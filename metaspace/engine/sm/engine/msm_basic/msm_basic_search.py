@@ -1,6 +1,4 @@
-from collections import OrderedDict
 from itertools import product
-from pathlib import Path
 import numpy as np
 import pandas as pd
 import logging
@@ -81,6 +79,13 @@ class MSMSearch(object):
         segm_rdd = self._sc.parallelize(range(centr_segm_n), numSlices=centr_segm_n)
         return segm_rdd.map(func).collect()
 
+    @staticmethod
+    def clip_centroids_df(centroids_df, mz_min, mz_max):
+        ds_mz_range_unique_formulas = centroids_df[(mz_min < centroids_df.mz) &
+                                                   (centroids_df.mz < mz_max)].index.unique()
+        centr_df = centroids_df[centroids_df.index.isin(ds_mz_range_unique_formulas)].reset_index().copy()
+        return centr_df
+
     def search(self):
         """ Search, score, and compute FDR for all MolDB formulas
 
@@ -110,9 +115,8 @@ class MSMSearch(object):
         ds_segments_path = self._ds_data_path / 'ds_segments'
         segment_spectra(self._imzml_parser, coordinates, ds_segments, ds_segments_path)
 
-        mz_min, mz_max = ds_segments[0, 0], ds_segments[-1, 1]
-        centr_df = (centroids_df[(mz_min < centroids_df.mz) & (centroids_df.mz < mz_max)]
-                    .copy().reset_index())
+        centr_df = self.clip_centroids_df(centroids_df, mz_min=ds_segments[0, 0], mz_max=ds_segments[-1, 1])
+
         centr_segments_path = self._ds_data_path / 'centr_segments'
         ds_size_mb = len(ds_segments) * ds_segm_size_mb
         data_per_centr_segm_mb = 50
