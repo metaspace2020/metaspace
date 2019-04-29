@@ -92,7 +92,7 @@ class MSMSearch(object):
         centroids_gen = CentroidsGenerator(sc=self._sc, isocalc=isocalc)
         ion_formulas = np.unique(ion_formula_map_df.ion_formula.values)
         formula_centroids = centroids_gen.generate_if_not_exist(formulas=ion_formulas.tolist())
-        logger.debug(f'Formula centroids df size: {formula_centroids.centroids_df.shape}')
+        logger.debug(f'Formula centroids df size: {formula_centroids.centroids_df().shape}')
         return formula_centroids
 
     def process_segments(self, centr_segm_n, func):
