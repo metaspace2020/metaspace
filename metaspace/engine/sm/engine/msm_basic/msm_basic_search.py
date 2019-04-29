@@ -17,6 +17,7 @@ logger = logging.getLogger('engine')
 def init_fdr(moldbs, target_adducts):
     """ Randomly select decoy adducts for each moldb and target adduct
     """
+    logger.info('Selecting decoy adducts')
     moldb_fdr_list = []
     for moldb in moldbs:
         fdr = FDR(decoy_sample_size=20, target_adducts=target_adducts)
@@ -29,6 +30,7 @@ def init_fdr(moldbs, target_adducts):
 def collect_ion_formulas(moldb_fdr_list):
     """ Collect all ion formulas that need to be searched for
     """
+    logger.info('Collecting ion formulas')
     ion_formula_map_list = []
     for moldb, fdr in moldb_fdr_list:
         for formula, adduct in fdr.ion_tuples():
@@ -70,6 +72,7 @@ class MSMSearch(object):
     def _fetch_formula_centroids(self, ion_formula_map_df):
         """ Generate/load centroids for all ions formulas
         """
+        logger.info('Fetching formula centroids')
         isocalc = IsocalcWrapper(self._isotope_gen_config)
         centroids_gen = CentroidsGenerator(sc=self._sc, isocalc=isocalc)
         ion_formulas = np.unique(ion_formula_map_df.ion_formula.values)
@@ -85,6 +88,13 @@ class MSMSearch(object):
                                                    (centroids_df.mz < mz_max)].index.unique()
         centr_df = centroids_df[centroids_df.index.isin(ds_mz_range_unique_formulas)].reset_index().copy()
         return centr_df
+
+    def select_target_formula_ids(self, formulas_df, ion_formula_map_df):
+        logger.info('Selecting target formula ids')
+        target_formulas_mask = ion_formula_map_df.adduct.isin(self._isotope_gen_config['adducts'])
+        target_formulas = set(ion_formula_map_df[target_formulas_mask].ion_formula.values)
+        target_formula_inds = set(formulas_df[formulas_df.formula.isin(target_formulas)].index)
+        return target_formula_inds
 
     def search(self):
         """ Search, score, and compute FDR for all MolDB formulas
@@ -104,9 +114,7 @@ class MSMSearch(object):
         formulas_df = formula_centroids.formulas_df
         logger.debug(f'formula_centroids_df size: {centroids_df.shape}')
 
-        target_formulas_mask = ion_formula_map_df.adduct.isin(self._isotope_gen_config['adducts'])
-        target_formulas = set(ion_formula_map_df[target_formulas_mask].ion_formula.values)
-        target_formula_inds = set(formulas_df[formulas_df.formula.isin(target_formulas)].index)
+        target_formula_inds = self.select_target_formula_ids(formulas_df, ion_formula_map_df)
 
         coordinates = [coo[:2] for coo in self._imzml_parser.coordinates]
         ds_segm_size_mb = 5
@@ -120,7 +128,11 @@ class MSMSearch(object):
         centr_segments_path = self._ds_data_path / 'centr_segments'
         ds_size_mb = len(ds_segments) * ds_segm_size_mb
         data_per_centr_segm_mb = 50
-        centr_segm_n = int(max(32, ds_size_mb // data_per_centr_segm_mb))
+        peaks_per_centr_segm = 1e4
+        centr_segm_n = int(max(ds_size_mb // data_per_centr_segm_mb,
+                               centr_df.shape[0] // peaks_per_centr_segm,
+                               32))
+
         segment_centroids(centr_df, centr_segm_n, centr_segments_path)
 
         process_centr_segment = create_process_segment(ds_segments, ds_segments_path, centr_segments_path,

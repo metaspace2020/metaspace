@@ -94,6 +94,7 @@ class SearchJob(object):
             logger.info("Running new job ds_id: %s, ds_name: %s, mol dbs: %s",
                         self._ds.id, self._ds.name, moldbs)
 
+            logger.info('Parsing imzml')
             imzml_parser = ImzMLParser(self._ds_imzml_path)
             search_alg = MSMSearch(sc=self._sc, imzml_parser=imzml_parser, moldbs=moldbs,
                                    ds_config=self._ds.config, ds_data_path=self._ds_data_path)
@@ -175,6 +176,7 @@ class SearchJob(object):
 
             self._configure_spark()
 
+            logger.info('Copying input data')
             self._ds_data_path = Path(self._sm_config['fs']['data_path']) / ds.id
             rmtree(self._ds_data_path, ignore_errors=True)
             copytree(src=ds.input_path, dst=self._ds_data_path)

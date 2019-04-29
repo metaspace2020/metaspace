@@ -119,6 +119,8 @@ def segment_spectra(imzml_parser, coordinates, ds_segments, ds_segments_path):
 
 
 def segment_centroids(centr_df, segm_n, centr_segm_path):
+    logger.info(f'Segmenting centroids into {segm_n} segments')
+
     rmtree(centr_segm_path, ignore_errors=True)
     centr_segm_path.mkdir(parents=True)
 
