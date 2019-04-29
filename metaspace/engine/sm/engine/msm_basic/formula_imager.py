@@ -72,6 +72,17 @@ def create_process_segment(ds_segments, ds_segments_path, centr_segments_path,
     compute_metrics = make_compute_image_metrics(sample_area_mask, nrows, ncols, image_gen_config)
     ppm = image_gen_config['ppm']
 
+    def choose_ds_segments(centr_df):
+        centr_segm_min_mz, centr_segm_max_mz = centr_df.mz.agg([np.min, np.max])
+        centr_segm_min_mz -= centr_segm_min_mz * ppm * 1e-6
+        centr_segm_max_mz += centr_segm_max_mz * ppm * 1e-6
+
+        first_ds_segm_i = np.searchsorted(ds_segments[:, 0], centr_segm_min_mz, side='right') - 1
+        first_ds_segm_i = max(0, first_ds_segm_i)
+        last_ds_segm_i = np.searchsorted(ds_segments[:, 1], centr_segm_max_mz, side='left')  # last included
+        last_ds_segm_i = min(len(ds_segments) - 1, last_ds_segm_i)
+        return first_ds_segm_i, last_ds_segm_i
+
     def read_ds_segment(path):
         data = pd.read_msgpack(path)
         if type(data) == list:
@@ -96,16 +107,9 @@ def create_process_segment(ds_segments, ds_segments_path, centr_segments_path,
         formula_metrics_df, formula_images = pd.DataFrame(), {}
         if centr_segm_path.exists():
             logger.info(f'Reading centroid segment {segm_i} data from {centr_segm_path}')
+
             centr_df = pd.read_msgpack(centr_segm_path)
-
-            centr_segm_min_mz, centr_segm_max_mz = centr_df.mz.agg([np.min, np.max])
-            centr_segm_min_mz -= centr_segm_min_mz * ppm * 1e-6
-            centr_segm_max_mz += centr_segm_max_mz * ppm * 1e-6
-
-            first_ds_segm_i = np.searchsorted(ds_segments[:, 0], centr_segm_min_mz, side='right') - 1
-            first_ds_segm_i = max(0, first_ds_segm_i)
-            last_ds_segm_i = np.searchsorted(ds_segments[:, 1], centr_segm_max_mz, side='left')  # last included
-            last_ds_segm_i = min(len(ds_segments) - 1, last_ds_segm_i)
+            first_ds_segm_i, last_ds_segm_i = choose_ds_segments(centr_df)
 
             logger.info(f'Reading spectra segments {first_ds_segm_i}-{last_ds_segm_i} from {ds_segments_path}')
 
