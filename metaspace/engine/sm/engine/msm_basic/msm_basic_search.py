@@ -55,6 +55,21 @@ def compute_fdr(fdr, formula_metrics_df, formula_map_df, max_fdr=0.5):
     return moldb_ion_metrics_df
 
 
+def merge_results(results, formulas_df):
+    logger.info('Merging search results')
+
+    formula_metrics_list, formula_images_list = zip(*results)
+    formula_metrics_df = pd.concat(formula_metrics_list)
+    formula_images = {}
+    for images in formula_images_list:
+        formula_images.update(images)
+
+    formula_metrics_df = formula_metrics_df.join(formulas_df, how='left')
+    formula_metrics_df = formula_metrics_df.rename({'formula': 'ion_formula'}, axis=1)  # needed for fdr
+
+    return formula_metrics_df, formula_images
+
+
 class MSMSearch(object):
 
     def __init__(self, sc, imzml_parser, moldbs, ds_config, ds_data_path):
@@ -76,7 +91,9 @@ class MSMSearch(object):
         isocalc = IsocalcWrapper(self._isotope_gen_config)
         centroids_gen = CentroidsGenerator(sc=self._sc, isocalc=isocalc)
         ion_formulas = np.unique(ion_formula_map_df.ion_formula.values)
-        return centroids_gen.generate_if_not_exist(formulas=ion_formulas.tolist())
+        formula_centroids = centroids_gen.generate_if_not_exist(formulas=ion_formulas.tolist())
+        logger.debug(f'Formula centroids df size: {formula_centroids.centroids_df.shape}')
+        return formula_centroids
 
     def process_segments(self, centr_segm_n, func):
         segm_rdd = self._sc.parallelize(range(centr_segm_n), numSlices=centr_segm_n)
@@ -112,7 +129,6 @@ class MSMSearch(object):
         formula_centroids = self._fetch_formula_centroids(ion_formula_map_df)
         centroids_df = formula_centroids.centroids_df()
         formulas_df = formula_centroids.formulas_df
-        logger.debug(f'formula_centroids_df size: {centroids_df.shape}')
 
         target_formula_inds = self.select_target_formula_ids(formulas_df, ion_formula_map_df)
 
@@ -132,22 +148,13 @@ class MSMSearch(object):
         centr_segm_n = int(max(ds_size_mb // data_per_centr_segm_mb,
                                centr_df.shape[0] // peaks_per_centr_segm,
                                32))
-
         segment_centroids(centr_df, centr_segm_n, centr_segments_path)
 
         process_centr_segment = create_process_segment(ds_segments, ds_segments_path, centr_segments_path,
                                                        coordinates, self._image_gen_config, target_formula_inds)
         logger.info('Processing segments...')
-        process_results = self.process_segments(centr_segm_n, process_centr_segment)
-
-        formula_metrics_list, formula_images_list = zip(*process_results)
-        formula_metrics_df = pd.concat(formula_metrics_list)
-        formula_images = {}
-        for images in formula_images_list:
-            formula_images.update(images)
-
-        formula_metrics_df = formula_metrics_df.join(formula_centroids.formulas_df, how='left')
-        formula_metrics_df = formula_metrics_df.rename({'formula': 'ion_formula'}, axis=1)  # needed for fdr
+        results = self.process_segments(centr_segm_n, process_centr_segment)
+        formula_metrics_df, formula_images = merge_results(results, formula_centroids.formulas_df)
 
         # Compute fdr for each moldb search results
         for moldb, fdr in moldb_fdr_list:
