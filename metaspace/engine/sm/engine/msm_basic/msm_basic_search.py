@@ -138,6 +138,10 @@ class MSMSearch(object):
         ds_segments_path = self._ds_data_path / 'ds_segments'
         segment_spectra(self._imzml_parser, coordinates, ds_segments, ds_segments_path)
 
+        logger.info('Uploading dataset segments to workers')
+        for path in ds_segments_path.iterdir():
+            self._sc.addFile(str(path))
+
         centr_df = self.clip_centroids_df(centroids_df, mz_min=ds_segments[0, 0], mz_max=ds_segments[-1, 1])
 
         centr_segments_path = self._ds_data_path / 'centr_segments'
@@ -148,6 +152,10 @@ class MSMSearch(object):
                                centr_df.shape[0] // peaks_per_centr_segm,
                                32))
         segment_centroids(centr_df, centr_segm_n, centr_segments_path)
+
+        logger.info('Uploading centroids segments to workers')
+        for path in ds_segments_path.iterdir():
+            self._sc.addFile(str(path))
 
         process_centr_segment = create_process_segment(ds_segments, ds_segments_path, centr_segments_path,
                                                        coordinates, self._image_gen_config, target_formula_inds)

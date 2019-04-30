@@ -1,6 +1,8 @@
 import logging
+from pathlib import Path
 import numpy as np
 import pandas as pd
+from pyspark.files import SparkFiles
 from scipy.sparse import coo_matrix
 
 from sm.engine.msm_basic.formula_validator import make_compute_image_metrics, formula_image_metrics
@@ -105,8 +107,11 @@ def create_process_segment(ds_segments, ds_segments_path, centr_segments_path,
     compute_metrics = make_compute_image_metrics(sample_area_mask, nrows, ncols, image_gen_config)
     ppm = image_gen_config['ppm']
 
+    local_centr_segments_path = Path(SparkFiles.get(str(centr_segments_path)))
+    local_ds_segments_path = Path(SparkFiles.get(str(ds_segments_path)))
+
     def process_centr_segment(segm_i):
-        centr_segm_path = centr_segments_path / f'{segm_i:04}.msgpack'
+        centr_segm_path = local_centr_segments_path / f'{segm_i:04}.msgpack'
         formula_metrics_df, formula_images = pd.DataFrame(), {}
         if centr_segm_path.exists():
             logger.info(f'Reading centroid segment {segm_i} data from {centr_segm_path}')
@@ -114,9 +119,9 @@ def create_process_segment(ds_segments, ds_segments_path, centr_segments_path,
             centr_df = pd.read_msgpack(centr_segm_path)
             first_ds_segm_i, last_ds_segm_i = choose_ds_segments(ds_segments, centr_df, ppm)
 
-            logger.info(f'Reading spectra segments {first_ds_segm_i}-{last_ds_segm_i} from {ds_segments_path}')
+            logger.info(f'Reading spectra segments {first_ds_segm_i}-{last_ds_segm_i} from {local_ds_segments_path}')
 
-            sp_arr = read_ds_segments(ds_segments_path, first_ds_segm_i, last_ds_segm_i)
+            sp_arr = read_ds_segments(local_ds_segments_path, first_ds_segm_i, last_ds_segm_i)
 
             formula_images_it = gen_iso_images(sp_inds=sp_arr[:,0], sp_mzs=sp_arr[:,1], sp_ints=sp_arr[:,2],
                                                centr_df=centr_df,
