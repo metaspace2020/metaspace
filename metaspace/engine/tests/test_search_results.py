@@ -46,11 +46,11 @@ def test_isotope_images_are_stored(search_results, spark_context):
     img_store_mock.post_image.return_value = img_id
 
     img_store_mock.reset_mock()
-    formula_images = {
-        0: [coo_matrix([[0, 0], [0, 1]]), None, coo_matrix([[2, 3], [1, 0]]), None],
-        1: [coo_matrix([[1, 1], [0, 1]]), None, None, None],
-    }
-    ids = post_images_to_image_store(spark_context, formula_images, mask, img_store_mock, 'fs')
+    formula_images_rdd = spark_context.parallelize([
+        (0, [coo_matrix([[0, 0], [0, 1]]), None, coo_matrix([[2, 3], [1, 0]]), None]),
+        (1, [coo_matrix([[1, 1], [0, 1]]), None, None, None]),
+    ])
+    ids = post_images_to_image_store(formula_images_rdd, mask, img_store_mock, 'fs')
     assert ids == {
         0: {'iso_image_ids': [img_id, None, img_id, None]},
         1: {'iso_image_ids': [img_id, None, None, None]}

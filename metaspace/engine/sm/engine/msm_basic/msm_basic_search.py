@@ -2,6 +2,7 @@ from itertools import product
 import numpy as np
 import pandas as pd
 import logging
+from pyspark.storagelevel import StorageLevel
 
 from sm.engine.fdr import FDR
 from sm.engine.formula_parser import generate_ion_formula
@@ -55,19 +56,15 @@ def compute_fdr(fdr, formula_metrics_df, formula_map_df, max_fdr=0.5):
     return moldb_ion_metrics_df
 
 
-def merge_results(results, formulas_df):
+def merge_results(results_rdd, formulas_df):
     logger.info('Merging search results')
 
-    formula_metrics_list, formula_images_list = zip(*results)
-    formula_metrics_df = pd.concat(formula_metrics_list)
-    formula_images = {}
-    for images in formula_images_list:
-        formula_images.update(images)
-
+    formula_metrics_df = pd.concat(results_rdd.map(lambda t: t[0]).collect())
     formula_metrics_df = formula_metrics_df.join(formulas_df, how='left')
     formula_metrics_df = formula_metrics_df.rename({'formula': 'ion_formula'}, axis=1)  # needed for fdr
 
-    return formula_metrics_df, formula_images
+    formula_images_rdd = results_rdd.flatMap(lambda t: t[1].items())
+    return formula_metrics_df, formula_images_rdd
 
 
 class MSMSearch(object):
@@ -96,8 +93,10 @@ class MSMSearch(object):
         return formula_centroids
 
     def process_segments(self, centr_segm_n, func):
-        segm_rdd = self._sc.parallelize(range(centr_segm_n), numSlices=centr_segm_n)
-        return segm_rdd.map(func).collect()
+        results_rdd = (self._sc.parallelize(range(centr_segm_n), numSlices=centr_segm_n)
+                       .map(func)
+                       .persist(storageLevel=StorageLevel.MEMORY_AND_DISK))
+        return results_rdd
 
     @staticmethod
     def clip_centroids_df(centroids_df, mz_min, mz_max):
@@ -153,13 +152,15 @@ class MSMSearch(object):
         process_centr_segment = create_process_segment(ds_segments, ds_segments_path, centr_segments_path,
                                                        coordinates, self._image_gen_config, target_formula_inds)
         logger.info('Processing segments...')
-        results = self.process_segments(centr_segm_n, process_centr_segment)
-        formula_metrics_df, formula_images = merge_results(results, formula_centroids.formulas_df)
+        results_rdd = self.process_segments(centr_segm_n, process_centr_segment)
+
+        formula_metrics_df, formula_images_rdd = merge_results(results_rdd, formula_centroids.formulas_df)
 
         # Compute fdr for each moldb search results
         for moldb, fdr in moldb_fdr_list:
             moldb_formula_map_df = (ion_formula_map_df[ion_formula_map_df.moldb_id == moldb.id]
                                     .drop('moldb_id', axis=1))
             moldb_ion_metrics_df = compute_fdr(fdr, formula_metrics_df, moldb_formula_map_df, max_fdr=0.5)
-            moldb_ion_images = {f_i: formula_images[f_i] for f_i in moldb_ion_metrics_df.index}
-            yield moldb, moldb_ion_metrics_df, moldb_ion_images
+
+            moldb_ion_images_rdd = formula_images_rdd.filter(lambda kv: kv[0] in moldb_ion_metrics_df.index)
+            yield moldb, moldb_ion_metrics_df, moldb_ion_images_rdd

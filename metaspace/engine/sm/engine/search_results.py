@@ -12,7 +12,7 @@ METRICS_INS = ('INSERT INTO iso_image_metrics (job_id, db_id, sf, adduct, msm, f
                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)')
 
 
-def post_images_to_image_store(sc, formula_images, alpha_channel, img_store, img_store_type):
+def post_images_to_image_store(formula_images_rdd, alpha_channel, img_store, img_store_type):
     logger.info('Posting iso images to {}'.format(img_store))
     png_generator = PngGenerator(alpha_channel, greyscale=True)
 
@@ -22,13 +22,9 @@ def post_images_to_image_store(sc, formula_images, alpha_channel, img_store, img
             if img is not None:
                 fp = png_generator.generate_png(img.toarray())
                 iso_image_ids[k] = img_store.post_image(img_store_type, 'iso_image', fp)
-        return {
-            'iso_image_ids': iso_image_ids
-        }
+        return {'iso_image_ids': iso_image_ids}
 
-    formula_images_rdd = sc.parallelize(formula_images.values(), numSlices=128)
-    urls = formula_images_rdd.map(generate_png_and_post).collect()
-    return dict(zip(formula_images.keys(), urls))
+    return dict(formula_images_rdd.mapValues(generate_png_and_post).collect())
 
 
 class SearchResults(object):
@@ -66,26 +62,24 @@ class SearchResults(object):
                                                 ion_img_ids))
         db.insert(METRICS_INS, rows)
 
-    def store(self, metrics_df, formula_images, alpha_channel, db, sc, img_store, img_store_type):
+    def store(self, metrics_df, formula_images_rdd, alpha_channel, db, img_store, img_store_type):
         """ Save formula metrics and images
 
         Args
         ---------
         metrics_df : pandas.Dataframe
             formula, adduct, msm, fdr, individual metrics
-        formula_images : pyspark.RDD
+        formula_images_rdd : pyspark.RDD
             values must be lists of 2d intensity arrays (in coo_matrix format)
         alpha_channel : numpy.array
             Image alpha channel (2D, 0..1)
         db : sm.engine.DB
-            database connection
-        sc : pyspark.context.SparkContext
             database connection
         img_store : sm.engine.png_generator.ImageStoreServiceWrapper
             m/z image store
         img_store_type: str
         """
         logger.info('Storing search results to the DB')
-        formula_image_ids = post_images_to_image_store(sc, formula_images,
+        formula_image_ids = post_images_to_image_store(formula_images_rdd,
                                                        alpha_channel, img_store, img_store_type)
         self.store_ion_metrics(metrics_df, formula_image_ids, db)

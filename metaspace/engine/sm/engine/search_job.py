@@ -100,15 +100,15 @@ class SearchJob(object):
                                    ds_config=self._ds.config, ds_data_path=self._ds_data_path)
             search_results_it = search_alg.search()
 
-            for moldb, moldb_ion_metrics_df, moldb_ion_images in search_results_it:
+            for moldb, moldb_ion_metrics_df, moldb_ion_images_rdd in search_results_it:
                 # Save results for each moldb
                 self.store_job_meta(moldb.id)
                 search_results = SearchResults(moldb.id, self._job_id, METRICS.keys())
                 img_store_type = self._ds.get_ion_img_storage_type(self._db)
                 coordinates = [coo[:2] for coo in imzml_parser.coordinates]
                 sample_area_mask = make_sample_area_mask(coordinates)
-                search_results.store(moldb_ion_metrics_df, moldb_ion_images, sample_area_mask,
-                                     self._db, self._sc, self._img_store, img_store_type)
+                search_results.store(moldb_ion_metrics_df, moldb_ion_images_rdd, sample_area_mask,
+                                     self._db, self._img_store, img_store_type)
                 self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FINISHED,
                                                               datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                                                               self._job_id))

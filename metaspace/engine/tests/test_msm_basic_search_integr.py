@@ -47,7 +47,7 @@ def test_search(formula_image_metrics_mock, pyspark_context, ds_config):
     msm_search._fetch_formula_centroids = lambda args: FormulaCentroids(formulas_df, centroids_df)
 
     def process_segments(centr_segm_n, func):
-        return map(func, range(centr_segm_n))
+        return pyspark_context.parallelize(map(func, range(centr_segm_n)))
 
     msm_search.process_segments = process_segments
 
@@ -59,9 +59,9 @@ def test_search(formula_image_metrics_mock, pyspark_context, ds_config):
     ]
     formula_image_metrics_mock.side_effect = image_metrics_result_list
 
-    _, moldb_ion_metrics_df, moldb_ion_images = next(msm_search.search())
+    _, moldb_ion_metrics_df, moldb_ion_images_rdd = next(msm_search.search())
 
     assert moldb_ion_metrics_df.shape == (2, 5)
-    assert len(moldb_ion_images) == 2
+    assert moldb_ion_images_rdd.count() == 3
 
     rmtree(ds_data_path)
