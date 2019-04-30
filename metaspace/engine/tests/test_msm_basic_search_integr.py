@@ -5,8 +5,7 @@ from unittest.mock import MagicMock, patch, Mock
 import numpy as np
 import pandas as pd
 
-from sm.engine.dataset_reader import DatasetReader
-from sm.engine.formula_centroids import CentroidsGenerator, FormulaCentroids
+from sm.engine.formula_centroids import FormulaCentroids
 from sm.engine.msm_basic.msm_basic_search import MSMSearch, init_fdr, collect_ion_formulas, compute_fdr
 from sm.engine.tests.util import pyspark_context, ds_config, make_moldb_mock
 

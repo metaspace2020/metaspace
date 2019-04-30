@@ -18,7 +18,6 @@ from sm.engine.util import SMConfig
 from sm.engine.queue import QueuePublisher
 from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.db import DB
-from sm.engine.work_dir import WorkDirManager
 
 
 class SMDaemonManager(object):
@@ -118,10 +117,6 @@ class SMDaemonManager(object):
         # TODO: move deletion of optical images here for consistency - it's currently in SMapiDatasetManager
         self.es.delete_ds(ds.id)
         self._db.alter('DELETE FROM dataset WHERE id=%s', params=(ds.id,))
-        if del_raw_data:
-            self.logger.warning('Deleting raw data: {}'.format(ds.input_path))
-            wd_man = WorkDirManager(ds.id)
-            wd_man.del_input_data(ds.input_path)
 
     def _send_email(self, email, subj, body):
         try:
