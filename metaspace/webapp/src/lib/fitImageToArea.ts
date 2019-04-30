@@ -1,5 +1,5 @@
 
-interface FitImageToAreaArgs {
+export interface FitImageToAreaArgs {
   imageWidth: number;
   imageHeight: number;
   areaWidth: number;
@@ -12,7 +12,7 @@ interface FitImageToAreaArgs {
   mode?: 'contain' | 'cover';
 }
 
-interface FitImageToAreaResult {
+export interface FitImageToAreaResult {
   imageX: number;
   imageY: number;
   imageWidth: number;
@@ -27,13 +27,8 @@ const clip = (val: number, min?: number | null, max?: number | null) => {
 };
 
 const fitImageToArea = (args: FitImageToAreaArgs): FitImageToAreaResult => {
-  const {
-    imageWidth, imageHeight,
-    areaWidth, areaHeight,
-    areaMinWidth, areaMinHeight,
-    minZoom, maxZoom,
-    mode = 'contain'
-  } = args;
+  const {imageWidth, imageHeight, areaWidth, areaHeight, minZoom, maxZoom} = args;
+  const {areaMinWidth = areaWidth, areaMinHeight = areaHeight, mode = 'contain'} = args;
 
   const imageAspect = imageWidth / imageHeight;
   const areaAspect = areaWidth / areaHeight;
@@ -64,7 +59,6 @@ const fitImageToArea = (args: FitImageToAreaArgs): FitImageToAreaResult => {
     areaWidth: fittedAreaWidth,
     areaHeight: fittedAreaHeight,
   };
-
 };
 
 export default fitImageToArea;

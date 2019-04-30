@@ -17,12 +17,13 @@
         </el-popover>
         <br/>
         {{  other.mz.toFixed(4) }} <br/>
-        <image-loader :src="other.isotopeImages[0].url"
-              v-bind="imageLoaderSettings"
-              :colormap="colormap"
-              :max-height=250
-              style="overflow: hidden">
-        </image-loader>
+        <image-loader
+          :src="other.isotopeImages[0].url"
+          class="ion-image"
+          :imageFitParams="{areaMinHeight: 100}"
+          v-bind="imageLoaderSettings"
+          :colormap="colormap"
+        />
         <el-popover
           trigger="hover"
           class="rel-annot-details"
@@ -183,6 +184,11 @@ export default {
   }
   .mol-formula-line {
     line-height: 1em;
+  }
+
+  .ion-image {
+    max-width: 260px;
+    max-height: 250px;
   }
 
   .ion-link, a.ion-link:link {

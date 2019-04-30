@@ -1,21 +1,27 @@
 <template>
 <div class="main-ion-image-container">
     <div class="main-ion-image-container-row1">
-        <ion-image-viewer
-          :ionImage="ionImage"
-          :isLoading="ionImageIsLoading"
-          :colormap="colormap"
-          :pixelSizeX="pixelSizeX"
-          :pixelSizeY="pixelSizeY"
-          :disableScaleBar="disableScaleBar"
-          :scaleBarColor="scaleBarColor"
-          ref="imageLoader"
-          scrollBlock
-          class="image-loader"
-          v-bind="imageLoaderSettings"
-          @zoom="onImageZoom"
-          @move="onImageMove">
-        </ion-image-viewer>
+        <div class="image-viewer-container" ref="imageViewerContainer" v-resize="onResize">
+            <ion-image-viewer
+              :ionImage="ionImage"
+              :isLoading="ionImageIsLoading"
+              :colormap="colormap"
+              :pixelSizeX="pixelSizeX"
+              :pixelSizeY="pixelSizeY"
+              :disableScaleBar="disableScaleBar"
+              :scaleBarColor="scaleBarColor"
+              :width="imageViewerWidth"
+              :height="imageViewerHeight"
+              :zoom="imageLoaderSettings.imagePosition.zoom * imageFit.imageZoom"
+              :xOffset="imageLoaderSettings.imagePosition.xOffset"
+              :yOffset="imageLoaderSettings.imagePosition.yOffset"
+              ref="imageLoader"
+              scrollBlock
+              class="image-loader"
+              v-bind="imageLoaderSettings"
+              @move="handleImageMove"
+            />
+        </div>
 
         <div class="colorbar-container">
             <div v-if="imageLoaderSettings.opticalImageUrl">
@@ -73,6 +79,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
+import resize from 'vue-resize-directive';
 import {Component, Prop, Watch} from 'vue-property-decorator';
 import { saveAs } from 'file-saver';
 import Colorbar from './Colorbar.vue';
@@ -80,9 +87,14 @@ import IonImageViewer from '../../../../components/IonImageViewer.vue';
 import domtoimage from 'dom-to-image-google-font-issue';
 import {IonImage, loadPngFromUrl, processIonImage} from '../../../../lib/ionImageRendering';
 import {get} from 'lodash-es';
+import fitImageToArea, {FitImageToAreaResult} from '../../../../lib/fitImageToArea';
+
 
 @Component({
     name: 'main-image',
+    directives: {
+        resize
+    },
     components: {
         IonImageViewer,
         Colorbar,
@@ -103,8 +115,6 @@ export default class MainImage extends Vue {
     imageLoaderSettings!: any
     @Prop({required: true, type: Function})
     onImageMove!: Function
-    @Prop({required: true, type: Function})
-    onImageZoom!: Function
     @Prop({type: Number})
     pixelSizeX!: Number
     @Prop({type: Number})
@@ -117,9 +127,17 @@ export default class MainImage extends Vue {
     ionImageUrl: string | null = null;
     ionImage: IonImage | null = null;
     ionImageIsLoading = false;
+    imageViewerWidth: number = 500;
+    imageViewerHeight: number = 500; // constant
 
     created() {
         const ignoredPromise = this.updateIonImage();
+    }
+    mounted() {
+        this.imageViewerWidth = this.$refs.imageViewerContainer.clientWidth;
+    }
+    onResize() {
+        this.imageViewerWidth = this.$refs.imageViewerContainer.clientWidth;
     }
 
     @Watch('annotation')
@@ -140,6 +158,15 @@ export default class MainImage extends Vue {
 
     get colorbarDirection(): string {
       return this.colormap[0] == '-' ? 'bottom' : 'top';
+    }
+    get imageFit(): FitImageToAreaResult {
+        const {width=500, height=500} = this.ionImage || {};
+        return fitImageToArea({
+            imageWidth: width,
+            imageHeight: height,
+            areaWidth: this.imageViewerWidth,
+            areaHeight: this.imageViewerHeight,
+        });
     }
 
     saveImage(event: any): void {
@@ -170,6 +197,14 @@ export default class MainImage extends Vue {
     onOpacityInput(val: number): void {
       this.$emit('opacityInput', val);
     }
+
+    handleImageMove({zoom, xOffset, yOffset}: any) {
+        this.onImageMove({
+            zoom: zoom / this.imageFit.imageZoom,
+            xOffset,
+            yOffset,
+        });
+    }
 }
 </script>
 
@@ -185,8 +220,15 @@ export default class MainImage extends Vue {
     justify-content: center;
 }
 
+.image-viewer-container {
+    flex: 1 1 auto;
+    max-width: 100%;
+    overflow: hidden;
+}
+
 .colorbar-container {
     display: flex;
+    flex:none;
     flex-direction: column;
     justify-content: flex-end;
     padding-left: 10px;
