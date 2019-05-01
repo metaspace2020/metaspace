@@ -67,6 +67,16 @@ def merge_results(results_rdd, formulas_df):
     return formula_metrics_df, formula_images_rdd
 
 
+def calculate_centroids_segments_n(centr_df, ds_segments, ds_segm_size_mb):
+    ds_size_mb = len(ds_segments) * ds_segm_size_mb
+    data_per_centr_segm_mb = 50
+    peaks_per_centr_segm = 1e4
+    centr_segm_n = int(max(ds_size_mb // data_per_centr_segm_mb,
+                           centr_df.shape[0] // peaks_per_centr_segm,
+                           32))
+    return centr_segm_n
+
+
 class MSMSearch(object):
 
     def __init__(self, sc, imzml_parser, moldbs, ds_config, ds_data_path):
@@ -112,6 +122,10 @@ class MSMSearch(object):
         target_formula_inds = set(formulas_df[formulas_df.formula.isin(target_formulas)].index)
         return target_formula_inds
 
+    def upload_segments_to_workers(self, path):
+        for file_path in path.iterdir():
+            self._sc.addFile(str(file_path))
+
     def search(self):
         """ Search, score, and compute FDR for all MolDB formulas
 
@@ -139,29 +153,21 @@ class MSMSearch(object):
         segment_spectra(self._imzml_parser, coordinates, ds_segments, ds_segments_path)
 
         logger.info('Uploading dataset segments to workers')
-        for path in ds_segments_path.iterdir():
-            self._sc.addFile(str(path))
+        self.upload_segments_to_workers(ds_segments_path)
 
         centr_df = self.clip_centroids_df(centroids_df, mz_min=ds_segments[0, 0], mz_max=ds_segments[-1, 1])
 
         centr_segments_path = self._ds_data_path / 'centr_segments'
-        ds_size_mb = len(ds_segments) * ds_segm_size_mb
-        data_per_centr_segm_mb = 50
-        peaks_per_centr_segm = 1e4
-        centr_segm_n = int(max(ds_size_mb // data_per_centr_segm_mb,
-                               centr_df.shape[0] // peaks_per_centr_segm,
-                               32))
+        centr_segm_n = calculate_centroids_segments_n(centr_df, ds_segments, ds_segm_size_mb)
         segment_centroids(centr_df, centr_segm_n, centr_segments_path)
 
         logger.info('Uploading centroids segments to workers')
-        for path in ds_segments_path.iterdir():
-            self._sc.addFile(str(path))
+        self.upload_segments_to_workers(centr_segments_path)
 
+        logger.info('Processing segments...')
         process_centr_segment = create_process_segment(ds_segments, ds_segments_path, centr_segments_path,
                                                        coordinates, self._image_gen_config, target_formula_inds)
-        logger.info('Processing segments...')
         results_rdd = self.process_segments(centr_segm_n, process_centr_segment)
-
         formula_metrics_df, formula_images_rdd = merge_results(results_rdd, formula_centroids.formulas_df)
 
         # Compute fdr for each moldb search results
