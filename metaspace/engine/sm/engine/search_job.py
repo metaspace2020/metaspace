@@ -4,6 +4,8 @@ from pathlib import Path
 from pprint import pformat
 from datetime import datetime
 from shutil import copytree, rmtree
+
+import boto3
 from pyimzml.ImzMLParser import ImzMLParser
 from pyspark import SparkContext, SparkConf
 import logging
@@ -14,7 +16,7 @@ from sm.engine.msm_basic.formula_validator import METRICS
 from sm.engine.msm_basic.msm_basic_search import MSMSearch
 from sm.engine.db import DB
 from sm.engine.search_results import SearchResults
-from sm.engine.util import SMConfig
+from sm.engine.util import SMConfig, split_s3_path
 from sm.engine.es_export import ESExporter
 from sm.engine.mol_db import MolecularDB
 from sm.engine.errors import JobFailedError
@@ -147,6 +149,24 @@ class SearchJob(object):
 
         self._ds.save_ion_img_storage_type(self._db, ms_file_type_config['img_storage_type'])
 
+    def _copy_input_data(self, ds):
+        logger.info('Copying input data')
+        self._ds_data_path = Path(self._sm_config['fs']['data_path']) / ds.id
+        if ds.input_path.startswith('s3a://'):
+            self._ds_data_path.mkdir(parents=True, exist_ok=True)
+
+            session = boto3.session.Session(aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
+                                            aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'])
+            bucket_name, key = split_s3_path(ds.input_path)
+            for obj_sum in (session.resource('s3')
+                            .Bucket(bucket_name)
+                            .objects.filter(Prefix=key)):
+                local_file = str(self._ds_data_path / Path(obj_sum.key).name)
+                obj_sum.Object().download_file(local_file)
+        else:
+            rmtree(self._ds_data_path, ignore_errors=True)
+            copytree(src=ds.input_path, dst=self._ds_data_path)
+
     def run(self, ds):
         """ Entry point of the engine. Molecule search is completed in several steps:
             * Copy input data to the engine work dir
@@ -175,12 +195,7 @@ class SearchJob(object):
                 self._status_queue = None
 
             self._configure_spark()
-
-            logger.info('Copying input data')
-            self._ds_data_path = Path(self._sm_config['fs']['data_path']) / ds.id
-            rmtree(self._ds_data_path, ignore_errors=True)
-            copytree(src=ds.input_path, dst=self._ds_data_path)
-
+            self._copy_input_data(ds)
             self._save_data_from_raw_ms_file()
             self._img_store.storage_type = 'fs'
 

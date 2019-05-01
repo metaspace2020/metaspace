@@ -144,5 +144,10 @@ def create_ds_from_files(ds_id, ds_name, ds_input_path):
 
 
 def split_s3_path(path):
-    """ Returns a pair (bucket, key) """
+    """
+    Returns
+    ---
+        tuple[string, string]
+    Returns a pair of (bucket, key)
+    """
     return path.split('s3a://')[-1].split('/', 1)
