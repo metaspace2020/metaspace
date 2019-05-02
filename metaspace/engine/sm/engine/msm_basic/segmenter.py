@@ -65,7 +65,7 @@ def define_ds_segments(imzml_parser, sample_ratio=0.05, ds_segm_size_mb=5):
 def segment_spectra_chunk(sp_mz_int_buf, mz_segments, ds_segments_path):
     for segm_i, (l, r) in mz_segments:
         segm_start, segm_end = np.searchsorted(sp_mz_int_buf[:, 1], (l, r))  # mz expected to be in column 1
-        pd.to_msgpack(ds_segments_path / f'{segm_i:04}.msgpack',
+        pd.to_msgpack(ds_segments_path / f'ds_segm_{segm_i:04}.msgpack',
                       sp_mz_int_buf[segm_start:segm_end],
                       append=True)
 
@@ -134,4 +134,4 @@ def segment_centroids(centr_df, segm_n, centr_segm_path):
     centr_segm_df = pd.merge(centr_df, first_peak_df[['formula_i', 'segm_i']],
                              on='formula_i').sort_values('mz')
     for segm_i, df in centr_segm_df.groupby('segm_i'):
-        pd.to_msgpack(f'{centr_segm_path}/{segm_i:04}.msgpack', df)
+        pd.to_msgpack(f'{centr_segm_path}/centr_segm_{segm_i:04}.msgpack', df)
