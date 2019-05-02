@@ -19,7 +19,20 @@ METRICS = OrderedDict([('chaos', 0), ('spatial', 0), ('spectral', 0), ('msm', 0)
                        ('max_iso_ints', [0, 0, 0, 0])])
 
 
-def make_compute_image_metrics(sample_area_mask, nrows, ncols, img_gen_conf):
+def replace_nan(v, default=0):
+    def replace(x):
+        if not x or np.isinf(x) or np.isnan(x):
+            return default
+        else:
+            return float(x)
+
+    if type(v) is list:
+        return [replace(x) for x in v]
+    else:
+        return replace(v)
+
+
+def make_compute_image_metrics(sample_area_mask, nrows, ncols, img_gen_config):
     """ Returns a function for computing formula images metrics
 
     Args
@@ -27,25 +40,12 @@ def make_compute_image_metrics(sample_area_mask, nrows, ncols, img_gen_conf):
     sample_area_mask: ndarray[bool]
         mask for separating sampled pixels (True) from non-sampled (False)
 
-    img_gen_conf : dict
+    img_gen_config : dict
         isotope_generation section of the dataset config
     Returns
     -----
         function
     """
-    def replace_nan(v, default=0):
-
-        def replace(x):
-            if not x or np.isinf(x) or np.isnan(x):
-                return default
-            else:
-                return x
-
-        if type(v) is list:
-            return [replace(x) for x in v]
-        else:
-            return replace(v)
-
     empty_matrix = np.zeros((nrows, ncols))
     sample_area_mask_flat = sample_area_mask.flatten()
 
@@ -60,7 +60,7 @@ def make_compute_image_metrics(sample_area_mask, nrows, ncols, img_gen_conf):
             iso_imgs_flat = [img.flatten()[sample_area_mask_flat] for img in iso_imgs]
             iso_imgs_flat = iso_imgs_flat[:len(formula_ints)]
 
-            if img_gen_conf['do_preprocessing']:
+            if img_gen_config.get('do_preprocessing', False):
                 for img in iso_imgs_flat:
                     smoothing.hot_spot_removal(img)
 
@@ -70,7 +70,7 @@ def make_compute_image_metrics(sample_area_mask, nrows, ncols, img_gen_conf):
                 m['spatial'] = isotope_image_correlation(iso_imgs_flat, weights=formula_ints[1:])
                 if m['spatial'] > 0:
 
-                    moc = measure_of_chaos(iso_imgs[0], img_gen_conf['nlevels'])
+                    moc = measure_of_chaos(iso_imgs[0], img_gen_config.get('nlevels', 30))
                     m['chaos'] = 0 if np.isclose(moc, 1.0) else moc
                     if m['chaos'] > 0:
 
@@ -89,20 +89,17 @@ def complete_image_list(images):
     return non_empty_image_n > 1 and images[0] is not None
 
 
-def formula_image_metrics(formula_images_gen, compute_metrics, target_formula_inds):
+def formula_image_metrics(formula_images_it, compute_metrics, target_formula_inds):
     """ Compute isotope image metrics for each formula
 
     Args
-    -----
-    sc : pyspark.SparkContext
-    ds_config : dict
-    ds_reader: engine.dataset_reader.DatasetReader
-    formula_centr_ints: dict
-    formula_images : pyspark.rdd.RDD
-        RDD of (formula, list[images]) pairs
+    ---
+    formula_images_it: Iterator
+    compute_metrics: function
+    target_formula_inds: set
 
     Returns
-    -----
+    ---
         pandas.DataFrame
     """
 
@@ -120,7 +117,7 @@ def formula_image_metrics(formula_images_gen, compute_metrics, target_formula_in
                 if f_i in target_formula_inds:
                     formula_images[f_i] = f_images
 
-    for f_i, p_i, f_int, image in formula_images_gen:
+    for f_i, p_i, f_int, image in formula_images_it:
         formula_images_buffer[f_i][p_i] = image
         formula_ints_buffer[f_i][p_i] = f_int
 

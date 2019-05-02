@@ -7,10 +7,6 @@ from sm.engine.util import SMConfig
 
 logger = logging.getLogger('engine')
 
-SF_INS = 'INSERT INTO sum_formula (db_id, sf) values (%s, %s)'
-SF_COUNT = 'SELECT count(*) FROM sum_formula WHERE db_id = %s'
-SF_SELECT = 'SELECT sf FROM sum_formula WHERE db_id = %s'
-
 
 class MolDBServiceWrapper(object):
     def __init__(self, service_url):
@@ -82,9 +78,6 @@ class MolecularDB(object):
             raise Exception('MolDB id or name should be provided')
 
         self._id, self._name, self._version = data['id'], data['name'], data['version']
-        self._sf_df = None
-        self._sfs = None
-        self._ion_centroids = None
 
     def __repr__(self):
         return '<{}:{}>'.format(self.name, self.version)
@@ -101,13 +94,6 @@ class MolecularDB(object):
     def version(self):
         return self._version
 
-    @property
-    def ion_centroids(self):
-        return self._ion_centroids
-
-    def set_ion_centroids(self, ion_centroids):
-        self._ion_centroids = ion_centroids
-
     def get_molecules(self, sf=None):
         """ Returns a dataframe with (mol_id, mol_name) or (sf, mol_id, mol_name) rows
 
@@ -123,10 +109,4 @@ class MolecularDB(object):
     @property
     def formulas(self):
         """ Total list of formulas """
-        if not self._sfs:
-            if self._db.select_one(SF_COUNT, params=(self._id,))[0] == 0:
-                sfs = self._mol_db_service.fetch_db_sfs(self.id)
-                rows = [(self._id, sf) for sf in sfs]
-                self._db.insert(SF_INS, rows)
-            self._sfs = [row[0] for row in self._db.select(SF_SELECT, params=(self._id,))]
-        return self._sfs
+        return self._mol_db_service.fetch_db_sfs(self.id)

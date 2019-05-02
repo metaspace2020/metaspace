@@ -30,7 +30,7 @@
     "update_daemon_threads": 1
   },
   "fs": {
-    "base_path": "/opt/data/sm_test_data",
+    "data_path": "/tmp/abc",
     "s3_base_path": ""
   },
   "spark": {

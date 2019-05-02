@@ -27,12 +27,13 @@ class SciTester(object):
     def __init__(self, sm_config_path):
         self.sm_config_path = sm_config_path
         self.sm_config = SMConfig.get_conf()
+        self.sm_config['colocalization']['enabled'] = False
         self.db = DB(self.sm_config['db'])
 
-        self.ds_id = '2000-01-01-00_00_00'
+        self.ds_id = '2000-01-01_00h00m00s'
         self.base_search_res_path = join(proj_root(), 'tests/reports', 'spheroid_untreated_search_res.csv')
         self.ds_name = 'sci_test_spheroid_untreated'
-        self.data_dir_path = join(self.sm_config['fs']['base_path'], self.ds_name)
+        self.ds_data_path = join(self.sm_config['fs']['data_path'], self.ds_name)
         self.input_path = join(proj_root(), 'tests/data/untreated')
         self.ds_config_path = join(self.input_path, 'config.json')
         self.metrics = ['chaos', 'spatial', 'spectral']
@@ -148,7 +149,7 @@ class SciTester(object):
 
     def clear_data_dirs(self):
         with warn_only():
-            local('rm -rf {}'.format(self.data_dir_path))
+            local('rm -rf {}'.format(self.ds_data_path))
 
 
 if __name__ == '__main__':

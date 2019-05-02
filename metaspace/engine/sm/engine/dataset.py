@@ -101,7 +101,6 @@ class Dataset(object):
             **kwargs,
         })
 
-
     @classmethod
     def load(cls, db, ds_id):
         docs = db.select_with_fields(cls.DS_SEL, params=(ds_id,))

@@ -1,9 +1,8 @@
-from collections import OrderedDict
 from itertools import product
-from pathlib import Path
 import numpy as np
 import pandas as pd
 import logging
+from pyspark.storagelevel import StorageLevel
 
 from sm.engine.fdr import FDR
 from sm.engine.formula_parser import generate_ion_formula
@@ -11,8 +10,7 @@ from sm.engine.formula_centroids import CentroidsGenerator
 from sm.engine.isocalc_wrapper import IsocalcWrapper, ISOTOPIC_PEAK_N
 from sm.engine.util import SMConfig
 from sm.engine.msm_basic.formula_imager import create_process_segment
-from sm.engine.msm_basic.segmenter import define_mz_segments, segment_spectra, segment_centroids
-from sm.engine.msm_basic.formula_validator import formula_image_metrics
+from sm.engine.msm_basic.segmenter import define_ds_segments, segment_spectra, segment_centroids
 
 logger = logging.getLogger('engine')
 
@@ -20,6 +18,7 @@ logger = logging.getLogger('engine')
 def init_fdr(moldbs, target_adducts):
     """ Randomly select decoy adducts for each moldb and target adduct
     """
+    logger.info('Selecting decoy adducts')
     moldb_fdr_list = []
     for moldb in moldbs:
         fdr = FDR(decoy_sample_size=20, target_adducts=target_adducts)
@@ -32,6 +31,7 @@ def init_fdr(moldbs, target_adducts):
 def collect_ion_formulas(moldb_fdr_list):
     """ Collect all ion formulas that need to be searched for
     """
+    logger.info('Collecting ion formulas')
     ion_formula_map_list = []
     for moldb, fdr in moldb_fdr_list:
         for formula, adduct in fdr.ion_tuples():
@@ -56,6 +56,17 @@ def compute_fdr(fdr, formula_metrics_df, formula_map_df, max_fdr=0.5):
     return moldb_ion_metrics_df
 
 
+def merge_results(results_rdd, formulas_df):
+    logger.info('Merging search results')
+
+    formula_metrics_df = pd.concat(results_rdd.map(lambda t: t[0]).collect())
+    formula_metrics_df = formula_metrics_df.join(formulas_df, how='left')
+    formula_metrics_df = formula_metrics_df.rename({'formula': 'ion_formula'}, axis=1)  # needed for fdr
+
+    formula_images_rdd = results_rdd.flatMap(lambda t: t[1].items())
+    return formula_metrics_df, formula_images_rdd
+
+
 class MSMSearch(object):
 
     def __init__(self, sc, imzml_parser, moldbs, ds_config, ds_data_path):
@@ -73,10 +84,33 @@ class MSMSearch(object):
     def _fetch_formula_centroids(self, ion_formula_map_df):
         """ Generate/load centroids for all ions formulas
         """
+        logger.info('Fetching formula centroids')
         isocalc = IsocalcWrapper(self._isotope_gen_config)
         centroids_gen = CentroidsGenerator(sc=self._sc, isocalc=isocalc)
         ion_formulas = np.unique(ion_formula_map_df.ion_formula.values)
-        return centroids_gen.generate_if_not_exist(formulas=ion_formulas.tolist())
+        formula_centroids = centroids_gen.generate_if_not_exist(formulas=ion_formulas.tolist())
+        logger.debug(f'Formula centroids df size: {formula_centroids.centroids_df().shape}')
+        return formula_centroids
+
+    def process_segments(self, centr_segm_n, func):
+        results_rdd = (self._sc.parallelize(range(centr_segm_n), numSlices=centr_segm_n)
+                       .map(func)
+                       .persist(storageLevel=StorageLevel.MEMORY_AND_DISK))
+        return results_rdd
+
+    @staticmethod
+    def clip_centroids_df(centroids_df, mz_min, mz_max):
+        ds_mz_range_unique_formulas = centroids_df[(mz_min < centroids_df.mz) &
+                                                   (centroids_df.mz < mz_max)].index.unique()
+        centr_df = centroids_df[centroids_df.index.isin(ds_mz_range_unique_formulas)].reset_index().copy()
+        return centr_df
+
+    def select_target_formula_ids(self, formulas_df, ion_formula_map_df):
+        logger.info('Selecting target formula ids')
+        target_formulas_mask = ion_formula_map_df.adduct.isin(self._isotope_gen_config['adducts'])
+        target_formulas = set(ion_formula_map_df[target_formulas_mask].ion_formula.values)
+        target_formula_inds = set(formulas_df[formulas_df.formula.isin(target_formulas)].index)
+        return target_formula_inds
 
     def search(self):
         """ Search, score, and compute FDR for all MolDB formulas
@@ -94,44 +128,39 @@ class MSMSearch(object):
         formula_centroids = self._fetch_formula_centroids(ion_formula_map_df)
         centroids_df = formula_centroids.centroids_df()
         formulas_df = formula_centroids.formulas_df
-        logger.debug(f'formula_centroids_df size: {centroids_df.shape}')
 
-        target_formulas_mask = ion_formula_map_df.adduct.isin(self._isotope_gen_config['adducts'])
-        target_formulas = set(ion_formula_map_df[target_formulas_mask].ion_formula.values)
-        target_formula_inds = set(formulas_df[formulas_df.formula.isin(target_formulas)].index)
+        target_formula_inds = self.select_target_formula_ids(formulas_df, ion_formula_map_df)
 
         coordinates = [coo[:2] for coo in self._imzml_parser.coordinates]
-        mz_segments = define_mz_segments(self._imzml_parser, centroids_df)
+        ds_segm_size_mb = 5
+        ds_segments = define_ds_segments(self._imzml_parser, sample_ratio=0.05, ds_segm_size_mb=ds_segm_size_mb)
 
-        ds_segments_path = self._ds_data_path / 'spectra_segments'
-        segment_spectra(self._imzml_parser, coordinates, mz_segments, ds_segments_path)
+        ds_segments_path = self._ds_data_path / 'ds_segments'
+        segment_spectra(self._imzml_parser, coordinates, ds_segments, ds_segments_path)
 
-        mz_min, mz_max = mz_segments[0, 0], mz_segments[-1, 1]
-        centr_df = (centroids_df[(mz_min < centroids_df.mz) & (centroids_df.mz < mz_max)]
-                    .copy().reset_index())
-        centr_segm_path = self._ds_data_path / 'centr_segments'
-        segment_centroids(centr_df, mz_segments, centr_segm_path)
+        centr_df = self.clip_centroids_df(centroids_df, mz_min=ds_segments[0, 0], mz_max=ds_segments[-1, 1])
 
-        process_segment = create_process_segment(ds_segments_path, centr_segm_path,
-                                                 coordinates, self._image_gen_config, target_formula_inds)
-        segm_n = len(mz_segments)
-        segm_rdd = self._sc.parallelize(range(segm_n), numSlices=segm_n)
+        centr_segments_path = self._ds_data_path / 'centr_segments'
+        ds_size_mb = len(ds_segments) * ds_segm_size_mb
+        data_per_centr_segm_mb = 50
+        peaks_per_centr_segm = 1e4
+        centr_segm_n = int(max(ds_size_mb // data_per_centr_segm_mb,
+                               centr_df.shape[0] // peaks_per_centr_segm,
+                               32))
+        segment_centroids(centr_df, centr_segm_n, centr_segments_path)
+
+        process_centr_segment = create_process_segment(ds_segments, ds_segments_path, centr_segments_path,
+                                                       coordinates, self._image_gen_config, target_formula_inds)
         logger.info('Processing segments...')
-        process_results = segm_rdd.map(process_segment).collect()
+        results_rdd = self.process_segments(centr_segm_n, process_centr_segment)
 
-        formula_metrics_list, formula_images_list = zip(*process_results)
-        formula_metrics_df = pd.concat(formula_metrics_list)
-        formula_images = {}
-        for images in formula_images_list:
-            formula_images.update(images)
-
-        formula_metrics_df = formula_metrics_df.join(formula_centroids.formulas_df, how='left')
-        formula_metrics_df = formula_metrics_df.rename({'formula': 'ion_formula'}, axis=1)
+        formula_metrics_df, formula_images_rdd = merge_results(results_rdd, formula_centroids.formulas_df)
 
         # Compute fdr for each moldb search results
         for moldb, fdr in moldb_fdr_list:
             moldb_formula_map_df = (ion_formula_map_df[ion_formula_map_df.moldb_id == moldb.id]
                                     .drop('moldb_id', axis=1))
             moldb_ion_metrics_df = compute_fdr(fdr, formula_metrics_df, moldb_formula_map_df, max_fdr=0.5)
-            moldb_ion_images = {f_i: formula_images[f_i] for f_i in moldb_ion_metrics_df.index}
-            yield moldb, moldb_ion_metrics_df, moldb_ion_images
+
+            moldb_ion_images_rdd = formula_images_rdd.filter(lambda kv: kv[0] in moldb_ion_metrics_df.index)
+            yield moldb, moldb_ion_metrics_df, moldb_ion_images_rdd
