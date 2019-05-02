@@ -25,41 +25,45 @@ const createDataUrl = (imageData: Uint8ClampedArray, width: number, height: numb
 };
 
 const extractIntensityAndMask = (png: Image, min: number, max: number) => {
-  const {width, height, ctype} = png;
-  const pngBytes = png.data as any as Uint8Array; // The typings are wrong - `data` is always Uint8Array
-  const bytesPerComponent = width <= 8 ? 1 : 2;
+  const {width, height, depth, ctype} = png;
+  const bytesPerComponent = depth <= 8 ? 1 : 2;
   const hasAlpha = ctype === 4 || ctype === 6;
   const numPixels = (width * height);
   const numComponents = (ctype & 2 ? 3 : 1) + (hasAlpha ? 1 : 0);
-  const rangeVal = Number(max - min);
+  const rangeVal = Number(max - min) / (bytesPerComponent === 1 ? 255 : 65535);
   const baseVal = Number(min);
+  // NOTE: pngDataBuffer usually has some trailing padding bytes. TypedArrays should have explicit sizes specified to prevent over-reading
+  const pngDataBuffer = (png.data as any as Uint8Array).buffer; // The typings are wrong
 
   // NOTE: This function is a bit verbose. It's intentionally structured this way so that the JS engine can
-  // statically determine the types of all variables involved in copying, and hopefully generate good machine code.
+  // statically determine the types of all variables involved in copying, and hopefully generate fast machine code.
   const intensityValues = new Float32Array(numPixels);
   const mask = new Uint8ClampedArray(numPixels);
+  const dataView = new DataView(pngDataBuffer, 0, numPixels * numComponents * bytesPerComponent);
   if (bytesPerComponent === 1) {
-    const componentArray = new Uint8Array(pngBytes.buffer);
     for (let i = 0; i < numPixels; i++) {
-      intensityValues[i] = (componentArray[i * numComponents] / 255) * rangeVal + baseVal;
+      const byteOffset = i * numComponents * bytesPerComponent;
+      intensityValues[i] = dataView.getUint8(byteOffset) * rangeVal + baseVal;
     }
     if (hasAlpha) {
       const alphaOffset = numComponents - 1;
       for (let i = 0; i < numPixels; i++) {
-        mask[i] = componentArray[i * numComponents + alphaOffset] < 128 ? 0 : 255;
+        const byteOffset = i * numComponents * bytesPerComponent + alphaOffset;
+        mask[i] = dataView.getUint8(byteOffset) < 128 ? 0 : 255;
       }
     } else {
       mask.fill(255)
     }
   } else {
-    const componentArray = new Uint16Array(pngBytes.buffer);
     for (let i = 0; i < numPixels; i++) {
-      intensityValues[i] = (componentArray[i * numComponents] / 65535) * rangeVal + baseVal;
+      const byteOffset = i * numComponents * bytesPerComponent;
+      intensityValues[i] = dataView.getUint16(byteOffset, false) * rangeVal + baseVal;
     }
     if (hasAlpha) {
-      const alphaOffset = numComponents - 1;
+      const alphaOffset = (numComponents - 1) * bytesPerComponent;
       for (let i = 0; i < numPixels; i++) {
-        mask[i] = componentArray[i * numComponents + alphaOffset] < 32768 ? 0 : 255;
+        const byteOffset = i * numComponents * bytesPerComponent + alphaOffset;
+        mask[i] = dataView.getUint16(byteOffset, false) < 32768 ? 0 : 255;
       }
     } else {
       mask.fill(255)
@@ -86,7 +90,7 @@ const getHotspotThreshold = (intensityValues: Float32Array, mask: Uint8ClampedAr
   // if (scalingFactor < 0.05) {
   //   return maxIntensity;
   // } else {
-    return threshold;
+  return threshold;
   // }
 };
 
