@@ -45,13 +45,12 @@
         @dblclick.native="onDoubleClick"
         @mousedown.native="onImageMouseDown"
         @contextmenu.native="onImageRightMouseDown"
-        imageStyle="overflow: visible"
+        :imageStyle="{overflow: 'visible', transform: annotImageTransformCSS, transformOrigin: '0 0'}"
         :imageFitParams="{areaWidth: naturalWidth || 1, areaHeight: naturalHeight || 1}"
         :max-height=100500
         @wheel.native="onWheel"
         :annot-image-opacity="annotImageOpacity"
         opacity-mode="linear"
-        :transform="annotImageTransformCSS"
         @redraw="onLoad">
     </image-loader>
 
@@ -394,11 +393,11 @@
      },
 
      scaleX() {
-       return this.opticalImageWidth / this.opticalImageNaturalWidth;
+       return this.opticalImageWidth / this.opticalImageNaturalWidth || 1;
      },
 
      scaleY() {
-       return this.opticalImageHeight / this.opticalImageNaturalHeight;
+       return this.opticalImageHeight / this.opticalImageNaturalHeight || 1;
      },
      annotImageTransformCSS() {
        const a = this.transform;
