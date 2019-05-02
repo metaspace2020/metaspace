@@ -49,7 +49,6 @@ class SearchJob(object):
         self.no_clean = no_clean
         self._img_store = img_store
 
-        self._job_id = None
         self._sc = None
         self._db = None
         self._ds = None
@@ -84,7 +83,7 @@ class SearchJob(object):
         """ Store search job metadata in the database """
         logger.info('Storing job metadata')
         rows = [(mol_db_id, self._ds.id, JobStatus.RUNNING, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
-        self._job_id = self._db.insert_return(JOB_INS, rows=rows)[0]
+        return self._db.insert_return(JOB_INS, rows=rows)[0]
 
     @property
     def _ds_imzml_path(self):
@@ -96,16 +95,19 @@ class SearchJob(object):
             logger.info("Running new job ds_id: %s, ds_name: %s, mol dbs: %s",
                         self._ds.id, self._ds.name, moldbs)
 
+            # FIXME: record runtime of dataset not jobs
+            job_ids = (self.store_job_meta(moldb.id) for moldb in moldbs)
+
             logger.info('Parsing imzml')
             imzml_parser = ImzMLParser(self._ds_imzml_path)
+
             search_alg = MSMSearch(sc=self._sc, imzml_parser=imzml_parser, moldbs=moldbs,
                                    ds_config=self._ds.config, ds_data_path=self._ds_data_path)
             search_results_it = search_alg.search()
 
-            for moldb, moldb_ion_metrics_df, moldb_ion_images_rdd in search_results_it:
+            for job_id, (moldb, moldb_ion_metrics_df, moldb_ion_images_rdd) in zip(job_ids, search_results_it):
                 # Save results for each moldb
-                self.store_job_meta(moldb.id)
-                search_results = SearchResults(moldb.id, self._job_id, METRICS.keys())
+                search_results = SearchResults(moldb.id, job_id, METRICS.keys())
                 img_store_type = self._ds.get_ion_img_storage_type(self._db)
                 coordinates = [coo[:2] for coo in imzml_parser.coordinates]
                 sample_area_mask = make_sample_area_mask(coordinates)
@@ -113,7 +115,7 @@ class SearchJob(object):
                                      self._db, self._img_store, img_store_type)
                 self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FINISHED,
                                                               datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                                                              self._job_id))
+                                                              job_id))
 
             if self._sm_config['colocalization'].get('enabled', False):
                 coloc = Colocalization(self._db)
@@ -121,7 +123,7 @@ class SearchJob(object):
         except Exception as e:
             self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FAILED,
                                                           datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                                                          self._job_id))
+                                                          job_ids[0]))
             msg = 'Job failed(ds_id={}, moldbs={}): {}'.format(self._ds.id, moldbs, str(e))
             raise JobFailedError(msg) from e
 
