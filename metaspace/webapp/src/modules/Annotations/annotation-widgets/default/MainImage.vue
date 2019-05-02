@@ -13,6 +13,8 @@
               :width="imageViewerWidth"
               :height="imageViewerHeight"
               :zoom="imageLoaderSettings.imagePosition.zoom * imageFit.imageZoom"
+              :minZoom="imageFit.imageZoom / 2"
+              :maxZoom="imageFit.imageZoom * 10"
               :xOffset="imageLoaderSettings.imagePosition.xOffset"
               :yOffset="imageLoaderSettings.imagePosition.yOffset"
               ref="imageLoader"

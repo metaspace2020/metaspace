@@ -9,6 +9,7 @@
       :zoom="imagePosition.zoom * imageFit.imageZoom"
       :xOffset="imagePosition.xOffset"
       :yOffset="imagePosition.yOffset"
+      :style="imageStyle"
       v-bind="$attrs"
       v-on="$listeners"
     />
@@ -38,10 +39,12 @@
 
     @Prop()
     src!: string | null;
-    @Prop()
+    @Prop({ default: () => ({zoom:1, xOffset: 0, yOffset: 0}) })
     imagePosition!: any;
     @Prop()
     imageFitParams!: any;
+    @Prop()
+    imageStyle!: any;
 
     containerWidth = 500;
     containerHeight = 500;
@@ -83,6 +86,16 @@
         areaWidth: this.containerWidth,
         areaHeight: this.containerHeight,
         ...this.imageFitParams,
+      });
+    }
+
+    @Watch('imageFit')
+    emitRedrawEvent() {
+      this.$emit('redraw', {
+        width: this.imageFit.areaWidth,
+        height: this.imageFit.areaHeight,
+        naturalWidth: this.ionImage ? this.ionImage.width : 0,
+        naturalHeight: this.ionImage ? this.ionImage.height : 0,
       });
     }
   }

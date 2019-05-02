@@ -37,7 +37,6 @@
  import config from '../config';
  import {renderIonImage} from '../lib/ionImageRendering';
  import ScaleBar from './ScaleBar.vue';
- import {pick} from 'lodash-es'
 
 
  export default {
@@ -50,9 +49,16 @@
    props: {
      ionImage: Object,
      isLoading: Boolean,
+     // width & height of HTML element
      width: {type: Number, required: true},
      height: {type: Number, required: true},
+     // zoom factor where 1.0 means 1 ion image pixel per browser pixel
      zoom: {type: Number, required: true},
+     minZoom: {type: Number, default: 0.1},
+     maxZoom: {type: Number, default: 10},
+     // x & y coordinates to offset the center of the image in ion image pixel units. As long as these remain constant
+     // the ion image pixel at the center will stay in the same place regardless of zoom level.
+     // xOffset=0, yOffset=0 will center the ion image.
      xOffset: {type: Number, required: true},
      yOffset: {type: Number, required: true},
      colormap: {
@@ -177,7 +183,7 @@
            left: x + 'px',
            top: y + 'px',
            transform: this.transform,
-           'transform-origin': '0 0'
+           'transform-origin': '0 0',
          };
        } else // LC-MS data (1 x number of time points)
        return {
@@ -190,7 +196,6 @@
        const style = this.imageStyle;
        return Object.assign({}, style, {
          //'opacity': 1.0 - style.opacity,
-         'margin-top': (-this.visibleImageHeight) + 'px',
          'vertical-align': 'top'
        });
      },
@@ -208,25 +213,14 @@
          event.preventDefault();
          const sY = scrollDistance(event);
 
-         const newZoom = Math.max(0.5, this.zoom - this.zoom * sY / 10.0);
+         const newZoom = Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom - this.zoom * sY / 10.0));
          const rect = event.target.getBoundingClientRect();
-         // const ionSpaceMouseX = (event.clientX - (rect.left + rect.right) / 2) / this.zoom + this.xOffset;
-         // const ionSpaceMouseY = (event.clientY - (rect.top + rect.bottom) / 2) / this.zoom + this.yOffset;
-         // const newYOffset = ionSpaceMouseX * newZoom
 
-         const dx = (event.clientX - (rect.left + rect.right) / 2) / this.zoom;
-         const dy = (event.clientY - (rect.top + rect.bottom) / 2) / this.zoom;
-         // const xOffset = this.xOffset + dx * (newZoom / this.zoom - 1);
-         // const yOffset = this.yOffset + dy * (newZoom / this.zoom - 1);
-
-
-         console.log([
-           'zoom', this.zoom, newZoom,
-           'd', dx, dy,
-           'old', this.xOffset, this.yOffset,
-           'new', xOffset, yOffset,
-         ])
-
+         // Adjust the offsets so that the pixel under the mouse stays still while the image expands around it
+         const mouseXOffset = (event.clientX - (rect.left + rect.right) / 2) / this.zoom;
+         const mouseYOffset = (event.clientY - (rect.top + rect.bottom) / 2) / this.zoom;
+         const xOffset = this.xOffset * (this.zoom / newZoom) + mouseXOffset * (this.zoom / newZoom - 1);
+         const yOffset = this.yOffset * (this.zoom / newZoom) + mouseYOffset * (this.zoom / newZoom - 1);
 
          this.$emit('move', {zoom: newZoom, xOffset, yOffset});
        }
@@ -275,7 +269,7 @@
        const xOffset = this.dragXOffset + (event.clientX - this.dragStartX) / this.zoom;
        const yOffset = this.dragYOffset + (event.clientY - this.dragStartY) / this.zoom;
        this.$emit('move', {zoom: this.zoom, xOffset, yOffset});
-     },
+     }
    }
  }
 </script>

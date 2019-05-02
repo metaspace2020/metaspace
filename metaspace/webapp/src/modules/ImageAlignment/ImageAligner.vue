@@ -39,13 +39,14 @@
     </div>
 
     <image-loader
-        :src="massSpecSrc"
+        :src="ionImageSrc"
         ref="annotImage"
         :style="annotImageStyle"
         @dblclick.native="onDoubleClick"
         @mousedown.native="onImageMouseDown"
         @contextmenu.native="onImageRightMouseDown"
-        style="z-index: 5; overflow: visible"
+        imageStyle="overflow: visible"
+        :imageFitParams="{areaWidth: naturalWidth || 1, areaHeight: naturalHeight || 1}"
         :max-height=100500
         @wheel.native="onWheel"
         :annot-image-opacity="annotImageOpacity"
@@ -105,7 +106,7 @@
        // URL of an optical image
        type: String
      },
-     massSpecSrc: {
+     ionImageSrc: {
        // URL of a grayscale image
        type: String
      },
@@ -244,7 +245,11 @@
            };
        }
 
-       this.normalizedTransform = computeTransform(this.originalHandlePositions(), pos);
+       try {
+         this.normalizedTransform = computeTransform(this.originalHandlePositions(), pos);
+       } catch (err) {
+         console.error(err)
+       }
      },
 
      updateRotation(event){

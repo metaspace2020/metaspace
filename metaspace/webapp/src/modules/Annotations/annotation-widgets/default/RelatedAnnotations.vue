@@ -20,7 +20,7 @@
         <image-loader
           :src="other.isotopeImages[0].url"
           class="ion-image"
-          :imageFitParams="{areaMinHeight: 100}"
+          :imageFitParams="{areaMinHeight: 50}"
           v-bind="imageLoaderSettings"
           :colormap="colormap"
         />
