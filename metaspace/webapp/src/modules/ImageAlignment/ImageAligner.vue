@@ -1,9 +1,8 @@
 <template>
   <div class="image-alignment-box"
-        :style="boxStyle"
         @mousemove="onMouseMove">
 
-    <div class="optical-img-container" style="height: calc(100%);" v-loading="!opticalImageNaturalHeight">
+    <div class="optical-img-container" style="border: 1px solid #ddf" v-loading="!opticalImageNaturalHeight">
       <img :src="opticalSrc"
             ref="scan"
             @load="onOpticalImageLoad"
@@ -192,6 +191,8 @@
 
        this.opticalImageWidth = this.$refs.scan.width;
        this.opticalImageHeight = this.$refs.scan.height;
+       this.opticalImageNaturalWidth = this.$refs.scan.naturalWidth;
+       this.opticalImageNaturalHeight = this.$refs.scan.naturalHeight;
      },
 
      onLoad({width, height, naturalWidth, naturalHeight}) {
@@ -423,13 +424,6 @@
          'margin': this.padding + 'px',
          'width': `calc(100% - ${this.padding * 2}px)`
        };
-     },
-
-     boxStyle() {
-       return {
-         height: this.opticalImageHeight + this.padding * 2 + 'px',
-         border: 'solid #ddf 1px'
-       }
      },
 
      svgWidth() {
