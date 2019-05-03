@@ -37,7 +37,7 @@ class JobStatus(object):
     FAILED = 'FAILED'
 
 
-class SearchJob(object):
+class AnnotationJob(object):
     """ Main class responsible for molecule search. Uses the other modules of the engine
 
     Args

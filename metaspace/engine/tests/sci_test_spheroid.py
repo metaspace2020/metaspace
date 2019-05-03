@@ -144,8 +144,8 @@ class SciTester(object):
                                  img_store=img_store)
 
         ds = create_ds_from_files(self.ds_id, self.ds_name, self.input_path)
-        from sm.engine.search_job import SearchJob
-        manager.annotate(ds, search_job_factory=SearchJob, del_first=True)
+        from sm.engine.annotation_job import AnnotationJob
+        manager.annotate(ds, annotation_job_factory=AnnotationJob, del_first=True)
 
     def clear_data_dirs(self):
         with warn_only():
