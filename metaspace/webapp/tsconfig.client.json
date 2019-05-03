@@ -1,5 +1,6 @@
 {
   "extends": "./tsconfig.json",
+  "target": "es5",
 
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,

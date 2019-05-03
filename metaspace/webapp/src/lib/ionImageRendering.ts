@@ -85,6 +85,7 @@ const getHotspotThreshold = (intensityValues: Float32Array, mask: Uint8ClampedAr
                              minIntensity: number, maxIntensity: number, hotspotQuantile: number) => {
   // Extract unmasked values so that the result isn't biased by empty pixels
   const values = [];
+
   for (let i = 0; i < mask.length; i++) {
     if (mask[i] !== 0) {
       values.push(intensityValues[i]);
@@ -94,7 +95,6 @@ const getHotspotThreshold = (intensityValues: Float32Array, mask: Uint8ClampedAr
 
   // Skip hotspot removal if it would have an insignificant effect
   // const scalingFactor = (maxIntensity - threshold) / (maxIntensity - minIntensity);
-  // console.log({minIntensity, maxIntensity, threshold, scalingFactor})
   // if (scalingFactor < 0.05) {
   //   return maxIntensity;
   // } else {

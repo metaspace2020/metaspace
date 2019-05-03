@@ -65,7 +65,7 @@
     "simple-statistics": "^7.0.2",
     "subscriptions-transport-ws": "^0.9.14",
     "ts-loader": "^4.3.0",
-    "upng-js": "^2.1.0",
+    "upng-js": "https://github.com/photopea/UPNG.js.git#f550095",
     "uuid": "^3.0.1",
     "vue": "~2.5.16",
     "vue-analytics": "^5.9.1",

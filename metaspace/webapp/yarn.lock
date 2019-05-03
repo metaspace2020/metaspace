@@ -14409,10 +14409,9 @@ update-diff@^1.0.2, update-diff@^1.1.0:
   resolved "https://registry.yarnpkg.com/update-diff/-/update-diff-1.1.0.tgz#f510182d81ee819fb82c3a6b22b62bbdeda7808f"
   integrity sha1-9RAYLYHugZ+4LDprIrYrve2ngI8=
 
-upng-js@^2.1.0:
+"upng-js@https://github.com/photopea/UPNG.js.git#f550095":
   version "2.1.0"
-  resolved "https://registry.yarnpkg.com/upng-js/-/upng-js-2.1.0.tgz#7176e73973db361ca95d0fa14f958385db6b9dd2"
-  integrity sha512-d3xzZzpMP64YkjP5pr8gNyvBt7dLk/uGI67EctzDuVp4lCZyVMo0aJO6l/VDlgbInJYDY6cnClLoBp29eKWI6g==
+  resolved "https://github.com/photopea/UPNG.js.git#f550095d97f817c05505cda7353e0a0cfa26eb21"
   dependencies:
     pako "^1.0.5"
 
