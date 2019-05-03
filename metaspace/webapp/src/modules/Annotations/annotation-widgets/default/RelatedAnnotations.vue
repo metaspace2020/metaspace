@@ -19,8 +19,7 @@
         {{  other.mz.toFixed(4) }} <br/>
         <image-loader
           :src="other.isotopeImages[0].url"
-          class="ion-image"
-          :imageFitParams="{areaMinHeight: 50}"
+          :imageFitParams="{areaWidth: 260, areaHeight: 250, areaMinHeight: 50}"
           v-bind="imageLoaderSettings"
           :colormap="colormap"
         />
@@ -184,13 +183,6 @@ export default {
   }
   .mol-formula-line {
     line-height: 1em;
-  }
-
-  .ion-image {
-    min-width: 50px;
-    max-width: 260px;
-    min-height: 50px;
-    max-height: 250px;
   }
 
   .ion-link, a.ion-link:link {
