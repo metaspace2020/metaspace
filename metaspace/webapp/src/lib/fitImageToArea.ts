@@ -23,7 +23,7 @@ export interface FitImageToAreaResult {
 }
 
 const clip = (val: number, min?: number | null, max?: number | null) => {
-  return Math.min(Math.max(val, min != null ? min : val), max != null ? max : val);
+  return Math.min(Math.max(val, min != null ? min : -Infinity), max != null ? max : Infinity);
 };
 
 const fitImageToArea = (args: FitImageToAreaArgs): FitImageToAreaResult => {
