@@ -99,7 +99,7 @@ class SearchJob(object):
                             self._ds.id, self._ds.name, moldbs)
 
                 # FIXME: record runtime of dataset not jobs
-                job_ids = (self._store_job_meta(moldb.id) for moldb in moldbs)
+                job_ids = [self._store_job_meta(moldb.id) for moldb in moldbs]
 
                 logger.info('Parsing imzml')
                 imzml_parser = ImzMLParser(self._ds_imzml_path)
