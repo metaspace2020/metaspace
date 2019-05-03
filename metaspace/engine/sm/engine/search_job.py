@@ -79,7 +79,7 @@ class SearchJob(object):
         logger.info('Connecting to the DB')
         self._db = DB(self._sm_config['db'])
 
-    def store_job_meta(self, mol_db_id):
+    def _store_job_meta(self, mol_db_id):
         """ Store search job metadata in the database """
         logger.info('Storing job metadata')
         rows = [(mol_db_id, self._ds.id, JobStatus.RUNNING, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
@@ -90,48 +90,53 @@ class SearchJob(object):
         return next(str(p) for p in Path(self._ds_data_path).iterdir()
                     if str(p).lower().endswith('.imzml'))
 
-    def _run_annotation_jobs(self, moldbs):
-        try:
-            logger.info("Running new job ds_id: %s, ds_name: %s, mol dbs: %s",
-                        self._ds.id, self._ds.name, moldbs)
+    def _run_annotation_jobs(self, moldb_ids):
+        if moldb_ids:
+            try:
+                moldbs = [MolecularDB(id=id, db=self._db, iso_gen_config=self._ds.config['isotope_generation'])
+                          for id in moldb_ids]
+                logger.info("Running new job ds_id: %s, ds_name: %s, mol dbs: %s",
+                            self._ds.id, self._ds.name, moldbs)
 
-            # FIXME: record runtime of dataset not jobs
-            job_ids = (self.store_job_meta(moldb.id) for moldb in moldbs)
+                # FIXME: record runtime of dataset not jobs
+                job_ids = (self._store_job_meta(moldb.id) for moldb in moldbs)
 
-            logger.info('Parsing imzml')
-            imzml_parser = ImzMLParser(self._ds_imzml_path)
+                logger.info('Parsing imzml')
+                imzml_parser = ImzMLParser(self._ds_imzml_path)
 
-            search_alg = MSMSearch(sc=self._sc, imzml_parser=imzml_parser, moldbs=moldbs,
-                                   ds_config=self._ds.config, ds_data_path=self._ds_data_path)
-            search_results_it = search_alg.search()
+                search_alg = MSMSearch(sc=self._sc, imzml_parser=imzml_parser, moldbs=moldbs,
+                                       ds_config=self._ds.config, ds_data_path=self._ds_data_path)
+                search_results_it = search_alg.search()
 
-            for job_id, (moldb, moldb_ion_metrics_df, moldb_ion_images_rdd) in zip(job_ids, search_results_it):
-                # Save results for each moldb
-                search_results = SearchResults(moldb.id, job_id, METRICS.keys())
-                img_store_type = self._ds.get_ion_img_storage_type(self._db)
-                coordinates = [coo[:2] for coo in imzml_parser.coordinates]
-                sample_area_mask = make_sample_area_mask(coordinates)
-                search_results.store(moldb_ion_metrics_df, moldb_ion_images_rdd, sample_area_mask,
-                                     self._db, self._img_store, img_store_type)
-                self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FINISHED,
+                for job_id, (moldb, moldb_ion_metrics_df, moldb_ion_images_rdd) in zip(job_ids, search_results_it):
+                    # Save results for each moldb
+                    search_results = SearchResults(moldb.id, job_id, METRICS.keys())
+                    img_store_type = self._ds.get_ion_img_storage_type(self._db)
+                    coordinates = [coo[:2] for coo in imzml_parser.coordinates]
+                    sample_area_mask = make_sample_area_mask(coordinates)
+                    search_results.store(moldb_ion_metrics_df, moldb_ion_images_rdd, sample_area_mask,
+                                         self._db, self._img_store, img_store_type)
+                    self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FINISHED,
+                                                                  datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                                                  job_id))
+
+                if self._sm_config['colocalization'].get('enabled', False):
+                    coloc = Colocalization(self._db)
+                    coloc.run_coloc_job(self._ds.id)
+            except Exception as e:
+                self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FAILED,
                                                               datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                                                              job_id))
+                                                              job_ids[0]))
+                msg = 'Job failed(ds_id={}, moldbs={}): {}'.format(self._ds.id, moldbs, str(e))
+                raise JobFailedError(msg) from e
 
-            if self._sm_config['colocalization'].get('enabled', False):
-                coloc = Colocalization(self._db)
-                coloc.run_coloc_job(self._ds.id)
-        except Exception as e:
-            self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FAILED,
-                                                          datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                                                          job_ids[0]))
-            msg = 'Job failed(ds_id={}, moldbs={}): {}'.format(self._ds.id, moldbs, str(e))
-            raise JobFailedError(msg) from e
-
-    def _remove_annotation_job(self, mol_db):
-        logger.info("Removing job results ds_id: %s, ds_name: %s, db_name: %s, db_version: %s",
-                    self._ds.id, self._ds.name, mol_db.name, mol_db.version)
-        self._db.alter('DELETE FROM job WHERE ds_id = %s and db_id = %s', params=(self._ds.id, mol_db.id))
-        self._es.delete_ds(self._ds.id, mol_db)
+    def _remove_annotation_jobs(self, moldb_ids):
+        for id in moldb_ids:
+            moldb = MolecularDB(id=id, db=self._db, iso_gen_config=self._ds.config['isotope_generation'])
+            logger.info("Removing job results ds_id: %s, ds_name: %s, db_name: %s, db_version: %s",
+                        self._ds.id, self._ds.name, moldb.name, moldb.version)
+            self._db.alter('DELETE FROM job WHERE ds_id = %s and db_id = %s', params=(self._ds.id, moldb.id))
+            self._es.delete_ds(self._ds.id, moldb)
 
     def _moldb_ids(self):
         completed_moldb_ids = {db_id for (_, db_id) in
@@ -204,16 +209,8 @@ class SearchJob(object):
             logger.info('Dataset config:\n%s', pformat(self._ds.config))
 
             completed_moldb_ids, new_moldb_ids = self._moldb_ids()
-            for moldb_id in completed_moldb_ids - new_moldb_ids:
-                mol_db = MolecularDB(id=moldb_id, db=self._db,
-                                     iso_gen_config=self._ds.config['isotope_generation'])
-                self._remove_annotation_job(mol_db)
-
-            moldbs = [MolecularDB(id=moldb_id, db=self._db,
-                                  iso_gen_config=self._ds.config['isotope_generation'])
-                      for moldb_id in new_moldb_ids - completed_moldb_ids]
-            if moldbs:
-                self._run_annotation_jobs(moldbs)
+            self._remove_annotation_jobs(completed_moldb_ids - new_moldb_ids)
+            self._run_annotation_jobs(new_moldb_ids - completed_moldb_ids)
 
             logger.info("All done!")
             time_spent = time.time() - start
