@@ -6,11 +6,12 @@
        @wheel="onWheel"
        @mousedown.left.prevent="onMouseDown">
 
-    <img :src="ionImageDataUri"
+    <img v-if="ionImage"
+         :src="ionImageDataUri"
          class="isotope-image"
          :style="imageStyle"/>
 
-    <img v-if="opticalSrc"
+    <img v-if="ionImage && opticalSrc"
          :src="opticalImageUrl"
          class="optical-image"
          :style="opticalImageStyle" />
@@ -145,11 +146,7 @@
      },
 
      ionImageDataUri() {
-       if (this.ionImage != null) {
-         return renderIonImage(this.ionImage, this.cmap);
-       } else {
-         return 'data:,';
-       }
+       return this.ionImage && renderIonImage(this.ionImage, this.cmap);
      },
 
      messageOS() {
@@ -169,13 +166,23 @@
      imageStyle() {
        // assume the allocated screen space has width > height
        if (!this.ionImage) {
-         return null;
+         const width = this.width * this.zoom;
+         const height = this.height * this.zoom;
+         const x = this.width / 2 + (this.xOffset - this.width / 2) * this.zoom;
+         const y = this.height / 2 + (this.yOffset - this.height / 2) * this.zoom;
+         return {
+           'width': width + 'px',
+           'height': height + 'px',
+           left: x + 'px',
+           top: y + 'px',
+           transform: this.transform,
+           'transform-origin': '0 0',
+         };
        } else if (!this.isLCMS) {
          const width = this.ionImage.width * this.zoom;
          const height = this.ionImage.height * this.zoom;
          const x = this.width / 2 + (this.xOffset - this.ionImage.width / 2) * this.zoom;
          const y = this.height / 2 + (this.yOffset - this.ionImage.height / 2) * this.zoom;
-         const transform = `translate(${x}px, ${y}px)`;
 
          return {
            'width': width + 'px',
@@ -185,11 +192,13 @@
            transform: this.transform,
            'transform-origin': '0 0',
          };
-       } else // LC-MS data (1 x number of time points)
-       return {
-         width: this.width + 'px',
-         height: this.height + 'px'
-       };
+       } else {
+         // LC-MS data (1 x number of time points)
+         return {
+           width: this.width + 'px',
+           height: this.height + 'px'
+         };
+       }
      },
 
      opticalImageStyle() {

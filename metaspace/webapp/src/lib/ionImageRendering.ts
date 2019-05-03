@@ -12,15 +12,23 @@ export interface IonImage {
   clippedMaxIntensity: number;
 }
 
-const createDataUrl = (imageData: Uint8ClampedArray, width: number, height: number) => {
-  if (imageData.length != width * height * 4) {
-    throw new Error('imageData must be in RGBA format');
+const createDataUrl = (imageBytes: Uint8ClampedArray, width: number, height: number) => {
+  if (imageBytes.length != width * height * 4) {
+    throw new Error('imageBytes must be in RGBA format');
   }
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
-  const ctx = canvas.getContext("2d");
-  ctx!.putImageData(new ImageData(imageData, width, height), 0, 0);
+  const ctx = canvas.getContext("2d")!;
+  let imageData: ImageData;
+  try {
+    imageData = new ImageData(imageBytes, width, height)
+  } catch (ex) {
+    // IE11 doesn't support `new ImageData`, so it gets the slow path
+    imageData = ctx.createImageData(width, height);
+    imageData.data.set(imageBytes);
+  }
+  ctx.putImageData(imageData, 0, 0);
   return canvas.toDataURL();
 };
 

@@ -79,10 +79,9 @@
     }
 
     get imageFit(): FitImageToAreaResult {
-      const {width=500, height=500} = this.ionImage || {};
       return fitImageToArea({
-        imageWidth: width,
-        imageHeight: height,
+        imageWidth: this.ionImage ? this.ionImage.width : this.containerWidth,
+        imageHeight: this.ionImage ? this.ionImage.height : this.containerHeight,
         areaWidth: this.containerWidth,
         areaHeight: this.containerHeight,
         ...this.imageFitParams,

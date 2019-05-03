@@ -3,7 +3,7 @@
         :style="boxStyle"
         @mousemove="onMouseMove">
 
-    <div class="optical-img-container" style="height: calc(100%);">
+    <div class="optical-img-container" style="height: calc(100%);" v-loading="!opticalImageNaturalHeight">
       <img :src="opticalSrc"
             ref="scan"
             @load="onOpticalImageLoad"

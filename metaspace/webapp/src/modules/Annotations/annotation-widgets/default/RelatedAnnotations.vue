@@ -187,7 +187,9 @@ export default {
   }
 
   .ion-image {
+    min-width: 50px;
     max-width: 260px;
+    min-height: 50px;
     max-height: 250px;
   }
 
