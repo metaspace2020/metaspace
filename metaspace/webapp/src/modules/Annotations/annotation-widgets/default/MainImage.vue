@@ -90,6 +90,7 @@ import domtoimage from 'dom-to-image-google-font-issue';
 import {IonImage, loadPngFromUrl, processIonImage} from '../../../../lib/ionImageRendering';
 import {get} from 'lodash-es';
 import fitImageToArea, {FitImageToAreaResult} from '../../../../lib/fitImageToArea';
+import reportError from '../../../../lib/reportError';
 
 
 @Component({
@@ -149,11 +150,19 @@ export default class MainImage extends Vue {
         if (newUrl != null && newUrl !== this.ionImageUrl) {
             this.ionImageUrl = newUrl;
             this.ionImageIsLoading = true;
-            const png = await loadPngFromUrl(newUrl);
-            if (newUrl === this.ionImageUrl) {
-                const {minIntensity, maxIntensity} = isotopeImage;
-                this.ionImage = processIonImage(png, minIntensity, maxIntensity);
-                this.ionImageIsLoading = false;
+            try {
+                const png = await loadPngFromUrl(newUrl);
+                if (newUrl === this.ionImageUrl) {
+                    const { minIntensity, maxIntensity } = isotopeImage;
+                    this.ionImage = processIonImage(png, minIntensity, maxIntensity);
+                    this.ionImageIsLoading = false;
+                }
+            } catch (err) {
+                reportError(err, null);
+                if (newUrl === this.ionImageUrl) {
+                    this.ionImage = null;
+                    this.ionImageIsLoading = false;
+                }
             }
         }
     }
@@ -171,17 +180,13 @@ export default class MainImage extends Vue {
         });
     }
 
-    saveImage(event: any): void {
-      let node = this.$refs.imageLoader.getParent(),
-        {imgWidth, imgHeight} = this.$refs.imageLoader.getScaledImageSize();
-      domtoimage
-        .toBlob(node, {
-          width: Math.min(imgWidth, node.clientWidth),
-          height:  Math.min(imgHeight, node.clientHeight)
-        })
-        .then(blob  => {
-          saveAs(blob, `${this.annotation.id}.png`);
-        })
+    async saveImage() {
+        const node = this.$refs.imageViewerContainer;
+        const blob = await domtoimage.toBlob(node, {
+            width: node.clientWidth,
+            height: node.clientHeight,
+        });
+        saveAs(blob, `${this.annotation.id}.png`);
     }
 
     showBrowserWarning() {

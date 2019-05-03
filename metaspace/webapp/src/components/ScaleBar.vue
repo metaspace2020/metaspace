@@ -1,7 +1,7 @@
 <template>
   <div class="scale-bar">
     <div v-if="xStyle != null" class="scale-bar-x" :style="xStyle">
-      <div class="scale-bar-x-text">{{xParams.text}}</div>
+      <div class="scale-bar-x-text" :class="{'scale-bar-x-text-offset': yStyle != null}">{{xParams.text}}</div>
     </div>
     <div v-if="yStyle != null" class="scale-bar-y" :style="yStyle">
       <div class="scale-bar-y-text">{{yParams.text}}</div>
@@ -124,13 +124,12 @@
   }
 
   .scale-bar-x-text {
-    /*position: absolute;*/
-    /*width: var(--scaleBarTextWidth);*/
-    /*bottom: 10px;*/
-    /*left: 0;*/
-    /*right: 0;*/
-    width: 100%;
+    /*width: 100%;*/
+    margin: 0 -20px;
     text-align: center;
+  }
+  .scale-bar-x-text-offset {
+    padding-left: 10px;
   }
 
   .scale-bar-y {
@@ -143,11 +142,9 @@
 
   .scale-bar-y-text {
     position: absolute;
-    /*width: 100px;*/
-    /*bottom: var(--addedValToOyBar)px;*/
     line-height: 1em;
     top: -0.5em;
     left: 3px;
-    /*right: 0;*/
+    width: 100px;
   }
 </style>

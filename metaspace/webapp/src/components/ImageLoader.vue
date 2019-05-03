@@ -24,6 +24,7 @@
   import IonImageViewer from './IonImageViewer.vue';
   import {IonImage, loadPngFromUrl, processIonImage} from '../lib/ionImageRendering';
   import fitImageToArea, {FitImageToAreaResult} from '../lib/fitImageToArea';
+  import reportError from '../lib/reportError';
 
   @Component({
     inheritAttrs: false,
@@ -69,11 +70,19 @@
 
       if (newUrl != null) {
         this.ionImageIsLoading = true;
-        const png = await loadPngFromUrl((config.imageStorage || '') + newUrl);
+        try {
+          const png = await loadPngFromUrl((config.imageStorage || '') + newUrl);
 
-        if (newUrl === this.src) {
-          this.ionImage = processIonImage(png);
-          this.ionImageIsLoading = false;
+          if (newUrl === this.src) {
+            this.ionImage = processIonImage(png);
+            this.ionImageIsLoading = false;
+          }
+        } catch (err) {
+          reportError(err, null);
+          if (newUrl === this.src) {
+            this.ionImage = null;
+            this.ionImageIsLoading = false;
+          }
         }
       }
     }
