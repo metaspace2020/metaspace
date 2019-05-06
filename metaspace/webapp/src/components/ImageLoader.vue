@@ -6,9 +6,9 @@
       :isLoading="ionImageIsLoading"
       :width="imageFit.areaWidth"
       :height="imageFit.areaHeight"
-      :zoom="imagePosition.zoom * imageFit.imageZoom"
-      :xOffset="imagePosition.xOffset"
-      :yOffset="imagePosition.yOffset"
+      :zoom="zoom"
+      :xOffset="xOffset"
+      :yOffset="yOffset"
       :style="imageStyle"
       v-bind="$attrs"
       v-on="$listeners"
@@ -40,7 +40,7 @@
 
     @Prop()
     src!: string | null;
-    @Prop({ default: () => ({zoom:1, xOffset: 0, yOffset: 0}) })
+    @Prop()
     imagePosition!: any;
     @Prop()
     imageFitParams!: any;
@@ -85,6 +85,16 @@
           }
         }
       }
+    }
+
+    get zoom() {
+      return (this.imagePosition && this.imagePosition.zoom || 1) * this.imageFit.imageZoom;
+    }
+    get xOffset() {
+      return this.imagePosition && this.imagePosition.xOffset || 0;
+    }
+    get yOffset() {
+      return this.imagePosition && this.imagePosition.yOffset || 0;
     }
 
     get imageFit(): FitImageToAreaResult {

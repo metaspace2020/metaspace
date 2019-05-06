@@ -29,3 +29,8 @@ declare module "vue-apollo/types/vue-apollo" {
   export interface ApolloProperty<V> {
   }
 }
+
+declare module "numeric" {
+  const inv: any;
+  export {inv};
+}

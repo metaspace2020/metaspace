@@ -6,17 +6,18 @@
        @wheel="onWheel"
        @mousedown.left.prevent="onMouseDown">
 
-    <img v-if="ionImage"
-         :src="ionImageDataUri"
-         class="isotope-image"
-         :style="imageStyle"/>
+    <div :style="viewBoxStyle">
+      <img v-if="ionImage"
+           :src="ionImageDataUri"
+           class="isotope-image"
+           :style="ionImageStyle"/>
 
-    <img v-if="ionImage && opticalSrc"
-         :src="opticalImageUrl"
-         class="optical-image"
-         :style="opticalImageStyle" />
-
-    <scale-bar v-if="!disableScaleBar"
+      <img v-if="ionImage && opticalSrc"
+           :src="opticalImageUrl"
+           class="optical-image"
+           :style="opticalImageStyle" />
+    </div>
+    <scale-bar v-if="!showScaleBar"
                :xScale="xScale"
                :yScale="yScale"
                :scaleBarColor="scaleBarColor" />
@@ -39,6 +40,12 @@
  import {renderIonImage} from '../lib/ionImageRendering';
  import ScaleBar from './ScaleBar.vue';
 
+
+ const formatMatrix3d = t =>
+   `matrix3d(${t[0][0]}, ${t[1][0]}, 0, ${t[2][0]},
+             ${t[0][1]}, ${t[1][1]}, 0, ${t[2][1]},
+                      0,          0, 1,          0,
+             ${t[0][2]}, ${t[1][2]}, 0, ${t[2][2]})`;
 
  export default {
    directives: {
@@ -78,9 +85,18 @@
        type: String,
        default: 'constant'
      },
-     transform: {
-       type: String,
-       default: ''
+     ionImageTransform: {
+       // 3x3 matrix mapping ion-image pixel coordinates into new ion-image pixel coordinates independent from
+       // zoom/offset props, e.g. This ionImageTransform:
+       // [[1, 0, 5],
+       //  [0, 1, 3],
+       //  [0, 0, 1]]
+       // will mean that the pixel in the viewer that previously showed ion image pixel (10, 10) will now show
+       // pixel (5, 7) because the ion image has moved (+5, +3) from its original position.
+       type: Array,
+     },
+     opticalTransform: {
+       type: Array,
      },
      scrollBlock: {
        type: Boolean,
@@ -94,7 +110,7 @@
        type: Number,
        default: 0
      },
-     disableScaleBar: {
+     showScaleBar: {
        type: Boolean,
        default: false
      },
@@ -163,34 +179,17 @@
        }
      },
 
-     imageStyle() {
-       // assume the allocated screen space has width > height
-       if (!this.ionImage) {
-         const width = this.width * this.zoom;
-         const height = this.height * this.zoom;
-         const x = this.width / 2 + (this.xOffset - this.width / 2) * this.zoom;
-         const y = this.height / 2 + (this.yOffset - this.height / 2) * this.zoom;
+     viewBoxStyle() {
+       if (!this.isLCMS) {
+         const ionImageWidth = (this.ionImage != null ? this.ionImage.width : this.width);
+         const ionImageHeight = (this.ionImage != null ? this.ionImage.height : this.height);
+         const x = this.width / 2 + (this.xOffset - ionImageWidth / 2) * this.zoom;
+         const y = this.height / 2 + (this.yOffset - ionImageHeight / 2) * this.zoom;
          return {
-           'width': width + 'px',
-           'height': height + 'px',
-           left: x + 'px',
-           top: y + 'px',
-           transform: this.transform,
-           'transform-origin': '0 0',
-         };
-       } else if (!this.isLCMS) {
-         const width = this.ionImage.width * this.zoom;
-         const height = this.ionImage.height * this.zoom;
-         const x = this.width / 2 + (this.xOffset - this.ionImage.width / 2) * this.zoom;
-         const y = this.height / 2 + (this.yOffset - this.ionImage.height / 2) * this.zoom;
-
-         return {
-           'width': width + 'px',
-           'height': height + 'px',
-           left: x + 'px',
-           top: y + 'px',
-           transform: this.transform,
-           'transform-origin': '0 0',
+           left: 0,
+           top: 0,
+           transformOrigin: '0 0',
+           transform: `translate(${x}px, ${y}px) scale(${this.zoom})`,
          };
        } else {
          // LC-MS data (1 x number of time points)
@@ -199,14 +198,19 @@
            height: this.height + 'px'
          };
        }
+
+     },
+
+     ionImageStyle() {
+       return {
+         transform: (this.ionImageTransform ? formatMatrix3d(this.ionImageTransform) : ''),
+       };
      },
 
      opticalImageStyle() {
-       const style = this.imageStyle;
-       return Object.assign({}, style, {
-         //'opacity': 1.0 - style.opacity,
-         'vertical-align': 'top'
-       });
+       return {
+         transform: (this.opticalTransform ? formatMatrix3d(this.opticalTransform) : ''),
+       };
      },
 
      opticalImageUrl() {
@@ -287,7 +291,10 @@
  /* No attribute exists for MS Edge at the moment, so ion images are antialiased there */
  .isotope-image {
    position: absolute;
-   z-index: 2;
+   z-index: 1;
+   left: 0;
+   top: 0;
+   transform-origin: 0 0;
    image-rendering: pixelated;
    image-rendering: -moz-crisp-edges;
    -ms-interpolation-mode: nearest-neighbor;
@@ -296,7 +303,10 @@
 
  .optical-image {
    position: absolute;
-   z-index: 1;
+   z-index: -1;
+   left: 0;
+   top: 0;
+   transform-origin: 0 0;
  }
 
  .image-loader {

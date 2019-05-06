@@ -4,9 +4,9 @@
  import { annotationQuery } from '../../api/annotation';
  import {
   datasetVisibilityQuery,
-   DatasetVisibilityResult,
+  DatasetVisibilityResult,
   msAcqGeometryQuery,
-  opticalImageQuery,
+  opticalImageQuery, RawOpticalImageQuery, rawOpticalImageQuery,
 } from '../../api/dataset';
  import { encodeParams } from '../Filters/index';
  import annotationWidgets from './annotation-widgets/index'
@@ -20,6 +20,7 @@
  import {ANNOTATION_SPECIFIC_FILTERS} from '../Filters/filterSpecs';
  import config from '../../config';
  import noImageURL from '../../assets/no-image.svg';
+ import {inv} from 'numeric';
 
  type colorObjType = {
    code: string,
@@ -34,9 +35,12 @@
 
  type ImageSettings = {
    annotImageOpacity: number
-   opticalSrc: string
+   opticalImageUrl: string | null
    opacityMode: 'linear' | 'constant'
    imagePosition: ImagePosition
+   showOpticalImage: boolean
+   opticalSrc: string | null
+   opticalTransform: number[][] | null
  }
 
  const metadataDependentComponents: any = {};
@@ -50,7 +54,7 @@
    }
  }
 
- @Component({
+ @Component<AnnotationView>({
    name: 'annotation-view',
    components: componentsToRegister,
    apollo: {
@@ -69,28 +73,28 @@
            return null;
          }
        },
-       variables(this: any): any {
+       variables(): any {
          return {
            id: this.annotation.id
          };
        }
      },
 
-     opticalImageUrl: {
-       query: opticalImageQuery,
-       variables(this: any): any {
+     opticalImage: {
+       query: rawOpticalImageQuery,
+       variables(): any {
          return {
-           datasetId: this.annotation.dataset.id,
-           zoom: this.imagePosition.zoom
+           ds_id: this.annotation.dataset.id
+           // datasetId: this.annotation.dataset.id,
+           // zoom: this.imagePosition.zoom
          }
        },
-       // assumes both image server and webapp are routed via nginx
-       update: (data: any) => data.opticalImageUrl
+       update: (data: any) => data.rawOpticalImage
      },
 
      msAcqGeometry: {
        query: msAcqGeometryQuery,
-       variables(this: any): any {
+       variables(): any {
          return {
           datasetId: this.annotation.dataset.id
          }
@@ -118,8 +122,8 @@
 
    msAcqGeometry: any
    peakChartData: any
-   opticalImageUrl?: string
-   disableScaleBar: boolean = false
+   opticalImage!: RawOpticalImageQuery | null;
+   showScaleBar: boolean = false
    datasetVisibility: DatasetVisibilityResult | null = null
    currentUser: CurrentUserRoleResult | null = null
    scaleBarColor: string = '#000000'
@@ -160,7 +164,7 @@
    }
 
    get imageOpacityMode(): 'linear' | 'constant' {
-     return (this.showOpticalImage && this.opticalImageUrl) ? 'linear' : 'constant';
+     return (this.showOpticalImage && this.opticalImage != null) ? 'linear' : 'constant';
    }
 
    get permalinkHref(): Location {
@@ -183,15 +187,21 @@
    }
 
    get imageLoaderSettings(): ImageSettings {
-     return Object.assign({}, {
-       annotImageOpacity: (this.showOpticalImage && this.opticalImageUrl) ? this.opacity : 1.0,
-       opticalSrc: this.showOpticalImage && this.opticalImageUrl != null ? this.opticalImageUrl : '',
-       opticalImageUrl: this.opticalImageUrl,
+     let opticalTransform = null;
+     if (this.showOpticalImage && this.opticalImage) {
+       try {
+         opticalTransform = inv(this.opticalImage.transform);
+       } catch (ex) {}
+     }
+     return {
+       annotImageOpacity: (this.showOpticalImage && this.opticalImage) ? this.opacity : 1.0,
+       opticalImageUrl: this.opticalImage && this.opticalImage.url,
        opacityMode: this.imageOpacityMode,
        showOpticalImage: this.showOpticalImage,
-       disableScaleBar: this.disableScaleBar,
        imagePosition: this.imagePosition,
-     });
+       opticalSrc: this.showOpticalImage && this.opticalImage ? this.opticalImage.url : null,
+       opticalTransform,
+     };
    }
 
    get visibilityText() {
@@ -289,7 +299,7 @@
    }
 
    toggleScaleBar(): void {
-     this.disableScaleBar = !this.disableScaleBar
+     this.showScaleBar = !this.showScaleBar
    }
 
    loadVisibility() {

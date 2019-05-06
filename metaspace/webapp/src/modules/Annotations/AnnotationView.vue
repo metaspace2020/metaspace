@@ -65,7 +65,7 @@
                      :acquisitionGeometry="msAcqGeometry"
                      :pixelSizeX="pixelSizeX"
                      :pixelSizeY="pixelSizeY"
-                     :disableScaleBar="disableScaleBar"
+                     :showScaleBar="showScaleBar"
                      :scaleBarColor="scaleBarColor"
                      @opacityInput="newVal => opacity = newVal">
           </component>

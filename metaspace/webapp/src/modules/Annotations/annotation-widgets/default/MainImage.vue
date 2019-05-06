@@ -8,7 +8,7 @@
               :colormap="colormap"
               :pixelSizeX="pixelSizeX"
               :pixelSizeY="pixelSizeY"
-              :disableScaleBar="disableScaleBar"
+              :showScaleBar="showScaleBar"
               :scaleBarColor="scaleBarColor"
               :width="imageViewerWidth"
               :height="imageViewerHeight"
@@ -91,6 +91,7 @@ import {IonImage, loadPngFromUrl, processIonImage} from '../../../../lib/ionImag
 import {get} from 'lodash-es';
 import fitImageToArea, {FitImageToAreaResult} from '../../../../lib/fitImageToArea';
 import reportError from '../../../../lib/reportError';
+import {inv} from 'numeric';
 
 
 @Component({
@@ -123,7 +124,7 @@ export default class MainImage extends Vue {
     @Prop({type: Number})
     pixelSizeY!: Number
     @Prop({type: Boolean})
-    disableScaleBar!: Boolean
+    showScaleBar!: Boolean
     @Prop({type: String})
     scaleBarColor!: String
 

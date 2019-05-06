@@ -122,6 +122,10 @@ export const rawOpticalImageQuery =
       transform
     }
   }`;
+export interface RawOpticalImageQuery {
+  url: string;
+  transform: number[][];
+}
 
 export const thumbnailOptImageQuery =
     gql`query ($datasetId: String!) {
