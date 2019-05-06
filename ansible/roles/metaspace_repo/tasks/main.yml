@@ -57,14 +57,6 @@
         - --exclude='.*'
         - --exclude=aws/env/*
         - --exclude=aws/files/*
-    - src: "{{ sm_home }}/"
-      dest: "{{ sm_home }}/"
-      rsync_opts:
-        - --exclude=.*
-        - --exclude=conf/*
-        - --exclude=logs/*
-        - --exclude=docker/*
-        - --exclude=docs/*
     - src: "{{ sm_graphql_home }}/"
       dest: "{{ sm_graphql_home }}/"
       rsync_opts:
@@ -73,7 +65,24 @@
         - --exclude='dist/*'
         - --exclude='node_modules/*'
         - --exclude='.*'
+  tags: ['web']
 
+- name: Upload local engine files
+  synchronize:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    rsync_opts: "{{ item.rsync_opts }}"
+  when: local_deploy is defined
+  with_items:
+    - src: "{{ sm_home }}/"
+      dest: "{{ sm_home }}/"
+      rsync_opts:
+        - --exclude=.*
+        - --exclude=conf/*
+        - --exclude=logs/*.json
+        - --exclude=docker/*
+        - --exclude=docs/*
+  tags: [master, slave, web]
 
 #    - src: "{{ sm_webapp_home }}/"
 #      dest: "{{ sm_webapp_home }}/"

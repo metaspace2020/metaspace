@@ -18,7 +18,6 @@ from sm.engine.util import SMConfig
 from sm.engine.queue import QueuePublisher
 from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.db import DB
-from sm.engine.work_dir import WorkDirManager
 
 
 class SMDaemonManager(object):
@@ -60,7 +59,7 @@ class SMDaemonManager(object):
             self.logger.error(e)
         return link
 
-    def annotate(self, ds, search_job_factory=None, del_first=False, **kwargs):
+    def annotate(self, ds, annotation_job_factory=None, del_first=False, **kwargs):
         """ Run an annotation job for the dataset. If del_first provided, delete first
         """
         if del_first:
@@ -68,8 +67,8 @@ class SMDaemonManager(object):
             self._del_iso_images(ds)
             self._db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
         ds.save(self._db, self.es)
-        search_job_factory(img_store=self._img_store,
-                           sm_config=self._sm_config, **kwargs).run(ds)
+        annotation_job_factory(img_store=self._img_store,
+                               sm_config=self._sm_config, **kwargs).run(ds)
         Colocalization(self._db).run_coloc_job(ds.id)
         generate_ion_thumbnail(db=self._db,
                                img_store=self._img_store,
@@ -118,10 +117,6 @@ class SMDaemonManager(object):
         # TODO: move deletion of optical images here for consistency - it's currently in SMapiDatasetManager
         self.es.delete_ds(ds.id)
         self._db.alter('DELETE FROM dataset WHERE id=%s', params=(ds.id,))
-        if del_raw_data:
-            self.logger.warning('Deleting raw data: {}'.format(ds.input_path))
-            wd_man = WorkDirManager(ds.id)
-            wd_man.del_input_data(ds.input_path)
 
     def _send_email(self, email, subj, body):
         try:
@@ -223,9 +218,9 @@ class SMAnnotateDaemon(object):
         self.logger.info(f" SM annotate daemon received a message: {msg}")
         self._manager.post_to_slack('new', " [v] New annotation message: {}".format(json.dumps(msg)))
 
-        from sm.engine.search_job import SearchJob
+        from sm.engine.annotation_job import AnnotationJob
         self._manager.annotate(ds=ds,
-                               search_job_factory=SearchJob,
+                               annotation_job_factory=AnnotationJob,
                                del_first=msg.get('del_first', False))
 
         upd_msg = {

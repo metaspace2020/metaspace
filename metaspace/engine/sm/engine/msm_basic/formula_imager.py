@@ -1,6 +1,8 @@
 import logging
+from pathlib import Path
 import numpy as np
 import pandas as pd
+from pyspark.files import SparkFiles
 from scipy.sparse import coo_matrix
 
 from sm.engine.msm_basic.formula_validator import make_compute_image_metrics, formula_image_metrics
@@ -77,7 +79,8 @@ def choose_ds_segments(ds_segments, centr_df, ppm):
     return first_ds_segm_i, last_ds_segm_i
 
 
-def read_ds_segment(path):
+def read_ds_segment(segm_i):
+    path = get_file_path(f'ds_segm_{segm_i:04}.msgpack')
     data = pd.read_msgpack(path)
     if type(data) == list:
         sp_arr = np.concatenate(data)
@@ -86,37 +89,41 @@ def read_ds_segment(path):
     return sp_arr
 
 
-def read_ds_segments(ds_segments_path, first_segm_i, last_segm_i):
-    sp_arr = [read_ds_segment(ds_segments_path / f'{ds_segm_i:04}.msgpack')
+def read_ds_segments(first_segm_i, last_segm_i):
+    sp_arr = [read_ds_segment(ds_segm_i)
               for ds_segm_i in range(first_segm_i, last_segm_i + 1)]
     sp_arr = [a for a in sp_arr if a.shape[0] > 0]
     if len(sp_arr) > 0:
         sp_arr = np.concatenate(sp_arr)
-        sp_arr = sp_arr[sp_arr[:, 1].argsort()]  # assumes mz in column 1
+        sp_arr = sp_arr[sp_arr[:, 1].argsort()]  # assume mz in column 1
     else:
         sp_arr = np.empty((0, 3))
     return sp_arr
 
 
-def create_process_segment(ds_segments, ds_segments_path, centr_segments_path,
-                           coordinates, image_gen_config, target_formula_inds):
+def get_file_path(name):
+    return Path(SparkFiles.get(name))
+
+
+def create_process_segment(ds_segments, coordinates, image_gen_config, target_formula_inds):
     sample_area_mask = make_sample_area_mask(coordinates)
     nrows, ncols = ds_dims(coordinates)
     compute_metrics = make_compute_image_metrics(sample_area_mask, nrows, ncols, image_gen_config)
     ppm = image_gen_config['ppm']
 
     def process_centr_segment(segm_i):
-        centr_segm_path = centr_segments_path / f'{segm_i:04}.msgpack'
+        centr_segm_path = get_file_path(f'centr_segm_{segm_i:04}.msgpack')
+
         formula_metrics_df, formula_images = pd.DataFrame(), {}
         if centr_segm_path.exists():
-            logger.info(f'Reading centroid segment {segm_i} data from {centr_segm_path}')
+            logger.info(f'Reading centroids segment {segm_i} data from {centr_segm_path}')
 
             centr_df = pd.read_msgpack(centr_segm_path)
             first_ds_segm_i, last_ds_segm_i = choose_ds_segments(ds_segments, centr_df, ppm)
 
-            logger.info(f'Reading spectra segments {first_ds_segm_i}-{last_ds_segm_i} from {ds_segments_path}')
+            logger.info(f'Reading dataset segments {first_ds_segm_i}-{last_ds_segm_i}')
 
-            sp_arr = read_ds_segments(ds_segments_path, first_ds_segm_i, last_ds_segm_i)
+            sp_arr = read_ds_segments(first_ds_segm_i, last_ds_segm_i)
 
             formula_images_it = gen_iso_images(sp_inds=sp_arr[:,0], sp_mzs=sp_arr[:,1], sp_ints=sp_arr[:,2],
                                                centr_df=centr_df,
@@ -125,6 +132,9 @@ def create_process_segment(ds_segments, ds_segments_path, centr_segments_path,
                                                                        compute_metrics,
                                                                        target_formula_inds)
             logger.info(f'Segment {segm_i} finished')
+        else:
+            logger.warning(f'Centroids segment path not found {centr_segm_path}')
+
         return formula_metrics_df, formula_images
 
     return process_centr_segment

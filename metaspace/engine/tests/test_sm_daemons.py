@@ -20,7 +20,7 @@ from sm.engine.es_export import ESExporter
 from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.acq_geometry_factory import ACQ_GEOMETRY_KEYS
 from sm.engine.msm_basic.msm_basic_search import compute_fdr
-from sm.engine.search_job import JobStatus
+from sm.engine.annotation_job import JobStatus
 from sm.engine.tests.util import (
     test_db,
     init_loggers,
@@ -128,7 +128,7 @@ def run_daemons(db, es):
        return_value=Image.new('RGBA', (10, 10)))
 @patch('sm.engine.off_sample_wrapper.call_api',
        return_value={'predictions': {'label': 'off', 'prob': 0.99}})
-@patch('sm.engine.search_job.MSMSearch')
+@patch('sm.engine.annotation_job.MSMSearch')
 def test_sm_daemons(MSMSearchMock,
                     call_off_sample_api_mock,
                     get_image_by_id_mock,
@@ -257,7 +257,7 @@ def test_sm_daemons(MSMSearchMock,
 
 @patch('sm.engine.mol_db.MolDBServiceWrapper')
 @patch('sm.engine.search_results.post_images_to_image_store')
-@patch('sm.engine.search_job.MSMSearch')
+@patch('sm.engine.annotation_job.MSMSearch')
 def test_sm_daemons_annot_fails(MSMSearchMock,
                                 post_images_to_annot_service_mock,
                                 MolDBServiceWrapperMock,
@@ -318,7 +318,7 @@ def test_sm_daemons_annot_fails(MSMSearchMock,
 
 @patch('sm.engine.mol_db.MolDBServiceWrapper')
 @patch('sm.engine.search_results.post_images_to_image_store')
-@patch('sm.engine.search_job.MSMSearch')
+@patch('sm.engine.annotation_job.MSMSearch')
 def test_sm_daemon_es_export_fails(MSMSearchMock,
                                    post_images_to_annot_service_mock,
                                    MolDBServiceWrapperMock,

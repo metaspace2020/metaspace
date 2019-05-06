@@ -11,7 +11,7 @@ from sm.engine.es_export import ESExporter
 from sm.engine.sm_daemons import SMDaemonManager
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import SMConfig, init_loggers, create_ds_from_files
-from sm.engine.search_job import SearchJob
+from sm.engine.annotation_job import AnnotationJob
 
 
 if __name__ == "__main__":
@@ -35,7 +35,7 @@ if __name__ == "__main__":
 
     try:
         ds = create_ds_from_files(args.ds_id, args.ds_name, args.input_path)
-        manager.annotate(ds, SearchJob, del_first=True, no_clean=args.no_clean)
+        manager.annotate(ds, AnnotationJob, del_first=True, no_clean=args.no_clean)
     except Exception as e:
         logging.getLogger('engine').error(e, exc_info=True)
         sys.exit(1)
