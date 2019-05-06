@@ -1,19 +1,29 @@
 <template>
 <div class="main-ion-image-container">
     <div class="main-ion-image-container-row1">
-        <image-loader :src="annotation.isotopeImages[0].url"
-                      :colormap="colormap"
-                      :pixelSizeX="pixelSizeX"
-                      :pixelSizeY="pixelSizeY"
-                      :disableScaleBar="disableScaleBar"
-                      :scaleBarColor="scaleBarColor"
-                      ref="imageLoader"
-                      scrollBlock
-                      class="image-loader"
-                      v-bind="imageLoaderSettings"
-                      @zoom="onImageZoom"
-                      @move="onImageMove">
-        </image-loader>
+        <div class="image-viewer-container" ref="imageViewerContainer" v-resize="onResize">
+            <ion-image-viewer
+              :ionImage="ionImage"
+              :isLoading="ionImageIsLoading"
+              :colormap="colormap"
+              :pixelSizeX="pixelSizeX"
+              :pixelSizeY="pixelSizeY"
+              :disableScaleBar="disableScaleBar"
+              :scaleBarColor="scaleBarColor"
+              :width="imageViewerWidth"
+              :height="imageViewerHeight"
+              :zoom="imageLoaderSettings.imagePosition.zoom * imageFit.imageZoom"
+              :minZoom="imageFit.imageZoom / 2"
+              :maxZoom="imageFit.imageZoom * 10"
+              :xOffset="imageLoaderSettings.imagePosition.xOffset"
+              :yOffset="imageLoaderSettings.imagePosition.yOffset"
+              ref="imageLoader"
+              scrollBlock
+              class="image-loader"
+              v-bind="imageLoaderSettings"
+              @move="handleImageMove"
+            />
+        </div>
 
         <div class="colorbar-container">
             <div v-if="imageLoaderSettings.opticalImageUrl">
@@ -30,12 +40,25 @@
                 </el-slider>
             </div>
 
-            {{ annotation.isotopeImages[0].maxIntensity.toExponential(2) }}
+            <el-tooltip v-if="ionImage && ionImage.maxIntensity !== ionImage.clippedMaxIntensity" placement="left">
+                <div>
+                    <div style="color: red">{{ ionImage.clippedMaxIntensity.toExponential(2) }}</div>
+                </div>
+                <div slot="content">
+                    Hot-spot removal has been applied to this image. <br/>
+                    Pixel intensities above the 99th percentile, {{ ionImage.clippedMaxIntensity.toExponential(2) }},
+                    have been reduced to {{ ionImage.clippedMaxIntensity.toExponential(2) }}. <br/>
+                    The highest intensity before hot-spot removal was {{ ionImage.maxIntensity.toExponential(2) }}.
+                </div>
+            </el-tooltip>
+            <div v-else>
+                {{ ionImage && ionImage.maxIntensity.toExponential(2) }}
+            </div>
             <colorbar style="width: 20px; height: 160px; align-self: center;"
                       :direction="colorbarDirection" :map="colormapName"
                       slot="reference">
             </colorbar>
-            {{ annotation.isotopeImages[0].minIntensity.toExponential(2) }}
+            {{ ionImage && ionImage.minIntensity.toExponential(2) }}
 
             <div class="annot-view__image-download">
                 <!-- see https://github.com/tsayen/dom-to-image/issues/155 -->
@@ -58,17 +81,26 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { Component, Prop } from 'vue-property-decorator';
+import resize from 'vue-resize-directive';
+import {Component, Prop, Watch} from 'vue-property-decorator';
 import { saveAs } from 'file-saver';
 import Colorbar from './Colorbar.vue';
-import ImageLoader from '../../../../components/ImageLoader.vue';
+import IonImageViewer from '../../../../components/IonImageViewer.vue';
 import domtoimage from 'dom-to-image-google-font-issue';
+import {IonImage, loadPngFromUrl, processIonImage} from '../../../../lib/ionImageRendering';
+import {get} from 'lodash-es';
+import fitImageToArea, {FitImageToAreaResult} from '../../../../lib/fitImageToArea';
+import reportError from '../../../../lib/reportError';
+
 
 @Component({
     name: 'main-image',
+    directives: {
+        resize
+    },
     components: {
-        ImageLoader,
-        Colorbar
+        IonImageViewer,
+        Colorbar,
     }
 })
 export default class MainImage extends Vue {
@@ -86,8 +118,6 @@ export default class MainImage extends Vue {
     imageLoaderSettings!: any
     @Prop({required: true, type: Function})
     onImageMove!: Function
-    @Prop({required: true, type: Function})
-    onImageZoom!: Function
     @Prop({type: Number})
     pixelSizeX!: Number
     @Prop({type: Number})
@@ -97,21 +127,66 @@ export default class MainImage extends Vue {
     @Prop({type: String})
     scaleBarColor!: String
 
+    ionImageUrl: string | null = null;
+    ionImage: IonImage | null = null;
+    ionImageIsLoading = false;
+    imageViewerWidth: number = 500;
+    imageViewerHeight: number = 500; // constant
+
+    created() {
+        const ignoredPromise = this.updateIonImage();
+    }
+    mounted() {
+        this.imageViewerWidth = this.$refs.imageViewerContainer.clientWidth;
+    }
+    onResize() {
+        this.imageViewerWidth = this.$refs.imageViewerContainer.clientWidth;
+    }
+
+    @Watch('annotation')
+    async updateIonImage() {
+        const isotopeImage = get(this.annotation, 'isotopeImages[0]');
+        const newUrl = isotopeImage != null ? isotopeImage.url : null;
+        if (newUrl != null && newUrl !== this.ionImageUrl) {
+            this.ionImageUrl = newUrl;
+            this.ionImageIsLoading = true;
+            try {
+                const png = await loadPngFromUrl(newUrl);
+                if (newUrl === this.ionImageUrl) {
+                    const { minIntensity, maxIntensity } = isotopeImage;
+                    this.ionImage = processIonImage(png, minIntensity, maxIntensity);
+                    this.ionImageIsLoading = false;
+                }
+            } catch (err) {
+                reportError(err, null);
+                if (newUrl === this.ionImageUrl) {
+                    this.ionImage = null;
+                    this.ionImageIsLoading = false;
+                }
+            }
+        }
+    }
+
     get colorbarDirection(): string {
       return this.colormap[0] == '-' ? 'bottom' : 'top';
     }
+    get imageFit(): FitImageToAreaResult {
+        const {width=500, height=500} = this.ionImage || {};
+        return fitImageToArea({
+            imageWidth: width,
+            imageHeight: height,
+            areaWidth: this.imageViewerWidth,
+            areaHeight: this.imageViewerHeight,
+        });
+    }
 
-    saveImage(event: any): void {
-      let node = this.$refs.imageLoader.getParent(),
-        {imgWidth, imgHeight} = this.$refs.imageLoader.getScaledImageSize();
-      domtoimage
-        .toBlob(node, {
-          width: imgWidth >= node.clientWidth ? node.clientWidth : imgWidth,
-          height:  imgHeight >= node.clientHeight ? node.clientHeight : imgHeight
-        })
-        .then(blob  => {
-          saveAs(blob, `${this.annotation.id}.png`);
-        })
+    async saveImage() {
+        const node = this.$refs.imageViewerContainer;
+        const blob = await domtoimage.toBlob(node, {
+            width: node.clientWidth,
+            height: node.clientHeight,
+        });
+        saveAs(blob, `${this.annotation.id}.png`);
     }
 
     showBrowserWarning() {
@@ -121,13 +196,21 @@ export default class MainImage extends Vue {
       'settings or show the optical image.');
     }
 
-  get browserSupportsDomToImage(): boolean {
+    get browserSupportsDomToImage(): boolean {
       return window.navigator.userAgent.includes('Chrome') ||
           window.navigator.userAgent.includes('Firefox');
     }
 
     onOpacityInput(val: number): void {
       this.$emit('opacityInput', val);
+    }
+
+    handleImageMove({zoom, xOffset, yOffset}: any) {
+        this.onImageMove({
+            zoom: zoom / this.imageFit.imageZoom,
+            xOffset,
+            yOffset,
+        });
     }
 }
 </script>
@@ -144,8 +227,15 @@ export default class MainImage extends Vue {
     justify-content: center;
 }
 
+.image-viewer-container {
+    flex: 1 1 auto;
+    max-width: 100%;
+    overflow: hidden;
+}
+
 .colorbar-container {
     display: flex;
+    flex:none;
     flex-direction: column;
     justify-content: flex-end;
     padding-left: 10px;

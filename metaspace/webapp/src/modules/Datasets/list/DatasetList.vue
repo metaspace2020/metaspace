@@ -69,7 +69,11 @@
 
   .allow-double-column {
     >.dataset-item {
-      flex-basis: calc(50% - 6px);
+      width: calc(50% - 8px);
+      // NOTE: In IE11, box-sizing:border-box is ignored in flex-basis calculations, so it's reverted to the
+      // default value here. Single-column
+      //
+      /*box-sizing: content-box;*/
     }
   }
 

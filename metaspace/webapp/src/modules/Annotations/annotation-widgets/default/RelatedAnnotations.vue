@@ -17,12 +17,12 @@
         </el-popover>
         <br/>
         {{  other.mz.toFixed(4) }} <br/>
-        <image-loader :src="other.isotopeImages[0].url"
-              v-bind="imageLoaderSettings"
-              :colormap="colormap"
-              :max-height=250
-              style="overflow: hidden">
-        </image-loader>
+        <image-loader
+          :src="other.isotopeImages[0].url"
+          :imageFitParams="{areaWidth: 260, areaHeight: 250, areaMinHeight: 50}"
+          v-bind="imageLoaderSettings"
+          :colormap="colormap"
+        />
         <el-popover
           trigger="hover"
           class="rel-annot-details"

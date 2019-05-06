@@ -16,6 +16,12 @@ declare module "plotly.js/src/components/colorscale/extract_scale.js"
 
 declare module "vue-slide-up-down";
 
+declare module "vue-resize-directive" {
+  import {DirectiveFunction, DirectiveOptions} from 'vue';
+  const resize: DirectiveFunction | DirectiveOptions;
+  export default resize;
+}
+
 declare module "vue-apollo/types/vue-apollo" {
   import { ApolloProperty } from 'vue-apollo/types/vue-apollo';
   import { ApolloClient } from 'apollo-client';

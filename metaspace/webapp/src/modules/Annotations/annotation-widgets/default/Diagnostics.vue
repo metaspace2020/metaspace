@@ -28,7 +28,7 @@
             {{ img.mz.toFixed(4) }}<br/>
                 <image-loader :src="img.url"
                               :colormap="colormap"
-                              :max-height=250
+                              :imageFitParams="{areaMinHeight: 50, areaHeight: 250}"
                               v-bind="imageLoaderSettings"
                               v-if="img.url !== null"
                               style="overflow: hidden"

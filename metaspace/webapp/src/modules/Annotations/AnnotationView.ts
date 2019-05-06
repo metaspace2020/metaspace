@@ -36,9 +36,8 @@
    annotImageOpacity: number
    opticalSrc: string
    opacityMode: 'linear' | 'constant'
+   imagePosition: ImagePosition
  }
-
- type ImageLoaderSettings = ImagePosition & ImageSettings;
 
  const metadataDependentComponents: any = {};
  const componentsToRegister: any = { DatasetInfo, ColocalizationSettings };
@@ -82,7 +81,7 @@
        variables(this: any): any {
          return {
            datasetId: this.annotation.dataset.id,
-           zoom: this.imageLoaderSettings.zoom
+           zoom: this.imagePosition.zoom
          }
        },
        // assumes both image server and webapp are routed via nginx
@@ -183,14 +182,15 @@
      };
    }
 
-   get imageLoaderSettings(): ImageLoaderSettings {
-     return Object.assign({}, this.imagePosition, {
+   get imageLoaderSettings(): ImageSettings {
+     return Object.assign({}, {
        annotImageOpacity: (this.showOpticalImage && this.opticalImageUrl) ? this.opacity : 1.0,
        opticalSrc: this.showOpticalImage && this.opticalImageUrl != null ? this.opticalImageUrl : '',
        opticalImageUrl: this.opticalImageUrl,
        opacityMode: this.imageOpacityMode,
        showOpticalImage: this.showOpticalImage,
-       disableScaleBar: this.disableScaleBar
+       disableScaleBar: this.disableScaleBar,
+       imagePosition: this.imagePosition,
      });
    }
 
@@ -255,11 +255,8 @@
      this.$store.commit('updateAnnotationViewSections', activeSections)
    }
 
-   onImageZoom(event: any): void {
-     this.imagePosition.zoom = event.zoom;
-   }
-
    onImageMove(event: any): void {
+     this.imagePosition.zoom = event.zoom;
      this.imagePosition.xOffset = event.xOffset;
      this.imagePosition.yOffset = event.yOffset;
    }
