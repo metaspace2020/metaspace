@@ -7,6 +7,7 @@ from fabric.api import local
 from fabric.context_managers import warn_only
 
 from sm.engine.es_export import ESExporter
+from sm.engine.search_job import SearchJob
 from sm.engine.sm_daemons import SMDaemonManager
 from sm.engine.db import DB
 from sm.engine.mol_db import MolDBServiceWrapper
@@ -27,7 +28,6 @@ class SciTester(object):
     def __init__(self, sm_config_path):
         self.sm_config_path = sm_config_path
         self.sm_config = SMConfig.get_conf()
-        self.sm_config['colocalization']['enabled'] = False
         self.db = DB(self.sm_config['db'])
 
         self.ds_id = '2000-01-01-00_00_00'
@@ -140,12 +140,10 @@ class SciTester(object):
         if mock_graphql_db:
             self.db.alter(GRAPHQL_SQL_SCHEMA)
 
-        manager = SMDaemonManager(db=self.db, es=ESExporter(self.db), img_store=img_store,
-                                  sm_config=self.sm_config)
-
         ds = create_ds_from_files(self.ds_id, self.ds_name, self.input_path)
-        from sm.engine.search_job import SearchJob
-        manager.annotate(ds, search_job_factory=SearchJob, del_first=True)
+        self.db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
+        ds.save(self.db)
+        SearchJob(img_store).run(ds)
 
     def clear_data_dirs(self):
         with warn_only():
