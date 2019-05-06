@@ -231,12 +231,13 @@ class SMAnnotateDaemon(object):
         }
         self._upd_queue_pub.publish(msg=upd_msg, priority=DatasetActionPriority.HIGH)
 
-        analyze_msg = {
-            'ds_id': msg['ds_id'],
-            'ds_name': msg['ds_name'],
-            'action': DaemonAction.CLASSIFY_OFF_SAMPLE,
-        }
-        self._upd_queue_pub.publish(msg=analyze_msg, priority=DatasetActionPriority.LOW)
+        if self._sm_config['services'].get('off_sample', False):
+            analyze_msg = {
+                'ds_id': msg['ds_id'],
+                'ds_name': msg['ds_name'],
+                'action': DaemonAction.CLASSIFY_OFF_SAMPLE,
+            }
+            self._upd_queue_pub.publish(msg=analyze_msg, priority=DatasetActionPriority.LOW)
 
     def start(self):
         self._stopped = False
