@@ -129,7 +129,6 @@
        dragStartY: null,
        dragXOffset: 0, // starting position
        dragYOffset: 0,
-       dragThrottled: false,
        overlayDefault: true,
        overlayFadingIn: false,
        tmId: 0
@@ -258,7 +257,6 @@
      },
 
      onMouseUp(event) {
-       this.dragThrottled = false;
        const xOffset = this.dragXOffset + (event.clientX - this.dragStartX) / this.zoom;
        const yOffset = this.dragYOffset + (event.clientY - this.dragStartY) / this.zoom;
        this.$emit('move', {zoom: this.zoom, xOffset, yOffset});
@@ -268,15 +266,8 @@
      },
 
      onMouseMove(event) {
-       if (this.dragStartX === null || this.dragThrottled) {
+       if (this.dragStartX === null) {
          return;
-       }
-
-       this.dragThrottled = true;
-       if(window.requestAnimationFrame) {
-         requestAnimationFrame(() => { this.dragThrottled = false; });
-       } else {
-         setTimeout(() => { this.dragThrottled = false; }, 40);
        }
 
        const xOffset = this.dragXOffset + (event.clientX - this.dragStartX) / this.zoom;

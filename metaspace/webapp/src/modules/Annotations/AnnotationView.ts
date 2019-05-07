@@ -16,7 +16,7 @@
  import { Location } from 'vue-router';
  import { currentUserRoleQuery, CurrentUserRoleResult} from '../../api/user';
  import { safeJsonParse } from '../../util';
- import {omit, pick} from 'lodash-es';
+ import {omit, pick, throttle} from 'lodash-es';
  import {ANNOTATION_SPECIFIC_FILTERS} from '../Filters/filterSpecs';
  import config from '../../config';
  import noImageURL from '../../assets/no-image.svg';
@@ -129,6 +129,10 @@
    scaleBarColor: string = '#000000'
    failedImages: string[] = []
    noImageURL = noImageURL
+
+   created() {
+     this.onImageMove = throttle(this.onImageMove);
+   }
 
    metadataDependentComponent(category: string): any {
      const currentMdType: string = this.$store.getters.filter.metadataType;
