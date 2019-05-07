@@ -17,7 +17,6 @@ from sm.engine.daemon_action import DaemonAction
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.dataset import Dataset, DatasetStatus
-from sm.engine.acq_geometry_factory import ACQ_GEOMETRY_KEYS
 from sm.engine.search_job import JobStatus
 from sm.engine.tests.util import (
     test_db,
@@ -199,18 +198,18 @@ def test_sm_daemons(calc_metrics_mock,
         assert len(rows) == 1
         assert rows[0][0] == ds.get_acq_geometry(db)
         assert rows[0][0] == {
-            ACQ_GEOMETRY_KEYS.LENGTH_UNIT: 'nm',
-            ACQ_GEOMETRY_KEYS.AcqGridSection.section_name: {
-                ACQ_GEOMETRY_KEYS.AcqGridSection.REGULAR_GRID: True,
-                ACQ_GEOMETRY_KEYS.AcqGridSection.PIXEL_COUNT_X : 3,
-                ACQ_GEOMETRY_KEYS.AcqGridSection.PIXEL_COUNT_Y : 3,
-                ACQ_GEOMETRY_KEYS.AcqGridSection.PIXEL_SPACING_X : 100,
-                ACQ_GEOMETRY_KEYS.AcqGridSection.PIXEL_SPACING_Y : 100
+            'length_unit': 'nm',
+            'acquisition_grid': {
+                'regular_grid': True,
+                'count_x': 3,
+                'count_y': 3,
+                'spacing_x': 100,
+                'spacing_y': 100,
             },
-            ACQ_GEOMETRY_KEYS.PixelSizeSection.section_name: {
-                ACQ_GEOMETRY_KEYS.PixelSizeSection.REGULAR_SIZE: True,
-                ACQ_GEOMETRY_KEYS.PixelSizeSection.PIXEL_SIZE_X : 100,
-                ACQ_GEOMETRY_KEYS.PixelSizeSection.PIXEL_SIZE_Y : 100
+            'pixel_size': {
+                'regular_size': True,
+                'size_x': 100,
+                'size_y': 100
             }
         }
 

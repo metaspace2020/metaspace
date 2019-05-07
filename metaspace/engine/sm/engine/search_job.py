@@ -11,6 +11,7 @@ from datetime import datetime
 from pyspark import SparkContext, SparkConf
 import logging
 
+from sm.engine.acq_geometry import make_acq_geometry
 from sm.engine.colocalization import Colocalization
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.msm_basic.msm_basic_search import MSMBasicSearch
@@ -150,12 +151,10 @@ class SearchJob(object):
         return completed_moldb_ids, new_moldb_ids
 
     def _save_data_from_raw_ms_file(self):
-        ms_file_type_config = SMConfig.get_ms_file_handler(self._wd_manager.local_dir.ms_file_path)
-        acq_geometry_factory_module = ms_file_type_config['acq_geometry_factory']
-        acq_geometry_factory = getattr(import_module(acq_geometry_factory_module['path']),
-                                                acq_geometry_factory_module['name'])
+        ms_file_path = self._wd_manager.local_dir.ms_file_path
+        ms_file_type_config = SMConfig.get_ms_file_handler(ms_file_path)
 
-        acq_geometry = acq_geometry_factory(self._wd_manager.local_dir.ms_file_path).create()
+        acq_geometry = make_acq_geometry(ms_file_type_config['type'], ms_file_path)
         self._ds.save_acq_geometry(self._db, acq_geometry)
 
         self._ds.save_ion_img_storage_type(self._db, ms_file_type_config['img_storage_type'])
