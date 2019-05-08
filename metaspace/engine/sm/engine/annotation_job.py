@@ -154,7 +154,7 @@ class AnnotationJob(object):
 
     def _copy_input_data(self, ds):
         logger.info('Copying input data')
-        self._ds_data_path = Path(self._sm_config['fs']['data_path']) / ds.id
+        self._ds_data_path = Path(self._sm_config['fs']['spark_data_path']) / ds.id
         if ds.input_path.startswith('s3a://'):
             self._ds_data_path.mkdir(parents=True, exist_ok=True)
 

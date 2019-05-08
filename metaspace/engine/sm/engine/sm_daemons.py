@@ -1,5 +1,7 @@
 import json
 import urllib.parse
+from pathlib import Path
+
 import redis
 from requests import post
 import logging
@@ -188,6 +190,7 @@ class SMAnnotateDaemon(object):
                                              logger=self.logger)
         self._db = DB(self._sm_config['db'])
         self.redis_client = redis.Redis(**self._sm_config.get('redis', {}))
+        Path(self._sm_config['fs']['spark_data_path']).mkdir(parents=True, exist_ok=True)
 
     def _on_success(self, msg):
         ds = Dataset.load(self._db, msg['ds_id'])

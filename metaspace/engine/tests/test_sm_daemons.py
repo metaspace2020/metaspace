@@ -41,7 +41,7 @@ logger = logging.getLogger('annotate-daemon')
 test_ds_name = 'imzml_example_ds'
 
 proj_dir_path = dirname(dirname(__file__))
-data_dir_path = join(sm_config['fs']['data_path'], test_ds_name)
+data_dir_path = join(sm_config['fs']['spark_data_path'], test_ds_name)
 input_dir_path = join(proj_dir_path, 'tests/data/imzml_example_ds')
 ds_config_path = join(input_dir_path, 'config.json')
 

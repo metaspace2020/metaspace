@@ -33,7 +33,7 @@ class SciTester(object):
         self.ds_id = '2000-01-01_00h00m00s'
         self.base_search_res_path = join(proj_root(), 'tests/reports', 'spheroid_untreated_search_res.csv')
         self.ds_name = 'sci_test_spheroid_untreated'
-        self.ds_data_path = join(self.sm_config['fs']['data_path'], self.ds_name)
+        self.ds_data_path = join(self.sm_config['fs']['spark_data_path'], self.ds_name)
         self.input_path = join(proj_root(), 'tests/data/untreated')
         self.ds_config_path = join(self.input_path, 'config.json')
         self.metrics = ['chaos', 'spatial', 'spectral']
