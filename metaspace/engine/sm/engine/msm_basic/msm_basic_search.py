@@ -112,6 +112,9 @@ class MSMSearch(object):
             self._sc.addFile(str(file_path))
 
     def remove_temp_files(self):
+        logger.debug(f'Cleaning dataset temp dir {self._ds_data_path}')
+        rmtree(self._ds_data_path, ignore_errors=True)
+
         logger.debug(f'Cleaning spark master temp dir {SparkFiles.getRootDirectory()}')
         rmtree(SparkFiles.getRootDirectory(), ignore_errors=True)
 
