@@ -1,7 +1,9 @@
 from itertools import product
+from shutil import rmtree
 import numpy as np
 import pandas as pd
 import logging
+from pyspark.files import SparkFiles
 from pyspark.storagelevel import StorageLevel
 
 from sm.engine.fdr import FDR
@@ -109,6 +111,20 @@ class MSMSearch(object):
         for file_path in path.iterdir():
             self._sc.addFile(str(file_path))
 
+    def remove_temp_files(self):
+        logger.debug(f'Cleaning dataset temp dir {self._ds_data_path}')
+        rmtree(self._ds_data_path, ignore_errors=True)
+
+        logger.debug(f'Cleaning spark master temp dir {SparkFiles.getRootDirectory()}')
+        rmtree(SparkFiles.getRootDirectory(), ignore_errors=True)
+
+        temp_dir_rdd = (self._sc.parallelize(range(self._sc.defaultParallelism))
+                        .map(lambda args: SparkFiles.getRootDirectory()))
+        logger.debug(f'Cleaning spark workers temp dirs: {set(temp_dir_rdd.collect())}')
+        (temp_dir_rdd
+         .map(lambda path: rmtree(path, ignore_errors=True))
+         .collect())
+
     def search(self):
         """ Search, score, and compute FDR for all MolDB formulas
 
@@ -152,6 +168,8 @@ class MSMSearch(object):
                                                        self._image_gen_config, target_formula_inds)
         results_rdd = self.process_segments(centr_segm_n, process_centr_segment)
         formula_metrics_df, formula_images_rdd = merge_results(results_rdd, formula_centroids.formulas_df)
+
+        self.remove_temp_files()
 
         # Compute fdr for each moldb search results
         for moldb, fdr in moldb_fdr_list:
