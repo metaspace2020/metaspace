@@ -33,6 +33,7 @@ def test_search(formula_image_metrics_mock, pyspark_context, ds_config):
     imzml_parser_mock = Mock()
     imzml_parser_mock.coordinates = list(product([0], range(sp_n)))
     imzml_parser_mock.getspectrum.return_value = (np.linspace(0, 100, num=sp_n), np.ones(sp_n))
+    imzml_parser_mock.mzPrecision = 'f'
 
     ds_data_path = Path('/tmp/abc')
     msm_search = MSMSearch(pyspark_context, imzml_parser_mock, [make_moldb_mock()], ds_config, ds_data_path)
