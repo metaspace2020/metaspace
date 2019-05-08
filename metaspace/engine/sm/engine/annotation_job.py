@@ -170,6 +170,14 @@ class AnnotationJob(object):
             rmtree(self._ds_data_path, ignore_errors=True)
             copytree(src=ds.input_path, dst=self._ds_data_path)
 
+    def cleanup(self):
+        if self._sc:
+            self._sc.stop()
+        if self._db:
+            self._db.close()
+        logger.debug(f'Cleaning dataset temp dir {self._ds_data_path}')
+        rmtree(self._ds_data_path, ignore_errors=True)
+
     def run(self, ds):
         """ Entry point of the engine. Molecule search is completed in several steps:
             * Copy input data to the engine work dir
@@ -212,8 +220,5 @@ class AnnotationJob(object):
             time_spent = time.time() - start
             logger.info('Time spent: %d min %d sec', *divmod(int(round(time_spent)), 60))
         finally:
-            if self._sc:
-                self._sc.stop()
-            if self._db:
-                self._db.close()
+            self.cleanup()
             logger.info('*' * 150)
