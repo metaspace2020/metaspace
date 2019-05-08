@@ -119,10 +119,6 @@ class AnnotationJob(object):
                     self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FINISHED,
                                                                   datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                                                                   job_id))
-
-                if self._sm_config['colocalization'].get('enabled', False):
-                    coloc = Colocalization(self._db)
-                    coloc.run_coloc_job(self._ds.id)
             except Exception as e:
                 self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FAILED,
                                                               datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
