@@ -120,27 +120,22 @@ def read_json(path):
         return res
 
 
-def create_ds_from_files(ds_id, ds_name, ds_input_path):
-    base_dir = Path(ds_input_path)
-    meta_path = base_dir / 'meta.json'
-    if meta_path.exists():
+def create_ds_from_files(ds_id, ds_name, ds_input_path, config_path, meta_path):
+    if Path(meta_path).exists():
         metadata = json.load(open(str(meta_path)))
     else:
         raise Exception('meta.json not found')
-    ds_config = json.load(open(str(base_dir / 'config.json')))
-
-    regexp = re.compile(translate('*.imzML'), re.IGNORECASE)
-    imzml_path = [f for f in base_dir.glob('*')
-                  if re.match(regexp, str(f))][0]
-    ms_file_type_config = SMConfig.get_ms_file_handler(str(imzml_path))
-    img_storage_type = ms_file_type_config['img_storage_type']
+    ds_config = json.load(open(str(config_path)))
 
     from sm.engine.dataset import Dataset
-    return Dataset(ds_id, ds_name, str(ds_input_path), datetime.now(), metadata,
+    return Dataset(id=ds_id,
+                   name=ds_name,
+                   input_path=str(ds_input_path),
+                   upload_dt=datetime.now(),
+                   metadata=metadata,
                    is_public=True,
                    mol_dbs=ds_config['databases'],
-                   adducts=ds_config['isotope_generation']['adducts'],
-                   img_storage_type=img_storage_type)
+                   adducts=ds_config['isotope_generation']['adducts'])
 
 
 def split_s3_path(path):
