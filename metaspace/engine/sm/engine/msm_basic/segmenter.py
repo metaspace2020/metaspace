@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 from sm.engine.errors import JobFailedError
-from sm.engine.msm_basic.formula_imager import determine_spectra_order
+from sm.engine.msm_basic.formula_imager import get_pixel_indices
 
 MAX_MZ_VALUE = 10**5
 MAX_INTENS_VALUE = 10**12
@@ -90,7 +90,7 @@ def segment_spectra(imzml_parser, coordinates, ds_segments, ds_segments_path):
     mz_segments[-1, 1] = MAX_MZ_VALUE
     mz_segments = list(enumerate(mz_segments))
 
-    sp_id_to_idx = determine_spectra_order(coordinates)
+    sp_id_to_idx = get_pixel_indices(coordinates)
 
     chunk_size = 5000
     coord_chunk_it = chunk_list(coordinates, chunk_size)
