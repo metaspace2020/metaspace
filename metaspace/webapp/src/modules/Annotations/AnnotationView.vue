@@ -47,7 +47,8 @@
         <el-collapse-item name="images" id="annot-img-collapse" class="av-centered">
           <component :is="metadataDependentComponent('main-image-header')"
                      :annotation="annotation"
-                     :imageLoaderSettings="imageLoaderSettings"
+                     :hasOpticalImage="bestOpticalImage != null"
+                     :showOpticalImage="showOpticalImage"
                      :resetViewport="resetViewport"
                      :toggleOpticalImage="toggleOpticalImage"
                      :toggleScaleBar="toggleScaleBar"

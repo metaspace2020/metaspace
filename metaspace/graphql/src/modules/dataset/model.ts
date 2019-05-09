@@ -88,4 +88,5 @@ export interface EngineOpticalImage {
   scale: number;
   width: number;
   height: number;
+  transform: number[][];
 }

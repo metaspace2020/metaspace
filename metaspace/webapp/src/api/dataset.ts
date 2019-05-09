@@ -121,6 +121,7 @@ export interface OpticalImage {
   scale: number;
   width: number;
   height: number;
+  transform: number[][];
 }
 export const opticalImagesQuery =
   gql`query ($datasetId: String!, $type: OpticalImageType) {
@@ -132,8 +133,8 @@ export const opticalImagesQuery =
         scale
         width
         height
+        transform
       }
-      opticalImageTransform
     }
   }`;
 

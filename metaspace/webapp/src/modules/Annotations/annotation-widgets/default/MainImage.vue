@@ -26,7 +26,7 @@
         </div>
 
         <div class="colorbar-container">
-            <div v-if="imageLoaderSettings.opticalImageUrl">
+            <div v-if="imageLoaderSettings.opticalSrc">
                 Opacity:
                 <el-slider
                         vertical

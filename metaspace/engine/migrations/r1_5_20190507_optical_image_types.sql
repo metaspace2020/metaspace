@@ -13,7 +13,8 @@ ALTER TABLE optical_image
     ADD zoom REAL NOT NULL DEFAULT(1),
     ADD scale REAL NOT NULL DEFAULT(1),
     ADD width INT NOT NULL DEFAULT(1),
-    ADD height INT NOT NULL DEFAULT(1);
+    ADD height INT NOT NULL DEFAULT(1),
+    ADD transform REAL[][] DEFAULT(ARRAY[]::REAL[]);
 
 UPDATE public.optical_image SET zoom = _zoom WHERE true;
 
@@ -24,4 +25,5 @@ ALTER TABLE optical_image
     ALTER COLUMN zoom DROP DEFAULT,
     ALTER COLUMN scale DROP DEFAULT,
     ALTER COLUMN width DROP DEFAULT,
-    ALTER COLUMN height DROP DEFAULT;
+    ALTER COLUMN height DROP DEFAULT,
+    ALTER COLUMN transform DROP DEFAULT;

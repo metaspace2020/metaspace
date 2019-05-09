@@ -40,7 +40,7 @@ export const thumbnailOpticalImageUrl = async (ctx: Context, datasetId: string) 
 };
 
 const getOpticalImagesByDsId = async (ctx: Context, id: string): Promise<OpticalImage[]> => {
-  const dataloader = ctx.contextCacheGet('thumbnailOpticalImageUrlDataLoader', [], () => {
+  const dataloader = ctx.contextCacheGet('getOpticalImagesByDsIdDataLoader', [], () => {
     return new DataLoader(async (datasetIds: string[]): Promise<OpticalImage[][]> => {
       const rawResults: EngineOpticalImage[] = await ctx.entityManager.query(
         'SELECT * from public.optical_image WHERE ds_id = ANY($1)', [datasetIds]);
@@ -49,7 +49,7 @@ const getOpticalImagesByDsId = async (ctx: Context, id: string): Promise<Optical
         url: `/fs/optical_images/${id}`,
         type: type.toUpperCase() as OpticalImageType,
       }));
-      const groupedResults = _.groupBy(results, 'id');
+      const groupedResults = _.groupBy(results, 'ds_id');
       return datasetIds.map(id => groupedResults[id] || []);
     });
   });

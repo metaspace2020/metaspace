@@ -21,7 +21,6 @@
  import {ANNOTATION_SPECIFIC_FILTERS} from '../Filters/filterSpecs';
  import config from '../../config';
  import noImageURL from '../../assets/no-image.svg';
- import {inv} from 'numeric';
 
  type colorObjType = {
    code: string,
@@ -36,10 +35,8 @@
 
  type ImageSettings = {
    annotImageOpacity: number
-   opticalImageUrl: string | null
    opacityMode: 'linear' | 'constant'
    imagePosition: ImagePosition
-   showOpticalImage: boolean
    opticalSrc: string | null
    opticalTransform: number[][] | null
  }
@@ -89,10 +86,8 @@
            type: config.features.optical_transform ? 'SCALED' : 'CLIPPED_TO_ION_IMAGE',
          }
        },
-       manual: true,
-       result({data}: any) {
-         this.opticalImages = data.dataset && data.dataset.opticalImages || [];
-         this.opticalImageTransform = data.dataset && data.dataset.opticalImageTransform || null;
+       update(data: any) {
+         return data.dataset && data.dataset.opticalImages || [];
        }
      },
 
@@ -126,8 +121,7 @@
 
    msAcqGeometry: any
    peakChartData: any
-   opticalImages: OpticalImage[] | null = null
-   opticalImageTransform: number[][] | null = null
+   opticalImages: OpticalImage[] | null
    showScaleBar: boolean = false
    datasetVisibility: DatasetVisibilityResult | null = null
    currentUser: CurrentUserRoleResult | null = null
@@ -195,33 +189,30 @@
      };
    }
 
-   get imageLoaderSettings(): ImageSettings {
-     const hasOpticalImages = this.showOpticalImage && this.opticalImages != null && this.opticalImages.length > 0;
-     let opticalImageUrl = null;
-     let opticalTransform = null;
-     if (hasOpticalImages) {
+   get bestOpticalImage(): OpticalImage | null {
+     if (this.opticalImages != null && this.opticalImages.length > 0) {
        const {zoom} = this.imagePosition;
        // Find the best optical image, preferring images with a higher zoom level than the current zoom
        const sortedOpticalImages = sortBy(this.opticalImages, optImg =>
          optImg.zoom >= zoom
            ? optImg.zoom - zoom
            : 100 + (zoom - optImg.zoom));
-       opticalImageUrl = sortedOpticalImages[0].url;
 
-       if (config.features.optical_transform) {
-         try {
-           opticalTransform = inv(this.opticalImageTransform);
-         } catch (ex) {}
-       }
+       return sortedOpticalImages[0];
      }
+     return null;
+   }
+
+   get imageLoaderSettings(): ImageSettings {
+     const optImg = this.bestOpticalImage;
+     const hasOpticalImages = this.showOpticalImage && optImg != null;
+
      return {
        annotImageOpacity: (this.showOpticalImage && hasOpticalImages) ? this.opacity : 1.0,
-       opticalImageUrl,
        opacityMode: this.imageOpacityMode,
-       showOpticalImage: this.showOpticalImage,
        imagePosition: this.imagePosition,
-       opticalSrc: this.showOpticalImage ? opticalImageUrl : null,
-       opticalTransform,
+       opticalSrc: this.showOpticalImage && optImg && optImg.url || null,
+       opticalTransform: optImg && optImg.transform,
      };
    }
 
