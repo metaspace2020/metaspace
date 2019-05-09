@@ -180,7 +180,6 @@ type OpticalImage {
     url: String!
     type: OpticalImageType!
     zoom: Float!    # Zoom level for optimal pixel density when fitted to a 1000x500 area
-    scale: Float!   # Pixel density relative to the original image. 0.5 means 50% of the size of the original image
     width: Int!
     height: Int!
     transform: [[Float!]!]!  #3x3 matrix that transforms the optical image to line up with the ion image

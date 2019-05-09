@@ -85,7 +85,6 @@ export interface EngineOpticalImage {
   ds_id: string;
   type: string;
   zoom: number;
-  scale: number;
   width: number;
   height: number;
   transform: number[][];

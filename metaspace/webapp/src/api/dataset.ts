@@ -118,9 +118,6 @@ export interface OpticalImage {
   url: string;
   type: OpticalImageType;
   zoom: number;
-  scale: number;
-  width: number;
-  height: number;
   transform: number[][];
 }
 export const opticalImagesQuery =
@@ -130,9 +127,6 @@ export const opticalImagesQuery =
         url
         type
         zoom
-        scale
-        width
-        height
         transform
       }
     }

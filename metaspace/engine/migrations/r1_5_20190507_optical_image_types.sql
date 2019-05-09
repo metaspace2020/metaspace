@@ -11,7 +11,6 @@ ALTER TABLE optical_image
     ALTER COLUMN ds_id SET NOT NULL,
     ADD type text NOT NULL DEFAULT('clipped_to_ion_image'),
     ADD zoom REAL NOT NULL DEFAULT(1),
-    ADD scale REAL NOT NULL DEFAULT(1),
     ADD width INT NOT NULL DEFAULT(1),
     ADD height INT NOT NULL DEFAULT(1),
     ADD transform REAL[][] DEFAULT(ARRAY[]::REAL[]);
@@ -23,7 +22,6 @@ ALTER TABLE optical_image DROP COLUMN _zoom;
 ALTER TABLE optical_image
     ALTER COLUMN type DROP DEFAULT,
     ALTER COLUMN zoom DROP DEFAULT,
-    ALTER COLUMN scale DROP DEFAULT,
     ALTER COLUMN width DROP DEFAULT,
     ALTER COLUMN height DROP DEFAULT,
     ALTER COLUMN transform DROP DEFAULT;
