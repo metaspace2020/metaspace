@@ -80,3 +80,12 @@ export interface EngineDataset {
   adducts: string[];
 }
 
+export interface EngineOpticalImage {
+  id: string;
+  ds_id: string;
+  type: string;
+  zoom: number;
+  scale: number;
+  width: number;
+  height: number;
+}

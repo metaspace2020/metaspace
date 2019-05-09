@@ -33,8 +33,12 @@ type Dataset {
   inputPath: String
   uploadDateTime: String
   fdrCounts(inpFdrLvls: [Int!]! = [10], checkLvl: Int! = 10): FdrCounts
-  opticalImage: String @deprecated(badName: "Renamed to rawOpticalImageUrl")
-  rawOpticalImageUrl: String
+
+  opticalImage: String @deprecated(reason: "Use Dataset.opticalImages instead")
+  rawOpticalImageUrl: String @deprecated(reason: "Use Dataset.opticalImages instead")
+
+  opticalImages(type: OpticalImageType): [OpticalImage!]!
+  opticalImageTransform: [[Float!]!]
 
   thumbnailOpticalImageUrl: String
   ionThumbnailUrl: String
@@ -166,6 +170,21 @@ type DatasetCountPerGroup {
   counts: [DatasetCountPerGroupListElement]
 }
 
+enum OpticalImageType {
+    RAW
+    SCALED
+    CLIPPED_TO_ION_IMAGE
+}
+
+type OpticalImage {
+    url: String!
+    type: OpticalImageType!
+    zoom: Float!    # Zoom level for optimal pixel density when fitted to a 1000x500 area
+    scale: Float!   # Pixel density relative to the original image. 0.5 means 50% of the size of the original image
+    width: Int!
+    height: Int!
+}
+
 type RawOpticalImage {
     url: String
     transform: [[Float]]
@@ -231,9 +250,9 @@ type Query {
 
   opticalImageUrl(datasetId: String!, zoom: Float = 1): String
 
-  rawOpticalImage(datasetId: String!): RawOpticalImage
+  rawOpticalImage(datasetId: String!): RawOpticalImage @deprecated(reason: "Use Dataset.opticalImages instead")
 
-  thumbnailImage(datasetId: String!): String @deprecated(badName: "Renamed to thumbnailOpticalImageUrl")
+  thumbnailImage(datasetId: String!): String @deprecated(reason: "Use Dataset.thumbnailOpticalImageUrl instead")
 
   thumbnailOpticalImageUrl(datasetId: String!): String @deprecated(reason: "Use Dataset.thumbnailOpticalImageUrl instead")
 

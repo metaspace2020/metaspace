@@ -110,9 +110,31 @@ export const datasetListItemsQuery =
     }
   }`;
 
-export const opticalImageQuery =
-    gql`query ($datasetId: String!, $zoom: Float!) {
-    opticalImageUrl(datasetId: $datasetId, zoom: $zoom)
+export type OpticalImageType =   'RAW' |
+  'SCALED' |
+  'CLIPPED_TO_ION_IMAGE';
+
+export interface OpticalImage {
+  url: string;
+  type: OpticalImageType;
+  zoom: number;
+  scale: number;
+  width: number;
+  height: number;
+}
+export const opticalImagesQuery =
+  gql`query ($datasetId: String!, $type: OpticalImageType) {
+    dataset(id: $datasetId) {
+      opticalImages(type: $type) {
+        url
+        type
+        zoom
+        scale
+        width
+        height
+      }
+      opticalImageTransform
+    }
   }`;
 
 export const rawOpticalImageQuery =

@@ -6,7 +6,8 @@
   datasetVisibilityQuery,
   DatasetVisibilityResult,
   msAcqGeometryQuery,
-  opticalImageQuery, RawOpticalImageQuery, rawOpticalImageQuery,
+  OpticalImage,
+  opticalImagesQuery,
 } from '../../api/dataset';
  import { encodeParams } from '../Filters/index';
  import annotationWidgets from './annotation-widgets/index'
@@ -16,7 +17,7 @@
  import { Location } from 'vue-router';
  import { currentUserRoleQuery, CurrentUserRoleResult} from '../../api/user';
  import { safeJsonParse } from '../../util';
- import {omit, pick, throttle} from 'lodash-es';
+ import {omit, pick, sortBy, throttle} from 'lodash-es';
  import {ANNOTATION_SPECIFIC_FILTERS} from '../Filters/filterSpecs';
  import config from '../../config';
  import noImageURL from '../../assets/no-image.svg';
@@ -80,16 +81,19 @@
        }
      },
 
-     opticalImage: {
-       query: rawOpticalImageQuery,
-       variables(): any {
+     opticalImages: {
+       query: opticalImagesQuery,
+       variables() {
          return {
-           ds_id: this.annotation.dataset.id
-           // datasetId: this.annotation.dataset.id,
-           // zoom: this.imagePosition.zoom
+           datasetId: this.annotation.dataset.id,
+           type: config.features.optical_transform ? 'SCALED' : 'CLIPPED_TO_ION_IMAGE',
          }
        },
-       update: (data: any) => data.rawOpticalImage
+       manual: true,
+       result({data}: any) {
+         this.opticalImages = data.dataset && data.dataset.opticalImages || [];
+         this.opticalImageTransform = data.dataset && data.dataset.opticalImageTransform || null;
+       }
      },
 
      msAcqGeometry: {
@@ -122,7 +126,8 @@
 
    msAcqGeometry: any
    peakChartData: any
-   opticalImage!: RawOpticalImageQuery | null;
+   opticalImages: OpticalImage[] | null = null
+   opticalImageTransform: number[][] | null = null
    showScaleBar: boolean = false
    datasetVisibility: DatasetVisibilityResult | null = null
    currentUser: CurrentUserRoleResult | null = null
@@ -168,7 +173,7 @@
    }
 
    get imageOpacityMode(): 'linear' | 'constant' {
-     return (this.showOpticalImage && this.opticalImage != null) ? 'linear' : 'constant';
+     return (this.showOpticalImage && this.opticalImages != null) ? 'linear' : 'constant';
    }
 
    get permalinkHref(): Location {
@@ -191,19 +196,31 @@
    }
 
    get imageLoaderSettings(): ImageSettings {
+     const hasOpticalImages = this.showOpticalImage && this.opticalImages != null && this.opticalImages.length > 0;
+     let opticalImageUrl = null;
      let opticalTransform = null;
-     if (this.showOpticalImage && this.opticalImage) {
-       try {
-         opticalTransform = inv(this.opticalImage.transform);
-       } catch (ex) {}
+     if (hasOpticalImages) {
+       const {zoom} = this.imagePosition;
+       // Find the best optical image, preferring images with a higher zoom level than the current zoom
+       const sortedOpticalImages = sortBy(this.opticalImages, optImg =>
+         optImg.zoom >= zoom
+           ? optImg.zoom - zoom
+           : 100 + (zoom - optImg.zoom));
+       opticalImageUrl = sortedOpticalImages[0].url;
+
+       if (config.features.optical_transform) {
+         try {
+           opticalTransform = inv(this.opticalImageTransform);
+         } catch (ex) {}
+       }
      }
      return {
-       annotImageOpacity: (this.showOpticalImage && this.opticalImage) ? this.opacity : 1.0,
-       opticalImageUrl: this.opticalImage && this.opticalImage.url,
+       annotImageOpacity: (this.showOpticalImage && hasOpticalImages) ? this.opacity : 1.0,
+       opticalImageUrl,
        opacityMode: this.imageOpacityMode,
        showOpticalImage: this.showOpticalImage,
        imagePosition: this.imagePosition,
-       opticalSrc: this.showOpticalImage && this.opticalImage ? this.opticalImage.url : null,
+       opticalSrc: this.showOpticalImage ? opticalImageUrl : null,
        opticalTransform,
      };
    }
