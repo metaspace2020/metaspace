@@ -1,9 +1,23 @@
 ---
 
+- name: Create metaspace installation directory
+  become: yes
+  file:
+    path: "{{ metaspace_home }}"
+    state: directory
+    owner: "{{ spark_user }}"
+    group: "{{ spark_user }}"
+
+- name: Check if .git dir exists
+  stat:
+    path: "{{ metaspace_home }}/.git"
+  register: git_dir
+
 - name: Remove all local file changes
   shell: git reset --hard && git clean -f
   args:
     chdir: "{{ metaspace_home }}"
+  when: git_dir.stat.exists
 
 - name: Delete all local and remote branches except for 'master'
   shell: |
@@ -14,7 +28,7 @@
       xargs --no-run-if-empty git branch -D
   args:
     chdir: "{{ metaspace_home }}"
-  when: local_deploy is not defined
+  when: git_dir.stat.exists and local_deploy is not defined
 
 - name: Pull metaspace "{{ metaspace_branch }}" branch from the repository
   git:
