@@ -88,7 +88,7 @@ mol_db_postgres_pass: POSTGRES_PASSWORD
 mol_db_image_dir: /var/www/mol-images
 mol_db_miniconda_env:
   name: mol-db
-mol_db_import_databases: true  # set to false to avoid dropping MolDB database
+mol_db_import_databases: true  # set to false to avoid triggering database import
 mol_db_import_mol_images: true  # set to false to avoid reimporting all molecular images
 mol_db_image_archives:
   - name: HMDB
@@ -365,7 +365,7 @@ cluster_configuration:
 
     master:
       hostgroup: MASTER_HOSTGROUP  # specify a custom name for the group of hosts
-      type: c4.xlarge
+      type: c5d.2xlarge
       n: 1
       elipalloc:
       price: 0.6
@@ -375,13 +375,13 @@ cluster_configuration:
       block_dev_maps:
         - DeviceName: /dev/sda1
           Ebs:
-            VolumeSize: 500
+            VolumeSize: 200
             DeleteOnTermination: True
             VolumeType: gp2
 
     slave:
       hostgroup: SLAVE_HOSTGROUP  # specify a custom name for the group of hosts
-      type: c4.2xlarge
+      type: c5d.2xlarge
       n: 1
       elipalloc:
       price: 0.6
@@ -391,7 +391,7 @@ cluster_configuration:
       block_dev_maps:
         - DeviceName: /dev/sda1
           Ebs:
-            VolumeSize: 1000
+            VolumeSize: 200
             DeleteOnTermination: True
             VolumeType: gp2
 # uncomment below if you want to use Elasticsearch for logs aggregation
