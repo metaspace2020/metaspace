@@ -1,21 +1,25 @@
 
-def make_ims_acq_geometry(ms_file_path):
-    from pyimzml.ImzMLParser import ImzMLParser
-    parser = ImzMLParser(ms_file_path)
-    grid_props = parser.imzmldict
+def make_ims_acq_geometry(ms_file_path, metadata, dims):
+    pixel_size = metadata.get('MS_Analysis', {}).get('Pixel_Size', {})
+
+    # if ms_file_path is not None:
+    #     from pyimzml.ImzMLParser import ImzMLParser
+    #     parser = ImzMLParser(ms_file_path)
+    #     grid_props = parser.imzmldict
+    # else:
+    #     grid_props = {}
+
     return {
         'length_unit': 'nm',
         'acquisition_grid': {
             'regular_grid': True,
-            'count_x': grid_props.get('max count of pixels x', 0),
-            'count_y': grid_props.get('max count of pixels y', 0),
-            'spacing_x': grid_props.get('pixel size x', 0.0),
-            'spacing_y': grid_props.get('pixel size y', 0.0)
+            'count_x': dims[0],
+            'count_y': dims[1]
         },
         'pixel_size': {
             'regular_size': True,
-            'size_x': grid_props.get('pixel size x', 0.0),
-            'size_y': grid_props.get('pixel size y', 0.0)
+            'size_x': pixel_size.get('Xaxis'),
+            'size_y': pixel_size.get('Yaxis')
         }
     }
 
@@ -28,19 +32,21 @@ def make_lcms_acq_geometry(ms_file_path):
         'length_unit': 's',
         'acquisition_grid': {
             'regular_grid': False,
-            'coord_list': pixel_coords
+            'coord_list': pixel_coords,
+            'count_x': len(pixel_coords),
+            'count_y': 1
         },
         'pixel_size': {
             'regular_size': True,
-            'size_x': 0,
-            'size_y': 0,
+            'size_x': 1,
+            'size_y': 1,
         }
     }
 
 
-def make_acq_geometry(type, ms_file_path):
+def make_acq_geometry(type, ms_file_path, metadata, dims):
     if type == 'ims':
-        return make_ims_acq_geometry(ms_file_path)
+        return make_ims_acq_geometry(ms_file_path, metadata, dims)
     elif type == 'lcms':
         return make_lcms_acq_geometry(ms_file_path)
     else:

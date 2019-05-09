@@ -153,8 +153,9 @@ class SearchJob(object):
     def _save_data_from_raw_ms_file(self):
         ms_file_path = self._wd_manager.local_dir.ms_file_path
         ms_file_type_config = SMConfig.get_ms_file_handler(ms_file_path)
+        dims = self._ds_reader.get_dims()
 
-        acq_geometry = make_acq_geometry(ms_file_type_config['type'], ms_file_path)
+        acq_geometry = make_acq_geometry(ms_file_type_config['type'], ms_file_path, self._ds.metadata, dims)
         self._ds.save_acq_geometry(self._db, acq_geometry)
 
         self._ds.save_ion_img_storage_type(self._db, ms_file_type_config['img_storage_type'])
