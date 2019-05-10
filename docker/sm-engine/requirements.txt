@@ -2,7 +2,7 @@ pyImagingMSpec==0.1.4
 cpyImagingMSpec==0.2.4
 pyMSpec==0.1.2
 cpyMSpec==0.3.5  # Drop all isotopic patterns if updated!
-pyimzML==1.2.4
+pyimzML==1.2.6
 requests
 pytest
 recommonmark
@@ -10,13 +10,9 @@ boto3
 fabric3
 pypng
 pyyaml
-elasticsearch
-elasticsearch_dsl
+elasticsearch-dsl>=5.0.0,<6.0.0
 pika==0.11.0b1
 bottle
-# pyspark==2.3.0
-# pysparkling
-PyArrow>=0.8.0
 Pillow==4.2.1
 pyopenms==2.2.0
 numpy>=1.11.2
@@ -24,8 +20,8 @@ scipy>=0.18.1
 matplotlib>=2
 pandas>=0.22
 cffi
-psycopg2==2.7.1
+psycopg2==2.8.2
 cherrypy<9
-pyimzML==1.2.4
 redis
 scikit-learn==0.20.2
+pyspark[sql]==2.3.3

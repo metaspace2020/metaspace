@@ -224,7 +224,6 @@ jobs:
           name: Test engine dependencies
           command: |
             pip install --upgrade -r requirements.txt
-            source docker/env.sh
       - attach_workspace:
           at: ~/workspace
       - run:
