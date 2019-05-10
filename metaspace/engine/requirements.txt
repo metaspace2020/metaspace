@@ -25,3 +25,4 @@ cherrypy<9
 redis
 scikit-learn==0.20.2
 pyspark[sql]==2.3.3
+pysparkling>=0.5.0

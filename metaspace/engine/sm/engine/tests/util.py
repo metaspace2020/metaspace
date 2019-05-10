@@ -63,12 +63,7 @@ def ds_config():
 
 @pytest.fixture(scope='module')
 def pysparkling_context(request):
-
-    class SparkContext(Context):
-        def parallelize(self, x, numSlices=None):
-            return super().parallelize(x, numPartitions=numSlices)
-
-    return SparkContext()
+    return Context()
 
 
 @pytest.fixture(scope='module')
