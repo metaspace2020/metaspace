@@ -202,9 +202,7 @@ def test_sm_daemons(calc_metrics_mock,
             'acquisition_grid': {
                 'regular_grid': True,
                 'count_x': 3,
-                'count_y': 3,
-                'spacing_x': 100,
-                'spacing_y': 100,
+                'count_y': 3
             },
             'pixel_size': {
                 'regular_size': True,

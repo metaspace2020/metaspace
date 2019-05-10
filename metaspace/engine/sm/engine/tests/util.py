@@ -34,7 +34,11 @@ def metadata():
                 "Resolving_Power": 80000,
                 "mz": 700
             },
-            "Analyzer": "FTICR"
+            "Analyzer": "FTICR",
+            "Pixel_Size": {
+                "Xaxis": 100,
+                "Yaxis": 100,
+            }
         }
     }
 
