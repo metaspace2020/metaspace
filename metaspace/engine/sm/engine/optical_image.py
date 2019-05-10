@@ -87,7 +87,7 @@ def _scale_image(scan, transform_, zoom):
 
 def _save_jpeg(img):
     buf = io.BytesIO()
-    img.save(buf, 'jpeg', quality=90)
+    img.convert('RGB').save(buf, 'jpeg', quality=90)
     buf.seek(0)
     return buf
 

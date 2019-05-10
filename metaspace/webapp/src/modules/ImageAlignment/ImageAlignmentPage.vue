@@ -39,7 +39,7 @@
                    class="input-optical-image"
                    style="display: none;"
                    @change="onFileChange($event)"
-                   accept=".jpg, .jpeg"/>
+                   accept=".jpg, .jpeg, .png"/>
             Select optical image
           </label>
 
@@ -48,7 +48,7 @@
           </div>
 
           <div class="el-upload__tip" slot="tip">
-            JPEG file less than {{ limitMB }}MB in size
+            JPEG or PNG file less than {{ limitMB }}MB in size
           </div>
         </div>
 
