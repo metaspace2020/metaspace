@@ -197,7 +197,7 @@ jobs:
 
   test-engine:
     docker:
-      - image: metaspace2020/sm-engine:1.2.1
+      - image: metaspace2020/sm-engine:1.4.0
 
       - image: redis:5.0.3
 
