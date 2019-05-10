@@ -3,13 +3,13 @@ from collections import OrderedDict
 from os.path import join, dirname
 import pandas as pd
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, Mock
 import numpy as np
 
 from sm.engine.db import DB
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.search_results import SearchResults, METRICS_INS, post_images_to_image_store
-from sm.engine.tests.util import pysparkling_context as spark_context
+from sm.engine.tests.util import pysparkling_context
 from scipy.sparse import coo_matrix
 
 db_mock = MagicMock(spec=DB)
@@ -39,14 +39,14 @@ def test_save_ion_img_metrics_correct_db_call(search_results):
     db_mock.insert.assert_called_with(METRICS_INS, exp_rows)
 
 
-def test_isotope_images_are_stored(search_results, spark_context):
+def test_isotope_images_are_stored(search_results, pysparkling_context):
     mask = np.array([[1, 1], [1, 0]])
     img_id = "iso_image_id"
-    img_store_mock = MagicMock(spec=ImageStoreServiceWrapper)
+    img_store_mock = Mock(spec=ImageStoreServiceWrapper)
     img_store_mock.post_image.return_value = img_id
 
     img_store_mock.reset_mock()
-    formula_images_rdd = spark_context.parallelize([
+    formula_images_rdd = pysparkling_context.parallelize([
         (0, [coo_matrix([[0, 0], [0, 1]]), None, coo_matrix([[2, 3], [1, 0]]), None]),
         (1, [coo_matrix([[1, 1], [0, 1]]), None, None, None]),
     ])

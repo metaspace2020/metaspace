@@ -7,7 +7,7 @@ import pandas as pd
 
 from sm.engine.formula_centroids import FormulaCentroids
 from sm.engine.msm_basic.msm_basic_search import MSMSearch, init_fdr, collect_ion_formulas, compute_fdr
-from sm.engine.tests.util import pyspark_context, ds_config, make_moldb_mock
+from sm.engine.tests.util import spark_context, ds_config, make_moldb_mock
 
 
 def test_compute_fdr():
@@ -28,7 +28,7 @@ def test_compute_fdr():
 
 
 @patch('sm.engine.msm_basic.formula_imager.formula_image_metrics')
-def test_search(formula_image_metrics_mock, pyspark_context, ds_config):
+def test_search(formula_image_metrics_mock, spark_context, ds_config):
     sp_n = 100
     imzml_parser_mock = Mock()
     imzml_parser_mock.coordinates = list(product([0], range(sp_n)))
@@ -36,7 +36,7 @@ def test_search(formula_image_metrics_mock, pyspark_context, ds_config):
     imzml_parser_mock.mzPrecision = 'f'
 
     ds_data_path = Path('/tmp/abc')
-    msm_search = MSMSearch(pyspark_context, imzml_parser_mock, [make_moldb_mock()], ds_config, ds_data_path)
+    msm_search = MSMSearch(spark_context, imzml_parser_mock, [make_moldb_mock()], ds_config, ds_data_path)
     formulas_df = (pd.DataFrame([(0, 'H3O'), (1, 'C5H4O')], columns=['formula_i', 'formula'])
                    .set_index('formula_i'))
     centroids_df = (pd.DataFrame(data=[(0, 0, 1, 100), (0, 1, 2, 10),
@@ -47,7 +47,7 @@ def test_search(formula_image_metrics_mock, pyspark_context, ds_config):
     msm_search._fetch_formula_centroids = lambda args: FormulaCentroids(formulas_df, centroids_df)
 
     def process_segments(centr_segm_n, func):
-        return pyspark_context.parallelize(map(func, range(centr_segm_n)))
+        return spark_context.parallelize(map(func, range(centr_segm_n)))
 
     msm_search.process_segments = process_segments
 

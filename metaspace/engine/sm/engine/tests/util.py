@@ -61,18 +61,18 @@ def ds_config():
     }
 
 
-class SparkContext(Context):
-    def parallelize(self, x, numSlices=None):
-        return super().parallelize(x, numPartitions=numSlices)
-
-
 @pytest.fixture(scope='module')
 def pysparkling_context(request):
+
+    class SparkContext(Context):
+        def parallelize(self, x, numSlices=None):
+            return super().parallelize(x, numPartitions=numSlices)
+
     return SparkContext()
 
 
 @pytest.fixture(scope='module')
-def pyspark_context(request):
+def spark_context(request):
     from pyspark import SparkContext
     import sys
     import os
