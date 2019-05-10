@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 from sm.engine.errors import JobFailedError
-from sm.engine.msm_basic.formula_imager import determine_spectra_order
+from sm.engine.msm_basic.formula_imager import get_pixel_indices
 
 MAX_MZ_VALUE = 10**5
 MAX_INTENS_VALUE = 10**12
@@ -42,7 +42,8 @@ def spectra_sample_gen(imzml_parser, sample_ratio=0.05):
         yield sp_idx, mzs, ints
 
 
-def define_ds_segments(imzml_parser, sample_ratio=0.05, ds_segm_size_mb=5):
+def define_ds_segments(imzml_parser, ds_segm_size_mb=5, sample_ratio=0.05):
+    logger.info(f'Defining dataset segment bounds')
     spectra_sample = list(spectra_sample_gen(imzml_parser, sample_ratio=sample_ratio))
     check_spectra_quality(spectra_sample)
 
@@ -89,7 +90,7 @@ def segment_spectra(imzml_parser, coordinates, ds_segments, ds_segments_path):
     mz_segments[-1, 1] = MAX_MZ_VALUE
     mz_segments = list(enumerate(mz_segments))
 
-    sp_id_to_idx = determine_spectra_order(coordinates)
+    sp_id_to_idx = get_pixel_indices(coordinates)
 
     chunk_size = 5000
     coord_chunk_it = chunk_list(coordinates, chunk_size)
@@ -108,14 +109,32 @@ def segment_spectra(imzml_parser, coordinates, ds_segments, ds_segments_path):
             ints_list.append(ints_)
             sp_i += 1
 
+        dtype = imzml_parser.mzPrecision
         mzs = np.concatenate(mzs_list)
         by_mz = np.argsort(mzs)
         sp_mz_int_buf = np.array([np.concatenate(sp_inds_list)[by_mz],
                                   mzs[by_mz],
-                                  np.concatenate(ints_list)[by_mz]]).T
+                                  np.concatenate(ints_list)[by_mz]], dtype).T
         segment_spectra_chunk(sp_mz_int_buf, mz_segments, ds_segments_path)
 
         sp_inds_list, mzs_list, ints_list = [], [], []
+
+
+def clip_centroids_df(centroids_df, mz_min, mz_max):
+    ds_mz_range_unique_formulas = centroids_df[(mz_min < centroids_df.mz) &
+                                               (centroids_df.mz < mz_max)].index.unique()
+    centr_df = centroids_df[centroids_df.index.isin(ds_mz_range_unique_formulas)].reset_index().copy()
+    return centr_df
+
+
+def calculate_centroids_segments_n(centr_df, ds_segments, ds_segm_size_mb):
+    ds_size_mb = len(ds_segments) * ds_segm_size_mb
+    data_per_centr_segm_mb = 50
+    peaks_per_centr_segm = 1e4
+    centr_segm_n = int(max(ds_size_mb // data_per_centr_segm_mb,
+                           centr_df.shape[0] // peaks_per_centr_segm,
+                           32))
+    return centr_segm_n
 
 
 def segment_centroids(centr_df, segm_n, centr_segm_path):

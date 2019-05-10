@@ -119,10 +119,6 @@ class AnnotationJob(object):
                     self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FINISHED,
                                                                   datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                                                                   job_id))
-
-                if self._sm_config['colocalization'].get('enabled', False):
-                    coloc = Colocalization(self._db)
-                    coloc.run_coloc_job(self._ds.id)
             except Exception as e:
                 self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FAILED,
                                                               datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
@@ -158,7 +154,7 @@ class AnnotationJob(object):
 
     def _copy_input_data(self, ds):
         logger.info('Copying input data')
-        self._ds_data_path = Path(self._sm_config['fs']['data_path']) / ds.id
+        self._ds_data_path = Path(self._sm_config['fs']['spark_data_path']) / ds.id
         if ds.input_path.startswith('s3a://'):
             self._ds_data_path.mkdir(parents=True, exist_ok=True)
 
@@ -173,6 +169,14 @@ class AnnotationJob(object):
         else:
             rmtree(self._ds_data_path, ignore_errors=True)
             copytree(src=ds.input_path, dst=self._ds_data_path)
+
+    def cleanup(self):
+        if self._sc:
+            self._sc.stop()
+        if self._db:
+            self._db.close()
+        logger.debug(f'Cleaning dataset temp dir {self._ds_data_path}')
+        rmtree(self._ds_data_path, ignore_errors=True)
 
     def run(self, ds):
         """ Entry point of the engine. Molecule search is completed in several steps:
@@ -216,8 +220,5 @@ class AnnotationJob(object):
             time_spent = time.time() - start
             logger.info('Time spent: %d min %d sec', *divmod(int(round(time_spent)), 60))
         finally:
-            if self._sc:
-                self._sc.stop()
-            if self._db:
-                self._db.close()
+            self.cleanup()
             logger.info('*' * 150)

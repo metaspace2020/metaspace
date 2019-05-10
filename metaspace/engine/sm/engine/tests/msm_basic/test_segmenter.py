@@ -26,6 +26,7 @@ def test_define_ds_segments():
 def test_segment_spectra(to_msgpack_mock):
     imzml_parser_mock = Mock()
     imzml_parser_mock.getspectrum.return_value = (np.linspace(0, 90, num=10), np.ones(10))
+    imzml_parser_mock.mzPrecision = 'f'
     coordinates = list(product([0], range(10)))
     ds_segments = np.array([[0, 50], [50, 90.]])
 

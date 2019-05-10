@@ -1,5 +1,7 @@
 import json
 import urllib.parse
+from pathlib import Path
+
 import redis
 from requests import post
 import logging
@@ -188,6 +190,7 @@ class SMAnnotateDaemon(object):
                                              logger=self.logger)
         self._db = DB(self._sm_config['db'])
         self.redis_client = redis.Redis(**self._sm_config.get('redis', {}))
+        Path(self._sm_config['fs']['spark_data_path']).mkdir(parents=True, exist_ok=True)
 
     def _on_success(self, msg):
         ds = Dataset.load(self._db, msg['ds_id'])
@@ -231,12 +234,13 @@ class SMAnnotateDaemon(object):
         }
         self._upd_queue_pub.publish(msg=upd_msg, priority=DatasetActionPriority.HIGH)
 
-        analyze_msg = {
-            'ds_id': msg['ds_id'],
-            'ds_name': msg['ds_name'],
-            'action': DaemonAction.CLASSIFY_OFF_SAMPLE,
-        }
-        self._upd_queue_pub.publish(msg=analyze_msg, priority=DatasetActionPriority.LOW)
+        if self._sm_config['services'].get('off_sample', False):
+            analyze_msg = {
+                'ds_id': msg['ds_id'],
+                'ds_name': msg['ds_name'],
+                'action': DaemonAction.CLASSIFY_OFF_SAMPLE,
+            }
+            self._upd_queue_pub.publish(msg=analyze_msg, priority=DatasetActionPriority.LOW)
 
     def start(self):
         self._stopped = False
@@ -322,9 +326,12 @@ class SMIndexUpdateDaemon(object):
             self._manager.index(ds=ds)
 
         elif msg['action'] == DaemonAction.CLASSIFY_OFF_SAMPLE:
-            # depending on number of annotations may take up to several minutes
-            classify_dataset_ion_images(self._db, ds, self._sm_config['services'])
-            self._manager.index(ds=ds)
+            try:
+                # depending on number of annotations may take up to several minutes
+                classify_dataset_ion_images(self._db, ds, self._sm_config['services'])
+                self._manager.index(ds=ds)
+            except Exception as e:  # don't fail dataset when off-sample classifications fails
+                self.logger.warning(f'Failed to classify off-sample: {e}')
 
         elif msg['action'] == DaemonAction.UPDATE:
             self._manager.update(ds, msg['fields'])

@@ -48,7 +48,7 @@ def ds_dims(coordinates):
     return nrows, ncols
 
 
-def determine_spectra_order(coordinates):
+def get_pixel_indices(coordinates):
     _coord = np.array(coordinates)
     _coord = np.around(_coord, 5)  # correct for numerical precision
     _coord -= np.amin(_coord, axis=0)
@@ -60,10 +60,10 @@ def determine_spectra_order(coordinates):
 
 
 def make_sample_area_mask(coordinates):
-    sp_indices = determine_spectra_order(coordinates)
+    pixel_indices = get_pixel_indices(coordinates)
     nrows, ncols = ds_dims(coordinates)
     sample_area_mask = np.zeros(ncols * nrows, dtype=bool)
-    sample_area_mask[sp_indices] = True
+    sample_area_mask[pixel_indices] = True
     return sample_area_mask.reshape(nrows, ncols)
 
 
@@ -116,7 +116,7 @@ def create_process_segment(ds_segments, coordinates, image_gen_config, target_fo
 
         formula_metrics_df, formula_images = pd.DataFrame(), {}
         if centr_segm_path.exists():
-            logger.info(f'Reading centroids segment {segm_i} data from {centr_segm_path}')
+            logger.info(f'Reading centroids segment {segm_i} from {centr_segm_path}')
 
             centr_df = pd.read_msgpack(centr_segm_path)
             first_ds_segm_i, last_ds_segm_i = choose_ds_segments(ds_segments, centr_df, ppm)

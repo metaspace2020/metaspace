@@ -16,10 +16,6 @@
   file: dest=/opt/dev state=directory owner=ubuntu group=ubuntu mode=0700
   become: yes
 
-- name: Create /opt/data/sm_data directory
-  file: dest=/opt/data/sm_data state=directory owner=ubuntu group=ubuntu mode=0700
-  become: yes
-
 - name: Put SPARK_HOME into update sm-env.sh scripts
   template: src=sm-env.sh.j2 dest="{{ sm_home }}/scripts/sm-env.sh" owner=ubuntu group=ubuntu mode=0644
 

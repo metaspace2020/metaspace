@@ -31,6 +31,7 @@
   },
   "fs": {
     "data_path": "/tmp/abc",
+    "spark_data_path": "/tmp/abc",
     "s3_base_path": ""
   },
   "spark": {
