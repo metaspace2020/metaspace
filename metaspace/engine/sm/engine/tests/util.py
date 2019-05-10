@@ -63,7 +63,7 @@ def ds_config():
 
 class SparkContext(Context):
     def parallelize(self, x, numSlices=None):
-        return super().parallelize(x, numSlices=numSlices)
+        return super().parallelize(x, numPartitions=numSlices)
 
 
 @pytest.fixture(scope='module')
