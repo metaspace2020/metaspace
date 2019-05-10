@@ -33,8 +33,12 @@ CREATE INDEX ind_dataset_name ON dataset (name);
 DROP TABLE IF EXISTS optical_image;
 CREATE TABLE optical_image (
   id      text PRIMARY KEY,
-  ds_id   text,
-  zoom    int,
+  ds_id   text NOT NULL,
+  type text NOT NULL,
+  zoom REAL NOT NULL,
+  width INT NOT NULL,
+  height INT NOT NULL,
+  transform REAL[][],
   CONSTRAINT opt_img_ds_id_fk FOREIGN KEY (ds_id)
       REFERENCES dataset (id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE CASCADE

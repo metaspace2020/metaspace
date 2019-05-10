@@ -4,9 +4,10 @@
  import { annotationQuery } from '../../api/annotation';
  import {
   datasetVisibilityQuery,
-   DatasetVisibilityResult,
+  DatasetVisibilityResult,
   msAcqGeometryQuery,
-  opticalImageQuery,
+  OpticalImage,
+  opticalImagesQuery,
 } from '../../api/dataset';
  import { encodeParams } from '../Filters/index';
  import annotationWidgets from './annotation-widgets/index'
@@ -16,10 +17,11 @@
  import { Location } from 'vue-router';
  import { currentUserRoleQuery, CurrentUserRoleResult} from '../../api/user';
  import { safeJsonParse } from '../../util';
- import {omit, pick} from 'lodash-es';
+ import {omit, pick, sortBy, throttle} from 'lodash-es';
  import {ANNOTATION_SPECIFIC_FILTERS} from '../Filters/filterSpecs';
  import config from '../../config';
  import noImageURL from '../../assets/no-image.svg';
+ import {OpacityMode} from '../../lib/createColormap';
 
  type colorObjType = {
    code: string,
@@ -34,9 +36,10 @@
 
  type ImageSettings = {
    annotImageOpacity: number
-   opticalSrc: string
-   opacityMode: 'linear' | 'constant'
+   opacityMode: OpacityMode
    imagePosition: ImagePosition
+   opticalSrc: string | null
+   opticalTransform: number[][] | null
  }
 
  const metadataDependentComponents: any = {};
@@ -50,7 +53,7 @@
    }
  }
 
- @Component({
+ @Component<AnnotationView>({
    name: 'annotation-view',
    components: componentsToRegister,
    apollo: {
@@ -69,28 +72,29 @@
            return null;
          }
        },
-       variables(this: any): any {
+       variables(): any {
          return {
            id: this.annotation.id
          };
        }
      },
 
-     opticalImageUrl: {
-       query: opticalImageQuery,
-       variables(this: any): any {
+     opticalImages: {
+       query: opticalImagesQuery,
+       variables() {
          return {
            datasetId: this.annotation.dataset.id,
-           zoom: this.imagePosition.zoom
+           type: config.features.optical_transform ? 'SCALED' : 'CLIPPED_TO_ION_IMAGE',
          }
        },
-       // assumes both image server and webapp are routed via nginx
-       update: (data: any) => data.opticalImageUrl
+       update(data: any) {
+         return data.dataset && data.dataset.opticalImages || [];
+       }
      },
 
      msAcqGeometry: {
        query: msAcqGeometryQuery,
-       variables(this: any): any {
+       variables(): any {
          return {
           datasetId: this.annotation.dataset.id
          }
@@ -118,13 +122,17 @@
 
    msAcqGeometry: any
    peakChartData: any
-   opticalImageUrl?: string
-   disableScaleBar: boolean = false
+   opticalImages!: OpticalImage[] | null
+   showScaleBar: boolean = false
    datasetVisibility: DatasetVisibilityResult | null = null
    currentUser: CurrentUserRoleResult | null = null
    scaleBarColor: string = '#000000'
    failedImages: string[] = []
    noImageURL = noImageURL
+
+   created() {
+     this.onImageMove = throttle(this.onImageMove);
+   }
 
    metadataDependentComponent(category: string): any {
      const currentMdType: string = this.$store.getters.filter.metadataType;
@@ -159,8 +167,8 @@
      return "Molecules (" + this.annotation.possibleCompounds.length + ")";
    }
 
-   get imageOpacityMode(): 'linear' | 'constant' {
-     return (this.showOpticalImage && this.opticalImageUrl) ? 'linear' : 'constant';
+   get imageOpacityMode(): OpacityMode {
+     return (this.showOpticalImage && this.bestOpticalImage != null) ? 'linear' : 'constant';
    }
 
    get permalinkHref(): Location {
@@ -182,16 +190,31 @@
      };
    }
 
+   get bestOpticalImage(): OpticalImage | null {
+     if (this.opticalImages != null && this.opticalImages.length > 0) {
+       const {zoom} = this.imagePosition;
+       // Find the best optical image, preferring images with a higher zoom level than the current zoom
+       const sortedOpticalImages = sortBy(this.opticalImages, optImg =>
+         optImg.zoom >= zoom
+           ? optImg.zoom - zoom
+           : 100 + (zoom - optImg.zoom));
+
+       return sortedOpticalImages[0];
+     }
+     return null;
+   }
+
    get imageLoaderSettings(): ImageSettings {
-     return Object.assign({}, {
-       annotImageOpacity: (this.showOpticalImage && this.opticalImageUrl) ? this.opacity : 1.0,
-       opticalSrc: this.showOpticalImage && this.opticalImageUrl != null ? this.opticalImageUrl : '',
-       opticalImageUrl: this.opticalImageUrl,
+     const optImg = this.bestOpticalImage;
+     const hasOpticalImages = this.showOpticalImage && optImg != null;
+
+     return {
+       annotImageOpacity: (this.showOpticalImage && hasOpticalImages) ? this.opacity : 1.0,
        opacityMode: this.imageOpacityMode,
-       showOpticalImage: this.showOpticalImage,
-       disableScaleBar: this.disableScaleBar,
        imagePosition: this.imagePosition,
-     });
+       opticalSrc: this.showOpticalImage && optImg && optImg.url || null,
+       opticalTransform: optImg && optImg.transform,
+     };
    }
 
    get visibilityText() {
@@ -289,7 +312,7 @@
    }
 
    toggleScaleBar(): void {
-     this.disableScaleBar = !this.disableScaleBar
+     this.showScaleBar = !this.showScaleBar
    }
 
    loadVisibility() {

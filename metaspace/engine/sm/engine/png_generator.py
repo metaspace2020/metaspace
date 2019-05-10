@@ -30,13 +30,13 @@ class ImageStoreServiceWrapper(object):
         storage_type: str
             db | fs
         img_type: str
-            iso_image | optical_image | raw_optical_image
+            iso_image | optical_image | raw_optical_image | ion_thumbnail
         fp:
             file object
 
         Returns
         ---
-        : str
+        str
             new image id
         """
         url = self._format_url(storage_type=storage_type, img_type=img_type, method='upload')
@@ -50,6 +50,19 @@ class ImageStoreServiceWrapper(object):
             print('Failed to delete: {}'.format(url))  # logger has issues with pickle when sent to spark
 
     def get_image_by_id(self, storage_type, img_type, img_id):
+        """
+        Args
+        ---
+        storage_type: str
+            db | fs
+        img_type: str
+            iso_image | optical_image | raw_optical_image | ion_thumbnail
+        img_id: str
+
+        Returns
+        ---
+        Image.Image
+        """
         url = self._format_url(storage_type=storage_type, img_type=img_type, img_id=img_id)
         return Image.open(self._session.get(url, stream=True).raw)
 

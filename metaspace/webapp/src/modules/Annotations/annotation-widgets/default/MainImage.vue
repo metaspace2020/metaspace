@@ -8,13 +8,13 @@
               :colormap="colormap"
               :pixelSizeX="pixelSizeX"
               :pixelSizeY="pixelSizeY"
-              :disableScaleBar="disableScaleBar"
+              :showScaleBar="showScaleBar"
               :scaleBarColor="scaleBarColor"
               :width="imageViewerWidth"
               :height="imageViewerHeight"
               :zoom="imageLoaderSettings.imagePosition.zoom * imageFit.imageZoom"
-              :minZoom="imageFit.imageZoom / 2"
-              :maxZoom="imageFit.imageZoom * 10"
+              :minZoom="imageFit.imageZoom / 4"
+              :maxZoom="imageFit.imageZoom * 20"
               :xOffset="imageLoaderSettings.imagePosition.xOffset"
               :yOffset="imageLoaderSettings.imagePosition.yOffset"
               ref="imageLoader"
@@ -26,7 +26,7 @@
         </div>
 
         <div class="colorbar-container">
-            <div v-if="imageLoaderSettings.opticalImageUrl">
+            <div v-if="imageLoaderSettings.opticalSrc">
                 Opacity:
                 <el-slider
                         vertical
@@ -123,7 +123,7 @@ export default class MainImage extends Vue {
     @Prop({type: Number})
     pixelSizeY!: Number
     @Prop({type: Boolean})
-    disableScaleBar!: Boolean
+    showScaleBar!: Boolean
     @Prop({type: String})
     scaleBarColor!: String
 
@@ -131,16 +131,19 @@ export default class MainImage extends Vue {
     ionImage: IonImage | null = null;
     ionImageIsLoading = false;
     imageViewerWidth: number = 500;
-    imageViewerHeight: number = 500; // constant
+    imageViewerHeight: number = 500;
 
     created() {
         const ignoredPromise = this.updateIonImage();
     }
     mounted() {
-        this.imageViewerWidth = this.$refs.imageViewerContainer.clientWidth;
+        this.onResize();
     }
     onResize() {
-        this.imageViewerWidth = this.$refs.imageViewerContainer.clientWidth;
+        if (this.$refs.imageViewerContainer != null) {
+            this.imageViewerWidth = this.$refs.imageViewerContainer.clientWidth;
+            this.imageViewerHeight = Math.min(Math.max(window.innerHeight - 500, 500), 1000);
+        }
     }
 
     @Watch('annotation')

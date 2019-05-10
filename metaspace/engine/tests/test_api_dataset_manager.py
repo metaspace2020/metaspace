@@ -1,3 +1,4 @@
+from itertools import product
 from unittest.mock import MagicMock, call
 from datetime import datetime
 from PIL import Image
@@ -10,6 +11,7 @@ from sm.rest.dataset_manager import SMapiDatasetManager
 from sm.rest.dataset_manager import Dataset, DatasetActionPriority, DatasetStatus
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.tests.util import sm_config, metadata, ds_config, test_db, fill_db
+from sm.engine.optical_image import OpticalImageType
 
 
 def create_api_ds_man(db=None, es=None, img_store=None,
@@ -71,7 +73,10 @@ class TestSMapiDatasetManager:
         action_queue_mock = MagicMock(spec=QueuePublisher)
         es_mock = MagicMock(spec=ESExporter)
         img_store_mock = MagicMock(ImageStoreServiceWrapper)
-        img_store_mock.post_image.side_effect = ['opt_img_id1', 'opt_img_id2', 'opt_img_id3', 'thumbnail_id']
+        img_store_mock.post_image.side_effect = ['opt_img_scaled_id1', 'opt_img_id1',
+                                                 'opt_img_scaled_id2', 'opt_img_id2',
+                                                 'opt_img_scaled_id3', 'opt_img_id3',
+                                                 'thumbnail_id']
         img_store_mock.get_image_by_id.return_value = Image.new('RGB', (100, 100))
 
         db, ds_man = create_api_ds_man(es=es_mock,
@@ -86,9 +91,9 @@ class TestSMapiDatasetManager:
         raw_img_id = 'raw_opt_img_id'
         ds_man.add_optical_image(ds_id, raw_img_id, [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
                                  zoom_levels=zoom_levels)
-        assert db.select('SELECT * FROM optical_image') == [
-            ('opt_img_id{}'.format(i + 1), ds.id, zoom)
-            for i, zoom in enumerate(zoom_levels)
-        ]
+        optical_images = db.select(f"SELECT ds_id, type, zoom FROM optical_image")
+        for type, zoom in product([OpticalImageType.SCALED, OpticalImageType.CLIPPED_TO_ION_IMAGE], zoom_levels):
+            assert (ds_id, type, zoom) in optical_images
+
         assert db.select('SELECT optical_image FROM dataset where id = %s', params=(ds_id,)) == [(raw_img_id,)]
         assert db.select('SELECT thumbnail FROM dataset where id = %s', params=(ds_id,)) == [('thumbnail_id',)]

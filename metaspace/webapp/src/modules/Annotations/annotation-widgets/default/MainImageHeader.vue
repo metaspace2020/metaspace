@@ -18,9 +18,9 @@
             @click="resetViewport"/>
     </span>
 
-    <span v-if="imageLoaderSettings.opticalImageUrl">
+    <span v-if="hasOpticalImage">
         <img class="show-optical-image-icon"
-            :class="imageLoaderSettings.showOpticalImage ? '' : 'png-icon-disabled'"
+            :class="showOpticalImage ? '' : 'png-icon-disabled'"
             src="../../../../assets/microscope-icon.png"
             title="Show/hide optical image"
             @click="toggleOpticalImage"/>
@@ -43,14 +43,16 @@ interface colorObjType {
     components: { IonImageSettings }
 })
 export default class MainImageHeader extends Vue {
-    @Prop()
-    imageLoaderSettings: any
+    @Prop({required: true, type: Boolean})
+    hasOpticalImage!: boolean;
+    @Prop({required: true, type: Boolean})
+    showOpticalImage!: boolean;
     @Prop({required: true, type: Function})
-    resetViewport!: Function
+    resetViewport!: Function;
     @Prop({required: true, type: Function})
-    toggleOpticalImage!: Function
+    toggleOpticalImage!: Function;
     @Prop({required: true, type: Function})
-    toggleScaleBar!: Function
+    toggleScaleBar!: Function;
 
     updateColor(colorObj: colorObjType) {
       this.$emit('colorInput', colorObj)

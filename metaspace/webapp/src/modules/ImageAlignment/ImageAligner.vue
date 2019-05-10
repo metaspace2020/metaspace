@@ -44,11 +44,12 @@
         @dblclick.native="onDoubleClick"
         @mousedown.native="onImageMouseDown"
         @contextmenu.native="onImageRightMouseDown"
-        :imageStyle="{overflow: 'visible', transform: annotImageTransformCSS, transformOrigin: '0 0'}"
+        :imageStyle="{overflow: 'visible'}"
         :imageFitParams="{areaWidth: naturalWidth || 1, areaHeight: naturalHeight || 1}"
         :max-height=100500
         @wheel.native="onWheel"
         :annot-image-opacity="annotImageOpacity"
+        :ionImageTransform="ionImageTransform"
         opacity-mode="linear"
         @redraw="onLoad">
     </image-loader>
@@ -59,7 +60,7 @@
 <script>
  import Vue from 'vue';
  import ImageLoader from '../../components/ImageLoader.vue';
- import {inv, dot, diag, getDiag} from 'numeric';
+ import {inv, dot, diag} from 'numeric';
  import {scrollDistance} from '../../util';
 
  function computeTransform(src, dst) {
@@ -400,12 +401,8 @@
      scaleY() {
        return this.opticalImageHeight / this.opticalImageNaturalHeight || 1;
      },
-     annotImageTransformCSS() {
-       const a = this.transform;
-       return `matrix3d(${a[0][0]}, ${a[1][0]}, 0, ${a[2][0]},
-                        ${a[0][1]}, ${a[1][1]}, 0, ${a[2][1]},
-                                 0,          0, 1,          0,
-                        ${a[0][2]}, ${a[1][2]}, 0, ${a[2][2]})`;
+     ionImageTransform() {
+       return dot(diag([this.scaleX, this.scaleY, 1]), this.normalizedTransform);
      },
 
      annotImageStyle() {
