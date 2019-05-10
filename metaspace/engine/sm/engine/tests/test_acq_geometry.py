@@ -13,8 +13,8 @@ def test_ims_geometry_factory_normal():
         'length_unit': 'nm',
         'acquisition_grid': {
             'regular_grid': True,
-            'count_x': 123,
-            'count_y': 456
+            'count_x': 456,
+            'count_y': 123
         },
         'pixel_size': {
             'regular_size': True,
@@ -32,8 +32,8 @@ def test_ims_geometry_factory_empty():
         'length_unit': 'nm',
         'acquisition_grid': {
             'regular_grid': True,
-            'count_x': 123,
-            'count_y': 456
+            'count_x': 456,
+            'count_y': 123
         },
         'pixel_size': {
             'regular_size': True,

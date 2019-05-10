@@ -36,7 +36,8 @@ def run(ds_id, sql_where):
                                            "WHERE j.ds_id = %s LIMIT 1", [ds_id])
             print(sample_img_id)
             if sample_img_id:
-                dims = img_store.get_image_by_id('fs', 'iso_image', sample_img_id).size
+                w, h = img_store.get_image_by_id('fs', 'iso_image', sample_img_id).size
+                dims = (h, w)  # n_cols, n_rows
             else:
                 dims = (None, None)
 

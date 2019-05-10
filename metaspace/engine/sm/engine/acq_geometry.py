@@ -1,6 +1,7 @@
 
 def make_ims_acq_geometry(ms_file_path, metadata, dims):
     pixel_size = metadata.get('MS_Analysis', {}).get('Pixel_Size', {})
+    row_n, col_n = dims
 
     # if ms_file_path is not None:
     #     from pyimzml.ImzMLParser import ImzMLParser
@@ -13,8 +14,8 @@ def make_ims_acq_geometry(ms_file_path, metadata, dims):
         'length_unit': 'nm',
         'acquisition_grid': {
             'regular_grid': True,
-            'count_x': int(dims[0]),
-            'count_y': int(dims[1])
+            'count_x': int(col_n),
+            'count_y': int(row_n)
         },
         'pixel_size': {
             'regular_size': True,
