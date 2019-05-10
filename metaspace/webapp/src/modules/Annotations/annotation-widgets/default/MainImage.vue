@@ -132,7 +132,7 @@ export default class MainImage extends Vue {
     ionImage: IonImage | null = null;
     ionImageIsLoading = false;
     imageViewerWidth: number = 500;
-    imageViewerHeight: number = 500; // constant
+    imageViewerHeight: number = 500;
 
     created() {
         const ignoredPromise = this.updateIonImage();
@@ -142,6 +142,7 @@ export default class MainImage extends Vue {
     }
     onResize() {
         this.imageViewerWidth = this.$refs.imageViewerContainer.clientWidth;
+        this.imageViewerHeight = Math.min(Math.max(window.innerHeight - 500, 500), 1000);
     }
 
     @Watch('annotation')
