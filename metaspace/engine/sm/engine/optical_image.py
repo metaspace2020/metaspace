@@ -32,7 +32,6 @@ logger = logging.getLogger('engine')
 
 
 class OpticalImageType(object):
-    RAW = 'raw'
     SCALED = 'scaled'
     CLIPPED_TO_ION_IMAGE = 'clipped_to_ion_image'
 
@@ -70,7 +69,7 @@ def _scale_image(scan, transform_, zoom):
     # i.e. zoom = 1 is what the user sees by default, and zooming into the image triggers
     # fetching higher-resolution images from the server
 
-    scale_factor = zoom * min(VIEWPORT_WIDTH / scan.width, VIEWPORT_HEIGHT / scan.height)
+    scale_factor = min(zoom * min(VIEWPORT_WIDTH / scan.width, VIEWPORT_HEIGHT / scan.height), 1)
     new_dims = int(round(scan.width * scale_factor)), int(round(scan.height * scale_factor))
 
     img = scan.resize(new_dims, True)
@@ -99,9 +98,6 @@ def _add_raw_optical_image(db, img_store, ds, img_id, transform):
 
 def _add_zoom_optical_images(db, img_store, ds, dims, img_id, optical_img, transform, zoom_levels):
     rows = []
-
-    rows.append((img_id, ds.id, OpticalImageType.RAW,
-                 1, optical_img.width, optical_img.height, np.linalg.pinv(transform).tolist()))
 
     for zoom in zoom_levels:
         img, (width, height), transform_to_ion_space = _scale_image(optical_img, transform, zoom)

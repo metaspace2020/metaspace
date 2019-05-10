@@ -12,10 +12,25 @@
            class="isotope-image"
            :style="ionImageStyle"/>
 
-      <img v-if="ionImage && opticalSrc"
-           :src="opticalImageUrl"
+      <!--
+       The key for the currently loaded image can shift between the following two img virtual-DOM nodes, which causes
+       Vue to transfer the real DOM node from one virtual-DOM node to the other. This allows the following code to
+       seamlessly switch between zoom levels that have different images and different transforms.
+       Always test against IE11 when touching this code - IE11's @load event doesn't always fire on img elements.
+      -->
+      <img v-if="ionImage && opticalImageUrl"
+           :key="loadedOpticalImageUrl"
+           :src="loadedOpticalImageUrl"
            class="optical-image"
-           :style="opticalImageStyle" />
+           :style="loadedOpticalImageStyle" />
+
+      <img v-if="ionImage && opticalImageUrl && loadedOpticalImageUrl !== opticalImageUrl"
+           :key="opticalImageUrl"
+           :src="opticalImageUrl"
+           class="optical-image optical-image-loading"
+           :style="opticalImageStyle"
+           @load="onOpticalImageLoaded"
+      />
     </div>
     <scale-bar v-if="!showScaleBar"
                :xScale="xScale"
@@ -131,7 +146,10 @@
        dragYOffset: 0,
        overlayDefault: true,
        overlayFadingIn: false,
-       tmId: 0
+       tmId: 0,
+       // Cache the last loaded optical image so that it doesn't flicker when changing zoom levels
+       loadedOpticalImageUrl: this.opticalImageUrl,
+       loadedOpticalImageStyle: this.opticalImageStyle,
      }
    },
    computed: {
@@ -142,7 +160,6 @@
        }
        return false
      },
-
 
      xScale() {
        if (this.ionImage != null && this.pixelSizeX != null && this.pixelSizeX !== 0) {
@@ -213,7 +230,7 @@
      },
 
      opticalImageUrl() {
-       return (config.imageStorage || '') + this.opticalSrc;
+       return this.opticalSrc ? (config.imageStorage || '') + this.opticalSrc : null;
      },
 
    },
@@ -273,6 +290,11 @@
        const xOffset = this.dragXOffset + (event.clientX - this.dragStartX) / this.zoom;
        const yOffset = this.dragYOffset + (event.clientY - this.dragStartY) / this.zoom;
        this.$emit('move', {zoom: this.zoom, xOffset, yOffset});
+     },
+
+     onOpticalImageLoaded() {
+       this.loadedOpticalImageUrl = this.opticalImageUrl;
+       this.loadedOpticalImageStyle = this.opticalImageStyle;
      }
    }
  }
@@ -298,6 +320,11 @@
    left: 0;
    top: 0;
    transform-origin: 0 0;
+ }
+
+ .optical-image-loading {
+   opacity: 0.01;
+   z-index: -2;
  }
 
  .image-loader {

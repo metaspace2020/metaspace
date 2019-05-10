@@ -121,7 +121,7 @@
 
    msAcqGeometry: any
    peakChartData: any
-   opticalImages: OpticalImage[] | null
+   opticalImages!: OpticalImage[] | null
    showScaleBar: boolean = false
    datasetVisibility: DatasetVisibilityResult | null = null
    currentUser: CurrentUserRoleResult | null = null
@@ -167,7 +167,7 @@
    }
 
    get imageOpacityMode(): 'linear' | 'constant' {
-     return (this.showOpticalImage && this.opticalImages != null) ? 'linear' : 'constant';
+     return (this.showOpticalImage && this.bestOpticalImage != null) ? 'linear' : 'constant';
    }
 
    get permalinkHref(): Location {

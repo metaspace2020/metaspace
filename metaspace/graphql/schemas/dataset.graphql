@@ -171,7 +171,6 @@ type DatasetCountPerGroup {
 }
 
 enum OpticalImageType {
-    RAW
     SCALED
     CLIPPED_TO_ION_IMAGE
 }
