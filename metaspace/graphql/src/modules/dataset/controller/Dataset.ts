@@ -46,6 +46,7 @@ const getOpticalImagesByDsId = async (ctx: Context, id: string): Promise<Optical
         'SELECT * from public.optical_image WHERE ds_id = ANY($1)', [datasetIds]);
       const results = rawResults.map(({id, type, ...rest}) => ({
         ...rest,
+        id,
         url: `/fs/optical_images/${id}`,
         type: type.toUpperCase() as OpticalImageType,
       }));

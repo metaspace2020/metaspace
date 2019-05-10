@@ -110,9 +110,7 @@ export const datasetListItemsQuery =
     }
   }`;
 
-export type OpticalImageType =   'RAW' |
-  'SCALED' |
-  'CLIPPED_TO_ION_IMAGE';
+export type OpticalImageType = 'SCALED' | 'CLIPPED_TO_ION_IMAGE';
 
 export interface OpticalImage {
   url: string;
@@ -123,7 +121,9 @@ export interface OpticalImage {
 export const opticalImagesQuery =
   gql`query ($datasetId: String!, $type: OpticalImageType) {
     dataset(id: $datasetId) {
+      id
       opticalImages(type: $type) {
+        id
         url
         type
         zoom
@@ -138,15 +138,6 @@ export const rawOpticalImageQuery =
       url
       transform
     }
-  }`;
-export interface RawOpticalImageQuery {
-  url: string;
-  transform: number[][];
-}
-
-export const thumbnailOptImageQuery =
-    gql`query ($datasetId: String!) {
-      thumbnailImage(datasetId: $datasetId) 
   }`;
 
 export const createDatasetQuery =

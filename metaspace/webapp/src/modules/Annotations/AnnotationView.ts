@@ -21,6 +21,7 @@
  import {ANNOTATION_SPECIFIC_FILTERS} from '../Filters/filterSpecs';
  import config from '../../config';
  import noImageURL from '../../assets/no-image.svg';
+ import {OpacityMode} from '../../lib/createColormap';
 
  type colorObjType = {
    code: string,
@@ -35,7 +36,7 @@
 
  type ImageSettings = {
    annotImageOpacity: number
-   opacityMode: 'linear' | 'constant'
+   opacityMode: OpacityMode
    imagePosition: ImagePosition
    opticalSrc: string | null
    opticalTransform: number[][] | null
@@ -166,7 +167,7 @@
      return "Molecules (" + this.annotation.possibleCompounds.length + ")";
    }
 
-   get imageOpacityMode(): 'linear' | 'constant' {
+   get imageOpacityMode(): OpacityMode {
      return (this.showOpticalImage && this.bestOpticalImage != null) ? 'linear' : 'constant';
    }
 

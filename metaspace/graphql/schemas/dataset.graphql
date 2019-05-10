@@ -176,6 +176,7 @@ enum OpticalImageType {
 }
 
 type OpticalImage {
+    id: String!
     url: String!
     type: OpticalImageType!
     zoom: Float!    # Zoom level for optimal pixel density when fitted to a 1000x500 area

@@ -91,7 +91,6 @@ import {IonImage, loadPngFromUrl, processIonImage} from '../../../../lib/ionImag
 import {get} from 'lodash-es';
 import fitImageToArea, {FitImageToAreaResult} from '../../../../lib/fitImageToArea';
 import reportError from '../../../../lib/reportError';
-import {inv} from 'numeric';
 
 
 @Component({
@@ -141,8 +140,10 @@ export default class MainImage extends Vue {
         this.imageViewerWidth = this.$refs.imageViewerContainer.clientWidth;
     }
     onResize() {
-        this.imageViewerWidth = this.$refs.imageViewerContainer.clientWidth;
-        this.imageViewerHeight = Math.min(Math.max(window.innerHeight - 500, 500), 1000);
+        if (this.$refs.imageViewerContainer != null) {
+            this.imageViewerWidth = this.$refs.imageViewerContainer.clientWidth;
+            this.imageViewerHeight = Math.min(Math.max(window.innerHeight - 500, 500), 1000);
+        }
     }
 
     @Watch('annotation')

@@ -39,7 +39,7 @@
                    class="input-optical-image"
                    style="display: none;"
                    @change="onFileChange($event)"
-                   accept=".jpg, .jpeg, .png"/>
+                   accept=".jpg,.jpeg,.png"/>
             Select optical image
           </label>
 
