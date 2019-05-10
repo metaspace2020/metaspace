@@ -137,7 +137,7 @@ export default class MainImage extends Vue {
         const ignoredPromise = this.updateIonImage();
     }
     mounted() {
-        this.imageViewerWidth = this.$refs.imageViewerContainer.clientWidth;
+        this.onresize();
     }
     onResize() {
         if (this.$refs.imageViewerContainer != null) {
