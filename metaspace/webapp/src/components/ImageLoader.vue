@@ -59,8 +59,10 @@
       this.onResize();
     }
     onResize() {
-      this.containerWidth = this.$refs.container.clientWidth;
-      this.containerHeight = this.$refs.container.clientHeight;
+      if (this.$refs.container != null) {
+        this.containerWidth = this.$refs.container.clientWidth;
+        this.containerHeight = this.$refs.container.clientHeight;
+      }
     }
 
     @Watch('src')

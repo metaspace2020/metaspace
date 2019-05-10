@@ -50,14 +50,19 @@ def _transform_image_to_ion_space(scan, transform_, dims, zoom):
     # i.e. zoom = 1 is what the user sees by default, and zooming into the image triggers
     # fetching higher-resolution images from the server
 
-    scale_factor = min(int(round(zoom * min(VIEWPORT_WIDTH / dims[0], VIEWPORT_HEIGHT / dims[1]))), 1)
+    # Note: min/max scale factor here assume that `transform` maps the optical image on to approximately the same
+    # shape/size as the ion image. If there is a significant unused border outside the ion image, or the optical image
+    # is much larger, then the optical image's DPI won't be a good match with the screen resolution
+    max_scale_factor = np.ceil(max(scan.width / dims[0], scan.height / dims[1]))
+    scale_factor = zoom * min(VIEWPORT_WIDTH / dims[0], VIEWPORT_HEIGHT / dims[1])
+    scale_factor = np.clip(scale_factor, 1, max_scale_factor)
 
     transform = np.array(transform_)
     assert transform.shape == (3, 3)
     transform = transform / transform[2, 2]
     transform[:, :2] /= scale_factor
     coeffs = transform.flat[:8]
-    new_dims = dims[0] * scale_factor, dims[1] * scale_factor
+    new_dims = int(round(dims[0] * scale_factor)), int(round(dims[1] * scale_factor))
     img = scan.transform(new_dims, Image.PERSPECTIVE, coeffs, Image.BICUBIC)
     transform_to_ion_space = np.diag([1/scale_factor, 1/scale_factor, 1])
 

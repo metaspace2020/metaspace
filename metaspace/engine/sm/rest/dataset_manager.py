@@ -1,8 +1,5 @@
-import io
 import logging
 from datetime import datetime
-import numpy as np
-from PIL import Image
 
 from sm.engine.dataset import DatasetStatus, Dataset
 from sm.engine.errors import DSIsBusy, UnknownDSID
