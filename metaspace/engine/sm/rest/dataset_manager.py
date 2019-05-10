@@ -75,10 +75,9 @@ class SMapiDatasetManager(object):
         return doc['id']
 
     def delete(self, ds_id, **kwargs):
-        """ Delete optical images and send delete message to the queue """
+        """ Send delete message to the queue """
         ds = Dataset.load(self._db, ds_id)
         self._set_ds_busy(ds, kwargs.get('force', False))
-        self.del_optical_image(ds_id, **kwargs)
         self._post_sm_msg(ds=ds, queue=self._update_queue, action=DaemonAction.DELETE, **kwargs)
 
     def update(self, ds_id, doc, **kwargs):
