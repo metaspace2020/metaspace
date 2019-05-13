@@ -1,9 +1,23 @@
 ---
 
+- name: Create metaspace installation directory
+  become: yes
+  file:
+    path: "{{ metaspace_home }}"
+    state: directory
+    owner: "{{ spark_user }}"
+    group: "{{ spark_user }}"
+
+- name: Check if .git dir exists
+  stat:
+    path: "{{ metaspace_home }}/.git"
+  register: git_dir
+
 - name: Remove all local file changes
   shell: git reset --hard && git clean -f
   args:
     chdir: "{{ metaspace_home }}"
+  when: git_dir.stat.exists
 
 - name: Delete all local and remote branches except for 'master'
   shell: |
@@ -14,7 +28,7 @@
       xargs --no-run-if-empty git branch -D
   args:
     chdir: "{{ metaspace_home }}"
-  when: local_deploy is not defined
+  when: git_dir.stat.exists and local_deploy is not defined
 
 - name: Pull metaspace "{{ metaspace_branch }}" branch from the repository
   git:
@@ -39,8 +53,6 @@
       dest: "{{ sm_ansible_home }}/"
       rsync_opts:
         - --exclude=.*
-        - --exclude=aws/env/*
-        - --exclude=aws/files/*
     - src: "{{ sm_home }}/"
       dest: "{{ sm_home }}/"
       rsync_opts:
@@ -57,7 +69,34 @@
         - --exclude='dist/*'
         - --exclude='node_modules/*'
         - --exclude='.*'
+        - --exclude=aws/env/*
+        - --exclude=aws/files/*
+    - src: "{{ sm_graphql_home }}/"
+      dest: "{{ sm_graphql_home }}/"
+      rsync_opts:
+        - --exclude='config/*.js'
+        - --exclude='logs/*'
+        - --exclude='dist/*'
+        - --exclude='node_modules/*'
+        - --exclude='.*'
+  tags: ['web']
 
+- name: Upload local engine files
+  synchronize:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    rsync_opts: "{{ item.rsync_opts }}"
+  when: local_deploy is defined
+  with_items:
+    - src: "{{ sm_home }}/"
+      dest: "{{ sm_home }}/"
+      rsync_opts:
+        - --exclude=.*
+        - --exclude=conf/*
+        - --exclude=logs/*.json
+        - --exclude=docker/*
+        - --exclude=docs/*
+  tags: [master, slave, web]
 
 #    - src: "{{ sm_webapp_home }}/"
 #      dest: "{{ sm_webapp_home }}/"

@@ -1,14 +1,14 @@
 import argparse
 from os.path import join
+import os
+import sys
 from pprint import pprint
-import numpy as np
 
+import numpy as np
 from fabric.api import local
 from fabric.context_managers import warn_only
 
-from sm.engine.es_export import ESExporter
-from sm.engine.search_job import SearchJob
-from sm.engine.sm_daemons import SMDaemonManager
+from sm.engine.annotation_job import AnnotationJob
 from sm.engine.db import DB
 from sm.engine.mol_db import MolDBServiceWrapper
 from sm.engine.png_generator import ImageStoreServiceWrapper
@@ -30,10 +30,10 @@ class SciTester(object):
         self.sm_config = SMConfig.get_conf()
         self.db = DB(self.sm_config['db'])
 
-        self.ds_id = '2000-01-01-00_00_00'
+        self.ds_id = '2000-01-01_00h00m00s'
         self.base_search_res_path = join(proj_root(), 'tests/reports', 'spheroid_untreated_search_res.csv')
         self.ds_name = 'sci_test_spheroid_untreated'
-        self.data_dir_path = join(self.sm_config['fs']['base_path'], self.ds_name)
+        self.ds_data_path = join(self.sm_config['fs']['spark_data_path'], self.ds_name)
         self.input_path = join(proj_root(), 'tests/data/untreated')
         self.ds_config_path = join(self.input_path, 'config.json')
         self.metrics = ['chaos', 'spatial', 'spectral']
@@ -140,14 +140,16 @@ class SciTester(object):
         if mock_graphql_db:
             self.db.alter(GRAPHQL_SQL_SCHEMA)
 
+        os.environ['PYSPARK_PYTHON'] = sys.executable
+
         ds = create_ds_from_files(self.ds_id, self.ds_name, self.input_path)
         self.db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
         ds.save(self.db)
-        SearchJob(img_store).run(ds)
+        AnnotationJob(img_store).run(ds)
 
     def clear_data_dirs(self):
         with warn_only():
-            local('rm -rf {}'.format(self.data_dir_path))
+            local('rm -rf {}'.format(self.ds_data_path))
 
 
 if __name__ == '__main__':

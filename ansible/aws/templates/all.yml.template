@@ -1,6 +1,7 @@
 ---
 
 stage: STAGE_NAME  # prod/stage/dev
+ansible_python_interpreter: /usr/bin/python3
 
 web_host: DOMAIN_NAME or IP
 
@@ -87,7 +88,7 @@ mol_db_postgres_pass: POSTGRES_PASSWORD
 mol_db_image_dir: /var/www/mol-images
 mol_db_miniconda_env:
   name: mol-db
-mol_db_import_databases: true  # set to false to avoid dropping MolDB database
+mol_db_import_databases: true  # set to false to avoid triggering database import
 mol_db_import_mol_images: true  # set to false to avoid reimporting all molecular images
 mol_db_image_archives:
   - name: HMDB
@@ -201,7 +202,7 @@ sm_webapp_features:
 sm_activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
 
 spark_key_file: ~/.ssh/ubuntu_spark
-spark_version: "2.3.0-bin-hadoop2.7"
+spark_version: "2.3.3-bin-hadoop2.7"
 spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"
 spark_home: "/usr/lib/spark"
 spark_user: "ubuntu"
@@ -365,7 +366,7 @@ cluster_configuration:
 
     master:
       hostgroup: MASTER_HOSTGROUP  # specify a custom name for the group of hosts
-      type: c4.xlarge
+      type: c5d.2xlarge
       n: 1
       elipalloc:
       price: 0.6
@@ -375,13 +376,13 @@ cluster_configuration:
       block_dev_maps:
         - DeviceName: /dev/sda1
           Ebs:
-            VolumeSize: 500
+            VolumeSize: 200
             DeleteOnTermination: True
             VolumeType: gp2
 
     slave:
       hostgroup: SLAVE_HOSTGROUP  # specify a custom name for the group of hosts
-      type: c4.2xlarge
+      type: c5d.2xlarge
       n: 1
       elipalloc:
       price: 0.6
@@ -391,7 +392,7 @@ cluster_configuration:
       block_dev_maps:
         - DeviceName: /dev/sda1
           Ebs:
-            VolumeSize: 1000
+            VolumeSize: 200
             DeleteOnTermination: True
             VolumeType: gp2
 # uncomment below if you want to use Elasticsearch for logs aggregation

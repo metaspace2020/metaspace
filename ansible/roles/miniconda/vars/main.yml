@@ -1,4 +1,3 @@
-miniconda_installer: Miniconda{{ miniconda_python }}-{{ miniconda_version }}-{{ miniconda_systems[ansible_system] }}-{{ miniconda_architecture[ansible_architecture] }}.sh
 miniconda_systems:
   Linux: Linux
   Darwin: MacOSX
@@ -7,3 +6,5 @@ miniconda_architecture:
   i386: x86
   armv7l: armv7l
   ppc64le: ppc64le
+
+miniconda_installer: Miniconda{{ miniconda_python }}-{{ miniconda_version }}-{{ miniconda_systems[ansible_system] }}-{{ miniconda_architecture[ansible_architecture] }}.sh

@@ -65,19 +65,17 @@ def ds_config():
     }
 
 
-class SparkContext(Context):
-    def parallelize(self, x, numSlices=None):
-        return super().parallelize(x, numPartitions=numSlices)
-
-
 @pytest.fixture(scope='module')
 def pysparkling_context(request):
-    return SparkContext()
+    return Context()
 
 
 @pytest.fixture(scope='module')
-def pyspark_context(request):
+def spark_context(request):
     from pyspark import SparkContext
+    import sys
+    import os
+    os.environ.setdefault('PYSPARK_PYTHON', sys.executable)
     sc = SparkContext(master='local[2]')
     request.addfinalizer(lambda: sc.stop())
     return sc
@@ -85,10 +83,10 @@ def pyspark_context(request):
 
 @pytest.fixture()
 def test_db(request):
-    db_config = dict(**sm_config['db'])
-    db_config['database'] = 'postgres'
+    db_config_postgres = dict(**sm_config['db'])
+    db_config_postgres['database'] = 'postgres'
 
-    db = DB(db_config, autocommit=True)
+    db = DB(db_config_postgres, autocommit=True)
     db.alter('DROP DATABASE IF EXISTS sm_test')
     db.alter('CREATE DATABASE sm_test')
     db.close()
@@ -104,7 +102,7 @@ def test_db(request):
 
     def fin():
         DB.close_all()
-        db = DB(db_config, autocommit=True)
+        db = DB(db_config_postgres, autocommit=True)
         try:
             db.alter('DROP DATABASE IF EXISTS sm_test')
         except Exception as e:
@@ -178,7 +176,7 @@ def mol_db(ds_config):
     service.find_db_by_name_version.return_value = data
     SMConfig._config_dict = sm_config
 
-    mol_db = MolecularDB(1, None, None, ds_config['isotope_generation'],
+    mol_db = MolecularDB(1, 'name', 'version', ds_config['isotope_generation'],
                          mol_db_service=service, db=db)
     mol_db._sf_df = pd.DataFrame(dict(
         sf_id=[1, 2, 3],
@@ -187,3 +185,11 @@ def mol_db(ds_config):
         centr_ints=[[1, 0.1, 0.05], [1], [1, 0.3]]
     ), columns=['sf_id', 'adduct', 'mzs', 'centr_ints'])
     return mol_db
+
+
+def make_moldb_mock():
+    moldb_mock = MagicMock(spec=MolecularDB)
+    moldb_mock.id = 0
+    moldb_mock.name = 'test_db'
+    moldb_mock.formulas = ['H2O', 'C5H3O']
+    return moldb_mock

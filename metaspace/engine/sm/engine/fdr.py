@@ -10,10 +10,8 @@ DECOY_ADDUCTS = ['+He', '+Li', '+Be', '+B', '+C', '+N', '+O', '+F', '+Ne', '+Mg'
 
 class FDR(object):
 
-    def __init__(self, job_id, decoy_sample_size, target_adducts, db):
-        self.job_id = job_id
+    def __init__(self, decoy_sample_size, target_adducts):
         self.decoy_sample_size = decoy_sample_size
-        self.db = db
         self.target_adducts = target_adducts
         self.td_df = None
         self.fdr_levels = [0.05, 0.1, 0.2, 0.5]
@@ -56,23 +54,23 @@ class FDR(object):
         df['fdr'] = df.fdr_d
         return df.drop('fdr_d', axis=1)
 
-    def estimate_fdr(self, sf_adduct_msm_df):
+    def estimate_fdr(self, formula_msm):
         logger.info('Estimating FDR')
 
-        all_sf_adduct_msm_df = (pd.DataFrame(self.ion_tuples(), columns=['formula', 'adduct'])
+        all_formula_msm_df = (pd.DataFrame(self.ion_tuples(), columns=['formula', 'adduct'])
                                 .set_index(['formula', 'adduct']).sort_index())
-        all_sf_adduct_msm_df = all_sf_adduct_msm_df.join(sf_adduct_msm_df).fillna(0)
+        all_formula_msm_df = all_formula_msm_df.join(formula_msm).fillna(0)
 
         target_fdr_df_list = []
         for ta in self.target_adducts:
-            target_msm = all_sf_adduct_msm_df.loc(axis=0)[:, ta]
+            target_msm = all_formula_msm_df.loc(axis=0)[:, ta]
             full_decoy_df = self.td_df[self.td_df.ta == ta][['formula', 'da']]
 
             msm_fdr_list = []
             for i in range(self.decoy_sample_size):
                 decoy_subset_df = full_decoy_df[i::self.decoy_sample_size]
                 sf_da_list = [tuple(row) for row in decoy_subset_df.values]
-                decoy_msm = all_sf_adduct_msm_df.loc[sf_da_list]
+                decoy_msm = all_formula_msm_df.loc[sf_da_list]
                 msm_fdr = self._msm_fdr_map(target_msm, decoy_msm)
                 msm_fdr_list.append(msm_fdr)
 

@@ -34,14 +34,16 @@
     - role: spark
       become: yes
       spark_env_extras: "{{ spark_env_extras_slave }}"
+      tags: [spark]
+
+    - role: miniconda
+      tags: [miniconda]
 
     - role: sm_spark_slave
       venv: "{{ miniconda_prefix }}"
       conda_env: "{{ miniconda_env.name }}"
       spark_usr_dir: "{{ spark_home }}"
-
-    - role: miniconda
-      tags: [miniconda]
+      tags: [sm-spark-slave]
   tags: [slave]
 
 
@@ -71,6 +73,7 @@
     - role: spark
       become: yes
       spark_env_extras: "{{ spark_env_extras_master }}"
+      tags: [spark]
 
     - role: spark_master
       become: yes
