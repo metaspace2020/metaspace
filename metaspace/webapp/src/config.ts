@@ -1,5 +1,6 @@
 const fileConfig = require('./clientConfig.json');
 import {defaultsDeep} from 'lodash-es';
+import safeJsonParse from './lib/safeJsonParse';
 
 
 interface AWSConfig {
@@ -63,25 +64,41 @@ const defaultConfig: ClientConfig = {
   }
 };
 
+const FEATURE_STORAGE_KEY = 'featureFlags';
+
 let config = defaultsDeep({}, fileConfig, defaultConfig) as ClientConfig;
 
 export const updateConfigFromQueryString = () => {
   if (typeof window !== 'undefined' && window.location && window.location.search) {
     // hackily parse the querystring because vue-router hasn't initialized yet and IE doesn't support the
     // URLSearchParams class that can do this properly
-    window.location.search
+    const queryStringFeatures = window.location.search
       .substring(1)
       .split('&')
       .filter(part => part.startsWith('feat='))
-      .forEach(features => {
-        features.substring('feat='.length)
-          .split(',')
-          .forEach(feat => {
-            const val = !feat.startsWith('-');
-            const key = val ? feat : feat.substring(1);
-            (config.features as any)[key] = val;
-          });
-      });
+      .map(features => features.substring('feat='.length).split(','))
+      .reduce((a, b) => a.concat(b), []);
+
+    const overrides: Partial<Features> = {};
+    if (queryStringFeatures.includes('reset')) {
+      localStorage.removeItem(FEATURE_STORAGE_KEY);
+    } else {
+      Object.assign(overrides, safeJsonParse(localStorage.getItem(FEATURE_STORAGE_KEY)));
+    }
+
+    queryStringFeatures.forEach(feat => {
+      const val = !feat.startsWith('-');
+      const key = (val ? feat : feat.substring(1));
+      if (key !== 'reset' && key !== 'save') {
+        overrides[key as keyof Features] = val;
+      }
+    });
+
+    Object.assign(config.features, overrides);
+
+    if (queryStringFeatures.includes('save')) {
+      localStorage.setItem(FEATURE_STORAGE_KEY, JSON.stringify(overrides));
+    }
   }
 };
 
