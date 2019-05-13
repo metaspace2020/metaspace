@@ -1,14 +1,14 @@
 import argparse
 from os.path import join
+import os
+import sys
 from pprint import pprint
-import numpy as np
 
+import numpy as np
 from fabric.api import local
 from fabric.context_managers import warn_only
 
-from sm.engine.es_export import ESExporter
 from sm.engine.annotation_job import AnnotationJob
-from sm.engine.sm_daemons import SMDaemonManager
 from sm.engine.db import DB
 from sm.engine.mol_db import MolDBServiceWrapper
 from sm.engine.png_generator import ImageStoreServiceWrapper
@@ -28,7 +28,6 @@ class SciTester(object):
     def __init__(self, sm_config_path):
         self.sm_config_path = sm_config_path
         self.sm_config = SMConfig.get_conf()
-        self.sm_config['colocalization']['enabled'] = False
         self.db = DB(self.sm_config['db'])
 
         self.ds_id = '2000-01-01_00h00m00s'
@@ -140,6 +139,8 @@ class SciTester(object):
             img_store = ImageStoreServiceWrapper(self.sm_config['services']['img_service_url'])
         if mock_graphql_db:
             self.db.alter(GRAPHQL_SQL_SCHEMA)
+
+        os.environ['PYSPARK_PYTHON'] = sys.executable
 
         ds = create_ds_from_files(self.ds_id, self.ds_name, self.input_path)
         self.db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
