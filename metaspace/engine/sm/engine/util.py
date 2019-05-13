@@ -7,6 +7,7 @@ from logging.config import dictConfig
 from pathlib import Path
 import re
 from fnmatch import translate
+from copy import deepcopy
 
 
 def proj_root():
@@ -75,7 +76,7 @@ class SMConfig(object):
                     cls._config_dict = json.load(f)
             except IOError as e:
                 logging.getLogger('engine').warning(e)
-        return cls._config_dict
+        return deepcopy(cls._config_dict)
 
     @classmethod
     def get_ms_file_handler(cls, ms_file_path):
@@ -119,29 +120,34 @@ def read_json(path):
         return res
 
 
-def create_ds_from_files(ds_id, ds_name, ds_input_path):
-    base_dir = Path(ds_input_path)
-    meta_path = base_dir / 'meta.json'
-    if meta_path.exists():
+def create_ds_from_files(ds_id, ds_name, ds_input_path, config_path=None, meta_path=None):
+    if not config_path:
+        config_path = Path(ds_input_path) / 'config.json'
+    if not meta_path:
+        meta_path = Path(ds_input_path) / 'meta.json'
+
+    ds_config = json.load(open(str(config_path)))
+    if Path(meta_path).exists():
         metadata = json.load(open(str(meta_path)))
     else:
-        metadata = {'Data_Type': 'Imaging MS'}
-    ds_config = json.load(open(str(base_dir / 'config.json')))
-
-    regexp = re.compile(translate('*.imzML'), re.IGNORECASE)
-    imzml_path = [f for f in base_dir.glob('*')
-                  if re.match(regexp, str(f))][0]
-    ms_file_type_config = SMConfig.get_ms_file_handler(str(imzml_path))
-    img_storage_type = ms_file_type_config['img_storage_type']
+        raise Exception('meta.json not found')
 
     from sm.engine.dataset import Dataset
-    return Dataset(ds_id, ds_name, str(ds_input_path), datetime.now(), metadata,
+    return Dataset(id=ds_id,
+                   name=ds_name,
+                   input_path=str(ds_input_path),
+                   upload_dt=datetime.now(),
+                   metadata=metadata,
                    is_public=True,
                    mol_dbs=ds_config['databases'],
-                   adducts=ds_config['isotope_generation']['adducts'],
-                   img_storage_type=img_storage_type)
+                   adducts=ds_config['isotope_generation']['adducts'])
 
 
 def split_s3_path(path):
-    """ Returns a pair (bucket, key) """
+    """
+    Returns
+    ---
+        tuple[string, string]
+    Returns a pair of (bucket, key)
+    """
     return path.split('s3a://')[-1].split('/', 1)

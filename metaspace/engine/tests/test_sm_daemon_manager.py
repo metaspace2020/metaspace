@@ -11,7 +11,7 @@ from sm.engine.dataset import DatasetStatus, Dataset
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.tests.util import sm_config, test_db, fill_db, sm_index, es_dsl_search, metadata, ds_config
 
-mol_db_mock = {'id': 1, 'name': 'HMDB-v4', 'version':'2001-01-01'}
+mol_db_mock = {'id': 1, 'name': 'HMDB-v4', 'version': '2001-01-01'}
 
 
 def create_ds(ds_id='2000-01-01', ds_name='ds_name', input_path='input_path', upload_dt=None,
@@ -46,7 +46,7 @@ class TestSMDaemonDatasetManager:
             pass
 
     @patch('sm.engine.mol_db.MolDBServiceWrapper.find_db_by_name_version', return_value=[mol_db_mock])
-    def test_annotate_ds(self, test_db, metadata, ds_config):
+    def test_annotate_ds(self, find_db_by_name_version_mock, test_db, metadata, ds_config):
         es_mock = MagicMock(spec=ESExporter)
         db = DB(sm_config['db'])
         try:
@@ -59,7 +59,7 @@ class TestSMDaemonDatasetManager:
             ds = create_ds(ds_id=ds_id, ds_name=ds_name, input_path=input_path,
                            upload_dt=upload_dt, metadata=metadata)
 
-            manager.annotate(ds, search_job_factory=self.SearchJob)
+            manager.annotate(ds, annotation_job_factory=self.SearchJob)
 
             DS_SEL = 'select name, input_path, upload_dt, metadata, config from dataset where id=%s'
             assert db.select_one(DS_SEL, params=(ds_id,)) == (ds_name, input_path, upload_dt, metadata, ds_config)
