@@ -1,6 +1,5 @@
 import config from './config';
-import * as Raven from 'raven-js';
-import sanitizeHtml from 'sanitize-html'
+import sanitizeHtml from 'sanitize-html';
 
 const fuConfig = config.fineUploader;
 
@@ -95,17 +94,6 @@ function getOS() {
   return os;
 }
 
-function safeJsonParse(json: string | null | undefined) {
-  if (json) {
-    try {
-      return JSON.parse(json);
-    } catch (err) {
-      Raven.captureException(err);
-    }
-  }
-  return undefined;
-}
-
 function sanitizeIt(descriptionText: string) {
   return sanitizeHtml(
     descriptionText,
@@ -132,6 +120,5 @@ export {
   scrollDistance,
   mdTypeSupportsOpticalImages,
   getOS,
-  safeJsonParse,
   sanitizeIt
 };

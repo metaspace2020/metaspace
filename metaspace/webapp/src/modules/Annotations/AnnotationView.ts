@@ -16,7 +16,7 @@
  import { Component, Prop } from 'vue-property-decorator';
  import { Location } from 'vue-router';
  import { currentUserRoleQuery, CurrentUserRoleResult} from '../../api/user';
- import { safeJsonParse } from '../../util';
+ import safeJsonParse from '../../lib/safeJsonParse';
  import {omit, pick, sortBy, throttle} from 'lodash-es';
  import {ANNOTATION_SPECIFIC_FILTERS} from '../Filters/filterSpecs';
  import config from '../../config';

@@ -145,7 +145,7 @@
  import {mdTypeSupportsOpticalImages} from '../../../util';
  import {encodeParams} from '../../Filters/index';
  import reportError from '../../../lib/reportError';
- import {safeJsonParse} from "../../../util";
+ import safeJsonParse from '../../../lib/safeJsonParse';
  import {plural} from '../../../lib/vueFilters';
 
  function removeUnderscores(str) {

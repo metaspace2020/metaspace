@@ -69,7 +69,7 @@
  import FormSection from './sections/FormSection.vue';
  import DataManagementSection from './sections/DataManagementSection.vue'
  import emailRegex from '../../lib/emailRegex';
- import { safeJsonParse } from '../../util'
+ import safeJsonParse from '../../lib/safeJsonParse';
 
  const factories = {
    'string': schema => schema.default || '',
