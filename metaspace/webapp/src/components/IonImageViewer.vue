@@ -306,13 +306,13 @@
          const sY = scrollDistance(event);
 
          const newZoom = Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom - this.zoom * sY / 10.0));
-         const rect = event.currentTarget.getBoundingClientRect();
+         const rect = this.$refs.imageLoader.getBoundingClientRect();
 
          // Adjust the offsets so that the pixel under the mouse stays still while the image expands around it
          const mouseXOffset = (event.clientX - (rect.left + rect.right) / 2) / this.zoom;
          const mouseYOffset = (event.clientY - (rect.top + rect.bottom) / 2) / this.zoom;
-         const xOffset = this.xOffset * (this.zoom / newZoom) + mouseXOffset * (this.zoom / newZoom - 1);
-         const yOffset = this.yOffset * (this.zoom / newZoom) + mouseYOffset * (this.zoom / newZoom - 1);
+         const xOffset = this.xOffset + mouseXOffset * (this.zoom / newZoom - 1);
+         const yOffset = this.yOffset + mouseYOffset * (this.zoom / newZoom - 1);
 
          this.$emit('move', {zoom: newZoom, xOffset, yOffset});
 
@@ -384,8 +384,9 @@
        const rect = this.$refs.imageLoader.getBoundingClientRect();
        if (this.ionImage != null) {
          const { width = 0, height = 0 } = this.ionImage;
-         const x = Math.floor((event.clientX - 2 - (rect.left + rect.right) / 2) / this.zoom - this.xOffset + width / 2);
-         const y = Math.floor((event.clientY - 2 - (rect.top + rect.bottom) / 2) / this.zoom - this.yOffset + height / 2);
+         // Includes a 2px offset up and left so that the selected pixel is less obscured by the mouse cursor
+         const x = Math.floor((event.clientX - (rect.left + rect.right) / 2 - 2) / this.zoom - this.xOffset + width / 2);
+         const y = Math.floor((event.clientY - (rect.top + rect.bottom) / 2 - 2) / this.zoom - this.yOffset + height / 2);
 
          this.cursorPixelPos = [x, y];
        } else {
