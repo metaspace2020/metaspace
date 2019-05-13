@@ -1,16 +1,20 @@
 <template>
   <div class="image-loader"
        v-loading="isLoading"
+       ref="imageLoader"
        :element-loading-text="message"
        :style="{width:width+'px', height:height+'px'}"
        @wheel="onWheel"
-       @mousedown.left.prevent="onMouseDown">
+       @mousedown.left.prevent="onMouseDown"
+       @mousemove="onMouseOverIonImage"
+       @mouseleave="onMouseLeaveIonImage">
 
     <div :style="viewBoxStyle">
       <img v-if="ionImage"
            :src="ionImageDataUri"
            class="isotope-image"
-           :style="ionImageStyle"/>
+           :style="ionImageStyle"
+      />
 
       <!--
        The key for the currently loaded image can shift between the following two img virtual-DOM nodes, which causes
@@ -32,6 +36,21 @@
            @load="onOpticalImageLoaded"
       />
     </div>
+
+    <div >
+      <el-tooltip
+        v-if="pixelIntensityStyle"
+        :manual="true"
+        :value="true"
+        ref="pixelIntensityTooltip"
+        :content="cursorOverPixelIntensity.toExponential(2)"
+        popper-class="pointer-events-none"
+        placement="top"
+      >
+        <div :style="pixelIntensityStyle" />
+      </el-tooltip>
+    </div>
+
     <scale-bar v-if="!showScaleBar"
                :xScale="xScale"
                :yScale="yScale"
@@ -54,6 +73,7 @@
  import config from '../config';
  import {renderIonImage} from '../lib/ionImageRendering';
  import ScaleBar from './ScaleBar.vue';
+ import {throttle} from 'lodash-es';
 
 
  const formatMatrix3d = t =>
@@ -150,7 +170,16 @@
        // Cache the last loaded optical image so that it doesn't flicker when changing zoom levels
        loadedOpticalImageUrl: this.opticalImageUrl,
        loadedOpticalImageStyle: this.opticalImageStyle,
+       cursorPixelPos: null,
      }
+   },
+   watch: {
+     pixelIntensityStyle() {
+       this.$nextTick(this.updatePixelIntensity)
+     }
+   },
+   created() {
+     this.updatePixelIntensity = throttle(this.updatePixelIntensity);
    },
    computed: {
      isIE() {
@@ -233,6 +262,40 @@
        return this.opticalSrc ? (config.imageStorage || '') + this.opticalSrc : null;
      },
 
+     cursorOverPixelIntensity() {
+       if (this.ionImage != null && this.cursorPixelPos != null) {
+         const [x, y] = this.cursorPixelPos;
+         const {width, height, mask, intensityValues} = this.ionImage
+         if (x >= 0 && x < width
+           && y >= 0 && y < height
+           && mask[y * width + x] !== 0) {
+           return intensityValues[y * width + x];
+         } else {
+           return null;
+         }
+       }
+     },
+
+     pixelIntensityStyle() {
+       if (this.ionImage != null && this.cursorPixelPos != null && this.cursorOverPixelIntensity != null) {
+         const baseX = this.width / 2 + (this.xOffset - this.ionImage.width / 2) * this.zoom;
+         const baseY = this.height / 2 + (this.yOffset - this.ionImage.height / 2) * this.zoom;
+         const [cursorX, cursorY] = this.cursorPixelPos;
+         return {
+           left: (baseX + cursorX * this.zoom - 0.5) + 'px',
+           top: (baseY + cursorY * this.zoom - 0.5) + 'px',
+           width: `${this.zoom - 0.5}px`,
+           height: `${this.zoom - 0.5}px`,
+           position: 'absolute',
+           border: '1px solid red',
+           display: 'block',
+           zIndex: 3,
+         }
+       } else {
+         return null;
+       }
+     }
+
    },
    methods: {
 
@@ -243,7 +306,7 @@
          const sY = scrollDistance(event);
 
          const newZoom = Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom - this.zoom * sY / 10.0));
-         const rect = event.target.getBoundingClientRect();
+         const rect = event.currentTarget.getBoundingClientRect();
 
          // Adjust the offsets so that the pixel under the mouse stays still while the image expands around it
          const mouseXOffset = (event.clientX - (rect.left + rect.right) / 2) / this.zoom;
@@ -252,6 +315,10 @@
          const yOffset = this.yOffset * (this.zoom / newZoom) + mouseYOffset * (this.zoom / newZoom - 1);
 
          this.$emit('move', {zoom: newZoom, xOffset, yOffset});
+
+         this.$nextTick(() => {
+           this.movePixelIntensity(event);
+         });
        }
        else if (event.deltaY) {
          this.overlayFadingIn = true;
@@ -295,6 +362,35 @@
      onOpticalImageLoaded() {
        this.loadedOpticalImageUrl = this.opticalImageUrl;
        this.loadedOpticalImageStyle = this.opticalImageStyle;
+     },
+
+     onMouseOverIonImage(event) {
+       this.movePixelIntensity(event);
+     },
+
+     onMouseLeaveIonImage() {
+       this.cursorPixelPos = null;
+     },
+
+     updatePixelIntensity() {
+       // WORKAROUND: el-tooltip and el-popover don't correctly open if they're mounted in an already-visible state
+       // Calling updatePopper
+       if (this.$refs.pixelIntensityTooltip != null) {
+         this.$refs.pixelIntensityTooltip.updatePopper();
+       }
+     },
+
+     movePixelIntensity(event) {
+       const rect = this.$refs.imageLoader.getBoundingClientRect();
+       if (this.ionImage != null) {
+         const { width = 0, height = 0 } = this.ionImage;
+         const x = Math.floor((event.clientX - 2 - (rect.left + rect.right) / 2) / this.zoom - this.xOffset + width / 2);
+         const y = Math.floor((event.clientY - 2 - (rect.top + rect.bottom) / 2) / this.zoom - this.yOffset + height / 2);
+
+         this.cursorPixelPos = [x, y];
+       } else {
+         this.cursorPixelPos = null;
+       }
      }
    }
  }
@@ -360,4 +456,12 @@
    opacity: 0.6;
    transition: 0.7s;
  }
+
+
+</style>
+<style>
+  /* Unscoped, because the tooltip is appended to document.body */
+  .pointer-events-none {
+    pointer-events: none;
+  }
 </style>
