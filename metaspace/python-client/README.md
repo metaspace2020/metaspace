@@ -1,6 +1,6 @@
-# METASPACE python-client
+# METASPACE Python client
 
-Python module that provides programmatic access to a running instance of [`METASPACE`](https://github.com/metaspace2020/) platform
+Python module that provides programmatic access to the [METASPACE](https://metaspace2020.eu) platform.
 
 ## Applications
 
@@ -12,13 +12,7 @@ Python module that provides programmatic access to a running instance of [`METAS
 
 You need to have **Python 3.6 or higher** to use this library.
 
-`pip install git+https://github.com/metaspace2020/metaspace#subdirectory=metaspace/python-client`
-
-## Which branch to use
-If you are trying to access annotations from the main public metaspace instance
-then make sure you include the branch name of the latest release branch, e.g.
-
-`pip install git+https://github.com/metaspace2020/metaspace@release/v1.0#subdirectory=metaspace/python-client`
+`pip install metaspace2020`
 
 ## Jupyter Notebooks
 
