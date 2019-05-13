@@ -47,7 +47,8 @@
         <el-collapse-item name="images" id="annot-img-collapse" class="av-centered">
           <component :is="metadataDependentComponent('main-image-header')"
                      :annotation="annotation"
-                     :imageLoaderSettings="imageLoaderSettings"
+                     :hasOpticalImage="bestOpticalImage != null"
+                     :showOpticalImage="showOpticalImage"
                      :resetViewport="resetViewport"
                      :toggleOpticalImage="toggleOpticalImage"
                      :toggleScaleBar="toggleScaleBar"
@@ -59,13 +60,13 @@
                      :colormap="colormap"
                      :colormapName="colormapName"
                      :opacity="opacity"
+                     :imagePosition="imagePosition"
                      :imageLoaderSettings="imageLoaderSettings"
-                     :onImageZoom="onImageZoom"
                      :onImageMove="onImageMove"
                      :acquisitionGeometry="msAcqGeometry"
                      :pixelSizeX="pixelSizeX"
                      :pixelSizeY="pixelSizeY"
-                     :disableScaleBar="disableScaleBar"
+                     :showScaleBar="showScaleBar"
                      :scaleBarColor="scaleBarColor"
                      @opacityInput="newVal => opacity = newVal">
           </component>

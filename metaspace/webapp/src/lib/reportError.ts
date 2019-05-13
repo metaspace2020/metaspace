@@ -17,13 +17,15 @@ function isHandled(err: any) {
   return false;
 }
 
-export default function reportError(err: Error, message?: string) {
+const DEFAULT_MESSAGE = 'Oops! Something went wrong. Please refresh the page and try again.';
+
+export default function reportError(err: Error, message: string | null = DEFAULT_MESSAGE) {
   try {
     if (!isHandled(err)) {
       Raven.captureException(err);
       console.error(err);
-      if ($notify != null) {
-        $notify.error(message || 'Oops! Something went wrong. Please refresh the page and try again.');
+      if ($notify != null && message) {
+        $notify.error(message);
       }
     }
   } catch (ex) {

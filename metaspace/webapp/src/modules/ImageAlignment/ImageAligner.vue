@@ -1,9 +1,8 @@
 <template>
   <div class="image-alignment-box"
-        :style="boxStyle"
         @mousemove="onMouseMove">
 
-    <div class="optical-img-container" style="height: calc(100%);">
+    <div class="optical-img-container" style="border: 1px solid #ddf" v-loading="!opticalImageNaturalHeight">
       <img :src="opticalSrc"
             ref="scan"
             @load="onOpticalImageLoad"
@@ -39,18 +38,19 @@
     </div>
 
     <image-loader
-        :src="massSpecSrc"
+        :src="ionImageSrc"
         ref="annotImage"
         :style="annotImageStyle"
         @dblclick.native="onDoubleClick"
         @mousedown.native="onImageMouseDown"
         @contextmenu.native="onImageRightMouseDown"
-        style="z-index: 5; overflow: visible"
+        :imageStyle="{overflow: 'visible'}"
+        :imageFitParams="{areaWidth: naturalWidth || 1, areaHeight: naturalHeight || 1}"
         :max-height=100500
         @wheel.native="onWheel"
         :annot-image-opacity="annotImageOpacity"
+        :ionImageTransform="ionImageTransform"
         opacity-mode="linear"
-        :transform="annotImageTransformCSS"
         @redraw="onLoad">
     </image-loader>
 
@@ -60,7 +60,7 @@
 <script>
  import Vue from 'vue';
  import ImageLoader from '../../components/ImageLoader.vue';
- import {inv, dot, diag, getDiag} from 'numeric';
+ import {inv, dot, diag} from 'numeric';
  import {scrollDistance} from '../../util';
 
  function computeTransform(src, dst) {
@@ -105,7 +105,7 @@
        // URL of an optical image
        type: String
      },
-     massSpecSrc: {
+     ionImageSrc: {
        // URL of a grayscale image
        type: String
      },
@@ -192,15 +192,15 @@
 
        this.opticalImageWidth = this.$refs.scan.width;
        this.opticalImageHeight = this.$refs.scan.height;
+       this.opticalImageNaturalWidth = this.$refs.scan.naturalWidth;
+       this.opticalImageNaturalHeight = this.$refs.scan.naturalHeight;
      },
 
-     onLoad({width, height}) {
-       const oldWidth = this.width,
-             oldHeight = this.height;
+     onLoad({width, height, naturalWidth, naturalHeight}) {
        this.width = width;
        this.height = height;
-       this.naturalWidth = this.$refs.annotImage.getImage().naturalWidth;
-       this.naturalHeight = this.$refs.annotImage.getImage().naturalHeight;
+       this.naturalWidth = naturalWidth;
+       this.naturalHeight = naturalHeight;
      },
 
      onMouseDown(event, handleIndex) {
@@ -246,7 +246,11 @@
            };
        }
 
-       this.normalizedTransform = computeTransform(this.originalHandlePositions(), pos);
+       try {
+         this.normalizedTransform = computeTransform(this.originalHandlePositions(), pos);
+       } catch (err) {
+         console.error(err)
+       }
      },
 
      updateRotation(event){
@@ -314,7 +318,7 @@
        let deltaAngle = (360.0 / Math.PI) * (a1 - a2);
 
        this.$emit('updateRotationAngle', this.startRotationAngle + deltaAngle);
-       },
+     },
 
      onImageMouseDown(event) {
        event.preventDefault();
@@ -327,7 +331,7 @@
 
      onImageRightMouseDown(event) {
        event.preventDefault();
-       this.imageDrag=false;
+       this.imageDrag = false;
        this.startRotationAngle = this.rotationAngleDegrees;
        document.removeEventListener('mouseup', this.onMouseUp);
        this.dragStartX = event.clientX;
@@ -391,18 +395,14 @@
      },
 
      scaleX() {
-       return this.opticalImageWidth / this.opticalImageNaturalWidth;
+       return this.opticalImageWidth / this.opticalImageNaturalWidth || 1;
      },
 
      scaleY() {
-       return this.opticalImageHeight / this.opticalImageNaturalHeight;
+       return this.opticalImageHeight / this.opticalImageNaturalHeight || 1;
      },
-     annotImageTransformCSS() {
-       const a = this.transform;
-       return `matrix3d(${a[0][0]}, ${a[1][0]}, 0, ${a[2][0]},
-                        ${a[0][1]}, ${a[1][1]}, 0, ${a[2][1]},
-                                 0,          0, 1,          0,
-                        ${a[0][2]}, ${a[1][2]}, 0, ${a[2][2]})`;
+     ionImageTransform() {
+       return dot(diag([this.scaleX, this.scaleY, 1]), this.normalizedTransform);
      },
 
      annotImageStyle() {
@@ -421,13 +421,6 @@
          'margin': this.padding + 'px',
          'width': `calc(100% - ${this.padding * 2}px)`
        };
-     },
-
-     boxStyle() {
-       return {
-         height: this.opticalImageHeight + this.padding * 2 + 'px',
-         border: 'solid #ddf 1px'
-       }
      },
 
      svgWidth() {

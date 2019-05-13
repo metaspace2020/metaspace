@@ -11,7 +11,8 @@ from sm.engine.colocalization import Colocalization
 from sm.engine.daemon_action import DaemonAction, DaemonActionStage
 from sm.engine.ion_thumbnail import generate_ion_thumbnail
 from sm.engine.off_sample_wrapper import classify_dataset_ion_images
-from sm.rest.dataset_manager import IMG_URLS_BY_ID_SEL, DatasetActionPriority
+from sm.engine.optical_image import del_optical_image, IMG_URLS_BY_ID_SEL
+from sm.rest.dataset_manager import DatasetActionPriority
 from sm.engine.errors import UnknownDSID
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.mol_db import MolecularDB
@@ -116,7 +117,7 @@ class SMDaemonManager(object):
         """ Delete all dataset related data from the DB """
         self.logger.warning('Deleting dataset: {}'.format(ds.id))
         self._del_iso_images(ds)
-        # TODO: move deletion of optical images here for consistency - it's currently in SMapiDatasetManager
+        del_optical_image(self._db, self._img_store, ds.id)
         self.es.delete_ds(ds.id)
         self._db.alter('DELETE FROM dataset WHERE id=%s', params=(ds.id,))
 

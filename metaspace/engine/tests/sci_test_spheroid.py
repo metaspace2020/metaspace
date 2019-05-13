@@ -7,6 +7,7 @@ from fabric.api import local
 from fabric.context_managers import warn_only
 
 from sm.engine.es_export import ESExporter
+from sm.engine.annotation_job import AnnotationJob
 from sm.engine.sm_daemons import SMDaemonManager
 from sm.engine.db import DB
 from sm.engine.mol_db import MolDBServiceWrapper
@@ -140,12 +141,10 @@ class SciTester(object):
         if mock_graphql_db:
             self.db.alter(GRAPHQL_SQL_SCHEMA)
 
-        manager = SMDaemonManager(db=self.db, es=ESExporter(self.db),
-                                 img_store=img_store)
-
         ds = create_ds_from_files(self.ds_id, self.ds_name, self.input_path)
-        from sm.engine.annotation_job import AnnotationJob
-        manager.annotate(ds, annotation_job_factory=AnnotationJob, del_first=True)
+        self.db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
+        ds.save(self.db)
+        AnnotationJob(img_store).run(ds)
 
     def clear_data_dirs(self):
         with warn_only():

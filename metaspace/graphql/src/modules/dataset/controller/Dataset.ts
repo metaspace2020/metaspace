@@ -2,8 +2,8 @@ import * as _ from 'lodash';
 import {dsField} from '../../../../datasetFilters';
 import {DatasetSource, FieldResolversFor} from '../../../bindingTypes';
 import {ProjectSourceRepository} from '../../project/ProjectSourceRepository';
-import {Dataset as DatasetModel} from '../model';
-import {Dataset} from '../../../binding';
+import {Dataset as DatasetModel, EngineOpticalImage} from '../model';
+import {Dataset, OpticalImage, OpticalImageType} from '../../../binding';
 import {rawOpticalImage} from './Query';
 import getScopeRoleForEsDataset from '../util/getScopeRoleForEsDataset';
 import {logger} from '../../../utils';
@@ -12,14 +12,17 @@ import getGroupAdminNames from '../../group/util/getGroupAdminNames';
 import * as DataLoader from 'dataloader';
 
 interface DbDataset {
+  id: string;
   thumbnail: string | null;
   ion_thumbnail: string | null;
+  transform: number[][] | null;
 }
 const getDbDatasetById = async (ctx: Context, id: string): Promise<DbDataset | null> => {
   const dataloader = ctx.contextCacheGet('thumbnailOpticalImageUrlDataLoader', [], () => {
     return new DataLoader(async (datasetIds: string[]): Promise<any[]> => {
       const results = await ctx.entityManager.query(
-        'SELECT id, thumbnail, ion_thumbnail FROM public.dataset WHERE id = ANY($1)', [datasetIds]);
+        'SELECT id, thumbnail, ion_thumbnail, transform FROM public.dataset WHERE id = ANY($1)',
+        [datasetIds]);
       const keyedResults = _.keyBy(results, 'id');
       return datasetIds.map(id => keyedResults[id] || null);
     });
@@ -34,6 +37,24 @@ export const thumbnailOpticalImageUrl = async (ctx: Context, datasetId: string) 
   } else {
     return null;
   }
+};
+
+const getOpticalImagesByDsId = async (ctx: Context, id: string): Promise<OpticalImage[]> => {
+  const dataloader = ctx.contextCacheGet('getOpticalImagesByDsIdDataLoader', [], () => {
+    return new DataLoader(async (datasetIds: string[]): Promise<OpticalImage[][]> => {
+      const rawResults: EngineOpticalImage[] = await ctx.entityManager.query(
+        'SELECT * from public.optical_image WHERE ds_id = ANY($1)', [datasetIds]);
+      const results = rawResults.map(({id, type, ...rest}) => ({
+        ...rest,
+        id,
+        url: `/fs/optical_images/${id}`,
+        type: type.toUpperCase() as OpticalImageType,
+      }));
+      const groupedResults = _.groupBy(results, 'ds_id');
+      return datasetIds.map(id => groupedResults[id] || []);
+    });
+  });
+  return await dataloader.load(id);
 };
 
 const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
@@ -222,6 +243,18 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
 
   async thumbnailOpticalImageUrl(ds, args, ctx) {
     return await thumbnailOpticalImageUrl(ctx, ds._source.ds_id);
+  },
+
+  async opticalImages(ds, {type}: {type?: string}, ctx) {
+    const opticalImages = await getOpticalImagesByDsId(ctx, ds._source.ds_id);
+    return type != null
+      ? opticalImages.filter(optImg => optImg.type === type)
+      : opticalImages;
+  },
+
+  async opticalImageTransform(ds, args, ctx) {
+    const datasetRow = await getDbDatasetById(ctx, ds._source.ds_id);
+    return datasetRow != null ? datasetRow.transform : null;
   },
 
   async ionThumbnailUrl(ds, args, ctx) {
