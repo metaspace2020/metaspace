@@ -39,7 +39,7 @@ interface colorObjType {
 }
 
 @Component({
-    name: 'main-image',
+    name: 'main-image-header',
     components: { IonImageSettings }
 })
 export default class MainImageHeader extends Vue {

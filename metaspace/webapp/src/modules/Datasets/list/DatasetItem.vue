@@ -444,9 +444,9 @@
 
  .dataset-item {
    position: relative;
-   box-sizing: border-box;
    border-radius: 5px;
-   flex: 1 1 100%;
+   // Can't use box-sizing:border-box due to IE11 flexbox limitations, so instead using `calc(100% - 2px)`
+   flex: 1 1 calc(100% - 2px);
    min-height: 120px;
    min-width: 600px;
    max-width: 950px;
