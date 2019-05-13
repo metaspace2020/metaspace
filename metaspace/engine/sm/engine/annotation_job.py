@@ -1,17 +1,16 @@
 import time
-from importlib import import_module
 from pathlib import Path
 from pprint import pformat
 from datetime import datetime
 from shutil import copytree, rmtree
+import logging
 
 import boto3
 from pyimzml.ImzMLParser import ImzMLParser
 from pyspark import SparkContext, SparkConf
-import logging
 
-from sm.engine.colocalization import Colocalization
-from sm.engine.msm_basic.formula_imager import make_sample_area_mask
+from sm.engine.acq_geometry import make_acq_geometry
+from sm.engine.msm_basic.formula_imager import make_sample_area_mask, ds_dims
 from sm.engine.msm_basic.formula_validator import METRICS
 from sm.engine.msm_basic.msm_basic_search import MSMSearch
 from sm.engine.db import DB
@@ -85,12 +84,13 @@ class AnnotationJob(object):
         rows = [(mol_db_id, self._ds.id, JobStatus.RUNNING, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
         return self._db.insert_return(JOB_INS, rows=rows)[0]
 
-    @property
-    def _ds_imzml_path(self):
-        return next(str(p) for p in Path(self._ds_data_path).iterdir()
-                    if str(p).lower().endswith('.imzml'))
+    def create_imzml_parser(self):
+        logger.info('Parsing imzml')
+        imzml_path = next(str(p) for p in Path(self._ds_data_path).iterdir()
+                          if str(p).lower().endswith('.imzml'))
+        return ImzMLParser(imzml_path)
 
-    def _run_annotation_jobs(self, moldb_ids):
+    def _run_annotation_jobs(self, imzml_parser, moldb_ids):
         if moldb_ids:
             try:
                 moldbs = [MolecularDB(id=id, db=self._db, iso_gen_config=self._ds.config['isotope_generation'])
@@ -100,9 +100,6 @@ class AnnotationJob(object):
 
                 # FIXME: record runtime of dataset not jobs
                 job_ids = [self._store_job_meta(moldb.id) for moldb in moldbs]
-
-                logger.info('Parsing imzml')
-                imzml_parser = ImzMLParser(self._ds_imzml_path)
 
                 search_alg = MSMSearch(sc=self._sc, imzml_parser=imzml_parser, moldbs=moldbs,
                                        ds_config=self._ds.config, ds_data_path=self._ds_data_path)
@@ -141,13 +138,13 @@ class AnnotationJob(object):
                          for moldb_name in self._ds.config['databases']}
         return completed_moldb_ids, new_moldb_ids
 
-    def _save_data_from_raw_ms_file(self):
-        ms_file_type_config = SMConfig.get_ms_file_handler(self._ds_imzml_path)
-        acq_geometry_factory_module = ms_file_type_config['acq_geometry_factory']
-        acq_geometry_factory = getattr(import_module(acq_geometry_factory_module['path']),
-                                       acq_geometry_factory_module['name'])
+    def _save_data_from_raw_ms_file(self, imzml_parser):
+        #TODO: create proper ImzMLParser wrapper
+        ms_file_path = imzml_parser.filename
+        ms_file_type_config = SMConfig.get_ms_file_handler(ms_file_path)
+        dims = ds_dims([coord[:2] for coord in imzml_parser.coordinates])
 
-        acq_geometry = acq_geometry_factory(self._ds_imzml_path).create()
+        acq_geometry = make_acq_geometry(ms_file_type_config['type'], ms_file_path, self._ds.metadata, dims)
         self._ds.save_acq_geometry(self._db, acq_geometry)
 
         self._ds.save_ion_img_storage_type(self._db, ms_file_type_config['img_storage_type'])
@@ -208,14 +205,15 @@ class AnnotationJob(object):
 
             self._configure_spark()
             self._copy_input_data(ds)
-            self._save_data_from_raw_ms_file()
+            imzml_parser = self.create_imzml_parser()
+            self._save_data_from_raw_ms_file(imzml_parser)
             self._img_store.storage_type = 'fs'
 
             logger.info('Dataset config:\n%s', pformat(self._ds.config))
 
             completed_moldb_ids, new_moldb_ids = self._moldb_ids()
             self._remove_annotation_jobs(completed_moldb_ids - new_moldb_ids)
-            self._run_annotation_jobs(new_moldb_ids - completed_moldb_ids)
+            self._run_annotation_jobs(imzml_parser, new_moldb_ids - completed_moldb_ids)
 
             logger.info("All done!")
             time_spent = time.time() - start

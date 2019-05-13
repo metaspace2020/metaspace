@@ -120,12 +120,17 @@ def read_json(path):
         return res
 
 
-def create_ds_from_files(ds_id, ds_name, ds_input_path, config_path, meta_path):
+def create_ds_from_files(ds_id, ds_name, ds_input_path, config_path=None, meta_path=None):
+    if not config_path:
+        config_path = Path(ds_input_path) / 'config.json'
+    if not meta_path:
+        meta_path = Path(ds_input_path) / 'meta.json'
+
+    ds_config = json.load(open(str(config_path)))
     if Path(meta_path).exists():
         metadata = json.load(open(str(meta_path)))
     else:
         raise Exception('meta.json not found')
-    ds_config = json.load(open(str(config_path)))
 
     from sm.engine.dataset import Dataset
     return Dataset(id=ds_id,
