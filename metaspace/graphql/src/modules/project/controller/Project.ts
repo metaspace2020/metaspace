@@ -71,21 +71,18 @@ const ProjectResolvers: FieldResolversFor<Project, ProjectSource> = {
   },
 
   async numDatasets(project, args, ctx: Context): Promise<number> {
-    if (canViewProjectMembersAndDatasets(project.currentUserRole, ctx.isAdmin)) {
-      return await ctx.entityManager
-        .getRepository(DatasetProjectModel)
-        .count({ where: { projectId: project.id, approved: true } });
-    } else {
-      return await ctx.entityManager
-        .getRepository(DatasetProjectModel)
-        .createQueryBuilder('dataset_project')
-        .innerJoinAndSelect('dataset_project.dataset', 'dataset')
-        .innerJoin('(SELECT id, is_public FROM "public"."dataset")', 'engine_dataset', 'dataset.id = engine_dataset.id')
-        .where('dataset_project.project_id = :projectId', { projectId: project.id })
-        .andWhere('dataset_project.approved = TRUE')
-        .andWhere('engine_dataset.is_public = TRUE')
-        .getCount();
-    }
+    const canSeePrivateDatasets = canViewProjectMembersAndDatasets(project.currentUserRole, ctx.isAdmin);
+
+    return await ctx.entityManager
+      .getRepository(DatasetProjectModel)
+      .createQueryBuilder('dataset_project')
+      .innerJoinAndSelect('dataset_project.dataset', 'dataset')
+      .innerJoin('(SELECT * FROM "public"."dataset")', 'engine_dataset', 'dataset.id = engine_dataset.id')
+      .where('dataset_project.project_id = :projectId', { projectId: project.id })
+      .andWhere('dataset_project.approved = TRUE')
+      .andWhere(canSeePrivateDatasets ? 'TRUE' : 'engine_dataset.is_public')
+      .andWhere(`engine_dataset.status != 'FAILED'`)
+      .getCount();
   },
 
   async latestUploadDT(project, args, ctx: Context): Promise<Date> {
@@ -93,7 +90,7 @@ const ProjectResolvers: FieldResolversFor<Project, ProjectSource> = {
       .getRepository(DatasetProjectModel)
       .createQueryBuilder('dataset_project')
       .innerJoin('dataset_project.dataset', 'dataset')
-      .innerJoin('(SELECT id, is_public, upload_dt FROM "public"."dataset")', 'engine_dataset', 'dataset.id = engine_dataset.id')
+      .innerJoin('(SELECT * FROM "public"."dataset")', 'engine_dataset', 'dataset.id = engine_dataset.id')
       .select('MAX(engine_dataset.upload_dt)', 'upload_dt')
       .where('dataset_project.project_id = :projectId', { projectId: project.id })
       .andWhere('dataset_project.approved = TRUE');
