@@ -3,11 +3,11 @@ FROM ubuntu:16.04
 MAINTAINER Vitaly Kovalev <kovalev@embl.de>
 WORKDIR /
 
-ENV SPARK_DIR spark-2.3.0-bin-hadoop2.7
+ENV SPARK_DIR spark-2.3.3-bin-hadoop2.7
 ENV SPARK_HOME /$SPARK_DIR
 ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
-ENV PY4J_ARCH py4j-0.10.6-src.zip
-ENV PYTHONPATH=.:$SPARK_HOME/python:$SPARK_HOME/python/lib/$PY4J_ARCH:$PYTHONPATH
+#ENV PY4J_ARCH py4j-0.10.7-src.zip
+#ENV PYTHONPATH=.:$SPARK_HOME/python:$SPARK_HOME/python/lib/$PY4J_ARCH:$PYTHONPATH
 
 COPY requirements.txt /requirements.txt
 
@@ -52,7 +52,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
 # --- Engine dependencies ---
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
-        git curl postgresql-client && \
+        git curl postgresql-client libpq-dev python3-dev&& \
     apt-get clean -y && \
     apt-get autoremove -y && \
     $PIP_INSTALL \

@@ -7,6 +7,13 @@
   tasks:
     - name: Gather AWS instance facts
       action: ec2_metadata_facts
+
+    - name: Clean spark logs and temp files
+      become: yes
+      shell: /bin/rm -rf /var/log/spark/* /tmp/spark/* {{ sm_home }}/logs/*
+      args:
+        warn: false
+
   tags: [always]
 
 

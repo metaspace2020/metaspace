@@ -27,16 +27,11 @@
 
 - name: Install misc packages
   become: yes
-  apt: name={{ item }} state=present update_cache=yes
-  with_items:
-    - htop
-    - iotop
-    - mc
-    - gcc
-    - git
-    - software-properties-common
-    - python3-pip
-    - libssl-dev
+  apt:
+    name: ['htop', 'iotop', 'mc', 'gcc', 'git', 'software-properties-common',
+           'python3-pip', 'libssl-dev']
+    state: present
+    update_cache: yes
 
 - name: Update pip
   become: yes

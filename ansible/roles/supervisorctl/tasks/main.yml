@@ -5,6 +5,7 @@
   args:
     executable: /bin/bash
   register: supervisorctl_status_out
+  failed_when: false
 
 - name: Start supervisord daemon
   shell: >

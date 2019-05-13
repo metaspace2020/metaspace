@@ -9,7 +9,7 @@ import shutil
 from sm.engine.formula_centroids import CentroidsGenerator, FormulaCentroids
 from sm.engine.formula_parser import generate_ion_formula
 from sm.engine.isocalc_wrapper import IsocalcWrapper
-from sm.engine.tests.util import test_db, sm_config, ds_config, pyspark_context
+from sm.engine.tests.util import test_db, sm_config, ds_config, spark_context
 
 os.environ.setdefault('PYSPARK_PYTHON', sys.executable)
 
@@ -19,9 +19,9 @@ def clean_isotope_storage_path():
     shutil.rmtree(sm_config['isotope_storage']['path'], ignore_errors=True)
 
 
-def test_if_not_exist_returns_valid_df(pyspark_context, ds_config, clean_isotope_storage_path):
+def test_if_not_exist_returns_valid_df(spark_context, ds_config, clean_isotope_storage_path):
     isocalc = IsocalcWrapper(ds_config['isotope_generation'])
-    centroids_gen = CentroidsGenerator(sc=pyspark_context, isocalc=isocalc)
+    centroids_gen = CentroidsGenerator(sc=spark_context, isocalc=isocalc)
     centroids_gen._iso_gen_part_n = 1
 
     ion_centroids = centroids_gen.generate_if_not_exist(formulas=['C2H4O8Na', 'C3H6O7Na', 'fake_mfNa'])
@@ -31,7 +31,7 @@ def test_if_not_exist_returns_valid_df(pyspark_context, ds_config, clean_isotope
     assert ion_centroids.formulas_df.shape == (2, 1)
 
 
-def test_save_restore_works(pyspark_context, ds_config, clean_isotope_storage_path):
+def test_save_restore_works(spark_context, ds_config, clean_isotope_storage_path):
     ion_centroids = FormulaCentroids(formulas_df=pd.DataFrame({'formula_i': [101, 101, 102, 102],
                                                                'formula': ['H2O', 'H2O', 'Au', 'Au']})
                                      .set_index('formula_i'),
@@ -42,7 +42,7 @@ def test_save_restore_works(pyspark_context, ds_config, clean_isotope_storage_pa
                                      .set_index('formula_i'))
 
     isocalc = IsocalcWrapper(ds_config['isotope_generation'])
-    centr_gen = CentroidsGenerator(sc=pyspark_context, isocalc=isocalc)
+    centr_gen = CentroidsGenerator(sc=spark_context, isocalc=isocalc)
     centr_gen._save(ion_centroids)
     formula_centroids_restored = centr_gen._restore()
 
@@ -52,9 +52,9 @@ def test_save_restore_works(pyspark_context, ds_config, clean_isotope_storage_pa
                        formula_centroids_restored.centroids_df().sort_index())
 
 
-def test_centroids_subset_ordered_by_mz(pyspark_context, ds_config, clean_isotope_storage_path):
+def test_centroids_subset_ordered_by_mz(spark_context, ds_config, clean_isotope_storage_path):
     isocalc = IsocalcWrapper(ds_config['isotope_generation'])
-    centr_gen = CentroidsGenerator(sc=pyspark_context, isocalc=isocalc)
+    centr_gen = CentroidsGenerator(sc=spark_context, isocalc=isocalc)
     centr_gen._iso_gen_part_n = 1
     formulas = [generate_ion_formula(f, a)
                 for f, a in product(['C2H4O8', 'C3H6O7', 'C59H112O6', 'C62H108O'],

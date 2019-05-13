@@ -165,6 +165,7 @@ class AnnotationJob(object):
                             .Bucket(bucket_name)
                             .objects.filter(Prefix=key)):
                 local_file = str(self._ds_data_path / Path(obj_sum.key).name)
+                logger.debug(f'Downloading s3a://{bucket_name}/{obj_sum.key} -> {local_file}')
                 obj_sum.Object().download_file(local_file)
         else:
             rmtree(self._ds_data_path, ignore_errors=True)
