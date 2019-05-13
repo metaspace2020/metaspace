@@ -88,21 +88,17 @@ const Resolvers = {
         const {hideDeprecated, onlyLastVersion} = args;
 
         let molDBs = await fetchMolecularDatabases();
-        if (hideDeprecated) {
-          molDBs = molDBs.filter((molDB) => !deprecatedMolDBs.has(molDB.name));
-        }
         for (let molDB of molDBs) {
-          molDB['default'] = config.defaults.moldb_names.includes(molDB.name);
+          molDB.default = config.defaults.moldb_names.includes(molDB.name);
+          molDB.deprecated = deprecatedMolDBs.has(molDB.name);
+          molDB.superseded = molDBs.some(db => db.name === molDB.name && db.version > molDB.version);
+          molDB.hidden = molDB.deprecated || molDB.superseded;
+        }
+        if (hideDeprecated) {
+          molDBs = molDBs.filter(molDB => !molDB.deprecated);
         }
         if (onlyLastVersion) {
-          const molDBNameMap = new Map();
-          for (let molDB of molDBs) {
-            if (!molDBNameMap.has(molDB.name))
-              molDBNameMap.set(molDB.name, molDB);
-            else if (molDB.version > molDBNameMap.get(molDB.name).version)
-              molDBNameMap.set(molDB.name, molDB);
-          }
-          molDBs = Array.from(molDBNameMap.values());
+          molDBs = molDBs.filter(molDB => !molDB.superseded);
         }
 
         return molDBs;

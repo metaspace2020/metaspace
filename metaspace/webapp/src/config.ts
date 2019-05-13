@@ -30,6 +30,7 @@ interface Features {
   off_sample_col: boolean;
   new_feature_popups: boolean;
   optical_transform: boolean;
+  all_dbs: boolean;
 }
 
 interface ClientConfig {
@@ -61,6 +62,7 @@ const defaultConfig: ClientConfig = {
     off_sample_col: false,
     new_feature_popups: true,
     optical_transform: true,
+    all_dbs: false,
   }
 };
 
