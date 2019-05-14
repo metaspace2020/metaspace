@@ -1,7 +1,7 @@
 import {Route} from 'vue-router';
 import * as cookie from 'js-cookie';
 import {pick} from 'lodash-es';
-import {safeJsonParse} from '../../util';
+import safeJsonParse from '../../lib/safeJsonParse';
 
 const STORAGE_KEY = 'signInRedirect';
 const DEFAULT_ROUTE = {path:'/datasets'};

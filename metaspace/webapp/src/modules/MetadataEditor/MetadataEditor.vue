@@ -69,7 +69,8 @@
  import FormSection from './sections/FormSection.vue';
  import DataManagementSection from './sections/DataManagementSection.vue'
  import emailRegex from '../../lib/emailRegex';
- import { safeJsonParse } from '../../util'
+ import safeJsonParse from '../../lib/safeJsonParse';
+ import config from '../../config';
 
  const factories = {
    'string': schema => schema.default || '',
@@ -226,7 +227,14 @@
          query: metadataOptionsQuery,
          fetchPolicy: 'cache-first',
        });
-       return data;
+       if (!config.features.all_dbs) {
+         return {
+           ...data,
+           molecularDatabases: data.molecularDatabases.filter(db => !db.hidden),
+         }
+       } else {
+         return data;
+       }
      },
 
      async initializeForm() {
@@ -329,8 +337,8 @@
        }
        if (!name || name.length < 5) {
          set(errors, ['metaspaceOptions', 'name'], 'should be at least 5 characters');
-       } else if (name.length > 50) {
-         set(errors, ['metaspaceOptions', 'name'], 'should be no more than 50 characters');
+       } else if (name.length > 250) {
+         set(errors, ['metaspaceOptions', 'name'], 'should be no more than 250 characters');
        }
 
        if (groupId == null && principalInvestigator == null) {

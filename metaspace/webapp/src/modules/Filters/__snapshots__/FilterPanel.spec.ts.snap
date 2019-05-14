@@ -350,7 +350,6 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       <div slot-key="default">
         <mock-el-select filterable="true" value="HMDBv4">
           <mock-el-option label="molecularDatabases.0.name" value="molecularDatabases.0.name"></mock-el-option>
-          <mock-el-option label="molecularDatabases.1.name" value="molecularDatabases.1.name"></mock-el-option>
         </mock-el-select>
       </div>
       <div slot-key="reference">

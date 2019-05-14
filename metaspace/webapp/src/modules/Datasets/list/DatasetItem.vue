@@ -11,7 +11,8 @@
 
     <div class="ds-info">
       <div class="ds-item-line">
-        <b>{{ formatDatasetName }}</b>
+        <!-- title is set to make it easier to see overflowing datasets' names by hovering over the name -->
+        <b :title="formatDatasetName">{{ formatDatasetName }}</b>
       </div>
 
       <div class="ds-item-line" style="color: darkblue;">
@@ -145,7 +146,7 @@
  import {mdTypeSupportsOpticalImages} from '../../../util';
  import {encodeParams} from '../../Filters/index';
  import reportError from '../../../lib/reportError';
- import {safeJsonParse} from "../../../util";
+ import safeJsonParse from '../../../lib/safeJsonParse';
  import {plural} from '../../../lib/vueFilters';
 
  function removeUnderscores(str) {
@@ -444,9 +445,9 @@
 
  .dataset-item {
    position: relative;
-   box-sizing: border-box;
    border-radius: 5px;
-   flex: 1 1 100%;
+   // Can't use box-sizing:border-box due to IE11 flexbox limitations, so instead using `calc(100% - 2px)`
+   flex: 1 1 calc(100% - 2px);
    min-height: 120px;
    min-width: 600px;
    max-width: 950px;

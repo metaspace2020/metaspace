@@ -13,7 +13,7 @@
 <script>
   import {defaultMetadataType, metadataSchemas} from '../assets/metadataRegistry';
   import {get, flatMap} from 'lodash-es';
-  import { safeJsonParse } from '../util'
+  import safeJsonParse from '../lib/safeJsonParse';
   import {optionalSuffixInParens} from '../lib/vueFilters';
 
   export default {

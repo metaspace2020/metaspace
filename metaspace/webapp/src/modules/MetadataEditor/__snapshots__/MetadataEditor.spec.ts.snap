@@ -653,28 +653,6 @@ exports[`MetadataEditor should match snapshot 1`] = `
                                 <div slot-key="reference"><span class="desc-cite">Citation</span></div>
                               </mock-el-popover>
                             </div>
-                            <div>
-                              <b>EMBL-dev1:</b>
-                              A molecular database used for developmental and testing purposes by the Alexandrov team at EMBL.
-                              <mock-el-popover trigger="hover" placement="top">
-                                <div slot-key="default">
-                                  <div class="desc-cite-popover">
-                                    <i>EMBL</i>, developers database 1</div>
-                                </div>
-                                <div slot-key="reference"><span class="desc-cite">Citation</span></div>
-                              </mock-el-popover>
-                            </div>
-                            <div>
-                              <b>EMBL-dev2:</b>
-                              A molecular database used for developmental and testing purposes by the Alexandrov team at EMBL.
-                              <mock-el-popover trigger="hover" placement="top">
-                                <div slot-key="default">
-                                  <div class="desc-cite-popover">
-                                    <i>EMBL</i>, developers database 2</div>
-                                </div>
-                                <div slot-key="reference"><span class="desc-cite">Citation</span></div>
-                              </mock-el-popover>
-                            </div>
                           </div>
                         </div>
                         <div slot-key="reference">
@@ -686,7 +664,6 @@ exports[`MetadataEditor should match snapshot 1`] = `
                     <div class="el-form-item__content">
                       <mock-el-select value="molecularDatabases.0.name" required="true" multiple="" multiple-limit="3">
                         <mock-el-option value="molecularDatabases.0.name" label="molecularDatabases.0.name"></mock-el-option>
-                        <mock-el-option value="molecularDatabases.1.name" label="molecularDatabases.1.name"></mock-el-option>
                       </mock-el-select>
                       <!---->
                     </div>

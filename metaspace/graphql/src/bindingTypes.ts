@@ -1,6 +1,7 @@
 import {GraphQLFieldResolver} from 'graphql';
 import {Context} from './context';
 import {User as UserModel} from './modules/user/model';
+import {UserGroup as UserGroupModel} from './modules/group/model';
 import {Project as ProjectModel, UserProject as UserProjectModel} from './modules/project/model';
 import {UserProjectRole} from './binding';
 import {ESDataset} from '../esConnector';
@@ -32,6 +33,9 @@ export type ProjectSource = ProjectModel & { currentUserRole: UserProjectRole | 
 export type UserProjectSource = {
   [field in keyof UserProjectModel]: field extends 'user' ? UserSource : UserProjectModel[field]
 };
+export type UserGroupSource = {
+  [field in keyof UserGroupModel]: field extends 'user' ? UserSource : UserGroupModel[field]
+}
 export type DatasetSource = ESDataset;
 export interface DatasetUserSource {
   id: string;

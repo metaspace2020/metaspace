@@ -92,6 +92,7 @@ type MolecularDatabase {
   name: String!
   version: String!
   default: Boolean!
+  hidden: Boolean!  # True if database is deprecated/superseded and would not be useful for most users
 }
 
 type ColocalizationAlgo {

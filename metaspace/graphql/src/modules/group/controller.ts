@@ -6,7 +6,7 @@ import {User as UserModel} from '../user/model';
 import {Dataset as DatasetModel} from '../dataset/model';
 import {Group, UserGroup, UserGroupRole} from '../../binding';
 import {Context, ContextUser} from '../../context';
-import {Scope, ScopeRoleOptions} from '../../bindingTypes';
+import {Scope, ScopeRoleOptions, UserGroupSource} from '../../bindingTypes';
 import {findUserByEmail, logger, LooselyCompatible} from '../../utils';
 import {sendInvitationEmail} from '../auth';
 import config from '../../utils/config';
@@ -73,14 +73,17 @@ const updateUserGroupDatasets = async (entityManager: EntityManager, userId: str
 
 export const Resolvers = {
   UserGroup: {
-    async numDatasets(userGroup: UserGroupModel, _: any, {entityManager}: Context) {
-      const {userId, groupId} = userGroup;
+    async numDatasets(userGroup: UserGroupSource, _: any, {entityManager}: Context) {
+      const {userId, groupId, user} = userGroup;
+      const canSeePrivateDatasets = [ScopeRoleOptions.GROUP_MEMBER, ScopeRoleOptions.GROUP_MANAGER].includes(user.scopeRole);
+
       return await entityManager.getRepository(DatasetModel)
         .createQueryBuilder('dataset')
-        .innerJoin('(SELECT id, status FROM "public"."dataset")', 'engine_dataset', 'dataset.id = engine_dataset.id')
+        .innerJoin('(SELECT id, status, is_public FROM "public"."dataset")', 'engine_dataset', 'dataset.id = engine_dataset.id')
         .where('dataset.userId = :userId', { userId })
         .andWhere('dataset.groupId = :groupId', { groupId })
         .andWhere('dataset.groupApproved = TRUE')
+        .andWhere(canSeePrivateDatasets ? 'TRUE' : 'engine_dataset.is_public')
         .andWhere(`engine_dataset.status != 'FAILED'`)
         .getCount();
     }
@@ -141,9 +144,8 @@ export const Resolvers = {
         .addOrderBy('user.name')
         .getMany();
       return userGroupModels.map(ug => ({
+        ...ug,
         user: {...ug.user, scopeRole},
-        group: ug.group,
-        role: ug.role
       }));
     },
   },
