@@ -51,8 +51,9 @@ const logger = new (winston.Logger)({
 });
 
 const deprecatedMolDBs = new Set([
-  'HMDB', 'ChEBI', 'LIPID_MAPS', 'SwissLipids', 'COTTON_HMDB',
-  'HMDB-v2.5', 'HMDB-v2.5-cotton', 'EMBL-dev1', 'EMBL-dev2',
+  'HMDB', 'ChEBI', 'LIPID_MAPS', 'SwissLipids', 'COTTON_HMDB', 'HMDB-v2.5', 'HMDB-v2.5-cotton',
+  // EMBL-dev1/2 aren't actually deprecated. Their inclusion in this list is just for hiding them from normal users in the UI
+  'EMBL-dev1', 'EMBL-dev2',
 ]);
 
 async function fetchMolecularDatabases() {
