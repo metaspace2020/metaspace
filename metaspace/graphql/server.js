@@ -111,7 +111,7 @@ async function createHttpServerAsync(config) {
       onOperation(message, params) {
         const jwt = message.payload.jwt;
         const user = jwt != null ? jwtSimple.decode(jwt, config.jwt.secret) : null;
-        params.context = getContext(user && user.user, connection, null, null);
+        params.context = getContext(user && user.user, connection.manager, null, null);
         return params;
       }
     }, {

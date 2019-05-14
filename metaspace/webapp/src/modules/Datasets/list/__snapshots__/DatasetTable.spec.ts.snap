@@ -132,7 +132,7 @@ exports[`DatasetTable should match snapshot 1`] = `
       </div>
       <div class="ds-info">
         <div class="ds-item-line">
-          <b>allDatasets.0.name</b>
+          <b title="allDatasets.0.name">allDatasets.0.name</b>
         </div>
         <div class="ds-item-line"><span title="Filter by species" class="ds-add-filter">
         allDatasets.0.organism</span>,
@@ -248,7 +248,7 @@ exports[`DatasetTable should match snapshot 1`] = `
     </div>
     <div class="ds-info">
       <div class="ds-item-line">
-        <b>allDatasets.0.name</b>
+        <b title="allDatasets.0.name">allDatasets.0.name</b>
       </div>
       <div class="ds-item-line"><span title="Filter by species" class="ds-add-filter">
         allDatasets.0.organism</span>,
@@ -364,7 +364,7 @@ exports[`DatasetTable should match snapshot 1`] = `
   </div>
   <div class="ds-info">
     <div class="ds-item-line">
-      <b>allDatasets.0.name</b>
+      <b title="allDatasets.0.name">allDatasets.0.name</b>
     </div>
     <div class="ds-item-line"><span title="Filter by species" class="ds-add-filter">
         allDatasets.0.organism</span>,

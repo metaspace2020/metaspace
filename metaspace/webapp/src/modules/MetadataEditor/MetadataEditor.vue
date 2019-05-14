@@ -329,8 +329,8 @@
        }
        if (!name || name.length < 5) {
          set(errors, ['metaspaceOptions', 'name'], 'should be at least 5 characters');
-       } else if (name.length > 50) {
-         set(errors, ['metaspaceOptions', 'name'], 'should be no more than 50 characters');
+       } else if (name.length > 250) {
+         set(errors, ['metaspaceOptions', 'name'], 'should be no more than 250 characters');
        }
 
        if (groupId == null && principalInvestigator == null) {
