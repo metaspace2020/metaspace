@@ -69,7 +69,8 @@
  import FormSection from './sections/FormSection.vue';
  import DataManagementSection from './sections/DataManagementSection.vue'
  import emailRegex from '../../lib/emailRegex';
- import { safeJsonParse } from '../../util'
+ import safeJsonParse from '../../lib/safeJsonParse';
+ import config from '../../config';
 
  const factories = {
    'string': schema => schema.default || '',
@@ -226,7 +227,14 @@
          query: metadataOptionsQuery,
          fetchPolicy: 'cache-first',
        });
-       return data;
+       if (!config.features.all_dbs) {
+         return {
+           ...data,
+           molecularDatabases: data.molecularDatabases.filter(db => !db.hidden),
+         }
+       } else {
+         return data;
+       }
      },
 
      async initializeForm() {

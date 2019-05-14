@@ -37,7 +37,7 @@
   import config from '../../config';
   import Component from 'vue-class-component';
   import {debounce, isArray} from 'lodash-es';
-  import {safeJsonParse} from '../../util';
+  import safeJsonParse from '../../lib/safeJsonParse';
 
   interface FeatureSpec {
     name: string;

@@ -198,6 +198,7 @@ sm_webapp_features:
   off_sample_col: false
   new_feature_popups: true
   optical_transform: true
+  all_dbs: false
 
 sm_activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
 

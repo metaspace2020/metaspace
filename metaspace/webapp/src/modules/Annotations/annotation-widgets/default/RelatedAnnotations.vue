@@ -58,7 +58,7 @@
 
 <script>
   import {get, omit} from 'lodash-es';
-  import {renderMolFormula, safeJsonParse} from '../../../../util';
+  import {renderMolFormula} from '../../../../util';
   import ImageLoader from '../../../../components/ImageLoader.vue';
   import { relatedAnnotationsQuery } from '../../../../api/annotation';
   import {encodeParams, stripFilteringParams} from '../../../Filters';

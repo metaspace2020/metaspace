@@ -103,7 +103,9 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     initialValue: lists => lists.molecularDatabases
                                 .filter(d => d.default)
                                 .map(d => d.name)[0],
-    options: lists => lists.molecularDatabases.map(d => d.name),
+    options: lists => lists.molecularDatabases
+      .filter(d => config.features.all_dbs || !d.hidden)
+      .map(d => d.name),
     removable: false
   },
 
