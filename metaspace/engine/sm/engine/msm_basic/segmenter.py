@@ -47,7 +47,7 @@ def define_ds_segments(imzml_parser, ds_segm_size_mb=5, sample_ratio=0.05):
     spectra_sample = list(spectra_sample_gen(imzml_parser, sample_ratio=sample_ratio))
     check_spectra_quality(spectra_sample)
 
-    spectra_mzs = np.array([mz for sp_id, mzs, ints in spectra_sample for mz in mzs])
+    spectra_mzs = np.concatenate([mzs for sp_id, mzs, ints in spectra_sample])
     total_n_mz = spectra_mzs.shape[0] / sample_ratio
 
     float_prec = 4 if imzml_parser.mzPrecision == 'f' else 8
@@ -56,7 +56,7 @@ def define_ds_segments(imzml_parser, ds_segm_size_mb=5, sample_ratio=0.05):
     segm_n = max(1, int(segm_n))
 
     segm_bounds_q = [i * 1 / segm_n for i in range(0, segm_n + 1)]
-    segm_lower_bounds = [np.quantile(spectra_mzs, q) for q in segm_bounds_q]
+    segm_lower_bounds = np.quantile(spectra_mzs, segm_bounds_q)
     ds_segments = np.array(list(zip(segm_lower_bounds[:-1], segm_lower_bounds[1:])))
 
     logger.info(f'Generated {len(ds_segments)} dataset segments: {ds_segments[0]}...{ds_segments[-1]}')
