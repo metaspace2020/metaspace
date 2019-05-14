@@ -152,6 +152,10 @@
      scaleBarColor: {
        type: String,
        default: '#000000'
+     },
+     showPixelIntensity: {
+       type: Boolean,
+       default: false
      }
    },
    data () {
@@ -277,7 +281,11 @@
      },
 
      pixelIntensityStyle() {
-       if (this.ionImage != null && this.cursorPixelPos != null && this.cursorOverPixelIntensity != null) {
+       if (this.showPixelIntensity
+         && this.ionImage != null
+         && this.cursorPixelPos != null
+         && this.cursorOverPixelIntensity != null) {
+
          const baseX = this.width / 2 + (this.xOffset - this.ionImage.width / 2) * this.zoom;
          const baseY = this.height / 2 + (this.yOffset - this.ionImage.height / 2) * this.zoom;
          const [cursorX, cursorY] = this.cursorPixelPos;

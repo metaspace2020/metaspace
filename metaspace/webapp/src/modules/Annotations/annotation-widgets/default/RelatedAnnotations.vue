@@ -22,6 +22,9 @@
           :imageFitParams="{areaWidth: 260, areaHeight: 250, areaMinHeight: 50}"
           v-bind="imageLoaderSettings"
           :colormap="colormap"
+          :minIntensity="other.isotopeImages[0].minIntensity"
+          :maxIntensity="other.isotopeImages[0].maxIntensity"
+          showPixelIntensity
         />
         <el-popover
           trigger="hover"

@@ -19,6 +19,7 @@
               :yOffset="imageLoaderSettings.imagePosition.yOffset"
               ref="imageLoader"
               scrollBlock
+              showPixelIntensity
               class="image-loader"
               v-bind="imageLoaderSettings"
               @move="handleImageMove"

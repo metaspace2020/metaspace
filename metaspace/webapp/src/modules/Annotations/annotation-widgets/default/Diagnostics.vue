@@ -32,6 +32,9 @@
                               v-bind="imageLoaderSettings"
                               v-if="img.url !== null"
                               style="overflow: hidden"
+                              :minIntensity="img.minIntensity"
+                              :maxIntensity="img.maxIntensity"
+                              showPixelIntensity
                 />
             </div>
         </el-col>

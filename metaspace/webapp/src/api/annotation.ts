@@ -122,6 +122,7 @@ gql`query GetRelatedAnnotations($datasetId: String!, $filter: AnnotationFilter!,
       fdrLevel
       isotopeImages {
         url
+        minIntensity
         maxIntensity
       }
       possibleCompounds {
