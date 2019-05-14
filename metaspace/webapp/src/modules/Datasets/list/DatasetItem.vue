@@ -11,7 +11,8 @@
 
     <div class="ds-info">
       <div class="ds-item-line">
-        <b>{{ formatDatasetName }}</b>
+        <!-- title is set to make it easier to see overflowing datasets' names by hovering over the name -->
+        <b :title="formatDatasetName">{{ formatDatasetName }}</b>
       </div>
 
       <div class="ds-item-line" style="color: darkblue;">
