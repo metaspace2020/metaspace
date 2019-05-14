@@ -47,7 +47,7 @@
         popper-class="pointer-events-none"
         placement="top"
       >
-        <div :style="pixelIntensityStyle" />
+        <div :style="pixelIntensityStyle" class="pixel-intensity" />
       </el-tooltip>
     </div>
 
@@ -294,10 +294,6 @@
            top: (baseY + cursorY * this.zoom - 0.5) + 'px',
            width: `${this.zoom - 0.5}px`,
            height: `${this.zoom - 0.5}px`,
-           position: 'absolute',
-           border: '1px solid red',
-           display: 'block',
-           zIndex: 3,
          }
        } else {
          return null;
@@ -466,7 +462,13 @@
    transition: 0.7s;
  }
 
-
+  .pixel-intensity {
+    position: absolute;
+    border: 1px solid red;
+    display: block;
+    z-index: 3;
+    pointer-events: none;
+  }
 </style>
 <style>
   /* Unscoped, because the tooltip is appended to document.body */
