@@ -14,16 +14,14 @@ ABS_MZ_TOLERANCE_DA = 0.002
 logger = logging.getLogger('engine')
 
 
-def check_spectra_quality(spectra_sample):
+def check_spectra_quality(mz_arr, int_arr):
     err_msgs = []
 
-    mz_arr = np.concatenate([sp[1] for sp in spectra_sample])
     wrong_mz_n = mz_arr[(mz_arr < 0) | (mz_arr > MAX_MZ_VALUE)].shape[0]
     if wrong_mz_n > 0:
         err_msgs.append('Sample mz arrays contain {} values outside of allowed range [0, {}]'\
                         .format(wrong_mz_n, MAX_MZ_VALUE))
 
-    int_arr = np.concatenate([sp[2] for sp in spectra_sample])
     wrong_int_n = mz_arr[(int_arr < 0) | (int_arr > MAX_INTENS_VALUE)].shape[0]
     if wrong_int_n > 0:
         err_msgs.append('Sample intensity arrays contain {} values outside of allowed range [0, {}]'\
@@ -42,21 +40,16 @@ def spectra_sample_gen(imzml_parser, sample_ratio=0.05):
         yield sp_idx, mzs, ints
 
 
-def define_ds_segments(imzml_parser, ds_segm_size_mb=5, sample_ratio=0.05):
+def define_ds_segments(sample_mzs, total_mz_n, mz_precision, ds_segm_size_mb=5):
     logger.info(f'Defining dataset segment bounds')
-    spectra_sample = list(spectra_sample_gen(imzml_parser, sample_ratio=sample_ratio))
-    check_spectra_quality(spectra_sample)
 
-    spectra_mzs = np.concatenate([mzs for sp_id, mzs, ints in spectra_sample])
-    total_n_mz = spectra_mzs.shape[0] / sample_ratio
-
-    float_prec = 4 if imzml_parser.mzPrecision == 'f' else 8
-    segm_arr_columns = 3
-    segm_n = segm_arr_columns * (total_n_mz * float_prec) // (ds_segm_size_mb * 2**20)
+    float_prec = 4 if mz_precision == 'f' else 8
+    segm_arr_column_n = 3  # sp_idx, mzs, ints
+    segm_n = segm_arr_column_n * (total_mz_n * float_prec) // (ds_segm_size_mb * 2**20)
     segm_n = max(1, int(segm_n))
 
     segm_bounds_q = [i * 1 / segm_n for i in range(0, segm_n + 1)]
-    segm_lower_bounds = np.quantile(spectra_mzs, segm_bounds_q)
+    segm_lower_bounds = np.quantile(sample_mzs, segm_bounds_q)
     ds_segments = np.array(list(zip(segm_lower_bounds[:-1], segm_lower_bounds[1:])))
 
     logger.info(f'Generated {len(ds_segments)} dataset segments: {ds_segments[0]}...{ds_segments[-1]}')
@@ -71,9 +64,17 @@ def segment_spectra_chunk(sp_mz_int_buf, mz_segments, ds_segments_path):
                       append=True)
 
 
-def segment_spectra(imzml_parser, coordinates, ds_segments, ds_segments_path):
+def calculate_chunk_sp_n(sample_mzs_bytes, sample_sp_n, max_chunk_size_mb=500):
+    segm_arr_column_n = 3  # sp_idx, mzs, ints
+    sample_spectra_size_mb = sample_mzs_bytes * (segm_arr_column_n + 1) / 2 ** 20  # +1 - sort arg copy of mzs
+    spectrum_size_mb = sample_spectra_size_mb / sample_sp_n
+    chunk_sp_n = int(max_chunk_size_mb / spectrum_size_mb)
+    return max(1, chunk_sp_n)
 
-    def chunk_list(l, size=5000):
+
+def segment_spectra(imzml_parser, coordinates, chunk_sp_n, ds_segments, ds_segments_path):
+
+    def chunk_list(l, size):
         n = (len(l) - 1) // size + 1
         for i in range(n):
             yield l[size * i:size * (i + 1)]
@@ -92,8 +93,7 @@ def segment_spectra(imzml_parser, coordinates, ds_segments, ds_segments_path):
 
     sp_id_to_idx = get_pixel_indices(coordinates)
 
-    chunk_size = 5000
-    coord_chunk_it = chunk_list(coordinates, chunk_size)
+    coord_chunk_it = chunk_list(coordinates, chunk_sp_n)
 
     sp_i = 0
     sp_inds_list, mzs_list, ints_list = [], [], []
