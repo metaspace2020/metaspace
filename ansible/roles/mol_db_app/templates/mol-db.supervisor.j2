@@ -4,8 +4,8 @@
 process_name = {{ mol_db_app_name }}
 environment = PATH="{{ miniconda_prefix }}/envs/{{ mol_db_miniconda_env.name }}/bin"
 directory = {{ mol_db_home }}
-command = {{ miniconda_prefix }}/envs/{{ mol_db_miniconda_env.name }}/bin/gunicorn \
-    --reload --log-level INFO --access-logfile - --workers 4 --worker-class sync --timeout 90 \
+command = {{ miniconda_prefix }}/envs/{{ mol_db_miniconda_env.name }}/bin/gunicorn
+    --reload --log-level INFO --access-logfile - --workers 4 --worker-class sync --timeout 90
     --bind 0.0.0.0:{{ mol_db_port }} app.main:application
 redirect_stderr = true
 stdout_logfile = {{ mol_db_home }}/logs/{{ mol_db_app_name }}.log
