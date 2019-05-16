@@ -28,7 +28,7 @@
   become: yes
 
 - name: Install psycopg2 (required by ansible)
-  apt: name=python-psycopg2 state=latest
+  apt: name=python3-psycopg2 state=latest
   become: yes
 
 - name: Create sm postgres user

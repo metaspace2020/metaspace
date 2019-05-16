@@ -52,6 +52,7 @@
   with_items:
     - "{{ ssl.cert }}"
     - "{{ ssl.key }}"
+  when: not skip_ssl_cert_upload
 
 - name: Restart Nginx
   become: yes
