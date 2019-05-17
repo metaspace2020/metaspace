@@ -18,7 +18,6 @@ from sm.engine.search_results import SearchResults
 from sm.engine.util import SMConfig, split_s3_path
 from sm.engine.es_export import ESExporter
 from sm.engine.mol_db import MolecularDB
-from sm.engine.errors import JobFailedError
 from sm.engine.queue import QueuePublisher, SM_DS_STATUS
 
 logger = logging.getLogger('engine')
@@ -120,8 +119,7 @@ class AnnotationJob(object):
                 self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FAILED,
                                                               datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                                                               job_ids[0]))
-                msg = 'Job failed(ds_id={}, moldbs={}): {}'.format(self._ds.id, moldbs, str(e))
-                raise JobFailedError(msg) from e
+                raise
 
     def _remove_annotation_jobs(self, moldb_ids):
         for id in moldb_ids:

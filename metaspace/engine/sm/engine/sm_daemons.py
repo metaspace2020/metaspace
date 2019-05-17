@@ -13,7 +13,7 @@ from sm.engine.ion_thumbnail import generate_ion_thumbnail
 from sm.engine.off_sample_wrapper import classify_dataset_ion_images
 from sm.engine.optical_image import del_optical_image, IMG_URLS_BY_ID_SEL
 from sm.rest.dataset_manager import DatasetActionPriority
-from sm.engine.errors import UnknownDSID
+from sm.engine.errors import UnknownDSID, IndexUpdateFailedError, AnnotationFailedError
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.mol_db import MolecularDB
 from sm.engine.queue import SM_DS_STATUS, QueueConsumer
@@ -194,18 +194,20 @@ class SMAnnotateDaemon(object):
         Path(self._sm_config['fs']['spark_data_path']).mkdir(parents=True, exist_ok=True)
 
     def _on_success(self, msg):
+        self.logger.info(f" SM annotate daemon: success")
+
         ds = Dataset.load(self._db, msg['ds_id'])
         ds.notify_update(self._manager.status_queue, msg['action'], DaemonActionStage.FINISHED)
-        self.logger.info(f" SM annotate daemon: success")
 
         self._manager.post_to_slack('dart', ' [v] Annotation succeeded: {}'.format(json.dumps(msg)))
         self.redis_client.set('cluster-busy', 'no')
 
     def _on_failure(self, msg):
+        self.logger.error(f" SM annotate daemon: failure", exc_info=True)
+
         ds = Dataset.load(self._db, msg['ds_id'])
         ds.set_status(self._db, self._manager.es, DatasetStatus.FAILED)
         ds.notify_update(self._manager.status_queue, msg['action'], DaemonActionStage.FAILED)
-        self.logger.error(f" SM annotate daemon: failure", exc_info=True)
 
         self._manager.post_to_slack('hankey', ' [x] Annotation failed: {}'.format(json.dumps(msg)))
         if 'email' in msg:
@@ -213,35 +215,39 @@ class SMAnnotateDaemon(object):
         self.redis_client.set('cluster-busy', 'no')
 
     def _callback(self, msg):
-        self.redis_client.set('cluster-busy', 'yes', ex=3600*13)  # key expires in 13h
+        try:
+            self.logger.info(f" SM annotate daemon received a message: {msg}")
+            self.redis_client.set('cluster-busy', 'yes', ex=3600*13)  # key expires in 13h
 
-        ds = Dataset.load(self._db, msg['ds_id'])
-        ds.set_status(self._db, self._manager.es, DatasetStatus.ANNOTATING)
-        ds.notify_update(self._manager.status_queue, msg['action'], DaemonActionStage.STARTED)
+            ds = Dataset.load(self._db, msg['ds_id'])
+            ds.set_status(self._db, self._manager.es, DatasetStatus.ANNOTATING)
+            ds.notify_update(self._manager.status_queue, msg['action'], DaemonActionStage.STARTED)
 
-        self.logger.info(f" SM annotate daemon received a message: {msg}")
-        self._manager.post_to_slack('new', " [v] New annotation message: {}".format(json.dumps(msg)))
+            self._manager.post_to_slack('new', " [v] New annotation message: {}".format(json.dumps(msg)))
 
-        from sm.engine.annotation_job import AnnotationJob
-        self._manager.annotate(ds=ds,
-                               annotation_job_factory=AnnotationJob,
-                               del_first=msg.get('del_first', False))
+            from sm.engine.annotation_job import AnnotationJob
+            self._manager.annotate(ds=ds,
+                                   annotation_job_factory=AnnotationJob,
+                                   del_first=msg.get('del_first', False))
 
-        upd_msg = {
-            'ds_id': msg['ds_id'],
-            'ds_name': msg['ds_name'],
-            'email': msg.get('email', None),
-            'action': DaemonAction.INDEX,
-        }
-        self._upd_queue_pub.publish(msg=upd_msg, priority=DatasetActionPriority.HIGH)
-
-        if self._sm_config['services'].get('off_sample', False):
-            analyze_msg = {
+            upd_msg = {
                 'ds_id': msg['ds_id'],
                 'ds_name': msg['ds_name'],
-                'action': DaemonAction.CLASSIFY_OFF_SAMPLE,
+                'email': msg.get('email', None),
+                'action': DaemonAction.INDEX,
             }
-            self._upd_queue_pub.publish(msg=analyze_msg, priority=DatasetActionPriority.LOW)
+            self._upd_queue_pub.publish(msg=upd_msg, priority=DatasetActionPriority.HIGH)
+
+            if self._sm_config['services'].get('off_sample', False):
+                analyze_msg = {
+                    'ds_id': msg['ds_id'],
+                    'ds_name': msg['ds_name'],
+                    'action': DaemonAction.CLASSIFY_OFF_SAMPLE,
+                }
+                self._upd_queue_pub.publish(msg=analyze_msg, priority=DatasetActionPriority.LOW)
+        except Exception as e:
+            msg = f"Annotation failed (ds_id={msg['ds_id']}): {e}"
+            raise AnnotationFailedError(msg) from e
 
     def start(self):
         self._stopped = False
@@ -317,29 +323,34 @@ class SMIndexUpdateDaemon(object):
             self._manager.send_failed_email(msg)
 
     def _callback(self, msg):
-        ds = Dataset.load(self._db, msg['ds_id'])
+        try:
+            self.logger.info(f' SM update daemon received a message: {msg}')
+            self._manager.post_to_slack('new', f" [v] New {msg['action']} message: {json.dumps(msg)}")
 
-        self.logger.info(f' SM update daemon received a message: {msg}')
-        self._manager.post_to_slack('new', f" [v] New {msg['action']} message: {json.dumps(msg)}")
-        ds.notify_update(self._manager.status_queue, msg['action'], DaemonActionStage.STARTED)
+            ds = Dataset.load(self._db, msg['ds_id'])
+            ds.notify_update(self._manager.status_queue, msg['action'], DaemonActionStage.STARTED)
 
-        if msg['action'] == DaemonAction.INDEX:
-            self._manager.index(ds=ds)
-
-        elif msg['action'] == DaemonAction.CLASSIFY_OFF_SAMPLE:
-            try:
-                # depending on number of annotations may take up to several minutes
-                classify_dataset_ion_images(self._db, ds, self._sm_config['services'])
+            if msg['action'] == DaemonAction.INDEX:
                 self._manager.index(ds=ds)
-            except Exception as e:  # don't fail dataset when off-sample classifications fails
-                self.logger.warning(f'Failed to classify off-sample: {e}')
 
-        elif msg['action'] == DaemonAction.UPDATE:
-            self._manager.update(ds, msg['fields'])
-        elif msg['action'] == DaemonAction.DELETE:
-            self._manager.delete(ds=ds)
-        else:
-            raise Exception(f"Wrong action: {msg['action']}")
+            elif msg['action'] == DaemonAction.CLASSIFY_OFF_SAMPLE:
+                try:
+                    # depending on number of annotations may take up to several minutes
+                    classify_dataset_ion_images(self._db, ds, self._sm_config['services'])
+                except Exception as e:  # don't fail dataset when off-sample classification fails
+                    self.logger.warning(f'Failed to classify off-sample: {e}')
+
+                self._manager.index(ds=ds)
+
+            elif msg['action'] == DaemonAction.UPDATE:
+                self._manager.update(ds, msg['fields'])
+            elif msg['action'] == DaemonAction.DELETE:
+                self._manager.delete(ds=ds)
+            else:
+                raise Exception(f"Wrong action: {msg['action']}")
+        except Exception as e:
+            msg = f"Index update failed (ds_id={msg['ds_id']}): {e}"
+            raise IndexUpdateFailedError(msg) from e
 
     def start(self):
         self._stopped = False

@@ -4,12 +4,12 @@ class SMError(Exception):
         self.message = msg
 
 
-class JobFailedError(SMError):
+class AnnotationFailedError(SMError):
     def __init__(self, msg):
         super().__init__(msg)
 
 
-class ESExportFailedError(SMError):
+class IndexUpdateFailedError(SMError):
     def __init__(self, msg):
         super().__init__(msg)
 
