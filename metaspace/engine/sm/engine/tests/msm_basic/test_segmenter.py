@@ -5,20 +5,28 @@ import pandas as pd
 from itertools import product
 from pyimzml import ImzMLParser
 
-from sm.engine.msm_basic.segmenter import segment_centroids, define_ds_segments, segment_spectra, MAX_MZ_VALUE
+from sm.engine.msm_basic.segmenter import segment_centroids, define_ds_segments, segment_spectra, MAX_MZ_VALUE, \
+    calculate_chunk_sp_n
+
+
+def test_calculate_chunk_sp_n():
+    sample_mzs_bytes = 25 * 2**20
+    sample_sp_n = 10
+    max_chunk_size_mb = 500
+
+    chunk_sp_n = calculate_chunk_sp_n(sample_mzs_bytes, sample_sp_n, max_chunk_size_mb)
+
+    assert chunk_sp_n == 50
 
 
 def test_define_ds_segments():
-    imzml_parser_mock = Mock()
-    imzml_parser_mock.coordinates = list(product([0], range(10)))
-    imzml_parser_mock.getspectrum.return_value = (np.linspace(0, 100, num=11), np.ones(11))
-
-    exp_ds_segments = np.array([[0, 50.], [50, 100.]])
+    sample_mzs = np.linspace(0, 100, 100)
 
     # 3 (columns) * 10 (spectra) * 10 (mz/spectrum) * 8 (float prec) ~= 2400 (dataset size, bytes)
     # 2400 // 2**10 (segm size, bytes) ~= 2 (segments)
-    ds_segments = define_ds_segments(imzml_parser_mock, sample_ratio=0.5, ds_segm_size_mb=2**-10)
+    ds_segments = define_ds_segments(sample_mzs, mz_precision='d', total_mz_n=100, ds_segm_size_mb=2**-10)
 
+    exp_ds_segments = np.array([[0, 50.], [50, 100.]])
     assert np.allclose(ds_segments, exp_ds_segments)
 
 
@@ -30,7 +38,8 @@ def test_segment_spectra(to_msgpack_mock):
     coordinates = list(product([0], range(10)))
     ds_segments = np.array([[0, 50], [50, 90.]])
 
-    segment_spectra(imzml_parser_mock, coordinates, ds_segments, Path('/tmp/abc'))
+    chunk_sp_n = 1000
+    segment_spectra(imzml_parser_mock, coordinates, chunk_sp_n, ds_segments, Path('/tmp/abc'))
 
     for segm_i, (min_mz, max_mz) in enumerate(ds_segments):
         args = to_msgpack_mock.call_args_list[segm_i][0]

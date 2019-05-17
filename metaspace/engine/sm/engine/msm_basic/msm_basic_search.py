@@ -13,7 +13,7 @@ from sm.engine.isocalc_wrapper import IsocalcWrapper, ISOTOPIC_PEAK_N
 from sm.engine.util import SMConfig
 from sm.engine.msm_basic.formula_imager import create_process_segment
 from sm.engine.msm_basic.segmenter import define_ds_segments, segment_spectra, segment_centroids, clip_centroids_df, \
-    calculate_centroids_segments_n
+    calculate_centroids_segments_n, spectra_sample_gen, check_spectra_quality, calculate_chunk_sp_n
 
 logger = logging.getLogger('engine')
 
@@ -141,12 +141,24 @@ class MSMSearch(object):
 
         target_formula_inds = self.select_target_formula_ids(formulas_df, ion_formula_map_df)
 
-        coordinates = [coo[:2] for coo in self._imzml_parser.coordinates]
+        logger.info('Reading spectra sample')
         ds_segm_size_mb = 5
-        ds_segments = define_ds_segments(self._imzml_parser, ds_segm_size_mb, sample_ratio=0.05)
+        sample_ratio = 0.05
+        spectra_sample = list(spectra_sample_gen(self._imzml_parser, sample_ratio))
+        sample_mzs = np.concatenate([mzs for sp_id, mzs, ints in spectra_sample])
+        sample_ints = np.concatenate([ints for sp_id, mzs, ints in spectra_sample])
+        check_spectra_quality(sample_mzs, sample_ints)
+
+        total_mz_n = sample_mzs.shape[0] / sample_ratio
+        ds_segments = define_ds_segments(sample_mzs, total_mz_n,
+                                         self._imzml_parser.mzPrecision, ds_segm_size_mb)
+
+        sample_sp_n = int(len(self._imzml_parser.coordinates) * sample_ratio)
+        chunk_sp_n = calculate_chunk_sp_n(sample_mzs.nbytes, sample_sp_n)
 
         ds_segments_path = self._ds_data_path / 'ds_segments'
-        segment_spectra(self._imzml_parser, coordinates, ds_segments, ds_segments_path)
+        coordinates = [coo[:2] for coo in self._imzml_parser.coordinates]
+        segment_spectra(self._imzml_parser, coordinates, chunk_sp_n, ds_segments, ds_segments_path)
 
         logger.info('Putting segments to workers')
         self.put_segments_to_workers(ds_segments_path)

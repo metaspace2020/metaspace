@@ -12,7 +12,7 @@
   tasks:
     - name: Create a list of private ip addresses for the slave instances
       set_fact: spark_slave_ips="{{ spark_slave_ips  + [ hostvars[item].ansible_ssh_host ] }}"
-      with_items: "{{ groups['slave'] }}"
+      with_items: "{{ groups['master'] + groups['slave'] }}"
 
     - name: Put slave ip addresses into the slaves file
       become: yes

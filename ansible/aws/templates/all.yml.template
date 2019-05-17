@@ -367,33 +367,33 @@ cluster_configuration:
 
     master:
       hostgroup: MASTER_HOSTGROUP  # specify a custom name for the group of hosts
-      type: c5d.2xlarge
+      type: c4.4xlarge
       n: 1
       elipalloc:
-      price: 0.6
+      price:  1.0
       sec_group: default
       image: ami-07174474  # public ubuntu 16.04, create custom AMI and put its id here
 
       block_dev_maps:
         - DeviceName: /dev/sda1
           Ebs:
-            VolumeSize: 200
+            VolumeSize: 500
             DeleteOnTermination: True
             VolumeType: gp2
 
     slave:
       hostgroup: SLAVE_HOSTGROUP  # specify a custom name for the group of hosts
-      type: c5d.2xlarge
+      type: c4.4xlarge
       n: 1
       elipalloc:
-      price: 0.6
+      price: 1.0
       sec_group: default
       image: ami-07174474  # public ubuntu 16.04, create custom AMI and put its id here
 
       block_dev_maps:
         - DeviceName: /dev/sda1
           Ebs:
-            VolumeSize: 200
+            VolumeSize: 500
             DeleteOnTermination: True
             VolumeType: gp2
 # uncomment below if you want to use Elasticsearch for logs aggregation
