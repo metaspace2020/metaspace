@@ -7,6 +7,11 @@ interface Dictionary<T> {
   [key: string]: T;
 }
 
+interface SortSettings {
+  by: string;
+  dir: string;
+}
+
 const FILTER_TO_URL: Record<FilterKey, string> = {
   database: 'db',
   group: 'grp',
@@ -44,7 +49,7 @@ const PATH_TO_LEVEL: Record<string, Level> = {
   '/projects': 'projects',
 };
 
-export const DEFAULT_TABLE_ORDER = {
+export const DEFAULT_TABLE_ORDER: SortSettings = {
   by: 'ORDER_BY_MSM',
   dir: 'DESCENDING'
 };
@@ -156,17 +161,12 @@ export function encodeSections(sections: string[]) {
   return parseInt(str, 2);
 }
 
-function decodeSortOrder(str: string) {
+function decodeSortOrder(str: string): SortSettings {
   const dir = str[0] == '-' ? 'DESCENDING' : 'ASCENDING';
   if (str[0] == '-')
     str = str.slice(1);
   const by = 'ORDER_BY_' + str.toUpperCase();
   return {by, dir};
-}
-
-interface SortSettings {
-  by: string
-  dir: string
 }
 
 export function encodeSortOrder(settings: SortSettings): string | null {
@@ -175,12 +175,34 @@ export function encodeSortOrder(settings: SortSettings): string | null {
   return sort === '-msm' ? null : sort;
 }
 
-export function decodeSettings(location: Location): any {
+export interface UrlTableSettings {
+  currentPage: number;
+  order: SortSettings
+}
+
+export interface UrlAnnotationViewSettings {
+  activeSections: string[];
+  colormap: string;
+  colocalizationAlgo: string | null;
+  hotspotThreshold: number | null;
+}
+
+export interface UrlDatasetsSettings {
+  tab: string;
+}
+
+export interface UrlSettings {
+  table: UrlTableSettings;
+  annotationView: UrlAnnotationViewSettings;
+  datasets: UrlDatasetsSettings;
+}
+
+export function decodeSettings(location: Location): UrlSettings | undefined {
   const {query, path} = location;
   if (!query || !path)
     return undefined;
 
-  let settings = {
+  let settings: UrlSettings = {
     table: {
       currentPage: 1,
       order: DEFAULT_TABLE_ORDER,
@@ -189,7 +211,8 @@ export function decodeSettings(location: Location): any {
     annotationView: {
       activeSections: DEFAULT_ANNOTATION_VIEW_SECTIONS,
       colormap: DEFAULT_COLORMAP,
-      colocalizationAlgo: null as string | null,
+      colocalizationAlgo: null,
+      hotspotThreshold: null
     },
 
     datasets: {
@@ -203,6 +226,10 @@ export function decodeSettings(location: Location): any {
     settings.table.order = decodeSortOrder(query.sort);
   if (query.cmap)
     settings.annotationView.colormap = query.cmap;
+  if (query.hotspotthreshold) {
+    // Note: this also accepts the string 'none' to mean no hotspot removal (100%) for the sake of readable URLs
+    settings.annotationView.hotspotThreshold = parseFloat(query.hotspotthreshold) || 100;
+  }
   if (query.sections !== undefined)
     settings.annotationView.activeSections = decodeSections(query.sections);
   if (query.alg)

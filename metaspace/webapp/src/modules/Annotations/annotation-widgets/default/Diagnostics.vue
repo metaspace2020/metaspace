@@ -34,6 +34,7 @@
                               style="overflow: hidden"
                               :minIntensity="img.minIntensity"
                               :maxIntensity="img.maxIntensity"
+                              :hotspotQuantile="hotspotQuantile"
                               showPixelIntensity
                 />
             </div>
@@ -79,6 +80,8 @@ export default class Diagnostics extends Vue {
     colormap: any
     @Prop()
     imageLoaderSettings: any
+    @Prop()
+    hotspotQuantile?: number
 
     sampleIsotopeColor: string = 'red'
     theorIsotopeColor: string = 'blue'

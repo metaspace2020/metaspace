@@ -92,6 +92,7 @@ import {IonImage, loadPngFromUrl, processIonImage} from '../../../../lib/ionImag
 import {get} from 'lodash-es';
 import fitImageToArea, {FitImageToAreaResult} from '../../../../lib/fitImageToArea';
 import reportError from '../../../../lib/reportError';
+import {Image} from 'upng-js';
 
 
 @Component({
@@ -120,16 +121,18 @@ export default class MainImage extends Vue {
     @Prop({required: true, type: Function})
     onImageMove!: Function
     @Prop({type: Number})
-    pixelSizeX!: Number
+    pixelSizeX!: number
     @Prop({type: Number})
-    pixelSizeY!: Number
+    pixelSizeY!: number
     @Prop({type: Boolean})
-    showScaleBar!: Boolean
+    showScaleBar!: boolean
     @Prop({type: String})
-    scaleBarColor!: String
+    scaleBarColor!: string
+    @Prop({type: Number})
+    hotspotQuantile?: number
 
     ionImageUrl: string | null = null;
-    ionImage: IonImage | null = null;
+    ionImagePng: Image | null = null;
     ionImageIsLoading = false;
     imageViewerWidth: number = 500;
     imageViewerHeight: number = 500;
@@ -148,6 +151,7 @@ export default class MainImage extends Vue {
     }
 
     @Watch('annotation')
+    @Watch('imageLoaderSettings.hotspotQuantile')
     async updateIonImage() {
         const isotopeImage = get(this.annotation, 'isotopeImages[0]');
         const newUrl = isotopeImage != null ? isotopeImage.url : null;
@@ -157,17 +161,27 @@ export default class MainImage extends Vue {
             try {
                 const png = await loadPngFromUrl(newUrl);
                 if (newUrl === this.ionImageUrl) {
-                    const { minIntensity, maxIntensity } = isotopeImage;
-                    this.ionImage = processIonImage(png, minIntensity, maxIntensity);
+                    this.ionImagePng = png;
                     this.ionImageIsLoading = false;
                 }
             } catch (err) {
                 reportError(err, null);
                 if (newUrl === this.ionImageUrl) {
-                    this.ionImage = null;
+                    this.ionImagePng = null;
                     this.ionImageIsLoading = false;
                 }
             }
+        }
+    }
+
+    get ionImage(): IonImage | null {
+        console.log('rerender')
+        if (this.ionImagePng != null) {
+            const isotopeImage = get(this.annotation, 'isotopeImages[0]');
+            const { minIntensity, maxIntensity } = isotopeImage;
+            return processIonImage(this.ionImagePng, minIntensity, maxIntensity, this.hotspotQuantile);
+        } else {
+            return null;
         }
     }
 

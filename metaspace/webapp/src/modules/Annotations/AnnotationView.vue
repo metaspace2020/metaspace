@@ -68,6 +68,7 @@
                      :pixelSizeY="pixelSizeY"
                      :showScaleBar="showScaleBar"
                      :scaleBarColor="scaleBarColor"
+                     :hotspotQuantile="hotspotQuantile"
                      @opacityInput="newVal => opacity = newVal">
           </component>
         </el-collapse-item>
@@ -137,7 +138,8 @@
                      :annotation="annotation"
                      :database="this.$store.getters.filter.database"
                      :acquisitionGeometry="msAcqGeometry"
-                     :image-loader-settings="imageLoaderSettings">
+                     :image-loader-settings="imageLoaderSettings"
+                     :hotspotQuantile="hotspotQuantile">
           </component>
         </el-collapse-item>
 
@@ -148,7 +150,8 @@
                      :annotation="annotation"
                      :database="this.$store.getters.filter.database"
                      :acquisitionGeometry="msAcqGeometry"
-                     :image-loader-settings="imageLoaderSettings">
+                     :image-loader-settings="imageLoaderSettings"
+                     :hotspotQuantile="hotspotQuantile">
           </component>
         </el-collapse-item>
 
@@ -158,6 +161,7 @@
                      :annotation="annotation"
                      :colormap="colormap"
                      :imageLoaderSettings="imageLoaderSettings"
+                     :hotspotQuantile="hotspotQuantile"
                      :peakChartData="peakChartData"
                      :acquisitionGeometry="msAcqGeometry">
           </component>
