@@ -81,13 +81,17 @@ const extractIntensityAndMask = (png: Image, min: number, max: number) => {
   return {intensityValues, mask};
 };
 
-const getHotspotThreshold = (intensityValues: Float32Array, mask: Uint8ClampedArray,
+export const getHotspotThreshold = (intensityValues: Float32Array, mask: Uint8ClampedArray,
                              minIntensity: number, maxIntensity: number, hotspotQuantile: number) => {
-  // Extract unmasked values so that the result isn't biased by empty pixels
+  // Only non-zero values should be considered, otherwise sparse images have most of their set pixels treated as hotspots.
+  // For compatibility with the previous version where images were loaded as 8-bit, this also excludes pixels
+  // whose values would round down to zero. This can make a big difference - some ion images have as high as 40% of
+  // their pixels set to values that are zero when loaded as 8-bit but non-zero when loaded as 16-bit.
+  const minValueConsidered = maxIntensity / 256;
   const values = [];
 
   for (let i = 0; i < mask.length; i++) {
-    if (mask[i] !== 0) {
+    if (intensityValues[i] >= minValueConsidered && mask[i] !== 0) {
       values.push(intensityValues[i]);
     }
   }
@@ -142,8 +146,8 @@ export const processIonImage = (png: Image, minIntensity: number = 0, maxIntensi
   };
 };
 
-export const renderIonImage = (ionImage: IonImage, cmap?: number[][]) => {
-  const {clippedValues, mask, width, height} = ionImage;
+export const renderIonImageToBuffer = (ionImage: IonImage, cmap?: number[][]) => {
+  const {clippedValues, mask} = ionImage;
   // Treat pixels as 32-bit values instead of four 8-bit values to avoid extra math.
   // Assume little-endian byte order, because big-endian is pretty much gone.
   const outputBuffer = new ArrayBuffer(clippedValues.length * 4);
@@ -172,6 +176,13 @@ export const renderIonImage = (ionImage: IonImage, cmap?: number[][]) => {
       outputRGBA[i] = emptyRGBA;
     }
   }
+  return outputBuffer;
+};
+
+export const renderIonImage = (ionImage: IonImage, cmap?: number[][]) => {
+  const {width, height} = ionImage;
+
+  const outputBuffer = renderIonImageToBuffer(ionImage, cmap);
 
   return createDataUrl(new Uint8ClampedArray(outputBuffer), width, height);
 };

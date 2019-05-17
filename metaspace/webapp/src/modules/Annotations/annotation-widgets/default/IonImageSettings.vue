@@ -16,6 +16,9 @@
         <el-form-item>
           <el-checkbox :checked="inverted" @input="onInvertChange">Invert</el-checkbox>
         </el-form-item>
+        <el-form-item>
+          <el-checkbox :checked="hotspotThreshold !== 'none'" @change="onHotspotThresholdChange">Hotspot clipping</el-checkbox>
+        </el-form-item>
       </el-form-item>
       <el-form-item label="Scale bar color">
         <el-select :value="pickedColor"
@@ -76,6 +79,10 @@
      return this.colormap[0] == '-';
    }
 
+   get hotspotThreshold() {
+     return this.$store.getters.settings.annotationView.hotspotThreshold;
+   }
+
    scaleBarColors(color: string): string {
      let cssBaseRule = `width: 100px; height: 20px; margin: 2px auto; background-color:${color};`;
      if (color === '#FFFFFF') {
@@ -90,6 +97,10 @@
 
    onInvertChange(invert: any) {
      this.$store.commit('setColormap', (invert ? '-' : '') + this.colormapName);
+   }
+
+   onHotspotThresholdChange(enableHotspotClipping: boolean) {
+     this.$store.commit('setHotspotThreshold', enableHotspotClipping ? null : 'none');
    }
 
    setBarVisibility() {

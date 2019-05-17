@@ -40,6 +40,10 @@
    imagePosition: ImagePosition
    opticalSrc: string | null
    opticalTransform: number[][] | null
+   // hotspotQuantile is deliberately not included here, because every time it changes some slow computation occurs,
+   // and the computed getters were being triggered by any part of the ImageSettings object changing, such as opacity,
+   // causing a lot of jank.
+   //hotspotQuantile?: number
  }
 
  const metadataDependentComponents: any = {};
@@ -152,6 +156,11 @@
      return this.$store.getters.settings.annotationView.colormap;
    }
 
+   get hotspotQuantile(): number | undefined {
+     const threshold = this.$store.getters.settings.annotationView.hotspotThreshold;
+     return threshold ? threshold / 100 : undefined;
+   }
+
    get colormapName(): string {
      return this.colormap.replace('-', '');
    }
@@ -185,7 +194,7 @@
        path,
        query: {
          ...encodeParams(filter, path, this.$store.state.filterLists),
-         ...pick(this.$route.query, 'sections', 'sort', 'hideopt', 'cmap'),
+         ...pick(this.$route.query, 'sections', 'sort', 'hideopt', 'cmap', 'hotspotthreshold'),
        },
      };
    }

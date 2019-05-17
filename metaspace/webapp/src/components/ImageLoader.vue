@@ -50,6 +50,8 @@
     minIntensity?: number;
     @Prop()
     maxIntensity?: number;
+    @Prop()
+    hotspotQuantile?: number;
 
     containerWidth = 500;
     containerHeight = 500;
@@ -80,7 +82,7 @@
           const png = await loadPngFromUrl((config.imageStorage || '') + newUrl);
 
           if (newUrl === this.src) {
-            this.ionImage = processIonImage(png, this.minIntensity, this.maxIntensity);
+            this.ionImage = processIonImage(png, this.minIntensity, this.maxIntensity, this.hotspotQuantile);
             this.ionImageIsLoading = false;
           }
         } catch (err) {
