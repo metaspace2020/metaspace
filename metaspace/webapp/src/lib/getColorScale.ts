@@ -1,6 +1,11 @@
 import * as d3 from 'd3';
-import * as scales from 'plotly.js/src/components/colorscale/scales.js';
-import * as extractScale from 'plotly.js/src/components/colorscale/extract_scale.js';
+// WORKAROUND: Jest had an issue with these CommonJS exports. `import * as extractScale` sets extractScale
+// to a regular function in the browser, but to {default: [Function]} when run in Jest. There doesn't appear to be
+// a good framework-level solution, so this horror is needed:
+let scales = require('plotly.js/src/components/colorscale/scales.js');
+if (scales.default) scales = scales.default;
+let extractScale = require('plotly.js/src/components/colorscale/extract_scale.js');
+if (extractScale.default) extractScale = extractScale.default;
 
 interface ColorScale {
   domain: number[]

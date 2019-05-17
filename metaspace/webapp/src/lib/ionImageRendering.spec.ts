@@ -1,8 +1,11 @@
-// A 1x256 linear gradient between (0,0,0,0) and (255,255,255,255)
-
-import {getHotspotThreshold, processIonImage, renderIonImage} from './ionImageRendering';
+import {getHotspotThreshold, processIonImage, renderIonImage, renderIonImageToBuffer} from './ionImageRendering';
 import {range, times} from 'lodash-es';
 import {decode, encodeLL, Image} from 'upng-js';
+import {readFile} from 'fs';
+import {promisify} from 'util';
+import * as path from 'path'
+import createColormap from './createColormap';
+const readFileAsync = promisify(readFile);
 
 const getGradientPng = (is16Bit = true, isGrayscale = true, hasAlpha = true, length = 256): Image => {
   const values = is16Bit ? range(0, 65536, Math.ceil(65536/length)) : range(0, 256, Math.ceil(256/length));
@@ -89,17 +92,30 @@ describe('ionImageRendering.ts', () => {
     });
   });
 
-  test(`getHotspotThreshold is compatible with legacy 8-bit hotspot clipping`, () => {
-    const intensityValues = new Float32Array([
-      // Values below 1/256th of maxIntensity should influence the median
-      0, 1280, 2550,
-      // Values equal to or above 1/256th of maxIntensity should be considered
-      // The 0.5th quantile should be the 3rd item out of these numbers
-      2560, 2560, 327680, 655350, 655350]);
-    const mask = new Uint8ClampedArray([255, 255, 255, 255, 255, 255, 255, 255]);
+  test(`renderIonImage result is similar to reference result produced with METASPACE v1.3`, async () => {
+    const ionImageFile = await readFileAsync(path.resolve(__dirname, './testdata/ion_image.png'));
+    const referencePngFile = await readFileAsync(path.resolve(__dirname, './testdata/reference_colorized.png'));
+    const ionImagePng = decode(ionImageFile.buffer as ArrayBuffer);
+    const referencePng = decode(referencePngFile.buffer as ArrayBuffer);
+    const referenceData = new Uint8ClampedArray(referencePng.data);
+    const byteLength = referencePng.width * referencePng.height * 4;
 
-    const result = getHotspotThreshold(intensityValues, mask, 0, 655350, 0.5);
+    const ionImage = processIonImage(ionImagePng);
+    const renderedIonImage = renderIonImageToBuffer(ionImage, createColormap('Viridis'));
+    const renderedData = new Uint8ClampedArray(renderedIonImage);
 
-    expect(result).toBe(327680);
+    expect(renderedData.length).toEqual(byteLength);
+    for(let i = 0; i < byteLength; i+= 4) {
+      // expected vs actual RGBA should be +/- 4 values
+      const [er,eg,eb,ea] = referenceData.slice(i, i+4) as any as number[];
+      const [ar,ag,ab,aa] = renderedData.slice(i, i+4) as any as number[];
+      expect(ar).toBeGreaterThan(er - 4);
+      expect(ar).toBeLessThan(er + 4);
+      expect(ag).toBeGreaterThan(eg - 4);
+      expect(ag).toBeLessThan(eg + 4);
+      expect(ab).toBeGreaterThan(eb - 4);
+      expect(ab).toBeLessThan(eb + 4);
+      expect(aa).toEqual(ea);
+    }
   })
 });

@@ -146,8 +146,8 @@ export const processIonImage = (png: Image, minIntensity: number = 0, maxIntensi
   };
 };
 
-export const renderIonImage = (ionImage: IonImage, cmap?: number[][]) => {
-  const {clippedValues, mask, width, height} = ionImage;
+export const renderIonImageToBuffer = (ionImage: IonImage, cmap?: number[][]) => {
+  const {clippedValues, mask} = ionImage;
   // Treat pixels as 32-bit values instead of four 8-bit values to avoid extra math.
   // Assume little-endian byte order, because big-endian is pretty much gone.
   const outputBuffer = new ArrayBuffer(clippedValues.length * 4);
@@ -176,6 +176,13 @@ export const renderIonImage = (ionImage: IonImage, cmap?: number[][]) => {
       outputRGBA[i] = emptyRGBA;
     }
   }
+  return outputBuffer;
+};
+
+export const renderIonImage = (ionImage: IonImage, cmap?: number[][]) => {
+  const {width, height} = ionImage;
+
+  const outputBuffer = renderIonImageToBuffer(ionImage, cmap);
 
   return createDataUrl(new Uint8ClampedArray(outputBuffer), width, height);
 };
