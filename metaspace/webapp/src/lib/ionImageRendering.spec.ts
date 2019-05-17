@@ -1,6 +1,6 @@
 // A 1x256 linear gradient between (0,0,0,0) and (255,255,255,255)
 
-import {processIonImage, renderIonImage} from './ionImageRendering';
+import {getHotspotThreshold, processIonImage, renderIonImage} from './ionImageRendering';
 import {range, times} from 'lodash-es';
 import {decode, encodeLL, Image} from 'upng-js';
 
@@ -88,4 +88,18 @@ describe('ionImageRendering.ts', () => {
       });
     });
   });
+
+  test(`getHotspotThreshold is compatible with legacy 8-bit hotspot clipping`, () => {
+    const intensityValues = new Float32Array([
+      // Values below 1/256th of maxIntensity should influence the median
+      0, 1280, 2550,
+      // Values equal to or above 1/256th of maxIntensity should be considered
+      // The 0.5th quantile should be the 3rd item out of these numbers
+      2560, 2560, 327680, 655350, 655350]);
+    const mask = new Uint8ClampedArray([255, 255, 255, 255, 255, 255, 255, 255]);
+
+    const result = getHotspotThreshold(intensityValues, mask, 0, 655350, 0.5);
+
+    expect(result).toBe(327680);
+  })
 });
