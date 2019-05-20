@@ -71,7 +71,7 @@ const FEATURE_STORAGE_KEY = 'featureFlags';
 let config = defaultsDeep({}, fileConfig, defaultConfig) as ClientConfig;
 
 export const updateConfigFromQueryString = () => {
-  if (typeof window !== 'undefined' && window.location != null) {
+  if (typeof window !== 'undefined') {
     // hackily parse the querystring because vue-router hasn't initialized yet and IE doesn't support the
     // URLSearchParams class that can do this properly
     const queryStringFeatures = (window.location.search || '')
