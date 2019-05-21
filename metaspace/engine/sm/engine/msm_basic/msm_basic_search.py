@@ -9,7 +9,7 @@ from pyspark.storagelevel import StorageLevel
 from sm.engine.fdr import FDR
 from sm.engine.formula_parser import generate_ion_formula
 from sm.engine.formula_centroids import CentroidsGenerator
-from sm.engine.isocalc_wrapper import IsocalcWrapper, ISOTOPIC_PEAK_N
+from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.util import SMConfig
 from sm.engine.msm_basic.formula_imager import create_process_segment
 from sm.engine.msm_basic.segmenter import define_ds_segments, segment_spectra, segment_centroids, clip_centroids_df, \
@@ -174,7 +174,7 @@ class MSMSearch(object):
 
         logger.info('Processing segments...')
         process_centr_segment = create_process_segment(ds_segments, coordinates,
-                                                       self._image_gen_config, target_formula_inds)
+                                                       self._ds_config, target_formula_inds)
         results_rdd = self.process_segments(centr_segm_n, process_centr_segment)
         formula_metrics_df, formula_images_rdd = merge_results(results_rdd, formula_centroids.formulas_df)
 

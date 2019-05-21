@@ -4,7 +4,6 @@ import numpy as np
 import logging
 import requests
 
-from sm.engine.isocalc_wrapper import ISOTOPIC_PEAK_N
 from sm.engine.png_generator import PngGenerator
 
 logger = logging.getLogger('engine')
@@ -12,12 +11,12 @@ METRICS_INS = ('INSERT INTO iso_image_metrics (job_id, db_id, sf, adduct, msm, f
                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)')
 
 
-def post_images_to_image_store(formula_images_rdd, alpha_channel, img_store, img_store_type):
+def post_images_to_image_store(formula_images_rdd, alpha_channel, img_store, img_store_type, n_peaks):
     logger.info('Posting iso images to {}'.format(img_store))
     png_generator = PngGenerator(alpha_channel, greyscale=True)
 
     def generate_png_and_post(imgs):
-        iso_image_ids = [None] * ISOTOPIC_PEAK_N
+        iso_image_ids = [None] * n_peaks
         for k, img in enumerate(imgs):
             if img is not None:
                 fp = png_generator.generate_png(img.toarray())
@@ -39,10 +38,11 @@ class SearchResults(object):
     metric_names: list
         Metric names
     """
-    def __init__(self, sf_db_id, job_id, metric_names):
+    def __init__(self, sf_db_id, job_id, metric_names, n_peaks):
         self.sf_db_id = sf_db_id
         self.job_id = job_id
         self.metric_names = metric_names
+        self.n_peaks = n_peaks
 
     def _metrics_table_row_gen(self, job_id, db_id, metr_df, formula_img_ids):
         for ind, r in metr_df.iterrows():
@@ -81,5 +81,5 @@ class SearchResults(object):
         """
         logger.info('Storing search results to the DB')
         formula_image_ids = post_images_to_image_store(formula_images_rdd,
-                                                       alpha_channel, img_store, img_store_type)
+                                                       alpha_channel, img_store, img_store_type, self.n_peaks)
         self.store_ion_metrics(metrics_df, formula_image_ids, db)

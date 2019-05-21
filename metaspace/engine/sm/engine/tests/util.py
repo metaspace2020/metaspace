@@ -48,7 +48,8 @@ def ds_config():
     return {
         "image_generation": {
             "n_levels": 30,
-            "ppm": 3
+            "ppm": 3,
+            "min_px": 1,
         },
         "isotope_generation": {
             "adducts": ["+H", "+Na", "+K"],

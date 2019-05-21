@@ -105,11 +105,13 @@ def get_file_path(name):
     return Path(SparkFiles.get(name))
 
 
-def create_process_segment(ds_segments, coordinates, image_gen_config, target_formula_inds):
+def create_process_segment(ds_segments, coordinates, ds_config, target_formula_inds):
     sample_area_mask = make_sample_area_mask(coordinates)
     nrows, ncols = ds_dims(coordinates)
-    compute_metrics = make_compute_image_metrics(sample_area_mask, nrows, ncols, image_gen_config)
-    ppm = image_gen_config['ppm']
+    compute_metrics = make_compute_image_metrics(sample_area_mask, nrows, ncols, ds_config['image_generation'])
+    ppm = ds_config['image_generation']['ppm']
+    min_px = ds_config['image_generation']['min_px']
+    n_peaks = ds_config['isotope_generation']['n_peaks']
 
     def process_centr_segment(segm_i):
         centr_segm_path = get_file_path(f'centr_segm_{segm_i:04}.msgpack')
@@ -127,10 +129,11 @@ def create_process_segment(ds_segments, coordinates, image_gen_config, target_fo
 
             formula_images_it = gen_iso_images(sp_inds=sp_arr[:,0], sp_mzs=sp_arr[:,1], sp_ints=sp_arr[:,2],
                                                centr_df=centr_df,
-                                               nrows=nrows, ncols=ncols, ppm=ppm, min_px=1)
+                                               nrows=nrows, ncols=ncols, ppm=ppm, min_px=min_px)
             formula_metrics_df, formula_images = formula_image_metrics(formula_images_it,
                                                                        compute_metrics,
-                                                                       target_formula_inds)
+                                                                       target_formula_inds,
+                                                                       n_peaks)
             logger.info(f'Segment {segm_i} finished')
         else:
             logger.warning(f'Centroids segment path not found {centr_segm_path}')

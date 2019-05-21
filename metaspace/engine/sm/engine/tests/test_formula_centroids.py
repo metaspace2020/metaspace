@@ -9,7 +9,8 @@ def create_formula_centroids(rows1, rows2):
     return FormulaCentroids(formulas_df=(pd.DataFrame(rows1, columns=['formula_i', 'formula'])
                                          .set_index('formula_i')),
                             centroids_df=(pd.DataFrame(rows2, columns=['formula_i', 'peak_i', 'mz', 'int'])
-                                          .set_index('formula_i')))
+                                          .set_index('formula_i')),
+                            n_peaks=4)
 
 
 def test_add_non_overlap():

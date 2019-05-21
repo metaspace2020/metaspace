@@ -191,7 +191,7 @@ def _get_isotope_generation_from_metadata(metadata):
     return default_adducts, charge, isocalc_sigma
 
 
-def generate_ds_config(metadata, mol_dbs=None, adducts=None, ppm=None, n_peaks=None, n_decoys=None,
+def generate_ds_config(metadata, mol_dbs=None, adducts=None, ppm=None, min_px=None, n_peaks=None, n_decoys=None,
                        neutral_losses=None, chem_mods=None):
 
     sm_config = SMConfig.get_conf()
@@ -216,6 +216,7 @@ def generate_ds_config(metadata, mol_dbs=None, adducts=None, ppm=None, n_peaks=N
         'image_generation': {
             'ppm': ppm or 3,
             'n_levels': 30,
+            'min_px': 1 if min_px is None else min_px,
         }
     }
     return config
@@ -229,11 +230,12 @@ def update_ds_config(old_config, metadata, **kwargs):
     old_vals = {
         'mol_dbs': old_config['databases'],
         'adducts': old_config['isotope_generation']['adducts'],
-        'ppm': old_config['image_generation']['ppm'],
         'n_peaks': old_config['isotope_generation'].get('n_peaks'),
-        'n_decoys': old_config.get('annotation', {}).get('n_decoys'),
         'neutral_losses': old_config['isotope_generation'].get('neutral_losses'),
         'chem_mods': old_config['isotope_generation'].get('chem_mods'),
+        'n_decoys': old_config.get('annotation', {}).get('n_decoys'),
+        'ppm': old_config['image_generation']['ppm'],
+        'min_px': old_config['image_generation']['min_px'],
     }
 
     for k, v in old_vals:

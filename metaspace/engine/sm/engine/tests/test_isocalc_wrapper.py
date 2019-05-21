@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from numpy.testing import assert_array_almost_equal
 
-from sm.engine.isocalc_wrapper import IsocalcWrapper, ISOTOPIC_PEAK_N
+from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.tests.util import ds_config
 
 
@@ -28,7 +28,7 @@ def test_centroids_number(ds_config, formula, adduct):
     mzs, ints = isocalc_wrapper.centroids(formula + adduct)
 
     assert mzs is not None and ints is not None
-    assert len(mzs) == len(ints) == ISOTOPIC_PEAK_N
+    assert len(mzs) == len(ints) == 4
 
 
 def test_centroids_h20(ds_config):
