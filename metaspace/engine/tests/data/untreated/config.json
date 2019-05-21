@@ -2,7 +2,7 @@
     "image_generation": {
         "q": 99, 
         "do_preprocessing": false, 
-        "nlevels": 30, 
+        "n_levels": 30,
         "ppm": 3.0
     }, 
     "isotope_generation": {

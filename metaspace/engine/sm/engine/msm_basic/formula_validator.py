@@ -70,7 +70,7 @@ def make_compute_image_metrics(sample_area_mask, nrows, ncols, img_gen_config):
                 m['spatial'] = isotope_image_correlation(iso_imgs_flat, weights=formula_ints[1:])
                 if m['spatial'] > 0:
 
-                    moc = measure_of_chaos(iso_imgs[0], img_gen_config.get('nlevels', 30))
+                    moc = measure_of_chaos(iso_imgs[0], img_gen_config.get('n_levels', 30))
                     m['chaos'] = 0 if np.isclose(moc, 1.0) else moc
                     if m['chaos'] > 0:
 

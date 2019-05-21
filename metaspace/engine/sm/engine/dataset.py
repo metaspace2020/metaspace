@@ -153,7 +153,7 @@ class Dataset(object):
         return msg
 
 
-def generate_ds_config(metadata, mol_dbs, adducts, ppm=None):
+def _get_isotope_generation_from_metadata(metadata):
     assert 'MS_Analysis' in metadata
 
     sm_config = SMConfig.get_conf()
@@ -181,39 +181,63 @@ def generate_ds_config(metadata, mol_dbs, adducts, ppm=None):
     elif rp200 < 875000: params = RESOL_POWER_PARAMS['750K']
     else: params = RESOL_POWER_PARAMS['1000K']
 
-    default_moldbs = sm_config['ds_config_defaults']['moldb_names']
-    mol_dbs = [*mol_dbs, *(mol_db for mol_db in default_moldbs if mol_db not in mol_dbs)]
+    default_adducts = sm_config['ds_config_defaults']['adducts'][polarity]
+    charge = {
+        'polarity': polarity,
+        'n_charges': 1
+    }
+    isocalc_sigma = float(f"{params['sigma']:f}")
 
-    if not adducts:
-        adducts = sm_config['ds_config_defaults']['adducts'][polarity]
+    return default_adducts, charge, isocalc_sigma
+
+
+def generate_ds_config(metadata, mol_dbs=None, adducts=None, ppm=None, n_peaks=None, n_decoys=None,
+                       neutral_losses=None, chem_mods=None):
+
+    sm_config = SMConfig.get_conf()
+    default_moldbs = sm_config['ds_config_defaults']['moldb_names']
+
+    mol_dbs = [*mol_dbs, *(mol_db for mol_db in default_moldbs if mol_db not in mol_dbs)]
+    default_adducts, charge, isocalc_sigma = _get_isotope_generation_from_metadata(metadata)
 
     config = {
         'databases': mol_dbs,
         'isotope_generation': {
-            'adducts': adducts,
-            'charge': {
-                'polarity': polarity,
-                'n_charges': 1
-            },
-            'isocalc_sigma': float(f"{params['sigma']:f}"),
-            'isocalc_pts_per_mz': int(params['pts_per_mz'])
+            'adducts': adducts or default_adducts,
+            'charge': charge,
+            'isocalc_sigma': isocalc_sigma,
+            'n_peaks': n_peaks or 4,
+            'neutral_losses': neutral_losses or [],
+            'chem_mods': chem_mods or [],
+        },
+        'annotation': {
+            'n_decoys': n_decoys or 20,
         },
         'image_generation': {
-            'ppm': metadata.get('Image_Generation', {}).get('ppm', ppm or 3),
-            'nlevels': 30,
-            'q': 99,
-            'do_preprocessing': False
+            'ppm': ppm or 3,
+            'n_levels': 30,
         }
     }
     return config
 
 
-def update_ds_config(old_config, metadata, mol_dbs=None, adducts=None, ppm=None):
-    if mol_dbs is None:
-        mol_dbs = old_config['databases']
-    if adducts is None:
-        adducts = old_config['isotope_generation']['adducts']
-    if ppm is None:
-        ppm = old_config['image_generation']['ppm']
+def update_ds_config(old_config, metadata, **kwargs):
+    """
+    Extracts parameters from an existing ds_config, and uses them to generate a new ds_config with the provided changes.
+    """
 
-    return generate_ds_config(metadata, mol_dbs, adducts, ppm)
+    old_vals = {
+        'mol_dbs': old_config['databases'],
+        'adducts': old_config['isotope_generation']['adducts'],
+        'ppm': old_config['image_generation']['ppm'],
+        'n_peaks': old_config['isotope_generation'].get('n_peaks'),
+        'n_decoys': old_config.get('annotation', {}).get('n_decoys'),
+        'neutral_losses': old_config['isotope_generation'].get('neutral_losses'),
+        'chem_mods': old_config['isotope_generation'].get('chem_mods'),
+    }
+
+    for k, v in old_vals:
+        if v is not None:
+            kwargs.setdefault(k, v)
+
+    return generate_ds_config(metadata, **kwargs)

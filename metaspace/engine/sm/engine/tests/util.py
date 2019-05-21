@@ -47,9 +47,7 @@ def metadata():
 def ds_config():
     return {
         "image_generation": {
-            "q": 99,
-            "do_preprocessing": False,
-            "nlevels": 30,
+            "n_levels": 30,
             "ppm": 3
         },
         "isotope_generation": {
@@ -59,7 +57,12 @@ def ds_config():
                 "n_charges": 1
             },
             "isocalc_sigma": 0.000619,
-            "isocalc_pts_per_mz": 8078
+            "n_peaks": 4,
+            "neutral_losses": [],
+            "chem_mods": [],
+        },
+        "annotation": {
+            "n_decoys": 20
         },
         "databases": ["HMDB-v4"]
     }

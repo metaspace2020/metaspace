@@ -11,7 +11,7 @@
   },
   "image_generation": {
     "ppm": 100.0,
-    "nlevels": 30,
+    "n_levels": 30,
     "q": 99,
     "do_preprocessing": false
   },

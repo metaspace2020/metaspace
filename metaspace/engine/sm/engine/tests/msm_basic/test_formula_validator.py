@@ -15,7 +15,7 @@ from sm.engine.tests.util import pysparkling_context as spark_context, ds_config
 @patch('sm.engine.msm_basic.formula_validator.measure_of_chaos', return_value=0.9)
 def test_get_compute_img_measures_pass(chaos_mock, image_corr_mock, pattern_match_mock):
     img_gen_config = {
-        'nlevels': 30,
+        'n_levels': 30,
         'do_preprocessing': False,
         'q': 99.0
     }

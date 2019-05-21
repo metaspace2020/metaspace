@@ -123,6 +123,8 @@ def add_ds(ds_man, ds_id=None, params=None):
             is_public
             mol_dbs
             adducts
+            ppm
+
         }
         priority
         force
