@@ -269,6 +269,7 @@ jobs:
           name: Test setup
           command: |
             pip install --upgrade -r requirements.txt
+            pip install -e .
       - run:
           name: Create engine database
           command: |
@@ -280,7 +281,7 @@ jobs:
             createuser -h localhost -U sm --createdb mol_db
             createdb -h localhost -U mol_db mol_db
             wget -qN https://s3-eu-west-1.amazonaws.com/sm-engine/tests/mol_db_HMDBv25.sql
-            psql -h localhost -U sm -d sm_test -f mol_db_HMDBv25.sql
+            psql -h localhost -U mol_db -d mol_db -f mol_db_HMDBv25.sql
             cd ../mol-db
             cp conf/local.ini.template conf/local.ini
             conda env create -f environment.yml
@@ -290,9 +291,10 @@ jobs:
       - run:
           name: Run scientific test
           command: |
-            cp ~/workspace/graphql_schema.sql ./sm/engine/tests/graphql_schema.sql
-            #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
-            python tests/sci_test_spheroid.py -r --mock-img-store --mock-graphql-db
+            #cp ~/workspace/graphql_schema.sql ./sm/engine/tests/graphql_schema.sql
+            while true; do echo '---'; sleep 5; done  # uncomment this line for debugging
+            python tests/sci_test/spheroid.py -r --mock-img-store --mock-graphql-db \
+              --config=tests/sci_test/config.json
 
 workflows:
   version: 2
@@ -302,7 +304,9 @@ workflows:
       - test-engine:
           requires:
             - generate-graphql-schema
-      #- test-engine-sci  # uncomment for debugging
+      - test-engine-sci:  # uncomment for debugging
+          requires:
+            - generate-graphql-schema
 #      - test-graphql
       - test-webapp:
           requires:
