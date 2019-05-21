@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 
-from sm.engine.dataset import DatasetStatus, Dataset
+from sm.engine.dataset import DatasetStatus, Dataset, generate_ds_config, update_ds_config
 from sm.engine.errors import DSIsBusy, UnknownDSID
 from sm.engine.daemon_action import DaemonAction, DaemonActionStage
 from sm.engine.optical_image import add_optical_image, del_optical_image
@@ -55,18 +55,19 @@ class SMapiDatasetManager(object):
         try:
             ds = Dataset.load(self._db, doc['id'])
             self._set_ds_busy(ds, kwargs.get('force', False))
+            config = update_ds_config(ds.config, ds.metadata, mol_dbs=doc.get('mol_dbs'), adducts=doc.get('adducts'))
             is_new = False
         except UnknownDSID:
             is_new = True
+            config = generate_ds_config(doc.get('metadata'), doc.get('mol_dbs'), doc.get('adducts'))
 
         ds = Dataset(id=doc['id'],
                      name=doc.get('name'),
                      input_path=doc.get('input_path'),
                      upload_dt=doc.get('upload_dt', now.isoformat()),
                      metadata=doc.get('metadata'),
+                     config=config,
                      is_public=doc.get('is_public'),
-                     mol_dbs=doc.get('mol_dbs'),
-                     adducts=doc.get('adducts'),
                      status=DatasetStatus.QUEUED)
         ds.save(self._db, self._es)
         ds.notify_update(self._status_queue, DaemonAction.ANNOTATE, DaemonActionStage.QUEUED, is_new=is_new)
@@ -87,6 +88,7 @@ class SMapiDatasetManager(object):
         ds.input_path = doc.get('input_path', ds.input_path)
         if 'metadata' in doc:
             ds.metadata = doc['metadata']
+        ds.config = update_ds_config(ds.config, ds.metadata, mol_dbs=doc.get('mol_dbs'), adducts=doc.get('adducts'))
         ds.upload_dt = doc.get('upload_dt', ds.upload_dt)
         ds.is_public = doc.get('is_public', ds.is_public)
         ds.save(self._db, self._es)

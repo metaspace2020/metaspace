@@ -170,24 +170,13 @@ def test_sm_daemons(MSMSearchMock,
     es = ESExporter(db)
 
     try:
-        upload_dt = datetime.now()
         ds_id = '2000-01-01_00h00m'
-        db.insert(Dataset.DS_INSERT, [{
-            'id': ds_id,
-            'name': test_ds_name,
-            'input_path': input_dir_path,
-            'upload_dt': upload_dt,
-            'metadata': json.dumps(metadata),
-            'config': json.dumps(ds_config),
-            'status': DatasetStatus.QUEUED,
-            'is_public': True,
-            'mol_dbs': ['HMDB-v4'],
-            'adducts': ['+H', '+Na', '+K'],
-            'ion_img_storage': 'fs'
-        }])
+        upload_dt = datetime.now()
+        ds = Dataset(id=ds_id, name=test_ds_name, input_path=input_dir_path, upload_dt=upload_dt,
+                     metadata=metadata, config=ds_config, status=DatasetStatus.QUEUED)
+        ds.save(db, es)
 
-        ds = Dataset.load(db, ds_id)
-        queue_pub.publish({'ds_id': ds.id, 'ds_name': ds.name, 'action': DaemonAction.ANNOTATE})
+        queue_pub.publish({'ds_id': ds_id, 'ds_name': test_ds_name, 'action': DaemonAction.ANNOTATE})
 
         run_daemons(db, es)
 
@@ -284,20 +273,9 @@ def test_sm_daemons_annot_fails(MSMSearchMock,
 
     try:
         ds_id = '2000-01-01_00h00m'
-        upload_dt = datetime.now()
-        db.insert(Dataset.DS_INSERT, [{
-            'id': ds_id,
-            'name': test_ds_name,
-            'input_path': input_dir_path,
-            'upload_dt': upload_dt,
-            'metadata': json.dumps(metadata),
-            'config': json.dumps(ds_config),
-            'status': DatasetStatus.QUEUED,
-            'is_public': True,
-            'mol_dbs': ['HMDB-v4'],
-            'adducts': ['+H', '+Na', '+K'],
-            'ion_img_storage': 'fs'
-        }])
+        ds = Dataset(id=ds_id, name=test_ds_name, input_path=input_dir_path, upload_dt=datetime.now(),
+                     metadata=metadata, config=ds_config, status=DatasetStatus.QUEUED)
+        ds.save(db, es)
 
         queue_pub.publish({'ds_id': ds_id, 'ds_name': test_ds_name, 'action': DaemonAction.ANNOTATE})
 
@@ -364,20 +342,9 @@ def test_sm_daemon_es_export_fails(MSMSearchMock,
 
     try:
         ds_id = '2000-01-01_00h00m'
-        upload_dt = datetime.now()
-        db.insert(Dataset.DS_INSERT, [{
-            'id': ds_id,
-            'name': test_ds_name,
-            'input_path': input_dir_path,
-            'upload_dt': upload_dt,
-            'metadata': json.dumps(metadata),
-            'config': json.dumps(ds_config),
-            'status': DatasetStatus.QUEUED,
-            'is_public': True,
-            'mol_dbs': ['HMDB-v4'],
-            'adducts': ['+H', '+Na', '+K'],
-            'ion_img_storage': 'fs'
-        }])
+        ds = Dataset(id=ds_id, name=test_ds_name, input_path=input_dir_path, upload_dt=datetime.now(),
+                     metadata=metadata, config=ds_config, status=DatasetStatus.QUEUED)
+        ds.save(db, es)
 
         queue_pub.publish({'ds_id': ds_id, 'ds_name': test_ds_name, 'action': DaemonAction.ANNOTATE})
 

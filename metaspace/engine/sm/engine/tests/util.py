@@ -118,10 +118,10 @@ def fill_db(test_db, metadata, ds_config):
     ds_id = '2000-01-01'
     db = DB(sm_config['db'])
     db.insert('INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, '
-              'status, is_public, mol_dbs, adducts) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+              'status, is_public) values (%s, %s, %s, %s, %s, %s, %s, %s)',
               rows=[(ds_id, 'ds_name', 'input_path', upload_dt,
                      json.dumps(metadata), json.dumps(ds_config), 'FINISHED',
-                     True, ['HMDB-v4'], ['+H'])])
+                     True)])
     db.insert("INSERT INTO job (id, db_id, ds_id) VALUES (%s, %s, %s)",
               rows=[(0, 0, ds_id)])
     db.insert("INSERT INTO sum_formula (id, db_id, sf) VALUES (%s, %s, %s)",

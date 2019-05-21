@@ -139,8 +139,7 @@ def create_ds_from_files(ds_id, ds_name, ds_input_path, config_path=None, meta_p
                    upload_dt=datetime.now(),
                    metadata=metadata,
                    is_public=True,
-                   mol_dbs=ds_config['databases'],
-                   adducts=ds_config['isotope_generation']['adducts'])
+                   config=ds_config)
 
 
 def split_s3_path(path):

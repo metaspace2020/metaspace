@@ -38,7 +38,7 @@ ANNOTATIONS_SEL = ('SELECT iso_image_ids[1], sf, adduct, fdr '
                    '    ORDER BY start DESC '
                    '    LIMIT 1)')
 
-DATASET_CONFIG_SEL = ("SELECT mol_dbs, config #>> '{isotope_generation,charge,polarity}' "
+DATASET_CONFIG_SEL = ("SELECT config #> '{databases}', config #> '{isotope_generation,charge,polarity}' "
                       "FROM dataset "
                       "WHERE id = %s")
 

@@ -39,7 +39,7 @@ def mock_get_ion_images_for_analysis(storage_type, img_ids, **kwargs):
 @patch('sm.engine.mol_db.MolDBServiceWrapper.find_db_by_name_version', return_value=[mol_db_mock])
 def test_new_ds_saves_to_db(find_db_by_name_version_mock, test_db, metadata, ds_config):
     db = DB(sm_config['db'])
-    ds = Dataset('ds_id', 'ds_name', 'input_path', datetime.now(), metadata, mol_dbs=['HDMB'])
+    ds = Dataset('ds_id', 'ds_name', 'input_path', datetime.now(), metadata, ds_config)
     ds.save(db)
 
     ion_metrics_df = pd.DataFrame({'formula': ['H2O', 'H2O', 'CO2', 'CO2', 'H2SO4', 'H2SO4'],
