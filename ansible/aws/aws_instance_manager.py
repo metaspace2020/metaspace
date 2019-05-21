@@ -94,7 +94,8 @@ class AWSInstManager(object):
                     'Placement': {
                         'AvailabilityZone': best_price_az
                     },
-                    'BlockDeviceMappings': block_dev_maps
+                    'BlockDeviceMappings': block_dev_maps,
+                    'EbsOptimized': True
                 }
             )
             sleep(5)  # to overcome Waiter SpotInstanceRequestFulfilled failed: The spot instance request ID does not exist
