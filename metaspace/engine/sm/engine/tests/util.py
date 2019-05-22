@@ -62,8 +62,8 @@ def ds_config():
             "neutral_losses": [],
             "chem_mods": [],
         },
-        "annotation": {
-            "n_decoys": 20
+        "fdr": {
+            "decoy_sample_size": 20
         },
         "databases": ["HMDB-v4"]
     }

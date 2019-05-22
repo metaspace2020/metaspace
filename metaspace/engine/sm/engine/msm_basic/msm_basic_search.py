@@ -18,13 +18,13 @@ from sm.engine.msm_basic.segmenter import define_ds_segments, segment_spectra, s
 logger = logging.getLogger('engine')
 
 
-def init_fdr(moldbs, target_adducts):
+def init_fdr(moldbs, target_adducts, fdr_config):
     """ Randomly select decoy adducts for each moldb and target adduct
     """
     logger.info('Selecting decoy adducts')
     moldb_fdr_list = []
     for moldb in moldbs:
-        fdr = FDR(decoy_sample_size=20, target_adducts=target_adducts)
+        fdr = FDR(decoy_sample_size=fdr_config['decoy_sample_size'], target_adducts=target_adducts)
         target_ions = list(product(moldb.formulas, target_adducts))
         fdr.decoy_adducts_selection(target_ions)
         moldb_fdr_list.append((moldb, fdr))
@@ -78,9 +78,9 @@ class MSMSearch(object):
         self._sm_config = SMConfig.get_conf()
         self._ds_data_path = ds_data_path
 
-        self._image_gen_config = ds_config['image_generation']
         self._target_adducts = ds_config['isotope_generation']['adducts']
         self._isotope_gen_config = self._ds_config['isotope_generation']
+        self._fdr_config = ds_config['fdr']
 
     def _fetch_formula_centroids(self, ion_formula_map_df):
         """ Generate/load centroids for all ions formulas
@@ -132,7 +132,7 @@ class MSMSearch(object):
         """
         logger.info('Running molecule search')
 
-        moldb_fdr_list = init_fdr(self._moldbs, self._target_adducts)
+        moldb_fdr_list = init_fdr(self._moldbs, self._target_adducts, self._fdr_config)
         ion_formula_map_df = collect_ion_formulas(moldb_fdr_list)
 
         formula_centroids = self._fetch_formula_centroids(ion_formula_map_df)

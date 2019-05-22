@@ -5,7 +5,7 @@ from sm.engine.tests.util import make_moldb_mock
 
 
 def test_init_fdr():
-    moldb_fdr_list = init_fdr([make_moldb_mock()], ['+H'])
+    moldb_fdr_list = init_fdr([make_moldb_mock()], ['+H'], {'decoy_sample_size': 20})
 
     assert len(moldb_fdr_list) == 1
     _, fdr = moldb_fdr_list[0]
@@ -13,9 +13,18 @@ def test_init_fdr():
 
 
 def test_collect_ion_formulas():
-    moldb_fdr_list = init_fdr([make_moldb_mock()], ['+H'])
+    moldb_fdr_list = init_fdr([make_moldb_mock()], ['+H'], {'decoy_sample_size': 20})
 
     df = collect_ion_formulas(moldb_fdr_list)
 
     assert df.columns.tolist() == ['moldb_id', 'ion_formula', 'formula', 'adduct']
     assert df.shape == (42, 4)
+
+
+def test_decoy_sample_size_30():
+    moldb_fdr_list = init_fdr([make_moldb_mock()], ['+H'], {'decoy_sample_size': 30})
+
+    df = collect_ion_formulas(moldb_fdr_list)
+
+    assert df.columns.tolist() == ['moldb_id', 'ion_formula', 'formula', 'adduct']
+    assert df.shape == (62, 4)

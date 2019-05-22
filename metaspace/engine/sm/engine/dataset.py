@@ -191,12 +191,13 @@ def _get_isotope_generation_from_metadata(metadata):
     return default_adducts, charge, isocalc_sigma
 
 
-def generate_ds_config(metadata, mol_dbs=None, adducts=None, ppm=None, min_px=None, n_peaks=None, n_decoys=None,
-                       neutral_losses=None, chem_mods=None):
+def generate_ds_config(metadata, mol_dbs=None, adducts=None, ppm=None, min_px=None, n_peaks=None,
+                       decoy_sample_size=None, neutral_losses=None, chem_mods=None):
 
     sm_config = SMConfig.get_conf()
     default_moldbs = sm_config['ds_config_defaults']['moldb_names']
 
+    mol_dbs = mol_dbs or []
     mol_dbs = [*mol_dbs, *(mol_db for mol_db in default_moldbs if mol_db not in mol_dbs)]
     default_adducts, charge, isocalc_sigma = _get_isotope_generation_from_metadata(metadata)
 
@@ -210,8 +211,8 @@ def generate_ds_config(metadata, mol_dbs=None, adducts=None, ppm=None, min_px=No
             'neutral_losses': neutral_losses or [],
             'chem_mods': chem_mods or [],
         },
-        'annotation': {
-            'n_decoys': n_decoys or 20,
+        'fdr': {
+            'decoy_sample_size': decoy_sample_size or 20,
         },
         'image_generation': {
             'ppm': ppm or 3,
@@ -226,19 +227,21 @@ def update_ds_config(old_config, metadata, **kwargs):
     """
     Extracts parameters from an existing ds_config, and uses them to generate a new ds_config with the provided changes.
     """
-
+    isotope_generation = old_config.get('isotope_generation', {})
+    fdr = old_config.get('fdr', {})
+    image_generation = old_config.get('image_generation', {})
     old_vals = {
-        'mol_dbs': old_config['databases'],
-        'adducts': old_config['isotope_generation']['adducts'],
-        'n_peaks': old_config['isotope_generation'].get('n_peaks'),
-        'neutral_losses': old_config['isotope_generation'].get('neutral_losses'),
-        'chem_mods': old_config['isotope_generation'].get('chem_mods'),
-        'n_decoys': old_config.get('annotation', {}).get('n_decoys'),
-        'ppm': old_config['image_generation']['ppm'],
-        'min_px': old_config['image_generation']['min_px'],
+        'mol_dbs': old_config.get('databases'),
+        'adducts': isotope_generation.get('adducts'),
+        'n_peaks': isotope_generation.get('n_peaks'),
+        'neutral_losses': isotope_generation.get('neutral_losses'),
+        'chem_mods': isotope_generation.get('chem_mods'),
+        'decoy_sample_size': fdr.get('decoy_sample_size'),
+        'ppm': image_generation.get('ppm'),
+        'min_px': image_generation.get('min_px'),
     }
 
-    for k, v in old_vals:
+    for k, v in old_vals.items():
         if v is not None:
             kwargs.setdefault(k, v)
 

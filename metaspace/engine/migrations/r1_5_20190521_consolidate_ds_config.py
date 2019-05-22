@@ -16,7 +16,7 @@ def migrate(db, output_file):
     json.dump(to_backup, output_file, indent=2, sort_keys=True)
 
     # Update configs
-    new_configs = [(id, json.dumps(update_ds_config(config, metadata, mol_dbs, adducts)))
+    new_configs = [(id, json.dumps(update_ds_config(config, metadata, mol_dbs=mol_dbs, adducts=adducts)))
                    for id, metadata, config, mol_dbs, adducts in datasets]
     db.alter_many("UPDATE dataset "
                   "SET config = u.config::json "
