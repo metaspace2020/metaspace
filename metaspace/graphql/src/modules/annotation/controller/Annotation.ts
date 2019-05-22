@@ -111,15 +111,17 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
 
   isotopeImages(hit) {
     const {iso_image_ids, centroid_mzs, total_iso_ints, min_iso_ints, max_iso_ints} = hit._source;
-    return centroid_mzs.map(function(mz, i) {
-      return {
-        url: iso_image_ids[i] !== null ? `/${hit._source.ds_ion_img_storage}${config.img_upload.categories.iso_image.path}${iso_image_ids[i]}` : null,
-        mz: parseFloat(mz as any),
-        totalIntensity: total_iso_ints[i],
-        minIntensity: min_iso_ints[i],
-        maxIntensity: max_iso_ints[i],
-      };
-    });
+    return centroid_mzs
+      .map(function(mz, i) {
+        return {
+          mz: parseFloat(mz as any),
+          url: iso_image_ids[i] !== null ? `/${hit._source.ds_ion_img_storage}${config.img_upload.categories.iso_image.path}${iso_image_ids[i]}` : null,
+          totalIntensity: total_iso_ints[i],
+          minIntensity: min_iso_ints[i],
+          maxIntensity: max_iso_ints[i],
+        };
+      })
+      .filter(mzImage => mzImage.mz != null && mzImage.totalIntensity != null && mzImage.minIntensity != null && mzImage.maxIntensity != null);
   },
 
   async colocalizationCoeff(hit, args: {colocalizationCoeffFilter: ColocalizationCoeffFilter | null}, context) {
