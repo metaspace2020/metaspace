@@ -13,7 +13,6 @@ from sm.engine.db import DB
 from sm.engine.mol_db import MolDBServiceWrapper
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import proj_root, SMConfig, create_ds_from_files, init_loggers
-from sm.engine.tests.graphql_sql_schema import GRAPHQL_SQL_SCHEMA
 
 SEARCH_RES_SELECT = ("select m.sf, m.adduct, m.stats "
                      "from iso_image_metrics m "
@@ -132,13 +131,11 @@ class SciTester(object):
 
         return ImageStoreMock()
 
-    def run_search(self, mock_img_store=False, mock_graphql_db=False):
+    def run_search(self, mock_img_store=False):
         if mock_img_store:
             img_store = self._create_img_store_mock()
         else:
             img_store = ImageStoreServiceWrapper(self.sm_config['services']['img_service_url'])
-        if mock_graphql_db:
-            self.db.alter(GRAPHQL_SQL_SCHEMA)
 
         os.environ['PYSPARK_PYTHON'] = sys.executable
 
@@ -160,7 +157,6 @@ if __name__ == '__main__':
                         default=join(proj_root(), 'conf/config.json'),
                         help='path to sm config file')
     parser.add_argument('--mock-img-store', action='store_true', help='whether to mock the Image Store Service')
-    parser.add_argument('--mock-graphql-db', action='store_true', help='whether to mock the graphql database schema')
     args = parser.parse_args()
 
     SMConfig.set_path(args.sm_config_path)
@@ -172,7 +168,7 @@ if __name__ == '__main__':
         run_search_successful = False
         search_results_different = False
         try:
-            sci_tester.run_search(args.mock_img_store, args.mock_graphql_db)
+            sci_tester.run_search(args.mock_img_store)
             run_search_successful = True
             search_results_different = sci_tester.search_results_are_different()
         except Exception as e:
