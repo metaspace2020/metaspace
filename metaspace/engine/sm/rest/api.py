@@ -121,10 +121,7 @@ def add_ds(ds_man, ds_id=None, params=None):
             upload_dt
             metadata
             is_public
-            mol_dbs
-            adducts
-            ppm
-
+            (ds_config keys from sm.engine.dataset.FLAT_DS_CONFIG_KEYS)
         }
         priority
         force

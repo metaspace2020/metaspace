@@ -35,6 +35,17 @@ RESOL_POWER_PARAMS = {
     '1000K': {'sigma': 0.00017331000892, 'fwhm': 0.000408113883008, 'pts_per_mz': 28850},
 }
 
+FLAT_DS_CONFIG_KEYS = frozenset({
+    'mol_dbs',
+    'adducts',
+    'ppm',
+    'min_px',
+    'n_peaks',
+    'decoy_sample_size',
+    'neutral_losses',
+    'chem_mods',
+})
+
 
 class Dataset(object):
     """ Class for representing an IMS dataset
@@ -193,6 +204,7 @@ def _get_isotope_generation_from_metadata(metadata):
 
 def generate_ds_config(metadata, mol_dbs=None, adducts=None, ppm=None, min_px=None, n_peaks=None,
                        decoy_sample_size=None, neutral_losses=None, chem_mods=None):
+    # The kwarg names should match FLAT_DS_CONFIG_KEYS
 
     sm_config = SMConfig.get_conf()
     default_moldbs = sm_config['ds_config_defaults']['moldb_names']
@@ -226,7 +238,10 @@ def generate_ds_config(metadata, mol_dbs=None, adducts=None, ppm=None, min_px=No
 def update_ds_config(old_config, metadata, **kwargs):
     """
     Extracts parameters from an existing ds_config, and uses them to generate a new ds_config with the provided changes.
+    See FLAT_DS_CONFIG_KEYS for the list of allowed keys
     """
+    assert all(key in FLAT_DS_CONFIG_KEYS for key in kwargs.keys())
+
     isotope_generation = old_config.get('isotope_generation', {})
     fdr = old_config.get('fdr', {})
     image_generation = old_config.get('image_generation', {})
