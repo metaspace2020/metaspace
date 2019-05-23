@@ -32,7 +32,7 @@ ANNOTATIONS_SEL = '''SELECT
     j.id AS job_id,
     m.fdr AS fdr,
     m.iso_image_ids AS iso_image_ids,
-    ds.config->'isotope_generation'->'charge'->'polarity' AS polarity,
+    (CASE ds.config->'isotope_generation'->'charge' WHEN -1 THEN 'Negative' WHEN 1 THEN 'Positive' END) AS polarity,
     m.off_sample->'prob' as off_sample_prob,
     m.off_sample->'label' as off_sample_label
 FROM iso_image_metrics m

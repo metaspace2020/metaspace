@@ -55,23 +55,19 @@ def sm_engine_config(meta_json, mass_accuracy_ppm=2):
     params = RESOL_POWER_PARAMS[str(rp_options[idx] // 1000) + "K"]
 
     return {
-        "database": {
-            "name": meta_json['metaspace_options']['Metabolite_Database']
-        },
+        "databases": [meta_json['metaspace_options']['Metabolite_Database']],
         "isotope_generation": {
             "adducts": {'+': ['+H', '+K', '+Na'], '-': ['-H', '+Cl']}[polarity],
-            "charge": {
-                "polarity": polarity,
-                "n_charges": 1
-            },
+            "charge": 1,
             "isocalc_sigma": round(params['sigma'], 6),
-            "isocalc_pts_per_mz": params['pts_per_mz']
+            "n_peaks": 4,
+            "neutral_losses": [],
+            "chem_mods": [],
         },
         "image_generation": {
-            "ppm": float(mass_accuracy_ppm),
             "nlevels": 30,
-            "q": 99,
-            "do_preprocessing": False
+            "ppm": float(mass_accuracy_ppm),
+            "min_px": 1,
         }
     }
 

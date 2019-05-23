@@ -6,24 +6,22 @@ ION_SEL = ('SELECT ion, id '
            'WHERE ion = ANY(%s)')
 
 
-def get_ion_id_mapping(db, mols, polarity):
+def get_ion_id_mapping(db, mols, charge):
     """Get a mapping of ions to ion ids, adding missing ions to the database if necessary
     Args
     ------------
     mols : list[tuple[str, str]]
         (formula, adduct) tuples
-    polarity : str
-        'Positive', 'Negative', '+' or '-'
+    charge : int
+        1 or -1
     Returns
     ------------
     dict[tuple[str, str], int]
         (formula, adduct) => ion_id
     """
-    if polarity in ('Positive', '+'):
-        charge = 1
+    if charge == 1:
         charge_sign = '+'
-    elif polarity in ('Negative', '-'):
-        charge = -1
+    elif charge == -1:
         charge_sign = '-'
     else:
         raise TypeError("polarity must be 'Positive', 'Negative', '+' or '-'")

@@ -20,10 +20,7 @@ class IsocalcWrapper(object):
     """
 
     def __init__(self, isocalc_config):
-        self.charge = 0
-        if 'polarity' in isocalc_config['charge']:
-            polarity = isocalc_config['charge']['polarity']
-            self.charge = (-1 if polarity == '-' else 1) * isocalc_config['charge']['n_charges']
+        self.charge = isocalc_config['charge']
         self.sigma = float(isocalc_config['isocalc_sigma'])
         self.n_peaks = isocalc_config['n_peaks']
         # self.pts_per_mz = int(isocalc_config['isocalc_pts_per_mz'])

@@ -53,10 +53,7 @@ def ds_config():
         },
         "isotope_generation": {
             "adducts": ["+H", "+Na", "+K"],
-            "charge": {
-                "polarity": "+",
-                "n_charges": 1
-            },
+            "charge": 1,
             "isocalc_sigma": 0.000619,
             "n_peaks": 4,
             "neutral_losses": [],
