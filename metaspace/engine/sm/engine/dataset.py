@@ -170,6 +170,7 @@ def _get_isotope_generation_from_metadata(metadata):
     sm_config = SMConfig.get_conf()
 
     polarity = metadata['MS_Analysis']['Polarity']
+    polarity_sign = {'Positive': '+', 'Negative': '-'}[polarity]
     instrument = metadata['MS_Analysis']['Analyzer']
     rp = metadata['MS_Analysis']['Detector_Resolving_Power']
     rp_mz = float(rp['mz'])
@@ -191,7 +192,7 @@ def _get_isotope_generation_from_metadata(metadata):
     elif rp200 < 875000: params = RESOL_POWER_PARAMS['750K']
     else: params = RESOL_POWER_PARAMS['1000K']
 
-    default_adducts = sm_config['ds_config_defaults']['adducts'][polarity]
+    default_adducts = sm_config['ds_config_defaults']['adducts'][polarity_sign]
     charge = {'Positive': 1, 'Negative': -1}[polarity]
     isocalc_sigma = float(f"{params['sigma']:f}")
 
