@@ -41,12 +41,8 @@
     "s3_base_path": ""
   },
   "spark": {
-    "master": "local[*]",
-    "spark.executor.memory": "2g",
-    "spark.driver.memory": "4g",
+    "master": "local[4]",
     "spark.serializer": "org.apache.spark.serializer.KryoSerializer",
-    "spark.kryoserializer.buffer.max": "128m",
-    "spark.python.worker.memory": "512m",
     "spark.rdd.compress": true,
     "spark.ui.showConsoleProgress": false,
     "spark.sql.execution.arrow.enabled": true
