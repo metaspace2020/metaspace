@@ -208,6 +208,7 @@ class FormulaCentroids(object):
             logger.warning(f'{len(miss_formulas)} missing formulas ignored: {list(miss_formulas)[:10]}...')
 
         valid_formulas = formulas - miss_formulas
-        valid_formula_ids = self.formulas_df[self.formulas_df.formula.isin(valid_formulas)].index.values
-        return FormulaCentroids(formulas_df=self.formulas_df.loc[valid_formula_ids],
-                                centroids_df=self._centroids_df.loc[valid_formula_ids])
+        subset_formulas_df = self.formulas_df[self.formulas_df.formula.isin(valid_formulas)]
+        subset_centroids_df = self._centroids_df[self._centroids_df.index.isin(subset_formulas_df.index)]
+        return FormulaCentroids(formulas_df=subset_formulas_df,
+                                centroids_df=subset_centroids_df)
