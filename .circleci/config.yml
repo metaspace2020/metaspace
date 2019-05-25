@@ -240,7 +240,7 @@ jobs:
 
   test-engine-sci:
     docker:
-      - image: metaspace2020/sm-engine:1.2.1
+      - image: metaspace2020/sm-engine:1.4.0
 
       - image: redis:5.0.3
 
@@ -269,13 +269,7 @@ jobs:
           name: Test setup
           command: |
             pip install --upgrade -r requirements.txt
-            source docker/env.sh
-      - run:
-          name: Download and unpack isotope centroids
-          command: |
-            wget https://s3-eu-west-1.amazonaws.com/sm-engine/testing/dumps/2019-01-28/HMDB-v2.5.tar.gz
-            mkdir -p /tmp/isotope_storage
-            tar -xvf HMDB-v2.5.tar.gz -C /tmp/isotope_storage
+            pip install -e .
       - run:
           name: Create engine database
           command: |
@@ -284,11 +278,12 @@ jobs:
       - run:
           name: Set up and run mol-db
           command: |
-            createdb -h localhost -U sm mol_db
-            wget -qN https://s3-eu-west-1.amazonaws.com/sm-engine/testing/dumps/2019-01-28/mol_db.sql
-            psql -h localhost -U sm -d mol_db -f mol_db.sql
-            cp docker/mol_db_conf.ini ../mol-db/conf/local.ini
+            createuser -h localhost -U sm --createdb mol_db
+            createdb -h localhost -U mol_db mol_db
+            wget -qN https://s3-eu-west-1.amazonaws.com/sm-engine/tests/mol_db_HMDBv25.sql
+            psql -h localhost -U mol_db -d mol_db -f mol_db_HMDBv25.sql
             cd ../mol-db
+            cp conf/local.ini.template conf/local.ini
             conda env create -f environment.yml
             source activate mol-db
             pip install -e .
@@ -296,9 +291,8 @@ jobs:
       - run:
           name: Run scientific test
           command: |
-            cp ~/workspace/graphql_schema.sql ./sm/engine/tests/graphql_schema.sql
-            #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
-            python tests/sci_test_spheroid.py -r --mock-img-store --mock-graphql-db
+            #while true; do echo '---'; sleep 5; done  # uncomment this line for debugging
+            python tests/sci_test/spheroid.py -r --mock-img-store --config=tests/sci_test/config.json
 
 workflows:
   version: 2
@@ -308,7 +302,7 @@ workflows:
       - test-engine:
           requires:
             - generate-graphql-schema
-      #- test-engine-sci  # uncomment for debugging
+#      - test-engine-sci  # uncomment for debugging
 #      - test-graphql
       - test-webapp:
           requires:
@@ -328,9 +322,7 @@ workflows:
   weekly:
     jobs:
       - generate-graphql-schema
-      - test-engine-sci:
-          requires:
-            - generate-graphql-schema
+      - test-engine-sci
     triggers:
       - schedule:
           cron: "0 11 * * 1"
