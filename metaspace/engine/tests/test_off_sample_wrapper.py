@@ -32,7 +32,7 @@ def test_classify_ion_images_preds_saved(call_api_mock, ImageStoreServiceWrapper
         ('select off_sample '
          'from dataset d '
          'join job j on j.ds_id = d.id '
-         'join iso_image_metrics m on m.job_id = j.id '
+         'join annotation m on m.job_id = j.id '
          'where d.id = %s '
          'order by m.id '),
         params=(ds_id,)

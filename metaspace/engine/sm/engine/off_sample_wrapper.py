@@ -62,12 +62,12 @@ SEL_ION_IMAGES = (
     'select m.id as ann_id, iso_image_ids[1] as img_id '
     'from dataset d '
     'join job j on j.ds_id = d.id '
-    'join iso_image_metrics m on m.job_id = j.id '
+    'join annotation m on m.job_id = j.id '
     'where d.id = %s and (%s or m.off_sample is null)'
     'order by m.id '
 )
 UPD_OFF_SAMPLE = (
-    'update iso_image_metrics as row set off_sample = row2.off_sample::json '
+    'update annotation as row set off_sample = row2.off_sample::json '
     'from (values %s) as row2(id, off_sample) '
     'where row.id = row2.id; '
 )

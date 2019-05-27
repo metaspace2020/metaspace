@@ -21,7 +21,7 @@ def _make_fake_ds(db, ds_id, metadata, ds_config):
     ds.save(db)
 
     job_id, = db.insert_return("INSERT INTO job (db_id, ds_id) VALUES (%s, %s) RETURNING id", [(0, ds_id)])
-    db.insert(("INSERT INTO iso_image_metrics (job_id, sf, adduct, msm, fdr, stats, iso_image_ids) "
+    db.insert(("INSERT INTO annotation (job_id, formula, adduct, msm, fdr, stats, iso_image_ids) "
                "VALUES (%s, %s, %s, 1, 0, '{}', %s)"),
               rows=[(job_id, f'H{i+1}O', '+H', [str(i), str(1000 + i)]) for i in range(200)])
 

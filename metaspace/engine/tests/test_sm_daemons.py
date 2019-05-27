@@ -215,9 +215,9 @@ def test_sm_daemons(MSMSearchMock,
         assert start <= finish
 
         # image metrics asserts
-        rows = db.select(('SELECT sf, adduct, stats, iso_image_ids '
-                          'FROM iso_image_metrics '
-                          'ORDER BY sf, adduct'))
+        rows = db.select(('SELECT formula, adduct, stats, iso_image_ids '
+                          'FROM annotation '
+                          'ORDER BY formula, adduct'))
         assert len(rows) == 3
         assert rows[0] == ('C12H24O', '+H', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9, 'msm': 0.9**3,
                                                 'total_iso_ints': [100.], 'min_iso_ints': [0], 'max_iso_ints': [10.]},

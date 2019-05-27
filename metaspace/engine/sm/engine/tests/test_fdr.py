@@ -76,7 +76,7 @@ def test_estimate_fdr_digitize_works():
 
 
 def test_ions():
-    sfs = ['H2O', 'C5H2OH']
+    formulas = ['H2O', 'C5H2OH']
     target_adducts = ['+H', '+Na']
     decoy_sample_size = 5
     fdr_config = {**FDR_CONFIG, 'decoy_sample_size': decoy_sample_size}
@@ -86,9 +86,9 @@ def test_ions():
     ions = fdr.ion_tuples()
 
     assert type(ions) == list
-    # total number varies because different (sf, adduct) pairs may receive the same (sf, decoy_adduct) pair
-    assert len(sfs) * decoy_sample_size + len(sfs) * len(target_adducts) < \
+    # total number varies because different (formula, modifier) pairs may receive the same (formula, decoy_modifier) pair
+    assert len(formulas) * decoy_sample_size + len(formulas) * len(target_adducts) < \
            len(ions) <= \
-           len(sfs) * len(target_adducts) * decoy_sample_size + len(sfs) * len(target_adducts)
-    target_ions = [(sf, adduct) for sf, adduct in product(sfs, target_adducts)]
+           len(formulas) * len(target_adducts) * decoy_sample_size + len(formulas) * len(target_adducts)
+    target_ions = [(formula, adduct) for formula, adduct in product(formulas, target_adducts)]
     assert set(target_ions).issubset(set(map(tuple, ions)))

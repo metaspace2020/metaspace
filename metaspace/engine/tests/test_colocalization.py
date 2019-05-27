@@ -49,7 +49,7 @@ def test_new_ds_saves_to_db(find_db_by_name_version_mock, test_db, metadata, ds_
     job_id, = db.insert_return("INSERT INTO job (db_id, ds_id, status) "
                                "VALUES (1, %s, 'FINISHED') "
                                "RETURNING id", [[ds.id]])
-    db.insert('INSERT INTO iso_image_metrics(job_id, sf, adduct, msm, fdr, stats, iso_image_ids) '
+    db.insert('INSERT INTO annotation(job_id, formula, adduct, msm, fdr, stats, iso_image_ids) '
               "VALUES (%s, %s, %s, 1, %s, '{}', %s)",
               [(job_id, r.formula, r.adduct, r.fdr, [r.image_id]) for i, r in ion_metrics_df.iterrows()])
     img_svc_mock = MagicMock(spec=ImageStoreServiceWrapper)

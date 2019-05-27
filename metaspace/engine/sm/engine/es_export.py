@@ -19,8 +19,8 @@ ANNOTATION_COLUMNS = ["sf", "sf_adduct",
                       "iso_image_ids", "polarity"]
 
 ANNOTATIONS_SEL = '''SELECT
-    m.sf AS sf,
-    CONCAT(m.sf, m.adduct) AS sf_adduct,
+    m.formula AS sf,
+    CONCAT(m.formula, m.adduct) AS sf_adduct,
     COALESCE(((m.stats -> 'chaos'::text)::text)::real, 0::real) AS chaos,
     COALESCE(((m.stats -> 'spatial'::text)::text)::real, 0::real) AS image_corr,
     COALESCE(((m.stats -> 'spectral'::text)::text)::real, 0::real) AS pattern_match,
@@ -35,7 +35,7 @@ ANNOTATIONS_SEL = '''SELECT
     (CASE ds.config->'isotope_generation'->>'charge' WHEN '-1' THEN 'Negative' WHEN '1' THEN 'Positive' END) AS polarity,
     m.off_sample->'prob' as off_sample_prob,
     m.off_sample->'label' as off_sample_label
-FROM iso_image_metrics m
+FROM annotation m
 JOIN job j ON j.id = m.job_id
 JOIN dataset ds ON ds.id = j.ds_id
 WHERE ds.id = %s AND j.db_id = %s

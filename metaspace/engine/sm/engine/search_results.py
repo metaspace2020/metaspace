@@ -5,7 +5,7 @@ import logging
 from sm.engine.png_generator import PngGenerator
 
 logger = logging.getLogger('engine')
-METRICS_INS = ('INSERT INTO iso_image_metrics (job_id, sf, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids) '
+METRICS_INS = ('INSERT INTO annotation (job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids) '
                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)')
 
 

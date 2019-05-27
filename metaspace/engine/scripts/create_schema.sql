@@ -1,13 +1,3 @@
-DROP TABLE IF EXISTS sum_formula CASCADE;
-CREATE TABLE sum_formula (
-	id 			serial NOT NULL,
-	db_id 	int,
-	sf 		  text,
-	CONSTRAINT sum_formula_id_pk PRIMARY KEY(id)
-);
-CREATE INDEX ind_sum_formulas_1 ON sum_formula (sf);
-CREATE INDEX ind_sum_formulas_4 ON sum_formula (db_id);
-
 DROP TABLE IF EXISTS dataset CASCADE;
 CREATE TABLE dataset (
 	id	        	text NOT NULL,
@@ -56,25 +46,25 @@ CREATE TABLE job (
       ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
-DROP TABLE IF EXISTS iso_image_metrics;
-CREATE TABLE iso_image_metrics (
+DROP TABLE IF EXISTS annotation;
+CREATE TABLE annotation (
     id              serial NOT NULL,
 	job_id	        int NOT NULL,
-	sf		    	text NOT NULL,
-	adduct 	        text NOT NULL,
+	formula	    	text NOT NULL,
 	chem_mod        text,
 	neutral_loss    text,
+	adduct 	        text NOT NULL,
 	msm             real NOT NULL,
 	fdr             real NOT NULL,
 	stats 	        json NOT NULL,
     iso_image_ids   text[] NOT NULL,
     off_sample      json,
-    CONSTRAINT iso_image_metrics_id_pk PRIMARY KEY(id),
-    CONSTRAINT iso_image_metrics_job_id_fk FOREIGN KEY (job_id)
+    CONSTRAINT annotation_id_pk PRIMARY KEY(id),
+    CONSTRAINT annotation_job_id_fk FOREIGN KEY (job_id)
       REFERENCES job (id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE CASCADE,
-    CONSTRAINT iso_image_metrics_annotation_uindex
-        UNIQUE (job_id, sf, adduct, chem_mod, neutral_loss)
+    CONSTRAINT annotation_annotation_uindex
+        UNIQUE (job_id, formula, chem_mod, neutral_loss, adduct)
 )
 WITH (
   autovacuum_enabled=true,
@@ -82,5 +72,5 @@ WITH (
   autovacuum_analyze_threshold=5000
 );
 
-CREATE INDEX iso_image_metrics_job_id_index
-    ON iso_image_metrics (job_id);
+CREATE INDEX annotation_job_id_index
+    ON annotation (job_id);
