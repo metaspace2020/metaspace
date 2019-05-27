@@ -17,7 +17,7 @@ def test_collect_ion_formulas():
 
     df = collect_ion_formulas(moldb_fdr_list)
 
-    assert df.columns.tolist() == ['moldb_id', 'ion_formula', 'formula', 'adduct']
+    assert df.columns.tolist() == ['moldb_id', 'ion_formula', 'formula', 'modifier']
     assert df.shape == (42, 4)
 
 
@@ -26,5 +26,5 @@ def test_decoy_sample_size_30():
 
     df = collect_ion_formulas(moldb_fdr_list)
 
-    assert df.columns.tolist() == ['moldb_id', 'ion_formula', 'formula', 'adduct']
+    assert df.columns.tolist() == ['moldb_id', 'ion_formula', 'formula', 'modifier']
     assert df.shape == (62, 4)

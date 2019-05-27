@@ -7,7 +7,7 @@ import requests
 from sm.engine.png_generator import PngGenerator
 
 logger = logging.getLogger('engine')
-METRICS_INS = ('INSERT INTO iso_image_metrics (job_id, db_id, sf, adduct, msm, fdr, stats, iso_image_ids) '
+METRICS_INS = ('INSERT INTO iso_image_metrics (job_id, db_id, sf, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids) '
                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)')
 
 
@@ -49,7 +49,7 @@ class SearchResults(object):
             m = OrderedDict((name, r[name]) for name in self.metric_names)
             metr_json = json.dumps(m)
             image_ids = formula_img_ids[r.formula_i]['iso_image_ids']
-            yield (job_id, db_id, r.formula, r.adduct,
+            yield (job_id, db_id, r.formula, r.chem_mod, r.neutral_loss, r.adduct,
                    float(r.msm), float(r.fdr), metr_json,
                    image_ids)
 

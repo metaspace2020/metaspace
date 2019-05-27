@@ -26,7 +26,7 @@ def test_save_ion_img_metrics_correct_db_call(search_results):
     ion_img_ids = {13: {'iso_image_ids': ['iso_image_1', None, None, None]}}
     ion_metrics_df = (pd.DataFrame([(13, 'H2O', '+H', 0.9, 0.9, 0.9, 0.9 ** 3,
                                      [100, 10], [0, 0], [10, 1], 0.5)],
-                                   columns=['formula_i', 'formula', 'adduct', 'chaos', 'spatial', 'spectral', 'msm',
+                                   columns=['formula_i', 'formula', 'modifier', 'chaos', 'spatial', 'spectral', 'msm',
                                             'total_iso_ints', 'min_iso_ints', 'max_iso_ints', 'fdr'])
                       .set_index('formula_i'))
 
@@ -61,7 +61,7 @@ def test_isotope_images_are_stored(search_results, pysparkling_context):
 def test_non_native_python_number_types_handled(search_results):
     ion_img_ids = {13: {'iso_image_ids': ['iso_image_1', None, None, None]}}
     metrics_df = (pd.DataFrame([(13, 'H2O', '+H', 0.9, 0.9, 0.9, 0.9 ** 3, [100, 10], [0, 0], [10, 1], 0.5)],
-                               columns=['formula_i', 'formula', 'adduct', 'chaos', 'spatial', 'spectral', 'msm',
+                               columns=['formula_i', 'formula', 'modifier', 'chaos', 'spatial', 'spectral', 'msm',
                                         'total_iso_ints', 'min_iso_ints', 'max_iso_ints', 'fdr'])
                   .set_index('formula_i'))
 

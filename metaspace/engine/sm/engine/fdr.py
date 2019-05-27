@@ -1,4 +1,6 @@
 import logging
+from itertools import product
+
 import numpy as np
 import pandas as pd
 
@@ -8,31 +10,56 @@ logger = logging.getLogger('engine')
 DECOY_ADDUCTS = ['+He', '+Li', '+Be', '+B', '+C', '+N', '+O', '+F', '+Ne', '+Mg', '+Al', '+Si', '+P', '+S', '+Cl', '+Ar', '+Ca', '+Sc', '+Ti', '+V', '+Cr', '+Mn', '+Fe', '+Co', '+Ni', '+Cu', '+Zn', '+Ga', '+Ge', '+As', '+Se', '+Br', '+Kr', '+Rb', '+Sr', '+Y', '+Zr', '+Nb', '+Mo', '+Ru', '+Rh', '+Pd', '+Ag', '+Cd', '+In', '+Sn', '+Sb', '+Te', '+I', '+Xe', '+Cs', '+Ba', '+La', '+Ce', '+Pr', '+Nd', '+Sm', '+Eu', '+Gd', '+Tb', '+Dy', '+Ho', '+Ir', '+Th', '+Pt', '+Os', '+Yb', '+Lu', '+Bi', '+Pb', '+Re', '+Tl', '+Tm', '+U', '+W', '+Au', '+Er', '+Hf', '+Hg', '+Ta']
 
 
+def _make_target_modifiers_df(chem_mods, neutral_losses, target_adducts):
+    """
+    All combinations of chemical modification, neutral loss or target adduct.
+    Note that the combination order matters as these target modifiers are used later to map back to separated
+    chemical modification, neutral loss and target adduct fields.
+    """
+    df = pd.DataFrame(product(chem_mods, neutral_losses, target_adducts),
+                      columns=['chem_mod', 'neutral_loss', 'target_adduct'])
+    df = df.assign(target_modifier=df.chem_mod + df.neutral_loss + df.target_adduct)
+    df = df.assign(decoy_modifier_prefix=df.chem_mod + df.neutral_loss)
+    df = df.set_index('target_modifier')
+    return df
+
+
 class FDR(object):
 
-    def __init__(self, decoy_sample_size, target_adducts):
+    def __init__(self, decoy_sample_size, target_adducts, neutral_losses, chem_mods):
         self.decoy_sample_size = decoy_sample_size
         self.target_adducts = target_adducts
+        self.neutral_losses = neutral_losses
+        self.chem_mods = chem_mods
         self.td_df = None
         self.fdr_levels = [0.05, 0.1, 0.2, 0.5]
         self.random_seed = 42
+        self.target_modifiers_df = _make_target_modifiers_df(chem_mods, neutral_losses, target_adducts)
 
-    def _decoy_adduct_gen(self, target_ions, decoy_adducts_cand):
+    def _decoy_adduct_gen(self, target_formulas, decoy_adducts_cand):
         np.random.seed(self.random_seed)
-        for sf, ta in target_ions:
+        target_modifiers = list(self.target_modifiers_df.decoy_modifier_prefix.items())
+        for formula, (tm, dmprefix) in product(target_formulas, target_modifiers):
             for da in np.random.choice(decoy_adducts_cand, size=self.decoy_sample_size, replace=False):
-                yield (sf, ta, da)
+                yield (formula, tm, dmprefix + da)
 
-    def decoy_adducts_selection(self, target_ions):
+    def decoy_adducts_selection(self, target_formulas):
         decoy_adduct_cand = [add for add in DECOY_ADDUCTS if add not in self.target_adducts]
-        self.td_df = pd.DataFrame(self._decoy_adduct_gen(target_ions, decoy_adduct_cand),
-                                  columns=['formula', 'ta', 'da'])
+        self.td_df = pd.DataFrame(self._decoy_adduct_gen(target_formulas, decoy_adduct_cand),
+                                  columns=['formula', 'tm', 'dm'])
 
     def ion_tuples(self):
-        """ All ions needed for FDR calculation """
-        d_ions = self.td_df[['formula', 'da']].drop_duplicates().values.tolist()
-        t_ions = self.td_df[['formula', 'ta']].drop_duplicates().values.tolist()
+        """ 
+        All ions needed for FDR calculation as a list of (formula, modifier), where modifier is a combination of
+        chemical modification, neutral loss and adduct 
+        """
+        d_ions = self.td_df[['formula', 'dm']].drop_duplicates().values.tolist()
+        t_ions = self.td_df[['formula', 'tm']].drop_duplicates().values.tolist()
         return list(map(tuple, t_ions + d_ions))
+
+    def target_modifiers(self):
+        """ List of possible modifier values for target ions """
+        return self.target_modifiers_df.index.to_list()
 
     @staticmethod
     def _msm_fdr_map(target_msm, decoy_msm):
@@ -57,14 +84,14 @@ class FDR(object):
     def estimate_fdr(self, formula_msm):
         logger.info('Estimating FDR')
 
-        all_formula_msm_df = (pd.DataFrame(self.ion_tuples(), columns=['formula', 'adduct'])
-                                .set_index(['formula', 'adduct']).sort_index())
+        all_formula_msm_df = (pd.DataFrame(self.ion_tuples(), columns=['formula', 'modifier'])
+                                .set_index(['formula', 'modifier']).sort_index())
         all_formula_msm_df = all_formula_msm_df.join(formula_msm).fillna(0)
 
         target_fdr_df_list = []
-        for ta in self.target_adducts:
-            target_msm = all_formula_msm_df.loc(axis=0)[:, ta]
-            full_decoy_df = self.td_df[self.td_df.ta == ta][['formula', 'da']]
+        for tm in self.target_modifiers_df.index:
+            target_msm = all_formula_msm_df.loc(axis=0)[:, tm]
+            full_decoy_df = self.td_df[self.td_df.tm == tm][['formula', 'dm']]
 
             msm_fdr_list = []
             for i in range(self.decoy_sample_size):

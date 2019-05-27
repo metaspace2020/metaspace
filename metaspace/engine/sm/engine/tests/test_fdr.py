@@ -39,9 +39,9 @@ def test_estimate_fdr_returns_correct_df():
                           ['H2O', '+Co', 0.5],
                           ['C2H2', '+Ag', 0.75],
                           ['C2H2', '+Ar', 0.0]],
-                          columns=['formula', 'adduct', 'msm']).set_index(['formula', 'adduct']).sort_index()
+                          columns=['formula', 'modifier', 'msm']).set_index(['formula', 'modifier']).sort_index()
     exp_sf_df = pd.DataFrame([['H2O', '+H', 0.2], ['C2H2', '+H', 0.8]],
-                             columns=['formula', 'adduct', 'fdr']).set_index(['formula', 'adduct'])
+                             columns=['formula', 'modifier', 'fdr']).set_index(['formula', 'modifier'])
 
     assert_frame_equal(fdr.estimate_fdr(msm_df), exp_sf_df)
 
@@ -63,12 +63,12 @@ def test_estimate_fdr_digitize_works():
                           ['C2', '+Ag', 0.3],
                           ['C3', '+Cl', 0.25],
                           ['C4', '+Co', 0.1]],
-                          columns=['formula', 'adduct', 'msm']).set_index(['formula', 'adduct']).sort_index()
+                          columns=['formula', 'modifier', 'msm']).set_index(['formula', 'modifier']).sort_index()
     exp_sf_df = pd.DataFrame([['C1', '+H', 0.4],
                               ['C2', '+H', 0.4],
                               ['C3', '+H', 0.4],
                               ['C4', '+H', 0.8]],
-                             columns=['formula', 'adduct', 'fdr']).set_index(['formula', 'adduct'])
+                             columns=['formula', 'modifier', 'fdr']).set_index(['formula', 'modifier'])
 
     assert_frame_equal(fdr.estimate_fdr(msm_df), exp_sf_df)
 

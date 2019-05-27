@@ -24,7 +24,7 @@ def test_compute_fdr(ds_config):
     metrics_df = compute_fdr(fdr, formula_metrics_df, formula_map_df)
 
     assert metrics_df.shape == (2, 5)
-    assert sorted(metrics_df.columns.tolist()) == sorted(['ion_formula', 'msm', 'formula', 'adduct', 'fdr'])
+    assert sorted(metrics_df.columns.tolist()) == sorted(['ion_formula', 'msm', 'formula', 'modifier', 'fdr'])
 
 
 @patch('sm.engine.msm_basic.formula_imager.formula_image_metrics')
