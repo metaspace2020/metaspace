@@ -40,9 +40,6 @@ class FDR(object):
     def _decoy_adduct_gen(self, target_formulas, decoy_adducts_cand):
         np.random.seed(self.random_seed)
         target_modifiers = list(self.target_modifiers_df.decoy_modifier_prefix.items())
-        print(target_formulas)
-        print(target_modifiers)
-        print(self.decoy_sample_size)
         for formula, (tm, dmprefix) in product(target_formulas, target_modifiers):
             for da in np.random.choice(decoy_adducts_cand, size=self.decoy_sample_size, replace=False):
                 yield (formula, tm, dmprefix + da)

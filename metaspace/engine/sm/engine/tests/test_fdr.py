@@ -92,3 +92,25 @@ def test_ions():
            len(formulas) * len(target_adducts) * decoy_sample_size + len(formulas) * len(target_adducts)
     target_ions = [(formula, adduct) for formula, adduct in product(formulas, target_adducts)]
     assert set(target_ions).issubset(set(map(tuple, ions)))
+
+
+def test_chem_mods_and_neutral_losses():
+    formulas = ['H2O', 'C5H2OH']
+    chem_mods = ['-H+C']
+    neutral_losses = ['-O','-C']
+    target_adducts = ['+H', '+Na']
+    target_modifiers = [cm + nl + ta for cm, nl, ta in product(['', *chem_mods], ['', *neutral_losses], target_adducts)]
+    decoy_sample_size = 5
+    fdr_config = {**FDR_CONFIG, 'decoy_sample_size': decoy_sample_size}
+
+    fdr = FDR(fdr_config=fdr_config, chem_mods=chem_mods, neutral_losses=neutral_losses, target_adducts=target_adducts)
+    fdr.decoy_adducts_selection(target_formulas=['H2O', 'C5H2OH'])
+    ions = fdr.ion_tuples()
+
+    assert type(ions) == list
+    # total number varies because different (formula, modifier) pairs may receive the same (formula, decoy_modifier) pair
+    min_count = len(formulas) * len(target_modifiers)
+    max_count = len(formulas) * len(target_modifiers) * (1 + decoy_sample_size)
+    assert min_count < len(ions) <= max_count
+    target_ions = list(product(formulas, target_modifiers))
+    assert set(target_ions).issubset(set(map(tuple, ions)))

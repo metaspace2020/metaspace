@@ -53,8 +53,6 @@ def test_neutral_losses_and_chem_mods():
     df = collect_ion_formulas(moldb_fdr_list)
 
     assert df.columns.tolist() == ['moldb_id', 'ion_formula', 'formula', 'modifier']
-    print(df.columns)
-    print(df.values)
     # 2 formulas * (4 target adducts + (4 target adducts * 1 decoy adducts per target adduct)
     # * (no loss + 2 neutral losses) * (no mod + 1 chem mod) = 2 * (4 + 4) * 3 * 2 = 96
     assert df.shape == (96, 4)
