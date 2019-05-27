@@ -307,16 +307,16 @@ workflows:
       - test-webapp:
           requires:
             - generate-graphql-schema
-#  sci-test-on-demand:
-#    jobs:
-#      - generate-graphql-schema
-#      - test-engine-sci:
-#          requires:
-#            - generate-graphql-schema
-#          filters:
-#            branches:
-#              # Replace this with the branch to run sci-test against
-#              only: feature/neutral-loss-config
+  sci-test-on-demand:
+    jobs:
+      - generate-graphql-schema
+      - test-engine-sci:
+          requires:
+            - generate-graphql-schema
+          filters:
+            branches:
+              # Replace this with the branch to run sci-test against
+              only: feature/neutral-loss-config
 
 ## Disabled until we have time to redo these tests
 #  daily:
