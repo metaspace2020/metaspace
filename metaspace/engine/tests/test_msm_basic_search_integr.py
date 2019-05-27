@@ -11,7 +11,7 @@ from sm.engine.tests.util import spark_context, ds_config, make_moldb_mock
 
 
 def test_compute_fdr(ds_config):
-    moldb_fdr_list = init_fdr([make_moldb_mock()], ['+H', '+Na'], ds_config['fdr'])
+    moldb_fdr_list = init_fdr(ds_config['fdr'], ds_config['isotope_generation'], [make_moldb_mock()])
     _, fdr = moldb_fdr_list[0]
     formula_map_df = collect_ion_formulas(moldb_fdr_list).drop('moldb_id', axis=1)
 
@@ -23,7 +23,7 @@ def test_compute_fdr(ds_config):
 
     metrics_df = compute_fdr(fdr, formula_metrics_df, formula_map_df)
 
-    assert metrics_df.shape == (2, 5)
+    assert len(metrics_df) == 2
     assert sorted(metrics_df.columns.tolist()) == sorted(['ion_formula', 'msm', 'formula', 'modifier', 'fdr'])
 
 
@@ -61,7 +61,7 @@ def test_search(formula_image_metrics_mock, spark_context, ds_config):
 
     _, moldb_ion_metrics_df, moldb_ion_images_rdd = next(msm_search.search())
 
-    assert moldb_ion_metrics_df.shape == (2, 5)
+    assert len(moldb_ion_metrics_df) == 2
     assert moldb_ion_images_rdd.count() == 3
 
     rmtree(ds_data_path)

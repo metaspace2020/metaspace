@@ -38,7 +38,7 @@ ANNOTATIONS_SEL = '''SELECT
 FROM iso_image_metrics m
 JOIN job j ON j.id = m.job_id
 JOIN dataset ds ON ds.id = j.ds_id
-WHERE ds.id = %s AND m.db_id = %s
+WHERE ds.id = %s AND j.db_id = %s
 ORDER BY COALESCE(m.msm, 0::real) DESC'''
 
 DATASET_SEL = '''SELECT

@@ -142,8 +142,11 @@ def test_sm_daemons(MSMSearchMock,
 
     formula_metrics_df = pd.DataFrame({
         'formula_i': [0, 1, 2],
-        'ion_formula': ['C12H24O+H', 'C12H24O+Na', 'C12H24O+K'],
+        'ion_formula': ['C12H24O-H2O+H', 'C12H24O-H2+O2-CO+Na', 'C12H24O+K'],
         'formula': ['C12H24O', 'C12H24O', 'C12H24O'],
+        'modifier': ['-H2O+H', '-H2+O2-CO+Na', '+K'],
+        'chem_mod': [None, '-H2+O2', None],
+        'neutral_loss': ['-H2O', '-CO', None],
         'adduct': ['+H', '+Na', '+K'],
         'chaos': [0.9, 0.9, 0.9],
         'spatial': [0.9, 0.9, 0.9],
@@ -212,17 +215,17 @@ def test_sm_daemons(MSMSearchMock,
         assert start <= finish
 
         # image metrics asserts
-        rows = db.select(('SELECT db_id, sf, adduct, stats, iso_image_ids '
+        rows = db.select(('SELECT sf, adduct, stats, iso_image_ids '
                           'FROM iso_image_metrics '
                           'ORDER BY sf, adduct'))
         assert len(rows) == 3
-        assert rows[0] == (0, 'C12H24O', '+H', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9, 'msm': 0.9**3,
+        assert rows[0] == ('C12H24O', '+H', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9, 'msm': 0.9**3,
                                                 'total_iso_ints': [100.], 'min_iso_ints': [0], 'max_iso_ints': [10.]},
                            ['iso_image_1', None, None, None])
-        assert rows[1] == (0, 'C12H24O', '+K', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9, 'msm': 0.9**3,
+        assert rows[1] == ('C12H24O', '+K', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9, 'msm': 0.9**3,
                                                 'total_iso_ints': [100.], 'min_iso_ints': [0], 'max_iso_ints': [10.]},
                            ['iso_image_1', None, None, None])
-        assert rows[2] == (0, 'C12H24O', '+Na', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9, 'msm': 0.9**3,
+        assert rows[2] == ('C12H24O', '+Na', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9, 'msm': 0.9**3,
                                                  'total_iso_ints': [100.], 'min_iso_ints': [0], 'max_iso_ints': [10.]},
                            ['iso_image_1', None, None, None])
 
@@ -305,8 +308,11 @@ def test_sm_daemon_es_export_fails(MSMSearchMock,
 
     formula_metrics_df = pd.DataFrame({
         'formula_i': [0, 1, 2],
-        'ion_formula': ['C12H24O+H', 'C12H24O+Na', 'C12H24O+K'],
+        'ion_formula': ['C12H24O-H2O+H', 'C12H24O-H2+O2-CO+Na', 'C12H24O+K'],
         'formula': ['C12H24O', 'C12H24O', 'C12H24O'],
+        'modifier': ['-H2O+H', '-H2+O2-CO+Na', '+K'],
+        'chem_mod': [None, '-H2+O2', None],
+        'neutral_loss': ['-H2O', '-CO', None],
         'adduct': ['+H', '+Na', '+K'],
         'chaos': [0.9, 0.9, 0.9],
         'spatial': [0.9, 0.9, 0.9],

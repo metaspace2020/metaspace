@@ -16,21 +16,22 @@ def _make_target_modifiers_df(chem_mods, neutral_losses, target_adducts):
     Note that the combination order matters as these target modifiers are used later to map back to separated
     chemical modification, neutral loss and target adduct fields.
     """
-    df = pd.DataFrame(product(chem_mods, neutral_losses, target_adducts),
-                      columns=['chem_mod', 'neutral_loss', 'target_adduct'])
-    df = df.assign(target_modifier=df.chem_mod + df.neutral_loss + df.target_adduct)
-    df = df.assign(decoy_modifier_prefix=df.chem_mod + df.neutral_loss)
+    df = pd.DataFrame(list(product([None, *chem_mods], [None, *neutral_losses], target_adducts)),
+                      columns=['chem_mod', 'neutral_loss', 'target_adduct'],
+                      dtype='O')
+    df = df.assign(target_modifier=df.chem_mod.fillna('') + df.neutral_loss.fillna('') + df.target_adduct)
+    df = df.assign(decoy_modifier_prefix=df.chem_mod.fillna('') + df.neutral_loss.fillna(''))
     df = df.set_index('target_modifier')
     return df
 
 
 class FDR(object):
 
-    def __init__(self, decoy_sample_size, target_adducts, neutral_losses, chem_mods):
-        self.decoy_sample_size = decoy_sample_size
-        self.target_adducts = target_adducts
-        self.neutral_losses = neutral_losses
+    def __init__(self, fdr_config, chem_mods, neutral_losses, target_adducts):
+        self.decoy_sample_size = fdr_config['decoy_sample_size']
         self.chem_mods = chem_mods
+        self.neutral_losses = neutral_losses
+        self.target_adducts = target_adducts
         self.td_df = None
         self.fdr_levels = [0.05, 0.1, 0.2, 0.5]
         self.random_seed = 42
@@ -39,6 +40,9 @@ class FDR(object):
     def _decoy_adduct_gen(self, target_formulas, decoy_adducts_cand):
         np.random.seed(self.random_seed)
         target_modifiers = list(self.target_modifiers_df.decoy_modifier_prefix.items())
+        print(target_formulas)
+        print(target_modifiers)
+        print(self.decoy_sample_size)
         for formula, (tm, dmprefix) in product(target_formulas, target_modifiers):
             for da in np.random.choice(decoy_adducts_cand, size=self.decoy_sample_size, replace=False):
                 yield (formula, tm, dmprefix + da)
@@ -59,7 +63,7 @@ class FDR(object):
 
     def target_modifiers(self):
         """ List of possible modifier values for target ions """
-        return self.target_modifiers_df.index.to_list()
+        return self.target_modifiers_df.index.tolist()
 
     @staticmethod
     def _msm_fdr_map(target_msm, decoy_msm):

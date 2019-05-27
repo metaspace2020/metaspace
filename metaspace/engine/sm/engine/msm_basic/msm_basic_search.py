@@ -23,10 +23,10 @@ def init_fdr(fdr_config, isotope_gen_config, moldbs):
     logger.info('Selecting decoy adducts')
     moldb_fdr_list = []
     for moldb in moldbs:
-        fdr = FDR(decoy_sample_size=fdr_config['decoy_sample_size'], 
+        fdr = FDR(fdr_config=fdr_config,
                   chem_mods=isotope_gen_config['chem_mods'], 
                   neutral_losses=isotope_gen_config['neutral_losses'], 
-                  target_adducts=isotope_gen_config['target_adducts'])
+                  target_adducts=isotope_gen_config['adducts'])
         fdr.decoy_adducts_selection(moldb.formulas)
         moldb_fdr_list.append((moldb, fdr))
     return moldb_fdr_list
@@ -103,7 +103,7 @@ class MSMSearch(object):
 
     def select_target_formula_ids(self, formulas_df, ion_formula_map_df, target_modifiers):
         logger.info('Selecting target formula ids')
-        target_formulas_mask = ion_formula_map_df.adduct.isin(target_modifiers)
+        target_formulas_mask = ion_formula_map_df.modifier.isin(target_modifiers)
         target_formulas = set(ion_formula_map_df[target_formulas_mask].ion_formula.values)
         target_formula_inds = set(formulas_df[formulas_df.formula.isin(target_formulas)].index)
         return target_formula_inds

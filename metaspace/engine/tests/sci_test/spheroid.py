@@ -18,7 +18,7 @@ SEARCH_RES_SELECT = ("select m.sf, m.adduct, m.stats "
                      "from iso_image_metrics m "
                      "join job j on j.id = m.job_id "
                      "join dataset ds on ds.id = j.ds_id "
-                     "where m.db_id = %s AND ds.name = %s "
+                     "where j.db_id = %s AND ds.name = %s "
                      "ORDER BY sf, adduct ")
 
 
