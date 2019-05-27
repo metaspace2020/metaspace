@@ -125,6 +125,16 @@ class ESIndexManager(object):
                 }
             }
         }]
+        dataset_properties = {
+                        "ds_id": {"type": "keyword"},
+                        "ds_name": {
+                            "type": "keyword",
+                            "fields": {
+                                "searchable": {"type": "text", "analyzer": "delimited_ds_names"},
+                                "searchable_lower": {"type": "text", "analyzer": "delimited_ds_names_lower"},
+                            }
+                        },
+                    }
         body = {
             "settings": {
                 "index": {
@@ -137,6 +147,26 @@ class ESIndexManager(object):
                                 "type": "custom",
                                 "filter": ["lowercase", "asciifolding"]
                             }
+                        },
+                        "analyzer": {
+                            # Support ds names that are delimited with underscores, dashes, etc.
+                            "delimited_ds_names": {
+                                "type": "custom",
+                                "tokenizer": "standard",
+                                "filter": ["my_word_delimeter", "asciifolding"],
+                            },
+                            "delimited_ds_names_lower": {
+                                "type": "custom",
+                                "tokenizer": "standard",
+                                "filter": ["my_word_delimeter", "lowercase", "asciifolding"],
+                            },
+                        },
+                        "filter": {
+                            "my_word_delimeter": {
+                                "type": "word_delimiter",
+                                "catenate_all": True,
+                                "preserve_original": True
+                            },
                         }
                     }
                 }
@@ -144,14 +174,12 @@ class ESIndexManager(object):
             "mappings": {
                 "dataset": {
                     "dynamic_templates": dynamic_templates,
-                    "properties": {
-                        "ds_id": {"type": "keyword"}
-                    }
+                    "properties": dataset_properties
                 },
                 "annotation": {
                     "dynamic_templates": dynamic_templates,
                     "properties": {
-                        "ds_id": {"type": "keyword"},
+                        **dataset_properties,
                         "chaos": {"type": "float"},
                         "image_corr": {"type": "float"},
                         "pattern_match": {"type": "float"},
@@ -162,6 +190,7 @@ class ESIndexManager(object):
                         "fdr": {"type": "float"},
                         "off_sample_prob": {"type": "float"},
                         "off_sample_label": {"type": "keyword"},
+                        "db_version": {"type": "keyword"},  # Prevent "YYYY-MM"-style DB versions from being parsed as dates
                     }
                 }
             }

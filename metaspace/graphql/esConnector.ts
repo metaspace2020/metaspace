@@ -269,7 +269,7 @@ function constructSimpleQueryFilter(simpleQuery: string) {
   return {
     simple_query_string: {
       query: simpleQuery,
-      fields: ["_all"],
+      fields: ["_all", "ds_name.searchable", "ds_name.searchable_lower"],
       default_operator: "and"
     }
   };
