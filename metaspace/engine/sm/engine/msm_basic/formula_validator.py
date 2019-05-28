@@ -58,10 +58,6 @@ def make_compute_image_metrics(sample_area_mask, nrows, ncols, img_gen_config):
             iso_imgs_flat = [img.flatten()[sample_area_mask_flat] for img in iso_imgs]
             iso_imgs_flat = iso_imgs_flat[:len(formula_ints)]
 
-            if img_gen_config.get('do_preprocessing', False):
-                for img in iso_imgs_flat:
-                    smoothing.hot_spot_removal(img)
-
             m['spectral'] = isotope_pattern_match(iso_imgs_flat, formula_ints)
             if m['spectral'] > 0:
 

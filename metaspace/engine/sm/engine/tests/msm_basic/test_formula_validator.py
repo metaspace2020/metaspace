@@ -16,8 +16,6 @@ from sm.engine.tests.util import pysparkling_context as spark_context, ds_config
 def test_get_compute_img_measures_pass(chaos_mock, image_corr_mock, pattern_match_mock):
     img_gen_config = {
         'n_levels': 30,
-        'do_preprocessing': False,
-        'q': 99.0
     }
     sample_area_mask = np.ones((2, 3), dtype=int)
     compute_metrics = make_compute_image_metrics(sample_area_mask, 2, 3, img_gen_config)
