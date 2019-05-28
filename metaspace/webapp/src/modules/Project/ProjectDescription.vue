@@ -61,8 +61,8 @@
   import Vue from 'vue';
   import {Component, Prop} from 'vue-property-decorator';
   import marked from 'marked';
-  import * as cookie from 'js-cookie';
   import {sanitizeIt} from '../../util'
+  import {getLocalStorage, setLocalStorage} from '../../lib/localStorage';
 
   interface Modes {
     preview: boolean
@@ -94,7 +94,7 @@
         edit: true
       };
       this.$nextTick(()=> {
-        this.showHint = ((cookie.getJSON('show_descr_hint') as any as number) !== 0);
+        this.showHint = !getLocalStorage<boolean>('hideMarkdownHint');
       })
     }
 
@@ -125,7 +125,7 @@
 
     disableHint() {
       this.showHint = false;
-      cookie.set('show_descr_hint', 0 as any)
+      setLocalStorage('hideMarkdownHint', true);
     }
 
     embedMarkdownAsHtml() {

@@ -54,7 +54,7 @@
  import {
    get, set, cloneDeep, defaults,
    isEmpty, isEqual, isPlainObject,
-   mapValues, forEach, without, pick, omit,
+   mapValues, forEach, without, omit,
  } from 'lodash-es';
  import {
    newDatasetQuery,
@@ -106,11 +106,6 @@
 
    created() {
      this.loadingPromise = this.initializeForm();
-
-     // Clean up local storage from previous versions
-     localStorage.removeItem('latestMetadataSubmission');
-     localStorage.removeItem('latestMetadataOptions');
-     localStorage.removeItem('latestMetadataSubmissionVersion');
    },
 
    data() {
