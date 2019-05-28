@@ -7,7 +7,7 @@ from sm.engine.sm_daemons import SMDaemonManager
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.queue import QueuePublisher
-from sm.engine.dataset import DatasetStatus, Dataset
+from sm.engine.dataset import DatasetStatus, Dataset, generate_ds_config
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.tests.util import sm_config, test_db, fill_db, sm_index, es_dsl_search, metadata, ds_config
 
@@ -21,8 +21,17 @@ def create_ds(ds_id='2000-01-01', ds_name='ds_name', input_path='input_path', up
         mol_dbs = ['HMDB-v4']
     if not adducts:
         adducts = ['+H', '+Na', '+K']
-    return Dataset(ds_id, ds_name, input_path, upload_dt, metadata or {},
-                   status=status, mol_dbs=mol_dbs, adducts=adducts, img_storage_type='fs')
+    if not metadata:
+        metadata = {
+            'MS_Analysis': {
+                'Polarity': 'Positive',
+                'Analyzer': 'FTICR',
+                'Detector_Resolving_Power': {'mz': 200, 'Resolving_Power': 140000}
+            }
+        }
+    config = generate_ds_config(metadata, mol_dbs, adducts)
+    return Dataset(id=ds_id, name=ds_name, input_path=input_path, upload_dt=upload_dt,
+                   metadata=metadata or {}, config=config, status=status, img_storage_type='fs')
 
 
 def create_daemon_man(db=None, es=None, img_store=None, status_queue=None):

@@ -35,19 +35,29 @@ RESOL_POWER_PARAMS = {
     '1000K': {'sigma': 0.00017331000892, 'fwhm': 0.000408113883008, 'pts_per_mz': 28850},
 }
 
+FLAT_DS_CONFIG_KEYS = frozenset({
+    'mol_dbs',
+    'adducts',
+    'ppm',
+    'min_px',
+    'n_peaks',
+    'decoy_sample_size',
+    'neutral_losses',
+    'chem_mods',
+})
+
 
 class Dataset(object):
     """ Class for representing an IMS dataset
     """
-    DS_SEL = ('SELECT id, name, input_path, upload_dt, metadata, status, is_public, mol_dbs, adducts '
+    DS_SEL = ('SELECT id, name, input_path, upload_dt, metadata, config, status, is_public '
               'FROM dataset WHERE id = %s')
     DS_UPD = ('UPDATE dataset set name=%(name)s, input_path=%(input_path)s, upload_dt=%(upload_dt)s, '
-              'metadata=%(metadata)s, config=%(config)s, status=%(status)s, is_public=%(is_public)s, '
-              'mol_dbs=%(mol_dbs)s, adducts=%(adducts)s where id=%(id)s')
+              'metadata=%(metadata)s, config=%(config)s, status=%(status)s, is_public=%(is_public)s where id=%(id)s')
     DS_INSERT = ('INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, status, '
-                 'is_public, mol_dbs, adducts) '
+                 'is_public) '
                  'VALUES (%(id)s, %(name)s, %(input_path)s, %(upload_dt)s, %(metadata)s, %(config)s, %(status)s, '
-                 '%(is_public)s, %(mol_dbs)s, %(adducts)s)')
+                 '%(is_public)s)')
     # NOTE: config is saved to but never read from the database
 
     ACQ_GEOMETRY_SEL = 'SELECT acq_geometry FROM dataset WHERE id = %s'
@@ -56,31 +66,19 @@ class Dataset(object):
     IMG_STORAGE_TYPE_UPD = 'UPDATE dataset SET ion_img_storage_type = %s WHERE id = %s'
 
     def __init__(self, id=None, name=None, input_path=None, upload_dt=None,
-                 metadata=None, status=DatasetStatus.QUEUED,
-                 is_public=True, mol_dbs=None, adducts=None, img_storage_type='fs'):
+                 metadata=None, config=None, status=DatasetStatus.QUEUED,
+                 is_public=True, img_storage_type='fs'):
         self.id = id
         self.name = name
         self.input_path = input_path
         self.upload_dt = upload_dt
         self.status = status
         self.is_public = is_public
-        self.mol_dbs = mol_dbs
-        self.adducts = adducts
         self.ion_img_storage_type = img_storage_type
 
-        self._metadata = None
-        self.config = None
+        self.metadata = metadata
+        self.config = config
         self._sm_config = SMConfig.get_conf()
-        self.metadata = metadata  # triggers config generation
-
-    @property
-    def metadata(self):
-        return self._metadata
-
-    @metadata.setter
-    def metadata(self, value):
-        self._metadata = value
-        self._generate_config()
 
     def __str__(self):
         return str(self.__dict__)
@@ -122,9 +120,7 @@ class Dataset(object):
             'metadata': json.dumps(self.metadata or {}),
             'config': json.dumps(self.config or {}),
             'status': self.status,
-            'is_public': self.is_public,
-            'mol_dbs': self.mol_dbs,
-            'adducts': self.adducts
+            'is_public': self.is_public
         }
         if not self.is_stored(db):
             db.insert(self.DS_INSERT, rows=[doc])
@@ -167,54 +163,98 @@ class Dataset(object):
             msg['user_email'] = email.lower()
         return msg
 
-    def _generate_config(self):
-        if not self._metadata or 'MS_Analysis' not in self._metadata:
-            return None
 
-        polarity_dict = {'Positive': '+', 'Negative': '-'}
-        polarity = polarity_dict[self._metadata['MS_Analysis']['Polarity']]
-        instrument = self._metadata['MS_Analysis']['Analyzer']
-        rp = self._metadata['MS_Analysis']['Detector_Resolving_Power']
-        rp_mz = float(rp['mz'])
-        rp_resolution = float(rp['Resolving_Power'])
+def _get_isotope_generation_from_metadata(metadata):
+    assert 'MS_Analysis' in metadata
 
-        if instrument == 'FTICR':
-            rp200 = rp_resolution * rp_mz / 200.0
-        elif instrument == 'Orbitrap':
-            rp200 = rp_resolution * (rp_mz / 200.0)**0.5
-        else:
-            rp200 = rp_resolution
+    sm_config = SMConfig.get_conf()
 
-        if rp200 < 85000: params = RESOL_POWER_PARAMS['70K']
-        elif rp200 < 120000: params = RESOL_POWER_PARAMS['100K']
-        elif rp200 < 195000: params = RESOL_POWER_PARAMS['140K']
-        elif rp200 < 265000: params = RESOL_POWER_PARAMS['250K']
-        elif rp200 < 390000: params = RESOL_POWER_PARAMS['280K']
-        elif rp200 < 625000: params = RESOL_POWER_PARAMS['500K']
-        elif rp200 < 875000: params = RESOL_POWER_PARAMS['750K']
-        else: params = RESOL_POWER_PARAMS['1000K']
+    polarity = metadata['MS_Analysis']['Polarity']
+    polarity_sign = {'Positive': '+', 'Negative': '-'}[polarity]
+    instrument = metadata['MS_Analysis']['Analyzer']
+    rp = metadata['MS_Analysis']['Detector_Resolving_Power']
+    rp_mz = float(rp['mz'])
+    rp_resolution = float(rp['Resolving_Power'])
 
-        for default_moldb in self._sm_config['ds_config_defaults']['moldb_names']:
-            if default_moldb not in self.mol_dbs:
-                self.mol_dbs.append(default_moldb)
-        if not self.adducts:
-            self.adducts = self._sm_config['ds_config_defaults']['adducts'][polarity]
+    if instrument == 'FTICR':
+        rp200 = rp_resolution * rp_mz / 200.0
+    elif instrument == 'Orbitrap':
+        rp200 = rp_resolution * (rp_mz / 200.0)**0.5
+    else:
+        rp200 = rp_resolution
 
-        self.config = {
-            'databases': self.mol_dbs,
-            'isotope_generation': {
-                'adducts': self.adducts,
-                'charge': {
-                    'polarity': polarity,
-                    'n_charges': 1
-                },
-                'isocalc_sigma': float(f"{params['sigma']:f}"),
-                'isocalc_pts_per_mz': int(params['pts_per_mz'])
-            },
-            'image_generation': {
-                'ppm': self._metadata.get('Image_Generation', {}).get('ppm', 3),
-                'nlevels': 30,
-                'q': 99,
-                'do_preprocessing': False
-            }
+    if rp200 < 85000: params = RESOL_POWER_PARAMS['70K']
+    elif rp200 < 120000: params = RESOL_POWER_PARAMS['100K']
+    elif rp200 < 195000: params = RESOL_POWER_PARAMS['140K']
+    elif rp200 < 265000: params = RESOL_POWER_PARAMS['250K']
+    elif rp200 < 390000: params = RESOL_POWER_PARAMS['280K']
+    elif rp200 < 625000: params = RESOL_POWER_PARAMS['500K']
+    elif rp200 < 875000: params = RESOL_POWER_PARAMS['750K']
+    else: params = RESOL_POWER_PARAMS['1000K']
+
+    default_adducts = sm_config['ds_config_defaults']['adducts'][polarity_sign]
+    charge = {'Positive': 1, 'Negative': -1}[polarity]
+    isocalc_sigma = float(f"{params['sigma']:f}")
+
+    return default_adducts, charge, isocalc_sigma
+
+
+def generate_ds_config(metadata, mol_dbs=None, adducts=None, ppm=None, min_px=None, n_peaks=None,
+                       decoy_sample_size=None, neutral_losses=None, chem_mods=None):
+    # The kwarg names should match FLAT_DS_CONFIG_KEYS
+
+    sm_config = SMConfig.get_conf()
+    default_moldbs = sm_config['ds_config_defaults']['moldb_names']
+
+    mol_dbs = mol_dbs or []
+    mol_dbs = [*mol_dbs, *(mol_db for mol_db in default_moldbs if mol_db not in mol_dbs)]
+    default_adducts, charge, isocalc_sigma = _get_isotope_generation_from_metadata(metadata)
+
+    config = {
+        'databases': mol_dbs,
+        'isotope_generation': {
+            'adducts': adducts or default_adducts,
+            'charge': charge,
+            'isocalc_sigma': isocalc_sigma,
+            'n_peaks': n_peaks or 4,
+            'neutral_losses': neutral_losses or [],
+            'chem_mods': chem_mods or [],
+        },
+        'fdr': {
+            'decoy_sample_size': decoy_sample_size or 20,
+        },
+        'image_generation': {
+            'ppm': ppm or 3,
+            'n_levels': 30,
+            'min_px': min_px or 1,
         }
+    }
+    return config
+
+
+def update_ds_config(old_config, metadata, **kwargs):
+    """
+    Extracts parameters from an existing ds_config, and uses them to generate a new ds_config with the provided changes.
+    See FLAT_DS_CONFIG_KEYS for the list of allowed keys
+    """
+    assert all(key in FLAT_DS_CONFIG_KEYS for key in kwargs.keys())
+
+    isotope_generation = old_config.get('isotope_generation', {})
+    fdr = old_config.get('fdr', {})
+    image_generation = old_config.get('image_generation', {})
+    old_vals = {
+        'mol_dbs': old_config.get('databases'),
+        'adducts': isotope_generation.get('adducts'),
+        'n_peaks': isotope_generation.get('n_peaks'),
+        'neutral_losses': isotope_generation.get('neutral_losses'),
+        'chem_mods': isotope_generation.get('chem_mods'),
+        'decoy_sample_size': fdr.get('decoy_sample_size'),
+        'ppm': image_generation.get('ppm'),
+        'min_px': image_generation.get('min_px'),
+    }
+
+    for k, v in old_vals.items():
+        if v is not None:
+            kwargs.setdefault(k, v)
+
+    return generate_ds_config(metadata, **kwargs)

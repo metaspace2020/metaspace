@@ -11,8 +11,6 @@ from pyImagingMSpec.image_measures import isotope_image_correlation, isotope_pat
 from cpyImagingMSpec import measure_of_chaos
 from pyImagingMSpec import smoothing
 
-from sm.engine.isocalc_wrapper import ISOTOPIC_PEAK_N
-
 METRICS = OrderedDict([('chaos', 0), ('spatial', 0), ('spectral', 0), ('msm', 0),
                        ('total_iso_ints', [0, 0, 0, 0]),
                        ('min_iso_ints', [0, 0, 0, 0]),
@@ -60,17 +58,13 @@ def make_compute_image_metrics(sample_area_mask, nrows, ncols, img_gen_config):
             iso_imgs_flat = [img.flatten()[sample_area_mask_flat] for img in iso_imgs]
             iso_imgs_flat = iso_imgs_flat[:len(formula_ints)]
 
-            if img_gen_config.get('do_preprocessing', False):
-                for img in iso_imgs_flat:
-                    smoothing.hot_spot_removal(img)
-
             m['spectral'] = isotope_pattern_match(iso_imgs_flat, formula_ints)
             if m['spectral'] > 0:
 
                 m['spatial'] = isotope_image_correlation(iso_imgs_flat, weights=formula_ints[1:])
                 if m['spatial'] > 0:
 
-                    moc = measure_of_chaos(iso_imgs[0], img_gen_config.get('nlevels', 30))
+                    moc = measure_of_chaos(iso_imgs[0], img_gen_config.get('n_levels', 30))
                     m['chaos'] = 0 if np.isclose(moc, 1.0) else moc
                     if m['chaos'] > 0:
 
@@ -89,7 +83,7 @@ def complete_image_list(images):
     return non_empty_image_n > 1 and images[0] is not None
 
 
-def formula_image_metrics(formula_images_it, compute_metrics, target_formula_inds):
+def formula_image_metrics(formula_images_it, compute_metrics, target_formula_inds, n_peaks):
     """ Compute isotope image metrics for each formula
 
     Args
@@ -97,6 +91,7 @@ def formula_image_metrics(formula_images_it, compute_metrics, target_formula_ind
     formula_images_it: Iterator
     compute_metrics: function
     target_formula_inds: set
+    n_peaks: int
 
     Returns
     ---
@@ -106,8 +101,8 @@ def formula_image_metrics(formula_images_it, compute_metrics, target_formula_ind
     formula_metrics = {}
     formula_images = {}
 
-    formula_images_buffer = defaultdict(lambda: [None] * ISOTOPIC_PEAK_N)
-    formula_ints_buffer = defaultdict(lambda: [0] * ISOTOPIC_PEAK_N)
+    formula_images_buffer = defaultdict(lambda: [None] * n_peaks)
+    formula_ints_buffer = defaultdict(lambda: [0] * n_peaks)
 
     def add_metrics(f_i, f_images, f_ints):
         if complete_image_list(f_images):
@@ -121,7 +116,7 @@ def formula_image_metrics(formula_images_it, compute_metrics, target_formula_ind
         formula_images_buffer[f_i][p_i] = image
         formula_ints_buffer[f_i][p_i] = f_int
 
-        if p_i == ISOTOPIC_PEAK_N - 1:  # last formula image index
+        if p_i == n_peaks - 1:  # last formula image index
             f_images = formula_images_buffer.pop(f_i)
             f_ints = formula_ints_buffer.pop(f_i)
             add_metrics(f_i, f_images, f_ints)

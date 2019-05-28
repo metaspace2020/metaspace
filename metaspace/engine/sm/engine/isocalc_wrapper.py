@@ -6,7 +6,6 @@ import logging
 
 logger = logging.getLogger('engine')
 
-ISOTOPIC_PEAK_N = 4
 SIGMA_TO_FWHM = 2.3548200450309493  # 2 \sqrt{2 \log 2}
 
 
@@ -21,11 +20,9 @@ class IsocalcWrapper(object):
     """
 
     def __init__(self, isocalc_config):
-        self.charge = 0
-        if 'polarity' in isocalc_config['charge']:
-            polarity = isocalc_config['charge']['polarity']
-            self.charge = (-1 if polarity == '-' else 1) * isocalc_config['charge']['n_charges']
+        self.charge = isocalc_config['charge']
         self.sigma = float(isocalc_config['isocalc_sigma'])
+        self.n_peaks = isocalc_config['n_peaks']
         # self.pts_per_mz = int(isocalc_config['isocalc_pts_per_mz'])
 
     @staticmethod
@@ -60,12 +57,12 @@ class IsocalcWrapper(object):
             centr = iso_pattern.centroids(instrument_model)
             mzs_ = np.array(centr.masses)
             ints_ = 100. * np.array(centr.intensities)
-            mzs_, ints_ = self._trim(mzs_, ints_, ISOTOPIC_PEAK_N)
+            mzs_, ints_ = self._trim(mzs_, ints_, self.n_peaks)
 
             n = len(mzs_)
-            mzs = np.zeros(ISOTOPIC_PEAK_N)
+            mzs = np.zeros(self.n_peaks)
             mzs[:n] = np.array(mzs_)
-            ints = np.zeros(ISOTOPIC_PEAK_N)
+            ints = np.zeros(self.n_peaks)
             ints[:n] = ints_
 
             return mzs, ints

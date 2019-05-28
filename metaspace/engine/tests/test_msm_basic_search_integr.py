@@ -10,8 +10,8 @@ from sm.engine.msm_basic.msm_basic_search import MSMSearch, init_fdr, collect_io
 from sm.engine.tests.util import spark_context, ds_config, make_moldb_mock
 
 
-def test_compute_fdr():
-    moldb_fdr_list = init_fdr([make_moldb_mock()], ['+H', '+Na'])
+def test_compute_fdr(ds_config):
+    moldb_fdr_list = init_fdr([make_moldb_mock()], ['+H', '+Na'], ds_config['fdr'])
     _, fdr = moldb_fdr_list[0]
     formula_map_df = collect_ion_formulas(moldb_fdr_list).drop('moldb_id', axis=1)
 

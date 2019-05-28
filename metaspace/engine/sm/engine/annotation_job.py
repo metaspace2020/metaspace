@@ -91,9 +91,11 @@ class AnnotationJob(object):
 
     def _run_annotation_jobs(self, imzml_parser, moldb_ids):
         if moldb_ids:
+            job_ids = []
             try:
                 moldbs = [MolecularDB(id=id, db=self._db, iso_gen_config=self._ds.config['isotope_generation'])
                           for id in moldb_ids]
+                n_peaks = self._ds.config['isotope_generation']['n_peaks']
                 logger.info("Running new job ds_id: %s, ds_name: %s, mol dbs: %s",
                             self._ds.id, self._ds.name, moldbs)
 
@@ -106,7 +108,7 @@ class AnnotationJob(object):
 
                 for job_id, (moldb, moldb_ion_metrics_df, moldb_ion_images_rdd) in zip(job_ids, search_results_it):
                     # Save results for each moldb
-                    search_results = SearchResults(moldb.id, job_id, METRICS.keys())
+                    search_results = SearchResults(moldb.id, job_id, METRICS.keys(), n_peaks)
                     img_store_type = self._ds.get_ion_img_storage_type(self._db)
                     coordinates = [coo[:2] for coo in imzml_parser.coordinates]
                     sample_area_mask = make_sample_area_mask(coordinates)

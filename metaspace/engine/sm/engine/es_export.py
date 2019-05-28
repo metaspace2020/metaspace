@@ -32,7 +32,7 @@ ANNOTATIONS_SEL = '''SELECT
     j.id AS job_id,
     m.fdr AS fdr,
     m.iso_image_ids AS iso_image_ids,
-    ds.config->'isotope_generation'->'charge'->'polarity' AS polarity,
+    (CASE ds.config->'isotope_generation'->>'charge' WHEN '-1' THEN 'Negative' WHEN '1' THEN 'Positive' END) AS polarity,
     m.off_sample->'prob' as off_sample_prob,
     m.off_sample->'label' as off_sample_label
 FROM iso_image_metrics m
@@ -63,8 +63,8 @@ FROM (
     d.status AS ds_status,
     to_char(max(job.finish), 'YYYY-MM-DD HH24:MI:SS') AS ds_last_finished,
     d.is_public AS ds_is_public,
-    d.mol_dbs AS ds_mol_dbs,
-    d.adducts AS ds_adducts,
+    d.config #> '{databases}' AS ds_mol_dbs,
+    d.config #> '{isotope_generation,adducts}' AS ds_adducts,
     d.acq_geometry AS ds_acq_geometry,
     d.ion_img_storage_type AS ds_ion_img_storage
   FROM dataset as d

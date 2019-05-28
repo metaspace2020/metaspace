@@ -9,7 +9,7 @@ import numpy as np
 from copy import deepcopy
 
 from sm.engine.util import SMConfig, split_s3_path
-from sm.engine.isocalc_wrapper import IsocalcWrapper, ISOTOPIC_PEAK_N
+from sm.engine.isocalc_wrapper import IsocalcWrapper
 
 logger = logging.getLogger('engine')
 
@@ -31,7 +31,8 @@ class CentroidsGenerator(object):
         self._iso_gen_part_n = 512
 
         self._spark_session = SparkSession(self._sc)
-        self._ion_centroids_path = '{}/{}/{}'.format(self._sm_config['isotope_storage']['path'],
+        self._ion_centroids_path = '{}/{}/{}/{}'.format(self._sm_config['isotope_storage']['path'],
+                                                     self._isocalc.n_peaks,
                                                      self._isocalc.sigma,
                                                      self._isocalc.charge)
         self._s3 = boto3.client('s3', self._sm_config['aws']['aws_region'],
@@ -210,10 +211,3 @@ class FormulaCentroids(object):
         valid_formula_ids = self.formulas_df[self.formulas_df.formula.isin(valid_formulas)].index.values
         return FormulaCentroids(formulas_df=self.formulas_df.loc[valid_formula_ids],
                                 centroids_df=self._centroids_df.loc[valid_formula_ids])
-
-    def centroids_ints(self):
-        sort_centr_df = self._centroids_df.reset_index().sort_values(by=['formula_i', 'peak_i'])
-        values = sort_centr_df.int.values.reshape(-1, ISOTOPIC_PEAK_N)
-        keys = sort_centr_df.formula_i.values[::ISOTOPIC_PEAK_N]
-        centr_ints = {k: v[v > 0] for k, v in zip(keys, values)}
-        return centr_ints
