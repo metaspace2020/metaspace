@@ -73,7 +73,7 @@ class CentroidsGenerator(object):
 
         # to exclude all formulas that failed
         formulas_df = formulas_df.loc[centroids_df.index.unique()]
-        return FormulaCentroids(formulas_df, centroids_df, self._isocalc.n_peaks)
+        return FormulaCentroids(formulas_df, centroids_df)
 
     def generate_if_not_exist(self, formulas):
         """ Generate missing centroids and return them
@@ -127,7 +127,7 @@ class CentroidsGenerator(object):
                 self._ion_centroids_path + '/formulas').toPandas().set_index('formula_i')
             centroids_df = self._spark_session.read.parquet(
                 self._ion_centroids_path + '/centroids').toPandas().set_index('formula_i')
-            return FormulaCentroids(formulas_df, centroids_df, self._isocalc.n_peaks)
+            return FormulaCentroids(formulas_df, centroids_df)
 
     def _save(self, formula_centroids):
         """ Save isotopic peaks
@@ -150,14 +150,13 @@ class FormulaCentroids(object):
     formulas_df : pandas.DataFrame
     centroids_df : pandas.DataFrame
     """
-    def __init__(self, formulas_df, centroids_df, n_peaks):
+    def __init__(self, formulas_df, centroids_df):
         u_index_formulas = set(formulas_df.index.unique())
         u_index_centroids = set(centroids_df.index.unique())
         assert u_index_formulas == u_index_centroids, (u_index_formulas, u_index_centroids)
 
         self.formulas_df = formulas_df.sort_values(by='formula')
         self._centroids_df = centroids_df.sort_values(by='mz')
-        self.n_peaks = n_peaks
 
     def centroids_df(self, fixed_size_centroids=False):
         """
@@ -184,7 +183,6 @@ class FormulaCentroids(object):
         """
         assert type(other) == FormulaCentroids
         assert pd.merge(self.formulas_df, other.formulas_df, on='formula').empty
-        assert self.n_peaks == other.n_peaks
 
         index_offset = self.formulas_df.index.max() - other.formulas_df.index.min() + 1
         other_formulas_df = other.formulas_df.copy()
@@ -195,12 +193,11 @@ class FormulaCentroids(object):
         formulas_df = pd.concat([self.formulas_df, other_formulas_df])
         centroids_df = pd.concat([self._centroids_df, other_centroids_df])
         formulas_df.index.name = centroids_df.index.name = 'formula_i'  # fix: occasionally pandas looses index name
-        return FormulaCentroids(formulas_df, centroids_df, self.n_peaks)
+        return FormulaCentroids(formulas_df, centroids_df)
 
     def copy(self):
         return FormulaCentroids(formulas_df=self.formulas_df.copy(),
-                                centroids_df=self._centroids_df.copy(),
-                                n_peaks=self.n_peaks)
+                                centroids_df=self._centroids_df.copy())
 
     def subset(self, formulas):
         formulas = set(formulas)
@@ -213,12 +210,4 @@ class FormulaCentroids(object):
         valid_formulas = formulas - miss_formulas
         valid_formula_ids = self.formulas_df[self.formulas_df.formula.isin(valid_formulas)].index.values
         return FormulaCentroids(formulas_df=self.formulas_df.loc[valid_formula_ids],
-                                centroids_df=self._centroids_df.loc[valid_formula_ids],
-                                n_peaks=self.n_peaks)
-
-    def centroids_ints(self):
-        sort_centr_df = self._centroids_df.reset_index().sort_values(by=['formula_i', 'peak_i'])
-        values = sort_centr_df.int.values.reshape(-1, self.n_peaks)
-        keys = sort_centr_df.formula_i.values[::self.n_peaks]
-        centr_ints = {k: v[v > 0] for k, v in zip(keys, values)}
-        return centr_ints
+                                centroids_df=self._centroids_df.loc[valid_formula_ids])

@@ -44,7 +44,7 @@ def test_search(formula_image_metrics_mock, spark_context, ds_config):
                                  columns=['formula_i', 'peak_i', 'mz', 'int'])
                     .sort_values(by='mz')
                     .set_index('formula_i'))
-    msm_search._fetch_formula_centroids = lambda args: FormulaCentroids(formulas_df, centroids_df, 4)
+    msm_search._fetch_formula_centroids = lambda args: FormulaCentroids(formulas_df, centroids_df)
 
     def process_segments(centr_segm_n, func):
         return spark_context.parallelize(map(func, range(centr_segm_n)))

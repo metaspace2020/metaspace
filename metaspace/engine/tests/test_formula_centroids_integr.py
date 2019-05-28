@@ -39,8 +39,7 @@ def test_save_restore_works(spark_context, ds_config, clean_isotope_storage_path
                                                                 'peak_i': [0, 1, 0, 1],
                                                                 'mz': [100., 200., 300., 400.],
                                                                 'int': [100., 10., 100., 1.]})
-                                     .set_index('formula_i'),
-                                     n_peaks=4)
+                                     .set_index('formula_i'))
 
     isocalc = IsocalcWrapper(ds_config['isotope_generation'])
     centr_gen = CentroidsGenerator(sc=spark_context, isocalc=isocalc)

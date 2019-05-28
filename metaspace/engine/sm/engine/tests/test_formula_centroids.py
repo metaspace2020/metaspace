@@ -9,8 +9,7 @@ def create_formula_centroids(rows1, rows2):
     return FormulaCentroids(formulas_df=(pd.DataFrame(rows1, columns=['formula_i', 'formula'])
                                          .set_index('formula_i')),
                             centroids_df=(pd.DataFrame(rows2, columns=['formula_i', 'peak_i', 'mz', 'int'])
-                                          .set_index('formula_i')),
-                            n_peaks=4)
+                                          .set_index('formula_i')))
 
 
 def test_add_non_overlap():
@@ -36,15 +35,3 @@ def test_add_overlap_exception():
 
     with raises(AssertionError):
         formula_centroids += formula_centroids_other
-
-
-def test_centroids_ints():
-    formula_centroids = create_formula_centroids([(0, 'f1a1'), (1, 'f2a2')],
-                                                 [(0, 0, 10, 100), (0, 1, 15, 100), (0, 2, 0, 0), (0, 3, 0, 0),
-                                                  (1, 0, 20, 100), (1, 1, 25, 100), (1, 2, 0, 0), (1, 3, 0, 0)])
-
-    centroids_ints = formula_centroids.centroids_ints()
-
-    exp_centroids_ints = {0: np.array([100, 100]), 1: np.array([100, 100])}
-    for formula_i in exp_centroids_ints.keys():
-        assert np.all(centroids_ints[formula_i] == exp_centroids_ints[formula_i])

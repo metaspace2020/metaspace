@@ -226,7 +226,7 @@ def generate_ds_config(metadata, mol_dbs=None, adducts=None, ppm=None, min_px=No
         'image_generation': {
             'ppm': ppm or 3,
             'n_levels': 30,
-            'min_px': 1 if min_px is None else min_px,
+            'min_px': min_px or 1,
         }
     }
     return config
