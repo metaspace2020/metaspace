@@ -15,7 +15,7 @@ from sm.engine.msm_basic.formula_validator import METRICS
 from sm.engine.msm_basic.msm_basic_search import MSMSearch
 from sm.engine.db import DB
 from sm.engine.search_results import SearchResults
-from sm.engine.util import SMConfig, split_s3_path
+from sm.engine.util import SMConfig, split_s3_path, find_file_by_ext
 from sm.engine.es_export import ESExporter
 from sm.engine.mol_db import MolecularDB
 from sm.engine.queue import QueuePublisher, SM_DS_STATUS
@@ -85,9 +85,8 @@ class AnnotationJob(object):
 
     def create_imzml_parser(self):
         logger.info('Parsing imzml')
-        imzml_path = next(str(p) for p in Path(self._ds_data_path).iterdir()
-                          if str(p).lower().endswith('.imzml'))
-        return ImzMLParser(imzml_path)
+        imzml_path = find_file_by_ext(self._ds_data_path, 'imzml')
+        return ImzMLParser(imzml_path, parse_lib='ElementTree')
 
     def _run_annotation_jobs(self, imzml_parser, moldb_ids):
         if moldb_ids:
