@@ -46,7 +46,7 @@ def define_ds_segments(sample_mzs, total_mz_n, mz_precision, ds_segm_size_mb=5):
     float_prec = 4 if mz_precision == 'f' else 8
     segm_arr_column_n = 3  # sp_idx, mzs, ints
     segm_n = segm_arr_column_n * (total_mz_n * float_prec) // (ds_segm_size_mb * 2**20)
-    segm_n = max(16, int(segm_n))
+    segm_n = max(1, int(segm_n))
 
     segm_bounds_q = [i * 1 / segm_n for i in range(0, segm_n + 1)]
     segm_lower_bounds = np.quantile(sample_mzs, segm_bounds_q)
