@@ -1,11 +1,15 @@
 ---
 
 - name: Make sure a folder for the config file exists
-  file: path={{ sm_ansible_home }}/aws/{{ stage }}/group_vars/ state=directory mode=0755
+  file: path={{ sm_ansible_home }}/aws/{{ stage }}/group_vars/all state=directory mode=0755
 
-- name: Upload {{ stage }}/group_vars/all.yml with variables resolved
-  template: src=../{{ stage }}/group_vars/all.yml dest={{ sm_ansible_home }}/aws/{{ stage }}/group_vars/all.yml
-            owner=ubuntu group=ubuntu mode=0600
+- name: Upload {{ stage }}/group_vars/all/vars.yml with variables resolved
+  template:
+    src: "../{{ stage }}/group_vars/all/vars.yml"
+    dest: "{{ sm_ansible_home }}/aws/{{ stage }}/group_vars/all/vars.yml"
+    owner: ubuntu
+    group: ubuntu
+    mode: "0600"
 
 - name: Update the inventory file
   command: "{{ sm_cluster_autostart_python }} update_inventory.py --stage={{ stage }}"
