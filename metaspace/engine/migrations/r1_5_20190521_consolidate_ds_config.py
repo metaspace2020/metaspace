@@ -48,6 +48,11 @@ def restore(db, backup_file):
                   "FROM (VALUES %s) u(id, config, mol_dbs, adducts) "
                   "WHERE dataset.id = u.id", backup)
 
+    # Fix any datasets that don't have backup data
+    db.alter("UPDATE dataset SET mol_dbs = ARRAY(SELECT json_array_elements_text(config #> '{databases}')), "
+             "adducts = ARRAY(SELECT json_array_elements_text(config #> '{isotope_generation,adducts}'))"
+             "WHERE mol_dbs IS NULL AND adducts IS NULL")
+
     db.alter("ALTER TABLE dataset ALTER COLUMN mol_dbs SET NOT NULL, ALTER COLUMN adducts SET NOT NULL")
 
 
