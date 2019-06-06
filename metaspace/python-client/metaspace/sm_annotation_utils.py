@@ -344,37 +344,38 @@ class MolDBClient:
     def __init__(self, config):
         self._url = config['moldb_url']
         self._mol_formula_lists = {}
+        self._session = requests.session()
 
     def getDatabase(self, name, version=None):
         url = self._url + '/databases?name={}'.format(name)
         if version:
             url += '&version=' + version
-        db_list = _extract_data(requests.get(url))
+        db_list = _extract_data(self._session.get(url))
         return MolecularDatabase(db_list[0], self)
 
     def getDatabaseList(self):
         url = self._url + '/databases'
-        db_list = _extract_data(requests.get(url))
+        db_list = _extract_data(self._session.get(url))
         return [MolecularDatabase(db, self) for db in db_list]
 
     def getMolFormulaList(self, dbId):
         if dbId in self._mol_formula_lists:
             return self._mol_formula_lists[dbId]
         url = self._url + '/databases/{}/sfs'.format(dbId)
-        self._mol_formula_lists[dbId] = _extract_data(requests.get(url))
+        self._mol_formula_lists[dbId] = _extract_data(self._session.get(url))
         return self._mol_formula_lists[dbId]
 
     def getMolFormulaNames(self, dbId, molFormula):
         url = '{}/databases/{}/molecules?sf={}'.format(
             self._url, dbId, molFormula
         ) + '&limit=100&fields=mol_name'
-        return [m['mol_name'] for m in _extract_data(requests.get(url))]
+        return [m['mol_name'] for m in _extract_data(self._session.get(url))]
 
     def getMolFormulaIds(self, dbId, molFormula):
         url = '{}/databases/{}/molecules?sf={}'.format(
             self._url, dbId, molFormula
         ) + '&limit=100&fields=mol_id'
-        return [m['mol_id'] for m in _extract_data(requests.get(url))]
+        return [m['mol_id'] for m in _extract_data(self._session.get(url))]
 
     def get_molecules(self, db_id, fields, limit=100):
         """ Fetch molecules from database
@@ -390,7 +391,7 @@ class MolDBClient:
         """
         url = f'{self._url}/databases/{db_id}/molecules?'
         url += f'limit={limit}&fields={",".join(fields)}'
-        return [m for m in _extract_data(requests.get(url))]
+        return [m for m in _extract_data(self._session.get(url))]
 
     def clearCache(self):
         self._mol_formula_lists = {}
@@ -488,6 +489,7 @@ class SMDataset(object):
         self._gqclient = gqclient
         self._config = json.loads(self._info['configJson'])
         self._metadata = Metadata(self._info['metadataJson'])
+        self._session = requests.session()
 
     @property
     def id(self):
@@ -577,7 +579,7 @@ class SMDataset(object):
             if not url:
                 return None
             url = self._baseurl + url
-            im = mpimg.imread(BytesIO(requests.get(url).content))
+            im = mpimg.imread(BytesIO(self._session.get(url).content))
             mask = im[:, :, 3]
             data = im[:, :, 0]
             data[mask == 0] = 0
@@ -612,7 +614,7 @@ class SMDataset(object):
             if not url:
                 return None
             url = self._baseurl + url
-            im = Image.open(BytesIO(requests.get(url).content))
+            im = Image.open(BytesIO(self._session.get(url).content))
             return np.asarray(im)
         raw_im = self._gqclient.getRawOpticalImage(self.id)['rawOpticalImage']
         return OpticalImage(fetch_image(raw_im['url']), np.asarray(raw_im['transform']))
