@@ -50,6 +50,7 @@ config.slack.channel = "{{ sm_graphql_slack_channel }}";
 
 config.jwt = {};
 config.jwt.secret = "{{ sm_graphql_jwt_secret }}";
+config.jwt.algorithm = "HS256";
 
 config.aws = {
   aws_access_key_id: "{{ sm_graphql_aws_access_key_id }}",

@@ -110,7 +110,7 @@ async function createHttpServerAsync(config) {
       schema: executableSchema,
       onOperation(message, params) {
         const jwt = message.payload.jwt;
-        const user = jwt != null ? jwtSimple.decode(jwt, config.jwt.secret) : null;
+        const user = jwt != null ? jwtSimple.decode(jwt, config.jwt.secret, false, config.jwt.algorithm) : null;
         params.context = getContext(user && user.user, connection.manager, null, null);
         return params;
       }
