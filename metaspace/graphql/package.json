@@ -16,6 +16,7 @@
   },
   "license": "ISC",
   "dependencies": {
+    "@sentry/node": "5.4.0",
     "@types/amqplib": "^0.5.9",
     "@types/aws-sdk": "^2.7.0",
     "@types/bcrypt": "^2.0.0",

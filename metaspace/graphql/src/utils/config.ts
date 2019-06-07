@@ -66,6 +66,9 @@ export interface Config {
     secret: string;
     algorithm: TAlgorithm;
   };
+  sentry: {
+    dsn: string | null;
+  };
   features: {
     graphqlMocks: boolean;
     impersonation: boolean;

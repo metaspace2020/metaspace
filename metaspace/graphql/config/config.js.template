@@ -52,6 +52,10 @@ config.jwt = {};
 config.jwt.secret = "{{ sm_graphql_jwt_secret }}";
 config.jwt.algorithm = "HS256";
 
+config.sentry = {
+  dsn: "{{ sm_webapp_sentry_dsn }}",
+};
+
 config.aws = {
   aws_access_key_id: "{{ sm_graphql_aws_access_key_id }}",
   aws_secret_access_key: "{{ sm_graphql_aws_secret_access_key }}",

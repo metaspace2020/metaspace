@@ -82,6 +82,10 @@ module.exports = {
     algorithm: 'HS256',
   },
 
+  sentry: {
+    dsn: null,
+  },
+
   google: {
     client_id: '',
     client_secret: '',
