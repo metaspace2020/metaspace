@@ -53,7 +53,7 @@ config.jwt.secret = "{{ sm_graphql_jwt_secret }}";
 config.jwt.algorithm = "HS256";
 
 config.sentry = {
-  dsn: "{{ sm_webapp_sentry_dsn }}",
+  dsn: "{{ sentry_dsn }}",
 };
 
 config.aws = {

@@ -10,4 +10,4 @@ exports.UPLOAD_DESTINATION = "{{ sm_webapp_upload_destination }}";
 // must match 's3_bucket' in src/clientConfig.js
 exports.S3_UPLOAD_BUCKET = "{{ sm_webapp_s3_bucket }}";
 
-exports.RAVEN_DSN = "{{ sm_webapp_sentry_dsn }}";
+exports.RAVEN_DSN = "{{ sentry_dsn }}";

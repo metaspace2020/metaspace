@@ -182,7 +182,6 @@ sm_webapp_aws_access_key_id: WEBAPP_AWS_ACCESS_KEY_ID
 sm_webapp_aws_secret_access_key: WEBAPP_AWS_SECRET_ACCESS_KEY
 sm_webapp_s3_bucket: BUCKET-NAME-UPLOAD  # just plain bucket name
 sm_webapp_google_client_id: ""
-sm_webapp_sentry_dsn: ""
 sm_webapp_upload_destination: s3
 sm_webapp_jwt_secret: "{{ sm_graphql_jwt_secret }}"
 sm_webapp_redis_host: "{{ web_redis.host }}"
@@ -222,6 +221,8 @@ spark_env_extras_master:
 
 slack_channel:
 slack_webhook_url:
+
+sentry_dsn: ""
 
 ssl:
   path: ../files

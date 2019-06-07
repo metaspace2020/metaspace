@@ -16,7 +16,7 @@
     "storage": "{{ sm_webapp_upload_destination }}"
   },
 
-  "ravenDsn": "{{ sm_webapp_sentry_dsn }}",
+  "ravenDsn": "{{ sentry_dsn }}",
 
   "metadataTypes": {{ sm_webapp_metadata_types | to_json }},
 

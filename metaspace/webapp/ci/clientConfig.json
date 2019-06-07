@@ -16,7 +16,7 @@
     "storage": "s3"
   },
 
-  "ravenDsn": "{{ sm_webapp_sentry_dsn }}",
+  "ravenDsn": "",
 
   "metadataTypes": ["ims", "lcms"],
 
