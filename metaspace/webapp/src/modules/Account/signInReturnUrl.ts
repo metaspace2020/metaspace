@@ -7,7 +7,7 @@ const DEFAULT_ROUTE = {path:'/datasets'};
 
 
 export const setSignInReturnUrl = (route: Route) => {
-  const val = JSON.stringify(pick(route, ['name','path','hash','query','params']));
+  const val = pick(route, ['name','path','hash','query','params']);
   setLocalStorage(STORAGE_KEY, val, true);
 };
 
