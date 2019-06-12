@@ -34,10 +34,10 @@
       },
 
       mode() {
-        if (this.dataset.thumbnailOpticalImageUrl) {
-          return 'opt';
-        } else if (config.features.ion_thumbs && this.dataset.ionThumbnailUrl) {
+        if (config.features.ion_thumbs && this.dataset.ionThumbnailUrl) {
           return 'ion';
+        } else if (this.dataset.thumbnailOpticalImageUrl) {
+          return 'opt';
         } else {
           return 'empty';
         }
