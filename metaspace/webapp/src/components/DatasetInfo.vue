@@ -13,15 +13,15 @@
 <script>
   import {defaultMetadataType, metadataSchemas} from '../assets/metadataRegistry';
   import {get, flatMap} from 'lodash-es';
-  import safeJsonParse from '../lib/safeJsonParse';
   import {optionalSuffixInParens} from '../lib/vueFilters';
+  import {getLocalStorage, setLocalStorage} from '../lib/localStorage';
 
   export default {
     name: 'dataset-info',
     props: ['metadata', 'expandedKeys', 'currentUser'],
     data() {
       return {
-        expandedTreeNodes: safeJsonParse(localStorage.getItem('expandedTreeNodes')) || [],
+        expandedTreeNodes: getLocalStorage('expandedTreeNodes') || [],
       };
     },
     created() {
@@ -90,12 +90,12 @@
             this.expandedTreeNodes.splice(nodeId, 1);
           }
         }
-        localStorage.setItem('expandedTreeNodes', JSON.stringify(this.expandedTreeNodes));
+        setLocalStorage('expandedTreeNodes', this.expandedTreeNodes);
       },
 
       handleNodeExpand(node) {
         this.expandedTreeNodes.push(node.id);
-        localStorage.setItem('expandedTreeNodes', JSON.stringify(this.expandedTreeNodes));
+        setLocalStorage('expandedTreeNodes', this.expandedTreeNodes);
       },
 
       prettify(str) {

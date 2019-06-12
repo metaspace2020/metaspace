@@ -16,6 +16,7 @@
   },
   "license": "ISC",
   "dependencies": {
+    "@sentry/node": "5.4.0",
     "@types/amqplib": "^0.5.9",
     "@types/aws-sdk": "^2.7.0",
     "@types/bcrypt": "^2.0.0",
@@ -56,7 +57,7 @@
     "html-entities": "^1.2.1",
     "json-schema-deref-sync": "^0.9.0",
     "jsondiffpatch": "^0.3.9",
-    "jwt-simple": "^0.5.1",
+    "jwt-simple": "^0.5.6",
     "knex": "^0.15.2",
     "lodash": "^4.17.4",
     "merge-graphql-schemas": "^1.5.3",

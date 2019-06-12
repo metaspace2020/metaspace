@@ -1,6 +1,6 @@
 const fileConfig = require('./clientConfig.json');
 import {defaultsDeep} from 'lodash-es';
-import safeJsonParse from './lib/safeJsonParse';
+import {getLocalStorage, removeLocalStorage, setLocalStorage} from './lib/localStorage';
 
 
 interface AWSConfig {
@@ -83,9 +83,9 @@ export const updateConfigFromQueryString = () => {
 
     const overrides: Partial<Features> = {};
     if (queryStringFeatures.includes('reset')) {
-      localStorage.removeItem(FEATURE_STORAGE_KEY);
+      removeLocalStorage(FEATURE_STORAGE_KEY);
     } else {
-      Object.assign(overrides, safeJsonParse(localStorage.getItem(FEATURE_STORAGE_KEY)));
+      Object.assign(overrides, getLocalStorage(FEATURE_STORAGE_KEY));
     }
 
     queryStringFeatures.forEach(feat => {
@@ -99,7 +99,7 @@ export const updateConfigFromQueryString = () => {
     Object.assign(config.features, overrides);
 
     if (queryStringFeatures.includes('save')) {
-      localStorage.setItem(FEATURE_STORAGE_KEY, JSON.stringify(overrides));
+      setLocalStorage(FEATURE_STORAGE_KEY, overrides);
     }
   }
 };
