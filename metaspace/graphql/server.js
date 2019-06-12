@@ -19,7 +19,7 @@ const bodyParser = require('body-parser'),
   jwt = require('express-jwt'),
   jwtSimple = require('jwt-simple'),
   cors = require('cors'),
-  {UserError} = require('graphql-errors');
+  {IsUserError} = require('graphql-errors');
 
 const {createImgServerAsync} = require('./imageUpload.js'),
   {configureAuth} = require('./src/modules/auth'),
@@ -78,27 +78,30 @@ const configureSentryErrorHandler = (app) => {
 
 const formatGraphQLError = (error) => {
   const {message, extensions, source, path, name, positions} = error;
-  if (error instanceof GraphQLError) {
-    logger.error(extensions.exception || message, source);
-  } else {
-    logger.error(error);
+  const isUserError = extensions && extensions.exception && extensions.exception[IsUserError] === true;
 
-  }
-
-  Sentry.withScope(scope => {
-    scope.setExtras({
-      source: source && source.body,
-      positions,
-      path,
-    });
-    if (path || name !== 'GraphQLError') {
-      scope.setTag('graphql', 'exec_error');
-      Sentry.captureException(error);
+  if (!isUserError) {
+    if (error instanceof GraphQLError) {
+      logger.error(extensions.exception || message, source);
     } else {
-      scope.setTag('graphql', 'bad_query');
-      Sentry.captureMessage(`GraphQLBadQuery: ${error.message}`)
+      logger.error(error);
     }
-  });
+
+    Sentry.withScope(scope => {
+      scope.setExtras({
+        source: source && source.body,
+        positions,
+        path,
+      });
+      if (path || name !== 'GraphQLError') {
+        scope.setTag('graphql', 'exec_error');
+        Sentry.captureException(error);
+      } else {
+        scope.setTag('graphql', 'bad_query');
+        Sentry.captureMessage(`GraphQLBadQuery: ${error.message}`)
+      }
+    });
+  }
 
   return error;
 };
