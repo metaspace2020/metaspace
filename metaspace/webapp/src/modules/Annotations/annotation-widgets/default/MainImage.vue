@@ -175,7 +175,6 @@ export default class MainImage extends Vue {
     }
 
     get ionImage(): IonImage | null {
-        console.log('rerender')
         if (this.ionImagePng != null) {
             const isotopeImage = get(this.annotation, 'isotopeImages[0]');
             const { minIntensity, maxIntensity } = isotopeImage;

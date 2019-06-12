@@ -37,7 +37,7 @@
   import config from '../../config';
   import Component from 'vue-class-component';
   import {debounce, isArray} from 'lodash-es';
-  import safeJsonParse from '../../lib/safeJsonParse';
+  import {getLocalStorage, setLocalStorage} from '../../lib/localStorage';
 
   interface FeatureSpec {
     name: string;
@@ -97,8 +97,7 @@ We recommend including off-sample area around your sample during data acquisitio
 
     getStorageDismissedFeatures() {
       try {
-        const json = localStorage.getItem(STORAGE_KEY);
-        const list = json && safeJsonParse(json);
+        const list = getLocalStorage(STORAGE_KEY);
         if (isArray(list)) {
           // Filter out invalid/old entries
           return list.filter(item => NEW_FEATURES.some(f => f.name === item));
@@ -138,7 +137,7 @@ We recommend including off-sample area around your sample during data acquisitio
 
       if (activeFeatureName != null) {
         const currentFeatureStatus = this.getStorageDismissedFeatures();
-        localStorage.setItem(STORAGE_KEY, JSON.stringify([...currentFeatureStatus, activeFeatureName]));
+        setLocalStorage(STORAGE_KEY, [...currentFeatureStatus, activeFeatureName]);
       }
     }
 

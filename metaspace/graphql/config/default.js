@@ -79,6 +79,11 @@ module.exports = {
 
   jwt: {
     secret: 'secret',
+    algorithm: 'HS256',
+  },
+
+  sentry: {
+    dsn: null,
   },
 
   google: {

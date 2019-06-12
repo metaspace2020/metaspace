@@ -1,5 +1,6 @@
 import * as config from 'config';
 import { IConfig } from 'config';
+import {TAlgorithm} from 'jwt-simple';
 
 export interface ImageCategoryConfig {
   type: string,
@@ -63,6 +64,10 @@ export interface Config {
   };
   jwt: {
     secret: string;
+    algorithm: TAlgorithm;
+  };
+  sentry: {
+    dsn: string | null;
   };
   features: {
     graphqlMocks: boolean;
