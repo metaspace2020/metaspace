@@ -13,6 +13,15 @@
                       :map="scale"></color-bar>
           </el-option>
         </el-select>
+        <el-form-item label="Color scale" data-feature-anchor="ion-image-color-scale">
+          <el-select :value="scaleType"
+                     style="width: 120px;"
+                     title="Color scale"
+                     @input="onScaleTypeChange">
+            <el-option value="linear" label="Linear" />
+            <el-option value="log" label="Logarithmic" />
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-checkbox :checked="inverted" @input="onInvertChange">Invert</el-checkbox>
         </el-form-item>
@@ -42,6 +51,7 @@
  import Vue from 'vue';
  import ColorBar from './Colorbar.vue';
  import { Component } from 'vue-property-decorator'
+ import {ScaleType} from '../../../../lib/ionImageRendering';
 
  interface colorObjType {
    code: string,
@@ -79,6 +89,10 @@
      return this.colormap[0] == '-';
    }
 
+   get scaleType() {
+     return this.$store.getters.settings.annotationView.scaleType;
+   }
+
    get hotspotThreshold() {
      return this.$store.getters.settings.annotationView.hotspotThreshold;
    }
@@ -97,6 +111,10 @@
 
    onInvertChange(invert: any) {
      this.$store.commit('setColormap', (invert ? '-' : '') + this.colormapName);
+   }
+
+   onScaleTypeChange(scaleType: ScaleType) {
+     this.$store.commit('setScaleType', scaleType);
    }
 
    onHotspotThresholdChange(enableHotspotClipping: boolean) {

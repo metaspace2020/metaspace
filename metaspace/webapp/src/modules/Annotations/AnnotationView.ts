@@ -157,6 +157,10 @@
      return this.$store.getters.settings.annotationView.colormap;
    }
 
+   get scaleType(): string {
+     return this.$store.getters.settings.annotationView.scaleType;
+   }
+
    get hotspotQuantile(): number | undefined {
      const threshold = this.$store.getters.settings.annotationView.hotspotThreshold;
      return threshold ? threshold / 100 : undefined;
@@ -195,7 +199,7 @@
        path,
        query: {
          ...encodeParams(filter, path, this.$store.state.filterLists),
-         ...pick(this.$route.query, 'sections', 'sort', 'hideopt', 'cmap', 'hotspotthreshold'),
+         ...pick(this.$route.query, 'sections', 'sort', 'hideopt', 'cmap', 'hotspotthreshold', 'scale'),
        },
      };
    }

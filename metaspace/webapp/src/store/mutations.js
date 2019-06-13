@@ -181,6 +181,14 @@ export default {
     });
   },
 
+  setScaleType(state, scaleType) {
+    router.replace({
+      query: scaleType !== 'linear'
+        ? { ...state.route.query, scale: scaleType }
+        : omit(state.route.query, 'scale'),
+    });
+  },
+
   setHotspotThreshold(state, hotspotThreshold) {
     // hotspotThreshold should be a number or 'none'
     router.replace({

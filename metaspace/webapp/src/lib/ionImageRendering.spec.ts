@@ -1,4 +1,4 @@
-import {getHotspotThreshold, processIonImage, renderIonImage, renderIonImageToBuffer} from './ionImageRendering';
+import {processIonImage, renderIonImageToBuffer} from './ionImageRendering';
 import {range, times} from 'lodash-es';
 import {decode, encodeLL, Image} from 'upng-js';
 import {readFile} from 'fs';

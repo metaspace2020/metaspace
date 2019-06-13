@@ -23,7 +23,7 @@
   import config from '../config';
   import {Component, Prop, Watch} from 'vue-property-decorator';
   import IonImageViewer from './IonImageViewer.vue';
-  import {IonImage, loadPngFromUrl, processIonImage} from '../lib/ionImageRendering';
+  import {IonImage, loadPngFromUrl, processIonImage, ScaleType} from '../lib/ionImageRendering';
   import fitImageToArea, {FitImageToAreaResult} from '../lib/fitImageToArea';
   import reportError from '../lib/reportError';
 
@@ -55,6 +55,8 @@
     hotspotQuantile?: number;
     @Prop()
     pixelAspectRatio!: number;
+    @Prop({type: String})
+    scaleType?: ScaleType;
 
     containerWidth = 500;
     containerHeight = 500;
@@ -85,7 +87,8 @@
           const png = await loadPngFromUrl((config.imageStorage || '') + newUrl);
 
           if (newUrl === this.src) {
-            this.ionImage = processIonImage(png, this.minIntensity, this.maxIntensity, this.hotspotQuantile);
+            this.ionImage = processIonImage(png, this.minIntensity, this.maxIntensity,
+              this.hotspotQuantile, this.scaleType);
             this.ionImageIsLoading = false;
           }
         } catch (err) {

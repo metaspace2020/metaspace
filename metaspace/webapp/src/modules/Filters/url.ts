@@ -2,6 +2,7 @@ import { FILTER_SPECIFICATIONS, FilterKey, getDefaultFilter, Level, MetadataList
 
 import {invert} from 'lodash-es';
 import { Location } from 'vue-router';
+import {ScaleType} from '../../lib/ionImageRendering';
 
 interface Dictionary<T> {
   [key: string]: T;
@@ -184,6 +185,7 @@ export interface UrlAnnotationViewSettings {
   activeSections: string[];
   colormap: string;
   colocalizationAlgo: string | null;
+  scaleType: ScaleType;
   hotspotThreshold: number | null;
 }
 
@@ -212,7 +214,8 @@ export function decodeSettings(location: Location): UrlSettings | undefined {
       activeSections: DEFAULT_ANNOTATION_VIEW_SECTIONS,
       colormap: DEFAULT_COLORMAP,
       colocalizationAlgo: null,
-      hotspotThreshold: null
+      scaleType: 'linear',
+      hotspotThreshold: null,
     },
 
     datasets: {
@@ -229,6 +232,9 @@ export function decodeSettings(location: Location): UrlSettings | undefined {
   if (query.hotspotthreshold) {
     // Note: this also accepts the string 'none' to mean no hotspot removal (100%) for the sake of readable URLs
     settings.annotationView.hotspotThreshold = parseFloat(query.hotspotthreshold) || 100;
+  }
+  if (query.scale) {
+    settings.annotationView.scaleType = (query.scale || 'linear') as ScaleType;
   }
   if (query.sections !== undefined)
     settings.annotationView.activeSections = decodeSections(query.sections);

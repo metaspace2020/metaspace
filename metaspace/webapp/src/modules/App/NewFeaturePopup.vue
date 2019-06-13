@@ -43,6 +43,7 @@
     name: string;
     title: string;
     contentHtml: string;
+    dontShowAfter: Date;
     placement: Placement;
     getAnchorIfActive: (vue: Vue) => HTMLElement | null;
   }
@@ -61,11 +62,27 @@ allowing you to find important molecules faster.</p>
 <p>Please keep in mind that the accuracy of this model is greatly improved in datasets that include some off-sample area.
 We recommend including off-sample area around your sample during data acquisition.</p>
       `,
+      dontShowAfter: new Date('2019-07-22'),
       placement: 'bottom',
       getAnchorIfActive(vue: Vue) {
         if (config.features.off_sample && vue.$route.path === '/annotations') {
           return document.querySelector('.tf-outer[data-test-key=offSample]')
             || document.querySelector('.filter-select');
+        }
+        return null;
+      },
+    },
+    {
+      name: 'logScale',
+      title: 'Log-scale colormaps',
+      contentHtml: `
+<p>Ion images are now displayed with a log-scale by default. The colormap can be configured in this menu.</p>
+      `,
+      dontShowAfter: new Date('2019-07-22'),
+      placement: 'bottom',
+      getAnchorIfActive(vue: Vue) {
+        if (config.features.off_sample && vue.$route.path === '/annotations') {
+          return document.querySelector('[data-feature-anchor="ion-image-settings"]');
         }
         return null;
       },

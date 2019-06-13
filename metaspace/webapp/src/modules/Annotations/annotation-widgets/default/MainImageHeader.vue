@@ -7,7 +7,10 @@
     <el-popover placement="bottom" trigger="click">
         <ion-image-settings @colorInput="updateColor" @toggleScaleBar="toggleScaleBar"></ion-image-settings>
         <div slot="reference" @click="$event.stopPropagation()">
-        <i class="el-icon-setting" style="font-size: 20px; vertical-align: middle;"></i>
+        <i class="el-icon-setting"
+           style="font-size: 20px; vertical-align: middle;"
+           data-feature-anchor="ion-image-settings"
+        />
         </div>
     </el-popover>
 

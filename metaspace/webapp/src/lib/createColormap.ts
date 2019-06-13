@@ -1,5 +1,6 @@
 import * as d3 from 'd3';
 import getColorScale from './getColorScale';
+import {ScaleType} from './ionImageRendering';
 
 export type OpacityMode = 'constant' | 'linear' | 'quadratic';
 
@@ -22,4 +23,9 @@ export default function createColormap(name: string, opacityMode: OpacityMode = 
     colors.push([color.r, color.g, color.b, alpha].map(Math.round));
   }
   return colors;
+}
+
+export function renderColorbar(cmap: number[][], scaleType: ScaleType, height: number) {
+
+
 }

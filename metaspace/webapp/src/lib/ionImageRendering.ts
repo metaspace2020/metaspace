@@ -9,8 +9,13 @@ export interface IonImage {
   height: number;
   minIntensity: number;
   maxIntensity: number;
+  clippedMinIntensity: number;
   clippedMaxIntensity: number;
+  minQuantile: number;
+  maxQuantile: number;
 }
+
+export type ScaleType = 'linear' | 'log';
 
 const createDataUrl = (imageBytes: Uint8ClampedArray, width: number, height: number) => {
   if (imageBytes.length != width * height * 4) {
@@ -81,38 +86,73 @@ const extractIntensityAndMask = (png: Image, min: number, max: number) => {
   return {intensityValues, mask};
 };
 
-export const getHotspotThreshold = (intensityValues: Float32Array, mask: Uint8ClampedArray,
-                             minIntensity: number, maxIntensity: number, hotspotQuantile: number) => {
-  // Only non-zero values should be considered, otherwise sparse images have most of their set pixels treated as hotspots.
+const getClippedMinIntensity = (intensityValues: Float32Array, minIntensity: number, scaleType: ScaleType) => {
+  if (scaleType === 'log') {
+    // Get minimum non-zero value, because log(0) is invalid
+    let minValue = Infinity;
+    for (let i = 0; i < intensityValues.length; i++) {
+      if (intensityValues[i] > 0 && intensityValues[i] < minValue) {
+        minValue = intensityValues[i];
+      }
+    }
+    return Math.log(minValue);
+  } else {
+    return minIntensity;
+  }
+};
+
+const getMinMaxThresholds = (intensityValues: Float32Array, mask: Uint8ClampedArray,
+                             minIntensity: number, maxIntensity: number,
+                             logFloorQuantile: number, hotspotQuantile: number, scaleType: ScaleType) => {
+  // Only non-zero values should be considered for hotspot removal, otherwise sparse images have most of their set pixels treated as hotspots.
   // For compatibility with the previous version where images were loaded as 8-bit, this also excludes pixels
   // whose values would round down to zero. This can make a big difference - some ion images have as high as 40% of
   // their pixels set to values that are zero when loaded as 8-bit but non-zero when loaded as 16-bit.
   const minValueConsidered = maxIntensity / 256;
-  const values = [];
+  const maxThresholdValues = [];
 
   for (let i = 0; i < mask.length; i++) {
     if (intensityValues[i] >= minValueConsidered && mask[i] !== 0) {
-      values.push(intensityValues[i]);
+      maxThresholdValues.push(intensityValues[i]);
     }
   }
-  const threshold = quantile(values, hotspotQuantile);
+  const maxThreshold = quantile(maxThresholdValues, hotspotQuantile);
 
-  // Skip hotspot removal if it would have an insignificant effect
-  // const scalingFactor = (maxIntensity - threshold) / (maxIntensity - minIntensity);
-  // if (scalingFactor < 0.05) {
-  //   return maxIntensity;
-  // } else {
-  return threshold;
-  // }
+  let minThreshold;
+  if (scaleType === 'log') {
+    // minThreshold doesn't need backwards compatibility with 8-bit values. Logarithmic images look a lot better if
+    // very small values are allowed to count towards the lower threshold
+    const minThresholdValues = [];
+    for (let i = 0; i < mask.length; i++) {
+      if (intensityValues[i] > 0 && mask[i] !== 0) {
+        minThresholdValues.push(intensityValues[i]);
+      }
+    }
+    minThreshold = quantile(minThresholdValues, logFloorQuantile);
+  } else {
+    minThreshold = minIntensity;
+  }
+
+  return [minThreshold, maxThreshold];
 };
 
-const quantizeIonImage = (intensityValues: Float32Array, mask: Uint8ClampedArray,
-                          minIntensity: number, clippedMaxIntensity: number) => {
+const quantizeIonImage = (intensityValues: Float32Array,
+                          clippedMinIntensity: number, clippedMaxIntensity: number, scaleType: ScaleType) => {
   const clippedValues = new Uint8ClampedArray(intensityValues.length);
-  const intensityScale = 255 / (clippedMaxIntensity - minIntensity);
 
-  for(let i = 0; i < mask.length; i++) {
-    clippedValues[i] = (intensityValues[i] - minIntensity) * intensityScale;
+  if (scaleType === 'log') {
+    const logMinIntensity = Math.log(clippedMinIntensity);
+    const intensityScale = 255 / (Math.log(clippedMaxIntensity) - logMinIntensity);
+
+    for (let i = 0; i < intensityValues.length; i++) {
+      clippedValues[i] = (Math.log(intensityValues[i]) - logMinIntensity) * intensityScale;
+    }
+  } else {
+    const intensityScale = 255 / (clippedMaxIntensity - clippedMinIntensity);
+
+    for (let i = 0; i < intensityValues.length; i++) {
+      clippedValues[i] = (intensityValues[i] - clippedMinIntensity) * intensityScale;
+    }
   }
 
   return clippedValues;
@@ -128,11 +168,13 @@ export const loadPngFromUrl = async (url: string) => {
 };
 
 export const processIonImage = (png: Image, minIntensity: number = 0, maxIntensity: number = 1,
-                                hotspotQuantile = 0.99): IonImage => {
+                                hotspotQuantile = 0.99, scaleType: ScaleType = 'linear'): IonImage => {
+  const logFloorQuantile = 0.01;
   const {width, height} = png;
   const {intensityValues, mask} = extractIntensityAndMask(png, minIntensity, maxIntensity);
-  const clippedMaxIntensity = getHotspotThreshold(intensityValues, mask, minIntensity, maxIntensity, hotspotQuantile);
-  const clippedValues = quantizeIonImage(intensityValues, mask, minIntensity, clippedMaxIntensity);
+  const [clippedMinIntensity, clippedMaxIntensity] = getMinMaxThresholds(intensityValues, mask,
+    minIntensity, maxIntensity, logFloorQuantile, hotspotQuantile, scaleType);
+  const clippedValues = quantizeIonImage(intensityValues, clippedMinIntensity, clippedMaxIntensity, scaleType);
 
   return {
     intensityValues,
@@ -142,7 +184,10 @@ export const processIonImage = (png: Image, minIntensity: number = 0, maxIntensi
     height,
     minIntensity,
     maxIntensity,
+    clippedMinIntensity,
     clippedMaxIntensity,
+    minQuantile: scaleType === 'log' ? logFloorQuantile : 0,
+    maxQuantile: hotspotQuantile,
   };
 };
 
