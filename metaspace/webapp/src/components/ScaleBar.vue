@@ -72,7 +72,7 @@
       },
 
       yStyle() {
-        if (this.yParams != null && this.xScale !== this.yScale) {
+        if (this.yParams != null && Math.abs(this.xScale / this.yScale - 1) > 0.01) {
           return {
             'color': this.scaleBarColor,
             'borderColor': this.scaleBarColor,

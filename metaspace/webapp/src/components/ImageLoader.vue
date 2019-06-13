@@ -6,6 +6,7 @@
       :isLoading="ionImageIsLoading"
       :width="imageFit.areaWidth"
       :height="imageFit.areaHeight"
+      :pixelAspectRatio="pixelAspectRatio"
       :zoom="zoom"
       :xOffset="xOffset"
       :yOffset="yOffset"
@@ -52,6 +53,8 @@
     maxIntensity?: number;
     @Prop()
     hotspotQuantile?: number;
+    @Prop()
+    pixelAspectRatio!: number;
 
     containerWidth = 500;
     containerHeight = 500;
@@ -108,7 +111,7 @@
     get imageFit(): FitImageToAreaResult {
       return fitImageToArea({
         imageWidth: this.ionImage ? this.ionImage.width : this.containerWidth,
-        imageHeight: this.ionImage ? this.ionImage.height : this.containerHeight,
+        imageHeight: (this.ionImage ? this.ionImage.height : this.containerHeight) / this.pixelAspectRatio,
         areaWidth: this.containerWidth,
         areaHeight: this.containerHeight,
         ...this.imageFitParams,

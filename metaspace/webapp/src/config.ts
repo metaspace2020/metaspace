@@ -27,9 +27,10 @@ interface Features {
   coloc: boolean;
   ion_thumbs: boolean;
   off_sample: boolean;
-  off_sample_col: boolean;
+  off_sample_col: boolean; // Not a "feature" - just shows an extra column for debugging
   new_feature_popups: boolean;
   optical_transform: boolean;
+  ignore_pixel_aspect_ratio: boolean;
   all_dbs: boolean;
 }
 
@@ -56,12 +57,13 @@ const defaultConfig: ClientConfig = {
   ravenDsn: null,
   metadataTypes: ["ims"],
   features: {
-    coloc: false,
-    ion_thumbs: false,
+    coloc: true,
+    ion_thumbs: true,
     off_sample: true,
     off_sample_col: false,
     new_feature_popups: true,
     optical_transform: true,
+    ignore_pixel_aspect_ratio: false,
     all_dbs: false,
   }
 };

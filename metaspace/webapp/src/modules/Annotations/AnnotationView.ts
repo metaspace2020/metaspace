@@ -40,6 +40,7 @@
    imagePosition: ImagePosition
    opticalSrc: string | null
    opticalTransform: number[][] | null
+   pixelAspectRatio: number
    // hotspotQuantile is deliberately not included here, because every time it changes some slow computation occurs,
    // and the computed getters were being triggered by any part of the ImageSettings object changing, such as opacity,
    // causing a lot of jank.
@@ -223,6 +224,8 @@
        imagePosition: this.imagePosition,
        opticalSrc: this.showOpticalImage && optImg && optImg.url || null,
        opticalTransform: optImg && optImg.transform,
+       pixelAspectRatio: config.features.ignore_pixel_aspect_ratio ? 1
+         : this.pixelSizeX && this.pixelSizeY && this.pixelSizeX / this.pixelSizeY || 1,
      };
    }
 
