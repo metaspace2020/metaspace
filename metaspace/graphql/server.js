@@ -21,7 +21,7 @@ const bodyParser = require('body-parser'),
   cors = require('cors'),
   {IsUserError} = require('graphql-errors');
 
-const {createImgServerAsync} = require('./imageUpload.js'),
+const {createImgServerAsync} = require('./imageUpload'),
   {configureAuth} = require('./src/modules/auth'),
   {initDBConnection} = require('./src/utils/knexDb'),
   {logger} = require('./utils'),

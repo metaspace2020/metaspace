@@ -56,7 +56,11 @@ const router = new VueRouter({
     { path: '/admin/groups', component: async () => await import('./modules/Admin/GroupsListPage.vue') },
 
     { path: '/account/sign-in', component: DialogPage, props: {dialog: 'signIn'} },
-    { path: '/account/sign-in-success', redirect: redirectAfterSignIn },
+    { path: '/account/sign-in-success', redirect: () => {
+        debugger;
+
+        return redirectAfterSignIn()
+      }},
     { path: '/account/create-account', component: DialogPage, props: {dialog: 'createAccount'} },
     { path: '/account/forgot-password', component: DialogPage, props: {dialog: 'forgotPassword'} },
     { path: '/account/reset-password', component: ResetPasswordPage },
