@@ -263,8 +263,7 @@ class ClusterDaemon(object):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Daemon for auto starting SM cluster')
-    parser.add_argument('--ansible-config', dest='ansible_config_path', default='env/dev/group_vars/all.yml', type=str,
-                        help='Ansible config path')
+    parser.add_argument('--ansible-config', dest='ansible_config_path', type=str, help='Ansible config path')
     parser.add_argument('--interval', type=int, default=120, help='Cluster status check interval in sec (<1200)')
     parser.add_argument('--debug', dest='debug', action='store_true', help='Run in debug mode')
     args = parser.parse_args()
