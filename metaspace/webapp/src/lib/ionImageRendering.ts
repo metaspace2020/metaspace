@@ -210,7 +210,7 @@ export const loadPngFromUrl = async (url: string) => {
 
 export const processIonImage = (png: Image, minIntensity: number = 0, maxIntensity: number = 1,
                                 scaleType: ScaleType = 'linear'): IonImage => {
-  const [scaleMode, minQuantile, maxQuantile] = SCALES[scaleType] || SCALES['linear'];
+  const [scaleMode, minQuantile, maxQuantile] = scaleType in SCALES ? SCALES[scaleType] : SCALES['linear'];
 
   const {width, height} = png;
   const {intensityValues, mask} = extractIntensityAndMask(png, minIntensity, maxIntensity);

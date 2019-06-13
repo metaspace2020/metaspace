@@ -214,7 +214,7 @@ export function decodeSettings(location: Location): UrlSettings | undefined {
       activeSections: DEFAULT_ANNOTATION_VIEW_SECTIONS,
       colormap: DEFAULT_COLORMAP,
       colocalizationAlgo: null,
-      scaleType: 'linear',
+      scaleType: 'log',
       hotspotThreshold: null,
     },
 
@@ -234,7 +234,7 @@ export function decodeSettings(location: Location): UrlSettings | undefined {
     settings.annotationView.hotspotThreshold = parseFloat(query.hotspotthreshold) || 100;
   }
   if (query.scale) {
-    settings.annotationView.scaleType = (query.scale || 'linear') as ScaleType;
+    settings.annotationView.scaleType = (query.scale || 'log') as ScaleType;
   }
   if (query.sections !== undefined)
     settings.annotationView.activeSections = decodeSections(query.sections);
