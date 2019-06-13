@@ -1,4 +1,5 @@
 import * as d3 from 'd3';
+import {reverse} from 'lodash-es';
 // WORKAROUND: Jest had an issue with these CommonJS exports. `import * as extractScale` sets extractScale
 // to a regular function in the browser, but to {default: [Function]} when run in Jest. There doesn't appear to be
 // a good framework-level solution, so this horror is needed:
@@ -17,7 +18,10 @@ export default function getColorScale(name: string): ColorScale {
   {
     return extractScale(scales[name], 0, 1); // normal
   }
-  else
-    return extractScale(scales[name.slice(1)], 1, 0); // inverted
+  else {
+    // inverted
+    const {domain, range} = extractScale(scales[name.slice(1)], 1, 0);
+    return {domain: reverse(domain), range: reverse(range)};
+  }
 }
 

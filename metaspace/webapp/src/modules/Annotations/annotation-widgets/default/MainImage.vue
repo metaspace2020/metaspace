@@ -9,7 +9,6 @@
               :pixelSizeX="pixelSizeX"
               :pixelSizeY="pixelSizeY"
               :pixelAspectRatio="imageLoaderSettings.pixelAspectRatio"
-              :showScaleBar="showScaleBar"
               :scaleBarColor="scaleBarColor"
               :width="imageViewerWidth"
               :height="imageViewerHeight"
@@ -57,7 +56,8 @@
                 {{ ionImage && ionImage.maxIntensity.toExponential(2) }}
             </div>
             <colorbar style="width: 20px; height: 160px; align-self: center;"
-                      :direction="colorbarDirection" :map="colormapName"
+                      :map="colormap"
+                      :ionImage="ionImage"
                       slot="reference">
             </colorbar>
             {{ ionImage && ionImage.clippedMinIntensity.toExponential(2) }}
@@ -113,8 +113,6 @@ export default class MainImage extends Vue {
     annotation!: any
     @Prop({required: true, type: String})
     colormap!: string
-    @Prop({required: true, type: String})
-    colormapName!: string
     @Prop({required: true, type: Number})
     opacity!: number
     @Prop({required: true})
@@ -125,12 +123,8 @@ export default class MainImage extends Vue {
     pixelSizeX!: number
     @Prop({type: Number})
     pixelSizeY!: number
-    @Prop({type: Boolean})
-    showScaleBar!: boolean
     @Prop({type: String})
-    scaleBarColor!: string
-    @Prop({type: Number})
-    hotspotQuantile?: number
+    scaleBarColor!: string | null
     @Prop({type: String})
     scaleType?: ScaleType
 
@@ -180,15 +174,12 @@ export default class MainImage extends Vue {
         if (this.ionImagePng != null) {
             const isotopeImage = get(this.annotation, 'isotopeImages[0]');
             const { minIntensity, maxIntensity } = isotopeImage;
-            return processIonImage(this.ionImagePng, minIntensity, maxIntensity, this.hotspotQuantile, this.scaleType);
+            return processIonImage(this.ionImagePng, minIntensity, maxIntensity, this.scaleType);
         } else {
             return null;
         }
     }
 
-    get colorbarDirection(): string {
-      return this.colormap[0] == '-' ? 'bottom' : 'top';
-    }
     get imageFit(): FitImageToAreaResult {
         const {width=500, height=500} = this.ionImage || {};
         return fitImageToArea({

@@ -2,46 +2,48 @@
   <span id="ion-image-settings">
     <el-form>
       <el-form-item label="Colormap">
-        <el-select :value="colormapName"
-                   style="width: 120px;"
-                   title="Colormap"
+        <el-select :value="colormap"
+                   style="width: 150px;"
                    @input="onColormapChange">
           <el-option v-for="scale in availableScales"
                      :value="scale" :label="scale" :key="scale">
-            <color-bar direction="right"
-                      style="width: 100px; height: 20px;"
-                      :map="scale"></color-bar>
+            <color-bar style="width: 100px; height: 20px;"
+                       :map="scale"
+                       horizontal />
           </el-option>
+          <el-option-group label="Inverted">
+            <el-option v-for="scale in availableScales"
+                       :value="'-' + scale" :label="scale" :key="'-' + scale">
+              <color-bar style="width: 100px; height: 20px;"
+                         :map="'-' + scale"
+                         horizontal />
+            </el-option>
+          </el-option-group>
         </el-select>
-        <el-form-item label="Color scale" data-feature-anchor="ion-image-color-scale">
-          <el-select :value="scaleType"
-                     style="width: 120px;"
-                     title="Color scale"
-                     @input="onScaleTypeChange">
-            <el-option value="linear" label="Linear" />
-            <el-option value="log" label="Logarithmic" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-checkbox :checked="inverted" @input="onInvertChange">Invert</el-checkbox>
-        </el-form-item>
-        <el-form-item>
-          <el-checkbox :checked="hotspotThreshold !== 'none'" @change="onHotspotThresholdChange">Hotspot clipping</el-checkbox>
-        </el-form-item>
+      </el-form-item>
+      <el-form-item label="Intensity scaling" data-feature-anchor="ion-image-color-scale">
+        <el-select :value="scaleType"
+                   style="width: 150px;"
+                   @input="onScaleTypeChange">
+          <el-option value="linear" label="Linear" />
+          <el-option value="linear-full" label="Linear (without hotspot clipping)" />
+          <el-option value="log" label="Logarithmic" />
+          <el-option value="log-full" label="Logarithmic (without outlier clipping)" />
+          <el-option value="rank" label="Percentile Rank" />
+        </el-select>
       </el-form-item>
       <el-form-item label="Scale bar color">
         <el-select :value="pickedColor"
-                   style="width: 120px;"
-                   title="Scale_bar_color"
-                   @input="handlerClick">
+                   style="width: 150px;"
+                   @input="onScaleBarColorChange">
           <el-option v-for="color in paletteColors"
                      :value="color.code" :label="color.colorName" :key="color.code">
-              <div :style="scaleBarColors(color.code)"></div>
+            <div :style="{position: 'relative', background: color.bgColor, height: '50px', width: '150px'}">
+              <scale-bar :xScale="50" :yScale="50" :scaleBarColor="color.code" />
+            </div>
           </el-option>
+          <el-option value="hidden" label="Hidden" />
         </el-select>
-        <el-form-item>
-          <el-checkbox @click="$event.stopPropagation()" @input="setBarVisibility">Disable</el-checkbox>
-        </el-form-item>
       </el-form-item>
     </el-form>
   </span>
@@ -52,41 +54,37 @@
  import ColorBar from './Colorbar.vue';
  import { Component } from 'vue-property-decorator'
  import {ScaleType} from '../../../../lib/ionImageRendering';
+ import ScaleBar from '../../../../components/ScaleBar.vue';
 
  interface colorObjType {
    code: string,
+   bgColor: string,
    colorName: string
  }
 
  @Component({
    name: 'ion-image-setting',
-   components: { ColorBar }
+   components: { ColorBar, ScaleBar }
  })
  export default class IonImageSettings extends Vue {
    availableScales: string[] = ["Viridis", "Cividis", "Hot", "YlGnBu", "Portland", "Greys"];
    paletteColors: colorObjType[] = [{
      code: '#000000',
+     bgColor: 'transparent',
      colorName: "Black"
    }, {
-     code: '#FFFFFF',
-     colorName: 'White'
-   }, {
      code: '#999999',
+     bgColor: 'transparent',
      colorName: "Gray"
+   }, {
+     code: '#FFFFFF',
+     bgColor: '#CCCCCC',
+     colorName: 'White'
    }];
-   disableBar = false;
    pickedColor: string = this.paletteColors[0].code;
 
    get colormap() {
      return this.$store.getters.settings.annotationView.colormap;
-   }
-
-   get colormapName() {
-     return this.colormap.replace('-', '');
-   }
-
-   get inverted() {
-     return this.colormap[0] == '-';
    }
 
    get scaleType() {
@@ -106,34 +104,16 @@
    }
 
    onColormapChange(selection: string) {
-     this.$store.commit('setColormap', (this.inverted ? '-' : '') + selection);
-   }
-
-   onInvertChange(invert: any) {
-     this.$store.commit('setColormap', (invert ? '-' : '') + this.colormapName);
+     this.$store.commit('setColormap', selection);
    }
 
    onScaleTypeChange(scaleType: ScaleType) {
      this.$store.commit('setScaleType', scaleType);
    }
 
-   onHotspotThresholdChange(enableHotspotClipping: boolean) {
-     this.$store.commit('setHotspotThreshold', enableHotspotClipping ? null : 'none');
-   }
-
-   setBarVisibility() {
-     this.disableBar = !this.disableBar;
-     this.$emit('toggleScaleBar')
-   }
-
-   handlerClick(c: string) {
+   onScaleBarColorChange(c: string) {
      this.pickedColor = c;
-     let colorObj = this.paletteColors.find(el => {
-       return el.code === c;
-     });
-     if (colorObj !== undefined) {
-       this.$emit('colorInput', colorObj)
-     }
+     this.$emit('scaleBarColorChange', c === 'hidden' ? null : c)
    }
  }
 </script>

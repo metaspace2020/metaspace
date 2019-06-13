@@ -24,7 +24,6 @@
           :colormap="colormap"
           :minIntensity="other.isotopeImages[0].minIntensity"
           :maxIntensity="other.isotopeImages[0].maxIntensity"
-          :hotspotQuantile="hotspotQuantile"
           showPixelIntensity
         />
         <el-popover
@@ -69,7 +68,7 @@
   import {ANNOTATION_SPECIFIC_FILTERS} from '../../../Filters/filterSpecs';
 
 export default {
-  props: ['query', 'annotation', 'database', 'imageLoaderSettings', 'hotspotQuantile'],
+  props: ['query', 'annotation', 'database', 'imageLoaderSettings'],
   components: { ImageLoader },
   data() {
     return {

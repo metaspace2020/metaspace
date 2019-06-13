@@ -51,7 +51,7 @@
       </el-tooltip>
     </div>
 
-    <scale-bar v-if="!showScaleBar"
+    <scale-bar v-if="scaleBarColor"
                :xScale="xScale"
                :yScale="yScale"
                :scaleBarColor="scaleBarColor" />
@@ -148,10 +148,6 @@
      pixelAspectRatio: {
        type: Number,
        default: 1
-     },
-     showScaleBar: {
-       type: Boolean,
-       default: false
      },
      scaleBarColor: {
        type: String,

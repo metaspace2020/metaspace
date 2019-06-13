@@ -38,7 +38,7 @@ describe('ionImageRendering.ts', () => {
       test(`processIonImage correctly decodes a ${bits}-bit ${colorType} image`, () => {
         const png = getGradientPng(is16Bit, isRGBA);
 
-        const image = processIonImage(png, 0, 1, 0.5);
+        const image = processIonImage(png, 0, 1, 'test');
 
         expect(image.width).toBe(256);
         expect(image.height).toBe(1);
@@ -55,7 +55,7 @@ describe('ionImageRendering.ts', () => {
         });
         // First half of non-masked pixels should be a linear gradient to 255
         range(128, 192).forEach(i => {
-          expect(image.clippedValues[i]).toBeCloseTo(i/0.75, -1);
+          expect(image.clippedValues[i]).toBeCloseTo(i / 0.75, -1);
         });
         // Second half of non-masked pixels should be clipped to 255
         range(193, 256).forEach(i => {
@@ -66,7 +66,7 @@ describe('ionImageRendering.ts', () => {
       test(`processIonImage correctly decodes a ${bits}-bit ${colorType} image without alpha`, () => {
         const png = getGradientPng(is16Bit, isRGBA, false);
 
-        const image = processIonImage(png, 0, 1, 0.5);
+        const image = processIonImage(png, 0, 1, 'test');
 
         expect(image.width).toBe(256);
         expect(image.height).toBe(1);

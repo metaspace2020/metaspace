@@ -24,8 +24,3 @@ export default function createColormap(name: string, opacityMode: OpacityMode = 
   }
   return colors;
 }
-
-export function renderColorbar(cmap: number[][], scaleType: ScaleType, height: number) {
-
-
-}

@@ -76,7 +76,7 @@ We recommend including off-sample area around your sample during data acquisitio
       name: 'logScale',
       title: 'Log-scale colormaps',
       contentHtml: `
-<p>Ion images are now displayed with a log-scale by default. The colormap can be configured in this menu.</p>
+<p>Ion images are now displayed with a log-scale colormap by default. The colormap can be configured in this menu.</p>
       `,
       dontShowAfter: new Date('2019-07-22'),
       placement: 'bottom',

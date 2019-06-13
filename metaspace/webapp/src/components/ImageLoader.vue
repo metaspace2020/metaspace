@@ -52,8 +52,6 @@
     @Prop()
     maxIntensity?: number;
     @Prop()
-    hotspotQuantile?: number;
-    @Prop()
     pixelAspectRatio!: number;
     @Prop({type: String})
     scaleType?: ScaleType;
@@ -87,8 +85,7 @@
           const png = await loadPngFromUrl((config.imageStorage || '') + newUrl);
 
           if (newUrl === this.src) {
-            this.ionImage = processIonImage(png, this.minIntensity, this.maxIntensity,
-              this.hotspotQuantile, this.scaleType);
+            this.ionImage = processIonImage(png, this.minIntensity, this.maxIntensity, this.scaleType);
             this.ionImageIsLoading = false;
           }
         } catch (err) {
