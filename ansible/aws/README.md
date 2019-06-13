@@ -17,7 +17,8 @@ Software requirements for the developer machine:
 git clone -b rel-v0.8 https://github.com/metaspace2020/metaspace.git
 cd metaspace/ansible/aws
 mkdir env/dev/group_vars
-cp templates/all.yml.template env/dev/group_vars/group_vars/all.yml
+cp templates/all/vars.yml.template env/dev/group_vars/group_vars/all/vars.yml
+cp templates/all/vault.yml.template env/dev/group_vars/group_vars/all/vault.yml
 cp templates/web.yml.template env/dev/group_vars/group_vars/web.yml.template
 cp templates/master.yml.template env/dev/group_vars/group_vars/master.yml.template
 cp templates/elk.yml.template env/dev/group_vars/group_vars/elk.yml.template
@@ -46,7 +47,7 @@ Specify
 * Passwords
 * `hostgroup` values for all types of instances
 
-in dev/group_vars/all.yml
+in dev/group_vars/all/vars.yml and dev/group_vars/all/vault.yml
 
 Values to be updated are capitalized.
 
@@ -71,7 +72,7 @@ ansible-playbook -i dev provision/spark_cluster.yml
 `ansible-playbook -i dev create_ami.yml`
 
 This step will take a while.
-Once the playbook is finished replace AMI ids for master ans slave instances with new ones in the dev/group_vars/all.yml.
+Once the playbook is finished replace AMI ids for master ans slave instances with new ones in the dev/group_vars/all/vars.yml.
 New AMI ids can be found in the AWS Console.
 
 #### Stop Spark master and slave instances
