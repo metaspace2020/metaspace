@@ -3,6 +3,7 @@ import { FILTER_SPECIFICATIONS, FilterKey, getDefaultFilter, Level, MetadataList
 import {invert} from 'lodash-es';
 import { Location } from 'vue-router';
 import {ScaleType} from '../../lib/ionImageRendering';
+import {DEFAULT_SCALE_TYPE} from '../../lib/constants';
 
 interface Dictionary<T> {
   [key: string]: T;
@@ -214,7 +215,7 @@ export function decodeSettings(location: Location): UrlSettings | undefined {
       activeSections: DEFAULT_ANNOTATION_VIEW_SECTIONS,
       colormap: DEFAULT_COLORMAP,
       colocalizationAlgo: null,
-      scaleType: 'log',
+      scaleType: DEFAULT_SCALE_TYPE,
       hotspotThreshold: null,
     },
 
@@ -234,7 +235,7 @@ export function decodeSettings(location: Location): UrlSettings | undefined {
     settings.annotationView.hotspotThreshold = parseFloat(query.hotspotthreshold) || 100;
   }
   if (query.scale) {
-    settings.annotationView.scaleType = (query.scale || 'log') as ScaleType;
+    settings.annotationView.scaleType = (query.scale || DEFAULT_SCALE_TYPE) as ScaleType;
   }
   if (query.sections !== undefined)
     settings.annotationView.activeSections = decodeSections(query.sections);

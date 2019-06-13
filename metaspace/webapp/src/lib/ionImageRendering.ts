@@ -1,6 +1,7 @@
 import {decode, Image} from 'upng-js';
 import {quantile} from 'simple-statistics';
 import {range} from 'lodash-es';
+import {DEFAULT_SCALE_TYPE} from './constants';
 
 export interface IonImage {
   intensityValues: Float32Array;
@@ -209,8 +210,8 @@ export const loadPngFromUrl = async (url: string) => {
 };
 
 export const processIonImage = (png: Image, minIntensity: number = 0, maxIntensity: number = 1,
-                                scaleType: ScaleType = 'linear'): IonImage => {
-  const [scaleMode, minQuantile, maxQuantile] = scaleType in SCALES ? SCALES[scaleType] : SCALES['linear'];
+                                scaleType: ScaleType = DEFAULT_SCALE_TYPE): IonImage => {
+  const [scaleMode, minQuantile, maxQuantile] = SCALES[scaleType];
 
   const {width, height} = png;
   const {intensityValues, mask} = extractIntensityAndMask(png, minIntensity, maxIntensity);
