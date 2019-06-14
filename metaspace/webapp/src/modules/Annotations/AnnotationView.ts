@@ -160,10 +160,6 @@
      return this.$store.getters.settings.annotationView.scaleType;
    }
 
-   get colormapName(): string {
-     return this.colormap.replace('-', '');
-   }
-
    get formattedMolFormula(): string {
      if (!this.annotation) return '';
      const { sumFormula, adduct, dataset } = this.annotation;
@@ -193,7 +189,7 @@
        path,
        query: {
          ...encodeParams(filter, path, this.$store.state.filterLists),
-         ...pick(this.$route.query, 'sections', 'sort', 'hideopt', 'cmap', 'hotspotthreshold', 'scale'),
+         ...pick(this.$route.query, 'sections', 'sort', 'hideopt', 'cmap', 'scale'),
        },
      };
    }

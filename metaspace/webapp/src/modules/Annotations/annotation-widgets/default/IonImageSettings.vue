@@ -1,16 +1,29 @@
 <template>
   <span id="ion-image-settings">
-    <el-form>
+    <el-form label-position="top">
+      <el-form-item label="Intensity scaling" data-feature-anchor="ion-image-color-scale">
+        <el-select :value="scaleType"
+                   style="width: 300px;"
+                   @input="onScaleTypeChange">
+          <el-option value="linear" label="Linear" />
+          <el-option value="linear-full" label="Linear (without hotspot clipping)" />
+          <el-option value="log" label="Logarithmic" />
+          <el-option value="log-full" label="Logarithmic (without outlier clipping)" />
+          <el-option value="rank" label="Rank" />
+        </el-select>
+      </el-form-item>
       <el-form-item label="Colormap">
         <el-select :value="colormap"
                    style="width: 150px;"
                    @input="onColormapChange">
-          <el-option v-for="scale in availableScales"
-                     :value="scale" :label="scale" :key="scale">
-            <color-bar style="width: 100px; height: 20px;"
-                       :map="scale"
-                       horizontal />
-          </el-option>
+          <el-option-group>
+            <el-option v-for="scale in availableScales"
+                       :value="scale" :label="scale" :key="scale">
+              <color-bar style="width: 100px; height: 20px;"
+                         :map="scale"
+                         horizontal />
+            </el-option>
+          </el-option-group>
           <el-option-group label="Inverted">
             <el-option v-for="scale in availableScales"
                        :value="'-' + scale" :label="scale" :key="'-' + scale">
@@ -21,25 +34,14 @@
           </el-option-group>
         </el-select>
       </el-form-item>
-      <el-form-item label="Intensity scaling" data-feature-anchor="ion-image-color-scale">
-        <el-select :value="scaleType"
-                   style="width: 150px;"
-                   @input="onScaleTypeChange">
-          <el-option value="linear" label="Linear" />
-          <el-option value="linear-full" label="Linear (without hotspot clipping)" />
-          <el-option value="log" label="Logarithmic" />
-          <el-option value="log-full" label="Logarithmic (without outlier clipping)" />
-          <el-option value="rank" label="Percentile Rank" />
-        </el-select>
-      </el-form-item>
       <el-form-item label="Scale bar color">
         <el-select :value="pickedColor"
                    style="width: 150px;"
                    @input="onScaleBarColorChange">
           <el-option v-for="color in paletteColors"
                      :value="color.code" :label="color.colorName" :key="color.code">
-            <div :style="{position: 'relative', background: color.bgColor, height: '50px', width: '150px'}">
-              <scale-bar :xScale="50" :yScale="50" :scaleBarColor="color.code" />
+            <div :style="{position: 'relative', background: color.bgColor, height: '50px'}">
+              <scale-bar :xScale="8" :yScale="8" :scaleBarColor="color.code" />
             </div>
           </el-option>
           <el-option value="hidden" label="Hidden" />
@@ -91,10 +93,6 @@
      return this.$store.getters.settings.annotationView.scaleType;
    }
 
-   get hotspotThreshold() {
-     return this.$store.getters.settings.annotationView.hotspotThreshold;
-   }
-
    scaleBarColors(color: string): string {
      let cssBaseRule = `width: 100px; height: 20px; margin: 2px auto; background-color:${color};`;
      if (color === '#FFFFFF') {
@@ -128,4 +126,8 @@
  #ion-image-settings > .el-select {
    display: inline-flex;
  }
+
+  #ion-image-settings > .el-form--label-top .el-form-item__label {
+    padding: 0;
+  }
 </style>

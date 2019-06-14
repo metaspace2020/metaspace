@@ -76,9 +76,9 @@ We recommend including off-sample area around your sample during data acquisitio
       name: 'logScale',
       title: 'Log-scale colormaps',
       contentHtml: `
-<p>Ion images are now displayed with a log-scale colormap by default. The colormap can be configured in this menu.</p>
+<p>Ion images can now be viewed with a logarithmic-scale colormap. The colormap can be configured in this menu.</p>
       `,
-      dontShowAfter: new Date('2019-07-22'),
+      dontShowAfter: new Date('2019-08-22'),
       placement: 'bottom',
       getAnchorIfActive(vue: Vue) {
         if (config.features.off_sample && vue.$route.path === '/annotations') {

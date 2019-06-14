@@ -190,15 +190,6 @@ export default {
     });
   },
 
-  setHotspotThreshold(state, hotspotThreshold) {
-    // hotspotThreshold should be a number or 'none'
-    router.replace({
-      query: hotspotThreshold != null
-        ? { ...state.route.query, hotspotthreshold: hotspotThreshold }
-        : omit(state.route.query, 'hotspotthreshold'),
-    });
-  },
-
   setCurrentPage(state, page) {
     router.replace({
       query: page !== 1

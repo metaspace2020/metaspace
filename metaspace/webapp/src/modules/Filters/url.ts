@@ -187,7 +187,6 @@ export interface UrlAnnotationViewSettings {
   colormap: string;
   colocalizationAlgo: string | null;
   scaleType: ScaleType;
-  hotspotThreshold: number | null;
 }
 
 export interface UrlDatasetsSettings {
@@ -216,7 +215,6 @@ export function decodeSettings(location: Location): UrlSettings | undefined {
       colormap: DEFAULT_COLORMAP,
       colocalizationAlgo: null,
       scaleType: DEFAULT_SCALE_TYPE,
-      hotspotThreshold: null,
     },
 
     datasets: {
@@ -230,10 +228,6 @@ export function decodeSettings(location: Location): UrlSettings | undefined {
     settings.table.order = decodeSortOrder(query.sort);
   if (query.cmap)
     settings.annotationView.colormap = query.cmap;
-  if (query.hotspotthreshold) {
-    // Note: this also accepts the string 'none' to mean no hotspot removal (100%) for the sake of readable URLs
-    settings.annotationView.hotspotThreshold = parseFloat(query.hotspotthreshold) || 100;
-  }
   if (query.scale) {
     settings.annotationView.scaleType = (query.scale || DEFAULT_SCALE_TYPE) as ScaleType;
   }

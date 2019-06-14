@@ -57,7 +57,6 @@
           <component :is="metadataDependentComponent('main-image')"
                      :annotation="annotation"
                      :colormap="colormap"
-                     :colormapName="colormapName"
                      :opacity="opacity"
                      :imagePosition="imagePosition"
                      :imageLoaderSettings="imageLoaderSettings"
