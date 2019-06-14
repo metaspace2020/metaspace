@@ -14,7 +14,7 @@ type GroupOrProject = {
 }
 
 export const sentGroupOrProjectInvitationEmail = (type: 'group' | 'project', recipient: User, sender: User, groupOrProject: GroupOrProject) => {
-  const subject = 'Invitation to join project';
+  const subject = `Invitation to join ${type}`;
   const text = `Dear ${recipient.name || 'METASPACE user'},
 
 You have been invited to join the "${groupOrProject.name}" ${type} by ${sender.name}. 
@@ -26,7 +26,7 @@ METASPACE Team`;
 };
 
 export const sendRequestAccessEmail = (type: 'group' | 'project', recipient: User, sender: User, groupOrProject: GroupOrProject) => {
-  const subject = 'Request to join project';
+  const subject = `Request to join ${type}`;
   const text = `Dear ${recipient.name || 'METASPACE user'},
 
 ${sender.name || 'A METASPACE user'} has requested to join the "${groupOrProject.name}" ${type}. 
@@ -39,7 +39,7 @@ METASPACE Team`;
 
 
 export const sendAcceptanceEmail = (type: 'group' | 'project', recipient: User, groupOrProject: GroupOrProject) => {
-  const subject = 'Invitation to join project';
+  const subject = `Invitation to join ${type}`;
   const text = `Dear ${recipient.name || 'METASPACE user'},
 
 Your request to join the "${groupOrProject.name}" ${type} has been accepted. 
