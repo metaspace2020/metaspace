@@ -1,6 +1,6 @@
 import * as AWS from 'aws-sdk';
 import config from './config';
-import {logger} from '../../utils';
+import logger from './logger';
 
 
 AWS.config.update({

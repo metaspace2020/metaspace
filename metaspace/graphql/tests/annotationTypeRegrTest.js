@@ -7,7 +7,7 @@ const chai = require('chai'),
   expect = chai.expect;
 
 const  config = require('config'),
-  logger = require('../utils').logger,
+  logger = require('../src/utils/logger').default,
   {graphqlQuery, stripUrls} = require('./testingUtils'),
   {createHttpServerAsync} = require('../server');
 

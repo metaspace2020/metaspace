@@ -5,11 +5,12 @@
 import * as supertest from 'supertest';
 import * as Knex from 'knex';
 import * as fs from 'fs';
-import config, {ImageStorageType} from '../../utils/config';
 
-const {logger} = require('../../../utils.js'),
-  {initDBConnection} = require('../../utils/knexDb'),
-  {createImageServerApp} = require('./imageUpload');
+import config, {ImageStorageType} from '../../utils/config';
+import logger from '../../utils/logger';
+import {initDBConnection} from '../../utils/knexDb';
+import {createImageServerApp} from './imageServer';
+
 
 const getRespMimeMap = {
   fs: 'image/png',

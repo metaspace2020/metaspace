@@ -8,31 +8,29 @@ if (require('iterall').$$asyncIterator !== Symbol.asyncIterator) {
 }
 
 
-const bodyParser = require('body-parser'),
-  compression = require('compression'),
-  config = require('./src/utils/config').default,
-  express = require('express'),
-  session = require('express-session'),
-  connectRedis = require('connect-redis'),
-  Sentry = require('@sentry/node'),
-  {ApolloServer} = require('apollo-server-express'),
-  jwt = require('express-jwt'),
-  jwtSimple = require('jwt-simple'),
-  cors = require('cors'),
-  {IsUserError} = require('graphql-errors');
+import * as bodyParser from 'body-parser';
+import * as compression from 'compression';
+import * as http from 'http';
+import * as express from 'express';
+import * as session from 'express-session';
+import * as connectRedis from 'connect-redis';
+import * as Sentry from '@sentry/node';
+import {ApolloServer} from 'apollo-server-express';
+import * as jwt from 'express-jwt';
+import * as jwtSimple from 'jwt-simple';
+import * as cors from 'cors';
+import { execute, subscribe, GraphQLError } from 'graphql';
+import {IsUserError} from 'graphql-errors';
+import { SubscriptionServer } from 'subscriptions-transport-ws';
 
-const {createImgServerAsync} = require('./src/modules/images/imageUpload'),
-  {configureAuth} = require('./src/modules/auth'),
-  {initDBConnection} = require('./src/utils/knexDb'),
-  {logger} = require('./utils'),
-  {createConnection} = require('./src/utils'),
-  {executableSchema} = require('./executableSchema'),
-  getContext = require('./src/getContext').default;
-
-// subscriptions setup
-const http = require('http'),
-      { execute, subscribe, GraphQLError } = require('graphql'),
-      { SubscriptionServer } = require('subscriptions-transport-ws');
+import {createImgServerAsync} from './src/modules/webServer/imageServer';
+import {configureAuth} from './src/modules/auth';
+import {initDBConnection} from './src/utils/knexDb';
+import config from './src/utils/config';
+import logger from './src/utils/logger';
+import {createConnection} from './src/utils';
+import {executableSchema} from './executableSchema';
+import getContext from './src/getContext';
 
 const env = process.env.NODE_ENV || 'development';
 
@@ -60,8 +58,7 @@ const configureSession = (app) => {
 };
 
 const configureSentryRequestHandler = (app) => {
-  // if (env !== 'development' && config.sentry.dsn) {
-  if (config.sentry.dsn) {
+  if (env !== 'development' && config.sentry.dsn) {
     Sentry.init({ dsn: config.sentry.dsn });
     // Sentry.Handlers.requestHandler should be the first middleware
     app.use(Sentry.Handlers.requestHandler());
@@ -69,8 +66,7 @@ const configureSentryRequestHandler = (app) => {
 };
 
 const configureSentryErrorHandler = (app) => {
-  // if (env !== 'development' && config.sentry.dsn) {
-  if (config.sentry.dsn) {
+  if (env !== 'development' && config.sentry.dsn) {
     // Raven.errorHandler should go after all normal handlers/middleware, but before any other error handlers
     app.use(Sentry.Handlers.errorHandler());
   }

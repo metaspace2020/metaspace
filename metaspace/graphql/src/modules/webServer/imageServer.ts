@@ -10,7 +10,7 @@ import * as cors from 'cors';
 import * as crypto from 'crypto';
 import * as fs from 'fs-extra';
 const getPixels = require('get-pixels');
-import {logger} from '../../../utils';
+import logger from '../../utils/logger';
 import {Config, ImageCategory} from '../../utils/config';
 
 export const IMG_TABLE_NAME = 'image';
