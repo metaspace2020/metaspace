@@ -267,5 +267,7 @@ if __name__ == '__main__':
     else:
         raise Exception("Wrong action '{}'".format(args.action))
 
-    cmd = '{} update_inventory.py --stage {}'.format(sys.executable, args.stage).split(' ')
-    print('Inventory:\n{}'.format(check_output(cmd, universal_newlines=True)))
+    cmd = f'{sys.executable} update_inventory.py --stage {args.stage}'
+    if args.cred_file:
+        cmd += ' --credentials-file'
+    print('Inventory:\n{}'.format(check_output(cmd.split(' '), universal_newlines=True)))
