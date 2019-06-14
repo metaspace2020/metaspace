@@ -1,6 +1,5 @@
 import * as d3 from 'd3';
 import getColorScale from './getColorScale';
-import {ScaleType} from './ionImageRendering';
 
 export type OpacityMode = 'constant' | 'linear' | 'quadratic';
 

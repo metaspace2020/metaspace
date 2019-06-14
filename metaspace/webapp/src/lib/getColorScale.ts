@@ -19,7 +19,7 @@ export default function getColorScale(name: string): ColorScale {
     return extractScale(scales[name], 0, 1); // normal
   }
   else {
-    // inverted
+    // inverted - reverse both arrays so that the domain is always in ascending order
     const {domain, range} = extractScale(scales[name.slice(1)], 1, 0);
     return {domain: reverse(domain), range: reverse(range)};
   }
