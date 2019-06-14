@@ -145,6 +145,10 @@
        type: Number,
        default: 0
      },
+     pixelAspectRatio: {
+       type: Number,
+       default: 1
+     },
      showScaleBar: {
        type: Boolean,
        default: false
@@ -202,8 +206,16 @@
 
      yScale() {
        if (this.ionImage != null && this.pixelSizeY != null && this.pixelSizeY !== 0) {
-         return this.pixelSizeY / this.zoom;
+         return this.pixelSizeY / this.zoom * this.pixelAspectRatio;
        }
+     },
+
+     zoomX() {
+       return this.zoom;
+     },
+
+     zoomY() {
+       return this.zoom / this.pixelAspectRatio;
      },
 
      cmap() {
@@ -232,13 +244,13 @@
        if (!this.isLCMS) {
          const ionImageWidth = (this.ionImage != null ? this.ionImage.width : this.width);
          const ionImageHeight = (this.ionImage != null ? this.ionImage.height : this.height);
-         const x = this.width / 2 + (this.xOffset - ionImageWidth / 2) * this.zoom;
-         const y = this.height / 2 + (this.yOffset - ionImageHeight / 2) * this.zoom;
+         const x = this.width / 2 + (this.xOffset - ionImageWidth / 2) * this.zoomX;
+         const y = this.height / 2 + (this.yOffset - ionImageHeight / 2) * this.zoomY;
          return {
            left: 0,
            top: 0,
            transformOrigin: '0 0',
-           transform: `translate(${x}px, ${y}px) scale(${this.zoom})`,
+           transform: `translate(${x}px, ${y}px) scale(${this.zoomX}, ${this.zoomY})`,
          };
        } else {
          // LC-MS data (1 x number of time points)
@@ -286,14 +298,14 @@
          && this.cursorPixelPos != null
          && this.cursorOverPixelIntensity != null) {
 
-         const baseX = this.width / 2 + (this.xOffset - this.ionImage.width / 2) * this.zoom;
-         const baseY = this.height / 2 + (this.yOffset - this.ionImage.height / 2) * this.zoom;
+         const baseX = this.width / 2 + (this.xOffset - this.ionImage.width / 2) * this.zoomX;
+         const baseY = this.height / 2 + (this.yOffset - this.ionImage.height / 2) * this.zoomY;
          const [cursorX, cursorY] = this.cursorPixelPos;
          return {
-           left: (baseX + cursorX * this.zoom - 0.5) + 'px',
-           top: (baseY + cursorY * this.zoom - 0.5) + 'px',
-           width: `${this.zoom - 0.5}px`,
-           height: `${this.zoom - 0.5}px`,
+           left: (baseX + cursorX * this.zoomX - 0.5) + 'px',
+           top: (baseY + cursorY * this.zoomY - 0.5) + 'px',
+           width: `${this.zoomX - 0.5}px`,
+           height: `${this.zoomY - 0.5}px`,
          }
        } else {
          return null;
@@ -309,16 +321,17 @@
          event.preventDefault();
          const sY = scrollDistance(event);
 
-         const newZoom = Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom - this.zoom * sY / 10.0));
+         const newZoomX = Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom - this.zoom * sY / 10.0));
+         const newZoomY = newZoomX / this.pixelAspectRatio;
          const rect = this.$refs.imageLoader.getBoundingClientRect();
 
          // Adjust the offsets so that the pixel under the mouse stays still while the image expands around it
-         const mouseXOffset = (event.clientX - (rect.left + rect.right) / 2) / this.zoom;
-         const mouseYOffset = (event.clientY - (rect.top + rect.bottom) / 2) / this.zoom;
-         const xOffset = this.xOffset + mouseXOffset * (this.zoom / newZoom - 1);
-         const yOffset = this.yOffset + mouseYOffset * (this.zoom / newZoom - 1);
+         const mouseXOffset = (event.clientX - (rect.left + rect.right) / 2) / this.zoomX;
+         const mouseYOffset = (event.clientY - (rect.top + rect.bottom) / 2) / this.zoomY;
+         const xOffset = this.xOffset + mouseXOffset * (this.zoomX / newZoomX - 1);
+         const yOffset = this.yOffset + mouseYOffset * (this.zoomY / newZoomY - 1);
 
-         this.$emit('move', {zoom: newZoom, xOffset, yOffset});
+         this.$emit('move', {zoom: newZoomX, xOffset, yOffset});
 
          this.$nextTick(() => {
            this.movePixelIntensity(event);
@@ -345,8 +358,8 @@
      },
 
      onMouseUp(event) {
-       const xOffset = this.dragXOffset + (event.clientX - this.dragStartX) / this.zoom;
-       const yOffset = this.dragYOffset + (event.clientY - this.dragStartY) / this.zoom;
+       const xOffset = this.dragXOffset + (event.clientX - this.dragStartX) / this.zoomX;
+       const yOffset = this.dragYOffset + (event.clientY - this.dragStartY) / this.zoomY;
        this.$emit('move', {zoom: this.zoom, xOffset, yOffset});
        document.removeEventListener('mouseup', this.onMouseUp);
        document.removeEventListener('mousemove', this.onMouseMove);
@@ -358,8 +371,8 @@
          return;
        }
 
-       const xOffset = this.dragXOffset + (event.clientX - this.dragStartX) / this.zoom;
-       const yOffset = this.dragYOffset + (event.clientY - this.dragStartY) / this.zoom;
+       const xOffset = this.dragXOffset + (event.clientX - this.dragStartX) / this.zoomX;
+       const yOffset = this.dragYOffset + (event.clientY - this.dragStartY) / this.zoomY;
        this.$emit('move', {zoom: this.zoom, xOffset, yOffset});
      },
 
@@ -389,8 +402,8 @@
        if (this.ionImage != null) {
          const { width = 0, height = 0 } = this.ionImage;
          // Includes a 2px offset up and left so that the selected pixel is less obscured by the mouse cursor
-         const x = Math.floor((event.clientX - (rect.left + rect.right) / 2 - 2) / this.zoom - this.xOffset + width / 2);
-         const y = Math.floor((event.clientY - (rect.top + rect.bottom) / 2 - 2) / this.zoom - this.yOffset + height / 2);
+         const x = Math.floor((event.clientX - (rect.left + rect.right) / 2 - 2) / this.zoomX - this.xOffset + width / 2);
+         const y = Math.floor((event.clientY - (rect.top + rect.bottom) / 2 - 2) / this.zoomY - this.yOffset + height / 2);
 
          this.cursorPixelPos = [x, y];
        } else {

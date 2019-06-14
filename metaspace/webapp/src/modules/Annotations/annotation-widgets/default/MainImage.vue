@@ -8,6 +8,7 @@
               :colormap="colormap"
               :pixelSizeX="pixelSizeX"
               :pixelSizeY="pixelSizeY"
+              :pixelAspectRatio="imageLoaderSettings.pixelAspectRatio"
               :showScaleBar="showScaleBar"
               :scaleBarColor="scaleBarColor"
               :width="imageViewerWidth"
@@ -191,7 +192,7 @@ export default class MainImage extends Vue {
         const {width=500, height=500} = this.ionImage || {};
         return fitImageToArea({
             imageWidth: width,
-            imageHeight: height,
+            imageHeight: height / this.imageLoaderSettings.pixelAspectRatio,
             areaWidth: this.imageViewerWidth,
             areaHeight: this.imageViewerHeight,
         });

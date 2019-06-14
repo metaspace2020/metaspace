@@ -1,20 +1,20 @@
 <template>
   <router-link v-if="editable" :to="opticalImageAlignmentHref">
     <div v-if="mode === 'opt'" class="thumb thumb__opt thumb__editable" title="Edit Optical Image">
-      <img class="thumb--img" :src="dataset.thumbnailOpticalImageUrl" alt="Edit optical image"/>
+      <img class="thumb--img" :style="imageStyle" :src="dataset.thumbnailOpticalImageUrl" alt="Edit optical image"/>
     </div>
     <div v-else-if="mode === 'ion'" class="thumb thumb__ion thumb__editable" title="Add Optical Image">
-      <img class="thumb--img" :src="dataset.ionThumbnailUrl" alt="Add optical image"/>
+      <img class="thumb--img" :style="imageStyle" :src="dataset.ionThumbnailUrl" alt="Add optical image"/>
     </div>
     <div v-else class="thumb thumb__empty thumb__editable" title="Add Optical Image">
       <img class="thumb--img" src="../../../assets/no_opt_image.png" alt="Add optical image"/>
     </div>
   </router-link>
   <div v-else-if="mode === 'opt'" class="thumb thumb__opt">
-    <img class="thumb--img" :src="dataset.thumbnailOpticalImageUrl" alt="Optical image"/>
+    <img class="thumb--img" :style="imageStyle" :src="dataset.thumbnailOpticalImageUrl" alt="Optical image"/>
   </div>
   <div v-else-if="mode === 'ion'" class="thumb thumb__ion">
-    <img class="thumb--img" :src="dataset.ionThumbnailUrl" alt="Optical image"/>
+    <img class="thumb--img" :style="imageStyle" :src="dataset.ionThumbnailUrl" alt="Optical image"/>
   </div>
   <div v-else class="thumb thumb__empty">
     <img class="thumb--img" src="../../../assets/no_opt_image.png" alt="Optical image"/>
@@ -22,7 +22,7 @@
 </template>
 
 <script>
-  import config from '../../../clientConfig.json';
+  import config from '../../../config';
   export default {
     props: ['dataset', 'editable'],
     computed: {
@@ -34,10 +34,10 @@
       },
 
       mode() {
-        if (this.dataset.thumbnailOpticalImageUrl) {
-          return 'opt';
-        } else if (config.features.ion_thumbs && this.dataset.ionThumbnailUrl) {
+        if (config.features.ion_thumbs && this.dataset.ionThumbnailUrl) {
           return 'ion';
+        } else if (this.dataset.thumbnailOpticalImageUrl) {
+          return 'opt';
         } else {
           return 'empty';
         }
@@ -51,8 +51,20 @@
         }[this.mode];
       },
 
-      imageClass() {
-        return this.dataset.thumbnailOpticalImageUrl != null ? 'thumb-thumbnail' : 'ion-image-thumbnail';
+      imageStyle() {
+        let aspectRatio = 1;
+        if (!config.features.ignore_pixel_aspect_ratio) {
+          try {
+            const metadata = JSON.parse(this.dataset.metadataJson);
+            const { Xaxis, Yaxis } = metadata.MS_Analysis.Pixel_Size;
+            aspectRatio = Xaxis && Yaxis && (Xaxis / Yaxis) || 1;
+          } catch {}
+        }
+
+        return {
+          transform: `scaleY(${1/aspectRatio}) translateY(${50 - 50 * aspectRatio}%)`,
+          height: `${100 * aspectRatio}px`,
+        }
       }
     }
   }
@@ -66,6 +78,7 @@
     width: 100px;
     height: 100px;
     z-index: 0;
+    overflow: hidden;
   }
 
   .thumb__editable {
