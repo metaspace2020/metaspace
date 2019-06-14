@@ -18,7 +18,7 @@ import {DatasetProject as DatasetProjectModel} from '../../dataset/model';
 import {In} from 'typeorm';
 import {Context} from '../../../context';
 import * as auth from '../../auth';
-import * as projectEmails from '../email';
+import * as projectEmails from '../../groupOrProject/email';
 import {createUserCredentials, verifyEmail} from '../../auth/operation';
 
 
@@ -64,14 +64,15 @@ describe('modules/project/controller (membership-related mutations)', () => {
 
 
     test('User requests access, is accepted, leaves', async () => {
-      const requestAccessEmailSpy = jest.spyOn(projectEmails, 'sendRequestAccessToProjectEmail');
-      const acceptanceEmailSpy = jest.spyOn(projectEmails, 'sendProjectAcceptanceEmail');
+      const requestAccessEmailSpy = jest.spyOn(projectEmails, 'sendRequestAccessEmail');
+      const acceptanceEmailSpy = jest.spyOn(projectEmails, 'sendAcceptanceEmail');
       await doQuery(requestAccessToProjectQuery, {projectId});
       expect(await testEntityManager.findOne(UserProjectModel, {projectId, userId}))
         .toEqual(expect.objectContaining({ role: UPRO.PENDING }));
       expect(requestAccessEmailSpy).toHaveBeenCalledTimes(1);
       expect(requestAccessEmailSpy)
         .toHaveBeenCalledWith(
+          'project',
           expect.objectContaining({id: manager.id}),
           expect.objectContaining({id: userId}),
           expect.objectContaining({id: projectId}));
@@ -81,7 +82,10 @@ describe('modules/project/controller (membership-related mutations)', () => {
         .toEqual(expect.objectContaining({ role: UPRO.MEMBER }));
       expect(acceptanceEmailSpy).toHaveBeenCalledTimes(1);
       expect(acceptanceEmailSpy)
-        .toHaveBeenCalledWith(expect.objectContaining({id: userId}), expect.objectContaining({id: projectId}));
+        .toHaveBeenCalledWith(
+          'project',
+          expect.objectContaining({id: userId}),
+          expect.objectContaining({id: projectId}));
 
       await doQuery(leaveProjectQuery, {projectId});
       expect(await testEntityManager.findOne(UserProjectModel, {projectId, userId}))
@@ -99,12 +103,13 @@ describe('modules/project/controller (membership-related mutations)', () => {
     });
 
     test('Manager invites user, user accepts, manager removes user from group', async () => {
-      const invitationEmailSpy = jest.spyOn(projectEmails, 'sendProjectInvitationEmail');
+      const invitationEmailSpy = jest.spyOn(projectEmails, 'sentGroupOrProjectInvitationEmail');
       await doQuery(inviteUserToProjectQuery, {projectId, email: userContext.user!.email}, {context: managerContext});
       expect(await testEntityManager.findOne(UserProjectModel, {projectId, userId}))
         .toEqual(expect.objectContaining({ role: UPRO.INVITED }));
       expect(invitationEmailSpy)
         .toHaveBeenCalledWith(
+          'project',
           expect.objectContaining({id: userId}),
           expect.objectContaining({id: manager.id}),
           expect.objectContaining({id: projectId}));

@@ -2,10 +2,11 @@ import * as config from 'config';
 import { IConfig } from 'config';
 import {TAlgorithm} from 'jwt-simple';
 
+export type ImageStorageType = 'db' | 'fs';
 export interface ImageCategoryConfig {
   type: string,
   path: string,
-  storage_types: string[],
+  storage_types: ImageStorageType[],
 }
 
 export type ImageCategory = 'iso_image' | 'optical_image' | 'raw_optical_image' | 'ion_thumbnail';

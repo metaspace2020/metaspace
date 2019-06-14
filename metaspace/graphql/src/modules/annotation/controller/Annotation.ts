@@ -1,6 +1,6 @@
 import * as _ from 'lodash';
 import fetch from 'node-fetch';
-import {logger} from '../../../../utils';
+import logger from '../../../utils/logger';
 import {FieldResolversFor} from '../../../bindingTypes';
 import {Annotation, ColocalizationCoeffFilter} from '../../../binding';
 import {ESAnnotation} from '../../../../esConnector';
