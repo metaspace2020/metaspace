@@ -3,16 +3,15 @@
  * @jest-environment node
  */
 import * as supertest from 'supertest';
-import * as express from 'express';
 import * as Knex from 'knex';
 import * as fs from 'fs';
-import config, {ImageStorageType} from '../src/utils/config';
+import config, {ImageStorageType} from '../../utils/config';
 
-const {logger} = require('../utils.js'),
-  {initDBConnection} = require('../src/utils/knexDb'),
-  {createImageServerApp, IMG_TABLE_NAME} = require('../imageUpload');
+const {logger} = require('../../../utils.js'),
+  {initDBConnection} = require('../../utils/knexDb'),
+  {createImageServerApp} = require('./imageUpload');
 
-let getRespMimeMap = {
+const getRespMimeMap = {
   fs: 'image/png',
   db: 'application/octet-stream'
 };
@@ -32,7 +31,6 @@ describe('imageUploadTest with fs and db backends', () => {
 
       afterAll(async () => {
         logger.info('> After all');
-        await new Promise(resolve => server.end(resolve));
         await knex.destroy();
       });
 
@@ -41,40 +39,35 @@ describe('imageUploadTest with fs and db backends', () => {
       it(`POST /${storageType}/iso_images/upload should store the image and respond with a new iso image id`, async () => {
         const resp = await server
           .post(`/${storageType}/iso_images/upload`)
-          .attach('iso_image', fs.readFileSync('tests/test_iso_image.png'), 'test_iso_image.png');
+          .attach('iso_image', fs.readFileSync('tests/test_iso_image.png'), 'test_iso_image.png')
+          .expect(201)
+          .expect('Content-Type', /application\/json/);
 
-        expect(resp.status).toBe(201);
-        expect(resp.type).toBe('application/json');
         expect(resp.body).toHaveProperty('image_id');
 
         image_id = resp.body.image_id;
       });
 
       it(`GET /${storageType}/iso_images/:image_id should respond with the iso image`, async () => {
-        const resp = await server
+        await server
           .get(`/${storageType}/iso_images/${image_id}`)
-          .send();
-
-        expect(resp.status).toBe(200);
-        expect(resp.type).toBe(getRespMimeMap[storageType]);
+          .send()
+          .expect(200)
+          .expect('Content-Type', getRespMimeMap[storageType]);
       });
 
       it(`DELETE /${storageType}/iso_images/delete/${image_id!} should delete the iso image`, async () => {
-        const resp = await server
+        await server
           .delete(`/${storageType}/iso_images/delete/${image_id}`)
-          .send();
-
-        expect(resp.status).toBe(202);
+          .send()
+          .expect(202);
       });
 
       it(`GET /${storageType}/iso_images/:image_id should respond with 404 as the image is deleted`, async () => {
-        try {
-          const resp = await server
-            .get(`/${storageType}/iso_images/${image_id}`)
-            .send();
-        } catch (e) {
-          expect(e.status).toBe(404);
-        }
+        await server
+          .get(`/${storageType}/iso_images/${image_id}`)
+          .send()
+          .expect(404);
       });
 
     });
