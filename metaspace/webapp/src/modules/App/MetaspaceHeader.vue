@@ -314,7 +314,9 @@
  .b-header {
    background-color: rgba(0, 105, 224, 0.85);
    position: fixed;
-   z-index: 1000;
+   // z-index should be higher than v-loading's .el-loading-mask (z-index: 2000) so that loading spinners
+   // don't overlap the header, but can't be higher than v-tooltip's initial z-index (2001)
+   z-index: 2001;
    top: 0;
    left: 0;
    right: 0;

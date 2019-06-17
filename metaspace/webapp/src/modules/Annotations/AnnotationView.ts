@@ -41,10 +41,10 @@
    opticalSrc: string | null
    opticalTransform: number[][] | null
    pixelAspectRatio: number
-   // hotspotQuantile is deliberately not included here, because every time it changes some slow computation occurs,
+   // scaleType is deliberately not included here, because every time it changes some slow computation occurs,
    // and the computed getters were being triggered by any part of the ImageSettings object changing, such as opacity,
    // causing a lot of jank.
-   //hotspotQuantile?: number
+   //scaleType?: ScaleType
  }
 
  const metadataDependentComponents: any = {};
@@ -128,10 +128,9 @@
    msAcqGeometry: any
    peakChartData: any
    opticalImages!: OpticalImage[] | null
-   showScaleBar: boolean = false
    datasetVisibility: DatasetVisibilityResult | null = null
    currentUser: CurrentUserRoleResult | null = null
-   scaleBarColor: string = '#000000'
+   scaleBarColor: string | null = '#000000'
    failedImages: string[] = []
    noImageURL = noImageURL
 
@@ -157,13 +156,8 @@
      return this.$store.getters.settings.annotationView.colormap;
    }
 
-   get hotspotQuantile(): number | undefined {
-     const threshold = this.$store.getters.settings.annotationView.hotspotThreshold;
-     return threshold ? threshold / 100 : undefined;
-   }
-
-   get colormapName(): string {
-     return this.colormap.replace('-', '');
+   get scaleType(): string {
+     return this.$store.getters.settings.annotationView.scaleType;
    }
 
    get formattedMolFormula(): string {
@@ -195,7 +189,7 @@
        path,
        query: {
          ...encodeParams(filter, path, this.$store.state.filterLists),
-         ...pick(this.$route.query, 'sections', 'sort', 'hideopt', 'cmap', 'hotspotthreshold'),
+         ...pick(this.$route.query, 'sections', 'sort', 'hideopt', 'cmap', 'scale'),
        },
      };
    }
@@ -323,16 +317,12 @@
      }
    }
 
-   toggleScaleBar(): void {
-     this.showScaleBar = !this.showScaleBar
-   }
-
    loadVisibility() {
      this.$apollo.queries.datasetVisibility.start();
    }
 
-   setScaleBarColor(colorObj: colorObjType) {
-     this.scaleBarColor = colorObj.code;
+   setScaleBarColor(color: string | null) {
+     this.scaleBarColor = color;
    }
 
    filterColocSamples() {

@@ -1,5 +1,7 @@
 import {decode, Image} from 'upng-js';
 import {quantile} from 'simple-statistics';
+import {range} from 'lodash-es';
+import {DEFAULT_SCALE_TYPE} from './constants';
 
 export interface IonImage {
   intensityValues: Float32Array;
@@ -9,8 +11,26 @@ export interface IonImage {
   height: number;
   minIntensity: number;
   maxIntensity: number;
+  clippedMinIntensity: number;
   clippedMaxIntensity: number;
+  // scaleBarValues - Quantization of linear intensity values, used for showing the distribution of colors on the scale bar
+  // Always length 256
+  scaleBarValues: Uint8ClampedArray;
+  minQuantile: number | null;
+  maxQuantile: number | null;
 }
+
+export type ScaleType = 'linear' | 'linear-full' | 'log' | 'log-full' | 'hist' | 'test';
+export type ScaleMode = 'linear' | 'log' | 'hist';
+
+const SCALES: Record<ScaleType, [ScaleMode, number | null, number | null]> = {
+  linear: ['linear', null, 0.99],
+  'linear-full': ['linear', null, null],
+  log: ['log', 0.01, 0.99],
+  'log-full': ['log', 0, 1],
+  hist: ['hist', null, null],
+  test: ['linear', null, 0.5], // For unit tests, because it's easier to make test data for 50% threshold than 99%
+};
 
 const createDataUrl = (imageBytes: Uint8ClampedArray, width: number, height: number) => {
   if (imageBytes.length != width * height * 4) {
@@ -81,41 +101,103 @@ const extractIntensityAndMask = (png: Image, min: number, max: number) => {
   return {intensityValues, mask};
 };
 
-export const getHotspotThreshold = (intensityValues: Float32Array, mask: Uint8ClampedArray,
-                             minIntensity: number, maxIntensity: number, hotspotQuantile: number) => {
-  // Only non-zero values should be considered, otherwise sparse images have most of their set pixels treated as hotspots.
-  // For compatibility with the previous version where images were loaded as 8-bit, this also excludes pixels
-  // whose values would round down to zero. This can make a big difference - some ion images have as high as 40% of
-  // their pixels set to values that are zero when loaded as 8-bit but non-zero when loaded as 16-bit.
-  const minValueConsidered = maxIntensity / 256;
+const getScaleParams = (intensityValues: Float32Array, mask: Uint8ClampedArray,
+                             minIntensity: number, maxIntensity: number,
+                             lowQuantile: number | null, highQuantile: number | null, scaleMode: ScaleMode) => {
+
   const values = [];
 
+  // Only non-zero values should be considered for hotspot removal, otherwise sparse images have most of their set pixels treated as hotspots.
+  // For compatibility with the previous version where images were loaded as 8-bit, linear scale's thresholds exclude pixels
+  // whose values would round down to zero. This can make a big difference - some ion images have as high as 40% of
+  // their pixels set to values that are zero when loaded as 8-bit but non-zero when loaded as 16-bit.
+  const minValueConsidered = scaleMode === 'linear' ? maxIntensity / 256 : 0;
   for (let i = 0; i < mask.length; i++) {
-    if (intensityValues[i] >= minValueConsidered && mask[i] !== 0) {
+    if (intensityValues[i] > minValueConsidered && mask[i] !== 0) {
       values.push(intensityValues[i]);
     }
   }
-  const threshold = quantile(values, hotspotQuantile);
 
-  // Skip hotspot removal if it would have an insignificant effect
-  // const scalingFactor = (maxIntensity - threshold) / (maxIntensity - minIntensity);
-  // if (scalingFactor < 0.05) {
-  //   return maxIntensity;
-  // } else {
-  return threshold;
-  // }
+  const clippedMinIntensity = lowQuantile == null ? minIntensity : quantile(values, lowQuantile);
+  const clippedMaxIntensity = highQuantile == null ? maxIntensity : quantile(values, highQuantile);
+
+  let rankValues: Float32Array | null = null;
+  if (scaleMode === 'hist') {
+    const lo = lowQuantile || 0, hi = highQuantile || 1;
+    const quantiles = range(256).map(i => lo + (hi - lo) * i / 255);
+    rankValues = new Float32Array(quantile(values, quantiles));
+  }
+
+  return {clippedMinIntensity, clippedMaxIntensity, rankValues};
 };
 
-const quantizeIonImage = (intensityValues: Float32Array, mask: Uint8ClampedArray,
-                          minIntensity: number, clippedMaxIntensity: number) => {
+const quantizeIonImageLinear = (intensityValues: Float32Array, minIntensity: number, maxIntensity: number) => {
   const clippedValues = new Uint8ClampedArray(intensityValues.length);
-  const intensityScale = 255 / (clippedMaxIntensity - minIntensity);
+  const intensityScale = 255 / (maxIntensity - minIntensity);
 
-  for(let i = 0; i < mask.length; i++) {
+  for (let i = 0; i < intensityValues.length; i++) {
     clippedValues[i] = (intensityValues[i] - minIntensity) * intensityScale;
   }
 
   return clippedValues;
+};
+
+const quantizeIonImageLog = (intensityValues: Float32Array, minIntensity: number, maxIntensity: number) => {
+  const clippedValues = new Uint8ClampedArray(intensityValues.length);
+  const logMinIntensity = Math.log(minIntensity);
+  const intensityScale = 255 / (Math.log(maxIntensity) - logMinIntensity);
+
+  for (let i = 0; i < intensityValues.length; i++) {
+    clippedValues[i] = (Math.log(intensityValues[i]) - logMinIntensity) * intensityScale;
+  }
+
+  return clippedValues;
+};
+
+const quantizeIonImageRank = (intensityValues: Float32Array, rankValues: Float32Array) => {
+  const clippedValues = new Uint8ClampedArray(intensityValues.length);
+  const min = rankValues[0];
+  const max = rankValues[255];
+
+  for (let i = 0; i < intensityValues.length; i++) {
+    const intensity = intensityValues[i];
+    if (intensity < min) {
+      clippedValues[i] = 0;
+    } else if (intensity >= max) {
+      clippedValues[i] = 255;
+    } else {
+      // Fixed-depth binary search into 256-element array
+      let mid = 0;
+      if (intensity > rankValues[mid | 0x80]) mid |= 0x80;
+      if (intensity > rankValues[mid | 0x40]) mid |= 0x40;
+      if (intensity > rankValues[mid | 0x20]) mid |= 0x20;
+      if (intensity > rankValues[mid | 0x10]) mid |= 0x10;
+      if (intensity > rankValues[mid | 0x08]) mid |= 0x08;
+      if (intensity > rankValues[mid | 0x04]) mid |= 0x04;
+      if (intensity > rankValues[mid | 0x02]) mid |= 0x02;
+      if (intensity > rankValues[mid | 0x01]) mid |= 0x01;
+      clippedValues[i] = mid;
+    }
+  }
+
+  return clippedValues;
+};
+
+const quantizeIonImage = (intensityValues: Float32Array, minIntensity: number, maxIntensity: number,
+                          rankValues: Float32Array | null, scaleMode: ScaleMode): Uint8ClampedArray => {
+  if (scaleMode === 'hist') {
+    return quantizeIonImageRank(intensityValues, rankValues!);
+  } else if (scaleMode === 'log') {
+    return quantizeIonImageLog(intensityValues, minIntensity, maxIntensity);
+  } else {
+    return quantizeIonImageLinear(intensityValues, minIntensity, maxIntensity);
+  }
+};
+
+const quantizeScaleBar = (minIntensity: number, maxIntensity: number,
+                          rankValues: Float32Array | null, scaleMode: ScaleMode): Uint8ClampedArray => {
+  const linearDistribution = new Float32Array(range(256).map(i => minIntensity + (maxIntensity - minIntensity) * i / 255));
+  return quantizeIonImage(linearDistribution, minIntensity, maxIntensity, rankValues, scaleMode);
 };
 
 export const loadPngFromUrl = async (url: string) => {
@@ -128,11 +210,16 @@ export const loadPngFromUrl = async (url: string) => {
 };
 
 export const processIonImage = (png: Image, minIntensity: number = 0, maxIntensity: number = 1,
-                                hotspotQuantile = 0.99): IonImage => {
+                                scaleType: ScaleType = DEFAULT_SCALE_TYPE): IonImage => {
+  const [scaleMode, minQuantile, maxQuantile] = SCALES[scaleType];
+
   const {width, height} = png;
   const {intensityValues, mask} = extractIntensityAndMask(png, minIntensity, maxIntensity);
-  const clippedMaxIntensity = getHotspotThreshold(intensityValues, mask, minIntensity, maxIntensity, hotspotQuantile);
-  const clippedValues = quantizeIonImage(intensityValues, mask, minIntensity, clippedMaxIntensity);
+  const {clippedMinIntensity, clippedMaxIntensity, rankValues} =
+    getScaleParams(intensityValues, mask, minIntensity, maxIntensity, minQuantile, maxQuantile, scaleMode);
+
+  let clippedValues = quantizeIonImage(intensityValues, clippedMinIntensity, clippedMaxIntensity, rankValues, scaleMode);
+  let scaleBarValues = quantizeScaleBar(clippedMinIntensity, clippedMaxIntensity, rankValues, scaleMode);
 
   return {
     intensityValues,
@@ -142,7 +229,11 @@ export const processIonImage = (png: Image, minIntensity: number = 0, maxIntensi
     height,
     minIntensity,
     maxIntensity,
+    clippedMinIntensity,
     clippedMaxIntensity,
+    scaleBarValues,
+    minQuantile,
+    maxQuantile,
   };
 };
 
@@ -187,5 +278,17 @@ export const renderIonImage = (ionImage: IonImage, cmap?: number[][]) => {
   return createDataUrl(new Uint8ClampedArray(outputBuffer), width, height);
 };
 
+export const renderScaleBar = (ionImage: IonImage, cmap: number[][], horizontal: boolean) => {
+  const outputBytes = new Uint8ClampedArray(256 * 4);
+  ionImage.scaleBarValues.forEach((val, i) => {
+    for (let j = 0; j < 4; j++) {
+      outputBytes[(255 - i) * 4 + j] = cmap[val][j];
+    }
+  });
 
-
+  if (horizontal) {
+    return createDataUrl(outputBytes, 256, 1);
+  } else {
+    return createDataUrl(outputBytes, 1, 256);
+  }
+};

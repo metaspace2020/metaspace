@@ -51,14 +51,12 @@
                      :showOpticalImage="showOpticalImage"
                      :resetViewport="resetViewport"
                      :toggleOpticalImage="toggleOpticalImage"
-                     :toggleScaleBar="toggleScaleBar"
-                     @colorInput="colorObj=>setScaleBarColor(colorObj)"
+                     @scaleBarColorChange="setScaleBarColor"
                      slot="title">
           </component>
           <component :is="metadataDependentComponent('main-image')"
                      :annotation="annotation"
                      :colormap="colormap"
-                     :colormapName="colormapName"
                      :opacity="opacity"
                      :imagePosition="imagePosition"
                      :imageLoaderSettings="imageLoaderSettings"
@@ -66,9 +64,8 @@
                      :acquisitionGeometry="msAcqGeometry"
                      :pixelSizeX="pixelSizeX"
                      :pixelSizeY="pixelSizeY"
-                     :showScaleBar="showScaleBar"
                      :scaleBarColor="scaleBarColor"
-                     :hotspotQuantile="hotspotQuantile"
+                     :scaleType="scaleType"
                      @opacityInput="newVal => opacity = newVal">
           </component>
         </el-collapse-item>
@@ -139,7 +136,7 @@
                      :database="this.$store.getters.filter.database"
                      :acquisitionGeometry="msAcqGeometry"
                      :image-loader-settings="imageLoaderSettings"
-                     :hotspotQuantile="hotspotQuantile">
+                     :scaleType="scaleType">
           </component>
         </el-collapse-item>
 
@@ -151,7 +148,7 @@
                      :database="this.$store.getters.filter.database"
                      :acquisitionGeometry="msAcqGeometry"
                      :image-loader-settings="imageLoaderSettings"
-                     :hotspotQuantile="hotspotQuantile">
+                     :scaleType="scaleType">
           </component>
         </el-collapse-item>
 
@@ -161,7 +158,7 @@
                      :annotation="annotation"
                      :colormap="colormap"
                      :imageLoaderSettings="imageLoaderSettings"
-                     :hotspotQuantile="hotspotQuantile"
+                     :scaleType="scaleType"
                      :peakChartData="peakChartData"
                      :acquisitionGeometry="msAcqGeometry">
           </component>

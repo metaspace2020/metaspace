@@ -5,9 +5,12 @@
     </span>
 
     <el-popover placement="bottom" trigger="click">
-        <ion-image-settings @colorInput="updateColor" @toggleScaleBar="toggleScaleBar"></ion-image-settings>
+        <ion-image-settings @scaleBarColorChange="onScaleBarColorChange"></ion-image-settings>
         <div slot="reference" @click="$event.stopPropagation()">
-        <i class="el-icon-setting" style="font-size: 20px; vertical-align: middle;"></i>
+        <i class="el-icon-setting"
+           style="font-size: 20px; vertical-align: middle;"
+           data-feature-anchor="ion-image-settings"
+        />
         </div>
     </el-popover>
 
@@ -51,11 +54,9 @@ export default class MainImageHeader extends Vue {
     resetViewport!: Function;
     @Prop({required: true, type: Function})
     toggleOpticalImage!: Function;
-    @Prop({required: true, type: Function})
-    toggleScaleBar!: Function;
 
-    updateColor(colorObj: colorObjType) {
-      this.$emit('colorInput', colorObj)
+    onScaleBarColorChange(color: string | null) {
+      this.$emit('scaleBarColorChange', color)
     }
 }
 </script>

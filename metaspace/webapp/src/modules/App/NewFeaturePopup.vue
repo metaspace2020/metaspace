@@ -43,6 +43,7 @@
     name: string;
     title: string;
     contentHtml: string;
+    dontShowAfter: Date;
     placement: Placement;
     getAnchorIfActive: (vue: Vue) => HTMLElement | null;
   }
@@ -61,11 +62,27 @@ allowing you to find important molecules faster.</p>
 <p>Please keep in mind that the accuracy of this model is greatly improved in datasets that include some off-sample area.
 We recommend including off-sample area around your sample during data acquisition.</p>
       `,
+      dontShowAfter: new Date('2019-07-22'),
       placement: 'bottom',
       getAnchorIfActive(vue: Vue) {
         if (config.features.off_sample && vue.$route.path === '/annotations') {
           return document.querySelector('.tf-outer[data-test-key=offSample]')
             || document.querySelector('.filter-select');
+        }
+        return null;
+      },
+    },
+    {
+      name: 'logScale',
+      title: 'Log-scale colormaps',
+      contentHtml: `
+<p>Ion images can now be viewed with a logarithmic-scale colormap. The ion image display options can be configured in this menu.</p>
+      `,
+      dontShowAfter: new Date('2019-08-30'),
+      placement: 'bottom',
+      getAnchorIfActive(vue: Vue) {
+        if (vue.$route.path === '/annotations') {
+          return document.querySelector('[data-feature-anchor="ion-image-settings"]');
         }
         return null;
       },
@@ -146,6 +163,7 @@ We recommend including off-sample area around your sample during data acquisitio
         const dismissedFeatures = this.getDismissedFeatures();
         const activatableFeatures = NEW_FEATURES
           .filter(feature => !dismissedFeatures.includes(feature.name))
+          .filter(feature => feature.dontShowAfter > new Date())
           .map(feature => [feature, feature.getAnchorIfActive(this)] as [FeatureSpec, HTMLElement | null])
           .filter(([feature, anchor]) => anchor != null);
 
