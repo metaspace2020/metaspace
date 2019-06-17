@@ -20,15 +20,15 @@ export interface IonImage {
   maxQuantile: number | null;
 }
 
-export type ScaleType = 'linear' | 'linear-full' | 'log' | 'log-full' | 'rank' | 'test';
-export type ScaleMode = 'linear' | 'log' | 'rank';
+export type ScaleType = 'linear' | 'linear-full' | 'log' | 'log-full' | 'hist' | 'test';
+export type ScaleMode = 'linear' | 'log' | 'hist';
 
 const SCALES: Record<ScaleType, [ScaleMode, number | null, number | null]> = {
   linear: ['linear', null, 0.99],
   'linear-full': ['linear', null, null],
   log: ['log', 0.01, 0.99],
   'log-full': ['log', 0, 1],
-  rank: ['rank', null, null],
+  hist: ['hist', null, null],
   test: ['linear', null, 0.5], // For unit tests, because it's easier to make test data for 50% threshold than 99%
 };
 
@@ -122,7 +122,7 @@ const getScaleParams = (intensityValues: Float32Array, mask: Uint8ClampedArray,
   const clippedMaxIntensity = highQuantile == null ? maxIntensity : quantile(values, highQuantile);
 
   let rankValues: Float32Array | null = null;
-  if (scaleMode === 'rank') {
+  if (scaleMode === 'hist') {
     const lo = lowQuantile || 0, hi = highQuantile || 1;
     const quantiles = range(256).map(i => lo + (hi - lo) * i / 255);
     rankValues = new Float32Array(quantile(values, quantiles));
@@ -185,7 +185,7 @@ const quantizeIonImageRank = (intensityValues: Float32Array, rankValues: Float32
 
 const quantizeIonImage = (intensityValues: Float32Array, minIntensity: number, maxIntensity: number,
                           rankValues: Float32Array | null, scaleMode: ScaleMode): Uint8ClampedArray => {
-  if (scaleMode === 'rank') {
+  if (scaleMode === 'hist') {
     return quantizeIonImageRank(intensityValues, rankValues!);
   } else if (scaleMode === 'log') {
     return quantizeIonImageLog(intensityValues, minIntensity, maxIntensity);

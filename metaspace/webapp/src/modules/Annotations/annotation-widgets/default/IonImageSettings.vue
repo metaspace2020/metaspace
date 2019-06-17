@@ -9,7 +9,7 @@
           <el-option value="linear-full" label="Linear (without hotspot clipping)" />
           <el-option value="log" label="Logarithmic" />
           <el-option value="log-full" label="Logarithmic (without outlier clipping)" />
-          <el-option value="rank" label="Rank" />
+          <el-option value="hist" label="Equalized Histogram" />
         </el-select>
       </el-form-item>
       <el-form-item label="Colormap">
