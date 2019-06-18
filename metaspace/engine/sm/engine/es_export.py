@@ -131,7 +131,6 @@ class ESIndexManager(object):
                             "type": "keyword",
                             "fields": {
                                 "searchable": {"type": "text", "analyzer": "delimited_ds_names"},
-                                "searchable_lower": {"type": "text", "analyzer": "delimited_ds_names_lower"},
                             }
                         },
                     }
@@ -151,11 +150,6 @@ class ESIndexManager(object):
                         "analyzer": {
                             # Support ds names that are delimited with underscores, dashes, etc.
                             "delimited_ds_names": {
-                                "type": "custom",
-                                "tokenizer": "standard",
-                                "filter": ["my_word_delimeter", "asciifolding"],
-                            },
-                            "delimited_ds_names_lower": {
                                 "type": "custom",
                                 "tokenizer": "standard",
                                 "filter": ["my_word_delimeter", "lowercase", "asciifolding"],
