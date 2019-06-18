@@ -44,7 +44,7 @@ class SearchResults(object):
             m = OrderedDict((name, r[name]) for name in self.metric_names)
             metr_json = json.dumps(m)
             image_ids = formula_img_ids[r.formula_i]['iso_image_ids']
-            yield (job_id, r.formula, r.chem_mod, r.neutral_loss, r.target_adduct,
+            yield (job_id, r.formula, r.chem_mod, r.neutral_loss, r.adduct,
                    float(r.msm), float(r.fdr), metr_json,
                    image_ids)
 
