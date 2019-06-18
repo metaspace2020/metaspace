@@ -126,14 +126,14 @@ class ESIndexManager(object):
             }
         }]
         dataset_properties = {
-                        "ds_id": {"type": "keyword"},
-                        "ds_name": {
-                            "type": "keyword",
-                            "fields": {
-                                "searchable": {"type": "text", "analyzer": "delimited_ds_names"},
-                            }
-                        },
-                    }
+            "ds_id": {"type": "keyword"},
+            "ds_name": {
+                "type": "keyword",
+                "fields": {
+                    "searchable": {"type": "text", "analyzer": "delimited_ds_names"},
+                }
+            },
+        }
         body = {
             "settings": {
                 "index": {
@@ -152,7 +152,7 @@ class ESIndexManager(object):
                             "delimited_ds_names": {
                                 "type": "custom",
                                 "tokenizer": "standard",
-                                "filter": ["my_word_delimeter", "lowercase", "asciifolding"],
+                                "filter": ["lowercase", "asciifolding", "my_word_delimeter"],
                             },
                         },
                         "filter": {
@@ -160,7 +160,7 @@ class ESIndexManager(object):
                                 "type": "word_delimiter",
                                 "catenate_all": True,
                                 "preserve_original": True
-                            },
+                            }
                         }
                     }
                 }
