@@ -33,7 +33,7 @@ const setOrMerge = <T>(obj: any, path: string, value: T, onConflict = (val: T, o
 interface AnnotationAndIons {
   annotation: ColocAnnotation;
   ionsById: Map<number, Ion>;
-  ionsBySfAdduct: Map<string, Ion>;
+  ionsByIon: Map<string, Ion>;
 }
 
 const getColocAnnotation = async (context: Context, datasetId: string, fdrLevel: number, database: string | null,
@@ -52,7 +52,7 @@ const getColocAnnotation = async (context: Context, datasetId: string, fdrLevel:
       return {
         annotation,
         ionsById: new Map<number, Ion>(ions.map(ion => [ion.id, ion] as [number, Ion])),
-        ionsBySfAdduct: new Map<string, Ion>(ions.map(ion => [ion.formula + ion.adduct, ion] as [string, Ion])),
+        ionsByIon: new Map<string, Ion>(ions.map(ion => [ion.ion, ion] as [string, Ion])),
       };
     } else {
       return null;
@@ -60,7 +60,7 @@ const getColocAnnotation = async (context: Context, datasetId: string, fdrLevel:
   });
 };
 
-const getColocSampleSfAdducts = async (context: Context, datasetId: string, fdrLevel: number, database: string | null,
+const getColocSampleIons = async (context: Context, datasetId: string, fdrLevel: number, database: string | null,
                            colocalizationAlgo: string) => {
   const result = await context.entityManager.findOne(ColocJob,
     {datasetId, fdr: fdrLevel, molDb: database, algorithm: colocalizationAlgo},
@@ -68,8 +68,8 @@ const getColocSampleSfAdducts = async (context: Context, datasetId: string, fdrL
   if (result == null) {
     return null;
   } else {
-    const ions = await context.entityManager.findByIds(Ion, result.sampleIonIds, {select: ['formula','adduct']});
-    return ions.map(({formula, adduct}) => formula + adduct);
+    const ions = await context.entityManager.findByIds(Ion, result.sampleIonIds, {select: ['ion']});
+    return ions.map(({ion}) => ion);
   }
 };
 
@@ -115,11 +115,11 @@ export const applyQueryFilters = async (context: Context, args: Args): Promise<F
 
 
   if (datasetId != null && colocalizationAlgo != null && colocalizationSamples) {
-    const samples = await getColocSampleSfAdducts(context, datasetId, fdrLevel, database, colocalizationAlgo);
+    const samples = await getColocSampleIons(context, datasetId, fdrLevel, database, colocalizationAlgo);
     if (samples != null) {
-      newArgs = setOrMerge(newArgs, 'filter.sfAdduct', samples, _.intersection);
+      newArgs = setOrMerge(newArgs, 'filter.ion', samples, _.intersection);
     } else {
-      newArgs = setOrMerge(newArgs, 'filter.sfAdduct', []);
+      newArgs = setOrMerge(newArgs, 'filter.ion', []);
     }
   }
 
@@ -127,23 +127,23 @@ export const applyQueryFilters = async (context: Context, args: Args): Promise<F
     const annotationAndIons = await getColocAnnotation(context, datasetId, fdrLevel, database, colocalizedWith, colocalizationAlgo);
 
     if (annotationAndIons != null) {
-      const {annotation, ionsById, ionsBySfAdduct} = annotationAndIons;
+      const {annotation, ionsById, ionsByIon} = annotationAndIons;
       const {offset, limit} = args as ArgsFromBinding<Query['allAnnotations']>;
-      const colocSfAdducts = _.uniq([annotation.ionId, ...annotation.colocIonIds])
+      const colocIons = _.uniq([annotation.ionId, ...annotation.colocIonIds])
         .map(ionId => {
           const ion = ionsById.get(ionId);
-          return ion != null ? ion.formula + ion.adduct : null
+          return ion != null ? ion.ion : null
         })
-        .filter(sfAdduct => sfAdduct != null);
+        .filter(ion => ion != null);
 
-      newArgs = setOrMerge(newArgs, 'filter.sfAdduct', colocSfAdducts, _.intersection);
+      newArgs = setOrMerge(newArgs, 'filter.ion', colocIons, _.intersection);
       // Always select 1000 annotations so that sorting by colocalizationCoeff doesn't just sort per-page
       newArgs = setOrMerge(newArgs, 'offset', 0);
       newArgs = setOrMerge(newArgs, 'limit', 1000);
 
       postprocess = (annotations: ESAnnotation[]): ESAnnotationWithColoc[] => {
         let newAnnotations: ESAnnotationWithColoc[] = annotations.map(ann => {
-          const ion = ionsBySfAdduct.get(ann._source.sf_adduct);
+          const ion = ionsByIon.get(ann._source.ion);
           return {
             ...ann,
             _cachedColocCoeff: ion != null ? getColocCoeffInner(annotation, ion.id) : null,
@@ -182,7 +182,7 @@ export const applyQueryFilters = async (context: Context, args: Args): Promise<F
         return newAnnotations;
       }
     } else {
-      newArgs = setOrMerge(newArgs, 'filter.sfAdduct', []);
+      newArgs = setOrMerge(newArgs, 'filter.ion', []);
     }
   }
 

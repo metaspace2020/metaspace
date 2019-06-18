@@ -26,6 +26,8 @@ type Dataset {
   isPublic: Boolean!
   molDBs: [String!]!
   adducts: [String!]!
+  neutralLosses: [String!]!
+  chemMods: [String!]!
   acquisitionGeometry: String
   metadataType: String!
 
@@ -140,6 +142,8 @@ input DatasetCreateInput {
   metadataJson: String!
   molDBs: [String!]!
   adducts: [String!]!
+  neutralLosses: [String!]! = []
+  chemMods: [String!]! = []
   submitterId: ID!
   groupId: ID
   projectIds: [ID!] = []
@@ -154,6 +158,8 @@ input DatasetUpdateInput {
   metadataJson: String
   molDBs: [String!]
   adducts: [String!]
+  neutralLosses: [String!]
+  chemMods: [String!]
   submitterId: ID
   groupId: ID
   projectIds: [ID!]

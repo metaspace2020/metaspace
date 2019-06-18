@@ -87,7 +87,8 @@ export function processingSettingsChanged(ds: EngineDS, update: DatasetUpdateInp
   let newDB = false, procSettingsUpd = false, metaDiff = null;
   if (update.molDBs)
     newDB = true;
-  if (update.adducts)
+  console.log(update)
+  if (update.adducts || update.neutralLosses || update.chemMods)
     procSettingsUpd = true;
 
   if (update.metadata) {

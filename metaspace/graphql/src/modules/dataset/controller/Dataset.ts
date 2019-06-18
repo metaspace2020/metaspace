@@ -90,6 +90,14 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     return ds._source.ds_adducts;
   },
 
+  neutralLosses(ds) {
+    return ds._source.ds_neutral_losses;
+  },
+
+  chemMods(ds) {
+    return ds._source.ds_chem_mods;
+  },
+
   acquisitionGeometry(ds) {
     return JSON.stringify(ds._source.ds_acq_geometry);
   },
