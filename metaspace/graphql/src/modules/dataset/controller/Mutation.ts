@@ -87,9 +87,11 @@ export function processingSettingsChanged(ds: EngineDS, update: DatasetUpdateInp
   let newDB = false, procSettingsUpd = false, metaDiff = null;
   if (update.molDBs)
     newDB = true;
-  console.log(update)
-  if (update.adducts || update.neutralLosses || update.chemMods)
+
+  if (update.adducts || update.neutralLosses || update.chemMods
+    || update.ppm || update.numPeaks || update.decoySampleSize) {
     procSettingsUpd = true;
+  }
 
   if (update.metadata) {
     const metaDelta = jsondiffpatch.diff(ds.metadata, update.metadata),

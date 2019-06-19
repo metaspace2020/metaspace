@@ -142,8 +142,12 @@ input DatasetCreateInput {
   metadataJson: String!
   molDBs: [String!]!
   adducts: [String!]!
-  neutralLosses: [String!]! = []
-  chemMods: [String!]! = []
+  neutralLosses: [String!]
+  chemMods: [String!]
+  ppm: Float
+  numPeaks: Int
+  decoySampleSize: Int
+
   submitterId: ID!
   groupId: ID
   projectIds: [ID!] = []
@@ -160,6 +164,10 @@ input DatasetUpdateInput {
   adducts: [String!]
   neutralLosses: [String!]
   chemMods: [String!]
+  ppm: Float
+  numPeaks: Int
+  decoySampleSize: Int
+
   submitterId: ID
   groupId: ID
   projectIds: [ID!]

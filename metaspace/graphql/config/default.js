@@ -10,7 +10,7 @@ module.exports = {
   },
 
   defaults: {
-    adducts: {"+": ["+H", "+Na", "+K"], "-": ["-H", "+Cl"]},
+    adducts: {"+": ["", "+H", "+Na", "+K"], "-": ["-H", "+Cl"]},
     moldb_names: ['HMDB-v4']
   },
 

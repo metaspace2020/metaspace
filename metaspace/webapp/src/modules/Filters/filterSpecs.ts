@@ -12,13 +12,15 @@ import BooleanFilter from './filter-components/BooleanFilter.vue';
 import config from '../../config';
 
 // Filled during the initialization of adduct filter below
-const ADDUCT_POLARITY: Record<string, string> = {};
+const ADDUCT_POLARITY: Record<string, '+'|'-'> = {};
 
 function formatAdduct (adduct: string) {
-  if (adduct === null)
+  if (adduct === null) {
     return '';
-  else {
-    return renderMolFormula('M', adduct, ADDUCT_POLARITY[adduct])
+  } else if (adduct === '') {
+    return '[M]⁺'
+  } else {
+    return renderMolFormula('M' + adduct + ADDUCT_POLARITY[adduct])
   }
 }
 
@@ -88,6 +90,7 @@ export interface FilterSpecification {
   optionFormatter?(value: any): string;
   valueFormatter?(value: any): string;
   valueKey?: string;
+  allowEmptyString?: boolean;
   sortOrder?: number;
   dependsOnFilters?: FilterKey[];
   conflictsWithFilters?: FilterKey[];
@@ -143,11 +146,12 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     initialValue: undefined,
     options: lists => lists.adducts.map(d => {
       const {adduct, charge} = d;
-      ADDUCT_POLARITY[adduct] = charge > 0 ? 'POSITIVE' : 'NEGATIVE';
+      ADDUCT_POLARITY[adduct] = charge > 0 ? '+' : '-';
       return adduct;
     }),
     optionFormatter: formatAdduct,
-    valueFormatter: formatAdduct
+    valueFormatter: formatAdduct,
+    allowEmptyString: true
   },
 
   mz: {

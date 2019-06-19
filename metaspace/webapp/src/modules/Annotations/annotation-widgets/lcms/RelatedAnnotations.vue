@@ -16,7 +16,7 @@
 
 <script>
  import { schemeCategory10 as graphColors } from 'd3';
- import { renderMolFormula } from '../../../../util';
+ import { renderMolFormulaHtml } from '../../../../util';
  import XicPlot from './XicPlot.vue';
  import PlotLegend from '../PlotLegend.vue';
  import { relatedAnnotationsQuery } from '../../../../api/annotation';
@@ -74,7 +74,7 @@
    },
    methods: {
      showAdduct(annotation) {
-       return `<span>${renderMolFormula(this.annotation.sumFormula, annotation.adduct, this.annotation.dataset.polarity)}</span><br/>
+       return `<span>${renderMolFormulaHtml(this.annotation.ion)}</span><br/>
               ${annotation.mz.toFixed(4)}<br/>
               <span style="font-size: smaller">
                 MSM score: ${annotation.msmScore.toFixed(3)}<br/>

@@ -137,7 +137,7 @@
  import ImageAligner from './ImageAligner.vue';
  import {annotationListQuery} from '../../api/annotation';
  import {addOpticalImageQuery, deleteOpticalImageQuery, rawOpticalImageQuery} from '../../api/dataset';
- import {renderMolFormula, prettifySign} from '../../util';
+ import {renderMolFormula, renderMolFormulaHtml} from '../../util';
 
  import gql from 'graphql-tag';
  import reportError from '../../lib/reportError';
@@ -274,16 +274,13 @@
      },
 
      renderAnnotation(annotation) {
-       const {sumFormula, adduct, dataset} = annotation;
-       return renderMolFormula(sumFormula, adduct, dataset.polarity);
+       const {ion} = annotation;
+       return renderMolFormulaHtml(ion);
      },
 
      renderLabel(annotation) {
-       const {sumFormula, adduct, dataset} = annotation;
-       let result = `[${sumFormula + adduct}]`;
-       result = prettifySign(result);
-       result += {'POSITIVE': '⁺', 'NEGATIVE': '¯'}[dataset.polarity];
-       return result;
+       const {ion} = annotation;
+       return renderMolFormula(ion);
      },
 
      onFileChange(event) {
