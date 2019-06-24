@@ -152,7 +152,7 @@ class FormulaCentroids(object):
     def __init__(self, formulas_df, centroids_df):
         u_index_formulas = set(formulas_df.index.unique())
         u_index_centroids = set(centroids_df.index.unique())
-        assert u_index_formulas == u_index_centroids, (u_index_formulas, u_index_centroids)
+        assert u_index_formulas == u_index_centroids
 
         self.formulas_df = formulas_df.sort_values(by='formula')
         self._centroids_df = centroids_df.sort_values(by='mz')

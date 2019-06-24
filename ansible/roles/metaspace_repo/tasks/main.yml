@@ -92,8 +92,8 @@
       dest: "{{ sm_home }}/"
       rsync_opts:
         - --exclude=.*
-        - --exclude=conf/*
-        - --exclude=logs/*.json
+        - --exclude=conf/*.json
+        - --exclude=logs/*
         - --exclude=docker/*
         - --exclude=docs/*
   tags: [master, slave, web]
