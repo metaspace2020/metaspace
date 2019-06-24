@@ -222,7 +222,8 @@ interface ExtraAnnotationFilters {
 function constructAnnotationFilters(filter: AnnotationFilter & ExtraAnnotationFilters) {
   const {
     database, datasetName, mzFilter, msmScoreFilter, fdrLevel,
-    sumFormula, adduct, ion, offSample, compoundQuery, annId
+    sumFormula, adduct, ion, offSample, compoundQuery, annId,
+    hasNeutralLossOrChemMod
   } = filter;
   const filters = [];
 
@@ -250,6 +251,11 @@ function constructAnnotationFilters(filter: AnnotationFilter & ExtraAnnotationFi
     filters.push({term: {ds_name: datasetName}});
   if (offSample != null)
     filters.push({term: {off_sample_label: offSample ? 'off' : 'on'}});
+  if (hasNeutralLossOrChemMod === true) {
+    filters.push({bool: {should: [{exists: {field: 'neutral_loss'}}, {exists: {field: 'chem_mod'}}]}});
+  } else if (hasNeutralLossOrChemMod === false) {
+    filters.push({bool: {must_not: [{exists: {field: 'neutral_loss'}}, {exists: {field: 'chem_mod'}}]}});
+  }
 
   if (ion)
     filters.push(constructTermOrTermsFilter('ion', ion));

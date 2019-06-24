@@ -153,6 +153,7 @@ input AnnotationFilter {
   colocalizationSamples: Boolean  # Requires DatasetFilter.datasetIds to be set to a specific dataset
   colocalizationAlgo: String
   offSample: Boolean
+  hasNeutralLossOrChemMod: Boolean @deprecated(reason: "Do not depend on this filter - it is intended to only be a temporary measure until a more flexible filter API that supports is-null/non-null queries is built")
 }
 
 input ColocalizationCoeffFilter {
