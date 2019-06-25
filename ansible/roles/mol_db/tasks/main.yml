@@ -46,7 +46,7 @@
     && conda install -c openbabel openbabel
 
 - import_tasks: import_mol_databases.yml
-  when: mol_db_import_databases
+  when: mol_db_import_databases | bool
 
 - import_tasks: import_mol_images.yml
-  when: mol_db_import_mol_images
+  when: mol_db_import_mol_images | bool
