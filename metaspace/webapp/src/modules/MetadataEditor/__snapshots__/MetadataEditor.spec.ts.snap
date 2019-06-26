@@ -41,12 +41,17 @@ Object {
     "adducts.0.adduct",
     "adducts.1.adduct",
   ],
+  "chemMods": Array [],
+  "decoySampleSize": null,
   "groupId": "123",
   "isPublic": true,
   "molDBs": Array [
     "molecularDatabases.1.name",
   ],
   "name": "dataset.name",
+  "neutralLosses": Array [],
+  "numPeaks": null,
+  "ppm": null,
   "principalInvestigator": Object {
     "email": "dataset.principalInvestigator.email",
     "name": "dataset.principalInvestigator.name",
@@ -269,8 +274,16 @@ exports[`MetadataEditor should match snapshot 1`] = `
                         <div class="el-form-item is-required el-form-item--medium">
                           <!---->
                           <div class="el-form-item__content">
-                            <div class="el-input el-input--medium">
-                              <input required="required" type="text" class="el-input__inner">
+                            <div class="el-input-number-overrides el-input-number el-input-number--medium is-without-controls">
+                              <!---->
+                              <!---->
+                              <div class="el-input el-input--medium">
+                                <!---->
+                                <input type="text" autocomplete="off" max="Infinity" min="-Infinity" class="el-input__inner" role="spinbutton" aria-valuemax="Infinity" aria-valuemin="-Infinity" aria-valuenow="200" aria-disabled="false">
+                                <!---->
+                                <!---->
+                                <!---->
+                              </div>
                             </div>
                             <div class="subfield-label">m/z</div>
                             <!---->
@@ -282,8 +295,16 @@ exports[`MetadataEditor should match snapshot 1`] = `
                         <div class="el-form-item is-required el-form-item--medium">
                           <!---->
                           <div class="el-form-item__content">
-                            <div class="el-input el-input--medium">
-                              <input required="required" type="text" class="el-input__inner">
+                            <div class="el-input-number-overrides el-input-number el-input-number--medium is-without-controls">
+                              <!---->
+                              <!---->
+                              <div class="el-input el-input--medium">
+                                <!---->
+                                <input type="text" autocomplete="off" max="Infinity" min="-Infinity" class="el-input__inner" role="spinbutton" aria-valuemax="Infinity" aria-valuemin="-Infinity" aria-valuenow="140000" aria-disabled="false">
+                                <!---->
+                                <!---->
+                                <!---->
+                              </div>
                             </div>
                             <div class="subfield-label">resolving power</div>
                             <!---->
@@ -308,8 +329,16 @@ exports[`MetadataEditor should match snapshot 1`] = `
                         <div class="el-form-item is-required el-form-item--medium">
                           <!---->
                           <div class="el-form-item__content">
-                            <div class="el-input el-input--medium">
-                              <input required="required" type="text" class="el-input__inner">
+                            <div class="el-input-number-overrides el-input-number el-input-number--medium is-without-controls">
+                              <!---->
+                              <!---->
+                              <div class="el-input el-input--medium">
+                                <!---->
+                                <input type="text" autocomplete="off" max="Infinity" min="-Infinity" class="el-input__inner" role="spinbutton" aria-valuemax="Infinity" aria-valuemin="-Infinity" aria-valuenow="0" aria-disabled="false">
+                                <!---->
+                                <!---->
+                                <!---->
+                              </div>
                             </div>
                             <div class="subfield-label">horizontal</div>
                             <!---->
@@ -321,8 +350,16 @@ exports[`MetadataEditor should match snapshot 1`] = `
                         <div class="el-form-item is-required el-form-item--medium">
                           <!---->
                           <div class="el-form-item__content">
-                            <div class="el-input el-input--medium">
-                              <input required="required" type="text" class="el-input__inner">
+                            <div class="el-input-number-overrides el-input-number el-input-number--medium is-without-controls" required="required">
+                              <!---->
+                              <!---->
+                              <div class="el-input el-input--medium">
+                                <!---->
+                                <input type="text" autocomplete="off" max="Infinity" min="-Infinity" class="el-input__inner" role="spinbutton" aria-valuemax="Infinity" aria-valuemin="-Infinity" aria-valuenow="0" aria-disabled="false">
+                                <!---->
+                                <!---->
+                                <!---->
+                              </div>
                             </div>
                             <div class="subfield-label">vertical</div>
                             <!---->
@@ -535,13 +572,13 @@ exports[`MetadataEditor should match snapshot 1`] = `
         </div>
       </div>
       <div class="metadata-section">
-        <div class="el-row">
-          <div class="el-col el-col-6">
-            <div class="metadata-section__title">Annotation settings</div>
-          </div>
-          <div class="el-col el-col-18">
-            <div class="el-row" style="margin-left: -4px; margin-right: -4px;">
-              <form class="el-form el-form--label-top">
+        <form class="el-form el-form--label-top">
+          <div class="el-row">
+            <div class="el-col el-col-6">
+              <div class="metadata-section__title">Annotation settings</div>
+            </div>
+            <div class="el-col el-col-18">
+              <div class="el-row" style="margin-left: -4px; margin-right: -4px;">
                 <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
                   <div class="el-form-item md-form-field el-form-item--medium">
                     <label class="el-form-item__label"><span class="field-label"><span>Metabolite database</span><span style="color: red;">*</span>
@@ -702,10 +739,12 @@ exports[`MetadataEditor should match snapshot 1`] = `
                     </div>
                   </div>
                 </div>
-              </form>
+              </div>
+              <!---->
+              <!---->
             </div>
           </div>
-        </div>
+        </form>
       </div>
       <div class="metadata-section">
         <form class="el-form el-form--label-top">

@@ -24,8 +24,8 @@
 </template>
 
 <script>
- import {FILTER_SPECIFICATIONS} from './filterSpecs';
- import {isFunction} from 'lodash-es';
+  import {FILTER_COMPONENT_PROPS, FILTER_SPECIFICATIONS} from './filterSpecs';
+ import {isFunction, pick} from 'lodash-es';
 
  const orderedFilterKeys = [
    'database',
@@ -156,7 +156,7 @@
          onDestroy: () => {
            this.$store.commit('removeFilter', filterKey);
          },
-         attrs,
+         attrs: pick(attrs, FILTER_COMPONENT_PROPS),
        };
      },
 

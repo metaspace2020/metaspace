@@ -96,6 +96,13 @@ export interface FilterSpecification {
   conflictsWithFilters?: FilterKey[];
 }
 
+/** Attrs to pass to the component that will render the filter */
+export const FILTER_COMPONENT_PROPS: (keyof FilterSpecification)[] = [
+  'name', 'helpComponent',
+  'removable', 'filterable', 'multiple',
+  'optionFormatter', 'valueFormatter', 'valueKey', 'allowEmptyString'
+];
+
 export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
   database: {
     type: SingleSelectFilter,
