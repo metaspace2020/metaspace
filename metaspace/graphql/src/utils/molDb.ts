@@ -1,11 +1,7 @@
 import fetch from 'node-fetch';
 import config from './config';
 
-export const deprecatedMolDBs = new Set([
-  'HMDB', 'ChEBI', 'LIPID_MAPS', 'SwissLipids', 'COTTON_HMDB', 'HMDB-v2.5', 'HMDB-v2.5-cotton',
-  // EMBL-dev1/2, M4I_* aren't actually deprecated. Their inclusion in this list is just for hiding them from normal users in the UI
-  'EMBL-dev1', 'EMBL-dev2', 'M4I_1',
-]);
+export const deprecatedMolDBs = new Set([...config.moldbs.deprecated, ...config.moldbs.custom]);
 
 export async function fetchMolecularDatabases() {
   const host = config.services.moldb_service_host,

@@ -22,6 +22,10 @@ export interface Config {
     adducts: string[];
     moldb_names: string[];
   };
+  moldbs: {
+    deprecated: string[];
+    custom: string[];
+  },
   img_upload: {
     iso_img_fs_path: string;
     categories: Record<ImageCategory, ImageCategoryConfig>;
