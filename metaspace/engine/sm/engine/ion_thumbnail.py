@@ -8,7 +8,7 @@ from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
 
 ISO_IMAGE_SEL = ("SELECT iso_image_ids[1] "
-                 "FROM iso_image_metrics m "
+                 "FROM annotation m "
                  "JOIN job j on j.id = m.job_id "
                  "WHERE ds_id = %s "
                  "ORDER BY fdr, msm "

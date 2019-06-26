@@ -1,29 +1,19 @@
-DROP TABLE IF EXISTS sum_formula CASCADE;
-CREATE TABLE sum_formula (
-	id 			serial NOT NULL,
-	db_id 	int,
-	sf 		  text,
-	CONSTRAINT sum_formula_id_pk PRIMARY KEY(id)
-);
-CREATE INDEX ind_sum_formulas_1 ON sum_formula (sf);
-CREATE INDEX ind_sum_formulas_4 ON sum_formula (db_id);
-
 DROP TABLE IF EXISTS dataset CASCADE;
 CREATE TABLE dataset (
-	id	        	text,
-	name					text,
+	id	        	text NOT NULL,
+	name			text,
 	input_path  	text,
-	upload_dt			timestamp,
-	metadata			json,
+	upload_dt		timestamp,
+	metadata		json,
 	config      	json,
-	status				text,
-	optical_image text,
-	transform			float[],
-	is_public     boolean not null default(true),
+	status			text,
+	optical_image   text,
+	transform		float[],
+	is_public       boolean not null default(true),
 	acq_geometry	json,
 	ion_img_storage_type text not null default('fs'),
-  thumbnail     text,
-  ion_thumbnail text,
+    thumbnail       text,
+    ion_thumbnail   text,
 	CONSTRAINT dataset_id_pk PRIMARY KEY(id)
 );
 CREATE INDEX ind_dataset_name ON dataset (name);
@@ -56,25 +46,31 @@ CREATE TABLE job (
       ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
-DROP TABLE IF EXISTS iso_image_metrics;
-CREATE TABLE iso_image_metrics (
-  id          serial NOT NULL,
-	job_id	    int,
-	db_id		    int,
-	sf		    	text,
-	adduct 	    text,
-	msm         real,
-	fdr         real,
-	stats 	    json,
-  iso_image_ids  text[],
-  off_sample  json,
-	CONSTRAINT iso_image_metrics_id_pk PRIMARY KEY(id),
-	CONSTRAINT iso_image_metrics_job_id_fk FOREIGN KEY (job_id)
+DROP TABLE IF EXISTS annotation;
+CREATE TABLE annotation (
+    id              serial NOT NULL,
+	job_id	        int NOT NULL,
+	formula	    	text NOT NULL,
+	chem_mod        text,
+	neutral_loss    text,
+	adduct 	        text NOT NULL,
+	msm             real NOT NULL,
+	fdr             real NOT NULL,
+	stats 	        json NOT NULL,
+    iso_image_ids   text[] NOT NULL,
+    off_sample      json,
+    CONSTRAINT annotation_id_pk PRIMARY KEY(id),
+    CONSTRAINT annotation_job_id_fk FOREIGN KEY (job_id)
       REFERENCES job (id) MATCH SIMPLE
-      ON UPDATE NO ACTION ON DELETE CASCADE
+      ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT annotation_annotation_uindex
+        UNIQUE (job_id, formula, chem_mod, neutral_loss, adduct)
 )
 WITH (
   autovacuum_enabled=true,
   autovacuum_vacuum_threshold=5000,
   autovacuum_analyze_threshold=5000
 );
+
+CREATE INDEX annotation_job_id_index
+    ON annotation (job_id);

@@ -30,8 +30,8 @@ SUCCESSFUL_COLOC_JOB_SEL = ('SELECT mol_db FROM graphql.coloc_job '
                             'GROUP BY mol_db '
                             'HAVING not bool_or(error IS NOT NULL)')
 
-ANNOTATIONS_SEL = ('SELECT iso_image_ids[1], sf, adduct, fdr '
-                   'FROM iso_image_metrics m '
+ANNOTATIONS_SEL = ('SELECT iso_image_ids[1], formula, adduct, fdr '
+                   'FROM annotation m '
                    'WHERE m.job_id = ('
                    '    SELECT id FROM job j '
                    '    WHERE j.ds_id = %s AND j.db_id = %s '

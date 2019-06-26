@@ -13,7 +13,7 @@ from sm.engine.off_sample_wrapper import classify_dataset_ion_images
 MISSING_OFF_SAMPLE_SEL = """
 SELECT DISTINCT j.ds_id
 FROM job j
-JOIN iso_image_metrics iim ON j.id = iim.job_id
+JOIN annotation iim ON j.id = iim.job_id
 WHERE j.status = 'FINISHED'
   AND iim.off_sample IS NULL
 ORDER BY j.ds_id DESC;

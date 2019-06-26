@@ -41,8 +41,7 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
             }]
         elif sql == ANNOTATIONS_SEL:
             return [{
-                'sf': 'H2O',
-                'sf_adduct': 'H2O+H',
+                'formula': 'H2O',
                 'chaos': 1,
                 'image_corr': 1,
                 'pattern_match': 1,
@@ -51,13 +50,14 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
                 'max_iso_ints': 100,
                 'msm': 1,
                 'adduct': '+H',
+                'neutral_loss': '-H',
+                'chem_mod': '-H+O',
                 'job_id': 1,
                 'fdr': 0.1,
                 'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
                 'polarity': '+'
             }, {
-                'sf': 'Au',
-                'sf_adduct': 'Au+H',
+                'formula': 'Au',
                 'chaos': 1,
                 'image_corr': 1,
                 'pattern_match': 1,
@@ -66,6 +66,8 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
                 'max_iso_ints': 100,
                 'msm': 1,
                 'adduct': '+H',
+                'neutral_loss': None,
+                'chem_mod': None,
                 'job_id': 1,
                 'fdr': 0.05,
                 'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
@@ -87,6 +89,7 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
     isocalc_mock = MagicMock(IsocalcWrapper)
     isocalc_mock.centroids = lambda formula: {
         'H2O+H': ([100., 200.], None),
+        'H2O-H+O-H+H': ([100., 200., 300.], None),
         'Au+H': ([10., 20.], None)
     }[formula]
 
@@ -110,25 +113,27 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
         'ds_submitter': 'user_id',
         'ds_group': 'group_id',
     }
-    ann_1_d = es_dsl_search.filter('term', sf='H2O').execute().to_dict()['hits']['hits'][0]['_source']
+    ann_1_d = es_dsl_search.filter('term', formula='H2O').execute().to_dict()['hits']['hits'][0]['_source']
     assert ann_1_d == {
-        'pattern_match': 1, 'image_corr': 1, 'fdr': 0.1, 'chaos': 1, 'sf': 'H2O', 'min_iso_ints': 0,
-        'msm': 1, 'sf_adduct': 'H2O+H', 'total_iso_ints': 100, 'centroid_mzs': [100., 200.],
+        'pattern_match': 1, 'image_corr': 1, 'fdr': 0.1, 'chaos': 1, 'formula': 'H2O', 'min_iso_ints': 0,
+        'msm': 1, 'ion': 'H2O-H+O-H+H+', 'total_iso_ints': 100, 'centroid_mzs': [100., 200., 300.],
         'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'], 'polarity': '+', 'job_id': 1, 'max_iso_ints': 100,
-        'adduct': '+H', 'ds_name': 'ds_name', 'annotation_counts': [], 'db_version': '2017', 'ds_status': 'ds_status',
-        'ion_add_pol': '[M+H]+', 'comp_names': ['mol_name'], 'db_name': 'db_name', 'mz': 100., 'ds_meta': {},
+        'adduct': '+H', 'neutral_loss': '-H', 'chem_mod': '-H+O',
+        'ds_name': 'ds_name', 'annotation_counts': [], 'db_version': '2017', 'ds_status': 'ds_status',
+        'comp_names': ['mol_name'], 'db_name': 'db_name', 'mz': 100., 'ds_meta': {},
         'comp_ids': ['mol_id'], 'ds_config': 'ds_config', 'ds_input_path': 'ds_input_path', 'ds_id': ds_id,
         'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished,
         'ds_ion_img_storage': 'fs', 'ds_is_public': True,
         'ds_submitter': 'user_id', 'ds_group': 'group_id',
     }
-    ann_2_d = es_dsl_search.filter('term', sf='Au').execute().to_dict()['hits']['hits'][0]['_source']
+    ann_2_d = es_dsl_search.filter('term', formula='Au').execute().to_dict()['hits']['hits'][0]['_source']
     assert ann_2_d == {
-        'pattern_match': 1, 'image_corr': 1, 'fdr': 0.05, 'chaos': 1, 'sf': 'Au', 'min_iso_ints': 0,
-        'msm': 1, 'sf_adduct': 'Au+H', 'total_iso_ints': 100, 'centroid_mzs': [10., 20.],
+        'pattern_match': 1, 'image_corr': 1, 'fdr': 0.05, 'chaos': 1, 'formula': 'Au', 'min_iso_ints': 0,
+        'msm': 1, 'ion': 'Au+H+', 'total_iso_ints': 100, 'centroid_mzs': [10., 20.],
         'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'], 'polarity': '+', 'job_id': 1, 'max_iso_ints': 100,
-        'adduct': '+H',  'ds_name': 'ds_name', 'annotation_counts': [], 'db_version': '2017', 'ds_status': 'ds_status',
-        'ion_add_pol': '[M+H]+', 'comp_names': ['mol_name'], 'db_name': 'db_name', 'mz': 10., 'ds_meta': {},
+        'adduct': '+H', 'neutral_loss': None, 'chem_mod': None,
+        'ds_name': 'ds_name', 'annotation_counts': [], 'db_version': '2017', 'ds_status': 'ds_status',
+        'comp_names': ['mol_name'], 'db_name': 'db_name', 'mz': 10., 'ds_meta': {},
         'comp_ids': ['mol_id'], 'ds_config': 'ds_config', 'ds_input_path': 'ds_input_path', 'ds_id': ds_id,
         'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished,
         'ds_ion_img_storage': 'fs', 'ds_is_public': True,

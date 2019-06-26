@@ -1,14 +1,12 @@
 import json
 from collections import OrderedDict
-import numpy as np
 import logging
-import requests
 
 from sm.engine.png_generator import PngGenerator
 
 logger = logging.getLogger('engine')
-METRICS_INS = ('INSERT INTO iso_image_metrics (job_id, db_id, sf, adduct, msm, fdr, stats, iso_image_ids) '
-               'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)')
+METRICS_INS = ('INSERT INTO annotation (job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids) '
+               'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)')
 
 
 def post_images_to_image_store(formula_images_rdd, alpha_channel, img_store, img_store_type, n_peaks):
@@ -31,25 +29,22 @@ class SearchResults(object):
 
     Args
     ----------
-    sf_db_id : int
-        Formula database id
     job_id : int
         Search job id
     metric_names: list
         Metric names
     """
-    def __init__(self, sf_db_id, job_id, metric_names, n_peaks):
-        self.sf_db_id = sf_db_id
+    def __init__(self, job_id, metric_names, n_peaks):
         self.job_id = job_id
         self.metric_names = metric_names
         self.n_peaks = n_peaks
 
-    def _metrics_table_row_gen(self, job_id, db_id, metr_df, formula_img_ids):
+    def _metrics_table_row_gen(self, job_id, metr_df, formula_img_ids):
         for ind, r in metr_df.iterrows():
             m = OrderedDict((name, r[name]) for name in self.metric_names)
             metr_json = json.dumps(m)
             image_ids = formula_img_ids[r.formula_i]['iso_image_ids']
-            yield (job_id, db_id, r.formula, r.adduct,
+            yield (job_id, r.formula, r.chem_mod, r.neutral_loss, r.adduct,
                    float(r.msm), float(r.fdr), metr_json,
                    image_ids)
 
@@ -57,7 +52,7 @@ class SearchResults(object):
         """ Store formula image metrics and image ids in the database """
         logger.info('Storing iso image metrics')
 
-        rows = list(self._metrics_table_row_gen(self.job_id, self.sf_db_id,
+        rows = list(self._metrics_table_row_gen(self.job_id,
                                                 ion_metrics_df.reset_index(),
                                                 ion_img_ids))
         db.insert(METRICS_INS, rows)

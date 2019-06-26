@@ -14,12 +14,12 @@ from sm.engine.mol_db import MolDBServiceWrapper
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import proj_root, SMConfig, create_ds_from_files, init_loggers
 
-SEARCH_RES_SELECT = ("select m.sf, m.adduct, m.stats "
-                     "from iso_image_metrics m "
+SEARCH_RES_SELECT = ("select m.formula, m.adduct, m.stats "
+                     "from annotation m "
                      "join job j on j.id = m.job_id "
                      "join dataset ds on ds.id = j.ds_id "
-                     "where m.db_id = %s AND ds.name = %s "
-                     "ORDER BY sf, adduct ")
+                     "where j.db_id = %s AND ds.name = %s "
+                     "ORDER BY formula, adduct ")
 
 
 class SciTester(object):
@@ -58,8 +58,8 @@ class SciTester(object):
     def save_sci_test_report(self):
         with open(self.base_search_res_path, 'w') as f:
             f.write('\t'.join(['formula', 'adduct'] + self.metrics) + '\n')
-            for (sf, adduct), metrics in sorted(self.fetch_search_res().items()):
-                f.write('\t'.join([sf, adduct] + metrics.astype(str).tolist()) + '\n')
+            for (formula, adduct), metrics in sorted(self.fetch_search_res().items()):
+                f.write('\t'.join([formula, adduct] + metrics.astype(str).tolist()) + '\n')
 
         print('Successfully saved sample dataset search report')
 

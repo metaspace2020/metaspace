@@ -108,7 +108,7 @@ class AnnotationJob(object):
 
                 for job_id, (moldb, moldb_ion_metrics_df, moldb_ion_images_rdd) in zip(job_ids, search_results_it):
                     # Save results for each moldb
-                    search_results = SearchResults(moldb.id, job_id, METRICS.keys(), n_peaks)
+                    search_results = SearchResults(job_id, METRICS.keys(), n_peaks)
                     img_store_type = self._ds.get_ion_img_storage_type(self._db)
                     coordinates = [coo[:2] for coo in imzml_parser.coordinates]
                     sample_area_mask = make_sample_area_mask(coordinates)

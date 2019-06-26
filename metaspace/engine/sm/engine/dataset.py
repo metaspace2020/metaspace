@@ -193,7 +193,7 @@ def _get_isotope_generation_from_metadata(metadata):
     else: params = RESOL_POWER_PARAMS['1000K']
 
     default_adducts = sm_config['ds_config_defaults']['adducts'][polarity_sign]
-    charge = {'Positive': 1, 'Negative': -1}[polarity]
+    charge = {'+': 1, '-': -1}[polarity_sign]
     isocalc_sigma = float(f"{params['sigma']:f}")
 
     return default_adducts, charge, isocalc_sigma
