@@ -17,8 +17,6 @@ const ADDUCT_POLARITY: Record<string, '+'|'-'> = {};
 function formatAdduct (adduct: string) {
   if (adduct === null) {
     return '';
-  } else if (adduct === '') {
-    return '[M]⁺'
   } else {
     return renderMolFormula('M' + adduct + ADDUCT_POLARITY[adduct])
   }

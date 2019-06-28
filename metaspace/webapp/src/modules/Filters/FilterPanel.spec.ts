@@ -42,7 +42,6 @@ describe('FilterPanel', () => {
         adductSuggestions: () => [
           {"adduct": "-H", "charge": -1},
           {"adduct": "+Cl", "charge": -1},
-          {"adduct": "", "charge": 1},
           {"adduct": "+H", "charge": 1},
           {"adduct": "+Na", "charge": 1},
           {"adduct": "+K", "charge": 1},
