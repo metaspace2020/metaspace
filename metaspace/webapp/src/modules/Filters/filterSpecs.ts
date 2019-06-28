@@ -12,13 +12,13 @@ import BooleanFilter from './filter-components/BooleanFilter.vue';
 import config from '../../config';
 
 // Filled during the initialization of adduct filter below
-const ADDUCT_POLARITY: Record<string, string> = {};
+const ADDUCT_POLARITY: Record<string, '+'|'-'> = {};
 
 function formatAdduct (adduct: string) {
-  if (adduct === null)
+  if (adduct === null) {
     return '';
-  else {
-    return renderMolFormula('M', adduct, ADDUCT_POLARITY[adduct])
+  } else {
+    return renderMolFormula('M' + adduct + ADDUCT_POLARITY[adduct])
   }
 }
 
@@ -88,10 +88,18 @@ export interface FilterSpecification {
   optionFormatter?(value: any): string;
   valueFormatter?(value: any): string;
   valueKey?: string;
+  allowEmptyString?: boolean;
   sortOrder?: number;
   dependsOnFilters?: FilterKey[];
   conflictsWithFilters?: FilterKey[];
 }
+
+/** Attrs to pass to the component that will render the filter */
+export const FILTER_COMPONENT_PROPS: (keyof FilterSpecification)[] = [
+  'name', 'helpComponent',
+  'removable', 'filterable', 'multiple',
+  'optionFormatter', 'valueFormatter', 'valueKey', 'allowEmptyString'
+];
 
 export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
   database: {
@@ -143,11 +151,12 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     initialValue: undefined,
     options: lists => lists.adducts.map(d => {
       const {adduct, charge} = d;
-      ADDUCT_POLARITY[adduct] = charge > 0 ? 'POSITIVE' : 'NEGATIVE';
+      ADDUCT_POLARITY[adduct] = charge > 0 ? '+' : '-';
       return adduct;
     }),
     optionFormatter: formatAdduct,
-    valueFormatter: formatAdduct
+    valueFormatter: formatAdduct,
+    allowEmptyString: true
   },
 
   mz: {

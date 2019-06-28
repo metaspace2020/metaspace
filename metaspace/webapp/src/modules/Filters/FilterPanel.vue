@@ -14,19 +14,9 @@
                :data-test-key="f.filterKey"
                :is="f.type"
                :filterKey="f.filterKey"
-               :name="f.name"
-               :helpComponent="f.helpComponent"
-               :options="f.options"
-               :labels="f.labels"
-               :clearable="f.clearable"
-               :removable="f.removable"
-               :filterable="f.filterable"
-               :multiple="f.multiple"
-               :optionFormatter="f.optionFormatter"
                :value="f.value"
-               :valueFormatter="f.valueFormatter"
-               :valueKey="f.valueKey"
-               :width="f.width"
+               :options="f.options"
+               v-bind="f.attrs"
                @change="f.onChange"
                @destroy="f.onDestroy">
     </component>
@@ -34,8 +24,8 @@
 </template>
 
 <script>
- import {FILTER_SPECIFICATIONS} from './filterSpecs';
- import {isFunction} from 'lodash-es';
+  import {FILTER_COMPONENT_PROPS, FILTER_SPECIFICATIONS} from './filterSpecs';
+ import {isFunction, pick} from 'lodash-es';
 
  const orderedFilterKeys = [
    'database',
@@ -152,22 +142,22 @@
 
      makeFilter(filterKey) {
        const filterSpec = FILTER_SPECIFICATIONS[filterKey];
-       let self = this;
-       const behaviour = {
+       const {type, ...attrs} = filterSpec;
+       return {
          filterKey,
-         value: self.filter[filterKey],
+         type,
+         value: this.filter[filterKey],
          options: this.getFilterOptions(filterSpec, filterKey),
          // passing the value of undefined destroys the tag element
-         onChange(val) {
-           self.$store.commit('updateFilter',
-                              Object.assign(self.filter, {[filterKey]: val}));
+         onChange: (val) => {
+           this.$store.commit('updateFilter',
+                              Object.assign(this.filter, {[filterKey]: val}));
          },
-         onDestroy() {
-           self.$store.commit('removeFilter', filterKey);
-         }
+         onDestroy: () => {
+           this.$store.commit('removeFilter', filterKey);
+         },
+         attrs: pick(attrs, FILTER_COMPONENT_PROPS),
        };
-       let result = Object.assign({}, filterSpec, behaviour);
-       return result;
      },
 
      addFilter(key) {
@@ -213,10 +203,6 @@
 
  .el-select-dropdown__wrap {
    /* so that no scrolling is necessary */
-   max-height: 480px;
- }
-
- .el-select-dropdown__wrap {
     max-height: 500px;
  }
 </style>

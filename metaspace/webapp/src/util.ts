@@ -3,21 +3,24 @@ import sanitizeHtml from 'sanitize-html';
 
 const fuConfig = config.fineUploader;
 
-function prettifySign(str: string): string {
-  return str.replace('-', ' – ').replace('+', ' + ');
-}
-
-interface StringDictionary {
-  [x: string]: string
-}
-
 type JWT = string;
 
-function renderMolFormula(sumFormula: string, adduct: string, polarity: string): string {
-  let result = `[${(sumFormula + adduct).replace(/(\d+)/g, "<sub>$1</sub>")}]`;
-  const shorten: StringDictionary = {'POSITIVE': '⁺', 'NEGATIVE': '¯'};
-  result = prettifySign(result) + shorten[polarity];
-  return result;
+function renderMolFormula(ion: string): string {
+  let polaritySign, formula;
+  if (ion.endsWith('-') || ion.endsWith('+')) {
+    polaritySign = ion[ion.length-1] === '-' ? '¯' : '⁺';
+    formula = ion.substr(0, ion.length - 1);
+  } else {
+    polaritySign = '';
+    formula = ion;
+  }
+  formula = formula.replace(/-/g, ' – ').replace(/\+/g, ' + ');
+
+  return `[${formula}]${polaritySign}`;
+}
+
+function renderMolFormulaHtml(ion: string): string {
+  return renderMolFormula(ion).replace(/(\d+)/g, "<sub>$1</sub>");
 }
 
 function checkStatus(response: Response): Response {
@@ -112,7 +115,7 @@ function sanitizeIt(descriptionText: string) {
 
 export {
   renderMolFormula,
-  prettifySign,
+  renderMolFormulaHtml,
   getJWT,
   decodePayload,
   pathFromUUID,

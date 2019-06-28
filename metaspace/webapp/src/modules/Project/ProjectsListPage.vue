@@ -165,7 +165,7 @@
       await Promise.all([
         this.$apollo.queries.allProjects.refetch(),
         this.$apollo.queries.myProjects.refetch(),
-        this.$apollo.queries.projectsCount.refetch(),
+        this.$apollo.queries.allProjectsCount.refetch(),
       ])
     }
 

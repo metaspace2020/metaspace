@@ -29,6 +29,7 @@ describe('AnnotationTable', () => {
     id: "2019-02-12_15h55m06s_HMDB-v4_2018-04-09_C19H18N2O7S2_minus_H",
     sumFormula: "C19H18N2O7S2",
     adduct: "-H",
+    ion: 'C19H18N2O7S2-H+',
     msmScore: 0.657486,
     rhoSpatial: 0.686362,
     rhoSpectral: 0.959122,

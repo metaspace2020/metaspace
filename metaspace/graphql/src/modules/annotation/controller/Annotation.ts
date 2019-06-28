@@ -22,7 +22,7 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
   },
 
   sumFormula(hit) {
-    return hit._source.sf;
+    return hit._source.formula;
   },
 
   possibleCompounds(hit) {
@@ -60,11 +60,11 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
 
   adduct: (hit) => hit._source.adduct,
 
-  ion: (hit) => {
-    const polarity = _.get(hit._source.ds_meta, 'MS_Analysis.Polarity');
-    const sign = polarity === 'Negative' ? '-' : '+';
-    return hit._source.sf_adduct + sign;
-  },
+  neutralLoss: (hit) => hit._source.neutral_loss,
+
+  chemMod: (hit) => hit._source.chem_mod,
+
+  ion: (hit) => hit._source.ion,
 
   database: (hit) => hit._source.db_name,
 
@@ -93,14 +93,15 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
   },
 
   peakChartData(hit) {
-    const {sf_adduct, ds_meta, ds_config, ds_id, mz} = hit._source;
+    const {ion, ds_meta, ds_config, ds_id, mz} = hit._source;
     const msInfo = ds_meta.MS_Analysis;
-    const host = config.services.moldb_service_host,
-      pol = msInfo.Polarity.toLowerCase() == 'positive' ? '+1' : '-1';
+    const host = config.services.moldb_service_host;
+    const pol = msInfo.Polarity.toLowerCase() == 'positive' ? '+1' : '-1';
 
-    let rp = mz / (ds_config.isotope_generation.isocalc_sigma * 2.35482),
-      ppm = ds_config.image_generation.ppm,
-      theorData = fetch(`http://${host}/v1/isotopic_pattern/${sf_adduct}/tof/${rp}/400/${pol}`);
+    const rp = mz / (ds_config.isotope_generation.isocalc_sigma * 2.35482);
+    const ppm = ds_config.image_generation.ppm;
+    const ion_without_pol = ion.substr(0, ion.length-1);
+    const theorData = fetch(`http://${host}/v1/isotopic_pattern/${ion_without_pol}/tof/${rp}/400/${pol}`);
 
     return theorData.then(res => res.json()).then(json => {
       let {data} = json;

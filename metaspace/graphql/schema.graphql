@@ -106,6 +106,8 @@ type Annotation {
   dataset: Dataset!
   sumFormula: String!
   adduct: String!
+  neutralLoss: String
+  chemMod: String
   ion: String!
   database: String!
   mz: Float!
@@ -147,10 +149,11 @@ input AnnotationFilter {
   fdrLevel: Float
   sumFormula: String
   adduct: String
-  colocalizedWith: String         # Should be an ion string (sf+adduct+polarity). Requires DatasetFilter.datasetIds to be set to a specific dataset
+  colocalizedWith: String         # Should be an ion string (formula+adduct+polarity). Requires DatasetFilter.datasetIds to be set to a specific dataset
   colocalizationSamples: Boolean  # Requires DatasetFilter.datasetIds to be set to a specific dataset
   colocalizationAlgo: String
   offSample: Boolean
+  hasNeutralLossOrChemMod: Boolean @deprecated(reason: "Do not depend on this filter - it is intended to only be a temporary measure until a more flexible filter API that supports is-null/non-null queries is built")
 }
 
 input ColocalizationCoeffFilter {

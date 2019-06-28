@@ -5,8 +5,8 @@
         <custom-number-input
           @input="val => onInput('mz', val)"
           :value="value.mz"
-          isInteger
-        ></custom-number-input>
+          :precision="0"
+        />
         <div class="subfield-label">m/z</div>
         <span class="error-msg" v-if="error && error.mz">{{ error.mz }}</span>
       </el-form-item>
@@ -17,8 +17,8 @@
         <custom-number-input
           @input="val => onInput('Resolving_Power', val)"
           :value="value.Resolving_Power"
-          isInteger
-        ></custom-number-input>
+          :precision="0"
+        />
         <div class="subfield-label">resolving power</div>
         <span class="error-msg" v-if="error && error.Resolving_Power">{{ error.Resolving_Power }}</span>
       </el-form-item>

@@ -10,9 +10,9 @@ Object {
     "colocalizationSamples": true,
     "database": "HMDB-v4",
     "fdrLevel": 0.1,
-    "sfAdduct": Array [
-      "H2O+H",
-      "H3O+H",
+    "ion": Array [
+      "H2O+H+",
+      "H3O+H+",
     ],
   },
 }
@@ -28,10 +28,10 @@ Object {
     "colocalizedWith": "H2O+H+",
     "database": "HMDB-v4",
     "fdrLevel": 0.1,
-    "sfAdduct": Array [
-      "H2O+H",
-      "H3O+H",
-      "H4O+H",
+    "ion": Array [
+      "H2O+H+",
+      "H3O+H+",
+      "H4O+H+",
     ],
   },
   "limit": 1000,

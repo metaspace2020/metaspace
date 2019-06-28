@@ -5,6 +5,7 @@ export const editDatasetFragment =
   gql`fragment EditDatasetFragment on Dataset {
     id
     metadataJson
+    configJson
     isPublic
     group {
       id

@@ -31,6 +31,8 @@ interface Features {
   new_feature_popups: boolean;
   optical_transform: boolean;
   all_dbs: boolean;
+  neutral_loss: boolean;
+  advanced_ds_config: boolean;
 }
 
 interface ClientConfig {
@@ -63,6 +65,8 @@ const defaultConfig: ClientConfig = {
     new_feature_popups: true,
     optical_transform: true,
     all_dbs: false,
+    neutral_loss: false,
+    advanced_ds_config: false,
   }
 };
 

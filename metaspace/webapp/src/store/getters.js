@@ -1,5 +1,6 @@
 import {mzFilterPrecision} from '../util';
 import {decodeParams, decodeSettings} from '../modules/Filters';
+import config from '../config';
 
 export default {
   filter(state) {
@@ -28,6 +29,10 @@ export default {
       colocalizationSamples: filter.colocalizationSamples,
       offSample: filter.offSample == null ? undefined : !!filter.offSample,
     };
+
+    if (!config.features.neutral_loss && !config.features.advanced_ds_config) {
+      f.hasNeutralLossOrChemMod = false;
+    }
 
     if (filter.minMSM)
       f.msmScoreFilter = {min: filter.minMSM, max: 1.0};

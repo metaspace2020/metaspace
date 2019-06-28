@@ -24,7 +24,6 @@ describe('annotation/queryFilters applyQueryFilters', () => {
   afterEach(onAfterEach);
 
   let ions: Ion[];
-  let ionSfAdducts: string[];
   let job: ColocJob;
 
   beforeEach(async () => {
@@ -37,7 +36,6 @@ describe('annotation/queryFilters applyQueryFilters', () => {
       charge: 1
     })));
     await testEntityManager.insert(Ion, ions);
-    ionSfAdducts = ions.map(ion => ion.formula + ion.adduct);
 
     job = testEntityManager.create(ColocJob, {
       datasetId: 'datasetId',
@@ -75,7 +73,7 @@ describe('annotation/queryFilters applyQueryFilters', () => {
       offset: 0,
       limit: 1000,
       filter: {
-        sfAdduct: ionSfAdducts.slice(1,4),
+        ion: ions.slice(1,4).map(ion => ion.ion),
       }
     });
   });
@@ -96,7 +94,7 @@ describe('annotation/queryFilters applyQueryFilters', () => {
     expect(args).toMatchSnapshot();
     expect(args).toMatchObject({
       filter: {
-        sfAdduct: ionSfAdducts.slice(1,3)
+        ion: ions.slice(1,3).map(ion => ion.ion)
       }
     });
   });
@@ -113,17 +111,17 @@ describe('annotation/queryFilters applyQueryFilters', () => {
     };
     const {args, postprocess} = await applyQueryFilters(anonContext, argsWithColocWith);
     const annotations: DeepPartial<ESAnnotation>[] = [
-      {_source: {sf_adduct: ionSfAdducts[2]}},
-      {_source: {sf_adduct: ionSfAdducts[3]}},
-      {_source: {sf_adduct: ionSfAdducts[1]}},
+      {_source: {ion: ions[2].ion}},
+      {_source: {ion: ions[3].ion}},
+      {_source: {ion: ions[1].ion}},
     ];
 
     const result = postprocess!(annotations as ESAnnotation[]);
 
     expect(result).toMatchObject([
-      {_source: {sf_adduct: ionSfAdducts[1]}, _isColocReference: true},
-      {_source: {sf_adduct: ionSfAdducts[2]}, _isColocReference: false},
-      {_source: {sf_adduct: ionSfAdducts[3]}, _isColocReference: false},
+      {_source: {ion: ions[1].ion}, _isColocReference: true},
+      {_source: {ion: ions[2].ion}, _isColocReference: false},
+      {_source: {ion: ions[3].ion}, _isColocReference: false},
     ]);
     expect(await result[0].getColocalizationCoeff(ions[1].ion, job.algorithm, job.molDb!, job.fdr)).toEqual(1);
     expect(await result[1].getColocalizationCoeff(ions[1].ion, job.algorithm, job.molDb!, job.fdr)).toEqual(0.9);
