@@ -7,9 +7,11 @@ import {Dataset as DatasetModel} from '../dataset/model';
 import {Group, UserGroup, UserGroupRole} from '../../binding';
 import {Context, ContextUser} from '../../context';
 import {Scope, ScopeRoleOptions, UserGroupSource} from '../../bindingTypes';
-import {findUserByEmail, logger, LooselyCompatible} from '../../utils';
+import {findUserByEmail, LooselyCompatible} from '../../utils';
 import {sendInvitationEmail} from '../auth';
+import {sendAcceptanceEmail, sentGroupOrProjectInvitationEmail, sendRequestAccessEmail} from '../groupOrProject/email';
 import config from '../../utils/config';
+import logger from '../../utils/logger';
 import {createInactiveUser} from '../auth/operation';
 import {smAPIUpdateDataset} from '../../utils/smAPI';
 import {getDatasetForEditing} from '../dataset/operation/getDatasetForEditing';
@@ -271,7 +273,8 @@ export const Resolvers = {
     async requestAccessToGroup(_: any, {groupId}: any, {getUserIdOrFail, entityManager}: Context): Promise<UserGroupModel> {
       const userId = getUserIdOrFail();
       logger.info(`User '${userId}' requesting access to '${groupId}' group...`);
-      await entityManager.getRepository(GroupModel).findOneOrFail(groupId);
+      const user = await entityManager.getRepository(UserModel).findOneOrFail(userId);
+      const group = await entityManager.getRepository(GroupModel).findOneOrFail(groupId);
 
       const userGroupRepo = entityManager.getRepository(UserGroupModel);
       let userGroup = await userGroupRepo.findOne({ where: { groupId, userId } });
@@ -284,6 +287,12 @@ export const Resolvers = {
           primary: true
         });
         await userGroupRepo.save(userGroup);
+
+        const managers = await entityManager.getRepository(UserGroupModel)
+          .find({where: {groupId, role: UserGroupRoleOptions.GROUP_ADMIN}, relations: ['user'] });
+        managers.forEach(manager => {
+          sendRequestAccessEmail('group', manager.user, user, group);
+        });
       }
 
       logger.info(`User '${userId}' requested access to '${groupId}' group`);
@@ -297,8 +306,8 @@ export const Resolvers = {
       await assertCanEditGroup(entityManager, user, groupId);
       logger.info(`User '${user!.id}' accepting request from '${userId}' user to join '${groupId}' group...`);
 
-      await entityManager.getRepository(UserModel).findOneOrFail(userId);
-      await entityManager.getRepository(GroupModel).findOneOrFail(groupId);
+      const userModel = await entityManager.getRepository(UserModel).findOneOrFail(userId);
+      const group = await entityManager.getRepository(GroupModel).findOneOrFail(groupId);
 
       const userGroupRepo = entityManager.getRepository(UserGroupModel);
 
@@ -312,6 +321,8 @@ export const Resolvers = {
           groupId,
           role: UserGroupRoleOptions.MEMBER
         });
+
+        sendAcceptanceEmail('group', userModel, group);
       }
 
       await updateUserGroupDatasets(entityManager, userId, groupId, true);
@@ -326,15 +337,16 @@ export const Resolvers = {
       await assertCanEditGroup(entityManager, user, groupId);
       logger.info(`User '${user!.id}' inviting ${email} to join '${groupId}' group...`);
 
+      const currentUser = await entityManager.getRepository(UserModel).findOneOrFail(getUserIdOrFail());
       let invUser = await findUserByEmail(entityManager, email, 'email')
         || await findUserByEmail(entityManager, email, 'not_verified_email');
+      const isNewUser = !invUser;
       if (!invUser) {
         invUser = await createInactiveUser(email);
-        const currentUser = await entityManager.getRepository(UserModel).findOneOrFail(getUserIdOrFail());
         const link = `${config.web_public_url}/account/create-account`;
         sendInvitationEmail(email, currentUser.name || '', link);
       }
-      await entityManager.getRepository(GroupModel).findOneOrFail(groupId);
+      const group = await entityManager.getRepository(GroupModel).findOneOrFail(groupId);
 
       const userGroupRepo = entityManager.getRepository(UserGroupModel);
 
@@ -353,9 +365,12 @@ export const Resolvers = {
           role: UserGroupRoleOptions.INVITED,
         }) as UserGroupModel;
         logger.info(`'${invUserGroup.userId}' user was invited to '${groupId}' group`);
+
+        if (!isNewUser) {
+          sentGroupOrProjectInvitationEmail('group', invUser, currentUser, group);
+        }
       }
 
-      logger.info(`User ${email} was invited to '${groupId}' group`);
       return await userGroupRepo.findOneOrFail({
         where: { userId: invUser.id, groupId },
         relations: ['user', 'group']

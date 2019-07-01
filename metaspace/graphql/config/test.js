@@ -63,6 +63,7 @@ config.slack.channel = "";
 
 config.jwt = {};
 config.jwt.secret = "";
+config.jwt.algorithm = "HS256";
 
 config.aws = {
   aws_access_key_id: "",

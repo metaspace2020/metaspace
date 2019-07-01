@@ -2,7 +2,7 @@ import {Brackets, EntityManager, EntityRepository} from 'typeorm';
 import {Context, ContextUser} from '../../context';
 import {Project as ProjectModel, UserProjectRoleOptions as UPRO} from './model';
 import {ProjectSource} from '../../bindingTypes';
-import _ = require('lodash');
+import * as _ from 'lodash';
 import * as DataLoader from 'dataloader';
 
 type SortBy = 'name' | 'popularity';

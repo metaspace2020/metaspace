@@ -1,5 +1,5 @@
 import logging
-from collections import defaultdict
+from math import ceil
 from shutil import rmtree
 import pandas as pd
 import numpy as np
@@ -57,10 +57,14 @@ def define_ds_segments(sample_mzs, total_mz_n, mz_precision, ds_segm_size_mb=5):
 
 
 def segment_spectra_chunk(sp_mz_int_buf, mz_segments, ds_segments_path):
-    for segm_i, (l, r) in mz_segments:
-        segm_start, segm_end = np.searchsorted(sp_mz_int_buf[:, 1], (l, r))  # mz expected to be in column 1
+    segm_left_bounds, segm_right_bounds = zip(*mz_segments)
+
+    segm_starts = np.searchsorted(sp_mz_int_buf[:, 1], segm_left_bounds)  # mz expected to be in column 1
+    segm_ends = np.searchsorted(sp_mz_int_buf[:, 1], segm_right_bounds)
+
+    for segm_i, (start, end) in enumerate(zip(segm_starts, segm_ends)):
         pd.to_msgpack(ds_segments_path / f'ds_segm_{segm_i:04}.msgpack',
-                      sp_mz_int_buf[segm_start:segm_end],
+                      sp_mz_int_buf[start:end],
                       append=True)
 
 
@@ -89,18 +93,18 @@ def segment_spectra(imzml_parser, coordinates, chunk_sp_n, ds_segments, ds_segme
     mz_segments = ds_segments.copy()
     mz_segments[0, 0] = 0
     mz_segments[-1, 1] = MAX_MZ_VALUE
-    mz_segments = list(enumerate(mz_segments))
 
     sp_id_to_idx = get_pixel_indices(coordinates)
 
-    coord_chunk_it = chunk_list(coordinates, chunk_sp_n)
+    coord_chunks = list(chunk_list(coordinates, chunk_sp_n))
+    chunk_n = len(coord_chunks)
 
     sp_i = 0
     sp_inds_list, mzs_list, ints_list = [], [], []
-    for ch_i, coord_chunk in enumerate(coord_chunk_it):
-        logger.debug(f'Segmenting spectra chunk {ch_i}')
+    for ch_i, coord_chunk in enumerate(coord_chunks):
+        logger.debug(f'Segmenting spectra chunk {ch_i+1}/{chunk_n}')
 
-        for x, y in coord_chunk:
+        for _ in coord_chunk:
             mzs_, ints_ = imzml_parser.getspectrum(sp_i)
             mzs_, ints_ = map(np.array, [mzs_, ints_])
             sp_idx = sp_id_to_idx[sp_i]
@@ -127,24 +131,22 @@ def clip_centroids_df(centroids_df, mz_min, mz_max):
     return centr_df
 
 
-def calculate_centroids_segments_n(centr_df, ds_segments, ds_segm_size_mb):
-    ds_size_mb = len(ds_segments) * ds_segm_size_mb
-    data_per_centr_segm_mb = 50
-    peaks_per_centr_segm = 1e4
-    centr_segm_n = int(max(ds_size_mb // data_per_centr_segm_mb,
-                           centr_df.shape[0] // peaks_per_centr_segm,
-                           32))
+def calculate_centroids_segments_n(centr_df, image_dims):
+    rows, cols = image_dims
+    max_total_dense_images_size = 5 * 2 ** 30
+    peaks_per_centr_segm = int(max_total_dense_images_size / (rows * cols * 8))
+    centr_segm_n = max(16, ceil(centr_df.shape[0] / peaks_per_centr_segm))
     return centr_segm_n
 
 
-def segment_centroids(centr_df, segm_n, centr_segm_path):
-    logger.info(f'Segmenting centroids into {segm_n} segments')
+def segment_centroids(centr_df, centr_segm_n, centr_segm_path):
+    logger.info(f'Segmenting centroids into {centr_segm_n} segments')
 
     rmtree(centr_segm_path, ignore_errors=True)
     centr_segm_path.mkdir(parents=True)
 
     first_peak_df = centr_df[centr_df.peak_i == 0].copy()
-    segm_bounds_q = [i * 1 / segm_n for i in range(0, segm_n)]
+    segm_bounds_q = [i * 1 / centr_segm_n for i in range(0, centr_segm_n)]
     segm_lower_bounds = list(np.quantile(first_peak_df.mz, q) for q in segm_bounds_q)
 
     segment_mapping = np.searchsorted(segm_lower_bounds, first_peak_df.mz.values, side='right') - 1

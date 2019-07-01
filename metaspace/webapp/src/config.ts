@@ -1,6 +1,6 @@
 const fileConfig = require('./clientConfig.json');
 import {defaultsDeep} from 'lodash-es';
-import safeJsonParse from './lib/safeJsonParse';
+import {getLocalStorage, removeLocalStorage, setLocalStorage} from './lib/localStorage';
 
 
 interface AWSConfig {
@@ -27,9 +27,10 @@ interface Features {
   coloc: boolean;
   ion_thumbs: boolean;
   off_sample: boolean;
-  off_sample_col: boolean;
+  off_sample_col: boolean; // Not a "feature" - just shows an extra column for debugging
   new_feature_popups: boolean;
   optical_transform: boolean;
+  ignore_pixel_aspect_ratio: boolean;
   all_dbs: boolean;
   neutral_loss: boolean;
   advanced_ds_config: boolean;
@@ -58,12 +59,13 @@ const defaultConfig: ClientConfig = {
   ravenDsn: null,
   metadataTypes: ["ims"],
   features: {
-    coloc: false,
-    ion_thumbs: false,
+    coloc: true,
+    ion_thumbs: true,
     off_sample: true,
     off_sample_col: false,
     new_feature_popups: true,
     optical_transform: true,
+    ignore_pixel_aspect_ratio: false,
     all_dbs: false,
     neutral_loss: false,
     advanced_ds_config: false,
@@ -87,9 +89,9 @@ export const updateConfigFromQueryString = () => {
 
     const overrides: Partial<Features> = {};
     if (queryStringFeatures.includes('reset')) {
-      localStorage.removeItem(FEATURE_STORAGE_KEY);
+      removeLocalStorage(FEATURE_STORAGE_KEY);
     } else {
-      Object.assign(overrides, safeJsonParse(localStorage.getItem(FEATURE_STORAGE_KEY)));
+      Object.assign(overrides, getLocalStorage(FEATURE_STORAGE_KEY));
     }
 
     queryStringFeatures.forEach(feat => {
@@ -103,7 +105,7 @@ export const updateConfigFromQueryString = () => {
     Object.assign(config.features, overrides);
 
     if (queryStringFeatures.includes('save')) {
-      localStorage.setItem(FEATURE_STORAGE_KEY, JSON.stringify(overrides));
+      setLocalStorage(FEATURE_STORAGE_KEY, overrides);
     }
   }
 };

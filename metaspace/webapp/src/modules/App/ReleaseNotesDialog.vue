@@ -45,19 +45,19 @@
 <script lang="ts">
   import Vue from 'vue';
   import Component from 'vue-class-component';
-  import * as cookie from 'js-cookie';
+  import {getLocalStorage, setLocalStorage} from '../../lib/localStorage';
 
   const CURRENT_VERSION = 1;
 
   @Component
   export default class ReleaseNotesDialog extends Vue {
-    visible = (cookie.getJSON('hideReleaseNotes') as any as number || 0) < CURRENT_VERSION;
+    visible = (getLocalStorage<number>('hideReleaseNotes') || 0) < CURRENT_VERSION;
     dontShowAgain = false;
 
     handleClose() {
       this.visible = false;
       if (this.dontShowAgain) {
-        cookie.set('hideReleaseNotes', CURRENT_VERSION as any, {expires: 365});
+        setLocalStorage('hideReleaseNotes', CURRENT_VERSION, true);
       }
     }
   }

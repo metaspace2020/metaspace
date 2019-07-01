@@ -8,6 +8,8 @@ config.defaults = {
   adducts: {{ sm_graphql_default_adducts | to_json }}
 };
 
+config.moldbs = {{ sm_graphql_moldbs | to_json }}
+
 config.services = {};
 /* Molecular database service, used only for internal purposes (peakChartData query) */
 config.services.moldb_service_host = "{{ sm_graphql_moldb_service_host }}";
@@ -50,6 +52,11 @@ config.slack.channel = "{{ sm_graphql_slack_channel }}";
 
 config.jwt = {};
 config.jwt.secret = "{{ sm_graphql_jwt_secret }}";
+config.jwt.algorithm = "HS256";
+
+config.sentry = {
+  dsn: "{{ sentry_dsn }}",
+};
 
 config.aws = {
   aws_access_key_id: "{{ sm_graphql_aws_access_key_id }}",

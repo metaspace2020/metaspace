@@ -3,7 +3,7 @@ import fetch from 'node-fetch';
 import * as _ from 'lodash';
 
 import config from './config';
-import {logger} from '.';
+import logger from './logger';
 
 interface SMAPIBody {
   doc?: Object;

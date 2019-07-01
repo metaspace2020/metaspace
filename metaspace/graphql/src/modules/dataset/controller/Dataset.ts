@@ -6,7 +6,7 @@ import {Dataset as DatasetModel, EngineOpticalImage} from '../model';
 import {Dataset, OpticalImage, OpticalImageType} from '../../../binding';
 import {rawOpticalImage} from './Query';
 import getScopeRoleForEsDataset from '../util/getScopeRoleForEsDataset';
-import {logger} from '../../../utils';
+import logger from '../../../utils/logger';
 import {Context} from '../../../context';
 import getGroupAdminNames from '../../group/util/getGroupAdminNames';
 import * as DataLoader from 'dataloader';

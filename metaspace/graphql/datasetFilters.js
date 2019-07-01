@@ -1,4 +1,4 @@
-const capitalize = require('lodash/capitalize');
+import {capitalize} from 'lodash';
 
 function getPgField(schemaPath) {
   const pathElements = schemaPath.replace(/\./g, ',');

@@ -1,10 +1,12 @@
 import * as config from 'config';
 import { IConfig } from 'config';
+import {TAlgorithm} from 'jwt-simple';
 
+export type ImageStorageType = 'db' | 'fs';
 export interface ImageCategoryConfig {
   type: string,
   path: string,
-  storage_types: string[],
+  storage_types: ImageStorageType[],
 }
 
 export type ImageCategory = 'iso_image' | 'optical_image' | 'raw_optical_image' | 'ion_thumbnail';
@@ -20,6 +22,10 @@ export interface Config {
     adducts: string[];
     moldb_names: string[];
   };
+  moldbs: {
+    deprecated: string[];
+    custom: string[];
+  },
   img_upload: {
     iso_img_fs_path: string;
     categories: Record<ImageCategory, ImageCategoryConfig>;
@@ -63,6 +69,10 @@ export interface Config {
   };
   jwt: {
     secret: string;
+    algorithm: TAlgorithm;
+  };
+  sentry: {
+    dsn: string | null;
   };
   features: {
     graphqlMocks: boolean;

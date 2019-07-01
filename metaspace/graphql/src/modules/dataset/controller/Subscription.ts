@@ -1,6 +1,8 @@
 import * as Amqplib from 'amqplib';
+import * as Sentry from '@sentry/node';
 import {esDatasetByID} from '../../../../esConnector';
-import {logger, wait} from '../../../../utils';
+import logger from '../../../utils/logger';
+import wait from '../../../utils/wait';
 import config from '../../../utils/config';
 import {DatasetStatus} from '../model';
 import {Context} from '../../../context';
@@ -68,6 +70,7 @@ async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
     }
   } catch (err) {
     logger.error(err);
+    Sentry.captureException(err);
   }
 
   logger.warn(`Failed to propagate dataset update for ${ds_id}`);

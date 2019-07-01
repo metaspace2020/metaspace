@@ -12,6 +12,7 @@ import {
   stripFilteringParams,
 } from '../modules/Filters';
 import {DEFAULT_ANNOTATION_VIEW_SECTIONS, DEFAULT_COLORMAP, DEFAULT_TABLE_ORDER} from '../modules/Filters/url';
+import {DEFAULT_SCALE_TYPE} from '../lib/constants';
 
 
 function updatedLocation(state, filter) {
@@ -181,12 +182,11 @@ export default {
     });
   },
 
-  setHotspotThreshold(state, hotspotThreshold) {
-    // hotspotThreshold should be a number or 'none'
+  setScaleType(state, scaleType) {
     router.replace({
-      query: hotspotThreshold != null
-        ? { ...state.route.query, hotspotthreshold: hotspotThreshold }
-        : omit(state.route.query, 'hotspotthreshold'),
+      query: scaleType !== DEFAULT_SCALE_TYPE
+        ? { ...state.route.query, scale: scaleType }
+        : omit(state.route.query, 'scale'),
     });
   },
 

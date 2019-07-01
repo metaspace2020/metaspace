@@ -3,7 +3,7 @@
 [program:{{ sm_cluster_autostart_app_name }}]
 process_name = {{ sm_cluster_autostart_app_name }}
 directory = {{ sm_ansible_home }}/aws
-command = {{ sm_cluster_autostart_python }} cluster_auto_start_daemon.py --ansible-config={{ stage }}/group_vars/all.yml --interval=10
+command = {{ sm_cluster_autostart_python }} cluster_auto_start_daemon.py --ansible-config={{ stage }}/group_vars/all/vars.yml --interval=10
 redirect_stderr = true
 stdout_logfile = {{ sm_ansible_home }}/aws/logs/{{ sm_cluster_autostart_app_name }}.log
 numprocs = 1

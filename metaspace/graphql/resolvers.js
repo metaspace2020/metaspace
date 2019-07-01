@@ -1,18 +1,12 @@
-import fetch from 'node-fetch';
-import * as config from 'config';
-import * as _ from 'lodash';
+import config from './src/utils/config';
+import logger from './src/utils/logger';
 import {
   esSearchResults,
   esAnnotationByID,
   esFilterValueCountResults,
   esCountResults,
 } from './esConnector';
-import {
-  fetchEngineDS,
-  fetchMolecularDatabases,
-  deprecatedMolDBs,
-  logger,
-} from './utils';
+import {fetchMolecularDatabases, deprecatedMolDBs} from './src/utils/molDb';
 import {applyQueryFilters} from './src/modules/annotation/queryFilters';
 
 

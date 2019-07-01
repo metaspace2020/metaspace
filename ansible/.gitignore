@@ -1,8 +1,7 @@
 .*
 *.retry
-vbox/group_vars/*.yml
-aws/*/group_vars/*.yml
-aws/*/hosts*
+aws/env
 aws/provision/elk-vars.yml
 *.ipynb
 *.pyc
+aws/vault_pass.txt

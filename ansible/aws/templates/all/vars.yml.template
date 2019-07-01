@@ -13,12 +13,12 @@ metaspace_home: /opt/dev/metaspace
 
 time_zone_name: UTC  # Ubuntu timezone name
 
-aws_access_key_id: AWS_ACCESS_KEY_ID
-aws_secret_access_key: AWS_SECRET_ACCESS_KEY
-aws_key_name: AWS_KEY_NAME
+aws_access_key_id: "{{ vault_aws_access_key_id }}"
+aws_secret_access_key: "{{ vault_aws_secret_access_key }}"
+aws_key_name: "{{ vault_aws_key_name }}"
 aws_region: eu-west-1
 
-notification_email: SM-ADMIN@EXAMPLE.COM
+notification_email: "{{ vault_notification_email }}"
 
 web_public_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}"  # specify manually in production
 
@@ -29,13 +29,13 @@ postgres_drop_create: false
 elasticsearch_version: 5.5.2
 
 kibana_version: "{{ elasticsearch_version }}"
-kibana_user: kibana
-kibana_password: KIBANA_PASSWORD
+kibana_user: "{{ vault_kibana_user }}"
+kibana_password: "{{ vault_kibana_password }}"
 kibana_es_port: 9200  # kibana runs on the same host and connects to ES directly
 
 rabbitmq_host: "{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}"
-rabbitmq_user: sm
-rabbitmq_password: RABBITMQ_PASSWORD
+rabbitmq_user: "{{ vault_rabbitmq_user }}"
+rabbitmq_password: "{{ vault_rabbitmq_password }}"
 
 miniconda_version: latest
 miniconda_python: 3
@@ -54,18 +54,18 @@ web_redis:
   port: 6379
 
 sm_postgres_host: "{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}"
-sm_postgres_password: POSTGRES_PASSWORD
+sm_postgres_password: "{{ vault_sm_postgres_password }}"
 sm_home: "{{ metaspace_home }}/metaspace/engine"
 sm_s3_path: ENGINE_BUCKET_NAME  # bucket for sm engine tmp data in "s3a://bucket-name/tmp" form
 sm_img_service_url: "http://{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}:4201"
 sm_es_host: "{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}"
 sm_es_port: 9210  # cannot be 9200 (nginx proxied)
-sm_es_user: elastic
-sm_es_password: ELASTIC_PASSWORD
+sm_es_user: "{{ vault_sm_es_user }}"
+sm_es_password: "{{ vault_sm_es_password }}"
 sm_send_email: true
 sm_create_schema: true  # set to false to avoid database dropping during provisioning
 sm_create_es_index: true  # set to false to avoid Elasticsearch index dropping during provisioning
-sm_isotope_storage_path: S3_ISOTOPE_STORAGE_PATH
+sm_isotope_storage_path: "{{ vault_sm_isotope_storage_path }}"  # cache path for generated centroids
 sm_default_adducts:
   "+": ["+H", "+Na", "+K"]
   "-": ["-H", "+Cl"]
@@ -84,7 +84,7 @@ sm_cluster_autostart_redis:
 
 mol_db_home: "{{ metaspace_home }}/metaspace/mol-db"
 mol_db_url: "http://{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}:5001/v1"
-mol_db_postgres_pass: POSTGRES_PASSWORD
+mol_db_postgres_pass: "{{ vault_mol_db_postgres_password }}"
 mol_db_image_dir: /var/www/mol-images
 mol_db_miniconda_env:
   name: mol-db
@@ -143,7 +143,7 @@ sm_graphql_hostname: "{{ web_host }}"  # specify manually in production
 sm_graphql_home: "{{ metaspace_home }}/metaspace/graphql"
 sm_graphql_slack_webhook_url: ""
 sm_graphql_slack_channel: ""
-sm_graphql_jwt_secret: JWT_SECRET
+sm_graphql_jwt_secret: "{{ vault_sm_web_jwt_secret }}"
 sm_graphql_public_url: "http://{{ sm_graphql_hostname }}/graphql"
 sm_graphql_mol_image_host: "{{ sm_graphql_hostname }}"
 sm_graphql_img_upload_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
@@ -157,15 +157,15 @@ sm_graphql_img_storage_backend: fs
 sm_graphql_redis_host: "{{ web_redis.host }}"
 sm_graphql_redis_port: "{{ web_redis.port }}"
 sm_graphql_aws_region: "{{ aws_region }}"
-sm_graphql_aws_access_key_id: GRAPHQL_AWS_ACCESS_KEY_ID
-sm_graphql_aws_secret_access_key: GRAPHQL_AWS_SECRET_ACCESS_KEY
-sm_graphql_google_client_id: ""
-sm_graphql_google_client_secret: ""
-sm_graphql_google_callback_url: "http://{{ sm_webapp_hostname }}/auth/google/callback"
-sm_graphql_cookie_secret: COOKIE_SECRET
+sm_graphql_aws_access_key_id: "{{ vault_sm_web_aws_access_key_id }}"  # sm-web-app user
+sm_graphql_aws_secret_access_key: "{{ vault_sm_web_aws_secret_access_key }}"
+sm_graphql_google_client_id: "{{ vault_sm_web_google_client_id }}"
+sm_graphql_google_client_secret: "{{ vault_sm_web_google_client_secret }}"
+sm_graphql_google_callback_url: "http://{{ sm_webapp_hostname }}/api_auth/google/callback"
+sm_graphql_cookie_secret: "{{ vault_sm_web_cookie_secret }}"
 sm_graphql_features:
   graphqlMocks: false
-  impersonation: false
+  impersonation: true
 sm_graphql_metadata_lookups:
   colocalizationAlgos:
     - ['cosine', 'Cosine distance']
@@ -174,17 +174,15 @@ sm_graphql_metadata_lookups:
 sm_webapp_hostname: "{{ web_host }}"  # specify manually in production
 sm_webapp_home: "{{ metaspace_home }}/metaspace/webapp"
 sm_webapp_port: 8082
-# The region should satisfy the following requirements:
-#  - AWS SES endpoints are available there
-#  - AWS authentication protocol V2 is supported
-sm_webapp_aws_region: WEBAPP_AWS_REGION
-sm_webapp_aws_access_key_id: WEBAPP_AWS_ACCESS_KEY_ID
-sm_webapp_aws_secret_access_key: WEBAPP_AWS_SECRET_ACCESS_KEY
-sm_webapp_s3_bucket: BUCKET-NAME-UPLOAD  # just plain bucket name
-sm_webapp_google_client_id: ""
-sm_webapp_sentry_dsn: ""
+sm_webapp_cookie_secret: "{{ vault_sm_web_cookie_secret }}"
+sm_webapp_admin_emails: "{{ vault_sm_webapp_admin_emails }}"
+sm_webapp_aws_region: "{{ aws_region }}"
+sm_webapp_aws_access_key_id: "{{ vault_sm_web_aws_access_key_id }}"  # sm-web-app user
+sm_webapp_aws_secret_access_key: "{{ vault_sm_web_aws_secret_access_key }}"
+sm_webapp_s3_bucket: "{{ vault_sm_webapp_s3_bucket }}"
+sm_webapp_google_client_id: "{{ vault_sm_web_google_client_id }}"
 sm_webapp_upload_destination: s3
-sm_webapp_jwt_secret: "{{ sm_graphql_jwt_secret }}"
+sm_webapp_jwt_secret: "{{ vault_sm_web_jwt_secret }}"
 sm_webapp_redis_host: "{{ web_redis.host }}"
 sm_webapp_redis_port: "{{ web_redis.port }}"
 sm_webapp_enable_uploads: true
@@ -193,7 +191,7 @@ sm_webapp_enable_uploads: true
 sm_webapp_metadata_types: ["ims"]  # set ["ims", "lcms"] to accept both IMS and LC-MS datasets
 sm_webapp_features:
   coloc: true
-  ion_thumbs: false
+  ion_thumbs: true
   off_sample: true
   off_sample_col: false
   new_feature_popups: true
@@ -203,16 +201,16 @@ sm_webapp_features:
 sm_activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
 
 spark_key_file: ~/.ssh/ubuntu_spark
-spark_version: "2.3.3-bin-hadoop2.7"
-spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"
-spark_home: "/usr/lib/spark"
-spark_user: "ubuntu"
+spark_version: 2.3.3-bin-hadoop2.7
+spark_mirror: "{{ vault_spark_mirror }}"
+spark_home: /usr/lib/spark
+spark_user: ubuntu
 
 elk_enable: false  # set "true" to enable logs aggregation in ELK
 
 spark_env_extras_slave:
-  SPARK_WORKER_DIR: "/tmp/spark"
-  SPARK_LOCAL_DIRS: "/tmp/spark"
+  SPARK_WORKER_DIR: /tmp/spark
+  SPARK_LOCAL_DIRS: /tmp/spark
   PYSPARK_PYTHON: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
 
 spark_env_extras_master:
@@ -220,8 +218,10 @@ spark_env_extras_master:
   AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
   PYSPARK_PYTHON: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
 
-slack_channel:
-slack_webhook_url:
+slack_channel: "{{ vault_slack_channel }}"
+slack_webhook_url: "{{ vault_slack_webhook_url }}"
+
+sentry_dsn: "{{ vault_sentry_dsn }}"
 
 ssl:
   path: ../files

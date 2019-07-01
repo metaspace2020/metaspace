@@ -150,3 +150,8 @@ def split_s3_path(path):
     Returns a pair of (bucket, key)
     """
     return path.split('s3a://')[-1].split('/', 1)
+
+
+def find_file_by_ext(path, ext):
+    return next(str(p) for p in Path(path).iterdir()
+                if str(p).lower().endswith(ext))

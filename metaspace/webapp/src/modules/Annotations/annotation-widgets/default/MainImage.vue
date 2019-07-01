@@ -8,7 +8,7 @@
               :colormap="colormap"
               :pixelSizeX="pixelSizeX"
               :pixelSizeY="pixelSizeY"
-              :showScaleBar="showScaleBar"
+              :pixelAspectRatio="imageLoaderSettings.pixelAspectRatio"
               :scaleBarColor="scaleBarColor"
               :width="imageViewerWidth"
               :height="imageViewerHeight"
@@ -47,7 +47,7 @@
                 </div>
                 <div slot="content">
                     Hot-spot removal has been applied to this image. <br/>
-                    Pixel intensities above the 99th percentile, {{ ionImage.clippedMaxIntensity.toExponential(2) }},
+                    Pixel intensities above the {{ionImage.maxQuantile*100}}th percentile, {{ ionImage.clippedMaxIntensity.toExponential(2) }},
                     have been reduced to {{ ionImage.clippedMaxIntensity.toExponential(2) }}. <br/>
                     The highest intensity before hot-spot removal was {{ ionImage.maxIntensity.toExponential(2) }}.
                 </div>
@@ -56,10 +56,11 @@
                 {{ ionImage && ionImage.maxIntensity.toExponential(2) }}
             </div>
             <colorbar style="width: 20px; height: 160px; align-self: center;"
-                      :direction="colorbarDirection" :map="colormapName"
+                      :map="colormap"
+                      :ionImage="ionImage"
                       slot="reference">
             </colorbar>
-            {{ ionImage && ionImage.minIntensity.toExponential(2) }}
+            {{ ionImage && ionImage.clippedMinIntensity.toExponential(2) }}
 
             <div class="annot-view__image-download">
                 <!-- see https://github.com/tsayen/dom-to-image/issues/155 -->
@@ -88,7 +89,7 @@ import { saveAs } from 'file-saver';
 import Colorbar from './Colorbar.vue';
 import IonImageViewer from '../../../../components/IonImageViewer.vue';
 import domtoimage from 'dom-to-image-google-font-issue';
-import {IonImage, loadPngFromUrl, processIonImage} from '../../../../lib/ionImageRendering';
+import {IonImage, loadPngFromUrl, processIonImage, ScaleType} from '../../../../lib/ionImageRendering';
 import {get} from 'lodash-es';
 import fitImageToArea, {FitImageToAreaResult} from '../../../../lib/fitImageToArea';
 import reportError from '../../../../lib/reportError';
@@ -112,8 +113,6 @@ export default class MainImage extends Vue {
     annotation!: any
     @Prop({required: true, type: String})
     colormap!: string
-    @Prop({required: true, type: String})
-    colormapName!: string
     @Prop({required: true, type: Number})
     opacity!: number
     @Prop({required: true})
@@ -124,12 +123,10 @@ export default class MainImage extends Vue {
     pixelSizeX!: number
     @Prop({type: Number})
     pixelSizeY!: number
-    @Prop({type: Boolean})
-    showScaleBar!: boolean
     @Prop({type: String})
-    scaleBarColor!: string
-    @Prop({type: Number})
-    hotspotQuantile?: number
+    scaleBarColor!: string | null
+    @Prop({type: String})
+    scaleType?: ScaleType
 
     ionImageUrl: string | null = null;
     ionImagePng: Image | null = null;
@@ -151,7 +148,6 @@ export default class MainImage extends Vue {
     }
 
     @Watch('annotation')
-    @Watch('imageLoaderSettings.hotspotQuantile')
     async updateIonImage() {
         const isotopeImage = get(this.annotation, 'isotopeImages[0]');
         const newUrl = isotopeImage != null ? isotopeImage.url : null;
@@ -175,24 +171,20 @@ export default class MainImage extends Vue {
     }
 
     get ionImage(): IonImage | null {
-        console.log('rerender')
         if (this.ionImagePng != null) {
             const isotopeImage = get(this.annotation, 'isotopeImages[0]');
             const { minIntensity, maxIntensity } = isotopeImage;
-            return processIonImage(this.ionImagePng, minIntensity, maxIntensity, this.hotspotQuantile);
+            return processIonImage(this.ionImagePng, minIntensity, maxIntensity, this.scaleType);
         } else {
             return null;
         }
     }
 
-    get colorbarDirection(): string {
-      return this.colormap[0] == '-' ? 'bottom' : 'top';
-    }
     get imageFit(): FitImageToAreaResult {
         const {width=500, height=500} = this.ionImage || {};
         return fitImageToArea({
             imageWidth: width,
-            imageHeight: height,
+            imageHeight: height / this.imageLoaderSettings.pixelAspectRatio,
             areaWidth: this.imageViewerWidth,
             areaHeight: this.imageViewerHeight,
         });

@@ -6,6 +6,7 @@
       :isLoading="ionImageIsLoading"
       :width="imageFit.areaWidth"
       :height="imageFit.areaHeight"
+      :pixelAspectRatio="pixelAspectRatio"
       :zoom="zoom"
       :xOffset="xOffset"
       :yOffset="yOffset"
@@ -22,7 +23,7 @@
   import config from '../config';
   import {Component, Prop, Watch} from 'vue-property-decorator';
   import IonImageViewer from './IonImageViewer.vue';
-  import {IonImage, loadPngFromUrl, processIonImage} from '../lib/ionImageRendering';
+  import {IonImage, loadPngFromUrl, processIonImage, ScaleType} from '../lib/ionImageRendering';
   import fitImageToArea, {FitImageToAreaResult} from '../lib/fitImageToArea';
   import reportError from '../lib/reportError';
 
@@ -51,7 +52,9 @@
     @Prop()
     maxIntensity?: number;
     @Prop()
-    hotspotQuantile?: number;
+    pixelAspectRatio!: number;
+    @Prop({type: String})
+    scaleType?: ScaleType;
 
     containerWidth = 500;
     containerHeight = 500;
@@ -82,7 +85,7 @@
           const png = await loadPngFromUrl((config.imageStorage || '') + newUrl);
 
           if (newUrl === this.src) {
-            this.ionImage = processIonImage(png, this.minIntensity, this.maxIntensity, this.hotspotQuantile);
+            this.ionImage = processIonImage(png, this.minIntensity, this.maxIntensity, this.scaleType);
             this.ionImageIsLoading = false;
           }
         } catch (err) {
@@ -108,7 +111,7 @@
     get imageFit(): FitImageToAreaResult {
       return fitImageToArea({
         imageWidth: this.ionImage ? this.ionImage.width : this.containerWidth,
-        imageHeight: this.ionImage ? this.ionImage.height : this.containerHeight,
+        imageHeight: (this.ionImage ? this.ionImage.height : this.containerHeight) / this.pixelAspectRatio,
         areaWidth: this.containerWidth,
         areaHeight: this.containerHeight,
         ...this.imageFitParams,

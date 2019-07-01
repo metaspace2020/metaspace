@@ -13,11 +13,10 @@
     - debug: var=aws_key_name
 
     - name: Spin up SM instances
-      shell: python3 aws_instance_manager.py create --key-name {{ aws_key_name }}
+      shell: "{{ sm_cluster_autostart_python }} aws_instance_manager.py create --key-name {{ aws_key_name }}
              --components {{ components }} --stage {{ stage }}
-      when: spark_volume_size is not defined
+             {{ ' --credentials-file' if cred_file is defined else '' }}"
 
-    - meta: refresh_inventory
   tags: ["web", "spark", "elk"]
 
 

@@ -1,35 +1,38 @@
 // Before loading anything graphql-related, polyfill Symbol.asyncIterator because it's needed by TypeScript to support
 // async iterators, and the 'iterall' package imported by graphql-js will make its own symbol and reject others
 // if this isn't defined when 'iterall' is loaded
+
 Symbol.asyncIterator = Symbol.asyncIterator || Symbol.for("Symbol.asyncIterator");
 if (require('iterall').$$asyncIterator !== Symbol.asyncIterator) {
   throw new Error('iterall is using the wrong symbol for asyncIterator')
 }
 
-const bodyParser = require('body-parser'),
-  compression = require('compression'),
-  config = require('config'),
-  express = require('express'),
-  session = require('express-session'),
-  connectRedis = require('connect-redis'),
-  {ApolloServer} = require('apollo-server-express'),
-  jwt = require('express-jwt'),
-  jwtSimple = require('jwt-simple'),
-  cors = require('cors'),
-  {UserError} = require('graphql-errors');
 
-const {createImgServerAsync} = require('./imageUpload.js'),
-  {configureAuth} = require('./src/modules/auth'),
-  {initDBConnection} = require('./src/utils/knexDb'),
-  {logger} = require('./utils'),
-  {createConnection} = require('./src/utils'),
-  {executableSchema} = require('./executableSchema'),
-  getContext = require('./src/getContext').default;
+import * as bodyParser from 'body-parser';
+import * as compression from 'compression';
+import * as http from 'http';
+import * as express from 'express';
+import * as session from 'express-session';
+import * as connectRedis from 'connect-redis';
+import * as Sentry from '@sentry/node';
+import {ApolloServer} from 'apollo-server-express';
+import * as jwt from 'express-jwt';
+import * as jwtSimple from 'jwt-simple';
+import * as cors from 'cors';
+import { execute, subscribe, GraphQLError } from 'graphql';
+import {IsUserError} from 'graphql-errors';
+import { SubscriptionServer } from 'subscriptions-transport-ws';
 
-// subscriptions setup
-const http = require('http'),
-      { execute, subscribe } = require('graphql'),
-      { SubscriptionServer } = require('subscriptions-transport-ws');
+import {createImgServerAsync} from './src/modules/webServer/imageServer';
+import {configureAuth} from './src/modules/auth';
+import {initDBConnection} from './src/utils/knexDb';
+import config from './src/utils/config';
+import logger from './src/utils/logger';
+import {createConnection} from './src/utils';
+import {executableSchema} from './executableSchema';
+import getContext from './src/getContext';
+
+const env = process.env.NODE_ENV || 'development';
 
 let wsServer = http.createServer((req, res) => {
   res.writeHead(404);
@@ -54,9 +57,56 @@ const configureSession = (app) => {
   }));
 };
 
+const configureSentryRequestHandler = (app) => {
+  if (env !== 'development' && config.sentry.dsn) {
+    Sentry.init({ dsn: config.sentry.dsn });
+    // Sentry.Handlers.requestHandler should be the first middleware
+    app.use(Sentry.Handlers.requestHandler());
+  }
+};
+
+const configureSentryErrorHandler = (app) => {
+  if (env !== 'development' && config.sentry.dsn) {
+    // Raven.errorHandler should go after all normal handlers/middleware, but before any other error handlers
+    app.use(Sentry.Handlers.errorHandler());
+  }
+};
+
+const formatGraphQLError = (error) => {
+  const {message, extensions, source, path, name, positions} = error;
+  const isUserError = extensions && extensions.exception && extensions.exception[IsUserError] === true;
+
+  if (!isUserError) {
+    if (error instanceof GraphQLError) {
+      logger.error(extensions.exception || message, source);
+    } else {
+      logger.error(error);
+    }
+
+    Sentry.withScope(scope => {
+      scope.setExtras({
+        source: source && source.body,
+        positions,
+        path,
+      });
+      if (path || name !== 'GraphQLError') {
+        scope.setTag('graphql', 'exec_error');
+        Sentry.captureException(error);
+      } else {
+        scope.setTag('graphql', 'bad_query');
+        Sentry.captureMessage(`GraphQLBadQuery: ${error.message}`)
+      }
+    });
+  }
+
+  return error;
+};
+
 async function createHttpServerAsync(config) {
   let app = express();
   let httpServer = http.createServer(app);
+
+  configureSentryRequestHandler(app);
 
   app.use(cors());
   app.use(compression());
@@ -82,14 +132,12 @@ async function createHttpServerAsync(config) {
         'editor.cursorShape': 'line',
       }
     },
-    formatError: error => {
-      const {message, extensions, source} = error;
-      logger.error(extensions.exception || message, source);
-      return error;
-    },
+    formatError: formatGraphQLError,
     introspection: true,
   });
   apollo.applyMiddleware({ app });
+
+  configureSentryErrorHandler(app);
 
   app.use(function (err, req, res, next) {
     res.status(err.status || 500);
@@ -110,8 +158,9 @@ async function createHttpServerAsync(config) {
       schema: executableSchema,
       onOperation(message, params) {
         const jwt = message.payload.jwt;
-        const user = jwt != null ? jwtSimple.decode(jwt, config.jwt.secret) : null;
+        const user = jwt != null ? jwtSimple.decode(jwt, config.jwt.secret, false, config.jwt.algorithm) : null;
         params.context = getContext(user && user.user, connection.manager, null, null);
+        params.formatError = formatGraphQLError;
         return params;
       }
     }, {

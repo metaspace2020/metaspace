@@ -6,7 +6,7 @@ import {Moment} from 'moment';
 
 import * as emailService from './email';
 import config from '../../utils/config';
-import {logger} from '../../utils';
+import logger from '../../utils/logger';
 import * as utils from '../../utils';
 import {Credentials as CredentialsModel, Credentials} from './model';
 import {User as UserModel, User} from '../user/model';

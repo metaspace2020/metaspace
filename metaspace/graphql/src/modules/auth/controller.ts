@@ -86,7 +86,7 @@ const configureJwt = (router: IRouter<any>) => {
         }
       };
     }
-    return JwtSimple.encode(payload as JwtPayload, config.jwt.secret);
+    return JwtSimple.encode(payload as JwtPayload, config.jwt.secret, config.jwt.algorithm);
   }
 
   // Gives a one-time token, which expires in 60 seconds.

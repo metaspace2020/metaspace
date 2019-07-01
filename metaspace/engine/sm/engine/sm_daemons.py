@@ -72,7 +72,7 @@ class SMDaemonManager(object):
         ds.save(self._db, self.es)
         annotation_job_factory(img_store=self._img_store,
                                sm_config=self._sm_config, **kwargs).run(ds)
-        Colocalization(self._db).run_coloc_job(ds.id)
+        Colocalization(self._db).run_coloc_job(ds.id, reprocess=del_first)
         generate_ion_thumbnail(db=self._db,
                                img_store=self._img_store,
                                ds_id=ds.id,

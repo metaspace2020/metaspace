@@ -42,6 +42,9 @@ const isProd = process.env.NODE_ENV === 'production';
 import VueAnalytics from 'vue-analytics';
 import { setErrorNotifier } from './lib/reportError'
 import {updateConfigFromQueryString} from './config';
+import {migrateLocalStorage} from './lib/localStorage';
+
+migrateLocalStorage();
 
 Vue.use(VueAnalytics, {
   id: 'UA-73509518-1',

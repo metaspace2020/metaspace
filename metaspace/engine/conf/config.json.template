@@ -42,11 +42,11 @@
   },
   "spark": {
     "master": "{{ spark_master_host | default('local[*]') }}",
-    "spark.executor.memory": "2g",
+    "spark.executor.memory": "10g",
     "spark.driver.memory": "4g",
     "spark.driver.maxResultSize": "3g",
     "spark.serializer": "org.apache.spark.serializer.KryoSerializer",
-    "spark.kryoserializer.buffer.max": "128m",
+    "spark.kryoserializer.buffer.max": "512m",
     "spark.python.worker.memory": "1g",
     "spark.rdd.compress": true,
     "spark.ui.showConsoleProgress": false,

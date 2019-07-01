@@ -10,7 +10,7 @@ from sm.engine.formula_parser import generate_ion_formula, ParseFormulaError
 from sm.engine.formula_centroids import CentroidsGenerator
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.util import SMConfig
-from sm.engine.msm_basic.formula_imager import create_process_segment
+from sm.engine.msm_basic.formula_imager import create_process_segment, ds_dims
 from sm.engine.msm_basic.segmenter import define_ds_segments, segment_spectra, segment_centroids, clip_centroids_df, \
     calculate_centroids_segments_n, spectra_sample_gen, check_spectra_quality, calculate_chunk_sp_n
 
@@ -96,7 +96,9 @@ class MSMSearch(object):
         return formula_centroids
 
     def process_segments(self, centr_segm_n, func):
-        results_rdd = (self._sc.parallelize(range(centr_segm_n), numSlices=centr_segm_n)
+        centr_segm_inds = np.arange(centr_segm_n)
+        np.random.shuffle(centr_segm_inds)
+        results_rdd = (self._sc.parallelize(centr_segm_inds, numSlices=centr_segm_n)
                        .map(func)
                        .persist(storageLevel=StorageLevel.MEMORY_AND_DISK))
         return results_rdd
@@ -113,7 +115,7 @@ class MSMSearch(object):
         for file_path in path.iterdir():
             self._sc.addFile(str(file_path))
 
-    def remove_temp_files(self):
+    def remove_spark_temp_files(self):
         logger.debug(f'Cleaning spark master temp dir {SparkFiles.getRootDirectory()}')
         rmtree(SparkFiles.getRootDirectory(), ignore_errors=True)
 
@@ -157,7 +159,7 @@ class MSMSearch(object):
                                          self._imzml_parser.mzPrecision, ds_segm_size_mb)
 
         sample_sp_n = int(len(self._imzml_parser.coordinates) * sample_ratio)
-        chunk_sp_n = calculate_chunk_sp_n(sample_mzs.nbytes, sample_sp_n)
+        chunk_sp_n = calculate_chunk_sp_n(sample_mzs.nbytes, sample_sp_n, max_chunk_size_mb=1000)
 
         ds_segments_path = self._ds_data_path / 'ds_segments'
         coordinates = [coo[:2] for coo in self._imzml_parser.coordinates]
@@ -169,7 +171,7 @@ class MSMSearch(object):
         centr_df = clip_centroids_df(centroids_df, mz_min=ds_segments[0, 0], mz_max=ds_segments[-1, 1])
 
         centr_segments_path = self._ds_data_path / 'centr_segments'
-        centr_segm_n = calculate_centroids_segments_n(centr_df, ds_segments, ds_segm_size_mb)
+        centr_segm_n = calculate_centroids_segments_n(centr_df, ds_dims(coordinates))
         segment_centroids(centr_df, centr_segm_n, centr_segments_path)
 
         logger.info('Putting centroids segments to workers')
@@ -181,7 +183,7 @@ class MSMSearch(object):
         results_rdd = self.process_segments(centr_segm_n, process_centr_segment)
         formula_metrics_df, formula_images_rdd = merge_results(results_rdd, formula_centroids.formulas_df)
 
-        self.remove_temp_files()
+        self.remove_spark_temp_files()
 
         # Compute fdr for each moldb search results
         for moldb, fdr in moldb_fdr_list:

@@ -1,6 +1,6 @@
 import {EntityManager} from 'typeorm';
 import {ContextUser} from '../../../context';
-import {logger} from '../../../../utils';
+import logger from '../../../utils/logger';
 import {getDatasetForEditing} from './getDatasetForEditing';
 import {Dataset as DatasetModel, DatasetProject as DatasetProjectModel} from '../model';
 import {DeleteDatasetArgs, smAPIDeleteDataset} from '../../../utils/smAPI';

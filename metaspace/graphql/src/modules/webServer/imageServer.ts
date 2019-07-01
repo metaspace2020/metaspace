@@ -1,24 +1,27 @@
 /**
  * Created by intsco on 1/10/17.
  */
-const express = require('express'),
-  http = require('http'),
-  multer = require('multer'),
-  path = require('path'),
-  cors = require('cors'),
-  crypto = require('crypto'),
-  fs = require('fs-extra'),
-  getPixels = require('get-pixels'),
-  Promise = require('promise');
+import * as express from 'express';
+import * as http from 'http';
+import * as Knex from 'knex';
+import * as multer from 'multer';
+import * as path from 'path';
+import * as cors from 'cors';
+import * as crypto from 'crypto';
+import * as fs from 'fs-extra';
+const getPixels = require('get-pixels');
+import logger from '../../utils/logger';
+import {Config, ImageCategory} from '../../utils/config';
 
-const {logger} = require('./utils.js'),
-  IMG_TABLE_NAME = 'image';
+export const IMG_TABLE_NAME = 'image';
 
-function imageProviderDBBackend(knex) {
+type NDArray = any;
+
+function imageProviderDBBackend(knex: Knex) {
   /**
    @param {object} knex - knex database handler
    **/
-  return async (app, category, mimeType, basePath, categoryPath) => {
+  return async (app: express.Application, category: ImageCategory, mimeType: string, basePath: string, categoryPath: string) => {
     /**
      @param {string} category - field name / database table name
      @param {string} mimeType - e.g. 'image/png' or 'image/jpeg'
@@ -27,7 +30,7 @@ function imageProviderDBBackend(knex) {
      **/
     let storage = multer.memoryStorage();
     let upload = multer({storage: storage});
-    let pixelsToBinary = (pixels) => {
+    let pixelsToBinary = (pixels: NDArray) => {
       // assuming pixels are stored as rgba
       const result = Buffer.allocUnsafe(pixels.data.length / 4);
       for (let i = 0; i < pixels.data.length; i += 4) {
@@ -50,7 +53,7 @@ function imageProviderDBBackend(knex) {
         try {
           const row = await knex.select(knex.raw('data')).from(IMG_TABLE_NAME).where('id', '=', req.params.image_id).first();
           if (row === undefined) {
-            throw ({message: `Image with id=${req.params.image_id} does not exist`});
+            throw Error(`Image with id=${req.params.image_id} does not exist`);
           }
           const imgBuf = row.data;
           res.type('application/octet-stream');
@@ -68,7 +71,7 @@ function imageProviderDBBackend(knex) {
         logger.debug(req.file.originalname);
         let imgID = crypto.randomBytes(16).toString('hex');
 
-        getPixels(req.file.buffer, mimeType, async function (err, pixels) {
+        getPixels(req.file.buffer, mimeType, async function (err?: Error, pixels?: NDArray) {
           if (err) {
             logger.error(err.message);
             res.status(500).send('Failed to parse image');
@@ -103,11 +106,11 @@ function imageProviderDBBackend(knex) {
   }
 }
 
-function imageProviderFSBackend(storageRootDir) {
+function imageProviderFSBackend(storageRootDir: string) {
   /**
    @param {string} storageRootDir - path to a folder where images will be stored, e.g '/opt/data/'
    **/
-  return async (app, category, mimeType, basePath, categoryPath) => {
+  return async (app: express.Application, category: ImageCategory, mimeType: string, basePath: string, categoryPath: string) => {
     let storage = multer.diskStorage({
       destination: async (req, file, cb) => {
         try {
@@ -135,12 +138,11 @@ function imageProviderFSBackend(storageRootDir) {
         req.url = path.join(categoryPath, subdir, fname);
         next();
       });
-    const options = {
+    app.use(express.static(storageRootDir, {
       setHeaders: (res) => {
         res.type(mimeType);
       }
-    };
-    app.use(express.static(storageRootDir, options));
+    }));
     logger.debug(`Accepting GET on ${uri}`);
 
     uri = path.join(basePath, categoryPath, 'upload');
@@ -170,7 +172,7 @@ function imageProviderFSBackend(storageRootDir) {
   }
 }
 
-async function setRouteHandlers(config, knex) {
+export async function createImageServerApp(config: Config, knex: Knex) {
   try {
     const app = express();
     app.use(cors());
@@ -180,10 +182,10 @@ async function setRouteHandlers(config, knex) {
       'db': imageProviderDBBackend(knex)
     };
 
-    for (const category of Object.keys(config.img_upload.categories)) {
+    for (const category of Object.keys(config.img_upload.categories) as ImageCategory[]) {
       logger.debug(`Image category: ${category}`);
       const catSettings = config.img_upload.categories[category];
-      for (const storageType of catSettings['storage_types']) {
+      for (const storageType of catSettings.storage_types) {
         const {type: mimeType, path: categoryPath} = catSettings;
         logger.debug(`Storage type: ${storageType}. MIME type: ${mimeType}. Path: ${categoryPath}`);
         const backend = backendFactories[storageType];
@@ -198,12 +200,12 @@ async function setRouteHandlers(config, knex) {
   }
 }
 
-async function createImgServerAsync(config, knex) {
+export async function createImgServerAsync(config: Config, knex: Knex) {
   try {
-    let app = await setRouteHandlers(config, knex);
+    let app = await createImageServerApp(config, knex);
 
     let httpServer = http.createServer(app);
-    httpServer.listen(config.img_storage_port, (err) => {
+    httpServer.listen(config.img_storage_port, (err?: Error) => {
       if (err) {
         logger.error('Could not start iso image server', err);
       }
@@ -214,7 +216,4 @@ async function createImgServerAsync(config, knex) {
   catch (e) {
     logger.error(`${e.stack}`);
   }
-  return Promise.resolve(httpServer);
 }
-
-module.exports = {createImgServerAsync, IMG_TABLE_NAME};

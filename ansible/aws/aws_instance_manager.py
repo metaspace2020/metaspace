@@ -15,8 +15,8 @@ class AWSInstManager(object):
     def __init__(self, conf, aws_conf, dry_run=False, verbose=False):
         self.key_name = aws_conf['key_name']
         self.dry_run = dry_run
-        session = boto3.session.Session(aws_access_key_id=aws_conf['aws_access_key_id'],
-                                        aws_secret_access_key=aws_conf['aws_secret_access_key'])
+        session = boto3.session.Session(aws_access_key_id=aws_conf.get('aws_access_key_id', None),
+                                        aws_secret_access_key=aws_conf.get('aws_secret_access_key', None))
         self.ec2 = session.resource('ec2', region_name=aws_conf['region'])
         self.ec2_client = session.client('ec2', region_name=aws_conf['region'])
         self.conf = conf
@@ -227,22 +227,25 @@ if __name__ == '__main__':
     parser.add_argument('--components', help='all,web,master,slave')
     parser.add_argument('--key-name', type=str, help='AWS key name to use')
     parser.add_argument('--stage', dest='stage', default='dev', type=str, help='One of dev/stage/prod')
+    parser.add_argument('--credentials-file', dest='cred_file', action='store_true', help='Use AWS credentials file')
     parser.add_argument('--create-ami', dest='create_ami', action='store_true')
     parser.add_argument('--dry-run', dest='dry_run', action='store_true',
                         help="Don't actually start/stop instances")
     args = parser.parse_args()
 
-    conf_file = 'group_vars/all.yml' if not args.create_ami else 'group_vars/create_ami_config.yml'
+    conf_file = 'group_vars/all/vars.yml' if not args.create_ami else 'group_vars/create_ami_config.yml'
     config_path = path.join(args.stage, conf_file)
     conf = load(open(config_path))
     cluster_conf = conf['cluster_configuration']
 
     aws_conf = {
         'key_name': args.key_name or conf['aws_key_name'],
-        'region': conf['aws_region'],
-        'aws_access_key_id': conf['aws_access_key_id'],
-        'aws_secret_access_key': conf['aws_secret_access_key']
+        'region': conf['aws_region']
     }
+    if not args.cred_file:
+        aws_conf['aws_access_key_id'] = conf['aws_access_key_id']
+        aws_conf['aws_secret_access_key'] = conf['aws_secret_access_key']
+
     aws_inst_man = AWSInstManager(conf=cluster_conf, aws_conf=aws_conf,
                                   dry_run=args.dry_run, verbose=True)
 
@@ -264,5 +267,7 @@ if __name__ == '__main__':
     else:
         raise Exception("Wrong action '{}'".format(args.action))
 
-    cmd = '{} update_inventory.py --stage {}'.format(sys.executable, args.stage).split(' ')
-    print('Inventory:\n{}'.format(check_output(cmd, universal_newlines=True)))
+    cmd = f'{sys.executable} update_inventory.py --stage {args.stage}'
+    if args.cred_file:
+        cmd += ' --credentials-file'
+    print('Inventory:\n{}'.format(check_output(cmd.split(' '), universal_newlines=True)))

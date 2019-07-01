@@ -13,7 +13,7 @@ import {User as UserModel} from '../../user/model';
 import config from '../../../utils/config';
 import {sendInvitationEmail} from '../../auth';
 import {findUserByEmail} from '../../../utils';
-import {sendProjectAcceptanceEmail, sendProjectInvitationEmail, sendRequestAccessToProjectEmail} from '../email';
+import {sendAcceptanceEmail, sentGroupOrProjectInvitationEmail, sendRequestAccessEmail} from '../../groupOrProject/email';
 import {smAPIUpdateDataset} from '../../../utils/smAPI';
 import {getDatasetForEditing} from '../../dataset/operation/getDatasetForEditing';
 
@@ -119,7 +119,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     const managers = await ctx.entityManager.getRepository(UserProjectModel)
       .find({where: {projectId, role: UPRO.MANAGER}, relations: ['user'] });
     managers.forEach(manager => {
-      sendRequestAccessToProjectEmail(manager.user, userProject.user, userProject.project);
+      sendRequestAccessEmail('project', manager.user, userProject.user, userProject.project);
     });
 
     // NOTE: In the return value, some role-dependent fields like `userProject.project.currentUserRole` will still reflect
@@ -133,7 +133,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     const userProject = await ctx.entityManager.getRepository(UserProjectModel)
       .findOneOrFail({ userId, projectId }, { relations: ['user', 'project'] });
 
-    sendProjectAcceptanceEmail(userProject.user, userProject.project);
+    sendAcceptanceEmail('project', userProject.user, userProject.project);
 
     // NOTE: This return value has the same issue with role-dependent fields as `requestAccessToProject`
     return { ...userProject, user: convertUserToUserSource(userProject.user, SRO.OTHER) };
@@ -149,7 +149,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       sendInvitationEmail(email, currentUser.name || '', link);
     } else {
       const project = await ctx.entityManager.getRepository(ProjectModel).findOneOrFail(projectId);
-      sendProjectInvitationEmail(user, currentUser, project);
+      sentGroupOrProjectInvitationEmail('project', user, currentUser, project);
     }
     const userId = user.id;
 

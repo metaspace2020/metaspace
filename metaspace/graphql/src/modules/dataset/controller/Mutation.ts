@@ -1,12 +1,13 @@
 import * as jsondiffpatch from 'jsondiffpatch';
 import config from '../../../utils/config';
+import logger from '../../../utils/logger';
 import * as Ajv from 'ajv';
 import {UserError} from 'graphql-errors';
 import {EntityManager} from 'typeorm';
 import * as moment from 'moment';
 import * as _ from 'lodash';
 
-import {fetchMolecularDatabases, logger} from '../../../../utils';
+import {fetchMolecularDatabases} from '../../../utils/molDb';
 import {EngineDS, fetchEngineDS} from '../../../utils/knexDb';
 
 import {smAPIRequest} from '../../../utils';
