@@ -58,7 +58,7 @@ def test_centroids_subset_ordered_by_mz(spark_context, ds_config, clean_isotope_
     centr_gen._iso_gen_part_n = 1
     formulas = [generate_ion_formula(f, a)
                 for f, a in product(['C2H4O8', 'C3H6O7', 'C59H112O6', 'C62H108O'],
-                                    ['+Na', '+H', '+K'])]
+                                    ['+Na', '+H', '[M]+'])]
     formula_centroids = centr_gen.generate_if_not_exist(formulas)
 
     assert formula_centroids.centroids_df(True).shape == (4 * 3 * 4, 3)

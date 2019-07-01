@@ -52,7 +52,7 @@ def ds_config():
             "min_px": 1,
         },
         "isotope_generation": {
-            "adducts": ["+H", "+Na", "+K"],
+            "adducts": ["+H", "+Na", "+K", "[M]+"],
             "charge": 1,
             "isocalc_sigma": 0.000619,
             "n_peaks": 4,

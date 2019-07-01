@@ -3,7 +3,7 @@ from itertools import product
 
 import numpy as np
 import pandas as pd
-
+from sm.engine.formula_parser import format_modifiers
 
 logger = logging.getLogger('engine')
 
@@ -16,11 +16,11 @@ def _make_target_modifiers_df(chem_mods, neutral_losses, target_adducts):
     Note that the combination order matters as these target modifiers are used later to map back to separated
     chemical modification, neutral loss and target adduct fields.
     """
-    df = pd.DataFrame(list(product([None, *chem_mods], [None, *neutral_losses], target_adducts)),
-                      columns=['chem_mod', 'neutral_loss', 'adduct'],
+    rows = [(cm, nl, ta, format_modifiers(cm, nl, ta), format_modifiers(cm, nl))
+            for cm, nl, ta in product([None, *chem_mods], [None, *neutral_losses], target_adducts)]
+    df = pd.DataFrame(rows,
+                      columns=['chem_mod', 'neutral_loss', 'adduct', 'target_modifier', 'decoy_modifier_prefix'],
                       dtype='O')
-    df = df.assign(target_modifier=df.chem_mod.fillna('') + df.neutral_loss.fillna('') + df.adduct)
-    df = df.assign(decoy_modifier_prefix=df.chem_mod.fillna('') + df.neutral_loss.fillna(''))
     df = df.set_index('target_modifier')
     return df
 

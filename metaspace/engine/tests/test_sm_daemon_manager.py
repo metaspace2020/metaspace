@@ -20,7 +20,7 @@ def create_ds(ds_id='2000-01-01', ds_name='ds_name', input_path='input_path', up
     if not mol_dbs:
         mol_dbs = ['HMDB-v4']
     if not adducts:
-        adducts = ['+H', '+Na', '+K']
+        adducts = ['+H', '+Na', '+K', '[M]+']
     if not metadata:
         metadata = {
             'MS_Analysis': {
@@ -71,7 +71,10 @@ class TestSMDaemonDatasetManager:
             manager.annotate(ds, annotation_job_factory=self.SearchJob)
 
             DS_SEL = 'select name, input_path, upload_dt, metadata, config from dataset where id=%s'
-            assert db.select_one(DS_SEL, params=(ds_id,)) == (ds_name, input_path, upload_dt, metadata, ds_config)
+            results = db.select_one(DS_SEL, params=(ds_id,))
+            assert results[3] == metadata
+            assert results[4] == ds_config
+            # assert db.select_one(DS_SEL, params=(ds_id,)) == (ds_name, input_path, upload_dt, metadata, ds_config)
         finally:
             db.close()
 

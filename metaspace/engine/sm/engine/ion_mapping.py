@@ -1,3 +1,5 @@
+from sm.engine.formula_parser import format_ion_formula
+
 ION_INS = ('INSERT INTO graphql.ion (ion, formula, adduct, charge) ' 
            'VALUES (%s, %s, %s, %s) ' 
            'RETURNING id')
@@ -19,14 +21,8 @@ def get_ion_id_mapping(db, ion_tuples, charge):
     dict[tuple[str, str], int]
         (formula, adduct) => ion_id
     """
-    if charge == 1:
-        charge_sign = '+'
-    elif charge == -1:
-        charge_sign = '-'
-    else:
-        raise TypeError("polarity must be 'Positive', 'Negative', '+' or '-'")
 
-    ion_formulas = [formula + adduct + charge_sign for formula, adduct in ion_tuples]
+    ion_formulas = [format_ion_formula(formula, adduct, charge=charge) for formula, adduct in ion_tuples]
     ion_to_mol = dict(zip(ion_formulas, ion_tuples))
     ion_to_id = dict(db.select(ION_SEL, [ion_formulas]))
     missing_ions = sorted(set(ion_formulas).difference(ion_to_id.keys()))

@@ -43,7 +43,7 @@ def test_new_ds_saves_to_db(find_db_by_name_version_mock, test_db, metadata, ds_
     ds.save(db)
 
     ion_metrics_df = pd.DataFrame({'formula': ['H2O', 'H2O', 'CO2', 'CO2', 'H2SO4', 'H2SO4'],
-                                   'adduct': ['+H', '+K', '+H', '+K', '+H', '+K'],
+                                   'adduct': ['+H', '[M]+', '+H', '[M]+', '+H', '[M]+'],
                                    'fdr': [0.05, 0.1, 0.05, 0.1, 0.05, 0.1],
                                    'image_id': list(map(str, range(6)))})
     job_id, = db.insert_return("INSERT INTO job (db_id, ds_id, status) "

@@ -239,6 +239,9 @@ def update_ds_config(old_config, metadata, **kwargs):
     """
     assert all(key in FLAT_DS_CONFIG_KEYS for key in kwargs.keys())
 
+    print('kwargs', kwargs)
+    print('old_config', old_config)
+
     isotope_generation = old_config.get('isotope_generation', {})
     fdr = old_config.get('fdr', {})
     image_generation = old_config.get('image_generation', {})
@@ -252,9 +255,12 @@ def update_ds_config(old_config, metadata, **kwargs):
         'ppm': image_generation.get('ppm'),
         'min_px': image_generation.get('min_px'),
     }
+    print('old_vals', old_vals)
 
     for k, v in old_vals.items():
         if v is not None:
             kwargs.setdefault(k, v)
+
+    print('kwargs after', kwargs)
 
     return generate_ds_config(metadata, **kwargs)
