@@ -7,6 +7,7 @@ import Vuex from 'vuex';
 import store from '../../store/index';
 import { sync } from 'vuex-router-sync';
 import { encodeParams } from './url';
+import {mockAdductSuggestions} from '../../../tests/utils/mockGraphqlData';
 
 
 Vue.use(Vuex);
@@ -39,13 +40,7 @@ describe('FilterPanel', () => {
   beforeEach(async () => {
     initMockGraphqlClient({
       Query: () => ({
-        adductSuggestions: () => [
-          {"adduct": "-H", "charge": -1},
-          {"adduct": "+Cl", "charge": -1},
-          {"adduct": "+H", "charge": 1},
-          {"adduct": "+Na", "charge": 1},
-          {"adduct": "+K", "charge": 1},
-        ]
+        adductSuggestions: mockAdductSuggestions
       })
     });
     store.commit('setFilterLists', null);

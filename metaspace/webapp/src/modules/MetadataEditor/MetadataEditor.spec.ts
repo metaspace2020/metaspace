@@ -3,6 +3,7 @@ import MetadataEditor from './MetadataEditor.vue';
 import router from '../../router';
 import { initMockGraphqlClient, provide } from '../../../tests/utils/mockGraphqlClient';
 import store from '../../store/index';
+import {mockAdductSuggestions} from '../../../tests/utils/mockGraphqlData';
 
 
 describe('MetadataEditor', () => {
@@ -38,7 +39,8 @@ describe('MetadataEditor', () => {
   it('should match snapshot', async () => {
     initMockGraphqlClient({
       Query: () => ({
-        currentUserLastSubmittedDataset: () => null // Prevent automatic mocking
+        currentUserLastSubmittedDataset: () => null, // Prevent automatic mocking
+        adductSuggestions: mockAdductSuggestions,
       })
     });
     const wrapper = mount(MetadataEditor, { store, router, provide, sync: false });
