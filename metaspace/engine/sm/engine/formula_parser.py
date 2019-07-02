@@ -71,7 +71,7 @@ def generate_ion_formula(formula, *adducts):
     for adduct in adducts:
         if adduct in ('[M]+','[M]-'):
             # In order to support more complex adducts in the future, this should move away from using plain formulas like "+H",
-            # and instead adopt a comprehensive description format that supports transformations like [2M3C13+Na+H+5.109]+2
+            # and instead adopt a comprehensive description format that supports transformations like [2M3C13+Na+H+5.109]2+
             # (Dimeric form of molecule with 3 atoms labelled with C13, Na and H adducts, an unknown +5.109 mass shift and charge=+2)
             # However this would require significant changes to the rest of the pipeline. For now [M]+ and [M]- are just treated as special-cases.
             continue

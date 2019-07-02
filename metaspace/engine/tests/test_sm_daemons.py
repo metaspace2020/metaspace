@@ -216,10 +216,10 @@ def test_sm_daemons(MSMSearchMock,
 
         # image metrics asserts
         rows = db.select(('SELECT formula, adduct, stats, iso_image_ids '
-                          'FROM annotation '
-                          'ORDER BY formula, adduct'))
+                          'FROM annotation'))
+        rows = sorted(rows, key=lambda row: row[1]) # Sort in Python because postgres sorts symbols inconsistently between locales
         assert len(rows) == 3
-        for row, expected_adduct in zip(rows, ['+H','[M]+','+Na']):
+        for row, expected_adduct in zip(rows, ['+H', '+Na', '[M]+']):
             formula, adduct, stats, iso_image_ids = row
             assert formula == 'C12H24O'
             assert adduct == expected_adduct
