@@ -11,56 +11,9 @@ import SimpleFilterBox from './filter-components/SimpleFilterBox.vue';
 import BooleanFilter from './filter-components/BooleanFilter.vue';
 import config from '../../config';
 
-// Filled during the initialization of adduct filter below
-const ADDUCT_POLARITY: Record<string, '+'|'-'> = {};
-
-function formatAdduct (adduct: string) {
-  if (adduct === null) {
-    return '';
-  } else {
-    return renderMolFormula('M' + adduct + ADDUCT_POLARITY[adduct])
-  }
-}
-
 function formatFDR (fdr: number) {
   return fdr ? Math.round(fdr * 100) + '%' : '';
 }
-
-/*
-   Introduction of a new filter requires:
-   * type (one of the suitable filter components)
-   * name: short name, will be shown on the 'tags'
-   * description: what will be shown as a select option
-   * levels: on which pages the filter makes sense;
-     currently 'annotation' and 'dataset' are used
-   * defaultInLevels: on which pages the filter should be active by default
-   * initialValue: what will be the filter value when it's created
-   * hidden: whether to hide the filter from the UI
-   * any required settings for the chosen filter component
-     (e.g. 'options' for SingleSelectFilter/MultipleSelectFilter)
-
-   In addition, there are some optional settings, such as
-   'removable' (applicable to every filter) or 'filterable'.
-
-   The specifications below describe only the presentation logic.
-   Once a filter is added to the specifications list, any pages
-   making use of it must also implement the data filtering logic,
-   e.g. adding GraphQL query variables and setting them accordingly.
-
-   Data filtering logic is currently located in two places:
-   * url.ts
-     add new fields to FILTER_TO_URL (for vue-router)
-   * store/getters.js
-     edit gqlAnnotationFilter and gqlDatasetFilter getters
-
-   You must also add the filter key to filterKeys array in FilterPanel.vue:
-   this controls the order of the filters in the dropdown list.
-
-   If options to a select are provided as a string, they are taken from
-   FilterPanel computed properties. When a new filter is added that uses
-   this feature, fetchOptionListsQuery in api/metadata.js should be tweaked to
-   incorporate any extra fields that are needed to populate the options.
-*/
 
 export type Level = 'annotation' | 'dataset' | 'upload' | 'projects';
 
@@ -71,26 +24,59 @@ export type FilterKey = 'database' | 'datasetIds' | 'minMSM' | 'compoundName' | 
 
 export type MetadataLists = Record<string, any[]>;
 
+/**
+ The specifications below describe the presentation logic of filters.
+ Once a filter is added to the specifications list, any pages
+ making use of it must also implement the data filtering logic,
+ e.g. adding GraphQL query variables and setting them accordingly.
+
+ Data filtering logic is currently located in two places:
+ * url.ts
+ add new fields to FILTER_TO_URL (for vue-router)
+ * store/getters.js
+ edit gqlAnnotationFilter and gqlDatasetFilter getters
+
+ You must also add the filter key to filterKeys array in FilterPanel.vue:
+ this controls the order of the filters in the dropdown list.
+
+ If options to a select are provided as a string, they are taken from
+ FilterPanel computed properties. When a new filter is added that uses
+ this feature, fetchOptionListsQuery in api/metadata.js should be tweaked to
+ incorporate any extra fields that are needed to populate the options.
+ */
 export interface FilterSpecification {
+  /** Component used for input/display e.g. SingleSelectFilter */
   type: Component;
+  /** Name shown on component */
   name: string;
+  /** Text used to refer to the filter in the "Add filter" drop-down list */
   description?: string;
+  /** Component that contains help text to be displayed as a question mark icon with a popover. Only supported by specific input components */
   helpComponent?: Component;
+  /** List of which pages the filter makes sense */
   levels: Level[];
+  /** List of which pages the filter should be visible by default */
   defaultInLevels?: Level[];
+  /** Initial value of the filter when it is added, or if it is visible by default. Can be a function that is called after MetadataLists is loaded. */
   initialValue: undefined | null | number | string | boolean | ((lists: MetadataLists) => any);
+  /** List of options for SingleSelectFilter. Can be a function that is called after MetadataLists is loaded. */
   options?: string | number[] | boolean[] | string[] | ((lists: MetadataLists) => any[]);
   removable?: boolean;
   filterable?: boolean;
   multiple?: boolean;
   hidden?: boolean | (() => boolean);
+  /** How to encode/decode this filter from the URL */
   encoding?: 'list' | 'json' | 'bool' | 'number';
-  optionFormatter?(value: any): string;
-  valueFormatter?(value: any): string;
-  valueKey?: string;
+  /** Callback to format options for display. "options" parameter may be an empty array while the page is loading */
+  optionFormatter?(value: any, options: any[]): string;
+  /** Callback to extract the "value" of an object-based option */
+  valueGetter?(option: any): any;
+  /** Whether an empty string is a valid value or should be considered unset */
   allowEmptyString?: boolean;
   sortOrder?: number;
+  /** List of other filters whose removal should cause this filter to also be removed */
   dependsOnFilters?: FilterKey[];
+  /** List of other filters whose addition should cause this filter to be removed */
   conflictsWithFilters?: FilterKey[];
 }
 
@@ -98,7 +84,7 @@ export interface FilterSpecification {
 export const FILTER_COMPONENT_PROPS: (keyof FilterSpecification)[] = [
   'name', 'helpComponent',
   'removable', 'filterable', 'multiple',
-  'optionFormatter', 'valueFormatter', 'valueKey', 'allowEmptyString'
+  'optionFormatter', 'valueGetter', 'allowEmptyString'
 ];
 
 export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
@@ -149,13 +135,9 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     description: 'Select adduct',
     levels: ['annotation'],
     initialValue: undefined,
-    options: lists => lists.adducts.map(d => {
-      const {adduct, charge} = d;
-      ADDUCT_POLARITY[adduct] = charge > 0 ? '+' : '-';
-      return adduct;
-    }),
-    optionFormatter: formatAdduct,
-    valueFormatter: formatAdduct,
+    options: lists => lists.adducts.filter(a => config.features.all_adducts || !a.hidden),
+    optionFormatter: adduct => adduct && adduct.name,
+    valueGetter: adduct => adduct && adduct.adduct,
     allowEmptyString: true
   },
 
@@ -177,7 +159,6 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
 
     options: [0.05, 0.1, 0.2, 0.5],
     optionFormatter: formatFDR,
-    valueFormatter: formatFDR,
     encoding: 'number',
     filterable: false,
     removable: false
@@ -354,7 +335,6 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     options: [true, false],
     encoding: 'bool',
     optionFormatter: option => `${option ? 'Off' : 'On'}-sample only`,
-    valueFormatter: option => `${option ? 'Off' : 'On'}-sample only`,
     hidden: () => !config.features.off_sample,
   }
 };

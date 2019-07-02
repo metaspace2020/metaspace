@@ -34,6 +34,10 @@ export default {
       f.hasNeutralLossOrChemMod = false;
     }
 
+    if (!config.features.all_adducts) {
+      f.hasHiddenAdduct = false;
+    }
+
     if (filter.minMSM)
       f.msmScoreFilter = {min: filter.minMSM, max: 1.0};
 

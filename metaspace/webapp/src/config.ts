@@ -32,6 +32,7 @@ interface Features {
   optical_transform: boolean;
   ignore_pixel_aspect_ratio: boolean;
   all_dbs: boolean;
+  all_adducts: boolean;
   neutral_loss: boolean;
   advanced_ds_config: boolean;
 }
@@ -67,6 +68,7 @@ const defaultConfig: ClientConfig = {
     optical_transform: true,
     ignore_pixel_aspect_ratio: false,
     all_dbs: false,
+    all_adducts: false,
     neutral_loss: false,
     advanced_ds_config: false,
   }

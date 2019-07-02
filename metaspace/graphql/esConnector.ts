@@ -223,7 +223,7 @@ function constructAnnotationFilters(filter: AnnotationFilter & ExtraAnnotationFi
   const {
     database, datasetName, mzFilter, msmScoreFilter, fdrLevel,
     sumFormula, adduct, ion, offSample, compoundQuery, annId,
-    hasNeutralLossOrChemMod
+    hasNeutralLossOrChemMod, hasHiddenAdduct
   } = filter;
   const filters = [];
 
@@ -255,6 +255,9 @@ function constructAnnotationFilters(filter: AnnotationFilter & ExtraAnnotationFi
     filters.push({bool: {should: [{exists: {field: 'neutral_loss'}}, {exists: {field: 'chem_mod'}}]}});
   } else if (hasNeutralLossOrChemMod === false) {
     filters.push({bool: {must_not: [{exists: {field: 'neutral_loss'}}, {exists: {field: 'chem_mod'}}]}});
+  }
+  if (hasHiddenAdduct === false) {
+    filters.push({bool: {must_not: [{terms: {adduct: config.adducts.filter(a => a.hidden).map(a => a.adduct)}}]}})
   }
 
   if (ion)

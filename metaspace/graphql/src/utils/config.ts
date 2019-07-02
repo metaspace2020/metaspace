@@ -11,6 +11,14 @@ export interface ImageCategoryConfig {
 
 export type ImageCategory = 'iso_image' | 'optical_image' | 'raw_optical_image' | 'ion_thumbnail';
 
+export interface Adduct {
+  adduct: string;
+  name: string;
+  charge: number;
+  hidden: boolean;
+  default: boolean;
+}
+
 export interface Config {
   port: number;
   ws_port: number;
@@ -19,9 +27,9 @@ export interface Config {
     level: string;
   };
   defaults: {
-    adducts: string[];
     moldb_names: string[];
   };
+  adducts: Adduct[];
   moldbs: {
     deprecated: string[];
     custom: string[];

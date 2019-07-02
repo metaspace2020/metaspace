@@ -71,7 +71,10 @@ type Compound {
 
 type Adduct {
   adduct: String!
+  name: String!
   charge: Int!
+  hidden: Boolean!
+  default: Boolean!
 }
 
 type Spectrum {
@@ -154,6 +157,7 @@ input AnnotationFilter {
   colocalizationAlgo: String
   offSample: Boolean
   hasNeutralLossOrChemMod: Boolean @deprecated(reason: "Do not depend on this filter - it is intended to only be a temporary measure until a more flexible filter API that supports is-null/non-null queries is built")
+  hasHiddenAdduct: Boolean @deprecated(reason: "Do not depend on this filter - it is intended to only be a temporary measure until a more flexible filter API that supports multi-value queries is built")
 }
 
 input ColocalizationCoeffFilter {
