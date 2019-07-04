@@ -30,7 +30,7 @@ SUCCESSFUL_COLOC_JOB_SEL = ('SELECT mol_db FROM graphql.coloc_job '
                             'GROUP BY mol_db '
                             'HAVING not bool_or(error IS NOT NULL)')
 
-ANNOTATIONS_SEL = ('SELECT iso_image_ids[1], formula, adduct, fdr '
+ANNOTATIONS_SEL = ('SELECT iso_image_ids[1], formula, chem_mod, neutral_loss, adduct, fdr '
                    'FROM annotation m '
                    'WHERE m.job_id = ('
                    '    SELECT id FROM job j '
@@ -285,10 +285,11 @@ class Colocalization(object):
         annotation_rows = self._db.select(ANNOTATIONS_SEL, [ds_id, mol_db.id])
         num_annotations = len(annotation_rows)
         if num_annotations != 0:
-            sf_adducts = [(formula, adduct) for image, formula, adduct, fdr in annotation_rows]
-            ion_id_mapping = get_ion_id_mapping(self._db, sf_adducts, charge)
-            ion_ids = np.array([ion_id_mapping[sf_adduct] for sf_adduct in sf_adducts])
-            fdrs = np.array([fdr for image, formula, adduct, fdr in annotation_rows])
+            ion_tuples = [(formula, chem_mod, neutral_loss, adduct)
+                          for image, formula, chem_mod, neutral_loss, adduct, fdr in annotation_rows]
+            ion_id_mapping = get_ion_id_mapping(self._db, ion_tuples, charge)
+            ion_ids = np.array([ion_id_mapping[ion_tuple] for ion_tuple in ion_tuples])
+            fdrs = np.array([row[5] for row in annotation_rows])
 
             logger.debug(f'Getting {num_annotations} images for "{ds_id}" {mol_db_name}')
             image_ids = [row[0] for row in annotation_rows]
