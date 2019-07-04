@@ -17,7 +17,7 @@ def _make_target_modifiers_df(chem_mods, neutral_losses, target_adducts):
     chemical modification, neutral loss and target adduct fields.
     """
     rows = [(cm, nl, ta, format_modifiers(cm, nl, ta), format_modifiers(cm, nl))
-            for cm, nl, ta in product([None, *chem_mods], [None, *neutral_losses], target_adducts)]
+            for cm, nl, ta in product(['', *chem_mods], ['', *neutral_losses], target_adducts)]
     df = pd.DataFrame(rows,
                       columns=['chem_mod', 'neutral_loss', 'adduct', 'target_modifier', 'decoy_modifier_prefix'],
                       dtype='O')

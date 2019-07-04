@@ -65,14 +65,16 @@ export class ColocAnnotation {
 }
 
 @Entity('ion')
-// WIP: This index doesn't work. Postgres treats all nulls as unequal, meaning any row that contains at least one null
-// will pass the uniqueness check, even if there is an identical row already.
 @Index(['formula', 'chemMod', 'neutralLoss', 'adduct', 'charge'], {unique: true})
 export class Ion {
   @PrimaryGeneratedColumn({ type: 'int' })
   id: number;
 
-  /** All components of the ion in one string, with charge as a '+'/'-' suffix e.g. "C21H41O6P-HO+HO3P-H2O-CO2+Na+" */
+  /**
+   * All components of the ion in one string, with charge as a '+'/'-' suffix e.g. "C21H41O6P-HO+HO3P-H2O-CO2+Na+".
+   * Note that this isn't unique - it's possible for different combinations of chemMods, neutralLosses and adducts
+   * to build the same ion.
+   */
   @Column({ type: 'text' })
   @Index()
   ion: string;
@@ -83,10 +85,10 @@ export class Ion {
   @Column({ type: 'text' })
   formula: string;
 
-  @Column({ type: 'text', nullable: true, name: 'chem_mod' })
+  @Column({ type: 'text', name: 'chem_mod', default: '' })
   chemMod: string;
 
-  @Column({ type: 'text', nullable: true, name: 'neutral_loss' })
+  @Column({ type: 'text', name: 'neutral_loss', default: '' })
   neutralLoss: string;
 
   @Column({ type: 'text' })

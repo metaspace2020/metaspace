@@ -32,6 +32,8 @@ describe('annotation/queryFilters applyQueryFilters', () => {
     ions = testEntityManager.create(Ion, [1,2,3,4].map(i => ({
       ion: `H${i}O+H+`,
       formula: `H${i}O`,
+      chemMod: i & 1 ? '-H+OH' : '',
+      neutralLoss: i & 2 ? '-OH' : '',
       adduct: '+H',
       charge: 1
     })));
@@ -109,19 +111,21 @@ describe('annotation/queryFilters applyQueryFilters', () => {
         colocalizationAlgo: job.algorithm,
       }
     };
+    const ionAnnotations = ions.map(({ion, formula, chemMod, neutralLoss, adduct}) =>
+      ({ion, formula, chem_mod: chemMod, neutral_loss: neutralLoss, adduct}));
     const {args, postprocess} = await applyQueryFilters(anonContext, argsWithColocWith);
     const annotations: DeepPartial<ESAnnotation>[] = [
-      {_source: {ion: ions[2].ion}},
-      {_source: {ion: ions[3].ion}},
-      {_source: {ion: ions[1].ion}},
+      {_source: ionAnnotations[2]},
+      {_source: ionAnnotations[3]},
+      {_source: ionAnnotations[1]},
     ];
 
     const result = postprocess!(annotations as ESAnnotation[]);
 
     expect(result).toMatchObject([
-      {_source: {ion: ions[1].ion}, _isColocReference: true},
-      {_source: {ion: ions[2].ion}, _isColocReference: false},
-      {_source: {ion: ions[3].ion}, _isColocReference: false},
+      {_source: ionAnnotations[1], _isColocReference: true},
+      {_source: ionAnnotations[2], _isColocReference: false},
+      {_source: ionAnnotations[3], _isColocReference: false},
     ]);
     expect(await result[0].getColocalizationCoeff(ions[1].ion, job.algorithm, job.molDb!, job.fdr)).toEqual(1);
     expect(await result[1].getColocalizationCoeff(ions[1].ion, job.algorithm, job.molDb!, job.fdr)).toEqual(0.9);

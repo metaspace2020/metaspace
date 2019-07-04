@@ -125,8 +125,8 @@ def fill_db(test_db, metadata, ds_config):
                      True)])
     db.insert("INSERT INTO job (id, db_id, ds_id) VALUES (%s, %s, %s)",
               rows=[(0, 0, ds_id)])
-    db.insert(("INSERT INTO annotation (job_id, formula, adduct, msm, fdr, stats, iso_image_ids) "
-               "VALUES (%s, %s, %s, 0.5, 0.2, '{}', %s)"),
+    db.insert(("INSERT INTO annotation (job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids) "
+               "VALUES (%s, %s, '', '', %s, 0.5, 0.2, '{}', %s)"),
               rows=[(0, 'H2O', '+H', ['iso_image_11', 'iso_image_12']),
                     (0, 'CH4', '+H', ['iso_image_21', 'iso_image_22'])])
     user_id = str(uuid.uuid4())
