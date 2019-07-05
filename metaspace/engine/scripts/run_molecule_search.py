@@ -22,8 +22,6 @@ if __name__ == "__main__":
     parser.add_argument('--input-path', type=str, help='Path to dataset')
     parser.add_argument('--config-path', type=str, help='Path to dataset config')
     parser.add_argument('--meta-path', type=str, help='Path to dataset metadata')
-    parser.add_argument('--no-clean', dest='no_clean', action='store_true',
-                        help="Don't clean dataset txt files after job is finished")
     parser.add_argument('--config', dest='sm_config_path', default='conf/config.json',
                         type=str, help='SM config path')
     args = parser.parse_args()
@@ -42,7 +40,7 @@ if __name__ == "__main__":
 
         ds = create_ds_from_files(args.ds_id, args.ds_name,
                                   args.input_path, config_path, meta_path)
-        manager.annotate(ds, AnnotationJob, del_first=True, no_clean=args.no_clean)
+        manager.annotate(ds, AnnotationJob, del_first=True)
     except Exception as e:
         logging.getLogger('engine').error(e, exc_info=True)
         sys.exit(1)

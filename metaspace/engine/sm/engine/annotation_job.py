@@ -36,15 +36,8 @@ class JobStatus(object):
 
 
 class AnnotationJob(object):
-    """ Main class responsible for molecule search. Uses the other modules of the engine
-
-    Args
-    -----
-    no_clean : bool
-        Don't delete interim data files
-    """
-    def __init__(self, img_store=None, sm_config=None, no_clean=False):
-        self.no_clean = no_clean
+    """ Main class responsible for molecule search. Uses the other modules of the engine """
+    def __init__(self, img_store=None, sm_config=None):
         self._img_store = img_store
 
         self._sc = None
