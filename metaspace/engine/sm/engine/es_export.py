@@ -15,6 +15,7 @@ from sm.engine.util import SMConfig
 logger = logging.getLogger('engine')
 
 ANNOTATIONS_SEL = '''SELECT
+    m.id as annotation_id,
     m.formula AS formula,
     COALESCE(((m.stats -> 'chaos'::text)::text)::real, 0::real) AS chaos,
     COALESCE(((m.stats -> 'spatial'::text)::text)::real, 0::real) AS image_corr,
@@ -347,11 +348,10 @@ class ESExporter(object):
                 # assert fdr in fdr_levels
                 annotation_counts[fdr] += 1
 
-                ion_str = doc['ion'].replace('+', 'plus_').replace('-', 'minus_')
                 to_index.append({
                     '_index': self.index,
                     '_type': 'annotation',
-                    '_id': '{}_{}_{}_{}'.format(doc['ds_id'], mol_db.name, mol_db.version, ion_str),
+                    '_id': f"{doc['ds_id']}_{doc['annotation_id']}",
                     '_source': doc
                 })
 
