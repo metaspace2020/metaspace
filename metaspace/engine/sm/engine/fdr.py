@@ -90,7 +90,7 @@ class FDR(object):
         all_formula_msm_df = all_formula_msm_df.join(formula_msm).fillna(0)
 
         target_fdr_df_list = []
-        for tm in self.target_modifiers_df.index:
+        for tm in self.target_modifiers_df.index.drop_duplicates():
             target_msm = all_formula_msm_df.loc(axis=0)[:, tm]
             full_decoy_df = self.td_df[self.td_df.tm == tm][['formula', 'dm']]
 
