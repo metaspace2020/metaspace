@@ -3,7 +3,7 @@ import logging
 from copy import deepcopy
 
 from sm.engine.mol_db import MolecularDB
-from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine.isocalc_wrapper import IsocalcWrapper, set_centroids_cache_enabled
 from sm.engine.util import init_loggers, SMConfig
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter, ESIndexManager
@@ -60,6 +60,8 @@ def reindex_results(ds_id, ds_mask):
     assert ds_id or ds_mask
 
     conf = SMConfig.get_conf()
+    set_centroids_cache_enabled(True)
+
     if ds_mask == '_all_':
         _reindex_all(conf)
     else:
