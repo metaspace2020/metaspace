@@ -71,7 +71,7 @@ def pysparkling_context(request):
     return Context()
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture()
 def spark_context(request):
     from pyspark import SparkContext
     import sys
@@ -186,9 +186,9 @@ def mol_db(ds_config):
     return mol_db
 
 
-def make_moldb_mock():
+def make_moldb_mock(formulas=('H2O','C5H3O')):
     moldb_mock = MagicMock(spec=MolecularDB)
     moldb_mock.id = 0
     moldb_mock.name = 'test_db'
-    moldb_mock.formulas = ['H2O', 'C5H3O']
+    moldb_mock.formulas = list(formulas)
     return moldb_mock
