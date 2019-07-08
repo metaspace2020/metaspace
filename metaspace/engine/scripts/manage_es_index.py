@@ -3,6 +3,22 @@ import argparse
 from sm.engine.util import SMConfig, init_loggers
 from sm.engine.es_export import ESIndexManager
 
+def print_status(es_man, alias):
+    active_index = es_man.internal_index_name(alias)
+    inactive_index = es_man.another_index_name(active_index)
+
+    if es_man.exists_index(active_index):
+        active_count, active_size = es_man.get_index_stats(active_index)
+        print(f'Active index {alias} -> {active_index}: {active_count} docs, {active_size / 2**20:f}MiB')
+    else:
+        print(f'Active index {alias} -> {active_index}: MISSING')
+
+    if es_man.exists_index(inactive_index):
+        inactive_count, inactive_size = es_man.get_index_stats(inactive_index)
+        print(f'Inactive index {inactive_index}: {inactive_count} docs, {inactive_size / 2**20:f}MiB')
+    else:
+        print(f'Inactive index {inactive_index}: NOT PRESENT')
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Create ElasticSearch indices')
@@ -45,8 +61,5 @@ if __name__ == '__main__':
     else:
         parser.error('Invalid action')
 
-    # Print current mappings
-    active_index = es_man.internal_index_name(alias)
-    inactive_index = es_man.another_index_name(active_index)
-    print(f'Active index {alias} -> {active_index}: {"PRESENT" if es_man.exists_index(active_index) else "NOT PRESENT"}')
-    print(f'Inactive index {inactive_index}: {"PRESENT" if es_man.exists_index(inactive_index) else "NOT PRESENT"}')
+    # Print status regardless. The specific command just exists as a clean way to indicate to not do anything
+    print_status(es_man, alias)

@@ -221,6 +221,12 @@ class ESIndexManager(object):
                 "actions": [{"remove": {"index": old_index, "alias": alias}}]
             })
 
+    def get_index_stats(self, index):
+        data = self._ind_client.stats(index, metric="docs,store")
+        ind_data = data['indices'][index]['total']
+        return ind_data['docs']['count'], ind_data['store']['size_in_bytes']
+
+
 
 def flatten_doc(doc, parent_key='', sep='.'):
     items = []

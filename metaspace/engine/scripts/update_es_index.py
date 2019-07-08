@@ -9,8 +9,19 @@ from sm.engine.db import DB
 from sm.engine.es_export import ESExporter, ESIndexManager
 
 
+def get_inactive_index_es_config(es_config):
+    es_man = ESIndexManager(es_config)
+    old_index = es_man.internal_index_name(es_config['index'])
+    new_index = es_man.another_index_name(old_index)
+    tmp_es_config = deepcopy(es_config)
+    tmp_es_config['index'] = new_index
+
+    return tmp_es_config
+
+
 def _reindex_all(conf):
     es_config = conf['elasticsearch']
+    inactive_es_config = get_inactive_index_es_config(es_config)
     alias = es_config['index']
     es_man = ESIndexManager(es_config)
     old_index = es_man.internal_index_name(alias)
@@ -18,15 +29,12 @@ def _reindex_all(conf):
     es_man.create_index(new_index)
 
     try:
-        tmp_es_config = deepcopy(es_config)
-        tmp_es_config['index'] = new_index
-
         db = DB(conf['db'])
-        es_exp = ESExporter(db, tmp_es_config)
+        es_exp = ESExporter(db, inactive_es_config)
         ds_ids = [r[0] for r in db.select('select id from dataset')]
         _reindex_datasets(ds_ids, db, es_exp)
 
-        es_man.remap_alias(tmp_es_config['index'], alias=alias)
+        es_man.remap_alias(inactive_es_config['index'], alias=alias)
     except Exception as e:
         es_man.delete_index(new_index)
         raise e
@@ -59,7 +67,7 @@ def _reindex_datasets(ds_ids, db, es_exp):
             logger.error(new_msg, exc_info=True)
 
 
-def reindex_results(ds_id, ds_mask):
+def reindex_results(ds_id, ds_mask, use_inactive_index):
     assert ds_id or ds_mask
 
     conf = SMConfig.get_conf()
@@ -68,8 +76,12 @@ def reindex_results(ds_id, ds_mask):
     if ds_mask == '_all_':
         _reindex_all(conf)
     else:
+        es_config = conf['elasticsearch']
+        if use_inactive_index:
+            es_config = get_inactive_index_es_config(es_config)
+
         db = DB(conf['db'])
-        es_exp = ESExporter(db)
+        es_exp = ESExporter(db, es_config=es_config)
 
         if ds_id:
             ds_ids = ds_id.split(',')
@@ -84,6 +96,7 @@ def reindex_results(ds_id, ds_mask):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Reindex dataset results')
     parser.add_argument('--config', default='conf/config.json', help='SM config path')
+    parser.add_argument('--inactive', action='store_true', help='Run against the inactive index')
     parser.add_argument('--ds-id', dest='ds_id', default='', help='DS id (or comma-separated list of ids)')
     parser.add_argument('--ds-name', dest='ds_name', default='', help='DS name prefix mask (_all_ for all datasets)')
     args = parser.parse_args()
@@ -92,4 +105,4 @@ if __name__ == '__main__':
     init_loggers(SMConfig.get_conf()['logs'])
     logger = logging.getLogger('engine')
 
-    reindex_results(args.ds_id, args.ds_name)
+    reindex_results(args.ds_id, args.ds_name, args.inactive)
