@@ -41,6 +41,7 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
             }]
         elif sql == ANNOTATIONS_SEL:
             return [{
+                'annotation_id': 1234,
                 'formula': 'H2O',
                 'chaos': 1,
                 'image_corr': 1,
@@ -57,6 +58,7 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
                 'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
                 'polarity': '+'
             }, {
+                'annotation_id': 1235,
                 'formula': 'Au',
                 'chaos': 1,
                 'image_corr': 1,
@@ -124,7 +126,7 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
         'comp_ids': ['mol_id'], 'ds_config': 'ds_config', 'ds_input_path': 'ds_input_path', 'ds_id': ds_id,
         'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished,
         'ds_ion_img_storage': 'fs', 'ds_is_public': True,
-        'ds_submitter': 'user_id', 'ds_group': 'group_id',
+        'ds_submitter': 'user_id', 'ds_group': 'group_id', 'annotation_id': 1234,
     }
     ann_2_d = es_dsl_search.filter('term', formula='Au').execute().to_dict()['hits']['hits'][0]['_source']
     assert ann_2_d == {
@@ -137,7 +139,7 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
         'comp_ids': ['mol_id'], 'ds_config': 'ds_config', 'ds_input_path': 'ds_input_path', 'ds_id': ds_id,
         'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished,
         'ds_ion_img_storage': 'fs', 'ds_is_public': True,
-        'ds_submitter': 'user_id', 'ds_group': 'group_id',
+        'ds_submitter': 'user_id', 'ds_group': 'group_id', 'annotation_id': 1235,
     }
 
 
@@ -294,7 +296,7 @@ def test_rename_index_works(test_db):
 
     assert es_man.exists_index(alias)
     assert es_man.exists_index('{}-yang'.format(alias))
-    assert not es_man.exists_index('{}-yin'.format(alias))
+    assert es_man.exists_index('{}-yin'.format(alias))
 
 
 def test_internal_index_name_return_valid_values():

@@ -100,15 +100,12 @@ class ESIndexManager(object):
 
     def internal_index_name(self, alias):
         yin, yang = '{}-yin'.format(alias), '{}-yang'.format(alias)
-        assert not (self.exists_index(yin) and self.exists_index(yang)), \
-            'Only one of {} and {} should exist'.format(yin, yang)
+        indices = self._ind_client.get_alias(name=alias)
+        assert len(indices) == 1, f'Could not resolve ElasticSearch alias "{alias}" result: {indices}'
+        index = next(iter(indices.keys()))
+        assert index == yin or index == yang, f'Unexpected ElasticSearch alias "{alias}" => "{index}"'
 
-        if self.exists_index(yin):
-            return yin
-        elif self.exists_index(yang):
-            return yang
-        else:
-            return yin
+        return index
 
     def create_index(self, index):
         dynamic_templates = [{
@@ -223,8 +220,6 @@ class ESIndexManager(object):
             self._ind_client.update_aliases({
                 "actions": [{"remove": {"index": old_index, "alias": alias}}]
             })
-            out = self._ind_client.delete(index=old_index)
-            logger.info('Index {} deleted: {}'.format(old_index, out))
 
 
 def flatten_doc(doc, parent_key='', sep='.'):

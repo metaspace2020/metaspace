@@ -13,7 +13,8 @@ def _reindex_all(conf):
     es_config = conf['elasticsearch']
     alias = es_config['index']
     es_man = ESIndexManager(es_config)
-    new_index = es_man.another_index_name(es_man.internal_index_name(alias))
+    old_index = es_man.internal_index_name(alias)
+    new_index = es_man.another_index_name(old_index)
     es_man.create_index(new_index)
 
     try:
@@ -29,6 +30,8 @@ def _reindex_all(conf):
     except Exception as e:
         es_man.delete_index(new_index)
         raise e
+    else:
+        es_man.delete_index(old_index)
 
 
 def _reindex_datasets(ds_ids, db, es_exp):
