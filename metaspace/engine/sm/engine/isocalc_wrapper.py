@@ -84,9 +84,9 @@ class IsocalcWrapper(object):
             return None, None
 
     def centroids(self, formula):
-        if _centroids_cache:
+        if _centroids_cache is not None:
             cache_key = (formula, self.charge, self.sigma, self.n_peaks)
-            result = _centroids_cache[cache_key]
+            result = _centroids_cache.get(cache_key)
             if not result:
                 result = self._centroids_uncached(formula)
                 _centroids_cache[cache_key] = result
