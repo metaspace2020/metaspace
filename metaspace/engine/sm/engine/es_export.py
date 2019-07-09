@@ -101,8 +101,12 @@ class ESIndexManager(object):
     def internal_index_name(self, alias):
         yin, yang = '{}-yin'.format(alias), '{}-yang'.format(alias)
         indices = self._ind_client.get_alias(name=alias)
-        assert len(indices) == 1, f'Could not resolve ElasticSearch alias "{alias}" result: {indices}'
+        assert len(indices) > 0, f'Could not find ElasticSearch alias "{alias}"'
+
         index = next(iter(indices.keys()))
+        if len(indices) > 1:
+            logger.warning(f'Multiple indices mapped on to the same alias: {indices}. Arbitrarily choosing {index}')
+
         assert index == yin or index == yang, f'Unexpected ElasticSearch alias "{alias}" => "{index}"'
 
         return index
