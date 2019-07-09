@@ -198,7 +198,7 @@ sm_webapp_features:
   optical_transform: true
   all_dbs: false
   all_adducts: false
-  neutral_loss: false
+  neutral_losses: false
   chem_mods: false
   advanced_ds_config: false
 

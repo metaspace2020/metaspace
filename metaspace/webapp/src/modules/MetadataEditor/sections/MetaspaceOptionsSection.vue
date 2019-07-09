@@ -44,8 +44,8 @@
               />
             </el-col>
           </el-row>
-          <el-row :gutter="8" v-if="features.neutral_loss || features.chem_mods || features.advanced_ds_config">
-            <el-col :span="8" v-if="features.neutral_loss">
+          <el-row :gutter="8" v-if="features.neutral_losses || features.chem_mods || features.advanced_ds_config">
+            <el-col :span="8" v-if="features.neutral_losses">
               <el-form-item class="md-form-field" :class="{'is-error': error && error.neutralLosses}">
                 <span slot="label" class="field-label">
                   <span>Neutral losses</span>
