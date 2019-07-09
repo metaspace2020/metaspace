@@ -197,6 +197,10 @@ sm_webapp_features:
   new_feature_popups: true
   optical_transform: true
   all_dbs: false
+  all_adducts: false
+  neutral_loss: false
+  chem_mods: false
+  advanced_ds_config: false
 
 sm_activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
 

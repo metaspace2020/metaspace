@@ -34,6 +34,7 @@ interface Features {
   all_dbs: boolean;
   all_adducts: boolean;
   neutral_loss: boolean;
+  chem_mods: boolean;
   advanced_ds_config: boolean;
 }
 
@@ -70,6 +71,7 @@ const defaultConfig: ClientConfig = {
     all_dbs: false,
     all_adducts: false,
     neutral_loss: false,
+    chem_mods: false,
     advanced_ds_config: false,
   }
 };
