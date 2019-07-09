@@ -50,7 +50,9 @@
     "spark.python.worker.memory": "1g",
     "spark.rdd.compress": true,
     "spark.ui.showConsoleProgress": false,
-    "spark.sql.execution.arrow.enabled": true
+    "spark.sql.execution.arrow.enabled": true,
+    "spark.network.timeout": "360s",
+    "spark.executor.heartbeatInterval": "60s"
   },
   "aws": {
     "aws_access_key_id": "{{ aws_access_key_id }}",
