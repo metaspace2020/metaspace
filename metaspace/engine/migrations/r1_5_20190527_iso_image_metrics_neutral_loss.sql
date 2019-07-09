@@ -40,6 +40,8 @@ WITH (
 CREATE INDEX annotation_job_id_index
     ON annotation (job_id);
 
+ALTER TABLE annotation OWNER TO sm;
+
 INSERT INTO annotation (job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids, off_sample)
 SELECT job_id, sf, '', '', adduct, msm, fdr, stats, iso_image_ids, off_sample FROM iso_image_metrics
 ORDER BY job_id, sf, adduct;
