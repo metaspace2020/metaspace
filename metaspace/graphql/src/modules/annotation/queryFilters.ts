@@ -33,7 +33,7 @@ const setOrMerge = <T>(obj: any, path: string, value: T, onConflict = (val: T, o
 interface AnnotationAndIons {
   annotation: ColocAnnotation;
   ionsById: Map<number, Ion>;
-  ionsByIon: Map<string, Ion>;
+  lookupIon: (formula: string, chemMod: string, neutralLoss: string, adduct: string) => Ion | undefined;
 }
 
 const getColocAnnotation = async (context: Context, datasetId: string, fdrLevel: number, database: string | null,
@@ -49,10 +49,14 @@ const getColocAnnotation = async (context: Context, datasetId: string, fdrLevel:
       .getOne();
     if (annotation != null) {
       const ions = await context.entityManager.findByIds(Ion, [annotation.ionId, ...annotation.colocIonIds]);
+      const ionsByFormula = _.groupBy(ions, 'formula');
       return {
         annotation,
         ionsById: new Map<number, Ion>(ions.map(ion => [ion.id, ion] as [number, Ion])),
-        ionsByIon: new Map<string, Ion>(ions.map(ion => [ion.ion, ion] as [string, Ion])),
+        lookupIon: (formula: string, chemMod: string, neutralLoss: string, adduct: string) => {
+          return (ionsByFormula[formula] || [])
+            .find(ion => ion.chemMod === chemMod && ion.neutralLoss === neutralLoss && ion.adduct === adduct);
+        },
       };
     } else {
       return null;
@@ -127,7 +131,7 @@ export const applyQueryFilters = async (context: Context, args: Args): Promise<F
     const annotationAndIons = await getColocAnnotation(context, datasetId, fdrLevel, database, colocalizedWith, colocalizationAlgo);
 
     if (annotationAndIons != null) {
-      const {annotation, ionsById, ionsByIon} = annotationAndIons;
+      const {annotation, ionsById, lookupIon} = annotationAndIons;
       const {offset, limit} = args as ArgsFromBinding<Query['allAnnotations']>;
       const colocIons = _.uniq([annotation.ionId, ...annotation.colocIonIds])
         .map(ionId => {
@@ -143,7 +147,7 @@ export const applyQueryFilters = async (context: Context, args: Args): Promise<F
 
       postprocess = (annotations: ESAnnotation[]): ESAnnotationWithColoc[] => {
         let newAnnotations: ESAnnotationWithColoc[] = annotations.map(ann => {
-          const ion = ionsByIon.get(ann._source.ion);
+          const ion = lookupIon(ann._source.formula, ann._source.chem_mod, ann._source.neutral_loss, ann._source.adduct);
           return {
             ...ann,
             _cachedColocCoeff: ion != null ? getColocCoeffInner(annotation, ion.id) : null,

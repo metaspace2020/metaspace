@@ -52,7 +52,7 @@ def ds_config():
             "min_px": 1,
         },
         "isotope_generation": {
-            "adducts": ["+H", "+Na", "+K"],
+            "adducts": ["+H", "+Na", "+K", "[M]+"],
             "charge": 1,
             "isocalc_sigma": 0.000619,
             "n_peaks": 4,
@@ -71,7 +71,7 @@ def pysparkling_context(request):
     return Context()
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture()
 def spark_context(request):
     from pyspark import SparkContext
     import sys
@@ -125,8 +125,8 @@ def fill_db(test_db, metadata, ds_config):
                      True)])
     db.insert("INSERT INTO job (id, db_id, ds_id) VALUES (%s, %s, %s)",
               rows=[(0, 0, ds_id)])
-    db.insert(("INSERT INTO annotation (job_id, formula, adduct, msm, fdr, stats, iso_image_ids) "
-               "VALUES (%s, %s, %s, 0.5, 0.2, '{}', %s)"),
+    db.insert(("INSERT INTO annotation (job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids) "
+               "VALUES (%s, %s, '', '', %s, 0.5, 0.2, '{}', %s)"),
               rows=[(0, 'H2O', '+H', ['iso_image_11', 'iso_image_12']),
                     (0, 'CH4', '+H', ['iso_image_21', 'iso_image_22'])])
     user_id = str(uuid.uuid4())
@@ -186,9 +186,9 @@ def mol_db(ds_config):
     return mol_db
 
 
-def make_moldb_mock():
+def make_moldb_mock(formulas=('H2O','C5H3O')):
     moldb_mock = MagicMock(spec=MolecularDB)
     moldb_mock.id = 0
     moldb_mock.name = 'test_db'
-    moldb_mock.formulas = ['H2O', 'C5H3O']
+    moldb_mock.formulas = list(formulas)
     return moldb_mock

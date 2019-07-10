@@ -4,10 +4,6 @@
 
 let config = {};
 
-config.defaults = {
-  adducts: {{ sm_graphql_default_adducts | to_json }}
-};
-
 config.moldbs = {{ sm_graphql_moldbs | to_json }}
 
 config.services = {};

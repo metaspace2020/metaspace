@@ -50,11 +50,7 @@ const Resolvers = {
     },
 
     adductSuggestions() {
-      return config.defaults.adducts['-'].map(a => {
-        return {adduct: a, charge: -1};
-      }).concat(config.defaults.adducts['+'].map(a => {
-        return {adduct: a, charge: 1};
-      }));
+      return config.adducts;
     },
 
     async submitterSuggestions(_, {query}, ctx) {

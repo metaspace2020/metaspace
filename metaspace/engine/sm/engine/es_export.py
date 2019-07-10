@@ -9,11 +9,13 @@ import pandas as pd
 import random
 
 from sm.engine.dataset_locker import DatasetLocker
+from sm.engine.formula_parser import format_ion_formula
 from sm.engine.util import SMConfig
 
 logger = logging.getLogger('engine')
 
 ANNOTATIONS_SEL = '''SELECT
+    m.id as annotation_id,
     m.formula AS formula,
     COALESCE(((m.stats -> 'chaos'::text)::text)::real, 0::real) AS chaos,
     COALESCE(((m.stats -> 'spatial'::text)::text)::real, 0::real) AS image_corr,
@@ -98,15 +100,16 @@ class ESIndexManager(object):
 
     def internal_index_name(self, alias):
         yin, yang = '{}-yin'.format(alias), '{}-yang'.format(alias)
-        assert not (self.exists_index(yin) and self.exists_index(yang)), \
-            'Only one of {} and {} should exist'.format(yin, yang)
+        indices = self._ind_client.get_alias(name=alias)
+        assert len(indices) > 0, f'Could not find ElasticSearch alias "{alias}"'
 
-        if self.exists_index(yin):
-            return yin
-        elif self.exists_index(yang):
-            return yang
-        else:
-            return yin
+        index = next(iter(indices.keys()))
+        if len(indices) > 1:
+            logger.warning(f'Multiple indices mapped on to the same alias: {indices}. Arbitrarily choosing {index}')
+
+        assert index == yin or index == yang, f'Unexpected ElasticSearch alias "{alias}" => "{index}"'
+
+        return index
 
     def create_index(self, index):
         dynamic_templates = [{
@@ -221,8 +224,12 @@ class ESIndexManager(object):
             self._ind_client.update_aliases({
                 "actions": [{"remove": {"index": old_index, "alias": alias}}]
             })
-            out = self._ind_client.delete(index=old_index)
-            logger.info('Index {} deleted: {}'.format(old_index, out))
+
+    def get_index_stats(self, index):
+        data = self._ind_client.stats(index, metric="docs,store")
+        ind_data = data['indices'][index]['total']
+        return ind_data['docs']['count'], ind_data['store']['size_in_bytes']
+
 
 
 def flatten_doc(doc, parent_key='', sep='.'):
@@ -335,7 +342,7 @@ class ESExporter(object):
                 doc['db_name'] = mol_db.name
                 doc['db_version'] = mol_db.version
                 formula = doc['formula']
-                ion_without_pol = formula + (doc['chem_mod'] or '') + (doc['neutral_loss'] or '') + doc['adduct']
+                ion_without_pol = format_ion_formula(formula, doc['chem_mod'], doc['neutral_loss'], doc['adduct'])
                 doc['ion'] = ion_without_pol + doc['polarity']
                 doc['comp_ids'], doc['comp_names'] = mol_by_formula[formula]
                 mzs, _ = isocalc.centroids(ion_without_pol)
@@ -346,11 +353,10 @@ class ESExporter(object):
                 # assert fdr in fdr_levels
                 annotation_counts[fdr] += 1
 
-                ion_str = doc['ion'].replace('+', 'plus_').replace('-', 'minus_')
                 to_index.append({
                     '_index': self.index,
                     '_type': 'annotation',
-                    '_id': '{}_{}_{}_{}'.format(doc['ds_id'], mol_db.name, mol_db.version, ion_str),
+                    '_id': f"{doc['ds_id']}_{doc['annotation_id']}",
                     '_source': doc
                 })
 

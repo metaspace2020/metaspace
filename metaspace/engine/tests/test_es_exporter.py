@@ -41,6 +41,7 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
             }]
         elif sql == ANNOTATIONS_SEL:
             return [{
+                'annotation_id': 1234,
                 'formula': 'H2O',
                 'chaos': 1,
                 'image_corr': 1,
@@ -57,6 +58,7 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
                 'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
                 'polarity': '+'
             }, {
+                'annotation_id': 1235,
                 'formula': 'Au',
                 'chaos': 1,
                 'image_corr': 1,
@@ -66,8 +68,8 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
                 'max_iso_ints': 100,
                 'msm': 1,
                 'adduct': '+H',
-                'neutral_loss': None,
-                'chem_mod': None,
+                'neutral_loss': '',
+                'chem_mod': '',
                 'job_id': 1,
                 'fdr': 0.05,
                 'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
@@ -124,20 +126,20 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
         'comp_ids': ['mol_id'], 'ds_config': 'ds_config', 'ds_input_path': 'ds_input_path', 'ds_id': ds_id,
         'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished,
         'ds_ion_img_storage': 'fs', 'ds_is_public': True,
-        'ds_submitter': 'user_id', 'ds_group': 'group_id',
+        'ds_submitter': 'user_id', 'ds_group': 'group_id', 'annotation_id': 1234,
     }
     ann_2_d = es_dsl_search.filter('term', formula='Au').execute().to_dict()['hits']['hits'][0]['_source']
     assert ann_2_d == {
         'pattern_match': 1, 'image_corr': 1, 'fdr': 0.05, 'chaos': 1, 'formula': 'Au', 'min_iso_ints': 0,
         'msm': 1, 'ion': 'Au+H+', 'total_iso_ints': 100, 'centroid_mzs': [10., 20.],
         'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'], 'polarity': '+', 'job_id': 1, 'max_iso_ints': 100,
-        'adduct': '+H', 'neutral_loss': None, 'chem_mod': None,
+        'adduct': '+H', 'neutral_loss': '', 'chem_mod': '',
         'ds_name': 'ds_name', 'annotation_counts': [], 'db_version': '2017', 'ds_status': 'ds_status',
         'comp_names': ['mol_name'], 'db_name': 'db_name', 'mz': 10., 'ds_meta': {},
         'comp_ids': ['mol_id'], 'ds_config': 'ds_config', 'ds_input_path': 'ds_input_path', 'ds_id': ds_id,
         'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished,
         'ds_ion_img_storage': 'fs', 'ds_is_public': True,
-        'ds_submitter': 'user_id', 'ds_group': 'group_id',
+        'ds_submitter': 'user_id', 'ds_group': 'group_id', 'annotation_id': 1235,
     }
 
 
@@ -294,7 +296,7 @@ def test_rename_index_works(test_db):
 
     assert es_man.exists_index(alias)
     assert es_man.exists_index('{}-yang'.format(alias))
-    assert not es_man.exists_index('{}-yin'.format(alias))
+    assert es_man.exists_index('{}-yin'.format(alias))
 
 
 def test_internal_index_name_return_valid_values():

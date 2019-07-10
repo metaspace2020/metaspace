@@ -1,22 +1,26 @@
 import config from './config';
 import sanitizeHtml from 'sanitize-html';
+import {zipObject} from 'lodash-es';
 
 const fuConfig = config.fineUploader;
 
 type JWT = string;
 
-function renderMolFormula(ion: string): string {
-  let polaritySign, formula;
-  if (ion.endsWith('-') || ion.endsWith('+')) {
-    polaritySign = ion[ion.length-1] === '-' ? '¯' : '⁺';
-    formula = ion.substr(0, ion.length - 1);
-  } else {
-    polaritySign = '';
-    formula = ion;
-  }
-  formula = formula.replace(/-/g, ' – ').replace(/\+/g, ' + ');
+const NORMAL_TO_SUPERSCRIPT = zipObject('0123456789+-', '⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻');
+const NORMAL_TO_SUPERSCRIPT_RE = /[0-9+-]/g;
 
-  return `[${formula}]${polaritySign}`;
+function superscript(s: string): string {
+  return s.replace(NORMAL_TO_SUPERSCRIPT_RE, c => NORMAL_TO_SUPERSCRIPT[c]);
+}
+
+function renderMolFormula(ion: string): string {
+  const match = /^(.*?)([+-]\d*)?$/.exec(ion);
+  const formula = match && match[1] || ion;
+  const charge = match && match[2] || undefined;
+  const formattedCharge = charge ? superscript(charge) : '';
+  const formattedFormula = formula.replace(/-/g, ' – ').replace(/\+/g, ' + ');
+
+  return `[${formattedFormula}]${formattedCharge}`;
 }
 
 function renderMolFormulaHtml(ion: string): string {

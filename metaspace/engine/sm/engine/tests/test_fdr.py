@@ -4,19 +4,21 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 from pandas.util.testing import assert_frame_equal
 
-from sm.engine.db import DB
 from sm.engine.fdr import FDR
+from sm.engine.formula_parser import format_modifiers
 
 FDR_CONFIG = {'decoy_sample_size': 2}
 
 @patch('sm.engine.fdr.DECOY_ADDUCTS', ['+He', '+Li'])
 def test_fdr_decoy_adduct_selection_saves_corr():
-    fdr = FDR(fdr_config=FDR_CONFIG, chem_mods=[], neutral_losses=[], target_adducts=['+H', '+K'])
+    fdr = FDR(fdr_config=FDR_CONFIG, chem_mods=[], neutral_losses=[], target_adducts=['+H', '+K', '[M]+'])
 
     exp_target_decoy_df = pd.DataFrame([('H2O', '+H', '+He'),
                                         ('H2O', '+H', '+Li'),
                                         ('H2O', '+K', '+He'),
-                                        ('H2O', '+K', '+Li')],
+                                        ('H2O', '+K', '+Li'),
+                                        ('H2O', '', '+He'),
+                                        ('H2O', '', '+Li')],
                                        columns=['formula', 'tm', 'dm'])
 
     fdr.decoy_adducts_selection(target_formulas=['H2O'])
@@ -98,8 +100,8 @@ def test_chem_mods_and_neutral_losses():
     formulas = ['H2O', 'C5H2OH']
     chem_mods = ['-H+C']
     neutral_losses = ['-O','-C']
-    target_adducts = ['+H', '+Na']
-    target_modifiers = [cm + nl + ta for cm, nl, ta in product(['', *chem_mods], ['', *neutral_losses], target_adducts)]
+    target_adducts = ['+H', '+Na', '[M]+']
+    target_modifiers = [format_modifiers(cm, nl, ta) for cm, nl, ta in product(['', *chem_mods], ['', *neutral_losses], target_adducts)]
     decoy_sample_size = 5
     fdr_config = {**FDR_CONFIG, 'decoy_sample_size': decoy_sample_size}
 

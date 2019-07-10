@@ -16,8 +16,8 @@ CREATE TABLE annotation (
     id              serial NOT NULL,
 	job_id	        int NOT NULL,
 	formula	    	text NOT NULL,
-	chem_mod        text,
-	neutral_loss    text,
+	chem_mod        text NOT NULL,
+	neutral_loss    text NOT NULL,
 	adduct 	        text NOT NULL,
 	msm             real NOT NULL,
 	fdr             real NOT NULL,
@@ -40,8 +40,10 @@ WITH (
 CREATE INDEX annotation_job_id_index
     ON annotation (job_id);
 
-INSERT INTO annotation (job_id, formula, adduct, msm, fdr, stats, iso_image_ids, off_sample)
-SELECT job_id, sf, adduct, msm, fdr, stats, iso_image_ids, off_sample FROM iso_image_metrics
+ALTER TABLE annotation OWNER TO sm;
+
+INSERT INTO annotation (job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids, off_sample)
+SELECT job_id, sf, '', '', adduct, msm, fdr, stats, iso_image_ids, off_sample FROM iso_image_metrics
 ORDER BY job_id, sf, adduct;
 
 DROP TABLE iso_image_metrics;

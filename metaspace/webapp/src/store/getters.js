@@ -30,8 +30,16 @@ export default {
       offSample: filter.offSample == null ? undefined : !!filter.offSample,
     };
 
-    if (!config.features.neutral_loss && !config.features.advanced_ds_config) {
-      f.hasNeutralLossOrChemMod = false;
+    if (!config.features.neutral_losses && !config.features.advanced_ds_config) {
+      f.hasNeutralLoss = false;
+    }
+
+    if (!config.features.chem_mods && !config.features.advanced_ds_config) {
+      f.hasChemMod = false;
+    }
+
+    if (!config.features.all_adducts) {
+      f.hasHiddenAdduct = false;
     }
 
     if (filter.minMSM)

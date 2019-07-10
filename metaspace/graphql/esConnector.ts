@@ -58,8 +58,8 @@ export interface ESAnnotationSource extends ESDatasetSource {
 
   formula: string;
   adduct: string;
-  neutral_loss: string | null;
-  chem_mod: string | null;
+  neutral_loss: string;
+  chem_mod: string;
   ion: string;
   polarity: '-'|'+';
 
@@ -223,7 +223,7 @@ function constructAnnotationFilters(filter: AnnotationFilter & ExtraAnnotationFi
   const {
     database, datasetName, mzFilter, msmScoreFilter, fdrLevel,
     sumFormula, adduct, ion, offSample, compoundQuery, annId,
-    hasNeutralLossOrChemMod
+    hasNeutralLoss, hasChemMod, hasHiddenAdduct
   } = filter;
   const filters = [];
 
@@ -251,10 +251,14 @@ function constructAnnotationFilters(filter: AnnotationFilter & ExtraAnnotationFi
     filters.push({term: {ds_name: datasetName}});
   if (offSample != null)
     filters.push({term: {off_sample_label: offSample ? 'off' : 'on'}});
-  if (hasNeutralLossOrChemMod === true) {
-    filters.push({bool: {should: [{exists: {field: 'neutral_loss'}}, {exists: {field: 'chem_mod'}}]}});
-  } else if (hasNeutralLossOrChemMod === false) {
-    filters.push({bool: {must_not: [{exists: {field: 'neutral_loss'}}, {exists: {field: 'chem_mod'}}]}});
+  if (hasNeutralLoss === false) {
+    filters.push({term: {neutral_loss: ''}});
+  }
+  if (hasChemMod === false) {
+    filters.push({term: {chem_mod: ''}});
+  }
+  if (hasHiddenAdduct === false) {
+    filters.push({bool: {must_not: [{terms: {adduct: config.adducts.filter(a => a.hidden).map(a => a.adduct)}}]}})
   }
 
   if (ion)

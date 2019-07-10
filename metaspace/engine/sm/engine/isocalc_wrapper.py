@@ -8,6 +8,18 @@ logger = logging.getLogger('engine')
 
 SIGMA_TO_FWHM = 2.3548200450309493  # 2 \sqrt{2 \log 2}
 
+_centroids_cache = None
+
+
+def set_centroids_cache_enabled(enabled):
+    """ Turns on/off the centroids cache. This cache can become a massive memory leak if permanently left active.
+    It should only be used for batch processing jobs """
+    global _centroids_cache
+    if enabled and not _centroids_cache:
+        _centroids_cache = dict()
+    else:
+        _centroids_cache = None
+
 
 class IsocalcWrapper(object):
     """ Wrapper around pyMSpec.pyisocalc.pyisocalc used for getting theoretical isotope peaks'
@@ -37,7 +49,7 @@ class IsocalcWrapper(object):
         ints = ints[mz_order]
         return mzs, ints
 
-    def centroids(self, formula):
+    def _centroids_uncached(self, formula):
         """
         Args
         -----
@@ -45,7 +57,7 @@ class IsocalcWrapper(object):
 
         Returns
         -----
-            list[tuple]
+            Tuple[np.ndarray, np.ndarray]
         """
         try:
             pyisocalc.parseSumFormula(formula)  # tests that formula is parsable
@@ -70,3 +82,14 @@ class IsocalcWrapper(object):
         except Exception as e:
             logger.warning('%s - %s', formula, e)
             return None, None
+
+    def centroids(self, formula):
+        if _centroids_cache is not None:
+            cache_key = (formula, self.charge, self.sigma, self.n_peaks)
+            result = _centroids_cache.get(cache_key)
+            if not result:
+                result = self._centroids_uncached(formula)
+                _centroids_cache[cache_key] = result
+            return result
+        else:
+            return self._centroids_uncached(formula)

@@ -162,10 +162,9 @@
      },
      adductOptions() {
        const polarity = get(this.value, ['MS_Analysis', 'Polarity']) || 'Positive';
-       const noAdduct = (polarity === 'Positive' ? 'M⁺' : 'M⁻');
-       return this.possibleAdducts[polarity].map(adduct => ({
+       return this.possibleAdducts[polarity].map(({adduct, name}) => ({
          value: adduct,
-         label: adduct === '' ? noAdduct : adduct,
+         label: name,
        }));
      }
    },
@@ -237,13 +236,17 @@
          query: metadataOptionsQuery,
          fetchPolicy: 'cache-first',
        });
-       if (!config.features.all_dbs) {
-         return {
-           ...data,
-           molecularDatabases: data.molecularDatabases.filter(db => !db.hidden),
-         }
-       } else {
-         return data;
+       return {
+         ...data,
+         adducts: config.features.all_adducts
+           ? data.adducts
+           : data.adducts
+                 .filter(ad => !ad.hidden)
+                 // Also use this as a feature flag to keep old-style names e.g. +H instead of [M+H]⁺
+                 .map(ad => ({...ad, name: ad.adduct})),
+         molecularDatabases: config.features.all_dbs
+           ? data.molecularDatabases
+           : data.molecularDatabases.filter(db => !db.hidden),
        }
      },
 
@@ -277,8 +280,8 @@
 
        // Load options
        this.possibleAdducts = {
-         'Positive': adducts.filter(a => a.charge > 0).map(a => a.adduct),
-         'Negative': adducts.filter(a => a.charge < 0).map(a => a.adduct)
+         'Positive': adducts.filter(a => a.charge > 0),
+         'Negative': adducts.filter(a => a.charge < 0)
        };
        this.molDBOptions = molecularDatabases.map(d => d.name);
        this.schema = deriveFullSchema(metadataSchemas[mdType]);

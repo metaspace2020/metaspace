@@ -39,7 +39,6 @@ exports[`MetadataEditor should be able to load an existing dataset: metaspaceOpt
 Object {
   "adducts": Array [
     "adducts.0.adduct",
-    "adducts.1.adduct",
   ],
   "chemMods": Array [],
   "decoySampleSize": null,
@@ -713,9 +712,10 @@ exports[`MetadataEditor should match snapshot 1`] = `
                       </span>
                     </label>
                     <div class="el-form-item__content">
-                      <mock-el-select value="adducts.0.adduct,adducts.1.adduct" required="true" multiple="">
-                        <mock-el-option value="adducts.0.adduct" label="adducts.0.adduct"></mock-el-option>
-                        <mock-el-option value="adducts.1.adduct" label="adducts.1.adduct"></mock-el-option>
+                      <mock-el-select value="+H,+Na,+K" required="true" multiple="">
+                        <mock-el-option value="+H" label="+H"></mock-el-option>
+                        <mock-el-option value="+Na" label="+Na"></mock-el-option>
+                        <mock-el-option value="+K" label="+K"></mock-el-option>
                       </mock-el-select>
                       <!---->
                     </div>

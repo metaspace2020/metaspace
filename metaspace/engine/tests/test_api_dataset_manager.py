@@ -37,7 +37,7 @@ def create_ds_doc(ds_id='2000-01-01', ds_name='ds_name', input_path='input_path'
     if not mol_dbs:
         mol_dbs = ['HMDB-v4']
     if not adducts:
-        adducts = ['+H', '+Na', '+K']
+        adducts = ['+H', '+Na', '+K', '[M]+']
     if not metadata:
         metadata = {
             'MS_Analysis': {

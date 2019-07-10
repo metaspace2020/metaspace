@@ -43,14 +43,14 @@ def test_new_ds_saves_to_db(find_db_by_name_version_mock, test_db, metadata, ds_
     ds.save(db)
 
     ion_metrics_df = pd.DataFrame({'formula': ['H2O', 'H2O', 'CO2', 'CO2', 'H2SO4', 'H2SO4'],
-                                   'adduct': ['+H', '+K', '+H', '+K', '+H', '+K'],
+                                   'adduct': ['+H', '[M]+', '+H', '[M]+', '+H', '[M]+'],
                                    'fdr': [0.05, 0.1, 0.05, 0.1, 0.05, 0.1],
                                    'image_id': list(map(str, range(6)))})
     job_id, = db.insert_return("INSERT INTO job (db_id, ds_id, status) "
                                "VALUES (1, %s, 'FINISHED') "
                                "RETURNING id", [[ds.id]])
-    db.insert('INSERT INTO annotation(job_id, formula, adduct, msm, fdr, stats, iso_image_ids) '
-              "VALUES (%s, %s, %s, 1, %s, '{}', %s)",
+    db.insert('INSERT INTO annotation(job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids) '
+              "VALUES (%s, %s, '', '', %s, 1, %s, '{}', %s)",
               [(job_id, r.formula, r.adduct, r.fdr, [r.image_id]) for i, r in ion_metrics_df.iterrows()])
     img_svc_mock = MagicMock(spec=ImageStoreServiceWrapper)
     img_svc_mock.get_ion_images_for_analysis.side_effect = mock_get_ion_images_for_analysis

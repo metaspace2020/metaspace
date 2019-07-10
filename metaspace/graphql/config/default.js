@@ -10,8 +10,24 @@ module.exports = {
   },
 
   defaults: {
-    adducts: {"+": ["+H", "+Na", "+K"], "-": ["-H", "+Cl"]},
     moldb_names: ['HMDB-v4']
+  },
+
+  adducts: [
+    // Positive mode
+    {adduct: "+H", name: "[M + H]⁺", charge: 1, hidden: false, default: true},
+    {adduct: "+Na", name: "[M + Na]⁺", charge: 1, hidden: false, default: true},
+    {adduct: "+K", name: "[M + K]⁺", charge: 1, hidden: false, default: true},
+    {adduct: "[M]+", name: "[M]⁺", charge: 1, hidden: true, default: false},
+    // Negative mode
+    {adduct: "-H", name: "[M - H]⁻", charge: -1, hidden: false, default: true},
+    {adduct: "+Cl", name: "[M + Cl]⁻", charge: -1, hidden: false, default: true},
+    {adduct: "[M]-", name: "[M]⁻", charge: -1, hidden: true, default: false},
+  ],
+
+  moldbs: {
+    deprecated: [],
+    custom: [],
   },
 
   /* Settings for image storage.

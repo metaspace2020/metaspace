@@ -2,7 +2,7 @@ import pytest
 from itertools import product
 from pyMSpec.pyisocalc import pyisocalc
 
-from sm.engine.formula_parser import generate_ion_formula, safe_generate_ion_formula, ParseFormulaError
+from sm.engine.formula_parser import generate_ion_formula, safe_generate_ion_formula, ParseFormulaError, format_ion_formula
 
 
 @pytest.mark.parametrize('formula, adduct', product(
@@ -37,3 +37,25 @@ def test_generate_ion_formula_negative_values(formula, comma_separated_adducts):
         assert False, 'Should have raised ParseFormulaError'
     except ParseFormulaError:
         pass
+
+
+@pytest.mark.parametrize('formula, adduct', product(
+    ['C2H6O', 'C7H6O4', 'C40H78NO8P'],
+    ['[M]-', '[M]+'],
+))
+def test_generate_ion_formula_with_charge_only_adduct(formula, adduct):
+    ion_formula = safe_generate_ion_formula(formula, adduct)
+
+    assert ion_formula == formula
+
+
+def test_format_ion_formula():
+    assert format_ion_formula('M') == 'M'
+    assert format_ion_formula('M', charge=1) == 'M+'
+    assert format_ion_formula('M', '+H', charge=1) == 'M+H+'
+    assert format_ion_formula('M', '-H2O', '+H', charge=1) == 'M-H2O+H+'
+    assert format_ion_formula('M', '[M]+', charge=1) == 'M+'
+    assert format_ion_formula('M', '-H2O', '[M]-', charge=-1) == 'M-H2O-'
+    assert format_ion_formula('M', charge=-10) == 'M-10'
+    assert format_ion_formula('M', charge=10) == 'M+10'
+

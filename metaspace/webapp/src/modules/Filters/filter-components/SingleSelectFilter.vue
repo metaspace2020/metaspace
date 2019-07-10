@@ -4,12 +4,12 @@
     <el-select slot="edit"
                :filterable="filterable" :clearable="clearable" :value="value" @change="onChange">
       <el-option v-for="(item, idx) in options"
-                 :label="formatOption(item)" :value="item" :key="idx">
+                 :label="formatOption(item)" :value="valueGetter ? valueGetter(item) : item" :key="idx">
       </el-option>
     </el-select>
 
     <span slot="show" class="tf-value-span">
-      <span v-if="value != null && (allowEmptyString || value !== '')" v-html="formatValue(value)"></span>
+      <span v-if="value != null && (allowEmptyString || value !== '')">{{formatValue(value)}}</span>
       <span v-else>
         (any)
       </span>
@@ -21,8 +21,6 @@
  import TagFilter from './TagFilter.vue';
  import Vue from 'vue';
  import { Component, Model, Prop } from 'vue-property-decorator'
-
- type Option = string | number;
 
  @Component({
    components: {
@@ -42,7 +40,7 @@
    @Prop()
    optionFormatter?: Function;
    @Prop()
-   valueFormatter?: Function;
+   valueGetter?: Function;
    @Prop({type: Boolean, default: false})
    clearable!: boolean;
    @Prop({type: Boolean, default: true})
@@ -52,22 +50,24 @@
    @Prop({type: Boolean, default: false})
    allowEmptyString!: boolean;
 
-   onChange(val: Option) {
+   onChange(val: any) {
      this.$emit('change', val);
    }
 
-   formatOption(option: Option): string {
+   formatOption(option: any): string {
      if (this.optionFormatter)
-       return this.optionFormatter(option);
+       return this.optionFormatter(option, this.options);
      else
        return option + '';
    }
 
-   formatValue(value: Option): string {
-     if (this.valueFormatter)
-       return this.valueFormatter(value);
-     else
-       return value + '';
+   formatValue(value: any): string {
+     if (this.valueGetter != null) {
+       const option = this.options.find(opt => this.valueGetter!(opt) === value);
+       return option != null ? this.formatOption(option) : value;
+     } else {
+       return value != null ? this.formatOption(value) : value;
+     }
    }
 
    destroy(): void {
