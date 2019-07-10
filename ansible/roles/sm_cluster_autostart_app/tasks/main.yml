@@ -25,12 +25,6 @@
             dest=/etc/supervisor/sm-cluster-autostart-daemon.supervisor
             owner=ubuntu group=ubuntu mode=0600
 
-- name: Remove vault password path from ansible.cfg
-  lineinfile:
-    dest: "{{ sm_ansible_home }}/aws/ansible.cfg"
-    regexp: ^vault_password_file
-    line: ""
-
 - name: Update and restart supervisor app
   supervisorctl:
     name: "{{ sm_cluster_autostart_app_name }}"
