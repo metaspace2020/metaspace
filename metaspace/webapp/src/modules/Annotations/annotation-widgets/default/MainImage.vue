@@ -56,8 +56,7 @@
         </div>
         <colorbar style="width: 20px; height: 160px; align-self: center;"
                   :map="colormap"
-                  :ionImage="ionImage"
-                  slot="reference">
+                  :ionImage="ionImage">
         </colorbar>
         {{ ionImage && ionImage.clippedMinIntensity.toExponential(2) }}
 
