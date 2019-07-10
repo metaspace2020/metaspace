@@ -37,6 +37,8 @@ export interface ESDatasetSource {
   ds_is_public: boolean;
   ds_mol_dbs: string[];
   ds_adducts: string[];
+  ds_neutral_losses: string[];
+  ds_chem_mods: string[];
   ds_acq_geometry: any;
   ds_submitter_id: string;
   ds_submitter_name: string;
@@ -54,11 +56,12 @@ export interface ESAnnotationSource extends ESDatasetSource {
   db_name: string;
   db_version: any;
 
-  sf: string;
+  formula: string;
   adduct: string;
-  sf_adduct: string;
+  neutral_loss: string;
+  chem_mod: string;
+  ion: string;
   polarity: '-'|'+';
-  ion_add_pol: string;
 
   mz: number;
   centroid_mzs: number[];
@@ -124,7 +127,7 @@ function esSort(orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: Sorti
   else if (orderBy === 'ORDER_BY_DATASET')
     return [sortTerm('ds_name', order), sortTerm('mz', order)];
   else if (orderBy === 'ORDER_BY_FORMULA')
-    return [sortTerm('sf', order), sortTerm('adduct', order), sortTerm('fdr', order)];
+    return [sortTerm('formula', order), sortTerm('adduct', order), sortTerm('fdr', order)];
   else if (orderBy === 'ORDER_BY_OFF_SAMPLE')
     return [sortTerm('off_sample_prob', order)];
   // dataset orderings
@@ -213,13 +216,14 @@ function constructDatasetFilters(filter: DatasetFilter) {
   return filters;
 }
 interface ExtraAnnotationFilters {
-  sfAdduct?: string;
+  ion?: string;
   annId?: string;
 }
 function constructAnnotationFilters(filter: AnnotationFilter & ExtraAnnotationFilters) {
   const {
     database, datasetName, mzFilter, msmScoreFilter, fdrLevel,
-    sumFormula, adduct, sfAdduct, offSample, compoundQuery, annId
+    sumFormula, adduct, ion, offSample, compoundQuery, annId,
+    hasNeutralLoss, hasChemMod, hasHiddenAdduct
   } = filter;
   const filters = [];
 
@@ -240,16 +244,25 @@ function constructAnnotationFilters(filter: AnnotationFilter & ExtraAnnotationFi
   if (database)
     filters.push({term: {db_name: database}});
   if (sumFormula)
-    filters.push({term: {sf: sumFormula}});
+    filters.push({term: {formula: sumFormula}});
   if (adduct != null)
     filters.push({term: {adduct: adduct}});
   if (datasetName)
     filters.push({term: {ds_name: datasetName}});
   if (offSample != null)
     filters.push({term: {off_sample_label: offSample ? 'off' : 'on'}});
+  if (hasNeutralLoss === false) {
+    filters.push({term: {neutral_loss: ''}});
+  }
+  if (hasChemMod === false) {
+    filters.push({term: {chem_mod: ''}});
+  }
+  if (hasHiddenAdduct === false) {
+    filters.push({bool: {must_not: [{terms: {adduct: config.adducts.filter(a => a.hidden).map(a => a.adduct)}}]}})
+  }
 
-  if (sfAdduct)
-    filters.push(constructTermOrTermsFilter('sf_adduct', sfAdduct));
+  if (ion)
+    filters.push(constructTermOrTermsFilter('ion', ion));
 
 
   if (compoundQuery) {
@@ -257,7 +270,7 @@ function constructAnnotationFilters(filter: AnnotationFilter & ExtraAnnotationFi
       bool: {
         should: [
           { wildcard: { comp_names: `*${compoundQuery.toLowerCase()}*` } },
-          { term: { sf: compoundQuery } }]
+          { term: { formula: compoundQuery } }]
       }
     });
   }
@@ -269,7 +282,7 @@ function constructSimpleQueryFilter(simpleQuery: string) {
   return {
     simple_query_string: {
       query: simpleQuery,
-      fields: ["_all"],
+      fields: ["_all", "ds_name.searchable"],
       default_operator: "and"
     }
   };

@@ -143,7 +143,7 @@ export default class MainImage extends Vue {
     onResize() {
         if (this.$refs.imageViewerContainer != null) {
             this.imageViewerWidth = this.$refs.imageViewerContainer.clientWidth;
-            this.imageViewerHeight = Math.min(Math.max(window.innerHeight - 500, 500), 1000);
+            this.imageViewerHeight = Math.min(Math.max(window.innerHeight - 520, 500), 1000);
         }
     }
 

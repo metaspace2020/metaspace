@@ -16,7 +16,8 @@
           v-model="metaspaceOptions"
           :error="errors['metaspaceOptions']"
           :molDBOptions="molDBOptions"
-          :adductOptions="adductOptions"/>
+          :adductOptions="adductOptions"
+          :isNewDataset="isNew"/>
         <form-section v-for="sectionKey in otherSections"
                       :key="sectionKey"
                       v-bind="sectionBinds(sectionKey)"
@@ -160,19 +161,32 @@
        return without(allSections, ...specialSections);
      },
      adductOptions() {
-       return this.possibleAdducts[get(this.value, ['MS_Analysis', 'Polarity']) || 'Positive'];
+       const polarity = get(this.value, ['MS_Analysis', 'Polarity']) || 'Positive';
+       return this.possibleAdducts[polarity].map(({adduct, name}) => ({
+         value: adduct,
+         label: name,
+       }));
      }
    },
    methods: {
      async loadDataset() {
-       const metaspaceOptionsFromDataset = (dataset) => {
-         const {isPublic, molDBs, adducts, name, group, projects, submitter, principalInvestigator} = dataset;
+       const metaspaceOptionsFromDataset = (dataset, isNew) => {
+         const {isPublic, configJson, molDBs, adducts, name, group, projects, submitter, principalInvestigator} = dataset;
+         const config = safeJsonParse(configJson);
          return {
            submitterId: submitter ? submitter.id : null,
            groupId: group ? group.id : null,
            projectIds: projects ? projects.map(p => p.id) : [],
            principalInvestigator: principalInvestigator == null ? null : omit(principalInvestigator, '__typename'),
-           isPublic, molDBs, adducts, name,
+           isPublic,
+           molDBs,
+           adducts,
+           name,
+           neutralLosses: isNew ? [] : get(config, 'isotope_generation.neutral_losses') || [],
+           chemMods: isNew ? [] : get(config, 'isotope_generation.chem_mods') || [],
+           numPeaks: isNew ? null : get(config, 'isotope_generation.n_peaks') || null,
+           decoySampleSize: isNew ? null : get(config, 'fdr.decoy_sample_size') || null,
+           ppm: isNew ? null : get(config, 'image_generation.ppm') || null,
          };
        };
 
@@ -185,7 +199,7 @@
          return {
            metadata: dataset && safeJsonParse(dataset.metadataJson) || {},
            metaspaceOptions: {
-             ...(dataset != null ? metaspaceOptionsFromDataset(dataset) : null),
+             ...(dataset != null ? metaspaceOptionsFromDataset(dataset, true) : null),
              submitterId: this.$store.state.currentTour ? null : data.currentUser.id,
              groupId: this.$store.state.currentTour ? null :
                data.currentUser.primaryGroup && data.currentUser.primaryGroup.group.id,
@@ -211,7 +225,7 @@
          }
          return {
            metadata: JSON.parse(data.dataset.metadataJson),
-           metaspaceOptions: metaspaceOptionsFromDataset(data.dataset),
+           metaspaceOptions: metaspaceOptionsFromDataset(data.dataset, false),
            submitter,
          }
        }
@@ -222,13 +236,17 @@
          query: metadataOptionsQuery,
          fetchPolicy: 'cache-first',
        });
-       if (!config.features.all_dbs) {
-         return {
-           ...data,
-           molecularDatabases: data.molecularDatabases.filter(db => !db.hidden),
-         }
-       } else {
-         return data;
+       return {
+         ...data,
+         adducts: config.features.all_adducts
+           ? data.adducts
+           : data.adducts
+                 .filter(ad => !ad.hidden)
+                 // Also use this as a feature flag to keep old-style names e.g. +H instead of [M+H]⁺
+                 .map(ad => ({...ad, name: ad.adduct})),
+         molecularDatabases: config.features.all_dbs
+           ? data.molecularDatabases
+           : data.molecularDatabases.filter(db => !db.hidden),
        }
      },
 
@@ -262,8 +280,8 @@
 
        // Load options
        this.possibleAdducts = {
-         'Positive': adducts.filter(a => a.charge > 0).map(a => a.adduct),
-         'Negative': adducts.filter(a => a.charge < 0).map(a => a.adduct)
+         'Positive': adducts.filter(a => a.charge > 0),
+         'Negative': adducts.filter(a => a.charge < 0)
        };
        this.molDBOptions = molecularDatabases.map(d => d.name);
        this.schema = deriveFullSchema(metadataSchemas[mdType]);
@@ -385,10 +403,10 @@
 
      updateCurrentAdductOptions() {
        const selectedAdducts = this.metaspaceOptions.adducts;
-       let newAdducts = selectedAdducts.filter(adduct => this.adductOptions.includes(adduct))
+       let newAdducts = selectedAdducts.filter(adduct => this.adductOptions.some(option => option.value === adduct));
        // Default to selecting all valid adducts (at least until the less common adducts are added)
        if (newAdducts.length === 0) {
-         newAdducts = this.adductOptions.slice();
+         newAdducts = this.adductOptions.map(option => option.value);
        }
        this.metaspaceOptions.adducts = newAdducts;
      },

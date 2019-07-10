@@ -12,7 +12,7 @@ DEL_DATASET_RAW_OPTICAL_IMAGE = 'update dataset set optical_image = NULL, transf
 UPD_DATASET_THUMB_OPTICAL_IMAGE = 'update dataset set thumbnail = %s WHERE id = %s'
 
 IMG_URLS_BY_ID_SEL = ('SELECT iso_image_ids '
-                      'FROM iso_image_metrics m '
+                      'FROM annotation m '
                       'JOIN job j ON j.id = m.job_id '
                       'JOIN dataset d ON d.id = j.ds_id '
                       'WHERE ds_id = %s')

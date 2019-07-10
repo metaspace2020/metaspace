@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 
-from sm.engine.dataset import DatasetStatus, Dataset
+from sm.engine.dataset import DatasetStatus, Dataset, generate_ds_config, update_ds_config, FLAT_DS_CONFIG_KEYS
 from sm.engine.errors import DSIsBusy, UnknownDSID
 from sm.engine.daemon_action import DaemonAction, DaemonActionStage
 from sm.engine.optical_image import add_optical_image, del_optical_image
@@ -52,21 +52,24 @@ class SMapiDatasetManager(object):
         if 'id' not in doc:
             doc['id'] = now.strftime('%Y-%m-%d_%Hh%Mm%Ss')
 
+        ds_config_kwargs = dict((k,v) for k,v in doc.items() if k in FLAT_DS_CONFIG_KEYS)
+
         try:
             ds = Dataset.load(self._db, doc['id'])
             self._set_ds_busy(ds, kwargs.get('force', False))
+            config = update_ds_config(ds.config, ds.metadata, **ds_config_kwargs)
             is_new = False
         except UnknownDSID:
             is_new = True
+            config = generate_ds_config(doc.get('metadata'), **ds_config_kwargs)
 
         ds = Dataset(id=doc['id'],
                      name=doc.get('name'),
                      input_path=doc.get('input_path'),
                      upload_dt=doc.get('upload_dt', now.isoformat()),
                      metadata=doc.get('metadata'),
+                     config=config,
                      is_public=doc.get('is_public'),
-                     mol_dbs=doc.get('mol_dbs'),
-                     adducts=doc.get('adducts'),
                      status=DatasetStatus.QUEUED)
         ds.save(self._db, self._es)
         ds.notify_update(self._status_queue, DaemonAction.ANNOTATE, DaemonActionStage.QUEUED, is_new=is_new)

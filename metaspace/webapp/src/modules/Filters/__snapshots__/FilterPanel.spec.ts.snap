@@ -5,27 +5,93 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
   <mock-el-select placeholder="Add filter" class="filter-select">
     <mock-el-option value="offSample" label="Show/hide off-sample annotations"></mock-el-option>
   </mock-el-select>
-  <div class="tf-outer" data-test-key="simpleQuery" filterkey="simpleQuery" name="Simple query" options="">
+  <div class="tf-outer" data-test-key="simpleQuery" filterkey="simpleQuery" options="" name="Simple query">
     <div class="tf-name">
       <i class="el-icon-search" style="color: white;"></i>
     </div>
     <input type="text" placeholder="enter any keywords" class="tf-value tf-value-input">
     <!---->
   </div>
-  <div class="tf-outer" data-test-key="polarity" filterkey="polarity">
+  <div class="tf-outer" data-test-key="analyzerType" filterkey="analyzerType">
     <div class="tf-name">
-      Polarity:
+      Analyzer type:
       <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
       <div slot-key="default">
-        <mock-el-select value="Positive">
-          <mock-el-option label="Positive" value="Positive"></mock-el-option>
-          <mock-el-option label="Negative" value="Negative"></mock-el-option>
+        <mock-el-select filterable="true" value="FTICR">
+          <mock-el-option label="analyzerTypes" value="analyzerTypes"></mock-el-option>
+          <mock-el-option label="analyzerTypes" value="analyzerTypes"></mock-el-option>
         </mock-el-select>
       </div>
       <div slot-key="reference">
-        <div class="tf-value"><span class="tf-value-span"><span>Positive</span></span>
+        <div class="tf-value"><span class="tf-value-span"><span>FTICR</span></span>
+          <!---->
+        </div>
+      </div>
+    </mock-el-popover>
+    <div class="tf-remove el-icon-circle-close"></div>
+  </div>
+  <div class="tf-outer" data-test-key="fdrLevel" filterkey="fdrLevel">
+    <div class="tf-name">
+      FDR:
+      <!---->
+    </div>
+    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
+      <div slot-key="default">
+        <mock-el-select value="0.1">
+          <mock-el-option label="5%" value="0.05"></mock-el-option>
+          <mock-el-option label="10%" value="0.1"></mock-el-option>
+          <mock-el-option label="20%" value="0.2"></mock-el-option>
+          <mock-el-option label="50%" value="0.5"></mock-el-option>
+        </mock-el-select>
+      </div>
+      <div slot-key="reference">
+        <div class="tf-value"><span class="tf-value-span"><span>10%</span></span>
+          <!---->
+        </div>
+      </div>
+    </mock-el-popover>
+    <!---->
+  </div>
+  <div class="tf-outer" data-test-key="metadataType" filterkey="metadataType">
+    <div class="tf-name">
+      Data type:
+      <!---->
+    </div>
+    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
+      <div slot-key="default">
+        <mock-el-select filterable="true" value="ims">
+          <mock-el-option label="Imaging MS" value="Imaging MS"></mock-el-option>
+          <mock-el-option label="LC-MS" value="LC-MS"></mock-el-option>
+        </mock-el-select>
+      </div>
+      <div slot-key="reference">
+        <div class="tf-value"><span class="tf-value-span"><span>ims</span></span>
+          <!---->
+        </div>
+      </div>
+    </mock-el-popover>
+    <!---->
+  </div>
+  <div class="tf-outer" data-test-key="group" options="">
+    <div class="tf-name">
+      Group:
+      <!---->
+    </div>
+    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
+      <div slot-key="default">
+        <mock-el-select placeholder="Start typing name" remote="" filterable="" clearable="" remote-method="function () { [native code] }" loading="true" loading-text="Loading matching entries..." no-match-text="No matches" multiple-limit="10" value="0123">
+          <mock-el-option value="0123"></mock-el-option>
+        </mock-el-select>
+      </div>
+      <div slot-key="reference">
+        <div class="tf-value"><span class="tf-value-span"><span>
+      
+    </span>
+          <!---->
+          <!---->
+          </span>
           <!---->
         </div>
       </div>
@@ -125,25 +191,24 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     </div>
     <div class="tf-remove el-icon-circle-close"></div>
   </div>
-  <div class="tf-outer" data-test-key="adduct" filterkey="adduct">
+  <div class="tf-outer" data-test-key="database" filterkey="database">
     <div class="tf-name">
-      Adduct:
+      Database:
       <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
       <div slot-key="default">
-        <mock-el-select filterable="true" value="+K">
-          <mock-el-option label="[Madducts.<sub>0</sub>.adduct]⁺" value="adducts.0.adduct"></mock-el-option>
-          <mock-el-option label="[Madducts.<sub>1</sub>.adduct]⁺" value="adducts.1.adduct"></mock-el-option>
+        <mock-el-select filterable="true" value="HMDBv4">
+          <mock-el-option label="molecularDatabases.0.name" value="molecularDatabases.0.name"></mock-el-option>
         </mock-el-select>
       </div>
       <div slot-key="reference">
-        <div class="tf-value"><span class="tf-value-span"><span>[M + K]undefined</span></span>
+        <div class="tf-value"><span class="tf-value-span"><span>HMDBv4</span></span>
           <!---->
         </div>
       </div>
     </mock-el-popover>
-    <div class="tf-remove el-icon-circle-close"></div>
+    <!---->
   </div>
   <div class="tf-outer" data-test-key="mz" filterkey="mz" options="">
     <div class="tf-name">
@@ -155,46 +220,20 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     </div> <span class="tf-value-suffix">± 0.0001</span>
     <div class="tf-remove el-icon-circle-close"></div>
   </div>
-  <div class="tf-outer" data-test-key="fdrLevel" filterkey="fdrLevel">
+  <div class="tf-outer" data-test-key="polarity" filterkey="polarity">
     <div class="tf-name">
-      FDR:
+      Polarity:
       <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
       <div slot-key="default">
-        <mock-el-select value="0.1">
-          <mock-el-option label="5%" value="0.05"></mock-el-option>
-          <mock-el-option label="10%" value="0.1"></mock-el-option>
-          <mock-el-option label="20%" value="0.2"></mock-el-option>
-          <mock-el-option label="50%" value="0.5"></mock-el-option>
+        <mock-el-select value="Positive">
+          <mock-el-option label="Positive" value="Positive"></mock-el-option>
+          <mock-el-option label="Negative" value="Negative"></mock-el-option>
         </mock-el-select>
       </div>
       <div slot-key="reference">
-        <div class="tf-value"><span class="tf-value-span"><span>10%</span></span>
-          <!---->
-        </div>
-      </div>
-    </mock-el-popover>
-    <!---->
-  </div>
-  <div class="tf-outer" data-test-key="group" options="">
-    <div class="tf-name">
-      Group:
-      <!---->
-    </div>
-    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
-      <div slot-key="default">
-        <mock-el-select placeholder="Start typing name" remote="" filterable="" clearable="" remote-method="function () { [native code] }" loading="true" loading-text="Loading matching entries..." no-match-text="No matches" multiple-limit="10" value="0123">
-          <mock-el-option value="0123"></mock-el-option>
-        </mock-el-select>
-      </div>
-      <div slot-key="reference">
-        <div class="tf-value"><span class="tf-value-span"><span>
-      
-    </span>
-          <!---->
-          <!---->
-          </span>
+        <div class="tf-value"><span class="tf-value-span"><span>Positive</span></span>
           <!---->
         </div>
       </div>
@@ -321,64 +360,28 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     </mock-el-popover>
     <div class="tf-remove el-icon-circle-close"></div>
   </div>
-  <div class="tf-outer" data-test-key="analyzerType" filterkey="analyzerType">
+  <div class="tf-outer" data-test-key="adduct" filterkey="adduct">
     <div class="tf-name">
-      Analyzer type:
+      Adduct:
       <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
       <div slot-key="default">
-        <mock-el-select filterable="true" value="FTICR">
-          <mock-el-option label="analyzerTypes" value="analyzerTypes"></mock-el-option>
-          <mock-el-option label="analyzerTypes" value="analyzerTypes"></mock-el-option>
+        <mock-el-select filterable="true" value="+K">
+          <mock-el-option label="[M + H]⁺" value="+H"></mock-el-option>
+          <mock-el-option label="[M + Na]⁺" value="+Na"></mock-el-option>
+          <mock-el-option label="[M + K]⁺" value="+K"></mock-el-option>
+          <mock-el-option label="[M - H]⁻" value="-H"></mock-el-option>
+          <mock-el-option label="[M + Cl]⁻" value="+Cl"></mock-el-option>
         </mock-el-select>
       </div>
       <div slot-key="reference">
-        <div class="tf-value"><span class="tf-value-span"><span>FTICR</span></span>
+        <div class="tf-value"><span class="tf-value-span"><span>[M + K]⁺</span></span>
           <!---->
         </div>
       </div>
     </mock-el-popover>
     <div class="tf-remove el-icon-circle-close"></div>
-  </div>
-  <div class="tf-outer" data-test-key="database" filterkey="database">
-    <div class="tf-name">
-      Database:
-      <!---->
-    </div>
-    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
-      <div slot-key="default">
-        <mock-el-select filterable="true" value="HMDBv4">
-          <mock-el-option label="molecularDatabases.0.name" value="molecularDatabases.0.name"></mock-el-option>
-        </mock-el-select>
-      </div>
-      <div slot-key="reference">
-        <div class="tf-value"><span class="tf-value-span"><span>HMDBv4</span></span>
-          <!---->
-        </div>
-      </div>
-    </mock-el-popover>
-    <!---->
-  </div>
-  <div class="tf-outer" data-test-key="metadataType" filterkey="metadataType">
-    <div class="tf-name">
-      Data type:
-      <!---->
-    </div>
-    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
-      <div slot-key="default">
-        <mock-el-select filterable="true" value="ims">
-          <mock-el-option label="Imaging MS" value="Imaging MS"></mock-el-option>
-          <mock-el-option label="LC-MS" value="LC-MS"></mock-el-option>
-        </mock-el-select>
-      </div>
-      <div slot-key="reference">
-        <div class="tf-value"><span class="tf-value-span"><span>ims</span></span>
-          <!---->
-        </div>
-      </div>
-    </mock-el-popover>
-    <!---->
   </div>
 </div>
 `;

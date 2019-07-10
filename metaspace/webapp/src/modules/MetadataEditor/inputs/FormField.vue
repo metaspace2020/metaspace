@@ -45,6 +45,15 @@
       v-bind="$attrs"
     />
 
+    <custom-number-input
+      v-else-if="type === 'number'"
+      @input="onInput"
+      :value="value"
+      :required="required"
+      :placeholder="placeholder"
+      v-bind="$attrs"
+    />
+
     <el-select
       v-else-if="type === 'select'"
       @input="onInput"
@@ -122,6 +131,7 @@
   import PixelSizeInput from './PixelSizeInput.vue';
   import { Component, Prop } from 'vue-property-decorator';
   import { FetchSuggestions, FetchSuggestionsCallback } from 'element-ui/types/autocomplete';
+  import CustomNumberInput from './CustomNumberInput.vue';
 
   @Component({
     inheritAttrs: false,
@@ -129,7 +139,8 @@
       TableInput,
       PersonInput,
       DetectorResolvingPowerInput,
-      PixelSizeInput
+      PixelSizeInput,
+      CustomNumberInput,
     }
   })
   export default class FormField extends Vue {

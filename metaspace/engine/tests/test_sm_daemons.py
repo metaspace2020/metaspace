@@ -142,9 +142,12 @@ def test_sm_daemons(MSMSearchMock,
 
     formula_metrics_df = pd.DataFrame({
         'formula_i': [0, 1, 2],
-        'ion_formula': ['C12H24O+H', 'C12H24O+Na', 'C12H24O+K'],
+        'ion_formula': ['C12H24O-H2O+H', 'C12H24O-H2+O2-CO+Na', 'C12H24O'],
         'formula': ['C12H24O', 'C12H24O', 'C12H24O'],
-        'adduct': ['+H', '+Na', '+K'],
+        'modifier': ['-H2O+H', '-H2+O2-CO+Na', ''],
+        'chem_mod': ['', '-H2+O2', ''],
+        'neutral_loss': ['-H2O', '-CO', ''],
+        'adduct': ['+H', '+Na', '[M]+'],
         'chaos': [0.9, 0.9, 0.9],
         'spatial': [0.9, 0.9, 0.9],
         'spectral': [0.9, 0.9, 0.9],
@@ -170,24 +173,13 @@ def test_sm_daemons(MSMSearchMock,
     es = ESExporter(db)
 
     try:
-        upload_dt = datetime.now()
         ds_id = '2000-01-01_00h00m'
-        db.insert(Dataset.DS_INSERT, [{
-            'id': ds_id,
-            'name': test_ds_name,
-            'input_path': input_dir_path,
-            'upload_dt': upload_dt,
-            'metadata': json.dumps(metadata),
-            'config': json.dumps(ds_config),
-            'status': DatasetStatus.QUEUED,
-            'is_public': True,
-            'mol_dbs': ['HMDB-v4'],
-            'adducts': ['+H', '+Na', '+K'],
-            'ion_img_storage': 'fs'
-        }])
+        upload_dt = datetime.now()
+        ds = Dataset(id=ds_id, name=test_ds_name, input_path=input_dir_path, upload_dt=upload_dt,
+                     metadata=metadata, config=ds_config, status=DatasetStatus.QUEUED)
+        ds.save(db, es)
 
-        ds = Dataset.load(db, ds_id)
-        queue_pub.publish({'ds_id': ds.id, 'ds_name': ds.name, 'action': DaemonAction.ANNOTATE})
+        queue_pub.publish({'ds_id': ds_id, 'ds_name': test_ds_name, 'action': DaemonAction.ANNOTATE})
 
         run_daemons(db, es)
 
@@ -223,19 +215,17 @@ def test_sm_daemons(MSMSearchMock,
         assert start <= finish
 
         # image metrics asserts
-        rows = db.select(('SELECT db_id, sf, adduct, stats, iso_image_ids '
-                          'FROM iso_image_metrics '
-                          'ORDER BY sf, adduct'))
+        rows = db.select(('SELECT formula, adduct, stats, iso_image_ids '
+                          'FROM annotation'))
+        rows = sorted(rows, key=lambda row: row[1]) # Sort in Python because postgres sorts symbols inconsistently between locales
         assert len(rows) == 3
-        assert rows[0] == (0, 'C12H24O', '+H', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9, 'msm': 0.9**3,
-                                                'total_iso_ints': [100.], 'min_iso_ints': [0], 'max_iso_ints': [10.]},
-                           ['iso_image_1', None, None, None])
-        assert rows[1] == (0, 'C12H24O', '+K', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9, 'msm': 0.9**3,
-                                                'total_iso_ints': [100.], 'min_iso_ints': [0], 'max_iso_ints': [10.]},
-                           ['iso_image_1', None, None, None])
-        assert rows[2] == (0, 'C12H24O', '+Na', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9, 'msm': 0.9**3,
-                                                 'total_iso_ints': [100.], 'min_iso_ints': [0], 'max_iso_ints': [10.]},
-                           ['iso_image_1', None, None, None])
+        for row, expected_adduct in zip(rows, ['+H', '+Na', '[M]+']):
+            formula, adduct, stats, iso_image_ids = row
+            assert formula == 'C12H24O'
+            assert adduct == expected_adduct
+            assert stats == {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9, 'msm': 0.9**3,
+                            'total_iso_ints': [100.], 'min_iso_ints': [0], 'max_iso_ints': [10.]}
+            assert iso_image_ids == ['iso_image_1', None, None, None]
 
         time.sleep(1)  # Waiting for ES
         # ES asserts
@@ -284,20 +274,9 @@ def test_sm_daemons_annot_fails(MSMSearchMock,
 
     try:
         ds_id = '2000-01-01_00h00m'
-        upload_dt = datetime.now()
-        db.insert(Dataset.DS_INSERT, [{
-            'id': ds_id,
-            'name': test_ds_name,
-            'input_path': input_dir_path,
-            'upload_dt': upload_dt,
-            'metadata': json.dumps(metadata),
-            'config': json.dumps(ds_config),
-            'status': DatasetStatus.QUEUED,
-            'is_public': True,
-            'mol_dbs': ['HMDB-v4'],
-            'adducts': ['+H', '+Na', '+K'],
-            'ion_img_storage': 'fs'
-        }])
+        ds = Dataset(id=ds_id, name=test_ds_name, input_path=input_dir_path, upload_dt=datetime.now(),
+                     metadata=metadata, config=ds_config, status=DatasetStatus.QUEUED)
+        ds.save(db, es)
 
         queue_pub.publish({'ds_id': ds_id, 'ds_name': test_ds_name, 'action': DaemonAction.ANNOTATE})
 
@@ -327,8 +306,11 @@ def test_sm_daemon_es_export_fails(MSMSearchMock,
 
     formula_metrics_df = pd.DataFrame({
         'formula_i': [0, 1, 2],
-        'ion_formula': ['C12H24O+H', 'C12H24O+Na', 'C12H24O+K'],
+        'ion_formula': ['C12H24O-H2O+H', 'C12H24O-H2+O2-CO+Na', 'C12H24O+K'],
         'formula': ['C12H24O', 'C12H24O', 'C12H24O'],
+        'modifier': ['-H2O+H', '-H2+O2-CO+Na', '+K'],
+        'chem_mod': ['', '-H2+O2', ''],
+        'neutral_loss': ['-H2O', '-CO', ''],
         'adduct': ['+H', '+Na', '+K'],
         'chaos': [0.9, 0.9, 0.9],
         'spatial': [0.9, 0.9, 0.9],
@@ -364,20 +346,9 @@ def test_sm_daemon_es_export_fails(MSMSearchMock,
 
     try:
         ds_id = '2000-01-01_00h00m'
-        upload_dt = datetime.now()
-        db.insert(Dataset.DS_INSERT, [{
-            'id': ds_id,
-            'name': test_ds_name,
-            'input_path': input_dir_path,
-            'upload_dt': upload_dt,
-            'metadata': json.dumps(metadata),
-            'config': json.dumps(ds_config),
-            'status': DatasetStatus.QUEUED,
-            'is_public': True,
-            'mol_dbs': ['HMDB-v4'],
-            'adducts': ['+H', '+Na', '+K'],
-            'ion_img_storage': 'fs'
-        }])
+        ds = Dataset(id=ds_id, name=test_ds_name, input_path=input_dir_path, upload_dt=datetime.now(),
+                     metadata=metadata, config=ds_config, status=DatasetStatus.QUEUED)
+        ds.save(db, es)
 
         queue_pub.publish({'ds_id': ds_id, 'ds_name': test_ds_name, 'action': DaemonAction.ANNOTATE})
 

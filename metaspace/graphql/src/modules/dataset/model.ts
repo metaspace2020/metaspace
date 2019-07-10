@@ -76,8 +76,6 @@ export interface EngineDataset {
   ion_img_storage_type: string;
   thumbnail: string | null;
   ion_thumbnail: string | null;
-  mol_dbs: string[];
-  adducts: string[];
 }
 
 export interface EngineOpticalImage {

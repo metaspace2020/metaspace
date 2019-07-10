@@ -1,23 +1,30 @@
 import config from './config';
 import sanitizeHtml from 'sanitize-html';
+import {zipObject} from 'lodash-es';
 
 const fuConfig = config.fineUploader;
 
-function prettifySign(str: string): string {
-  return str.replace('-', ' – ').replace('+', ' + ');
-}
-
-interface StringDictionary {
-  [x: string]: string
-}
-
 type JWT = string;
 
-function renderMolFormula(sumFormula: string, adduct: string, polarity: string): string {
-  let result = `[${(sumFormula + adduct).replace(/(\d+)/g, "<sub>$1</sub>")}]`;
-  const shorten: StringDictionary = {'POSITIVE': '⁺', 'NEGATIVE': '¯'};
-  result = prettifySign(result) + shorten[polarity];
-  return result;
+const NORMAL_TO_SUPERSCRIPT = zipObject('0123456789+-', '⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻');
+const NORMAL_TO_SUPERSCRIPT_RE = /[0-9+-]/g;
+
+function superscript(s: string): string {
+  return s.replace(NORMAL_TO_SUPERSCRIPT_RE, c => NORMAL_TO_SUPERSCRIPT[c]);
+}
+
+function renderMolFormula(ion: string): string {
+  const match = /^(.*?)([+-]\d*)?$/.exec(ion);
+  const formula = match && match[1] || ion;
+  const charge = match && match[2] || undefined;
+  const formattedCharge = charge ? superscript(charge) : '';
+  const formattedFormula = formula.replace(/-/g, ' – ').replace(/\+/g, ' + ');
+
+  return `[${formattedFormula}]${formattedCharge}`;
+}
+
+function renderMolFormulaHtml(ion: string): string {
+  return renderMolFormula(ion).replace(/(\d+)/g, "<sub>$1</sub>");
 }
 
 function checkStatus(response: Response): Response {
@@ -112,7 +119,7 @@ function sanitizeIt(descriptionText: string) {
 
 export {
   renderMolFormula,
-  prettifySign,
+  renderMolFormulaHtml,
   getJWT,
   decodePayload,
   pathFromUUID,

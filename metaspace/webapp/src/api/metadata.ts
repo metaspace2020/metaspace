@@ -5,6 +5,7 @@ export const editDatasetFragment =
   gql`fragment EditDatasetFragment on Dataset {
     id
     metadataJson
+    configJson
     isPublic
     group {
       id
@@ -97,12 +98,12 @@ export const fetchOptionListsQuery = gql`query fetchOptionListsQuery {
   analyzerTypes: metadataSuggestions(field: "MS_Analysis.Analyzer", query: "", limit: 1000)
   colocalizationAlgos {id, name}
   molecularDatabases: molecularDatabases(hideDeprecated: false, onlyLastVersion: false){name, default, hidden}
-  adducts: adductSuggestions{adduct, charge}
+  adducts: adductSuggestions{adduct, name, charge, default, hidden}
 }`;
 
 export const metadataOptionsQuery = gql`query metadataOptionsQuery {
   molecularDatabases: molecularDatabases(hideDeprecated: false, onlyLastVersion: false){name, default, hidden}
-  adducts: adductSuggestions{adduct, charge}
+  adducts: adductSuggestions{adduct, name, charge, default, hidden}
 }`;
 
 export const colocalizationAlgosQuery = gql`query colocalizationAlgosQuery {

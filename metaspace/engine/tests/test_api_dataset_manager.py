@@ -4,6 +4,7 @@ from datetime import datetime
 from PIL import Image
 
 from sm.engine.daemon_action import DaemonAction
+from sm.engine.dataset import generate_ds_config
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.queue import QueuePublisher
@@ -36,7 +37,15 @@ def create_ds_doc(ds_id='2000-01-01', ds_name='ds_name', input_path='input_path'
     if not mol_dbs:
         mol_dbs = ['HMDB-v4']
     if not adducts:
-        adducts = ['+H', '+Na', '+K']
+        adducts = ['+H', '+Na', '+K', '[M]+']
+    if not metadata:
+        metadata = {
+            'MS_Analysis': {
+                'Polarity': 'Positive',
+                'Analyzer': 'FTICR',
+                'Detector_Resolving_Power': {'mz': 200, 'Resolving_Power': 140000}
+            }
+        }
     return dict(
         id=ds_id, name=ds_name, input_path=input_path, upload_dt=upload_dt, metadata=metadata,
         status=status, mol_dbs=mol_dbs, adducts=adducts, img_storage_type='fs', is_public=True
@@ -57,11 +66,12 @@ class TestSMapiDatasetManager:
         msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'action': DaemonAction.ANNOTATE}
         action_queue_mock.publish.assert_has_calls([call(msg, DatasetActionPriority.HIGH)])
 
-    def test_delete_ds(self, test_db, ds_config):
+    def test_delete_ds(self, test_db, metadata, ds_config):
         update_queue = MagicMock(spec=QueuePublisher)
         db, ds_man = create_api_ds_man(update_queue=update_queue)
         ds_id = '2000-01-01'
-        ds = Dataset(**create_ds_doc(ds_id=ds_id, status=DatasetStatus.FINISHED))
+        ds = Dataset(id=ds_id, name='ds_name', input_path='input_path', upload_dt=datetime.now(),
+                     metadata=metadata, config=ds_config, status=DatasetStatus.FINISHED)
         ds.save(db)
 
         ds_man.delete(ds_id)
@@ -69,7 +79,7 @@ class TestSMapiDatasetManager:
         msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'action': DaemonAction.DELETE}
         update_queue.publish.assert_has_calls([call(msg, DatasetActionPriority.STANDARD)])
 
-    def test_add_optical_image(self, fill_db, ds_config):
+    def test_add_optical_image(self, fill_db, metadata, ds_config):
         action_queue_mock = MagicMock(spec=QueuePublisher)
         es_mock = MagicMock(spec=ESExporter)
         img_store_mock = MagicMock(ImageStoreServiceWrapper)
@@ -84,7 +94,8 @@ class TestSMapiDatasetManager:
         ds_man._annotation_image_shape = MagicMock(return_value=(100, 100))
 
         ds_id = '2000-01-01'
-        ds = Dataset(**create_ds_doc(ds_id=ds_id))
+        ds = Dataset(id=ds_id, name='ds_name', input_path='input_path', upload_dt=datetime.now(),
+                     metadata=metadata, config=ds_config, status=DatasetStatus.QUEUED)
         ds.save(db)
 
         zoom_levels = [1, 2, 3]

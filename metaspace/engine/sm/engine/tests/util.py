@@ -47,19 +47,20 @@ def metadata():
 def ds_config():
     return {
         "image_generation": {
-            "q": 99,
-            "do_preprocessing": False,
-            "nlevels": 30,
-            "ppm": 3
+            "n_levels": 30,
+            "ppm": 3,
+            "min_px": 1,
         },
         "isotope_generation": {
-            "adducts": ["+H", "+Na", "+K"],
-            "charge": {
-                "polarity": "+",
-                "n_charges": 1
-            },
+            "adducts": ["+H", "+Na", "+K", "[M]+"],
+            "charge": 1,
             "isocalc_sigma": 0.000619,
-            "isocalc_pts_per_mz": 8078
+            "n_peaks": 4,
+            "neutral_losses": [],
+            "chem_mods": [],
+        },
+        "fdr": {
+            "decoy_sample_size": 20
         },
         "databases": ["HMDB-v4"]
     }
@@ -70,7 +71,7 @@ def pysparkling_context(request):
     return Context()
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture()
 def spark_context(request):
     from pyspark import SparkContext
     import sys
@@ -118,18 +119,16 @@ def fill_db(test_db, metadata, ds_config):
     ds_id = '2000-01-01'
     db = DB(sm_config['db'])
     db.insert('INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, '
-              'status, is_public, mol_dbs, adducts) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+              'status, is_public) values (%s, %s, %s, %s, %s, %s, %s, %s)',
               rows=[(ds_id, 'ds_name', 'input_path', upload_dt,
                      json.dumps(metadata), json.dumps(ds_config), 'FINISHED',
-                     True, ['HMDB-v4'], ['+H'])])
+                     True)])
     db.insert("INSERT INTO job (id, db_id, ds_id) VALUES (%s, %s, %s)",
               rows=[(0, 0, ds_id)])
-    db.insert("INSERT INTO sum_formula (id, db_id, sf) VALUES (%s, %s, %s)",
-              rows=[(1, 0, 'H2O')])
-    db.insert(("INSERT INTO iso_image_metrics (job_id, db_id, sf, adduct, iso_image_ids) "
-               "VALUES (%s, %s, %s, %s, %s)"),
-              rows=[(0, 0, 'H2O', '+H', ['iso_image_11', 'iso_image_12']),
-                    (0, 0, 'CH4', '+H', ['iso_image_21', 'iso_image_22'])])
+    db.insert(("INSERT INTO annotation (job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids) "
+               "VALUES (%s, %s, '', '', %s, 0.5, 0.2, '{}', %s)"),
+              rows=[(0, 'H2O', '+H', ['iso_image_11', 'iso_image_12']),
+                    (0, 'CH4', '+H', ['iso_image_21', 'iso_image_22'])])
     user_id = str(uuid.uuid4())
     db.insert("INSERT INTO graphql.user (id, name, email) VALUES (%s, %s, %s)",
               rows=[(user_id, 'name', 'name@embl.de')])
@@ -187,9 +186,9 @@ def mol_db(ds_config):
     return mol_db
 
 
-def make_moldb_mock():
+def make_moldb_mock(formulas=('H2O','C5H3O')):
     moldb_mock = MagicMock(spec=MolecularDB)
     moldb_mock.id = 0
     moldb_mock.name = 'test_db'
-    moldb_mock.formulas = ['H2O', 'C5H3O']
+    moldb_mock.formulas = list(formulas)
     return moldb_mock

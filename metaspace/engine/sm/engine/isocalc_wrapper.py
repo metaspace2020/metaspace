@@ -6,8 +6,19 @@ import logging
 
 logger = logging.getLogger('engine')
 
-ISOTOPIC_PEAK_N = 4
 SIGMA_TO_FWHM = 2.3548200450309493  # 2 \sqrt{2 \log 2}
+
+_centroids_cache = None
+
+
+def set_centroids_cache_enabled(enabled):
+    """ Turns on/off the centroids cache. This cache can become a massive memory leak if permanently left active.
+    It should only be used for batch processing jobs """
+    global _centroids_cache
+    if enabled and not _centroids_cache:
+        _centroids_cache = dict()
+    else:
+        _centroids_cache = None
 
 
 class IsocalcWrapper(object):
@@ -21,11 +32,9 @@ class IsocalcWrapper(object):
     """
 
     def __init__(self, isocalc_config):
-        self.charge = 0
-        if 'polarity' in isocalc_config['charge']:
-            polarity = isocalc_config['charge']['polarity']
-            self.charge = (-1 if polarity == '-' else 1) * isocalc_config['charge']['n_charges']
+        self.charge = isocalc_config['charge']
         self.sigma = float(isocalc_config['isocalc_sigma'])
+        self.n_peaks = isocalc_config['n_peaks']
         # self.pts_per_mz = int(isocalc_config['isocalc_pts_per_mz'])
 
     @staticmethod
@@ -40,7 +49,7 @@ class IsocalcWrapper(object):
         ints = ints[mz_order]
         return mzs, ints
 
-    def centroids(self, formula):
+    def _centroids_uncached(self, formula):
         """
         Args
         -----
@@ -48,7 +57,7 @@ class IsocalcWrapper(object):
 
         Returns
         -----
-            list[tuple]
+            Tuple[np.ndarray, np.ndarray]
         """
         try:
             pyisocalc.parseSumFormula(formula)  # tests that formula is parsable
@@ -60,12 +69,12 @@ class IsocalcWrapper(object):
             centr = iso_pattern.centroids(instrument_model)
             mzs_ = np.array(centr.masses)
             ints_ = 100. * np.array(centr.intensities)
-            mzs_, ints_ = self._trim(mzs_, ints_, ISOTOPIC_PEAK_N)
+            mzs_, ints_ = self._trim(mzs_, ints_, self.n_peaks)
 
             n = len(mzs_)
-            mzs = np.zeros(ISOTOPIC_PEAK_N)
+            mzs = np.zeros(self.n_peaks)
             mzs[:n] = np.array(mzs_)
-            ints = np.zeros(ISOTOPIC_PEAK_N)
+            ints = np.zeros(self.n_peaks)
             ints[:n] = ints_
 
             return mzs, ints
@@ -73,3 +82,14 @@ class IsocalcWrapper(object):
         except Exception as e:
             logger.warning('%s - %s', formula, e)
             return None, None
+
+    def centroids(self, formula):
+        if _centroids_cache is not None:
+            cache_key = (formula, self.charge, self.sigma, self.n_peaks)
+            result = _centroids_cache.get(cache_key)
+            if not result:
+                result = self._centroids_uncached(formula)
+                _centroids_cache[cache_key] = result
+            return result
+        else:
+            return self._centroids_uncached(formula)

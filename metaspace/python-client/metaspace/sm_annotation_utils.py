@@ -549,7 +549,7 @@ class SMDataset(object):
 
     @property
     def polarity(self):
-        return self._config['isotope_generation']['charge']['polarity']
+        return 'Positive' if self._config['isotope_generation']['charge'] > 0 else 'Negative'
 
     @property
     def databases(self):

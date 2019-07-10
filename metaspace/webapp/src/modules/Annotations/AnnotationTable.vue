@@ -101,7 +101,7 @@
 
             <div slot="reference" class="cell-wrapper">
                 <span class="sf cell-span"
-                      v-html="renderMolFormula(props.row.sumFormula, props.row.adduct, props.row.dataset.polarity)"></span>
+                      v-html="renderMolFormulaHtml(props.row.ion)"></span>
                 <img src="../../assets/filter-icon.png"
                      v-if="!filter.compoundName"
                      @click="filterMolFormula(props.row)"
@@ -217,7 +217,7 @@
 </template>
 
 <script>
-  import {renderMolFormula} from '../../util';
+  import {renderMolFormulaHtml} from '../../util';
  import ProgressButton from './ProgressButton.vue';
  import {
    annotationListQuery,
@@ -412,7 +412,7 @@
        return this.hideColumns.indexOf(columnLabel) >= 0;
      },
 
-     renderMolFormula,
+     renderMolFormulaHtml,
      getRowClass ({row}) {
        const {fdrLevel, colocalizationCoeff} = row;
        const fdrClass =

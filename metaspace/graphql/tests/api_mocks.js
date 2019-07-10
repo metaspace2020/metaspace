@@ -34,7 +34,7 @@ function molecularDatabaseService(port) {
   };
 
   const databases = {
-    data: [{name: config.defaults.moldb_name}],
+    data: [{name: config.defaults.moldb_names[0]}],
     meta: { message: 'OK', code: 200 }
   };
 

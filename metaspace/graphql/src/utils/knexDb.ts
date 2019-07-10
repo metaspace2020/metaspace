@@ -52,7 +52,5 @@ export const fetchEngineDS = async ({id, name}: IdOrName) => {
     metadataJson: JSON.stringify(ds.metadata),
     config: ds.config,
     isPublic: ds.is_public,
-    molDBs: ds.mol_dbs,
-    adducts: ds.adducts
   };
 };

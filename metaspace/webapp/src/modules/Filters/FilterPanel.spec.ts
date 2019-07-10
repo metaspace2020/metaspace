@@ -7,6 +7,7 @@ import Vuex from 'vuex';
 import store from '../../store/index';
 import { sync } from 'vuex-router-sync';
 import { encodeParams } from './url';
+import {mockAdductSuggestions} from '../../../tests/utils/mockGraphqlData';
 
 
 Vue.use(Vuex);
@@ -36,13 +37,25 @@ describe('FilterPanel', () => {
     metadataType: 'ims'
   };
 
-  beforeEach(() => {
-    initMockGraphqlClient();
+  beforeEach(async () => {
+    initMockGraphqlClient({
+      Query: () => ({
+        adductSuggestions: mockAdductSuggestions
+      })
+    });
+    store.commit('setFilterLists', null);
+    await store.dispatch('initFilterLists');
   });
 
-  it('should match snapshot (no filters)', async () => {
+  const updateFilter = async (newFilter: any) => {
     router.replace({ path: '/annotations' });
-    store.commit('updateFilter', {});
+    await Vue.nextTick();
+    store.commit('updateFilter', newFilter);
+    await Vue.nextTick(); // Must wait after every change for vue-router to update the store
+  };
+
+  it('should match snapshot (no filters)', async () => {
+    await updateFilter({});
     const propsData = { level: 'annotation' };
     const wrapper = mount(FilterPanel, { router, provide, store, propsData, sync: false });
     await Vue.nextTick();
@@ -51,8 +64,7 @@ describe('FilterPanel', () => {
   });
 
   it('should match snapshot (all annotation filters)', async () => {
-    router.replace({ path: '/annotations' });
-    store.commit('updateFilter', allFilters);
+    await updateFilter(allFilters);
     const propsData = { level: 'annotation' };
     const wrapper = mount(FilterPanel, { router, provide, store, propsData, sync: false });
     await Vue.nextTick();
@@ -61,8 +73,7 @@ describe('FilterPanel', () => {
   });
 
   it('should update the route when filters change', async () => {
-    router.replace({ path: '/annotations' });
-    store.commit('updateFilter', allFilters);
+    await updateFilter(allFilters);
     const propsData = { level: 'annotation' };
     const wrapper = mount(FilterPanel, { router, provide, store, propsData, sync: false });
     const newFilters = {
@@ -97,8 +108,7 @@ describe('FilterPanel', () => {
   });
 
   it('should be able to add a filter', async () => {
-    router.replace({ path: '/annotations' });
-    store.commit('updateFilter', {});
+    await updateFilter({});
     const propsData = { level: 'annotation' };
     const wrapper = mount(FilterPanel, { router, provide, store, propsData, sync: false });
     await Vue.nextTick();
@@ -111,8 +121,7 @@ describe('FilterPanel', () => {
   });
 
   it('should be able to remove a filter', async () => {
-    router.replace({ path: '/annotations' });
-    store.commit('updateFilter', allFilters);
+    await updateFilter(allFilters);
     const propsData = { level: 'annotation' };
     const wrapper = mount(FilterPanel, { router, provide, store, propsData, sync: false });
     await Vue.nextTick();

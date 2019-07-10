@@ -9,18 +9,14 @@ import pandas as pd
 import random
 
 from sm.engine.dataset_locker import DatasetLocker
+from sm.engine.formula_parser import format_ion_formula
 from sm.engine.util import SMConfig
 
 logger = logging.getLogger('engine')
 
-ANNOTATION_COLUMNS = ["sf", "sf_adduct",
-                      "chaos", "image_corr", "pattern_match", "total_iso_ints", "min_iso_ints", "max_iso_ints", "msm",
-                      "adduct", "job_id", "fdr",
-                      "iso_image_ids", "polarity"]
-
 ANNOTATIONS_SEL = '''SELECT
-    m.sf AS sf,
-    CONCAT(m.sf, m.adduct) AS sf_adduct,
+    m.id as annotation_id,
+    m.formula AS formula,
     COALESCE(((m.stats -> 'chaos'::text)::text)::real, 0::real) AS chaos,
     COALESCE(((m.stats -> 'spatial'::text)::text)::real, 0::real) AS image_corr,
     COALESCE(((m.stats -> 'spectral'::text)::text)::real, 0::real) AS pattern_match,
@@ -29,16 +25,18 @@ ANNOTATIONS_SEL = '''SELECT
     (m.stats -> 'max_iso_ints'::text) AS max_iso_ints,
     COALESCE(m.msm, 0::real) AS msm,
     m.adduct AS adduct,
+    m.neutral_loss as neutral_loss,
+    m.chem_mod as chem_mod,
     j.id AS job_id,
     m.fdr AS fdr,
     m.iso_image_ids AS iso_image_ids,
-    ds.config->'isotope_generation'->'charge'->'polarity' AS polarity,
+    (CASE ds.config->'isotope_generation'->>'charge' WHEN '-1' THEN '-' WHEN '1' THEN '+' END) AS polarity,
     m.off_sample->'prob' as off_sample_prob,
     m.off_sample->'label' as off_sample_label
-FROM iso_image_metrics m
+FROM annotation m
 JOIN job j ON j.id = m.job_id
 JOIN dataset ds ON ds.id = j.ds_id
-WHERE ds.id = %s AND m.db_id = %s
+WHERE ds.id = %s AND j.db_id = %s
 ORDER BY COALESCE(m.msm, 0::real) DESC'''
 
 DATASET_SEL = '''SELECT
@@ -63,8 +61,10 @@ FROM (
     d.status AS ds_status,
     to_char(max(job.finish), 'YYYY-MM-DD HH24:MI:SS') AS ds_last_finished,
     d.is_public AS ds_is_public,
-    d.mol_dbs AS ds_mol_dbs,
-    d.adducts AS ds_adducts,
+    d.config #> '{databases}' AS ds_mol_dbs,
+    d.config #> '{isotope_generation,adducts}' AS ds_adducts,
+    d.config #> '{isotope_generation,neutral_losses}' AS ds_neutral_losses,
+    d.config #> '{isotope_generation,chem_mods}' AS ds_chem_mods,
     d.acq_geometry AS ds_acq_geometry,
     d.ion_img_storage_type AS ds_ion_img_storage
   FROM dataset as d
@@ -100,15 +100,16 @@ class ESIndexManager(object):
 
     def internal_index_name(self, alias):
         yin, yang = '{}-yin'.format(alias), '{}-yang'.format(alias)
-        assert not (self.exists_index(yin) and self.exists_index(yang)), \
-            'Only one of {} and {} should exist'.format(yin, yang)
+        indices = self._ind_client.get_alias(name=alias)
+        assert len(indices) > 0, f'Could not find ElasticSearch alias "{alias}"'
 
-        if self.exists_index(yin):
-            return yin
-        elif self.exists_index(yang):
-            return yang
-        else:
-            return yin
+        index = next(iter(indices.keys()))
+        if len(indices) > 1:
+            logger.warning(f'Multiple indices mapped on to the same alias: {indices}. Arbitrarily choosing {index}')
+
+        assert index == yin or index == yang, f'Unexpected ElasticSearch alias "{alias}" => "{index}"'
+
+        return index
 
     def create_index(self, index):
         dynamic_templates = [{
@@ -125,6 +126,15 @@ class ESIndexManager(object):
                 }
             }
         }]
+        dataset_properties = {
+            "ds_id": {"type": "keyword"},
+            "ds_name": {
+                "type": "keyword",
+                "fields": {
+                    "searchable": {"type": "text", "analyzer": "delimited_ds_names"},
+                }
+            },
+        }
         body = {
             "settings": {
                 "index": {
@@ -137,6 +147,21 @@ class ESIndexManager(object):
                                 "type": "custom",
                                 "filter": ["lowercase", "asciifolding"]
                             }
+                        },
+                        "analyzer": {
+                            # Support ds names that are delimited with underscores, dashes, etc.
+                            "delimited_ds_names": {
+                                "type": "custom",
+                                "tokenizer": "standard",
+                                "filter": ["lowercase", "asciifolding", "my_word_delimeter"],
+                            },
+                        },
+                        "filter": {
+                            "my_word_delimeter": {
+                                "type": "word_delimiter",
+                                "catenate_all": True,
+                                "preserve_original": True
+                            }
                         }
                     }
                 }
@@ -144,14 +169,12 @@ class ESIndexManager(object):
             "mappings": {
                 "dataset": {
                     "dynamic_templates": dynamic_templates,
-                    "properties": {
-                        "ds_id": {"type": "keyword"}
-                    }
+                    "properties": dataset_properties
                 },
                 "annotation": {
                     "dynamic_templates": dynamic_templates,
                     "properties": {
-                        "ds_id": {"type": "keyword"},
+                        **dataset_properties,
                         "chaos": {"type": "float"},
                         "image_corr": {"type": "float"},
                         "pattern_match": {"type": "float"},
@@ -162,6 +185,7 @@ class ESIndexManager(object):
                         "fdr": {"type": "float"},
                         "off_sample_prob": {"type": "float"},
                         "off_sample_label": {"type": "keyword"},
+                        "db_version": {"type": "keyword"},  # Prevent "YYYY-MM"-style DB versions from being parsed as dates
                     }
                 }
             }
@@ -200,8 +224,12 @@ class ESIndexManager(object):
             self._ind_client.update_aliases({
                 "actions": [{"remove": {"index": old_index, "alias": alias}}]
             })
-            out = self._ind_client.delete(index=old_index)
-            logger.info('Index {} deleted: {}'.format(old_index, out))
+
+    def get_index_stats(self, index):
+        data = self._ind_client.stats(index, metric="docs,store")
+        ind_data = data['indices'][index]['total']
+        return ind_data['docs']['count'], ind_data['store']['size_in_bytes']
+
 
 
 def flatten_doc(doc, parent_key='', sep='.'):
@@ -244,7 +272,7 @@ class ESExporter(object):
         self._db = db
         self._ds_locker = DatasetLocker(self.sm_config['db'])
         self.index = es_config['index']
-        self._get_mol_by_sf_dict_cache = dict()
+        self._get_mol_by_formula_dict_cache = dict()
 
     def _remove_mol_db_from_dataset(self, ds_id, mol_db):
         dataset = self._es.get_source(self.index, id=ds_id, doc_type='dataset')
@@ -271,20 +299,20 @@ class ESExporter(object):
                 self._es.index(index=self.index, id=ds_id,
                                doc_type='dataset', body=ds, params={'refresh': 'wait_for'})
 
-    def _get_mol_by_sf_dict(self, mol_db):
+    def _get_mol_by_formula_dict(self, mol_db):
         try:
-            return self._get_mol_by_sf_dict_cache[mol_db.id]
+            return self._get_mol_by_formula_dict_cache[mol_db.id]
         except KeyError:
             mols = mol_db.get_molecules()
-            by_sf = mols.groupby('sf')
+            by_formula = mols.groupby('sf')
             # limit IDs and names to 50 each to prevent ES 413 Request Entity Too Large error
-            mol_by_sf_df = pd.concat([by_sf.apply(lambda df: df.mol_id.values[:50].tolist()),
-                                      by_sf.apply(lambda df: df.mol_name.values[:50].tolist())], axis=1)
-            mol_by_sf_df.columns = ['mol_ids', 'mol_names']
-            mol_by_sf_dict = mol_by_sf_df.apply(lambda row: (row.mol_ids, row.mol_names), axis=1).to_dict()
+            mol_by_formula_df = pd.concat([by_formula.apply(lambda df: df.mol_id.values[:50].tolist()),
+                                      by_formula.apply(lambda df: df.mol_name.values[:50].tolist())], axis=1)
+            mol_by_formula_df.columns = ['mol_ids', 'mol_names']
+            mol_by_formula_dict = mol_by_formula_df.apply(lambda row: (row.mol_ids, row.mol_names), axis=1).to_dict()
 
-            self._get_mol_by_sf_dict_cache[mol_db.id] = mol_by_sf_dict
-            return mol_by_sf_dict
+            self._get_mol_by_formula_dict_cache[mol_db.id] = mol_by_formula_dict
+            return mol_by_formula_dict
 
     def _add_ds_fields_to_ann(self, ann_doc, ds_doc):
         for f in ds_doc:
@@ -308,28 +336,27 @@ class ESExporter(object):
             logger.info('Indexing {} documents: {}, {}'.format(len(annotation_docs), ds_id, mol_db))
 
             to_index = []
-            mol_by_sf = self._get_mol_by_sf_dict(mol_db)
+            mol_by_formula = self._get_mol_by_formula_dict(mol_db)
             for doc in annotation_docs:
                 self._add_ds_fields_to_ann(doc, ds_doc)
                 doc['db_name'] = mol_db.name
                 doc['db_version'] = mol_db.version
-                sf = doc['sf']
-                doc['comp_ids'], doc['comp_names'] = mol_by_sf[sf]
-                mzs, _ = isocalc.centroids(sf + doc['adduct'])
+                formula = doc['formula']
+                ion_without_pol = format_ion_formula(formula, doc['chem_mod'], doc['neutral_loss'], doc['adduct'])
+                doc['ion'] = ion_without_pol + doc['polarity']
+                doc['comp_ids'], doc['comp_names'] = mol_by_formula[formula]
+                mzs, _ = isocalc.centroids(ion_without_pol)
                 doc['centroid_mzs'] = list(mzs)
                 doc['mz'] = mzs[0]
-                doc['ion_add_pol'] = '[M{}]{}'.format(doc['adduct'], doc['polarity'])
 
                 fdr = round(doc['fdr'] * 100, 2)
                 # assert fdr in fdr_levels
                 annotation_counts[fdr] += 1
 
-                add_str = doc['adduct'].replace('+', 'plus_').replace('-', 'minus_')
                 to_index.append({
                     '_index': self.index,
                     '_type': 'annotation',
-                    '_id': '{}_{}_{}_{}_{}'.format(doc['ds_id'], mol_db.name, mol_db.version,
-                                                   doc['sf'], add_str),
+                    '_id': f"{doc['ds_id']}_{doc['annotation_id']}",
                     '_source': doc
                 })
 

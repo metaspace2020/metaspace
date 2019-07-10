@@ -61,7 +61,7 @@
 
 <script>
   import {get, omit} from 'lodash-es';
-  import {renderMolFormula} from '../../../../util';
+  import {renderMolFormulaHtml} from '../../../../util';
   import ImageLoader from '../../../../components/ImageLoader.vue';
   import { relatedAnnotationsQuery } from '../../../../api/annotation';
   import {encodeParams, stripFilteringParams} from '../../../Filters';
@@ -116,7 +116,7 @@ export default {
   },
   methods: {
     renderFormula(other) {
-      return renderMolFormula(other.sumFormula, other.adduct, this.annotation.dataset.polarity);
+      return renderMolFormulaHtml(other.ion);
     },
     linkToAnnotation(other) {
       let filters = null;

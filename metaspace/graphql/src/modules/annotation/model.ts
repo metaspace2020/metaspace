@@ -65,13 +65,18 @@ export class ColocAnnotation {
 }
 
 @Entity('ion')
+@Index(['formula', 'chemMod', 'neutralLoss', 'adduct', 'charge'], {unique: true})
 export class Ion {
   @PrimaryGeneratedColumn({ type: 'int' })
   id: number;
 
-  /** All components of the ion in one string, with charge as a '+'/'-' suffix e.g. "C21H41O6P-HO+HO3P-H2O-CO2+Na+" */
-  @Index({ unique: true })
+  /**
+   * All components of the ion in one string, with charge as a '+'/'-' suffix e.g. "C21H41O6P-HO+HO3P-H2O-CO2+Na+".
+   * Note that this isn't unique - it's possible for different combinations of chemMods, neutralLosses and adducts
+   * to build the same ion.
+   */
   @Column({ type: 'text' })
+  @Index()
   ion: string;
 
   /** The formula of the molecule prior to any modifications, e.g. "C21H41O6P".
@@ -80,13 +85,11 @@ export class Ion {
   @Column({ type: 'text' })
   formula: string;
 
-  // /** Array of molecules lost, including the '-' prefix, e.g. ['-H2O','-CO2'] */
-  // @Column({ type: 'text', name: 'neutral_losses' })
-  // neutralLosses: string[];
+  @Column({ type: 'text', name: 'chem_mod', default: '' })
+  chemMod: string;
 
-  // /** Array of derivatizations, using '-' and '+' prefixes to indicate atoms lost/gained, e.g. ['-HO+HO3P'] */
-  // @Column({ type: 'text' })
-  // derivatizations: string[];
+  @Column({ type: 'text', name: 'neutral_loss', default: '' })
+  neutralLoss: string;
 
   @Column({ type: 'text' })
   adduct: string;

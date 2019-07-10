@@ -12,7 +12,7 @@ CORRUPT_COLOC_JOBS_SEL = """
 WITH mol_db_lookup AS (SELECT unnest(%s::int[]) AS id, unnest(%s::text[]) AS name), 
     fdr_lookup AS (SELECT unnest(%s::numeric[]) AS fdr), 
     algorithm_lookup AS (SELECT unnest(%s::text[]) algorithm),
-    job_fdr_counts_temp AS (SELECT job_id, fdr, COUNT(*) num_annotations FROM iso_image_metrics GROUP BY job_id, fdr),
+    job_fdr_counts_temp AS (SELECT job_id, fdr, COUNT(*) num_annotations FROM annotation GROUP BY job_id, fdr),
     job_fdr_counts AS (
       SELECT iim.job_id, fdr.fdr, SUM(num_annotations) AS num_annotations
       FROM job_fdr_counts_temp iim
@@ -42,7 +42,7 @@ ORDER BY j.ds_id DESC;
 MISSING_COLOC_JOBS_SEL = """
 WITH mol_db_lookup AS (SELECT unnest(%s::int[]) AS id, unnest(%s::text[]) AS name), 
     fdr_lookup AS (SELECT unnest(%s::numeric[]) AS fdr), 
-    job_fdr_counts_temp AS (SELECT job_id, fdr, COUNT(*) num_annotations FROM iso_image_metrics GROUP BY job_id, fdr),
+    job_fdr_counts_temp AS (SELECT job_id, fdr, COUNT(*) num_annotations FROM annotation GROUP BY job_id, fdr),
     job_fdr_counts AS (
       SELECT iim.job_id, fdr.fdr, SUM(num_annotations) AS num_annotations
       FROM job_fdr_counts_temp iim

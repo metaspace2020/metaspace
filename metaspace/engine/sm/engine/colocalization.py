@@ -30,15 +30,15 @@ SUCCESSFUL_COLOC_JOB_SEL = ('SELECT mol_db FROM graphql.coloc_job '
                             'GROUP BY mol_db '
                             'HAVING not bool_or(error IS NOT NULL)')
 
-ANNOTATIONS_SEL = ('SELECT iso_image_ids[1], sf, adduct, fdr '
-                   'FROM iso_image_metrics m '
+ANNOTATIONS_SEL = ('SELECT iso_image_ids[1], formula, chem_mod, neutral_loss, adduct, fdr '
+                   'FROM annotation m '
                    'WHERE m.job_id = ('
                    '    SELECT id FROM job j '
                    '    WHERE j.ds_id = %s AND j.db_id = %s '
                    '    ORDER BY start DESC '
                    '    LIMIT 1)')
 
-DATASET_CONFIG_SEL = ("SELECT mol_dbs, config #>> '{isotope_generation,charge,polarity}' "
+DATASET_CONFIG_SEL = ("SELECT config #> '{databases}', config #> '{isotope_generation,charge}' "
                       "FROM dataset "
                       "WHERE id = %s")
 
@@ -280,15 +280,16 @@ class Colocalization(object):
             self._save_job_to_db(ColocalizationJob(ds_id, mol_db, 0, error=format_exc()))
             raise
 
-    def _get_existing_ds_annotations(self, ds_id, mol_db_name, image_storage_type, polarity):
+    def _get_existing_ds_annotations(self, ds_id, mol_db_name, image_storage_type, charge):
         mol_db = MolecularDB(name=mol_db_name)
         annotation_rows = self._db.select(ANNOTATIONS_SEL, [ds_id, mol_db.id])
         num_annotations = len(annotation_rows)
         if num_annotations != 0:
-            sf_adducts = [(formula, adduct) for image, formula, adduct, fdr in annotation_rows]
-            ion_id_mapping = get_ion_id_mapping(self._db, sf_adducts, polarity)
-            ion_ids = np.array([ion_id_mapping[sf_adduct] for sf_adduct in sf_adducts])
-            fdrs = np.array([fdr for image, formula, adduct, fdr in annotation_rows])
+            ion_tuples = [(formula, chem_mod, neutral_loss, adduct)
+                          for image, formula, chem_mod, neutral_loss, adduct, fdr in annotation_rows]
+            ion_id_mapping = get_ion_id_mapping(self._db, ion_tuples, charge)
+            ion_ids = np.array([ion_id_mapping[ion_tuple] for ion_tuple in ion_tuples])
+            fdrs = np.array([row[5] for row in annotation_rows])
 
             logger.debug(f'Getting {num_annotations} images for "{ds_id}" {mol_db_name}')
             image_ids = [row[0] for row in annotation_rows]
@@ -312,13 +313,13 @@ class Colocalization(object):
         """
 
         image_storage_type = Dataset(ds_id).get_ion_img_storage_type(self._db)
-        mol_dbs, polarity = self._db.select_one(DATASET_CONFIG_SEL, [ds_id])
+        mol_dbs, charge = self._db.select_one(DATASET_CONFIG_SEL, [ds_id])
         existing_mol_dbs = set(db for db, in self._db.select(SUCCESSFUL_COLOC_JOB_SEL, [ds_id]))
 
         for mol_db_name in mol_dbs:
             if reprocess or mol_db_name not in existing_mol_dbs:
                 logger.info(f'Running colocalization job for {ds_id} on {mol_db_name}')
-                images, ion_ids, fdrs = self._get_existing_ds_annotations(ds_id, mol_db_name, image_storage_type, polarity)
+                images, ion_ids, fdrs = self._get_existing_ds_annotations(ds_id, mol_db_name, image_storage_type, charge)
                 self._analyze_and_save(ds_id, mol_db_name, images, ion_ids, fdrs)
             else:
                 logger.info(f'Skipping colocalization job for {ds_id} on {mol_db_name}')

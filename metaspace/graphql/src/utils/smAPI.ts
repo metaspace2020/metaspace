@@ -23,6 +23,10 @@ const fieldRenameMap = {
   groupId: 'group_id',
   projectIds: 'project_ids',
   molDBs: 'mol_dbs',
+  neutralLosses: 'neutral_losses',
+  chemMods: 'chem_mods',
+  numPeaks: 'n_peaks',
+  decoySampleSize: 'decoy_sample_size'
 };
 
 export const smAPIRequest = async (uri: string, args: any={}) => {

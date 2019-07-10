@@ -1,4 +1,4 @@
- import { renderMolFormula } from '../../util';
+ import { renderMolFormulaHtml } from '../../util';
  import DatasetInfo from '../../components/DatasetInfo.vue';
  import ColocalizationSettings from './annotation-widgets/ColocalizationSettings.vue';
  import { annotationQuery } from '../../api/annotation';
@@ -162,8 +162,7 @@
 
    get formattedMolFormula(): string {
      if (!this.annotation) return '';
-     const { sumFormula, adduct, dataset } = this.annotation;
-     return renderMolFormula(sumFormula, adduct, dataset.polarity);
+     return renderMolFormulaHtml(this.annotation.ion);
    }
 
    get compoundsTabLabel(): string {
