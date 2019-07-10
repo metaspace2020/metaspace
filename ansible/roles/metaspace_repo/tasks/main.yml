@@ -38,8 +38,6 @@
     update: yes
     force: yes
   when: local_deploy is not defined
-#  register: git_deploy
-#  until: git_deploy | succeeded
 
 # Double check all exclude paths
 - name: Upload local files
@@ -97,6 +95,12 @@
         - --exclude=docker/*
         - --exclude=docs/*
   tags: [master, slave, web]
+
+- name: Remove vault password path from ansible.cfg
+  lineinfile:
+    dest: "{{ sm_ansible_home }}/aws/ansible.cfg"
+    regexp: ^vault_password_file
+    line: ""
 
 #    - src: "{{ sm_webapp_home }}/"
 #      dest: "{{ sm_webapp_home }}/"
