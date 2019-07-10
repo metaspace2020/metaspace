@@ -1,81 +1,78 @@
 <template>
-<div class="main-ion-image-container">
-    <div class="main-ion-image-container-row1">
-        <div class="image-viewer-container" ref="imageViewerContainer" v-resize="onResize">
-            <ion-image-viewer
-              :ionImage="ionImage"
-              :isLoading="ionImageIsLoading"
-              :colormap="colormap"
-              :pixelSizeX="pixelSizeX"
-              :pixelSizeY="pixelSizeY"
-              :pixelAspectRatio="imageLoaderSettings.pixelAspectRatio"
-              :scaleBarColor="scaleBarColor"
-              :width="imageViewerWidth"
-              :height="imageViewerHeight"
-              :zoom="imageLoaderSettings.imagePosition.zoom * imageFit.imageZoom"
-              :minZoom="imageFit.imageZoom / 4"
-              :maxZoom="imageFit.imageZoom * 20"
-              :xOffset="imageLoaderSettings.imagePosition.xOffset"
-              :yOffset="imageLoaderSettings.imagePosition.yOffset"
-              ref="imageLoader"
-              scrollBlock
-              showPixelIntensity
-              class="image-loader"
-              v-bind="imageLoaderSettings"
-              @move="handleImageMove"
-            />
+<div class="main-ion-image-container" ref="container">
+    <div class="image-viewer-container" ref="imageViewerContainer" v-resize="onResize">
+        <ion-image-viewer
+          :ionImage="ionImage"
+          :isLoading="ionImageIsLoading"
+          :colormap="colormap"
+          :pixelSizeX="pixelSizeX"
+          :pixelSizeY="pixelSizeY"
+          :pixelAspectRatio="imageLoaderSettings.pixelAspectRatio"
+          :scaleBarColor="scaleBarColor"
+          :width="imageViewerWidth"
+          :height="imageViewerHeight"
+          :zoom="imageLoaderSettings.imagePosition.zoom * imageFit.imageZoom"
+          :minZoom="imageFit.imageZoom / 4"
+          :maxZoom="imageFit.imageZoom * 20"
+          :xOffset="imageLoaderSettings.imagePosition.xOffset"
+          :yOffset="imageLoaderSettings.imagePosition.yOffset"
+          ref="imageLoader"
+          scrollBlock
+          showPixelIntensity
+          class="image-loader"
+          v-bind="imageLoaderSettings"
+          @move="handleImageMove"
+        />
+    </div>
+
+    <div class="colorbar-container">
+        <div v-if="imageLoaderSettings.opticalSrc" class="opacity-slider dom-to-image-hidden">
+            Opacity:
+            <el-slider
+                    vertical
+                    height="150px"
+                    :value="opacity"
+                    @input="onOpacityInput"
+                    :min=0
+                    :max=1
+                    :step=0.01
+                    style="margin: 10px 0px 30px 0px;">
+            </el-slider>
         </div>
 
-        <div class="colorbar-container">
-            <div v-if="imageLoaderSettings.opticalSrc">
-                Opacity:
-                <el-slider
-                        vertical
-                        height="150px"
-                        :value="opacity"
-                        @input="onOpacityInput"
-                        :min=0
-                        :max=1
-                        :step=0.01
-                        style="margin: 10px 0px 30px 0px;">
-                </el-slider>
+        <el-tooltip v-if="ionImage && ionImage.maxIntensity !== ionImage.clippedMaxIntensity" placement="left">
+            <div>
+                <div style="color: red">{{ ionImage.clippedMaxIntensity.toExponential(2) }}</div>
             </div>
+            <div slot="content">
+                Hot-spot removal has been applied to this image. <br/>
+                Pixel intensities above the {{ionImage.maxQuantile*100}}th percentile, {{ ionImage.clippedMaxIntensity.toExponential(2) }},
+                have been reduced to {{ ionImage.clippedMaxIntensity.toExponential(2) }}. <br/>
+                The highest intensity before hot-spot removal was {{ ionImage.maxIntensity.toExponential(2) }}.
+            </div>
+        </el-tooltip>
+        <div v-else>
+            {{ ionImage && ionImage.maxIntensity.toExponential(2) }}
+        </div>
+        <colorbar style="width: 20px; height: 160px; align-self: center;"
+                  :map="colormap"
+                  :ionImage="ionImage">
+        </colorbar>
+        {{ ionImage && ionImage.clippedMinIntensity.toExponential(2) }}
 
-            <el-tooltip v-if="ionImage && ionImage.maxIntensity !== ionImage.clippedMaxIntensity" placement="left">
-                <div>
-                    <div style="color: red">{{ ionImage.clippedMaxIntensity.toExponential(2) }}</div>
-                </div>
-                <div slot="content">
-                    Hot-spot removal has been applied to this image. <br/>
-                    Pixel intensities above the {{ionImage.maxQuantile*100}}th percentile, {{ ionImage.clippedMaxIntensity.toExponential(2) }},
-                    have been reduced to {{ ionImage.clippedMaxIntensity.toExponential(2) }}. <br/>
-                    The highest intensity before hot-spot removal was {{ ionImage.maxIntensity.toExponential(2) }}.
-                </div>
-            </el-tooltip>
-            <div v-else>
-                {{ ionImage && ionImage.maxIntensity.toExponential(2) }}
-            </div>
-            <colorbar style="width: 20px; height: 160px; align-self: center;"
-                      :map="colormap"
-                      :ionImage="ionImage"
-                      slot="reference">
-            </colorbar>
-            {{ ionImage && ionImage.clippedMinIntensity.toExponential(2) }}
-
-            <div class="annot-view__image-download">
-                <!-- see https://github.com/tsayen/dom-to-image/issues/155 -->
-                <img src="../../../../assets/download-icon.png"
-                     width="32px"
-                     title="Save visible region in PNG format"
-                     @click="saveImage"
-                     v-if="browserSupportsDomToImage"/>
-                <img src="../../../../assets/download-icon.png"
-                     width="32px"
-                     style="opacity: 0.3"
-                     title="Your browser is not supported"
-                     @click="showBrowserWarning"
-                     v-else/>
-            </div>
+        <div class="annot-view__image-download dom-to-image-hidden">
+            <!-- see https://github.com/tsayen/dom-to-image/issues/155 -->
+            <img src="../../../../assets/download-icon.png"
+                 width="32px"
+                 title="Save visible region in PNG format"
+                 @click="saveImage"
+                 v-if="browserSupportsDomToImage"/>
+            <img src="../../../../assets/download-icon.png"
+                 width="32px"
+                 style="opacity: 0.3"
+                 title="Your browser is not supported"
+                 @click="showBrowserWarning"
+                 v-else/>
         </div>
     </div>
 </div>
@@ -191,10 +188,11 @@ export default class MainImage extends Vue {
     }
 
     async saveImage() {
-        const node = this.$refs.imageViewerContainer;
+        const node = this.$refs.container;
         const blob = await domtoimage.toBlob(node, {
             width: node.clientWidth,
             height: node.clientHeight,
+            filter: el => !el.classList || !el.classList.contains('dom-to-image-hidden'),
         });
         saveAs(blob, `${this.annotation.id}.png`);
     }
@@ -228,11 +226,6 @@ export default class MainImage extends Vue {
 <style>
 .main-ion-image-container {
     display: flex;
-    flex-direction: column;
-}
-
-.main-ion-image-container-row1 {
-    display: flex;
     flex-direction: row;
     justify-content: center;
 }
@@ -247,9 +240,14 @@ export default class MainImage extends Vue {
     display: flex;
     flex:none;
     flex-direction: column;
+    align-items: center;
     justify-content: flex-end;
-    padding-left: 10px;
-    padding-bottom: 6px;
+    padding: 6px 5px 0 5px;
+}
+.opacity-slider {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .annot-view__image-download {
