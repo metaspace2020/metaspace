@@ -22,6 +22,7 @@
  import config from '../../config';
  import noImageURL from '../../assets/no-image.svg';
  import {OpacityMode} from '../../lib/createColormap';
+ import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue';
 
  type colorObjType = {
    code: string,
@@ -48,7 +49,11 @@
  }
 
  const metadataDependentComponents: any = {};
- const componentsToRegister: any = { DatasetInfo, ColocalizationSettings };
+ const componentsToRegister: any = {
+   DatasetInfo,
+   ColocalizationSettings,
+   CandidateMoleculesPopover,
+ };
  for (let category of Object.keys(annotationWidgets)) {
    metadataDependentComponents[category] = {};
    for (let mdType of Object.keys(annotationWidgets[category])) {
