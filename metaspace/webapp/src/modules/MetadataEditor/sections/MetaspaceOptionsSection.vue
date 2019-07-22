@@ -65,7 +65,7 @@
                 </span>
                 <el-select
                   class="md-ac"
-                  :disabled="!features.advanced_ds_config && isNewDataset"
+                  :disabled="!features.advanced_ds_config && !features.neutral_losses_new_ds && isNewDataset"
                   :value="value.neutralLosses"
                   @input="val => onInput('neutralLosses', val)"
                   multiple filterable default-first-option remote
