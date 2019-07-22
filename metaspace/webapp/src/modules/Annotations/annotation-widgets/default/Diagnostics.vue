@@ -30,7 +30,6 @@
                               :colormap="colormap"
                               :imageFitParams="{areaMinHeight: 50, areaHeight: 250}"
                               v-bind="imageLoaderSettings"
-                              v-if="img.url !== null"
                               style="overflow: hidden"
                               :minIntensity="img.minIntensity"
                               :maxIntensity="img.maxIntensity"
@@ -91,7 +90,8 @@ export default class Diagnostics extends Vue {
 
     get sortedIsotopeImages(): any[] {
         // Usually isotope images are pre-sorted by the server, but it's not an explicit guarantee of the API
-        return sortBy(this.annotation.isotopeImages, img => img.mz);
+        return sortBy(this.annotation.isotopeImages, img => img.mz)
+          .filter(img => img.mz > 0);
     }
 
     get showOffSample(): boolean {
