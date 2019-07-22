@@ -127,7 +127,8 @@
              dataset processing has been temporarily suspended so that we can safely update the website.\n\n
              Please wait a few hours and try again.`,
                'Dataset processing suspended',
-               { type: 'warning' });
+               { type: 'warning' })
+                 .catch(() => {/*Ignore exception raised when alert is closed*/});
              return false;
            } else if (await this.confirmReprocess()) {
              return await this.saveDataset(datasetId, payload, {...options, reprocess: true});

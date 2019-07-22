@@ -103,7 +103,8 @@
         await resetPassword(this.token, this.email, this.model.password);
         await refreshLoginStatus();
         this.$router.push('/');
-        this.$alert('Your password has been successfully reset.', 'Password reset', {type: 'success'});
+        this.$alert('Your password has been successfully reset.', 'Password reset', {type: 'success'})
+          .catch(() => {/*Ignore exception raised when alert is closed*/});
       } catch (err) {
         reportError(err);
       } finally {
