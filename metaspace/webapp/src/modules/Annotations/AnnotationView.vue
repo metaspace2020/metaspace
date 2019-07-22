@@ -7,17 +7,9 @@
         <div class="el-collapse-item grey-bg">
           <div class="el-collapse-item__header av-header grey-bg">
 
-            <el-popover trigger="hover" placement="bottom">
-              <div>Candidate molecules ({{ annotation.possibleCompounds.length }}):
-                <ul>
-                  <li v-for="comp in annotation.possibleCompounds">
-                    {{ comp.name }}
-                  </li>
-                </ul>
-              </div>
-
-              <span slot="reference" class="sf-big" v-html="formattedMolFormula" />
-            </el-popover>
+            <candidate-molecules-popover placement="bottom" :possibleCompounds="annotation.possibleCompounds">
+              <span class="sf-big" v-html="formattedMolFormula" />
+            </candidate-molecules-popover>
 
             <span class="mz-big">{{ annotation.mz.toFixed(4) }}</span>
             <el-popover trigger="hover" placement="bottom">
