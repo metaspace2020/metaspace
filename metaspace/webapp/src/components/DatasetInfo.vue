@@ -144,8 +144,23 @@
   }
 </script>
 
-<style>
+<style lang="scss" scoped>
  #metadata-tree {
    text-align: left;
+
+   // Allow line breaks & word wrap on very long lines
+   /deep/ .el-tree-node {
+     white-space: normal;
+   }
+   /deep/ .el-tree-node__content {
+     height: auto;
+     padding: 1px 0;
+   }
+   /deep/ .el-tree-node__label {
+     width: calc(100% - 30px); // Flex-shrink doesn't seem to work with overflow-wrap, so subtract 30px as an approximation of the space consumed the parent's padding
+     overflow-wrap: break-word;
+   }
  }
+
+
 </style>
