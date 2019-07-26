@@ -598,7 +598,7 @@ class SMDataset(object):
             if images[i] is None:
                 images[i] = np.zeros(shape, dtype=non_empty_images[0].dtype)
             else:
-                images[i] *= image_metadata[i]['maxIntensity']
+                images[i] *= float(image_metadata[i]['maxIntensity'])
 
         return IsotopeImages(images, sf, adduct, [r['mz'] for r in image_metadata], [r['url'] for r in image_metadata])
 
