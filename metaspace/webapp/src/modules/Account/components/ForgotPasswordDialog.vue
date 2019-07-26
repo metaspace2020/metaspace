@@ -60,7 +60,10 @@
         await sendPasswordResetToken(this.model.email);
         this.hasSucceeded = true;
       } catch (err) {
-        reportError(err);
+        // form.validate() throws false if something is invalid. Detect it so that we don't log "false" as an error
+        if (err !== false) {
+          reportError(err);
+        }
       } finally {
         this.isSubmitting = false;
       }

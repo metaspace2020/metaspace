@@ -90,24 +90,16 @@
                        sortable="custom"
                        min-width="120">
         <template slot-scope="props">
-        <el-popover trigger="hover" placement="right">
-            <div>Candidate molecules ({{ props.row.possibleCompounds.length }}):
-                <ul>
-                    <li v-for="comp in props.row.possibleCompounds">
-                        {{ comp.name }}
-                    </li>
-                </ul>
-            </div>
-
-            <div slot="reference" class="cell-wrapper">
+          <candidate-molecules-popover placement="right" :possibleCompounds="props.row.possibleCompounds">
+            <div class="cell-wrapper">
                 <span class="sf cell-span"
                       v-html="renderMolFormulaHtml(props.row.ion)"></span>
-                <img src="../../assets/filter-icon.png"
-                     v-if="!filter.compoundName"
-                     @click="filterMolFormula(props.row)"
-                     title="Limit results to this molecular formula"/>
+              <img src="../../assets/filter-icon.png"
+                   v-if="!filter.compoundName"
+                   @click="filterMolFormula(props.row)"
+                   title="Limit results to this molecular formula"/>
             </div>
-        </el-popover>
+          </candidate-molecules-popover>
         </template>
       </el-table-column>
 
@@ -219,6 +211,7 @@
 <script>
   import {renderMolFormulaHtml} from '../../util';
  import ProgressButton from './ProgressButton.vue';
+  import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue';
  import {
    annotationListQuery,
    tableExportQuery
@@ -246,7 +239,10 @@
  export default {
    name: 'annotation-table',
    props: ["hideColumns"],
-   components: {ProgressButton},
+   components: {
+     ProgressButton,
+     CandidateMoleculesPopover,
+   },
    data () {
      return {
        annotations: [],

@@ -14,9 +14,9 @@ import {get} from 'lodash-es';
 const graphqlUrl = config.graphqlUrl || `${window.location.origin}/graphql`;
 const wsGraphqlUrl = config.wsGraphqlUrl || `${window.location.origin.replace(/^http/, 'ws')}/ws`;
 
-let $alert: ((message: string, title: string, options?: any) => void) | null = null;
+let $alert: ((message: string, title: string, options?: any) => Promise<any>) | null = null;
 
-export function setMaintenanceMessageHandler(_$alert: (message: string, title: string, options?: any) => void) {
+export function setMaintenanceMessageHandler(_$alert: (message: string, title: string, options?: any) => Promise<any>) {
   $alert = _$alert;
 }
 
@@ -50,7 +50,8 @@ const errorLink = onError(({ graphQLErrors, networkError, forward, operation }) 
         readOnlyErrors.forEach(err => { (err as any).isHandled = true; });
         $alert('This operation could not be completed. METASPACE is currently in read-only mode for scheduled maintenance. Please try again later.',
           'Scheduled Maintenance',
-          {type: 'error'});
+          {type: 'error'})
+          .catch(() => {/*Ignore exception raised when alert is closed*/});
       }
     }
   } else if (networkError) {

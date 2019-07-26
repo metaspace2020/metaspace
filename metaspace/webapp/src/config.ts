@@ -34,6 +34,7 @@ interface Features {
   all_dbs: boolean;
   all_adducts: boolean;
   neutral_losses: boolean;
+  neutral_losses_new_ds: boolean; // False prevents neutral losses being set on the first upload
   chem_mods: boolean;
   advanced_ds_config: boolean;
 }
@@ -71,6 +72,7 @@ const defaultConfig: ClientConfig = {
     all_dbs: false,
     all_adducts: false,
     neutral_losses: false,
+    neutral_losses_new_ds: true,
     chem_mods: false,
     advanced_ds_config: false,
   }

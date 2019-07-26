@@ -199,6 +199,7 @@ sm_webapp_features:
   all_dbs: false
   all_adducts: false
   neutral_losses: false
+  neutral_losses_new_ds: true
   chem_mods: false
   advanced_ds_config: false
 
