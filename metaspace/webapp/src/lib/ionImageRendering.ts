@@ -280,11 +280,12 @@ export const renderIonImage = (ionImage: IonImage, cmap?: number[][]) => {
 
 export const renderScaleBar = (ionImage: IonImage, cmap: number[][], horizontal: boolean) => {
   const outputBytes = new Uint8ClampedArray(256 * 4);
-  ionImage.scaleBarValues.forEach((val, i) => {
+  for (let i = 0; i < ionImage.scaleBarValues.length; i++) {
+    const val = ionImage.scaleBarValues[i];
     for (let j = 0; j < 4; j++) {
       outputBytes[(255 - i) * 4 + j] = cmap[val][j];
     }
-  });
+  }
 
   if (horizontal) {
     return createDataUrl(outputBytes, 256, 1);

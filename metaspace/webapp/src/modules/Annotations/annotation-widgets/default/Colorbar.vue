@@ -23,7 +23,7 @@
      if (this.ionImage != null) {
        const cmap = createColormap(this.map);
        return {
-         backgroundImage: `url(${renderScaleBar(this.ionImage, cmap, this.horizontal)}`,
+         backgroundImage: `url(${renderScaleBar(this.ionImage, cmap, this.horizontal)})`,
          backgroundSize: 'contain',
          backgroundRepeat: 'repeat-x'
        };
