@@ -130,7 +130,7 @@ class CentroidsGenerator(object):
                 self._ion_centroids_path + '/centroids').toPandas().set_index('formula_i')
             return FormulaCentroids(formulas_df, centroids_df)
 
-    def _save_df_chunks(self, df, path, chunk_size=5 * 10 ** 6):
+    def _save_df_chunks(self, df, path, chunk_size=10 * 10 ** 6):
         chunks = int(ceil(df.shape[0] / chunk_size))
         for ch_i in range(chunks):
             sdf = self._spark_session.createDataFrame(df[ch_i * chunk_size:(ch_i + 1) * chunk_size])
