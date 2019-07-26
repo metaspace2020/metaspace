@@ -101,6 +101,19 @@ const extractIntensityAndMask = (png: Image, min: number, max: number) => {
   return {intensityValues, mask};
 };
 
+function safeQuantile(values: number[], q: number): number;
+function safeQuantile(values: number[], q: number[]): number[];
+function safeQuantile(values: number[], q: number | number[]): any {
+  // Handle cases when `values` is empty gracefully
+  if (values.length > 0) {
+    return quantile(values, q as any);
+  } else if (typeof q === 'number') {
+    return 0;
+  } else {
+    return q.map(() => 0);
+  }
+}
+
 const getScaleParams = (intensityValues: Float32Array, mask: Uint8ClampedArray,
                              minIntensity: number, maxIntensity: number,
                              lowQuantile: number | null, highQuantile: number | null, scaleMode: ScaleMode) => {
@@ -118,14 +131,14 @@ const getScaleParams = (intensityValues: Float32Array, mask: Uint8ClampedArray,
     }
   }
 
-  const clippedMinIntensity = lowQuantile == null ? minIntensity : quantile(values, lowQuantile);
-  const clippedMaxIntensity = highQuantile == null ? maxIntensity : quantile(values, highQuantile);
+  const clippedMinIntensity = lowQuantile == null ? minIntensity : safeQuantile(values, lowQuantile);
+  const clippedMaxIntensity = highQuantile == null ? maxIntensity : safeQuantile(values, highQuantile);
 
   let rankValues: Float32Array | null = null;
   if (scaleMode === 'hist') {
     const lo = lowQuantile || 0, hi = highQuantile || 1;
     const quantiles = range(256).map(i => lo + (hi - lo) * i / 255);
-    rankValues = new Float32Array(quantile(values, quantiles));
+    rankValues = new Float32Array(safeQuantile(values, quantiles));
   }
 
   return {clippedMinIntensity, clippedMaxIntensity, rankValues};

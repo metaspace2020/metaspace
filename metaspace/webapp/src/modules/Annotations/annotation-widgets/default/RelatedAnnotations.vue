@@ -3,18 +3,15 @@
     <div class="small-peak-image" v-for="(other, idx) in annotations" :key="other.ion">
       <component :is="other.ion !== colocReferenceIon ? 'router-link' : 'span'" :to="linkToAnnotation(other)" class="ion-link">
 
-        <el-popover trigger="hover" placement="top" :openDelay="100" class="mol-formula-line">
-          <div>Candidate molecules ({{ other.possibleCompounds.length }}):
-            <ul>
-              <li v-for="comp in other.possibleCompounds">
-                {{ comp.name }}
-              </li>
-            </ul>
-          </div>
+        <candidate-molecules-popover
+          class="mol-formula-line"
+          placement="top"
+          :possibleCompounds="other.possibleCompounds"
+          :openDelay="100">
+          <span v-if="other.ion !== colocReferenceIon" class="sf cell-span" v-html="renderFormula(other)" />
+          <span v-else>Reference annotation<sub><!-- Subscript to make height consistent with formulas --></sub></span>
+        </candidate-molecules-popover>
 
-          <span v-if="other.ion !== colocReferenceIon" slot="reference" class="sf cell-span" v-html="renderFormula(other)" />
-          <span v-else slot="reference">Reference annotation<sub><!-- Subscript to make height consistent with formulas --></sub></span>
-        </el-popover>
         <br/>
         {{  other.mz.toFixed(4) }} <br/>
         <image-loader
@@ -66,10 +63,11 @@
   import { relatedAnnotationsQuery } from '../../../../api/annotation';
   import {encodeParams, stripFilteringParams} from '../../../Filters';
   import {ANNOTATION_SPECIFIC_FILTERS} from '../../../Filters/filterSpecs';
+  import CandidateMoleculesPopover from '../CandidateMoleculesPopover';
 
 export default {
   props: ['query', 'annotation', 'database', 'imageLoaderSettings'],
-  components: { ImageLoader },
+  components: { ImageLoader, CandidateMoleculesPopover },
   data() {
     return {
       loading: 0,
