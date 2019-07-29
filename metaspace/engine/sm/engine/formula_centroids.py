@@ -1,4 +1,5 @@
 import logging
+from math import ceil
 from pathlib import Path
 import boto3
 from botocore.exceptions import ClientError
@@ -129,17 +130,23 @@ class CentroidsGenerator(object):
                 self._ion_centroids_path + '/centroids').toPandas().set_index('formula_i')
             return FormulaCentroids(formulas_df, centroids_df)
 
+    def _save_df_chunks(self, df, path, chunk_size=10 * 10 ** 6):
+        chunks = int(ceil(df.shape[0] / chunk_size))
+        for ch_i in range(chunks):
+            sdf = self._spark_session.createDataFrame(df[ch_i * chunk_size:(ch_i + 1) * chunk_size])
+            mode = 'overwrite' if ch_i == 0 else 'append'
+            sdf.write.parquet(path, mode=mode)
+
     def _save(self, formula_centroids):
         """ Save isotopic peaks
         """
         logger.info('Saving peaks')
         assert formula_centroids.formulas_df.index.name == 'formula_i'
 
-        centr_spark_df = self._spark_session.createDataFrame(
-            formula_centroids.centroids_df(fixed_size_centroids=True).reset_index())
-        centr_spark_df.write.parquet(self._ion_centroids_path + '/centroids', mode='overwrite')
-        ion_spark_df = self._spark_session.createDataFrame(formula_centroids.formulas_df.reset_index())
-        ion_spark_df.write.parquet(self._ion_centroids_path + '/formulas', mode='overwrite')
+        self._save_df_chunks(formula_centroids.centroids_df(fixed_size_centroids=True).reset_index(),
+                             self._ion_centroids_path + '/centroids')
+        self._save_df_chunks(formula_centroids.formulas_df.reset_index(),
+                             self._ion_centroids_path + '/formulas')
 
 
 class FormulaCentroids(object):
