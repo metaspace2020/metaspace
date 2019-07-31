@@ -55,11 +55,7 @@ module.exports.module = {
     },
     {
       test: /\.md$/,
-      use: ['html-loader', 'markdown-loader']
-    },
-    {
-      test: /\.tour/,
-      use: ['json-loader', './loaders/tour-loader.js']
+      use: ['frontmatter-markdown-loader']
     }
   ]
 };

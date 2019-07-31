@@ -52,10 +52,9 @@
 <script>
  import Vue from 'vue';
 
- import introTour from '../../tours/intro.tour';
- import filteringTour from '../../tours/filtering.tour';
- import diagnosticsTour from '../../tours/diagnostics.tour';
- import TourStep from './TourStep.vue';
+ import introTour from '../../tours/intro.ts';
+ import filteringTour from '../../tours/filtering.ts';
+ import diagnosticsTour from '../../tours/diagnostics.ts';
 
  export default {
    name: 'help-page',
