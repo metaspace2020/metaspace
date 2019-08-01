@@ -37,12 +37,17 @@ class FDR(object):
         self.random_seed = 42
         self.target_modifiers_df = _make_target_modifiers_df(chem_mods, neutral_losses, target_adducts)
 
+    def choose_decoys(self, decoys):
+        copy = decoys.copy()
+        np.random.shuffle(copy)
+        return copy[:self.decoy_sample_size]
+
     def _decoy_adduct_gen(self, target_formulas, decoy_adducts_cand):
         np.random.seed(self.random_seed)
         target_modifiers = list(self.target_modifiers_df.decoy_modifier_prefix.items())
-        for formula, (tm, dmprefix) in product(target_formulas, target_modifiers):
-            for da in np.random.choice(decoy_adducts_cand, size=self.decoy_sample_size, replace=False):
-                yield (formula, tm, dmprefix + da)
+        for formula, (tm, dm_prefix) in product(target_formulas, target_modifiers):
+            for da in self.choose_decoys(decoy_adducts_cand):
+                yield (formula, tm, dm_prefix + da)
 
     def decoy_adducts_selection(self, target_formulas):
         decoy_adduct_cand = [add for add in DECOY_ADDUCTS if add not in self.target_adducts]
@@ -85,20 +90,19 @@ class FDR(object):
     def estimate_fdr(self, formula_msm):
         logger.info('Estimating FDR')
 
-        all_formula_msm_df = (pd.DataFrame(self.ion_tuples(), columns=['formula', 'modifier'])
-                                .set_index(['formula', 'modifier']).sort_index())
-        all_formula_msm_df = all_formula_msm_df.join(formula_msm).fillna(0)
+        td_df = self.td_df.set_index('tm')
 
         target_fdr_df_list = []
         for tm in self.target_modifiers_df.index.drop_duplicates():
-            target_msm = all_formula_msm_df.loc(axis=0)[:, tm]
-            full_decoy_df = self.td_df[self.td_df.tm == tm][['formula', 'dm']]
+            target_msm = formula_msm[formula_msm.modifier == tm]
+            full_decoy_df = td_df.loc[tm, ['formula', 'dm']]
 
             msm_fdr_list = []
             for i in range(self.decoy_sample_size):
                 decoy_subset_df = full_decoy_df[i::self.decoy_sample_size]
-                sf_da_list = [tuple(row) for row in decoy_subset_df.values]
-                decoy_msm = all_formula_msm_df.loc[sf_da_list]
+                decoy_msm = pd.merge(formula_msm, decoy_subset_df,
+                                     left_on=['formula', 'modifier'],
+                                     right_on=['formula', 'dm'])
                 msm_fdr = self._msm_fdr_map(target_msm, decoy_msm)
                 msm_fdr_list.append(msm_fdr)
 
