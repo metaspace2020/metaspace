@@ -202,13 +202,8 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
         return
 
     logger.debug('Calculating colocalization metrics')
-    pca_images = PCA(min(20, *images.ref.shape)).fit_transform(images.ref)
     cos_scores = pairwise_kernels(images.ref, metric='cosine')
     images.free()
-
-    pca_cos_scores = pairwise_kernels(pca_images, metric='cosine')
-    pca_pear_scores = np.float32(np.corrcoef(pca_images))
-    pca_sper_scores = np.float32(spearmanr(pca_images, axis=1)[0])  # TODO: Discard low p-value entries?
 
     for fdr in [0.05, 0.1, 0.2, 0.5]:
         fdr_mask = fdrs <= fdr + 0.001
@@ -242,9 +237,6 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
                                          coloc_annotations=coloc_annotations)
 
             yield run_alg('cosine', cos_scores, True)
-            yield run_alg('pca_cosine', pca_cos_scores, False)
-            yield run_alg('pca_pearson', pca_pear_scores, False)
-            yield run_alg('pca_spearman', pca_sper_scores, False)
         else:
             logger.debug(f'Skipping FDR {fdr} as there are only {len(masked_ion_ids)} annotation(s)')
 
