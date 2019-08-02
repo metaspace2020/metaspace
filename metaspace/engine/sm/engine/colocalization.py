@@ -3,10 +3,8 @@ import warnings
 from datetime import datetime
 from traceback import format_exc
 import numpy as np
-from sklearn.decomposition import PCA
 from sklearn.metrics.pairwise import pairwise_kernels
 from sklearn.cluster import spectral_clustering
-from scipy.stats import spearmanr
 from scipy.ndimage import zoom
 
 from sm.engine.dataset import Dataset
@@ -36,7 +34,8 @@ ANNOTATIONS_SEL = ('SELECT iso_image_ids[1], formula, chem_mod, neutral_loss, ad
                    '    SELECT id FROM job j '
                    '    WHERE j.ds_id = %s AND j.db_id = %s '
                    '    ORDER BY start DESC '
-                   '    LIMIT 1)')
+                   '    LIMIT 1) '
+                   'ORDER BY msm DESC')
 
 DATASET_CONFIG_SEL = ("SELECT config #> '{databases}', config #> '{isotope_generation,charge}' "
                       "FROM dataset "
@@ -110,15 +109,13 @@ def _labels_to_clusters(labels, scores):
 
 
 def _label_clusters(scores):
-    min_clusters = 5
-    max_clusters = 20
     n_samples = scores.shape[0]
-    if n_samples <= min_clusters:
-        return np.array([i for i in range(n_samples)])
+    min_clusters = min(int(np.round(np.sqrt(n_samples))), 20)
+    max_clusters = min(n_samples, 20)
 
     results = []
     last_error = None
-    for n_clusters in range(min_clusters, min(n_samples, max_clusters)):
+    for n_clusters in range(min_clusters, max_clusters + 1):
         try:
             labels = spectral_clustering(affinity=scores, n_clusters=n_clusters, random_state=1, n_init=100)
             cluster_score = np.mean([scores[a, b] for a, b in enumerate(labels)])
@@ -138,12 +135,12 @@ def _label_clusters(scores):
     return best_labels
 
 
-def _get_best_colocs(scores, labels, max_samples, min_score):
+def _get_best_colocs(scores, max_samples, min_score):
     coloc_idxs = []
-    for i, cluster_id in enumerate(labels):
+    for i in range(scores.shape[0]):
         pairing_scores = scores[i, :].copy()
-        pairing_scores[pairing_scores < min_score] = 0 # Discard scores below threshold
-        pairing_scores[i] = 0 # Ignore self-correlation
+        pairing_scores[pairing_scores < min_score] = 0  # Discard scores below threshold
+        pairing_scores[i] = 0  # Ignore self-correlation
 
         num_above_min_score = np.count_nonzero(pairing_scores)
         num_to_keep = np.minimum(num_above_min_score, max_samples)
@@ -178,7 +175,7 @@ def _downscale_image_if_required(img, num_annotations):
         return zoom(img, zoom_factor)
 
 
-def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
+def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs, cluster_max_images=5000):
     """ Calculate co-localization of ion images for all algorithms and yield results
 
     Args
@@ -192,6 +189,8 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
         1D array where each item is the ion_id for the corresponding row in images
     fdrs: np.ndarray
         1D array where each item is the fdr for the corresponding row in images
+    cluster_max_images: int
+        maximum number of images used for clustering
     """
     assert images.ref.shape[1] >= 3
     assert images.ref.shape[0] == ion_ids.shape[0] == fdrs.shape[0], (images.ref.shape, ion_ids.shape, fdrs.shape)
@@ -205,9 +204,15 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
     cos_scores = pairwise_kernels(images.ref, metric='cosine')
     images.free()
 
+    trunc_ion_ids = ion_ids[:cluster_max_images]
+    trunc_fdrs = fdrs[:cluster_max_images]
+
     for fdr in [0.05, 0.1, 0.2, 0.5]:
         fdr_mask = fdrs <= fdr + 0.001
         masked_ion_ids = ion_ids[fdr_mask]
+
+        trunc_fdr_mask = trunc_fdrs <= fdr + 0.001
+        trunc_masked_ion_ids = trunc_ion_ids[trunc_fdr_mask]
 
         if len(masked_ion_ids) > 1:
             logger.debug(f'Finding best colocalizations at FDR {fdr} ({len(masked_ion_ids)} annotations)')
@@ -220,17 +225,21 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
 
             def run_alg(algorithm, scores, cluster):
                 nonlocal labels, clusters
-                masked_scores = scores if fdr_mask.all() else scores[fdr_mask, :][:, fdr_mask]
+
                 if cluster:
-                    logger.debug(f'Clustering {algorithm} at {fdr} FDR with {len(masked_ion_ids)} annotations')
                     try:
-                        labels = _label_clusters(masked_scores)
-                        clusters = _labels_to_clusters(labels, masked_scores)
+                        trunc_scores = scores[:cluster_max_images, :cluster_max_images]
+                        trunc_masked_scores = trunc_scores[trunc_fdr_mask, :][:, trunc_fdr_mask]
+                        logger.debug(f'Clustering {algorithm} at {fdr} FDR with '
+                                     f'{trunc_masked_scores.shape[0]} annotations')
+                        labels = _label_clusters(trunc_masked_scores)
+                        clusters = _labels_to_clusters(labels, trunc_masked_scores)
                     except Exception as err:
                         logger.warning(f'Failed to cluster {algorithm}: {err}', exc_info=True)
 
-                colocs = _get_best_colocs(masked_scores, labels, 100, 0.3)
-                sample_ion_ids = [masked_ion_ids.item(c[0]) for c in clusters] # This could be done better
+                masked_scores = scores if fdr_mask.all() else scores[fdr_mask, :][:, fdr_mask]
+                colocs = _get_best_colocs(masked_scores, max_samples=100, min_score=0.3)
+                sample_ion_ids = [trunc_masked_ion_ids.item(c[0]) for c in clusters]  # This could be done better
                 coloc_annotations = list(_format_coloc_annotations(masked_ion_ids, masked_scores, colocs))
                 return ColocalizationJob(ds_id, mol_db, fdr, algorithm, start, datetime.now(),
                                          ion_ids=masked_ion_ids.tolist(), sample_ion_ids=sample_ion_ids,
