@@ -10,6 +10,7 @@ from pyimzml.ImzMLParser import ImzMLParser
 from pyspark import SparkContext, SparkConf
 
 from sm.engine.acq_geometry import make_acq_geometry
+from sm.engine.errors import ImzMLError
 from sm.engine.msm_basic.formula_imager import make_sample_area_mask, ds_dims
 from sm.engine.msm_basic.formula_validator import METRICS
 from sm.engine.msm_basic.msm_basic_search import MSMSearch
@@ -77,9 +78,13 @@ class AnnotationJob(object):
         return self._db.insert_return(JOB_INS, rows=rows)[0]
 
     def create_imzml_parser(self):
-        logger.info('Parsing imzml')
-        imzml_path = find_file_by_ext(self._ds_data_path, 'imzml')
-        return ImzMLParser(imzml_path, parse_lib='ElementTree')
+        try:
+            logger.info('Parsing imzml')
+            imzml_path = find_file_by_ext(self._ds_data_path, 'imzml')
+            return ImzMLParser(imzml_path, parse_lib='ElementTree')
+        except Exception as e:
+            import traceback
+            raise ImzMLError(traceback.format_exc()) from e
 
     def _run_annotation_jobs(self, imzml_parser, moldb_ids):
         if moldb_ids:

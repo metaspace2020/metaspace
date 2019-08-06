@@ -4,7 +4,6 @@ from shutil import rmtree
 import pandas as pd
 import numpy as np
 
-from sm.engine.errors import AnnotationFailedError
 from sm.engine.msm_basic.formula_imager import get_pixel_indices
 
 MAX_MZ_VALUE = 10**5
@@ -28,7 +27,7 @@ def check_spectra_quality(mz_arr, int_arr):
                         .format(wrong_int_n, MAX_INTENS_VALUE))
 
     if len(err_msgs) > 0:
-        raise AnnotationFailedError(' '.join(err_msgs))
+        raise Exception(' '.join(err_msgs))
 
 
 def spectra_sample_gen(imzml_parser, sample_ratio=0.05):
