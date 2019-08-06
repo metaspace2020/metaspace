@@ -2,6 +2,7 @@ from itertools import product
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import MagicMock, patch, Mock
+
 import numpy as np
 import pandas as pd
 
@@ -43,20 +44,20 @@ def make_formula_image_metrics_mock_side_effect():
     return formula_image_metrics_mock
 
 
-def test_compute_fdr(ds_config):
+def test_compute_fdr(spark_context, ds_config):
     moldb_fdr_list = init_fdr(ds_config['fdr'], ds_config['isotope_generation'], [make_moldb_mock()])
     _, fdr = moldb_fdr_list[0]
-    formula_map_df = collect_ion_formulas(moldb_fdr_list).drop('moldb_id', axis=1)
+    formula_map_df = collect_ion_formulas(spark_context, moldb_fdr_list).drop('moldb_id', axis=1)
 
     formula_metrics_df = (pd.DataFrame([(10, 'H3O', 0.99),
                                         (11, 'C5H4O', 0.5),
-                                        (12, 'H2ONa', 0.0)],
+                                        (12, 'H2ONa', 0.1)],
                                        columns=['formula_i', 'ion_formula', 'msm'])
                           .set_index('formula_i'))
 
     metrics_df = compute_fdr(fdr, formula_metrics_df, formula_map_df)
 
-    assert len(metrics_df) == 2
+    assert len(metrics_df) == 3
     assert sorted(metrics_df.columns.tolist()) == sorted(['ion_formula', 'msm', 'formula', 'modifier', 'fdr'])
 
 

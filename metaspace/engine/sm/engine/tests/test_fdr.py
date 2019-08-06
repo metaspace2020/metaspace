@@ -9,6 +9,7 @@ from sm.engine.formula_parser import format_modifiers
 
 FDR_CONFIG = {'decoy_sample_size': 2}
 
+
 @patch('sm.engine.fdr.DECOY_ADDUCTS', ['+He', '+Li'])
 def test_fdr_decoy_adduct_selection_saves_corr():
     fdr = FDR(fdr_config=FDR_CONFIG, chem_mods=[], neutral_losses=[], target_adducts=['+H', '+K', '[M]+'])
@@ -42,9 +43,9 @@ def test_estimate_fdr_returns_correct_df():
                           ['H2O', '+Co', 0.5],
                           ['C2H2', '+Ag', 0.75],
                           ['C2H2', '+Ar', 0.0]],
-                          columns=['formula', 'modifier', 'msm']).set_index(['formula', 'modifier']).sort_index()
+                          columns=['formula', 'modifier', 'msm'])
     exp_sf_df = pd.DataFrame([['H2O', '+H', 0.2], ['C2H2', '+H', 0.8]],
-                             columns=['formula', 'modifier', 'fdr']).set_index(['formula', 'modifier'])
+                             columns=['formula', 'modifier', 'fdr'])
 
     assert_frame_equal(fdr.estimate_fdr(msm_df), exp_sf_df)
 
@@ -67,12 +68,12 @@ def test_estimate_fdr_digitize_works():
                           ['C2', '+Ag', 0.3],
                           ['C3', '+Cl', 0.25],
                           ['C4', '+Co', 0.1]],
-                          columns=['formula', 'modifier', 'msm']).set_index(['formula', 'modifier']).sort_index()
+                          columns=['formula', 'modifier', 'msm'])
     exp_sf_df = pd.DataFrame([['C1', '+H', 0.4],
                               ['C2', '+H', 0.4],
                               ['C3', '+H', 0.4],
                               ['C4', '+H', 0.8]],
-                             columns=['formula', 'modifier', 'fdr']).set_index(['formula', 'modifier'])
+                             columns=['formula', 'modifier', 'fdr'])
 
     assert_frame_equal(fdr.estimate_fdr(msm_df), exp_sf_df)
 

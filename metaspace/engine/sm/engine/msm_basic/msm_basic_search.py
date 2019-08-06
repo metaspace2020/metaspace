@@ -6,7 +6,7 @@ from pyspark.files import SparkFiles
 from pyspark.storagelevel import StorageLevel
 
 from sm.engine.fdr import FDR
-from sm.engine.formula_parser import generate_ion_formula, ParseFormulaError
+from sm.engine.formula_parser import safe_generate_ion_formula
 from sm.engine.formula_centroids import CentroidsGenerator
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.util import SMConfig
@@ -32,22 +32,27 @@ def init_fdr(fdr_config, isotope_gen_config, moldbs):
     return moldb_fdr_list
 
 
-def collect_ion_formulas(moldb_fdr_list):
+def collect_ion_formulas(sc, moldb_fdr_list):
     """ Collect all ion formulas that need to be searched for
     """
     logger.info('Collecting ion formulas')
-    ion_formula_map_list = []
+
+    def gen_ion_formulas(args):
+        formula, modifier = args
+        ion_formula = safe_generate_ion_formula(formula, modifier)
+        return ion_formula, formula, modifier
+
+    ion_formula_map_dfs = []
     for moldb, fdr in moldb_fdr_list:
-        for formula, adduct in fdr.ion_tuples():
-            try:
-                ion_formula = generate_ion_formula(formula, adduct)
-                ion_formula_map_list.append((moldb.id, ion_formula, formula, adduct))
-            except ParseFormulaError:
-                pass
-            except Exception as e:
-                logger.debug(e)
-    return pd.DataFrame(ion_formula_map_list,
-                        columns=['moldb_id', 'ion_formula', 'formula', 'modifier'])
+        ion_formulas = (sc.parallelize(fdr.ion_tuples())
+                        .map(gen_ion_formulas)
+                        .filter(lambda t: t[0])
+                        .collect())
+        df = pd.DataFrame(ion_formulas, columns=['ion_formula', 'formula', 'modifier'])
+        df.insert(0, 'moldb_id', moldb.id)
+        ion_formula_map_dfs.append(df)
+
+    return pd.concat(ion_formula_map_dfs)
 
 
 def compute_fdr(fdr, formula_metrics_df, formula_map_df, max_fdr=0.5):
@@ -55,10 +60,11 @@ def compute_fdr(fdr, formula_metrics_df, formula_map_df, max_fdr=0.5):
     """
     moldb_ion_metrics_df = formula_metrics_df.join(formula_map_df.set_index('ion_formula'),
                                                    on='ion_formula', how='inner')
-    formula_fdr_df = fdr.estimate_fdr(moldb_ion_metrics_df.set_index(['formula', 'modifier']).msm)
-    moldb_ion_metrics_df = moldb_ion_metrics_df.join(formula_fdr_df, on=['formula', 'modifier'])
+    formula_fdr_df = fdr.estimate_fdr(moldb_ion_metrics_df[['formula', 'modifier', 'msm']])
+    # fdr is computed only for target modification ions
+    moldb_ion_metrics_df = moldb_ion_metrics_df.merge(formula_fdr_df.set_index(['formula', 'modifier']).fdr,
+                                                      left_on=['formula', 'modifier'], right_index=True)
     moldb_ion_metrics_df = moldb_ion_metrics_df[moldb_ion_metrics_df.fdr <= max_fdr]
-
     return moldb_ion_metrics_df
 
 
@@ -137,7 +143,7 @@ class MSMSearch(object):
         logger.info('Running molecule search')
 
         moldb_fdr_list = init_fdr(self._fdr_config, self._isotope_gen_config, self._moldbs)
-        ion_formula_map_df = collect_ion_formulas(moldb_fdr_list)
+        ion_formula_map_df = collect_ion_formulas(self._sc, moldb_fdr_list)
         target_modifiers = set().union(*(fdr.target_modifiers() for moldb, fdr in moldb_fdr_list))
 
         formula_centroids = self._fetch_formula_centroids(ion_formula_map_df)
@@ -189,8 +195,9 @@ class MSMSearch(object):
         for moldb, fdr in moldb_fdr_list:
             moldb_formula_map_df = (ion_formula_map_df[ion_formula_map_df.moldb_id == moldb.id]
                                     .drop('moldb_id', axis=1))
-            moldb_fdrs_df = compute_fdr(fdr, formula_metrics_df, moldb_formula_map_df, max_fdr=0.5)
-            moldb_ion_images_rdd = formula_images_rdd.filter(lambda kv: kv[0] in moldb_fdrs_df.index)
-            moldb_ion_metrics_df = moldb_fdrs_df.merge(fdr.target_modifiers_df, left_on='modifier', right_index=True)
 
+            moldb_metrics_fdr_df = compute_fdr(fdr, formula_metrics_df, moldb_formula_map_df, max_fdr=0.5)
+            moldb_ion_images_rdd = formula_images_rdd.filter(lambda kv: kv[0] in moldb_metrics_fdr_df.index)
+            moldb_ion_metrics_df = moldb_metrics_fdr_df.merge(fdr.target_modifiers_df,
+                                                              left_on='modifier', right_index=True)
             yield moldb, moldb_ion_metrics_df, moldb_ion_images_rdd
