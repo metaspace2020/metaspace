@@ -37,7 +37,7 @@ class FDR(object):
         self.random_seed = 42
         self.target_modifiers_df = _make_target_modifiers_df(chem_mods, neutral_losses, target_adducts)
 
-    def choose_decoys(self, decoys):
+    def _choose_decoys(self, decoys):
         copy = decoys.copy()
         np.random.shuffle(copy)
         return copy[:self.decoy_sample_size]
@@ -46,7 +46,7 @@ class FDR(object):
         np.random.seed(self.random_seed)
         target_modifiers = list(self.target_modifiers_df.decoy_modifier_prefix.items())
         for formula, (tm, dm_prefix) in product(target_formulas, target_modifiers):
-            for da in self.choose_decoys(decoy_adducts_cand):
+            for da in self._choose_decoys(decoy_adducts_cand):
                 yield (formula, tm, dm_prefix + da)
 
     def decoy_adducts_selection(self, target_formulas):
