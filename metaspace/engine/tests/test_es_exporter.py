@@ -6,7 +6,7 @@ import time
 import pandas as pd
 
 from sm.engine.mol_db import MolecularDB
-from sm.engine.es_export import ESExporter, ESIndexManager, DATASET_SEL, ANNOTATIONS_SEL
+from sm.engine.es_export import ESExporter, ESIndexManager
 from sm.engine.db import DB
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.tests.util import sm_config, ds_config, sm_index, es, es_dsl_search, test_db
