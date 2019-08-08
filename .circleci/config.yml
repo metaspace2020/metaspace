@@ -114,12 +114,12 @@ jobs:
       - run:
           name: Compile
           command: |
+            yarn run deref-schema
             yarn run build-ci
       - run:
           name: Run tests
           command: |
             cp ~/workspace/graphql-schema.json ./tests/utils/graphql-schema.json
-            yarn run deref-schema
             yarn run test-ci
       - run:
           name: Upload coverage
