@@ -8,8 +8,12 @@ from collections import defaultdict, MutableMapping
 import pandas as pd
 import random
 
+from peewee import JOIN, fn, SQL, Case
+
 from sm.engine.dataset_locker import DatasetLocker
 from sm.engine.formula_parser import format_ion_formula
+from sm.engine.peewee.db import db, DbDataset, Job, Annotation
+from sm.engine.peewee.graphql import GqlDataset, User, Group, DatasetProject, Project
 from sm.engine.util import SMConfig
 
 logger = logging.getLogger('engine')
@@ -286,6 +290,88 @@ class ESExporter(object):
     def _select_ds_by_id(self, ds_id):
         return self._db.select_with_fields(DATASET_SEL, params=(ds_id,))[0]
 
+    @db.connection_context()
+    def _select_ds_by_id_peewee(self, ds_id):
+        # latest_job_query = (Job.select(Job.ds_id, fn.MAX(Job.finish).alias('last_finished'))
+        #                     .group_by(Job.ds_id)
+        #                     .alias('latest_job'))
+        # latest_job_query.c.last_finished
+        ds = (DbDataset
+              .select(DbDataset, GqlDataset, User, Group, DatasetProject, Project)
+              .join_from(DbDataset, GqlDataset, JOIN.LEFT_OUTER, on=(DbDataset.id == GqlDataset.id), attr='gql_dataset')
+              .join_from(GqlDataset, User, JOIN.LEFT_OUTER)
+              .join_from(GqlDataset, Group, JOIN.LEFT_OUTER)
+              .join_from(GqlDataset, DatasetProject, JOIN.LEFT_OUTER)
+              .join_from(DatasetProject, Project, JOIN.LEFT_OUTER)
+              .where(DbDataset.id == ds_id)
+              .get())
+        submitter = ds.gql_dataset and ds.gql_dataset.user
+        group = ds.gql_dataset and ds.gql_dataset.group
+        group_approved = ds.gql_dataset and ds.gql_dataset.group_approved
+        dataset_projects = ds.gql_dataset and ds.gql_dataset.dataset_projects or []
+        projects = [dp.project for dp in dataset_projects if dp.approved]
+        last_finished = ds.jobs.select(fn.MAX(Job.finish)).scalar()
+
+        return {
+            'ds_id': ds.id,
+            'ds_name': ds.name,
+            'ds_config': ds.config,
+            'ds_meta': ds.metadata,
+            'ds_input_path': ds.input_path,
+            'ds_upload_dt': ds.upload_dt,
+            'ds_status': ds.status,
+            'ds_last_finished': last_finished.strftime('%Y-%m-%d %H:%M:%S') if last_finished else None,
+            'ds_is_public': ds.is_public,
+            'ds_mol_dbs': ds.config['databases'],
+            'ds_adducts': ds.config.get('isotope_generation', {}).get('adducts'),
+            'ds_neutral_losses': ds.config.get('isotope_generation', {}).get('neutral_losses'),
+            'ds_chem_mods': ds.config.get('isotope_generation', {}).get('chem_mods'),
+            'ds_acq_geometry': ds.acq_geometry,
+            'ds_ion_img_storage': ds.ion_img_storage_type,
+            'ds_submitter_id': submitter and submitter.id,
+            'ds_submitter_name': submitter and submitter.name,
+            'ds_submitter_email': submitter and (submitter.email or submitter.not_verified_email),
+            'ds_group_id': group and group.id,
+            'ds_group_name': group and group.name,
+            'ds_group_short_name': group and group.short_name,
+            'ds_group_approved': group_approved,
+            'ds_project_ids': [p.id for p in projects],
+            'ds_project_names': [p.name for p in projects],
+        }
+
+    def _select_annotations_by_ds_id(self, ds_id, mol_db_id):
+        return self._db.select_with_fields(ANNOTATIONS_SEL, params=(ds_id, mol_db_id))
+
+    @db.connection_context()
+    def _select_annotations_by_ds_id_peewee(self, ds_id, mol_db_id):
+        annotations = (Annotation
+                       .select(
+                            Annotation.id.alias('annotation_id'),
+                            Annotation.formula,
+                            fn.COALESCE(Annotation.stats['chaos'].cast('text').cast('real'), 0.0).cast('real').alias('chaos'),
+                            fn.COALESCE(Annotation.stats['spatial'].cast('text').cast('real'), 0.0).cast('real').alias('image_corr'),
+                            fn.COALESCE(Annotation.stats['spectral'].cast('text').cast('real'), 0.0).cast('real').alias('pattern_match'),
+                            Annotation.stats['total_iso_ints'].as_json().alias('total_iso_ints'),
+                            Annotation.stats['min_iso_ints'].as_json().alias('min_iso_ints'),
+                            Annotation.stats['max_iso_ints'].as_json().alias('max_iso_ints'),
+                            fn.COALESCE(Annotation.msm, 0.0).alias('msm'),
+                            Annotation.adduct,
+                            Annotation.neutral_loss,
+                            Annotation.chem_mod,
+                            Job.id.alias('job_id'),
+                            Annotation.fdr,
+                            Annotation.iso_image_ids,
+                            Case(DbDataset.config['isotope_generation']['charge'].cast('text'), [('-1', '-'), ('1', '+')]).alias('polarity'),
+                            Annotation.off_sample['prob'].as_json().alias('off_sample_prob'),
+                            Annotation.off_sample['label'].as_json().alias('off_sample_label'),
+                        )
+                       .join(Job)
+                       .join_from(Job, DbDataset)
+                       .where((DbDataset.id == ds_id) & (Job.db_id == mol_db_id))
+                       .order_by(fn.COALESCE(Annotation.msm, 0).desc()))
+        return list(annotations.dicts())
+
+
     @retry_on_conflict()
     def sync_dataset(self, ds_id):
         """ Warning: This will wait till ES index/update is completed
@@ -332,7 +418,7 @@ class ESExporter(object):
             annotation_counts = defaultdict(int)
             fdr_levels = [5, 10, 20, 50]
 
-            annotation_docs = self._db.select_with_fields(ANNOTATIONS_SEL, params=(ds_id, mol_db.id))
+            annotation_docs = self._select_annotations_by_ds_id(ds_id, mol_db.id)
             logger.info('Indexing {} documents: {}, {}'.format(len(annotation_docs), ds_id, mol_db))
 
             to_index = []
