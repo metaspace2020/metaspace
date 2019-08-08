@@ -26,7 +26,6 @@ JOB_ID_MOLDB_ID_SEL = "SELECT id, db_id FROM job WHERE ds_id = %s AND status='FI
 JOB_INS = "INSERT INTO job (db_id, ds_id, status, start) VALUES (%s, %s, %s, %s) RETURNING id"
 JOB_UPD_STATUS_FINISH = "UPDATE job set status=%s, finish=%s where id=%s"
 JOB_UPD_FINISH = "UPDATE job set finish=%s where id=%s"
-TARGET_DECOY_ADD_DEL = 'DELETE FROM target_decoy_add tda WHERE tda.job_id IN (SELECT id FROM job WHERE ds_id = %s)'
 
 
 class JobStatus(object):
