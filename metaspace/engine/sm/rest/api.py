@@ -8,6 +8,7 @@ from bottle import response as resp
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.dataset import Dataset
+from sm.engine.peewee.db import init_db
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_DS_STATUS, SM_UPDATE
 from sm.engine.util import SMConfig
@@ -234,4 +235,5 @@ if __name__ == '__main__':
     init_loggers(SMConfig.get_conf()['logs'])
     logger = logging.getLogger(name='api')
     logger.info('Starting SM api')
+    init_db(SMConfig.get_conf()['db'])
     run(**SMConfig.get_conf()['bottle'])

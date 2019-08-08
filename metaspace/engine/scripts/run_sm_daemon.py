@@ -5,6 +5,7 @@ import signal
 
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
+from sm.engine.peewee.db import init_db
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.sm_daemons import SMAnnotateDaemon, SMDaemonManager, SMIndexUpdateDaemon
 from sm.engine.queue import SM_ANNOTATE, SM_UPDATE, SM_DS_STATUS, QueuePublisher
@@ -23,6 +24,7 @@ if __name__ == "__main__":
     init_loggers(sm_config['logs'])
     logger = logging.getLogger(f'{args.name}-daemon')
     logger.info(f'Starting {args.name}-daemon')
+    init_db(sm_config['db'])
 
     def get_manager():
         db = DB(sm_config['db'])
