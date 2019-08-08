@@ -13,7 +13,7 @@ from sm.engine.ion_thumbnail import generate_ion_thumbnail
 from sm.engine.off_sample_wrapper import classify_dataset_ion_images
 from sm.engine.optical_image import del_optical_image, IMG_URLS_BY_ID_SEL
 from sm.rest.dataset_manager import DatasetActionPriority
-from sm.engine.errors import UnknownDSID, IndexUpdateFailedError, AnnotationFailedError
+from sm.engine.errors import UnknownDSID, IndexUpdateError, AnnotationError, ImzMLError
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.mol_db import MolecularDB
 from sm.engine.queue import SM_DS_STATUS, QueueConsumer
@@ -159,13 +159,22 @@ class SMDaemonManager(object):
         )
         self._send_email(msg['email'], 'METASPACE service notification (SUCCESS)', email_body)
 
-    def send_failed_email(self, msg):
+    def send_failed_email(self, msg, traceback=None):
         ds_name, _ = self.fetch_ds_metadata(msg['ds_id'])
+        content = (
+            f'We are sorry to inform you that there was a problem during processing of the "{ds_name}" dataset '
+            'and it could not be annotated.'
+        )
+        if traceback:
+            content += (f"\n\nWe could not successfully read the dataset's imzML file. "
+                        f'Please make sure you are using up-to-date software for '
+                        f'exporting the dataset to imzML format.\nIf you are a developer, '
+                        f'the following stack trace may be useful:\n\n{traceback}')
+        content += ('\n\nIf this is unexpected, please do not hesitate to contact us for support '
+                    'at contact@metaspace2020.eu')
         email_body = (
             'Dear METASPACE user,\n\n'
-            f'We are sorry to inform you that there was a problem during processing of the "{ds_name}" dataset '
-            'and it could not be annotated. '
-            'If this is unexpected, please do not hesitate to contact us for support at contact@metaspace2020.eu\n\n'
+            f'{content}\n\n'
             'Best regards,\n'
             'METASPACE Team'
         )
@@ -202,16 +211,19 @@ class SMAnnotateDaemon(object):
         self._manager.post_to_slack('dart', ' [v] Annotation succeeded: {}'.format(json.dumps(msg)))
         self.redis_client.set('cluster-busy', 'no')
 
-    def _on_failure(self, msg):
+    def _on_failure(self, msg, e):
         self.logger.error(f" SM annotate daemon: failure", exc_info=True)
 
         ds = Dataset.load(self._db, msg['ds_id'])
         ds.set_status(self._db, self._manager.es, DatasetStatus.FAILED)
         ds.notify_update(self._manager.status_queue, msg['action'], DaemonActionStage.FAILED)
 
-        self._manager.post_to_slack('hankey', ' [x] Annotation failed: {}'.format(json.dumps(msg)))
+        slack_msg = f'{json.dumps(msg)}\n```{e.traceback}```'
+        self._manager.post_to_slack('hankey', f' [x] Annotation failed: {slack_msg}')
+
         if 'email' in msg:
-            self._manager.send_failed_email(msg)
+            traceback = e.__cause__.traceback if type(e.__cause__) == ImzMLError else None
+            self._manager.send_failed_email(msg, traceback)
         self.redis_client.set('cluster-busy', 'no')
 
     def _callback(self, msg):
@@ -246,8 +258,9 @@ class SMAnnotateDaemon(object):
                 }
                 self._upd_queue_pub.publish(msg=analyze_msg, priority=DatasetActionPriority.LOW)
         except Exception as e:
-            msg = f"Annotation failed (ds_id={msg['ds_id']}): {e}"
-            raise AnnotationFailedError(msg) from e
+            import traceback
+            raise AnnotationError(ds_id=msg['ds_id'],
+                                  traceback=traceback.format_exc(chain=False)) from e
 
     def start(self):
         self._stopped = False
@@ -350,7 +363,7 @@ class SMIndexUpdateDaemon(object):
                 raise Exception(f"Wrong action: {msg['action']}")
         except Exception as e:
             msg = f"Index update failed (ds_id={msg['ds_id']}): {e}"
-            raise IndexUpdateFailedError(msg) from e
+            raise IndexUpdateError(msg) from e
 
     def start(self):
         self._stopped = False

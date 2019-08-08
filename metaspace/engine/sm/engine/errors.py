@@ -4,14 +4,23 @@ class SMError(Exception):
         self.message = msg
 
 
-class AnnotationFailedError(SMError):
+class AnnotationError(SMError):
+    def __init__(self, ds_id, traceback):
+        super().__init__()
+        self.ds_id = ds_id
+        self.traceback = traceback
+        self.message = f"Annotation failed (ds_id={self.ds_id})"
+
+
+class IndexUpdateError(SMError):
     def __init__(self, msg):
         super().__init__(msg)
 
 
-class IndexUpdateFailedError(SMError):
-    def __init__(self, msg):
-        super().__init__(msg)
+class ImzMLError(SMError):
+    def __init__(self, traceback):
+        super().__init__()
+        self.traceback = traceback
 
 
 class DSError(SMError):

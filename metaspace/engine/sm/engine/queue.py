@@ -406,7 +406,7 @@ class QueueConsumer(Thread):
             except BaseException as e:
                 self.logger.error(' [x] Failed: {}'.format(body), exc_info=False)
                 try:
-                    self._on_failure(msg or body)
+                    self._on_failure(msg or body, e)
                 except BaseException as e:
                     self.logger.error(' [x] Failed in _on_failure: {}'.format(body), exc_info=True)
             else:
