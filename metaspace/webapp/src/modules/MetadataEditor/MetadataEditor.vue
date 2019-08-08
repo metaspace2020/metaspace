@@ -49,7 +49,7 @@
     a submit event is emitted with dataset ID and stringified form value.
   */
 
- import {defaultMetadataType, metadataSchemas} from '../../assets/metadataRegistry';
+ import {defaultMetadataType, metadataSchemas} from '../../lib/metadataRegistry';
  import {FilterPanel} from '../Filters/index';
  import {deriveFullSchema} from './formStructure';
  import {

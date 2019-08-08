@@ -11,7 +11,7 @@
     "test": "yarn run generate-local-graphql-schema && cross-env NODE_ENV=test jest",
     "test-ci": "cross-env NODE_ENV=test jest",
     "coverage": "cross-env NODE_ENV=test jest --coverage",
-    "deref-schema": "node ./deref_schema.js src/assets",
+    "deref-schema": "node ./deref_schema.js src/lib/metadataSchemas",
     "generate-local-graphql-schema": "cd ../graphql && yarn run gen-graphql-schema",
     "fetch-prod-graphql-schema": "apollo schema:download tests/utils/graphql-schema.json --endpoint https://metaspace2020.eu/graphql"
   },

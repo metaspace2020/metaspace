@@ -11,7 +11,7 @@
 </template>
 
 <script>
-  import {defaultMetadataType, metadataSchemas} from '../assets/metadataRegistry';
+  import {defaultMetadataType, metadataSchemas} from '../lib/metadataRegistry';
   import {get, flatMap} from 'lodash-es';
   import {optionalSuffixInParens} from '../lib/vueFilters';
   import {getLocalStorage, setLocalStorage} from '../lib/localStorage';
