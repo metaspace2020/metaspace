@@ -16,7 +16,7 @@ def wait_for_es(sec=1):
     time.sleep(sec)
 
 
-def test_index_ds_works(test_db, es_dsl_search, sm_index):
+def _test_index_ds_works(test_db, es_dsl_search, sm_index):
     ds_id = '2000-01-01_00h00m'
     upload_dt = datetime.now().isoformat(' ')
     mol_db_id = 0
