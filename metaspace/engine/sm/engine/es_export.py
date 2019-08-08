@@ -18,73 +18,79 @@ from sm.engine.util import SMConfig
 
 logger = logging.getLogger('engine')
 
-ANNOTATIONS_SEL = '''SELECT
-    m.id as annotation_id,
-    m.formula AS formula,
-    COALESCE(((m.stats -> 'chaos'::text)::text)::real, 0::real) AS chaos,
-    COALESCE(((m.stats -> 'spatial'::text)::text)::real, 0::real) AS image_corr,
-    COALESCE(((m.stats -> 'spectral'::text)::text)::real, 0::real) AS pattern_match,
-    (m.stats -> 'total_iso_ints'::text) AS total_iso_ints,
-    (m.stats -> 'min_iso_ints'::text) AS min_iso_ints,
-    (m.stats -> 'max_iso_ints'::text) AS max_iso_ints,
-    COALESCE(m.msm, 0::real) AS msm,
-    m.adduct AS adduct,
-    m.neutral_loss as neutral_loss,
-    m.chem_mod as chem_mod,
-    j.id AS job_id,
-    m.fdr AS fdr,
-    m.iso_image_ids AS iso_image_ids,
-    (CASE ds.config->'isotope_generation'->>'charge' WHEN '-1' THEN '-' WHEN '1' THEN '+' END) AS polarity,
-    m.off_sample->'prob' as off_sample_prob,
-    m.off_sample->'label' as off_sample_label
-FROM annotation m
-JOIN job j ON j.id = m.job_id
-JOIN dataset ds ON ds.id = j.ds_id
-WHERE ds.id = %s AND j.db_id = %s
-ORDER BY COALESCE(m.msm, 0::real) DESC'''
+@db.connection_context()
+def _select_annotations_by_ds_id(ds_id, mol_db_id):
+    annotations = (Annotation
+                   .select(
+                        Annotation.id.alias('annotation_id'),
+                        Annotation.formula,
+                        fn.COALESCE(Annotation.stats['chaos'].cast('text').cast('real'), 0.0).cast('real').alias('chaos'),
+                        fn.COALESCE(Annotation.stats['spatial'].cast('text').cast('real'), 0.0).cast('real').alias('image_corr'),
+                        fn.COALESCE(Annotation.stats['spectral'].cast('text').cast('real'), 0.0).cast('real').alias('pattern_match'),
+                        Annotation.stats['total_iso_ints'].as_json().alias('total_iso_ints'),
+                        Annotation.stats['min_iso_ints'].as_json().alias('min_iso_ints'),
+                        Annotation.stats['max_iso_ints'].as_json().alias('max_iso_ints'),
+                        fn.COALESCE(Annotation.msm, 0.0).alias('msm'),
+                        Annotation.adduct,
+                        Annotation.neutral_loss,
+                        Annotation.chem_mod,
+                        Job.id.alias('job_id'),
+                        Annotation.fdr,
+                        Annotation.iso_image_ids,
+                        Case(DbDataset.config['isotope_generation']['charge'].cast('text'), [('-1', '-'), ('1', '+')]).alias('polarity'),
+                        Annotation.off_sample['prob'].as_json().alias('off_sample_prob'),
+                        Annotation.off_sample['label'].as_json().alias('off_sample_label'),
+                    )
+                   .join(Job)
+                   .join_from(Job, DbDataset)
+                   .where((DbDataset.id == ds_id) & (Job.db_id == mol_db_id))
+                   .order_by(fn.COALESCE(Annotation.msm, 0).desc()))
+    return list(annotations.dicts())
 
-DATASET_SEL = '''SELECT
-    d.*,
-    gu.id as ds_submitter_id,
-    gu.name as ds_submitter_name,
-    COALESCE(gu.email, gu.not_verified_email) as ds_submitter_email,
-    gg.id as ds_group_id,
-    gg.name as ds_group_name,
-    gg.short_name as ds_group_short_name,
-    gd.group_approved as ds_group_approved,
-    COALESCE(gp.ds_project_ids, '{}') as ds_project_ids,
-    COALESCE(gp.ds_project_names, '{}') as ds_project_names
-FROM (
-  SELECT
-    d.id AS ds_id,
-    d.name AS ds_name,
-    d.config AS ds_config,
-    d.metadata AS ds_meta,
-    d.input_path AS ds_input_path,
-    d.upload_dt AS ds_upload_dt,
-    d.status AS ds_status,
-    to_char(max(job.finish), 'YYYY-MM-DD HH24:MI:SS') AS ds_last_finished,
-    d.is_public AS ds_is_public,
-    d.config #> '{databases}' AS ds_mol_dbs,
-    d.config #> '{isotope_generation,adducts}' AS ds_adducts,
-    d.config #> '{isotope_generation,neutral_losses}' AS ds_neutral_losses,
-    d.config #> '{isotope_generation,chem_mods}' AS ds_chem_mods,
-    d.acq_geometry AS ds_acq_geometry,
-    d.ion_img_storage_type AS ds_ion_img_storage
-  FROM dataset as d
-  LEFT JOIN job ON job.ds_id = d.id
-  GROUP BY d.id) as d
-LEFT JOIN graphql.dataset gd ON gd.id = d.ds_id
-LEFT JOIN graphql.user gu ON gu.id = gd.user_id
-LEFT JOIN graphql.group gg ON gg.id = gd.group_id
-LEFT JOIN (
-    SELECT gdp.dataset_id, array_agg(gp.id)::text[] as ds_project_ids, array_agg(gp.name)::text[] as ds_project_names
-    FROM graphql.dataset_project gdp
-    JOIN graphql.project gp ON gdp.project_id = gp.id
-    WHERE gdp.approved
-    GROUP BY gdp.dataset_id
-) gp ON gp.dataset_id = d.ds_id
-WHERE d.ds_id = %s'''
+@db.connection_context()
+def _select_ds_by_id(ds_id):
+    ds = (DbDataset
+          .select(DbDataset, GqlDataset, User, Group, DatasetProject, Project)
+          .join_from(DbDataset, GqlDataset, JOIN.LEFT_OUTER, on=(DbDataset.id == GqlDataset.id), attr='gql_dataset')
+          .join_from(GqlDataset, User, JOIN.LEFT_OUTER)
+          .join_from(GqlDataset, Group, JOIN.LEFT_OUTER)
+          .join_from(GqlDataset, DatasetProject, JOIN.LEFT_OUTER)
+          .join_from(DatasetProject, Project, JOIN.LEFT_OUTER)
+          .where(DbDataset.id == ds_id)
+          .get())
+    submitter = ds.gql_dataset and ds.gql_dataset.user
+    group = ds.gql_dataset and ds.gql_dataset.group
+    group_approved = ds.gql_dataset and ds.gql_dataset.group_approved
+    dataset_projects = ds.gql_dataset and ds.gql_dataset.dataset_projects or []
+    projects = [dp.project for dp in dataset_projects if dp.approved]
+    last_finished = ds.jobs.select(fn.MAX(Job.finish)).scalar()
+
+    return {
+        'ds_id': ds.id,
+        'ds_name': ds.name,
+        'ds_config': ds.config,
+        'ds_meta': ds.metadata,
+        'ds_input_path': ds.input_path,
+        'ds_upload_dt': ds.upload_dt,
+        'ds_status': ds.status,
+        'ds_last_finished': last_finished.strftime('%Y-%m-%d %H:%M:%S') if last_finished else None,
+        'ds_is_public': ds.is_public,
+        'ds_mol_dbs': ds.config['databases'],
+        'ds_adducts': ds.config.get('isotope_generation', {}).get('adducts'),
+        'ds_neutral_losses': ds.config.get('isotope_generation', {}).get('neutral_losses'),
+        'ds_chem_mods': ds.config.get('isotope_generation', {}).get('chem_mods'),
+        'ds_acq_geometry': ds.acq_geometry,
+        'ds_ion_img_storage': ds.ion_img_storage_type,
+        'ds_submitter_id': submitter and submitter.id,
+        'ds_submitter_name': submitter and submitter.name,
+        'ds_submitter_email': submitter and (submitter.email or submitter.not_verified_email),
+        'ds_group_id': group and group.id,
+        'ds_group_name': group and group.name,
+        'ds_group_short_name': group and group.short_name,
+        'ds_group_approved': group_approved,
+        'ds_project_ids': [p.id for p in projects],
+        'ds_project_names': [p.name for p in projects],
+    }
 
 DS_COLUMNS_TO_SKIP_IN_ANN = ('ds_acq_geometry',)
 
@@ -287,97 +293,12 @@ class ESExporter(object):
         self._es.update(self.index, id=ds_id, body={'doc': dataset}, doc_type='dataset')
         return dataset
 
-    def _select_ds_by_id(self, ds_id):
-        return self._db.select_with_fields(DATASET_SEL, params=(ds_id,))[0]
-
-    @db.connection_context()
-    def _select_ds_by_id_peewee(self, ds_id):
-        # latest_job_query = (Job.select(Job.ds_id, fn.MAX(Job.finish).alias('last_finished'))
-        #                     .group_by(Job.ds_id)
-        #                     .alias('latest_job'))
-        # latest_job_query.c.last_finished
-        ds = (DbDataset
-              .select(DbDataset, GqlDataset, User, Group, DatasetProject, Project)
-              .join_from(DbDataset, GqlDataset, JOIN.LEFT_OUTER, on=(DbDataset.id == GqlDataset.id), attr='gql_dataset')
-              .join_from(GqlDataset, User, JOIN.LEFT_OUTER)
-              .join_from(GqlDataset, Group, JOIN.LEFT_OUTER)
-              .join_from(GqlDataset, DatasetProject, JOIN.LEFT_OUTER)
-              .join_from(DatasetProject, Project, JOIN.LEFT_OUTER)
-              .where(DbDataset.id == ds_id)
-              .get())
-        submitter = ds.gql_dataset and ds.gql_dataset.user
-        group = ds.gql_dataset and ds.gql_dataset.group
-        group_approved = ds.gql_dataset and ds.gql_dataset.group_approved
-        dataset_projects = ds.gql_dataset and ds.gql_dataset.dataset_projects or []
-        projects = [dp.project for dp in dataset_projects if dp.approved]
-        last_finished = ds.jobs.select(fn.MAX(Job.finish)).scalar()
-
-        return {
-            'ds_id': ds.id,
-            'ds_name': ds.name,
-            'ds_config': ds.config,
-            'ds_meta': ds.metadata,
-            'ds_input_path': ds.input_path,
-            'ds_upload_dt': ds.upload_dt,
-            'ds_status': ds.status,
-            'ds_last_finished': last_finished.strftime('%Y-%m-%d %H:%M:%S') if last_finished else None,
-            'ds_is_public': ds.is_public,
-            'ds_mol_dbs': ds.config['databases'],
-            'ds_adducts': ds.config.get('isotope_generation', {}).get('adducts'),
-            'ds_neutral_losses': ds.config.get('isotope_generation', {}).get('neutral_losses'),
-            'ds_chem_mods': ds.config.get('isotope_generation', {}).get('chem_mods'),
-            'ds_acq_geometry': ds.acq_geometry,
-            'ds_ion_img_storage': ds.ion_img_storage_type,
-            'ds_submitter_id': submitter and submitter.id,
-            'ds_submitter_name': submitter and submitter.name,
-            'ds_submitter_email': submitter and (submitter.email or submitter.not_verified_email),
-            'ds_group_id': group and group.id,
-            'ds_group_name': group and group.name,
-            'ds_group_short_name': group and group.short_name,
-            'ds_group_approved': group_approved,
-            'ds_project_ids': [p.id for p in projects],
-            'ds_project_names': [p.name for p in projects],
-        }
-
-    def _select_annotations_by_ds_id(self, ds_id, mol_db_id):
-        return self._db.select_with_fields(ANNOTATIONS_SEL, params=(ds_id, mol_db_id))
-
-    @db.connection_context()
-    def _select_annotations_by_ds_id_peewee(self, ds_id, mol_db_id):
-        annotations = (Annotation
-                       .select(
-                            Annotation.id.alias('annotation_id'),
-                            Annotation.formula,
-                            fn.COALESCE(Annotation.stats['chaos'].cast('text').cast('real'), 0.0).cast('real').alias('chaos'),
-                            fn.COALESCE(Annotation.stats['spatial'].cast('text').cast('real'), 0.0).cast('real').alias('image_corr'),
-                            fn.COALESCE(Annotation.stats['spectral'].cast('text').cast('real'), 0.0).cast('real').alias('pattern_match'),
-                            Annotation.stats['total_iso_ints'].as_json().alias('total_iso_ints'),
-                            Annotation.stats['min_iso_ints'].as_json().alias('min_iso_ints'),
-                            Annotation.stats['max_iso_ints'].as_json().alias('max_iso_ints'),
-                            fn.COALESCE(Annotation.msm, 0.0).alias('msm'),
-                            Annotation.adduct,
-                            Annotation.neutral_loss,
-                            Annotation.chem_mod,
-                            Job.id.alias('job_id'),
-                            Annotation.fdr,
-                            Annotation.iso_image_ids,
-                            Case(DbDataset.config['isotope_generation']['charge'].cast('text'), [('-1', '-'), ('1', '+')]).alias('polarity'),
-                            Annotation.off_sample['prob'].as_json().alias('off_sample_prob'),
-                            Annotation.off_sample['label'].as_json().alias('off_sample_label'),
-                        )
-                       .join(Job)
-                       .join_from(Job, DbDataset)
-                       .where((DbDataset.id == ds_id) & (Job.db_id == mol_db_id))
-                       .order_by(fn.COALESCE(Annotation.msm, 0).desc()))
-        return list(annotations.dicts())
-
-
     @retry_on_conflict()
     def sync_dataset(self, ds_id):
         """ Warning: This will wait till ES index/update is completed
         """
         with self._ds_locker.lock(ds_id):
-            ds = self._select_ds_by_id(ds_id)
+            ds = _select_ds_by_id(ds_id)
             if self._es.exists(index=self.index, doc_type='dataset', id=ds_id):
                 self._es.update(index=self.index, id=ds_id,
                                 doc_type='dataset', body={'doc': ds}, params={'refresh': 'wait_for'})
@@ -411,14 +332,14 @@ class ESExporter(object):
             try:
                 ds_doc = self._remove_mol_db_from_dataset(ds_id, mol_db)
             except NotFoundError:
-                ds_doc = self._select_ds_by_id(ds_id)
+                ds_doc = _select_ds_by_id(ds_id)
             if 'annotation_counts' not in ds_doc:
                 ds_doc['annotation_counts'] = []
 
             annotation_counts = defaultdict(int)
             fdr_levels = [5, 10, 20, 50]
 
-            annotation_docs = self._select_annotations_by_ds_id(ds_id, mol_db.id)
+            annotation_docs = _select_annotations_by_ds_id(ds_id, mol_db.id)
             logger.info('Indexing {} documents: {}, {}'.format(len(annotation_docs), ds_id, mol_db))
 
             to_index = []
@@ -463,7 +384,7 @@ class ESExporter(object):
         with self._ds_locker.lock(ds_id):
             pipeline_id = f'update-ds-fields-{ds_id}'
             if fields:
-                ds_doc = self._select_ds_by_id(ds_id)
+                ds_doc = _select_ds_by_id(ds_id)
 
                 ds_doc_upd = {}
                 for f in fields:
