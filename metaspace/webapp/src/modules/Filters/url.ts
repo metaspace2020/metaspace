@@ -1,6 +1,6 @@
 import { FILTER_SPECIFICATIONS, FilterKey, getDefaultFilter, Level, MetadataLists } from './filterSpecs';
 
-import {invert} from 'lodash-es';
+import {invert, mapValues} from 'lodash-es';
 import { Location } from 'vue-router';
 import {ScaleType} from '../../lib/ionImageRendering';
 import {DEFAULT_SCALE_TYPE} from '../../lib/constants';
@@ -114,25 +114,28 @@ export function decodeParams(location: Location, filterLists: any): Object {
       continue; // skip params unrelated to filtering
 
     const {levels, encoding} = FILTER_SPECIFICATIONS[fKey];
+    // If necessary, unwrap array parameters and take their first element. Array-valued parameters can happen
+    // if someone changes the URL and adds a second copy of an existing parameter.
+    let value = typeof query[key] === 'string' ? query[key] : query[key][0];
 
     if (levels.indexOf(level) == -1)
       continue;
 
     if (encoding == 'json') {
-      if ('[{'.indexOf(query[key][0]) == -1) {
+      if ('[{'.indexOf(value[0]) == -1) {
         // assume non-JSON means array of one element
-        filter[fKey] = [query[key]];
+        filter[fKey] = [value];
       } else {
-        filter[fKey] = JSON.parse(query[key]);
+        filter[fKey] = JSON.parse(value);
       }
     } else if (encoding == 'list') {
-      filter[fKey] = query[key] ? query[key].split(',') : [];
+      filter[fKey] = value ? value.split(',') : [];
     } else if (encoding == 'bool') {
-      filter[fKey] = query[key] === '1';
+      filter[fKey] = value === '1';
     } else if (encoding == 'number') {
-      filter[fKey] = parseFloat(query[key]);
+      filter[fKey] = parseFloat(value);
     } else {
-      filter[fKey] = query[key];
+      filter[fKey] = value;
     }
 
     if (filter[fKey] === null)
@@ -200,9 +203,14 @@ export interface UrlSettings {
 }
 
 export function decodeSettings(location: Location): UrlSettings | undefined {
-  const {query, path} = location;
+  let {query, path} = location;
   if (!query || !path)
     return undefined;
+
+  // When vue-router encounters the same query parameter more than once it supplies an array instead of a string.
+  // To prevent type errors below, find any arrayified parameters and just take their first element
+  query = mapValues(query, (stringOrArray:string|string[]) =>
+    typeof stringOrArray === 'string' ? stringOrArray : stringOrArray[0]);
 
   let settings: UrlSettings = {
     table: {
