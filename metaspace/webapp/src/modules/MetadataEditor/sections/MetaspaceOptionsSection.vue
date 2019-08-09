@@ -55,9 +55,9 @@
                         Search for ions with a specific neutral loss by entering the formula of the loss here,
                         e.g. <span class="example-input">-H2O</span> to search for ions with H2O loss.
                       </p>
-                      <p>
+                      <p v-if="!features.neutral_losses_new_ds">
                         This functionality is only intended for diagnosis when specific expected molecules
-                        were not been found in a regular search. It may not be available until after the initial annotation has run.
+                        were not found in a regular search. It may not be available until after the initial annotation has run.
                       </p>
                     </div>
                     <i slot="reference" class="el-icon-question metadata-help-icon"></i>
