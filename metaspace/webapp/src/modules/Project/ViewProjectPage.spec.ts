@@ -47,10 +47,10 @@ describe('ViewProjectPage', () => {
       project: mockProjectFn,
       projectByUrlSlug: mockProjectFn,
       allDatasets: () => ([
-        { id: 'datasetId1', name: 'dataset name 1' },
-        { id: 'datasetId2', name: 'dataset name 2' },
-        { id: 'datasetId3', name: 'dataset name 3' },
-        { id: 'datasetId4', name: 'dataset name 4' },
+        { id: 'datasetId1', name: 'dataset name 1', status: 'FINISHED' },
+        { id: 'datasetId2', name: 'dataset name 2', status: 'QUEUED' },
+        { id: 'datasetId3', name: 'dataset name 3', status: 'ANNOTATING' },
+        { id: 'datasetId4', name: 'dataset name 4', status: 'FINISHED' },
       ]),
       countDatasets: () => 4,
     })
