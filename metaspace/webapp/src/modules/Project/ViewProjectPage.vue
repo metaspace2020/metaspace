@@ -101,11 +101,9 @@
   import reportError from '../../lib/reportError';
   import {currentUserRoleQuery, CurrentUserRoleResult} from '../../api/user';
   import isUuid from '../../lib/isUuid';
-  import {isArray, throttle} from 'lodash-es';
   import ProjectMembersList from './ProjectMembersList.vue';
   import ProjectSettings from './ProjectSettings.vue';
   import {optionalSuffixInParens, plural} from '../../lib/vueFilters';
-  import apolloClient from '../../graphqlClient';
   import {removeDatasetFromAllDatasetsQuery} from '../../lib/updateApolloCache';
   import ProjectDescription from "./ProjectDescription.vue";
 
@@ -199,7 +197,9 @@
 
     get currentUserId(): string | null { return this.currentUser && this.currentUser.id }
     get roleInProject(): ProjectRole | null { return this.project && this.project.currentUserRole; }
-    get projectDatasets(): DatasetDetailItem[] { return this.data && this.data.allDatasets || []; }
+    get projectDatasets(): DatasetDetailItem[] {
+      return (this.data && this.data.allDatasets || []).filter(ds => ds.status !== 'FAILED');
+    }
     get countDatasets(): number { return this.data && this.data.countDatasets || 0; }
     get members() { return this.project && this.project.members || []; }
     get countMembers() { return this.project && this.project.numMembers; }

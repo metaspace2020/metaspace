@@ -201,7 +201,9 @@
 
     get currentUserId(): string | null { return this.currentUser && this.currentUser.id }
     get roleInGroup(): UserGroupRole | null { return this.group && this.group.currentUserRole; }
-    get groupDatasets(): DatasetDetailItem[] { return this.data && this.data.allDatasets || []; }
+    get groupDatasets(): DatasetDetailItem[] {
+      return (this.data && this.data.allDatasets || []).filter(ds => ds.status !== 'FAILED');
+    }
     get countDatasets(): number { return this.data && this.data.countDatasets || 0; }
     get members() { return this.group && this.group.members || []; }
     get countMembers() { return this.group && this.group.numMembers; }
