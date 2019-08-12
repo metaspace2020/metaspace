@@ -9,9 +9,11 @@ const writeFile = promisify(require("fs").writeFile);
 //FIXME: Most of this file is redundant now that `schema.ts` exists in the parent directory.
 
 const schemaFiles = [
-  '../schema.graphql',
-  '../schemas/user.graphql',
+  // NOTE: This list should be kept in sync with ../schema.ts
+  '../schemas/lookups.graphql',
+  '../schemas/annotation.graphql',
   '../schemas/dataset.graphql',
+  '../schemas/user.graphql',
   '../schemas/group.graphql',
   '../schemas/project.graphql',
   '../schemas/system.graphql',

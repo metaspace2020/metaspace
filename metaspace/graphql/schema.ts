@@ -3,7 +3,9 @@ import {mergeSchemas, makeExecutableSchema} from 'graphql-tools';
 import * as fs from 'fs';
 
 export const mergedSchemas = mergeTypes([
-  fs.readFileSync('schema.graphql', 'utf8'),
+  // NOTE: This list should be kept in sync with bin/generate-json-graphql-schema.js
+  fs.readFileSync('schemas/lookups.graphql', 'utf8'),
+  fs.readFileSync('schemas/annotation.graphql', 'utf8'),
   fs.readFileSync('schemas/dataset.graphql', 'utf8'),
   fs.readFileSync('schemas/user.graphql', 'utf8'),
   fs.readFileSync('schemas/group.graphql', 'utf8'),

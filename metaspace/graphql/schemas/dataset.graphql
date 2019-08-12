@@ -46,6 +46,17 @@ type Dataset {
   ionThumbnailUrl: String
 }
 
+type FdrCounts {
+  dbName: String!
+  levels: [Float!]!
+  counts: [Float!]!
+}
+
+type Person {
+  name: String!
+  email: String    # null if current user is not allowed to see
+}
+
 # Datasets' submitter and group are taken from ElasticSearch, which means they can be out of sync with the database.
 # If they overlap with Users/Groups loaded from the database, it causes a lot of problems with the client-side GraphQL cache.
 # To solve this, they're separated into their own data types so that client-side code can cache them differently.
@@ -69,6 +80,11 @@ type DatasetProject {
   urlSlug: String @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
 }
 
+enum DatasetOrderBy {
+  ORDER_BY_DATE
+  ORDER_BY_NAME
+}
+
 # fields of categorical type
 enum DatasetAggField {
   DF_GROUP,
@@ -81,6 +97,23 @@ enum DatasetAggField {
   DF_CONDITION,
   DF_GROWTH_CONDITIONS,
   DF_MALDI_MATRIX
+}
+
+enum JobStatus {
+  QUEUED,
+  ANNOTATING,
+  FINISHED,
+  FAILED,
+}
+
+enum Polarity {
+  POSITIVE
+  NEGATIVE
+}
+
+type Analyzer {
+  type: String!
+  resolvingPower(mz: Float!): Float!
 }
 
 input DatasetFilter {
@@ -133,6 +166,11 @@ input DatasetCountPerGroupInput {
   fields: [DatasetAggField!]!
   filter: DatasetFilter = {}
   simpleQuery: String
+}
+
+input PersonInput {
+  name: String!
+  email: String!
 }
 
 input DatasetCreateInput {

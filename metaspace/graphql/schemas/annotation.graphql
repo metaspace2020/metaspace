@@ -1,0 +1,134 @@
+type Annotation {
+  id: String!
+
+  dataset: Dataset!
+  sumFormula: String!
+  adduct: String!
+  neutralLoss: String
+  chemMod: String
+  ion: String!
+  database: String!
+  mz: Float!
+  possibleCompounds: [Compound!]!
+  fdrLevel: Float!
+  msmScore: Float!
+  rhoSpatial: Float
+  rhoSpectral: Float
+  rhoChaos: Float
+  isotopeImages: [MzImage!]!
+
+  peakChartData: String  # JSON
+
+  # Unfortunately Apollo's client-side cache makes it necessary to parameterize colocalizationCoeff so that its values
+  # are consistent between requests. Without this, having multiple queries with different 'colocalizedWith' filters
+  # will cause the values to interfere, e.g. browsing the Annotations page when using a `colocalizedWith` filter
+  # as well as having the "Colocalized With" section open will trigger two queries with different colocalization params
+  # in `allAnnotations`, resulting in different values of colocalizationCoeff for the same annotation.
+  # If `colocalizationCoeffFilter` is null, this will return null, allowing queries to include this field even if it's not
+  # applicable with the current set of filters. Otherwise the values must match the parent `allAnnotations`' filter.
+  colocalizationCoeff(colocalizationCoeffFilter: ColocalizationCoeffFilter): Float
+
+  offSample: Boolean    # false = only on-sample, true = only off-sample
+  offSampleProb: Float  # 0.0 = probably on-sample, 1.0 = probably off-sample
+}
+
+type CompoundInfoEntry {
+  database: String!
+  url: String
+  databaseId: String!
+}
+
+type Compound {
+  name: String!
+  imageURL: String
+  information: [CompoundInfoEntry]
+  # TODO: InChi/SMILES, ClassyFire results
+}
+
+type Adduct {
+  adduct: String!
+  name: String!
+  charge: Int!
+  hidden: Boolean!
+  default: Boolean!
+}
+
+type Spectrum {
+  mzs: [Float!]!
+  intensities: [Float!]!
+}
+
+type MzImage {
+  mz: Float
+  url: String
+  totalIntensity: Float!
+  minIntensity: Float!
+  maxIntensity: Float!
+}
+
+type ColocalizationAlgo {
+  id: String!
+  name: String!
+}
+
+enum AnnotationOrderBy {
+  ORDER_BY_MZ
+  ORDER_BY_MSM
+  ORDER_BY_FDR_MSM
+  ORDER_BY_DATASET
+  ORDER_BY_FORMULA
+  ORDER_BY_COLOCALIZATION
+  ORDER_BY_OFF_SAMPLE
+}
+
+# [min, max) interval
+input NumericRange {
+  min: Float!
+  max: Float!
+}
+
+input AnnotationFilter {
+  database: String
+  datasetName: String
+  mzFilter: NumericRange
+  msmScoreFilter: NumericRange
+  compoundQuery: String
+  fdrLevel: Float
+  sumFormula: String
+  adduct: String
+  colocalizedWith: String         # Should be an ion string (formula+adduct+polarity). Requires DatasetFilter.datasetIds to be set to a specific dataset
+  colocalizationSamples: Boolean  # Requires DatasetFilter.datasetIds to be set to a specific dataset
+  colocalizationAlgo: String
+  offSample: Boolean
+  hasNeutralLoss: Boolean @deprecated(reason: "Do not depend on this filter - it is intended to only be a temporary measure until a more flexible filter API that supports is-null/non-null queries is built")
+  hasChemMod: Boolean @deprecated(reason: "Do not depend on this filter - it is intended to only be a temporary measure until a more flexible filter API that supports is-null/non-null queries is built")
+  hasHiddenAdduct: Boolean @deprecated(reason: "Do not depend on this filter - it is intended to only be a temporary measure until a more flexible filter API that supports multi-value queries is built")
+}
+
+input ColocalizationCoeffFilter {
+  colocalizedWith: String!
+  colocalizationAlgo: String
+  database: String
+  fdrLevel: Float!
+}
+
+type Query {
+  allAnnotations(orderBy: AnnotationOrderBy = ORDER_BY_MSM,
+                 sortingOrder: SortingOrder = DESCENDING,
+                 offset: Int = 0, limit: Int = 10,
+                 filter: AnnotationFilter = {},
+                 datasetFilter: DatasetFilter = {},
+                 simpleQuery: String): [Annotation]
+
+  countAnnotations(filter: AnnotationFilter = {},
+                   datasetFilter: DatasetFilter = {},
+                   simpleQuery: String): Int!
+
+  annotation(id: String!): Annotation
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
+}
