@@ -5,7 +5,7 @@ import SearchableFilter from './filter-components/SearchableFilter.vue';
 import OffSampleHelp from './filter-components/OffSampleHelp.vue';
 import MzFilter from './filter-components/MzFilter.vue';
 import SearchBox from './filter-components/SearchBox.vue';
-import {metadataTypes, defaultMetadataType} from '../../assets/metadataRegistry';
+import {metadataTypes, defaultMetadataType} from '../../lib/metadataRegistry';
 import { Component } from 'vue';
 import SimpleFilterBox from './filter-components/SimpleFilterBox.vue';
 import BooleanFilter from './filter-components/BooleanFilter.vue';

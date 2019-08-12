@@ -2,8 +2,7 @@ clientConfig.json
 db.sqlite
 
 # Dereferenced metadata files
-/src/assets/*.json
-/src/assets/metadataMapping.js
+/src/lib/metadataSchemas
 
 # Copy of graphql schema for tests
 /tests/utils/graphql-schema.json

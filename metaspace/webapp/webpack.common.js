@@ -64,6 +64,7 @@ module.exports.resolve = {
 };
 module.exports.optimization = {
   noEmitOnErrors: true,
+  minimize: false,
   splitChunks: {
     cacheGroups: {
       vendor: {
