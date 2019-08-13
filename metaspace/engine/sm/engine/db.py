@@ -21,16 +21,15 @@ def db_decor(func):
             value_getter = getattr(args[0], 'getvalue', None)
             debug_output = args[0] if not value_getter else value_getter()
             logger.debug(debug_output[:1000])
+            self._connect()
             res = func(self, *args, **kwargs)
-        except Exception as e:
-            # logger.error('SQL: %s,\nArgs: %s', args[0], str(args[1:])[:1000], exc_info=False)
+        except psycopg2.ProgrammingError as e:
             self.conn.rollback()
             raise Exception('SQL: {},\nArgs: {}\nError: {}'.format(args[0], str(args[1:])[:1000], e.args[0]))
         else:
             self.conn.commit()
         finally:
-            if self.curs:
-                self.curs.close()
+            self._close()
         return res
 
     return wrapper
@@ -49,15 +48,24 @@ class DB(object):
     _dbs = WeakSet()
 
     def __init__(self, config, autocommit=False):
-        self.conn = psycopg2.connect(**config)
-        if autocommit:
-            self.conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+        self._config = config
+        self._autocommit = autocommit
+        self.conn = None
         self.curs = None
         DB._dbs.add(self)
 
-    def close(self):
+    def _connect(self):
+        self.conn = psycopg2.connect(**self._config)
+        if self._autocommit:
+            self.conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+        self.curs = self.conn.cursor()
+
+    def _close(self):
         """ Close the connection to the database """
-        self.conn.close()
+        if self.curs:
+            self.curs.close()
+        if self.conn:
+            self.conn.close()
         DB._dbs.discard(self)
 
     @classmethod
@@ -66,7 +74,6 @@ class DB(object):
             db.close()
 
     def _select(self, sql, params=None):
-        self.curs = self.conn.cursor()
         self.curs.execute(sql, params) if params else self.curs.execute(sql)
         return self.curs.fetchall()
 
@@ -93,6 +100,7 @@ class DB(object):
         fields = [desc[0] for desc in self.curs.description]
         return [dict(zip(fields, row)) for row in rows]
 
+    @db_decor
     def select_one(self, sql, params=None):
         """ Execute select query and take the first row
 
@@ -122,7 +130,6 @@ class DB(object):
         rows : list
             list of tuples as table rows
         """
-        self.curs = self.conn.cursor()
         self.curs.executemany(sql, rows)
 
     @db_decor
@@ -140,7 +147,6 @@ class DB(object):
         : list
             inserted ids
         """
-        self.curs = self.conn.cursor()
         ids = []
         for row in rows:
             self.curs.execute(sql, row)
@@ -158,7 +164,6 @@ class DB(object):
         params :
             query parameters for placeholders
         """
-        self.curs = self.conn.cursor()
         self.curs.execute(sql, params)
 
     @db_decor
@@ -172,7 +177,7 @@ class DB(object):
         rows:
             Iterable of query parameters for placeholders
         """
-        execute_values(self.conn.cursor(), sql, rows)
+        execute_values(self.curs, sql, rows)
 
     @db_decor
     def copy(self, inp_file, table, sep='\t', columns=None):
@@ -189,5 +194,4 @@ class DB(object):
         columns : list
             column names to insert into
         """
-        self.curs = self.conn.cursor()
         self.curs.copy_from(inp_file, table=table, sep=sep, columns=columns)
