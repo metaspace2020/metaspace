@@ -4,32 +4,50 @@ from weakref import WeakSet
 
 from psycopg2.extras import execute_values
 import psycopg2.extensions
+from psycopg2.pool import ThreadedConnectionPool
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
 
 logger = logging.getLogger('engine')
+_conn_pool = None
+
+
+def init_conn_pool(config):
+    global _conn_pool
+    if not _conn_pool:
+        _conn_pool = ThreadedConnectionPool(4, 12, **config)
+
+
+def close_conn_pool():
+    global _conn_pool
+    if _conn_pool:
+        _conn_pool.closeall()
 
 
 def db_decor(func):
 
     @wraps(func)
     def wrapper(self, *args, **kwargs):
+        conn = None
         res = []
         try:
             # for cases when SQL queries are written to StringIO
             value_getter = getattr(args[0], 'getvalue', None)
             debug_output = args[0] if not value_getter else value_getter()
             logger.debug(debug_output[:1000])
-            self._connect()
+
+            conn = _conn_pool.getconn()
+            self._curs = conn.cursor()
             res = func(self, *args, **kwargs)
         except psycopg2.ProgrammingError as e:
-            self.conn.rollback()
+            conn.rollback()
             raise Exception('SQL: {},\nArgs: {}\nError: {}'.format(args[0], str(args[1:])[:1000], e.args[0]))
         else:
-            self.conn.commit()
+            conn.commit()
+            self._curs.close()
         finally:
-            self._close()
+            _conn_pool.putconn(conn)
         return res
 
     return wrapper
@@ -45,37 +63,13 @@ class DB(object):
     autocommit : bool
         enable non-transactional client mode
     """
-    _dbs = WeakSet()
 
-    def __init__(self, config, autocommit=False):
-        self._config = config
-        self._autocommit = autocommit
-        self.conn = None
-        self.curs = None
-        DB._dbs.add(self)
-
-    def _connect(self):
-        self.conn = psycopg2.connect(**self._config)
-        if self._autocommit:
-            self.conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-        self.curs = self.conn.cursor()
-
-    def _close(self):
-        """ Close the connection to the database """
-        if self.curs:
-            self.curs.close()
-        if self.conn:
-            self.conn.close()
-        DB._dbs.discard(self)
-
-    @classmethod
-    def close_all(cls):
-        for db in list(cls._dbs):
-            db.close()
+    def __init__(self):
+        self._curs = None
 
     def _select(self, sql, params=None):
-        self.curs.execute(sql, params) if params else self.curs.execute(sql)
-        return self.curs.fetchall()
+        self._curs.execute(sql, params) if params else self._curs.execute(sql)
+        return self._curs.fetchall()
 
     @db_decor
     def select(self, sql, params=None):
@@ -97,7 +91,7 @@ class DB(object):
     @db_decor
     def select_with_fields(self, sql, params):
         rows = self._select(sql, params)
-        fields = [desc[0] for desc in self.curs.description]
+        fields = [desc[0] for desc in self._curs.description]
         return [dict(zip(fields, row)) for row in rows]
 
     @db_decor
@@ -130,7 +124,7 @@ class DB(object):
         rows : list
             list of tuples as table rows
         """
-        self.curs.executemany(sql, rows)
+        self._curs.executemany(sql, rows)
 
     @db_decor
     def insert_return(self, sql, rows=None):
@@ -149,8 +143,8 @@ class DB(object):
         """
         ids = []
         for row in rows:
-            self.curs.execute(sql, row)
-            ids.append(self.curs.fetchone()[0])
+            self._curs.execute(sql, row)
+            ids.append(self._curs.fetchone()[0])
         return ids
 
     @db_decor
@@ -164,7 +158,7 @@ class DB(object):
         params :
             query parameters for placeholders
         """
-        self.curs.execute(sql, params)
+        self._curs.execute(sql, params)
 
     @db_decor
     def alter_many(self, sql, rows=None):
@@ -177,7 +171,7 @@ class DB(object):
         rows:
             Iterable of query parameters for placeholders
         """
-        execute_values(self.curs, sql, rows)
+        execute_values(self._curs, sql, rows)
 
     @db_decor
     def copy(self, inp_file, table, sep='\t', columns=None):
@@ -194,4 +188,4 @@ class DB(object):
         columns : list
             column names to insert into
         """
-        self.curs.copy_from(inp_file, table=table, sep=sep, columns=columns)
+        self._curs.copy_from(inp_file, table=table, sep=sep, columns=columns)

@@ -2,12 +2,13 @@
 import argparse
 import logging
 import signal
+from functools import partial
 
-from sm.engine.db import DB
+from sm.engine.db import DB, init_conn_pool, close_conn_pool
 from sm.engine.es_export import ESExporter
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.sm_daemons import SMAnnotateDaemon, SMDaemonManager, SMIndexUpdateDaemon
-from sm.engine.queue import SM_ANNOTATE, SM_UPDATE, SM_DS_STATUS, QueuePublisher
+from sm.engine.queue import SM_ANNOTATE, SM_UPDATE, SM_DS_STATUS, QueuePublisher, QueueConsumer
 from sm.engine.util import SMConfig, init_loggers
 
 
@@ -24,8 +25,10 @@ if __name__ == "__main__":
     logger = logging.getLogger(f'{args.name}-daemon')
     logger.info(f'Starting {args.name}-daemon')
 
+    init_conn_pool(sm_config['db'])
+
     def get_manager():
-        db = DB(sm_config['db'])
+        db = DB()
         status_queue_pub = QueuePublisher(config=sm_config['rabbitmq'],
                                           qdesc=SM_DS_STATUS,
                                           logger=logger)
@@ -34,6 +37,7 @@ if __name__ == "__main__":
             img_store=ImageStoreServiceWrapper(sm_config['services']['img_service_url']),
             status_queue=status_queue_pub,
             logger=logger)
+
     daemons = []
     if args.name == 'annotate':
         daemons.append(SMAnnotateDaemon(manager=get_manager(),
@@ -51,8 +55,11 @@ if __name__ == "__main__":
         for d in daemons:
             d.stop()
 
+        close_conn_pool()
+
     signal.signal(signal.SIGINT, stop_daemons)
     signal.signal(signal.SIGTERM, stop_daemons)
 
     for daemon in daemons:
         daemon.start()
+
