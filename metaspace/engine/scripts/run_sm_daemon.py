@@ -6,7 +6,7 @@ import signal
 from sm.engine.db import DB, ConnectionPool
 from sm.engine.es_export import ESExporter
 from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.sm_daemons import SMAnnotateDaemon, SMDaemonManager, SMIndexUpdateDaemon
+from sm.engine.sm_daemons import SMAnnotateDaemon, DatasetManager, SMIndexUpdateDaemon
 from sm.engine.queue import SM_ANNOTATE, SM_UPDATE, SM_DS_STATUS, QueuePublisher, QueueConsumer
 from sm.engine.util import SMConfig, init_loggers
 
@@ -30,7 +30,7 @@ if __name__ == "__main__":
         status_queue_pub = QueuePublisher(config=sm_config['rabbitmq'],
                                           qdesc=SM_DS_STATUS,
                                           logger=logger)
-        return SMDaemonManager(
+        return DatasetManager(
             db=db, es=ESExporter(db),
             img_store=ImageStoreServiceWrapper(sm_config['services']['img_service_url']),
             status_queue=status_queue_pub,
@@ -44,9 +44,11 @@ if __name__ == "__main__":
                                         annot_qdesc=SM_ANNOTATE,
                                         upd_qdesc=SM_UPDATE))
     elif args.name == 'update':
+        make_update_queue_cons = partial(QueueConsumer, config=sm_config['rabbitmq'],
+                                         qdesc=SM_UPDATE, logger=logger,
+                                         poll_interval=1)
         for i in range(sm_config['services']['update_daemon_threads']):
-            daemon = SMIndexUpdateDaemon(manager=get_manager(),
-                                         update_qdesc=SM_UPDATE)
+            daemon = SMIndexUpdateDaemon(get_manager(), make_update_queue_cons)
             daemons.append(daemon)
     else:
         raise Exception(f'Wrong SM daemon name: {args.name}')

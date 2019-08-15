@@ -3,6 +3,7 @@ import os
 import sys
 import logging
 from collections import OrderedDict
+from functools import partial
 from os.path import join, dirname
 from unittest.mock import patch
 import time
@@ -20,6 +21,7 @@ from sm.engine.es_export import ESExporter
 from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.msm_basic.msm_basic_search import compute_fdr
 from sm.engine.annotation_job import JobStatus
+from sm.engine.queue import QueueConsumer
 from sm.engine.tests.util import (
     test_db,
     init_loggers,
@@ -96,12 +98,12 @@ queue_pub = init_queue_pub()
 def run_daemons(db, es):
     from sm.engine.queue import QueuePublisher, SM_DS_STATUS, SM_ANNOTATE, SM_UPDATE
     from sm.engine.png_generator import ImageStoreServiceWrapper
-    from sm.engine.sm_daemons import SMDaemonManager, SMAnnotateDaemon, SMIndexUpdateDaemon
+    from sm.engine.sm_daemons import DatasetManager, SMAnnotateDaemon, SMIndexUpdateDaemon
 
     status_queue_pub = QueuePublisher(config=sm_config['rabbitmq'],
                                       qdesc=SM_DS_STATUS,
                                       logger=logger)
-    manager = SMDaemonManager(
+    manager = DatasetManager(
         db=db, es=es,
         img_store=ImageStoreServiceWrapper(sm_config['services']['img_service_url']),
         status_queue=status_queue_pub,
@@ -113,8 +115,10 @@ def run_daemons(db, es):
                                        upd_qdesc=SM_UPDATE)
     annotate_daemon.start()
     annotate_daemon.stop()
-    update_daemon = SMIndexUpdateDaemon(manager=manager,
-                                        update_qdesc=SM_UPDATE)
+    make_update_queue_cons = partial(QueueConsumer, config=sm_config['rabbitmq'],
+                                     qdesc=SM_UPDATE, logger=logger,
+                                     poll_interval=1)
+    update_daemon = SMIndexUpdateDaemon(manager, make_update_queue_cons)
     update_daemon.start()
     update_daemon.stop()
 

@@ -24,14 +24,13 @@ type EngineDatasetActionStage = 'QUEUED' | 'STARTED' | 'FINISHED' | 'FAILED';
 
 interface DatasetStatusPayload {
   ds_id: string;
-  status: DatasetStatus | null;
   action: EngineDatasetAction;
   stage: EngineDatasetActionStage;
   is_new?: boolean;
 }
 
 async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
-  const {ds_id, status, action: rawAction, stage, ...rest} = payload;
+  const {ds_id, action: rawAction, stage, ...rest} = payload;
   const action = (rawAction || '').toUpperCase() as EngineDatasetAction;
   // wait until updates are reflected in ES so that clients can refresh their data
   const maxAttempts = 8;
@@ -42,7 +41,7 @@ async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
 
   try {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      logger.debug(JSON.stringify({attempt, action, status}));
+      logger.debug(JSON.stringify({attempt, action}));
       const ds = await esDatasetByID(ds_id, null, true);
 
       if (action === 'DELETE' && stage === 'FINISHED') {

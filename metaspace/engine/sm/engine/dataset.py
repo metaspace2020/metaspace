@@ -90,15 +90,6 @@ class Dataset(object):
         self.status = status
         self.save(db, es)
 
-    def notify_update(self, status_queue, action, stage, **kwargs):
-        status_queue.publish({
-            'ds_id': self.id,
-            'status': self.status,
-            'action': action,
-            'stage': stage,
-            **kwargs,
-        })
-
     @classmethod
     def load(cls, db, ds_id):
         docs = db.select_with_fields(cls.DS_SEL, params=(ds_id,))
