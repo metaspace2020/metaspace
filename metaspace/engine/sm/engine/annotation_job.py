@@ -168,8 +168,6 @@ class AnnotationJob(object):
     def cleanup(self):
         if self._sc:
             self._sc.stop()
-        if self._db:
-            self._db.close()
         logger.debug(f'Cleaning dataset temp dir {self._ds_data_path}')
         rmtree(self._ds_data_path, ignore_errors=True)
 

@@ -77,7 +77,6 @@ def sm_modify_dataset(request_name):
                 ds_man = _create_dataset_manager(db)
                 res = handler(ds_man, ds_id, params)
 
-                db.close()
                 return {
                     'status': OK['status'],
                     'ds_id': ds_id or res.get('ds_id', None)

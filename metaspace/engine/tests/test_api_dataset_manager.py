@@ -15,20 +15,19 @@ from sm.engine.tests.util import sm_config, metadata, ds_config, test_db, fill_d
 from sm.engine.optical_image import OpticalImageType
 
 
-def create_api_ds_man(db=None, es=None, img_store=None,
+def create_api_ds_man(es=None, img_store=None,
                       annot_queue=None, update_queue=None, status_queue=None):
-    db = db or DB(sm_config['db'])
     es_mock = es or MagicMock(spec=ESExporter)
     annot_queue_mock = annot_queue or MagicMock(QueuePublisher)
     update_queue_mock = update_queue or MagicMock(QueuePublisher)
     status_queue_mock = status_queue or MagicMock(QueuePublisher)
     img_store_mock = img_store or MagicMock(spec=ImageStoreServiceWrapper)
 
-    return db, SMapiDatasetManager(db=db, es=es_mock,
-                                   image_store=img_store_mock,
-                                   annot_queue=annot_queue_mock,
-                                   update_queue=update_queue_mock,
-                                   status_queue=status_queue_mock)
+    return SMapiDatasetManager(db=DB(), es=es_mock,
+                               image_store=img_store_mock,
+                               annot_queue=annot_queue_mock,
+                               update_queue=update_queue_mock,
+                               status_queue=status_queue_mock)
 
 
 def create_ds_doc(ds_id='2000-01-01', ds_name='ds_name', input_path='input_path', upload_dt=None,
@@ -56,7 +55,7 @@ class TestSMapiDatasetManager:
 
     def test_add_new_ds(self, test_db, ds_config):
         action_queue_mock = MagicMock(spec=QueuePublisher)
-        _, ds_man = create_api_ds_man(annot_queue=action_queue_mock)
+        ds_man = create_api_ds_man(annot_queue=action_queue_mock)
 
         ds_id = '2000-01-01'
         ds_doc = create_ds_doc(ds_id=ds_id)
@@ -68,11 +67,11 @@ class TestSMapiDatasetManager:
 
     def test_delete_ds(self, test_db, metadata, ds_config):
         update_queue = MagicMock(spec=QueuePublisher)
-        db, ds_man = create_api_ds_man(update_queue=update_queue)
+        ds_man = create_api_ds_man(update_queue=update_queue)
         ds_id = '2000-01-01'
         ds = Dataset(id=ds_id, name='ds_name', input_path='input_path', upload_dt=datetime.now(),
                      metadata=metadata, config=ds_config, status=DatasetStatus.FINISHED)
-        ds.save(db)
+        ds.save(DB())
 
         ds_man.delete(ds_id)
 
@@ -89,8 +88,8 @@ class TestSMapiDatasetManager:
                                                  'thumbnail_id']
         img_store_mock.get_image_by_id.return_value = Image.new('RGB', (100, 100))
 
-        db, ds_man = create_api_ds_man(es=es_mock,
-                                       img_store=img_store_mock, annot_queue=action_queue_mock)
+        db = DB()
+        ds_man = create_api_ds_man(es=es_mock, img_store=img_store_mock, annot_queue=action_queue_mock)
         ds_man._annotation_image_shape = MagicMock(return_value=(100, 100))
 
         ds_id = '2000-01-01'

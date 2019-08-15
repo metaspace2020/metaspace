@@ -273,8 +273,6 @@ class SMAnnotateDaemon(object):
             self._annot_queue_consumer.stop()
             self._annot_queue_consumer.join()
             self._stopped = True
-        if self._db:
-            self._db.close()
 
 
 class SMIndexUpdateDaemon(object):
@@ -374,5 +372,3 @@ class SMIndexUpdateDaemon(object):
             self._update_queue_cons.stop()
             self._update_queue_cons.join()
             self._stopped = True
-        if self._db:
-            self._db.close()

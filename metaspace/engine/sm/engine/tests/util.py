@@ -2,15 +2,18 @@ import json
 import logging
 from pathlib import Path
 from unittest.mock import MagicMock
+
 import pytest
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search
 from fabric.api import local
+import psycopg2
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from pysparkling import Context
 import pandas as pd
 import uuid
 
-from sm.engine.db import DB
+from sm.engine.db import DB, init_conn_pool, close_conn_pool
 from sm.engine.mol_db import MolecularDB
 from sm.engine.tests.graphql_sql_schema import GRAPHQL_SQL_SCHEMA
 from sm.engine.util import proj_root, SMConfig, init_loggers
@@ -84,32 +87,36 @@ def spark_context(request):
 
 @pytest.fixture()
 def test_db(request):
-    db_config_postgres = dict(**sm_config['db'])
-    db_config_postgres['database'] = 'postgres'
 
-    db = DB(db_config_postgres, autocommit=True)
-    db.alter('DROP DATABASE IF EXISTS sm_test')
-    db.alter('CREATE DATABASE sm_test')
-    db.close()
+    def autocommit_execute(db_config, *sqls):
+        admin_conn = None
+        try:
+            admin_conn = psycopg2.connect(**db_config)
+            admin_conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+            with admin_conn.cursor() as curs:
+                for sql in sqls:
+                    curs.execute(sql)
+        finally:
+            if admin_conn:
+                admin_conn.close()
+
+    db_config_postgres = {**sm_config['db'], 'database': 'postgres'}
+    autocommit_execute(db_config_postgres,
+                       'DROP DATABASE IF EXISTS sm_test',
+                       'CREATE DATABASE sm_test')
 
     local('psql -h {} -U {} sm_test < {}'.format(
         sm_config['db']['host'], sm_config['db']['user'],
         Path(proj_root()) / 'scripts/create_schema.sql'))
 
-    db_config = dict(**sm_config['db'])
-    db = DB(db_config, autocommit=True)
-    db.alter(GRAPHQL_SQL_SCHEMA)
-    db.close()
+    autocommit_execute(sm_config['db'], GRAPHQL_SQL_SCHEMA)
+
+    init_conn_pool(sm_config['db'])
 
     def fin():
-        DB.close_all()
-        db = DB(db_config_postgres, autocommit=True)
-        try:
-            db.alter('DROP DATABASE IF EXISTS sm_test')
-        except Exception as e:
-            logging.getLogger('engine').warning('Drop sm_test database failed: %s', e)
-        finally:
-            db.close()
+        close_conn_pool()
+        autocommit_execute(db_config_postgres,
+                           'DROP DATABASE IF EXISTS sm_test')
     request.addfinalizer(fin)
 
 
@@ -117,7 +124,7 @@ def test_db(request):
 def fill_db(test_db, metadata, ds_config):
     upload_dt = '2000-01-01 00:00:00'
     ds_id = '2000-01-01'
-    db = DB(sm_config['db'])
+    db = DB()
     db.insert('INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, '
               'status, is_public) values (%s, %s, %s, %s, %s, %s, %s, %s)',
               rows=[(ds_id, 'ds_name', 'input_path', upload_dt,
@@ -125,8 +132,8 @@ def fill_db(test_db, metadata, ds_config):
                      True)])
     db.insert("INSERT INTO job (id, db_id, ds_id) VALUES (%s, %s, %s)",
               rows=[(0, 0, ds_id)])
-    db.insert(("INSERT INTO annotation (job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids) "
-               "VALUES (%s, %s, '', '', %s, 0.5, 0.2, '{}', %s)"),
+    db.insert(("INSERT INTO annotation (job_id, formula, chem_mod, neutral_loss, adduct, "
+               "msm, fdr, stats, iso_image_ids) VALUES (%s, %s, '', '', %s, 0.5, 0.2, '{}', %s)"),
               rows=[(0, 'H2O', '+H', ['iso_image_11', 'iso_image_12']),
                     (0, 'CH4', '+H', ['iso_image_21', 'iso_image_22'])])
     user_id = str(uuid.uuid4())
@@ -137,7 +144,6 @@ def fill_db(test_db, metadata, ds_config):
               rows=[(group_id, 'group name', 'short name')])
     db.insert("INSERT INTO graphql.dataset (id, user_id, group_id) VALUES (%s, %s, %s)",
               rows=[('dataset id', user_id, group_id)])
-    db.close()
 
 
 @pytest.fixture()

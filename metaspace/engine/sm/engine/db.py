@@ -1,10 +1,10 @@
 import logging
 from functools import wraps
-from weakref import WeakSet
 
 from psycopg2.extras import execute_values
 import psycopg2.extensions
 from psycopg2.pool import ThreadedConnectionPool
+from psycopg2 import ProgrammingError, IntegrityError, DataError
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
@@ -23,29 +23,29 @@ def close_conn_pool():
     global _conn_pool
     if _conn_pool:
         _conn_pool.closeall()
+        _conn_pool = None
 
 
 def db_decor(func):
 
     @wraps(func)
-    def wrapper(self, *args, **kwargs):
+    def wrapper(self, sql, *args, **kwargs):
+        assert _conn_pool, 'init_conn_pool should be called first'
+
         conn = None
         res = []
         try:
             # for cases when SQL queries are written to StringIO
-            value_getter = getattr(args[0], 'getvalue', None)
-            debug_output = args[0] if not value_getter else value_getter()
+            value_getter = getattr(sql, 'getvalue', None)
+            debug_output = sql if not value_getter else value_getter()
             logger.debug(debug_output[:1000])
 
-            conn = _conn_pool.getconn()
-            self._curs = conn.cursor()
-            res = func(self, *args, **kwargs)
-        except psycopg2.ProgrammingError as e:
-            conn.rollback()
-            raise Exception('SQL: {},\nArgs: {}\nError: {}'.format(args[0], str(args[1:])[:1000], e.args[0]))
-        else:
-            conn.commit()
-            self._curs.close()
+            with _conn_pool.getconn() as conn:
+                with conn.cursor() as curs:
+                    self._curs = curs
+                    res = func(self, sql, *args, **kwargs)
+        except (ProgrammingError, IntegrityError, DataError) as e:
+            raise Exception(f'SQL: {sql},\nArgs: {str(args)[:1000]}\n') from e
         finally:
             _conn_pool.putconn(conn)
         return res
@@ -54,17 +54,9 @@ def db_decor(func):
 
 
 class DB(object):
-    """ Postgres database access provider
+    """Postgres database access provider."""
 
-    Args
-    ----------
-    config : dict
-        database access parameters
-    autocommit : bool
-        enable non-transactional client mode
-    """
-
-    def __init__(self):
+    def __init__(self, *args):
         self._curs = None
 
     def _select(self, sql, params=None):
