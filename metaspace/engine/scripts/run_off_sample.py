@@ -26,7 +26,7 @@ def run_off_sample(ds_id, sql_where, fix_missing, overwrite_existing):
     assert not (ds_id and sql_where)
 
     conf = SMConfig.get_conf()
-    db = DB(conf['db'])
+    db = DB()
     es_exp = ESExporter(db)
 
     if ds_id:

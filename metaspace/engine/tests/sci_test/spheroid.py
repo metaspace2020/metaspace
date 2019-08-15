@@ -9,7 +9,7 @@ from fabric.api import local
 from fabric.context_managers import warn_only
 
 from sm.engine.annotation_job import AnnotationJob
-from sm.engine.db import DB
+from sm.engine.db import DB, init_conn_pool, close_conn_pool
 from sm.engine.mol_db import MolDBServiceWrapper
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import proj_root, SMConfig, create_ds_from_files, init_loggers
@@ -27,7 +27,7 @@ class SciTester(object):
     def __init__(self, sm_config_path):
         self.sm_config_path = sm_config_path
         self.sm_config = SMConfig.get_conf()
-        self.db = DB(self.sm_config['db'])
+        self.db = DB()
 
         self.ds_id = '2000-01-01_00h00m00s'
         self.base_search_res_path = join(proj_root(), 'tests/reports', 'spheroid_untreated_search_res.csv')
@@ -160,27 +160,33 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     SMConfig.set_path(args.sm_config_path)
-    init_loggers(SMConfig.get_conf()['logs'])
+    sm_config = SMConfig.get_conf()
+    init_loggers(sm_config['logs'])
 
-    sci_tester = SciTester(args.sm_config_path)
+    try:
+        init_conn_pool(sm_config['db'])
 
-    if args.run:
-        run_search_successful = False
-        search_results_different = False
-        try:
-            sci_tester.run_search(args.mock_img_store)
-            run_search_successful = True
-            search_results_different = sci_tester.search_results_are_different()
-        except Exception as e:
-            if not run_search_successful:
-                raise Exception('Search was not successful!') from e
-            elif search_results_different:
-                raise Exception('Search was successful but the results are different!') from e
-        finally:
-            sci_tester.clear_data_dirs()
+        sci_tester = SciTester(args.sm_config_path)
 
-    elif args.save:
-        if 'y' == input('You are going to replace the reference values. Are you sure? (y/n): '):
-            sci_tester.save_sci_test_report()
-    else:
-        parser.print_help()
+        if args.run:
+            run_search_successful = False
+            search_results_different = False
+            try:
+                sci_tester.run_search(args.mock_img_store)
+                run_search_successful = True
+                search_results_different = sci_tester.search_results_are_different()
+            except Exception as e:
+                if not run_search_successful:
+                    raise Exception('Search was not successful!') from e
+                elif search_results_different:
+                    raise Exception('Search was successful but the results are different!') from e
+            finally:
+                sci_tester.clear_data_dirs()
+
+        elif args.save:
+            if 'y' == input('You are going to replace the reference values. Are you sure? (y/n): '):
+                sci_tester.save_sci_test_report()
+        else:
+            parser.print_help()
+    finally:
+        close_conn_pool()

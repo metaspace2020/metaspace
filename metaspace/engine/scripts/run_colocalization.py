@@ -74,7 +74,7 @@ def run_coloc_jobs(ds_id, sql_where, fix_missing, fix_corrupt, skip_existing):
 
     conf = SMConfig.get_conf()
 
-    db = DB(conf['db'])
+    db = DB()
 
     if ds_id:
         ds_ids = ds_id.split(',')

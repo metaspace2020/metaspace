@@ -198,7 +198,7 @@ class SMAnnotateDaemon(object):
         self._upd_queue_pub = QueuePublisher(config=self._sm_config['rabbitmq'],
                                              qdesc=upd_qdesc,
                                              logger=self.logger)
-        self._db = DB(self._sm_config['db'])
+        self._db = DB()
         self.redis_client = redis.Redis(**self._sm_config.get('redis', {}))
         Path(self._sm_config['fs']['spark_data_path']).mkdir(parents=True, exist_ok=True)
 
@@ -283,7 +283,7 @@ class SMIndexUpdateDaemon(object):
     def __init__(self, manager, update_qdesc, poll_interval=1):
         self._manager = manager
         self._sm_config = SMConfig.get_conf()
-        self._db = DB(self._sm_config['db'])
+        self._db = DB()
         self._update_queue_cons = QueueConsumer(config=self._sm_config['rabbitmq'],
                                                 qdesc=update_qdesc,
                                                 callback=self._callback,

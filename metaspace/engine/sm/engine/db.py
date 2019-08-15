@@ -16,12 +16,14 @@ _conn_pool = None
 def init_conn_pool(config):
     global _conn_pool
     if not _conn_pool:
+        logger.info('Initialising database connection pool')
         _conn_pool = ThreadedConnectionPool(4, 12, **config)
 
 
 def close_conn_pool():
     global _conn_pool
     if _conn_pool:
+        logger.info('Closing database connection pool')
         _conn_pool.closeall()
         _conn_pool = None
 
@@ -56,7 +58,7 @@ def db_decor(func):
 class DB(object):
     """Postgres database access provider."""
 
-    def __init__(self, *args):
+    def __init__(self):
         self._curs = None
 
     def _select(self, sql, params=None):

@@ -29,7 +29,7 @@ def _reindex_all(conf):
     es_man.create_index(new_index)
 
     try:
-        db = DB(conf['db'])
+        db = DB()
         es_exp = ESExporter(db, inactive_es_config)
         ds_ids = [r[0] for r in db.select('select id from dataset')]
         _reindex_datasets(ds_ids, db, es_exp)
@@ -80,7 +80,7 @@ def reindex_results(ds_id, ds_mask, use_inactive_index):
         if use_inactive_index:
             es_config = get_inactive_index_es_config(es_config)
 
-        db = DB(conf['db'])
+        db = DB()
         es_exp = ESExporter(db, es_config=es_config)
 
         if ds_id:

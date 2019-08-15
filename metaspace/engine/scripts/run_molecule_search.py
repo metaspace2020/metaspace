@@ -7,7 +7,7 @@ import logging
 import sys
 from pathlib import Path
 
-from sm.engine.db import DB
+from sm.engine.db import DB, init_conn_pool, close_conn_pool
 from sm.engine.es_export import ESExporter
 from sm.engine.sm_daemons import SMDaemonManager
 from sm.engine.png_generator import ImageStoreServiceWrapper
@@ -30,11 +30,13 @@ if __name__ == "__main__":
     sm_config = SMConfig.get_conf()
     init_loggers(sm_config['logs'])
 
-    db = DB(sm_config['db'])
-    img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
-    manager = SMDaemonManager(db, ESExporter(db), img_store)
-
     try:
+        init_conn_pool(sm_config['db'])
+
+        db = DB()
+        img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
+        manager = SMDaemonManager(db, ESExporter(db), img_store)
+
         config_path = args.config_path or Path(args.input_path) / 'config.json'
         meta_path = args.meta_path or Path(args.input_path) / 'meta.json'
 
@@ -44,5 +46,7 @@ if __name__ == "__main__":
     except Exception as e:
         logging.getLogger('engine').error(e, exc_info=True)
         sys.exit(1)
+    finally:
+        close_conn_pool()
 
     sys.exit()

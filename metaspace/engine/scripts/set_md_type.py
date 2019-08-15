@@ -34,9 +34,7 @@ if __name__ == "__main__":
     init_logger()
     logger = logging.getLogger('engine')
 
-    db = DB(sm_config['db'])
-
     if args.ds_name and args.md_type:
-        set_metadata_type(db, args.md_type, args.ds_name)
+        set_metadata_type(DB(), args.md_type, args.ds_name)
     else:
         parser.print_help()

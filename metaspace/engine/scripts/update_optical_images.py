@@ -10,7 +10,7 @@ from sm.engine.png_generator import ImageStoreServiceWrapper
 def update_optical_images(ds_id, sql_where):
     config = SMConfig.get_conf()
     img_store = ImageStoreServiceWrapper(config['services']['img_service_url'])
-    db = DB(config['db'])
+    db = DB()
 
     if ds_id:
         ds_ids = ds_id.split(',')

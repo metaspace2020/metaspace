@@ -8,10 +8,9 @@ from sm.engine.db import DB
 
 
 def run(ds_id, sql_where, algorithm):
-
     conf = SMConfig.get_conf()
 
-    db = DB(conf['db'])
+    db = DB()
     img_store = ImageStoreServiceWrapper(conf['services']['img_service_url'])
 
     if sql_where:

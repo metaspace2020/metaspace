@@ -21,7 +21,7 @@ def test_classify_ion_images_preds_saved(call_api_mock, ImageStoreServiceWrapper
     image_store_mock = ImageStoreServiceWrapperMock()
     image_store_mock.get_image_by_id.return_value = Image.new('RGBA', (10, 10))
 
-    db = DB(sm_config['db'])
+    db = DB()
     ds_id = '2000-01-01'
     ds = Dataset.load(db, ds_id)
 

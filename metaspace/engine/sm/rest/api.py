@@ -41,11 +41,6 @@ ERROR = {
 }
 
 
-def _create_db_conn():
-    config = SMConfig.get_conf()
-    return DB(config['db'])
-
-
 def _json_params(req):
     b = req.body.getvalue()
     return json.loads(b.decode('utf-8'))
@@ -73,8 +68,7 @@ def sm_modify_dataset(request_name):
             try:
                 params = _json_params(req)
                 logger.info('Received %s request: %s', request_name, params)
-                db = _create_db_conn()
-                ds_man = _create_dataset_manager(db)
+                ds_man = _create_dataset_manager(DB())
                 res = handler(ds_man, ds_id, params)
 
                 return {
