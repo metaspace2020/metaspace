@@ -1,15 +1,14 @@
 import argparse
-import logging
+from functools import partial
 
 from sm.engine.db import DB
 from sm.engine.optical_image import add_optical_image
-from sm.engine.util import init_loggers, SMConfig
+from sm.engine.util import bootstrap_and_run
 from sm.engine.png_generator import ImageStoreServiceWrapper
 
 
-def update_optical_images(ds_id, sql_where):
-    config = SMConfig.get_conf()
-    img_store = ImageStoreServiceWrapper(config['services']['img_service_url'])
+def update_optical_images(sm_config, logger, ds_id, sql_where):
+    img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
     db = DB()
 
     if ds_id:
@@ -39,11 +38,10 @@ if __name__ == "__main__":
                              'e.g. "status = \'FINISHED\' and ion_thumbnail is null"')
     args = parser.parse_args()
 
-    SMConfig.set_path(args.config)
-    init_loggers(SMConfig.get_conf()['logs'])
-    logger = logging.getLogger('engine')
-
     if args.ds_id or args.sql_where:
-        update_optical_images(args.ds_id, args.sql_where)
+        bootstrap_and_run(args.config,
+                          partial(update_optical_images,
+                                  ds_id=args.ds_id,
+                                  sql_where=args.sql_where))
     else:
         parser.print_help()

@@ -2,9 +2,8 @@
 import argparse
 import logging
 import signal
-from functools import partial
 
-from sm.engine.db import DB, init_conn_pool, close_conn_pool
+from sm.engine.db import DB, ConnectionPool
 from sm.engine.es_export import ESExporter
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.sm_daemons import SMAnnotateDaemon, SMDaemonManager, SMIndexUpdateDaemon
@@ -22,10 +21,9 @@ if __name__ == "__main__":
     SMConfig.set_path(args.config_path)
     sm_config = SMConfig.get_conf()
     init_loggers(sm_config['logs'])
-    logger = logging.getLogger(f'{args.name}-daemon')
-    logger.info(f'Starting {args.name}-daemon')
-
-    init_conn_pool(sm_config['db'])
+    daemon_name = args.name
+    logger = logging.getLogger(f'{daemon_name}-daemon')
+    logger.info(f'Starting {daemon_name}-daemon')
 
     def get_manager():
         db = DB()
@@ -37,6 +35,8 @@ if __name__ == "__main__":
             img_store=ImageStoreServiceWrapper(sm_config['services']['img_service_url']),
             status_queue=status_queue_pub,
             logger=logger)
+
+    conn_pool = ConnectionPool(sm_config['db'])
 
     daemons = []
     if args.name == 'annotate':
@@ -52,14 +52,13 @@ if __name__ == "__main__":
         raise Exception(f'Wrong SM daemon name: {args.name}')
 
     def stop_daemons(*args):
+        logger.info(f'Stopping {daemon_name}-daemon')
         for d in daemons:
             d.stop()
-
-        close_conn_pool()
+        conn_pool.close()
 
     signal.signal(signal.SIGINT, stop_daemons)
     signal.signal(signal.SIGTERM, stop_daemons)
 
     for daemon in daemons:
         daemon.start()
-

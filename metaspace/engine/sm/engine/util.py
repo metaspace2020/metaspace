@@ -9,6 +9,8 @@ import re
 from fnmatch import translate
 from copy import deepcopy
 
+from sm.engine.db import ConnectionPool
+
 
 def proj_root():
     return os.getcwd()
@@ -155,3 +157,13 @@ def split_s3_path(path):
 def find_file_by_ext(path, ext):
     return next(str(p) for p in Path(path).iterdir()
                 if str(p).lower().endswith(ext))
+
+
+def bootstrap_and_run(config_path, func):
+    SMConfig.set_path(config_path)
+    sm_config = SMConfig.get_conf()
+    init_loggers(sm_config['logs'])
+    logger = logging.getLogger('engine')
+
+    with ConnectionPool(sm_config['db']):
+        func(sm_config, logger)

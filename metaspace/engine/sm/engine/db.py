@@ -8,31 +8,37 @@ from psycopg2 import ProgrammingError, IntegrityError, DataError
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
-
 logger = logging.getLogger('engine')
-_conn_pool = None
 
 
-def init_conn_pool(config):
-    global _conn_pool
-    if not _conn_pool:
+class ConnectionPool:
+    pool = None
+
+    def __init__(self, config, min_conn=4, max_conn=12):
         logger.info('Initialising database connection pool')
-        _conn_pool = ThreadedConnectionPool(4, 12, **config)
+        if not ConnectionPool.pool:
+            ConnectionPool.pool = ThreadedConnectionPool(
+                min_conn, max_conn, **config)
 
-
-def close_conn_pool():
-    global _conn_pool
-    if _conn_pool:
+    @staticmethod
+    def close():
         logger.info('Closing database connection pool')
-        _conn_pool.closeall()
-        _conn_pool = None
+        if ConnectionPool.pool:
+            ConnectionPool.pool.closeall()
+        ConnectionPool.pool = None
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
 
 def db_decor(func):
 
     @wraps(func)
     def wrapper(self, sql, *args, **kwargs):
-        assert _conn_pool, 'init_conn_pool should be called first'
+        assert ConnectionPool.pool, "'with ConnectionPool(config):' should be used"
 
         conn = None
         res = []
@@ -42,14 +48,16 @@ def db_decor(func):
             debug_output = sql if not value_getter else value_getter()
             logger.debug(debug_output[:1000])
 
-            with _conn_pool.getconn() as conn:
+            # psycopg commits/rollbacks transaction instead of closing connection on exit from with block
+            # http://initd.org/psycopg/docs/usage.html#with-statement
+            with ConnectionPool.pool.getconn() as conn:
                 with conn.cursor() as curs:
                     self._curs = curs
                     res = func(self, sql, *args, **kwargs)
         except (ProgrammingError, IntegrityError, DataError) as e:
             raise Exception(f'SQL: {sql},\nArgs: {str(args)[:1000]}\n') from e
         finally:
-            _conn_pool.putconn(conn)
+            ConnectionPool.pool.putconn(conn)
         return res
 
     return wrapper

@@ -1,11 +1,11 @@
 import argparse
-import logging
+from functools import partial
 
 from sm.engine.dataset import Dataset
 from sm.engine.es_export import ESExporter
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.mol_db import MolecularDB
-from sm.engine.util import init_loggers, SMConfig
+from sm.engine.util import bootstrap_and_run
 from sm.engine.db import DB
 from sm.engine.off_sample_wrapper import classify_dataset_ion_images
 
@@ -20,12 +20,11 @@ ORDER BY j.ds_id DESC;
 """
 
 
-def run_off_sample(ds_id, sql_where, fix_missing, overwrite_existing):
+def run_off_sample(sm_config, logger, ds_id, sql_where, fix_missing, overwrite_existing):
     assert len([data_source for data_source in [ds_id, sql_where, fix_missing] if data_source]) == 1, \
            "Exactly one data source (ds_id, sql_where, fix_missing) must be specified"
     assert not (ds_id and sql_where)
 
-    conf = SMConfig.get_conf()
     db = DB()
     es_exp = ESExporter(db)
 
@@ -46,7 +45,7 @@ def run_off_sample(ds_id, sql_where, fix_missing, overwrite_existing):
     for i, ds_id in enumerate(ds_ids):
         try:
             logger.info(f'Running off-sample on {i+1} out of {len(ds_ids)}')
-            classify_dataset_ion_images(db, Dataset(id=ds_id), conf['services'], overwrite_existing)
+            classify_dataset_ion_images(db, Dataset(id=ds_id), sm_config['services'], overwrite_existing)
 
             # Reindex dataset
             ds_name, ds_config = db.select_one("select name, config from dataset where id = %s", (ds_id,))
@@ -75,11 +74,9 @@ if __name__ == '__main__':
                         help='Run classification for annotations even if they have already been classified')
     args = parser.parse_args()
 
-    SMConfig.set_path(args.config)
-    init_loggers(SMConfig.get_conf()['logs'])
-    logger = logging.getLogger('engine')
-
-    run_off_sample(ds_id=args.ds_id,
-                   sql_where=args.sql_where,
-                   fix_missing=args.fix_missing,
-                   overwrite_existing=args.overwrite_existing)
+    bootstrap_and_run(args.config,
+                      partial(run_off_sample,
+                              ds_id=args.ds_id,
+                              sql_where=args.sql_where,
+                              fix_missing=args.fix_missing,
+                              overwrite_existing=args.overwrite_existing))

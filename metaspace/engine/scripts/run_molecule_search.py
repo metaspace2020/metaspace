@@ -3,16 +3,27 @@
 Script for running molecule search
 """
 import argparse
-import logging
-import sys
 from pathlib import Path
 
-from sm.engine.db import DB, init_conn_pool, close_conn_pool
+from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.sm_daemons import SMDaemonManager
 from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.util import SMConfig, init_loggers, create_ds_from_files
+from sm.engine.util import create_ds_from_files, bootstrap_and_run
 from sm.engine.annotation_job import AnnotationJob
+
+
+def run_search(sm_config, logger):
+    db = DB()
+    img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
+    manager = SMDaemonManager(db, ESExporter(db), img_store)
+
+    config_path = args.config_path or Path(args.input_path) / 'config.json'
+    meta_path = args.meta_path or Path(args.input_path) / 'meta.json'
+
+    ds = create_ds_from_files(args.ds_id, args.ds_name,
+                              args.input_path, config_path, meta_path)
+    manager.annotate(ds, AnnotationJob, del_first=True)
 
 
 if __name__ == "__main__":
@@ -26,27 +37,4 @@ if __name__ == "__main__":
                         type=str, help='SM config path')
     args = parser.parse_args()
 
-    SMConfig.set_path(args.sm_config_path)
-    sm_config = SMConfig.get_conf()
-    init_loggers(sm_config['logs'])
-
-    try:
-        init_conn_pool(sm_config['db'])
-
-        db = DB()
-        img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
-        manager = SMDaemonManager(db, ESExporter(db), img_store)
-
-        config_path = args.config_path or Path(args.input_path) / 'config.json'
-        meta_path = args.meta_path or Path(args.input_path) / 'meta.json'
-
-        ds = create_ds_from_files(args.ds_id, args.ds_name,
-                                  args.input_path, config_path, meta_path)
-        manager.annotate(ds, AnnotationJob, del_first=True)
-    except Exception as e:
-        logging.getLogger('engine').error(e, exc_info=True)
-        sys.exit(1)
-    finally:
-        close_conn_pool()
-
-    sys.exit()
+    bootstrap_and_run(args.sm_config_path, run_search)
