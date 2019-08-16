@@ -13,7 +13,7 @@ from pysparkling import Context
 import pandas as pd
 import uuid
 
-from sm.engine.db import DB, init_conn_pool, close_conn_pool
+from sm.engine.db import DB, ConnectionPool
 from sm.engine.mol_db import MolecularDB
 from sm.engine.tests.graphql_sql_schema import GRAPHQL_SQL_SCHEMA
 from sm.engine.util import proj_root, SMConfig, init_loggers
@@ -111,10 +111,10 @@ def test_db(request):
 
     autocommit_execute(sm_config['db'], GRAPHQL_SQL_SCHEMA)
 
-    init_conn_pool(sm_config['db'])
+    conn_pool = ConnectionPool(sm_config['db'])
 
     def fin():
-        close_conn_pool()
+        conn_pool.close()
         autocommit_execute(db_config_postgres,
                            'DROP DATABASE IF EXISTS sm_test')
     request.addfinalizer(fin)
