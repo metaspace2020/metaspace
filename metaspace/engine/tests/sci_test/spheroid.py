@@ -1,4 +1,5 @@
 import argparse
+from functools import partial
 from os.path import join
 import os
 import sys
@@ -9,10 +10,10 @@ from fabric.api import local
 from fabric.context_managers import warn_only
 
 from sm.engine.annotation_job import AnnotationJob
-from sm.engine.db import DB, init_conn_pool, close_conn_pool
+from sm.engine.db import DB
 from sm.engine.mol_db import MolDBServiceWrapper
 from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.util import proj_root, SMConfig, create_ds_from_files, init_loggers
+from sm.engine.util import proj_root, SMConfig, create_ds_from_files, bootstrap_and_run
 
 SEARCH_RES_SELECT = ("select m.formula, m.adduct, m.stats "
                      "from annotation m "
@@ -149,6 +150,27 @@ class SciTester(object):
             local('rm -rf {}'.format(self.ds_data_path))
 
 
+def run(sci_tester, mock_img_store, *args):
+    run_search_successful = False
+    search_results_different = False
+    try:
+        sci_tester.run_search(mock_img_store)
+        run_search_successful = True
+        search_results_different = sci_tester.search_results_are_different()
+    except Exception as e:
+        if not run_search_successful:
+            raise Exception('Search was not successful!') from e
+        elif search_results_different:
+            raise Exception('Search was successful but the results are different!') from e
+    finally:
+        sci_tester.clear_data_dirs()
+
+
+def save(sci_tester, *args):
+    if 'y' == input('You are going to replace the reference values. Are you sure? (y/n): '):
+        sci_tester.save_sci_test_report()
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Scientific tests runner')
     parser.add_argument('-r', '--run', action='store_true', help='compare current search results with previous')
@@ -159,34 +181,15 @@ if __name__ == '__main__':
     parser.add_argument('--mock-img-store', action='store_true', help='whether to mock the Image Store Service')
     args = parser.parse_args()
 
-    SMConfig.set_path(args.sm_config_path)
-    sm_config = SMConfig.get_conf()
-    init_loggers(sm_config['logs'])
-
-    try:
-        init_conn_pool(sm_config['db'])
-
-        sci_tester = SciTester(args.sm_config_path)
-
-        if args.run:
-            run_search_successful = False
-            search_results_different = False
-            try:
-                sci_tester.run_search(args.mock_img_store)
-                run_search_successful = True
-                search_results_different = sci_tester.search_results_are_different()
-            except Exception as e:
-                if not run_search_successful:
-                    raise Exception('Search was not successful!') from e
-                elif search_results_different:
-                    raise Exception('Search was successful but the results are different!') from e
-            finally:
-                sci_tester.clear_data_dirs()
-
-        elif args.save:
-            if 'y' == input('You are going to replace the reference values. Are you sure? (y/n): '):
-                sci_tester.save_sci_test_report()
-        else:
-            parser.print_help()
-    finally:
-        close_conn_pool()
+    sci_tester = SciTester(args.sm_config_path)
+    if args.run:
+        bootstrap_and_run(args.sm_config_path,
+                          partial(run,
+                                  sci_tester,
+                                  args.mock_img_store))
+    elif args.save:
+        bootstrap_and_run(args.sm_config_path,
+                          partial(save,
+                                  sci_tester))
+    else:
+        parser.print_help()
