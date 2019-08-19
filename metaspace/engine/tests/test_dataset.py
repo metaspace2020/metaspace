@@ -15,7 +15,7 @@ from sm.engine.tests.util import sm_config, test_db, metadata, ds_config
 def fill_db(test_db, metadata, ds_config):
     upload_dt = '2000-01-01 00:00:00'
     ds_id = '2000-01-01'
-    db = DB(sm_config['db'])
+    db = DB()
     db.insert(('INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, status, '
                'is_public) '
                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'),
@@ -31,7 +31,7 @@ def test_generate_ds_config(metadata, ds_config):
 
 
 def test_dataset_load_existing_ds_works(fill_db, metadata, ds_config):
-    db = DB(sm_config['db'])
+    db = DB()
     upload_dt = datetime.strptime('2000-01-01 00:00:00', '%Y-%m-%d %H:%M:%S')
     ds_id = '2000-01-01'
 
@@ -47,7 +47,7 @@ def test_dataset_load_existing_ds_works(fill_db, metadata, ds_config):
 
 
 def test_dataset_save_overwrite_ds_works(fill_db, metadata, ds_config):
-    db = DB(sm_config['db'])
+    db = DB()
     es_mock = MagicMock(spec=ESExporter)
 
     upload_dt = datetime.now()
@@ -61,7 +61,7 @@ def test_dataset_save_overwrite_ds_works(fill_db, metadata, ds_config):
 
 
 def test_dataset_update_status_works(fill_db, metadata, ds_config):
-    db = DB(sm_config['db'])
+    db = DB()
     es_mock = MagicMock(spec=ESExporter)
 
     upload_dt = datetime.now()

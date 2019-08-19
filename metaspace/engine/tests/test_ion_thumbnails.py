@@ -34,7 +34,7 @@ def _mock_get_ion_images_for_analysis(storage_type, img_ids, **kwargs):
 
 @pytest.mark.parametrize('algorithm', [alg for alg in ALGORITHMS.keys()])
 def test_creates_ion_thumbnail(test_db, algorithm, metadata, ds_config):
-    db = DB(sm_config['db'])
+    db = DB()
     img_store_mock = MagicMock(spec=ImageStoreServiceWrapper)
     img_store_mock.post_image.return_value = IMG_ID
     img_store_mock.get_ion_images_for_analysis.side_effect = _mock_get_ion_images_for_analysis

@@ -1,9 +1,8 @@
 import argparse
-import logging
-from itertools import groupby
+from functools import partial
 
 from sm.engine.mol_db import MolDBServiceWrapper
-from sm.engine.util import init_loggers, SMConfig
+from sm.engine.util import bootstrap_and_run
 from sm.engine.db import DB
 from sm.engine.colocalization import Colocalization
 
@@ -67,21 +66,19 @@ ORDER BY j.ds_id DESC;
 """
 
 
-def run_coloc_jobs(ds_id, sql_where, fix_missing, fix_corrupt, skip_existing):
+def run_coloc_jobs(sm_config, logger, ds_id, sql_where, fix_missing, fix_corrupt, skip_existing):
     assert len([data_source for data_source in [ds_id, sql_where, fix_missing, fix_corrupt] if data_source]) == 1, \
            "Exactly one data source (ds_id, sql_where, fix_missing, fix_corrupt) must be specified"
     assert not (ds_id and sql_where)
 
-    conf = SMConfig.get_conf()
-
-    db = DB(conf['db'])
+    db = DB()
 
     if ds_id:
         ds_ids = ds_id.split(',')
     elif sql_where:
         ds_ids = [id for (id, ) in db.select(f'SELECT DISTINCT dataset.id FROM dataset WHERE {sql_where}')]
     else:
-        mol_db_service = MolDBServiceWrapper(conf['services']['mol_db'])
+        mol_db_service = MolDBServiceWrapper(sm_config['services']['mol_db'])
         mol_dbs = [(db['id'], db['name']) for db in mol_db_service.fetch_all_dbs()]
         mol_db_ids, mol_db_names = map(list, zip(*mol_dbs))
         fdrs = [0.05, 0.1, 0.2, 0.5]
@@ -126,12 +123,10 @@ if __name__ == '__main__':
                         help='Re-run colocalization jobs even if they have already successfully run')
     args = parser.parse_args()
 
-    SMConfig.set_path(args.config)
-    init_loggers(SMConfig.get_conf()['logs'])
-    logger = logging.getLogger('engine')
-
-    run_coloc_jobs(ds_id=args.ds_id,
-                   sql_where=args.sql_where,
-                   fix_missing=args.fix_missing,
-                   fix_corrupt=args.fix_corrupt,
-                   skip_existing=args.skip_existing)
+    bootstrap_and_run(args.config,
+                      partial(run_coloc_jobs,
+                              ds_id=args.ds_id,
+                              sql_where=args.sql_where,
+                              fix_missing=args.fix_missing,
+                              fix_corrupt=args.fix_corrupt,
+                              skip_existing=args.skip_existing))

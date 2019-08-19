@@ -35,7 +35,7 @@ def create_ds(ds_id='2000-01-01', ds_name='ds_name', input_path='input_path', up
 
 
 def create_daemon_man(db=None, es=None, img_store=None, status_queue=None):
-    db = db or DB(sm_config['db'])
+    db = db or DB()
     es_mock = es or MagicMock(spec=ESExporter)
     status_queue_mock = status_queue or MagicMock(QueuePublisher)
     img_store_mock = img_store or MagicMock(spec=ImageStoreServiceWrapper)
@@ -57,26 +57,23 @@ class TestSMDaemonDatasetManager:
     @patch('sm.engine.mol_db.MolDBServiceWrapper.find_db_by_name_version', return_value=[mol_db_mock])
     def test_annotate_ds(self, find_db_by_name_version_mock, test_db, metadata, ds_config):
         es_mock = MagicMock(spec=ESExporter)
-        db = DB(sm_config['db'])
-        try:
-            manager = create_daemon_man(db=db, es=es_mock)
+        db = DB()
+        manager = create_daemon_man(db=db, es=es_mock)
 
-            ds_id = '2000-01-01'
-            ds_name = 'ds_name'
-            input_path = 'input_path'
-            upload_dt = datetime.now()
-            ds = create_ds(ds_id=ds_id, ds_name=ds_name, input_path=input_path,
-                           upload_dt=upload_dt, metadata=metadata)
+        ds_id = '2000-01-01'
+        ds_name = 'ds_name'
+        input_path = 'input_path'
+        upload_dt = datetime.now()
+        ds = create_ds(ds_id=ds_id, ds_name=ds_name, input_path=input_path,
+                       upload_dt=upload_dt, metadata=metadata)
 
-            manager.annotate(ds, annotation_job_factory=self.SearchJob)
+        manager.annotate(ds, annotation_job_factory=self.SearchJob)
 
-            DS_SEL = 'select name, input_path, upload_dt, metadata, config from dataset where id=%s'
-            results = db.select_one(DS_SEL, params=(ds_id,))
-            assert results[3] == metadata
-            assert results[4] == ds_config
-            # assert db.select_one(DS_SEL, params=(ds_id,)) == (ds_name, input_path, upload_dt, metadata, ds_config)
-        finally:
-            db.close()
+        DS_SEL = 'select name, input_path, upload_dt, metadata, config from dataset where id=%s'
+        results = db.select_one(DS_SEL, params=(ds_id,))
+        assert results[3] == metadata
+        assert results[4] == ds_config
+        # assert db.select_one(DS_SEL, params=(ds_id,)) == (ds_name, input_path, upload_dt, metadata, ds_config)
 
     def test_index_ds(self, fill_db, metadata):
         es_mock = MagicMock(spec=ESExporter)
@@ -96,7 +93,7 @@ class TestSMDaemonDatasetManager:
             assert ds_id in call_args and molecular_db_mock in call_args
 
     def test_delete_ds(self, fill_db):
-        db = DB(sm_config['db'])
+        db = DB()
         es_mock = MagicMock(spec=ESExporter)
         img_store_service_mock = MagicMock(spec=ImageStoreServiceWrapper)
         manager = create_daemon_man(db=db, es=es_mock, img_store=img_store_service_mock)

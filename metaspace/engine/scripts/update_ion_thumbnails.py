@@ -1,18 +1,15 @@
 import argparse
-import logging
+from functools import partial
 
 from sm.engine.ion_thumbnail import DEFAULT_ALGORITHM, ALGORITHMS, generate_ion_thumbnail
 from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.util import init_loggers, SMConfig
+from sm.engine.util import bootstrap_and_run
 from sm.engine.db import DB
 
 
-def run(ds_id, sql_where, algorithm):
-
-    conf = SMConfig.get_conf()
-
-    db = DB(conf['db'])
-    img_store = ImageStoreServiceWrapper(conf['services']['img_service_url'])
+def run(sm_config, logger, ds_id, sql_where, algorithm):
+    db = DB()
+    img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
 
     if sql_where:
         ds_ids = [id for (id, ) in db.select(f'SELECT DISTINCT dataset.id FROM dataset WHERE {sql_where}')]
@@ -47,8 +44,8 @@ if __name__ == '__main__':
         print('error: must specify either --ds-id or --sql-where')
         exit(1)
 
-    SMConfig.set_path(args.config)
-    init_loggers(SMConfig.get_conf()['logs'])
-    logger = logging.getLogger('engine')
-
-    run(args.ds_id, args.sql_where, args.algorithm)
+    bootstrap_and_run(args.config,
+                      partial(run,
+                              ds_id=args.ds_id,
+                              sql_where=args.sql_where,
+                              algorithm=args.algorithm))

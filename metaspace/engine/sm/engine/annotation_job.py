@@ -42,7 +42,7 @@ class AnnotationJob(object):
         self._img_store = img_store
 
         self._sc = None
-        self._db = None
+        self._db = DB()
         self._ds = None
         self._status_queue = None
         self._es = None
@@ -66,10 +66,6 @@ class AnnotationJob(object):
             sconf.set("spark.hadoop.fs.s3a.endpoint", "s3.{}.amazonaws.com".format(self._sm_config['aws']['aws_region']))
 
         self._sc = SparkContext(master=self._sm_config['spark']['master'], conf=sconf, appName='SM engine')
-
-    def _init_db(self):
-        logger.info('Connecting to the DB')
-        self._db = DB(self._sm_config['db'])
 
     def _store_job_meta(self, mol_db_id):
         """ Store search job metadata in the database """
@@ -168,8 +164,6 @@ class AnnotationJob(object):
     def cleanup(self):
         if self._sc:
             self._sc.stop()
-        if self._db:
-            self._db.close()
         logger.debug(f'Cleaning dataset temp dir {self._ds_data_path}')
         rmtree(self._ds_data_path, ignore_errors=True)
 
@@ -189,7 +183,6 @@ class AnnotationJob(object):
             logger.info('*' * 150)
             start = time.time()
 
-            self._init_db()
             self._es = ESExporter(self._db)
             self._ds = ds
 

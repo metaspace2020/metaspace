@@ -3,11 +3,11 @@ import argparse
 import logging
 import signal
 
-from sm.engine.db import DB
+from sm.engine.db import DB, ConnectionPool
 from sm.engine.es_export import ESExporter
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.sm_daemons import SMAnnotateDaemon, SMDaemonManager, SMIndexUpdateDaemon
-from sm.engine.queue import SM_ANNOTATE, SM_UPDATE, SM_DS_STATUS, QueuePublisher
+from sm.engine.queue import SM_ANNOTATE, SM_UPDATE, SM_DS_STATUS, QueuePublisher, QueueConsumer
 from sm.engine.util import SMConfig, init_loggers
 
 
@@ -21,11 +21,12 @@ if __name__ == "__main__":
     SMConfig.set_path(args.config_path)
     sm_config = SMConfig.get_conf()
     init_loggers(sm_config['logs'])
-    logger = logging.getLogger(f'{args.name}-daemon')
-    logger.info(f'Starting {args.name}-daemon')
+    daemon_name = args.name
+    logger = logging.getLogger(f'{daemon_name}-daemon')
+    logger.info(f'Starting {daemon_name}-daemon')
 
     def get_manager():
-        db = DB(sm_config['db'])
+        db = DB()
         status_queue_pub = QueuePublisher(config=sm_config['rabbitmq'],
                                           qdesc=SM_DS_STATUS,
                                           logger=logger)
@@ -34,6 +35,9 @@ if __name__ == "__main__":
             img_store=ImageStoreServiceWrapper(sm_config['services']['img_service_url']),
             status_queue=status_queue_pub,
             logger=logger)
+
+    conn_pool = ConnectionPool(sm_config['db'])
+
     daemons = []
     if args.name == 'annotate':
         daemons.append(SMAnnotateDaemon(manager=get_manager(),
@@ -48,8 +52,10 @@ if __name__ == "__main__":
         raise Exception(f'Wrong SM daemon name: {args.name}')
 
     def stop_daemons(*args):
+        logger.info(f'Stopping {daemon_name}-daemon')
         for d in daemons:
             d.stop()
+        conn_pool.close()
 
     signal.signal(signal.SIGINT, stop_daemons)
     signal.signal(signal.SIGTERM, stop_daemons)

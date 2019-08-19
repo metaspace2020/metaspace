@@ -169,7 +169,7 @@ def test_sm_daemons(MSMSearchMock,
         2: url_dict,
     }
 
-    db = DB(sm_config['db'])
+    db = DB()
     es = ESExporter(db)
 
     try:
@@ -237,7 +237,6 @@ def test_sm_daemons(MSMSearchMock,
             assert doc['_id'].startswith(ds_id)
 
     finally:
-        db.close()
         with warn_only():
             local('rm -rf {}'.format(data_dir_path))
 
@@ -269,7 +268,7 @@ def test_sm_daemons_annot_fails(MSMSearchMock,
         2: url_dict
     }
 
-    db = DB(sm_config['db'])
+    db = DB()
     es = ESExporter(db)
 
     try:
@@ -287,7 +286,6 @@ def test_sm_daemons_annot_fails(MSMSearchMock,
         assert len(row) == 1
         assert row[0] == 'FAILED'
     finally:
-        db.close()
         with warn_only():
             local('rm -rf {}'.format(data_dir_path))
 
@@ -334,7 +332,7 @@ def test_sm_daemon_es_export_fails(MSMSearchMock,
         2: url_dict,
     }
 
-    db = DB(sm_config['db'])
+    db = DB()
     annotate_daemon = None
     update_daemon = None
 
@@ -360,7 +358,6 @@ def test_sm_daemon_es_export_fails(MSMSearchMock,
         row = db.select_one('SELECT status from dataset')
         assert row[0] == 'FAILED'
     finally:
-        db.close()
         if annotate_daemon:
             annotate_daemon.stop()
         if update_daemon:

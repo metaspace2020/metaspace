@@ -1,74 +1,77 @@
 import logging
 from functools import wraps
-from weakref import WeakSet
 
 from psycopg2.extras import execute_values
 import psycopg2.extensions
+from psycopg2.pool import ThreadedConnectionPool
+from psycopg2 import ProgrammingError, IntegrityError, DataError
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
-
 logger = logging.getLogger('engine')
+
+
+class ConnectionPool:
+    pool = None
+
+    def __init__(self, config, min_conn=4, max_conn=12):
+        logger.info('Initialising database connection pool')
+        if not ConnectionPool.pool:
+            ConnectionPool.pool = ThreadedConnectionPool(
+                min_conn, max_conn, **config)
+
+    @staticmethod
+    def close():
+        logger.info('Closing database connection pool')
+        if ConnectionPool.pool:
+            ConnectionPool.pool.closeall()
+        ConnectionPool.pool = None
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
 
 def db_decor(func):
 
     @wraps(func)
-    def wrapper(self, *args, **kwargs):
+    def wrapper(self, sql, *args, **kwargs):
+        assert ConnectionPool.pool, "'with ConnectionPool(config):' should be used"
+
+        conn = None
         res = []
         try:
             # for cases when SQL queries are written to StringIO
-            value_getter = getattr(args[0], 'getvalue', None)
-            debug_output = args[0] if not value_getter else value_getter()
+            value_getter = getattr(sql, 'getvalue', None)
+            debug_output = sql if not value_getter else value_getter()
             logger.debug(debug_output[:1000])
-            res = func(self, *args, **kwargs)
-        except Exception as e:
-            # logger.error('SQL: %s,\nArgs: %s', args[0], str(args[1:])[:1000], exc_info=False)
-            self.conn.rollback()
-            raise Exception('SQL: {},\nArgs: {}\nError: {}'.format(args[0], str(args[1:])[:1000], e.args[0]))
-        else:
-            self.conn.commit()
+
+            # psycopg commits/rollbacks transaction instead of closing connection on exit from with block
+            # http://initd.org/psycopg/docs/usage.html#with-statement
+            with ConnectionPool.pool.getconn() as conn:
+                with conn.cursor() as curs:
+                    self._curs = curs
+                    res = func(self, sql, *args, **kwargs)
+        except (ProgrammingError, IntegrityError, DataError) as e:
+            raise Exception(f'SQL: {sql},\nArgs: {str(args)[:1000]}\n') from e
         finally:
-            if self.curs:
-                self.curs.close()
+            ConnectionPool.pool.putconn(conn)
         return res
 
     return wrapper
 
 
 class DB(object):
-    """ Postgres database access provider
+    """Postgres database access provider."""
 
-    Args
-    ----------
-    config : dict
-        database access parameters
-    autocommit : bool
-        enable non-transactional client mode
-    """
-    _dbs = WeakSet()
-
-    def __init__(self, config, autocommit=False):
-        self.conn = psycopg2.connect(**config)
-        if autocommit:
-            self.conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-        self.curs = None
-        DB._dbs.add(self)
-
-    def close(self):
-        """ Close the connection to the database """
-        self.conn.close()
-        DB._dbs.discard(self)
-
-    @classmethod
-    def close_all(cls):
-        for db in list(cls._dbs):
-            db.close()
+    def __init__(self):
+        self._curs = None
 
     def _select(self, sql, params=None):
-        self.curs = self.conn.cursor()
-        self.curs.execute(sql, params) if params else self.curs.execute(sql)
-        return self.curs.fetchall()
+        self._curs.execute(sql, params) if params else self._curs.execute(sql)
+        return self._curs.fetchall()
 
     @db_decor
     def select(self, sql, params=None):
@@ -90,9 +93,10 @@ class DB(object):
     @db_decor
     def select_with_fields(self, sql, params):
         rows = self._select(sql, params)
-        fields = [desc[0] for desc in self.curs.description]
+        fields = [desc[0] for desc in self._curs.description]
         return [dict(zip(fields, row)) for row in rows]
 
+    @db_decor
     def select_one(self, sql, params=None):
         """ Execute select query and take the first row
 
@@ -122,8 +126,7 @@ class DB(object):
         rows : list
             list of tuples as table rows
         """
-        self.curs = self.conn.cursor()
-        self.curs.executemany(sql, rows)
+        self._curs.executemany(sql, rows)
 
     @db_decor
     def insert_return(self, sql, rows=None):
@@ -140,11 +143,10 @@ class DB(object):
         : list
             inserted ids
         """
-        self.curs = self.conn.cursor()
         ids = []
         for row in rows:
-            self.curs.execute(sql, row)
-            ids.append(self.curs.fetchone()[0])
+            self._curs.execute(sql, row)
+            ids.append(self._curs.fetchone()[0])
         return ids
 
     @db_decor
@@ -158,8 +160,7 @@ class DB(object):
         params :
             query parameters for placeholders
         """
-        self.curs = self.conn.cursor()
-        self.curs.execute(sql, params)
+        self._curs.execute(sql, params)
 
     @db_decor
     def alter_many(self, sql, rows=None):
@@ -172,7 +173,7 @@ class DB(object):
         rows:
             Iterable of query parameters for placeholders
         """
-        execute_values(self.conn.cursor(), sql, rows)
+        execute_values(self._curs, sql, rows)
 
     @db_decor
     def copy(self, inp_file, table, sep='\t', columns=None):
@@ -189,5 +190,4 @@ class DB(object):
         columns : list
             column names to insert into
         """
-        self.curs = self.conn.cursor()
-        self.curs.copy_from(inp_file, table=table, sep=sep, columns=columns)
+        self._curs.copy_from(inp_file, table=table, sep=sep, columns=columns)
