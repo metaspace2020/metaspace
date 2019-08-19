@@ -2,6 +2,7 @@
 import argparse
 import logging
 import signal
+from functools import partial
 
 from sm.engine.db import DB, ConnectionPool
 from sm.engine.es_export import ESExporter

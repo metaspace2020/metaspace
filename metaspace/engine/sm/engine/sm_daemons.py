@@ -1,4 +1,5 @@
 import json
+import traceback
 import urllib.parse
 from pathlib import Path
 
@@ -16,11 +17,10 @@ from sm.rest.dataset_manager import DatasetActionPriority
 from sm.engine.errors import UnknownDSID, IndexUpdateError, AnnotationError, ImzMLError
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.mol_db import MolecularDB
-from sm.engine.queue import SM_DS_STATUS, QueueConsumer
+from sm.engine.queue import QueueConsumer
 from sm.engine.util import SMConfig
 from sm.engine.queue import QueuePublisher
 from sm.engine.dataset import Dataset, DatasetStatus
-from sm.engine.db import DB
 
 
 class DatasetManager(object):
@@ -224,6 +224,7 @@ class SMAnnotateDaemon(object):
         self.logger.info(f" SM annotate daemon: success")
 
         ds = self._manager.load_ds(msg['ds_id'])
+        self._manager.set_ds_status(ds, DatasetStatus.FINISHED)
         self._manager.notify_update(ds.id, msg['action'],
                                     DaemonActionStage.FINISHED)
 
@@ -234,7 +235,7 @@ class SMAnnotateDaemon(object):
         self.logger.error(f" SM annotate daemon: failure", exc_info=True)
 
         ds = self._manager.load_ds(msg['ds_id'])
-        self._manager.set_ds_status(ds, DatasetStatus.ANNOTATING)
+        self._manager.set_ds_status(ds, DatasetStatus.FAILED)
         self._manager.notify_update(ds.id, msg['action'],
                                     DaemonActionStage.FAILED)
 
@@ -279,7 +280,6 @@ class SMAnnotateDaemon(object):
                 }
                 self._update_queue_pub.publish(msg=analyze_msg, priority=DatasetActionPriority.LOW)
         except Exception as e:
-            import traceback
             raise AnnotationError(ds_id=msg['ds_id'],
                                   traceback=traceback.format_exc(chain=False)) from e
 
