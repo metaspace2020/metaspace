@@ -818,6 +818,7 @@ class SMInstance(object):
 
     def top_hits(self, datasets, adduct=None, size=100):
         """
+        NOT AVAILABLE ON THE PUBLIC METASPACE INSTANCE
         Returns (sum formula, adduct) pairs with highest average MSM scores
         across multiple datasets. Looks for all adducts by default
         """
@@ -838,12 +839,14 @@ class SMInstance(object):
 
     def msm_scores(self, datasets, sf_adduct_pairs, db_name="HMDB-v4"):
         """
+        NOT AVAILABLE ON THE PUBLIC METASPACE INSTANCE
         Returns a dataframe of MSM scores for multiple datasets and (sum formula, adduct) pairs.
         """
         return self.get_tables(datasets, sf_adduct_pairs, ['msm'], db_name)['msm']
 
     def get_tables(self, datasets, sf_adduct_pairs, fields=['msm', 'fdr'], db_name="HMDB-v4"):
         """
+        NOT AVAILABLE ON THE PUBLIC METASPACE INSTANCE
         Returns dataframe-valued dictionaries of MSM scores
         for multiple datasets and (sum formula, adduct) pairs.
         """

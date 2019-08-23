@@ -12,8 +12,6 @@ setup(
     author='Alexandrov Team, EMBL',
     packages=find_packages(),
     install_requires=[
-        'elasticsearch==5.4.0',
-        'elasticsearch_dsl==5.3.0',
         'pandas',
         'plotly>=1.12',
         'numpy',
