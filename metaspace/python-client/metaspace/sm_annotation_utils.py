@@ -169,6 +169,13 @@ class GraphQLClient(object):
         }
     """
 
+    DEFAULT_ANNOTATION_FILTER = {
+        'database': 'HMDB-v4',
+        'hasNeutralLoss': False,
+        'hasChemMod': False,
+        'hasHiddenAdduct': False,
+    }
+
     def getDataset(self, datasetId):
         query = """
         query datasetInfo($id: String!) {
@@ -226,8 +233,8 @@ class GraphQLClient(object):
           }
         }"""
         annotFilter = deepcopy(annotationFilter)
-        if 'database' not in annotFilter:
-            annotFilter['database'] = "HMDB-v4"
+        for key, val in self.DEFAULT_ANNOTATION_FILTER.items():
+            annotFilter.setdefault(key, val)
         return self.listQuery('allAnnotations', query,
                               {'filter': annotFilter, 'dFilter': datasetFilter})
 
