@@ -37,16 +37,18 @@ class GraphQLClient(object):
         self.host = self._config['host']
         self.session = requests.Session()
         self.session.verify = self._config['verify_certificate']
-        self.res = self.session.post(self._config['signin_url'], params={
-            "email": self._config['usr_email'],
-            "password": self._config['usr_pass']
-        })
-        if self.res.status_code == 401:
-            print('Unauthorized. Only public but not private datasets will be accessible.')
-        elif self.res.status_code == 200:
-            print('Authorized.')
-        elif self.res.status_code != 200:
-            self.res.raise_for_status()
+        self.logged_in = False
+        if self._config['usr_email']:
+            login_res = self.session.post(self._config['signin_url'], params={
+                "email": self._config['usr_email'],
+                "password": self._config['usr_pass']
+            })
+            if login_res.status_code == 401:
+                print('Login failed. Only public datasets will be accessible.')
+            elif login_res.status_code:
+                self.logged_in = True
+            else:
+                login_res.raise_for_status()
 
 
     def query(self, query, variables={}):
@@ -177,7 +179,11 @@ class GraphQLClient(object):
         """
         match = self.query(query, {'id': datasetId})['dataset']
         if not match:
-            raise DatasetNotFound("search by id for {}".format(datasetId))
+            if self.logged_in:
+                raise DatasetNotFound("No dataset found with id {}.".format(datasetId))
+            else:
+                raise DatasetNotFound("No dataset found with id {}. You are not logged in. "
+                                      "If the dataset is set to private, you need to log in to access it.".format(datasetId))
         else:
             return match
 
@@ -191,7 +197,11 @@ class GraphQLClient(object):
         """
         matches = self.query(query, {'filter': {'name': datasetName}})['allDatasets']
         if not matches:
-            raise DatasetNotFound("search by name for {}".format(datasetName))
+            if self.logged_in:
+                raise DatasetNotFound("No dataset found with name '{}'.".format(datasetName))
+            else:
+                raise DatasetNotFound("No dataset found with name '{}'. You are not logged in. "
+                                      "If the dataset is set to private, you need to log in to access it.".format(datasetName))
         elif len(matches) > 1:
             print('Found datasets:')
             for dataset in matches:
@@ -636,7 +646,7 @@ class SMInstance(object):
         self._config['usr_email'] = email
         self._config['usr_pass'] = password
         self.reconnect()
-        return self._gqclient.res.status_code == 200
+        return self._gqclient.logged_in
 
     def reconnect(self):
         self._gqclient = GraphQLClient(self._config)
