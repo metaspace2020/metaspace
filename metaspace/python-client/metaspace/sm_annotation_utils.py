@@ -892,7 +892,11 @@ class SMInstance(object):
         :param folder_uuid: a unique key for the dataset
         :return: 
         """
-        import boto3
+        try:
+            import boto3
+        except ImportError:
+            raise ImportError('Please install boto3 to use the submit_dataset function')
+
         s3 = boto3.client('s3')
         buckets = s3.list_buckets()
         if not s3bucket in [b['Name'] for b in buckets['Buckets']]:

@@ -15,10 +15,8 @@ setup(
         'pandas',
         'plotly>=1.12',
         'numpy',
-        'pyyaml',
         'matplotlib',
         'pyMSpec',
-        'boto3',
         'pillow',
     ],
     classifiers=[
