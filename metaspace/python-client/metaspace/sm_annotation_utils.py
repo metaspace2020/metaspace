@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
 import numpy as np
-import requests, json, re, os, boto3, pprint
+import requests, json, re, os, pprint
 from copy import deepcopy
 from io import BytesIO
 from PIL import Image
@@ -847,6 +847,7 @@ class SMInstance(object):
         :param folder_uuid: a unique key for the dataset
         :return: 
         """
+        import boto3
         s3 = boto3.client('s3')
         buckets = s3.list_buckets()
         if not s3bucket in [b['Name'] for b in buckets['Buckets']]:
