@@ -84,37 +84,34 @@ class AnnotationJob(object):
 
     def _run_annotation_jobs(self, imzml_parser, moldb_ids):
         if moldb_ids:
-            job_ids = []
-            try:
-                moldbs = [MolecularDB(id=id, db=self._db, iso_gen_config=self._ds.config['isotope_generation'])
-                          for id in moldb_ids]
-                n_peaks = self._ds.config['isotope_generation']['n_peaks']
-                logger.info("Running new job ds_id: %s, ds_name: %s, mol dbs: %s",
-                            self._ds.id, self._ds.name, moldbs)
+            moldbs = [MolecularDB(id=id, db=self._db, iso_gen_config=self._ds.config['isotope_generation'])
+                      for id in moldb_ids]
+            n_peaks = self._ds.config['isotope_generation']['n_peaks']
+            logger.info("Running new job ds_id: %s, ds_name: %s, mol dbs: %s",
+                        self._ds.id, self._ds.name, moldbs)
 
-                # FIXME: record runtime of dataset not jobs
-                job_ids = [self._store_job_meta(moldb.id) for moldb in moldbs]
+            # FIXME: record runtime of dataset not jobs
+            job_ids = [self._store_job_meta(moldb.id) for moldb in moldbs]
 
-                search_alg = MSMSearch(sc=self._sc, imzml_parser=imzml_parser, moldbs=moldbs,
-                                       ds_config=self._ds.config, ds_data_path=self._ds_data_path)
-                search_results_it = search_alg.search()
+            search_alg = MSMSearch(sc=self._sc, imzml_parser=imzml_parser, moldbs=moldbs,
+                                   ds_config=self._ds.config, ds_data_path=self._ds_data_path)
+            search_results_it = search_alg.search()
 
-                for job_id, (moldb, moldb_ion_metrics_df, moldb_ion_images_rdd) in zip(job_ids, search_results_it):
-                    # Save results for each moldb
+            for job_id, (moldb, moldb_ion_metrics_df, moldb_ion_images_rdd) in zip(job_ids, search_results_it):
+                # Save results for each moldb
+                job_status = JobStatus.FAILED
+                try:
                     search_results = SearchResults(job_id, METRICS.keys(), n_peaks)
                     img_store_type = self._ds.get_ion_img_storage_type(self._db)
                     coordinates = [coo[:2] for coo in imzml_parser.coordinates]
                     sample_area_mask = make_sample_area_mask(coordinates)
                     search_results.store(moldb_ion_metrics_df, moldb_ion_images_rdd, sample_area_mask,
                                          self._db, self._img_store, img_store_type)
-                    self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FINISHED,
+                    job_status = JobStatus.FINISHED
+                finally:
+                    self._db.alter(JOB_UPD_STATUS_FINISH, params=(job_status,
                                                                   datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                                                                   job_id))
-            except Exception as e:
-                self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FAILED,
-                                                              datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                                                              job_ids[0]))
-                raise
 
     def _remove_annotation_jobs(self, moldb_ids):
         for id in moldb_ids:

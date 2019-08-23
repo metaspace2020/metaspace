@@ -72,7 +72,11 @@ class SMapiDatasetManager(object):
                      is_public=doc.get('is_public'),
                      status=DatasetStatus.QUEUED)
         ds.save(self._db, self._es)
-        ds.notify_update(self._status_queue, DaemonAction.ANNOTATE, DaemonActionStage.QUEUED, is_new=is_new)
+        self._status_queue.publish({
+            'ds_id': ds.id,
+            'action': DaemonAction.ANNOTATE,
+            'stage': DaemonActionStage.QUEUED
+        })
 
         self._post_sm_msg(ds=ds, queue=self._annot_queue, action=DaemonAction.ANNOTATE, **kwargs)
         return doc['id']

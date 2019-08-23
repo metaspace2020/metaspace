@@ -3,7 +3,7 @@ from unittest.mock import call
 from unittest.mock import patch, MagicMock
 from datetime import datetime
 
-from sm.engine.sm_daemons import SMDaemonManager
+from sm.engine.sm_daemons import DatasetManager
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.queue import QueuePublisher
@@ -40,9 +40,9 @@ def create_daemon_man(db=None, es=None, img_store=None, status_queue=None):
     status_queue_mock = status_queue or MagicMock(QueuePublisher)
     img_store_mock = img_store or MagicMock(spec=ImageStoreServiceWrapper)
 
-    return SMDaemonManager(db=db, es=es_mock,
-                           img_store=img_store_mock,
-                           status_queue=status_queue_mock)
+    return DatasetManager(db=db, es=es_mock,
+                          img_store=img_store_mock,
+                          status_queue=status_queue_mock)
 
 
 class TestSMDaemonDatasetManager:

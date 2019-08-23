@@ -74,22 +74,6 @@ def test_dataset_update_status_works(fill_db, metadata, ds_config):
     assert DatasetStatus.FINISHED == Dataset.load(db, ds_id).status
 
 
-def test_dataset_notify_update_works(fill_db, metadata, ds_config):
-    status_queue_mock = MagicMock(spec=QueuePublisher)
-
-    upload_dt = datetime.now()
-    ds_id = '2000-01-01'
-    ds = Dataset(id=ds_id, name='ds_name', input_path='input_path', upload_dt=upload_dt,
-                 metadata=metadata, config=ds_config, status=DatasetStatus.FINISHED)
-
-    ds.notify_update(status_queue_mock, DaemonAction.ANNOTATE, DaemonActionStage.FINISHED)
-
-    status_queue_mock.publish.assert_called_once_with({'ds_id': ds_id,
-                                                       'status': DatasetStatus.FINISHED,
-                                                       'action': DaemonAction.ANNOTATE,
-                                                       'stage': DaemonActionStage.FINISHED})
-
-
 def test_dataset_to_queue_message_works(metadata, ds_config):
     upload_dt = datetime.now()
     ds_id = '2000-01-01'
