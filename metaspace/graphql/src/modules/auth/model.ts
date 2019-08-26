@@ -12,23 +12,27 @@ export class Credentials {
   @Column({ type: 'text', nullable: true })
   hash: string | null;
 
-  @Column({ type: 'text', name: 'google_id', nullable: true })
+  @Column({ type: 'text', nullable: true })
   googleId: string | null;
 
-  @Column({ type: 'text', name: 'email_verification_token', nullable: true })
+  @Column({ type: 'text', nullable: true })
   emailVerificationToken: string | null;
 
-  @Column({ type: 'timestamp without time zone', name: 'email_verification_token_expires',
+  @Column({ type: 'timestamp without time zone',
     nullable: true, transformer: new MomentValueTransformer() })
   emailVerificationTokenExpires?: Moment | null;
 
-  @Column({ type: 'boolean', name: 'email_verified', default: false })
+  @Column({ type: 'boolean', default: false })
   emailVerified: boolean;
 
-  @Column({ type: 'text', name: 'reset_password_token', nullable: true })
+  @Column({ type: 'text', nullable: true })
   resetPasswordToken: string | null;
 
-  @Column({ type: 'timestamp without time zone', name: 'reset_password_token_expires',
+  @Column({ type: 'timestamp without time zone',
     nullable: true, transformer: new MomentValueTransformer() })
   resetPasswordTokenExpires: Moment | null;
 }
+
+export const AUTH_ENTITIES = [
+  Credentials,
+];

@@ -5,7 +5,8 @@ import {Credentials} from '../modules/auth/model';
 import {testEntityManager, userContext} from './graphqlTestEnvironment';
 import {Project, UserProject, UserProjectRoleOptions as UPRO} from '../modules/project/model';
 import {UserProjectRole} from '../binding';
-import {Dataset, EngineDataset} from '../modules/dataset/model';
+import {Dataset} from '../modules/dataset/model';
+import {EngineDataset} from '../modules/engine/model';
 
 
 export const createTestUser = async (user?: Partial<User>): Promise<User> => {

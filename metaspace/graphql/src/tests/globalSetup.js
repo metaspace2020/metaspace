@@ -53,5 +53,7 @@ module.exports = async () => {
   await knex.destroy();
 
   // Create a TypeORM connection just to apply migrations, so that parallel tests don't conflict during initialization
-  await (await createConnection()).close();
+  const conn = await createConnection();
+  await conn.runMigrations();
+  await conn.close();
 };
