@@ -9,7 +9,7 @@ import pandas as pd
 import random
 
 from sm.engine.dataset_locker import DatasetLocker
-from sm.engine.formula_parser import format_ion_formula
+from sm.engine.formula_parser import format_ion_formula, safe_generate_ion_formula
 from sm.engine.util import SMConfig
 
 logger = logging.getLogger('engine')
@@ -367,6 +367,7 @@ class ESExporter(object):
                     formula, doc['chem_mod'], doc['neutral_loss'], doc['adduct']
                 )
                 doc['ion'] = ion_without_pol + doc['polarity']
+                doc['ion_formula'] = safe_generate_ion_formula(formula, doc['chem_mod'], doc['neutral_loss'], doc['adduct'])
                 doc['comp_ids'], doc['comp_names'] = mol_by_formula[formula]
                 mzs, _ = isocalc.centroids(ion_without_pol)
                 doc['centroid_mzs'] = list(mzs)
