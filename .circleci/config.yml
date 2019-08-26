@@ -308,7 +308,7 @@ workflows:
       - test-engine:
           requires:
             - generate-graphql-schema
-#      - test-engine-sci  # uncomment for debugging
+      - test-engine-sci  # uncomment for debugging
 #      - test-graphql
       - test-webapp:
           requires:

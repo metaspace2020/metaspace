@@ -25,9 +25,8 @@ SEARCH_RES_SELECT = ("select m.formula, m.adduct, m.stats "
 
 class SciTester(object):
 
-    def __init__(self, sm_config_path):
-        self.sm_config_path = sm_config_path
-        self.sm_config = SMConfig.get_conf()
+    def __init__(self, sm_config):
+        self.sm_config = sm_config
         self.db = DB()
 
         self.ds_id = '2000-01-01_00h00m00s'
@@ -150,7 +149,8 @@ class SciTester(object):
             local('rm -rf {}'.format(self.ds_data_path))
 
 
-def run(sci_tester, mock_img_store, *args):
+def run(mock_img_store, sm_config, *args):
+    sci_tester = SciTester(sm_config)
     run_search_successful = False
     search_results_different = False
     try:
@@ -166,9 +166,9 @@ def run(sci_tester, mock_img_store, *args):
         sci_tester.clear_data_dirs()
 
 
-def save(sci_tester, *args):
+def save(sm_config, *args):
     if 'y' == input('You are going to replace the reference values. Are you sure? (y/n): '):
-        sci_tester.save_sci_test_report()
+        SciTester(sm_config).save_sci_test_report()
 
 
 if __name__ == '__main__':
@@ -181,15 +181,11 @@ if __name__ == '__main__':
     parser.add_argument('--mock-img-store', action='store_true', help='whether to mock the Image Store Service')
     args = parser.parse_args()
 
-    sci_tester = SciTester(args.sm_config_path)
     if args.run:
         bootstrap_and_run(args.sm_config_path,
                           partial(run,
-                                  sci_tester,
                                   args.mock_img_store))
     elif args.save:
-        bootstrap_and_run(args.sm_config_path,
-                          partial(save,
-                                  sci_tester))
+        bootstrap_and_run(args.sm_config_path, save)
     else:
         parser.print_help()
