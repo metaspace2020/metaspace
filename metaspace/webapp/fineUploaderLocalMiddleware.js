@@ -18,7 +18,7 @@ function combineChunks(req, res) {
   let filenames = [];
   for (let i = 0; i < req.body.qqtotalparts; i++)
     filenames.push(directory(req) + "/" + filename(req, i));
-  console.log('combine', filenames);
+  // console.log('combine', filenames);
   concat(filenames,
          directory(req) + "/" + req.body.qqfilename,
          function(err) {
@@ -26,7 +26,7 @@ function combineChunks(req, res) {
              res.json({'error': 'failed to combine chunks'});
            else {
              for (let fn of filenames)
-               fs.unlink(fn, console.log);
+               fs.unlink(fn, (err) => { if(err) console.error(err); });
              res.send(200);
            }
          });
@@ -56,9 +56,9 @@ function fineUploaderLocalMiddleware(options) {
 
   router.post('/', function (req, res) {
     upload(req, res, function (err) {
-      console.log('upload', req.body);
+      // console.log('upload', req.body);
       if (err) {
-        console.log(err);
+        console.error(err);
         // TODO specify error
         res.json({success: false});
       } else {
