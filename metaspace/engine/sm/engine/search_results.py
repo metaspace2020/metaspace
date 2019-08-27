@@ -5,11 +5,15 @@ import logging
 from sm.engine.png_generator import PngGenerator
 
 logger = logging.getLogger('engine')
-METRICS_INS = ('INSERT INTO annotation (job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids) '
-               'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)')
+METRICS_INS = (
+    'INSERT INTO annotation (job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids) '
+    'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'
+)
 
 
-def post_images_to_image_store(formula_images_rdd, alpha_channel, img_store, img_store_type, n_peaks):
+def post_images_to_image_store(
+    formula_images_rdd, alpha_channel, img_store, img_store_type, n_peaks
+):
     logger.info('Posting iso images to {}'.format(img_store))
     png_generator = PngGenerator(alpha_channel, greyscale=True)
 
@@ -34,6 +38,7 @@ class SearchResults(object):
     metric_names: list
         Metric names
     """
+
     def __init__(self, job_id, metric_names, n_peaks):
         self.job_id = job_id
         self.metric_names = metric_names
@@ -44,20 +49,38 @@ class SearchResults(object):
             m = OrderedDict((name, r[name]) for name in self.metric_names)
             metr_json = json.dumps(m)
             image_ids = formula_img_ids[r.formula_i]['iso_image_ids']
-            yield (job_id, r.formula, r.chem_mod, r.neutral_loss, r.adduct,
-                   float(r.msm), float(r.fdr), metr_json,
-                   image_ids)
+            yield (
+                job_id,
+                r.formula,
+                r.chem_mod,
+                r.neutral_loss,
+                r.adduct,
+                float(r.msm),
+                float(r.fdr),
+                metr_json,
+                image_ids,
+            )
 
     def store_ion_metrics(self, ion_metrics_df, ion_img_ids, db):
         """ Store formula image metrics and image ids in the database """
         logger.info('Storing iso image metrics')
 
-        rows = list(self._metrics_table_row_gen(self.job_id,
-                                                ion_metrics_df.reset_index(),
-                                                ion_img_ids))
+        rows = list(
+            self._metrics_table_row_gen(
+                self.job_id, ion_metrics_df.reset_index(), ion_img_ids
+            )
+        )
         db.insert(METRICS_INS, rows)
 
-    def store(self, metrics_df, formula_images_rdd, alpha_channel, db, img_store, img_store_type):
+    def store(
+        self,
+        metrics_df,
+        formula_images_rdd,
+        alpha_channel,
+        db,
+        img_store,
+        img_store_type,
+    ):
         """ Save formula metrics and images
 
         Args
@@ -75,6 +98,7 @@ class SearchResults(object):
         img_store_type: str
         """
         logger.info('Storing search results to the DB')
-        formula_image_ids = post_images_to_image_store(formula_images_rdd,
-                                                       alpha_channel, img_store, img_store_type, self.n_peaks)
+        formula_image_ids = post_images_to_image_store(
+            formula_images_rdd, alpha_channel, img_store, img_store_type, self.n_peaks
+        )
         self.store_ion_metrics(metrics_df, formula_image_ids, db)

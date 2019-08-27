@@ -18,7 +18,7 @@ logger = logging.getLogger('update-daemon')
 
 def make_chunk_gen(items, chunk_size):
     chunk_n = (len(items) - 1) // chunk_size + 1
-    chunks = [items[i * chunk_size:(i + 1) * chunk_size] for i in range(chunk_n)]
+    chunks = [items[i * chunk_size : (i + 1) * chunk_size] for i in range(chunk_n)]
     for image_path_chunk in chunks:
         yield image_path_chunk
 
@@ -31,9 +31,7 @@ def encode_image_as_base64(img):
 
 
 def base64_images_to_doc(images):
-    images_doc = {
-        'images': [{'content': content} for content in images]
-    }
+    images_doc = {'images': [{'content': content} for content in images]}
     return images_doc
 
 
@@ -47,8 +45,10 @@ def retry_on_error(num_retries=3):
                 except Exception:
                     min_wait_time = 10 * i
                     delay = random.uniform(min_wait_time, min_wait_time + 5)
-                    logger.warning(f'Off-sample API error on attempt {i}. '
-                                   f'Retrying after {delay:.1f} seconds...')
+                    logger.warning(
+                        f'Off-sample API error on attempt {i}. '
+                        f'Retrying after {delay:.1f} seconds...'
+                    )
                     sleep(delay)
             # Last attempt, don't catch the exception
             return func(*args, **kwargs)
@@ -99,7 +99,6 @@ def call_api(url='', doc=None):
 
 
 def make_classify_images(api_endpoint, get_image):
-
     def classify(chunk):
         logger.debug('Classifying chunk of {} images'.format(len(chunk)))
 
@@ -129,7 +128,9 @@ def classify_dataset_ion_images(db, ds, services_config, overwrite_existing=Fals
 
     image_store_service = ImageStoreServiceWrapper(img_api_endpoint)
     storage_type = ds.get_ion_img_storage_type(db)
-    get_image_by_id = partial(image_store_service.get_image_by_id, storage_type, 'iso_image')
+    get_image_by_id = partial(
+        image_store_service.get_image_by_id, storage_type, 'iso_image'
+    )
 
     annotations = db.select_with_fields(SEL_ION_IMAGES, (ds.id, overwrite_existing))
     image_ids = [a['img_id'] for a in annotations]
@@ -137,6 +138,8 @@ def classify_dataset_ion_images(db, ds, services_config, overwrite_existing=Fals
     classify_images = make_classify_images(off_sample_api_endpoint, get_image_by_id)
     image_predictions = classify_images(image_ids)
 
-    rows = [(ann['ann_id'], json.dumps(pred))
-            for ann, pred in zip(annotations, image_predictions)]
+    rows = [
+        (ann['ann_id'], json.dumps(pred))
+        for ann, pred in zip(annotations, image_predictions)
+    ]
     db.alter_many(UPD_OFF_SAMPLE, rows)

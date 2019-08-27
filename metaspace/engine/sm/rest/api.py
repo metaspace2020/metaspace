@@ -15,30 +15,15 @@ from sm.engine.util import init_loggers
 from sm.engine.errors import UnknownDSID, DSIsBusy
 from sm.rest.dataset_manager import SMapiDatasetManager, DatasetActionPriority
 
-OK = {
-    'status_code': 200,
-    'status': 'success'
-}
+OK = {'status_code': 200, 'status': 'success'}
 
-ERR_DS_NOT_EXIST = {
-    'status_code': 404,
-    'status': 'not_exist'
-}
+ERR_DS_NOT_EXIST = {'status_code': 404, 'status': 'not_exist'}
 
-ERR_OBJECT_EXISTS = {
-    'status_code': 400,
-    'status': 'already_exists'
-}
+ERR_OBJECT_EXISTS = {'status_code': 400, 'status': 'already_exists'}
 
-ERR_DS_BUSY = {
-    'status_code': 409,
-    'status': 'dataset_busy'
-}
+ERR_DS_BUSY = {'status_code': 409, 'status': 'dataset_busy'}
 
-ERROR = {
-    'status_code': 500,
-    'status': 'server_error'
-}
+ERROR = {'status_code': 500, 'status': 'server_error'}
 
 
 def _json_params(req):
@@ -55,11 +40,15 @@ def _create_dataset_manager(db):
     config = SMConfig.get_conf()
     img_store = ImageStoreServiceWrapper(config['services']['img_service_url'])
     img_store.storage_type = 'fs'
-    return SMapiDatasetManager(db=db, es=ESExporter(db), image_store=img_store,
-                               annot_queue=_create_queue_publisher(SM_ANNOTATE),
-                               update_queue=_create_queue_publisher(SM_UPDATE),
-                               status_queue=_create_queue_publisher(SM_DS_STATUS),
-                               logger=logger)
+    return SMapiDatasetManager(
+        db=db,
+        es=ESExporter(db),
+        image_store=img_store,
+        annot_queue=_create_queue_publisher(SM_ANNOTATE),
+        update_queue=_create_queue_publisher(SM_UPDATE),
+        status_queue=_create_queue_publisher(SM_DS_STATUS),
+        logger=logger,
+    )
 
 
 def sm_modify_dataset(request_name):
@@ -73,30 +62,23 @@ def sm_modify_dataset(request_name):
 
                 return {
                     'status': OK['status'],
-                    'ds_id': ds_id or res.get('ds_id', None)
+                    'ds_id': ds_id or res.get('ds_id', None),
                 }
             except UnknownDSID as e:
                 logger.warning(e.message)
                 resp.status = ERR_DS_NOT_EXIST['status_code']
-                return {
-                    'status': ERR_DS_NOT_EXIST['status'],
-                    'ds_id': ds_id
-                }
+                return {'status': ERR_DS_NOT_EXIST['status'], 'ds_id': ds_id}
             except DSIsBusy as e:
                 logger.warning(e.message)
                 resp.status = ERR_DS_BUSY['status_code']
-                return {
-                    'status': ERR_DS_BUSY['status'],
-                    'ds_id': ds_id
-                }
+                return {'status': ERR_DS_BUSY['status'], 'ds_id': ds_id}
             except Exception as e:
                 logger.error(e, exc_info=True)
                 resp.status = ERROR['status_code']
-                return {
-                    'status': ERROR['status'],
-                    'ds_id': ds_id
-                }
+                return {'status': ERROR['status'], 'ds_id': ds_id}
+
         return _func
+
     return _modify
 
 
@@ -136,10 +118,9 @@ def add_ds(ds_man, ds_id=None, params=None):
             del_first=params.get('del_first', False),
             force=params.get('force', False),
             email=params.get('email', None),
-            priority=params.get('priority', DatasetActionPriority.DEFAULT))
-        return {
-            'ds_id': ds_id
-        }
+            priority=params.get('priority', DatasetActionPriority.DEFAULT),
+        )
+        return {'ds_id': ds_id}
 
 
 @post('/v1/datasets/<ds_id>/update')
@@ -169,8 +150,7 @@ def update_ds(ds_man, ds_id, params):
         logger.info(f'Nothing to update for "{ds_id}"')
     else:
         priority = params.get('priority', DatasetActionPriority.STANDARD)
-        ds_man.update(ds_id=ds_id, doc=doc,
-                      force=force, priority=priority)
+        ds_man.update(ds_id=ds_id, doc=doc, force=force, priority=priority)
 
 
 @post('/v1/datasets/<ds_id>/delete')
@@ -220,7 +200,13 @@ def del_optical_image(ds_man, ds_id, params):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SM Engine REST API')
-    parser.add_argument('--config', dest='config_path', default='conf/config.json', type=str, help='SM config path')
+    parser.add_argument(
+        '--config',
+        dest='config_path',
+        default='conf/config.json',
+        type=str,
+        help='SM config path',
+    )
     args = parser.parse_args()
 
     def run_bottle(sm_config, logger):

@@ -5,7 +5,10 @@ import pandas as pd
 from pyspark.files import SparkFiles
 from scipy.sparse import coo_matrix
 
-from sm.engine.msm_basic.formula_validator import make_compute_image_metrics, formula_image_metrics
+from sm.engine.msm_basic.formula_validator import (
+    make_compute_image_metrics,
+    formula_image_metrics,
+)
 
 logger = logging.getLogger('engine')
 
@@ -37,7 +40,9 @@ def gen_iso_images(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, ppm=3, min_
                 inds = sp_inds[l:u]
                 row_inds = inds / ncols
                 col_inds = inds % ncols
-                m = coo_matrix((data, (row_inds, col_inds)), shape=(nrows, ncols), copy=True)
+                m = coo_matrix(
+                    (data, (row_inds, col_inds)), shape=(nrows, ncols), copy=True
+                )
             yield centr_f_inds[i], centr_p_inds[i], centr_ints[i], m
 
 
@@ -72,9 +77,13 @@ def choose_ds_segments(ds_segments, centr_df, ppm):
     centr_segm_min_mz -= centr_segm_min_mz * ppm * 1e-6
     centr_segm_max_mz += centr_segm_max_mz * ppm * 1e-6
 
-    first_ds_segm_i = np.searchsorted(ds_segments[:, 0], centr_segm_min_mz, side='right') - 1
+    first_ds_segm_i = (
+        np.searchsorted(ds_segments[:, 0], centr_segm_min_mz, side='right') - 1
+    )
     first_ds_segm_i = max(0, first_ds_segm_i)
-    last_ds_segm_i = np.searchsorted(ds_segments[:, 1], centr_segm_max_mz, side='left')  # last included
+    last_ds_segm_i = np.searchsorted(
+        ds_segments[:, 1], centr_segm_max_mz, side='left'
+    )  # last included
     last_ds_segm_i = min(len(ds_segments) - 1, last_ds_segm_i)
     return first_ds_segm_i, last_ds_segm_i
 
@@ -90,8 +99,9 @@ def read_ds_segment(segm_i):
 
 
 def read_ds_segments(first_segm_i, last_segm_i):
-    sp_arr = [read_ds_segment(ds_segm_i)
-              for ds_segm_i in range(first_segm_i, last_segm_i + 1)]
+    sp_arr = [
+        read_ds_segment(ds_segm_i) for ds_segm_i in range(first_segm_i, last_segm_i + 1)
+    ]
     sp_arr = [a for a in sp_arr if a.shape[0] > 0]
     if len(sp_arr) > 0:
         sp_arr = np.concatenate(sp_arr)
@@ -108,7 +118,9 @@ def get_file_path(name):
 def create_process_segment(ds_segments, coordinates, ds_config, target_formula_inds):
     sample_area_mask = make_sample_area_mask(coordinates)
     nrows, ncols = ds_dims(coordinates)
-    compute_metrics = make_compute_image_metrics(sample_area_mask, nrows, ncols, ds_config['image_generation'])
+    compute_metrics = make_compute_image_metrics(
+        sample_area_mask, nrows, ncols, ds_config['image_generation']
+    )
     ppm = ds_config['image_generation']['ppm']
     min_px = ds_config['image_generation']['min_px']
     n_peaks = ds_config['isotope_generation']['n_peaks']
@@ -121,19 +133,27 @@ def create_process_segment(ds_segments, coordinates, ds_config, target_formula_i
             logger.info(f'Reading centroids segment {segm_i} from {centr_segm_path}')
 
             centr_df = pd.read_msgpack(centr_segm_path)
-            first_ds_segm_i, last_ds_segm_i = choose_ds_segments(ds_segments, centr_df, ppm)
+            first_ds_segm_i, last_ds_segm_i = choose_ds_segments(
+                ds_segments, centr_df, ppm
+            )
 
             logger.info(f'Reading dataset segments {first_ds_segm_i}-{last_ds_segm_i}')
 
             sp_arr = read_ds_segments(first_ds_segm_i, last_ds_segm_i)
 
-            formula_images_it = gen_iso_images(sp_inds=sp_arr[:,0], sp_mzs=sp_arr[:,1], sp_ints=sp_arr[:,2],
-                                               centr_df=centr_df,
-                                               nrows=nrows, ncols=ncols, ppm=ppm, min_px=min_px)
-            formula_metrics_df, formula_images = formula_image_metrics(formula_images_it,
-                                                                       compute_metrics,
-                                                                       target_formula_inds,
-                                                                       n_peaks)
+            formula_images_it = gen_iso_images(
+                sp_inds=sp_arr[:, 0],
+                sp_mzs=sp_arr[:, 1],
+                sp_ints=sp_arr[:, 2],
+                centr_df=centr_df,
+                nrows=nrows,
+                ncols=ncols,
+                ppm=ppm,
+                min_px=min_px,
+            )
+            formula_metrics_df, formula_images = formula_image_metrics(
+                formula_images_it, compute_metrics, target_formula_inds, n_peaks
+            )
             logger.info(f'Segment {segm_i} finished')
         else:
             logger.warning(f'Centroids segment path not found {centr_segm_path}')

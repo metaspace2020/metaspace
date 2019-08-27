@@ -68,7 +68,7 @@ class IsocalcWrapper(object):
             instrument_model = InstrumentModel('tof', resolving_power)
             centr = iso_pattern.centroids(instrument_model)
             mzs_ = np.array(centr.masses)
-            ints_ = 100. * np.array(centr.intensities)
+            ints_ = 100.0 * np.array(centr.intensities)
             mzs_, ints_ = self._trim(mzs_, ints_, self.n_peaks)
 
             n = len(mzs_)

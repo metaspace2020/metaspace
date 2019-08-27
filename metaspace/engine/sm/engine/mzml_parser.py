@@ -1,5 +1,6 @@
 from sm.engine.mzml_reading import read_ms1_experiment
 
+
 class MzMLParser(object):
     def __init__(self, filename):
         self.experiment = read_ms1_experiment(filename)

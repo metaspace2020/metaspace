@@ -6,8 +6,8 @@ import numpy as np
 
 from sm.engine.msm_basic.formula_imager import get_pixel_indices
 
-MAX_MZ_VALUE = 10**5
-MAX_INTENS_VALUE = 10**12
+MAX_MZ_VALUE = 10 ** 5
+MAX_INTENS_VALUE = 10 ** 12
 ABS_MZ_TOLERANCE_DA = 0.002
 
 logger = logging.getLogger('engine')
@@ -18,13 +18,19 @@ def check_spectra_quality(mz_arr, int_arr):
 
     wrong_mz_n = mz_arr[(mz_arr < 0) | (mz_arr > MAX_MZ_VALUE)].shape[0]
     if wrong_mz_n > 0:
-        err_msgs.append('Sample mz arrays contain {} values outside of allowed range [0, {}]'\
-                        .format(wrong_mz_n, MAX_MZ_VALUE))
+        err_msgs.append(
+            'Sample mz arrays contain {} values outside of allowed range [0, {}]'.format(
+                wrong_mz_n, MAX_MZ_VALUE
+            )
+        )
 
     wrong_int_n = mz_arr[(int_arr < 0) | (int_arr > MAX_INTENS_VALUE)].shape[0]
     if wrong_int_n > 0:
-        err_msgs.append('Sample intensity arrays contain {} values outside of allowed range [0, {}]'\
-                        .format(wrong_int_n, MAX_INTENS_VALUE))
+        err_msgs.append(
+            'Sample intensity arrays contain {} values outside of allowed range [0, {}]'.format(
+                wrong_int_n, MAX_INTENS_VALUE
+            )
+        )
 
     if len(err_msgs) > 0:
         raise Exception(' '.join(err_msgs))
@@ -44,43 +50,54 @@ def define_ds_segments(sample_mzs, total_mz_n, mz_precision, ds_segm_size_mb=5):
 
     float_prec = 4 if mz_precision == 'f' else 8
     segm_arr_column_n = 3  # sp_idx, mzs, ints
-    segm_n = segm_arr_column_n * (total_mz_n * float_prec) // (ds_segm_size_mb * 2**20)
+    segm_n = (
+        segm_arr_column_n * (total_mz_n * float_prec) // (ds_segm_size_mb * 2 ** 20)
+    )
     segm_n = max(1, int(segm_n))
 
     segm_bounds_q = [i * 1 / segm_n for i in range(0, segm_n + 1)]
     segm_lower_bounds = np.quantile(sample_mzs, segm_bounds_q)
     ds_segments = np.array(list(zip(segm_lower_bounds[:-1], segm_lower_bounds[1:])))
 
-    logger.info(f'Generated {len(ds_segments)} dataset segments: {ds_segments[0]}...{ds_segments[-1]}')
+    logger.info(
+        f'Generated {len(ds_segments)} dataset segments: {ds_segments[0]}...{ds_segments[-1]}'
+    )
     return ds_segments
 
 
 def segment_spectra_chunk(sp_mz_int_buf, mz_segments, ds_segments_path):
     segm_left_bounds, segm_right_bounds = zip(*mz_segments)
 
-    segm_starts = np.searchsorted(sp_mz_int_buf[:, 1], segm_left_bounds)  # mz expected to be in column 1
+    segm_starts = np.searchsorted(
+        sp_mz_int_buf[:, 1], segm_left_bounds
+    )  # mz expected to be in column 1
     segm_ends = np.searchsorted(sp_mz_int_buf[:, 1], segm_right_bounds)
 
     for segm_i, (start, end) in enumerate(zip(segm_starts, segm_ends)):
-        pd.to_msgpack(ds_segments_path / f'ds_segm_{segm_i:04}.msgpack',
-                      sp_mz_int_buf[start:end],
-                      append=True)
+        pd.to_msgpack(
+            ds_segments_path / f'ds_segm_{segm_i:04}.msgpack',
+            sp_mz_int_buf[start:end],
+            append=True,
+        )
 
 
 def calculate_chunk_sp_n(sample_mzs_bytes, sample_sp_n, max_chunk_size_mb=500):
     segm_arr_column_n = 3  # sp_idx, mzs, ints
-    sample_spectra_size_mb = sample_mzs_bytes * (segm_arr_column_n + 1) / 2 ** 20  # +1 - sort arg copy of mzs
+    sample_spectra_size_mb = (
+        sample_mzs_bytes * (segm_arr_column_n + 1) / 2 ** 20
+    )  # +1 - sort arg copy of mzs
     spectrum_size_mb = sample_spectra_size_mb / sample_sp_n
     chunk_sp_n = int(max_chunk_size_mb / spectrum_size_mb)
     return max(1, chunk_sp_n)
 
 
-def segment_spectra(imzml_parser, coordinates, chunk_sp_n, ds_segments, ds_segments_path):
-
+def segment_spectra(
+    imzml_parser, coordinates, chunk_sp_n, ds_segments, ds_segments_path
+):
     def chunk_list(l, size):
         n = (len(l) - 1) // size + 1
         for i in range(n):
-            yield l[size * i:size * (i + 1)]
+            yield l[size * i : size * (i + 1)]
 
     logger.info(f'Segmenting dataset into {len(ds_segments)} segments')
 
@@ -115,18 +132,28 @@ def segment_spectra(imzml_parser, coordinates, chunk_sp_n, ds_segments, ds_segme
         dtype = imzml_parser.mzPrecision
         mzs = np.concatenate(mzs_list)
         by_mz = np.argsort(mzs)
-        sp_mz_int_buf = np.array([np.concatenate(sp_inds_list)[by_mz],
-                                  mzs[by_mz],
-                                  np.concatenate(ints_list)[by_mz]], dtype).T
+        sp_mz_int_buf = np.array(
+            [
+                np.concatenate(sp_inds_list)[by_mz],
+                mzs[by_mz],
+                np.concatenate(ints_list)[by_mz],
+            ],
+            dtype,
+        ).T
         segment_spectra_chunk(sp_mz_int_buf, mz_segments, ds_segments_path)
 
         sp_inds_list, mzs_list, ints_list = [], [], []
 
 
 def clip_centroids_df(centroids_df, mz_min, mz_max):
-    ds_mz_range_unique_formulas = centroids_df[(mz_min < centroids_df.mz) &
-                                               (centroids_df.mz < mz_max)].index.unique()
-    centr_df = centroids_df[centroids_df.index.isin(ds_mz_range_unique_formulas)].reset_index().copy()
+    ds_mz_range_unique_formulas = centroids_df[
+        (mz_min < centroids_df.mz) & (centroids_df.mz < mz_max)
+    ].index.unique()
+    centr_df = (
+        centroids_df[centroids_df.index.isin(ds_mz_range_unique_formulas)]
+        .reset_index()
+        .copy()
+    )
     return centr_df
 
 
@@ -148,10 +175,13 @@ def segment_centroids(centr_df, centr_segm_n, centr_segm_path):
     segm_bounds_q = [i * 1 / centr_segm_n for i in range(0, centr_segm_n)]
     segm_lower_bounds = list(np.quantile(first_peak_df.mz, q) for q in segm_bounds_q)
 
-    segment_mapping = np.searchsorted(segm_lower_bounds, first_peak_df.mz.values, side='right') - 1
+    segment_mapping = (
+        np.searchsorted(segm_lower_bounds, first_peak_df.mz.values, side='right') - 1
+    )
     first_peak_df['segm_i'] = segment_mapping
 
-    centr_segm_df = pd.merge(centr_df, first_peak_df[['formula_i', 'segm_i']],
-                             on='formula_i').sort_values('mz')
+    centr_segm_df = pd.merge(
+        centr_df, first_peak_df[['formula_i', 'segm_i']], on='formula_i'
+    ).sort_values('mz')
     for segm_i, df in centr_segm_df.groupby('segm_i'):
         pd.to_msgpack(f'{centr_segm_path}/centr_segm_{segm_i:04}.msgpack', df)

@@ -9,7 +9,7 @@ def test_png_gen_greyscale_works():
     alpha_ch = np.array([[1, 1, 1]])
     gen = PngGenerator(alpha_ch, greyscale=True)
 
-    img_data = np.array([[0., 5., 10.]])
+    img_data = np.array([[0.0, 5.0, 10.0]])
     norm_img_data = (img_data - img_data.min()) / (img_data.max() - img_data.min())
     fp = gen.generate_png(img_data)
 
@@ -19,4 +19,6 @@ def test_png_gen_greyscale_works():
     assert_equal(height, 1)
 
     grey_shape = img_data.shape + (2,)
-    assert_almost_equal(np.array(list(pixels)).reshape(grey_shape)[:,:,0], norm_img_data, decimal=4)
+    assert_almost_equal(
+        np.array(list(pixels)).reshape(grey_shape)[:, :, 0], norm_img_data, decimal=4
+    )

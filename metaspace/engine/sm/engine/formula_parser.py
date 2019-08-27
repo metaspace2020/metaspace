@@ -13,31 +13,44 @@ class ParseFormulaError(Exception):
 
 
 def parse_formula(f):
-    return [(elem, int(n or '1'))
-            for (elem, n) in formula_regexp.findall(f)]
+    return [(elem, int(n or '1')) for (elem, n) in formula_regexp.findall(f)]
 
 
 def _hill_system_sort(ion_elements):
     """ Reorder elements to be consistently ordered per https://en.wikipedia.org/wiki/Chemical_formula#Hill_system """
     if ion_elements['C'] != 0:
-        return ['C', 'H', *sorted(key for key in ion_elements.keys() if key not in ('C', 'H'))]
+        return [
+            'C',
+            'H',
+            *sorted(key for key in ion_elements.keys() if key not in ('C', 'H')),
+        ]
     else:
         return sorted(key for key in ion_elements.keys())
 
 
 def _chnops_sort(ion_elements):
     """ Reorder elements to be consistently ordered per the method in pyMSpec """
-    return [*'CHNOPS', *sorted(key for key in ion_elements.keys() if len(key) > 1 or key not in 'CHNOPS')]
+    return [
+        *'CHNOPS',
+        *sorted(
+            key for key in ion_elements.keys() if len(key) > 1 or key not in 'CHNOPS'
+        ),
+    ]
 
 
 def format_modifiers(*adducts):
-    return ''.join(adduct for adduct in adducts if adduct and adduct not in ('[M]+','[M]-'))
+    return ''.join(
+        adduct for adduct in adducts if adduct and adduct not in ('[M]+', '[M]-')
+    )
 
 
 def format_charge(charge):
-    if not charge: return ''
-    if charge == 1: return '+'
-    if charge == -1: return '-'
+    if not charge:
+        return ''
+    if charge == 1:
+        return '+'
+    if charge == -1:
+        return '-'
     return format(int(charge), '+0')
 
 
@@ -69,7 +82,7 @@ def generate_ion_formula(formula, *adducts):
     ion_elements = Counter(dict(parse_formula(formula)))
 
     for adduct in adducts:
-        if adduct in ('[M]+','[M]-'):
+        if adduct in ('[M]+', '[M]-'):
             # In order to support more complex adducts in the future, this should move away from using plain formulas like "+H",
             # and instead adopt a comprehensive description format that supports transformations like [2M3C13+Na+H+5.109]2+
             # (Dimeric form of molecule with 3 atoms labelled with C13, Na and H adducts, an unknown +5.109 mass shift and charge=+2)
@@ -78,14 +91,16 @@ def generate_ion_formula(formula, *adducts):
         if not adduct_validate_regexp.match(adduct):
             raise ParseFormulaError(f'Invalid adduct: {adduct}')
         for op, adduct_part in adduct_regexp.findall(adduct):
-            assert op in ('+','-'), 'Adduct should be prefixed with + or -'
+            assert op in ('+', '-'), 'Adduct should be prefixed with + or -'
             for elem, n in parse_formula(adduct_part):
                 if op == '+':
                     ion_elements[elem] += n
                 else:
                     ion_elements[elem] -= n
                     if ion_elements[elem] < 0:
-                        raise ParseFormulaError(f'Negative total element count for {elem}')
+                        raise ParseFormulaError(
+                            f'Negative total element count for {elem}'
+                        )
 
     if not any(count > 0 for count in ion_elements.values()):
         raise ParseFormulaError('No remaining elements')

@@ -5,6 +5,7 @@ from zlib import adler32
 
 LOCK_KEY = 894951
 
+
 class DatasetLocker(object):
     def __init__(self, dbconfig):
         self._dbconfig = dbconfig

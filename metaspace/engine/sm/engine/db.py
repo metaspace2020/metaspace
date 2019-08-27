@@ -5,6 +5,7 @@ from psycopg2.extras import execute_values
 import psycopg2.extensions
 from psycopg2.pool import ThreadedConnectionPool
 from psycopg2 import ProgrammingError, IntegrityError, DataError
+
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
@@ -17,8 +18,7 @@ class ConnectionPool:
     def __init__(self, config, min_conn=4, max_conn=12):
         logger.info('Initialising database connection pool')
         if not ConnectionPool.pool:
-            ConnectionPool.pool = ThreadedConnectionPool(
-                min_conn, max_conn, **config)
+            ConnectionPool.pool = ThreadedConnectionPool(min_conn, max_conn, **config)
 
     @staticmethod
     def close():
@@ -35,7 +35,6 @@ class ConnectionPool:
 
 
 def db_decor(func):
-
     @wraps(func)
     def wrapper(self, sql, *args, **kwargs):
         assert ConnectionPool.pool, "'with ConnectionPool(config):' should be used"

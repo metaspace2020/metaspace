@@ -27,18 +27,25 @@ def delete_queue():
 
 
 def run_queue_consumer_thread(config, callback, output_q, wait=1):
-    queue_consumer = QueueConsumer(config, QDESC, callback,
-                                   lambda *args: output_q.put('on_success'),
-                                   lambda *args: output_q.put('on_failure'),
-                                   poll_interval=0.1)
+    queue_consumer = QueueConsumer(
+        config,
+        QDESC,
+        callback,
+        lambda *args: output_q.put('on_success'),
+        lambda *args: output_q.put('on_failure'),
+        poll_interval=0.1,
+    )
     queue_consumer.start()
     queue_consumer.stop()
     queue_consumer.join()
 
 
 def queue_is_empty(config):
-    resp = requests.get(url='http://localhost:15672/api/queues/%2F/{}'.format(QDESC['name']),
-                        auth=(config['user'], config['password']), timeout=1)
+    resp = requests.get(
+        url='http://localhost:15672/api/queues/%2F/{}'.format(QDESC['name']),
+        auth=(config['user'], config['password']),
+        timeout=1,
+    )
     return resp.json()['messages'] == 0
 
 
@@ -49,7 +56,12 @@ def test_queue_msg_published_consumed_on_success_called(delete_queue):
     queue_pub.publish(msg)
 
     output_q = Queue()
-    run_queue_consumer_thread(config, callback=lambda *args: output_q.put('callback'), output_q=output_q, wait=1)
+    run_queue_consumer_thread(
+        config,
+        callback=lambda *args: output_q.put('callback'),
+        output_q=output_q,
+        wait=1,
+    )
 
     assert output_q.get() == 'callback'
     assert output_q.get() == 'on_success'
@@ -71,7 +83,9 @@ def test_queue_msg_published_consumed_on_failure_called():
         output_q.put('callback')
         raise Exception('Callback exception')
 
-    run_queue_consumer_thread(config, callback=raise_exception, output_q=output_q, wait=1)
+    run_queue_consumer_thread(
+        config, callback=raise_exception, output_q=output_q, wait=1
+    )
 
     assert output_q.get() == 'callback'
     assert output_q.get() == 'on_failure'
