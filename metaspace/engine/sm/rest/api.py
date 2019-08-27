@@ -60,10 +60,7 @@ def sm_modify_dataset(request_name):
                 ds_man = _create_dataset_manager(DB())
                 res = handler(ds_man, ds_id, params)
 
-                return {
-                    'status': OK['status'],
-                    'ds_id': ds_id or res.get('ds_id', None),
-                }
+                return {'status': OK['status'], 'ds_id': ds_id or res.get('ds_id', None)}
             except UnknownDSID as e:
                 logger.warning(e.message)
                 resp.status = ERR_DS_NOT_EXIST['status_code']
@@ -200,13 +197,7 @@ def del_optical_image(ds_man, ds_id, params):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SM Engine REST API')
-    parser.add_argument(
-        '--config',
-        dest='config_path',
-        default='conf/config.json',
-        type=str,
-        help='SM config path',
-    )
+    parser.add_argument('--config', dest='config_path', default='conf/config.json', type=str, help='SM config path')
     args = parser.parse_args()
 
     def run_bottle(sm_config, logger):

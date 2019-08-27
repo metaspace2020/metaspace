@@ -9,15 +9,7 @@ from sm.engine.es_export import ESExporter
 from sm.engine.queue import QueuePublisher
 from sm.engine.dataset import DatasetStatus, Dataset, generate_ds_config
 from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.tests.util import (
-    sm_config,
-    test_db,
-    fill_db,
-    sm_index,
-    es_dsl_search,
-    metadata,
-    ds_config,
-)
+from sm.engine.tests.util import sm_config, test_db, fill_db, sm_index, es_dsl_search, metadata, ds_config
 
 mol_db_mock = {'id': 1, 'name': 'HMDB-v4', 'version': '2001-01-01'}
 
@@ -64,9 +56,7 @@ def create_daemon_man(db=None, es=None, img_store=None, status_queue=None):
     status_queue_mock = status_queue or MagicMock(QueuePublisher)
     img_store_mock = img_store or MagicMock(spec=ImageStoreServiceWrapper)
 
-    return DatasetManager(
-        db=db, es=es_mock, img_store=img_store_mock, status_queue=status_queue_mock
-    )
+    return DatasetManager(db=db, es=es_mock, img_store=img_store_mock, status_queue=status_queue_mock)
 
 
 class TestSMDaemonDatasetManager:
@@ -77,13 +67,8 @@ class TestSMDaemonDatasetManager:
         def run(self, *args, **kwargs):
             pass
 
-    @patch(
-        'sm.engine.mol_db.MolDBServiceWrapper.find_db_by_name_version',
-        return_value=[mol_db_mock],
-    )
-    def test_annotate_ds(
-        self, find_db_by_name_version_mock, test_db, metadata, ds_config
-    ):
+    @patch('sm.engine.mol_db.MolDBServiceWrapper.find_db_by_name_version', return_value=[mol_db_mock])
+    def test_annotate_ds(self, find_db_by_name_version_mock, test_db, metadata, ds_config):
         es_mock = MagicMock(spec=ESExporter)
         db = DB()
         manager = create_daemon_man(db=db, es=es_mock)
@@ -92,13 +77,7 @@ class TestSMDaemonDatasetManager:
         ds_name = 'ds_name'
         input_path = 'input_path'
         upload_dt = datetime.now()
-        ds = create_ds(
-            ds_id=ds_id,
-            ds_name=ds_name,
-            input_path=input_path,
-            upload_dt=upload_dt,
-            metadata=metadata,
-        )
+        ds = create_ds(ds_id=ds_id, ds_name=ds_name, input_path=input_path, upload_dt=upload_dt, metadata=metadata)
 
         manager.annotate(ds, annotation_job_factory=self.SearchJob)
 
@@ -141,6 +120,4 @@ class TestSMDaemonDatasetManager:
             [call('fs', 'iso_image', ids[0]), call('fs', 'iso_image', ids[1])]
         )
         es_mock.delete_ds.assert_called_with(ds_id)
-        assert (
-            db.select_one('SELECT * FROM dataset WHERE id = %s', params=(ds_id,)) == []
-        )
+        assert db.select_one('SELECT * FROM dataset WHERE id = %s', params=(ds_id,)) == []

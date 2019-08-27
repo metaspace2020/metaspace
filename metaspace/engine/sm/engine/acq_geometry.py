@@ -11,16 +11,8 @@ def make_ims_acq_geometry(ms_file_path, metadata, dims):
 
     return {
         'length_unit': 'nm',
-        'acquisition_grid': {
-            'regular_grid': True,
-            'count_x': int(col_n),
-            'count_y': int(row_n),
-        },
-        'pixel_size': {
-            'regular_size': True,
-            'size_x': pixel_size.get('Xaxis'),
-            'size_y': pixel_size.get('Yaxis'),
-        },
+        'acquisition_grid': {'regular_grid': True, 'count_x': int(col_n), 'count_y': int(row_n)},
+        'pixel_size': {'regular_size': True, 'size_x': pixel_size.get('Xaxis'), 'size_y': pixel_size.get('Yaxis')},
     }
 
 

@@ -12,12 +12,7 @@ FDR_CONFIG = {'decoy_sample_size': 2}
 
 @patch('sm.engine.fdr.DECOY_ADDUCTS', ['+He', '+Li'])
 def test_fdr_decoy_adduct_selection_saves_corr():
-    fdr = FDR(
-        fdr_config=FDR_CONFIG,
-        chem_mods=[],
-        neutral_losses=[],
-        target_adducts=['+H', '+K', '[M]+'],
-    )
+    fdr = FDR(fdr_config=FDR_CONFIG, chem_mods=[], neutral_losses=[], target_adducts=['+H', '+K', '[M]+'])
 
     exp_target_decoy_df = pd.DataFrame(
         [
@@ -35,24 +30,15 @@ def test_fdr_decoy_adduct_selection_saves_corr():
 
     assert_frame_equal(
         fdr.td_df.sort_values(by=['formula', 'tm', 'dm']).reset_index(drop=True),
-        exp_target_decoy_df.sort_values(by=['formula', 'tm', 'dm']).reset_index(
-            drop=True
-        ),
+        exp_target_decoy_df.sort_values(by=['formula', 'tm', 'dm']).reset_index(drop=True),
     )
 
 
 def test_estimate_fdr_returns_correct_df():
-    fdr = FDR(
-        fdr_config=FDR_CONFIG, chem_mods=[], neutral_losses=[], target_adducts=['+H']
-    )
+    fdr = FDR(fdr_config=FDR_CONFIG, chem_mods=[], neutral_losses=[], target_adducts=['+H'])
     fdr.fdr_levels = [0.2, 0.8]
     fdr.td_df = pd.DataFrame(
-        [
-            ['H2O', '+H', '+Cu'],
-            ['H2O', '+H', '+Co'],
-            ['C2H2', '+H', '+Ag'],
-            ['C2H2', '+H', '+Ar'],
-        ],
+        [['H2O', '+H', '+Cu'], ['H2O', '+H', '+Co'], ['C2H2', '+H', '+Ag'], ['C2H2', '+H', '+Ar']],
         columns=['formula', 'tm', 'dm'],
     )
 
@@ -67,27 +53,17 @@ def test_estimate_fdr_returns_correct_df():
         ],
         columns=['formula', 'modifier', 'msm'],
     )
-    exp_sf_df = pd.DataFrame(
-        [['H2O', '+H', 0.2], ['C2H2', '+H', 0.8]],
-        columns=['formula', 'modifier', 'fdr'],
-    )
+    exp_sf_df = pd.DataFrame([['H2O', '+H', 0.2], ['C2H2', '+H', 0.8]], columns=['formula', 'modifier', 'fdr'])
 
     assert_frame_equal(fdr.estimate_fdr(msm_df), exp_sf_df)
 
 
 def test_estimate_fdr_digitize_works():
     fdr_config = {**FDR_CONFIG, 'decoy_sample_size': 1}
-    fdr = FDR(
-        fdr_config=fdr_config, chem_mods=[], neutral_losses=[], target_adducts=['+H']
-    )
+    fdr = FDR(fdr_config=fdr_config, chem_mods=[], neutral_losses=[], target_adducts=['+H'])
     fdr.fdr_levels = [0.4, 0.8]
     fdr.td_df = pd.DataFrame(
-        [
-            ['C1', '+H', '+Cu'],
-            ['C2', '+H', '+Ag'],
-            ['C3', '+H', '+Cl'],
-            ['C4', '+H', '+Co'],
-        ],
+        [['C1', '+H', '+Cu'], ['C2', '+H', '+Ag'], ['C3', '+H', '+Cl'], ['C4', '+H', '+Co']],
         columns=['formula', 'tm', 'dm'],
     )
 
@@ -118,12 +94,7 @@ def test_ions():
     decoy_sample_size = 5
     fdr_config = {**FDR_CONFIG, 'decoy_sample_size': decoy_sample_size}
 
-    fdr = FDR(
-        fdr_config=fdr_config,
-        chem_mods=[],
-        neutral_losses=[],
-        target_adducts=target_adducts,
-    )
+    fdr = FDR(fdr_config=fdr_config, chem_mods=[], neutral_losses=[], target_adducts=target_adducts)
     fdr.decoy_adducts_selection(target_formulas=['H2O', 'C5H2OH'])
     ions = fdr.ion_tuples()
 
@@ -132,12 +103,9 @@ def test_ions():
     assert (
         len(formulas) * decoy_sample_size + len(formulas) * len(target_adducts)
         < len(ions)
-        <= len(formulas) * len(target_adducts) * decoy_sample_size
-        + len(formulas) * len(target_adducts)
+        <= len(formulas) * len(target_adducts) * decoy_sample_size + len(formulas) * len(target_adducts)
     )
-    target_ions = [
-        (formula, adduct) for formula, adduct in product(formulas, target_adducts)
-    ]
+    target_ions = [(formula, adduct) for formula, adduct in product(formulas, target_adducts)]
     assert set(target_ions).issubset(set(map(tuple, ions)))
 
 
@@ -147,20 +115,12 @@ def test_chem_mods_and_neutral_losses():
     neutral_losses = ['-O', '-C']
     target_adducts = ['+H', '+Na', '[M]+']
     target_modifiers = [
-        format_modifiers(cm, nl, ta)
-        for cm, nl, ta in product(
-            ['', *chem_mods], ['', *neutral_losses], target_adducts
-        )
+        format_modifiers(cm, nl, ta) for cm, nl, ta in product(['', *chem_mods], ['', *neutral_losses], target_adducts)
     ]
     decoy_sample_size = 5
     fdr_config = {**FDR_CONFIG, 'decoy_sample_size': decoy_sample_size}
 
-    fdr = FDR(
-        fdr_config=fdr_config,
-        chem_mods=chem_mods,
-        neutral_losses=neutral_losses,
-        target_adducts=target_adducts,
-    )
+    fdr = FDR(fdr_config=fdr_config, chem_mods=chem_mods, neutral_losses=neutral_losses, target_adducts=target_adducts)
     fdr.decoy_adducts_selection(target_formulas=['H2O', 'C5H2OH'])
     ions = fdr.ion_tuples()
 

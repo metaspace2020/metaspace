@@ -1,8 +1,4 @@
-from sm.engine.msm_basic.msm_basic_search import (
-    init_fdr,
-    collect_ion_formulas,
-    compute_fdr,
-)
+from sm.engine.msm_basic.msm_basic_search import init_fdr, collect_ion_formulas, compute_fdr
 from sm.engine.tests.util import make_moldb_mock, spark_context
 
 BASIC_ISOTOPE_GENERATION_CONFIG = {
@@ -24,9 +20,7 @@ FULL_ISOTOPE_GENERATION_CONFIG = {
 
 
 def test_init_fdr():
-    moldb_fdr_list = init_fdr(
-        {'decoy_sample_size': 20}, BASIC_ISOTOPE_GENERATION_CONFIG, [make_moldb_mock()]
-    )
+    moldb_fdr_list = init_fdr({'decoy_sample_size': 20}, BASIC_ISOTOPE_GENERATION_CONFIG, [make_moldb_mock()])
 
     assert len(moldb_fdr_list) == 1
     _, fdr = moldb_fdr_list[0]
@@ -34,9 +28,7 @@ def test_init_fdr():
 
 
 def test_collect_ion_formulas(spark_context):
-    moldb_fdr_list = init_fdr(
-        {'decoy_sample_size': 20}, BASIC_ISOTOPE_GENERATION_CONFIG, [make_moldb_mock()]
-    )
+    moldb_fdr_list = init_fdr({'decoy_sample_size': 20}, BASIC_ISOTOPE_GENERATION_CONFIG, [make_moldb_mock()])
 
     df = collect_ion_formulas(spark_context, moldb_fdr_list)
 
@@ -45,9 +37,7 @@ def test_collect_ion_formulas(spark_context):
 
 
 def test_decoy_sample_size_30(spark_context):
-    moldb_fdr_list = init_fdr(
-        {'decoy_sample_size': 30}, BASIC_ISOTOPE_GENERATION_CONFIG, [make_moldb_mock()]
-    )
+    moldb_fdr_list = init_fdr({'decoy_sample_size': 30}, BASIC_ISOTOPE_GENERATION_CONFIG, [make_moldb_mock()])
 
     df = collect_ion_formulas(spark_context, moldb_fdr_list)
 
@@ -56,9 +46,7 @@ def test_decoy_sample_size_30(spark_context):
 
 
 def test_neutral_losses_and_chem_mods(spark_context):
-    moldb_fdr_list = init_fdr(
-        {'decoy_sample_size': 1}, FULL_ISOTOPE_GENERATION_CONFIG, [make_moldb_mock()]
-    )
+    moldb_fdr_list = init_fdr({'decoy_sample_size': 1}, FULL_ISOTOPE_GENERATION_CONFIG, [make_moldb_mock()])
 
     df = collect_ion_formulas(spark_context, moldb_fdr_list)
 

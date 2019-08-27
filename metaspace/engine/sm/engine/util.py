@@ -27,12 +27,7 @@ def init_loggers(config=None):
     if not logs_dir.exists():
         logs_dir.mkdir()
 
-    log_level_codes = {
-        'ERROR': logging.ERROR,
-        'WARNING': logging.WARNING,
-        'INFO': logging.INFO,
-        'DEBUG': logging.DEBUG,
-    }
+    log_level_codes = {'ERROR': logging.ERROR, 'WARNING': logging.WARNING, 'INFO': logging.INFO, 'DEBUG': logging.DEBUG}
 
     def convert_levels(orig_d):
         d = orig_d.copy()
@@ -93,17 +88,8 @@ class SMConfig(object):
             SM configuration for handling specific type of MS data
         """
         conf = cls.get_conf()
-        ms_file_extension = (
-            Path(ms_file_path).suffix[1:].lower()
-        )  # skip the leading "."
-        return next(
-            (
-                h
-                for h in conf['ms_file_handlers']
-                if ms_file_extension in h['extensions']
-            ),
-            None,
-        )
+        ms_file_extension = Path(ms_file_path).suffix[1:].lower()  # skip the leading "."
+        return next((h for h in conf['ms_file_handlers'] if ms_file_extension in h['extensions']), None)
 
 
 def _cmd(template, call_func, *args):
@@ -131,9 +117,7 @@ def read_json(path):
         return res
 
 
-def create_ds_from_files(
-    ds_id, ds_name, ds_input_path, config_path=None, meta_path=None
-):
+def create_ds_from_files(ds_id, ds_name, ds_input_path, config_path=None, meta_path=None):
     if not config_path:
         config_path = Path(ds_input_path) / 'config.json'
     if not meta_path:

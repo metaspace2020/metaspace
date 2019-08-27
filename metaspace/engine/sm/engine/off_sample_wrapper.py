@@ -45,10 +45,7 @@ def retry_on_error(num_retries=3):
                 except Exception:
                     min_wait_time = 10 * i
                     delay = random.uniform(min_wait_time, min_wait_time + 5)
-                    logger.warning(
-                        f'Off-sample API error on attempt {i}. '
-                        f'Retrying after {delay:.1f} seconds...'
-                    )
+                    logger.warning(f'Off-sample API error on attempt {i}. ' f'Retrying after {delay:.1f} seconds...')
                     sleep(delay)
             # Last attempt, don't catch the exception
             return func(*args, **kwargs)
@@ -128,9 +125,7 @@ def classify_dataset_ion_images(db, ds, services_config, overwrite_existing=Fals
 
     image_store_service = ImageStoreServiceWrapper(img_api_endpoint)
     storage_type = ds.get_ion_img_storage_type(db)
-    get_image_by_id = partial(
-        image_store_service.get_image_by_id, storage_type, 'iso_image'
-    )
+    get_image_by_id = partial(image_store_service.get_image_by_id, storage_type, 'iso_image')
 
     annotations = db.select_with_fields(SEL_ION_IMAGES, (ds.id, overwrite_existing))
     image_ids = [a['img_id'] for a in annotations]
@@ -138,8 +133,5 @@ def classify_dataset_ion_images(db, ds, services_config, overwrite_existing=Fals
     classify_images = make_classify_images(off_sample_api_endpoint, get_image_by_id)
     image_predictions = classify_images(image_ids)
 
-    rows = [
-        (ann['ann_id'], json.dumps(pred))
-        for ann, pred in zip(annotations, image_predictions)
-    ]
+    rows = [(ann['ann_id'], json.dumps(pred)) for ann, pred in zip(annotations, image_predictions)]
     db.alter_many(UPD_OFF_SAMPLE, rows)

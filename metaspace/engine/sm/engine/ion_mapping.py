@@ -28,19 +28,12 @@ def get_ion_id_mapping(db, ion_tuples, charge):
     """
 
     formulas, chem_mods, neutral_losses, adducts = map(list, zip(*ion_tuples))
-    existing_ions = db.select(
-        ION_SEL, [formulas, chem_mods, neutral_losses, adducts, charge]
-    )
+    existing_ions = db.select(ION_SEL, [formulas, chem_mods, neutral_losses, adducts, charge])
     ion_to_id = dict(((fo, cm, nl, ad), id) for fo, cm, nl, ad, id in existing_ions)
-    missing_ions = sorted(
-        set(ion_tuples).difference(ion_to_id.keys()), key=lambda row: row[0]
-    )
+    missing_ions = sorted(set(ion_tuples).difference(ion_to_id.keys()), key=lambda row: row[0])
 
     if missing_ions:
-        rows = [
-            (format_ion_formula(*ion, charge=charge), *ion, charge)
-            for ion in missing_ions
-        ]
+        rows = [(format_ion_formula(*ion, charge=charge), *ion, charge) for ion in missing_ions]
         ids = db.insert_return(ION_INS, rows)
         ion_to_id.update((row[1:5], id) for id, row in zip(ids, rows))
 

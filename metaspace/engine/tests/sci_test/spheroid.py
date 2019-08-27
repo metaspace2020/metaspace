@@ -31,9 +31,7 @@ class SciTester(object):
         self.db = DB()
 
         self.ds_id = '2000-01-01_00h00m00s'
-        self.base_search_res_path = join(
-            proj_root(), 'tests/reports', 'spheroid_untreated_search_res.csv'
-        )
+        self.base_search_res_path = join(proj_root(), 'tests/reports', 'spheroid_untreated_search_res.csv')
         self.ds_name = 'sci_test_spheroid_untreated'
         self.ds_data_path = join(self.sm_config['fs']['spark_data_path'], self.ds_name)
         self.input_path = join(proj_root(), 'tests/data/untreated')
@@ -62,17 +60,13 @@ class SciTester(object):
         with open(self.base_search_res_path, 'w') as f:
             f.write('\t'.join(['formula', 'adduct'] + self.metrics) + '\n')
             for (formula, adduct), metrics in sorted(self.fetch_search_res().items()):
-                f.write(
-                    '\t'.join([formula, adduct] + metrics.astype(str).tolist()) + '\n'
-                )
+                f.write('\t'.join([formula, adduct] + metrics.astype(str).tolist()) + '\n')
 
         print('Successfully saved sample dataset search report')
 
     @staticmethod
     def print_metric_hist(metric_arr, bins=10):
-        metric_freq, metric_interv = np.histogram(
-            metric_arr, bins=np.linspace(-1, 1, 21)
-        )
+        metric_freq, metric_interv = np.histogram(metric_arr, bins=np.linspace(-1, 1, 21))
         metric_interv = [round(x, 2) for x in metric_interv]
         pprint(list(zip(zip(metric_interv[:-1], metric_interv[1:]), metric_freq)))
 
@@ -143,9 +137,7 @@ class SciTester(object):
         if mock_img_store:
             img_store = self._create_img_store_mock()
         else:
-            img_store = ImageStoreServiceWrapper(
-                self.sm_config['services']['img_service_url']
-            )
+            img_store = ImageStoreServiceWrapper(self.sm_config['services']['img_service_url'])
 
         os.environ['PYSPARK_PYTHON'] = sys.executable
 
@@ -171,42 +163,24 @@ def run(mock_img_store, sm_config, *args):
         if not run_search_successful:
             raise Exception('Search was not successful!') from e
         elif search_results_different:
-            raise Exception(
-                'Search was successful but the results are different!'
-            ) from e
+            raise Exception('Search was successful but the results are different!') from e
     finally:
         sci_tester.clear_data_dirs()
 
 
 def save(sm_config, *args):
-    if 'y' == input(
-        'You are going to replace the reference values. Are you sure? (y/n): '
-    ):
+    if 'y' == input('You are going to replace the reference values. Are you sure? (y/n): '):
         SciTester(sm_config).save_sci_test_report()
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Scientific tests runner')
+    parser.add_argument('-r', '--run', action='store_true', help='compare current search results with previous')
+    parser.add_argument('-s', '--save', action='store_true', help='store current search results')
     parser.add_argument(
-        '-r',
-        '--run',
-        action='store_true',
-        help='compare current search results with previous',
+        '--config', dest='sm_config_path', default=join(proj_root(), 'conf/config.json'), help='path to sm config file'
     )
-    parser.add_argument(
-        '-s', '--save', action='store_true', help='store current search results'
-    )
-    parser.add_argument(
-        '--config',
-        dest='sm_config_path',
-        default=join(proj_root(), 'conf/config.json'),
-        help='path to sm config file',
-    )
-    parser.add_argument(
-        '--mock-img-store',
-        action='store_true',
-        help='whether to mock the Image Store Service',
-    )
+    parser.add_argument('--mock-img-store', action='store_true', help='whether to mock the Image Store Service')
     args = parser.parse_args()
 
     if args.run:

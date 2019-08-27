@@ -19,29 +19,23 @@ def clean_isotope_storage_path():
     shutil.rmtree(sm_config['isotope_storage']['path'], ignore_errors=True)
 
 
-def test_if_not_exist_returns_valid_df(
-    spark_context, ds_config, clean_isotope_storage_path
-):
+def test_if_not_exist_returns_valid_df(spark_context, ds_config, clean_isotope_storage_path):
     isocalc = IsocalcWrapper(ds_config['isotope_generation'])
     centroids_gen = CentroidsGenerator(sc=spark_context, isocalc=isocalc)
     centroids_gen._iso_gen_part_n = 1
 
-    ion_centroids = centroids_gen.generate_if_not_exist(
-        formulas=['C2H4O8Na', 'C3H6O7Na', 'fake_mfNa']
-    )
+    ion_centroids = centroids_gen.generate_if_not_exist(formulas=['C2H4O8Na', 'C3H6O7Na', 'fake_mfNa'])
 
     assert ion_centroids.centroids_df(True).shape == (2 * 4, 3)
-    assert np.all(
-        np.diff(ion_centroids.centroids_df().mz.values) >= 0
-    )  # assert that dataframe is sorted by mz
+    assert np.all(np.diff(ion_centroids.centroids_df().mz.values) >= 0)  # assert that dataframe is sorted by mz
     assert ion_centroids.formulas_df.shape == (2, 1)
 
 
 def test_save_restore_works(spark_context, ds_config, clean_isotope_storage_path):
     ion_centroids = FormulaCentroids(
-        formulas_df=pd.DataFrame(
-            {'formula_i': [101, 101, 102, 102], 'formula': ['H2O', 'H2O', 'Au', 'Au']}
-        ).set_index('formula_i'),
+        formulas_df=pd.DataFrame({'formula_i': [101, 101, 102, 102], 'formula': ['H2O', 'H2O', 'Au', 'Au']}).set_index(
+            'formula_i'
+        ),
         centroids_df=pd.DataFrame(
             {
                 'formula_i': [101, 101, 102, 102],
@@ -59,31 +53,21 @@ def test_save_restore_works(spark_context, ds_config, clean_isotope_storage_path
 
     from pandas.testing import assert_frame_equal
 
+    assert_frame_equal(ion_centroids.formulas_df.sort_index(), formula_centroids_restored.formulas_df.sort_index())
     assert_frame_equal(
-        ion_centroids.formulas_df.sort_index(),
-        formula_centroids_restored.formulas_df.sort_index(),
-    )
-    assert_frame_equal(
-        ion_centroids.centroids_df().sort_index(),
-        formula_centroids_restored.centroids_df().sort_index(),
+        ion_centroids.centroids_df().sort_index(), formula_centroids_restored.centroids_df().sort_index()
     )
 
 
-def test_centroids_subset_ordered_by_mz(
-    spark_context, ds_config, clean_isotope_storage_path
-):
+def test_centroids_subset_ordered_by_mz(spark_context, ds_config, clean_isotope_storage_path):
     isocalc = IsocalcWrapper(ds_config['isotope_generation'])
     centr_gen = CentroidsGenerator(sc=spark_context, isocalc=isocalc)
     centr_gen._iso_gen_part_n = 1
     formulas = [
         generate_ion_formula(f, a)
-        for f, a in product(
-            ['C2H4O8', 'C3H6O7', 'C59H112O6', 'C62H108O'], ['+Na', '+H', '[M]+']
-        )
+        for f, a in product(['C2H4O8', 'C3H6O7', 'C59H112O6', 'C62H108O'], ['+Na', '+H', '[M]+'])
     ]
     formula_centroids = centr_gen.generate_if_not_exist(formulas)
 
     assert formula_centroids.centroids_df(True).shape == (4 * 3 * 4, 3)
-    assert np.all(
-        np.diff(formula_centroids.centroids_df().mz.values) >= 0
-    )  # assert that dataframe is sorted by mz
+    assert np.all(np.diff(formula_centroids.centroids_df().mz.values) >= 0)  # assert that dataframe is sorted by mz

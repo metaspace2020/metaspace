@@ -9,14 +9,7 @@ from sm.engine.mol_db import MolecularDB
 from sm.engine.es_export import ESExporter, ESIndexManager, DATASET_SEL, ANNOTATIONS_SEL
 from sm.engine.db import DB
 from sm.engine.isocalc_wrapper import IsocalcWrapper
-from sm.engine.tests.util import (
-    sm_config,
-    ds_config,
-    sm_index,
-    es,
-    es_dsl_search,
-    test_db,
-)
+from sm.engine.tests.util import sm_config, ds_config, sm_index, es, es_dsl_search, test_db
 
 
 def wait_for_es(sec=1):
@@ -40,9 +33,7 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
                     'ds_meta': {},
                     'ds_upload_dt': upload_dt,
                     'ds_status': 'ds_status',
-                    'ds_last_finished': datetime.strptime(
-                        last_finished, '%Y-%m-%dT%H:%M:%S'
-                    ),
+                    'ds_last_finished': datetime.strptime(last_finished, '%Y-%m-%dT%H:%M:%S'),
                     'ds_is_public': True,
                     'ds_ion_img_storage': 'fs',
                     'ds_acq_geometry': {},
@@ -90,9 +81,7 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
                 },
             ]
         else:
-            logging.getLogger('engine').error(
-                f'Wrong db_sel_side_effect arguments: {params}'
-            )
+            logging.getLogger('engine').error(f'Wrong db_sel_side_effect arguments: {params}')
 
     db_mock = MagicMock(spec=DB)
     db_mock.select_with_fields.side_effect = db_sel_side_effect
@@ -102,8 +91,7 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
     mol_db_mock.name = 'db_name'
     mol_db_mock.version = '2017'
     mol_db_mock.get_molecules.return_value = pd.DataFrame(
-        [('H2O', 'mol_id', 'mol_name'), ('Au', 'mol_id', 'mol_name')],
-        columns=['sf', 'mol_id', 'mol_name'],
+        [('H2O', 'mol_id', 'mol_name'), ('Au', 'mol_id', 'mol_name')], columns=['sf', 'mol_id', 'mol_name']
     )
 
     isocalc_mock = MagicMock(IsocalcWrapper)
@@ -119,11 +107,7 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
 
     wait_for_es(sec=1)
 
-    ds_d = (
-        es_dsl_search.filter('term', _type='dataset')
-        .execute()
-        .to_dict()['hits']['hits'][0]['_source']
-    )
+    ds_d = es_dsl_search.filter('term', _type='dataset').execute().to_dict()['hits']['hits'][0]['_source']
     assert ds_d == {
         'ds_last_finished': last_finished,
         'ds_config': 'ds_config',
@@ -136,12 +120,7 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
         'annotation_counts': [
             {
                 'db': {'name': 'db_name', 'version': '2017'},
-                'counts': [
-                    {'level': 5, 'n': 1},
-                    {'level': 10, 'n': 2},
-                    {'level': 20, 'n': 2},
-                    {'level': 50, 'n': 2},
-                ],
+                'counts': [{'level': 5, 'n': 1}, {'level': 10, 'n': 2}, {'level': 20, 'n': 2}, {'level': 50, 'n': 2}],
             }
         ],
         'ds_is_public': True,
@@ -150,11 +129,7 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
         'ds_submitter': 'user_id',
         'ds_group': 'group_id',
     }
-    ann_1_d = (
-        es_dsl_search.filter('term', formula='H2O')
-        .execute()
-        .to_dict()['hits']['hits'][0]['_source']
-    )
+    ann_1_d = es_dsl_search.filter('term', formula='H2O').execute().to_dict()['hits']['hits'][0]['_source']
     assert ann_1_d == {
         'pattern_match': 1,
         'image_corr': 1,
@@ -193,11 +168,7 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
         'ds_group': 'group_id',
         'annotation_id': 1234,
     }
-    ann_2_d = (
-        es_dsl_search.filter('term', formula='Au')
-        .execute()
-        .to_dict()['hits']['hits'][0]['_source']
-    )
+    ann_2_d = es_dsl_search.filter('term', formula='Au').execute().to_dict()['hits']['hits'][0]['_source']
     assert ann_2_d == {
         'pattern_match': 1,
         'image_corr': 1,
@@ -259,10 +230,7 @@ def test_delete_ds__one_db_ann_only(test_db, es, sm_index):
         body={'ds_id': 'dataset2', 'db_name': 'HMDB', 'db_version': '2016'},
     )
     es.create(
-        index=index,
-        doc_type='dataset',
-        id='id4',
-        body={'ds_id': 'dataset1', 'db_name': 'HMDB', 'db_version': '2016'},
+        index=index, doc_type='dataset', id='id4', body={'ds_id': 'dataset1', 'db_name': 'HMDB', 'db_version': '2016'}
     )
 
     wait_for_es(sec=1)
@@ -278,25 +246,13 @@ def test_delete_ds__one_db_ann_only(test_db, es, sm_index):
     wait_for_es(sec=1)
 
     body = {'query': {'bool': {'filter': []}}}
-    body['query']['bool']['filter'] = [
-        {'term': {'ds_id': 'dataset1'}},
-        {'term': {'db_name': 'HMDB'}},
-    ]
+    body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset1'}}, {'term': {'db_name': 'HMDB'}}]
     assert es.count(index=index, doc_type='annotation', body=body)['count'] == 0
-    body['query']['bool']['filter'] = [
-        {'term': {'ds_id': 'dataset1'}},
-        {'term': {'db_name': 'ChEBI'}},
-    ]
+    body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset1'}}, {'term': {'db_name': 'ChEBI'}}]
     assert es.count(index=index, doc_type='annotation', body=body)['count'] == 1
-    body['query']['bool']['filter'] = [
-        {'term': {'ds_id': 'dataset2'}},
-        {'term': {'db_name': 'HMDB'}},
-    ]
+    body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset2'}}, {'term': {'db_name': 'HMDB'}}]
     assert es.count(index=index, doc_type='annotation', body=body)['count'] == 1
-    body['query']['bool']['filter'] = [
-        {'term': {'ds_id': 'dataset1'}},
-        {'term': {'_type': 'dataset'}},
-    ]
+    body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset1'}}, {'term': {'_type': 'dataset'}}]
     assert es.count(index=index, doc_type='dataset', body=body)['count'] == 1
 
 
@@ -337,25 +293,13 @@ def test_delete_ds__completely(test_db, es, sm_index):
     wait_for_es(sec=1)
 
     body = {'query': {'bool': {'filter': []}}}
-    body['query']['bool']['filter'] = [
-        {'term': {'ds_id': 'dataset1'}},
-        {'term': {'db_name': 'HMDB'}},
-    ]
+    body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset1'}}, {'term': {'db_name': 'HMDB'}}]
     assert es.count(index=index, doc_type='annotation', body=body)['count'] == 0
-    body['query']['bool']['filter'] = [
-        {'term': {'ds_id': 'dataset1'}},
-        {'term': {'db_name': 'ChEBI'}},
-    ]
+    body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset1'}}, {'term': {'db_name': 'ChEBI'}}]
     assert es.count(index=index, doc_type='annotation', body=body)['count'] == 0
-    body['query']['bool']['filter'] = [
-        {'term': {'ds_id': 'dataset2'}},
-        {'term': {'db_name': 'HMDB'}},
-    ]
+    body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset2'}}, {'term': {'db_name': 'HMDB'}}]
     assert es.count(index=index, doc_type='annotation', body=body)['count'] == 1
-    body['query']['bool']['filter'] = [
-        {'term': {'ds_id': 'dataset1'}},
-        {'term': {'_type': 'dataset'}},
-    ]
+    body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset1'}}, {'term': {'_type': 'dataset'}}]
     assert es.count(index=index, doc_type='dataset', body=body)['count'] == 0
 
 
@@ -417,19 +361,11 @@ def test_update_ds_works_for_all_fields(test_db, es, sm_index, es_dsl_search):
     es_exporter.update_ds('dataset1', fields=list(update.keys()))
     wait_for_es(sec=1)
 
-    ds_doc = (
-        es_dsl_search.filter('term', _type='dataset')
-        .execute()
-        .to_dict()['hits']['hits'][0]['_source']
-    )
+    ds_doc = es_dsl_search.filter('term', _type='dataset').execute().to_dict()['hits']['hits'][0]['_source']
     for k, v in update.items():
         assert v == ds_doc[f'ds_{k}']
 
-    ann_doc = (
-        es_dsl_search.filter('term', _type='annotation')
-        .execute()
-        .to_dict()['hits']['hits'][0]['_source']
-    )
+    ann_doc = es_dsl_search.filter('term', _type='annotation').execute().to_dict()['hits']['hits'][0]['_source']
     for k, v in update.items():
         assert v == ann_doc[f'ds_{k}']
 
@@ -459,7 +395,4 @@ def test_internal_index_name_return_valid_values():
     alias = es_config['index']
     es_man = ESIndexManager(es_config)
 
-    assert es_man.internal_index_name(alias) in [
-        '{}-yin'.format(alias),
-        '{}-yang'.format(alias),
-    ]
+    assert es_man.internal_index_name(alias) in ['{}-yin'.format(alias), '{}-yang'.format(alias)]

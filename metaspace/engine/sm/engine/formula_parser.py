@@ -19,29 +19,18 @@ def parse_formula(f):
 def _hill_system_sort(ion_elements):
     """ Reorder elements to be consistently ordered per https://en.wikipedia.org/wiki/Chemical_formula#Hill_system """
     if ion_elements['C'] != 0:
-        return [
-            'C',
-            'H',
-            *sorted(key for key in ion_elements.keys() if key not in ('C', 'H')),
-        ]
+        return ['C', 'H', *sorted(key for key in ion_elements.keys() if key not in ('C', 'H'))]
     else:
         return sorted(key for key in ion_elements.keys())
 
 
 def _chnops_sort(ion_elements):
     """ Reorder elements to be consistently ordered per the method in pyMSpec """
-    return [
-        *'CHNOPS',
-        *sorted(
-            key for key in ion_elements.keys() if len(key) > 1 or key not in 'CHNOPS'
-        ),
-    ]
+    return [*'CHNOPS', *sorted(key for key in ion_elements.keys() if len(key) > 1 or key not in 'CHNOPS')]
 
 
 def format_modifiers(*adducts):
-    return ''.join(
-        adduct for adduct in adducts if adduct and adduct not in ('[M]+', '[M]-')
-    )
+    return ''.join(adduct for adduct in adducts if adduct and adduct not in ('[M]+', '[M]-'))
 
 
 def format_charge(charge):
@@ -98,9 +87,7 @@ def generate_ion_formula(formula, *adducts):
                 else:
                     ion_elements[elem] -= n
                     if ion_elements[elem] < 0:
-                        raise ParseFormulaError(
-                            f'Negative total element count for {elem}'
-                        )
+                        raise ParseFormulaError(f'Negative total element count for {elem}')
 
     if not any(count > 0 for count in ion_elements.values()):
         raise ParseFormulaError('No remaining elements')

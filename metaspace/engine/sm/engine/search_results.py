@@ -11,9 +11,7 @@ METRICS_INS = (
 )
 
 
-def post_images_to_image_store(
-    formula_images_rdd, alpha_channel, img_store, img_store_type, n_peaks
-):
+def post_images_to_image_store(formula_images_rdd, alpha_channel, img_store, img_store_type, n_peaks):
     logger.info('Posting iso images to {}'.format(img_store))
     png_generator = PngGenerator(alpha_channel, greyscale=True)
 
@@ -65,22 +63,10 @@ class SearchResults(object):
         """ Store formula image metrics and image ids in the database """
         logger.info('Storing iso image metrics')
 
-        rows = list(
-            self._metrics_table_row_gen(
-                self.job_id, ion_metrics_df.reset_index(), ion_img_ids
-            )
-        )
+        rows = list(self._metrics_table_row_gen(self.job_id, ion_metrics_df.reset_index(), ion_img_ids))
         db.insert(METRICS_INS, rows)
 
-    def store(
-        self,
-        metrics_df,
-        formula_images_rdd,
-        alpha_channel,
-        db,
-        img_store,
-        img_store_type,
-    ):
+    def store(self, metrics_df, formula_images_rdd, alpha_channel, db, img_store, img_store_type):
         """ Save formula metrics and images
 
         Args

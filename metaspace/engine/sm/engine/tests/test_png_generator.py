@@ -19,6 +19,4 @@ def test_png_gen_greyscale_works():
     assert_equal(height, 1)
 
     grey_shape = img_data.shape + (2,)
-    assert_almost_equal(
-        np.array(list(pixels)).reshape(grey_shape)[:, :, 0], norm_img_data, decimal=4
-    )
+    assert_almost_equal(np.array(list(pixels)).reshape(grey_shape)[:, :, 0], norm_img_data, decimal=4)

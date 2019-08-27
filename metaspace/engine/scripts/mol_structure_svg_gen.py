@@ -43,11 +43,7 @@ def readCompounds(db_name, tsv_filename):
             continue
         valid += 1
         yield id, inchi
-    print(
-        "{}: scanned {} records, {} with InChI ({:.1f}%)".format(
-            db_name, k, valid, float(valid) / k * 100.0
-        )
-    )
+    print("{}: scanned {} records, {} with InChI ({:.1f}%)".format(db_name, k, valid, float(valid) / k * 100.0))
 
 
 if not os.path.exists(OUTPUT_DIR):

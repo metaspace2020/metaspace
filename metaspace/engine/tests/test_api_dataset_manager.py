@@ -15,9 +15,7 @@ from sm.engine.tests.util import sm_config, metadata, ds_config, test_db, fill_d
 from sm.engine.optical_image import OpticalImageType
 
 
-def create_api_ds_man(
-    es=None, img_store=None, annot_queue=None, update_queue=None, status_queue=None
-):
+def create_api_ds_man(es=None, img_store=None, annot_queue=None, update_queue=None, status_queue=None):
     es_mock = es or MagicMock(spec=ESExporter)
     annot_queue_mock = annot_queue or MagicMock(QueuePublisher)
     update_queue_mock = update_queue or MagicMock(QueuePublisher)
@@ -82,9 +80,7 @@ class TestSMapiDatasetManager:
         ds_man.add(ds_doc, priority=DatasetActionPriority.HIGH)
 
         msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'action': DaemonAction.ANNOTATE}
-        action_queue_mock.publish.assert_has_calls(
-            [call(msg, DatasetActionPriority.HIGH)]
-        )
+        action_queue_mock.publish.assert_has_calls([call(msg, DatasetActionPriority.HIGH)])
 
     def test_delete_ds(self, test_db, metadata, ds_config):
         update_queue = MagicMock(spec=QueuePublisher)
@@ -104,9 +100,7 @@ class TestSMapiDatasetManager:
         ds_man.delete(ds_id)
 
         msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'action': DaemonAction.DELETE}
-        update_queue.publish.assert_has_calls(
-            [call(msg, DatasetActionPriority.STANDARD)]
-        )
+        update_queue.publish.assert_has_calls([call(msg, DatasetActionPriority.STANDARD)])
 
     def test_add_optical_image(self, fill_db, metadata, ds_config):
         action_queue_mock = MagicMock(spec=QueuePublisher)
@@ -124,9 +118,7 @@ class TestSMapiDatasetManager:
         img_store_mock.get_image_by_id.return_value = Image.new('RGB', (100, 100))
 
         db = DB()
-        ds_man = create_api_ds_man(
-            es=es_mock, img_store=img_store_mock, annot_queue=action_queue_mock
-        )
+        ds_man = create_api_ds_man(es=es_mock, img_store=img_store_mock, annot_queue=action_queue_mock)
         ds_man._annotation_image_shape = MagicMock(return_value=(100, 100))
 
         ds_id = '2000-01-01'
@@ -143,22 +135,10 @@ class TestSMapiDatasetManager:
 
         zoom_levels = [1, 2, 3]
         raw_img_id = 'raw_opt_img_id'
-        ds_man.add_optical_image(
-            ds_id,
-            raw_img_id,
-            [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
-            zoom_levels=zoom_levels,
-        )
+        ds_man.add_optical_image(ds_id, raw_img_id, [[1, 0, 0], [0, 1, 0], [0, 0, 1]], zoom_levels=zoom_levels)
         optical_images = db.select(f"SELECT ds_id, type, zoom FROM optical_image")
-        for type, zoom in product(
-            [OpticalImageType.SCALED, OpticalImageType.CLIPPED_TO_ION_IMAGE],
-            zoom_levels,
-        ):
+        for type, zoom in product([OpticalImageType.SCALED, OpticalImageType.CLIPPED_TO_ION_IMAGE], zoom_levels):
             assert (ds_id, type, zoom) in optical_images
 
-        assert db.select(
-            'SELECT optical_image FROM dataset where id = %s', params=(ds_id,)
-        ) == [(raw_img_id,)]
-        assert db.select(
-            'SELECT thumbnail FROM dataset where id = %s', params=(ds_id,)
-        ) == [('thumbnail_id',)]
+        assert db.select('SELECT optical_image FROM dataset where id = %s', params=(ds_id,)) == [(raw_img_id,)]
+        assert db.select('SELECT thumbnail FROM dataset where id = %s', params=(ds_id,)) == [('thumbnail_id',)]

@@ -27,9 +27,7 @@ def _make_fake_ds(db, ds_id, metadata, ds_config):
     )
     ds.save(db)
 
-    job_id, = db.insert_return(
-        "INSERT INTO job (db_id, ds_id) VALUES (%s, %s) RETURNING id", [(0, ds_id)]
-    )
+    job_id, = db.insert_return("INSERT INTO job (db_id, ds_id) VALUES (%s, %s) RETURNING id", [(0, ds_id)])
     db.insert(
         (
             "INSERT INTO annotation (job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids) "
@@ -40,9 +38,7 @@ def _make_fake_ds(db, ds_id, metadata, ds_config):
 
 
 def _mock_get_ion_images_for_analysis(storage_type, img_ids, **kwargs):
-    images = np.unpackbits(np.arange(len(img_ids), dtype=np.uint8)).reshape(
-        (len(img_ids), 8)
-    )
+    images = np.unpackbits(np.arange(len(img_ids), dtype=np.uint8)).reshape((len(img_ids), 8))
     mask = np.ones((4, 2))
     return images, mask, (4, 2)
 
@@ -52,15 +48,11 @@ def test_creates_ion_thumbnail(test_db, algorithm, metadata, ds_config):
     db = DB()
     img_store_mock = MagicMock(spec=ImageStoreServiceWrapper)
     img_store_mock.post_image.return_value = IMG_ID
-    img_store_mock.get_ion_images_for_analysis.side_effect = (
-        _mock_get_ion_images_for_analysis
-    )
+    img_store_mock.get_ion_images_for_analysis.side_effect = _mock_get_ion_images_for_analysis
     _make_fake_ds(db, DS_ID, metadata, ds_config)
 
     generate_ion_thumbnail(db, img_store_mock, DS_ID, algorithm=algorithm)
 
-    new_ion_thumbnail, = db.select_one(
-        "SELECT ion_thumbnail FROM dataset WHERE id = %s", [DS_ID]
-    )
+    new_ion_thumbnail, = db.select_one("SELECT ion_thumbnail FROM dataset WHERE id = %s", [DS_ID])
     assert new_ion_thumbnail == IMG_ID
     assert img_store_mock.post_image.called

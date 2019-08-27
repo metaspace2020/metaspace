@@ -7,12 +7,8 @@ from sm.engine.dataset import Dataset
 
 
 SEL_DATASET_RAW_OPTICAL_IMAGE = 'SELECT optical_image from dataset WHERE id = %s'
-UPD_DATASET_RAW_OPTICAL_IMAGE = (
-    'update dataset set optical_image = %s, transform = %s WHERE id = %s'
-)
-DEL_DATASET_RAW_OPTICAL_IMAGE = (
-    'update dataset set optical_image = NULL, transform = NULL WHERE id = %s'
-)
+UPD_DATASET_RAW_OPTICAL_IMAGE = 'update dataset set optical_image = %s, transform = %s WHERE id = %s'
+DEL_DATASET_RAW_OPTICAL_IMAGE = 'update dataset set optical_image = NULL, transform = NULL WHERE id = %s'
 UPD_DATASET_THUMB_OPTICAL_IMAGE = 'update dataset set thumbnail = %s WHERE id = %s'
 
 IMG_URLS_BY_ID_SEL = (
@@ -24,8 +20,7 @@ IMG_URLS_BY_ID_SEL = (
 )
 
 INS_OPTICAL_IMAGE = (
-    'INSERT INTO optical_image (id, ds_id, type, zoom, width, height, transform) '
-    'VALUES (%s, %s, %s, %s, %s, %s, %s)'
+    'INSERT INTO optical_image (id, ds_id, type, zoom, width, height, transform) ' 'VALUES (%s, %s, %s, %s, %s, %s, %s)'
 )
 SEL_OPTICAL_IMAGE = 'SELECT id FROM optical_image WHERE ds_id = %s'
 SEL_OPTICAL_IMAGE_THUMBNAIL = 'SELECT thumbnail FROM dataset WHERE id = %s'
@@ -82,20 +77,13 @@ def _scale_image(scan, transform_, zoom):
     # i.e. zoom = 1 is what the user sees by default, and zooming into the image triggers
     # fetching higher-resolution images from the server
 
-    scale_factor = min(
-        zoom * min(VIEWPORT_WIDTH / scan.width, VIEWPORT_HEIGHT / scan.height), 1
-    )
-    new_dims = (
-        int(round(scan.width * scale_factor)),
-        int(round(scan.height * scale_factor)),
-    )
+    scale_factor = min(zoom * min(VIEWPORT_WIDTH / scan.width, VIEWPORT_HEIGHT / scan.height), 1)
+    new_dims = (int(round(scan.width * scale_factor)), int(round(scan.height * scale_factor)))
 
     img = scan.resize(new_dims, True)
 
     transform_to_ion_space = np.linalg.pinv(np.array(transform_))
-    transform_to_ion_space = np.dot(
-        transform_to_ion_space, np.diag([1 / scale_factor, 1 / scale_factor, 1])
-    )
+    transform_to_ion_space = np.dot(transform_to_ion_space, np.diag([1 / scale_factor, 1 / scale_factor, 1]))
 
     return img, new_dims, transform_to_ion_space.tolist()
 
@@ -116,44 +104,20 @@ def _add_raw_optical_image(db, img_store, ds, img_id, transform):
     db.alter(UPD_DATASET_RAW_OPTICAL_IMAGE, params=(img_id, transform, ds.id))
 
 
-def _add_zoom_optical_images(
-    db, img_store, ds, dims, img_id, optical_img, transform, zoom_levels
-):
+def _add_zoom_optical_images(db, img_store, ds, dims, img_id, optical_img, transform, zoom_levels):
     rows = []
 
     for zoom in zoom_levels:
-        img, (width, height), transform_to_ion_space = _scale_image(
-            optical_img, transform, zoom
-        )
+        img, (width, height), transform_to_ion_space = _scale_image(optical_img, transform, zoom)
         buf = _save_jpeg(img)
         scaled_img_id = img_store.post_image('fs', 'optical_image', buf)
-        rows.append(
-            (
-                scaled_img_id,
-                ds.id,
-                OpticalImageType.SCALED,
-                zoom,
-                width,
-                height,
-                transform_to_ion_space,
-            )
-        )
+        rows.append((scaled_img_id, ds.id, OpticalImageType.SCALED, zoom, width, height, transform_to_ion_space))
 
-        img, (width, height), transform_to_ion_space = _transform_image_to_ion_space(
-            optical_img, transform, dims, zoom
-        )
+        img, (width, height), transform_to_ion_space = _transform_image_to_ion_space(optical_img, transform, dims, zoom)
         buf = _save_jpeg(img)
         scaled_img_id = img_store.post_image('fs', 'optical_image', buf)
         rows.append(
-            (
-                scaled_img_id,
-                ds.id,
-                OpticalImageType.CLIPPED_TO_ION_IMAGE,
-                zoom,
-                width,
-                height,
-                transform_to_ion_space,
-            )
+            (scaled_img_id, ds.id, OpticalImageType.CLIPPED_TO_ION_IMAGE, zoom, width, height, transform_to_ion_space)
         )
 
     for row in db.select(SEL_OPTICAL_IMAGE, params=(ds.id,)):
@@ -173,9 +137,7 @@ def _add_thumbnail_optical_image(db, img_store, ds, dims, optical_img, transform
     db.alter(UPD_DATASET_THUMB_OPTICAL_IMAGE, params=(img_thumb_id, ds.id))
 
 
-def add_optical_image(
-    db, img_store, ds_id, img_id, transform, zoom_levels=(1, 2, 4, 8)
-):
+def add_optical_image(db, img_store, ds_id, img_id, transform, zoom_levels=(1, 2, 4, 8)):
     """ Generate scaled and transformed versions of the provided optical image + creates the thumbnail """
     ds = Dataset.load(db, ds_id)
     logger.info('Adding optical image to "%s" dataset', ds.id)
@@ -185,9 +147,7 @@ def add_optical_image(
     optical_img = img_store.get_image_by_id('fs', 'raw_optical_image', img_id)
 
     _add_raw_optical_image(db, img_store, ds, img_id, transform)
-    _add_zoom_optical_images(
-        db, img_store, ds, dims, img_id, optical_img, transform, zoom_levels
-    )
+    _add_zoom_optical_images(db, img_store, ds, dims, img_id, optical_img, transform, zoom_levels)
     _add_thumbnail_optical_image(db, img_store, ds, dims, optical_img, transform)
 
 

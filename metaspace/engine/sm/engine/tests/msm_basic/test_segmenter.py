@@ -29,9 +29,7 @@ def test_define_ds_segments():
 
     # 3 (columns) * 10 (spectra) * 10 (mz/spectrum) * 8 (float prec) ~= 2400 (dataset size, bytes)
     # 2400 // 2**10 (segm size, bytes) ~= 2 (segments)
-    ds_segments = define_ds_segments(
-        sample_mzs, mz_precision='d', total_mz_n=100, ds_segm_size_mb=2 ** -10
-    )
+    ds_segments = define_ds_segments(sample_mzs, mz_precision='d', total_mz_n=100, ds_segm_size_mb=2 ** -10)
 
     exp_ds_segments = np.array([[0, 50.0], [50, 100.0]])
     assert np.allclose(ds_segments, exp_ds_segments)
@@ -40,18 +38,13 @@ def test_define_ds_segments():
 @patch('sm.engine.msm_basic.segmenter.pd.to_msgpack')
 def test_segment_spectra(to_msgpack_mock):
     imzml_parser_mock = Mock()
-    imzml_parser_mock.getspectrum.return_value = (
-        np.linspace(0, 90, num=10),
-        np.ones(10),
-    )
+    imzml_parser_mock.getspectrum.return_value = (np.linspace(0, 90, num=10), np.ones(10))
     imzml_parser_mock.mzPrecision = 'f'
     coordinates = list(product([0], range(10)))
     ds_segments = np.array([[0, 50], [50, 90.0]])
 
     chunk_sp_n = 1000
-    segment_spectra(
-        imzml_parser_mock, coordinates, chunk_sp_n, ds_segments, Path('/tmp/abc')
-    )
+    segment_spectra(imzml_parser_mock, coordinates, chunk_sp_n, ds_segments, Path('/tmp/abc'))
 
     for segm_i, (min_mz, max_mz) in enumerate(ds_segments):
         args = to_msgpack_mock.call_args_list[segm_i][0]

@@ -30,34 +30,13 @@ RESOL_POWER_PARAMS = {
     '200K': {'sigma': 0.000866550044598, 'fwhm': 0.00204056941504, 'pts_per_mz': 5770},
     '250K': {'sigma': 0.000693240035678, 'fwhm': 0.00163245553203, 'pts_per_mz': 7212},
     '280K': {'sigma': 0.00061896431757, 'fwhm': 0.00145754958217, 'pts_per_mz': 8078},
-    '500K': {
-        'sigma': 0.000346620017839,
-        'fwhm': 0.000816227766017,
-        'pts_per_mz': 14425,
-    },
-    '750K': {
-        'sigma': 0.000231080011893,
-        'fwhm': 0.000544151844011,
-        'pts_per_mz': 21637,
-    },
-    '1000K': {
-        'sigma': 0.00017331000892,
-        'fwhm': 0.000408113883008,
-        'pts_per_mz': 28850,
-    },
+    '500K': {'sigma': 0.000346620017839, 'fwhm': 0.000816227766017, 'pts_per_mz': 14425},
+    '750K': {'sigma': 0.000231080011893, 'fwhm': 0.000544151844011, 'pts_per_mz': 21637},
+    '1000K': {'sigma': 0.00017331000892, 'fwhm': 0.000408113883008, 'pts_per_mz': 28850},
 }
 
 FLAT_DS_CONFIG_KEYS = frozenset(
-    {
-        'mol_dbs',
-        'adducts',
-        'ppm',
-        'min_px',
-        'n_peaks',
-        'decoy_sample_size',
-        'neutral_losses',
-        'chem_mods',
-    }
+    {'mol_dbs', 'adducts', 'ppm', 'min_px', 'n_peaks', 'decoy_sample_size', 'neutral_losses', 'chem_mods'}
 )
 
 
@@ -65,10 +44,7 @@ class Dataset(object):
     """ Class for representing an IMS dataset
     """
 
-    DS_SEL = (
-        'SELECT id, name, input_path, upload_dt, metadata, config, status, is_public '
-        'FROM dataset WHERE id = %s'
-    )
+    DS_SEL = 'SELECT id, name, input_path, upload_dt, metadata, config, status, is_public ' 'FROM dataset WHERE id = %s'
     DS_UPD = (
         'UPDATE dataset set name=%(name)s, input_path=%(input_path)s, upload_dt=%(upload_dt)s, '
         'metadata=%(metadata)s, config=%(config)s, status=%(status)s, is_public=%(is_public)s where id=%(id)s'
@@ -175,11 +151,7 @@ class Dataset(object):
 
     def to_queue_message(self):
         msg = {'ds_id': self.id, 'ds_name': self.name, 'input_path': self.input_path}
-        email = (
-            self.metadata.get('Submitted_By', {})
-            .get('Submitter', {})
-            .get('Email', None)
-        )
+        email = self.metadata.get('Submitted_By', {}).get('Submitter', {}).get('Email', None)
         if email:
             msg['user_email'] = email.lower()
         return msg
@@ -245,13 +217,8 @@ def generate_ds_config(
     default_moldbs = sm_config['ds_config_defaults']['moldb_names']
 
     mol_dbs = mol_dbs or []
-    mol_dbs = [
-        *mol_dbs,
-        *(mol_db for mol_db in default_moldbs if mol_db not in mol_dbs),
-    ]
-    default_adducts, charge, isocalc_sigma = _get_isotope_generation_from_metadata(
-        metadata
-    )
+    mol_dbs = [*mol_dbs, *(mol_db for mol_db in default_moldbs if mol_db not in mol_dbs)]
+    default_adducts, charge, isocalc_sigma = _get_isotope_generation_from_metadata(metadata)
 
     config = {
         'databases': mol_dbs,
