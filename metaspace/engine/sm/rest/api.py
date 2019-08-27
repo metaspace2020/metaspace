@@ -1,6 +1,6 @@
 import argparse
 import json
-import logging
+
 from bottle import post, run
 from bottle import request as req
 from bottle import response as resp
@@ -10,7 +10,7 @@ from sm.engine.es_export import ESExporter
 from sm.engine.dataset import Dataset
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_DS_STATUS, SM_UPDATE
-from sm.engine.util import SMConfig
+from sm.engine.util import SMConfig, bootstrap_and_run
 from sm.engine.util import init_loggers
 from sm.engine.errors import UnknownDSID, DSIsBusy
 from sm.rest.dataset_manager import SMapiDatasetManager, DatasetActionPriority
@@ -222,9 +222,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SM Engine REST API')
     parser.add_argument('--config', dest='config_path', default='conf/config.json', type=str, help='SM config path')
     args = parser.parse_args()
-    SMConfig.set_path(args.config_path)
 
-    init_loggers(SMConfig.get_conf()['logs'])
-    logger = logging.getLogger(name='api')
-    logger.info('Starting SM api')
-    run(**SMConfig.get_conf()['bottle'])
+    def run_bottle(sm_config, logger):
+        logger.info('Starting SM api')
+        run(**sm_config['bottle'])
+
+    bootstrap_and_run(args.config_path, run_bottle)

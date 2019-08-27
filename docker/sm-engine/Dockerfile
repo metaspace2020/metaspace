@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
 MAINTAINER Vitaly Kovalev <kovalev@embl.de>
 WORKDIR /
@@ -6,10 +6,9 @@ WORKDIR /
 ENV SPARK_DIR spark-2.3.3-bin-hadoop2.7
 ENV SPARK_HOME /$SPARK_DIR
 ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
-#ENV PY4J_ARCH py4j-0.10.7-src.zip
-#ENV PYTHONPATH=.:$SPARK_HOME/python:$SPARK_HOME/python/lib/$PY4J_ARCH:$PYTHONPATH
 
-COPY requirements.txt /requirements.txt
+# Use the fastest apt mirror
+RUN sed -i -e 's|http://.*archive.ubuntu.com/ubuntu/|mirror://mirrors.ubuntu.com/mirrors.txt|' /etc/apt/sources.list
 
 RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     PIP_INSTALL="python -m pip install --upgrade" && \
@@ -25,7 +24,6 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         netcat \
         && \
 # ----- Spark -----
-    apt-get update && \
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
         openjdk-8-jre-headless ca-certificates-java wget && \
     wget -qO - http://s3-eu-west-1.amazonaws.com/sm-engine/dev/$SPARK_DIR.tar.gz | tar xz && \
@@ -37,6 +35,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
         python3.6 \
         python3.6-dev \
+        python3-distutils \
         libsm6 libxrender1 libxext6 \
         && \
     wget -O ~/get-pip.py https://bootstrap.pypa.io/get-pip.py && \
@@ -44,27 +43,32 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     ln -s /usr/bin/python3.6 /usr/local/bin/python3 && \
     ln -s /usr/bin/python3.6 /usr/local/bin/python && \
     $PIP_INSTALL \
-        setuptools \
-        coverage \
-        codecov \
-        pysparkling \
-        && \
-# --- Engine dependencies ---
-    apt-get update && \
-    DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
-        git curl postgresql-client libpq-dev python3-dev&& \
+        setuptools && \
     apt-get clean -y && \
     apt-get autoremove -y && \
-    $PIP_INSTALL \
-        -r requirements.txt \
-        && \
-    rm -rf /var/lib/apt/lists/* /tmp/* ~/* ~/.cache/* && \
+    rm -rf /var/lib/apt/lists/* /tmp/* ~/* ~/.cache/*
+
 # --- MolDB dependencies ---
-    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+    mkdir /root/.conda && \
     chmod +x Miniconda3-latest-Linux-x86_64.sh && \
     ./Miniconda3-latest-Linux-x86_64.sh -b && \
     ln -S -T /root/miniconda3/bin/conda /usr/local/bin/conda && \
-    ln -S -T /root/miniconda3/bin/activate /usr/local/bin/activate
+    ln -S -T /root/miniconda3/bin/activate /usr/local/bin/activate && \
+    rm -rf /var/lib/apt/lists/* /tmp/* ~/* ~/.cache/*
+
+# --- Engine dependencies ---
+COPY requirements.txt /requirements.txt
+RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
+    PIP_INSTALL="python -m pip install --upgrade" && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
+        git curl postgresql-client libpq-dev && \
+    $PIP_INSTALL \
+        -r requirements.txt && \
+    apt-get clean -y && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/* /tmp/* ~/* ~/.cache/*
 
 RUN mkdir -p /opt/data /root/metaspace
 #WORKDIR /root/metaspace/metaspace/engine

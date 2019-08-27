@@ -8,7 +8,7 @@ pytest
 recommonmark
 boto3
 fabric3
-pypng
+pypng==0.0.19    # 0.0.20 introduced incompatible API changes
 pyyaml
 elasticsearch-dsl>=5.0.0,<6.0.0
 pika==0.11.0b1
@@ -20,8 +20,15 @@ scipy>=0.18.1
 matplotlib>=2
 pandas>=0.22
 cffi
-psycopg2==2.8.2
+psycopg2-binary==2.8.2
 cherrypy<9
 redis
 scikit-learn==0.20.2
 pyspark[sql]==2.3.3
+coverage
+codecov
+pysparkling
+docutils<0.15  # botocore requirement
+pylama
+pylama_pylint
+black
