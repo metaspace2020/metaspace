@@ -1,5 +1,6 @@
 import argparse
 import json
+import logging
 
 from bottle import post, run
 from bottle import request as req
@@ -201,10 +202,9 @@ if __name__ == '__main__':
         '--config', dest='config_path', default='conf/config.json', type=str, help='SM config path'
     )
     args = parser.parse_args()
+    logger = logging.getLogger('api')
 
-    def run_bottle(sm_config, _logger):
-        global logger
-        logger = _logger
+    def run_bottle(sm_config):
         logger.info('Starting SM api')
         run(**sm_config['bottle'])
 
