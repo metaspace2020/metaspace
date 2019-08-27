@@ -31,5 +31,4 @@ pysparkling
 docutils<0.15  # botocore requirement
 pylama
 pylama_pylint
-docutils<0.15  # botocore requirement
 black

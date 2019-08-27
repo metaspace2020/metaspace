@@ -226,9 +226,9 @@ jobs:
             pip install --upgrade -r requirements.txt
       - attach_workspace:
           at: ~/workspace
-      - run:
-          name: Run code formatter
-          command: black --skip-string-normalization --target-version py36 --check sm
+#      - run:
+#          name: Run code formatter
+#          command: black --skip-string-normalization --target-version py36 --check sm
 #      - run:
 #          name: Run linter
 #          command: pylama --options pylama.ini sm
