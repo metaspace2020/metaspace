@@ -9,13 +9,29 @@ from sm.engine.es_export import ESExporter
 from sm.engine.queue import QueuePublisher
 from sm.engine.dataset import DatasetStatus, Dataset, generate_ds_config
 from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.tests.util import sm_config, test_db, fill_db, sm_index, es_dsl_search, metadata, ds_config
+from sm.engine.tests.util import (
+    sm_config,
+    test_db,
+    fill_db,
+    sm_index,
+    es_dsl_search,
+    metadata,
+    ds_config,
+)
 
 mol_db_mock = {'id': 1, 'name': 'HMDB-v4', 'version': '2001-01-01'}
 
 
-def create_ds(ds_id='2000-01-01', ds_name='ds_name', input_path='input_path', upload_dt=None,
-              metadata=None, status=DatasetStatus.QUEUED, mol_dbs=None, adducts=None):
+def create_ds(
+    ds_id='2000-01-01',
+    ds_name='ds_name',
+    input_path='input_path',
+    upload_dt=None,
+    metadata=None,
+    status=DatasetStatus.QUEUED,
+    mol_dbs=None,
+    adducts=None,
+):
     upload_dt = upload_dt or datetime.now()
     if not mol_dbs:
         mol_dbs = ['HMDB-v4']
@@ -26,12 +42,20 @@ def create_ds(ds_id='2000-01-01', ds_name='ds_name', input_path='input_path', up
             'MS_Analysis': {
                 'Polarity': 'Positive',
                 'Analyzer': 'FTICR',
-                'Detector_Resolving_Power': {'mz': 200, 'Resolving_Power': 140000}
+                'Detector_Resolving_Power': {'mz': 200, 'Resolving_Power': 140000},
             }
         }
     config = generate_ds_config(metadata, mol_dbs, adducts)
-    return Dataset(id=ds_id, name=ds_name, input_path=input_path, upload_dt=upload_dt,
-                   metadata=metadata or {}, config=config, status=status, img_storage_type='fs')
+    return Dataset(
+        id=ds_id,
+        name=ds_name,
+        input_path=input_path,
+        upload_dt=upload_dt,
+        metadata=metadata or {},
+        config=config,
+        status=status,
+        img_storage_type='fs',
+    )
 
 
 def create_daemon_man(db=None, es=None, img_store=None, status_queue=None):
@@ -40,13 +64,12 @@ def create_daemon_man(db=None, es=None, img_store=None, status_queue=None):
     status_queue_mock = status_queue or MagicMock(QueuePublisher)
     img_store_mock = img_store or MagicMock(spec=ImageStoreServiceWrapper)
 
-    return DatasetManager(db=db, es=es_mock,
-                          img_store=img_store_mock,
-                          status_queue=status_queue_mock)
+    return DatasetManager(
+        db=db, es=es_mock, img_store=img_store_mock, status_queue=status_queue_mock
+    )
 
 
 class TestSMDaemonDatasetManager:
-
     class SearchJob:
         def __init__(self, *args, **kwargs):
             pass
@@ -54,7 +77,9 @@ class TestSMDaemonDatasetManager:
         def run(self, *args, **kwargs):
             pass
 
-    @patch('sm.engine.mol_db.MolDBServiceWrapper.find_db_by_name_version', return_value=[mol_db_mock])
+    @patch(
+        'sm.engine.mol_db.MolDBServiceWrapper.find_db_by_name_version', return_value=[mol_db_mock]
+    )
     def test_annotate_ds(self, find_db_by_name_version_mock, test_db, metadata, ds_config):
         es_mock = MagicMock(spec=ESExporter)
         db = DB()
@@ -64,8 +89,13 @@ class TestSMDaemonDatasetManager:
         ds_name = 'ds_name'
         input_path = 'input_path'
         upload_dt = datetime.now()
-        ds = create_ds(ds_id=ds_id, ds_name=ds_name, input_path=input_path,
-                       upload_dt=upload_dt, metadata=metadata)
+        ds = create_ds(
+            ds_id=ds_id,
+            ds_name=ds_name,
+            input_path=input_path,
+            upload_dt=upload_dt,
+            metadata=metadata,
+        )
 
         manager.annotate(ds, annotation_job_factory=self.SearchJob)
 
@@ -105,6 +135,7 @@ class TestSMDaemonDatasetManager:
 
         ids = [f'iso_image_{i}{j}' for i, j in product([1, 2], [1, 2])]
         img_store_service_mock.delete_image_by_id.assert_has_calls(
-            [call('fs', 'iso_image', ids[0]), call('fs', 'iso_image', ids[1])])
+            [call('fs', 'iso_image', ids[0]), call('fs', 'iso_image', ids[1])]
+        )
         es_mock.delete_ds.assert_called_with(ds_id)
         assert db.select_one('SELECT * FROM dataset WHERE id = %s', params=(ds_id,)) == []

@@ -24,57 +24,62 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
 
     def db_sel_side_effect(sql, params):
         if sql == DATASET_SEL:
-            return [{
-                'ds_id': ds_id,
-                'ds_name': 'ds_name',
-                'ds_input_path': 'ds_input_path',
-                'ds_config': 'ds_config',
-                'ds_meta': {},
-                'ds_upload_dt': upload_dt,
-                'ds_status': 'ds_status',
-                'ds_last_finished': datetime.strptime(last_finished, '%Y-%m-%dT%H:%M:%S'),
-                'ds_is_public': True,
-                'ds_ion_img_storage': 'fs',
-                'ds_acq_geometry': {},
-                'ds_submitter': 'user_id',
-                'ds_group': 'group_id',
-            }]
+            return [
+                {
+                    'ds_id': ds_id,
+                    'ds_name': 'ds_name',
+                    'ds_input_path': 'ds_input_path',
+                    'ds_config': 'ds_config',
+                    'ds_meta': {},
+                    'ds_upload_dt': upload_dt,
+                    'ds_status': 'ds_status',
+                    'ds_last_finished': datetime.strptime(last_finished, '%Y-%m-%dT%H:%M:%S'),
+                    'ds_is_public': True,
+                    'ds_ion_img_storage': 'fs',
+                    'ds_acq_geometry': {},
+                    'ds_submitter': 'user_id',
+                    'ds_group': 'group_id',
+                }
+            ]
         elif sql == ANNOTATIONS_SEL:
-            return [{
-                'annotation_id': 1234,
-                'formula': 'H2O',
-                'chaos': 1,
-                'image_corr': 1,
-                'pattern_match': 1,
-                'total_iso_ints': 100,
-                'min_iso_ints': 0,
-                'max_iso_ints': 100,
-                'msm': 1,
-                'adduct': '+H',
-                'neutral_loss': '-H',
-                'chem_mod': '-H+O',
-                'job_id': 1,
-                'fdr': 0.1,
-                'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
-                'polarity': '+'
-            }, {
-                'annotation_id': 1235,
-                'formula': 'Au',
-                'chaos': 1,
-                'image_corr': 1,
-                'pattern_match': 1,
-                'total_iso_ints': 100,
-                'min_iso_ints': 0,
-                'max_iso_ints': 100,
-                'msm': 1,
-                'adduct': '+H',
-                'neutral_loss': '',
-                'chem_mod': '',
-                'job_id': 1,
-                'fdr': 0.05,
-                'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
-                'polarity': '+'
-            }]
+            return [
+                {
+                    'annotation_id': 1234,
+                    'formula': 'H2O',
+                    'chaos': 1,
+                    'image_corr': 1,
+                    'pattern_match': 1,
+                    'total_iso_ints': 100,
+                    'min_iso_ints': 0,
+                    'max_iso_ints': 100,
+                    'msm': 1,
+                    'adduct': '+H',
+                    'neutral_loss': '-H',
+                    'chem_mod': '-H+O',
+                    'job_id': 1,
+                    'fdr': 0.1,
+                    'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
+                    'polarity': '+',
+                },
+                {
+                    'annotation_id': 1235,
+                    'formula': 'Au',
+                    'chaos': 1,
+                    'image_corr': 1,
+                    'pattern_match': 1,
+                    'total_iso_ints': 100,
+                    'min_iso_ints': 0,
+                    'max_iso_ints': 100,
+                    'msm': 1,
+                    'adduct': '+H',
+                    'neutral_loss': '',
+                    'chem_mod': '',
+                    'job_id': 1,
+                    'fdr': 0.05,
+                    'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
+                    'polarity': '+',
+                },
+            ]
         else:
             logging.getLogger('engine').error(f'Wrong db_sel_side_effect arguments: {params}')
 
@@ -85,14 +90,16 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
     mol_db_mock.id = mol_db_id
     mol_db_mock.name = 'db_name'
     mol_db_mock.version = '2017'
-    mol_db_mock.get_molecules.return_value = pd.DataFrame([('H2O', 'mol_id', 'mol_name'), ('Au', 'mol_id', 'mol_name')],
-                                                          columns=['sf', 'mol_id', 'mol_name'])
+    mol_db_mock.get_molecules.return_value = pd.DataFrame(
+        [('H2O', 'mol_id', 'mol_name'), ('Au', 'mol_id', 'mol_name')],
+        columns=['sf', 'mol_id', 'mol_name'],
+    )
 
     isocalc_mock = MagicMock(IsocalcWrapper)
     isocalc_mock.centroids = lambda formula: {
-        'H2O+H': ([100., 200.], None),
-        'H2O-H+O-H+H': ([100., 200., 300.], None),
-        'Au+H': ([10., 20.], None)
+        'H2O+H': ([100.0, 200.0], None),
+        'H2O-H+O-H+H': ([100.0, 200.0, 300.0], None),
+        'Au+H': ([10.0, 20.0], None),
     }[formula]
 
     es_exp = ESExporter(db_mock)
@@ -101,58 +108,149 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
 
     wait_for_es(sec=1)
 
-    ds_d = es_dsl_search.filter('term', _type='dataset').execute().to_dict()['hits']['hits'][0]['_source']
+    ds_d = (
+        es_dsl_search.filter('term', _type='dataset')
+        .execute()
+        .to_dict()['hits']['hits'][0]['_source']
+    )
     assert ds_d == {
-        'ds_last_finished': last_finished, 'ds_config': 'ds_config', 'ds_meta': {},
-        'ds_status': 'ds_status', 'ds_name': 'ds_name', 'ds_input_path': 'ds_input_path', 'ds_id': ds_id,
+        'ds_last_finished': last_finished,
+        'ds_config': 'ds_config',
+        'ds_meta': {},
+        'ds_status': 'ds_status',
+        'ds_name': 'ds_name',
+        'ds_input_path': 'ds_input_path',
+        'ds_id': ds_id,
         'ds_upload_dt': upload_dt,
-        'annotation_counts': [{'db': {'name': 'db_name', 'version': '2017'},
-                               'counts': [{'level': 5, 'n': 1}, {'level': 10, 'n': 2},
-                                          {'level': 20, 'n': 2}, {'level': 50, 'n': 2}]}],
+        'annotation_counts': [
+            {
+                'db': {'name': 'db_name', 'version': '2017'},
+                'counts': [
+                    {'level': 5, 'n': 1},
+                    {'level': 10, 'n': 2},
+                    {'level': 20, 'n': 2},
+                    {'level': 50, 'n': 2},
+                ],
+            }
+        ],
         'ds_is_public': True,
         'ds_acq_geometry': {},
         'ds_ion_img_storage': 'fs',
         'ds_submitter': 'user_id',
         'ds_group': 'group_id',
     }
-    ann_1_d = es_dsl_search.filter('term', formula='H2O').execute().to_dict()['hits']['hits'][0]['_source']
+    ann_1_d = (
+        es_dsl_search.filter('term', formula='H2O')
+        .execute()
+        .to_dict()['hits']['hits'][0]['_source']
+    )
     assert ann_1_d == {
-        'pattern_match': 1, 'image_corr': 1, 'fdr': 0.1, 'chaos': 1, 'formula': 'H2O', 'min_iso_ints': 0,
-        'msm': 1, 'ion': 'H2O-H+O-H+H+', 'total_iso_ints': 100, 'centroid_mzs': [100., 200., 300.],
-        'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'], 'polarity': '+', 'job_id': 1, 'max_iso_ints': 100,
-        'adduct': '+H', 'neutral_loss': '-H', 'chem_mod': '-H+O',
-        'ds_name': 'ds_name', 'annotation_counts': [], 'db_version': '2017', 'ds_status': 'ds_status',
-        'comp_names': ['mol_name'], 'db_name': 'db_name', 'mz': 100., 'ds_meta': {},
-        'comp_ids': ['mol_id'], 'ds_config': 'ds_config', 'ds_input_path': 'ds_input_path', 'ds_id': ds_id,
-        'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished,
-        'ds_ion_img_storage': 'fs', 'ds_is_public': True,
-        'ds_submitter': 'user_id', 'ds_group': 'group_id', 'annotation_id': 1234,
+        'pattern_match': 1,
+        'image_corr': 1,
+        'fdr': 0.1,
+        'chaos': 1,
+        'formula': 'H2O',
+        'min_iso_ints': 0,
+        'msm': 1,
+        'ion': 'H2O-H+O-H+H+',
+        'total_iso_ints': 100,
+        'centroid_mzs': [100.0, 200.0, 300.0],
+        'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
+        'polarity': '+',
+        'job_id': 1,
+        'max_iso_ints': 100,
+        'adduct': '+H',
+        'neutral_loss': '-H',
+        'chem_mod': '-H+O',
+        'ds_name': 'ds_name',
+        'annotation_counts': [],
+        'db_version': '2017',
+        'ds_status': 'ds_status',
+        'comp_names': ['mol_name'],
+        'db_name': 'db_name',
+        'mz': 100.0,
+        'ds_meta': {},
+        'comp_ids': ['mol_id'],
+        'ds_config': 'ds_config',
+        'ds_input_path': 'ds_input_path',
+        'ds_id': ds_id,
+        'ds_upload_dt': upload_dt,
+        'ds_last_finished': last_finished,
+        'ds_ion_img_storage': 'fs',
+        'ds_is_public': True,
+        'ds_submitter': 'user_id',
+        'ds_group': 'group_id',
+        'annotation_id': 1234,
     }
-    ann_2_d = es_dsl_search.filter('term', formula='Au').execute().to_dict()['hits']['hits'][0]['_source']
+    ann_2_d = (
+        es_dsl_search.filter('term', formula='Au').execute().to_dict()['hits']['hits'][0]['_source']
+    )
     assert ann_2_d == {
-        'pattern_match': 1, 'image_corr': 1, 'fdr': 0.05, 'chaos': 1, 'formula': 'Au', 'min_iso_ints': 0,
-        'msm': 1, 'ion': 'Au+H+', 'total_iso_ints': 100, 'centroid_mzs': [10., 20.],
-        'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'], 'polarity': '+', 'job_id': 1, 'max_iso_ints': 100,
-        'adduct': '+H', 'neutral_loss': '', 'chem_mod': '',
-        'ds_name': 'ds_name', 'annotation_counts': [], 'db_version': '2017', 'ds_status': 'ds_status',
-        'comp_names': ['mol_name'], 'db_name': 'db_name', 'mz': 10., 'ds_meta': {},
-        'comp_ids': ['mol_id'], 'ds_config': 'ds_config', 'ds_input_path': 'ds_input_path', 'ds_id': ds_id,
-        'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished,
-        'ds_ion_img_storage': 'fs', 'ds_is_public': True,
-        'ds_submitter': 'user_id', 'ds_group': 'group_id', 'annotation_id': 1235,
+        'pattern_match': 1,
+        'image_corr': 1,
+        'fdr': 0.05,
+        'chaos': 1,
+        'formula': 'Au',
+        'min_iso_ints': 0,
+        'msm': 1,
+        'ion': 'Au+H+',
+        'total_iso_ints': 100,
+        'centroid_mzs': [10.0, 20.0],
+        'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
+        'polarity': '+',
+        'job_id': 1,
+        'max_iso_ints': 100,
+        'adduct': '+H',
+        'neutral_loss': '',
+        'chem_mod': '',
+        'ds_name': 'ds_name',
+        'annotation_counts': [],
+        'db_version': '2017',
+        'ds_status': 'ds_status',
+        'comp_names': ['mol_name'],
+        'db_name': 'db_name',
+        'mz': 10.0,
+        'ds_meta': {},
+        'comp_ids': ['mol_id'],
+        'ds_config': 'ds_config',
+        'ds_input_path': 'ds_input_path',
+        'ds_id': ds_id,
+        'ds_upload_dt': upload_dt,
+        'ds_last_finished': last_finished,
+        'ds_ion_img_storage': 'fs',
+        'ds_is_public': True,
+        'ds_submitter': 'user_id',
+        'ds_group': 'group_id',
+        'annotation_id': 1235,
     }
 
 
 def test_delete_ds__one_db_ann_only(test_db, es, sm_index):
     index = sm_config['elasticsearch']['index']
-    es.create(index=index, doc_type='annotation', id='id1',
-              body={'ds_id': 'dataset1', 'db_name': 'HMDB', 'db_version': '2016'})
-    es.create(index=index, doc_type='annotation', id='id2',
-              body={'ds_id': 'dataset1', 'db_name': 'ChEBI', 'db_version': '2016'})
-    es.create(index=index, doc_type='annotation', id='id3',
-              body={'ds_id': 'dataset2', 'db_name': 'HMDB', 'db_version': '2016'})
-    es.create(index=index, doc_type='dataset', id='id4',
-              body={'ds_id': 'dataset1', 'db_name': 'HMDB', 'db_version': '2016'})
+    es.create(
+        index=index,
+        doc_type='annotation',
+        id='id1',
+        body={'ds_id': 'dataset1', 'db_name': 'HMDB', 'db_version': '2016'},
+    )
+    es.create(
+        index=index,
+        doc_type='annotation',
+        id='id2',
+        body={'ds_id': 'dataset1', 'db_name': 'ChEBI', 'db_version': '2016'},
+    )
+    es.create(
+        index=index,
+        doc_type='annotation',
+        id='id3',
+        body={'ds_id': 'dataset2', 'db_name': 'HMDB', 'db_version': '2016'},
+    )
+    es.create(
+        index=index,
+        doc_type='dataset',
+        id='id4',
+        body={'ds_id': 'dataset1', 'db_name': 'HMDB', 'db_version': '2016'},
+    )
 
     wait_for_es(sec=1)
 
@@ -166,33 +264,55 @@ def test_delete_ds__one_db_ann_only(test_db, es, sm_index):
 
     wait_for_es(sec=1)
 
-    body = {
-        'query': {
-            'bool': {
-                'filter': []
-            }
-        }
-    }
-    body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset1'}}, {'term': {'db_name': 'HMDB'}}]
+    body = {'query': {'bool': {'filter': []}}}
+    body['query']['bool']['filter'] = [
+        {'term': {'ds_id': 'dataset1'}},
+        {'term': {'db_name': 'HMDB'}},
+    ]
     assert es.count(index=index, doc_type='annotation', body=body)['count'] == 0
-    body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset1'}}, {'term': {'db_name': 'ChEBI'}}]
+    body['query']['bool']['filter'] = [
+        {'term': {'ds_id': 'dataset1'}},
+        {'term': {'db_name': 'ChEBI'}},
+    ]
     assert es.count(index=index, doc_type='annotation', body=body)['count'] == 1
-    body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset2'}}, {'term': {'db_name': 'HMDB'}}]
+    body['query']['bool']['filter'] = [
+        {'term': {'ds_id': 'dataset2'}},
+        {'term': {'db_name': 'HMDB'}},
+    ]
     assert es.count(index=index, doc_type='annotation', body=body)['count'] == 1
-    body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset1'}}, {'term': {'_type': 'dataset'}}]
+    body['query']['bool']['filter'] = [
+        {'term': {'ds_id': 'dataset1'}},
+        {'term': {'_type': 'dataset'}},
+    ]
     assert es.count(index=index, doc_type='dataset', body=body)['count'] == 1
 
 
 def test_delete_ds__completely(test_db, es, sm_index):
     index = sm_config['elasticsearch']['index']
-    es.create(index=index, doc_type='annotation', id='id1',
-              body={'ds_id': 'dataset1', 'db_name': 'HMDB', 'db_version': '2016'})
-    es.create(index=index, doc_type='annotation', id='id2',
-              body={'ds_id': 'dataset1', 'db_name': 'ChEBI', 'db_version': '2016'})
-    es.create(index=index, doc_type='annotation', id='id3',
-              body={'ds_id': 'dataset2', 'db_name': 'HMDB', 'db_version': '2016'})
-    es.create(index=index, doc_type='dataset', id='dataset1',
-              body={'ds_id': 'dataset1', 'db_name': 'HMDB', 'db_version': '2016'})
+    es.create(
+        index=index,
+        doc_type='annotation',
+        id='id1',
+        body={'ds_id': 'dataset1', 'db_name': 'HMDB', 'db_version': '2016'},
+    )
+    es.create(
+        index=index,
+        doc_type='annotation',
+        id='id2',
+        body={'ds_id': 'dataset1', 'db_name': 'ChEBI', 'db_version': '2016'},
+    )
+    es.create(
+        index=index,
+        doc_type='annotation',
+        id='id3',
+        body={'ds_id': 'dataset2', 'db_name': 'HMDB', 'db_version': '2016'},
+    )
+    es.create(
+        index=index,
+        doc_type='dataset',
+        id='dataset1',
+        body={'ds_id': 'dataset1', 'db_name': 'HMDB', 'db_version': '2016'},
+    )
 
     wait_for_es(sec=1)
 
@@ -203,20 +323,26 @@ def test_delete_ds__completely(test_db, es, sm_index):
 
     wait_for_es(sec=1)
 
-    body = {
-        'query': {
-            'bool': {
-                'filter': []
-            }
-        }
-    }
-    body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset1'}}, {'term': {'db_name': 'HMDB'}}]
+    body = {'query': {'bool': {'filter': []}}}
+    body['query']['bool']['filter'] = [
+        {'term': {'ds_id': 'dataset1'}},
+        {'term': {'db_name': 'HMDB'}},
+    ]
     assert es.count(index=index, doc_type='annotation', body=body)['count'] == 0
-    body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset1'}}, {'term': {'db_name': 'ChEBI'}}]
+    body['query']['bool']['filter'] = [
+        {'term': {'ds_id': 'dataset1'}},
+        {'term': {'db_name': 'ChEBI'}},
+    ]
     assert es.count(index=index, doc_type='annotation', body=body)['count'] == 0
-    body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset2'}}, {'term': {'db_name': 'HMDB'}}]
+    body['query']['bool']['filter'] = [
+        {'term': {'ds_id': 'dataset2'}},
+        {'term': {'db_name': 'HMDB'}},
+    ]
     assert es.count(index=index, doc_type='annotation', body=body)['count'] == 1
-    body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset1'}}, {'term': {'_type': 'dataset'}}]
+    body['query']['bool']['filter'] = [
+        {'term': {'ds_id': 'dataset1'}},
+        {'term': {'_type': 'dataset'}},
+    ]
     assert es.count(index=index, doc_type='dataset', body=body)['count'] == 0
 
 
@@ -226,55 +352,71 @@ def test_update_ds_works_for_all_fields(test_db, es, sm_index, es_dsl_search):
         'submitter_id': 'new_ds_submitter_id',
         'group_id': 'new_ds_group_id',
         'projects_ids': ['proj_id1', 'proj_id2'],
-        'is_public': True
+        'is_public': True,
     }
 
     index = sm_config['elasticsearch']['index']
     es.create(
-        index=index, doc_type='annotation', id='id1',
+        index=index,
+        doc_type='annotation',
+        id='id1',
         body={
             'ds_id': 'dataset1',
             'ds_name': 'ds_name',
             'ds_submitter_id': 'ds_submitter',
             'ds_group_id': 'ds_group_id',
             'ds_project_ids': [],
-            'ds_is_public': False
-        })
+            'ds_is_public': False,
+        },
+    )
     es.create(
-        index=index, doc_type='dataset', id='dataset1',
+        index=index,
+        doc_type='dataset',
+        id='dataset1',
         body={
             'ds_id': 'dataset1',
             'ds_name': 'ds_name',
             'ds_submitter_id': 'ds_submitter_id',
             'ds_group_id': 'ds_group_id',
             'ds_projects_ids': [],
-            'ds_is_public': False
-        })
+            'ds_is_public': False,
+        },
+    )
     wait_for_es(sec=1)
 
     db_mock = MagicMock(spec=DB)
-    db_mock.select_with_fields.return_value = [{
-        'ds_name': 'new_ds_name',
-        'ds_submitter_id': 'new_ds_submitter_id',
-        'ds_submitter_name': 'submitter_name',
-        'ds_submitter_email': 'submitter_email',
-        'ds_group_id': 'new_ds_group_id',
-        'ds_group_name': 'group_name',
-        'ds_group_approved': True,
-        'ds_group_short_name': 'group_short_name',
-        'ds_projects_ids': ['proj_id1', 'proj_id2'],
-        'ds_is_public': True
-    }]
+    db_mock.select_with_fields.return_value = [
+        {
+            'ds_name': 'new_ds_name',
+            'ds_submitter_id': 'new_ds_submitter_id',
+            'ds_submitter_name': 'submitter_name',
+            'ds_submitter_email': 'submitter_email',
+            'ds_group_id': 'new_ds_group_id',
+            'ds_group_name': 'group_name',
+            'ds_group_approved': True,
+            'ds_group_short_name': 'group_short_name',
+            'ds_projects_ids': ['proj_id1', 'proj_id2'],
+            'ds_is_public': True,
+        }
+    ]
 
     es_exporter = ESExporter(db_mock)
     es_exporter.update_ds('dataset1', fields=list(update.keys()))
     wait_for_es(sec=1)
 
-    ds_doc = es_dsl_search.filter('term', _type='dataset').execute().to_dict()['hits']['hits'][0]['_source']
+    ds_doc = (
+        es_dsl_search.filter('term', _type='dataset')
+        .execute()
+        .to_dict()['hits']['hits'][0]['_source']
+    )
     for k, v in update.items():
         assert v == ds_doc[f'ds_{k}']
 
-    ann_doc = es_dsl_search.filter('term', _type='annotation').execute().to_dict()['hits']['hits'][0]['_source']
+    ann_doc = (
+        es_dsl_search.filter('term', _type='annotation')
+        .execute()
+        .to_dict()['hits']['hits'][0]['_source']
+    )
     for k, v in update.items():
         assert v == ann_doc[f'ds_{k}']
 

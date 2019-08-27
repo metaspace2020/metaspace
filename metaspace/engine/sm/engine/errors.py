@@ -1,4 +1,3 @@
-
 class SMError(Exception):
     def __init__(self, msg=None):
         self.message = msg
@@ -35,12 +34,10 @@ class UnknownDSID(DSError):
 
 
 class DSIDExists(DSError):
-
     def __init__(self, ds_id):
         super().__init__(ds_id, f'Dataset {ds_id} already exists')
 
 
 class DSIsBusy(DSError):
-
     def __init__(self, ds_id):
         super().__init__(ds_id, f'Dataset {ds_id} is busy')

@@ -32,13 +32,18 @@ class CentroidsGenerator(object):
         self._iso_gen_part_n = 512
 
         self._spark_session = SparkSession(self._sc)
-        self._ion_centroids_path = '{}/{}/{}/{}'.format(self._sm_config['isotope_storage']['path'],
-                                                     self._isocalc.n_peaks,
-                                                     self._isocalc.sigma,
-                                                     self._isocalc.charge)
-        self._s3 = boto3.client('s3', self._sm_config['aws']['aws_region'],
-                                aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
-                                aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'])
+        self._ion_centroids_path = '{}/{}/{}/{}'.format(
+            self._sm_config['isotope_storage']['path'],
+            self._isocalc.n_peaks,
+            self._isocalc.sigma,
+            self._isocalc.charge,
+        )
+        self._s3 = boto3.client(
+            's3',
+            self._sm_config['aws']['aws_region'],
+            aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
+            aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'],
+        )
 
     def _generate(self, formulas, index_start=0):
         """ Generate isotopic peaks
@@ -55,22 +60,22 @@ class CentroidsGenerator(object):
             formula_i, formula = args
             mzs, ints = isocalc.centroids(formula)
             if mzs is not None:
-                return zip(repeat(formula_i),
-                           range(0, len(mzs)),
-                           map(float, mzs),
-                           map(float, ints))
+                return zip(repeat(formula_i), range(0, len(mzs)), map(float, mzs), map(float, ints))
             else:
                 return []
 
-        formulas_df = pd.DataFrame([(i, formula) for i, formula in enumerate(formulas, index_start)],
-                                   columns=['formula_i', 'formula']).set_index('formula_i')
-        centroids_rdd = (self._sc.parallelize(formulas_df.reset_index().values,
-                                              numSlices=self._iso_gen_part_n)
-                         .flatMap(calc_centroids))
-        centroids_df = (pd.DataFrame(data=centroids_rdd.collect(),
-                                     columns=['formula_i', 'peak_i', 'mz', 'int'])
-                        .sort_values(by='mz')
-                        .set_index('formula_i'))
+        formulas_df = pd.DataFrame(
+            [(i, formula) for i, formula in enumerate(formulas, index_start)],
+            columns=['formula_i', 'formula'],
+        ).set_index('formula_i')
+        centroids_rdd = self._sc.parallelize(
+            formulas_df.reset_index().values, numSlices=self._iso_gen_part_n
+        ).flatMap(calc_centroids)
+        centroids_df = (
+            pd.DataFrame(data=centroids_rdd.collect(), columns=['formula_i', 'peak_i', 'mz', 'int'])
+            .sort_values(by='mz')
+            .set_index('formula_i')
+        )
 
         # to exclude all formulas that failed
         formulas_df = formulas_df.loc[centroids_df.index.unique()]
@@ -118,22 +123,32 @@ class CentroidsGenerator(object):
             else:
                 return True
         else:
-            return (Path(self._ion_centroids_path + '/formulas/_SUCCESS').exists() &
-                    Path(self._ion_centroids_path + '/centroids/_SUCCESS').exists())
+            return (
+                Path(self._ion_centroids_path + '/formulas/_SUCCESS').exists()
+                & Path(self._ion_centroids_path + '/centroids/_SUCCESS').exists()
+            )
 
     def _restore(self):
         logger.info('Restoring peaks')
         if self._saved():
-            formulas_df = self._spark_session.read.parquet(
-                self._ion_centroids_path + '/formulas').toPandas().set_index('formula_i')
-            centroids_df = self._spark_session.read.parquet(
-                self._ion_centroids_path + '/centroids').toPandas().set_index('formula_i')
+            formulas_df = (
+                self._spark_session.read.parquet(self._ion_centroids_path + '/formulas')
+                .toPandas()
+                .set_index('formula_i')
+            )
+            centroids_df = (
+                self._spark_session.read.parquet(self._ion_centroids_path + '/centroids')
+                .toPandas()
+                .set_index('formula_i')
+            )
             return FormulaCentroids(formulas_df, centroids_df)
 
     def _save_df_chunks(self, df, path, chunk_size=10 * 10 ** 6):
         chunks = int(ceil(df.shape[0] / chunk_size))
         for ch_i in range(chunks):
-            sdf = self._spark_session.createDataFrame(df[ch_i * chunk_size:(ch_i + 1) * chunk_size])
+            sdf = self._spark_session.createDataFrame(
+                df[ch_i * chunk_size : (ch_i + 1) * chunk_size]
+            )
             mode = 'overwrite' if ch_i == 0 else 'append'
             sdf.write.parquet(path, mode=mode)
 
@@ -143,10 +158,13 @@ class CentroidsGenerator(object):
         logger.info('Saving peaks')
         assert formula_centroids.formulas_df.index.name == 'formula_i'
 
-        self._save_df_chunks(formula_centroids.centroids_df(fixed_size_centroids=True).reset_index(),
-                             self._ion_centroids_path + '/centroids')
-        self._save_df_chunks(formula_centroids.formulas_df.reset_index(),
-                             self._ion_centroids_path + '/formulas')
+        self._save_df_chunks(
+            formula_centroids.centroids_df(fixed_size_centroids=True).reset_index(),
+            self._ion_centroids_path + '/centroids',
+        )
+        self._save_df_chunks(
+            formula_centroids.formulas_df.reset_index(), self._ion_centroids_path + '/formulas'
+        )
 
 
 class FormulaCentroids(object):
@@ -157,6 +175,7 @@ class FormulaCentroids(object):
     formulas_df : pandas.DataFrame
     centroids_df : pandas.DataFrame
     """
+
     def __init__(self, formulas_df, centroids_df):
         u_index_formulas = set(formulas_df.index.unique())
         u_index_centroids = set(centroids_df.index.unique())
@@ -199,12 +218,15 @@ class FormulaCentroids(object):
 
         formulas_df = pd.concat([self.formulas_df, other_formulas_df])
         centroids_df = pd.concat([self._centroids_df, other_centroids_df])
-        formulas_df.index.name = centroids_df.index.name = 'formula_i'  # fix: occasionally pandas looses index name
+        formulas_df.index.name = (
+            centroids_df.index.name
+        ) = 'formula_i'  # fix: occasionally pandas looses index name
         return FormulaCentroids(formulas_df, centroids_df)
 
     def copy(self):
-        return FormulaCentroids(formulas_df=self.formulas_df.copy(),
-                                centroids_df=self._centroids_df.copy())
+        return FormulaCentroids(
+            formulas_df=self.formulas_df.copy(), centroids_df=self._centroids_df.copy()
+        )
 
     def subset(self, formulas):
         formulas = set(formulas)
@@ -212,10 +234,13 @@ class FormulaCentroids(object):
         if len(miss_formulas) > 0:
             # Missing formulas requested
             # Also happens when CentroidsGenerator._generate failed to compute formula centroids
-            logger.warning(f'{len(miss_formulas)} missing formulas ignored: {list(miss_formulas)[:10]}...')
+            logger.warning(
+                f'{len(miss_formulas)} missing formulas ignored: {list(miss_formulas)[:10]}...'
+            )
 
         valid_formulas = formulas - miss_formulas
         subset_formulas_df = self.formulas_df[self.formulas_df.formula.isin(valid_formulas)]
-        subset_centroids_df = self._centroids_df[self._centroids_df.index.isin(subset_formulas_df.index)]
-        return FormulaCentroids(formulas_df=subset_formulas_df,
-                                centroids_df=subset_centroids_df)
+        subset_centroids_df = self._centroids_df[
+            self._centroids_df.index.isin(subset_formulas_df.index)
+        ]
+        return FormulaCentroids(formulas_df=subset_formulas_df, centroids_df=subset_centroids_df)

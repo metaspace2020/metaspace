@@ -7,14 +7,22 @@ from operator import mul, add
 from collections import OrderedDict, defaultdict
 
 from pyImagingMSpec.image_measures import isotope_image_correlation, isotope_pattern_match
+
 # from pyImagingMSpec.image_measures import measure_of_chaos
 from cpyImagingMSpec import measure_of_chaos
 from pyImagingMSpec import smoothing
 
-METRICS = OrderedDict([('chaos', 0), ('spatial', 0), ('spectral', 0), ('msm', 0),
-                       ('total_iso_ints', [0, 0, 0, 0]),
-                       ('min_iso_ints', [0, 0, 0, 0]),
-                       ('max_iso_ints', [0, 0, 0, 0])])
+METRICS = OrderedDict(
+    [
+        ('chaos', 0),
+        ('spatial', 0),
+        ('spectral', 0),
+        ('msm', 0),
+        ('total_iso_ints', [0, 0, 0, 0]),
+        ('min_iso_ints', [0, 0, 0, 0]),
+        ('max_iso_ints', [0, 0, 0, 0]),
+    ]
+)
 
 
 def replace_nan(v, default=0):
@@ -52,11 +60,12 @@ def make_compute_image_metrics(sample_area_mask, nrows, ncols, img_gen_config):
 
         m = METRICS.copy()
         if len(iso_images_sparse) > 0:
-            iso_imgs = [img.toarray() if img is not None else empty_matrix
-                        for img in iso_images_sparse]
+            iso_imgs = [
+                img.toarray() if img is not None else empty_matrix for img in iso_images_sparse
+            ]
 
             iso_imgs_flat = [img.flatten()[sample_area_mask_flat] for img in iso_imgs]
-            iso_imgs_flat = iso_imgs_flat[:len(formula_ints)]
+            iso_imgs_flat = iso_imgs_flat[: len(formula_ints)]
 
             m['spectral'] = isotope_pattern_match(iso_imgs_flat, formula_ints)
             if m['spectral'] > 0:

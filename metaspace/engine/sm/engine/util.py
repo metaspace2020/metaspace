@@ -31,7 +31,7 @@ def init_loggers(config=None):
         'ERROR': logging.ERROR,
         'WARNING': logging.WARNING,
         'INFO': logging.INFO,
-        'DEBUG': logging.DEBUG
+        'DEBUG': logging.DEBUG,
     }
 
     def convert_levels(orig_d):
@@ -94,7 +94,9 @@ class SMConfig(object):
         """
         conf = cls.get_conf()
         ms_file_extension = Path(ms_file_path).suffix[1:].lower()  # skip the leading "."
-        return next((h for h in conf['ms_file_handlers'] if ms_file_extension in h['extensions']), None)
+        return next(
+            (h for h in conf['ms_file_handlers'] if ms_file_extension in h['extensions']), None
+        )
 
 
 def _cmd(template, call_func, *args):
@@ -135,13 +137,16 @@ def create_ds_from_files(ds_id, ds_name, ds_input_path, config_path=None, meta_p
         raise Exception('meta.json not found')
 
     from sm.engine.dataset import Dataset
-    return Dataset(id=ds_id,
-                   name=ds_name,
-                   input_path=str(ds_input_path),
-                   upload_dt=datetime.now(),
-                   metadata=metadata,
-                   is_public=True,
-                   config=ds_config)
+
+    return Dataset(
+        id=ds_id,
+        name=ds_name,
+        input_path=str(ds_input_path),
+        upload_dt=datetime.now(),
+        metadata=metadata,
+        is_public=True,
+        config=ds_config,
+    )
 
 
 def split_s3_path(path):
@@ -155,8 +160,7 @@ def split_s3_path(path):
 
 
 def find_file_by_ext(path, ext):
-    return next(str(p) for p in Path(path).iterdir()
-                if str(p).lower().endswith(ext))
+    return next(str(p) for p in Path(path).iterdir() if str(p).lower().endswith(ext))
 
 
 def bootstrap_and_run(config_path, func):

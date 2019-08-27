@@ -5,12 +5,17 @@ import pandas as pd
 from itertools import product
 from pyimzml import ImzMLParser
 
-from sm.engine.msm_basic.segmenter import segment_centroids, define_ds_segments, segment_spectra, MAX_MZ_VALUE, \
-    calculate_chunk_sp_n
+from sm.engine.msm_basic.segmenter import (
+    segment_centroids,
+    define_ds_segments,
+    segment_spectra,
+    MAX_MZ_VALUE,
+    calculate_chunk_sp_n,
+)
 
 
 def test_calculate_chunk_sp_n():
-    sample_mzs_bytes = 25 * 2**20
+    sample_mzs_bytes = 25 * 2 ** 20
     sample_sp_n = 10
     max_chunk_size_mb = 500
 
@@ -24,9 +29,11 @@ def test_define_ds_segments():
 
     # 3 (columns) * 10 (spectra) * 10 (mz/spectrum) * 8 (float prec) ~= 2400 (dataset size, bytes)
     # 2400 // 2**10 (segm size, bytes) ~= 2 (segments)
-    ds_segments = define_ds_segments(sample_mzs, mz_precision='d', total_mz_n=100, ds_segm_size_mb=2**-10)
+    ds_segments = define_ds_segments(
+        sample_mzs, mz_precision='d', total_mz_n=100, ds_segm_size_mb=2 ** -10
+    )
 
-    exp_ds_segments = np.array([[0, 50.], [50, 100.]])
+    exp_ds_segments = np.array([[0, 50.0], [50, 100.0]])
     assert np.allclose(ds_segments, exp_ds_segments)
 
 
@@ -36,7 +43,7 @@ def test_segment_spectra(to_msgpack_mock):
     imzml_parser_mock.getspectrum.return_value = (np.linspace(0, 90, num=10), np.ones(10))
     imzml_parser_mock.mzPrecision = 'f'
     coordinates = list(product([0], range(10)))
-    ds_segments = np.array([[0, 50], [50, 90.]])
+    ds_segments = np.array([[0, 50], [50, 90.0]])
 
     chunk_sp_n = 1000
     segment_spectra(imzml_parser_mock, coordinates, chunk_sp_n, ds_segments, Path('/tmp/abc'))
@@ -47,22 +54,26 @@ def test_segment_spectra(to_msgpack_mock):
 
         assert segm_arr.shape == (50, 3)
         # mz stored in column 1
-        assert np.all(min_mz <= segm_arr[:,1])
+        assert np.all(min_mz <= segm_arr[:, 1])
         assert np.all(segm_arr[:, 1] <= max_mz)
 
 
 @patch('sm.engine.msm_basic.segmenter.pd.to_msgpack')
 def test_segment_centroids(to_msgpack_mock):
-    centr_df = pd.DataFrame([(0, 0, 90),
-                             (0, 1, 100),
-                             (0, 2, 110),
-                             (1, 0, 100),
-                             (1, 1, 110),
-                             (1, 2, 120),
-                             (2, 0, 110),
-                             (2, 1, 120),
-                             (2, 2, 130)],
-                            columns=['formula_i', 'peak_i', 'mz'])
+    centr_df = pd.DataFrame(
+        [
+            (0, 0, 90),
+            (0, 1, 100),
+            (0, 2, 110),
+            (1, 0, 100),
+            (1, 1, 110),
+            (1, 2, 120),
+            (2, 0, 110),
+            (2, 1, 120),
+            (2, 2, 130),
+        ],
+        columns=['formula_i', 'peak_i', 'mz'],
+    )
     segm_n = 3
     segment_centroids(centr_df, segm_n, Path('/tmp/abc'))
 

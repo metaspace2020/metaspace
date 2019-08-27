@@ -15,22 +15,25 @@ from sm.engine.mol_db import MolDBServiceWrapper
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import proj_root, SMConfig, create_ds_from_files, bootstrap_and_run
 
-SEARCH_RES_SELECT = ("select m.formula, m.adduct, m.stats "
-                     "from annotation m "
-                     "join job j on j.id = m.job_id "
-                     "join dataset ds on ds.id = j.ds_id "
-                     "where j.db_id = %s AND ds.name = %s "
-                     "ORDER BY formula, adduct ")
+SEARCH_RES_SELECT = (
+    "select m.formula, m.adduct, m.stats "
+    "from annotation m "
+    "join job j on j.id = m.job_id "
+    "join dataset ds on ds.id = j.ds_id "
+    "where j.db_id = %s AND ds.name = %s "
+    "ORDER BY formula, adduct "
+)
 
 
 class SciTester(object):
-
     def __init__(self, sm_config):
         self.sm_config = sm_config
         self.db = DB()
 
         self.ds_id = '2000-01-01_00h00m00s'
-        self.base_search_res_path = join(proj_root(), 'tests/reports', 'spheroid_untreated_search_res.csv')
+        self.base_search_res_path = join(
+            proj_root(), 'tests/reports', 'spheroid_untreated_search_res.csv'
+        )
         self.ds_name = 'sci_test_spheroid_untreated'
         self.ds_data_path = join(self.sm_config['fs']['spark_data_path'], self.ds_name)
         self.input_path = join(proj_root(), 'tests/data/untreated')
@@ -47,7 +50,7 @@ class SciTester(object):
 
         with open(self.base_search_res_path) as f:
             rows = map(lambda line: line.strip('\n').split('\t'), f.readlines()[1:])
-            return {(r[0], r[1]):  prep_metric_arrays(r[2:]) for r in rows}
+            return {(r[0], r[1]): prep_metric_arrays(r[2:]) for r in rows}
 
     def fetch_search_res(self):
         mol_db_service = MolDBServiceWrapper(self.sm_config['services']['mol_db'])
@@ -116,12 +119,13 @@ class SciTester(object):
     def search_results_are_different(self):
         old_search_res = self.read_base_search_res()
         search_res = self.fetch_search_res()
-        return (self._missed_formulas(old_search_res, search_res) or
-                self._false_discovery(old_search_res, search_res) or
-                self._metrics_diff(old_search_res, search_res))
+        return (
+            self._missed_formulas(old_search_res, search_res)
+            or self._false_discovery(old_search_res, search_res)
+            or self._metrics_diff(old_search_res, search_res)
+        )
 
     def _create_img_store_mock(self):
-
         class ImageStoreMock(object):
             def post_image(self, *args):
                 return None
@@ -173,18 +177,23 @@ def save(sm_config, *args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Scientific tests runner')
-    parser.add_argument('-r', '--run', action='store_true', help='compare current search results with previous')
+    parser.add_argument(
+        '-r', '--run', action='store_true', help='compare current search results with previous'
+    )
     parser.add_argument('-s', '--save', action='store_true', help='store current search results')
-    parser.add_argument('--config', dest='sm_config_path',
-                        default=join(proj_root(), 'conf/config.json'),
-                        help='path to sm config file')
-    parser.add_argument('--mock-img-store', action='store_true', help='whether to mock the Image Store Service')
+    parser.add_argument(
+        '--config',
+        dest='sm_config_path',
+        default=join(proj_root(), 'conf/config.json'),
+        help='path to sm config file',
+    )
+    parser.add_argument(
+        '--mock-img-store', action='store_true', help='whether to mock the Image Store Service'
+    )
     args = parser.parse_args()
 
     if args.run:
-        bootstrap_and_run(args.sm_config_path,
-                          partial(run,
-                                  args.mock_img_store))
+        bootstrap_and_run(args.sm_config_path, partial(run, args.mock_img_store))
     elif args.save:
         bootstrap_and_run(args.sm_config_path, save)
     else:

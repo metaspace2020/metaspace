@@ -1,12 +1,16 @@
 from sm.engine.formula_parser import format_ion_formula
 
-ION_INS = ('INSERT INTO graphql.ion (ion, formula, chem_mod, neutral_loss, adduct, charge) ' 
-           'VALUES (%s, %s, %s, %s, %s, %s) ' 
-           'RETURNING id')
-ION_SEL = ('WITH ions AS (SELECT UNNEST(%s::text[]) as fo, UNNEST(%s::text[]) as cm, UNNEST(%s::text[]) as nl, UNNEST(%s::text[]) as ad) '
-           'SELECT formula, chem_mod, neutral_loss, adduct, id ' 
-           'FROM graphql.ion JOIN ions ON formula = fo AND chem_mod = cm AND neutral_loss = nl AND adduct = ad '
-           'WHERE charge = %s')
+ION_INS = (
+    'INSERT INTO graphql.ion (ion, formula, chem_mod, neutral_loss, adduct, charge) '
+    'VALUES (%s, %s, %s, %s, %s, %s) '
+    'RETURNING id'
+)
+ION_SEL = (
+    'WITH ions AS (SELECT UNNEST(%s::text[]) as fo, UNNEST(%s::text[]) as cm, UNNEST(%s::text[]) as nl, UNNEST(%s::text[]) as ad) '
+    'SELECT formula, chem_mod, neutral_loss, adduct, id '
+    'FROM graphql.ion JOIN ions ON formula = fo AND chem_mod = cm AND neutral_loss = nl AND adduct = ad '
+    'WHERE charge = %s'
+)
 
 
 def get_ion_id_mapping(db, ion_tuples, charge):

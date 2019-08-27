@@ -16,16 +16,18 @@ DATABASE_PATHS = {
     'ChEBI': 'chebi.tsv',
     'LIPID_MAPS': 'lipidmaps.tsv',
     'SwissLipids': 'swissLipids_Isomeric subspecies20170111.tsv',
-    'KEGG': 'kegg.tsv'
+    'KEGG': 'kegg.tsv',
 }
 
 OUTPUT_DIR = 'databases/mol-images'
+
 
 def generateSvg(inchi, filename):
     if os.path.exists(filename):
         return
     mol = pybel.readstring('inchi', inchi)
     mol.write('svg', filename=filename)
+
 
 def readCompounds(db_name, tsv_filename):
     # skip header line, assume first and last fields are id and inchi
@@ -41,8 +43,11 @@ def readCompounds(db_name, tsv_filename):
             continue
         valid += 1
         yield id, inchi
-    print("{}: scanned {} records, {} with InChI ({:.1f}%)"
-          .format(db_name, k, valid, float(valid) / k * 100.0))
+    print(
+        "{}: scanned {} records, {} with InChI ({:.1f}%)".format(
+            db_name, k, valid, float(valid) / k * 100.0
+        )
+    )
 
 
 if not os.path.exists(OUTPUT_DIR):

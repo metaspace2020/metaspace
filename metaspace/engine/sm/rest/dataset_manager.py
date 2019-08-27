@@ -1,7 +1,13 @@
 import logging
 from datetime import datetime
 
-from sm.engine.dataset import DatasetStatus, Dataset, generate_ds_config, update_ds_config, FLAT_DS_CONFIG_KEYS
+from sm.engine.dataset import (
+    DatasetStatus,
+    Dataset,
+    generate_ds_config,
+    update_ds_config,
+    FLAT_DS_CONFIG_KEYS,
+)
 from sm.engine.errors import DSIsBusy, UnknownDSID
 from sm.engine.daemon_action import DaemonAction, DaemonActionStage
 from sm.engine.optical_image import add_optical_image, del_optical_image
@@ -10,6 +16,7 @@ from sm.engine.util import SMConfig
 
 class DatasetActionPriority(object):
     """ Priorities used for messages sent to queue """
+
     LOW = 0
     STANDARD = 1
     HIGH = 2
@@ -17,9 +24,16 @@ class DatasetActionPriority(object):
 
 
 class SMapiDatasetManager(object):
-
-    def __init__(self, db, es, image_store, logger=None,
-                 annot_queue=None, update_queue=None, status_queue=None):
+    def __init__(
+        self,
+        db,
+        es,
+        image_store,
+        logger=None,
+        annot_queue=None,
+        update_queue=None,
+        status_queue=None,
+    ):
         self._sm_config = SMConfig.get_conf()
         self._db = db
         self._es = es
@@ -30,17 +44,13 @@ class SMapiDatasetManager(object):
         self.logger = logger or logging.getLogger()
 
     def _set_ds_busy(self, ds, ignore_status=False):
-        if ds.status in {DatasetStatus.QUEUED,
-                         DatasetStatus.ANNOTATING} and not ignore_status:
+        if ds.status in {DatasetStatus.QUEUED, DatasetStatus.ANNOTATING} and not ignore_status:
             raise DSIsBusy(ds.id)
 
         ds.set_status(self._db, self._es, DatasetStatus.QUEUED)
 
     def _post_sm_msg(self, ds, queue, priority=DatasetActionPriority.DEFAULT, **kwargs):
-        msg = {
-            'ds_id': ds.id,
-            'ds_name': ds.name
-        }
+        msg = {'ds_id': ds.id, 'ds_name': ds.name}
         msg.update(kwargs)
 
         queue.publish(msg, priority)
@@ -52,7 +62,7 @@ class SMapiDatasetManager(object):
         if 'id' not in doc:
             doc['id'] = now.strftime('%Y-%m-%d_%Hh%Mm%Ss')
 
-        ds_config_kwargs = dict((k,v) for k,v in doc.items() if k in FLAT_DS_CONFIG_KEYS)
+        ds_config_kwargs = dict((k, v) for k, v in doc.items() if k in FLAT_DS_CONFIG_KEYS)
 
         try:
             ds = Dataset.load(self._db, doc['id'])
@@ -63,20 +73,20 @@ class SMapiDatasetManager(object):
             is_new = True
             config = generate_ds_config(doc.get('metadata'), **ds_config_kwargs)
 
-        ds = Dataset(id=doc['id'],
-                     name=doc.get('name'),
-                     input_path=doc.get('input_path'),
-                     upload_dt=doc.get('upload_dt', now.isoformat()),
-                     metadata=doc.get('metadata'),
-                     config=config,
-                     is_public=doc.get('is_public'),
-                     status=DatasetStatus.QUEUED)
+        ds = Dataset(
+            id=doc['id'],
+            name=doc.get('name'),
+            input_path=doc.get('input_path'),
+            upload_dt=doc.get('upload_dt', now.isoformat()),
+            metadata=doc.get('metadata'),
+            config=config,
+            is_public=doc.get('is_public'),
+            status=DatasetStatus.QUEUED,
+        )
         ds.save(self._db, self._es)
-        self._status_queue.publish({
-            'ds_id': ds.id,
-            'action': DaemonAction.ANNOTATE,
-            'stage': DaemonActionStage.QUEUED
-        })
+        self._status_queue.publish(
+            {'ds_id': ds.id, 'action': DaemonAction.ANNOTATE, 'stage': DaemonActionStage.QUEUED}
+        )
 
         self._post_sm_msg(ds=ds, queue=self._annot_queue, action=DaemonAction.ANNOTATE, **kwargs)
         return doc['id']
@@ -98,8 +108,13 @@ class SMapiDatasetManager(object):
         ds.is_public = doc.get('is_public', ds.is_public)
         ds.save(self._db, self._es)
 
-        self._post_sm_msg(ds=ds, queue=self._update_queue,
-                          action=DaemonAction.UPDATE, fields=list(doc.keys()), **kwargs)
+        self._post_sm_msg(
+            ds=ds,
+            queue=self._update_queue,
+            action=DaemonAction.UPDATE,
+            fields=list(doc.keys()),
+            **kwargs,
+        )
 
     def add_optical_image(self, ds_id, img_id, transform, zoom_levels=(1, 2, 4, 8)):
         """ Generate scaled and transformed versions of the provided optical image + creates the thumbnail """

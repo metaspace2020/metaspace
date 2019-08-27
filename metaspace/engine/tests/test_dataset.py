@@ -16,12 +16,25 @@ def fill_db(test_db, metadata, ds_config):
     upload_dt = '2000-01-01 00:00:00'
     ds_id = '2000-01-01'
     db = DB()
-    db.insert(('INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, status, '
-               'is_public) '
-               'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'),
-              rows=[(ds_id, 'ds_name', 'input_path', upload_dt,
-                     json.dumps(metadata), json.dumps(ds_config), DatasetStatus.FINISHED,
-                     True)])
+    db.insert(
+        (
+            'INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, status, '
+            'is_public) '
+            'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'
+        ),
+        rows=[
+            (
+                ds_id,
+                'ds_name',
+                'input_path',
+                upload_dt,
+                json.dumps(metadata),
+                json.dumps(ds_config),
+                DatasetStatus.FINISHED,
+                True,
+            )
+        ],
+    )
 
 
 def test_generate_ds_config(metadata, ds_config):
@@ -40,9 +53,15 @@ def test_dataset_load_existing_ds_works(fill_db, metadata, ds_config):
     assert ds.metadata == metadata
     ds_fields = {k: v for k, v in ds.__dict__.items() if not k.startswith('_')}
     assert ds_fields == dict(
-        id=ds_id, name='ds_name', input_path='input_path', upload_dt=upload_dt,
-        metadata=metadata, config=ds_config, status=DatasetStatus.FINISHED, is_public=True,
-        ion_img_storage_type='fs'
+        id=ds_id,
+        name='ds_name',
+        input_path='input_path',
+        upload_dt=upload_dt,
+        metadata=metadata,
+        config=ds_config,
+        status=DatasetStatus.FINISHED,
+        is_public=True,
+        ion_img_storage_type='fs',
     )
 
 
@@ -66,8 +85,15 @@ def test_dataset_update_status_works(fill_db, metadata, ds_config):
 
     upload_dt = datetime.now()
     ds_id = '2000-01-01'
-    ds = Dataset(id=ds_id, name='ds_name', input_path='input_path', upload_dt=upload_dt,
-                 metadata=metadata, config=ds_config, status=DatasetStatus.ANNOTATING)
+    ds = Dataset(
+        id=ds_id,
+        name='ds_name',
+        input_path='input_path',
+        upload_dt=upload_dt,
+        metadata=metadata,
+        config=ds_config,
+        status=DatasetStatus.ANNOTATING,
+    )
 
     ds.set_status(db, es_mock, DatasetStatus.FINISHED)
 
@@ -77,8 +103,15 @@ def test_dataset_update_status_works(fill_db, metadata, ds_config):
 def test_dataset_to_queue_message_works(metadata, ds_config):
     upload_dt = datetime.now()
     ds_id = '2000-01-01'
-    ds = Dataset(id=ds_id, name='ds_name', input_path='input_path', upload_dt=upload_dt,
-                 metadata=metadata, config=ds_config, status=DatasetStatus.QUEUED)
+    ds = Dataset(
+        id=ds_id,
+        name='ds_name',
+        input_path='input_path',
+        upload_dt=upload_dt,
+        metadata=metadata,
+        config=ds_config,
+        status=DatasetStatus.QUEUED,
+    )
 
     msg = ds.to_queue_message()
 
