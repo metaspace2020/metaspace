@@ -28,7 +28,9 @@ def test_ims_geometry_factory_empty():
 
 
 def test_lcms_geometry_factory():
-    lcms_file_path = join(proj_root(), 'tests/data/lcms_acq_geometry_example/apple_surface_swab.mzML')
+    lcms_file_path = join(
+        proj_root(), 'tests/data/lcms_acq_geometry_example/apple_surface_swab.mzML'
+    )
 
     geometry = make_acq_geometry('lcms', lcms_file_path, {}, (0, 0))
 

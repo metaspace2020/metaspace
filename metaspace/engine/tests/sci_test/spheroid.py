@@ -31,7 +31,9 @@ class SciTester(object):
         self.db = DB()
 
         self.ds_id = '2000-01-01_00h00m00s'
-        self.base_search_res_path = join(proj_root(), 'tests/reports', 'spheroid_untreated_search_res.csv')
+        self.base_search_res_path = join(
+            proj_root(), 'tests/reports', 'spheroid_untreated_search_res.csv'
+        )
         self.ds_name = 'sci_test_spheroid_untreated'
         self.ds_data_path = join(self.sm_config['fs']['spark_data_path'], self.ds_name)
         self.input_path = join(proj_root(), 'tests/data/untreated')
@@ -175,12 +177,19 @@ def save(sm_config, *args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Scientific tests runner')
-    parser.add_argument('-r', '--run', action='store_true', help='compare current search results with previous')
+    parser.add_argument(
+        '-r', '--run', action='store_true', help='compare current search results with previous'
+    )
     parser.add_argument('-s', '--save', action='store_true', help='store current search results')
     parser.add_argument(
-        '--config', dest='sm_config_path', default=join(proj_root(), 'conf/config.json'), help='path to sm config file'
+        '--config',
+        dest='sm_config_path',
+        default=join(proj_root(), 'conf/config.json'),
+        help='path to sm config file',
     )
-    parser.add_argument('--mock-img-store', action='store_true', help='whether to mock the Image Store Service')
+    parser.add_argument(
+        '--mock-img-store', action='store_true', help='whether to mock the Image Store Service'
+    )
     args = parser.parse_args()
 
     if args.run:

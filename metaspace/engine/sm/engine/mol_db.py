@@ -50,7 +50,9 @@ class MolecularDB(object):
         Provides several data structures used in the engine to speed up computation
     """
 
-    def __init__(self, id=None, name=None, version=None, iso_gen_config=None, mol_db_service=None, db=None):
+    def __init__(
+        self, id=None, name=None, version=None, iso_gen_config=None, mol_db_service=None, db=None
+    ):
         """
         Args
         -----
@@ -67,7 +69,9 @@ class MolecularDB(object):
         """
         self._iso_gen_config = iso_gen_config
         sm_config = SMConfig.get_conf()
-        self._mol_db_service = mol_db_service or MolDBServiceWrapper(sm_config['services']['mol_db'])
+        self._mol_db_service = mol_db_service or MolDBServiceWrapper(
+            sm_config['services']['mol_db']
+        )
         self._db = db
 
         if id is not None:

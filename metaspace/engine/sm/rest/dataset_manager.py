@@ -1,7 +1,13 @@
 import logging
 from datetime import datetime
 
-from sm.engine.dataset import DatasetStatus, Dataset, generate_ds_config, update_ds_config, FLAT_DS_CONFIG_KEYS
+from sm.engine.dataset import (
+    DatasetStatus,
+    Dataset,
+    generate_ds_config,
+    update_ds_config,
+    FLAT_DS_CONFIG_KEYS,
+)
 from sm.engine.errors import DSIsBusy, UnknownDSID
 from sm.engine.daemon_action import DaemonAction, DaemonActionStage
 from sm.engine.optical_image import add_optical_image, del_optical_image
@@ -18,7 +24,16 @@ class DatasetActionPriority(object):
 
 
 class SMapiDatasetManager(object):
-    def __init__(self, db, es, image_store, logger=None, annot_queue=None, update_queue=None, status_queue=None):
+    def __init__(
+        self,
+        db,
+        es,
+        image_store,
+        logger=None,
+        annot_queue=None,
+        update_queue=None,
+        status_queue=None,
+    ):
         self._sm_config = SMConfig.get_conf()
         self._db = db
         self._es = es
@@ -69,7 +84,9 @@ class SMapiDatasetManager(object):
             status=DatasetStatus.QUEUED,
         )
         ds.save(self._db, self._es)
-        self._status_queue.publish({'ds_id': ds.id, 'action': DaemonAction.ANNOTATE, 'stage': DaemonActionStage.QUEUED})
+        self._status_queue.publish(
+            {'ds_id': ds.id, 'action': DaemonAction.ANNOTATE, 'stage': DaemonActionStage.QUEUED}
+        )
 
         self._post_sm_msg(ds=ds, queue=self._annot_queue, action=DaemonAction.ANNOTATE, **kwargs)
         return doc['id']
@@ -92,7 +109,11 @@ class SMapiDatasetManager(object):
         ds.save(self._db, self._es)
 
         self._post_sm_msg(
-            ds=ds, queue=self._update_queue, action=DaemonAction.UPDATE, fields=list(doc.keys()), **kwargs
+            ds=ds,
+            queue=self._update_queue,
+            action=DaemonAction.UPDATE,
+            fields=list(doc.keys()),
+            **kwargs,
         )
 
     def add_optical_image(self, ds_id, img_id, transform, zoom_levels=(1, 2, 4, 8)):

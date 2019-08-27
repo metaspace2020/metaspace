@@ -14,7 +14,9 @@ def update_optical_images(sm_config, logger, ds_id, sql_where):
     if ds_id:
         ds_ids = ds_id.split(',')
     else:
-        ds_ids = [id for (id,) in db.select(f'SELECT DISTINCT dataset.id FROM dataset WHERE {sql_where}')]
+        ds_ids = [
+            id for (id,) in db.select(f'SELECT DISTINCT dataset.id FROM dataset WHERE {sql_where}')
+        ]
 
     for i, ds_id in enumerate(ds_ids):
         try:
@@ -31,9 +33,13 @@ def update_optical_images(sm_config, logger, ds_id, sql_where):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Updates optical image copies for a provided dataset")
+    parser = argparse.ArgumentParser(
+        description="Updates optical image copies for a provided dataset"
+    )
     parser.add_argument('--config', default='conf/config.json', help='SM config path')
-    parser.add_argument('--ds-id', dest='ds_id', default='', help='DS id (or comma-separated list of ids)')
+    parser.add_argument(
+        '--ds-id', dest='ds_id', default='', help='DS id (or comma-separated list of ids)'
+    )
     parser.add_argument(
         '--sql-where',
         dest='sql_where',
@@ -44,6 +50,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.ds_id or args.sql_where:
-        bootstrap_and_run(args.config, partial(update_optical_images, ds_id=args.ds_id, sql_where=args.sql_where))
+        bootstrap_and_run(
+            args.config, partial(update_optical_images, ds_id=args.ds_id, sql_where=args.sql_where)
+        )
     else:
         parser.print_help()

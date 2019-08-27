@@ -56,7 +56,9 @@ def test_queue_msg_published_consumed_on_success_called(delete_queue):
     queue_pub.publish(msg)
 
     output_q = Queue()
-    run_queue_consumer_thread(config, callback=lambda *args: output_q.put('callback'), output_q=output_q, wait=1)
+    run_queue_consumer_thread(
+        config, callback=lambda *args: output_q.put('callback'), output_q=output_q, wait=1
+    )
 
     assert output_q.get() == 'callback'
     assert output_q.get() == 'on_success'

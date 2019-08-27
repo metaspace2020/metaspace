@@ -7,8 +7,12 @@ from sm.engine.dataset import Dataset
 
 
 SEL_DATASET_RAW_OPTICAL_IMAGE = 'SELECT optical_image from dataset WHERE id = %s'
-UPD_DATASET_RAW_OPTICAL_IMAGE = 'update dataset set optical_image = %s, transform = %s WHERE id = %s'
-DEL_DATASET_RAW_OPTICAL_IMAGE = 'update dataset set optical_image = NULL, transform = NULL WHERE id = %s'
+UPD_DATASET_RAW_OPTICAL_IMAGE = (
+    'update dataset set optical_image = %s, transform = %s WHERE id = %s'
+)
+DEL_DATASET_RAW_OPTICAL_IMAGE = (
+    'update dataset set optical_image = NULL, transform = NULL WHERE id = %s'
+)
 UPD_DATASET_THUMB_OPTICAL_IMAGE = 'update dataset set thumbnail = %s WHERE id = %s'
 
 IMG_URLS_BY_ID_SEL = (
@@ -20,7 +24,8 @@ IMG_URLS_BY_ID_SEL = (
 )
 
 INS_OPTICAL_IMAGE = (
-    'INSERT INTO optical_image (id, ds_id, type, zoom, width, height, transform) ' 'VALUES (%s, %s, %s, %s, %s, %s, %s)'
+    'INSERT INTO optical_image (id, ds_id, type, zoom, width, height, transform) '
+    'VALUES (%s, %s, %s, %s, %s, %s, %s)'
 )
 SEL_OPTICAL_IMAGE = 'SELECT id FROM optical_image WHERE ds_id = %s'
 SEL_OPTICAL_IMAGE_THUMBNAIL = 'SELECT thumbnail FROM dataset WHERE id = %s'
@@ -83,7 +88,9 @@ def _scale_image(scan, transform_, zoom):
     img = scan.resize(new_dims, True)
 
     transform_to_ion_space = np.linalg.pinv(np.array(transform_))
-    transform_to_ion_space = np.dot(transform_to_ion_space, np.diag([1 / scale_factor, 1 / scale_factor, 1]))
+    transform_to_ion_space = np.dot(
+        transform_to_ion_space, np.diag([1 / scale_factor, 1 / scale_factor, 1])
+    )
 
     return img, new_dims, transform_to_ion_space.tolist()
 
@@ -111,13 +118,33 @@ def _add_zoom_optical_images(db, img_store, ds, dims, img_id, optical_img, trans
         img, (width, height), transform_to_ion_space = _scale_image(optical_img, transform, zoom)
         buf = _save_jpeg(img)
         scaled_img_id = img_store.post_image('fs', 'optical_image', buf)
-        rows.append((scaled_img_id, ds.id, OpticalImageType.SCALED, zoom, width, height, transform_to_ion_space))
+        rows.append(
+            (
+                scaled_img_id,
+                ds.id,
+                OpticalImageType.SCALED,
+                zoom,
+                width,
+                height,
+                transform_to_ion_space,
+            )
+        )
 
-        img, (width, height), transform_to_ion_space = _transform_image_to_ion_space(optical_img, transform, dims, zoom)
+        img, (width, height), transform_to_ion_space = _transform_image_to_ion_space(
+            optical_img, transform, dims, zoom
+        )
         buf = _save_jpeg(img)
         scaled_img_id = img_store.post_image('fs', 'optical_image', buf)
         rows.append(
-            (scaled_img_id, ds.id, OpticalImageType.CLIPPED_TO_ION_IMAGE, zoom, width, height, transform_to_ion_space)
+            (
+                scaled_img_id,
+                ds.id,
+                OpticalImageType.CLIPPED_TO_ION_IMAGE,
+                zoom,
+                width,
+                height,
+                transform_to_ion_space,
+            )
         )
 
     for row in db.select(SEL_OPTICAL_IMAGE, params=(ds.id,)):

@@ -197,7 +197,9 @@ def del_optical_image(ds_man, ds_id, params):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SM Engine REST API')
-    parser.add_argument('--config', dest='config_path', default='conf/config.json', type=str, help='SM config path')
+    parser.add_argument(
+        '--config', dest='config_path', default='conf/config.json', type=str, help='SM config path'
+    )
     args = parser.parse_args()
 
     def run_bottle(sm_config, logger):

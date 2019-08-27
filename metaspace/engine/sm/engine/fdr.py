@@ -102,7 +102,9 @@ def _make_target_modifiers_df(chem_mods, neutral_losses, target_adducts):
         for cm, nl, ta in product(['', *chem_mods], ['', *neutral_losses], target_adducts)
     ]
     df = pd.DataFrame(
-        rows, columns=['chem_mod', 'neutral_loss', 'adduct', 'target_modifier', 'decoy_modifier_prefix'], dtype='O'
+        rows,
+        columns=['chem_mod', 'neutral_loss', 'adduct', 'target_modifier', 'decoy_modifier_prefix'],
+        dtype='O',
     )
     df = df.set_index('target_modifier')
     return df
@@ -117,7 +119,9 @@ class FDR(object):
         self.td_df = None
         self.fdr_levels = [0.05, 0.1, 0.2, 0.5]
         self.random_seed = 42
-        self.target_modifiers_df = _make_target_modifiers_df(chem_mods, neutral_losses, target_adducts)
+        self.target_modifiers_df = _make_target_modifiers_df(
+            chem_mods, neutral_losses, target_adducts
+        )
 
     def _choose_decoys(self, decoys):
         copy = decoys.copy()
@@ -134,7 +138,8 @@ class FDR(object):
     def decoy_adducts_selection(self, target_formulas):
         decoy_adduct_cand = [add for add in DECOY_ADDUCTS if add not in self.target_adducts]
         self.td_df = pd.DataFrame(
-            self._decoy_adduct_gen(target_formulas, decoy_adduct_cand), columns=['formula', 'tm', 'dm']
+            self._decoy_adduct_gen(target_formulas, decoy_adduct_cand),
+            columns=['formula', 'tm', 'dm'],
         )
 
     def ion_tuples(self):
@@ -154,7 +159,11 @@ class FDR(object):
     def _msm_fdr_map(target_msm, decoy_msm):
         target_msm_hits = pd.Series(target_msm.msm.value_counts(), name='target')
         decoy_msm_hits = pd.Series(decoy_msm.msm.value_counts(), name='decoy')
-        msm_df = pd.concat([target_msm_hits, decoy_msm_hits], axis=1).fillna(0).sort_index(ascending=False)
+        msm_df = (
+            pd.concat([target_msm_hits, decoy_msm_hits], axis=1)
+            .fillna(0)
+            .sort_index(ascending=False)
+        )
         msm_df['target_cum'] = msm_df.target.cumsum()
         msm_df['decoy_cum'] = msm_df.decoy.cumsum()
         msm_df['fdr'] = msm_df.decoy_cum / msm_df.target_cum
@@ -184,7 +193,10 @@ class FDR(object):
             for i in range(self.decoy_sample_size):
                 decoy_subset_df = full_decoy_df[i :: self.decoy_sample_size]
                 decoy_msm = pd.merge(
-                    formula_msm, decoy_subset_df, left_on=['formula', 'modifier'], right_on=['formula', 'dm']
+                    formula_msm,
+                    decoy_subset_df,
+                    left_on=['formula', 'modifier'],
+                    right_on=['formula', 'dm'],
                 )
                 msm_fdr = self._msm_fdr_map(target_msm, decoy_msm)
                 msm_fdr_list.append(msm_fdr)

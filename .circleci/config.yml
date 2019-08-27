@@ -228,7 +228,7 @@ jobs:
           at: ~/workspace
 #      - run:
 #          name: Run code formatter
-#          command: black --skip-string-normalization --target-version py36 --check sm tests scripts
+#          command: black --line-length 100 --skip-string-normalization --target-version py36 --check sm tests scripts
 #      - run:
 #          name: Run linter
 #          command: pylama --options pylama.ini sm

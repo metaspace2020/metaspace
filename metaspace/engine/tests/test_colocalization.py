@@ -26,12 +26,17 @@ def test_valid_colocalization_jobs_generated(find_db_by_name_version_mock):
     sample_job = [job for job in jobs if job.fdr == 0.2 and job.algorithm_name == 'cosine'][0]
     assert len(sample_job.sample_ion_ids) > 0
     assert len(sample_job.coloc_annotations) == 15
-    assert len(sample_job.coloc_annotations[0][1]) > 0  # First annotation was colocalized with at least one other
+    assert (
+        len(sample_job.coloc_annotations[0][1]) > 0
+    )  # First annotation was colocalized with at least one other
 
 
 def mock_get_ion_images_for_analysis(storage_type, img_ids, **kwargs):
     images = (
-        np.array([np.linspace(0, 25, 25, False) % ((seed or 1) % 25) for seed in range(len(img_ids))], dtype=np.float32)
+        np.array(
+            [np.linspace(0, 25, 25, False) % ((seed or 1) % 25) for seed in range(len(img_ids))],
+            dtype=np.float32,
+        )
         / 25
     )
     mask = (np.linspace(0, 25, 25, False).reshape((5, 5)) % 4 == 1) / 25
@@ -53,7 +58,8 @@ def test_new_ds_saves_to_db(find_db_by_name_version_mock, test_db, metadata, ds_
         }
     )
     job_id, = db.insert_return(
-        "INSERT INTO job (db_id, ds_id, status) " "VALUES (1, %s, 'FINISHED') " "RETURNING id", [[ds.id]]
+        "INSERT INTO job (db_id, ds_id, status) " "VALUES (1, %s, 'FINISHED') " "RETURNING id",
+        [[ds.id]],
     )
     db.insert(
         'INSERT INTO annotation(job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids) '

@@ -14,10 +14,15 @@ from sm.engine.util import SMConfig, init_loggers
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description=('A daemon process for consuming messages from a ' 'queue and performing dataset manipulations')
+        description=(
+            'A daemon process for consuming messages from a '
+            'queue and performing dataset manipulations'
+        )
     )
     parser.add_argument('--name', type=str, help='SM daemon name (annotate/update)')
-    parser.add_argument('--config', dest='config_path', default='conf/config.json', type=str, help='SM config path')
+    parser.add_argument(
+        '--config', dest='config_path', default='conf/config.json', type=str, help='SM config path'
+    )
     args = parser.parse_args()
 
     SMConfig.set_path(args.config_path)
@@ -29,7 +34,9 @@ if __name__ == "__main__":
 
     def get_manager():
         db = DB()
-        status_queue_pub = QueuePublisher(config=sm_config['rabbitmq'], qdesc=SM_DS_STATUS, logger=logger)
+        status_queue_pub = QueuePublisher(
+            config=sm_config['rabbitmq'], qdesc=SM_DS_STATUS, logger=logger
+        )
         return DatasetManager(
             db=db,
             es=ESExporter(db),
@@ -42,10 +49,16 @@ if __name__ == "__main__":
 
     daemons = []
     if args.name == 'annotate':
-        daemons.append(SMAnnotateDaemon(manager=get_manager(), annot_qdesc=SM_ANNOTATE, upd_qdesc=SM_UPDATE))
+        daemons.append(
+            SMAnnotateDaemon(manager=get_manager(), annot_qdesc=SM_ANNOTATE, upd_qdesc=SM_UPDATE)
+        )
     elif args.name == 'update':
         make_update_queue_cons = partial(
-            QueueConsumer, config=sm_config['rabbitmq'], qdesc=SM_UPDATE, logger=logger, poll_interval=1
+            QueueConsumer,
+            config=sm_config['rabbitmq'],
+            qdesc=SM_UPDATE,
+            logger=logger,
+            poll_interval=1,
         )
         for i in range(sm_config['services']['update_daemon_threads']):
             daemon = SMIndexUpdateDaemon(get_manager(), make_update_queue_cons)

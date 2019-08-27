@@ -29,7 +29,9 @@ def test_define_ds_segments():
 
     # 3 (columns) * 10 (spectra) * 10 (mz/spectrum) * 8 (float prec) ~= 2400 (dataset size, bytes)
     # 2400 // 2**10 (segm size, bytes) ~= 2 (segments)
-    ds_segments = define_ds_segments(sample_mzs, mz_precision='d', total_mz_n=100, ds_segm_size_mb=2 ** -10)
+    ds_segments = define_ds_segments(
+        sample_mzs, mz_precision='d', total_mz_n=100, ds_segm_size_mb=2 ** -10
+    )
 
     exp_ds_segments = np.array([[0, 50.0], [50, 100.0]])
     assert np.allclose(ds_segments, exp_ds_segments)

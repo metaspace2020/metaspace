@@ -89,11 +89,15 @@ def test_db(request):
                 admin_conn.close()
 
     db_config_postgres = {**sm_config['db'], 'database': 'postgres'}
-    autocommit_execute(db_config_postgres, 'DROP DATABASE IF EXISTS sm_test', 'CREATE DATABASE sm_test')
+    autocommit_execute(
+        db_config_postgres, 'DROP DATABASE IF EXISTS sm_test', 'CREATE DATABASE sm_test'
+    )
 
     local(
         'psql -h {} -U {} sm_test < {}'.format(
-            sm_config['db']['host'], sm_config['db']['user'], Path(proj_root()) / 'scripts/create_schema.sql'
+            sm_config['db']['host'],
+            sm_config['db']['user'],
+            Path(proj_root()) / 'scripts/create_schema.sql',
         )
     )
 
@@ -117,7 +121,16 @@ def fill_db(test_db, metadata, ds_config):
         'INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, '
         'status, is_public) values (%s, %s, %s, %s, %s, %s, %s, %s)',
         rows=[
-            (ds_id, 'ds_name', 'input_path', upload_dt, json.dumps(metadata), json.dumps(ds_config), 'FINISHED', True)
+            (
+                ds_id,
+                'ds_name',
+                'input_path',
+                upload_dt,
+                json.dumps(metadata),
+                json.dumps(ds_config),
+                'FINISHED',
+                True,
+            )
         ],
     )
     db.insert("INSERT INTO job (id, db_id, ds_id) VALUES (%s, %s, %s)", rows=[(0, 0, ds_id)])
@@ -126,11 +139,15 @@ def fill_db(test_db, metadata, ds_config):
             "INSERT INTO annotation (job_id, formula, chem_mod, neutral_loss, adduct, "
             "msm, fdr, stats, iso_image_ids) VALUES (%s, %s, '', '', %s, 0.5, 0.2, '{}', %s)"
         ),
-        rows=[(0, 'H2O', '+H', ['iso_image_11', 'iso_image_12']), (0, 'CH4', '+H', ['iso_image_21', 'iso_image_22'])],
+        rows=[
+            (0, 'H2O', '+H', ['iso_image_11', 'iso_image_12']),
+            (0, 'CH4', '+H', ['iso_image_21', 'iso_image_22']),
+        ],
     )
     user_id = str(uuid.uuid4())
     db.insert(
-        "INSERT INTO graphql.user (id, name, email) VALUES (%s, %s, %s)", rows=[(user_id, 'name', 'name@embl.de')]
+        "INSERT INTO graphql.user (id, name, email) VALUES (%s, %s, %s)",
+        rows=[(user_id, 'name', 'name@embl.de')],
     )
     group_id = str(uuid.uuid4())
     db.insert(
@@ -145,12 +162,20 @@ def fill_db(test_db, metadata, ds_config):
 
 @pytest.fixture()
 def es():
-    return Elasticsearch(hosts=["{}:{}".format(sm_config['elasticsearch']['host'], sm_config['elasticsearch']['port'])])
+    return Elasticsearch(
+        hosts=[
+            "{}:{}".format(sm_config['elasticsearch']['host'], sm_config['elasticsearch']['port'])
+        ]
+    )
 
 
 @pytest.fixture()
 def es_dsl_search():
-    es = Elasticsearch(hosts=["{}:{}".format(sm_config['elasticsearch']['host'], sm_config['elasticsearch']['port'])])
+    es = Elasticsearch(
+        hosts=[
+            "{}:{}".format(sm_config['elasticsearch']['host'], sm_config['elasticsearch']['port'])
+        ]
+    )
     return Search(using=es, index=sm_config['elasticsearch']['index'])
 
 
@@ -177,7 +202,9 @@ def mol_db(ds_config):
     service.find_db_by_name_version.return_value = data
     SMConfig._config_dict = sm_config
 
-    mol_db = MolecularDB(1, 'name', 'version', ds_config['isotope_generation'], mol_db_service=service, db=db)
+    mol_db = MolecularDB(
+        1, 'name', 'version', ds_config['isotope_generation'], mol_db_service=service, db=db
+    )
     mol_db._sf_df = pd.DataFrame(
         dict(
             sf_id=[1, 2, 3],

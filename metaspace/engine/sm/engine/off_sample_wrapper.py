@@ -45,7 +45,10 @@ def retry_on_error(num_retries=3):
                 except Exception:
                     min_wait_time = 10 * i
                     delay = random.uniform(min_wait_time, min_wait_time + 5)
-                    logger.warning(f'Off-sample API error on attempt {i}. ' f'Retrying after {delay:.1f} seconds...')
+                    logger.warning(
+                        f'Off-sample API error on attempt {i}. '
+                        f'Retrying after {delay:.1f} seconds...'
+                    )
                     sleep(delay)
             # Last attempt, don't catch the exception
             return func(*args, **kwargs)

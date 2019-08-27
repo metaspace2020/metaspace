@@ -51,7 +51,9 @@ class DatasetManager(object):
             post(self._slack_conf['webhook_url'], json=m)
 
     def fetch_ds_metadata(self, ds_id):
-        res = self._db.select_one('SELECT name, metadata FROM dataset WHERE id = %s', params=(ds_id,))
+        res = self._db.select_one(
+            'SELECT name, metadata FROM dataset WHERE id = %s', params=(ds_id,)
+        )
         return res or ('', {})
 
     def create_web_app_link(self, msg):
@@ -86,12 +88,18 @@ class DatasetManager(object):
             self._del_iso_images(ds)
             self._db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
         ds.save(self._db, self._es)
-        annotation_job_factory(img_store=self._img_store, sm_config=self._sm_config, **kwargs).run(ds)
+        annotation_job_factory(img_store=self._img_store, sm_config=self._sm_config, **kwargs).run(
+            ds
+        )
         Colocalization(self._db).run_coloc_job(ds.id, reprocess=del_first)
-        generate_ion_thumbnail(db=self._db, img_store=self._img_store, ds_id=ds.id, only_if_needed=not del_first)
+        generate_ion_thumbnail(
+            db=self._db, img_store=self._img_store, ds_id=ds.id, only_if_needed=not del_first
+        )
 
     def _finished_job_moldbs(self, ds_id):
-        for job_id, mol_db_id in self._db.select('SELECT id, db_id FROM job WHERE ds_id = %s', params=(ds_id,)):
+        for job_id, mol_db_id in self._db.select(
+            'SELECT id, db_id FROM job WHERE ds_id = %s', params=(ds_id,)
+        ):
             yield job_id, MolecularDB(id=mol_db_id).name
 
     def index(self, ds):
@@ -102,7 +110,9 @@ class DatasetManager(object):
             if mol_db_name not in ds.config['databases']:
                 self._db.alter('DELETE FROM job WHERE id = %s', params=(job_id,))
             else:
-                mol_db = MolecularDB(name=mol_db_name, iso_gen_config=ds.config['isotope_generation'])
+                mol_db = MolecularDB(
+                    name=mol_db_name, iso_gen_config=ds.config['isotope_generation']
+                )
                 isocalc = IsocalcWrapper(ds.config['isotope_generation'])
                 self._es.index_ds(ds_id=ds.id, mol_db=mol_db, isocalc=isocalc)
 
@@ -122,7 +132,9 @@ class DatasetManager(object):
                     if img_id:
                         self._img_store.delete_image_by_id(storage_type, 'iso_image', img_id)
         except UnknownDSID:
-            self.logger.warning('Attempt to delete isotopic images of non-existing dataset. Skipping')
+            self.logger.warning(
+                'Attempt to delete isotopic images of non-existing dataset. Skipping'
+            )
 
     def delete(self, ds, del_raw_data=False, **kwargs):
         """ Delete all dataset related data from the DB """
@@ -173,7 +185,8 @@ class DatasetManager(object):
                 f'the following stack trace may be useful:\n\n{traceback}'
             )
         content += (
-            '\n\nIf this is unexpected, please do not hesitate to contact us for support ' 'at contact@metaspace2020.eu'
+            '\n\nIf this is unexpected, please do not hesitate to contact us for support '
+            'at contact@metaspace2020.eu'
         )
         email_body = 'Dear METASPACE user,\n\n' f'{content}\n\n' 'Best regards,\n' 'METASPACE Team'
         self._send_email(msg['email'], 'METASPACE service notification (FAILED)', email_body)
@@ -198,8 +211,12 @@ class SMAnnotateDaemon(object):
             logger=self.logger,
             poll_interval=poll_interval,
         )
-        self._upd_queue_pub = QueuePublisher(config=self._sm_config['rabbitmq'], qdesc=upd_qdesc, logger=self.logger)
-        self._update_queue_pub = QueuePublisher(config=self._sm_config['rabbitmq'], qdesc=upd_qdesc, logger=self.logger)
+        self._upd_queue_pub = QueuePublisher(
+            config=self._sm_config['rabbitmq'], qdesc=upd_qdesc, logger=self.logger
+        )
+        self._update_queue_pub = QueuePublisher(
+            config=self._sm_config['rabbitmq'], qdesc=upd_qdesc, logger=self.logger
+        )
         self._redis_client = redis.Redis(**self._sm_config.get('redis', {}))
         Path(self._sm_config['fs']['spark_data_path']).mkdir(parents=True, exist_ok=True)
 
@@ -237,11 +254,15 @@ class SMAnnotateDaemon(object):
             self._manager.set_ds_status(ds, DatasetStatus.ANNOTATING)
             self._manager.notify_update(ds.id, msg['action'], DaemonActionStage.STARTED)
 
-            self._manager.post_to_slack('new', " [v] New annotation message: {}".format(json.dumps(msg)))
+            self._manager.post_to_slack(
+                'new', " [v] New annotation message: {}".format(json.dumps(msg))
+            )
 
             from sm.engine.annotation_job import AnnotationJob
 
-            self._manager.annotate(ds=ds, annotation_job_factory=AnnotationJob, del_first=msg.get('del_first', False))
+            self._manager.annotate(
+                ds=ds, annotation_job_factory=AnnotationJob, del_first=msg.get('del_first', False)
+            )
 
             update_msg = {
                 'ds_id': msg['ds_id'],
@@ -259,7 +280,9 @@ class SMAnnotateDaemon(object):
                 }
                 self._update_queue_pub.publish(msg=analyze_msg, priority=DatasetActionPriority.LOW)
         except Exception as e:
-            raise AnnotationError(ds_id=msg['ds_id'], traceback=traceback.format_exc(chain=False)) from e
+            raise AnnotationError(
+                ds_id=msg['ds_id'], traceback=traceback.format_exc(chain=False)
+            ) from e
 
     def start(self):
         self._stopped = False
@@ -291,7 +314,9 @@ class SMIndexUpdateDaemon(object):
         self.logger.info(f" SM update daemon: success")
 
         if msg['action'] == DaemonAction.DELETE:
-            self._manager.notify_update(msg['ds_id'], action=DaemonAction.DELETE, stage=DaemonActionStage.FINISHED)
+            self._manager.notify_update(
+                msg['ds_id'], action=DaemonAction.DELETE, stage=DaemonActionStage.FINISHED
+            )
         else:
             ds = self._manager.load_ds(msg['ds_id'])
             if msg['action'] == DaemonAction.INDEX:
@@ -302,7 +327,9 @@ class SMIndexUpdateDaemon(object):
             msg['web_app_link'] = self._manager.create_web_app_link(msg)
 
         if msg['action'] != DaemonAction.UPDATE:
-            self._manager.post_to_slack('dart', f" [v] Succeeded to {msg['action']}: {json.dumps(msg)}")
+            self._manager.post_to_slack(
+                'dart', f" [v] Succeeded to {msg['action']}: {json.dumps(msg)}"
+            )
 
         if msg.get('email'):
             self._manager.send_success_email(msg)
@@ -322,7 +349,9 @@ class SMIndexUpdateDaemon(object):
     def _callback(self, msg):
         try:
             self.logger.info(f' SM update daemon received a message: {msg}')
-            self._manager.post_to_slack('new', f" [v] New {msg['action']} message: {json.dumps(msg)}")
+            self._manager.post_to_slack(
+                'new', f" [v] New {msg['action']} message: {json.dumps(msg)}"
+            )
 
             ds = self._manager.load_ds(msg['ds_id'])
             self._manager.notify_update(ds.id, msg['action'], DaemonActionStage.STARTED)

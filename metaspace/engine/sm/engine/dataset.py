@@ -36,7 +36,16 @@ RESOL_POWER_PARAMS = {
 }
 
 FLAT_DS_CONFIG_KEYS = frozenset(
-    {'mol_dbs', 'adducts', 'ppm', 'min_px', 'n_peaks', 'decoy_sample_size', 'neutral_losses', 'chem_mods'}
+    {
+        'mol_dbs',
+        'adducts',
+        'ppm',
+        'min_px',
+        'n_peaks',
+        'decoy_sample_size',
+        'neutral_losses',
+        'chem_mods',
+    }
 )
 
 
@@ -44,7 +53,10 @@ class Dataset(object):
     """ Class for representing an IMS dataset
     """
 
-    DS_SEL = 'SELECT id, name, input_path, upload_dt, metadata, config, status, is_public ' 'FROM dataset WHERE id = %s'
+    DS_SEL = (
+        'SELECT id, name, input_path, upload_dt, metadata, config, status, is_public '
+        'FROM dataset WHERE id = %s'
+    )
     DS_UPD = (
         'UPDATE dataset set name=%(name)s, input_path=%(input_path)s, upload_dt=%(upload_dt)s, '
         'metadata=%(metadata)s, config=%(config)s, status=%(status)s, is_public=%(is_public)s where id=%(id)s'

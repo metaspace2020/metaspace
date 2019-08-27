@@ -29,8 +29,12 @@ ALGORITHMS = {
     ),
     'image-medoid': lambda *args: _make_thumbnail_from_image_clusters(*args, use_centroids=False),
     'image-centroid': lambda *args: _make_thumbnail_from_image_clusters(*args, use_centroids=True),
-    'pixel-mean-intensity': lambda *args: _make_thumbnail_from_pixel_clusters(*args, use_distance_from_centroid=False),
-    'pixel-distance': lambda *args: _make_thumbnail_from_pixel_clusters(*args, use_distance_from_centroid=True),
+    'pixel-mean-intensity': lambda *args: _make_thumbnail_from_pixel_clusters(
+        *args, use_distance_from_centroid=False
+    ),
+    'pixel-distance': lambda *args: _make_thumbnail_from_pixel_clusters(
+        *args, use_distance_from_centroid=True
+    ),
 }
 DEFAULT_ALGORITHM = 'image-centroid'
 
@@ -52,8 +56,12 @@ def _pick_least_overlapping_image_set(images, mask, num_to_pick):
     pixel_count = np.count_nonzero(mask)
 
     def get_overlap(idxs):
-        num_nonoverlapping = np.count_nonzero(np.sum([images[i] > 0.25 for i in idxs], axis=0) == 1) / pixel_count
-        sum_population = np.count_nonzero(np.sum([images[i] > 0.25 for i in idxs], axis=0)) / pixel_count
+        num_nonoverlapping = (
+            np.count_nonzero(np.sum([images[i] > 0.25 for i in idxs], axis=0) == 1) / pixel_count
+        )
+        sum_population = (
+            np.count_nonzero(np.sum([images[i] > 0.25 for i in idxs], axis=0)) / pixel_count
+        )
         min_population = np.min([np.sum(images[i] > 0.25) for i in idxs]) / pixel_count
         return num_nonoverlapping * (1 - np.abs(0.8 - sum_population)) * min_population
 
@@ -78,7 +86,9 @@ def _make_thumbnail_from_minimally_overlapping_image_clusters(images, mask, h, w
         all_centroids = kmeans.cluster_centers_
         centroids = _pick_least_overlapping_image_set(all_centroids, mask, 3)
         # centroids, labels = kmeans2(good_images, good_images[:3])
-        medoids_idxs = [np.argmin(cdist(good_images, centroid[np.newaxis, :])) for centroid in centroids]
+        medoids_idxs = [
+            np.argmin(cdist(good_images, centroid[np.newaxis, :])) for centroid in centroids
+        ]
         medoids = np.array([good_images[idx] for idx in medoids_idxs])
     else:
         # Pad with zeros
@@ -98,7 +108,9 @@ def _make_thumbnail_from_image_clusters(images, mask, h, w, use_centroids):
         kmeans = KMeans(3)
         kmeans.fit(good_images)
         centroids = kmeans.cluster_centers_
-        medoids_idxs = [np.argmin(cdist(good_images, centroid[np.newaxis, :])) for centroid in centroids]
+        medoids_idxs = [
+            np.argmin(cdist(good_images, centroid[np.newaxis, :])) for centroid in centroids
+        ]
         medoids = np.array([good_images[idx] for idx in medoids_idxs])
     else:
         # Pad with zeros
@@ -138,7 +150,9 @@ def _make_thumbnail_from_pixel_clusters(images, mask, h, w, use_distance_from_ce
         pixel_intensity = np.mean(pixels, axis=1)
 
     # Sort colors by total intensity for consistency, and normalize each label
-    label_intensity = np.average(pixel_intensity[np.newaxis, :] * labels_mask, weights=labels_mask, axis=1)
+    label_intensity = np.average(
+        pixel_intensity[np.newaxis, :] * labels_mask, weights=labels_mask, axis=1
+    )
     sorted_colors = COLORS[np.argsort(label_intensity)]
 
     pixel_vals = sorted_colors[labels] * pixel_intensity[:, np.newaxis]

@@ -62,7 +62,9 @@ class QueueConsumerAsync(object):
 
         """
         self.logger.info('Connecting to %s', self._url)
-        return pika.SelectConnection(pika.URLParameters(self._url), self.on_connection_open, stop_ioloop_on_close=False)
+        return pika.SelectConnection(
+            pika.URLParameters(self._url), self.on_connection_open, stop_ioloop_on_close=False
+        )
 
     def on_connection_open(self, unused_connection):
         """This method is called by pika once the connection to RabbitMQ has
@@ -99,7 +101,10 @@ class QueueConsumerAsync(object):
             self._connection.ioloop.stop()
         else:
             self.logger.warning(
-                'Connection closed, reopening in %s seconds: (%s) %s', self._reopen_timeout, reply_code, reply_text
+                'Connection closed, reopening in %s seconds: (%s) %s',
+                self._reopen_timeout,
+                reply_code,
+                reply_text,
             )
             self._connection.add_timeout(self._reopen_timeout, self.reconnect)
 
@@ -175,7 +180,9 @@ class QueueConsumerAsync(object):
 
         """
         self.logger.info('Declaring exchange %s', exchange_name)
-        self._channel.exchange_declare(self.on_exchange_declareok, exchange_name, self.exchange_type)
+        self._channel.exchange_declare(
+            self.on_exchange_declareok, exchange_name, self.exchange_type
+        )
 
     def on_exchange_declareok(self, unused_frame):
         """Invoked by pika when RabbitMQ has finished the Exchange.Declare RPC
@@ -197,7 +204,10 @@ class QueueConsumerAsync(object):
         """
         self.logger.info('Declaring queue %s', queue_name)
         self._channel.queue_declare(
-            self.on_queue_declareok, queue_name, durable=self._qdesc['durable'], arguments=self._qdesc['arguments']
+            self.on_queue_declareok,
+            queue_name,
+            durable=self._qdesc['durable'],
+            arguments=self._qdesc['arguments'],
         )
 
     def on_queue_declareok(self, method_frame):
@@ -280,7 +290,10 @@ class QueueConsumerAsync(object):
             self.acknowledge_message(basic_deliver.delivery_tag)
             body = body.decode('utf-8')
             self.logger.info(
-                ' [v] Received message # %s from %s: %s', basic_deliver.delivery_tag, properties.app_id, body
+                ' [v] Received message # %s from %s: %s',
+                basic_deliver.delivery_tag,
+                properties.app_id,
+                body,
             )
 
             msg = json.loads(body)
@@ -363,7 +376,9 @@ class QueueConsumerAsync(object):
 
 
 class QueueConsumer(Thread):
-    def __init__(self, config, qdesc, callback, on_success, on_failure, logger=None, poll_interval=1):
+    def __init__(
+        self, config, qdesc, callback, on_success, on_failure, logger=None, poll_interval=1
+    ):
         """Create a new instance of the blocking consumer class
         """
         super().__init__()
@@ -398,7 +413,12 @@ class QueueConsumer(Thread):
             msg = None
             try:
                 body = body.decode('utf-8')
-                self.logger.info(' [v] Received message # %s from %s: %s', method.delivery_tag, properties.app_id, body)
+                self.logger.info(
+                    ' [v] Received message # %s from %s: %s',
+                    method.delivery_tag,
+                    properties.app_id,
+                    body,
+                )
                 msg = json.loads(body)
 
                 if msg.get('action', None) == 'exit':
@@ -472,7 +492,9 @@ class QueuePublisher(object):
         creds = pika.PlainCredentials(config['user'], config['password'])
         self.qdesc = qdesc
         self.qname = qdesc['name']
-        self.conn_params = pika.ConnectionParameters(host=config['host'], credentials=creds, heartbeat=0)
+        self.conn_params = pika.ConnectionParameters(
+            host=config['host'], credentials=creds, heartbeat=0
+        )
         self.conn = None
         self.logger = logger if logger else logging.getLogger()
 
@@ -494,12 +516,16 @@ class QueuePublisher(object):
         try:
             self.conn = pika.BlockingConnection(self.conn_params)
             ch = self.conn.channel()
-            ch.queue_declare(queue=self.qname, durable=self.qdesc['durable'], arguments=self.qdesc['arguments'])
+            ch.queue_declare(
+                queue=self.qname, durable=self.qdesc['durable'], arguments=self.qdesc['arguments']
+            )
             ch.basic_publish(
                 exchange='',
                 routing_key=self.qname,
                 body=json.dumps(msg),
-                properties=pika.BasicProperties(delivery_mode=2, priority=priority),  # make message persistent
+                properties=pika.BasicProperties(
+                    delivery_mode=2, priority=priority
+                ),  # make message persistent
             )
             self.logger.info(" [v] Sent {} to {}".format(json.dumps(msg), self.qname))
         except AMQPError as e:

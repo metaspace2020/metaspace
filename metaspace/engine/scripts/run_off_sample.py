@@ -32,7 +32,9 @@ def run_off_sample(sm_config, logger, ds_id, sql_where, fix_missing, overwrite_e
     if ds_id:
         ds_ids = ds_id.split(',')
     elif sql_where:
-        ds_ids = [id for (id,) in db.select(f'SELECT DISTINCT dataset.id FROM dataset WHERE {sql_where}')]
+        ds_ids = [
+            id for (id,) in db.select(f'SELECT DISTINCT dataset.id FROM dataset WHERE {sql_where}')
+        ]
     else:
         logger.info('Checking for missing off-sample jobs...')
         results = db.select(MISSING_OFF_SAMPLE_SEL)
@@ -46,13 +48,19 @@ def run_off_sample(sm_config, logger, ds_id, sql_where, fix_missing, overwrite_e
     for i, ds_id in enumerate(ds_ids):
         try:
             logger.info(f'Running off-sample on {i+1} out of {len(ds_ids)}')
-            classify_dataset_ion_images(db, Dataset(id=ds_id), sm_config['services'], overwrite_existing)
+            classify_dataset_ion_images(
+                db, Dataset(id=ds_id), sm_config['services'], overwrite_existing
+            )
 
             # Reindex dataset
-            ds_name, ds_config = db.select_one("select name, config from dataset where id = %s", (ds_id,))
+            ds_name, ds_config = db.select_one(
+                "select name, config from dataset where id = %s", (ds_id,)
+            )
             for mol_db_name in ds_config['databases']:
                 try:
-                    mol_db = MolecularDB(name=mol_db_name, iso_gen_config=ds_config['isotope_generation'])
+                    mol_db = MolecularDB(
+                        name=mol_db_name, iso_gen_config=ds_config['isotope_generation']
+                    )
                     isocalc = IsocalcWrapper(ds_config['isotope_generation'])
                     es_exp.index_ds(ds_id, mol_db=mol_db, isocalc=isocalc)
                 except Exception as e:
@@ -66,7 +74,9 @@ def run_off_sample(sm_config, logger, ds_id, sql_where, fix_missing, overwrite_e
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run off-sample classification')
     parser.add_argument('--config', default='conf/config.json', help='SM config path')
-    parser.add_argument('--ds-id', dest='ds_id', default=None, help='DS id (or comma-separated list of ids)')
+    parser.add_argument(
+        '--ds-id', dest='ds_id', default=None, help='DS id (or comma-separated list of ids)'
+    )
     parser.add_argument(
         '--sql-where',
         dest='sql_where',
@@ -74,7 +84,9 @@ if __name__ == '__main__':
         help='SQL WHERE clause for picking rows from the dataset table, e.g. "status = \'FINISHED\'"',
     )
     parser.add_argument(
-        '--fix-missing', action='store_true', help='Run classification on all datasets that are missing off-sample data'
+        '--fix-missing',
+        action='store_true',
+        help='Run classification on all datasets that are missing off-sample data',
     )
     parser.add_argument(
         '--overwrite-existing',

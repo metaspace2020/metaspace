@@ -60,7 +60,9 @@ def make_compute_image_metrics(sample_area_mask, nrows, ncols, img_gen_config):
 
         m = METRICS.copy()
         if len(iso_images_sparse) > 0:
-            iso_imgs = [img.toarray() if img is not None else empty_matrix for img in iso_images_sparse]
+            iso_imgs = [
+                img.toarray() if img is not None else empty_matrix for img in iso_images_sparse
+            ]
 
             iso_imgs_flat = [img.flatten()[sample_area_mask_flat] for img in iso_imgs]
             iso_imgs_flat = iso_imgs_flat[: len(formula_ints)]

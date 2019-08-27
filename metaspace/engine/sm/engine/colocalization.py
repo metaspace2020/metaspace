@@ -22,7 +22,8 @@ COLOC_JOB_INS = (
 )
 
 COLOC_ANN_INS = (
-    'INSERT INTO graphql.coloc_annotation(coloc_job_id, ion_id, coloc_ion_ids, coloc_coeffs) ' 'VALUES (%s, %s, %s, %s)'
+    'INSERT INTO graphql.coloc_annotation(coloc_job_id, ion_id, coloc_ion_ids, coloc_coeffs) '
+    'VALUES (%s, %s, %s, %s)'
 )
 
 SUCCESSFUL_COLOC_JOB_SEL = (
@@ -44,7 +45,9 @@ ANNOTATIONS_SEL = (
 )
 
 DATASET_CONFIG_SEL = (
-    "SELECT config #> '{databases}', config #> '{isotope_generation,charge}' " "FROM dataset " "WHERE id = %s"
+    "SELECT config #> '{databases}', config #> '{isotope_generation,charge}' "
+    "FROM dataset "
+    "WHERE id = %s"
 )
 
 logger = logging.getLogger('engine')
@@ -81,7 +84,12 @@ class ColocalizationJob(object):
             list of (base_ion_id, list(other_ion_ids), list(other_ion_scores))
         """
         assert error or all(
-            (algorithm_name, ion_ids is not None, sample_ion_ids is not None, coloc_annotations is not None)
+            (
+                algorithm_name,
+                ion_ids is not None,
+                sample_ion_ids is not None,
+                coloc_annotations is not None,
+            )
         )
 
         self.ds_id = ds_id
@@ -135,7 +143,9 @@ def _label_clusters(scores):
     last_error = None
     for n_clusters in range(min_clusters, max_clusters + 1):
         try:
-            labels = spectral_clustering(affinity=scores, n_clusters=n_clusters, random_state=1, n_init=100)
+            labels = spectral_clustering(
+                affinity=scores, n_clusters=n_clusters, random_state=1, n_init=100
+            )
             cluster_score = np.mean([scores[a, b] for a, b in enumerate(labels)])
             results.append((n_clusters, cluster_score, labels))
         except Exception as err:
@@ -211,7 +221,11 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs, cluster_max_ima
         maximum number of images used for clustering
     """
     assert images.ref.shape[1] >= 3
-    assert images.ref.shape[0] == ion_ids.shape[0] == fdrs.shape[0], (images.ref.shape, ion_ids.shape, fdrs.shape)
+    assert images.ref.shape[0] == ion_ids.shape[0] == fdrs.shape[0], (
+        images.ref.shape,
+        ion_ids.shape,
+        fdrs.shape,
+    )
     start = datetime.now()
 
     if len(ion_ids) < 2:
@@ -233,7 +247,9 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs, cluster_max_ima
         trunc_masked_ion_ids = trunc_ion_ids[trunc_fdr_mask]
 
         if len(masked_ion_ids) > 1:
-            logger.debug(f'Finding best colocalizations at FDR {fdr} ({len(masked_ion_ids)} annotations)')
+            logger.debug(
+                f'Finding best colocalizations at FDR {fdr} ({len(masked_ion_ids)} annotations)'
+            )
 
             # NOTE: Keep labels/clusters between algorithms so that if any algorithm fails to cluster,
             # it can use the labels/clusters from a previous successful run.
@@ -249,7 +265,8 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs, cluster_max_ima
                         trunc_scores = scores[:cluster_max_images, :cluster_max_images]
                         trunc_masked_scores = trunc_scores[trunc_fdr_mask, :][:, trunc_fdr_mask]
                         logger.debug(
-                            f'Clustering {algorithm} at {fdr} FDR with ' f'{trunc_masked_scores.shape[0]} annotations'
+                            f'Clustering {algorithm} at {fdr} FDR with '
+                            f'{trunc_masked_scores.shape[0]} annotations'
                         )
                         labels = _label_clusters(trunc_masked_scores)
                         clusters = _labels_to_clusters(labels, trunc_masked_scores)
@@ -258,8 +275,12 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs, cluster_max_ima
 
                 masked_scores = scores if fdr_mask.all() else scores[fdr_mask, :][:, fdr_mask]
                 colocs = _get_best_colocs(masked_scores, max_samples=100, min_score=0.3)
-                sample_ion_ids = [trunc_masked_ion_ids.item(c[0]) for c in clusters]  # This could be done better
-                coloc_annotations = list(_format_coloc_annotations(masked_ion_ids, masked_scores, colocs))
+                sample_ion_ids = [
+                    trunc_masked_ion_ids.item(c[0]) for c in clusters
+                ]  # This could be done better
+                coloc_annotations = list(
+                    _format_coloc_annotations(masked_ion_ids, masked_scores, colocs)
+                )
                 return ColocalizationJob(
                     ds_id,
                     mol_db,
@@ -274,14 +295,18 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs, cluster_max_ima
 
             yield run_alg('cosine', cos_scores, True)
         else:
-            logger.debug(f'Skipping FDR {fdr} as there are only {len(masked_ion_ids)} annotation(s)')
+            logger.debug(
+                f'Skipping FDR {fdr} as there are only {len(masked_ion_ids)} annotation(s)'
+            )
 
 
 class Colocalization(object):
     def __init__(self, db, img_store=None):
         self._db = db
         self._sm_config = SMConfig.get_conf()
-        self._img_store = img_store or ImageStoreServiceWrapper(self._sm_config['services']['img_service_url'])
+        self._img_store = img_store or ImageStoreServiceWrapper(
+            self._sm_config['services']['img_service_url']
+        )
 
     def _save_job_to_db(self, job):
         job_id, = self._db.insert_return(
@@ -335,8 +360,12 @@ class Colocalization(object):
 
             logger.debug(f'Getting {num_annotations} images for "{ds_id}" {mol_db_name}')
             image_ids = [row[0] for row in annotation_rows]
-            images, mask, (h, w) = self._img_store.get_ion_images_for_analysis(image_storage_type, image_ids)
-            logger.debug(f'Finished getting images for "{ds_id}" {mol_db_name}. Image size: {h}x{w}')
+            images, mask, (h, w) = self._img_store.get_ion_images_for_analysis(
+                image_storage_type, image_ids
+            )
+            logger.debug(
+                f'Finished getting images for "{ds_id}" {mol_db_name}. Image size: {h}x{w}'
+            )
         else:
             images = np.zeros((0, 0), dtype=np.float32)
             ion_ids = np.zeros((0,), dtype=np.int64)

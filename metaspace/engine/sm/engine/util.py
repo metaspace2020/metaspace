@@ -27,7 +27,12 @@ def init_loggers(config=None):
     if not logs_dir.exists():
         logs_dir.mkdir()
 
-    log_level_codes = {'ERROR': logging.ERROR, 'WARNING': logging.WARNING, 'INFO': logging.INFO, 'DEBUG': logging.DEBUG}
+    log_level_codes = {
+        'ERROR': logging.ERROR,
+        'WARNING': logging.WARNING,
+        'INFO': logging.INFO,
+        'DEBUG': logging.DEBUG,
+    }
 
     def convert_levels(orig_d):
         d = orig_d.copy()
@@ -89,7 +94,9 @@ class SMConfig(object):
         """
         conf = cls.get_conf()
         ms_file_extension = Path(ms_file_path).suffix[1:].lower()  # skip the leading "."
-        return next((h for h in conf['ms_file_handlers'] if ms_file_extension in h['extensions']), None)
+        return next(
+            (h for h in conf['ms_file_handlers'] if ms_file_extension in h['extensions']), None
+        )
 
 
 def _cmd(template, call_func, *args):

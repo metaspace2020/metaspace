@@ -74,7 +74,9 @@ def choose_ds_segments(ds_segments, centr_df, ppm):
 
     first_ds_segm_i = np.searchsorted(ds_segments[:, 0], centr_segm_min_mz, side='right') - 1
     first_ds_segm_i = max(0, first_ds_segm_i)
-    last_ds_segm_i = np.searchsorted(ds_segments[:, 1], centr_segm_max_mz, side='left')  # last included
+    last_ds_segm_i = np.searchsorted(
+        ds_segments[:, 1], centr_segm_max_mz, side='left'
+    )  # last included
     last_ds_segm_i = min(len(ds_segments) - 1, last_ds_segm_i)
     return first_ds_segm_i, last_ds_segm_i
 
@@ -107,7 +109,9 @@ def get_file_path(name):
 def create_process_segment(ds_segments, coordinates, ds_config, target_formula_inds):
     sample_area_mask = make_sample_area_mask(coordinates)
     nrows, ncols = ds_dims(coordinates)
-    compute_metrics = make_compute_image_metrics(sample_area_mask, nrows, ncols, ds_config['image_generation'])
+    compute_metrics = make_compute_image_metrics(
+        sample_area_mask, nrows, ncols, ds_config['image_generation']
+    )
     ppm = ds_config['image_generation']['ppm']
     min_px = ds_config['image_generation']['min_px']
     n_peaks = ds_config['isotope_generation']['n_peaks']

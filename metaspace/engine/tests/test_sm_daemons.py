@@ -22,7 +22,15 @@ from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.msm_basic.msm_basic_search import compute_fdr
 from sm.engine.annotation_job import JobStatus
 from sm.engine.queue import QueueConsumer
-from sm.engine.tests.util import test_db, init_loggers, sm_index, es_dsl_search, metadata, ds_config, make_moldb_mock
+from sm.engine.tests.util import (
+    test_db,
+    init_loggers,
+    sm_index,
+    es_dsl_search,
+    metadata,
+    ds_config,
+    make_moldb_mock,
+)
 from sm.engine.util import SMConfig
 
 os.environ.setdefault('PYSPARK_PYTHON', sys.executable)
@@ -58,7 +66,9 @@ def reset_queues():
 
 def init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock):
     mol_db_wrapper_mock = MolDBServiceWrapperMock()
-    mol_db_wrapper_mock.find_db_by_name_version.return_value = [{'id': 0, 'name': 'HMDB-v4', 'version': '2018'}]
+    mol_db_wrapper_mock.find_db_by_name_version.return_value = [
+        {'id': 0, 'name': 'HMDB-v4', 'version': '2018'}
+    ]
     mol_db_wrapper_mock.find_db_by_id.return_value = {'id': 0, 'name': 'HMDB-v4', 'version': '2018'}
     mol_db_wrapper_mock.fetch_db_sfs.return_value = ['C12H24O']
     mol_db_wrapper_mock.fetch_molecules.return_value = [
@@ -96,7 +106,9 @@ def run_daemons(db, es):
     from sm.engine.png_generator import ImageStoreServiceWrapper
     from sm.engine.sm_daemons import DatasetManager, SMAnnotateDaemon, SMIndexUpdateDaemon
 
-    status_queue_pub = QueuePublisher(config=sm_config['rabbitmq'], qdesc=SM_DS_STATUS, logger=logger)
+    status_queue_pub = QueuePublisher(
+        config=sm_config['rabbitmq'], qdesc=SM_DS_STATUS, logger=logger
+    )
     manager = DatasetManager(
         db=db,
         es=es,
@@ -105,7 +117,9 @@ def run_daemons(db, es):
         logger=logger,
         sm_config=sm_config,
     )
-    annotate_daemon = SMAnnotateDaemon(manager=manager, annot_qdesc=SM_ANNOTATE, upd_qdesc=SM_UPDATE)
+    annotate_daemon = SMAnnotateDaemon(
+        manager=manager, annot_qdesc=SM_ANNOTATE, upd_qdesc=SM_UPDATE
+    )
     annotate_daemon.start()
     annotate_daemon.stop()
     make_update_queue_cons = partial(
@@ -123,9 +137,13 @@ def run_daemons(db, es):
     return_value=get_ion_images_for_analysis_mock_return,
 )
 @patch(
-    'sm.engine.off_sample_wrapper.ImageStoreServiceWrapper.get_image_by_id', return_value=Image.new('RGBA', (10, 10))
+    'sm.engine.off_sample_wrapper.ImageStoreServiceWrapper.get_image_by_id',
+    return_value=Image.new('RGBA', (10, 10)),
 )
-@patch('sm.engine.off_sample_wrapper.call_api', return_value={'predictions': {'label': 'off', 'prob': 0.99}})
+@patch(
+    'sm.engine.off_sample_wrapper.call_api',
+    return_value={'predictions': {'label': 'off', 'prob': 0.99}},
+)
 @patch('sm.engine.annotation_job.MSMSearch')
 def test_sm_daemons(
     MSMSearchMock,
@@ -197,7 +215,9 @@ def test_sm_daemons(
         )
         ds.save(db, es)
 
-        queue_pub.publish({'ds_id': ds_id, 'ds_name': test_ds_name, 'action': DaemonAction.ANNOTATE})
+        queue_pub.publish(
+            {'ds_id': ds_id, 'ds_name': test_ds_name, 'action': DaemonAction.ANNOTATE}
+        )
 
         run_daemons(db, es)
 
@@ -249,7 +269,9 @@ def test_sm_daemons(
         # ES asserts
         ds_docs = es_dsl_search.query('term', _type='dataset').execute().to_dict()['hits']['hits']
         assert 1 == len(ds_docs)
-        ann_docs = es_dsl_search.query('term', _type='annotation').execute().to_dict()['hits']['hits']
+        ann_docs = (
+            es_dsl_search.query('term', _type='annotation').execute().to_dict()['hits']['hits']
+        )
         assert len(ann_docs) == len(rows)
         for doc in ann_docs:
             assert doc['_id'].startswith(ds_id)
@@ -300,7 +322,9 @@ def test_sm_daemons_annot_fails(
         )
         ds.save(db, es)
 
-        queue_pub.publish({'ds_id': ds_id, 'ds_name': test_ds_name, 'action': DaemonAction.ANNOTATE})
+        queue_pub.publish(
+            {'ds_id': ds_id, 'ds_name': test_ds_name, 'action': DaemonAction.ANNOTATE}
+        )
 
         run_daemons(db, es)
 
@@ -387,7 +411,9 @@ def test_sm_daemon_es_export_fails(
         )
         ds.save(db, es)
 
-        queue_pub.publish({'ds_id': ds_id, 'ds_name': test_ds_name, 'action': DaemonAction.ANNOTATE})
+        queue_pub.publish(
+            {'ds_id': ds_id, 'ds_name': test_ds_name, 'action': DaemonAction.ANNOTATE}
+        )
 
         run_daemons(db, es)
 

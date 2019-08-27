@@ -27,7 +27,9 @@ def _make_fake_ds(db, ds_id, metadata, ds_config):
     )
     ds.save(db)
 
-    job_id, = db.insert_return("INSERT INTO job (db_id, ds_id) VALUES (%s, %s) RETURNING id", [(0, ds_id)])
+    job_id, = db.insert_return(
+        "INSERT INTO job (db_id, ds_id) VALUES (%s, %s) RETURNING id", [(0, ds_id)]
+    )
     db.insert(
         (
             "INSERT INTO annotation (job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids) "

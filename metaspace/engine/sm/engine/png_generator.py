@@ -46,7 +46,9 @@ class ImageStoreServiceWrapper(object):
     def delete_image(self, url):
         r = self._session.delete(url)
         if r.status_code != 202:
-            print('Failed to delete: {}'.format(url))  # logger has issues with pickle when sent to spark
+            print(
+                'Failed to delete: {}'.format(url)
+            )  # logger has issues with pickle when sent to spark
 
     def get_image_by_id(self, storage_type, img_type, img_id):
         """
@@ -65,7 +67,9 @@ class ImageStoreServiceWrapper(object):
         url = self._format_url(storage_type=storage_type, img_type=img_type, img_id=img_id)
         return Image.open(self._session.get(url, stream=True).raw)
 
-    def get_ion_images_for_analysis(self, storage_type, img_ids, hotspot_percentile=99, max_size=None, max_mem_mb=2048):
+    def get_ion_images_for_analysis(
+        self, storage_type, img_ids, hotspot_percentile=99, max_size=None, max_mem_mb=2048
+    ):
         """ Retrieves ion images, does hot-spot removal and resizing, and returns them as a numpy array.
         Args
         ----
@@ -145,7 +149,9 @@ class ImageStoreServiceWrapper(object):
         return value, mask, (h, w)
 
     def delete_image_by_id(self, storage_type, img_type, img_id):
-        url = self._format_url(storage_type=storage_type, img_type=img_type, method='delete', img_id=img_id)
+        url = self._format_url(
+            storage_type=storage_type, img_type=img_type, method='delete', img_id=img_id
+        )
         self.delete_image(url)
 
     def __str__(self):
@@ -447,7 +453,11 @@ class PngGenerator(object):
         im = self._get_img_data(img)
         fp = BytesIO()
         png_writer = png.Writer(
-            width=self._shape[1], height=self._shape[0], alpha=True, greyscale=self._greyscale, bitdepth=self._bitdepth
+            width=self._shape[1],
+            height=self._shape[0],
+            alpha=True,
+            greyscale=self._greyscale,
+            bitdepth=self._bitdepth,
         )
         png_writer.write(fp, im.reshape(im.shape[0], im.shape[1] * im.shape[2]).tolist())
         fp.seek(0)

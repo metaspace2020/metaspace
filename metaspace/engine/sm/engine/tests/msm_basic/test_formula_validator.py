@@ -6,7 +6,11 @@ import pytest
 from pandas.util.testing import assert_frame_equal
 from scipy.sparse import csr_matrix
 
-from sm.engine.msm_basic.formula_validator import formula_image_metrics, make_compute_image_metrics, replace_nan
+from sm.engine.msm_basic.formula_validator import (
+    formula_image_metrics,
+    make_compute_image_metrics,
+    replace_nan,
+)
 from sm.engine.tests.util import pysparkling_context as spark_context, ds_config, sm_config
 
 
@@ -60,9 +64,13 @@ def test_formula_image_metrics():
         (1, 1, 10, csr_matrix([[0, 50, 50], [0, 20, 0]])),
     ]
 
-    metrics_df, _ = formula_image_metrics(ref_images, lambda *args: exp_metrics, target_formula_inds={0, 1}, n_peaks=4)
+    metrics_df, _ = formula_image_metrics(
+        ref_images, lambda *args: exp_metrics, target_formula_inds={0, 1}, n_peaks=4
+    )
 
-    exp_metrics_df = pd.DataFrame(data=[exp_metrics, exp_metrics], index=pd.Index([0, 1], name='formula_i'))
+    exp_metrics_df = pd.DataFrame(
+        data=[exp_metrics, exp_metrics], index=pd.Index([0, 1], name='formula_i')
+    )
     assert_frame_equal(metrics_df, exp_metrics_df)
 
 

@@ -68,7 +68,14 @@ ORDER BY j.ds_id DESC;
 
 def run_coloc_jobs(sm_config, logger, ds_id, sql_where, fix_missing, fix_corrupt, skip_existing):
     assert (
-        len([data_source for data_source in [ds_id, sql_where, fix_missing, fix_corrupt] if data_source]) == 1
+        len(
+            [
+                data_source
+                for data_source in [ds_id, sql_where, fix_missing, fix_corrupt]
+                if data_source
+            ]
+        )
+        == 1
     ), "Exactly one data source (ds_id, sql_where, fix_missing, fix_corrupt) must be specified"
     assert not (ds_id and sql_where)
 
@@ -77,7 +84,9 @@ def run_coloc_jobs(sm_config, logger, ds_id, sql_where, fix_missing, fix_corrupt
     if ds_id:
         ds_ids = ds_id.split(',')
     elif sql_where:
-        ds_ids = [id for (id,) in db.select(f'SELECT DISTINCT dataset.id FROM dataset WHERE {sql_where}')]
+        ds_ids = [
+            id for (id,) in db.select(f'SELECT DISTINCT dataset.id FROM dataset WHERE {sql_where}')
+        ]
     else:
         mol_db_service = MolDBServiceWrapper(sm_config['services']['mol_db'])
         mol_dbs = [(db['id'], db['name']) for db in mol_db_service.fetch_all_dbs()]
@@ -87,12 +96,18 @@ def run_coloc_jobs(sm_config, logger, ds_id, sql_where, fix_missing, fix_corrupt
 
         if fix_missing:
             logger.info('Checking for missing colocalization jobs...')
-            results = db.select(MISSING_COLOC_JOBS_SEL, [list(mol_db_ids), list(mol_db_names), fdrs, algorithms])
+            results = db.select(
+                MISSING_COLOC_JOBS_SEL, [list(mol_db_ids), list(mol_db_names), fdrs, algorithms]
+            )
             ds_ids = [ds_id for ds_id, in results]
             logger.info(f'Found {len(ds_ids)} missing colocalization sets')
         else:
-            logger.info('Checking all colocalization jobs. This is super slow: ~5 minutes per 1000 datasets...')
-            results = db.select(CORRUPT_COLOC_JOBS_SEL, [list(mol_db_ids), list(mol_db_names), fdrs, algorithms])
+            logger.info(
+                'Checking all colocalization jobs. This is super slow: ~5 minutes per 1000 datasets...'
+            )
+            results = db.select(
+                CORRUPT_COLOC_JOBS_SEL, [list(mol_db_ids), list(mol_db_names), fdrs, algorithms]
+            )
             ds_ids = [ds_id for ds_id, in results]
             logger.info(f'Found {len(ds_ids)} corrupt colocalization sets')
 
@@ -112,7 +127,9 @@ def run_coloc_jobs(sm_config, logger, ds_id, sql_where, fix_missing, fix_corrupt
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run colocalization jobs')
     parser.add_argument('--config', default='conf/config.json', help='SM config path')
-    parser.add_argument('--ds-id', dest='ds_id', default=None, help='DS id (or comma-separated list of ids)')
+    parser.add_argument(
+        '--ds-id', dest='ds_id', default=None, help='DS id (or comma-separated list of ids)'
+    )
     parser.add_argument(
         '--sql-where',
         dest='sql_where',

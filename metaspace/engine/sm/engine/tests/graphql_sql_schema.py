@@ -10,4 +10,6 @@ try:
     with schema_path.open('r') as f:
         GRAPHQL_SQL_SCHEMA = f.read() + PATCH
 except IOError:
-    raise AssertionError('graphql_schema.sql is missing. Run `yarn run gen-sql-schema` in the graphql project.')
+    raise AssertionError(
+        'graphql_schema.sql is missing. Run `yarn run gen-sql-schema` in the graphql project.'
+    )

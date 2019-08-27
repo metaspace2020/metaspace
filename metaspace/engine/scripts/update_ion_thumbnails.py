@@ -12,7 +12,9 @@ def run(sm_config, logger, ds_id, sql_where, algorithm):
     img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
 
     if sql_where:
-        ds_ids = [id for (id,) in db.select(f'SELECT DISTINCT dataset.id FROM dataset WHERE {sql_where}')]
+        ds_ids = [
+            id for (id,) in db.select(f'SELECT DISTINCT dataset.id FROM dataset WHERE {sql_where}')
+        ]
     else:
         ds_ids = ds_id.split(',')
 
@@ -31,7 +33,9 @@ def run(sm_config, logger, ds_id, sql_where, algorithm):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run colocalization jobs')
     parser.add_argument('--config', default='conf/config.json', help='SM config path')
-    parser.add_argument('--ds-id', dest='ds_id', default=None, help='DS id (or comma-separated list of ids)')
+    parser.add_argument(
+        '--ds-id', dest='ds_id', default=None, help='DS id (or comma-separated list of ids)'
+    )
     parser.add_argument(
         '--sql-where',
         dest='sql_where',
@@ -52,4 +56,7 @@ if __name__ == '__main__':
         print('error: must specify either --ds-id or --sql-where')
         exit(1)
 
-    bootstrap_and_run(args.config, partial(run, ds_id=args.ds_id, sql_where=args.sql_where, algorithm=args.algorithm))
+    bootstrap_and_run(
+        args.config,
+        partial(run, ds_id=args.ds_id, sql_where=args.sql_where, algorithm=args.algorithm),
+    )

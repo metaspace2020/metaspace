@@ -32,7 +32,13 @@ if __name__ == "__main__":
     parser.add_argument('--input-path', type=str, help='Path to dataset')
     parser.add_argument('--config-path', type=str, help='Path to dataset config')
     parser.add_argument('--meta-path', type=str, help='Path to dataset metadata')
-    parser.add_argument('--config', dest='sm_config_path', default='conf/config.json', type=str, help='SM config path')
+    parser.add_argument(
+        '--config',
+        dest='sm_config_path',
+        default='conf/config.json',
+        type=str,
+        help='SM config path',
+    )
     args = parser.parse_args()
 
     bootstrap_and_run(args.sm_config_path, run_search)
