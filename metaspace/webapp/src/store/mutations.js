@@ -193,7 +193,7 @@ export default {
   setCurrentPage(state, page) {
     router.replace({
       query: page !== 1
-        ? { ...state.route.query, page }
+        ? { ...state.route.query, page: String(page) }
         : omit(state.route.query, 'page'),
     });
   },
