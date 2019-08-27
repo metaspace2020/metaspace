@@ -1,6 +1,6 @@
 import { FILTER_SPECIFICATIONS, FilterKey, getDefaultFilter, Level, MetadataLists } from './filterSpecs';
 
-import {invert, mapValues} from 'lodash-es';
+import {invert, isArray, mapValues} from 'lodash-es';
 import { Location } from 'vue-router';
 import {ScaleType} from '../../lib/ionImageRendering';
 import {DEFAULT_SCALE_TYPE} from '../../lib/constants';
@@ -116,7 +116,7 @@ export function decodeParams(location: Location, filterLists: any): Object {
     const {levels, encoding} = FILTER_SPECIFICATIONS[fKey];
     // If necessary, unwrap array parameters and take their first element. Array-valued parameters can happen
     // if someone changes the URL and adds a second copy of an existing parameter.
-    let value = typeof query[key] !== 'string' ? query[key][0] : query[key];
+    let value = isArray(query[key]) ? query[key][0] : query[key];
 
     if (levels.indexOf(level) == -1)
       continue;
@@ -210,7 +210,7 @@ export function decodeSettings(location: Location): UrlSettings | undefined {
   // When vue-router encounters the same query parameter more than once it supplies an array instead of a string.
   // To prevent type errors below, find any arrayified parameters and just take their first element
   query = mapValues(query, (stringOrArray:string|string[]) =>
-    typeof stringOrArray !== 'string' ? stringOrArray[0] : stringOrArray);
+    isArray(stringOrArray) ? stringOrArray[0] : stringOrArray);
 
   let settings: UrlSettings = {
     table: {

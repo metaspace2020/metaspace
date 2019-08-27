@@ -175,8 +175,9 @@
                        @size-change="onPageSizeChange"
                        :page-sizes="pageSizes"
                        :current-page.sync="currentPage"
-                       :layout="paginationLayout">
-        </el-pagination>
+                       :layout="paginationLayout"
+                       v-if="!initialLoading"
+        />
 
         <div id="annot-count">
           <b>{{ totalCount }}</b> matching {{ totalCount == 1 ? 'record': 'records' }}
@@ -252,6 +253,7 @@
        isExporting: false,
        exportProgress: 0,
        totalCount: 0,
+       initialLoading: true,
        csvChunkSize: 1000,
      }
    },
@@ -376,6 +378,7 @@
          }
 
          this.totalCount = data.countAnnotations;
+         this.initialLoading = false;
        },
        watchLoading (isLoading) {
          this.$store.commit('updateAnnotationTableStatus', isLoading);
