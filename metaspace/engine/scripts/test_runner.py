@@ -14,8 +14,12 @@ import argparse
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test runner for SM engine')
     parser.add_argument('-u', '--unit', action='store_true', help='run unit tests only')
-    parser.add_argument('-r', '--regr', action='store_true', help='run regression tests only')
-    parser.add_argument('-s', '--sci', action='store_true', help='run scientific tests only')
+    parser.add_argument(
+        '-r', '--regr', action='store_true', help='run regression tests only'
+    )
+    parser.add_argument(
+        '-s', '--sci', action='store_true', help='run scientific tests only'
+    )
     parser.add_argument('-a', '--all', action='store_true', help='run all tests')
 
     args = parser.parse_args()

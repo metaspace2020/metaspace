@@ -49,12 +49,17 @@ def _reindex_datasets(logger, ds_ids, db, es_exp):
         try:
             # Delete from ES regardless of whether the DS exists, so that this can clean up deleted datasets
             es_exp.delete_ds(ds_id)
-            ds = db.select_one("select name, config from dataset where id = %s", (ds_id,))
+            ds = db.select_one(
+                "select name, config from dataset where id = %s", (ds_id,)
+            )
             if ds:
                 ds_name, ds_config = ds
                 for mol_db_name in ds_config['databases']:
                     try:
-                        mol_db = MolecularDB(name=mol_db_name, iso_gen_config=ds_config['isotope_generation'])
+                        mol_db = MolecularDB(
+                            name=mol_db_name,
+                            iso_gen_config=ds_config['isotope_generation'],
+                        )
                         isocalc = IsocalcWrapper(ds_config['isotope_generation'])
                         es_exp.index_ds(ds_id, mol_db=mol_db, isocalc=isocalc)
                     except Exception as e:
@@ -85,7 +90,12 @@ def reindex_results(sm_config, logger, ds_id, ds_mask, use_inactive_index):
         if ds_id:
             ds_ids = ds_id.split(',')
         elif ds_mask:
-            ds_ids = [id for (id,) in db.select("select id from dataset where name like '{}%'".format(ds_mask))]
+            ds_ids = [
+                id
+                for (id,) in db.select(
+                    "select id from dataset where name like '{}%'".format(ds_mask)
+                )
+            ]
         else:
             ds_ids = []
 
@@ -95,13 +105,29 @@ def reindex_results(sm_config, logger, ds_id, ds_mask, use_inactive_index):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Reindex dataset results')
     parser.add_argument('--config', default='conf/config.json', help='SM config path')
-    parser.add_argument('--inactive', action='store_true', help='Run against the inactive index')
-    parser.add_argument('--ds-id', dest='ds_id', default='', help='DS id (or comma-separated list of ids)')
-    parser.add_argument('--ds-name', dest='ds_name', default='', help='DS name prefix mask (_all_ for all datasets)')
+    parser.add_argument(
+        '--inactive', action='store_true', help='Run against the inactive index'
+    )
+    parser.add_argument(
+        '--ds-id',
+        dest='ds_id',
+        default='',
+        help='DS id (or comma-separated list of ids)',
+    )
+    parser.add_argument(
+        '--ds-name',
+        dest='ds_name',
+        default='',
+        help='DS name prefix mask (_all_ for all datasets)',
+    )
     args = parser.parse_args()
 
-    bootstrap_and_run(args.config,
-                      partial(reindex_results,
-                              ds_id=args.ds_id,
-                              ds_mask=args.ds_name,
-                              use_inactive_index=args.inactive))
+    bootstrap_and_run(
+        args.config,
+        partial(
+            reindex_results,
+            ds_id=args.ds_id,
+            ds_mask=args.ds_name,
+            use_inactive_index=args.inactive,
+        ),
+    )

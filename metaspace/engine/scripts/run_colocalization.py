@@ -66,9 +66,19 @@ ORDER BY j.ds_id DESC;
 """
 
 
-def run_coloc_jobs(sm_config, logger, ds_id, sql_where, fix_missing, fix_corrupt, skip_existing):
-    assert len([data_source for data_source in [ds_id, sql_where, fix_missing, fix_corrupt] if data_source]) == 1, \
-           "Exactly one data source (ds_id, sql_where, fix_missing, fix_corrupt) must be specified"
+def run_coloc_jobs(
+    sm_config, logger, ds_id, sql_where, fix_missing, fix_corrupt, skip_existing
+):
+    assert (
+        len(
+            [
+                data_source
+                for data_source in [ds_id, sql_where, fix_missing, fix_corrupt]
+                if data_source
+            ]
+        )
+        == 1
+    ), "Exactly one data source (ds_id, sql_where, fix_missing, fix_corrupt) must be specified"
     assert not (ds_id and sql_where)
 
     db = DB()
@@ -76,7 +86,12 @@ def run_coloc_jobs(sm_config, logger, ds_id, sql_where, fix_missing, fix_corrupt
     if ds_id:
         ds_ids = ds_id.split(',')
     elif sql_where:
-        ds_ids = [id for (id, ) in db.select(f'SELECT DISTINCT dataset.id FROM dataset WHERE {sql_where}')]
+        ds_ids = [
+            id
+            for (id,) in db.select(
+                f'SELECT DISTINCT dataset.id FROM dataset WHERE {sql_where}'
+            )
+        ]
     else:
         mol_db_service = MolDBServiceWrapper(sm_config['services']['mol_db'])
         mol_dbs = [(db['id'], db['name']) for db in mol_db_service.fetch_all_dbs()]
@@ -86,15 +101,22 @@ def run_coloc_jobs(sm_config, logger, ds_id, sql_where, fix_missing, fix_corrupt
 
         if fix_missing:
             logger.info('Checking for missing colocalization jobs...')
-            results = db.select(MISSING_COLOC_JOBS_SEL, [list(mol_db_ids), list(mol_db_names), fdrs, algorithms])
+            results = db.select(
+                MISSING_COLOC_JOBS_SEL,
+                [list(mol_db_ids), list(mol_db_names), fdrs, algorithms],
+            )
             ds_ids = [ds_id for ds_id, in results]
             logger.info(f'Found {len(ds_ids)} missing colocalization sets')
         else:
-            logger.info('Checking all colocalization jobs. This is super slow: ~5 minutes per 1000 datasets...')
-            results = db.select(CORRUPT_COLOC_JOBS_SEL, [list(mol_db_ids), list(mol_db_names), fdrs, algorithms])
+            logger.info(
+                'Checking all colocalization jobs. This is super slow: ~5 minutes per 1000 datasets...'
+            )
+            results = db.select(
+                CORRUPT_COLOC_JOBS_SEL,
+                [list(mol_db_ids), list(mol_db_names), fdrs, algorithms],
+            )
             ds_ids = [ds_id for ds_id, in results]
             logger.info(f'Found {len(ds_ids)} corrupt colocalization sets')
-
 
     if not ds_ids:
         logger.warning('No datasets match filter')
@@ -112,21 +134,43 @@ def run_coloc_jobs(sm_config, logger, ds_id, sql_where, fix_missing, fix_corrupt
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run colocalization jobs')
     parser.add_argument('--config', default='conf/config.json', help='SM config path')
-    parser.add_argument('--ds-id', dest='ds_id', default=None, help='DS id (or comma-separated list of ids)')
-    parser.add_argument('--sql-where', dest='sql_where', default=None,
-                        help='SQL WHERE clause for picking rows from the dataset table, e.g. "status = \'FINISHED\'"')
-    parser.add_argument('--fix-missing', action='store_true',
-                        help='Run colocalization on all datasets that are missing colocalization data')
-    parser.add_argument('--fix-corrupt', action='store_true',
-                        help='Run colocalization on all datasets that have incomplete colocalization data (SLOW)')
-    parser.add_argument('--skip-existing', action='store_true',
-                        help='Re-run colocalization jobs even if they have already successfully run')
+    parser.add_argument(
+        '--ds-id',
+        dest='ds_id',
+        default=None,
+        help='DS id (or comma-separated list of ids)',
+    )
+    parser.add_argument(
+        '--sql-where',
+        dest='sql_where',
+        default=None,
+        help='SQL WHERE clause for picking rows from the dataset table, e.g. "status = \'FINISHED\'"',
+    )
+    parser.add_argument(
+        '--fix-missing',
+        action='store_true',
+        help='Run colocalization on all datasets that are missing colocalization data',
+    )
+    parser.add_argument(
+        '--fix-corrupt',
+        action='store_true',
+        help='Run colocalization on all datasets that have incomplete colocalization data (SLOW)',
+    )
+    parser.add_argument(
+        '--skip-existing',
+        action='store_true',
+        help='Re-run colocalization jobs even if they have already successfully run',
+    )
     args = parser.parse_args()
 
-    bootstrap_and_run(args.config,
-                      partial(run_coloc_jobs,
-                              ds_id=args.ds_id,
-                              sql_where=args.sql_where,
-                              fix_missing=args.fix_missing,
-                              fix_corrupt=args.fix_corrupt,
-                              skip_existing=args.skip_existing))
+    bootstrap_and_run(
+        args.config,
+        partial(
+            run_coloc_jobs,
+            ds_id=args.ds_id,
+            sql_where=args.sql_where,
+            fix_missing=args.fix_missing,
+            fix_corrupt=args.fix_corrupt,
+            skip_existing=args.skip_existing,
+        ),
+    )

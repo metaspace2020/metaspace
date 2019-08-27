@@ -13,6 +13,7 @@ from pyMSpec.pyisocalc import pyisocalc
 
 logging.basicConfig(level=logging.INFO)
 
+
 def oboTerms(obo_fn):
     """
     Simple OBO parser, yields a dictionary for every encountered term
@@ -39,6 +40,7 @@ def oboTerms(obo_fn):
                     pass
         if term:
             yield term
+
 
 class ChebiOntology(object):
     def __init__(self):
@@ -121,26 +123,36 @@ class ChebiOntology(object):
             if all(f(node) for f in filters):
                 yield node
 
+
 ### ------------------- Filters for nodes -------------------------
+
 
 def hasValidFormula():
     """
     Checks if the formula can be parsed by pyisocalc
     """
+
     def _filter(term):
         return term.get('_sf') is not None
+
     return _filter
+
 
 def checks_for_valid_sf(filter_gen):
     _validator = hasValidFormula()
+
     def _wrapper(*args, **kwargs):
         _filter = filter_gen(*args, **kwargs)
+
         def _validating_filter(term):
             if not _validator(term):
                 return False
             return _filter(term)
+
         return _validating_filter
+
     return _wrapper
+
 
 @checks_for_valid_sf
 def containsElement(element):
@@ -148,18 +160,24 @@ def containsElement(element):
     Checks if the formula contains an element (specified as a string)
     """
     segment_has_element = lambda x: str(x.element()) == element and x.amount() >= 1
+
     def _filter(term):
         return any(segment_has_element(x) for x in term['_sf'].get_segments())
+
     return _filter
+
 
 @checks_for_valid_sf
 def hasAverageMassWithinRange(min_mass, max_mass):
     """
     Checks if the average mass in Da is within [min_mass, max_mass] range
     """
+
     def _filter(term):
         return min_mass <= term['_sf'].average_mass() <= max_mass
+
     return _filter
+
 
 if __name__ == '__main__':
     chebi = ChebiOntology()
