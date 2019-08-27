@@ -228,10 +228,10 @@ jobs:
           at: ~/workspace
       - run:
           name: Run code formatter
-          command: black --check sm
-      - run:
-          name: Run linter
-          command: pylama --options pylama.ini sm
+          command: black --skip-string-normalization --target-version py36 --check sm
+#      - run:
+#          name: Run linter
+#          command: pylama --options pylama.ini sm
       - run:
           name: Run unit and integration tests
           command: |
@@ -308,7 +308,7 @@ workflows:
       - test-engine:
           requires:
             - generate-graphql-schema
-      - test-engine-sci  # uncomment for debugging
+#      - test-engine-sci  # uncomment for debugging
 #      - test-graphql
       - test-webapp:
           requires:
