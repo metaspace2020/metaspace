@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
 import numpy as np
-import requests, json, re, os, boto3, pprint
+import requests, json, re, os, pprint
 from copy import deepcopy
 from io import BytesIO
 from PIL import Image
@@ -37,16 +37,18 @@ class GraphQLClient(object):
         self.host = self._config['host']
         self.session = requests.Session()
         self.session.verify = self._config['verify_certificate']
-        self.res = self.session.post(self._config['signin_url'], params={
-            "email": self._config['usr_email'],
-            "password": self._config['usr_pass']
-        })
-        if self.res.status_code == 401:
-            print('Unauthorized. Only public but not private datasets will be accessible.')
-        elif self.res.status_code == 200:
-            print('Authorized.')
-        elif self.res.status_code != 200:
-            self.res.raise_for_status()
+        self.logged_in = False
+        if self._config['usr_email']:
+            login_res = self.session.post(self._config['signin_url'], params={
+                "email": self._config['usr_email'],
+                "password": self._config['usr_pass']
+            })
+            if login_res.status_code == 401:
+                print('Login failed. Only public datasets will be accessible.')
+            elif login_res.status_code:
+                self.logged_in = True
+            else:
+                login_res.raise_for_status()
 
 
     def query(self, query, variables={}):
@@ -167,6 +169,13 @@ class GraphQLClient(object):
         }
     """
 
+    DEFAULT_ANNOTATION_FILTER = {
+        'database': 'HMDB-v4',
+        'hasNeutralLoss': False,
+        'hasChemMod': False,
+        'hasHiddenAdduct': False,
+    }
+
     def getDataset(self, datasetId):
         query = """
         query datasetInfo($id: String!) {
@@ -177,7 +186,11 @@ class GraphQLClient(object):
         """
         match = self.query(query, {'id': datasetId})['dataset']
         if not match:
-            raise DatasetNotFound("search by id for {}".format(datasetId))
+            if self.logged_in:
+                raise DatasetNotFound("No dataset found with id {}.".format(datasetId))
+            else:
+                raise DatasetNotFound("No dataset found with id {}. You are not logged in. "
+                                      "If the dataset is set to private, you need to log in to access it.".format(datasetId))
         else:
             return match
 
@@ -191,7 +204,11 @@ class GraphQLClient(object):
         """
         matches = self.query(query, {'filter': {'name': datasetName}})['allDatasets']
         if not matches:
-            raise DatasetNotFound("search by name for {}".format(datasetName))
+            if self.logged_in:
+                raise DatasetNotFound("No dataset found with name '{}'.".format(datasetName))
+            else:
+                raise DatasetNotFound("No dataset found with name '{}'. You are not logged in. "
+                                      "If the dataset is set to private, you need to log in to access it.".format(datasetName))
         elif len(matches) > 1:
             print('Found datasets:')
             for dataset in matches:
@@ -216,8 +233,8 @@ class GraphQLClient(object):
           }
         }"""
         annotFilter = deepcopy(annotationFilter)
-        if 'database' not in annotFilter:
-            annotFilter['database'] = "HMDB-v4"
+        for key, val in self.DEFAULT_ANNOTATION_FILTER.items():
+            annotFilter.setdefault(key, val)
         return self.listQuery('allAnnotations', query,
                               {'filter': annotFilter, 'dFilter': datasetFilter})
 
@@ -404,8 +421,10 @@ def ion(r):
 class IsotopeImages(object):
     def __init__(self, images, sf, adduct, centroids, urls):
         self._images = images
-        self._sf = sf
-        self._adduct = adduct
+        # Keeping the private self._sf, self._adduct fields for backwards compatibility. There is no other easy way
+        # to get that data, so it's probable that there is code somewhere that depends on the private fields.
+        self.formula = self._sf = sf
+        self.adduct = self._adduct = adduct
         self._centroids = centroids
         self._urls = urls
 
@@ -417,6 +436,9 @@ class IsotopeImages(object):
 
     def __len__(self):
         return len(self._images)
+
+    def __bool__(self):
+        return len(self._images) > 0
 
     def peak(self, index):
         return self._centroids[index]
@@ -506,13 +528,13 @@ class SMDataset(object):
     def __repr__(self):
         return "SMDataset({} | ID: {})".format(self.name, self.id)
 
-    def annotations(self, fdr=0.1, database=None, return_vals = ('sumFormula', 'adduct')):
-        annotationFilter = {'fdrLevel': fdr}
+    def annotations(self, fdr=0.1, database=None, return_vals = ('sumFormula', 'adduct'), **annotation_filter):
+        annotation_filter.setdefault('fdrLevel', fdr)
         if database:
-            annotationFilter['database'] = database
-        datasetFilter = {'ids': self.id}
+            annotation_filter['database'] = database
+        dataset_filter = {'ids': self.id}
 
-        records = self._gqclient.getAnnotations(annotationFilter, datasetFilter)
+        records = self._gqclient.getAnnotations(annotation_filter, dataset_filter)
         return [list(r[val] for val in return_vals) for r in records]
 
     def results(self, database=None):
@@ -567,7 +589,18 @@ class SMDataset(object):
     def _baseurl(self):
         return self._gqclient.host
 
-    def isotope_images(self, sf, adduct):
+    def isotope_images(self, sf, adduct, only_first_isotope=False, scale_intensity=True):
+        """
+        Retrieve ion images for a specific sf and adduct
+        :param str   sf:
+        :param str   adduct:
+        :param bool  only_first_isotope: Only retrieve the first (most abundant) isotopic ion image.
+                                         Typically this is all you need for data analysis, as the less abundant isotopes
+                                         are usually lower quality copies of the first isotopic ion image.
+        :param bool  scale_intensity:    When True, the output values will be scaled to the intensity range of the original data.
+                                         When False, the output values will be in the 0.0 to 1.0 range.
+        :return IsotopeImages:
+        """
         records = self._gqclient.getAnnotations(
             dict(sumFormula=sf, adduct=adduct, database=None),
             dict(ids=self.id)
@@ -586,27 +619,46 @@ class SMDataset(object):
             assert data.max() <= 1
             return data
 
-        images = []
-        image_metadata = None
         if records:
             image_metadata = records[0]['isotopeImages']
-            images = [fetchImage(r.get('url')) for r in image_metadata]
+        else:
+            image_metadata = []
+        if only_first_isotope:
+            image_metadata = image_metadata[:1]
 
-        non_empty_images = [i for i in images if i is not None]
-        shape = non_empty_images[0].shape
-        for i in range(len(images)):
-            if images[i] is None:
-                images[i] = np.zeros(shape, dtype=non_empty_images[0].dtype)
-            else:
-                images[i] *= float(image_metadata[i]['maxIntensity'])
+        images = [fetchImage(r.get('url')) for r in image_metadata]
+        image_mzs = [r['mz'] for r in image_metadata]
+        image_urls = [r['url'] for r in image_metadata]
 
-        return IsotopeImages(images, sf, adduct, [r['mz'] for r in image_metadata], [r['url'] for r in image_metadata])
+        if scale_intensity:
+            non_empty_images = [i for i in images if i is not None]
+            shape = non_empty_images[0].shape
+            for i in range(len(images)):
+                if images[i] is None:
+                    images[i] = np.zeros(shape, dtype=non_empty_images[0].dtype)
+                else:
+                    images[i] *= float(image_metadata[i]['maxIntensity'])
 
-    def all_annotation_images(self, fdr=0.1, database=None):
+        return IsotopeImages(images, sf, adduct, image_mzs, image_urls)
+
+    def all_annotation_images(self, fdr=0.1, database=None, only_first_isotope=False, scale_intensity=True, **annotation_filter):
+        """
+        Retrieve all ion images for the dataset and given annotation filters.
+        :param float fdr:                Maximum FDR level of annotations
+        :param str   database:           Molecular database to use (e.g. HMDBv4)
+        :param bool  only_first_isotope: Only retrieve the first (most abundant) isotopic ion image for each annotation.
+                                         Typically this is all you need for data analysis, as the less abundant isotopes
+                                         are usually lower quality copies of the first isotopic ion image.
+        :param bool  scale_intensity:    When True, the output values will be scaled to the intensity range of the original data.
+                                         When False, the output values will be in the 0.0 to 1.0 range.
+        :param       annotation_filter:  Additional filters passed to `SMDataset.annotations`
+        :return list[IsotopeImages]:
+        """
         with ThreadPoolExecutor() as pool:
-            images = [img for img in pool.map(lambda row: self.isotope_images(*row),
-                                              self.annotations(fdr=fdr, database=database))]
-        return images
+            def get_annotation_images(row):
+                sf, adduct = row
+                return self.isotope_images(sf, adduct, only_first_isotope=only_first_isotope, scale_intensity=scale_intensity)
+            return list(pool.map(get_annotation_images, self.annotations(fdr=fdr, database=database, **annotation_filter)))
 
     def optical_images(self):
         def fetch_image(url):
@@ -636,7 +688,7 @@ class SMInstance(object):
         self._config['usr_email'] = email
         self._config['usr_pass'] = password
         self.reconnect()
-        return self._gqclient.res.status_code == 200
+        return self._gqclient.logged_in
 
     def reconnect(self):
         self._gqclient = GraphQLClient(self._config)
@@ -773,6 +825,7 @@ class SMInstance(object):
 
     def top_hits(self, datasets, adduct=None, size=100):
         """
+        NOT AVAILABLE ON THE PUBLIC METASPACE INSTANCE
         Returns (sum formula, adduct) pairs with highest average MSM scores
         across multiple datasets. Looks for all adducts by default
         """
@@ -793,12 +846,14 @@ class SMInstance(object):
 
     def msm_scores(self, datasets, sf_adduct_pairs, db_name="HMDB-v4"):
         """
+        NOT AVAILABLE ON THE PUBLIC METASPACE INSTANCE
         Returns a dataframe of MSM scores for multiple datasets and (sum formula, adduct) pairs.
         """
         return self.get_tables(datasets, sf_adduct_pairs, ['msm'], db_name)['msm']
 
     def get_tables(self, datasets, sf_adduct_pairs, fields=['msm', 'fdr'], db_name="HMDB-v4"):
         """
+        NOT AVAILABLE ON THE PUBLIC METASPACE INSTANCE
         Returns dataframe-valued dictionaries of MSM scores
         for multiple datasets and (sum formula, adduct) pairs.
         """
@@ -837,6 +892,11 @@ class SMInstance(object):
         :param folder_uuid: a unique key for the dataset
         :return: 
         """
+        try:
+            import boto3
+        except ImportError:
+            raise ImportError('Please install boto3 to use the submit_dataset function')
+
         s3 = boto3.client('s3')
         buckets = s3.list_buckets()
         if not s3bucket in [b['Name'] for b in buckets['Buckets']]:
