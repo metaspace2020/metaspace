@@ -12,6 +12,7 @@ gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrde
         sumFormula
         adduct
         ion
+        ionFormula
         database
         msmScore
         rhoSpatial
@@ -40,6 +41,9 @@ gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrde
           minIntensity
           maxIntensity
           totalIntensity
+        }
+        isomers {
+          ion
         }
         possibleCompounds {
           name
