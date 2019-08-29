@@ -9,7 +9,7 @@ import pandas as pd
 import random
 
 from sm.engine.dataset_locker import DatasetLocker
-from sm.engine.formula_parser import format_ion_formula
+from sm.engine.formula_parser import format_ion_formula, safe_generate_ion_formula
 from sm.engine.util import SMConfig
 
 logger = logging.getLogger('engine')
@@ -27,6 +27,7 @@ ANNOTATIONS_SEL = '''SELECT
     m.adduct AS adduct,
     m.neutral_loss as neutral_loss,
     m.chem_mod as chem_mod,
+    ion.ion_formula,
     j.id AS job_id,
     m.fdr AS fdr,
     m.iso_image_ids AS iso_image_ids,
@@ -36,6 +37,8 @@ ANNOTATIONS_SEL = '''SELECT
 FROM annotation m
 JOIN job j ON j.id = m.job_id
 JOIN dataset ds ON ds.id = j.ds_id
+LEFT JOIN graphql.ion ON m.formula = ion.formula AND m.chem_mod = ion.chem_mod AND m.neutral_loss = ion.neutral_loss 
+                      AND m.adduct = ion.adduct AND (ds.config->'isotope_generation'->>'charge')::int = ion.charge
 WHERE ds.id = %s AND j.db_id = %s
 ORDER BY COALESCE(m.msm, 0::real) DESC'''
 
@@ -350,13 +353,14 @@ class ESExporter(object):
 
             annotation_counts = defaultdict(int)
             fdr_levels = [5, 10, 20, 50]
+            isomer_groups = defaultdict(list)
+            missing_ion_formulas = []
 
             annotation_docs = self._db.select_with_fields(
                 ANNOTATIONS_SEL, params=(ds_id, mol_db.id)
             )
             logger.info('Indexing {} documents: {}, {}'.format(len(annotation_docs), ds_id, mol_db))
 
-            to_index = []
             mol_by_formula = self._get_mol_by_formula_dict(mol_db)
             for doc in annotation_docs:
                 self._add_ds_fields_to_ann(doc, ds_doc)
@@ -375,7 +379,23 @@ class ESExporter(object):
                 fdr = round(doc['fdr'] * 100, 2)
                 # assert fdr in fdr_levels
                 annotation_counts[fdr] += 1
+                if doc['ion_formula']:
+                    isomer_groups[doc['ion_formula']].append(doc['ion'])
+                else:
+                    missing_ion_formulas.append(doc['ion'])
 
+            for doc in annotation_docs:
+                doc['isomer_ions'] = [
+                    ion for ion in isomer_groups[doc['ion_formula']] if ion != doc['ion']
+                ]
+
+            if missing_ion_formulas:
+                logger.warn(
+                    f'Missing ion formulas {len(missing_ion_formulas)}: {missing_ion_formulas[:20]}'
+                )
+
+            to_index = []
+            for doc in annotation_docs:
                 to_index.append(
                     {
                         '_index': self.index,

@@ -94,6 +94,9 @@ export class Ion {
   @Column({ type: 'text' })
   adduct: string;
 
+  @Column({ type: 'text', default: '' })
+  ionFormula: string;
+
   /** 1 or -1 */
   @Column({ type: 'smallint' })
   charge: number;
