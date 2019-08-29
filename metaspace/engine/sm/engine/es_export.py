@@ -353,7 +353,7 @@ class ESExporter(object):
 
             annotation_counts = defaultdict(int)
             fdr_levels = [5, 10, 20, 50]
-            isomer_groups = defaultdict(lambda: [])
+            isomer_groups = defaultdict(list)
             missing_ion_formulas = []
 
             annotation_docs = self._db.select_with_fields(
