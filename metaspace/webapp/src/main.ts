@@ -72,7 +72,7 @@ const app = new Vue({
   */
   store,
   router,
-  provide: apolloProvider.provide(),
+  apolloProvider,
 });
 
 setErrorNotifier(app.$notify);

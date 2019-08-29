@@ -1,7 +1,7 @@
 import { mount, config as testConfig } from '@vue/test-utils';
 import MetadataEditor from './MetadataEditor.vue';
 import router from '../../router';
-import { initMockGraphqlClient, provide } from '../../../tests/utils/mockGraphqlClient';
+import { initMockGraphqlClient, apolloProvider } from '../../../tests/utils/mockGraphqlClient';
 import store from '../../store/index';
 import {mockAdductSuggestions} from '../../../tests/utils/mockGraphqlData';
 
@@ -43,7 +43,7 @@ describe('MetadataEditor', () => {
         adductSuggestions: mockAdductSuggestions,
       })
     });
-    const wrapper = mount(MetadataEditor, { store, router, provide, sync: false });
+    const wrapper = mount(MetadataEditor, { store, router, apolloProvider, sync: false });
     await wrapper.vm.$data.loadingPromise;
 
     expect(wrapper).toMatchSnapshot();
@@ -56,7 +56,7 @@ describe('MetadataEditor', () => {
       })
     });
     const propsData = { datasetId: '123' };
-    const wrapper = mount(MetadataEditor, { store, router, provide, propsData, sync: false });
+    const wrapper = mount(MetadataEditor, { store, router, apolloProvider, propsData, sync: false });
     await wrapper.vm.$data.loadingPromise;
 
     expect(wrapper.vm.$data.value).toMatchSnapshot('metadata');
@@ -70,7 +70,7 @@ describe('MetadataEditor', () => {
       })
     });
 
-    const wrapper = mount(MetadataEditor, { store, router, provide, sync: false });
+    const wrapper = mount(MetadataEditor, { store, router, apolloProvider, sync: false });
     await wrapper.vm.$data.loadingPromise;
 
     const fieldValues: Record<string, string> = {};
@@ -98,7 +98,7 @@ describe('MetadataEditor', () => {
       })
     });
     const propsData = { datasetId: '123' };
-    const wrapper = mount(MetadataEditor, { store, router, provide, propsData, sync: false });
+    const wrapper = mount(MetadataEditor, { store, router, apolloProvider, propsData, sync: false });
     await wrapper.vm.$data.loadingPromise;
 
     expect(mockUserFn).toHaveBeenCalledTimes(1);

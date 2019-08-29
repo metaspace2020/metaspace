@@ -69,3 +69,12 @@ afterEach(() => {
 // TODO: Change metadata to always ship with all available types, but filter at runtime based on config
 // so that it's not environment-dependent in tests
 replaceConfigWithDefaultForTests();
+
+// Change Vue.nextTick() to wait multiple ticks, because Apollo often takes multiple ticks to return data
+const originalNextTick = Vue.nextTick;
+Vue.nextTick = async (callback?: any, context?: any) => {
+  await originalNextTick();
+  await originalNextTick();
+  await originalNextTick();
+  await originalNextTick(callback, context);
+};

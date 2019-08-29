@@ -3,7 +3,7 @@ import Vue from 'vue';
 import { restoreConsole, suppressConsoleWarn } from '../../../tests/utils/suppressConsole';
 import EditUserPage from './EditUserPage.vue';
 import router from '../../router';
-import { initMockGraphqlClient, provide } from '../../../tests/utils/mockGraphqlClient';
+import { initMockGraphqlClient, apolloProvider } from '../../../tests/utils/mockGraphqlClient';
 import { UserProfileQuery } from '../../api/user';
 
 
@@ -48,14 +48,14 @@ describe('EditUserPage', () => {
   });
 
   it('should match snapshot', async () => {
-    const wrapper = mount(EditUserPage, { router, provide, sync: false });
+    const wrapper = mount(EditUserPage, { router, apolloProvider, sync: false });
     await Vue.nextTick();
 
     expect(wrapper).toMatchSnapshot();
   });
 
   it('should be able to submit changes to the user', async () => {
-    const wrapper = mount(EditUserPage, { router, provide, sync: false });
+    const wrapper = mount(EditUserPage, { router, apolloProvider, sync: false });
     await Vue.nextTick();
     const nameInput = wrapper.find('input[name="name"]');
     const emailInput = wrapper.find('input[name="email"]');
@@ -84,7 +84,7 @@ describe('EditUserPage', () => {
   });
 
   it('should not include unchanged fields in the update payload', async () => {
-    const wrapper = mount(EditUserPage, { router, provide, sync: false });
+    const wrapper = mount(EditUserPage, { router, apolloProvider, sync: false });
     await Vue.nextTick();
     const nameInput = wrapper.find('input[name="name"]');
     const saveButton = wrapper.find('.saveButton');
