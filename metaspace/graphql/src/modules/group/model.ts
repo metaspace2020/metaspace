@@ -26,10 +26,10 @@ export class Group {
   @Column({ type: 'text' })
   name: string;
 
-  @Column({ type: 'text', name: 'short_name' })
+  @Column({ type: 'text' })
   shortName: string;
 
-  @Column({ type: 'text', name: 'url_slug', nullable: true })
+  @Column({ type: 'text', nullable: true })
   urlSlug: string | null;
 
   @Column({ type: 'text', name: 'group_description', default: ''})
@@ -42,14 +42,14 @@ export class Group {
 @Entity('user_group')
 export class UserGroup {
 
-  @PrimaryColumn({ type: 'uuid', name: 'user_id' })
+  @PrimaryColumn({ type: 'uuid' })
   userId: string;
 
   @ManyToOne(type => User)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @PrimaryColumn({ type: 'uuid', name: 'group_id' })
+  @PrimaryColumn({ type: 'uuid' })
   groupId: string;
 
   @ManyToOne(type => Group)
@@ -65,3 +65,9 @@ export class UserGroup {
   @Column({ default: true })
   primary: boolean;
 }
+
+
+export const GROUP_ENTITIES = [
+  Group,
+  UserGroup,
+];

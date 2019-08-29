@@ -1,7 +1,8 @@
 import json
 import logging
+from random import randint
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from elasticsearch import Elasticsearch
@@ -22,6 +23,7 @@ from sm.engine.es_export import ESIndexManager
 TEST_CONFIG_PATH = 'conf/test_config.json'
 SMConfig.set_path(Path(proj_root()) / TEST_CONFIG_PATH)
 sm_config = SMConfig.get_conf(update=True)
+patch('sm.engine.util.SMConfig.get_conf', new_callable=lambda: lambda: sm_config).start()
 
 init_loggers(sm_config['logs'])
 
@@ -88,15 +90,18 @@ def test_db(request):
             if admin_conn:
                 admin_conn.close()
 
+    db_name = f'sm_test_{hex(randint(0, 0xFFFFFFFF))[2:]}'
+    sm_config['db']['database'] = db_name
     db_config_postgres = {**sm_config['db'], 'database': 'postgres'}
     autocommit_execute(
-        db_config_postgres, 'DROP DATABASE IF EXISTS sm_test', 'CREATE DATABASE sm_test'
+        db_config_postgres, f'DROP DATABASE IF EXISTS {db_name}', f'CREATE DATABASE {db_name}'
     )
 
     local(
-        'psql -h {} -U {} sm_test < {}'.format(
+        'psql -h {} -U {} {} < {}'.format(
             sm_config['db']['host'],
             sm_config['db']['user'],
+            db_name,
             Path(proj_root()) / 'scripts/create_schema.sql',
         )
     )
@@ -107,7 +112,7 @@ def test_db(request):
 
     def fin():
         conn_pool.close()
-        autocommit_execute(db_config_postgres, 'DROP DATABASE IF EXISTS sm_test')
+        autocommit_execute(db_config_postgres, f'DROP DATABASE IF EXISTS {db_name}')
 
     request.addfinalizer(fin)
 
