@@ -14,7 +14,8 @@ const getContext = (jwtUser: JwtUser | null, entityManager: EntityManager,
   const user = jwtUser != null && jwtUser.id != null ? jwtUser : null;
   const contextCache: Record<string, any> = {};
 
-  const contextCacheGet = <V>(functionName: string, args: ContextCacheKeyArg[], func: (...args: ContextCacheKeyArg[]) => V) => {
+  const contextCacheGet = <TArgs extends readonly ContextCacheKeyArg[], V>
+  (functionName: string, args: TArgs, func: (...args: TArgs) => V) => {
     const key = [functionName, ...args.map(v => JSON.stringify(v))].join(' ');
     if (key in contextCache) {
       return contextCache[key] as V;
@@ -39,34 +40,35 @@ const getContext = (jwtUser: JwtUser | null, entityManager: EntityManager,
   const cachedGetEntityById = async <T>(Model: ObjectType<T> & {}, entityId: any): Promise<T | null> => {
     const modelMetadata = entityManager.connection.getMetadata(Model);
     const modelName = modelMetadata.name;
-    const dataloader = contextCacheGet('cachedGetEntityByIdDataLoader', [modelName], () => {
-      const idFields = modelMetadata.primaryColumns.map(col => col.propertyName);
-      let keyFunc: (objectKey: any) => any;
-      let validatingKeyFunc: (objectKey: any) => any;
-      if (idFields.length === 1) {
-        keyFunc = key => key;
-        validatingKeyFunc = (key: any) => {
-          if (typeof key !== 'string' && typeof key !== 'number') {
-            throw new Error(`cachedGetEntityById: Invalid entity id: ${key}`);
-          }
-          return key;
-        };
-      } else {
-        keyFunc = (objectKey) => JSON.stringify(idFields.map(idField => objectKey[idField]));
-        validatingKeyFunc = (objectKey) => {
-          const unrecognizedKeyField = Object.keys(objectKey).find(key => !idFields.includes(key));
-          if (unrecognizedKeyField != null) {
-            throw new Error(`cachedGetEntityById: Unrecognized property in entity id: ${unrecognizedKeyField}`);
-          }
-          return JSON.stringify(idFields.map(idField => objectKey[idField]));
-        };
-      }
-      return new DataLoader(async (entityIds: any[]): Promise<(T|null)[]> => {
-        const results = await entityManager.getRepository(Model).findByIds(entityIds);
-        const keyedResults = _.keyBy(results, obj => keyFunc(modelMetadata.getEntityIdMixedMap(obj)) as string);
-        return entityIds.map(id => keyedResults[keyFunc(id) as any] || null);
-      }, {cacheKeyFn: validatingKeyFunc, maxBatchSize: 100});
-    });
+    const dataloader = contextCacheGet('cachedGetEntityByIdDataLoader', [modelName],
+      (modelName) => {
+        const idFields = modelMetadata.primaryColumns.map(col => col.propertyName);
+        let keyFunc: (objectKey: any) => any;
+        let validatingKeyFunc: (objectKey: any) => any;
+        if (idFields.length === 1) {
+          keyFunc = key => key;
+          validatingKeyFunc = (key: any) => {
+            if (typeof key !== 'string' && typeof key !== 'number') {
+              throw new Error(`cachedGetEntityById: Invalid entity id: ${key}`);
+            }
+            return key;
+          };
+        } else {
+          keyFunc = (objectKey) => JSON.stringify(idFields.map(idField => objectKey[idField]));
+          validatingKeyFunc = (objectKey) => {
+            const unrecognizedKeyField = Object.keys(objectKey).find(key => !idFields.includes(key));
+            if (unrecognizedKeyField != null) {
+              throw new Error(`cachedGetEntityById: Unrecognized property in entity id: ${unrecognizedKeyField}`);
+            }
+            return JSON.stringify(idFields.map(idField => objectKey[idField]));
+          };
+        }
+        return new DataLoader(async (entityIds: any[]): Promise<(T|null)[]> => {
+          const results = await entityManager.getRepository(Model).findByIds(entityIds);
+          const keyedResults = _.keyBy(results, obj => keyFunc(modelMetadata.getEntityIdMixedMap(obj)) as string);
+          return entityIds.map(id => keyedResults[keyFunc(id) as any] || null);
+        }, {cacheKeyFn: validatingKeyFunc, maxBatchSize: 100});
+      });
     return await dataloader.load(entityId);
   };
 
@@ -87,8 +89,6 @@ const getContext = (jwtUser: JwtUser | null, entityManager: EntityManager,
       }
       return user.id;
     },
-    // TODO: TypeScript 3.0
-    // contextCacheGet<TArgs extends (string | number)[], V>(functionName: string, args: TArgs, func: (...args: TArgs) => V) {
     contextCacheGet,
     cachedGetEntityById,
   };
