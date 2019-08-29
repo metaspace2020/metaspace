@@ -8,7 +8,7 @@ from pyimzml import ImzMLParser
 from sm.engine.msm_basic.segmenter import (
     segment_centroids,
     define_ds_segments,
-    segment_spectra,
+    segment_ds,
     MAX_MZ_VALUE,
     calculate_chunk_sp_n,
 )
@@ -46,7 +46,7 @@ def test_segment_spectra(to_msgpack_mock):
     ds_segments = np.array([[0, 50], [50, 90.0]])
 
     chunk_sp_n = 1000
-    segment_spectra(imzml_parser_mock, coordinates, chunk_sp_n, ds_segments, Path('/tmp/abc'))
+    segment_ds(imzml_parser_mock, coordinates, chunk_sp_n, ds_segments, Path('/tmp/abc'))
 
     for segm_i, (min_mz, max_mz) in enumerate(ds_segments):
         args = to_msgpack_mock.call_args_list[segm_i][0]
