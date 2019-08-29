@@ -22,13 +22,5 @@ declare module "vue-resize-directive" {
   export default resize;
 }
 
-declare module "vue-apollo/types/vue-apollo" {
-  import { ApolloProperty } from 'vue-apollo/types/vue-apollo';
-  import { ApolloClient } from 'apollo-client';
-
-  export interface ApolloProperty<V> {
-  }
-}
-
 // Polyfill GlobalFetch type due to temporary issue in apollo-link: https://github.com/apollographql/apollo-link/issues/1131
 declare type GlobalFetch = WindowOrWorkerGlobalScope;
