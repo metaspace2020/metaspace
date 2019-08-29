@@ -215,7 +215,7 @@ function constructDatasetFilters(filter: DatasetFilter) {
   }
   return filters;
 }
-export interface ExtraAnnotationFilters {
+interface ExtraAnnotationFilters {
   ion?: string;
   annId?: string;
 }
