@@ -9,7 +9,7 @@ from psycopg2 import ProgrammingError, IntegrityError, DataError
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
-logger = logging.getLogger('engine')
+logger = logging.getLogger('engine.db')
 
 
 class ConnectionPool:

@@ -4,7 +4,7 @@ import {esDatasetByID} from '../../../../esConnector';
 import logger from '../../../utils/logger';
 import wait from '../../../utils/wait';
 import config from '../../../utils/config';
-import {DatasetStatus} from '../model';
+import {DatasetStatus} from '../../engine/model';
 import {Context} from '../../../context';
 import canViewEsDataset from '../util/canViewEsDataset';
 import {relationshipToDataset} from '../util/relationshipToDataset';

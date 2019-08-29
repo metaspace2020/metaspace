@@ -15,7 +15,7 @@ export class ColocJob {
   @Column({ type: 'text', name: 'ds_id' })
   datasetId: string;
 
-  @Column({ type: 'text', name: 'mol_db', nullable: true })
+  @Column({ type: 'text', nullable: true })
   molDb: string | null;
 
   @Column({ type: 'numeric', precision: 2, scale: 2 })
@@ -35,7 +35,7 @@ export class ColocJob {
   @Column({ type: 'text', nullable: true })
   error: string | null;
 
-  @Column({ type: 'int', array: true, name: 'sample_ion_ids' })
+  @Column({ type: 'int', array: true })
   sampleIonIds: number[];
 
   @OneToMany(type => ColocAnnotation, colocAnnotation => colocAnnotation.colocJob)
@@ -46,21 +46,21 @@ export class ColocJob {
 @Entity('coloc_annotation')
 export class ColocAnnotation {
 
-  @PrimaryColumn({ type: 'uuid', name: 'coloc_job_id' })
+  @PrimaryColumn({ type: 'uuid' })
   colocJobId: string;
 
   /** Index of the annotation's sfAdduct in the parent ColocJob's orderedMols array */
-  @PrimaryColumn({ type: 'int', name: 'ion_id' })
+  @PrimaryColumn({ type: 'int' })
   ionId: number;
 
-  @Column({ type: 'int', array: true, name: 'coloc_ion_ids' })
+  @Column({ type: 'int', array: true })
   colocIonIds: number[];
 
-  @Column({ type: 'float4', array: true, name: 'coloc_coeffs' })
+  @Column({ type: 'float4', array: true })
   colocCoeffs: number[];
 
   @ManyToOne(type => ColocJob, {onDelete: 'CASCADE'})
-  @JoinColumn({ name: 'coloc_job_id' })
+  @JoinColumn()
   colocJob: ColocJob;
 }
 
@@ -85,10 +85,10 @@ export class Ion {
   @Column({ type: 'text' })
   formula: string;
 
-  @Column({ type: 'text', name: 'chem_mod', default: '' })
+  @Column({ type: 'text', default: '' })
   chemMod: string;
 
-  @Column({ type: 'text', name: 'neutral_loss', default: '' })
+  @Column({ type: 'text', default: '' })
   neutralLoss: string;
 
   @Column({ type: 'text' })
@@ -101,3 +101,9 @@ export class Ion {
   @Column({ type: 'smallint' })
   charge: number;
 }
+
+export const ANNOTATION_ENTITIES = [
+  ColocJob,
+  ColocAnnotation,
+  Ion,
+];

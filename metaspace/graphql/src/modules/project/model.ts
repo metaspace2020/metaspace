@@ -29,7 +29,7 @@ export class Project {
   @Column({ type: 'text' })
   name: string;
 
-  @Column({ type: 'text', name: 'url_slug', nullable: true })
+  @Column({ type: 'text', nullable: true })
   urlSlug: string | null;
 
   @OneToMany(type => UserProject, userProject => userProject.project)
@@ -53,7 +53,7 @@ export class Project {
 @Entity('user_project')
 export class UserProject {
 
-  @PrimaryColumn({ type: 'text', name: 'user_id' })
+  @PrimaryColumn({ type: 'text' })
   userId: string;
 
   @ManyToOne(type => User)
@@ -61,7 +61,7 @@ export class UserProject {
   user: User;
 
   @Index()
-  @PrimaryColumn({ type: 'text', name: 'project_id' })
+  @PrimaryColumn({ type: 'text' })
   projectId: string;
 
   @ManyToOne(type => Project)
@@ -74,3 +74,8 @@ export class UserProject {
     'MEMBER' |
     'MANAGER';
 }
+
+export const PROJECT_ENTITIES = [
+  Project,
+  UserProject,
+];
