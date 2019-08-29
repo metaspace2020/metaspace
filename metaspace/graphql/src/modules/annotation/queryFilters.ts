@@ -7,8 +7,8 @@ import {UserError} from 'graphql-errors';
 import config from '../../utils/config';
 import {ESAnnotation} from '../../../esConnector';
 
-type Args = ArgsFromBinding<Query['allAnnotations']>
-          | ArgsFromBinding<Query['countAnnotations']>;
+type Args = (ArgsFromBinding<Query['allAnnotations']>
+          | ArgsFromBinding<Query['countAnnotations']>);
 interface FilterResult {
   args: Args;
   postprocess?(annotations: ESAnnotation[]): ESAnnotationWithColoc[] ;

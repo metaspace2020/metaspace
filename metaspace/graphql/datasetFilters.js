@@ -122,7 +122,7 @@ class GroupMatchFilter extends AbstractDatasetFilter {
   }
 }
 
-const datasetFilters = {
+export const datasetFilters = {
   polarity: new PhraseMatchFilter('MS_Analysis.Polarity', {preprocess: capitalize}),
   ionisationSource: new ExactMatchFilter('MS_Analysis.Ionisation_Source', {}),
   analyzerType: new PhraseMatchFilter('MS_Analysis.Analyzer', {}),
@@ -141,7 +141,7 @@ const datasetFilters = {
   metadataType: new ExactMatchFilter('Data_Type', {}),
 };
 
-function dsField(hit, alias){
+export function dsField(hit, alias){
   let info = hit._source.ds_meta;
   for (let field of datasetFilters[alias].schemaPath.split(".")) {
     info = info[field];
@@ -150,10 +150,3 @@ function dsField(hit, alias){
   }
   return info;
 }
-
-module.exports = {
-  SubstringMatchFilter,
-  datasetFilters,
-  dsField,
-  getPgField
-};
