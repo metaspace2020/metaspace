@@ -29,3 +29,6 @@ declare module "vue-apollo/types/vue-apollo" {
   export interface ApolloProperty<V> {
   }
 }
+
+// Polyfill GlobalFetch type due to temporary issue in apollo-link: https://github.com/apollographql/apollo-link/issues/1131
+declare type GlobalFetch = WindowOrWorkerGlobalScope;

@@ -15,7 +15,7 @@
 </template>
 
 <script>
- import { schemeCategory10 as graphColors } from 'd3';
+ import { schemeCategory10 as graphColors } from 'd3-scale-chromatic';
  import { renderMolFormulaHtml } from '../../../../util';
  import XicPlot from './XicPlot.vue';
  import PlotLegend from '../PlotLegend.vue';

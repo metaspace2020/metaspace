@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`ViewGroupPage datasets tab should match snapshot (non-member) 1`] = `
-<div class="page" mock-v-loading="false">
+<div class="page" mock-v-loading="true">
   <div class="page-content">
     <!---->
     <div class="header-row">
@@ -26,7 +26,7 @@ exports[`ViewGroupPage datasets tab should match snapshot (non-member) 1`] = `
             <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
               <div class="el-tabs__active-bar is-top" style="width: -40px; transform: translateX(0px); -webkit-transform: translateX(0px);"></div>
               <div id="tab-description" aria-controls="pane-description" role="tab" tabindex="-1" class="el-tabs__item is-top">Description</div>
-              <div id="tab-datasets" aria-controls="pane-datasets" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active">Datasets (4)</div>
+              <div id="tab-datasets" aria-controls="pane-datasets" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active">Datasets</div>
               <div id="tab-members" aria-controls="pane-members" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
           Members (2)
           <!----></span></div>
@@ -38,13 +38,12 @@ exports[`ViewGroupPage datasets tab should match snapshot (non-member) 1`] = `
         <!---->
         <div role="tabpanel" id="pane-datasets" aria-labelledby="tab-datasets" class="el-tab-pane">
           <div class="dataset-list">
-            <datasetitem-stub dataset="[object Object]" currentuser="[object Object]" idx="0" hidegroupmenu="true" class=""></datasetitem-stub>
-            <datasetitem-stub dataset="[object Object]" currentuser="[object Object]" idx="1" hidegroupmenu="true" class="odd"></datasetitem-stub>
-            <datasetitem-stub dataset="[object Object]" currentuser="[object Object]" idx="2" hidegroupmenu="true" class=""></datasetitem-stub>
-            <!---->
+            <div class="datasets-list-empty">
+              No datasets found
+            </div>
           </div>
           <div class="dataset-list-footer">
-            <a href="/datasets?grp=00000000-1111-2222-3333-444444444444" class="">See all datasets</a>
+            <!---->
           </div>
         </div>
         <!---->
@@ -56,7 +55,7 @@ exports[`ViewGroupPage datasets tab should match snapshot (non-member) 1`] = `
 `;
 
 exports[`ViewGroupPage members tab should match snapshot (invited) 1`] = `
-<div class="page" mock-v-loading="false">
+<div class="page" mock-v-loading="true">
   <div class="page-content">
     <!---->
     <div class="header-row">
@@ -100,7 +99,7 @@ exports[`ViewGroupPage members tab should match snapshot (invited) 1`] = `
             <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
               <div class="el-tabs__active-bar is-top" style="width: -20px; transform: translateX(0px); -webkit-transform: translateX(0px);"></div>
               <div id="tab-description" aria-controls="pane-description" role="tab" tabindex="-1" class="el-tabs__item is-top">Description</div>
-              <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
+              <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets</div>
               <div id="tab-members" aria-controls="pane-members" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
           Members (2)
           <!----></span></div>
@@ -384,7 +383,7 @@ exports[`ViewGroupPage members tab should match snapshot (manager, including tab
 `;
 
 exports[`ViewGroupPage members tab should match snapshot (member) 1`] = `
-<div class="page" mock-v-loading="false">
+<div class="page" mock-v-loading="true">
   <div class="page-content">
     <!---->
     <div class="header-row">
@@ -405,7 +404,7 @@ exports[`ViewGroupPage members tab should match snapshot (member) 1`] = `
             <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
               <div class="el-tabs__active-bar is-top" style="width: -20px; transform: translateX(0px); -webkit-transform: translateX(0px);"></div>
               <div id="tab-description" aria-controls="pane-description" role="tab" tabindex="-1" class="el-tabs__item is-top">Description</div>
-              <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
+              <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets</div>
               <div id="tab-members" aria-controls="pane-members" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
           Members (2)
           <span class="notification"></span></span>
@@ -431,7 +430,7 @@ exports[`ViewGroupPage members tab should match snapshot (member) 1`] = `
 `;
 
 exports[`ViewGroupPage members tab should match snapshot (non-member) 1`] = `
-<div class="page" mock-v-loading="false">
+<div class="page" mock-v-loading="true">
   <div class="page-content">
     <!---->
     <div class="header-row">
@@ -456,7 +455,7 @@ exports[`ViewGroupPage members tab should match snapshot (non-member) 1`] = `
             <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
               <div class="el-tabs__active-bar is-top" style="width: -20px; transform: translateX(0px); -webkit-transform: translateX(0px);"></div>
               <div id="tab-description" aria-controls="pane-description" role="tab" tabindex="-1" class="el-tabs__item is-top">Description</div>
-              <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
+              <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets</div>
               <div id="tab-members" aria-controls="pane-members" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
           Members (2)
           <!----></span></div>

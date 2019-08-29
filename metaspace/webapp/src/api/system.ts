@@ -1,4 +1,5 @@
 import gql from 'graphql-tag';
+import {ApolloVueSubscribeToMoreOptions} from 'vue-apollo/types/options';
 
 export interface SystemHealth {
   canMutate: Boolean
@@ -12,7 +13,7 @@ export const getSystemHealthQuery = gql`query GetSystemHealth {
 }`;
 
 // Always use fetchPolicy: 'cache-first' for this
-export const getSystemHealthSubscribeToMore = {
+export const getSystemHealthSubscribeToMore: ApolloVueSubscribeToMoreOptions<any> = {
   document: gql`subscription SystemHealth {
     systemHealthUpdated { canMutate canProcessDatasets message }
   }`,

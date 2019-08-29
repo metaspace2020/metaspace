@@ -66,7 +66,7 @@ exports[`MetaspaceHeader should match snapshot (logged in) 1`] = `
 
 exports[`MetaspaceHeader should match snapshot (logged out) 1`] = `
 <div>
-  <div class="spacerWithAlert"></div>
+  <div class="spacer"></div>
   <div class="b-header">
     <div class="header-items">
       <a href="/" class="header-item logo router-link-exact-active router-link-active">
@@ -90,25 +90,10 @@ exports[`MetaspaceHeader should match snapshot (logged out) 1`] = `
       <a href="/help" class="header-item page-link">
         Help
       </a>
-      <div class="header-items">
-        <div class="header-item page-link">
-          Create account
-        </div>
-        <div class="header-item page-link">
-          Sign in
-        </div>
-      </div>
+      <!---->
       <!---->
     </div>
   </div>
-  <div class="alert el-row">
-    <div role="alert" class="el-alert el-alert--warning" name="el-alert-fade">
-      <i class="el-alert__icon el-icon-warning"></i>
-      <div class="el-alert__content"><span class="el-alert__title">systemHealthUpdated.message</span>
-        <!---->
-        <i class="el-alert__closebtn el-icon-close" style="display: none;"></i>
-      </div>
-    </div>
-  </div>
+  <!---->
 </div>
 `;

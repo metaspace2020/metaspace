@@ -65,10 +65,11 @@ function mzFilterPrecision(value: number | string): string {
   }
 }
 
-function scrollDistance(event: MouseWheelEvent) {
+interface WheelEventCompat extends WheelEvent { wheelDelta?: number }
+function scrollDistance(event: WheelEventCompat) {
   let sY = 0;
   if ('detail'      in event) { sY = event.detail * 2; }
-  if ('wheelDelta'  in event) { sY = -event.wheelDelta / 120; }
+  if ('wheelDelta'  in event) { sY = -event.wheelDelta! / 120; }
   if (('deltaY' in event) && !sY) { sY = (event.deltaY < 1) ? -1 : 1; }
   return sY;
 }

@@ -30,7 +30,10 @@
  import TourStep from './TourStep.vue';
  import {DialogController} from '../Account';
  import config from '../../config';
+ import Vue, {ComponentOptions} from 'vue';
+ import 'element-ui'; // Needed for Vue.$alert augmentation
 
+ /** @type {ComponentOptions<Vue> & Vue} */
  export default {
    name: 'app',
    components: {
@@ -65,7 +68,7 @@
        }
      }
    }
- }
+ };
 </script>
 
 <style>
