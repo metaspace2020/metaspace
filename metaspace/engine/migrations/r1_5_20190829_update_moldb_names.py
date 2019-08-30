@@ -7,7 +7,7 @@ from sm.engine.db import DB, ConnectionPool
 from sm.engine.util import init_loggers
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Update SwissLipids molecule names')
+    parser = argparse.ArgumentParser(description='Update molecular database molecule names')
     parser.add_argument('--config', default='conf/config.json', help='SM config path')
     parser.add_argument('file_path', help='Path to file with new names')
     args = parser.parse_args()
