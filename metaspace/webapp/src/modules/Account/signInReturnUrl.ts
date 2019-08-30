@@ -1,4 +1,4 @@
-import {Route} from 'vue-router';
+import {RawLocation, Route} from 'vue-router';
 import {pick} from 'lodash-es';
 import {getLocalStorage, removeLocalStorage, setLocalStorage} from '../../lib/localStorage';
 
@@ -11,8 +11,8 @@ export const setSignInReturnUrl = (route: Route) => {
   setLocalStorage(STORAGE_KEY, val, true);
 };
 
-export const redirectAfterSignIn = () => {
-  let redirect = getLocalStorage(STORAGE_KEY);
+export const redirectAfterSignIn = (): RawLocation => {
+  let redirect = getLocalStorage<RawLocation>(STORAGE_KEY);
   removeLocalStorage(STORAGE_KEY);
   return redirect || DEFAULT_ROUTE;
 };

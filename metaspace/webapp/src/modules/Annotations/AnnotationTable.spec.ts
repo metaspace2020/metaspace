@@ -1,7 +1,7 @@
 import { mount, config as testConfig } from '@vue/test-utils';
 import AnnotationTable from './AnnotationTable.vue';
 import router from '../../router';
-import { initMockGraphqlClient, provide } from '../../../tests/utils/mockGraphqlClient';
+import { initMockGraphqlClient, apolloProvider } from '../../../tests/utils/mockGraphqlClient';
 import store from '../../store/index';
 import Vue from 'vue';
 import Vuex from 'vuex';
@@ -50,7 +50,7 @@ describe('AnnotationTable', () => {
       { "name": "C.I. Food Red 6", "information": [{ "databaseId": "HMDB0032738" }] },
     ],
     colocalizationCoeff: 0.840809,
-    offSample: 'on',
+    offSample: false,
     offSampleProb: 0.03,
   };
   const propsData = {hideColumns: ["OffSampleProb"]};
@@ -64,7 +64,7 @@ describe('AnnotationTable', () => {
         countAnnotations: () => 1,
       })
     });
-    const wrapper = mount(AnnotationTable, { store, router, provide, propsData, sync: false });
+    const wrapper = mount(AnnotationTable, { store, router, apolloProvider, propsData, sync: false });
     await Vue.nextTick();
 
     expect(wrapper).toMatchSnapshot();
@@ -82,7 +82,7 @@ describe('AnnotationTable', () => {
         countAnnotations: () => 4,
       })
     });
-    const wrapper = mount(AnnotationTable, { store, router, provide, propsData, sync: false });
+    const wrapper = mount(AnnotationTable, { store, router, apolloProvider, propsData, sync: false });
     wrapper.setData({csvChunkSize: 2});
     await new Promise(resolve => setTimeout(resolve, 1));
 

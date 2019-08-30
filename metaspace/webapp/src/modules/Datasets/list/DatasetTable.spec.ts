@@ -1,7 +1,7 @@
 import { mount, config as testConfig } from '@vue/test-utils';
 import DatasetTable from './DatasetTable.vue';
 import router from '../../../router';
-import { initMockGraphqlClient, provide } from '../../../../tests/utils/mockGraphqlClient';
+import { initMockGraphqlClient, apolloProvider } from '../../../../tests/utils/mockGraphqlClient';
 import store from '../../../store/index';
 import Vue from 'vue';
 import Vuex from 'vuex';
@@ -56,7 +56,7 @@ describe('DatasetTable', () => {
         countDatasets: () => 1,
       })
     });
-    const wrapper = mount(DatasetTable, { store, router, provide, sync: false });
+    const wrapper = mount(DatasetTable, { store, router, apolloProvider, sync: false });
     await Vue.nextTick();
 
     expect(wrapper).toMatchSnapshot();
@@ -76,7 +76,7 @@ describe('DatasetTable', () => {
         countDatasets: () => 4,
       })
     });
-    const wrapper = mount(DatasetTable, { store, router, provide, sync: false });
+    const wrapper = mount(DatasetTable, { store, router, apolloProvider, sync: false });
     wrapper.setData({csvChunkSize: 2});
     await Vue.nextTick();
 

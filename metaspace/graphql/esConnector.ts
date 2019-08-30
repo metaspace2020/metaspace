@@ -6,7 +6,7 @@ import * as elasticsearch from 'elasticsearch';
 import * as sprintf from 'sprintf-js';
 import config from './src/utils/config';
 import logger from './src/utils/logger';
-import {datasetFilters} from './datasetFilters.js';
+import {datasetFilters} from './datasetFilters';
 import {ContextUser, UserProjectRoles} from './src/context';
 import {AnnotationFilter, AnnotationOrderBy, DatasetFilter, DatasetOrderBy, SortingOrder} from './src/binding';
 
@@ -196,7 +196,7 @@ const constructAuthFilters = (user: ContextUser | null, userProjectRoles: UserPr
 
 function constructDatasetFilters(filter: DatasetFilter) {
   const filters = [];
-  for (let [key, val] of Object.entries(filter)) {
+  for (let [key, val] of (Object.entries(filter) as [keyof DatasetFilter, any][])) {
     if (val) {
       if (datasetFilters[key] != null) {
         filters.push(datasetFilters[key].esFilter(val));

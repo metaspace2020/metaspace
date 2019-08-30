@@ -7,6 +7,6 @@ export const defaultMetadataType = metadataTypes.includes("Imaging MS") ? "Imagi
 export const metadataSchemas: Record<string, any> = {};
 
 for (const mdType of metadataTypes) {
-  const mdFilename = metadataMapping[mdType];
+  const mdFilename = (metadataMapping as Record<string, string>)[mdType];
   metadataSchemas[mdType] = require(`./${mdFilename}`);
 }

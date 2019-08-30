@@ -3,7 +3,7 @@ import Vue from 'vue';
 import ProjectsListPage from './ProjectsListPage.vue';
 import router from '../../router';
 import { MyProjectsListQuery, ProjectsListProject, ProjectsListQuery } from '../../api/project';
-import { initMockGraphqlClient, provide } from '../../../tests/utils/mockGraphqlClient';
+import { initMockGraphqlClient, apolloProvider } from '../../../tests/utils/mockGraphqlClient';
 import Vuex from 'vuex';
 import store from '../../store';
 import { sync } from 'vuex-router-sync';
@@ -44,7 +44,7 @@ describe('ProjectsListPage', () => {
         countProjects: () => 3,
       })
     });
-    const wrapper = mount(ProjectsListPage, { router, provide, store, sync: false });
+    const wrapper = mount(ProjectsListPage, { router, apolloProvider, store, sync: false });
     await Vue.nextTick();
     await Vue.nextTick();
 
@@ -61,7 +61,7 @@ describe('ProjectsListPage', () => {
       })
     });
 
-    const wrapper = mount(ProjectsListPage, { router, provide, store, sync: false });
+    const wrapper = mount(ProjectsListPage, { router, apolloProvider, store, sync: false });
     store.commit('updateFilter', { simpleFilter: 'my-projects' });
     await Vue.nextTick();
 
@@ -79,7 +79,7 @@ describe('ProjectsListPage', () => {
       })
     });
 
-    const wrapper = mount(ProjectsListPage, { router, provide, store, sync: false });
+    const wrapper = mount(ProjectsListPage, { router, apolloProvider, store, sync: false });
     store.commit('updateFilter', { simpleFilter: 'my-projects', simpleQuery: 'ww' });
     await Vue.nextTick();
 

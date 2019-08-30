@@ -50,7 +50,7 @@ exports[`DatasetTable should match snapshot 1`] = `
           </span><span class="el-checkbox__label">Finished (1)<!----></span></label>
         <!---->
       </div>
-      <div></div>
+      <div style="flex-grow: 1;"></div>
       <button type="button" class="el-button el-button--default el-button--small">
         <!---->
         <!----><span>
@@ -134,7 +134,7 @@ exports[`DatasetTable should match snapshot 1`] = `
         <div class="ds-item-line">
           <b title="allDatasets.0.name">allDatasets.0.name</b>
         </div>
-        <div class="ds-item-line"><span title="Filter by species" class="ds-add-filter">
+        <div class="ds-item-line" style="color: darkblue;"><span title="Filter by species" class="ds-add-filter">
         allDatasets.0.organism</span>,
           <span title="Filter by organism part" class="ds-add-filter">
         alldatasets.0.organismpart</span> <span title="Filter by condition" class="ds-add-filter">
@@ -250,7 +250,7 @@ exports[`DatasetTable should match snapshot 1`] = `
       <div class="ds-item-line">
         <b title="allDatasets.0.name">allDatasets.0.name</b>
       </div>
-      <div class="ds-item-line"><span title="Filter by species" class="ds-add-filter">
+      <div class="ds-item-line" style="color: darkblue;"><span title="Filter by species" class="ds-add-filter">
         allDatasets.0.organism</span>,
         <span title="Filter by organism part" class="ds-add-filter">
         alldatasets.0.organismpart</span> <span title="Filter by condition" class="ds-add-filter">
@@ -366,7 +366,7 @@ exports[`DatasetTable should match snapshot 1`] = `
     <div class="ds-item-line">
       <b title="allDatasets.0.name">allDatasets.0.name</b>
     </div>
-    <div class="ds-item-line"><span title="Filter by species" class="ds-add-filter">
+    <div class="ds-item-line" style="color: darkblue;"><span title="Filter by species" class="ds-add-filter">
         allDatasets.0.organism</span>,
       <span title="Filter by organism part" class="ds-add-filter">
         alldatasets.0.organismpart</span> <span title="Filter by condition" class="ds-add-filter">
