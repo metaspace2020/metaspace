@@ -25,7 +25,7 @@ module.exports.module = {
             appendTsSuffixTo: [/\.vue$/, /\.json$/],
             onlyCompileBundledFiles: true,
             transpileOnly: true,
-            configFile: 'tsconfig.client.json'
+            configFile: 'tsconfig.json'
           }
         }
       ],
@@ -86,7 +86,7 @@ module.exports.plugins = [
     vue: true,
     workers: 2,
     async: false,
-    tsconfig: 'tsconfig.client.json'
+    tsconfig: 'tsconfig.json'
   }),
 ];
 

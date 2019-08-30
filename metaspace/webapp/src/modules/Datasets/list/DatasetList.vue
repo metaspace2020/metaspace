@@ -20,7 +20,8 @@
   import DatasetItem from './DatasetItem.vue';
   import {currentUserRoleQuery} from '../../../api/user';
 
-  export default {
+  /** @type {ComponentOptions<Vue> & Vue} */
+  const DatasetList = {
     name: 'dataset-list',
     props: {
       datasets: {type: Array, required: true},
@@ -61,7 +62,8 @@
         }
       }
     }
-  }
+  };
+  export default DatasetList;
 </script>
 
 <style scoped lang="scss">

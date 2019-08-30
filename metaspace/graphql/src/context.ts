@@ -28,9 +28,11 @@ export interface Context {
    * @param functionName    The name of the function being memoized, or any other namespace/unique identifier
    *                        to help prevent cache key conflicts
    * @param args            Non-nested JSON.stringify'able args to be used as cache key
+   *                        NOTE: TypeScript will enforce that these arguments' types match the arguments to `func`
    * @param func            Function to memoize
    */
-  contextCacheGet: <V>(functionName: string, args: ContextCacheKeyArg[], func: (...args: ContextCacheKeyArg[]) => V) => V;
+  contextCacheGet: <TArgs extends readonly ContextCacheKeyArg[], V>
+                   (functionName: string, args: TArgs, func: (...args: TArgs) => V) => V;
   /**
    * Fast equivalent of `entityManager.getRepository(Model).findOne(id)` using DataLoader to cache & batch results.
    * @param Model           Any TypeORM Entity

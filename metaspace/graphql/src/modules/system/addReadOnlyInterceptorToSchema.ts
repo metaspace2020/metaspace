@@ -26,7 +26,7 @@ const addReadOnlyInterceptorToSchema = (schema: GraphQLSchema) => {
         if (!canMutate || (!canProcessDatasets && mutationRequiresDatasetProcessing(mutationName, args))) {
           throw new UserError(JSON.stringify({ type: 'read_only_mode', message }));
         } else {
-          return originalResolve.apply(this, arguments);
+          return originalResolve.apply(this, arguments as any);
         }
       }
     })

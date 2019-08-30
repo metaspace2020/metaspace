@@ -30,8 +30,9 @@ Vue.use(ElementUI, { locale });
 import store from './store';
 import router from './router';
 import { sync } from 'vuex-router-sync';
+import {Route} from 'vue-router';
 sync(store, router);
-router.afterEach((to) => {
+router.afterEach((to: Route) => {
   store.commit('updateFilterOnNavigate', to);
 });
 
@@ -71,7 +72,7 @@ const app = new Vue({
   */
   store,
   router,
-  provide: apolloProvider.provide(),
+  apolloProvider,
 });
 
 setErrorNotifier(app.$notify);

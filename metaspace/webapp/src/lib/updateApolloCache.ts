@@ -1,6 +1,7 @@
 import {Vue} from 'vue/types/vue';
 import apolloClient from '../graphqlClient';
 import {DatasetDetailItem} from '../api/dataset';
+import {VueApolloQueryOptions} from 'vue-apollo/types/options';
 
 export const removeDatasetFromAllDatasetsQuery = (vm: Vue, queryName: string, datasetId: string) => {
   updateApolloCache(vm, queryName, oldVal => {
@@ -24,7 +25,7 @@ export const removeDatasetFromAllDatasetsQuery = (vm: Vue, queryName: string, da
  *                   a copy.
  */
 const updateApolloCache = (vm: Vue, queryName: string, update: (value: any) => any) => {
-  let {query, variables} = vm.$apollo.queries[queryName].options;
+  let {query, variables} = (vm.$apollo.queries[queryName] as any).options as VueApolloQueryOptions<any, any>;
   if (query instanceof Function) query = query.call(vm);
   if (variables instanceof Function) variables = variables.call(vm);
   let oldVal: any;

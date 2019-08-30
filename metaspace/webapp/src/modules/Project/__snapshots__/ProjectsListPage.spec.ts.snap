@@ -96,7 +96,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
           <!---->
         </div>
       </div>
-      <div></div>
+      <div style="flex-grow: 1;"></div>
       <button type="button" class="el-button el-button--default">
         <!---->
         <!----><span>Create project</span></button>

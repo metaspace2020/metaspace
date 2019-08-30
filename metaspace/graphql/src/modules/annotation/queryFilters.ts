@@ -38,30 +38,31 @@ interface AnnotationAndIons {
 
 const getColocAnnotation = async (context: Context, datasetId: string, fdrLevel: number, database: string | null,
                            colocalizedWith: string, colocalizationAlgo: string): Promise<AnnotationAndIons | null> => {
-  const args = [datasetId, fdrLevel, database, colocalizedWith, colocalizationAlgo];
-  return await context.contextCacheGet('getColocAnnotation', args, async () => {
-    const annotation = await context.entityManager.createQueryBuilder(ColocAnnotation, 'colocAnnotation')
-      .innerJoinAndSelect('colocAnnotation.colocJob', 'colocJob')
-      .innerJoin(Ion, 'ion', 'colocAnnotation.ionId = ion.id')
-      .where('colocJob.datasetId = :datasetId AND colocJob.fdr = :fdrLevel AND colocJob.molDb = :database ' +
-        'AND colocJob.algorithm = :colocalizationAlgo AND ion.ion = :colocalizedWith',
-        { datasetId, fdrLevel, database, colocalizationAlgo, colocalizedWith })
-      .getOne();
-    if (annotation != null) {
-      const ions = await context.entityManager.findByIds(Ion, [annotation.ionId, ...annotation.colocIonIds]);
-      const ionsByFormula = _.groupBy(ions, 'formula');
-      return {
-        annotation,
-        ionsById: new Map<number, Ion>(ions.map(ion => [ion.id, ion] as [number, Ion])),
-        lookupIon: (formula: string, chemMod: string, neutralLoss: string, adduct: string) => {
-          return (ionsByFormula[formula] || [])
-            .find(ion => ion.chemMod === chemMod && ion.neutralLoss === neutralLoss && ion.adduct === adduct);
-        },
-      };
-    } else {
-      return null;
-    }
-  });
+  const args = [datasetId, fdrLevel, database, colocalizedWith, colocalizationAlgo] as const;
+  return await context.contextCacheGet('getColocAnnotation', args,
+    async (datasetId, fdrLevel, database, colocalizedWith, colocalizationAlgo) => {
+      const annotation = await context.entityManager.createQueryBuilder(ColocAnnotation, 'colocAnnotation')
+        .innerJoinAndSelect('colocAnnotation.colocJob', 'colocJob')
+        .innerJoin(Ion, 'ion', 'colocAnnotation.ionId = ion.id')
+        .where('colocJob.datasetId = :datasetId AND colocJob.fdr = :fdrLevel AND colocJob.molDb = :database ' +
+          'AND colocJob.algorithm = :colocalizationAlgo AND ion.ion = :colocalizedWith',
+          { datasetId, fdrLevel, database, colocalizationAlgo, colocalizedWith })
+        .getOne();
+      if (annotation != null) {
+        const ions = await context.entityManager.findByIds(Ion, [annotation.ionId, ...annotation.colocIonIds]);
+        const ionsByFormula = _.groupBy(ions, 'formula');
+        return {
+          annotation,
+          ionsById: new Map<number, Ion>(ions.map(ion => [ion.id, ion] as [number, Ion])),
+          lookupIon: (formula: string, chemMod: string, neutralLoss: string, adduct: string) => {
+            return (ionsByFormula[formula] || [])
+              .find(ion => ion.chemMod === chemMod && ion.neutralLoss === neutralLoss && ion.adduct === adduct);
+          },
+        };
+      } else {
+        return null;
+      }
+    });
 };
 
 const getColocSampleIons = async (context: Context, datasetId: string, fdrLevel: number, database: string | null,
