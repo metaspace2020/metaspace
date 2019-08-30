@@ -408,7 +408,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
           </div>
         </mock-el-dialog>
         <mock-el-dialog append-to-body="" title="Create project" class="dialog">
-          <div mock-v-loading="0">
+          <div mock-v-loading="1">
             <form class="el-form el-form--label-top" size="mini">
               <div>
                 <div class="el-form-item name is-required">

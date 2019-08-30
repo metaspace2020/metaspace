@@ -276,7 +276,7 @@ exports[`EditUserPage should match snapshot 1`] = `
       <h2>Projects</h2>
       <div class="el-row">
         <mock-el-dialog append-to-body="" title="Create project" class="dialog">
-          <div mock-v-loading="1">
+          <div mock-v-loading="0">
             <form class="el-form el-form--label-top" size="mini">
               <div>
                 <div class="el-form-item name is-required">

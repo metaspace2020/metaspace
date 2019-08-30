@@ -10,7 +10,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
-import { schemeCategory10 as LegendColors } from 'd3';
+import { schemeCategory10 as LegendColors } from 'd3-scale-chromatic';
 
 import XicPlot from './XicPlot.vue';
 

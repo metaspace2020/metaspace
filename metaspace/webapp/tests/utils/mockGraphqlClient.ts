@@ -46,7 +46,6 @@ const baseMocks: IMocks = {
 
 let graphqlClient: ApolloClient<NormalizedCacheObject>;
 export let apolloProvider: VueApollo;
-export let provide: any;
 
 const getGraphqlSchema = () => {
   // const serverUrl = config.graphqlUrl || 'http://localhost:8888/graphql';
@@ -92,7 +91,6 @@ export const initMockGraphqlClient = (mocks?: IMocks) => {
   Vue.use(VueApollo);
 
   apolloProvider = new VueApollo({ defaultClient: graphqlClient });
-  provide = apolloProvider.provide();
 
 };
 

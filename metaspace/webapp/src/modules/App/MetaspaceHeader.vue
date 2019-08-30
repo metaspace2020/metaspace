@@ -90,7 +90,8 @@
   import NotificationIcon from '../../components/NotificationIcon.vue';
   import {datasetStatusUpdatedQuery} from '../../api/dataset';
 
- export default {
+  /** @type {ComponentOptions<Vue> & Vue} */
+ const MetaspaceHeader = {
    name: 'metaspace-header',
 
    components: {
@@ -214,8 +215,8 @@
      $subscribe: {
        datasetStatusUpdated: {
          query: datasetStatusUpdatedQuery,
-         result({ data }) {
-           const { dataset, relationship, action, stage, is_new } = data.datasetStatusUpdated;
+         result(data) {
+           const { dataset, relationship, action, stage, is_new } = data.data.datasetStatusUpdated;
            if (dataset != null && relationship != null) {
              const { name, submitter } = dataset;
 
@@ -305,6 +306,8 @@
      },
    }
  }
+
+ export default MetaspaceHeader;
 </script>
 
 <style lang="scss" scoped>

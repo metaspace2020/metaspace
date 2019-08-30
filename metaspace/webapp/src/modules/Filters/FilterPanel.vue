@@ -66,7 +66,8 @@
    return accum;
  }, filterComponents);
 
- export default {
+  /** @type {ComponentOptions<Vue> & Vue} */
+ const FilterPanel = {
    name: 'filter-panel',
    props: ["level", "simpleFilterOptions"],
    components: filterComponents,
@@ -185,7 +186,8 @@
        return [];
      }
    }
- }
+ };
+  export default FilterPanel;
 </script>
 
 <style>

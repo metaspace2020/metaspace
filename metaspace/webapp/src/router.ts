@@ -1,5 +1,5 @@
-import Vue from 'vue';
-import VueRouter from 'vue-router';
+import Vue, {AsyncComponent} from 'vue';
+import VueRouter, {RawLocation} from 'vue-router';
 import AboutPage from './modules/App/AboutPage.vue';
 import DatasetsPage from './modules/Datasets/DatasetsPage.vue';
 import {DialogPage, ResetPasswordPage} from './modules/Account';
@@ -7,7 +7,7 @@ import {redirectAfterSignIn} from './modules/Account/signInReturnUrl';
 
 Vue.use(VueRouter);
 
-const asyncPages = {
+const asyncPagesFreelyTyped = {
   AnnotationsPage: () => import(/* webpackPrefetch: true, webpackChunkName: "AnnotationsPage" */ './modules/Annotations/AnnotationsPage.vue'),
   DatasetSummary: () => import(/* webpackPrefetch: true, webpackChunkName: "DatasetSummary" */ './modules/Datasets/summary/DatasetSummary.vue'),
   MetadataEditPage: () => import(/* webpackPrefetch: true, webpackChunkName: "MetadataEditPage" */ './modules/MetadataEditor/MetadataEditPage.vue'),
@@ -22,12 +22,15 @@ const asyncPages = {
   ViewGroupPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/GroupProfile/ViewGroupPage.vue'),
   ViewProjectPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Project/ViewProjectPage.vue'),
   ProjectsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Project/ProjectsListPage.vue'),
+  SystemHealthPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Admin/SystemHealthPage.vue'),
+  GroupsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Admin/GroupsListPage.vue'),
 };
+const asyncPages = asyncPagesFreelyTyped as Record<keyof typeof asyncPagesFreelyTyped, AsyncComponent>;
 
 const convertLegacyHashUrls = () => {
   const {pathname, hash} = window.location;
   if (pathname === '/' && hash && hash.startsWith('#/')) {
-    history.replaceState(undefined, undefined, hash.slice(1));
+    history.replaceState(undefined, undefined as any, hash.slice(1));
   }
 };
 convertLegacyHashUrls();
@@ -52,8 +55,8 @@ const router = new VueRouter({
     { path: '/help', component: asyncPages.HelpPage },
     { path: '/user/me', component: asyncPages.EditUserPage },
 
-    { path: '/admin/health', component: async () => await import('./modules/Admin/SystemHealthPage.vue') },
-    { path: '/admin/groups', component: async () => await import('./modules/Admin/GroupsListPage.vue') },
+    { path: '/admin/health', component: asyncPages.SystemHealthPage },
+    { path: '/admin/groups', component: asyncPages.GroupsListPage },
 
     { path: '/account/sign-in', component: DialogPage, props: {dialog: 'signIn'} },
     { path: '/account/sign-in-success', redirect: redirectAfterSignIn },
@@ -66,7 +69,7 @@ const router = new VueRouter({
     { path: '/project/:projectIdOrSlug', name: 'project', component: asyncPages.ViewProjectPage },
     { // Legacy URL sent in "request access" emails up until Feb 2019
       path: '/project/:projectIdOrSlug/manage',
-      redirect: { path: '/project/:projectIdOrSlug', query: { tab: 'members' } }
+      redirect: { path: '/project/:projectIdOrSlug', query: { tab: 'members' } } as RawLocation
     },
     { path: '/projects', component: asyncPages.ProjectsListPage },
   ]
