@@ -19,7 +19,7 @@ def get_inactive_index_es_config(es_config):
     return tmp_es_config
 
 
-def _reindex_all(conf):
+def _reindex_all(logger, conf):
     es_config = conf['elasticsearch']
     inactive_es_config = get_inactive_index_es_config(es_config)
     alias = es_config['index']
@@ -32,7 +32,7 @@ def _reindex_all(conf):
         db = DB()
         es_exp = ESExporter(db, inactive_es_config)
         ds_ids = [r[0] for r in db.select('select id from dataset')]
-        _reindex_datasets(ds_ids, db, es_exp)
+        _reindex_datasets(logger, ds_ids, db, es_exp)
 
         es_man.remap_alias(inactive_es_config['index'], alias=alias)
     except Exception as e:
@@ -75,7 +75,7 @@ def reindex_results(sm_config, logger, ds_id, ds_mask, use_inactive_index):
     set_centroids_cache_enabled(True)
 
     if ds_mask == '_all_':
-        _reindex_all(sm_config)
+        _reindex_all(logger, sm_config)
     else:
         es_config = sm_config['elasticsearch']
         if use_inactive_index:
