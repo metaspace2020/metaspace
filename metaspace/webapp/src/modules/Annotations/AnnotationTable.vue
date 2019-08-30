@@ -90,7 +90,11 @@
                        sortable="custom"
                        min-width="120">
         <template slot-scope="props">
-          <candidate-molecules-popover placement="right" :possibleCompounds="props.row.possibleCompounds">
+          <candidate-molecules-popover
+            placement="right"
+            :possibleCompounds="props.row.possibleCompounds"
+            :limit="10"
+            :isomers="showIsomers ? props.row.isomers : []">
             <div class="cell-wrapper">
                 <span class="sf cell-span"
                       v-html="renderMolFormulaHtml(props.row.ion)"></span>
@@ -100,16 +104,6 @@
                    title="Limit results to this molecular formula"/>
             </div>
           </candidate-molecules-popover>
-          <div class="flex-spacer" />
-          <el-popover trigger="hover" class="isomer-warning-icon" v-if="props.row.isomers.length > 0">
-            <div>
-              <p>Isomeric annotations ({{props.row.isomers.length}}):</p>
-              <ul>
-                <li v-for="isomer in props.row.isomers" v-html="renderMolFormulaHtml(isomer.ion)" />
-              </ul>
-            </div>
-            <div slot="reference" />
-          </el-popover>
         </template>
       </el-table-column>
 
@@ -316,6 +310,7 @@
          sortingOrder: this.sortingOrder,
          offset: (this.currentPage - 1) * this.recordsPerPage,
          limit: this.recordsPerPage,
+         countIsomerCompounds: config.features.isomers,
        };
      },
 
@@ -356,6 +351,9 @@
          && this.$store.getters.filter.datasetIds != null
          && this.$store.getters.filter.datasetIds.length > 1;
      },
+     showIsomers() {
+       return config.features.isomers;
+     }
    },
    apollo: {
      annotations: {
@@ -746,14 +744,4 @@
  #annot-count {
    padding: 10px 0 0 5px;
  }
- .flex-spacer {
-   flex-grow: 1;
- }
-  .isomer-warning-icon>div {
-    width: 16px;
-    height: 16px;
-    margin: auto 8px;
-
-    background-image: url('../../assets/danger.svg')
-  }
 </style>

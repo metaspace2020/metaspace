@@ -206,7 +206,8 @@
            limit: 100,
            query: '',
            orderBy: 'ORDER_BY_MSM',
-           sortingOrder: 'DESCENDING'
+           sortingOrder: 'DESCENDING',
+           countIsomerCompounds: false,
          };
        },
        update: data => data.allAnnotations

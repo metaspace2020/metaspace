@@ -1,6 +1,6 @@
 <template>
-  <div id="compound-list">
-    <div class="compound" v-for="(compound, idx) in annotation.possibleCompounds" :key="idx">
+  <div class="compound-list">
+    <div class="compound" v-for="(compound, idx) in compounds" :key="idx">
       <el-popover placement="left" trigger="click">
         <img :src="failedImages.includes(compound.imageURL) ? noImageURL : compound.imageURL"
              @error="onCompoundImageError(compound.imageURL)"
@@ -39,10 +39,60 @@
   </div>
 </template>
 <script>
+  import noImageURL from '../../../assets/no-image.svg';
+
   export default {
     props: {
-      annotation: Object,
-
+      compounds: Array,
+    },
+    data() {
+      return {
+        failedImages: [],
+        noImageURL,
+      }
+    },
+    methods: {
+      onCompoundImageError(url) {
+        this.failedImages.push(url);
+      }
     }
   }
 </script>
+<style lang="scss" scoped>
+
+  .compound-list {
+    margin: 0 auto;
+    text-align: left;
+    font-size: 0;
+  }
+
+  .compound {
+    display: inline-block;
+    vertical-align: top;
+    min-width: 250px;
+    font-size: 1rem;
+    margin: 10px;
+    text-align: center;
+  }
+
+  .compound-thumbnail {
+    height: 200px;
+    width: 200px;
+    cursor: pointer;
+  }
+
+  .compound-image {
+    height: 700px;
+  }
+
+  figcaption {
+    font-size: 24px;
+    text-align: center;
+  }
+
+  figcaption a {
+    font-size: 20px;
+    text-align: center;
+  }
+
+</style>

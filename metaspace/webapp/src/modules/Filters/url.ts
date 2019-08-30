@@ -144,7 +144,7 @@ export function decodeParams(location: Location, filterLists: any): Object {
   return filter;
 }
 
-const allSections = ['images', 'compounds', 'scores', 'metadata', 'adducts', 'colocalized', 'isomers'].reverse();
+const allSections = ['images', 'compounds', 'scores', 'metadata', 'adducts', 'colocalized'].reverse();
 
 function decodeSections(number: string): string[] {
   let sections = [],

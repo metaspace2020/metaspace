@@ -354,6 +354,7 @@ class ESExporter(object):
             annotation_counts = defaultdict(int)
             fdr_levels = [5, 10, 20, 50]
             isomer_groups = defaultdict(list)
+            isomer_comp_counts = defaultdict(int)
             missing_ion_formulas = []
 
             annotation_docs = self._db.select_with_fields(
@@ -381,6 +382,7 @@ class ESExporter(object):
                 annotation_counts[fdr] += 1
                 if doc['ion_formula']:
                     isomer_groups[doc['ion_formula']].append(doc['ion'])
+                    isomer_comp_counts[doc['ion_formula']] += len(doc['comp_ids'])
                 else:
                     missing_ion_formulas.append(doc['ion'])
 
@@ -388,6 +390,7 @@ class ESExporter(object):
                 doc['isomer_ions'] = [
                     ion for ion in isomer_groups[doc['ion_formula']] if ion != doc['ion']
                 ]
+                doc['comps_count_with_isomers'] = isomer_comp_counts[doc['ion_formula']]
 
             if missing_ion_formulas:
                 logger.warn(

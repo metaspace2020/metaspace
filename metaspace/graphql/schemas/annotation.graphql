@@ -10,6 +10,7 @@ type Annotation {
   ionFormula: String!   # "Compiled" formula, such that there are no +/-s, each element is only included once, in CHNOPS order
   database: String!
   mz: Float!
+  countPossibleCompounds(includeIsomers: Boolean = False): Int!
   possibleCompounds: [Compound!]!
   fdrLevel: Float!
   msmScore: Float!

@@ -1,15 +1,12 @@
 import argparse
-import logging
 
 from sm.engine.formula_parser import safe_generate_ion_formula
-from sm.engine.util import init_loggers, SMConfig
+from sm.engine.util import init_loggers, SMConfig, bootstrap_and_run
 from sm.engine.db import DB
 
-logger = logging.getLogger('engine')
 
-
-def populate_ion_formula(conf):
-    db = DB(conf['db'])
+def populate_ion_formula(conf, logger):
+    db = DB()
     BATCH_SIZE = 10000
     ion_tuples = db.select(
         "SELECT id, formula, chem_mod, neutral_loss, adduct FROM graphql.ion WHERE ion_formula = ''"
@@ -35,8 +32,4 @@ if __name__ == '__main__':
     parser.add_argument('--config', default='conf/config.json', help='SM config path')
     args = parser.parse_args()
 
-    SMConfig.set_path(args.config)
-    init_loggers(SMConfig.get_conf()['logs'])
-
-    conf = SMConfig.get_conf()
-    populate_ion_formula(conf)
+    bootstrap_and_run(args.config, populate_ion_formula)

@@ -95,10 +95,6 @@ export default {
           vars.filter = { database: this.database, sumFormula: this.annotation.sumFormula };
           vars.orderBy = 'ORDER_BY_MZ';
           vars.sortingOrder = 'ASCENDING'
-        } else if (this.query === 'isomers') {
-          vars.filter = { database: this.database, ionFormula: this.annotation.ionFormula };
-          vars.orderBy = 'ORDER_BY_FDR_MSM';
-          vars.sortingOrder = 'DESCENDING'
         } else if (this.query === 'colocalized') {
           const mol = this.annotation.ion;
           const colocalizationAlgo = this.$store.getters.settings.annotationView.colocalizationAlgo;
@@ -127,12 +123,6 @@ export default {
           datasetIds: [this.annotation.dataset.id],
           compoundName: other.sumFormula,
           adduct: other.adduct,
-          fdrLevel: Math.max(other.fdrLevel, this.$store.getters.filter.fdrLevel),
-        };
-      } else if (this.query === 'isomers') {
-        filters = {
-          datasetIds: [this.annotation.dataset.id],
-          ionFormula: other.ionFormula,
           fdrLevel: Math.max(other.fdrLevel, this.$store.getters.filter.fdrLevel),
         };
       } else if (this.query === 'colocalized') {

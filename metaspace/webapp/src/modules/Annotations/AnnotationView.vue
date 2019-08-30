@@ -7,7 +7,11 @@
         <div class="el-collapse-item grey-bg">
           <div class="el-collapse-item__header av-header grey-bg">
 
-            <candidate-molecules-popover placement="bottom" :possibleCompounds="annotation.possibleCompounds">
+            <candidate-molecules-popover
+              placement="bottom"
+              :possibleCompounds="annotation.possibleCompounds"
+              :isomers="showIsomers ? annotation.isomers : []"
+            >
               <span class="sf-big" v-html="formattedMolFormula" />
             </candidate-molecules-popover>
 
@@ -62,8 +66,15 @@
           </component>
         </el-collapse-item>
 
-        <el-collapse-item :title="compoundsTabLabel" name="compounds">
-
+        <el-collapse-item name="compounds">
+          <div slot="title" style="display: flex; align-items: center">
+            <div>Molecules ({{annotation.countPossibleCompounds}})</div>
+            <isomers-alert v-if="showIsomers && annotation.isomers.length > 0" :isomers="annotation.isomers" />
+          </div>
+          <related-molecules v-if="annotation && activeSections.indexOf('compounds') !== -1"
+                             query="isomers"
+                             :annotation="annotation"
+                             :database="this.$store.getters.filter.database" />
         </el-collapse-item>
 
         <el-collapse-item v-if="showColoc" name="colocalized">
@@ -99,18 +110,6 @@
           <component v-if="activeSections.indexOf('adducts') !== -1"
                      :is="metadataDependentComponent('related-annotations')"
                      query="allAdducts"
-                     :annotation="annotation"
-                     :database="this.$store.getters.filter.database"
-                     :acquisitionGeometry="msAcqGeometry"
-                     :image-loader-settings="imageLoaderSettings"
-                     :scaleType="scaleType">
-          </component>
-        </el-collapse-item>
-
-        <el-collapse-item title="Isomers" name="isomers">
-          <component v-if="activeSections.indexOf('isomers') !== -1"
-                     :is="metadataDependentComponent('related-annotations')"
-                     query="isomers"
                      :annotation="annotation"
                      :database="this.$store.getters.filter.database"
                      :acquisitionGeometry="msAcqGeometry"
@@ -177,43 +176,8 @@
    width: 100%;
  }
 
- #compound-list {
-   margin: 0 auto;
-   text-align: left;
-   font-size: 0;
- }
-
- .compound {
-   display: inline-block;
-   vertical-align: top;
-   min-width: 250px;
-   font-size: 1rem;
-   margin: 10px;
-   text-align: center;
- }
-
- .compound-thumbnail {
-   height: 200px;
-   width: 200px;
-   cursor: pointer;
- }
-
- .compound-image {
-   height: 700px;
- }
-
  .el-collapse-item__header {
    text-align: left;
- }
-
- figcaption {
-   font-size: 24px;
-   text-align: center;
- }
-
- figcaption a {
-   font-size: 20px;
-   text-align: center;
  }
 
  .grey-bg {

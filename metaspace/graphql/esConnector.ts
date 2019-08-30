@@ -78,6 +78,7 @@ export interface ESAnnotationSource extends ESDatasetSource {
   msm: number;
   comp_ids: string[];
   comp_names: string[];
+  comps_count_with_isomers?: number;
   isomer_ions: string[];
 
   off_sample_prob?: number;

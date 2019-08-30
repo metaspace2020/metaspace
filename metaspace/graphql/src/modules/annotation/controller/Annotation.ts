@@ -25,6 +25,14 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
     return hit._source.formula;
   },
 
+  countPossibleCompounds(hit, args: {includeIsomers: boolean}) {
+    if (args.includeIsomers) {
+      return hit._source.comps_count_with_isomers || 0;
+    } else {
+      return hit._source.comp_ids.length;
+    }
+  },
+
   possibleCompounds(hit) {
     const ids = hit._source.comp_ids;
     const names = hit._source.comp_names;
