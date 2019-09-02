@@ -16,6 +16,23 @@ type MolecularDatabase {
   hidden: Boolean!  # True if database is deprecated/superseded and would not be useful for most users
 }
 
+type ChemMod {
+  name: String!
+  chemMod: String!
+}
+type NeutralLoss {
+  name: String!
+  neutralLoss: String!
+}
+
+type Adduct {
+  adduct: String!
+  name: String!
+  charge: Int!
+  hidden: Boolean!
+  default: Boolean!
+}
+
 type Query {
   metadataSuggestions(field: String!, query: String!, limit: Int = 10): [String!]!
 
@@ -23,6 +40,10 @@ type Query {
 
   molecularDatabases(hideDeprecated: Boolean=true,
     onlyLastVersion: Boolean=true): [MolecularDatabase!]
+
+  chemModSuggestions: [ChemMod!]!
+
+  neutralLossSuggestions: [NeutralLoss!]!
 
   adductSuggestions: [Adduct!]!
 

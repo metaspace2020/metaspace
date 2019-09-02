@@ -48,14 +48,6 @@ type Compound {
   # TODO: InChi/SMILES, ClassyFire results
 }
 
-type Adduct {
-  adduct: String!
-  name: String!
-  charge: Int!
-  hidden: Boolean!
-  default: Boolean!
-}
-
 type Spectrum {
   mzs: [Float!]!
   intensities: [Float!]!
