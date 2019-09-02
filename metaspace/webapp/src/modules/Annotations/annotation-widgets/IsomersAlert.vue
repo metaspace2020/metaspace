@@ -1,7 +1,8 @@
 <template>
   <el-popover trigger="hover" v-if="isomers.length > 0" class="popover">
     <div>
-      <p>Isomeric annotations:</p>
+      <p v-if="isomers.length === 1">An isomeric ion was annotated:</p>
+      <p v-else>Isomeric annotations were found:</p>
       <ul>
         <li v-for="isomer in isomers" v-html="renderMolFormulaHtml(isomer.ion)" />
       </ul>

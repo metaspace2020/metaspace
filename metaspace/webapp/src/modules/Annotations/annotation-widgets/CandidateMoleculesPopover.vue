@@ -11,8 +11,8 @@
       <div v-if="isomers && isomers.length > 0" class="isomer-warning">
         <div class="isomer-warning-icon" />
         <div>
-          <span v-if="isomers.length == 1">An isomeric ion was also annotated.</span>
-          <span v-else>{{isomers.length}} isomeric ions were also annotated.</span>
+          <span v-if="isomers.length == 1">An isomeric ion was annotated.</span>
+          <span v-else>{{isomers.length}} isomeric ions were annotated.</span>
           <br/>
           <span> Check the <b>Molecules</b> panel for more candidates.</span>
         </div>

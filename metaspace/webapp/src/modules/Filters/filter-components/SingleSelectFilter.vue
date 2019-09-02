@@ -9,7 +9,7 @@
     </el-select>
 
     <span slot="show" class="tf-value-span">
-      <span v-if="value != null && (allowEmptyString || value !== '')">{{formatValue(value)}}</span>
+      <span v-if="value != null">{{formatValue(value)}}</span>
       <span v-else>
         (any)
       </span>
@@ -47,8 +47,6 @@
    removable!: boolean;
    @Prop({type: Boolean, default: true})
    filterable!: boolean;
-   @Prop({type: Boolean, default: false})
-   allowEmptyString!: boolean;
 
    onChange(val: any) {
      this.$emit('change', val);

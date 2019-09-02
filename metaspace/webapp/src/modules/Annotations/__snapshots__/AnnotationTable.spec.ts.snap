@@ -95,12 +95,14 @@ exports[`AnnotationTable should match snapshot 1`] = `
               <div class="cell">
                 <mock-el-popover trigger="hover" placement="right">
                   <div slot-key="default">
-                    <div>Candidate molecules (1):
+                    <div><span>Candidate molecules (1):</span>
                       <ul>
                         <li>
                           C.I. Food Red 6
                         </li>
+                        <!---->
                       </ul>
+                      <!---->
                     </div>
                   </div>
                   <div slot-key="reference">
