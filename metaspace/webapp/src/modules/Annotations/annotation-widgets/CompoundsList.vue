@@ -36,6 +36,9 @@
                 </a>
               </span>
     </div>
+    <div v-if="compounds.length === 0" class="empty-message">
+      This database does not contain molecule information.
+    </div>
   </div>
 </template>
 <script>
@@ -63,7 +66,6 @@
   .compound-list {
     margin: 0 auto;
     text-align: left;
-    font-size: 0;
   }
 
   .compound {
@@ -95,4 +97,9 @@
     text-align: center;
   }
 
+  .empty-message {
+    color: #909399;
+    text-align: center;
+    padding: 100px 50px;
+  }
 </style>
