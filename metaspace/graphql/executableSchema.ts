@@ -1,5 +1,5 @@
 import {
-  addMockFunctionsToSchema,
+  addMockFunctionsToSchema, IResolvers,
   makeExecutableSchema,
 } from 'graphql-tools';
 import {maskErrors} from 'graphql-errors';
@@ -11,7 +11,7 @@ import {Resolvers as SystemResolvers} from './src/modules/system/controller';
 import {Resolvers as ProjectResolvers} from './src/modules/project/controller';
 import {Resolvers as DatasetResolvers} from './src/modules/dataset/controller';
 import {Resolvers as AnnotationResolvers} from './src/modules/annotation/controller';
-import * as Resolvers from './resolvers';
+import {Resolvers as LookupsResolvers} from './src/modules/lookups/controller';
 import {mergedSchemas} from './schema';
 import addReadOnlyInterceptorToSchema from './src/modules/system/addReadOnlyInterceptorToSchema';
 import {Context} from './src/context';
@@ -21,13 +21,13 @@ export const makeNewExecutableSchema = () => {
   return makeExecutableSchema<Context>({
     typeDefs: mergedSchemas,
     resolvers: [
-      Resolvers,
       UserResolvers,
       GroupResolvers,
       ProjectResolvers,
       SystemResolvers,
       DatasetResolvers,
       AnnotationResolvers,
+      LookupsResolvers,
     ],
   });
 };
