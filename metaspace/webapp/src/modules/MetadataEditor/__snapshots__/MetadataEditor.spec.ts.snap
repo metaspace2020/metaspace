@@ -84,7 +84,30 @@ exports[`MetadataEditor should match snapshot 1`] = `
                     </span>
                   </label>
                   <div class="el-form-item__content">
-                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="Species" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
+                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="Species" trigger-on-focus="true" fetch-suggestions="function debounced() {
+        var time = now(),
+            isInvoking = shouldInvoke(time);
+
+        lastArgs = arguments;
+        lastThis = this;
+        lastCallTime = time;
+
+        if (isInvoking) {
+          if (timerId === undefined) {
+            return leadingEdge(lastCallTime);
+          }
+          if (maxing) {
+            // Handle invocations in a tight loop.
+            clearTimeout(timerId);
+            timerId = setTimeout(timerExpired, wait);
+            return invokeFunc(lastCallTime);
+          }
+        }
+        if (timerId === undefined) {
+          timerId = setTimeout(timerExpired, wait);
+        }
+        return result;
+      }" class="md-ac"></mock-el-autocomplete>
                     <!---->
                   </div>
                 </div>
@@ -96,7 +119,30 @@ exports[`MetadataEditor should match snapshot 1`] = `
                     </span>
                   </label>
                   <div class="el-form-item__content">
-                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="Organ or organism part" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
+                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="Organ or organism part" trigger-on-focus="true" fetch-suggestions="function debounced() {
+        var time = now(),
+            isInvoking = shouldInvoke(time);
+
+        lastArgs = arguments;
+        lastThis = this;
+        lastCallTime = time;
+
+        if (isInvoking) {
+          if (timerId === undefined) {
+            return leadingEdge(lastCallTime);
+          }
+          if (maxing) {
+            // Handle invocations in a tight loop.
+            clearTimeout(timerId);
+            timerId = setTimeout(timerExpired, wait);
+            return invokeFunc(lastCallTime);
+          }
+        }
+        if (timerId === undefined) {
+          timerId = setTimeout(timerExpired, wait);
+        }
+        return result;
+      }" class="md-ac"></mock-el-autocomplete>
                     <!---->
                   </div>
                 </div>
@@ -108,7 +154,30 @@ exports[`MetadataEditor should match snapshot 1`] = `
                     </span>
                   </label>
                   <div class="el-form-item__content">
-                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="E.g. wildtype, diseased" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
+                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="E.g. wildtype, diseased" trigger-on-focus="true" fetch-suggestions="function debounced() {
+        var time = now(),
+            isInvoking = shouldInvoke(time);
+
+        lastArgs = arguments;
+        lastThis = this;
+        lastCallTime = time;
+
+        if (isInvoking) {
+          if (timerId === undefined) {
+            return leadingEdge(lastCallTime);
+          }
+          if (maxing) {
+            // Handle invocations in a tight loop.
+            clearTimeout(timerId);
+            timerId = setTimeout(timerExpired, wait);
+            return invokeFunc(lastCallTime);
+          }
+        }
+        if (timerId === undefined) {
+          timerId = setTimeout(timerExpired, wait);
+        }
+        return result;
+      }" class="md-ac"></mock-el-autocomplete>
                     <!---->
                   </div>
                 </div>
@@ -121,7 +190,30 @@ exports[`MetadataEditor should match snapshot 1`] = `
                     </span>
                   </label>
                   <div class="el-form-item__content">
-                    <mock-el-autocomplete popper-class="" value="" placeholder="E.g. intervention, treatment" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
+                    <mock-el-autocomplete popper-class="" value="" placeholder="E.g. intervention, treatment" trigger-on-focus="true" fetch-suggestions="function debounced() {
+        var time = now(),
+            isInvoking = shouldInvoke(time);
+
+        lastArgs = arguments;
+        lastThis = this;
+        lastCallTime = time;
+
+        if (isInvoking) {
+          if (timerId === undefined) {
+            return leadingEdge(lastCallTime);
+          }
+          if (maxing) {
+            // Handle invocations in a tight loop.
+            clearTimeout(timerId);
+            timerId = setTimeout(timerExpired, wait);
+            return invokeFunc(lastCallTime);
+          }
+        }
+        if (timerId === undefined) {
+          timerId = setTimeout(timerExpired, wait);
+        }
+        return result;
+      }" class="md-ac"></mock-el-autocomplete>
                     <!---->
                   </div>
                 </div>
@@ -147,7 +239,30 @@ exports[`MetadataEditor should match snapshot 1`] = `
                     </span>
                   </label>
                   <div class="el-form-item__content">
-                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="Preservation method" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
+                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="Preservation method" trigger-on-focus="true" fetch-suggestions="function debounced() {
+        var time = now(),
+            isInvoking = shouldInvoke(time);
+
+        lastArgs = arguments;
+        lastThis = this;
+        lastCallTime = time;
+
+        if (isInvoking) {
+          if (timerId === undefined) {
+            return leadingEdge(lastCallTime);
+          }
+          if (maxing) {
+            // Handle invocations in a tight loop.
+            clearTimeout(timerId);
+            timerId = setTimeout(timerExpired, wait);
+            return invokeFunc(lastCallTime);
+          }
+        }
+        if (timerId === undefined) {
+          timerId = setTimeout(timerExpired, wait);
+        }
+        return result;
+      }" class="md-ac"></mock-el-autocomplete>
                     <!---->
                   </div>
                 </div>
@@ -159,7 +274,30 @@ exports[`MetadataEditor should match snapshot 1`] = `
                     </span>
                   </label>
                   <div class="el-form-item__content">
-                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="E.g. chemical modification" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
+                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="E.g. chemical modification" trigger-on-focus="true" fetch-suggestions="function debounced() {
+        var time = now(),
+            isInvoking = shouldInvoke(time);
+
+        lastArgs = arguments;
+        lastThis = this;
+        lastCallTime = time;
+
+        if (isInvoking) {
+          if (timerId === undefined) {
+            return leadingEdge(lastCallTime);
+          }
+          if (maxing) {
+            // Handle invocations in a tight loop.
+            clearTimeout(timerId);
+            timerId = setTimeout(timerExpired, wait);
+            return invokeFunc(lastCallTime);
+          }
+        }
+        if (timerId === undefined) {
+          timerId = setTimeout(timerExpired, wait);
+        }
+        return result;
+      }" class="md-ac"></mock-el-autocomplete>
                     <!---->
                   </div>
                 </div>
@@ -171,7 +309,30 @@ exports[`MetadataEditor should match snapshot 1`] = `
                     </span>
                   </label>
                   <div class="el-form-item__content">
-                    <mock-el-autocomplete popper-class="" value="none" required="true" placeholder="MALDI matrix, if used" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
+                    <mock-el-autocomplete popper-class="" value="none" required="true" placeholder="MALDI matrix, if used" trigger-on-focus="true" fetch-suggestions="function debounced() {
+        var time = now(),
+            isInvoking = shouldInvoke(time);
+
+        lastArgs = arguments;
+        lastThis = this;
+        lastCallTime = time;
+
+        if (isInvoking) {
+          if (timerId === undefined) {
+            return leadingEdge(lastCallTime);
+          }
+          if (maxing) {
+            // Handle invocations in a tight loop.
+            clearTimeout(timerId);
+            timerId = setTimeout(timerExpired, wait);
+            return invokeFunc(lastCallTime);
+          }
+        }
+        if (timerId === undefined) {
+          timerId = setTimeout(timerExpired, wait);
+        }
+        return result;
+      }" class="md-ac"></mock-el-autocomplete>
                     <!---->
                   </div>
                 </div>
@@ -183,7 +344,30 @@ exports[`MetadataEditor should match snapshot 1`] = `
                     </span>
                   </label>
                   <div class="el-form-item__content">
-                    <mock-el-autocomplete popper-class="" value="none" required="true" placeholder="Method of application, if used" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
+                    <mock-el-autocomplete popper-class="" value="none" required="true" placeholder="Method of application, if used" trigger-on-focus="true" fetch-suggestions="function debounced() {
+        var time = now(),
+            isInvoking = shouldInvoke(time);
+
+        lastArgs = arguments;
+        lastThis = this;
+        lastCallTime = time;
+
+        if (isInvoking) {
+          if (timerId === undefined) {
+            return leadingEdge(lastCallTime);
+          }
+          if (maxing) {
+            // Handle invocations in a tight loop.
+            clearTimeout(timerId);
+            timerId = setTimeout(timerExpired, wait);
+            return invokeFunc(lastCallTime);
+          }
+        }
+        if (timerId === undefined) {
+          timerId = setTimeout(timerExpired, wait);
+        }
+        return result;
+      }" class="md-ac"></mock-el-autocomplete>
                     <!---->
                   </div>
                 </div>
@@ -196,7 +380,30 @@ exports[`MetadataEditor should match snapshot 1`] = `
                     </span>
                   </label>
                   <div class="el-form-item__content">
-                    <mock-el-autocomplete popper-class="" value="none" placeholder="Solvent used e.g. for DESI or MALDI matrix" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
+                    <mock-el-autocomplete popper-class="" value="none" placeholder="Solvent used e.g. for DESI or MALDI matrix" trigger-on-focus="true" fetch-suggestions="function debounced() {
+        var time = now(),
+            isInvoking = shouldInvoke(time);
+
+        lastArgs = arguments;
+        lastThis = this;
+        lastCallTime = time;
+
+        if (isInvoking) {
+          if (timerId === undefined) {
+            return leadingEdge(lastCallTime);
+          }
+          if (maxing) {
+            // Handle invocations in a tight loop.
+            clearTimeout(timerId);
+            timerId = setTimeout(timerExpired, wait);
+            return invokeFunc(lastCallTime);
+          }
+        }
+        if (timerId === undefined) {
+          timerId = setTimeout(timerExpired, wait);
+        }
+        return result;
+      }" class="md-ac"></mock-el-autocomplete>
                     <!---->
                   </div>
                 </div>
@@ -244,7 +451,30 @@ exports[`MetadataEditor should match snapshot 1`] = `
                     </span>
                   </label>
                   <div class="el-form-item__content">
-                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="E.g. MALDI, DESI" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
+                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="E.g. MALDI, DESI" trigger-on-focus="true" fetch-suggestions="function debounced() {
+        var time = now(),
+            isInvoking = shouldInvoke(time);
+
+        lastArgs = arguments;
+        lastThis = this;
+        lastCallTime = time;
+
+        if (isInvoking) {
+          if (timerId === undefined) {
+            return leadingEdge(lastCallTime);
+          }
+          if (maxing) {
+            // Handle invocations in a tight loop.
+            clearTimeout(timerId);
+            timerId = setTimeout(timerExpired, wait);
+            return invokeFunc(lastCallTime);
+          }
+        }
+        if (timerId === undefined) {
+          timerId = setTimeout(timerExpired, wait);
+        }
+        return result;
+      }" class="md-ac"></mock-el-autocomplete>
                     <!---->
                   </div>
                 </div>
@@ -256,7 +486,30 @@ exports[`MetadataEditor should match snapshot 1`] = `
                     </span>
                   </label>
                   <div class="el-form-item__content">
-                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="E.g. FTICR, Orbitrap" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
+                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="E.g. FTICR, Orbitrap" trigger-on-focus="true" fetch-suggestions="function debounced() {
+        var time = now(),
+            isInvoking = shouldInvoke(time);
+
+        lastArgs = arguments;
+        lastThis = this;
+        lastCallTime = time;
+
+        if (isInvoking) {
+          if (timerId === undefined) {
+            return leadingEdge(lastCallTime);
+          }
+          if (maxing) {
+            // Handle invocations in a tight loop.
+            clearTimeout(timerId);
+            timerId = setTimeout(timerExpired, wait);
+            return invokeFunc(lastCallTime);
+          }
+        }
+        if (timerId === undefined) {
+          timerId = setTimeout(timerExpired, wait);
+        }
+        return result;
+      }" class="md-ac"></mock-el-autocomplete>
                     <!---->
                   </div>
                 </div>
@@ -282,6 +535,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                                 <!---->
                                 <!---->
                                 <!---->
+                                <!---->
                               </div>
                             </div>
                             <div class="subfield-label">m/z</div>
@@ -300,6 +554,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                               <div class="el-input el-input--medium">
                                 <!---->
                                 <input type="text" autocomplete="off" max="Infinity" min="-Infinity" class="el-input__inner" role="spinbutton" aria-valuemax="Infinity" aria-valuemin="-Infinity" aria-valuenow="140000" aria-disabled="false">
+                                <!---->
                                 <!---->
                                 <!---->
                                 <!---->
@@ -337,6 +592,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                                 <!---->
                                 <!---->
                                 <!---->
+                                <!---->
                               </div>
                             </div>
                             <div class="subfield-label">horizontal</div>
@@ -355,6 +611,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                               <div class="el-input el-input--medium">
                                 <!---->
                                 <input type="text" autocomplete="off" max="Infinity" min="-Infinity" class="el-input__inner" role="spinbutton" aria-valuemax="Infinity" aria-valuemin="-Infinity" aria-valuenow="0" aria-disabled="false">
+                                <!---->
                                 <!---->
                                 <!---->
                                 <!---->
@@ -420,6 +677,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                       <!---->
                       <!---->
                       <!---->
+                      <!---->
                     </div>
                     <!---->
                   </div>
@@ -427,8 +685,8 @@ exports[`MetadataEditor should match snapshot 1`] = `
                 <div class="el-form-item isPublic">
                   <!---->
                   <div class="el-form-item__content">
-                    <label role="checkbox" aria-checked="true" class="el-checkbox is-checked"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
-                      <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
+                    <label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
+                      <input type="checkbox" aria-hidden="false" class="el-checkbox__original" value="">
                       </span><span class="el-checkbox__label">Allow other users to see this project<!----></span></label>
                     <!---->
                   </div>
@@ -442,8 +700,8 @@ exports[`MetadataEditor should match snapshot 1`] = `
               <div>
                 <div class="dataset-checkbox-list">
                   <div>
-                    <label role="checkbox" class="el-checkbox is-checked" aria-checked="true"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
-                      <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
+                    <label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
+                      <input type="checkbox" aria-hidden="false" class="el-checkbox__original" value="">
                       </span><span class="el-checkbox__label">
         allDatasets.0.name
         <span class="reset-color">(Submitted Invalid Date at Invalid Date)</span>
@@ -452,8 +710,8 @@ exports[`MetadataEditor should match snapshot 1`] = `
                     </label>
                   </div>
                   <div>
-                    <label role="checkbox" class="el-checkbox is-checked" aria-checked="true"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
-                      <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
+                    <label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
+                      <input type="checkbox" aria-hidden="false" class="el-checkbox__original" value="">
                       </span><span class="el-checkbox__label">
         allDatasets.1.name
         <span class="reset-color">(Submitted Invalid Date at Invalid Date)</span>
@@ -495,6 +753,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                       <div class="el-input el-input--medium is-disabled">
                         <!---->
                         <input type="text" disabled="disabled" autocomplete="off" required="required" class="el-input__inner">
+                        <!---->
                         <!---->
                         <!---->
                         <!---->
@@ -734,6 +993,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                         <!---->
                         <!---->
                         <!---->
+                        <!---->
                       </div>
                       <!---->
                     </div>
@@ -765,7 +1025,8 @@ exports[`MetadataEditor should match snapshot 1`] = `
                   </label>
                   <div class="el-form-item__content">
                     <div class="el-textarea el-input--medium">
-                      <textarea class="el-textarea__inner" style="min-height: -6px; height: -20px;"></textarea>
+                      <textarea autocomplete="off" class="el-textarea__inner" style="min-height: -6px; height: -20px;"></textarea>
+                      <!---->
                     </div>
                     <!---->
                   </div>

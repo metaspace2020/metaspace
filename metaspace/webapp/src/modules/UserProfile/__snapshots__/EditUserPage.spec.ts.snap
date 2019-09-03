@@ -7,8 +7,8 @@ exports[`EditUserPage should match snapshot 1`] = `
     </p>
     <p>Please select whether you would like to delete all your datasets or keep them within METASPACE accessible by the group members:
     </p>
-    <label role="checkbox" class="el-checkbox" style="margin: 10px 20px;"><span aria-checked="mixed" class="el-checkbox__input"><span class="el-checkbox__inner"></span>
-      <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
+    <label class="el-checkbox" style="margin: 10px 20px;"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span>
+      <input type="checkbox" aria-hidden="false" class="el-checkbox__original" value="">
       </span><span class="el-checkbox__label">
       Delete datasets that I have submitted
     <!----></span></label>
@@ -52,6 +52,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                   <!---->
                   <!---->
                   <!---->
+                  <!---->
                 </div>
                 <!---->
               </div>
@@ -64,6 +65,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                 <div class="el-input">
                   <!---->
                   <input type="text" autocomplete="off" name="email" class="el-input__inner">
+                  <!---->
                   <!---->
                   <!---->
                   <!---->
@@ -264,7 +266,7 @@ exports[`EditUserPage should match snapshot 1`] = `
       </div>
       <div>
         <p>Primary group:</p>
-        <mock-el-select placeholder="Select" style="padding-left: 15px; width: 400px;" mock-v-loading="false">
+        <mock-el-select placeholder="Select" value="DDD" style="padding-left: 15px; width: 400px;" mock-v-loading="false">
           <mock-el-option label="Group A" value="AAA"></mock-el-option>
           <mock-el-option label="Group B" value="BBB"></mock-el-option>
           <mock-el-option label="Group C" value="CCC"></mock-el-option>
@@ -288,6 +290,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                       <!---->
                       <!---->
                       <!---->
+                      <!---->
                     </div>
                     <!---->
                   </div>
@@ -295,8 +298,8 @@ exports[`EditUserPage should match snapshot 1`] = `
                 <div class="el-form-item isPublic">
                   <!---->
                   <div class="el-form-item__content">
-                    <label role="checkbox" aria-checked="true" class="el-checkbox is-checked"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
-                      <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
+                    <label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
+                      <input type="checkbox" aria-hidden="false" class="el-checkbox__original" value="">
                       </span><span class="el-checkbox__label">Allow other users to see this project<!----></span></label>
                     <!---->
                   </div>
@@ -310,8 +313,8 @@ exports[`EditUserPage should match snapshot 1`] = `
               <div>
                 <div class="dataset-checkbox-list">
                   <div>
-                    <label role="checkbox" class="el-checkbox is-checked" aria-checked="true"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
-                      <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
+                    <label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
+                      <input type="checkbox" aria-hidden="false" class="el-checkbox__original" value="">
                       </span><span class="el-checkbox__label">
         allDatasets.0.name
         <span class="reset-color">(Submitted Invalid Date at Invalid Date)</span>
@@ -320,8 +323,8 @@ exports[`EditUserPage should match snapshot 1`] = `
                     </label>
                   </div>
                   <div>
-                    <label role="checkbox" class="el-checkbox is-checked" aria-checked="true"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
-                      <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
+                    <label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
+                      <input type="checkbox" aria-hidden="false" class="el-checkbox__original" value="">
                       </span><span class="el-checkbox__label">
         allDatasets.1.name
         <span class="reset-color">(Submitted Invalid Date at Invalid Date)</span>

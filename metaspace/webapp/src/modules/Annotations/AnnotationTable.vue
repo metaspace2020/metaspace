@@ -713,8 +713,11 @@
    padding: 0 10px !important;
  }
 
- .el-table__empty-block {
+ #annot-table .el-table__empty-block {
    min-height: 300px;
+ }
+ #annot-table .el-table__empty-text {
+   line-height: normal;
  }
 
  #annot-table > .el-loading-mask {
