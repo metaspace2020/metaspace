@@ -43,6 +43,10 @@ export interface DatasetUserSource {
   email: string;
   scopeRole: ScopeRole;
 }
+export interface AnalyzerSource {
+  type: string;
+  rp: { mz: number, Resolving_Power: number };
+}
 
 // Utility to extract the type of the `args` field from a query/mutation in binding.ts
 // Usage: customField(source, args: ArgsFromBinding<CustomType['customField']>)

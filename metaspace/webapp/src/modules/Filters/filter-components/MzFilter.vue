@@ -9,7 +9,7 @@
 
     <span class="tf-value-suffix">± {{ precision }}</span>
 
-    <div class="tf-remove el-icon-circle-close"
+    <div class="tf-remove el-icon-error"
          v-if="removable"
          @click="destroy"></div>
   </div>

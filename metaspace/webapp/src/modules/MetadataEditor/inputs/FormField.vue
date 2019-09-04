@@ -96,6 +96,7 @@
       :error="typeof error !== 'string' ? error : null"
       :required="required"
       :fetchSuggestions="fetchSuggestions"
+      :debounce="0"
       v-bind="$attrs"
     />
 
@@ -132,6 +133,7 @@
   import { Component, Prop } from 'vue-property-decorator';
   import { FetchSuggestions, FetchSuggestionsCallback } from 'element-ui/types/autocomplete';
   import CustomNumberInput from './CustomNumberInput.vue';
+  import {throttle} from 'lodash-es';
 
   @Component({
     inheritAttrs: false,
@@ -166,6 +168,14 @@
     fetchSuggestions!: FetchSuggestions;
 
     wideAutocomplete = false;
+
+    created() {
+      // WORKAROUND: Currently there's a delay that causes the autocomplete box to stutter when opening on focus.
+      // Fix PR: https://github.com/ElemeFE/element/pull/17302
+      // The current workaround is to disable debouncing on the component and instead use throttle here so that
+      // the first call happens without delay
+      this.fetchSuggestionsAndTestWidth = throttle(this.fetchSuggestionsAndTestWidth);
+    }
 
     get optionsAreStrings() {
       return this.options && this.options.length > 0 && typeof this.options[0] === 'string';

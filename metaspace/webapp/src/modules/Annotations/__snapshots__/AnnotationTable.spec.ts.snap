@@ -158,9 +158,10 @@ exports[`AnnotationTable should match snapshot 1`] = `
         </ul>
         <button type="button" disabled="disabled" class="btn-next">
           <i class="el-icon el-icon-arrow-right"></i>
-        </button><span class="el-pagination__sizes"><div class="el-select el-select--mini"><!----><div class="el-input el-input--mini el-input--suffix"><!----><input type="text" readonly="readonly" autocomplete="off" placeholder="请选择" class="el-input__inner"><!----><span class="el-input__suffix"><span class="el-input__suffix-inner"><i class="el-select__caret el-input__icon el-icon-arrow-up"></i><!----></span>
+        </button><span class="el-pagination__sizes"><div class="el-select el-select--mini"><!----><div class="el-input el-input--mini el-input--suffix"><!----><input type="text" readonly="readonly" autocomplete="off" placeholder="请选择" class="el-input__inner"><!----><span class="el-input__suffix"><span class="el-input__suffix-inner"><i class="el-select__caret el-input__icon el-icon-arrow-up"></i><!----><!----><!----><!----><!----></span>
         <!---->
         </span>
+        <!---->
         <!---->
       </div>
       <div class="el-select-dropdown el-popper" style="display: none;">
