@@ -6,8 +6,8 @@
   "private": true,
   "scripts": {
     "dev": "cross-env NODE_ENV=development node --max_old_space_size=4096 server.js",
-    "build": "cross-env NODE_ENV=production webpack --progress --hide-modules",
-    "build-ci": "cross-env NODE_ENV=production webpack --hide-modules",
+    "build": "yarn run deref-schema && cross-env NODE_ENV=production webpack --progress --hide-modules",
+    "build-ci": "yarn run deref-schema && cross-env NODE_ENV=production webpack --hide-modules",
     "test": "yarn run generate-local-graphql-schema && cross-env NODE_ENV=test jest",
     "test-ci": "cross-env NODE_ENV=test jest",
     "coverage": "cross-env NODE_ENV=test jest --coverage",
