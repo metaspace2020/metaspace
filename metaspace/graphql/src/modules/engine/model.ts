@@ -1,12 +1,23 @@
-import {Column, Entity, JoinColumn, ManyToOne, PrimaryColumn} from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryColumn,
+  PrimaryGeneratedColumn,
+  Unique,
+} from 'typeorm';
 import {MomentValueTransformer} from '../../utils/MomentValueTransformer';
 
 export type DatasetStatus = 'QUEUED' | 'ANNOTATING' | 'FINISHED' | 'FAILED';
 
-@Entity({schema: 'public', name: 'dataset', synchronize: false})
+@Entity({schema: 'public', name: 'dataset'})
 export class EngineDataset {
   @PrimaryColumn({ type: 'text' })
   id: string;
+  @Index('ind_dataset_name')
   @Column({ type: 'text', nullable: true })
   name: string | null;
   @Column({ type: 'text', nullable: true })
@@ -21,7 +32,7 @@ export class EngineDataset {
   status: DatasetStatus | null;
   @Column({ type: 'text', nullable: true })
   opticalImage: string | null;
-  @Column({ type: 'float', array: true, nullable: true })
+  @Column({ type: 'double precision', array: true, nullable: true })
   transform: number[] | null;
   @Column({ type: 'boolean', default: true })
   is_public: boolean;
@@ -34,15 +45,18 @@ export class EngineDataset {
   @Column({ type: 'text', nullable: true })
   ion_thumbnail: string | null;
 
-  opticalImages: EngineOpticalImage[]
+  @OneToMany(type => OpticalImage, opticalImage => opticalImage.dataset)
+  opticalImages: OpticalImage[];
+
+  @OneToMany(type => Job, job => job.dataset)
+  jobs: Job[];
 }
 
-@Entity({schema: 'public', name: 'optical_image', synchronize: false})
-export class EngineOpticalImage {
+@Entity({schema: 'public'})
+export class OpticalImage {
   @PrimaryColumn({ type: 'text' })
   id: string;
-  @ManyToOne(type => EngineDataset, dataset => dataset.opticalImages)
-  @JoinColumn({ name: 'ds_id' })
+  @Column({ name: 'ds_id' })
   datasetId: string;
   @Column({ type: 'text' })
   type: string;
@@ -52,12 +66,93 @@ export class EngineOpticalImage {
   width: number;
   @Column({ type: 'int' })
   height: number;
-  @Column({ type: 'real', array: true })
+  @Column({ type: 'real', array: true, nullable: true })
   transform: number[][];
+
+
+  @ManyToOne(type => EngineDataset, dataset => dataset.opticalImages, {onDelete: 'CASCADE'})
+  @JoinColumn({ name: 'ds_id' })
+  dataset: EngineDataset;
 }
+
+@Entity({schema: 'public'})
+export class Job {
+  @PrimaryGeneratedColumn()
+  id: number;
+  @Column({ type: 'int', nullable: true })
+  dbId: number | null;
+  @Column({ name: 'ds_id', nullable: true })
+  datasetId: string | null;
+  @Column({ type: 'text', nullable: true })
+  status: DatasetStatus | null;
+  @Column({ type: 'timestamp', nullable: true })
+  start: number;
+  @Column({ type: 'timestamp', nullable: true })
+  finish: number;
+
+  @ManyToOne(type => EngineDataset, dataset => dataset.jobs, {onDelete: 'CASCADE'})
+  @JoinColumn({ name: 'ds_id' })
+  dataset: EngineDataset;
+  @OneToMany(type => Annotation, annotation => annotation.job)
+  annotations: Annotation[];
+}
+
+interface AnnotationStats {
+  chaos: number;
+  spatial: number;
+  spectral: number;
+  msm: number;
+  total_iso_ints: number[];
+  min_iso_ints: number[];
+  max_iso_ints: number[];
+}
+
+type OffSampleLabel = 'off' | 'on';
+interface AnnotationOffSample {
+  prob: number;
+  label: OffSampleLabel;
+}
+
+@Entity({schema: 'public'})
+@Unique('annotation_annotation_uindex', ['jobId', 'formula', 'chemMod', 'neutralLoss', 'adduct'])
+export class Annotation {
+  @PrimaryGeneratedColumn()
+  id: number;
+  @Index('annotation_job_id_index')
+  @Column({name: 'job_id'})
+  jobId: number;
+  @Column({ type: 'text' })
+  formula: string;
+  @Column({ type: 'text' })
+  chemMod: string;
+  @Column({ type: 'text' })
+  neutralLoss: string;
+  @Column({ type: 'text' })
+  adduct: string;
+  @Column({ type: 'real' })
+  msm: number;
+  @Column({ type: 'real' })
+  fdr: number;
+  @Column({ type: 'json' })
+  stats: AnnotationStats;
+  @Column({ type: 'text', array: true })
+  isoImageIds: string[];
+  @Column({ type: 'json', nullable: true })
+  offSample: AnnotationOffSample | null;
+
+  @ManyToOne(type => Job, job => job.annotations, {onDelete: 'CASCADE'})
+  @JoinColumn({name: 'job_id'})
+  job: Job;
+}
+
+
+
+
 
 
 export const ENGINE_ENTITIES = [
   EngineDataset,
-  EngineOpticalImage,
+  OpticalImage,
+  Job,
+  Annotation,
 ];

@@ -3,7 +3,7 @@ import {dsField} from '../../../../datasetFilters';
 import {DatasetSource, FieldResolversFor} from '../../../bindingTypes';
 import {ProjectSourceRepository} from '../../project/ProjectSourceRepository';
 import {Dataset as DatasetModel} from '../model';
-import {EngineOpticalImage} from '../../engine/model';
+import {OpticalImage as OpticalImageModel} from '../../engine/model';
 import {Dataset, OpticalImage, OpticalImageType} from '../../../binding';
 import {rawOpticalImage} from './Query';
 import getScopeRoleForEsDataset from '../util/getScopeRoleForEsDataset';
@@ -43,7 +43,7 @@ export const thumbnailOpticalImageUrl = async (ctx: Context, datasetId: string) 
 const getOpticalImagesByDsId = async (ctx: Context, id: string): Promise<OpticalImage[]> => {
   const dataloader = ctx.contextCacheGet('getOpticalImagesByDsIdDataLoader', [], () => {
     return new DataLoader(async (datasetIds: string[]): Promise<OpticalImage[][]> => {
-      const rawResults: EngineOpticalImage[] = await ctx.entityManager.query(
+      const rawResults: OpticalImageModel[] = await ctx.entityManager.query(
         'SELECT * from public.optical_image WHERE ds_id = ANY($1)', [datasetIds]);
       const results = rawResults.map(({id, type, ...rest}) => ({
         ...rest,
