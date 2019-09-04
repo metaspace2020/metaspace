@@ -49,6 +49,7 @@
   import {encodeParams, stripFilteringParams} from '../../Filters';
   import {ANNOTATION_SPECIFIC_FILTERS} from '../../Filters/filterSpecs';
   import CompoundsList from './CompoundsList.vue';
+  import config from '../../../config';
 
 export default {
   props: ['query', 'annotation', 'database'],
@@ -78,7 +79,12 @@ export default {
   },
   computed: {
     sortedAnnotations() {
-      return this.annotations && sortBy(this.annotations, a => a.ion === this.annotation.ion ? 0 : 1);
+      const annotations = this.annotations && sortBy(this.annotations, a => a.ion === this.annotation.ion ? 0 : 1);
+      if (!config.features.isomers) {
+        return annotations.slice(0,1);
+      } else {
+        return annotations;
+      }
     }
   },
   methods: {
