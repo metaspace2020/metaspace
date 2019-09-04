@@ -368,11 +368,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     </mock-el-popover>
     <div class="tf-remove el-icon-error"></div>
   </div>
-  <div class="tf-outer" data-test-key="adduct" filterkey="adduct" name="Adduct" optionformatter="function (adduct) {
-      return adduct &amp;&amp; adduct.name;
-    }" valuegetter="function (adduct) {
-      return adduct &amp;&amp; adduct.adduct;
-    }">
+  <div class="tf-outer" data-test-key="adduct" filterkey="adduct" name="Adduct">
     <div class="tf-name">
       Adduct:
       <!---->

@@ -155,8 +155,6 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     levels: ['annotation'],
     initialValue: undefined,
     options: lists => lists.adducts.filter(a => config.features.all_adducts || !a.hidden),
-    optionFormatter: adduct => adduct && adduct.name,
-    valueGetter: adduct => adduct && adduct.adduct,
     isMultiFilter: true
   },
 
