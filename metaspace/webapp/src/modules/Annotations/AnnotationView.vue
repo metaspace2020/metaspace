@@ -118,7 +118,7 @@
           </component>
         </el-collapse-item>
 
-        <el-collapse-item title="Diagnostics" name="scores">
+        <el-collapse-item title="Diagnostics" name="scores" class="tour-diagnostic-tab">
           <component v-if="activeSections.indexOf('scores') !== -1"
                      :is="metadataDependentComponent('diagnostics')"
                      :annotation="annotation"
@@ -145,6 +145,7 @@
 
 <style scoped lang="scss">
   /deep/ .av-header {
+    justify-content: center;
     text-align: center !important;
     cursor: default !important;
     font: 24px 'Roboto', sans-serif;
@@ -176,8 +177,14 @@
    width: 100%;
  }
 
- .el-collapse-item__header {
+ #annot-content /deep/ .el-collapse-item__header {
    text-align: left;
+
+   .el-collapse-item__arrow {
+     // WORKAROUND: A new version of ElementUI changed the position of the arrow in a way that doesn't look good
+     // with our existing components: https://github.com/ElemeFE/element/issues/14142
+     order: -1;
+   }
  }
 
  .grey-bg {

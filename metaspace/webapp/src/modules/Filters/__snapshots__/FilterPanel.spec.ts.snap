@@ -30,7 +30,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
         </div>
       </div>
     </mock-el-popover>
-    <div class="tf-remove el-icon-circle-close"></div>
+    <div class="tf-remove el-icon-error"></div>
   </div>
   <div class="tf-outer" data-test-key="fdrLevel" filterkey="fdrLevel">
     <div class="tf-name">
@@ -98,7 +98,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
         </div>
       </div>
     </mock-el-popover>
-    <div class="tf-remove el-icon-circle-close"></div>
+    <div class="tf-remove el-icon-error"></div>
   </div>
   <div class="tf-outer" data-test-key="project" options="">
     <div class="tf-name">
@@ -124,7 +124,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
         </div>
       </div>
     </mock-el-popover>
-    <div class="tf-remove el-icon-circle-close"></div>
+    <div class="tf-remove el-icon-error"></div>
   </div>
   <div class="tf-outer" data-test-key="submitter" options="">
     <div class="tf-name">
@@ -151,7 +151,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
         </div>
       </div>
     </mock-el-popover>
-    <div class="tf-remove el-icon-circle-close"></div>
+    <div class="tf-remove el-icon-error"></div>
   </div>
   <div class="tf-outer" data-test-key="datasetIds" options="">
     <div class="tf-name">
@@ -177,7 +177,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
         </div>
       </div>
     </mock-el-popover>
-    <div class="tf-remove el-icon-circle-close"></div>
+    <div class="tf-remove el-icon-error"></div>
   </div>
   <div class="tf-outer" data-test-key="minMSM" filterkey="minMSM" options="">
     <div class="tf-name">
@@ -187,7 +187,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       0.5
     </span></span>
     </div>
-    <div class="tf-remove el-icon-circle-close"></div>
+    <div class="tf-remove el-icon-error"></div>
   </div>
   <div class="tf-outer" data-test-key="compoundName" filterkey="compoundName" options="">
     <div class="tf-name">
@@ -197,7 +197,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       C8H20NO6P
     </span></span>
     </div>
-    <div class="tf-remove el-icon-circle-close"></div>
+    <div class="tf-remove el-icon-error"></div>
   </div>
   <div class="tf-outer" data-test-key="database" filterkey="database">
     <div class="tf-name">
@@ -226,7 +226,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       296.0659
     </span></span>
     </div> <span class="tf-value-suffix">± 0.0001</span>
-    <div class="tf-remove el-icon-circle-close"></div>
+    <div class="tf-remove el-icon-error"></div>
   </div>
   <div class="tf-outer" data-test-key="polarity" filterkey="polarity">
     <div class="tf-name">
@@ -246,7 +246,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
         </div>
       </div>
     </mock-el-popover>
-    <div class="tf-remove el-icon-circle-close"></div>
+    <div class="tf-remove el-icon-error"></div>
   </div>
   <div class="tf-outer" data-test-key="organism" filterkey="organism">
     <div class="tf-name">
@@ -266,7 +266,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
         </div>
       </div>
     </mock-el-popover>
-    <div class="tf-remove el-icon-circle-close"></div>
+    <div class="tf-remove el-icon-error"></div>
   </div>
   <div class="tf-outer" data-test-key="organismPart" filterkey="organismPart">
     <div class="tf-name">
@@ -286,7 +286,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
         </div>
       </div>
     </mock-el-popover>
-    <div class="tf-remove el-icon-circle-close"></div>
+    <div class="tf-remove el-icon-error"></div>
   </div>
   <div class="tf-outer" data-test-key="condition" filterkey="condition">
     <div class="tf-name">
@@ -306,7 +306,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
         </div>
       </div>
     </mock-el-popover>
-    <div class="tf-remove el-icon-circle-close"></div>
+    <div class="tf-remove el-icon-error"></div>
   </div>
   <div class="tf-outer" data-test-key="growthConditions" filterkey="growthConditions">
     <div class="tf-name">
@@ -326,7 +326,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
         </div>
       </div>
     </mock-el-popover>
-    <div class="tf-remove el-icon-circle-close"></div>
+    <div class="tf-remove el-icon-error"></div>
   </div>
   <div class="tf-outer" data-test-key="ionisationSource" filterkey="ionisationSource">
     <div class="tf-name">
@@ -346,7 +346,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
         </div>
       </div>
     </mock-el-popover>
-    <div class="tf-remove el-icon-circle-close"></div>
+    <div class="tf-remove el-icon-error"></div>
   </div>
   <div class="tf-outer" data-test-key="maldiMatrix" filterkey="maldiMatrix">
     <div class="tf-name">
@@ -366,7 +366,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
         </div>
       </div>
     </mock-el-popover>
-    <div class="tf-remove el-icon-circle-close"></div>
+    <div class="tf-remove el-icon-error"></div>
   </div>
   <div class="tf-outer" data-test-key="adduct" filterkey="adduct" name="Adduct" optionformatter="function (adduct) {
       return adduct &amp;&amp; adduct.name;
@@ -405,7 +405,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
         </div>
       </div>
     </mock-el-popover>
-    <div class="tf-remove el-icon-circle-close"></div>
+    <div class="tf-remove el-icon-error"></div>
   </div>
 </div>
 `;

@@ -28,7 +28,7 @@
           </el-button>
         </div>
 
-        <i class="el-icon-circle-close ts-close" title="Close"
+        <i class="el-icon-error ts-close" title="Close"
            @click="close"></i>
       </div>
 
