@@ -39,14 +39,14 @@ exports[`DatasetTable should match snapshot 1`] = `
           <input type="radio" tabindex="-1" class="el-radio-button__orig-radio" value="Summary"><span class="el-radio-button__inner">Summary</span></label>
       </div>
       <div role="group" aria-label="checkbox-group" class="el-checkbox-group dataset-status-checkboxes">
-        <label role="checkbox" aria-checked="true" class="el-checkbox cb-started is-checked"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
-          <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="started">
+        <label class="el-checkbox cb-started is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
+          <input type="checkbox" aria-hidden="false" class="el-checkbox__original" value="started">
           </span><span class="el-checkbox__label">Processing (1)<!----></span></label>
-        <label role="checkbox" aria-checked="true" class="el-checkbox cb-queued is-checked"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
-          <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="queued">
+        <label class="el-checkbox cb-queued is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
+          <input type="checkbox" aria-hidden="false" class="el-checkbox__original" value="queued">
           </span><span class="el-checkbox__label">Queued (1)<!----></span></label>
-        <label role="checkbox" aria-checked="true" class="el-checkbox is-checked"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
-          <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="finished">
+        <label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
+          <input type="checkbox" aria-hidden="false" class="el-checkbox__original" value="finished">
           </span><span class="el-checkbox__label">Finished (1)<!----></span></label>
         <!---->
       </div>
@@ -64,23 +64,23 @@ exports[`DatasetTable should match snapshot 1`] = `
         <div class="el-row">
           <div role="tree" class="el-tree" id="metadata-tree">
             <div role="treeitem" tabindex="0" aria-expanded="true" draggable="false" class="el-tree-node is-expanded is-focusable">
-              <div class="el-tree-node__content" style="padding-left: 0px;"><span class="el-tree-node__expand-icon el-icon-caret-right expanded"></span>
+              <div class="el-tree-node__content" style="padding-left: 0px;"><span class="expanded el-tree-node__expand-icon el-icon-caret-right"></span>
                 <!---->
                 <!----><span class="el-tree-node__label">MS analysis</span></div>
               <div role="group" aria-expanded="true" class="el-tree-node__children">
                 <div role="treeitem" tabindex="-1" aria-expanded="true" draggable="false" class="el-tree-node is-expanded is-focusable">
-                  <div class="el-tree-node__content" style="padding-left: 18px;"><span class="el-tree-node__expand-icon el-icon-caret-right expanded"></span>
+                  <div class="el-tree-node__content" style="padding-left: 18px;"><span class="expanded el-tree-node__expand-icon el-icon-caret-right"></span>
                     <!---->
                     <!----><span class="el-tree-node__label">Detector resolving power</span></div>
                   <div role="group" aria-expanded="true" class="el-tree-node__children">
                     <div role="treeitem" tabindex="-1" draggable="false" class="el-tree-node is-focusable">
-                      <div class="el-tree-node__content" style="padding-left: 36px;"><span class="el-tree-node__expand-icon el-icon-caret-right is-leaf"></span>
+                      <div class="el-tree-node__content" style="padding-left: 36px;"><span class="is-leaf el-tree-node__expand-icon el-icon-caret-right"></span>
                         <!---->
                         <!----><span class="el-tree-node__label">mz: 1234</span></div>
                       <!---->
                     </div>
                     <div role="treeitem" tabindex="-1" draggable="false" class="el-tree-node is-focusable">
-                      <div class="el-tree-node__content" style="padding-left: 36px;"><span class="el-tree-node__expand-icon el-icon-caret-right is-leaf"></span>
+                      <div class="el-tree-node__content" style="padding-left: 36px;"><span class="is-leaf el-tree-node__expand-icon el-icon-caret-right"></span>
                         <!---->
                         <!----><span class="el-tree-node__label">Resolving power: 123456</span></div>
                       <!---->
@@ -90,30 +90,30 @@ exports[`DatasetTable should match snapshot 1`] = `
               </div>
             </div>
             <div role="treeitem" tabindex="-1" aria-expanded="true" draggable="false" class="el-tree-node is-expanded is-focusable">
-              <div class="el-tree-node__content" style="padding-left: 0px;"><span class="el-tree-node__expand-icon el-icon-caret-right expanded"></span>
+              <div class="el-tree-node__content" style="padding-left: 0px;"><span class="expanded el-tree-node__expand-icon el-icon-caret-right"></span>
                 <!---->
                 <!----><span class="el-tree-node__label">Data Management</span></div>
               <div role="group" aria-expanded="true" class="el-tree-node__children">
                 <div role="treeitem" tabindex="-1" draggable="false" class="el-tree-node is-focusable">
-                  <div class="el-tree-node__content" style="padding-left: 18px;"><span class="el-tree-node__expand-icon el-icon-caret-right is-leaf"></span>
+                  <div class="el-tree-node__content" style="padding-left: 18px;"><span class="is-leaf el-tree-node__expand-icon el-icon-caret-right"></span>
                     <!---->
                     <!----><span class="el-tree-node__label">Submitter: allDatasets.0.submitter.name</span></div>
                   <!---->
                 </div>
                 <div role="treeitem" tabindex="-1" draggable="false" class="el-tree-node is-focusable">
-                  <div class="el-tree-node__content" style="padding-left: 18px;"><span class="el-tree-node__expand-icon el-icon-caret-right is-leaf"></span>
+                  <div class="el-tree-node__content" style="padding-left: 18px;"><span class="is-leaf el-tree-node__expand-icon el-icon-caret-right"></span>
                     <!---->
                     <!----><span class="el-tree-node__label">Principal Investigator: allDatasets.0.principalInvestigator.name</span></div>
                   <!---->
                 </div>
                 <div role="treeitem" tabindex="-1" draggable="false" class="el-tree-node is-focusable">
-                  <div class="el-tree-node__content" style="padding-left: 18px;"><span class="el-tree-node__expand-icon el-icon-caret-right is-leaf"></span>
+                  <div class="el-tree-node__content" style="padding-left: 18px;"><span class="is-leaf el-tree-node__expand-icon el-icon-caret-right"></span>
                     <!---->
                     <!----><span class="el-tree-node__label">Group: allDatasets.0.group.name</span></div>
                   <!---->
                 </div>
                 <div role="treeitem" tabindex="-1" draggable="false" class="el-tree-node is-focusable">
-                  <div class="el-tree-node__content" style="padding-left: 18px;"><span class="el-tree-node__expand-icon el-icon-caret-right is-leaf"></span>
+                  <div class="el-tree-node__content" style="padding-left: 18px;"><span class="is-leaf el-tree-node__expand-icon el-icon-caret-right"></span>
                     <!---->
                     <!----><span class="el-tree-node__label">Projects: allDatasets.0.projects.0.name, allDatasets.0.projects.1.name</span></div>
                   <!---->
@@ -180,23 +180,23 @@ exports[`DatasetTable should match snapshot 1`] = `
       <div class="el-row">
         <div role="tree" class="el-tree" id="metadata-tree">
           <div role="treeitem" tabindex="0" aria-expanded="true" draggable="false" class="el-tree-node is-expanded is-focusable">
-            <div class="el-tree-node__content" style="padding-left: 0px;"><span class="el-tree-node__expand-icon el-icon-caret-right expanded"></span>
+            <div class="el-tree-node__content" style="padding-left: 0px;"><span class="expanded el-tree-node__expand-icon el-icon-caret-right"></span>
               <!---->
               <!----><span class="el-tree-node__label">MS analysis</span></div>
             <div role="group" aria-expanded="true" class="el-tree-node__children">
               <div role="treeitem" tabindex="-1" aria-expanded="true" draggable="false" class="el-tree-node is-expanded is-focusable">
-                <div class="el-tree-node__content" style="padding-left: 18px;"><span class="el-tree-node__expand-icon el-icon-caret-right expanded"></span>
+                <div class="el-tree-node__content" style="padding-left: 18px;"><span class="expanded el-tree-node__expand-icon el-icon-caret-right"></span>
                   <!---->
                   <!----><span class="el-tree-node__label">Detector resolving power</span></div>
                 <div role="group" aria-expanded="true" class="el-tree-node__children">
                   <div role="treeitem" tabindex="-1" draggable="false" class="el-tree-node is-focusable">
-                    <div class="el-tree-node__content" style="padding-left: 36px;"><span class="el-tree-node__expand-icon el-icon-caret-right is-leaf"></span>
+                    <div class="el-tree-node__content" style="padding-left: 36px;"><span class="is-leaf el-tree-node__expand-icon el-icon-caret-right"></span>
                       <!---->
                       <!----><span class="el-tree-node__label">mz: 1234</span></div>
                     <!---->
                   </div>
                   <div role="treeitem" tabindex="-1" draggable="false" class="el-tree-node is-focusable">
-                    <div class="el-tree-node__content" style="padding-left: 36px;"><span class="el-tree-node__expand-icon el-icon-caret-right is-leaf"></span>
+                    <div class="el-tree-node__content" style="padding-left: 36px;"><span class="is-leaf el-tree-node__expand-icon el-icon-caret-right"></span>
                       <!---->
                       <!----><span class="el-tree-node__label">Resolving power: 123456</span></div>
                     <!---->
@@ -206,30 +206,30 @@ exports[`DatasetTable should match snapshot 1`] = `
             </div>
           </div>
           <div role="treeitem" tabindex="-1" aria-expanded="true" draggable="false" class="el-tree-node is-expanded is-focusable">
-            <div class="el-tree-node__content" style="padding-left: 0px;"><span class="el-tree-node__expand-icon el-icon-caret-right expanded"></span>
+            <div class="el-tree-node__content" style="padding-left: 0px;"><span class="expanded el-tree-node__expand-icon el-icon-caret-right"></span>
               <!---->
               <!----><span class="el-tree-node__label">Data Management</span></div>
             <div role="group" aria-expanded="true" class="el-tree-node__children">
               <div role="treeitem" tabindex="-1" draggable="false" class="el-tree-node is-focusable">
-                <div class="el-tree-node__content" style="padding-left: 18px;"><span class="el-tree-node__expand-icon el-icon-caret-right is-leaf"></span>
+                <div class="el-tree-node__content" style="padding-left: 18px;"><span class="is-leaf el-tree-node__expand-icon el-icon-caret-right"></span>
                   <!---->
                   <!----><span class="el-tree-node__label">Submitter: allDatasets.0.submitter.name</span></div>
                 <!---->
               </div>
               <div role="treeitem" tabindex="-1" draggable="false" class="el-tree-node is-focusable">
-                <div class="el-tree-node__content" style="padding-left: 18px;"><span class="el-tree-node__expand-icon el-icon-caret-right is-leaf"></span>
+                <div class="el-tree-node__content" style="padding-left: 18px;"><span class="is-leaf el-tree-node__expand-icon el-icon-caret-right"></span>
                   <!---->
                   <!----><span class="el-tree-node__label">Principal Investigator: allDatasets.0.principalInvestigator.name</span></div>
                 <!---->
               </div>
               <div role="treeitem" tabindex="-1" draggable="false" class="el-tree-node is-focusable">
-                <div class="el-tree-node__content" style="padding-left: 18px;"><span class="el-tree-node__expand-icon el-icon-caret-right is-leaf"></span>
+                <div class="el-tree-node__content" style="padding-left: 18px;"><span class="is-leaf el-tree-node__expand-icon el-icon-caret-right"></span>
                   <!---->
                   <!----><span class="el-tree-node__label">Group: allDatasets.0.group.name</span></div>
                 <!---->
               </div>
               <div role="treeitem" tabindex="-1" draggable="false" class="el-tree-node is-focusable">
-                <div class="el-tree-node__content" style="padding-left: 18px;"><span class="el-tree-node__expand-icon el-icon-caret-right is-leaf"></span>
+                <div class="el-tree-node__content" style="padding-left: 18px;"><span class="is-leaf el-tree-node__expand-icon el-icon-caret-right"></span>
                   <!---->
                   <!----><span class="el-tree-node__label">Projects: allDatasets.0.projects.0.name, allDatasets.0.projects.1.name</span></div>
                 <!---->
@@ -296,23 +296,23 @@ exports[`DatasetTable should match snapshot 1`] = `
     <div class="el-row">
       <div role="tree" class="el-tree" id="metadata-tree">
         <div role="treeitem" tabindex="0" aria-expanded="true" draggable="false" class="el-tree-node is-expanded is-focusable">
-          <div class="el-tree-node__content" style="padding-left: 0px;"><span class="el-tree-node__expand-icon el-icon-caret-right expanded"></span>
+          <div class="el-tree-node__content" style="padding-left: 0px;"><span class="expanded el-tree-node__expand-icon el-icon-caret-right"></span>
             <!---->
             <!----><span class="el-tree-node__label">MS analysis</span></div>
           <div role="group" aria-expanded="true" class="el-tree-node__children">
             <div role="treeitem" tabindex="-1" aria-expanded="true" draggable="false" class="el-tree-node is-expanded is-focusable">
-              <div class="el-tree-node__content" style="padding-left: 18px;"><span class="el-tree-node__expand-icon el-icon-caret-right expanded"></span>
+              <div class="el-tree-node__content" style="padding-left: 18px;"><span class="expanded el-tree-node__expand-icon el-icon-caret-right"></span>
                 <!---->
                 <!----><span class="el-tree-node__label">Detector resolving power</span></div>
               <div role="group" aria-expanded="true" class="el-tree-node__children">
                 <div role="treeitem" tabindex="-1" draggable="false" class="el-tree-node is-focusable">
-                  <div class="el-tree-node__content" style="padding-left: 36px;"><span class="el-tree-node__expand-icon el-icon-caret-right is-leaf"></span>
+                  <div class="el-tree-node__content" style="padding-left: 36px;"><span class="is-leaf el-tree-node__expand-icon el-icon-caret-right"></span>
                     <!---->
                     <!----><span class="el-tree-node__label">mz: 1234</span></div>
                   <!---->
                 </div>
                 <div role="treeitem" tabindex="-1" draggable="false" class="el-tree-node is-focusable">
-                  <div class="el-tree-node__content" style="padding-left: 36px;"><span class="el-tree-node__expand-icon el-icon-caret-right is-leaf"></span>
+                  <div class="el-tree-node__content" style="padding-left: 36px;"><span class="is-leaf el-tree-node__expand-icon el-icon-caret-right"></span>
                     <!---->
                     <!----><span class="el-tree-node__label">Resolving power: 123456</span></div>
                   <!---->
@@ -322,30 +322,30 @@ exports[`DatasetTable should match snapshot 1`] = `
           </div>
         </div>
         <div role="treeitem" tabindex="-1" aria-expanded="true" draggable="false" class="el-tree-node is-expanded is-focusable">
-          <div class="el-tree-node__content" style="padding-left: 0px;"><span class="el-tree-node__expand-icon el-icon-caret-right expanded"></span>
+          <div class="el-tree-node__content" style="padding-left: 0px;"><span class="expanded el-tree-node__expand-icon el-icon-caret-right"></span>
             <!---->
             <!----><span class="el-tree-node__label">Data Management</span></div>
           <div role="group" aria-expanded="true" class="el-tree-node__children">
             <div role="treeitem" tabindex="-1" draggable="false" class="el-tree-node is-focusable">
-              <div class="el-tree-node__content" style="padding-left: 18px;"><span class="el-tree-node__expand-icon el-icon-caret-right is-leaf"></span>
+              <div class="el-tree-node__content" style="padding-left: 18px;"><span class="is-leaf el-tree-node__expand-icon el-icon-caret-right"></span>
                 <!---->
                 <!----><span class="el-tree-node__label">Submitter: allDatasets.0.submitter.name</span></div>
               <!---->
             </div>
             <div role="treeitem" tabindex="-1" draggable="false" class="el-tree-node is-focusable">
-              <div class="el-tree-node__content" style="padding-left: 18px;"><span class="el-tree-node__expand-icon el-icon-caret-right is-leaf"></span>
+              <div class="el-tree-node__content" style="padding-left: 18px;"><span class="is-leaf el-tree-node__expand-icon el-icon-caret-right"></span>
                 <!---->
                 <!----><span class="el-tree-node__label">Principal Investigator: allDatasets.0.principalInvestigator.name</span></div>
               <!---->
             </div>
             <div role="treeitem" tabindex="-1" draggable="false" class="el-tree-node is-focusable">
-              <div class="el-tree-node__content" style="padding-left: 18px;"><span class="el-tree-node__expand-icon el-icon-caret-right is-leaf"></span>
+              <div class="el-tree-node__content" style="padding-left: 18px;"><span class="is-leaf el-tree-node__expand-icon el-icon-caret-right"></span>
                 <!---->
                 <!----><span class="el-tree-node__label">Group: allDatasets.0.group.name</span></div>
               <!---->
             </div>
             <div role="treeitem" tabindex="-1" draggable="false" class="el-tree-node is-focusable">
-              <div class="el-tree-node__content" style="padding-left: 18px;"><span class="el-tree-node__expand-icon el-icon-caret-right is-leaf"></span>
+              <div class="el-tree-node__content" style="padding-left: 18px;"><span class="is-leaf el-tree-node__expand-icon el-icon-caret-right"></span>
                 <!---->
                 <!----><span class="el-tree-node__label">Projects: allDatasets.0.projects.0.name, allDatasets.0.projects.1.name</span></div>
               <!---->

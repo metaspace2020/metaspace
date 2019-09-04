@@ -9,7 +9,7 @@
            placeholder="enter any keywords"
            :value="value" @input="onChange($event.target.value)">
 
-    <div class="tf-remove el-icon-circle-close"
+    <div class="tf-remove el-icon-error"
          v-if="removable"
          @click="destroy"></div>
   </div>

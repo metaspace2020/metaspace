@@ -23,7 +23,7 @@
     <el-row id="isotope-images-container">
         <el-col :xs="24" :sm="12" :md="12" :lg="6"
                 v-for="(img, idx) in sortedIsotopeImages"
-                :key="idx">
+                :key="annotation.id + idx">
             <div class="small-peak-image">
             {{ img.mz.toFixed(4) }}<br/>
                 <image-loader :src="img.url"
