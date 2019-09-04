@@ -202,7 +202,9 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    def run_bottle(sm_config, logger):
+    def run_bottle(sm_config, _logger):
+        global logger
+        logger = _logger
         logger.info('Starting SM api')
         run(**sm_config['bottle'])
 
