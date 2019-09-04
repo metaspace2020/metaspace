@@ -1,4 +1,5 @@
 import argparse
+import logging
 from copy import deepcopy
 from functools import partial
 
@@ -69,7 +70,7 @@ def _reindex_datasets(logger, ds_ids, db, es_exp):
             logger.error(new_msg, exc_info=True)
 
 
-def reindex_results(sm_config, logger, ds_id, ds_mask, use_inactive_index):
+def reindex_results(sm_config, ds_id, ds_mask, use_inactive_index):
     assert ds_id or ds_mask
 
     set_centroids_cache_enabled(True)
@@ -110,6 +111,7 @@ if __name__ == '__main__':
         '--ds-name', dest='ds_name', default='', help='DS name prefix mask (_all_ for all datasets)'
     )
     args = parser.parse_args()
+    logger = logging.getLogger('engine')
 
     bootstrap_and_run(
         args.config,

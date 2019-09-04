@@ -1,4 +1,5 @@
 import argparse
+import logging
 from functools import partial
 
 from sm.engine.dataset import Dataset
@@ -20,7 +21,7 @@ ORDER BY j.ds_id DESC;
 """
 
 
-def run_off_sample(sm_config, logger, ds_id, sql_where, fix_missing, overwrite_existing):
+def run_off_sample(sm_config, ds_id, sql_where, fix_missing, overwrite_existing):
     assert (
         len([data_source for data_source in [ds_id, sql_where, fix_missing] if data_source]) == 1
     ), "Exactly one data source (ds_id, sql_where, fix_missing) must be specified"
@@ -94,6 +95,7 @@ if __name__ == '__main__':
         help='Run classification for annotations even if they have already been classified',
     )
     args = parser.parse_args()
+    logger = logging.getLogger('engine')
 
     bootstrap_and_run(
         args.config,

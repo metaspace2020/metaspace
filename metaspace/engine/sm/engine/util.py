@@ -167,7 +167,6 @@ def bootstrap_and_run(config_path, func):
     SMConfig.set_path(config_path)
     sm_config = SMConfig.get_conf()
     init_loggers(sm_config['logs'])
-    logger = logging.getLogger('engine')
 
     with ConnectionPool(sm_config['db']):
-        func(sm_config, logger)
+        func(sm_config)
