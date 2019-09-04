@@ -1,21 +1,42 @@
 <template>
   <div class="related-molecules" v-loading="loading">
-    <div v-for="(other, idx) in annotations" :key="other.ion">
-      <component v-if="annotations.length > 1"
-                 :is="other.ion !== annotation.ion ? 'router-link' : 'div'"
-                 :to="other.ion !== annotation.ion ? linkToAnnotation(other) : undefined"
-                 class="ion-link">
-        <h3>
-          {{other.ion === annotation.ion ? 'Selected annotation' : 'Isomeric annotation'}}
-          <span class="ion-formula" v-html="renderMolFormulaHtml(other.ion)" />
-          <span :class="fdrBadgeClass(other)">{{Math.round(other.fdrLevel*100)}}% FDR</span>
-        </h3>
-      </component>
+    <div v-for="(other, idx) in sortedAnnotations" :key="other.ion">
+      <el-divider v-if="sortedAnnotations.length > 1">
+        <div class="ion-heading">
+          <component :is="other.ion !== annotation.ion ? 'router-link' : 'div'"
+                     :to="other.ion !== annotation.ion ? linkToAnnotation(other) : undefined"
+                     class="ion-link">
+            <div>
+              <span v-if="other.ion !== annotation.ion">Isomer:</span>
+              <span class="ion-formula" v-html="renderMolFormulaHtml(other.ion)" />
+            </div>
+
+            <div :class="fdrBadgeClass(other)">{{Math.round(other.fdrLevel*100)}}% FDR</div>
+          </component>
+
+          <el-popover v-if="other.ion !== annotation.ion" trigger="hover" placement="top">
+            <div style="max-width: 500px;">
+              <p>
+                The False Discovery Rate (FDR) for each annotation is calculated among all ions that share the same adduct.
+              </p>
+              <p>
+                It is possible for isomeric annotations to show different FDRs due to having different adducts.
+                In these cases, it is an indicator of certain adducts having a higher or lower probability of
+                incorrectly labelling unknown molecules.
+              </p>
+              <p>
+                The FDR should not be used to decide which isomeric molecule is more likely to be correct.
+              </p>
+            </div>
+            <i slot="reference" class="el-icon-question help-icon" />
+          </el-popover>
+        </div>
+      </el-divider>
 
       <compounds-list :compounds="other.possibleCompounds" />
     </div>
 
-    <p v-if="annotations != null && annotations.length === 0" class="empty-message">
+    <p v-if="sortedAnnotations != null && sortedAnnotations.length === 0" class="empty-message">
       No annotations found.
     </p>
   </div>
@@ -51,9 +72,14 @@ export default {
         return vars;
       },
       update(data) {
-        return sortBy(data.allAnnotations, a => a.ion === this.annotation.ion ? 0 : 1);
+        return data.allAnnotations;
       }
     },
+  },
+  computed: {
+    sortedAnnotations() {
+      return this.annotations && sortBy(this.annotations, a => a.ion === this.annotation.ion ? 0 : 1);
+    }
   },
   methods: {
     renderMolFormulaHtml,
@@ -99,25 +125,30 @@ export default {
 <style scoped lang="scss">
   @import "~element-ui/packages/theme-chalk/src/common/var";
 
+  .ion-heading {
+    display: flex;
+    align-items: center;
+  }
   .ion-link, a.ion-link:link {
-    display: block;
-    margin-left: 10px;
-    color: $--color-text-primary;
+    display: flex;
+    align-items: center;
     text-decoration: none;
+    font-size: 1.2em;
+    color: $--color-text-regular;
 
-    h3 {
-      font-weight: normal;
-
-      .ion-formula {
-        font-weight: bold;
-      }
+    .ion-formula {
+      font-weight: bold;
     }
+  }
+  .help-icon {
+    font-size: 16px;
+    color: $--color-text-regular;
   }
 
   .fdr-badge {
     border-radius: 5px;
-    padding: 5px;
-    margin: 0 10px;
+    padding: 2px 5px;
+    margin: auto 10px;
 
     &.fdr-badge-5 {
       background-color: #c8ffc8;
