@@ -639,62 +639,62 @@
  }
 
  .el-table__body tr.fdr-5 > td.fdr-cell, .fdr-legend.fdr-5, .el-table__body tr.coloc-95 > td.coloc-cell {
-      background-color: #c8ffc8;
-    }
-
-.el-table__body tr.fdr-10 > td.fdr-cell, .fdr-legend.fdr-10, .el-table__body tr.coloc-90 > td.coloc-cell {
-      background-color: #e0ffe0;
-    }
-
-.el-table__body tr.fdr-20 > td.fdr-cell, .fdr-legend.fdr-20, .el-table__body tr.coloc-80 > td.coloc-cell {
-      background-color: #ffe;
-    }
-
- .el-table__body tr.fdr-50 > td.fdr-cell, .fdr-legend.fdr-50, .el-table__body tr.coloc-50 > td.coloc-cell {
-      background-color: #fff5e0;
-    }
-
- .el-table__body tr.fdr-5.current-row > td {
-      background-color: #8f8 !important;
-    }
-
- .el-table__body tr.fdr-10.current-row > td {
-      background-color: #bfb !important;
-    }
-
- .el-table__body tr.fdr-20.current-row > td {
-      background-color: #ffa !important;
-    }
-
- .el-table__body tr.fdr-50.current-row > td {
-      background-color: #ffe5a0 !important;
-    }
-
-  .cell-wrapper {
-     width: 100%;
-     display: flex;
-     justify-content: space-between;
+   background-color: #c8ffc8;
  }
 
-     .cell-span {
-       width: 80%;
-     }
+.el-table__body tr.fdr-10 > td.fdr-cell, .fdr-legend.fdr-10, .el-table__body tr.coloc-90 > td.coloc-cell {
+   background-color: #e0ffe0;
+ }
+
+.el-table__body tr.fdr-20 > td.fdr-cell, .fdr-legend.fdr-20, .el-table__body tr.coloc-80 > td.coloc-cell {
+   background-color: #ffe;
+ }
+
+ .el-table__body tr.fdr-50 > td.fdr-cell, .fdr-legend.fdr-50, .el-table__body tr.coloc-50 > td.coloc-cell {
+   background-color: #fff5e0;
+ }
+
+ .el-table__body tr.fdr-5.current-row > td {
+   background-color: #8f8 !important;
+ }
+
+ .el-table__body tr.fdr-10.current-row > td {
+   background-color: #bfb !important;
+ }
+
+ .el-table__body tr.fdr-20.current-row > td {
+   background-color: #ffa !important;
+ }
+
+ .el-table__body tr.fdr-50.current-row > td {
+   background-color: #ffe5a0 !important;
+ }
+
+ .cell-wrapper {
+   width: 100%;
+   display: flex;
+   justify-content: space-between;
+ }
+
+ .cell-span {
+   width: 80%;
+ }
 
  .cell-wrapper img {
-       /*
-          don't use display:none because of a TestCafe bug:
-          https://github.com/DevExpress/testcafe/issues/1426
-       */
-       opacity: 0;
-       max-height: 20px;
-       max-width: 20%;
-     }
+   /*
+      don't use display:none because of a TestCafe bug:
+      https://github.com/DevExpress/testcafe/issues/1426
+   */
+   opacity: 0;
+   max-height: 20px;
+   max-width: 20%;
+ }
 
  .cell-wrapper:hover img {
-       display: inherit;
-       cursor: pointer;
-       opacity: 1;
-     }
+   display: inherit;
+   cursor: pointer;
+   opacity: 1;
+ }
 
  .fdr-legend, .fdr-legend-header {
    padding: 5px;
@@ -705,12 +705,12 @@
  }
 
  .fdr-legend.fdr-5 {
-     border-radius: 5px 0px 0px 5px;
-   }
+   border-radius: 5px 0px 0px 5px;
+ }
 
  .fdr-legend.fdr-50 {
-     border-radius: 0px 5px 5px 0px;
-   }
+   border-radius: 0px 5px 5px 0px;
+ }
 
  #annot-table th.fdr-cell > .cell {
    padding: 0;
