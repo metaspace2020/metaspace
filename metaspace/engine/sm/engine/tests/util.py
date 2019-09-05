@@ -16,7 +16,7 @@ import uuid
 
 from sm.engine.db import DB, ConnectionPool
 from sm.engine.mol_db import MolecularDB
-from sm.engine.tests.graphql_sql_schema import GRAPHQL_SQL_SCHEMA
+from sm.engine.tests.db_sql_schema import DB_SQL_SCHEMA
 from sm.engine.util import proj_root, SMConfig, init_loggers
 from sm.engine.es_export import ESIndexManager
 
@@ -97,16 +97,7 @@ def test_db(request):
         db_config_postgres, f'DROP DATABASE IF EXISTS {db_name}', f'CREATE DATABASE {db_name}'
     )
 
-    local(
-        'psql -h {} -U {} {} < {}'.format(
-            sm_config['db']['host'],
-            sm_config['db']['user'],
-            db_name,
-            Path(proj_root()) / 'scripts/create_schema.sql',
-        )
-    )
-
-    autocommit_execute(sm_config['db'], GRAPHQL_SQL_SCHEMA)
+    autocommit_execute(sm_config['db'], DB_SQL_SCHEMA)
 
     conn_pool = ConnectionPool(sm_config['db'])
 

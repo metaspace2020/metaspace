@@ -2,12 +2,13 @@ import json
 from collections import OrderedDict
 import logging
 
+from sm.engine.ion_mapping import get_ion_id_mapping
 from sm.engine.png_generator import PngGenerator
 
 logger = logging.getLogger('engine')
 METRICS_INS = (
-    'INSERT INTO annotation (job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids) '
-    'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'
+    'INSERT INTO annotation (job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids, ion_id) '
+    'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
 )
 
 
@@ -39,12 +40,13 @@ class SearchResults(object):
         Metric names
     """
 
-    def __init__(self, job_id, metric_names, n_peaks):
+    def __init__(self, job_id, metric_names, n_peaks, charge):
         self.job_id = job_id
         self.metric_names = metric_names
         self.n_peaks = n_peaks
+        self.charge = charge
 
-    def _metrics_table_row_gen(self, job_id, metr_df, formula_img_ids):
+    def _metrics_table_row_gen(self, job_id, metr_df, formula_img_ids, ion_mapping):
         for ind, r in metr_df.iterrows():
             m = OrderedDict((name, r[name]) for name in self.metric_names)
             metr_json = json.dumps(m)
@@ -59,16 +61,21 @@ class SearchResults(object):
                 float(r.fdr),
                 metr_json,
                 image_ids,
+                ion_mapping[(r.formula), (r.chem_mod), (r.neutral_loss), (r.adduct)],
             )
 
     def store_ion_metrics(self, ion_metrics_df, ion_img_ids, db):
         """ Store formula image metrics and image ids in the database """
         logger.info('Storing iso image metrics')
 
-        rows = list(
-            self._metrics_table_row_gen(self.job_id, ion_metrics_df.reset_index(), ion_img_ids)
+        ions = ion_metrics_df[['formula', 'chem_mod', 'neutral_loss', 'adduct']]
+        ion_tuples = list(ions.itertuples(False, None))
+        ion_mapping = get_ion_id_mapping(db, ion_tuples, self.charge)
+
+        rows = self._metrics_table_row_gen(
+            self.job_id, ion_metrics_df.reset_index(), ion_img_ids, ion_mapping
         )
-        db.insert(METRICS_INS, rows)
+        db.insert(METRICS_INS, list(rows))
 
     def store(self, metrics_df, formula_images_rdd, alpha_channel, db, img_store, img_store_type):
         """ Save formula metrics and images

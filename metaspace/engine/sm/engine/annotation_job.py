@@ -134,7 +134,8 @@ class AnnotationJob(object):
                 # Save results for each moldb
                 job_status = JobStatus.FAILED
                 try:
-                    search_results = SearchResults(job_id, METRICS.keys(), n_peaks)
+                    charge = self._ds.config['isotope_generation']['charge']
+                    search_results = SearchResults(job_id, METRICS.keys(), n_peaks, charge)
                     img_store_type = self._ds.get_ion_img_storage_type(self._db)
                     coordinates = [coo[:2] for coo in imzml_parser.coordinates]
                     sample_area_mask = make_sample_area_mask(coordinates)

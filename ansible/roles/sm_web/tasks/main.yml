@@ -41,12 +41,6 @@
   become_user: postgres
   postgresql_db: name=sm owner=sm encoding=UTF8 template=template0
 
-- name: Create sm schema
-  shell: "psql -h localhost -U sm sm < {{ sm_home }}/scripts/create_schema.sql"
-  args:
-    executable: /bin/bash
-  when: sm_create_schema
-
 - name: Create /opt/data/sm_data directory
   file: dest=/opt/data/sm_data state=directory owner=ubuntu group=ubuntu mode=0700
   become: yes
