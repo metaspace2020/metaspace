@@ -68,21 +68,21 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index, ds_config, metadata):
         "INSERT INTO graphql.dataset(id, user_id, group_id) VALUES (%s, %s, %s)",
         [[ds_id, user_id, group_id]],
     )
-    db.insert(
-        "INSERT INTO annotation(job_id, formula, chem_mod, neutral_loss, adduct, "
-        "msm, fdr, stats, iso_image_ids) "
-        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
-        [
-            [job_id, 'H2O', '-H+O', '-H', '+H', 1, 0.1, annotation_stats, iso_image_ids],
-            [job_id, 'Au', '', '', '+H', 1, 0.05, annotation_stats, iso_image_ids],
-        ],
-    )
-    db.insert(
+    ion_id1, ion_id2 = db.insert_return(
         "INSERT INTO graphql.ion(ion, formula, chem_mod, neutral_loss, adduct, charge, ion_formula) "
-        "VALUES (%s, %s, %s, %s, %s, %s, %s)",
+        "VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id",
         [
             ['H2O-H+O-H+H', 'H2O', '-H+O', '-H', '+H', 1, 'HO2'],
             ['Au+H', 'Au', '', '', '+H', 1, 'HAu'],
+        ],
+    )
+    db.insert(
+        "INSERT INTO annotation(job_id, formula, chem_mod, neutral_loss, adduct, "
+        "msm, fdr, stats, iso_image_ids, ion_id) "
+        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+        [
+            [job_id, 'H2O', '-H+O', '-H', '+H', 1, 0.1, annotation_stats, iso_image_ids, ion_id1],
+            [job_id, 'Au', '', '', '+H', 1, 0.05, annotation_stats, iso_image_ids, ion_id2],
         ],
     )
 

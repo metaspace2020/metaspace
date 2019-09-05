@@ -37,8 +37,7 @@ ANNOTATIONS_SEL = '''SELECT
 FROM annotation m
 JOIN job j ON j.id = m.job_id
 JOIN dataset ds ON ds.id = j.ds_id
-LEFT JOIN graphql.ion ON m.formula = ion.formula AND m.chem_mod = ion.chem_mod AND m.neutral_loss = ion.neutral_loss 
-                      AND m.adduct = ion.adduct AND (ds.config->'isotope_generation'->>'charge')::int = ion.charge
+LEFT JOIN graphql.ion ON m.ion_id = ion.id
 WHERE ds.id = %s AND j.db_id = %s
 ORDER BY COALESCE(m.msm, 0::real) DESC'''
 

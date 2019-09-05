@@ -11,7 +11,7 @@
     "test-integration": "mocha --timeout 3000 tests/*RegrTest.js # Has not been maintained. Mocha removed due to security advisory in one of its dependencies",
     "gen-binding": "graphql-binding --language typescript --input schema.ts --outputBinding src/binding.ts",
     "deref-schema": "node ./bin/deref_schema.js ./metadataSchemas/",
-    "gen-sql-schema": "node ./bin/dump-sql-schema.js ../engine/sm/engine/tests/graphql_schema.sql",
+    "gen-sql-schema": "node ./bin/dump-sql-schema.js ../engine/scripts/db_schema.sql",
     "gen-graphql-schema": "node ./bin/generate-json-graphql-schema.js ../webapp/tests/utils/graphql-schema.json"
   },
   "license": "ISC",

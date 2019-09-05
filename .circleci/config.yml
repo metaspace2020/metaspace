@@ -71,17 +71,19 @@ jobs:
             mkdir -p dist
             node ./bin/generate-json-graphql-schema.js ./dist/graphql-schema.json
       - run:
-          name: Dump SQL schema
+          name: Dump GraphQL and SQL schema
           command: |
             psql -h localhost -U sm -c "CREATE ROLE postgres WITH LOGIN SUPERUSER PASSWORD 'postgres'"
             psql -h localhost -U sm -c "CREATE DATABASE sm_test owner sm"
             yarn run gen-binding
-            NODE_CONFIG_ENV=test node ./bin/dump-sql-schema.js ./dist/graphql_schema.sql
+            NODE_CONFIG_ENV=test yarn run gen-sql-schema
+      - run:
+          name: Assert SQL schema doesn't have uncommitted changes
+          command: git diff --exit-code ../engine/scripts/db_schema.sql
       - persist_to_workspace:
           root: dist
           paths:
             - graphql-schema.json
-            - graphql_schema.sql
 
   test-webapp:
     docker:
@@ -234,7 +236,6 @@ jobs:
       - run:
           name: Run unit and integration tests
           command: |
-            cp ~/workspace/graphql_schema.sql ./sm/engine/tests/graphql_schema.sql
             #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
             coverage run --source=./sm/engine --omit=./sm/engine/tests/*,./tests/* -m py.test sm/engine/tests tests
       - run:
@@ -279,7 +280,7 @@ jobs:
           name: Create engine database
           command: |
             createdb -h localhost -U sm sm_test
-            psql -h localhost -U sm -d sm_test < scripts/create_schema.sql
+            psql -h localhost -U sm -d sm_test < scripts/db_schema.sql
       - run:
           name: Set up and run mol-db
           command: |
@@ -321,7 +322,7 @@ workflows:
           filters:
             branches:
               # Replace this with the branch to run sci-test against
-              only: feature/neutral-loss-config
+              only: feature/isomer-annotation-ion-id
 
 ## Disabled until we have time to redo these tests
 #  daily:
