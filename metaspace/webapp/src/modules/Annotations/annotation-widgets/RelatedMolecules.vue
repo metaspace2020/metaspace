@@ -52,7 +52,10 @@
   import config from '../../../config';
 
 export default {
-  props: ['query', 'annotation', 'database'],
+  props: {
+    annotation: { type: Object, required: true },
+    database: { type: String, requried: true },
+  },
   components: { CompoundsList },
   data() {
     return {
@@ -79,7 +82,10 @@ export default {
   },
   computed: {
     sortedAnnotations() {
-      const annotations = this.annotations && sortBy(this.annotations, a => a.ion === this.annotation.ion ? 0 : 1);
+      const annotations = this.annotations != null
+        ? sortBy(this.annotations, a => a.ion === this.annotation.ion ? 0 : 1)
+        : [];
+
       if (!config.features.isomers) {
         return annotations.slice(0,1);
       } else {

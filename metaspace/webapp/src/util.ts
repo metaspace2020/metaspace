@@ -18,7 +18,7 @@ function renderMolFormula(ion: string): string {
   const formula = match && match[1] || ion;
   const charge = match && match[2] || undefined;
   const formattedCharge = charge ? superscript(charge) : '';
-  const formattedFormula = formula.replace(/-/g, ' – ').replace(/\+/g, ' + ');
+  const formattedFormula = formula.replace(/-/g, ' - ').replace(/\+/g, ' + ');
 
   return `[${formattedFormula}]${formattedCharge}`;
 }

@@ -145,9 +145,6 @@ export const relatedMoleculesQuery =
       ids: $datasetId
     }, filter: $filter, limit: 12, orderBy: $orderBy, sortingOrder: $sortingOrder) {
       id
-      mz
-      sumFormula
-      adduct
       ion
       fdrLevel
       possibleCompounds {
