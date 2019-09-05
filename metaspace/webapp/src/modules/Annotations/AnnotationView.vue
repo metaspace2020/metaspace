@@ -174,7 +174,7 @@
     justify-content: center;
     text-align: center !important;
     cursor: default !important;
-    font: 24px 'Roboto', sans-serif;
+    font-size: 24px;
     line-height: 40px;
     vertical-align: center;
 
@@ -189,12 +189,12 @@
     }
 
     .sf-big {
-      font: 24px 'Roboto', sans-serif;
+      font-size: 24px;
       text-shadow : 0 0 0 #000;
     }
 
     .mz-big {
-      font: 24px 'Roboto';
+      font-size: 24px;
       padding: 0 4px;
     }
   }
