@@ -1,5 +1,4 @@
 const express = require('express'),
-      webpack = require('webpack'),
       favicon = require('serve-favicon'),
       Raven = require('raven'),
       connectHistoryApiFallback = require('connect-history-api-fallback');
@@ -9,22 +8,12 @@ const conf = require('./conf.js');
 
 const configureAppServer = (app) => {
 
-  if (env === 'development') {
-    const webpackDevMiddleware = require('webpack-dev-middleware');
-    const webpackHotMiddleware = require('webpack-hot-middleware');
-    const config = require('./webpack.dev.config.js');
-    const compiler = webpack(config);
-
-    app.use(webpackDevMiddleware(compiler, config.devServer));
-    app.use(webpackHotMiddleware(compiler));
-  } else {
-    const compression = require('compression');
-    app.use(compression());
-    app.use('/dist', express.static('dist', {
-      // Cache headers must be specified, or else some browsers automatically start caching JS files
-      maxAge: '10m'
-    }));
-  }
+  const compression = require('compression');
+  app.use(compression());
+  app.use('/dist', express.static('dist', {
+    // Cache headers must be specified, or else some browsers automatically start caching JS files
+    maxAge: '10m'
+  }));
 
   app.use(connectHistoryApiFallback({index: '/'})); // Rewrite unknown non-file paths to serve index.html
   app.get('/', (req, res) => res.sendFile(__dirname + '/index.html'));
@@ -46,11 +35,11 @@ const configureRavenErrorHandler = (app) => {
 };
 
 const configureUploadHandler = (app) => {
-  if (conf.UPLOAD_DESTINATION === 's3') {
-    app.use('/upload', require('./fineUploaderS3Middleware.js')());
-  } else {
-    app.use('/upload', require('./fineUploaderLocalMiddleware.js')());
-  }
+  // if (conf.UPLOAD_DESTINATION === 's3') {
+  //   app.use('/upload', require('../graphql/src/modules/webServer/fineUploaderS3Middleware.js')());
+  // } else {
+  //   app.use('/upload', require('../graphql/src/modules/webServer/fineUploaderLocalMiddleware.js')());
+  // }
 };
 
 const startServer = () => {

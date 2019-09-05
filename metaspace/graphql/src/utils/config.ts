@@ -90,6 +90,7 @@ export interface Config {
     aws_access_key_id: string;
     aws_secret_access_key: string;
     aws_region: string;
+    aws_datasets_bucket: string;
   };
   metadataLookups: {
     colocalizationAlgos: [string, string][]; // code, name

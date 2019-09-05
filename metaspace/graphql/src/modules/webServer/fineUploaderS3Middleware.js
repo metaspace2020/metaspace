@@ -1,10 +1,10 @@
 // minimal amount of code to support direct upload to S3
-const config = require('./conf.js'),
-      crypto = require('crypto'),
-      express = require('express'),
-      bodyParser = require('body-parser'),
-      genUuid = require('uuid'),
-      url = require('url');
+import config from '../../utils/config';
+import crypto from 'crypto';
+import express from 'express';
+import bodyParser from 'body-parser';
+import genUuid from 'uuid';
+import url from 'url';
 
 /**
  * Generate a uuid to be used as the destination directory in S3, and sign it. This server-supplied signature allows
@@ -15,7 +15,7 @@ const config = require('./conf.js'),
  * @param next
  */
 function generateUuidForUpload(req, res, next) {
-  const hmac = crypto.createHmac('sha1', config.AWS_SECRET_ACCESS_KEY);
+  const hmac = crypto.createHmac('sha1', config.aws.aws_secret_access_key);
   const uuid = genUuid();
   const uuidSignature = hmac.update(uuid).digest('base64');
   res.json({uuid, uuidSignature});

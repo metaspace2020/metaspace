@@ -23,4 +23,4 @@ fi
 
 wait_for "nc -z redis 6379" "Redis"
 
-exec node server.js
+exec yarn run dev

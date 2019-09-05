@@ -1,10 +1,10 @@
-const config = require('./conf.js'),
-      concat = require('concat-files'),
-      fs = require('fs'),
-      express = require('express'),
-      mkdirp = require('mkdirp'),
-      multer = require('multer'),
-      bodyParser = require('body-parser');
+import config from '../../utils/config';
+import concat from 'concat-files';
+import fs from 'fs';
+import express from 'express';
+import mkdirp from 'mkdirp';
+import multer from 'multer';
+import bodyParser from 'body-parser';
 
 function directory(req) {
   return `${config.UPLOAD_DESTINATION}/${req.body.uuid}`;
