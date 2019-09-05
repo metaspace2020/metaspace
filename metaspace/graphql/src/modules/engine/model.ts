@@ -10,6 +10,7 @@ import {
   Unique,
 } from 'typeorm';
 import {MomentValueTransformer} from '../../utils/MomentValueTransformer';
+import {Ion} from '../annotation/model';
 
 export type DatasetStatus = 'QUEUED' | 'ANNOTATING' | 'FINISHED' | 'FAILED';
 
@@ -69,7 +70,6 @@ export class OpticalImage {
   @Column({ type: 'real', array: true, nullable: true })
   transform: number[][];
 
-
   @ManyToOne(type => EngineDataset, dataset => dataset.opticalImages, {onDelete: 'CASCADE'})
   @JoinColumn({ name: 'ds_id' })
   dataset: EngineDataset;
@@ -93,6 +93,7 @@ export class Job {
   @ManyToOne(type => EngineDataset, dataset => dataset.jobs, {onDelete: 'CASCADE'})
   @JoinColumn({ name: 'ds_id' })
   dataset: EngineDataset;
+
   @OneToMany(type => Annotation, annotation => annotation.job)
   annotations: Annotation[];
 }
@@ -119,7 +120,7 @@ export class Annotation {
   @PrimaryGeneratedColumn()
   id: number;
   @Index('annotation_job_id_index')
-  @Column({name: 'job_id'})
+  @Column()
   jobId: number;
   @Column({ type: 'text' })
   formula: string;
@@ -139,16 +140,17 @@ export class Annotation {
   isoImageIds: string[];
   @Column({ type: 'json', nullable: true })
   offSample: AnnotationOffSample | null;
+  @Column({ type: 'int', nullable: true })
+  ionId: number | null;
 
   @ManyToOne(type => Job, job => job.annotations, {onDelete: 'CASCADE'})
   @JoinColumn({name: 'job_id'})
   job: Job;
+
+  @ManyToOne(type => Ion,  {onDelete: 'SET NULL'})
+  @JoinColumn({name: 'ion_id'})
+  ion: Ion | null;
 }
-
-
-
-
-
 
 export const ENGINE_ENTITIES = [
   EngineDataset,

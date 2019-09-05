@@ -187,6 +187,7 @@ CREATE TABLE "public"."annotation" (
   "stats" json NOT NULL, 
   "iso_image_ids" text array NOT NULL, 
   "off_sample" json, 
+  "ion_id" integer, 
   CONSTRAINT "annotation_annotation_uindex" UNIQUE ("job_id", 
   "formula", 
   "chem_mod", 
@@ -250,5 +251,9 @@ ALTER TABLE "public"."job" ADD CONSTRAINT "FK_f6baae98b3a2436b6f98318d5d0" FOREI
 ALTER TABLE "public"."annotation" ADD CONSTRAINT "FK_bfed30991918671d59fc1f5d5e4" FOREIGN KEY (
   "job_id") REFERENCES "public"."job"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."annotation" ADD CONSTRAINT "FK_665acc421d80b12a4738e4a175d" FOREIGN KEY (
+  "ion_id") REFERENCES "graphql"."ion"("id"
+) ON DELETE SET NULL ON UPDATE NO ACTION;
 
 
