@@ -182,7 +182,7 @@ def test_sm_daemons(
         }
     ).set_index('formula_i')
     search_algo_mock = MSMSearchMock()
-    search_algo_mock.search.return_value = [(make_moldb_mock(), formula_metrics_df, [])]
+    search_algo_mock.search.return_value = [(formula_metrics_df, [])]
     search_algo_mock.metrics = OrderedDict(
         [
             ('chaos', 0),
@@ -373,7 +373,7 @@ def test_sm_daemon_es_export_fails(
         }
     ).set_index('formula_i')
     search_algo_mock = MSMSearchMock()
-    search_algo_mock.search.return_value = [(make_moldb_mock(), formula_metrics_df, [])]
+    search_algo_mock.search.return_value = [(formula_metrics_df, [])]
     search_algo_mock.metrics = OrderedDict(
         [
             ('chaos', 0),

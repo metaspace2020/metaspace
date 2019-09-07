@@ -208,7 +208,7 @@ class MSMSearch:
             moldb_ion_metrics_df = moldb_metrics_fdr_df.merge(
                 fdr.target_modifiers_df, left_on='modifier', right_index=True
             )
-            yield moldb, moldb_ion_metrics_df, moldb_ion_images_rdd
+            yield moldb_ion_metrics_df, moldb_ion_images_rdd
 
     @staticmethod
     def target_modifiers(moldb_fdr_list):

@@ -55,9 +55,7 @@ def _reindex_datasets(logger, ds_ids, db, es_exp):
                 ds_name, ds_config = ds
                 for mol_db_name in ds_config['databases']:
                     try:
-                        mol_db = MolecularDB(
-                            name=mol_db_name, iso_gen_config=ds_config['isotope_generation']
-                        )
+                        mol_db = MolecularDB(name=mol_db_name)
                         isocalc = IsocalcWrapper(ds_config['isotope_generation'])
                         es_exp.index_ds(ds_id, mol_db=mol_db, isocalc=isocalc)
                     except Exception as e:

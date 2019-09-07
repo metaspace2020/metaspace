@@ -1,30 +1,32 @@
+
 class SMError(Exception):
-    def __init__(self, msg=None):
-        self.message = msg
+    def __init__(self, message=None):
+        super(SMError, self).__init__(message)
 
 
 class AnnotationError(SMError):
     def __init__(self, ds_id, traceback):
-        super().__init__()
         self.ds_id = ds_id
         self.traceback = traceback
-        self.message = f"Annotation failed (ds_id={self.ds_id})"
+        super().__init__(f"Annotation failed (ds_id={ds_id})")
 
 
 class IndexUpdateError(SMError):
-    def __init__(self, msg):
-        super().__init__(msg)
+    def __init__ (self, ds_id, traceback):
+        self.ds_id = ds_id
+        self.traceback = traceback
+        super().__init__(f"Index update failed (ds_id={ds_id})")
 
 
 class ImzMLError(SMError):
     def __init__(self, traceback):
-        super().__init__()
+        super().__init__('Error parsing imzML file')
         self.traceback = traceback
 
 
 class DSError(SMError):
-    def __init__(self, ds_id, msg):
-        super().__init__(msg)
+    def __init__(self, ds_id, message):
+        super().__init__(message)
         self.ds_id = ds_id
 
 

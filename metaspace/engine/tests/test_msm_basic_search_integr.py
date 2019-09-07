@@ -123,7 +123,7 @@ def test_search(formula_image_metrics_mock, spark_context, ds_config):
         ]
         formula_image_metrics_mock.side_effect = image_metrics_result_list
 
-        _, moldb_ion_metrics_df, moldb_ion_images_rdd = next(msm_search.search())
+        moldb_ion_metrics_df, moldb_ion_images_rdd = next(msm_search.search())
 
         assert len(moldb_ion_metrics_df) == 2
         assert moldb_ion_images_rdd.count() == 3
@@ -167,7 +167,7 @@ def test_ambiguous_modifiers(formula_image_metrics_mock, spark_context, ds_confi
         )
         formula_image_metrics_mock.side_effect = make_formula_image_metrics_mock_side_effect()
 
-        _, moldb_ion_metrics_df, _ = next(msm_search.search())
+        moldb_ion_metrics_df, _ = next(msm_search.search())
 
         assert (
             moldb_ion_metrics_df[['formula', 'chem_mod', 'neutral_loss', 'adduct']]
