@@ -194,6 +194,18 @@ jobs:
             stty cols 80  # https://github.com/DevExpress/testcafe/issues/1469
             yarn run test-e2e
 
+  test-ansible:
+    docker:
+      - image: metaspace2020/sm-engine:1.5.0
+    working_directory: ~/metaspace/ansible
+    steps:
+      - checkout:
+          path: ~/metaspace
+      - run:
+          name: Run code formatter for .py files
+          command: black --line-length 100 --skip-string-normalization --target-version py36 \
+                      --check .
+
   test-engine:
     docker:
       - image: metaspace2020/sm-engine:1.5.0
