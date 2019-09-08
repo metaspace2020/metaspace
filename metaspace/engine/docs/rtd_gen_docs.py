@@ -7,7 +7,13 @@ rootdir = dirname(curdir)
 conf_dir = join(rootdir, 'conf')
 apidoc_cmd = 'sphinx-apidoc'
 apidoc_exclusions = ' '.join(
-    [join(rootdir, 'pyMSpec'), join(rootdir, 'pyImagingMSpec'), join(rootdir, 'tests'), join(rootdir, 'engine', 'tests')])
+    [
+        join(rootdir, 'pyMSpec'),
+        join(rootdir, 'pyImagingMSpec'),
+        join(rootdir, 'tests'),
+        join(rootdir, 'engine', 'tests'),
+    ]
+)
 apidoc_params = '-f -o {} {} {}'.format(curdir, rootdir, apidoc_exclusions)
 
 
