@@ -10,10 +10,11 @@ from PIL import Image
 from requests import post, get
 import numpy as np
 
+from sm.engine.errors import SMError
 from sm.engine.png_generator import ImageStoreServiceWrapper
 
 
-logger = logging.getLogger('update-daemon')
+logger = logging.getLogger('update-daemon')  # noqa
 
 
 def make_chunk_gen(items, chunk_size):
@@ -42,7 +43,7 @@ def retry_on_error(num_retries=3):
             for i in range(1, num_retries + 1):
                 try:
                     return func(*args, **kwargs)
-                except Exception:
+                except SMError:
                     min_wait_time = 10 * i
                     delay = random.uniform(min_wait_time, min_wait_time + 5)
                     logger.warning(
@@ -94,8 +95,7 @@ def call_api(url='', doc=None):
         resp = get(url=url)
     if resp.status_code == 200:
         return resp.json()
-    else:
-        raise Exception(resp.content or resp)
+    raise SMError(resp.content or resp)
 
 
 def make_classify_images(api_endpoint, get_image):
@@ -123,6 +123,14 @@ def make_classify_images(api_endpoint, get_image):
 
 
 def classify_dataset_ion_images(db, ds, services_config, overwrite_existing=False):
+    """Classifies all dataset ion images.
+
+    Args:
+        db (sm.engine.db.DB): database connection
+        ds (sm.engine.dataset.Dataset): target dataset
+        services_config (dict): configuration for services
+        overwrite_existing (bool): whether to overwrite existing image classes
+    """
     off_sample_api_endpoint = services_config['off_sample']
     img_api_endpoint = services_config['img_service_url']
 

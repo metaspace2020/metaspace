@@ -7,19 +7,19 @@ from sm.engine.util import SMConfig
 logger = logging.getLogger('engine')
 
 
-class DatasetStatus(object):
-    """ Stage of dataset lifecycle """
+class DatasetStatus:  # noqa
+    """Stage of dataset lifecycle.
 
-    """ The dataset is queued for processing """
+    Attributes:
+        QUEUED: The dataset is queued for processing
+        ANNOTATING: The processing is in progress
+        FINISHED: The processing finished successfully (most common)
+        FAILED: An error occurred during processing
+    """
+
     QUEUED = 'QUEUED'
-
-    """ The processing is in progress """
     ANNOTATING = 'ANNOTATING'
-
-    """ The processing finished successfully (most common) """
     FINISHED = 'FINISHED'
-
-    """ An error occurred during processing """
     FAILED = 'FAILED'
 
 
@@ -49,7 +49,7 @@ FLAT_DS_CONFIG_KEYS = frozenset(
 )
 
 
-class Dataset(object):
+class Dataset:
     """ Class for representing an IMS dataset
     """
 
@@ -59,13 +59,14 @@ class Dataset(object):
     )
     DS_UPD = (
         'UPDATE dataset set name=%(name)s, input_path=%(input_path)s, upload_dt=%(upload_dt)s, '
-        'metadata=%(metadata)s, config=%(config)s, status=%(status)s, is_public=%(is_public)s where id=%(id)s'
+        '   metadata=%(metadata)s, config=%(config)s, status=%(status)s, is_public=%(is_public)s '
+        'where id=%(id)s'
     )
     DS_INSERT = (
         'INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, status, '
-        'is_public) '
-        'VALUES (%(id)s, %(name)s, %(input_path)s, %(upload_dt)s, %(metadata)s, %(config)s, %(status)s, '
-        '%(is_public)s)'
+        '   is_public) '
+        'VALUES (%(id)s, %(name)s, %(input_path)s, %(upload_dt)s, '
+        '   %(metadata)s, %(config)s, %(status)s, %(is_public)s)'
     )
     # NOTE: config is saved to but never read from the database
 
@@ -74,9 +75,9 @@ class Dataset(object):
     IMG_STORAGE_TYPE_SEL = 'SELECT ion_img_storage_type FROM dataset WHERE id = %s'
     IMG_STORAGE_TYPE_UPD = 'UPDATE dataset SET ion_img_storage_type = %s WHERE id = %s'
 
-    def __init__(
+    def __init__(  # noqa
         self,
-        id=None,
+        id=None,  # noqa
         name=None,
         input_path=None,
         upload_dt=None,
@@ -86,7 +87,7 @@ class Dataset(object):
         is_public=True,
         img_storage_type='fs',
     ):
-        self.id = id
+        self.id = id  # noqa
         self.name = name
         self.input_path = input_path
         self.upload_dt = upload_dt
@@ -113,12 +114,12 @@ class Dataset(object):
         docs = db.select_with_fields(cls.DS_SEL, params=(ds_id,))
         if docs:
             return Dataset(**docs[0])
-        else:
-            raise UnknownDSID('Dataset does not exist: {}'.format(ds_id))
+
+        raise UnknownDSID('Dataset does not exist: {}'.format(ds_id))
 
     def is_stored(self, db):
-        r = db.select_one(self.DS_SEL, params=(self.id,))
-        return True if r else False
+        res = db.select_one(self.DS_SEL, params=(self.id,))
+        return bool(res)
 
     def save(self, db, es=None):
         doc = {
@@ -141,20 +142,20 @@ class Dataset(object):
             es.sync_dataset(self.id)
 
     def get_acq_geometry(self, db):
-        r = db.select_one(Dataset.ACQ_GEOMETRY_SEL, params=(self.id,))
-        if not r:
+        res = db.select_one(Dataset.ACQ_GEOMETRY_SEL, params=(self.id,))
+        if not res:
             raise UnknownDSID('Dataset does not exist: {}'.format(self.id))
-        return r[0]
+        return res[0]
 
     def save_acq_geometry(self, db, acq_geometry):
         db.alter(self.ACQ_GEOMETRY_UPD, params=(json.dumps(acq_geometry), self.id))
 
     def get_ion_img_storage_type(self, db):
         if not self.ion_img_storage_type:
-            r = db.select_one(Dataset.IMG_STORAGE_TYPE_SEL, params=(self.id,))
-            if not r:
+            res = db.select_one(Dataset.IMG_STORAGE_TYPE_SEL, params=(self.id,))
+            if not res:
                 raise UnknownDSID('Dataset does not exist: {}'.format(self.id))
-            self.ion_img_storage_type = r[0]
+            self.ion_img_storage_type = res[0]
         return self.ion_img_storage_type
 
     def save_ion_img_storage_type(self, db, storage_type):
@@ -177,9 +178,9 @@ def _get_isotope_generation_from_metadata(metadata):
     polarity = metadata['MS_Analysis']['Polarity']
     polarity_sign = {'Positive': '+', 'Negative': '-'}[polarity]
     instrument = metadata['MS_Analysis']['Analyzer']
-    rp = metadata['MS_Analysis']['Detector_Resolving_Power']
-    rp_mz = float(rp['mz'])
-    rp_resolution = float(rp['Resolving_Power'])
+    resolving_power = metadata['MS_Analysis']['Detector_Resolving_Power']
+    rp_mz = float(resolving_power['mz'])
+    rp_resolution = float(resolving_power['Resolving_Power'])
 
     if instrument == 'FTICR':
         rp200 = rp_resolution * rp_mz / 200.0
@@ -212,7 +213,7 @@ def _get_isotope_generation_from_metadata(metadata):
     return default_adducts, charge, isocalc_sigma
 
 
-def generate_ds_config(
+def generate_ds_config(  # noqa
     metadata,
     mol_dbs=None,
     adducts=None,
@@ -249,11 +250,13 @@ def generate_ds_config(
 
 
 def update_ds_config(old_config, metadata, **kwargs):
-    """
-    Extracts parameters from an existing ds_config, and uses them to generate a new ds_config with the provided changes.
+    """Updates dataset config.
+
+    Extracts parameters from an existing ds_config, and uses them
+    to generate a new ds_config with the provided changes.
     See FLAT_DS_CONFIG_KEYS for the list of allowed keys
     """
-    assert all(key in FLAT_DS_CONFIG_KEYS for key in kwargs.keys())
+    assert all(key in FLAT_DS_CONFIG_KEYS for key in kwargs)
 
     isotope_generation = old_config.get('isotope_generation', {})
     fdr = old_config.get('fdr', {})

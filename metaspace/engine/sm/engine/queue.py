@@ -10,7 +10,7 @@ class StopThread(Exception):
     pass
 
 
-class QueueConsumerAsync(object):
+class QueueConsumerAsync:  # noqa
     """This is an example consumer that will handle unexpected interactions
     with RabbitMQ such as channel and connection closures.
 
@@ -86,7 +86,7 @@ class QueueConsumerAsync(object):
         self.logger.info('Adding connection close callback')
         self._connection.add_on_close_callback(self.on_connection_closed)
 
-    def on_connection_closed(self, connection, reply_code, reply_text):
+    def on_connection_closed(self, connection, reply_code, reply_text):  # noqa
         """This method is invoked by pika when the connection to RabbitMQ is
         closed unexpectedly. Since it is unexpected, we will reconnect to
         RabbitMQ if it disconnects.
@@ -210,7 +210,7 @@ class QueueConsumerAsync(object):
             arguments=self._qdesc['arguments'],
         )
 
-    def on_queue_declareok(self, method_frame):
+    def on_queue_declareok(self, method_frame):  # noqa
         """Method invoked by pika when the Queue.Declare RPC call made in
         setup_queue has completed. In this method we will bind the queue
         and exchange together with the routing key by issuing the Queue.Bind
@@ -298,7 +298,7 @@ class QueueConsumerAsync(object):
 
             msg = json.loads(body)
             self._callback(msg)
-        except BaseException as e:
+        except Exception:  # noqa
             self.logger.error(' [x] Failed: {}'.format(body), exc_info=True)
             self._on_failure(msg or body)
         else:
@@ -426,17 +426,17 @@ class QueueConsumer(Thread):
                     return
 
                 self._callback(msg)
-            except BaseException as e:
+            except BaseException as e:  # noqa
                 self.logger.error(' [x] Failed: {}'.format(body), exc_info=False)
                 try:
                     self._on_failure(msg or body, e)
-                except BaseException as e:
+                except:  # noqa
                     self.logger.error(' [x] Failed in _on_failure: {}'.format(body), exc_info=True)
             else:
                 self.logger.info(' [v] Succeeded: {}'.format(body))
                 try:
                     self._on_success(msg)
-                except BaseException as e:
+                except:  # noqa
                     self.logger.error(' [x] Failed in _on_success: {}'.format(body), exc_info=True)
             finally:
                 self._channel.basic_ack(method.delivery_tag)
@@ -476,8 +476,7 @@ class QueueConsumer(Thread):
             self._failed_attempts = 0
             if self.stopped():
                 raise StopThread()
-            else:
-                sleep(self._poll_interval)
+            sleep(self._poll_interval)
 
     def stop(self):
         """ After calling `stop`, method `join` must be called"""
@@ -487,7 +486,7 @@ class QueueConsumer(Thread):
         return self._stop_event.is_set()
 
 
-class QueuePublisher(object):
+class QueuePublisher:
     def __init__(self, config, qdesc, logger=None):
         creds = pika.PlainCredentials(config['user'], config['password'])
         self.qdesc = qdesc
@@ -504,8 +503,8 @@ class QueuePublisher(object):
     def delete_queue(self):
         try:
             self.conn = pika.BlockingConnection(self.conn_params)
-            ch = self.conn.channel()
-            ch.queue_delete(self.qname)
+            channel = self.conn.channel()
+            channel.queue_delete(self.qname)
         except AMQPError as e:
             self.logger.error('Queue delete failed: %s - %s', self.qname, e)
         finally:
@@ -515,11 +514,11 @@ class QueuePublisher(object):
     def publish(self, msg, priority=0):
         try:
             self.conn = pika.BlockingConnection(self.conn_params)
-            ch = self.conn.channel()
-            ch.queue_declare(
+            channel = self.conn.channel()
+            channel.queue_declare(
                 queue=self.qname, durable=self.qdesc['durable'], arguments=self.qdesc['arguments']
             )
-            ch.basic_publish(
+            channel.basic_publish(
                 exchange='',
                 routing_key=self.qname,
                 body=json.dumps(msg),

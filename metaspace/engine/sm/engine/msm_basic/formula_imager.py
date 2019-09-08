@@ -10,8 +10,10 @@ from sm.engine.msm_basic.formula_validator import make_compute_image_metrics, fo
 logger = logging.getLogger('engine')
 
 
-def gen_iso_images(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, ppm=3, min_px=1):
-    if len(sp_inds) > 0:
+def gen_iso_images(  # noqa
+    sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, ppm=3, min_px=1
+):  # this function is compute performance optimized
+    if sp_inds.size > 0:
         by_sp_mz = np.argsort(sp_mzs)  # sort order by mz ascending
         sp_mzs = sp_mzs[by_sp_mz]
         sp_inds = sp_inds[by_sp_mz]
@@ -25,16 +27,16 @@ def gen_iso_images(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, ppm=3, min_
 
         lower = centr_mzs - centr_mzs * ppm * 1e-6
         upper = centr_mzs + centr_mzs * ppm * 1e-6
-        lower_idx = np.searchsorted(sp_mzs, lower, 'l')
-        upper_idx = np.searchsorted(sp_mzs, upper, 'r')
+        lower_inds = np.searchsorted(sp_mzs, lower, 'l')
+        upper_inds = np.searchsorted(sp_mzs, upper, 'r')
 
         # Note: consider going in the opposite direction so that
         # formula_image_metrics can check for the first peak images instead of the last
-        for i, (l, u) in enumerate(zip(lower_idx, upper_idx)):
+        for i, (lo_i, up_i) in enumerate(zip(lower_inds, upper_inds)):
             m = None
-            if u - l >= min_px:
-                data = sp_ints[l:u]
-                inds = sp_inds[l:u]
+            if up_i - lo_i >= min_px:
+                data = sp_ints[lo_i:up_i]
+                inds = sp_inds[lo_i:up_i]
                 row_inds = inds / ncols
                 col_inds = inds % ncols
                 m = coo_matrix((data, (row_inds, col_inds)), shape=(nrows, ncols), copy=True)
@@ -84,7 +86,7 @@ def choose_ds_segments(ds_segments, centr_df, ppm):
 def read_ds_segment(segm_i):
     path = get_file_path(f'ds_segm_{segm_i:04}.msgpack')
     data = pd.read_msgpack(path)
-    if type(data) == list:
+    if isinstance(data, list):
         sp_arr = np.concatenate(data)
     else:
         sp_arr = data
@@ -93,8 +95,8 @@ def read_ds_segment(segm_i):
 
 def read_ds_segments(first_segm_i, last_segm_i):
     sp_arr = [read_ds_segment(ds_segm_i) for ds_segm_i in range(first_segm_i, last_segm_i + 1)]
-    sp_arr = [a for a in sp_arr if a.shape[0] > 0]
-    if len(sp_arr) > 0:
+    sp_arr = [a for a in sp_arr if a.size > 0]
+    if sp_arr:
         sp_arr = np.concatenate(sp_arr)
         sp_arr = sp_arr[sp_arr[:, 1].argsort()]  # assume mz in column 1
     else:

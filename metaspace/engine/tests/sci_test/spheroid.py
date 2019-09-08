@@ -25,7 +25,7 @@ SEARCH_RES_SELECT = (
 )
 
 
-class SciTester(object):
+class SciTester:
     def __init__(self, sm_config):
         self.sm_config = sm_config
         self.db = DB()
@@ -126,7 +126,7 @@ class SciTester(object):
         )
 
     def _create_img_store_mock(self):
-        class ImageStoreMock(object):
+        class ImageStoreMock:
             def post_image(self, *args):
                 return None
 

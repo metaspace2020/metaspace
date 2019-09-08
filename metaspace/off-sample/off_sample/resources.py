@@ -13,7 +13,7 @@ from off_sample.utils import logger
 from off_sample.config import config
 
 
-class PredictResource(object):
+class PredictResource:
     def __init__(self):
         self.model = OffSamplePredictModel(config['paths']['model_path'])
         self.data_path = Path(config['paths']['data_path'])
@@ -58,7 +58,7 @@ class PredictResource(object):
                 shutil.rmtree(path)
 
 
-class PingResource(object):
+class PingResource:
     def on_get(self, req, resp):
         updated_dt = dt.fromtimestamp(getmtime(config['paths']['model_path']))
         doc = {'status': 'ok', 'host': socket.getfqdn(), 'updated': dt.isoformat(updated_dt)}
