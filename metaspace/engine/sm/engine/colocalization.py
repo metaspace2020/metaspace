@@ -56,7 +56,8 @@ logger = logging.getLogger('engine')
 
 
 class ColocalizationJob:
-    def __init__(  # noqa
+    # pylint: disable=too-many-arguments
+    def __init__(
         self,
         ds_id,
         mol_db,
@@ -150,7 +151,7 @@ def _label_clusters(scores):
             )
             cluster_score = np.mean([scores[a, b] for a, b in enumerate(labels)])
             results.append((n_clusters, cluster_score, labels))
-        except Exception as e:  # noqa
+        except Exception as e:
             last_error = e
 
     if not results:
@@ -182,8 +183,8 @@ def _get_best_colocs(scores, max_samples, min_score):
 
 
 def _format_coloc_annotations(ion_ids, scores, colocs):
-    for i, js in enumerate(colocs):  # noqa
-        sorted_js = sorted(js, key=lambda j: -scores[i, j])  # noqa
+    for i, js in enumerate(colocs):  # pylint: disable=invalid-name
+        sorted_js = sorted(js, key=lambda j: -scores[i, j])  # pylint: disable=cell-var-from-loop
         base_ion_id = ion_ids.item(i)
         other_ion_ids = [ion_ids.item(j) for j in sorted_js]
         other_ion_scores = [scores.item((i, j)) for j in sorted_js]
@@ -276,7 +277,7 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs, cluster_max_ima
                         )
                         labels = _label_clusters(trunc_masked_scores)
                         clusters = _labels_to_clusters(labels, trunc_masked_scores)
-                    except Exception as e:  # noqa
+                    except Exception as e:
                         logger.warning(f'Failed to cluster {algorithm}: {e}', exc_info=True)
 
                 masked_scores = scores if fdr_mask.all() else scores[fdr_mask, :][:, fdr_mask]

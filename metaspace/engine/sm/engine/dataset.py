@@ -7,7 +7,7 @@ from sm.engine.util import SMConfig
 logger = logging.getLogger('engine')
 
 
-class DatasetStatus:  # noqa
+class DatasetStatus:
     """Stage of dataset lifecycle.
 
     Attributes:
@@ -75,9 +75,9 @@ class Dataset:
     IMG_STORAGE_TYPE_SEL = 'SELECT ion_img_storage_type FROM dataset WHERE id = %s'
     IMG_STORAGE_TYPE_UPD = 'UPDATE dataset SET ion_img_storage_type = %s WHERE id = %s'
 
-    def __init__(  # noqa
+    def __init__(
         self,
-        id=None,  # noqa
+        id=None,  # pylint: disable=redefined-builtin
         name=None,
         input_path=None,
         upload_dt=None,
@@ -87,7 +87,7 @@ class Dataset:
         is_public=True,
         img_storage_type='fs',
     ):
-        self.id = id  # noqa
+        self.id = id
         self.name = name
         self.input_path = input_path
         self.upload_dt = upload_dt
@@ -213,7 +213,7 @@ def _get_isotope_generation_from_metadata(metadata):
     return default_adducts, charge, isocalc_sigma
 
 
-def generate_ds_config(  # noqa
+def generate_ds_config(
     metadata,
     mol_dbs=None,
     adducts=None,

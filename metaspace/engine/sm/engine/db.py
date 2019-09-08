@@ -52,7 +52,7 @@ def db_decor(func):
             # http://initd.org/psycopg/docs/usage.html#with-statement
             with ConnectionPool.pool.getconn() as conn:
                 with conn.cursor() as curs:
-                    self._curs = curs  # noqa
+                    self._curs = curs  # pylint: disable=protected-access
                     res = func(self, sql, *args, **kwargs)
         except (ProgrammingError, IntegrityError, DataError) as e:
             raise Exception(f'SQL: {sql},\nArgs: {str(args)[:1000]}\n') from e
@@ -115,7 +115,7 @@ class DB:
             single row
         """
         res = self._select(sql, params)
-        assert len(res) in {0, 1}, "Requested one row, got {}".format(len(res))  # noqa
+        assert len(res) in {0, 1}, "Requested one row, got {}".format(len(res))
         return res[0] if res else []
 
     @db_decor

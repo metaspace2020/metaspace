@@ -126,9 +126,7 @@ def _make_thumbnail_from_image_clusters(images, mask, h, w, use_centroids):
     return np.dstack([*(sample.reshape(h, w) for sample in samples), mask])
 
 
-def _make_thumbnail_from_pixel_clusters(
-    images, mask, h, w, use_distance_from_centroid=False
-):  # noqa
+def _make_thumbnail_from_pixel_clusters(images, mask, h, w, use_distance_from_centroid=False):
     """ Alternate implementation. Results are sharper, but noisier """
     # 6-color
     # colors = np.array([[1, 0, 1, 0], [1, 0, 0, 0], [1, 1, 0, 0],
@@ -215,5 +213,5 @@ def generate_ion_thumbnail(db, img_store, ds_id, only_if_needed=False, algorithm
         if existing_thumb_id:
             img_store.delete_image_by_id('fs', 'ion_thumbnail', existing_thumb_id)
 
-    except Exception:  # noqa
+    except Exception:
         logger.error('Error generating ion thumbnail image', exc_info=True)

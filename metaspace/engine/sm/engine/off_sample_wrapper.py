@@ -14,7 +14,7 @@ from sm.engine.errors import SMError
 from sm.engine.png_generator import ImageStoreServiceWrapper
 
 
-logger = logging.getLogger('update-daemon')  # noqa
+logger = logging.getLogger('update-daemon')
 
 
 def make_chunk_gen(items, chunk_size):
@@ -100,7 +100,7 @@ def call_api(url='', doc=None):
 
 def make_classify_images(api_endpoint, get_image):
     def classify(chunk):
-        logger.debug('Classifying chunk of {} images'.format(len(chunk)))
+        logger.debug(f'Classifying chunk of {len(chunk)} images')
 
         base64_images = []
         for elem in chunk:
@@ -112,7 +112,7 @@ def make_classify_images(api_endpoint, get_image):
         return pred_doc['predictions']
 
     def classify_items(items):
-        logger.info('Off-sample classification of {} images'.format(len(items)))
+        logger.info(f'Off-sample classification of {len(items)} images')
         with ThreadPoolExecutor(8) as pool:
             chunk_it = make_chunk_gen(items, chunk_size=32)
             preds_list = pool.map(classify, chunk_it)

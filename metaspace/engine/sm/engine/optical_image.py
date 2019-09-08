@@ -38,7 +38,7 @@ VIEWPORT_HEIGHT = 500.0
 logger = logging.getLogger('engine')
 
 
-class OpticalImageType:  # noqa
+class OpticalImageType:
     SCALED = 'scaled'
     CLIPPED_TO_ION_IMAGE = 'clipped_to_ion_image'
 
@@ -48,7 +48,7 @@ def _annotation_image_shape(db, img_store, ds):
     ion_img_id = db.select(IMG_URLS_BY_ID_SEL + ' LIMIT 1', params=(ds.id,))[0][0][0]
     storage_type = ds.get_ion_img_storage_type(db)
     result = img_store.get_image_by_id(storage_type, 'iso_image', ion_img_id).size
-    logger.info('Annotation image shape for "{}" dataset is {}'.format(ds.id, result))
+    logger.info(f'Annotation image shape for "{ds.id}" dataset is {result}')
     return result
 
 
@@ -111,7 +111,7 @@ def _add_raw_optical_image(db, img_store, ds, img_id, transform):
     db.alter(UPD_DATASET_RAW_OPTICAL_IMAGE, params=(img_id, transform, ds.id))
 
 
-def _add_zoom_optical_images(db, img_store, ds, dims, optical_img, transform, zoom_levels):  # noqa
+def _add_zoom_optical_images(db, img_store, ds, dims, optical_img, transform, zoom_levels):
     rows = []
 
     for zoom in zoom_levels:

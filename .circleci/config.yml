@@ -252,7 +252,7 @@ jobs:
             codecov --root ../.. -F engine
 #      - run:
 #          name: Run linter
-#          command: pylama --options pylama.ini sm
+#          command: pylint sm
       - run:
          name: Run code formatter
          command: |

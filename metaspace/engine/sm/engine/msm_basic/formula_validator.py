@@ -88,7 +88,7 @@ def complete_image_list(images):
     return non_empty_image_n > 1 and images[0] is not None
 
 
-def formula_image_metrics(  # noqa
+def formula_image_metrics(
     formula_images_it, compute_metrics, target_formula_inds, n_peaks
 ):  # function optimized for compute performance
     """ Compute isotope image metrics for each formula

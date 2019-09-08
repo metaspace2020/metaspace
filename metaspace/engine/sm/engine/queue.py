@@ -10,7 +10,9 @@ class StopThread(Exception):
     pass
 
 
-class QueueConsumerAsync:  # noqa
+# pylint: disable=too-many-instance-attributes,unused-argument,too-many-public-methods
+# pylint: disable=logging-format-interpolation
+class QueueConsumerAsync:
     """This is an example consumer that will handle unexpected interactions
     with RabbitMQ such as channel and connection closures.
 
@@ -117,7 +119,6 @@ class QueueConsumerAsync:  # noqa
         self._connection.ioloop.stop()
 
         if not self._closing:
-
             # Create a new connection
             self._connection = self.connect()
 
@@ -298,7 +299,7 @@ class QueueConsumerAsync:  # noqa
 
             msg = json.loads(body)
             self._callback(msg)
-        except Exception:  # noqa
+        except Exception:
             self.logger.error(' [x] Failed: {}'.format(body), exc_info=True)
             self._on_failure(msg or body)
         else:
@@ -426,17 +427,17 @@ class QueueConsumer(Thread):
                     return
 
                 self._callback(msg)
-            except BaseException as e:  # noqa
+            except BaseException as e:
                 self.logger.error(' [x] Failed: {}'.format(body), exc_info=False)
                 try:
                     self._on_failure(msg or body, e)
-                except:  # noqa
+                except BaseException:
                     self.logger.error(' [x] Failed in _on_failure: {}'.format(body), exc_info=True)
             else:
                 self.logger.info(' [v] Succeeded: {}'.format(body))
                 try:
                     self._on_success(msg)
-                except:  # noqa
+                except BaseException:
                     self.logger.error(' [x] Failed in _on_success: {}'.format(body), exc_info=True)
             finally:
                 self._channel.basic_ack(method.delivery_tag)

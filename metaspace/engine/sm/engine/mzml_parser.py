@@ -1,7 +1,7 @@
-from pyopenms import FileHandler, MSExperiment  # noqa
+from pyopenms import FileHandler, MSExperiment  # pylint: disable=no-name-in-module
 
 
-class MzMLParser:  # noqa
+class MzMLParser:
     def __init__(self, filename):
         self.experiment = self.read_ms1_experiment(filename)
         self.coordinates = [(i, 1, 1) for i in range(1, self.experiment.size() + 1)]

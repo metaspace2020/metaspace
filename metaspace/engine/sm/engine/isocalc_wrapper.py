@@ -77,7 +77,7 @@ class IsocalcWrapper:
 
             return mzs, ints
 
-        except Exception as e:  # noqa
+        except Exception as e:
             logger.warning('%s - %s', formula, e)
             return None, None
 
@@ -87,7 +87,8 @@ class IsocalcWrapper:
             result = self._centroids_cache.get(cache_key)
             if not result:
                 result = self._centroids_uncached(formula)
-                self._centroids_cache[cache_key] = result  # noqa
+                # pylint: disable=unsupported-assignment-operation
+                self._centroids_cache[cache_key] = result
             return result
 
         return self._centroids_uncached(formula)

@@ -7,16 +7,16 @@ from pathlib import Path
 import boto3
 import pandas as pd
 from botocore.exceptions import ClientError
+from pyspark import SparkContext  # pylint: disable=unused-import
 from pyspark.sql import SparkSession
-from pyspark import SparkContext  # noqa
 
-from sm.engine.isocalc_wrapper import IsocalcWrapper  # noqa
+from sm.engine.isocalc_wrapper import IsocalcWrapper  # pylint: disable=unused-import
 from sm.engine.util import SMConfig, split_s3_path
 
 logger = logging.getLogger('engine')
 
 
-class CentroidsGenerator:  # noqa
+class CentroidsGenerator:
     """Generator of theoretical isotope peaks for all molecules in database."""
 
     def __init__(self, sc, isocalc):

@@ -10,9 +10,9 @@ from sm.engine.msm_basic.formula_validator import make_compute_image_metrics, fo
 logger = logging.getLogger('engine')
 
 
-def gen_iso_images(  # noqa
-    sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, ppm=3, min_px=1
-):  # this function is compute performance optimized
+# pylint: disable=too-many-locals
+# this function is compute performance optimized
+def gen_iso_images(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, ppm=3, min_px=1):
     if sp_inds.size > 0:
         by_sp_mz = np.argsort(sp_mzs)  # sort order by mz ascending
         sp_mzs = sp_mzs[by_sp_mz]

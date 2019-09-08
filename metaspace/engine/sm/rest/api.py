@@ -68,7 +68,7 @@ def sm_modify_dataset(request_name):
                 logger.warning(e)
                 resp.status = ERR_DS_BUSY['status_code']
                 return {'status': ERR_DS_BUSY['status'], 'ds_id': ds_id}
-            except Exception as e:  # noqa
+            except Exception as e:
                 logger.error(e, exc_info=True)
                 resp.status = ERROR['status_code']
                 return {'status': ERROR['status'], 'ds_id': ds_id}
@@ -184,7 +184,7 @@ def add_optical_image(ds_man, ds_id, params):
 
 @post('/v1/datasets/<ds_id>/del-optical-image')
 @sm_modify_dataset('DEL_OPTICAL_IMAGE')
-def del_optical_image(ds_man, ds_id, params):  # noqa
+def del_optical_image(ds_man, ds_id, params):  # pylint: disable=unused-argument
     """
     :param ds_man: rest.SMapiDatasetManager
     :param ds_id: string

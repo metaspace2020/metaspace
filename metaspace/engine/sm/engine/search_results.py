@@ -16,7 +16,7 @@ METRICS_INS = (
 def post_images_to_image_store(
     formula_images_rdd, alpha_channel, img_store, img_store_type, n_peaks
 ):
-    logger.info('Posting iso images to {}'.format(img_store))
+    logger.info(f'Posting iso images to {img_store}')
     png_generator = PngGenerator(alpha_channel, greyscale=True)
 
     def generate_png_and_post(imgs):

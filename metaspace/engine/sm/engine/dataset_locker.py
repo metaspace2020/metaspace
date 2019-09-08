@@ -6,7 +6,7 @@ from psycopg2 import connect
 LOCK_KEY = 894951
 
 
-class DatasetLocker:  # noqa
+class DatasetLocker:
     def __init__(self, dbconfig):
         self._dbconfig = dbconfig
 

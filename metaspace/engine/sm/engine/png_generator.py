@@ -66,7 +66,7 @@ class ImageStoreServiceWrapper:
         url = self._format_url(storage_type=storage_type, img_type=img_type, img_id=img_id)
         return Image.open(self._session.get(url, stream=True).raw)
 
-    def get_ion_images_for_analysis(  # noqa
+    def get_ion_images_for_analysis(
         self, storage_type, img_ids, hotspot_percentile=99, max_size=None, max_mem_mb=2048
     ):
         """Retrieves ion images, does hot-spot removal and resizing,
@@ -143,7 +143,7 @@ class ImageStoreServiceWrapper:
             np.clip(zoomed_img, 0, None, out=zoomed_img)
             zoomed_img /= np.max(zoomed_img) or 1
 
-            value[idx, :] = zoomed_img.ravel()  # noqa
+            value[idx, :] = zoomed_img.ravel()  # pylint: disable=unsupported-assignment-operation
 
         process_img(img_ids[0], 0, do_setup=True)
         with ThreadPoolExecutor() as executor:
@@ -162,7 +162,7 @@ class ImageStoreServiceWrapper:
         return self._img_service_url
 
 
-class PngGenerator:  # noqa
+class PngGenerator:
     """ Generator of isotopic images as png files
 
     Args

@@ -14,7 +14,7 @@ from sm.engine.optical_image import add_optical_image, del_optical_image
 from sm.engine.util import SMConfig
 
 
-class DatasetActionPriority:  # noqa
+class DatasetActionPriority:
     """ Priorities used for messages sent to queue """
 
     LOW = 0

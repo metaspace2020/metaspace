@@ -99,8 +99,8 @@ def _make_target_modifiers_df(chem_mods, neutral_losses, target_adducts):
     to map back to separated chemical modification, neutral loss and target adduct fields.
     """
     rows = [
-        (cm, nl, ta, format_modifiers(cm, nl, ta), format_modifiers(cm, nl))  # noqa
-        for cm, nl, ta in product(['', *chem_mods], ['', *neutral_losses], target_adducts)  # noqa
+        (cm, nl, ta, format_modifiers(cm, nl, ta), format_modifiers(cm, nl))
+        for cm, nl, ta in product(['', *chem_mods], ['', *neutral_losses], target_adducts)
     ]
     df = pd.DataFrame(
         rows,
@@ -132,9 +132,10 @@ class FDR:
     def _decoy_adduct_gen(self, target_formulas, decoy_adducts_cand):
         np.random.seed(self.random_seed)
         target_modifiers = list(self.target_modifiers_df.decoy_modifier_prefix.items())
-        for formula, (tm, dm_prefix) in product(target_formulas, target_modifiers):  # noqa
-            for da in self._choose_decoys(decoy_adducts_cand):  # noqa
-                yield (formula, tm, dm_prefix + da)  # noqa
+        # pylint: disable=invalid-name
+        for formula, (tm, dm_prefix) in product(target_formulas, target_modifiers):
+            for da in self._choose_decoys(decoy_adducts_cand):
+                yield (formula, tm, dm_prefix + da)
 
     def decoy_adducts_selection(self, target_formulas):
         decoy_adduct_cand = [add for add in DECOY_ADDUCTS if add not in self.target_adducts]
@@ -187,7 +188,7 @@ class FDR:
         td_df = self.td_df.set_index('tm')
 
         target_fdr_df_list = []
-        for tm in self.target_modifiers_df.index.drop_duplicates():  # noqa
+        for tm in self.target_modifiers_df.index.drop_duplicates():  # pylint: disable=invalid-name
             target_msm = formula_msm[formula_msm.modifier == tm]
             full_decoy_df = td_df.loc[tm, ['formula', 'dm']]
 

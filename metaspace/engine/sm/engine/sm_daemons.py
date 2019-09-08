@@ -63,7 +63,7 @@ class DatasetManager:
             base_url = self._sm_config['services']['web_app_url']
             ds_id_quoted = urllib.parse.quote(msg['ds_id'])
             link = '{}/annotations?mdtype={}&ds={}'.format(base_url, md_type_quoted, ds_id_quoted)
-        except Exception as e:  # noqa
+        except Exception as e:
             self.logger.error(e)
         return link
 
@@ -83,7 +83,7 @@ class DatasetManager:
         """ Run an annotation job for the dataset. If del_first provided, delete first
         """
         if del_first:
-            self.logger.warning('Deleting all results for dataset: {}'.format(ds.id))
+            self.logger.warning(f'Deleting all results for dataset: {ds.id}')
             self._del_iso_images(ds)
             self._db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
         ds.save(self._db, self._es)
@@ -357,7 +357,7 @@ class SMIndexUpdateDaemon:
                 try:
                     # depending on number of annotations may take up to several minutes
                     self._manager.classify_dataset_images(ds)
-                except Exception as e:  # noqa, don't fail dataset when off-sample pred fails
+                except Exception as e:  # don't fail dataset when off-sample pred fails
                     self.logger.warning(f'Failed to classify off-sample: {e}')
 
                 self._manager.index(ds=ds)

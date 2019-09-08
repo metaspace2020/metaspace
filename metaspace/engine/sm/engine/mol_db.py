@@ -48,7 +48,8 @@ class MolecularDB:
         Provides several data structures used in the engine to speed up computation
     """
 
-    def __init__(self, id=None, name=None, version=None, mol_db_service=None):  # noqa
+    # pylint: disable=redefined-builtin
+    def __init__(self, id=None, name=None, version=None, mol_db_service=None):
         """
         Args
         -----
@@ -64,7 +65,7 @@ class MolecularDB:
             sm_config['services']['mol_db']
         )
 
-        if id is not None:  # noqa
+        if id is not None:
             data = self._mol_db_service.find_db_by_id(id)
         elif name is not None:
             data = self._mol_db_service.find_db_by_name_version(name, version)[0]

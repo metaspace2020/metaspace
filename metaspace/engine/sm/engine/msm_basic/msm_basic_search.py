@@ -203,7 +203,7 @@ class MSMSearch:
                 fdr, formula_metrics_df, moldb_formula_map_df, max_fdr=0.5
             )
             moldb_ion_images_rdd = formula_images_rdd.filter(
-                lambda kv: kv[0] in moldb_metrics_fdr_df.index  # noqa
+                lambda kv: kv[0] in moldb_metrics_fdr_df.index  # pylint: disable=cell-var-from-loop
             )
             moldb_ion_metrics_df = moldb_metrics_fdr_df.merge(
                 fdr.target_modifiers_df, left_on='modifier', right_index=True

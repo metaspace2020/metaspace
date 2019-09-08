@@ -103,7 +103,7 @@ class ESIndexManager:
         self._ind_client = IndicesClient(self._es)
 
     def internal_index_name(self, alias):
-        yin, yang = '{}-yin'.format(alias), '{}-yang'.format(alias)
+        yin, yang = f'{alias}-yin', f'{alias}-yang'
         indices = self._ind_client.get_alias(name=alias)
         assert indices, f'Could not find ElasticSearch alias "{alias}"'
 
@@ -195,14 +195,14 @@ class ESIndexManager:
 
         if not self._ind_client.exists(index):
             out = self._ind_client.create(index=index, body=body)
-            logger.info('Index {} created\n{}'.format(index, out))
+            logger.info(f'Index {index} created\n{out}')
         else:
-            logger.info('Index {} already exists'.format(index))
+            logger.info(f'Index {index} already exists')
 
     def delete_index(self, index):
         if self._ind_client.exists(index):
             out = self._ind_client.delete(index)
-            logger.info('Index {} deleted: {}'.format(index, out))
+            logger.info(f'Index {index} deleted: {out}')
 
     def exists_index(self, index):
         return self._ind_client.exists(index)
@@ -211,14 +211,14 @@ class ESIndexManager:
     def another_index_name(index):
         assert index.endswith('yin') or index.endswith('yang')
 
-        if index.endswith('yin'):  # noqa
+        if index.endswith('yin'):  # pylint: disable=no-else-return
             return index.replace('yin', 'yang')
         else:
             return index.replace('yang', 'yin')
 
     def remap_alias(self, new_index, alias='sm'):
         old_index = self.another_index_name(new_index)
-        logger.info('Remapping {} alias: {} -> {}'.format(alias, old_index, new_index))
+        logger.info(f'Remapping {alias} alias: {old_index} -> {new_index}')
 
         self._ind_client.update_aliases(
             {"actions": [{"add": {"index": new_index, "alias": alias}}]}
@@ -345,7 +345,7 @@ class ESExporter:
 
     def _index_ds_annotations(self, ds_id, mol_db, ds_doc, isocalc):
         annotation_docs = self._db.select_with_fields(ANNOTATIONS_SEL, params=(ds_id, mol_db.id))
-        logger.info('Indexing {} documents: {}, {}'.format(len(annotation_docs), ds_id, mol_db))
+        logger.info(f'Indexing {len(annotation_docs)} documents: {ds_id}, {mol_db}')
 
         to_index = []
         annotation_counts = defaultdict(int)
