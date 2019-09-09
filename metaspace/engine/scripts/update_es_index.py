@@ -3,11 +3,10 @@ import logging
 from copy import deepcopy
 from functools import partial
 
-from sm.engine.mol_db import MolecularDB
-from sm.engine.isocalc_wrapper import IsocalcWrapper
-from sm.engine.util import bootstrap_and_run
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter, ESIndexManager
+from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine.util import bootstrap_and_run
 
 logger = logging.getLogger('engine')
 
