@@ -2,17 +2,18 @@ import argparse
 import logging
 from functools import partial
 
+from sm.engine.colocalization import Colocalization
+from sm.engine.db import DB
 from sm.engine.mol_db import MolDBServiceWrapper
 from sm.engine.util import bootstrap_and_run
-from sm.engine.db import DB
-from sm.engine.colocalization import Colocalization
-
 
 CORRUPT_COLOC_JOBS_SEL = """
 WITH mol_db_lookup AS (SELECT unnest(%s::int[]) AS id, unnest(%s::text[]) AS name), 
     fdr_lookup AS (SELECT unnest(%s::numeric[]) AS fdr), 
     algorithm_lookup AS (SELECT unnest(%s::text[]) algorithm),
-    job_fdr_counts_temp AS (SELECT job_id, fdr, COUNT(*) num_annotations FROM annotation GROUP BY job_id, fdr),
+    job_fdr_counts_temp AS (
+        SELECT job_id, fdr, COUNT(*) num_annotations FROM annotation GROUP BY job_id, fdr
+    ),
     job_fdr_counts AS (
       SELECT iim.job_id, fdr.fdr, SUM(num_annotations) AS num_annotations
       FROM job_fdr_counts_temp iim
@@ -42,7 +43,9 @@ ORDER BY j.ds_id DESC;
 MISSING_COLOC_JOBS_SEL = """
 WITH mol_db_lookup AS (SELECT unnest(%s::int[]) AS id, unnest(%s::text[]) AS name), 
     fdr_lookup AS (SELECT unnest(%s::numeric[]) AS fdr), 
-    job_fdr_counts_temp AS (SELECT job_id, fdr, COUNT(*) num_annotations FROM annotation GROUP BY job_id, fdr),
+    job_fdr_counts_temp AS (
+        SELECT job_id, fdr, COUNT(*) num_annotations FROM annotation GROUP BY job_id, fdr
+    ),
     job_fdr_counts AS (
       SELECT iim.job_id, fdr.fdr, SUM(num_annotations) AS num_annotations
       FROM job_fdr_counts_temp iim
@@ -67,23 +70,23 @@ ORDER BY j.ds_id DESC;
 """
 
 
-def run_coloc_jobs(sm_config, ds_id, sql_where, fix_missing, fix_corrupt, skip_existing):
+def run_coloc_jobs(sm_config, ds_id_str, sql_where, fix_missing, fix_corrupt, skip_existing):
     assert (
         len(
             [
                 data_source
-                for data_source in [ds_id, sql_where, fix_missing, fix_corrupt]
+                for data_source in [ds_id_str, sql_where, fix_missing, fix_corrupt]
                 if data_source
             ]
         )
         == 1
     ), "Exactly one data source (ds_id, sql_where, fix_missing, fix_corrupt) must be specified"
-    assert not (ds_id and sql_where)
+    assert not (ds_id_str and sql_where)
 
     db = DB()
 
-    if ds_id:
-        ds_ids = ds_id.split(',')
+    if ds_id_str:
+        ds_ids = ds_id_str.split(',')
     elif sql_where:
         ds_ids = [
             id for (id,) in db.select(f'SELECT DISTINCT dataset.id FROM dataset WHERE {sql_where}')
@@ -104,7 +107,8 @@ def run_coloc_jobs(sm_config, ds_id, sql_where, fix_missing, fix_corrupt, skip_e
             logger.info(f'Found {len(ds_ids)} missing colocalization sets')
         else:
             logger.info(
-                'Checking all colocalization jobs. This is super slow: ~5 minutes per 1000 datasets...'
+                'Checking all colocalization jobs. '
+                'This is super slow: ~5 minutes per 1000 datasets...'
             )
             results = db.select(
                 CORRUPT_COLOC_JOBS_SEL, [list(mol_db_ids), list(mol_db_names), fdrs, algorithms]
@@ -135,7 +139,8 @@ if __name__ == '__main__':
         '--sql-where',
         dest='sql_where',
         default=None,
-        help='SQL WHERE clause for picking rows from the dataset table, e.g. "status = \'FINISHED\'"',
+        help='SQL WHERE clause for picking rows from the dataset table, '
+        'e.g. "status = \'FINISHED\'"',
     )
     parser.add_argument(
         '--fix-missing',

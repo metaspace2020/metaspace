@@ -8,12 +8,12 @@ from sm.engine.util import bootstrap_and_run
 from sm.engine.png_generator import ImageStoreServiceWrapper
 
 
-def update_optical_images(sm_config, ds_id, sql_where):
+def update_optical_images(sm_config, ds_id_str, sql_where):
     img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
     db = DB()
 
-    if ds_id:
-        ds_ids = ds_id.split(',')
+    if ds_id_str:
+        ds_ids = ds_id_str.split(',')
     else:
         ds_ids = [
             id for (id,) in db.select(f'SELECT DISTINCT dataset.id FROM dataset WHERE {sql_where}')
@@ -53,7 +53,8 @@ if __name__ == "__main__":
 
     if args.ds_id or args.sql_where:
         bootstrap_and_run(
-            args.config, partial(update_optical_images, ds_id=args.ds_id, sql_where=args.sql_where)
+            args.config,
+            partial(update_optical_images, ds_id_str=args.ds_id, sql_where=args.sql_where),
         )
     else:
         parser.print_help()
