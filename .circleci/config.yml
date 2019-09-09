@@ -242,8 +242,9 @@ jobs:
 #          command: pylama --options pylama.ini sm
       - run:
          name: Run code formatter
-         command: black --line-length 100 --skip-string-normalization --target-version py36 \
-          --check sm tests scripts
+         command: |
+          black --line-length 100 --skip-string-normalization --target-version py36 \
+            --check sm tests scripts
 
   test-engine-sci:
     docker:
