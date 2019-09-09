@@ -102,9 +102,7 @@ class AnnotationJob:
 
     @staticmethod
     def create_mol_dbs(moldb_ids):
-        return [
-            MolecularDB(id=id) for id in moldb_ids
-        ]
+        return [MolecularDB(id=id) for id in moldb_ids]
 
     def _run_annotation_jobs(self, imzml_parser, moldbs):
         if moldbs:
@@ -136,7 +134,7 @@ class AnnotationJob:
                     search_results = SearchResults(
                         job_id=job_id,
                         metric_names=METRICS.keys(),
-                        n_peaks=self._ds.config['isotope_generation']['n_peaks']
+                        n_peaks=self._ds.config['isotope_generation']['n_peaks'],
                     )
                     img_store_type = self._ds.get_ion_img_storage_type(self._db)
                     coordinates = [coo[:2] for coo in imzml_parser.coordinates]

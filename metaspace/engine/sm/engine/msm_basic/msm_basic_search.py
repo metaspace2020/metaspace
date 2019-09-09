@@ -240,7 +240,7 @@ class MSMSearch:
         target_formula_inds = self.select_target_formula_ids(
             formulas_df=formula_centroids.formulas_df,
             ion_formula_map_df=ion_formula_map_df,
-            target_modifiers=self.target_modifiers(moldb_fdr_list)
+            target_modifiers=self.target_modifiers(moldb_fdr_list),
         )
         process_centr_segment = create_process_segment(
             ds_segments, self._coordinates, self._ds_config, target_formula_inds

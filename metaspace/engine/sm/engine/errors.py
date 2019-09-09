@@ -1,4 +1,3 @@
-
 class SMError(Exception):
     def __init__(self, message=None):
         super(SMError, self).__init__(message)
@@ -12,7 +11,7 @@ class AnnotationError(SMError):
 
 
 class IndexUpdateError(SMError):
-    def __init__ (self, ds_id, traceback):
+    def __init__(self, ds_id, traceback):
         self.ds_id = ds_id
         self.traceback = traceback
         super().__init__(f"Index update failed (ds_id={ds_id})")

@@ -49,9 +49,7 @@ class MolecularDB:
         Provides several data structures used in the engine to speed up computation
     """
 
-    def __init__(
-        self, id=None, name=None, version=None, mol_db_service=None
-    ):
+    def __init__(self, id=None, name=None, version=None, mol_db_service=None):
         """
         Args
         -----

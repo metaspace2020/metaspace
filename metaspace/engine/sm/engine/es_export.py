@@ -408,9 +408,7 @@ class ESExporter(object):
         """Delete and index dataset documents for all moldbs defined in the dataset config."""
         self.delete_ds(ds_id)
 
-        res = DB().select_one(
-            "select name, config from dataset where id = %s", params=(ds_id,)
-        )
+        res = DB().select_one("select name, config from dataset where id = %s", params=(ds_id,))
         if res:
             ds_name, ds_config = res
             isocalc = IsocalcWrapper(ds_config['isotope_generation'])
