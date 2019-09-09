@@ -10,7 +10,7 @@ from sm.engine.fdr import FDR
 from sm.engine.formula_centroids import CentroidsGenerator
 from sm.engine.formula_parser import safe_generate_ion_formula
 from sm.engine.isocalc_wrapper import IsocalcWrapper
-from sm.engine.msm_basic.formula_imager import create_process_segment, get_ds_dims
+from sm.engine.msm_basic.formula_imager import create_process_segment, ds_dims
 from sm.engine.msm_basic.segmenter import (
     calculate_centroids_segments_n,
     calculate_chunk_sp_n,
@@ -233,7 +233,7 @@ class MSMSearch:
         centr_segm_n = self.clip_and_segment_centroids(
             centroids_df=formula_centroids.centroids_df(),
             ds_segments=ds_segments,
-            ds_dims=get_ds_dims(self._coordinates),
+            ds_dims=ds_dims(self._coordinates),
         )
 
         logger.info('Processing segments...')
