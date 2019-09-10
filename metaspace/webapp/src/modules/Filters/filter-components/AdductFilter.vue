@@ -3,9 +3,9 @@
     <div slot="edit">
       <el-select
         :value="filterValues.chemMod"
-        @focus="() => chemModQuery = ''"
+        @focus="() => updateChemModQuery('')"
         @change="val => onChange('chemMod', val)"
-        :remoteMethod="val => chemModQuery = val"
+        :remoteMethod="updateChemModQuery"
         :loading="chemModOptionsLoading !== 0"
         placeholder="Select chemical modification"
         filterable clearable remote
@@ -18,9 +18,9 @@
       </el-select>
       <el-select
         :value="filterValues.neutralLoss"
-        @focus="() => neutralLossQuery = ''"
+        @focus="() => updateNeutralLossQuery('')"
         @change="val => onChange('neutralLoss', val)"
-        :remoteMethod="val => neutralLossQuery = val"
+        :remoteMethod="updateNeutralLossQuery"
         :loading="neutralLossOptionsLoading !== 0"
         placeholder="Select neutral loss"
         filterable clearable remote
@@ -145,6 +145,14 @@
       } else {
         return '(Any)'
       }
+    }
+
+    updateChemModQuery(query: string) {
+      this.chemModQuery = query;
+    }
+
+    updateNeutralLossQuery(query: string) {
+      this.neutralLossQuery = query;
     }
 
     onChange(filterKey: 'chemMod' | 'neutralLoss' | 'adduct', val: any) {
