@@ -126,8 +126,10 @@ exports[`DatasetTable should match snapshot 1`] = `
         </div>
       </mock-el-dialog>
       <div class="opt-image--container">
-        <div class="thumb thumb__ion">
-          <img src="allDatasets.0.ionThumbnailUrl" alt="Optical image" class="thumb--img" style="transform: scaleY(1) translateY(0%); height: 100px;">
+        <div class="thumb">
+          <img src="allDatasets.0.thumbnailOpticalImageUrl" alt="Optical image" class="thumb--img" style="transform: scaleY(1) translateY(0%); height: 100px;">
+          <img src="allDatasets.0.ionThumbnailUrl" alt="Ion image thumbnail" class="thumb--img thumb--img__ion" style="transform: scaleY(1) translateY(0%); height: 100px;">
+          <!---->
         </div>
       </div>
       <div class="ds-info">
@@ -242,8 +244,10 @@ exports[`DatasetTable should match snapshot 1`] = `
       </div>
     </mock-el-dialog>
     <div class="opt-image--container">
-      <div class="thumb thumb__ion">
-        <img src="allDatasets.0.ionThumbnailUrl" alt="Optical image" class="thumb--img" style="transform: scaleY(1) translateY(0%); height: 100px;">
+      <div class="thumb">
+        <img src="allDatasets.0.thumbnailOpticalImageUrl" alt="Optical image" class="thumb--img" style="transform: scaleY(1) translateY(0%); height: 100px;">
+        <img src="allDatasets.0.ionThumbnailUrl" alt="Ion image thumbnail" class="thumb--img thumb--img__ion" style="transform: scaleY(1) translateY(0%); height: 100px;">
+        <!---->
       </div>
     </div>
     <div class="ds-info">
@@ -358,8 +362,10 @@ exports[`DatasetTable should match snapshot 1`] = `
     </div>
   </mock-el-dialog>
   <div class="opt-image--container">
-    <div class="thumb thumb__ion">
-      <img src="allDatasets.0.ionThumbnailUrl" alt="Optical image" class="thumb--img" style="transform: scaleY(1) translateY(0%); height: 100px;">
+    <div class="thumb">
+      <img src="allDatasets.0.thumbnailOpticalImageUrl" alt="Optical image" class="thumb--img" style="transform: scaleY(1) translateY(0%); height: 100px;">
+      <img src="allDatasets.0.ionThumbnailUrl" alt="Ion image thumbnail" class="thumb--img thumb--img__ion" style="transform: scaleY(1) translateY(0%); height: 100px;">
+      <!---->
     </div>
   </div>
   <div class="ds-info">

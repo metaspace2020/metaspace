@@ -605,7 +605,6 @@
 
  #annot-table {
    border: 0px;
-   font-family: 'Roboto', sans-serif;
  }
 
  /* fix cell height and align text in the center */

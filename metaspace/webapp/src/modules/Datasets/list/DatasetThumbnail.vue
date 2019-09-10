@@ -1,23 +1,47 @@
 <template>
   <router-link v-if="editable" :to="opticalImageAlignmentHref">
-    <div v-if="mode === 'opt'" class="thumb thumb__opt thumb__editable" title="Edit Optical Image">
-      <img class="thumb--img" :style="imageStyle" :src="dataset.thumbnailOpticalImageUrl" alt="Edit optical image"/>
-    </div>
-    <div v-else-if="mode === 'ion'" class="thumb thumb__ion thumb__editable" title="Add Optical Image">
-      <img class="thumb--img" :style="imageStyle" :src="dataset.ionThumbnailUrl" alt="Add optical image"/>
-    </div>
-    <div v-else class="thumb thumb__empty thumb__editable" title="Add Optical Image">
-      <img class="thumb--img" src="../../../assets/no_opt_image.png" alt="Add optical image"/>
+    <div class="thumb thumb__editable"
+         :class="showEmpty && 'thumb__empty'"
+         :title="title">
+      <img v-if="hasOpticalImage"
+           class="thumb--img"
+           :style="imageStyle"
+           :src="dataset.thumbnailOpticalImageUrl"
+           alt="Edit optical image"
+           @error="optLoadError = true"/>
+      <img v-if="showIonThumb"
+           class="thumb--img thumb--img__ion"
+           :style="imageStyle"
+           :src="dataset.ionThumbnailUrl"
+           alt="Add optical image"
+           @error="ionLoadError = true"/>
+      <img v-if="showEmpty"
+           class="thumb--img"
+           src="../../../assets/no_opt_image.png"
+           alt="Add optical image"/>
+      <div class="thumb--overlay el-icon-edit"
+           :class="hasOpticalImage ? 'el-icon-edit' : 'el-icon-plus'" />
     </div>
   </router-link>
-  <div v-else-if="mode === 'opt'" class="thumb thumb__opt">
-    <img class="thumb--img" :style="imageStyle" :src="dataset.thumbnailOpticalImageUrl" alt="Optical image"/>
-  </div>
-  <div v-else-if="mode === 'ion'" class="thumb thumb__ion">
-    <img class="thumb--img" :style="imageStyle" :src="dataset.ionThumbnailUrl" alt="Optical image"/>
-  </div>
-  <div v-else class="thumb thumb__empty">
-    <img class="thumb--img" src="../../../assets/no_opt_image.png" alt="Optical image"/>
+  <div v-else
+       class="thumb"
+       :class="showEmpty && 'thumb__empty'">
+    <img v-if="hasOpticalImage"
+         class="thumb--img"
+         :style="imageStyle"
+         :src="dataset.thumbnailOpticalImageUrl"
+         alt="Optical image"
+         @error="optLoadError = true"/>
+    <img v-if="showIonThumb"
+         class="thumb--img thumb--img__ion"
+         :style="imageStyle"
+         :src="dataset.ionThumbnailUrl"
+         alt="Ion image thumbnail"
+         @error="ionLoadError = true"/>
+    <img v-if="showEmpty"
+         class="thumb--img"
+         src="../../../assets/no_opt_image.png"
+         alt="No optical image"/>
   </div>
 </template>
 
@@ -25,6 +49,12 @@
   import config from '../../../config';
   export default {
     props: ['dataset', 'editable'],
+    data() {
+      return {
+        ionLoadError: false,
+        optLoadError: false,
+      };
+    },
     computed: {
       opticalImageAlignmentHref() {
         return {
@@ -33,22 +63,20 @@
         };
       },
 
-      mode() {
-        if (config.features.ion_thumbs && this.dataset.ionThumbnailUrl) {
-          return 'ion';
-        } else if (this.dataset.thumbnailOpticalImageUrl) {
-          return 'opt';
-        } else {
-          return 'empty';
-        }
+      showIonThumb() {
+        return !this.ionLoadError && config.features.ion_thumbs && this.dataset.ionThumbnailUrl != null;
       },
 
-      imageUrl() {
-        return {
-          opt: this.dataset.thumbnailOpticalImageUrl,
-          ion: this.dataset.ionThumbnailUrl,
-          empty: null, // URL must be in the vue template for webpack to resolve it correctly
-        }[this.mode];
+      hasOpticalImage() {
+        return !this.optLoadError && this.dataset.thumbnailOpticalImageUrl != null;
+      },
+
+      showEmpty() {
+        return !this.showIonThumb && !this.hasOpticalImage;
+      },
+
+      title() {
+        return this.hasOpticalImage ? 'Edit Optical Image' : 'Add Optical Image';
       },
 
       imageStyle() {
@@ -86,40 +114,32 @@
     &:hover .thumb--img {
       opacity: .2;
     }
-    &:hover::before {
-      font-family: 'element-icons' !important;
+    & .thumb--overlay {
+      display: none;
+    }
+    &:hover .thumb--overlay {
+      display: block;
+      position: absolute;
       font-style: normal;
       font-size: 1.5em;
       color: #2c3e50;
-      position: absolute;
-      display: block;
       width: 30px;
       height: 30px;
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
     }
-
-    &.thumb__ion:hover::before, &.thumb__empty:hover::before {
-      font-weight: bold;
-      content: '\E62B';
-    }
-
-    &.thumb__opt:hover::before {
-      content: '\E61C';
-    }
   }
 
   .thumb--img {
-    width: 100px;
-    height: 100px;
-    object-fit: cover;
-    object-position: 0 0;
-  }
-
-  .thumb__ion .thumb--img {
+    position: absolute;
+    width: 100%;
+    height: 100%;
     object-fit: contain;
     object-position: center;
+  }
+
+  .thumb--img__ion {
     /* Default image-rendering uses bilinear filtering, which makes the stretched ion image blurry.
     Chrome only supports pixelated, Firefox only supports crisp-edges, IE11 supports nothing */
     image-rendering: crisp-edges;

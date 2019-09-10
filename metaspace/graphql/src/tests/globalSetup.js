@@ -40,15 +40,6 @@ module.exports = async () => {
   await knex.raw(`
       CREATE SCHEMA ${DbSchemaName} AUTHORIZATION ${config.db.user};
       CREATE EXTENSION "uuid-ossp";
-      CREATE TABLE public.dataset (
-        id	        	text,
-        name          text,
-        upload_dt			timestamp,
-        metadata			json,
-        status        text,
-        is_public     boolean not null default(true),
-        CONSTRAINT dataset_id_pk PRIMARY KEY(id)
-      );
       GRANT ALL ON ALL TABLES IN SCHEMA public TO ${config.db.user}`);
   await knex.destroy();
 

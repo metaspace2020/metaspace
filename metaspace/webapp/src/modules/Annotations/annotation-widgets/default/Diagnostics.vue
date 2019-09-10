@@ -151,9 +151,6 @@ export default class Diagnostics extends Vue {
     }
 }
 
-#isotope-plot-container text {
-    font-family: "Roboto" !important;
-}
     .off-sample-tag {
         margin-left: 10px;
         color: white;
