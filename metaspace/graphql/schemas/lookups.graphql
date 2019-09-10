@@ -45,7 +45,7 @@ type Query {
 
   neutralLossSuggestions(query: String): [NeutralLoss!]!
 
-  adductSuggestions(query: String): [Adduct!]!
+  adductSuggestions: [Adduct!]!
 
   colocalizationAlgos: [ColocalizationAlgo!]!
 }
