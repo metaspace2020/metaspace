@@ -3,9 +3,12 @@
     <div slot="edit">
       <el-select
         :value="filterValues.chemMod"
+        @focus="() => chemModQuery = ''"
         @change="val => onChange('chemMod', val)"
+        :remoteMethod="val => chemModQuery = val"
+        :loading="chemModOptionsLoading !== 0"
         placeholder="Select chemical modification"
-        clearable
+        filterable clearable remote
       >
         <el-option v-for="item in chemModOptions"
                    :label="item.name"
@@ -15,9 +18,12 @@
       </el-select>
       <el-select
         :value="filterValues.neutralLoss"
+        @focus="() => neutralLossQuery = ''"
         @change="val => onChange('neutralLoss', val)"
+        :remoteMethod="val => neutralLossQuery = val"
+        :loading="neutralLossOptionsLoading !== 0"
         placeholder="Select neutral loss"
-        clearable
+        filterable clearable remote
       >
         <el-option v-for="item in neutralLossOptions"
                    :label="item.name"
@@ -29,7 +35,7 @@
         :value="filterValues.adduct"
         @change="val => onChange('adduct', val)"
         placeholder="Select ionising adduct"
-        clearable
+        filterable clearable remote
       >
         <el-option v-for="item in adductOptions"
                    :label="item.name"
@@ -50,37 +56,63 @@
   import Vue from 'vue';
   import { Component, Prop } from 'vue-property-decorator'
   import config from '../../../config';
-  import {AdductSuggestion} from '../../../api/metadata';
+  import {
+    AdductSuggestion,
+    ChemModSuggestion,
+    chemModSuggestionQuery,
+    NeutralLossSuggestion, neutralLossSuggestionQuery,
+  } from '../../../api/metadata';
 
-  @Component({
+  @Component<AdductFilter>({
     components: {
       TagFilter
+    },
+    apollo: {
+      chemModOptions: {
+        query: chemModSuggestionQuery,
+        fetchPolicy: 'cache-first',
+        loadingKey: 'chemModOptionsLoading',
+        variables() {
+          return {query: this.chemModQuery}
+        },
+        update({chemMods}: {chemMods: ChemModSuggestion[]}) {
+          return [
+            ...(this.chemModQuery ? [] : [{ chemMod: 'none', name: 'No chemical modification' }]),
+            ...chemMods,
+          ];
+        }
+      },
+      neutralLossOptions: {
+        query: neutralLossSuggestionQuery,
+        fetchPolicy: 'cache-first',
+        loadingKey: 'neutralLossOptionsLoading',
+        variables() {
+          return {query: this.neutralLossQuery}
+        },
+        update({neutralLosses}: {neutralLosses: NeutralLossSuggestion[]}) {
+          return [
+            ...(this.neutralLossQuery ? [] : [{neutralLoss: 'none', name: 'No neutral loss'}]),
+            ...neutralLosses,
+          ];
+        }
+      }
     }
   })
   export default class AdductFilter extends Vue {
     @Prop(Object)
     filterValues: any;
 
+    chemModQuery: string = '';
+    neutralLossQuery: string = '';
+    chemModOptions!: ChemModSuggestion[];
+    neutralLossOptions!: NeutralLossSuggestion[];
+    chemModOptionsLoading = 0;
+    neutralLossOptionsLoading = 0;
+
     get filterLists() {
       return this.$store.state.filterLists || {
-        chemMods: [],
-        neutralLosses: [],
         adducts: [],
       }
-    }
-
-    get chemModOptions() {
-      return [
-        { chemMod: 'none', name: 'No chemical modification' },
-        ...this.filterLists.chemMods
-      ];
-    }
-
-    get neutralLossOptions() {
-      return [
-        {neutralLoss: 'none', name: 'No neutral loss'},
-        ...this.filterLists.neutralLosses
-      ];
     }
 
     get adductOptions() {

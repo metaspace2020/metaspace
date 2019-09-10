@@ -98,8 +98,6 @@ export const fetchOptionListsQuery = gql`query fetchOptionListsQuery {
   analyzerTypes: metadataSuggestions(field: "MS_Analysis.Analyzer", query: "", limit: 1000)
   colocalizationAlgos {id, name}
   molecularDatabases: molecularDatabases(hideDeprecated: false, onlyLastVersion: false){name, default, hidden}
-  chemMods: chemModSuggestions{chemMod, name}
-  neutralLosses: neutralLossSuggestions{neutralLoss, name}
   adducts: adductSuggestions{adduct, name, charge, default, hidden}
 }`;
 
@@ -124,6 +122,14 @@ export interface AdductSuggestion {
   default: boolean;
   hidden: boolean;
 }
+
+export const chemModSuggestionQuery = gql`query chemModSuggestionQuery($query: String) {
+  chemMods: chemModSuggestions(query: $query) {chemMod, name}
+}`;
+
+export const neutralLossSuggestionQuery = gql`query neutralLossSuggestionQuery($query: String) {
+  neutralLosses: neutralLossSuggestions(query: $query) {neutralLoss, name}
+}`;
 
 export const metadataOptionsQuery = gql`query metadataOptionsQuery {
   molecularDatabases: molecularDatabases(hideDeprecated: false, onlyLastVersion: false){name, default, hidden}

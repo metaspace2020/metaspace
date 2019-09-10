@@ -213,7 +213,7 @@ interface ExtraAnnotationFilters {
 function constructAnnotationFilters(filter: AnnotationFilter & ExtraAnnotationFilters) {
   const {
     database, datasetName, mzFilter, msmScoreFilter, fdrLevel,
-    sumFormula, adduct, ion, ionFormula, offSample, compoundQuery, annId,
+    sumFormula, chemMod, neutralLoss, adduct, ion, ionFormula, offSample, compoundQuery, annId,
     hasNeutralLoss, hasChemMod, hasHiddenAdduct
   } = filter;
   const filters = [];
@@ -236,6 +236,10 @@ function constructAnnotationFilters(filter: AnnotationFilter & ExtraAnnotationFi
     filters.push({term: {db_name: database}});
   if (sumFormula)
     filters.push({term: {formula: sumFormula}});
+  if (chemMod != null)
+    filters.push({term: {chem_mod: chemMod}});
+  if (neutralLoss != null)
+    filters.push({term: {neutral_loss: neutralLoss}});
   if (adduct != null)
     filters.push({term: {adduct: adduct}});
   if (datasetName)
@@ -408,15 +412,22 @@ export const esCountGroupedResults = async (args: any, docType: DocType, user: C
   }
 };
 
-export const esFilterValueCountResults = async (args: any, user: ContextUser | null): Promise<any> => {
-  const {wildcard, aggsTerms} = args;
+export interface FilterValueCountArgs {
+  filters: any[];
+  aggsTerms: any;
+  user: ContextUser | null;
+  docType?: DocType;
+}
+
+export const esFilterValueCountResults = async (args: FilterValueCountArgs): Promise<any> => {
+  const {filters, aggsTerms, user, docType = 'dataset'} = args;
   const body = {
     query: {
       bool: {
         filter: [
           ...constructAuthFilters(user, user != null ? await user.getProjectRoles() : {}),
-          { term: { _type: 'dataset' } },
-          wildcard,
+          { term: { _type: docType } },
+          ...filters,
         ]
       }
     },

@@ -41,11 +41,11 @@ type Query {
   molecularDatabases(hideDeprecated: Boolean=true,
     onlyLastVersion: Boolean=true): [MolecularDatabase!]
 
-  chemModSuggestions: [ChemMod!]!
+  chemModSuggestions(query: String): [ChemMod!]!
 
-  neutralLossSuggestions: [NeutralLoss!]!
+  neutralLossSuggestions(query: String): [NeutralLoss!]!
 
-  adductSuggestions: [Adduct!]!
+  adductSuggestions(query: String): [Adduct!]!
 
   colocalizationAlgos: [ColocalizationAlgo!]!
 }
