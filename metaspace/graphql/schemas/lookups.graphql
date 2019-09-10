@@ -16,6 +16,15 @@ type MolecularDatabase {
   hidden: Boolean!  # True if database is deprecated/superseded and would not be useful for most users
 }
 
+type ChemMod {
+  name: String!
+  chemMod: String!
+}
+type NeutralLoss {
+  name: String!
+  neutralLoss: String!
+}
+
 type Adduct {
   adduct: String!
   name: String!
@@ -31,6 +40,10 @@ type Query {
 
   molecularDatabases(hideDeprecated: Boolean=true,
     onlyLastVersion: Boolean=true): [MolecularDatabase!]
+
+  chemModSuggestions(query: String): [ChemMod!]!
+
+  neutralLossSuggestions(query: String): [NeutralLoss!]!
 
   adductSuggestions: [Adduct!]!
 

@@ -4,7 +4,8 @@ export const annotationListQuery =
 gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
                            $offset: Int, $limit: Int, $query: String,
                            $filter: AnnotationFilter, $dFilter: DatasetFilter,
-                           $colocalizationCoeffFilter: ColocalizationCoeffFilter) {
+                           $colocalizationCoeffFilter: ColocalizationCoeffFilter,
+                           $countIsomerCompounds: Boolean) {
     allAnnotations(filter: $filter, datasetFilter: $dFilter, simpleQuery: $query,
       orderBy: $orderBy, sortingOrder: $sortingOrder,
       offset: $offset, limit: $limit) {
@@ -12,6 +13,7 @@ gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrde
         sumFormula
         adduct
         ion
+        ionFormula
         database
         msmScore
         rhoSpatial
@@ -41,6 +43,10 @@ gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrde
           maxIntensity
           totalIntensity
         }
+        isomers {
+          ion
+        }
+        countPossibleCompounds(includeIsomers: $countIsomerCompounds)
         possibleCompounds {
           name
           imageURL
@@ -129,5 +135,25 @@ gql`query GetRelatedAnnotations($datasetId: String!, $filter: AnnotationFilter!,
         name
       }
       colocalizationCoeff(colocalizationCoeffFilter: $colocalizationCoeffFilter)
+    }
+  }`;
+
+export const relatedMoleculesQuery =
+  gql`query RelatedMoleculesQuery($datasetId: String!, $filter: AnnotationFilter!, 
+                                $orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder) {
+    allAnnotations(datasetFilter: {
+      ids: $datasetId
+    }, filter: $filter, limit: 12, orderBy: $orderBy, sortingOrder: $sortingOrder) {
+      id
+      ion
+      fdrLevel
+      possibleCompounds {
+        name
+        imageURL
+        information {
+          database
+          url
+        }
+      }
     }
   }`;

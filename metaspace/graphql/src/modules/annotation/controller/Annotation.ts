@@ -25,6 +25,14 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
     return hit._source.formula;
   },
 
+  countPossibleCompounds(hit, args: {includeIsomers: boolean}) {
+    if (args.includeIsomers) {
+      return hit._source.comps_count_with_isomers || 0;
+    } else {
+      return hit._source.comp_ids.length;
+    }
+  },
+
   possibleCompounds(hit) {
     const ids = hit._source.comp_ids;
     const names = hit._source.comp_names;
@@ -65,6 +73,8 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
   chemMod: (hit) => hit._source.chem_mod,
 
   ion: (hit) => hit._source.ion,
+
+  ionFormula: (hit) => hit._source.ion_formula || '', // TODO: Remove " || ''" after prod has been migrated
 
   database: (hit) => hit._source.db_name,
 
@@ -123,6 +133,11 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
         };
       })
       .filter(mzImage => mzImage.mz != null && mzImage.totalIntensity != null && mzImage.minIntensity != null && mzImage.maxIntensity != null);
+  },
+
+  isomers(hit) {
+    const {isomer_ions} = hit._source;
+    return (isomer_ions || []).map(ion => ({ion}))
   },
 
   async colocalizationCoeff(hit, args: {colocalizationCoeffFilter: ColocalizationCoeffFilter | null}, context) {

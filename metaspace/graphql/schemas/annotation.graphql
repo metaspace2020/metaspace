@@ -3,12 +3,14 @@ type Annotation {
 
   dataset: Dataset!
   sumFormula: String!
-  adduct: String!
-  neutralLoss: String
   chemMod: String
-  ion: String!
+  neutralLoss: String
+  adduct: String!
+  ion: String!          # Formula+adducts+polarity
+  ionFormula: String!   # "Compiled" formula, such that there are no +/-s, each element is only included once, in CHNOPS order
   database: String!
   mz: Float!
+  countPossibleCompounds(includeIsomers: Boolean = False): Int!
   possibleCompounds: [Compound!]!
   fdrLevel: Float!
   msmScore: Float!
@@ -16,6 +18,7 @@ type Annotation {
   rhoSpectral: Float
   rhoChaos: Float
   isotopeImages: [MzImage!]!
+  isomers: [IsomerAnnotation!]!
 
   peakChartData: String  # JSON
 
@@ -58,6 +61,10 @@ type MzImage {
   maxIntensity: Float!
 }
 
+type IsomerAnnotation {
+  ion: String!
+}
+
 type ColocalizationAlgo {
   id: String!
   name: String!
@@ -87,7 +94,11 @@ input AnnotationFilter {
   compoundQuery: String
   fdrLevel: Float
   sumFormula: String
+  chemMod: String
+  neutralLoss: String
   adduct: String
+  ion: String
+  ionFormula: String
   colocalizedWith: String         # Should be an ion string (formula+adduct+polarity). Requires DatasetFilter.datasetIds to be set to a specific dataset
   colocalizationSamples: Boolean  # Requires DatasetFilter.datasetIds to be set to a specific dataset
   colocalizationAlgo: String

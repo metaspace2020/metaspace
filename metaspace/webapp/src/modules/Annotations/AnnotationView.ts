@@ -20,14 +20,12 @@
  import {omit, pick, sortBy, throttle} from 'lodash-es';
  import {ANNOTATION_SPECIFIC_FILTERS} from '../Filters/filterSpecs';
  import config from '../../config';
- import noImageURL from '../../assets/no-image.svg';
  import {OpacityMode} from '../../lib/createColormap';
  import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue';
+ import RelatedMolecules from './annotation-widgets/RelatedMolecules.vue';
+ import CompoundsList from './annotation-widgets/CompoundsList.vue';
+ import IsomersAlert from './annotation-widgets/IsomersAlert.vue';
 
- type colorObjType = {
-   code: string,
-   colorName: string
- }
 
  type ImagePosition = {
    zoom: number
@@ -53,6 +51,9 @@
    DatasetInfo,
    ColocalizationSettings,
    CandidateMoleculesPopover,
+   RelatedMolecules,
+   CompoundsList,
+   IsomersAlert,
  };
  for (let category of Object.keys(annotationWidgets)) {
    metadataDependentComponents[category] = {};
@@ -139,8 +140,6 @@
    datasetVisibility: DatasetVisibilityResult | null = null
    currentUser: CurrentUserRoleResult | null = null
    scaleBarColor: string | null = '#000000'
-   failedImages: string[] = []
-   noImageURL = noImageURL
 
    created() {
      this.onImageMove = throttle(this.onImageMove);
@@ -171,11 +170,6 @@
    get formattedMolFormula(): string {
      if (!this.annotation) return '';
      return renderMolFormulaHtml(this.annotation.ion);
-   }
-
-   get compoundsTabLabel(): string {
-     if (!this.annotation) return '';
-     return "Molecules (" + this.annotation.possibleCompounds.length + ")";
    }
 
    get imageOpacityMode(): OpacityMode {
@@ -273,6 +267,10 @@
      return config.features.coloc;
    }
 
+   get showIsomers() {
+     return config.features.isomers;
+   }
+
    opacity: number = 1.0;
 
    imagePosition: ImagePosition = {
@@ -295,10 +293,6 @@
      this.imagePosition.zoom = event.zoom;
      this.imagePosition.xOffset = event.xOffset;
      this.imagePosition.yOffset = event.yOffset;
-   }
-
-   onCompoundImageError(url: string) {
-     this.failedImages.push(url);
    }
 
    resetViewport(event: any): void {

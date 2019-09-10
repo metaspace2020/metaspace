@@ -124,7 +124,7 @@ export default {
     });
 
     const newFilter = omit(oldFilter, filtersToRemove);
-    pull(state.orderedActiveFilters, ...filtersToRemove);
+    state.orderedActiveFilters = without(state.orderedActiveFilters, ...filtersToRemove);
     pushURL(state, newFilter);
   },
 
@@ -134,7 +134,7 @@ export default {
     const removed = without(state.orderedActiveFilters, ...newActiveFilters);
     const added = without(newActiveFilters, ...state.orderedActiveFilters);
 
-    pull(state.orderedActiveFilters, ...removed);
+    state.orderedActiveFilters = without(state.orderedActiveFilters, ...removed);
     state.orderedActiveFilters.push(...added);
     sortFilterKeys(state.orderedActiveFilters);
   },

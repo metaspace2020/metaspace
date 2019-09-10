@@ -22,6 +22,8 @@ const FILTER_TO_URL: Record<FilterKey, string> = {
   datasetIds: 'ds',
   minMSM: 'msm',
   compoundName: 'mol',
+  chemMod: 'chem_mod',
+  neutralLoss: 'nl',
   adduct: 'add',
   mz: 'mz',
   fdrLevel: 'fdr',

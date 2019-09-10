@@ -61,6 +61,7 @@ export interface ESAnnotationSource extends ESDatasetSource {
   neutral_loss: string;
   chem_mod: string;
   ion: string;
+  ion_formula: string;
   polarity: '-'|'+';
 
   mz: number;
@@ -77,6 +78,8 @@ export interface ESAnnotationSource extends ESDatasetSource {
   msm: number;
   comp_ids: string[];
   comp_names: string[];
+  comps_count_with_isomers?: number;
+  isomer_ions: string[];
 
   off_sample_prob?: number;
   off_sample_label?: 'on' | 'off';
@@ -156,17 +159,6 @@ function constructTermOrTermsFilter(field: keyof ESAnnotationSource, valueOrValu
   }
 }
 
-function constructTermsOrNullFilter(field: keyof ESAnnotationSource, values: any[]) {
-  const filters = values.map(val => {
-    if (val == null) {
-      return {bool: {must_not: {exists: {field}}}};
-    } else {
-      return {term: {[field]: val.toUpperCase()}};
-    }
-  });
-  return filters.length == 1 ? filters[0] : {bool: {should: filters}};
-}
-
 const constructAuthFilters = (user: ContextUser | null, userProjectRoles: UserProjectRoles) => {
 
   // (!) Authorisation checks
@@ -216,13 +208,12 @@ function constructDatasetFilters(filter: DatasetFilter) {
   return filters;
 }
 interface ExtraAnnotationFilters {
-  ion?: string;
   annId?: string;
 }
 function constructAnnotationFilters(filter: AnnotationFilter & ExtraAnnotationFilters) {
   const {
     database, datasetName, mzFilter, msmScoreFilter, fdrLevel,
-    sumFormula, adduct, ion, offSample, compoundQuery, annId,
+    sumFormula, chemMod, neutralLoss, adduct, ion, ionFormula, offSample, compoundQuery, annId,
     hasNeutralLoss, hasChemMod, hasHiddenAdduct
   } = filter;
   const filters = [];
@@ -245,6 +236,10 @@ function constructAnnotationFilters(filter: AnnotationFilter & ExtraAnnotationFi
     filters.push({term: {db_name: database}});
   if (sumFormula)
     filters.push({term: {formula: sumFormula}});
+  if (chemMod != null)
+    filters.push({term: {chem_mod: chemMod}});
+  if (neutralLoss != null)
+    filters.push({term: {neutral_loss: neutralLoss}});
   if (adduct != null)
     filters.push({term: {adduct: adduct}});
   if (datasetName)
@@ -260,10 +255,12 @@ function constructAnnotationFilters(filter: AnnotationFilter & ExtraAnnotationFi
   if (hasHiddenAdduct === false) {
     filters.push({bool: {must_not: [{terms: {adduct: config.adducts.filter(a => a.hidden).map(a => a.adduct)}}]}})
   }
-
-  if (ion)
+  if (ion != null) {
     filters.push(constructTermOrTermsFilter('ion', ion));
-
+  }
+  if (ionFormula != null) {
+    filters.push(constructTermOrTermsFilter('ion_formula', ionFormula));
+  }
 
   if (compoundQuery) {
     filters.push({
@@ -415,15 +412,22 @@ export const esCountGroupedResults = async (args: any, docType: DocType, user: C
   }
 };
 
-export const esFilterValueCountResults = async (args: any, user: ContextUser | null): Promise<any> => {
-  const {wildcard, aggsTerms} = args;
+export interface FilterValueCountArgs {
+  filters: any[];
+  aggsTerms: any;
+  user: ContextUser | null;
+  docType?: DocType;
+}
+
+export const esFilterValueCountResults = async (args: FilterValueCountArgs): Promise<any> => {
+  const {filters, aggsTerms, user, docType = 'dataset'} = args;
   const body = {
     query: {
       bool: {
         filter: [
           ...constructAuthFilters(user, user != null ? await user.getProjectRoles() : {}),
-          { term: { _type: 'dataset' } },
-          wildcard,
+          { term: { _type: docType } },
+          ...filters,
         ]
       }
     },

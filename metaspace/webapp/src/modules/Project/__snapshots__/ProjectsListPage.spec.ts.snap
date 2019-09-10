@@ -89,7 +89,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
             <mock-el-option value="my-projects" label="My projects"></mock-el-option>
           </mock-el-select>
         </div>
-        <div class="tf-outer" data-test-key="simpleQuery" filterkey="simpleQuery" options="" name="Simple query">
+        <div class="tf-outer" data-test-key="simpleQuery" filterkey="simpleQuery" name="Simple query" options="">
           <div class="tf-name">
             <i class="el-icon-search" style="color: white;"></i>
           </div>

@@ -2,6 +2,9 @@ import {mzFilterPrecision} from '../util';
 import {decodeParams, decodeSettings} from '../modules/Filters';
 import config from '../config';
 
+/** For filters where empty string is a valid client-side value that must be converted to empty string for the API */
+const noneToEmptyString = s => s === 'none' ? '' : s;
+
 export default {
   filter(state) {
     return decodeParams(state.route, state.filterLists);
@@ -22,6 +25,8 @@ export default {
     const f = {
       database: filter.database,
       compoundQuery: filter.compoundName,
+      chemMod: noneToEmptyString(filter.chemMod),
+      neutralLoss: noneToEmptyString(filter.neutralLoss),
       adduct: filter.adduct,
       fdrLevel: filter.fdrLevel,
       colocalizedWith: filter.colocalizedWith,
