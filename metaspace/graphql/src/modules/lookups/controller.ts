@@ -28,7 +28,7 @@ const getTopFieldValues = async (docType: 'dataset' | 'annotation',
     docType,
     user
   });
-  return Object.keys(itemCounts);
+  return Object.keys(itemCounts).filter(key => key !== '');
 };
 
 const padPlusMinus = (s: string) => s.replace(/([+-])/g,' $1 ');
