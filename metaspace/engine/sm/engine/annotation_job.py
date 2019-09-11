@@ -11,7 +11,7 @@ from pyspark import SparkContext, SparkConf
 
 from sm.engine.acq_geometry import make_acq_geometry
 from sm.engine.errors import ImzMLError
-from sm.engine.msm_basic.formula_imager import make_sample_area_mask, ds_dims
+from sm.engine.msm_basic.formula_imager import make_sample_area_mask, get_ds_dims
 from sm.engine.msm_basic.formula_validator import METRICS
 from sm.engine.msm_basic.msm_basic_search import MSMSearch
 from sm.engine.db import DB
@@ -180,7 +180,7 @@ class AnnotationJob:
     def _save_data_from_raw_ms_file(self, imzml_parser):
         ms_file_path = imzml_parser.filename
         ms_file_type_config = SMConfig.get_ms_file_handler(ms_file_path)
-        dims = ds_dims([coord[:2] for coord in imzml_parser.coordinates])
+        dims = get_ds_dims([coord[:2] for coord in imzml_parser.coordinates])
 
         acq_geometry = make_acq_geometry(
             ms_file_type_config['type'], ms_file_path, self._ds.metadata, dims

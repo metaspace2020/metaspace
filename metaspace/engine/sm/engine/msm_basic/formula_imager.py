@@ -41,7 +41,7 @@ def gen_iso_images(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, ppm=3, min_
             yield centr_f_inds[i], centr_p_inds[i], centr_ints[i], m
 
 
-def ds_dims(coordinates):
+def get_ds_dims(coordinates):
     min_x, min_y = np.amin(coordinates, axis=0)
     max_x, max_y = np.amax(coordinates, axis=0)
     nrows, ncols = max_y - min_y + 1, max_x - min_x + 1
@@ -53,7 +53,7 @@ def get_pixel_indices(coordinates):
     _coord = np.around(_coord, 5)  # correct for numerical precision
     _coord -= np.amin(_coord, axis=0)
 
-    _, ncols = ds_dims(coordinates)
+    _, ncols = get_ds_dims(coordinates)
     pixel_indices = _coord[:, 1] * ncols + _coord[:, 0]
     pixel_indices = pixel_indices.astype(np.int32)
     return pixel_indices
@@ -61,7 +61,7 @@ def get_pixel_indices(coordinates):
 
 def make_sample_area_mask(coordinates):
     pixel_indices = get_pixel_indices(coordinates)
-    nrows, ncols = ds_dims(coordinates)
+    nrows, ncols = get_ds_dims(coordinates)
     sample_area_mask = np.zeros(ncols * nrows, dtype=bool)
     sample_area_mask[pixel_indices] = True
     return sample_area_mask.reshape(nrows, ncols)
@@ -108,7 +108,7 @@ def get_file_path(name):
 
 def create_process_segment(ds_segments, coordinates, ds_config, target_formula_inds):
     sample_area_mask = make_sample_area_mask(coordinates)
-    nrows, ncols = ds_dims(coordinates)
+    nrows, ncols = get_ds_dims(coordinates)
     compute_metrics = make_compute_image_metrics(
         sample_area_mask, nrows, ncols, ds_config['image_generation']
     )
