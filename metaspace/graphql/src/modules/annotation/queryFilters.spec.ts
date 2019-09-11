@@ -13,6 +13,7 @@ import {Query} from '../../binding';
 import {applyQueryFilters} from './queryFilters';
 import {ESAnnotation} from '../../../esConnector';
 import {DeepPartial} from 'typeorm';
+import {ESAnnotationWithColoc} from './queryFilters';
 
 type Args = ArgsFromBinding<Query['allAnnotations']>
   | ArgsFromBinding<Query['countAnnotations']>;
@@ -76,7 +77,7 @@ describe('annotation/queryFilters applyQueryFilters', () => {
       limit: 1000,
       filter: {
         ion: ions.slice(1,4).map(ion => ion.ion),
-      }
+      } as any
     });
   });
 
@@ -97,7 +98,7 @@ describe('annotation/queryFilters applyQueryFilters', () => {
     expect(args).toMatchObject({
       filter: {
         ion: ions.slice(1,3).map(ion => ion.ion)
-      }
+      } as any
     });
   });
 
@@ -120,7 +121,7 @@ describe('annotation/queryFilters applyQueryFilters', () => {
       {_source: ionAnnotations[1]},
     ];
 
-    const result = postprocess!(annotations as ESAnnotation[]);
+    const result = postprocess!(annotations as ESAnnotation[]) as ESAnnotationWithColoc[];
 
     expect(result).toMatchObject([
       {_source: ionAnnotations[1], _isColocReference: true},
