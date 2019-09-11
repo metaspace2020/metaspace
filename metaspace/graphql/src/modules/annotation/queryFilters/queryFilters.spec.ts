@@ -6,19 +6,15 @@ import {
   onBeforeAll,
   onBeforeEach,
   testEntityManager,
-} from '../../tests/graphqlTestEnvironment';
-import {ColocAnnotation, ColocJob, Ion} from './model';
-import {ArgsFromBinding} from '../../bindingTypes';
-import {Query} from '../../binding';
-import {applyQueryFilters} from './queryFilters';
-import {ESAnnotation} from '../../../esConnector';
+} from '../../../tests/graphqlTestEnvironment';
+import {ColocAnnotation, ColocJob, Ion} from '../model';
+import {applyQueryFilters} from './index';
+import {ESAnnotation} from '../../../../esConnector';
 import {DeepPartial} from 'typeorm';
-import {ESAnnotationWithColoc} from './queryFilters';
+import {ESAnnotationWithColoc} from './index';
+import {QueryFilterArgs} from './types';
 
-type Args = ArgsFromBinding<Query['allAnnotations']>
-  | ArgsFromBinding<Query['countAnnotations']>;
-
-describe('annotation/queryFilters applyQueryFilters', () => {
+describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
   beforeAll(onBeforeAll);
   afterAll(onAfterAll);
   // beforeEach(onBeforeEach);
@@ -59,7 +55,7 @@ describe('annotation/queryFilters applyQueryFilters', () => {
   });
 
   it('should transform the args of a request with a colocalizedWith filter', async () => {
-    const argsWithColocWith: Args = {
+    const argsWithColocWith: QueryFilterArgs = {
       datasetFilter: { ids: job.datasetId },
       filter: {
         database: job.molDb!,
@@ -82,7 +78,7 @@ describe('annotation/queryFilters applyQueryFilters', () => {
   });
 
   it('should transform the args of a request with a colocalizationSamples filter', async () => {
-    const argsWithColocWith: Args = {
+    const argsWithColocWith: QueryFilterArgs = {
       datasetFilter: { ids: job.datasetId },
       filter: {
         database: job.molDb!,
@@ -103,7 +99,7 @@ describe('annotation/queryFilters applyQueryFilters', () => {
   });
 
   it('should add colocalizationCoeffs to annotations', async () => {
-    const argsWithColocWith: Args = {
+    const argsWithColocWith: QueryFilterArgs = {
       datasetFilter: { ids: job.datasetId },
       filter: {
         database: job.molDb!,

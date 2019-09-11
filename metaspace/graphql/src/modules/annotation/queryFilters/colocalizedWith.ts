@@ -1,11 +1,9 @@
 import {Context} from '../../../context';
 import config from '../../../utils/config';
-import {ArgsFromBinding} from '../../../bindingTypes';
-import {Query} from '../../../binding';
 import * as _ from 'lodash';
 import {ESAnnotation} from '../../../../esConnector';
 import {UserError} from 'graphql-errors';
-import {Args, ESAnnotationWithColoc, FilterResult} from './types';
+import {QueryFilterArgs, ESAnnotationWithColoc, QueryFilterResult} from './types';
 import {ColocAnnotation, Ion} from '../model';
 import {setOrMerge} from '../../../utils/setOrMerge';
 
@@ -59,80 +57,91 @@ const getColocCoeffInner = (baseAnnotation: ColocAnnotation, otherIonId: number)
   }
 };
 
-export const applyColocalizedWithFilter = async function (context: Context, args: Args): Promise<FilterResult> {
-  const datasetId = args.datasetFilter && args.datasetFilter.ids;
-  const {
-    fdrLevel = 0.1,
-    database = null,
-    colocalizedWith = null,
-  } = args.filter || {};
-  const colocalizationAlgo =
-    args.filter && args.filter.colocalizationAlgo
-    || config.metadataLookups.defaultColocalizationAlgo;
-  let newArgs = args;
-
-  if (datasetId != null && colocalizationAlgo != null && colocalizedWith != null) {
-    const annotationAndIons = await getColocAnnotation(context, datasetId, fdrLevel, database, colocalizedWith, colocalizationAlgo);
-    if (annotationAndIons != null) {
-      const { annotation, ionsById, lookupIon } = annotationAndIons;
-      const { offset, limit } = args as ArgsFromBinding<Query['allAnnotations']>;
-      const colocIons = _.uniq([annotation.ionId, ...annotation.colocIonIds])
-        .map(ionId => {
-          const ion = ionsById.get(ionId);
-          return ion != null ? ion.ion : null;
-        })
-        .filter(ion => ion != null);
-
-      newArgs = setOrMerge(newArgs, 'filter.ion', colocIons, _.intersection);
-      // Always select 1000 annotations so that sorting by colocalizationCoeff doesn't just sort per-page
-      newArgs = setOrMerge(newArgs, 'offset', 0);
-      newArgs = setOrMerge(newArgs, 'limit', 1000);
-
-      const postprocess = (annotations: ESAnnotation[]): ESAnnotationWithColoc[] => {
-        let newAnnotations: ESAnnotationWithColoc[] = annotations.map(ann => {
-          const ion = lookupIon(ann._source.formula, ann._source.chem_mod, ann._source.neutral_loss, ann._source.adduct);
-          return {
-            ...ann,
-            _cachedColocCoeff: ion != null ? getColocCoeffInner(annotation, ion.id) : null,
-            _isColocReference: ion != null && ion.id === annotation.ionId,
-            async getColocalizationCoeff(_colocalizedWith: string, _colocalizationAlgo: string, _database: string, _fdrLevel: number) {
-              if (_colocalizedWith === colocalizedWith && _colocalizationAlgo === colocalizationAlgo && _database === database && _fdrLevel === fdrLevel) {
-                return this._cachedColocCoeff;
-              } else {
-                throw new UserError('colocalizationCoeff arguments must match the parent allAnnotations filter values');
-                // return getColocCoeff(context, datasetId, _colocalizedWith, ann._source.sf_adduct, _colocalizationAlgo, _database, _fdrLevel)
-              }
-            },
-          };
-        });
-
-        if (!('orderBy' in args) || args.orderBy === 'ORDER_BY_COLOCALIZATION') {
-          const order = 'sortingOrder' in args && args.sortingOrder === 'ASCENDING' ? 1 : -1;
-
-          newAnnotations = _.sortBy(newAnnotations, ann => {
-            if (ann._isColocReference) {
-              // Always show reference annotations as the most colocalized,
-              // even if there are other annotations with a 1.0 colocalizationCoeff
-              return Infinity * order;
-            } else {
-              return (ann._cachedColocCoeff != null ? ann._cachedColocCoeff : -1) * order;
-            }
-          });
-        }
-        if (offset) {
-          newAnnotations = newAnnotations.slice(offset);
-        }
-        if (limit) {
-          newAnnotations = newAnnotations.slice(0, limit);
-        }
-
-        return newAnnotations;
+const createPostprocess = ({annotation, lookupIon}: AnnotationAndIons, args: QueryFilterArgs,
+                          colocalizedWith: string, colocalizationAlgo: string, database: string | null,
+                          fdrLevel: number) => {
+  return (annotations: ESAnnotation[]): ESAnnotationWithColoc[] => {
+    let newAnnotations: ESAnnotationWithColoc[] = annotations.map(ann => {
+      const ion = lookupIon(ann._source.formula, ann._source.chem_mod, ann._source.neutral_loss, ann._source.adduct);
+      return {
+        ...ann,
+        _cachedColocCoeff: ion != null ? getColocCoeffInner(annotation, ion.id) : null,
+        _isColocReference: ion != null && ion.id === annotation.ionId,
+        async getColocalizationCoeff(_colocalizedWith: string, _colocalizationAlgo: string, _database: string, _fdrLevel: number) {
+          if (_colocalizedWith === colocalizedWith
+            && _colocalizationAlgo === colocalizationAlgo
+            && _database === database
+            && _fdrLevel === fdrLevel) {
+            return this._cachedColocCoeff;
+          } else {
+            throw new UserError('colocalizationCoeff arguments must match the parent allAnnotations filter values');
+            // return getColocCoeff(context, datasetId, _colocalizedWith, ann._source.sf_adduct, _colocalizationAlgo, _database, _fdrLevel)
+          }
+        },
       };
-      return {args: newArgs, postprocess};
-    } else {
-      return {args: setOrMerge(newArgs, 'filter.ion', [])};
+    });
+
+    if (args.orderBy === undefined || args.orderBy === 'ORDER_BY_COLOCALIZATION') {
+      const order = 'sortingOrder' in args && args.sortingOrder === 'ASCENDING' ? 1 : -1;
+
+      newAnnotations = _.sortBy(newAnnotations, ann => {
+        if (ann._isColocReference) {
+          // Always show reference annotations as the most colocalized,
+          // even if there are other annotations with a 1.0 colocalizationCoeff
+          return Infinity * order;
+        } else {
+          return (ann._cachedColocCoeff != null ? ann._cachedColocCoeff : -1) * order;
+        }
+      });
     }
-  } else {
-    return { args }
-  }
+    if (args.offset) {
+      newAnnotations = newAnnotations.slice(args.offset);
+    }
+    if (args.limit) {
+      newAnnotations = newAnnotations.slice(0, args.limit);
+    }
+
+    return newAnnotations;
+  };
 };
+
+export const applyColocalizedWithFilter =
+  async (context: Context, args: QueryFilterArgs): Promise<QueryFilterResult> => {
+    const datasetId = args.datasetFilter && args.datasetFilter.ids;
+    const {
+      fdrLevel = 0.1,
+      database = null,
+      colocalizedWith = null,
+    } = args.filter || {};
+    const colocalizationAlgo =
+      args.filter && args.filter.colocalizationAlgo
+      || config.metadataLookups.defaultColocalizationAlgo;
+    let newArgs = args;
+
+    if (datasetId != null && colocalizationAlgo != null && colocalizedWith != null) {
+      const annotationAndIons = await getColocAnnotation(context, datasetId, fdrLevel, database, colocalizedWith, colocalizationAlgo);
+      if (annotationAndIons != null) {
+        const { annotation, ionsById, lookupIon } = annotationAndIons;
+        const colocIons = _.uniq([annotation.ionId, ...annotation.colocIonIds])
+          .map(ionId => {
+            const ion = ionsById.get(ionId);
+            return ion != null ? ion.ion : null;
+          })
+          .filter(ion => ion != null);
+
+        newArgs = setOrMerge(newArgs, 'filter.ion', colocIons, _.intersection);
+        // Always select 1000 annotations so that sorting by colocalizationCoeff doesn't just sort per-page
+        newArgs = setOrMerge(newArgs, 'offset', 0);
+        newArgs = setOrMerge(newArgs, 'limit', 1000);
+
+        return {
+          args: newArgs,
+          postprocess: createPostprocess(annotationAndIons, args, colocalizedWith, colocalizationAlgo, database, fdrLevel),
+        };
+      } else {
+        return {args: setOrMerge(newArgs, 'filter.ion', [])};
+      }
+    } else {
+      return { args }
+    }
+  };

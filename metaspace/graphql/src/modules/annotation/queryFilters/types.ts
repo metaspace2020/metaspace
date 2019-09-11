@@ -1,14 +1,27 @@
-import {ArgsFromBinding} from '../../../bindingTypes';
-import {Query} from '../../../binding';
+import {
+  AnnotationFilter,
+  AnnotationOrderBy,
+  DatasetFilter,
+  DatasetOrderBy, Query,
+  SortingOrder,
+} from '../../../binding';
 import {ESAnnotation} from '../../../../esConnector';
 
-export type Args = ArgsFromBinding<Query['allAnnotations']>
-  | ArgsFromBinding<Query['countAnnotations']>;
+// A superset of allAnnotations, countAnnotations, allDatasets and countDatasets
+export interface QueryFilterArgs {
+  orderBy?: AnnotationOrderBy | DatasetOrderBy;
+  sortingOrder?: SortingOrder;
+  offset?: number;
+  limit?: number;
+  filter?: AnnotationFilter;
+  datasetFilter?: DatasetFilter;
+  simpleQuery?: string;
+}
 
 export type PostProcessFunc = (annotations: ESAnnotation[]) => ESAnnotation[];
 
-export interface FilterResult {
-  args: Args;
+export interface QueryFilterResult {
+  args: QueryFilterArgs;
   postprocess?: PostProcessFunc;
 }
 

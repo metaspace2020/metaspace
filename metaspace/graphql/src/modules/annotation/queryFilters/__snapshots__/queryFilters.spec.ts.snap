@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`annotation/queryFilters applyQueryFilters should transform the args of a request with a colocalizationSamples filter 1`] = `
+exports[`annotation/queryFilters applyQueryFilters (colocalization) should transform the args of a request with a colocalizationSamples filter 1`] = `
 Object {
   "datasetFilter": Object {
     "ids": "datasetId",
@@ -18,7 +18,7 @@ Object {
 }
 `;
 
-exports[`annotation/queryFilters applyQueryFilters should transform the args of a request with a colocalizedWith filter 1`] = `
+exports[`annotation/queryFilters applyQueryFilters (colocalization) should transform the args of a request with a colocalizedWith filter 1`] = `
 Object {
   "datasetFilter": Object {
     "ids": "datasetId",
