@@ -88,7 +88,7 @@ class QueueConsumerAsync:
         self.logger.info('Adding connection close callback')
         self._connection.add_on_close_callback(self.on_connection_closed)
 
-    def on_connection_closed(self, connection, reply_code, reply_text):  # noqa
+    def on_connection_closed(self, connection, reply_code, reply_text):
         """This method is invoked by pika when the connection to RabbitMQ is
         closed unexpectedly. Since it is unexpected, we will reconnect to
         RabbitMQ if it disconnects.
@@ -211,7 +211,7 @@ class QueueConsumerAsync:
             arguments=self._qdesc['arguments'],
         )
 
-    def on_queue_declareok(self, method_frame):  # noqa
+    def on_queue_declareok(self, method_frame):
         """Method invoked by pika when the Queue.Declare RPC call made in
         setup_queue has completed. In this method we will bind the queue
         and exchange together with the routing key by issuing the Queue.Bind
