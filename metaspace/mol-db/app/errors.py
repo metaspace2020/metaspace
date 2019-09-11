@@ -7,52 +7,21 @@ except ImportError:
     OrderedDict = dict
 
 
-OK = {
-    'status': falcon.HTTP_200,
-    'code': 200,
-}
+OK = {'status': falcon.HTTP_200, 'code': 200}
 
-ERR_UNKNOWN = {
-    'status': falcon.HTTP_500,
-    'code': 500,
-    'title': 'Unknown Error'
-}
+ERR_UNKNOWN = {'status': falcon.HTTP_500, 'code': 500, 'title': 'Unknown Error'}
 
-ERR_AUTH_REQUIRED = {
-    'status': falcon.HTTP_401,
-    'code': 99,
-    'title': 'Authentication Required'
-}
+ERR_AUTH_REQUIRED = {'status': falcon.HTTP_401, 'code': 99, 'title': 'Authentication Required'}
 
-ERR_INVALID_PARAMETER = {
-    'status': falcon.HTTP_400,
-    'code': 88,
-    'title': 'Invalid Parameter'
-}
+ERR_INVALID_PARAMETER = {'status': falcon.HTTP_400, 'code': 88, 'title': 'Invalid Parameter'}
 
-ERR_DATABASE_ROLLBACK = {
-    'status': falcon.HTTP_500,
-    'code': 77,
-    'title': 'Database Rollback Error'
-}
+ERR_DATABASE_ROLLBACK = {'status': falcon.HTTP_500, 'code': 77, 'title': 'Database Rollback Error'}
 
-ERR_NOT_SUPPORTED = {
-    'status': falcon.HTTP_404,
-    'code': 10,
-    'title': 'Not Supported'
-}
+ERR_NOT_SUPPORTED = {'status': falcon.HTTP_404, 'code': 10, 'title': 'Not Supported'}
 
-ERR_OBJECT_NOT_EXISTS = {
-    'status': falcon.HTTP_404,
-    'code': 21,
-    'title': 'Object Not Exists'
-}
+ERR_OBJECT_NOT_EXISTS = {'status': falcon.HTTP_404, 'code': 21, 'title': 'Object Not Exists'}
 
-ERR_PASSWORD_NOT_MATCH = {
-    'status': falcon.HTTP_400,
-    'code': 22,
-    'title': 'Password Not Match'
-}
+ERR_PASSWORD_NOT_MATCH = {'status': falcon.HTTP_400, 'code': 22, 'title': 'Password Not Match'}
 
 
 class AppError(Exception):

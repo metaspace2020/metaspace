@@ -17,7 +17,8 @@ class Molecule(Base):
 
     def __repr__(self):
         return "<Molecule(inchikey='{}', mol_id = '{}', mol_name = '{}', sf='{}', db_id='{}')>".format(
-            self.inchikey, self.mol_id, self.mol_name, self.sf, self.db_id)
+            self.inchikey, self.mol_id, self.mol_name, self.sf, self.db_id
+        )
 
     @classmethod
     def get_id(cls):
@@ -29,7 +30,7 @@ class Molecule(Base):
         'mol_name': str,
         'inchikey': str,
         'inchi': str,
-        'sf': str
+        'sf': str,
     }
 
     FIELDS.update(Base.FIELDS)

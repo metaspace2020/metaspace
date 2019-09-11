@@ -2,10 +2,12 @@ import re
 import falcon
 
 from sqlalchemy.orm.exc import NoResultFound
+
 # from cerberus import Validator, ValidationError
 
 from app import log
 from app.api.base import BaseResource
+
 # from app.utils.hooks import auth_required
 # from app.utils.auth import encrypt_token, hash_password, verify_password, uuid
 from app.errors import AppError, InvalidParameterError, ObjectNotExistError, PasswordNotMatch
@@ -35,6 +37,7 @@ class MoleculeItem(BaseResource):
     """
     Handle for endpoint: /v1/molecules/{mol_id}
     """
+
     # @falcon.before(auth_required)
     def on_get(self, req, res, mol_id):
         db_session = req.context['session']

@@ -18,9 +18,7 @@ def predict_chunk(image_path_chunk):
         with open(fp, 'rb') as f:
             content = base64.b64encode(f.read()).decode()
             base64_images.append(content)
-    doc = {
-        'images': [{'content': content} for content in base64_images]
-    }
+    doc = {'images': [{'content': content} for content in base64_images]}
 
     resp = post(url=API_ENDPOINT + '/predict', json=doc)
     if resp.status_code == 200:
@@ -32,7 +30,7 @@ def predict_chunk(image_path_chunk):
 
 def make_chunk_gen(items, chunk_size):
     chunk_n = (len(items) - 1) // chunk_size + 1
-    chunks = [items[i * chunk_size:(i + 1) * chunk_size] for i in range(chunk_n)]
+    chunks = [items[i * chunk_size : (i + 1) * chunk_size] for i in range(chunk_n)]
     for image_path_chunk in chunks:
         yield image_path_chunk
 

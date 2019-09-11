@@ -7,10 +7,13 @@ logger = logging.getLogger('API')
 logger.setLevel(config.LOG_LEVEL)
 logger.propagate = False
 
-FORMAT = "%(asctime)s - %(levelname)s - %(name)s[%(threadName)s] - %(filename)s:%(lineno)d - %(message)s"
+FORMAT = (
+    "%(asctime)s - %(levelname)s - %(name)s[%(threadName)s] - %(filename)s:%(lineno)d - %(message)s"
+)
 
 if config.APP_ENV == 'live':
     from logging.handlers import RotatingFileHandler
+
     file_handler = RotatingFileHandler('log/app.log', 'a', 1 * 1024 * 1024, 10)
     formatter = logging.Formatter(FORMAT)
     file_handler.setFormatter(formatter)
