@@ -116,6 +116,10 @@
     "setupFilesAfterEnv": [
       "<rootDir>/src/tests/setupTestFramework.ts"
     ],
+    "coveragePathIgnorePatterns": [
+      "node_modules",
+      "src/migrations"
+    ],
     "globalSetup": "<rootDir>/src/tests/globalSetup.js",
     "globalTeardown": "<rootDir>/src/tests/globalTeardown.js",
     "clearMocks": true
