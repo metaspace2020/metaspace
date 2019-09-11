@@ -100,16 +100,11 @@ def fetch_chunk_spectra_data(sp_ids, imzml_parser, sp_id_to_idx):
         mzs_list.append(mzs_)
         ints_list.append(ints_)
 
-    dtype = imzml_parser.mzPrecision
     mzs = np.concatenate(mzs_list)
     by_mz = np.argsort(mzs)
     sp_mz_int_buf = np.array(
-        [
-            np.concatenate(sp_inds_list)[by_mz],
-            mzs[by_mz],
-            np.concatenate(ints_list)[by_mz]
-        ],
-        dtype,
+        [np.concatenate(sp_inds_list)[by_mz], mzs[by_mz], np.concatenate(ints_list)[by_mz]],
+        dtype=imzml_parser.mzPrecision,
     ).T
     return sp_mz_int_buf
 
@@ -117,7 +112,7 @@ def fetch_chunk_spectra_data(sp_ids, imzml_parser, sp_id_to_idx):
 def chunk_list(xs, size):
     n = (len(xs) - 1) // size + 1
     for i in range(n):
-        yield xs[size * i: size * (i + 1)]
+        yield xs[size * i : size * (i + 1)]
 
 
 def extend_ds_segment_bounds(ds_segments):

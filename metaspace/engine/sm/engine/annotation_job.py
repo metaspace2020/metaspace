@@ -113,7 +113,7 @@ class AnnotationJob:
                 moldbs,
             )
 
-            # Total runtime of the dataset should be measured, not separate jobs
+            # FIXME: Total runtime of the dataset should be measured, not separate jobs
             job_ids = [self._store_job_meta(moldb.id) for moldb in moldbs]
 
             search_alg = MSMSearch(

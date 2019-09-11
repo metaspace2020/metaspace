@@ -10,7 +10,8 @@ from sm.engine.msm_basic.segmenter import (
     define_ds_segments,
     segment_ds,
     calculate_chunk_sp_n,
-    fetch_chunk_spectra_data)
+    fetch_chunk_spectra_data,
+)
 
 
 def test_calculate_chunk_sp_n():
@@ -35,10 +36,7 @@ def test_fetch_chunk_spectra_data():
     )
 
     exp_sp_mz_int_buf = np.vstack(
-        [
-            np.sort([mz for mz in np.linspace(0, 90, num=mz_n) for _ in range(2)]),
-            np.ones(2*mz_n)
-        ]
+        [np.sort([mz for mz in np.linspace(0, 90, num=mz_n) for _ in range(2)]), np.ones(2 * mz_n)]
     ).T
     assert sp_mz_int_buf.dtype == 'f'
     assert_array_almost_equal(sp_mz_int_buf[:, 1:], exp_sp_mz_int_buf)
