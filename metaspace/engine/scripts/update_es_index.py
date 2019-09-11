@@ -3,11 +3,12 @@ import logging
 from copy import deepcopy
 from functools import partial
 
-from sm.engine.mol_db import MolecularDB
-from sm.engine.isocalc_wrapper import IsocalcWrapper, set_centroids_cache_enabled
-from sm.engine.util import bootstrap_and_run
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter, ESIndexManager
+from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine.util import bootstrap_and_run
+
+logger = logging.getLogger('engine')
 
 
 def get_inactive_index_es_config(es_config):
@@ -20,7 +21,7 @@ def get_inactive_index_es_config(es_config):
     return tmp_es_config
 
 
-def _reindex_all(logger, conf):
+def _reindex_all(conf):
     es_config = conf['elasticsearch']
     inactive_es_config = get_inactive_index_es_config(es_config)
     alias = es_config['index']
@@ -33,7 +34,7 @@ def _reindex_all(logger, conf):
         db = DB()
         es_exp = ESExporter(db, inactive_es_config)
         ds_ids = [r[0] for r in db.select('select id from dataset')]
-        _reindex_datasets(logger, ds_ids, db, es_exp)
+        _reindex_datasets(ds_ids, es_exp)
 
         es_man.remap_alias(inactive_es_config['index'], alias=alias)
     except Exception as e:
@@ -43,40 +44,20 @@ def _reindex_all(logger, conf):
         es_man.delete_index(old_index)
 
 
-def _reindex_datasets(logger, ds_ids, db, es_exp):
+def _reindex_datasets(ds_ids, es_exp):
     logger.info('Reindexing %s dataset(s)', len(ds_ids))
-    for idx, ds_id in enumerate(ds_ids):
-        logger.info(f'Reindexing {idx+1} out of {len(ds_ids)}')
-        try:
-            # Delete from ES regardless of whether the DS exists, so that this can clean up deleted datasets
-            es_exp.delete_ds(ds_id)
-            ds = db.select_one("select name, config from dataset where id = %s", (ds_id,))
-            if ds:
-                ds_name, ds_config = ds
-                for mol_db_name in ds_config['databases']:
-                    try:
-                        mol_db = MolecularDB(
-                            name=mol_db_name, iso_gen_config=ds_config['isotope_generation']
-                        )
-                        isocalc = IsocalcWrapper(ds_config['isotope_generation'])
-                        es_exp.index_ds(ds_id, mol_db=mol_db, isocalc=isocalc)
-                    except Exception as e:
-                        new_msg = f'Failed to reindex(ds_id={ds_id}, ds_name={ds_name}, mol_db={mol_db_name}): {e}'
-                        logger.error(new_msg, exc_info=True)
-            else:
-                logger.warning(f'Dataset does not exist(ds_id={ds_id})')
-        except Exception as e:
-            new_msg = 'Failed to reindex(ds_id={}): {}'.format(ds_id, e)
-            logger.error(new_msg, exc_info=True)
+    for i, ds_id in enumerate(ds_ids, 1):
+        logger.info(f'Reindexing {i} out of {len(ds_ids)}')
+        es_exp.reindex_ds(ds_id)
 
 
 def reindex_results(sm_config, ds_id, ds_mask, use_inactive_index):
     assert ds_id or ds_mask
 
-    set_centroids_cache_enabled(True)
+    IsocalcWrapper.set_centroids_cache_enabled(True)
 
     if ds_mask == '_all_':
-        _reindex_all(logger, sm_config)
+        _reindex_all(sm_config)
     else:
         es_config = sm_config['elasticsearch']
         if use_inactive_index:
@@ -97,7 +78,7 @@ def reindex_results(sm_config, ds_id, ds_mask, use_inactive_index):
         else:
             ds_ids = []
 
-        _reindex_datasets(logger, ds_ids, db, es_exp)
+        _reindex_datasets(ds_ids, es_exp)
 
 
 if __name__ == '__main__':
@@ -111,7 +92,6 @@ if __name__ == '__main__':
         '--ds-name', dest='ds_name', default='', help='DS name prefix mask (_all_ for all datasets)'
     )
     args = parser.parse_args()
-    logger = logging.getLogger('engine')
 
     bootstrap_and_run(
         args.config,

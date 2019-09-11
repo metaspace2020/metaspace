@@ -23,7 +23,7 @@ from sm.engine.queue import QueuePublisher
 from sm.engine.dataset import Dataset, DatasetStatus
 
 
-class DatasetManager(object):
+class DatasetManager:
     def __init__(self, db, es, img_store, status_queue=None, logger=None, sm_config=None):
         self._sm_config = sm_config or SMConfig.get_conf()
         self._slack_conf = self._sm_config.get('slack', {})
@@ -110,9 +110,7 @@ class DatasetManager(object):
             if mol_db_name not in ds.config['databases']:
                 self._db.alter('DELETE FROM job WHERE id = %s', params=(job_id,))
             else:
-                mol_db = MolecularDB(
-                    name=mol_db_name, iso_gen_config=ds.config['isotope_generation']
-                )
+                mol_db = MolecularDB(name=mol_db_name)
                 isocalc = IsocalcWrapper(ds.config['isotope_generation'])
                 self._es.index_ds(ds_id=ds.id, mol_db=mol_db, isocalc=isocalc)
 
@@ -192,7 +190,7 @@ class DatasetManager(object):
         self._send_email(msg['email'], 'METASPACE service notification (FAILED)', email_body)
 
 
-class SMAnnotateDaemon(object):
+class SMAnnotateDaemon:
     """ Reads messages from annotation queue and starts annotation jobs
     """
 
@@ -297,7 +295,7 @@ class SMAnnotateDaemon(object):
             self._stopped = True
 
 
-class SMIndexUpdateDaemon(object):
+class SMIndexUpdateDaemon:
     """ Reads messages from the update queue and does indexing/update/delete
     """
 
@@ -334,14 +332,15 @@ class SMIndexUpdateDaemon(object):
         if msg.get('email'):
             self._manager.send_success_email(msg)
 
-    def _on_failure(self, msg):
+    def _on_failure(self, msg, e):
         self.logger.error(f' SM update daemon: failure', exc_info=True)
 
         ds = self._manager.load_ds(msg['ds_id'])
         self._manager.set_ds_status(ds, DatasetStatus.FAILED)
         self._manager.notify_update(ds.id, msg['action'], DaemonActionStage.FAILED)
 
-        self._manager.post_to_slack('hankey', f" [x] Failed to {msg['action']}: {json.dumps(msg)}")
+        slack_msg = f'{json.dumps(msg)}\n```{e.traceback}```'
+        self._manager.post_to_slack('hankey', f" [x] Failed to {msg['action']}: {slack_msg}")
 
         if msg.get('email'):
             self._manager.send_failed_email(msg)
@@ -375,8 +374,7 @@ class SMIndexUpdateDaemon(object):
             else:
                 raise Exception(f"Wrong action: {msg['action']}")
         except Exception as e:
-            msg = f"Index update failed (ds_id={msg['ds_id']}): {e}"
-            raise IndexUpdateError(msg) from e
+            raise IndexUpdateError(msg['ds_id'], traceback=traceback.format_exc(chain=False)) from e
 
     def start(self):
         self._stopped = False

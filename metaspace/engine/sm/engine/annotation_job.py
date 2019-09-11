@@ -11,7 +11,7 @@ from pyspark import SparkContext, SparkConf
 
 from sm.engine.acq_geometry import make_acq_geometry
 from sm.engine.errors import ImzMLError
-from sm.engine.msm_basic.formula_imager import make_sample_area_mask, ds_dims
+from sm.engine.msm_basic.formula_imager import make_sample_area_mask, get_ds_dims
 from sm.engine.msm_basic.formula_validator import METRICS
 from sm.engine.msm_basic.msm_basic_search import MSMSearch
 from sm.engine.db import DB
@@ -32,13 +32,13 @@ TARGET_DECOY_ADD_DEL = (
 )
 
 
-class JobStatus(object):
+class JobStatus:  # noqa
     RUNNING = 'RUNNING'
     FINISHED = 'FINISHED'
     FAILED = 'FAILED'
 
 
-class AnnotationJob(object):
+class AnnotationJob:
     """ Main class responsible for molecule search. Uses the other modules of the engine """
 
     def __init__(self, img_store=None, sm_config=None):
@@ -100,15 +100,12 @@ class AnnotationJob(object):
 
             raise ImzMLError(traceback.format_exc()) from e
 
-    def _run_annotation_jobs(self, imzml_parser, moldb_ids):
-        if moldb_ids:
-            moldbs = [
-                MolecularDB(
-                    id=id, db=self._db, iso_gen_config=self._ds.config['isotope_generation']
-                )
-                for id in moldb_ids
-            ]
-            n_peaks = self._ds.config['isotope_generation']['n_peaks']
+    @staticmethod
+    def create_mol_dbs(moldb_ids):
+        return [MolecularDB(id=id) for id in moldb_ids]
+
+    def _run_annotation_jobs(self, imzml_parser, moldbs):
+        if moldbs:
             logger.info(
                 "Running new job ds_id: %s, ds_name: %s, mol dbs: %s",
                 self._ds.id,
@@ -116,11 +113,11 @@ class AnnotationJob(object):
                 moldbs,
             )
 
-            # FIXME: record runtime of dataset not jobs
+            # FIXME: Total runtime of the dataset should be measured, not separate jobs
             job_ids = [self._store_job_meta(moldb.id) for moldb in moldbs]
 
             search_alg = MSMSearch(
-                sc=self._sc,
+                spark_context=self._sc,
                 imzml_parser=imzml_parser,
                 moldbs=moldbs,
                 ds_config=self._ds.config,
@@ -128,13 +125,17 @@ class AnnotationJob(object):
             )
             search_results_it = search_alg.search()
 
-            for job_id, (moldb, moldb_ion_metrics_df, moldb_ion_images_rdd) in zip(
+            for job_id, (moldb_ion_metrics_df, moldb_ion_images_rdd) in zip(
                 job_ids, search_results_it
             ):
                 # Save results for each moldb
                 job_status = JobStatus.FAILED
                 try:
-                    search_results = SearchResults(job_id, METRICS.keys(), n_peaks)
+                    search_results = SearchResults(
+                        job_id=job_id,
+                        metric_names=METRICS.keys(),
+                        n_peaks=self._ds.config['isotope_generation']['n_peaks'],
+                    )
                     img_store_type = self._ds.get_ion_img_storage_type(self._db)
                     coordinates = [coo[:2] for coo in imzml_parser.coordinates]
                     sample_area_mask = make_sample_area_mask(coordinates)
@@ -153,11 +154,8 @@ class AnnotationJob(object):
                         params=(job_status, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), job_id),
                     )
 
-    def _remove_annotation_jobs(self, moldb_ids):
-        for id in moldb_ids:
-            moldb = MolecularDB(
-                id=id, db=self._db, iso_gen_config=self._ds.config['isotope_generation']
-            )
+    def _remove_annotation_jobs(self, moldbs):
+        for moldb in moldbs:
             logger.info(
                 "Removing job results ds_id: %s, ds_name: %s, db_name: %s, db_version: %s",
                 self._ds.id,
@@ -180,10 +178,9 @@ class AnnotationJob(object):
         return completed_moldb_ids, new_moldb_ids
 
     def _save_data_from_raw_ms_file(self, imzml_parser):
-        # TODO: create proper ImzMLParser wrapper
         ms_file_path = imzml_parser.filename
         ms_file_type_config = SMConfig.get_ms_file_handler(ms_file_path)
-        dims = ds_dims([coord[:2] for coord in imzml_parser.coordinates])
+        dims = get_ds_dims([coord[:2] for coord in imzml_parser.coordinates])
 
         acq_geometry = make_acq_geometry(
             ms_file_type_config['type'], ms_file_path, self._ds.metadata, dims
@@ -218,16 +215,19 @@ class AnnotationJob(object):
         rmtree(self._ds_data_path, ignore_errors=True)
 
     def run(self, ds):
-        """ Entry point of the engine. Molecule search is completed in several steps:
-            * Copy input data to the engine work dir
-            * Convert input mass spec files to plain text format. One line - one spectrum data
-            * Generate and save to the database theoretical peaks for all formulas from the molecule database
-            * Molecules search. The most compute intensive part. Spark is used to run it in distributed manner
-            * Save results (isotope images and their metrics of quality for each formula) to the database
+        """Starts dataset annotation job.
 
-        Args
-        -----
-            ds : sm.engine.dataset_manager.Dataset
+        Annotation job consists of several steps:
+            * Copy input data to the engine work dir
+            * Generate and save to the database theoretical peaks
+              for all formulas from the molecule database
+            * Molecules search. The most compute intensive part
+              that uses most the cluster resources
+            * Computing FDR per molecular database and filtering the results
+            * Saving the results: metrics saved in the database, images in the Image service
+
+        Args:
+            ds (sm.engine.dataset.Dataset): dataset to annotate
         """
         try:
             logger.info('*' * 150)
@@ -252,8 +252,10 @@ class AnnotationJob(object):
             logger.info('Dataset config:\n%s', pformat(self._ds.config))
 
             completed_moldb_ids, new_moldb_ids = self._moldb_ids()
-            self._remove_annotation_jobs(completed_moldb_ids - new_moldb_ids)
-            self._run_annotation_jobs(imzml_parser, new_moldb_ids - completed_moldb_ids)
+            self._remove_annotation_jobs(self.create_mol_dbs(completed_moldb_ids - new_moldb_ids))
+            self._run_annotation_jobs(
+                imzml_parser, self.create_mol_dbs(new_moldb_ids - completed_moldb_ids)
+            )
 
             logger.info("All done!")
             time_spent = time.time() - start

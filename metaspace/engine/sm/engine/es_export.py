@@ -9,7 +9,10 @@ import pandas as pd
 import random
 
 from sm.engine.dataset_locker import DatasetLocker
+from sm.engine.db import DB
 from sm.engine.formula_parser import format_ion_formula
+from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine.mol_db import MolecularDB
 from sm.engine.util import SMConfig
 
 logger = logging.getLogger('engine')
@@ -401,6 +404,26 @@ class ESExporter(object):
             )
             self._es.index(self.index, doc_type='dataset', body=ds_doc, id=ds_id)
 
+    def reindex_ds(self, ds_id):
+        """Delete and index dataset documents for all moldbs defined in the dataset config."""
+        self.delete_ds(ds_id)
+
+        res = DB().select_one("select name, config from dataset where id = %s", params=(ds_id,))
+        if res:
+            ds_name, ds_config = res
+            isocalc = IsocalcWrapper(ds_config['isotope_generation'])
+            for moldb_name in ds_config['databases']:
+                try:
+                    self.index_ds(ds_id, mol_db=MolecularDB(name=moldb_name), isocalc=isocalc)
+                except Exception as e:
+                    new_msg = (
+                        f'Failed to reindex(ds_id={ds_id}, ds_name={ds_name}, '
+                        f'mol_db={moldb_name}): {e}'
+                    )
+                    logger.error(new_msg, exc_info=True)
+        else:
+            logger.warning(f'Dataset does not exist(ds_id={ds_id})')
+
     @retry_on_conflict()
     def update_ds(self, ds_id, fields):
         with self._ds_locker.lock(ds_id):
@@ -461,9 +484,6 @@ class ESExporter(object):
         with self._ds_locker.lock(ds_id):
             logger.info('Deleting or updating dataset document in ES: %s, %s', ds_id, mol_db)
 
-            must = [{'term': {'ds_id': ds_id}}]
-            body = {'query': {'constant_score': {'filter': {'bool': {'must': must}}}}}
-
             try:
                 if mol_db:
                     self._remove_mol_db_from_dataset(ds_id, mol_db)
@@ -476,11 +496,13 @@ class ESExporter(object):
 
             logger.info('Deleting annotation documents from ES: %s, %s', ds_id, mol_db)
 
+            must = [{'term': {'ds_id': ds_id}}]
             if mol_db:
                 must.append({'term': {'db_name': mol_db.name}})
                 must.append({'term': {'db_version': mol_db.version}})
 
             try:
+                body = {'query': {'constant_score': {'filter': {'bool': {'must': must}}}}}
                 resp = self._es.delete_by_query(
                     index=self.index, body=body, doc_type='annotation', conflicts='proceed'
                 )

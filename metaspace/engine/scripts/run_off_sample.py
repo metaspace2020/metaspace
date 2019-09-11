@@ -3,13 +3,10 @@ import logging
 from functools import partial
 
 from sm.engine.dataset import Dataset
-from sm.engine.es_export import ESExporter
-from sm.engine.isocalc_wrapper import IsocalcWrapper
-from sm.engine.mol_db import MolecularDB
-from sm.engine.util import bootstrap_and_run
 from sm.engine.db import DB
+from sm.engine.es_export import ESExporter
 from sm.engine.off_sample_wrapper import classify_dataset_ion_images
-
+from sm.engine.util import bootstrap_and_run
 
 MISSING_OFF_SAMPLE_SEL = """
 SELECT DISTINCT j.ds_id
@@ -21,17 +18,17 @@ ORDER BY j.ds_id DESC;
 """
 
 
-def run_off_sample(sm_config, ds_id, sql_where, fix_missing, overwrite_existing):
+def run_off_sample(sm_config, ds_id_str, sql_where, fix_missing, overwrite_existing):
     assert (
-        len([data_source for data_source in [ds_id, sql_where, fix_missing] if data_source]) == 1
+        len([data_source for data_source in [ds_id_str, sql_where, fix_missing] if data_source])
+        == 1
     ), "Exactly one data source (ds_id, sql_where, fix_missing) must be specified"
-    assert not (ds_id and sql_where)
+    assert not (ds_id_str and sql_where)
 
     db = DB()
-    es_exp = ESExporter(db)
 
-    if ds_id:
-        ds_ids = ds_id.split(',')
+    if ds_id_str:
+        ds_ids = ds_id_str.split(',')
     elif sql_where:
         ds_ids = [
             id for (id,) in db.select(f'SELECT DISTINCT dataset.id FROM dataset WHERE {sql_where}')
@@ -46,28 +43,14 @@ def run_off_sample(sm_config, ds_id, sql_where, fix_missing, overwrite_existing)
         logger.warning('No datasets match filter')
         return
 
+    es_exp = ESExporter(db)
     for i, ds_id in enumerate(ds_ids):
         try:
             logger.info(f'Running off-sample on {i+1} out of {len(ds_ids)}')
             classify_dataset_ion_images(
                 db, Dataset(id=ds_id), sm_config['services'], overwrite_existing
             )
-
-            # Reindex dataset
-            ds_name, ds_config = db.select_one(
-                "select name, config from dataset where id = %s", (ds_id,)
-            )
-            for mol_db_name in ds_config['databases']:
-                try:
-                    mol_db = MolecularDB(
-                        name=mol_db_name, iso_gen_config=ds_config['isotope_generation']
-                    )
-                    isocalc = IsocalcWrapper(ds_config['isotope_generation'])
-                    es_exp.index_ds(ds_id, mol_db=mol_db, isocalc=isocalc)
-                except Exception as e:
-                    new_msg = f'Failed to reindex(ds_id={ds_id}, ds_name={ds_name}, mol_db={mol_db_name}): {e}'
-                    logger.error(new_msg, exc_info=True)
-
+            es_exp.reindex_ds(ds_id)
         except Exception:
             logger.error(f'Failed to run off-sample on {ds_id}', exc_info=True)
 
@@ -82,7 +65,8 @@ if __name__ == '__main__':
         '--sql-where',
         dest='sql_where',
         default=None,
-        help='SQL WHERE clause for picking rows from the dataset table, e.g. "status = \'FINISHED\'"',
+        help='SQL WHERE clause for picking rows from the dataset table, '
+        'e.g. "status = \'FINISHED\'"',
     )
     parser.add_argument(
         '--fix-missing',

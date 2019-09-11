@@ -2,13 +2,12 @@ import pandas as pd
 import logging
 import requests
 
-from sm.engine.db import DB
 from sm.engine.util import SMConfig
 
 logger = logging.getLogger('engine')
 
 
-class MolDBServiceWrapper(object):
+class MolDBServiceWrapper:
     def __init__(self, service_url):
         self._service_url = service_url
         self._session = requests.Session()
@@ -45,14 +44,12 @@ class MolDBServiceWrapper(object):
             return self._fetch(url.format(self._service_url, db_id))
 
 
-class MolecularDB(object):
+class MolecularDB:
     """ A class representing a molecule database to search through.
         Provides several data structures used in the engine to speed up computation
     """
 
-    def __init__(
-        self, id=None, name=None, version=None, iso_gen_config=None, mol_db_service=None, db=None
-    ):
+    def __init__(self, id=None, name=None, version=None, mol_db_service=None):
         """
         Args
         -----
@@ -60,19 +57,13 @@ class MolecularDB(object):
         name: str
         version: str
             If None the latest version will be used
-        iso_gen_config: dict
-            Isotope generator configuration
         mol_db_service: sm.engine.MolDBServiceWrapper
             Molecular database ID/name resolver
-        db: DB
-            Database connector
         """
-        self._iso_gen_config = iso_gen_config
         sm_config = SMConfig.get_conf()
         self._mol_db_service = mol_db_service or MolDBServiceWrapper(
             sm_config['services']['mol_db']
         )
-        self._db = db
 
         if id is not None:
             data = self._mol_db_service.find_db_by_id(id)
