@@ -201,19 +201,13 @@ export async function createImageServerApp(config: Config, knex: Knex) {
 }
 
 export async function createImgServerAsync(config: Config, knex: Knex) {
-  try {
-    let app = await createImageServerApp(config, knex);
+  const app = await createImageServerApp(config, knex);
 
-    let httpServer = http.createServer(app);
-    httpServer.listen(config.img_storage_port, (err?: Error) => {
-      if (err) {
-        logger.error('Could not start iso image server', err);
-      }
-      logger.info(`Image server is listening on ${config.img_storage_port} port...`);
-    });
-    return httpServer;
-  }
-  catch (e) {
-    logger.error(`${e.stack}`);
-  }
+  const httpServer = http.createServer(app);
+  await new Promise((resolve, reject) => {
+    httpServer.listen(config.img_storage_port).on('listening', resolve).on('error', reject);
+  });
+
+  logger.info(`Image server is listening on ${config.img_storage_port} port...`);
+  return httpServer;
 }

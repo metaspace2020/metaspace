@@ -34,11 +34,6 @@ import getContext from './src/getContext';
 
 const env = process.env.NODE_ENV || 'development';
 
-let wsServer = http.createServer((req, res) => {
-  res.writeHead(404);
-  res.end();
-});
-
 
 const configureSession = (app) => {
   let sessionStore = undefined;
@@ -102,6 +97,36 @@ const formatGraphQLError = (error) => {
   return error;
 };
 
+async function createSubscriptionServerAsync(config) {
+  const wsServer = http.createServer((req, res) => {
+    res.writeHead(404);
+    res.end();
+  });
+
+  await new Promise((resolve, reject) => {
+    wsServer.listen(config.ws_port).on('listening', resolve).on('error', reject);
+  });
+
+  logger.info(`WebSocket server is running on ${config.ws_port} port...`);
+  SubscriptionServer.create({
+    execute,
+    subscribe,
+    schema: executableSchema,
+    onOperation(message, params) {
+      const jwt = message.payload.jwt;
+      const user = jwt != null ? jwtSimple.decode(jwt, config.jwt.secret, false, config.jwt.algorithm) : null;
+      params.context = getContext(user && user.user, connection.manager, null, null);
+      params.formatError = formatGraphQLError;
+      return params;
+    }
+  }, {
+    server: wsServer,
+    path: '/graphql',
+  });
+
+  return wsServer;
+}
+
 async function createHttpServerAsync(config) {
   let app = express();
   let httpServer = http.createServer(app);
@@ -147,40 +172,30 @@ async function createHttpServerAsync(config) {
     });
   });
 
-  wsServer.listen(config.ws_port, (err) => {
-    if (err) {
-      logger.error('Could not start WebSocket server', err);
-    }
-    logger.info(`WebSocket server is running on ${config.ws_port} port...`);
-    SubscriptionServer.create({
-      execute,
-      subscribe,
-      schema: executableSchema,
-      onOperation(message, params) {
-        const jwt = message.payload.jwt;
-        const user = jwt != null ? jwtSimple.decode(jwt, config.jwt.secret, false, config.jwt.algorithm) : null;
-        params.context = getContext(user && user.user, connection.manager, null, null);
-        params.formatError = formatGraphQLError;
-        return params;
-      }
-    }, {
-      server: wsServer,
-      path: '/graphql',
-    });
+  await new Promise((resolve, reject) => {
+    httpServer.listen(config.port).on('listening', resolve).on('error', reject);
   });
-
-  httpServer.listen(config.port);
   logger.info(`SM GraphQL is running on ${config.port} port...`);
   return httpServer;
 }
 
 if (process.argv[1].endsWith('server.js')) {
   const db = initDBConnection();
-  createHttpServerAsync(config)
-    .catch(e => {
-      logger.error(e);
-    });
-  createImgServerAsync(config, db);
+  Promise.all([
+    createSubscriptionServerAsync(config),
+    createHttpServerAsync(config),
+    createImgServerAsync(config, db),
+  ]).then(async servers => {
+    // If any server dies for any reason, kill the whole process
+    const closeListeners = servers.map(server => new Promise((resolve, reject) => {
+      const address = server.address();
+      server.on('close', () => reject(new Error(`Server at ${JSON.stringify(address)} closed unexpectedly`)))
+    }));
+    await Promise.all(closeListeners);
+  }).catch(error => {
+    logger.error(error);
+    process.exit(1);
+  });
 }
 
-module.exports = {createHttpServerAsync, wsServer}; // for testing
+module.exports = {createHttpServerAsync}; // for testing
