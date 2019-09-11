@@ -161,7 +161,9 @@ class MSMSearch:
         check_spectra_quality(sample_mzs, sample_ints)
 
         sample_sp_n = int(len(self._coordinates) * sample_ratio)
-        chunk_sp_n = calculate_chunk_sp_n(sample_mzs.nbytes, sample_sp_n, max_chunk_size_mb=1000)
+        spectra_per_chunk_n = calculate_chunk_sp_n(
+            sample_mzs.nbytes, sample_sp_n, max_chunk_size_mb=1000
+        )
 
         total_mz_n = sample_mzs.shape[0] / sample_ratio
         ds_segments = define_ds_segments(
@@ -169,7 +171,13 @@ class MSMSearch:
         )
 
         ds_segments_path = self._ds_data_path / 'ds_segments'
-        segment_ds(self._imzml_parser, self._coordinates, chunk_sp_n, ds_segments, ds_segments_path)
+        segment_ds(
+            self._imzml_parser,
+            self._coordinates,
+            spectra_per_chunk_n,
+            ds_segments,
+            ds_segments_path,
+        )
 
         logger.info('Putting segments to workers')
         self.put_segments_to_workers(ds_segments_path)
@@ -193,7 +201,7 @@ class MSMSearch:
     def compute_fdr_and_filter_results(
         moldb_fdr_list, ion_formula_map_df, formula_metrics_df, formula_images_rdd
     ):
-        # Compute fdr for each moldb search results
+        """Compute FDR for each moldb search result set."""
         for moldb, fdr in moldb_fdr_list:
             moldb_formula_map_df = ion_formula_map_df[ion_formula_map_df.moldb_id == moldb.id].drop(
                 'moldb_id', axis=1
