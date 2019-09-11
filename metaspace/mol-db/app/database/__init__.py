@@ -15,9 +15,7 @@ def get_engine(uri):
         'pool_timeout': 30,
         'max_overflow': 30,
         'echo': config.DB_ECHO,
-        'execution_options': {
-            'autocommit': config.DB_AUTOCOMMIT
-        }
+        'execution_options': {'autocommit': config.DB_AUTOCOMMIT},
     }
     return create_engine(uri, **options)
 
@@ -30,4 +28,5 @@ def init_session():
     db_session.configure(bind=engine)
 
     from app.model.base import Base
+
     Base.metadata.create_all(engine)

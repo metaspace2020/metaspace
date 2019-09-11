@@ -194,6 +194,19 @@ jobs:
             stty cols 80  # https://github.com/DevExpress/testcafe/issues/1469
             yarn run test-e2e
 
+  test-pycode-format:
+    docker:
+      - image: metaspace2020/sm-engine:1.5.0
+    working_directory: ~/metaspace
+    steps:
+      - checkout:
+          path: ~/metaspace
+      - run:
+          name: Code format check for .py files in ansible and metaspace directories
+          command: |
+            black --line-length 100 --skip-string-normalization --target-version py36 --check \
+              ansible metaspace/mol-db metaspace/off-sample metaspace/python-client
+
   test-engine:
     docker:
       - image: metaspace2020/sm-engine:1.5.0
@@ -243,8 +256,7 @@ jobs:
       - run:
          name: Run code formatter
          command: |
-          black --line-length 100 --skip-string-normalization --target-version py36 \
-            --check sm tests scripts
+           black --line-length 100 --skip-string-normalization --target-version py36 --check .
 
   test-engine-sci:
     docker:
@@ -307,6 +319,7 @@ workflows:
   commit:
     jobs:
       - generate-graphql-schema
+      - test-pycode-format
       - test-engine:
           requires:
             - generate-graphql-schema

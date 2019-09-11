@@ -16,10 +16,7 @@ def send_to_sns(subject, message):
 
     client = boto3.client('sns')
 
-    response = client.publish(
-        TargetArn=aws_sns_arn,
-        Message=message,
-        Subject=subject)
+    response = client.publish(TargetArn=aws_sns_arn, Message=message, Subject=subject)
 
     if 'MessageId' in response:
         print("Notification sent with message id: %s" % response['MessageId'])
@@ -31,8 +28,7 @@ def get_tag_value(instance, name, default, func=None):
     v_type = type(default)
     f = func or v_type
     try:
-        res = [f(t.get('Value')) for t in instance['Tags']
-               if t['Key'] == name][0]
+        res = [f(t.get('Value')) for t in instance['Tags'] if t['Key'] == name][0]
     except IndexError:
         res = default
     return res
@@ -41,15 +37,10 @@ def get_tag_value(instance, name, default, func=None):
 def backup_region(ec2, region, today):
     print('Today is {} / {}'.format(today, today.strftime('%A')))
     reservations = ec2.describe_instances(
-        Filters=[
-            {'Name': 'tag-key', 'Values': ['backup', 'Backup']},
-        ]
-    ).get(
-        'Reservations', []
-    )
+        Filters=[{'Name': 'tag-key', 'Values': ['backup', 'Backup']}]
+    ).get('Reservations', [])
 
-    instances = sum([[i for i in r['Instances']]
-                     for r in reservations], [])
+    instances = sum([[i for i in r['Instances']] for r in reservations], [])
 
     print("Found %d instances that need backing up in region %s" % (len(instances), region))
 
@@ -63,18 +54,17 @@ def backup_region(ec2, region, today):
         else:
             # keep all other snapshots for 'retention_daily' days
             retention_days = get_tag_value(instance, 'retention_daily', default=2)
-        backup_instance(ec2, instance, retention_days,
-                        to_tag_retention, to_tag_mount_point)
+        backup_instance(ec2, instance, retention_days, to_tag_retention, to_tag_mount_point)
 
     for retention_days in to_tag_retention.keys():
         delete_date = today + datetime.timedelta(days=retention_days)
         delete_fmt = delete_date.strftime('%Y-%m-%d')
-        print("Will delete %d snapshots on %s" % (len(to_tag_retention[retention_days]), delete_fmt))
+        print(
+            "Will delete %d snapshots on %s" % (len(to_tag_retention[retention_days]), delete_fmt)
+        )
         ec2.create_tags(
             Resources=to_tag_retention[retention_days],
-            Tags=[
-                {'Key': 'delete_on', 'Value': delete_fmt},
-            ]
+            Tags=[{'Key': 'delete_on', 'Value': delete_fmt}],
         )
 
     message = "{} instances have been backed up in region {}".format(len(instances), region)
@@ -82,8 +72,9 @@ def backup_region(ec2, region, today):
 
 
 def backup_instance(ec2, instance, retention_days, to_tag_retention, to_tag_mount_point):
-    skip_volumes = get_tag_value(instance, 'skip_backup_volumes', default=[],
-                                 func=lambda v: str(v).split(','))
+    skip_volumes = get_tag_value(
+        instance, 'skip_backup_volumes', default=[], func=lambda v: str(v).split(',')
+    )
     skip_volumes_list = list(chain.from_iterable(skip_volumes))
     inst_name = get_tag_value(instance, 'Name', default='')
 
@@ -95,29 +86,23 @@ def backup_instance(ec2, instance, retention_days, to_tag_retention, to_tag_moun
             print("Volume %s is set to be skipped, not backing up" % (vol_id))
             continue
         dev_attachment = dev['DeviceName']
-        print("Found EBS volume %s on instance %s attached to %s" % (
-            vol_id, instance['InstanceId'], dev_attachment))
-
-        snap = ec2.create_snapshot(
-            VolumeId=vol_id,
-            Description=instance['InstanceId'],
+        print(
+            "Found EBS volume %s on instance %s attached to %s"
+            % (vol_id, instance['InstanceId'], dev_attachment)
         )
+
+        snap = ec2.create_snapshot(VolumeId=vol_id, Description=instance['InstanceId'])
 
         to_tag_retention[retention_days].append(snap['SnapshotId'])
         to_tag_mount_point[vol_id].append(snap['SnapshotId'])
 
-        print("Retaining snapshot %s of volume %s from instance %s for %d days" % (
-            snap['SnapshotId'],
-            vol_id,
-            instance['InstanceId'],
-            retention_days,
-        ))
+        print(
+            "Retaining snapshot %s of volume %s from instance %s for %d days"
+            % (snap['SnapshotId'], vol_id, instance['InstanceId'], retention_days)
+        )
 
         ec2.create_tags(
-            Resources=to_tag_mount_point[vol_id],
-            Tags=[
-                {'Key': 'Name', 'Value': inst_name},
-            ]
+            Resources=to_tag_mount_point[vol_id], Tags=[{'Key': 'Name', 'Value': inst_name}]
         )
 
 
@@ -131,15 +116,15 @@ def lambda_handler(event, context):
 
 if __name__ == '__main__':
     from botocore.stub import Stubber
+
     ec2 = boto3.client('ec2', region_name='eu-west-1')
     stubber = Stubber(ec2)
 
     def init_stubber(stubber):
         input_args = dict(Filters=[{'Name': 'tag-key', 'Values': ['backup', 'Backup']}])
         import test_responses as resp
-        stubber.add_response('describe_instances',
-                             resp.describe_instances,
-                             input_args)
+
+        stubber.add_response('describe_instances', resp.describe_instances, input_args)
         stubber.add_response('create_snapshot', {'SnapshotId': '42'})
         stubber.add_response('create_tags', {})
         stubber.add_response('create_tags', {})

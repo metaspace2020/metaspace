@@ -19,6 +19,7 @@ if __name__ == '__main__':
     logger.info('Creating app...')
     app = get_app()
     from wsgiref import simple_server
+
     httpd = simple_server.make_server('0.0.0.0', 9876, app)
     logger.info('Running debug server...')
     httpd.serve_forever()

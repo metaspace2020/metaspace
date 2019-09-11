@@ -1,5 +1,6 @@
 import sys
 from os.path import dirname
+
 sys.path.append(dirname(dirname(__file__)))
 import argparse
 from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
@@ -69,8 +70,11 @@ def remove_duplicated_inchikey_molecules(mol_db_df):
     ids_to_insert = set()
     for inchikey, g in mol_db_df.groupby('inchikey'):
         if len(g) > 1:
-            logger.warning("{} molecules have the same InChI key {}: {} - taking only the first one" \
-                           .format(len(g), inchikey, list(g['id'])))
+            logger.warning(
+                "{} molecules have the same InChI key {}: {} - taking only the first one".format(
+                    len(g), inchikey, list(g['id'])
+                )
+            )
         ids_to_insert.add(g.iloc[0].id)
     # remove duplicates
     return mol_db_df[mol_db_df['id'].isin(ids_to_insert)]
@@ -85,7 +89,6 @@ def save_molecules(mol_db, mol_db_df):
 
 
 def filter_formulas(mol_db_df):
-
     def is_valid(sf):
         if '.' in sf:
             logger.warning('"." in formula {}, skipping'.format(sf))
@@ -126,9 +129,14 @@ if __name__ == "__main__":
     parser.add_argument('version', type=str, help='Database version')
     parser.add_argument('csv_file', type=str, help='Path to a database csv file')
     parser.add_argument('--sep', dest='sep', type=str, help='CSV file fields delimiter')
-    parser.add_argument('--yes', dest='confirmed', type=bool, help='Don\'t ask for a confirmation')  # TODO: remove
-    parser.add_argument('--drop', action='store_true',
-                        help='Drop molecular database before importing? (destructive, use with caution!)')
+    parser.add_argument(
+        '--yes', dest='confirmed', type=bool, help='Don\'t ask for a confirmation'
+    )  # TODO: remove
+    parser.add_argument(
+        '--drop',
+        action='store_true',
+        help='Drop molecular database before importing? (destructive, use with caution!)',
+    )
     parser.set_defaults(sep='\t', confirmed=False)
     args = parser.parse_args()
 

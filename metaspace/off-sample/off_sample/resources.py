@@ -14,7 +14,6 @@ from off_sample.config import config
 
 
 class PredictResource(object):
-
     def __init__(self):
         self.model = OffSamplePredictModel(config['paths']['model_path'])
         self.data_path = Path(config['paths']['data_path'])
@@ -22,7 +21,7 @@ class PredictResource(object):
         self.images_limit = 32
 
     def save_images(self, doc, path):
-        images_doc = doc['images'][:self.images_limit]
+        images_doc = doc['images'][: self.images_limit]
         logger.info(f"Saving {len(images_doc)} images to {path}")
         image_paths = []
         for i, image_doc in enumerate(images_doc):
@@ -37,8 +36,7 @@ class PredictResource(object):
         path = Path(image_paths[0]).parent
         logger.info(f'Running model on {len(image_paths)} images in {path}')
         probs, labels = self.model.predict(image_paths)
-        pred_list = [{'prob': float(prob), 'label': label}
-                     for prob, label in zip(probs, labels)]
+        pred_list = [{'prob': float(prob), 'label': label} for prob, label in zip(probs, labels)]
         return {'predictions': pred_list}
 
     def on_post(self, req, resp):
@@ -61,12 +59,7 @@ class PredictResource(object):
 
 
 class PingResource(object):
-
     def on_get(self, req, resp):
         updated_dt = dt.fromtimestamp(getmtime(config['paths']['model_path']))
-        doc = {
-            'status': 'ok',
-            'host': socket.getfqdn(),
-            'updated': dt.isoformat(updated_dt)
-        }
+        doc = {'status': 'ok', 'host': socket.getfqdn(), 'updated': dt.isoformat(updated_dt)}
         resp.body = json.dumps(doc, ensure_ascii=False)

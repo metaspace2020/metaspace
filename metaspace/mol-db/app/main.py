@@ -1,5 +1,6 @@
 import sys
 from os.path import dirname
+
 # sys.path.append(dirname(dirname(__file__)))
 import falcon
 
@@ -26,12 +27,15 @@ class App(falcon.API):
 
         self.add_route('/v1/molecules/{mol_id}', molecules.MoleculeItem())
 
-        self.add_route('/v1/isotopic_pattern/{ion}/{instr}/{res_power}/{at_mz}/{charge}',
-                       isotopic_pattern.IsotopicPatternItem())
+        self.add_route(
+            '/v1/isotopic_pattern/{ion}/{instr}/{res_power}/{at_mz}/{charge}',
+            isotopic_pattern.IsotopicPatternItem(),
+        )
 
         # self.add_route('/v1/sfs', formulae.SumFormulaCollection())
         # self.add_route('/v1/sfs/{sf}/molecules', formulae.SumFormulaCollection())
         self.add_error_handler(AppError, AppError.handle)
+
 
 init_session()
 middleware = [
@@ -43,5 +47,6 @@ application = App(middleware=middleware)
 
 if __name__ == "__main__":
     from wsgiref import simple_server
+
     httpd = simple_server.make_server('127.0.0.1', 5001, application)
     httpd.serve_forever()
