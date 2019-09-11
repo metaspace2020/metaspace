@@ -1,16 +1,16 @@
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 from itertools import product
-from pyimzml import ImzMLParser
+from numpy.testing import assert_array_almost_equal
 
 from sm.engine.msm_basic.segmenter import (
     segment_centroids,
     define_ds_segments,
-    segment_spectra,
-    MAX_MZ_VALUE,
+    segment_ds,
     calculate_chunk_sp_n,
+    fetch_chunk_spectra_data,
 )
 
 
@@ -22,6 +22,24 @@ def test_calculate_chunk_sp_n():
     chunk_sp_n = calculate_chunk_sp_n(sample_mzs_bytes, sample_sp_n, max_chunk_size_mb)
 
     assert chunk_sp_n == 50
+
+
+def test_fetch_chunk_spectra_data():
+    mz_n = 10
+    imzml_parser_mock = Mock()
+    imzml_parser_mock.getspectrum.return_value = (np.linspace(0, 90, num=mz_n), np.ones(mz_n))
+    imzml_parser_mock.mzPrecision = 'f'
+    sp_id_to_idx = {0: 0, 1: 1}
+
+    sp_mz_int_buf = fetch_chunk_spectra_data(
+        sp_ids=[0, 1], imzml_parser=imzml_parser_mock, sp_id_to_idx=sp_id_to_idx
+    )
+
+    exp_sp_mz_int_buf = np.vstack(
+        [np.sort([mz for mz in np.linspace(0, 90, num=mz_n) for _ in range(2)]), np.ones(2 * mz_n)]
+    ).T
+    assert sp_mz_int_buf.dtype == 'f'
+    assert_array_almost_equal(sp_mz_int_buf[:, 1:], exp_sp_mz_int_buf)
 
 
 def test_define_ds_segments():
@@ -38,7 +56,7 @@ def test_define_ds_segments():
 
 
 @patch('sm.engine.msm_basic.segmenter.pd.to_msgpack')
-def test_segment_spectra(to_msgpack_mock):
+def test_segment_ds(to_msgpack_mock):
     imzml_parser_mock = Mock()
     imzml_parser_mock.getspectrum.return_value = (np.linspace(0, 90, num=10), np.ones(10))
     imzml_parser_mock.mzPrecision = 'f'
@@ -46,7 +64,7 @@ def test_segment_spectra(to_msgpack_mock):
     ds_segments = np.array([[0, 50], [50, 90.0]])
 
     chunk_sp_n = 1000
-    segment_spectra(imzml_parser_mock, coordinates, chunk_sp_n, ds_segments, Path('/tmp/abc'))
+    segment_ds(imzml_parser_mock, coordinates, chunk_sp_n, ds_segments, Path('/tmp/abc'))
 
     for segm_i, (min_mz, max_mz) in enumerate(ds_segments):
         args = to_msgpack_mock.call_args_list[segm_i][0]

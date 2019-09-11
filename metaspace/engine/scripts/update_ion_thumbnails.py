@@ -1,4 +1,5 @@
 import argparse
+import logging
 from functools import partial
 
 from sm.engine.ion_thumbnail import DEFAULT_ALGORITHM, ALGORITHMS, generate_ion_thumbnail
@@ -7,7 +8,7 @@ from sm.engine.util import bootstrap_and_run
 from sm.engine.db import DB
 
 
-def run(sm_config, logger, ds_id, sql_where, algorithm):
+def run(sm_config, ds_id, sql_where, algorithm):
     db = DB()
     img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
 
@@ -50,6 +51,7 @@ if __name__ == '__main__':
         help='Algorithm for thumbnail generation. Options: ' + str(list(ALGORITHMS.keys())),
     )
     args = parser.parse_args()
+    logger = logging.getLogger('engine')
 
     if not (bool(args.ds_id) ^ bool(args.sql_where)):
         parser.print_usage()

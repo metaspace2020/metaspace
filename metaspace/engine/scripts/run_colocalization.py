@@ -1,4 +1,5 @@
 import argparse
+import logging
 from functools import partial
 
 from sm.engine.mol_db import MolDBServiceWrapper
@@ -66,7 +67,7 @@ ORDER BY j.ds_id DESC;
 """
 
 
-def run_coloc_jobs(sm_config, logger, ds_id, sql_where, fix_missing, fix_corrupt, skip_existing):
+def run_coloc_jobs(sm_config, ds_id, sql_where, fix_missing, fix_corrupt, skip_existing):
     assert (
         len(
             [
@@ -152,6 +153,7 @@ if __name__ == '__main__':
         help='Re-run colocalization jobs even if they have already successfully run',
     )
     args = parser.parse_args()
+    logger = logging.getLogger('engine')
 
     bootstrap_and_run(
         args.config,

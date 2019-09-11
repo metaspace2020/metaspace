@@ -198,9 +198,7 @@ def mol_db(ds_config):
     service.find_db_by_name_version.return_value = data
     SMConfig._config_dict = sm_config
 
-    mol_db = MolecularDB(
-        1, 'name', 'version', ds_config['isotope_generation'], mol_db_service=service, db=db
-    )
+    mol_db = MolecularDB(1, 'name', 'version', mol_db_service=service)
     mol_db._sf_df = pd.DataFrame(
         dict(
             sf_id=[1, 2, 3],

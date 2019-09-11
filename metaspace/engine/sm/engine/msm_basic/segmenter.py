@@ -1,9 +1,12 @@
 import logging
 from math import ceil
 from shutil import rmtree
+from collections import defaultdict
+
 import pandas as pd
 import numpy as np
 
+from sm.engine.errors import SMError
 from sm.engine.msm_basic.formula_imager import get_pixel_indices
 
 MAX_MZ_VALUE = 10 ** 5
@@ -32,8 +35,8 @@ def check_spectra_quality(mz_arr, int_arr):
             )
         )
 
-    if len(err_msgs) > 0:
-        raise Exception(' '.join(err_msgs))
+    if err_msgs:
+        raise SMError(' '.join(err_msgs))
 
 
 def spectra_sample_gen(imzml_parser, sample_ratio=0.05):
@@ -87,52 +90,53 @@ def calculate_chunk_sp_n(sample_mzs_bytes, sample_sp_n, max_chunk_size_mb=500):
     return max(1, chunk_sp_n)
 
 
-def segment_spectra(imzml_parser, coordinates, chunk_sp_n, ds_segments, ds_segments_path):
-    def chunk_list(l, size):
-        n = (len(l) - 1) // size + 1
-        for i in range(n):
-            yield l[size * i : size * (i + 1)]
+def fetch_chunk_spectra_data(sp_ids, imzml_parser, sp_id_to_idx):
+    sp_inds_list, mzs_list, ints_list = [], [], []
+    for sp_id in sp_ids:
+        mzs_, ints_ = imzml_parser.getspectrum(sp_id)
+        mzs_, ints_ = map(np.array, [mzs_, ints_])
+        sp_idx = sp_id_to_idx[sp_id]
+        sp_inds_list.append(np.ones_like(mzs_) * sp_idx)
+        mzs_list.append(mzs_)
+        ints_list.append(ints_)
 
+    mzs = np.concatenate(mzs_list)
+    by_mz = np.argsort(mzs)
+    sp_mz_int_buf = np.array(
+        [np.concatenate(sp_inds_list)[by_mz], mzs[by_mz], np.concatenate(ints_list)[by_mz]],
+        dtype=imzml_parser.mzPrecision,
+    ).T
+    return sp_mz_int_buf
+
+
+def chunk_list(xs, size):
+    n = (len(xs) - 1) // size + 1
+    for i in range(n):
+        yield xs[size * i : size * (i + 1)]
+
+
+def extend_ds_segment_bounds(ds_segments):
+    """Extend boundaries of the first and last segments
+    to include all mzs outside of the spectra sample mz range."""
+    mz_segments = ds_segments.copy()
+    mz_segments[0, 0] = 0
+    mz_segments[-1, 1] = MAX_MZ_VALUE
+    return mz_segments
+
+
+def segment_ds(imzml_parser, coordinates, chunk_sp_n, ds_segments, ds_segments_path):
     logger.info(f'Segmenting dataset into {len(ds_segments)} segments')
 
     rmtree(ds_segments_path, ignore_errors=True)
     ds_segments_path.mkdir(parents=True)
 
-    # extend boundaries of the first and last segments
-    # to include all mzs outside of the spectra sample mz range
-    mz_segments = ds_segments.copy()
-    mz_segments[0, 0] = 0
-    mz_segments[-1, 1] = MAX_MZ_VALUE
-
     sp_id_to_idx = get_pixel_indices(coordinates)
-
-    coord_chunks = list(chunk_list(coordinates, chunk_sp_n))
-    chunk_n = len(coord_chunks)
-
-    sp_i = 0
-    sp_inds_list, mzs_list, ints_list = [], [], []
-    for ch_i, coord_chunk in enumerate(coord_chunks):
-        logger.debug(f'Segmenting spectra chunk {ch_i+1}/{chunk_n}')
-
-        for _ in coord_chunk:
-            mzs_, ints_ = imzml_parser.getspectrum(sp_i)
-            mzs_, ints_ = map(np.array, [mzs_, ints_])
-            sp_idx = sp_id_to_idx[sp_i]
-            sp_inds_list.append(np.ones_like(mzs_) * sp_idx)
-            mzs_list.append(mzs_)
-            ints_list.append(ints_)
-            sp_i += 1
-
-        dtype = imzml_parser.mzPrecision
-        mzs = np.concatenate(mzs_list)
-        by_mz = np.argsort(mzs)
-        sp_mz_int_buf = np.array(
-            [np.concatenate(sp_inds_list)[by_mz], mzs[by_mz], np.concatenate(ints_list)[by_mz]],
-            dtype,
-        ).T
+    mz_segments = extend_ds_segment_bounds(ds_segments)
+    sp_id_chunks = chunk_list(xs=range(len(coordinates)), size=chunk_sp_n)
+    for ch_i, sp_ids in enumerate(sp_id_chunks, 1):
+        logger.debug(f'Segmenting spectra chunk {ch_i}')
+        sp_mz_int_buf = fetch_chunk_spectra_data(sp_ids, imzml_parser, sp_id_to_idx)
         segment_spectra_chunk(sp_mz_int_buf, mz_segments, ds_segments_path)
-
-        sp_inds_list, mzs_list, ints_list = [], [], []
 
 
 def clip_centroids_df(centroids_df, mz_min, mz_max):
