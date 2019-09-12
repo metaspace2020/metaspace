@@ -238,30 +238,62 @@ class GraphQLClient(object):
         else:
             return matches[0]
 
-    def getAnnotations(self, annotationFilter={}, datasetFilter={}):
+    def getAnnotations(self, annotationFilter=None, datasetFilter=None, fields=None):
         query = (
             """
-        query getAnnotations($filter: AnnotationFilter,
-                             $dFilter: DatasetFilter,
-                             $offset: Int, $limit: Int) {
-          allAnnotations(
-            filter: $filter,
-            datasetFilter: $dFilter,
-            offset: $offset,
-            limit: $limit
-          ) {
-        """
-            + self.ANNOTATION_FIELDS
-            + """
-          }
-        }"""
+            query getAnnotations($filter: AnnotationFilter,
+                                 $dFilter: DatasetFilter,
+                                 $offset: Int, $limit: Int) {
+              allAnnotations(
+                filter: $filter,
+                datasetFilter: $dFilter,
+                offset: $offset,
+                limit: $limit
+              ) {
+                %s
+              }
+            }""" % (fields or self.ANNOTATION_FIELDS)
         )
-        annotFilter = deepcopy(annotationFilter)
-        for key, val in self.DEFAULT_ANNOTATION_FILTER.items():
-            annotFilter.setdefault(key, val)
+        if datasetFilter is None:
+            annotationFilter = {}
+        if annotationFilter is None:
+            annotFilter = {}
+        else:
+            annotFilter = deepcopy(annotationFilter)
+            for key, val in self.DEFAULT_ANNOTATION_FILTER.items():
+                annotFilter.setdefault(key, val)
+
         return self.listQuery(
-            'allAnnotations', query, {'filter': annotFilter, 'dFilter': datasetFilter}
+            field_name='allAnnotations',
+            query=query,
+            variables={'filter': annotFilter, 'dFilter': datasetFilter}
         )
+
+    def countAnnotations(self, annotationFilter=None, datasetFilter=None):
+        query = (
+            """
+            query getAnnotationCount($filter: AnnotationFilter,
+                                 $dFilter: DatasetFilter) {
+              countAnnotations(
+                filter: $filter,
+                datasetFilter: $dFilter
+              )
+            }"""
+        )
+        if datasetFilter is None:
+            annotationFilter = {}
+        if annotationFilter is None:
+            annotFilter = {}
+        else:
+            annotFilter = deepcopy(annotationFilter)
+            for key, val in self.DEFAULT_ANNOTATION_FILTER.items():
+                annotFilter.setdefault(key, val)
+
+        return self.query(
+            query=query,
+            variables={'filter': annotFilter, 'dFilter': datasetFilter}
+        )
+
 
     def getDatasets(self, datasetFilter={}):
         query = (
