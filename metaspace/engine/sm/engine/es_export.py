@@ -511,11 +511,11 @@ class ESExporter:
 
             try:
                 body = {'query': {'constant_score': {'filter': {'bool': {'must': must}}}}}
-                resp = self._es.delete_by_query(
+                resp = self._es.delete_by_query(  # pylint: disable=unexpected-keyword-arg
                     index=self.index,
                     body=body,
                     doc_type='annotation',
-                    params=dict(conflicts='proceed'),
+                    conflicts='proceed',
                 )
                 logger.debug(resp)
             except ElasticsearchException as e:
