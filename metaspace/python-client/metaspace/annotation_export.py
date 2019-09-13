@@ -39,7 +39,7 @@ filter_field_name_mapping = {
 filter_field_value_preprocess = {
     "polarity": lambda v: {"Positive": "POSITIVE", "Negative": "NEGATIVE"}[v],
     "ids": lambda v: v.replace(',', '|'),
-    "offSample": lambda v: bool(int(v))
+    "offSample": lambda v: bool(int(v)),
 }
 
 default_ds_filter = {
@@ -91,9 +91,9 @@ def convert_url_to_filter_args(url):
 
 
 def fetch_graphql_res(filter_args):
-    unknown_fields = (set(filter_args.keys())
-                      - set(default_ds_filter.keys())
-                      - set(default_ann_filter.keys()))
+    unknown_fields = (
+        set(filter_args.keys()) - set(default_ds_filter.keys()) - set(default_ann_filter.keys())
+    )
     assert not unknown_fields, unknown_fields
 
     fields = """
@@ -159,11 +159,16 @@ def convert_to_dfs(graphql_res):
 
 def calculate_ann_stat(ann_df):
     logger.info(f'Calculating statistics on annotations dataframe')
-    ann_stat_df = (ann_df.groupby(['formula', 'fdr']).count()
-                   .reset_index().rename({'ds_id': 'ds_n'}, axis=1))
-    ann_stat_df = (pd.pivot_table(ann_stat_df, values='ds_n', index='formula', columns='fdr')
-                   .fillna(0).astype(int).reset_index()
-                   .rename({fdr_: f'fdr_{fdr_}_ds_n' for fdr_ in [0.05, 0.1, 0.2, 0.5]}, axis=1))
+    ann_stat_df = (
+        ann_df.groupby(['formula', 'fdr']).count().reset_index().rename({'ds_id': 'ds_n'}, axis=1)
+    )
+    ann_stat_df = (
+        pd.pivot_table(ann_stat_df, values='ds_n', index='formula', columns='fdr')
+        .fillna(0)
+        .astype(int)
+        .reset_index()
+        .rename({fdr_: f'fdr_{fdr_}_ds_n' for fdr_ in [0.05, 0.1, 0.2, 0.5]}, axis=1)
+    )
     logger.info(f'Annotation statistics dataframe: {ann_stat_df.shape}')
     return ann_stat_df
 

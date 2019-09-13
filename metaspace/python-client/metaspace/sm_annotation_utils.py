@@ -239,8 +239,7 @@ class GraphQLClient(object):
             return matches[0]
 
     def getAnnotations(self, annotationFilter=None, datasetFilter=None, fields=None):
-        query = (
-            """
+        query = """
             query getAnnotations($filter: AnnotationFilter,
                                  $dFilter: DatasetFilter,
                                  $offset: Int, $limit: Int) {
@@ -249,10 +248,9 @@ class GraphQLClient(object):
                 datasetFilter: $dFilter,
                 offset: $offset,
                 limit: $limit
-              ) {
-                %s
-              }
-            }""" % (fields or self.ANNOTATION_FIELDS)
+              ) { %s }
+            }""" % (
+            fields or self.ANNOTATION_FIELDS
         )
         if datasetFilter is None:
             annotationFilter = {}
@@ -266,12 +264,11 @@ class GraphQLClient(object):
         return self.listQuery(
             field_name='allAnnotations',
             query=query,
-            variables={'filter': annotFilter, 'dFilter': datasetFilter}
+            variables={'filter': annotFilter, 'dFilter': datasetFilter},
         )
 
     def countAnnotations(self, annotationFilter=None, datasetFilter=None):
-        query = (
-            """
+        query = """
             query getAnnotationCount($filter: AnnotationFilter,
                                  $dFilter: DatasetFilter) {
               countAnnotations(
@@ -279,7 +276,6 @@ class GraphQLClient(object):
                 datasetFilter: $dFilter
               )
             }"""
-        )
         if datasetFilter is None:
             annotationFilter = {}
         if annotationFilter is None:
@@ -289,11 +285,7 @@ class GraphQLClient(object):
             for key, val in self.DEFAULT_ANNOTATION_FILTER.items():
                 annotFilter.setdefault(key, val)
 
-        return self.query(
-            query=query,
-            variables={'filter': annotFilter, 'dFilter': datasetFilter}
-        )
-
+        return self.query(query=query, variables={'filter': annotFilter, 'dFilter': datasetFilter})
 
     def getDatasets(self, datasetFilter={}):
         query = (

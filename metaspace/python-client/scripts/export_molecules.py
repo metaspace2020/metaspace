@@ -8,7 +8,7 @@ from metaspace.annotation_export import (
     fetch_graphql_res,
     convert_to_dfs,
     calculate_ann_stat,
-    export_molecules
+    export_molecules,
 )
 
 if __name__ == '__main__':
