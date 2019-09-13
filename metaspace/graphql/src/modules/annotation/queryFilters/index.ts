@@ -3,12 +3,14 @@ import {QueryFilterArgs, QueryFilterResult, PostProcessFunc} from './types';
 import {applyColocalizationSamplesFilter} from './colocalizationSamples';
 import {applyColocalizedWithFilter} from './colocalizedWith';
 import * as _ from 'lodash';
+import {applyHasAnnotationMatchingFilter} from './hasAnnotationMatching';
 
 export {ESAnnotationWithColoc} from './types';
 
 const queryFilters = [
   applyColocalizationSamplesFilter,
   applyColocalizedWithFilter,
+  applyHasAnnotationMatchingFilter,
 ];
 
 /**

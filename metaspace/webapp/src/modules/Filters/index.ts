@@ -9,6 +9,7 @@ export {
 } from './filterSpecs';
 
 export {
+  getLevel,
   encodeParams,
   decodeParams,
   stripFilteringParams,

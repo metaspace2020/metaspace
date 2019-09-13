@@ -9,6 +9,7 @@ import logger from './src/utils/logger';
 import {datasetFilters} from './datasetFilters';
 import {ContextUser, UserProjectRoles} from './src/context';
 import {AnnotationFilter, AnnotationOrderBy, DatasetFilter, DatasetOrderBy, SortingOrder} from './src/binding';
+import * as _ from 'lodash';
 
 const ES_LIMIT_MAX = 50000;
 
@@ -206,9 +207,10 @@ function constructDatasetFilters(filter: DatasetFilter) {
   const filters = [];
   for (let [key, val] of (Object.entries(filter) as [keyof DatasetFilter, any][])) {
     if (val) {
-      if (datasetFilters[key] != null) {
-        filters.push(datasetFilters[key].esFilter(val));
-      } else {
+      const datasetFilter = datasetFilters[key];
+      if (datasetFilter != null) {
+        filters.push(datasetFilter.esFilter(val));
+      } else if (datasetFilter === undefined) {
         console.error(`Missing datasetFilter[${key}]`);
       }
     }
@@ -389,13 +391,8 @@ export const esCountGroupedResults = async (args: any, docType: DocType, user: C
   if (args.groupingFields.length === 0) {
     // handle case of no grouping for convenience
     const request = { body, index: esIndex };
-    try {
-      const resp = await es.count(request);
-      return {counts: [{fieldValues: [], count: resp.count}]};
-    } catch (e) {
-      logger.error(e);
-      return e.message;
-    }
+    const resp = await es.count(request);
+    return {counts: [{fieldValues: [], count: resp.count}]};
   }
 
   const aggRequest = {
@@ -406,13 +403,24 @@ export const esCountGroupedResults = async (args: any, docType: DocType, user: C
     index: esIndex,
     size: 0,
   };
-  try {
-    const resp = await es.search(aggRequest);
-    return flattenAggResponse(args.groupingFields, resp.aggregations, 0);
-  } catch (e) {
-    logger.error(e);
-    return e.message;
-  }
+  const resp = await es.search(aggRequest);
+  return flattenAggResponse(args.groupingFields, resp.aggregations, 0);
+};
+
+export const esCountMatchingAnnotationsPerDataset = async (args: any, user: ContextUser | null): Promise<Record<string, number>> => {
+  const body = constructESQuery(args, 'annotation', user, user != null ? await user.getProjectRoles() : {});
+
+  const aggRequest = {
+    body: {
+      ...body,
+      aggs: { ds_id: { terms: { field: 'ds_id' } } },
+    },
+    index: esIndex,
+    size: 0,
+  };
+  const resp = await es.search(aggRequest);
+  const counts = resp.aggregations.ds_id.buckets.map(({key, doc_count}: any) => [key, doc_count]);
+  return _.fromPairs(counts);
 };
 
 export const esFilterValueCountResults = async (args: any, user: ContextUser | null): Promise<any> => {

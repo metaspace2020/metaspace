@@ -139,6 +139,7 @@ export const datasetFilters = {
   group: new GroupMatchFilter('', { esField: 'ds_group_id' }),
   project: new ExactMatchFilter('', { esField: 'ds_project_ids' }),
   metadataType: new ExactMatchFilter('Data_Type', {}),
+  hasAnnotationMatching: null,
 };
 
 export function dsField(hit, alias){

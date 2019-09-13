@@ -1,8 +1,12 @@
 import {mzFilterPrecision} from '../util';
-import {decodeParams, decodeSettings} from '../modules/Filters';
+import {decodeParams, decodeSettings, getLevel} from '../modules/Filters';
 import config from '../config';
 
 export default {
+  filterLevel(state) {
+    return getLevel(state.route.path);
+  },
+
   filter(state) {
     return decodeParams(state.route, state.filterLists);
   },
@@ -61,7 +65,10 @@ export default {
     const filter = getters.filter;
     const {group, project, submitter, datasetIds, polarity,
            organism, organismPart, condition, growthConditions,
-           ionisationSource, analyzerType, maldiMatrix, metadataType} = filter;
+           ionisationSource, analyzerType, maldiMatrix, metadataType,
+           compoundName} = filter;
+    const level = getters.filterLevel;
+    const hasAnnotationMatching = level === 'dataset' && compoundName ? { compoundQuery: compoundName } : undefined;
     return {
       group: group,
       project: project,
@@ -78,7 +85,8 @@ export default {
       maldiMatrix,
       analyzerType,
       polarity: polarity ? polarity.toUpperCase() : null,
-      metadataType
+      metadataType,
+      hasAnnotationMatching,
     }
   },
 

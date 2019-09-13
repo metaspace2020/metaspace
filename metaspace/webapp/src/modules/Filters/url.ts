@@ -51,6 +51,10 @@ const PATH_TO_LEVEL: Record<string, Level> = {
   '/projects': 'projects',
 };
 
+export const getLevel = (path?: string): Level | null => {
+  return path != null && PATH_TO_LEVEL[path.toLowerCase()] || null;
+};
+
 export const DEFAULT_TABLE_ORDER: SortSettings = {
   by: 'ORDER_BY_MSM',
   dir: 'DESCENDING'
@@ -61,14 +65,14 @@ export const DEFAULT_ANNOTATION_VIEW_SECTIONS = ['images'];
 export const DEFAULT_COLORMAP = 'Viridis';
 
 export function encodeParams(filter: any, path?: string, filterLists?: MetadataLists): Dictionary<string> {
-  const level = path != null ? PATH_TO_LEVEL[path.toLowerCase()] : null;
+  const level = getLevel(path);
   const defaultFilter = level != null ? getDefaultFilter(level, filterLists) : null;
 
   let q: Dictionary<string> = {};
   let key: FilterKey;
   for (key in FILTER_TO_URL) {
     const {levels, encoding} = FILTER_SPECIFICATIONS[key];
-    if (path != null && level != null && levels.indexOf(level) == -1)
+    if (level != null && levels.indexOf(level) == -1)
       continue;
 
     if (key in filter && (defaultFilter == null || filter[key] != defaultFilter[key])) {
@@ -100,13 +104,12 @@ export function stripFilteringParams(query: Dictionary<string>): Dictionary<stri
 
 export function decodeParams(location: Location, filterLists: any): Object {
   const {query, path} = location;
+  const level = path ? getLevel(path) : null;
 
-  if (!path || !query)
+  if (!path || !query || !level)
     return {};
 
-  const level = PATH_TO_LEVEL[path];
-
-  const filter: any = getDefaultFilter(level, filterLists);
+  const filter = getDefaultFilter(level, filterLists);
 
   for (var key in query) {
     const fKey = URL_TO_FILTER[key];
