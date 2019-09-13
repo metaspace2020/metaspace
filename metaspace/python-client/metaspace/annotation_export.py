@@ -32,11 +32,14 @@ filter_field_name_mapping = {
     "src": "ionisationSource",
     "matrix": "maldiMatrix",
     "mode": "polarity",
+    "offs": "offSample",
+    "colo": "colocalizedWith",
 }
 
-filter_field_value_mapping = {
-    "Positive": "POSITIVE",
-    "Negative": "NEGATIVE",
+filter_field_value_preprocess = {
+    "polarity": lambda v: {"Positive": "POSITIVE", "Negative": "NEGATIVE"}[v],
+    "ids": lambda v: v.replace(',', '|'),
+    "offSample": lambda v: bool(int(v))
 }
 
 default_ds_filter = {
@@ -54,8 +57,10 @@ default_ds_filter = {
 
 default_ann_filter = {
     "colocalizationAlgo": None,
+    "colocalizedWith": None,
     "fdrLevel": 0.1,
     "database": 'HMDB-v4',
+    "offSample": None,
     "hasChemMod": False,
     "hasHiddenAdduct": False,
     "hasNeutralLoss": False,
@@ -74,7 +79,7 @@ def convert_url_to_filter_args(url):
     }
 
     filter_args = {
-        field: filter_field_value_mapping.get(value, value)
+        field: filter_field_value_preprocess.get(field, lambda x: x)(value)
         for field, value in filter_args.items()
     }
     logger.info(f'Filter args: {filter_args}')
