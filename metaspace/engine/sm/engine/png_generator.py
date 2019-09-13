@@ -1,17 +1,16 @@
-import logging
-from io import BytesIO
-from PIL import Image
-from os import path
 from concurrent.futures import ThreadPoolExecutor
+from io import BytesIO
+from os import path
+
+import numpy as np
 import png
 import requests
-import numpy as np
-from matplotlib.colors import Normalize
 from requests.adapters import HTTPAdapter
+from PIL import Image
 from scipy.ndimage import zoom
 
 
-class ImageStoreServiceWrapper(object):
+class ImageStoreServiceWrapper:
     def __init__(self, img_service_url):
         self._img_service_url = img_service_url
         self._session = requests.Session()
@@ -39,13 +38,13 @@ class ImageStoreServiceWrapper(object):
             new image id
         """
         url = self._format_url(storage_type=storage_type, img_type=img_type, method='upload')
-        r = self._session.post(url, files={img_type: fp})
-        r.raise_for_status()
-        return r.json()['image_id']
+        resp = self._session.post(url, files={img_type: fp})
+        resp.raise_for_status()
+        return resp.json()['image_id']
 
     def delete_image(self, url):
-        r = self._session.delete(url)
-        if r.status_code != 202:
+        resp = self._session.delete(url)
+        if resp.status_code != 202:
             print(
                 'Failed to delete: {}'.format(url)
             )  # logger has issues with pickle when sent to spark
@@ -70,25 +69,29 @@ class ImageStoreServiceWrapper(object):
     def get_ion_images_for_analysis(
         self, storage_type, img_ids, hotspot_percentile=99, max_size=None, max_mem_mb=2048
     ):
-        """ Retrieves ion images, does hot-spot removal and resizing, and returns them as a numpy array.
-        Args
-        ----
-        storage_type: str
-        img_ids: list[str]
-        hotspot_percentile: float
-        max_size: Union[None, tuple[int, int]]
-            If images are greater than this size, they will be downsampled to fit in this size
-        max_mem_mb: Union[None, float]
-            If the output numpy array would require more than this amount of memory, images will be downsampled to fit
+        """Retrieves ion images, does hot-spot removal and resizing,
+        and returns them as numpy array.
 
-        Returns
-        -------
-        tuple[np.ndarray, np.ndarray, tuple[int, int]]
-            (value, mask, (h, w))
-            value - A float32 numpy array with shape (len(img_ids), h * w) where each row is one image
-            mask - A float32 numpy array with shape (h, w) containing the ion image mask. May contain values that are
-                   between 0 and 1 if downsampling caused both filled and empty pixels to be merged
-            h, w - shape of each image in value such that value[i].reshape(h, w) reconstructs the image
+        Args:
+            storage_type (str):
+            img_ids (list[str]):
+            hotspot_percentile (float):
+            max_size (Union[None, tuple[int, int]]):
+                If images are greater than this size, they will be downsampled to fit in this size
+            max_mem_mb (Union[None, float]):
+                If the output numpy array would require more than this amount of memory,
+                images will be downsampled to fit
+
+        Returns:
+            tuple[np.ndarray, np.ndarray, tuple[int, int]]
+                (value, mask, (h, w))
+                value - A float32 numpy array with shape (len(img_ids), h * w)
+                    where each row is one image
+                mask - A float32 numpy array with shape (h, w) containing the ion image mask.
+                    May contain values that are between 0 and 1 if downsampling
+                    caused both filled and empty pixels to be merged
+                h, w - shape of each image in value such that value[i].reshape(h, w)
+                    reconstructs the image
         """
         assert all(img_ids)
 
@@ -124,7 +127,8 @@ class ImageStoreServiceWrapper(object):
 
             img_arr = np.asarray(img, dtype=np.float32)[:, :, 0]
 
-            # Try to use the hotspot percentile, but fall back to the image's maximum or 1.0 if needed
+            # Try to use the hotspot percentile,
+            # but fall back to the image's maximum or 1.0 if needed
             # to ensure that there are no divide-by-zero issues
             hotspot_threshold = np.percentile(img_arr, hotspot_percentile) or np.max(img_arr) or 1.0
             np.clip(img_arr, None, hotspot_threshold, out=img_arr)
@@ -134,16 +138,16 @@ class ImageStoreServiceWrapper(object):
             else:
                 zoomed_img = img_arr
 
-            # Note: due to prefiltering & smoothing, zoom can change the min/max of the image, so hotspot_threshold
-            # cannot be reused here for scaling
+            # Note: due to prefiltering & smoothing, zoom can change the min/max of the image,
+            # so hotspot_threshold cannot be reused here for scaling
             np.clip(zoomed_img, 0, None, out=zoomed_img)
             zoomed_img /= np.max(zoomed_img) or 1
 
-            value[idx, :] = zoomed_img.ravel()
+            value[idx, :] = zoomed_img.ravel()  # pylint: disable=unsupported-assignment-operation
 
         process_img(img_ids[0], 0, do_setup=True)
-        with ThreadPoolExecutor() as ex:
-            for result in ex.map(process_img, img_ids[1:], range(1, len(img_ids))):
+        with ThreadPoolExecutor() as executor:
+            for _ in executor.map(process_img, img_ids[1:], range(1, len(img_ids))):
                 pass
 
         return value, mask, (h, w)
@@ -158,7 +162,7 @@ class ImageStoreServiceWrapper(object):
         return self._img_service_url
 
 
-class PngGenerator(object):
+class PngGenerator:
     """ Generator of isotopic images as png files
 
     Args
@@ -436,21 +440,22 @@ class PngGenerator(object):
         )
         self._colors = np.c_[colors, np.ones(colors.shape[0])]
 
-    def _get_img_data(self, img):
-        xa = ((img - img.min()) / (img.max() - img.min())) * (2 ** self._bitdepth - 1)
+    def _to_image(self, array):
+        image = ((array - array.min()) / (array.max() - array.min())) * (2 ** self._bitdepth - 1)
         if self._greyscale:
-            grey = np.empty(shape=xa.shape + (2,), dtype=np.uint16)
-            grey[:, :, 0] = xa.astype(np.uint16)
+            grey = np.empty(shape=image.shape + (2,), dtype=np.uint16)
+            grey[:, :, 0] = image.astype(np.uint16)
             grey[:, :, 1] = (self._mask * (2 ** self._bitdepth - 1)).astype(np.uint16)
-            return grey
+            image = grey
         else:
-            rgba = np.empty(shape=xa.shape + (4,), dtype=self._colors.dtype)
-            self._colors.take(xa.astype(np.uint8), axis=0, mode='clip', out=rgba)
+            rgba = np.empty(shape=image.shape + (4,), dtype=self._colors.dtype)
+            self._colors.take(image.astype(np.uint8), axis=0, mode='clip', out=rgba)
             rgba[:, :, 3] = self._mask * (2 ** self._bitdepth - 1)
-            return rgba
+            image = rgba
+        return image
 
-    def generate_png(self, img):
-        im = self._get_img_data(img)
+    def generate_png(self, array):
+        img = self._to_image(array)
         fp = BytesIO()
         png_writer = png.Writer(
             width=self._shape[1],
@@ -459,6 +464,6 @@ class PngGenerator(object):
             greyscale=self._greyscale,
             bitdepth=self._bitdepth,
         )
-        png_writer.write(fp, im.reshape(im.shape[0], im.shape[1] * im.shape[2]).tolist())
+        png_writer.write(fp, img.reshape(img.shape[0], img.shape[1] * img.shape[2]).tolist())
         fp.seek(0)
         return fp

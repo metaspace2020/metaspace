@@ -1,3 +1,4 @@
+# pylint: disable=invalid-name, redefined-outer-name
 import argparse
 
 from sm.engine.util import SMConfig, init_loggers
@@ -11,7 +12,8 @@ def print_status(es_man, alias):
     if es_man.exists_index(active_index):
         active_count, active_size = es_man.get_index_stats(active_index)
         print(
-            f'Active index {alias} -> {active_index}: {active_count} docs, {active_size / 2**20:f}MiB'
+            f'Active index {alias} -> {active_index}: {active_count} docs, '
+            f'{active_size / 2**20:f}MiB'
         )
     else:
         print(f'Active index {alias} -> {active_index}: MISSING')
@@ -72,5 +74,6 @@ if __name__ == '__main__':
     else:
         parser.error('Invalid action')
 
-    # Print status regardless. The specific command just exists as a clean way to indicate to not do anything
+    # Print status regardless. The specific command just exists as a clean way
+    # to indicate to not do anything
     print_status(es_man, alias)

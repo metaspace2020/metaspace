@@ -29,6 +29,5 @@ coverage
 codecov
 pysparkling
 docutils<0.15  # botocore requirement
-pylama
-pylama_pylint
+pylint
 black

@@ -1,6 +1,5 @@
 class SMError(Exception):
-    def __init__(self, message=None):
-        super(SMError, self).__init__(message)
+    pass
 
 
 class AnnotationError(SMError):

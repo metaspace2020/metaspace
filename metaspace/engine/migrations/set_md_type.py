@@ -4,7 +4,7 @@ import logging
 import json
 
 from sm.engine.db import DB
-from sm.engine.util import SMConfig, init_logger
+from sm.engine.util import SMConfig, init_loggers
 
 ALL_DS_MASK = '_all_'
 '''
@@ -48,7 +48,7 @@ if __name__ == "__main__":
     SMConfig.set_path(args.sm_config_path)
     sm_config = SMConfig.get_conf()
 
-    init_logger()
+    init_loggers()
     logger = logging.getLogger('engine')
 
     if args.ds_name and args.md_type:

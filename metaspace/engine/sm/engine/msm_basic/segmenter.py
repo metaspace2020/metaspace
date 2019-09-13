@@ -1,10 +1,9 @@
 import logging
 from math import ceil
 from shutil import rmtree
-from collections import defaultdict
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from sm.engine.errors import SMError
 from sm.engine.msm_basic.formula_imager import get_pixel_indices
@@ -124,7 +123,7 @@ def extend_ds_segment_bounds(ds_segments):
     return mz_segments
 
 
-def segment_ds(imzml_parser, coordinates, chunk_sp_n, ds_segments, ds_segments_path):
+def segment_ds(imzml_parser, coordinates, spectra_per_chunk_n, ds_segments, ds_segments_path):
     logger.info(f'Segmenting dataset into {len(ds_segments)} segments')
 
     rmtree(ds_segments_path, ignore_errors=True)
@@ -132,7 +131,7 @@ def segment_ds(imzml_parser, coordinates, chunk_sp_n, ds_segments, ds_segments_p
 
     sp_id_to_idx = get_pixel_indices(coordinates)
     mz_segments = extend_ds_segment_bounds(ds_segments)
-    sp_id_chunks = chunk_list(xs=range(len(coordinates)), size=chunk_sp_n)
+    sp_id_chunks = chunk_list(xs=range(len(coordinates)), size=spectra_per_chunk_n)
     for ch_i, sp_ids in enumerate(sp_id_chunks, 1):
         logger.debug(f'Segmenting spectra chunk {ch_i}')
         sp_mz_int_buf = fetch_chunk_spectra_data(sp_ids, imzml_parser, sp_id_to_idx)

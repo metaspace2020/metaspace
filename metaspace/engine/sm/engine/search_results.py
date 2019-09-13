@@ -6,7 +6,9 @@ from sm.engine.png_generator import PngGenerator
 
 logger = logging.getLogger('engine')
 METRICS_INS = (
-    'INSERT INTO annotation (job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids) '
+    'INSERT INTO annotation ('
+    '   job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids'
+    ') '
     'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'
 )
 
@@ -14,7 +16,7 @@ METRICS_INS = (
 def post_images_to_image_store(
     formula_images_rdd, alpha_channel, img_store, img_store_type, n_peaks
 ):
-    logger.info('Posting iso images to {}'.format(img_store))
+    logger.info(f'Posting iso images to {img_store}')
     png_generator = PngGenerator(alpha_channel, greyscale=True)
 
     def generate_png_and_post(imgs):
@@ -28,7 +30,7 @@ def post_images_to_image_store(
     return dict(formula_images_rdd.mapValues(generate_png_and_post).collect())
 
 
-class SearchResults(object):
+class SearchResults:
     """ Container for molecule search results
 
     Args
@@ -45,18 +47,18 @@ class SearchResults(object):
         self.n_peaks = n_peaks
 
     def _metrics_table_row_gen(self, job_id, metr_df, formula_img_ids):
-        for ind, r in metr_df.iterrows():
-            m = OrderedDict((name, r[name]) for name in self.metric_names)
+        for _, row in metr_df.iterrows():
+            m = OrderedDict((name, row[name]) for name in self.metric_names)
             metr_json = json.dumps(m)
-            image_ids = formula_img_ids[r.formula_i]['iso_image_ids']
+            image_ids = formula_img_ids[row.formula_i]['iso_image_ids']
             yield (
                 job_id,
-                r.formula,
-                r.chem_mod,
-                r.neutral_loss,
-                r.adduct,
-                float(r.msm),
-                float(r.fdr),
+                row.formula,
+                row.chem_mod,
+                row.neutral_loss,
+                row.adduct,
+                float(row.msm),
+                float(row.fdr),
                 metr_json,
                 image_ids,
             )

@@ -8,7 +8,7 @@ from sm.engine.util import bootstrap_and_run
 from sm.engine.db import DB
 
 
-def run(sm_config, ds_id, sql_where, algorithm):
+def run(sm_config, ds_id_str, sql_where, algorithm):
     db = DB()
     img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
 
@@ -17,7 +17,7 @@ def run(sm_config, ds_id, sql_where, algorithm):
             id for (id,) in db.select(f'SELECT DISTINCT dataset.id FROM dataset WHERE {sql_where}')
         ]
     else:
-        ds_ids = ds_id.split(',')
+        ds_ids = ds_id_str.split(',')
 
     if not ds_ids:
         logger.warning('No datasets match filter')
@@ -53,7 +53,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     logger = logging.getLogger('engine')
 
-    if not (bool(args.ds_id) ^ bool(args.sql_where)):
+    if not bool(args.ds_id) ^ bool(args.sql_where):
         parser.print_usage()
         print('error: must specify either --ds-id or --sql-where')
         exit(1)

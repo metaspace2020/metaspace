@@ -1,15 +1,15 @@
-import os
 import json
-from datetime import datetime
-from subprocess import check_call, call
 import logging
 from logging.config import dictConfig
-from pathlib import Path
-import re
-from fnmatch import translate
+import os
 from copy import deepcopy
+from datetime import datetime
+from pathlib import Path
+from subprocess import call, check_call
 
 from sm.engine.db import ConnectionPool
+
+logger = logging.getLogger('engine')
 
 
 def proj_root():
@@ -34,20 +34,20 @@ def init_loggers(config=None):
         'DEBUG': logging.DEBUG,
     }
 
-    def convert_levels(orig_d):
-        d = orig_d.copy()
-        for k, v in d.items():
+    def convert_levels(orig_dic):
+        dic = orig_dic.copy()
+        for k, v in dic.items():
             if k == 'level':
-                d[k] = log_level_codes[d[k]]
-            elif type(v) == dict:
-                d[k] = convert_levels(v)
-        return d
+                dic[k] = log_level_codes[dic[k]]
+            elif isinstance(v, dict):
+                dic[k] = convert_levels(v)
+        return dic
 
     log_config = convert_levels(config)
     dictConfig(log_config)
 
 
-class SMConfig(object):
+class SMConfig:
     """ Engine configuration manager """
 
     _path = 'conf/config.json'
@@ -74,10 +74,10 @@ class SMConfig(object):
         assert cls._path
         if update or not cls._config_dict:
             try:
-                with open(cls._path) as f:
-                    cls._config_dict = json.load(f)
+                with open(cls._path) as file:
+                    cls._config_dict = json.load(file)
             except IOError as e:
-                logging.getLogger('engine').warning(e)
+                logger.warning(e)
         return deepcopy(cls._config_dict)
 
     @classmethod
@@ -101,7 +101,7 @@ class SMConfig(object):
 
 def _cmd(template, call_func, *args):
     cmd_str = template.format(*args)
-    logging.getLogger('engine').info('Call "%s"', cmd_str)
+    logger.info('Call "%s"', cmd_str)
     return call_func(cmd_str.split())
 
 
@@ -116,12 +116,12 @@ def cmd(template, *args):
 def read_json(path):
     res = {}
     try:
-        with open(path) as f:
-            res = json.load(f)
-    except IOError as e:
-        logging.getLogger('engine').warning("Couldn't find %s file", path)
-    finally:
-        return res
+        with open(path) as file:
+            res = json.load(file)
+    except IOError:
+        logger.warning("Couldn't find %s file", path)
+
+    return res
 
 
 def create_ds_from_files(ds_id, ds_name, ds_input_path, config_path=None, meta_path=None):
