@@ -16,7 +16,7 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
     ansible_config_path = path.join(args.stage, 'group_vars/all/vars.yml')
-    ansible_config = yaml.load(open(ansible_config_path))
+    ansible_config = yaml.full_load(open(ansible_config_path))
     inv_file = path.join(args.stage, 'hosts')
 
     with open(inv_file, 'w') as fp:

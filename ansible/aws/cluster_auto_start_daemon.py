@@ -68,7 +68,7 @@ class ClusterDaemon:
         self, ansible_config_path, aws_key_name=None, interval=60, qname='sm_annotate', debug=False
     ):
         with open(ansible_config_path) as fp:
-            self.ansible_config = yaml.load(fp)
+            self.ansible_config = yaml.full_load(fp)
 
         self.interval = min(interval, 1200)
         self.aws_key_name = aws_key_name or self.ansible_config['aws_key_name']

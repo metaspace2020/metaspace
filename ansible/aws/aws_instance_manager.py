@@ -8,7 +8,7 @@ from subprocess import check_output
 from time import sleep
 
 import boto3
-from yaml import load
+import yaml
 
 
 class AWSInstManager:
@@ -307,7 +307,7 @@ if __name__ == '__main__':
         'group_vars/all/vars.yml' if not args.create_ami else 'group_vars/create_ami_config.yml'
     )
     config_path = path.join(args.stage, conf_file)
-    conf = load(open(config_path))
+    conf = yaml.full_load(open(config_path))
     cluster_conf = conf['cluster_configuration']
 
     aws_conf = {'key_name': args.key_name or conf['aws_key_name'], 'region': conf['aws_region']}
