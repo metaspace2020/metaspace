@@ -15,8 +15,10 @@ from metaspace.annotation_export import (
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run molecule export')
     parser.add_argument('--path', default='.', help='Export path')
-    parser.add_argument('--url', type=str, help='Metaspace URL')
-    parser.add_argument('--coloc-thr', type=float, default=None, help='Metaspace URL')
+    parser.add_argument('--url', type=str, help='Metaspace URL, in double quotes')
+    parser.add_argument(
+        '--coloc-thr', type=float, default=None, help='Colocalization coeff threshold'
+    )
     args = parser.parse_args()
 
     url = args.url
