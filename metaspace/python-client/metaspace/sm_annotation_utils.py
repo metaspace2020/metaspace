@@ -269,7 +269,9 @@ class GraphQLClient(object):
             field_name='allAnnotations',
             query=query,
             variables={
-                'filter': annotFilter, 'dFilter': datasetFilter, 'colocCoeffFilter': colocFilter
+                'filter': annotFilter,
+                'dFilter': datasetFilter,
+                'colocCoeffFilter': colocFilter,
             },
         )
 

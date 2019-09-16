@@ -210,7 +210,9 @@ def export_molecules(ann_stat_df, mol_df, path):
         mol_export_df = pd.merge(ann_stat_df, mol_df).sort_values(by='id')
 
         export_path = Path(path)
-        mol_export_df.to_csv(export_path / 'molecules_stats.csv', index=False, sep='\t', header=True)
+        mol_export_df.to_csv(
+            export_path / 'molecules_stats.csv', index=False, sep='\t', header=True
+        )
         mol_export_df.id.to_csv(export_path / 'molecules.csv', index=False, header=False)
     else:
         logger.info(f'Annotation or molecule dataframe is empty. Nothing to export')
