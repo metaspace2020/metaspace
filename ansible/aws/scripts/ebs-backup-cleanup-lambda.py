@@ -15,10 +15,7 @@ def send_to_sns(subject, message):
 
     client = boto3.client('sns')
 
-    response = client.publish(
-        TargetArn=aws_sns_arn,
-        Message=message,
-        Subject=subject)
+    response = client.publish(TargetArn=aws_sns_arn, Message=message, Subject=subject)
 
     if 'MessageId' in response:
         print("Notification sent with message id: %s" % response['MessageId'])
@@ -36,16 +33,18 @@ def cleanup_region(ec2, account_ids, region, today):
     ]
     snapshot_response = ec2.describe_snapshots(OwnerIds=account_ids, Filters=filters)
 
-    print("Found %d snapshot(s) that need(s) deleting in region %s on %s" % (
-        len(snapshot_response['Snapshots']),
-        region,
-        delete_on))
+    print(
+        "Found %d snapshot(s) that need(s) deleting in region %s on %s"
+        % (len(snapshot_response['Snapshots']), region, delete_on)
+    )
 
     for snap in snapshot_response['Snapshots']:
         print("Deleting snapshot %s" % snap['SnapshotId'])
         ec2.delete_snapshot(SnapshotId=snap['SnapshotId'])
 
-    message = "{} snapshots have been cleaned up in region {}".format(len(snapshot_response['Snapshots']), region)
+    message = "{} snapshots have been cleaned up in region {}".format(
+        len(snapshot_response['Snapshots']), region
+    )
     send_to_sns('EBS Backups Cleanup', message)
 
 
@@ -75,28 +74,38 @@ def lambda_handler(event, context):
     for region in aws_regions:
         ec2 = boto3.client('ec2', region_name=region)
         account_id = get_account_id(boto3.client('iam'))
-        cleanup_region(ec2=ec2, account_ids=[account_id],
-                       region=region, today=datetime.date.today())
+        cleanup_region(
+            ec2=ec2, account_ids=[account_id], region=region, today=datetime.date.today()
+        )
 
 
 if __name__ == '__main__':
     from botocore.stub import Stubber
+
     ec2 = boto3.client('ec2', region_name='eu-west-1')
     stubber = Stubber(ec2)
 
     def init_stubber(stubber, delete_on):
         import test_responses as resp
-        stubber.add_response('describe_snapshots',
-                             resp.describe_snapshots,
-                             {'OwnerIds': [''], 'Filters': [
-                                 {'Name': 'tag-key', 'Values': ['delete_on']},
-                                 {'Name': 'tag-value', 'Values': [delete_on]}]})
+
+        stubber.add_response(
+            'describe_snapshots',
+            resp.describe_snapshots,
+            {
+                'OwnerIds': [''],
+                'Filters': [
+                    {'Name': 'tag-key', 'Values': ['delete_on']},
+                    {'Name': 'tag-value', 'Values': [delete_on]},
+                ],
+            },
+        )
         stubber.add_response('delete_snapshot', {})
 
     with Stubber(ec2) as stubber:
         init_stubber(stubber, '2017-09-03')
         account_id = get_account_id(boto3.client('iam'))
-        cleanup_region(ec2=ec2, account_ids=[account_id],
-                       region='eu-west-1', today=datetime.date(2017, 9, 3))
+        cleanup_region(
+            ec2=ec2, account_ids=[account_id], region='eu-west-1', today=datetime.date(2017, 9, 3)
+        )
 
     # cleanup_region(ec2, 'eu-west-1', datetime.date(2017, 9, 3))

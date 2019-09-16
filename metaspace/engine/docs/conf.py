@@ -25,25 +25,27 @@ import rtd_gen_docs
 rtd_gen_docs.main()
 
 # see http://www.sphinx-doc.org/en/stable/ext/autodoc.html#confval-autodoc_mock_imports
-autodoc_mock_imports = ['fabfile',
-                        'isatools.io.isatab_parser',
-                        'mpl_toolkits.axes_grid1',
-                        'networkx',
-                        'pandas',
-                        'png',
-                        'psycopg2',
-                        'psycopg2.extensions',
-                        'psycopg2.extras',
-                        'pyspark',
-                        'requests',
-                        'scipy',
-                        'scipy.optimize',
-                        'scipy.signal',
-                        'scipy.sparse',
-                        'scipy.stats',
-                        'tornpsql',
-                        'cpyImagingMSpec',
-                        'cpyMSpec']
+autodoc_mock_imports = [
+    'fabfile',
+    'isatools.io.isatab_parser',
+    'mpl_toolkits.axes_grid1',
+    'networkx',
+    'pandas',
+    'png',
+    'psycopg2',
+    'psycopg2.extensions',
+    'psycopg2.extras',
+    'pyspark',
+    'requests',
+    'scipy',
+    'scipy.optimize',
+    'scipy.signal',
+    'scipy.sparse',
+    'scipy.stats',
+    'tornpsql',
+    'cpyImagingMSpec',
+    'cpyMSpec',
+]
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -58,19 +60,13 @@ needs_sphinx = '1.0'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.viewcode',
-    'numpydoc'
-]
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'numpydoc']
 
 numpydoc_show_class_members = False
 numpydoc_show_inherited_class_members = False
 numpydoc_class_members_toctree = False
 
-source_parsers = {
-    '.md': CommonMarkParser,
-}
+source_parsers = {'.md': CommonMarkParser}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -247,13 +243,10 @@ htmlhelp_basename = 'SM_distributeddoc'
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     # 'papersize': 'letterpaper',
-
     # The font size ('10pt', '11pt' or '12pt').
     # 'pointsize': '10pt',
-
     # Additional stuff for the LaTeX preamble.
     # 'preamble': '',
-
     # Latex figure (float) alignment
     # 'figure_align': 'htbp',
 }
@@ -262,8 +255,13 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'SM_distributed.tex', u'SM\\_distributed Documentation',
-     u'Alexandrov Team', 'manual'),
+    (
+        master_doc,
+        'SM_distributed.tex',
+        u'SM\\_distributed Documentation',
+        u'Alexandrov Team',
+        'manual',
+    )
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -290,10 +288,7 @@ latex_domain_indices = True
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'sm_distributed', u'SM_distributed Documentation',
-     [author], 1)
-]
+man_pages = [(master_doc, 'sm_distributed', u'SM_distributed Documentation', [author], 1)]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
@@ -305,9 +300,15 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'SM_distributed', u'SM_distributed Documentation',
-     author, 'SM_distributed', 'One line description of project.',
-     'Miscellaneous'),
+    (
+        master_doc,
+        'SM_distributed',
+        u'SM_distributed Documentation',
+        author,
+        'SM_distributed',
+        'One line description of project.',
+        'Miscellaneous',
+    )
 ]
 
 # Documents to append as an appendix to all manuals.

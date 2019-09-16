@@ -3,6 +3,7 @@ import falcon
 
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import desc
+
 # from cerberus import Validator, ValidationError
 
 from app import log
@@ -94,9 +95,9 @@ class SumFormulaCollection(BaseResource):
     # @falcon.before(auth_required)
     def on_get(self, req, res, db_id):
         db_session = req.context['session']
-        sf_tuples = (db_session.query(Molecule.sf)
-                     .filter(Molecule.db_id == db_id)
-                     .distinct('sf').all())
+        sf_tuples = (
+            db_session.query(Molecule.sf).filter(Molecule.db_id == db_id).distinct('sf').all()
+        )
 
         objs = [t[0] for t in sf_tuples]
         self.on_success(res, objs)
@@ -131,6 +132,7 @@ class MolDBItem(BaseResource):
     """
     Handle for endpoint: /v1/databases/{db_id}
     """
+
     # @falcon.before(auth_required)
     def on_get(self, req, res, db_id):
         session = req.context['session']

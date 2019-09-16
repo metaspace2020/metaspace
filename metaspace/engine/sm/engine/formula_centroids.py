@@ -1,30 +1,30 @@
 import logging
+from copy import deepcopy
+from itertools import repeat
 from math import ceil
 from pathlib import Path
-import boto3
-from botocore.exceptions import ClientError
-from itertools import product, repeat
-from pyspark.sql import SparkSession
-import pandas as pd
-import numpy as np
-from copy import deepcopy
 
+import boto3
+import pandas as pd
+from botocore.exceptions import ClientError
+from pyspark import SparkContext  # pylint: disable=unused-import
+from pyspark.sql import SparkSession
+
+from sm.engine.isocalc_wrapper import IsocalcWrapper  # pylint: disable=unused-import
 from sm.engine.util import SMConfig, split_s3_path
-from sm.engine.isocalc_wrapper import IsocalcWrapper
 
 logger = logging.getLogger('engine')
 
 
-class CentroidsGenerator(object):
-    """ Generator of theoretical isotope peaks for all molecules in database
-
-    Args
-    ----------
-    sc : pyspark.SparkContext
-    isocalc: IsocalcWrapper
-    """
+class CentroidsGenerator:
+    """Generator of theoretical isotope peaks for all molecules in database."""
 
     def __init__(self, sc, isocalc):
+        """
+        Args:
+            sc (SparkContext):
+            isocalc (IsocalcWrapper):
+        """
         self._sc = sc
         self._isocalc = isocalc
         self._sm_config = SMConfig.get_conf()
@@ -61,8 +61,7 @@ class CentroidsGenerator(object):
             mzs, ints = isocalc.centroids(formula)
             if mzs is not None:
                 return zip(repeat(formula_i), range(0, len(mzs)), map(float, mzs), map(float, ints))
-            else:
-                return []
+            return []
 
         formulas_df = pd.DataFrame(
             [(i, formula) for i, formula in enumerate(formulas, index_start)],
@@ -92,7 +91,7 @@ class CentroidsGenerator(object):
         ---
             FormulaCentroids
         """
-        assert len(formulas) > 0
+        assert formulas
 
         all_formula_centroids = self._restore()
 
@@ -101,7 +100,7 @@ class CentroidsGenerator(object):
         else:
             saved_formulas = all_formula_centroids.formulas_df.formula.unique()
             new_formulas = list(set(formulas) - set(saved_formulas))
-            if len(new_formulas) > 0:
+            if new_formulas:
                 logger.info(f'Number of missing formulas: {len(new_formulas)}')
                 index_start = all_formula_centroids.formulas_df.index.max() + 1
                 new_formula_centroids = self._generate(new_formulas, index_start)
@@ -130,6 +129,7 @@ class CentroidsGenerator(object):
 
     def _restore(self):
         logger.info('Restoring peaks')
+        formula_centroids = None
         if self._saved():
             formulas_df = (
                 self._spark_session.read.parquet(self._ion_centroids_path + '/formulas')
@@ -141,7 +141,8 @@ class CentroidsGenerator(object):
                 .toPandas()
                 .set_index('formula_i')
             )
-            return FormulaCentroids(formulas_df, centroids_df)
+            formula_centroids = FormulaCentroids(formulas_df, centroids_df)
+        return formula_centroids
 
     def _save_df_chunks(self, df, path, chunk_size=10 * 10 ** 6):
         chunks = int(ceil(df.shape[0] / chunk_size))
@@ -167,7 +168,7 @@ class CentroidsGenerator(object):
         )
 
 
-class FormulaCentroids(object):
+class FormulaCentroids:
     """ Theoretical isotope peaks for formulas
 
     Args
@@ -197,8 +198,7 @@ class FormulaCentroids(object):
         """
         if fixed_size_centroids:
             return self._centroids_df
-        else:
-            return self._centroids_df[self._centroids_df.mz > 0]
+        return self._centroids_df[self._centroids_df.mz > 0]
 
     def __add__(self, other):
         """ Is also used for += operation by Python automatically
@@ -207,13 +207,13 @@ class FormulaCentroids(object):
         -----
         other: FormulaCentroids
         """
-        assert type(other) == FormulaCentroids
+        assert isinstance(other, FormulaCentroids)
         assert pd.merge(self.formulas_df, other.formulas_df, on='formula').empty
 
         index_offset = self.formulas_df.index.max() - other.formulas_df.index.min() + 1
         other_formulas_df = other.formulas_df.copy()
         other_formulas_df.index = other_formulas_df.index + index_offset
-        other_centroids_df = other.centroids_df(fixed_size_centroids=True).copy()
+        other_centroids_df = other.centroids_df().copy()
         other_centroids_df.index = other_centroids_df.index + index_offset
 
         formulas_df = pd.concat([self.formulas_df, other_formulas_df])
@@ -231,7 +231,7 @@ class FormulaCentroids(object):
     def subset(self, formulas):
         formulas = set(formulas)
         miss_formulas = formulas - set(self.formulas_df.formula.values)
-        if len(miss_formulas) > 0:
+        if miss_formulas:
             # Missing formulas requested
             # Also happens when CentroidsGenerator._generate failed to compute formula centroids
             logger.warning(

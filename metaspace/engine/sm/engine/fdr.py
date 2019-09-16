@@ -3,6 +3,7 @@ from itertools import product
 
 import numpy as np
 import pandas as pd
+
 from sm.engine.formula_parser import format_modifiers
 
 logger = logging.getLogger('engine')
@@ -94,8 +95,8 @@ DECOY_ADDUCTS = [
 def _make_target_modifiers_df(chem_mods, neutral_losses, target_adducts):
     """
     All combinations of chemical modification, neutral loss or target adduct.
-    Note that the combination order matters as these target modifiers are used later to map back to separated
-    chemical modification, neutral loss and target adduct fields.
+    Note that the combination order matters as these target modifiers are used later
+    to map back to separated chemical modification, neutral loss and target adduct fields.
     """
     rows = [
         (cm, nl, ta, format_modifiers(cm, nl, ta), format_modifiers(cm, nl))
@@ -110,7 +111,7 @@ def _make_target_modifiers_df(chem_mods, neutral_losses, target_adducts):
     return df
 
 
-class FDR(object):
+class FDR:
     def __init__(self, fdr_config, chem_mods, neutral_losses, target_adducts):
         self.decoy_sample_size = fdr_config['decoy_sample_size']
         self.chem_mods = chem_mods
@@ -131,6 +132,7 @@ class FDR(object):
     def _decoy_adduct_gen(self, target_formulas, decoy_adducts_cand):
         np.random.seed(self.random_seed)
         target_modifiers = list(self.target_modifiers_df.decoy_modifier_prefix.items())
+        # pylint: disable=invalid-name
         for formula, (tm, dm_prefix) in product(target_formulas, target_modifiers):
             for da in self._choose_decoys(decoy_adducts_cand):
                 yield (formula, tm, dm_prefix + da)
@@ -143,9 +145,10 @@ class FDR(object):
         )
 
     def ion_tuples(self):
-        """ 
-        All ions needed for FDR calculation as a list of (formula, modifier), where modifier is a combination of
-        chemical modification, neutral loss and adduct 
+        """Returns list of tuples in List[(formula, modifier)] form.
+
+        All ions needed for FDR calculation as a list of (formula, modifier),
+        where modifier is a combination of chemical modification, neutral loss and adduct
         """
         d_ions = self.td_df[['formula', 'dm']].drop_duplicates().values.tolist()
         t_ions = self.td_df[['formula', 'tm']].drop_duplicates().values.tolist()
@@ -185,7 +188,7 @@ class FDR(object):
         td_df = self.td_df.set_index('tm')
 
         target_fdr_df_list = []
-        for tm in self.target_modifiers_df.index.drop_duplicates():
+        for tm in self.target_modifiers_df.index.drop_duplicates():  # pylint: disable=invalid-name
             target_msm = formula_msm[formula_msm.modifier == tm]
             full_decoy_df = td_df.loc[tm, ['formula', 'dm']]
 

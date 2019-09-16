@@ -32,7 +32,7 @@ TARGET_DECOY_ADD_DEL = (
 )
 
 
-class JobStatus:  # noqa
+class JobStatus:
     RUNNING = 'RUNNING'
     FINISHED = 'FINISHED'
     FAILED = 'FAILED'

@@ -7,6 +7,7 @@ except ImportError:
     OrderedDict = dict
 
 from app import log
+
 # from app.utils.alchemy import new_alchemy_encoder
 from app.config import BRAND_NAME, POSTGRES
 from app.database import engine
@@ -18,7 +19,7 @@ LOG = log.get_logger()
 class BaseResource(object):
     HELLO_WORLD = {
         'server': '%s' % BRAND_NAME,
-        'database': '%s (%s)' % (engine.name, POSTGRES['host'])
+        'database': '%s (%s)' % (engine.name, POSTGRES['host']),
     }
 
     @classmethod

@@ -3,8 +3,7 @@ from fastai.basic_train import load_learner
 from fastai.vision.data import ImageList
 
 
-class OffSamplePredictModel(object):
-
+class OffSamplePredictModel:
     def __init__(self, model_path):
         self.learn = load_learner('.', model_path)
         self.target_class_idx = self.learn.data.classes.index('off')

@@ -6,9 +6,13 @@ ION_INS = (
     'RETURNING id'
 )
 ION_SEL = (
-    'WITH ions AS (SELECT UNNEST(%s::text[]) as fo, UNNEST(%s::text[]) as cm, UNNEST(%s::text[]) as nl, UNNEST(%s::text[]) as ad) '
+    'WITH ions AS ('
+    '   SELECT UNNEST(%s::text[]) as fo, UNNEST(%s::text[]) as cm, '
+    '       UNNEST(%s::text[]) as nl, UNNEST(%s::text[]) as ad'
+    ') '
     'SELECT formula, chem_mod, neutral_loss, adduct, id '
-    'FROM graphql.ion JOIN ions ON formula = fo AND chem_mod = cm AND neutral_loss = nl AND adduct = ad '
+    'FROM graphql.ion '
+    'JOIN ions ON formula = fo AND chem_mod = cm AND neutral_loss = nl AND adduct = ad '
     'WHERE charge = %s'
 )
 

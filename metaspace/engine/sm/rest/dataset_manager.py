@@ -14,7 +14,7 @@ from sm.engine.optical_image import add_optical_image, del_optical_image
 from sm.engine.util import SMConfig
 
 
-class DatasetActionPriority(object):
+class DatasetActionPriority:
     """ Priorities used for messages sent to queue """
 
     LOW = 0
@@ -23,7 +23,7 @@ class DatasetActionPriority(object):
     DEFAULT = STANDARD
 
 
-class SMapiDatasetManager(object):
+class SMapiDatasetManager:
     def __init__(
         self,
         db,
@@ -68,9 +68,7 @@ class SMapiDatasetManager(object):
             ds = Dataset.load(self._db, doc['id'])
             self._set_ds_busy(ds, kwargs.get('force', False))
             config = update_ds_config(ds.config, ds.metadata, **ds_config_kwargs)
-            is_new = False
         except UnknownDSID:
-            is_new = True
             config = generate_ds_config(doc.get('metadata'), **ds_config_kwargs)
 
         ds = Dataset(
@@ -117,9 +115,14 @@ class SMapiDatasetManager(object):
         )
 
     def add_optical_image(self, ds_id, img_id, transform, zoom_levels=(1, 2, 4, 8)):
-        """ Generate scaled and transformed versions of the provided optical image + creates the thumbnail """
+        """Add optical image to dataset.
+
+        Generates scaled and transformed versions of the provided optical image
+        + creates the thumbnail
+        """
+
         add_optical_image(self._db, self._img_store, ds_id, img_id, transform, zoom_levels)
 
-    def del_optical_image(self, ds_id, **kwargs):
+    def del_optical_image(self, ds_id):
         """ Deletes raw and zoomed optical images from DB and FS"""
         del_optical_image(self._db, self._img_store, ds_id)
