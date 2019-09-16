@@ -90,7 +90,11 @@
                        sortable="custom"
                        min-width="120">
         <template slot-scope="props">
-          <candidate-molecules-popover placement="right" :possibleCompounds="props.row.possibleCompounds">
+          <candidate-molecules-popover
+            placement="right"
+            :possibleCompounds="props.row.possibleCompounds"
+            :limit="10"
+            :isomers="showIsomers ? props.row.isomers : []">
             <div class="cell-wrapper">
                 <span class="sf cell-span"
                       v-html="renderMolFormulaHtml(props.row.ion)"></span>
@@ -306,6 +310,7 @@
          sortingOrder: this.sortingOrder,
          offset: (this.currentPage - 1) * this.recordsPerPage,
          limit: this.recordsPerPage,
+         countIsomerCompounds: config.features.isomers,
        };
      },
 
@@ -346,6 +351,9 @@
          && this.$store.getters.filter.datasetIds != null
          && this.$store.getters.filter.datasetIds.length > 1;
      },
+     showIsomers() {
+       return config.features.isomers;
+     }
    },
    apollo: {
      annotations: {
@@ -601,11 +609,10 @@
  }
 </script>
 
-<style>
+<style lang="scss">
 
  #annot-table {
    border: 0px;
-   font-family: 'Roboto', sans-serif;
  }
 
  /* fix cell height and align text in the center */

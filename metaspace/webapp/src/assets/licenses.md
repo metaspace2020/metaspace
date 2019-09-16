@@ -6,6 +6,15 @@
 * map-icon.svg
     Flaticon Basic License (attribution required, author: Freepik)
     https://www.flaticon.com/free-icon/map_1198515
+
+* danger.svg
+    Flaticon Basic License (attribution required, author: Freepik)
+    https://www.flaticon.com/free-icon/danger_272340
+
+* danger-solid.svg
+    Flaticon Basic License (attribution required, author: Freepik)
+    https://www.flaticon.com/free-icon/danger_272289
+
     
 * padlock-icon.svg
     Flaticon Basic License (attribution required) 

@@ -43,7 +43,7 @@ export const rawOpticalImage = async (dsId: string, ctx: Context) => {
   return null;
 };
 
-const QueryResolvers: FieldResolversFor<Query, void>  = {
+const QueryResolvers: FieldResolversFor<Query, void> = {
   async dataset(source, { id: dsId }, ctx): Promise<DatasetSource | null> {
     const ds = await esDatasetByID(dsId, ctx.user);
     return ds || null;

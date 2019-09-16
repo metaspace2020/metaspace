@@ -107,6 +107,10 @@
             "handlers": ["console_debug"],
             "level": "INFO"
         },
+        "engine.db": {
+            "handlers": ["console_debug"],
+            "level": "INFO"
+        },
         "api": {
             "handlers": ["console_debug"],
             "level": "INFO"

@@ -443,7 +443,7 @@
  }
 
  .image-loader__overlay-text {
-   font: 24px 'Roboto', sans-serif;
+   font-size: 24px;
    display: block;
    position: relative;
    text-align: center;

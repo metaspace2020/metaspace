@@ -73,8 +73,17 @@
 
 <style>
 
+  @font-face {
+    /* Roboto doesn't contain superscript glyphs, and the fallback is OS-dependent. OSX's fallback, Helvetica,
+     looks bad for the superscript + and - characters in formatted ion formulas, because it's too small to read. */
+
+    font-family: SUPERSCIPT_OVERRIDE;
+    src: local('Lucida Grande'), local('-apple-system'), local('serif');
+    unicode-range: U+207A-207B;
+  }
+
  html {
-   font-family: 'Roboto', Helvetica, sans-serif;
+   font-family: 'Roboto', SUPERSCIPT_OVERRIDE, Helvetica, sans-serif;
    overflow-y: scroll; /* always show the right scrollbar to avoid flickering */
  }
 

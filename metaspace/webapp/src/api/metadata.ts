@@ -101,6 +101,36 @@ export const fetchOptionListsQuery = gql`query fetchOptionListsQuery {
   adducts: adductSuggestions{adduct, name, charge, default, hidden}
 }`;
 
+export interface MolecularDatabase {
+  name: string;
+  default: boolean;
+  hidden: boolean;
+}
+
+export interface ChemModSuggestion {
+  chemMod: string;
+  name: string;
+}
+export interface NeutralLossSuggestion {
+  neutralLoss: string;
+  name: string;
+}
+export interface AdductSuggestion {
+  adduct: string;
+  name: string;
+  charge: number;
+  default: boolean;
+  hidden: boolean;
+}
+
+export const chemModSuggestionQuery = gql`query chemModSuggestionQuery($query: String) {
+  chemMods: chemModSuggestions(query: $query) {chemMod, name}
+}`;
+
+export const neutralLossSuggestionQuery = gql`query neutralLossSuggestionQuery($query: String) {
+  neutralLosses: neutralLossSuggestions(query: $query) {neutralLoss, name}
+}`;
+
 export const metadataOptionsQuery = gql`query metadataOptionsQuery {
   molecularDatabases: molecularDatabases(hideDeprecated: false, onlyLastVersion: false){name, default, hidden}
   adducts: adductSuggestions{adduct, name, charge, default, hidden}

@@ -20,7 +20,8 @@ if [ "$SM_DOCKER_ENV" = "development" ]; then
   yarn install
   yarn run deref-schema
   nodemon -e graphql -q --exec "yarn run gen-binding" &
-  exec nodemon -e js,json,ts --require ts-node/register server.js
+  # exec nodemon -e js,json,ts --require ts-node/register server.js
+  exec yarn exec ts-node-dev -- --respawn server.js
 else
   export NODE_ENV=production
   cd /opt/metaspace/metaspace/graphql

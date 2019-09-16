@@ -16,13 +16,13 @@ export class User {
   @Column({ type: 'text', nullable: true })
   email: string | null;
 
-  @Column({ type: 'text', nullable: true, name: 'not_verified_email'})
+  @Column({ type: 'text', nullable: true})
   notVerifiedEmail: string | null;
 
   @Column({ type: 'text', default: 'user' })
   role: string;
 
-  @Column({ type: 'text', name: 'credentials_id' })
+  @Column({ type: 'text' })
   credentialsId: string;
 
   @OneToOne(type => Credentials)
@@ -38,3 +38,7 @@ export class User {
   @OneToMany(type => UserProject, userProject => userProject.user)
   projects?: UserProject[];
 }
+
+export const USER_ENTITIES = [
+  User
+];

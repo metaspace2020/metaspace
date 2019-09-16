@@ -11,7 +11,7 @@ fi
 # not existing, which could cause any existing data to be dropped when the script is rerun.
 if [ "$( PGPASSWORD=password psql -U sm -h postgres -tAc "SELECT NOT EXISTS (SELECT 1 FROM pg_tables WHERE tablename='dataset')" )" = 't' ]; then
   echo "Creating database schema"
-  PGPASSWORD=password psql -U sm -h postgres -f ./scripts/create_schema.sql
+  PGPASSWORD=password psql -U sm -h postgres -f ./sm/engine/tests/graphql_schema.sql
 fi
 
 curl -I http://elasticsearch:9200/sm 2>/dev/null | head -1 | grep 404 >/dev/null

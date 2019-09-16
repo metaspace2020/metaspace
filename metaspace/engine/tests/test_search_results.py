@@ -7,12 +7,20 @@ from unittest.mock import MagicMock, Mock
 import numpy as np
 
 from sm.engine.db import DB
+from sm.engine.ion_mapping import ION_SEL
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.search_results import SearchResults, METRICS_INS, post_images_to_image_store
 from sm.engine.tests.util import pysparkling_context
 from scipy.sparse import coo_matrix
 
 db_mock = MagicMock(spec=DB)
+
+
+def db_sel_side_effect(query, *args):
+    if query == ION_SEL:
+        # formula, chem_mod, neutral_loss, adduct, id
+        return [('H2O', '', '-OH', '+H', 123)]
+    raise ValueError(f'Unrecognized db.select: {query} {args}')
 
 
 @pytest.fixture
@@ -26,7 +34,7 @@ def search_results():
         'min_iso_ints',
         'max_iso_ints',
     ]
-    res = SearchResults(0, metrics, 4)
+    res = SearchResults(0, metrics, 4, 1)
     return res
 
 
@@ -72,6 +80,7 @@ def _mock_ion_metrics_df():
 def test_save_ion_img_metrics_correct_db_call(search_results):
     ion_img_ids = {13: {'iso_image_ids': ['iso_image_1', None, None, None]}}
     ion_metrics_df = _mock_ion_metrics_df()
+    db_mock.select.side_effect = db_sel_side_effect
 
     search_results.store_ion_metrics(ion_metrics_df, ion_img_ids, db_mock)
 
@@ -92,7 +101,18 @@ def test_save_ion_img_metrics_correct_db_call(search_results):
         )
     )
     exp_rows = [
-        (0, 'H2O', '', '-OH', '+H', 0.9 ** 3, 0.5, metrics_json, ['iso_image_1', None, None, None])
+        (
+            0,
+            'H2O',
+            '',
+            '-OH',
+            '+H',
+            0.9 ** 3,
+            0.5,
+            metrics_json,
+            ['iso_image_1', None, None, None],
+            123,
+        )
     ]
     db_mock.insert.assert_called_with(METRICS_INS, exp_rows)
 
@@ -121,6 +141,7 @@ def test_isotope_images_are_stored(search_results, pysparkling_context):
 def test_non_native_python_number_types_handled(search_results):
     ion_img_ids = {13: {'iso_image_ids': ['iso_image_1', None, None, None]}}
     metrics_df = _mock_ion_metrics_df()
+    db_mock.select.side_effect = db_sel_side_effect
 
     for col in ['chaos', 'spatial', 'spectral', 'msm', 'fdr']:
         metrics_df[col] = metrics_df[col].astype(np.float64)
@@ -154,6 +175,7 @@ def test_non_native_python_number_types_handled(search_results):
                 0.5,
                 metrics_json,
                 ['iso_image_1', None, None, None],
+                123,
             )
         ]
         db_mock.insert.assert_called_with(METRICS_INS, exp_rows)

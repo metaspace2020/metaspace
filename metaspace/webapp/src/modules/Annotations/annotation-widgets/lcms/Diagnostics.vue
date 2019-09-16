@@ -103,7 +103,4 @@ export default class Diagnostics extends Vue {
     color: blue;
 }
 
-#isotope-plot-container text {
-    font-family: "Roboto" !important;
-}
 </style>

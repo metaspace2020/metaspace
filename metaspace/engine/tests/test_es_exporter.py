@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import datetime
 from unittest.mock import MagicMock
@@ -9,82 +10,81 @@ from sm.engine.mol_db import MolecularDB
 from sm.engine.es_export import ESExporter, ESIndexManager, DATASET_SEL, ANNOTATIONS_SEL
 from sm.engine.db import DB
 from sm.engine.isocalc_wrapper import IsocalcWrapper
-from sm.engine.tests.util import sm_config, ds_config, sm_index, es, es_dsl_search, test_db
+from sm.engine.tests.util import (
+    sm_config,
+    ds_config,
+    metadata,
+    sm_index,
+    es,
+    es_dsl_search,
+    test_db,
+)
 
 
 def wait_for_es(sec=1):
     time.sleep(sec)
 
 
-def test_index_ds_works(test_db, es_dsl_search, sm_index):
+def test_index_ds_works(test_db, es_dsl_search, sm_index, ds_config, metadata):
     ds_id = '2000-01-01_00h00m'
-    upload_dt = datetime.now().isoformat(' ')
+    upload_dt = datetime.now().isoformat()
     mol_db_id = 0
-    last_finished = '2017-01-01T00:00:00'
+    last_finished = '2017-01-01 00:00:00'
+    iso_image_ids = ['iso_img_id_1', 'iso_img_id_2']
+    annotation_stats = json.dumps(
+        {
+            'chaos': 1,
+            'spatial': 1,
+            'spectral': 1,
+            'total_iso_ints': 100,
+            'min_iso_ints': 0,
+            'max_iso_ints': 100,
+        }
+    )
 
-    def db_sel_side_effect(sql, params):
-        if sql == DATASET_SEL:
-            return [
-                {
-                    'ds_id': ds_id,
-                    'ds_name': 'ds_name',
-                    'ds_input_path': 'ds_input_path',
-                    'ds_config': 'ds_config',
-                    'ds_meta': {},
-                    'ds_upload_dt': upload_dt,
-                    'ds_status': 'ds_status',
-                    'ds_last_finished': datetime.strptime(last_finished, '%Y-%m-%dT%H:%M:%S'),
-                    'ds_is_public': True,
-                    'ds_ion_img_storage': 'fs',
-                    'ds_acq_geometry': {},
-                    'ds_submitter': 'user_id',
-                    'ds_group': 'group_id',
-                }
-            ]
-        elif sql == ANNOTATIONS_SEL:
-            return [
-                {
-                    'annotation_id': 1234,
-                    'formula': 'H2O',
-                    'chaos': 1,
-                    'image_corr': 1,
-                    'pattern_match': 1,
-                    'total_iso_ints': 100,
-                    'min_iso_ints': 0,
-                    'max_iso_ints': 100,
-                    'msm': 1,
-                    'adduct': '+H',
-                    'neutral_loss': '-H',
-                    'chem_mod': '-H+O',
-                    'job_id': 1,
-                    'fdr': 0.1,
-                    'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
-                    'polarity': '+',
-                },
-                {
-                    'annotation_id': 1235,
-                    'formula': 'Au',
-                    'chaos': 1,
-                    'image_corr': 1,
-                    'pattern_match': 1,
-                    'total_iso_ints': 100,
-                    'min_iso_ints': 0,
-                    'max_iso_ints': 100,
-                    'msm': 1,
-                    'adduct': '+H',
-                    'neutral_loss': '',
-                    'chem_mod': '',
-                    'job_id': 1,
-                    'fdr': 0.05,
-                    'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
-                    'polarity': '+',
-                },
-            ]
-        else:
-            logging.getLogger('engine').error(f'Wrong db_sel_side_effect arguments: {params}')
-
-    db_mock = MagicMock(spec=DB)
-    db_mock.select_with_fields.side_effect = db_sel_side_effect
+    db = DB()
+    db.insert(
+        "INSERT INTO dataset(id, name, input_path, config, metadata, upload_dt, status, "
+        "is_public, ion_img_storage_type, acq_geometry) "
+        "VALUES (%s, 'ds_name', 'ds_input_path', %s, %s, %s, 'ds_status', "
+        "true, 'fs', '{}')",
+        [[ds_id, json.dumps(ds_config), json.dumps(metadata), upload_dt]],
+    )
+    job_id, = db.insert_return(
+        "INSERT INTO job(ds_id, db_id, status, start, finish) "
+        "VALUES (%s, 0, 'job_status', %s, %s) RETURNING id",
+        [[ds_id, last_finished, last_finished]],
+    )
+    user_id, = db.insert_return(
+        "INSERT INTO graphql.user (email, name, role) "
+        "VALUES ('email', 'user_name', 'user') RETURNING id",
+        [[]],
+    )
+    group_id, = db.insert_return(
+        "INSERT INTO graphql.group (name, short_name) VALUES ('group name', 'grp') RETURNING id",
+        [[]],
+    )
+    db.insert(
+        "INSERT INTO graphql.dataset(id, user_id, group_id) VALUES (%s, %s, %s)",
+        [[ds_id, user_id, group_id]],
+    )
+    ion_id1, ion_id2 = db.insert_return(
+        "INSERT INTO graphql.ion(ion, formula, chem_mod, neutral_loss, adduct, charge, ion_formula) "
+        "VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id",
+        [
+            ['H2O-H+O-H+H', 'H2O', '-H+O', '-H', '+H', 1, 'HO2'],
+            ['Au+H', 'Au', '', '', '+H', 1, 'HAu'],
+        ],
+    )
+    db.insert(
+        "INSERT INTO annotation(job_id, formula, chem_mod, neutral_loss, adduct, "
+        "msm, fdr, stats, iso_image_ids, ion_id) "
+        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+        [
+            [job_id, 'H2O', '-H+O', '-H', '+H', 1, 0.1, annotation_stats, iso_image_ids, ion_id1],
+            [job_id, 'Au', '', '', '+H', 1, 0.05, annotation_stats, iso_image_ids, ion_id2],
+        ],
+    )
 
     mol_db_mock = MagicMock(MolecularDB)
     mol_db_mock.id = mol_db_id
@@ -102,7 +102,7 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
         'Au+H': ([10.0, 20.0], None),
     }[formula]
 
-    es_exp = ESExporter(db_mock)
+    es_exp = ESExporter(db)
     es_exp.delete_ds(ds_id)
     es_exp.index_ds(ds_id=ds_id, mol_db=mol_db_mock, isocalc=isocalc_mock)
 
@@ -113,15 +113,34 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
         .execute()
         .to_dict()['hits']['hits'][0]['_source']
     )
-    assert ds_d == {
+    expected_ds_fields = {
         'ds_last_finished': last_finished,
-        'ds_config': 'ds_config',
-        'ds_meta': {},
+        'ds_config': ds_config,
+        'ds_adducts': ds_config['isotope_generation']['adducts'],
+        'ds_mol_dbs': ds_config['databases'],
+        'ds_chem_mods': [],
+        'ds_neutral_losses': [],
+        'ds_project_ids': [],
+        'ds_project_names': [],
+        'ds_meta': metadata,
         'ds_status': 'ds_status',
         'ds_name': 'ds_name',
         'ds_input_path': 'ds_input_path',
         'ds_id': ds_id,
         'ds_upload_dt': upload_dt,
+        'ds_is_public': True,
+        'ds_ion_img_storage': 'fs',
+        'ds_submitter_email': 'email',
+        'ds_submitter_id': user_id,
+        'ds_submitter_name': 'user_name',
+        'ds_group_approved': False,
+        'ds_group_id': group_id,
+        'ds_group_name': 'group name',
+        'ds_group_short_name': 'grp',
+    }
+    assert ds_d == {
+        **expected_ds_fields,
+        'ds_acq_geometry': {},
         'annotation_counts': [
             {
                 'db': {'name': 'db_name', 'version': '2017'},
@@ -133,11 +152,6 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
                 ],
             }
         ],
-        'ds_is_public': True,
-        'ds_acq_geometry': {},
-        'ds_ion_img_storage': 'fs',
-        'ds_submitter': 'user_id',
-        'ds_group': 'group_id',
     }
     ann_1_d = (
         es_dsl_search.filter('term', formula='H2O')
@@ -145,83 +159,71 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index):
         .to_dict()['hits']['hits'][0]['_source']
     )
     assert ann_1_d == {
-        'pattern_match': 1,
-        'image_corr': 1,
+        **expected_ds_fields,
+        'pattern_match': 1.0,
+        'image_corr': 1.0,
         'fdr': 0.1,
-        'chaos': 1,
+        'chaos': 1.0,
         'formula': 'H2O',
         'min_iso_ints': 0,
-        'msm': 1,
+        'msm': 1.0,
         'ion': 'H2O-H+O-H+H+',
+        'ion_formula': 'HO2',
         'total_iso_ints': 100,
         'centroid_mzs': [100.0, 200.0, 300.0],
         'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
+        'isomer_ions': [],
         'polarity': '+',
         'job_id': 1,
         'max_iso_ints': 100,
         'adduct': '+H',
         'neutral_loss': '-H',
         'chem_mod': '-H+O',
-        'ds_name': 'ds_name',
         'annotation_counts': [],
         'db_version': '2017',
-        'ds_status': 'ds_status',
         'comp_names': ['mol_name'],
+        'comps_count_with_isomers': 1,
         'db_name': 'db_name',
         'mz': 100.0,
-        'ds_meta': {},
         'comp_ids': ['mol_id'],
-        'ds_config': 'ds_config',
-        'ds_input_path': 'ds_input_path',
-        'ds_id': ds_id,
-        'ds_upload_dt': upload_dt,
-        'ds_last_finished': last_finished,
-        'ds_ion_img_storage': 'fs',
-        'ds_is_public': True,
-        'ds_submitter': 'user_id',
-        'ds_group': 'group_id',
-        'annotation_id': 1234,
+        'annotation_id': 1,
+        'off_sample_label': None,
+        'off_sample_prob': None,
     }
     ann_2_d = (
         es_dsl_search.filter('term', formula='Au').execute().to_dict()['hits']['hits'][0]['_source']
     )
     assert ann_2_d == {
-        'pattern_match': 1,
-        'image_corr': 1,
+        **expected_ds_fields,
+        'pattern_match': 1.0,
+        'image_corr': 1.0,
         'fdr': 0.05,
-        'chaos': 1,
+        'chaos': 1.0,
         'formula': 'Au',
         'min_iso_ints': 0,
-        'msm': 1,
+        'msm': 1.0,
         'ion': 'Au+H+',
+        'ion_formula': 'HAu',
         'total_iso_ints': 100,
         'centroid_mzs': [10.0, 20.0],
         'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
+        'isomer_ions': [],
         'polarity': '+',
         'job_id': 1,
         'max_iso_ints': 100,
         'adduct': '+H',
         'neutral_loss': '',
         'chem_mod': '',
-        'ds_name': 'ds_name',
         'annotation_counts': [],
         'db_version': '2017',
-        'ds_status': 'ds_status',
         'comp_names': ['mol_name'],
+        'comps_count_with_isomers': 1,
         'db_name': 'db_name',
         'mz': 10.0,
-        'ds_meta': {},
         'comp_ids': ['mol_id'],
-        'ds_config': 'ds_config',
-        'ds_input_path': 'ds_input_path',
-        'ds_id': ds_id,
-        'ds_upload_dt': upload_dt,
-        'ds_last_finished': last_finished,
-        'ds_ion_img_storage': 'fs',
-        'ds_is_public': True,
-        'ds_submitter': 'user_id',
-        'ds_group': 'group_id',
-        'annotation_id': 1235,
+        'annotation_id': 2,
+        'off_sample_label': None,
+        'off_sample_prob': None,
     }
 
 

@@ -1,8 +1,8 @@
-from sm.engine.formula_parser import format_ion_formula
+from sm.engine.formula_parser import format_ion_formula, safe_generate_ion_formula
 
 ION_INS = (
-    'INSERT INTO graphql.ion (ion, formula, chem_mod, neutral_loss, adduct, charge) '
-    'VALUES (%s, %s, %s, %s, %s, %s) '
+    'INSERT INTO graphql.ion (ion, formula, chem_mod, neutral_loss, adduct, charge, ion_formula) '
+    'VALUES (%s, %s, %s, %s, %s, %s, %s) '
     'RETURNING id'
 )
 ION_SEL = (
@@ -37,7 +37,10 @@ def get_ion_id_mapping(db, ion_tuples, charge):
     missing_ions = sorted(set(ion_tuples).difference(ion_to_id.keys()), key=lambda row: row[0])
 
     if missing_ions:
-        rows = [(format_ion_formula(*ion, charge=charge), *ion, charge) for ion in missing_ions]
+        rows = [
+            (format_ion_formula(*ion, charge=charge), *ion, charge, safe_generate_ion_formula(*ion))
+            for ion in missing_ions
+        ]
         ids = db.insert_return(ION_INS, rows)
         ion_to_id.update((row[1:5], id) for id, row in zip(ids, rows))
 
