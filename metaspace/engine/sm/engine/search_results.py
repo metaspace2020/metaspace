@@ -63,7 +63,7 @@ class SearchResults:
                 float(row.fdr),
                 metr_json,
                 image_ids,
-                ion_mapping[(r.formula), (r.chem_mod), (r.neutral_loss), (r.adduct)],
+                ion_mapping[(row.formula), (row.chem_mod), (row.neutral_loss), (row.adduct)],
             )
 
     def store_ion_metrics(self, ion_metrics_df, ion_img_ids, db):

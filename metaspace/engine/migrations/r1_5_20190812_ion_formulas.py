@@ -6,12 +6,12 @@ from sm.engine.ion_mapping import get_ion_id_mapping
 from sm.engine.util import init_loggers, SMConfig
 from sm.engine.db import DB, ConnectionPool
 
+BATCH_SIZE = 10000
 logger = logging.getLogger('engine')
 
 
 def populate_ion_formula(db):
     logger.info("Adding ion_formula to existing ions")
-    BATCH_SIZE = 10000
     ion_tuples = db.select(
         "SELECT id, formula, chem_mod, neutral_loss, adduct FROM graphql.ion WHERE ion_formula = ''"
     )
@@ -24,7 +24,8 @@ def populate_ion_formula(db):
         ]
 
         db.alter(
-            'WITH ion_formulas AS (SELECT UNNEST(%s::int[]) as id, UNNEST(%s::text[]) as new_ion_formula) '
+            'WITH ion_formulas AS (SELECT UNNEST(%s::int[]) as id, '
+            '                             UNNEST(%s::text[]) as new_ion_formula) '
             'UPDATE graphql.ion SET ion_formula = new_ion_formula '
             'FROM ion_formulas WHERE ion.id = ion_formulas.id',
             [ids, ion_formulas],
@@ -35,7 +36,7 @@ def populate_ions(db):
     logger.info("Adding missing ions")
     ion_tuples = db.select(
         "SELECT DISTINCT formula, chem_mod, neutral_loss, adduct, "
-        "(dataset.config->'isotope_generation'->>'charge')::int as charge "
+        "(d.config->'isotope_generation'->>'charge')::int as charge "
         "FROM annotation "
         "JOIN job ON annotation.job_id = job.id "
         "JOIN dataset d on job.ds_id = d.id"
@@ -61,7 +62,7 @@ def populate_ion_id(db):
     )
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description='Merge mol_dbs and adducts into config')
     parser.add_argument('--config', default='conf/config.json', help='SM config path')
     args = parser.parse_args()
@@ -75,3 +76,7 @@ if __name__ == '__main__':
         populate_ion_formula(db)
         populate_ions(db)
         populate_ion_id(db)
+
+
+if __name__ == '__main__':
+    main()
