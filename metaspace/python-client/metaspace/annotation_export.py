@@ -7,11 +7,11 @@ import pandas as pd
 
 from metaspace.sm_annotation_utils import GraphQLClient, get_config
 
-logger = logging.getLogger('metab-export')
+logger = logging.getLogger('mol-export')
 
 
 def init_logger(level):
-    logger_ = logging.getLogger('metab-export')
+    logger_ = logging.getLogger('mol-export')
     logger_.setLevel(level)
     ch = logging.StreamHandler()
     ch.setLevel(level)
@@ -56,14 +56,14 @@ default_ds_filter = {
 }
 
 default_ann_filter = {
-    "colocalizationAlgo": None,
-    "colocalizedWith": None,
     "fdrLevel": 0.1,
     "database": 'HMDB-v4',
     "offSample": None,
     "hasChemMod": False,
     "hasHiddenAdduct": False,
     "hasNeutralLoss": False,
+    "colocalizationAlgo": None,
+    "colocalizedWith": None,
 }
 
 
@@ -109,6 +109,7 @@ def fetch_graphql_res(filter_args):
         dataset {
             id
         }
+        colocalizationCoeff(colocalizationCoeffFilter: $colocCoeffFilter)
     """
 
     ds_filter = {
@@ -121,13 +122,27 @@ def fetch_graphql_res(filter_args):
     }
     logger.info(f'Annotation filter: {ann_filter}')
 
+    if ann_filter.get('colocalizedWith', None):
+        coloc_filter = {
+            'colocalizationAlgo': None,
+            'colocalizedWith': ann_filter['colocalizedWith'],
+            'database': ann_filter['database'],
+            'fdrLevel': ann_filter['fdrLevel'],
+        }
+    else:
+        coloc_filter = None
+
     config = get_config('https://metaspace2020.eu')
     client = GraphQLClient(config)
     resp = client.countAnnotations(annotationFilter=ann_filter, datasetFilter=ds_filter)
     logger.info(f"{resp['countAnnotations']} annotations matched the filters. Downloading...")
 
-    res = client.getAnnotations(datasetFilter=ds_filter, annotationFilter=ann_filter, fields=fields)
-    return res
+    return client.getAnnotations(
+        datasetFilter=ds_filter,
+        annotationFilter=ann_filter,
+        colocFilter=coloc_filter,
+        fields=fields,
+    )
 
 
 def convert_to_dfs(graphql_res):
@@ -138,6 +153,7 @@ def convert_to_dfs(graphql_res):
             'formula': row['sumFormula'],
             'fdr': row['fdrLevel'],
             'ds_id': row['dataset']['id'],
+            'coloc_coeff': row['colocalizationCoeff'],
         }
         anns.append(ann_doc)
 
@@ -157,10 +173,25 @@ def convert_to_dfs(graphql_res):
     return ann_df, mol_df
 
 
+def filter_ann_df(ann_df, coloc_thr=None):
+    if coloc_thr and 'coloc_coeff' in ann_df.columns:
+        ann_df = ann_df[ann_df.coloc_coeff > coloc_thr]
+        logger.info(
+            f'Annotations dataframe after filtering (coloc_thr={coloc_thr}): {ann_df.shape}'
+        )
+    return ann_df
+
+
 def calculate_ann_stat(ann_df):
+    if not ann_df.size:
+        return pd.DataFrame()
+
     logger.info(f'Calculating statistics on annotations dataframe')
     ann_stat_df = (
-        ann_df.groupby(['formula', 'fdr']).count().reset_index().rename({'ds_id': 'ds_n'}, axis=1)
+        ann_df.groupby(['formula', 'fdr'])
+        .ds_id.count()
+        .reset_index()
+        .rename({'ds_id': 'ds_n'}, axis=1)
     )
     ann_stat_df = (
         pd.pivot_table(ann_stat_df, values='ds_n', index='formula', columns='fdr')
@@ -175,8 +206,11 @@ def calculate_ann_stat(ann_df):
 
 def export_molecules(ann_stat_df, mol_df, path):
     logger.info(f'Exporting molecules stats and list of molecules to {path}')
-    mol_export_df = pd.merge(ann_stat_df, mol_df).sort_values(by='id')
+    if ann_stat_df.size and mol_df.size:
+        mol_export_df = pd.merge(ann_stat_df, mol_df).sort_values(by='id')
 
-    export_path = Path(path)
-    mol_export_df.to_csv(export_path / 'molecules_stats.csv', index=False, sep='\t', header=True)
-    mol_export_df.id.to_csv(export_path / 'molecules.csv', index=False, header=False)
+        export_path = Path(path)
+        mol_export_df.to_csv(export_path / 'molecules_stats.csv', index=False, sep='\t', header=True)
+        mol_export_df.id.to_csv(export_path / 'molecules.csv', index=False, header=False)
+    else:
+        logger.info(f'Annotation or molecule dataframe is empty. Nothing to export')
