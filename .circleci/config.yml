@@ -206,8 +206,7 @@ jobs:
       - run:
           name: Code format check for .py files in ansible and metaspace directories
           command: |
-            black --line-length 100 --skip-string-normalization --target-version py36 --check \
-              ansible metaspace/mol-db metaspace/off-sample metaspace/python-client
+            black --check ansible metaspace/mol-db metaspace/off-sample metaspace/python-client
 
   test-engine:
     docker:
@@ -256,8 +255,7 @@ jobs:
           command: pylint sm scripts
       - run:
          name: Run code formatter
-         command: |
-           black --line-length 100 --skip-string-normalization --target-version py36 --check .
+         command: black --check .
 
   test-engine-sci:
     docker:

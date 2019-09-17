@@ -8,19 +8,19 @@ from subprocess import check_output
 from time import sleep
 
 import boto3
-from yaml import load
+import yaml
 
 
 class AWSInstManager:
     def __init__(self, conf, aws_conf, dry_run=False, verbose=False):
         self.key_name = aws_conf['key_name']
         self.dry_run = dry_run
-        session = boto3.session.Session(
+        self.session = boto3.session.Session(
             aws_access_key_id=aws_conf.get('aws_access_key_id', None),
             aws_secret_access_key=aws_conf.get('aws_secret_access_key', None),
         )
-        self.ec2 = session.resource('ec2', region_name=aws_conf['region'])
-        self.ec2_client = session.client('ec2', region_name=aws_conf['region'])
+        self.ec2 = self.session.resource('ec2', region_name=aws_conf['region'])
+        self.ec2_client = self.session.client('ec2', region_name=aws_conf['region'])
         self.conf = conf
         if verbose:
             pprint(self.conf)
@@ -62,8 +62,37 @@ class AWSInstManager:
             tags.append({'Key': tag_name, 'Value': tag_value})
         inst.create_tags(Tags=tags)
 
+    def add_alarms(self, instances, alarms):
+        print(f'Adding {len(alarms)} alarms to {len(instances)} instances')
+        cloudwatch = self.session.client('cloudwatch')
+        for inst in instances:
+            for alarm in alarms:
+                cloudwatch.put_metric_alarm(
+                    AlarmName=f"{alarm['prefix']}-{inst.id}",
+                    ComparisonOperator=alarm['comparison'],
+                    EvaluationPeriods=alarm['points'],
+                    MetricName=alarm['metric'],
+                    Namespace='AWS/EC2',
+                    Period=alarm['period'],
+                    Statistic='Average',
+                    Threshold=alarm['threshold'],
+                    ActionsEnabled=True,
+                    AlarmActions=alarm['actions'],
+                    AlarmDescription='Alarm when cluster instance idles',
+                    Dimensions=[{'Name': 'InstanceId', 'Value': inst.id}],
+                )
+
     def launch_new_inst(
-        self, inst_type, spot_price, inst_n, image, el_ip_id, sec_group, host_group, block_dev_maps
+        self,
+        inst_type,
+        spot_price,
+        inst_n,
+        image,
+        el_ip_id,
+        sec_group,
+        host_group,
+        block_dev_maps,
+        alarms,
     ):
         print('Launching {} new instances...'.format(inst_n))
 
@@ -102,9 +131,9 @@ class AWSInstManager:
                     'EbsOptimized': True,
                 },
             )
-            sleep(
-                5
-            )  # to overcome Waiter SpotInstanceRequestFulfilled failed: The spot instance request ID does not exist
+            # to overcome "Waiter SpotInstanceRequestFulfilled failed:
+            # The spot instance request ID does not exist"
+            sleep(5)
 
             spot_req_ids = [r['SpotInstanceRequestId'] for r in spot_resp['SpotInstanceRequests']]
 
@@ -128,6 +157,9 @@ class AWSInstManager:
             else:
                 print('Wrong number of instances {} for just one IP address'.format(inst_n))
 
+        if alarms:
+            self.add_alarms(instances, alarms)
+
         print('Launched {}'.format(instances))
         return instances
 
@@ -143,6 +175,7 @@ class AWSInstManager:
         spot_price=None,
         el_ip_id=None,
         inst_tags=None,
+        alarms=None,
     ):
         print('Start {} instance(s) of type {}, name={}'.format(inst_n, inst_type, inst_name))
         instances = self.find_inst_by(host_group)
@@ -173,6 +206,7 @@ class AWSInstManager:
                         sec_group,
                         host_group,
                         block_dev_maps,
+                        alarms,
                     )
                     instances.extend(new_instances)
 
@@ -183,7 +217,7 @@ class AWSInstManager:
 
         print('Success')
 
-    def stop_instances(self, host_group, method='stop'):
+    def stop_instances(self, host_group, method='stop', alarms=None):
         instances = self.find_inst_by(host_group)
 
         if not self.dry_run:
@@ -194,13 +228,21 @@ class AWSInstManager:
                     resp = inst.terminate()
                 else:
                     raise BaseException('Unknown instance stop method: {}'.format(method))
-                pprint(resp)
+                assert resp['ResponseMetadata']['HTTPStatusCode'] == 200
+
+            if alarms:
+                alarm_names = [
+                    f"{alarm['prefix']}-{inst.id}" for alarm in alarms for inst in instances
+                ]
+                resp = self.session.client('cloudwatch').delete_alarms(AlarmNames=alarm_names)
+                assert resp['ResponseMetadata']['HTTPStatusCode'] == 200
         else:
             print('DRY RUN!')
 
     def create_all_instances(self, components):
         for component in components:
             i = self.conf['instances'][component]
+            alarms = [self.conf['alarms'][id] for id in i.get('alarms', [])]
             self.create_instances(
                 i['hostgroup'],
                 i['type'],
@@ -212,13 +254,15 @@ class AWSInstManager:
                 spot_price=i.get('price', None),
                 el_ip_id=i['elipalloc'],
                 inst_tags=i.get('tags', {}),
+                alarms=alarms,
             )
 
     def stop_all_instances(self, components):
         for component in components:
             i = self.conf['instances'][component]
             method = 'stop' if i['price'] is None else 'terminate'
-            self.stop_instances(i['hostgroup'], method=method)
+            alarms = [self.conf['alarms'][id] for id in i.get('alarms', [])]
+            self.stop_instances(i['hostgroup'], method=method, alarms=alarms)
 
     def clone_prod_instance(self, suffix='beta'):
         i_conf = self.conf['instances']['web']
@@ -241,36 +285,10 @@ class AWSInstManager:
             block_dev_maps=i_conf['block_dev_maps'],
         )
 
-    def swap_prod_instance(self, suffix='beta'):
-        prod_hostgroup = self.conf['instances']['web']['hostgroup']
-        prod_inst = self.find_inst_by(prod_hostgroup, first=True)
-
-        beta_hostgroup = '{}-{}'.format(self.conf['instances']['web']['hostgroup'], suffix)
-        beta_inst = self.find_inst_by(beta_hostgroup, first=True)
-
-        resp = self.ec2_client.create_tags(Resources=[beta_inst.id], Tags=prod_inst.tags)
-        print('Updated beta instance tags: {}'.format(resp))
-        resp = self.ec2_client.create_tags(
-            Resources=[prod_inst.id],
-            Tags=[
-                {'Key': 'hostgroup', 'Value': ''},
-                {'Key': 'Name', 'Value': '{}-old'.format(prod_hostgroup)},
-            ],
-        )
-        print('Updated prod instance tags: {}'.format(resp))
-
-        resp = self.ec2_client.associate_address(
-            AllocationId=self.conf['instances']['web']['elipalloc'], InstanceId=beta_inst.id
-        )
-        print('Associated Elastic IP: {}'.format(resp))
-
-        # resp = prod_inst.stop()
-        # print('Stopped old prod instance: {}'.format(resp))
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SM AWS instances management tool')
-    parser.add_argument('action', type=str, help='create|stop|clone|swap')
+    parser.add_argument('action', type=str, help='create|stop|clone')
     parser.add_argument('--components', help='all,web,master,slave')
     parser.add_argument('--key-name', type=str, help='AWS key name to use')
     parser.add_argument(
@@ -289,7 +307,7 @@ if __name__ == '__main__':
         'group_vars/all/vars.yml' if not args.create_ami else 'group_vars/create_ami_config.yml'
     )
     config_path = path.join(args.stage, conf_file)
-    conf = load(open(config_path))
+    conf = yaml.full_load(open(config_path))
     cluster_conf = conf['cluster_configuration']
 
     aws_conf = {'key_name': args.key_name or conf['aws_key_name'], 'region': conf['aws_region']}
@@ -314,8 +332,6 @@ if __name__ == '__main__':
         aws_inst_man.stop_all_instances(components)
     elif args.action == 'clone':
         aws_inst_man.clone_prod_instance()
-    elif args.action == 'swap':
-        aws_inst_man.swap_prod_instance()
     else:
         raise Exception("Wrong action '{}'".format(args.action))
 
