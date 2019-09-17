@@ -117,49 +117,23 @@ type Analyzer {
 }
 
 input DatasetFilter {
-  # list of IDs separated by '|'
-  ids: String
-
-  # substring match
-  name: String
-
-  # exact match
+  ids: String # list of IDs separated by '|'
+  name: String # substring match
   submitter: ID
-
-  # exact match
   group: ID
   hasGroup: Boolean
-
-  # exact match
   project: ID
-
   polarity: Polarity
-
-  # exact match
   ionisationSource: String
-
-  # exact match
   analyzerType: String
-
-  # exact match
   maldiMatrix: String
-
-  # exact match
   organism: String
-
-  # exact match
   organismPart: String
-
-  # exact match
   condition: String
-
-  # exact match
   growthConditions: String
-
-  # exact match
   metadataType: String
-
   status: JobStatus
+  hasAnnotationMatching: AnnotationFilter # Does not support some advanced filters e.g. the colocalization filters
 }
 
 input DatasetCountPerGroupInput {

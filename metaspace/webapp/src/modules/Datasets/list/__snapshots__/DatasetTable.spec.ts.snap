@@ -18,6 +18,7 @@ exports[`DatasetTable should match snapshot 1`] = `
       <mock-el-option value="project" label="Select project"></mock-el-option>
       <mock-el-option value="submitter" label="Select submitter"></mock-el-option>
       <mock-el-option value="datasetIds" label="Select dataset"></mock-el-option>
+      <mock-el-option value="compoundName" label="Search molecule"></mock-el-option>
       <mock-el-option value="polarity" label="Select polarity"></mock-el-option>
       <mock-el-option value="organism" label="Select organism"></mock-el-option>
       <mock-el-option value="organismPart" label="Select organism part"></mock-el-option>

@@ -6,6 +6,7 @@ import {Dataset as DatasetModel} from '../model';
 import {UserGroup as UserGroupModel, UserGroupRoleOptions} from '../../group/model';
 import {Context} from '../../../context';
 import {thumbnailOpticalImageUrl} from './Dataset';
+import {applyQueryFilters} from '../../annotation/queryFilters';
 
 const resolveDatasetScopeRole = async (ctx: Context, dsId: string) => {
   let scopeRole = SRO.OTHER;
@@ -50,31 +51,34 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
   },
 
   async allDatasets(source, args, ctx): Promise<DatasetSource[]> {
-    const translatedArgs = {
+    const {args: filteredArgs} = await applyQueryFilters(ctx, {
       ...args,
       datasetFilter: args.filter,
       filter: {}
-    };
-    return await esSearchResults(translatedArgs, 'dataset', ctx.user);
+    });
+    return await esSearchResults(filteredArgs, 'dataset', ctx.user);
   },
 
   async countDatasets(source, args, ctx): Promise<number> {
-    const translatedArgs = {
+    const {args: filteredArgs} = await applyQueryFilters(ctx, {
       ...args,
       datasetFilter: args.filter,
       filter: {}
-    };
-    return await esCountResults(translatedArgs, 'dataset', ctx.user);
+    });
+    return await esCountResults(filteredArgs, 'dataset', ctx.user);
   },
 
   async countDatasetsPerGroup(source, {query}, ctx) {
-    const args = {
+    const {args} = await applyQueryFilters(ctx, {
       datasetFilter: query.filter,
       simpleQuery: query.simpleQuery,
       filter: {},
-      groupingFields: query.fields
+    });
+    const groupArgs = {
+      ...args,
+      groupingFields: query.fields,
     };
-    return await esCountGroupedResults(args, 'dataset', ctx.user);
+    return await esCountGroupedResults(groupArgs, 'dataset', ctx.user);
   },
 
   async opticalImageUrl(source, {datasetId: dsId, zoom = 1}, ctx) {
