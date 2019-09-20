@@ -47,7 +47,7 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
         infoURL = `http://pseudomonas.umaryland.edu/PAMDB?MetID=${id}`;
       } else if (dbBaseName === 'ECMDB') {
         infoURL = `http://ecmdb.ca/compounds/${id}`;
-      } else if (dbBaseName === 'GNPS-pseudomonas') {
+      } else if (dbBaseName === 'GNPS') {
         infoURL = `https://gnps.ucsd.edu/ProteoSAFe/gnpslibraryspectrum.jsp?SpectrumID=${id}`;
       }
 
