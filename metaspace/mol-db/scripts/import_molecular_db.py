@@ -14,22 +14,22 @@ from app.database import init_session, db_session
 from app.log import logger
 
 
-def get_inchikey_gen():
+def get_inchikey_gen(mol_db_id):
     ob_conversion = OBConversion()
     ob_conversion.SetInAndOutFormats("inchi", "inchi")
     ob_conversion.SetOptions("K", ob_conversion.OUTOPTIONS)
 
     def get_inchikey(ser):
         try:
-            if 'inchikey' in ser and ser.inchikey:
+            if ser.get('inchikey', None):
                 return ser.inchikey
 
-            if not ser.inchi:
-                raise Exception('Empty inchi')
+            if ser.get('inchi', None):
+                mol = OBMol()
+                ob_conversion.ReadString(mol, ser.inchi)
+                return ob_conversion.WriteString(mol).strip('\n')
 
-            mol = OBMol()
-            ob_conversion.ReadString(mol, ser.inchi)
-            return ob_conversion.WriteString(mol).strip('\n')
+            return f"{mol_db_id}:{ser['id']}"
         except Exception as e:
             logger.warning(f'{e}\t{ser}')
             return '{}-{}-{}'.format(ser.formula, ser['name'], ser['id'])
@@ -108,10 +108,12 @@ def filter_formulas(mol_db_df):
 
 def import_molecules(mol_db, csv_file, delimiter):
     mol_db_df = pd.read_csv(open(csv_file, encoding='utf8'), sep=delimiter).fillna('')
-    assert {'id', 'inchi', 'name', 'formula'}.issubset(set(mol_db_df.columns))
+    assert {'id', 'name', 'formula'}.issubset(set(mol_db_df.columns))
 
     mol_db_df = filter_formulas(mol_db_df)
-    mol_db_df['inchikey'] = mol_db_df.apply(get_inchikey_gen(), axis=1)
+    if 'inchi' not in mol_db_df.columns:
+        mol_db_df['inchi'] = ''
+    mol_db_df['inchikey'] = mol_db_df.apply(get_inchikey_gen(mol_db.id), axis=1)
     mol_db_df = remove_invalid_inchikey_molecules(mol_db_df)
     mol_db_df = remove_duplicated_inchikey_molecules(mol_db_df)
 
@@ -127,7 +129,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=help_msg)
     parser.add_argument('name', type=str, help='Database name')
     parser.add_argument('version', type=str, help='Database version')
-    parser.add_argument('csv_file', type=str, help='Path to a database csv file')
+    optional_columns = ['inchikey', 'inchi']
+    required_columns = ['mol_id', 'mol_name', 'sf']
+    parser.add_argument(
+        'csv_file',
+        type=str,
+        help=f'Path to a database csv file. Required columns: {required_columns}. '
+        f'Optional: {optional_columns} ',
+    )
     parser.add_argument('--sep', dest='sep', type=str, help='CSV file fields delimiter')
     parser.add_argument(
         '--yes', dest='confirmed', type=bool, help='Don\'t ask for a confirmation'
