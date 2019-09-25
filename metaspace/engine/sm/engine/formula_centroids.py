@@ -121,13 +121,22 @@ class CentroidsGenerator(object):
             return (Path(self._ion_centroids_path + '/formulas/_SUCCESS').exists() &
                     Path(self._ion_centroids_path + '/centroids/_SUCCESS').exists())
 
+    def _restore_df_chunks(self, spark_df, chunk_size=20 * 10 ** 6):
+        total_n = spark_df.rdd.count()
+        chunk_n = ceil(total_n / chunk_size)
+        spark_dfs = spark_df.randomSplit([1.0 for _ in range(chunk_n)])
+        dfs = [_.toPandas() for _ in spark_dfs]
+        return pd.concat(dfs).set_index('formula_i')
+
     def _restore(self):
         logger.info('Restoring peaks')
         if self._saved():
-            formulas_df = self._spark_session.read.parquet(
-                self._ion_centroids_path + '/formulas').toPandas().set_index('formula_i')
-            centroids_df = self._spark_session.read.parquet(
-                self._ion_centroids_path + '/centroids').toPandas().set_index('formula_i')
+            formulas_df = self._restore_df_chunks(
+                self._spark_session.read.parquet(self._ion_centroids_path + '/formulas')
+            )
+            centroids_df = self._restore_df_chunks(
+                self._spark_session.read.parquet(self._ion_centroids_path + '/centroids')
+            )
             return FormulaCentroids(formulas_df, centroids_df)
 
     def _save_df_chunks(self, df, path, chunk_size=5 * 10 ** 6):
