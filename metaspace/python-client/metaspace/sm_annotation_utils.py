@@ -169,7 +169,6 @@ class GraphQLClient(object):
             url
             maxIntensity
         }
-        colocalizationCoeff(colocalizationCoeffFilter: $colocalizationCoeffFilter)
     """
 
     DEFAULT_ANNOTATION_FILTER = {
@@ -242,22 +241,27 @@ class GraphQLClient(object):
     def getAnnotations(
         self, annotationFilter=None, datasetFilter=None, colocFilter=None, fields=None
     ):
+        query_vars = [
+            '$filter: AnnotationFilter',
+            '$dFilter: DatasetFilter',
+            '$offset: Int',
+            '$limit: Int'
+        ]
+        if colocFilter:
+            query_vars.append('$colocalizationCoeffFilter: ColocalizationCoeffFilter')
         query = """
-            query getAnnotations($filter: AnnotationFilter,
-                                 $dFilter: DatasetFilter,
-                                 $colocCoeffFilter: ColocalizationCoeffFilter,
-                                 $offset: Int, $limit: Int) {
+            query getAnnotations(%s) {
               allAnnotations(
                 filter: $filter,
                 datasetFilter: $dFilter,
                 offset: $offset,
                 limit: $limit
               ) { %s }
-            }""" % (
-            fields or self.ANNOTATION_FIELDS
-        )
+            }""" % (','.join(query_vars), fields or self.ANNOTATION_FIELDS)
         if datasetFilter is None:
-            annotationFilter = {}
+            datasetFilter = {}
+        if colocFilter is None:
+            colocFilter = {}
         if annotationFilter is None:
             annotFilter = {}
         else:
@@ -271,7 +275,7 @@ class GraphQLClient(object):
             variables={
                 'filter': annotFilter,
                 'dFilter': datasetFilter,
-                'colocCoeffFilter': colocFilter,
+                'colocalizationCoeffFilter': colocFilter,
             },
         )
 
