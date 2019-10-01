@@ -231,7 +231,7 @@ if __name__ == '__main__':
     path = Path(args.path)
     coloc_thr = args.coloc_thr
 
-    init_logger(logging.DEBUG)
+    init_logger(logging.INFO)
 
     filter_args = convert_url_to_filter_args(url)
     graphql_res = fetch_graphql_res(filter_args)
