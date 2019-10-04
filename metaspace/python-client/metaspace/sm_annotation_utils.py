@@ -245,7 +245,7 @@ class GraphQLClient(object):
             '$filter: AnnotationFilter',
             '$dFilter: DatasetFilter',
             '$offset: Int',
-            '$limit: Int'
+            '$limit: Int',
         ]
         if colocFilter:
             query_vars.append('$colocalizationCoeffFilter: ColocalizationCoeffFilter')
@@ -257,7 +257,10 @@ class GraphQLClient(object):
                 offset: $offset,
                 limit: $limit
               ) { %s }
-            }""" % (','.join(query_vars), fields or self.ANNOTATION_FIELDS)
+            }""" % (
+            ','.join(query_vars),
+            fields or self.ANNOTATION_FIELDS,
+        )
         if datasetFilter is None:
             datasetFilter = {}
         if colocFilter is None:
