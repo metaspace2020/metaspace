@@ -238,30 +238,69 @@ class GraphQLClient(object):
         else:
             return matches[0]
 
-    def getAnnotations(self, annotationFilter={}, datasetFilter={}):
-        query = (
-            """
-        query getAnnotations($filter: AnnotationFilter,
-                             $dFilter: DatasetFilter,
-                             $offset: Int, $limit: Int) {
-          allAnnotations(
-            filter: $filter,
-            datasetFilter: $dFilter,
-            offset: $offset,
-            limit: $limit
-          ) {
-        """
-            + self.ANNOTATION_FIELDS
-            + """
-          }
-        }"""
+    def getAnnotations(
+        self, annotationFilter=None, datasetFilter=None, colocFilter=None, fields=None
+    ):
+        query_vars = [
+            '$filter: AnnotationFilter',
+            '$dFilter: DatasetFilter',
+            '$offset: Int',
+            '$limit: Int',
+        ]
+        if colocFilter:
+            query_vars.append('$colocalizationCoeffFilter: ColocalizationCoeffFilter')
+        query = """
+            query getAnnotations(%s) {
+              allAnnotations(
+                filter: $filter,
+                datasetFilter: $dFilter,
+                offset: $offset,
+                limit: $limit
+              ) { %s }
+            }""" % (
+            ','.join(query_vars),
+            fields or self.ANNOTATION_FIELDS,
         )
-        annotFilter = deepcopy(annotationFilter)
-        for key, val in self.DEFAULT_ANNOTATION_FILTER.items():
-            annotFilter.setdefault(key, val)
+        if datasetFilter is None:
+            datasetFilter = {}
+        if colocFilter is None:
+            colocFilter = {}
+        if annotationFilter is None:
+            annotFilter = {}
+        else:
+            annotFilter = deepcopy(annotationFilter)
+            for key, val in self.DEFAULT_ANNOTATION_FILTER.items():
+                annotFilter.setdefault(key, val)
+
         return self.listQuery(
-            'allAnnotations', query, {'filter': annotFilter, 'dFilter': datasetFilter}
+            field_name='allAnnotations',
+            query=query,
+            variables={
+                'filter': annotFilter,
+                'dFilter': datasetFilter,
+                'colocalizationCoeffFilter': colocFilter,
+            },
         )
+
+    def countAnnotations(self, annotationFilter=None, datasetFilter=None):
+        query = """
+            query getAnnotationCount($filter: AnnotationFilter,
+                                 $dFilter: DatasetFilter) {
+              countAnnotations(
+                filter: $filter,
+                datasetFilter: $dFilter
+              )
+            }"""
+        if datasetFilter is None:
+            annotationFilter = {}
+        if annotationFilter is None:
+            annotFilter = {}
+        else:
+            annotFilter = deepcopy(annotationFilter)
+            for key, val in self.DEFAULT_ANNOTATION_FILTER.items():
+                annotFilter.setdefault(key, val)
+
+        return self.query(query=query, variables={'filter': annotFilter, 'dFilter': datasetFilter})
 
     def getDatasets(self, datasetFilter={}):
         query = (
