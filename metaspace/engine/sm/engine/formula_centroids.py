@@ -124,9 +124,9 @@ class CentroidsGenerator(object):
     def _restore_df_chunks(self, spark_df, chunk_size=20 * 10 ** 6):
         total_n = spark_df.rdd.count()
         chunk_n = ceil(total_n / chunk_size)
-        spark_dfs = spark_df.randomSplit([1.0 for _ in range(chunk_n)])
-        dfs = [_.toPandas() for _ in spark_dfs]
-        return pd.concat(dfs).set_index('formula_i')
+        spark_dfs = spark_df.randomSplit(weights=np.ones(chunk_n))
+        pandas_dfs = [df.toPandas() for df in spark_dfs]
+        return pd.concat(pandas_dfs).set_index('formula_i')
 
     def _restore(self):
         logger.info('Restoring peaks')
