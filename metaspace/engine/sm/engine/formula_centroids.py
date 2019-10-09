@@ -5,6 +5,7 @@ from math import ceil
 from pathlib import Path
 
 import boto3
+import numpy as np
 import pandas as pd
 from botocore.exceptions import ClientError
 from pyspark import SparkContext  # pylint: disable=unused-import
@@ -127,24 +128,28 @@ class CentroidsGenerator:
                 & Path(self._ion_centroids_path + '/centroids/_SUCCESS').exists()
             )
 
+    def _restore_df_chunks(self, spark_df, chunk_size=20 * 10 ** 6):
+        total_n = spark_df.rdd.count()
+        chunk_n = ceil(total_n / chunk_size)
+        logger.debug(f'Restoring peaks chunks, chunk_size={chunk_size / 1e6}M, chunk_n={chunk_n}')
+        spark_dfs = spark_df.randomSplit(weights=np.ones(chunk_n))
+        pandas_dfs = [df.toPandas() for df in spark_dfs]
+        return pd.concat(pandas_dfs).set_index('formula_i')
+
     def _restore(self):
         logger.info('Restoring peaks')
         formula_centroids = None
         if self._saved():
-            formulas_df = (
+            formulas_df = self._restore_df_chunks(
                 self._spark_session.read.parquet(self._ion_centroids_path + '/formulas')
-                .toPandas()
-                .set_index('formula_i')
             )
-            centroids_df = (
+            centroids_df = self._restore_df_chunks(
                 self._spark_session.read.parquet(self._ion_centroids_path + '/centroids')
-                .toPandas()
-                .set_index('formula_i')
             )
             formula_centroids = FormulaCentroids(formulas_df, centroids_df)
         return formula_centroids
 
-    def _save_df_chunks(self, df, path, chunk_size=10 * 10 ** 6):
+    def _save_df_chunks(self, df, path, chunk_size=5 * 10 ** 6):
         chunks = int(ceil(df.shape[0] / chunk_size))
         for ch_i in range(chunks):
             sdf = self._spark_session.createDataFrame(
@@ -180,10 +185,21 @@ class FormulaCentroids:
     def __init__(self, formulas_df, centroids_df):
         u_index_formulas = set(formulas_df.index.unique())
         u_index_centroids = set(centroids_df.index.unique())
-        assert u_index_formulas == u_index_centroids
+        index_intersection = u_index_formulas.intersection(u_index_centroids)
+        index_union = u_index_formulas.union(u_index_centroids)
+        if len(index_union) > len(index_intersection):
+            mismatch_row_n = len(index_union) - len(index_intersection)
+            logger.warning(
+                f'Index mismatch between formulas and centroids dataframes. '
+                f'Ignoring {mismatch_row_n} rows'
+            )
 
-        self.formulas_df = formulas_df.sort_values(by='formula')
-        self._centroids_df = centroids_df.sort_values(by='mz')
+        self.formulas_df = formulas_df[
+            formulas_df.index.isin(index_intersection)
+        ].sort_values(by='formula')
+        self._centroids_df = centroids_df[
+            centroids_df.index.isin(index_intersection)
+        ].sort_values(by='mz')
 
     def centroids_df(self, fixed_size_centroids=False):
         """
