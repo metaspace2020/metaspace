@@ -12,7 +12,7 @@ export class ProjectSourceRepository {
   constructor(private manager: EntityManager) {
   }
 
-  private queryProjectsWhere(user: ContextUser | null, whereClause?: string, parameters?: object, sortBy: SortBy = 'name') {
+  private async queryProjectsWhere(user: ContextUser, whereClause?: string, parameters?: object, sortBy: SortBy = 'name') {
     const columnMap = this.manager.connection
       .getMetadata(ProjectModel)
       .columns
@@ -31,7 +31,7 @@ export class ProjectSourceRepository {
                             FROM graphql.user_project 
                             WHERE role IN ('${UPRO.MEMBER}','${UPRO.MANAGER}') 
                             GROUP BY project_id)`,
-        'num_members', 'project.id = num_members.project_id')
+          'num_members', 'project.id = num_members.project_id')
         .leftJoin(`(SELECT project_id, COUNT(*) as cnt 
                             FROM graphql.dataset_project 
                             WHERE approved = true
@@ -42,14 +42,12 @@ export class ProjectSourceRepository {
     }
 
     // Hide datasets the current user doesn't have access to
-    if (user && user.role === 'admin') {
+    if (user.id && user.role === 'admin') {
       qb = qb.where('true'); // For consistency, in case anything weird happens when `andWhere` is called without first calling `where`
-    } else if (user != null) {
-      qb = qb.where(new Brackets(qb => qb.where('project.is_public = True')
-        .orWhere('project.id IN (SELECT project_id FROM graphql.user_project WHERE user_id = :userId AND role = ANY(:roles))',
-          { userId: user.id, roles: [UPRO.INVITED, UPRO.PENDING, UPRO.MEMBER, UPRO.MANAGER] })));
     } else {
-      qb = qb.where('project.is_public = True');
+      const allProjectIds = Object.entries(await user.getProjectRoles()).map(([id, role]) => id);
+      qb = qb.where(new Brackets(qb => qb.where('project.is_public = True')
+        .orWhere('project.id = ANY(:projectIds)', { projectIds: allProjectIds })));
     }
     // Add caller-supplied filter
     if (whereClause) {
@@ -57,9 +55,9 @@ export class ProjectSourceRepository {
     }
 
     // Add currentUserRole field
-    if (user != null) {
+    if (user.id != null) {
       qb = qb.leftJoin('project.members', 'user_project',
-        'project.id = user_project.project_id AND user_project.user_id = :userId', { userId: user.id })
+        'project.id = user_project.project_id AND user_project.user_id = :userId', {userId: user.id})
         .addSelect('user_project.role', 'currentUserRole');
     } else {
       qb = qb.addSelect('null::text', 'currentUserRole');
@@ -69,13 +67,13 @@ export class ProjectSourceRepository {
     return qb;
   }
 
-  async findProjectById(user: ContextUser | null, projectId: string): Promise<ProjectSource | null> {
-    return await this.queryProjectsWhere(user, 'project.id = :projectId', {projectId})
+  async findProjectById(user: ContextUser, projectId: string): Promise<ProjectSource | null> {
+    return await (await this.queryProjectsWhere(user, 'project.id = :projectId', {projectId}))
       .getRawOne() || null;
   }
 
-  async findProjectByUrlSlug(user: ContextUser | null, urlSlug: string): Promise<ProjectSource | null> {
-    return await this.queryProjectsWhere(user, 'project.urlSlug = :urlSlug', {urlSlug})
+  async findProjectByUrlSlug(user: ContextUser, urlSlug: string): Promise<ProjectSource | null> {
+    return await (await this.queryProjectsWhere(user, 'project.urlSlug = :urlSlug', {urlSlug}))
       .getRawOne() || null;
   }
 
@@ -88,15 +86,15 @@ export class ProjectSourceRepository {
     return dataLoader.load(datasetId);
   }
 
-  async findProjectsByDatasetIds(user: ContextUser | null, datasetIds: string[]): Promise<ProjectSource[][]> {
-    const rows = await this.queryProjectsWhere(user, `
+  async findProjectsByDatasetIds(user: ContextUser, datasetIds: string[]): Promise<ProjectSource[][]> {
+    const rows = await (await this.queryProjectsWhere(user, `
         (:isAdmin OR dataset_project.approved OR project.id = ANY(:projectIds))
         AND dataset_project.dataset_id = ANY(:datasetIds)`,
       {
         datasetIds,
-        projectIds: user != null ? await user.getMemberOfProjectIds() : [],
-        isAdmin: user != null && user.role === 'admin',
-      })
+        projectIds: await user.getMemberOfProjectIds(),
+        isAdmin: user.id != null && user.role === 'admin',
+      }))
       .innerJoin('dataset_project', 'dataset_project', 'dataset_project.project_id = project.id')
       .addSelect('dataset_project.dataset_id', 'datasetId')
       .getRawMany();
@@ -104,7 +102,7 @@ export class ProjectSourceRepository {
     return datasetIds.map(id => groupedRows[id] || []);
   }
 
-  private queryProjectsByTextSearch(user: ContextUser | null, query?: string, sortBy: SortBy = 'name') {
+  private queryProjectsByTextSearch(user: ContextUser, query?: string, sortBy: SortBy = 'name') {
     if (query) {
       // Full-text search is disabled as it relies on functions not present in the installed pg version (9.5)
       // TODO: Add a full-text index to project.name to speed this up
@@ -122,9 +120,9 @@ export class ProjectSourceRepository {
     }
   }
 
-  async findProjectsByQuery(user: ContextUser | null, query?: string,
+  async findProjectsByQuery(user: ContextUser, query?: string,
                             offset?: number, limit?: number): Promise<ProjectSource[]> {
-    let queryBuilder = this.queryProjectsByTextSearch(user, query, 'popularity');
+    let queryBuilder = await this.queryProjectsByTextSearch(user, query, 'popularity');
     if (offset != null) {
       queryBuilder = queryBuilder.offset(offset);
     }
@@ -134,7 +132,7 @@ export class ProjectSourceRepository {
     return await queryBuilder.getRawMany();
   }
 
-  async countProjectsByQuery(user: ContextUser | null, query?: string): Promise<number> {
-    return await this.queryProjectsByTextSearch(user, query).getCount();
+  async countProjectsByQuery(user: ContextUser, query?: string): Promise<number> {
+    return await (await this.queryProjectsByTextSearch(user, query)).getCount();
   }
 }

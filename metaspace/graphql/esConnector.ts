@@ -160,18 +160,21 @@ function constructTermOrTermsFilter(field: keyof ESAnnotationSource, valueOrValu
   }
 }
 
-const constructAuthFilters = (user: ContextUser | null, userProjectRoles: UserProjectRoles) => {
-
+const constructAuthFilters = (user: ContextUser, userProjectRoles: UserProjectRoles) => {
   // (!) Authorisation checks
-  if (user != null && user.role === 'admin') {
+  if (user.id != null && user.role === 'admin') {
     // Admins can see everything - don't filter
-    return []
-  } else if (user != null && user.id != null) {
+    return [];
+  } else {
+    // Public datasets
     const should: any[] = [
-      { term: { ds_is_public: true } },
-      { term: { ds_submitter_id: user.id } },
+      {term: {ds_is_public: true}},
     ];
-
+    // User is owner
+    if (user.id) {
+      should.push({ term: { ds_submitter_id: user.id } } );
+    }
+    // User's group
     if (user.groupIds) {
       should.push({
         bool: {
@@ -182,16 +185,14 @@ const constructAuthFilters = (user: ContextUser | null, userProjectRoles: UserPr
         }
       });
     }
+    // Projects user has access to
     const visibleProjectIds = Object.entries(userProjectRoles || [])
-                                    .filter(([id, role]) => ([UPRO.MEMBER, UPRO.MANAGER] as any[]).includes(role))
-                                    .map(([id, role]) => id);
+      .filter(([id, role]) => ([UPRO.MEMBER, UPRO.MANAGER, UPRO.REVIEWER] as any[]).includes(role))
+      .map(([id, role]) => id);
     if (visibleProjectIds.length > 0) {
-      should.push({ terms: { ds_project_ids: visibleProjectIds } });
+      should.push({terms: {ds_project_ids: visibleProjectIds}});
     }
     return [{ bool: { should } }];
-  } else {
-    // not logged in user
-    return [{ term: { ds_is_public: true } }];
   }
 };
 
@@ -287,9 +288,9 @@ function constructSimpleQueryFilter(simpleQuery: string) {
   };
 }
 
-function constructESQuery(args: any, docType: DocType, user: ContextUser | null,
+function constructESQuery(args: any, docType: DocType, user: ContextUser,
                           userProjectRoles: UserProjectRoles, bypassAuth = false) {
-  const { orderBy, sortingOrder, filter, datasetFilter, simpleQuery} = args;
+  const { orderBy, sortingOrder, filter, datasetFilter, simpleQuery } = args;
 
   return {
     query: {
@@ -308,27 +309,26 @@ function constructESQuery(args: any, docType: DocType, user: ContextUser | null,
 }
 
 export const esSearchResults = async (args: any, docType: DocType,
-                                      user: ContextUser | null, bypassAuth?: boolean): Promise<any[]> => {
+                                      user: ContextUser, bypassAuth?: boolean): Promise<any[]> => {
   if (args.limit > ES_LIMIT_MAX) {
     throw Error(`The maximum value for limit is ${ES_LIMIT_MAX}`)
   }
 
-  const body = constructESQuery(args, docType, user, user != null ? await user.getProjectRoles() : {}, bypassAuth);
+  const body = constructESQuery(args, docType, user, await user.getProjectRoles(), bypassAuth);
   const request = {
     body,
     index: esIndex,
     from: args.offset,
     size: args.limit
   };
-  // console.time('esQuery');
 
   const resp = await es.search(request);
   return resp.hits.hits;
 };
 
 
-export const esCountResults = async (args: any, docType: DocType, user: ContextUser | null): Promise<number> => {
-  const body = constructESQuery(args, docType, user, user != null ? await user.getProjectRoles() : {});
+export const esCountResults = async (args: any, docType: DocType, user: ContextUser): Promise<number> => {
+  const body = constructESQuery(args, docType, user, await user.getProjectRoles());
   const request = { body, index: esIndex };
   const resp = await es.count(request);
   return resp.count;
@@ -382,8 +382,8 @@ function flattenAggResponse(fields: string[], aggs: any, idx: number): any {
   return { counts };
 }
 
-export const esCountGroupedResults = async (args: any, docType: DocType, user: ContextUser | null): Promise<any> => {
-  const body = constructESQuery(args, docType, user, user != null ? await user.getProjectRoles() : {});
+export const esCountGroupedResults = async (args: any, docType: DocType, user: ContextUser): Promise<any> => {
+  const body = constructESQuery(args, docType, user, await user.getProjectRoles());
 
   if (args.groupingFields.length === 0) {
     // handle case of no grouping for convenience
@@ -404,8 +404,8 @@ export const esCountGroupedResults = async (args: any, docType: DocType, user: C
   return flattenAggResponse(args.groupingFields, resp.aggregations, 0);
 };
 
-export const esCountMatchingAnnotationsPerDataset = async (args: any, user: ContextUser | null): Promise<Record<string, number>> => {
-  const body = constructESQuery(args, 'annotation', user, user != null ? await user.getProjectRoles() : {});
+export const esCountMatchingAnnotationsPerDataset = async (args: any, user: ContextUser): Promise<Record<string, number>> => {
+  const body = constructESQuery(args, 'annotation', user, await user.getProjectRoles());
 
   const aggRequest = {
     body: {
@@ -423,7 +423,7 @@ export const esCountMatchingAnnotationsPerDataset = async (args: any, user: Cont
 export interface FilterValueCountArgs {
   filters: any[];
   aggsTerms: any;
-  user: ContextUser | null;
+  user: ContextUser;
   docType?: DocType;
 }
 
@@ -433,7 +433,7 @@ export const esFilterValueCountResults = async (args: FilterValueCountArgs): Pro
     query: {
       bool: {
         filter: [
-          ...constructAuthFilters(user, user != null ? await user.getProjectRoles() : {}),
+          ...constructAuthFilters(user, await user.getProjectRoles()),
           { term: { _type: docType } },
           ...filters,
         ]
@@ -454,18 +454,18 @@ export const esFilterValueCountResults = async (args: FilterValueCountArgs): Pro
   return itemCounts;
 };
 
-async function getFirst(args: any, docType: DocType, user: ContextUser | null, bypassAuth: boolean = false) {
+async function getFirst(args: any, docType: DocType, user: ContextUser, bypassAuth: boolean = false) {
   const docs = await esSearchResults(args, docType, user, bypassAuth);
   return docs && docs[0] && docs[0]._source ? docs[0] : null;
 }
 
-export const esAnnotationByID = async (id: string, user: ContextUser | null): Promise<ESAnnotationSource | null> => {
+export const esAnnotationByID = async (id: string, user: ContextUser): Promise<ESAnnotationSource | null> => {
   if (id)
     return getFirst({ filter: { annId: id } }, 'annotation', user);
   return null;
 };
 
-export const esDatasetByID = async (id: string, user: ContextUser | null,
+export const esDatasetByID = async (id: string, user: ContextUser,
                                     bypassAuth?: boolean): Promise<ESDataset | null> => {
   if (id)
     return getFirst({ datasetFilter: { ids: id } }, 'dataset', user, bypassAuth);

@@ -1,5 +1,5 @@
 import {EntityManager, ObjectType} from 'typeorm';
-import {Context, ContextCacheKeyArg} from './context';
+import {Context, ContextCacheKeyArg, ContextUser} from './context';
 import {UserProjectRoleOptions as UPRO} from './modules/project/model';
 import {UserError} from 'graphql-errors';
 import {JwtUser} from './modules/auth/controller';
@@ -25,9 +25,15 @@ const getContext = (jwtUser: JwtUser | null, entityManager: EntityManager,
   };
 
   const getProjectRoles = () => contextCacheGet('getProjectRoles', [], async () => {
-    return user != null && user.id != null
+    let projectRoles = user != null && user.id != null
       ? await getUserProjectRoles(entityManager, user.id)
       : {};
+    const reviewProjects = req.session!.reviewProjects;
+    if (reviewProjects) {
+      const reviewProjectRoles = _.fromPairs(reviewProjects.map((id: String) => [id, UPRO.REVIEWER]));
+      projectRoles = _.assign(reviewProjectRoles, projectRoles);
+    }
+    return projectRoles;
   });
 
   const getMemberOfProjectIds = async () => {
@@ -72,16 +78,21 @@ const getContext = (jwtUser: JwtUser | null, entityManager: EntityManager,
     return await dataloader.load(entityId);
   };
 
+  const contextUser: ContextUser = {
+    role: 'user',
+    getProjectRoles,
+    getMemberOfProjectIds,
+  };
+  if (user) {
+    contextUser.id = user.id;
+    contextUser.role = user.role as ('user' | 'admin');
+    contextUser.email = user.email;
+    contextUser.groupIds = user.groupIds;
+  }
+
   return {
     req, res, entityManager,
-    user: user == null || user.id == null ? null : {
-      id: user.id,
-      role: user.role as ('user' | 'admin'),
-      email: user.email,
-      groupIds: user.groupIds,
-      getProjectRoles,
-      getMemberOfProjectIds,
-    },
+    user: contextUser,
     isAdmin: user != null && user.role === 'admin',
     getUserIdOrFail() {
       if (user == null || user.id == null) {

@@ -147,7 +147,6 @@ async function createHttpServerAsync(config) {
   configureSession(app);
   await configureAuth(app, connection.manager);
 
-
   const apollo = new ApolloServer({
     schema: executableSchema,
     context: ({req, res}) => getContext(req.user && req.user.user, connection.manager, req, res),

@@ -5,7 +5,7 @@ import logger from '../../../utils/logger';
 import wait from '../../../utils/wait';
 import config from '../../../utils/config';
 import {DatasetStatus} from '../../engine/model';
-import {Context} from '../../../context';
+import {Context, ContextUser} from '../../../context';
 import canViewEsDataset from '../util/canViewEsDataset';
 import {relationshipToDataset} from '../util/relationshipToDataset';
 import {
@@ -29,6 +29,12 @@ interface DatasetStatusPayload {
   is_new?: boolean;
 }
 
+const dummyContextUser: ContextUser = {
+  role: 'user',
+  getProjectRoles: async () => { return {}; },
+  getMemberOfProjectIds: async () => { return []; },
+};
+
 async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
   const {ds_id, action: rawAction, stage, ...rest} = payload;
   const action = (rawAction || '').toUpperCase() as EngineDatasetAction;
@@ -42,7 +48,7 @@ async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
   try {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       logger.debug(JSON.stringify({attempt, action}));
-      const ds = await esDatasetByID(ds_id, null, true);
+      const ds = await esDatasetByID(ds_id, dummyContextUser, true);
 
       if (action === 'DELETE' && stage === 'FINISHED') {
         if (ds == null) {

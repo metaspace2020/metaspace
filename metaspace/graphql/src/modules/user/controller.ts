@@ -109,7 +109,7 @@ export const Resolvers = {
     },
 
     async currentUser(_: any, {}: any, ctx: Context): Promise<UserSource|null> {
-      if (ctx.user != null) {
+      if (ctx.user.id != null) {
         const scopeRole = await resolveUserScopeRole(ctx, ctx.user.id);
         const user = await ctx.entityManager.getRepository(UserModel).findOneOrFail({
           where: { id: ctx.user.id }

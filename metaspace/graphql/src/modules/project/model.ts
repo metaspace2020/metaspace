@@ -17,7 +17,8 @@ export const UserProjectRoleOptions: Record<UserProjectRole, UserProjectRole> = 
   INVITED: 'INVITED',
   PENDING: 'PENDING',
   MEMBER: 'MEMBER',
-  MANAGER: 'MANAGER'
+  MANAGER: 'MANAGER',
+  REVIEWER: 'REVIEWER',
 };
 
 @Entity()
@@ -69,10 +70,7 @@ export class UserProject {
   project: Project;
 
   @Column({ type: 'text', enum: Object.keys(UserProjectRoleOptions) })
-  role: 'INVITED' |
-    'PENDING' |
-    'MEMBER' |
-    'MANAGER';
+  role: UserProjectRole;
 }
 
 export const PROJECT_ENTITIES = [

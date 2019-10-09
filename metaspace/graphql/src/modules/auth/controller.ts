@@ -5,6 +5,7 @@ import {Strategy as LocalStrategy} from 'passport-local';
 import {Strategy as GoogleStrategy} from 'passport-google-oauth20';
 import * as JwtSimple from 'jwt-simple';
 import {EntityManager} from 'typeorm';
+import 'express-session';
 
 import config from '../../utils/config';
 import {User} from '../user/model';
@@ -39,10 +40,12 @@ const configurePassport = (router: IRouter<any>) => {
   }));
 
   router.post('/signout', preventCache, (req, res) => {
+    (req as any).session.destroy();
     req.logout();
     res.send('OK');
   });
   router.get('/signout', preventCache, (req, res) => {
+    (req as any).session.destroy();
     req.logout();
     res.redirect('/');
   });
@@ -149,6 +152,39 @@ const configureLocalAuth = (router: IRouter<any>) => {
       }
     })(req, res, next);
   })
+};
+
+const configureReviewerAuth = (router: IRouter<any>) => {
+  router.get('/review', (req, res) => {
+    console.log('Before:');
+    console.log(req.sessionID);
+    console.log(req.session);
+
+    const session = req.session!;
+    const {prj: projectId, token} = req.query;
+    if (projectId && token) {
+      //TODO: Verify token first
+
+      if (!session.reviewProjects) {
+        session.reviewProjects = [projectId];
+      }
+      else if (!session.reviewProjects.includes(projectId)) {
+        session.reviewProjects.push(projectId);
+      }
+
+      res.cookie('flashMessage',
+        JSON.stringify({type: 'review_token_success'}),
+        {maxAge: 10*60*1000});
+      res.status(200).send();
+      // res.redirect(`/project/${projectId}`)
+    }
+    else {
+      res.status(404).send();
+    }
+
+    console.log('After:');
+    console.log(req.session);
+  });
 };
 
 const configureGoogleAuth = (router: IRouter<any>) => {
@@ -308,5 +344,6 @@ export const configureAuth = async (app: Express, entityManager: EntityManager) 
   // TODO: find a parameter validation middleware
   configureCreateAccount(router);
   configureResetPassword(router);
+  configureReviewerAuth(router);
   app.use('/api_auth', router);
 };

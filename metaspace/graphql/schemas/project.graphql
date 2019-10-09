@@ -43,6 +43,7 @@ enum UserProjectRole {
   PENDING    # User requested to join the project but the PI hasn't confirmed it yet
   MEMBER     # Normal member of the project
   MANAGER    # Project administrator
+  REVIEWER   # Anonymous user with read-only access to specified projects
 }
 
 type Query {
