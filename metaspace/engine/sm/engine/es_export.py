@@ -231,7 +231,6 @@ class ESIndexManager(object):
         return ind_data['docs']['count'], ind_data['store']['size_in_bytes']
 
 
-
 def flatten_doc(doc, parent_key='', sep='.'):
     items = []
     for k, v in doc.items():
@@ -261,6 +260,7 @@ def retry_on_conflict(num_retries=3):
         return wrapper
 
     return decorator
+
 
 class ESExporter(object):
     def __init__(self, db, es_config=None):
@@ -416,7 +416,7 @@ class ESExporter(object):
                             'pipeline': pipeline_id,
                             'wait_for_completion': True,
                             'refresh': 'wait_for',
-                            'request_timeout': 60,
+                            'request_timeout': 5*60,
                         })
                 finally:
                     self._ingest.delete_pipeline(pipeline_id)
