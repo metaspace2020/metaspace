@@ -501,7 +501,7 @@ class ESExporter:
                             'pipeline': pipeline_id,
                             'wait_for_completion': True,
                             'refresh': 'wait_for',
-                            'request_timeout': 5*60,
+                            'request_timeout': 5 * 60,
                         },
                     )
                 finally:
