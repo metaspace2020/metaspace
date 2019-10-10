@@ -143,34 +143,6 @@ class GraphQLClient(object):
         inputPath
     """
 
-    ANNOTATION_FIELDS = """
-        sumFormula
-        adduct
-        mz
-        msmScore
-        rhoSpatial
-        rhoSpectral
-        rhoChaos
-        fdrLevel
-        offSample
-        offSampleProb
-        dataset {
-            id
-            name
-        }
-        possibleCompounds {
-            name
-            information{
-              url
-            }
-        }
-        isotopeImages {
-            mz
-            url
-            maxIntensity
-        }
-    """
-
     DEFAULT_ANNOTATION_FILTER = {
         'database': 'HMDB-v4',
         'hasNeutralLoss': False,
@@ -241,46 +213,78 @@ class GraphQLClient(object):
     def getAnnotations(
         self, annotationFilter=None, datasetFilter=None, colocFilter=None, fields=None
     ):
-        query_vars = [
-            '$filter: AnnotationFilter',
-            '$dFilter: DatasetFilter',
-            '$offset: Int',
-            '$limit: Int',
-        ]
-        if colocFilter:
-            query_vars.append('$colocalizationCoeffFilter: ColocalizationCoeffFilter')
         query = """
-            query getAnnotations(%s) {
-              allAnnotations(
-                filter: $filter,
-                datasetFilter: $dFilter,
-                offset: $offset,
-                limit: $limit
-              ) { %s }
-            }""" % (
-            ','.join(query_vars),
-            fields or self.ANNOTATION_FIELDS,
-        )
+            query getAnnotations(
+                $filter: AnnotationFilter,
+                $dFilter: DatasetFilter,
+                $colocalizationCoeffFilter: ColocalizationCoeffFilter,
+                $orderBy: AnnotationOrderBy,
+                $sortingOrder: SortingOrder
+                $offset: Int,
+                $limit: Int,
+            ) {
+                allAnnotations(
+                    filter: $filter,
+                    datasetFilter: $dFilter,
+                    orderBy: $orderBy,
+                    sortingOrder: $sortingOrder,
+                    offset: $offset,
+                    limit: $limit,
+                ) {
+                    sumFormula
+                    adduct
+                    mz
+                    msmScore
+                    rhoSpatial
+                    rhoSpectral
+                    rhoChaos
+                    fdrLevel
+                    offSample
+                    offSampleProb
+                    dataset {
+                        id
+                        name
+                    }
+                    possibleCompounds {
+                        name
+                        information{
+                          url
+                          databaseId
+                        }
+                    }
+                    isotopeImages {
+                        mz
+                        url
+                        maxIntensity
+                    }
+                    colocalizationCoeff(
+                        colocalizationCoeffFilter: $colocalizationCoeffFilter
+                    )
+                }
+            }"""
         if datasetFilter is None:
             datasetFilter = {}
-        if colocFilter is None:
-            colocFilter = {}
-        if annotationFilter is None:
-            annotFilter = {}
-        else:
-            annotFilter = deepcopy(annotationFilter)
-            for key, val in self.DEFAULT_ANNOTATION_FILTER.items():
-                annotFilter.setdefault(key, val)
 
-        return self.listQuery(
-            field_name='allAnnotations',
-            query=query,
-            variables={
-                'filter': annotFilter,
-                'dFilter': datasetFilter,
-                'colocalizationCoeffFilter': colocFilter,
-            },
-        )
+        if annotationFilter is None:
+            annot_filter = {}
+        else:
+            annot_filter = deepcopy(annotationFilter)
+            for key, val in self.DEFAULT_ANNOTATION_FILTER.items():
+                annot_filter.setdefault(key, val)
+
+        if colocFilter:
+            annot_filter.update(colocFilter)
+            order_by = 'ORDER_BY_COLOCALIZATION'
+        else:
+            order_by = 'ORDER_BY_MSM'
+
+        vars = {
+            'filter': annot_filter,
+            'dFilter': datasetFilter,
+            'colocalizationCoeffFilter': colocFilter,
+            'orderBy': order_by,
+        }
+        return self.listQuery(field_name='allAnnotations', query=query, variables=vars)
 
     def countAnnotations(self, annotationFilter=None, datasetFilter=None):
         query = """
@@ -645,11 +649,29 @@ class SMDataset(object):
         records = self._gqclient.getAnnotations(annotation_filter, dataset_filter)
         return [list(r[val] for val in return_vals) for r in records]
 
-    def results(self, database=None):
-        annotationFilter = {}
-        if database:
-            annotationFilter['database'] = database
-        records = self._gqclient.getAnnotations(annotationFilter, {'ids': self.id})
+    def results(self, database, fdr=None, coloc_with=None):
+        if coloc_with:
+            assert fdr
+            coloc_coeff_filter = {
+                'database': database,
+                'colocalizedWith': coloc_with,
+                'fdrLevel': fdr,
+            }
+            annotation_filter = coloc_coeff_filter.copy()
+        else:
+            coloc_coeff_filter = None
+            annotation_filter = {'database': database}
+            if fdr:
+                annotation_filter['fdrLevel'] = fdr
+
+        records = self._gqclient.getAnnotations(
+            annotationFilter=annotation_filter,
+            datasetFilter={'ids': self.id},
+            colocFilter=coloc_coeff_filter,
+        )
+        if not records:
+            return pd.DataFrame()
+
         df = pd.io.json.json_normalize(records)
         return pd.DataFrame(
             dict(
@@ -663,10 +685,11 @@ class SMDataset(object):
                 mz=df['mz'],
                 moleculeNames=[[item['name'] for item in lst] for lst in df['possibleCompounds']],
                 moleculeIds=[
-                    [item['information'][0]['url'].rsplit("/")[-1] for item in lst]
+                    [item['information'][0]['databaseId'] for item in lst]
                     for lst in df['possibleCompounds']
                 ],
                 intensity=[img[0]['maxIntensity'] for img in df['isotopeImages']],
+                colocCoeff=df['colocalizationCoeff'],
             )
         ).set_index(['formula', 'adduct'])
 
