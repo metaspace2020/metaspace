@@ -22,6 +22,7 @@ import {findUserByEmail} from '../../../utils';
 import {sendAcceptanceEmail, sentGroupOrProjectInvitationEmail, sendRequestAccessEmail} from '../../groupOrProject/email';
 import {smAPIUpdateDataset} from '../../../utils/smAPI';
 import {getDatasetForEditing} from '../../dataset/operation/getDatasetForEditing';
+import * as crypto from 'crypto';
 
 
 const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
@@ -31,6 +32,12 @@ const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
   if (!ctx.isAdmin && userProject == null) {
     throw new UserError('Unauthorized');
   }
+};
+
+const generateRandomToken = () => {
+  // 9 Bytes = 72 bits = 12 Base64 symbols
+  return crypto.randomBytes(9).toString('base64')
+    .replace(/\//g,'_').replace(/\+/g,'-');
 };
 
 const MutationResolvers: FieldResolversFor<Mutation, void> = {
@@ -206,7 +213,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
     if (project != null) {
       const projectDetails = {
-        reviewToken: 'ABC',
+        reviewToken: generateRandomToken(),
         publicationStatus: PublicationStatusOptions.UNDER_REVIEW,
       };
       const projectRepository = ctx.entityManager.getRepository(ProjectModel);

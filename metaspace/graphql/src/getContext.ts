@@ -28,10 +28,12 @@ const getContext = (jwtUser: JwtUser | null, entityManager: EntityManager,
     let projectRoles = user != null && user.id != null
       ? await getUserProjectRoles(entityManager, user.id)
       : {};
-    const reviewProjects = req.session!.reviewProjects;
-    if (reviewProjects) {
-      const reviewProjectRoles = _.fromPairs(reviewProjects.map((id: String) => [id, UPRO.REVIEWER]));
-      projectRoles = _.assign(reviewProjectRoles, projectRoles);
+    if (req.session) {
+      const reviewProjects = req.session.reviewProjects;
+      if (reviewProjects) {
+        const reviewProjectRoles = _.fromPairs(reviewProjects.map((id: String) => [id, UPRO.REVIEWER]));
+        projectRoles = _.assign(reviewProjectRoles, projectRoles);
+      }
     }
     return projectRoles;
   });
