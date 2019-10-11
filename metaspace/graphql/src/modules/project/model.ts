@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 
 import {User} from '../user/model';
-import {UserProjectRole} from '../../binding'
+import {UserProjectRole, PublicationStatus} from '../../binding'
 import {DatasetProject} from '../dataset/model';
 import {Moment} from 'moment';
 import {MomentValueTransformer} from '../../utils/MomentValueTransformer';
@@ -19,6 +19,12 @@ export const UserProjectRoleOptions: Record<UserProjectRole, UserProjectRole> = 
   MEMBER: 'MEMBER',
   MANAGER: 'MANAGER',
   REVIEWER: 'REVIEWER',
+};
+
+export const PublicationStatusOptions: Record<PublicationStatus, PublicationStatus> = {
+  UNPUBLISHED: 'UNPUBLISHED',
+  UNDER_REVIEW: 'UNDER_REVIEW',
+  PUBLISHED: 'PUBLISHED',
 };
 
 @Entity()
@@ -47,8 +53,14 @@ export class Project {
     transformer: new MomentValueTransformer() })
   createdDT: Moment;
 
-  @Column({ type: 'text', name: 'project_description', default: ''})
+  @Column({ type: 'text', name: 'project_description', default: '' })
   projectDescriptionAsHtml: string;
+
+  @Column({ type: 'text', nullable: true })
+  reviewToken: string | null;
+
+  @Column({ type: 'text', default: 'UNPUBLISHED' })
+  publicationStatus: string;
 }
 
 @Entity('user_project')

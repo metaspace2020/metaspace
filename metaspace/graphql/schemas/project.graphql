@@ -1,3 +1,9 @@
+enum PublicationStatus {
+  UNPUBLISHED
+  UNDER_REVIEW
+  PUBLISHED
+}
+
 type Project {
   id: ID!
   name: String!
@@ -11,6 +17,8 @@ type Project {
   createdDT: String!
   latestUploadDT: String
   projectDescriptionAsHtml: String
+  reviewLink: String
+  publicationStatus: PublicationStatus
 }
 
 input CreateProjectInput {
@@ -76,4 +84,6 @@ type Mutation {
   updateUserProject(projectId: ID!, userId: ID!, update: UpdateUserProjectInput!): Boolean!
 
   importDatasetsIntoProject(projectId: ID!, datasetIds: [ID!]!): Boolean!
+
+  createReviewLink(projectId: ID!): String!
 }

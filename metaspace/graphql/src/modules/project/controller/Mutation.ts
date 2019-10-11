@@ -1,8 +1,14 @@
 import {Context} from '../../../context';
-import {Project as ProjectModel, UserProject as UserProjectModel, UserProjectRoleOptions as UPRO} from '../model';
+import {
+  Project as ProjectModel,
+  PublicationStatusOptions,
+  UserProject as UserProjectModel,
+  UserProjectRoleOptions as UPRO
+} from '../model';
+import {Dataset as DatasetModel} from '../../dataset/model';
 import {UserError} from 'graphql-errors';
 import {FieldResolversFor, ProjectSource, ScopeRoleOptions as SRO, UserProjectSource} from '../../../bindingTypes';
-import {Mutation} from '../../../binding';
+import {Mutation, PublicationStatus} from '../../../binding';
 import {ProjectSourceRepository} from '../ProjectSourceRepository';
 import {DatasetProject as DatasetProjectModel} from '../../dataset/model';
 import updateUserProjectRole from '../operation/updateUserProjectRole';
@@ -26,6 +32,7 @@ const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
     throw new UserError('Unauthorized');
   }
 };
+
 const MutationResolvers: FieldResolversFor<Mutation, void> = {
   async createProject(source, { projectDetails }, ctx): Promise<ProjectSource> {
     const userId = ctx.getUserIdOrFail(); // Exit early if not logged in
@@ -80,7 +87,6 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
   async deleteProject(source, { projectId }, ctx): Promise<Boolean> {
     await asyncAssertCanEditProject(ctx, projectId);
-
 
     const affectedDatasets = await ctx.entityManager.getRepository(DatasetProjectModel)
       .find({where: { projectId }, relations: ['dataset', 'dataset.datasetProjects']});
@@ -191,6 +197,34 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
     return true;
   },
+
+  async createReviewLink(source, {projectId}, ctx) {
+    await asyncAssertCanEditProject(ctx, projectId);
+
+    const project = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
+      .findProjectById(ctx.user, projectId);
+
+    if (project != null) {
+      const projectDetails = {
+        reviewToken: 'ABC',
+        publicationStatus: PublicationStatusOptions.UNDER_REVIEW,
+      };
+      const projectRepository = ctx.entityManager.getRepository(ProjectModel);
+      await projectRepository.update(projectId, projectDetails);
+
+      const datasetRepository = ctx.entityManager.getRepository(DatasetModel);
+      const affectedDatasets = await ctx.entityManager.getRepository(DatasetProjectModel)
+        .find({where: { projectId }, relations: ['dataset', 'dataset.datasetProjects']});
+      await Promise.all(affectedDatasets.map(async dp => {
+        await datasetRepository.update({ id: dp.datasetId },
+          { publicationStatus: PublicationStatusOptions.UNDER_REVIEW });
+      }));
+
+      return `/api_auth/review?prj=${project.id}&token=${projectDetails.reviewToken}`;
+    } else {
+      throw Error(`Project id not found ${projectId}`);
+    }
+  }
 };
 
 export default MutationResolvers;

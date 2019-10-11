@@ -9,6 +9,7 @@ import 'express-session';
 
 import config from '../../utils/config';
 import {User} from '../user/model';
+import {Project} from '../project/model';
 import {
   createUserCredentials,
   findUserByEmail,
@@ -154,8 +155,8 @@ const configureLocalAuth = (router: IRouter<any>) => {
   })
 };
 
-const configureReviewerAuth = (router: IRouter<any>) => {
-  router.get('/review', (req, res) => {
+const configureReviewerAuth = (router: IRouter<any>, entityManager: EntityManager) => {
+  router.get('/review', async (req, res) => {
     console.log('Before:');
     console.log(req.sessionID);
     console.log(req.session);
@@ -163,25 +164,33 @@ const configureReviewerAuth = (router: IRouter<any>) => {
     const session = req.session!;
     const {prj: projectId, token} = req.query;
     if (projectId && token) {
-      //TODO: Verify token first
+      const project = await entityManager.getRepository(Project).findOne({ id: projectId });
+      if (project) {
+        if (project.reviewToken == null || project.reviewToken != token) {
+          res.status(401).send();
+        }
+        else {
+          if (!session.reviewProjects) {
+            session.reviewProjects = [projectId];
+          }
+          else if (!session.reviewProjects.includes(projectId)) {
+            session.reviewProjects.push(projectId);
+          }
 
-      if (!session.reviewProjects) {
-        session.reviewProjects = [projectId];
+          res.cookie('flashMessage',
+            JSON.stringify({type: 'review_token_success'}),
+            {maxAge: 10*60*1000});
+          res.status(200).send('OK');
+          // res.redirect(`/project/${projectId}`)
+        }
       }
-      else if (!session.reviewProjects.includes(projectId)) {
-        session.reviewProjects.push(projectId);
+      else {
+        res.status(404).send();
       }
-
-      res.cookie('flashMessage',
-        JSON.stringify({type: 'review_token_success'}),
-        {maxAge: 10*60*1000});
-      res.status(200).send();
-      // res.redirect(`/project/${projectId}`)
     }
     else {
       res.status(404).send();
     }
-
     console.log('After:');
     console.log(req.session);
   });
@@ -344,6 +353,6 @@ export const configureAuth = async (app: Express, entityManager: EntityManager) 
   // TODO: find a parameter validation middleware
   configureCreateAccount(router);
   configureResetPassword(router);
-  configureReviewerAuth(router);
+  configureReviewerAuth(router, entityManager);
   app.use('/api_auth', router);
 };

@@ -36,6 +36,9 @@ export class Dataset {
   @OneToMany(type => DatasetProject, datasetProject => datasetProject.dataset)
   @JoinTable({ name: 'dataset_project' })
   datasetProjects: DatasetProject[];
+
+  @Column({ type: 'text', default: 'UNPUBLISHED' })
+  publicationStatus: string;
 }
 
 @Entity({ name: 'dataset_project' })
