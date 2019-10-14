@@ -36,9 +36,6 @@ export class Dataset {
   @OneToMany(type => DatasetProject, datasetProject => datasetProject.dataset)
   @JoinTable({ name: 'dataset_project' })
   datasetProjects: DatasetProject[];
-
-  @Column({ type: 'text', default: 'UNPUBLISHED' })
-  publicationStatus: string;
 }
 
 @Entity({ name: 'dataset_project' })
@@ -60,6 +57,9 @@ export class DatasetProject {
 
   @Column({ type: 'boolean' })
   approved: Boolean;
+
+  @Column({ type: 'text', default: 'UNPUBLISHED' })
+  publicationStatus: string;
 }
 
 export const DATASET_ENTITIES = [

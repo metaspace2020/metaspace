@@ -6,8 +6,8 @@ import wait from '../../../utils/wait';
 import config from '../../../utils/config';
 import {DatasetStatus} from '../../engine/model';
 import {Context, ContextUser} from '../../../context';
-import canViewEsDataset from '../util/canViewEsDataset';
-import {relationshipToDataset} from '../util/relationshipToDataset';
+import canViewEsDataset from '../operation/canViewEsDataset';
+import {relationshipToDataset} from '../operation/relationshipToDataset';
 import {
   asyncIterateDatasetDeleted,
   asyncIterateDatasetStatusUpdated,

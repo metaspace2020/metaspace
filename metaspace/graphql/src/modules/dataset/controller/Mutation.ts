@@ -11,7 +11,7 @@ import {fetchMolecularDatabases} from '../../../utils/molDb';
 import {EngineDS, fetchEngineDS} from '../../../utils/knexDb';
 
 import {smAPIRequest} from '../../../utils';
-import {UserProjectRoleOptions as UPRO} from '../../project/model';
+import {PublicationStatusOptions, UserProjectRoleOptions as UPRO} from '../../project/model';
 import {UserGroup as UserGroupModel, UserGroupRoleOptions} from '../../group/model';
 import {Dataset as DatasetModel, DatasetProject as DatasetProjectModel} from '../model';
 import {DatasetCreateInput, DatasetUpdateInput, Int, Mutation} from '../../../binding';
@@ -21,6 +21,7 @@ import {getUserProjectRoles} from '../../../utils/db';
 import {metadataSchemas} from '../../../../metadataSchemas/metadataRegistry';
 import {getDatasetForEditing} from '../operation/getDatasetForEditing';
 import {deleteDataset} from '../operation/deleteDataset';
+import {verifyDatasetPublicationStatus} from '../operation/verifyDatasetPublicationStatus';
 type MetadataSchema = any;
 type MetadataRoot = any;
 type MetadataNode = any;
@@ -173,7 +174,9 @@ const saveDS = async (entityManager: EntityManager, args: SaveDSArgs, requireIns
         await datasetProjectRepo.save({ datasetId: dsId, projectId, approved });
       });
     const deletePromises = existingDatasetProjects
-      .filter(({projectId}) => !projectIds.includes(projectId))
+      .filter(({ projectId, publicationStatus }) =>
+        !projectIds.includes(projectId) && publicationStatus == PublicationStatusOptions.UNPUBLISHED
+      )
       .map(async ({projectId}) => { await datasetProjectRepo.delete({ datasetId: dsId, projectId }); });
 
     await Promise.all([...savePromises, ...deletePromises]);
@@ -280,6 +283,10 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
       }
     }
 
+    if (update.isPublic) {
+      await verifyDatasetPublicationStatus(entityManager, dsId);
+    }
+
     const engineDS = await fetchEngineDS({id: dsId});
     const {newDB, procSettingsUpd} = await processingSettingsChanged(engineDS, {...update, metadata});
     const reprocessingNeeded = newDB || procSettingsUpd;
@@ -333,6 +340,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     if (user == null) {
       throw new UserError('Unauthorized');
     }
+    await verifyDatasetPublicationStatus(entityManager, dsId);
     const resp = await deleteDataset(entityManager, user, dsId, {force});
     return JSON.stringify(resp);
   },
