@@ -171,11 +171,11 @@ const configureReviewerAuth = (router: IRouter<any>, entityManager: EntityManage
             res.status(401).send();
           }
           else {
-            if (!session.reviewProjects) {
-              session.reviewProjects = [projectId];
+            if (!session.reviewTokens) {
+              session.reviewTokens = [token];
             }
-            else if (!session.reviewProjects.includes(projectId)) {
-              session.reviewProjects.push(projectId);
+            else if (!session.reviewTokens.includes(token)) {
+              session.reviewTokens.push(token);
             }
 
             res.cookie('flashMessage',

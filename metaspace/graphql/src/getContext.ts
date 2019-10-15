@@ -1,6 +1,6 @@
-import {EntityManager, ObjectType} from 'typeorm';
+import {EntityManager, In, ObjectType} from 'typeorm';
 import {Context, ContextCacheKeyArg, ContextUser} from './context';
-import {UserProjectRoleOptions as UPRO} from './modules/project/model';
+import {Project as ProjectModel, UserProjectRoleOptions as UPRO} from './modules/project/model';
 import {UserError} from 'graphql-errors';
 import {JwtUser} from './modules/auth/controller';
 import {getUserProjectRoles} from './utils/db';
@@ -28,10 +28,11 @@ const getContext = (jwtUser: JwtUser | null, entityManager: EntityManager,
     let projectRoles = user != null && user.id != null
       ? await getUserProjectRoles(entityManager, user.id)
       : {};
-    if (req.session) {
-      const reviewProjects = req.session.reviewProjects;
+    if (req.session && req.session.reviewTokens) {
+      const projectRepository = entityManager.getRepository(ProjectModel);
+      const reviewProjects = await projectRepository.find({ where: { reviewToken: In(req.session.reviewTokens) } });
       if (reviewProjects) {
-        const reviewProjectRoles = _.fromPairs(reviewProjects.map((id: String) => [id, UPRO.REVIEWER]));
+        const reviewProjectRoles = _.fromPairs(reviewProjects.map((project) => [project.id, UPRO.REVIEWER]));
         projectRoles = _.assign(reviewProjectRoles, projectRoles);
       }
     }

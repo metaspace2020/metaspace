@@ -85,5 +85,7 @@ type Mutation {
 
   importDatasetsIntoProject(projectId: ID!, datasetIds: [ID!]!): Boolean!
 
+  # Managing reveiw links
   createReviewLink(projectId: ID!): String!
+  deleteReviewLink(projectId: ID!): Boolean!
 }

@@ -243,6 +243,16 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     } else {
       throw Error(`Project id not found ${projectId}`);
     }
+  },
+
+  async deleteReviewLink(source, {projectId}, ctx) {
+    await asyncAssertCanEditProject(ctx, projectId);
+
+    const projectRepository = ctx.entityManager.getRepository(ProjectModel);
+    await projectRepository.update({ id: projectId },
+      { reviewToken: null, publicationStatus: PublicationStatusOptions.UNPUBLISHED });
+    await updateDatasetsPublicationStatus(ctx, projectId, PublicationStatusOptions.UNPUBLISHED);
+    return true;
   }
 };
 
