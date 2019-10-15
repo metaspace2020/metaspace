@@ -100,7 +100,7 @@ export function processingSettingsChanged(ds: EngineDS, update: DatasetUpdateInp
       metaDiff = (jsondiffpatch.formatters as any).jsonpatch.format(metaDelta);
 
     for (let diffObj of metaDiff) {
-      if (diffObj.op !== 'move') {  // ignore permuations in arrays
+      if (diffObj.op !== 'move') {  // ignore permutations in arrays
         const procSettingsPaths = [
           '/MS_Analysis/Polarity',
           '/MS_Analysis/Detector_Resolving_Power',

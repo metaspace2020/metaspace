@@ -46,29 +46,28 @@ const metadata = {
     "Additional_Information_Freetext": "NA"
   }
 },
-  dsConfig = {
-    "image_generation": {
-      "q": 99,
-      "do_preprocessing": false,
-      "nlevels": 30,
-      "ppm": 3
-    },
-    "isotope_generation": {
-      "adducts": ["+H", "+Na", "+K"],
-      "charge": {
-        "polarity": "+",
-        "n_charges": 1
-      },
-      "isocalc_sigma": 0.000619,
-      "isocalc_pts_per_mz": 8078
-    },
-    "databases": config.defaults.moldb_names
+dsConfig = {
+  "image_generation": {
+    "q": 99,
+    "do_preprocessing": false,
+    "nlevels": 30,
+    "ppm": 3
   },
-  ds = {
-    config: dsConfig,
-    metadata: metadata,
-    molDBs: config.defaults.moldb_names
-  } as EngineDS;
+  "isotope_generation": {
+    "adducts": ["+H", "+Na", "+K"],
+    "charge": {
+      "polarity": "+",
+      "n_charges": 1
+    },
+    "isocalc_sigma": 0.000619,
+    "isocalc_pts_per_mz": 8078
+  },
+  "databases": config.defaults.moldb_names
+},
+ds = {
+  config: dsConfig,
+  metadata: metadata,
+} as EngineDS;
 
 function clone(obj: any) {
   return JSON.parse(JSON.stringify(obj));
@@ -76,8 +75,10 @@ function clone(obj: any) {
 
 describe('processingSettingsChanged', () => {
   test('Reprocessing needed when database list changed', () => {
-    const updDS = clone(ds);
-    updDS.molDBs.push('ChEBI');
+    const updDS = {
+      molDBs: [...ds.config.databases, 'ChEBI'],
+      metadata: ds.metadata,
+    };
 
     const {newDB} = processingSettingsChanged(ds, updDS);
 
@@ -85,8 +86,10 @@ describe('processingSettingsChanged', () => {
   });
 
   test('Drop reprocessing needed when instrument settings changed', () => {
-    const updDS = clone(ds);
-    updDS.metadata.MS_Analysis.Detector_Resolving_Power.mz = 100;
+    const updDS = {
+      molDBs: ds.config.databases,
+      metadata: _.defaultsDeep({ MS_Analysis: { Detector_Resolving_Power: { mz: 100 }}}, ds.metadata),
+    };
 
     const {procSettingsUpd} = processingSettingsChanged(ds, updDS);
 
