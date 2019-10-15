@@ -1,6 +1,11 @@
 import {createTestDataset, createTestProject, createTestProjectMember} from '../../../tests/testDataCreation';
-import {UserProjectRole} from '../../../binding';
-import {Project as ProjectModel, UserProject as UserProjectModel, UserProjectRoleOptions as UPRO} from '../model';
+import {PublicationStatus, UserProjectRole} from '../../../binding';
+import {
+  Project as ProjectModel,
+  PublicationStatusOptions,
+  UserProject as UserProjectModel,
+  UserProjectRoleOptions as UPRO
+} from '../model';
 import {User as UserModel} from '../../user/model';
 import {
   doQuery,
@@ -182,8 +187,8 @@ describe('modules/project/controller (membership-related mutations)', () => {
 
       expect(await testEntityManager.find(DatasetProjectModel, {datasetId: In(datasetIds)}))
         .toEqual(expect.arrayContaining([
-          {datasetId: datasetIds[0], projectId, approved: true},
-          {datasetId: datasetIds[1], projectId, approved: true},
+          {datasetId: datasetIds[0], projectId, approved: true, publicationStatus: PublicationStatusOptions.UNPUBLISHED},
+          {datasetId: datasetIds[1], projectId, approved: true, publicationStatus: PublicationStatusOptions.UNPUBLISHED},
         ]));
     });
 
@@ -199,8 +204,8 @@ describe('modules/project/controller (membership-related mutations)', () => {
 
       expect(await testEntityManager.find(DatasetProjectModel, {datasetId: In(datasetIds)}))
         .toEqual(expect.arrayContaining([
-          {datasetId: datasetIds[0], projectId, approved: true},
-          {datasetId: datasetIds[1], projectId, approved: true},
+          {datasetId: datasetIds[0], projectId, approved: true, publicationStatus: PublicationStatusOptions.UNPUBLISHED},
+          {datasetId: datasetIds[1], projectId, approved: true, publicationStatus: PublicationStatusOptions.UNPUBLISHED},
         ]));
     });
 
@@ -239,6 +244,7 @@ describe('modules/project/controller (membership-related mutations)', () => {
     test.each([
         [false, UPRO.INVITED],
         [false, UPRO.PENDING],
+        [false, UPRO.REVIEWER],
         [true, UPRO.MEMBER],
         [true, UPRO.MANAGER],
       ])
@@ -260,8 +266,8 @@ describe('modules/project/controller (membership-related mutations)', () => {
 
       expect(await testEntityManager.find(DatasetProjectModel, {datasetId: In(datasetIds)}))
         .toEqual(expect.arrayContaining([
-          {datasetId: datasetIds[0], projectId, approved},
-          {datasetId: datasetIds[1], projectId, approved},
+          {datasetId: datasetIds[0], projectId, approved, publicationStatus: PublicationStatusOptions.UNPUBLISHED},
+          {datasetId: datasetIds[1], projectId, approved, publicationStatus: PublicationStatusOptions.UNPUBLISHED},
         ]));
       await validateBackgroundData(bgData);
     });

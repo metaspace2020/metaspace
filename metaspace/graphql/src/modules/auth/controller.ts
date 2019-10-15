@@ -158,10 +158,6 @@ const configureLocalAuth = (router: IRouter<any>) => {
 const configureReviewerAuth = (router: IRouter<any>, entityManager: EntityManager) => {
   router.get('/review', async (req, res, next) => {
     try {
-      console.log('Before:');
-      console.log(req.sessionID);
-      console.log(req.session);
-
       const session = req.session;
       const {prj: projectId, token} = req.query;
       if (session && projectId && token) {
@@ -178,11 +174,9 @@ const configureReviewerAuth = (router: IRouter<any>, entityManager: EntityManage
               session.reviewTokens.push(token);
             }
 
-            res.cookie('flashMessage',
-              JSON.stringify({type: 'review_token_success'}),
-              {maxAge: 10*60*1000});
-            res.status(200).send('OK');
-            // res.redirect(`/project/${projectId}`)
+            res.cookie('flashMessage', JSON.stringify({ type: 'review_token_success' }),
+              { maxAge: 10*60*1000 });
+            res.redirect(`/project/${projectId}`);
           }
         }
         else {
@@ -192,8 +186,6 @@ const configureReviewerAuth = (router: IRouter<any>, entityManager: EntityManage
       else {
         res.status(404).send();
       }
-      console.log('After:');
-      console.log(req.session);
     } catch (err) {
       return next(err);
     }

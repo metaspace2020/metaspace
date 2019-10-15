@@ -30,7 +30,7 @@ const getContext = (jwtUser: JwtUser | null, entityManager: EntityManager,
       : {};
     if (req.session && req.session.reviewTokens) {
       const projectRepository = entityManager.getRepository(ProjectModel);
-      const reviewProjects = await projectRepository.find({ where: { reviewToken: In(req.session.reviewTokens) } });
+      const reviewProjects = await projectRepository.find({ where: { reviewToken: In(req.session.reviewTokens) }});
       if (reviewProjects) {
         const reviewProjectRoles = _.fromPairs(reviewProjects.map((project) => [project.id, UPRO.REVIEWER]));
         projectRoles = _.assign(reviewProjectRoles, projectRoles);
@@ -111,5 +111,6 @@ export default getContext;
 
 export const getContextForTest = (jwtUser: JwtUser | null, entityManager: EntityManager): Context => {
   // TODO: Add mocks for req & res if/when needed
-  return getContext(jwtUser, entityManager, null as any, null as any);
+  const reqMock = { session: null };
+  return getContext(jwtUser, entityManager, reqMock as any, null as any);
 };

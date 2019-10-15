@@ -39,7 +39,7 @@ describe('annotation/queryFilters hasAnnotationMatching', () => {
     expect(mockEsConnector.esCountMatchingAnnotationsPerDataset).toHaveBeenCalledWith({
       datasetFilter: { polarity: 'NEGATIVE' },
       filter: { compoundQuery: 'H2SO4' }
-    }, null);
+    }, expect.anything());
   });
 
 });
