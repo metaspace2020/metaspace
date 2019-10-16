@@ -370,31 +370,6 @@ class ESExporter:
                 f'Missing ion formulas {len(missing_ion_formulas)}: {missing_ion_formulas[:20]}'
             )
 
-    @staticmethod
-    def _add_isobar_fields_to_anns(ann_docs):
-
-        isomer_groups = defaultdict(list)
-        isomer_comp_counts = defaultdict(int)
-        missing_ion_formulas = []
-
-        for doc in ann_docs:
-            if doc['ion_formula']:
-                isomer_groups[doc['ion_formula']].append(doc['ion'])
-                isomer_comp_counts[doc['ion_formula']] += len(doc['comp_ids'])
-            else:
-                missing_ion_formulas.append(doc['ion'])
-
-        for doc in ann_docs:
-            doc['isomer_ions'] = [
-                ion for ion in isomer_groups[doc['ion_formula']] if ion != doc['ion']
-            ]
-            doc['comps_count_with_isomers'] = isomer_comp_counts[doc['ion_formula']]
-
-        if missing_ion_formulas:
-            logger.warning(
-                f'Missing ion formulas {len(missing_ion_formulas)}: {missing_ion_formulas[:20]}'
-            )
-
     def _index_ds_annotations(self, ds_id, mol_db, ds_doc, isocalc):
         annotation_docs = self._db.select_with_fields(ANNOTATIONS_SEL, params=(ds_id, mol_db.id))
         logger.info(f'Indexing {len(annotation_docs)} documents: {ds_id}, {mol_db}')
@@ -527,7 +502,7 @@ class ESExporter:
                             'pipeline': pipeline_id,
                             'wait_for_completion': True,
                             'refresh': 'wait_for',
-                            'request_timeout': 5*60,
+                            'request_timeout': 5 * 60,
                         },
                     )
                 finally:

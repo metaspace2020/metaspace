@@ -10,6 +10,7 @@ logger = logging.getLogger('engine')
 SIGMA_TO_FWHM = 2.3548200450309493  # 2 \sqrt{2 \log 2}
 BASE_MZ = 200.0
 
+
 class IsocalcWrapper:
     """ Wrapper around pyMSpec.pyisocalc.pyisocalc used for getting theoretical isotope peaks'
     centroids and profiles for a sum formula.
@@ -125,4 +126,3 @@ class IsocalcWrapper:
         lower = mzs - half_width
         upper = mzs + half_width
         return lower, upper
-

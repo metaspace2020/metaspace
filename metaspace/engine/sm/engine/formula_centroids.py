@@ -203,12 +203,12 @@ class FormulaCentroids:
                 f'Ignoring {mismatch_row_n} rows'
             )
 
-        self.formulas_df = formulas_df[
-            formulas_df.index.isin(index_intersection)
-        ].sort_values(by='formula')
-        self._centroids_df = centroids_df[
-            centroids_df.index.isin(index_intersection)
-        ].sort_values(by='mz')
+        self.formulas_df = formulas_df[formulas_df.index.isin(index_intersection)].sort_values(
+            by='formula'
+        )
+        self._centroids_df = centroids_df[centroids_df.index.isin(index_intersection)].sort_values(
+            by='mz'
+        )
 
     def centroids_df(self, fixed_size_centroids=False):
         """
