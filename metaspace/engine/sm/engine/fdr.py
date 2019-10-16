@@ -163,7 +163,7 @@ class FDR:
     @classmethod
     def nearest_fdr_level(cls, fdr):
         for level in cls.fdr_levels:
-            if fdr < level:
+            if round(fdr, 2) <= level:
                 return level
 
     @staticmethod
