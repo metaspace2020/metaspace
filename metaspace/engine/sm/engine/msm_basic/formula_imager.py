@@ -5,6 +5,7 @@ import pandas as pd
 from pyspark.files import SparkFiles
 from scipy.sparse import coo_matrix
 
+from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.msm_basic.formula_validator import make_compute_image_metrics, formula_image_metrics
 
 logger = logging.getLogger('engine')
@@ -12,7 +13,7 @@ logger = logging.getLogger('engine')
 
 # pylint: disable=too-many-locals
 # this function is compute performance optimized
-def gen_iso_images(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, ppm=3, min_px=1):
+def gen_iso_images(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, isocalc, min_px=1):
     if sp_inds.size > 0:
         by_sp_mz = np.argsort(sp_mzs)  # sort order by mz ascending
         sp_mzs = sp_mzs[by_sp_mz]
@@ -25,8 +26,7 @@ def gen_iso_images(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, ppm=3, min_
         centr_p_inds = centr_df.peak_i.values[by_centr_mz]
         centr_ints = centr_df.int.values[by_centr_mz]
 
-        lower = centr_mzs - centr_mzs * ppm * 1e-6
-        upper = centr_mzs + centr_mzs * ppm * 1e-6
+        lower, upper = isocalc.mass_accuracy_bounds(centr_mzs)
         lower_inds = np.searchsorted(sp_mzs, lower, 'l')
         upper_inds = np.searchsorted(sp_mzs, upper, 'r')
 
@@ -114,6 +114,7 @@ def create_process_segment(ds_segments, coordinates, ds_config, target_formula_i
     compute_metrics = make_compute_image_metrics(
         sample_area_mask, nrows, ncols, ds_config['image_generation']
     )
+    isocalc = IsocalcWrapper(ds_config)
     ppm = ds_config['image_generation']['ppm']
     min_px = ds_config['image_generation']['min_px']
     n_peaks = ds_config['isotope_generation']['n_peaks']
@@ -139,7 +140,7 @@ def create_process_segment(ds_segments, coordinates, ds_config, target_formula_i
                 centr_df=centr_df,
                 nrows=nrows,
                 ncols=ncols,
-                ppm=ppm,
+                isocalc=isocalc,
                 min_px=min_px,
             )
             formula_metrics_df, formula_images = formula_image_metrics(

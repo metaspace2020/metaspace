@@ -113,7 +113,7 @@ class MSMSearch:
         """ Generate/load centroids for all ions formulas
         """
         logger.info('Fetching formula centroids')
-        isocalc = IsocalcWrapper(self._isotope_gen_config)
+        isocalc = IsocalcWrapper(self._ds_config)
         centroids_gen = CentroidsGenerator(sc=self._spark_context, isocalc=isocalc)
         ion_formulas = np.unique(ion_formula_map_df.ion_formula.values)
         formula_centroids = centroids_gen.generate_if_not_exist(formulas=ion_formulas.tolist())

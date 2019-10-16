@@ -1,13 +1,14 @@
 import logging
 
 import numpy as np
-from cpyMSpec import InstrumentModel, isotopePattern
+import cpyMSpec as cpyMSpec_0_4_2
+import cpyMSpec_0_3_5
 from pyMSpec.pyisocalc import pyisocalc
 
 logger = logging.getLogger('engine')
 
 SIGMA_TO_FWHM = 2.3548200450309493  # 2 \sqrt{2 \log 2}
-
+BASE_MZ = 200.0
 
 class IsocalcWrapper:
     """ Wrapper around pyMSpec.pyisocalc.pyisocalc used for getting theoretical isotope peaks'
@@ -30,10 +31,16 @@ class IsocalcWrapper:
         else:
             cls._centroids_cache = None
 
-    def __init__(self, isocalc_config):
+    def __init__(self, ds_config):
+        self.analysis_version = ds_config.get('analysis_version', 1)
+
+        isocalc_config = ds_config['isotope_generation']
+        self.instrument = isocalc_config['instrument']
         self.charge = isocalc_config['charge']
         self.sigma = float(isocalc_config['isocalc_sigma'])
         self.n_peaks = isocalc_config['n_peaks']
+
+        self.ppm = ds_config['image_generation']['ppm']
 
     @staticmethod
     def _trim(mzs, ints, k):
@@ -57,13 +64,27 @@ class IsocalcWrapper:
         -----
             Tuple[np.ndarray, np.ndarray]
         """
+        if self.analysis_version < 2:
+            cpyMSpec = cpyMSpec_0_3_5
+        else:
+            cpyMSpec = cpyMSpec_0_4_2
+
         try:
             pyisocalc.parseSumFormula(formula)  # tests that formula is parsable
-            iso_pattern = isotopePattern(str(formula))
+
+            iso_pattern = cpyMSpec.isotopePattern(str(formula))
             iso_pattern.addCharge(int(self.charge))
             fwhm = self.sigma * SIGMA_TO_FWHM
-            resolving_power = iso_pattern.masses[0] / fwhm
-            instrument_model = InstrumentModel('tof', resolving_power)
+
+            if self.analysis_version < 2:
+                resolving_power = iso_pattern.masses[0] / fwhm
+                instrument_model = cpyMSpec.InstrumentModel('tof', resolving_power)
+            else:
+                resolving_power = BASE_MZ / fwhm
+                instrument_model = cpyMSpec.InstrumentModel(
+                    self.instrument, resolving_power, at_mz=BASE_MZ
+                )
+
             centr = iso_pattern.centroids(instrument_model)
             mzs_ = np.array(centr.masses)
             ints_ = 100.0 * np.array(centr.intensities)
@@ -92,3 +113,16 @@ class IsocalcWrapper:
             return result
 
         return self._centroids_uncached(formula)
+
+    def mass_accuracy_bounds(self, mzs):
+        if self.analysis_version < 2 or self.instrument == 'FTICR':
+            half_width = mzs * self.ppm * 1e-6
+        elif self.instrument == 'Orbitrap':
+            half_width = np.sqrt(mzs / BASE_MZ) * (BASE_MZ * self.ppm * 1e-6)
+        else:
+            half_width = BASE_MZ * self.ppm * 1e-6
+
+        lower = mzs - half_width
+        upper = mzs + half_width
+        return lower, upper
+

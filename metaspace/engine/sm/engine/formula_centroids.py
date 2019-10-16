@@ -33,12 +33,21 @@ class CentroidsGenerator:
         self._iso_gen_part_n = 512
 
         self._spark_session = SparkSession(self._sc)
-        self._ion_centroids_path = '{}/{}/{}/{}'.format(
-            self._sm_config['isotope_storage']['path'],
-            self._isocalc.n_peaks,
-            self._isocalc.sigma,
-            self._isocalc.charge,
-        )
+        if self._isocalc.analysis_version < 2:
+            self._ion_centroids_path = '{}/{}/{}/{}'.format(
+                self._sm_config['isotope_storage']['path'],
+                self._isocalc.n_peaks,
+                self._isocalc.sigma,
+                self._isocalc.charge,
+            )
+        else:
+            self._ion_centroids_path = '{}/v2/{}/{}_{}/{}'.format(
+                self._sm_config['isotope_storage']['path'],
+                self._isocalc.n_peaks,
+                self._isocalc.instrument,
+                self._isocalc.sigma,
+                self._isocalc.charge,
+            )
         self._s3 = boto3.client(
             's3',
             self._sm_config['aws']['aws_region'],

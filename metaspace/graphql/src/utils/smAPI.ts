@@ -26,7 +26,8 @@ const fieldRenameMap = {
   neutralLosses: 'neutral_losses',
   chemMods: 'chem_mods',
   numPeaks: 'n_peaks',
-  decoySampleSize: 'decoy_sample_size'
+  decoySampleSize: 'decoy_sample_size',
+  analysisVersion: 'analysis_version',
 };
 
 export const smAPIRequest = async (uri: string, args: any={}) => {
