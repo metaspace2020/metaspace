@@ -13,7 +13,11 @@ FDR_CONFIG = {'decoy_sample_size': 2}
 @patch('sm.engine.fdr.DECOY_ADDUCTS', ['+He', '+Li'])
 def test_fdr_decoy_adduct_selection_saves_corr():
     fdr = FDR(
-        fdr_config=FDR_CONFIG, chem_mods=[], neutral_losses=[], target_adducts=['+H', '+K', '[M]+']
+        fdr_config=FDR_CONFIG,
+        chem_mods=[],
+        neutral_losses=[],
+        target_adducts=['+H', '+K', '[M]+'],
+        analysis_version=1,
     )
 
     exp_target_decoy_df = pd.DataFrame(
@@ -37,7 +41,13 @@ def test_fdr_decoy_adduct_selection_saves_corr():
 
 
 def test_estimate_fdr_returns_correct_df():
-    fdr = FDR(fdr_config=FDR_CONFIG, chem_mods=[], neutral_losses=[], target_adducts=['+H'])
+    fdr = FDR(
+        fdr_config=FDR_CONFIG,
+        chem_mods=[],
+        neutral_losses=[],
+        target_adducts=['+H'],
+        analysis_version=1,
+    )
     fdr.fdr_levels = [0.2, 0.8]
     fdr.td_df = pd.DataFrame(
         [['H2O', '+H', '+Cu'], ['H2O', '+H', '+Co'], ['C2H2', '+H', '+Ag'], ['C2H2', '+H', '+Ar']],
@@ -64,7 +74,13 @@ def test_estimate_fdr_returns_correct_df():
 
 def test_estimate_fdr_digitize_works():
     fdr_config = {**FDR_CONFIG, 'decoy_sample_size': 1}
-    fdr = FDR(fdr_config=fdr_config, chem_mods=[], neutral_losses=[], target_adducts=['+H'])
+    fdr = FDR(
+        fdr_config=fdr_config,
+        chem_mods=[],
+        neutral_losses=[],
+        target_adducts=['+H'],
+        analysis_version=1,
+    )
     fdr.fdr_levels = [0.4, 0.8]
     fdr.td_df = pd.DataFrame(
         [['C1', '+H', '+Cu'], ['C2', '+H', '+Ag'], ['C3', '+H', '+Cl'], ['C4', '+H', '+Co']],
@@ -98,7 +114,13 @@ def test_ions():
     decoy_sample_size = 5
     fdr_config = {**FDR_CONFIG, 'decoy_sample_size': decoy_sample_size}
 
-    fdr = FDR(fdr_config=fdr_config, chem_mods=[], neutral_losses=[], target_adducts=target_adducts)
+    fdr = FDR(
+        fdr_config=fdr_config,
+        chem_mods=[],
+        neutral_losses=[],
+        target_adducts=target_adducts,
+        analysis_version=1,
+    )
     fdr.decoy_adducts_selection(target_formulas=['H2O', 'C5H2OH'])
     ions = fdr.ion_tuples()
 
@@ -131,6 +153,7 @@ def test_chem_mods_and_neutral_losses():
         chem_mods=chem_mods,
         neutral_losses=neutral_losses,
         target_adducts=target_adducts,
+        analysis_version=1,
     )
     fdr.decoy_adducts_selection(target_formulas=['H2O', 'C5H2OH'])
     ions = fdr.ion_tuples()

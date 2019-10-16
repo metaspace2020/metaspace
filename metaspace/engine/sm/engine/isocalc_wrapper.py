@@ -35,7 +35,7 @@ class IsocalcWrapper:
         self.analysis_version = ds_config.get('analysis_version', 1)
 
         isocalc_config = ds_config['isotope_generation']
-        self.instrument = isocalc_config['instrument']
+        self.instrument = isocalc_config.get('instrument', 'TOF')
         self.charge = isocalc_config['charge']
         self.sigma = float(isocalc_config['isocalc_sigma'])
         self.n_peaks = isocalc_config['n_peaks']
@@ -82,7 +82,7 @@ class IsocalcWrapper:
             else:
                 resolving_power = BASE_MZ / fwhm
                 instrument_model = cpyMSpec.InstrumentModel(
-                    self.instrument, resolving_power, at_mz=BASE_MZ
+                    self.instrument.lower(), resolving_power, at_mz=BASE_MZ
                 )
 
             centr = iso_pattern.centroids(instrument_model)

@@ -23,7 +23,7 @@ def test_init_fdr():
     ds_config = {
         'analysis_version': 1,
         'fdr': {'decoy_sample_size': 20},
-        'isotope_generation': BASIC_ISOTOPE_GENERATION_CONFIG
+        'isotope_generation': BASIC_ISOTOPE_GENERATION_CONFIG,
     }
     moldb_fdr_list = init_fdr(ds_config, [make_moldb_mock()])
 
@@ -36,7 +36,7 @@ def test_collect_ion_formulas(spark_context):
     ds_config = {
         'analysis_version': 1,
         'fdr': {'decoy_sample_size': 20},
-        'isotope_generation': BASIC_ISOTOPE_GENERATION_CONFIG
+        'isotope_generation': BASIC_ISOTOPE_GENERATION_CONFIG,
     }
     moldb_fdr_list = init_fdr(ds_config, [make_moldb_mock()])
 
@@ -50,7 +50,7 @@ def test_decoy_sample_size_30(spark_context):
     ds_config = {
         'analysis_version': 1,
         'fdr': {'decoy_sample_size': 30},
-        'isotope_generation': BASIC_ISOTOPE_GENERATION_CONFIG
+        'isotope_generation': BASIC_ISOTOPE_GENERATION_CONFIG,
     }
     moldb_fdr_list = init_fdr(ds_config, [make_moldb_mock()])
 
@@ -64,7 +64,7 @@ def test_neutral_losses_and_chem_mods(spark_context):
     ds_config = {
         'analysis_version': 1,
         'fdr': {'decoy_sample_size': 1},
-        'isotope_generation': BASIC_ISOTOPE_GENERATION_CONFIG
+        'isotope_generation': FULL_ISOTOPE_GENERATION_CONFIG,
     }
     moldb_fdr_list = init_fdr(ds_config, [make_moldb_mock()])
 
