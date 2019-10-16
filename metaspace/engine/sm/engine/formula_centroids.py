@@ -137,7 +137,8 @@ class CentroidsGenerator:
                 & Path(self._ion_centroids_path + '/centroids/_SUCCESS').exists()
             )
 
-    def _restore_df_chunks(self, spark_df, chunk_size=20 * 10 ** 6):
+    @staticmethod
+    def _restore_df_chunks(spark_df, chunk_size=20 * 10 ** 6):
         total_n = spark_df.rdd.count()
         chunk_n = ceil(total_n / chunk_size)
         logger.debug(f'Restoring peaks chunks, chunk_size={chunk_size / 1e6}M, chunk_n={chunk_n}')

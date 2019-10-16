@@ -165,6 +165,7 @@ class FDR:
         for level in cls.fdr_levels:
             if round(fdr, 2) <= level:
                 return level
+        return 1.0
 
     @staticmethod
     def _msm_fdr_map(target_msm, decoy_msm):
@@ -190,10 +191,10 @@ class FDR:
                 df.loc[row_mask, 'fdr_d'] = fdr_thr
             df['fdr'] = df.fdr_d
             return df.drop('fdr_d', axis=1)
-        else:
-            df = fdr_df.sort_values(by='msm')
-            df['fdr'] = np.minimum.accumulate(df.fdr)
-            return df
+
+        df = fdr_df.sort_values(by='msm')
+        df['fdr'] = np.minimum.accumulate(df.fdr)  # pylint: disable=no-member
+        return df
 
     def estimate_fdr(self, formula_msm):
         logger.info('Estimating FDR')

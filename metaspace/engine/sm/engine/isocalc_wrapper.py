@@ -66,9 +66,10 @@ class IsocalcWrapper:
             Tuple[np.ndarray, np.ndarray]
         """
         if self.analysis_version < 2:
-            cpyMSpec = cpyMSpec_0_3_5
+            cpyMSpec = cpyMSpec_0_3_5  # pylint: disable=invalid-name
         else:
-            cpyMSpec = cpyMSpec_0_4_2
+            # noinspection PyPep8Naming
+            cpyMSpec = cpyMSpec_0_4_2  # pylint: disable=invalid-name
 
         try:
             pyisocalc.parseSumFormula(formula)  # tests that formula is parsable
