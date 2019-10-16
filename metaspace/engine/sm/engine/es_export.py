@@ -11,6 +11,7 @@ from elasticsearch.helpers import parallel_bulk
 
 from sm.engine.dataset_locker import DatasetLocker
 from sm.engine.db import DB
+from sm.engine.fdr import FDR
 from sm.engine.formula_parser import format_ion_formula
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.mol_db import MolecularDB
@@ -389,7 +390,7 @@ class ESExporter:
             doc['centroid_mzs'] = list(mzs)
             doc['mz'] = mzs[0]
 
-            fdr = round(doc['fdr'] * 100, 2)
+            fdr = round(FDR.nearest_fdr_level(doc['fdr']) * 100, 2)
             annotation_counts[fdr] += 1
 
         self._add_isomer_fields_to_anns(annotation_docs)
@@ -442,7 +443,7 @@ class ESExporter:
         res = DB().select_one("select name, config from dataset where id = %s", params=(ds_id,))
         if res:
             ds_name, ds_config = res
-            isocalc = IsocalcWrapper(ds_config['isotope_generation'])
+            isocalc = IsocalcWrapper(ds_config)
             for moldb_name in ds_config['databases']:
                 try:
                     self.index_ds(ds_id, mol_db=MolecularDB(name=moldb_name), isocalc=isocalc)

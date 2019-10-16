@@ -65,9 +65,7 @@ def make_formula_image_metrics_mock_side_effect():
 
 
 def test_compute_fdr(spark_context, ds_config):
-    moldb_fdr_list = init_fdr(
-        ds_config['fdr'], ds_config['isotope_generation'], [make_moldb_mock()]
-    )
+    moldb_fdr_list = init_fdr(ds_config, [make_moldb_mock()])
     _, fdr = moldb_fdr_list[0]
     formula_map_df = collect_ion_formulas(spark_context, moldb_fdr_list).drop('moldb_id', axis=1)
 

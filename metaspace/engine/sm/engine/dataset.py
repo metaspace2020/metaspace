@@ -227,6 +227,7 @@ def _get_isotope_generation_from_metadata(metadata, analysis_version):
 
 def generate_ds_config(
     metadata,
+    analysis_version=None,
     mol_dbs=None,
     adducts=None,
     ppm=None,
@@ -235,7 +236,6 @@ def generate_ds_config(
     decoy_sample_size=None,
     neutral_losses=None,
     chem_mods=None,
-    analysis_version=None,
 ):
     # The kwarg names should match FLAT_DS_CONFIG_KEYS
 
