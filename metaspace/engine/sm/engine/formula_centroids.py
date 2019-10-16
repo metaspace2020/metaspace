@@ -48,6 +48,7 @@ class CentroidsGenerator:
                 self._isocalc.sigma,
                 self._isocalc.charge,
             )
+        logger.info(f'Centroids path: {self._ion_centroids_path}')
         self._s3 = boto3.client(
             's3',
             self._sm_config['aws']['aws_region'],
