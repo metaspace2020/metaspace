@@ -1,6 +1,5 @@
 import {Context} from '../../../context';
 import {DatasetProject as DatasetProjectModel} from '../../dataset/model';
-import {PublicationStatusOptions} from '../model';
 import {PublicationStatus} from '../../../binding';
 
 

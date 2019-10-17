@@ -1,16 +1,15 @@
 import {EntityManager} from 'typeorm';
-import {ContextUser} from '../../../context';
-import {DeleteDatasetArgs} from '../../../utils/smAPI';
-import {DatasetProject as DatasetProjectModel, DatasetProject} from '../model';
-import {PublicationStatusOptions} from '../../project/model';
+import {DatasetProject as DatasetProjectModel} from '../model';
+import {PublicationStatusOptions as PSO} from '../../project/PublicationStatusOptions';
+import {UserError} from 'graphql-errors';
 
 
-export const verifyDatasetPublicationStatus = async (entityManager: EntityManager, dsId: string) => {
+export const verifyDatasetPublicationStatus = async (entityManager: EntityManager, datasetId: string) => {
   const dsPublishedInProject = (await entityManager.getRepository(DatasetProjectModel)
-    .find({ datasetId: dsId }))
-    .find(dp => dp.publicationStatus != PublicationStatusOptions.UNPUBLISHED);
+    .find({ datasetId }))
+    .find(dp => dp.publicationStatus != PSO.UNPUBLISHED);
   if (dsPublishedInProject) {
-    throw Error(`Dataset ${dsId} is in ${dsPublishedInProject.projectId} project ` +
+    throw new UserError(`Cannot modify dataset ${datasetId} as it belongs to ${dsPublishedInProject.projectId} project ` +
       `which is in ${dsPublishedInProject.publicationStatus} status`);
   }
 };

@@ -12,6 +12,7 @@ import {UserProjectRole, PublicationStatus} from '../../binding'
 import {DatasetProject} from '../dataset/model';
 import {Moment} from 'moment';
 import {MomentValueTransformer} from '../../utils/MomentValueTransformer';
+import {PublicationStatusOptions as PSO} from './PublicationStatusOptions';
 
 export const UserProjectRoleOptions: Record<UserProjectRole, UserProjectRole> = {
   INVITED: 'INVITED',
@@ -19,12 +20,6 @@ export const UserProjectRoleOptions: Record<UserProjectRole, UserProjectRole> = 
   MEMBER: 'MEMBER',
   MANAGER: 'MANAGER',
   REVIEWER: 'REVIEWER',
-};
-
-export const PublicationStatusOptions: Record<PublicationStatus, PublicationStatus> = {
-  UNPUBLISHED: 'UNPUBLISHED',
-  UNDER_REVIEW: 'UNDER_REVIEW',
-  PUBLISHED: 'PUBLISHED',
 };
 
 @Entity()
@@ -59,8 +54,8 @@ export class Project {
   @Column({ type: 'text', nullable: true })
   reviewToken: string | null;
 
-  @Column({ type: 'text', default: 'UNPUBLISHED' })
-  publicationStatus: string;
+  @Column({ type: 'text', enum: Object.keys(PSO), default: PSO.UNPUBLISHED })
+  publicationStatus: PublicationStatus;
 }
 
 @Entity('user_project')

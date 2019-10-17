@@ -36,15 +36,15 @@ export class EngineDataset {
   @Column({ type: 'double precision', array: true, nullable: true })
   transform: number[] | null;
   @Column({ type: 'boolean', default: true })
-  is_public: boolean;
+  isPublic: boolean;
   @Column({ type: 'json', nullable: true })
-  acq_geometry: object | null;
+  acqGeometry: object | null;
   @Column({ type: 'text', default: 'fs' })
-  ion_img_storage_type: string;
+  ionImgStorageType: string;
   @Column({ type: 'text', nullable: true })
   thumbnail: string | null;
   @Column({ type: 'text', nullable: true })
-  ion_thumbnail: string | null;
+  ionThumbnail: string | null;
 
   @OneToMany(type => OpticalImage, opticalImage => opticalImage.dataset)
   opticalImages: OpticalImage[];

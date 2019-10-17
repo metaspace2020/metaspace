@@ -1,11 +1,10 @@
 import {Context} from '../../../context';
 import {
   Project as ProjectModel,
-  PublicationStatusOptions,
   UserProject as UserProjectModel,
   UserProjectRoleOptions as UPRO
 } from '../model';
-import {Dataset as DatasetModel} from '../../dataset/model';
+import {PublicationStatusOptions as PSO} from '../PublicationStatusOptions';
 import {UserError} from 'graphql-errors';
 import {FieldResolversFor, ProjectSource, ScopeRoleOptions as SRO, UserProjectSource} from '../../../bindingTypes';
 import {Mutation, PublicationStatus} from '../../../binding';
@@ -77,14 +76,17 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     const projectRepository = ctx.entityManager.getRepository(ProjectModel);
     let project = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, projectId);
-    if (project && project.publicationStatus && projectDetails.isPublic) {
-      throw Error(`Project ${projectId} is in ${project.publicationStatus} status, its visibility cannot be changed`);
+    if (project == null) {
+      throw new UserError(`Not found project ${projectId}`);
+    }
+    if ([PSO.UNDER_REVIEW, PSO.PUBLISHED].includes(project.publicationStatus) && projectDetails.isPublic != null) {
+      throw new UserError(`Cannot modify project ${projectId} as it is in ${project.publicationStatus} status`);
     }
 
     await projectRepository.update(projectId, projectDetails);
     if (projectDetails.name || projectDetails.urlSlug || projectDetails.isPublic) {
       const affectedDatasets = await ctx.entityManager.getRepository(DatasetProjectModel)
-      .find({where: { projectId }, relations: ['dataset', 'dataset.datasetProjects']});
+        .find({where: { projectId }, relations: ['dataset', 'dataset.datasetProjects']});
       await Promise.all(affectedDatasets.map(async dp => {
         await smAPIUpdateDataset(dp.datasetId, {
           projectIds: dp.dataset.datasetProjects.map(p => p.projectId)
@@ -108,7 +110,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     const project = await projectRepository.findOne({ id: projectId });
 
     if (project) {
-      if (project.publicationStatus == PublicationStatusOptions.UNPUBLISHED) {
+      if (project.publicationStatus == PSO.UNPUBLISHED) {
         const affectedDatasets = await ctx.entityManager.getRepository(DatasetProjectModel)
           .find({where: { projectId }, relations: ['dataset', 'dataset.datasetProjects']});
         await ctx.entityManager.getRepository(DatasetProjectModel).delete({ projectId });
@@ -122,12 +124,10 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
         await ctx.entityManager.getRepository(UserProjectModel).delete({ projectId });
         await projectRepository.delete({ id: projectId });
-      }
-      else {
-        throw Error(`Project ${projectId} is in ${project.publicationStatus} status and cannot be deleted`);
+      } else {
+        throw new UserError(`Cannot modify project ${projectId} as it is in ${project.publicationStatus} status`);
       }
     }
-
     return true;
   },
 
@@ -227,22 +227,15 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
   async createReviewLink(source, {projectId}, ctx) {
     await asyncAssertCanEditProject(ctx, projectId);
 
-    const project = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
-      .findProjectById(ctx.user, projectId);
+    const projectRepository = ctx.entityManager.getRepository(ProjectModel);
+    const projectDetails = {
+      reviewToken: generateRandomToken(),
+      publicationStatus: PSO.UNDER_REVIEW,
+    };
+    await projectRepository.update(projectId, projectDetails);
+    await updateDatasetsPublicationStatus(ctx, projectId, PSO.UNDER_REVIEW);
 
-    if (project != null) {
-      const projectRepository = ctx.entityManager.getRepository(ProjectModel);
-      const projectDetails = {
-        reviewToken: generateRandomToken(),
-        publicationStatus: PublicationStatusOptions.UNDER_REVIEW,
-      };
-      await projectRepository.update(projectId, projectDetails);
-      await updateDatasetsPublicationStatus(ctx, projectId, PublicationStatusOptions.UNDER_REVIEW);
-
-      return `/api_auth/review?prj=${project.id}&token=${projectDetails.reviewToken}`;
-    } else {
-      throw Error(`Project id not found ${projectId}`);
-    }
+    return `/api_auth/review?prj=${projectId}&token=${projectDetails.reviewToken}`;
   },
 
   async deleteReviewLink(source, {projectId}, ctx) {
@@ -250,8 +243,8 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
     const projectRepository = ctx.entityManager.getRepository(ProjectModel);
     await projectRepository.update({ id: projectId },
-      { reviewToken: null, publicationStatus: PublicationStatusOptions.UNPUBLISHED });
-    await updateDatasetsPublicationStatus(ctx, projectId, PublicationStatusOptions.UNPUBLISHED);
+      { reviewToken: null, publicationStatus: PSO.UNPUBLISHED });
+    await updateDatasetsPublicationStatus(ctx, projectId, PSO.UNPUBLISHED);
     return true;
   }
 };

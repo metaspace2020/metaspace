@@ -4,8 +4,9 @@ import {User} from '../modules/user/model';
 import {Credentials} from '../modules/auth/model';
 import {testEntityManager, userContext} from './graphqlTestEnvironment';
 import {Project, UserProject, UserProjectRoleOptions as UPRO} from '../modules/project/model';
-import {UserProjectRole} from '../binding';
-import {Dataset} from '../modules/dataset/model';
+import {PublicationStatusOptions as PSO} from '../modules/project/PublicationStatusOptions';
+import {PublicationStatus, UserProjectRole} from '../binding';
+import {Dataset, DatasetProject} from '../modules/dataset/model';
 import {EngineDataset} from '../modules/engine/model';
 
 
@@ -21,11 +22,11 @@ export const createTestUser = async (user?: Partial<User>): Promise<User> => {
 };
 
 export const createTestProject = async (project?: Partial<Project>): Promise<Project> => {
-  return await testEntityManager.save(Project, {
+  return await testEntityManager.save(Project, _.defaults(project, {
     name: 'test project',
     isPublic: true,
-    ...project,
-  }) as Project;
+    publicationStatus: PSO.UNPUBLISHED,
+  })) as Project;
 };
 
 export const createTestProjectMember = async (projectOrId: string | {id: string},
@@ -75,3 +76,14 @@ export const createTestDataset = async (dataset: Partial<Dataset> = {}, engineDa
   return (await datasetPromise) as Dataset;
 };
 
+export const createTestDatasetInProject = async (publicationStatus: PublicationStatus) => {
+  const dataset = await createTestDataset(),
+    project = await createTestProject();
+  await testEntityManager.save(DatasetProject, {
+    projectId: project.id,
+    datasetId: dataset.id,
+    approved: true,
+    publicationStatus
+  });
+  return dataset;
+};

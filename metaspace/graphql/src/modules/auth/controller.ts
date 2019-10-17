@@ -165,29 +165,24 @@ const configureReviewerAuth = (router: IRouter<any>, entityManager: EntityManage
         if (project) {
           if (project.reviewToken == null || project.reviewToken != token) {
             res.status(401).send();
-          }
-          else {
+          } else {
             if (!session.reviewTokens) {
               session.reviewTokens = [token];
-            }
-            else if (!session.reviewTokens.includes(token)) {
+            } else if (!session.reviewTokens.includes(token)) {
               session.reviewTokens.push(token);
             }
-
             res.cookie('flashMessage', JSON.stringify({ type: 'review_token_success' }),
               { maxAge: 10*60*1000 });
             res.redirect(`/project/${projectId}`);
           }
-        }
-        else {
+        } else {
           res.status(404).send();
         }
-      }
-      else {
+      } else {
         res.status(404).send();
       }
     } catch (err) {
-      return next(err);
+      next(err);
     }
   });
 };
