@@ -207,7 +207,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
   },
 
   async importDatasetsIntoProject(source, { projectId, datasetIds }, ctx): Promise<Boolean> {
-    const userProjectRole = (ctx.user != null ? await ctx.user.getProjectRoles() : {})[projectId];
+    const userProjectRole = (await ctx.user.getProjectRoles())[projectId];
     if (userProjectRole == null) {
       throw new UserError('Not a member of project');
     }

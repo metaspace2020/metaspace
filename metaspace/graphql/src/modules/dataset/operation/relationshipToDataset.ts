@@ -17,7 +17,6 @@ export const relationshipToDataset = async (dataset: DatasetSource, ctx: Context
   const ds = dataset._source;
   const user = ctx.user;
   const relationships: DatasetRelationship[] = [];
-  if (user != null) {
     if (user.id === ds.ds_submitter_id) {
       relationships.push({
         type: 'submitter',
@@ -43,6 +42,5 @@ export const relationshipToDataset = async (dataset: DatasetSource, ctx: Context
         });
       }
     }
-  }
   return relationships;
 };

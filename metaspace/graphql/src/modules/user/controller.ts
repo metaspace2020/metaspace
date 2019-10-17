@@ -20,8 +20,8 @@ import {patchPassportIntoLiveRequest} from '../auth/middleware';
 import {resolveGroupScopeRole} from '../group/util/resolveGroupScopeRole';
 import canSeeUserEmail from './util/canSeeUserEmail';
 
-const assertCanEditUser = (user: ContextUser | null, userId: string) => {
-  if (!user || !user.id)
+const assertCanEditUser = (user: ContextUser, userId: string) => {
+  if (!user.id)
     throw new UserError('Not authenticated');
 
   if (user.role !== 'admin' && user.id !== userId)
@@ -30,7 +30,7 @@ const assertCanEditUser = (user: ContextUser | null, userId: string) => {
 
 const resolveUserScopeRole = async (ctx: Context, userId?: string): Promise<ScopeRole> => {
   let scopeRole = SRO.OTHER;
-  if (userId && ctx.user != null && userId === ctx.user.id) {
+  if (userId && userId === ctx.user.id) {
     scopeRole = SRO.PROFILE_OWNER;
   }
   return scopeRole;

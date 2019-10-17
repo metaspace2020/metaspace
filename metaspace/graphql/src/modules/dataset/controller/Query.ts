@@ -7,6 +7,7 @@ import {Context} from '../../../context';
 import {thumbnailOpticalImageUrl} from './Dataset';
 import {applyQueryFilters} from '../../annotation/queryFilters';
 import {EngineDataset, OpticalImage} from '../../engine/model';
+import {rawOpticalImage} from './Dataset';
 
 const resolveDatasetScopeRole = async (ctx: Context, dsId: string) => {
   let scopeRole = SRO.OTHER;
@@ -78,17 +79,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
 
   // TODO: deprecated, remove
   async rawOpticalImage(source, { datasetId }, ctx) {
-    const ds = await esDatasetByID(datasetId, ctx.user);  // check if user has access
-    if (ds) {
-      const engineDataset = await ctx.entityManager.getRepository(EngineDataset).findOne(datasetId);
-      if (engineDataset && engineDataset.opticalImage) {
-        return {
-          url: `/fs/raw_optical_images/${engineDataset.opticalImage}`,
-          transform: engineDataset.transform
-        };
-      }
-    }
-    return null;
+    return await rawOpticalImage(datasetId, ctx);
   },
 
   // TODO: deprecated, remove

@@ -3,14 +3,14 @@ import {dsField} from '../../../../datasetFilters';
 import {DatasetSource, FieldResolversFor} from '../../../bindingTypes';
 import {ProjectSourceRepository} from '../../project/ProjectSourceRepository';
 import {Dataset as DatasetModel} from '../model';
-import {OpticalImage as OpticalImageModel} from '../../engine/model';
+import {EngineDataset, OpticalImage as OpticalImageModel} from '../../engine/model';
 import {Dataset, OpticalImage, OpticalImageType} from '../../../binding';
-import {rawOpticalImage} from './Query';
 import getScopeRoleForEsDataset from '../operation/getScopeRoleForEsDataset';
 import logger from '../../../utils/logger';
 import {Context} from '../../../context';
 import getGroupAdminNames from '../../group/util/getGroupAdminNames';
 import * as DataLoader from 'dataloader';
+import {esDatasetByID} from '../../../../esConnector';
 
 interface DbDataset {
   id: string;
@@ -56,6 +56,20 @@ const getOpticalImagesByDsId = async (ctx: Context, id: string): Promise<Optical
     });
   });
   return await dataloader.load(id);
+};
+
+export const rawOpticalImage = async (datasetId: string, ctx: Context) => {
+  const ds = await esDatasetByID(datasetId, ctx.user);  // check if user has access
+  if (ds) {
+    const engineDataset = await ctx.entityManager.getRepository(EngineDataset).findOne(datasetId);
+    if (engineDataset && engineDataset.opticalImage) {
+      return {
+        url: `/fs/raw_optical_images/${engineDataset.opticalImage}`,
+        transform: engineDataset.transform
+      };
+    }
+  }
+  return null;
 };
 
 const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
@@ -151,7 +165,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   async projects(ds, args, ctx) {
     // If viewing someone else's DS, only approved projects are visible, so exit early if there are no projects in elasticsearch
     const projectIds = _.castArray(ds._source.ds_project_ids).filter(id => id != null);
-    const canSeeUnapprovedProjects = ctx.isAdmin || (ctx.user != null && ctx.user.id === ds._source.ds_submitter_id);
+    const canSeeUnapprovedProjects = ctx.isAdmin || (ctx.user.id === ds._source.ds_submitter_id);
     if (!canSeeUnapprovedProjects && projectIds.length === 0) {
       return [];
     }
@@ -166,13 +180,13 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     }));
   },
 
-  async principalInvestigator(ds, _, {cachedGetEntityById, isAdmin, user}) {
+  async principalInvestigator(ds, _, {cachedGetEntityById, isAdmin, user}: Context) {
     const dataset = await cachedGetEntityById(DatasetModel, ds._source.ds_id);
     if (dataset == null) {
       logger.warn(`Elasticsearch DS does not exist in DB: ${ds._source.ds_id}`);
       return null;
     }
-    const canSeePiEmail = isAdmin || (user != null && user.id === ds._source.ds_submitter_id);
+    const canSeePiEmail = isAdmin || (user.id === ds._source.ds_submitter_id);
     if (dataset.piName) {
       return {
         name: dataset.piName,
