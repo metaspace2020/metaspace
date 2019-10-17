@@ -2,7 +2,6 @@ import config from '../../../utils/config';
 import * as _ from 'lodash';
 
 import {processingSettingsChanged} from './Mutation';
-import {EngineDS} from '../../../utils/knexDb';
 import {
   doQuery, onAfterAll, onAfterEach,
   onBeforeAll, onBeforeEach, setupTestUsers, testEntityManager,
@@ -11,7 +10,7 @@ import {PublicationStatusOptions as PSO} from '../../project/PublicationStatusOp
 import {createTestDatasetInProject} from '../../../tests/testDataCreation';
 import {Dataset as DatasetType} from '../../../binding';
 import {Dataset as DatasetModel, DatasetProject as DatasetProjectModel} from '../model';
-import {EngineDataset as EngineDatasetModel} from '../../engine/model';
+import {EngineDataset, EngineDataset as EngineDatasetModel} from '../../engine/model';
 
 describe('processingSettingsChanged', () => {
   const metadata = {
@@ -77,11 +76,11 @@ describe('processingSettingsChanged', () => {
     ds = {
       config: dsConfig,
       metadata: metadata,
-    } as EngineDS;
+    } as EngineDataset;
 
   it('Reprocessing needed when database list changed', () => {
     const updDS = {
-      molDBs: [...ds.config.databases, 'ChEBI'],
+      molDBs: [...(ds.config as any).databases, 'ChEBI'],
       metadata: ds.metadata,
     };
 
@@ -92,7 +91,7 @@ describe('processingSettingsChanged', () => {
 
   it('Drop reprocessing needed when instrument settings changed', () => {
     const updDS = {
-      molDBs: ds.config.databases,
+      molDBs: (ds.config as any).databases,
       metadata: _.defaultsDeep({ MS_Analysis: { Detector_Resolving_Power: { mz: 100 }}}, ds.metadata),
     };
 

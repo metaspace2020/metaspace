@@ -79,7 +79,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     if (project == null) {
       throw new UserError(`Not found project ${projectId}`);
     }
-    if ([PSO.UNDER_REVIEW, PSO.PUBLISHED].includes(project.publicationStatus) && projectDetails.isPublic != null) {
+    if (project.publicationStatus != PSO.UNPUBLISHED && projectDetails.isPublic == false) {
       throw new UserError(`Cannot modify project ${projectId} as it is in ${project.publicationStatus} status`);
     }
 
@@ -224,7 +224,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     return true;
   },
 
-  async createReviewLink(source, {projectId}, ctx) {
+  async createReviewLink(source, {projectId}, ctx): Promise<ProjectSource> {
     await asyncAssertCanEditProject(ctx, projectId);
 
     const projectRepository = ctx.entityManager.getRepository(ProjectModel);
@@ -235,10 +235,11 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     await projectRepository.update(projectId, projectDetails);
     await updateDatasetsPublicationStatus(ctx, projectId, PSO.UNDER_REVIEW);
 
-    return `/api_auth/review?prj=${projectId}&token=${projectDetails.reviewToken}`;
+    return await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
+      .findProjectById(ctx.user, projectId) as ProjectSource;
   },
 
-  async deleteReviewLink(source, {projectId}, ctx) {
+  async deleteReviewLink(source, {projectId}, ctx): Promise<Boolean> {
     await asyncAssertCanEditProject(ctx, projectId);
 
     const projectRepository = ctx.entityManager.getRepository(ProjectModel);

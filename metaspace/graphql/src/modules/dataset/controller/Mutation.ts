@@ -8,7 +8,6 @@ import * as moment from 'moment';
 import * as _ from 'lodash';
 
 import {fetchMolecularDatabases} from '../../../utils/molDb';
-import {EngineDS, fetchEngineDS} from '../../../utils/knexDb';
 
 import {smAPIRequest} from '../../../utils';
 import {UserProjectRoleOptions as UPRO} from '../../project/model';
@@ -23,6 +22,7 @@ import {metadataSchemas} from '../../../../metadataSchemas/metadataRegistry';
 import {getDatasetForEditing} from '../operation/getDatasetForEditing';
 import {deleteDataset} from '../operation/deleteDataset';
 import {verifyDatasetPublicationStatus} from '../operation/verifyDatasetPublicationStatus';
+import {EngineDataset} from '../../engine/model';
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -87,7 +87,7 @@ async function molDBsExist(molDBNames: string[]) {
   }
 }
 
-export function processingSettingsChanged(ds: EngineDS, update: DatasetUpdateInput & {metadata: MetadataRoot}) {
+export function processingSettingsChanged(ds: EngineDataset, update: DatasetUpdateInput & {metadata: MetadataRoot}) {
   let newDB = false, procSettingsUpd = false, metaDiff = null;
   if (update.molDBs)
     newDB = true;
@@ -187,7 +187,7 @@ const saveDataset = async (entityManager: EntityManager, args: SaveDatasetArgs, 
 
 const assertCanCreateDataset = (user: ContextUser) => {
   if (user.id == null)
-    throw Error(`Not authenticated`);
+    throw new UserError(`Not authenticated`);
 };
 
 const newDatasetId = () => {
@@ -252,13 +252,13 @@ const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
 const MutationResolvers: FieldResolversFor<Mutation, void>  = {
 
   reprocessDataset: async (source, { id, priority }, ctx: Context) => {
-    const dataset = await fetchEngineDS({id});
-    if (dataset === undefined)
+    const engineDataset = await ctx.entityManager.getRepository(EngineDataset).findOne(id);
+    if (engineDataset === undefined)
       throw Error('Dataset does not exist');
 
     return await createDataset({
       datasetId: id,
-      input: dataset as any, // TODO: map this properly
+      input: engineDataset as any, // TODO: map this properly
       priority: priority,
       force: true,
       skipValidation: true,
@@ -284,11 +284,11 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
       }
     }
 
-    if (update.isPublic != null || update.projectIds != null) {
+    if (update.isPublic == false || update.projectIds != null) {
       await verifyDatasetPublicationStatus(ctx.entityManager, datasetId);
     }
 
-    const engineDataset = await fetchEngineDS({id: datasetId});
+    const engineDataset = await ctx.entityManager.getRepository(EngineDataset).findOneOrFail(datasetId);
     const {newDB, procSettingsUpd} = await processingSettingsChanged(engineDataset, {...update, metadata});
     const reprocessingNeeded = newDB || procSettingsUpd;
 

@@ -17,7 +17,7 @@ type Project {
   createdDT: String!
   latestUploadDT: String
   projectDescriptionAsHtml: String
-  reviewLink: String
+  reviewToken: String
   publicationStatus: PublicationStatus
 }
 
@@ -86,6 +86,6 @@ type Mutation {
   importDatasetsIntoProject(projectId: ID!, datasetIds: [ID!]!): Boolean!
 
   # Managing reveiw links
-  createReviewLink(projectId: ID!): String!
+  createReviewLink(projectId: ID!): Project!
   deleteReviewLink(projectId: ID!): Boolean!
 }
