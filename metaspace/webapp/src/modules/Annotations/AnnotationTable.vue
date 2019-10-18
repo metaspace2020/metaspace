@@ -229,7 +229,12 @@
  import config from '../../config';
 
  // 38 = up, 40 = down, 74 = j, 75 = k
- const KEY_TO_ACTION = {38: 'up', 75: 'up', 40: 'down', 74: 'down'};
+ const KEY_TO_ACTION = {
+   ArrowUp: 'up', K: 'up', k: 'up',
+   ArrowDown: 'down', J: 'down', j: 'down',
+   ArrowLeft: 'left', H: 'left', h: 'left',
+   ArrowRight: 'right', L: 'right', l: 'right',
+ };
 
  const SORT_ORDER_TO_COLUMN = {
    ORDER_BY_MZ: 'mz',
@@ -461,7 +466,7 @@
      },
 
      onKeyDown (event) {
-       const action = KEY_TO_ACTION[event.keyCode];
+       const action = KEY_TO_ACTION[event.key];
        if (action) {
          event.preventDefault();
          return false;
@@ -470,7 +475,7 @@
      },
 
      onKeyUp (event) {
-       const action = KEY_TO_ACTION[event.keyCode];
+       const action = KEY_TO_ACTION[event.key];
        if (!action)
          return;
 
@@ -480,7 +485,7 @@
        const curRow = tblStore.states.currentRow;
        const curIdx = this.annotations.indexOf(curRow);
 
-       if (action == 'up' && curIdx == 0) {
+       if (action === 'up' && curIdx === 0) {
          if (this.currentPage === 1)
            return;
          this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, data.length - 1)); };
@@ -488,11 +493,23 @@
          return;
        }
 
-       if (action == 'down' && curIdx == this.annotations.length - 1) {
+       if (action === 'down' && curIdx === this.annotations.length - 1) {
          if (this.currentPage === this.numberOfPages)
            return;
          this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, 0)); };
          this.currentPage += 1;
+         return;
+       }
+
+       if (action === 'left') {
+         this.currentPage = Math.max(1, this.currentPage - 1);
+         this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, Math.min(curIdx, data.length-1))); };
+         return;
+       }
+
+       if (action === 'right') {
+         this.currentPage = Math.min(this.numberOfPages, this.currentPage + 1);
+         this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, Math.min(curIdx, data.length-1))); };
          return;
        }
 
