@@ -4,6 +4,7 @@ from collections import MutableMapping, defaultdict
 from functools import wraps
 from time import sleep
 
+import numpy as np
 import pandas as pd
 from elasticsearch import ConflictError, Elasticsearch, ElasticsearchException, NotFoundError
 from elasticsearch.client import IndicesClient, IngestClient
@@ -347,6 +348,7 @@ class ESExporter:
 
     @staticmethod
     def _add_isomer_fields_to_anns(ann_docs):
+        # isomer_groups' key is an ion_formula (e.g. "C1H2"), value is an ion (e.g. "C1H1+H+")
         isomer_groups = defaultdict(list)
         isomer_comp_counts = defaultdict(int)
         missing_ion_formulas = []
@@ -368,6 +370,31 @@ class ESExporter:
             logger.warning(
                 f'Missing ion formulas {len(missing_ion_formulas)}: {missing_ion_formulas[:20]}'
             )
+
+    @staticmethod
+    def _add_isobar_fields_to_anns(ann_docs, ds_doc):
+        ann_mzs = []
+
+        for doc in ann_docs:
+            for peak_n, mz in enumerate(doc['centroid_mzs'], 1):  # pylint: disable=invalid-name
+                ann_mzs.append((doc, peak_n, mz, doc['msm'], doc['ion'], doc['ion_formula'] or ''))
+
+        mzs_df = pd.DataFrame(ann_mzs, columns=['doc', 'peak_n', 'mz', 'msm', 'ion', 'ion_formula'])
+        mzs_df = mzs_df.sort_values('mz').reset_index()
+
+        # After feature/analysis_version_2 is merged, use this code instead:
+        # mzs_df['lower_mz'], mzs_df['upper_mz'] = isocalc.mass_accuracy_bounds(mzs_df['mz'])
+        ppm = ds_doc['ds_config']['image_generation']['ppm']
+        mzs_df['lower_mz'] = mzs_df['mz'] - mzs_df['mz'] * ppm * 1e-6
+        mzs_df['upper_mz'] = mzs_df['mz'] + mzs_df['mz'] * ppm * 1e-6
+        mzs_df['lower_idx'] = np.searchsorted(mzs_df.mz.values, mzs_df.lower_mz.values, 'l')
+        mzs_df['upper_idx'] = np.searchsorted(mzs_df.mz.values, mzs_df.upper_mz.values, 'r')
+
+        for row in mzs_df[mzs_df.peak_n == 1].itertuples(index=False):
+            isobars = mzs_df.iloc[row.lower_idx : row.upper_idx].sort_values('msm', ascending=False)
+            isobars = isobars[isobars.ion_formula != row.ion_formula]  # exclude self & isomers
+            isobars_dict = isobars[['ion_formula', 'ion', 'peak_n', 'mz', 'msm']].to_dict('records')
+            row.doc['isobars'] = isobars_dict
 
     def _index_ds_annotations(self, ds_id, mol_db, ds_doc, isocalc):
         annotation_docs = self._db.select_with_fields(ANNOTATIONS_SEL, params=(ds_id, mol_db.id))
@@ -393,6 +420,7 @@ class ESExporter:
             annotation_counts[fdr] += 1
 
         self._add_isomer_fields_to_anns(annotation_docs)
+        self._add_isobar_fields_to_anns(annotation_docs, ds_doc)
         to_index = []
         for doc in annotation_docs:
             to_index.append(
