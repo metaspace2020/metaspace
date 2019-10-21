@@ -117,6 +117,7 @@
               <span class="cell-span">
                   {{ formatMZ(props.row) }}
               </span>
+              <isobars-alert v-if="props.row.isobars.length > 0" :isobars="props.row.isobars" />
               <img src="../../assets/filter-icon.png"
                    @click="filterMZ(props.row)"
                    title="Limit results to this m/z (with 5 ppm tolerance)"/>
@@ -217,6 +218,7 @@
   import {renderMolFormulaHtml} from '../../util';
  import ProgressButton from './ProgressButton.vue';
   import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue';
+  import IsobarsAlert from './annotation-widgets/IsobarsAlert.vue';
  import {
    annotationListQuery,
    tableExportQuery
@@ -252,6 +254,7 @@
    components: {
      ProgressButton,
      CandidateMoleculesPopover,
+     IsobarsAlert,
    },
    data () {
      return {

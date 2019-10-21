@@ -1,53 +1,21 @@
 <template>
 <div>
-    <el-row id="scores-table">
-        <div class="msm-score-calc">
-            MSM score =
-            <span>{{ annotation.msmScore.toFixed(3) }}</span> =
-            <span>{{ annotation.rhoSpatial.toFixed(3) }}</span>
-            (&rho;<sub>spatial</sub>) &times;
-            <span>{{ annotation.rhoSpectral.toFixed(3) }}</span>
-            (&rho;<sub>spectral</sub>) &times;
-            <span>{{ annotation.rhoChaos.toFixed(3) }}</span>
-            (&rho;<sub>chaos</sub>)
+    <div v-for="grp in annotationGroups">
+        <div v-if="grp.isReference">
+            <h4>Current annotation</h4>
         </div>
-        <div v-if="showOffSample">
-            <el-popover trigger="hover" :open-delay="100">
-                Image analysis gave an off-sample probability of {{formattedOffSampleProb}}.
-                <span slot="reference" :class="annotation.offSample ? 'off-sample-tag' : 'on-sample-tag'">
-                    {{annotation.offSample ? 'Off-sample' : 'On-sample'}}
-                </span>
-            </el-popover>
+        <div v-else>
+            Potential misclassification of the {{formatPeakN(grp.peakN)}} peak of:
+            <h4 v-for="ann in grp.annotations" v-html="renderMolFormulaHtml(ann.ion)" />
         </div>
-    </el-row>
-    <el-row id="isotope-images-container">
-        <el-col :xs="24" :sm="12" :md="12" :lg="6"
-                v-for="(img, idx) in sortedIsotopeImages"
-                :key="annotation.id + idx">
-            <div class="small-peak-image">
-            {{ img.mz.toFixed(4) }}<br/>
-                <image-loader :src="img.url"
-                              :colormap="colormap"
-                              :imageFitParams="{areaMinHeight: 50, areaHeight: 250}"
-                              v-bind="imageLoaderSettings"
-                              style="overflow: hidden"
-                              :minIntensity="img.minIntensity"
-                              :maxIntensity="img.maxIntensity"
-                              showPixelIntensity
-                />
-            </div>
-        </el-col>
-    </el-row>
-    <el-row id="isotope-plot-container">
-        <isotope-pattern-plot :data="peakChartData"
-                              :isotopeColors="Array(annotation.isotopeImages.length).fill(sampleIsotopeColor)"
-                              :theorColor="theorIsotopeColor">
-        </isotope-pattern-plot>
-    </el-row>
-    <el-row>
-        <plot-legend :items="isotopeLegendItems">
-        </plot-legend>
-    </el-row>
+        <diagnostics-row
+          :annotation="grp.annotations[0]"
+          :peakChartData="grp.peakChartData"
+          :colormap="colormap"
+          :imageLoaderSettings="imageLoaderSettings"
+        />
+    </div>
+    <div v-if="loading" v-loading style="height: 200px" />
 </div>
 </template>
 
@@ -55,19 +23,35 @@
 import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
 
-import ImageLoader from '../../../../components/ImageLoader.vue';
-import PlotLegend from '../PlotLegend.vue';
-import IsotopePatternPlot from '../IsotopePatternPlot.vue';
-import {sortBy} from 'lodash-es';
-import config from '../../../../config'
+import DiagnosticsRow from './DiagnosticsRow.vue';
+import {groupBy, intersection, sortBy, xor} from 'lodash-es';
+import {isobarsQuery} from '../../../../api/annotation';
+import { renderMolFormulaHtml } from '../../../../util';
+import safeJsonParse from '../../../../lib/safeJsonParse';
 
-@Component({
+@Component<Diagnostics>({
     name: 'diagnostics',
     components: {
-        ImageLoader,
-        PlotLegend,
-        IsotopePatternPlot
-    }
+        DiagnosticsRow,
+    },
+    apollo: {
+        isobarAnnotations: {
+            query: isobarsQuery,
+            loadingKey: 'loading',
+            skip() {
+                return !this.hasIsobars;
+            },
+            variables() {
+                return {
+                    datasetId: this.annotation.dataset.id,
+                    ionFormula: this.annotation.ionFormula,
+                };
+            },
+            update(data) {
+                return data.allAnnotations;
+            }
+        },
+    },
 })
 export default class Diagnostics extends Vue {
     @Prop()
@@ -79,33 +63,56 @@ export default class Diagnostics extends Vue {
     @Prop()
     imageLoaderSettings: any
 
-    sampleIsotopeColor: string = 'red'
-    theorIsotopeColor: string = 'blue'
+    loading = 0
+    isobarAnnotations: any[] = []
+    renderMolFormulaHtml = renderMolFormulaHtml;
 
-    get isotopeLegendItems(): any[] {
-        return this.annotation ? [{name: 'Sample', color: this.sampleIsotopeColor, opacity: 1},
-                                  {name: 'Theoretical', color: this.theorIsotopeColor, opacity: 0.6}]
-                               : [];
-    }
-
-    get sortedIsotopeImages(): any[] {
-        // Usually isotope images are pre-sorted by the server, but it's not an explicit guarantee of the API
-        return sortBy(this.annotation.isotopeImages, img => img.mz)
-          .filter(img => img.mz > 0);
-    }
-
-    get showOffSample(): boolean {
-        return config.features.off_sample && this.annotation.offSample != null;
-    }
-
-    get formattedOffSampleProb(): string {
-        if (this.annotation.offSampleProb < 0.1) {
-            return 'less than 10%';
-        } else if (this.annotation.offSampleProb > 0.9) {
-            return 'greater than 90%';
-        } else {
-            return (+this.annotation.offSampleProb * 100).toFixed(0) + '%'
+    get annotationGroups() {
+        const allAnnotations = [this.annotation, ...(this.loading ? [] : this.isobarAnnotations)];
+        const isobarsByIonFormula = groupBy(this.annotation.isobars, 'ionFormula');
+        const isobarsKeys = [this.annotation.ionFormula, ...Object.keys(isobarsByIonFormula)];
+        const annotationsByIonFormula = groupBy(allAnnotations, 'ionFormula');
+        const annotationsKeys = Object.keys(annotationsByIonFormula);
+        // isobarsByIonFormula and annotationsByIonFormula should line up, but do an inner join just to be safe
+        const ionFormulas = intersection(isobarsKeys, annotationsKeys);
+        const missingIonFormulas = xor(isobarsKeys, annotationsKeys);
+        if (!this.loading && missingIonFormulas.length > 0) {
+            console.error('Inconsistent annotations between Annotation.isobars and isobaricWith query results.',
+              Object.keys(isobarsByIonFormula), Object.keys(annotationsByIonFormula), this.annotation.id)
         }
+
+        const groups = ionFormulas.map(ionFormula => {
+            const isReference = ionFormula === this.annotation.ionFormula;
+            const isobars = isobarsByIonFormula[ionFormula];
+            const annotations = annotationsByIonFormula[ionFormula];
+            return {
+                ionFormula, isReference, annotations,
+                peakN: isReference ? 1 : isobars[0].peakN,
+                peakChartData: isReference ? this.peakChartData : safeJsonParse(annotations[0].peakChartData)
+            }
+        });
+
+        return sortBy(groups, [
+          grp => grp.isReference ? 0 : 1,
+          grp => -grp.annotations[0].msm
+        ]);
+    }
+
+    get hasIsobars() {
+        return this.annotation.isobars.length != 0;
+    }
+
+    formatPeakN(peakN: number) {
+        if (peakN === 1) {
+            return '1st';
+        } else if (peakN === 2) {
+            return '2nd';
+        } else if (peakN === 2) {
+            return '3rd';
+        } else {
+            return `${peakN}th`
+        }
+
     }
 }
 </script>

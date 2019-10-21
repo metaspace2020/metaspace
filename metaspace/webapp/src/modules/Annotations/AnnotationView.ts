@@ -73,15 +73,7 @@
        update: (data: any) => {
          const {annotation} = data;
          if (annotation != null) {
-           const chart = safeJsonParse(annotation.peakChartData);
-           const isotopes = annotation.isotopeImages.filter((im: any) => im.mz > 0);
-           return {
-             ...chart,
-             sampleData: {
-               mzs: isotopes.map((im: any) => im.mz),
-               ints: isotopes.map((im: any) => im.totalIntensity),
-             },
-           };
+           return safeJsonParse(annotation.peakChartData);
          } else {
            return null;
          }

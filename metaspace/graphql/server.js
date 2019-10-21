@@ -180,7 +180,6 @@ async function createHttpServerAsync(config, connection) {
     credentialsRequired: false,
   }));
 
-  const connection = await createConnection();
   configureCronSchedule(connection.manager);
 
   app.use(bodyParser.json());

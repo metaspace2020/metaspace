@@ -191,6 +191,14 @@ class ESIndexManager:
                         "db_version": {
                             "type": "keyword"
                         },  # Prevent "YYYY-MM"-style DB versions from being parsed as dates
+                        "isobars.ion": {"type": "keyword", "include_in_all": False},
+                        "isobars.ion_formula": {"type": "keyword", "include_in_all": False},
+                        # inverse_isobar_ion_formulas exists because the isobar relationship is
+                        # asymmetric. Isobars are only reported against an annotation if that
+                        # annotation's 1st peak conflicts against any peak from another annotation.
+                        # e.g. if annotation A's 4th peak conflicts with annotation B's 1st peak,
+                        # then only annotation B is reported to have an isobar.
+                        "inverse_isobar_ion_formulas": {"type": "keyword", "include_in_all": False},
                     },
                 },
             },
@@ -376,6 +384,7 @@ class ESExporter:
         ann_mzs = []
 
         for doc in ann_docs:
+            doc['inverse_isobar_ion_formulas'] = []
             for peak_n, mz in enumerate(doc['centroid_mzs'], 1):  # pylint: disable=invalid-name
                 ann_mzs.append((doc, peak_n, mz, doc['msm'], doc['ion'], doc['ion_formula'] or ''))
 
@@ -395,6 +404,9 @@ class ESExporter:
             isobars = isobars[isobars.ion_formula != row.ion_formula]  # exclude self & isomers
             isobars_dict = isobars[['ion_formula', 'ion', 'peak_n', 'mz', 'msm']].to_dict('records')
             row.doc['isobars'] = isobars_dict
+            for isobar_doc in isobars.doc:
+                if row.ion_formula not in isobar_doc['inverse_isobar_ion_formulas']:
+                    isobar_doc['inverse_isobar_ion_formulas'].append(row.ion_formula)
 
     def _index_ds_annotations(self, ds_id, mol_db, ds_doc, isocalc):
         annotation_docs = self._db.select_with_fields(ANNOTATIONS_SEL, params=(ds_id, mol_db.id))

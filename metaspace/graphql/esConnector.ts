@@ -52,6 +52,14 @@ export interface ESDatasetSource {
   annotation_counts: any[];
 }
 
+export interface Isobar {
+  ion: string;
+  ion_formula: string;
+  peak_n: number;
+  mz: number;
+  msm: number;
+}
+
 export interface ESAnnotationSource extends ESDatasetSource {
   job_id: number;
   db_name: string;
@@ -81,6 +89,8 @@ export interface ESAnnotationSource extends ESDatasetSource {
   comp_names: string[];
   comps_count_with_isomers?: number;
   isomer_ions: string[];
+  isobars?: Isobar[];
+  inverse_isobar_ion_formulas?: string[]
 
   off_sample_prob?: number;
   off_sample_label?: 'on' | 'off';
@@ -217,7 +227,7 @@ function constructAnnotationFilters(filter: AnnotationFilter & ExtraAnnotationFi
   const {
     database, datasetName, mzFilter, msmScoreFilter, fdrLevel,
     sumFormula, chemMod, neutralLoss, adduct, ion, ionFormula, offSample, compoundQuery, annId,
-    hasNeutralLoss, hasChemMod, hasHiddenAdduct
+    isobaricWith, hasNeutralLoss, hasChemMod, hasHiddenAdduct
   } = filter;
   const filters = [];
 
@@ -263,6 +273,9 @@ function constructAnnotationFilters(filter: AnnotationFilter & ExtraAnnotationFi
   }
   if (ionFormula != null) {
     filters.push(constructTermOrTermsFilter('ion_formula', ionFormula));
+  }
+  if (isobaricWith != null) {
+    filters.push(constructTermOrTermsFilter('inverse_isobar_ion_formulas', isobaricWith))
   }
 
   if (compoundQuery) {

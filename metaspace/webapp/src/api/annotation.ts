@@ -46,6 +46,10 @@ gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrde
         isomers {
           ion
         }
+        isobars {
+          ionFormula
+          peakN
+        }
         countPossibleCompounds(includeIsomers: $countIsomerCompounds)
         possibleCompounds {
           name
@@ -102,10 +106,6 @@ gql`query GetAnnotation($id: String!) {
     annotation(id: $id) {
       id
       peakChartData
-      isotopeImages {
-        mz
-        totalIntensity
-      }
     }
   }`;
 
@@ -147,6 +147,39 @@ export const relatedMoleculesQuery =
       id
       ion
       fdrLevel
+      possibleCompounds {
+        name
+        imageURL
+        information {
+          database
+          url
+        }
+      }
+    }
+  }`;
+
+export const isobarsQuery =
+  gql`query IsobarsQuery($datasetId: String!, $ionFormula: String!) {
+    allAnnotations(datasetFilter: { ids: $datasetId }, filter: { isobaricWith: $ionFormula }, 
+                   orderBy: ORDER_BY_FDR_MSM, sortingOrder: ASCENDING) {
+      id
+      ion
+      ionFormula
+      mz
+      fdrLevel
+      msmScore
+      rhoSpatial
+      rhoSpectral
+      rhoChaos
+      offSample
+      peakChartData
+      isotopeImages {
+        mz
+        url
+        minIntensity
+        maxIntensity
+        totalIntensity
+      }
       possibleCompounds {
         name
         imageURL
