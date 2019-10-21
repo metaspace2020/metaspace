@@ -50,18 +50,25 @@ def populate_ions(db):
 
 
 def populate_ion_id(db):
+    CHUNK_SIZE = 100
     logger.info("Linking ions to annotation table")
-    db.alter(
-        "UPDATE annotation SET ion_id = ion.id "
-        "FROM graphql.ion, job, dataset "
-        "WHERE annotation.job_id = job.id "
-        "AND job.ds_id = dataset.id "
-        "AND annotation.formula = ion.formula "
-        "AND annotation.chem_mod = ion.chem_mod "
-        "AND annotation.neutral_loss = ion.neutral_loss "
-        "AND annotation.adduct = ion.adduct "
-        "AND (dataset.config->'isotope_generation'->>'charge')::int = ion.charge"
-    )
+    ds_ids = [id for id, in db.select("SELECT id FROM dataset ORDER BY id DESC")]
+    for i in range(0, len(ds_ids), CHUNK_SIZE):
+        print(f'Updating dataset {i} out of {len(ds_ids)}')
+        db.alter(
+            "UPDATE annotation SET ion_id = ion.id "
+            "FROM graphql.ion, job, dataset "
+            "WHERE annotation.job_id = job.id "
+            "AND job.ds_id = dataset.id "
+            "AND dataset.id = ANY(%s) "
+            "AND annotation.formula = ion.formula "
+            "AND annotation.chem_mod = ion.chem_mod "
+            "AND annotation.neutral_loss = ion.neutral_loss "
+            "AND annotation.adduct = ion.adduct "
+            "AND annotation.ion_id != ion.id "
+            "AND (dataset.config->'isotope_generation'->>'charge')::int = ion.charge ",
+            [[ds_ids[i : i + CHUNK_SIZE]]],
+        )
 
 
 def main():
