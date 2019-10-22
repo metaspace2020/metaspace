@@ -117,7 +117,7 @@
               <span class="cell-span">
                   {{ formatMZ(props.row) }}
               </span>
-              <isobars-alert v-if="props.row.isobars.length > 0" :isobars="props.row.isobars" />
+              <isobars-alert :annotation="props.row" :isobars="props.row.isobars" />
               <img src="../../assets/filter-icon.png"
                    @click="filterMZ(props.row)"
                    title="Limit results to this m/z (with 5 ppm tolerance)"/>

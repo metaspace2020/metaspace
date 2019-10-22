@@ -5,7 +5,7 @@
             <h4>Current annotation</h4>
         </div>
         <div v-else>
-            Potential misclassification of the {{formatPeakN(grp.peakN)}} peak of:
+            Potential misclassification of the {{formatPeakNs(grp.peakNs)}} peak of:
             <h4 v-for="ann in grp.annotations" v-html="renderMolFormulaHtml(ann.ion)" />
         </div>
         <diagnostics-row
@@ -87,7 +87,7 @@ export default class Diagnostics extends Vue {
             const annotations = annotationsByIonFormula[ionFormula];
             return {
                 ionFormula, isReference, annotations,
-                peakN: isReference ? 1 : isobars[0].peakN,
+                peakNs: isReference ? 1 : isobars[0].peakNs,
                 peakChartData: isReference ? this.peakChartData : safeJsonParse(annotations[0].peakChartData)
             }
         });
@@ -102,12 +102,23 @@ export default class Diagnostics extends Vue {
         return this.annotation.isobars.length != 0;
     }
 
+    formatPeakNs(peakNs: number[]) {
+        const formatted = peakNs.map(this.formatPeakN);
+        if (formatted.length <= 1) {
+            return formatted[0];
+        } else if (formatted.length === 2) {
+            return formatted.join(' and ');
+        } else {
+            return formatted.slice(0, -1).join(', ') + ' and ' + formatted[formatted.length - 1];
+        }
+    }
+
     formatPeakN(peakN: number) {
         if (peakN === 1) {
             return '1st';
         } else if (peakN === 2) {
             return '2nd';
-        } else if (peakN === 2) {
+        } else if (peakN === 3) {
             return '3rd';
         } else {
             return `${peakN}th`

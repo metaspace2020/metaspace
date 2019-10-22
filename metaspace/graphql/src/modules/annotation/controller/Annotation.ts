@@ -148,8 +148,8 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
 
   isobars(hit) {
     const isobars = hit._source.isobars || [];
-    return isobars.map(({ion, ion_formula, peak_n, mz, msm}) =>
-      ({ ion, ionFormula: ion_formula, peakN: peak_n, mz, msmScore: msm }));
+    return isobars.map(({ion, ion_formula, peak_ns,  msm}) =>
+      ({ ion, ionFormula: ion_formula, peakNs: peak_ns, msmScore: msm }));
   },
 
   async colocalizationCoeff(hit, args: {colocalizationCoeffFilter: ColocalizationCoeffFilter | null}, context) {

@@ -48,7 +48,8 @@ gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrde
         }
         isobars {
           ionFormula
-          peakN
+          peakNs
+          msmScore
         }
         countPossibleCompounds(includeIsomers: $countIsomerCompounds)
         possibleCompounds {

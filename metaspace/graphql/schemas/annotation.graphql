@@ -69,8 +69,7 @@ type IsomerAnnotation {
 type IsobarAnnotation {
   ion: String!
   ionFormula: String!
-  peakN: Int!
-  mz: Float!
+  peakNs: [Int!]!
   msmScore: Float!
 }
 

@@ -55,9 +55,8 @@ export interface ESDatasetSource {
 export interface Isobar {
   ion: string;
   ion_formula: string;
-  peak_n: number;
-  mz: number;
   msm: number;
+  peak_ns: number[];
 }
 
 export interface ESAnnotationSource extends ESDatasetSource {

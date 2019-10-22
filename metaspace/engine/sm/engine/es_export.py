@@ -384,11 +384,25 @@ class ESExporter:
         ann_mzs = []
 
         for doc in ann_docs:
+            doc['isobars'] = []
             doc['inverse_isobar_ion_formulas'] = []
             for peak_n, mz in enumerate(doc['centroid_mzs'], 1):  # pylint: disable=invalid-name
-                ann_mzs.append((doc, peak_n, mz, doc['msm'], doc['ion'], doc['ion_formula'] or ''))
+                if mz != 0:
+                    ann_mzs.append(
+                        (
+                            doc['annotation_id'],
+                            doc,
+                            peak_n,
+                            mz,
+                            doc['msm'],
+                            doc['ion'],
+                            doc['ion_formula'] or '',
+                        )
+                    )
 
-        mzs_df = pd.DataFrame(ann_mzs, columns=['doc', 'peak_n', 'mz', 'msm', 'ion', 'ion_formula'])
+        mzs_df = pd.DataFrame(
+            ann_mzs, columns=['id', 'doc', 'peak_n', 'mz', 'msm', 'ion', 'ion_formula']
+        )
         mzs_df = mzs_df.sort_values('mz').reset_index()
 
         # After feature/analysis_version_2 is merged, use this code instead:
@@ -396,17 +410,40 @@ class ESExporter:
         ppm = ds_doc['ds_config']['image_generation']['ppm']
         mzs_df['lower_mz'] = mzs_df['mz'] - mzs_df['mz'] * ppm * 1e-6
         mzs_df['upper_mz'] = mzs_df['mz'] + mzs_df['mz'] * ppm * 1e-6
-        mzs_df['lower_idx'] = np.searchsorted(mzs_df.mz.values, mzs_df.lower_mz.values, 'l')
-        mzs_df['upper_idx'] = np.searchsorted(mzs_df.mz.values, mzs_df.upper_mz.values, 'r')
+        mzs_df['lower_idx'] = np.searchsorted(mzs_df.upper_mz.values, mzs_df.lower_mz.values, 'l')
+        mzs_df['upper_idx'] = np.searchsorted(mzs_df.lower_mz.values, mzs_df.upper_mz.values, 'r')
 
-        for row in mzs_df[mzs_df.peak_n == 1].itertuples(index=False):
-            isobars = mzs_df.iloc[row.lower_idx : row.upper_idx].sort_values('msm', ascending=False)
-            isobars = isobars[isobars.ion_formula != row.ion_formula]  # exclude self & isomers
-            isobars_dict = isobars[['ion_formula', 'ion', 'peak_n', 'mz', 'msm']].to_dict('records')
-            row.doc['isobars'] = isobars_dict
-            for isobar_doc in isobars.doc:
-                if row.ion_formula not in isobar_doc['inverse_isobar_ion_formulas']:
-                    isobar_doc['inverse_isobar_ion_formulas'].append(row.ion_formula)
+        for _, peak_rows in mzs_df.groupby('id'):
+            doc = peak_rows.doc.iloc[0]
+            overlaps = []
+            # Collect all other annotations that have any overlap with this annotation
+            for peak_row in peak_rows.itertuples():
+                peak_overlaps = mzs_df.iloc[peak_row.lower_idx : peak_row.upper_idx]
+                # exclude self & isomers
+                peak_overlaps = peak_overlaps[lambda df: df.ion_formula != peak_row.ion_formula]
+                peak_overlaps['overlaps_peak_n'] = peak_row.peak_n
+                overlaps.append(peak_overlaps)
+
+            # Add a list of other annotations where either the first peak has overlap,
+            # or there are multiple peaks that overlap.
+            for _, overlap_rows in pd.concat(overlaps).groupby('id'):
+                overlap_doc = overlap_rows.doc.iloc[0]
+                peak_ns = sorted(overlap_rows.peak_n.values.tolist())
+                if len(overlap_rows) > 1 or 1 in peak_ns:
+                    if len(overlap_rows) > 1:
+                        print(
+                            ds_doc['ds_id'], 'has isobar', doc['ion'], overlap_doc['ion'], peak_ns
+                        )
+                    doc['isobars'].append(
+                        {
+                            'ion_formula': overlap_doc['ion_formula'],
+                            'ion': overlap_doc['ion'],
+                            'msm': overlap_doc['msm'],
+                            'peak_ns': peak_ns,
+                        }
+                    )
+                    if doc['ion_formula'] not in overlap_doc['inverse_isobar_ion_formulas']:
+                        overlap_doc['inverse_isobar_ion_formulas'].append(doc['ion_formula'])
 
     def _index_ds_annotations(self, ds_id, mol_db, ds_doc, isocalc):
         annotation_docs = self._db.select_with_fields(ANNOTATIONS_SEL, params=(ds_id, mol_db.id))
