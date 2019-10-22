@@ -54,6 +54,12 @@ export class Project {
   @Column({ type: 'text', nullable: true })
   reviewToken: string | null;
 
+  @Column({ type: 'timestamp without time zone', default: null, transformer: new MomentValueTransformer() })
+  reviewTokenCreatedDT: Moment | null;
+
+  @Column({ type: 'int', default: 0 })
+  publishNotificationsSent: number;
+
   @Column({ type: 'text', enum: Object.keys(PSO), default: PSO.UNPUBLISHED })
   publicationStatus: PublicationStatus;
 }

@@ -7,14 +7,13 @@ import {
 import {PublicationStatusOptions as PSO} from '../PublicationStatusOptions';
 import {UserError} from 'graphql-errors';
 import {FieldResolversFor, ProjectSource, ScopeRoleOptions as SRO, UserProjectSource} from '../../../bindingTypes';
-import {Mutation, PublicationStatus} from '../../../binding';
+import {Mutation} from '../../../binding';
 import {ProjectSourceRepository} from '../ProjectSourceRepository';
 import {DatasetProject as DatasetProjectModel} from '../../dataset/model';
 import updateUserProjectRole from '../operation/updateUserProjectRole';
 import {convertUserToUserSource} from '../../user/util/convertUserToUserSource';
 import {createInactiveUser} from '../../auth/operation';
 import updateProjectDatasets from '../operation/updateProjectDatasets';
-import updateDatasetsPublicationStatus from '../operation/updateDatasetsPublicationStatus';
 import {User as UserModel} from '../../user/model';
 import config from '../../../utils/config';
 import {sendInvitationEmail} from '../../auth';
@@ -23,6 +22,7 @@ import {sendAcceptanceEmail, sentGroupOrProjectInvitationEmail, sendRequestAcces
 import {smAPIUpdateDataset} from '../../../utils/smAPI';
 import {getDatasetForEditing} from '../../dataset/operation/getDatasetForEditing';
 import * as crypto from 'crypto';
+import {utc} from 'moment';
 
 
 const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
@@ -54,7 +54,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     await ctx.entityManager.getRepository(UserProjectModel)
       .insert({
         projectId: newProject.id,
-        userId: ctx.user!.id,
+        userId,
         role: UPRO.MANAGER,
       });
     const project = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
@@ -69,18 +69,16 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
   async updateProject(source, { projectId, projectDetails }, ctx): Promise<ProjectSource> {
     await asyncAssertCanEditProject(ctx, projectId);
 
-    if (projectDetails.urlSlug !== undefined && !ctx.isAdmin) {
-      throw new UserError('urlSlug can only be set by METASPACE administrators');
-    }
-
     const projectRepository = ctx.entityManager.getRepository(ProjectModel);
     let project = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, projectId);
     if (project == null) {
       throw new UserError(`Not found project ${projectId}`);
     }
-    if (project.publicationStatus == PSO.PUBLISHED && projectDetails.isPublic == false) {
-      throw new UserError(`Cannot modify project ${projectId} as it is in ${project.publicationStatus} status`);
+    if (!ctx.isAdmin) {
+      if (project.publicationStatus == PSO.PUBLISHED && projectDetails.isPublic == false) {
+        throw new UserError(`Cannot modify project ${projectId} as it is in ${project.publicationStatus} status`);
+      }
     }
 
     await projectRepository.update(projectId, projectDetails);
@@ -110,7 +108,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     const project = await projectRepository.findOne({ id: projectId });
 
     if (project) {
-      if (project.publicationStatus == PSO.UNPUBLISHED) {
+      if (project.publicationStatus == PSO.UNPUBLISHED || ctx.isAdmin) {
         const affectedDatasets = await ctx.entityManager.getRepository(DatasetProjectModel)
           .find({where: { projectId }, relations: ['dataset', 'dataset.datasetProjects']});
         await ctx.entityManager.getRepository(DatasetProjectModel).delete({ projectId });
@@ -230,10 +228,14 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     const projectRepository = ctx.entityManager.getRepository(ProjectModel);
     const projectDetails = {
       reviewToken: generateRandomToken(),
+      reviewTokenCreatedDT: utc(),
       publicationStatus: PSO.UNDER_REVIEW,
     };
     await projectRepository.update(projectId, projectDetails);
-    await updateDatasetsPublicationStatus(ctx, projectId, PSO.UNDER_REVIEW);
+    const project = await projectRepository.findOneOrFail(projectId),
+      newPublicationStatus = project.publicationStatus == PSO.PUBLISHED ? PSO.PUBLISHED : PSO.UNDER_REVIEW;
+    await ctx.entityManager.getRepository(DatasetProjectModel)
+      .update({ projectId }, { publicationStatus: newPublicationStatus });
 
     return await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, projectId) as ProjectSource;
@@ -243,11 +245,32 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     await asyncAssertCanEditProject(ctx, projectId);
 
     const projectRepository = ctx.entityManager.getRepository(ProjectModel);
-    await projectRepository.update({ id: projectId },
-      { reviewToken: null, publicationStatus: PSO.UNPUBLISHED });
-    await updateDatasetsPublicationStatus(ctx, projectId, PSO.UNPUBLISHED);
+    const project = await projectRepository.findOneOrFail(projectId);
+    const newPublicationStatus = project.publicationStatus == PSO.PUBLISHED ? PSO.PUBLISHED : PSO.UNPUBLISHED;
+    await projectRepository.update(projectId,
+      { reviewToken: null, reviewTokenCreatedDT: null, publicationStatus: newPublicationStatus });
+    await ctx.entityManager.getRepository(DatasetProjectModel)
+      .update({ projectId }, { publicationStatus: newPublicationStatus });
     return true;
-  }
+  },
+
+  async publishProject(source, {projectId}, ctx): Promise<ProjectSource> {
+    await asyncAssertCanEditProject(ctx, projectId);
+
+    await ctx.entityManager.update(ProjectModel, projectId,
+      { publicationStatus: PSO.PUBLISHED, isPublic: true });
+    const datasetProjectRepository = await ctx.entityManager.getRepository(DatasetProjectModel);
+    datasetProjectRepository.update({ projectId }, { publicationStatus: PSO.PUBLISHED });
+
+    const affectedDatasets = await datasetProjectRepository.find(
+      { where: { projectId }, relations: ['dataset', 'dataset.datasetProjects'] });
+    await Promise.all(affectedDatasets.map(async dp => {
+      await smAPIUpdateDataset(dp.datasetId, { isPublic: true });
+    }));
+
+    return await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
+      .findProjectById(ctx.user, projectId) as ProjectSource;
+  },
 };
 
 export default MutationResolvers;
