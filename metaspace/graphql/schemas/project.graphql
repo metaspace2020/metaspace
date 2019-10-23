@@ -91,4 +91,5 @@ type Mutation {
 
   # Project publishing
   publishProject(projectId: ID!): Project!
+  unpublishProject(projectId: ID!, isPublic: Boolean): Project!  # for admins only
 }

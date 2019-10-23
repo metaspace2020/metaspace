@@ -95,11 +95,11 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     if (project != null) {
       return project;
     } else {
-      throw Error(`Project became invisible to user after update ${projectId}`);
+      throw new UserError(`Project became invisible to user after update ${projectId}`);
     }
   },
 
-  async deleteProject(source, { projectId }, ctx): Promise<Boolean> {
+  async deleteProject(source, { projectId }, ctx: Context): Promise<Boolean> {
     await asyncAssertCanEditProject(ctx, projectId);
 
     const projectRepository = ctx.entityManager.getRepository(ProjectModel);
@@ -132,13 +132,13 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     return true;
   },
 
-  async removeUserFromProject(source, { projectId, userId }, ctx): Promise<Boolean> {
+  async removeUserFromProject(source, { projectId, userId }, ctx: Context): Promise<Boolean> {
     await updateUserProjectRole(ctx, userId, projectId, null);
 
     return true;
   },
 
-  async requestAccessToProject(source, { projectId }, ctx): Promise<UserProjectSource> {
+  async requestAccessToProject(source, { projectId }, ctx: Context): Promise<UserProjectSource> {
     const userId = ctx.getUserIdOrFail();
     await updateUserProjectRole(ctx, userId, projectId, UPRO.PENDING);
     const userProject = await ctx.entityManager.findOneOrFail(UserProjectModel,
@@ -188,7 +188,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     return { ...userProject, user: convertUserToUserSource(userProject.user, SRO.OTHER) };
   },
 
-  async acceptProjectInvitation(source, { projectId }, ctx): Promise<UserProjectSource> {
+  async acceptProjectInvitation(source, { projectId }, ctx: Context): Promise<UserProjectSource> {
     const userId = ctx.getUserIdOrFail();
     await updateUserProjectRole(ctx, userId, projectId, UPRO.MEMBER);
     const userProject = await ctx.entityManager.findOneOrFail(UserProjectModel,
@@ -196,13 +196,13 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     return { ...userProject, user: convertUserToUserSource(userProject.user, SRO.OTHER) };
   },
 
-  async updateUserProject(source, {projectId, userId, update}, ctx): Promise<boolean> {
+  async updateUserProject(source, { projectId, userId, update }, ctx: Context): Promise<boolean> {
     await asyncAssertCanEditProject(ctx, projectId);
     await updateUserProjectRole(ctx, userId, projectId, update.role || null);
     return true;
   },
 
-  async importDatasetsIntoProject(source, { projectId, datasetIds }, ctx): Promise<Boolean> {
+  async importDatasetsIntoProject(source, { projectId, datasetIds }, ctx: Context): Promise<Boolean> {
     const userProjectRole = (await ctx.user.getProjectRoles())[projectId];
     if (userProjectRole == null) {
       throw new UserError('Not a member of project');
@@ -220,7 +220,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     return true;
   },
 
-  async createReviewLink(source, {projectId}, ctx): Promise<ProjectSource> {
+  async createReviewLink(source, { projectId }, ctx: Context): Promise<ProjectSource> {
     await asyncAssertCanEditProject(ctx, projectId);
 
     const projectRepository = ctx.entityManager.getRepository(ProjectModel);
@@ -239,7 +239,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       .findProjectById(ctx.user, projectId) as ProjectSource;
   },
 
-  async deleteReviewLink(source, {projectId}, ctx): Promise<Boolean> {
+  async deleteReviewLink(source, { projectId }, ctx: Context): Promise<Boolean> {
     await asyncAssertCanEditProject(ctx, projectId);
 
     const projectRepository = ctx.entityManager.getRepository(ProjectModel);
@@ -252,7 +252,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     return true;
   },
 
-  async publishProject(source, {projectId}, ctx): Promise<ProjectSource> {
+  async publishProject(source, { projectId }, ctx: Context): Promise<ProjectSource> {
     await asyncAssertCanEditProject(ctx, projectId);
 
     await ctx.entityManager.update(ProjectModel, projectId,
@@ -265,6 +265,30 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     await Promise.all(affectedDatasets.map(async dp => {
       await smAPIUpdateDataset(dp.datasetId, { isPublic: true });
     }));
+
+    return await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
+      .findProjectById(ctx.user, projectId) as ProjectSource;
+  },
+
+  async unpublishProject(source, { projectId, isPublic }, ctx: Context): Promise<ProjectSource> {
+    if (!ctx.isAdmin) {
+      throw new UserError('Unauthorized');
+    }
+
+    const projectRepository = await ctx.entityManager.getRepository(ProjectModel),
+      project = await projectRepository.findOneOrFail(projectId),
+      newPublicationStatus = project.reviewToken ? PSO.UNDER_REVIEW : PSO.UNPUBLISHED;
+    await projectRepository.update(projectId, { publicationStatus: newPublicationStatus, isPublic });
+    await ctx.entityManager.update(DatasetProjectModel,
+      { projectId }, { publicationStatus: newPublicationStatus });
+
+    if (isPublic != null) {
+      const affectedDatasets = await ctx.entityManager.find(DatasetProjectModel,
+        { where: { projectId }, relations: ['dataset', 'dataset.datasetProjects'] });
+      await Promise.all(affectedDatasets.map(async dp => {
+        await smAPIUpdateDataset(dp.datasetId, { isPublic });
+      }));
+    }
 
     return await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, projectId) as ProjectSource;

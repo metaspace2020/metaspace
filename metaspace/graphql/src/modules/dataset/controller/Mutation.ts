@@ -203,6 +203,7 @@ type CreateDatasetArgs = {
   delFirst?: boolean,        // Only used by reprocess
   skipValidation?: boolean,  // Only used by reprocess
 };
+
 const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
   const {input, priority, force, delFirst, skipValidation} = args;
   const {user, entityManager, isAdmin, getUserIdOrFail} = ctx;
@@ -254,7 +255,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
   reprocessDataset: async (source, { id, priority }, ctx: Context) => {
     const engineDataset = await ctx.entityManager.findOne(EngineDataset, id);
     if (engineDataset === undefined)
-      throw Error('Dataset does not exist');
+      throw new UserError('Dataset does not exist');
 
     return await createDataset({
       datasetId: id,

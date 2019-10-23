@@ -8,6 +8,7 @@ if (require('iterall').$$asyncIterator !== Symbol.asyncIterator) {
 }
 
 
+import {utc} from 'moment';
 import * as bodyParser from 'body-parser';
 import * as compression from 'compression';
 import * as http from 'http';
@@ -23,6 +24,7 @@ import { execute, subscribe, GraphQLError } from 'graphql';
 import {IsUserError} from 'graphql-errors';
 import { SubscriptionServer } from 'subscriptions-transport-ws';
 
+import {sendPublishProjectNotificationEmail} from './src/modules/project/email';
 import {createImgServerAsync} from './src/modules/webServer/imageServer';
 import {configureAuth} from './src/modules/auth';
 import config from './src/utils/config';
@@ -30,6 +32,10 @@ import logger from './src/utils/logger';
 import {createConnection} from './src/utils';
 import {executableSchema} from './executableSchema';
 import getContext from './src/getContext';
+import {
+  Project as ProjectModel,
+  UserProjectRoleOptions as UPRO,
+} from './src/modules/project/model';
 
 const env = process.env.NODE_ENV || 'development';
 
@@ -126,6 +132,40 @@ async function createSubscriptionServerAsync(config) {
   return wsServer;
 }
 
+const configureCronSchedule = (entityManager) => {
+  const CronJob = require('cron').CronJob;
+
+  const emailNotificationsHandler = async () => {
+    try {
+      const nDaysAgo = utc().subtract(180, 'days');
+      const projects = await entityManager.createQueryBuilder('project', 'proj')
+        .where('proj.review_token_created_dt < :nDaysAgo', { nDaysAgo })
+        .andWhere('proj.publish_notifications_sent = :notifications_sent',
+          { notifications_sent: 0 })
+        .leftJoinAndSelect('proj.members', 'member')
+        .andWhere('member.role = :role', { role: UPRO.MANAGER })
+        .leftJoinAndSelect('member.user', 'user')
+        .getMany();
+
+      await Promise.all(
+        projects.map(async project => {
+          project.members.map(member => {
+            sendPublishProjectNotificationEmail(member.user.email, project);
+          });
+          await entityManager.update(ProjectModel, project.id,
+            { publishNotificationsSent: project.publishNotificationsSent + 1 });
+        })
+      );
+    }
+    catch (error) {
+      logger.error(error);
+    }
+  };
+
+  new CronJob('00 43 14 * * 1-5', emailNotificationsHandler, null, true);
+  logger.info('Cron job started');
+};
+
 async function createHttpServerAsync(config) {
   let app = express();
   let httpServer = http.createServer(app);
@@ -141,6 +181,7 @@ async function createHttpServerAsync(config) {
   }));
 
   const connection = await createConnection();
+  configureCronSchedule(connection.manager);
 
   app.use(bodyParser.json());
   configureSession(app);
