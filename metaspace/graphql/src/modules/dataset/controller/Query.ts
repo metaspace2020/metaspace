@@ -1,16 +1,17 @@
 import {DatasetSource, FieldResolversFor, ScopeRoleOptions as SRO} from '../../../bindingTypes';
 import {Mutation, Query} from '../../../binding';
 import {esCountGroupedResults, esCountResults, esDatasetByID, esSearchResults} from '../../../../esConnector';
-import {db} from '../../../utils/knexDb';
 import {Dataset as DatasetModel} from '../model';
 import {UserGroup as UserGroupModel, UserGroupRoleOptions} from '../../group/model';
 import {Context} from '../../../context';
 import {thumbnailOpticalImageUrl} from './Dataset';
 import {applyQueryFilters} from '../../annotation/queryFilters';
+import {EngineDataset, OpticalImage} from '../../engine/model';
+import {rawOpticalImage} from './Dataset';
 
 const resolveDatasetScopeRole = async (ctx: Context, dsId: string) => {
   let scopeRole = SRO.OTHER;
-  if (ctx.user) {
+  if (ctx.user.id) {
     if (dsId) {
       const ds = await ctx.cachedGetEntityById(DatasetModel, dsId);
       if (ds && ds.groupId != null) {
@@ -25,23 +26,6 @@ const resolveDatasetScopeRole = async (ctx: Context, dsId: string) => {
     }
   }
   return scopeRole;
-};
-
-export const rawOpticalImage = async (dsId: string, ctx: Context) => {
-  // TODO: consider moving to Dataset type
-  const ds = await esDatasetByID(dsId, ctx.user);  // check if user has access
-  if (ds) {
-    const row = await (db.from('dataset')
-      .where('id', dsId)
-      .first());
-    if (row && row.optical_image) {
-      return {
-        url: `/fs/raw_optical_images/${row.optical_image}`,
-        transform: row.transform
-      };
-    }
-  }
-  return null;
 };
 
 const QueryResolvers: FieldResolversFor<Query, void> = {
@@ -81,23 +65,21 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     return await esCountGroupedResults(groupArgs, 'dataset', ctx.user);
   },
 
-  async opticalImageUrl(source, {datasetId: dsId, zoom = 1}, ctx) {
+  async opticalImageUrl(source, {datasetId, zoom = 1}, ctx) {
     // TODO: consider moving to Dataset type
-    const ds = await esDatasetByID(dsId, ctx.user);  // check if user has access
-    if (ds) {
+    if (await esDatasetByID(datasetId, ctx.user)) { // check if user has access
       const intZoom = zoom <= 1.5 ? 1 : (zoom <= 3 ? 2 : (zoom <= 6 ? 4 : 8));
       // TODO: manage optical images on the graphql side
-      const row = await (db.from('optical_image')
-        .where('ds_id', dsId)
-        .where('zoom', intZoom)
-        .first());
-      return (row) ? `/fs/optical_images/${row.id}` : null;
+      const opticalImage = await ctx.entityManager.getRepository(OpticalImage)
+        .findOne({ datasetId, zoom: intZoom });
+      return (opticalImage) ? `/fs/optical_images/${opticalImage.id}` : null;
     }
     return null;
   },
 
-  async rawOpticalImage(source, {datasetId: dsId}, ctx) {
-    return await rawOpticalImage(dsId, ctx);
+  // TODO: deprecated, remove
+  async rawOpticalImage(source, { datasetId }, ctx) {
+    return await rawOpticalImage(datasetId, ctx);
   },
 
   // TODO: deprecated, remove
@@ -111,17 +93,15 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
   },
 
   async currentUserLastSubmittedDataset(source, args, ctx): Promise<DatasetSource | null> {
-
-    const {user} = ctx;
-    if (user) {
+    if (ctx.user.id) {
       const results = await esSearchResults({
         orderBy: 'ORDER_BY_DATE',
         sortingOrder: 'DESCENDING',
         datasetFilter: {
-          submitter: user.id,
+          submitter: ctx.user.id,
         },
         limit: 1,
-      }, 'dataset', user);
+      }, 'dataset', ctx.user);
       if (results.length > 0) {
         return {
           ...results[0],

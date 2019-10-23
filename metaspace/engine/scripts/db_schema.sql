@@ -42,6 +42,8 @@ CREATE TABLE "graphql"."project" (
   "is_public" boolean NOT NULL DEFAULT true, 
   "created_dt" TIMESTAMP NOT NULL DEFAULT (now() at time zone 'utc'), 
   "project_description" text NOT NULL DEFAULT '', 
+  "review_token" text, 
+  "publication_status" text NOT NULL DEFAULT 'UNPUBLISHED', 
   CONSTRAINT "PK_486ca2f737a2dfd930e46d254aa" PRIMARY KEY ("id")
 );
 
@@ -71,6 +73,7 @@ CREATE TABLE "graphql"."dataset_project" (
   "dataset_id" text NOT NULL, 
   "project_id" uuid NOT NULL, 
   "approved" boolean NOT NULL, 
+  "publication_status" text NOT NULL DEFAULT 'UNPUBLISHED', 
   CONSTRAINT "PK_9511b6cda2f4d4299812106cdd4" PRIMARY KEY ("dataset_id", 
   "project_id")
 );

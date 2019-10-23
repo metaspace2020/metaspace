@@ -5,9 +5,11 @@ import {Strategy as LocalStrategy} from 'passport-local';
 import {Strategy as GoogleStrategy} from 'passport-google-oauth20';
 import * as JwtSimple from 'jwt-simple';
 import {EntityManager} from 'typeorm';
+import 'express-session';
 
 import config from '../../utils/config';
 import {User} from '../user/model';
+import {Project} from '../project/model';
 import {
   createUserCredentials,
   findUserByEmail,
@@ -39,10 +41,12 @@ const configurePassport = (router: IRouter<any>) => {
   }));
 
   router.post('/signout', preventCache, (req, res) => {
+    (req as any).session.destroy();
     req.logout();
     res.send('OK');
   });
   router.get('/signout', preventCache, (req, res) => {
+    (req as any).session.destroy();
     req.logout();
     res.redirect('/');
   });
@@ -149,6 +153,38 @@ const configureLocalAuth = (router: IRouter<any>) => {
       }
     })(req, res, next);
   })
+};
+
+const configureReviewerAuth = (router: IRouter<any>, entityManager: EntityManager) => {
+  router.get('/review', async (req, res, next) => {
+    try {
+      const session = req.session;
+      const {prj: projectId, token} = req.query;
+      if (session && projectId && token) {
+        const project = await entityManager.getRepository(Project).findOne({ id: projectId });
+        if (project) {
+          if (project.reviewToken == null || project.reviewToken != token) {
+            res.status(401).send();
+          } else {
+            if (!session.reviewTokens) {
+              session.reviewTokens = [token];
+            } else if (!session.reviewTokens.includes(token)) {
+              session.reviewTokens.push(token);
+            }
+            res.cookie('flashMessage', JSON.stringify({ type: 'review_token_success' }),
+              { maxAge: 10*60*1000 });
+            res.redirect(`/project/${projectId}`);
+          }
+        } else {
+          res.status(404).send();
+        }
+      } else {
+        res.status(404).send();
+      }
+    } catch (err) {
+      next(err);
+    }
+  });
 };
 
 const configureGoogleAuth = (router: IRouter<any>) => {
@@ -308,5 +344,6 @@ export const configureAuth = async (app: Express, entityManager: EntityManager) 
   // TODO: find a parameter validation middleware
   configureCreateAccount(router);
   configureResetPassword(router);
+  configureReviewerAuth(router, entityManager);
   app.use('/api_auth', router);
 };

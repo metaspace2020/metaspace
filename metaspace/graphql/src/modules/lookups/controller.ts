@@ -12,7 +12,7 @@ const getTopFieldValues = async (docType: 'dataset' | 'annotation',
                                  field: string,
                                  query: string | null | undefined,
                                  limit: number | undefined,
-                                 user: ContextUser | null): Promise<string[]> => {
+                                 user: ContextUser): Promise<string[]> => {
 
   const itemCounts = await esFilterValueCountResults({
     aggsTerms: {

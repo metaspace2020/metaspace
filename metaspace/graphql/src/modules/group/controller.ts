@@ -17,22 +17,22 @@ import {smAPIUpdateDataset} from '../../utils/smAPI';
 import {getDatasetForEditing} from '../dataset/operation/getDatasetForEditing';
 import {resolveGroupScopeRole} from './util/resolveGroupScopeRole';
 
-const assertCanCreateGroup = (user: ContextUser | null) => {
-  if (!user || user.role !== 'admin')
+const assertCanCreateGroup = (user: ContextUser) => {
+  if (!user.id || user.role !== 'admin')
     throw new UserError('Only admins can create groups');
 };
 
-const assertUserAuthenticated = (user: ContextUser | null) => {
-  if (!user || !user.id)
+const assertUserAuthenticated = (user: ContextUser) => {
+  if (!user.id)
     throw new UserError('Not authenticated');
 };
 
-const assertUserRoles = async (entityManager: EntityManager, user: ContextUser | null, groupId: string, roles: UserGroupRole[]) => {
+const assertUserRoles = async (entityManager: EntityManager, user: ContextUser, groupId: string, roles: UserGroupRole[]) => {
   if (groupId) {
-    if (user != null && user.role === 'admin')
+    if (user.id && user.role === 'admin')
       return;
 
-    const userGroup = user != null
+    const userGroup = user.id
       ? (await entityManager.getRepository(UserGroupModel).find({
         select: ['userId'],
         where: {
@@ -48,13 +48,13 @@ const assertUserRoles = async (entityManager: EntityManager, user: ContextUser |
   }
 };
 
-const assertCanEditGroup = async (entityManager: EntityManager, user: ContextUser | null, groupId: string) => {
+const assertCanEditGroup = async (entityManager: EntityManager, user: ContextUser, groupId: string) => {
   assertUserAuthenticated(user);
   await assertUserRoles(entityManager, user, groupId,
     [UserGroupRoleOptions.GROUP_ADMIN]);
 };
 
-const assertCanAddDataset = async (entityManager: EntityManager, user: ContextUser | null, groupId: string) => {
+const assertCanAddDataset = async (entityManager: EntityManager, user: ContextUser, groupId: string) => {
   assertUserAuthenticated(user);
   await assertUserRoles(entityManager, user, groupId,
     [UserGroupRoleOptions.GROUP_ADMIN, UserGroupRoleOptions.MEMBER]);
@@ -93,7 +93,7 @@ export const Resolvers = {
 
   Group: {
     async currentUserRole(group: GroupModel, _: any, {user, entityManager}: Context) {
-      if (user == null) {
+      if (user.id == null) {
         return null;
       }
       const userGroup = await entityManager.getRepository(UserGroupModel).findOne({

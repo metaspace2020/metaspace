@@ -287,8 +287,7 @@ type Mutation {
         skipValidation: Boolean=false, # ignored for non-admins
         force: Boolean=false, priority: Int=0): String!
 
-  deleteDataset(id: String!,
-        force: Boolean=false, priority: Int=0): String!
+  deleteDataset(id: String!, force: Boolean=false, priority: Int=0): String!
 
   # for dev purposes only
   reprocessDataset(id: String, priority: Int=0, delFirst: Boolean=false): String!

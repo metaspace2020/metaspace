@@ -2,24 +2,24 @@ import {Request, Response} from 'express';
 import {EntityManager, ObjectType} from 'typeorm';
 import {UserProjectRole} from './binding';
 
-export type UserProjectRoles = {[projectId: string]: UserProjectRole | undefined}
+export type UserProjectRoles = {[projectId: string]: UserProjectRole}
 
 export type ContextCacheKeyArg = string | number | boolean | null | undefined;
 
 export interface ContextUser {
   role: 'user' | 'admin';
-  id: string,
-  email?: string,
-  groupIds?: string[], // used in esConnector for ES visibility filters
+  id?: string; // id is undefined when not logged in
+  email?: string;
+  groupIds?: string[]; // used in esConnector for ES visibility filters
   getProjectRoles: () => Promise<UserProjectRoles>;
-  getMemberOfProjectIds: () => Promise<string[]>;
+  getMemberOfProjectIds: () => Promise<string[]>;  // only projects where user has UPRO.MEMBER, UPRO.MANAGER role
 }
 
 export interface Context {
   req: Request;
   res: Response;
   entityManager: EntityManager;
-  user: ContextUser | null;
+  user: ContextUser;
   isAdmin: boolean;
   getUserIdOrFail: () => string; // Throws "Unauthenticated" error if not logged in
   /**

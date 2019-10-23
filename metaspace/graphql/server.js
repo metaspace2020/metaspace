@@ -25,7 +25,6 @@ import { SubscriptionServer } from 'subscriptions-transport-ws';
 
 import {createImgServerAsync} from './src/modules/webServer/imageServer';
 import {configureAuth} from './src/modules/auth';
-import {initDBConnection} from './src/utils/knexDb';
 import config from './src/utils/config';
 import logger from './src/utils/logger';
 import {createConnection} from './src/utils';
@@ -147,7 +146,6 @@ async function createHttpServerAsync(config) {
   configureSession(app);
   await configureAuth(app, connection.manager);
 
-
   const apollo = new ApolloServer({
     schema: executableSchema,
     context: ({req, res}) => getContext(req.user && req.user.user, connection.manager, req, res),
@@ -180,11 +178,10 @@ async function createHttpServerAsync(config) {
 }
 
 if (process.argv[1].endsWith('server.js')) {
-  const db = initDBConnection();
   Promise.all([
     createSubscriptionServerAsync(config),
     createHttpServerAsync(config),
-    createImgServerAsync(config, db),
+    createImgServerAsync(config),
   ]).then(async servers => {
     // If any server dies for any reason, kill the whole process
     const closeListeners = servers.map(server => new Promise((resolve, reject) => {

@@ -1,6 +1,6 @@
-import {EntityManager, ObjectType} from 'typeorm';
-import {Context, ContextCacheKeyArg} from './context';
-import {UserProjectRoleOptions as UPRO} from './modules/project/model';
+import {EntityManager, In, ObjectType} from 'typeorm';
+import {Context, ContextCacheKeyArg, ContextUser} from './context';
+import {Project as ProjectModel, UserProjectRoleOptions as UPRO} from './modules/project/model';
 import {UserError} from 'graphql-errors';
 import {JwtUser} from './modules/auth/controller';
 import {getUserProjectRoles} from './utils/db';
@@ -25,9 +25,18 @@ const getContext = (jwtUser: JwtUser | null, entityManager: EntityManager,
   };
 
   const getProjectRoles = () => contextCacheGet('getProjectRoles', [], async () => {
-    return user != null && user.id != null
+    let projectRoles = user != null && user.id != null
       ? await getUserProjectRoles(entityManager, user.id)
       : {};
+    if (req.session && req.session.reviewTokens) {
+      const projectRepository = entityManager.getRepository(ProjectModel);
+      const reviewProjects = await projectRepository.find({ where: { reviewToken: In(req.session.reviewTokens) }});
+      if (reviewProjects.length > 0) {
+        const reviewProjectRoles = _.fromPairs(reviewProjects.map((project) => [project.id, UPRO.REVIEWER]));
+        projectRoles = {...reviewProjectRoles, ...projectRoles};
+      }
+    }
+    return projectRoles;
   });
 
   const getMemberOfProjectIds = async () => {
@@ -72,16 +81,21 @@ const getContext = (jwtUser: JwtUser | null, entityManager: EntityManager,
     return await dataloader.load(entityId);
   };
 
+  const contextUser: ContextUser = {
+    role: 'user',
+    getProjectRoles,
+    getMemberOfProjectIds,
+  };
+  if (user) {
+    contextUser.id = user.id;
+    contextUser.role = user.role as ('user' | 'admin');
+    contextUser.email = user.email;
+    contextUser.groupIds = user.groupIds;
+  }
+
   return {
     req, res, entityManager,
-    user: user == null || user.id == null ? null : {
-      id: user.id,
-      role: user.role as ('user' | 'admin'),
-      email: user.email,
-      groupIds: user.groupIds,
-      getProjectRoles,
-      getMemberOfProjectIds,
-    },
+    user: contextUser,
     isAdmin: user != null && user.role === 'admin',
     getUserIdOrFail() {
       if (user == null || user.id == null) {
@@ -97,5 +111,6 @@ export default getContext;
 
 export const getContextForTest = (jwtUser: JwtUser | null, entityManager: EntityManager): Context => {
   // TODO: Add mocks for req & res if/when needed
-  return getContext(jwtUser, entityManager, null as any, null as any);
+  const reqMock = { session: null };
+  return getContext(jwtUser, entityManager, reqMock as any, null as any);
 };
