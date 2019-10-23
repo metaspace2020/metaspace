@@ -1,4 +1,3 @@
-<script src="../../../../graphql/src/context.ts"></script>
 <template>
   <div id="app">
     <metaspace-header>

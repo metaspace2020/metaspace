@@ -31,9 +31,9 @@ const getContext = (jwtUser: JwtUser | null, entityManager: EntityManager,
     if (req.session && req.session.reviewTokens) {
       const projectRepository = entityManager.getRepository(ProjectModel);
       const reviewProjects = await projectRepository.find({ where: { reviewToken: In(req.session.reviewTokens) }});
-      if (reviewProjects) {
+      if (reviewProjects.length > 0) {
         const reviewProjectRoles = _.fromPairs(reviewProjects.map((project) => [project.id, UPRO.REVIEWER]));
-        projectRoles = _.assign(reviewProjectRoles, projectRoles);
+        projectRoles = {...reviewProjectRoles, ...projectRoles};
       }
     }
     return projectRoles;

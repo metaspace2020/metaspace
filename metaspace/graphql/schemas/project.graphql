@@ -18,7 +18,7 @@ type Project {
   latestUploadDT: String
   projectDescriptionAsHtml: String
   reviewToken: String
-  publicationStatus: PublicationStatus
+  publicationStatus: PublicationStatus!
 }
 
 input CreateProjectInput {

@@ -14,7 +14,7 @@ export default async (dataset: DatasetSource, user: ContextUser) => {
   if (ds.ds_project_ids != null && ds.ds_project_ids.length > 0) {
     const projectRoles = await user.getProjectRoles();
     if (ds.ds_project_ids.some(projectId =>
-      ([UPRO.MEMBER, UPRO.MANAGER] as any[]).includes(projectRoles[projectId]))) {
+      ([UPRO.MEMBER, UPRO.MANAGER,UPRO.REVIEWER] as any[]).includes(projectRoles[projectId]))) {
       return true;
     }
   }

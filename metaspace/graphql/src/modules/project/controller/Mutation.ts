@@ -79,7 +79,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     if (project == null) {
       throw new UserError(`Not found project ${projectId}`);
     }
-    if (project.publicationStatus != PSO.UNPUBLISHED && projectDetails.isPublic == false) {
+    if (project.publicationStatus == PSO.PUBLISHED && projectDetails.isPublic == false) {
       throw new UserError(`Cannot modify project ${projectId} as it is in ${project.publicationStatus} status`);
     }
 

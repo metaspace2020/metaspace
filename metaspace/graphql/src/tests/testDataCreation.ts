@@ -22,11 +22,12 @@ export const createTestUser = async (user?: Partial<User>): Promise<User> => {
 };
 
 export const createTestProject = async (project?: Partial<Project>): Promise<Project> => {
-  return await testEntityManager.save(Project, _.defaults(project, {
+  const projectDefaultFields = {
     name: 'test project',
     isPublic: true,
     publicationStatus: PSO.UNPUBLISHED,
-  })) as Project;
+  };
+  return await testEntityManager.save(Project, {...projectDefaultFields, ...project}) as Project;
 };
 
 export const createTestProjectMember = async (projectOrId: string | {id: string},

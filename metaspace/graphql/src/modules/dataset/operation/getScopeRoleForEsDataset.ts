@@ -5,7 +5,7 @@ import {Context} from '../../../context';
 export default async (ds: DatasetSource, ctx: Context) => {
   if (ctx.user.id === ds._source.ds_submitter_id) {
     return SRO.PROFILE_OWNER;
-  } else if (ctx.user && ctx.user.groupIds && ds._source.ds_group_id && ctx.user.groupIds.includes(ds._source.ds_group_id)) {
+  } else if (ctx.user.groupIds && ds._source.ds_group_id && ctx.user.groupIds.includes(ds._source.ds_group_id)) {
     return SRO.GROUP_MEMBER; //TODO: Differentiate manager vs member?
   } else if (ds._source.ds_project_ids && ds._source.ds_project_ids.length > 0) {
     const projects = await ctx.user.getProjectRoles();

@@ -1,6 +1,6 @@
 import {Brackets, EntityManager, EntityRepository} from 'typeorm';
 import {Context, ContextUser} from '../../context';
-import {Project as ProjectModel, UserProjectRoleOptions as UPRO} from './model';
+import {Project as ProjectModel, UserProjectRoleOptions, UserProjectRoleOptions as UPRO} from './model';
 import {ProjectSource} from '../../bindingTypes';
 import * as _ from 'lodash';
 import * as DataLoader from 'dataloader';
@@ -45,7 +45,8 @@ export class ProjectSourceRepository {
     if (user.id && user.role === 'admin') {
       qb = qb.where('true'); // For consistency, in case anything weird happens when `andWhere` is called without first calling `where`
     } else {
-      const allProjectIds = Object.entries(await user.getProjectRoles()).map(([id, role]) => id);
+      const allProjectIds = Object.entries(await user.getProjectRoles())
+        .filter(([id, role]) => role != UPRO.PENDING).map(([id, role]) => id);
       qb = qb.where(new Brackets(qb => qb.where('project.is_public = True')
         .orWhere('project.id = ANY(:projectIds)', { projectIds: allProjectIds })));
     }

@@ -23,7 +23,7 @@ const assertCanCreateGroup = (user: ContextUser) => {
 };
 
 const assertUserAuthenticated = (user: ContextUser) => {
-  if (!user.id || !user.id)
+  if (!user.id)
     throw new UserError('Not authenticated');
 };
 
