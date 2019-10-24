@@ -341,41 +341,41 @@ class GraphQLClient(object):
         variables = {"datasetId": dsid}
         return self.query(query, variables)
 
-    def createDataset(
+    def create_dataset(
         self,
         data_path,
         metadata,
         priority=0,
-        dsName=None,
-        isPublic=None,
-        molDBs=None,
+        ds_name=None,
+        is_public=None,
+        mol_dbs=None,
         adducts=None,
-        dsid=None,
+        ppm=None,
+        ds_id=None,
     ):
         submitter_id = self.get_submitter_id()
         query = """
-                    mutation createDataset($id: String, $input: DatasetCreateInput!, $priority: Int) {
-                        createDataset(
-                          id: $id,
-                          input: $input,
-                          priority: $priority
-                        )
-                      }
-                """
-
+            mutation createDataset($id: String, $input: DatasetCreateInput!, $priority: Int) {
+                createDataset(
+                  id: $id,
+                  input: $input,
+                  priority: $priority
+                )
+            }
+        """
         variables = {
-            'id': dsid,
+            'id': ds_id,
             'input': {
-                'name': dsName,
+                'name': ds_name,
                 'inputPath': data_path,
-                'isPublic': isPublic,
-                'molDBs': molDBs,
+                'isPublic': is_public,
+                'molDBs': mol_dbs,
                 'adducts': adducts,
+                'ppm': ppm,
                 'submitterId': submitter_id,
                 'metadataJson': metadata,
             },
         }
-
         return self.query(query, variables)
 
     def delete_dataset(self, ds_id, force=False):
@@ -391,25 +391,37 @@ class GraphQLClient(object):
         return self.query(query, variables)
 
     def update_dataset(
-        self, ds_id, molDBs=None, adducts=None, reprocess=False, force=False, priority=1
+        self,
+        ds_id,
+        name=None,
+        mol_dbs=None,
+        adducts=None,
+        ppm=None,
+        reprocess=False,
+        force=False,
+        priority=1,
     ):
         query = """
-                mutation updateMetadataDatabases($id: String!, $reprocess: Boolean, 
-                    $input: DatasetUpdateInput!, $priority: Int, $force: Boolean) {
-                        updateDataset(
-                          id: $id,
-                          input: $input,
-                          priority: $priority,
-                          reprocess: $reprocess,
-                          force: $force
-                          )
-                        }
-                """
+            mutation updateMetadataDatabases($id: String!, $reprocess: Boolean, 
+                $input: DatasetUpdateInput!, $priority: Int, $force: Boolean) {
+                    updateDataset(
+                      id: $id,
+                      input: $input,
+                      priority: $priority,
+                      reprocess: $reprocess,
+                      force: $force
+                    )
+            }
+        """
         input_field = {}
-        if molDBs:
-            input_field['molDBs'] = molDBs
+        if name:
+            input_field['name'] = name
+        if mol_dbs:
+            input_field['molDBs'] = mol_dbs
         if adducts:
             input_field['adducts'] = adducts
+        if ppm:
+            input_field['ppm'] = ppm
         variables = {
             'id': ds_id,
             'input': input_field,
@@ -1067,12 +1079,21 @@ class SMInstance(object):
             key = "{}/{}".format(folder_uuid, os.path.split(fn)[1])
             s3.upload_file(fn, s3bucket, key)
         folder = "s3a://" + s3bucket + "/" + folder_uuid
-        return self._gqclient.createDataset(
-            folder, metadata, priority, dsName, isPublic, molDBs, adducts, dsid=dsid
+        return self._gqclient.create_dataset(
+            data_path=folder,
+            metadata=metadata,
+            priority=priority,
+            ds_name=dsName,
+            is_public=isPublic,
+            mol_dbs=molDBs,
+            adducts=adducts,
+            ds_id=dsid,
         )
 
     def update_dataset_dbs(self, datasetID, molDBs, adducts, priority):
-        return self._gqclient.update_dataset(datasetID, molDBs, adducts, priority)
+        return self._gqclient.update_dataset(
+            ds_id=datasetID, mol_dbs=molDBs, adducts=adducts, priority=priority
+        )
 
     def delete_dataset(self, ds_id, **kwargs):
         return self._gqclient.delete_dataset(ds_id, **kwargs)
