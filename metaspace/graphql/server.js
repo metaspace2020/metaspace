@@ -162,7 +162,7 @@ const configureCronSchedule = (entityManager) => {
     }
   };
 
-  new CronJob('00 43 14 * * 1-5', emailNotificationsHandler, null, true);
+  new CronJob('00 00 14 * * 1-5', emailNotificationsHandler, null, true);
   logger.info('Cron job started');
 };
 

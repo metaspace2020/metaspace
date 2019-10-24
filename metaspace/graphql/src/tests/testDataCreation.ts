@@ -1,4 +1,3 @@
-import * as _ from 'lodash';
 import * as moment from 'moment';
 import {User} from '../modules/user/model';
 import {Credentials} from '../modules/auth/model';
