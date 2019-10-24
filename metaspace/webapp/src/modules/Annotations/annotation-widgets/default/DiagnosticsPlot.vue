@@ -13,8 +13,8 @@
 import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
 
-import PlotLegend from '../IsotopePatternPlot/PlotLegend.vue';
-import IsotopePatternPlot from '../IsotopePatternPlot/IsotopePatternPlot.vue';
+import PlotLegend from '../PlotLegend.vue';
+import IsotopePatternPlot from '../IsotopePatternPlot.vue';
 
 @Component({
     components: {
