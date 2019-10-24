@@ -191,14 +191,12 @@ class ESIndexManager:
                         "db_version": {
                             "type": "keyword"
                         },  # Prevent "YYYY-MM"-style DB versions from being parsed as dates
-                        "isobars.ion": {"type": "keyword", "include_in_all": False},
-                        "isobars.ion_formula": {"type": "keyword", "include_in_all": False},
-                        # inverse_isobar_ion_formulas exists because the isobar relationship is
-                        # asymmetric. Isobars are only reported against an annotation if that
-                        # annotation's 1st peak conflicts against any peak from another annotation.
-                        # e.g. if annotation A's 4th peak conflicts with annotation B's 1st peak,
-                        # then only annotation B is reported to have an isobar.
-                        "inverse_isobar_ion_formulas": {"type": "keyword", "include_in_all": False},
+                        "isobars": {
+                            "properties": {
+                                "ion": {"type": "keyword", "include_in_all": False},
+                                "ion_formula": {"type": "keyword", "include_in_all": False},
+                            }
+                        },
                     },
                 },
             },
@@ -435,10 +433,6 @@ class ESExporter:
                     )
                 )
                 if len(overlap_rows) > 1 or 1 in peak_ns:
-                    if len(overlap_rows) > 1:
-                        print(
-                            ds_doc['ds_id'], 'has isobar', doc['ion'], overlap_doc['ion'], peak_ns
-                        )
                     doc['isobars'].append(
                         {
                             'ion_formula': overlap_doc['ion_formula'],
@@ -447,8 +441,6 @@ class ESExporter:
                             'peak_ns': peak_ns,
                         }
                     )
-                    if doc['ion_formula'] not in overlap_doc['inverse_isobar_ion_formulas']:
-                        overlap_doc['inverse_isobar_ion_formulas'].append(doc['ion_formula'])
 
     def _index_ds_annotations(self, ds_id, mol_db, ds_doc, isocalc):
         annotation_docs = self._db.select_with_fields(ANNOTATIONS_SEL, params=(ds_id, mol_db.id))
