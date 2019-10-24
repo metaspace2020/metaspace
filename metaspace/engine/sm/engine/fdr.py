@@ -158,6 +158,13 @@ class FDR:
         """ List of possible modifier values for target ions """
         return self.target_modifiers_df.index.tolist()
 
+    @classmethod
+    def nearest_fdr_level(cls, fdr):
+        for level in cls.fdr_levels:
+            if fdr < level + 0.005:
+                return level
+        return 1
+
     @staticmethod
     def _msm_fdr_map(target_msm, decoy_msm):
         target_msm_hits = pd.Series(target_msm.msm.value_counts(), name='target')
