@@ -1,21 +1,72 @@
 <template>
-<div>
-    <div v-for="grp in annotationGroups">
-        <div v-if="grp.isReference">
-            <h4>Current annotation</h4>
-        </div>
-        <div v-else>
-            Potential misclassification of the {{formatPeakNs(grp.peakNs)}} peak of:
-            <h4 v-for="ann in grp.annotations" v-html="renderMolFormulaHtml(ann.ion)" />
-        </div>
-        <diagnostics-row
-          :annotation="grp.annotations[0]"
-          :peakChartData="grp.peakChartData"
-          :colormap="colormap"
-          :imageLoaderSettings="imageLoaderSettings"
-        />
+<div v-loading="loading">
+    <el-alert v-if="hasIsobars" :closable="false" type="warning">
+        This annotation has isobars!
+    </el-alert>
+    <div v-if="hasIsobars">
+        Compare with:
+        <ul>
+            <li v-for="grp in annotationGroups">
+                <a
+                  href="#"
+                  @click.prevent="handleSelectComparison(grp)">
+                    <candidate-molecules-popover
+                      v-if="grp.isReference || grp.annotations.length === 1"
+                      class="mol-formula-line"
+                      placement="top"
+                      :possibleCompounds="grp.annotations[0].possibleCompounds"
+                      :openDelay="100">
+                        <span v-html="renderMolFormulaHtml(grp.annotations[0].ion)" />
+                    </candidate-molecules-popover>
+                    <span v-if="grp.isReference">(current annotation)</span>
+                    <span v-if="!grp.isReference && grp.annotations.length > 1">
+                        {{grp.annotations.length}} isomeric annotations at {{grp.annotations[0].mz.toFixed(4)}}
+                    </span>
+                </a>
+                <ul v-if="!grp.isReference && grp.annotations.length > 1">
+                    <li v-for="ann in grp.annotations">
+                        <candidate-molecules-popover
+                          class="mol-formula-line"
+                          placement="top"
+                          :possibleCompounds="ann.possibleCompounds"
+                          :openDelay="100">
+                            <span v-html="renderMolFormulaHtml(ann.ion)" />
+                        </candidate-molecules-popover>
+                    </li>
+                </ul>
+            </li>
+        </ul>
     </div>
-    <div v-if="loading" v-loading style="height: 200px" />
+    <h4 v-if="comparisonAnnotation">Current annotation</h4>
+    <diagnostics-metrics
+      :annotation="annotation"
+    />
+    <diagnostics-images
+      :annotation="annotation"
+      :colormap="colormap"
+      :imageLoaderSettings="imageLoaderSettings"
+    />
+    <candidate-molecules-popover
+      v-if="comparisonAnnotation"
+      placement="top"
+      :possibleCompounds="comparisonAnnotation.possibleCompounds"
+      :openDelay="100">
+        <h4 v-html="renderMolFormulaHtml(comparisonAnnotation.ion)" />
+    </candidate-molecules-popover>
+    <diagnostics-metrics
+      v-if="comparisonAnnotation"
+      :annotation="comparisonAnnotation"
+    />
+    <diagnostics-images
+      v-if="comparisonAnnotation"
+      :annotation="comparisonAnnotation"
+      :colormap="colormap"
+      :imageLoaderSettings="imageLoaderSettings"
+    />
+    <diagnostics-plot
+      :peakChartData="peakChartData"
+      :comparisonPeakChartData="comparisonPeakChartData"
+    />
 </div>
 </template>
 
@@ -23,16 +74,30 @@
 import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
 
-import DiagnosticsRow from './DiagnosticsRow.vue';
+import DiagnosticsMetrics from './DiagnosticsMetrics.vue';
+import DiagnosticsImages from './DiagnosticsImages.vue';
+import DiagnosticsPlot from './DiagnosticsPlot.vue';
+import CandidateMoleculesPopover from '../CandidateMoleculesPopover.vue';
 import {groupBy, intersection, sortBy, xor} from 'lodash-es';
 import {isobarsQuery} from '../../../../api/annotation';
 import { renderMolFormulaHtml } from '../../../../util';
 import safeJsonParse from '../../../../lib/safeJsonParse';
 
+interface AnnotationGroup {
+    isReference: boolean;
+    ionFormula: string;
+    annotations: any[];
+    peakChartData: any;
+    peakNs: [number, number][];
+}
+
 @Component<Diagnostics>({
     name: 'diagnostics',
     components: {
-        DiagnosticsRow,
+        DiagnosticsMetrics,
+        DiagnosticsImages,
+        DiagnosticsPlot,
+        CandidateMoleculesPopover,
     },
     apollo: {
         isobarAnnotations: {
@@ -55,19 +120,20 @@ import safeJsonParse from '../../../../lib/safeJsonParse';
 })
 export default class Diagnostics extends Vue {
     @Prop()
-    annotation: any
+    annotation: any;
     @Prop()
-    peakChartData: any
+    peakChartData: any;
     @Prop()
-    colormap: any
+    colormap: any;
     @Prop()
-    imageLoaderSettings: any
+    imageLoaderSettings: any;
 
-    loading = 0
-    isobarAnnotations: any[] = []
+    loading = 0;
+    isobarAnnotations: any[] = [];
     renderMolFormulaHtml = renderMolFormulaHtml;
+    comparisonIonFormula: string | null = null;
 
-    get annotationGroups() {
+    get annotationGroups(): AnnotationGroup[] {
         const allAnnotations = [this.annotation, ...(this.loading ? [] : this.isobarAnnotations)];
         const isobarsByIonFormula = groupBy(this.annotation.isobars, 'ionFormula');
         const isobarsKeys = [this.annotation.ionFormula, ...Object.keys(isobarsByIonFormula)];
@@ -102,28 +168,28 @@ export default class Diagnostics extends Vue {
         return this.annotation.isobars.length != 0;
     }
 
-    formatPeakNs(peakNs: number[]) {
-        const formatted = peakNs.map(this.formatPeakN);
-        if (formatted.length <= 1) {
-            return formatted[0];
-        } else if (formatted.length === 2) {
-            return formatted.join(' and ');
-        } else {
-            return formatted.slice(0, -1).join(', ') + ' and ' + formatted[formatted.length - 1];
+    get comparisonAnnotation() {
+        const grp = this.annotationGroups.find(grp => grp.ionFormula === this.comparisonIonFormula);
+        if (grp != null) {
+            return grp.annotations[0];
         }
+        return null;
     }
 
-    formatPeakN(peakN: number) {
-        if (peakN === 1) {
-            return '1st';
-        } else if (peakN === 2) {
-            return '2nd';
-        } else if (peakN === 3) {
-            return '3rd';
-        } else {
-            return `${peakN}th`
+    get comparisonPeakChartData() {
+        const grp = this.annotationGroups.find(grp => grp.ionFormula === this.comparisonIonFormula);
+        if (grp != null) {
+            return grp.peakChartData;
         }
+        return null;
+    }
 
+    handleSelectComparison(grp: AnnotationGroup) {
+        if (grp.isReference) {
+            this.comparisonIonFormula = null;
+        } else {
+            this.comparisonIonFormula = grp.ionFormula;
+        }
     }
 }
 </script>

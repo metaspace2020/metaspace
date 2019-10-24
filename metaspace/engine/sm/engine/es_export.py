@@ -428,7 +428,12 @@ class ESExporter:
             # or there are multiple peaks that overlap.
             for _, overlap_rows in pd.concat(overlaps).groupby('id'):
                 overlap_doc = overlap_rows.doc.iloc[0]
-                peak_ns = sorted(overlap_rows.peak_n.values.tolist())
+                peak_ns = sorted(
+                    zip(
+                        overlap_rows.peak_n.values.tolist(),
+                        overlap_rows.overlaps_peak_n.values.tolist(),
+                    )
+                )
                 if len(overlap_rows) > 1 or 1 in peak_ns:
                     if len(overlap_rows) > 1:
                         print(
