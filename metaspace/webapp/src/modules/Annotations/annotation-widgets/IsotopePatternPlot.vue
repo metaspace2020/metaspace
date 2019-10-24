@@ -11,21 +11,19 @@
      this.xScale = xScale;
      this.yScale = yScale;
      this.ppm = ppm;
-     this.circles = svg.append('g').selectAll('circle')
+     const element = svg.append('g').attr('class', cssClass);
+     this.circles = element.append('g').selectAll('circle')
                        .data(points).enter().append('circle')
-                        .attr('r', 4)
-                        .style('cssClass', cssClass);
+                        .attr('r', 4);
 
-     this.lines = svg.append('g').selectAll('line')
+     this.lines = element.append('g').selectAll('line')
                       .data(points).enter().append('line')
-                      .attr('cssClass', cssClass)
                       .attr('stroke-width', 3);
 
-     this.ppmRectangles = svg.append('g').selectAll('rect')
+     this.ppmRectangles = element.append('g').selectAll('rect')
                               .data(points).enter()
                               .append('rect')
                               .attr('opacity', 0.2)
-                              .attr('cssClass', cssClass)
                               .attr('height', yScale(0))
                               .attr('y', 0);
 
@@ -50,14 +48,12 @@
  }
 
  class TheorGraph {
-   constructor(svg, xScale, yScale, points, color) {
+   constructor(svg, xScale, yScale, points, cssClass) {
      this.xScale = xScale;
      this.yScale = yScale;
      this.points = points;
-     this.color = color;
-     this.theorGraph = svg.append('g').append('path')
-                             .attr('class', 'line')
-                             .attr('stroke', color)
+     const element = svg.append('g').attr('class', cssClass);
+     this.theorGraph = element.append('g').append('path')
                              .attr('stroke-width', 2)
                              .attr('opacity', 0.6)
                              .attr('fill', 'none');
