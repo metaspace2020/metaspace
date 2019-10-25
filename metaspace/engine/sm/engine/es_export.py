@@ -379,14 +379,14 @@ class ESExporter:
 
     @staticmethod
     def _add_isobar_fields_to_anns(ann_docs, ds_doc):
-        ann_mzs = []
+        peaks = []
 
         for doc in ann_docs:
             doc['isobars'] = []
             doc['inverse_isobar_ion_formulas'] = []
             for peak_n, mz in enumerate(doc['centroid_mzs'], 1):  # pylint: disable=invalid-name
                 if mz != 0:
-                    ann_mzs.append(
+                    peaks.append(
                         (
                             doc['annotation_id'],
                             doc,
@@ -398,10 +398,10 @@ class ESExporter:
                         )
                     )
 
-        mzs_df = pd.DataFrame(
-            ann_mzs, columns=['id', 'doc', 'peak_n', 'mz', 'msm', 'ion', 'ion_formula']
+        peaks_df = pd.DataFrame(
+            peaks, columns=['id', 'doc', 'peak_n', 'mz', 'msm', 'ion', 'ion_formula']
         )
-        mzs_df = mzs_df.sort_values('mz').reset_index()
+        mzs_df = peaks_df.sort_values('mz')
 
         # After feature/analysis_version_2 is merged, use this code instead:
         # mzs_df['lower_mz'], mzs_df['upper_mz'] = isocalc.mass_accuracy_bounds(mzs_df['mz'])
@@ -410,29 +410,32 @@ class ESExporter:
         mzs_df['upper_mz'] = mzs_df['mz'] + mzs_df['mz'] * ppm * 1e-6
         mzs_df['lower_idx'] = np.searchsorted(mzs_df.upper_mz.values, mzs_df.lower_mz.values, 'l')
         mzs_df['upper_idx'] = np.searchsorted(mzs_df.lower_mz.values, mzs_df.upper_mz.values, 'r')
+        _ids = mzs_df.id.values
+        _ion_formulas = mzs_df.ion_formula.values
+        _peak_ns = mzs_df.peak_n.values
+        _docs = mzs_df.doc.values
 
         for _, peak_rows in mzs_df.groupby('id'):
             doc = peak_rows.doc.iloc[0]
-            overlaps = []
+            overlaps = defaultdict(list)
             # Collect all other annotations that have any overlap with this annotation
-            for peak_row in peak_rows.itertuples():
-                peak_overlaps = mzs_df.iloc[peak_row.lower_idx : peak_row.upper_idx]
-                # exclude self & isomers
-                peak_overlaps = peak_overlaps[lambda df: df.ion_formula != peak_row.ion_formula]
-                peak_overlaps['overlaps_peak_n'] = peak_row.peak_n
-                overlaps.append(peak_overlaps)
-
-            # Add a list of other annotations where either the first peak has overlap,
-            # or there are multiple peaks that overlap.
-            for _, overlap_rows in pd.concat(overlaps).groupby('id'):
-                overlap_doc = overlap_rows.doc.iloc[0]
-                peak_ns = sorted(
-                    zip(
-                        overlap_rows.peak_n.values.tolist(),
-                        overlap_rows.overlaps_peak_n.values.tolist(),
-                    )
+            for lower_idx, upper_idx, ion_formula, peak_n in peak_rows[
+                ['lower_idx', 'upper_idx', 'ion_formula', 'peak_n']
+            ].itertuples(False, None):
+                peak_overlap_is = (
+                    np.nonzero(_ion_formulas[lower_idx:upper_idx] != ion_formula)[0] + lower_idx
                 )
-                if len(overlap_rows) > 1 or 1 in peak_ns:
+                for peak_overlap_i in peak_overlap_is:
+                    overlaps[_ids[peak_overlap_i]].append(
+                        (int(peak_n), int(_peak_ns[peak_overlap_i]), _docs[peak_overlap_i])
+                    )
+
+            # Add a list of other annotations where either both first peaks overlap,
+            # or there are multiple overlaps.
+            for overlap_rows in overlaps.values():
+                peak_ns = sorted(row[:2] for row in overlap_rows)
+                if len(peak_ns) > 1 or (1, 1) in peak_ns:
+                    overlap_doc = overlap_rows[0][2]
                     doc['isobars'].append(
                         {
                             'ion_formula': overlap_doc['ion_formula'],

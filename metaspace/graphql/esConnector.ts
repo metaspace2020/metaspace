@@ -274,7 +274,7 @@ function constructAnnotationFilters(filter: AnnotationFilter & ExtraAnnotationFi
     filters.push(constructTermOrTermsFilter('ion_formula', ionFormula));
   }
   if (isobaricWith != null) {
-    filters.push(constructTermOrTermsFilter('inverse_isobar_ion_formulas', isobaricWith))
+    filters.push(constructTermOrTermsFilter('isobars.ion_formula' as any, isobaricWith))
   }
 
   if (compoundQuery) {

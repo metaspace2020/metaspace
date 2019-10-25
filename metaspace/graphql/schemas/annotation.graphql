@@ -71,6 +71,7 @@ type IsobarAnnotation {
   ionFormula: String!
   peakNs: [[Int!]]!
   msmScore: Float!
+  shouldWarn: Boolean!
 }
 
 type ColocalizationAlgo {
