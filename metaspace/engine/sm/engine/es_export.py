@@ -422,8 +422,11 @@ class ESExporter:
             for lower_idx, upper_idx, ion_formula, peak_n in peak_rows[
                 ['lower_idx', 'upper_idx', 'ion_formula', 'peak_n']
             ].itertuples(False, None):
+                # Ignore annotations with "greater" ion_formula values as an optimization.
+                # The backwards link from "greater" to "lesser" is populated below, and doing this
+                # helps to ensure that the relationship is always reflexive.
                 peak_overlap_is = (
-                    np.nonzero(_ion_formulas[lower_idx:upper_idx] != ion_formula)[0] + lower_idx
+                    np.nonzero(_ion_formulas[lower_idx:upper_idx] < ion_formula)[0] + lower_idx
                 )
                 for peak_overlap_i in peak_overlap_is:
                     overlaps[_ids[peak_overlap_i]].append(
@@ -442,6 +445,14 @@ class ESExporter:
                             'ion': overlap_doc['ion'],
                             'msm': overlap_doc['msm'],
                             'peak_ns': peak_ns,
+                        }
+                    )
+                    overlap_doc['isobars'].append(
+                        {
+                            'ion_formula': doc['ion_formula'],
+                            'ion': doc['ion'],
+                            'msm': doc['msm'],
+                            'peak_ns': [(b, a) for a, b in peak_ns],
                         }
                     )
 
