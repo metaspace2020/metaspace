@@ -187,7 +187,7 @@
     const gY = svg.append('g').call(yAxis);
 
     svg.append('text')
-       .text('Intensity').style('text-anchor', 'middle')
+       .text('Relative intensity').style('text-anchor', 'middle')
        .attr('transform', `translate(-30, ${height/2}) rotate(-90)`);
 
     svg.append('text')
@@ -213,9 +213,6 @@
   const makeLegendTheorLine = () => {
     const curve = [0, 0, 0, 0, 0, 1, 2, 4, 9, 16, 27, 42, 59, 77, 91, 100, 100, 92, 77, 60, 42, 28, 16, 9, 5, 2, 1, 0, 0, 0, 0, 0];
     const drawPath = d3.line().x(d => d * 2).y(d => 31 - curve[d] * 0.3);
-    window.xScale = xScale;
-    window.yScale = yScale;
-    window.drawPath = drawPath;
     return drawPath(range(32));
   };
 

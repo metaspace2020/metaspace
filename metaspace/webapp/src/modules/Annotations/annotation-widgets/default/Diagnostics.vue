@@ -78,7 +78,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { Component, Prop } from 'vue-property-decorator';
+import {Component, Prop, Watch} from 'vue-property-decorator';
 
 import DiagnosticsMetrics from './DiagnosticsMetrics.vue';
 import DiagnosticsImages from './DiagnosticsImages.vue';
@@ -88,6 +88,7 @@ import {groupBy, intersection, sortBy, xor} from 'lodash-es';
 import {isobarsQuery} from '../../../../api/annotation';
 import { renderMolFormula, renderMolFormulaHtml } from '../../../../util';
 import safeJsonParse from '../../../../lib/safeJsonParse';
+import reportError from '../../../../lib/reportError';
 
 interface AnnotationGroup {
     isReference: boolean;
@@ -113,6 +114,7 @@ interface AnnotationGroup {
                 return !this.hasIsobars;
             },
             variables() {
+                this.isobarAnnotationsIonFormula = this.annotation.ionFormula;
                 return {
                     datasetId: this.annotation.dataset.id,
                     ionFormula: this.annotation.ionFormula,
@@ -136,9 +138,19 @@ export default class Diagnostics extends Vue {
 
     loading = 0;
     isobarAnnotations: any[] = [];
+    // Keep track of the last ionFormula used for fetching isobars, so that discrepancies can be reported
+    isobarAnnotationsIonFormula: string | null = null;
     renderMolFormula = renderMolFormula;
     renderMolFormulaHtml = renderMolFormulaHtml;
     comparisonIonFormula: string | null = null;
+
+    @Watch('annotationGroups')
+    resetComparisonIfInvalid() {
+        if (this.comparisonIonFormula
+          && !this.annotationGroups.some(ag => ag.ionFormula == this.comparisonIonFormula)) {
+            this.comparisonIonFormula = null;
+        }
+    }
 
     get annotationGroups(): AnnotationGroup[] {
         const allAnnotations = [this.annotation, ...(this.loading ? [] : this.isobarAnnotations)];
@@ -149,9 +161,14 @@ export default class Diagnostics extends Vue {
         // isobarsByIonFormula and annotationsByIonFormula should line up, but do an inner join just to be safe
         const ionFormulas = intersection(isobarsKeys, annotationsKeys);
         const missingIonFormulas = xor(isobarsKeys, annotationsKeys);
-        if (!this.loading && missingIonFormulas.length > 0) {
-            console.error('Inconsistent annotations between Annotation.isobars and isobaricWith query results.',
-              Object.keys(isobarsByIonFormula), Object.keys(annotationsByIonFormula), this.annotation.id)
+        if (!this.loading
+          && this.isobarAnnotationsIonFormula === this.annotation.ionFormula
+          && missingIonFormulas.length > 0) {
+            reportError(new Error(
+              'Inconsistent annotations between Annotation.isobars and isobaricWith query results. '
+              + `Annotation ${this.annotation.id} ${this.annotation.ion}: `
+              + `${Object.keys(isobarsByIonFormula).join(',')} != ${Object.keys(annotationsByIonFormula).join(',')}`
+            ), null);
         }
 
         const groups = ionFormulas.map(ionFormula => {
