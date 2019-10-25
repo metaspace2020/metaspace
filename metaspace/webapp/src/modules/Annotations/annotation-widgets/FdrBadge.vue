@@ -26,6 +26,7 @@
     border-radius: 5px;
     padding: 2px 5px;
     margin: auto 10px;
+    white-space: nowrap;
 
     &.fdr-badge-5 {
       background-color: #c8ffc8;

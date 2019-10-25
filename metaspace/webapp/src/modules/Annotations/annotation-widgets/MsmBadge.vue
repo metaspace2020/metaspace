@@ -26,6 +26,7 @@
     border-radius: 5px;
     padding: 2px 5px;
     margin: auto 10px;
+    white-space: nowrap;
 
     &.msm-badge-900 {
       background-color: #76c6ba;

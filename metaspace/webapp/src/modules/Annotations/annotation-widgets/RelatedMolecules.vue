@@ -37,11 +37,11 @@
             <div style="max-width: 400px;">
               <p>
                 When two isobaric ions are annotated with significantly different MSM scores (>0.5),
-                it is generally reasonable to assume that the lower-scoring ion is a mis-annotation.
+                it is generally reasonable to assume that the lower-scoring ion is a false discovery.
               </p>
               <p>
-                To help manually review cases when the MSM scores are similar, the <b>Diagnostics</b> panel
-                allows side-by-side comparison of isotopic ion images and spectra.
+                To help manually review cases when the MSM scores are not significantly different,
+                the <b>Diagnostics</b> panel allows side-by-side comparison of isotopic ion images and spectra.
               </p>
             </div>
             <i slot="reference" class="el-icon-question help-icon" />
@@ -140,7 +140,10 @@ export default {
     linkToAnnotation(other) {
       const filters = {
         datasetIds: [this.annotation.dataset.id],
-        ionFormula: other.ionFormula,
+        compoundName: other.sumFormula,
+        chemMod: other.chemMod,
+        neutralLoss: other.neutralLoss,
+        adduct: other.adduct,
         fdrLevel: Math.max(other.fdrLevel, this.$store.getters.filter.fdrLevel),
       };
 
@@ -176,6 +179,7 @@ export default {
     display: flex;
     align-items: center;
     text-decoration: none;
+    white-space: nowrap;
     font-size: 1.2em;
     color: $--color-text-regular;
 

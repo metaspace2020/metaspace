@@ -21,22 +21,29 @@ import IsotopePatternPlot from '../IsotopePatternPlot.vue';
 })
 export default class Diagnostics extends Vue {
     @Prop()
-    peakChartData: any
+    peakChartData: any;
     @Prop()
-    comparisonPeakChartData: any
+    comparisonPeakChartData: any;
 
-    sampleIsotopeColor: string = 'red'
-    theorIsotopeColor: string = 'blue'
-    comparisonIsotopeColor: string = 'blue'
 
     get isotopeLegendItems(): any[] {
-        return this.peakChartData ? [
-          {name: 'Sample', cssClass: 'refSample', type: 'sample'},
-          {name: 'Theoretical', cssClass: 'refTheor', type: 'theor'},
-          {name: 'Sample', cssClass: 'compSample', type: 'sample'},
-          {name: 'Theoretical', cssClass: 'compTheor', type: 'theor'},
-      ]
-                               : [];
+        if (this.peakChartData != null) {
+            if (this.comparisonPeakChartData != null) {
+                return [
+                    {name: 'Reference Sample', cssClass: 'refSample', type: 'sample'},
+                    {name: 'Reference Theoretical', cssClass: 'refTheor', type: 'theor'},
+                    {name: 'Sample', cssClass: 'compSample', type: 'sample'},
+                    {name: 'Theoretical', cssClass: 'compTheor', type: 'theor'},
+                ]
+            } else {
+                return [
+                    {name: 'Sample', cssClass: 'refSample', type: 'sample'},
+                    {name: 'Theoretical', cssClass: 'refTheor', type: 'theor'},
+                ]
+            }
+        } else {
+            return []
+        }
     }
 
     get plotData(): any {

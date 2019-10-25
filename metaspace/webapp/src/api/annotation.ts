@@ -153,7 +153,12 @@ export const relatedMoleculesQuery =
       ids: $datasetId
     }, filter: $filter, limit: 12, orderBy: $orderBy, sortingOrder: $sortingOrder) {
       id
+      sumFormula
+      chemMod
+      neutralLoss
+      adduct
       ion
+      ionFormula
       msmScore
       fdrLevel
       possibleCompounds {
