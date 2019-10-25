@@ -24,7 +24,7 @@
  import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue';
  import RelatedMolecules from './annotation-widgets/RelatedMolecules.vue';
  import CompoundsList from './annotation-widgets/CompoundsList.vue';
- import IsomersAlert from './annotation-widgets/IsomersAlert.vue';
+ import IsomersAlert from './annotation-widgets/AmbiguityAlert.vue';
 
 
  type ImagePosition = {
@@ -257,10 +257,6 @@
 
    get showColoc() {
      return config.features.coloc;
-   }
-
-   get showIsomers() {
-     return config.features.isomers;
    }
 
    opacity: number = 1.0;

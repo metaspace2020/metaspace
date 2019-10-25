@@ -8,13 +8,25 @@
         </li>
         <li class="more-count" v-if="moreCount">(+ {{moreCount}} more)</li>
       </ul>
-      <div v-if="isomers && isomers.length > 0" class="isomer-warning">
-        <div class="isomer-warning-icon" />
+      <div v-if="showIsomers" class="warning">
+        <div class="warning-icon" />
         <div>
           <span v-if="isomers.length == 1">An isomeric ion was annotated.</span>
           <span v-else>{{isomers.length}} isomeric ions were annotated.</span>
           <br/>
-          <span> Check the <b>Molecules</b> panel for more candidates.</span>
+          <span>Check the <b>Molecules</b> panel for more candidates.</span>
+        </div>
+      </div>
+      <div v-if="showIsobars" class="warning">
+        <div class="warning-icon" />
+        <div>
+          <span v-if="isobars.length == 1">An isobaric ion was annotated.</span>
+          <span v-else>{{isobars.length}} isobaric ions were annotated.</span>
+          <br/>
+          <span>
+            Check the <b>Molecules</b> panel for more candidates,
+            and the <b>Diagnostics</b> panel to compare the isotopic images and spectra.
+          </span>
         </div>
       </div>
     </div>
@@ -24,6 +36,7 @@
 </template>
 
 <script>
+  import config from '../../../config';
 
 
   export default {
@@ -32,6 +45,7 @@
       possibleCompounds: { type: Array, required: true },
       limit: Number,
       isomers: Array,
+      isobars: Array,
     },
     computed: {
       filteredCompounds() {
@@ -41,6 +55,12 @@
       },
       moreCount() {
         return this.possibleCompounds.length - this.filteredCompounds.length;
+      },
+      showIsomers() {
+        return config.features.isomers  && this.isomers && this.isomers.length > 0;
+      },
+      showIsobars() {
+        return config.features.isobars && this.isobars && this.isobars.some(isobar => isobar.shouldWarn);
       }
     },
     mounted() {
@@ -71,10 +91,10 @@
     list-style: none;
     font-style: italic;
   }
-  .isomer-warning {
+  .warning {
     display: flex;
   }
-  .isomer-warning-icon {
+  .warning-icon {
     align-self: center;
     width: 16px;
     height: 16px;

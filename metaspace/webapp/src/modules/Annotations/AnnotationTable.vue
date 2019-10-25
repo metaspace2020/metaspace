@@ -94,7 +94,9 @@
             placement="right"
             :possibleCompounds="props.row.possibleCompounds"
             :limit="10"
-            :isomers="showIsomers ? props.row.isomers : []">
+            :isomers="props.row.isomers"
+            :isobars="props.row.isobars"
+          >
             <div class="cell-wrapper">
                 <span class="sf cell-span"
                       v-html="renderMolFormulaHtml(props.row.ion)"></span>
@@ -117,7 +119,6 @@
               <span class="cell-span">
                   {{ formatMZ(props.row) }}
               </span>
-              <isobars-alert :annotation="props.row" :isobars="props.row.isobars" />
               <img src="../../assets/filter-icon.png"
                    @click="filterMZ(props.row)"
                    title="Limit results to this m/z (with 5 ppm tolerance)"/>
@@ -358,9 +359,6 @@
        return (this.queryVariables.filter.colocalizedWith || this.queryVariables.filter.colocalizationSamples)
          && this.$store.getters.filter.datasetIds != null
          && this.$store.getters.filter.datasetIds.length > 1;
-     },
-     showIsomers() {
-       return config.features.isomers;
      }
    },
    apollo: {

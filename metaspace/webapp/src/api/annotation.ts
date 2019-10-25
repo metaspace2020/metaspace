@@ -49,7 +49,7 @@ gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrde
         isobars {
           ionFormula
           peakNs
-          msmScore
+          shouldWarn
         }
         countPossibleCompounds(includeIsomers: $countIsomerCompounds)
         possibleCompounds {
@@ -135,6 +135,12 @@ gql`query GetRelatedAnnotations($datasetId: String!, $filter: AnnotationFilter!,
       possibleCompounds {
         name
       }
+      isomers {
+        ion
+      }
+      isobars {
+        shouldWarn
+      }
       colocalizationCoeff(colocalizationCoeffFilter: $colocalizationCoeffFilter)
     }
   }`;
@@ -147,6 +153,7 @@ export const relatedMoleculesQuery =
     }, filter: $filter, limit: 12, orderBy: $orderBy, sortingOrder: $sortingOrder) {
       id
       ion
+      msmScore
       fdrLevel
       possibleCompounds {
         name

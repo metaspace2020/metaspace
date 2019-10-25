@@ -7,6 +7,8 @@
           class="mol-formula-line"
           placement="top"
           :possibleCompounds="other.possibleCompounds"
+          :isomers="other.isomers"
+          :isobars="other.isobars"
           :openDelay="100">
           <span v-if="other.ion !== colocReferenceIon" class="sf cell-span" v-html="renderFormula(other)" />
           <span v-else>Reference annotation<sub><!-- Subscript to make height consistent with formulas --></sub></span>

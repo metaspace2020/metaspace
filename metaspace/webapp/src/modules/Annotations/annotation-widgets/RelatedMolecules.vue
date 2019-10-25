@@ -7,14 +7,16 @@
                      :to="other.ion !== annotation.ion ? linkToAnnotation(other) : undefined"
                      class="ion-link">
             <div>
-              <span v-if="other.ion !== annotation.ion">Isomer:</span>
+              <span v-if="other.isIsomer">Isomer:</span>
+              <span v-else-if="other.isIsobar">Isobar:</span>
               <span class="ion-formula" v-html="renderMolFormulaHtml(other.ion)" />
             </div>
 
             <div :class="fdrBadgeClass(other)">{{Math.round(other.fdrLevel*100)}}% FDR</div>
+            <div v-if="other.isIsobar" :class="msmBadgeClass(other)">{{other.msmScore.toFixed(3)}} MSM</div>
           </component>
 
-          <el-popover v-if="other.ion !== annotation.ion" trigger="hover" placement="top">
+          <el-popover v-if="other.isIsomer" trigger="hover" placement="top">
             <div style="max-width: 500px;">
               <p>
                 The False Discovery Rate (FDR) for each annotation is calculated among all ions that share the same adduct.
@@ -26,6 +28,20 @@
               </p>
               <p>
                 The FDR should not be used to decide which isomeric molecule is more likely to be correct.
+              </p>
+            </div>
+            <i slot="reference" class="el-icon-question help-icon" />
+          </el-popover>
+
+          <el-popover v-else-if="other.isIsobar" trigger="hover" placement="top">
+            <div style="max-width: 400px;">
+              <p>
+                When two isobaric ions are annotated with significantly different MSM scores (>0.5),
+                it is generally reasonable to assume that the lower-scoring ion is a mis-annotation.
+              </p>
+              <p>
+                To help manually review cases when the MSM scores are similar, the <b>Diagnostics</b> panel
+                allows side-by-side comparison of isotopic ion images and spectra.
               </p>
             </div>
             <i slot="reference" class="el-icon-question help-icon" />
@@ -43,7 +59,7 @@
 </template>
 
 <script>
-  import {omit, sortBy} from 'lodash-es';
+  import {omit, sortBy, uniqBy} from 'lodash-es';
   import {renderMolFormulaHtml} from '../../../util';
   import {relatedMoleculesQuery} from '../../../api/annotation';
   import {encodeParams, stripFilteringParams} from '../../Filters';
@@ -63,17 +79,37 @@ export default {
     };
   },
   apollo: {
-    annotations: {
+    isomerAnnotations: {
       query: relatedMoleculesQuery,
       loadingKey: 'loading',
+      skip() {
+        return !config.features.isomers;
+      },
       variables() {
-        let vars = { datasetId: this.annotation.dataset.id };
-
-        vars.filter = { database: this.database, ionFormula: this.annotation.ionFormula };
-        vars.orderBy = 'ORDER_BY_FDR_MSM';
-        vars.sortingOrder = 'DESCENDING';
-
-        return vars;
+        return {
+          datasetId: this.annotation.dataset.id,
+          filter: { database: this.database, ionFormula: this.annotation.ionFormula },
+          orderBy: 'ORDER_BY_FDR_MSM',
+          sortingOrder: 'ASCENDING',
+        };
+      },
+      update(data) {
+        return data.allAnnotations;
+      }
+    },
+    isobarAnnotations: {
+      query: relatedMoleculesQuery,
+      loadingKey: 'loading',
+      skip() {
+        return !config.features.isobars;
+      },
+      variables() {
+        return {
+          datasetId: this.annotation.dataset.id,
+          filter: { database: this.database, isobaricWith: this.annotation.ionFormula },
+          orderBy: 'ORDER_BY_FDR_MSM',
+          sortingOrder: 'ASCENDING',
+        };
       },
       update(data) {
         return data.allAnnotations;
@@ -82,15 +118,15 @@ export default {
   },
   computed: {
     sortedAnnotations() {
-      const annotations = this.annotations != null
-        ? sortBy(this.annotations, a => a.ion === this.annotation.ion ? 0 : 1)
-        : [];
+      let annotations = [
+        this.annotation,
+        ...(this.isomerAnnotations || []).map(ann => ({...ann, isIsomer: true})),
+        ...(this.isobarAnnotations || []).map(ann => ({...ann, isIsobar: true})),
+      ];
+      annotations = sortBy(annotations, a => a.ion === this.annotation.ion ? 0 : 1);
+      annotations = uniqBy(annotations, a => a.ion);
 
-      if (!config.features.isomers) {
-        return annotations.slice(0,1);
-      } else {
-        return annotations;
-      }
+      return annotations;
     }
   },
   methods: {
@@ -128,6 +164,17 @@ export default {
         return 'fdr-badge fdr-badge-20'
       } else {
         return 'fdr-badge fdr-badge-50'
+      }
+    },
+    msmBadgeClass(other) {
+      if (other.msmScore >= 0.9) {
+        return 'msm-badge msm-badge-900'
+      } else if (other.msmScore >= 0.5) {
+        return 'msm-badge msm-badge-500'
+      } else if (other.msmScore >= 0.1) {
+        return 'msm-badge msm-badge-100'
+      } else {
+        return 'msm-badge msm-badge-000'
       }
     }
   }
@@ -176,6 +223,28 @@ export default {
 
     &.fdr-badge-50 {
       background-color: #fff5e0;
+    }
+  }
+
+  .msm-badge {
+    border-radius: 5px;
+    padding: 2px 5px;
+    margin: auto 10px;
+
+    &.msm-badge-900 {
+      background-color: #76c6ba;
+    }
+
+    &.msm-badge-500 {
+      background-color: #d4ede9;
+    }
+
+    &.msm-badge-100 {
+      background-color: #f6ecd1;
+    }
+
+    &.msm-badge-000 {
+      background-color: #dbb972;
     }
   }
 </style>

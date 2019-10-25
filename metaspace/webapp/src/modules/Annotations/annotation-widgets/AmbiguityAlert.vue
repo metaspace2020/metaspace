@@ -1,5 +1,5 @@
 <template>
-  <el-popover trigger="hover" v-if="isomers.length > 0" class="popover">
+  <el-popover trigger="hover" v-if="visible" class="popover">
     <div>
       <p v-if="isomers.length === 1">An isomeric ion was also annotated:</p>
       <p v-else>{{isomers.length}} more isomeric ions were also annotated:</p>
@@ -12,14 +12,25 @@
 </template>
 <script>
   import {renderMolFormulaHtml} from '../../../util';
+  import config from '../../../config';
 
   export default {
     props: {
-      isomers: Array
+      isomers: Array,
+      isobars: Array,
+    },
+    computed: {
+      visible() {
+        return (config.features.isomers && this.isomers && this.isomers.length > 0)
+          || (config.features.isobars && this.isobars && this.isobars.some(isobar => isobar.shouldWarn));
+      },
+      text() {
+
+      }
     },
     methods: {
       renderMolFormulaHtml
-    }
+    },
   }
 </script>
 <style scoped>
