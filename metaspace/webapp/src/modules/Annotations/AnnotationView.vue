@@ -70,7 +70,7 @@
         <el-collapse-item name="compounds">
           <div slot="title" style="display: flex; align-items: center">
             <div>Molecules ({{annotation.countPossibleCompounds}})</div>
-            <isomers-alert :isomers="annotation.isomers" :isobars="annotation.isobars" />
+            <ambiguity-alert :isomers="annotation.isomers" :isobars="annotation.isobars" />
           </div>
           <related-molecules v-if="annotation && activeSections.indexOf('compounds') !== -1"
                              query="isomers"

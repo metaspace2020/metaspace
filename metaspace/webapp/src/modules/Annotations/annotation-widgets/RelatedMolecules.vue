@@ -12,8 +12,8 @@
               <span class="ion-formula" v-html="renderMolFormulaHtml(other.ion)" />
             </div>
 
-            <div :class="fdrBadgeClass(other)">{{Math.round(other.fdrLevel*100)}}% FDR</div>
-            <div v-if="other.isIsobar" :class="msmBadgeClass(other)">{{other.msmScore.toFixed(3)}} MSM</div>
+            <fdr-badge :fdrLevel="other.fdrLevel" />
+            <msm-badge v-if="other.isIsobar" :msmScore="other.msmScore" />
           </component>
 
           <el-popover v-if="other.isIsomer" trigger="hover" placement="top">
@@ -65,6 +65,8 @@
   import {encodeParams, stripFilteringParams} from '../../Filters';
   import {ANNOTATION_SPECIFIC_FILTERS} from '../../Filters/filterSpecs';
   import CompoundsList from './CompoundsList.vue';
+  import FdrBadge from './FdrBadge.vue';
+  import MsmBadge from './MsmBadge.vue';
   import config from '../../../config';
 
 export default {
@@ -72,7 +74,11 @@ export default {
     annotation: { type: Object, required: true },
     database: { type: String, requried: true },
   },
-  components: { CompoundsList },
+  components: {
+    CompoundsList,
+    FdrBadge,
+    MsmBadge,
+  },
   data() {
     return {
       loading: 0,
@@ -155,28 +161,6 @@ export default {
         }
       }
     },
-    fdrBadgeClass(other) {
-      if (other.fdrLevel <= 0.05) {
-        return 'fdr-badge fdr-badge-5'
-      } else if (other.fdrLevel <= 0.10) {
-        return 'fdr-badge fdr-badge-10'
-      } else if (other.fdrLevel <= 0.20) {
-        return 'fdr-badge fdr-badge-20'
-      } else {
-        return 'fdr-badge fdr-badge-50'
-      }
-    },
-    msmBadgeClass(other) {
-      if (other.msmScore >= 0.9) {
-        return 'msm-badge msm-badge-900'
-      } else if (other.msmScore >= 0.5) {
-        return 'msm-badge msm-badge-500'
-      } else if (other.msmScore >= 0.1) {
-        return 'msm-badge msm-badge-100'
-      } else {
-        return 'msm-badge msm-badge-000'
-      }
-    }
   }
 }
 </script>
@@ -202,49 +186,5 @@ export default {
   .help-icon {
     font-size: 16px;
     color: $--color-text-regular;
-  }
-
-  .fdr-badge {
-    border-radius: 5px;
-    padding: 2px 5px;
-    margin: auto 10px;
-
-    &.fdr-badge-5 {
-      background-color: #c8ffc8;
-    }
-
-    &.fdr-badge-10 {
-      background-color: #e0ffe0;
-    }
-
-    &.fdr-badge-20 {
-      background-color: #ffe;
-    }
-
-    &.fdr-badge-50 {
-      background-color: #fff5e0;
-    }
-  }
-
-  .msm-badge {
-    border-radius: 5px;
-    padding: 2px 5px;
-    margin: auto 10px;
-
-    &.msm-badge-900 {
-      background-color: #76c6ba;
-    }
-
-    &.msm-badge-500 {
-      background-color: #d4ede9;
-    }
-
-    &.msm-badge-100 {
-      background-color: #f6ecd1;
-    }
-
-    &.msm-badge-000 {
-      background-color: #dbb972;
-    }
   }
 </style>

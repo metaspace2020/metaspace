@@ -1,10 +1,7 @@
 <template>
     <div>
         <el-row id="isotope-plot-container">
-            <isotope-pattern-plot :data="plotData" />
-        </el-row>
-        <el-row>
-            <plot-legend :items="isotopeLegendItems" />
+            <isotope-pattern-plot :data="plotData" :legendItems="isotopeLegendItems" />
         </el-row>
     </div>
 </template>
@@ -34,8 +31,11 @@ export default class Diagnostics extends Vue {
 
     get isotopeLegendItems(): any[] {
         return this.peakChartData ? [
-          {name: 'Sample', color: this.sampleIsotopeColor, opacity: 1},
-          {name: 'Theoretical', color: this.theorIsotopeColor, opacity: 0.6}]
+          {name: 'Sample', cssClass: 'refSample', type: 'sample'},
+          {name: 'Theoretical', cssClass: 'refTheor', type: 'theor'},
+          {name: 'Sample', cssClass: 'compSample', type: 'sample'},
+          {name: 'Theoretical', cssClass: 'compTheor', type: 'theor'},
+      ]
                                : [];
     }
 

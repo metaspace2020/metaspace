@@ -24,7 +24,7 @@
  import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue';
  import RelatedMolecules from './annotation-widgets/RelatedMolecules.vue';
  import CompoundsList from './annotation-widgets/CompoundsList.vue';
- import IsomersAlert from './annotation-widgets/AmbiguityAlert.vue';
+ import AmbiguityAlert from './annotation-widgets/AmbiguityAlert.vue';
 
 
  type ImagePosition = {
@@ -53,7 +53,7 @@
    CandidateMoleculesPopover,
    RelatedMolecules,
    CompoundsList,
-   IsomersAlert,
+   AmbiguityAlert,
  };
  for (let category of Object.keys(annotationWidgets)) {
    metadataDependentComponents[category] = {};

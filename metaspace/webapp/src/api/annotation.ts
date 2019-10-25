@@ -47,6 +47,7 @@ gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrde
           ion
         }
         isobars {
+          ion
           ionFormula
           peakNs
           shouldWarn

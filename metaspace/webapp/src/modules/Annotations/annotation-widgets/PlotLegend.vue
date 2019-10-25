@@ -17,25 +17,5 @@
 
 <style>
 
-.plot-legend {
-  display: flex;
-  justify-content: center;
-}
-
-.legend-item {
-  margin: 5px 30px;
-}
-
-.legend-item-line {
-  display: block;
-  border: 0;
-  height: 2px;
-  width: 30px;
-}
-
-.legend-item-name {
-  text-align: center;
-  display: block;
-}
 
 </style>

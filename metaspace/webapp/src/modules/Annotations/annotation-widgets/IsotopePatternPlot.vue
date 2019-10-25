@@ -1,31 +1,45 @@
 <template>
-  <div ref="peakChart" style="height: 300px;">
+  <div class="peak-chart">
+    <div ref="peakChart" style="height: 300px;">
+    </div>
+    <div class="plot-legend" v-if="legendItems">
+      <div v-for="(item, idx) in legendItems" :key="idx" class='legend-item' >
+        <svg width="64" height="32">
+          <g>
+            <g v-if="item.type === 'sample'" class="sample-graph" :class="item.cssClass">
+              <g><circle cx="32" cy="4" r="4"/></g>
+              <g><line x1="32" x2="32" y1="4" y2="32" /></g>
+              <g><rect width="48" height="28" x="8" y="4" /></g>
+            </g>
+            <g v-else-if="item.type === 'theor'" class="theor-graph" :class="item.cssClass">
+              <g><path :d="legendTheorLine"/></g>
+            </g>
+          </g>
+        </svg>
+        <span class="legend-item-name" v-html="item.name"></span>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
  import * as d3 from 'd3';
 
- class MeasuredPeaks {
+ class SampleGraph {
    constructor(svg, xScale, yScale, points, cssClass, ppm) {
      this.xScale = xScale;
      this.yScale = yScale;
      this.ppm = ppm;
-     const element = svg.append('g').attr('class', cssClass);
+     const element = svg.append('g').attr('class', `sample-graph ${cssClass}`);
      this.circles = element.append('g').selectAll('circle')
-                       .data(points).enter().append('circle')
-                        .attr('r', 4);
+                       .data(points).enter().append('circle');
 
      this.lines = element.append('g').selectAll('line')
-                      .data(points).enter().append('line')
-                      .attr('stroke-width', 3);
+                      .data(points).enter().append('line');
 
      this.ppmRectangles = element.append('g').selectAll('rect')
                               .data(points).enter()
-                              .append('rect')
-                              .attr('opacity', 0.2)
-                              .attr('height', yScale(0))
-                              .attr('y', 0);
+                              .append('rect');
 
      this.update();
    }
@@ -35,15 +49,22 @@
      const lines = t ? this.lines.transition(t) : this.lines;
      const ppmRectangles = t ? this.ppmRectangles.transition(t) : this.ppmRectangles;
 
-     ppmRectangles.attr('width', d => this.xScale(d[0] * (1 + 1e-6 * this.ppm))
-                                      - this.xScale(d[0] * (1 - 1e-6 * this.ppm)))
-                   .attr('x', d => this.xScale(d[0] * (1 - 1e-6 * this.ppm)));
-
+     const circleRad = 4;
+     const ppmRadius = 1e-6 * this.ppm;
+     const ppmWidth = d => this.xScale(d[0] * (1 + ppmRadius)) - this.xScale(d[0] * (1 - ppmRadius));
+     const ppmHeight = d => this.yScale(0) - this.yScale(d[1]);
      circles.attr('cx', d => this.xScale(d[0]))
-             .attr('cy', d => this.yScale(d[1]));
+            .attr('cy', d => this.yScale(d[1]))
+            .attr('r', circleRad)
+            .style('display', d => Math.min(ppmWidth(d), ppmHeight(d)) > circleRad ? 'none' : '');
 
      lines.attr('x1', d => this.xScale(d[0])).attr('x2', d => this.xScale(d[0]))
-           .attr('y1', d => this.yScale(d[1])).attr('y2', d => this.yScale(0));
+          .attr('y1', d => this.yScale(d[1])).attr('y2', d => this.yScale(0));
+
+     ppmRectangles.attr('width', ppmWidth)
+                  .attr('height', ppmHeight)
+                  .attr('x', d => this.xScale(d[0] * (1 - ppmRadius)))
+                  .attr('y', d => this.yScale(d[1]));
    }
  }
 
@@ -52,11 +73,8 @@
      this.xScale = xScale;
      this.yScale = yScale;
      this.points = points;
-     const element = svg.append('g').attr('class', cssClass);
-     this.theorGraph = element.append('g').append('path')
-                             .attr('stroke-width', 2)
-                             .attr('opacity', 0.6)
-                             .attr('fill', 'none');
+     const element = svg.append('g').attr('class', `theor-graph ${cssClass}`);
+     this.theorGraph = element.append('g').append('path');
 
      this.update();
    }
@@ -143,6 +161,19 @@
                      .attr('width', width + margin.left + margin.right)
                      .attr('height', height + margin.top + margin.bottom);
 
+   // Mask for "striped" effect on comparison ppm rectangles
+   container.append('defs').html(`
+      <pattern id="pattern-stripe"
+               width="6" height="6"
+               patternUnits="userSpaceOnUse"
+               patternTransform="rotate(45)">
+        <rect width="3" height="6" transform="translate(0,0)" fill="white"></rect>
+      </pattern>
+      <mask id="mask-stripe">
+        <rect x="0" y="0" width="100%" height="100%" fill="url(#pattern-stripe)" />
+      </mask>
+  `);
+
    const svg = container.append('g')
                       .attr('transform',
                             `translate(${margin.left}, ${margin.top})`);
@@ -162,7 +193,7 @@
       .attr('transform', `translate(${width / 2}, ${height +  30}) `);
 
    // Data
-   const measuredPeakss = pointss.map((points, i) => new MeasuredPeaks(svg, xScale, yScale, points, sampleClasses[i], ppm));
+   const sampleGraphs = pointss.map((points, i) => new SampleGraph(svg, xScale, yScale, points, sampleClasses[i], ppm));
    const theorGraphs = theorPointss.map((theorPoints, i) => new TheorGraph(svg, xScale, yScale, theorPoints, theorClasses[i]));
 
    // Overlay
@@ -170,7 +201,7 @@
    let brushLayer = svg.append('g').call(brush);
 
    function update(t = null) {
-     measuredPeakss.forEach(measuredPeaks => measuredPeaks.update(t));
+     sampleGraphs.forEach(sampleGraph => sampleGraph.update(t));
      theorGraphs.forEach(theorGraph => theorGraph.update(t));
    }
 
@@ -179,10 +210,15 @@
 
  export default {
    name: 'isotope-pattern-plot',
-   props: ['data'],
+   props: ['data', 'legendItems'],
    watch: {
      'data': function(d) {
        this.redraw();
+     }
+   },
+   data() {
+     return {
+       legendTheorLine: 'M0,31 L2,31 L4,31 L6,31 L8,31 L10,31 L12,31 L14,31 L16,31 L18,31 L20,30 L22,29 L24,26 L26,22 L28,16 L30,10 L32,4 L34,1 L36,2 L38,7 L40,13 L42,19 L44,25 L46,28 L48,30 L50,30 L52,31 L54,31 L56,31 L58,31 L60,31 L62,31'
      }
    },
    mounted() {
@@ -199,3 +235,45 @@
  }
 
 </script>
+<style lang="scss" scoped>
+  .peak-chart /deep/ .sample-graph {
+    circle {
+      stroke: none;
+    }
+
+    line {
+      stroke-width: 2;
+    }
+
+    rect {
+    }
+  }
+
+  .peak-chart /deep/ .theor-graph {
+    path {
+      stroke-width: 2;
+      fill: none;
+    }
+  }
+
+  .plot-legend {
+    display: flex;
+    justify-content: center;
+  }
+
+  .legend-item {
+    margin: 5px 30px;
+  }
+
+  .legend-item-line {
+    display: block;
+    border: 0;
+    height: 2px;
+    width: 30px;
+  }
+
+  .legend-item-name {
+    text-align: center;
+    display: block;
+  }
+</style>

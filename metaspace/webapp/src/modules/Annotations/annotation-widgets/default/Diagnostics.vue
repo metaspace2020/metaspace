@@ -1,68 +1,65 @@
 <template>
 <div v-loading="loading">
-    <el-alert v-if="hasIsobars" :closable="false" type="warning">
-        This annotation has isobars!
+    <el-alert v-if="hasIsobars" :closable="false" type="warning" show-icon style="margin: 10px">
+        {{annotationGroups.filter(g => !g.isReference).length === 1
+        ? 'Another ion was annotated that is isobaric to the selected annotation.'
+        : 'Other ions were annotated that are isobaric to the selected annotation.'}}.
+        Select an isobaric annotation below to compare against.
     </el-alert>
     <div v-if="hasIsobars">
-        Compare with:
-        <ul>
-            <li v-for="grp in annotationGroups">
-                <a
-                  href="#"
-                  @click.prevent="handleSelectComparison(grp)">
-                    <candidate-molecules-popover
-                      v-if="grp.isReference || grp.annotations.length === 1"
-                      class="mol-formula-line"
-                      placement="top"
-                      :possibleCompounds="grp.annotations[0].possibleCompounds"
-                      :openDelay="100">
-                        <span v-html="renderMolFormulaHtml(grp.annotations[0].ion)" />
-                    </candidate-molecules-popover>
-                    <span v-if="grp.isReference">(current annotation)</span>
-                    <span v-if="!grp.isReference && grp.annotations.length > 1">
-                        {{grp.annotations.length}} isomeric annotations at {{grp.annotations[0].mz.toFixed(4)}}
-                    </span>
-                </a>
-                <ul v-if="!grp.isReference && grp.annotations.length > 1">
-                    <li v-for="ann in grp.annotations">
-                        <candidate-molecules-popover
-                          class="mol-formula-line"
-                          placement="top"
-                          :possibleCompounds="ann.possibleCompounds"
-                          :openDelay="100">
-                            <span v-html="renderMolFormulaHtml(ann.ion)" />
-                        </candidate-molecules-popover>
-                    </li>
-                </ul>
-            </li>
-        </ul>
+        Compare against:
+        <el-select v-model="comparisonIonFormula" clearable>
+            <el-option
+              v-for="grp in annotationGroups"
+              v-if="!grp.isReference"
+              :key="grp.ionFormula"
+              :value="grp.ionFormula"
+              :label="grp.label"
+              v-html="grp.labelHtml"
+            />
+        </el-select>
     </div>
-    <h4 v-if="comparisonAnnotation">Current annotation</h4>
-    <diagnostics-metrics
-      :annotation="annotation"
-    />
-    <diagnostics-images
-      :annotation="annotation"
-      :colormap="colormap"
-      :imageLoaderSettings="imageLoaderSettings"
-    />
-    <candidate-molecules-popover
-      v-if="comparisonAnnotation"
-      placement="top"
-      :possibleCompounds="comparisonAnnotation.possibleCompounds"
-      :openDelay="100">
-        <h4 v-html="renderMolFormulaHtml(comparisonAnnotation.ion)" />
-    </candidate-molecules-popover>
-    <diagnostics-metrics
-      v-if="comparisonAnnotation"
-      :annotation="comparisonAnnotation"
-    />
-    <diagnostics-images
-      v-if="comparisonAnnotation"
-      :annotation="comparisonAnnotation"
-      :colormap="colormap"
-      :imageLoaderSettings="imageLoaderSettings"
-    />
+
+    <!-- Reference annotation metrics -->
+    <div v-if="comparisonAnnotation" class="ref-annotation-header">
+        <candidate-molecules-popover
+          placement="top"
+          :possibleCompounds="annotation.possibleCompounds"
+          :openDelay="100">
+            <span v-html="renderMolFormulaHtml(annotation.ion)" />
+        </candidate-molecules-popover>
+        <span style="padding-left: 5px">(Reference annotation)</span>
+    </div>
+    <div :class="comparisonAnnotation ? 'ref-annotation-container' : ''">
+        <diagnostics-metrics
+          :annotation="annotation"
+        />
+        <diagnostics-images
+          :annotation="annotation"
+          :colormap="colormap"
+          :imageLoaderSettings="imageLoaderSettings"
+        />
+    </div>
+
+    <!-- Comparison annotation metrics -->
+    <div v-if="comparisonAnnotation" class="comp-annotation-header">
+        <candidate-molecules-popover
+          placement="top"
+          :possibleCompounds="comparisonAnnotation.possibleCompounds"
+          :openDelay="100">
+            <span v-html="renderMolFormulaHtml(comparisonAnnotation.ion)" />
+        </candidate-molecules-popover>
+    </div>
+    <div v-if="comparisonAnnotation" class="comp-annotation-container">
+        <diagnostics-metrics
+          :annotation="comparisonAnnotation"
+        />
+        <diagnostics-images
+          :annotation="comparisonAnnotation"
+          :colormap="colormap"
+          :imageLoaderSettings="imageLoaderSettings"
+        />
+    </div>
     <diagnostics-plot
       :peakChartData="peakChartData"
       :comparisonPeakChartData="comparisonPeakChartData"
@@ -80,8 +77,9 @@ import DiagnosticsPlot from './DiagnosticsPlot.vue';
 import CandidateMoleculesPopover from '../CandidateMoleculesPopover.vue';
 import {groupBy, intersection, sortBy, xor} from 'lodash-es';
 import {isobarsQuery} from '../../../../api/annotation';
-import { renderMolFormulaHtml } from '../../../../util';
+import { renderMolFormula, renderMolFormulaHtml } from '../../../../util';
 import safeJsonParse from '../../../../lib/safeJsonParse';
+import {ElOption} from 'element-ui/types/option';
 
 interface AnnotationGroup {
     isReference: boolean;
@@ -130,6 +128,7 @@ export default class Diagnostics extends Vue {
 
     loading = 0;
     isobarAnnotations: any[] = [];
+    renderMolFormula = renderMolFormula;
     renderMolFormulaHtml = renderMolFormulaHtml;
     comparisonIonFormula: string | null = null;
 
@@ -154,7 +153,11 @@ export default class Diagnostics extends Vue {
             return {
                 ionFormula, isReference, annotations,
                 peakNs: isReference ? 1 : isobars[0].peakNs,
-                peakChartData: isReference ? this.peakChartData : safeJsonParse(annotations[0].peakChartData)
+                peakChartData: isReference ? this.peakChartData : safeJsonParse(annotations[0].peakChartData),
+                label: renderMolFormula(annotations[0].ion)
+                  + (annotations.length > 1 ? ` (+ ${annotations.length - 1} isobars)` : ''),
+                labelHtml: renderMolFormulaHtml(annotations[0].ion)
+                  + (annotations.length > 1 ? ` <i>(+ ${annotations.length - 1} isobars)</i>` : ''),
             }
         });
 
@@ -248,5 +251,32 @@ export default class Diagnostics extends Vue {
         padding: 0 3px;
         background: $--color-success;
         border-radius: 3px;
+    }
+
+    $refColor: rgb(72, 120, 208);
+    $compColor: rgb(214, 95, 95);
+    $rad: 4px;
+    .ref-annotation-container {
+        border-left: $rad solid rgba($refColor, 0.25);
+        border-radius: 0 0 $rad $rad;
+        padding: $rad;
+    }
+    .ref-annotation-header {
+        margin-top: 10px;
+        background-color: rgba($refColor, 0.25);
+        border-radius: $rad $rad 0 0;
+        padding: $rad $rad + 10px;
+    }
+    .comp-annotation-container {
+        margin-bottom: 10px;
+        border-left: $rad solid rgba($compColor, 0.25);
+        border-radius: 0 0 $rad $rad;
+        padding: $rad;
+    }
+    .comp-annotation-header {
+        margin-top: 10px;
+        background-color: rgba($compColor, 0.25);
+        border-radius: $rad $rad 0 0;
+        padding: $rad $rad + 10px;
     }
 </style>
