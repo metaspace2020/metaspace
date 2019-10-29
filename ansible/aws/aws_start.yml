@@ -3,7 +3,7 @@
 - name: Spinning up AWS instances
   hosts: localhost
   connection: local
-  gather_facts: False
+  gather_facts: no
 
   vars:
     components: ''
@@ -13,37 +13,27 @@
     - debug: var=aws_key_name
 
     - name: Spin up SM instances
-      shell: "{{ sm_cluster_autostart_python }} aws_instance_manager.py create --key-name {{ aws_key_name }}
-             --components {{ components }} --stage {{ stage }}
-             {{ ' --credentials-file' if cred_file is defined else '' }}"
+      shell: >
+        {{ sm_cluster_autostart_python }} aws_instance_manager.py create --key-name {{ aws_key_name }}
+        --components {{ components }} --stage {{ stage }}
+        {{ ' --credentials-file' if cred_file is defined else '' }}
+
+    - meta: refresh_inventory
 
   tags: ["web", "spark", "elk"]
 
 
-- name: Wait for SSH on the master to come up
-  hosts: localhost
+- name: Wait for SSH on Spark instances to come up
+  hosts: master, slave
   user: ubuntu
-  gather_facts: True
+  gather_facts: no
 
   tasks:
-    - debug: var=hostvars['master-1']['ansible_ssh_host']
-
-    - name: Wait for SSH on the master to come up
-      wait_for:
-        host: "{{ hostvars['master-1']['ansible_ssh_host'] }}"
-        port: 22
+    - name: Wait for instance to become reachable over SSH
+      wait_for_connection:
         timeout: 300
-        state: started
 
-    - debug: var=hostvars["{{ item }}"]['ansible_ssh_host']
-      with_items: "{{ groups['slave'] }}"
-
-    - name: Wait for SSH on the slaves to come up
-      wait_for:
-        host: "{{ hostvars[item]['ansible_ssh_host'] }}"
-        port: 22
-        timeout: 300
-        state: started
-      with_items: "{{ groups['slave'] }}"
+    - name: Gather facts for first time
+      setup:
 
   tags: ["spark"]
