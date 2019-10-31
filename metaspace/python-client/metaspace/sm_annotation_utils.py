@@ -210,9 +210,7 @@ class GraphQLClient(object):
         else:
             return matches[0]
 
-    def getAnnotations(
-        self, annotationFilter=None, datasetFilter=None, colocFilter=None, fields=None
-    ):
+    def getAnnotations(self, annotationFilter=None, datasetFilter=None, colocFilter=None):
         query = """
             query getAnnotations(
                 $filter: AnnotationFilter,
