@@ -1,7 +1,6 @@
 ---
 
 stage: STAGE_NAME  # prod/stage/dev
-ansible_python_interpreter: /usr/bin/python3
 
 web_host: DOMAIN_NAME or IP
 
