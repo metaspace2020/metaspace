@@ -147,7 +147,7 @@ class AWSInstManager:
                 self.ec2.Instance(r['InstanceId']) for r in desc_resp['SpotInstanceRequests']
             ]
 
-        waiter = self.ec2_client.get_waiter('instance_running')
+        waiter = self.ec2_client.get_waiter('instance_status_ok')
         waiter.wait(InstanceIds=[inst.id for inst in instances])
 
         if el_ip_id:
