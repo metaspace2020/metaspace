@@ -37,7 +37,8 @@ class CentroidsGenerator:
             self._isocalc.sigma,
             self._isocalc.charge,
         )
-        Path(self._ion_centroids_path).mkdir(parents=True, exist_ok=True)
+        if self._path_local(self._ion_centroids_path):
+            Path(self._ion_centroids_path).mkdir(parents=True, exist_ok=True)
 
         self._s3 = boto3.client(
             's3',
@@ -45,6 +46,10 @@ class CentroidsGenerator:
             aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
             aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'],
         )
+
+    @staticmethod
+    def _path_local(path):
+        return not path.startswith('s3a://')
 
     def _generate(self, formulas, index_start=0):
         """ Generate isotopic peaks
@@ -113,7 +118,7 @@ class CentroidsGenerator:
     def _saved(self):
         """ Check if ion centroids saved to parquet
         """
-        if self._ion_centroids_path.startswith('s3a://'):
+        if not self._path_local(self._ion_centroids_path):
             bucket, key = split_s3_path(self._ion_centroids_path)
             try:
                 self._s3.head_object(Bucket=bucket, Key=key + '/formulas.parquet')
