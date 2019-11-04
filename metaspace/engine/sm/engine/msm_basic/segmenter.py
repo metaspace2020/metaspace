@@ -4,6 +4,8 @@ from shutil import rmtree
 
 import numpy as np
 import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 
 from sm.engine.errors import SMError
 from sm.engine.msm_basic.formula_imager import get_pixel_indices
@@ -74,9 +76,11 @@ def segment_spectra_chunk(sp_mz_int_buf, mz_segments, ds_segments_path):
     segm_ends = np.searchsorted(sp_mz_int_buf[:, 1], segm_right_bounds)
 
     for segm_i, (start, end) in enumerate(zip(segm_starts, segm_ends)):
-        pd.to_msgpack(
-            ds_segments_path / f'ds_segm_{segm_i:04}.msgpack', sp_mz_int_buf[start:end], append=True
-        )
+        table = pa.Table.from_pandas(pd.DataFrame(sp_mz_int_buf[start:end]))
+        with pq.ParquetWriter(
+            ds_segments_path / f'ds_segm_{segm_i:04}.parquet', table.schema
+        ) as writer:
+            writer.write_table(table)
 
 
 def calculate_chunk_sp_n(sample_mzs_bytes, sample_sp_n, max_chunk_size_mb=500):
@@ -173,4 +177,8 @@ def segment_centroids(centr_df, centr_segm_n, centr_segm_path):
         centr_df, first_peak_df[['formula_i', 'segm_i']], on='formula_i'
     ).sort_values('mz')
     for segm_i, df in centr_segm_df.groupby('segm_i'):
-        pd.to_msgpack(f'{centr_segm_path}/centr_segm_{segm_i:04}.msgpack', df)
+        table = pa.Table.from_pandas(df)
+        with pq.ParquetWriter(
+            f'{centr_segm_path}/centr_segm_{segm_i:04}.parquet', table.schema
+        ) as writer:
+            writer.write_table(table)

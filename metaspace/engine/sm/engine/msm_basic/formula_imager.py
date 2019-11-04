@@ -1,7 +1,9 @@
 import logging
 from pathlib import Path
+
 import numpy as np
 import pandas as pd
+import pyarrow.parquet as pq
 from pyspark.files import SparkFiles
 from scipy.sparse import coo_matrix
 
@@ -84,12 +86,8 @@ def choose_ds_segments(ds_segments, centr_df, ppm):
 
 
 def read_ds_segment(segm_i):
-    path = get_file_path(f'ds_segm_{segm_i:04}.msgpack')
-    data = pd.read_msgpack(path)
-    if isinstance(data, list):
-        sp_arr = np.concatenate(data)
-    else:
-        sp_arr = data
+    path = get_file_path(f'ds_segm_{segm_i:04}.parquet')
+    sp_arr = pq.read_table(path).to_pandas().values
     return sp_arr
 
 
@@ -119,13 +117,13 @@ def create_process_segment(ds_segments, coordinates, ds_config, target_formula_i
     n_peaks = ds_config['isotope_generation']['n_peaks']
 
     def process_centr_segment(segm_i):
-        centr_segm_path = get_file_path(f'centr_segm_{segm_i:04}.msgpack')
+        centr_segm_path = get_file_path(f'centr_segm_{segm_i:04}.parquet')
 
         formula_metrics_df, formula_images = pd.DataFrame(), {}
         if centr_segm_path.exists():
             logger.info(f'Reading centroids segment {segm_i} from {centr_segm_path}')
 
-            centr_df = pd.read_msgpack(centr_segm_path)
+            centr_df = pq.read_table(centr_segm_path).to_pandas()
             first_ds_segm_i, last_ds_segm_i = choose_ds_segments(ds_segments, centr_df, ppm)
 
             logger.info(f'Reading dataset segments {first_ds_segm_i}-{last_ds_segm_i}')

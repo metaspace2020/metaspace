@@ -55,8 +55,8 @@ def test_define_ds_segments():
     assert np.allclose(ds_segments, exp_ds_segments)
 
 
-@patch('sm.engine.msm_basic.segmenter.pd.to_msgpack')
-def test_segment_ds(to_msgpack_mock):
+@patch('sm.engine.msm_basic.segmenter.pq.ParquetWriter.write_table')
+def test_segment_ds(write_table_mock):
     imzml_parser_mock = Mock()
     imzml_parser_mock.getspectrum.return_value = (np.linspace(0, 90, num=10), np.ones(10))
     imzml_parser_mock.mzPrecision = 'f'
@@ -67,8 +67,8 @@ def test_segment_ds(to_msgpack_mock):
     segment_ds(imzml_parser_mock, coordinates, chunk_sp_n, ds_segments, Path('/tmp/abc'))
 
     for segm_i, (min_mz, max_mz) in enumerate(ds_segments):
-        args = to_msgpack_mock.call_args_list[segm_i][0]
-        segm_arr = args[1]
+        args = write_table_mock.call_args_list[segm_i][0]
+        segm_arr = args[0].to_pandas().values
 
         assert segm_arr.shape == (50, 3)
         # mz stored in column 1
@@ -76,8 +76,8 @@ def test_segment_ds(to_msgpack_mock):
         assert np.all(segm_arr[:, 1] <= max_mz)
 
 
-@patch('sm.engine.msm_basic.segmenter.pd.to_msgpack')
-def test_segment_centroids(to_msgpack_mock):
+@patch('sm.engine.msm_basic.segmenter.pq.ParquetWriter.write_table')
+def test_segment_centroids(write_table_mock):
     centr_df = pd.DataFrame(
         [
             (0, 0, 90),
@@ -96,8 +96,8 @@ def test_segment_centroids(to_msgpack_mock):
     segment_centroids(centr_df, segm_n, Path('/tmp/abc'))
 
     for segm_i in range(segm_n):
-        args = to_msgpack_mock.call_args_list[segm_i][0]
-        df = args[1]
+        args = write_table_mock.call_args_list[segm_i][0]
+        df = args[0].to_pandas()
 
         assert df.shape == (3, 4)
         assert set(df.formula_i) == {segm_i}

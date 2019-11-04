@@ -1,15 +1,14 @@
 import logging
 from copy import deepcopy
 from itertools import repeat
-from math import ceil
 from pathlib import Path
 
 import boto3
-import numpy as np
 import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 from botocore.exceptions import ClientError
 from pyspark import SparkContext  # pylint: disable=unused-import
-from pyspark.sql import SparkSession
 
 from sm.engine.isocalc_wrapper import IsocalcWrapper  # pylint: disable=unused-import
 from sm.engine.util import SMConfig, split_s3_path
@@ -32,13 +31,14 @@ class CentroidsGenerator:
         self._parquet_chunks_n = 64
         self._iso_gen_part_n = 512
 
-        self._spark_session = SparkSession(self._sc)
         self._ion_centroids_path = '{}/{}/{}/{}'.format(
             self._sm_config['isotope_storage']['path'],
             self._isocalc.n_peaks,
             self._isocalc.sigma,
             self._isocalc.charge,
         )
+        Path(self._ion_centroids_path).mkdir(parents=True, exist_ok=True)
+
         self._s3 = boto3.client(
             's3',
             self._sm_config['aws']['aws_region'],
@@ -116,61 +116,44 @@ class CentroidsGenerator:
         if self._ion_centroids_path.startswith('s3a://'):
             bucket, key = split_s3_path(self._ion_centroids_path)
             try:
-                self._s3.head_object(Bucket=bucket, Key=key + '/formulas/_SUCCESS')
+                self._s3.head_object(Bucket=bucket, Key=key + '/formulas.parquet')
+                self._s3.head_object(Bucket=bucket, Key=key + '/centroids.parquet')
             except ClientError:
                 return False
             else:
                 return True
         else:
-            return (
-                Path(self._ion_centroids_path + '/formulas/_SUCCESS').exists()
-                & Path(self._ion_centroids_path + '/centroids/_SUCCESS').exists()
-            )
-
-    @staticmethod
-    def _restore_df_chunks(spark_df, chunk_size=20 * 10 ** 6):
-        total_n = spark_df.rdd.count()
-        chunk_n = ceil(total_n / chunk_size)
-        logger.debug(f'Restoring peaks chunks, chunk_size={chunk_size / 1e6}M, chunk_n={chunk_n}')
-        spark_dfs = spark_df.randomSplit(weights=np.ones(chunk_n))
-        pandas_dfs = [df.toPandas() for df in spark_dfs]
-        return pd.concat(pandas_dfs).set_index('formula_i')
+            return (Path(self._ion_centroids_path) / 'formulas.parquet').exists() & (
+                Path(self._ion_centroids_path) / 'centroids.parquet'
+            ).exists()
 
     def _restore(self):
-        logger.info('Restoring peaks')
+        logger.info(f'Restoring peaks from {self._ion_centroids_path}')
         formula_centroids = None
         if self._saved():
-            formulas_df = self._restore_df_chunks(
-                self._spark_session.read.parquet(self._ion_centroids_path + '/formulas')
+            formulas_df = (
+                pq.read_table(f'{self._ion_centroids_path}/formulas.parquet')
+                .to_pandas()
+                .set_index('formula_i')
             )
-            centroids_df = self._restore_df_chunks(
-                self._spark_session.read.parquet(self._ion_centroids_path + '/centroids')
+            centroids_df = (
+                pq.read_table(f'{self._ion_centroids_path}/centroids.parquet')
+                .to_pandas()
+                .set_index('formula_i')
             )
             formula_centroids = FormulaCentroids(formulas_df, centroids_df)
         return formula_centroids
 
-    def _save_df_chunks(self, df, path, chunk_size=5 * 10 ** 6):
-        chunks = int(ceil(df.shape[0] / chunk_size))
-        for ch_i in range(chunks):
-            sdf = self._spark_session.createDataFrame(
-                df[ch_i * chunk_size : (ch_i + 1) * chunk_size]
-            )
-            mode = 'overwrite' if ch_i == 0 else 'append'
-            sdf.write.parquet(path, mode=mode)
-
     def _save(self, formula_centroids):
         """ Save isotopic peaks
         """
-        logger.info('Saving peaks')
+        logger.info(f'Saving peaks to {self._ion_centroids_path}')
         assert formula_centroids.formulas_df.index.name == 'formula_i'
 
-        self._save_df_chunks(
-            formula_centroids.centroids_df(fixed_size_centroids=True).reset_index(),
-            self._ion_centroids_path + '/centroids',
-        )
-        self._save_df_chunks(
-            formula_centroids.formulas_df.reset_index(), self._ion_centroids_path + '/formulas'
-        )
+        centroids_table = pa.Table.from_pandas(formula_centroids.centroids_df().reset_index())
+        pq.write_table(centroids_table, f'{self._ion_centroids_path}/centroids.parquet')
+        formulas_table = pa.Table.from_pandas(formula_centroids.formulas_df.reset_index())
+        pq.write_table(formulas_table, f'{self._ion_centroids_path}/formulas.parquet')
 
 
 class FormulaCentroids:
