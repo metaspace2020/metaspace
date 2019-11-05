@@ -260,7 +260,7 @@ class AWSInstManager:
     def stop_all_instances(self, components):
         for component in components:
             i = self.conf['instances'][component]
-            method = 'stop' if i['price'] is None else 'terminate'
+            method = 'stop' if not i.get('price', None) else 'terminate'
             alarms = [self.conf['alarms'][id] for id in i.get('alarms', [])]
             self.stop_instances(i['hostgroup'], method=method, alarms=alarms)
 
