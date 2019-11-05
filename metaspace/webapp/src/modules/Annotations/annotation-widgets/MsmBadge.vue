@@ -29,19 +29,19 @@
     white-space: nowrap;
 
     &.msm-badge-900 {
-      background-color: #76c6ba;
+      background-color: #c8ffc8;
     }
 
     &.msm-badge-500 {
-      background-color: #d4ede9;
+      background-color: #e0ffe0;
     }
 
     &.msm-badge-100 {
-      background-color: #f6ecd1;
+      background-color: #ffe;
     }
 
     &.msm-badge-000 {
-      background-color: #dbb972;
+      background-color: #fff5e0;
     }
   }
 </style>

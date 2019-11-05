@@ -94,9 +94,11 @@
     if (!data) return;
 
     const {sampleDatas, ppm, theors, sampleClasses, theorClasses} = data;
-    const maxIntensity = Math.max(...sampleDatas.map(sampleData => Math.max(...sampleData.ints)));
-    const sampleIntss = sampleDatas.map(sampleData => sampleData.ints.map(i => i / maxIntensity * 100.0));
     const sampleMzs = sampleDatas.map(sampleData => sampleData.mzs);
+    const sampleInts = sampleDatas.map(sampleData => {
+      const maxIntensity = Math.max(...sampleData.ints);
+      return sampleData.ints.map(i => i / maxIntensity * 100.0)
+    });
 
     d3.select(element).select('svg').remove();
 
@@ -113,7 +115,7 @@
     const xAxis = d3.axisBottom(xScale).ticks(5);
     const yAxis = d3.axisLeft(yScale).ticks(5).tickPadding(5);
 
-    const pointss = sampleIntss.map((sampleInts, i) => d3.zip(sampleMzs[i], sampleInts));
+    const pointss = sampleInts.map((sampleInts, i) => d3.zip(sampleMzs[i], sampleInts));
     const theorPointss = theors.map(({mzs, ints}) => d3.zip(mzs, ints));
 
     const dblClickTimeout = 400; // milliseconds

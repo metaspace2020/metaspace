@@ -219,7 +219,6 @@
   import {renderMolFormulaHtml} from '../../util';
  import ProgressButton from './ProgressButton.vue';
   import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue';
-  import IsobarsAlert from './annotation-widgets/IsobarsAlert.vue';
  import {
    annotationListQuery,
    tableExportQuery
@@ -255,7 +254,6 @@
    components: {
      ProgressButton,
      CandidateMoleculesPopover,
-     IsobarsAlert,
    },
    data () {
      return {

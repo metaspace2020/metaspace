@@ -175,17 +175,15 @@ export default class Diagnostics extends Vue {
             const isReference = ionFormula === this.annotation.ionFormula;
             const isobars = isobarsByIonFormula[ionFormula];
             const annotations = annotationsByIonFormula[ionFormula];
-            const isomersText = annotations.length < 2 ? ''
-              : annotations.length === 2 ? ' (+ 1 isobar)'
-              : ` (+ ${annotations.length - 1} isobars)`;
+            const deltaMz = annotations[0].mz - this.annotation.mz;
+            const massShiftText = isReference ? '' : `[M${deltaMz >= 0 ? '+' : ''}${deltaMz.toFixed(4)}]: `;
+            const isomersText = annotations.length < 2 ? '' : ' (isomers)';
             return {
                 ionFormula, isReference, annotations,
                 peakNs: isReference ? 1 : isobars[0].peakNs,
                 peakChartData: isReference ? this.peakChartData : safeJsonParse(annotations[0].peakChartData),
-                label: renderMolFormula(annotations[0].ion)
-                  + isomersText,
-                labelHtml: renderMolFormulaHtml(annotations[0].ion)
-                  + (isomersText ? ` <i>${isomersText}</i>` : ''),
+                label: massShiftText + annotations.map(ann => renderMolFormula(ann.ion)).join(', ') + isomersText,
+                labelHtml: massShiftText + annotations.map(ann => renderMolFormulaHtml(ann.ion)).join(', ') + isomersText,
             }
         });
 
