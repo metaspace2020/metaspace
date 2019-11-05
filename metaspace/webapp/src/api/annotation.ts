@@ -87,6 +87,12 @@ gql`query Export($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
       rhoChaos
       offSample
       offSampleProb
+      isomers {
+        ion
+      }
+      isobars {
+        ion
+      }
       dataset {
         id
         name
@@ -98,6 +104,11 @@ gql`query Export($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
         information {
           databaseId
         }
+      }
+      isotopeImages {
+        minIntensity
+        maxIntensity
+        totalIntensity
       }
       colocalizationCoeff(colocalizationCoeffFilter: $colocalizationCoeffFilter)
     }

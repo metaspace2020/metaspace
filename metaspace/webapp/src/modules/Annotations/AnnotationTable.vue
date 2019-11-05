@@ -552,16 +552,24 @@
        const chunkSize = this.csvChunkSize;
        const includeColoc = !this.hidden('ColocalizationCoeff');
        const includeOffSample = config.features.off_sample;
+       const includeIsomers = config.features.isomers;
+       const includeIsobars = config.features.isobars;
        const colocalizedWith = this.filter.colocalizedWith;
        let csv = csvExportHeader();
        const columns = ['group', 'datasetName', 'datasetId', 'formula', 'adduct', 'mz',
          'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
-         'moleculeNames', 'moleculeIds'];
+         'moleculeNames', 'moleculeIds', 'minIntensity', 'maxIntensity', 'totalIntensity'];
        if (includeColoc) {
          columns.push('colocalizationCoeff');
        }
        if (includeOffSample) {
          columns.push('offSample', 'rawOffSampleProb');
+       }
+       if (includeIsomers) {
+         columns.push('isomerIons');
+       }
+       if (includeIsobars) {
+         columns.push('isobarIons');
        }
        csv += formatCsvRow(columns);
 
@@ -573,6 +581,7 @@
          const {
            dataset, sumFormula, adduct, ion, mz,
            msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos, possibleCompounds,
+           isotopeImages, isomers, isobars,
            offSample, offSampleProb, colocalizationCoeff
          } = row;
          const cells = [
@@ -582,13 +591,22 @@
            sumFormula, "M" + adduct, mz,
            msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos,
            formatCsvTextArray(possibleCompounds.map(m => m.name)),
-           formatCsvTextArray(possibleCompounds.map(databaseId))
+           formatCsvTextArray(possibleCompounds.map(databaseId)),
+           isotopeImages[0] && isotopeImages[0].minIntensity,
+           isotopeImages[0] && isotopeImages[0].maxIntensity,
+           isotopeImages[0] && isotopeImages[0].totalIntensity,
          ];
          if (includeColoc) {
            cells.push(colocalizedWith === ion ? 'Reference annotation' : colocalizationCoeff);
          }
          if (includeOffSample) {
            cells.push(offSample, offSampleProb);
+         }
+         if (includeIsomers) {
+           cells.push(formatCsvTextArray(isomers.map(isomer => isomer.ion)));
+         }
+         if (includeIsobars) {
+           cells.push(formatCsvTextArray(isobars.map(isobar => isobar.ion)));
          }
 
          return formatCsvRow(cells);
