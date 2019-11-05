@@ -16,7 +16,7 @@
             </g>
           </g>
         </svg>
-        <span class="legend-item-name" v-html="item.name"></span>
+        <span class="legend-item-name" v-html="item.labelHtml"></span>
       </div>
     </div>
   </div>

@@ -31,7 +31,7 @@ import {sortBy} from 'lodash-es';
         ImageLoader,
     }
 })
-export default class Diagnostics extends Vue {
+export default class DiagnosticsImages extends Vue {
     @Prop()
     annotation: any
     @Prop()

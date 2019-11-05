@@ -71,7 +71,9 @@
     </div>
     <diagnostics-plot
       :peakChartData="peakChartData"
+      :ion="annotation.ion"
       :comparisonPeakChartData="comparisonPeakChartData"
+      :comparisonIon="comparisonIon"
     />
 </div>
 </template>
@@ -89,6 +91,7 @@ import {isobarsQuery} from '../../../../api/annotation';
 import { renderMolFormula, renderMolFormulaHtml } from '../../../../util';
 import safeJsonParse from '../../../../lib/safeJsonParse';
 import reportError from '../../../../lib/reportError';
+import config from '../../../../config';
 
 interface AnnotationGroup {
     isReference: boolean;
@@ -194,20 +197,20 @@ export default class Diagnostics extends Vue {
     }
 
     get hasIsobars() {
-        return this.annotation.isobars.length != 0;
+        return config.features.isobars && this.annotation.isobars.length != 0;
     }
 
     get comparisonAnnotationGroup() {
         return this.annotationGroups.find(grp => grp.ionFormula === this.comparisonIonFormula);
     }
 
-    get comparisonPeakChartData() {
-        const grp = this.annotationGroups.find(grp => grp.ionFormula === this.comparisonIonFormula);
-        if (grp != null) {
-            return grp.peakChartData;
-        }
-        return null;
-    }
+  get comparisonPeakChartData() {
+    return this.comparisonAnnotationGroup && this.comparisonAnnotationGroup.peakChartData;
+  }
+
+  get comparisonIon() {
+    return this.comparisonAnnotationGroup && this.comparisonAnnotationGroup.annotations[0].ion;
+  }
 }
 </script>
 

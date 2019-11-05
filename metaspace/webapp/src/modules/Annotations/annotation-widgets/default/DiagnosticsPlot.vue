@@ -12,6 +12,7 @@ import { Component, Prop } from 'vue-property-decorator';
 
 import PlotLegend from '../PlotLegend.vue';
 import IsotopePatternPlot from '../IsotopePatternPlot.vue';
+import {renderMolFormulaHtml} from '../../../../util';
 
 @Component({
     components: {
@@ -19,26 +20,32 @@ import IsotopePatternPlot from '../IsotopePatternPlot.vue';
         IsotopePatternPlot
     }
 })
-export default class Diagnostics extends Vue {
+export default class DiagnosticsPlot extends Vue {
     @Prop()
     peakChartData: any;
     @Prop()
+    ion: any;
+    @Prop()
     comparisonPeakChartData: any;
+    @Prop()
+    comparisonIon: any;
 
 
     get isotopeLegendItems(): any[] {
         if (this.peakChartData != null) {
+            const ionHtml = renderMolFormulaHtml(this.ion);
             if (this.comparisonPeakChartData != null) {
+                const compIonHtml = renderMolFormulaHtml(this.comparisonIon);
                 return [
-                    {name: 'Reference Sample', cssClass: 'refSample', type: 'sample'},
-                    {name: 'Reference Theoretical', cssClass: 'refTheor', type: 'theor'},
-                    {name: 'Sample', cssClass: 'compSample', type: 'sample'},
-                    {name: 'Theoretical', cssClass: 'compTheor', type: 'theor'},
+                    {labelHtml: `${ionHtml}<br> Theoretical`, cssClass: 'refTheor', type: 'theor'},
+                    {labelHtml: `${ionHtml}<br> Sample`, cssClass: 'refSample', type: 'sample'},
+                    {labelHtml: `${compIonHtml}<br> Theoretical`, cssClass: 'compTheor', type: 'theor'},
+                    {labelHtml: `${compIonHtml}<br> Sample`, cssClass: 'compSample', type: 'sample'},
                 ]
             } else {
                 return [
-                    {name: 'Sample', cssClass: 'refSample', type: 'sample'},
-                    {name: 'Theoretical', cssClass: 'refTheor', type: 'theor'},
+                    {labelHtml: 'Theoretical', cssClass: 'soloTheor', type: 'theor'},
+                    {labelHtml: 'Sample', cssClass: 'soloSample', type: 'sample'},
                 ]
             }
         } else {
@@ -62,8 +69,8 @@ export default class Diagnostics extends Vue {
             sampleDatas,
             theors,
             ppm,
-            sampleClasses: ['refSample', 'compSample'],
-            theorClasses: ['refTheor', 'compTheor'],
+            sampleClasses: this.comparisonPeakChartData ? ['refSample', 'compSample'] : ['soloSample'],
+            theorClasses: this.comparisonPeakChartData ? ['refTheor', 'compTheor'] : ['soloTheor'],
         }
     }
 }
@@ -72,6 +79,24 @@ export default class Diagnostics extends Vue {
 <style lang="scss" scoped>
     $refColor: rgb(72, 120, 208);
     $compColor: rgb(214, 95, 95);
+    #isotope-plot-container /deep/ .soloSample {
+        circle {
+            fill: rgba($compColor, 0.75);
+        }
+        line {
+            stroke: rgba($compColor, 0.75);
+        }
+        rect {
+            fill: rgba($compColor, 0.2);
+        }
+    }
+    #isotope-plot-container /deep/ .soloTheor {
+        path {
+            stroke: rgba($refColor, 0.75);
+        }
+    }
+
+
     #isotope-plot-container /deep/ .refSample {
         circle {
             fill: rgba($refColor, 0.75);
@@ -88,6 +113,7 @@ export default class Diagnostics extends Vue {
             stroke: rgba($refColor, 0.75);
         }
     }
+
     #isotope-plot-container /deep/ .compSample {
         circle {
             fill: rgba($compColor, 0.75);
