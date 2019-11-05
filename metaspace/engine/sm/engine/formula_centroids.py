@@ -37,8 +37,13 @@ class CentroidsGenerator:
             self._isocalc.sigma,
             self._isocalc.charge,
         )
-        if self._path_local(self._ion_centroids_path):
-            Path(self._ion_centroids_path).mkdir(parents=True, exist_ok=True)
+        self._parquet_file_names = ['centroids.parquet', 'formulas.parquet']
+        self._centroids_stored_on_s3 = self._ion_centroids_path.startswith('s3a://')
+        if self._centroids_stored_on_s3:
+            self._local_ion_centroids_path = Path('/tmp')
+        else:
+            self._local_ion_centroids_path = Path(self._ion_centroids_path)
+        Path(self._local_ion_centroids_path).mkdir(parents=True, exist_ok=True)
 
         self._s3 = boto3.client(
             's3',
@@ -46,10 +51,6 @@ class CentroidsGenerator:
             aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
             aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'],
         )
-
-    @staticmethod
-    def _path_local(path):
-        return not path.startswith('s3a://')
 
     def _generate(self, formulas, index_start=0):
         """ Generate isotopic peaks
@@ -118,31 +119,48 @@ class CentroidsGenerator:
     def _saved(self):
         """ Check if ion centroids saved to parquet
         """
-        if not self._path_local(self._ion_centroids_path):
+        if self._centroids_stored_on_s3:
             bucket, key = split_s3_path(self._ion_centroids_path)
             try:
-                self._s3.head_object(Bucket=bucket, Key=key + '/formulas.parquet')
-                self._s3.head_object(Bucket=bucket, Key=key + '/centroids.parquet')
+                for fn in self._parquet_file_names:
+                    self._s3.head_object(Bucket=bucket, Key=f'{key}/{fn}')
             except ClientError:
                 return False
             else:
                 return True
         else:
-            return (Path(self._ion_centroids_path) / 'formulas.parquet').exists() & (
-                Path(self._ion_centroids_path) / 'centroids.parquet'
-            ).exists()
+            return all(
+                [(Path(self._ion_centroids_path) / fn).exists() for fn in self._parquet_file_names]
+            )
+
+    def _download_from_s3(self):
+        bucket, key = split_s3_path(self._ion_centroids_path)
+        for fn in self._parquet_file_names:
+            self._s3.download_file(
+                Bucket=bucket, Key=f'{key}/{fn}', Filename=str(self._local_ion_centroids_path / fn)
+            )
+
+    def _upload_to_s3(self):
+        bucket, key = split_s3_path(self._ion_centroids_path)
+        for fn in self._parquet_file_names:
+            self._s3.upload_file(
+                Filename=str(self._local_ion_centroids_path / fn), Bucket=bucket, Key=f'{key}/{fn}'
+            )
 
     def _restore(self):
         logger.info(f'Restoring peaks from {self._ion_centroids_path}')
         formula_centroids = None
         if self._saved():
+            if self._centroids_stored_on_s3:
+                self._download_from_s3()
+
             formulas_df = (
-                pq.read_table(f'{self._ion_centroids_path}/formulas.parquet')
+                pq.read_table(self._local_ion_centroids_path / 'formulas.parquet')
                 .to_pandas()
                 .set_index('formula_i')
             )
             centroids_df = (
-                pq.read_table(f'{self._ion_centroids_path}/centroids.parquet')
+                pq.read_table(self._local_ion_centroids_path / 'centroids.parquet')
                 .to_pandas()
                 .set_index('formula_i')
             )
@@ -156,9 +174,12 @@ class CentroidsGenerator:
         assert formula_centroids.formulas_df.index.name == 'formula_i'
 
         centroids_table = pa.Table.from_pandas(formula_centroids.centroids_df().reset_index())
-        pq.write_table(centroids_table, f'{self._ion_centroids_path}/centroids.parquet')
+        pq.write_table(centroids_table, self._local_ion_centroids_path / 'centroids.parquet')
         formulas_table = pa.Table.from_pandas(formula_centroids.formulas_df.reset_index())
-        pq.write_table(formulas_table, f'{self._ion_centroids_path}/formulas.parquet')
+        pq.write_table(formulas_table, self._local_ion_centroids_path / 'formulas.parquet')
+
+        if self._centroids_stored_on_s3:
+            self._upload_to_s3()
 
 
 class FormulaCentroids:
