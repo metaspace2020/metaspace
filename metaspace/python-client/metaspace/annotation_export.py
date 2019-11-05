@@ -96,22 +96,6 @@ def fetch_graphql_res(filter_args):
     )
     assert not unknown_fields, unknown_fields
 
-    fields = """
-        sumFormula
-        fdrLevel
-        possibleCompounds {
-            name
-            information {
-                database
-                databaseId
-            }
-        }
-        dataset {
-            id
-        }
-        colocalizationCoeff(colocalizationCoeffFilter: $colocCoeffFilter)
-    """
-
     ds_filter = {
         field: filter_args.get(field, default) for field, default in default_ds_filter.items()
     }
@@ -138,10 +122,7 @@ def fetch_graphql_res(filter_args):
     logger.info(f"{resp['countAnnotations']} annotations matched the filters. Downloading...")
 
     return client.getAnnotations(
-        datasetFilter=ds_filter,
-        annotationFilter=ann_filter,
-        colocFilter=coloc_filter,
-        fields=fields,
+        datasetFilter=ds_filter, annotationFilter=ann_filter, colocFilter=coloc_filter
     )
 
 
