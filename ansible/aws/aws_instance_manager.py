@@ -21,6 +21,7 @@ class AWSInstManager:
         )
         self.ec2 = self.session.resource('ec2', region_name=aws_conf['region'])
         self.ec2_client = self.session.client('ec2', region_name=aws_conf['region'])
+        self.cloudwatch_client = self.session.client('cloudwatch', region_name=aws_conf['region'])
         self.conf = conf
         if verbose:
             pprint(self.conf)
@@ -64,10 +65,9 @@ class AWSInstManager:
 
     def add_alarms(self, instances, alarms):
         print(f'Adding {len(alarms)} alarms to {len(instances)} instances')
-        cloudwatch = self.session.client('cloudwatch')
         for inst in instances:
             for alarm in alarms:
-                cloudwatch.put_metric_alarm(
+                self.cloudwatch_client.put_metric_alarm(
                     AlarmName=f"{alarm['prefix']}-{inst.id}",
                     ComparisonOperator=alarm['comparison'],
                     EvaluationPeriods=alarm['points'],
@@ -234,7 +234,7 @@ class AWSInstManager:
                 alarm_names = [
                     f"{alarm['prefix']}-{inst.id}" for alarm in alarms for inst in instances
                 ]
-                resp = self.session.client('cloudwatch').delete_alarms(AlarmNames=alarm_names)
+                resp = self.cloudwatch_client.delete_alarms(AlarmNames=alarm_names)
                 assert resp['ResponseMetadata']['HTTPStatusCode'] == 200
         else:
             print('DRY RUN!')
