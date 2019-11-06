@@ -8,11 +8,8 @@ import {Request, Response} from 'express';
 import * as _ from 'lodash';
 import * as DataLoader from 'dataloader';
 
-function getContext(jwtUser: JwtUser | null, entityManager: EntityManager): BaseContext;
-function getContext(jwtUser: JwtUser | null, entityManager: EntityManager,
-                    req: Request, res: Response): Context;
-function getContext(jwtUser: JwtUser | null, entityManager: EntityManager,
-                req?: Request, res?: Response) {
+const getBaseContext = (jwtUser: JwtUser | null, entityManager: EntityManager,
+                req?: Request, res?: Response) => {
   const user = jwtUser != null && jwtUser.id != null ? jwtUser : null;
   const contextCache: Record<string, any> = {};
 
@@ -108,7 +105,17 @@ function getContext(jwtUser: JwtUser | null, entityManager: EntityManager,
     contextCacheGet,
     cachedGetEntityById,
   };
-}
+};
+
+const getContext = (jwtUser: JwtUser | null, entityManager: EntityManager,
+                        req: Request, res: Response): Context => {
+  return getBaseContext(jwtUser, entityManager, req, res) as Context;
+};
+
+export const getContextForSubscription = (jwtUser: JwtUser | null, entityManager: EntityManager): BaseContext => {
+  return getBaseContext(jwtUser, entityManager);
+};
+
 export default getContext;
 
 export const getContextForTest = (jwtUser: JwtUser | null, entityManager: EntityManager): Context => {

@@ -29,7 +29,7 @@ import config from './src/utils/config';
 import logger from './src/utils/logger';
 import {createConnection} from './src/utils';
 import {executableSchema} from './executableSchema';
-import getContext from './src/getContext';
+import getContext, {getContextForSubscription} from './src/getContext';
 
 const env = process.env.NODE_ENV || 'development';
 
@@ -114,7 +114,7 @@ async function createSubscriptionServerAsync(config, connection) {
     onOperation(message, params) {
       const jwt = message.payload.jwt;
       const user = jwt != null ? jwtSimple.decode(jwt, config.jwt.secret, false, config.jwt.algorithm) : null;
-      params.context = getContext(user && user.user, connection.manager);
+      params.context = getContextForSubscription(user && user.user, connection.manager);
       params.formatError = formatGraphQLError;
       return params;
     }
