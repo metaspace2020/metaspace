@@ -30,6 +30,8 @@ def get_ion_id_mapping(db, ion_tuples, charge):
     dict[tuple[str, str, str, str], int]
         (formula, chem_mod, neutral_loss, adduct) => ion_id
     """
+    if not ion_tuples:
+        return {}
 
     formulas, chem_mods, neutral_losses, adducts = map(list, zip(*ion_tuples))
     existing_ions = db.select(ION_SEL, [formulas, chem_mods, neutral_losses, adducts, charge])
