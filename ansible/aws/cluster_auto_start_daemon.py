@@ -110,7 +110,7 @@ class ClusterDaemon:
             self.ec2.instances.filter(
                 Filters=[
                     {'Name': 'tag:hostgroup', 'Values': [self.master_hostgroup]},
-                    {'Name': 'instance-state-name', 'Values': ['running', 'stopped', 'pending']},
+                    {'Name': 'instance-state-name', 'Values': ['running', 'pending']},
                 ]
             )
         )
