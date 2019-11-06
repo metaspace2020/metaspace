@@ -9,7 +9,7 @@ recommonmark
 boto3
 fabric3
 pypng==0.0.19    # 0.0.20 introduced incompatible API changes
-pyyaml
+pyyaml>=5.1
 elasticsearch-dsl>=5.0.0,<6.0.0
 pika==0.11.0b1
 bottle
