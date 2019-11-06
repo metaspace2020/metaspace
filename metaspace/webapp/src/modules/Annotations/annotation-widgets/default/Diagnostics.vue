@@ -1,9 +1,14 @@
 <template>
 <div v-loading="loading">
-    <el-alert v-if="hasIsobars" :closable="false" type="warning" show-icon style="margin: 10px">
+    <el-alert v-if="hasIsobars" :closable="false" :type="hasWarnIsobar ? 'warning' : 'info'" show-icon class="isobar-alert">
         {{annotationGroups.filter(g => !g.isReference).length === 1
         ? 'Another ion was annotated that is isobaric to the selected annotation.'
         : 'Other ions were annotated that are isobaric to the selected annotation.'}}
+        <span v-if="!hasWarnIsobar">
+            {{annotationGroups.filter(g => !g.isReference).length === 1
+            ? 'However, as its MSM score is significantly lower, it is likely a false discovery.'
+            : 'However, as their MSM scores are significantly lower, they are likely false discoveries.'}}
+        </span>
         Select an isobaric annotation below to compare against.
     </el-alert>
     <div class="compare-container" v-if="hasIsobars">
@@ -199,6 +204,9 @@ export default class Diagnostics extends Vue {
     get hasIsobars() {
         return config.features.isobars && this.annotation.isobars.length != 0;
     }
+    get hasWarnIsobar() {
+        return this.annotation.isobars.some((isobar: any) => isobar.shouldWarn);
+    }
 
     get comparisonAnnotationGroup() {
         return this.annotationGroups.find(grp => grp.ionFormula === this.comparisonIonFormula);
@@ -217,58 +225,11 @@ export default class Diagnostics extends Vue {
 <style lang="scss" scoped>
 @import "~element-ui/packages/theme-chalk/src/common/var";
 
-#scores-table {
-    display: flex;
-    border-collapse: collapse;
-    border: 1px solid lightblue;
-    font-size: 16px;
-    padding: 3px 10px;
-    align-items: center;
+.isobar-alert {
+    margin: 10px;
+    width: calc(100% - 10px);
 }
 
-.msm-score-calc {
-    text-align: center;
-    flex-grow: 1;
-    justify-content: center;
-}
-
-.msm-score-calc > span {
-    color: blue;
-}
-
-#isotope-images-container {
-    margin: 10px auto;
-    text-align: center;
-    font-size: 13px;
-}
-
-.small-peak-image {
-    font-size: 1rem;
-    vertical-align: top;
-    padding: 0 5px 0 5px;
-    text-align: center;
-    flex: 0 1 260px;
-    box-sizing: border-box;
-
-    @media (max-width: 768px) {
-        flex-basis: 100%;
-    }
-}
-
-    .off-sample-tag {
-        margin-left: 10px;
-        color: white;
-        padding: 0 3px;
-        background: $--color-warning;
-        border-radius: 3px;
-    }
-    .on-sample-tag {
-        margin-left: 10px;
-        color: white;
-        padding: 0 3px;
-        background: $--color-success;
-        border-radius: 3px;
-    }
     .compare-container {
         margin-bottom: 10px;
     }
