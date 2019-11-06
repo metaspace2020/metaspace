@@ -1,5 +1,5 @@
 import {EntityManager, In, ObjectType} from 'typeorm';
-import {Context, ContextCacheKeyArg, ContextUser} from './context';
+import {Context, ContextCacheKeyArg, ContextUser, SubscriptionContext} from './context';
 import {Project as ProjectModel, UserProjectRoleOptions as UPRO} from './modules/project/model';
 import {UserError} from 'graphql-errors';
 import {JwtUser} from './modules/auth/controller';
@@ -8,9 +8,11 @@ import {Request, Response} from 'express';
 import * as _ from 'lodash';
 import * as DataLoader from 'dataloader';
 
-
-const getContext = (jwtUser: JwtUser | null, entityManager: EntityManager,
-                req: Request, res: Response): Context => {
+function getContext(jwtUser: JwtUser | null, entityManager: EntityManager): SubscriptionContext;
+function getContext(jwtUser: JwtUser | null, entityManager: EntityManager,
+                    req: Request, res: Response): Context;
+function getContext(jwtUser: JwtUser | null, entityManager: EntityManager,
+                req?: Request, res?: Response) {
   const user = jwtUser != null && jwtUser.id != null ? jwtUser : null;
   const contextCache: Record<string, any> = {};
 
@@ -28,7 +30,7 @@ const getContext = (jwtUser: JwtUser | null, entityManager: EntityManager,
     let projectRoles = user != null && user.id != null
       ? await getUserProjectRoles(entityManager, user.id)
       : {};
-    if (req.session && req.session.reviewTokens) {
+    if (req && req.session && req.session.reviewTokens) {
       const projectRepository = entityManager.getRepository(ProjectModel);
       const reviewProjects = await projectRepository.find({ where: { reviewToken: In(req.session.reviewTokens) }});
       if (reviewProjects.length > 0) {
@@ -106,7 +108,7 @@ const getContext = (jwtUser: JwtUser | null, entityManager: EntityManager,
     contextCacheGet,
     cachedGetEntityById,
   };
-};
+}
 export default getContext;
 
 export const getContextForTest = (jwtUser: JwtUser | null, entityManager: EntityManager): Context => {

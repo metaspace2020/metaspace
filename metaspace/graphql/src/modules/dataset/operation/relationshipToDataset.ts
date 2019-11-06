@@ -1,5 +1,5 @@
 import {DatasetSource} from '../../../bindingTypes';
-import {Context} from '../../../context';
+import {SubscriptionContext} from '../../../context';
 import {Project as ProjectModel, UserProjectRoleOptions as UPRO} from '../../project/model';
 
 interface DatasetRelationship {
@@ -13,7 +13,7 @@ interface DatasetRelationship {
  * @param dataset
  * @param ctx
  */
-export const relationshipToDataset = async (dataset: DatasetSource, ctx: Context): Promise<DatasetRelationship[]> => {
+export const relationshipToDataset = async (dataset: DatasetSource, ctx: SubscriptionContext): Promise<DatasetRelationship[]> => {
   const ds = dataset._source;
   const user = ctx.user;
   const relationships: DatasetRelationship[] = [];

@@ -15,9 +15,7 @@ export interface ContextUser {
   getMemberOfProjectIds: () => Promise<string[]>;  // only projects where user has UPRO.MEMBER, UPRO.MANAGER role
 }
 
-export interface Context {
-  req: Request;
-  res: Response;
+export interface SubscriptionContext {
   entityManager: EntityManager;
   user: ContextUser;
   isAdmin: boolean;
@@ -43,3 +41,7 @@ export interface Context {
   cachedGetEntityById: <T>(Model: ObjectType<T> & {}, id: string | number | Partial<T>) => Promise<T | null>
 }
 
+export interface Context extends SubscriptionContext {
+  req: Request;
+  res: Response;
+}

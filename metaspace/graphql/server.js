@@ -114,7 +114,7 @@ async function createSubscriptionServerAsync(config, connection) {
     onOperation(message, params) {
       const jwt = message.payload.jwt;
       const user = jwt != null ? jwtSimple.decode(jwt, config.jwt.secret, false, config.jwt.algorithm) : null;
-      params.context = getContext(user && user.user, connection.manager, null, null);
+      params.context = getContext(user && user.user, connection.manager);
       params.formatError = formatGraphQLError;
       return params;
     }
