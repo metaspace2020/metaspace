@@ -1,5 +1,5 @@
 import {EntityManager, In, ObjectType} from 'typeorm';
-import {Context, ContextCacheKeyArg, ContextUser, SubscriptionContext} from './context';
+import {Context, ContextCacheKeyArg, ContextUser, BaseContext} from './context';
 import {Project as ProjectModel, UserProjectRoleOptions as UPRO} from './modules/project/model';
 import {UserError} from 'graphql-errors';
 import {JwtUser} from './modules/auth/controller';
@@ -8,7 +8,7 @@ import {Request, Response} from 'express';
 import * as _ from 'lodash';
 import * as DataLoader from 'dataloader';
 
-function getContext(jwtUser: JwtUser | null, entityManager: EntityManager): SubscriptionContext;
+function getContext(jwtUser: JwtUser | null, entityManager: EntityManager): BaseContext;
 function getContext(jwtUser: JwtUser | null, entityManager: EntityManager,
                     req: Request, res: Response): Context;
 function getContext(jwtUser: JwtUser | null, entityManager: EntityManager,

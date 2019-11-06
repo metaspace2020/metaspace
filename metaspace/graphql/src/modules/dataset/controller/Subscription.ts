@@ -4,7 +4,7 @@ import {esDatasetByID} from '../../../../esConnector';
 import logger from '../../../utils/logger';
 import wait from '../../../utils/wait';
 import config from '../../../utils/config';
-import {ContextUser, SubscriptionContext} from '../../../context';
+import {ContextUser, BaseContext} from '../../../context';
 import canViewEsDataset from '../operation/canViewEsDataset';
 import {relationshipToDataset} from '../operation/relationshipToDataset';
 import {
@@ -104,7 +104,7 @@ async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
 
 const SubscriptionResolvers = {
   datasetStatusUpdated: {
-    subscribe: (source: any, args: any, context: SubscriptionContext) => {
+    subscribe: (source: any, args: any, context: BaseContext) => {
       const iterator = asyncIterateDatasetStatusUpdated();
       // This asyncIterator is manually implemented because there is a weird interaction between TypeScript and iterall.
       // Somehow `iterator.return()` doesn't get called. I suspect iterall doesn't recognize TypeScript's asyncIterators
