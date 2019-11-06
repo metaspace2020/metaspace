@@ -125,7 +125,7 @@ jobs:
       - run:
           name: Upload coverage
           command: |
-            yarn run test-ci --coverage
+            yarn run test-ci --coverage --maxWorkers=1
             npx codecov -p ../.. -F webapp
 
   test-webapp-e2e:
