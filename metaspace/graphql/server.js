@@ -96,7 +96,7 @@ const formatGraphQLError = (error) => {
   return error;
 };
 
-async function createSubscriptionServerAsync(config) {
+async function createSubscriptionServerAsync(config, connection) {
   const wsServer = http.createServer((req, res) => {
     res.writeHead(404);
     res.end();
@@ -126,7 +126,7 @@ async function createSubscriptionServerAsync(config) {
   return wsServer;
 }
 
-async function createHttpServerAsync(config) {
+async function createHttpServerAsync(config, connection) {
   let app = express();
   let httpServer = http.createServer(app);
 
@@ -139,8 +139,6 @@ async function createHttpServerAsync(config) {
     // issuer: config.jwt.issuer, // TODO: Add issuer to config so that it can be validated
     credentialsRequired: false,
   }));
-
-  const connection = await createConnection();
 
   app.use(bodyParser.json());
   configureSession(app);
@@ -177,22 +175,30 @@ async function createHttpServerAsync(config) {
   return httpServer;
 }
 
-if (process.argv[1].endsWith('server.js')) {
-  Promise.all([
-    createSubscriptionServerAsync(config),
-    createHttpServerAsync(config),
-    createImgServerAsync(config),
-  ]).then(async servers => {
+const main = async () => {
+  try {
+    const connection = await createConnection();
+
+    const servers = await Promise.all([
+      createSubscriptionServerAsync(config, connection),
+      createHttpServerAsync(config, connection),
+      createImgServerAsync(config),
+    ]);
+
     // If any server dies for any reason, kill the whole process
     const closeListeners = servers.map(server => new Promise((resolve, reject) => {
       const address = server.address();
       server.on('close', () => reject(new Error(`Server at ${JSON.stringify(address)} closed unexpectedly`)))
     }));
     await Promise.all(closeListeners);
-  }).catch(error => {
+  } catch (error) {
     logger.error(error);
     process.exit(1);
-  });
+  }
+};
+
+if (process.argv[1].endsWith('server.js')) {
+  const ignoredPromise = main();
 }
 
 module.exports = {createHttpServerAsync}; // for testing
