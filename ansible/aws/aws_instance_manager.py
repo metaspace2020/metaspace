@@ -147,9 +147,6 @@ class AWSInstManager:
                 self.ec2.Instance(r['InstanceId']) for r in desc_resp['SpotInstanceRequests']
             ]
 
-        waiter = self.ec2_client.get_waiter('instance_status_ok')
-        waiter.wait(InstanceIds=[inst.id for inst in instances])
-
         if el_ip_id:
             if inst_n == 1:
                 elastic_ip = self.ec2.VpcAddress(el_ip_id)
@@ -212,6 +209,9 @@ class AWSInstManager:
 
                 for inst in instances:
                     self.assign_tags(inst, inst_name, host_group, inst_tags)
+
+                waiter = self.ec2_client.get_waiter('instance_running')
+                waiter.wait(InstanceIds=[inst.id for inst in instances])
             else:
                 print('DRY RUN!')
 
