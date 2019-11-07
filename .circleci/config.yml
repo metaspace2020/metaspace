@@ -336,7 +336,7 @@ workflows:
           filters:
             branches:
               # Replace this with the branch to run sci-test against
-              only: feature/isomer-annotation-ion-id
+              only: feature/update-engine-docker-image
 
 ## Disabled until we have time to redo these tests
 #  daily:
