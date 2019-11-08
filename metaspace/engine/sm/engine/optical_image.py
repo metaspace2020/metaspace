@@ -185,12 +185,12 @@ def del_optical_image(db, img_store, ds_id):
     """ Deletes raw and zoomed optical images from DB and FS"""
     ds = Dataset.load(db, ds_id)
     logger.info('Deleting optical image to "%s" dataset', ds.id)
-    raw_img_id, = db.select_one(SEL_DATASET_RAW_OPTICAL_IMAGE, params=(ds.id,))
+    (raw_img_id,) = db.select_one(SEL_DATASET_RAW_OPTICAL_IMAGE, params=(ds.id,))
     if raw_img_id:
         img_store.delete_image_by_id('fs', 'raw_optical_image', raw_img_id)
     for row in db.select(SEL_OPTICAL_IMAGE, params=(ds.id,)):
         img_store.delete_image_by_id('fs', 'optical_image', row[0])
-    thumbnail_img_id, = db.select_one(SEL_OPTICAL_IMAGE_THUMBNAIL, params=(ds.id,))
+    (thumbnail_img_id,) = db.select_one(SEL_OPTICAL_IMAGE_THUMBNAIL, params=(ds.id,))
     if thumbnail_img_id:
         img_store.delete_image_by_id('fs', 'optical_image', thumbnail_img_id)
     db.alter(DEL_DATASET_RAW_OPTICAL_IMAGE, params=(ds.id,))
