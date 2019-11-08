@@ -78,7 +78,7 @@ class IsocalcWrapper:
             return mzs, ints
 
         except Exception as e:
-            logger.warning('%s - %s', formula, e)
+            logger.warning(f'{formula} - {e}')
             return None, None
 
     def centroids(self, formula):

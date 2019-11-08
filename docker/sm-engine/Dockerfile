@@ -64,6 +64,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
         git curl postgresql-client libpq-dev && \
+    $PIP_INSTALL pip && \
     $PIP_INSTALL \
         -r requirements.txt && \
     apt-get clean -y && \

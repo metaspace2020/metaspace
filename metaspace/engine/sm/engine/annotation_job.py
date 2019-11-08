@@ -4,6 +4,7 @@ from pprint import pformat
 from datetime import datetime
 from shutil import copytree, rmtree
 import logging
+from traceback import format_exc
 
 import boto3
 from pyimzml.ImzMLParser import ImzMLParser
@@ -53,7 +54,7 @@ class AnnotationJob:
         self._sm_config = sm_config or SMConfig.get_conf()
         self._ds_data_path = None
 
-        logger.debug('Using SM config:\n%s', pformat(self._sm_config))
+        logger.debug(f'Using SM config:\n{pformat(self._sm_config)}')
 
     def _configure_spark(self):
         logger.info('Configuring Spark')
@@ -96,9 +97,7 @@ class AnnotationJob:
             imzml_path = find_file_by_ext(self._ds_data_path, 'imzml')
             return ImzMLParser(imzml_path, parse_lib='ElementTree')
         except Exception as e:
-            import traceback
-
-            raise ImzMLError(traceback.format_exc()) from e
+            raise ImzMLError(format_exc()) from e
 
     @staticmethod
     def create_mol_dbs(moldb_ids):
@@ -107,10 +106,7 @@ class AnnotationJob:
     def _run_annotation_jobs(self, imzml_parser, moldbs):
         if moldbs:
             logger.info(
-                "Running new job ds_id: %s, ds_name: %s, mol dbs: %s",
-                self._ds.id,
-                self._ds.name,
-                moldbs,
+                f"Running new job ds_id: {self._ds.id}, ds_name: {self._ds.name}, mol dbs: {moldbs}"
             )
 
             # FIXME: Total runtime of the dataset should be measured, not separate jobs
@@ -158,11 +154,8 @@ class AnnotationJob:
     def _remove_annotation_jobs(self, moldbs):
         for moldb in moldbs:
             logger.info(
-                "Removing job results ds_id: %s, ds_name: %s, db_name: %s, db_version: %s",
-                self._ds.id,
-                self._ds.name,
-                moldb.name,
-                moldb.version,
+                f"Removing job results ds_id: {self._ds.id}, ds_name: {self._ds.name}, "
+                f"db_name: {moldb.name}, db_version: {moldb.version}"
             )
             self._db.alter(
                 'DELETE FROM job WHERE ds_id = %s and db_id = %s', params=(self._ds.id, moldb.id)
@@ -201,7 +194,8 @@ class AnnotationJob:
                 aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'],
             )
             bucket_name, key = split_s3_path(ds.input_path)
-            for obj_sum in session.resource('s3').Bucket(bucket_name).objects.filter(Prefix=key):
+            bucket = session.resource('s3').Bucket(bucket_name)  # pylint: disable=no-member
+            for obj_sum in bucket.objects.filter(Prefix=key):
                 local_file = str(self._ds_data_path / Path(obj_sum.key).name)
                 logger.debug(f'Downloading s3a://{bucket_name}/{obj_sum.key} -> {local_file}')
                 obj_sum.Object().download_file(local_file)
@@ -250,7 +244,7 @@ class AnnotationJob:
             self._save_data_from_raw_ms_file(imzml_parser)
             self._img_store.storage_type = 'fs'
 
-            logger.info('Dataset config:\n%s', pformat(self._ds.config))
+            logger.info(f'Dataset config:\n{pformat(self._ds.config)}')
 
             completed_moldb_ids, new_moldb_ids = self._moldb_ids()
             self._remove_annotation_jobs(self.create_mol_dbs(completed_moldb_ids - new_moldb_ids))
@@ -259,8 +253,8 @@ class AnnotationJob:
             )
 
             logger.info("All done!")
-            time_spent = time.time() - start
-            logger.info('Time spent: %d min %d sec', *divmod(int(round(time_spent)), 60))
+            minutes, seconds = divmod(int(round(time.time() - start)), 60)
+            logger.info(f'Time spent: {minutes} min {seconds} sec')
         finally:
             self.cleanup()
             logger.info('*' * 150)

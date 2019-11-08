@@ -44,7 +44,7 @@ class OpticalImageType:
 
 
 def _annotation_image_shape(db, img_store, ds):
-    logger.info('Querying annotation image shape for "%s" dataset...', ds.id)
+    logger.info(f'Querying annotation image shape for "{ds.id}" dataset...')
     ion_img_id = db.select(IMG_URLS_BY_ID_SEL + ' LIMIT 1', params=(ds.id,))[0][0][0]
     storage_type = ds.get_ion_img_storage_type(db)
     result = img_store.get_image_by_id(storage_type, 'iso_image', ion_img_id).size
@@ -170,7 +170,7 @@ def add_optical_image(db, img_store, ds_id, img_id, transform, zoom_levels=(1, 2
     Generates scaled and transformed versions of the provided optical image + creates the thumbnail
     """
     ds = Dataset.load(db, ds_id)
-    logger.info('Adding optical image to "%s" dataset', ds.id)
+    logger.info(f'Adding optical image to "{ds.id}" dataset')
 
     dims = _annotation_image_shape(db, img_store, ds)
     print(img_id)
@@ -184,13 +184,13 @@ def add_optical_image(db, img_store, ds_id, img_id, transform, zoom_levels=(1, 2
 def del_optical_image(db, img_store, ds_id):
     """ Deletes raw and zoomed optical images from DB and FS"""
     ds = Dataset.load(db, ds_id)
-    logger.info('Deleting optical image to "%s" dataset', ds.id)
-    raw_img_id, = db.select_one(SEL_DATASET_RAW_OPTICAL_IMAGE, params=(ds.id,))
+    logger.info(f'Deleting optical image to "{ds.id}" dataset')
+    (raw_img_id,) = db.select_one(SEL_DATASET_RAW_OPTICAL_IMAGE, params=(ds.id,))
     if raw_img_id:
         img_store.delete_image_by_id('fs', 'raw_optical_image', raw_img_id)
     for row in db.select(SEL_OPTICAL_IMAGE, params=(ds.id,)):
         img_store.delete_image_by_id('fs', 'optical_image', row[0])
-    thumbnail_img_id, = db.select_one(SEL_OPTICAL_IMAGE_THUMBNAIL, params=(ds.id,))
+    (thumbnail_img_id,) = db.select_one(SEL_OPTICAL_IMAGE_THUMBNAIL, params=(ds.id,))
     if thumbnail_img_id:
         img_store.delete_image_by_id('fs', 'optical_image', thumbnail_img_id)
     db.alter(DEL_DATASET_RAW_OPTICAL_IMAGE, params=(ds.id,))

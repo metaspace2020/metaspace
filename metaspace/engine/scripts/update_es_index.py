@@ -45,7 +45,7 @@ def _reindex_all(conf):
 
 
 def _reindex_datasets(ds_ids, es_exp):
-    logger.info('Reindexing %s dataset(s)', len(ds_ids))
+    logger.info(f'Reindexing {len(ds_ids)} dataset(s)')
     for i, ds_id in enumerate(ds_ids, 1):
         logger.info(f'Reindexing {i} out of {len(ds_ids)}')
         es_exp.reindex_ds(ds_id)

@@ -1,5 +1,6 @@
 import json
 import logging
+from traceback import format_exc
 import urllib.parse
 from pathlib import Path
 
@@ -20,6 +21,7 @@ from sm.engine.optical_image import IMG_URLS_BY_ID_SEL, del_optical_image
 from sm.engine.queue import QueueConsumer, QueuePublisher
 from sm.engine.util import SMConfig
 from sm.rest.dataset_manager import DatasetActionPriority
+from sm.engine.annotation_job import AnnotationJob
 
 
 class DatasetManager:
@@ -119,7 +121,7 @@ class DatasetManager:
         self._es.update_ds(ds.id, fields)
 
     def _del_iso_images(self, ds):
-        self.logger.info('Deleting isotopic images: (%s, %s)', ds.id, ds.name)
+        self.logger.info(f'Deleting isotopic images: ({ds.id}, {ds.name})')
 
         try:
             storage_type = ds.get_ion_img_storage_type(self._db)
@@ -256,8 +258,6 @@ class SMAnnotateDaemon:
                 'new', " [v] New annotation message: {}".format(json.dumps(msg))
             )
 
-            from sm.engine.annotation_job import AnnotationJob
-
             self._manager.annotate(
                 ds=ds, annotation_job_factory=AnnotationJob, del_first=msg.get('del_first', False)
             )
@@ -278,11 +278,7 @@ class SMAnnotateDaemon:
                 }
                 self._update_queue_pub.publish(msg=analyze_msg, priority=DatasetActionPriority.LOW)
         except Exception as e:
-            import traceback
-
-            raise AnnotationError(
-                ds_id=msg['ds_id'], traceback=traceback.format_exc(chain=False)
-            ) from e
+            raise AnnotationError(ds_id=msg['ds_id'], traceback=format_exc(chain=False)) from e
 
     def start(self):
         self._stopped = False
@@ -369,9 +365,7 @@ class SMIndexUpdateDaemon:
             else:
                 raise SMError(f"Wrong action: {msg['action']}")
         except Exception as e:
-            import traceback
-
-            raise IndexUpdateError(msg['ds_id'], traceback=traceback.format_exc(chain=False)) from e
+            raise IndexUpdateError(msg['ds_id'], traceback=format_exc(chain=False)) from e
 
     def start(self):
         self._stopped = False

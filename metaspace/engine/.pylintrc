@@ -141,6 +141,7 @@ disable=print-statement,
         comprehension-escape,
         missing-docstring,
         logging-fstring-interpolation,
+        logging-format-interpolation,
         too-few-public-methods,
         broad-except,
         bad-continuation,
@@ -326,7 +327,7 @@ variable-naming-style=snake_case
 
 # Format style used to check logging format string. `old` means using %
 # formatting, while `new` is for `{}` formatting.
-logging-format-style=old
+logging-format-style=new
 
 # Logging modules to check that the string format arguments are in logging
 # function parameter format.

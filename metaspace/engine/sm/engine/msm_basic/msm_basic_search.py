@@ -165,7 +165,7 @@ class MSMSearch:
             sample_mzs.nbytes, sample_sp_n, max_chunk_size_mb=1000
         )
 
-        total_mz_n = sample_mzs.shape[0] / sample_ratio
+        total_mz_n = sample_mzs.shape[0] / sample_ratio  # pylint: disable=unsubscriptable-object
         ds_segments = define_ds_segments(
             sample_mzs, total_mz_n, self._imzml_parser.mzPrecision, ds_segm_size_mb
         )
