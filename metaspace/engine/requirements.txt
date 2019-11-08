@@ -25,4 +25,5 @@ cherrypy<9
 redis
 scikit-learn==0.20.2
 pyspark[sql]==2.3.3
+pyarrow>=0.8,<0.15  # 0.15 breaks writing to parquet files from spark
 pysparkling>=0.5.0
