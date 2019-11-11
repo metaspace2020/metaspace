@@ -303,8 +303,6 @@ jobs:
             psql -h localhost -U mol_db -d mol_db -f mol_db_HMDBv25.sql
             cd ../mol-db
             cp conf/local.ini.template conf/local.ini
-            conda env create -f environment.yml
-            source activate mol-db
             pip install -e .
             gunicorn --daemon --bind 0.0.0.0:5001 app.main:application --reload
       - run:
