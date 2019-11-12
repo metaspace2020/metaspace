@@ -518,7 +518,7 @@ class ESExporter:
         :return:
         """
         with self._ds_locker.lock(ds_id):
-            logger.info('Deleting or updating dataset document in ES: %s, %s', ds_id, mol_db)
+            logger.info(f'Deleting or updating dataset document in ES: {ds_id}, {mol_db}')
 
             try:
                 if mol_db:
@@ -528,9 +528,9 @@ class ESExporter:
             except NotFoundError:
                 pass
             except ElasticsearchException as e:
-                logger.warning('Dataset deletion failed: %s', e)
+                logger.warning(f'Dataset deletion failed: {e}')
 
-            logger.info('Deleting annotation documents from ES: %s, %s', ds_id, mol_db)
+            logger.info(f'Deleting annotation documents from ES: {ds_id}, {mol_db}')
 
             must = [{'term': {'ds_id': ds_id}}]
             if mol_db:
@@ -544,4 +544,4 @@ class ESExporter:
                 )
                 logger.debug(resp)
             except ElasticsearchException as e:
-                logger.warning('Annotation deletion failed: %s', e)
+                logger.warning(f'Annotation deletion failed: {e}')

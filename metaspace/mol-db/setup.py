@@ -11,8 +11,9 @@ setup(
     author_email='vitaly.kovalev@embl.de',
     packages=find_packages(),
     install_requires=[
-        "falcon>=1.1.0",
+        "falcon>=1.1.0,<3.0",
         "sqlalchemy>=1.1.5",
+        "gunicorn>=19.1.0",
         "psycopg2>=2.6.2",
         "pandas>=0.19.2",
         "cpyMSpec>=0.3.4",

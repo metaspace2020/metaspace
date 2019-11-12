@@ -50,17 +50,17 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index, ds_config, metadata):
         "true, 'fs', '{}')",
         [[ds_id, json.dumps(ds_config), json.dumps(metadata), upload_dt]],
     )
-    job_id, = db.insert_return(
+    (job_id,) = db.insert_return(
         "INSERT INTO job(ds_id, db_id, status, start, finish) "
         "VALUES (%s, 0, 'job_status', %s, %s) RETURNING id",
         [[ds_id, last_finished, last_finished]],
     )
-    user_id, = db.insert_return(
+    (user_id,) = db.insert_return(
         "INSERT INTO graphql.user (email, name, role) "
         "VALUES ('email', 'user_name', 'user') RETURNING id",
         [[]],
     )
-    group_id, = db.insert_return(
+    (group_id,) = db.insert_return(
         "INSERT INTO graphql.group (name, short_name) VALUES ('group name', 'grp') RETURNING id",
         [[]],
     )

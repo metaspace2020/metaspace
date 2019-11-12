@@ -54,7 +54,7 @@ class SMapiDatasetManager:
         msg.update(kwargs)
 
         queue.publish(msg, priority)
-        self.logger.info('New message posted to %s: %s', queue, msg)
+        self.logger.info(f'New message posted to {queue}: {msg}')
 
     def add(self, doc, **kwargs):
         """ Save dataset and send add message to the queue """

@@ -65,8 +65,7 @@ class CentroidsGenerator:
             return []
 
         formulas_df = pd.DataFrame(
-            [(i, formula) for i, formula in enumerate(formulas, index_start)],
-            columns=['formula_i', 'formula'],
+            list(enumerate(formulas, index_start)), columns=['formula_i', 'formula']
         ).set_index('formula_i')
         centroids_rdd = self._sc.parallelize(
             formulas_df.reset_index().values, numSlices=self._iso_gen_part_n

@@ -11,7 +11,7 @@ class StopThread(Exception):
 
 
 # pylint: disable=too-many-instance-attributes,unused-argument,too-many-public-methods
-# pylint: disable=logging-format-interpolation
+# pylint: disable=logging-format-interpolation,logging-too-many-args
 class QueueConsumerAsync:
     """This is an example consumer that will handle unexpected interactions
     with RabbitMQ such as channel and connection closures.

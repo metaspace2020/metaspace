@@ -38,24 +38,15 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         python3-distutils \
         libsm6 libxrender1 libxext6 \
         && \
-    wget -O ~/get-pip.py https://bootstrap.pypa.io/get-pip.py && \
-    python3.6 ~/get-pip.py && \
+    wget -O /tmp/get-pip.py https://bootstrap.pypa.io/get-pip.py && \
+    python3.6 /tmp/get-pip.py && \
     ln -s /usr/bin/python3.6 /usr/local/bin/python3 && \
     ln -s /usr/bin/python3.6 /usr/local/bin/python && \
     $PIP_INSTALL \
         setuptools && \
     apt-get clean -y && \
     apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/* /tmp/* ~/* ~/.cache/*
-
-# --- MolDB dependencies ---
-RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
-    mkdir /root/.conda && \
-    chmod +x Miniconda3-latest-Linux-x86_64.sh && \
-    ./Miniconda3-latest-Linux-x86_64.sh -b && \
-    ln -S -T /root/miniconda3/bin/conda /usr/local/bin/conda && \
-    ln -S -T /root/miniconda3/bin/activate /usr/local/bin/activate && \
-    rm -rf /var/lib/apt/lists/* /tmp/* ~/* ~/.cache/*
+    rm -rf /var/lib/apt/lists/* /tmp/* ~/.cache/*
 
 # --- Engine dependencies ---
 COPY requirements.txt /requirements.txt
@@ -64,11 +55,12 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
         git curl postgresql-client libpq-dev && \
+    $PIP_INSTALL pip && \
     $PIP_INSTALL \
         -r requirements.txt && \
     apt-get clean -y && \
     apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/* /tmp/* ~/* ~/.cache/*
+    rm -rf /var/lib/apt/lists/* /tmp/* ~/.cache/*
 
 RUN mkdir -p /opt/data /root/metaspace
 #WORKDIR /root/metaspace/metaspace/engine
