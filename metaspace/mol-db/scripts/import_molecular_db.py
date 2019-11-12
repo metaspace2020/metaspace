@@ -4,8 +4,6 @@ from os.path import dirname
 sys.path.append(dirname(dirname(__file__)))
 import argparse
 from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
-from openbabel import OBMol, OBConversion
-import numpy as np
 import pandas as pd
 
 from app.model.molecular_db import MolecularDB
@@ -15,19 +13,11 @@ from app.log import logger
 
 
 def get_inchikey_gen(mol_db_id):
-    ob_conversion = OBConversion()
-    ob_conversion.SetInAndOutFormats("inchi", "inchi")
-    ob_conversion.SetOptions("K", ob_conversion.OUTOPTIONS)
 
     def get_inchikey(ser):
         try:
             if ser.get('inchikey', None):
                 return ser.inchikey
-
-            if ser.get('inchi', None):
-                mol = OBMol()
-                ob_conversion.ReadString(mol, ser.inchi)
-                return ob_conversion.WriteString(mol).strip('\n')
 
             return f"{mol_db_id}:{ser['id']}"
         except Exception as e:
@@ -81,9 +71,13 @@ def remove_duplicated_inchikey_molecules(mol_db_df):
 
 
 def save_molecules(mol_db, mol_db_df):
-    new_molecule_df = mol_db_df[['inchikey', 'inchi', 'id', 'name', 'formula']].copy()
-    new_molecule_df.columns = ['inchikey', 'inchi', 'mol_id', 'mol_name', 'sf']
-    new_molecule_df['db_id'] = mol_db.id
+    new_molecule_df = mol_db_df[['inchikey', 'id', 'name', 'formula']].copy()
+    new_molecule_df.rename(
+        {'id': 'mol_id', 'name': 'mol_name', 'formula': 'sf'}, axis='columns', inplace=True
+    )
+    new_molecule_df['inchi'] = ''
+    new_molecule_df['db_id'] = int(mol_db.id)
+
     if new_molecule_df.shape[0] > 0:
         db_session.bulk_insert_mappings(Molecule, new_molecule_df.to_dict(orient='record'))
 
@@ -111,8 +105,6 @@ def import_molecules(mol_db, csv_file, delimiter):
     assert {'id', 'name', 'formula'}.issubset(set(mol_db_df.columns))
 
     mol_db_df = filter_formulas(mol_db_df)
-    if 'inchi' not in mol_db_df.columns:
-        mol_db_df['inchi'] = ''
     mol_db_df['inchikey'] = mol_db_df.apply(get_inchikey_gen(mol_db.id), axis=1)
     mol_db_df = remove_invalid_inchikey_molecules(mol_db_df)
     mol_db_df = remove_duplicated_inchikey_molecules(mol_db_df)
@@ -129,7 +121,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=help_msg)
     parser.add_argument('name', type=str, help='Database name')
     parser.add_argument('version', type=str, help='Database version')
-    optional_columns = ['inchikey', 'inchi']
+    optional_columns = ['inchikey']
     required_columns = ['mol_id', 'mol_name', 'sf']
     parser.add_argument(
         'csv_file',
