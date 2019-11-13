@@ -16,7 +16,6 @@ logger = log.get_logger()
 class App(falcon.API):
     def __init__(self, *args, **kwargs):
         super(App, self).__init__(*args, **kwargs)
-        logger.info('API Server is starting')
 
         self.add_route('/', base.BaseResource())
 
@@ -32,9 +31,9 @@ class App(falcon.API):
             isotopic_pattern.IsotopicPatternItem(),
         )
 
-        # self.add_route('/v1/sfs', formulae.SumFormulaCollection())
-        # self.add_route('/v1/sfs/{sf}/molecules', formulae.SumFormulaCollection())
         self.add_error_handler(AppError, AppError.handle)
+
+        logger.info('API server is running')
 
 
 init_session()

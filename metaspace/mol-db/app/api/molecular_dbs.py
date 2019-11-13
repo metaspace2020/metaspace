@@ -1,60 +1,16 @@
-import re
-import falcon
+import logging
+from io import StringIO
 
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import desc
+import pandas as pd
 
-# from cerberus import Validator, ValidationError
-
-from app import log
 from app.api.base import BaseResource
-from app.errors import AppError, InvalidParameterError, ObjectNotExistError, PasswordNotMatch
+from app.moldb_import import import_molecular_database
+from app.errors import ObjectNotExistError, BadRequestError
 from app.model import MolecularDB, Molecule
 
-LOG = log.get_logger()
-
-
-# FIELDS = {
-#     'username': {
-#         'type': 'string',
-#         'required': True,
-#         'minlength': 4,
-#         'maxlength': 20
-#     },
-#     'email': {
-#         'type': 'string',
-#         'regex': '[a-zA-Z0-9._-]+@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,4}',
-#         'required': True,
-#         'maxlength': 320
-#     },
-#     'password': {
-#         'type': 'string',
-#         'regex': '[0-9a-zA-Z]\w{3,14}',
-#         'required': True,
-#         'minlength': 8,
-#         'maxlength': 64
-#     },
-#     'info': {
-#         'type': 'dict',
-#         'required': False
-#     }
-# }
-#
-#
-# def validate_user_create(req, res, resource, params):
-#     schema = {
-#         'username': FIELDS['username'],
-#         'email': FIELDS['email'],
-#         'password': FIELDS['password'],
-#         'info': FIELDS['info']
-#     }
-#
-#     v = Validator(schema)
-#     try:
-#         if not v.validate(req.context['data']):
-#             raise InvalidParameterError(v.errors)
-#     except ValidationError:
-#         raise InvalidParameterError('Invalid Request %s' % req.context)
+logger = logging.getLogger('API')
 
 
 class MoleculeCollection(BaseResource):
@@ -108,13 +64,12 @@ class MolDBCollection(BaseResource):
     Handle for endpoint: /v1/databases
     """
 
-    # @falcon.before(auth_required)
     def on_get(self, req, res):
-        db_session = req.context['session']
+        db = req.context['session']
         name = req.params.get('name', None)
         version = req.params.get('version', None)
 
-        q = db_session.query(MolecularDB)
+        q = db.query(MolecularDB)
         if name:
             q = q.filter(MolecularDB.name == name)
         if version:
@@ -127,17 +82,36 @@ class MolDBCollection(BaseResource):
         else:
             raise ObjectNotExistError('db_name: {}, db_version: {}'.format(name, version))
 
+    def on_post(self, req, res):
+        name = req.params.get('name', None)
+        version = req.params.get('version', None)
+        drop_moldb = req.params.get('drop', 'no').lower() in ['true', 'yes', '1']
+        if not (name and version):
+            BadRequestError(f'"Name" and "version" parameters required: {name}, {version}')
+
+        buffer = StringIO(req.stream.read(req.content_length).decode())
+        moldb_df = pd.read_csv(buffer, sep='\t')
+
+        moldb = import_molecular_database(name, version, moldb_df, drop_moldb=drop_moldb)
+        self.on_success(res, f'Created: {moldb}')
+
 
 class MolDBItem(BaseResource):
     """
     Handle for endpoint: /v1/databases/{db_id}
     """
 
-    # @falcon.before(auth_required)
     def on_get(self, req, res, db_id):
         session = req.context['session']
         try:
-            user_db = MolecularDB.find_one(session, db_id)
+            user_db = MolecularDB.find_by_id(session, db_id)
             self.on_success(res, user_db.to_dict())
         except NoResultFound:
             raise ObjectNotExistError('user id: %s' % db_id)
+
+    def on_delete(self, req, res, db_id):
+        db = req.context['session']
+        moldb = MolecularDB.find_by_id(db, db_id)
+        db.delete(moldb)
+        db.commit()
+        self.on_success(res)

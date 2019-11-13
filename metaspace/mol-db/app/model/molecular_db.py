@@ -30,6 +30,10 @@ class MolecularDB(Base):
     def find_by_name_version(cls, session, name, version):
         return session.query(MolecularDB).filter_by(name=name, version=version).first()
 
+    @classmethod
+    def find_by_id(cls, session, id):
+        return session.query(MolecularDB).filter_by(id=id).first()
+
     FIELDS = {'id': int, 'name': str, 'version': str}
 
     FIELDS.update(Base.FIELDS)
