@@ -11,7 +11,6 @@ logger = logging.getLogger('API')
 
 
 def get_inchikey_gen(mol_db_id):
-
     def get_inchikey(ser):
         try:
             if ser.get('inchikey', None):
@@ -23,27 +22,6 @@ def get_inchikey_gen(mol_db_id):
             return '{}-{}-{}'.format(ser.formula, ser['name'], ser['id'])
 
     return get_inchikey
-
-
-# def get_or_create(session, model, query, **kwargs):
-#     inst = query.first()
-#     if inst:
-#         return inst
-#     else:
-#         inst = model(**kwargs)
-#         session.add(inst)
-#         # session.commit()
-#         return inst
-#
-#
-# def get_or_create_molecule(session, model, **kwargs):
-#     q = session.query(model).filter_by(inchikey=kwargs['inchikey'])
-#     return get_or_create(session, model, query=q, **kwargs)
-#
-#
-# def get_or_create_db_mol_assoc(session, model, **kwargs):
-#     q = session.query(model).filter_by(db_id=kwargs['db_id'], inchikey=kwargs['inchikey'])
-#     return get_or_create(session, model, query=q, **kwargs)
 
 
 def filter_formulas(mol_db_df):
