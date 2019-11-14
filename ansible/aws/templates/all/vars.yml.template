@@ -324,6 +324,8 @@ nginx_servers:
         params:
           - proxy_pass http://moldb_server/;
           - include proxy-params.conf;
+          - limit_except GET {allow 127.0.0.1/32; deny all;}
+          - client_max_body_size 200M;
 
   - desc: Elasticsearch redirect
     params:
