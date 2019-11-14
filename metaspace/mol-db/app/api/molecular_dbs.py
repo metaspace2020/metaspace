@@ -93,7 +93,7 @@ class MolDBCollection(BaseResource):
         moldb_df = pd.read_csv(buffer, sep='\t')
 
         moldb = import_molecular_database(name, version, moldb_df, drop_moldb=drop_moldb)
-        self.on_success(res, f'Created: {moldb}')
+        self.on_success(res, moldb.to_dict())
 
 
 class MolDBItem(BaseResource):
@@ -104,8 +104,8 @@ class MolDBItem(BaseResource):
     def on_get(self, req, res, db_id):
         session = req.context['session']
         try:
-            user_db = MolecularDB.find_by_id(session, db_id)
-            self.on_success(res, user_db.to_dict())
+            moldb = MolecularDB.find_by_id(session, db_id)
+            self.on_success(res, moldb.to_dict())
         except NoResultFound:
             raise ObjectNotExistError('user id: %s' % db_id)
 
