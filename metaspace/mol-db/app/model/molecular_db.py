@@ -5,7 +5,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
 from app.model.base import Base
-from app.config import UUID_LEN
 
 
 class MolecularDB(Base):

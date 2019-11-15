@@ -94,25 +94,3 @@ def import_molecules_from_df(moldb, moldb_df):
         save_molecules(moldb, moldb_df)
     else:
         raise BadRequestError(f'Empty dataframe: {moldb_df}')
-
-
-def import_molecular_database(name, version, moldb_df, drop_moldb=False):
-    moldb = MolecularDB.find_by_name_version(db, name, version)
-    if moldb and not drop_moldb:
-        raise BadRequestError(f'Mol DB already exists: {moldb}')
-
-    if moldb:
-        logger.info(f'Deleting Mol DB: {moldb}')
-        db.delete(moldb)
-        db.commit()
-        moldb = MolecularDB(id=moldb.id, name=name, version=version)
-    else:
-        moldb = MolecularDB(name=name, version=version)
-    db.add(moldb)
-    db.commit()
-    db.refresh(moldb)
-
-    import_molecules_from_df(moldb, moldb_df)
-
-    db.commit()
-    return moldb
