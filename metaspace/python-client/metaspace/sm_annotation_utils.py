@@ -143,6 +143,23 @@ class GraphQLClient(object):
         inputPath
     """
 
+    ANNOTATION_FIELDS = """
+        sumFormula
+        neutralLoss
+        adduct
+        mz
+        msmScore
+        rhoSpatial
+        rhoSpectral
+        rhoChaos
+        fdrLevel
+        offSample
+        offSampleProb
+        dataset { id name }
+        possibleCompounds { name information { url databaseId } }
+        isotopeImages { mz url maxIntensity totalIntensity }
+    """
+
     DEFAULT_ANNOTATION_FILTER = {
         'database': 'HMDB-v4',
         'hasNeutralLoss': False,
@@ -211,15 +228,23 @@ class GraphQLClient(object):
             return matches[0]
 
     def getAnnotations(self, annotationFilter=None, datasetFilter=None, colocFilter=None):
+        query_arguments = [
+            "$filter: AnnotationFilter",
+            "$dFilter: DatasetFilter",
+            "$orderBy: AnnotationOrderBy",
+            "$sortingOrder: SortingOrder",
+            "$offset: Int",
+            "$limit: Int",
+        ]
+        if colocFilter:
+            query_arguments.append("$colocalizationCoeffFilter: ColocalizationCoeffFilter")
+            self.ANNOTATION_FIELDS += (
+                "colocalizationCoeff( colocalizationCoeffFilter: $colocalizationCoeffFilter)"
+            )
+
         query = """
             query getAnnotations(
-                $filter: AnnotationFilter,
-                $dFilter: DatasetFilter,
-                $colocalizationCoeffFilter: ColocalizationCoeffFilter,
-                $orderBy: AnnotationOrderBy,
-                $sortingOrder: SortingOrder
-                $offset: Int,
-                $limit: Int,
+                %s
             ) {
                 allAnnotations(
                     filter: $filter,
@@ -229,37 +254,12 @@ class GraphQLClient(object):
                     offset: $offset,
                     limit: $limit,
                 ) {
-                    sumFormula
-                    adduct
-                    mz
-                    msmScore
-                    rhoSpatial
-                    rhoSpectral
-                    rhoChaos
-                    fdrLevel
-                    offSample
-                    offSampleProb
-                    dataset {
-                        id
-                        name
-                    }
-                    possibleCompounds {
-                        name
-                        information{
-                          url
-                          databaseId
-                        }
-                    }
-                    isotopeImages {
-                        mz
-                        url
-                        maxIntensity
-                    }
-                    colocalizationCoeff(
-                        colocalizationCoeffFilter: $colocalizationCoeffFilter
-                    )
+                %s
                 }
-            }"""
+            }""" % (
+            ','.join(query_arguments),
+            self.ANNOTATION_FIELDS,
+        )
         if datasetFilter is None:
             datasetFilter = {}
 
