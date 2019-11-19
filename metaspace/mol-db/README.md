@@ -16,31 +16,31 @@ CREATE DATABASE mol_db WITH OWNER sm;
 \q  # exit
 ```
 
-Python>=3.4 is required
+Python>=3.6 is required
 ```bash
 sudo pip install -U pip
 sudo pip install -r requirements.txt
 ```
 ## Usage
 
-To start the API in a development mode
+Start the API in development mode
 ```
 python app/main.py
 ```
 
-To start in a production mode
+Start in production mode
 ```
 gunicorn --log-level INFO --access-logfile - --workers 4 \
 --worker-class sync --timeout 90 --bind 0.0.0.0:5001 app.main:application
 ``` 
 
-To add a new database
+Add a new database
 ```
 curl -X POST "http://localhost:5001/v1/databases?name=mol-db-name&version=2019-12-12&drop=yes"
 curl -H "Content-Type: text/plain" --data-binary -d "@/path/to/import/file.csv" -X POST "http://localhost:5001/v1/databases/{moldb_id}/molecules"
 ```
 
-To delete a database
+Delete a database
 ```
 curl -X DELETE "http://localhost:5001/v1/databases/{moldb_id}"
 ```
