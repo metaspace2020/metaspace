@@ -31,8 +31,8 @@ export interface Config {
   };
   adducts: Adduct[];
   moldbs: {
+    public: string[];
     deprecated: string[];
-    custom: string[];
   },
   img_upload: {
     iso_img_fs_path: string;

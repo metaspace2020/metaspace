@@ -1111,10 +1111,13 @@ class SMInstance(object):
             ds_id=dsid,
         )
 
-    def update_dataset_dbs(self, datasetID, molDBs, adducts, priority):
+    def update_dataset_dbs(self, datasetID, molDBs, adducts, priority=1):
         return self._gqclient.update_dataset(
             ds_id=datasetID, mol_dbs=molDBs, adducts=adducts, priority=priority
         )
+
+    def reprocess_dataset(self, dataset_id, force=False):
+        return self._gqclient.update_dataset(ds_id=dataset_id, reprocess=True, force=force)
 
     def delete_dataset(self, ds_id, **kwargs):
         return self._gqclient.delete_dataset(ds_id, **kwargs)
