@@ -55,7 +55,7 @@ def test_define_ds_segments():
     assert np.allclose(ds_segments, exp_ds_segments)
 
 
-@patch('sm.engine.msm_basic.segmenter.pq.ParquetWriter.write_table')
+@patch('sm.engine.msm_basic.segmenter.pa.parquet.write_table')
 def test_segment_ds(write_table_mock):
     imzml_parser_mock = Mock()
     imzml_parser_mock.getspectrum.return_value = (np.linspace(0, 90, num=10), np.ones(10))
@@ -66,9 +66,10 @@ def test_segment_ds(write_table_mock):
     chunk_sp_n = 1000
     segment_ds(imzml_parser_mock, coordinates, chunk_sp_n, ds_segments, Path('/tmp/abc'))
 
-    for segm_i, (min_mz, max_mz) in enumerate(ds_segments):
-        args = write_table_mock.call_args_list[segm_i][0]
-        segm_arr = args[0].to_pandas().values
+    for (table, path), _ in write_table_mock.call_args_list:
+        segm_arr = table.to_pandas().values
+        segm_i = int(path.stem[-4:])
+        min_mz, max_mz = ds_segments[segm_i]
 
         assert segm_arr.shape == (50, 3)
         # mz stored in column 1

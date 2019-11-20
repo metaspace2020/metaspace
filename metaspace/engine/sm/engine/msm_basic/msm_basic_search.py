@@ -162,7 +162,7 @@ class MSMSearch:
 
         sample_sp_n = int(len(self._coordinates) * sample_ratio)
         spectra_per_chunk_n = calculate_chunk_sp_n(
-            sample_mzs.nbytes, sample_sp_n, max_chunk_size_mb=1000
+            sample_mzs.nbytes, sample_sp_n, max_chunk_size_mb=5000
         )
 
         total_mz_n = sample_mzs.shape[0] / sample_ratio  # pylint: disable=unsubscriptable-object

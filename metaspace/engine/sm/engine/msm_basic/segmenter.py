@@ -1,4 +1,5 @@
 import logging
+import concurrent.futures
 from math import ceil
 from shutil import rmtree
 
@@ -69,18 +70,24 @@ def define_ds_segments(sample_mzs, total_mz_n, mz_precision, ds_segm_size_mb=5):
 
 def segment_spectra_chunk(sp_mz_int_buf, mz_segments, ds_segments_path):
     segm_left_bounds, segm_right_bounds = zip(*mz_segments)
-
-    segm_starts = np.searchsorted(
-        sp_mz_int_buf[:, 1], segm_left_bounds
-    )  # mz expected to be in column 1
+    # mz expected to be in column 1
+    segm_starts = np.searchsorted(sp_mz_int_buf[:, 1], segm_left_bounds)
     segm_ends = np.searchsorted(sp_mz_int_buf[:, 1], segm_right_bounds)
 
-    for segm_i, (start, end) in enumerate(zip(segm_starts, segm_ends)):
+    def save(segm_i, start, end):
         table = pa.Table.from_pandas(pd.DataFrame(sp_mz_int_buf[start:end]))
-        with pq.ParquetWriter(
-            ds_segments_path / f'ds_segm_{segm_i:04}.parquet', table.schema
-        ) as writer:
-            writer.write_table(table)
+        segment_path = ds_segments_path / f'ds_segm_{segm_i:04}.parquet'
+        if segment_path.exists():
+            table = pa.concat_tables([pq.read_table(segment_path), table])
+        pa.parquet.write_table(table, segment_path)
+
+    max_workers = min(len(mz_segments), 16)
+    with concurrent.futures.ThreadPoolExecutor(max_workers) as executor:
+        futures = [
+            executor.submit(save, segm_i, start, end)
+            for segm_i, (start, end) in enumerate(zip(segm_starts, segm_ends))
+        ]
+        concurrent.futures.wait(futures)
 
 
 def calculate_chunk_sp_n(sample_mzs_bytes, sample_sp_n, max_chunk_size_mb=500):
@@ -136,8 +143,8 @@ def segment_ds(imzml_parser, coordinates, spectra_per_chunk_n, ds_segments, ds_s
     sp_id_to_idx = get_pixel_indices(coordinates)
     mz_segments = extend_ds_segment_bounds(ds_segments)
     sp_id_chunks = chunk_list(xs=range(len(coordinates)), size=spectra_per_chunk_n)
-    for ch_i, sp_ids in enumerate(sp_id_chunks, 1):
-        logger.debug(f'Segmenting spectra chunk {ch_i}')
+    for chunk_i, sp_ids in enumerate(sp_id_chunks, 1):
+        logger.debug(f'Segmenting spectra chunk {chunk_i}')
         sp_mz_int_buf = fetch_chunk_spectra_data(sp_ids, imzml_parser, sp_id_to_idx)
         segment_spectra_chunk(sp_mz_int_buf, mz_segments, ds_segments_path)
 
