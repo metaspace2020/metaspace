@@ -82,6 +82,11 @@ class AWSInstManager:
                     Dimensions=[{'Name': 'InstanceId', 'Value': inst.id}],
                 )
 
+    def wait_for_instances(self, instances, status='instance_running'):
+        if instances:
+            waiter = self.ec2_client.get_waiter(status)
+            waiter.wait(InstanceIds=[inst.id for inst in instances])
+
     def launch_new_inst(
         self,
         inst_type,
@@ -147,6 +152,8 @@ class AWSInstManager:
                 self.ec2.Instance(r['InstanceId']) for r in desc_resp['SpotInstanceRequests']
             ]
 
+        self.wait_for_instances(instances)
+
         if el_ip_id:
             if inst_n == 1:
                 elastic_ip = self.ec2.VpcAddress(el_ip_id)
@@ -159,6 +166,20 @@ class AWSInstManager:
 
         print('Launched {}'.format(instances))
         return instances
+
+    def start_instances(self, instances):
+        stopped_instances = []
+        for inst in instances:
+            if inst.state['Name'] in ['running', 'pending']:
+                print('Already running: {}'.format(inst))
+            elif inst.state['Name'] == 'stopped':
+                print('Stopped instance found. Starting...')
+                stopped_instances.append(inst)
+            else:
+                raise BaseException('Wrong state: {}'.format(inst.state['Name']))
+        for inst in stopped_instances:
+            inst.start()
+        self.wait_for_instances(stopped_instances)
 
     def create_instances(
         self,
@@ -176,7 +197,6 @@ class AWSInstManager:
     ):
         print('Start {} instance(s) of type {}, name={}'.format(inst_n, inst_type, inst_name))
         instances = self.find_inst_by(host_group)
-        new_inst_n = inst_n - len(instances)
 
         if len(instances) > inst_n:
             raise BaseException(
@@ -184,15 +204,9 @@ class AWSInstManager:
             )
         else:
             if not self.dry_run:
-                for inst in instances:
-                    if inst.state['Name'] in ['running', 'pending']:
-                        print('Already running: {}'.format(inst))
-                    elif inst.state['Name'] == 'stopped':
-                        print('Stopped instance found. Starting...')
-                        self.ec2.instances.filter(InstanceIds=[inst.id]).start()
-                    else:
-                        raise BaseException('Wrong state: {}'.format(inst.state['Name']))
+                self.start_instances(instances)
 
+                new_inst_n = inst_n - len(instances)
                 if new_inst_n > 0:
                     new_instances = self.launch_new_inst(
                         inst_type,
@@ -209,9 +223,6 @@ class AWSInstManager:
 
                 for inst in instances:
                     self.assign_tags(inst, inst_name, host_group, inst_tags)
-
-                waiter = self.ec2_client.get_waiter('instance_running')
-                waiter.wait(InstanceIds=[inst.id for inst in instances])
             else:
                 print('DRY RUN!')
 
