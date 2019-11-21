@@ -24,16 +24,24 @@
 
 
 - name: Wait for SSH on Spark instances to come up
-  hosts: master, slave
+  hosts: localhost
   user: ubuntu
-  gather_facts: no
+  gather_facts: True
 
   tasks:
-    - name: Wait for instance to become reachable over SSH
-      wait_for_connection:
+    - name: Wait for SSH on master to come up
+      wait_for:
+        host: "{{ hostvars['master-1']['ansible_ssh_host'] }}"
+        port: 22
         timeout: 300
+        state: started
 
-    - name: Gather facts for first time
-      setup:
+    - name: Wait for SSH on slaves to come up
+      wait_for:
+        host: "{{ hostvars[item]['ansible_ssh_host'] }}"
+        port: 22
+        timeout: 300
+        state: started
+      with_items: "{{ groups['slave'] }}"
 
   tags: ["spark"]

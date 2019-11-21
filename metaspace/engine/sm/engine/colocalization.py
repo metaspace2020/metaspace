@@ -316,7 +316,7 @@ class Colocalization:
         )
 
     def _save_job_to_db(self, job):
-        job_id, = self._db.insert_return(
+        (job_id,) = self._db.insert_return(
             COLOC_JOB_INS,
             [
                 [

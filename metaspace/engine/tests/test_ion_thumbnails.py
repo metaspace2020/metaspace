@@ -27,7 +27,7 @@ def _make_fake_ds(db, ds_id, metadata, ds_config):
     )
     ds.save(db)
 
-    job_id, = db.insert_return(
+    (job_id,) = db.insert_return(
         "INSERT INTO job (db_id, ds_id) VALUES (%s, %s) RETURNING id", [(0, ds_id)]
     )
     db.insert(
@@ -55,6 +55,6 @@ def test_creates_ion_thumbnail(test_db, algorithm, metadata, ds_config):
 
     generate_ion_thumbnail(db, img_store_mock, DS_ID, algorithm=algorithm)
 
-    new_ion_thumbnail, = db.select_one("SELECT ion_thumbnail FROM dataset WHERE id = %s", [DS_ID])
+    (new_ion_thumbnail,) = db.select_one("SELECT ion_thumbnail FROM dataset WHERE id = %s", [DS_ID])
     assert new_ion_thumbnail == IMG_ID
     assert img_store_mock.post_image.called

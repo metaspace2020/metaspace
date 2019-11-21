@@ -33,7 +33,7 @@ def run(ds_id, sql_where):
         try:
             logger.info(f'[{i+1} / {len(ds_ids)}] Updating acq geometry for {ds_id}')
             ds = Dataset.load(db, ds_id)
-            sample_img_id, = db.select_one(
+            (sample_img_id,) = db.select_one(
                 "SELECT iim.iso_image_ids[1] from job j "
                 "JOIN iso_image_metrics iim on j.id = iim.job_id "
                 "WHERE j.ds_id = %s LIMIT 1",
