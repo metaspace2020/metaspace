@@ -334,7 +334,7 @@ workflows:
           filters:
             branches:
               # Replace this with the branch to run sci-test against
-              only: feature/update-engine-docker-image
+              only: feature/replace-msgpack-with-arrow
 
 ## Disabled until we have time to redo these tests
 #  daily:
