@@ -386,8 +386,8 @@ class ESExporter:
             doc['ion'] = ion_without_pol + doc['polarity']
             doc['comp_ids'], doc['comp_names'] = mol_by_formula[formula]
             mzs, _ = isocalc.centroids(ion_without_pol)
-            doc['centroid_mzs'] = list(mzs)
-            doc['mz'] = mzs[0]
+            doc['centroid_mzs'] = list(mzs) if mzs is not None else []
+            doc['mz'] = mzs[0] if mzs is not None else 0
 
             fdr = round(doc['fdr'] * 100, 2)
             annotation_counts[fdr] += 1
