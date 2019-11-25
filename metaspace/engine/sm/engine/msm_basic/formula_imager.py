@@ -1,4 +1,5 @@
 import logging
+import pickle
 from pathlib import Path
 
 import numpy as np
@@ -85,14 +86,25 @@ def choose_ds_segments(ds_segments, centr_df, ppm):
     return first_ds_segm_i, last_ds_segm_i
 
 
-def read_ds_segment(segm_i):
-    path = get_file_path(f'ds_segm_{segm_i:04}.parquet')
-    sp_arr = pq.read_table(path).to_pandas().values
-    return sp_arr
+def read_ds_segment(segm_path):
+    segments = []
+    try:
+        with open(segm_path, 'rb') as f:
+            while True:
+                segments.append(pickle.load(f))
+    except EOFError:
+        pass
+    if segments:
+        return np.concatenate(segments)
+    else:
+        return np.array([])
 
 
 def read_ds_segments(first_segm_i, last_segm_i):
-    sp_arr = [read_ds_segment(ds_segm_i) for ds_segm_i in range(first_segm_i, last_segm_i + 1)]
+    sp_arr = [
+        read_ds_segment(get_file_path(f'ds_segm_{segm_i:04}.pickle'))
+        for segm_i in range(first_segm_i, last_segm_i + 1)
+    ]
     sp_arr = [a for a in sp_arr if a.size > 0]
     if sp_arr:
         sp_arr = np.concatenate(sp_arr)

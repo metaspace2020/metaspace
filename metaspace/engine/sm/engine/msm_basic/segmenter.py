@@ -1,5 +1,5 @@
 import logging
-import concurrent.futures
+import pickle
 from math import ceil
 from shutil import rmtree
 
@@ -74,20 +74,10 @@ def segment_spectra_chunk(sp_mz_int_buf, mz_segments, ds_segments_path):
     segm_starts = np.searchsorted(sp_mz_int_buf[:, 1], segm_left_bounds)
     segm_ends = np.searchsorted(sp_mz_int_buf[:, 1], segm_right_bounds)
 
-    def save(segm_i, start, end):
-        table = pa.Table.from_pandas(pd.DataFrame(sp_mz_int_buf[start:end]))
-        segment_path = ds_segments_path / f'ds_segm_{segm_i:04}.parquet'
-        if segment_path.exists():
-            table = pa.concat_tables([pq.read_table(segment_path), table])
-        pa.parquet.write_table(table, segment_path)
-
-    max_workers = min(len(mz_segments), 16)
-    with concurrent.futures.ThreadPoolExecutor(max_workers) as executor:
-        futures = [
-            executor.submit(save, segm_i, start, end)
-            for segm_i, (start, end) in enumerate(zip(segm_starts, segm_ends))
-        ]
-        concurrent.futures.wait(futures)
+    for segm_i, (start, end) in enumerate(zip(segm_starts, segm_ends)):
+        segment_path = ds_segments_path / f'ds_segm_{segm_i:04}.pickle'
+        with open(segment_path, 'ab') as f:
+            pickle.dump(sp_mz_int_buf[start:end], f)
 
 
 def calculate_chunk_sp_n(sample_mzs_bytes, sample_sp_n, max_chunk_size_mb=500):

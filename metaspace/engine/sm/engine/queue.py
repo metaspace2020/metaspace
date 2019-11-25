@@ -441,8 +441,6 @@ class QueueConsumer(Thread):
                     self.logger.error(' [x] Failed in _on_success: {}'.format(body), exc_info=True)
             finally:
                 self._channel.basic_ack(method.delivery_tag)
-        else:
-            self.logger.debug('No messages in "{}" queue'.format(self._qname))
 
     def run(self):
         """ Use `start` method to kick off message polling """
