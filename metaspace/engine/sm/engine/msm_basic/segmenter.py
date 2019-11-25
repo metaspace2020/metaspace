@@ -5,8 +5,6 @@ from shutil import rmtree
 
 import numpy as np
 import pandas as pd
-import pyarrow as pa
-import pyarrow.parquet as pq
 
 from sm.engine.errors import SMError
 from sm.engine.msm_basic.formula_imager import get_pixel_indices
