@@ -55,8 +55,8 @@ def test_define_ds_segments():
     assert np.allclose(ds_segments, exp_ds_segments)
 
 
-@patch('sm.engine.msm_basic.segmenter.pa.parquet.write_table')
-def test_segment_ds(write_table_mock):
+@patch('sm.engine.msm_basic.segmenter.pickle.dump')
+def test_segment_ds(dump_mock):
     imzml_parser_mock = Mock()
     imzml_parser_mock.getspectrum.return_value = (np.linspace(0, 90, num=10), np.ones(10))
     imzml_parser_mock.mzPrecision = 'f'
@@ -66,9 +66,7 @@ def test_segment_ds(write_table_mock):
     chunk_sp_n = 1000
     segment_ds(imzml_parser_mock, coordinates, chunk_sp_n, ds_segments, Path('/tmp/abc'))
 
-    for (table, path), _ in write_table_mock.call_args_list:
-        segm_arr = table.to_pandas().values
-        segm_i = int(path.stem[-4:])
+    for segm_i, ((segm_arr, path), _) in enumerate(dump_mock.call_args_list):
         min_mz, max_mz = ds_segments[segm_i]
 
         assert segm_arr.shape == (50, 3)
@@ -77,8 +75,8 @@ def test_segment_ds(write_table_mock):
         assert np.all(segm_arr[:, 1] <= max_mz)
 
 
-@patch('sm.engine.msm_basic.segmenter.pq.ParquetWriter.write_table')
-def test_segment_centroids(write_table_mock):
+@patch('sm.engine.msm_basic.segmenter.pickle.dump')
+def test_segment_centroids(dump_mock):
     centr_df = pd.DataFrame(
         [
             (0, 0, 90),
@@ -97,8 +95,8 @@ def test_segment_centroids(write_table_mock):
     segment_centroids(centr_df, segm_n, Path('/tmp/abc'))
 
     for segm_i in range(segm_n):
-        args = write_table_mock.call_args_list[segm_i][0]
-        df = args[0].to_pandas()
+        args, _ = dump_mock.call_args_list[segm_i]
+        df, _ = args
 
         assert df.shape == (3, 4)
         assert set(df.formula_i) == {segm_i}

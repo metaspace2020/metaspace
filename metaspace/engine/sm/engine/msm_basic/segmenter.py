@@ -174,8 +174,6 @@ def segment_centroids(centr_df, centr_segm_n, centr_segm_path):
         centr_df, first_peak_df[['formula_i', 'segm_i']], on='formula_i'
     ).sort_values('mz')
     for segm_i, df in centr_segm_df.groupby('segm_i'):
-        table = pa.Table.from_pandas(df)
-        with pq.ParquetWriter(
-            f'{centr_segm_path}/centr_segm_{segm_i:04}.parquet', table.schema
-        ) as writer:
-            writer.write_table(table)
+        segment_path = centr_segm_path / f'centr_segm_{segm_i:04}.pickle'
+        with open(segment_path, 'wb') as f:
+            pickle.dump(df, f)

@@ -4,7 +4,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import pyarrow.parquet as pq
 from pyspark.files import SparkFiles
 from scipy.sparse import coo_matrix
 
@@ -94,10 +93,12 @@ def read_ds_segment(segm_path):
                 segments.append(pickle.load(f))
     except EOFError:
         pass
-    if segments:
-        return np.concatenate(segments)
-    else:
-        return np.array([])
+    return np.concatenate(segments) if segments else np.array([])
+
+
+def read_centroids_segment(segm_path):
+    with open(segm_path, 'rb') as f:
+        return pickle.load(f)
 
 
 def read_ds_segments(first_segm_i, last_segm_i):
@@ -129,13 +130,13 @@ def create_process_segment(ds_segments, coordinates, ds_config, target_formula_i
     n_peaks = ds_config['isotope_generation']['n_peaks']
 
     def process_centr_segment(segm_i):
-        centr_segm_path = get_file_path(f'centr_segm_{segm_i:04}.parquet')
+        centr_segm_path = get_file_path(f'centr_segm_{segm_i:04}.pickle')
 
         formula_metrics_df, formula_images = pd.DataFrame(), {}
         if centr_segm_path.exists():
             logger.info(f'Reading centroids segment {segm_i} from {centr_segm_path}')
 
-            centr_df = pq.read_table(centr_segm_path).to_pandas()
+            centr_df = read_centroids_segment(centr_segm_path)
             first_ds_segm_i, last_ds_segm_i = choose_ds_segments(ds_segments, centr_df, ppm)
 
             logger.info(f'Reading dataset segments {first_ds_segm_i}-{last_ds_segm_i}')
