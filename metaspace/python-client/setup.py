@@ -11,7 +11,15 @@ setup(
     url='https://github.com/metaspace2020/metaspace/tree/master/metaspace/python-client',
     author='Alexandrov Team, EMBL',
     packages=find_packages(),
-    install_requires=['pandas', 'plotly>=1.12', 'numpy', 'matplotlib', 'pyMSpec', 'pillow'],
+    install_requires=[
+        'pandas',
+        'plotly>=1.12',
+        'numpy',
+        'matplotlib',
+        'pyMSpec',
+        'pillow',
+        'requests',
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache Software License",
