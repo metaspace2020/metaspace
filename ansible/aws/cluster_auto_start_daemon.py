@@ -292,7 +292,7 @@ class ClusterDaemon:
                     if (
                         self.spark_master_public_ip is not None
                         and not self.job_running()
-                        and self.min_uptime_over()
+                        and self.min_uptime_over(minutes=30)
                     ):
                         self.cluster_stop()
 
