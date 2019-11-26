@@ -31,7 +31,10 @@ class AWSInstManager:
             self.ec2.instances.filter(
                 Filters=[
                     {'Name': 'tag:hostgroup', 'Values': [host_group]},
-                    {'Name': 'instance-state-name', 'Values': ['running', 'stopped', 'pending']},
+                    {
+                        'Name': 'instance-state-name',
+                        'Values': ['pending', 'running', 'stopping', 'stopped'],
+                    },
                 ]
             )
         )
