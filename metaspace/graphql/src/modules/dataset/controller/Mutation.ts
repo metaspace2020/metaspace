@@ -119,7 +119,7 @@ export function processingSettingsChanged(ds: EngineDataset, update: DatasetUpda
 }
 
 const isMemberOf = async (entityManager: EntityManager, userId: string, groupId: string) => {
-  const userGroup = await entityManager.getRepository(UserGroupModel).findOne({
+  const userGroup = await entityManager.findOne(UserGroupModel, {
     userId,
     groupId
   });
@@ -156,9 +156,9 @@ const saveDataset = async (entityManager: EntityManager, args: SaveDatasetArgs, 
 
   if (requireInsert) {
     // When creating new datasets, use INSERT so that SQL prevents the same ID from being used twice
-    await entityManager.getRepository(DatasetModel).insert(dsUpdate);
+    await entityManager.insert(DatasetModel, dsUpdate);
   } else {
-    await entityManager.getRepository(DatasetModel).save(dsUpdate);
+    await entityManager.save(DatasetModel, dsUpdate);
   }
 
   if (projectIds != null) {
@@ -203,6 +203,7 @@ type CreateDatasetArgs = {
   delFirst?: boolean,        // Only used by reprocess
   skipValidation?: boolean,  // Only used by reprocess
 };
+
 const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
   const {input, priority, force, delFirst, skipValidation} = args;
   const {user, entityManager, isAdmin, getUserIdOrFail} = ctx;
@@ -252,9 +253,9 @@ const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
 const MutationResolvers: FieldResolversFor<Mutation, void>  = {
 
   reprocessDataset: async (source, { id, priority }, ctx: Context) => {
-    const engineDataset = await ctx.entityManager.getRepository(EngineDataset).findOne(id);
+    const engineDataset = await ctx.entityManager.findOne(EngineDataset, id);
     if (engineDataset === undefined)
-      throw Error('Dataset does not exist');
+      throw new UserError('Dataset does not exist');
 
     return await createDataset({
       datasetId: id,
@@ -291,7 +292,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
       await verifyDatasetPublicationStatus(ctx.entityManager, datasetId);
     }
 
-    const engineDataset = await ctx.entityManager.getRepository(EngineDataset).findOneOrFail(datasetId);
+    const engineDataset = await ctx.entityManager.findOneOrFail(EngineDataset, datasetId);
     const {newDB, procSettingsUpd} = await processingSettingsChanged(engineDataset, {...update, metadata});
     const reprocessingNeeded = newDB || procSettingsUpd;
 

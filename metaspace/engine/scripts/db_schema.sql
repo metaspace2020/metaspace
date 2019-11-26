@@ -43,6 +43,8 @@ CREATE TABLE "graphql"."project" (
   "created_dt" TIMESTAMP NOT NULL DEFAULT (now() at time zone 'utc'), 
   "project_description" text NOT NULL DEFAULT '', 
   "review_token" text, 
+  "review_token_created_dt" TIMESTAMP DEFAULT null, 
+  "publish_notifications_sent" integer NOT NULL DEFAULT 0, 
   "publication_status" text NOT NULL DEFAULT 'UNPUBLISHED', 
   CONSTRAINT "PK_486ca2f737a2dfd930e46d254aa" PRIMARY KEY ("id")
 );
