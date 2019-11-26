@@ -334,7 +334,7 @@ workflows:
           filters:
             branches:
               # Replace this with the branch to run sci-test against
-              only: feature/update-engine-docker-image
+              only: master
 
 ## Disabled until we have time to redo these tests
 #  daily:
@@ -348,15 +348,15 @@ workflows:
 #              only:
 #                - master
 #                - feature/.*
-  weekly:
-    jobs:
-      - generate-graphql-schema
-      - test-engine-sci
-    triggers:
-      - schedule:
-          cron: "0 11 * * 1"
-          filters:
-            branches:
-              only:
-                - master
-
+#  weekly:
+#    jobs:
+#      - generate-graphql-schema
+#      - test-engine-sci
+#    triggers:
+#      - schedule:
+#          cron: "0 11 * * 1"
+#          filters:
+#            branches:
+#              only:
+#                - master
+#

@@ -1,4 +1,5 @@
 import logging
+import pickle
 from math import ceil
 from shutil import rmtree
 
@@ -67,16 +68,14 @@ def define_ds_segments(sample_mzs, total_mz_n, mz_precision, ds_segm_size_mb=5):
 
 def segment_spectra_chunk(sp_mz_int_buf, mz_segments, ds_segments_path):
     segm_left_bounds, segm_right_bounds = zip(*mz_segments)
-
-    segm_starts = np.searchsorted(
-        sp_mz_int_buf[:, 1], segm_left_bounds
-    )  # mz expected to be in column 1
+    # mz expected to be in column 1
+    segm_starts = np.searchsorted(sp_mz_int_buf[:, 1], segm_left_bounds)
     segm_ends = np.searchsorted(sp_mz_int_buf[:, 1], segm_right_bounds)
 
     for segm_i, (start, end) in enumerate(zip(segm_starts, segm_ends)):
-        pd.to_msgpack(
-            ds_segments_path / f'ds_segm_{segm_i:04}.msgpack', sp_mz_int_buf[start:end], append=True
-        )
+        segment_path = ds_segments_path / f'ds_segm_{segm_i:04}.pickle'
+        with open(segment_path, 'ab') as f:
+            pickle.dump(sp_mz_int_buf[start:end], f)
 
 
 def calculate_chunk_sp_n(sample_mzs_bytes, sample_sp_n, max_chunk_size_mb=500):
@@ -132,8 +131,8 @@ def segment_ds(imzml_parser, coordinates, spectra_per_chunk_n, ds_segments, ds_s
     sp_id_to_idx = get_pixel_indices(coordinates)
     mz_segments = extend_ds_segment_bounds(ds_segments)
     sp_id_chunks = chunk_list(xs=range(len(coordinates)), size=spectra_per_chunk_n)
-    for ch_i, sp_ids in enumerate(sp_id_chunks, 1):
-        logger.debug(f'Segmenting spectra chunk {ch_i}')
+    for chunk_i, sp_ids in enumerate(sp_id_chunks, 1):
+        logger.debug(f'Segmenting spectra chunk {chunk_i}')
         sp_mz_int_buf = fetch_chunk_spectra_data(sp_ids, imzml_parser, sp_id_to_idx)
         segment_spectra_chunk(sp_mz_int_buf, mz_segments, ds_segments_path)
 
@@ -173,4 +172,6 @@ def segment_centroids(centr_df, centr_segm_n, centr_segm_path):
         centr_df, first_peak_df[['formula_i', 'segm_i']], on='formula_i'
     ).sort_values('mz')
     for segm_i, df in centr_segm_df.groupby('segm_i'):
-        pd.to_msgpack(f'{centr_segm_path}/centr_segm_{segm_i:04}.msgpack', df)
+        segment_path = centr_segm_path / f'centr_segm_{segm_i:04}.pickle'
+        with open(segment_path, 'wb') as f:
+            pickle.dump(df, f)
