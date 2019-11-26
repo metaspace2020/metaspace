@@ -31,7 +31,7 @@ import config from './src/utils/config';
 import logger from './src/utils/logger';
 import {createConnection} from './src/utils';
 import {executableSchema} from './executableSchema';
-import getContext from './src/getContext';
+import getContext, {getContextForSubscription} from './src/getContext';
 import {
   Project as ProjectModel,
   UserProjectRoleOptions as UPRO,
@@ -102,7 +102,7 @@ const formatGraphQLError = (error) => {
   return error;
 };
 
-async function createSubscriptionServerAsync(config) {
+async function createSubscriptionServerAsync(config, connection) {
   const wsServer = http.createServer((req, res) => {
     res.writeHead(404);
     res.end();
@@ -120,7 +120,7 @@ async function createSubscriptionServerAsync(config) {
     onOperation(message, params) {
       const jwt = message.payload.jwt;
       const user = jwt != null ? jwtSimple.decode(jwt, config.jwt.secret, false, config.jwt.algorithm) : null;
-      params.context = getContext(user && user.user, connection.manager, null, null);
+      params.context = getContextForSubscription(user && user.user, connection.manager);
       params.formatError = formatGraphQLError;
       return params;
     }
@@ -166,7 +166,7 @@ const configureCronSchedule = (entityManager) => {
   logger.info('Cron job started');
 };
 
-async function createHttpServerAsync(config) {
+async function createHttpServerAsync(config, connection) {
   let app = express();
   let httpServer = http.createServer(app);
 
@@ -218,22 +218,30 @@ async function createHttpServerAsync(config) {
   return httpServer;
 }
 
-if (process.argv[1].endsWith('server.js')) {
-  Promise.all([
-    createSubscriptionServerAsync(config),
-    createHttpServerAsync(config),
-    createImgServerAsync(config),
-  ]).then(async servers => {
+const main = async () => {
+  try {
+    const connection = await createConnection();
+
+    const servers = await Promise.all([
+      createSubscriptionServerAsync(config, connection),
+      createHttpServerAsync(config, connection),
+      createImgServerAsync(config),
+    ]);
+
     // If any server dies for any reason, kill the whole process
     const closeListeners = servers.map(server => new Promise((resolve, reject) => {
       const address = server.address();
       server.on('close', () => reject(new Error(`Server at ${JSON.stringify(address)} closed unexpectedly`)))
     }));
     await Promise.all(closeListeners);
-  }).catch(error => {
+  } catch (error) {
     logger.error(error);
     process.exit(1);
-  });
+  }
+};
+
+if (process.argv[1].endsWith('server.js')) {
+  const ignoredPromise = main();
 }
 
 module.exports = {createHttpServerAsync}; // for testing

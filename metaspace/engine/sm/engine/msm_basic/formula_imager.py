@@ -1,5 +1,7 @@
 import logging
+import pickle
 from pathlib import Path
+
 import numpy as np
 import pandas as pd
 from pyspark.files import SparkFiles
@@ -83,18 +85,27 @@ def choose_ds_segments(ds_segments, centr_df, ppm):
     return first_ds_segm_i, last_ds_segm_i
 
 
-def read_ds_segment(segm_i):
-    path = get_file_path(f'ds_segm_{segm_i:04}.msgpack')
-    data = pd.read_msgpack(path)
-    if isinstance(data, list):
-        sp_arr = np.concatenate(data)
-    else:
-        sp_arr = data
-    return sp_arr
+def read_ds_segment(segm_path):
+    segments = []
+    try:
+        with open(segm_path, 'rb') as f:
+            while True:
+                segments.append(pickle.load(f))
+    except EOFError:
+        pass
+    return np.concatenate(segments) if segments else np.array([])
+
+
+def read_centroids_segment(segm_path):
+    with open(segm_path, 'rb') as f:
+        return pickle.load(f)
 
 
 def read_ds_segments(first_segm_i, last_segm_i):
-    sp_arr = [read_ds_segment(ds_segm_i) for ds_segm_i in range(first_segm_i, last_segm_i + 1)]
+    sp_arr = [
+        read_ds_segment(get_file_path(f'ds_segm_{segm_i:04}.pickle'))
+        for segm_i in range(first_segm_i, last_segm_i + 1)
+    ]
     sp_arr = [a for a in sp_arr if a.size > 0]
     if sp_arr:
         sp_arr = np.concatenate(sp_arr)
@@ -119,13 +130,13 @@ def create_process_segment(ds_segments, coordinates, ds_config, target_formula_i
     n_peaks = ds_config['isotope_generation']['n_peaks']
 
     def process_centr_segment(segm_i):
-        centr_segm_path = get_file_path(f'centr_segm_{segm_i:04}.msgpack')
+        centr_segm_path = get_file_path(f'centr_segm_{segm_i:04}.pickle')
 
         formula_metrics_df, formula_images = pd.DataFrame(), {}
         if centr_segm_path.exists():
             logger.info(f'Reading centroids segment {segm_i} from {centr_segm_path}')
 
-            centr_df = pd.read_msgpack(centr_segm_path)
+            centr_df = read_centroids_segment(centr_segm_path)
             first_ds_segm_i, last_ds_segm_i = choose_ds_segments(ds_segments, centr_df, ppm)
 
             logger.info(f'Reading dataset segments {first_ds_segm_i}-{last_ds_segm_i}')

@@ -55,7 +55,7 @@ def sm_modify_dataset(request_name):
         def _func(ds_id=None):
             try:
                 params = _json_params(req)
-                logger.info('Received %s request: %s', request_name, params)
+                logger.info(f'Received {request_name} request: {params}')
                 ds_man = _create_dataset_manager(DB())
                 res = handler(ds_man, ds_id, params)
 

@@ -259,7 +259,10 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
 
     return await createDataset({
       datasetId: id,
-      input: engineDataset as any, // TODO: map this properly
+      input: {
+        ...engineDataset,
+        metadataJson: JSON.stringify(engineDataset.metadata)
+      } as any, // TODO: map this properly
       priority: priority,
       force: true,
       skipValidation: true,

@@ -55,18 +55,15 @@ class BaseResource(object):
         obj['data'] = data
         res.body = self.to_json(obj)
 
-    def on_get(self, req, res):
+    def on_get(self, req, res, *args, **kwargs):
         if req.path == '/':
             res.status = falcon.HTTP_200
             res.body = self.to_json(self.HELLO_WORLD)
         else:
             raise NotSupportedError(method='GET', url=req.path)
 
-    def on_post(self, req, res):
+    def on_post(self, req, res, *args, **kwargs):
         raise NotSupportedError(method='POST', url=req.path)
 
-    def on_put(self, req, res):
-        raise NotSupportedError(method='PUT', url=req.path)
-
-    def on_delete(self, req, res):
+    def on_delete(self, req, res, *args, **kwargs):
         raise NotSupportedError(method='DELETE', url=req.path)

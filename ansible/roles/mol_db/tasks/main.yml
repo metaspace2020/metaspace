@@ -33,18 +33,6 @@
   shell: "conda env update -f environment.yml"
   when: env_status.stat.exists
 
-- name: Install OpenBabel
-  apt: name=openbabel state=latest
-  become: yes
-
-- name: Install openbabel into conda environment
-  args:
-    chdir: "{{ mol_db_home }}"
-    executable: /bin/bash
-  shell: >
-    source {{ mol_db_miniconda_prefix }}/bin/activate {{ mol_db_miniconda_env.name }}
-    && conda install -c openbabel openbabel
-
 - import_tasks: import_mol_databases.yml
   when: mol_db_import_databases | bool
 

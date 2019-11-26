@@ -44,7 +44,7 @@ if __name__ == '__main__':
             ec2.instances.filter(
                 Filters=[
                     {'Name': 'tag:hostgroup', 'Values': [spec['hostgroup']]},
-                    {'Name': 'instance-state-name', 'Values': ['running', 'stopped', 'pending']},
+                    {'Name': 'instance-state-name', 'Values': ['running', 'pending']},
                 ]
             )
         )

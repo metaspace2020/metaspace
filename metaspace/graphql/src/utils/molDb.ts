@@ -1,7 +1,8 @@
 import fetch from 'node-fetch';
 import config from './config';
 
-export const deprecatedMolDBs = new Set([...config.moldbs.deprecated, ...config.moldbs.custom]);
+export const publicMolDBs = new Set(config.moldbs.public);
+export const deprecatedMolDBs = new Set(config.moldbs.deprecated);
 
 export interface MolDb {
   id: number;

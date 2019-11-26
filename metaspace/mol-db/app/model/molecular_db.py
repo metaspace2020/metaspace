@@ -5,7 +5,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
 from app.model.base import Base
-from app.config import UUID_LEN
 
 
 class MolecularDB(Base):
@@ -29,6 +28,10 @@ class MolecularDB(Base):
     @classmethod
     def find_by_name_version(cls, session, name, version):
         return session.query(MolecularDB).filter_by(name=name, version=version).first()
+
+    @classmethod
+    def find_by_id(cls, session, id):
+        return session.query(MolecularDB).filter_by(id=id).first()
 
     FIELDS = {'id': int, 'name': str, 'version': str}
 

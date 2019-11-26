@@ -13,7 +13,7 @@ ERR_UNKNOWN = {'status': falcon.HTTP_500, 'code': 500, 'title': 'Unknown Error'}
 
 ERR_AUTH_REQUIRED = {'status': falcon.HTTP_401, 'code': 99, 'title': 'Authentication Required'}
 
-ERR_INVALID_PARAMETER = {'status': falcon.HTTP_400, 'code': 88, 'title': 'Invalid Parameter'}
+ERR_BAD_REQUEST = {'status': falcon.HTTP_400, 'code': 88, 'title': 'Bad request'}
 
 ERR_DATABASE_ROLLBACK = {'status': falcon.HTTP_500, 'code': 77, 'title': 'Database Rollback Error'}
 
@@ -56,9 +56,9 @@ class AppError(Exception):
         res.body = json.dumps({'meta': meta})
 
 
-class InvalidParameterError(AppError):
+class BadRequestError(AppError):
     def __init__(self, description=None):
-        super().__init__(ERR_INVALID_PARAMETER)
+        super().__init__(ERR_BAD_REQUEST)
         self.error['description'] = description
 
 

@@ -3,7 +3,7 @@ import argparse
 import json
 import logging
 from datetime import datetime
-from subprocess import CalledProcessError, check_output
+from subprocess import CalledProcessError, check_output, STDOUT, Popen, PIPE
 from time import sleep
 
 import boto3
@@ -82,6 +82,11 @@ class ClusterDaemon:
         self.admin_email = self.ansible_config['notification_email']
         self.debug = debug
         self.cluster_started_at = None
+        self.ansible_command_prefix = '{}/envs/{}/bin/ansible-playbook -f 1 -i {}'.format(
+            self.ansible_config["miniconda_prefix"],
+            self.ansible_config["miniconda_env"]["name"],
+            self.stage,
+        )
 
         self._setup_logger()
         self.queue = AnnotationQueue(
@@ -105,7 +110,7 @@ class ClusterDaemon:
             self.ec2.instances.filter(
                 Filters=[
                     {'Name': 'tag:hostgroup', 'Values': [self.master_hostgroup]},
-                    {'Name': 'instance-state-name', 'Values': ['running', 'stopped', 'pending']},
+                    {'Name': 'instance-state-name', 'Values': ['running', 'pending']},
                 ]
             )
         )
@@ -171,26 +176,18 @@ class ClusterDaemon:
 
     def _local(self, command, success_msg=None, failed_msg=None):
         try:
-            res = check_output(command)
+            res = check_output(command.split(' '), universal_newlines=True)
             self.logger.debug(res)
             self.logger.info(success_msg)
         except CalledProcessError as e:
-            self.logger.warning(e.output)
+            self.logger.error(e.output)
             self.logger.error(failed_msg)
             raise e
 
     def cluster_start(self):
         self.logger.info('Spinning up the cluster...')
         self._local(
-            [
-                'ansible-playbook',
-                '-i',
-                self.stage,
-                '-f',
-                '1',
-                'aws_start.yml',
-                '-e components=master,slave',
-            ],
+            f'{self.ansible_command_prefix} aws_start.yml -e components=master,slave',
             'Cluster is spun up',
             'Failed to spin up the cluster',
         )
@@ -206,16 +203,7 @@ class ClusterDaemon:
             self.logger.info('No jobs running. Queue is empty. Queue exit message sent')
             self.logger.info('Stopping the cluster...')
             self._local(
-                [
-                    'ansible-playbook',
-                    '-i',
-                    self.stage,
-                    '-f',
-                    '1',
-                    'aws_stop.yml',
-                    '-e',
-                    'components=master,slave',
-                ],
+                f'{self.ansible_command_prefix} aws_stop.yml -e components=master,slave',
                 'Cluster is stopped successfully',
                 'Failed to stop the cluster',
             )
@@ -224,7 +212,7 @@ class ClusterDaemon:
     def cluster_setup(self):
         self.logger.info('Setting up the cluster...')
         self._local(
-            ['ansible-playbook', '-i', self.stage, '-f', '1', 'aws_cluster_setup.yml'],
+            f'{self.ansible_command_prefix} aws_cluster_setup.yml',
             'Cluster setup is finished',
             'Failed to set up the cluster',
         )
@@ -232,7 +220,7 @@ class ClusterDaemon:
     def sm_engine_deploy(self):
         self.logger.info('Deploying SM engine code...')
         self._local(
-            ['ansible-playbook', '-i', self.stage, '-f', '1', 'deploy/spark.yml'],
+            f'{self.ansible_command_prefix} deploy/spark.yml',
             'The SM engine is deployed',
             'Failed to deploy the SM engine',
         )
@@ -266,7 +254,7 @@ class ClusterDaemon:
             0 < (60 + (launch_time.minute - now_time.minute)) % 60 <= max(5, 2 * self.interval / 60)
         )
 
-    def _try_start_setup_deploy(self, setup_failed_max=5):
+    def _try_start_setup_deploy(self, setup_failed_max=3):
         setup_failed = 0
         while True:
             try:

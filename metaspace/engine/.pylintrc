@@ -141,6 +141,7 @@ disable=print-statement,
         comprehension-escape,
         missing-docstring,
         logging-fstring-interpolation,
+        logging-format-interpolation,
         too-few-public-methods,
         broad-except,
         bad-continuation,
@@ -275,7 +276,7 @@ function-naming-style=snake_case
 #function-rgx=
 
 # Good variable names which should always be accepted, separated by a comma.
-good-names=_,i,j,k,n,a,e,m,v,h,w,x,db,df,ds,db,id,es,fn,fp,xs,Run,logger,parser,args,sm_config
+good-names=_,i,j,f,k,n,a,e,m,v,h,w,x,db,df,ds,db,id,es,fn,fp,xs,Run,logger,parser,args,sm_config
 
 # Include a hint for the correct naming format with invalid-name.
 include-naming-hint=no
@@ -326,7 +327,7 @@ variable-naming-style=snake_case
 
 # Format style used to check logging format string. `old` means using %
 # formatting, while `new` is for `{}` formatting.
-logging-format-style=old
+logging-format-style=new
 
 # Logging modules to check that the string format arguments are in logging
 # function parameter format.

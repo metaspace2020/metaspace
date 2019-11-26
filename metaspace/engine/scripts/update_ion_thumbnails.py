@@ -1,5 +1,6 @@
 import argparse
 import logging
+import sys
 from functools import partial
 
 from sm.engine.ion_thumbnail import DEFAULT_ALGORITHM, ALGORITHMS, generate_ion_thumbnail
@@ -56,7 +57,7 @@ if __name__ == '__main__':
     if not bool(args.ds_id) ^ bool(args.sql_where):
         parser.print_usage()
         print('error: must specify either --ds-id or --sql-where')
-        exit(1)
+        sys.exit(1)
 
     bootstrap_and_run(
         args.config,

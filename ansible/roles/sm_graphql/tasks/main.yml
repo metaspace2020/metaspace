@@ -23,7 +23,7 @@
 
 - name: Re-compile and re-install nodejs binaries
   command: npm rebuild --update-binary bcrypt
-  when: sm_graphql_update_binary
+  when: sm_graphql_update_binary | bool
 
 - name: Dereference metadata schema
   shell: yarn run deref-schema
