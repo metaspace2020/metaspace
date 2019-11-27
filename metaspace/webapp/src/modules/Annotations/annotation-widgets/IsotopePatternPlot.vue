@@ -1,7 +1,6 @@
 <template>
   <div class="peak-chart">
-    <div ref="peakChart" style="height: 300px;">
-    </div>
+    <div ref="peakChart" style="height: 300px;" />
     <div class="plot-legend" v-if="legendItems">
       <div v-for="(item, idx) in legendItems" :key="idx" class='legend-item' >
         <svg width="64" height="32">
@@ -24,7 +23,7 @@
 
 <script>
   import * as d3 from 'd3';
-  import {range} from 'lodash-es';
+  import {range, throttle} from 'lodash-es';
 
   class SampleGraph {
     constructor(svg, xScale, yScale, points, cssClass, ppm) {
@@ -89,34 +88,44 @@
     }
   }
 
-  function plotChart(data, element) {
+  function plotChart(data, element, relativeIntensityScale, toggleRelativeIntensityScale) {
     if (!element) return;
     if (!data) return;
 
     const {sampleDatas, ppm, theors, sampleClasses, theorClasses} = data;
     const sampleMzs = sampleDatas.map(sampleData => sampleData.mzs);
     const sampleInts = sampleDatas.map(sampleData => {
-      const maxIntensity = Math.max(...sampleData.ints);
-      return sampleData.ints.map(i => i / maxIntensity * 100.0)
+      if (relativeIntensityScale) {
+        const maxIntensity = Math.max(...sampleData.ints);
+        return sampleData.ints.map(i => i / maxIntensity * 100.0)
+      } else {
+        return sampleData.ints;
+      }
     });
 
-    d3.select(element).select('svg').remove();
-
-    const margin = {top: 10, right: 40, bottom: 50, left: 40};
+    const margin = {top: 10, right: 40, bottom: 50, left: relativeIntensityScale ? 40 : 60};
     const width = element.clientWidth - margin.left - margin.right;
     const height = element.clientHeight - margin.top - margin.bottom;
     const [minMz, maxMz] = d3.extent([].concat(...sampleMzs));
+    const maxInts = sampleInts.map(ints => d3.max(ints));
 
     const xDomain = [minMz - 0.1, maxMz + 0.1];
-    const yDomain = [0, 100];
+    const yDomain = [0, relativeIntensityScale ? 100 : d3.max(maxInts)];
     const xScale = d3.scaleLinear().range([0, width]).domain(xDomain);
     const yScale = d3.scaleLinear().range([height, 0]).domain(yDomain);
 
     const xAxis = d3.axisBottom(xScale).ticks(5);
-    const yAxis = d3.axisLeft(yScale).ticks(5).tickPadding(5);
+    const yAxis = d3.axisLeft(yScale).ticks(5, relativeIntensityScale ? null : 'e').tickPadding(5);
 
     const pointss = sampleInts.map((sampleInts, i) => d3.zip(sampleMzs[i], sampleInts));
-    const theorPointss = theors.map(({mzs, ints}) => d3.zip(mzs, ints));
+    const theorPointss = theors.map(({mzs, ints}, i) => {
+      if (relativeIntensityScale) {
+        return d3.zip(mzs, ints);
+      } else {
+        const scale = maxInts[i] / 100;
+        return d3.zip(mzs, ints.map(int => int * scale))
+      }
+    });
 
     const dblClickTimeout = 400; // milliseconds
     let idleTimeout;
@@ -131,36 +140,50 @@
         xScale.domain(xDomain);
         yScale.domain(yDomain);
       } else {
-        const mzRange = s.map(xScale.invert, xScale);
+        let mzRange = s.map(xScale.invert, xScale);
+        // Workaround: Rendering when highly zoomed is very slow in comparison mode (probably due to the striped fill)
+        // and can even crash/hang the browser. Prevent excessive zooming.
+        if (mzRange[1] - mzRange[0] < 0.01) {
+          const mid = (mzRange[0] + mzRange[1]) / 2;
+          mzRange = [mid - 0.005, mid + 0.005];
+        }
 
         function calcMaxIntensity(pts) {
           if (pts) {
             const intensities = pts
               .filter(d => d[0] >= mzRange[0] && d[0] <= mzRange[1])
               .map(d => d[1]);
-            if (intensities.length > 0)
+            if (intensities.length > 0) {
               return d3.max(intensities);
+            } else {
+              // no points in range - get the intensity of the closest point to the selected range
+              return pts
+                .map((d, i) => [Math.abs(d[0] - mzRange[0]), d[1]])
+                .reduce((a, r) => a[0] < r[0] ? a : r, [Infinity, 100])[1];
+            }
           }
           return 0;
         }
-
-        const intensityRange = [0, d3.max([
+        const maxInt = d3.max([
           ...pointss.map(calcMaxIntensity),
           ...theorPointss.map(calcMaxIntensity),
-        ])];
+        ]);
+        const intensityRange = [0, maxInt !== 0 ? maxInt : 100];
         xScale.domain(mzRange);
         yScale.domain(intensityRange);
-        brushLayer.call(brush.move, null); // remove the selection
+        brush.move(brushLayer, null); // remove the selection
       }
 
       const t = svg.transition().duration(300);
-      gX.transition(t).call(xAxis);
-      gY.transition(t).call(yAxis);
+      xAxis(gX.transition(t));
+      yAxis(gY.transition(t));
 
       update(t);
     }
 
+
     // Chart outer
+    d3.select(element).select('svg').remove();
     const container = d3.select(element).append('svg')
                       .attr('width', width + margin.left + margin.right)
                       .attr('height', height + margin.top + margin.bottom);
@@ -189,8 +212,12 @@
     const gY = svg.append('g').call(yAxis);
 
     svg.append('text')
-       .text('Relative intensity').style('text-anchor', 'middle')
-       .attr('transform', `translate(-30, ${height/2}) rotate(-90)`);
+       .text(relativeIntensityScale ? 'Relative intensity' : 'Intensity')
+       .style('text-anchor', 'middle')
+       .style('text-decoration-line', 'underline')
+       .style('text-decoration-style', 'dashed')
+       .attr('transform', `translate(-${relativeIntensityScale ? 30 : 50}, ${height/2}) rotate(-90)`)
+       .on('click', toggleRelativeIntensityScale);
 
     svg.append('text')
        .text('m/z').style('text-anchor', 'middle')
@@ -227,20 +254,25 @@
       }
     },
     data() {
-
       return {
         legendTheorLine: makeLegendTheorLine(),
+        relativeIntensityScale: true,
       }
     },
     mounted() {
-        this.redraw();
+      this.redraw = throttle(this.redraw, 200);
+      this.redraw();
 
       if (window)
         window.addEventListener('resize', () => this.redraw());
     },
     methods: {
       redraw() {
-        plotChart(this.data, this.$refs.peakChart);
+        plotChart(this.data, this.$refs.peakChart, this.relativeIntensityScale, this.toggleRelativeIntensityScale);
+      },
+      toggleRelativeIntensityScale() {
+        this.relativeIntensityScale = !this.relativeIntensityScale;
+        this.redraw();
       }
     }
   }

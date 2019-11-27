@@ -226,8 +226,8 @@ export default class Diagnostics extends Vue {
 @import "~element-ui/packages/theme-chalk/src/common/var";
 
 .isobar-alert {
-    margin: 10px;
-    width: calc(100% - 10px);
+    margin: 10px 0;
+    width: 100%;
 }
 
     .compare-container {
