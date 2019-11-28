@@ -89,7 +89,6 @@ export interface ESAnnotationSource extends ESDatasetSource {
   comps_count_with_isomers?: number;
   isomer_ions: string[];
   isobars?: Isobar[];
-  inverse_isobar_ion_formulas?: string[]
 
   off_sample_prob?: number;
   off_sample_label?: 'on' | 'off';

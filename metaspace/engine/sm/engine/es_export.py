@@ -356,13 +356,13 @@ class ESExporter:
     def _add_isomer_fields_to_anns(ann_docs):
         # isomer_groups' key is an ion_formula (e.g. "C1H2"), value is an ion (e.g. "C1H1+H+")
         isomer_groups = defaultdict(list)
-        isomer_comp_counts = defaultdict(int)
+        isomer_comps = defaultdict(set)
         missing_ion_formulas = []
 
         for doc in ann_docs:
             if doc['ion_formula']:
                 isomer_groups[doc['ion_formula']].append(doc['ion'])
-                isomer_comp_counts[doc['ion_formula']] += len(doc['comp_ids'])
+                isomer_comps[doc['ion_formula']].update(doc['comp_ids'])
             else:
                 missing_ion_formulas.append(doc['ion'])
 
@@ -370,7 +370,7 @@ class ESExporter:
             doc['isomer_ions'] = [
                 ion for ion in isomer_groups[doc['ion_formula']] if ion != doc['ion']
             ]
-            doc['comps_count_with_isomers'] = isomer_comp_counts[doc['ion_formula']]
+            doc['comps_count_with_isomers'] = len(isomer_comps[doc['ion_formula']])
 
         if missing_ion_formulas:
             logger.warning(
@@ -383,7 +383,6 @@ class ESExporter:
 
         for doc in ann_docs:
             doc['isobars'] = []
-            doc['inverse_isobar_ion_formulas'] = []
             for peak_n, mz in enumerate(doc['centroid_mzs'], 1):  # pylint: disable=invalid-name
                 if mz != 0:
                     peaks.append(
