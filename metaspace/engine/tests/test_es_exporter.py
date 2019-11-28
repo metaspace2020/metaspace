@@ -8,7 +8,13 @@ import time
 import pandas as pd
 
 from sm.engine.mol_db import MolecularDB
-from sm.engine.es_export import ESExporter, ESIndexManager, DATASET_SEL, ANNOTATIONS_SEL
+from sm.engine.es_export import (
+    ESExporter,
+    ESIndexManager,
+    DATASET_SEL,
+    ANNOTATIONS_SEL,
+    ESExporterIsobars,
+)
 from sm.engine.db import DB
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.tests.util import (
@@ -285,7 +291,7 @@ def test_add_isobar_fields_to_anns(ds_config):
     ]
     ds_doc = {'ds_config': ds_config}
 
-    ESExporter._add_isobar_fields_to_anns(ann_docs, ds_doc)
+    ESExporterIsobars.add_isobar_fields_to_anns(ann_docs, ds_doc)
 
     isobar_fields = dict((i, doc['isobars']) for i, doc in enumerate(ann_docs))
     assert isobar_fields == {

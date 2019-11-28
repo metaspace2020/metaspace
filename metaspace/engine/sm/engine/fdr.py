@@ -112,13 +112,14 @@ def _make_target_modifiers_df(chem_mods, neutral_losses, target_adducts):
 
 
 class FDR:
+    fdr_levels = [0.05, 0.1, 0.2, 0.5]
+
     def __init__(self, fdr_config, chem_mods, neutral_losses, target_adducts):
         self.decoy_sample_size = fdr_config['decoy_sample_size']
         self.chem_mods = chem_mods
         self.neutral_losses = neutral_losses
         self.target_adducts = target_adducts
         self.td_df = None
-        self.fdr_levels = [0.05, 0.1, 0.2, 0.5]
         self.random_seed = 42
         self.target_modifiers_df = _make_target_modifiers_df(
             chem_mods, neutral_losses, target_adducts
