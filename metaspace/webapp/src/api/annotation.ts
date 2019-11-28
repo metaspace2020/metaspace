@@ -197,6 +197,7 @@ export const isobarsQuery =
       rhoSpectral
       rhoChaos
       offSample
+      offSampleProb
       peakChartData
       isotopeImages {
         mz
