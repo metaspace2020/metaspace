@@ -1,5 +1,14 @@
 ---
 
+- name: Gather Ansible EC2 facts about Spark instances
+  hosts: [master, slave]
+  user: ubuntu
+  gather_facts: yes
+  tasks:
+    - name: Gather AWS instance facts
+      action: ec2_metadata_facts
+  tags: [always]
+
 - name: SM spark master initial setup (slaves file update)
   hosts: master
   user: ubuntu
@@ -11,7 +20,7 @@
 
   tasks:
     - name: Create a list of private ip addresses for the slave instances
-      set_fact: spark_slave_ips="{{ spark_slave_ips  + [ hostvars[item].ansible_ssh_host ] }}"
+      set_fact: spark_slave_ips="{{ spark_slave_ips  + [ hostvars[item].ansible_ec2_local_ipv4 ] }}"
       with_items: "{{ groups['master'] + groups['slave'] }}"
 
     - name: Put slave ip addresses into the slaves file
@@ -28,7 +37,7 @@
     - debug: var=command_result
 
     - name: Wait for the master daemon to start up
-      wait_for: host={{ ansible_ssh_host }} port=8080 delay=5 timeout=120
+      wait_for: host=localhost port=8080 delay=5 timeout=120
 
     - name: Start the slave daemons
       command: "{{ spark_home }}/sbin/start-slaves.sh"

@@ -167,7 +167,7 @@ class ClusterDaemon:
 
     def spark_up(self):
         return self._send_rest_request(
-            'http://{}:8080/api/v1/applications'.format(self.spark_master_public_ip)
+            'http://{}:8080/api/v1/applications'.format(self.spark_master_private_ip)
         )
 
     def job_running(self):
@@ -290,9 +290,9 @@ class ClusterDaemon:
                         self._try_start_setup_deploy()
                 else:
                     if (
-                        self.spark_master_public_ip
+                        self.spark_master_public_ip is not None
                         and not self.job_running()
-                        and self.min_uptime_over()
+                        and self.min_uptime_over(minutes=30)
                     ):
                         self.cluster_stop()
 
