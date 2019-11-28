@@ -144,7 +144,7 @@ export default {
         chemMod: other.chemMod,
         neutralLoss: other.neutralLoss,
         adduct: other.adduct,
-        fdrLevel: Math.max(other.fdrLevel, this.$store.getters.filter.fdrLevel),
+        fdrLevel: Math.max(other.fdrLevel, this.$store.getters.filter.fdrLevel || 0),
       };
 
       // Make a best effort to remove existing filters that might prevent showing the linked annotation, while
