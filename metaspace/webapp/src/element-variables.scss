@@ -32,3 +32,9 @@ $--collapse-header-height: 40px;
 @include b(popover) {
   word-break: normal;
 }
+
+@include b(dialog) {
+  @include e(body) {
+    word-break: normal;
+  }
+}
