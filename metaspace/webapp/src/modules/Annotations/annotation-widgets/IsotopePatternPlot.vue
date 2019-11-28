@@ -202,8 +202,7 @@
    `);
 
     const svg = container.append('g')
-                       .attr('transform',
-                             `translate(${margin.left}, ${margin.top})`);
+                       .attr('transform', `translate(${margin.left}, ${margin.top})`);
 
     const gX = svg.append('g')
                 .attr('transform', `translate(0, ${height})`)
