@@ -212,9 +212,7 @@
 
     svg.append('text')
        .text(relativeIntensityScale ? 'Relative intensity' : 'Intensity')
-       .style('text-anchor', 'middle')
-       .style('text-decoration-line', 'underline')
-       .style('text-decoration-style', 'dashed')
+       .attr('class', 'intensity-axis-label')
        .attr('transform', `translate(-${relativeIntensityScale ? 30 : 50}, ${height/2}) rotate(-90)`)
        .on('click', toggleRelativeIntensityScale);
 
@@ -278,6 +276,13 @@
 
 </script>
 <style lang="scss" scoped>
+  .peak-chart /deep/ .intensity-axis-label {
+    text-anchor: middle;
+    text-decoration-line: underline;
+    text-decoration-style: dashed;
+    cursor: pointer;
+  }
+
   .peak-chart /deep/ .sample-graph {
     circle {
       stroke: none;
