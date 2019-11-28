@@ -354,7 +354,6 @@ class ESExporter:
 
     @staticmethod
     def _add_isomer_fields_to_anns(ann_docs):
-        # isomer_groups' key is an ion_formula (e.g. "C1H2"), value is an ion (e.g. "C1H1+H+")
         isomer_groups = defaultdict(list)
         isomer_comps = defaultdict(set)
         missing_ion_formulas = []
