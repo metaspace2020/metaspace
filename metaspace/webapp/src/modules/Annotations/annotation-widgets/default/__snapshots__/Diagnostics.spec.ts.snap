@@ -117,7 +117,7 @@ exports[`Diagnostics should match snapshot (no isobars) 1`] = `
                   <text fill="currentColor" x="-11" dy="0.32em">100</text>
                 </g>
               </g>
-              <text style="text-anchor: middle; text-decoration-line: underline; text-decoration-style: dashed;" transform="translate(-30, -30) rotate(-90)">Relative intensity</text>
+              <text class="intensity-axis-label" transform="translate(-30, -30) rotate(-90)">Relative intensity</text>
               <text style="text-anchor: middle;" transform="translate(-40, -30) ">m/z</text>
               <g class="sample-graph soloSample">
                 <g>
@@ -391,7 +391,7 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
                 <text fill="currentColor" x="-11" dy="0.32em">100</text>
               </g>
             </g>
-            <text style="text-anchor: middle; text-decoration-line: underline; text-decoration-style: dashed;" transform="translate(-30, -30) rotate(-90)">Relative intensity</text>
+            <text class="intensity-axis-label" transform="translate(-30, -30) rotate(-90)">Relative intensity</text>
             <text style="text-anchor: middle;" transform="translate(-40, -30) ">m/z</text>
             <g class="sample-graph soloSample">
               <g>
