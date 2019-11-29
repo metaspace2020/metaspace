@@ -5,6 +5,10 @@ import cpyMSpec as cpyMSpec_0_4_2
 import cpyMSpec_0_3_5
 from pyMSpec.pyisocalc import pyisocalc
 
+assert cpyMSpec_0_4_2.utils.VERSION == '0.4.2'
+assert cpyMSpec_0_3_5.utils.VERSION == '0.3.5'
+
+
 logger = logging.getLogger('engine')
 
 SIGMA_TO_FWHM = 2.3548200450309493  # 2 \sqrt{2 \log 2}
