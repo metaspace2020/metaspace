@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 
 import numpy as np
 import cpyMSpec as cpyMSpec_0_4_2
@@ -25,16 +26,16 @@ class IsocalcWrapper:
         Dictionary representing isotope_generation section of a dataset config file
     """
 
-    _centroids_cache = None
+    _all_centroids_caches = None
 
     @classmethod
     def set_centroids_cache_enabled(cls, enabled):
         """ Turns on/off the centroids cache. This cache can become a massive memory leak
         if permanently left active. It should only be used for batch processing jobs """
-        if enabled and not cls._centroids_cache:
-            cls._centroids_cache = dict()
+        if enabled and not cls._all_centroids_caches:
+            cls._all_centroids_caches = defaultdict(dict)
         else:
-            cls._centroids_cache = None
+            cls._all_centroids_caches = None
 
     def __init__(self, ds_config):
         self.analysis_version = ds_config.get('analysis_version', 1)
@@ -46,6 +47,12 @@ class IsocalcWrapper:
         self.n_peaks = isocalc_config['n_peaks']
 
         self.ppm = ds_config['image_generation']['ppm']
+        centroids_cache_key = (self.charge, self.sigma, self.n_peaks, self.analysis_version)
+        if self._all_centroids_caches:
+            # pylint: disable=unsubscriptable-object
+            self._centroids_cache = self._all_centroids_caches[centroids_cache_key]
+        else:
+            self._centroids_cache = None
 
     @staticmethod
     def _trim(mzs, ints, k):
@@ -110,12 +117,11 @@ class IsocalcWrapper:
 
     def centroids(self, formula):
         if self._centroids_cache is not None:
-            cache_key = (formula, self.charge, self.sigma, self.n_peaks)
-            result = self._centroids_cache.get(cache_key)
+            result = self._centroids_cache.get(formula)
             if not result:
                 result = self._centroids_uncached(formula)
                 # pylint: disable=unsupported-assignment-operation
-                self._centroids_cache[cache_key] = result
+                self._centroids_cache[formula] = result
             return result
 
         return self._centroids_uncached(formula)
