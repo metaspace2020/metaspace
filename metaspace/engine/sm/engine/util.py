@@ -5,7 +5,6 @@ import os
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
-from subprocess import call, check_call
 
 from sm.engine.db import ConnectionPool
 
@@ -99,31 +98,6 @@ class SMConfig:
         )
 
 
-def _cmd(template, call_func, *args):
-    cmd_str = template.format(*args)
-    logger.info('Call "%s"', cmd_str)
-    return call_func(cmd_str.split())
-
-
-def cmd_check(template, *args):
-    return _cmd(template, check_call, *args)
-
-
-def cmd(template, *args):
-    return _cmd(template, call, *args)
-
-
-def read_json(path):
-    res = {}
-    try:
-        with open(path) as file:
-            res = json.load(file)
-    except IOError:
-        logger.warning("Couldn't find %s file", path)
-
-    return res
-
-
 def create_ds_from_files(ds_id, ds_name, ds_input_path, config_path=None, meta_path=None):
     if not config_path:
         config_path = Path(ds_input_path) / 'config.json'
@@ -136,7 +110,7 @@ def create_ds_from_files(ds_id, ds_name, ds_input_path, config_path=None, meta_p
     else:
         raise Exception('meta.json not found')
 
-    from sm.engine.dataset import Dataset
+    from sm.engine.dataset import Dataset  # pylint: disable=import-outside-toplevel
 
     return Dataset(
         id=ds_id,

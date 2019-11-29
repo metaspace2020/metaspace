@@ -128,7 +128,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: InputFilter,
     name: 'Molecule',
     description: 'Search molecule',
-    levels: ['dataset', 'annotation'],
+    levels: ['annotation'], // ['dataset', 'annotation'],
     initialValue: undefined
   },
 

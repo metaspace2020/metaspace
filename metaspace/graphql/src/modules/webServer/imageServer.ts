@@ -11,11 +11,30 @@ import * as crypto from 'crypto';
 import * as fs from 'fs-extra';
 const getPixels = require('get-pixels');
 import logger from '../../utils/logger';
-import {Config, ImageCategory} from '../../utils/config';
+import config, {Config, ImageCategory} from '../../utils/config';
 
 export const IMG_TABLE_NAME = 'image';
 
 type NDArray = any;
+
+const defaultDBConfig = () => {
+  const {host, database, user, password} = config.db;
+  return {
+    host, database, user, password,
+    max: 10, // client pool size
+    idleTimeoutMillis: 30000
+  };
+};
+
+export const initDBConnection = (config = defaultDBConfig) => {
+  return Knex({
+    client: 'pg',
+    connection: config(),
+    searchPath: ['engine', 'public'],
+    // @ts-ignore
+    asyncStackTraces: true,
+  });
+};
 
 function imageProviderDBBackend(knex: Knex) {
   /**
@@ -200,7 +219,8 @@ export async function createImageServerApp(config: Config, knex: Knex) {
   }
 }
 
-export async function createImgServerAsync(config: Config, knex: Knex) {
+export async function createImgServerAsync(config: Config) {
+  const knex = initDBConnection();
   const app = await createImageServerApp(config, knex);
 
   const httpServer = http.createServer(app);

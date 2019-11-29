@@ -51,6 +51,7 @@
       dest: "{{ sm_ansible_home }}/"
       rsync_opts:
         - --exclude=.*
+        - --exclude=aws/env
     - src: "{{ sm_home }}/"
       dest: "{{ sm_home }}/"
       rsync_opts:

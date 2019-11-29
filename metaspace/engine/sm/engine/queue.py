@@ -11,7 +11,7 @@ class StopThread(Exception):
 
 
 # pylint: disable=too-many-instance-attributes,unused-argument,too-many-public-methods
-# pylint: disable=logging-format-interpolation
+# pylint: disable=logging-format-interpolation,logging-too-many-args
 class QueueConsumerAsync:
     """This is an example consumer that will handle unexpected interactions
     with RabbitMQ such as channel and connection closures.
@@ -441,8 +441,6 @@ class QueueConsumer(Thread):
                     self.logger.error(' [x] Failed in _on_success: {}'.format(body), exc_info=True)
             finally:
                 self._channel.basic_ack(method.delivery_tag)
-        else:
-            self.logger.debug('No messages in "{}" queue'.format(self._qname))
 
     def run(self):
         """ Use `start` method to kick off message polling """

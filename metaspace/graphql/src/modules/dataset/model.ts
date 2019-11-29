@@ -2,6 +2,8 @@ import {Column, Entity, JoinColumn, JoinTable, ManyToOne, OneToMany, PrimaryColu
 import {Group} from '../group/model';
 import {User} from '../user/model';
 import {Project} from '../project/model';
+import {PublicationStatus} from '../../binding';
+import {PublicationStatusOptions as PSO} from '../project/PublicationStatusOptions';
 
 @Entity()
 export class Dataset {
@@ -57,6 +59,9 @@ export class DatasetProject {
 
   @Column({ type: 'boolean' })
   approved: Boolean;
+
+  @Column({ type: 'text', enum: Object.keys(PSO), default: PSO.UNPUBLISHED })
+  publicationStatus: PublicationStatus;
 }
 
 export const DATASET_ENTITIES = [

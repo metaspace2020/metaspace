@@ -179,3 +179,13 @@ def test_non_native_python_number_types_handled(search_results):
             )
         ]
         db_mock.insert.assert_called_with(METRICS_INS, exp_rows)
+
+
+def test_save_ion_img_metrics_empty_call(search_results):
+    ion_img_ids = {}
+    ion_metrics_df = _mock_ion_metrics_df().iloc[0:0]
+    db_mock.select.side_effect = db_sel_side_effect
+
+    search_results.store_ion_metrics(ion_metrics_df, ion_img_ids, db_mock)
+
+    db_mock.insert.assert_called_with(METRICS_INS, [])

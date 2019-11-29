@@ -438,7 +438,7 @@ class PngGenerator:
             ],
             dtype=np.float,
         )
-        self._colors = np.c_[colors, np.ones(colors.shape[0])]
+        self._colors = np.c_[colors, np.ones_like(colors[:, 0])]
 
     def _to_image(self, array):
         image = ((array - array.min()) / (array.max() - array.min())) * (2 ** self._bitdepth - 1)

@@ -146,15 +146,15 @@ describe('modules/project/controller (CRUD mutations)', () => {
       // Assert
       await expect(promise).rejects.toThrow('Unauthorized');
     });
-    it('should reject a urlSlug change from a user', async () => {
+    it('should reject a urlSlug change from a member', async () => {
       // Arrange
-      await testEntityManager.insert(UserProjectModel, {userId, projectId, role: UPRO.MANAGER});
+      await testEntityManager.insert(UserProjectModel, { userId, projectId, role: UPRO.MEMBER });
 
       // Act
-      const promise = doQuery<ProjectType>(updateProject, {projectId, projectDetails: projectDetailsWithSlug});
+      const promise = doQuery<ProjectType>(updateProject, { projectId, projectDetails: projectDetailsWithSlug });
 
       // Assert
-      await expect(promise).rejects.toThrow();
+      await expect(promise).rejects.toThrow('Unauthorized');
     });
     it('should not reject a urlSlug from an admin', async () => {
       // Act

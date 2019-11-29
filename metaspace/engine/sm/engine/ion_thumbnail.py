@@ -197,7 +197,7 @@ def _save_ion_thumbnail_image(img_store, thumbnail):
 
 def generate_ion_thumbnail(db, img_store, ds_id, only_if_needed=False, algorithm=DEFAULT_ALGORITHM):
     try:
-        existing_thumb_id, = db.select_one(THUMB_SEL, [ds_id])
+        (existing_thumb_id,) = db.select_one(THUMB_SEL, [ds_id])
 
         if existing_thumb_id and only_if_needed:
             return

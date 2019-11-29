@@ -1,8 +1,7 @@
 import * as bcrypt from 'bcrypt';
 import * as uuid from 'uuid';
 import {EntityManager, Repository} from 'typeorm';
-import * as moment from 'moment';
-import {Moment} from 'moment';
+import {Moment, utc} from 'moment';
 
 import * as emailService from './email';
 import config from '../../utils/config';
@@ -63,11 +62,11 @@ export const findUserByGoogleId = async (googleId: string) => {
 };
 
 export const createExpiry = (minutes: number=10): Moment => {
-  return moment.utc().add(minutes, 'minutes');
+  return utc().add(minutes, 'minutes');
 };
 
 const tokenExpired = (expires?: Moment|null): boolean => {
-  return expires == null || expires < moment.utc();
+  return expires == null || expires < utc();
 };
 
 export const sendEmailVerificationToken = async (cred: Credentials, email: string) => {

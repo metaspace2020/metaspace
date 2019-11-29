@@ -2,7 +2,7 @@ import {FieldResolversFor} from '../../bindingTypes';
 import {Query} from '../../binding';
 import {esFilterValueCountResults} from '../../../esConnector';
 import config from '../../utils/config';
-import {deprecatedMolDBs, fetchMolecularDatabases} from '../../utils/molDb';
+import {publicMolDBs, deprecatedMolDBs, fetchMolecularDatabases} from '../../utils/molDb';
 import logger from '../../utils/logger';
 import {Context, ContextUser} from '../../context';
 import {IResolvers} from 'graphql-tools';
@@ -12,7 +12,7 @@ const getTopFieldValues = async (docType: 'dataset' | 'annotation',
                                  field: string,
                                  query: string | null | undefined,
                                  limit: number | undefined,
-                                 user: ContextUser | null): Promise<string[]> => {
+                                 user: ContextUser): Promise<string[]> => {
 
   const itemCounts = await esFilterValueCountResults({
     aggsTerms: {
@@ -88,13 +88,15 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
 
       const molDBs = await fetchMolecularDatabases();
       let dbs = molDBs.map(molDB => {
-        const deprecated = deprecatedMolDBs.has(molDB.name);
-        const superseded = molDBs.some(db => db.name === molDB.name && db.version > molDB.version);
+        const isDeprecated = deprecatedMolDBs.has(molDB.name);
+        const isPublic = publicMolDBs.has(molDB.name);
+        const isSuperseded = molDBs.some(db => db.name === molDB.name && db.version > molDB.version);
         return {
           ...molDB,
           default: config.defaults.moldb_names.includes(molDB.name),
-          hidden: deprecated || superseded,
-          deprecated, superseded,
+          hidden: !isPublic || isDeprecated || isSuperseded,
+          deprecated: isDeprecated,
+          superseded: isSuperseded,
         }
       });
       if (hideDeprecated) {

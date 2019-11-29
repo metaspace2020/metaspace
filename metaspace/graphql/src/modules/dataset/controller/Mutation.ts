@@ -8,10 +8,10 @@ import * as moment from 'moment';
 import * as _ from 'lodash';
 
 import {fetchMolecularDatabases} from '../../../utils/molDb';
-import {EngineDS, fetchEngineDS} from '../../../utils/knexDb';
 
 import {smAPIRequest} from '../../../utils';
 import {UserProjectRoleOptions as UPRO} from '../../project/model';
+import {PublicationStatusOptions as PSO} from '../../project/PublicationStatusOptions';
 import {UserGroup as UserGroupModel, UserGroupRoleOptions} from '../../group/model';
 import {Dataset as DatasetModel, DatasetProject as DatasetProjectModel} from '../model';
 import {DatasetCreateInput, DatasetUpdateInput, Int, Mutation} from '../../../binding';
@@ -21,6 +21,9 @@ import {getUserProjectRoles} from '../../../utils/db';
 import {metadataSchemas} from '../../../../metadataSchemas/metadataRegistry';
 import {getDatasetForEditing} from '../operation/getDatasetForEditing';
 import {deleteDataset} from '../operation/deleteDataset';
+import {verifyDatasetPublicationStatus} from '../operation/verifyDatasetPublicationStatus';
+import {EngineDataset} from '../../engine/model';
+
 type MetadataSchema = any;
 type MetadataRoot = any;
 type MetadataNode = any;
@@ -84,7 +87,7 @@ async function molDBsExist(molDBNames: string[]) {
   }
 }
 
-export function processingSettingsChanged(ds: EngineDS, update: DatasetUpdateInput & {metadata: MetadataRoot}) {
+export function processingSettingsChanged(ds: EngineDataset, update: DatasetUpdateInput & {metadata: MetadataRoot}) {
   let newDB = false, procSettingsUpd = false, metaDiff = null;
   if (update.molDBs)
     newDB = true;
@@ -100,7 +103,7 @@ export function processingSettingsChanged(ds: EngineDS, update: DatasetUpdateInp
       metaDiff = (jsondiffpatch.formatters as any).jsonpatch.format(metaDelta);
 
     for (let diffObj of metaDiff) {
-      if (diffObj.op !== 'move') {  // ignore permuations in arrays
+      if (diffObj.op !== 'move') {  // ignore permutations in arrays
         const procSettingsPaths = [
           '/MS_Analysis/Polarity',
           '/MS_Analysis/Detector_Resolving_Power',
@@ -117,7 +120,7 @@ export function processingSettingsChanged(ds: EngineDS, update: DatasetUpdateInp
 }
 
 const isMemberOf = async (entityManager: EntityManager, userId: string, groupId: string) => {
-  const userGroup = await entityManager.getRepository(UserGroupModel).findOne({
+  const userGroup = await entityManager.findOne(UserGroupModel, {
     userId,
     groupId
   });
@@ -129,16 +132,16 @@ const isMemberOf = async (entityManager: EntityManager, userId: string, groupId:
   return isMember;
 };
 
-interface SaveDSArgs {
-  dsId?: string;
+interface SaveDatasetArgs {
+  datasetId?: string;
   submitterId: string;
   groupId?: string;
   projectIds?: string[];
   principalInvestigator?: {name: string, email: string};
 }
 
-const saveDS = async (entityManager: EntityManager, args: SaveDSArgs, requireInsert = false) => {
-  const {dsId, submitterId, groupId, projectIds, principalInvestigator} = args;
+const saveDataset = async (entityManager: EntityManager, args: SaveDatasetArgs, requireInsert = false) => {
+  const {datasetId, submitterId, groupId, projectIds, principalInvestigator} = args;
   const groupUpdate = groupId === undefined ? {}
     : groupId === null ? { groupId: null, groupApproved: false }
       : { groupId, groupApproved: await isMemberOf(entityManager, submitterId, groupId) };
@@ -146,7 +149,7 @@ const saveDS = async (entityManager: EntityManager, args: SaveDSArgs, requireIns
     : principalInvestigator === null ? { piName: null, piEmail: null }
     : { piName: principalInvestigator.name, piEmail: principalInvestigator.email };
   const dsUpdate = {
-    id: dsId,
+    id: datasetId,
     userId: submitterId,
     ...groupUpdate,
     ...piUpdate,
@@ -154,14 +157,14 @@ const saveDS = async (entityManager: EntityManager, args: SaveDSArgs, requireIns
 
   if (requireInsert) {
     // When creating new datasets, use INSERT so that SQL prevents the same ID from being used twice
-    await entityManager.getRepository(DatasetModel).insert(dsUpdate);
+    await entityManager.insert(DatasetModel, dsUpdate);
   } else {
-    await entityManager.getRepository(DatasetModel).save(dsUpdate);
+    await entityManager.save(DatasetModel, dsUpdate);
   }
 
   if (projectIds != null) {
     const datasetProjectRepo = entityManager.getRepository(DatasetProjectModel);
-    const existingDatasetProjects = await datasetProjectRepo.find({ datasetId: dsId });
+    const existingDatasetProjects = await datasetProjectRepo.find({ datasetId: datasetId });
     const userProjectRoles = await getUserProjectRoles(entityManager, submitterId);
     const savePromises = projectIds
       .map((projectId) => ({
@@ -171,18 +174,20 @@ const saveDS = async (entityManager: EntityManager, args: SaveDSArgs, requireIns
       }))
       .filter(({approved, existing}) => existing == null || existing.approved !== approved)
       .map(async ({projectId, approved}) => {
-        await datasetProjectRepo.save({ datasetId: dsId, projectId, approved });
+        await datasetProjectRepo.save({ datasetId: datasetId, projectId, approved });
       });
     const deletePromises = existingDatasetProjects
-      .filter(({projectId}) => !projectIds.includes(projectId))
-      .map(async ({projectId}) => { await datasetProjectRepo.delete({ datasetId: dsId, projectId }); });
+      .filter(({ projectId, publicationStatus }) =>
+        !projectIds.includes(projectId) && publicationStatus == PSO.UNPUBLISHED
+      )
+      .map(async ({projectId}) => { await datasetProjectRepo.delete({ datasetId: datasetId, projectId }); });
 
     await Promise.all([...savePromises, ...deletePromises]);
   }
 };
 
-const assertCanCreateDataset = (user: ContextUser | null) => {
-  if (!user)
+const assertCanCreateDataset = (user: ContextUser) => {
+  if (user.id == null)
     throw new UserError(`Not authenticated`);
 };
 
@@ -192,24 +197,25 @@ const newDatasetId = () => {
 };
 
 type CreateDatasetArgs = {
-  id?: string,
+  datasetId?: string,
   input: DatasetCreateInput,
   priority?: Int,
   force?: boolean,           // Only used by reprocess
   delFirst?: boolean,        // Only used by reprocess
   skipValidation?: boolean,  // Only used by reprocess
 };
+
 const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
   const {input, priority, force, delFirst, skipValidation} = args;
   const {user, entityManager, isAdmin, getUserIdOrFail} = ctx;
-  const dsId = args.id || newDatasetId();
-  const dsIdWasSpecified = !!args.id;
+  const datasetId = args.datasetId || newDatasetId();
+  const datasetIdWasSpecified = !!args.datasetId;
   const userId = getUserIdOrFail();
 
-  logger.info(`Creating dataset '${dsId}' by '${userId}' user ...`);
-  let ds;
-  if (dsIdWasSpecified) {
-    ds = await getDatasetForEditing(entityManager, user, dsId);
+  logger.info(`Creating dataset '${datasetId}' by '${userId}' user ...`);
+  let dataset;
+  if (datasetIdWasSpecified) {
+    dataset = await getDatasetForEditing(entityManager, user, datasetId);
   } else {
     assertCanCreateDataset(user);
   }
@@ -223,16 +229,16 @@ const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
 
   const {submitterId, groupId, projectIds, principalInvestigator} = input;
   const saveDSArgs = {
-    dsId,
+    datasetId,
     // Only admins can specify the submitterId
-    submitterId: (isAdmin ? submitterId as (string | undefined) : null) || (ds && ds.userId) || userId,
+    submitterId: (isAdmin ? submitterId as (string | undefined) : null) || (dataset && dataset.userId) || userId,
     groupId: groupId as (string | undefined),
     projectIds: projectIds as string[],
     principalInvestigator
   };
-  await saveDS(entityManager, saveDSArgs, !dsIdWasSpecified);
+  await saveDataset(entityManager, saveDSArgs, !datasetIdWasSpecified);
 
-  const url = `/v1/datasets/${dsId}/add`;
+  const url = `/v1/datasets/${datasetId}/add`;
   await smAPIRequest(url, {
     doc: {...input, metadata},
     priority: priority,
@@ -241,21 +247,23 @@ const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
     email: user!.email,
   });
 
-  logger.info(`Dataset '${dsId}' was created`);
-  return JSON.stringify({ dsId, status: 'success' });
+  logger.info(`Dataset '${datasetId}' was created`);
+  return JSON.stringify({ datasetId, status: 'success' });
 };
 
 const MutationResolvers: FieldResolversFor<Mutation, void>  = {
 
-  reprocessDataset: async (_, args, ctx) => {
-    const {id, priority} = args;
-    const ds = await fetchEngineDS({id});
-    if (ds === undefined)
-      throw new UserError('DS does not exist');
+  reprocessDataset: async (source, { id, priority }, ctx: Context) => {
+    const engineDataset = await ctx.entityManager.findOne(EngineDataset, id);
+    if (engineDataset === undefined)
+      throw new UserError('Dataset does not exist');
 
     return await createDataset({
-      id: id,
-      input: ds as any, // TODO: map this properly
+      datasetId: id,
+      input: {
+        ...engineDataset,
+        metadataJson: JSON.stringify(engineDataset.metadata)
+      } as any, // TODO: map this properly
       priority: priority,
       force: true,
       skipValidation: true,
@@ -263,32 +271,36 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     }, ctx);
   },
 
-  createDataset: async (_, args, ctx: Context) => {
+  createDataset: async (source, args, ctx: Context) => {
     return await createDataset(args, ctx);
   },
 
-  updateDataset: async (source, args, {user, entityManager, isAdmin}) => {
-    const {id: dsId, input: update, reprocess, skipValidation, delFirst, force, priority} = args;
+  updateDataset: async (source, args, ctx: Context) => {
+    const {id: datasetId, input: update, reprocess, skipValidation, delFirst, force, priority} = args;
 
-    logger.info(`User '${user && user.id}' updating '${dsId}' dataset...`);
-    const ds = await getDatasetForEditing(entityManager, user, dsId);
+    logger.info(`User '${ctx.user.id}' updating '${datasetId}' dataset...`);
+    const dataset = await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId);
 
     let metadata;
     if (update.metadataJson) {
       metadata = JSON.parse(update.metadataJson);
-      if (!skipValidation || !isAdmin) {
+      if (!skipValidation || !ctx.isAdmin) {
         validateMetadata(metadata);
       }
     }
 
-    const engineDS = await fetchEngineDS({id: dsId});
-    const {newDB, procSettingsUpd} = await processingSettingsChanged(engineDS, {...update, metadata});
+    if (update.isPublic == false || update.projectIds != null) {
+      await verifyDatasetPublicationStatus(ctx.entityManager, datasetId);
+    }
+
+    const engineDataset = await ctx.entityManager.findOneOrFail(EngineDataset, datasetId);
+    const {newDB, procSettingsUpd} = await processingSettingsChanged(engineDataset, {...update, metadata});
     const reprocessingNeeded = newDB || procSettingsUpd;
 
     const {submitterId, groupId, projectIds, principalInvestigator} = update;
-    const saveDSArgs = {
-      dsId,
-      submitterId: (isAdmin ? submitterId as (string | undefined) : null) || ds.userId,
+    const saveDatasetArgs = {
+      datasetId,
+      submitterId: (ctx.isAdmin ? submitterId as (string | undefined) : null) || dataset.userId,
       groupId: groupId as (string | undefined),
       projectIds: projectIds as string[],
       principalInvestigator
@@ -296,25 +308,23 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
 
     let smAPIResp;
     if (reprocess) {
-      await saveDS(entityManager, saveDSArgs);
-      smAPIResp = await smAPIRequest(`/v1/datasets/${dsId}/add`, {
-        doc: {...engineDS, ...update, ...(metadata ? {metadata} : {})},
+      await saveDataset(ctx.entityManager, saveDatasetArgs);
+      smAPIResp = await smAPIRequest(`/v1/datasets/${datasetId}/add`, {
+        doc: {...engineDataset, ...update, ...(metadata ? {metadata} : {})},
         del_first: procSettingsUpd || delFirst,  // delete old results if processing settings changed
         priority: priority,
         force: force,
-        email: user!.email,
+        email: ctx.user!.email,
       });
-    }
-    else {
+    } else {
       if (reprocessingNeeded) {
         throw new UserError(JSON.stringify({
           'type': 'reprocessing_needed',
           'hint': `Reprocessing needed. Provide 'reprocess' flag.`
         }));
-      }
-      else {
-        await saveDS(entityManager, saveDSArgs);
-        smAPIResp = await smAPIRequest(`/v1/datasets/${dsId}/update`, {
+      } else {
+        await saveDataset(ctx.entityManager, saveDatasetArgs);
+        smAPIResp = await smAPIRequest(`/v1/datasets/${datasetId}/update`, {
           doc: {
             ..._.omit(update, 'metadataJson'),
             ...(metadata ? {metadata} : {})
@@ -325,43 +335,41 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
       }
     }
 
-    logger.info(`Dataset '${dsId}' was updated`);
+    logger.info(`Dataset '${datasetId}' was updated`);
     return JSON.stringify(smAPIResp);
   },
 
-  deleteDataset: async (_, args, {user, entityManager}) => {
-    const {id: dsId, force} = args;
-    if (user == null) {
+  deleteDataset: async (source, { id: datasetId, force }, ctx: Context) => {
+    if (ctx.user.id == null) {
       throw new UserError('Unauthorized');
     }
-    const resp = await deleteDataset(entityManager, user, dsId, {force});
+    await verifyDatasetPublicationStatus(ctx.entityManager, datasetId);
+    const resp = await deleteDataset(ctx.entityManager, ctx.user, datasetId, { force });
     return JSON.stringify(resp);
   },
 
-  addOpticalImage: async (_, {input}, {user, entityManager, getUserIdOrFail}) => {
-    const {datasetId: dsId, transform} = input;
+  addOpticalImage: async (source, { input }, ctx: Context) => {
+    const {datasetId, transform} = input;
     let {imageUrl} = input;
 
-    logger.info(`User '${getUserIdOrFail()}' adding optical image to '${dsId}' dataset...`);
-    await getDatasetForEditing(entityManager, user, dsId);
+    logger.info(`User '${ctx.getUserIdOrFail()}' adding optical image to '${datasetId}' dataset...`);
+    await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId);
     // TODO support image storage running on a separate host
     const url = `http://localhost:${config.img_storage_port}${imageUrl}`;
-    const resp = await smAPIRequest(`/v1/datasets/${dsId}/add-optical-image`, {
+    const resp = await smAPIRequest(`/v1/datasets/${datasetId}/add-optical-image`, {
       url, transform
     });
 
-    logger.info(`Optical image was added to '${dsId}' dataset`);
+    logger.info(`Optical image was added to '${datasetId}' dataset`);
     return JSON.stringify(resp);
   },
 
-  deleteOpticalImage: async (_, args, {user, entityManager, getUserIdOrFail}) => {
-    const {datasetId: dsId} = args;
+  deleteOpticalImage: async (source, { datasetId }, ctx: Context) => {
+    logger.info(`User '${ctx.getUserIdOrFail()}' deleting optical image from '${datasetId}' dataset...`);
+    await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId);
+    const resp = await smAPIRequest(`/v1/datasets/${datasetId}/del-optical-image`, {});
 
-    logger.info(`User '${getUserIdOrFail()}' deleting optical image from '${dsId}' dataset...`);
-    await getDatasetForEditing(entityManager, user, dsId);
-    const resp = await smAPIRequest(`/v1/datasets/${dsId}/del-optical-image`, {});
-
-    logger.info(`Optical image was deleted from '${dsId}' dataset`);
+    logger.info(`Optical image was deleted from '${datasetId}' dataset`);
     return JSON.stringify(resp);
   }
 };

@@ -4,7 +4,7 @@ import {UserGroup as UserGroupModel, UserGroupRoleOptions} from '../model';
 
 export const resolveGroupScopeRole = async (ctx: Context, groupId?: string): Promise<ScopeRole> => {
   let scopeRole = ScopeRoleOptions.OTHER;
-  if (ctx.user != null && groupId) {
+  if (ctx.user.id && groupId) {
     const userGroup = await ctx.entityManager.getRepository(UserGroupModel).findOne({
       where: { userId: ctx.user.id, groupId },
     });

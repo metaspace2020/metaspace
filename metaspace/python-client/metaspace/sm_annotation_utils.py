@@ -145,6 +145,7 @@ class GraphQLClient(object):
 
     ANNOTATION_FIELDS = """
         sumFormula
+        neutralLoss
         adduct
         mz
         msmScore
@@ -154,21 +155,9 @@ class GraphQLClient(object):
         fdrLevel
         offSample
         offSampleProb
-        dataset {
-            id
-            name
-        }
-        possibleCompounds {
-            name
-            information{
-              url
-            }
-        }
-        isotopeImages {
-            mz
-            url
-            maxIntensity
-        }
+        dataset { id name }
+        possibleCompounds { name information { url databaseId } }
+        isotopeImages { mz url maxIntensity totalIntensity }
     """
 
     DEFAULT_ANNOTATION_FILTER = {
@@ -238,49 +227,62 @@ class GraphQLClient(object):
         else:
             return matches[0]
 
-    def getAnnotations(
-        self, annotationFilter=None, datasetFilter=None, colocFilter=None, fields=None
-    ):
-        query_vars = [
-            '$filter: AnnotationFilter',
-            '$dFilter: DatasetFilter',
-            '$offset: Int',
-            '$limit: Int',
+    def getAnnotations(self, annotationFilter=None, datasetFilter=None, colocFilter=None):
+        query_arguments = [
+            "$filter: AnnotationFilter",
+            "$dFilter: DatasetFilter",
+            "$orderBy: AnnotationOrderBy",
+            "$sortingOrder: SortingOrder",
+            "$offset: Int",
+            "$limit: Int",
         ]
         if colocFilter:
-            query_vars.append('$colocalizationCoeffFilter: ColocalizationCoeffFilter')
+            query_arguments.append("$colocalizationCoeffFilter: ColocalizationCoeffFilter")
+            self.ANNOTATION_FIELDS += (
+                "colocalizationCoeff( colocalizationCoeffFilter: $colocalizationCoeffFilter)"
+            )
+
         query = """
-            query getAnnotations(%s) {
-              allAnnotations(
-                filter: $filter,
-                datasetFilter: $dFilter,
-                offset: $offset,
-                limit: $limit
-              ) { %s }
+            query getAnnotations(
+                %s
+            ) {
+                allAnnotations(
+                    filter: $filter,
+                    datasetFilter: $dFilter,
+                    orderBy: $orderBy,
+                    sortingOrder: $sortingOrder,
+                    offset: $offset,
+                    limit: $limit,
+                ) {
+                %s
+                }
             }""" % (
-            ','.join(query_vars),
-            fields or self.ANNOTATION_FIELDS,
+            ','.join(query_arguments),
+            self.ANNOTATION_FIELDS,
         )
         if datasetFilter is None:
             datasetFilter = {}
-        if colocFilter is None:
-            colocFilter = {}
-        if annotationFilter is None:
-            annotFilter = {}
-        else:
-            annotFilter = deepcopy(annotationFilter)
-            for key, val in self.DEFAULT_ANNOTATION_FILTER.items():
-                annotFilter.setdefault(key, val)
 
-        return self.listQuery(
-            field_name='allAnnotations',
-            query=query,
-            variables={
-                'filter': annotFilter,
-                'dFilter': datasetFilter,
-                'colocalizationCoeffFilter': colocFilter,
-            },
-        )
+        if annotationFilter is None:
+            annot_filter = {}
+        else:
+            annot_filter = deepcopy(annotationFilter)
+            for key, val in self.DEFAULT_ANNOTATION_FILTER.items():
+                annot_filter.setdefault(key, val)
+
+        if colocFilter:
+            annot_filter.update(colocFilter)
+            order_by = 'ORDER_BY_COLOCALIZATION'
+        else:
+            order_by = 'ORDER_BY_MSM'
+
+        vars = {
+            'filter': annot_filter,
+            'dFilter': datasetFilter,
+            'colocalizationCoeffFilter': colocFilter,
+            'orderBy': order_by,
+        }
+        return self.listQuery(field_name='allAnnotations', query=query, variables=vars)
 
     def countAnnotations(self, annotationFilter=None, datasetFilter=None):
         query = """
@@ -341,41 +343,41 @@ class GraphQLClient(object):
         variables = {"datasetId": dsid}
         return self.query(query, variables)
 
-    def createDataset(
+    def create_dataset(
         self,
         data_path,
         metadata,
         priority=0,
-        dsName=None,
-        isPublic=None,
-        molDBs=None,
+        ds_name=None,
+        is_public=None,
+        mol_dbs=None,
         adducts=None,
-        dsid=None,
+        ppm=None,
+        ds_id=None,
     ):
         submitter_id = self.get_submitter_id()
         query = """
-                    mutation createDataset($id: String, $input: DatasetCreateInput!, $priority: Int) {
-                        createDataset(
-                          id: $id,
-                          input: $input,
-                          priority: $priority
-                        )
-                      }
-                """
-
+            mutation createDataset($id: String, $input: DatasetCreateInput!, $priority: Int) {
+                createDataset(
+                  id: $id,
+                  input: $input,
+                  priority: $priority
+                )
+            }
+        """
         variables = {
-            'id': dsid,
+            'id': ds_id,
             'input': {
-                'name': dsName,
+                'name': ds_name,
                 'inputPath': data_path,
-                'isPublic': isPublic,
-                'molDBs': molDBs,
+                'isPublic': is_public,
+                'molDBs': mol_dbs,
                 'adducts': adducts,
+                'ppm': ppm,
                 'submitterId': submitter_id,
                 'metadataJson': metadata,
             },
         }
-
         return self.query(query, variables)
 
     def delete_dataset(self, ds_id, force=False):
@@ -391,25 +393,37 @@ class GraphQLClient(object):
         return self.query(query, variables)
 
     def update_dataset(
-        self, ds_id, molDBs=None, adducts=None, reprocess=False, force=False, priority=1
+        self,
+        ds_id,
+        name=None,
+        mol_dbs=None,
+        adducts=None,
+        ppm=None,
+        reprocess=False,
+        force=False,
+        priority=1,
     ):
         query = """
-                mutation updateMetadataDatabases($id: String!, $reprocess: Boolean, 
-                    $input: DatasetUpdateInput!, $priority: Int, $force: Boolean) {
-                        updateDataset(
-                          id: $id,
-                          input: $input,
-                          priority: $priority,
-                          reprocess: $reprocess,
-                          force: $force
-                          )
-                        }
-                """
+            mutation updateMetadataDatabases($id: String!, $reprocess: Boolean, 
+                $input: DatasetUpdateInput!, $priority: Int, $force: Boolean) {
+                    updateDataset(
+                      id: $id,
+                      input: $input,
+                      priority: $priority,
+                      reprocess: $reprocess,
+                      force: $force
+                    )
+            }
+        """
         input_field = {}
-        if molDBs:
-            input_field['molDBs'] = molDBs
+        if name:
+            input_field['name'] = name
+        if mol_dbs:
+            input_field['molDBs'] = mol_dbs
         if adducts:
             input_field['adducts'] = adducts
+        if ppm:
+            input_field['ppm'] = ppm
         variables = {
             'id': ds_id,
             'input': input_field,
@@ -633,11 +647,29 @@ class SMDataset(object):
         records = self._gqclient.getAnnotations(annotation_filter, dataset_filter)
         return [list(r[val] for val in return_vals) for r in records]
 
-    def results(self, database=None):
-        annotationFilter = {}
-        if database:
-            annotationFilter['database'] = database
-        records = self._gqclient.getAnnotations(annotationFilter, {'ids': self.id})
+    def results(self, database, fdr=None, coloc_with=None):
+        if coloc_with:
+            assert fdr
+            coloc_coeff_filter = {
+                'database': database,
+                'colocalizedWith': coloc_with,
+                'fdrLevel': fdr,
+            }
+            annotation_filter = coloc_coeff_filter.copy()
+        else:
+            coloc_coeff_filter = None
+            annotation_filter = {'database': database}
+            if fdr:
+                annotation_filter['fdrLevel'] = fdr
+
+        records = self._gqclient.getAnnotations(
+            annotationFilter=annotation_filter,
+            datasetFilter={'ids': self.id},
+            colocFilter=coloc_coeff_filter,
+        )
+        if not records:
+            return pd.DataFrame()
+
         df = pd.io.json.json_normalize(records)
         return pd.DataFrame(
             dict(
@@ -651,10 +683,11 @@ class SMDataset(object):
                 mz=df['mz'],
                 moleculeNames=[[item['name'] for item in lst] for lst in df['possibleCompounds']],
                 moleculeIds=[
-                    [item['information'][0]['url'].rsplit("/")[-1] for item in lst]
+                    [item['information'][0]['databaseId'] for item in lst]
                     for lst in df['possibleCompounds']
                 ],
                 intensity=[img[0]['maxIntensity'] for img in df['isotopeImages']],
+                colocCoeff=df['colocalizationCoeff'],
             )
         ).set_index(['formula', 'adduct'])
 
@@ -1067,12 +1100,24 @@ class SMInstance(object):
             key = "{}/{}".format(folder_uuid, os.path.split(fn)[1])
             s3.upload_file(fn, s3bucket, key)
         folder = "s3a://" + s3bucket + "/" + folder_uuid
-        return self._gqclient.createDataset(
-            folder, metadata, priority, dsName, isPublic, molDBs, adducts, dsid=dsid
+        return self._gqclient.create_dataset(
+            data_path=folder,
+            metadata=metadata,
+            priority=priority,
+            ds_name=dsName,
+            is_public=isPublic,
+            mol_dbs=molDBs,
+            adducts=adducts,
+            ds_id=dsid,
         )
 
-    def update_dataset_dbs(self, datasetID, molDBs, adducts, priority):
-        return self._gqclient.update_dataset(datasetID, molDBs, adducts, priority)
+    def update_dataset_dbs(self, datasetID, molDBs, adducts, priority=1):
+        return self._gqclient.update_dataset(
+            ds_id=datasetID, mol_dbs=molDBs, adducts=adducts, priority=priority
+        )
+
+    def reprocess_dataset(self, dataset_id, force=False):
+        return self._gqclient.update_dataset(ds_id=dataset_id, reprocess=True, force=force)
 
     def delete_dataset(self, ds_id, **kwargs):
         return self._gqclient.delete_dataset(ds_id, **kwargs)

@@ -8,16 +8,18 @@ import {
 } from 'typeorm';
 
 import {User} from '../user/model';
-import {UserProjectRole} from '../../binding'
+import {UserProjectRole, PublicationStatus} from '../../binding'
 import {DatasetProject} from '../dataset/model';
 import {Moment} from 'moment';
 import {MomentValueTransformer} from '../../utils/MomentValueTransformer';
+import {PublicationStatusOptions as PSO} from './PublicationStatusOptions';
 
 export const UserProjectRoleOptions: Record<UserProjectRole, UserProjectRole> = {
   INVITED: 'INVITED',
   PENDING: 'PENDING',
   MEMBER: 'MEMBER',
-  MANAGER: 'MANAGER'
+  MANAGER: 'MANAGER',
+  REVIEWER: 'REVIEWER',
 };
 
 @Entity()
@@ -46,8 +48,20 @@ export class Project {
     transformer: new MomentValueTransformer() })
   createdDT: Moment;
 
-  @Column({ type: 'text', name: 'project_description', default: ''})
+  @Column({ type: 'text', name: 'project_description', default: '' })
   projectDescriptionAsHtml: string;
+
+  @Column({ type: 'text', nullable: true })
+  reviewToken: string | null;
+
+  @Column({ type: 'timestamp without time zone', default: null, transformer: new MomentValueTransformer() })
+  reviewTokenCreatedDT: Moment | null;
+
+  @Column({ type: 'int', default: 0 })
+  publishNotificationsSent: number;
+
+  @Column({ type: 'text', enum: Object.keys(PSO), default: PSO.UNPUBLISHED })
+  publicationStatus: PublicationStatus;
 }
 
 @Entity('user_project')
@@ -69,10 +83,7 @@ export class UserProject {
   project: Project;
 
   @Column({ type: 'text', enum: Object.keys(UserProjectRoleOptions) })
-  role: 'INVITED' |
-    'PENDING' |
-    'MEMBER' |
-    'MANAGER';
+  role: UserProjectRole;
 }
 
 export const PROJECT_ENTITIES = [

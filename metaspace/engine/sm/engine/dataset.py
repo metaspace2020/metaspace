@@ -136,7 +136,7 @@ class Dataset:
             db.insert(self.DS_INSERT, rows=[doc])
         else:
             db.alter(self.DS_UPD, params=doc)
-        logger.info("Inserted into dataset table: %s, %s", self.id, self.name)
+        logger.info(f'Inserted into dataset table: {self.id}, {self.name}')
 
         if es:
             es.sync_dataset(self.id)

@@ -42,9 +42,11 @@ def populate_ions(db):
         "JOIN dataset d on job.ds_id = d.id"
     )
     pos_ion_tuples = [(sf, cm, nl, ad) for sf, cm, nl, ad, ch in ion_tuples if ch == 1]
-    get_ion_id_mapping(db, pos_ion_tuples, 1)
+    if pos_ion_tuples:
+        get_ion_id_mapping(db, pos_ion_tuples, 1)
     neg_ion_tuples = [(sf, cm, nl, ad) for sf, cm, nl, ad, ch in ion_tuples if ch == -1]
-    get_ion_id_mapping(db, neg_ion_tuples, -1)
+    if neg_ion_tuples:
+        get_ion_id_mapping(db, neg_ion_tuples, -1)
 
 
 def populate_ion_id(db):

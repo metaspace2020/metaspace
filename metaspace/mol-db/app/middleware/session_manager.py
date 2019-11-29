@@ -20,7 +20,7 @@ class DatabaseSessionManager(object):
         """
         req.context['session'] = self._session_factory()
 
-    def process_response(self, req, res, resource=None):
+    def process_response(self, req, res, resource, req_succeeded):
         """
         Handle post-processing of the response (after routing).
         """
