@@ -159,7 +159,8 @@ class MSMSearch:
         sample_ints = np.concatenate([ints for sp_id, mzs, ints in spectra_sample])
         check_spectra_quality(sample_mzs, sample_ints)
 
-        sample_sp_n = int(len(self._coordinates) * sample_ratio)
+        n_spectra = len(self._coordinates)
+        sample_sp_n = min(max(int(n_spectra * sample_ratio), 20), n_spectra)
         spectra_per_chunk_n = calculate_chunk_sp_n(
             sample_mzs.nbytes, sample_sp_n, max_chunk_size_mb=500
         )
