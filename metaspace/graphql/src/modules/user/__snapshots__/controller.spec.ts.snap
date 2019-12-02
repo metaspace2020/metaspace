@@ -1,0 +1,75 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`modules/user/controller Query.currentUser should match snapshot 1`] = `
+Object {
+  "email": "MASKED",
+  "groups": Object {
+    "0": Object {
+      "group": Object {
+        "currentUserRole": "MEMBER",
+        "groupDescriptionAsHtml": "",
+        "hasPendingRequest": null,
+        "id": "MASKED",
+        "name": "test group",
+        "numMembers": 1,
+        "shortName": "tstgrp",
+        "urlSlug": null,
+      },
+      "numDatasets": 0,
+      "role": "MEMBER",
+    },
+    "1": Object {
+      "group": Object {
+        "currentUserRole": "MEMBER",
+        "groupDescriptionAsHtml": "",
+        "hasPendingRequest": null,
+        "id": "MASKED",
+        "name": "test group",
+        "numMembers": 1,
+        "shortName": "tstgrp",
+        "urlSlug": null,
+      },
+      "numDatasets": 0,
+      "role": "MEMBER",
+    },
+  },
+  "id": "MASKED",
+  "name": "tester",
+  "primaryGroup": Object {
+    "group": Object {
+      "currentUserRole": "MEMBER",
+      "groupDescriptionAsHtml": "",
+      "hasPendingRequest": null,
+      "id": "MASKED",
+      "name": "test group",
+      "numMembers": 1,
+      "shortName": "tstgrp",
+      "urlSlug": null,
+    },
+    "numDatasets": 0,
+    "role": "MEMBER",
+  },
+  "projects": Object {
+    "0": Object {
+      "numDatasets": 0,
+      "project": Object {
+        "createdDT": "MASKED",
+        "currentUserRole": "MEMBER",
+        "hasPendingRequest": null,
+        "id": "MASKED",
+        "isPublic": false,
+        "latestUploadDT": null,
+        "name": "MEMBER project",
+        "numDatasets": 0,
+        "numMembers": 1,
+        "projectDescriptionAsHtml": "",
+        "publicationStatus": "UNPUBLISHED",
+        "reviewToken": null,
+        "urlSlug": null,
+      },
+      "role": "MEMBER",
+    },
+  },
+  "role": "user",
+}
+`;

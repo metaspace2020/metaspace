@@ -1,5 +1,10 @@
 import * as _ from 'lodash';
-import {createTestDataset, createTestProject, createTestProjectMember} from '../../../tests/testDataCreation';
+import {
+  createTestDataset,
+  createTestProject,
+  createTestProjectMember,
+  createTestUserProject,
+} from '../../../tests/testDataCreation';
 import {Context} from '../../../context';
 import {Project as ProjectType, UserProjectRole} from '../../../binding';
 import {DatasetProject as DatasetProjectModel} from '../../dataset/model';
@@ -60,11 +65,7 @@ describe('modules/project/controller (queries)', () => {
     const userId = context.user && context.user.id;
 
     if (userId != null) {
-      if (projectRole != null) {
-        await testEntityManager.save(UserProjectModel, { userId, projectId, role: projectRole });
-      } else {
-        await testEntityManager.delete(UserProjectModel, { userId, projectId });
-      }
+      await createTestUserProject(userId, projectId, projectRole);
     }
 
     return {project, projectId, context};

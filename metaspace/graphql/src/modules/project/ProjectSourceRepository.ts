@@ -45,10 +45,10 @@ export class ProjectSourceRepository {
     if (user.id && user.role === 'admin') {
       qb = qb.where('true'); // For consistency, in case anything weird happens when `andWhere` is called without first calling `where`
     } else {
-      const allProjectIds = Object.entries(await user.getProjectRoles())
+      const allowedToSeeProjectIds = Object.entries(await user.getProjectRoles())
         .filter(([id, role]) => role != UPRO.PENDING).map(([id, role]) => id);
       qb = qb.where(new Brackets(qb => qb.where('project.is_public = True')
-        .orWhere('project.id = ANY(:projectIds)', { projectIds: allProjectIds })));
+        .orWhere('project.id = ANY(:allowedToSeeProjectIds)', { allowedToSeeProjectIds })));
     }
     // Add caller-supplied filter
     if (whereClause) {
@@ -71,6 +71,11 @@ export class ProjectSourceRepository {
   async findProjectById(user: ContextUser, projectId: string): Promise<ProjectSource | null> {
     return await (await this.queryProjectsWhere(user, 'project.id = :projectId', {projectId}))
       .getRawOne() || null;
+  }
+
+  async findProjectsByIds(user: ContextUser, projectIds: string[]): Promise<ProjectSource[]> {
+    return await (await this.queryProjectsWhere(user, 'project.id = ANY(:projectIds)', {projectIds}))
+      .getRawMany();
   }
 
   async findProjectByUrlSlug(user: ContextUser, urlSlug: string): Promise<ProjectSource | null> {
