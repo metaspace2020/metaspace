@@ -120,7 +120,10 @@ def formula_image_metrics(
                     formula_images[f_i] = f_images
 
     for f_i, p_i, f_int, image in formula_images_it:
-        formula_images_buffer[f_i][p_i] = image
+        if formula_images_buffer[f_i][p_i] is None:
+            formula_images_buffer[f_i][p_i] = image
+        else:
+            formula_images_buffer[f_i][p_i] += image
         formula_ints_buffer[f_i][p_i] = f_int
 
         if p_i == n_peaks - 1:  # last formula image index

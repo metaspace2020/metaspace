@@ -155,17 +155,22 @@ class MSMSearch:
 
     def define_segments_and_segment_ds(self, sample_ratio=0.05, ds_segm_size_mb=5):
         logger.info('Reading spectra sample')
-        spectra_sample = list(spectra_sample_gen(self._imzml_parser, sample_ratio))
+        spectra_n = len(self._coordinates)
+        sample_size = int(spectra_n * sample_ratio)
+        sample_size = np.clip(sample_size, min(spectra_n, 20), 1000)
+        spectra_sample = list(spectra_sample_gen(self._imzml_parser, sample_size))
         sample_mzs = np.concatenate([mzs for sp_id, mzs, ints in spectra_sample])
         sample_ints = np.concatenate([ints for sp_id, mzs, ints in spectra_sample])
         check_spectra_quality(sample_mzs, sample_ints)
 
-        sample_sp_n = int(len(self._coordinates) * sample_ratio)
         spectra_per_chunk_n = calculate_chunk_sp_n(
-            sample_mzs.nbytes, sample_sp_n, max_chunk_size_mb=500
+            sample_mzs.nbytes, sample_size, max_chunk_size_mb=500
         )
 
-        total_mz_n = sample_mzs.shape[0] / sample_ratio  # pylint: disable=unsubscriptable-object
+        actual_sample_ratio = sample_size / spectra_n
+        total_mz_n = (
+            sample_mzs.shape[0] / actual_sample_ratio
+        )  # pylint: disable=unsubscriptable-object
         ds_segments = define_ds_segments(
             sample_mzs, total_mz_n, self._imzml_parser.mzPrecision, ds_segm_size_mb
         )
@@ -232,8 +237,7 @@ class MSMSearch:
         """
         logger.info('Running molecule search')
 
-        ds_segments = self.define_segments_and_segment_ds()
-
+        ds_segments = self.define_segments_and_segment_ds(ds_segm_size_mb=20)
         moldb_fdr_list = init_fdr(self._fdr_config, self._isotope_gen_config, self._moldbs)
         ion_formula_map_df = collect_ion_formulas(self._spark_context, moldb_fdr_list)
 

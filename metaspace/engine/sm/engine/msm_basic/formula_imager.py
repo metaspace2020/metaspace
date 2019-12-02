@@ -14,35 +14,40 @@ logger = logging.getLogger('engine')
 
 # pylint: disable=too-many-locals
 # this function is compute performance optimized
-def gen_iso_images(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, ppm=3, min_px=1):
-    if sp_inds.size > 0:
-        by_sp_mz = np.argsort(sp_mzs)  # sort order by mz ascending
-        sp_mzs = sp_mzs[by_sp_mz]
-        sp_inds = sp_inds[by_sp_mz]
-        sp_ints = sp_ints[by_sp_mz]
+def gen_iso_images(ds_segm_sp_array_it, centr_df, nrows, ncols, ppm=3, min_px=1):
+    for sp_arr in ds_segm_sp_array_it:
+        sp_inds = sp_arr[:, 0]
+        sp_mzs = sp_arr[:, 1]
+        sp_ints = sp_arr[:, 2]
 
-        by_centr_mz = np.argsort(centr_df.mz.values)  # sort order by mz ascending
-        centr_mzs = centr_df.mz.values[by_centr_mz]
-        centr_f_inds = centr_df.formula_i.values[by_centr_mz]
-        centr_p_inds = centr_df.peak_i.values[by_centr_mz]
-        centr_ints = centr_df.int.values[by_centr_mz]
+        if sp_inds.size > 0:
+            ds_segm_mz_min = sp_mzs[0] - sp_mzs[0] * ppm * 1e-6
+            ds_segm_mz_max = sp_mzs[-1] + sp_mzs[-1] * ppm * 1e-6
+            centr_df_slice = centr_df[
+                (centr_df.mz > ds_segm_mz_min) & (centr_df.mz < ds_segm_mz_max)
+            ]
 
-        lower = centr_mzs - centr_mzs * ppm * 1e-6
-        upper = centr_mzs + centr_mzs * ppm * 1e-6
-        lower_inds = np.searchsorted(sp_mzs, lower, 'l')
-        upper_inds = np.searchsorted(sp_mzs, upper, 'r')
+            centr_mzs = centr_df_slice.mz.values
+            centr_f_inds = centr_df_slice.formula_i.values
+            centr_p_inds = centr_df_slice.peak_i.values
+            centr_ints = centr_df_slice.int.values
 
-        # Note: consider going in the opposite direction so that
-        # formula_image_metrics can check for the first peak images instead of the last
-        for i, (lo_i, up_i) in enumerate(zip(lower_inds, upper_inds)):
-            m = None
-            if up_i - lo_i >= min_px:
-                data = sp_ints[lo_i:up_i]
-                inds = sp_inds[lo_i:up_i]
-                row_inds = inds / ncols
-                col_inds = inds % ncols
-                m = coo_matrix((data, (row_inds, col_inds)), shape=(nrows, ncols), copy=True)
-            yield centr_f_inds[i], centr_p_inds[i], centr_ints[i], m
+            lower = centr_mzs - centr_mzs * ppm * 1e-6
+            upper = centr_mzs + centr_mzs * ppm * 1e-6
+            lower_inds = np.searchsorted(sp_mzs, lower, 'l')
+            upper_inds = np.searchsorted(sp_mzs, upper, 'r')
+
+            # Note: consider going in the opposite direction so that
+            # formula_image_metrics can check for the first peak images instead of the last
+            for i, (lo_i, up_i) in enumerate(zip(lower_inds, upper_inds)):
+                m = None
+                if up_i - lo_i >= 0:
+                    data = sp_ints[lo_i:up_i]
+                    inds = sp_inds[lo_i:up_i]
+                    row_inds = inds / ncols
+                    col_inds = inds % ncols
+                    m = coo_matrix((data, (row_inds, col_inds)), shape=(nrows, ncols), copy=True)
+                yield centr_f_inds[i], centr_p_inds[i], centr_ints[i], m
 
 
 def get_ds_dims(coordinates):
@@ -102,17 +107,11 @@ def read_centroids_segment(segm_path):
 
 
 def read_ds_segments(first_segm_i, last_segm_i):
-    sp_arr = [
-        read_ds_segment(get_file_path(f'ds_segm_{segm_i:04}.pickle'))
-        for segm_i in range(first_segm_i, last_segm_i + 1)
-    ]
-    sp_arr = [a for a in sp_arr if a.size > 0]
-    if sp_arr:
-        sp_arr = np.concatenate(sp_arr)
+    for ds_segm_i in range(first_segm_i, last_segm_i + 1):
+        segm_path = get_file_path(f'ds_segm_{ds_segm_i:04}.pickle')
+        sp_arr = read_ds_segment(segm_path)
         sp_arr = sp_arr[sp_arr[:, 1].argsort()]  # assume mz in column 1
-    else:
-        sp_arr = np.empty((0, 3))
-    return sp_arr
+        yield sp_arr
 
 
 def get_file_path(name):
@@ -141,12 +140,9 @@ def create_process_segment(ds_segments, coordinates, ds_config, target_formula_i
 
             logger.info(f'Reading dataset segments {first_ds_segm_i}-{last_ds_segm_i}')
 
-            sp_arr = read_ds_segments(first_ds_segm_i, last_ds_segm_i)
-
+            ds_segm_sp_array_it = read_ds_segments(first_ds_segm_i, last_ds_segm_i)
             formula_images_it = gen_iso_images(
-                sp_inds=sp_arr[:, 0],
-                sp_mzs=sp_arr[:, 1],
-                sp_ints=sp_arr[:, 2],
+                ds_segm_sp_array_it,
                 centr_df=centr_df,
                 nrows=nrows,
                 ncols=ncols,
