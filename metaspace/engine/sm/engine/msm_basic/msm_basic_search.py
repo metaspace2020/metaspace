@@ -169,8 +169,8 @@ class MSMSearch:
 
         actual_sample_ratio = sample_size / spectra_n
         total_mz_n = (
-            sample_mzs.shape[0] / actual_sample_ratio
-        )  # pylint: disable=unsubscriptable-object
+            sample_mzs.shape[0] / actual_sample_ratio  # pylint: disable=unsubscriptable-object
+        )
         ds_segments = define_ds_segments(
             sample_mzs, total_mz_n, self._imzml_parser.mzPrecision, ds_segm_size_mb
         )

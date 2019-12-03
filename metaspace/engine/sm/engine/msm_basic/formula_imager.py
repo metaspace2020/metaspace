@@ -14,7 +14,9 @@ logger = logging.getLogger('engine')
 
 # pylint: disable=too-many-locals
 # this function is compute performance optimized
-def gen_iso_images(ds_segm_sp_array_it, centr_df, nrows, ncols, ppm=3, min_px=1):
+def gen_iso_images(
+    ds_segm_sp_array_it, centr_df, nrows, ncols, ppm=3, min_px=1  # pylint: disable=unused-argument
+):
     for sp_arr in ds_segm_sp_array_it:
         sp_inds = sp_arr[:, 0]
         sp_mzs = sp_arr[:, 1]
