@@ -31,7 +31,6 @@ class MoleculeCollection(BaseResource):
             molecules = q.limit(limit).all()
 
         if fields:
-            fields = fields.split(',')
             selector = self.field_selector(fields)
             objs = [selector(mol.to_dict()) for mol in molecules]
         else:
@@ -50,6 +49,9 @@ class MoleculeCollection(BaseResource):
 
         buffer = StringIO(req.stream.read(req.content_length).decode())
         moldb_df = pd.read_csv(buffer, sep='\t')
+        if moldb_df.empty:
+            raise BadRequestError(f'Molecules dataframe is empty')
+
         import_molecules_from_df(moldb, moldb_df)
         self.on_success(res)
 
