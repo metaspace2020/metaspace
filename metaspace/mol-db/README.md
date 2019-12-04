@@ -36,13 +36,13 @@ gunicorn --log-level INFO --access-logfile - --workers 4 \
 
 Add a new database
 ```
-curl -X POST "http://localhost:5001/v1/databases?name=mol-db-name&version=2019-12-12&drop=yes"
-curl -H "Content-Type: text/plain" --data-binary -d "@/path/to/import/file.csv" -X POST "http://localhost:5001/v1/databases/{moldb_id}/molecules"
+curl -X POST -d '{"name": "mol-db-name", "version": "2019-12-12", "drop": "yes"}' http://localhost:5001/v1/databases
+curl -H "Content-Type: text/plain" --data-binary -d "@/path/to/import/file.csv" -X POST http://localhost:5001/v1/databases/{moldb_id}/molecules
 ```
 
 Delete a database
 ```
-curl -X DELETE "http://localhost:5001/v1/databases/{moldb_id}"
+curl -X DELETE http://localhost:5001/v1/databases/{moldb_id}
 ```
 
 Because the API doesn't have authentication, all non GET requests should be blocked for all IPs other than `127.0.0.1`

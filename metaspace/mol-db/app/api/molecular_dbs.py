@@ -1,3 +1,4 @@
+import json
 import logging
 from io import StringIO
 
@@ -97,9 +98,10 @@ class MolDBCollection(BaseResource):
 
     def on_post(self, req, res):
         db = req.context['session']
-        name = req.params.get('name', None)
-        version = req.params.get('version', None)
-        drop_moldb = req.params.get('drop', 'no').lower() in ['true', 'yes', '1']
+        doc = json.load(req.bounded_stream)
+        name = doc.get('name', None)
+        version = doc.get('version', None)
+        drop_moldb = doc.get('drop', 'no').lower() in ['true', 'yes', '1']
         if not (name and version):
             BadRequestError(f'"Name" and "version" parameters required: {name}, {version}')
 
