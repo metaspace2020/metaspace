@@ -88,8 +88,12 @@ def complete_image_list(images):
     return non_empty_image_n > 1 and images[0] is not None
 
 
+def nullify_images_with_too_few_pixels(f_images, min_px):
+    return [img if (img is not None and img.nnz >= min_px) else None for img in f_images]
+
+
 def formula_image_metrics(
-    formula_images_it, compute_metrics, target_formula_inds, n_peaks
+    formula_images_it, compute_metrics, target_formula_inds, n_peaks, min_px=1
 ):  # function optimized for compute performance
     """ Compute isotope image metrics for each formula
 
@@ -112,6 +116,7 @@ def formula_image_metrics(
     formula_ints_buffer = defaultdict(lambda: [0] * n_peaks)
 
     def add_metrics(f_i, f_images, f_ints):
+        f_images = nullify_images_with_too_few_pixels(f_images, min_px)
         if complete_image_list(f_images):
             f_metrics = compute_metrics(f_images, f_ints)
             if f_metrics['msm'] > 0:

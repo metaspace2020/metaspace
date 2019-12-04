@@ -14,9 +14,7 @@ logger = logging.getLogger('engine')
 
 # pylint: disable=too-many-locals
 # this function is compute performance optimized
-def gen_iso_images(
-    ds_segm_sp_array_it, centr_df, nrows, ncols, ppm=3, min_px=1  # pylint: disable=unused-argument
-):
+def gen_iso_images(ds_segm_sp_array_it, centr_df, nrows, ncols, ppm=3):
     for sp_arr in ds_segm_sp_array_it:
         sp_inds = sp_arr[:, 0]
         sp_mzs = sp_arr[:, 1]
@@ -144,15 +142,10 @@ def create_process_segment(ds_segments, coordinates, ds_config, target_formula_i
 
             ds_segm_sp_array_it = read_ds_segments(first_ds_segm_i, last_ds_segm_i)
             formula_images_it = gen_iso_images(
-                ds_segm_sp_array_it,
-                centr_df=centr_df,
-                nrows=nrows,
-                ncols=ncols,
-                ppm=ppm,
-                min_px=min_px,
+                ds_segm_sp_array_it, centr_df=centr_df, nrows=nrows, ncols=ncols, ppm=ppm
             )
             formula_metrics_df, formula_images = formula_image_metrics(
-                formula_images_it, compute_metrics, target_formula_inds, n_peaks
+                formula_images_it, compute_metrics, target_formula_inds, n_peaks, min_px
             )
             logger.info(f'Segment {segm_i} finished')
         else:
