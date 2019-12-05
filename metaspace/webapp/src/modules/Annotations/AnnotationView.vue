@@ -10,7 +10,8 @@
             <candidate-molecules-popover
               placement="bottom"
               :possibleCompounds="annotation.possibleCompounds"
-              :isomers="showIsomers ? annotation.isomers : []"
+              :isomers="annotation.isomers"
+              :isobars="annotation.isobars"
             >
               <span class="sf-big" v-html="formattedMolFormula" />
             </candidate-molecules-popover>
@@ -69,7 +70,7 @@
         <el-collapse-item name="compounds">
           <div slot="title" style="display: flex; align-items: center">
             <div>Molecules ({{annotation.countPossibleCompounds}})</div>
-            <isomers-alert v-if="showIsomers && annotation.isomers.length > 0" :isomers="annotation.isomers" />
+            <ambiguity-alert :isomers="annotation.isomers" :isobars="annotation.isobars" />
           </div>
           <related-molecules v-if="annotation && activeSections.indexOf('compounds') !== -1"
                              query="isomers"

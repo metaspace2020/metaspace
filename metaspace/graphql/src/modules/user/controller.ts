@@ -19,6 +19,7 @@ import {deleteDataset} from '../dataset/operation/deleteDataset';
 import {patchPassportIntoLiveRequest} from '../auth/middleware';
 import {resolveGroupScopeRole} from '../group/util/resolveGroupScopeRole';
 import canSeeUserEmail from './util/canSeeUserEmail';
+import {ProjectSourceRepository} from '../project/ProjectSourceRepository';
 
 const assertCanEditUser = (user: ContextUser, userId: string) => {
   if (!user.id)
@@ -79,7 +80,13 @@ export const Resolvers = {
       if (user.scopeRole === SRO.PROFILE_OWNER || ctx.isAdmin) {
         const userProjects = await ctx.entityManager.getRepository(UserProjectModel)
           .find({userId: user.id});
-        return userProjects.map(userProject => ({ ...userProject, user }));
+        // Exclude projects that user isn't allowed to see (e.g. private projects in PENDING status)
+        const visibleProjects = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
+          .findProjectsByIds(ctx.user, userProjects.map(p => p.projectId));
+        const visibleProjectIds = visibleProjects.map(p => p && p.id);
+        return userProjects
+          .filter(userProject => visibleProjectIds.includes(userProject.projectId))
+          .map(userProject => ({ ...userProject, user }));
       }
       return null;
     },
