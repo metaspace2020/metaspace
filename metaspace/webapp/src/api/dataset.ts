@@ -71,6 +71,7 @@ export const datasetDetailItemFragment =
     isPublic
     molDBs
     status
+    statusUpdateDT
     metadataType
     fdrCounts(inpFdrLvls: $inpFdrLvls, checkLvl: $checkLvl) {
       dbName
@@ -92,7 +93,7 @@ export const datasetDetailItemsQuery =
 
 export const datasetCountQuery =
   gql`query CountDatasets($dFilter: DatasetFilter, $query: String) {
-    countDatasets(filter: $dFilter, simpleQuery: $query)
+    countDatasetsPerGroup(query: {filter: $dFilter, simpleQuery: $query, fields: ["ds_status"]})
   }`
 
 export interface DatasetListItem {

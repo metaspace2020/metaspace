@@ -67,6 +67,7 @@ FROM (
     d.input_path AS ds_input_path,
     d.upload_dt AS ds_upload_dt,
     d.status AS ds_status,
+    d.status_update_dt as ds_status_update_dt,
     to_char(max(job.finish), 'YYYY-MM-DD HH24:MI:SS') AS ds_last_finished,
     d.is_public AS ds_is_public,
     d.config #> '{databases}' AS ds_mol_dbs,

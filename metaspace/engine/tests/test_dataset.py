@@ -73,7 +73,14 @@ def test_dataset_save_overwrite_ds_works(fill_db, metadata, ds_config):
 
     upload_dt = datetime.now()
     ds_id = '2000-01-01'
-    ds = Dataset(ds_id, 'ds_name', 'input_path', upload_dt, metadata, ds_config)
+    ds = Dataset(
+        id=ds_id,
+        name='ds_name',
+        input_path='input_path',
+        upload_dt=upload_dt,
+        metadata=metadata,
+        config=ds_config,
+    )
 
     ds.save(db, es_mock)
 

@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import datetime
 
 from sm.engine.errors import UnknownDSID
 from sm.engine.util import SMConfig
@@ -55,19 +56,21 @@ class Dataset:
     """
 
     DS_SEL = (
-        'SELECT id, name, input_path, upload_dt, metadata, config, status, is_public '
+        'SELECT id, name, input_path, upload_dt, metadata, config, status, '
+        '   status_update_dt, is_public '
         'FROM dataset WHERE id = %s'
     )
     DS_UPD = (
         'UPDATE dataset set name=%(name)s, input_path=%(input_path)s, upload_dt=%(upload_dt)s, '
-        '   metadata=%(metadata)s, config=%(config)s, status=%(status)s, is_public=%(is_public)s '
+        '   metadata=%(metadata)s, config=%(config)s, status=%(status)s, '
+        '   status_update_dt=%(status_update_dt)s, is_public=%(is_public)s '
         'where id=%(id)s'
     )
     DS_INSERT = (
         'INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, status, '
-        '   is_public) '
+        '   status_update_dt, is_public) '
         'VALUES (%(id)s, %(name)s, %(input_path)s, %(upload_dt)s, '
-        '   %(metadata)s, %(config)s, %(status)s, %(is_public)s)'
+        '   %(metadata)s, %(config)s, %(status)s, %(status_update_dt)s, %(is_public)s)'
     )
 
     ACQ_GEOMETRY_SEL = 'SELECT acq_geometry FROM dataset WHERE id = %s'
@@ -84,6 +87,7 @@ class Dataset:
         metadata=None,
         config=None,
         status=DatasetStatus.QUEUED,
+        status_update_dt=None,
         is_public=True,
         img_storage_type='fs',
     ):
@@ -92,6 +96,7 @@ class Dataset:
         self.input_path = input_path
         self.upload_dt = upload_dt
         self.status = status
+        self.status_update_dt = status_update_dt or datetime.now()
         self.is_public = is_public
         self.ion_img_storage_type = img_storage_type
 
@@ -107,6 +112,7 @@ class Dataset:
 
     def set_status(self, db, es, status):
         self.status = status
+        self.status_update_dt = datetime.now()
         self.save(db, es)
 
     @classmethod
@@ -130,6 +136,7 @@ class Dataset:
             'metadata': json.dumps(self.metadata or {}),
             'config': json.dumps(self.config or {}),
             'status': self.status,
+            'status_update_dt': self.status_update_dt,
             'is_public': self.is_public,
         }
         if not self.is_stored(db):

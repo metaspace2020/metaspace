@@ -1,4 +1,4 @@
-\<template>
+<template>
   <div>
     <filter-panel level="dataset" />
 
@@ -18,9 +18,7 @@
 
         <el-checkbox-group
           v-model="categories"
-          :min="1"
-          class="dataset-status-checkboxes"
-        >
+          :min="1" class="dataset-status-checkboxes" v-loading="countLoading">
           <el-checkbox
             class="cb-started"
             label="started"
@@ -57,8 +55,7 @@
       </el-form>
     </div>
 
-    <dataset-list
-      :datasets="datasets"
+    <dataset-list v-loading="loading" :datasets="datasets"
       allow-double-column
     />
   </div>
@@ -82,7 +79,18 @@ import { removeDatasetFromAllDatasetsQuery } from '../../../lib/updateApolloCach
 import { sortBy, uniqBy } from 'lodash-es'
 import updateApolloCache from '../../../lib/updateApolloCache'
 
-const processingStages = ['started', 'queued', 'failed', 'finished']
+ const extractGroupedStatusCounts = (data) => {
+   const counts = {
+     QUEUED: 0,
+     ANNOTATING: 0,
+     FINISHED: 0,
+     FAILED: 0,
+   };
+   (data.countDatasetsPerGroup.counts || []).forEach(({fieldValues: [status], count}) => {
+     counts[status] = count;
+   });
+   return counts;
+ };
 
 export default {
   name: 'DatasetTable',
@@ -96,8 +104,11 @@ export default {
       csvChunkSize: 1000,
       categories: ['started', 'queued', 'finished'],
       isExporting: false,
-    }
-  },
+       loading: 0,
+       countLoading: 0,
+     }
+   },
+
 
   computed: {
     noFilters() {
@@ -108,118 +119,110 @@ export default {
       return true
     },
 
-    nonEmpty() {
-      return this.datasets.length > 0
+    queryVariables() {
+       return {
+         dFilter: this.$store.getters.gqlDatasetFilter,
+         query: this.$store.getters.ftsQuery,
+         inpFdrLvls: [10],
+         checkLvl: 10
+       };
+     },
+
+     nonEmpty() {
+       return this.datasets.length > 0
     },
 
-    allDatasets() {
-      let list = []
-      for (const category of processingStages) {
-        if (this[category]) {
-          list = list.concat(this[category])
-        }
-      }
-      // Sort again in case any datasets have had their status changed and are now in the wrong list
-      const sortOrder = ['FAILED', 'ANNOTATING', 'QUEUED', 'FINISHED']
-      list = uniqBy(list, 'id')
-      list = sortBy(list, dataset => sortOrder.indexOf(dataset.status))
-      return list
-    },
-
-    datasets() {
-      return this.allDatasets
-        .filter(ds =>
-          (ds.status === 'FAILED' && this.categories.includes('failed'))
+     datasets() {
+       let datasets = (this.allDatasets || []);
+       datasets = datasets.filter(ds =>
+           (ds.status === 'FAILED' && this.categories.includes('failed'))
            || (ds.status === 'ANNOTATING' && this.categories.includes('started'))
            || (ds.status === 'QUEUED' && this.categories.includes('queued'))
            || (ds.status === 'FINISHED' && this.categories.includes('finished')))
-    },
+       datasets = sortBy(datasets, ['ds_status_update_dt'], ['desc']);
+       return datasets;
+     },
 
     canSeeFailed() {
       return this.currentUser != null && this.currentUser.role === 'admin'
     },
   },
 
-  apollo: {
-    $subscribe: {
-      datasetDeleted: {
-        query: datasetDeletedQuery,
-        result({ data }) {
-          const datasetId = data.datasetDeleted.id;
-          ['failed', 'finished', 'queued', 'started'].forEach(queryName => {
-            removeDatasetFromAllDatasetsQuery(this, queryName, datasetId)
-          })
-        },
-      },
-      datasetStatusUpdated: {
-        query: datasetStatusUpdatedQuery,
-        async result({ data }) {
-          const { dataset, action, stage, is_new: isNew } = data.datasetStatusUpdated
-          if (dataset != null && action === 'ANNOTATE' && stage === 'QUEUED' && isNew) {
-            updateApolloCache(this, 'queued', oldVal => {
-              return {
-                ...oldVal,
-                allDatasets: oldVal.allDatasets && [dataset, ...oldVal.allDatasets],
-              }
-            })
-          }
-        },
-      },
-    },
+   apollo: {
+     $subscribe: {
+       datasetDeleted: {
+         query: datasetDeletedQuery,
+         result({data}) {
+           const datasetId = data.datasetDeleted.id;
+           removeDatasetFromAllDatasetsQuery(this, 'allDatasets', datasetId);
+         }
+       },
+       datasetStatusUpdated: {
+         query: datasetStatusUpdatedQuery,
+         async result({ data }) {
+           const { dataset, action, stage, is_new } = data.datasetStatusUpdated;
+           if (this.noFilters && dataset != null) {
+             if (action === 'ANNOTATE' && stage === 'QUEUED' && is_new) {
+               updateApolloCache(this, 'allDatasets', oldVal => {
+                 return {
+                   ...oldVal,
+                   allDatasets: oldVal.allDatasets && [dataset, ...oldVal.allDatasets],
+                 };
+               });
+             }
+             if (this.allDatasets != null) {
+               // Make a best effort to update counts.
+               const oldDataset = this.allDatasets.find(ds => ds.id === dataset.id);
+               const oldStatus = oldDataset && oldDataset.status;
+               const newStatus = dataset.status;
+               updateApolloCache(this, 'countDatasets', oldVal => {
+                 const oldCounts = extractGroupedStatusCounts(oldVal);
+                 return {
+                   ...oldVal,
+                   counts: Object.entries(oldCounts).map(([status, count]) => ({
+                     fields: [status],
+                     count: count
+                       - (status === oldStatus ? 1 : 0)
+                       + (status === newStatus ? 1 : 0),
+                   })),
+                 };
+               });
+
+             }
+           }
+         }
+       },
+     },
 
     currentUser: {
-      query: currentUserRoleQuery,
-      fetchPolicy: 'cache-first',
-    },
+      loadingKey: 'loading',
+       query: currentUserRoleQuery,
+       fetchPolicy: 'cache-first',
+     },
 
-    failed: {
-      fetchPolicy: 'cache-and-network',
-      query: datasetDetailItemsQuery,
-      update: data => data.allDatasets,
-      skip() {
-        return !this.canSeeFailed
-      },
-      variables() {
-        return this.queryVariables('FAILED')
-      },
-    },
+     allDatasets: {
+       loadingKey: 'loading',
+       fetchPolicy: 'cache-and-network',
+       query: datasetDetailItemsQuery,
+       throttle: 1000,
+       variables () {
+         return this.queryVariables;
+       }
+     },
 
-    started: {
-      fetchPolicy: 'cache-and-network',
-      query: datasetDetailItemsQuery,
-      update: data => data.allDatasets,
-      variables() {
-        return this.queryVariables('ANNOTATING')
-      },
-    },
-
-    queued: {
-      fetchPolicy: 'cache-and-network',
-      query: datasetDetailItemsQuery,
-      update: data => data.allDatasets,
-      variables() {
-        return this.queryVariables('QUEUED')
-      },
-    },
-
-    finished: {
-      fetchPolicy: 'cache-and-network',
-      query: datasetDetailItemsQuery,
-      update: data => data.allDatasets,
-      variables() {
-        return this.queryVariables('FINISHED')
-      },
-    },
-
-    finishedCount: {
-      fetchPolicy: 'cache-and-network',
-      query: datasetCountQuery,
-      update: data => data.countDatasets,
-      variables() {
-        return this.queryVariables('FINISHED')
-      },
-    },
-  },
+     datasetCounts: {
+       loadingKey: 'countLoading',
+       fetchPolicy: 'cache-and-network',
+       query: datasetCountQuery,
+       throttle: 1000,
+       update(data) {
+         return extractGroupedStatusCounts(data);
+       },
+       variables () {
+         return this.queryVariables;
+       }
+     },
+   },
 
   methods: {
     formatSubmitter: (row, col) =>
@@ -229,35 +232,23 @@ export default {
     formatResolvingPower: (row, col) =>
       (row.analyzer.resolvingPower / 1000).toFixed(0) * 1000,
 
-    queryVariables(status) {
-      const body = {
-        dFilter: Object.assign({ status }, this.$store.getters.gqlDatasetFilter),
-        query: this.$store.getters.ftsQuery,
-        inpFdrLvls: [],
-        checkLvl: 10,
-      }
-      if (status === 'FINISHED') { body.inpFdrLvls = [10] }
-      return body
-    },
-
-    count(stage) {
-      let count = null
-      // assume not too many items are failed/queued/annotating so they are all visible in the web app,
-      // but check all lists because they may be in the wrong list due to status updates after they were loaded
-      if (stage === 'failed') {
-        count = this.allDatasets.filter(ds => ds.status === 'FAILED').length
-      }
-      if (stage === 'queued') {
-        count = this.allDatasets.filter(ds => ds.status === 'QUEUED').length
-      }
-      if (stage === 'started') {
-        count = this.allDatasets.filter(ds => ds.status === 'ANNOTATING').length
-      }
-      if (stage === 'finished') {
-        const inOtherLists = this.allDatasets.filter(ds => ds.status === 'FINISHED').length
-           - (this.finished && this.finished.length || 0)
-        count = this.finishedCount == null ? null : this.finishedCount + inOtherLists
-      }
+     count(stage) {
+       let count = null;
+       if (this.allDatasets != null) {
+         // assume not too many items are failed/queued/annotating so they are all visible in the web app,
+         // but check all lists because they may be in the wrong list due to status updates after they were loaded
+         if (stage === 'failed')
+           count = this.allDatasets.filter(ds => ds.status === 'FAILED').length;
+         if (stage === 'queued')
+           count = this.allDatasets.filter(ds => ds.status === 'QUEUED').length;
+         if (stage === 'started')
+           count = this.allDatasets.filter(ds => ds.status === 'ANNOTATING').length;
+         if (stage === 'finished') {
+           const inOtherLists = this.allDatasets.filter(ds => ds.status === 'FINISHED').length
+             - (this.finished && this.finished.length || 0);
+           count = this.finishedCount == null ? null : this.finishedCount + inOtherLists;
+         }
+       }
 
       return count != null && !isNaN(count) ? `(${count})` : ''
     },
@@ -308,7 +299,7 @@ export default {
       this.isExporting = true
       const self = this
 
-      const v = this.queryVariables('FINISHED')
+      const v = {...this.queryVariables, status:'FINISHED'}
       const chunks = []
       let offset = 0
 

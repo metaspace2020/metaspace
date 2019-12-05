@@ -32,6 +32,7 @@ type Dataset {
   metadataType: String!
 
   status: JobStatus
+  statusUpdateDT: String!
   inputPath: String
   uploadDateTime: String
   fdrCounts(inpFdrLvls: [Int!]! = [10], checkLvl: Int! = 10): FdrCounts
