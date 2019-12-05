@@ -45,6 +45,7 @@ describe('RelatedMolecules', () => {
 
   it('should match snapshot', async () => {
     config.features.isomers = true;
+    config.features.isobars = false;
     initMockGraphqlClient({
       Query: () => ({
         allAnnotations: () => ([
@@ -71,6 +72,7 @@ describe('RelatedMolecules', () => {
 
   it('should hide the isomer when the feature flag is off', async () => {
     config.features.isomers = false;
+    config.features.isobars = false;
     initMockGraphqlClient({
       Query: () => ({
         allAnnotations: () => ([

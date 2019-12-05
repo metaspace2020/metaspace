@@ -1,5 +1,6 @@
 import json
 import logging
+from copy import deepcopy
 from datetime import datetime
 from unittest.mock import MagicMock
 import time
@@ -7,7 +8,13 @@ import time
 import pandas as pd
 
 from sm.engine.mol_db import MolecularDB
-from sm.engine.es_export import ESExporter, ESIndexManager, DATASET_SEL, ANNOTATIONS_SEL
+from sm.engine.es_export import (
+    ESExporter,
+    ESIndexManager,
+    DATASET_SEL,
+    ANNOTATIONS_SEL,
+    ESExporterIsobars,
+)
 from sm.engine.db import DB
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.tests.util import (
@@ -172,6 +179,7 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index, ds_config, metadata):
         'total_iso_ints': 100,
         'centroid_mzs': [100.0, 200.0, 300.0],
         'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
+        'isobars': [],
         'isomer_ions': [],
         'polarity': '+',
         'job_id': 1,
@@ -207,6 +215,7 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index, ds_config, metadata):
         'total_iso_ints': 100,
         'centroid_mzs': [10.0, 20.0],
         'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
+        'isobars': [],
         'isomer_ions': [],
         'polarity': '+',
         'job_id': 1,
@@ -224,6 +233,75 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index, ds_config, metadata):
         'annotation_id': 2,
         'off_sample_label': None,
         'off_sample_prob': None,
+    }
+
+
+def test_add_isomer_fields_to_anns(ds_config):
+    ann_docs = [
+        {'ion': 'H2O+H-H-', 'ion_formula': 'H2O', 'comp_ids': ['1']},
+        {'ion': 'H3O-H-', 'ion_formula': 'H2O', 'comp_ids': ['2', '3']},
+        {'ion': 'H3O+CO2-CO2-H-', 'ion_formula': 'H2O', 'comp_ids': ['2', '3', '4']},
+        {'ion': 'H2O-H-', 'ion_formula': 'H1O', 'comp_ids': ['4']},
+    ]
+
+    ESExporter._add_isomer_fields_to_anns(ann_docs)
+
+    isomer_ions_fields = [doc['isomer_ions'] for doc in ann_docs]
+    comps_count_fields = [doc['comps_count_with_isomers'] for doc in ann_docs]
+    assert isomer_ions_fields == [
+        ['H3O-H-', 'H3O+CO2-CO2-H-'],
+        ['H2O+H-H-', 'H3O+CO2-CO2-H-'],
+        ['H2O+H-H-', 'H3O-H-'],
+        [],
+    ]
+
+    assert comps_count_fields == [4, 4, 4, 1]
+
+
+def test_add_isobar_fields_to_anns(ds_config):
+    ann_docs = [
+        {
+            'annotation_id': 'Base annotation',
+            'centroid_mzs': [100, 101, 102, 103],
+            'msm': 0.5,
+            'ion': 'H1+',
+            'ion_formula': 'H1',
+        },
+        {
+            'annotation_id': "Base's 1st centroid overlaps 1st",
+            'centroid_mzs': [100.0002, 101.1, 102.1, 103.1],
+            'msm': 0.6,
+            'ion': 'H2+',
+            'ion_formula': 'H2',
+        },
+        {
+            'annotation_id': "Base's 1st centroid overlaps 2nd (shouldn't be reported)",
+            'centroid_mzs': [98, 100.0002, 101.2, 102.2],
+            'msm': 0.7,
+            'ion': 'H3+',
+            'ion_formula': 'H3',
+        },
+        {
+            'annotation_id': "Base's 2nd and 3rd centroid overlap 3rd and 4th",
+            'centroid_mzs': [96, 97, 101, 102],
+            'msm': 0.8,
+            'ion': 'H4+',
+            'ion_formula': 'H4',
+        },
+    ]
+    ds_doc = {'ds_config': ds_config}
+
+    ESExporterIsobars.add_isobar_fields_to_anns(ann_docs, ds_doc)
+
+    isobar_fields = dict((i, doc['isobars']) for i, doc in enumerate(ann_docs))
+    assert isobar_fields == {
+        0: [
+            {'ion': 'H2+', 'ion_formula': 'H2', 'msm': 0.6, 'peak_ns': [(1, 1)]},
+            {'ion': 'H4+', 'ion_formula': 'H4', 'msm': 0.8, 'peak_ns': [(2, 3), (3, 4)]},
+        ],
+        1: [{'ion': 'H1+', 'ion_formula': 'H1', 'msm': 0.5, 'peak_ns': [(1, 1)]}],
+        2: [],
+        3: [{'ion': 'H1+', 'ion_formula': 'H1', 'msm': 0.5, 'peak_ns': [(3, 2), (4, 3)]}],
     }
 
 
