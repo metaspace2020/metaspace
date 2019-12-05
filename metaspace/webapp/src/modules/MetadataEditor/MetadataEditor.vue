@@ -187,6 +187,7 @@
            numPeaks: isNew ? null : get(config, 'isotope_generation.n_peaks') || null,
            decoySampleSize: isNew ? null : get(config, 'fdr.decoy_sample_size') || null,
            ppm: isNew ? null : get(config, 'image_generation.ppm') || null,
+           analysisVersion: isNew ? 1 : get(config, 'analysis_version') || 1,
          };
        };
 

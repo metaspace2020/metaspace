@@ -38,7 +38,9 @@ def fill_db(test_db, metadata, ds_config):
 
 
 def test_generate_ds_config(metadata, ds_config):
-    generated_config = generate_ds_config(metadata, ['HMDB-v4'], ["+H", "+Na", "+K", "[M]+"])
+    generated_config = generate_ds_config(
+        metadata, mol_dbs=['HMDB-v4'], adducts=["+H", "+Na", "+K", "[M]+"]
+    )
 
     assert generated_config == ds_config
 

@@ -31,12 +31,22 @@ class CentroidsGenerator:
         self._parquet_chunks_n = 64
         self._iso_gen_part_n = 512
 
-        self._ion_centroids_path = '{}/{}/{}/{}'.format(
-            self._sm_config['isotope_storage']['path'],
-            self._isocalc.n_peaks,
-            self._isocalc.sigma,
-            self._isocalc.charge,
-        )
+        if self._isocalc.analysis_version < 2:
+            self._ion_centroids_path = '{}/{}/{}/{}'.format(
+                self._sm_config['isotope_storage']['path'],
+                self._isocalc.n_peaks,
+                self._isocalc.sigma,
+                self._isocalc.charge,
+            )
+        else:
+            self._ion_centroids_path = '{}/v2/{}/{}_{}/{}'.format(
+                self._sm_config['isotope_storage']['path'],
+                self._isocalc.n_peaks,
+                self._isocalc.instrument,
+                self._isocalc.sigma,
+                self._isocalc.charge,
+            )
+        logger.info(f'Centroids path: {self._ion_centroids_path}')
         self._parquet_file_names = ['centroids.parquet', 'formulas.parquet']
         self._centroids_stored_on_s3 = self._ion_centroids_path.startswith('s3a://')
         if self._centroids_stored_on_s3:

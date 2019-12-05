@@ -54,8 +54,6 @@ class AnnotationJob:
         self._sm_config = sm_config or SMConfig.get_conf()
         self._ds_data_path = None
 
-        logger.debug(f'Using SM config:\n{pformat(self._sm_config)}')
-
     def _configure_spark(self):
         logger.info('Configuring Spark')
         sconf = SparkConf()

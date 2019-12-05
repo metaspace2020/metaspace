@@ -154,7 +154,7 @@
                        sortable="custom"
                        min-width="40">
         <template slot-scope="props">
-          <span> {{props.row.fdrLevel * 100}}% </span>
+          <span> {{Math.round(props.row.fdrLevel * 100)}}% </span>
         </template>
       </el-table-column>
 

@@ -20,7 +20,7 @@ def clean_isotope_storage_path():
 
 
 def test_if_not_exist_returns_valid_df(spark_context, ds_config, clean_isotope_storage_path):
-    isocalc = IsocalcWrapper(ds_config['isotope_generation'])
+    isocalc = IsocalcWrapper(ds_config)
     centroids_gen = CentroidsGenerator(sc=spark_context, isocalc=isocalc)
     centroids_gen._iso_gen_part_n = 1
 
@@ -50,7 +50,7 @@ def test_save_restore_works(spark_context, ds_config, clean_isotope_storage_path
         ).set_index('formula_i'),
     )
 
-    isocalc = IsocalcWrapper(ds_config['isotope_generation'])
+    isocalc = IsocalcWrapper(ds_config)
     centr_gen = CentroidsGenerator(sc=spark_context, isocalc=isocalc)
     centr_gen._save(ion_centroids)
     formula_centroids_restored = centr_gen._restore()
@@ -67,7 +67,7 @@ def test_save_restore_works(spark_context, ds_config, clean_isotope_storage_path
 
 
 def test_centroids_subset_ordered_by_mz(spark_context, ds_config, clean_isotope_storage_path):
-    isocalc = IsocalcWrapper(ds_config['isotope_generation'])
+    isocalc = IsocalcWrapper(ds_config)
     centr_gen = CentroidsGenerator(sc=spark_context, isocalc=isocalc)
     centr_gen._iso_gen_part_n = 1
     formulas = [

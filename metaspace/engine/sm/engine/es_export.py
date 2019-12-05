@@ -12,6 +12,7 @@ from elasticsearch.helpers import parallel_bulk
 
 from sm.engine.dataset_locker import DatasetLocker
 from sm.engine.db import DB
+from sm.engine.fdr import FDR
 from sm.engine.formula_parser import format_ion_formula
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.mol_db import MolecularDB
@@ -396,11 +397,11 @@ class ESExporter:
             doc['centroid_mzs'] = list(mzs) if mzs is not None else []
             doc['mz'] = mzs[0] if mzs is not None else 0
 
-            fdr = round(doc['fdr'] * 100, 2)
+            fdr = round(FDR.nearest_fdr_level(doc['fdr']) * 100, 2)
             annotation_counts[fdr] += 1
 
         self._add_isomer_fields_to_anns(annotation_docs)
-        ESExporterIsobars.add_isobar_fields_to_anns(annotation_docs, ds_doc)
+        ESExporterIsobars.add_isobar_fields_to_anns(annotation_docs, isocalc)
         to_index = []
         for doc in annotation_docs:
             to_index.append(
@@ -450,7 +451,7 @@ class ESExporter:
         res = DB().select_one("select name, config from dataset where id = %s", params=(ds_id,))
         if res:
             ds_name, ds_config = res
-            isocalc = IsocalcWrapper(ds_config['isotope_generation'])
+            isocalc = IsocalcWrapper(ds_config)
             for moldb_name in ds_config['databases']:
                 try:
                     self.index_ds(ds_id, mol_db=MolecularDB(name=moldb_name), isocalc=isocalc)
@@ -563,15 +564,15 @@ class ESExporterIsobars:
     """
 
     @classmethod
-    def add_isobar_fields_to_anns(cls, ann_docs, ds_doc):
-        mzs_df = cls._build_mzs_df(ann_docs, ds_doc)
+    def add_isobar_fields_to_anns(cls, ann_docs, isocalc):
+        mzs_df = cls._build_mzs_df(ann_docs, isocalc)
 
         for _, peak_rows in mzs_df.groupby('id'):
             overlaps = cls._find_overlaps(mzs_df, peak_rows)
             cls._apply_overlap_group(peak_rows, overlaps)
 
     @staticmethod
-    def _build_mzs_df(ann_docs, ds_doc):
+    def _build_mzs_df(ann_docs, isocalc):
         peaks = []
 
         for doc in ann_docs:
@@ -595,11 +596,7 @@ class ESExporterIsobars:
         )
         mzs_df = peaks_df.sort_values('mz')
 
-        # After feature/analysis_version_2 is merged, use this code instead:
-        # mzs_df['lower_mz'], mzs_df['upper_mz'] = isocalc.mass_accuracy_bounds(mzs_df['mz'])
-        ppm = ds_doc['ds_config']['image_generation']['ppm']
-        mzs_df['lower_mz'] = mzs_df['mz'] - mzs_df['mz'] * ppm * 1e-6
-        mzs_df['upper_mz'] = mzs_df['mz'] + mzs_df['mz'] * ppm * 1e-6
+        mzs_df['lower_mz'], mzs_df['upper_mz'] = isocalc.mass_accuracy_bounds(mzs_df['mz'])
         mzs_df['lower_idx'] = np.searchsorted(mzs_df.upper_mz.values, mzs_df.lower_mz.values, 'l')
         mzs_df['upper_idx'] = np.searchsorted(mzs_df.lower_mz.values, mzs_df.upper_mz.values, 'r')
         return mzs_df

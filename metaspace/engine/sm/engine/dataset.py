@@ -37,6 +37,7 @@ RESOL_POWER_PARAMS = {
 
 FLAT_DS_CONFIG_KEYS = frozenset(
     {
+        'analysis_version',
         'mol_dbs',
         'adducts',
         'ppm',
@@ -68,7 +69,6 @@ class Dataset:
         'VALUES (%(id)s, %(name)s, %(input_path)s, %(upload_dt)s, '
         '   %(metadata)s, %(config)s, %(status)s, %(is_public)s)'
     )
-    # NOTE: config is saved to but never read from the database
 
     ACQ_GEOMETRY_SEL = 'SELECT acq_geometry FROM dataset WHERE id = %s'
     ACQ_GEOMETRY_UPD = 'UPDATE dataset SET acq_geometry = %s WHERE id = %s'
@@ -170,14 +170,26 @@ class Dataset:
         return msg
 
 
-def _get_isotope_generation_from_metadata(metadata):
+def _normalize_instrument(analysis_version, instrument):
+    if analysis_version < 2:
+        return instrument if instrument in ('Orbitrap', 'FTICR') else 'TOF'
+
+    instrument = (instrument or '').lower()
+    if 'orbitrap' in instrument:
+        return 'Orbitrap'
+    if any(phrase in instrument for phrase in ['fticr', 'ft-icr', 'ftms', 'ft-ms']):
+        return 'FTICR'
+    return 'TOF'
+
+
+def _get_isotope_generation_from_metadata(metadata, analysis_version):
     assert 'MS_Analysis' in metadata
 
     sm_config = SMConfig.get_conf()
 
     polarity = metadata['MS_Analysis']['Polarity']
     polarity_sign = {'Positive': '+', 'Negative': '-'}[polarity]
-    instrument = metadata['MS_Analysis']['Analyzer']
+    instrument = _normalize_instrument(analysis_version, metadata['MS_Analysis']['Analyzer'])
     resolving_power = metadata['MS_Analysis']['Detector_Resolving_Power']
     rp_mz = float(resolving_power['mz'])
     rp_resolution = float(resolving_power['Resolving_Power'])
@@ -210,11 +222,12 @@ def _get_isotope_generation_from_metadata(metadata):
     charge = {'+': 1, '-': -1}[polarity_sign]
     isocalc_sigma = float(f"{params['sigma']:f}")
 
-    return default_adducts, charge, isocalc_sigma
+    return default_adducts, charge, isocalc_sigma, instrument
 
 
 def generate_ds_config(
     metadata,
+    analysis_version=None,
     mol_dbs=None,
     adducts=None,
     ppm=None,
@@ -229,16 +242,20 @@ def generate_ds_config(
     sm_config = SMConfig.get_conf()
     default_moldbs = sm_config['ds_config_defaults']['moldb_names']
 
+    analysis_version = analysis_version or 1
     mol_dbs = mol_dbs or []
     mol_dbs = [*mol_dbs, *(mol_db for mol_db in default_moldbs if mol_db not in mol_dbs)]
-    default_adducts, charge, isocalc_sigma = _get_isotope_generation_from_metadata(metadata)
+    iso_params = _get_isotope_generation_from_metadata(metadata, analysis_version)
+    default_adducts, charge, isocalc_sigma, instrument = iso_params
 
     config = {
         'databases': mol_dbs,
+        'analysis_version': analysis_version,
         'isotope_generation': {
             'adducts': adducts or default_adducts,
             'charge': charge,
             'isocalc_sigma': isocalc_sigma,
+            'instrument': instrument,
             'n_peaks': n_peaks or 4,
             'neutral_losses': neutral_losses or [],
             'chem_mods': chem_mods or [],
@@ -262,6 +279,7 @@ def update_ds_config(old_config, metadata, **kwargs):
     fdr = old_config.get('fdr', {})
     image_generation = old_config.get('image_generation', {})
     old_vals = {
+        'analysis_version': old_config.get('analysis_version'),
         'mol_dbs': old_config.get('databases'),
         'adducts': isotope_generation.get('adducts'),
         'n_peaks': isotope_generation.get('n_peaks'),
