@@ -9,3 +9,5 @@ redirect_stderr = true
 stdout_logfile = {{ sm_webapp_home }}/logs/{{ sm_web_app_app_name }}.log
 numprocs = 1
 numprocs_start = 8000
+autorestart = true
+startretries = 10
