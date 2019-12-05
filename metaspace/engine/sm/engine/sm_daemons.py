@@ -112,7 +112,7 @@ class DatasetManager:
                 self._db.alter('DELETE FROM job WHERE id = %s', params=(job_id,))
             else:
                 mol_db = MolecularDB(name=mol_db_name)
-                isocalc = IsocalcWrapper(ds.config['isotope_generation'])
+                isocalc = IsocalcWrapper(ds.config)
                 self._es.index_ds(ds_id=ds.id, mol_db=mol_db, isocalc=isocalc)
 
         ds.set_status(self._db, self._es, DatasetStatus.FINISHED)

@@ -112,13 +112,15 @@ def _make_target_modifiers_df(chem_mods, neutral_losses, target_adducts):
 
 
 class FDR:
-    def __init__(self, fdr_config, chem_mods, neutral_losses, target_adducts):
+    fdr_levels = [0.05, 0.1, 0.2, 0.5]
+
+    def __init__(self, fdr_config, chem_mods, neutral_losses, target_adducts, analysis_version):
         self.decoy_sample_size = fdr_config['decoy_sample_size']
         self.chem_mods = chem_mods
         self.neutral_losses = neutral_losses
         self.target_adducts = target_adducts
+        self.analysis_version = analysis_version
         self.td_df = None
-        self.fdr_levels = [0.05, 0.1, 0.2, 0.5]
         self.random_seed = 42
         self.target_modifiers_df = _make_target_modifiers_df(
             chem_mods, neutral_losses, target_adducts
@@ -158,6 +160,13 @@ class FDR:
         """ List of possible modifier values for target ions """
         return self.target_modifiers_df.index.tolist()
 
+    @classmethod
+    def nearest_fdr_level(cls, fdr):
+        for level in cls.fdr_levels:
+            if round(fdr, 2) <= level:
+                return level
+        return 1.0
+
     @staticmethod
     def _msm_fdr_map(target_msm, decoy_msm):
         target_msm_hits = pd.Series(target_msm.msm.value_counts(), name='target')
@@ -173,14 +182,19 @@ class FDR:
         return msm_df.fdr
 
     def _digitize_fdr(self, fdr_df):
-        df = fdr_df.copy().sort_values(by='msm', ascending=False)
-        msm_levels = [df[df.fdr < fdr_thr].msm.min() for fdr_thr in self.fdr_levels]
-        df['fdr_d'] = 1.0
-        for msm_thr, fdr_thr in zip(msm_levels, self.fdr_levels):
-            row_mask = np.isclose(df.fdr_d, 1.0) & np.greater_equal(df.msm, msm_thr)
-            df.loc[row_mask, 'fdr_d'] = fdr_thr
-        df['fdr'] = df.fdr_d
-        return df.drop('fdr_d', axis=1)
+        if self.analysis_version < 2:
+            df = fdr_df.copy().sort_values(by='msm', ascending=False)
+            msm_levels = [df[df.fdr < fdr_thr].msm.min() for fdr_thr in self.fdr_levels]
+            df['fdr_d'] = 1.0
+            for msm_thr, fdr_thr in zip(msm_levels, self.fdr_levels):
+                row_mask = np.isclose(df.fdr_d, 1.0) & np.greater_equal(df.msm, msm_thr)
+                df.loc[row_mask, 'fdr_d'] = fdr_thr
+            df['fdr'] = df.fdr_d
+            return df.drop('fdr_d', axis=1)
+
+        df = fdr_df.sort_values(by='msm')
+        df['fdr'] = np.minimum.accumulate(df.fdr)  # pylint: disable=no-member
+        return df
 
     def estimate_fdr(self, formula_msm):
         logger.info('Estimating FDR')

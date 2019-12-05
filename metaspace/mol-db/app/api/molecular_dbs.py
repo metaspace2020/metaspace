@@ -32,6 +32,8 @@ class MoleculeCollection(BaseResource):
             molecules = q.limit(limit).all()
 
         if fields:
+            if isinstance(fields, str):
+                fields = fields.split(',')
             selector = self.field_selector(fields)
             objs = [selector(mol.to_dict()) for mol in molecules]
         else:

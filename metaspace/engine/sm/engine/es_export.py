@@ -4,6 +4,7 @@ from collections import MutableMapping, defaultdict
 from functools import wraps
 from time import sleep
 
+import numpy as np
 import pandas as pd
 from elasticsearch import ConflictError, Elasticsearch, ElasticsearchException, NotFoundError
 from elasticsearch.client import IndicesClient, IngestClient
@@ -11,6 +12,7 @@ from elasticsearch.helpers import parallel_bulk
 
 from sm.engine.dataset_locker import DatasetLocker
 from sm.engine.db import DB
+from sm.engine.fdr import FDR
 from sm.engine.formula_parser import format_ion_formula
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.mol_db import MolecularDB
@@ -190,6 +192,12 @@ class ESIndexManager:
                         "db_version": {
                             "type": "keyword"
                         },  # Prevent "YYYY-MM"-style DB versions from being parsed as dates
+                        "isobars": {
+                            "properties": {
+                                "ion": {"type": "keyword", "include_in_all": False},
+                                "ion_formula": {"type": "keyword", "include_in_all": False},
+                            }
+                        },
                     },
                 },
             },
@@ -348,13 +356,13 @@ class ESExporter:
     @staticmethod
     def _add_isomer_fields_to_anns(ann_docs):
         isomer_groups = defaultdict(list)
-        isomer_comp_counts = defaultdict(int)
+        isomer_comps = defaultdict(set)
         missing_ion_formulas = []
 
         for doc in ann_docs:
             if doc['ion_formula']:
                 isomer_groups[doc['ion_formula']].append(doc['ion'])
-                isomer_comp_counts[doc['ion_formula']] += len(doc['comp_ids'])
+                isomer_comps[doc['ion_formula']].update(doc['comp_ids'])
             else:
                 missing_ion_formulas.append(doc['ion'])
 
@@ -362,7 +370,7 @@ class ESExporter:
             doc['isomer_ions'] = [
                 ion for ion in isomer_groups[doc['ion_formula']] if ion != doc['ion']
             ]
-            doc['comps_count_with_isomers'] = isomer_comp_counts[doc['ion_formula']]
+            doc['comps_count_with_isomers'] = len(isomer_comps[doc['ion_formula']])
 
         if missing_ion_formulas:
             logger.warning(
@@ -389,10 +397,11 @@ class ESExporter:
             doc['centroid_mzs'] = list(mzs) if mzs is not None else []
             doc['mz'] = mzs[0] if mzs is not None else 0
 
-            fdr = round(doc['fdr'] * 100, 2)
+            fdr = round(FDR.nearest_fdr_level(doc['fdr']) * 100, 2)
             annotation_counts[fdr] += 1
 
         self._add_isomer_fields_to_anns(annotation_docs)
+        ESExporterIsobars.add_isobar_fields_to_anns(annotation_docs, isocalc)
         to_index = []
         for doc in annotation_docs:
             to_index.append(
@@ -442,7 +451,7 @@ class ESExporter:
         res = DB().select_one("select name, config from dataset where id = %s", params=(ds_id,))
         if res:
             ds_name, ds_config = res
-            isocalc = IsocalcWrapper(ds_config['isotope_generation'])
+            isocalc = IsocalcWrapper(ds_config)
             for moldb_name in ds_config['databases']:
                 try:
                     self.index_ds(ds_id, mol_db=MolecularDB(name=moldb_name), isocalc=isocalc)
@@ -545,3 +554,99 @@ class ESExporter:
                 logger.debug(resp)
             except ElasticsearchException as e:
                 logger.warning(f'Annotation deletion failed: {e}')
+
+
+class ESExporterIsobars:
+    """
+    A helper function for ESExport that grew too big to remain a single function.
+    `ESExporterIsobars.add_isobar_fields_to_anns` computes the "isobars" field and adds it to
+    every annotation in a list of annotation documents.
+    """
+
+    @classmethod
+    def add_isobar_fields_to_anns(cls, ann_docs, isocalc):
+        mzs_df = cls._build_mzs_df(ann_docs, isocalc)
+
+        for _, peak_rows in mzs_df.groupby('id'):
+            overlaps = cls._find_overlaps(mzs_df, peak_rows)
+            cls._apply_overlap_group(peak_rows, overlaps)
+
+    @staticmethod
+    def _build_mzs_df(ann_docs, isocalc):
+        peaks = []
+
+        for doc in ann_docs:
+            doc['isobars'] = []
+            for peak_n, mz in enumerate(doc['centroid_mzs'], 1):  # pylint: disable=invalid-name
+                if mz != 0:
+                    peaks.append(
+                        (
+                            doc['annotation_id'],
+                            doc,
+                            peak_n,
+                            mz,
+                            doc['msm'],
+                            doc['ion'],
+                            doc['ion_formula'] or '',
+                        )
+                    )
+
+        peaks_df = pd.DataFrame(
+            peaks, columns=['id', 'doc', 'peak_n', 'mz', 'msm', 'ion', 'ion_formula']
+        )
+        mzs_df = peaks_df.sort_values('mz')
+
+        mzs_df['lower_mz'], mzs_df['upper_mz'] = isocalc.mass_accuracy_bounds(mzs_df['mz'])
+        mzs_df['lower_idx'] = np.searchsorted(mzs_df.upper_mz.values, mzs_df.lower_mz.values, 'l')
+        mzs_df['upper_idx'] = np.searchsorted(mzs_df.lower_mz.values, mzs_df.upper_mz.values, 'r')
+        return mzs_df
+
+    @staticmethod
+    def _find_overlaps(mzs_df, peak_rows):
+        overlaps = defaultdict(list)
+        # Use numpy arrays directly to minimize access times during the core loop
+        _ids = mzs_df.id.values
+        _ion_formulas = mzs_df.ion_formula.values
+        _peak_ns = mzs_df.peak_n.values
+        _docs = mzs_df.doc.values
+        # Collect all other annotations that have any overlap with this annotation
+        for lower_idx, upper_idx, ion_formula, peak_n in peak_rows[
+            ['lower_idx', 'upper_idx', 'ion_formula', 'peak_n']
+        ].itertuples(False, None):
+            # Ignore annotations with "greater" ion_formula values as an optimization.
+            # The backwards link from "greater" to "lesser" is populated below, and doing this
+            # helps to ensure that the relationship is always reflexive.
+            peak_overlap_is = (
+                np.nonzero(_ion_formulas[lower_idx:upper_idx] < ion_formula)[0] + lower_idx
+            )
+            for peak_overlap_i in peak_overlap_is:
+                overlaps[_ids[peak_overlap_i]].append(
+                    (int(peak_n), int(_peak_ns[peak_overlap_i]), _docs[peak_overlap_i])
+                )
+        return overlaps
+
+    @staticmethod
+    def _apply_overlap_group(peak_rows, overlaps):
+        doc = peak_rows.doc.iloc[0]
+        # Add a list of other annotations where either both first peaks overlap,
+        # or there are multiple overlaps.
+        for overlap_rows in overlaps.values():
+            peak_ns = sorted(row[:2] for row in overlap_rows)
+            if len(peak_ns) > 1 or (1, 1) in peak_ns:
+                overlap_doc = overlap_rows[0][2]
+                doc['isobars'].append(
+                    {
+                        'ion_formula': overlap_doc['ion_formula'],
+                        'ion': overlap_doc['ion'],
+                        'msm': overlap_doc['msm'],
+                        'peak_ns': peak_ns,
+                    }
+                )
+                overlap_doc['isobars'].append(
+                    {
+                        'ion_formula': doc['ion_formula'],
+                        'ion': doc['ion'],
+                        'msm': doc['msm'],
+                        'peak_ns': [(b, a) for a, b in peak_ns],
+                    }
+                )

@@ -46,10 +46,12 @@ def metadata():
 def ds_config():
     return {
         "image_generation": {"n_levels": 30, "ppm": 3, "min_px": 1},
+        "analysis_version": 1,
         "isotope_generation": {
             "adducts": ["+H", "+Na", "+K", "[M]+"],
             "charge": 1,
             "isocalc_sigma": 0.000619,
+            "instrument": "FTICR",
             "n_peaks": 4,
             "neutral_losses": [],
             "chem_mods": [],

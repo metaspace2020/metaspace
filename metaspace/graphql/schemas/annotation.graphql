@@ -19,6 +19,7 @@ type Annotation {
   rhoChaos: Float
   isotopeImages: [MzImage!]!
   isomers: [IsomerAnnotation!]!
+  isobars: [IsobarAnnotation!]!
 
   peakChartData: String  # JSON
 
@@ -65,6 +66,14 @@ type IsomerAnnotation {
   ion: String!
 }
 
+type IsobarAnnotation {
+  ion: String!
+  ionFormula: String!
+  peakNs: [[Int!]]!
+  msmScore: Float!
+  shouldWarn: Boolean!
+}
+
 type ColocalizationAlgo {
   id: String!
   name: String!
@@ -106,6 +115,7 @@ input AnnotationFilter {
   hasNeutralLoss: Boolean @deprecated(reason: "Do not depend on this filter - it is intended to only be a temporary measure until a more flexible filter API that supports is-null/non-null queries is built")
   hasChemMod: Boolean @deprecated(reason: "Do not depend on this filter - it is intended to only be a temporary measure until a more flexible filter API that supports is-null/non-null queries is built")
   hasHiddenAdduct: Boolean @deprecated(reason: "Do not depend on this filter - it is intended to only be a temporary measure until a more flexible filter API that supports multi-value queries is built")
+  isobaricWith: String            # Should be an ionFormula
 }
 
 input ColocalizationCoeffFilter {

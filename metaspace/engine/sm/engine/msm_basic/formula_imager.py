@@ -7,6 +7,7 @@ import pandas as pd
 from pyspark.files import SparkFiles
 from scipy.sparse import coo_matrix
 
+from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.msm_basic.formula_validator import make_compute_image_metrics, formula_image_metrics
 
 logger = logging.getLogger('engine')
@@ -14,15 +15,16 @@ logger = logging.getLogger('engine')
 
 # pylint: disable=too-many-locals
 # this function is compute performance optimized
-def gen_iso_images(ds_segm_sp_array_it, centr_df, nrows, ncols, ppm=3):
+def gen_iso_images(ds_segm_sp_array_it, centr_df, nrows, ncols, isocalc):
     for sp_arr in ds_segm_sp_array_it:
         sp_inds = sp_arr[:, 0]
         sp_mzs = sp_arr[:, 1]
         sp_ints = sp_arr[:, 2]
 
         if sp_inds.size > 0:
-            ds_segm_mz_min = sp_mzs[0] - sp_mzs[0] * ppm * 1e-6
-            ds_segm_mz_max = sp_mzs[-1] + sp_mzs[-1] * ppm * 1e-6
+            ds_segm_mz_min, _ = isocalc.mass_accuracy_bounds(sp_mzs[0])
+            _, ds_segm_mz_max = isocalc.mass_accuracy_bounds(sp_mzs[-1])
+
             centr_df_slice = centr_df[
                 (centr_df.mz > ds_segm_mz_min) & (centr_df.mz < ds_segm_mz_max)
             ]
@@ -32,8 +34,7 @@ def gen_iso_images(ds_segm_sp_array_it, centr_df, nrows, ncols, ppm=3):
             centr_p_inds = centr_df_slice.peak_i.values
             centr_ints = centr_df_slice.int.values
 
-            lower = centr_mzs - centr_mzs * ppm * 1e-6
-            upper = centr_mzs + centr_mzs * ppm * 1e-6
+            lower, upper = isocalc.mass_accuracy_bounds(centr_mzs)
             lower_inds = np.searchsorted(sp_mzs, lower, 'l')
             upper_inds = np.searchsorted(sp_mzs, upper, 'r')
 
@@ -124,6 +125,7 @@ def create_process_segment(ds_segments, coordinates, ds_config, target_formula_i
     compute_metrics = make_compute_image_metrics(
         sample_area_mask, nrows, ncols, ds_config['image_generation']
     )
+    isocalc = IsocalcWrapper(ds_config)
     ppm = ds_config['image_generation']['ppm']
     min_px = ds_config['image_generation']['min_px']
     n_peaks = ds_config['isotope_generation']['n_peaks']
@@ -142,7 +144,7 @@ def create_process_segment(ds_segments, coordinates, ds_config, target_formula_i
 
             ds_segm_sp_array_it = read_ds_segments(first_ds_segm_i, last_ds_segm_i)
             formula_images_it = gen_iso_images(
-                ds_segm_sp_array_it, centr_df=centr_df, nrows=nrows, ncols=ncols, ppm=ppm
+                ds_segm_sp_array_it, centr_df=centr_df, nrows=nrows, ncols=ncols, isocalc=isocalc
             )
             formula_metrics_df, formula_images = formula_image_metrics(
                 formula_images_it, compute_metrics, target_formula_inds, n_peaks, min_px

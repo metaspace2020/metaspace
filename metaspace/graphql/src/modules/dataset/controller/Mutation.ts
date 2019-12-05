@@ -93,7 +93,8 @@ export function processingSettingsChanged(ds: EngineDataset, update: DatasetUpda
     newDB = true;
 
   if (update.adducts || update.neutralLosses || update.chemMods
-    || update.ppm || update.numPeaks || update.decoySampleSize) {
+    || update.ppm || update.numPeaks || update.decoySampleSize
+    || update.analysisVersion) {
     procSettingsUpd = true;
   }
 

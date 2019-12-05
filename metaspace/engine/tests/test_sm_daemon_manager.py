@@ -45,7 +45,7 @@ def create_ds(
                 'Detector_Resolving_Power': {'mz': 200, 'Resolving_Power': 140000},
             }
         }
-    config = generate_ds_config(metadata, mol_dbs, adducts)
+    config = generate_ds_config(metadata, mol_dbs=mol_dbs, adducts=adducts)
     return Dataset(
         id=ds_id,
         name=ds_name,

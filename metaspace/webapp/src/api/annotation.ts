@@ -46,6 +46,12 @@ gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrde
         isomers {
           ion
         }
+        isobars {
+          ion
+          ionFormula
+          peakNs
+          shouldWarn
+        }
         countPossibleCompounds(includeIsomers: $countIsomerCompounds)
         possibleCompounds {
           name
@@ -81,6 +87,12 @@ gql`query Export($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
       rhoChaos
       offSample
       offSampleProb
+      isomers {
+        ion
+      }
+      isobars {
+        ion
+      }
       dataset {
         id
         name
@@ -93,6 +105,11 @@ gql`query Export($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
           databaseId
         }
       }
+      isotopeImages {
+        minIntensity
+        maxIntensity
+        totalIntensity
+      }
       colocalizationCoeff(colocalizationCoeffFilter: $colocalizationCoeffFilter)
     }
   }`;
@@ -102,10 +119,6 @@ gql`query GetAnnotation($id: String!) {
     annotation(id: $id) {
       id
       peakChartData
-      isotopeImages {
-        mz
-        totalIntensity
-      }
     }
   }`;
 
@@ -134,6 +147,12 @@ gql`query GetRelatedAnnotations($datasetId: String!, $filter: AnnotationFilter!,
       possibleCompounds {
         name
       }
+      isomers {
+        ion
+      }
+      isobars {
+        shouldWarn
+      }
       colocalizationCoeff(colocalizationCoeffFilter: $colocalizationCoeffFilter)
     }
   }`;
@@ -145,8 +164,48 @@ export const relatedMoleculesQuery =
       ids: $datasetId
     }, filter: $filter, limit: 12, orderBy: $orderBy, sortingOrder: $sortingOrder) {
       id
+      sumFormula
+      chemMod
+      neutralLoss
+      adduct
       ion
+      ionFormula
+      msmScore
       fdrLevel
+      possibleCompounds {
+        name
+        imageURL
+        information {
+          database
+          url
+        }
+      }
+    }
+  }`;
+
+export const isobarsQuery =
+  gql`query IsobarsQuery($datasetId: String!, $ionFormula: String!) {
+    allAnnotations(datasetFilter: { ids: $datasetId }, filter: { isobaricWith: $ionFormula }, 
+                   orderBy: ORDER_BY_FDR_MSM, sortingOrder: ASCENDING) {
+      id
+      ion
+      ionFormula
+      mz
+      fdrLevel
+      msmScore
+      rhoSpatial
+      rhoSpectral
+      rhoChaos
+      offSample
+      offSampleProb
+      peakChartData
+      isotopeImages {
+        mz
+        url
+        minIntensity
+        maxIntensity
+        totalIntensity
+      }
       possibleCompounds {
         name
         imageURL

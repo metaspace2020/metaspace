@@ -24,7 +24,7 @@
  import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue';
  import RelatedMolecules from './annotation-widgets/RelatedMolecules.vue';
  import CompoundsList from './annotation-widgets/CompoundsList.vue';
- import IsomersAlert from './annotation-widgets/IsomersAlert.vue';
+ import AmbiguityAlert from './annotation-widgets/AmbiguityAlert.vue';
 
 
  type ImagePosition = {
@@ -53,7 +53,7 @@
    CandidateMoleculesPopover,
    RelatedMolecules,
    CompoundsList,
-   IsomersAlert,
+   AmbiguityAlert,
  };
  for (let category of Object.keys(annotationWidgets)) {
    metadataDependentComponents[category] = {};
@@ -73,15 +73,7 @@
        update: (data: any) => {
          const {annotation} = data;
          if (annotation != null) {
-           const chart = safeJsonParse(annotation.peakChartData);
-           const isotopes = annotation.isotopeImages.filter((im: any) => im.mz > 0);
-           return {
-             ...chart,
-             sampleData: {
-               mzs: isotopes.map((im: any) => im.mz),
-               ints: isotopes.map((im: any) => im.totalIntensity),
-             },
-           };
+           return safeJsonParse(annotation.peakChartData);
          } else {
            return null;
          }
@@ -265,10 +257,6 @@
 
    get showColoc() {
      return config.features.coloc;
-   }
-
-   get showIsomers() {
-     return config.features.isomers;
    }
 
    opacity: number = 1.0;

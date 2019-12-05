@@ -113,6 +113,17 @@
                 <span class="error-msg" v-if="error && error.chemMods">{{ error.chemMods }}</span>
               </el-form-item>
             </el-col>
+            <el-col :span="8" v-if="features.advanced_ds_config">
+              <form-field
+                type="select"
+                name="Analysis version"
+                :help="AnalysisVersionHelp"
+                :value="value.analysisVersion"
+                @input="val => onInput('analysisVersion', val)"
+                :error="error && error.analysisVersion"
+                :options="ANALYSIS_VERSION_OPTIONS"
+              />
+            </el-col>
           </el-row>
           <el-row :gutter="8" v-if="features.advanced_ds_config">
             <el-col :span="8">
@@ -162,6 +173,7 @@
   import { Component, Prop } from 'vue-property-decorator';
   import FormField from '../inputs/FormField.vue';
   import DatabaseDescriptions from '../inputs/DatabaseDescriptions.vue';
+  import AnalysisVersionHelp from '../inputs/AnalysisVersionHelp.vue';
   import { MetaspaceOptions } from '../formStructure';
   import { MAX_MOL_DBS, MAX_NEUTRAL_LOSSES, MAX_CHEM_MODS } from '../../../lib/constants';
   import config from '../../../config';
@@ -200,9 +212,14 @@
 
     features = config.features;
     dbHelp = DatabaseDescriptions;
+    AnalysisVersionHelp = AnalysisVersionHelp;
     MAX_MOL_DBS = MAX_MOL_DBS;
     MAX_NEUTRAL_LOSSES = MAX_NEUTRAL_LOSSES;
     MAX_CHEM_MODS = MAX_CHEM_MODS;
+    ANALYSIS_VERSION_OPTIONS = [
+      {value: 1, label: 'v1 (Stable)'},
+      {value: 2, label: 'v2 (Development)'},
+    ];
 
     neutralLossOptions: string[] = [];
     chemModOptions: string[] = [];

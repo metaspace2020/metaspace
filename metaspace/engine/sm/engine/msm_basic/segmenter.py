@@ -41,7 +41,7 @@ def check_spectra_quality(mz_arr, int_arr):
 
 def spectra_sample_gen(imzml_parser, sample_size):
     sp_n = len(imzml_parser.coordinates)
-    sample_sp_inds = np.random.choice(np.arange(sp_n), sample_size)
+    sample_sp_inds = np.random.choice(np.arange(sp_n), sample_size, replace=False)
     for sp_idx in sample_sp_inds:
         mzs, ints = imzml_parser.getspectrum(sp_idx)
         yield sp_idx, mzs, ints

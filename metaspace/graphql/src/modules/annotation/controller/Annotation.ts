@@ -104,8 +104,8 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
     };
   },
 
-  peakChartData(hit) {
-    const {ion, ds_meta, ds_config, ds_id, mz} = hit._source;
+  async peakChartData(hit) {
+    const {ion, ds_meta, ds_config, mz, centroid_mzs, total_iso_ints} = hit._source;
     const msInfo = ds_meta.MS_Analysis;
     const host = config.services.moldb_service_host;
     const pol = msInfo.Polarity.toLowerCase() == 'positive' ? '+1' : '-1';
@@ -113,13 +113,17 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
     const rp = mz / (ds_config.isotope_generation.isocalc_sigma * 2.35482);
     const ppm = ds_config.image_generation.ppm;
     const ion_without_pol = ion.substr(0, ion.length-1);
-    const theorData = fetch(`http://${host}/v1/isotopic_pattern/${ion_without_pol}/tof/${rp}/400/${pol}`);
+    const res = await fetch(`http://${host}/v1/isotopic_pattern/${ion_without_pol}/tof/${rp}/400/${pol}`);
+    const {data} = await res.json();
 
-    return theorData.then(res => res.json()).then(json => {
-      let {data} = json;
-      data.ppm = ppm;
-      return JSON.stringify(data);
-    }).catch(e => logger.error(e));
+    return JSON.stringify({
+      ...data,
+      ppm,
+      sampleData: {
+        mzs: centroid_mzs.filter(_mz => _mz > 0),
+        ints: total_iso_ints.filter((_int, i) => centroid_mzs[i] > 0),
+      }
+    });
   },
 
   isotopeImages(hit) {
@@ -140,6 +144,18 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
   isomers(hit) {
     const {isomer_ions} = hit._source;
     return (isomer_ions || []).map(ion => ({ion}))
+  },
+
+  isobars(hit) {
+    const isobars = hit._source.isobars || [];
+    return isobars.map(({ion, ion_formula, peak_ns,  msm}) =>
+      ({
+        ion,
+        ionFormula: ion_formula,
+        peakNs: peak_ns,
+        msmScore: msm,
+        shouldWarn: msm > hit._source.msm - 0.5,
+      }));
   },
 
   async colocalizationCoeff(hit, args: {colocalizationCoeffFilter: ColocalizationCoeffFilter | null}, context) {
