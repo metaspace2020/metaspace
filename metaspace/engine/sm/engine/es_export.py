@@ -596,7 +596,6 @@ class ESExporterIsobars:
         )
         mzs_df = peaks_df.sort_values('mz')
 
-        # After feature/analysis_version_2 is merged, use this code instead:
         mzs_df['lower_mz'], mzs_df['upper_mz'] = isocalc.mass_accuracy_bounds(mzs_df['mz'])
         mzs_df['lower_idx'] = np.searchsorted(mzs_df.upper_mz.values, mzs_df.lower_mz.values, 'l')
         mzs_df['upper_idx'] = np.searchsorted(mzs_df.lower_mz.values, mzs_df.upper_mz.values, 'r')

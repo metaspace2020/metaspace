@@ -108,6 +108,7 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index, ds_config, metadata):
         'H2O-H+O-H+H': ([100.0, 200.0, 300.0], None),
         'Au+H': ([10.0, 20.0], None),
     }[formula]
+    isocalc_mock.mass_accuracy_bounds = lambda mzs: (mzs, mzs)
 
     es_exp = ESExporter(db)
     es_exp.delete_ds(ds_id)
