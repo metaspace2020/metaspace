@@ -236,7 +236,7 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index, ds_config, metadata):
     }
 
 
-def test_add_isomer_fields_to_anns(ds_config):
+def test_add_isomer_fields_to_anns():
     ann_docs = [
         {'ion': 'H2O+H-H-', 'ion_formula': 'H2O', 'comp_ids': ['1']},
         {'ion': 'H3O-H-', 'ion_formula': 'H2O', 'comp_ids': ['2', '3']},
@@ -289,9 +289,9 @@ def test_add_isobar_fields_to_anns(ds_config):
             'ion_formula': 'H4',
         },
     ]
-    ds_doc = {'ds_config': ds_config}
+    isocalc = IsocalcWrapper(ds_config)
 
-    ESExporterIsobars.add_isobar_fields_to_anns(ann_docs, ds_doc)
+    ESExporterIsobars.add_isobar_fields_to_anns(ann_docs, isocalc)
 
     isobar_fields = dict((i, doc['isobars']) for i, doc in enumerate(ann_docs))
     assert isobar_fields == {
