@@ -26,7 +26,7 @@ def gen_iso_images(ds_segm_sp_array_it, centr_df, nrows, ncols, isocalc):
             _, ds_segm_mz_max = isocalc.mass_accuracy_bounds(sp_mzs[-1])
 
             centr_df_slice = centr_df[
-                (centr_df.mz > ds_segm_mz_min) & (centr_df.mz < ds_segm_mz_max)
+                (centr_df.mz >= ds_segm_mz_min) & (centr_df.mz <= ds_segm_mz_max)
             ]
 
             centr_mzs = centr_df_slice.mz.values
@@ -42,7 +42,7 @@ def gen_iso_images(ds_segm_sp_array_it, centr_df, nrows, ncols, isocalc):
             # formula_image_metrics can check for the first peak images instead of the last
             for i, (lo_i, up_i) in enumerate(zip(lower_inds, upper_inds)):
                 m = None
-                if up_i - lo_i >= 0:
+                if up_i - lo_i > 0:
                     data = sp_ints[lo_i:up_i]
                     inds = sp_inds[lo_i:up_i]
                     row_inds = inds / ncols
