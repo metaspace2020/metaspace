@@ -13,8 +13,8 @@ MAX_MZ_VALUE = 10 ** 5
 MAX_INTENS_VALUE = 10 ** 12
 ABS_MZ_TOLERANCE_DA = 0.002
 
-SP_IDX_DTYPE = np.uint32
-INT_DTYPE = np.float32
+SpIdxDType = np.uint32
+IntensityDType = np.float32
 
 logger = logging.getLogger('engine')
 
@@ -53,9 +53,9 @@ def spectra_sample_gen(imzml_parser, sample_size):
 def define_ds_segments(sample_mzs, sample_ratio, imzml_parser, ds_segm_size_mb=5):
     logger.info(f'Defining dataset segment bounds')
     sp_arr_row_size_b = (
-        np.dtype(SP_IDX_DTYPE).itemsize
+        np.dtype(SpIdxDType).itemsize
         + np.dtype(imzml_parser.mzPrecision).itemsize
-        + np.dtype(INT_DTYPE).itemsize
+        + np.dtype(IntensityDType).itemsize
     )
     total_mz_n = sample_mzs.shape[0] / sample_ratio  # pylint: disable=unsubscriptable-object
     sp_arr_total_size_mb = sp_arr_row_size_b * total_mz_n / 2 ** 20
@@ -108,9 +108,9 @@ def fetch_chunk_spectra_data(sp_ids, imzml_parser, sp_id_to_idx):
     by_mz = np.argsort(mzs)
     sp_chunk_df = pd.DataFrame(
         {
-            'sp_idx': np.concatenate(sp_idxs_list)[by_mz].astype(SP_IDX_DTYPE),
+            'sp_idx': np.concatenate(sp_idxs_list)[by_mz].astype(SpIdxDType),
             'mz': mzs[by_mz].astype(imzml_parser.mzPrecision),
-            'int': np.concatenate(ints_list)[by_mz].astype(INT_DTYPE),
+            'int': np.concatenate(ints_list)[by_mz].astype(IntensityDType),
         }
     )
     return sp_chunk_df

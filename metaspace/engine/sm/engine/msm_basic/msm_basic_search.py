@@ -164,7 +164,7 @@ class MSMSearch:
 
         actual_sample_ratio = sample_size / spectra_n
         ds_segments = define_ds_segments(
-            sample_mzs, actual_sample_ratio, self._imzml_parser, ds_segm_size_mb=5
+            sample_mzs, actual_sample_ratio, self._imzml_parser, ds_segm_size_mb=ds_segm_size_mb
         )
 
         ds_segments_path = self._ds_data_path / 'ds_segments'
