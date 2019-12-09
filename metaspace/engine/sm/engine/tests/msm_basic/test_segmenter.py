@@ -31,27 +31,35 @@ def test_fetch_chunk_spectra_data():
     imzml_parser_mock.mzPrecision = 'f'
     sp_id_to_idx = {0: 0, 1: 1}
 
-    sp_mz_int_buf = fetch_chunk_spectra_data(
+    sp_chunk_df = fetch_chunk_spectra_data(
         sp_ids=[0, 1], imzml_parser=imzml_parser_mock, sp_id_to_idx=sp_id_to_idx
     )
 
-    exp_sp_mz_int_buf = np.vstack(
-        [np.sort([mz for mz in np.linspace(0, 90, num=mz_n) for _ in range(2)]), np.ones(2 * mz_n)]
-    ).T
-    assert sp_mz_int_buf.dtype == 'f'
-    assert_array_almost_equal(sp_mz_int_buf[:, 1:], exp_sp_mz_int_buf)
+    exp_mzs, exp_ints = [
+        np.sort([mz for mz in np.linspace(0, 90, num=mz_n) for _ in range(2)]),
+        np.ones(2 * mz_n),
+    ]
+
+    assert sp_chunk_df.mz.dtype == 'f'
+    assert_array_almost_equal(sp_chunk_df.mz, exp_mzs)
+    assert_array_almost_equal(sp_chunk_df.int, exp_ints)
 
 
 def test_define_ds_segments():
-    sample_mzs = np.linspace(0, 100, 100)
+    imzml_parser_mock = Mock()
+    imzml_parser_mock.mzPrecision = 'd'
 
-    # 3 (columns) * 10 (spectra) * 10 (mz/spectrum) * 8 (float prec) ~= 2400 (dataset size, bytes)
-    # 2400 // 2**10 (segm size, bytes) ~= 2 (segments)
+    mz_max = 100
+    sample_mzs = np.linspace(0, mz_max, 100)
+    ds_segm_size_mb = 800 / (2 ** 20)  # 1600 b total data size / 2 segments, converted to MB
     ds_segments = define_ds_segments(
-        sample_mzs, mz_precision='d', total_mz_n=100, ds_segm_size_mb=2 ** -10
+        sample_mzs, sample_ratio=1, imzml_parser=imzml_parser_mock, ds_segm_size_mb=ds_segm_size_mb
     )
 
-    exp_ds_segments = np.array([[0, 50.0], [50, 100.0]])
+    exp_ds_segm_n = 8
+    exp_bounds = [i * mz_max / exp_ds_segm_n for i in range(exp_ds_segm_n + 1)]
+    exp_ds_segments = np.array(list(zip(exp_bounds[:-1], exp_bounds[1:])))
+    assert ds_segments.shape == exp_ds_segments.shape
     assert np.allclose(ds_segments, exp_ds_segments)
 
 
@@ -66,13 +74,12 @@ def test_segment_ds(dump_mock):
     chunk_sp_n = 1000
     segment_ds(imzml_parser_mock, coordinates, chunk_sp_n, ds_segments, Path('/tmp/abc'))
 
-    for segm_i, ((segm_arr, path), _) in enumerate(dump_mock.call_args_list):
+    for segm_i, ((sp_chunk_df, f), _) in enumerate(dump_mock.call_args_list):
         min_mz, max_mz = ds_segments[segm_i]
 
-        assert segm_arr.shape == (50, 3)
-        # mz stored in column 1
-        assert np.all(min_mz <= segm_arr[:, 1])
-        assert np.all(segm_arr[:, 1] <= max_mz)
+        assert sp_chunk_df.shape == (50, 3)
+        assert np.all(min_mz <= sp_chunk_df.mz)
+        assert np.all(sp_chunk_df.mz <= max_mz)
 
 
 @patch('sm.engine.msm_basic.segmenter.pickle.dump')

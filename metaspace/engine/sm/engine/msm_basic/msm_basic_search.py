@@ -162,19 +162,15 @@ class MSMSearch:
         sample_ints = np.concatenate([ints for sp_id, mzs, ints in spectra_sample])
         check_spectra_quality(sample_mzs, sample_ints)
 
-        spectra_per_chunk_n = calculate_chunk_sp_n(
-            sample_mzs.nbytes, sample_size, max_chunk_size_mb=500
-        )
-
         actual_sample_ratio = sample_size / spectra_n
-        total_mz_n = (
-            sample_mzs.shape[0] / actual_sample_ratio  # pylint: disable=unsubscriptable-object
-        )
         ds_segments = define_ds_segments(
-            sample_mzs, total_mz_n, self._imzml_parser.mzPrecision, ds_segm_size_mb
+            sample_mzs, actual_sample_ratio, self._imzml_parser, ds_segm_size_mb=5
         )
 
         ds_segments_path = self._ds_data_path / 'ds_segments'
+        spectra_per_chunk_n = calculate_chunk_sp_n(
+            sample_mzs.nbytes, sample_size, max_chunk_size_mb=500
+        )
         segment_ds(
             self._imzml_parser,
             self._coordinates,
@@ -183,7 +179,7 @@ class MSMSearch:
             ds_segments_path,
         )
 
-        logger.info('Putting segments to workers')
+        logger.info('Putting dataset segments to workers')
         self.put_segments_to_workers(ds_segments_path)
 
         return ds_segments
