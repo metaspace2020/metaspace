@@ -158,7 +158,7 @@ def clip_centroids_df(centroids_df, mz_min, mz_max):
 
 def calculate_centroids_segments_n(centr_df, image_dims):
     rows, cols = image_dims
-    max_total_dense_images_size = 5 * 2 ** 30
+    max_total_dense_images_size = 2 ** 30
     peaks_per_centr_segm = int(max_total_dense_images_size / (rows * cols * 8))
     centr_segm_n = max(16, ceil(centr_df.shape[0] / peaks_per_centr_segm))
     return centr_segm_n
