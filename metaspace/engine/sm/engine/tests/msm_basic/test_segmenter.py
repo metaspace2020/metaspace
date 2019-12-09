@@ -28,7 +28,7 @@ def test_fetch_chunk_spectra_data():
     mz_n = 10
     imzml_parser_mock = Mock()
     imzml_parser_mock.getspectrum.return_value = (np.linspace(0, 90, num=mz_n), np.ones(mz_n))
-    imzml_parser_mock.mzPrecision = 'f'
+    imzml_parser_mock.mz_precision = 'f'
     sp_id_to_idx = {0: 0, 1: 1}
 
     sp_chunk_df = fetch_chunk_spectra_data(
@@ -47,7 +47,7 @@ def test_fetch_chunk_spectra_data():
 
 def test_define_ds_segments():
     imzml_parser_mock = Mock()
-    imzml_parser_mock.mzPrecision = 'd'
+    imzml_parser_mock.mz_precision = 'd'
 
     mz_max = 100
     sample_mzs = np.linspace(0, mz_max, 100)
@@ -67,12 +67,12 @@ def test_define_ds_segments():
 def test_segment_ds(dump_mock):
     imzml_parser_mock = Mock()
     imzml_parser_mock.getspectrum.return_value = (np.linspace(0, 90, num=10), np.ones(10))
-    imzml_parser_mock.mzPrecision = 'f'
-    coordinates = list(product([0], range(10)))
+    imzml_parser_mock.mz_precision = 'f'
+    imzml_parser_mock.coordinates = list(product([0], range(10)))
     ds_segments = np.array([[0, 50], [50, 90.0]])
 
     chunk_sp_n = 1000
-    segment_ds(imzml_parser_mock, coordinates, chunk_sp_n, ds_segments, Path('/tmp/abc'))
+    segment_ds(imzml_parser_mock, chunk_sp_n, ds_segments, Path('/tmp/abc'))
 
     for segm_i, ((sp_chunk_df, f), _) in enumerate(dump_mock.call_args_list):
         min_mz, max_mz = ds_segments[segm_i]

@@ -19,8 +19,8 @@ from sm.engine.tests.util import spark_context, ds_config, make_moldb_mock
 def make_imzml_parser_mock(sp_n=100):
     imzml_parser_mock = Mock()
     imzml_parser_mock.coordinates = list(product([0], range(sp_n)))
-    imzml_parser_mock.getspectrum.return_value = (np.linspace(0, 100, num=sp_n), np.ones(sp_n))
-    imzml_parser_mock.mzPrecision = 'f'
+    imzml_parser_mock.get_spectrum.return_value = (np.linspace(0, 100, num=sp_n), np.ones(sp_n))
+    imzml_parser_mock.mz_precision = 'f'
     return imzml_parser_mock
 
 
