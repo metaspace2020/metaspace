@@ -27,7 +27,7 @@ def test_calculate_chunk_sp_n():
 def test_fetch_chunk_spectra_data():
     mz_n = 10
     imzml_parser_mock = Mock()
-    imzml_parser_mock.getspectrum.return_value = (np.linspace(0, 90, num=mz_n), np.ones(mz_n))
+    imzml_parser_mock.get_spectrum.return_value = (np.linspace(0, 90, num=mz_n), np.ones(mz_n))
     imzml_parser_mock.mz_precision = 'f'
     sp_id_to_idx = {0: 0, 1: 1}
 
@@ -66,7 +66,7 @@ def test_define_ds_segments():
 @patch('sm.engine.msm_basic.segmenter.pickle.dump')
 def test_segment_ds(dump_mock):
     imzml_parser_mock = Mock()
-    imzml_parser_mock.getspectrum.return_value = (np.linspace(0, 90, num=10), np.ones(10))
+    imzml_parser_mock.get_spectrum.return_value = (np.linspace(0, 90, num=10), np.ones(10))
     imzml_parser_mock.mz_precision = 'f'
     imzml_parser_mock.coordinates = list(product([0], range(10)))
     ds_segments = np.array([[0, 50], [50, 90.0]])
