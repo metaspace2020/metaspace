@@ -17,34 +17,31 @@ logger = logging.getLogger('engine')
 # this function is compute performance optimized
 def gen_iso_images(ds_segm_it, centr_df, nrows, ncols, isocalc):
     for ds_segm_df in ds_segm_it:
-        if ds_segm_df.size > 0:
-            ds_segm_mz_min, _ = isocalc.mass_accuracy_bounds(ds_segm_df.mz.values[0])
-            _, ds_segm_mz_max = isocalc.mass_accuracy_bounds(ds_segm_df.mz.values[-1])
+        ds_segm_mz_min, _ = isocalc.mass_accuracy_bounds(ds_segm_df.mz.values[0])
+        _, ds_segm_mz_max = isocalc.mass_accuracy_bounds(ds_segm_df.mz.values[-1])
 
-            centr_df_slice = centr_df[
-                (centr_df.mz >= ds_segm_mz_min) & (centr_df.mz <= ds_segm_mz_max)
-            ]
+        centr_df_slice = centr_df[(centr_df.mz >= ds_segm_mz_min) & (centr_df.mz <= ds_segm_mz_max)]
 
-            centr_mzs = centr_df_slice.mz.values
-            centr_f_inds = centr_df_slice.formula_i.values
-            centr_p_inds = centr_df_slice.peak_i.values
-            centr_ints = centr_df_slice.int.values
+        centr_mzs = centr_df_slice.mz.values
+        centr_f_inds = centr_df_slice.formula_i.values
+        centr_p_inds = centr_df_slice.peak_i.values
+        centr_ints = centr_df_slice.int.values
 
-            lower, upper = isocalc.mass_accuracy_bounds(centr_mzs)
-            lower_inds = np.searchsorted(ds_segm_df.mz.values, lower, 'l')
-            upper_inds = np.searchsorted(ds_segm_df.mz.values, upper, 'r')
+        lower, upper = isocalc.mass_accuracy_bounds(centr_mzs)
+        lower_inds = np.searchsorted(ds_segm_df.mz.values, lower, 'l')
+        upper_inds = np.searchsorted(ds_segm_df.mz.values, upper, 'r')
 
-            # Note: consider going in the opposite direction so that
-            # formula_image_metrics can check for the first peak images instead of the last
-            for i, (lo_i, up_i) in enumerate(zip(lower_inds, upper_inds)):
-                m = None
-                if up_i - lo_i > 0:
-                    data = ds_segm_df.int.values[lo_i:up_i]
-                    inds = ds_segm_df.sp_idx.values[lo_i:up_i]
-                    row_inds = inds / ncols
-                    col_inds = inds % ncols
-                    m = coo_matrix((data, (row_inds, col_inds)), shape=(nrows, ncols), copy=True)
-                yield centr_f_inds[i], centr_p_inds[i], centr_ints[i], m
+        # Note: consider going in the opposite direction so that
+        # formula_image_metrics can check for the first peak images instead of the last
+        for i, (lo_i, up_i) in enumerate(zip(lower_inds, upper_inds)):
+            m = None
+            if up_i - lo_i > 0:
+                data = ds_segm_df.int.values[lo_i:up_i]
+                inds = ds_segm_df.sp_idx.values[lo_i:up_i]
+                row_inds = inds / ncols
+                col_inds = inds % ncols
+                m = coo_matrix((data, (row_inds, col_inds)), shape=(nrows, ncols), copy=True)
+            yield centr_f_inds[i], centr_p_inds[i], centr_ints[i], m
 
 
 def get_ds_dims(coordinates):
@@ -96,9 +93,7 @@ def read_ds_segment(segm_path):
     except EOFError:
         pass
 
-    if not sp_chunk_list:
-        return pd.DataFrame()
-    return pd.concat(sp_chunk_list)
+    return pd.concat(sp_chunk_list) if sp_chunk_list else None
 
 
 def read_centroids_segment(segm_path):
@@ -110,7 +105,8 @@ def read_ds_segments(first_segm_i, last_segm_i):
     for ds_segm_i in range(first_segm_i, last_segm_i + 1):
         segm_path = get_file_path(f'ds_segm_{ds_segm_i:04}.pickle')
         ds_segm_df = read_ds_segment(segm_path)
-        yield ds_segm_df.sort_values(by='mz')
+        if ds_segm_df is not None:
+            yield ds_segm_df.sort_values(by='mz')
 
 
 def get_file_path(name):
