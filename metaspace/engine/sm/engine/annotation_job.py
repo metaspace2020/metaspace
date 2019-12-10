@@ -4,10 +4,8 @@ from pprint import pformat
 from datetime import datetime
 from shutil import copytree, rmtree
 import logging
-from traceback import format_exc
 
 import boto3
-from pyimzml.ImzMLParser import ImzMLParser
 from pyspark import SparkContext, SparkConf
 
 from sm.engine.acq_geometry import make_acq_geometry
@@ -17,7 +15,7 @@ from sm.engine.msm_basic.formula_validator import METRICS
 from sm.engine.msm_basic.msm_basic_search import MSMSearch
 from sm.engine.db import DB
 from sm.engine.search_results import SearchResults
-from sm.engine.util import SMConfig, split_s3_path, find_file_by_ext
+from sm.engine.util import SMConfig, split_s3_path
 from sm.engine.es_export import ESExporter
 from sm.engine.mol_db import MolecularDB
 from sm.engine.queue import QueuePublisher, SM_DS_STATUS
