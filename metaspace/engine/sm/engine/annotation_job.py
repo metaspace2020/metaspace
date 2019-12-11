@@ -4,20 +4,18 @@ from pprint import pformat
 from datetime import datetime
 from shutil import copytree, rmtree
 import logging
-from traceback import format_exc
 
 import boto3
-from pyimzml.ImzMLParser import ImzMLParser
 from pyspark import SparkContext, SparkConf
 
 from sm.engine.acq_geometry import make_acq_geometry
-from sm.engine.errors import ImzMLError
+from sm.engine.imzml_parser import ImzMLParserWrapper
 from sm.engine.msm_basic.formula_imager import make_sample_area_mask, get_ds_dims
 from sm.engine.msm_basic.formula_validator import METRICS
 from sm.engine.msm_basic.msm_basic_search import MSMSearch
 from sm.engine.db import DB
 from sm.engine.search_results import SearchResults
-from sm.engine.util import SMConfig, split_s3_path, find_file_by_ext
+from sm.engine.util import SMConfig, split_s3_path
 from sm.engine.es_export import ESExporter
 from sm.engine.mol_db import MolecularDB
 from sm.engine.queue import QueuePublisher, SM_DS_STATUS
@@ -90,12 +88,8 @@ class AnnotationJob:
         return self._db.insert_return(JOB_INS, rows=rows)[0]
 
     def create_imzml_parser(self):
-        try:
-            logger.info('Parsing imzml')
-            imzml_path = find_file_by_ext(self._ds_data_path, 'imzml')
-            return ImzMLParser(imzml_path, parse_lib='ElementTree')
-        except Exception as e:
-            raise ImzMLError(format_exc()) from e
+        logger.info('Parsing imzml')
+        return ImzMLParserWrapper(self._ds_data_path)
 
     @staticmethod
     def create_mol_dbs(moldb_ids):
@@ -132,8 +126,7 @@ class AnnotationJob:
                         charge=self._ds.config['isotope_generation']['charge'],
                     )
                     img_store_type = self._ds.get_ion_img_storage_type(self._db)
-                    coordinates = [coo[:2] for coo in imzml_parser.coordinates]
-                    sample_area_mask = make_sample_area_mask(coordinates)
+                    sample_area_mask = make_sample_area_mask(imzml_parser.coordinates)
                     search_results.store(
                         moldb_ion_metrics_df,
                         moldb_ion_images_rdd,
@@ -172,13 +165,11 @@ class AnnotationJob:
     def _save_data_from_raw_ms_file(self, imzml_parser):
         ms_file_path = imzml_parser.filename
         ms_file_type_config = SMConfig.get_ms_file_handler(ms_file_path)
-        dims = get_ds_dims([coord[:2] for coord in imzml_parser.coordinates])
-
+        dims = get_ds_dims(imzml_parser.coordinates)
         acq_geometry = make_acq_geometry(
             ms_file_type_config['type'], ms_file_path, self._ds.metadata, dims
         )
         self._ds.save_acq_geometry(self._db, acq_geometry)
-
         self._ds.save_ion_img_storage_type(self._db, ms_file_type_config['img_storage_type'])
 
     def _copy_input_data(self, ds):

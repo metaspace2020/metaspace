@@ -46,7 +46,6 @@ class CentroidsGenerator:
                 self._isocalc.sigma,
                 self._isocalc.charge,
             )
-        logger.info(f'Centroids path: {self._ion_centroids_path}')
         self._parquet_file_names = ['centroids.parquet', 'formulas.parquet']
         self._centroids_stored_on_s3 = self._ion_centroids_path.startswith('s3a://')
         if self._centroids_stored_on_s3:

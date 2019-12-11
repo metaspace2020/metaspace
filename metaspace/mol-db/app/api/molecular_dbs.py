@@ -1,3 +1,4 @@
+import json
 import logging
 from io import StringIO
 
@@ -51,6 +52,9 @@ class MoleculeCollection(BaseResource):
 
         buffer = StringIO(req.stream.read(req.content_length).decode())
         moldb_df = pd.read_csv(buffer, sep='\t')
+        if moldb_df.empty:
+            raise BadRequestError(f'Molecules dataframe is empty')
+
         import_molecules_from_df(moldb, moldb_df)
         self.on_success(res)
 
@@ -96,9 +100,10 @@ class MolDBCollection(BaseResource):
 
     def on_post(self, req, res):
         db = req.context['session']
-        name = req.params.get('name', None)
-        version = req.params.get('version', None)
-        drop_moldb = req.params.get('drop', 'no').lower() in ['true', 'yes', '1']
+        doc = json.load(req.bounded_stream)
+        name = doc.get('name', None)
+        version = doc.get('version', None)
+        drop_moldb = doc.get('drop', 'no').lower() in ['true', 'yes', '1']
         if not (name and version):
             BadRequestError(f'"Name" and "version" parameters required: {name}, {version}')
 

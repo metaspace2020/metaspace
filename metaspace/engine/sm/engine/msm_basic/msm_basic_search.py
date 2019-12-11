@@ -103,7 +103,6 @@ class MSMSearch:
         self._spark_context = spark_context
         self._ds_config = ds_config
         self._imzml_parser = imzml_parser
-        self._coordinates = [coo[:2] for coo in self._imzml_parser.coordinates]
         self._moldbs = moldbs
         self._sm_config = SMConfig.get_conf()
         self._ds_data_path = ds_data_path
@@ -154,32 +153,26 @@ class MSMSearch:
 
     def define_segments_and_segment_ds(self, sample_ratio=0.05, ds_segm_size_mb=5):
         logger.info('Reading spectra sample')
-        spectra_sample = list(spectra_sample_gen(self._imzml_parser, sample_ratio))
+        spectra_n = len(self._imzml_parser.coordinates)
+        sample_size = int(spectra_n * sample_ratio)
+        sample_size = np.clip(sample_size, min(spectra_n, 20), 1000)
+        spectra_sample = list(spectra_sample_gen(self._imzml_parser, sample_size))
         sample_mzs = np.concatenate([mzs for sp_id, mzs, ints in spectra_sample])
         sample_ints = np.concatenate([ints for sp_id, mzs, ints in spectra_sample])
         check_spectra_quality(sample_mzs, sample_ints)
 
-        n_spectra = len(self._coordinates)
-        sample_sp_n = min(max(int(n_spectra * sample_ratio), 20), n_spectra)
-        spectra_per_chunk_n = calculate_chunk_sp_n(
-            sample_mzs.nbytes, sample_sp_n, max_chunk_size_mb=500
-        )
-
-        total_mz_n = sample_mzs.shape[0] / sample_ratio  # pylint: disable=unsubscriptable-object
+        actual_sample_ratio = sample_size / spectra_n
         ds_segments = define_ds_segments(
-            sample_mzs, total_mz_n, self._imzml_parser.mzPrecision, ds_segm_size_mb
+            sample_mzs, actual_sample_ratio, self._imzml_parser, ds_segm_size_mb=ds_segm_size_mb
         )
 
         ds_segments_path = self._ds_data_path / 'ds_segments'
-        segment_ds(
-            self._imzml_parser,
-            self._coordinates,
-            spectra_per_chunk_n,
-            ds_segments,
-            ds_segments_path,
+        spectra_per_chunk_n = calculate_chunk_sp_n(
+            sample_mzs.nbytes, sample_size, max_chunk_size_mb=500
         )
+        segment_ds(self._imzml_parser, spectra_per_chunk_n, ds_segments, ds_segments_path)
 
-        logger.info('Putting segments to workers')
+        logger.info('Putting dataset segments to workers')
         self.put_segments_to_workers(ds_segments_path)
 
         return ds_segments
@@ -232,7 +225,7 @@ class MSMSearch:
         """
         logger.info('Running molecule search')
 
-        ds_segments = self.define_segments_and_segment_ds()
+        ds_segments = self.define_segments_and_segment_ds(ds_segm_size_mb=20)
 
         moldb_fdr_list = init_fdr(self._ds_config, self._moldbs)
         ion_formula_map_df = collect_ion_formulas(self._spark_context, moldb_fdr_list)
@@ -241,7 +234,7 @@ class MSMSearch:
         centr_segm_n = self.clip_and_segment_centroids(
             centroids_df=formula_centroids.centroids_df(),
             ds_segments=ds_segments,
-            ds_dims=get_ds_dims(self._coordinates),
+            ds_dims=get_ds_dims(self._imzml_parser.coordinates),
         )
 
         logger.info('Processing segments...')
@@ -251,7 +244,7 @@ class MSMSearch:
             target_modifiers=self.target_modifiers(moldb_fdr_list),
         )
         process_centr_segment = create_process_segment(
-            ds_segments, self._coordinates, self._ds_config, target_formula_inds
+            ds_segments, self._imzml_parser.coordinates, self._ds_config, target_formula_inds
         )
         results_rdd = self.process_segments(centr_segm_n, process_centr_segment)
         formula_metrics_df, formula_images_rdd = merge_results(
