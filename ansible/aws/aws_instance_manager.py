@@ -175,7 +175,7 @@ class AWSInstManager:
         for inst in instances:
             if inst.state['Name'] in ['running', 'pending']:
                 print('Already running: {}'.format(inst))
-            elif inst.state['Name'] == 'stopped':
+            elif inst.state['Name'] in ['stopped', 'stopping']:
                 print('Stopped instance found. Starting...')
                 stopped_instances.append(inst)
             else:

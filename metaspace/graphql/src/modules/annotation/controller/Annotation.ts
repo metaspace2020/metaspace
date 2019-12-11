@@ -57,6 +57,8 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
         infoURL = `http://ecmdb.ca/compounds/${id}`;
       } else if (dbBaseName === 'GNPS') {
         infoURL = `https://gnps.ucsd.edu/ProteoSAFe/gnpslibraryspectrum.jsp?SpectrumID=${id}`;
+      } else if (dbBaseName === 'NPA') {
+        infoURL = `https://www.npatlas.org/joomla/index.php/explore/compounds#npaid=${id}`;
       }
 
       compounds.push({
