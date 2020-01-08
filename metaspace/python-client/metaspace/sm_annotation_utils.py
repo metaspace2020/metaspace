@@ -1,4 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+
 import pandas as pd
 import numpy as np
 import requests, json, re, os, pprint
@@ -1109,6 +1111,46 @@ class SMInstance(object):
             mol_dbs=molDBs,
             adducts=adducts,
             ds_id=dsid,
+        )
+
+    def submit_dataset_v2(
+        self,
+        imzml_fn,
+        ibd_fn,
+        ds_name,
+        metadata,
+        is_public=None,
+        moldbs=None,
+        adducts=None,
+        s3_bucket=None,
+        priority=0,
+    ):
+        """
+        Submit a dataset for processing on the SM Instance
+        :param imzml_fn: file path to imzml
+        :param ibd_fn: file path to ibd
+        :param is_public: make dataset public
+        :param ds_name: dataset name
+        :param moldbs: list molecular databases
+        :param metadata: a properly formatted metadata json string
+        :param adducts: list of adducts
+        :param s3_bucket: this should be a bucket that both the user has write permission to and METASPACE can access
+        :return:
+        """
+        import uuid
+
+        dataset_key = str(uuid.uuid4())
+        for fn in [imzml_fn, ibd_fn]:
+            file_key = f'{dataset_key}/{Path(fn).name}'
+            s3_bucket.upload_file(fn, file_key)
+        return self._gqclient.create_dataset(
+            data_path=f's3a://{s3_bucket.name}/{dataset_key}',
+            metadata=metadata,
+            priority=priority,
+            ds_name=ds_name,
+            is_public=is_public,
+            mol_dbs=moldbs,
+            adducts=adducts,
         )
 
     def update_dataset_dbs(self, datasetID, molDBs, adducts, priority=1):
