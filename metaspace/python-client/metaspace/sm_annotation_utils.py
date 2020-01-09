@@ -1119,22 +1119,22 @@ class SMInstance(object):
         ibd_fn,
         ds_name,
         metadata,
+        s3_bucket,
         is_public=None,
         moldbs=None,
         adducts=None,
-        s3_bucket=None,
         priority=0,
     ):
         """
         Submit a dataset for processing on the SM Instance
         :param imzml_fn: file path to imzml
         :param ibd_fn: file path to ibd
-        :param is_public: make dataset public
         :param ds_name: dataset name
-        :param moldbs: list molecular databases
         :param metadata: a properly formatted metadata json string
+        :param s3_bucket: boto3 s3 bucekt object, both the user has write permission to and METASPACE can access
+        :param is_public: make dataset public
+        :param moldbs: list molecular databases
         :param adducts: list of adducts
-        :param s3_bucket: this should be a bucket that both the user has write permission to and METASPACE can access
         :return:
         """
         import uuid
