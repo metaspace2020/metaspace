@@ -1127,11 +1127,13 @@ class SMInstance(object):
     ):
         """
         Submit a dataset for processing on the SM Instance
+
         :param imzml_fn: file path to imzml
         :param ibd_fn: file path to ibd
         :param ds_name: dataset name
         :param metadata: a properly formatted metadata json string
-        :param s3_bucket: boto3 s3 bucekt object, both the user has write permission to and METASPACE can access
+        :param s3_bucket: boto3 s3 bucket object, both the user has write permission to
+        and METASPACE can access
         :param is_public: make dataset public
         :param moldbs: list molecular databases
         :param adducts: list of adducts
