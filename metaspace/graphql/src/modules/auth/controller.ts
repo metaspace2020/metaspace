@@ -211,7 +211,8 @@ const configureGoogleAuth = (router: IRouter<any>) => {
     ));
 
     router.get('/google', Passport.authenticate('google', {
-      scope: ['profile', 'email']
+      prompt: 'select_account',
+      scope: ['profile', 'email'],
     }));
 
     router.get('/google/callback', Passport.authenticate('google', {
