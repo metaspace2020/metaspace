@@ -3,6 +3,7 @@ import {callbackify} from 'util';
 import * as Passport from 'passport';
 import {Strategy as LocalStrategy} from 'passport-local';
 import {Strategy as GoogleStrategy} from 'passport-google-oauth20';
+import * as jwt from 'express-jwt';
 import * as JwtSimple from 'jwt-simple';
 import {EntityManager} from 'typeorm';
 import 'express-session';
@@ -67,7 +68,7 @@ export interface JwtPayload {
   exp?: number
 }
 
-const configureJwt = (router: IRouter<any>) => {
+const configureJwt = (router: IRouter<any>, app: Express) => {
   function mintJWT(user: User | null, expSeconds: number | null = 60) {
     const nowSeconds = Math.floor(Date.now() / 1000);
     let payload;
@@ -92,6 +93,12 @@ const configureJwt = (router: IRouter<any>) => {
     }
     return JwtSimple.encode(payload as JwtPayload, config.jwt.secret, config.jwt.algorithm);
   }
+
+  app.use(jwt({
+    secret: config.jwt.secret,
+    // issuer: config.jwt.issuer, // TODO: Add issuer to config so that it can be validated
+    credentialsRequired: false,
+  }));
 
   // Gives a one-time token, which expires in 60 seconds.
   // (this allows small time discrepancy between different servers)
@@ -338,7 +345,7 @@ export const configureAuth = async (app: Express, entityManager: EntityManager) 
   const router = Router();
   await initOperation(entityManager);
   configurePassport(router);
-  configureJwt(router);
+  configureJwt(router, app);
   configureLocalAuth(router);
   configureGoogleAuth(router);
   configureImpersonation(router);
