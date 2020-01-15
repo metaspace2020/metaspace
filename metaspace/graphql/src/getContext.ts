@@ -126,12 +126,12 @@ export const getContextForSubscription = (jwtUser: JwtUser | null, entityManager
 
 export default getContext;
 
-export const getContextForTest = (jwtUser: JwtUser | UserModel | null, entityManager: EntityManager): BaseContext => {
+export const getContextForTest = (jwtUser: JwtUser | UserModel | null, entityManager: EntityManager): Context => {
   // TODO: Add mocks for req & res if/when needed
   const reqMock = { session: null } as any as Request;
   // Add group info if missing, so that tests don't have to care about where they get UserModel instances
   if (jwtUser != null && !('groupIds' in jwtUser) && !('groups' in jwtUser)) {
     (jwtUser as any).groupIds = [];
   }
-  return getBaseContext(jwtUser, entityManager, reqMock);
+  return getBaseContext(jwtUser, entityManager, reqMock, {} as Response) as Context;
 };

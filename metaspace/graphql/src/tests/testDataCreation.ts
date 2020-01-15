@@ -78,15 +78,6 @@ export const createTestProjectMember = async (projectOrId: string | {id: string}
   return user;
 };
 
-const dbInsert = async (table: string, params: object) => {
-  const paramFields = Object.keys(params);
-  const paramValues = Object.values(params);
-  const paramIndexes = paramFields.map((key, idx) => `$${idx+1}`);
-  await testEntityManager.query(
-    `INSERT INTO ${table} (${paramFields.join(',')}) VALUES (${paramIndexes.join(',')})`,
-    paramValues);
-};
-
 const genDatasetId = () => {
   const randomUnixTime = 150e10 + Math.floor(Math.random() * 10e10);
   return moment(randomUnixTime).toISOString()
@@ -101,13 +92,13 @@ export const createTestDataset = async (dataset: Partial<Dataset> = {}, engineDa
     ...dataset,
   });
 
-  await dbInsert('public.dataset', {
+  await testEntityManager.save(EngineDataset, {
     id: datasetId,
     name: 'test dataset',
-    upload_dt: new Date,
+    uploadDt: moment.utc(),
     metadata: {},
     status: 'FINISHED',
-    is_public: true,
+    isPublic: true,
     ...engineDataset,
   });
 

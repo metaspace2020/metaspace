@@ -61,7 +61,7 @@ export const createBackgroundData = async (options: BackgroundDataOptions): Prom
   const indDatasets = datasets
     ? [true, false, true, false].map(async (isPublic, i) => { // doubled so that both approved & non-approved datasetProjects can be made
       const dataset = {userId: (await indUsers[i]).id};
-      return createTestDataset(dataset, { name: `Independent Dataset ${i}`, is_public: isPublic })
+      return createTestDataset(dataset, { name: `Independent Dataset ${i}`, isPublic })
     })
     : [];
   allDatasets.push(...indDatasets);
@@ -113,7 +113,7 @@ export const createBackgroundData = async (options: BackgroundDataOptions): Prom
 
   const datasetsForUsers = _.flatMap(datasetsForUserIds, userId => {
     return [true, false].map(async isPublic => {
-      return createTestDataset({userId}, { name: `Dataset for user ${userId} ${isPublic}`, is_public: isPublic })
+      return createTestDataset({userId}, { name: `Dataset for user ${userId} ${isPublic}`, isPublic })
     });
   });
   allDatasets.push(...datasetsForUsers);
@@ -121,7 +121,7 @@ export const createBackgroundData = async (options: BackgroundDataOptions): Prom
   const datasetsForProjects = _.flatMap(datasetsForProjectIds, projectId => {
     return [[true, true], [true, false], [false, true], [false, false]].map(async ([isPublic, approved], idx) => {
       const userId = (await indUsers[idx % indUsers.length]).id;
-      const dataset = await createTestDataset({userId}, { name: `Dataset for project ${projectId} ${isPublic} ${approved}`, is_public: isPublic });
+      const dataset = await createTestDataset({userId}, { name: `Dataset for project ${projectId} ${isPublic} ${approved}`, isPublic });
       const datasetProject = await testEntityManager.save(DatasetProject, {datasetId: dataset.id, projectId, approved}) as any as DatasetProject;
       return {dataset, datasetProject};
     });
