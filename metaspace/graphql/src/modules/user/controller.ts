@@ -8,7 +8,7 @@ import {Dataset as DatasetModel} from '../dataset/model';
 import {Credentials as CredentialsModel} from '../auth/model';
 import {UserGroup as UserGroupModel, UserGroupRoleOptions} from '../group/model';
 import {UserProject as UserProjectModel} from '../project/model';
-import {Context, ContextUser} from '../../context';
+import {AuthMethod, AuthMethodOptions, Context, ContextUser} from '../../context';
 import {ScopeRole, ScopeRoleOptions as SRO, UserProjectSource, UserSource} from '../../bindingTypes';
 import {findUserById, resetUserApiKey, sendEmailVerificationToken, signout} from '../auth/operation';
 import {LooselyCompatible} from '../../utils';
@@ -113,7 +113,9 @@ export const Resolvers = {
     },
 
     async apiKey({scopeRole, id: userId}: UserSource, args: any, ctx: Context): Promise<string|null> {
-      if (scopeRole === SRO.PROFILE_OWNER || ctx.isAdmin) {
+      const allowedAuthMethods: AuthMethod[] = [AuthMethodOptions.JWT, AuthMethodOptions.SESSION];
+      if ((scopeRole === SRO.PROFILE_OWNER || ctx.isAdmin)
+        && allowedAuthMethods.includes(ctx.user.authMethod)) {
         const userModel = await findUserById(userId, true);
         return userModel && userModel.credentials && userModel.credentials.apiKey || null;
       } else {
@@ -188,12 +190,14 @@ export const Resolvers = {
         }
       }
 
-      const userDSs = await entityManager.getRepository(DatasetModel).find({ userId });
-      if (userDSs) {
-        logger.info(`Updating user '${userId}' datasets...`);
-        await Promise.all(userDSs.map(async ds => {
-          await smAPIUpdateDataset(ds.id, {submitterId: userId});
-        }));
+      if (update.name != null || update.email != null) {
+        const userDSs = await entityManager.getRepository(DatasetModel).find({ userId });
+        if (userDSs) {
+          logger.info(`Updating user '${userId}' datasets...`);
+          await Promise.all(userDSs.map(async ds => {
+            await smAPIUpdateDataset(ds.id, { submitterId: userId });
+          }));
+        }
       }
 
       logger.info(`User '${userId}' was updated`);

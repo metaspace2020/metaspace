@@ -139,6 +139,39 @@
         <!--</div>-->
       <!--</div>-->
       <div>
+        <h2>API access</h2>
+        <p style="width: 100%;padding-left: 15px;">
+          To <a href="https://github.com/metaspace2020/metaspace/tree/master/metaspace/python-client">access METASPACE programmatically</a>
+          or integrate with trusted third-party applications, an API key can be used to avoid sharing your password.
+        </p>
+        <el-row v-if="isLoaded && currentUser">
+          <div v-if="currentUser.apiKey">
+            <el-input
+              :value="currentUser.apiKey"
+              :type="showApiKey ? 'text' : 'password'"
+              @focus="e => { showApiKey = true; e.target.select(); }"
+              @blur="e => { showApiKey = false; }"
+              class="api-key"
+              readonly>
+              <el-button
+                slot="append"
+                icon="el-icon-document-copy"
+                title="Copy to clipboard"
+                @click="handleCopyApiKey"
+              />
+            </el-input>
+            <el-button type="danger"
+                       @click="handleRevokeApiKey"
+                       style="float:right; margin-top:15px">Revoke key</el-button>
+          </div>
+          <el-button v-else
+                     @click="handleGenerateApiKey"
+                     style="float:right; margin-top:15px">
+            Generate API Key
+          </el-button>
+        </el-row>
+      </div>
+      <div>
         <h2>Delete account</h2>
         <p style="width: 100%;padding-left: 15px;">
           If you delete your METASPACE account, you can either delete all your datasets or keep them within METASPACE.
@@ -161,7 +194,12 @@
 <script lang="ts">
   import Vue from 'vue'
   import { Component, Watch } from 'vue-property-decorator'
-  import { updateUserMutation, deleteUserMutation, userProfileQuery, UserProfileQuery } from '../../api/user';
+  import {
+    updateUserMutation,
+    deleteUserMutation,
+    userProfileQuery,
+    UserProfileQuery, resetUserApiKeyMutation,
+  } from '../../api/user';
   import reportError from "../../lib/reportError";
   import {refreshLoginStatus} from '../../graphqlClient';
   import {ElForm} from "element-ui/types/form";
@@ -198,6 +236,7 @@
   })
   export default class EditUserPage extends Vue {
     isLoaded = false;
+    showApiKey = false;
     showDeleteAccountDialog: boolean = false;
     isUserDetailsLoading: boolean = false;
     isUserDeletionLoading: boolean = false;
@@ -272,7 +311,6 @@
         }
         this.isUserDetailsLoading = true;
 
-        const oldPrimaryGroupId = this.currentUser!.primaryGroup != null ? this.currentUser!.primaryGroup!.group.id : null;
         await this.$apollo.mutate({
           mutation: updateUserMutation,
           variables: {
@@ -285,7 +323,7 @@
             }
           },
         });
-        await this.$apollo.queries.currentUser.refetch(); // TODO: Remove after PR #127 is merged
+        await this.$apollo.queries.currentUser.refetch();
         this.$message({
           type: "success",
           message: emailChanged
@@ -348,9 +386,69 @@
               update: { primaryGroupId: this.primaryGroupId }
             },
           });
-          await this.$apollo.queries.currentUser.refetch(); // TODO: Remove after PR #127 is merged
+          await this.$apollo.queries.currentUser.refetch();
         } finally {
           this.isChangingPrimaryGroup = false;
+        }
+      }
+    }
+
+    @ConfirmAsync(function (this: EditUserPage) {
+      return {
+        dangerouslyUseHTMLString: true,
+        message: `API keys allow almost full access to your account, including data shared with you by others,
+        and should not be shared with anybody you don't trust.<br><br>
+        If you are no longer using your API key or you accidentally share it publicly,
+        revoke the key to prevent unwanted access to your account.`,
+        confirmButtonText: 'I understand, generate the key',
+        confirmButtonLoadingText: 'Generating...',
+      }
+    })
+    async handleGenerateApiKey() {
+      await this.$apollo.mutate({
+        mutation: resetUserApiKeyMutation,
+        variables: {
+          userId: this.currentUser!.id,
+          removeKey: false,
+        },
+      });
+      await this.$apollo.queries.currentUser.refetch();
+    }
+
+    @ConfirmAsync(function (this: EditUserPage) {
+      return {
+        message: `Are you sure you want to revoke the API key?`,
+        confirmButtonText: 'Revoke key',
+        confirmButtonLoadingText: 'Revoking...',
+      }
+    })
+    async handleRevokeApiKey() {
+      await this.$apollo.mutate({
+        mutation: resetUserApiKeyMutation,
+        variables: {
+          userId: this.currentUser!.id,
+          removeKey: true,
+        },
+      });
+      await this.$apollo.queries.currentUser.refetch();
+    }
+
+    handleCopyApiKey() {
+      if (this.currentUser && this.currentUser.apiKey) {
+        if ('clipboard' in navigator) {
+          navigator.clipboard.writeText(this.currentUser.apiKey);
+        } else {
+          const el = document.createElement('textarea');
+          el.value = this.currentUser!.apiKey;
+          el.style.position = 'absolute';
+          el.style.left = '-9999px';
+          document.body.appendChild(el);
+          try {
+            el.select();
+            document.execCommand('copy');
+          } finally {
+            document.body.removeChild(el);
+          }
         }
       }
     }
@@ -370,6 +468,11 @@
 
   .user-edit-page {
     max-width: 950px;
+  }
+
+  .api-key /deep/ input {
+    background-color: white !important;
+    cursor: text !important;
   }
 
   .saveButton {
