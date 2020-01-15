@@ -1,10 +1,11 @@
 import * as _ from 'lodash';
-import {createTestDataset, createTestProject, createTestUser} from './testDataCreation';
+import {createTestDataset, createTestProject, createTestUser, createTestUserWithCredentials} from './testDataCreation';
 import {testEntityManager} from './graphqlTestEnvironment';
 import {Project, UserProject, UserProjectRoleOptions as UPRO} from '../modules/project/model';
 import {UserProjectRole} from '../binding';
 import {User} from '../modules/user/model';
 import {Dataset, DatasetProject} from '../modules/dataset/model';
+import {Credentials} from '../modules/auth/model';
 
 interface BackgroundDataOptions {
   // Set these flags to true to create independent data that is probably unrelated to the data being tested
@@ -21,6 +22,7 @@ interface BackgroundDataOptions {
 
 export interface BackgroundData {
   users: User[];
+  credentials: Credentials[];
   projects: Project[];
   datasets: Dataset[];
   userProjects: UserProject[];
@@ -39,16 +41,19 @@ export const createBackgroundData = async (options: BackgroundDataOptions): Prom
   const UPRORoles = Object.keys(UPRO) as UserProjectRole[];
 
   const allUsers = [] as Promise<User>[];
+  const allCredentials = [] as Promise<Credentials>[];
   const allProjects = [] as Promise<Project>[];
   const allDatasets = [] as Promise<Dataset>[];
   const allUserProjects = [] as Promise<UserProject>[];
   const allDatasetProjects = [] as Promise<DatasetProject>[];
 
   // Create "independent" data
-  const indUsers = users || datasets || datasetsForProjectIds
-    ? UPRORoles.map(role => createTestUser({name: `Independent User ${role}`}))
+  const indUserCreds = users || datasets || datasetsForProjectIds
+    ? UPRORoles.map(role => createTestUserWithCredentials({name: `Independent User ${role}`}))
     : [];
+  const indUsers = indUserCreds.map(async u => (await u)[0]);
   allUsers.push(...indUsers);
+  allCredentials.push(...indUserCreds.map(async u => (await u)[1]));
   const indProjects = projects
     ? [true, false].map((isPublic, i) => createTestProject({name: `Independent Project ${i}`, isPublic}))
     : [];
@@ -87,12 +92,13 @@ export const createBackgroundData = async (options: BackgroundDataOptions): Prom
   // Create "dependent" data
   const membersForProjects = _.flatMap(membersForProjectIds, projectId => {
     return UPRORoles.map(async role => {
-      const user = await createTestUser({ name: `${role} for project ${projectId}` });
+      const [user, credentials] = await createTestUserWithCredentials({ name: `${role} for project ${projectId}` });
       const userProject = await testEntityManager.save(UserProject, {userId: user.id, projectId, role}) as UserProject;
-      return {user, userProject};
+      return {user, credentials, userProject};
     });
   });
   allUsers.push(...membersForProjects.map(async m => (await m).user));
+  allCredentials.push(...membersForProjects.map(async m => (await m).credentials));
   allUserProjects.push(...membersForProjects.map(async m => (await m).userProject));
 
   const projectsForUsers = _.flatMap(projectsForUserIds, userId => {
@@ -125,6 +131,7 @@ export const createBackgroundData = async (options: BackgroundDataOptions): Prom
 
   return {
     users: await Promise.all(allUsers),
+    credentials: await Promise.all(allCredentials),
     projects: await Promise.all(allProjects),
     datasets: await Promise.all(allDatasets),
     userProjects: await Promise.all(allUserProjects),
@@ -134,17 +141,20 @@ export const createBackgroundData = async (options: BackgroundDataOptions): Prom
 
 export const validateBackgroundData = async (expected: BackgroundData) => {
   const usersPromise = testEntityManager.findByIds(User, expected.users.map(u => u.id));
+  const credentialsPromise = testEntityManager.findByIds(Credentials, expected.credentials.map(u => u.id));
   const projectsPromise = testEntityManager.findByIds(Project, expected.projects.map(p => p.id));
   const datasetsPromise = testEntityManager.findByIds(Dataset, expected.datasets.map(d => d.id));
   const userProjectsPromise = testEntityManager.findByIds(UserProject, expected.userProjects.map(({userId, projectId}) => ({userId, projectId})));
   const datasetProjectsPromise = testEntityManager.findByIds(DatasetProject, expected.datasetProjects.map(({datasetId, projectId}) => ({datasetId, projectId})));
   const users = await usersPromise;
+  const credentials = await credentialsPromise;
   const projects = await projectsPromise;
   const datasets = await datasetsPromise;
   const userProjects = await userProjectsPromise;
   const datasetProjects = await datasetProjectsPromise;
 
   expect(_.sortBy(users, ['id'])).toEqual(_.sortBy(expected.users, ['id']));
+  expect(_.sortBy(credentials, ['id'])).toEqual(_.sortBy(expected.credentials, ['id']));
   expect(_.sortBy(projects, ['id'])).toEqual(_.sortBy(expected.projects, ['id']));
   expect(_.sortBy(datasets, ['id'])).toEqual(_.sortBy(expected.datasets, ['id']));
   expect(_.sortBy(userProjects, ['userId', 'projectId'])).toEqual(_.sortBy(expected.userProjects, ['userId', 'projectId']));

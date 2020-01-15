@@ -6,8 +6,19 @@ export type UserProjectRoles = {[projectId: string]: UserProjectRole}
 
 export type ContextCacheKeyArg = string | number | boolean | null | undefined;
 
+export type ContextUserRole = 'guest' | 'user' | 'admin';
+
+export type AuthMethod = 'JWT' | 'API_KEY' | 'SESSION' | 'UNKNOWN';
+export const AuthMethodOptions: {[K in AuthMethod]: K} = {
+  JWT: 'JWT',
+  API_KEY: 'API_KEY',
+  SESSION: 'SESSION',
+  UNKNOWN: 'UNKNOWN',
+};
+
 export interface ContextUser {
-  role: 'user' | 'admin';
+  role: ContextUserRole;
+  authMethod: AuthMethod;
   id?: string; // id is undefined when not logged in
   email?: string;
   groupIds?: string[]; // used in esConnector for ES visibility filters

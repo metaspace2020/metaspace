@@ -10,6 +10,8 @@ import * as utils from '../../utils';
 import {Credentials as CredentialsModel, Credentials} from './model';
 import {User as UserModel, User} from '../user/model';
 import {sendCreateAccountEmail} from './email';
+import { Request } from 'express';
+import generateRandomToken from '../../utils/generateRandomToken';
 
 export interface UserCredentialsInput {
   email: string;
@@ -59,6 +61,17 @@ export const findUserByGoogleId = async (googleId: string) => {
     .where(`google_id = :googleId`, { googleId: googleId })
     .getOne()) || null;
   return user;
+};
+
+export const findUserByApiKey = async (apiKey: string, groups: boolean = false) => {
+  let query = userRepo.createQueryBuilder('user')
+    .leftJoinAndSelect('user.credentials', 'credentials')
+    .where(`api_key = :apiKey`, { apiKey: apiKey });
+
+  if (groups) {
+    query = query.innerJoinAndSelect('user.groups', 'groups');
+  }
+  return (await query.getOne()) || null;
 };
 
 export const createExpiry = (minutes: number=10): Moment => {
@@ -278,10 +291,29 @@ export const resetPassword = async (email: string, password: string, token: stri
   }
 };
 
+export const resetUserApiKey = async (userId: string, removeKey: boolean = false): Promise<string | null> => {
+  const user = await findUserById(userId);
+  if (user == null || user.credentialsId == null) {
+    throw new Error('user/credentials not found');
+  }
+  const apiKey = removeKey ? null : generateRandomToken();
+  await credRepo.update(user.credentialsId, {apiKey, apiKeyLastUpdated: utc()});
+  return apiKey;
+};
+
 export const createInactiveUser = async (email: string): Promise<UserModel> => {
   const invUserCred = await entityManager.getRepository(CredentialsModel).save({ emailVerified: false });
   return await entityManager.getRepository(UserModel).save({
     notVerifiedEmail: email,
     credentials: invUserCred
   }) as UserModel;
+};
+
+export const signout = async (req: Request): Promise<void> => {
+  req.logout();
+  await new Promise(resolve => {
+    if (req.session) {
+      req.session.destroy(resolve);
+    }
+  });
 };

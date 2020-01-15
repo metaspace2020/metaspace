@@ -16,6 +16,7 @@ import {mergedSchemas} from './schema';
 import addReadOnlyInterceptorToSchema from './src/modules/system/addReadOnlyInterceptorToSchema';
 import {Context} from './src/context';
 import {ResponsePath} from 'graphql';
+import addApiKeyInterceptorToSchema from './src/modules/system/addApiKeyInterceptorToSchema';
 
 export const makeNewExecutableSchema = () => {
   return makeExecutableSchema<Context>({
@@ -63,5 +64,6 @@ if (config.features.graphqlMocks) {
 // }
 
 addReadOnlyInterceptorToSchema(executableSchema);
+addApiKeyInterceptorToSchema(executableSchema);
 
 export {executableSchema};

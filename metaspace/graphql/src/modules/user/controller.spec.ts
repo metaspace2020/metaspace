@@ -1,7 +1,7 @@
 import * as _ from 'lodash';
 import {
   createTestGroup,
-  createTestProject,
+  createTestProject, createTestUser,
   createTestUserGroup,
   createTestUserProject,
 } from '../../tests/testDataCreation';
@@ -12,6 +12,7 @@ import {
 import {
   UserGroupRoleOptions as UGRO,
 } from '../group/model';
+import { Credentials as CredentialsModel } from '../auth/model'
 import {
   doQuery,
   onAfterAll,
@@ -23,7 +24,9 @@ import {
   testEntityManager,
   testUser, userContext,
 } from '../../tests/graphqlTestEnvironment';
-import {createBackgroundData} from '../../tests/backgroundDataCreation';
+import {createBackgroundData, validateBackgroundData} from '../../tests/backgroundDataCreation';
+import {getContextForTest} from '../../getContext';
+import {utc} from 'moment';
 
 
 // ROLE_COMBOS is a list of possible user & project role combinations, for tests that should exhaustively check every possibility
@@ -141,4 +144,64 @@ describe('modules/user/controller', () => {
     });
 
   });
+
+  describe('Mutation.resetUserApiKey', () => {
+    const query = `mutation($userId: ID!, $removeKey: Boolean!) {
+      resetUserApiKey(userId: $userId, removeKey: $removeKey) {
+        id
+        apiKey
+      }
+    }`;
+
+    it('should generate a 12-digit API key when called by the current user', async () => {
+      // Arrange
+      const backgroundData = await createBackgroundData({users: true});
+
+      // Act
+      const result = await doQuery(query, {userId: testUser.id, removeKey: false}, {context: userContext});
+
+      // Assert
+      const updatedCreds = await testEntityManager.findOneOrFail(CredentialsModel, testUser.credentialsId);
+      expect(result.id).toBe(testUser.id);
+      expect(result.apiKey).toHaveLength(12);
+      expect(result.apiKey).toBe(updatedCreds.apiKey);
+      expect(updatedCreds.apiKeyLastUpdated).toBeTruthy();
+      await validateBackgroundData(backgroundData);
+    });
+
+    it('should set the API key to null when called by the current user with removeKey: true', async () => {
+      // Arrange
+      const backgroundData = await createBackgroundData({users: true});
+      const startTime = utc().subtract(10, 'days');
+      await testEntityManager.update(CredentialsModel, testUser.credentialsId, {
+        apiKey: 'ExistingApiKey',
+        apiKeyLastUpdated: startTime,
+      });
+
+      // Act
+      const result = await doQuery(query, {userId: testUser.id, removeKey: true}, {context: userContext});
+
+      // Assert
+      const updatedCreds = await testEntityManager.findOneOrFail(CredentialsModel, testUser.credentialsId);
+      expect(result.id).toBe(testUser.id);
+      expect(result.apiKey).toBeNull();
+      expect(updatedCreds.apiKey).toBeNull();
+      expect(updatedCreds.apiKeyLastUpdated!.diff(startTime, 'days', true)).toBeCloseTo(10);
+      await validateBackgroundData(backgroundData);
+    });
+
+    it('should fail when called by a different current user', async () => {
+      // Arrange
+      await testEntityManager.update(CredentialsModel, testUser.credentialsId, {apiKey: 'ExistingApiKey'});
+      const otherUserContext = getContextForTest((await createTestUser()) as any, testEntityManager);
+
+      // Act
+      const resultPromise = doQuery(query, {userId: testUser.id, removeKey: false}, {context: otherUserContext});
+      await expect(resultPromise).rejects.toThrow();
+
+      // Assert
+      const updatedCreds = await testEntityManager.findOneOrFail(CredentialsModel, testUser.credentialsId);
+      expect(updatedCreds.apiKey).toBe('ExistingApiKey');
+    });
+  })
 });

@@ -4,7 +4,7 @@ import {esDatasetByID} from '../../../../esConnector';
 import logger from '../../../utils/logger';
 import wait from '../../../utils/wait';
 import config from '../../../utils/config';
-import {ContextUser, BaseContext} from '../../../context';
+import {ContextUser, BaseContext, AuthMethodOptions} from '../../../context';
 import canViewEsDataset from '../operation/canViewEsDataset';
 import {relationshipToDataset} from '../operation/relationshipToDataset';
 import {
@@ -29,7 +29,8 @@ interface DatasetStatusPayload {
 }
 
 const dummyContextUser: ContextUser = {
-  role: 'user',
+  role: 'guest',
+  authMethod: AuthMethodOptions.UNKNOWN,
   getProjectRoles: async () => { return {}; },
   getMemberOfProjectIds: async () => { return []; },
 };

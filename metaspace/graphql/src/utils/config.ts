@@ -1,6 +1,6 @@
 import * as config from 'config';
 import { IConfig } from 'config';
-import {TAlgorithm} from 'jwt-simple';
+import {Algorithm} from 'jsonwebtoken';
 
 export type ImageStorageType = 'db' | 'fs';
 export interface ImageCategoryConfig {
@@ -77,7 +77,7 @@ export interface Config {
   };
   jwt: {
     secret: string;
-    algorithm: TAlgorithm;
+    algorithm: Algorithm;
   };
   sentry: {
     dsn: string | null;

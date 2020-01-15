@@ -1,9 +1,5 @@
 import {Context} from '../../../context';
-import {
-  Project as ProjectModel,
-  UserProject as UserProjectModel,
-  UserProjectRoleOptions as UPRO
-} from '../model';
+import {Project as ProjectModel, UserProject as UserProjectModel, UserProjectRoleOptions as UPRO} from '../model';
 import {PublicationStatusOptions as PSO} from '../PublicationStatusOptions';
 import {UserError} from 'graphql-errors';
 import {FieldResolversFor, ProjectSource, ScopeRoleOptions as SRO, UserProjectSource} from '../../../bindingTypes';
@@ -18,11 +14,15 @@ import {User as UserModel} from '../../user/model';
 import config from '../../../utils/config';
 import {sendInvitationEmail} from '../../auth';
 import {findUserByEmail} from '../../../utils';
-import {sendAcceptanceEmail, sentGroupOrProjectInvitationEmail, sendRequestAccessEmail} from '../../groupOrProject/email';
+import {
+  sendAcceptanceEmail,
+  sendRequestAccessEmail,
+  sentGroupOrProjectInvitationEmail,
+} from '../../groupOrProject/email';
 import {smAPIUpdateDataset} from '../../../utils/smAPI';
 import {getDatasetForEditing} from '../../dataset/operation/getDatasetForEditing';
-import * as crypto from 'crypto';
 import {utc} from 'moment';
+import generateRandomToken from '../../../utils/generateRandomToken';
 
 
 const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
@@ -32,12 +32,6 @@ const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
   if (!ctx.isAdmin && userProject == null) {
     throw new UserError('Unauthorized');
   }
-};
-
-const generateRandomToken = () => {
-  // 9 Bytes = 72 bits = 12 Base64 symbols
-  return crypto.randomBytes(9).toString('base64')
-    .replace(/\//g,'_').replace(/\+/g,'-');
 };
 
 const MutationResolvers: FieldResolversFor<Mutation, void> = {

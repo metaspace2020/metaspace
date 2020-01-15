@@ -13,16 +13,20 @@ import {Dataset, DatasetProject} from '../modules/dataset/model';
 import {EngineDataset} from '../modules/engine/model';
 import {Group, UserGroup as UserGroupModel} from '../modules/group/model';
 
-
 export const createTestUser = async (user?: Partial<User>): Promise<User> => {
-  const creds = (await testEntityManager.save(Credentials, {})) as any as Credentials;
-  return await testEntityManager.save(User, {
+  return (await createTestUserWithCredentials(user))[0]
+};
+
+export const createTestUserWithCredentials = async (user?: Partial<User>): Promise<[User, Credentials]> => {
+  const creds = (await testEntityManager.save(Credentials, {}, {})) as Credentials;
+  const userModel = await testEntityManager.save(User, {
     name: 'tester',
     role: 'user',
     credentialsId: creds.id,
     email: `${Math.random()}@example.com`,
     ...user,
   }) as User;
+  return [userModel, creds];
 };
 
 export const createTestGroup = async (group?: Partial<Group>): Promise<Group> => {

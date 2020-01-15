@@ -10,13 +10,12 @@ import {UserGroup as UserGroupModel, UserGroupRoleOptions} from '../group/model'
 import {UserProject as UserProjectModel} from '../project/model';
 import {Context, ContextUser} from '../../context';
 import {ScopeRole, ScopeRoleOptions as SRO, UserProjectSource, UserSource} from '../../bindingTypes';
-import {sendEmailVerificationToken} from '../auth/operation';
+import {findUserById, resetUserApiKey, sendEmailVerificationToken, signout} from '../auth/operation';
 import {LooselyCompatible} from '../../utils';
 import logger from '../../utils/logger';
 import {convertUserToUserSource} from './util/convertUserToUserSource';
 import {smAPIUpdateDataset} from '../../utils/smAPI';
 import {deleteDataset} from '../dataset/operation/deleteDataset';
-import {patchPassportIntoLiveRequest} from '../auth/middleware';
 import {resolveGroupScopeRole} from '../group/util/resolveGroupScopeRole';
 import canSeeUserEmail from './util/canSeeUserEmail';
 import {ProjectSourceRepository} from '../project/ProjectSourceRepository';
@@ -35,6 +34,14 @@ const resolveUserScopeRole = async (ctx: Context, userId?: string): Promise<Scop
     scopeRole = SRO.PROFILE_OWNER;
   }
   return scopeRole;
+};
+
+const getUserSourceById = async function (ctx: Context, userId: string): Promise<UserSource | null> {
+  const scopeRole = await resolveUserScopeRole(ctx, userId);
+  const user = await ctx.entityManager.getRepository(UserModel).findOne({
+    where: { id: userId },
+  });
+  return user != null ? convertUserToUserSource(user, scopeRole) : null;
 };
 
 export const Resolvers = {
@@ -104,24 +111,25 @@ export const Resolvers = {
       }
       return null;
     },
+
+    async apiKey({scopeRole, id: userId}: UserSource, args: any, ctx: Context): Promise<string|null> {
+      if (scopeRole === SRO.PROFILE_OWNER || ctx.isAdmin) {
+        const userModel = await findUserById(userId, true);
+        return userModel && userModel.credentials && userModel.credentials.apiKey || null;
+      } else {
+        return null;
+      }
+    }
   },
 
   Query: {
     async user(_: any, {userId}: any, ctx: Context): Promise<UserSource|null> {
-      const scopeRole = await resolveUserScopeRole(ctx, userId);
-      const user = await ctx.entityManager.getRepository(UserModel).findOne({
-        where: { id: userId }
-      });
-      return user != null ? convertUserToUserSource(user, scopeRole) : null;
+      return await getUserSourceById(ctx, userId);
     },
 
     async currentUser(_: any, {}: any, ctx: Context): Promise<UserSource|null> {
       if (ctx.user.id != null) {
-        const scopeRole = await resolveUserScopeRole(ctx, ctx.user.id);
-        const user = await ctx.entityManager.getRepository(UserModel).findOneOrFail({
-          where: { id: ctx.user.id }
-        });
-        return convertUserToUserSource(user, scopeRole);
+        return await getUserSourceById(ctx, ctx.user.id);
       }
       return null;
     },
@@ -145,7 +153,8 @@ export const Resolvers = {
   },
 
   Mutation: {
-    async updateUser(_: any, {userId, update}: any, {user, isAdmin, entityManager}: Context): Promise<User> {
+    async updateUser(_: any, {userId, update}: any, ctx: Context): Promise<UserSource> {
+      const {user, isAdmin, entityManager} = ctx;
       assertCanEditUser(user, userId);
       logger.info(`User '${userId}' being updated by '${user!.id}'...`);
 
@@ -188,11 +197,7 @@ export const Resolvers = {
       }
 
       logger.info(`User '${userId}' was updated`);
-      return {
-        id: userObj.id,
-        name: userObj.name!,
-        role: userObj.role
-      };
+      return (await getUserSourceById(ctx, userObj.id))!;
     },
 
     async deleteUser(_: any, {userId, deleteDatasets}: any, {req, res, user: currentUser, entityManager}: Context): Promise<Boolean> {
@@ -227,10 +232,20 @@ export const Resolvers = {
         logger.info(`User '${userId}' was soft-deleted`);
       }
 
-      await patchPassportIntoLiveRequest(req, res);
-      req.logout();
+      if (userId === currentUser!.id) {
+        await signout(req);
+      }
 
       return true;
     },
+
+    async resetUserApiKey(_: any, {userId, removeKey}: any, ctx: Context): Promise<UserSource | null> {
+      assertCanEditUser(ctx.user, userId);
+      logger.info(`User '${userId}' API key is being ${removeKey ? 'removed' : 'reset'} by '${ctx.user!.id}'.`);
+
+      await resetUserApiKey(userId, removeKey);
+
+      return await getUserSourceById(ctx, userId);
+    }
   }
 };
