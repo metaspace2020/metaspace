@@ -6,7 +6,6 @@ import {ExtractJwt, Strategy as JwtStrategy} from 'passport-jwt';
 import {Strategy as GoogleStrategy} from 'passport-google-oauth20';
 import {HeaderAPIKeyStrategy} from 'passport-headerapikey';
 
-import * as jwt from 'express-jwt';
 import * as jsonwebtoken from 'jsonwebtoken';
 import {EntityManager} from 'typeorm';
 import 'express-session';
@@ -27,6 +26,7 @@ import {
   verifyPassword,
 } from './operation';
 import {AuthMethodOptions} from '../../context';
+import {UserError} from 'graphql-errors';
 
 const preventCache = (req: Request, res: Response, next: NextFunction) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
@@ -161,14 +161,24 @@ const configureApiKey = (router: IRouter<any>, app: Express) => {
     false,
     async (header, done) => {
       try {
-        if (header && prefix.test(header)) {
+        if (prefix.test(header)) {
           const apikey = header.replace(prefix, '');
           const user = await findUserByApiKey(apikey, true);
           if (user != null) {
             return done(null, user, AuthMethodOptions.API_KEY);
           }
         }
-        return done(null, false);
+        // WORKAROUND: Passport doesn't differentiate between unspecified and invalid authentication details,
+        // so following the recommended pattern of "return done(null, false)" will continue down the strategy chain
+        // until "anonymous" successfully authenticates the user. Throwing an error seems to be the only way to give
+        // correct feedback.
+        const error = new UserError(
+          prefix.test(header) ? 'Invalid API key'
+          : /Bearer /i.test(header) ? 'Invalid JWT'
+          : 'Malformed Authorization header'
+        );
+        (error as any).status = 401;
+        throw error;
       } catch (err) {
         return done(err);
       }
