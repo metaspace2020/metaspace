@@ -167,7 +167,7 @@
           <el-button v-else
                      @click="handleGenerateApiKey"
                      style="float:right; margin-top:15px">
-            Generate API Key
+            Generate API key
           </el-button>
         </el-row>
       </div>
