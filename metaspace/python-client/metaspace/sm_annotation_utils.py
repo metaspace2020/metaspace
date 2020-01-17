@@ -860,7 +860,9 @@ class SMInstance(object):
         return "SMInstance({})".format(self._config['graphql_url'])
 
     def login(self, email=None, password=None, api_key=None):
-        assert (email and password) or api_key, 'Either email and password, or api_key must be provided'
+        assert (
+            email and password
+        ) or api_key, 'Either email and password, or api_key must be provided'
         self._config['usr_email'] = email
         self._config['usr_pass'] = password
         self._config['usr_api_key'] = api_key
