@@ -27,6 +27,7 @@ import {
 } from './operation';
 import {AuthMethodOptions} from '../../context';
 import {UserError} from 'graphql-errors';
+import NoisyJwtStrategy from './NoisyJwtStrategy';
 
 const preventCache = (req: Request, res: Response, next: NextFunction) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
@@ -106,7 +107,7 @@ const configureJwt = (router: IRouter<any>) => {
     return jsonwebtoken.sign(payload as JwtPayload, config.jwt.secret, {algorithm: config.jwt.algorithm});
   }
 
-  Passport.use(new JwtStrategy({
+  Passport.use(new NoisyJwtStrategy({
     secretOrKey: config.jwt.secret,
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     algorithms: [config.jwt.algorithm],
