@@ -137,20 +137,6 @@ const configureJwt = (router: IRouter<any>) => {
       next(err);
     }
   });
-
-  router.get('/getapitoken', async (req, res, next) => {
-    try {
-      const user = getUserFromRequest(req);
-      if (user) {
-        const jwt = mintJWT(user, null);
-        res.send(`Your API token is: ${jwt}`);
-      } else {
-        res.status(401).send("Please log in before accessing this page");
-      }
-    } catch (err) {
-      next(err);
-    }
-  });
 };
 
 const configureApiKey = (router: IRouter<any>, app: Express) => {
@@ -167,18 +153,16 @@ const configureApiKey = (router: IRouter<any>, app: Express) => {
           if (user != null) {
             return done(null, user, AuthMethodOptions.API_KEY);
           }
+          // WORKAROUND: Passport doesn't differentiate between unspecified and invalid authentication details,
+          // so following the recommended pattern of "return done(null, false)" will continue down the strategy chain
+          // until "anonymous" successfully authenticates the user. Throwing an error seems to be the only way to give
+          // correct feedback.
+          const error = new UserError('Invalid API key');
+          (error as any).status = 401;
+          throw error;
+        } else {
+          return done(null, false);
         }
-        // WORKAROUND: Passport doesn't differentiate between unspecified and invalid authentication details,
-        // so following the recommended pattern of "return done(null, false)" will continue down the strategy chain
-        // until "anonymous" successfully authenticates the user. Throwing an error seems to be the only way to give
-        // correct feedback.
-        const error = new UserError(
-          prefix.test(header) ? 'Invalid API key'
-          : /Bearer /i.test(header) ? 'Invalid JWT'
-          : 'Malformed Authorization header'
-        );
-        (error as any).status = 401;
-        throw error;
       } catch (err) {
         return done(err);
       }
