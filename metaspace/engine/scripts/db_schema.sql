@@ -9,6 +9,8 @@ CREATE TABLE "graphql"."credentials" (
   "id" uuid NOT NULL DEFAULT uuid_generate_v1mc(), 
   "hash" text, 
   "google_id" text, 
+  "api_key" text, 
+  "api_key_last_updated" TIMESTAMP, 
   "email_verification_token" text, 
   "email_verification_token_expires" TIMESTAMP, 
   "email_verified" boolean NOT NULL DEFAULT false, 
