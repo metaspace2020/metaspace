@@ -63,6 +63,17 @@ CREATE INDEX "IDX_d99bb7781b0c98876331d19387" ON "graphql"."user_project" (
   "project_id"
 ) ;
 
+CREATE TABLE "graphql"."project_ext_link" (
+  "id" uuid NOT NULL DEFAULT uuid_generate_v1mc(), 
+  "project_id" uuid NOT NULL, 
+  "provider" text NOT NULL, 
+  "link" text NOT NULL, 
+  CONSTRAINT "UQ_c2d741fd8a35d8dfb29fbe5348c" UNIQUE ("project_id", 
+  "provider", 
+  "link"), 
+  CONSTRAINT "PK_d7d5ac93145c2b2b796bbfd6246" PRIMARY KEY ("id")
+);
+
 CREATE TABLE "graphql"."dataset" (
   "id" text NOT NULL, 
   "user_id" uuid NOT NULL, 
@@ -80,6 +91,17 @@ CREATE TABLE "graphql"."dataset_project" (
   "publication_status" text NOT NULL DEFAULT 'UNPUBLISHED', 
   CONSTRAINT "PK_9511b6cda2f4d4299812106cdd4" PRIMARY KEY ("dataset_id", 
   "project_id")
+);
+
+CREATE TABLE "graphql"."dataset_ext_link" (
+  "id" uuid NOT NULL DEFAULT uuid_generate_v1mc(), 
+  "dataset_id" text NOT NULL, 
+  "provider" text NOT NULL, 
+  "link" text NOT NULL, 
+  CONSTRAINT "UQ_ed208473066c676c0bf9cd8d1c2" UNIQUE ("dataset_id", 
+  "provider", 
+  "link"), 
+  CONSTRAINT "PK_26589fdf66c15ae925b9e5a2809" PRIMARY KEY ("id")
 );
 
 CREATE TABLE "graphql"."user" (
@@ -223,6 +245,10 @@ ALTER TABLE "graphql"."user_project" ADD CONSTRAINT "FK_d99bb7781b0c98876331d193
   "project_id") REFERENCES "graphql"."project"("id"
 ) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
+ALTER TABLE "graphql"."project_ext_link" ADD CONSTRAINT "FK_ce40f9dbdb59a2157346a7725c7" FOREIGN KEY (
+  "project_id") REFERENCES "graphql"."project"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
 ALTER TABLE "graphql"."dataset" ADD CONSTRAINT "FK_d890658f7d5c8961e0a0cbdbe41" FOREIGN KEY (
   "user_id") REFERENCES "graphql"."user"("id"
 ) ON DELETE NO ACTION ON UPDATE NO ACTION;
@@ -238,6 +264,10 @@ ALTER TABLE "graphql"."dataset_project" ADD CONSTRAINT "FK_8bb698a02c945dc2a67a2
 ALTER TABLE "graphql"."dataset_project" ADD CONSTRAINT "FK_e192464449c2ac136fd4f00b439" FOREIGN KEY (
   "project_id") REFERENCES "graphql"."project"("id"
 ) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE "graphql"."dataset_ext_link" ADD CONSTRAINT "FK_1265c9daee4d4d637999c6ec0d5" FOREIGN KEY (
+  "dataset_id") REFERENCES "graphql"."dataset"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
 
 ALTER TABLE "graphql"."user" ADD CONSTRAINT "FK_1b5eb1327a74d679537bdc1fa5b" FOREIGN KEY (
   "credentials_id") REFERENCES "graphql"."credentials"("id"

@@ -39,7 +39,6 @@ export class ColocJob {
   sampleIonIds: number[];
 
   @OneToMany(type => ColocAnnotation, colocAnnotation => colocAnnotation.colocJob)
-  @JoinTable({ name: 'dataset_project' })
   colocAnnotations: ColocAnnotation[];
 }
 

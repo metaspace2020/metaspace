@@ -4,7 +4,9 @@ import {
   Column,
   JoinColumn,
   OneToMany,
-  ManyToOne, Index, JoinTable,
+  ManyToOne,
+  Index,
+  Unique,
 } from 'typeorm';
 
 import {User} from '../user/model';
@@ -13,6 +15,7 @@ import {DatasetProject} from '../dataset/model';
 import {Moment} from 'moment';
 import {MomentValueTransformer} from '../../utils/MomentValueTransformer';
 import {PublicationStatusOptions as PSO} from './PublicationStatusOptions';
+import {ELPO, ExternalLinkProvider} from './ExternalLinkProvider';
 
 export const UserProjectRoleOptions: Record<UserProjectRole, UserProjectRole> = {
   INVITED: 'INVITED',
@@ -41,7 +44,6 @@ export class Project {
   isPublic: boolean;
 
   @OneToMany(type => DatasetProject, datasetProject => datasetProject.project)
-  @JoinTable({ name: 'dataset_project' })
   datasetProjects: DatasetProject[];
 
   @Column({ name: 'created_dt', type: 'timestamp without time zone', default: () => "(now() at time zone 'utc')",
@@ -62,6 +64,9 @@ export class Project {
 
   @Column({ type: 'text', enum: Object.keys(PSO), default: PSO.UNPUBLISHED })
   publicationStatus: PublicationStatus;
+
+  @OneToMany(type => ProjectExternalLink, extLink => extLink.project)
+  externalLinks: ProjectExternalLink[];
 }
 
 @Entity('user_project')
@@ -86,7 +91,29 @@ export class UserProject {
   role: UserProjectRole;
 }
 
+@Entity({ name: 'project_ext_link' })
+@Unique(['projectId', 'provider', 'link'])
+export class ProjectExternalLink {
+
+  @PrimaryColumn({ type: 'uuid', default: () => 'uuid_generate_v1mc()' })
+  id: string;
+
+  @Column({ type: 'text' })
+  projectId: string;
+
+  @ManyToOne(type => Project, {onDelete: 'CASCADE'})
+  @JoinColumn({ name: 'project_id' })
+  project: Project;
+
+  @Column({ type: 'text', enum: Object.keys(ELPO) })
+  provider: ExternalLinkProvider;
+
+  @Column({ type: 'text' })
+  link: string;
+}
+
 export const PROJECT_ENTITIES = [
   Project,
   UserProject,
+  ProjectExternalLink,
 ];
