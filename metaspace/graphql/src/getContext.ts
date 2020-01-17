@@ -1,5 +1,5 @@
 import {EntityManager, In, ObjectType} from 'typeorm';
-import {Context, ContextCacheKeyArg, ContextUser, BaseContext, ContextUserRole} from './context';
+import {Context, ContextCacheKeyArg, ContextUser, BaseContext, ContextUserRole, AuthMethodOptions} from './context';
 import {User as UserModel} from './modules/user/model';
 import {Project as ProjectModel, UserProjectRoleOptions as UPRO} from './modules/project/model';
 import {UserError} from 'graphql-errors';
@@ -83,7 +83,7 @@ const getBaseContext = (jwtUser: JwtUser | UserModel | null, entityManager: Enti
 
   const contextUser: ContextUser = {
     role: 'guest',
-    authMethod: req && req.authInfo || 'unknown',
+    authMethod: req && req.authInfo || AuthMethodOptions.UNKNOWN,
     getProjectRoles,
     getMemberOfProjectIds,
   };
@@ -128,7 +128,7 @@ export default getContext;
 
 export const getContextForTest = (jwtUser: JwtUser | UserModel | null, entityManager: EntityManager): Context => {
   // TODO: Add mocks for req & res if/when needed
-  const reqMock = { session: null } as any as Request;
+  const reqMock = { session: null, authInfo: AuthMethodOptions.JWT } as any as Request;
   // Add group info if missing, so that tests don't have to care about where they get UserModel instances
   if (jwtUser != null && !('groupIds' in jwtUser) && !('groups' in jwtUser)) {
     (jwtUser as any).groupIds = [];
