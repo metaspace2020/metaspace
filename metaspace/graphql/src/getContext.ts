@@ -9,9 +9,9 @@ import {Request, Response} from 'express';
 import * as _ from 'lodash';
 import * as DataLoader from 'dataloader';
 
-const getBaseContext = (jwtUser: JwtUser | UserModel | null, entityManager: EntityManager,
-                req?: Request, res?: Response) => {
-  const user = jwtUser != null && jwtUser.id != null ? jwtUser : null;
+const getBaseContext = (userFromRequest: JwtUser | UserModel | null, entityManager: EntityManager,
+                        req?: Request, res?: Response) => {
+  const user = userFromRequest != null && userFromRequest.id != null ? userFromRequest : null;
   const contextCache: Record<string, any> = {};
 
   const contextCacheGet = <TArgs extends readonly ContextCacheKeyArg[], V>
