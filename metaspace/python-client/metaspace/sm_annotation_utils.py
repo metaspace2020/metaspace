@@ -14,10 +14,16 @@ def _extract_data(res):
         raise Exception('Wrong Content-Type: {}'.format(res.headers.get('Content-Type')))
     res_json = res.json()
     if 'data' in res_json and 'errors' not in res_json:
-        return res.json()['data']
+        return res_json['data']
     else:
-        pprint.pprint(res.json()['errors'])
-        raise Exception(res.json()['errors'][0]['message'])
+        if 'errors' in res_json:
+            pprint.pprint(res_json['errors'])
+            raise Exception(res_json['errors'][0]['message'])
+        elif 'message' in res_json:
+            raise Exception(res_json['message'])
+        else:
+            pprint.pprint(res_json)
+            raise Exception('Invalid response from server')
 
 
 def get_config(host, email=None, password=None, verify_certificate=True):
@@ -40,7 +46,10 @@ class GraphQLClient(object):
         self.session = requests.Session()
         self.session.verify = self._config['verify_certificate']
         self.logged_in = False
-        if self._config['usr_email']:
+
+        if self._config.get('usr_api_key'):
+            self.logged_in = self.query("query { currentUser { id } }") is not None
+        elif self._config['usr_email']:
             login_res = self.session.post(
                 self._config['signin_url'],
                 params={"email": self._config['usr_email'], "password": self._config['usr_pass']},
@@ -53,10 +62,16 @@ class GraphQLClient(object):
                 login_res.raise_for_status()
 
     def query(self, query, variables={}):
+        api_key = self._config.get('usr_api_key')
+        if api_key:
+            headers = {'Authorization': f'Api-Key {api_key}'}
+        else:
+            headers = {'Authorization': 'Bearer ' + self.get_jwt()}
+
         res = self.session.post(
             self._config['graphql_url'],
             json={'query': query, 'variables': variables},
-            headers={'Authorization': 'Bearer ' + self.get_jwt()},
+            headers=headers,
             verify=self._config['verify_certificate'],
         )
         return _extract_data(res)
@@ -841,11 +856,15 @@ class SMInstance(object):
     def __repr__(self):
         return "SMInstance({})".format(self._config['graphql_url'])
 
-    def login(self, email, password):
+    def login(self, email=None, password=None, api_key=None):
+        assert (
+            email and password
+        ) or api_key, 'Either email and password, or api_key must be provided'
         self._config['usr_email'] = email
         self._config['usr_pass'] = password
+        self._config['usr_api_key'] = api_key
         self.reconnect()
-        return self._gqclient.logged_in
+        assert self._gqclient.logged_in, 'Login failed'
 
     def reconnect(self):
         self._gqclient = GraphQLClient(self._config)

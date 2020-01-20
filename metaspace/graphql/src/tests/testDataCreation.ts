@@ -13,16 +13,20 @@ import {Dataset, DatasetProject} from '../modules/dataset/model';
 import {EngineDataset} from '../modules/engine/model';
 import {Group, UserGroup as UserGroupModel} from '../modules/group/model';
 
-
 export const createTestUser = async (user?: Partial<User>): Promise<User> => {
-  const creds = (await testEntityManager.save(Credentials, {})) as any as Credentials;
-  return await testEntityManager.save(User, {
+  return (await createTestUserWithCredentials(user))[0]
+};
+
+export const createTestUserWithCredentials = async (user?: Partial<User>): Promise<[User, Credentials]> => {
+  const creds = (await testEntityManager.save(Credentials, {}, {})) as Credentials;
+  const userModel = await testEntityManager.save(User, {
     name: 'tester',
     role: 'user',
     credentialsId: creds.id,
     email: `${Math.random()}@example.com`,
     ...user,
   }) as User;
+  return [userModel, creds];
 };
 
 export const createTestGroup = async (group?: Partial<Group>): Promise<Group> => {
@@ -74,15 +78,6 @@ export const createTestProjectMember = async (projectOrId: string | {id: string}
   return user;
 };
 
-const dbInsert = async (table: string, params: object) => {
-  const paramFields = Object.keys(params);
-  const paramValues = Object.values(params);
-  const paramIndexes = paramFields.map((key, idx) => `$${idx+1}`);
-  await testEntityManager.query(
-    `INSERT INTO ${table} (${paramFields.join(',')}) VALUES (${paramIndexes.join(',')})`,
-    paramValues);
-};
-
 const genDatasetId = () => {
   const randomUnixTime = 150e10 + Math.floor(Math.random() * 10e10);
   return moment(randomUnixTime).toISOString()
@@ -97,13 +92,13 @@ export const createTestDataset = async (dataset: Partial<Dataset> = {}, engineDa
     ...dataset,
   });
 
-  await dbInsert('public.dataset', {
+  await testEntityManager.save(EngineDataset, {
     id: datasetId,
     name: 'test dataset',
-    upload_dt: new Date,
+    uploadDt: moment.utc(),
     metadata: {},
     status: 'FINISHED',
-    is_public: true,
+    isPublic: true,
     ...engineDataset,
   });
 

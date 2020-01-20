@@ -17,8 +17,7 @@ import * as session from 'express-session';
 import * as connectRedis from 'connect-redis';
 import * as Sentry from '@sentry/node';
 import {ApolloServer} from 'apollo-server-express';
-import * as jwt from 'express-jwt';
-import * as jwtSimple from 'jwt-simple';
+import * as jsonwebtoken from 'jsonwebtoken';
 import * as cors from 'cors';
 import { execute, subscribe, GraphQLError } from 'graphql';
 import {IsUserError} from 'graphql-errors';
@@ -119,7 +118,9 @@ async function createSubscriptionServerAsync(config, connection) {
     schema: executableSchema,
     onOperation(message, params) {
       const jwt = message.payload.jwt;
-      const user = jwt != null ? jwtSimple.decode(jwt, config.jwt.secret, false, config.jwt.algorithm) : null;
+      const user = jwt != null
+        ? jsonwebtoken.verify(jwt, config.jwt.secret, {algorithms: [config.jwt.algorithm]})
+        : null;
       params.context = getContextForSubscription(user && user.user, connection.manager);
       params.formatError = formatGraphQLError;
       return params;
@@ -174,11 +175,6 @@ async function createHttpServerAsync(config, connection) {
 
   app.use(cors());
   app.use(compression());
-  app.use(jwt({
-    secret: config.jwt.secret,
-    // issuer: config.jwt.issuer, // TODO: Add issuer to config so that it can be validated
-    credentialsRequired: false,
-  }));
 
   configureCronSchedule(connection.manager);
 
@@ -188,7 +184,7 @@ async function createHttpServerAsync(config, connection) {
 
   const apollo = new ApolloServer({
     schema: executableSchema,
-    context: ({req, res}) => getContext(req.user && req.user.user, connection.manager, req, res),
+    context: ({req, res}) => getContext(req.user, connection.manager, req, res),
     playground: {
       settings: {
         'editor.theme': 'light',

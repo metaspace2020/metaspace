@@ -2,8 +2,11 @@ import {Express, IRouter, NextFunction, Request, Response, Router} from 'express
 import {callbackify} from 'util';
 import * as Passport from 'passport';
 import {Strategy as LocalStrategy} from 'passport-local';
+import {ExtractJwt, Strategy as JwtStrategy} from 'passport-jwt';
 import {Strategy as GoogleStrategy} from 'passport-google-oauth20';
-import * as JwtSimple from 'jwt-simple';
+import {HeaderAPIKeyStrategy} from 'passport-headerapikey';
+
+import * as jsonwebtoken from 'jsonwebtoken';
 import {EntityManager} from 'typeorm';
 import 'express-session';
 
@@ -11,18 +14,20 @@ import config from '../../utils/config';
 import {User} from '../user/model';
 import {Project} from '../project/model';
 import {
-  createUserCredentials,
+  createUserCredentials, findUserByApiKey,
   findUserByEmail,
   findUserByGoogleId,
   findUserById,
   initOperation,
   resetPassword,
-  sendResetPasswordToken,
+  sendResetPasswordToken, signout,
   validateResetPasswordToken,
   verifyEmail,
   verifyPassword,
 } from './operation';
-import {getUserFromRequest, middleware} from './middleware';
+import {AuthMethodOptions} from '../../context';
+import {UserError} from 'graphql-errors';
+import NoisyJwtStrategy from './NoisyJwtStrategy';
 
 const preventCache = (req: Request, res: Response, next: NextFunction) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
@@ -31,8 +36,19 @@ const preventCache = (req: Request, res: Response, next: NextFunction) => {
   next();
 };
 
-const configurePassport = (router: IRouter<any>) => {
-  middleware.forEach(m => { router.use(m); });
+export const getUserFromRequest = (req: Request): User | null => {
+  const user = (req as any).user;
+  return user ? user as User : null;
+};
+
+const configurePassport = (router: IRouter<any>, app: Express) => {
+  app.use(Passport.initialize());
+  // GraphQL endpoint can use any authentication method, but precedence is given to JWT/API Key as they're usually
+  // explicitly provided and should override any session-based authentication
+  app.use('/graphql', Passport.authenticate(['jwt', 'headerapikey', 'session', 'anonymous'], {session: false}));
+  // /api_auth endpoints only use session-based authentication (i.e. local/google), to prevent JWT/API keys from being
+  // able to be used for resetting passwords, generating new JWTs, etc.
+  router.use(Passport.session());
 
   Passport.serializeUser<User, string>(callbackify( async (user: User) => user.id));
 
@@ -40,14 +56,12 @@ const configurePassport = (router: IRouter<any>) => {
     return await findUserById(id, false, true) || false;
   }));
 
-  router.post('/signout', preventCache, (req, res) => {
-    (req as any).session.destroy();
-    req.logout();
+  router.post('/signout', preventCache, async (req, res) => {
+    await signout(req);
     res.send('OK');
   });
-  router.get('/signout', preventCache, (req, res) => {
-    (req as any).session.destroy();
-    req.logout();
+  router.get('/signout', preventCache, async (req, res) => {
+    await signout(req);
     res.redirect('/');
   });
 };
@@ -90,8 +104,24 @@ const configureJwt = (router: IRouter<any>) => {
         }
       };
     }
-    return JwtSimple.encode(payload as JwtPayload, config.jwt.secret, config.jwt.algorithm);
+    return jsonwebtoken.sign(payload as JwtPayload, config.jwt.secret, {algorithm: config.jwt.algorithm});
   }
+
+  Passport.use(new NoisyJwtStrategy({
+    secretOrKey: config.jwt.secret,
+    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+    algorithms: [config.jwt.algorithm],
+  }, (jwtPayload: JwtPayload, done: any) => {
+    try {
+      if (jwtPayload.user && jwtPayload.user.id) {
+        done(null, jwtPayload.user, AuthMethodOptions.JWT);
+      } else {
+        done(null, false);
+      }
+    } catch (err) {
+      done(err);
+    }
+  }));
 
   // Gives a one-time token, which expires in 60 seconds.
   // (this allows small time discrepancy between different servers)
@@ -108,20 +138,37 @@ const configureJwt = (router: IRouter<any>) => {
       next(err);
     }
   });
+};
 
-  router.get('/getapitoken', async (req, res, next) => {
-    try {
-      const user = getUserFromRequest(req);
-      if (user) {
-        const jwt = mintJWT(user, null);
-        res.send(`Your API token is: ${jwt}`);
-      } else {
-        res.status(401).send("Please log in before accessing this page");
+const configureApiKey = (router: IRouter<any>, app: Express) => {
+  const prefix = /^Api-Key /i;
+  Passport.use(new HeaderAPIKeyStrategy (
+    // Handling prefix manually because HeaderAPIKeyStrategy raises an error when a different prefix is used
+    {header: 'Authorization', prefix: ''},
+    false,
+    async (header, done) => {
+      try {
+        if (prefix.test(header)) {
+          const apikey = header.replace(prefix, '');
+          const user = await findUserByApiKey(apikey, true);
+          if (user != null) {
+            return done(null, user, AuthMethodOptions.API_KEY);
+          }
+          // WORKAROUND: Passport doesn't differentiate between unspecified and invalid authentication details,
+          // so following the recommended pattern of "return done(null, false)" will continue down the strategy chain
+          // until "anonymous" successfully authenticates the user. Throwing an error seems to be the only way to give
+          // correct feedback.
+          const error = new UserError('Invalid API key');
+          (error as any).status = 401;
+          throw error;
+        } else {
+          return done(null, false);
+        }
+      } catch (err) {
+        return done(err);
       }
-    } catch (err) {
-      next(err);
     }
-  });
+  ));
 };
 
 const configureLocalAuth = (router: IRouter<any>) => {
@@ -130,10 +177,18 @@ const configureLocalAuth = (router: IRouter<any>) => {
       usernameField: 'email',
       passwordField: 'password',
     },
-    callbackify(async (username: string, password: string) => {
-      const user = await findUserByEmail(username);
-      return user && await verifyPassword(password, user.credentials.hash) ? user : false;
-    })
+    async (username: string, password: string, done: any) => {
+      try {
+        const user = await findUserByEmail(username);
+        if (user && await verifyPassword(password, user.credentials.hash)) {
+          done(null, user, AuthMethodOptions.SESSION);
+        } else {
+          done(null, false);
+        }
+      } catch (err) {
+        done(err);
+      }
+    }
   ));
 
   router.post('/signin', function(req, res, next) {
@@ -195,23 +250,33 @@ const configureGoogleAuth = (router: IRouter<any>) => {
         clientSecret: config.google.client_secret,
         callbackURL: config.google.callback_url,
       },
-      callbackify(async (accessToken: string, refreshToken: string, profile: any) => {
-        let user = await findUserByGoogleId(profile.id)
-          || await findUserByEmail(profile.emails[0].value);
-        if (!user) {
-          await createUserCredentials({
-            googleId: profile.id,
-            name: profile.displayName,
-            email: profile.emails[0].value,
-          });
-          user = await findUserByGoogleId(profile.id);
+      async (accessToken: string, refreshToken: string, profile: any, done: any) => {
+        try {
+          let user = await findUserByGoogleId(profile.id)
+            || await findUserByEmail(profile.emails[0].value);
+          if (!user) {
+            await createUserCredentials({
+              googleId: profile.id,
+              name: profile.displayName,
+              email: profile.emails[0].value,
+            });
+            user = await findUserByGoogleId(profile.id);
+          }
+          if (user) {
+            done(null, user, AuthMethodOptions.SESSION);
+          } else {
+            done(null, false);
+          }
+          return user;
+        } catch (err) {
+          done(err);
         }
-        return user;
-      })
+      }
     ));
 
     router.get('/google', Passport.authenticate('google', {
-      scope: ['profile', 'email']
+      prompt: 'select_account',
+      scope: ['profile', 'email'],
     }));
 
     router.get('/google/callback', Passport.authenticate('google', {
@@ -336,8 +401,9 @@ const configureResetPassword = (router: IRouter<any>) => {
 export const configureAuth = async (app: Express, entityManager: EntityManager) => {
   const router = Router();
   await initOperation(entityManager);
-  configurePassport(router);
+  configurePassport(router, app);
   configureJwt(router);
+  configureApiKey(router, app);
   configureLocalAuth(router);
   configureGoogleAuth(router);
   configureImpersonation(router);

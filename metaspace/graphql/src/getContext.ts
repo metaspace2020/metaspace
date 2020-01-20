@@ -1,5 +1,6 @@
 import {EntityManager, In, ObjectType} from 'typeorm';
-import {Context, ContextCacheKeyArg, ContextUser, BaseContext} from './context';
+import {Context, ContextCacheKeyArg, ContextUser, BaseContext, ContextUserRole, AuthMethodOptions} from './context';
+import {User as UserModel} from './modules/user/model';
 import {Project as ProjectModel, UserProjectRoleOptions as UPRO} from './modules/project/model';
 import {UserError} from 'graphql-errors';
 import {JwtUser} from './modules/auth/controller';
@@ -8,9 +9,9 @@ import {Request, Response} from 'express';
 import * as _ from 'lodash';
 import * as DataLoader from 'dataloader';
 
-const getBaseContext = (jwtUser: JwtUser | null, entityManager: EntityManager,
-                req?: Request, res?: Response) => {
-  const user = jwtUser != null && jwtUser.id != null ? jwtUser : null;
+const getBaseContext = (userFromRequest: JwtUser | UserModel | null, entityManager: EntityManager,
+                        req?: Request, res?: Response) => {
+  const user = userFromRequest != null && userFromRequest.id != null ? userFromRequest : null;
   const contextCache: Record<string, any> = {};
 
   const contextCacheGet = <TArgs extends readonly ContextCacheKeyArg[], V>
@@ -81,15 +82,22 @@ const getBaseContext = (jwtUser: JwtUser | null, entityManager: EntityManager,
   };
 
   const contextUser: ContextUser = {
-    role: 'user',
+    role: 'guest',
+    authMethod: req && req.authInfo || AuthMethodOptions.UNKNOWN,
     getProjectRoles,
     getMemberOfProjectIds,
   };
   if (user) {
     contextUser.id = user.id;
-    contextUser.role = user.role as ('user' | 'admin');
-    contextUser.email = user.email;
-    contextUser.groupIds = user.groupIds;
+    contextUser.role = user.role as ContextUserRole;
+    contextUser.email = user.email || undefined;
+    if ('groupIds' in user) {
+      contextUser.groupIds = user.groupIds;
+    } else if ('groups' in user && user.groups != null) {
+      contextUser.groupIds = user.groups.map(group => group.groupId);
+    } else {
+      throw new Error('User supplied to getBaseContext is missing group information');
+    }
   }
 
   return {
@@ -118,8 +126,12 @@ export const getContextForSubscription = (jwtUser: JwtUser | null, entityManager
 
 export default getContext;
 
-export const getContextForTest = (jwtUser: JwtUser | null, entityManager: EntityManager): Context => {
+export const getContextForTest = (jwtUser: JwtUser | UserModel | null, entityManager: EntityManager): Context => {
   // TODO: Add mocks for req & res if/when needed
-  const reqMock = { session: null };
-  return getContext(jwtUser, entityManager, reqMock as any, null as any);
+  const reqMock = { session: null, authInfo: AuthMethodOptions.JWT } as any as Request;
+  // Add group info if missing, so that tests don't have to care about where they get UserModel instances
+  if (jwtUser != null && !('groupIds' in jwtUser) && !('groups' in jwtUser)) {
+    (jwtUser as any).groupIds = [];
+  }
+  return getBaseContext(jwtUser, entityManager, reqMock, {} as Response) as Context;
 };

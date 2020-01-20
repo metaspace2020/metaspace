@@ -8,8 +8,9 @@ export interface UserProfileQueryGroup {
   role: UserGroupRole;
   numDatasets: number;
   group: {
-    id: string,
-    name: string
+    id: string;
+    name: string;
+    shortName: string;
     urlSlug: string | null;
     hasPendingRequest: boolean | null;
   };
@@ -30,6 +31,7 @@ export interface UserProfileQuery {
   name: string;
   role: string;
   email: string | null;
+  apiKey: string | null;
   groups: UserProfileQueryGroup[] | null;
   primaryGroup: UserProfileQueryGroup | null;
   projects: UserProfileQueryProject[] | null;
@@ -41,6 +43,7 @@ const userProfileFragment =
   name
   role
   email
+  apiKey
   primaryGroup {
     ...UserProfileQueryGroup
   }
@@ -64,6 +67,7 @@ fragment UserProfileQueryGroup on UserGroup {
   group {
     id
     name
+    shortName
     urlSlug
     hasPendingRequest
   }
@@ -81,6 +85,14 @@ ${userProfileFragment}
 export const updateUserMutation =
   gql`mutation ($userId: ID!, $update: UpdateUserInput!) {
   updateUser(userId: $userId, update: $update) {
+    ...UserProfileFragment
+  }
+}
+${userProfileFragment}`;
+
+export const resetUserApiKeyMutation =
+  gql`mutation ($userId: ID!, $removeKey: Boolean!) {
+  resetUserApiKey(userId: $userId, removeKey: $removeKey) {
     ...UserProfileFragment
   }
 }
