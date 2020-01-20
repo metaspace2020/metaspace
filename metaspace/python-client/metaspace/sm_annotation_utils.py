@@ -48,10 +48,7 @@ class GraphQLClient(object):
         self.logged_in = False
 
         if self._config.get('usr_api_key'):
-            try:
-                self.logged_in = self.query("query { currentUser { id } }") is not None
-            except:
-                pass
+            self.logged_in = self.query("query { currentUser { id } }") is not None
         elif self._config['usr_email']:
             login_res = self.session.post(
                 self._config['signin_url'],
