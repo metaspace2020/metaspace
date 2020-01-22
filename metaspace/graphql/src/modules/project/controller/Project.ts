@@ -11,6 +11,8 @@ import {Context} from '../../../context';
 import {convertUserToUserSource} from '../../user/util/convertUserToUserSource';
 import {In} from 'typeorm';
 import {DatasetProject as DatasetProjectModel} from '../../dataset/model';
+import * as DataLoader from 'dataloader';
+import * as _ from 'lodash';
 
 const canViewProjectMembersAndDatasets = (currentUserRole: UserProjectRole | null, isAdmin: boolean) =>
   isAdmin || ([UPRO.MANAGER, UPRO.MEMBER] as (UserProjectRole | null)[]).includes(currentUserRole);
@@ -105,6 +107,10 @@ const ProjectResolvers: FieldResolversFor<Project, ProjectSource> = {
     // TODO: Use a custom GraphQL scalar type so that Moment and Date are automatically converted to ISO strings.
     // graphql-binding translates all custom scalar types to strings, unless you run it programmatically and change its config
     return project.createdDT.toISOString();
+  },
+
+  async externalLinks(project, args, ctx) {
+    return project.externalLinks || [];
   },
 };
 

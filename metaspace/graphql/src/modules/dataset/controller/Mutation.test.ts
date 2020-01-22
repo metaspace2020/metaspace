@@ -3,14 +3,20 @@ import * as _ from 'lodash';
 
 import {processingSettingsChanged} from './Mutation';
 import {
-  doQuery, onAfterAll, onAfterEach,
-  onBeforeAll, onBeforeEach, setupTestUsers, testEntityManager,
+  doQuery,
+  onAfterAll,
+  onAfterEach,
+  onBeforeAll,
+  onBeforeEach,
+  setupTestUsers,
+  testEntityManager,
 } from '../../../tests/graphqlTestEnvironment';
 import {PublicationStatusOptions as PSO} from '../../project/PublicationStatusOptions';
 import {createTestDatasetInProject} from '../../../tests/testDataCreation';
 import {Dataset as DatasetType} from '../../../binding';
 import {Dataset as DatasetModel, DatasetProject as DatasetProjectModel} from '../model';
 import {EngineDataset, EngineDataset as EngineDatasetModel} from '../../engine/model';
+
 
 describe('processingSettingsChanged', () => {
   const metadata = {

@@ -1,7 +1,6 @@
 import {Context} from '../../../context';
 import {
   Project as ProjectModel,
-  ProjectExternalLink,
   UserProject as UserProjectModel,
   UserProjectRoleOptions as UPRO,
 } from '../model';
@@ -28,8 +27,7 @@ import {smAPIUpdateDataset} from '../../../utils/smAPI';
 import {getDatasetForEditing} from '../../dataset/operation/getDatasetForEditing';
 import {utc} from 'moment';
 import generateRandomToken from '../../../utils/generateRandomToken';
-import {ELPO, isExternalLinkProvider} from '../ExternalLinkProvider';
-import {Not} from 'typeorm';
+import {addExternalLink, removeExternalLink} from '../ExternalLink';
 
 
 const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
@@ -301,17 +299,12 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     ctx: Context
   ) => {
     await asyncAssertCanEditProject(ctx, projectId);
-    if (!isExternalLinkProvider(provider)) {
-      throw new UserError('Invalid provider. Allowed providers are: ' + Object.values(ELPO).join(', '));
-    }
-
-    if (replaceExisting) {
-      await ctx.entityManager.delete(ProjectExternalLink, {projectId, provider, link: Not(link)})
-    }
-
-    if ((await ctx.entityManager.count(ProjectExternalLink, {projectId, provider, link})) > 0) {
-      await ctx.entityManager.insert(ProjectExternalLink, {projectId, provider, link});
-    }
+    await ctx.entityManager.transaction(async txn => {
+      const project = await ctx.entityManager.findOneOrFail(ProjectModel, projectId);
+      await txn.update(ProjectModel, projectId, {
+        externalLinks: addExternalLink(project.externalLinks, provider, link, replaceExisting),
+      });
+    });
 
     return (await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, projectId))!;
@@ -323,12 +316,12 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     ctx: Context
   ) => {
     await asyncAssertCanEditProject(ctx, projectId);
-
-    if (link) {
-      await ctx.entityManager.delete(ProjectExternalLink, {projectId, provider, link})
-    } else {
-      await ctx.entityManager.delete(ProjectExternalLink, {projectId, provider})
-    }
+    await ctx.entityManager.transaction(async txn => {
+      const project = await ctx.entityManager.findOneOrFail(ProjectModel, projectId);
+      await txn.update(ProjectModel, projectId, {
+        externalLinks: removeExternalLink(project.externalLinks, provider, link),
+      });
+    });
 
     return (await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, projectId))!;

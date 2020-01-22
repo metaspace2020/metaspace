@@ -1,10 +1,10 @@
-import {Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryColumn, Unique} from 'typeorm';
+import {Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryColumn} from 'typeorm';
 import {Group} from '../group/model';
 import {User} from '../user/model';
 import {Project} from '../project/model';
 import {PublicationStatus} from '../../binding';
 import {PublicationStatusOptions as PSO} from '../project/PublicationStatusOptions';
-import {ELPO, ExternalLinkProvider, ExternalLinkProviderOptions} from '../project/ExternalLinkProvider';
+import {ExternalLink} from '../project/ExternalLink';
 
 @Entity()
 export class Dataset {
@@ -39,8 +39,8 @@ export class Dataset {
   @OneToMany(type => DatasetProject, datasetProject => datasetProject.dataset)
   datasetProjects: DatasetProject[];
 
-  @OneToMany(type => DatasetExternalLink, extLink => extLink.dataset)
-  externalLinks: DatasetExternalLink[];
+  @Column({type: 'json', nullable: true})
+  externalLinks: ExternalLink[] | null;
 }
 
 @Entity({ name: 'dataset_project' })
@@ -67,29 +67,7 @@ export class DatasetProject {
   publicationStatus: PublicationStatus;
 }
 
-@Entity({ name: 'dataset_ext_link' })
-@Unique(['datasetId', 'provider', 'link'])
-export class DatasetExternalLink {
-
-  @PrimaryColumn({ type: 'uuid', default: () => 'uuid_generate_v1mc()' })
-  id: string;
-
-  @Column({ type: 'text' })
-  datasetId: string;
-
-  @ManyToOne(type => Dataset, {onDelete: 'CASCADE'})
-  @JoinColumn({ name: 'dataset_id' })
-  dataset: Dataset;
-
-  @Column({ type: 'text', enum: Object.keys(ELPO) })
-  provider: ExternalLinkProvider;
-
-  @Column({ type: 'text' })
-  link: string;
-}
-
 export const DATASET_ENTITIES = [
   Dataset,
   DatasetProject,
-  DatasetExternalLink,
 ];

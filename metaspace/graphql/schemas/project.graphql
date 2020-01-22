@@ -104,9 +104,9 @@ type Mutation {
                          provider: String!,
                          link: String!,
                          # set replaceExisting to True to delete any previous links to the same provider
-                         replaceExisting: Boolean! = False): String!
+                         replaceExisting: Boolean! = False): Project!
 
   removeProjectExternalLink(projectId: String!,
                             provider: String!,
-                            link: String): String!
+                            link: String): Project!
 }

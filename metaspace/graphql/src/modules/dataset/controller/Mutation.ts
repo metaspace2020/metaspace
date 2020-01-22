@@ -3,7 +3,7 @@ import config from '../../../utils/config';
 import logger from '../../../utils/logger';
 import * as Ajv from 'ajv';
 import {UserError} from 'graphql-errors';
-import {EntityManager, Not} from 'typeorm';
+import {EntityManager} from 'typeorm';
 import * as moment from 'moment';
 import * as _ from 'lodash';
 
@@ -13,7 +13,7 @@ import {smAPIRequest} from '../../../utils';
 import {UserProjectRoleOptions as UPRO} from '../../project/model';
 import {PublicationStatusOptions as PSO} from '../../project/PublicationStatusOptions';
 import {UserGroup as UserGroupModel, UserGroupRoleOptions} from '../../group/model';
-import {Dataset as DatasetModel, DatasetExternalLink, DatasetProject as DatasetProjectModel} from '../model';
+import {Dataset as DatasetModel, DatasetProject as DatasetProjectModel} from '../model';
 import {DatasetCreateInput, DatasetUpdateInput, Int, Mutation} from '../../../binding';
 import {Context, ContextUser} from '../../../context';
 import {FieldResolversFor} from '../../../bindingTypes';
@@ -23,7 +23,7 @@ import {getDatasetForEditing} from '../operation/getDatasetForEditing';
 import {deleteDataset} from '../operation/deleteDataset';
 import {verifyDatasetPublicationStatus} from '../operation/verifyDatasetPublicationStatus';
 import {EngineDataset} from '../../engine/model';
-import {ELPO, isExternalLinkProvider} from '../../project/ExternalLinkProvider';
+import {addExternalLink, removeExternalLink} from '../../project/ExternalLink';
 import {esDatasetByID} from '../../../../esConnector';
 
 type MetadataSchema = any;
@@ -380,18 +380,13 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     {datasetId, provider, link, replaceExisting},
     ctx: Context
   ) => {
-    await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId);
-    if (!isExternalLinkProvider(provider)) {
-      throw new UserError('Invalid provider. Allowed providers are: ' + Object.values(ELPO).join(', '));
-    }
+    await ctx.entityManager.transaction(async txn => {
+      const ds = await getDatasetForEditing(txn, ctx.user, datasetId);
+      await txn.update(DatasetModel, ds.id, {
+        externalLinks: addExternalLink(ds.externalLinks, provider, link, replaceExisting),
+      });
+    });
 
-    if (replaceExisting) {
-      await ctx.entityManager.delete(DatasetExternalLink, {datasetId, provider, link: Not(link)})
-    }
-
-    if ((await ctx.entityManager.count(DatasetExternalLink, {datasetId, provider, link})) > 0) {
-      await ctx.entityManager.insert(DatasetExternalLink, {datasetId, provider, link});
-    }
     return await esDatasetByID(datasetId, ctx.user);
   },
 
@@ -400,13 +395,13 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     {datasetId, provider, link},
     ctx: Context
   ) => {
-    await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId);
+    await ctx.entityManager.transaction(async txn => {
+      const ds = await getDatasetForEditing(txn, ctx.user, datasetId);
+      await txn.update(DatasetModel, ds.id, {
+        externalLinks: removeExternalLink(ds.externalLinks, provider, link),
+      });
+    });
 
-    if (link) {
-      await ctx.entityManager.delete(DatasetExternalLink, {datasetId, provider, link})
-    } else {
-      await ctx.entityManager.delete(DatasetExternalLink, {datasetId, provider})
-    }
     return await esDatasetByID(datasetId, ctx.user);
   },
 };
