@@ -45,4 +45,3 @@ def test_remove_project_external_link(sm):
     result = sm.projects.remove_project_external_link(project_id, provider, link)
 
     assert not any(ext_link == {'provider': provider, 'link': link} for ext_link in result)
-

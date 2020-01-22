@@ -9,6 +9,7 @@ from metaspace.sm_annotation_utils import SMInstance
 def sm():
     return SMInstance(config_path=path.join(path.dirname(__file__), '../../test_config'))
 
+
 @pytest.fixture()
 def my_ds_id(sm):
     user_id = sm.current_user_id()
@@ -32,4 +33,3 @@ def test_remove_project_external_link(sm, my_ds_id):
     result = sm.remove_dataset_external_link(my_ds_id, provider, link)
 
     assert not any(ext_link == {'provider': provider, 'link': link} for ext_link in result)
-

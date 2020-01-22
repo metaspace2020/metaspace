@@ -27,10 +27,13 @@ def _extract_data(res):
             raise Exception('Invalid response from server')
 
 
-def get_config(host=None, verify_certificate=True, email=None, password=None, api_key=None, config_path=None):
-    default_config_path = (Path.home() / '.metaspace')
+def get_config(
+    host=None, verify_certificate=True, email=None, password=None, api_key=None, config_path=None
+):
+    default_config_path = Path.home() / '.metaspace'
     try:
         from configparser import ConfigParser
+
         if config_path:
             config_file = Path(config_path).read_text()
         else:
@@ -908,6 +911,7 @@ class SMInstance(object):
     @property
     def projects(self):
         from metaspace.projects_client import ProjectsClient
+
         return ProjectsClient(self._gqclient)
 
     def dataset(self, name=None, id=None):

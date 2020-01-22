@@ -2,7 +2,7 @@ from typing import Optional, List
 from metaspace.sm_annotation_utils import SMInstance, GraphQLClient
 
 try:
-    from typing import TypedDict # Requires Python 3.8
+    from typing import TypedDict  # Requires Python 3.8
 except ImportError:
     TypedDict = dict
 
