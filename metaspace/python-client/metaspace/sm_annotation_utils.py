@@ -1,9 +1,10 @@
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Optional
 
 import pandas as pd
 import numpy as np
-import requests, json, re, os, pprint
+import requests, json, os, pprint
 from copy import deepcopy
 from io import BytesIO
 from PIL import Image
@@ -26,7 +27,33 @@ def _extract_data(res):
             raise Exception('Invalid response from server')
 
 
-def get_config(host, email=None, password=None, verify_certificate=True):
+def get_config(host=None, verify_certificate=True, email=None, password=None, api_key=None, config_path=None):
+    default_config_path = (Path.home() / '.metaspace')
+    try:
+        from configparser import ConfigParser
+        if config_path:
+            config_file = Path(config_path).read_text()
+        else:
+            config_file = default_config_path.read_text()
+
+        config_parser = ConfigParser()
+        config_parser.read_string("[metaspace]\n" + config_file)
+        config = config_parser['metaspace']
+
+        if not host:
+            host = config.get('host')
+        if not email and not api_key:
+            email = config.get('email')
+            password = config.get('password')
+            api_key = config.get('api_key')
+    except Exception as ex:
+        if config_path:
+            raise
+        if default_config_path.exists():
+            print('Error processing ~/.metaspace config file')
+            raise
+
+    host = host or 'https://metaspace2020.eu'
     return {
         'host': host,
         'graphql_url': '{}/graphql'.format(host),
@@ -35,6 +62,7 @@ def get_config(host, email=None, password=None, verify_certificate=True):
         'gettoken_url': '{}/api_auth/gettoken'.format(host),
         'usr_email': email,
         'usr_pass': password,
+        'usr_api_key': api_key,
         'verify_certificate': verify_certificate,
     }
 
@@ -844,9 +872,9 @@ class SMDataset(object):
 
 
 class SMInstance(object):
-    def __init__(self, host='https://metaspace2020.eu', verify_certificate=True):
-        self._config = get_config(host=host, verify_certificate=verify_certificate)
-        if not verify_certificate:
+    def __init__(self, *args, **kwargs):
+        self._config = get_config(*args, **kwargs)
+        if not self._config['verify_certificate']:
             import warnings
             from urllib3.exceptions import InsecureRequestWarning
 
@@ -869,25 +897,18 @@ class SMInstance(object):
     def reconnect(self):
         self._gqclient = GraphQLClient(self._config)
         self._es_client = None
-        self._moldb_client = None
+        self.moldb_client = None
 
         if self._config['moldb_url']:
-            self._moldb_client = MolDBClient(self._config)
+            self.moldb_client = MolDBClient(self._config)
 
-        es_config = self._config.get('elasticsearch', None)
-        if es_config:
-            from elasticsearch import Elasticsearch
+    def logged_in(self):
+        return self._gqclient.logged_in
 
-            self._es_host = es_config['host']
-            self._es_port = es_config['port']
-            self._es_index = es_config['index']
-            self._es_user = es_config.get('user', '')
-            self._es_secret = es_config.get('password', '')
-            self._es_client = Elasticsearch(
-                hosts=['{}:{}'.format(self._es_host, self._es_port)],
-                http_auth=(self._es_user, self._es_secret),
-                index=self._es_index,
-            )
+    @property
+    def projects(self):
+        from metaspace.projects_client import ProjectsClient
+        return ProjectsClient(self._gqclient)
 
     def dataset(self, name=None, id=None):
         if id:
@@ -988,96 +1009,6 @@ class SMInstance(object):
         df.index = [dataset['id'] for dataset in datasets]
         return df
         # return pd.DataFrame.from_records([pd.io.json.json_normalize(json.loads(dataset['metadataJson'])) for dataset in datasets])
-
-    def _get_tables1(self, dataset, sf_adduct_pairs, fields, db_name):
-        results = dataset.results(database=db_name).reset_index()
-        results['sf_adduct'] = results['formula'] + results['adduct']
-        query = [sf + adduct for sf, adduct in sf_adduct_pairs]
-        results = results[results['sf_adduct'].isin(query)]
-        d = {}
-        fill_values = {'fdr': 1.0, 'msm': 0.0}
-        for f in fields:
-            columns = dict(
-                ds_name=dataset.name, formula=results['formula'], adduct=results['adduct']
-            )
-            columns[f] = results[f]
-            df = pd.DataFrame(columns)
-            d[f] = df.pivot_table(
-                f,
-                index=['ds_name'],
-                columns=['formula', 'adduct'],
-                fill_value=fill_values.get(f, 0.0),
-            )
-        return d
-
-    # the functionality below uses ElasticSearch heavily and cannot be replaced with GraphQL
-    # at the moment (aggregations, long lists of matching terms)
-
-    def top_hits(self, datasets, adduct=None, size=100):
-        """
-        NOT AVAILABLE ON THE PUBLIC METASPACE INSTANCE
-        Returns (sum formula, adduct) pairs with highest average MSM scores
-        across multiple datasets. Looks for all adducts by default
-        """
-        assert self._es_client, "You must provide ElasticSearch connection settings!"
-
-        from elasticsearch_dsl import Search
-
-        s = Search(using=self._es_client, index=self._es_index).filter(
-            'terms', ds_name=[d.name for d in datasets]
-        )
-
-        if adduct is not None:
-            s = s.filter('term', adduct=adduct)
-
-        s.aggs.bucket(
-            'per_sf_adduct', 'terms', field='sf_adduct', order={'msm_sum': 'desc'}, size=size
-        ).metric('msm_sum', 'sum', field='msm')
-
-        buckets = s.execute().aggregations.per_sf_adduct.buckets
-        return [re.match(r'(.*?)([+-].*)', res.key).groups() for res in buckets]
-
-    def msm_scores(self, datasets, sf_adduct_pairs, db_name="HMDB-v4"):
-        """
-        NOT AVAILABLE ON THE PUBLIC METASPACE INSTANCE
-        Returns a dataframe of MSM scores for multiple datasets and (sum formula, adduct) pairs.
-        """
-        return self.get_tables(datasets, sf_adduct_pairs, ['msm'], db_name)['msm']
-
-    def get_tables(self, datasets, sf_adduct_pairs, fields=['msm', 'fdr'], db_name="HMDB-v4"):
-        """
-        NOT AVAILABLE ON THE PUBLIC METASPACE INSTANCE
-        Returns dataframe-valued dictionaries of MSM scores
-        for multiple datasets and (sum formula, adduct) pairs.
-        """
-        assert fields, "list of fields can't be empty"
-        assert datasets, "list of datasets can't be empty"
-
-        # special case: if there's only one dataset, use GraphQL
-        if len(datasets) == 1 and not self._es_client:
-            return self._get_tables1(datasets[0], sf_adduct_pairs, fields, db_name)
-        # TODO: use graphql for all queries
-        assert self._es_client, "You must provide ElasticSearch connection settings!"
-        from elasticsearch_dsl import Search
-
-        fill_values = {'fdr': 1.0, 'msm': 0.0}
-        s = (
-            Search(using=self._es_client, index=self._es_index)
-            .filter('terms', ds_name=[d.name for d in datasets])
-            .filter('terms', sf_adduct=[x[0] + x[1] for x in sf_adduct_pairs])
-            .filter('term', db_name=db_name)
-            .fields(['sf', 'adduct', 'ds_name'] + fields)
-        )
-        results = list(s.scan())
-        d = {}
-        for f in fields:
-            records = ((r.ds_name, r.sf, r.adduct, r[f]) for r in results)
-            d[f] = pd.DataFrame.from_records(
-                records, columns=['ds_name', 'sf', 'adduct', f]
-            ).pivot_table(
-                f, index=['ds_name'], columns=['sf', 'adduct'], fill_value=fill_values.get(f, 0.0)
-            )
-        return d
 
     def submit_dataset(
         self,
@@ -1184,6 +1115,63 @@ class SMInstance(object):
 
     def delete_dataset(self, ds_id, **kwargs):
         return self._gqclient.delete_dataset(ds_id, **kwargs)
+
+    def current_user_id(self):
+        result = self._gqclient.query("""query { currentUser { id } }""")
+        return result['currentUser'] and result['currentUser']['id']
+
+    def add_dataset_external_link(
+        self, dataset_id: str, provider: str, link: str, replace_existing=False
+    ):
+        """
+        Note that the current user must be the submitter of the dataset being edited.
+
+        :param dataset_id:
+        :param provider: Must be a known 3rd party link provider name.
+                         Contact us if you're interested in integrating with METASPACE.
+        :param link:
+        :param replace_existing: pass True to overwrite existing links from the same provider
+        :return: The updated list of external links
+        """
+
+        result = self._gqclient.query(
+            """mutation($datasetId: String!, $provider: String!, $link: String!, 
+                        $replaceExisting: Boolean!) {
+                addDatasetExternalLink(datasetId: $datasetId, provider: $provider, link: $link, 
+                                       replaceExisting: $replaceExisting) {
+                    externalLinks { provider link }
+                } 
+            }""",
+            {
+                'datasetId': dataset_id,
+                'provider': provider,
+                'link': link,
+                'replaceExisting': replace_existing,
+            },
+        )
+        return result['addDatasetExternalLink']['externalLinks']
+
+    def remove_dataset_external_link(
+        self, dataset_id: str, provider: str, link: Optional[str] = None
+    ):
+        """
+        Note that the current user must be the submitter of the dataset being edited.
+
+        :param dataset_id:
+        :param provider:
+        :param link: If None, all links from the provider will be removed
+        :return: The updated list of external links
+        """
+
+        result = self._gqclient.query(
+            """mutation($datasetId: String!, $provider: String!, $link: String!) {
+                removeDatasetExternalLink(datasetId: $datasetId, provider: $provider, link: $link) {
+                    externalLinks { provider link }
+                } 
+            }""",
+            {'datasetId': dataset_id, 'provider': provider, 'link': link},
+        )
+        return result['removeDatasetExternalLink']['externalLinks']
 
 
 class MolecularDatabase:

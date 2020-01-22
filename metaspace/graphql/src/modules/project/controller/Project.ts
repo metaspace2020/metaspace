@@ -11,8 +11,6 @@ import {Context} from '../../../context';
 import {convertUserToUserSource} from '../../user/util/convertUserToUserSource';
 import {In} from 'typeorm';
 import {DatasetProject as DatasetProjectModel} from '../../dataset/model';
-import * as DataLoader from 'dataloader';
-import * as _ from 'lodash';
 
 const canViewProjectMembersAndDatasets = (currentUserRole: UserProjectRole | null, isAdmin: boolean) =>
   isAdmin || ([UPRO.MANAGER, UPRO.MEMBER] as (UserProjectRole | null)[]).includes(currentUserRole);
@@ -112,6 +110,14 @@ const ProjectResolvers: FieldResolversFor<Project, ProjectSource> = {
   async externalLinks(project, args, ctx) {
     return project.externalLinks || [];
   },
+
+  async reviewToken(project, args, ctx) {
+    if (project.currentUserRole == UPRO.MANAGER || ctx.isAdmin) {
+      return project.reviewToken;
+    } else {
+      return null;
+    }
+  }
 };
 
 export default ProjectResolvers;
