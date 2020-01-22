@@ -10,7 +10,8 @@ setup(
     long_description_content_type="text/markdown",
     url='https://github.com/metaspace2020/metaspace/tree/master/metaspace/python-client',
     author='Alexandrov Team, EMBL',
-    packages=find_packages(),
+    author_email='contact@metaspace2020.eu',
+    packages=find_packages(exclude=['*tests*']),
     install_requires=[
         'pandas',
         'plotly>=1.12',
