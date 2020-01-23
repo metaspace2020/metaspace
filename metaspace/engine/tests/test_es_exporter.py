@@ -57,8 +57,12 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index, ds_config, metadata):
         "true, 'fs', '{}')",
         [[ds_id, json.dumps(ds_config), json.dumps(metadata), upload_dt]],
     )
+    db.insert(
+        "INSERT INTO molecular_db (id, name, version) VALUES (%s, %s, %s)",
+        rows=[(0, 'HMDB-v4', '2018-04-03')],
+    )
     (job_id,) = db.insert_return(
-        "INSERT INTO job(ds_id, db_id, status, start, finish) "
+        "INSERT INTO job(ds_id, moldb_id, status, start, finish) "
         "VALUES (%s, 0, 'job_status', %s, %s) RETURNING id",
         [[ds_id, last_finished, last_finished]],
     )
@@ -95,11 +99,11 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index, ds_config, metadata):
 
     mol_db_mock = MagicMock(MolecularDB)
     mol_db_mock.id = mol_db_id
-    mol_db_mock.name = 'db_name'
-    mol_db_mock.version = '2017'
+    mol_db_mock.name = 'HMDB-v4'
+    mol_db_mock.version = '2018-04-03'
     mol_db_mock.get_molecules.return_value = pd.DataFrame(
         [('H2O', 'mol_id', 'mol_name'), ('Au', 'mol_id', 'mol_name')],
-        columns=['sf', 'mol_id', 'mol_name'],
+        columns=['formula', 'mol_id', 'mol_name'],
     )
 
     isocalc_mock = MagicMock(IsocalcWrapper)
@@ -151,7 +155,7 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index, ds_config, metadata):
         'ds_acq_geometry': {},
         'annotation_counts': [
             {
-                'db': {'name': 'db_name', 'version': '2017'},
+                'db': {'name': 'HMDB-v4', 'version': '2018-04-03'},
                 'counts': [
                     {'level': 5, 'n': 1},
                     {'level': 10, 'n': 2},
@@ -189,10 +193,10 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index, ds_config, metadata):
         'neutral_loss': '-H',
         'chem_mod': '-H+O',
         'annotation_counts': [],
-        'db_version': '2017',
+        'db_version': '2018-04-03',
         'comp_names': ['mol_name'],
         'comps_count_with_isomers': 1,
-        'db_name': 'db_name',
+        'db_name': 'HMDB-v4',
         'mz': 100.0,
         'comp_ids': ['mol_id'],
         'annotation_id': 1,
@@ -225,10 +229,10 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index, ds_config, metadata):
         'neutral_loss': '',
         'chem_mod': '',
         'annotation_counts': [],
-        'db_version': '2017',
+        'db_version': '2018-04-03',
         'comp_names': ['mol_name'],
         'comps_count_with_isomers': 1,
-        'db_name': 'db_name',
+        'db_name': 'HMDB-v4',
         'mz': 10.0,
         'comp_ids': ['mol_id'],
         'annotation_id': 2,

@@ -93,11 +93,17 @@ class DB:
         """
         return self._select(sql, params)
 
-    @db_decor
-    def select_with_fields(self, sql, params):
-        rows = self._select(sql, params)
+    def _add_fields(self, row_or_rows):
         fields = [desc[0] for desc in self._curs.description]
-        return [dict(zip(fields, row)) for row in rows]
+        if isinstance(row_or_rows, list):
+            return [dict(zip(fields, row)) for row in row_or_rows]
+        else:
+            return dict(zip(fields, row_or_rows))
+
+    @db_decor
+    def select_with_fields(self, sql, params=None):
+        rows = self._select(sql, params)
+        return self._add_fields(rows)
 
     @db_decor
     def select_one(self, sql, params=None):
@@ -117,6 +123,11 @@ class DB:
         res = self._select(sql, params)
         assert len(res) in {0, 1}, "Requested one row, got {}".format(len(res))
         return res[0] if res else []
+
+    @db_decor
+    def select_one_with_fields(self, sql, params=None):
+        row = self.select_one(sql, params)
+        return self._add_fields(row)
 
     @db_decor
     def insert(self, sql, rows=None):

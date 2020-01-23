@@ -131,7 +131,11 @@ def fill_db(test_db, metadata, ds_config):
             )
         ],
     )
-    db.insert("INSERT INTO job (id, db_id, ds_id) VALUES (%s, %s, %s)", rows=[(0, 0, ds_id)])
+    db.insert(
+        "INSERT INTO molecular_db (id, name, version) VALUES (%s, %s, %s)",
+        rows=[(0, 'HMDB-v4', '2018-04-03')],
+    )
+    db.insert("INSERT INTO job (id, moldb_id, ds_id) VALUES (%s, %s, %s)", rows=[(0, 0, ds_id)])
     db.insert(
         (
             "INSERT INTO annotation (job_id, formula, chem_mod, neutral_loss, adduct, "

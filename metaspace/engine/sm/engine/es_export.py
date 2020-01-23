@@ -330,7 +330,7 @@ class ESExporter:
             return self._get_mol_by_formula_dict_cache[mol_db.id]
         except KeyError:
             mols = mol_db.get_molecules()
-            by_formula = mols.groupby('sf')
+            by_formula = mols.groupby('formula')
             # limit IDs and names to 50 each to prevent ES 413 Request Entity Too Large error
             mol_by_formula_df = pd.concat(
                 [
