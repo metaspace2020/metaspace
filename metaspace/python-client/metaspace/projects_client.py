@@ -32,6 +32,19 @@ class ProjectsClient:
     def __init__(self, gql: GraphQLClient):
         self._gql = gql
 
+    def get_project(self, project_id: str):
+        result = self._gql.query(
+            """query get_all_projects($projectId: ID!) {
+                project(projectId: $projectId) {
+                    """
+            + self.PROJECT_FIELDS
+            + """
+                }
+            }""",
+            {"projectId": project_id},
+        )
+        return result['project']
+
     def get_all_projects(self, query: Optional[str] = None):
         result = self._gql.query(
             """query get_all_projects($query: String) {
