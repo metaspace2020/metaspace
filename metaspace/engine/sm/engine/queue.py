@@ -10,7 +10,9 @@ class StopThread(Exception):
     pass
 
 
-class QueueConsumerAsync(object):
+# pylint: disable=too-many-instance-attributes,unused-argument,too-many-public-methods
+# pylint: disable=logging-format-interpolation,logging-too-many-args
+class QueueConsumerAsync:
     """This is an example consumer that will handle unexpected interactions
     with RabbitMQ such as channel and connection closures.
 
@@ -117,7 +119,6 @@ class QueueConsumerAsync(object):
         self._connection.ioloop.stop()
 
         if not self._closing:
-
             # Create a new connection
             self._connection = self.connect()
 
@@ -298,7 +299,7 @@ class QueueConsumerAsync(object):
 
             msg = json.loads(body)
             self._callback(msg)
-        except BaseException as e:
+        except Exception:
             self.logger.error(' [x] Failed: {}'.format(body), exc_info=True)
             self._on_failure(msg or body)
         else:
@@ -430,18 +431,16 @@ class QueueConsumer(Thread):
                 self.logger.error(' [x] Failed: {}'.format(body), exc_info=False)
                 try:
                     self._on_failure(msg or body, e)
-                except BaseException as e:
+                except BaseException:
                     self.logger.error(' [x] Failed in _on_failure: {}'.format(body), exc_info=True)
             else:
                 self.logger.info(' [v] Succeeded: {}'.format(body))
                 try:
                     self._on_success(msg)
-                except BaseException as e:
+                except BaseException:
                     self.logger.error(' [x] Failed in _on_success: {}'.format(body), exc_info=True)
             finally:
                 self._channel.basic_ack(method.delivery_tag)
-        else:
-            self.logger.debug('No messages in "{}" queue'.format(self._qname))
 
     def run(self):
         """ Use `start` method to kick off message polling """
@@ -476,8 +475,7 @@ class QueueConsumer(Thread):
             self._failed_attempts = 0
             if self.stopped():
                 raise StopThread()
-            else:
-                sleep(self._poll_interval)
+            sleep(self._poll_interval)
 
     def stop(self):
         """ After calling `stop`, method `join` must be called"""
@@ -487,7 +485,7 @@ class QueueConsumer(Thread):
         return self._stop_event.is_set()
 
 
-class QueuePublisher(object):
+class QueuePublisher:
     def __init__(self, config, qdesc, logger=None):
         creds = pika.PlainCredentials(config['user'], config['password'])
         self.qdesc = qdesc
@@ -504,8 +502,8 @@ class QueuePublisher(object):
     def delete_queue(self):
         try:
             self.conn = pika.BlockingConnection(self.conn_params)
-            ch = self.conn.channel()
-            ch.queue_delete(self.qname)
+            channel = self.conn.channel()
+            channel.queue_delete(self.qname)
         except AMQPError as e:
             self.logger.error('Queue delete failed: %s - %s', self.qname, e)
         finally:
@@ -515,11 +513,11 @@ class QueuePublisher(object):
     def publish(self, msg, priority=0):
         try:
             self.conn = pika.BlockingConnection(self.conn_params)
-            ch = self.conn.channel()
-            ch.queue_declare(
+            channel = self.conn.channel()
+            channel.queue_declare(
                 queue=self.qname, durable=self.qdesc['durable'], arguments=self.qdesc['arguments']
             )
-            ch.basic_publish(
+            channel.basic_publish(
                 exchange='',
                 routing_key=self.qname,
                 body=json.dumps(msg),

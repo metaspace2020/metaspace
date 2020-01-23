@@ -8,8 +8,7 @@ import * as fs from 'fs';
 
 import config, {ImageStorageType} from '../../utils/config';
 import logger from '../../utils/logger';
-import {initDBConnection} from '../../utils/knexDb';
-import {createImageServerApp} from './imageServer';
+import {createImageServerApp, initDBConnection} from './imageServer';
 
 
 const getRespMimeMap = {

@@ -3,11 +3,10 @@ from functools import partial
 from os.path import join
 import os
 import sys
+from pathlib import Path
 from pprint import pprint
 
 import numpy as np
-from fabric.api import local
-from fabric.context_managers import warn_only
 
 from sm.engine.annotation_job import AnnotationJob
 from sm.engine.db import DB
@@ -25,7 +24,7 @@ SEARCH_RES_SELECT = (
 )
 
 
-class SciTester(object):
+class SciTester:
     def __init__(self, sm_config):
         self.sm_config = sm_config
         self.db = DB()
@@ -126,7 +125,7 @@ class SciTester(object):
         )
 
     def _create_img_store_mock(self):
-        class ImageStoreMock(object):
+        class ImageStoreMock:
             def post_image(self, *args):
                 return None
 
@@ -149,8 +148,9 @@ class SciTester(object):
         AnnotationJob(img_store).run(ds)
 
     def clear_data_dirs(self):
-        with warn_only():
-            local('rm -rf {}'.format(self.ds_data_path))
+        path = Path(self.ds_data_path)
+        if path.exists():
+            path.rmdir()
 
 
 def run(mock_img_store, sm_config, *args):

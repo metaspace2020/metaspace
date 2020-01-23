@@ -57,7 +57,7 @@ def test_new_ds_saves_to_db(find_db_by_name_version_mock, test_db, metadata, ds_
             'image_id': list(map(str, range(6))),
         }
     )
-    job_id, = db.insert_return(
+    (job_id,) = db.insert_return(
         "INSERT INTO job (db_id, ds_id, status) " "VALUES (1, %s, 'FINISHED') " "RETURNING id",
         [[ds.id]],
     )

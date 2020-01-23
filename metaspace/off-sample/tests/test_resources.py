@@ -10,7 +10,6 @@ from off_sample.resources import PredictResource
 
 
 class TestPredictResource:
-
     def test_on_post_sanity(self):
         req = MagicMock(spec=Request)
         resp = MagicMock(spec=Response)
@@ -20,9 +19,7 @@ class TestPredictResource:
             f_path = f'tests/{cl}-sample.png'
             content = base64.b64encode(open(f_path, 'rb').read()).decode()
             base64_images.append(content)
-        doc = {
-            'images': [{'content': content} for content in base64_images]
-        }
+        doc = {'images': [{'content': content} for content in base64_images]}
         fp = StringIO()
         json.dump(doc, fp)
         fp.seek(0)

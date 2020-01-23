@@ -3,7 +3,6 @@ from cpyMSpec import isotopePattern, InstrumentModel
 
 from app import log
 from app.api.base import BaseResource
-from app.errors import AppError, InvalidParameterError, ObjectNotExistError
 
 
 LOG = log.get_logger()
@@ -54,15 +53,12 @@ class Centroids(object):
         prof_ints = prof_ints[nnz_idx]
 
         return {
-            'mz_grid': {
-                'min_mz': min_mz,
-                'max_mz': max_mz
-            },
+            'mz_grid': {'min_mz': min_mz, 'max_mz': max_mz},
             'theor': {
                 'centroid_mzs': centr_mzs.tolist(),
                 'mzs': prof_mzs.tolist(),
-                'ints': (prof_ints * 100.0).tolist()
-            }
+                'ints': (prof_ints * 100.0).tolist(),
+            },
         }
 
     @property
@@ -74,6 +70,7 @@ class IsotopicPatternItem(BaseResource):
     """
     Handle for endpoint: /v1/isotopic_pattern/{ion}/{instr}/{res_power}/{at_mz}/{charge}
     """
+
     # @falcon.before(auth_required)
     def on_get(self, req, res, ion, instr, res_power, at_mz, charge):
         try:

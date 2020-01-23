@@ -125,7 +125,7 @@ jobs:
       - run:
           name: Upload coverage
           command: |
-            yarn run test-ci --coverage
+            yarn run test-ci --coverage --maxWorkers=1
             npx codecov -p ../.. -F webapp
 
   test-webapp-e2e:
@@ -196,9 +196,21 @@ jobs:
             stty cols 80  # https://github.com/DevExpress/testcafe/issues/1469
             yarn run test-e2e
 
+  test-pycode-format:
+    docker:
+      - image: metaspace2020/sm-engine:1.6.0
+    working_directory: ~/metaspace
+    steps:
+      - checkout:
+          path: ~/metaspace
+      - run:
+          name: Code format check for .py files in ansible and metaspace directories
+          command: |
+            black --check ansible metaspace/mol-db metaspace/off-sample metaspace/python-client
+
   test-engine:
     docker:
-      - image: metaspace2020/sm-engine:1.5.0
+      - image: metaspace2020/sm-engine:1.6.0
 
       - image: redis:5.0.3
 
@@ -227,26 +239,27 @@ jobs:
             pip install --upgrade -r requirements.txt
       - attach_workspace:
           at: ~/workspace
-#      - run:
-#          name: Run code formatter
-#          command: black --line-length 100 --skip-string-normalization --target-version py36 --check sm tests scripts
-#      - run:
-#          name: Run linter
-#          command: pylama --options pylama.ini sm
       - run:
           name: Run unit and integration tests
           command: |
             #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
-            coverage run --source=./sm/engine --omit=./sm/engine/tests/*,./tests/* -m py.test sm/engine/tests tests
+            coverage run --source=./sm/engine --omit=./sm/engine/tests/*,./tests/* -m py.test \
+            sm/engine/tests tests
       - run:
           name: Upload test coverage
           command: |
             #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
             codecov --root ../.. -F engine
+      - run:
+          name: Run linter
+          command: pylint sm scripts
+      - run:
+         name: Run code formatter
+         command: black --check .
 
   test-engine-sci:
     docker:
-      - image: metaspace2020/sm-engine:1.4.0
+      - image: metaspace2020/sm-engine:1.6.0
 
       - image: redis:5.0.3
 
@@ -290,8 +303,6 @@ jobs:
             psql -h localhost -U mol_db -d mol_db -f mol_db_HMDBv25.sql
             cd ../mol-db
             cp conf/local.ini.template conf/local.ini
-            conda env create -f environment.yml
-            source activate mol-db
             pip install -e .
             gunicorn --daemon --bind 0.0.0.0:5001 app.main:application --reload
       - run:
@@ -305,6 +316,7 @@ workflows:
   commit:
     jobs:
       - generate-graphql-schema
+      - test-pycode-format
       - test-engine:
           requires:
             - generate-graphql-schema
@@ -322,7 +334,7 @@ workflows:
           filters:
             branches:
               # Replace this with the branch to run sci-test against
-              only: feature/isomer-annotation-ion-id
+              only: master
 
 ## Disabled until we have time to redo these tests
 #  daily:
@@ -336,15 +348,15 @@ workflows:
 #              only:
 #                - master
 #                - feature/.*
-  weekly:
-    jobs:
-      - generate-graphql-schema
-      - test-engine-sci
-    triggers:
-      - schedule:
-          cron: "0 11 * * 1"
-          filters:
-            branches:
-              only:
-                - master
-
+#  weekly:
+#    jobs:
+#      - generate-graphql-schema
+#      - test-engine-sci
+#    triggers:
+#      - schedule:
+#          cron: "0 11 * * 1"
+#          filters:
+#            branches:
+#              only:
+#                - master
+#

@@ -18,6 +18,7 @@ setup(
         'matplotlib',
         'pyMSpec',
         'pillow',
+        'requests',
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -25,5 +26,5 @@ setup(
         "Operating System :: OS Independent",
         "Topic :: Scientific/Engineering :: Bio-Informatics",
         "Intended Audience :: Science/Research",
-    ]
+    ],
 )

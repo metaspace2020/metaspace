@@ -20,6 +20,7 @@ import os
 
 _s3 = boto3.resource('s3')
 
+
 def _download(sm_instance, ds_id, tmp_dir, max_size):
     fn_pref = ds_id
     download_dir = tmp_dir
@@ -44,6 +45,7 @@ def _download(sm_instance, ds_id, tmp_dir, max_size):
         if not os.path.exists(imzb_fn):
             convert_imzml_to_imzb(imzml_fn, imzb_fn)
     return imzml_fn, imzb_fn
+
 
 class LocalDataset(object):
     """
@@ -73,8 +75,7 @@ class LocalDataset(object):
         analyzer = self.analyzer.lower()
         if 'orbitrap' in analyzer:
             analyzer = 'orbitrap'
-        self._instrument = InstrumentModel(analyzer,
-                                           float(rp['Resolving_Power']), float(rp['mz']))
+        self._instrument = InstrumentModel(analyzer, float(rp['Resolving_Power']), float(rp['mz']))
         self._sm = sm_instance
         self._name = ds_name
         self._id = ds_id
@@ -129,7 +130,7 @@ class LocalDataset(object):
         """
         img = self.imzb.get_mz_image(mz, ppm).T
         img[img < 0] = 0
-        return img[self._first_col:, self._first_row:]
+        return img[self._first_col :, self._first_row :]
 
     def annotations(self, fdr=0.1):
         """
@@ -141,17 +142,19 @@ class LocalDataset(object):
         """
         Estimates m/z shift based on distance to the center of the closest m/z cluster.
         """
+
         def closest_bin(mz):
             l = self.mz_clusters['median'].values.searchsorted(mz)
             if l == 0:
                 return 0
             if l == len(self.mz_clusters):
                 return l - 1
-            prev, next = self.mz_clusters['median'].values[l-1:l+1]
+            prev, next = self.mz_clusters['median'].values[l - 1 : l + 1]
             if abs(prev - mz) < abs(next - mz):
                 return l - 1
             else:
                 return l
+
         l = closest_bin(true_mz)
         shift = self.mz_clusters.iloc[l]['median'] - true_mz
         return shift
@@ -160,7 +163,6 @@ class LocalDataset(object):
         """
         Removes all files from local disk (they stay safe on S3)
         """
-        for fn in [self.imzml_fn, self.imzml_fn[:-5] + "ibd",
-                   self.imzb_fn, self.imzb_fn + ".idx"]:
+        for fn in [self.imzml_fn, self.imzml_fn[:-5] + "ibd", self.imzb_fn, self.imzb_fn + ".idx"]:
             if os.path.exists(fn):
                 os.unlink(fn)

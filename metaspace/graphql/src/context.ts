@@ -2,24 +2,33 @@ import {Request, Response} from 'express';
 import {EntityManager, ObjectType} from 'typeorm';
 import {UserProjectRole} from './binding';
 
-export type UserProjectRoles = {[projectId: string]: UserProjectRole | undefined}
+export type UserProjectRoles = {[projectId: string]: UserProjectRole}
 
 export type ContextCacheKeyArg = string | number | boolean | null | undefined;
 
+export type ContextUserRole = 'guest' | 'user' | 'admin';
+
+export type AuthMethod = 'JWT' | 'API_KEY' | 'SESSION' | 'UNKNOWN';
+export const AuthMethodOptions: {[K in AuthMethod]: K} = {
+  JWT: 'JWT',
+  API_KEY: 'API_KEY',
+  SESSION: 'SESSION',
+  UNKNOWN: 'UNKNOWN',
+};
+
 export interface ContextUser {
-  role: 'user' | 'admin';
-  id: string,
-  email?: string,
-  groupIds?: string[], // used in esConnector for ES visibility filters
+  role: ContextUserRole;
+  authMethod: AuthMethod;
+  id?: string; // id is undefined when not logged in
+  email?: string;
+  groupIds?: string[]; // used in esConnector for ES visibility filters
   getProjectRoles: () => Promise<UserProjectRoles>;
-  getMemberOfProjectIds: () => Promise<string[]>;
+  getMemberOfProjectIds: () => Promise<string[]>;  // only projects where user has UPRO.MEMBER, UPRO.MANAGER role
 }
 
-export interface Context {
-  req: Request;
-  res: Response;
+export interface BaseContext {
   entityManager: EntityManager;
-  user: ContextUser | null;
+  user: ContextUser;
   isAdmin: boolean;
   getUserIdOrFail: () => string; // Throws "Unauthenticated" error if not logged in
   /**
@@ -43,3 +52,7 @@ export interface Context {
   cachedGetEntityById: <T>(Model: ObjectType<T> & {}, id: string | number | Partial<T>) => Promise<T | null>
 }
 
+export interface Context extends BaseContext {
+  req: Request;
+  res: Response;
+}

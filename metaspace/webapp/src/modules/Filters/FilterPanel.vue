@@ -14,8 +14,6 @@
                :data-test-key="f.filterKey"
                :is="f.type"
                :filterKey="f.filterKey"
-               :value="f.value"
-               :options="f.options"
                v-bind="f.attrs"
                @change="f.onChange"
                @destroy="f.onDestroy">
@@ -25,7 +23,7 @@
 
 <script>
   import {FILTER_COMPONENT_PROPS, FILTER_SPECIFICATIONS} from './filterSpecs';
- import {isFunction, pick} from 'lodash-es';
+ import {isFunction, pick, get, uniq} from 'lodash-es';
 
  const orderedFilterKeys = [
    'database',
@@ -80,7 +78,11 @@
      },
 
      activeKeys() {
-       return this.$store.state.orderedActiveFilters;
+       // For multi-filters, override child filters with their specified parent filter, preventing duplicates
+       const keys = this.$store.state.orderedActiveFilters
+                   .map(filterKey => get(FILTER_SPECIFICATIONS, [filterKey, 'multiFilterParent'], filterKey));
+
+       return uniq(keys);
      },
 
      visibleFilters() {
@@ -143,22 +145,43 @@
 
      makeFilter(filterKey) {
        const filterSpec = FILTER_SPECIFICATIONS[filterKey];
-       const {type, ...attrs} = filterSpec;
-       return {
-         filterKey,
-         type,
-         value: this.filter[filterKey],
-         options: this.getFilterOptions(filterSpec, filterKey),
-         // passing the value of undefined destroys the tag element
-         onChange: (val) => {
-           this.$store.commit('updateFilter',
-                              Object.assign(this.filter, {[filterKey]: val}));
-         },
-         onDestroy: () => {
-           this.$store.commit('removeFilter', filterKey);
-         },
-         attrs: pick(attrs, FILTER_COMPONENT_PROPS),
-       };
+       const {type, isMultiFilter, ...attrs} = filterSpec;
+
+       if (isMultiFilter) {
+         return {
+           filterKey,
+           type,
+           onChange: (val, _filterKey) => {
+             this.$store.commit('updateFilter',
+               Object.assign(this.filter, {[_filterKey]: val}));
+           },
+           onDestroy: (_filterKey) => {
+             this.$store.commit('removeFilter', _filterKey);
+           },
+           attrs: {
+             ...pick(attrs, FILTER_COMPONENT_PROPS),
+             filterValues: this.filter,
+           }
+         };
+       } else {
+         return {
+           filterKey,
+           type,
+           // passing the value of undefined destroys the tag element
+           onChange: (val) => {
+             this.$store.commit('updateFilter',
+               Object.assign(this.filter, {[filterKey]: val}));
+           },
+           onDestroy: () => {
+             this.$store.commit('removeFilter', filterKey);
+           },
+           attrs: {
+             ...pick(attrs, FILTER_COMPONENT_PROPS),
+             value: this.filter[filterKey],
+             options: this.getFilterOptions(filterSpec, filterKey),
+           }
+         };
+       }
      },
 
      addFilter(key) {

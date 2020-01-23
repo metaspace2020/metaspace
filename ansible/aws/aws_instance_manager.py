@@ -1,32 +1,43 @@
 #!/usr/bin/env python
 import argparse
-from pprint import pprint
-from time import sleep
+import sys
 from datetime import datetime, timedelta
 from os import path
+from pprint import pprint
 from subprocess import check_output
-import sys
+from time import sleep
+
 import boto3
-from yaml import load
+import yaml
 
 
-class AWSInstManager(object):
-
+class AWSInstManager:
     def __init__(self, conf, aws_conf, dry_run=False, verbose=False):
         self.key_name = aws_conf['key_name']
         self.dry_run = dry_run
-        session = boto3.session.Session(aws_access_key_id=aws_conf.get('aws_access_key_id', None),
-                                        aws_secret_access_key=aws_conf.get('aws_secret_access_key', None))
-        self.ec2 = session.resource('ec2', region_name=aws_conf['region'])
-        self.ec2_client = session.client('ec2', region_name=aws_conf['region'])
+        self.session = boto3.session.Session(
+            aws_access_key_id=aws_conf.get('aws_access_key_id', None),
+            aws_secret_access_key=aws_conf.get('aws_secret_access_key', None),
+        )
+        self.ec2 = self.session.resource('ec2', region_name=aws_conf['region'])
+        self.ec2_client = self.session.client('ec2', region_name=aws_conf['region'])
+        self.cloudwatch_client = self.session.client('cloudwatch', region_name=aws_conf['region'])
         self.conf = conf
         if verbose:
             pprint(self.conf)
 
     def find_inst_by(self, host_group, first=False):
-        instances = list(self.ec2.instances.filter(
-                Filters=[{'Name': 'tag:hostgroup', 'Values': [host_group]},
-                         {'Name': 'instance-state-name', 'Values': ['running', 'stopped', 'pending']}]))
+        instances = list(
+            self.ec2.instances.filter(
+                Filters=[
+                    {'Name': 'tag:hostgroup', 'Values': [host_group]},
+                    {
+                        'Name': 'instance-state-name',
+                        'Values': ['pending', 'running', 'stopping', 'stopped'],
+                    },
+                ]
+            )
+        )
         print('The following instances found: {}'.format(instances))
 
         if first:
@@ -41,7 +52,8 @@ class AWSInstManager(object):
             EndTime=datetime.now().isoformat(),
             InstanceTypes=[inst_type],
             ProductDescriptions=[platform],
-            MaxResults=10000)
+            MaxResults=10000,
+        )
         prices = [(p['AvailabilityZone'], p['SpotPrice']) for p in price_hist['SpotPriceHistory']]
         sorted_prices = sorted(prices, key=lambda t: t[1])
         return sorted_prices[0][0]
@@ -49,21 +61,54 @@ class AWSInstManager(object):
     def assign_tags(self, inst, inst_name, host_group, inst_tags):
         if not inst_tags:
             inst_tags = {}
-        tags = [
-            {'Key': 'Name', 'Value': inst_name},
-            {'Key': 'hostgroup', 'Value': host_group}
-        ]
+        tags = [{'Key': 'Name', 'Value': inst_name}, {'Key': 'hostgroup', 'Value': host_group}]
         for tag_name, tag_value in inst_tags.items():
             tags.append({'Key': tag_name, 'Value': tag_value})
         inst.create_tags(Tags=tags)
 
-    def launch_new_inst(self, inst_type, spot_price, inst_n, image, el_ip_id,
-                        sec_group, host_group, block_dev_maps):
+    def add_alarms(self, instances, alarms):
+        print(f'Adding {len(alarms)} alarms to {len(instances)} instances')
+        for inst in instances:
+            for alarm in alarms:
+                self.cloudwatch_client.put_metric_alarm(
+                    AlarmName=f"{alarm['prefix']}-{inst.id}",
+                    ComparisonOperator=alarm['comparison'],
+                    EvaluationPeriods=alarm['points'],
+                    MetricName=alarm['metric'],
+                    Namespace='AWS/EC2',
+                    Period=alarm['period'],
+                    Statistic='Average',
+                    Threshold=alarm['threshold'],
+                    ActionsEnabled=True,
+                    AlarmActions=alarm['actions'],
+                    AlarmDescription='Alarm when cluster instance idles',
+                    Dimensions=[{'Name': 'InstanceId', 'Value': inst.id}],
+                )
+
+    def wait_for_instances(self, instances, status='instance_running'):
+        if instances:
+            waiter = self.ec2_client.get_waiter(status)
+            waiter.wait(InstanceIds=[inst.id for inst in instances])
+
+    def launch_new_inst(
+        self,
+        inst_type,
+        spot_price,
+        inst_n,
+        image,
+        el_ip_id,
+        sec_group,
+        host_group,
+        block_dev_maps,
+        alarms,
+    ):
         print('Launching {} new instances...'.format(inst_n))
 
         if not image:
-            image = sorted(self.ec2.images.filter(Filters=[{'Name': 'tag:hostgroup', 'Values': [host_group]}]),
-                           key=lambda img: img.creation_date)[-1].id
+            image = sorted(
+                self.ec2.images.filter(Filters=[{'Name': 'tag:hostgroup', 'Values': [host_group]}]),
+                key=lambda img: img.creation_date,
+            )[-1].id
 
         if not spot_price:
             instances = self.ec2.create_instances(
@@ -75,7 +120,7 @@ class AWSInstManager(object):
                 SecurityGroups=[sec_group],
                 InstanceType=inst_type,
                 BlockDeviceMappings=block_dev_maps,
-                EbsOptimized=True
+                EbsOptimized=True,
             )
         else:
             best_price_az = self.find_best_price_availability_zone(3, inst_type)
@@ -87,31 +132,30 @@ class AWSInstManager(object):
                 LaunchSpecification={
                     'ImageId': image,
                     'KeyName': self.key_name,
-                    'SecurityGroups': [
-                        sec_group,
-                    ],
+                    'SecurityGroups': [sec_group],
                     'InstanceType': inst_type,
-                    'Placement': {
-                        'AvailabilityZone': best_price_az
-                    },
+                    'Placement': {'AvailabilityZone': best_price_az},
                     'BlockDeviceMappings': block_dev_maps,
-                    'EbsOptimized': True
-                }
+                    'EbsOptimized': True,
+                },
             )
-            sleep(5)  # to overcome Waiter SpotInstanceRequestFulfilled failed: The spot instance request ID does not exist
+            # to overcome "Waiter SpotInstanceRequestFulfilled failed:
+            # The spot instance request ID does not exist"
+            sleep(5)
 
             spot_req_ids = [r['SpotInstanceRequestId'] for r in spot_resp['SpotInstanceRequests']]
 
             waiter = self.ec2_client.get_waiter('spot_instance_request_fulfilled')
-            waiter.wait(
+            waiter.wait(SpotInstanceRequestIds=spot_req_ids)
+
+            desc_resp = self.ec2_client.describe_spot_instance_requests(
                 SpotInstanceRequestIds=spot_req_ids
             )
+            instances = [
+                self.ec2.Instance(r['InstanceId']) for r in desc_resp['SpotInstanceRequests']
+            ]
 
-            desc_resp = self.ec2_client.describe_spot_instance_requests(SpotInstanceRequestIds=spot_req_ids)
-            instances = [self.ec2.Instance(r['InstanceId']) for r in desc_resp['SpotInstanceRequests']]
-
-        waiter = self.ec2_client.get_waiter('instance_running')
-        waiter.wait(InstanceIds=[inst.id for inst in instances])
+        self.wait_for_instances(instances)
 
         if el_ip_id:
             if inst_n == 1:
@@ -120,32 +164,64 @@ class AWSInstManager(object):
             else:
                 print('Wrong number of instances {} for just one IP address'.format(inst_n))
 
+        if alarms:
+            self.add_alarms(instances, alarms)
+
         print('Launched {}'.format(instances))
         return instances
 
-    def create_instances(self, inst_name, inst_type, inst_n, image,
-                         sec_group, host_group, block_dev_maps,
-                         spot_price=None, el_ip_id=None, inst_tags=None):
+    def start_instances(self, instances):
+        stopped_instances = []
+        for inst in instances:
+            if inst.state['Name'] in ['running', 'pending']:
+                print('Already running: {}'.format(inst))
+            elif inst.state['Name'] in ['stopped', 'stopping']:
+                print('Stopped instance found. Starting...')
+                stopped_instances.append(inst)
+            else:
+                raise BaseException('Wrong state: {}'.format(inst.state['Name']))
+        for inst in stopped_instances:
+            inst.start()
+        self.wait_for_instances(stopped_instances)
+
+    def create_instances(
+        self,
+        inst_name,
+        inst_type,
+        inst_n,
+        image,
+        sec_group,
+        host_group,
+        block_dev_maps,
+        spot_price=None,
+        el_ip_id=None,
+        inst_tags=None,
+        alarms=None,
+    ):
         print('Start {} instance(s) of type {}, name={}'.format(inst_n, inst_type, inst_name))
         instances = self.find_inst_by(host_group)
-        new_inst_n = inst_n - len(instances)
 
         if len(instances) > inst_n:
-            raise BaseException('More than {} instance with Name tag {} exist'.format(inst_n, inst_name))
+            raise BaseException(
+                'More than {} instance with Name tag {} exist'.format(inst_n, inst_name)
+            )
         else:
             if not self.dry_run:
-                for inst in instances:
-                    if inst.state['Name'] in ['running', 'pending']:
-                        print('Already running: {}'.format(inst))
-                    elif inst.state['Name'] == 'stopped':
-                        print('Stopped instance found. Starting...')
-                        self.ec2.instances.filter(InstanceIds=[inst.id]).start()
-                    else:
-                        raise BaseException('Wrong state: {}'.format(inst.state['Name']))
+                self.start_instances(instances)
 
+                new_inst_n = inst_n - len(instances)
                 if new_inst_n > 0:
-                    new_instances = self.launch_new_inst(inst_type, spot_price, new_inst_n, image, el_ip_id,
-                                                         sec_group, host_group, block_dev_maps)
+                    new_instances = self.launch_new_inst(
+                        inst_type,
+                        spot_price,
+                        new_inst_n,
+                        image,
+                        el_ip_id,
+                        sec_group,
+                        host_group,
+                        block_dev_maps,
+                        alarms,
+                    )
                     instances.extend(new_instances)
 
                 for inst in instances:
@@ -155,7 +231,7 @@ class AWSInstManager(object):
 
         print('Success')
 
-    def stop_instances(self, host_group, method='stop'):
+    def stop_instances(self, host_group, method='stop', alarms=None):
         instances = self.find_inst_by(host_group)
 
         if not self.dry_run:
@@ -166,88 +242,96 @@ class AWSInstManager(object):
                     resp = inst.terminate()
                 else:
                     raise BaseException('Unknown instance stop method: {}'.format(method))
-                pprint(resp)
+                assert resp['ResponseMetadata']['HTTPStatusCode'] == 200
+
+            if alarms:
+                alarm_names = [
+                    f"{alarm['prefix']}-{inst.id}" for alarm in alarms for inst in instances
+                ]
+                resp = self.cloudwatch_client.delete_alarms(AlarmNames=alarm_names)
+                assert resp['ResponseMetadata']['HTTPStatusCode'] == 200
         else:
             print('DRY RUN!')
 
     def create_all_instances(self, components):
         for component in components:
             i = self.conf['instances'][component]
-            self.create_instances(i['hostgroup'], i['type'], i['n'], i['image'],
-                                  i['sec_group'], i['hostgroup'], i['block_dev_maps'],
-                                  spot_price=i.get('price', None), el_ip_id=i['elipalloc'],
-                                  inst_tags=i.get('tags', {}))
+            alarms = [self.conf['alarms'][id] for id in i.get('alarms', [])]
+            self.create_instances(
+                i['hostgroup'],
+                i['type'],
+                i['n'],
+                i['image'],
+                i['sec_group'],
+                i['hostgroup'],
+                i['block_dev_maps'],
+                spot_price=i.get('price', None),
+                el_ip_id=i['elipalloc'],
+                inst_tags=i.get('tags', {}),
+                alarms=alarms,
+            )
 
     def stop_all_instances(self, components):
         for component in components:
             i = self.conf['instances'][component]
-            method = 'stop' if i['price'] is None else 'terminate'
-            self.stop_instances(i['hostgroup'], method=method)
+            method = 'stop' if not i.get('price', None) else 'terminate'
+            alarms = [self.conf['alarms'][id] for id in i.get('alarms', [])]
+            self.stop_instances(i['hostgroup'], method=method, alarms=alarms)
 
     def clone_prod_instance(self, suffix='beta'):
         i_conf = self.conf['instances']['web']
         inst = self.find_inst_by(i_conf['hostgroup'], first=True)
 
-        image_name = "{}-{}".format(i_conf['hostgroup'], datetime.now().isoformat().replace(':', '-'))
-        resp = self.ec2_client.create_image(InstanceId=inst.id,
-                                            Name=image_name, NoReboot=True)
+        image_name = "{}-{}".format(
+            i_conf['hostgroup'], datetime.now().isoformat().replace(':', '-')
+        )
+        resp = self.ec2_client.create_image(InstanceId=inst.id, Name=image_name, NoReboot=True)
         print('Created image: {}'.format(resp))
 
         beta_host_group = '{}-{}'.format(i_conf['hostgroup'], suffix)
-        self.create_instances(inst_name=i_conf['hostgroup'], inst_type=i_conf['type'],
-                              inst_n=1, image=resp['ImageId'], sec_group=i_conf['sec_group'],
-                              host_group=beta_host_group, block_dev_maps=i_conf['block_dev_maps'])
-
-    def swap_prod_instance(self, suffix='beta'):
-        prod_hostgroup = self.conf['instances']['web']['hostgroup']
-        prod_inst = self.find_inst_by(prod_hostgroup, first=True)
-
-        beta_hostgroup = '{}-{}'.format(self.conf['instances']['web']['hostgroup'], suffix)
-        beta_inst = self.find_inst_by(beta_hostgroup, first=True)
-
-        resp = self.ec2_client.create_tags(Resources=[beta_inst.id], Tags=prod_inst.tags)
-        print('Updated beta instance tags: {}'.format(resp))
-        resp = self.ec2_client.create_tags(Resources=[prod_inst.id], Tags=[
-            {'Key': 'hostgroup', 'Value': ''},
-            {'Key': 'Name', 'Value': '{}-old'.format(prod_hostgroup)}
-        ])
-        print('Updated prod instance tags: {}'.format(resp))
-
-        resp = self.ec2_client.associate_address(AllocationId=self.conf['instances']['web']['elipalloc'],
-                                                 InstanceId=beta_inst.id)
-        print('Associated Elastic IP: {}'.format(resp))
-
-        # resp = prod_inst.stop()
-        # print('Stopped old prod instance: {}'.format(resp))
+        self.create_instances(
+            inst_name=i_conf['hostgroup'],
+            inst_type=i_conf['type'],
+            inst_n=1,
+            image=resp['ImageId'],
+            sec_group=i_conf['sec_group'],
+            host_group=beta_host_group,
+            block_dev_maps=i_conf['block_dev_maps'],
+        )
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SM AWS instances management tool')
-    parser.add_argument('action', type=str, help='create|stop|clone|swap')
+    parser.add_argument('action', type=str, help='create|stop|clone')
     parser.add_argument('--components', help='all,web,master,slave')
     parser.add_argument('--key-name', type=str, help='AWS key name to use')
-    parser.add_argument('--stage', dest='stage', default='dev', type=str, help='One of dev/stage/prod')
-    parser.add_argument('--credentials-file', dest='cred_file', action='store_true', help='Use AWS credentials file')
+    parser.add_argument(
+        '--stage', dest='stage', default='dev', type=str, help='One of dev/stage/prod'
+    )
+    parser.add_argument(
+        '--credentials-file', dest='cred_file', action='store_true', help='Use AWS credentials file'
+    )
     parser.add_argument('--create-ami', dest='create_ami', action='store_true')
-    parser.add_argument('--dry-run', dest='dry_run', action='store_true',
-                        help="Don't actually start/stop instances")
+    parser.add_argument(
+        '--dry-run', dest='dry_run', action='store_true', help="Don't actually start/stop instances"
+    )
     args = parser.parse_args()
 
-    conf_file = 'group_vars/all/vars.yml' if not args.create_ami else 'group_vars/create_ami_config.yml'
+    conf_file = (
+        'group_vars/all/vars.yml' if not args.create_ami else 'group_vars/create_ami_config.yml'
+    )
     config_path = path.join(args.stage, conf_file)
-    conf = load(open(config_path))
+    conf = yaml.full_load(open(config_path))
     cluster_conf = conf['cluster_configuration']
 
-    aws_conf = {
-        'key_name': args.key_name or conf['aws_key_name'],
-        'region': conf['aws_region']
-    }
+    aws_conf = {'key_name': args.key_name or conf['aws_key_name'], 'region': conf['aws_region']}
     if not args.cred_file:
         aws_conf['aws_access_key_id'] = conf['aws_access_key_id']
         aws_conf['aws_secret_access_key'] = conf['aws_secret_access_key']
 
-    aws_inst_man = AWSInstManager(conf=cluster_conf, aws_conf=aws_conf,
-                                  dry_run=args.dry_run, verbose=True)
+    aws_inst_man = AWSInstManager(
+        conf=cluster_conf, aws_conf=aws_conf, dry_run=args.dry_run, verbose=True
+    )
 
     if args.components:
         components = args.components.strip(' ').split(',')
@@ -262,8 +346,6 @@ if __name__ == '__main__':
         aws_inst_man.stop_all_instances(components)
     elif args.action == 'clone':
         aws_inst_man.clone_prod_instance()
-    elif args.action == 'swap':
-        aws_inst_man.swap_prod_instance()
     else:
         raise Exception("Wrong action '{}'".format(args.action))
 

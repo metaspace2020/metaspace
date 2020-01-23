@@ -60,6 +60,9 @@
            await this.$alert('This email verification link is invalid or has expired. Try signing in or resetting your password. ' +
              'If this keeps happening, please <a href="mailto:contact@metaspace2020.eu">let us know</a>.',
              'Something went wrong!', {type: 'warning', dangerouslyUseHTMLString: true});
+         } else if (flashMessage.type === 'review_token_success') {
+           await this.$alert('You have been granted access to a private project.',
+             'Welcome to METASPACE', {type: 'success'});
          }
        } catch (err) {
          // Ignore any errors - promise rejection here just means that the user cancelled out of the dialog
@@ -73,8 +76,17 @@
 
 <style>
 
+  @font-face {
+    /* Roboto doesn't contain superscript glyphs, and the fallback is OS-dependent. OSX's fallback, Helvetica,
+     looks bad for the superscript + and - characters in formatted ion formulas, because it's too small to read. */
+
+    font-family: SUPERSCIPT_OVERRIDE;
+    src: local('Lucida Grande'), local('-apple-system'), local('serif');
+    unicode-range: U+207A-207B;
+  }
+
  html {
-   font-family: 'Roboto', Helvetica, sans-serif;
+   font-family: 'Roboto', SUPERSCIPT_OVERRIDE, Helvetica, sans-serif;
    overflow-y: scroll; /* always show the right scrollbar to avoid flickering */
  }
 

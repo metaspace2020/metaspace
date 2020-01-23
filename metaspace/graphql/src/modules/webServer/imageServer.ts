@@ -11,11 +11,30 @@ import * as crypto from 'crypto';
 import * as fs from 'fs-extra';
 const getPixels = require('get-pixels');
 import logger from '../../utils/logger';
-import {Config, ImageCategory} from '../../utils/config';
+import config, {Config, ImageCategory} from '../../utils/config';
 
 export const IMG_TABLE_NAME = 'image';
 
 type NDArray = any;
+
+const defaultDBConfig = () => {
+  const {host, database, user, password} = config.db;
+  return {
+    host, database, user, password,
+    max: 10, // client pool size
+    idleTimeoutMillis: 30000
+  };
+};
+
+export const initDBConnection = (config = defaultDBConfig) => {
+  return Knex({
+    client: 'pg',
+    connection: config(),
+    searchPath: ['engine', 'public'],
+    // @ts-ignore
+    asyncStackTraces: true,
+  });
+};
 
 function imageProviderDBBackend(knex: Knex) {
   /**
@@ -200,20 +219,15 @@ export async function createImageServerApp(config: Config, knex: Knex) {
   }
 }
 
-export async function createImgServerAsync(config: Config, knex: Knex) {
-  try {
-    let app = await createImageServerApp(config, knex);
+export async function createImgServerAsync(config: Config) {
+  const knex = initDBConnection();
+  const app = await createImageServerApp(config, knex);
 
-    let httpServer = http.createServer(app);
-    httpServer.listen(config.img_storage_port, (err?: Error) => {
-      if (err) {
-        logger.error('Could not start iso image server', err);
-      }
-      logger.info(`Image server is listening on ${config.img_storage_port} port...`);
-    });
-    return httpServer;
-  }
-  catch (e) {
-    logger.error(`${e.stack}`);
-  }
+  const httpServer = http.createServer(app);
+  await new Promise((resolve, reject) => {
+    httpServer.listen(config.img_storage_port).on('listening', resolve).on('error', reject);
+  });
+
+  logger.info(`Image server is listening on ${config.img_storage_port} port...`);
+  return httpServer;
 }

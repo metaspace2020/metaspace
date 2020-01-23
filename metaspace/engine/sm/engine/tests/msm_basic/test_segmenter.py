@@ -1,16 +1,16 @@
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 from itertools import product
-from pyimzml import ImzMLParser
+from numpy.testing import assert_array_almost_equal
 
 from sm.engine.msm_basic.segmenter import (
     segment_centroids,
     define_ds_segments,
-    segment_spectra,
-    MAX_MZ_VALUE,
+    segment_ds,
     calculate_chunk_sp_n,
+    fetch_chunk_spectra_data,
 )
 
 
@@ -24,42 +24,66 @@ def test_calculate_chunk_sp_n():
     assert chunk_sp_n == 50
 
 
-def test_define_ds_segments():
-    sample_mzs = np.linspace(0, 100, 100)
+def test_fetch_chunk_spectra_data():
+    mz_n = 10
+    imzml_parser_mock = Mock()
+    imzml_parser_mock.get_spectrum.return_value = (np.linspace(0, 90, num=mz_n), np.ones(mz_n))
+    imzml_parser_mock.mz_precision = 'f'
+    sp_id_to_idx = {0: 0, 1: 1}
 
-    # 3 (columns) * 10 (spectra) * 10 (mz/spectrum) * 8 (float prec) ~= 2400 (dataset size, bytes)
-    # 2400 // 2**10 (segm size, bytes) ~= 2 (segments)
-    ds_segments = define_ds_segments(
-        sample_mzs, mz_precision='d', total_mz_n=100, ds_segm_size_mb=2 ** -10
+    sp_chunk_df = fetch_chunk_spectra_data(
+        sp_ids=[0, 1], imzml_parser=imzml_parser_mock, sp_id_to_idx=sp_id_to_idx
     )
 
-    exp_ds_segments = np.array([[0, 50.0], [50, 100.0]])
+    exp_mzs, exp_ints = [
+        np.sort([mz for mz in np.linspace(0, 90, num=mz_n) for _ in range(2)]),
+        np.ones(2 * mz_n),
+    ]
+
+    assert sp_chunk_df.mz.dtype == 'f'
+    assert_array_almost_equal(sp_chunk_df.mz, exp_mzs)
+    assert_array_almost_equal(sp_chunk_df.int, exp_ints)
+
+
+def test_define_ds_segments():
+    imzml_parser_mock = Mock()
+    imzml_parser_mock.mz_precision = 'd'
+
+    mz_max = 100
+    sample_mzs = np.linspace(0, mz_max, 100)
+    ds_segm_size_mb = 800 / (2 ** 20)  # 1600 b total data size / 2 segments, converted to MB
+    ds_segments = define_ds_segments(
+        sample_mzs, sample_ratio=1, imzml_parser=imzml_parser_mock, ds_segm_size_mb=ds_segm_size_mb
+    )
+
+    exp_ds_segm_n = 8
+    exp_bounds = [i * mz_max / exp_ds_segm_n for i in range(exp_ds_segm_n + 1)]
+    exp_ds_segments = np.array(list(zip(exp_bounds[:-1], exp_bounds[1:])))
+    assert ds_segments.shape == exp_ds_segments.shape
     assert np.allclose(ds_segments, exp_ds_segments)
 
 
-@patch('sm.engine.msm_basic.segmenter.pd.to_msgpack')
-def test_segment_spectra(to_msgpack_mock):
+@patch('sm.engine.msm_basic.segmenter.pickle.dump')
+def test_segment_ds(dump_mock):
     imzml_parser_mock = Mock()
-    imzml_parser_mock.getspectrum.return_value = (np.linspace(0, 90, num=10), np.ones(10))
-    imzml_parser_mock.mzPrecision = 'f'
-    coordinates = list(product([0], range(10)))
+    imzml_parser_mock.get_spectrum.return_value = (np.linspace(0, 90, num=10), np.ones(10))
+    imzml_parser_mock.mz_precision = 'f'
+    imzml_parser_mock.coordinates = list(product([0], range(10)))
     ds_segments = np.array([[0, 50], [50, 90.0]])
 
     chunk_sp_n = 1000
-    segment_spectra(imzml_parser_mock, coordinates, chunk_sp_n, ds_segments, Path('/tmp/abc'))
+    segment_ds(imzml_parser_mock, chunk_sp_n, ds_segments, Path('/tmp/abc'))
 
-    for segm_i, (min_mz, max_mz) in enumerate(ds_segments):
-        args = to_msgpack_mock.call_args_list[segm_i][0]
-        segm_arr = args[1]
+    for segm_i, ((sp_chunk_df, f), _) in enumerate(dump_mock.call_args_list):
+        min_mz, max_mz = ds_segments[segm_i]
 
-        assert segm_arr.shape == (50, 3)
-        # mz stored in column 1
-        assert np.all(min_mz <= segm_arr[:, 1])
-        assert np.all(segm_arr[:, 1] <= max_mz)
+        assert sp_chunk_df.shape == (50, 3)
+        assert np.all(min_mz <= sp_chunk_df.mz)
+        assert np.all(sp_chunk_df.mz <= max_mz)
 
 
-@patch('sm.engine.msm_basic.segmenter.pd.to_msgpack')
-def test_segment_centroids(to_msgpack_mock):
+@patch('sm.engine.msm_basic.segmenter.pickle.dump')
+def test_segment_centroids(dump_mock):
     centr_df = pd.DataFrame(
         [
             (0, 0, 90),
@@ -78,8 +102,8 @@ def test_segment_centroids(to_msgpack_mock):
     segment_centroids(centr_df, segm_n, Path('/tmp/abc'))
 
     for segm_i in range(segm_n):
-        args = to_msgpack_mock.call_args_list[segm_i][0]
-        df = args[1]
+        args, _ = dump_mock.call_args_list[segm_i]
+        df, _ = args
 
         assert df.shape == (3, 4)
         assert set(df.formula_i) == {segm_i}

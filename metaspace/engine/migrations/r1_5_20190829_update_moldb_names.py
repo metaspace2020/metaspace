@@ -16,11 +16,7 @@ if __name__ == '__main__':
 
     logger.info(f'Importing new names from {args.file_path}')
 
-    db_config = {
-        "host": "localhost",
-        "database": "mol_db",
-        "user": "mol_db"
-    }
+    db_config = {"host": "localhost", "database": "mol_db", "user": "mol_db"}
     with ConnectionPool(db_config):
         db = DB()
         names_df = pd.read_csv(args.file_path, sep='\t')[['id', 'name']]

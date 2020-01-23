@@ -1,6 +1,6 @@
 ---
 
-- name: SM services instance basic configuration
+- name: SM web instance basic configuration
   hosts: web
   user: ubuntu
   gather_facts: no
@@ -25,7 +25,7 @@
   tags: [filebeat]
 
 
-- name: SM services instance configuration
+- name: SM web instance configuration
   hosts: web
   user: ubuntu
   gather_facts: yes

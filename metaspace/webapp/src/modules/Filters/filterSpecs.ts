@@ -10,6 +10,7 @@ import { Component } from 'vue';
 import SimpleFilterBox from './filter-components/SimpleFilterBox.vue';
 import BooleanFilter from './filter-components/BooleanFilter.vue';
 import config from '../../config';
+import AdductFilter from './filter-components/AdductFilter.vue';
 
 function formatFDR (fdr: number) {
   return fdr ? Math.round(fdr * 100) + '%' : '';
@@ -17,7 +18,8 @@ function formatFDR (fdr: number) {
 
 export type Level = 'annotation' | 'dataset' | 'upload' | 'projects';
 
-export type FilterKey = 'database' | 'datasetIds' | 'minMSM' | 'compoundName' | 'adduct' | 'mz' | 'fdrLevel'
+export type FilterKey = 'database' | 'datasetIds' | 'minMSM' | 'compoundName'
+  | 'chemMod' | 'neutralLoss' | 'adduct' | 'mz' | 'fdrLevel'
   | 'group' | 'project' | 'submitter' | 'polarity' | 'organism' | 'organismPart' | 'condition' | 'growthConditions'
   | 'ionisationSource' | 'maldiMatrix' | 'analyzerType' | 'simpleFilter' | 'simpleQuery' | 'metadataType'
   | 'colocalizedWith' | 'colocalizationSamples' | 'offSample';
@@ -71,9 +73,10 @@ export interface FilterSpecification {
   optionFormatter?(value: any, options: any[]): string;
   /** Callback to extract the "value" of an object-based option */
   valueGetter?(option: any): any;
-  /** Whether an empty string is a valid value or should be considered unset */
-  allowEmptyString?: boolean;
   sortOrder?: number;
+  isMultiFilter?: boolean;
+  /** Other filter that should be used for displaying this filter's value */
+  multiFilterParent?: FilterKey;
   /** List of other filters whose removal should cause this filter to also be removed */
   dependsOnFilters?: FilterKey[];
   /** List of other filters whose addition should cause this filter to be removed */
@@ -84,7 +87,7 @@ export interface FilterSpecification {
 export const FILTER_COMPONENT_PROPS: (keyof FilterSpecification)[] = [
   'name', 'helpComponent',
   'removable', 'filterable', 'multiple',
-  'optionFormatter', 'valueGetter', 'allowEmptyString'
+  'optionFormatter', 'valueGetter'
 ];
 
 export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
@@ -125,20 +128,34 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: InputFilter,
     name: 'Molecule',
     description: 'Search molecule',
-    levels: ['annotation'],
+    levels: ['annotation'], // ['dataset', 'annotation'],
     initialValue: undefined
   },
 
+  chemMod: {
+    type: InputFilter,
+    name: 'Chemical modification',
+    levels: ['annotation'],
+    initialValue: undefined,
+    multiFilterParent: 'adduct',
+  },
+
+  neutralLoss: {
+    type: InputFilter,
+    name: 'Neutral loss',
+    levels: ['annotation'],
+    initialValue: undefined,
+    multiFilterParent: 'adduct',
+  },
+
   adduct: {
-    type: SingleSelectFilter,
+    type: AdductFilter,
     name: 'Adduct',
     description: 'Select adduct',
     levels: ['annotation'],
     initialValue: undefined,
     options: lists => lists.adducts.filter(a => config.features.all_adducts || !a.hidden),
-    optionFormatter: adduct => adduct && adduct.name,
-    valueGetter: adduct => adduct && adduct.adduct,
-    allowEmptyString: true
+    isMultiFilter: true
   },
 
   mz: {
@@ -344,7 +361,7 @@ export const DATASET_FILTERS: FilterKey[] = ['datasetIds', 'group', 'project', '
 /** = all annotation-affecting filters - dataset-affecting filters*/
 export const ANNOTATION_FILTERS: FilterKey[] = ['database', 'minMSM', 'compoundName', 'adduct', 'mz', 'fdrLevel', 'colocalizedWith', 'offSample'];
 /** Filters that are very specific to particular annotations and should be cleared when navigating to other annotations */
-export const ANNOTATION_SPECIFIC_FILTERS: FilterKey[] = ['compoundName', 'adduct', 'mz', 'colocalizedWith', 'colocalizationSamples'];
+export const ANNOTATION_SPECIFIC_FILTERS: FilterKey[] = ['compoundName', 'adduct', 'mz', 'colocalizedWith', 'colocalizationSamples', 'simpleQuery'];
 
 export function getFilterInitialValue(key: FilterKey, filterLists?: MetadataLists) {
   let value = FILTER_SPECIFICATIONS[key].initialValue;

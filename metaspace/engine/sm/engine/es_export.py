@@ -1,15 +1,21 @@
+import logging
+import random
+from collections import MutableMapping, defaultdict
 from functools import wraps
 from time import sleep
-from elasticsearch import Elasticsearch, NotFoundError, ElasticsearchException, ConflictError
-from elasticsearch.helpers import parallel_bulk
-from elasticsearch.client import IndicesClient, IngestClient
-import logging
-from collections import defaultdict, MutableMapping
+
+import numpy as np
 import pandas as pd
-import random
+from elasticsearch import ConflictError, Elasticsearch, ElasticsearchException, NotFoundError
+from elasticsearch.client import IndicesClient, IngestClient
+from elasticsearch.helpers import parallel_bulk
 
 from sm.engine.dataset_locker import DatasetLocker
-from sm.engine.formula_parser import format_ion_formula, safe_generate_ion_formula
+from sm.engine.db import DB
+from sm.engine.fdr import FDR
+from sm.engine.formula_parser import format_ion_formula
+from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine.mol_db import MolecularDB
 from sm.engine.util import SMConfig
 
 logger = logging.getLogger('engine')
@@ -93,7 +99,7 @@ def init_es_conn(es_config):
     return Elasticsearch(hosts=hosts, http_auth=http_auth)
 
 
-class ESIndexManager(object):
+class ESIndexManager:
     def __init__(self, es_config=None):
         if not es_config:
             es_config = SMConfig.get_conf()['elasticsearch']
@@ -101,19 +107,18 @@ class ESIndexManager(object):
         self._ind_client = IndicesClient(self._es)
 
     def internal_index_name(self, alias):
-        yin, yang = '{}-yin'.format(alias), '{}-yang'.format(alias)
+        yin, yang = f'{alias}-yin', f'{alias}-yang'
         indices = self._ind_client.get_alias(name=alias)
-        assert len(indices) > 0, f'Could not find ElasticSearch alias "{alias}"'
+        assert indices, f'Could not find ElasticSearch alias "{alias}"'
 
         index = next(iter(indices.keys()))
         if len(indices) > 1:
             logger.warning(
-                f'Multiple indices mapped on to the same alias: {indices}. Arbitrarily choosing {index}'
+                f'Multiple indices mapped on to the same alias: {indices}. '
+                f'Arbitrarily choosing {index}'
             )
 
-        assert (
-            index == yin or index == yang
-        ), f'Unexpected ElasticSearch alias "{alias}" => "{index}"'
+        assert index in (yin, yang), f'Unexpected ElasticSearch alias "{alias}" => "{index}"'
 
         return index
 
@@ -187,6 +192,12 @@ class ESIndexManager(object):
                         "db_version": {
                             "type": "keyword"
                         },  # Prevent "YYYY-MM"-style DB versions from being parsed as dates
+                        "isobars": {
+                            "properties": {
+                                "ion": {"type": "keyword", "include_in_all": False},
+                                "ion_formula": {"type": "keyword", "include_in_all": False},
+                            }
+                        },
                     },
                 },
             },
@@ -194,29 +205,30 @@ class ESIndexManager(object):
 
         if not self._ind_client.exists(index):
             out = self._ind_client.create(index=index, body=body)
-            logger.info('Index {} created\n{}'.format(index, out))
+            logger.info(f'Index {index} created\n{out}')
         else:
-            logger.info('Index {} already exists'.format(index))
+            logger.info(f'Index {index} already exists')
 
     def delete_index(self, index):
         if self._ind_client.exists(index):
             out = self._ind_client.delete(index)
-            logger.info('Index {} deleted: {}'.format(index, out))
+            logger.info(f'Index {index} deleted: {out}')
 
     def exists_index(self, index):
         return self._ind_client.exists(index)
 
-    def another_index_name(self, index):
+    @staticmethod
+    def another_index_name(index):
         assert index.endswith('yin') or index.endswith('yang')
 
-        if index.endswith('yin'):
+        if index.endswith('yin'):  # pylint: disable=no-else-return
             return index.replace('yin', 'yang')
         else:
             return index.replace('yang', 'yin')
 
     def remap_alias(self, new_index, alias='sm'):
         old_index = self.another_index_name(new_index)
-        logger.info('Remapping {} alias: {} -> {}'.format(alias, old_index, new_index))
+        logger.info(f'Remapping {alias} alias: {old_index} -> {new_index}')
 
         self._ind_client.update_aliases(
             {"actions": [{"add": {"index": new_index, "alias": alias}}]}
@@ -265,7 +277,7 @@ def retry_on_conflict(num_retries=3):
     return decorator
 
 
-class ESExporter(object):
+class ESExporter:
     def __init__(self, db, es_config=None):
         self.sm_config = SMConfig.get_conf()
         if not es_config:
@@ -278,14 +290,14 @@ class ESExporter(object):
         self._get_mol_by_formula_dict_cache = dict()
 
     def _remove_mol_db_from_dataset(self, ds_id, mol_db):
-        dataset = self._es.get_source(self.index, id=ds_id, doc_type='dataset')
-        dataset['annotation_counts'] = [
+        ds_doc = self._es.get_source(self.index, id=ds_id, doc_type='dataset')
+        ds_doc['annotation_counts'] = [
             entry
-            for entry in dataset.get('annotation_counts', [])
+            for entry in ds_doc.get('annotation_counts', [])
             if not (entry['db']['name'] == mol_db.name and entry['db']['version'] == mol_db.version)
         ]
-        self._es.update(self.index, id=ds_id, body={'doc': dataset}, doc_type='dataset')
-        return dataset
+        self._es.update(self.index, id=ds_id, body={'doc': ds_doc}, doc_type='dataset')
+        return ds_doc
 
     def _select_ds_by_id(self, ds_id):
         return self._db.select_with_fields(DATASET_SEL, params=(ds_id,))[0]
@@ -335,10 +347,77 @@ class ESExporter(object):
             self._get_mol_by_formula_dict_cache[mol_db.id] = mol_by_formula_dict
             return mol_by_formula_dict
 
-    def _add_ds_fields_to_ann(self, ann_doc, ds_doc):
-        for f in ds_doc:
-            if f not in DS_COLUMNS_TO_SKIP_IN_ANN:
-                ann_doc[f] = ds_doc[f]
+    @staticmethod
+    def _add_ds_fields_to_ann(ann_doc, ds_doc):
+        for field in ds_doc:
+            if field not in DS_COLUMNS_TO_SKIP_IN_ANN:
+                ann_doc[field] = ds_doc[field]
+
+    @staticmethod
+    def _add_isomer_fields_to_anns(ann_docs):
+        isomer_groups = defaultdict(list)
+        isomer_comps = defaultdict(set)
+        missing_ion_formulas = []
+
+        for doc in ann_docs:
+            if doc['ion_formula']:
+                isomer_groups[doc['ion_formula']].append(doc['ion'])
+                isomer_comps[doc['ion_formula']].update(doc['comp_ids'])
+            else:
+                missing_ion_formulas.append(doc['ion'])
+
+        for doc in ann_docs:
+            doc['isomer_ions'] = [
+                ion for ion in isomer_groups[doc['ion_formula']] if ion != doc['ion']
+            ]
+            doc['comps_count_with_isomers'] = len(isomer_comps[doc['ion_formula']])
+
+        if missing_ion_formulas:
+            logger.warning(
+                f'Missing ion formulas {len(missing_ion_formulas)}: {missing_ion_formulas[:20]}'
+            )
+
+    def _index_ds_annotations(self, ds_id, mol_db, ds_doc, isocalc):
+        annotation_docs = self._db.select_with_fields(ANNOTATIONS_SEL, params=(ds_id, mol_db.id))
+        logger.info(f'Indexing {len(annotation_docs)} documents: {ds_id}, {mol_db}')
+
+        annotation_counts = defaultdict(int)
+        mol_by_formula = self._get_mol_by_formula_dict(mol_db)
+        for doc in annotation_docs:
+            self._add_ds_fields_to_ann(doc, ds_doc)
+            doc['db_name'] = mol_db.name
+            doc['db_version'] = mol_db.version
+            formula = doc['formula']
+            ion_without_pol = format_ion_formula(
+                formula, doc['chem_mod'], doc['neutral_loss'], doc['adduct']
+            )
+            doc['ion'] = ion_without_pol + doc['polarity']
+            doc['comp_ids'], doc['comp_names'] = mol_by_formula[formula]
+            mzs, _ = isocalc.centroids(ion_without_pol)
+            doc['centroid_mzs'] = list(mzs) if mzs is not None else []
+            doc['mz'] = mzs[0] if mzs is not None else 0
+
+            fdr = round(FDR.nearest_fdr_level(doc['fdr']) * 100, 2)
+            annotation_counts[fdr] += 1
+
+        self._add_isomer_fields_to_anns(annotation_docs)
+        ESExporterIsobars.add_isobar_fields_to_anns(annotation_docs, isocalc)
+        to_index = []
+        for doc in annotation_docs:
+            to_index.append(
+                {
+                    '_index': self.index,
+                    '_type': 'annotation',
+                    '_id': f"{doc['ds_id']}_{doc['annotation_id']}",
+                    '_source': doc,
+                }
+            )
+
+        for success, info in parallel_bulk(self._es, actions=to_index, timeout='60s'):
+            if not success:
+                logger.error(f'Document failed: {info}')
+
+        return annotation_counts
 
     @retry_on_conflict()
     def index_ds(self, ds_id, mol_db, isocalc):
@@ -347,67 +426,12 @@ class ESExporter(object):
                 ds_doc = self._remove_mol_db_from_dataset(ds_id, mol_db)
             except NotFoundError:
                 ds_doc = self._select_ds_by_id(ds_id)
-            if 'annotation_counts' not in ds_doc:
                 ds_doc['annotation_counts'] = []
 
-            annotation_counts = defaultdict(int)
+            annotation_counts = self._index_ds_annotations(ds_id, mol_db, ds_doc, isocalc)
+
             fdr_levels = [5, 10, 20, 50]
-            isomer_groups = defaultdict(list)
-            missing_ion_formulas = []
-
-            annotation_docs = self._db.select_with_fields(
-                ANNOTATIONS_SEL, params=(ds_id, mol_db.id)
-            )
-            logger.info('Indexing {} documents: {}, {}'.format(len(annotation_docs), ds_id, mol_db))
-
-            mol_by_formula = self._get_mol_by_formula_dict(mol_db)
-            for doc in annotation_docs:
-                self._add_ds_fields_to_ann(doc, ds_doc)
-                doc['db_name'] = mol_db.name
-                doc['db_version'] = mol_db.version
-                formula = doc['formula']
-                ion_without_pol = format_ion_formula(
-                    formula, doc['chem_mod'], doc['neutral_loss'], doc['adduct']
-                )
-                doc['ion'] = ion_without_pol + doc['polarity']
-                doc['comp_ids'], doc['comp_names'] = mol_by_formula[formula]
-                mzs, _ = isocalc.centroids(ion_without_pol)
-                doc['centroid_mzs'] = list(mzs)
-                doc['mz'] = mzs[0]
-
-                fdr = round(doc['fdr'] * 100, 2)
-                # assert fdr in fdr_levels
-                annotation_counts[fdr] += 1
-                if doc['ion_formula']:
-                    isomer_groups[doc['ion_formula']].append(doc['ion'])
-                else:
-                    missing_ion_formulas.append(doc['ion'])
-
-            for doc in annotation_docs:
-                doc['isomer_ions'] = [
-                    ion for ion in isomer_groups[doc['ion_formula']] if ion != doc['ion']
-                ]
-
-            if missing_ion_formulas:
-                logger.warn(
-                    f'Missing ion formulas {len(missing_ion_formulas)}: {missing_ion_formulas[:20]}'
-                )
-
-            to_index = []
-            for doc in annotation_docs:
-                to_index.append(
-                    {
-                        '_index': self.index,
-                        '_type': 'annotation',
-                        '_id': f"{doc['ds_id']}_{doc['annotation_id']}",
-                        '_source': doc,
-                    }
-                )
-
-            for success, info in parallel_bulk(self._es, actions=to_index, timeout='60s'):
-                if not success:
-                    logger.error(f'Document failed: {info}')
-
+            # put cumulative annotation counts to ds_doc
             for i, level in enumerate(fdr_levels[1:]):
                 annotation_counts[level] += annotation_counts[fdr_levels[i]]
             ds_doc['annotation_counts'].append(
@@ -420,33 +444,57 @@ class ESExporter(object):
             )
             self._es.index(self.index, doc_type='dataset', body=ds_doc, id=ds_id)
 
+    def reindex_ds(self, ds_id):
+        """Delete and index dataset documents for all moldbs defined in the dataset config."""
+        self.delete_ds(ds_id)
+
+        res = DB().select_one("select name, config from dataset where id = %s", params=(ds_id,))
+        if res:
+            ds_name, ds_config = res
+            isocalc = IsocalcWrapper(ds_config)
+            for moldb_name in ds_config['databases']:
+                try:
+                    self.index_ds(ds_id, mol_db=MolecularDB(name=moldb_name), isocalc=isocalc)
+                except Exception as e:
+                    new_msg = (
+                        f'Failed to reindex(ds_id={ds_id}, ds_name={ds_name}, '
+                        f'mol_db={moldb_name}): {e}'
+                    )
+                    logger.error(new_msg, exc_info=True)
+        else:
+            logger.warning(f'Dataset does not exist(ds_id={ds_id})')
+
+    @staticmethod
+    def _create_updated_ds_doc(ds_doc, fields):
+        ds_doc_upd = {}
+        for field in fields:
+            if field == 'submitter_id':
+                ds_doc_upd['ds_submitter_id'] = ds_doc['ds_submitter_id']
+                ds_doc_upd['ds_submitter_name'] = ds_doc['ds_submitter_name']
+                ds_doc_upd['ds_submitter_email'] = ds_doc['ds_submitter_email']
+            elif field == 'group_id':
+                ds_doc_upd['ds_group_id'] = ds_doc['ds_group_id']
+                ds_doc_upd['ds_group_name'] = ds_doc['ds_group_name']
+                ds_doc_upd['ds_group_short_name'] = ds_doc['ds_group_short_name']
+                ds_doc_upd['ds_group_approved'] = ds_doc['ds_group_approved']
+            elif field == 'project_ids':
+                ds_doc_upd['ds_project_ids'] = ds_doc['ds_project_ids']
+                ds_doc_upd['ds_project_names'] = ds_doc['ds_project_names']
+            elif field == 'metadata':
+                ds_meta_flat_doc = flatten_doc(ds_doc['ds_meta'], parent_key='ds_meta')
+                ds_doc_upd.update(ds_meta_flat_doc)
+            elif f'ds_{field}' in ds_doc:
+                ds_doc_upd[f'ds_{field}'] = ds_doc[f'ds_{field}']
+        return ds_doc_upd
+
     @retry_on_conflict()
     def update_ds(self, ds_id, fields):
         with self._ds_locker.lock(ds_id):
             pipeline_id = f'update-ds-fields-{ds_id}'
             if fields:
-                ds_doc = self._select_ds_by_id(ds_id)
-
-                ds_doc_upd = {}
-                for f in fields:
-                    if f == 'submitter_id':
-                        ds_doc_upd['ds_submitter_id'] = ds_doc['ds_submitter_id']
-                        ds_doc_upd['ds_submitter_name'] = ds_doc['ds_submitter_name']
-                        ds_doc_upd['ds_submitter_email'] = ds_doc['ds_submitter_email']
-                    elif f == 'group_id':
-                        ds_doc_upd['ds_group_id'] = ds_doc['ds_group_id']
-                        ds_doc_upd['ds_group_name'] = ds_doc['ds_group_name']
-                        ds_doc_upd['ds_group_short_name'] = ds_doc['ds_group_short_name']
-                        ds_doc_upd['ds_group_approved'] = ds_doc['ds_group_approved']
-                    elif f == 'project_ids':
-                        ds_doc_upd['ds_project_ids'] = ds_doc['ds_project_ids']
-                        ds_doc_upd['ds_project_names'] = ds_doc['ds_project_names']
-                    elif f == 'metadata':
-                        ds_meta_flat_doc = flatten_doc(ds_doc['ds_meta'], parent_key='ds_meta')
-                        ds_doc_upd.update(ds_meta_flat_doc)
-                    elif f'ds_{f}' in ds_doc:
-                        ds_doc_upd[f'ds_{f}'] = ds_doc[f'ds_{f}']
-
+                ds_doc_upd = self._create_updated_ds_doc(
+                    ds_doc=self._select_ds_by_id(ds_id), fields=fields
+                )
                 processors = []
                 for k, v in ds_doc_upd.items():
                     if v is None:
@@ -462,7 +510,7 @@ class ESExporter(object):
                             'pipeline': pipeline_id,
                             'wait_for_completion': True,
                             'refresh': 'wait_for',
-                            'request_timeout': 60,
+                            'request_timeout': 5 * 60,
                         },
                     )
                 finally:
@@ -471,17 +519,15 @@ class ESExporter(object):
     @retry_on_conflict()
     def delete_ds(self, ds_id, mol_db=None, delete_dataset=True):
         """
-        If mol_db passed, only annotation statistics are updated in the dataset document. DS document won't be deleted
+        If mol_db passed, only annotation statistics are updated in the dataset document.
+        DS document won't be deleted
 
         :param ds_id: str
         :param mol_db: sm.engine.MolecularDB
         :return:
         """
         with self._ds_locker.lock(ds_id):
-            logger.info('Deleting or updating dataset document in ES: %s, %s', ds_id, mol_db)
-
-            must = [{'term': {'ds_id': ds_id}}]
-            body = {'query': {'constant_score': {'filter': {'bool': {'must': must}}}}}
+            logger.info(f'Deleting or updating dataset document in ES: {ds_id}, {mol_db}')
 
             try:
                 if mol_db:
@@ -491,18 +537,116 @@ class ESExporter(object):
             except NotFoundError:
                 pass
             except ElasticsearchException as e:
-                logger.warning('Dataset deletion failed: %s', e)
+                logger.warning(f'Dataset deletion failed: {e}')
 
-            logger.info('Deleting annotation documents from ES: %s, %s', ds_id, mol_db)
+            logger.info(f'Deleting annotation documents from ES: {ds_id}, {mol_db}')
 
+            must = [{'term': {'ds_id': ds_id}}]
             if mol_db:
                 must.append({'term': {'db_name': mol_db.name}})
                 must.append({'term': {'db_version': mol_db.version}})
 
             try:
-                resp = self._es.delete_by_query(
+                body = {'query': {'constant_score': {'filter': {'bool': {'must': must}}}}}
+                resp = self._es.delete_by_query(  # pylint: disable=unexpected-keyword-arg
                     index=self.index, body=body, doc_type='annotation', conflicts='proceed'
                 )
                 logger.debug(resp)
             except ElasticsearchException as e:
-                logger.warning('Annotation deletion failed: %s', e)
+                logger.warning(f'Annotation deletion failed: {e}')
+
+
+class ESExporterIsobars:
+    """
+    A helper function for ESExport that grew too big to remain a single function.
+    `ESExporterIsobars.add_isobar_fields_to_anns` computes the "isobars" field and adds it to
+    every annotation in a list of annotation documents.
+    """
+
+    @classmethod
+    def add_isobar_fields_to_anns(cls, ann_docs, isocalc):
+        mzs_df = cls._build_mzs_df(ann_docs, isocalc)
+
+        for _, peak_rows in mzs_df.groupby('id'):
+            overlaps = cls._find_overlaps(mzs_df, peak_rows)
+            cls._apply_overlap_group(peak_rows, overlaps)
+
+    @staticmethod
+    def _build_mzs_df(ann_docs, isocalc):
+        peaks = []
+
+        for doc in ann_docs:
+            doc['isobars'] = []
+            for peak_n, mz in enumerate(doc['centroid_mzs'], 1):  # pylint: disable=invalid-name
+                if mz != 0:
+                    peaks.append(
+                        (
+                            doc['annotation_id'],
+                            doc,
+                            peak_n,
+                            mz,
+                            doc['msm'],
+                            doc['ion'],
+                            doc['ion_formula'] or '',
+                        )
+                    )
+
+        peaks_df = pd.DataFrame(
+            peaks, columns=['id', 'doc', 'peak_n', 'mz', 'msm', 'ion', 'ion_formula']
+        )
+        mzs_df = peaks_df.sort_values('mz')
+
+        mzs_df['lower_mz'], mzs_df['upper_mz'] = isocalc.mass_accuracy_bounds(mzs_df['mz'])
+        mzs_df['lower_idx'] = np.searchsorted(mzs_df.upper_mz.values, mzs_df.lower_mz.values, 'l')
+        mzs_df['upper_idx'] = np.searchsorted(mzs_df.lower_mz.values, mzs_df.upper_mz.values, 'r')
+        return mzs_df
+
+    @staticmethod
+    def _find_overlaps(mzs_df, peak_rows):
+        overlaps = defaultdict(list)
+        # Use numpy arrays directly to minimize access times during the core loop
+        _ids = mzs_df.id.values
+        _ion_formulas = mzs_df.ion_formula.values
+        _peak_ns = mzs_df.peak_n.values
+        _docs = mzs_df.doc.values
+        # Collect all other annotations that have any overlap with this annotation
+        for lower_idx, upper_idx, ion_formula, peak_n in peak_rows[
+            ['lower_idx', 'upper_idx', 'ion_formula', 'peak_n']
+        ].itertuples(False, None):
+            # Ignore annotations with "greater" ion_formula values as an optimization.
+            # The backwards link from "greater" to "lesser" is populated below, and doing this
+            # helps to ensure that the relationship is always reflexive.
+            peak_overlap_is = (
+                np.nonzero(_ion_formulas[lower_idx:upper_idx] < ion_formula)[0] + lower_idx
+            )
+            for peak_overlap_i in peak_overlap_is:
+                overlaps[_ids[peak_overlap_i]].append(
+                    (int(peak_n), int(_peak_ns[peak_overlap_i]), _docs[peak_overlap_i])
+                )
+        return overlaps
+
+    @staticmethod
+    def _apply_overlap_group(peak_rows, overlaps):
+        doc = peak_rows.doc.iloc[0]
+        # Add a list of other annotations where either both first peaks overlap,
+        # or there are multiple overlaps.
+        for overlap_rows in overlaps.values():
+            peak_ns = sorted(row[:2] for row in overlap_rows)
+            if len(peak_ns) > 1 or (1, 1) in peak_ns:
+                overlap_doc = overlap_rows[0][2]
+                doc['isobars'].append(
+                    {
+                        'ion_formula': overlap_doc['ion_formula'],
+                        'ion': overlap_doc['ion'],
+                        'msm': overlap_doc['msm'],
+                        'peak_ns': peak_ns,
+                    }
+                )
+                overlap_doc['isobars'].append(
+                    {
+                        'ion_formula': doc['ion_formula'],
+                        'ion': doc['ion'],
+                        'msm': doc['msm'],
+                        'peak_ns': [(b, a) for a, b in peak_ns],
+                    }
+                )

@@ -1,16 +1,13 @@
 """
 Classes and functions for isotope image validation
 """
-import numpy as np
-import pandas as pd
-from operator import mul, add
 from collections import OrderedDict, defaultdict
 
+import numpy as np
+import pandas as pd
 from pyImagingMSpec.image_measures import isotope_image_correlation, isotope_pattern_match
-
-# from pyImagingMSpec.image_measures import measure_of_chaos
 from cpyImagingMSpec import measure_of_chaos
-from pyImagingMSpec import smoothing
+
 
 METRICS = OrderedDict(
     [
@@ -25,17 +22,17 @@ METRICS = OrderedDict(
 )
 
 
-def replace_nan(v, default=0):
+def replace_nan(val, default=0):
     def replace(x):
         if not x or np.isinf(x) or np.isnan(x):
             return default
-        else:
-            return float(x)
 
-    if type(v) is list:
-        return [replace(x) for x in v]
-    else:
-        return replace(v)
+        return float(x)
+
+    if isinstance(val, list):
+        return [replace(x) for x in val]
+
+    return replace(val)
 
 
 def make_compute_image_metrics(sample_area_mask, nrows, ncols, img_gen_config):
@@ -55,11 +52,11 @@ def make_compute_image_metrics(sample_area_mask, nrows, ncols, img_gen_config):
     empty_matrix = np.zeros((nrows, ncols))
     sample_area_mask_flat = sample_area_mask.flatten()
 
-    def compute(iso_images_sparse, formula_ints):
+    def compute_metrics(iso_images_sparse, formula_ints):
         np.seterr(invalid='ignore')  # to ignore division by zero warnings
 
-        m = METRICS.copy()
-        if len(iso_images_sparse) > 0:
+        doc = METRICS.copy()
+        if iso_images_sparse:
             iso_imgs = [
                 img.toarray() if img is not None else empty_matrix for img in iso_images_sparse
             ]
@@ -67,24 +64,23 @@ def make_compute_image_metrics(sample_area_mask, nrows, ncols, img_gen_config):
             iso_imgs_flat = [img.flatten()[sample_area_mask_flat] for img in iso_imgs]
             iso_imgs_flat = iso_imgs_flat[: len(formula_ints)]
 
-            m['spectral'] = isotope_pattern_match(iso_imgs_flat, formula_ints)
-            if m['spectral'] > 0:
+            doc['spectral'] = isotope_pattern_match(iso_imgs_flat, formula_ints)
+            if doc['spectral'] > 0:
 
-                m['spatial'] = isotope_image_correlation(iso_imgs_flat, weights=formula_ints[1:])
-                if m['spatial'] > 0:
+                doc['spatial'] = isotope_image_correlation(iso_imgs_flat, weights=formula_ints[1:])
+                if doc['spatial'] > 0:
 
                     moc = measure_of_chaos(iso_imgs[0], img_gen_config.get('n_levels', 30))
-                    m['chaos'] = 0 if np.isclose(moc, 1.0) else moc
-                    if m['chaos'] > 0:
+                    doc['chaos'] = 0 if np.isclose(moc, 1.0) else moc
+                    if doc['chaos'] > 0:
 
-                        m['msm'] = m['chaos'] * m['spatial'] * m['spectral']
-                        m['total_iso_ints'] = [img.sum() for img in iso_imgs]
-                        m['min_iso_ints'] = [img.min() for img in iso_imgs]
-                        m['max_iso_ints'] = [img.max() for img in iso_imgs]
-        metrics = OrderedDict((k, replace_nan(v)) for k, v in m.items())
-        return metrics
+                        doc['msm'] = doc['chaos'] * doc['spatial'] * doc['spectral']
+                        doc['total_iso_ints'] = [img.sum() for img in iso_imgs]
+                        doc['min_iso_ints'] = [img.min() for img in iso_imgs]
+                        doc['max_iso_ints'] = [img.max() for img in iso_imgs]
+        return OrderedDict((k, replace_nan(v)) for k, v in doc.items())
 
-    return compute
+    return compute_metrics
 
 
 def complete_image_list(images):
@@ -92,7 +88,13 @@ def complete_image_list(images):
     return non_empty_image_n > 1 and images[0] is not None
 
 
-def formula_image_metrics(formula_images_it, compute_metrics, target_formula_inds, n_peaks):
+def nullify_images_with_too_few_pixels(f_images, min_px):
+    return [img if (img is not None and img.nnz >= min_px) else None for img in f_images]
+
+
+def formula_image_metrics(
+    formula_images_it, compute_metrics, target_formula_inds, n_peaks, min_px=1
+):  # function optimized for compute performance
     """ Compute isotope image metrics for each formula
 
     Args
@@ -114,6 +116,7 @@ def formula_image_metrics(formula_images_it, compute_metrics, target_formula_ind
     formula_ints_buffer = defaultdict(lambda: [0] * n_peaks)
 
     def add_metrics(f_i, f_images, f_ints):
+        f_images = nullify_images_with_too_few_pixels(f_images, min_px)
         if complete_image_list(f_images):
             f_metrics = compute_metrics(f_images, f_ints)
             if f_metrics['msm'] > 0:
@@ -122,7 +125,10 @@ def formula_image_metrics(formula_images_it, compute_metrics, target_formula_ind
                     formula_images[f_i] = f_images
 
     for f_i, p_i, f_int, image in formula_images_it:
-        formula_images_buffer[f_i][p_i] = image
+        if formula_images_buffer[f_i][p_i] is None:
+            formula_images_buffer[f_i][p_i] = image
+        else:
+            formula_images_buffer[f_i][p_i] += image
         formula_ints_buffer[f_i][p_i] = f_int
 
         if p_i == n_peaks - 1:  # last formula image index

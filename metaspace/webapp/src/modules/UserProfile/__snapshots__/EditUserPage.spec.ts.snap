@@ -525,6 +525,35 @@ exports[`EditUserPage should match snapshot 1`] = `
       </div>
     </div>
     <div>
+      <h2>API access</h2>
+      <p style="width: 100%; padding-left: 15px;">
+        To
+        <a href="https://github.com/metaspace2020/metaspace/tree/master/metaspace/python-client">access METASPACE programmatically</a>
+        or integrate with trusted third-party applications, an API key can be used to avoid sharing your password.
+      </p>
+      <div class="el-row">
+        <div>
+          <div class="api-key el-input el-input-group el-input-group--append">
+            <!---->
+            <input type="password" readonly="readonly" autocomplete="off" class="el-input__inner">
+            <!---->
+            <!---->
+            <div class="el-input-group__append">
+              <button type="button" class="el-button el-button--default" title="Copy to clipboard">
+                <!---->
+                <i class="el-icon-document-copy"></i>
+                <!---->
+              </button>
+            </div>
+            <!---->
+          </div>
+          <button type="button" class="el-button el-button--danger" style="float: right; margin-top: 15px;">
+            <!---->
+            <!----><span>Revoke key</span></button>
+        </div>
+      </div>
+    </div>
+    <div>
       <h2>Delete account</h2>
       <p style="width: 100%; padding-left: 15px;">
         If you delete your METASPACE account, you can either delete all your datasets or keep them within METASPACE. For the latter, the private data will still be accessible by the group members only.

@@ -16,7 +16,9 @@ from sm.engine.png_generator import ImageStoreServiceWrapper
 COLOC_JOB_DEL = 'DELETE FROM graphql.coloc_job ' 'WHERE ds_id = %s AND mol_db = %s'
 
 COLOC_JOB_INS = (
-    'INSERT INTO graphql.coloc_job (ds_id, mol_db, fdr, algorithm, start, finish, error, sample_ion_ids) '
+    'INSERT INTO graphql.coloc_job ('
+    '   ds_id, mol_db, fdr, algorithm, start, finish, error, sample_ion_ids'
+    ') '
     'VALUES (%s, %s, %s, %s, %s, %s, %s, %s) '
     'RETURNING id'
 )
@@ -53,7 +55,8 @@ DATASET_CONFIG_SEL = (
 logger = logging.getLogger('engine')
 
 
-class ColocalizationJob(object):
+class ColocalizationJob:
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         ds_id,
@@ -104,7 +107,7 @@ class ColocalizationJob(object):
         self.coloc_annotations = coloc_annotations or []
 
 
-class FreeableRef(object):
+class FreeableRef:
     def __init__(self, ref):
         self._ref = ref
         self._freed = False
@@ -117,8 +120,8 @@ class FreeableRef(object):
     def ref(self):
         if self._freed:
             raise ReferenceError('FreeableRef is already freed')
-        else:
-            return self._ref
+
+        return self._ref
 
 
 def _labels_to_clusters(labels, scores):
@@ -148,18 +151,19 @@ def _label_clusters(scores):
             )
             cluster_score = np.mean([scores[a, b] for a, b in enumerate(labels)])
             results.append((n_clusters, cluster_score, labels))
-        except Exception as err:
-            last_error = err
+        except Exception as e:
+            last_error = e
 
     if not results:
         raise last_error
-    elif last_error:
-        logger.warning('Warning: clustering failed on some cluster sizes', last_error)
+
+    if last_error:
+        logger.warning(f'Clustering failed on some cluster sizes: {last_error}')
 
     # Find the best cluster, subtracting n/1000 to add a slight preference to having fewer clusters
     best_cluster_idx = np.argmax([cs - n / 1000 for n, cs, l in results])
-    best_n, best_cluster_score, best_labels = results[best_cluster_idx]
-    logger.debug(f'best with {best_n} clusters (scores: {[(r[0], r[1]) for r in results]})')
+    best_n, _, best_labels = results[best_cluster_idx]
+    logger.debug(f'Best with {best_n} clusters (scores: {[(r[0], r[1]) for r in results]})')
     return best_labels
 
 
@@ -179,8 +183,8 @@ def _get_best_colocs(scores, max_samples, min_score):
 
 
 def _format_coloc_annotations(ion_ids, scores, colocs):
-    for i, js in enumerate(colocs):
-        sorted_js = sorted(js, key=lambda j: -scores[i, j])
+    for i, js in enumerate(colocs):  # pylint: disable=invalid-name
+        sorted_js = sorted(js, key=lambda j: -scores[i, j])  # pylint: disable=cell-var-from-loop
         base_ion_id = ion_ids.item(i)
         other_ion_ids = [ion_ids.item(j) for j in sorted_js]
         other_ion_scores = [scores.item((i, j)) for j in sorted_js]
@@ -197,12 +201,14 @@ def _downscale_image_if_required(img, num_annotations):
     if zoom_factor > 1:
         return img
     with warnings.catch_warnings():
-        # ignore "UserWarning: From scipy 0.13.0, the output shape of zoom() is calculated with round() instead of int()
+        # ignore "UserWarning: From scipy 0.13.0, the output shape of zoom() is calculated
+        # with round() instead of int()
         # - for these inputs the size of the returned array has changed."
         warnings.filterwarnings('ignore', '.*the output shape of zoom.*')
         return zoom(img, zoom_factor)
 
 
+# pylint: disable=cell-var-from-loop
 def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs, cluster_max_images=5000):
     """ Calculate co-localization of ion images for all algorithms and yield results
 
@@ -251,7 +257,8 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs, cluster_max_ima
                 f'Finding best colocalizations at FDR {fdr} ({len(masked_ion_ids)} annotations)'
             )
 
-            # NOTE: Keep labels/clusters between algorithms so that if any algorithm fails to cluster,
+            # NOTE: Keep labels/clusters between algorithms
+            # so that if any algorithm fails to cluster,
             # it can use the labels/clusters from a previous successful run.
             # Usually cosine succeeds at clustering and PCA data fails clustering.
             labels = [0] * len(masked_ion_ids)
@@ -270,8 +277,8 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs, cluster_max_ima
                         )
                         labels = _label_clusters(trunc_masked_scores)
                         clusters = _labels_to_clusters(labels, trunc_masked_scores)
-                    except Exception as err:
-                        logger.warning(f'Failed to cluster {algorithm}: {err}', exc_info=True)
+                    except Exception as e:
+                        logger.warning(f'Failed to cluster {algorithm}: {e}', exc_info=True)
 
                 masked_scores = scores if fdr_mask.all() else scores[fdr_mask, :][:, fdr_mask]
                 colocs = _get_best_colocs(masked_scores, max_samples=100, min_score=0.3)
@@ -300,7 +307,7 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs, cluster_max_ima
             )
 
 
-class Colocalization(object):
+class Colocalization:
     def __init__(self, db, img_store=None):
         self._db = db
         self._sm_config = SMConfig.get_conf()
@@ -309,7 +316,7 @@ class Colocalization(object):
         )
 
     def _save_job_to_db(self, job):
-        job_id, = self._db.insert_return(
+        (job_id,) = self._db.insert_return(
             COLOC_JOB_INS,
             [
                 [
@@ -337,7 +344,8 @@ class Colocalization(object):
                 for job in analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
                     self._save_job_to_db(job)
             else:
-                # Technically `len(ion_ids) == 2` is enough, but spearmanr returns a scalar instead of a matrix
+                # Technically `len(ion_ids) == 2` is enough,
+                # but spearmanr returns a scalar instead of a matrix
                 # when there are only 2 items, and it's not worth handling this edge case
                 logger.info('Not enough annotations to perform colocalization')
         except Exception:
@@ -360,7 +368,7 @@ class Colocalization(object):
 
             logger.debug(f'Getting {num_annotations} images for "{ds_id}" {mol_db_name}')
             image_ids = [row[0] for row in annotation_rows]
-            images, mask, (h, w) = self._img_store.get_ion_images_for_analysis(
+            images, _, (h, w) = self._img_store.get_ion_images_for_analysis(
                 image_storage_type, image_ids
             )
             logger.debug(
@@ -374,13 +382,14 @@ class Colocalization(object):
         return FreeableRef(images), ion_ids, fdrs
 
     def run_coloc_job(self, ds_id, reprocess=False):
-        """ Analyze colocalization for a previously annotated dataset, querying the dataset's annotations from the db,
-        and downloading the exported ion images
+        """ Analyze colocalization for a previously annotated dataset,
+        querying the dataset's annotations from the db, and downloading the exported ion images
         Args
         ====
         ds_id: str
         reprocess: bool
-            Whether to re-run colocalization jobs against databases that have already successfully run
+            Whether to re-run colocalization jobs against databases
+            that have already successfully run
         """
 
         image_storage_type = Dataset(ds_id).get_ion_img_storage_type(self._db)

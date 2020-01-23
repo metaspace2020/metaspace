@@ -12,12 +12,61 @@ from sm.engine.queue import SM_ANNOTATE, SM_UPDATE, SM_DS_STATUS, QueuePublisher
 from sm.engine.util import SMConfig, init_loggers
 
 
+def get_manager():
+    db = DB()
+    status_queue_pub = QueuePublisher(
+        config=sm_config['rabbitmq'], qdesc=SM_DS_STATUS, logger=logger
+    )
+    return DatasetManager(
+        db=db,
+        es=ESExporter(db),
+        img_store=ImageStoreServiceWrapper(sm_config['services']['img_service_url']),
+        status_queue=status_queue_pub,
+        logger=logger,
+    )
+
+
+def main(daemon_name):
+    logger.info(f'Starting {daemon_name}-daemon')
+
+    conn_pool = ConnectionPool(sm_config['db'])
+
+    daemons = []
+    if daemon_name == 'annotate':
+        daemons.append(
+            SMAnnotateDaemon(manager=get_manager(), annot_qdesc=SM_ANNOTATE, upd_qdesc=SM_UPDATE)
+        )
+    elif daemon_name == 'update':
+        make_update_queue_cons = partial(
+            QueueConsumer,
+            config=sm_config['rabbitmq'],
+            qdesc=SM_UPDATE,
+            logger=logger,
+            poll_interval=1,
+        )
+        for _ in range(sm_config['services']['update_daemon_threads']):
+            daemon = SMIndexUpdateDaemon(get_manager(), make_update_queue_cons)
+            daemons.append(daemon)
+    else:
+        raise Exception(f'Wrong SM daemon name: {daemon_name}')
+
+    def cb_stop_daemons(*args):  # pylint: disable=redefined-outer-name
+        logger.info(f'Stopping {daemon_name}-daemon')
+        for d in daemons:  # pylint: disable=invalid-name
+            d.stop()
+        conn_pool.close()
+
+    signal.signal(signal.SIGINT, cb_stop_daemons)
+    signal.signal(signal.SIGTERM, cb_stop_daemons)
+
+    for daemon in daemons:
+        daemon.start()
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description=(
-            'A daemon process for consuming messages from a '
-            'queue and performing dataset manipulations'
-        )
+        description='A daemon process for consuming messages from a '
+        'queue and performing dataset manipulations'
     )
     parser.add_argument('--name', type=str, help='SM daemon name (annotate/update)')
     parser.add_argument(
@@ -28,52 +77,6 @@ if __name__ == "__main__":
     SMConfig.set_path(args.config_path)
     sm_config = SMConfig.get_conf()
     init_loggers(sm_config['logs'])
-    daemon_name = args.name
-    logger = logging.getLogger(f'{daemon_name}-daemon')
-    logger.info(f'Starting {daemon_name}-daemon')
+    logger = logging.getLogger(f'{args.name}-daemon')
 
-    def get_manager():
-        db = DB()
-        status_queue_pub = QueuePublisher(
-            config=sm_config['rabbitmq'], qdesc=SM_DS_STATUS, logger=logger
-        )
-        return DatasetManager(
-            db=db,
-            es=ESExporter(db),
-            img_store=ImageStoreServiceWrapper(sm_config['services']['img_service_url']),
-            status_queue=status_queue_pub,
-            logger=logger,
-        )
-
-    conn_pool = ConnectionPool(sm_config['db'])
-
-    daemons = []
-    if args.name == 'annotate':
-        daemons.append(
-            SMAnnotateDaemon(manager=get_manager(), annot_qdesc=SM_ANNOTATE, upd_qdesc=SM_UPDATE)
-        )
-    elif args.name == 'update':
-        make_update_queue_cons = partial(
-            QueueConsumer,
-            config=sm_config['rabbitmq'],
-            qdesc=SM_UPDATE,
-            logger=logger,
-            poll_interval=1,
-        )
-        for i in range(sm_config['services']['update_daemon_threads']):
-            daemon = SMIndexUpdateDaemon(get_manager(), make_update_queue_cons)
-            daemons.append(daemon)
-    else:
-        raise Exception(f'Wrong SM daemon name: {args.name}')
-
-    def stop_daemons(*args):
-        logger.info(f'Stopping {daemon_name}-daemon')
-        for d in daemons:
-            d.stop()
-        conn_pool.close()
-
-    signal.signal(signal.SIGINT, stop_daemons)
-    signal.signal(signal.SIGTERM, stop_daemons)
-
-    for daemon in daemons:
-        daemon.start()
+    main(args.name)

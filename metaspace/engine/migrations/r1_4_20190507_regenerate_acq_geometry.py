@@ -19,7 +19,9 @@ def run(ds_id, sql_where):
     img_store = ImageStoreServiceWrapper(conf['services']['img_service_url'])
 
     if sql_where:
-        ds_ids = [id for (id, ) in db.select(f'SELECT DISTINCT dataset.id FROM dataset WHERE {sql_where}')]
+        ds_ids = [
+            id for (id,) in db.select(f'SELECT DISTINCT dataset.id FROM dataset WHERE {sql_where}')
+        ]
     else:
         ds_ids = ds_id.split(',')
 
@@ -31,9 +33,12 @@ def run(ds_id, sql_where):
         try:
             logger.info(f'[{i+1} / {len(ds_ids)}] Updating acq geometry for {ds_id}')
             ds = Dataset.load(db, ds_id)
-            sample_img_id, = db.select_one("SELECT iim.iso_image_ids[1] from job j "
-                                           "JOIN iso_image_metrics iim on j.id = iim.job_id "
-                                           "WHERE j.ds_id = %s LIMIT 1", [ds_id])
+            (sample_img_id,) = db.select_one(
+                "SELECT iim.iso_image_ids[1] from job j "
+                "JOIN iso_image_metrics iim on j.id = iim.job_id "
+                "WHERE j.ds_id = %s LIMIT 1",
+                [ds_id],
+            )
             print(sample_img_id)
             if sample_img_id:
                 w, h = img_store.get_image_by_id('fs', 'iso_image', sample_img_id).size
@@ -53,11 +58,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run colocalization jobs')
     parser.add_argument('--config', default='conf/config.json', help='SM config path')
     parser.add_argument('--ds-id', default=None, help='DS id (or comma-separated list of ids)')
-    parser.add_argument('--sql-where', default=None,
-                        help='SQL WHERE clause for picking rows from the dataset table, '
-                             'e.g. "status = \'FINISHED\' and ion_thumbnail is null"')
-    parser.add_argument('--migrate', action='store_true',
-                        help='Update all datasets')
+    parser.add_argument(
+        '--sql-where',
+        default=None,
+        help='SQL WHERE clause for picking rows from the dataset table, '
+        'e.g. "status = \'FINISHED\' and ion_thumbnail is null"',
+    )
+    parser.add_argument('--migrate', action='store_true', help='Update all datasets')
     args = parser.parse_args()
 
     if not (bool(args.ds_id) ^ bool(args.sql_where) ^ bool(args.migrate)):

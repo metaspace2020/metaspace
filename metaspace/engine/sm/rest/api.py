@@ -1,5 +1,6 @@
 import argparse
 import json
+import logging
 
 from bottle import post, run
 from bottle import request as req
@@ -7,11 +8,9 @@ from bottle import response as resp
 
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
-from sm.engine.dataset import Dataset
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_DS_STATUS, SM_UPDATE
 from sm.engine.util import SMConfig, bootstrap_and_run
-from sm.engine.util import init_loggers
 from sm.engine.errors import UnknownDSID, DSIsBusy
 from sm.rest.dataset_manager import SMapiDatasetManager, DatasetActionPriority
 
@@ -26,9 +25,9 @@ ERR_DS_BUSY = {'status_code': 409, 'status': 'dataset_busy'}
 ERROR = {'status_code': 500, 'status': 'server_error'}
 
 
-def _json_params(req):
-    b = req.body.getvalue()
-    return json.loads(b.decode('utf-8'))
+def _json_params(request):
+    body = request.body.getvalue()
+    return json.loads(body.decode('utf-8'))
 
 
 def _create_queue_publisher(qdesc):
@@ -56,17 +55,17 @@ def sm_modify_dataset(request_name):
         def _func(ds_id=None):
             try:
                 params = _json_params(req)
-                logger.info('Received %s request: %s', request_name, params)
+                logger.info(f'Received {request_name} request: {params}')
                 ds_man = _create_dataset_manager(DB())
                 res = handler(ds_man, ds_id, params)
 
                 return {'status': OK['status'], 'ds_id': ds_id or res.get('ds_id', None)}
             except UnknownDSID as e:
-                logger.warning(e.message)
+                logger.warning(e)
                 resp.status = ERR_DS_NOT_EXIST['status_code']
                 return {'status': ERR_DS_NOT_EXIST['status'], 'ds_id': ds_id}
             except DSIsBusy as e:
-                logger.warning(e.message)
+                logger.warning(e)
                 resp.status = ERR_DS_BUSY['status_code']
                 return {'status': ERR_DS_BUSY['status'], 'ds_id': ds_id}
             except Exception as e:
@@ -107,17 +106,17 @@ def add_ds(ds_man, ds_id=None, params=None):
         msg = 'No input to create a dataset'
         logger.info(msg)
         raise Exception(msg)
-    else:
-        if ds_id:
-            doc['id'] = ds_id
-        ds_id = ds_man.add(
-            doc=doc,
-            del_first=params.get('del_first', False),
-            force=params.get('force', False),
-            email=params.get('email', None),
-            priority=params.get('priority', DatasetActionPriority.DEFAULT),
-        )
-        return {'ds_id': ds_id}
+
+    if ds_id:
+        doc['id'] = ds_id
+    ds_id = ds_man.add(
+        doc=doc,
+        del_first=params.get('del_first', False),
+        force=params.get('force', False),
+        email=params.get('email', None),
+        priority=params.get('priority', DatasetActionPriority.DEFAULT),
+    )
+    return {'ds_id': ds_id}
 
 
 @post('/v1/datasets/<ds_id>/update')
@@ -185,7 +184,7 @@ def add_optical_image(ds_man, ds_id, params):
 
 @post('/v1/datasets/<ds_id>/del-optical-image')
 @sm_modify_dataset('DEL_OPTICAL_IMAGE')
-def del_optical_image(ds_man, ds_id, params):
+def del_optical_image(ds_man, ds_id, params):  # pylint: disable=unused-argument
     """
     :param ds_man: rest.SMapiDatasetManager
     :param ds_id: string
@@ -201,8 +200,9 @@ if __name__ == '__main__':
         '--config', dest='config_path', default='conf/config.json', type=str, help='SM config path'
     )
     args = parser.parse_args()
+    logger = logging.getLogger('api')
 
-    def run_bottle(sm_config, logger):
+    def run_bottle(sm_config):
         logger.info('Starting SM api')
         run(**sm_config['bottle'])
 

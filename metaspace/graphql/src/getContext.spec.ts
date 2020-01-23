@@ -8,9 +8,9 @@ import {
   testUser,
 } from './tests/graphqlTestEnvironment';
 import {Dataset, DatasetProject} from './modules/dataset/model';
-import {Project, UserProject} from './modules/project/model';
-import {createTestUser} from './tests/testDataCreation';
-import {getContextForTest} from './getContext';
+import {Project, UserProject, UserProjectRoleOptions as UPRO} from './modules/project/model';
+import {createTestProject, createTestProjectMember, createTestUser} from './tests/testDataCreation';
+import getContext, {getContextForTest} from './getContext';
 import {MersenneTwister19937, pick} from 'random-js';
 
 
@@ -125,5 +125,36 @@ describe('getContext', () => {
         }
       });
     });
-  })
+  });
+  describe('ContextUser.getProjectRoles', () => {
+    const testIds = [1, 2].map(n => `00000000-1234-0000-0000-00000000000${n}`);
+
+    it('should return project roles for anonymous reviewer', async () => {
+      const [proj1, proj2] = testIds;
+      await createTestProject({ id: proj1, reviewToken: 'abc' });
+      await createTestProject({ id: proj2, reviewToken: 'xyz' });
+
+      const req = { session: { reviewTokens: ['abc'] }} as any;
+      const context = getContext(null, testEntityManager, req, null as any);
+
+      const projectRoles = await context.user.getProjectRoles();
+
+      expect(projectRoles).toMatchObject({[proj1]: UPRO.REVIEWER });
+    });
+
+    it('should return correct project roles for logged in user',
+      async () => {
+        const [proj1, proj2] = testIds;
+        await createTestProject({ id: proj1});
+        await createTestProject({ id: proj2, reviewToken: 'abc' });
+        const user = await createTestProjectMember(proj1, UPRO.MANAGER);
+
+        const req = { session: { reviewTokens: ['abc'] }} as any;
+        const context = getContext({ id: user.id, role: 'user', groupIds: [] }, testEntityManager, req, null as any);
+
+        const projectRoles = await context.user.getProjectRoles();
+
+        expect(projectRoles).toMatchObject({[proj1]: UPRO.MANAGER, [proj2]: UPRO.REVIEWER });
+      });
+  });
 });

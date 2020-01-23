@@ -13,7 +13,7 @@ from sm.engine.util import create_ds_from_files, bootstrap_and_run
 from sm.engine.annotation_job import AnnotationJob
 
 
-def run_search(sm_config, logger):
+def run_search(sm_config):
     db = DB()
     img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
     manager = DatasetManager(db, ESExporter(db), img_store)

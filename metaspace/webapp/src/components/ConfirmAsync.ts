@@ -52,7 +52,7 @@ function ConfirmAsync(options: ValueOrCallback<ElMessageBoxOptions & ExtraOption
       try {
         await this.$msgbox({
           showCancelButton: true,
-          lockScroll: true,
+          lockScroll: false,
           showInput,
           customClass: 'confirm-async-message-box',
           ...baseOptions,

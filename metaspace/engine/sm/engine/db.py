@@ -47,11 +47,12 @@ def db_decor(func):
             debug_output = sql if not value_getter else value_getter()
             logger.debug(debug_output[:1000])
 
-            # psycopg commits/rollbacks transaction instead of closing connection on exit from with block
+            # psycopg commits/rollbacks transaction instead
+            # of closing connection on exit from with block
             # http://initd.org/psycopg/docs/usage.html#with-statement
             with ConnectionPool.pool.getconn() as conn:
                 with conn.cursor() as curs:
-                    self._curs = curs
+                    self._curs = curs  # pylint: disable=protected-access
                     res = func(self, sql, *args, **kwargs)
         except (ProgrammingError, IntegrityError, DataError) as e:
             raise Exception(f'SQL: {sql},\nArgs: {str(args)[:1000]}\n') from e
@@ -62,14 +63,17 @@ def db_decor(func):
     return wrapper
 
 
-class DB(object):
+class DB:
     """Postgres database access provider."""
 
     def __init__(self):
         self._curs = None
 
     def _select(self, sql, params=None):
-        self._curs.execute(sql, params) if params else self._curs.execute(sql)
+        if params:
+            self._curs.execute(sql, params)
+        else:
+            self._curs.execute(sql)
         return self._curs.fetchall()
 
     @db_decor
@@ -111,8 +115,8 @@ class DB(object):
             single row
         """
         res = self._select(sql, params)
-        assert len(res) in [0, 1], "Requested one row, got {}".format(len(res))
-        return res[0] if len(res) > 0 else []
+        assert len(res) in {0, 1}, "Requested one row, got {}".format(len(res))
+        return res[0] if res else []
 
     @db_decor
     def insert(self, sql, rows=None):

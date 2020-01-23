@@ -19,8 +19,8 @@ from sm.engine.tests.util import spark_context, ds_config, make_moldb_mock
 def make_imzml_parser_mock(sp_n=100):
     imzml_parser_mock = Mock()
     imzml_parser_mock.coordinates = list(product([0], range(sp_n)))
-    imzml_parser_mock.getspectrum.return_value = (np.linspace(0, 100, num=sp_n), np.ones(sp_n))
-    imzml_parser_mock.mzPrecision = 'f'
+    imzml_parser_mock.get_spectrum.return_value = (np.linspace(0, 100, num=sp_n), np.ones(sp_n))
+    imzml_parser_mock.mz_precision = 'f'
     return imzml_parser_mock
 
 
@@ -52,7 +52,7 @@ def make_fetch_formula_centroids_mock():
 
 def make_formula_image_metrics_mock_side_effect():
     def formula_image_metrics_mock(
-        formula_images_it, compute_metrics, target_formula_inds, n_peaks
+        formula_images_it, compute_metrics, target_formula_inds, n_peaks, min_px
     ):
         formula_is = set(item[0] for item in formula_images_it)
         formula_metrics_df = pd.DataFrame(
@@ -65,9 +65,7 @@ def make_formula_image_metrics_mock_side_effect():
 
 
 def test_compute_fdr(spark_context, ds_config):
-    moldb_fdr_list = init_fdr(
-        ds_config['fdr'], ds_config['isotope_generation'], [make_moldb_mock()]
-    )
+    moldb_fdr_list = init_fdr(ds_config, [make_moldb_mock()])
     _, fdr = moldb_fdr_list[0]
     formula_map_df = collect_ion_formulas(spark_context, moldb_fdr_list).drop('moldb_id', axis=1)
 
@@ -123,7 +121,7 @@ def test_search(formula_image_metrics_mock, spark_context, ds_config):
         ]
         formula_image_metrics_mock.side_effect = image_metrics_result_list
 
-        _, moldb_ion_metrics_df, moldb_ion_images_rdd = next(msm_search.search())
+        moldb_ion_metrics_df, moldb_ion_images_rdd = next(msm_search.search())
 
         assert len(moldb_ion_metrics_df) == 2
         assert moldb_ion_images_rdd.count() == 3
@@ -167,7 +165,7 @@ def test_ambiguous_modifiers(formula_image_metrics_mock, spark_context, ds_confi
         )
         formula_image_metrics_mock.side_effect = make_formula_image_metrics_mock_side_effect()
 
-        _, moldb_ion_metrics_df, _ = next(msm_search.search())
+        moldb_ion_metrics_df, _ = next(msm_search.search())
 
         assert (
             moldb_ion_metrics_df[['formula', 'chem_mod', 'neutral_loss', 'adduct']]

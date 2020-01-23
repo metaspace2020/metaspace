@@ -1,5 +1,10 @@
 import * as _ from 'lodash';
-import {createTestDataset, createTestProject, createTestProjectMember} from '../../../tests/testDataCreation';
+import {
+  createTestDataset,
+  createTestProject,
+  createTestProjectMember,
+  createTestUserProject,
+} from '../../../tests/testDataCreation';
 import {Context} from '../../../context';
 import {Project as ProjectType, UserProjectRole} from '../../../binding';
 import {DatasetProject as DatasetProjectModel} from '../../dataset/model';
@@ -32,11 +37,13 @@ const ROLE_COMBOS: [UserRole, ProjectRole][] = [
   ['user', UPRO.INVITED],
   ['user', UPRO.MEMBER],
   ['user', UPRO.MANAGER],
+  ['user', UPRO.REVIEWER],
   ['admin', null],
   ['admin', UPRO.PENDING],
   ['admin', UPRO.INVITED],
   ['admin', UPRO.MEMBER],
   ['admin', UPRO.MANAGER],
+  ['admin', UPRO.REVIEWER],
 ];
 const getContextByRole = (userRole: UserRole) => ({
   'anon': anonContext,
@@ -58,11 +65,7 @@ describe('modules/project/controller (queries)', () => {
     const userId = context.user && context.user.id;
 
     if (userId != null) {
-      if (projectRole != null) {
-        await testEntityManager.save(UserProjectModel, { userId, projectId, role: projectRole });
-      } else {
-        await testEntityManager.delete(UserProjectModel, { userId, projectId });
-      }
+      await createTestUserProject(userId, projectId, projectRole);
     }
 
     return {project, projectId, context};
@@ -114,7 +117,7 @@ describe('modules/project/controller (queries)', () => {
         const result = await doQuery(query, {projectId}, {context});
 
         // Assert
-        if (userRole === 'admin' || projectRole != null) {
+        if (userRole === 'admin' || (projectRole && projectRole != UPRO.PENDING)) {
           expect(result).toEqual(expect.objectContaining({
             isPublic: false,
             currentUserRole: projectRole,
@@ -217,7 +220,7 @@ describe('modules/project/controller (queries)', () => {
         const count = await doQuery(countQuery, {}, { context });
 
         // Assert
-        if (userRole === 'admin' || projectRole != null) {
+        if (userRole === 'admin' || (projectRole && projectRole != UPRO.PENDING)) {
           expect(result).toEqual([
             expect.objectContaining({
               id: projectId,

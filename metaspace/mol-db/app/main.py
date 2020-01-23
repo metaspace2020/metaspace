@@ -1,5 +1,6 @@
 import sys
 from os.path import dirname
+
 # sys.path.append(dirname(dirname(__file__)))
 import falcon
 
@@ -15,7 +16,6 @@ logger = log.get_logger()
 class App(falcon.API):
     def __init__(self, *args, **kwargs):
         super(App, self).__init__(*args, **kwargs)
-        logger.info('API Server is starting')
 
         self.add_route('/', base.BaseResource())
 
@@ -26,12 +26,15 @@ class App(falcon.API):
 
         self.add_route('/v1/molecules/{mol_id}', molecules.MoleculeItem())
 
-        self.add_route('/v1/isotopic_pattern/{ion}/{instr}/{res_power}/{at_mz}/{charge}',
-                       isotopic_pattern.IsotopicPatternItem())
+        self.add_route(
+            '/v1/isotopic_pattern/{ion}/{instr}/{res_power}/{at_mz}/{charge}',
+            isotopic_pattern.IsotopicPatternItem(),
+        )
 
-        # self.add_route('/v1/sfs', formulae.SumFormulaCollection())
-        # self.add_route('/v1/sfs/{sf}/molecules', formulae.SumFormulaCollection())
         self.add_error_handler(AppError, AppError.handle)
+
+        logger.info('API server is running')
+
 
 init_session()
 middleware = [
@@ -43,5 +46,6 @@ application = App(middleware=middleware)
 
 if __name__ == "__main__":
     from wsgiref import simple_server
+
     httpd = simple_server.make_server('127.0.0.1', 5001, application)
     httpd.serve_forever()

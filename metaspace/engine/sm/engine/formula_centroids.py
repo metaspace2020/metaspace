@@ -1,43 +1,59 @@
 import logging
-from math import ceil
-from pathlib import Path
-import boto3
-from botocore.exceptions import ClientError
-from itertools import product, repeat
-from pyspark.sql import SparkSession
-import pandas as pd
-import numpy as np
 from copy import deepcopy
+from itertools import repeat
+from pathlib import Path
 
+import boto3
+import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
+from botocore.exceptions import ClientError
+from pyspark import SparkContext  # pylint: disable=unused-import
+
+from sm.engine.isocalc_wrapper import IsocalcWrapper  # pylint: disable=unused-import
 from sm.engine.util import SMConfig, split_s3_path
-from sm.engine.isocalc_wrapper import IsocalcWrapper
 
 logger = logging.getLogger('engine')
 
 
-class CentroidsGenerator(object):
-    """ Generator of theoretical isotope peaks for all molecules in database
-
-    Args
-    ----------
-    sc : pyspark.SparkContext
-    isocalc: IsocalcWrapper
-    """
+class CentroidsGenerator:
+    """Generator of theoretical isotope peaks for all molecules in database."""
 
     def __init__(self, sc, isocalc):
+        """
+        Args:
+            sc (SparkContext):
+            isocalc (IsocalcWrapper):
+        """
         self._sc = sc
         self._isocalc = isocalc
         self._sm_config = SMConfig.get_conf()
         self._parquet_chunks_n = 64
         self._iso_gen_part_n = 512
 
-        self._spark_session = SparkSession(self._sc)
-        self._ion_centroids_path = '{}/{}/{}/{}'.format(
-            self._sm_config['isotope_storage']['path'],
-            self._isocalc.n_peaks,
-            self._isocalc.sigma,
-            self._isocalc.charge,
-        )
+        if self._isocalc.analysis_version < 2:
+            self._ion_centroids_path = '{}/{}/{}/{}'.format(
+                self._sm_config['isotope_storage']['path'],
+                self._isocalc.n_peaks,
+                self._isocalc.sigma,
+                self._isocalc.charge,
+            )
+        else:
+            self._ion_centroids_path = '{}/v2/{}/{}_{}/{}'.format(
+                self._sm_config['isotope_storage']['path'],
+                self._isocalc.n_peaks,
+                self._isocalc.instrument,
+                self._isocalc.sigma,
+                self._isocalc.charge,
+            )
+        self._parquet_file_names = ['centroids.parquet', 'formulas.parquet']
+        self._centroids_stored_on_s3 = self._ion_centroids_path.startswith('s3a://')
+        if self._centroids_stored_on_s3:
+            self._local_ion_centroids_path = Path('/tmp')
+        else:
+            self._local_ion_centroids_path = Path(self._ion_centroids_path)
+        Path(self._local_ion_centroids_path).mkdir(parents=True, exist_ok=True)
+
         self._s3 = boto3.client(
             's3',
             self._sm_config['aws']['aws_region'],
@@ -61,12 +77,10 @@ class CentroidsGenerator(object):
             mzs, ints = isocalc.centroids(formula)
             if mzs is not None:
                 return zip(repeat(formula_i), range(0, len(mzs)), map(float, mzs), map(float, ints))
-            else:
-                return []
+            return []
 
         formulas_df = pd.DataFrame(
-            [(i, formula) for i, formula in enumerate(formulas, index_start)],
-            columns=['formula_i', 'formula'],
+            list(enumerate(formulas, index_start)), columns=['formula_i', 'formula']
         ).set_index('formula_i')
         centroids_rdd = self._sc.parallelize(
             formulas_df.reset_index().values, numSlices=self._iso_gen_part_n
@@ -92,7 +106,7 @@ class CentroidsGenerator(object):
         ---
             FormulaCentroids
         """
-        assert len(formulas) > 0
+        assert formulas
 
         all_formula_centroids = self._restore()
 
@@ -101,7 +115,7 @@ class CentroidsGenerator(object):
         else:
             saved_formulas = all_formula_centroids.formulas_df.formula.unique()
             new_formulas = list(set(formulas) - set(saved_formulas))
-            if len(new_formulas) > 0:
+            if new_formulas:
                 logger.info(f'Number of missing formulas: {len(new_formulas)}')
                 index_start = all_formula_centroids.formulas_df.index.max() + 1
                 new_formula_centroids = self._generate(new_formulas, index_start)
@@ -114,60 +128,70 @@ class CentroidsGenerator(object):
     def _saved(self):
         """ Check if ion centroids saved to parquet
         """
-        if self._ion_centroids_path.startswith('s3a://'):
+        if self._centroids_stored_on_s3:
             bucket, key = split_s3_path(self._ion_centroids_path)
             try:
-                self._s3.head_object(Bucket=bucket, Key=key + '/formulas/_SUCCESS')
+                for fn in self._parquet_file_names:
+                    self._s3.head_object(Bucket=bucket, Key=f'{key}/{fn}')
             except ClientError:
                 return False
             else:
                 return True
         else:
-            return (
-                Path(self._ion_centroids_path + '/formulas/_SUCCESS').exists()
-                & Path(self._ion_centroids_path + '/centroids/_SUCCESS').exists()
+            return all(
+                [(Path(self._ion_centroids_path) / fn).exists() for fn in self._parquet_file_names]
+            )
+
+    def _download_from_s3(self):
+        bucket, key = split_s3_path(self._ion_centroids_path)
+        for fn in self._parquet_file_names:
+            self._s3.download_file(
+                Bucket=bucket, Key=f'{key}/{fn}', Filename=str(self._local_ion_centroids_path / fn)
+            )
+
+    def _upload_to_s3(self):
+        bucket, key = split_s3_path(self._ion_centroids_path)
+        for fn in self._parquet_file_names:
+            self._s3.upload_file(
+                Filename=str(self._local_ion_centroids_path / fn), Bucket=bucket, Key=f'{key}/{fn}'
             )
 
     def _restore(self):
-        logger.info('Restoring peaks')
+        logger.info(f'Restoring peaks from {self._ion_centroids_path}')
+        formula_centroids = None
         if self._saved():
+            if self._centroids_stored_on_s3:
+                self._download_from_s3()
+
             formulas_df = (
-                self._spark_session.read.parquet(self._ion_centroids_path + '/formulas')
-                .toPandas()
+                pq.read_table(self._local_ion_centroids_path / 'formulas.parquet')
+                .to_pandas()
                 .set_index('formula_i')
             )
             centroids_df = (
-                self._spark_session.read.parquet(self._ion_centroids_path + '/centroids')
-                .toPandas()
+                pq.read_table(self._local_ion_centroids_path / 'centroids.parquet')
+                .to_pandas()
                 .set_index('formula_i')
             )
-            return FormulaCentroids(formulas_df, centroids_df)
-
-    def _save_df_chunks(self, df, path, chunk_size=10 * 10 ** 6):
-        chunks = int(ceil(df.shape[0] / chunk_size))
-        for ch_i in range(chunks):
-            sdf = self._spark_session.createDataFrame(
-                df[ch_i * chunk_size : (ch_i + 1) * chunk_size]
-            )
-            mode = 'overwrite' if ch_i == 0 else 'append'
-            sdf.write.parquet(path, mode=mode)
+            formula_centroids = FormulaCentroids(formulas_df, centroids_df)
+        return formula_centroids
 
     def _save(self, formula_centroids):
         """ Save isotopic peaks
         """
-        logger.info('Saving peaks')
+        logger.info(f'Saving peaks to {self._ion_centroids_path}')
         assert formula_centroids.formulas_df.index.name == 'formula_i'
 
-        self._save_df_chunks(
-            formula_centroids.centroids_df(fixed_size_centroids=True).reset_index(),
-            self._ion_centroids_path + '/centroids',
-        )
-        self._save_df_chunks(
-            formula_centroids.formulas_df.reset_index(), self._ion_centroids_path + '/formulas'
-        )
+        centroids_table = pa.Table.from_pandas(formula_centroids.centroids_df().reset_index())
+        pq.write_table(centroids_table, self._local_ion_centroids_path / 'centroids.parquet')
+        formulas_table = pa.Table.from_pandas(formula_centroids.formulas_df.reset_index())
+        pq.write_table(formulas_table, self._local_ion_centroids_path / 'formulas.parquet')
+
+        if self._centroids_stored_on_s3:
+            self._upload_to_s3()
 
 
-class FormulaCentroids(object):
+class FormulaCentroids:
     """ Theoretical isotope peaks for formulas
 
     Args
@@ -179,10 +203,21 @@ class FormulaCentroids(object):
     def __init__(self, formulas_df, centroids_df):
         u_index_formulas = set(formulas_df.index.unique())
         u_index_centroids = set(centroids_df.index.unique())
-        assert u_index_formulas == u_index_centroids
+        index_intersection = u_index_formulas.intersection(u_index_centroids)
+        index_union = u_index_formulas.union(u_index_centroids)
+        if len(index_union) > len(index_intersection):
+            mismatch_row_n = len(index_union) - len(index_intersection)
+            logger.warning(
+                f'Index mismatch between formulas and centroids dataframes. '
+                f'Ignoring {mismatch_row_n} rows'
+            )
 
-        self.formulas_df = formulas_df.sort_values(by='formula')
-        self._centroids_df = centroids_df.sort_values(by='mz')
+        self.formulas_df = formulas_df[formulas_df.index.isin(index_intersection)].sort_values(
+            by='formula'
+        )
+        self._centroids_df = centroids_df[centroids_df.index.isin(index_intersection)].sort_values(
+            by='mz'
+        )
 
     def centroids_df(self, fixed_size_centroids=False):
         """
@@ -197,8 +232,7 @@ class FormulaCentroids(object):
         """
         if fixed_size_centroids:
             return self._centroids_df
-        else:
-            return self._centroids_df[self._centroids_df.mz > 0]
+        return self._centroids_df[self._centroids_df.mz > 0]
 
     def __add__(self, other):
         """ Is also used for += operation by Python automatically
@@ -207,13 +241,13 @@ class FormulaCentroids(object):
         -----
         other: FormulaCentroids
         """
-        assert type(other) == FormulaCentroids
+        assert isinstance(other, FormulaCentroids)
         assert pd.merge(self.formulas_df, other.formulas_df, on='formula').empty
 
         index_offset = self.formulas_df.index.max() - other.formulas_df.index.min() + 1
         other_formulas_df = other.formulas_df.copy()
         other_formulas_df.index = other_formulas_df.index + index_offset
-        other_centroids_df = other.centroids_df(fixed_size_centroids=True).copy()
+        other_centroids_df = other.centroids_df().copy()
         other_centroids_df.index = other_centroids_df.index + index_offset
 
         formulas_df = pd.concat([self.formulas_df, other_formulas_df])
@@ -231,7 +265,7 @@ class FormulaCentroids(object):
     def subset(self, formulas):
         formulas = set(formulas)
         miss_formulas = formulas - set(self.formulas_df.formula.values)
-        if len(miss_formulas) > 0:
+        if miss_formulas:
             # Missing formulas requested
             # Also happens when CentroidsGenerator._generate failed to compute formula centroids
             logger.warning(

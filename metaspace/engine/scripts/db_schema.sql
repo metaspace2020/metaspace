@@ -9,6 +9,8 @@ CREATE TABLE "graphql"."credentials" (
   "id" uuid NOT NULL DEFAULT uuid_generate_v1mc(), 
   "hash" text, 
   "google_id" text, 
+  "api_key" text, 
+  "api_key_last_updated" TIMESTAMP, 
   "email_verification_token" text, 
   "email_verification_token_expires" TIMESTAMP, 
   "email_verified" boolean NOT NULL DEFAULT false, 
@@ -42,6 +44,10 @@ CREATE TABLE "graphql"."project" (
   "is_public" boolean NOT NULL DEFAULT true, 
   "created_dt" TIMESTAMP NOT NULL DEFAULT (now() at time zone 'utc'), 
   "project_description" text NOT NULL DEFAULT '', 
+  "review_token" text, 
+  "review_token_created_dt" TIMESTAMP DEFAULT null, 
+  "publish_notifications_sent" integer NOT NULL DEFAULT 0, 
+  "publication_status" text NOT NULL DEFAULT 'UNPUBLISHED', 
   CONSTRAINT "PK_486ca2f737a2dfd930e46d254aa" PRIMARY KEY ("id")
 );
 
@@ -71,6 +77,7 @@ CREATE TABLE "graphql"."dataset_project" (
   "dataset_id" text NOT NULL, 
   "project_id" uuid NOT NULL, 
   "approved" boolean NOT NULL, 
+  "publication_status" text NOT NULL DEFAULT 'UNPUBLISHED', 
   CONSTRAINT "PK_9511b6cda2f4d4299812106cdd4" PRIMARY KEY ("dataset_id", 
   "project_id")
 );

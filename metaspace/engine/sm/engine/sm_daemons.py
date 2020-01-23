@@ -1,29 +1,30 @@
 import json
-import traceback
+import logging
+from traceback import format_exc
 import urllib.parse
 from pathlib import Path
 
+import boto3
+from botocore.exceptions import ClientError
 import redis
 from requests import post
-import logging
-import boto3
 
 from sm.engine.colocalization import Colocalization
 from sm.engine.daemon_action import DaemonAction, DaemonActionStage
+from sm.engine.dataset import Dataset, DatasetStatus
+from sm.engine.errors import AnnotationError, ImzMLError, IndexUpdateError, SMError, UnknownDSID
 from sm.engine.ion_thumbnail import generate_ion_thumbnail
-from sm.engine.off_sample_wrapper import classify_dataset_ion_images
-from sm.engine.optical_image import del_optical_image, IMG_URLS_BY_ID_SEL
-from sm.rest.dataset_manager import DatasetActionPriority
-from sm.engine.errors import UnknownDSID, IndexUpdateError, AnnotationError, ImzMLError
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.mol_db import MolecularDB
-from sm.engine.queue import QueueConsumer
+from sm.engine.off_sample_wrapper import classify_dataset_ion_images
+from sm.engine.optical_image import IMG_URLS_BY_ID_SEL, del_optical_image
+from sm.engine.queue import QueueConsumer, QueuePublisher
 from sm.engine.util import SMConfig
-from sm.engine.queue import QueuePublisher
-from sm.engine.dataset import Dataset, DatasetStatus
+from sm.rest.dataset_manager import DatasetActionPriority
+from sm.engine.annotation_job import AnnotationJob
 
 
-class DatasetManager(object):
+class DatasetManager:
     def __init__(self, db, es, img_store, status_queue=None, logger=None, sm_config=None):
         self._sm_config = sm_config or SMConfig.get_conf()
         self._slack_conf = self._sm_config.get('slack', {})
@@ -59,7 +60,7 @@ class DatasetManager(object):
     def create_web_app_link(self, msg):
         link = None
         try:
-            ds_name, ds_meta = self.fetch_ds_metadata(msg['ds_id'])
+            _, ds_meta = self.fetch_ds_metadata(msg['ds_id'])
             md_type_quoted = urllib.parse.quote(ds_meta['Data_Type'])
             base_url = self._sm_config['services']['web_app_url']
             ds_id_quoted = urllib.parse.quote(msg['ds_id'])
@@ -84,7 +85,7 @@ class DatasetManager(object):
         """ Run an annotation job for the dataset. If del_first provided, delete first
         """
         if del_first:
-            self.logger.warning('Deleting all results for dataset: {}'.format(ds.id))
+            self.logger.warning(f'Deleting all results for dataset: {ds.id}')
             self._del_iso_images(ds)
             self._db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
         ds.save(self._db, self._es)
@@ -110,10 +111,8 @@ class DatasetManager(object):
             if mol_db_name not in ds.config['databases']:
                 self._db.alter('DELETE FROM job WHERE id = %s', params=(job_id,))
             else:
-                mol_db = MolecularDB(
-                    name=mol_db_name, iso_gen_config=ds.config['isotope_generation']
-                )
-                isocalc = IsocalcWrapper(ds.config['isotope_generation'])
+                mol_db = MolecularDB(name=mol_db_name)
+                isocalc = IsocalcWrapper(ds.config)
                 self._es.index_ds(ds_id=ds.id, mol_db=mol_db, isocalc=isocalc)
 
         ds.set_status(self._db, self._es, DatasetStatus.FINISHED)
@@ -122,7 +121,7 @@ class DatasetManager(object):
         self._es.update_ds(ds.id, fields)
 
     def _del_iso_images(self, ds):
-        self.logger.info('Deleting isotopic images: (%s, %s)', ds.id, ds.name)
+        self.logger.info(f'Deleting isotopic images: ({ds.id}, {ds.name})')
 
         try:
             storage_type = ds.get_ion_img_storage_type(self._db)
@@ -136,9 +135,9 @@ class DatasetManager(object):
                 'Attempt to delete isotopic images of non-existing dataset. Skipping'
             )
 
-    def delete(self, ds, del_raw_data=False, **kwargs):
+    def delete(self, ds):
         """ Delete all dataset related data from the DB """
-        self.logger.warning('Deleting dataset: {}'.format(ds.id))
+        self.logger.info(f'Deleting dataset: {ds.id}')
         self._del_iso_images(ds)
         del_optical_image(self._db, self._img_store, ds.id)
         self._es.delete_ds(ds.id)
@@ -151,7 +150,7 @@ class DatasetManager(object):
                 Destination={'ToAddresses': [email]},
                 Message={'Subject': {'Data': subj}, 'Body': {'Text': {'Data': body}}},
             )
-        except Exception as e:
+        except ClientError as e:
             self.logger.warning(f'Send email exception {e} for {email}')
         else:
             if resp['ResponseMetadata']['HTTPStatusCode'] == 200:
@@ -174,8 +173,8 @@ class DatasetManager(object):
     def send_failed_email(self, msg, traceback=None):
         ds_name, _ = self.fetch_ds_metadata(msg['ds_id'])
         content = (
-            f'We are sorry to inform you that there was a problem during processing of the "{ds_name}" dataset '
-            'and it could not be annotated.'
+            f'We are sorry to inform you that there was a problem '
+            f'during processing of the "{ds_name}" dataset and it could not be annotated.'
         )
         if traceback:
             content += (
@@ -191,8 +190,16 @@ class DatasetManager(object):
         email_body = 'Dear METASPACE user,\n\n' f'{content}\n\n' 'Best regards,\n' 'METASPACE Team'
         self._send_email(msg['email'], 'METASPACE service notification (FAILED)', email_body)
 
+    def ds_failure_handler(self, msg, e):
+        self.logger.error(f" SM {msg['action']} daemon: failure", exc_info=True)
+        ds = self.load_ds(msg['ds_id'])
+        self.set_ds_status(ds, status=DatasetStatus.FAILED)
+        self.notify_update(ds.id, msg['action'], stage=DaemonActionStage.FAILED)
+        slack_msg = f'{json.dumps(msg)}\n```{e.traceback}```'
+        self.post_to_slack('hankey', f" [x] {msg['action']} failed: {slack_msg}")
 
-class SMAnnotateDaemon(object):
+
+class SMAnnotateDaemon:
     """ Reads messages from annotation queue and starts annotation jobs
     """
 
@@ -231,17 +238,10 @@ class SMAnnotateDaemon(object):
         self._redis_client.set('cluster-busy', 'no')
 
     def _on_failure(self, msg, e):
-        self.logger.error(f" SM annotate daemon: failure", exc_info=True)
-
-        ds = self._manager.load_ds(msg['ds_id'])
-        self._manager.set_ds_status(ds, DatasetStatus.FAILED)
-        self._manager.notify_update(ds.id, msg['action'], DaemonActionStage.FAILED)
-
-        slack_msg = f'{json.dumps(msg)}\n```{e.traceback}```'
-        self._manager.post_to_slack('hankey', f' [x] Annotation failed: {slack_msg}')
+        self._manager.ds_failure_handler(msg, e)
 
         if 'email' in msg:
-            traceback = e.__cause__.traceback if type(e.__cause__) == ImzMLError else None
+            traceback = e.__cause__.traceback if isinstance(e.__cause__, ImzMLError) else None
             self._manager.send_failed_email(msg, traceback)
         self._redis_client.set('cluster-busy', 'no')
 
@@ -257,8 +257,6 @@ class SMAnnotateDaemon(object):
             self._manager.post_to_slack(
                 'new', " [v] New annotation message: {}".format(json.dumps(msg))
             )
-
-            from sm.engine.annotation_job import AnnotationJob
 
             self._manager.annotate(
                 ds=ds, annotation_job_factory=AnnotationJob, del_first=msg.get('del_first', False)
@@ -280,9 +278,7 @@ class SMAnnotateDaemon(object):
                 }
                 self._update_queue_pub.publish(msg=analyze_msg, priority=DatasetActionPriority.LOW)
         except Exception as e:
-            raise AnnotationError(
-                ds_id=msg['ds_id'], traceback=traceback.format_exc(chain=False)
-            ) from e
+            raise AnnotationError(ds_id=msg['ds_id'], traceback=format_exc(chain=False)) from e
 
     def start(self):
         self._stopped = False
@@ -297,7 +293,7 @@ class SMAnnotateDaemon(object):
             self._stopped = True
 
 
-class SMIndexUpdateDaemon(object):
+class SMIndexUpdateDaemon:
     """ Reads messages from the update queue and does indexing/update/delete
     """
 
@@ -334,16 +330,10 @@ class SMIndexUpdateDaemon(object):
         if msg.get('email'):
             self._manager.send_success_email(msg)
 
-    def _on_failure(self, msg):
-        self.logger.error(f' SM update daemon: failure', exc_info=True)
+    def _on_failure(self, msg, e):
+        self._manager.ds_failure_handler(msg, e)
 
-        ds = self._manager.load_ds(msg['ds_id'])
-        self._manager.set_ds_status(ds, DatasetStatus.FAILED)
-        self._manager.notify_update(ds.id, msg['action'], DaemonActionStage.FAILED)
-
-        self._manager.post_to_slack('hankey', f" [x] Failed to {msg['action']}: {json.dumps(msg)}")
-
-        if msg.get('email'):
+        if 'email' in msg:
             self._manager.send_failed_email(msg)
 
     def _callback(self, msg):
@@ -363,7 +353,7 @@ class SMIndexUpdateDaemon(object):
                 try:
                     # depending on number of annotations may take up to several minutes
                     self._manager.classify_dataset_images(ds)
-                except Exception as e:  # don't fail dataset when off-sample classification fails
+                except Exception as e:  # don't fail dataset when off-sample pred fails
                     self.logger.warning(f'Failed to classify off-sample: {e}')
 
                 self._manager.index(ds=ds)
@@ -373,10 +363,9 @@ class SMIndexUpdateDaemon(object):
             elif msg['action'] == DaemonAction.DELETE:
                 self._manager.delete(ds=ds)
             else:
-                raise Exception(f"Wrong action: {msg['action']}")
+                raise SMError(f"Wrong action: {msg['action']}")
         except Exception as e:
-            msg = f"Index update failed (ds_id={msg['ds_id']}): {e}"
-            raise IndexUpdateError(msg) from e
+            raise IndexUpdateError(msg['ds_id'], traceback=format_exc(chain=False)) from e
 
     def start(self):
         self._stopped = False

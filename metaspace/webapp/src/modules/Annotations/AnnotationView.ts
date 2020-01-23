@@ -20,14 +20,12 @@
  import {omit, pick, sortBy, throttle} from 'lodash-es';
  import {ANNOTATION_SPECIFIC_FILTERS} from '../Filters/filterSpecs';
  import config from '../../config';
- import noImageURL from '../../assets/no-image.svg';
  import {OpacityMode} from '../../lib/createColormap';
  import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue';
+ import RelatedMolecules from './annotation-widgets/RelatedMolecules.vue';
+ import CompoundsList from './annotation-widgets/CompoundsList.vue';
+ import AmbiguityAlert from './annotation-widgets/AmbiguityAlert.vue';
 
- type colorObjType = {
-   code: string,
-   colorName: string
- }
 
  type ImagePosition = {
    zoom: number
@@ -53,6 +51,9 @@
    DatasetInfo,
    ColocalizationSettings,
    CandidateMoleculesPopover,
+   RelatedMolecules,
+   CompoundsList,
+   AmbiguityAlert,
  };
  for (let category of Object.keys(annotationWidgets)) {
    metadataDependentComponents[category] = {};
@@ -72,15 +73,7 @@
        update: (data: any) => {
          const {annotation} = data;
          if (annotation != null) {
-           const chart = safeJsonParse(annotation.peakChartData);
-           const isotopes = annotation.isotopeImages.filter((im: any) => im.mz > 0);
-           return {
-             ...chart,
-             sampleData: {
-               mzs: isotopes.map((im: any) => im.mz),
-               ints: isotopes.map((im: any) => im.totalIntensity),
-             },
-           };
+           return safeJsonParse(annotation.peakChartData);
          } else {
            return null;
          }
@@ -139,8 +132,6 @@
    datasetVisibility: DatasetVisibilityResult | null = null
    currentUser: CurrentUserRoleResult | null = null
    scaleBarColor: string | null = '#000000'
-   failedImages: string[] = []
-   noImageURL = noImageURL
 
    created() {
      this.onImageMove = throttle(this.onImageMove);
@@ -171,11 +162,6 @@
    get formattedMolFormula(): string {
      if (!this.annotation) return '';
      return renderMolFormulaHtml(this.annotation.ion);
-   }
-
-   get compoundsTabLabel(): string {
-     if (!this.annotation) return '';
-     return "Molecules (" + this.annotation.possibleCompounds.length + ")";
    }
 
    get imageOpacityMode(): OpacityMode {
@@ -295,10 +281,6 @@
      this.imagePosition.zoom = event.zoom;
      this.imagePosition.xOffset = event.xOffset;
      this.imagePosition.yOffset = event.yOffset;
-   }
-
-   onCompoundImageError(url: string) {
-     this.failedImages.push(url);
    }
 
    resetViewport(event: any): void {

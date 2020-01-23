@@ -2,26 +2,26 @@
 import argparse
 import json
 import logging
+from datetime import datetime
+from subprocess import CalledProcessError, check_output, STDOUT, Popen, PIPE
 from time import sleep
+
+import boto3
 import pika
+import redis
 import requests
+import yaml
 from pika.exceptions import AMQPError
 from requests import ConnectionError
-import yaml
-from subprocess import check_output
-from subprocess import CalledProcessError
-import boto3
-from datetime import datetime
-import redis
 
 
-class AnnotationQueue(object):
-
+class AnnotationQueue:
     def __init__(self, host, user, password, qname, logger):
         self.qname = qname
         self.logger = logger
-        self.conn_params = pika.ConnectionParameters(host=host, heartbeat=0,
-                                                     credentials=pika.PlainCredentials(user, password))
+        self.conn_params = pika.ConnectionParameters(
+            host=host, heartbeat=0, credentials=pika.PlainCredentials(user, password)
+        )
         self.conn = None
 
     def _get_channel(self):
@@ -48,13 +48,14 @@ class AnnotationQueue(object):
         try:
             ch = self._get_channel()
             self._declare_queue(ch)
-            ch.basic_publish(exchange='',
-                             routing_key=self.qname,
-                             body=json.dumps({'action': 'exit'}),
-                             properties=pika.BasicProperties(
-                                 priority=3,  # max priority
-                                 expiration='60000',  # 60 sec ttl
-                             ))
+            ch.basic_publish(
+                exchange='',
+                routing_key=self.qname,
+                body=json.dumps({'action': 'exit'}),
+                properties=pika.BasicProperties(
+                    priority=3, expiration='60000'  # max priority  # 60 sec ttl
+                ),
+            )
         except AMQPError as e:
             self.logger.error(f'Failed to publish exit message: {e}')
         finally:
@@ -62,37 +63,57 @@ class AnnotationQueue(object):
                 self.conn.close()
 
 
-class ClusterDaemon(object):
-    def __init__(self, ansible_config_path, aws_key_name=None, interval=60,
-                 qname='sm_annotate', debug=False):
+class ClusterDaemon:
+    def __init__(
+        self, ansible_config_path, aws_key_name=None, interval=60, qname='sm_annotate', debug=False
+    ):
         with open(ansible_config_path) as fp:
-            self.ansible_config = yaml.load(fp)
+            self.ansible_config = yaml.full_load(fp)
 
         self.interval = min(interval, 1200)
         self.aws_key_name = aws_key_name or self.ansible_config['aws_key_name']
-        self.master_hostgroup = self.ansible_config['cluster_configuration']['instances']['master']['hostgroup']
-        self.slave_hostgroup = self.ansible_config['cluster_configuration']['instances']['slave']['hostgroup']
+        self.master_hostgroup = self.ansible_config['cluster_configuration']['instances']['master'][
+            'hostgroup'
+        ]
+        self.slave_hostgroup = self.ansible_config['cluster_configuration']['instances']['slave'][
+            'hostgroup'
+        ]
         self.stage = self.ansible_config['stage']
         self.admin_email = self.ansible_config['notification_email']
         self.debug = debug
         self.cluster_started_at = None
+        self.ansible_command_prefix = '{}/envs/{}/bin/ansible-playbook -f 1 -i {}'.format(
+            self.ansible_config["miniconda_prefix"],
+            self.ansible_config["miniconda_env"]["name"],
+            self.stage,
+        )
 
         self._setup_logger()
-        self.queue = AnnotationQueue(self.ansible_config['rabbitmq_host'],
-                                     self.ansible_config['rabbitmq_user'],
-                                     self.ansible_config['rabbitmq_password'],
-                                     qname, self.logger)
-        self.session = boto3.session.Session(aws_access_key_id=self.ansible_config['aws_access_key_id'],
-                                             aws_secret_access_key=self.ansible_config['aws_secret_access_key'])
+        self.queue = AnnotationQueue(
+            self.ansible_config['rabbitmq_host'],
+            self.ansible_config['rabbitmq_user'],
+            self.ansible_config['rabbitmq_password'],
+            qname,
+            self.logger,
+        )
+        self.session = boto3.session.Session(
+            aws_access_key_id=self.ansible_config['aws_access_key_id'],
+            aws_secret_access_key=self.ansible_config['aws_secret_access_key'],
+        )
         self.ec2 = self.session.resource('ec2', self.ansible_config['aws_region'])
         self.ses = self.session.client('ses', 'eu-west-1')
         self.redis_client = redis.Redis(**self.ansible_config.get('sm_cluster_autostart_redis', {}))
 
     def _resolve_spark_master(self):
         self.logger.debug('Resolving spark master ip...')
-        spark_master_instances = list(self.ec2.instances.filter(
-            Filters=[{'Name': 'tag:hostgroup', 'Values': [self.master_hostgroup]},
-                     {'Name': 'instance-state-name', 'Values': ['running', 'stopped', 'pending']}]))
+        spark_master_instances = list(
+            self.ec2.instances.filter(
+                Filters=[
+                    {'Name': 'tag:hostgroup', 'Values': [self.master_hostgroup]},
+                    {'Name': 'instance-state-name', 'Values': ['running', 'pending']},
+                ]
+            )
+        )
         return spark_master_instances[0] if spark_master_instances else None
 
     @property
@@ -108,7 +129,9 @@ class ClusterDaemon(object):
     def _setup_logger(self):
         self.logger = logging.getLogger('sm_cluster_auto_start')
         handler = logging.StreamHandler()
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s[%(threadName)s] - %(filename)s:%(lineno)d - %(message)s')
+        formatter = logging.Formatter(
+            '%(asctime)s - %(levelname)s - %(name)s[%(threadName)s] - %(filename)s:%(lineno)d - %(message)s'
+        )
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
         self.logger.setLevel(logging.DEBUG if self.debug else logging.INFO)
@@ -116,19 +139,8 @@ class ClusterDaemon(object):
     def _send_email(self, email, subj, body):
         resp = self.ses.send_email(
             Source='contact@metaspace2020.eu',
-            Destination={
-                'ToAddresses': [email]
-            },
-            Message={
-                'Subject': {
-                    'Data': subj
-                },
-                'Body': {
-                    'Text': {
-                        'Data': body
-                    }
-                }
-            }
+            Destination={'ToAddresses': [email]},
+            Message={'Subject': {'Data': subj}, 'Body': {'Text': {'Data': body}}},
         )
         if resp['ResponseMetadata']['HTTPStatusCode'] == 200:
             self.logger.info('Email with "{}" subject was sent to {}'.format(subj, email))
@@ -154,7 +166,9 @@ class ClusterDaemon(object):
         return n == 0
 
     def spark_up(self):
-        return self._send_rest_request('http://{}:8080/api/v1/applications'.format(self.spark_master_public_ip))
+        return self._send_rest_request(
+            'http://{}:8080/api/v1/applications'.format(self.spark_master_private_ip)
+        )
 
     def job_running(self):
         resp = self.redis_client.get('cluster-busy')
@@ -162,18 +176,21 @@ class ClusterDaemon(object):
 
     def _local(self, command, success_msg=None, failed_msg=None):
         try:
-            res = check_output(command)
+            res = check_output(command.split(' '), universal_newlines=True)
             self.logger.debug(res)
             self.logger.info(success_msg)
         except CalledProcessError as e:
-            self.logger.warning(e.output)
+            self.logger.error(e.output)
             self.logger.error(failed_msg)
             raise e
 
     def cluster_start(self):
         self.logger.info('Spinning up the cluster...')
-        self._local(['ansible-playbook', '-i', self.stage, '-f', '1', 'aws_start.yml', '-e components=master,slave'],
-                    'Cluster is spun up', 'Failed to spin up the cluster')
+        self._local(
+            f'{self.ansible_command_prefix} aws_start.yml -e components=master,slave',
+            'Cluster is spun up',
+            'Failed to spin up the cluster',
+        )
 
     def min_uptime_over(self, minutes=10):
         if self.cluster_started_at:
@@ -185,19 +202,28 @@ class ClusterDaemon(object):
             self.queue.send_queue_exit_message()
             self.logger.info('No jobs running. Queue is empty. Queue exit message sent')
             self.logger.info('Stopping the cluster...')
-            self._local(['ansible-playbook', '-i', self.stage, '-f', '1', 'aws_stop.yml', '-e', 'components=master,slave'],
-                        'Cluster is stopped successfully', 'Failed to stop the cluster')
+            self._local(
+                f'{self.ansible_command_prefix} aws_stop.yml -e components=master,slave',
+                'Cluster is stopped successfully',
+                'Failed to stop the cluster',
+            )
             self._post_to_slack('checkered_flag', "[v] Cluster stopped")
 
     def cluster_setup(self):
         self.logger.info('Setting up the cluster...')
-        self._local(['ansible-playbook', '-i', self.stage, '-f', '1', 'aws_cluster_setup.yml'],
-                    'Cluster setup is finished', 'Failed to set up the cluster')
+        self._local(
+            f'{self.ansible_command_prefix} aws_cluster_setup.yml',
+            'Cluster setup is finished',
+            'Failed to set up the cluster',
+        )
 
     def sm_engine_deploy(self):
         self.logger.info('Deploying SM engine code...')
-        self._local(['ansible-playbook', '-i', self.stage, '-f', '1', 'deploy/spark.yml'],
-                    'The SM engine is deployed', 'Failed to deploy the SM engine')
+        self._local(
+            f'{self.ansible_command_prefix} deploy/spark.yml',
+            'The SM engine is deployed',
+            'Failed to deploy the SM engine',
+        )
 
     def _post_to_slack(self, emoji, msg):
         if not self.debug and self.ansible_config['slack_webhook_url']:
@@ -205,28 +231,40 @@ class ClusterDaemon(object):
                 "channel": self.ansible_config['slack_channel'],
                 "username": "webhookbot",
                 "text": ":{}: {}".format(emoji, msg),
-                "icon_emoji": ":robot_face:"
+                "icon_emoji": ":robot_face:",
             }
             requests.post(self.ansible_config['slack_webhook_url'], json=msg)
 
     def _ec2_hour_over(self):
-        spark_instances = list(self.ec2.instances.filter(
-            Filters=[{'Name': 'tag:hostgroup', 'Values': [self.master_hostgroup, self.slave_hostgroup]},
-                     {'Name': 'instance-state-name', 'Values': ['running', 'pending']}]))
+        spark_instances = list(
+            self.ec2.instances.filter(
+                Filters=[
+                    {
+                        'Name': 'tag:hostgroup',
+                        'Values': [self.master_hostgroup, self.slave_hostgroup],
+                    },
+                    {'Name': 'instance-state-name', 'Values': ['running', 'pending']},
+                ]
+            )
+        )
         launch_time = min([i.launch_time for i in spark_instances])
         now_time = datetime.utcnow()
         self.logger.debug('launch: {} now: {}'.format(launch_time, now_time))
-        return 0 < (60 + (launch_time.minute - now_time.minute)) % 60 <= max(5, 2 * self.interval / 60)
+        return (
+            0 < (60 + (launch_time.minute - now_time.minute)) % 60 <= max(5, 2 * self.interval / 60)
+        )
 
-    def _try_start_setup_deploy(self, setup_failed_max=5):
+    def _try_start_setup_deploy(self, setup_failed_max=3):
         setup_failed = 0
         while True:
             try:
-                self.logger.info('Queue is not empty. Starting the cluster (%s attempt)...', setup_failed+1)
+                self.logger.info(
+                    'Queue is not empty. Starting the cluster (%s attempt)...', setup_failed + 1
+                )
                 self.cluster_start()
                 m = {
                     'master': self.ansible_config['cluster_configuration']['instances']['master'],
-                    'slave': self.ansible_config['cluster_configuration']['instances']['slave']
+                    'slave': self.ansible_config['cluster_configuration']['instances']['slave'],
                 }
                 self._post_to_slack('rocket', "[v] Cluster started: {}".format(m))
 
@@ -251,23 +289,34 @@ class ClusterDaemon(object):
                     if not self.spark_up():
                         self._try_start_setup_deploy()
                 else:
-                    if self.spark_master_public_ip and not self.job_running() and self.min_uptime_over():
+                    if (
+                        self.spark_master_public_ip is not None
+                        and not self.job_running()
+                        and self.min_uptime_over(minutes=30)
+                    ):
                         self.cluster_stop()
 
                 sleep(self.interval)
         except Exception as e:
             self.logger.error(e, exc_info=True)
             self._post_to_slack('sos', "[v] Something went wrong: {}".format(e))
-            self._send_email(self.admin_email, 'Cluster auto start daemon ({}) failed'.format(self.stage), str(e))
+            self._send_email(
+                self.admin_email, 'Cluster auto start daemon ({}) failed'.format(self.stage), str(e)
+            )
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Daemon for auto starting SM cluster')
-    parser.add_argument('--ansible-config', dest='ansible_config_path', type=str, help='Ansible config path')
-    parser.add_argument('--interval', type=int, default=120, help='Cluster status check interval in sec (<1200)')
+    parser.add_argument(
+        '--ansible-config', dest='ansible_config_path', type=str, help='Ansible config path'
+    )
+    parser.add_argument(
+        '--interval', type=int, default=120, help='Cluster status check interval in sec (<1200)'
+    )
     parser.add_argument('--debug', dest='debug', action='store_true', help='Run in debug mode')
     args = parser.parse_args()
 
-    cluster_daemon = ClusterDaemon(args.ansible_config_path, interval=args.interval,
-                                   qname='sm_annotate', debug=args.debug)
+    cluster_daemon = ClusterDaemon(
+        args.ansible_config_path, interval=args.interval, qname='sm_annotate', debug=args.debug
+    )
     cluster_daemon.run()

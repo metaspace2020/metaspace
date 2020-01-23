@@ -2,7 +2,7 @@
 
 HMDB, ChEBI and other molecular databases.
 
-Molecular attributes: InChI, InChI key, sum formula, name, database id
+Molecule attributes: formula, name, database id
 
 ## Installation (Ubuntu)
 
@@ -15,18 +15,37 @@ CREATE ROLE mol_db LOGIN CREATEDB NOSUPERUSER PASSWORD 'simple_pass';
 CREATE DATABASE mol_db WITH OWNER sm;
 \q  # exit
 ```
-Install OpenBabel
 
-`sudo apt-get install openbabel`
-
-Python of at least 3.4 version is required
+Python>=3.6 is required
 ```bash
 sudo pip install -U pip
 sudo pip install -r requirements.txt
 ```
-## Running
+## Usage
 
-`python3 app/main.py`
+Start the API in development mode
+```
+python app/main.py
+```
+
+Start in production mode
+```
+gunicorn --log-level INFO --access-logfile - --workers 4 \
+--worker-class sync --timeout 90 --bind 0.0.0.0:5001 app.main:application
+``` 
+
+Add a new database
+```
+curl -X POST -d '{"name": "mol-db-name", "version": "2019-12-12", "drop": "yes"}' http://localhost:5001/v1/databases
+curl -H "Content-Type: text/plain" --data-binary -d "@/path/to/import/file.csv" -X POST http://localhost:5001/v1/databases/{moldb_id}/molecules
+```
+
+Delete a database
+```
+curl -X DELETE http://localhost:5001/v1/databases/{moldb_id}
+```
+
+Because the API doesn't have authentication, all non GET requests should be blocked for all IPs other than `127.0.0.1`
 
 ## Funding
 

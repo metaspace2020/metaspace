@@ -1,7 +1,8 @@
 pyImagingMSpec==0.1.4
 cpyImagingMSpec==0.2.4
 pyMSpec==0.1.2
-cpyMSpec==0.3.5  # Drop all isotopic patterns if updated!
+cpyMSpec==0.4.2  # Drop all isotopic patterns if updated!
+cpyMSpec_0_3_5==0.3.5
 pyimzML==1.2.6
 requests
 pytest
@@ -9,11 +10,11 @@ recommonmark
 boto3
 fabric3
 pypng==0.0.19    # 0.0.20 introduced incompatible API changes
-pyyaml
+pyyaml>=5.1
 elasticsearch-dsl>=5.0.0,<6.0.0
 pika==0.11.0b1
 bottle
-Pillow==4.2.1
+Pillow==6.2.0
 pyopenms==2.2.0
 numpy>=1.11.2
 scipy>=0.18.1
@@ -25,4 +26,5 @@ cherrypy<9
 redis
 scikit-learn==0.20.2
 pyspark[sql]==2.3.3
+pyarrow>=0.8,<0.15  # 0.15 breaks writing to parquet files from spark
 pysparkling>=0.5.0

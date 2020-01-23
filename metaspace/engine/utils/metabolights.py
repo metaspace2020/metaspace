@@ -10,10 +10,12 @@ from sm.engine.util import SMConfig
 import isatools.io.isatab_parser as ip
 import boto3
 
+
 def setupQueue(sm_config_path):
     SMConfig.set_path(sm_config_path)
     rabbitmq_config = SMConfig.get_conf()['rabbitmq']
     return QueuePublisher(rabbitmq_config, 'sm_annotate')
+
 
 RESOL_POWER_PARAMS = {
     '70K': {'sigma': 0.00247585727028, 'fwhm': 0.00583019832869, 'pts_per_mz': 2019},
@@ -26,6 +28,7 @@ RESOL_POWER_PARAMS = {
     '750K': {'sigma': 0.000231080011893, 'fwhm': 0.000544151844011, 'pts_per_mz': 21637},
     '1000K': {'sigma': 0.00017331000892, 'fwhm': 0.000408113883008, 'pts_per_mz': 28850},
 }
+
 
 def sm_engine_config(meta_json, mass_accuracy_ppm=2):
     polarity_dict = {'Positive': '+', 'Negative': '-'}
@@ -44,6 +47,7 @@ def sm_engine_config(meta_json, mass_accuracy_ppm=2):
 
     rp_options = sorted([int(x[:-1]) * 1000 for x in RESOL_POWER_PARAMS.keys()])
     from bisect import bisect_left
+
     idx = bisect_left(rp_options, rp200)
     if idx == len(rp_options):
         idx = -1
@@ -64,21 +68,20 @@ def sm_engine_config(meta_json, mass_accuracy_ppm=2):
             "neutral_losses": [],
             "chem_mods": [],
         },
-        "image_generation": {
-            "nlevels": 30,
-            "ppm": float(mass_accuracy_ppm),
-            "min_px": 1,
-        }
+        "image_generation": {"nlevels": 30, "ppm": float(mass_accuracy_ppm), "min_px": 1},
     }
+
 
 class BatchConfig(object):
     def __init__(self, study_id, metadata_template):
         self.study_id = study_id
         self.metadata_template = metadata_template
 
+
 class MetabolightsBatch(object):
-    def __init__(self, batch_config, tmp_dir="/tmp", s3bucket='sm-engine-icl-data',
-                 parse_isatab=True):
+    def __init__(
+        self, batch_config, tmp_dir="/tmp", s3bucket='sm-engine-icl-data', parse_isatab=True
+    ):
         """
         tmp_dir: temporary directory for downloads
         study_id: numeric ID of the study
@@ -114,8 +117,10 @@ class MetabolightsBatch(object):
                 'analyzer': imzml.metadata['Parameter Value[Mass analyzer]'][0].Mass_analyzer,
                 'ionisation_source': imzml.metadata['Parameter Value[Ion source]'][0].Ion_source,
                 'polarity': imzml.metadata['Parameter Value[Scan polarity]'][0].Scan_polarity,
-                'sample_stabilisation': imzml.metadata['Parameter Value[Sample preservation]'][0].Sample_preservation,
-                'doi': study.publications[0]['Study Publication DOI']
+                'sample_stabilisation': imzml.metadata['Parameter Value[Sample preservation]'][
+                    0
+                ].Sample_preservation,
+                'doi': study.publications[0]['Study Publication DOI'],
             }
 
         return result
@@ -168,10 +173,7 @@ class MetabolightsBatch(object):
         return self._study_rel_dir + "/" + imzml[:-6]
 
     def _shorten(self, long_name):
-        d = {
-            'desorption electrospray ionization': 'DESI',
-            'electrospray ionization': 'DESI'
-        }
+        d = {'desorption electrospray ionization': 'DESI', 'electrospray ionization': 'DESI'}
         if long_name in d:
             return d[long_name]
         return long_name
@@ -199,11 +201,7 @@ class MetabolightsBatch(object):
             ds_name = self._institution + "//" + input_path.split("/")[-1]
             self._uploadMetadata(imzml, ds_name)
             ds_id = datetime.now().strftime("%Y-%m-%d_%Hh%Mm%Ss")
-            jobs.append({
-                "input_path": input_path,
-                "ds_name": ds_name,
-                "ds_id": ds_id
-            })
+            jobs.append({"input_path": input_path, "ds_name": ds_name, "ds_id": ds_id})
         return jobs
 
     def _copyFiles(self):
@@ -211,7 +209,9 @@ class MetabolightsBatch(object):
         Downloads metadata and centroided imzML files to a temporary directory,
         then copies files to the S3 bucket, putting them into structure expected by sm-engine.
         """
-        self._uploaded_to_s3 = {obj.key for obj in self._bucket.objects.filter(Prefix=self._study_rel_dir)}
+        self._uploaded_to_s3 = {
+            obj.key for obj in self._bucket.objects.filter(Prefix=self._study_rel_dir)
+        }
 
         self._ftp = self._ftpConnection()
         filenames = []
@@ -270,4 +270,5 @@ class MetabolightsBatch(object):
         Removes temporary files
         """
         import shutil
+
         shutil.rmtree(self._study_dir)

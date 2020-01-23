@@ -16,6 +16,12 @@ export class Credentials {
   googleId: string | null;
 
   @Column({ type: 'text', nullable: true })
+  apiKey: string | null;
+
+  @Column({ type: 'timestamp without time zone', nullable: true, transformer: new MomentValueTransformer() })
+  apiKeyLastUpdated: Moment | null;
+
+  @Column({ type: 'text', nullable: true })
   emailVerificationToken: string | null;
 
   @Column({ type: 'timestamp without time zone',

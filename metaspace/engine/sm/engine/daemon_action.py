@@ -1,4 +1,4 @@
-class DaemonAction(object):
+class DaemonAction:
     ANNOTATE = 'annotate'
     UPDATE = 'update'
     INDEX = 'index'
@@ -6,7 +6,7 @@ class DaemonAction(object):
     CLASSIFY_OFF_SAMPLE = 'classify_off_sample'
 
 
-class DaemonActionStage(object):
+class DaemonActionStage:
     QUEUED = 'QUEUED'
     STARTED = 'STARTED'
     FINISHED = 'FINISHED'

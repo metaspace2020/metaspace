@@ -1,3 +1,4 @@
+# pylint: disable=no-value-for-parameter
 import logging
 from io import BytesIO
 from itertools import combinations
@@ -94,7 +95,8 @@ def _make_thumbnail_from_minimally_overlapping_image_clusters(images, mask, h, w
         # Pad with zeros
         medoids = centroids = np.array([*np.zeros((3 - len(images), h * w)), *images])
 
-    # centroids are smoother and slightly nicer looking, medoids are more eye-catching but look worse in large lists
+    # centroids are smoother and slightly nicer looking, medoids are more eye-catching
+    # but look worse in large lists
     samples = centroids if use_centroids else medoids
     # Sort by total intensity for consistency
     # samples = [samples[i] for i in np.argsort(np.sum(samples, axis=1))]
@@ -116,7 +118,8 @@ def _make_thumbnail_from_image_clusters(images, mask, h, w, use_centroids):
         # Pad with zeros
         medoids = centroids = np.array([*np.zeros((3 - len(images), h * w)), *images])
 
-    # centroids are smoother and slightly nicer looking, medoids are more eye-catching but look worse in large lists
+    # centroids are smoother and slightly nicer looking, medoids are more eye-catching
+    # but look worse in large lists
     samples = centroids if use_centroids else medoids
     # Sort by total intensity for consistency
     samples = _sort_by_centralness(samples, h, w)[::-1]
@@ -126,20 +129,20 @@ def _make_thumbnail_from_image_clusters(images, mask, h, w, use_centroids):
 def _make_thumbnail_from_pixel_clusters(images, mask, h, w, use_distance_from_centroid=False):
     """ Alternate implementation. Results are sharper, but noisier """
     # 6-color
-    # COLORS = np.array([[1, 0, 1, 0], [1, 0, 0, 0], [1, 1, 0, 0], [0, 1, 0, 0], [0, 1, 1, 0], [0, 0, 1, 0]],
+    # colors = np.array([[1, 0, 1, 0], [1, 0, 0, 0], [1, 1, 0, 0],
+    #                    [0, 1, 0, 0], [0, 1, 1, 0], [0, 0, 1, 0]],
     #                   dtype=np.float32)
-    COLORS = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0]], dtype=np.float32)
-    num_clusters = len(COLORS)
+    colors = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0]], dtype=np.float32)
+    num_clusters = len(colors)
 
     pixels = images.transpose()[np.flatnonzero(mask)]  # Only include unmasked pixels
     kmeans = KMeans(num_clusters)
     kmeans.fit(pixels)
-    centroids = kmeans.cluster_centers_
     labels = kmeans.labels_
     labels_mask = labels[np.newaxis, :] == np.arange(num_clusters)[:, np.newaxis]
     if use_distance_from_centroid:
         # Get pixel intensity from inverse distance from centroid
-        pixel_centroids = centroids[labels]
+        pixel_centroids = kmeans.cluster_centers_[labels]
         pixel_distance_from_centroid = np.sum((pixels - pixel_centroids) ** 2, axis=1) ** 0.5
         cluster_radii = np.average(
             pixel_distance_from_centroid[np.newaxis, :] * labels_mask, weights=labels_mask, axis=1
@@ -153,7 +156,7 @@ def _make_thumbnail_from_pixel_clusters(images, mask, h, w, use_distance_from_ce
     label_intensity = np.average(
         pixel_intensity[np.newaxis, :] * labels_mask, weights=labels_mask, axis=1
     )
-    sorted_colors = COLORS[np.argsort(label_intensity)]
+    sorted_colors = colors[np.argsort(label_intensity)]
 
     pixel_vals = sorted_colors[labels] * pixel_intensity[:, np.newaxis]
     pixel_vals[:, :3] /= np.max(pixel_vals, axis=0)[:3]
@@ -194,7 +197,7 @@ def _save_ion_thumbnail_image(img_store, thumbnail):
 
 def generate_ion_thumbnail(db, img_store, ds_id, only_if_needed=False, algorithm=DEFAULT_ALGORITHM):
     try:
-        existing_thumb_id, = db.select_one(THUMB_SEL, [ds_id])
+        (existing_thumb_id,) = db.select_one(THUMB_SEL, [ds_id])
 
         if existing_thumb_id and only_if_needed:
             return

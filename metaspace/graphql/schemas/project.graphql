@@ -1,3 +1,9 @@
+enum PublicationStatus {
+  UNPUBLISHED
+  UNDER_REVIEW
+  PUBLISHED
+}
+
 type Project {
   id: ID!
   name: String!
@@ -11,6 +17,8 @@ type Project {
   createdDT: String!
   latestUploadDT: String
   projectDescriptionAsHtml: String
+  reviewToken: String
+  publicationStatus: PublicationStatus!
 }
 
 input CreateProjectInput {
@@ -43,6 +51,7 @@ enum UserProjectRole {
   PENDING    # User requested to join the project but the PI hasn't confirmed it yet
   MEMBER     # Normal member of the project
   MANAGER    # Project administrator
+  REVIEWER   # Anonymous user with read-only access to specified projects
 }
 
 type Query {
@@ -75,4 +84,12 @@ type Mutation {
   updateUserProject(projectId: ID!, userId: ID!, update: UpdateUserProjectInput!): Boolean!
 
   importDatasetsIntoProject(projectId: ID!, datasetIds: [ID!]!): Boolean!
+
+  # Managing review links
+  createReviewLink(projectId: ID!): Project!
+  deleteReviewLink(projectId: ID!): Boolean!
+
+  # Project publishing
+  publishProject(projectId: ID!): Project!
+  unpublishProject(projectId: ID!, isPublic: Boolean): Project!  # for admins only
 }

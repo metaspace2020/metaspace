@@ -7,9 +7,10 @@
 
 <script>
 
- import {configureSvg, addLegend, pieScatterPlot, setTickSize} from './utils';
+ import {configureSvg, pieScatterPlot, setTickSize} from './utils';
  import * as d3 from 'd3';
  import gql from 'graphql-tag';
+ import {groupBy, sumBy, sortBy, map} from 'lodash-es';
 
  const query =
    gql`query GetOrganismOrganCounts($filter: DatasetFilter, $query: String) {
@@ -25,7 +26,7 @@
       }
   }`;
 
- const minGroupSize = 10;
+ const OTHER = '(Other)';
 
  const geometry = {
    margin: {
@@ -49,7 +50,7 @@
      variables: {
          x: d => d.organism,
          y: d => d.organismPart,
-         count: d => d.totalCount
+         count: d => d.count
      },
 
      showSideHistograms: {
@@ -64,7 +65,7 @@
          sectors: [
              {
                  label: 'Total',
-                 count: d => d.totalCount,
+                 count: d => d.count,
                  color: '#55e'
              }
          ]
@@ -100,28 +101,39 @@
       if (!this.counts)
         return [];
 
-      let result = [];
+      const countBy = (array, iterator) => {
+        const groups = groupBy(array, iterator);
+        const counts = map(groups, (entries, key) => [key, sumBy(entries, 'count')]);
+        return sortBy(counts, ([, count]) => -count);
+      };
+      const topNBy = (array, n, iterator) => {
+        return countBy(array, iterator)
+          .slice(0, n)
+          .map(([key]) => key);
+      };
 
-      for (let entry of this.counts) {
-        if (entry.fieldValues.indexOf('N/A') >= 0)
-          continue;
-        if (entry.count < minGroupSize)
-          continue;
+      let rows = this.counts
+        .filter(entry => !entry.fieldValues.includes('N/A') && entry.count > 0)
+        .map(({fieldValues: [organism, organismPart], count}) => ({organism, organismPart, count}));
 
-        const [organism, organismPart] = entry.fieldValues;
+      // Group categories that aren't in the top N into "Other" categories
+      const topOrganisms = topNBy(rows, 25, 'organism');
+      const topOrganismParts = topNBy(rows, 25, 'organismPart');
+      rows = map(rows, ({organism, organismPart, count}) => ({
+        organism: topOrganisms.includes(organism) ? organism : OTHER,
+        organismPart: topOrganismParts.includes(organismPart) ? organismPart : OTHER,
+        count,
+      }));
+      rows = groupBy(rows, ({organism, organismPart}) => `${organism}|||${organismPart}`);
+      rows = map(rows, group => ({...group[0], count: sumBy(group, 'count')}));
 
-        result.push({
-          organism,
-          organismPart,
-          totalCount: entry.count
-        });
-      }
+      // Collect & sort categories for axis histograms, putting "Other" at the low end of each axis
+      let xData = countBy(rows, 'organism').map(([key, count]) => ({key, count}));
+      xData = sortBy(xData, ({key, count}) => key === OTHER ? Infinity : -count);
+      let yData = countBy(rows, 'organismPart').map(([key, count]) => ({key, count}));
+      yData = sortBy(yData, ({key, count}) => key === OTHER ? -Infinity : count);
 
-      result.sort((a, b) => {
-        return a.totalCount - b.totalCount;
-      });
-
-      return result;
+      return [rows, xData, yData];
     }
   },
 
@@ -130,7 +142,8 @@
       const elem = d3.select(this.$refs.organism_summary_plot);
       elem.selectAll('*').remove();
       const svg = configureSvg(elem, geometry);
-      const {scales} = pieScatterPlot(svg, this.data, config);
+      const [data, xData, yData] = this.data;
+      const {scales} = pieScatterPlot(svg, data, config, xData, yData);
 
       setTickSize('12px');
     }

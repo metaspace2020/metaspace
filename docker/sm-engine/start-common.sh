@@ -18,6 +18,8 @@ else
   cd /opt/metaspace/metaspace/engine
 fi
 
+pip install -qr requirements.txt
+
 wait_for "nc -z postgres 5432" "Postgres"
 wait_for "nc -z rabbitmq 5672" "RabbitMQ"
 

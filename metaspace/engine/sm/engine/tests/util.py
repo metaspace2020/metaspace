@@ -46,10 +46,12 @@ def metadata():
 def ds_config():
     return {
         "image_generation": {"n_levels": 30, "ppm": 3, "min_px": 1},
+        "analysis_version": 1,
         "isotope_generation": {
             "adducts": ["+H", "+Na", "+K", "[M]+"],
             "charge": 1,
             "isocalc_sigma": 0.000619,
+            "instrument": "FTICR",
             "n_peaks": 4,
             "neutral_losses": [],
             "chem_mods": [],
@@ -198,9 +200,7 @@ def mol_db(ds_config):
     service.find_db_by_name_version.return_value = data
     SMConfig._config_dict = sm_config
 
-    mol_db = MolecularDB(
-        1, 'name', 'version', ds_config['isotope_generation'], mol_db_service=service, db=db
-    )
+    mol_db = MolecularDB(1, 'name', 'version', mol_db_service=service)
     mol_db._sf_df = pd.DataFrame(
         dict(
             sf_id=[1, 2, 3],

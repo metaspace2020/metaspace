@@ -1,13 +1,9 @@
-def make_ims_acq_geometry(ms_file_path, metadata, dims):
+from sm.engine.mzml_parser import MzMLParser
+
+
+def make_ims_acq_geometry(metadata, dims):
     pixel_size = metadata.get('MS_Analysis', {}).get('Pixel_Size', {})
     row_n, col_n = dims
-
-    # if ms_file_path is not None:
-    #     from pyimzml.ImzMLParser import ImzMLParser
-    #     parser = ImzMLParser(ms_file_path)
-    #     grid_props = parser.imzmldict
-    # else:
-    #     grid_props = {}
 
     return {
         'length_unit': 'nm',
@@ -21,9 +17,7 @@ def make_ims_acq_geometry(ms_file_path, metadata, dims):
 
 
 def make_lcms_acq_geometry(ms_file_path):
-    from sm.engine.mzml_reading import read_ms1_experiment
-
-    ms_experiment = read_ms1_experiment(ms_file_path)
+    ms_experiment = MzMLParser.read_ms1_experiment(ms_file_path)
     pixel_coords = [(spec.getRT(), 0.0) for spec in ms_experiment]
     return {
         'length_unit': 's',
@@ -37,10 +31,11 @@ def make_lcms_acq_geometry(ms_file_path):
     }
 
 
-def make_acq_geometry(type, ms_file_path, metadata, dims):
-    if type == 'ims':
-        return make_ims_acq_geometry(ms_file_path, metadata, dims)
-    elif type == 'lcms':
+def make_acq_geometry(data_type, ms_file_path, metadata, dims):
+    if data_type == 'ims':
+        return make_ims_acq_geometry(metadata, dims)
+
+    if data_type == 'lcms':
         return make_lcms_acq_geometry(ms_file_path)
-    else:
-        raise ValueError('type')
+
+    raise ValueError('type')

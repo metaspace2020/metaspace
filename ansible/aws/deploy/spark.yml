@@ -1,7 +1,7 @@
 ---
 
-- name: Gather AWS web instance facts
-  hosts: web
+- name: Gather AWS instances facts
+  hosts: master, slave
   user: ubuntu
   tasks:
     - action: ec2_metadata_facts

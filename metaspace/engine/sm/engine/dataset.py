@@ -7,19 +7,19 @@ from sm.engine.util import SMConfig
 logger = logging.getLogger('engine')
 
 
-class DatasetStatus(object):
-    """ Stage of dataset lifecycle """
+class DatasetStatus:
+    """Stage of dataset lifecycle.
 
-    """ The dataset is queued for processing """
+    Attributes:
+        QUEUED: The dataset is queued for processing
+        ANNOTATING: The processing is in progress
+        FINISHED: The processing finished successfully (most common)
+        FAILED: An error occurred during processing
+    """
+
     QUEUED = 'QUEUED'
-
-    """ The processing is in progress """
     ANNOTATING = 'ANNOTATING'
-
-    """ The processing finished successfully (most common) """
     FINISHED = 'FINISHED'
-
-    """ An error occurred during processing """
     FAILED = 'FAILED'
 
 
@@ -37,6 +37,7 @@ RESOL_POWER_PARAMS = {
 
 FLAT_DS_CONFIG_KEYS = frozenset(
     {
+        'analysis_version',
         'mol_dbs',
         'adducts',
         'ppm',
@@ -49,7 +50,7 @@ FLAT_DS_CONFIG_KEYS = frozenset(
 )
 
 
-class Dataset(object):
+class Dataset:
     """ Class for representing an IMS dataset
     """
 
@@ -59,15 +60,15 @@ class Dataset(object):
     )
     DS_UPD = (
         'UPDATE dataset set name=%(name)s, input_path=%(input_path)s, upload_dt=%(upload_dt)s, '
-        'metadata=%(metadata)s, config=%(config)s, status=%(status)s, is_public=%(is_public)s where id=%(id)s'
+        '   metadata=%(metadata)s, config=%(config)s, status=%(status)s, is_public=%(is_public)s '
+        'where id=%(id)s'
     )
     DS_INSERT = (
         'INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, status, '
-        'is_public) '
-        'VALUES (%(id)s, %(name)s, %(input_path)s, %(upload_dt)s, %(metadata)s, %(config)s, %(status)s, '
-        '%(is_public)s)'
+        '   is_public) '
+        'VALUES (%(id)s, %(name)s, %(input_path)s, %(upload_dt)s, '
+        '   %(metadata)s, %(config)s, %(status)s, %(is_public)s)'
     )
-    # NOTE: config is saved to but never read from the database
 
     ACQ_GEOMETRY_SEL = 'SELECT acq_geometry FROM dataset WHERE id = %s'
     ACQ_GEOMETRY_UPD = 'UPDATE dataset SET acq_geometry = %s WHERE id = %s'
@@ -76,7 +77,7 @@ class Dataset(object):
 
     def __init__(
         self,
-        id=None,
+        id=None,  # pylint: disable=redefined-builtin
         name=None,
         input_path=None,
         upload_dt=None,
@@ -113,12 +114,12 @@ class Dataset(object):
         docs = db.select_with_fields(cls.DS_SEL, params=(ds_id,))
         if docs:
             return Dataset(**docs[0])
-        else:
-            raise UnknownDSID('Dataset does not exist: {}'.format(ds_id))
+
+        raise UnknownDSID('Dataset does not exist: {}'.format(ds_id))
 
     def is_stored(self, db):
-        r = db.select_one(self.DS_SEL, params=(self.id,))
-        return True if r else False
+        res = db.select_one(self.DS_SEL, params=(self.id,))
+        return bool(res)
 
     def save(self, db, es=None):
         doc = {
@@ -135,26 +136,26 @@ class Dataset(object):
             db.insert(self.DS_INSERT, rows=[doc])
         else:
             db.alter(self.DS_UPD, params=doc)
-        logger.info("Inserted into dataset table: %s, %s", self.id, self.name)
+        logger.info(f'Inserted into dataset table: {self.id}, {self.name}')
 
         if es:
             es.sync_dataset(self.id)
 
     def get_acq_geometry(self, db):
-        r = db.select_one(Dataset.ACQ_GEOMETRY_SEL, params=(self.id,))
-        if not r:
+        res = db.select_one(Dataset.ACQ_GEOMETRY_SEL, params=(self.id,))
+        if not res:
             raise UnknownDSID('Dataset does not exist: {}'.format(self.id))
-        return r[0]
+        return res[0]
 
     def save_acq_geometry(self, db, acq_geometry):
         db.alter(self.ACQ_GEOMETRY_UPD, params=(json.dumps(acq_geometry), self.id))
 
     def get_ion_img_storage_type(self, db):
         if not self.ion_img_storage_type:
-            r = db.select_one(Dataset.IMG_STORAGE_TYPE_SEL, params=(self.id,))
-            if not r:
+            res = db.select_one(Dataset.IMG_STORAGE_TYPE_SEL, params=(self.id,))
+            if not res:
                 raise UnknownDSID('Dataset does not exist: {}'.format(self.id))
-            self.ion_img_storage_type = r[0]
+            self.ion_img_storage_type = res[0]
         return self.ion_img_storage_type
 
     def save_ion_img_storage_type(self, db, storage_type):
@@ -169,17 +170,29 @@ class Dataset(object):
         return msg
 
 
-def _get_isotope_generation_from_metadata(metadata):
+def _normalize_instrument(analysis_version, instrument):
+    if analysis_version < 2:
+        return instrument if instrument in ('Orbitrap', 'FTICR') else 'TOF'
+
+    instrument = (instrument or '').lower()
+    if 'orbitrap' in instrument:
+        return 'Orbitrap'
+    if any(phrase in instrument for phrase in ['fticr', 'ft-icr', 'ftms', 'ft-ms']):
+        return 'FTICR'
+    return 'TOF'
+
+
+def _get_isotope_generation_from_metadata(metadata, analysis_version):
     assert 'MS_Analysis' in metadata
 
     sm_config = SMConfig.get_conf()
 
     polarity = metadata['MS_Analysis']['Polarity']
     polarity_sign = {'Positive': '+', 'Negative': '-'}[polarity]
-    instrument = metadata['MS_Analysis']['Analyzer']
-    rp = metadata['MS_Analysis']['Detector_Resolving_Power']
-    rp_mz = float(rp['mz'])
-    rp_resolution = float(rp['Resolving_Power'])
+    instrument = _normalize_instrument(analysis_version, metadata['MS_Analysis']['Analyzer'])
+    resolving_power = metadata['MS_Analysis']['Detector_Resolving_Power']
+    rp_mz = float(resolving_power['mz'])
+    rp_resolution = float(resolving_power['Resolving_Power'])
 
     if instrument == 'FTICR':
         rp200 = rp_resolution * rp_mz / 200.0
@@ -209,11 +222,12 @@ def _get_isotope_generation_from_metadata(metadata):
     charge = {'+': 1, '-': -1}[polarity_sign]
     isocalc_sigma = float(f"{params['sigma']:f}")
 
-    return default_adducts, charge, isocalc_sigma
+    return default_adducts, charge, isocalc_sigma, instrument
 
 
 def generate_ds_config(
     metadata,
+    analysis_version=None,
     mol_dbs=None,
     adducts=None,
     ppm=None,
@@ -228,16 +242,20 @@ def generate_ds_config(
     sm_config = SMConfig.get_conf()
     default_moldbs = sm_config['ds_config_defaults']['moldb_names']
 
+    analysis_version = analysis_version or 1
     mol_dbs = mol_dbs or []
     mol_dbs = [*mol_dbs, *(mol_db for mol_db in default_moldbs if mol_db not in mol_dbs)]
-    default_adducts, charge, isocalc_sigma = _get_isotope_generation_from_metadata(metadata)
+    iso_params = _get_isotope_generation_from_metadata(metadata, analysis_version)
+    default_adducts, charge, isocalc_sigma, instrument = iso_params
 
     config = {
         'databases': mol_dbs,
+        'analysis_version': analysis_version,
         'isotope_generation': {
             'adducts': adducts or default_adducts,
             'charge': charge,
             'isocalc_sigma': isocalc_sigma,
+            'instrument': instrument,
             'n_peaks': n_peaks or 4,
             'neutral_losses': neutral_losses or [],
             'chem_mods': chem_mods or [],
@@ -249,16 +267,19 @@ def generate_ds_config(
 
 
 def update_ds_config(old_config, metadata, **kwargs):
-    """
-    Extracts parameters from an existing ds_config, and uses them to generate a new ds_config with the provided changes.
+    """Updates dataset config.
+
+    Extracts parameters from an existing ds_config, and uses them
+    to generate a new ds_config with the provided changes.
     See FLAT_DS_CONFIG_KEYS for the list of allowed keys
     """
-    assert all(key in FLAT_DS_CONFIG_KEYS for key in kwargs.keys())
+    assert all(key in FLAT_DS_CONFIG_KEYS for key in kwargs)
 
     isotope_generation = old_config.get('isotope_generation', {})
     fdr = old_config.get('fdr', {})
     image_generation = old_config.get('image_generation', {})
     old_vals = {
+        'analysis_version': old_config.get('analysis_version'),
         'mol_dbs': old_config.get('databases'),
         'adducts': isotope_generation.get('adducts'),
         'n_peaks': isotope_generation.get('n_peaks'),

@@ -3,6 +3,7 @@ from sqlalchemy import DateTime, func
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 
 from app import log
+
 # from app.utils import alchemy
 
 LOG = log.get_logger()
@@ -39,5 +40,6 @@ class BaseModel(object):
         # 'created': alchemy.datetime_to_timestamp,
         # 'modified': alchemy.datetime_to_timestamp,
     }
+
 
 Base = declarative_base(cls=BaseModel)
