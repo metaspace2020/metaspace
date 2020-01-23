@@ -2,10 +2,13 @@ import {FieldResolversFor} from '../../bindingTypes';
 import {Query} from '../../binding';
 import {esFilterValueCountResults} from '../../../esConnector';
 import config from '../../utils/config';
-import {publicMolDBs, deprecatedMolDBs, fetchMolecularDatabases} from '../../utils/molDb';
 import logger from '../../utils/logger';
 import {Context, ContextUser} from '../../context';
 import {IResolvers} from 'graphql-tools';
+import {MolecularDB} from "../moldb/model";
+
+const publicMolDBs = new Set(config.moldbs.public);
+const deprecatedMolDBs = new Set(config.moldbs.deprecated);
 
 
 const getTopFieldValues = async (docType: 'dataset' | 'annotation',
@@ -86,7 +89,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     try {
       const {hideDeprecated, onlyLastVersion} = args;
 
-      const molDBs = await fetchMolecularDatabases();
+      const molDBs = await ctx.entityManager.getRepository(MolecularDB).find();
       let dbs = molDBs.map(molDB => {
         const isDeprecated = deprecatedMolDBs.has(molDB.name);
         const isPublic = publicMolDBs.has(molDB.name);

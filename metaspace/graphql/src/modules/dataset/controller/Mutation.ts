@@ -3,11 +3,9 @@ import config from '../../../utils/config';
 import logger from '../../../utils/logger';
 import * as Ajv from 'ajv';
 import {UserError} from 'graphql-errors';
-import {EntityManager} from 'typeorm';
+import {EntityManager, In, Not} from 'typeorm';
 import * as moment from 'moment';
 import * as _ from 'lodash';
-
-import {fetchMolecularDatabases} from '../../../utils/molDb';
 
 import {smAPIRequest} from '../../../utils';
 import {UserProjectRoleOptions as UPRO} from '../../project/model';
@@ -23,6 +21,7 @@ import {getDatasetForEditing} from '../operation/getDatasetForEditing';
 import {deleteDataset} from '../operation/deleteDataset';
 import {verifyDatasetPublicationStatus} from '../operation/verifyDatasetPublicationStatus';
 import {EngineDataset} from '../../engine/model';
+import {MolecularDB} from "../../moldb/model";
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -75,15 +74,17 @@ function validateMetadata(metadata: MetadataNode) {
   }
 }
 
-async function molDBsExist(molDBNames: string[]) {
-  const existingMolDBs = await fetchMolecularDatabases(),
-    existingMolDBNames = new Set<string>(existingMolDBs.map((mol_db: any) => mol_db.name));
-  for (let name of molDBNames) {
-    if (!existingMolDBNames.has(name))
-      throw new UserError(JSON.stringify({
-        'type': 'wrong_moldb_name',
-        'moldb_name': name
-      }));
+async function molDBsExist(entityManager: EntityManager, molDBNames: string[]) {
+  const foundMolDBNames = (await entityManager.getRepository(MolecularDB)
+    .find({ where: { name: In(molDBNames) } }))
+    .map(moldb => moldb.name);
+
+  if (foundMolDBNames.length < molDBNames.length) {
+    const missingMolDBNames = molDBNames.map(name => !foundMolDBNames.includes(name));
+    throw new UserError(JSON.stringify({
+      'type': 'wrong_moldb_name',
+      'moldb_name': missingMolDBNames
+    }));
   }
 }
 
@@ -225,7 +226,7 @@ const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
     validateMetadata(metadata);
   }
   // TODO: Many of the inputs are mistyped because of bugs in graphql-binding that should be reported and/or fixed
-  await molDBsExist(input.molDBs as any || []);
+  await molDBsExist(ctx.entityManager, input.molDBs as any || []);
 
   const {submitterId, groupId, projectIds, principalInvestigator} = input;
   const saveDSArgs = {
