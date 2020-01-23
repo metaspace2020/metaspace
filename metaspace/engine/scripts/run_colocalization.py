@@ -30,7 +30,7 @@ SELECT DISTINCT j.ds_id
 FROM dataset ds
 JOIN job j ON ds.id = j.ds_id
 JOIN job_fdr_counts jfc ON j.id = jfc.job_id
-JOIN mol_db_lookup mdb ON j.db_id = mdb.id
+JOIN mol_db_lookup mdb ON j.moldb_id = mdb.id
 CROSS JOIN algorithm_lookup alg
 JOIN coloc_job_fdr_counts cj ON ds.id = cj.ds_id AND cj.mol_db = mdb.name
                                   AND cj.fdr = jfc.fdr AND cj.algorithm = alg.algorithm
@@ -61,7 +61,7 @@ SELECT DISTINCT j.ds_id
 FROM dataset ds
 JOIN job j ON ds.id = j.ds_id
 JOIN job_fdr_counts jfc ON j.id = jfc.job_id
-JOIN mol_db_lookup mdb ON j.db_id = mdb.id
+JOIN mol_db_lookup mdb ON j.moldb_id = mdb.id
 LEFT JOIN coloc_job_fdr_counts cj ON ds.id = cj.ds_id AND cj.mol_db = mdb.name AND cj.fdr = jfc.fdr
 WHERE ds.status = 'FINISHED'
   AND j.status = 'FINISHED'

@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import {MomentValueTransformer} from '../../utils/MomentValueTransformer';
 import {Ion} from '../annotation/model';
+import {MolecularDB} from "../moldb/model";
 
 export type DatasetStatus = 'QUEUED' | 'ANNOTATING' | 'FINISHED' | 'FAILED';
 
@@ -79,7 +80,7 @@ export class OpticalImage {
 export class Job {
   @PrimaryGeneratedColumn()
   id: number;
-  @Column({ type: 'int', nullable: true })
+  @Column({ name: 'moldb_id', type: 'int', nullable: true })
   dbId: number | null;
   @Column({ name: 'ds_id', nullable: true })
   datasetId: string | null;
@@ -93,6 +94,10 @@ export class Job {
   @ManyToOne(type => EngineDataset, dataset => dataset.jobs, {onDelete: 'CASCADE'})
   @JoinColumn({ name: 'ds_id' })
   dataset: EngineDataset;
+
+  @ManyToOne(type => MolecularDB)
+  @JoinColumn({ name: 'moldb_id' })
+  moldb: MolecularDB;
 
   @OneToMany(type => Annotation, annotation => annotation.job)
   annotations: Annotation[];

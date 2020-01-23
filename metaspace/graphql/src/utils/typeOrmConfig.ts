@@ -7,6 +7,7 @@ import {GROUP_ENTITIES} from '../modules/group/model';
 import {PROJECT_ENTITIES} from '../modules/project/model';
 import {ANNOTATION_ENTITIES} from '../modules/annotation/model';
 import {ENGINE_ENTITIES} from '../modules/engine/model';
+import {MOLECULAR_DB_ENTITIES} from '../modules/moldb/model';
 import {SnakeCaseNamingStrategy} from './SnakeCaseNamingStrategy';
 
 export const DbSchemaName = 'graphql';
@@ -26,6 +27,7 @@ const typeOrmConfig: ConnectionOptions = {
     ...PROJECT_ENTITIES,
     ...ANNOTATION_ENTITIES,
     ...ENGINE_ENTITIES,
+    ...MOLECULAR_DB_ENTITIES,
   ],
   namingStrategy: new SnakeCaseNamingStrategy(),
   synchronize: false,

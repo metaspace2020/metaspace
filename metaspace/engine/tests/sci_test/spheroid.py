@@ -19,7 +19,7 @@ SEARCH_RES_SELECT = (
     "from annotation m "
     "join job j on j.id = m.job_id "
     "join dataset ds on ds.id = j.ds_id "
-    "where j.db_id = %s AND ds.name = %s "
+    "where j.moldb_id = %s AND ds.name = %s "
     "ORDER BY formula, adduct "
 )
 

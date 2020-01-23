@@ -44,7 +44,7 @@ FROM annotation m
 JOIN job j ON j.id = m.job_id
 JOIN dataset ds ON ds.id = j.ds_id
 LEFT JOIN graphql.ion ON m.ion_id = ion.id
-WHERE ds.id = %s AND j.db_id = %s
+WHERE ds.id = %s AND j.moldb_id = %s
 ORDER BY COALESCE(m.msm, 0::real) DESC'''
 
 DATASET_SEL = '''SELECT
