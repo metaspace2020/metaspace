@@ -26,7 +26,7 @@ def test_add_dataset_external_link(sm, my_ds_id):
     assert any(ext_link == {'provider': provider, 'link': link} for ext_link in result)
 
 
-def test_remove_project_external_link(sm, my_ds_id):
+def test_remove_dataset_external_link(sm, my_ds_id):
     provider = 'MetaboLights'
     link = 'https://www.ebi.ac.uk/metabolights/MTBLS313'
 
