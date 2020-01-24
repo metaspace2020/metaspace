@@ -109,13 +109,13 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
   async peakChartData(hit) {
     const {ion, ds_meta, ds_config, mz, centroid_mzs, total_iso_ints} = hit._source;
     const msInfo = ds_meta.MS_Analysis;
-    const host = config.services.moldb_service_host;
+    const host = config.services.sm_engine_api_host;
     const pol = msInfo.Polarity.toLowerCase() == 'positive' ? '+1' : '-1';
 
     const rp = mz / (ds_config.isotope_generation.isocalc_sigma * 2.35482);
     const ppm = ds_config.image_generation.ppm;
     const ion_without_pol = ion.substr(0, ion.length-1);
-    const res = await fetch(`http://${host}/v1/isotopic_pattern/${ion_without_pol}/tof/${rp}/400/${pol}`);
+    const res = await fetch(`http://${host}/v1/isotopic_patterns/${ion_without_pol}/tof/${rp}/400/${pol}`);
     const {data} = await res.json();
 
     return JSON.stringify({

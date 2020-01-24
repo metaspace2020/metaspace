@@ -39,7 +39,6 @@ export interface Config {
     categories: Record<ImageCategory, ImageCategoryConfig>;
   };
   services: {
-    moldb_service_host: string;
     sm_engine_api_host: string;
   };
   db: {
