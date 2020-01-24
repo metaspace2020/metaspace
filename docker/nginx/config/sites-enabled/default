@@ -10,6 +10,7 @@ server {
     proxy_read_timeout 300;
     send_timeout 300;
     resolver 127.0.0.11 valid=30s;
+    add_header X-uri "$uri";
     location /mol-images/ {
         root /var/www;
     }
@@ -17,9 +18,30 @@ server {
         # Using variables for proxy_pass instead of upstream server definitions means that nginx
         # won't die if the DNS entry doesn't exist, e.g. because docker hasn't started the container yet
         set $web_server sm-webapp:8082;
+        # Need to support web sockets for webpack dev server
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
         proxy_pass http://$web_server;
         client_max_body_size 5M;
+        include proxy-params.conf;
     }
+
+# For testing prod config
+#    location / {
+#        root /var/www/webapp;
+#        try_files $uri /index.html;
+#        expires 10m;
+#        location ~ ^/(js/.*|css/.*|img/.*|fonts/.*) {
+#            add_header Cache-Control "public,max-age=31536000,immutable";
+#            etag off;
+#            expires off;
+#            try_files $uri /old_ver/$1 =404;
+#        }
+#        location ~ \.\w*$ {
+#            try_files $uri =404;
+#        }
+#    }
 
     location /fs/iso_images/ {
         proxy_pass http://sm-graphql:4201/fs/iso_images/;
@@ -40,6 +62,11 @@ server {
     location /fs/ion_thumbnails/ {
         proxy_pass http://sm-graphql:4201/fs/ion_thumbnails/;
         client_max_body_size 50M;
+    }
+    location /dataset_upload {
+        proxy_pass http://sm-graphql:4201/dataset_upload;
+        # include proxy-params.conf;
+        client_max_body_size 5M;
     }
     location /graphql {
         proxy_pass http://sm-graphql:3010/graphql;
@@ -66,16 +93,7 @@ server {
         proxy_pass http://$kibana_server/;
         include proxy-params.conf;
     }
-}
 
-server {
-    listen 9210;
-    location / {
-        auth_basic "Private Property";
-        auth_basic_user_file /etc/nginx/passwdfile;
-        set $elasticsearch_server elasticsearch:9200;
-        proxy_pass http://$elasticsearch_server;
-        include proxy-params.conf;
-    }
-}
 
+
+}

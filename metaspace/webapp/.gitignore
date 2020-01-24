@@ -16,3 +16,7 @@ src/clientConfig.json
 
 # Screenshots taken by testcafe
 tests/e2e/screenshots
+
+# Build output
+/dist
+/www

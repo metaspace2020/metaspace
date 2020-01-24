@@ -60,6 +60,11 @@ config.aws = {
   aws_region: "{{ sm_graphql_aws_region }}"
 };
 
+config.dataset_upload = {
+  destination: '{{ sm_graphql_upload_destination }}',
+  bucket: '{{ sm_graphql_s3_upload_bucket }}',
+}
+
 config.features = {{ sm_graphql_features | to_json }};
 
 config.metadataLookups = {{ sm_graphql_metadata_lookups | default({}) | to_json }};

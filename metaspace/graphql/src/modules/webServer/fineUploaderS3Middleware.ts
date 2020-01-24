@@ -1,10 +1,10 @@
 // minimal amount of code to support direct upload to S3
 import config from '../../utils/config';
-import crypto from 'crypto';
-import express from 'express';
-import bodyParser from 'body-parser';
-import genUuid from 'uuid';
-import url from 'url';
+import * as crypto from 'crypto';
+import {Router, Request, Response, NextFunction} from 'express';
+import * as bodyParser from 'body-parser';
+import * as genUuid from 'uuid';
+import * as url from 'url';
 
 /**
  * Generate a uuid to be used as the destination directory in S3, and sign it. This server-supplied signature allows
@@ -14,7 +14,7 @@ import url from 'url';
  * @param res
  * @param next
  */
-function generateUuidForUpload(req, res, next) {
+function generateUuidForUpload(req: Request, res: Response, next: NextFunction) {
   const hmac = crypto.createHmac('sha1', config.aws.aws_secret_access_key);
   const uuid = genUuid();
   const uuidSignature = hmac.update(uuid).digest('base64');
@@ -35,7 +35,7 @@ function generateUuidForUpload(req, res, next) {
  * @param expectedUuidSignature
  * @returns {*}
  */
-const validateStringToSign = (stringToSign, expectedUuidSignature) => {
+const validateStringToSign = (stringToSign: string, expectedUuidSignature: string) => {
   const headers = stringToSign.split('\n');
   if (headers.length < 5) {
     console.error('S3 Uploader - stringToSign is too short');
@@ -78,8 +78,8 @@ const validateStringToSign = (stringToSign, expectedUuidSignature) => {
     const pathParts = pathname.split('/');
     if (pathParts.length === 4 && pathParts[0] === '') {
       validations.resourcePathStructure = true;
-      validations.resourceBucket = pathParts[1] === config.S3_UPLOAD_BUCKET;
-      actualUuidSignature = crypto.createHmac('sha1', config.AWS_SECRET_ACCESS_KEY)
+      validations.resourceBucket = pathParts[1] === config.dataset_upload.bucket;
+      actualUuidSignature = crypto.createHmac('sha1', config.aws.aws_secret_access_key)
                                   .update(pathParts[2])
                                   .digest('base64');
       validations.resourceOrigin = origin === fakeOrigin;
@@ -106,11 +106,11 @@ const validateStringToSign = (stringToSign, expectedUuidSignature) => {
   }
 };
 
-function signV2(req, res, next) {
+function signV2(req: Request, res: Response, next: NextFunction) {
   if (typeof req.body.headers === 'string'
     && typeof req.query.uuid_signature === 'string'
     && validateStringToSign(req.body.headers, req.query.uuid_signature)) {
-    const signature = crypto.createHmac('sha1', config.AWS_SECRET_ACCESS_KEY)
+    const signature = crypto.createHmac('sha1', config.aws.aws_secret_access_key)
                             .update(req.body.headers)
                             .digest('base64');
     res.json({signature});
@@ -126,8 +126,8 @@ function signV2(req, res, next) {
   // }
 }
 
-function fineUploaderS3Middleware(options) {
-  var router = express.Router();
+export default function fineUploaderS3Middleware() {
+  const router = Router();
   router.use(bodyParser.urlencoded({ extended: true }));
   router.use(bodyParser.json());
   router.post('/s3/sign', signV2);
@@ -135,4 +135,3 @@ function fineUploaderS3Middleware(options) {
   return router;
 }
 
-module.exports = fineUploaderS3Middleware;

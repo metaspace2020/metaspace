@@ -1,4 +1,4 @@
-FROM node:8.11.3
+FROM node:8.17.0
 
 RUN apt-get update && apt-get install -y netcat && apt-get clean
 RUN yarn global add nodemon

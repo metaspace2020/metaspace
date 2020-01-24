@@ -6,7 +6,6 @@ Web application for browsing results produced by [METASPACE engine](../engine).
 
 * Clone the repository
 * Run `yarn install`
-* Create `conf.js` using the provided `conf.js.template` (used by the backend, all secrets are kept here)
 * Create `src/clientConfig.json` using the provided template (this is used by the frontend)
 
 ## Running in development mode
@@ -30,12 +29,8 @@ To check code coverage: `yarn run coverage` then open `coverage/lcov-report/inde
 
 ## Running in production
 
-First, execute `yarn run build` to get the minified bundles in the `dist/` directory.
-
-Then set `NODE_ENV` accordingly and run `server.js`, e.g.
-```bash
-NODE_ENV=production forever start -l forever.log -o out.log -e err.log -c "nodemon --exitcrash" server.js
-```
+Run `yarn run build` to build and minify the project. 
+The files in the `dist/` directory can then be served by a web server such as nginx.
 
 ## Funding
 

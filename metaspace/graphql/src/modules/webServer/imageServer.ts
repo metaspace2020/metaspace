@@ -12,6 +12,8 @@ import * as fs from 'fs-extra';
 const getPixels = require('get-pixels');
 import logger from '../../utils/logger';
 import config, {Config, ImageCategory} from '../../utils/config';
+import fineUploaderS3Middleware from './fineUploaderS3Middleware';
+import fineUploaderLocalMiddleware from './fineUploaderLocalMiddleware';
 
 export const IMG_TABLE_NAME = 'image';
 
@@ -216,6 +218,7 @@ export async function createImageServerApp(config: Config, knex: Knex) {
   }
   catch (e) {
     logger.error(`${e.stack}`);
+    throw e;
   }
 }
 
@@ -227,6 +230,12 @@ export async function createImgServerAsync(config: Config) {
   await new Promise((resolve, reject) => {
     httpServer.listen(config.img_storage_port).on('listening', resolve).on('error', reject);
   });
+
+  if (config.dataset_upload.destination === 's3') {
+    app.use('/dataset_upload', fineUploaderS3Middleware());
+  } else {
+    app.use('/dataset_upload', fineUploaderLocalMiddleware());
+  }
 
   logger.info(`Image server is listening on ${config.img_storage_port} port...`);
   return httpServer;
