@@ -13,7 +13,7 @@
     "generate-local-graphql-schema": "cd ../graphql && yarn run gen-graphql-schema",
     "fetch-prod-graphql-schema": "apollo schema:download tests/utils/graphql-schema.json --endpoint https://metaspace2020.eu/graphql",
     "serve": "vue-cli-service serve",
-    "build": "yarn run deref-schema && cross-env NODE_ENV=production vue-cli-service build",
+    "build": "yarn run deref-schema && cross-env NODE_ENV=production vue-cli-service build --modern",
     "build-ci": "yarn run deref-schema && cross-env NODE_ENV=production vue-cli-service build --no-progress --hide-modules",
     "lint": "vue-cli-service lint",
     "test:unit": "vue-cli-service test:unit"

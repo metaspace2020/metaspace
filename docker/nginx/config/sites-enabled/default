@@ -10,7 +10,7 @@ server {
     proxy_read_timeout 300;
     send_timeout 300;
     resolver 127.0.0.11 valid=30s;
-    add_header X-uri "$uri";
+
     location /mol-images/ {
         root /var/www;
     }
@@ -30,6 +30,7 @@ server {
 # For testing prod config
 #    location / {
 #        root /var/www/webapp;
+#        gzip_types text/html text/css application/javascript application/json font/woff font/ttf image/svg+xml;
 #        try_files $uri /index.html;
 #        expires 10m;
 #        location ~ ^/(js/.*|css/.*|img/.*|fonts/.*) {
@@ -93,7 +94,4 @@ server {
         proxy_pass http://$kibana_server/;
         include proxy-params.conf;
     }
-
-
-
 }

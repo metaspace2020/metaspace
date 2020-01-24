@@ -269,6 +269,7 @@ nginx_servers:
       - ssl_certificate_key ssl/{{ ssl.key }};
       - proxy_read_timeout 300;
       - send_timeout 300;
+      - gzip_types text/html text/css application/javascript application/json font/woff font/ttf image/svg+xml;
     locations:
       - path: /mol-images/
         params:
