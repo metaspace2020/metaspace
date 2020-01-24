@@ -3,7 +3,16 @@
   "version": "0.6.0",
   "description": "sm-engine GraphQL interface",
   "main": "server.js",
-  "author": "Artem Tarasov <artem.tarasov@embl.de>",
+  "author": "Alexandrov Team, EMBL",
+  "contributors": [
+    "Andrew Palmer <andrew.palmer@embl.de>",
+    "Artem Tarasov <artem.tarasov@embl.de>",
+    "Ivan Protsyuk <ivan.protsyuk@embl.de>",
+    "Lachlan Stuart <lachlan.stuart@embl.de>",
+    "Renat Nigmetzianov <renat.nigmetzianov@embl.de>",
+    "Theodore Alexandrov <theodore.alexandrov@embl.de>",
+    "Vitaly Kovalev <vitaly.kovalev@embl.de>"
+  ],
   "scripts": {
     "dev": "nodemon -e js,json,ts --require ts-node/register server.js",
     "start": "ts-node src/index.ts",
