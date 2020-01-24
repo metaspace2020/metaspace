@@ -40,7 +40,7 @@ describe('ViewGroupPage', () => {
     numMembers: 2,
     members: mockMembersForPublic,
   };
-  const mockGroupFn = jest.fn(() => mockGroup);
+  const mockGroupFn = jest.fn((src: any, args: any, ctx: any, info: any): any => mockGroup);
   const graphqlMocks = {
     Query: () => ({
       currentUser: () => ({ id: 'userid' }),

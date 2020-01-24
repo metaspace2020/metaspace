@@ -6,10 +6,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     <mock-el-option value="offSample" label="Show/hide off-sample annotations"></mock-el-option>
   </mock-el-select>
   <div class="tf-outer" data-test-key="simpleQuery" filterkey="simpleQuery" name="Simple query" options="">
-    <div class="tf-name">
-      <i class="el-icon-search" style="color: white;"></i>
-    </div>
-    <input type="text" placeholder="enter any keywords" class="tf-value tf-value-input">
+    <div class="tf-name"><i class="el-icon-search" style="color: white;"></i></div> <input type="text" placeholder="enter any keywords" class="tf-value tf-value-input">
     <!---->
   </div>
   <div class="tf-outer" data-test-key="analyzerType" filterkey="analyzerType">
@@ -92,8 +89,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       group.label
     </span>
           <!---->
-          <!---->
-          </span>
+          <!----></span>
           <!---->
         </div>
       </div>
@@ -118,8 +114,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       project.label
     </span>
           <!---->
-          <!---->
-          </span>
+          <!----></span>
           <!---->
         </div>
       </div>
@@ -145,8 +140,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       user.label
     </span>
           <!---->
-          <!---->
-          </span>
+          <!----></span>
           <!---->
         </div>
       </div>
@@ -171,8 +165,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
         <div class="tf-value"><span class="tf-value-span"><!----> <span>
       (2 items selected)
     </span>
-          <!---->
-          </span>
+          <!----></span>
           <!---->
         </div>
       </div>
@@ -185,8 +178,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     </div>
     <div class="tf-value"><span class="tf-value-span"><span>
       0.5
-    </span></span>
-    </div>
+    </span></span></div>
     <div class="tf-remove el-icon-error"></div>
   </div>
   <div class="tf-outer" data-test-key="compoundName" filterkey="compoundName" options="">
@@ -195,8 +187,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     </div>
     <div class="tf-value"><span class="tf-value-span"><span>
       C8H20NO6P
-    </span></span>
-    </div>
+    </span></span></div>
     <div class="tf-remove el-icon-error"></div>
   </div>
   <div class="tf-outer" data-test-key="database" filterkey="database">
@@ -224,8 +215,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     </div>
     <div class="tf-value"><span class="tf-value-span"><span>
       296.0659
-    </span></span>
-    </div> <span class="tf-value-suffix">± 0.0001</span>
+    </span></span></div> <span class="tf-value-suffix">± 0.0001</span>
     <div class="tf-remove el-icon-error"></div>
   </div>
   <div class="tf-outer" data-test-key="polarity" filterkey="polarity">

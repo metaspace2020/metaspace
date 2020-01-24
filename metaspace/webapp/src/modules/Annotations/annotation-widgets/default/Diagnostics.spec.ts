@@ -119,7 +119,7 @@ describe('Diagnostics', () => {
         allAnnotations: () => ([isobarAnnotation]),
       })
     });
-    console.error = (...args) => {throw new Error(...args)};
+    console.error = (...args: any[]) => {throw new Error(...args)};
 
     const wrapper = mount(Diagnostics, { store, router, apolloProvider, stubs, propsData: props, sync: false });
     await Vue.nextTick();

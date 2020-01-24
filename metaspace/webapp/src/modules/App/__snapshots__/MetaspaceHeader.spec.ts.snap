@@ -4,30 +4,20 @@ exports[`MetaspaceHeader should match snapshot (logged in) 1`] = `
 <div>
   <div class="spacerWithAlert"></div>
   <div class="b-header">
-    <div class="header-items">
-      <a href="/" class="header-item logo router-link-exact-active router-link-active">
-        <img src="../../assets/logo.png" alt="Metaspace" title="Metaspace">
-      </a>
-      <a href="/upload" class="header-item page-link" id="upload-link">
+    <div class="header-items"><a href="/" class="header-item logo router-link-exact-active router-link-active"><img src="../../assets/logo.png" alt="Metaspace" title="Metaspace"></a> <a href="/upload" class="header-item page-link" id="upload-link">
         Upload
-      </a>
-      <a href="/annotations" class="header-item page-link" id="annotations-link">
+      </a> <a href="/annotations" class="header-item page-link" id="annotations-link">
         Annotations
-      </a>
-      <a href="/datasets" class="header-item page-link" id="datasets-link">
+      </a> <a href="/datasets" class="header-item page-link" id="datasets-link">
         Datasets
-      </a>
-      <a href="/projects" class="header-item page-link">
+      </a> <a href="/projects" class="header-item page-link">
         Projects
-      </a>
-      <a href="/group/456" class="header-item page-link">
+      </a> <a href="/group/456" class="header-item page-link">
         <div class="limit-width">
           currentUser.primaryGroup.group.shortName
         </div>
-      </a>
-    </div>
-    <div class="header-items">
-      <a href="/help" class="header-item page-link">
+      </a></div>
+    <div class="header-items"><a href="/help" class="header-item page-link">
         Help
       </a>
       <!---->
@@ -39,11 +29,9 @@ exports[`MetaspaceHeader should match snapshot (logged in) 1`] = `
               <mock-el-tooltip content="currentUser.projects.1.project.name has a pending membership request." placement="left"><span class="notification"></span></mock-el-tooltip>
             </div>
           </div>
-          <div class="submenu">
-            <a href="/user/me" class="submenu-item page-link">
+          <div class="submenu"><a href="/user/me" class="submenu-item page-link">
               My account
-              <mock-el-tooltip content="currentUser.projects.1.project.name has a pending membership request." placement="left"><span class="notification"></span></mock-el-tooltip>
-            </a>
+              <mock-el-tooltip content="currentUser.projects.1.project.name has a pending membership request." placement="left"><span class="notification"></span></mock-el-tooltip></a>
             <div class="submenu-item page-link">
               Sign out
             </div>
@@ -53,13 +41,10 @@ exports[`MetaspaceHeader should match snapshot (logged in) 1`] = `
     </div>
   </div>
   <div class="alert el-row">
-    <div role="alert" class="el-alert el-alert--warning is-light" name="el-alert-fade">
-      <i class="el-alert__icon el-icon-warning"></i>
+    <div role="alert" class="el-alert el-alert--warning is-light" name="el-alert-fade"><i class="el-alert__icon el-icon-warning"></i>
       <div class="el-alert__content"><span class="el-alert__title">systemHealthUpdated.message</span>
         <!---->
-        <!---->
-        <i class="el-alert__closebtn el-icon-close" style="display: none;"></i>
-      </div>
+        <!----><i class="el-alert__closebtn el-icon-close" style="display: none;"></i></div>
     </div>
   </div>
 </div>
@@ -69,26 +54,18 @@ exports[`MetaspaceHeader should match snapshot (logged out) 1`] = `
 <div>
   <div class="spacerWithAlert"></div>
   <div class="b-header">
-    <div class="header-items">
-      <a href="/" class="header-item logo router-link-exact-active router-link-active">
-        <img src="../../assets/logo.png" alt="Metaspace" title="Metaspace">
-      </a>
-      <a href="/upload" class="header-item page-link" id="upload-link">
+    <div class="header-items"><a href="/" class="header-item logo router-link-exact-active router-link-active"><img src="../../assets/logo.png" alt="Metaspace" title="Metaspace"></a> <a href="/upload" class="header-item page-link" id="upload-link">
         Upload
-      </a>
-      <a href="/annotations" class="header-item page-link" id="annotations-link">
+      </a> <a href="/annotations" class="header-item page-link" id="annotations-link">
         Annotations
-      </a>
-      <a href="/datasets" class="header-item page-link" id="datasets-link">
+      </a> <a href="/datasets" class="header-item page-link" id="datasets-link">
         Datasets
-      </a>
-      <a href="/projects" class="header-item page-link">
+      </a> <a href="/projects" class="header-item page-link">
         Projects
       </a>
       <!---->
     </div>
-    <div class="header-items">
-      <a href="/help" class="header-item page-link">
+    <div class="header-items"><a href="/help" class="header-item page-link">
         Help
       </a>
       <div class="header-items">
@@ -103,13 +80,10 @@ exports[`MetaspaceHeader should match snapshot (logged out) 1`] = `
     </div>
   </div>
   <div class="alert el-row">
-    <div role="alert" class="el-alert el-alert--warning is-light" name="el-alert-fade">
-      <i class="el-alert__icon el-icon-warning"></i>
+    <div role="alert" class="el-alert el-alert--warning is-light" name="el-alert-fade"><i class="el-alert__icon el-icon-warning"></i>
       <div class="el-alert__content"><span class="el-alert__title">systemHealthUpdated.message</span>
         <!---->
-        <!---->
-        <i class="el-alert__closebtn el-icon-close" style="display: none;"></i>
-      </div>
+        <!----><i class="el-alert__closebtn el-icon-close" style="display: none;"></i></div>
     </div>
   </div>
 </div>

@@ -16,7 +16,7 @@ sync(store, router);
 
 const blobToText = (blob: Blob) => new Promise<string>((resolve, reject) => {
   const reader = new FileReader();
-  reader.addEventListener('load', () => { resolve(reader.result) });
+  reader.addEventListener('load', () => { resolve(reader.result as string) });
   reader.addEventListener('error', (e) => { reject((e as any).error) });
   reader.readAsText(blob);
 });

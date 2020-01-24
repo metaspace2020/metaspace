@@ -90,7 +90,7 @@ describe('MetadataEditor', () => {
       name: 'mock user',
       groups: [{ group: {id: 'group', name: 'group name'} }],
     };
-    const mockUserFn = jest.fn(() => mockUser);
+    const mockUserFn = jest.fn((src: any, args: any, ctx: any) => mockUser);
     initMockGraphqlClient({
       Query: () => ({
         dataset: () => ({...mockDataset, submitter: { id: submitterId }}),
