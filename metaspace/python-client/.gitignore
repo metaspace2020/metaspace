@@ -91,3 +91,5 @@ ENV/
 config.yml
 *.DS_Store
 /.idea/
+
+./test_config

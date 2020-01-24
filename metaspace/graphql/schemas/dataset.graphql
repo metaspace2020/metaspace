@@ -44,6 +44,7 @@ type Dataset {
 
   thumbnailOpticalImageUrl: String
   ionThumbnailUrl: String
+  externalLinks: [ExternalLink!]!
 }
 
 type FdrCounts {
@@ -297,6 +298,17 @@ type Mutation {
   addOpticalImage(input: AddOpticalImageInput!): String!
 
   deleteOpticalImage(datasetId: String!): String!
+
+  # Links to related websites (publications, etc.)
+  addDatasetExternalLink(datasetId: String!,
+                         provider: String!,
+                         link: String!,
+                         # set replaceExisting to True to delete any previous links to the same provider
+                         replaceExisting: Boolean! = False): Dataset!
+
+  removeDatasetExternalLink(datasetId: String!,
+                            provider: String!,
+                            link: String): Dataset!
 }
 
 type Subscription {

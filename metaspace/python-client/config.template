@@ -1,0 +1,10 @@
+# Copy this file to your home directory, rename it to ".metaspace" and uncomment/fill in settings as needed
+
+# API Key is the preferred authentication mechanism. Generate an API key at https://metaspace2020.eu/user/me
+api_key=
+
+# email=
+# password=
+
+# host=http://localhost:8888
+# verify_certificate=False

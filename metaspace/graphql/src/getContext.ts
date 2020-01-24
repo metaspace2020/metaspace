@@ -12,7 +12,7 @@ import * as DataLoader from 'dataloader';
 const getBaseContext = (userFromRequest: JwtUser | UserModel | null, entityManager: EntityManager,
                         req?: Request, res?: Response) => {
   const user = userFromRequest != null && userFromRequest.id != null ? userFromRequest : null;
-  const contextCache: Record<string, any> = {};
+  let contextCache: Record<string, any> = {};
 
   const contextCacheGet = <TArgs extends readonly ContextCacheKeyArg[], V>
   (functionName: string, args: TArgs, func: (...args: TArgs) => V) => {
@@ -22,6 +22,10 @@ const getBaseContext = (userFromRequest: JwtUser | UserModel | null, entityManag
     } else {
       return contextCache[key] = func(...args);
     }
+  };
+
+  const contextCacheClear = () => {
+    contextCache = {};
   };
 
   const getProjectRoles = () => contextCacheGet('getProjectRoles', [], async () => {
@@ -111,6 +115,7 @@ const getBaseContext = (userFromRequest: JwtUser | UserModel | null, entityManag
       return user.id;
     },
     contextCacheGet,
+    contextCacheClear, // Only intended for use in tests
     cachedGetEntityById,
   };
 };

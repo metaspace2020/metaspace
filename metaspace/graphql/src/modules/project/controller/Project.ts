@@ -106,6 +106,18 @@ const ProjectResolvers: FieldResolversFor<Project, ProjectSource> = {
     // graphql-binding translates all custom scalar types to strings, unless you run it programmatically and change its config
     return project.createdDT.toISOString();
   },
+
+  async externalLinks(project, args, ctx) {
+    return project.externalLinks || [];
+  },
+
+  async reviewToken(project, args, ctx) {
+    if (project.currentUserRole == UPRO.MANAGER || ctx.isAdmin) {
+      return project.reviewToken;
+    } else {
+      return null;
+    }
+  }
 };
 
 export default ProjectResolvers;

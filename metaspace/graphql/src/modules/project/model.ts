@@ -4,7 +4,8 @@ import {
   Column,
   JoinColumn,
   OneToMany,
-  ManyToOne, Index, JoinTable,
+  ManyToOne,
+  Index,
 } from 'typeorm';
 
 import {User} from '../user/model';
@@ -13,6 +14,7 @@ import {DatasetProject} from '../dataset/model';
 import {Moment} from 'moment';
 import {MomentValueTransformer} from '../../utils/MomentValueTransformer';
 import {PublicationStatusOptions as PSO} from './PublicationStatusOptions';
+import {ExternalLink} from './ExternalLink';
 
 export const UserProjectRoleOptions: Record<UserProjectRole, UserProjectRole> = {
   INVITED: 'INVITED',
@@ -41,7 +43,6 @@ export class Project {
   isPublic: boolean;
 
   @OneToMany(type => DatasetProject, datasetProject => datasetProject.project)
-  @JoinTable({ name: 'dataset_project' })
   datasetProjects: DatasetProject[];
 
   @Column({ name: 'created_dt', type: 'timestamp without time zone', default: () => "(now() at time zone 'utc')",
@@ -62,6 +63,9 @@ export class Project {
 
   @Column({ type: 'text', enum: Object.keys(PSO), default: PSO.UNPUBLISHED })
   publicationStatus: PublicationStatus;
+
+  @Column({type: 'json', nullable: true})
+  externalLinks: ExternalLink[] | null;
 }
 
 @Entity('user_project')
