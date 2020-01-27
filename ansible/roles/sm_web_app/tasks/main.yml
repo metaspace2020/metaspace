@@ -32,9 +32,9 @@
 
 - name: Copy build output
   shell: >
-    rm -rf www/old_ver
-    [ -f www ] && mv www dist/old_ver
-    mv dist www
+    [ -f www/old_ver ] && rm -rf www/old_ver;
+    [ -f www ] && mv www dist/old_ver;
+    mv dist www;
   args:
     chdir: "{{ sm_webapp_home }}"
     executable: /bin/bash

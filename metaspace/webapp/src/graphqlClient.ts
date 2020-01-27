@@ -132,7 +132,7 @@ const apolloClient = new ApolloClient({
         project: (_, args, { getCacheKey}) => getCacheKey({ __typename: 'Project', id: args.projectId }),
       }
     },
-    dataIdFromObject(object) {
+    dataIdFromObject(object: any) {
       // WORKAROUND: Because of Apollo's aggressive caching, often the current User will be overwritten with results
       // from other queries. The server side often strips fields based on how they're accessed (the "ScopeRole" logic),
       // which means these query paths will often return different data with the same IDs:

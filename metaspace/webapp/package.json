@@ -114,19 +114,12 @@
       "^.+\\.[jt]sx?$": "ts-jest"
     },
     "moduleNameMapper": {
-      "lodash-es": "lodash",
-      "\\.scss$": "<rootDir>/tests/utils/scssMock.js",
-      "^@/(.*)$": "<rootDir>/src/$1"
+      "lodash-es": "lodash"
     },
     "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
     "setupFilesAfterEnv": [
       "<rootDir>/tests/utils/setupTestFramework.ts"
     ],
-    "globals": {
-      "ts-jest": {
-        "babelConfig": true
-      }
-    },
     "clearMocks": true,
     "restoreMocks": true,
     "moduleFileExtensions": [
@@ -148,11 +141,6 @@
       "jest-watch-typeahead/testname"
     ]
   },
-  "browserslist": {
-    "production": [
-      "defaults"
-    ]
-  },
   "_eslintConfig": {
     "root": true,
     "env": {
@@ -168,9 +156,9 @@
       "parser": "@typescript-eslint/parser"
     }
   },
-  "postcss": {
-    "plugins": {
-      "autoprefixer": {}
-    }
+  "babel": {
+    "presets": [
+      ["@vue/cli-plugin-babel/preset", { "useBuiltIns": "entry" }]
+    ]
   }
 }
