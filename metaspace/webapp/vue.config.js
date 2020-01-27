@@ -21,6 +21,11 @@ module.exports = {
     config.plugins = config.plugins.filter(p => !(p instanceof ProgressPlugin));
     config.plugins.find(p => p instanceof ForkTsCheckerWebpackPlugin).workersNumber = 3;
 
+    if (process.env.WEBPACK_STATS) {
+      const StatsPlugin = require('stats-webpack-plugin');
+      config.plugins.push(new StatsPlugin('stats.json'));
+    }
+
     if (process.env.NODE_ENV === 'production') {
       const compressionTest = /\.(js|css|json|txt|html|ico|svg)(\?.*)?$/i;
       config.plugins.push(
@@ -28,10 +33,10 @@ module.exports = {
           test: compressionTest,
           minRatio: 0.9
         }),
-        new BrotliPlugin({
-          test: compressionTest,
-          minRatio: 0.9
-        })
+        // new BrotliPlugin({
+        //   test: compressionTest,
+        //   minRatio: 0.9
+        // })
       );
     } else {
       // mutate for development...

@@ -22,9 +22,9 @@
     "generate-local-graphql-schema": "cd ../graphql && yarn run gen-graphql-schema",
     "fetch-prod-graphql-schema": "apollo schema:download tests/utils/graphql-schema.json --endpoint https://metaspace2020.eu/graphql",
     "build": "yarn run deref-schema && cross-env NODE_ENV=production vue-cli-service build --modern",
-    "build-ci": "yarn run deref-schema && cross-env NODE_ENV=production vue-cli-service build --no-progress --hide-modules",
+    "build-ci": "yarn run deref-schema && cross-env NODE_ENV=production vue-cli-service build --modern --no-progress --hide-modules",
     "lint": "vue-cli-service lint",
-    "test:unit": "vue-cli-service test:unit"
+    "analyze-size": "rm -rf dist ; NODE_ENV=production WEBPACK_STATS=true vue-cli-service build ; npx webpack-bundle-analyzer dist/stats.json dist/ -p 9900 -O"
   },
   "dependencies": {
     "@types/js-cookie": "^2.1.0",
@@ -98,11 +98,13 @@
     "json-schema-deref-sync": "^0.10.1",
     "node-sass": "^4.12.0",
     "sass-loader": "^8.0.0",
+    "stats-webpack-plugin": "^0.7.0",
     "ts-jest": "^24.3.0",
     "typescript": "3.6.5",
     "vue-cli-plugin-apollo": "^0.21.3",
     "vue-template-compiler": "2.6.11",
-    "webpack-bundle-analyzer": "^3.6.0"
+    "webpack-bundle-analyzer": "^3.6.0",
+    "webpack-cli": "^3.3.10"
   },
   "resolutions": {
     "babel-core": "7.0.0-bridge.0"
@@ -158,7 +160,12 @@
   },
   "babel": {
     "presets": [
-      ["@vue/cli-plugin-babel/preset", { "useBuiltIns": "entry" }]
+      [
+        "@vue/cli-plugin-babel/preset",
+        {
+          "useBuiltIns": "entry"
+        }
+      ]
     ]
   }
 }
