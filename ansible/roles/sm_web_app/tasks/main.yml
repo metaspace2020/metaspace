@@ -31,10 +31,11 @@
     executable: /bin/bash
 
 - name: Copy build output
+  become: true
   shell: >
-    [ -f www/old_ver ] && rm -rf www/old_ver;
-    [ -f www ] && mv www dist/old_ver;
-    mv dist www;
+    [ -f {{ sm_webapp_www }}/old_ver ] && rm -rf {{ sm_webapp_www }}/old_ver;
+    [ -f {{ sm_webapp_www }} ] && mv {{ sm_webapp_www }} dist/old_ver;
+    cp -R {{ sm_webapp_home }}/dist {{ sm_webapp_www }};
   args:
     chdir: "{{ sm_webapp_home }}"
     executable: /bin/bash

@@ -174,6 +174,7 @@ sm_graphql_metadata_lookups:
 
 sm_webapp_hostname: "{{ web_host }}"  # specify manually in production
 sm_webapp_home: "{{ metaspace_home }}/metaspace/webapp"
+sm_webapp_www: /var/www/webapp
 sm_webapp_aws_region: "{{ aws_region }}"
 sm_webapp_aws_access_key_id: "{{ vault_sm_web_aws_access_key_id }}"  # sm-web-app user
 sm_webapp_s3_bucket: "{{ vault_sm_web_s3_upload_bucket }}"
@@ -277,7 +278,7 @@ nginx_servers:
       # Web app static content
       - path: /
         params:
-          - root {{ sm_webapp_home }}/www;
+          - root {{ sm_webapp_www }};
           # Paths with no extension should fall back to index.html for vue-router to handle
           - try_files $uri /index.html;
           - expires 10m;
