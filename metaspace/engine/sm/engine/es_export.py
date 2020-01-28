@@ -120,6 +120,8 @@ class ESIndexManager:
                 f'Multiple indices mapped on to the same alias: {indices}. '
                 f'Arbitrarily choosing {index}'
             )
+        elif index is None:
+            index = yin
 
         assert index in (yin, yang), f'Unexpected ElasticSearch alias "{alias}" => "{index}"'
 
