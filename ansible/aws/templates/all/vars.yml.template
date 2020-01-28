@@ -57,8 +57,8 @@ sm_postgres_password: "{{ vault_sm_postgres_password }}"
 sm_home: "{{ metaspace_home }}/metaspace/engine"
 sm_s3_path: ENGINE_BUCKET_NAME  # bucket for sm engine tmp data in "s3a://bucket-name/tmp" form
 sm_img_service_url: "http://{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}:4201"
-sm_es_host: "{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}"
-sm_es_port: 9210  # cannot be 9200 (nginx proxied)
+sm_es_host: "127.0.0.1"  # ElasticSearch must be accessed via loopback adapter unless `elasticsearch_bound_to_any_host` is set
+sm_es_port: 9200
 sm_es_user: "{{ vault_sm_es_user }}"
 sm_es_password: "{{ vault_sm_es_password }}"
 sm_send_email: true

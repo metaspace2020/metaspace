@@ -3,6 +3,7 @@ miniconda_systems:
   Darwin: MacOSX
 miniconda_architecture:
   x86_64: x86_64
+  amd64: x86_64
   i386: x86
   armv7l: armv7l
   ppc64le: ppc64le

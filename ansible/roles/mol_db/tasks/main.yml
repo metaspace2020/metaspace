@@ -14,9 +14,12 @@
   become_user: postgres
   postgresql_db: name=mol_db owner=mol_db encoding=UTF8 template=template0
 
+- name: Fix conda
+  shell: "conda config --set restore_free_channel true"
+
 - name: Check if env already exists
   stat:
-    path: "{{ mol_db_miniconda_prefix }}/envs/{{ mol_db_miniconda_env.name }}"
+    path: "{{ miniconda_prefix }}/envs/{{ mol_db_miniconda_env.name }}"
   register: env_status
 
 - name: Create conda environment (from environment.yml file) if it doesn't exist
@@ -32,6 +35,23 @@
     executable: /bin/bash
   shell: "conda env update -f environment.yml"
   when: env_status.stat.exists
+
+- name: Install mol db into environment
+  args:
+    chdir: "{{ mol_db_home }}"
+    executable: /bin/bash
+  shell: "source activate {{ mol_db_miniconda_env.name }} && pip install -e ."
+
+- name: Pull MolDB config from the remote host
+  fetch: src={{ mol_db_home }}/conf/local.ini.template dest=/tmp/local.ini.template
+         flat=yes fail_on_missing=yes
+
+- name: Put MolDB config to ./conf/local.ini
+  template: src=/tmp/local.ini.template dest={{ mol_db_home }}/conf/local.ini
+            owner=ubuntu group=ubuntu mode=0600
+
+- name: Make sure that a directory for logs exists
+  file: path={{ mol_db_home }}/logs state=directory mode=0755
 
 - import_tasks: import_mol_databases.yml
   when: mol_db_import_databases | bool

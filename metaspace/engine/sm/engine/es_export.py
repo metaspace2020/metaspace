@@ -108,10 +108,13 @@ class ESIndexManager:
 
     def internal_index_name(self, alias):
         yin, yang = f'{alias}-yin', f'{alias}-yang'
-        indices = self._ind_client.get_alias(name=alias)
-        assert indices, f'Could not find ElasticSearch alias "{alias}"'
+        try:
+            indices = self._ind_client.get_alias(name=alias)
+        except NotFoundError:
+            indices = {}
+        logger.warning(f'Could not find ElasticSearch alias "{alias}"')
 
-        index = next(iter(indices.keys()))
+        index = next(iter(indices.keys()), None)
         if len(indices) > 1:
             logger.warning(
                 f'Multiple indices mapped on to the same alias: {indices}. '
