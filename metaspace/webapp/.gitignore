@@ -20,4 +20,3 @@ tests/e2e/screenshots
 
 # Build output
 /dist
-/www
