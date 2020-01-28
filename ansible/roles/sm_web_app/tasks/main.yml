@@ -1,7 +1,5 @@
 ---
 
-- debug: var=sm_webapp_admin_emails
-
 - name: Pull client config template from the remote host
   fetch: src={{ sm_webapp_home }}/src/clientConfig.json.template dest=/tmp/clientConfig.json.template
          flat=yes fail_on_missing=yes
