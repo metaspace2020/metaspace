@@ -15,7 +15,7 @@ from sm.engine.db import DB
 from sm.engine.fdr import FDR
 from sm.engine.formula_parser import format_ion_formula
 from sm.engine.isocalc_wrapper import IsocalcWrapper
-from sm.engine.mol_db import MolecularDB
+from sm.engine.molecular_db import MolecularDB
 from sm.engine.util import SMConfig
 
 logger = logging.getLogger('engine')

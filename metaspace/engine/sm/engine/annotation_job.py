@@ -17,7 +17,7 @@ from sm.engine.db import DB
 from sm.engine.search_results import SearchResults
 from sm.engine.util import SMConfig, split_s3_path
 from sm.engine.es_export import ESExporter
-from sm.engine.mol_db import MolecularDB
+from sm.engine.molecular_db import MolecularDB
 from sm.engine.queue import QueuePublisher, SM_DS_STATUS
 
 logger = logging.getLogger('engine')

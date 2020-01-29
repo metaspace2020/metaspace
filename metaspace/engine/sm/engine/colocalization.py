@@ -9,7 +9,7 @@ from scipy.ndimage import zoom
 
 from sm.engine.dataset import Dataset
 from sm.engine.ion_mapping import get_ion_id_mapping
-from sm.engine.mol_db import MolecularDB
+from sm.engine.molecular_db import MolecularDB
 from sm.engine.util import SMConfig
 from sm.engine.png_generator import ImageStoreServiceWrapper
 

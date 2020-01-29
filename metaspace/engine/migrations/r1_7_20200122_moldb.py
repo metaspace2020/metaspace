@@ -26,16 +26,23 @@ def dump_moldb_tables(db_config):
 def import_moldb_tables(db_config):
     logger.info('Importing moldb tables from files')
     conn = psycopg2.connect(**db_config)
-    curs = conn.cursor()
+    try:
+        curs = conn.cursor()
 
-    with open('/tmp/molecular_db.csv', 'r') as stream:
-        curs.copy_from(stream, 'molecular_db')
+        with open('/tmp/molecular_db.csv', 'r') as stream:
+            curs.copy_from(stream, 'molecular_db', columns=['id', 'name', 'version'])
 
-    with open('/tmp/molecule.csv', 'r') as stream:
-        curs.copy_from(stream, 'molecule', columns=['moldb_id', 'mol_id', 'mol_name', 'formula'])
+        curs.execute("SELECT setval('molecular_db_id_seq', max(id)) FROM molecular_db;")
 
-    conn.commit()
-    conn.close()
+        with open('/tmp/molecule.csv', 'r') as stream:
+            curs.copy_from(
+                stream, 'molecule', columns=['moldb_id', 'mol_id', 'mol_name', 'formula']
+            )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+    finally:
+        conn.close()
 
 
 def main():

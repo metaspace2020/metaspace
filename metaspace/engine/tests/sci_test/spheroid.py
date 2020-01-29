@@ -10,7 +10,7 @@ import numpy as np
 
 from sm.engine.annotation_job import AnnotationJob
 from sm.engine.db import DB
-from sm.engine.mol_db import MolecularDB
+from sm.engine.molecular_db import MolecularDB
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import proj_root, SMConfig, create_ds_from_files, bootstrap_and_run
 

@@ -1,5 +1,4 @@
 import json
-import logging
 from random import randint
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -7,7 +6,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search
-from fabric.api import local
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from pysparkling import Context
@@ -15,7 +13,7 @@ import pandas as pd
 import uuid
 
 from sm.engine.db import DB, ConnectionPool
-from sm.engine.mol_db import MolecularDB
+from sm.engine.molecular_db import MolecularDB
 from sm.engine.tests.db_sql_schema import DB_SQL_SCHEMA
 from sm.engine.util import proj_root, SMConfig, init_loggers
 from sm.engine.es_export import ESIndexManager

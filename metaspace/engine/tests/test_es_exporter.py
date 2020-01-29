@@ -1,18 +1,14 @@
 import json
-import logging
-from copy import deepcopy
 from datetime import datetime
 from unittest.mock import MagicMock
 import time
 
 import pandas as pd
 
-from sm.engine.mol_db import MolecularDB
+from sm.engine.molecular_db import MolecularDB
 from sm.engine.es_export import (
     ESExporter,
     ESIndexManager,
-    DATASET_SEL,
-    ANNOTATIONS_SEL,
     ESExporterIsobars,
 )
 from sm.engine.db import DB
