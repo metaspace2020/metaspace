@@ -1,35 +1,45 @@
 <template>
   <el-row>
-    <el-table id="annot-table"
-              ref="table"
-              :data="annotations"
-              size="mini"
-              border
-              v-loading="isLoading"
-              element-loading-text="Loading results from the server..."
-              highlight-current-row
-              width="100%"
-              stripe
-              tabindex="1"
-              :default-sort="tableSort"
-              :row-class-name="getRowClass"
-              @keyup.native="onKeyUp"
-              @keydown.native="onKeyDown"
-              @current-change="onCurrentRowChange"
-              @sort-change="onSortChange">
-
-      <p slot="empty" v-if="multipleDatasetsColocError">
+    <el-table
+      id="annot-table"
+      ref="table"
+      v-loading="isLoading"
+      :data="annotations"
+      size="mini"
+      border
+      element-loading-text="Loading results from the server..."
+      highlight-current-row
+      width="100%"
+      stripe
+      tabindex="1"
+      :default-sort="tableSort"
+      :row-class-name="getRowClass"
+      @keyup.native="onKeyUp"
+      @keydown.native="onKeyDown"
+      @current-change="onCurrentRowChange"
+      @sort-change="onSortChange"
+    >
+      <p
+        v-if="multipleDatasetsColocError"
+        slot="empty"
+      >
         Colocalization filters cannot be used with multiple datasets selected.
       </p>
 
-      <p slot="empty" v-else-if="noColocJobError">
-        Colocalization data not found. <br />
+      <p
+        v-else-if="noColocJobError"
+        slot="empty"
+      >
+        Colocalization data not found. <br>
         This can be caused by having no annotations match the current filters,
         or not having enough annotations at this FDR level for analysis.
       </p>
 
-      <p slot="empty" v-else-if="singleDatasetSelected && filter.fdrLevel <= 0.2 && ((filter.minMSM || 0) <= 0.2)"
-         style="text-align: left;">
+      <p
+        v-else-if="singleDatasetSelected && filter.fdrLevel <= 0.2 && ((filter.minMSM || 0) <= 0.2)"
+        slot="empty"
+        style="text-align: left;"
+      >
         No annotations were found for this dataset at {{ filter.fdrLevel * 100 }}% FDR. This might be because of:
         <ul>
           <li>Incorrect database setting</li>
@@ -39,150 +49,179 @@
 
         Please:
         <ul>
-          <li>Select another database <br/>(HMDB-v4 is always applicable)</li>
+          <li>Select another database <br>(HMDB-v4 is always applicable)</li>
           <li>Relax the FDR filter</li>
-          <li>Look for missing pixels/stripes: <br/>these indicate calibration issues</li>
+          <li>Look for missing pixels/stripes: <br>these indicate calibration issues</li>
         </ul>
       </p>
 
-      <p slot="empty" v-else>
+      <p
+        v-else
+        slot="empty"
+      >
         No annotations were found
       </p>
 
-      <el-table-column key="lab"
-                       v-if="!hidden('Group')"
-                       label="Lab"
-                       min-width="95">
+      <el-table-column
+        v-if="!hidden('Group')"
+        key="lab"
+        label="Lab"
+        min-width="95"
+      >
         <template slot-scope="props">
           <div class="cell-wrapper">
             <span class="cell-span">
-              <span v-if="props.row.dataset.group">{{props.row.dataset.group.name}}</span>
+              <span v-if="props.row.dataset.group">{{ props.row.dataset.group.name }}</span>
               <i v-else>No Group</i>
             </span>
-            <img v-if="props.row.dataset.group"
-                 src="../../assets/filter-icon.png"
-                 @click="filterGroup(props.row)"
-                 title="Limit results to this group"/>
+            <img
+              v-if="props.row.dataset.group"
+              src="../../assets/filter-icon.png"
+              title="Limit results to this group"
+              @click="filterGroup(props.row)"
+            >
           </div>
         </template>
       </el-table-column>
 
-      <el-table-column key="dataset"
-                       v-if="!hidden('Dataset')"
-                       property="dataset.name"
-                       label="Dataset"
-                       min-width="140">
+      <el-table-column
+        v-if="!hidden('Dataset')"
+        key="dataset"
+        property="dataset.name"
+        label="Dataset"
+        min-width="140"
+      >
         <template slot-scope="props">
           <div class="cell-wrapper">
-              <span class="cell-span">
-                  {{ formatDatasetName(props.row) }}
-              </span>
-              <img src="../../assets/filter-icon.png"
-                   @click="filterDataset(props.row)"
-                   title="Limit results to this dataset"/>
+            <span class="cell-span">
+              {{ formatDatasetName(props.row) }}
+            </span>
+            <img
+              src="../../assets/filter-icon.png"
+              title="Limit results to this dataset"
+              @click="filterDataset(props.row)"
+            >
           </div>
         </template>
       </el-table-column>
 
-      <el-table-column key="sumFormula"
-                       property="sumFormula"
-                       label="Annotation"
-                       sortable="custom"
-                       min-width="120">
+      <el-table-column
+        key="sumFormula"
+        property="sumFormula"
+        label="Annotation"
+        sortable="custom"
+        min-width="120"
+      >
         <template slot-scope="props">
           <candidate-molecules-popover
             placement="right"
-            :possibleCompounds="props.row.possibleCompounds"
+            :possible-compounds="props.row.possibleCompounds"
             :limit="10"
             :isomers="props.row.isomers"
             :isobars="props.row.isobars"
           >
             <div class="cell-wrapper">
-                <span class="sf cell-span"
-                      v-html="renderMolFormulaHtml(props.row.ion)"></span>
-              <img src="../../assets/filter-icon.png"
-                   v-if="!filter.compoundName"
-                   @click="filterMolFormula(props.row)"
-                   title="Limit results to this molecular formula"/>
+              <span
+                class="sf cell-span"
+                v-html="renderMolFormulaHtml(props.row.ion)"
+              />
+              <img
+                v-if="!filter.compoundName"
+                src="../../assets/filter-icon.png"
+                title="Limit results to this molecular formula"
+                @click="filterMolFormula(props.row)"
+              >
             </div>
           </candidate-molecules-popover>
         </template>
       </el-table-column>
 
-      <el-table-column key="mz"
-                       property="mz"
-                       label="m/z"
-                       sortable="custom"
-                       min-width="65">
+      <el-table-column
+        key="mz"
+        property="mz"
+        label="m/z"
+        sortable="custom"
+        min-width="65"
+      >
         <template slot-scope="props">
           <div class="cell-wrapper">
-              <span class="cell-span">
-                  {{ formatMZ(props.row) }}
-              </span>
-              <img src="../../assets/filter-icon.png"
-                   @click="filterMZ(props.row)"
-                   title="Limit results to this m/z (with 5 ppm tolerance)"/>
+            <span class="cell-span">
+              {{ formatMZ(props.row) }}
+            </span>
+            <img
+              src="../../assets/filter-icon.png"
+              title="Limit results to this m/z (with 5 ppm tolerance)"
+              @click="filterMZ(props.row)"
+            >
           </div>
         </template>
       </el-table-column>
 
-      <el-table-column key="offSampleProb"
-                       v-if="!hidden('OffSampleProb')"
-                       property="offSampleProb"
-                       label="Off-sample %"
-                       sortable="custom"
-                       min-width="60">
+      <el-table-column
+        v-if="!hidden('OffSampleProb')"
+        key="offSampleProb"
+        property="offSampleProb"
+        label="Off-sample %"
+        sortable="custom"
+        min-width="60"
+      >
         <template slot-scope="props">
-          <span> {{(props.row.offSampleProb * 100).toFixed(0)}}% </span>
+          <span> {{ (props.row.offSampleProb * 100).toFixed(0) }}% </span>
         </template>
       </el-table-column>
 
-      <el-table-column key="msmScore"
-                       property="msmScore"
-                       label="MSM"
-                       sortable="custom"
-                       min-width="60">
+      <el-table-column
+        key="msmScore"
+        property="msmScore"
+        label="MSM"
+        sortable="custom"
+        min-width="60"
+      >
         <template slot-scope="props">
-          <span>{{formatMSM(props.row)}}</span>
+          <span>{{ formatMSM(props.row) }}</span>
         </template>
       </el-table-column>
 
-      <el-table-column key="fdrLevel"
-                       property="fdrLevel"
-                       label="FDR"
-                       class-name="fdr-cell"
-                       sortable="custom"
-                       min-width="40">
+      <el-table-column
+        key="fdrLevel"
+        property="fdrLevel"
+        label="FDR"
+        class-name="fdr-cell"
+        sortable="custom"
+        min-width="40"
+      >
         <template slot-scope="props">
-          <span> {{Math.round(props.row.fdrLevel * 100)}}% </span>
+          <span> {{ Math.round(props.row.fdrLevel * 100) }}% </span>
         </template>
       </el-table-column>
 
-      <el-table-column key="colocalizationCoeff"
-                       v-if="!hidden('ColocalizationCoeff')"
-                       property="colocalizationCoeff"
-                       label="Coloc."
-                       class-name="coloc-cell"
-                       sortable="custom"
-                       min-width="40">
+      <el-table-column
+        v-if="!hidden('ColocalizationCoeff')"
+        key="colocalizationCoeff"
+        property="colocalizationCoeff"
+        label="Coloc."
+        class-name="coloc-cell"
+        sortable="custom"
+        min-width="40"
+      >
         <template slot-scope="props">
           <span v-if="props.row.colocalizationCoeff != null">
-            {{(props.row.colocalizationCoeff).toFixed(2)}}
+            {{ (props.row.colocalizationCoeff).toFixed(2) }}
           </span>
         </template>
       </el-table-column>
-
     </el-table>
 
     <div id="annot-table-controls">
       <div>
-        <el-pagination :total="totalCount"
-                       :page-size="recordsPerPage"
-                       @size-change="onPageSizeChange"
-                       :page-sizes="pageSizes"
-                       :current-page.sync="currentPage"
-                       :layout="paginationLayout"
-                       v-if="!initialLoading"
+        <el-pagination
+          v-if="!initialLoading"
+          :total="totalCount"
+          :page-size="recordsPerPage"
+          :page-sizes="pageSizes"
+          :current-page.sync="currentPage"
+          :layout="paginationLayout"
+          @size-change="onPageSizeChange"
         />
 
         <div id="annot-count">
@@ -190,24 +229,42 @@
         </div>
 
         <div style="padding-top: 10px;">
-          <div class="fdr-legend-header">FDR levels: </div>
-          <div class="fdr-legend fdr-5">5%</div>
-          <div class="fdr-legend fdr-10">10%</div>
-          <div class="fdr-legend fdr-20">20%</div>
-          <div class="fdr-legend fdr-50">50%</div>
+          <div class="fdr-legend-header">
+            FDR levels:
+          </div>
+          <div class="fdr-legend fdr-5">
+            5%
+          </div>
+          <div class="fdr-legend fdr-10">
+            10%
+          </div>
+          <div class="fdr-legend fdr-20">
+            20%
+          </div>
+          <div class="fdr-legend fdr-50">
+            50%
+          </div>
         </div>
       </div>
 
       <div>
-        <progress-button v-if="isExporting && totalCount > 5000" @click="abortExport"
-                         class="export-btn"
-                         :width=150 :height=36
-                         :percentage="exportProgress * 100">
+        <progress-button
+          v-if="isExporting && totalCount > 5000"
+          class="export-btn"
+          :width="150"
+          :height="36"
+          :percentage="exportProgress * 100"
+          @click="abortExport"
+        >
           Cancel
         </progress-button>
 
-        <el-button v-else class="export-btn" @click="startExport"
-                   :disabled="isExporting">
+        <el-button
+          v-else
+          class="export-btn"
+          :disabled="isExporting"
+          @click="startExport"
+        >
           Export to CSV
         </el-button>
       </div>
@@ -216,431 +273,442 @@
 </template>
 
 <script>
-  import {renderMolFormulaHtml} from '../../util';
- import ProgressButton from './ProgressButton.vue';
-  import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue';
- import {
-   annotationListQuery,
-   tableExportQuery
- } from '../../api/annotation';
+import { renderMolFormulaHtml } from '../../util'
+import ProgressButton from './ProgressButton.vue'
+import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue'
+import {
+  annotationListQuery,
+  tableExportQuery,
+} from '../../api/annotation'
 
- import Vue from 'vue';
- import FileSaver from 'file-saver';
-  import formatCsvRow, {csvExportHeader, formatCsvTextArray} from '../../lib/formatCsvRow';
- import {invert} from 'lodash-es';
- import config from '../../config';
+import Vue from 'vue'
+import FileSaver from 'file-saver'
+import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../lib/formatCsvRow'
+import { invert } from 'lodash-es'
+import config from '../../config'
 
- // 38 = up, 40 = down, 74 = j, 75 = k
- const KEY_TO_ACTION = {
-   ArrowUp: 'up', K: 'up', k: 'up',
-   ArrowDown: 'down', J: 'down', j: 'down',
-   ArrowLeft: 'left', H: 'left', h: 'left',
-   ArrowRight: 'right', L: 'right', l: 'right',
- };
+// 38 = up, 40 = down, 74 = j, 75 = k
+const KEY_TO_ACTION = {
+  ArrowUp: 'up',
+  K: 'up',
+  k: 'up',
+  ArrowDown: 'down',
+  J: 'down',
+  j: 'down',
+  ArrowLeft: 'left',
+  H: 'left',
+  h: 'left',
+  ArrowRight: 'right',
+  L: 'right',
+  l: 'right',
+}
 
- const SORT_ORDER_TO_COLUMN = {
-   ORDER_BY_MZ: 'mz',
-   ORDER_BY_MSM: 'msmScore',
-   ORDER_BY_FDR_MSM: 'fdrLevel',
-   ORDER_BY_FORMULA: 'sumFormula',
-   ORDER_BY_OFF_SAMPLE: 'offSampleProb',
-   ORDER_BY_COLOCALIZATION: 'colocalizationCoeff'
- };
- const COLUMN_TO_SORT_ORDER = invert(SORT_ORDER_TO_COLUMN);
+const SORT_ORDER_TO_COLUMN = {
+  ORDER_BY_MZ: 'mz',
+  ORDER_BY_MSM: 'msmScore',
+  ORDER_BY_FDR_MSM: 'fdrLevel',
+  ORDER_BY_FORMULA: 'sumFormula',
+  ORDER_BY_OFF_SAMPLE: 'offSampleProb',
+  ORDER_BY_COLOCALIZATION: 'colocalizationCoeff',
+}
+const COLUMN_TO_SORT_ORDER = invert(SORT_ORDER_TO_COLUMN)
 
- export default {
-   name: 'annotation-table',
-   props: ["hideColumns"],
-   components: {
-     ProgressButton,
-     CandidateMoleculesPopover,
-   },
-   data () {
-     return {
-       annotations: [],
-       recordsPerPage: 15,
-       greenCount: 0,
-       pageSizes: [15, 20, 25, 30],
-       isExporting: false,
-       exportProgress: 0,
-       totalCount: 0,
-       initialLoading: true,
-       csvChunkSize: 1000,
-     }
-   },
-   mounted() {
-     var nCells = (window.innerHeight - 150) / 43;
-     var pageSizes = this.pageSizes.filter(n => nCells >= n).slice(-1);
-     if (pageSizes.length > 0) {
-       this.recordsPerPage = pageSizes[0];
-     }
-   },
-   computed: {
-     isLoading() {
-       return this.$store.state.tableIsLoading;
-     },
+export default {
+  name: 'AnnotationTable',
+  components: {
+    ProgressButton,
+    CandidateMoleculesPopover,
+  },
+  props: ['hideColumns'],
+  data() {
+    return {
+      annotations: [],
+      recordsPerPage: 15,
+      greenCount: 0,
+      pageSizes: [15, 20, 25, 30],
+      isExporting: false,
+      exportProgress: 0,
+      totalCount: 0,
+      initialLoading: true,
+      csvChunkSize: 1000,
+    }
+  },
+  computed: {
+    isLoading() {
+      return this.$store.state.tableIsLoading
+    },
 
-     filter() {
-       return this.$store.getters.filter;
-     },
+    filter() {
+      return this.$store.getters.filter
+    },
 
-     singleDatasetSelected() {
-       let isSimple = true;
-       for (var key in this.filter) {
-         if (!this.filter[key])
-           continue;
-         if (['fdrLevel', 'minMSM', 'database', 'datasetIds', 'metadataType'].indexOf(key) == -1) {
-           isSimple = false;
-           break;
-         }
-       }
-       return isSimple && this.filter.datasetIds && this.filter.datasetIds.length == 1;
-     },
+    singleDatasetSelected() {
+      let isSimple = true
+      for (var key in this.filter) {
+        if (!this.filter[key])
+          continue
+        if (['fdrLevel', 'minMSM', 'database', 'datasetIds', 'metadataType'].indexOf(key) == -1) {
+          isSimple = false
+          break
+        }
+      }
+      return isSimple && this.filter.datasetIds && this.filter.datasetIds.length == 1
+    },
 
-     orderBy() {
-       return this.$store.getters.settings.table.order.by;
-     },
+    orderBy() {
+      return this.$store.getters.settings.table.order.by
+    },
 
-     sortingOrder() {
-       return this.$store.getters.settings.table.order.dir;
-     },
+    sortingOrder() {
+      return this.$store.getters.settings.table.order.dir
+    },
 
-     queryVariables() {
-       const filter = this.$store.getters.gqlAnnotationFilter;
-       const dFilter = this.$store.getters.gqlDatasetFilter;
-       const colocalizationCoeffFilter = this.$store.getters.gqlColocalizationFilter;
-       const query = this.$store.getters.ftsQuery;
+    queryVariables() {
+      const filter = this.$store.getters.gqlAnnotationFilter
+      const dFilter = this.$store.getters.gqlDatasetFilter
+      const colocalizationCoeffFilter = this.$store.getters.gqlColocalizationFilter
+      const query = this.$store.getters.ftsQuery
 
-       return {
-         filter, dFilter, query, colocalizationCoeffFilter,
-         orderBy: this.orderBy,
-         sortingOrder: this.sortingOrder,
-         offset: (this.currentPage - 1) * this.recordsPerPage,
-         limit: this.recordsPerPage,
-         countIsomerCompounds: config.features.isomers,
-       };
-     },
+      return {
+        filter,
+        dFilter,
+        query,
+        colocalizationCoeffFilter,
+        orderBy: this.orderBy,
+        sortingOrder: this.sortingOrder,
+        offset: (this.currentPage - 1) * this.recordsPerPage,
+        limit: this.recordsPerPage,
+        countIsomerCompounds: config.features.isomers,
+      }
+    },
 
-     tableSort() {
-       return {
-         prop: SORT_ORDER_TO_COLUMN[this.orderBy] || 'msmScore',
-         order: this.sortingOrder.toLowerCase(),
-       };
-     },
+    tableSort() {
+      return {
+        prop: SORT_ORDER_TO_COLUMN[this.orderBy] || 'msmScore',
+        order: this.sortingOrder.toLowerCase(),
+      }
+    },
 
-     numberOfPages () {
-       return Math.ceil(this.totalCount / this.recordsPerPage);
-     },
+    numberOfPages() {
+      return Math.ceil(this.totalCount / this.recordsPerPage)
+    },
 
-     currentPage: {
-       get() {
-         return this.$store.getters.settings.table.currentPage;
-       },
-       set(page) {
-         this.$store.commit('setCurrentPage', page);
-       }
-     },
+    currentPage: {
+      get() {
+        return this.$store.getters.settings.table.currentPage
+      },
+      set(page) {
+        this.$store.commit('setCurrentPage', page)
+      },
+    },
 
-     paginationLayout() {
-       const {datasetIds} = this.filter,
-             limitedSpace = datasetIds && datasetIds.length == 1;
-       if (limitedSpace)
-         return "pager";
+    paginationLayout() {
+      const { datasetIds } = this.filter
+      const limitedSpace = datasetIds && datasetIds.length == 1
+      if (limitedSpace)
+        return 'pager'
 
-       return "prev,pager,next,sizes";
-     },
-     noColocJobError() {
-       return (this.queryVariables.filter.colocalizedWith || this.queryVariables.filter.colocalizationSamples)
+      return 'prev,pager,next,sizes'
+    },
+    noColocJobError() {
+      return (this.queryVariables.filter.colocalizedWith || this.queryVariables.filter.colocalizationSamples)
         && this.annotations.length === 0
-     },
-     multipleDatasetsColocError() {
-       return (this.queryVariables.filter.colocalizedWith || this.queryVariables.filter.colocalizationSamples)
+    },
+    multipleDatasetsColocError() {
+      return (this.queryVariables.filter.colocalizedWith || this.queryVariables.filter.colocalizationSamples)
          && this.$store.getters.filter.datasetIds != null
-         && this.$store.getters.filter.datasetIds.length > 1;
-     }
-   },
-   apollo: {
-     annotations: {
-       query: annotationListQuery,
-       fetchPolicy: 'cache-first',
-       variables() {
-         return this.queryVariables;
-       },
-       update: data => data.allAnnotations,
-       debounce: 200,
-       result ({data}) {
-         // For whatever reason (could be a bug), vue-apollo seems to first refetch
-         // data for the current page and only then fetch the updated data.
-         // Checking if the data has been actually changed is easiest by comparing
-         // string representations of old and newly arrived data.
-         const changed = JSON.stringify(data) != this._prevData;
-         this._prevData = JSON.stringify(data);
+         && this.$store.getters.filter.datasetIds.length > 1
+    },
+  },
+  mounted() {
+    var nCells = (window.innerHeight - 150) / 43
+    var pageSizes = this.pageSizes.filter(n => nCells >= n).slice(-1)
+    if (pageSizes.length > 0) {
+      this.recordsPerPage = pageSizes[0]
+    }
+  },
+  apollo: {
+    annotations: {
+      query: annotationListQuery,
+      fetchPolicy: 'cache-first',
+      variables() {
+        return this.queryVariables
+      },
+      update: data => data.allAnnotations,
+      debounce: 200,
+      result({ data }) {
+        // For whatever reason (could be a bug), vue-apollo seems to first refetch
+        // data for the current page and only then fetch the updated data.
+        // Checking if the data has been actually changed is easiest by comparing
+        // string representations of old and newly arrived data.
+        const changed = JSON.stringify(data) != this._prevData
+        this._prevData = JSON.stringify(data)
 
-         // Handle page changes (due to pagination or keyboard events).
-         // On data arrival we need to highlight the current row if the change
-         // was because of an up/down key press, and disable all highlighting
-         // if it was due to a click on a pagination button.
-         if (this._onDataArrival && changed) {
-           this._onDataArrival(data.allAnnotations);
-           this._onDataArrival = (data) => {
-             this.clearCurrentRow();
-             if (data)
-               Vue.nextTick(() => this.setRow(data, 0));
-           };
-         }
+        // Handle page changes (due to pagination or keyboard events).
+        // On data arrival we need to highlight the current row if the change
+        // was because of an up/down key press, and disable all highlighting
+        // if it was due to a click on a pagination button.
+        if (this._onDataArrival && changed) {
+          this._onDataArrival(data.allAnnotations)
+          this._onDataArrival = (data) => {
+            this.clearCurrentRow()
+            if (data)
+              Vue.nextTick(() => this.setRow(data, 0))
+          }
+        }
 
-         this.totalCount = data.countAnnotations;
-         this.initialLoading = false;
-       },
-       watchLoading (isLoading) {
-         this.$store.commit('updateAnnotationTableStatus', isLoading);
-       }
-     }
-   },
-   created() {
-     this._onDataArrival = (data) => {
-       if (!data) return;
-       Vue.nextTick(() => this.setRow(data, 0));
-       const annotTable = document.getElementById('annot-table');
-       if (annotTable != null) {
-         annotTable.focus();
-       }
-     };
-   },
-   methods: {
-     onPageSizeChange(newSize) {
-       this.recordsPerPage = newSize;
-     },
-     setRow(data, rowIndex) {
-       // Ignore if called after unmount
-       if (this.$refs.table != null) {
-         this.$refs.table.setCurrentRow(null);
-         this.$refs.table.setCurrentRow(data[rowIndex]);
-       }
-     },
+        this.totalCount = data.countAnnotations
+        this.initialLoading = false
+      },
+      watchLoading(isLoading) {
+        this.$store.commit('updateAnnotationTableStatus', isLoading)
+      },
+    },
+  },
+  created() {
+    this._onDataArrival = (data) => {
+      if (!data) return
+      Vue.nextTick(() => this.setRow(data, 0))
+      const annotTable = document.getElementById('annot-table')
+      if (annotTable != null) {
+        annotTable.focus()
+      }
+    }
+  },
+  methods: {
+    onPageSizeChange(newSize) {
+      this.recordsPerPage = newSize
+    },
+    setRow(data, rowIndex) {
+      // Ignore if called after unmount
+      if (this.$refs.table != null) {
+        this.$refs.table.setCurrentRow(null)
+        this.$refs.table.setCurrentRow(data[rowIndex])
+      }
+    },
 
-     hidden (columnLabel) {
-       return this.hideColumns.indexOf(columnLabel) >= 0;
-     },
+    hidden(columnLabel) {
+      return this.hideColumns.indexOf(columnLabel) >= 0
+    },
 
-     renderMolFormulaHtml,
-     getRowClass ({row}) {
-       const {fdrLevel, colocalizationCoeff} = row;
-       const fdrClass =
+    renderMolFormulaHtml,
+    getRowClass({ row }) {
+      const { fdrLevel, colocalizationCoeff } = row
+      const fdrClass =
          fdrLevel <= 0.051 ? 'fdr-5'
-         : fdrLevel <= 0.101 ? 'fdr-10'
-         : fdrLevel <= 0.201 ? 'fdr-20'
-         : 'fdr-50';
-       const colocClass =
+           : fdrLevel <= 0.101 ? 'fdr-10'
+             : fdrLevel <= 0.201 ? 'fdr-20'
+               : 'fdr-50'
+      const colocClass =
          colocalizationCoeff == null ? ''
-         : colocalizationCoeff >= 0.949 ? 'coloc-95'
-         : colocalizationCoeff >= 0.899 ? 'coloc-90'
-         : colocalizationCoeff >= 0.799 ? 'coloc-80'
-         : 'coloc-50';
+           : colocalizationCoeff >= 0.949 ? 'coloc-95'
+             : colocalizationCoeff >= 0.899 ? 'coloc-90'
+               : colocalizationCoeff >= 0.799 ? 'coloc-80'
+                 : 'coloc-50'
 
-       return `${fdrClass} ${colocClass}`;
-     },
-     formatMSM: (row, col) => row.msmScore.toFixed(3),
-     formatMZ: (row, col) => row.mz.toFixed(4),
-     formatDatasetName: (row, col) => row.dataset.name,
+      return `${fdrClass} ${colocClass}`
+    },
+    formatMSM: (row, col) => row.msmScore.toFixed(3),
+    formatMZ: (row, col) => row.mz.toFixed(4),
+    formatDatasetName: (row, col) => row.dataset.name,
 
-     onSortChange (event) {
-       this.clearCurrentRow();
+    onSortChange(event) {
+      this.clearCurrentRow()
 
-       if (!event.order) {
-         const {prop, order} = this.tableSort;
-         // Skip the "unsorted" state by just inverting the last seen sort order
-         this.$refs.table.sort(prop, order === 'ascending' ? 'descending' : 'ascending');
-         return;
-       }
+      if (!event.order) {
+        const { prop, order } = this.tableSort
+        // Skip the "unsorted" state by just inverting the last seen sort order
+        this.$refs.table.sort(prop, order === 'ascending' ? 'descending' : 'ascending')
+        return
+      }
 
-       this.$store.commit('setSortOrder', {
-         by: COLUMN_TO_SORT_ORDER[event.prop] || this.orderBy,
-         dir: event.order.toUpperCase()
-       });
-     },
+      this.$store.commit('setSortOrder', {
+        by: COLUMN_TO_SORT_ORDER[event.prop] || this.orderBy,
+        dir: event.order.toUpperCase(),
+      })
+    },
 
-     onCurrentRowChange (row) {
-       this.$store.commit('setAnnotation', row);
-     },
+    onCurrentRowChange(row) {
+      this.$store.commit('setAnnotation', row)
+    },
 
-     onKeyDown (event) {
-       const action = KEY_TO_ACTION[event.key];
-       if (action) {
-         event.preventDefault();
-         return false;
-       }
-       return true;
-     },
+    onKeyDown(event) {
+      const action = KEY_TO_ACTION[event.key]
+      if (action) {
+        event.preventDefault()
+        return false
+      }
+      return true
+    },
 
-     onKeyUp (event) {
-       const action = KEY_TO_ACTION[event.key];
-       if (!action)
-         return;
+    onKeyUp(event) {
+      const action = KEY_TO_ACTION[event.key]
+      if (!action)
+        return
 
-       // WARNING the code below relies on internals of el-table:
-       // store.{states.currentRow, mutations.{setData, setCurrentRow}}
-       const tblStore = this.$refs.table.store;
-       const curRow = tblStore.states.currentRow;
-       const curIdx = this.annotations.indexOf(curRow);
+      // WARNING the code below relies on internals of el-table:
+      // store.{states.currentRow, mutations.{setData, setCurrentRow}}
+      const tblStore = this.$refs.table.store
+      const curRow = tblStore.states.currentRow
+      const curIdx = this.annotations.indexOf(curRow)
 
-       if (action === 'up' && curIdx === 0) {
-         if (this.currentPage === 1)
-           return;
-         this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, data.length - 1)); };
-         this.currentPage -= 1;
-         return;
-       }
+      if (action === 'up' && curIdx === 0) {
+        if (this.currentPage === 1)
+          return
+        this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, data.length - 1)) }
+        this.currentPage -= 1
+        return
+      }
 
-       if (action === 'down' && curIdx === this.annotations.length - 1) {
-         if (this.currentPage === this.numberOfPages)
-           return;
-         this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, 0)); };
-         this.currentPage += 1;
-         return;
-       }
+      if (action === 'down' && curIdx === this.annotations.length - 1) {
+        if (this.currentPage === this.numberOfPages)
+          return
+        this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, 0)) }
+        this.currentPage += 1
+        return
+      }
 
-       if (action === 'left') {
-         this.currentPage = Math.max(1, this.currentPage - 1);
-         this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, Math.min(curIdx, data.length-1))); };
-         return;
-       }
+      if (action === 'left') {
+        this.currentPage = Math.max(1, this.currentPage - 1)
+        this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, Math.min(curIdx, data.length - 1))) }
+        return
+      }
 
-       if (action === 'right') {
-         this.currentPage = Math.min(this.numberOfPages, this.currentPage + 1);
-         this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, Math.min(curIdx, data.length-1))); };
-         return;
-       }
+      if (action === 'right') {
+        this.currentPage = Math.min(this.numberOfPages, this.currentPage + 1)
+        this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, Math.min(curIdx, data.length - 1))) }
+        return
+      }
 
-       const delta = action == 'up' ? -1 : +1;
-       tblStore.commit('setCurrentRow',
-                       this.annotations[curIdx + delta]);
-     },
+      const delta = action == 'up' ? -1 : +1
+      tblStore.commit('setCurrentRow',
+        this.annotations[curIdx + delta])
+    },
 
-     clearCurrentRow () {
-       var currentRow = document.querySelector('.current-row');
-       if (currentRow)
-         currentRow.classList.remove('current-row');
-       // filed a bug: https://github.com/ElemeFE/element/issues/1890
-       // TODO check if it's really fixed
-     },
+    clearCurrentRow() {
+      var currentRow = document.querySelector('.current-row')
+      if (currentRow)
+        currentRow.classList.remove('current-row')
+      // filed a bug: https://github.com/ElemeFE/element/issues/1890
+      // TODO check if it's really fixed
+    },
 
-     updateFilter (delta) {
-       let filter = Object.assign({}, this.filter, delta);
-       this.$store.commit('updateFilter', filter);
-     },
+    updateFilter(delta) {
+      const filter = Object.assign({}, this.filter, delta)
+      this.$store.commit('updateFilter', filter)
+    },
 
-     filterGroup (row) {
-       if (row.dataset.group != null) {
-         this.updateFilter({ group: row.dataset.group.id });
-       }
-     },
+    filterGroup(row) {
+      if (row.dataset.group != null) {
+        this.updateFilter({ group: row.dataset.group.id })
+      }
+    },
 
-     filterDataset (row) {
-       this.updateFilter({datasetIds: [row.dataset.id]});
-     },
+    filterDataset(row) {
+      this.updateFilter({ datasetIds: [row.dataset.id] })
+    },
 
-     filterMolFormula (row) {
-       this.updateFilter({compoundName: row.sumFormula});
-     },
+    filterMolFormula(row) {
+      this.updateFilter({ compoundName: row.sumFormula })
+    },
 
-     filterMZ (row) {
-       this.updateFilter({mz: row.mz.toFixed(4)});
-     },
+    filterMZ(row) {
+      this.updateFilter({ mz: row.mz.toFixed(4) })
+    },
 
-     async startExport () {
-       const chunkSize = this.csvChunkSize;
-       const includeColoc = !this.hidden('ColocalizationCoeff');
-       const includeOffSample = config.features.off_sample;
-       const includeIsomers = config.features.isomers;
-       const includeIsobars = config.features.isobars;
-       const colocalizedWith = this.filter.colocalizedWith;
-       let csv = csvExportHeader();
-       const columns = ['group', 'datasetName', 'datasetId', 'formula', 'adduct', 'mz',
-         'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
-         'moleculeNames', 'moleculeIds', 'minIntensity', 'maxIntensity', 'totalIntensity'];
-       if (includeColoc) {
-         columns.push('colocalizationCoeff');
-       }
-       if (includeOffSample) {
-         columns.push('offSample', 'rawOffSampleProb');
-       }
-       if (includeIsomers) {
-         columns.push('isomerIons');
-       }
-       if (includeIsobars) {
-         columns.push('isobarIons');
-       }
-       csv += formatCsvRow(columns);
+    async startExport() {
+      const chunkSize = this.csvChunkSize
+      const includeColoc = !this.hidden('ColocalizationCoeff')
+      const includeOffSample = config.features.off_sample
+      const includeIsomers = config.features.isomers
+      const includeIsobars = config.features.isobars
+      const colocalizedWith = this.filter.colocalizedWith
+      let csv = csvExportHeader()
+      const columns = ['group', 'datasetName', 'datasetId', 'formula', 'adduct', 'mz',
+        'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
+        'moleculeNames', 'moleculeIds', 'minIntensity', 'maxIntensity', 'totalIntensity']
+      if (includeColoc) {
+        columns.push('colocalizationCoeff')
+      }
+      if (includeOffSample) {
+        columns.push('offSample', 'rawOffSampleProb')
+      }
+      if (includeIsomers) {
+        columns.push('isomerIons')
+      }
+      if (includeIsobars) {
+        columns.push('isobarIons')
+      }
+      csv += formatCsvRow(columns)
 
-       function databaseId(compound) {
-         return compound.information[0].databaseId;
-       }
+      function databaseId(compound) {
+        return compound.information[0].databaseId
+      }
 
-       function formatRow(row) {
-         const {
-           dataset, sumFormula, adduct, ion, mz,
-           msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos, possibleCompounds,
-           isotopeImages, isomers, isobars,
-           offSample, offSampleProb, colocalizationCoeff
-         } = row;
-         const cells = [
-           dataset.groupApproved && dataset.group ? dataset.group.name : '',
-           dataset.name,
-           dataset.id,
-           sumFormula, "M" + adduct, mz,
-           msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos,
-           formatCsvTextArray(possibleCompounds.map(m => m.name)),
-           formatCsvTextArray(possibleCompounds.map(databaseId)),
-           isotopeImages[0] && isotopeImages[0].minIntensity,
-           isotopeImages[0] && isotopeImages[0].maxIntensity,
-           isotopeImages[0] && isotopeImages[0].totalIntensity,
-         ];
-         if (includeColoc) {
-           cells.push(colocalizedWith === ion ? 'Reference annotation' : colocalizationCoeff);
-         }
-         if (includeOffSample) {
-           cells.push(offSample, offSampleProb);
-         }
-         if (includeIsomers) {
-           cells.push(formatCsvTextArray(isomers.map(isomer => isomer.ion)));
-         }
-         if (includeIsobars) {
-           cells.push(formatCsvTextArray(isobars.map(isobar => isobar.ion)));
-         }
+      function formatRow(row) {
+        const {
+          dataset, sumFormula, adduct, ion, mz,
+          msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos, possibleCompounds,
+          isotopeImages, isomers, isobars,
+          offSample, offSampleProb, colocalizationCoeff,
+        } = row
+        const cells = [
+          dataset.groupApproved && dataset.group ? dataset.group.name : '',
+          dataset.name,
+          dataset.id,
+          sumFormula, 'M' + adduct, mz,
+          msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos,
+          formatCsvTextArray(possibleCompounds.map(m => m.name)),
+          formatCsvTextArray(possibleCompounds.map(databaseId)),
+          isotopeImages[0] && isotopeImages[0].minIntensity,
+          isotopeImages[0] && isotopeImages[0].maxIntensity,
+          isotopeImages[0] && isotopeImages[0].totalIntensity,
+        ]
+        if (includeColoc) {
+          cells.push(colocalizedWith === ion ? 'Reference annotation' : colocalizationCoeff)
+        }
+        if (includeOffSample) {
+          cells.push(offSample, offSampleProb)
+        }
+        if (includeIsomers) {
+          cells.push(formatCsvTextArray(isomers.map(isomer => isomer.ion)))
+        }
+        if (includeIsobars) {
+          cells.push(formatCsvTextArray(isobars.map(isobar => isobar.ion)))
+        }
 
-         return formatCsvRow(cells);
-       }
+        return formatCsvRow(cells)
+      }
 
-       const queryVariables = {...this.queryVariables};
-       let offset = 0;
-       this.isExporting = true;
+      const queryVariables = { ...this.queryVariables }
+      let offset = 0
+      this.isExporting = true
 
-       while (this.isExporting && offset < this.totalCount) {
-         const resp = await this.$apollo.query({
-           query: tableExportQuery,
-           variables: {...queryVariables, limit: chunkSize, offset},
-         });
-         this.exportProgress = offset / this.totalCount;
-         offset += chunkSize;
-         csv += resp.data.annotations.map(formatRow).join('');
-       }
+      while (this.isExporting && offset < this.totalCount) {
+        const resp = await this.$apollo.query({
+          query: tableExportQuery,
+          variables: { ...queryVariables, limit: chunkSize, offset },
+        })
+        this.exportProgress = offset / this.totalCount
+        offset += chunkSize
+        csv += resp.data.annotations.map(formatRow).join('')
+      }
 
-       if (this.isExporting) {
-         this.isExporting = false;
-         this.exportProgress = 0;
+      if (this.isExporting) {
+        this.isExporting = false
+        this.exportProgress = 0
 
-         let blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' });
-         FileSaver.saveAs(blob, "metaspace_annotations.csv");
-       }
-     },
+        const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
+        FileSaver.saveAs(blob, 'metaspace_annotations.csv')
+      }
+    },
 
-     abortExport() {
-       this.isExporting = false;
-       this.exportProgress = 0;
-     }
-   }
- }
+    abortExport() {
+      this.isExporting = false
+      this.exportProgress = 0
+    },
+  },
+}
 </script>
 
 <style lang="scss">

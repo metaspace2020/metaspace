@@ -1,30 +1,42 @@
 <template>
   <div class="reset-password">
-    <div v-loading="isTokenValid == null" class="reset-password__body">
+    <div
+      v-loading="isTokenValid == null"
+      class="reset-password__body"
+    >
       <div v-if="isTokenValid">
         <h1>Reset Password</h1>
-        <el-form ref="form" :model="model" :rules="rules" class="reset-password__form">
+        <el-form
+          ref="form"
+          :model="model"
+          :rules="rules"
+          class="reset-password__form"
+        >
           <p>
             Please choose a new password
           </p>
           <el-form-item prop="password">
             <el-input
-              type="password"
               v-model="model.password"
+              type="password"
               placeholder="Password"
               required
             />
           </el-form-item>
           <el-form-item prop="confirmPassword">
             <el-input
-              type="password"
               v-model="model.confirmPassword"
+              type="password"
               placeholder="Confirm password"
               required
               @keypress.native.enter="onSubmit"
             />
           </el-form-item>
-          <el-button type="primary" :loading="isSubmitting" @click="onSubmit">
+          <el-button
+            type="primary"
+            :loading="isSubmitting"
+            @click="onSubmit"
+          >
             Reset password
           </el-button>
         </el-form>
@@ -33,19 +45,21 @@
         <h1>Reset Password</h1>
         <p>
           The reset password link you have used is no longer valid.
-          Please <router-link to="/account/forgot-password">start over</router-link>.
+          Please <router-link to="/account/forgot-password">
+            start over
+          </router-link>.
         </p>
       </div>
     </div>
   </div>
 </template>
 <script lang="ts">
-  import Vue from 'vue';
-  import { Component } from 'vue-property-decorator';
-  import { Form } from 'element-ui';
-  import { validatePasswordResetToken, resetPassword } from '../../../api/auth';
-  import reportError from '../../../lib/reportError';
-  import { refreshLoginStatus } from '../../../graphqlClient';
+import Vue from 'vue'
+import { Component } from 'vue-property-decorator'
+import { Form } from 'element-ui'
+import { validatePasswordResetToken, resetPassword } from '../../../api/auth'
+import reportError from '../../../lib/reportError'
+import { refreshLoginStatus } from '../../../graphqlClient'
 
   interface Model {
     password: string;
@@ -53,13 +67,14 @@
   }
 
   @Component
-  export default class ResetPasswordPage extends Vue {
+export default class ResetPasswordPage extends Vue {
     isTokenValid: boolean | null = null;
     isSubmitting: boolean = false;
     model: Model = {
       password: '',
       confirmPassword: '',
     };
+
     rules = {
       password: [
         { required: true, min: 8, message: 'Password must be at least 8 characters' },
@@ -72,50 +87,51 @@
     };
 
     get token() {
-      return this.$route.query.token;
+      return this.$route.query.token
     }
+
     get email() {
-      return this.$route.query.email;
+      return this.$route.query.email
     }
 
     async created() {
       this.isTokenValid = Boolean(this.token) && Boolean(this.email)
-        && await validatePasswordResetToken(this.token, this.email);
+        && await validatePasswordResetToken(this.token, this.email)
     }
 
     validatePassword(rule: object, value: string, callback: Function) {
-      (this.$refs.form as Form).validateField('confirmPassword', () => {});
-      callback();
-    };
+      (this.$refs.form as Form).validateField('confirmPassword', () => {})
+      callback()
+    }
 
     validateConfirmPassword(rule: object, value: string, callback: Function) {
       if (value && this.model.password && value !== this.model.password) {
-        callback(new Error('Passwords must match'));
+        callback(new Error('Passwords must match'))
       } else {
-        callback();
+        callback()
       }
-    };
+    }
 
     async onSubmit() {
-      await (this.$refs.form as Form).validate();
+      await (this.$refs.form as Form).validate()
       try {
-        this.isSubmitting = true;
-        await resetPassword(this.token, this.email, this.model.password);
-        await refreshLoginStatus();
-        this.$router.push('/');
-        this.$alert('Your password has been successfully reset.', 'Password reset', {type: 'success'})
-          .catch(() => {/*Ignore exception raised when alert is closed*/});
+        this.isSubmitting = true
+        await resetPassword(this.token, this.email, this.model.password)
+        await refreshLoginStatus()
+        this.$router.push('/')
+        this.$alert('Your password has been successfully reset.', 'Password reset', { type: 'success' })
+          .catch(() => { /* Ignore exception raised when alert is closed */ })
       } catch (err) {
-        reportError(err);
+        reportError(err)
       } finally {
-        this.isSubmitting = false;
+        this.isSubmitting = false
       }
     }
 
     onClose() {
-      this.$store.commit('account/hideDialog', 'signIn');
+      this.$store.commit('account/hideDialog', 'signIn')
     }
-  }
+}
 </script>
 <style>
   .reset-password {

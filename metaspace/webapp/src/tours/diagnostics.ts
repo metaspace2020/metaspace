@@ -1,8 +1,8 @@
-import convertTourStep from './convertTourStep';
+import convertTourStep from './convertTourStep'
 
 export default {
-  "id": "sm-tour-diagnostics",
-  "steps": [
+  id: 'sm-tour-diagnostics',
+  steps: [
     require('./diagnostics/steps/00-overview.md'),
     require('./diagnostics/steps/10-scores.md'),
     require('./diagnostics/steps/20-spatial.md'),

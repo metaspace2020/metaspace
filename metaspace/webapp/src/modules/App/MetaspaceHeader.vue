@@ -3,69 +3,128 @@
     <div :class="healthMessage ? 'spacerWithAlert' : 'spacer'" />
     <div class="b-header">
       <div class="header-items">
-        <router-link to="/" class="header-item logo">
-          <img src="../../assets/logo.png" alt="Metaspace" title="Metaspace"/>
+        <router-link
+          to="/"
+          class="header-item logo"
+        >
+          <img
+            src="../../assets/logo.png"
+            alt="Metaspace"
+            title="Metaspace"
+          >
         </router-link>
 
-        <router-link :to="uploadHref" class="header-item page-link" id='upload-link'>
+        <router-link
+          id="upload-link"
+          :to="uploadHref"
+          class="header-item page-link"
+        >
           Upload
         </router-link>
 
-        <router-link :to="annotationsHref" class="header-item page-link" id='annotations-link'>
+        <router-link
+          id="annotations-link"
+          :to="annotationsHref"
+          class="header-item page-link"
+        >
           Annotations
         </router-link>
 
-        <router-link :to="datasetsHref" class="header-item page-link" id='datasets-link'>
+        <router-link
+          id="datasets-link"
+          :to="datasetsHref"
+          class="header-item page-link"
+        >
           Datasets
         </router-link>
 
-        <router-link to="/projects" class="header-item page-link">
+        <router-link
+          to="/projects"
+          class="header-item page-link"
+        >
           Projects
         </router-link>
 
         <router-link
           v-if="currentUser && currentUser.primaryGroup"
           :to="primaryGroupHref"
-          class="header-item page-link">
+          class="header-item page-link"
+        >
           <div class="limit-width">
-            {{currentUser.primaryGroup.group.shortName}}
+            {{ currentUser.primaryGroup.group.shortName }}
           </div>
         </router-link>
       </div>
 
       <div class="header-items">
-        <router-link to="/help" class="header-item page-link">
+        <router-link
+          to="/help"
+          class="header-item page-link"
+        >
           Help
         </router-link>
 
-        <div v-if="loadingUser === 0 && currentUser == null" class="header-items">
-          <div class="header-item page-link" @click="showCreateAccount">
+        <div
+          v-if="loadingUser === 0 && currentUser == null"
+          class="header-items"
+        >
+          <div
+            class="header-item page-link"
+            @click="showCreateAccount"
+          >
             Create account
           </div>
 
-          <div class="header-item page-link" @click="showSignIn">
+          <div
+            class="header-item page-link"
+            @click="showSignIn"
+          >
             Sign in
           </div>
         </div>
 
-        <div v-if="loadingUser === 0 && currentUser != null" class="header-items">
-          <div class="submenu-container user-submenu"
-               :class="{'submenu-container-open': openSubmenu === 'user'}"
-               @mouseenter="handleSubmenuEnter('user')"
-               @mouseleave="handleSubmenuLeave('user')">
-            <div class="header-item submenu-header"
-                 :class="{'router-link-active': matchesRoute('/user/me')}">
-              <div class="limit-width" style="color: white;">
+        <div
+          v-if="loadingUser === 0 && currentUser != null"
+          class="header-items"
+        >
+          <div
+            class="submenu-container user-submenu"
+            :class="{'submenu-container-open': openSubmenu === 'user'}"
+            @mouseenter="handleSubmenuEnter('user')"
+            @mouseleave="handleSubmenuLeave('user')"
+          >
+            <div
+              class="header-item submenu-header"
+              :class="{'router-link-active': matchesRoute('/user/me')}"
+            >
+              <div
+                class="limit-width"
+                style="color: white;"
+              >
                 {{ userNameOrEmail }}
-                <notification-icon v-if="pendingRequestMessage != null" :tooltip="pendingRequestMessage" tooltipPlacement="left" />
+                <notification-icon
+                  v-if="pendingRequestMessage != null"
+                  :tooltip="pendingRequestMessage"
+                  tooltip-placement="left"
+                />
               </div>
             </div>
             <div class="submenu">
-              <router-link to="/user/me" class="submenu-item page-link">
+              <router-link
+                to="/user/me"
+                class="submenu-item page-link"
+              >
                 My account
-                <notification-icon v-if="pendingRequestMessage != null" :tooltip="pendingRequestMessage" tooltipPlacement="left" />
+                <notification-icon
+                  v-if="pendingRequestMessage != null"
+                  :tooltip="pendingRequestMessage"
+                  tooltip-placement="left"
+                />
               </router-link>
-              <div class="submenu-item page-link" @click="logout">
+              <div
+                class="submenu-item page-link"
+                @click="logout"
+              >
                 Sign out
               </div>
             </div>
@@ -73,113 +132,121 @@
         </div>
       </div>
     </div>
-    <el-row v-if="healthMessage" class="alert">
-      <el-alert show-icon :title="healthMessage" :type="healthSeverity" :closable="false" />
+    <el-row
+      v-if="healthMessage"
+      class="alert"
+    >
+      <el-alert
+        show-icon
+        :title="healthMessage"
+        :type="healthSeverity"
+        :closable="false"
+      />
     </el-row>
   </div>
 </template>
 
 <script>
-  import gql from 'graphql-tag';
-  import {signOut} from '../../api/auth';
-  import {getSystemHealthQuery, getSystemHealthSubscribeToMore} from '../../api/system';
-  import {UserGroupRoleOptions as UGRO} from '../../api/group';
-  import {ProjectRoleOptions as UPRO} from '../../api/project';
-  import {encodeParams} from '../Filters';
-  import {refreshLoginStatus} from '../../graphqlClient';
-  import NotificationIcon from '../../components/NotificationIcon.vue';
-  import {datasetStatusUpdatedQuery} from '../../api/dataset';
+import gql from 'graphql-tag'
+import { signOut } from '../../api/auth'
+import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system'
+import { UserGroupRoleOptions as UGRO } from '../../api/group'
+import { ProjectRoleOptions as UPRO } from '../../api/project'
+import { encodeParams } from '../Filters'
+import { refreshLoginStatus } from '../../graphqlClient'
+import NotificationIcon from '../../components/NotificationIcon.vue'
+import { datasetStatusUpdatedQuery } from '../../api/dataset'
 
-  /** @type {ComponentOptions<Vue> & Vue} */
- const MetaspaceHeader = {
-   name: 'metaspace-header',
+/** @type {ComponentOptions<Vue> & Vue} */
+const MetaspaceHeader = {
+  name: 'metaspace-header',
 
-   components: {
-     NotificationIcon,
-   },
+  components: {
+    NotificationIcon,
+  },
 
-   computed: {
-     uploadHref() {
-       return this.href('/upload');
-     },
+  computed: {
+    uploadHref() {
+      return this.href('/upload')
+    },
 
-     datasetsHref() {
-       return this.href('/datasets');
-     },
+    datasetsHref() {
+      return this.href('/datasets')
+    },
 
-     annotationsHref() {
-       return this.href('/annotations');
-     },
+    annotationsHref() {
+      return this.href('/annotations')
+    },
 
-     primaryGroupHref() {
-       if (this.currentUser && this.currentUser.primaryGroup) {
-         const { id, urlSlug } = this.currentUser.primaryGroup.group;
-         return {
-           name: 'group',
-           params: { groupIdOrSlug: urlSlug || id }
-         }
-       }
-     },
+    primaryGroupHref() {
+      if (this.currentUser && this.currentUser.primaryGroup) {
+        const { id, urlSlug } = this.currentUser.primaryGroup.group
+        return {
+          name: 'group',
+          params: { groupIdOrSlug: urlSlug || id },
+        }
+      }
+    },
 
-     userNameOrEmail() {
-       if (this.currentUser && this.currentUser.name) {
-         return this.currentUser.name;
-       }
-       return '';
-     },
+    userNameOrEmail() {
+      if (this.currentUser && this.currentUser.name) {
+        return this.currentUser.name
+      }
+      return ''
+    },
 
-     healthMessage() {
-       const {canMutate = true, message = null} = this.systemHealth || {};
-       if (message) {
-         return message;
-       } else if (!canMutate) {
-         return "METASPACE is currently in read-only mode for scheduled maintenance."
-       }
-     },
-     healthSeverity() {
-       return this.systemHealth && this.systemHealth.canMutate === false ? 'warning' : 'info';
-     },
-     pendingRequestMessage() {
-       if (this.currentUser != null) {
-         if (this.currentUser.groups != null) {
-           const invitedGroup = this.currentUser.groups.find(g => g.role === UGRO.INVITED);
-           const requestGroup = this.currentUser.groups.find(g => g.role === UGRO.GROUP_ADMIN && g.group.hasPendingRequest);
-           if (invitedGroup != null)
-             return `You have been invited to join ${invitedGroup.group.name}.`;
-           if (requestGroup != null)
-             return `${requestGroup.group.name} has a pending membership request.`;
-         }
-         if (this.currentUser.projects != null) {
-           const invitedProject = this.currentUser.projects.find(g => g.role === UPRO.INVITED);
-           const requestProject = this.currentUser.projects.find(g => g.role === UPRO.MANAGER && g.project.hasPendingRequest);
-           if (invitedProject != null)
-             return `You have been invited to join ${invitedProject.project.name}.`;
-           if (requestProject != null)
-             return `${requestProject.project.name} has a pending membership request.`;
-         }
-       }
-       return null;
-     }
-   },
+    healthMessage() {
+      const { canMutate = true, message = null } = this.systemHealth || {}
+      if (message) {
+        return message
+      } else if (!canMutate) {
+        return 'METASPACE is currently in read-only mode for scheduled maintenance.'
+      }
+    },
+    healthSeverity() {
+      return this.systemHealth && this.systemHealth.canMutate === false ? 'warning' : 'info'
+    },
+    pendingRequestMessage() {
+      if (this.currentUser != null) {
+        if (this.currentUser.groups != null) {
+          const invitedGroup = this.currentUser.groups.find(g => g.role === UGRO.INVITED)
+          const requestGroup = this.currentUser.groups.find(g => g.role === UGRO.GROUP_ADMIN && g.group.hasPendingRequest)
+          if (invitedGroup != null)
+            return `You have been invited to join ${invitedGroup.group.name}.`
+          if (requestGroup != null)
+            return `${requestGroup.group.name} has a pending membership request.`
+        }
+        if (this.currentUser.projects != null) {
+          const invitedProject = this.currentUser.projects.find(g => g.role === UPRO.INVITED)
+          const requestProject = this.currentUser.projects.find(g => g.role === UPRO.MANAGER && g.project.hasPendingRequest)
+          if (invitedProject != null)
+            return `You have been invited to join ${invitedProject.project.name}.`
+          if (requestProject != null)
+            return `${requestProject.project.name} has a pending membership request.`
+        }
+      }
+      return null
+    },
+  },
 
-   data() {
-     return {
-       loginEmail: '',
-       loadingUser: 0,
-       currentUser: null,
-       systemHealth: null,
-       openSubmenu: null
-     };
-   },
+  data() {
+    return {
+      loginEmail: '',
+      loadingUser: 0,
+      currentUser: null,
+      systemHealth: null,
+      openSubmenu: null,
+    }
+  },
 
-   apollo: {
-     systemHealth: {
-       query: getSystemHealthQuery,
-       subscribeToMore: getSystemHealthSubscribeToMore,
-       fetchPolicy: 'cache-first',
-     },
-     currentUser: {
-       query: gql`query metaspaceHeaderCurrentUserQuery {
+  apollo: {
+    systemHealth: {
+      query: getSystemHealthQuery,
+      subscribeToMore: getSystemHealthSubscribeToMore,
+      fetchPolicy: 'cache-first',
+    },
+    currentUser: {
+      query: gql`query metaspaceHeaderCurrentUserQuery {
          currentUser {
            id
            name
@@ -209,105 +276,105 @@
            }
          }
        }`,
-       fetchPolicy: 'cache-first',
-       loadingKey: 'loadingUser'
-     },
-     $subscribe: {
-       datasetStatusUpdated: {
-         query: datasetStatusUpdatedQuery,
-         result(data) {
-           const { dataset, relationship, action, stage, is_new } = data.data.datasetStatusUpdated;
-           if (dataset != null && relationship != null) {
-             const { name, submitter } = dataset;
+      fetchPolicy: 'cache-first',
+      loadingKey: 'loadingUser',
+    },
+    $subscribe: {
+      datasetStatusUpdated: {
+        query: datasetStatusUpdatedQuery,
+        result(data) {
+          const { dataset, relationship, action, stage, is_new } = data.data.datasetStatusUpdated
+          if (dataset != null && relationship != null) {
+            const { name, submitter } = dataset
 
-             let message, type;
-             if (relationship.type === 'submitter') {
-               if (action === 'ANNOTATE' && stage === 'FINISHED') {
-                 message = `Processing of dataset ${name} is finished!`;
-                 type = 'success';
-               } else if (stage === 'FAILED') {
-                 message = `Something went wrong with dataset ${name} :(`;
-                 type = 'warning';
-               } else if (action === 'ANNOTATE' && stage === 'QUEUED' && is_new) {
-                 message = `Dataset ${name} has been submitted`;
-                 type = 'info';
-               } else if (action === 'ANNOTATE' && stage === 'QUEUED' && !is_new) {
-                 message = `Dataset ${name} has been submitted for reprocessing`;
-                 type = 'info';
-               } else if (action === 'ANNOTATE' && stage === 'STARTED') {
-                 message = `Started processing dataset ${name}`;
-                 type = 'info';
-               }
-             } else {
-               const who = `${submitter.name} (${relationship.name})`;
-               if (action === 'ANNOTATE' && stage === 'FINISHED') {
-                 message = `Processing of dataset ${name} by ${who} is finished!`;
-                 type = 'success';
-               } else if (action === 'ANNOTATE' && stage === 'QUEUED' && is_new) {
-                 message = `Dataset ${name} has been submitted by ${who}`;
-                 type = 'info';
-               }
-             }
-             if (message != null && type != null) {
-               this.$notify({ message, type });
-             }
-           }
-         }
-       },
-     },
-   },
+            let message, type
+            if (relationship.type === 'submitter') {
+              if (action === 'ANNOTATE' && stage === 'FINISHED') {
+                message = `Processing of dataset ${name} is finished!`
+                type = 'success'
+              } else if (stage === 'FAILED') {
+                message = `Something went wrong with dataset ${name} :(`
+                type = 'warning'
+              } else if (action === 'ANNOTATE' && stage === 'QUEUED' && is_new) {
+                message = `Dataset ${name} has been submitted`
+                type = 'info'
+              } else if (action === 'ANNOTATE' && stage === 'QUEUED' && !is_new) {
+                message = `Dataset ${name} has been submitted for reprocessing`
+                type = 'info'
+              } else if (action === 'ANNOTATE' && stage === 'STARTED') {
+                message = `Started processing dataset ${name}`
+                type = 'info'
+              }
+            } else {
+              const who = `${submitter.name} (${relationship.name})`
+              if (action === 'ANNOTATE' && stage === 'FINISHED') {
+                message = `Processing of dataset ${name} by ${who} is finished!`
+                type = 'success'
+              } else if (action === 'ANNOTATE' && stage === 'QUEUED' && is_new) {
+                message = `Dataset ${name} has been submitted by ${who}`
+                type = 'info'
+              }
+            }
+            if (message != null && type != null) {
+              this.$notify({ message, type })
+            }
+          }
+        },
+      },
+    },
+  },
 
-   watch: {
-     '$route'() {
-       // Ensure queries are running, because occasionally the websocket connection doesn't automatically recover
-       this.$apollo.subscriptions.systemHealth.start();
-       this.$apollo.subscriptions.datasetStatusUpdated.start();
-     }
-   },
+  watch: {
+    '$route'() {
+      // Ensure queries are running, because occasionally the websocket connection doesn't automatically recover
+      this.$apollo.subscriptions.systemHealth.start()
+      this.$apollo.subscriptions.datasetStatusUpdated.start()
+    },
+  },
 
-   methods: {
-     href(path) {
-       const lastParams = this.$store.state.lastUsedFilters[path];
-       let f = lastParams ? lastParams.filter : {}
-       f = Object.assign({}, f, this.$store.getters.filter)
-       const link = {
-         path,
-         query: encodeParams(f, path, this.$store.state.filterLists)
-       };
-       return link;
-     },
+  methods: {
+    href(path) {
+      const lastParams = this.$store.state.lastUsedFilters[path]
+      let f = lastParams ? lastParams.filter : {}
+      f = Object.assign({}, f, this.$store.getters.filter)
+      const link = {
+        path,
+        query: encodeParams(f, path, this.$store.state.filterLists),
+      }
+      return link
+    },
 
-     matchesRoute(path) {
-       // WORKAROUND: vue-router hides its util function "isIncludedRoute", which would be perfect here
-       // return isIncludedRoute(this.$route, path);
-       return this.$route.path.startsWith(path);
-     },
+    matchesRoute(path) {
+      // WORKAROUND: vue-router hides its util function "isIncludedRoute", which would be perfect here
+      // return isIncludedRoute(this.$route, path);
+      return this.$route.path.startsWith(path)
+    },
 
-     showCreateAccount() {
-       this.$store.commit('account/showDialog', 'createAccount');
-     },
+    showCreateAccount() {
+      this.$store.commit('account/showDialog', 'createAccount')
+    },
 
-     showSignIn() {
-       this.$store.commit('account/showDialog', 'signIn');
-     },
+    showSignIn() {
+      this.$store.commit('account/showDialog', 'signIn')
+    },
 
-     async logout() {
-       await signOut();
-       await refreshLoginStatus();
-     },
+    async logout() {
+      await signOut()
+      await refreshLoginStatus()
+    },
 
-     handleSubmenuEnter(submenu) {
-       this.openSubmenu = submenu;
-     },
-     handleSubmenuLeave(submenu) {
-       if (this.openSubmenu === submenu) {
-         this.openSubmenu = null;
-       }
-     },
-   }
- }
+    handleSubmenuEnter(submenu) {
+      this.openSubmenu = submenu
+    },
+    handleSubmenuLeave(submenu) {
+      if (this.openSubmenu === submenu) {
+        this.openSubmenu = null
+      }
+    },
+  },
+}
 
- export default MetaspaceHeader;
+export default MetaspaceHeader
 </script>
 
 <style lang="scss" scoped>

@@ -1,4 +1,4 @@
-let oldConsole: Partial<Console> | null = null;
+let oldConsole: Partial<Console> | null = null
 
 type ConsolePredicate = (...args: any[]) => boolean;
 interface FilteredConsoleFunc {
@@ -6,50 +6,48 @@ interface FilteredConsoleFunc {
   filters: ConsolePredicate[];
 }
 
-
-
 const wrapWithFilter = (origFunc: Function): FilteredConsoleFunc => {
-  const wrappedFunc = function (this: any, ...args: any[]) {
+  const wrappedFunc = function(this: any, ...args: any[]) {
     if (!wrappedFunc.filters.some(filter => filter(...args))) {
       origFunc.apply(this, args)
     }
-  } as FilteredConsoleFunc;
-  wrappedFunc.filters = [];
-  return wrappedFunc;
-};
+  } as FilteredConsoleFunc
+  wrappedFunc.filters = []
+  return wrappedFunc
+}
 
 const suppressConsoleFn = (fn: keyof Console, filter?: ConsolePredicate | RegExp | string) => {
   if (oldConsole == null) {
-    oldConsole = {};
+    oldConsole = {}
   }
   if (oldConsole && !(fn in oldConsole)) {
-    oldConsole[fn] = console[fn];
-    console[fn] = wrapWithFilter(console[fn]);
+    oldConsole[fn] = console[fn]
+    console[fn] = wrapWithFilter(console[fn])
   }
-  let predicate: ConsolePredicate;
+  let predicate: ConsolePredicate
   if (filter == null) {
-    predicate = () => true;
+    predicate = () => true
   } else if (typeof filter === 'function') {
-    predicate = filter;
+    predicate = filter
   } else if (filter instanceof RegExp) {
-    predicate = (msg?: any) => filter.test(String(msg));
+    predicate = (msg?: any) => filter.test(String(msg))
   } else {
-    predicate = (msg?: any) => msg === filter;
+    predicate = (msg?: any) => msg === filter
   }
 
-  (console[fn] as FilteredConsoleFunc).filters.push(predicate);
-};
+  (console[fn] as FilteredConsoleFunc).filters.push(predicate)
+}
 
-export const suppressConsoleLog = (filter?: ConsolePredicate | RegExp | string) => suppressConsoleFn('log', filter);
-export const suppressConsoleWarn = (filter?: ConsolePredicate | RegExp | string) => suppressConsoleFn('warn', filter);
-export const suppressConsoleError = (filter?: ConsolePredicate | RegExp | string) => suppressConsoleFn('error', filter);
+export const suppressConsoleLog = (filter?: ConsolePredicate | RegExp | string) => suppressConsoleFn('log', filter)
+export const suppressConsoleWarn = (filter?: ConsolePredicate | RegExp | string) => suppressConsoleFn('warn', filter)
+export const suppressConsoleError = (filter?: ConsolePredicate | RegExp | string) => suppressConsoleFn('error', filter)
 
 export const restoreConsole = () => {
   if (oldConsole != null) {
-    let key: keyof Console;
+    let key: keyof Console
     for (key in oldConsole) {
-      console[key] = oldConsole[key];
+      console[key] = oldConsole[key]
     }
-    oldConsole = null;
+    oldConsole = null
   }
-};
+}

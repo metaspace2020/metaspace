@@ -1,19 +1,19 @@
-import { renderMolFormula } from '../../util';
-import InputFilter from './filter-components/InputFilter.vue';
-import SingleSelectFilter from './filter-components/SingleSelectFilter.vue';
-import SearchableFilter from './filter-components/SearchableFilter.vue';
-import OffSampleHelp from './filter-components/OffSampleHelp.vue';
-import MzFilter from './filter-components/MzFilter.vue';
-import SearchBox from './filter-components/SearchBox.vue';
-import {metadataTypes, defaultMetadataType} from '../../lib/metadataRegistry';
-import { Component } from 'vue';
-import SimpleFilterBox from './filter-components/SimpleFilterBox.vue';
-import BooleanFilter from './filter-components/BooleanFilter.vue';
-import config from '../../config';
-import AdductFilter from './filter-components/AdductFilter.vue';
+import { renderMolFormula } from '../../util'
+import InputFilter from './filter-components/InputFilter.vue'
+import SingleSelectFilter from './filter-components/SingleSelectFilter.vue'
+import SearchableFilter from './filter-components/SearchableFilter.vue'
+import OffSampleHelp from './filter-components/OffSampleHelp.vue'
+import MzFilter from './filter-components/MzFilter.vue'
+import SearchBox from './filter-components/SearchBox.vue'
+import { metadataTypes, defaultMetadataType } from '../../lib/metadataRegistry'
+import { Component } from 'vue'
+import SimpleFilterBox from './filter-components/SimpleFilterBox.vue'
+import BooleanFilter from './filter-components/BooleanFilter.vue'
+import config from '../../config'
+import AdductFilter from './filter-components/AdductFilter.vue'
 
-function formatFDR (fdr: number) {
-  return fdr ? Math.round(fdr * 100) + '%' : '';
+function formatFDR(fdr: number) {
+  return fdr ? Math.round(fdr * 100) + '%' : ''
 }
 
 export type Level = 'annotation' | 'dataset' | 'upload' | 'projects';
@@ -87,8 +87,8 @@ export interface FilterSpecification {
 export const FILTER_COMPONENT_PROPS: (keyof FilterSpecification)[] = [
   'name', 'helpComponent',
   'removable', 'filterable', 'multiple',
-  'optionFormatter', 'valueGetter'
-];
+  'optionFormatter', 'valueGetter',
+]
 
 export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
   database: {
@@ -98,12 +98,12 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     levels: ['annotation'],
     defaultInLevels: ['annotation'],
     initialValue: lists => lists.molecularDatabases
-                                .filter(d => d.default)
-                                .map(d => d.name)[0],
+      .filter(d => d.default)
+      .map(d => d.name)[0],
     options: lists => lists.molecularDatabases
       .filter(d => config.features.all_dbs || !d.hidden)
       .map(d => d.name),
-    removable: false
+    removable: false,
   },
 
   datasetIds: {
@@ -113,7 +113,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     levels: ['annotation', 'dataset'],
     initialValue: undefined,
     multiple: true,
-    encoding: 'list'
+    encoding: 'list',
   },
 
   minMSM: {
@@ -121,7 +121,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     name: 'Min. MSM',
     description: 'Set minimum MSM score',
     levels: ['annotation'],
-    initialValue: 0.0
+    initialValue: 0.0,
   },
 
   compoundName: {
@@ -129,7 +129,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     name: 'Molecule',
     description: 'Search molecule',
     levels: ['annotation'], // ['dataset', 'annotation'],
-    initialValue: undefined
+    initialValue: undefined,
   },
 
   chemMod: {
@@ -155,7 +155,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     levels: ['annotation'],
     initialValue: undefined,
     options: lists => lists.adducts.filter(a => config.features.all_adducts || !a.hidden),
-    isMultiFilter: true
+    isMultiFilter: true,
   },
 
   mz: {
@@ -163,7 +163,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     name: 'm/z',
     description: 'Search by m/z',
     levels: ['annotation'],
-    initialValue: undefined
+    initialValue: undefined,
   },
 
   fdrLevel: {
@@ -178,7 +178,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     optionFormatter: formatFDR,
     encoding: 'number',
     filterable: false,
-    removable: false
+    removable: false,
   },
 
   group: {
@@ -214,7 +214,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
 
     // FIXME: this ideally should be taken straight from the JSON schema
     options: ['Positive', 'Negative'],
-    filterable: false
+    filterable: false,
   },
 
   organism: {
@@ -224,7 +224,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     levels: ['annotation', 'dataset'],
     initialValue: undefined,
 
-    options: 'organisms'
+    options: 'organisms',
   },
 
   organismPart: {
@@ -234,7 +234,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     levels: ['annotation', 'dataset'],
     initialValue: undefined,
 
-    options: 'organismParts'
+    options: 'organismParts',
   },
 
   condition: {
@@ -244,7 +244,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     levels: ['annotation', 'dataset'],
     initialValue: undefined,
 
-    options: 'conditions'
+    options: 'conditions',
   },
 
   growthConditions: {
@@ -254,7 +254,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     levels: ['annotation', 'dataset'],
     initialValue: undefined,
 
-    options: 'growthConditions'
+    options: 'growthConditions',
   },
 
   ionisationSource: {
@@ -264,7 +264,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     levels: ['annotation', 'dataset'],
     initialValue: undefined,
 
-    options: 'ionisationSources'
+    options: 'ionisationSources',
   },
 
   maldiMatrix: {
@@ -274,7 +274,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     levels: ['annotation', 'dataset'],
     initialValue: undefined,
 
-    options: 'maldiMatrices'
+    options: 'maldiMatrices',
   },
 
   analyzerType: {
@@ -284,7 +284,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     levels: ['annotation', 'dataset'],
     initialValue: undefined,
 
-    options: 'analyzerTypes'
+    options: 'analyzerTypes',
   },
 
   simpleFilter: {
@@ -295,7 +295,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     defaultInLevels: ['projects'],
     initialValue: null,
     removable: false,
-    sortOrder: 1
+    sortOrder: 1,
   },
 
   simpleQuery: {
@@ -306,7 +306,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     defaultInLevels: ['annotation', 'dataset', 'projects'],
     initialValue: '',
     removable: false,
-    sortOrder: 2
+    sortOrder: 2,
   },
 
   metadataType: {
@@ -318,7 +318,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     initialValue: defaultMetadataType,
     removable: false,
     options: metadataTypes,
-    hidden: () => metadataTypes.length <= 1
+    hidden: () => metadataTypes.length <= 1,
   },
 
   colocalizedWith: {
@@ -353,38 +353,36 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     encoding: 'bool',
     optionFormatter: option => `${option ? 'Off' : 'On'}-sample only`,
     hidden: () => !config.features.off_sample,
-  }
-};
+  },
+}
 
-
-export const DATASET_FILTERS: FilterKey[] = ['datasetIds', 'group', 'project', 'submitter', 'polarity', 'organism', 'organismPart', 'condition', 'growthConditions', 'ionisationSource', 'maldiMatrix', 'analyzerType', 'metadataType'];
-/** = all annotation-affecting filters - dataset-affecting filters*/
-export const ANNOTATION_FILTERS: FilterKey[] = ['database', 'minMSM', 'compoundName', 'adduct', 'mz', 'fdrLevel', 'colocalizedWith', 'offSample'];
+export const DATASET_FILTERS: FilterKey[] = ['datasetIds', 'group', 'project', 'submitter', 'polarity', 'organism', 'organismPart', 'condition', 'growthConditions', 'ionisationSource', 'maldiMatrix', 'analyzerType', 'metadataType']
+/** = all annotation-affecting filters - dataset-affecting filters */
+export const ANNOTATION_FILTERS: FilterKey[] = ['database', 'minMSM', 'compoundName', 'adduct', 'mz', 'fdrLevel', 'colocalizedWith', 'offSample']
 /** Filters that are very specific to particular annotations and should be cleared when navigating to other annotations */
-export const ANNOTATION_SPECIFIC_FILTERS: FilterKey[] = ['compoundName', 'adduct', 'mz', 'colocalizedWith', 'colocalizationSamples', 'simpleQuery'];
+export const ANNOTATION_SPECIFIC_FILTERS: FilterKey[] = ['compoundName', 'adduct', 'mz', 'colocalizedWith', 'colocalizationSamples', 'simpleQuery']
 
 export function getFilterInitialValue(key: FilterKey, filterLists?: MetadataLists) {
-  let value = FILTER_SPECIFICATIONS[key].initialValue;
+  let value = FILTER_SPECIFICATIONS[key].initialValue
 
-  if(typeof value === 'function') {
-    if(filterLists != null) {
-      value = value(filterLists);
+  if (typeof value === 'function') {
+    if (filterLists != null) {
+      value = value(filterLists)
     } else {
-      value = null;
+      value = null
     }
   }
-  return value;
+  return value
 }
 
 export function getDefaultFilter(level: Level, filterLists?: MetadataLists) {
-  const filter: Partial<Record<FilterKey, any>> = {};
-  let key: FilterKey;
+  const filter: Partial<Record<FilterKey, any>> = {}
+  let key: FilterKey
   for (key in FILTER_SPECIFICATIONS) {
-    const spec = FILTER_SPECIFICATIONS[key];
+    const spec = FILTER_SPECIFICATIONS[key]
     if (spec.defaultInLevels != null && spec.defaultInLevels.includes(level)) {
-      filter[key] = getFilterInitialValue(key, filterLists);
+      filter[key] = getFilterInitialValue(key, filterLists)
     }
   }
-  return filter;
+  return filter
 }
-

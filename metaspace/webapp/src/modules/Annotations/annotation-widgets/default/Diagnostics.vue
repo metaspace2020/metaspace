@@ -1,102 +1,128 @@
 <template>
-<div v-loading="loading">
-    <el-alert v-if="hasIsobars" :closable="false" :type="hasWarnIsobar ? 'warning' : 'info'" show-icon class="isobar-alert">
-        {{annotationGroups.filter(g => !g.isReference).length === 1
+  <div v-loading="loading">
+    <el-alert
+      v-if="hasIsobars"
+      :closable="false"
+      :type="hasWarnIsobar ? 'warning' : 'info'"
+      show-icon
+      class="isobar-alert"
+    >
+      {{ annotationGroups.filter(g => !g.isReference).length === 1
         ? 'Another ion was annotated that is isobaric to the selected annotation.'
-        : 'Other ions were annotated that are isobaric to the selected annotation.'}}
-        <span v-if="!hasWarnIsobar">
-            {{annotationGroups.filter(g => !g.isReference).length === 1
-            ? 'However, as its MSM score is significantly lower, it is likely a false discovery.'
-            : 'However, as their MSM scores are significantly lower, they are likely false discoveries.'}}
-        </span>
-        Select an isobaric annotation below to compare against.
+        : 'Other ions were annotated that are isobaric to the selected annotation.' }}
+      <span v-if="!hasWarnIsobar">
+        {{ annotationGroups.filter(g => !g.isReference).length === 1
+          ? 'However, as its MSM score is significantly lower, it is likely a false discovery.'
+          : 'However, as their MSM scores are significantly lower, they are likely false discoveries.' }}
+      </span>
+      Select an isobaric annotation below to compare against.
     </el-alert>
-    <div class="compare-container" v-if="hasIsobars">
-        Compare selected annotation to:
-        <el-select
-          v-model="comparisonIonFormula"
-          class="compare-select"
-          placeholder="None"
-          clearable
-        >
-            <el-option
-              v-for="grp in annotationGroups"
-              v-if="!grp.isReference"
-              :key="grp.ionFormula"
-              :value="grp.ionFormula"
-              :label="grp.label"
-              v-html="grp.labelHtml"
-            />
-        </el-select>
+    <div
+      v-if="hasIsobars"
+      class="compare-container"
+    >
+      Compare selected annotation to:
+      <el-select
+        v-model="comparisonIonFormula"
+        class="compare-select"
+        placeholder="None"
+        clearable
+      >
+        <el-option
+          v-for="grp in annotationGroups"
+          v-if="!grp.isReference"
+          :key="grp.ionFormula"
+          :value="grp.ionFormula"
+          :label="grp.label"
+          v-html="grp.labelHtml"
+        />
+      </el-select>
     </div>
 
     <!-- Reference annotation metrics -->
-    <div v-if="comparisonAnnotationGroup" class="ref-annotation-header">
-        <candidate-molecules-popover
-          placement="top"
-          :possibleCompounds="annotation.possibleCompounds"
-          :openDelay="100">
-            <span class="annotation-ion" v-html="renderMolFormulaHtml(annotation.ion)" />
-        </candidate-molecules-popover>
-        <span style="padding-left: 5px">(Selected annotation)</span>
+    <div
+      v-if="comparisonAnnotationGroup"
+      class="ref-annotation-header"
+    >
+      <candidate-molecules-popover
+        placement="top"
+        :possible-compounds="annotation.possibleCompounds"
+        :open-delay="100"
+      >
+        <span
+          class="annotation-ion"
+          v-html="renderMolFormulaHtml(annotation.ion)"
+        />
+      </candidate-molecules-popover>
+      <span style="padding-left: 5px">(Selected annotation)</span>
     </div>
     <div :class="comparisonAnnotationGroup ? 'ref-annotation-container' : ''">
-        <diagnostics-metrics
-          :annotation="annotation"
-        />
-        <diagnostics-images
-          :annotation="annotation"
-          :colormap="colormap"
-          :imageLoaderSettings="imageLoaderSettings"
-        />
+      <diagnostics-metrics
+        :annotation="annotation"
+      />
+      <diagnostics-images
+        :annotation="annotation"
+        :colormap="colormap"
+        :image-loader-settings="imageLoaderSettings"
+      />
     </div>
 
     <!-- Comparison annotation metrics -->
-    <div v-if="comparisonAnnotationGroup" class="comp-annotation-header">
-        <span v-if="comparisonAnnotationGroup.annotations.length > 1">Isobars: </span>
-        <span v-for="(ann, i) in comparisonAnnotationGroup.annotations">
-            <candidate-molecules-popover
-              placement="top"
-              :possibleCompounds="ann.possibleCompounds"
-              :openDelay="100">
-                <span class="annotation-ion" v-html="renderMolFormulaHtml(ann.ion)" />
-            </candidate-molecules-popover>
-            <span v-if="i !== comparisonAnnotationGroup.annotations.length-1">, </span>
-        </span>
+    <div
+      v-if="comparisonAnnotationGroup"
+      class="comp-annotation-header"
+    >
+      <span v-if="comparisonAnnotationGroup.annotations.length > 1">Isobars: </span>
+      <span v-for="(ann, i) in comparisonAnnotationGroup.annotations">
+        <candidate-molecules-popover
+          placement="top"
+          :possible-compounds="ann.possibleCompounds"
+          :open-delay="100"
+        >
+          <span
+            class="annotation-ion"
+            v-html="renderMolFormulaHtml(ann.ion)"
+          />
+        </candidate-molecules-popover>
+        <span v-if="i !== comparisonAnnotationGroup.annotations.length-1">, </span>
+      </span>
     </div>
-    <div v-if="comparisonAnnotationGroup" class="comp-annotation-container">
-        <diagnostics-metrics
-          :annotation="comparisonAnnotationGroup.annotations[0]"
-        />
-        <diagnostics-images
-          :annotation="comparisonAnnotationGroup.annotations[0]"
-          :colormap="colormap"
-          :imageLoaderSettings="imageLoaderSettings"
-        />
+    <div
+      v-if="comparisonAnnotationGroup"
+      class="comp-annotation-container"
+    >
+      <diagnostics-metrics
+        :annotation="comparisonAnnotationGroup.annotations[0]"
+      />
+      <diagnostics-images
+        :annotation="comparisonAnnotationGroup.annotations[0]"
+        :colormap="colormap"
+        :image-loader-settings="imageLoaderSettings"
+      />
     </div>
     <diagnostics-plot
-      :peakChartData="peakChartData"
+      :peak-chart-data="peakChartData"
       :ion="annotation.ion"
-      :comparisonPeakChartData="comparisonPeakChartData"
-      :comparisonIon="comparisonIon"
+      :comparison-peak-chart-data="comparisonPeakChartData"
+      :comparison-ion="comparisonIon"
     />
-</div>
+  </div>
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
-import {Component, Prop, Watch} from 'vue-property-decorator';
+import Vue from 'vue'
+import { Component, Prop, Watch } from 'vue-property-decorator'
 
-import DiagnosticsMetrics from './DiagnosticsMetrics.vue';
-import DiagnosticsImages from './DiagnosticsImages.vue';
-import DiagnosticsPlot from './DiagnosticsPlot.vue';
-import CandidateMoleculesPopover from '../CandidateMoleculesPopover.vue';
-import {groupBy, intersection, sortBy, xor} from 'lodash-es';
-import {isobarsQuery} from '../../../../api/annotation';
-import { renderMolFormula, renderMolFormulaHtml } from '../../../../util';
-import safeJsonParse from '../../../../lib/safeJsonParse';
-import reportError from '../../../../lib/reportError';
-import config from '../../../../config';
+import DiagnosticsMetrics from './DiagnosticsMetrics.vue'
+import DiagnosticsImages from './DiagnosticsImages.vue'
+import DiagnosticsPlot from './DiagnosticsPlot.vue'
+import CandidateMoleculesPopover from '../CandidateMoleculesPopover.vue'
+import { groupBy, intersection, sortBy, xor } from 'lodash-es'
+import { isobarsQuery } from '../../../../api/annotation'
+import { renderMolFormula, renderMolFormulaHtml } from '../../../../util'
+import safeJsonParse from '../../../../lib/safeJsonParse'
+import reportError from '../../../../lib/reportError'
+import config from '../../../../config'
 
 interface AnnotationGroup {
     isReference: boolean;
@@ -107,40 +133,43 @@ interface AnnotationGroup {
 }
 
 @Component<Diagnostics>({
-    name: 'diagnostics',
-    components: {
-        DiagnosticsMetrics,
-        DiagnosticsImages,
-        DiagnosticsPlot,
-        CandidateMoleculesPopover,
+  name: 'diagnostics',
+  components: {
+    DiagnosticsMetrics,
+    DiagnosticsImages,
+    DiagnosticsPlot,
+    CandidateMoleculesPopover,
+  },
+  apollo: {
+    isobarAnnotations: {
+      query: isobarsQuery,
+      loadingKey: 'loading',
+      skip() {
+        return !this.hasIsobars
+      },
+      variables() {
+        this.isobarAnnotationsIonFormula = this.annotation.ionFormula
+        return {
+          datasetId: this.annotation.dataset.id,
+          ionFormula: this.annotation.ionFormula,
+        }
+      },
+      update(data) {
+        return data.allAnnotations
+      },
     },
-    apollo: {
-        isobarAnnotations: {
-            query: isobarsQuery,
-            loadingKey: 'loading',
-            skip() {
-                return !this.hasIsobars;
-            },
-            variables() {
-                this.isobarAnnotationsIonFormula = this.annotation.ionFormula;
-                return {
-                    datasetId: this.annotation.dataset.id,
-                    ionFormula: this.annotation.ionFormula,
-                };
-            },
-            update(data) {
-                return data.allAnnotations;
-            }
-        },
-    },
+  },
 })
 export default class Diagnostics extends Vue {
     @Prop()
     annotation: any;
+
     @Prop()
     peakChartData: any;
+
     @Prop()
     colormap: any;
+
     @Prop()
     imageLoaderSettings: any;
 
@@ -154,71 +183,74 @@ export default class Diagnostics extends Vue {
 
     @Watch('annotationGroups')
     resetComparisonIfInvalid() {
-        if (this.comparisonIonFormula
+      if (this.comparisonIonFormula
           && !this.annotationGroups.some(ag => ag.ionFormula == this.comparisonIonFormula)) {
-            this.comparisonIonFormula = null;
-        }
+        this.comparisonIonFormula = null
+      }
     }
 
     get annotationGroups(): AnnotationGroup[] {
-        const allAnnotations = [this.annotation, ...(this.loading ? [] : this.isobarAnnotations)];
-        const isobarsByIonFormula = groupBy(this.annotation.isobars, 'ionFormula');
-        const isobarsKeys = [this.annotation.ionFormula, ...Object.keys(isobarsByIonFormula)];
-        const annotationsByIonFormula = groupBy(allAnnotations, 'ionFormula');
-        const annotationsKeys = Object.keys(annotationsByIonFormula);
-        // isobarsByIonFormula and annotationsByIonFormula should line up, but do an inner join just to be safe
-        const ionFormulas = intersection(isobarsKeys, annotationsKeys);
-        const missingIonFormulas = xor(isobarsKeys, annotationsKeys);
-        if (!this.loading
+      const allAnnotations = [this.annotation, ...(this.loading ? [] : this.isobarAnnotations)]
+      const isobarsByIonFormula = groupBy(this.annotation.isobars, 'ionFormula')
+      const isobarsKeys = [this.annotation.ionFormula, ...Object.keys(isobarsByIonFormula)]
+      const annotationsByIonFormula = groupBy(allAnnotations, 'ionFormula')
+      const annotationsKeys = Object.keys(annotationsByIonFormula)
+      // isobarsByIonFormula and annotationsByIonFormula should line up, but do an inner join just to be safe
+      const ionFormulas = intersection(isobarsKeys, annotationsKeys)
+      const missingIonFormulas = xor(isobarsKeys, annotationsKeys)
+      if (!this.loading
           && this.isobarAnnotationsIonFormula === this.annotation.ionFormula
           && missingIonFormulas.length > 0) {
-            reportError(new Error(
-              'Inconsistent annotations between Annotation.isobars and isobaricWith query results. '
+        reportError(new Error(
+          'Inconsistent annotations between Annotation.isobars and isobaricWith query results. '
               + `Annotation ${this.annotation.id} ${this.annotation.ion}: `
-              + `${Object.keys(isobarsByIonFormula).join(',')} != ${Object.keys(annotationsByIonFormula).join(',')}`
-            ), null);
+              + `${Object.keys(isobarsByIonFormula).join(',')} != ${Object.keys(annotationsByIonFormula).join(',')}`,
+        ), null)
+      }
+
+      const groups = ionFormulas.map(ionFormula => {
+        const isReference = ionFormula === this.annotation.ionFormula
+        const isobars = isobarsByIonFormula[ionFormula]
+        const annotations = annotationsByIonFormula[ionFormula]
+        const deltaMz = annotations[0].mz - this.annotation.mz
+        const massShiftText = isReference ? '' : `[M${deltaMz >= 0 ? '+' : ''}${deltaMz.toFixed(4)}]: `
+        const isomersText = annotations.length < 2 ? '' : ' (isomers)'
+        return {
+          ionFormula,
+          isReference,
+          annotations,
+          peakNs: isReference ? 1 : isobars[0].peakNs,
+          peakChartData: isReference ? this.peakChartData : safeJsonParse(annotations[0].peakChartData),
+          label: massShiftText + annotations.map(ann => renderMolFormula(ann.ion)).join(', ') + isomersText,
+          labelHtml: massShiftText + annotations.map(ann => renderMolFormulaHtml(ann.ion)).join(', ') + isomersText,
         }
+      })
 
-        const groups = ionFormulas.map(ionFormula => {
-            const isReference = ionFormula === this.annotation.ionFormula;
-            const isobars = isobarsByIonFormula[ionFormula];
-            const annotations = annotationsByIonFormula[ionFormula];
-            const deltaMz = annotations[0].mz - this.annotation.mz;
-            const massShiftText = isReference ? '' : `[M${deltaMz >= 0 ? '+' : ''}${deltaMz.toFixed(4)}]: `;
-            const isomersText = annotations.length < 2 ? '' : ' (isomers)';
-            return {
-                ionFormula, isReference, annotations,
-                peakNs: isReference ? 1 : isobars[0].peakNs,
-                peakChartData: isReference ? this.peakChartData : safeJsonParse(annotations[0].peakChartData),
-                label: massShiftText + annotations.map(ann => renderMolFormula(ann.ion)).join(', ') + isomersText,
-                labelHtml: massShiftText + annotations.map(ann => renderMolFormulaHtml(ann.ion)).join(', ') + isomersText,
-            }
-        });
-
-        return sortBy(groups, [
-          grp => grp.isReference ? 0 : 1,
-          grp => -grp.annotations[0].msm
-        ]);
+      return sortBy(groups, [
+        grp => grp.isReference ? 0 : 1,
+        grp => -grp.annotations[0].msm,
+      ])
     }
 
     get hasIsobars() {
-        return config.features.isobars && this.annotation.isobars.length != 0;
+      return config.features.isobars && this.annotation.isobars.length != 0
     }
+
     get hasWarnIsobar() {
-        return this.annotation.isobars.some((isobar: any) => isobar.shouldWarn);
+      return this.annotation.isobars.some((isobar: any) => isobar.shouldWarn)
     }
 
     get comparisonAnnotationGroup() {
-        return this.annotationGroups.find(grp => grp.ionFormula === this.comparisonIonFormula);
+      return this.annotationGroups.find(grp => grp.ionFormula === this.comparisonIonFormula)
     }
 
-  get comparisonPeakChartData() {
-    return this.comparisonAnnotationGroup && this.comparisonAnnotationGroup.peakChartData;
-  }
+    get comparisonPeakChartData() {
+      return this.comparisonAnnotationGroup && this.comparisonAnnotationGroup.peakChartData
+    }
 
-  get comparisonIon() {
-    return this.comparisonAnnotationGroup && this.comparisonAnnotationGroup.annotations[0].ion;
-  }
+    get comparisonIon() {
+      return this.comparisonAnnotationGroup && this.comparisonAnnotationGroup.annotations[0].ion
+    }
 }
 </script>
 

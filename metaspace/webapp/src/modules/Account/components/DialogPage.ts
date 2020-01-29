@@ -1,7 +1,7 @@
-import Vue from 'vue';
-import { Component, Prop, Watch } from 'vue-property-decorator';
-import { DialogType } from '../dialogs';
-import config from '../../../config';
+import Vue from 'vue'
+import { Component, Prop, Watch } from 'vue-property-decorator'
+import { DialogType } from '../dialogs'
+import config from '../../../config'
 
 @Component
 export default class DialogPage extends Vue {
@@ -9,16 +9,18 @@ export default class DialogPage extends Vue {
   dialog!: DialogType;
 
   render() {
-    return null;
+    return null
   }
+
   created() {
-    this.showDialog();
+    this.showDialog()
   }
+
   @Watch('dialog')
   showDialog() {
     this.$store.commit('account/showDialog', {
       dialog: this.dialog,
-      dialogCloseRedirect: '/'
-    });
+      dialogCloseRedirect: '/',
+    })
   }
 }

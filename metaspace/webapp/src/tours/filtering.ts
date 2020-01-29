@@ -1,8 +1,8 @@
-import convertTourStep from './convertTourStep';
+import convertTourStep from './convertTourStep'
 
 export default {
-  "id": "sm-tour-filtering",
-  "steps": [
+  id: 'sm-tour-filtering',
+  steps: [
     require('./filtering/steps/00-panel.md'),
     require('./filtering/steps/10-click.md'),
     require('./filtering/steps/20-select.md'),

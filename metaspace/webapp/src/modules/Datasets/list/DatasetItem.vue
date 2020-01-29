@@ -1,12 +1,28 @@
 <template>
-  <div class="dataset-item" :class="disabledClass" v-if="!deferRender">
-
-    <el-dialog title="Provided metadata" :lock-scroll="false" :visible.sync="showMetadataDialog">
-      <dataset-info :metadata="metadata" :currentUser="currentUser" />
+  <div
+    v-if="!deferRender"
+    class="dataset-item"
+    :class="disabledClass"
+  >
+    <el-dialog
+      title="Provided metadata"
+      :lock-scroll="false"
+      :visible.sync="showMetadataDialog"
+    >
+      <dataset-info
+        :metadata="metadata"
+        :current-user="currentUser"
+      />
     </el-dialog>
 
-    <div v-if="isOpticalImageSupported"class="opt-image--container">
-      <dataset-thumbnail :dataset="dataset" :editable="canEditOpticalImage" />
+    <div
+      v-if="isOpticalImageSupported"
+      class="opt-image--container"
+    >
+      <dataset-thumbnail
+        :dataset="dataset"
+        :editable="canEditOpticalImage"
+      />
     </div>
 
     <div class="ds-info">
@@ -15,53 +31,78 @@
         <b :title="formatDatasetName">{{ formatDatasetName }}</b>
       </div>
 
-      <div class="ds-item-line" style="color: darkblue;">
-        <span class="ds-add-filter"
-              title="Filter by species"
-              @click="addFilter('organism')">
+      <div
+        class="ds-item-line"
+        style="color: darkblue;"
+      >
+        <span
+          class="ds-add-filter"
+          title="Filter by species"
+          @click="addFilter('organism')"
+        >
           {{ formatOrganism }}</span>,
-        <span class="ds-add-filter"
-              title="Filter by organism part"
-              @click="addFilter('organismPart')">
+        <span
+          class="ds-add-filter"
+          title="Filter by organism part"
+          @click="addFilter('organismPart')"
+        >
           {{ formatOrganismPart }}</span>
 
-        <span class="ds-add-filter"
-              title="Filter by condition"
-              @click="addFilter('condition')">
+        <span
+          class="ds-add-filter"
+          title="Filter by condition"
+          @click="addFilter('condition')"
+        >
           ({{ formatCondition }})</span>
       </div>
 
       <div class="ds-item-line">
-        <span class="ds-add-filter"
-              title="Filter by ionisation source"
-              @click="addFilter('ionisationSource')">
+        <span
+          class="ds-add-filter"
+          title="Filter by ionisation source"
+          @click="addFilter('ionisationSource')"
+        >
           {{ dataset.ionisationSource }}</span> +
-        <span class="ds-add-filter"
-              title="Filter by analyzer type"
-              @click="addFilter('analyzerType')">
+        <span
+          class="ds-add-filter"
+          title="Filter by analyzer type"
+          @click="addFilter('analyzerType')"
+        >
           {{ dataset.analyzer.type }}</span>,
-        <span class="ds-add-filter"
-              title="Filter by polarity"
-              @click="addFilter('polarity')">
+        <span
+          class="ds-add-filter"
+          title="Filter by polarity"
+          @click="addFilter('polarity')"
+        >
           {{ dataset.polarity.toLowerCase() }} mode</span>,
         RP {{ formatResolvingPower }}
       </div>
 
-      <div class="ds-item-line" style="font-size: 15px;">
+      <div
+        class="ds-item-line"
+        style="font-size: 15px;"
+      >
         Submitted <span class="s-bold">{{ formatDate }}</span>
         at {{ formatTime }} by
-        <span class="ds-add-filter"
-              title="Filter by submitter"
-              @click="addFilter('submitter')">
+        <span
+          class="ds-add-filter"
+          title="Filter by submitter"
+          @click="addFilter('submitter')"
+        >
           {{ formatSubmitter }}</span><!--
           Be careful not to add empty space before the comma
           --><span v-if="dataset.groupApproved && dataset.group">,
-          <el-dropdown @command="handleDropdownCommand"
-                       :showTimeout="50"
+          <el-dropdown
+:show-timeout="50"
                        placement="bottom"
-                       :trigger="hideGroupMenu ? 'never' : 'hover'">
-            <span class="s-group ds-add-filter" @click="addFilter('group')">
-              {{dataset.group.shortName}}
+                       :trigger="hideGroupMenu ? 'never' : 'hover'"
+                       @command="handleDropdownCommand"
+>
+            <span
+class="s-group ds-add-filter"
+@click="addFilter('group')"
+>
+              {{ dataset.group.shortName }}
             </span>
             <el-dropdown-menu slot="dropdown">
               <el-dropdown-item command="filter_group">Filter by this group</el-dropdown-item>
@@ -70,21 +111,30 @@
           </el-dropdown>
         </span>
       </div>
-      <div class="ds-item-line" v-if="dataset.status == 'FINISHED' && this.dataset.fdrCounts">
+      <div
+        v-if="dataset.status == 'FINISHED' && this.dataset.fdrCounts"
+        class="ds-item-line"
+      >
         <span>
-          <router-link :to="resultsHref(formatDbName())">{{formatFdrCounts() | plural('annotation', 'annotations')}}</router-link>
-          @ FDR {{formatFdrLevel()}}% ({{formatDbName()}})
+          <router-link :to="resultsHref(formatDbName())">{{ formatFdrCounts() | plural('annotation', 'annotations') }}</router-link>
+          @ FDR {{ formatFdrLevel() }}% ({{ formatDbName() }})
         </span>
       </div>
     </div>
 
     <div class="ds-actions">
       <span v-if="dataset.status == 'FINISHED'">
-        <i class="el-icon-picture"></i>
-        <el-popover trigger="hover" placement="top">
+        <i class="el-icon-picture" />
+        <el-popover
+          trigger="hover"
+          placement="top"
+        >
           <div class="db-link-list">
             Select a database:
-            <div v-for="database in metaboliteDatabases" :key="database" >
+            <div
+              v-for="database in metaboliteDatabases"
+              :key="database"
+            >
               <router-link :to="resultsHref(database)">
                 {{ database }}
               </router-link>
@@ -92,348 +142,375 @@
           </div>
           <a slot="reference">Browse annotations</a>
         </el-popover>
-        <br/>
+        <br>
       </span>
 
       <span v-if="dataset.status === 'ANNOTATING'">
-        <div class="striped-progressbar processing" title="Processing is under way"></div>
+        <div
+          class="striped-progressbar processing"
+          title="Processing is under way"
+        />
       </span>
 
       <span v-if="dataset.status === 'QUEUED'">
-        <div class="striped-progressbar queued" title="Waiting in the queue"></div>
+        <div
+          class="striped-progressbar queued"
+          title="Waiting in the queue"
+        />
       </span>
 
-      <i class="el-icon-view"></i>
-      <a @click="showMetadata" class="metadata-link">Show full metadata</a>
+      <i class="el-icon-view" />
+      <a
+        class="metadata-link"
+        @click="showMetadata"
+      >Show full metadata</a>
 
       <div v-if="canEdit">
-        <i class="el-icon-edit"></i>
-        <router-link :to="editHref">Edit metadata</router-link>
+        <i class="el-icon-edit" />
+        <router-link :to="editHref">
+          Edit metadata
+        </router-link>
       </div>
 
-      <div v-if="canEdit"
-           class="ds-delete">
-        <i class="el-icon-delete"></i>
-        <a href="#" @click.prevent="openDeleteDialog">Delete dataset</a>
+      <div
+        v-if="canEdit"
+        class="ds-delete"
+      >
+        <i class="el-icon-delete" />
+        <a
+          href="#"
+          @click.prevent="openDeleteDialog"
+        >Delete dataset</a>
       </div>
 
-      <div v-if="canReprocess" class="ds-reprocess">
-        <i class="el-icon-refresh"></i>
-        <a href="#" @click.prevent="handleReprocess">Reprocess dataset</a>
+      <div
+        v-if="canReprocess"
+        class="ds-reprocess"
+      >
+        <i class="el-icon-refresh" />
+        <a
+          href="#"
+          @click.prevent="handleReprocess"
+        >Reprocess dataset</a>
       </div>
 
-      <el-popover v-if="!dataset.isPublic" trigger="hover" placement="top" @show="loadVisibility">
+      <el-popover
+        v-if="!dataset.isPublic"
+        trigger="hover"
+        placement="top"
+        @show="loadVisibility"
+      >
         <div v-loading="visibilityText == null">
-          {{visibilityText}}
+          {{ visibilityText }}
         </div>
-        <img slot="reference"
-             class="ds-item-private-icon"
-             src="../../../assets/padlock-icon.svg">
+        <img
+          slot="reference"
+          class="ds-item-private-icon"
+          src="../../../assets/padlock-icon.svg"
+        >
       </el-popover>
     </div>
   </div>
 </template>
 
 <script>
- import DatasetInfo from '../../../components/DatasetInfo.vue';
- import DatasetThumbnail from './DatasetThumbnail.vue';
- import {capitalize} from 'lodash-es';
- import {
-   datasetVisibilityQuery,
-   deleteDatasetQuery,
-   reprocessDatasetQuery,
- } from '../../../api/dataset';
- import {mdTypeSupportsOpticalImages} from '../../../util';
- import {encodeParams} from '../../Filters/index';
- import reportError from '../../../lib/reportError';
- import safeJsonParse from '../../../lib/safeJsonParse';
- import {plural} from '../../../lib/vueFilters';
+import DatasetInfo from '../../../components/DatasetInfo.vue'
+import DatasetThumbnail from './DatasetThumbnail.vue'
+import { capitalize } from 'lodash-es'
+import {
+  datasetVisibilityQuery,
+  deleteDatasetQuery,
+  reprocessDatasetQuery,
+} from '../../../api/dataset'
+import { mdTypeSupportsOpticalImages } from '../../../util'
+import { encodeParams } from '../../Filters/index'
+import reportError from '../../../lib/reportError'
+import safeJsonParse from '../../../lib/safeJsonParse'
+import { plural } from '../../../lib/vueFilters'
 
- function removeUnderscores(str) {
-   return str.replace(/_/g, ' ');
- }
+function removeUnderscores(str) {
+  return str.replace(/_/g, ' ')
+}
 
- export default {
-   name: 'dataset-item',
-   props: ['dataset', 'currentUser', 'idx', 'hideGroupMenu'],
-   components: {
-     DatasetInfo,
-     DatasetThumbnail,
-   },
-   filters: {
-     plural
-   },
+export default {
+  name: 'DatasetItem',
+  components: {
+    DatasetInfo,
+    DatasetThumbnail,
+  },
+  filters: {
+    plural,
+  },
+  props: ['dataset', 'currentUser', 'idx', 'hideGroupMenu'],
+  data() {
+    return {
+      showMetadataDialog: false,
+      disabled: false,
+      deferRender: this.idx >= 20,
+    }
+  },
 
-   computed: {
-     opticalImageAlignmentHref() {
-         return {
-             name: 'add-optical-image',
-             params: {dataset_id: this.dataset.id}
-         };
-     },
+  computed: {
+    opticalImageAlignmentHref() {
+      return {
+        name: 'add-optical-image',
+        params: { dataset_id: this.dataset.id },
+      }
+    },
 
-     isOpticalImageSupported() {
-       return mdTypeSupportsOpticalImages(this.$store.getters.filter.metadataType);
-     },
+    isOpticalImageSupported() {
+      return mdTypeSupportsOpticalImages(this.$store.getters.filter.metadataType)
+    },
 
-     formatSubmitter() {
-       const { name } = this.dataset.submitter;
-       return name;
-     },
+    formatSubmitter() {
+      const { name } = this.dataset.submitter
+      return name
+    },
 
-     formatDatasetName() {
-       return this.dataset.name;
-     },
+    formatDatasetName() {
+      return this.dataset.name
+    },
 
-     analyzerType() {
-       return this.dataset.analyzer.type;
-     },
+    analyzerType() {
+      return this.dataset.analyzer.type
+    },
 
-     uploadedDateTime() {
-       const unknown = {date: '????-??-??', time: '??:??'};
-       if (!this.dataset.id)
-         return unknown;
+    uploadedDateTime() {
+      const unknown = { date: '????-??-??', time: '??:??' }
+      if (!this.dataset.id)
+        return unknown
 
-       const fields = this.dataset.id.split('_');
-       if (fields.length < 2)
-         return unknown;
+      const fields = this.dataset.id.split('_')
+      if (fields.length < 2)
+        return unknown
 
-       const date = fields[0];
-       const time = fields[1].split('m')[0].replace('h', ':');
-       return {
-         date,
-         time
-       }
-     },
+      const date = fields[0]
+      const time = fields[1].split('m')[0].replace('h', ':')
+      return {
+        date,
+        time,
+      }
+    },
 
-     formatDate() {
-       return this.uploadedDateTime.date;
-     },
+    formatDate() {
+      return this.uploadedDateTime.date
+    },
 
-     formatTime() {
-       return this.uploadedDateTime.time;
-     },
+    formatTime() {
+      return this.uploadedDateTime.time
+    },
 
-     metadata() {
-       const datasetMetadataExternals = {
-         "Submitter": this.dataset.submitter,
-         "PI": this.dataset.principalInvestigator,
-         "Group": this.dataset.groupApproved ? this.dataset.group : null,
-         "Projects": this.dataset.projects
-       };
-       return Object.assign(safeJsonParse(this.dataset.metadataJson), datasetMetadataExternals);
-     },
+    metadata() {
+      const datasetMetadataExternals = {
+        Submitter: this.dataset.submitter,
+        PI: this.dataset.principalInvestigator,
+        Group: this.dataset.groupApproved ? this.dataset.group : null,
+        Projects: this.dataset.projects,
+      }
+      return Object.assign(safeJsonParse(this.dataset.metadataJson), datasetMetadataExternals)
+    },
 
-     metaboliteDatabases() {
-       const dbs = this.dataset.molDBs;
-       if (typeof dbs === 'string')
-         return [dbs];
-       else
-         return dbs;
-     },
+    metaboliteDatabases() {
+      const dbs = this.dataset.molDBs
+      if (typeof dbs === 'string')
+        return [dbs]
+      else
+        return dbs
+    },
 
-     formatOrganism() {
-       return removeUnderscores(this.dataset.organism);
-     },
+    formatOrganism() {
+      return removeUnderscores(this.dataset.organism)
+    },
 
-     formatCondition() {
-       return removeUnderscores(this.dataset.condition).toLowerCase();
-     },
+    formatCondition() {
+      return removeUnderscores(this.dataset.condition).toLowerCase()
+    },
 
-     formatOrganismPart() {
-       return removeUnderscores(this.dataset.organismPart).toLowerCase();
-     },
+    formatOrganismPart() {
+      return removeUnderscores(this.dataset.organismPart).toLowerCase()
+    },
 
-     formatResolvingPower() {
-       const rp = this.metadata.MS_Analysis.Detector_Resolving_Power;
-       const {mz, Resolving_Power} = rp;
-       return (Resolving_Power / 1000).toFixed(0) + 'k @ ' + mz;
-     },
+    formatResolvingPower() {
+      const rp = this.metadata.MS_Analysis.Detector_Resolving_Power
+      const { mz, Resolving_Power } = rp
+      return (Resolving_Power / 1000).toFixed(0) + 'k @ ' + mz
+    },
 
-     canEdit() {
-       if (this.currentUser != null) {
-         if (this.currentUser.role === 'admin')
-           return true;
-         if (this.currentUser.id === this.dataset.submitter.id
+    canEdit() {
+      if (this.currentUser != null) {
+        if (this.currentUser.role === 'admin')
+          return true
+        if (this.currentUser.id === this.dataset.submitter.id
            && !['QUEUED', 'ANNOTATING'].includes(this.dataset.status))
-           return true;
-       }
-       return false;
-     },
+          return true
+      }
+      return false
+    },
 
-     canEditOpticalImage() {
-       return this.canEdit && this.dataset.status === 'FINISHED';
-     },
+    canEditOpticalImage() {
+      return this.canEdit && this.dataset.status === 'FINISHED'
+    },
 
-     canReprocess() {
-       return this.currentUser != null
-         && this.currentUser.role === 'admin';
-     },
-
-     editHref() {
-       return {
-         name: 'edit-metadata',
-         params: {dataset_id: this.dataset.id}
-       };
-     },
-
-     disabledClass() {
-       return this.disabled ? "ds-item-disabled" : "";
-     },
-
-     visibilityText() {
-       if (this.datasetVisibility != null) {
-         const {submitter, group, projects} = this.datasetVisibility;
-         const submitterName = this.currentUser && submitter.id === this.currentUser.id ? 'you' : submitter.name;
-         const all = [
-           submitterName,
-           ...(group ? [group.name] : []),
-           ...(projects || []).map(p => p.name),
-         ];
-         return `These annotation results are not publicly visible. They are visible to ${all.join(', ')} and METASPACE Administrators.`
-       }
-     }
-   },
-   data() {
-     return {
-       showMetadataDialog: false,
-       disabled: false,
-       deferRender: this.idx >= 20,
-     };
-   },
-   async created() {
-     // Defer rendering of most elements until after the first render, so that the page becomes interactive sooner
-     const delayFrames = Math.floor(this.idx/10);
-     try {
-       for (let i = 0; i < delayFrames; i++) {
-         await new Promise(resolve => requestAnimationFrame(resolve));
-       }
-     } catch (err) { /* Browser/test doesn't support requestAnimationFrame? */}
-     this.deferRender = false;
-   },
-   apollo: {
-     datasetVisibility: {
-       query: datasetVisibilityQuery,
-       skip: true,
-       variables() {
-         return {id: this.dataset.id}
-       }
-     },
-   },
-
-   methods: {
-     resultsHref(databaseName) {
-       const filter = Object.assign({}, this.$store.getters.filter, {
-         database: databaseName,
-         datasetIds: [this.dataset.id]
-       });
-       return {
-         path: '/annotations',
-         query: Object.assign({},
-           encodeParams(filter, '/annotations', this.$store.state.filterLists),
-           {mdtype: this.dataset.metadataType})
-       };
-     },
-
-     showMetadata() {
-       this.showMetadataDialog = true;
-     },
-
-     addFilter(field) {
-       let filter = Object.assign({}, this.$store.getters.filter);
-       if (field == 'polarity') {
-         filter['polarity'] = capitalize(this.dataset.polarity);
-       } else if (field == 'submitter') {
-         filter[field] = this.dataset.submitter.id;
-       } else if (field == 'group') {
-         filter[field] = this.dataset.group.id;
-       } else {
-         filter[field] = this.dataset[field] || this[field];
-       }
-       this.$store.commit('updateFilter', filter);
-       this.$emit('filterUpdate', filter);
-     },
-
-     async openDeleteDialog() {
-       const force = this.currentUser != null
+    canReprocess() {
+      return this.currentUser != null
          && this.currentUser.role === 'admin'
-         && this.dataset.status !== 'FINISHED';
-       try {
-         await this.$confirm(`Are you sure you want to ${force ? 'FORCE-DELETE' : 'delete'} ${this.formatDatasetName}?`, {
-           type: force ? 'warning' : null,
-           lockScroll: false,
-         });
-       } catch (cancel) {
-         return;
-       }
+    },
 
-       try {
-         this.disabled = true;
-         const resp = await this.$apollo.mutate({
-           mutation: deleteDatasetQuery,
-           variables: {
-             id: this.dataset.id,
-             force
-           }
-         });
-         this.$emit('datasetMutated');
-       }
-       catch (err) {
-         this.disabled = false;
-         reportError(err, "Deletion failed :( Please contact us at contact@metaspace2020.eu");
-       }
-     },
+    editHref() {
+      return {
+        name: 'edit-metadata',
+        params: { dataset_id: this.dataset.id },
+      }
+    },
 
-     async handleReprocess() {
-       try {
-         this.disabled = true;
-         await this.$apollo.mutate({
-           mutation: reprocessDatasetQuery,
-           variables: {
-             id: this.dataset.id,
-             force: true,
-           }
-         });
-         this.$notify.success("Dataset sent for reprocessing");
-         this.$emit('datasetMutated');
-       }
-       catch (err) {
-         reportError(err);
-       } finally {
-         this.disabled = false;
-       }
-     },
+    disabledClass() {
+      return this.disabled ? 'ds-item-disabled' : ''
+    },
 
-     handleDropdownCommand(command) {
-       if (command.startsWith('filter_')) {
-         this.addFilter(command.substring('filter_'.length));
-       } else if (command === 'view_group') {
-         this.$router.push({
-           name: 'group',
-           params: {
-             groupIdOrSlug: this.dataset.group.id,
-           },
-         })
-       }
-     },
+    visibilityText() {
+      if (this.datasetVisibility != null) {
+        const { submitter, group, projects } = this.datasetVisibility
+        const submitterName = this.currentUser && submitter.id === this.currentUser.id ? 'you' : submitter.name
+        const all = [
+          submitterName,
+          ...(group ? [group.name] : []),
+          ...(projects || []).map(p => p.name),
+        ]
+        return `These annotation results are not publicly visible. They are visible to ${all.join(', ')} and METASPACE Administrators.`
+      }
+    },
+  },
+  async created() {
+    // Defer rendering of most elements until after the first render, so that the page becomes interactive sooner
+    const delayFrames = Math.floor(this.idx / 10)
+    try {
+      for (let i = 0; i < delayFrames; i++) {
+        await new Promise(resolve => requestAnimationFrame(resolve))
+      }
+    } catch (err) { /* Browser/test doesn't support requestAnimationFrame? */ }
+    this.deferRender = false
+  },
+  apollo: {
+    datasetVisibility: {
+      query: datasetVisibilityQuery,
+      skip: true,
+      variables() {
+        return { id: this.dataset.id }
+      },
+    },
+  },
 
-     formatFdrLevel() {
-       return this.dataset.fdrCounts.levels.join(', ');
-     },
+  methods: {
+    resultsHref(databaseName) {
+      const filter = Object.assign({}, this.$store.getters.filter, {
+        database: databaseName,
+        datasetIds: [this.dataset.id],
+      })
+      return {
+        path: '/annotations',
+        query: Object.assign({},
+          encodeParams(filter, '/annotations', this.$store.state.filterLists),
+          { mdtype: this.dataset.metadataType }),
+      }
+    },
 
-     formatFdrCounts() {
-       return this.dataset.fdrCounts.counts.join(', ');
-     },
+    showMetadata() {
+      this.showMetadataDialog = true
+    },
 
-     formatDbName() {
-       return this.dataset.fdrCounts.dbName;
-     },
+    addFilter(field) {
+      const filter = Object.assign({}, this.$store.getters.filter)
+      if (field == 'polarity') {
+        filter.polarity = capitalize(this.dataset.polarity)
+      } else if (field == 'submitter') {
+        filter[field] = this.dataset.submitter.id
+      } else if (field == 'group') {
+        filter[field] = this.dataset.group.id
+      } else {
+        filter[field] = this.dataset[field] || this[field]
+      }
+      this.$store.commit('updateFilter', filter)
+      this.$emit('filterUpdate', filter)
+    },
 
-     loadVisibility() {
-       this.$apollo.queries.datasetVisibility.start();
-     }
-   }
- }
+    async openDeleteDialog() {
+      const force = this.currentUser != null
+         && this.currentUser.role === 'admin'
+         && this.dataset.status !== 'FINISHED'
+      try {
+        await this.$confirm(`Are you sure you want to ${force ? 'FORCE-DELETE' : 'delete'} ${this.formatDatasetName}?`, {
+          type: force ? 'warning' : null,
+          lockScroll: false,
+        })
+      } catch (cancel) {
+        return
+      }
+
+      try {
+        this.disabled = true
+        const resp = await this.$apollo.mutate({
+          mutation: deleteDatasetQuery,
+          variables: {
+            id: this.dataset.id,
+            force,
+          },
+        })
+        this.$emit('datasetMutated')
+      } catch (err) {
+        this.disabled = false
+        reportError(err, 'Deletion failed :( Please contact us at contact@metaspace2020.eu')
+      }
+    },
+
+    async handleReprocess() {
+      try {
+        this.disabled = true
+        await this.$apollo.mutate({
+          mutation: reprocessDatasetQuery,
+          variables: {
+            id: this.dataset.id,
+            force: true,
+          },
+        })
+        this.$notify.success('Dataset sent for reprocessing')
+        this.$emit('datasetMutated')
+      } catch (err) {
+        reportError(err)
+      } finally {
+        this.disabled = false
+      }
+    },
+
+    handleDropdownCommand(command) {
+      if (command.startsWith('filter_')) {
+        this.addFilter(command.substring('filter_'.length))
+      } else if (command === 'view_group') {
+        this.$router.push({
+          name: 'group',
+          params: {
+            groupIdOrSlug: this.dataset.group.id,
+          },
+        })
+      }
+    },
+
+    formatFdrLevel() {
+      return this.dataset.fdrCounts.levels.join(', ')
+    },
+
+    formatFdrCounts() {
+      return this.dataset.fdrCounts.counts.join(', ')
+    },
+
+    formatDbName() {
+      return this.dataset.fdrCounts.dbName
+    },
+
+    loadVisibility() {
+      this.$apollo.queries.datasetVisibility.start()
+    },
+  },
+}
 </script>
 
 <style lang="scss">

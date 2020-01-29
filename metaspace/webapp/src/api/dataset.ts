@@ -1,4 +1,4 @@
-import gql from 'graphql-tag';
+import gql from 'graphql-tag'
 
 // Prefixing these with `Gql` because differently-cased variants are used elsewhere
 export type GqlPolarity = 'POSITIVE' | 'NEGATIVE';
@@ -79,7 +79,7 @@ export const datasetDetailItemFragment =
     }
     thumbnailOpticalImageUrl
     ionThumbnailUrl
-  }`;
+  }`
 
 export const datasetDetailItemsQuery =
   gql`query GetDatasets($dFilter: DatasetFilter, $query: String, $inpFdrLvls: [Int!]!, $checkLvl: Int!) {
@@ -88,12 +88,12 @@ export const datasetDetailItemsQuery =
     }
   }
   ${datasetDetailItemFragment}
-  `;
+  `
 
 export const datasetCountQuery =
   gql`query CountDatasets($dFilter: DatasetFilter, $query: String) {
     countDatasets(filter: $dFilter, simpleQuery: $query)
-  }`;
+  }`
 
 export interface DatasetListItem {
   id: string;
@@ -108,7 +108,7 @@ export const datasetListItemsQuery =
       name
       uploadDT
     }
-  }`;
+  }`
 
 export type OpticalImageType = 'SCALED' | 'CLIPPED_TO_ION_IMAGE';
 
@@ -130,7 +130,7 @@ export const opticalImagesQuery =
         transform
       }
     }
-  }`;
+  }`
 
 export const rawOpticalImageQuery =
     gql`query Q($ds_id: String!) {
@@ -138,34 +138,34 @@ export const rawOpticalImageQuery =
       url
       transform
     }
-  }`;
+  }`
 
 export const createDatasetQuery =
   gql`mutation ($input: DatasetCreateInput!) {
       createDataset(input: $input, priority: 1)
-  }`;
+  }`
 
 export const deleteDatasetQuery =
   gql`mutation ($id: String!, $force: Boolean) {
     deleteDataset(id: $id, force: $force)
-  }`;
+  }`
 
 export const reprocessDatasetQuery =
   gql`mutation ($id: String!) {
     reprocessDataset(id: $id)
-  }`;
+  }`
 
 export const addOpticalImageQuery =
   gql`mutation ($imageUrl: String!,
                 $datasetId: String!, $transform: [[Float]]!) {
     addOpticalImage(input: {datasetId: $datasetId,
                             imageUrl: $imageUrl, transform: $transform})
-  }`;
+  }`
 
 export const deleteOpticalImageQuery =
   gql`mutation ($id: String!) {
     deleteOpticalImage(datasetId: $id)
-  }`;
+  }`
 
 export const msAcqGeometryQuery =
   gql`query ($datasetId: String!) {
@@ -173,7 +173,7 @@ export const msAcqGeometryQuery =
       id
       acquisitionGeometry
     }
-  }`;
+  }`
 
 export const datasetVisibilityQuery =
   gql`query DatasetVisibility($id: String!) {
@@ -183,7 +183,7 @@ export const datasetVisibilityQuery =
        group { id name }
        projects { id name }
      }
-   }`;
+   }`
 
 export interface DatasetVisibilityResult {
   id: string;
@@ -207,10 +207,10 @@ export const datasetStatusUpdatedQuery = gql`subscription datasetStatusUpdated($
     is_new
   }
 }
-${datasetDetailItemFragment}`;
+${datasetDetailItemFragment}`
 
 export const datasetDeletedQuery = gql`subscription datasetDeleted {
   datasetDeleted {
     id
   }
-}`;
+}`

@@ -1,5 +1,5 @@
-import {cloneDeep, mapValues} from 'lodash-es';
-import {Component} from 'vue';
+import { cloneDeep, mapValues } from 'lodash-es'
+import { Component } from 'vue'
 
 export type Polarity = 'Positive' | 'Negative';
 export type DetectorResolvingPower = { mz: number; Resolving_Power: number; };
@@ -57,19 +57,19 @@ export interface MetaspaceOptions {
 }
 
 const FIELD_WIDTH: Record<string, number> = {
-  'Submitter': 8,
-  'Supplementary': 16,
-  'Email': 24,
-  'Polarity': 4,
-  'Ionisation_Source': 8,
-  'Analyzer': 8,
-  'Detector_Resolving_Power': 17,
-  'Pixel_Size': 17,
-  'Dataset_Name': 12,
-  'Solvent_A_Table': 24,
-  'Solvent_B_Table': 24,
-  'Gradient_Table': 24
-};
+  Submitter: 8,
+  Supplementary: 16,
+  Email: 24,
+  Polarity: 4,
+  Ionisation_Source: 8,
+  Analyzer: 8,
+  Detector_Resolving_Power: 17,
+  Pixel_Size: 17,
+  Dataset_Name: 12,
+  Solvent_A_Table: 24,
+  Solvent_B_Table: 24,
+  Gradient_Table: 24,
+}
 
 function prettify(propName: string) {
   return propName
@@ -77,45 +77,45 @@ function prettify(propName: string) {
     .replace(/ [A-Z][a-z]/g, (x) => ' ' + x.slice(1).toLowerCase())
     .replace(/( freetext$| table$)/, '')
     .replace('metaspace', 'METASPACE')
-    .trim();
+    .trim()
 }
 
 function getFieldType(prop: JsonSchemaProperty, propName: string): FormFieldEditorType {
   if (prop.type === 'string') {
     if (propName.endsWith('Freetext')) {
-      return 'textarea';
+      return 'textarea'
     } else if (prop.enum) {
-      return 'select';
+      return 'select'
     } else if (propName !== 'Dataset_Name' && propName !== 'Email') {
-      return 'autocomplete';
+      return 'autocomplete'
     }
   } else if (prop.type === 'boolean') {
-    return 'checkbox';
+    return 'checkbox'
   } else if (prop.type === 'array') {
     if (propName.endsWith('Table')) {
-      return 'table';
+      return 'table'
     } else {
-      return 'selectMulti';
+      return 'selectMulti'
     }
   } else if (prop.type === 'object') {
     if (prop.properties && prop.properties.First_Name != null) {
-      return 'person';
+      return 'person'
     } else if (prop.properties && prop.properties.Resolving_Power != null) {
-      return 'detectorResolvingPower';
+      return 'detectorResolvingPower'
     }
   }
-  return 'text';
+  return 'text'
 }
 
 function getWidth(propName: string) {
   if (propName.endsWith('Freetext'))
-    return 16;
-  return FIELD_WIDTH[propName] || 8;
+    return 16
+  return FIELD_WIDTH[propName] || 8
 }
 
 function deriveSection(section: JsonSchemaProperty, sectionKey: string): FormSectionProperty | DataTypeSectionProperty {
   if (section.type === 'string') {
-    return section as DataTypeSectionProperty;
+    return section as DataTypeSectionProperty
   } else if (section.type === 'object') {
     const derivedSection: FormSectionProperty = {
       ...section,
@@ -127,19 +127,19 @@ function deriveSection(section: JsonSchemaProperty, sectionKey: string): FormSec
         smEditorColWidth: field.smEditorColWidth || getWidth(fieldKey),
         title: field.title || prettify(fieldKey),
       })),
-      help: section.help
-    };
-    return derivedSection;
+      help: section.help,
+    }
+    return derivedSection
   } else {
-    throw new Error(`Could not derive type of section ${sectionKey}`);
+    throw new Error(`Could not derive type of section ${sectionKey}`)
   }
 }
 
 export function deriveFullSchema(schema: JsonSchemaProperty): FormSchema {
   // TODO: Move all this information into custom attributes in the schema instead of inspecting the data/name/etc.
-  const clonedSchema = cloneDeep(schema);
+  const clonedSchema = cloneDeep(schema)
   return {
     ...clonedSchema,
     properties: mapValues(clonedSchema.properties, deriveSection),
-  };
+  }
 }

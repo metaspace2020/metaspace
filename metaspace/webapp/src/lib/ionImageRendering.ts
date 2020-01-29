@@ -1,7 +1,7 @@
-import {decode, Image} from 'upng-js';
-import {quantile} from 'simple-statistics';
-import {range} from 'lodash-es';
-import {DEFAULT_SCALE_TYPE} from './constants';
+import { decode, Image } from 'upng-js'
+import { quantile } from 'simple-statistics'
+import { range } from 'lodash-es'
+import { DEFAULT_SCALE_TYPE } from './constants'
 
 export interface IonImage {
   intensityValues: Float32Array;
@@ -30,209 +30,208 @@ const SCALES: Record<ScaleType, [ScaleMode, number | null, number | null]> = {
   'log-full': ['log', 0, 1],
   hist: ['hist', null, null],
   test: ['linear', null, 0.5], // For unit tests, because it's easier to make test data for 50% threshold than 99%
-};
+}
 
 const createDataUrl = (imageBytes: Uint8ClampedArray, width: number, height: number) => {
   if (imageBytes.length != width * height * 4) {
-    throw new Error('imageBytes must be in RGBA format');
+    throw new Error('imageBytes must be in RGBA format')
   }
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d")!;
-  let imageData: ImageData;
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')!
+  let imageData: ImageData
   try {
     imageData = new ImageData(imageBytes, width, height)
   } catch (ex) {
     // IE11 doesn't support `new ImageData`, so it gets the slow path
-    imageData = ctx.createImageData(width, height);
-    imageData.data.set(imageBytes);
+    imageData = ctx.createImageData(width, height)
+    imageData.data.set(imageBytes)
   }
-  ctx.putImageData(imageData, 0, 0);
-  return canvas.toDataURL();
-};
+  ctx.putImageData(imageData, 0, 0)
+  return canvas.toDataURL()
+}
 
 const extractIntensityAndMask = (png: Image, min: number, max: number) => {
-  const {width, height, depth, ctype} = png;
-  const bytesPerComponent = depth <= 8 ? 1 : 2;
-  const hasAlpha = ctype === 4 || ctype === 6;
-  const numPixels = (width * height);
-  const numComponents = (ctype & 2 ? 3 : 1) + (hasAlpha ? 1 : 0);
-  const rangeVal = Number(max - min) / (bytesPerComponent === 1 ? 255 : 65535);
-  const baseVal = Number(min);
+  const { width, height, depth, ctype } = png
+  const bytesPerComponent = depth <= 8 ? 1 : 2
+  const hasAlpha = ctype === 4 || ctype === 6
+  const numPixels = (width * height)
+  const numComponents = (ctype & 2 ? 3 : 1) + (hasAlpha ? 1 : 0)
+  const rangeVal = Number(max - min) / (bytesPerComponent === 1 ? 255 : 65535)
+  const baseVal = Number(min)
   // NOTE: pngDataBuffer usually has some trailing padding bytes. TypedArrays should have explicit sizes specified to prevent over-reading
-  const pngDataBuffer = (png.data as any as Uint8Array).buffer; // The typings are wrong
+  const pngDataBuffer = (png.data as any as Uint8Array).buffer // The typings are wrong
 
   // NOTE: This function is a bit verbose. It's intentionally structured this way so that the JS engine can
   // statically determine the types of all variables involved in copying, and hopefully generate fast machine code.
-  const intensityValues = new Float32Array(numPixels);
-  const mask = new Uint8ClampedArray(numPixels);
-  const dataView = new DataView(pngDataBuffer, 0, numPixels * numComponents * bytesPerComponent);
+  const intensityValues = new Float32Array(numPixels)
+  const mask = new Uint8ClampedArray(numPixels)
+  const dataView = new DataView(pngDataBuffer, 0, numPixels * numComponents * bytesPerComponent)
   if (bytesPerComponent === 1) {
     for (let i = 0; i < numPixels; i++) {
-      const byteOffset = i * numComponents * bytesPerComponent;
-      intensityValues[i] = dataView.getUint8(byteOffset) * rangeVal + baseVal;
+      const byteOffset = i * numComponents * bytesPerComponent
+      intensityValues[i] = dataView.getUint8(byteOffset) * rangeVal + baseVal
     }
     if (hasAlpha) {
-      const alphaOffset = numComponents - 1;
+      const alphaOffset = numComponents - 1
       for (let i = 0; i < numPixels; i++) {
-        const byteOffset = i * numComponents * bytesPerComponent + alphaOffset;
-        mask[i] = dataView.getUint8(byteOffset) < 128 ? 0 : 255;
+        const byteOffset = i * numComponents * bytesPerComponent + alphaOffset
+        mask[i] = dataView.getUint8(byteOffset) < 128 ? 0 : 255
       }
     } else {
       mask.fill(255)
     }
   } else {
     for (let i = 0; i < numPixels; i++) {
-      const byteOffset = i * numComponents * bytesPerComponent;
-      intensityValues[i] = dataView.getUint16(byteOffset, false) * rangeVal + baseVal;
+      const byteOffset = i * numComponents * bytesPerComponent
+      intensityValues[i] = dataView.getUint16(byteOffset, false) * rangeVal + baseVal
     }
     if (hasAlpha) {
-      const alphaOffset = (numComponents - 1) * bytesPerComponent;
+      const alphaOffset = (numComponents - 1) * bytesPerComponent
       for (let i = 0; i < numPixels; i++) {
-        const byteOffset = i * numComponents * bytesPerComponent + alphaOffset;
-        mask[i] = dataView.getUint16(byteOffset, false) < 32768 ? 0 : 255;
+        const byteOffset = i * numComponents * bytesPerComponent + alphaOffset
+        mask[i] = dataView.getUint16(byteOffset, false) < 32768 ? 0 : 255
       }
     } else {
       mask.fill(255)
     }
   }
 
-  return {intensityValues, mask};
-};
+  return { intensityValues, mask }
+}
 
 function safeQuantile(values: number[], q: number): number;
 function safeQuantile(values: number[], q: number[]): number[];
 function safeQuantile(values: number[], q: number | number[]): any {
   // Handle cases when `values` is empty gracefully
   if (values.length > 0) {
-    return quantile(values, q as any);
+    return quantile(values, q as any)
   } else if (typeof q === 'number') {
-    return 0;
+    return 0
   } else {
-    return q.map(() => 0);
+    return q.map(() => 0)
   }
 }
 
 const getScaleParams = (intensityValues: Float32Array, mask: Uint8ClampedArray,
-                             minIntensity: number, maxIntensity: number,
-                             lowQuantile: number | null, highQuantile: number | null, scaleMode: ScaleMode) => {
-
-  const values = [];
+  minIntensity: number, maxIntensity: number,
+  lowQuantile: number | null, highQuantile: number | null, scaleMode: ScaleMode) => {
+  const values = []
 
   // Only non-zero values should be considered for hotspot removal, otherwise sparse images have most of their set pixels treated as hotspots.
   // For compatibility with the previous version where images were loaded as 8-bit, linear scale's thresholds exclude pixels
   // whose values would round down to zero. This can make a big difference - some ion images have as high as 40% of
   // their pixels set to values that are zero when loaded as 8-bit but non-zero when loaded as 16-bit.
-  const minValueConsidered = scaleMode === 'linear' ? maxIntensity / 256 : 0;
+  const minValueConsidered = scaleMode === 'linear' ? maxIntensity / 256 : 0
   for (let i = 0; i < mask.length; i++) {
     if (intensityValues[i] > minValueConsidered && mask[i] !== 0) {
-      values.push(intensityValues[i]);
+      values.push(intensityValues[i])
     }
   }
 
-  const clippedMinIntensity = lowQuantile == null ? minIntensity : safeQuantile(values, lowQuantile);
-  const clippedMaxIntensity = highQuantile == null ? maxIntensity : safeQuantile(values, highQuantile);
+  const clippedMinIntensity = lowQuantile == null ? minIntensity : safeQuantile(values, lowQuantile)
+  const clippedMaxIntensity = highQuantile == null ? maxIntensity : safeQuantile(values, highQuantile)
 
-  let rankValues: Float32Array | null = null;
+  let rankValues: Float32Array | null = null
   if (scaleMode === 'hist') {
-    const lo = lowQuantile || 0, hi = highQuantile || 1;
-    const quantiles = range(256).map(i => lo + (hi - lo) * i / 255);
-    rankValues = new Float32Array(safeQuantile(values, quantiles));
+    const lo = lowQuantile || 0; const hi = highQuantile || 1
+    const quantiles = range(256).map(i => lo + (hi - lo) * i / 255)
+    rankValues = new Float32Array(safeQuantile(values, quantiles))
   }
 
-  return {clippedMinIntensity, clippedMaxIntensity, rankValues};
-};
+  return { clippedMinIntensity, clippedMaxIntensity, rankValues }
+}
 
 const quantizeIonImageLinear = (intensityValues: Float32Array, minIntensity: number, maxIntensity: number) => {
-  const clippedValues = new Uint8ClampedArray(intensityValues.length);
-  const intensityScale = 255 / (maxIntensity - minIntensity);
+  const clippedValues = new Uint8ClampedArray(intensityValues.length)
+  const intensityScale = 255 / (maxIntensity - minIntensity)
 
   for (let i = 0; i < intensityValues.length; i++) {
-    clippedValues[i] = (intensityValues[i] - minIntensity) * intensityScale;
+    clippedValues[i] = (intensityValues[i] - minIntensity) * intensityScale
   }
 
-  return clippedValues;
-};
+  return clippedValues
+}
 
 const quantizeIonImageLog = (intensityValues: Float32Array, minIntensity: number, maxIntensity: number) => {
-  const clippedValues = new Uint8ClampedArray(intensityValues.length);
-  const logMinIntensity = Math.log(minIntensity);
-  const intensityScale = 255 / (Math.log(maxIntensity) - logMinIntensity);
+  const clippedValues = new Uint8ClampedArray(intensityValues.length)
+  const logMinIntensity = Math.log(minIntensity)
+  const intensityScale = 255 / (Math.log(maxIntensity) - logMinIntensity)
 
   for (let i = 0; i < intensityValues.length; i++) {
-    clippedValues[i] = (Math.log(intensityValues[i]) - logMinIntensity) * intensityScale;
+    clippedValues[i] = (Math.log(intensityValues[i]) - logMinIntensity) * intensityScale
   }
 
-  return clippedValues;
-};
+  return clippedValues
+}
 
 const quantizeIonImageRank = (intensityValues: Float32Array, rankValues: Float32Array) => {
-  const clippedValues = new Uint8ClampedArray(intensityValues.length);
-  const min = rankValues[0];
-  const max = rankValues[255];
+  const clippedValues = new Uint8ClampedArray(intensityValues.length)
+  const min = rankValues[0]
+  const max = rankValues[255]
 
   for (let i = 0; i < intensityValues.length; i++) {
-    const intensity = intensityValues[i];
+    const intensity = intensityValues[i]
     if (intensity < min) {
-      clippedValues[i] = 0;
+      clippedValues[i] = 0
     } else if (intensity >= max) {
-      clippedValues[i] = 255;
+      clippedValues[i] = 255
     } else {
       // Fixed-depth binary search into 256-element array
-      let mid = 0;
-      if (intensity > rankValues[mid | 0x80]) mid |= 0x80;
-      if (intensity > rankValues[mid | 0x40]) mid |= 0x40;
-      if (intensity > rankValues[mid | 0x20]) mid |= 0x20;
-      if (intensity > rankValues[mid | 0x10]) mid |= 0x10;
-      if (intensity > rankValues[mid | 0x08]) mid |= 0x08;
-      if (intensity > rankValues[mid | 0x04]) mid |= 0x04;
-      if (intensity > rankValues[mid | 0x02]) mid |= 0x02;
-      if (intensity > rankValues[mid | 0x01]) mid |= 0x01;
-      clippedValues[i] = mid;
+      let mid = 0
+      if (intensity > rankValues[mid | 0x80]) mid |= 0x80
+      if (intensity > rankValues[mid | 0x40]) mid |= 0x40
+      if (intensity > rankValues[mid | 0x20]) mid |= 0x20
+      if (intensity > rankValues[mid | 0x10]) mid |= 0x10
+      if (intensity > rankValues[mid | 0x08]) mid |= 0x08
+      if (intensity > rankValues[mid | 0x04]) mid |= 0x04
+      if (intensity > rankValues[mid | 0x02]) mid |= 0x02
+      if (intensity > rankValues[mid | 0x01]) mid |= 0x01
+      clippedValues[i] = mid
     }
   }
 
-  return clippedValues;
-};
+  return clippedValues
+}
 
 const quantizeIonImage = (intensityValues: Float32Array, minIntensity: number, maxIntensity: number,
-                          rankValues: Float32Array | null, scaleMode: ScaleMode): Uint8ClampedArray => {
+  rankValues: Float32Array | null, scaleMode: ScaleMode): Uint8ClampedArray => {
   if (scaleMode === 'hist') {
-    return quantizeIonImageRank(intensityValues, rankValues!);
+    return quantizeIonImageRank(intensityValues, rankValues!)
   } else if (scaleMode === 'log') {
-    return quantizeIonImageLog(intensityValues, minIntensity, maxIntensity);
+    return quantizeIonImageLog(intensityValues, minIntensity, maxIntensity)
   } else {
-    return quantizeIonImageLinear(intensityValues, minIntensity, maxIntensity);
+    return quantizeIonImageLinear(intensityValues, minIntensity, maxIntensity)
   }
-};
+}
 
 const quantizeScaleBar = (minIntensity: number, maxIntensity: number,
-                          rankValues: Float32Array | null, scaleMode: ScaleMode): Uint8ClampedArray => {
-  const linearDistribution = new Float32Array(range(256).map(i => minIntensity + (maxIntensity - minIntensity) * i / 255));
-  return quantizeIonImage(linearDistribution, minIntensity, maxIntensity, rankValues, scaleMode);
-};
+  rankValues: Float32Array | null, scaleMode: ScaleMode): Uint8ClampedArray => {
+  const linearDistribution = new Float32Array(range(256).map(i => minIntensity + (maxIntensity - minIntensity) * i / 255))
+  return quantizeIonImage(linearDistribution, minIntensity, maxIntensity, rankValues, scaleMode)
+}
 
-export const loadPngFromUrl = async (url: string) => {
-  const response = await fetch(url, {credentials: 'omit'});
+export const loadPngFromUrl = async(url: string) => {
+  const response = await fetch(url, { credentials: 'omit' })
   if (response.status !== 200) {
-    throw new Error(`Invalid response fetching image: ${response.status} ${response.statusText}`);
+    throw new Error(`Invalid response fetching image: ${response.status} ${response.statusText}`)
   }
-  const buffer = await response.arrayBuffer();
-  return decode(buffer);
-};
+  const buffer = await response.arrayBuffer()
+  return decode(buffer)
+}
 
 export const processIonImage = (png: Image, minIntensity: number = 0, maxIntensity: number = 1,
-                                scaleType: ScaleType = DEFAULT_SCALE_TYPE): IonImage => {
-  const [scaleMode, minQuantile, maxQuantile] = SCALES[scaleType];
+  scaleType: ScaleType = DEFAULT_SCALE_TYPE): IonImage => {
+  const [scaleMode, minQuantile, maxQuantile] = SCALES[scaleType]
 
-  const {width, height} = png;
-  const {intensityValues, mask} = extractIntensityAndMask(png, minIntensity, maxIntensity);
-  const {clippedMinIntensity, clippedMaxIntensity, rankValues} =
-    getScaleParams(intensityValues, mask, minIntensity, maxIntensity, minQuantile, maxQuantile, scaleMode);
+  const { width, height } = png
+  const { intensityValues, mask } = extractIntensityAndMask(png, minIntensity, maxIntensity)
+  const { clippedMinIntensity, clippedMaxIntensity, rankValues } =
+    getScaleParams(intensityValues, mask, minIntensity, maxIntensity, minQuantile, maxQuantile, scaleMode)
 
-  let clippedValues = quantizeIonImage(intensityValues, clippedMinIntensity, clippedMaxIntensity, rankValues, scaleMode);
-  let scaleBarValues = quantizeScaleBar(clippedMinIntensity, clippedMaxIntensity, rankValues, scaleMode);
+  const clippedValues = quantizeIonImage(intensityValues, clippedMinIntensity, clippedMaxIntensity, rankValues, scaleMode)
+  const scaleBarValues = quantizeScaleBar(clippedMinIntensity, clippedMaxIntensity, rankValues, scaleMode)
 
   return {
     intensityValues,
@@ -247,62 +246,62 @@ export const processIonImage = (png: Image, minIntensity: number = 0, maxIntensi
     scaleBarValues,
     minQuantile,
     maxQuantile,
-  };
-};
+  }
+}
 
 export const renderIonImageToBuffer = (ionImage: IonImage, cmap?: number[][]) => {
-  const {clippedValues, mask} = ionImage;
+  const { clippedValues, mask } = ionImage
   // Treat pixels as 32-bit values instead of four 8-bit values to avoid extra math.
   // Assume little-endian byte order, because big-endian is pretty much gone.
-  const outputBuffer = new ArrayBuffer(clippedValues.length * 4);
-  const outputRGBA = new Uint32Array(outputBuffer);
-  const cmapBuffer = new ArrayBuffer(256 * 4);
-  const cmapComponents = new Uint8ClampedArray(cmapBuffer);
-  const cmapRGBA = new Uint32Array(cmapBuffer);
-  const emptyRGBA = 0x00000000;
+  const outputBuffer = new ArrayBuffer(clippedValues.length * 4)
+  const outputRGBA = new Uint32Array(outputBuffer)
+  const cmapBuffer = new ArrayBuffer(256 * 4)
+  const cmapComponents = new Uint8ClampedArray(cmapBuffer)
+  const cmapRGBA = new Uint32Array(cmapBuffer)
+  const emptyRGBA = 0x00000000
 
   for (let i = 0; i < 256; i++) {
     if (cmap != null) {
       for (let c = 0; c < 4; c++) {
-        cmapComponents[i * 4 + c] = cmap[i][c];
+        cmapComponents[i * 4 + c] = cmap[i][c]
       }
     } else {
       for (let c = 0; c < 4; c++) {
-        cmapComponents[i * 4 + c] = i;
+        cmapComponents[i * 4 + c] = i
       }
     }
   }
 
-  for(let i = 0; i < mask.length; i++) {
+  for (let i = 0; i < mask.length; i++) {
     if (mask[i]) {
-      outputRGBA[i] = cmapRGBA[clippedValues[i]];
+      outputRGBA[i] = cmapRGBA[clippedValues[i]]
     } else {
-      outputRGBA[i] = emptyRGBA;
+      outputRGBA[i] = emptyRGBA
     }
   }
-  return outputBuffer;
-};
+  return outputBuffer
+}
 
 export const renderIonImage = (ionImage: IonImage, cmap?: number[][]) => {
-  const {width, height} = ionImage;
+  const { width, height } = ionImage
 
-  const outputBuffer = renderIonImageToBuffer(ionImage, cmap);
+  const outputBuffer = renderIonImageToBuffer(ionImage, cmap)
 
-  return createDataUrl(new Uint8ClampedArray(outputBuffer), width, height);
-};
+  return createDataUrl(new Uint8ClampedArray(outputBuffer), width, height)
+}
 
 export const renderScaleBar = (ionImage: IonImage, cmap: number[][], horizontal: boolean) => {
-  const outputBytes = new Uint8ClampedArray(256 * 4);
+  const outputBytes = new Uint8ClampedArray(256 * 4)
   for (let i = 0; i < ionImage.scaleBarValues.length; i++) {
-    const val = ionImage.scaleBarValues[i];
+    const val = ionImage.scaleBarValues[i]
     for (let j = 0; j < 4; j++) {
-      outputBytes[(255 - i) * 4 + j] = cmap[val][j];
+      outputBytes[(255 - i) * 4 + j] = cmap[val][j]
     }
   }
 
   if (horizontal) {
-    return createDataUrl(outputBytes, 256, 1);
+    return createDataUrl(outputBytes, 256, 1)
   } else {
-    return createDataUrl(outputBytes, 1, 256);
+    return createDataUrl(outputBytes, 1, 256)
   }
-};
+}

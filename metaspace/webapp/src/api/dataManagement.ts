@@ -1,4 +1,4 @@
-import gql from 'graphql-tag';
+import gql from 'graphql-tag'
 
 export interface GroupListItem {
   id: string;
@@ -11,7 +11,7 @@ export const oneGroupQuery =
     id
     name
   }
-}`;
+}`
 
 export const oneProjectQuery =
   gql`query oneProjectQuery($projectId: ID!) {
@@ -19,7 +19,7 @@ export const oneProjectQuery =
     id
     name
   }
-}`;
+}`
 
 export const allGroupsQuery =
 gql`query allGroupsQuery($query: String) {
@@ -27,12 +27,11 @@ gql`query allGroupsQuery($query: String) {
     id
     name
   }
-}`;
+}`
 
 export const requestAccessToGroupMutation =
 gql`mutation($groupId: ID!) {
   requestAccessToGroup(groupId: $groupId){
     role
     }
-  }`;
-
+  }`

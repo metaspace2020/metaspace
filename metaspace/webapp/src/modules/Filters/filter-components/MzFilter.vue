@@ -4,45 +4,50 @@
       {{ name }}:
     </div>
 
-    <tf-input-box mode="number" @change="onChange" :value="value">
-    </tf-input-box>
+    <tf-input-box
+      mode="number"
+      :value="value"
+      @change="onChange"
+    />
 
     <span class="tf-value-suffix">± {{ precision }}</span>
 
-    <div class="tf-remove el-icon-error"
-         v-if="removable"
-         @click="destroy"></div>
+    <div
+      v-if="removable"
+      class="tf-remove el-icon-error"
+      @click="destroy"
+    />
   </div>
 </template>
 
 <script lang="ts">
- import Vue, { ComponentOptions } from 'vue'
- import TagFilterInputBox from './TagFilterInputBox.vue';
- import {mzFilterPrecision} from '../../../util';
+import Vue, { ComponentOptions } from 'vue'
+import TagFilterInputBox from './TagFilterInputBox.vue'
+import { mzFilterPrecision } from '../../../util'
 
- export default Vue.extend({
-   name: 'mz-filter',
-   components: {
-     'tf-input-box': TagFilterInputBox
-   },
-   props: {
-     name: String,
-     value: String,
-     removable: {type: Boolean, default: true}
-   },
-   computed: {
-     precision(): string {
-       return mzFilterPrecision(this.value);
-     }
-   },
-   methods: {
-     onChange(val: string): void {
-       this.$emit('input', val);
-       this.$emit('change', val);
-     },
-     destroy(): void {
-       this.$emit('destroy', this.name);
-     }
-   }
- })
+export default Vue.extend({
+  name: 'MzFilter',
+  components: {
+    'tf-input-box': TagFilterInputBox,
+  },
+  props: {
+    name: String,
+    value: String,
+    removable: { type: Boolean, default: true },
+  },
+  computed: {
+    precision(): string {
+      return mzFilterPrecision(this.value)
+    },
+  },
+  methods: {
+    onChange(val: string): void {
+      this.$emit('input', val)
+      this.$emit('change', val)
+    },
+    destroy(): void {
+      this.$emit('destroy', this.name)
+    },
+  },
+})
 </script>

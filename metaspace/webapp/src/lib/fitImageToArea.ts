@@ -23,32 +23,32 @@ export interface FitImageToAreaResult {
 }
 
 const clip = (val: number, min?: number | null, max?: number | null) => {
-  return Math.min(Math.max(val, min != null ? min : -Infinity), max != null ? max : Infinity);
-};
+  return Math.min(Math.max(val, min != null ? min : -Infinity), max != null ? max : Infinity)
+}
 
 const fitImageToArea = (args: FitImageToAreaArgs): FitImageToAreaResult => {
-  const {imageWidth, imageHeight, areaWidth, areaHeight, minZoom, maxZoom} = args;
-  const {areaMinWidth = areaWidth, areaMinHeight = areaHeight, mode = 'contain'} = args;
+  const { imageWidth, imageHeight, areaWidth, areaHeight, minZoom, maxZoom } = args
+  const { areaMinWidth = areaWidth, areaMinHeight = areaHeight, mode = 'contain' } = args
 
-  const imageAspect = imageWidth / imageHeight;
-  const areaAspect = areaWidth / areaHeight;
-  const isTall = imageAspect < areaAspect;
-  let imageZoom;
+  const imageAspect = imageWidth / imageHeight
+  const areaAspect = areaWidth / areaHeight
+  const isTall = imageAspect < areaAspect
+  let imageZoom
 
   if (isTall && mode === 'contain' || !isTall && mode === 'cover') {
-    imageZoom = areaHeight / imageHeight;
+    imageZoom = areaHeight / imageHeight
   } else {
-    imageZoom = areaWidth / imageWidth;
+    imageZoom = areaWidth / imageWidth
   }
 
-  imageZoom = clip(imageZoom, minZoom, maxZoom);
+  imageZoom = clip(imageZoom, minZoom, maxZoom)
 
-  const fittedImageWidth = imageWidth * imageZoom;
-  const fittedImageHeight = imageHeight * imageZoom;
-  const fittedAreaWidth = clip(fittedImageWidth, areaMinWidth, areaWidth);
-  const fittedAreaHeight = clip(fittedImageHeight, areaMinHeight, areaHeight);
-  const imageX = fittedAreaWidth / 2 - fittedImageWidth / 2;
-  const imageY = fittedAreaHeight / 2 - fittedImageHeight / 2;
+  const fittedImageWidth = imageWidth * imageZoom
+  const fittedImageHeight = imageHeight * imageZoom
+  const fittedAreaWidth = clip(fittedImageWidth, areaMinWidth, areaWidth)
+  const fittedAreaHeight = clip(fittedImageHeight, areaMinHeight, areaHeight)
+  const imageX = fittedAreaWidth / 2 - fittedImageWidth / 2
+  const imageY = fittedAreaHeight / 2 - fittedImageHeight / 2
 
   return {
     imageX: imageX,
@@ -58,7 +58,7 @@ const fitImageToArea = (args: FitImageToAreaArgs): FitImageToAreaResult => {
     imageZoom: imageZoom,
     areaWidth: fittedAreaWidth,
     areaHeight: fittedAreaHeight,
-  };
-};
+  }
+}
 
-export default fitImageToArea;
+export default fitImageToArea

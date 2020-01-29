@@ -1,9 +1,9 @@
-import { FILTER_SPECIFICATIONS, FilterKey, getDefaultFilter, Level, MetadataLists } from './filterSpecs';
+import { FILTER_SPECIFICATIONS, FilterKey, getDefaultFilter, Level, MetadataLists } from './filterSpecs'
 
-import {invert, isArray, mapValues} from 'lodash-es';
-import { Location } from 'vue-router';
-import {ScaleType} from '../../lib/ionImageRendering';
-import {DEFAULT_SCALE_TYPE} from '../../lib/constants';
+import { invert, isArray, mapValues } from 'lodash-es'
+import { Location } from 'vue-router'
+import { ScaleType } from '../../lib/ionImageRendering'
+import { DEFAULT_SCALE_TYPE } from '../../lib/constants'
 
 interface Dictionary<T> {
   [key: string]: T;
@@ -41,9 +41,9 @@ const FILTER_TO_URL: Record<FilterKey, string> = {
   colocalizedWith: 'colo',
   colocalizationSamples: 'locs',
   offSample: 'offs',
-};
+}
 
-const URL_TO_FILTER = invert(FILTER_TO_URL) as Record<string, FilterKey>;
+const URL_TO_FILTER = invert(FILTER_TO_URL) as Record<string, FilterKey>
 
 const PATH_TO_LEVEL: Record<string, Level> = {
   '/annotations': 'annotation',
@@ -51,138 +51,138 @@ const PATH_TO_LEVEL: Record<string, Level> = {
   '/datasets/summary': 'dataset',
   '/upload': 'upload',
   '/projects': 'projects',
-};
+}
 
 export const getLevel = (path?: string): Level | null => {
-  return path != null && PATH_TO_LEVEL[path.toLowerCase()] || null;
-};
+  return path != null && PATH_TO_LEVEL[path.toLowerCase()] || null
+}
 
 export const DEFAULT_TABLE_ORDER: SortSettings = {
   by: 'ORDER_BY_MSM',
-  dir: 'DESCENDING'
-};
+  dir: 'DESCENDING',
+}
 
-export const DEFAULT_ANNOTATION_VIEW_SECTIONS = ['images'];
+export const DEFAULT_ANNOTATION_VIEW_SECTIONS = ['images']
 
-export const DEFAULT_COLORMAP = 'Viridis';
+export const DEFAULT_COLORMAP = 'Viridis'
 
 export function encodeParams(filter: any, path?: string, filterLists?: MetadataLists): Dictionary<string> {
-  const level = getLevel(path);
-  const defaultFilter = level != null ? getDefaultFilter(level, filterLists) : null;
+  const level = getLevel(path)
+  const defaultFilter = level != null ? getDefaultFilter(level, filterLists) : null
 
-  let q: Dictionary<string> = {};
-  let key: FilterKey;
+  const q: Dictionary<string> = {}
+  let key: FilterKey
   for (key in FILTER_TO_URL) {
-    const {levels, encoding} = FILTER_SPECIFICATIONS[key];
+    const { levels, encoding } = FILTER_SPECIFICATIONS[key]
     if (level != null && levels.indexOf(level) == -1)
-      continue;
+      continue
 
     if (key in filter && (defaultFilter == null || filter[key] != defaultFilter[key])) {
       if (encoding === 'json') {
-        q[FILTER_TO_URL[key]] = JSON.stringify(filter[key]);
+        q[FILTER_TO_URL[key]] = JSON.stringify(filter[key])
       } else if (encoding === 'list') {
-        q[FILTER_TO_URL[key]] = filter[key].join(',');
+        q[FILTER_TO_URL[key]] = filter[key].join(',')
       } else if (encoding === 'bool') {
-        q[FILTER_TO_URL[key]] = filter[key] ? '1' : '0';
+        q[FILTER_TO_URL[key]] = filter[key] ? '1' : '0'
       } else if (encoding === 'number') {
-        q[FILTER_TO_URL[key]] = String(filter[key]);
+        q[FILTER_TO_URL[key]] = String(filter[key])
       } else {
-        q[FILTER_TO_URL[key]] = filter[key];
+        q[FILTER_TO_URL[key]] = filter[key]
       }
     }
   }
-  return q;
+  return q
 }
 
 export function stripFilteringParams(query: Dictionary<string>): Dictionary<string> {
-  let q: Dictionary<string> = {};
+  const q: Dictionary<string> = {}
   for (var key in query) {
-    const fKey = URL_TO_FILTER[key];
+    const fKey = URL_TO_FILTER[key]
     if (!fKey)
-      q[key] = query[key];
+      q[key] = query[key]
   }
-  return q;
+  return q
 }
 
 export function decodeParams(location: Location, filterLists: any): Object {
-  const {query, path} = location;
-  const level = path ? getLevel(path) : null;
+  const { query, path } = location
+  const level = path ? getLevel(path) : null
 
   if (!path || !query || !level)
-    return {};
+    return {}
 
-  const filter = getDefaultFilter(level, filterLists);
+  const filter = getDefaultFilter(level, filterLists)
 
   for (var key in query) {
-    const fKey = URL_TO_FILTER[key];
+    const fKey = URL_TO_FILTER[key]
     if (!fKey)
-      continue; // skip params unrelated to filtering
+      continue // skip params unrelated to filtering
 
-    const {levels, encoding} = FILTER_SPECIFICATIONS[fKey];
+    const { levels, encoding } = FILTER_SPECIFICATIONS[fKey]
     // If necessary, unwrap array parameters and take their first element. Array-valued parameters can happen
     // if someone changes the URL and adds a second copy of an existing parameter.
-    let value = isArray(query[key]) ? query[key][0] : query[key];
+    const value = isArray(query[key]) ? query[key][0] : query[key]
 
     if (levels.indexOf(level) == -1)
-      continue;
+      continue
 
     if (encoding == 'json') {
       if ('[{'.indexOf(value[0]) == -1) {
         // assume non-JSON means array of one element
-        filter[fKey] = [value];
+        filter[fKey] = [value]
       } else {
-        filter[fKey] = JSON.parse(value);
+        filter[fKey] = JSON.parse(value)
       }
     } else if (encoding == 'list') {
-      filter[fKey] = value ? value.split(',') : [];
+      filter[fKey] = value ? value.split(',') : []
     } else if (encoding == 'bool') {
-      filter[fKey] = value === '1';
+      filter[fKey] = value === '1'
     } else if (encoding == 'number') {
-      filter[fKey] = parseFloat(value);
+      filter[fKey] = parseFloat(value)
     } else {
-      filter[fKey] = value;
+      filter[fKey] = value
     }
 
     if (filter[fKey] === null)
-      filter[fKey] = undefined;
+      filter[fKey] = undefined
   }
-  return filter;
+  return filter
 }
 
-const allSections = ['images', 'compounds', 'scores', 'metadata', 'adducts', 'colocalized'].reverse();
+const allSections = ['images', 'compounds', 'scores', 'metadata', 'adducts', 'colocalized'].reverse()
 
 function decodeSections(number: string): string[] {
-  let sections = [],
-      mask = parseInt(number).toString(2);
+  const sections = []
+  const mask = parseInt(number).toString(2)
   for (let i = mask.length - 1; i >= 0; i--) {
     if (mask[i] == '1') {
-      sections.push(allSections[allSections.length - mask.length + i]);
+      sections.push(allSections[allSections.length - mask.length + i])
     }
   }
-  return sections;
+  return sections
 }
 
 export function encodeSections(sections: string[]) {
-  let str = '';
+  let str = ''
   for (let i = 0; i < allSections.length; i++) {
-    let found = sections.indexOf(allSections[i]) >= 0;
-    str += found ? '1' : '0';
+    const found = sections.indexOf(allSections[i]) >= 0
+    str += found ? '1' : '0'
   }
-  return parseInt(str, 2);
+  return parseInt(str, 2)
 }
 
 function decodeSortOrder(str: string): SortSettings {
-  const dir = str[0] == '-' ? 'DESCENDING' : 'ASCENDING';
+  const dir = str[0] == '-' ? 'DESCENDING' : 'ASCENDING'
   if (str[0] == '-')
-    str = str.slice(1);
-  const by = 'ORDER_BY_' + str.toUpperCase();
-  return {by, dir};
+    str = str.slice(1)
+  const by = 'ORDER_BY_' + str.toUpperCase()
+  return { by, dir }
 }
 
 export function encodeSortOrder(settings: SortSettings): string | null {
-  const dir = settings.dir == 'ASCENDING' ? '' : '-';
-  const sort = dir + settings.by.replace('ORDER_BY_', '').toLowerCase();
-  return sort === '-msm' ? null : sort;
+  const dir = settings.dir == 'ASCENDING' ? '' : '-'
+  const sort = dir + settings.by.replace('ORDER_BY_', '').toLowerCase()
+  return sort === '-msm' ? null : sort
 }
 
 export interface UrlTableSettings {
@@ -208,16 +208,16 @@ export interface UrlSettings {
 }
 
 export function decodeSettings(location: Location): UrlSettings | undefined {
-  let {query, path} = location;
+  let { query, path } = location
   if (!query || !path)
-    return undefined;
+    return undefined
 
   // When vue-router encounters the same query parameter more than once it supplies an array instead of a string.
   // To prevent type errors below, find any arrayified parameters and just take their first element
   query = mapValues(query, (stringOrArray:string|string[]) =>
-    isArray(stringOrArray) ? stringOrArray[0] : stringOrArray);
+    isArray(stringOrArray) ? stringOrArray[0] : stringOrArray)
 
-  let settings: UrlSettings = {
+  const settings: UrlSettings = {
     table: {
       currentPage: 1,
       order: DEFAULT_TABLE_ORDER,
@@ -231,24 +231,24 @@ export function decodeSettings(location: Location): UrlSettings | undefined {
     },
 
     datasets: {
-      tab: 'List'
-    }
-  };
+      tab: 'List',
+    },
+  }
 
   if (query.page)
-    settings.table.currentPage = parseInt(query.page);
+    settings.table.currentPage = parseInt(query.page)
   if (query.sort)
-    settings.table.order = decodeSortOrder(query.sort);
+    settings.table.order = decodeSortOrder(query.sort)
   if (query.cmap)
-    settings.annotationView.colormap = query.cmap;
+    settings.annotationView.colormap = query.cmap
   if (query.scale) {
-    settings.annotationView.scaleType = (query.scale || DEFAULT_SCALE_TYPE) as ScaleType;
+    settings.annotationView.scaleType = (query.scale || DEFAULT_SCALE_TYPE) as ScaleType
   }
   if (query.sections !== undefined)
-    settings.annotationView.activeSections = decodeSections(query.sections);
+    settings.annotationView.activeSections = decodeSections(query.sections)
   if (query.alg)
-    settings.annotationView.colocalizationAlgo = query.alg;
+    settings.annotationView.colocalizationAlgo = query.alg
   if (query.tab !== undefined)
-    settings.datasets.tab = query.tab;
-  return settings;
+    settings.datasets.tab = query.tab
+  return settings
 }

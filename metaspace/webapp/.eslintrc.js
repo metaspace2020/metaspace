@@ -1,5 +1,5 @@
-const operatorLinebreakOverrides = {}
-['=', '+=', '-=', '*=', '/=', '&=', '^='].forEach(o => {
+const operatorLinebreakOverrides = {};
+(['=', '+=', '-=', '*=', '/=', '&=', '^=']).forEach(o => {
   operatorLinebreakOverrides[o] = 'after';
 })
 

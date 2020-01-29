@@ -1,38 +1,60 @@
 <template>
   <div class="tf-outer">
-    <div class="tf-name" v-if="name || 'name' in $slots">
+    <div
+      v-if="name || 'name' in $slots"
+      class="tf-name"
+    >
       <slot name="name">
         {{ name }}:
       </slot>
-      <component v-if="helpComponent" :is="helpComponent" />
+      <component
+        :is="helpComponent"
+        v-if="helpComponent"
+      />
     </div>
 
-    <el-popover v-if="'edit' in $slots"
-                trigger="click"
-                placement="bottom"
-                :width="width"
-                class="tf-value-container">
-      <slot name="edit"></slot>
-      <div class="tf-value" slot="reference">
-        <slot name="show"></slot>
-        <component v-if="helpComponent && !(name || 'name' in $slots)" :is="helpComponent" style="align-self: center" />
+    <el-popover
+      v-if="'edit' in $slots"
+      trigger="click"
+      placement="bottom"
+      :width="width"
+      class="tf-value-container"
+    >
+      <slot name="edit" />
+      <div
+        slot="reference"
+        class="tf-value"
+      >
+        <slot name="show" />
+        <component
+          :is="helpComponent"
+          v-if="helpComponent && !(name || 'name' in $slots)"
+          style="align-self: center"
+        />
       </div>
     </el-popover>
-    <div v-else-if="'show' in $slots || 'reference' in $slots"
-         class="tf-value"
-         slot="reference">
-      <slot name="show"></slot>
+    <div
+      v-else-if="'show' in $slots || 'reference' in $slots"
+      slot="reference"
+      class="tf-value"
+    >
+      <slot name="show" />
     </div>
-    <div v-else class="tf-spacer"></div>
+    <div
+      v-else
+      class="tf-spacer"
+    />
 
-    <div class="tf-remove el-icon-error"
-         v-if="removable"
-         @click="destroy"></div>
+    <div
+      v-if="removable"
+      class="tf-remove el-icon-error"
+      @click="destroy"
+    />
   </div>
 </template>
 
 <script lang="ts">
- import Vue, { ComponentOptions } from 'vue';
+import Vue, { ComponentOptions } from 'vue'
 
  interface TagFilter extends Vue {
    name: string
@@ -41,20 +63,20 @@
    destroy(): void
  }
 
- export default {
-   name: 'tag-filter',
-   props: {
-     name: String,
-     helpComponent: Object,
-     removable: {type: Boolean, default: true},
-     width: {type: Number, default: 300}
-   },
-   methods: {
-     destroy() {
-       this.$emit('destroy', this.name);
-     }
-   }
- } as ComponentOptions<TagFilter>
+export default {
+  name: 'tag-filter',
+  props: {
+    name: String,
+    helpComponent: Object,
+    removable: { type: Boolean, default: true },
+    width: { type: Number, default: 300 },
+  },
+  methods: {
+    destroy() {
+      this.$emit('destroy', this.name)
+    },
+  },
+} as ComponentOptions<TagFilter>
 </script>
 
 <style lang="scss">

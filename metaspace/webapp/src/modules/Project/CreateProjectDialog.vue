@@ -1,38 +1,58 @@
 <template>
-  <el-dialog class="dialog"
-             :visible="visible"
-             append-to-body
-             title="Create project"
-             @close="handleClose"
-             :lockScroll="false">
+  <el-dialog
+    class="dialog"
+    :visible="visible"
+    append-to-body
+    title="Create project"
+    :lock-scroll="false"
+    @close="handleClose"
+  >
     <div v-loading="loading">
-      <edit-project-form ref="form" v-model="project" size="mini" />
+      <edit-project-form
+        ref="form"
+        v-model="project"
+        size="mini"
+      />
       <div v-if="allDatasets.length > 0">
         <h4 style="margin-top: 0">
           Would you like to include any of your previously submitted datasets?
         </h4>
-        <dataset-checkbox-list :datasets="allDatasets" v-model="selectedDatasets" />
+        <dataset-checkbox-list
+          v-model="selectedDatasets"
+          :datasets="allDatasets"
+        />
       </div>
       <div class="button-bar">
-        <el-button :disabled="isSubmitting" @click="handleClose">Cancel</el-button>
-        <el-button type="primary" :loading="isSubmitting" @click="handleCreate">{{acceptText}}</el-button>
+        <el-button
+          :disabled="isSubmitting"
+          @click="handleClose"
+        >
+          Cancel
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="isSubmitting"
+          @click="handleCreate"
+        >
+          {{ acceptText }}
+        </el-button>
       </div>
     </div>
   </el-dialog>
 </template>
 <script lang="ts">
-  import Vue from 'vue';
-  import { Component, Prop } from 'vue-property-decorator';
-  import { DatasetListItem, datasetListItemsQuery } from '../../api/dataset';
-  import EditProjectForm from './EditProjectForm.vue';
-  import DatasetCheckboxList from '../../components/DatasetCheckboxList.vue';
-  import { createProjectMutation, importDatasetsIntoProjectMutation } from '../../api/project';
-  import reportError from '../../lib/reportError';
+import Vue from 'vue'
+import { Component, Prop } from 'vue-property-decorator'
+import { DatasetListItem, datasetListItemsQuery } from '../../api/dataset'
+import EditProjectForm from './EditProjectForm.vue'
+import DatasetCheckboxList from '../../components/DatasetCheckboxList.vue'
+import { createProjectMutation, importDatasetsIntoProjectMutation } from '../../api/project'
+import reportError from '../../lib/reportError'
 
   @Component<CreateProjectDialog>({
     components: {
       EditProjectForm,
-      DatasetCheckboxList
+      DatasetCheckboxList,
     },
     apollo: {
       allDatasets: {
@@ -42,15 +62,16 @@
           return {
             dFilter: {
               submitter: this.currentUserId,
-            }
-          };
-        }
-      }
-    }
+            },
+          }
+        },
+      },
+    },
   })
-  export default class CreateProjectDialog extends Vue {
+export default class CreateProjectDialog extends Vue {
     @Prop({ required: true })
     currentUserId!: string;
+
     @Prop({ default: false })
     visible!: boolean;
 
@@ -63,15 +84,15 @@
     project = {
       name: '',
       isPublic: true,
-      urlSlug: ''
+      urlSlug: '',
     };
 
     get numSelected() {
-      return Object.values(this.selectedDatasets).filter(selected => selected).length;
+      return Object.values(this.selectedDatasets).filter(selected => selected).length
     }
 
     get acceptText() {
-      const action = 'Create project';
+      const action = 'Create project'
       return this.numSelected === 0
         ? action
         : `${action} and include ${this.numSelected} ${this.numSelected === 1 ? 'dataset' : 'datasets'}`
@@ -79,20 +100,20 @@
 
     handleClose() {
       if (!this.isSubmitting) {
-        this.$emit('close');
+        this.$emit('close')
       }
     }
 
     async handleCreate() {
       try {
-        await (this.$refs.form as any).validate();
+        await (this.$refs.form as any).validate()
       } catch (err) {
-        return;
+        return
       }
-      this.isSubmitting = true;
+      this.isSubmitting = true
       try {
-        const selectedDatasetIds = Object.keys(this.selectedDatasets).filter(key => this.selectedDatasets[key]);
-        const { name, isPublic, urlSlug } = this.project;
+        const selectedDatasetIds = Object.keys(this.selectedDatasets).filter(key => this.selectedDatasets[key])
+        const { name, isPublic, urlSlug } = this.project
         const { data } = await this.$apollo.mutate({
           mutation: createProjectMutation,
           variables: {
@@ -100,25 +121,25 @@
               name,
               isPublic,
               urlSlug: urlSlug != null && urlSlug !== '' ? urlSlug : null,
-            }
-          }
-        });
-        const projectId = data!.createProject.id;
+            },
+          },
+        })
+        const projectId = data!.createProject.id
         if (selectedDatasetIds.length > 0) {
           await this.$apollo.mutate({
             mutation: importDatasetsIntoProjectMutation,
-            variables: { projectId, datasetIds: selectedDatasetIds }
-          });
+            variables: { projectId, datasetIds: selectedDatasetIds },
+          })
         }
 
-        this.$emit('create', { id: projectId, name });
+        this.$emit('create', { id: projectId, name })
       } catch (err) {
-        reportError(err);
+        reportError(err)
       } finally {
-        this.isSubmitting = false;
+        this.isSubmitting = false
       }
     }
-  }
+}
 </script>
 <style scoped lang="scss">
   .dialog /deep/ .el-dialog {

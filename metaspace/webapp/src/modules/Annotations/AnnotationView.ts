@@ -1,31 +1,30 @@
- import { renderMolFormulaHtml } from '../../util';
- import DatasetInfo from '../../components/DatasetInfo.vue';
- import ColocalizationSettings from './annotation-widgets/ColocalizationSettings.vue';
- import { annotationQuery } from '../../api/annotation';
- import {
+import { renderMolFormulaHtml } from '../../util'
+import DatasetInfo from '../../components/DatasetInfo.vue'
+import ColocalizationSettings from './annotation-widgets/ColocalizationSettings.vue'
+import { annotationQuery } from '../../api/annotation'
+import {
   datasetVisibilityQuery,
   DatasetVisibilityResult,
   msAcqGeometryQuery,
   OpticalImage,
   opticalImagesQuery,
-} from '../../api/dataset';
- import { encodeParams } from '../Filters/index';
- import annotationWidgets from './annotation-widgets/index'
+} from '../../api/dataset'
+import { encodeParams } from '../Filters/index'
+import annotationWidgets from './annotation-widgets/index'
 
- import Vue from 'vue';
- import { Component, Prop } from 'vue-property-decorator';
- import { Location } from 'vue-router';
- import { currentUserRoleQuery, CurrentUserRoleResult} from '../../api/user';
- import safeJsonParse from '../../lib/safeJsonParse';
- import {omit, pick, sortBy, throttle} from 'lodash-es';
- import {ANNOTATION_SPECIFIC_FILTERS} from '../Filters/filterSpecs';
- import config from '../../config';
- import {OpacityMode} from '../../lib/createColormap';
- import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue';
- import RelatedMolecules from './annotation-widgets/RelatedMolecules.vue';
- import CompoundsList from './annotation-widgets/CompoundsList.vue';
- import AmbiguityAlert from './annotation-widgets/AmbiguityAlert.vue';
-
+import Vue from 'vue'
+import { Component, Prop } from 'vue-property-decorator'
+import { Location } from 'vue-router'
+import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
+import safeJsonParse from '../../lib/safeJsonParse'
+import { omit, pick, sortBy, throttle } from 'lodash-es'
+import { ANNOTATION_SPECIFIC_FILTERS } from '../Filters/filterSpecs'
+import config from '../../config'
+import { OpacityMode } from '../../lib/createColormap'
+import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue'
+import RelatedMolecules from './annotation-widgets/RelatedMolecules.vue'
+import CompoundsList from './annotation-widgets/CompoundsList.vue'
+import AmbiguityAlert from './annotation-widgets/AmbiguityAlert.vue'
 
  type ImagePosition = {
    zoom: number
@@ -43,26 +42,26 @@
    // scaleType is deliberately not included here, because every time it changes some slow computation occurs,
    // and the computed getters were being triggered by any part of the ImageSettings object changing, such as opacity,
    // causing a lot of jank.
-   //scaleType?: ScaleType
+   // scaleType?: ScaleType
  }
 
- const metadataDependentComponents: any = {};
- const componentsToRegister: any = {
-   DatasetInfo,
-   ColocalizationSettings,
-   CandidateMoleculesPopover,
-   RelatedMolecules,
-   CompoundsList,
-   AmbiguityAlert,
- };
- for (let category of Object.keys(annotationWidgets)) {
-   metadataDependentComponents[category] = {};
-   for (let mdType of Object.keys(annotationWidgets[category])) {
-     const component = annotationWidgets[category][mdType];
-     metadataDependentComponents[category][mdType] = component;
-     componentsToRegister[`${category}-${mdType}`] = component;
-   }
- }
+const metadataDependentComponents: any = {}
+const componentsToRegister: any = {
+  DatasetInfo,
+  ColocalizationSettings,
+  CandidateMoleculesPopover,
+  RelatedMolecules,
+  CompoundsList,
+  AmbiguityAlert,
+}
+for (const category of Object.keys(annotationWidgets)) {
+  metadataDependentComponents[category] = {}
+  for (const mdType of Object.keys(annotationWidgets[category])) {
+    const component = annotationWidgets[category][mdType]
+    metadataDependentComponents[category][mdType] = component
+    componentsToRegister[`${category}-${mdType}`] = component
+  }
+}
 
  @Component<AnnotationView>({
    name: 'annotation-view',
@@ -71,18 +70,18 @@
      peakChartData: {
        query: annotationQuery,
        update: (data: any) => {
-         const {annotation} = data;
+         const { annotation } = data
          if (annotation != null) {
-           return safeJsonParse(annotation.peakChartData);
+           return safeJsonParse(annotation.peakChartData)
          } else {
-           return null;
+           return null
          }
        },
        variables(): any {
          return {
-           id: this.annotation.id
-         };
-       }
+           id: this.annotation.id,
+         }
+       },
      },
 
      opticalImages: {
@@ -94,35 +93,35 @@
          }
        },
        update(data: any) {
-         return data.dataset && data.dataset.opticalImages || [];
-       }
+         return data.dataset && data.dataset.opticalImages || []
+       },
      },
 
      msAcqGeometry: {
        query: msAcqGeometryQuery,
        variables(): any {
          return {
-          datasetId: this.annotation.dataset.id
+           datasetId: this.annotation.dataset.id,
          }
        },
-       update: (data: any) => data['dataset'] && safeJsonParse(data['dataset']['acquisitionGeometry'])
+       update: (data: any) => data.dataset && safeJsonParse(data.dataset.acquisitionGeometry),
      },
 
      datasetVisibility: {
        query: datasetVisibilityQuery,
        skip: true,
        variables() {
-         return {id: this.annotation.dataset.id}
-       }
+         return { id: this.annotation.dataset.id }
+       },
      },
 
      currentUser: {
        query: currentUserRoleQuery,
        fetchPolicy: 'cache-first',
-     }
-   }
+     },
+   },
  })
- export default class AnnotationView extends Vue {
+export default class AnnotationView extends Vue {
    @Prop()
    annotation: any
 
@@ -134,38 +133,38 @@
    scaleBarColor: string | null = '#000000'
 
    created() {
-     this.onImageMove = throttle(this.onImageMove);
+     this.onImageMove = throttle(this.onImageMove)
    }
 
    metadataDependentComponent(category: string): any {
-     const currentMdType: string = this.$store.getters.filter.metadataType;
-     const componentKey: string = currentMdType in metadataDependentComponents[category] ? currentMdType : 'default';
-     return metadataDependentComponents[category][componentKey];
+     const currentMdType: string = this.$store.getters.filter.metadataType
+     const componentKey: string = currentMdType in metadataDependentComponents[category] ? currentMdType : 'default'
+     return metadataDependentComponents[category][componentKey]
    }
 
    get showOpticalImage(): boolean {
-     return !this.$route.query.hideopt;
+     return !this.$route.query.hideopt
    }
 
    get activeSections(): string[] {
-     return this.$store.getters.settings.annotationView.activeSections;
+     return this.$store.getters.settings.annotationView.activeSections
    }
 
    get colormap(): string {
-     return this.$store.getters.settings.annotationView.colormap;
+     return this.$store.getters.settings.annotationView.colormap
    }
 
    get scaleType(): string {
-     return this.$store.getters.settings.annotationView.scaleType;
+     return this.$store.getters.settings.annotationView.scaleType
    }
 
    get formattedMolFormula(): string {
-     if (!this.annotation) return '';
-     return renderMolFormulaHtml(this.annotation.ion);
+     if (!this.annotation) return ''
+     return renderMolFormulaHtml(this.annotation.ion)
    }
 
    get imageOpacityMode(): OpacityMode {
-     return (this.showOpticalImage && this.bestOpticalImage != null) ? 'linear' : 'constant';
+     return (this.showOpticalImage && this.bestOpticalImage != null) ? 'linear' : 'constant'
    }
 
    get permalinkHref(): Location {
@@ -176,34 +175,34 @@
        fdrLevel: this.annotation.fdrLevel,
        database: this.$store.getters.filter.database,
        simpleQuery: '',
-     };
-     const path = '/annotations';
+     }
+     const path = '/annotations'
      return {
        path,
        query: {
          ...encodeParams(filter, path, this.$store.state.filterLists),
          ...pick(this.$route.query, 'sections', 'sort', 'hideopt', 'cmap', 'scale'),
        },
-     };
+     }
    }
 
    get bestOpticalImage(): OpticalImage | null {
      if (this.opticalImages != null && this.opticalImages.length > 0) {
-       const {zoom} = this.imagePosition;
+       const { zoom } = this.imagePosition
        // Find the best optical image, preferring images with a higher zoom level than the current zoom
        const sortedOpticalImages = sortBy(this.opticalImages, optImg =>
          optImg.zoom >= zoom
            ? optImg.zoom - zoom
-           : 100 + (zoom - optImg.zoom));
+           : 100 + (zoom - optImg.zoom))
 
-       return sortedOpticalImages[0];
+       return sortedOpticalImages[0]
      }
-     return null;
+     return null
    }
 
    get imageLoaderSettings(): ImageSettings {
-     const optImg = this.bestOpticalImage;
-     const hasOpticalImages = this.showOpticalImage && optImg != null;
+     const optImg = this.bestOpticalImage
+     const hasOpticalImages = this.showOpticalImage && optImg != null
 
      return {
        annotImageOpacity: (this.showOpticalImage && hasOpticalImages) ? this.opacity : 1.0,
@@ -213,50 +212,50 @@
        opticalTransform: optImg && optImg.transform,
        pixelAspectRatio: config.features.ignore_pixel_aspect_ratio ? 1
          : this.pixelSizeX && this.pixelSizeY && this.pixelSizeX / this.pixelSizeY || 1,
-     };
+     }
    }
 
    get visibilityText() {
      if (this.datasetVisibility != null && this.datasetVisibility.id === this.annotation.dataset.id) {
-       const {submitter, group, projects} = this.datasetVisibility;
-       const submitterName = this.currentUser && submitter.id === this.currentUser.id ? 'you' : submitter.name;
+       const { submitter, group, projects } = this.datasetVisibility
+       const submitterName = this.currentUser && submitter.id === this.currentUser.id ? 'you' : submitter.name
        const all = [
          submitterName,
          ...(group ? [group.name] : []),
          ...(projects || []).map(p => p.name),
-       ];
+       ]
        return `These annotation results are not publicly visible. They are visible to ${all.join(', ')} and METASPACE Administrators.`
      }
    }
 
    get metadata() {
      const datasetMetadataExternals = {
-       "Submitter": this.annotation.dataset.submitter,
-       "PI": this.annotation.dataset.principalInvestigator,
-       "Group": this.annotation.dataset.group,
-       "Projects": this.annotation.dataset.projects
-     };
-     return Object.assign(safeJsonParse(this.annotation.dataset.metadataJson), datasetMetadataExternals);
+       Submitter: this.annotation.dataset.submitter,
+       PI: this.annotation.dataset.principalInvestigator,
+       Group: this.annotation.dataset.group,
+       Projects: this.annotation.dataset.projects,
+     }
+     return Object.assign(safeJsonParse(this.annotation.dataset.metadataJson), datasetMetadataExternals)
    }
 
    get pixelSizeX() {
-     if (this.metadata.MS_Analysis != null &&
-       this.metadata.MS_Analysis.Pixel_Size != null) {
+     if (this.metadata.MS_Analysis != null
+       && this.metadata.MS_Analysis.Pixel_Size != null) {
        return this.metadata.MS_Analysis.Pixel_Size.Xaxis
      }
      return 0
    }
 
    get pixelSizeY() {
-     if (this.metadata.MS_Analysis != null &&
-       this.metadata.MS_Analysis.Pixel_Size != null) {
+     if (this.metadata.MS_Analysis != null
+       && this.metadata.MS_Analysis.Pixel_Size != null) {
        return this.metadata.MS_Analysis.Pixel_Size.Yaxis
      }
      return 0
    }
 
    get showColoc() {
-     return config.features.coloc;
+     return config.features.coloc
    }
 
    opacity: number = 1.0;
@@ -264,54 +263,54 @@
    imagePosition: ImagePosition = {
      zoom: 1,
      xOffset: 0,
-     yOffset: 0
+     yOffset: 0,
    };
 
    onSectionsChange(activeSections: string[]): void {
      // FIXME: this is a hack to make isotope images redraw
      // so that they pick up the changes in parent div widths
      this.$nextTick(() => {
-       window.dispatchEvent(new Event('resize'));
-     });
+       window.dispatchEvent(new Event('resize'))
+     })
 
      this.$store.commit('updateAnnotationViewSections', activeSections)
    }
 
    onImageMove(event: any): void {
-     this.imagePosition.zoom = event.zoom;
-     this.imagePosition.xOffset = event.xOffset;
-     this.imagePosition.yOffset = event.yOffset;
+     this.imagePosition.zoom = event.zoom
+     this.imagePosition.xOffset = event.xOffset
+     this.imagePosition.yOffset = event.yOffset
    }
 
    resetViewport(event: any): void {
-     event.stopPropagation();
-     this.imagePosition.xOffset = 0;
-     this.imagePosition.yOffset = 0;
-     this.imagePosition.zoom = 1;
+     event.stopPropagation()
+     this.imagePosition.xOffset = 0
+     this.imagePosition.yOffset = 0
+     this.imagePosition.zoom = 1
    }
 
    toggleOpticalImage(event: any): void {
-     event.stopPropagation();
-     if(this.showOpticalImage) {
+     event.stopPropagation()
+     if (this.showOpticalImage) {
        this.$router.replace({
          query: {
            ...this.$route.query,
            hideopt: '1',
-         }
-       });
+         },
+       })
      } else {
        this.$router.replace({
          query: omit(this.$route.query, 'hideopt'),
-       });
+       })
      }
    }
 
    loadVisibility() {
-     this.$apollo.queries.datasetVisibility.start();
+     this.$apollo.queries.datasetVisibility.start()
    }
 
    setScaleBarColor(color: string | null) {
-     this.scaleBarColor = color;
+     this.scaleBarColor = color
    }
 
    filterColocSamples() {
@@ -327,11 +326,10 @@
        ...omit(this.$store.getters.filter, ANNOTATION_SPECIFIC_FILTERS),
        datasetIds: [this.annotation.dataset.id],
        colocalizedWith: this.annotation.ion,
-     });
+     })
      this.$store.commit('setSortOrder', {
        by: 'colocalization',
-       dir: 'descending'
-     });
+       dir: 'descending',
+     })
    }
-
- }
+}

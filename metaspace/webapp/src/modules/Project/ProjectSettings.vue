@@ -5,30 +5,40 @@
       <div class="flex-spacer" />
 
       <div class="header-row-buttons">
-        <el-button v-if="project"
-                   type="primary"
-                   @click="handleSave"
-                   :loading="isSaving">
+        <el-button
+          v-if="project"
+          type="primary"
+          :loading="isSaving"
+          @click="handleSave"
+        >
           Save
         </el-button>
       </div>
     </div>
-    <edit-project-form v-model="model" :disabled="isSaving" />
-    <div v-if="project != null && (project.isPublic || project.urlSlug || canEditUrlSlug)" style="margin-bottom: 2em">
+    <edit-project-form
+      v-model="model"
+      :disabled="isSaving"
+    />
+    <div
+      v-if="project != null && (project.isPublic || project.urlSlug || canEditUrlSlug)"
+      style="margin-bottom: 2em"
+    >
       <h2>Custom URL</h2>
       <div v-if="canEditUrlSlug">
-        <router-link :to="projectUrlRoute">{{projectUrlPrefix}}</router-link>
-        <input v-model="model.urlSlug" />
+        <router-link :to="projectUrlRoute">
+          {{ projectUrlPrefix }}
+        </router-link>
+        <input v-model="model.urlSlug">
       </div>
       <div v-if="!canEditUrlSlug && project && project.urlSlug">
         <router-link :to="projectUrlRoute">
-          {{projectUrlPrefix}}<span class="urlSlug">{{project.urlSlug}}</span>
+          {{ projectUrlPrefix }}<span class="urlSlug">{{ project.urlSlug }}</span>
         </router-link>
       </div>
       <div v-if="!canEditUrlSlug && project && !project.urlSlug">
         <p>
           <router-link :to="projectUrlRoute">
-            {{projectUrlPrefix}}<span class="urlSlug">{{project.id}}</span>
+            {{ projectUrlPrefix }}<span class="urlSlug">{{ project.id }}</span>
           </router-link>
         </p>
         <p><a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up a custom URL for your project.</p>
@@ -42,8 +52,9 @@
       <div style="text-align: right; margin: 1em 0;">
         <el-button
           type="danger"
+          :loading="isDeletingProject"
           @click="handleDeleteProject"
-          :loading="isDeletingProject">
+        >
           Delete project
         </el-button>
       </div>
@@ -51,19 +62,19 @@
   </div>
 </template>
 <script lang="ts">
-  import Vue from 'vue';
-  import {Component, Prop, Watch} from 'vue-property-decorator';
-  import {
-    deleteProjectMutation,
-    editProjectQuery,
-    EditProjectQuery,
-    UpdateProjectMutation,
-    updateProjectMutation,
-  } from '../../api/project';
-  import EditProjectForm from './EditProjectForm.vue';
-  import {currentUserRoleQuery, CurrentUserRoleResult} from '../../api/user';
-  import ConfirmAsync from '../../components/ConfirmAsync';
-  import reportError from '../../lib/reportError';
+import Vue from 'vue'
+import { Component, Prop, Watch } from 'vue-property-decorator'
+import {
+  deleteProjectMutation,
+  editProjectQuery,
+  EditProjectQuery,
+  UpdateProjectMutation,
+  updateProjectMutation,
+} from '../../api/project'
+import EditProjectForm from './EditProjectForm.vue'
+import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
+import ConfirmAsync from '../../components/ConfirmAsync'
+import reportError from '../../lib/reportError'
 
   @Component<ProjectSettings>({
     components: {
@@ -78,9 +89,9 @@
         query: editProjectQuery,
         variables() { return { projectId: this.projectId } },
       },
-    }
+    },
   })
-  export default class ProjectSettings extends Vue {
+export default class ProjectSettings extends Vue {
     @Prop()
     projectId!: string;
 
@@ -97,60 +108,64 @@
     project: EditProjectQuery | null = null;
 
     get canEditUrlSlug(): boolean {
-      return this.currentUser && this.currentUser.role === 'admin' || false;
+      return this.currentUser && this.currentUser.role === 'admin' || false
     }
+
     get projectName() {
-      return this.project ? this.project.name : '';
+      return this.project ? this.project.name : ''
     }
+
     get datasetsListFilter() {
       return {
         project: this.projectId,
-      };
+      }
     }
+
     get projectUrlRoute() {
-      const projectIdOrSlug = this.project ? this.project.urlSlug || this.project.id : '';
-      return { name: 'project', params: { projectIdOrSlug } };
+      const projectIdOrSlug = this.project ? this.project.urlSlug || this.project.id : ''
+      return { name: 'project', params: { projectIdOrSlug } }
     }
+
     get projectUrlPrefix() {
-      const {href} = this.$router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined, true);
-      return location.origin + href.replace('REMOVE', '');
+      const { href } = this.$router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined, true)
+      return location.origin + href.replace('REMOVE', '')
     }
 
     @Watch('project')
     setModel() {
-      this.model.name = this.project && this.project.name || '';
-      this.model.isPublic = this.project ? this.project.isPublic : true;
-      this.model.urlSlug = this.project && this.project.urlSlug || '';
+      this.model.name = this.project && this.project.name || ''
+      this.model.isPublic = this.project ? this.project.isPublic : true
+      this.model.urlSlug = this.project && this.project.urlSlug || ''
     }
 
-    @ConfirmAsync(function (this: ProjectSettings) {
+    @ConfirmAsync(function(this: ProjectSettings) {
       return {
         message: `Are you sure you want to delete ${this.projectName}?`,
         confirmButtonText: 'Delete project',
-        confirmButtonLoadingText: 'Deleting...'
+        confirmButtonLoadingText: 'Deleting...',
       }
     })
     async handleDeleteProject() {
-      this.isDeletingProject = true;
+      this.isDeletingProject = true
       try {
-        const projectName = this.projectName;
+        const projectName = this.projectName
         await this.$apollo.mutate({
           mutation: deleteProjectMutation,
           variables: { projectId: this.projectId },
-        });
-        this.$message({ message: `${projectName} has been deleted`, type: 'success' });
-        this.$router.push('/');
-      } catch(err) {
-        reportError(err);
+        })
+        this.$message({ message: `${projectName} has been deleted`, type: 'success' })
+        this.$router.push('/')
+      } catch (err) {
+        reportError(err)
       } finally {
-        this.isDeletingProject = false;
+        this.isDeletingProject = false
       }
     }
 
     async handleSave() {
-      this.isSaving = true;
+      this.isSaving = true
       try {
-        const {name, isPublic, urlSlug} = this.model;
+        const { name, isPublic, urlSlug } = this.model
         await this.$apollo.mutate<UpdateProjectMutation>({
           mutation: updateProjectMutation,
           variables: {
@@ -159,24 +174,24 @@
               name,
               isPublic,
               // Avoid sending a null urlSlug unless it's being intentionally unset
-              ...(this.canEditUrlSlug ? {urlSlug: urlSlug || null} : {}),
-            }
+              ...(this.canEditUrlSlug ? { urlSlug: urlSlug || null } : {}),
+            },
           },
-        });
-        this.$message({ message: `${name} has been saved`, type: 'success' });
+        })
+        this.$message({ message: `${name} has been saved`, type: 'success' })
         if (this.canEditUrlSlug) {
           this.$router.replace({
-            params: {projectIdOrSlug: urlSlug || this.projectId},
+            params: { projectIdOrSlug: urlSlug || this.projectId },
             query: this.$route.query,
-          });
+          })
         }
-      } catch(err) {
-        reportError(err);
+      } catch (err) {
+        reportError(err)
       } finally {
-        this.isSaving = false;
+        this.isSaving = false
       }
     }
-  }
+}
 
 </script>
 <style scoped lang="scss">

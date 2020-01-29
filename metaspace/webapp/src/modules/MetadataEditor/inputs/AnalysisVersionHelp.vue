@@ -12,9 +12,9 @@
 </template>
 
 <script>
-  export default {
-    name: 'AnalysisVersionHelp',
-  };
+export default {
+  name: 'AnalysisVersionHelp',
+}
 </script>
 
 <style scoped>

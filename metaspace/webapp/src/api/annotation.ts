@@ -1,4 +1,4 @@
-import gql from 'graphql-tag';
+import gql from 'graphql-tag'
 
 export const annotationListQuery =
 gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
@@ -64,7 +64,7 @@ gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrde
       }
 
     countAnnotations(filter: $filter, datasetFilter: $dFilter, simpleQuery: $query)
-  }`;
+  }`
 
 export const tableExportQuery =
 gql`query Export($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
@@ -112,7 +112,7 @@ gql`query Export($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
       }
       colocalizationCoeff(colocalizationCoeffFilter: $colocalizationCoeffFilter)
     }
-  }`;
+  }`
 
 export const annotationQuery =
 gql`query GetAnnotation($id: String!) {
@@ -120,7 +120,7 @@ gql`query GetAnnotation($id: String!) {
       id
       peakChartData
     }
-  }`;
+  }`
 
 export const relatedAnnotationsQuery =
 gql`query GetRelatedAnnotations($datasetId: String!, $filter: AnnotationFilter!, 
@@ -155,7 +155,7 @@ gql`query GetRelatedAnnotations($datasetId: String!, $filter: AnnotationFilter!,
       }
       colocalizationCoeff(colocalizationCoeffFilter: $colocalizationCoeffFilter)
     }
-  }`;
+  }`
 
 export const relatedMoleculesQuery =
   gql`query RelatedMoleculesQuery($datasetId: String!, $filter: AnnotationFilter!, 
@@ -181,7 +181,7 @@ export const relatedMoleculesQuery =
         }
       }
     }
-  }`;
+  }`
 
 export const isobarsQuery =
   gql`query IsobarsQuery($datasetId: String!, $ionFormula: String!) {
@@ -215,4 +215,4 @@ export const isobarsQuery =
         }
       }
     }
-  }`;
+  }`

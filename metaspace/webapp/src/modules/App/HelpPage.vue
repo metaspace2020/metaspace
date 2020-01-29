@@ -1,34 +1,51 @@
 <template>
-  <div id='help-wrapper'>
-
-    <div id='help-container'>
+  <div id="help-wrapper">
+    <div id="help-container">
       <p><b>Collaboration with groups and projects</b></p>
       We have added new ways for you to share your data with others:
       <div class="help-page">
-        <img src="../../assets/help_page_release_notes_hq.png" style="width: 100%; object-fit: contain;">
+        <img
+          src="../../assets/help_page_release_notes_hq.png"
+          style="width: 100%; object-fit: contain;"
+        >
       </div>
 
       We try our best to make the website as intuitive as possible, but it's unavoidable that some features are hard to discover on your own.
-      <br/>
+      <br>
       That's why we prepared a few thematic website tours:
 
       <div class="tour-panel">
         <div class="tour-block">
-          <el-button icon='el-icon-caret-right' @click='intro'>Introduction</el-button>
+          <el-button
+            icon="el-icon-caret-right"
+            @click="intro"
+          >
+            Introduction
+          </el-button>
           <p>
             Just enough to get you started
           </p>
         </div>
 
         <div class="tour-block">
-          <el-button icon='el-icon-caret-right' @click='filtering'>Filtering</el-button>
+          <el-button
+            icon="el-icon-caret-right"
+            @click="filtering"
+          >
+            Filtering
+          </el-button>
           <p>
-            Learn to steer snappily through<br/> the sea of molecular annotations!
+            Learn to steer snappily through<br> the sea of molecular annotations!
           </p>
         </div>
 
         <div class="tour-block">
-          <el-button icon='el-icon-caret-right' @click='diagnostics'>Diagnostic plots</el-button>
+          <el-button
+            icon="el-icon-caret-right"
+            @click="diagnostics"
+          >
+            Diagnostic plots
+          </el-button>
           <p>
             Get better insight into how scores are assigned to molecular formulae
           </p>
@@ -50,28 +67,28 @@
 </template>
 
 <script>
- import Vue from 'vue';
+import Vue from 'vue'
 
- import introTour from '../../tours/intro.ts';
- import filteringTour from '../../tours/filtering.ts';
- import diagnosticsTour from '../../tours/diagnostics.ts';
+import introTour from '../../tours/intro.ts'
+import filteringTour from '../../tours/filtering.ts'
+import diagnosticsTour from '../../tours/diagnostics.ts'
 
- export default {
-   name: 'help-page',
-   methods: {
-     intro() {
-       this.$store.commit('startTour', introTour);
-     },
+export default {
+  name: 'HelpPage',
+  methods: {
+    intro() {
+      this.$store.commit('startTour', introTour)
+    },
 
-     filtering() {
-       this.$store.commit('startTour', filteringTour);
-     },
+    filtering() {
+      this.$store.commit('startTour', filteringTour)
+    },
 
-     diagnostics() {
-       this.$store.commit('startTour', diagnosticsTour);
-     }
-   }
- }
+    diagnostics() {
+      this.$store.commit('startTour', diagnosticsTour)
+    },
+  },
+}
 </script>
 
 <style>

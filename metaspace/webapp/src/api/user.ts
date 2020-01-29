@@ -1,6 +1,6 @@
-import { UserGroupRole } from './group';
-import gql from 'graphql-tag';
-import { ProjectRole } from './project';
+import { UserGroupRole } from './group'
+import gql from 'graphql-tag'
+import { ProjectRole } from './project'
 
 export type UserRole = 'admin' | 'user' | 'anonymous';
 
@@ -72,7 +72,7 @@ fragment UserProfileQueryGroup on UserGroup {
     hasPendingRequest
   }
 }
-`;
+`
 export const userProfileQuery =
   gql`query UserProfileQuery {
   currentUser {
@@ -80,7 +80,7 @@ export const userProfileQuery =
   }
 }
 ${userProfileFragment}
-`;
+`
 
 export const updateUserMutation =
   gql`mutation ($userId: ID!, $update: UpdateUserInput!) {
@@ -88,7 +88,7 @@ export const updateUserMutation =
     ...UserProfileFragment
   }
 }
-${userProfileFragment}`;
+${userProfileFragment}`
 
 export const resetUserApiKeyMutation =
   gql`mutation ($userId: ID!, $removeKey: Boolean!) {
@@ -96,7 +96,7 @@ export const resetUserApiKeyMutation =
     ...UserProfileFragment
   }
 }
-${userProfileFragment}`;
+${userProfileFragment}`
 
 export interface DatasetSubmitterFragment {
   id: string;
@@ -133,12 +133,12 @@ export const datasetSubmitterFragment =
         name
       }
     }
-  }`;
+  }`
 
 export const deleteUserMutation =
   gql`mutation ($userId: ID!, $deleteDatasets: Boolean!) {
   deleteUser(userId: $userId, deleteDatasets: $deleteDatasets)
-}`;
+}`
 
 export interface CurrentUserIdResult {
   id: string;
@@ -149,7 +149,7 @@ export const currentUserIdQuery =
   gql`query CurrentUserIdQuery {
   currentUser { id }
 }
-`;
+`
 
 export interface CurrentUserRoleResult {
   id: string;
@@ -161,4 +161,4 @@ export const currentUserRoleQuery =
   gql`query CurrentUserRoleQuery {
   currentUser { id role }
 }
-`;
+`

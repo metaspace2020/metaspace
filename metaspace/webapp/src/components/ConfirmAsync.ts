@@ -2,9 +2,9 @@ import {
   ElMessageBoxComponent,
   ElMessageBoxOptions,
   MessageBoxCloseAction,
-} from 'element-ui/types/message-box';
-import reportError from '../lib/reportError';
-import Vue from 'vue';
+} from 'element-ui/types/message-box'
+import reportError from '../lib/reportError'
+import Vue from 'vue'
 import './ConfirmAsync.scss'
 
 interface ExtraOptions {
@@ -40,14 +40,13 @@ type ValueOrCallback<T> = T | ((...args: any[]) => T);
  *
  */
 function ConfirmAsync(options: ValueOrCallback<ElMessageBoxOptions & ExtraOptions>) {
-
-  return function decorate<This extends Vue, T extends (this: This, ...args: any[]) => Promise<any>>(target: This, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<T>) {
-    const originalFunc = descriptor.value as any as Function;
+  return function decorate<This extends Vue, T extends(this: This, ...args: any[]) => Promise<any>>(target: This, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<T>) {
+    const originalFunc = descriptor.value as any as Function
 
     async function wrappedFunc(this: This, ...args: any[]) {
       const { confirmButtonLoadingText, showInput, ...baseOptions } = typeof options === 'function'
         ? options.apply(this, args)
-        : options;
+        : options
 
       try {
         await this.$msgbox({
@@ -56,29 +55,29 @@ function ConfirmAsync(options: ValueOrCallback<ElMessageBoxOptions & ExtraOption
           showInput,
           customClass: 'confirm-async-message-box',
           ...baseOptions,
-          beforeClose: async (action: MessageBoxCloseAction, instance: ElMessageBoxComponent, done: Function) => {
-            let originalConfirmText = instance.confirmButtonText;
+          beforeClose: async(action: MessageBoxCloseAction, instance: ElMessageBoxComponent, done: Function) => {
+            const originalConfirmText = instance.confirmButtonText
             if (action === 'confirm') {
-              instance.confirmButtonLoading = true;
+              instance.confirmButtonLoading = true
               if (confirmButtonLoadingText != null) {
-                instance.confirmButtonText = confirmButtonLoadingText;
+                instance.confirmButtonText = confirmButtonLoadingText
               }
               try {
                 // if showInput is used, append the input value to `args`
-                const newArgs = showInput ? args.concat([instance.inputValue]) : args;
-                await originalFunc.apply(this, newArgs);
+                const newArgs = showInput ? args.concat([instance.inputValue]) : args
+                await originalFunc.apply(this, newArgs)
               } catch (err) {
-                reportError(err);
+                reportError(err)
               } finally {
                 // Restore instance to its previous state, because MessageBox keeps some state even after closing
-                instance.confirmButtonLoading = false;
-                instance.confirmButtonText = originalConfirmText;
-                done();
+                instance.confirmButtonLoading = false
+                instance.confirmButtonText = originalConfirmText
+                done()
               }
             } else {
-              done();
+              done()
             }
-          }
+          },
         })
       } catch {
         /* User clicked cancel */
@@ -86,9 +85,9 @@ function ConfirmAsync(options: ValueOrCallback<ElMessageBoxOptions & ExtraOption
     }
     return {
       ...descriptor,
-      value: wrappedFunc
+      value: wrappedFunc,
     }
   }
 }
 
-export default ConfirmAsync;
+export default ConfirmAsync

@@ -1,15 +1,18 @@
 <template>
-  <div ref="container" v-resize="onResize">
+  <div
+    ref="container"
+    v-resize="onResize"
+  >
     <ion-image-viewer
       ref="imageLoader"
-      :ionImage="ionImage"
-      :isLoading="ionImageIsLoading"
+      :ion-image="ionImage"
+      :is-loading="ionImageIsLoading"
       :width="imageFit.areaWidth"
       :height="imageFit.areaHeight"
-      :pixelAspectRatio="pixelAspectRatio"
+      :pixel-aspect-ratio="pixelAspectRatio"
       :zoom="zoom"
-      :xOffset="xOffset"
-      :yOffset="yOffset"
+      :x-offset="xOffset"
+      :y-offset="yOffset"
       :style="imageStyle"
       v-bind="$attrs"
       v-on="$listeners"
@@ -18,42 +21,49 @@
 </template>
 
 <script lang="ts">
-  import Vue from 'vue';
-  import resize from 'vue-resize-directive';
-  import config from '../config';
-  import {Component, Prop, Watch} from 'vue-property-decorator';
-  import IonImageViewer from './IonImageViewer.vue';
-  import {IonImage, loadPngFromUrl, processIonImage, ScaleType} from '../lib/ionImageRendering';
-  import fitImageToArea, {FitImageToAreaResult} from '../lib/fitImageToArea';
-  import reportError from '../lib/reportError';
+import Vue from 'vue'
+import resize from 'vue-resize-directive'
+import config from '../config'
+import { Component, Prop, Watch } from 'vue-property-decorator'
+import IonImageViewer from './IonImageViewer.vue'
+import { IonImage, loadPngFromUrl, processIonImage, ScaleType } from '../lib/ionImageRendering'
+import fitImageToArea, { FitImageToAreaResult } from '../lib/fitImageToArea'
+import reportError from '../lib/reportError'
 
   @Component({
     inheritAttrs: false,
     directives: {
-      resize
+      resize,
     },
     components: {
-      IonImageViewer
-    }
+      IonImageViewer,
+    },
   })
-  export default class ImageLoader extends Vue {
+export default class ImageLoader extends Vue {
     $refs: any;
 
     @Prop()
     src!: string | null;
+
     @Prop()
     imagePosition!: any;
+
     @Prop()
     imageFitParams!: any;
+
     @Prop()
     imageStyle!: any;
+
     @Prop()
     minIntensity?: number;
+
     @Prop()
     maxIntensity?: number;
+
     @Prop()
     pixelAspectRatio!: number;
-    @Prop({type: String})
+
+    @Prop({ type: String })
     scaleType?: ScaleType;
 
     containerWidth = 500;
@@ -62,50 +72,54 @@
     ionImageIsLoading = false;
 
     created() {
-      const ignoredPromise = this.updateIonImage();
+      const ignoredPromise = this.updateIonImage()
     }
+
     mounted() {
-      this.onResize();
+      this.onResize()
     }
+
     onResize() {
       if (this.$refs.container != null) {
-        this.containerWidth = this.$refs.container.clientWidth;
-        this.containerHeight = this.$refs.container.clientHeight;
+        this.containerWidth = this.$refs.container.clientWidth
+        this.containerHeight = this.$refs.container.clientHeight
       }
     }
 
     @Watch('src')
     async updateIonImage() {
       // Keep track of which image is loading so that this can bail if src changes before the download finishes
-      const newUrl = this.src;
+      const newUrl = this.src
 
       if (newUrl != null) {
-        this.ionImageIsLoading = true;
+        this.ionImageIsLoading = true
         try {
-          const png = await loadPngFromUrl((config.imageStorage || '') + newUrl);
+          const png = await loadPngFromUrl((config.imageStorage || '') + newUrl)
 
           if (newUrl === this.src) {
-            this.ionImage = processIonImage(png, this.minIntensity, this.maxIntensity, this.scaleType);
-            this.ionImageIsLoading = false;
+            this.ionImage = processIonImage(png, this.minIntensity, this.maxIntensity, this.scaleType)
+            this.ionImageIsLoading = false
           }
         } catch (err) {
-          reportError(err, null);
+          reportError(err, null)
           if (newUrl === this.src) {
-            this.ionImage = null;
-            this.ionImageIsLoading = false;
+            this.ionImage = null
+            this.ionImageIsLoading = false
           }
         }
       }
     }
 
     get zoom() {
-      return (this.imagePosition && this.imagePosition.zoom || 1) * this.imageFit.imageZoom;
+      return (this.imagePosition && this.imagePosition.zoom || 1) * this.imageFit.imageZoom
     }
+
     get xOffset() {
-      return this.imagePosition && this.imagePosition.xOffset || 0;
+      return this.imagePosition && this.imagePosition.xOffset || 0
     }
+
     get yOffset() {
-      return this.imagePosition && this.imagePosition.yOffset || 0;
+      return this.imagePosition && this.imagePosition.yOffset || 0
     }
 
     get imageFit(): FitImageToAreaResult {
@@ -115,7 +129,7 @@
         areaWidth: this.containerWidth,
         areaHeight: this.containerHeight,
         ...this.imageFitParams,
-      });
+      })
     }
 
     @Watch('imageFit')
@@ -125,7 +139,7 @@
         height: this.imageFit.areaHeight,
         naturalWidth: this.ionImage ? this.ionImage.width : 0,
         naturalHeight: this.ionImage ? this.ionImage.height : 0,
-      });
+      })
     }
-  }
+}
 </script>

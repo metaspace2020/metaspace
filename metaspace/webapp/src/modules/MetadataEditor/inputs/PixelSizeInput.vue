@@ -1,39 +1,61 @@
 <template>
   <el-row>
-    <el-col class="subfield" :span="12">
-      <el-form-item :class="{'is-error': error && error.Xaxis}" required>
+    <el-col
+      class="subfield"
+      :span="12"
+    >
+      <el-form-item
+        :class="{'is-error': error && error.Xaxis}"
+        required
+      >
         <custom-number-input
           :value="value.Xaxis"
           @input="val => onInput('Xaxis', val)"
-        ></custom-number-input>
-        <div class="subfield-label">horizontal</div>
-        <span class="error-msg" v-if="error && error.Xaxis">{{ error.Xaxis }}</span>
+        />
+        <div class="subfield-label">
+          horizontal
+        </div>
+        <span
+          v-if="error && error.Xaxis"
+          class="error-msg"
+        >{{ error.Xaxis }}</span>
       </el-form-item>
     </el-col>
-    <el-col class="subfield" :span="12">
-      <el-form-item :class="{'is-error': error && error.Yaxis}" required>
+    <el-col
+      class="subfield"
+      :span="12"
+    >
+      <el-form-item
+        :class="{'is-error': error && error.Yaxis}"
+        required
+      >
         <custom-number-input
           :value="value.Yaxis"
-          @input="val => onInput('Yaxis', val)"
           :required="required"
-        ></custom-number-input>
-        <div class="subfield-label">vertical</div>
-        <span class="error-msg" v-if="error && error.Yaxis">{{ error.Yaxis }}</span>
+          @input="val => onInput('Yaxis', val)"
+        />
+        <div class="subfield-label">
+          vertical
+        </div>
+        <span
+          v-if="error && error.Yaxis"
+          class="error-msg"
+        >{{ error.Yaxis }}</span>
       </el-form-item>
     </el-col>
   </el-row>
 </template>
 
 <script lang="ts">
-  import Vue from 'vue';
-  import { Component, Prop } from 'vue-property-decorator';
-  import {PixelSize} from '../formStructure';
-  import CustomNumberInput from './CustomNumberInput.vue'
+import Vue from 'vue'
+import { Component, Prop } from 'vue-property-decorator'
+import { PixelSize } from '../formStructure'
+import CustomNumberInput from './CustomNumberInput.vue'
 
   @Component({
-    components: {CustomNumberInput}
+    components: { CustomNumberInput },
   })
-  export default class PixelSizeInput extends Vue {
+export default class PixelSizeInput extends Vue {
     @Prop(Object)
     value!: PixelSize;
 
@@ -46,11 +68,11 @@
     onInput(fieldName: keyof PixelSize, value: number) {
       const newValue = {
         ...this.value,
-        [fieldName]: value
-      };
-      this.$emit('input', newValue);
-    };
-  }
+        [fieldName]: value,
+      }
+      this.$emit('input', newValue)
+    }
+}
 </script>
 
 <style>

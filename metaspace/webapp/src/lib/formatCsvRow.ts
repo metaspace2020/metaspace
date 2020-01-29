@@ -1,20 +1,20 @@
 export default (values: string[]): string => {
   const escaped = values.map(v => {
     if (v != null) {
-      return `"${String(v).replace(/"/g, '""')}"`;
+      return `"${String(v).replace(/"/g, '""')}"`
     } else {
-      return '';
+      return ''
     }
-  });
+  })
 
-  return escaped.join(',') + '\n';
-};
+  return escaped.join(',') + '\n'
+}
 
 export const csvExportHeader = () => {
-  const dateStr = new Date().toLocaleString().replace(/,/g, '');
+  const dateStr = new Date().toLocaleString().replace(/,/g, '')
   return `# Generated at ${dateStr}. For help see https://bit.ly/2HO2uz4\n`
-  + `# URL: ${window.location.href}\n`;
-};
+  + `# URL: ${window.location.href}\n`
+}
 
 /**
  * For arrays of text values, primarily molecule names, follow the pattern defined in /docs/csv_export.md for
@@ -26,4 +26,4 @@ export const csvExportHeader = () => {
 export const formatCsvTextArray = (values: string[]): string =>
   values
     .map(val => val.replace(/, +/g, ','))
-    .join(', ');
+    .join(', ')

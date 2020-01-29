@@ -1,43 +1,57 @@
 <template>
   <div>
-    <div ref="container" class="nf-container" v-show="activeFeature != null">
+    <div
+      v-show="activeFeature != null"
+      ref="container"
+      class="nf-container"
+    >
       <div v-if="activeFeature != null">
-        <div class="nf-container-corner-tag">NEW FEATURE!</div>
+        <div class="nf-container-corner-tag">
+          NEW FEATURE!
+        </div>
         <div class="bubble-container">
           <div class="bubble-content">
             <h3 v-if="activeFeature.title !== ''">
               {{ activeFeature.title }}
             </h3>
-            <div v-html="activeFeature.contentHtml">
-            </div>
+            <div v-html="activeFeature.contentHtml" />
           </div>
 
           <div class="nf-actions">
-            <el-button size="small" @click="remindMeLater">
+            <el-button
+              size="small"
+              @click="remindMeLater"
+            >
               Remind me later
             </el-button>
 
-            <el-button size="small" type="primary" @click.native="dismissCurrentFeature">
+            <el-button
+              size="small"
+              type="primary"
+              @click.native="dismissCurrentFeature"
+            >
               Got it!
             </el-button>
           </div>
-
         </div>
 
-        <div class="popper__arrow" x-arrow=''> </div>
+        <div
+          class="popper__arrow"
+          x-arrow=""
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-  import Vue from 'vue';
-  import Popper, {Placement} from 'popper.js';
+import Vue from 'vue'
+import Popper, { Placement } from 'popper.js'
 
-  import config from '../../config';
-  import Component from 'vue-class-component';
-  import {debounce, isArray} from 'lodash-es';
-  import {getLocalStorage, setLocalStorage} from '../../lib/localStorage';
+import config from '../../config'
+import Component from 'vue-class-component'
+import { debounce, isArray } from 'lodash-es'
+import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'
 
   interface FeatureSpec {
     name: string;
@@ -48,13 +62,13 @@
     getAnchorIfActive: (vue: Vue) => HTMLElement | null;
   }
 
-  const STORAGE_KEY = 'dismissedFeaturePopups';
+const STORAGE_KEY = 'dismissedFeaturePopups'
 
-  const NEW_FEATURES: FeatureSpec[] = [
-    {
-      name: 'offSample',
-      title: 'Off-Sample Prediction',
-      contentHtml: `
+const NEW_FEATURES: FeatureSpec[] = [
+  {
+    name: 'offSample',
+    title: 'Off-Sample Prediction',
+    contentHtml: `
 <p>We've trained a deep learning model to filter out annotations which represent molecules localized in the off-sample area,
 such as those corresponding to the MALDI matrix. You can now hide these annotations from the results,
 allowing you to find important molecules faster.</p>
@@ -62,36 +76,35 @@ allowing you to find important molecules faster.</p>
 <p>Please keep in mind that the accuracy of this model is greatly improved in datasets that include some off-sample area.
 We recommend including off-sample area around your sample during data acquisition.</p>
       `,
-      dontShowAfter: new Date('2019-07-22'),
-      placement: 'bottom',
-      getAnchorIfActive(vue: Vue) {
-        if (config.features.off_sample && vue.$route.path === '/annotations') {
-          return document.querySelector('.tf-outer[data-test-key=offSample]')
-            || document.querySelector('.filter-select');
-        }
-        return null;
-      },
+    dontShowAfter: new Date('2019-07-22'),
+    placement: 'bottom',
+    getAnchorIfActive(vue: Vue) {
+      if (config.features.off_sample && vue.$route.path === '/annotations') {
+        return document.querySelector('.tf-outer[data-test-key=offSample]')
+            || document.querySelector('.filter-select')
+      }
+      return null
     },
-    {
-      name: 'logScale',
-      title: 'Log-scale colormaps',
-      contentHtml: `
+  },
+  {
+    name: 'logScale',
+    title: 'Log-scale colormaps',
+    contentHtml: `
 <p>Ion images can now be viewed with a logarithmic-scale colormap. The ion image display options can be configured in this menu.</p>
       `,
-      dontShowAfter: new Date('2019-08-30'),
-      placement: 'bottom',
-      getAnchorIfActive(vue: Vue) {
-        if (vue.$route.path === '/annotations') {
-          return document.querySelector('[data-feature-anchor="ion-image-settings"]');
-        }
-        return null;
-      },
+    dontShowAfter: new Date('2019-08-30'),
+    placement: 'bottom',
+    getAnchorIfActive(vue: Vue) {
+      if (vue.$route.path === '/annotations') {
+        return document.querySelector('[data-feature-anchor="ion-image-settings"]')
+      }
+      return null
     },
-  ];
-
+  },
+]
 
   @Component({})
-  export default class NewFeaturePopup extends Vue {
+export default class NewFeaturePopup extends Vue {
     activeFeature: FeatureSpec | null = null;
     lastPopperAnchor: HTMLElement | null = null;
     popper: Popper | null = null;
@@ -99,89 +112,89 @@ We recommend including off-sample area around your sample during data acquisitio
     sessionDismissedFeatures: string[] = [];
 
     mounted() {
-      this.checkForPopups = debounce(this.checkForPopups, 100);
-      this.mutationObserver = new MutationObserver(() => { this.checkForPopups() });
+      this.checkForPopups = debounce(this.checkForPopups, 100)
+      this.mutationObserver = new MutationObserver(() => { this.checkForPopups() })
       // Ignore DOM elements outside of #app - it's unlikely that features will care about e.g. elements inside dialogs or tooltips
       this.mutationObserver.observe(document.querySelector('#app')!, {
         childList: true,
         subtree: true,
-      });
+      })
     }
+
     beforeDestroy() {
-      this.mutationObserver.disconnect();
-      this.close();
+      this.mutationObserver.disconnect()
+      this.close()
     }
 
     getStorageDismissedFeatures() {
       try {
-        const list = getLocalStorage(STORAGE_KEY);
+        const list = getLocalStorage(STORAGE_KEY)
         if (isArray(list)) {
           // Filter out invalid/old entries
-          return list.filter(item => NEW_FEATURES.some(f => f.name === item));
+          return list.filter(item => NEW_FEATURES.some(f => f.name === item))
         } else {
           return []
         }
       } catch (ex) {
-        return [];
+        return []
       }
-
     }
 
     getDismissedFeatures() {
-      return [...this.getStorageDismissedFeatures(), ...this.sessionDismissedFeatures];
+      return [...this.getStorageDismissedFeatures(), ...this.sessionDismissedFeatures]
     }
 
     close() {
-      this.activeFeature = null;
+      this.activeFeature = null
 
       if (this.popper != null) {
-        this.popper.destroy();
-        this.popper = null;
+        this.popper.destroy()
+        this.popper = null
       }
     }
 
     remindMeLater() {
       if (this.activeFeature != null) {
-        this.sessionDismissedFeatures.push(this.activeFeature.name);
-        this.close();
+        this.sessionDismissedFeatures.push(this.activeFeature.name)
+        this.close()
       }
     }
 
     dismissCurrentFeature() {
-      const activeFeatureName = this.activeFeature && this.activeFeature.name;
+      const activeFeatureName = this.activeFeature && this.activeFeature.name
       // Close before updating localStorage, in case of error updating localStorage.
-      this.close();
+      this.close()
 
       if (activeFeatureName != null) {
-        const currentFeatureStatus = this.getStorageDismissedFeatures();
-        setLocalStorage(STORAGE_KEY, [...currentFeatureStatus, activeFeatureName]);
+        const currentFeatureStatus = this.getStorageDismissedFeatures()
+        setLocalStorage(STORAGE_KEY, [...currentFeatureStatus, activeFeatureName])
       }
     }
 
     checkForPopups() {
       if (this.$refs.container != null) {
-        const dismissedFeatures = this.getDismissedFeatures();
+        const dismissedFeatures = this.getDismissedFeatures()
         const activatableFeatures = NEW_FEATURES
           .filter(feature => !dismissedFeatures.includes(feature.name))
           .filter(feature => feature.dontShowAfter > new Date())
           .map(feature => [feature, feature.getAnchorIfActive(this)] as [FeatureSpec, HTMLElement | null])
-          .filter(([feature, anchor]) => anchor != null);
+          .filter(([feature, anchor]) => anchor != null)
 
         if (activatableFeatures.length > 0) {
-          const [feature, anchor] = activatableFeatures[0];
-          this.activeFeature = feature;
+          const [feature, anchor] = activatableFeatures[0]
+          this.activeFeature = feature
           if (anchor != this.lastPopperAnchor && this.popper != null) {
-            this.popper.destroy();
+            this.popper.destroy()
           }
 
-          this.popper = new Popper(anchor!, this.$refs.container as Element, { placement: feature.placement });
-          this.lastPopperAnchor = anchor;
+          this.popper = new Popper(anchor!, this.$refs.container as Element, { placement: feature.placement })
+          this.lastPopperAnchor = anchor
         } else if (this.activeFeature != null) {
-          this.close();
+          this.close()
         }
       }
     }
-  }
+}
 </script>
 
 <style lang="scss">

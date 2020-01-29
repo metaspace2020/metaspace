@@ -1,5 +1,5 @@
-import gql from 'graphql-tag';
-import { omit } from 'lodash-es';
+import gql from 'graphql-tag'
+import { omit } from 'lodash-es'
 
 export interface Option {
   value: string;
@@ -14,7 +14,7 @@ export type SearchableFilterKey = 'datasetIds' | 'group' | 'project' | 'submitte
 
 const datasetQueries: FilterQueries = {
   async search($apollo, $store, query) {
-    const {data} = await $apollo.query({
+    const { data } = await $apollo.query({
       query: gql`query DatasetOptions($filter: DatasetFilter!, $orderBy: DatasetOrderBy, $sortingOrder: SortingOrder) {
         options: allDatasets(filter: $filter, orderBy: $orderBy, sortingOrder: $sortingOrder, limit: 20) {
          id
@@ -26,17 +26,17 @@ const datasetQueries: FilterQueries = {
       variables: {
         filter: {
           ...omit($store.getters.gqlDatasetFilter, 'ids'),
-          ...(query ? {name: query} : {}),
+          ...(query ? { name: query } : {}),
           status: 'FINISHED',
         },
         orderBy: query ? 'ORDER_BY_NAME' : 'ORDER_BY_DATE',
         sortingOrder: query ? 'ASCENDING' : 'DESCENDING',
-      }
-    });
-    return data.options as Option[];
+      },
+    })
+    return data.options as Option[]
   },
   async getById($apollo, ids) {
-    const {data} = await $apollo.query({
+    const { data } = await $apollo.query({
       query: gql`query DatasetNames($ids: String) {
         options: allDatasets(filter: {ids: $ids}) {
           id
@@ -45,11 +45,11 @@ const datasetQueries: FilterQueries = {
         }
       }`,
       fetchPolicy: 'cache-first',
-      variables: {ids: ids.join('|')}
-    });
-    return data.options as Option[];
-  }
-};
+      variables: { ids: ids.join('|') },
+    })
+    return data.options as Option[]
+  },
+}
 
 const groupQueries: FilterQueries = {
   async search($apollo, $store, query) {
@@ -63,11 +63,11 @@ const groupQueries: FilterQueries = {
         }
       }`,
         fetchPolicy: 'cache-first',
-        variables: { query }
-      });
-      return data.options as Option[];
+        variables: { query },
+      })
+      return data.options as Option[]
     } else {
-      const {data: {currentUser}} = await $apollo.query({
+      const { data: { currentUser } } = await $apollo.query({
         query: gql`query MyGroupOptions {
           currentUser {
             id
@@ -81,8 +81,8 @@ const groupQueries: FilterQueries = {
           }
         }`,
         fetchPolicy: 'cache-first',
-      });
-      return currentUser && currentUser.groups && currentUser.groups.map((userGroup: any) => userGroup.group) || [] as Option[];
+      })
+      return currentUser && currentUser.groups && currentUser.groups.map((userGroup: any) => userGroup.group) || [] as Option[]
     }
   },
   async getById($apollo, ids) {
@@ -95,14 +95,14 @@ const groupQueries: FilterQueries = {
         }
       }`,
       fetchPolicy: 'cache-first',
-      variables: { groupId }
-    }));
-    const results = await Promise.all(promises);
+      variables: { groupId },
+    }))
+    const results = await Promise.all(promises)
     return results
       .filter((result: any) => result.data.group != null)
-      .map((result: any) => result.data.group as Option);
-  }
-};
+      .map((result: any) => result.data.group as Option)
+  },
+}
 
 const projectQueries: FilterQueries = {
   async search($apollo, $store, query) {
@@ -116,11 +116,11 @@ const projectQueries: FilterQueries = {
         }
       }`,
         fetchPolicy: 'cache-first',
-        variables: { query }
-      });
-      return data.options as Option[];
+        variables: { query },
+      })
+      return data.options as Option[]
     } else {
-      const {data: {currentUser}} = await $apollo.query({
+      const { data: { currentUser } } = await $apollo.query({
         query: gql`query MyProjectOptions {
           currentUser {
             id
@@ -134,8 +134,8 @@ const projectQueries: FilterQueries = {
           }
         }`,
         fetchPolicy: 'cache-first',
-      });
-      return currentUser && currentUser.projects && currentUser.projects.map((userProject: any) => userProject.project) || [] as Option[];
+      })
+      return currentUser && currentUser.projects && currentUser.projects.map((userProject: any) => userProject.project) || [] as Option[]
     }
   },
   async getById($apollo, ids) {
@@ -148,14 +148,14 @@ const projectQueries: FilterQueries = {
         }
       }`,
       fetchPolicy: 'cache-first',
-      variables: { projectId }
-    }));
-    const results = await Promise.all(promises);
+      variables: { projectId },
+    }))
+    const results = await Promise.all(promises)
     return results
       .filter((result: any) => result.data.project != null)
-      .map((result: any) => result.data.project as Option);
-  }
-};
+      .map((result: any) => result.data.project as Option)
+  },
+}
 
 const submitterQueries: FilterQueries = {
   async search($apollo, $store, query) {
@@ -169,11 +169,11 @@ const submitterQueries: FilterQueries = {
         }
       }`,
         fetchPolicy: 'cache-first',
-        variables: { query }
-      });
-      return data.options as Option[];
+        variables: { query },
+      })
+      return data.options as Option[]
     } else {
-      const {data: {currentUser}} = await $apollo.query({
+      const { data: { currentUser } } = await $apollo.query({
         query: gql`query MySubmitterOptions {
           currentUser {
             id
@@ -193,17 +193,17 @@ const submitterQueries: FilterQueries = {
           }
         }`,
         fetchPolicy: 'cache-first',
-      });
+      })
       if (currentUser) {
-        const meOption = { value: currentUser.id, label: currentUser.label };
+        const meOption = { value: currentUser.id, label: currentUser.label }
         const peerOptions = currentUser.primaryGroup && currentUser.primaryGroup.group.members
-          && currentUser.primaryGroup.group.members.map((member: any) => member.user) || [];
+          && currentUser.primaryGroup.group.members.map((member: any) => member.user) || []
         return [
           meOption,
           ...peerOptions.filter((option: Option) => option.value !== currentUser.id && !!option.label),
-        ];
+        ]
       } else {
-        return [];
+        return []
       }
     }
   },
@@ -217,20 +217,20 @@ const submitterQueries: FilterQueries = {
         }
       }`,
       fetchPolicy: 'cache-first',
-      variables: { userId }
-    }));
-    const results = await Promise.all(promises);
+      variables: { userId },
+    }))
+    const results = await Promise.all(promises)
     return results
       .filter((result: any) => result.data.user != null)
-      .map((result: any) => result.data.user as Option);
-  }
-};
+      .map((result: any) => result.data.user as Option)
+  },
+}
 
 const searchableFilterQueries: Record<SearchableFilterKey, FilterQueries> = {
   datasetIds: datasetQueries,
   group: groupQueries,
   project: projectQueries,
   submitter: submitterQueries,
-};
+}
 
 export default searchableFilterQueries

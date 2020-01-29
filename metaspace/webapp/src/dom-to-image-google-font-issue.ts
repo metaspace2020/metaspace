@@ -15,6 +15,6 @@ declare module 'dom-to-image-google-font-issue' {
     toBlob(node: HTMLElement, options?: DTIOptions): Promise<Blob>
   }
 
-  const domtoimage: DTI;
+  const domtoimage: DTI
   export = domtoimage;
 }

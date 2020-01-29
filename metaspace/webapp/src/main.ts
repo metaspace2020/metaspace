@@ -1,17 +1,33 @@
-import Vue from 'vue';
+import Vue from 'vue'
 
-import config from './config';
-import * as Raven from 'raven-js';
-import * as RavenVue from 'raven-js/plugins/vue';
-if(config.ravenDsn != null && config.ravenDsn !== '') {
+import config from './config'
+import * as Raven from 'raven-js'
+import * as RavenVue from 'raven-js/plugins/vue'
+
+import VueApollo from 'vue-apollo'
+import apolloClient, { setMaintenanceMessageHandler } from './graphqlClient'
+
+import ElementUI from 'element-ui'
+import './element-variables.scss'
+import locale from 'element-ui/lib/locale/lang/en'
+
+import store from './store'
+import router from './router'
+import { sync } from 'vuex-router-sync'
+import { Route } from 'vue-router'
+
+import App from './modules/App/App.vue'
+
+import VueAnalytics from 'vue-analytics'
+import { setErrorNotifier } from './lib/reportError'
+import { updateConfigFromQueryString } from './config'
+import { migrateLocalStorage } from './lib/localStorage'
+if (config.ravenDsn != null && config.ravenDsn !== '') {
   Raven.config(config.ravenDsn)
-       .addPlugin(RavenVue, Vue)
-       .install();
+    .addPlugin(RavenVue, Vue)
+    .install()
 }
-
-import VueApollo from 'vue-apollo';
-import apolloClient, { setMaintenanceMessageHandler } from './graphqlClient';
-Vue.use(VueApollo);
+Vue.use(VueApollo)
 
 const apolloProvider = new VueApollo({
   defaultClient: apolloClient,
@@ -20,52 +36,36 @@ const apolloProvider = new VueApollo({
       fetchPolicy: 'network-only',
     },
   } as any,
-});
-
-import ElementUI from 'element-ui';
-import './element-variables.scss';
-import locale from 'element-ui/lib/locale/lang/en';
-Vue.use(ElementUI, { locale });
-
-import store from './store';
-import router from './router';
-import { sync } from 'vuex-router-sync';
-import {Route} from 'vue-router';
-sync(store, router);
+})
+Vue.use(ElementUI, { locale })
+sync(store, router)
 router.afterEach((to: Route) => {
-  store.commit('updateFilterOnNavigate', to);
-});
+  store.commit('updateFilterOnNavigate', to)
+})
 
-import App from './modules/App/App.vue';
+const isProd = process.env.NODE_ENV === 'production'
 
-const isProd = process.env.NODE_ENV === 'production';
-
-import VueAnalytics from 'vue-analytics';
-import { setErrorNotifier } from './lib/reportError'
-import {updateConfigFromQueryString} from './config';
-import {migrateLocalStorage} from './lib/localStorage';
-
-migrateLocalStorage();
+migrateLocalStorage()
 
 Vue.use(VueAnalytics, {
   id: 'UA-73509518-1',
   router,
   autoTracking: {
-    exception: isProd // disabled in dev because it impairs "break on uncaught exception"
+    exception: isProd, // disabled in dev because it impairs "break on uncaught exception"
   },
   debug: {
     // enabled: !isProd,
-    sendHitTask: isProd
-  }
-});
+    sendHitTask: isProd,
+  },
+})
 
-Vue.config.devtools = process.env.NODE_ENV === 'development';
-Vue.config.performance = process.env.NODE_ENV === 'development';
+Vue.config.devtools = process.env.NODE_ENV === 'development'
+Vue.config.performance = process.env.NODE_ENV === 'development'
 
 const app = new Vue({
   el: '#app',
   render: h => h(App),
-    /*
+  /*
   renderError (h, err) {
     return h('pre', { style: { color: 'red' }}, err.stack)
   },
@@ -73,8 +73,8 @@ const app = new Vue({
   store,
   router,
   apolloProvider,
-});
+})
 
-setErrorNotifier(app.$notify);
-setMaintenanceMessageHandler(app.$alert);
-updateConfigFromQueryString();
+setErrorNotifier(app.$notify)
+setMaintenanceMessageHandler(app.$alert)
+updateConfigFromQueryString()
