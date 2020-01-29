@@ -73,7 +73,7 @@ class ProjectsClient:
                 }
             }"""
         )
-        print(result)
+
         return [p['project'] for p in result.get('currentUser', {}).get('projects', [])]
 
     def add_project_external_link(
