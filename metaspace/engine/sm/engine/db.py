@@ -95,10 +95,8 @@ class DB:
 
     def _add_fields(self, row_or_rows):
         fields = [desc[0] for desc in self._curs.description]
-        if isinstance(row_or_rows, list):
-            return [dict(zip(fields, row)) for row in row_or_rows]
-        else:
-            return dict(zip(fields, row_or_rows))
+        rows = row_or_rows if isinstance(row_or_rows, list) else [row_or_rows]
+        return [dict(zip(fields, row)) for row in rows]
 
     @db_decor
     def select_with_fields(self, sql, params=None):

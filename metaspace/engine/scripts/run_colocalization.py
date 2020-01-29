@@ -69,6 +69,7 @@ ORDER BY j.ds_id DESC;
 """
 
 
+# pylint: disable=unused-argument
 def run_coloc_jobs(sm_config, ds_id_str, sql_where, fix_missing, fix_corrupt, skip_existing):
     assert (
         len(
@@ -91,8 +92,10 @@ def run_coloc_jobs(sm_config, ds_id_str, sql_where, fix_missing, fix_corrupt, sk
             id for (id,) in db.select(f'SELECT DISTINCT dataset.id FROM dataset WHERE {sql_where}')
         ]
     else:
-        ALL_MOLDBS_SEL = 'SELECT id, name FROM molecular_db m'
-        mol_dbs = [(doc['id'], doc['name']) for doc in db.select_with_fields(ALL_MOLDBS_SEL)]
+        mol_dbs = [
+            (doc['id'], doc['name'])
+            for doc in db.select_with_fields('SELECT id, name FROM molecular_db m')
+        ]
         mol_db_ids, mol_db_names = map(list, zip(*mol_dbs))
         fdrs = [0.05, 0.1, 0.2, 0.5]
         algorithms = ['cosine', 'pca_cosine', 'pca_pearson', 'pca_spearman']

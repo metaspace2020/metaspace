@@ -9,7 +9,7 @@ SIGMA_TO_FWHM = 2.3548200450309493  # 2 \sqrt{2 \log 2}
 logger = logging.getLogger('api')
 
 
-class Centroids(object):
+class Centroids:
     def __init__(self, isotope_pattern, instrument_model, pts_per_mz=None, n_peaks=ISOTOPIC_PEAK_N):
         self._isotope_pattern = isotope_pattern
         self._instrument_model = instrument_model

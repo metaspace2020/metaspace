@@ -6,14 +6,10 @@ import pandas as pd
 from sm.engine.molecular_db import create, import_molecules_from_df
 from sm.engine.util import bootstrap_and_run
 
-
-def import_new_database(sm_config):
-    moldb = create(args.name, args.version)
-    moldb_df = pd.read_csv(open(args.csv_file, encoding='utf8'), sep=args.sep).fillna('')
-    import_molecules_from_df(moldb, moldb_df)
+logger = logging.getLogger('engine')
 
 
-if __name__ == "__main__":
+def main():
     help_msg = 'Import a new molecular database'
     parser = argparse.ArgumentParser(description=help_msg)
     parser.add_argument('name', type=str, help='Database name')
@@ -28,6 +24,15 @@ if __name__ == "__main__":
     parser.add_argument('--config', default='conf/config.json', help='SM config path')
     parser.set_defaults(sep='\t', confirmed=False)
     args = parser.parse_args()
-    logger = logging.getLogger('engine')
+
+    # pylint: disable=unused-argument
+    def import_new_database(sm_config):
+        moldb = create(args.name, args.version)
+        moldb_df = pd.read_csv(open(args.csv_file, encoding='utf8'), sep=args.sep).fillna('')
+        import_molecules_from_df(moldb, moldb_df)
 
     bootstrap_and_run(args.config, import_new_database)
+
+
+if __name__ == "__main__":
+    main()
