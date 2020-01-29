@@ -144,7 +144,7 @@ export default {
 
       // FIXME somehow I couldn't get TestCafe to pass real filenames
       // so FineUploader uses default values for both :-\
-      if (fnames[0] == 'misc_data' && fnames[1] == 'misc_data') {
+      if (fnames[0] === 'misc_data' && fnames[1] === 'misc_data') {
         fnames = ['test.imzML', 'test.ibd']
       }
 
@@ -204,7 +204,7 @@ export default {
           },
           callbacks: {
             onAllComplete: (succeeded, failed) => {
-              if (failed.length == 0) {
+              if (failed.length === 0) {
                 this.$message({ message: 'All datasets have been uploaded', type: 'success' })
                 this.$emit('success', uuid)
               } else {
@@ -217,7 +217,7 @@ export default {
           },
         })
 
-        if (this.config.storage != 's3') {
+        if (this.config.storage !== 's3') {
           options.request = {
             endpoint: '/dataset_upload',
             params: {

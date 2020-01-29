@@ -89,7 +89,7 @@ export default {
   },
   created() {
     router.beforeEach((to, from, next) => {
-      if (!this.tour || to.path == from.path) {
+      if (!this.tour || to.path === from.path) {
         next()
         return
       }
@@ -114,7 +114,7 @@ export default {
   methods: {
     nextStep() {
       this.stepNum += 1
-      if (this.tour.steps.length == this.stepNum) {
+      if (this.tour.steps.length === this.stepNum) {
         this.close()
         return
       }
@@ -124,7 +124,7 @@ export default {
     },
 
     prevStep() {
-      if (this.stepNum == 0)
+      if (this.stepNum === 0)
         return // shouldn't happen
       this.stepNum -= 1
       this.popper.destroy()
@@ -133,7 +133,7 @@ export default {
 
     render() {
       // FIXME: simplify the logic here and make it more universal
-      if (this.step.route && this.lastRoute != this.step.route) {
+      if (this.step.route && this.lastRoute !== this.step.route) {
         this.lastRoute = this.step.route
         this.routeTransition = true
         if (this.step.query)

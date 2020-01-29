@@ -86,7 +86,7 @@ const config = {
 
 function drawMaldiCurlyBrace(svg, data, xScale) {
   const maldiData = data.filter(d => strieq(d.sourceType, 'maldi'))
-  if (maldiData.length == 0)
+  if (maldiData.length === 0)
     return
 
   const maldiRange = d3.extent(maldiData.map(d => xScale(d.source)))
@@ -167,7 +167,7 @@ export default {
           totalCount: entry.count,
         }
 
-        if (prev && ['analyzer', 'source', 'sourceType'].every(f => prev[f] == datum[f])) {
+        if (prev && ['analyzer', 'source', 'sourceType'].every(f => prev[f] === datum[f])) {
           ['positive', 'negative'].forEach(pol => { prev.counts[pol] += datum.counts[pol] })
           prev.totalCount += datum.totalCount
         } else {
@@ -195,7 +195,7 @@ export default {
             count: values.map(d => d.totalCount).reduce((x, y) => x + y),
           }))
           .sort((a, b) => {
-            if (a.sourceType != b.sourceType) {
+            if (a.sourceType !== b.sourceType) {
               if (strieq(a.sourceType, 'maldi'))
                 return 1
               if (strieq(b.sourceType, 'maldi'))

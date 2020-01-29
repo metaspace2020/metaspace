@@ -347,12 +347,12 @@ export default {
       for (var key in this.filter) {
         if (!this.filter[key])
           continue
-        if (['fdrLevel', 'minMSM', 'database', 'datasetIds', 'metadataType'].indexOf(key) == -1) {
+        if (['fdrLevel', 'minMSM', 'database', 'datasetIds', 'metadataType'].indexOf(key) === -1) {
           isSimple = false
           break
         }
       }
-      return isSimple && this.filter.datasetIds && this.filter.datasetIds.length == 1
+      return isSimple && this.filter.datasetIds && this.filter.datasetIds.length === 1
     },
 
     orderBy() {
@@ -404,7 +404,7 @@ export default {
 
     paginationLayout() {
       const { datasetIds } = this.filter
-      const limitedSpace = datasetIds && datasetIds.length == 1
+      const limitedSpace = datasetIds && datasetIds.length === 1
       if (limitedSpace)
         return 'pager'
 
@@ -441,7 +441,7 @@ export default {
         // data for the current page and only then fetch the updated data.
         // Checking if the data has been actually changed is easiest by comparing
         // string representations of old and newly arrived data.
-        const changed = JSON.stringify(data) != this._prevData
+        const changed = JSON.stringify(data) !== this._prevData
         this._prevData = JSON.stringify(data)
 
         // Handle page changes (due to pagination or keyboard events).
@@ -580,7 +580,7 @@ export default {
         return
       }
 
-      const delta = action == 'up' ? -1 : +1
+      const delta = action === 'up' ? -1 : +1
       tblStore.commit('setCurrentRow',
         this.annotations[curIdx + delta])
     },

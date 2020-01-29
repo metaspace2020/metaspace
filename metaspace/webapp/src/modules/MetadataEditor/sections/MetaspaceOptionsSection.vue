@@ -247,7 +247,7 @@ import './FormSection.scss'
 const normalizeFormulaModifier = (formula: string, defaultSign: '+'|'-') => {
   if (!formula) return null
   // It won't work for all situations, but for lazy users convert "h2o" to "H2O"
-  if (formula == formula.toLowerCase()) {
+  if (formula === formula.toLowerCase()) {
     formula = formula.toUpperCase()
   }
   if (!formula.startsWith('-') && !formula.startsWith('+')) {

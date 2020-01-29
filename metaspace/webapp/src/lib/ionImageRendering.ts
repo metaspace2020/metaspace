@@ -33,7 +33,7 @@ const SCALES: Record<ScaleType, [ScaleMode, number | null, number | null]> = {
 }
 
 const createDataUrl = (imageBytes: Uint8ClampedArray, width: number, height: number) => {
-  if (imageBytes.length != width * height * 4) {
+  if (imageBytes.length !== width * height * 4) {
     throw new Error('imageBytes must be in RGBA format')
   }
   const canvas = document.createElement('canvas')

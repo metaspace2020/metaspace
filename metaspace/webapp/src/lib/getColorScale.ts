@@ -14,7 +14,7 @@ interface ColorScale {
 }
 
 export default function getColorScale(name: string): ColorScale {
-  if (name[0] != '-') {
+  if (name[0] !== '-') {
     return extractScale(scales[name], 0, 1) // normal
   } else {
     // inverted - reverse both arrays so that the domain is always in ascending order

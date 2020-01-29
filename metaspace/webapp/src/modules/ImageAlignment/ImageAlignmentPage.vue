@@ -312,7 +312,7 @@ export default {
     },
 
     currentAnnotation() {
-      if (!this.annotations || this.annotations.length == 0)
+      if (!this.annotations || this.annotations.length === 0)
         return null
       return this.annotations[this.annotationIndex]
     },
@@ -325,7 +325,7 @@ export default {
     currentSumFormula() {
       if (!this.annotations)
         return 'loading...'
-      if (this.annotations.length == 0)
+      if (this.annotations.length === 0)
         return 'no results'
       return this.renderAnnotation(this.currentAnnotation)
     },
@@ -401,7 +401,7 @@ export default {
       xhr.open('POST', uri, true)
       xhr.responseType = 'json'
       xhr.onreadystatechange = async() => {
-        if (xhr.readyState == 4 && xhr.status == 201) {
+        if (xhr.readyState === 4 && xhr.status === 201) {
           const imageId = xhr.response.image_id
           const imageUrl = this.rawImageStorageUrl + '/' + imageId
           try {
@@ -414,7 +414,7 @@ export default {
           } catch (e) {
             reportError(e)
           }
-        } else if (xhr.readyState == 4) {
+        } else if (xhr.readyState === 4) {
           this.$message({
             type: 'error',
             message: "Couldn't upload the optical image due to server error",

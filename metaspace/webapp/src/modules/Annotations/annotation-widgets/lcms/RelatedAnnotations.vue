@@ -48,13 +48,13 @@ export default {
         return []
       }
       // no adducts apart from current annotation
-      if (this.annotations.length == 1) {
+      if (this.annotations.length === 1) {
         return [graphColors[0]]
       }
       // taking last colors from the palette
       const colors = graphColors.slice(-this.annotations.length + 1)
       // replacing color of the current annotation with the 1st palette color
-      const curAnnIdx = this.annotations.findIndex(a => a.adduct == this.annotation.adduct)
+      const curAnnIdx = this.annotations.findIndex(a => a.adduct === this.annotation.adduct)
       colors.splice(curAnnIdx, 0, graphColors[0])
       return colors
     },

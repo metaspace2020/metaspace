@@ -47,7 +47,7 @@ function decodePayload(jwt: JWT) {
 }
 
 function pathFromUUID(uuid: string): string {
-  if (fuConfig.storage == 's3')
+  if (fuConfig.storage === 's3')
     return 's3a://' + fuConfig.aws.s3_bucket + '/' + uuid
   else
     return fuConfig.storage + '/' + uuid + '/'
@@ -56,7 +56,7 @@ function pathFromUUID(uuid: string): string {
 function mzFilterPrecision(value: number | string): string {
   // Using parseFloat to remove any extra decimal places that won't actually count toward the precision
   const splitVal = String(parseFloat(String(value))).split('.')
-  if (splitVal.length == 1) {
+  if (splitVal.length === 1) {
     return '1'
   } else {
     const k = splitVal[1].length

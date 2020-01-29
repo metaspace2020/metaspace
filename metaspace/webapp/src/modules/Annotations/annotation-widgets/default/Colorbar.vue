@@ -30,7 +30,7 @@ export default class Colorbar extends Vue {
        }
      } else {
        const { domain, range } = getColorScale(this.map)
-       const direction = this.map[0] == '-' ? 'bottom' : 'top'
+       const direction = this.map[0] === '-' ? 'bottom' : 'top'
 
        const colors = []
        for (let i = 0; i < domain.length; i++)

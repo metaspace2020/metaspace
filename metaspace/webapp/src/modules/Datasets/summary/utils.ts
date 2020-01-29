@@ -112,7 +112,7 @@ function pieScatterPlot(svg: any, data: any, config: any,
         return `translate(${radius + 3}, ${i * 15})`
       })
     // .attr("text-anchor", function(d) { return (d.endAngle + d.startAngle)/2 > Math.PI ? "end" : "start"; })
-      .text((d: any): string => d.data == 0 ? '' : d.data)
+      .text((d: any): string => d.data === 0 ? '' : d.data)
       .style('fill', (d: any, i: number) => colors(pie.sectors[i].label))
 
   if (config.showSideHistograms) {

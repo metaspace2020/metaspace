@@ -109,7 +109,7 @@ export default class SearchableFilter extends Vue {
       // add currently selected values to the list
       for (let i = 0; i < this.options.length; i++) {
         const item = this.options[i]
-        if (values.indexOf(item.value) == -1) {
+        if (values.indexOf(item.value) === -1) {
           values.push(item.value)
           options.push(item)
         }

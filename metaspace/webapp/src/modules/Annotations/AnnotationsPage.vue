@@ -58,7 +58,7 @@ export default {
     hiddenColumns() {
       const { group, database, datasetIds, colocalizedWith, fdrLevel } = this.filter
       const hiddenColumns = []
-      const singleDatasetSelected = datasetIds && datasetIds.length == 1
+      const singleDatasetSelected = datasetIds && datasetIds.length === 1
       if (singleDatasetSelected)
         hiddenColumns.push('Dataset')
       if (group || singleDatasetSelected)

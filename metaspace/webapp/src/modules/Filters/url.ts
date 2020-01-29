@@ -74,10 +74,10 @@ export function encodeParams(filter: any, path?: string, filterLists?: MetadataL
   let key: FilterKey
   for (key in FILTER_TO_URL) {
     const { levels, encoding } = FILTER_SPECIFICATIONS[key]
-    if (level != null && levels.indexOf(level) == -1)
+    if (level != null && levels.indexOf(level) === -1)
       continue
 
-    if (key in filter && (defaultFilter == null || filter[key] != defaultFilter[key])) {
+    if (key in filter && (defaultFilter == null || filter[key] !== defaultFilter[key])) {
       if (encoding === 'json') {
         q[FILTER_TO_URL[key]] = JSON.stringify(filter[key])
       } else if (encoding === 'list') {
@@ -123,21 +123,21 @@ export function decodeParams(location: Location, filterLists: any): Object {
     // if someone changes the URL and adds a second copy of an existing parameter.
     const value = isArray(query[key]) ? query[key][0] : query[key]
 
-    if (levels.indexOf(level) == -1)
+    if (levels.indexOf(level) === -1)
       continue
 
-    if (encoding == 'json') {
-      if ('[{'.indexOf(value[0]) == -1) {
+    if (encoding === 'json') {
+      if ('[{'.indexOf(value[0]) === -1) {
         // assume non-JSON means array of one element
         filter[fKey] = [value]
       } else {
         filter[fKey] = JSON.parse(value)
       }
-    } else if (encoding == 'list') {
+    } else if (encoding === 'list') {
       filter[fKey] = value ? value.split(',') : []
-    } else if (encoding == 'bool') {
+    } else if (encoding === 'bool') {
       filter[fKey] = value === '1'
-    } else if (encoding == 'number') {
+    } else if (encoding === 'number') {
       filter[fKey] = parseFloat(value)
     } else {
       filter[fKey] = value
@@ -155,7 +155,7 @@ function decodeSections(number: string): string[] {
   const sections = []
   const mask = parseInt(number).toString(2)
   for (let i = mask.length - 1; i >= 0; i--) {
-    if (mask[i] == '1') {
+    if (mask[i] === '1') {
       sections.push(allSections[allSections.length - mask.length + i])
     }
   }
@@ -172,15 +172,15 @@ export function encodeSections(sections: string[]) {
 }
 
 function decodeSortOrder(str: string): SortSettings {
-  const dir = str[0] == '-' ? 'DESCENDING' : 'ASCENDING'
-  if (str[0] == '-')
+  const dir = str[0] === '-' ? 'DESCENDING' : 'ASCENDING'
+  if (str[0] === '-')
     str = str.slice(1)
   const by = 'ORDER_BY_' + str.toUpperCase()
   return { by, dir }
 }
 
 export function encodeSortOrder(settings: SortSettings): string | null {
-  const dir = settings.dir == 'ASCENDING' ? '' : '-'
+  const dir = settings.dir === 'ASCENDING' ? '' : '-'
   const sort = dir + settings.by.replace('ORDER_BY_', '').toLowerCase()
   return sort === '-msm' ? null : sort
 }

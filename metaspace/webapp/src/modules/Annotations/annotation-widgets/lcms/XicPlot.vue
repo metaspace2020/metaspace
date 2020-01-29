@@ -41,7 +41,7 @@ function imageToIntensity(intensityImgUrl, maxIntensity) {
 }
 
 function plotChart(intensities, timeSeq, timeUnitName, logIntensity, graphColors, element) {
-  if (!element || element.clientHeight == 0) {
+  if (!element || element.clientHeight === 0) {
     return
   }
   // IE 11
@@ -225,7 +225,7 @@ export default {
     graphColors: function() { this.reloadPlot() },
     acquisitionGeometry: function() { this.reloadPlot() },
     logIntensity: function() {
-      if (this.logIntensity != this.internalLogIntensity) {
+      if (this.logIntensity !== this.internalLogIntensity) {
         this.setLogIntensity(this.logIntensity)
       }
     },
@@ -242,7 +242,7 @@ export default {
       this.reloadPlot()
     },
     reloadPlot() {
-      if (this.intensityImgs.length != this.graphColors.length) {
+      if (this.intensityImgs.length !== this.graphColors.length) {
         return
       }
       this.validIntImages = this.intensityImgs.filter(intImg => intImg.url)

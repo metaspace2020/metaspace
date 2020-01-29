@@ -421,11 +421,11 @@ export default {
 
     addFilter(field) {
       const filter = Object.assign({}, this.$store.getters.filter)
-      if (field == 'polarity') {
+      if (field === 'polarity') {
         filter.polarity = capitalize(this.dataset.polarity)
-      } else if (field == 'submitter') {
+      } else if (field === 'submitter') {
         filter[field] = this.dataset.submitter.id
-      } else if (field == 'group') {
+      } else if (field === 'group') {
         filter[field] = this.dataset.group.id
       } else {
         filter[field] = this.dataset[field] || this[field]

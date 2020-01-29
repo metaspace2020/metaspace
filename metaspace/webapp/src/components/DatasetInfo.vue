@@ -115,11 +115,11 @@ export default {
         const data = obj[key]
         isLeaf = false
         const childSchema = schema.properties[key]
-        if (!data || key == 'Email') {
+        if (!data || key === 'Email') {
           continue // hide e-mails from the interface
         }
         const child = this.objToTreeNode(key, data, childSchema)
-        if (child.children && child.children.length == 0)
+        if (child.children && child.children.length === 0)
           continue
         children.push(child)
       }

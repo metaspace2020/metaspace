@@ -186,7 +186,7 @@ export default class Diagnostics extends Vue {
     @Watch('annotationGroups')
     resetComparisonIfInvalid() {
       if (this.comparisonIonFormula
-          && !this.annotationGroups.some(ag => ag.ionFormula == this.comparisonIonFormula)) {
+          && !this.annotationGroups.some(ag => ag.ionFormula === this.comparisonIonFormula)) {
         this.comparisonIonFormula = null
       }
     }
@@ -239,7 +239,7 @@ export default class Diagnostics extends Vue {
     }
 
     get hasIsobars() {
-      return config.features.isobars && this.annotation.isobars.length != 0
+      return config.features.isobars && this.annotation.isobars.length !== 0
     }
 
     get hasWarnIsobar() {

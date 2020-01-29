@@ -183,7 +183,7 @@ export default class NewFeaturePopup extends Vue {
         if (activatableFeatures.length > 0) {
           const [feature, anchor] = activatableFeatures[0]
           this.activeFeature = feature
-          if (anchor != this.lastPopperAnchor && this.popper != null) {
+          if (anchor !== this.lastPopperAnchor && this.popper != null) {
             this.popper.destroy()
           }
 
