@@ -22,9 +22,11 @@ export default (name: string, options?: MockComponentOptions) => {
       if (options && options.abstract) {
         const children = flattenDeep(Object.values(this.$slots))
         if (slotKeys.length > 1 || (slotKeys.length === 1 && slotKeys[0] !== 'default')) {
-          throw new Error(`Mocked ${name} component is an abstract component and cannot have slots other than 'default'. It has these slots: ${slotKeys.join(', ')}.`)
+          throw new Error(`Mocked ${name} component is an abstract component `
+          + `and cannot have slots other than 'default'. It has these slots: ${slotKeys.join(', ')}.`)
         } else if (children.length > 1) {
-          throw new Error(`Mocked ${name} component is an abstract component and cannot have more than 1 child element. It has ${children.length} children.`)
+          throw new Error(`Mocked ${name} component is an abstract component `
+          + `and cannot have more than 1 child element. It has ${children.length} children.`)
         } else {
           return children[0]
         }

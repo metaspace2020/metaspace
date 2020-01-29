@@ -9,8 +9,15 @@
             placement="top"
           >
             <div>
-              <p><b>Public:</b> Annotations will be available in the METASPACE public knowledge base, sharable and searchable by the community. The uploaded imzML files are not made public.</p>
-              <p><b>Private:</b> Annotations will be visible to the submitter (and only the submitter) when the submitter is logged in. METASPACE admins can also view these annotations. The uploaded imzML files are also private.</p>
+              <p>
+                <b>Public:</b> Annotations will be available in the METASPACE public knowledge base,
+                sharable and searchable by the community. The uploaded imzML files are not made public.
+              </p>
+              <p>
+                <b>Private:</b> Annotations will be visible to the submitter and logged-in members
+                of the selected group and projects. METASPACE admins can also view these annotations.
+                The uploaded imzML files are also private.
+              </p>
             </div>
             <i
               slot="reference"
