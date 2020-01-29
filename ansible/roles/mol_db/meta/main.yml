@@ -1,5 +1,0 @@
----
-
-dependencies:
-  - role: supervisor
-  - role: metaspace_repo
