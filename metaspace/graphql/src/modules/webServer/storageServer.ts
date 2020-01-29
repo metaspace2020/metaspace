@@ -193,7 +193,7 @@ function imageProviderFSBackend(storageRootDir: string) {
   }
 }
 
-export async function createImageServerApp(config: Config, knex: Knex) {
+export async function createStorageServerApp(config: Config, knex: Knex) {
   try {
     const app = express();
     app.use(cors());
@@ -222,9 +222,9 @@ export async function createImageServerApp(config: Config, knex: Knex) {
   }
 }
 
-export async function createImgServerAsync(config: Config) {
+export async function createStorageServerAsync(config: Config) {
   const knex = initDBConnection();
-  const app = await createImageServerApp(config, knex);
+  const app = await createStorageServerApp(config, knex);
 
   const httpServer = http.createServer(app);
   await new Promise((resolve, reject) => {
@@ -237,6 +237,6 @@ export async function createImgServerAsync(config: Config) {
     app.use('/dataset_upload', fineUploaderLocalMiddleware());
   }
 
-  logger.info(`Image server is listening on ${config.img_storage_port} port...`);
+  logger.info(`Storage server is listening on ${config.img_storage_port} port...`);
   return httpServer;
 }

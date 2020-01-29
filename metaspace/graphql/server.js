@@ -24,7 +24,7 @@ import {IsUserError} from 'graphql-errors';
 import { SubscriptionServer } from 'subscriptions-transport-ws';
 
 import {sendPublishProjectNotificationEmail} from './src/modules/project/email';
-import {createImgServerAsync} from './src/modules/webServer/imageServer';
+import {createStorageServerAsync} from './src/modules/webServer/storageServer';
 import {configureAuth} from './src/modules/auth';
 import config from './src/utils/config';
 import logger from './src/utils/logger';
@@ -220,7 +220,7 @@ const main = async () => {
     const servers = await Promise.all([
       createSubscriptionServerAsync(config, connection),
       createHttpServerAsync(config, connection),
-      createImgServerAsync(config),
+      createStorageServerAsync(config),
     ]);
 
     // If any server dies for any reason, kill the whole process
