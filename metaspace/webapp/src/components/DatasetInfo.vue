@@ -57,7 +57,8 @@ export default {
       // and not others. This could creep users out and make them wonder if we're sharing their email address to
       // the public internet. Because of this, only show email addresses to admins here.
       const canSeeEmailAddresses = this.currentUser && this.currentUser.role === 'admin'
-      const submitter = optionalSuffixInParens(this.dsSubmitter.name, canSeeEmailAddresses ? this.dsSubmitter.email : null)
+      const submitter = optionalSuffixInParens(this.dsSubmitter.name,
+        canSeeEmailAddresses ? this.dsSubmitter.email : null)
       const dataManagementChilds = [
         { id: 'Submitter', label: `Submitter: ${submitter}` },
       ]

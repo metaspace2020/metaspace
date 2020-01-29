@@ -83,7 +83,13 @@ export default class EditGroupForm extends Vue {
       name: [{ type: 'string', required: true, min: 2, message: 'Full name is required', trigger: 'manual' }],
       shortName: [{ type: 'string', required: true, min: 2, message: 'Short name is required', trigger: 'manual' }],
       groupAdminEmail: [
-        { type: 'string', pattern: emailRegex, required: true, message: 'Group admin must be a valid email address', trigger: 'manual' },
+        {
+          type: 'string',
+          pattern: emailRegex,
+          required: true,
+          message: 'Group admin must be a valid email address',
+          trigger: 'manual',
+        },
       ],
     };
 

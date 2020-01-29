@@ -411,8 +411,10 @@ export default {
       if (this.ionImage != null) {
         const { width = 0, height = 0 } = this.ionImage
         // Includes a 2px offset up and left so that the selected pixel is less obscured by the mouse cursor
-        const x = Math.floor((event.clientX - (rect.left + rect.right) / 2 - 2) / this.zoomX - this.xOffset + width / 2)
-        const y = Math.floor((event.clientY - (rect.top + rect.bottom) / 2 - 2) / this.zoomY - this.yOffset + height / 2)
+        const x = Math.floor((event.clientX - (rect.left + rect.right) / 2 - 2)
+          / this.zoomX - this.xOffset + width / 2)
+        const y = Math.floor((event.clientY - (rect.top + rect.bottom) / 2 - 2)
+          / this.zoomY - this.yOffset + height / 2)
 
         this.cursorPixelPos = [x, y]
       } else {

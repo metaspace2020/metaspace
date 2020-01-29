@@ -69,12 +69,13 @@ const NEW_FEATURES: FeatureSpec[] = [
     name: 'offSample',
     title: 'Off-Sample Prediction',
     contentHtml: `
-<p>We've trained a deep learning model to filter out annotations which represent molecules localized in the off-sample area,
-such as those corresponding to the MALDI matrix. You can now hide these annotations from the results,
-allowing you to find important molecules faster.</p>
+<p>We've trained a deep learning model to filter out annotations which represent molecules localized
+in the off-sample area, such as those corresponding to the MALDI matrix. You can now
+hide these annotations from the results, allowing you to find important molecules faster.</p>
 <p>Add the <u style="white-space: nowrap;">Show/hide off-sample annotations</u> filter to try it out.</p>
-<p>Please keep in mind that the accuracy of this model is greatly improved in datasets that include some off-sample area.
-We recommend including off-sample area around your sample during data acquisition.</p>
+<p>Please keep in mind that the accuracy of this model is greatly improved
+in datasets that include some off-sample area. We recommend including off-sample area around your sample
+during data acquisition.</p>
       `,
     dontShowAfter: new Date('2019-07-22'),
     placement: 'bottom',
@@ -90,7 +91,8 @@ We recommend including off-sample area around your sample during data acquisitio
     name: 'logScale',
     title: 'Log-scale colormaps',
     contentHtml: `
-<p>Ion images can now be viewed with a logarithmic-scale colormap. The ion image display options can be configured in this menu.</p>
+<p>Ion images can now be viewed with a logarithmic-scale colormap.
+The ion image display options can be configured in this menu.</p>
       `,
     dontShowAfter: new Date('2019-08-30'),
     placement: 'bottom',

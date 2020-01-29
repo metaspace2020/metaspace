@@ -103,7 +103,8 @@ export default class ProjectMembersList extends Vue {
 
     @ConfirmAsync(function(this: ProjectMembersList, member: ViewProjectMember) {
       return {
-        message: `This will allow ${member.user.name} to access all private datasets that are in ${this.projectName}. Are you sure you want to accept them into the project?`,
+        message: `This will allow ${member.user.name} to access all private datasets that are in ${this.projectName}. `
+        + 'Are you sure you want to accept them into the project?',
         confirmButtonText: 'Accept request',
         confirmButtonLoadingText: 'Accepting...',
       }
@@ -134,7 +135,8 @@ export default class ProjectMembersList extends Vue {
     @ConfirmAsync(function(this: ProjectMembersList) {
       return {
         title: 'Add member',
-        message: `An email will be sent inviting them to join the project. If they accept the invitation, they will be able to access the private datasets of ${this.projectName}.`,
+        message: 'An email will be sent inviting them to join the project. If they accept the invitation, '
+        + `they will be able to access the private datasets of ${this.projectName}.`,
         showInput: true,
         inputPlaceholder: 'Email address',
         inputPattern: emailRegex,

@@ -99,7 +99,8 @@ export default class GroupMembersList extends Vue {
 
     @ConfirmAsync(function(this: GroupMembersList, member: EditGroupQueryMember) {
       return {
-        message: `This will allow ${member.user.name} to access all private datasets that are in ${this.groupName}. Are you sure you want to accept them into the group?`,
+        message: `This will allow ${member.user.name} to access all private datasets that are in ${this.groupName}. `
+        + 'Are you sure you want to accept them into the group?',
         confirmButtonText: 'Accept request',
         confirmButtonLoadingText: 'Accepting...',
       }
@@ -130,7 +131,8 @@ export default class GroupMembersList extends Vue {
     @ConfirmAsync(function(this: GroupMembersList) {
       return {
         title: 'Add member',
-        message: `An email will be sent inviting them to join the group. If they accept the invitation, they will be able to access the private datasets of ${this.groupName}.`,
+        message: 'An email will be sent inviting them to join the group. '
+        + `If they accept the invitation, they will be able to access the private datasets of ${this.groupName}.`,
         showInput: true,
         inputPlaceholder: 'Email address',
         inputPattern: emailRegex,

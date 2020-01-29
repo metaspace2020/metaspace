@@ -381,7 +381,8 @@ export default {
           ...(group ? [group.name] : []),
           ...(projects || []).map(p => p.name),
         ]
-        return `These annotation results are not publicly visible. They are visible to ${all.join(', ')} and METASPACE Administrators.`
+        return 'These annotation results are not publicly visible. '
+          + `They are visible to ${all.join(', ')} and METASPACE Administrators.`
       }
       return null
     },
@@ -444,7 +445,8 @@ export default {
          && this.currentUser.role === 'admin'
          && this.dataset.status !== 'FINISHED'
       try {
-        await this.$confirm(`Are you sure you want to ${force ? 'FORCE-DELETE' : 'delete'} ${this.formatDatasetName}?`, {
+        const msg = `Are you sure you want to ${force ? 'FORCE-DELETE' : 'delete'} ${this.formatDatasetName}?`
+        await this.$confirm(msg, {
           type: force ? 'warning' : null,
           lockScroll: false,
         })

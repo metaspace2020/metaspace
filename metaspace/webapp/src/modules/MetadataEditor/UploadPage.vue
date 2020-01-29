@@ -178,6 +178,7 @@ export default {
       uploadedUuid: null,
       features: config.features,
       helpDialog: false,
+      // eslint-disable-next-line vue/max-len
       helpLink: 'https://docs.google.com/document/d/e/2PACX-1vTT4QrMQ2RJMjziscaU8S3gbznlv6Rm5ojwrsdAXPbR5bt7Ivp-ThkC0hefrk3ZdVqiyCX7VU_ddA62/pub',
       systemHealth: null,
       currentUser: null,

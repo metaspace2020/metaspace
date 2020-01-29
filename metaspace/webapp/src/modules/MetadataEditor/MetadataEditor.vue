@@ -186,7 +186,10 @@ export default {
   methods: {
     async loadDataset() {
       const metaspaceOptionsFromDataset = (dataset, isNew) => {
-        const { isPublic, configJson, molDBs, adducts, name, group, projects, submitter, principalInvestigator } = dataset
+        const {
+          isPublic, configJson, molDBs, adducts,
+          name, group, projects, submitter, principalInvestigator,
+        } = dataset
         const config = safeJsonParse(configJson)
         return {
           submitterId: submitter ? submitter.id : null,

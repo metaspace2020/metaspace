@@ -40,7 +40,8 @@ type ValueOrCallback<T> = T | ((...args: any[]) => T);
  *
  */
 function ConfirmAsync(options: ValueOrCallback<ElMessageBoxOptions & ExtraOptions>) {
-  return function decorate<This extends Vue, T extends(this: This, ...args: any[]) => Promise<any>>(target: This, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<T>) {
+  return function decorate<This extends Vue, T extends(this: This, ...args: any[])
+    => Promise<any>>(target: This, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<T>) {
     const originalFunc = descriptor.value as any as Function
 
     async function wrappedFunc(this: This, ...args: any[]) {

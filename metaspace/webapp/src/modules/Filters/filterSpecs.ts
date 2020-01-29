@@ -356,11 +356,18 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
   },
 }
 
-export const DATASET_FILTERS: FilterKey[] = ['datasetIds', 'group', 'project', 'submitter', 'polarity', 'organism', 'organismPart', 'condition', 'growthConditions', 'ionisationSource', 'maldiMatrix', 'analyzerType', 'metadataType']
+export const DATASET_FILTERS: FilterKey[] = [
+  'datasetIds', 'group', 'project', 'submitter', 'polarity', 'organism', 'organismPart', 'condition',
+  'growthConditions', 'ionisationSource', 'maldiMatrix', 'analyzerType', 'metadataType',
+]
 /** = all annotation-affecting filters - dataset-affecting filters */
-export const ANNOTATION_FILTERS: FilterKey[] = ['database', 'minMSM', 'compoundName', 'adduct', 'mz', 'fdrLevel', 'colocalizedWith', 'offSample']
+export const ANNOTATION_FILTERS: FilterKey[] = [
+  'database', 'minMSM', 'compoundName', 'adduct', 'mz', 'fdrLevel', 'colocalizedWith', 'offSample',
+]
 /** Filters that are very specific to particular annotations and should be cleared when navigating to other annotations */
-export const ANNOTATION_SPECIFIC_FILTERS: FilterKey[] = ['compoundName', 'adduct', 'mz', 'colocalizedWith', 'colocalizationSamples', 'simpleQuery']
+export const ANNOTATION_SPECIFIC_FILTERS: FilterKey[] = [
+  'compoundName', 'adduct', 'mz', 'colocalizedWith', 'colocalizationSamples', 'simpleQuery',
+]
 
 export function getFilterInitialValue(key: FilterKey, filterLists?: MetadataLists) {
   let value = FILTER_SPECIFICATIONS[key].initialValue

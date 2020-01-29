@@ -113,7 +113,8 @@ describe('ViewGroupPage', () => {
     })
 
     it('should match snapshot (member)', async() => {
-      mockGroupFn.mockImplementation(() => ({ ...mockGroup, currentUserRole: 'MEMBER', members: mockMembersForMembers }))
+      mockGroupFn.mockImplementation(() =>
+        ({ ...mockGroup, currentUserRole: 'MEMBER', members: mockMembersForMembers }))
       initMockGraphqlClient(graphqlMocks)
       const wrapper = mount(ViewGroupPage, { router, stubs: stubsWithMembersList, apolloProvider, sync: false })
       await Vue.nextTick()
@@ -122,7 +123,8 @@ describe('ViewGroupPage', () => {
     })
 
     it('should match snapshot (manager, including table)', async() => {
-      mockGroupFn.mockImplementation(() => ({ ...mockGroup, currentUserRole: 'GROUP_ADMIN', members: mockMembersForAdmins }))
+      mockGroupFn.mockImplementation(() =>
+        ({ ...mockGroup, currentUserRole: 'GROUP_ADMIN', members: mockMembersForAdmins }))
       initMockGraphqlClient(graphqlMocks)
       const wrapper = mount(ViewGroupPage, { router, stubs, apolloProvider, sync: false })
       await Vue.nextTick()

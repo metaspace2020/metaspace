@@ -76,7 +76,11 @@ describe('AnnotationTable', () => {
         allAnnotations: (_: any, { offset }: any) => {
           return [
             merge({}, mockAnnotation, { id: `AnnotationId_${offset + 1}`, mz: offset + 1 }),
-            merge({}, mockAnnotation, { dataset: { groupApproved: false }, id: `AnnotationId_${offset + 2}`, mz: offset + 2 }),
+            merge({}, mockAnnotation, {
+              dataset: { groupApproved: false },
+              id: `AnnotationId_${offset + 2}`,
+              mz: offset + 2,
+            }),
           ]
         },
         countAnnotations: () => 4,

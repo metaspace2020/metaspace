@@ -208,7 +208,8 @@ const quantizeIonImage = (intensityValues: Float32Array, minIntensity: number, m
 
 const quantizeScaleBar = (minIntensity: number, maxIntensity: number,
   rankValues: Float32Array | null, scaleMode: ScaleMode): Uint8ClampedArray => {
-  const linearDistribution = new Float32Array(range(256).map(i => minIntensity + (maxIntensity - minIntensity) * i / 255))
+  const linearDistribution =
+    new Float32Array(range(256).map(i => minIntensity + (maxIntensity - minIntensity) * i / 255))
   return quantizeIonImage(linearDistribution, minIntensity, maxIntensity, rankValues, scaleMode)
 }
 
@@ -230,7 +231,8 @@ export const processIonImage = (png: Image, minIntensity: number = 0, maxIntensi
   const { clippedMinIntensity, clippedMaxIntensity, rankValues } =
     getScaleParams(intensityValues, mask, minIntensity, maxIntensity, minQuantile, maxQuantile, scaleMode)
 
-  const clippedValues = quantizeIonImage(intensityValues, clippedMinIntensity, clippedMaxIntensity, rankValues, scaleMode)
+  const clippedValues = quantizeIonImage(intensityValues, clippedMinIntensity, clippedMaxIntensity, rankValues,
+    scaleMode)
   const scaleBarValues = quantizeScaleBar(clippedMinIntensity, clippedMaxIntensity, rankValues, scaleMode)
 
   return {

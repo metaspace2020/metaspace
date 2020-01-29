@@ -131,7 +131,8 @@ export default {
     dropText() {
       const multipleFilesAllowed = this.dataTypeConfig.maxFiles > 1
       const fileExtensions = this.dataTypeConfig.fileExtensions
-      const formattedFileTypes = fileExtensions.length > 1 ? `${fileExtensions.slice(0, -1).join(', ')} and ${fileExtensions[fileExtensions.length - 1]}`
+      const formattedFileTypes = fileExtensions.length > 1
+        ? `${fileExtensions.slice(0, -1).join(', ')} and ${fileExtensions[fileExtensions.length - 1]}`
         : fileExtensions[0]
 
       return `drop ${formattedFileTypes} file${multipleFilesAllowed ? 's' : ''} here`

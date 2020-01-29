@@ -86,7 +86,9 @@ export default {
           const oldVal = initialMetaspaceOptions[key]
           const newVal = metaspaceOptions[key]
           // For arrays (molDBs, adducts, projectIds) ignore changes in order
-          if (isArray(oldVal) && isArray(newVal) ? !isEqual(oldVal.slice().sort(), newVal.slice().sort()) : !isEqual(oldVal, newVal)) {
+          if (isArray(oldVal) && isArray(newVal)
+            ? !isEqual(oldVal.slice().sort(), newVal.slice().sort())
+            : !isEqual(oldVal, newVal)) {
             payload[key] = newVal
           }
         })

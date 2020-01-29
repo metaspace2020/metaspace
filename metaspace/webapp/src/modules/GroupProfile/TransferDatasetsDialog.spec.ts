@@ -21,7 +21,9 @@ describe('TransferDatasetsDialog', () => {
   };
   [false, true].forEach(hasDatasets => {
     [false, true].forEach(isInvited => {
-      it(`should match snapshot (${hasDatasets ? 'datasets to import' : 'no datasets'}, ${isInvited ? 'invited' : 'requesting access'})`, () => {
+      it('should match snapshot ('
+        + `${hasDatasets ? 'datasets to import' : 'no datasets'}, `
+        + `${isInvited ? 'invited' : 'requesting access'})`, () => {
         const propsData = { ...mockProps, isInvited }
         const wrapper = mount(TransferDatasetsDialog, { router, propsData, stubs, sync: false })
         wrapper.setData({ allDatasets: hasDatasets ? mockDatasets : [] })

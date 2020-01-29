@@ -124,9 +124,15 @@ export default {
       const svg = configureSvg(elem, geometry)
 
       const data = this.data
-      const xScale = d3.scaleBand().domain(data.map(d => d.lab)).range([0, geometry.width])
-      const yScaleTop = d3.scaleLinear().domain([0, d3.max(data.map(d => d.numDatasets))]).range([height / 2, 0])
-      const yScaleBottom = d3.scaleLinear().domain([0, d3.max(data.map(d => d.numSubmitters))]).range([height / 2, height])
+      const xScale = d3.scaleBand()
+        .domain(data.map(d => d.lab))
+        .range([0, geometry.width])
+      const yScaleTop = d3.scaleLinear()
+        .domain([0, d3.max(data.map(d => d.numDatasets))])
+        .range([height / 2, 0])
+      const yScaleBottom = d3.scaleLinear()
+        .domain([0, d3.max(data.map(d => d.numSubmitters))])
+        .range([height / 2, height])
 
       svg.selectAll('rect.ndatasets').data(data).enter()
         .append('rect')

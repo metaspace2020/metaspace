@@ -362,7 +362,8 @@ export default class EditUserPage extends Vue {
         if (emailChanged) {
           try {
             await this.$confirm(
-              'Are you sure you want to change email address? A verification email will be sent to your new address to confirm the change.',
+              'Are you sure you want to change email address? '
+              + 'A verification email will be sent to your new address to confirm the change.',
               'Confirm email address change', {
                 confirmButtonText: 'Yes, send verification email',
                 lockScroll: false,
@@ -390,7 +391,8 @@ export default class EditUserPage extends Vue {
         this.$message({
           type: 'success',
           message: emailChanged
-            ? 'A verification link has been sent to your new email address. Please click the link in this email to confirm the change.'
+            ? 'A verification link has been sent to your new email address. '
+            + 'Please click the link in this email to confirm the change.'
             : 'Your details have been saved',
         })
       } catch (err) {
@@ -425,7 +427,8 @@ export default class EditUserPage extends Vue {
 
     @ConfirmAsync(function(this: EditUserPage) {
       return {
-        message: 'This will send you an email with a link and instructions to change your password. Do you wish to proceed?',
+        message: 'This will send you an email with a link and instructions to change your password. '
+          + 'Do you wish to proceed?',
         confirmButtonText: 'Change password',
         confirmButtonLoadingText: 'Sending email...',
       }

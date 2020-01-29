@@ -57,8 +57,9 @@ export default {
           await this.$alert('Your email address was successfully verified. You may now upload datasets to METASPACE.',
             'Welcome to METASPACE', { type: 'success' })
         } else if (flashMessage.type === 'verify_email_failure') {
-          await this.$alert('This email verification link is invalid or has expired. Try signing in or resetting your password. '
-             + 'If this keeps happening, please <a href="mailto:contact@metaspace2020.eu">let us know</a>.',
+          await this.$alert('This email verification link is invalid or has expired. '
+            + 'Try signing in or resetting your password. '
+            + 'If this keeps happening, please <a href="mailto:contact@metaspace2020.eu">let us know</a>.',
           'Something went wrong!', { type: 'warning', dangerouslyUseHTMLString: true })
         } else if (flashMessage.type === 'review_token_success') {
           await this.$alert('You have been granted access to a private project.',

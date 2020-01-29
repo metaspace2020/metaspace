@@ -192,7 +192,10 @@ export interface DatasetVisibilityResult {
   projects: { id: string, name: string }[] | null;
 }
 
-export const datasetStatusUpdatedQuery = gql`subscription datasetStatusUpdated($inpFdrLvls: [Int!] = [10], $checkLvl: Int = 10) {
+export const datasetStatusUpdatedQuery = gql`subscription datasetStatusUpdated(
+  $inpFdrLvls: [Int!] = [10],
+  $checkLvl: Int = 10
+) {
   datasetStatusUpdated {
     dataset {
       ...DatasetDetailItem

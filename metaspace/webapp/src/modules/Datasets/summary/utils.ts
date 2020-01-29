@@ -131,8 +131,12 @@ function pieScatterPlot(svg: any, data: any, config: any,
     }
 
     if (config.showSideHistograms.y) {
-      const yL = d3.scaleLinear().domain([0, d3.max(xData.map(d => d.count))]).range([height, height + margin.bottom / 3 - 1])
-      const xL = d3.scaleBand().domain(xData.map(d => d.key)).rangeRound([0, width])
+      const yL = d3.scaleLinear()
+        .domain([0, d3.max(xData.map(d => d.count))])
+        .range([height, height + margin.bottom / 3 - 1])
+      const xL = d3.scaleBand()
+        .domain(xData.map(d => d.key))
+        .rangeRound([0, width])
       svg.append('g').selectAll('rect.bhist').data(xData).enter()
         .append('rect').attr('class', 'bhist')
         .attr('y', yL(0)).attr('x', (d: any): number => xL(d.key) || 0)

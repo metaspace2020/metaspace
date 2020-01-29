@@ -113,7 +113,8 @@ describe('ViewProjectPage', () => {
     })
 
     it('should match snapshot (member)', async() => {
-      mockProjectFn.mockImplementation(() => ({ ...mockProject, currentUserRole: 'MEMBER', members: mockMembersForMembers }))
+      mockProjectFn.mockImplementation(() =>
+        ({ ...mockProject, currentUserRole: 'MEMBER', members: mockMembersForMembers }))
       initMockGraphqlClient(graphqlMocks)
       const wrapper = mount(ViewProjectPage, { router, stubs: stubsWithMembersList, apolloProvider, sync: false })
       await Vue.nextTick()
@@ -122,7 +123,8 @@ describe('ViewProjectPage', () => {
     })
 
     it('should match snapshot (manager, including table)', async() => {
-      mockProjectFn.mockImplementation(() => ({ ...mockProject, currentUserRole: 'MANAGER', members: mockMembersForManagers }))
+      mockProjectFn.mockImplementation(() =>
+        ({ ...mockProject, currentUserRole: 'MANAGER', members: mockMembersForManagers }))
       initMockGraphqlClient(graphqlMocks)
       const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider, sync: false })
       await Vue.nextTick()

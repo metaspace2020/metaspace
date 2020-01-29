@@ -1,3 +1,4 @@
+/* eslint-disable vue/max-len */
 import Vue, { AsyncComponent } from 'vue'
 import VueRouter, { RawLocation } from 'vue-router'
 import AboutPage from './modules/App/AboutPage.vue'

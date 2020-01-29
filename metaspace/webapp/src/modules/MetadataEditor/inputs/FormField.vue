@@ -224,7 +224,10 @@ export default class FormField extends Vue {
       const CHARS_BREAKPOINT = 26
       this.fetchSuggestions(queryString, results => {
         this.wideAutocomplete = Array.isArray(results)
-          && results.some(result => result && result.value && result.value.length && result.value.length >= CHARS_BREAKPOINT)
+          && results.some(result => result
+            && result.value
+            && result.value.length
+            && result.value.length >= CHARS_BREAKPOINT)
         callback(results)
       })
     }

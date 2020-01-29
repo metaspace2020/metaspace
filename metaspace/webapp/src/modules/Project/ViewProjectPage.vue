@@ -203,7 +203,12 @@ import ProjectDescription from './ProjectDescription.vue'
         loadingKey: 'projectLoading',
       },
       data: {
-        query: gql`query ProjectProfileDatasets($projectId: ID!, $maxVisibleDatasets: Int!, $inpFdrLvls: [Int!] = [10], $checkLvl: Int = 10) {
+        query: gql`query ProjectProfileDatasets(
+          $projectId: ID!,
+          $maxVisibleDatasets: Int!,
+          $inpFdrLvls: [Int!] = [10],
+          $checkLvl: Int = 10
+        ) {
           allDatasets(offset: 0, limit: $maxVisibleDatasets, filter: { project: $projectId }) {
             ...DatasetDetailItem
           }

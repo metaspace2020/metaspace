@@ -121,8 +121,7 @@ function plotChart(intensities, timeSeq, timeUnitName, logIntensity, graphColors
     .attr('height', element.clientHeight)
 
   const svg = container.append('g')
-    .attr('transform',
-                            `translate(${margin.left}, ${margin.top})`)
+    .attr('transform', `translate(${margin.left}, ${margin.top})`)
 
   svg.append('defs')
     .append('clipPath')
@@ -216,8 +215,11 @@ export default {
   },
   computed: {
     isReady() {
-      return this.validIntImages && this.acquisitionGeometry && 'coord_list' in this.acquisitionGeometry.acquisition_grid
-              && this.$refs.xicChart && this.$refs.xicChart.clientHeight
+      return this.validIntImages
+        && this.acquisitionGeometry
+        && 'coord_list' in this.acquisitionGeometry.acquisition_grid
+        && this.$refs.xicChart
+        && this.$refs.xicChart.clientHeight
     },
   },
   watch: {

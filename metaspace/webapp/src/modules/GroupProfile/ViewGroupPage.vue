@@ -213,7 +213,12 @@ import GroupDescription from './GroupDescription.vue'
         loadingKey: 'groupLoading',
       },
       data: {
-        query: gql`query GroupProfileDatasets($groupId: ID!, $maxVisibleDatasets: Int!, $inpFdrLvls: [Int!] = [10], $checkLvl: Int = 10) {
+        query: gql`query GroupProfileDatasets(
+          $groupId: ID!,
+          $maxVisibleDatasets: Int!,
+          $inpFdrLvls: [Int!] = [10],
+          $checkLvl: Int = 10
+        ) {
           allDatasets(offset: 0, limit: $maxVisibleDatasets, filter: { group: $groupId }) {
             ...DatasetDetailItem
           }

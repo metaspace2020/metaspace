@@ -263,7 +263,8 @@ function plotChart(data, element, relativeIntensityScale, toggleRelativeIntensit
 
   // Data
   const sampleGraphs = pointss.map((points, i) => new SampleGraph(svg, xScale, yScale, points, sampleClasses[i], ppm))
-  const theorGraphs = theorPointss.map((theorPoints, i) => new TheorGraph(svg, xScale, yScale, theorPoints, theorClasses[i]))
+  const theorGraphs = theorPointss.map((theorPoints, i) =>
+    new TheorGraph(svg, xScale, yScale, theorPoints, theorClasses[i]))
 
   // Overlay
   const brush = d3.brushX().extent([[0, 0], [width, height]]).on('end', brushHandler)
@@ -278,7 +279,10 @@ function plotChart(data, element, relativeIntensityScale, toggleRelativeIntensit
 }
 
 const makeLegendTheorLine = () => {
-  const curve = [0, 0, 0, 0, 0, 1, 2, 4, 9, 16, 27, 42, 59, 77, 91, 100, 100, 92, 77, 60, 42, 28, 16, 9, 5, 2, 1, 0, 0, 0, 0, 0]
+  const curve = [
+    0, 0, 0, 0, 0, 1, 2, 4, 9, 16, 27, 42, 59, 77, 91, 100,
+    100, 92, 77, 60, 42, 28, 16, 9, 5, 2, 1, 0, 0, 0, 0, 0,
+  ]
   const drawPath = d3.line().x(d => d * 2).y(d => 31 - curve[d] * 0.3)
   return drawPath(range(32))
 }

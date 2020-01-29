@@ -48,9 +48,10 @@ const errorLink = onError(({ graphQLErrors, networkError, forward, operation }) 
     if (readOnlyErrors.length > 0) {
       if ($alert != null) {
         readOnlyErrors.forEach(err => { (err as any).isHandled = true })
-        $alert('This operation could not be completed. METASPACE is currently in read-only mode for scheduled maintenance. Please try again later.',
-          'Scheduled Maintenance',
-          { type: 'error' })
+        $alert('This operation could not be completed. '
+          + 'METASPACE is currently in read-only mode for scheduled maintenance. Please try again later.',
+        'Scheduled Maintenance',
+        { type: 'error' })
           .catch(() => { /* Ignore exception raised when alert is closed */ })
       }
     }

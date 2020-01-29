@@ -186,7 +186,8 @@ export default class DataManagementSection extends Vue {
     get groupIdIsUnknown() {
       return this.value.groupId != null
         && this.submitter != null
-        && (this.submitter.groups == null || !this.submitter.groups.some(group => group.group.id === this.value.groupId))
+        && (this.submitter.groups == null
+            || !this.submitter.groups.some(group => group.group.id === this.value.groupId))
     }
 
     get groupId() {
@@ -344,7 +345,9 @@ export default class DataManagementSection extends Vue {
         this.groupId = group.id
         this.unknownGroup = group
       } else {
-        const principalInvestigator = this.value.principalInvestigator || this.lastPrincipalInvestigator || { name: '', email: '' }
+        const principalInvestigator = this.value.principalInvestigator
+          || this.lastPrincipalInvestigator
+          || { name: '', email: '' }
         this.$emit('input', { ...this.value, groupId: null, principalInvestigator })
       }
       this.showFindGroupDialog = false

@@ -69,8 +69,17 @@ describe('DatasetTable', () => {
           return [
             merge({}, mockDataset, { principalInvestigator: null, id: `${status}1`, status }),
             merge({}, mockDataset, { principalInvestigator: null, groupApproved: false, id: `${status}2`, status }),
-            merge({}, mockDataset, { principalInvestigator: null, group: { adminNames: ['group', 'admin', 'names'] }, id: `${status}3`, status }),
-            merge({}, mockDataset, { principalInvestigator: { name: 'principal investigator' }, id: `${status}4`, status }),
+            merge({}, mockDataset, {
+              principalInvestigator: null,
+              group: { adminNames: ['group', 'admin', 'names'] },
+              id: `${status}3`,
+              status,
+            }),
+            merge({}, mockDataset, {
+              principalInvestigator: { name: 'principal investigator' },
+              id: `${status}4`,
+              status,
+            }),
           ].slice(offset, offset + 2)
         },
         countDatasets: () => 4,

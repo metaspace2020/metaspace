@@ -224,7 +224,8 @@ export default class AnnotationView extends Vue {
          ...(group ? [group.name] : []),
          ...(projects || []).map(p => p.name),
        ]
-       return `These annotation results are not publicly visible. They are visible to ${all.join(', ')} and METASPACE Administrators.`
+       return ('These annotation results are not publicly visible. '
+         + `They are visible to ${all.join(', ')} and METASPACE Administrators.`)
      }
    }
 

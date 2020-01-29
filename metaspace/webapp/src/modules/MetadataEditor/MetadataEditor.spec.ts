@@ -6,6 +6,7 @@ import store from '../../store/index'
 import { mockAdductSuggestions } from '../../../tests/utils/mockGraphqlData'
 
 describe('MetadataEditor', () => {
+  /* eslint-disable vue/max-len */
   const mockMetadata = {
     Data_Type: 'Imaging MS',
     Sample_Information: { Organism: 'Human', Organism_Part: 'Liver', Condition: 'Live', Sample_Growth_Conditions: 'N/A' },
@@ -13,6 +14,8 @@ describe('MetadataEditor', () => {
     MS_Analysis: { Polarity: 'Positive', Ionisation_Source: 'none', Analyzer: 'none', Detector_Resolving_Power: { mz: 123, Resolving_Power: 123456 } },
     Additional_Information: { Supplementary: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.' },
   }
+  /* eslint-enable vue/max-len */
+
   const mockDataset = {
     molDBs: ['molecularDatabases.1.name'],
     metadataJson: JSON.stringify(mockMetadata),

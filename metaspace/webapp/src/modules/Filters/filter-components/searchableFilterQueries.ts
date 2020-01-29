@@ -82,7 +82,10 @@ const groupQueries: FilterQueries = {
         }`,
         fetchPolicy: 'cache-first',
       })
-      return currentUser && currentUser.groups && currentUser.groups.map((userGroup: any) => userGroup.group) || [] as Option[]
+      return (currentUser
+        && currentUser.groups
+        && currentUser.groups.map((userGroup: any) => userGroup.group))
+        || [] as Option[]
     }
   },
   async getById($apollo, ids) {
@@ -135,7 +138,10 @@ const projectQueries: FilterQueries = {
         }`,
         fetchPolicy: 'cache-first',
       })
-      return currentUser && currentUser.projects && currentUser.projects.map((userProject: any) => userProject.project) || [] as Option[]
+      return (currentUser
+      && currentUser.projects
+        && currentUser.projects.map((userProject: any) => userProject.project))
+        || [] as Option[]
     }
   },
   async getById($apollo, ids) {

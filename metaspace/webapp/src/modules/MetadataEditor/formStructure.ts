@@ -20,7 +20,8 @@ export interface JsonSchemaProperty {
   help?: string;
 }
 
-export type FormFieldEditorType = 'textarea' | 'select' | 'autocomplete' | 'checkbox' | 'table' | 'selectMulti' | 'person' | 'detectorResolvingPower' | 'text' | 'pixelSize';
+export type FormFieldEditorType = 'textarea' | 'select' | 'autocomplete' | 'checkbox' | 'table' | 'selectMulti'
+  | 'person' | 'detectorResolvingPower' | 'text' | 'pixelSize';
 
 export interface FormFieldProperty extends JsonSchemaProperty {
   title: string;
