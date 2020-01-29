@@ -69,12 +69,22 @@ class DB:
     def __init__(self):
         self._curs = None
 
-    def _select(self, sql, params=None):
+    def _add_fields(self, rows):
+        fields = [desc[0] for desc in self._curs.description]
+        return [dict(zip(fields, row)) for row in rows]
+
+    def _select(self, sql, params=None, one=False, fields=False):
         if params:
             self._curs.execute(sql, params)
         else:
             self._curs.execute(sql)
-        return self._curs.fetchall()
+        rows = self._curs.fetchall()
+        if fields:
+            rows = self._add_fields(rows)
+        if one:
+            assert len(rows) in {0, 1}, "Requested one row, got {}".format(len(rows))
+            return rows[0] if rows else []
+        return rows
 
     @db_decor
     def select(self, sql, params=None):
@@ -93,15 +103,9 @@ class DB:
         """
         return self._select(sql, params)
 
-    def _add_fields(self, row_or_rows):
-        fields = [desc[0] for desc in self._curs.description]
-        rows = row_or_rows if isinstance(row_or_rows, list) else [row_or_rows]
-        return [dict(zip(fields, row)) for row in rows]
-
     @db_decor
     def select_with_fields(self, sql, params=None):
-        rows = self._select(sql, params)
-        return self._add_fields(rows)
+        return self._select(sql, params, fields=True)
 
     @db_decor
     def select_one(self, sql, params=None):
@@ -118,14 +122,11 @@ class DB:
         : tuple
             single row
         """
-        res = self._select(sql, params)
-        assert len(res) in {0, 1}, "Requested one row, got {}".format(len(res))
-        return res[0] if res else []
+        return self._select(sql, params, one=True)
 
     @db_decor
     def select_one_with_fields(self, sql, params=None):
-        row = self.select_one(sql, params)
-        return self._add_fields(row)
+        return self._select(sql, params, one=True, fields=True)
 
     @db_decor
     def insert(self, sql, rows=None):
