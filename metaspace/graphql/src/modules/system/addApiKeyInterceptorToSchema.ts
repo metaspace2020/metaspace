@@ -18,6 +18,10 @@ const ALLOWED_MUTATIONS = new Set([
   'deleteReviewLink',
   'publishProject',
   'unpublishProject',
+  'addDatasetExternalLink',
+  'removeDatasetExternalLink',
+  'addProjectExternalLink',
+  'removeProjectExternalLink',
 ]);
 
 const wrapMutation = <TSource, TContext extends Context, TArgs>(

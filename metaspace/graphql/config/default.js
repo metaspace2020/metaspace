@@ -58,6 +58,10 @@ module.exports = {
     }
   },
 
+  dataset_upload: {
+    destination: '/opt/data/uploads',
+  },
+
   services: {
     /* Internal ad-hoc service with /v1/datasets and /v1/isotopic_patterns endpoints */
     sm_engine_api_host: "localhost:5123",

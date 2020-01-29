@@ -48,6 +48,7 @@ CREATE TABLE "graphql"."project" (
   "review_token_created_dt" TIMESTAMP DEFAULT null, 
   "publish_notifications_sent" integer NOT NULL DEFAULT 0, 
   "publication_status" text NOT NULL DEFAULT 'UNPUBLISHED', 
+  "external_links" json, 
   CONSTRAINT "PK_486ca2f737a2dfd930e46d254aa" PRIMARY KEY ("id")
 );
 
@@ -70,6 +71,7 @@ CREATE TABLE "graphql"."dataset" (
   "group_approved" boolean NOT NULL DEFAULT false, 
   "pi_name" text, 
   "pi_email" text, 
+  "external_links" json, 
   CONSTRAINT "PK_64fe57c57282f8de5caf4adb72f" PRIMARY KEY ("id")
 );
 

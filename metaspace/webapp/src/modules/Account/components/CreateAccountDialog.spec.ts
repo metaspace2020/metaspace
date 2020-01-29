@@ -15,7 +15,7 @@ Vue.use(Vuex);
 
 const setFormField = (wrapper: Wrapper<Vue>, fieldName: string, value: string) => {
   wrapper
-    .findAll(ElementUI.FormItem)
+    .findAll<ElementUI.FormItem>(ElementUI.FormItem)
     .filter((fi: Wrapper<ElementUI.FormItem>) => fi.props().prop === fieldName)
     .at(0)
     .find('input')

@@ -33,10 +33,14 @@ export interface Config {
   moldbs: {
     public: string[];
     deprecated: string[];
-  },
+  };
   img_upload: {
     iso_img_fs_path: string;
     categories: Record<ImageCategory, ImageCategoryConfig>;
+  };
+  dataset_upload: {
+    destination: string; // 's3' for S3 storage
+    bucket?: string;
   };
   services: {
     sm_engine_api_host: string;

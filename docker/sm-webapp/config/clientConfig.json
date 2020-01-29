@@ -1,9 +1,8 @@
 {
-  "graphqlUrl": "http://localhost:8999/graphql",
-  "wsGraphqlUrl": "ws://localhost:8999/ws",
+  "graphqlUrl": null,
+  "wsGraphqlUrl": null,
 
   "google_client_id": "clientid",
-  "enableUploads": true,
 
   "fineUploader": {
     "aws": {
@@ -18,6 +17,18 @@
   "ravenDsn": null,
   "metadataTypes": ["ims", "lcms"],
   "features": {
-    "newAuth": false
+    "coloc": true,
+    "ion_thumbs": true,
+    "off_sample": true,
+    "off_sample_col": false,
+    "new_feature_popups": true,
+    "optical_transform": false,
+    "all_dbs": true,
+    "all_adducts": true,
+    "neutral_losses": true,
+    "chem_mods": true,
+    "advanced_ds_config": false,
+    "isomers": true,
+    "isobars": true
   }
 }

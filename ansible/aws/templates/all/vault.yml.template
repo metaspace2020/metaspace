@@ -24,10 +24,8 @@ vault_sm_web_google_client_secret:
 vault_sm_web_jwt_secret:
 vault_sm_web_aws_access_key_id:
 vault_sm_web_aws_secret_access_key:
+vault_sm_web_s3_upload_bucket:
 vault_sm_web_cookie_secret:
-
-vault_sm_webapp_s3_bucket:
-vault_sm_webapp_admin_emails:
 
 vault_spark_mirror:
 

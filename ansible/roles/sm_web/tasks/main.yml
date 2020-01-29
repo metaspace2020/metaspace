@@ -45,12 +45,8 @@
   file: dest=/opt/data/sm_data state=directory owner=ubuntu group=ubuntu mode=0700
   become: yes
 
-- name: Copy sm-api supervisor config file
-  template: src=sm-api.supervisor.j2 dest=/etc/supervisor/sm-api.supervisor
-            mode=0600 owner=ubuntu group=ubuntu
-
 - name: Create SM ElasticSearch index
-  shell: "{{ sm_activate_venv }} && python scripts/create_es_index.py --drop"
+  shell: "{{ sm_activate_venv }} && python scripts/manage_es_index.py create --drop"
   args:
     chdir: "{{ sm_home }}"
     executable: /bin/bash

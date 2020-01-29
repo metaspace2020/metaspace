@@ -11,7 +11,7 @@ const lazyHash = (str: string) => Array.from(str).reduce((hash, char) => hash ^ 
 
 const getPath = (info: GraphQLResolveInfo) => {
   let path = [];
-  let cur = info.path;
+  let cur: any = info.path;
   while (cur != null) {
     path.push(cur.key);
     cur = cur.prev;

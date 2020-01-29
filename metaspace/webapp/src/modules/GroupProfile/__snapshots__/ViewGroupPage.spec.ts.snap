@@ -9,8 +9,7 @@ exports[`ViewGroupPage datasets tab should match snapshot (non-member) 1`] = `
         <h1>group name</h1>
         <h2 class="short-name">(groupShortName)</h2>
       </div>
-      <div class="header-buttons">
-        <button type="button" class="el-button el-button--primary">
+      <div class="header-buttons"><button type="button" class="el-button el-button--primary">
           <!---->
           <!----><span>
           Request access
@@ -43,9 +42,7 @@ exports[`ViewGroupPage datasets tab should match snapshot (non-member) 1`] = `
             <datasetitem-stub dataset="[object Object]" currentuser="[object Object]" idx="2" hidegroupmenu="true" class=""></datasetitem-stub>
             <!---->
           </div>
-          <div class="dataset-list-footer">
-            <a href="/datasets?grp=00000000-1111-2222-3333-444444444444" class="">See all datasets</a>
-          </div>
+          <div class="dataset-list-footer"><a href="/datasets?grp=00000000-1111-2222-3333-444444444444" class="">See all datasets</a></div>
         </div>
         <!---->
         <!---->
@@ -68,8 +65,7 @@ exports[`ViewGroupPage members tab should match snapshot (invited) 1`] = `
         <!---->
         <!---->
       </div>
-      <div role="alert" class="el-alert el-alert--info is-light">
-        <i class="el-alert__icon el-icon-info is-big"></i>
+      <div role="alert" class="el-alert el-alert--info is-light" name="el-alert-fade"><i class="el-alert__icon el-icon-info is-big"></i>
         <div class="el-alert__content">
           <!---->
           <p class="el-alert__description">
@@ -77,22 +73,18 @@ exports[`ViewGroupPage members tab should match snapshot (invited) 1`] = `
               <p>
                 You have been invited to join group name.
               </p>
-              <div>
-                <button type="button" class="el-button el-button--danger">
+              <div><button type="button" class="el-button el-button--danger">
                   <!---->
                   <!----><span>
               Decline invitation
-            </span></button>
-                <button type="button" class="el-button el-button--primary">
+            </span></button> <button type="button" class="el-button el-button--primary">
                   <!---->
                   <!----><span>
               Join group
-            </span></button>
-              </div>
+            </span></button></div>
             </div>
           </p>
-          <!---->
-          <i class="el-alert__closebtn el-icon-close" style="display: none;"></i>
+          <!----><i class="el-alert__closebtn el-icon-close" style="display: none;"></i>
         </div>
       </div>
     </div>
@@ -154,8 +146,7 @@ exports[`ViewGroupPage members tab should match snapshot (manager, including tab
               <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
               <div id="tab-members" aria-controls="pane-members" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
           Members (2)
-          <span class="notification"></span></span>
-              </div>
+          <span class="notification"></span></span></div>
               <div id="tab-settings" aria-controls="pane-settings" role="tab" tabindex="-1" class="el-tabs__item is-top">Settings</div>
             </div>
           </div>
@@ -228,16 +219,12 @@ exports[`ViewGroupPage members tab should match snapshot (manager, including tab
                           </div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
-                          <div class="cell">
-                            <a href="#" title="Change role">
+                          <div class="cell"><a href="#" title="Change role">
                               Group admin
-                            </a>
-                          </div>
+                            </a></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
-                          <div class="cell">
-                            <a href="/datasets?grp=00000000-1111-2222-3333-444444444444&amp;subm=3" class="">123</a>
-                          </div>
+                          <div class="cell"><a href="/datasets?grp=00000000-1111-2222-3333-444444444444&amp;subm=3" class="">123</a></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
                           <div class="cell">
@@ -265,25 +252,20 @@ exports[`ViewGroupPage members tab should match snapshot (manager, including tab
         </span></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
-                          <div class="cell">
-                            <a href="/datasets?grp=00000000-1111-2222-3333-444444444444&amp;subm=4" class="">0</a>
-                          </div>
+                          <div class="cell"><a href="/datasets?grp=00000000-1111-2222-3333-444444444444&amp;subm=4" class="">0</a></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
                           <div class="cell">
                             <!---->
-                            <!---->
-                            <button type="button" class="el-button grid-button el-button--success el-button--mini">
+                            <!----> <button type="button" class="el-button grid-button el-button--success el-button--mini">
                               <!---->
                               <!----><span>
           Accept
-        </span></button>
-                            <button type="button" class="el-button grid-button el-button--default el-button--mini">
+        </span></button> <button type="button" class="el-button grid-button el-button--default el-button--mini">
                               <!---->
                               <!----><span>
           Decline
-        </span></button>
-                          </div>
+        </span></button></div>
                         </td>
                       </tr>
                       <tr class="el-table__row">
@@ -303,14 +285,11 @@ exports[`ViewGroupPage members tab should match snapshot (manager, including tab
         </span></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
-                          <div class="cell">
-                            <a href="/datasets?grp=00000000-1111-2222-3333-444444444444&amp;subm=5" class="">0</a>
-                          </div>
+                          <div class="cell"><a href="/datasets?grp=00000000-1111-2222-3333-444444444444&amp;subm=5" class="">0</a></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
                           <div class="cell">
-                            <!---->
-                            <button type="button" class="el-button grid-button el-button--default el-button--mini">
+                            <!----> <button type="button" class="el-button grid-button el-button--default el-button--mini">
                               <!---->
                               <!----><span>
           Cancel
@@ -332,20 +311,15 @@ exports[`ViewGroupPage members tab should match snapshot (manager, including tab
                           </div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
-                          <div class="cell">
-                            <a href="#" title="Change role">
+                          <div class="cell"><a href="#" title="Change role">
                               Member
-                            </a>
-                          </div>
+                            </a></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
-                          <div class="cell">
-                            <a href="/datasets?grp=00000000-1111-2222-3333-444444444444&amp;subm=6" class="">1</a>
-                          </div>
+                          <div class="cell"><a href="/datasets?grp=00000000-1111-2222-3333-444444444444&amp;subm=6" class="">1</a></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
-                          <div class="cell">
-                            <button type="button" class="el-button grid-button el-button--default el-button--mini">
+                          <div class="cell"><button type="button" class="el-button grid-button el-button--default el-button--mini">
                               <!---->
                               <!----><span>
           Remove
@@ -370,8 +344,7 @@ exports[`ViewGroupPage members tab should match snapshot (manager, including tab
               </div>
               <div class="pagination-row">
                 <!---->
-                <div class="flex-spacer"></div>
-                <button type="button" class="el-button el-button--default">
+                <div class="flex-spacer"></div> <button type="button" class="el-button el-button--default">
                   <!---->
                   <!----><span>Add member</span></button>
               </div>
@@ -411,8 +384,7 @@ exports[`ViewGroupPage members tab should match snapshot (member) 1`] = `
               <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
               <div id="tab-members" aria-controls="pane-members" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
           Members (2)
-          <span class="notification"></span></span>
-              </div>
+          <span class="notification"></span></span></div>
             </div>
           </div>
         </div>
@@ -442,8 +414,7 @@ exports[`ViewGroupPage members tab should match snapshot (non-member) 1`] = `
         <h1>group name</h1>
         <h2 class="short-name">(groupShortName)</h2>
       </div>
-      <div class="header-buttons">
-        <button type="button" class="el-button el-button--primary">
+      <div class="header-buttons"><button type="button" class="el-button el-button--primary">
           <!---->
           <!----><span>
           Request access
@@ -525,22 +496,18 @@ exports[`ViewGroupPage settings tab should match snapshot 1`] = `
             <div class="header-row">
               <h2>Group Details</h2>
               <div class="flex-spacer"></div>
-              <div class="header-row-buttons">
-                <button type="button" class="el-button el-button--primary">
+              <div class="header-row-buttons"><button type="button" class="el-button el-button--primary">
                   <!---->
                   <!----><span>
         Save
-      </span></button>
-              </div>
+      </span></button></div>
             </div>
             <form class="el-form el-form--label-top">
               <div>
-                <div class="el-form-item name is-required">
-                  <label for="name" class="el-form-item__label">Full name</label>
+                <div class="el-form-item name is-required"><label for="name" class="el-form-item__label">Full name</label>
                   <div class="el-form-item__content">
                     <div class="el-input">
-                      <!---->
-                      <input type="text" autocomplete="off" maxlength="50" class="el-input__inner">
+                      <!----><input type="text" autocomplete="off" maxlength="50" class="el-input__inner">
                       <!---->
                       <!---->
                       <!---->
@@ -549,44 +516,38 @@ exports[`ViewGroupPage settings tab should match snapshot 1`] = `
                     <!---->
                   </div>
                 </div>
-                <div class="el-form-item shortName is-required">
-                  <label for="shortName" class="el-form-item__label"><span>
+                <div class="el-form-item shortName is-required"><label for="shortName" class="el-form-item__label"><span>
         Short name
         <mock-el-popover trigger="hover" placement="right"><div slot-key="default"> <p>The short name will be shown whenever space is limited.</p></div><div slot-key="reference"><i class="el-icon-question metadata-help-icon"></i></div></mock-el-popover></span></label>
-                  <div
-                    class="el-form-item__content">
+                  <div class="el-form-item__content">
                     <div class="el-input">
-                      <!---->
-                      <input type="text" autocomplete="off" maxlength="20" class="el-input__inner">
+                      <!----><input type="text" autocomplete="off" maxlength="20" class="el-input__inner">
                       <!---->
                       <!---->
                       <!---->
                       <!---->
                     </div>
                     <!---->
+                  </div>
                 </div>
               </div>
-          </div>
-          <!---->
-          </form>
-          <div style="margin-bottom: 2em;">
-            <h2>Custom URL</h2>
-            <!---->
-            <!---->
-            <div>
-              <p>
-                <a href="/group/00000000-1111-2222-3333-444444444444" class="router-link-active">
-                  http://localhost/group/<span class="urlSlug">00000000-1111-2222-3333-444444444444</span></a>
-              </p>
-              <p>
-                <a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up a custom URL to showcase your group.</p>
+              <!---->
+            </form>
+            <div style="margin-bottom: 2em;">
+              <h2>Custom URL</h2>
+              <!---->
+              <!---->
+              <div>
+                <p><a href="/group/00000000-1111-2222-3333-444444444444" class="router-link-active">
+                    http://localhost/group/<span class="urlSlug">00000000-1111-2222-3333-444444444444</span></a></p>
+                <p><a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up a custom URL to showcase your group.</p>
+              </div>
             </div>
+            <!---->
           </div>
-          <!---->
         </div>
       </div>
     </div>
   </div>
-</div>
 </div>
 `;

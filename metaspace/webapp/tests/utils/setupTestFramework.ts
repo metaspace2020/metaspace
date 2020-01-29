@@ -24,6 +24,8 @@ registerMockComponent('el-messagebox');
 registerMockComponent('el-dropdown');
 registerMockComponent('el-dropdown-menu');
 registerMockComponent('el-dropdown-item');
+registerMockComponent('el-tree');
+registerMockComponent('el-pagination');
 
 // Mock problematic directives
 registerMockDirective('loading');

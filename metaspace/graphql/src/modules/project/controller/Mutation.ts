@@ -1,5 +1,9 @@
 import {Context} from '../../../context';
-import {Project as ProjectModel, UserProject as UserProjectModel, UserProjectRoleOptions as UPRO} from '../model';
+import {
+  Project as ProjectModel,
+  UserProject as UserProjectModel,
+  UserProjectRoleOptions as UPRO,
+} from '../model';
 import {PublicationStatusOptions as PSO} from '../PublicationStatusOptions';
 import {UserError} from 'graphql-errors';
 import {FieldResolversFor, ProjectSource, ScopeRoleOptions as SRO, UserProjectSource} from '../../../bindingTypes';
@@ -23,6 +27,7 @@ import {smAPIUpdateDataset} from '../../../utils/smAPI';
 import {getDatasetForEditing} from '../../dataset/operation/getDatasetForEditing';
 import {utc} from 'moment';
 import generateRandomToken from '../../../utils/generateRandomToken';
+import {addExternalLink, removeExternalLink} from '../ExternalLink';
 
 
 const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
@@ -286,6 +291,40 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
     return await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, projectId) as ProjectSource;
+  },
+
+  addProjectExternalLink: async (
+    source,
+    {projectId, provider, link, replaceExisting},
+    ctx: Context
+  ) => {
+    await asyncAssertCanEditProject(ctx, projectId);
+    await ctx.entityManager.transaction(async txn => {
+      const project = await ctx.entityManager.findOneOrFail(ProjectModel, projectId);
+      await txn.update(ProjectModel, projectId, {
+        externalLinks: addExternalLink(project.externalLinks, provider, link, replaceExisting),
+      });
+    });
+
+    return (await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
+      .findProjectById(ctx.user, projectId))!;
+  },
+
+  removeProjectExternalLink: async (
+    source,
+    {projectId, provider, link},
+    ctx: Context
+  ) => {
+    await asyncAssertCanEditProject(ctx, projectId);
+    await ctx.entityManager.transaction(async txn => {
+      const project = await ctx.entityManager.findOneOrFail(ProjectModel, projectId);
+      await txn.update(ProjectModel, projectId, {
+        externalLinks: removeExternalLink(project.externalLinks, provider, link),
+      });
+    });
+
+    return (await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
+      .findProjectById(ctx.user, projectId))!;
   },
 };
 

@@ -21,6 +21,8 @@ import {getDatasetForEditing} from '../operation/getDatasetForEditing';
 import {deleteDataset} from '../operation/deleteDataset';
 import {verifyDatasetPublicationStatus} from '../operation/verifyDatasetPublicationStatus';
 import {EngineDataset} from '../../engine/model';
+import {addExternalLink, removeExternalLink} from '../../project/ExternalLink';
+import {esDatasetByID} from '../../../../esConnector';
 import {MolecularDB} from "../../moldb/model";
 
 type MetadataSchema = any;
@@ -372,7 +374,37 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
 
     logger.info(`Optical image was deleted from '${datasetId}' dataset`);
     return JSON.stringify(resp);
-  }
+  },
+
+  addDatasetExternalLink: async (
+    source,
+    {datasetId, provider, link, replaceExisting},
+    ctx: Context
+  ) => {
+    await ctx.entityManager.transaction(async txn => {
+      const ds = await getDatasetForEditing(txn, ctx.user, datasetId);
+      await txn.update(DatasetModel, ds.id, {
+        externalLinks: addExternalLink(ds.externalLinks, provider, link, replaceExisting),
+      });
+    });
+
+    return await esDatasetByID(datasetId, ctx.user);
+  },
+
+  removeDatasetExternalLink: async (
+    source,
+    {datasetId, provider, link},
+    ctx: Context
+  ) => {
+    await ctx.entityManager.transaction(async txn => {
+      const ds = await getDatasetForEditing(txn, ctx.user, datasetId);
+      await txn.update(DatasetModel, ds.id, {
+        externalLinks: removeExternalLink(ds.externalLinks, provider, link),
+      });
+    });
+
+    return await esDatasetByID(datasetId, ctx.user);
+  },
 };
 
 export default MutationResolvers;

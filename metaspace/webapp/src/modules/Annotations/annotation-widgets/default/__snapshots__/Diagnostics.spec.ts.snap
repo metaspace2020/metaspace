@@ -10,12 +10,12 @@ exports[`Diagnostics should match snapshot (no isobars) 1`] = `
       <div class="msm-score-calc">
         MSM score =
         <span>0.657</span> =
-        <span>0.686</span> (ρ
-        <sub>spatial</sub>) ×
-        <span>0.959</span> (ρ
-        <sub>spectral</sub>) ×
-        <span>0.999</span> (ρ
-        <sub>chaos</sub>)
+        <span>0.686</span>
+        (ρ<sub>spatial</sub>) ×
+        <span>0.959</span>
+        (ρ<sub>spectral</sub>) ×
+        <span>0.999</span>
+        (ρ<sub>chaos</sub>)
       </div>
       <div>
         <mock-el-popover trigger="hover" open-delay="100">
@@ -31,18 +31,14 @@ exports[`Diagnostics should match snapshot (no isobars) 1`] = `
     <div class="isotope-images-container el-row">
       <div class="el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6">
         <div class="small-peak-image">
-          100.0000
-          <br>
-          <imageloader-stub src="/fs/iso_images/img1" colormap="Viridis" imagefitparams="[object Object]" minintensity="0" maxintensity="100" showpixelintensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1"
-            style="overflow: hidden;"></imageloader-stub>
+          100.0000<br>
+          <imageloader-stub src="/fs/iso_images/img1" colormap="Viridis" imagefitparams="[object Object]" minintensity="0" maxintensity="100" showpixelintensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
         </div>
       </div>
       <div class="el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6">
         <div class="small-peak-image">
-          101.0000
-          <br>
-          <imageloader-stub src="/fs/iso_images/img2" colormap="Viridis" imagefitparams="[object Object]" minintensity="100" maxintensity="200" showpixelintensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1"
-            style="overflow: hidden;"></imageloader-stub>
+          101.0000<br>
+          <imageloader-stub src="/fs/iso_images/img2" colormap="Viridis" imagefitparams="[object Object]" minintensity="100" maxintensity="200" showpixelintensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
         </div>
       </div>
     </div>
@@ -52,8 +48,7 @@ exports[`Diagnostics should match snapshot (no isobars) 1`] = `
   <div>
     <div class="el-row" id="isotope-plot-container">
       <div class="peak-chart">
-        <div style="height: 300px;">
-          <svg width="0" height="0">
+        <div style="height: 300px;"><svg width="0" height="0">
             <defs>
               <pattern id="pattern-stripe" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
                 <rect width="3" height="6" transform="translate(0,0)" fill="white"></rect>
@@ -66,59 +61,45 @@ exports[`Diagnostics should match snapshot (no isobars) 1`] = `
               <g transform="translate(0, -60)" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle">
                 <path class="domain" stroke="currentColor" d="M0.5,6V0.5H-79.5V6"></path>
                 <g class="tick" opacity="1" transform="translate(-6.166666666666351,0)">
-                  <line stroke="currentColor" y2="6"></line>
-                  <text fill="currentColor" y="9" dy="0.71em">100.0</text>
+                  <line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">100.0</text>
                 </g>
                 <g class="tick" opacity="1" transform="translate(-19.5,0)">
-                  <line stroke="currentColor" y2="6"></line>
-                  <text fill="currentColor" y="9" dy="0.71em">100.2</text>
+                  <line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">100.2</text>
                 </g>
                 <g class="tick" opacity="1" transform="translate(-32.83333333333365,0)">
-                  <line stroke="currentColor" y2="6"></line>
-                  <text fill="currentColor" y="9" dy="0.71em">100.4</text>
+                  <line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">100.4</text>
                 </g>
                 <g class="tick" opacity="1" transform="translate(-46.16666666666635,0)">
-                  <line stroke="currentColor" y2="6"></line>
-                  <text fill="currentColor" y="9" dy="0.71em">100.6</text>
+                  <line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">100.6</text>
                 </g>
                 <g class="tick" opacity="1" transform="translate(-59.5,0)">
-                  <line stroke="currentColor" y2="6"></line>
-                  <text fill="currentColor" y="9" dy="0.71em">100.8</text>
+                  <line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">100.8</text>
                 </g>
                 <g class="tick" opacity="1" transform="translate(-72.83333333333366,0)">
-                  <line stroke="currentColor" y2="6"></line>
-                  <text fill="currentColor" y="9" dy="0.71em">101.0</text>
+                  <line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">101.0</text>
                 </g>
               </g>
               <g fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
                 <path class="domain" stroke="currentColor" d="M-6,-59.5H0.5V0.5H-6"></path>
                 <g class="tick" opacity="1" transform="translate(0,-59.5)">
-                  <line stroke="currentColor" x2="-6"></line>
-                  <text fill="currentColor" x="-11" dy="0.32em">0</text>
+                  <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">0</text>
                 </g>
                 <g class="tick" opacity="1" transform="translate(0,-47.5)">
-                  <line stroke="currentColor" x2="-6"></line>
-                  <text fill="currentColor" x="-11" dy="0.32em">20</text>
+                  <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">20</text>
                 </g>
                 <g class="tick" opacity="1" transform="translate(0,-35.5)">
-                  <line stroke="currentColor" x2="-6"></line>
-                  <text fill="currentColor" x="-11" dy="0.32em">40</text>
+                  <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">40</text>
                 </g>
                 <g class="tick" opacity="1" transform="translate(0,-23.5)">
-                  <line stroke="currentColor" x2="-6"></line>
-                  <text fill="currentColor" x="-11" dy="0.32em">60</text>
+                  <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">60</text>
                 </g>
                 <g class="tick" opacity="1" transform="translate(0,-11.5)">
-                  <line stroke="currentColor" x2="-6"></line>
-                  <text fill="currentColor" x="-11" dy="0.32em">80</text>
+                  <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">80</text>
                 </g>
                 <g class="tick" opacity="1" transform="translate(0,0.5)">
-                  <line stroke="currentColor" x2="-6"></line>
-                  <text fill="currentColor" x="-11" dy="0.32em">100</text>
+                  <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">100</text>
                 </g>
-              </g>
-              <text class="intensity-axis-label" transform="translate(-30, -30) rotate(-90)">Relative intensity</text>
-              <text style="text-anchor: middle;" transform="translate(-40, -30) ">m/z</text>
+              </g><text class="intensity-axis-label" transform="translate(-30, -30) rotate(-90)">Relative intensity</text><text style="text-anchor: middle;" transform="translate(-40, -30) ">m/z</text>
               <g class="sample-graph soloSample">
                 <g>
                   <circle cx="-6.666666666666351" cy="0" r="4"></circle>
@@ -145,11 +126,9 @@ exports[`Diagnostics should match snapshot (no isobars) 1`] = `
                 <rect class="handle handle--e" cursor="ew-resize" style="display: none;"></rect>
               </g>
             </g>
-          </svg>
-        </div>
+          </svg></div>
         <div class="plot-legend">
-          <div class="legend-item">
-            <svg width="64" height="32">
+          <div class="legend-item"><svg width="64" height="32">
               <g>
                 <g class="theor-graph soloTheor">
                   <g>
@@ -158,8 +137,7 @@ exports[`Diagnostics should match snapshot (no isobars) 1`] = `
                 </g>
               </g>
             </svg> <span class="legend-item-name">Theoretical</span></div>
-          <div class="legend-item">
-            <svg width="64" height="32">
+          <div class="legend-item"><svg width="64" height="32">
               <g>
                 <g class="sample-graph soloSample">
                   <g>
@@ -183,8 +161,7 @@ exports[`Diagnostics should match snapshot (no isobars) 1`] = `
 
 exports[`Diagnostics should match snapshot (with isobar) 1`] = `
 <div mock-v-loading="0">
-  <div role="alert" class="el-alert isobar-alert el-alert--warning is-light">
-    <i class="el-alert__icon el-icon-warning is-big"></i>
+  <div role="alert" class="el-alert isobar-alert el-alert--warning is-light" name="el-alert-fade"><i class="el-alert__icon el-icon-warning is-big"></i>
     <div class="el-alert__content">
       <!---->
       <p class="el-alert__description">
@@ -192,18 +169,14 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
         <!---->
         Select an isobaric annotation below to compare against.
       </p>
-      <!---->
-      <i class="el-alert__closebtn el-icon-close" style="display: none;"></i>
+      <!----><i class="el-alert__closebtn el-icon-close" style="display: none;"></i>
     </div>
   </div>
   <div class="compare-container">
     Compare selected annotation to:
     <mock-el-select placeholder="None" clearable="" class="compare-select" value="C8H9S2">
       <!---->
-      <mock-el-option value="C8H9S2" label="[M+0.0000]: [C8H10S2 - H]⁻">[M+0.0000]: [C
-        <sub>8</sub>H
-        <sub>10</sub>S
-        <sub>2</sub> - H]⁻</mock-el-option>
+      <mock-el-option value="C8H9S2" label="[M+0.0000]: [C8H10S2 - H]⁻">[M+0.0000]: [C<sub>8</sub>H<sub>10</sub>S<sub>2</sub> - H]⁻</mock-el-option>
     </mock-el-select>
   </div>
   <div class="ref-annotation-header">
@@ -221,18 +194,19 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
         </div>
       </div>
       <div slot-key="reference"><span class="annotation-ion">[C<sub>19</sub>H<sub>18</sub>N<sub>2</sub>O<sub>7</sub>S<sub>2</sub> - H]⁺</span></div>
-    </mock-el-popover> <span style="padding-left: 5px;">(Selected annotation)</span></div>
+    </mock-el-popover> <span style="padding-left: 5px;">(Selected annotation)</span>
+  </div>
   <div class="ref-annotation-container">
     <div class="el-row" id="scores-table">
       <div class="msm-score-calc">
         MSM score =
         <span>0.657</span> =
-        <span>0.686</span> (ρ
-        <sub>spatial</sub>) ×
-        <span>0.959</span> (ρ
-        <sub>spectral</sub>) ×
-        <span>0.999</span> (ρ
-        <sub>chaos</sub>)
+        <span>0.686</span>
+        (ρ<sub>spatial</sub>) ×
+        <span>0.959</span>
+        (ρ<sub>spectral</sub>) ×
+        <span>0.999</span>
+        (ρ<sub>chaos</sub>)
       </div>
       <div>
         <mock-el-popover trigger="hover" open-delay="100">
@@ -248,24 +222,20 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
     <div class="isotope-images-container el-row">
       <div class="el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6">
         <div class="small-peak-image">
-          100.0000
-          <br>
-          <imageloader-stub src="/fs/iso_images/img1" colormap="Viridis" imagefitparams="[object Object]" minintensity="0" maxintensity="100" showpixelintensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1"
-            style="overflow: hidden;"></imageloader-stub>
+          100.0000<br>
+          <imageloader-stub src="/fs/iso_images/img1" colormap="Viridis" imagefitparams="[object Object]" minintensity="0" maxintensity="100" showpixelintensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
         </div>
       </div>
       <div class="el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6">
         <div class="small-peak-image">
-          101.0000
-          <br>
-          <imageloader-stub src="/fs/iso_images/img2" colormap="Viridis" imagefitparams="[object Object]" minintensity="100" maxintensity="200" showpixelintensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1"
-            style="overflow: hidden;"></imageloader-stub>
+          101.0000<br>
+          <imageloader-stub src="/fs/iso_images/img2" colormap="Viridis" imagefitparams="[object Object]" minintensity="100" maxintensity="200" showpixelintensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
         </div>
       </div>
     </div>
   </div>
   <div class="comp-annotation-header">
-    <!----><span><mock-el-popover trigger="hover" placement="top" opendelay="100"><div slot-key="default"><div><span>Candidate molecules (1):</span>
+    <!----> <span><mock-el-popover trigger="hover" placement="top" opendelay="100"><div slot-key="default"><div><span>Candidate molecules (1):</span>
     <ul>
       <li>
         C.I. Food Red 6
@@ -278,20 +248,18 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
 </div>
 <div slot-key="reference"><span class="annotation-ion">[C<sub>8</sub>H<sub>10</sub>S<sub>2</sub> - H]⁻</span></div>
 </mock-el-popover>
-<!---->
-</span>
-</div>
+<!----></span></div>
 <div class="comp-annotation-container">
   <div class="el-row" id="scores-table">
     <div class="msm-score-calc">
       MSM score =
       <span>0.657</span> =
-      <span>0.686</span> (ρ
-      <sub>spatial</sub>) ×
-      <span>0.959</span> (ρ
-      <sub>spectral</sub>) ×
-      <span>0.999</span> (ρ
-      <sub>chaos</sub>)
+      <span>0.686</span>
+      (ρ<sub>spatial</sub>) ×
+      <span>0.959</span>
+      (ρ<sub>spectral</sub>) ×
+      <span>0.999</span>
+      (ρ<sub>chaos</sub>)
     </div>
     <div>
       <mock-el-popover trigger="hover" open-delay="100">
@@ -307,18 +275,14 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
   <div class="isotope-images-container el-row">
     <div class="el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6">
       <div class="small-peak-image">
-        100.0000
-        <br>
-        <imageloader-stub src="/fs/iso_images/img1" colormap="Viridis" imagefitparams="[object Object]" minintensity="0" maxintensity="100" showpixelintensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1"
-          style="overflow: hidden;"></imageloader-stub>
+        100.0000<br>
+        <imageloader-stub src="/fs/iso_images/img1" colormap="Viridis" imagefitparams="[object Object]" minintensity="0" maxintensity="100" showpixelintensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
       </div>
     </div>
     <div class="el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6">
       <div class="small-peak-image">
-        101.0000
-        <br>
-        <imageloader-stub src="/fs/iso_images/img2" colormap="Viridis" imagefitparams="[object Object]" minintensity="100" maxintensity="200" showpixelintensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1"
-          style="overflow: hidden;"></imageloader-stub>
+        101.0000<br>
+        <imageloader-stub src="/fs/iso_images/img2" colormap="Viridis" imagefitparams="[object Object]" minintensity="100" maxintensity="200" showpixelintensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
       </div>
     </div>
   </div>
@@ -326,8 +290,7 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
 <div>
   <div class="el-row" id="isotope-plot-container">
     <div class="peak-chart">
-      <div style="height: 300px;">
-        <svg width="0" height="0">
+      <div style="height: 300px;"><svg width="0" height="0">
           <defs>
             <pattern id="pattern-stripe" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
               <rect width="3" height="6" transform="translate(0,0)" fill="white"></rect>
@@ -340,59 +303,45 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
             <g transform="translate(0, -60)" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle">
               <path class="domain" stroke="currentColor" d="M0.5,6V0.5H-79.5V6"></path>
               <g class="tick" opacity="1" transform="translate(-6.166666666666351,0)">
-                <line stroke="currentColor" y2="6"></line>
-                <text fill="currentColor" y="9" dy="0.71em">100.0</text>
+                <line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">100.0</text>
               </g>
               <g class="tick" opacity="1" transform="translate(-19.5,0)">
-                <line stroke="currentColor" y2="6"></line>
-                <text fill="currentColor" y="9" dy="0.71em">100.2</text>
+                <line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">100.2</text>
               </g>
               <g class="tick" opacity="1" transform="translate(-32.83333333333365,0)">
-                <line stroke="currentColor" y2="6"></line>
-                <text fill="currentColor" y="9" dy="0.71em">100.4</text>
+                <line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">100.4</text>
               </g>
               <g class="tick" opacity="1" transform="translate(-46.16666666666635,0)">
-                <line stroke="currentColor" y2="6"></line>
-                <text fill="currentColor" y="9" dy="0.71em">100.6</text>
+                <line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">100.6</text>
               </g>
               <g class="tick" opacity="1" transform="translate(-59.5,0)">
-                <line stroke="currentColor" y2="6"></line>
-                <text fill="currentColor" y="9" dy="0.71em">100.8</text>
+                <line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">100.8</text>
               </g>
               <g class="tick" opacity="1" transform="translate(-72.83333333333366,0)">
-                <line stroke="currentColor" y2="6"></line>
-                <text fill="currentColor" y="9" dy="0.71em">101.0</text>
+                <line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">101.0</text>
               </g>
             </g>
             <g fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
               <path class="domain" stroke="currentColor" d="M-6,-59.5H0.5V0.5H-6"></path>
               <g class="tick" opacity="1" transform="translate(0,-59.5)">
-                <line stroke="currentColor" x2="-6"></line>
-                <text fill="currentColor" x="-11" dy="0.32em">0</text>
+                <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">0</text>
               </g>
               <g class="tick" opacity="1" transform="translate(0,-47.5)">
-                <line stroke="currentColor" x2="-6"></line>
-                <text fill="currentColor" x="-11" dy="0.32em">20</text>
+                <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">20</text>
               </g>
               <g class="tick" opacity="1" transform="translate(0,-35.5)">
-                <line stroke="currentColor" x2="-6"></line>
-                <text fill="currentColor" x="-11" dy="0.32em">40</text>
+                <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">40</text>
               </g>
               <g class="tick" opacity="1" transform="translate(0,-23.5)">
-                <line stroke="currentColor" x2="-6"></line>
-                <text fill="currentColor" x="-11" dy="0.32em">60</text>
+                <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">60</text>
               </g>
               <g class="tick" opacity="1" transform="translate(0,-11.5)">
-                <line stroke="currentColor" x2="-6"></line>
-                <text fill="currentColor" x="-11" dy="0.32em">80</text>
+                <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">80</text>
               </g>
               <g class="tick" opacity="1" transform="translate(0,0.5)">
-                <line stroke="currentColor" x2="-6"></line>
-                <text fill="currentColor" x="-11" dy="0.32em">100</text>
+                <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">100</text>
               </g>
-            </g>
-            <text class="intensity-axis-label" transform="translate(-30, -30) rotate(-90)">Relative intensity</text>
-            <text style="text-anchor: middle;" transform="translate(-40, -30) ">m/z</text>
+            </g><text class="intensity-axis-label" transform="translate(-30, -30) rotate(-90)">Relative intensity</text><text style="text-anchor: middle;" transform="translate(-40, -30) ">m/z</text>
             <g class="sample-graph soloSample">
               <g>
                 <circle cx="-6.666666666666351" cy="0" r="4"></circle>
@@ -419,11 +368,9 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
               <rect class="handle handle--e" cursor="ew-resize" style="display: none;"></rect>
             </g>
           </g>
-        </svg>
-      </div>
+        </svg></div>
       <div class="plot-legend">
-        <div class="legend-item">
-          <svg width="64" height="32">
+        <div class="legend-item"><svg width="64" height="32">
             <g>
               <g class="theor-graph refTheor">
                 <g>
@@ -432,8 +379,7 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
               </g>
             </g>
           </svg> <span class="legend-item-name">[C<sub>19</sub>H<sub>18</sub>N<sub>2</sub>O<sub>7</sub>S<sub>2</sub> - H]⁺<br> Theoretical</span></div>
-        <div class="legend-item">
-          <svg width="64" height="32">
+        <div class="legend-item"><svg width="64" height="32">
             <g>
               <g class="sample-graph refSample">
                 <g>
@@ -448,8 +394,7 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
               </g>
             </g>
           </svg> <span class="legend-item-name">[C<sub>19</sub>H<sub>18</sub>N<sub>2</sub>O<sub>7</sub>S<sub>2</sub> - H]⁺<br> Sample</span></div>
-        <div class="legend-item">
-          <svg width="64" height="32">
+        <div class="legend-item"><svg width="64" height="32">
             <g>
               <g class="theor-graph compTheor">
                 <g>
@@ -458,8 +403,7 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
               </g>
             </g>
           </svg> <span class="legend-item-name">[C<sub>8</sub>H<sub>10</sub>S<sub>2</sub> - H]⁻<br> Theoretical</span></div>
-        <div class="legend-item">
-          <svg width="64" height="32">
+        <div class="legend-item"><svg width="64" height="32">
             <g>
               <g class="sample-graph compSample">
                 <g>

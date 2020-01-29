@@ -64,7 +64,7 @@
   import {
     ViewGroupResult,
   } from '../../api/group';
-  import {sanitizeIt} from '../../util'
+  import sanitizeIt from '../../lib/sanitizeIt';
   import {getLocalStorage, setLocalStorage} from '../../lib/localStorage';
 
   interface Modes {

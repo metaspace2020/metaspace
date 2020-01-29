@@ -4,9 +4,7 @@ sm_es_port: 9210
 nginx_upstream_hosts:
   - name: web_server
     server: 127.0.0.1:{{ sm_webapp_port }}
-  - name: mol_image_server
-    server: 127.0.0.1:3020
-  - name: isotope_image_server
+  - name: storage_server
     server: 127.0.0.1:4201
   - name: graphql_server
     server: 127.0.0.1:3010
@@ -53,15 +51,15 @@ nginx_servers:
           - client_max_body_size 5M;
       - path: /iso_images/
         params:
-          - proxy_pass http://isotope_image_server/iso_images/;
+          - proxy_pass http://storage_server/iso_images/;
           - limit_except GET {deny all;}
       - path: /optical_images/
         params:
-          - proxy_pass http://isotope_image_server/optical_images/;
+          - proxy_pass http://storage_server/optical_images/;
           - limit_except GET {deny all;}
       - path: /raw_optical_images/
         params:
-          - proxy_pass http://isotope_image_server/raw_optical_images/;
+          - proxy_pass http://storage_server/raw_optical_images/;
           - client_max_body_size 50M;
       - path: /graphql
         params:

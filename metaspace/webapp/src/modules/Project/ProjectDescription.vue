@@ -61,7 +61,7 @@
   import Vue from 'vue';
   import {Component, Prop} from 'vue-property-decorator';
   import marked from 'marked';
-  import {sanitizeIt} from '../../util'
+  import sanitizeIt from '../../lib/sanitizeIt';
   import {getLocalStorage, setLocalStorage} from '../../lib/localStorage';
 
   interface Modes {

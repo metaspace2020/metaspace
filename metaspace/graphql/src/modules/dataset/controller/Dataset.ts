@@ -11,18 +11,23 @@ import {Context} from '../../../context';
 import getGroupAdminNames from '../../group/util/getGroupAdminNames';
 import * as DataLoader from 'dataloader';
 import {esDatasetByID} from '../../../../esConnector';
+import {ExternalLink} from '../../project/ExternalLink';
 
 interface DbDataset {
   id: string;
   thumbnail: string | null;
   ion_thumbnail: string | null;
   transform: number[][] | null;
+  external_links: ExternalLink[] | null;
 }
 const getDbDatasetById = async (ctx: Context, id: string): Promise<DbDataset | null> => {
-  const dataloader = ctx.contextCacheGet('thumbnailOpticalImageUrlDataLoader', [], () => {
+  const dataloader = ctx.contextCacheGet('getDbDatasetByIdDataLoader', [], () => {
     return new DataLoader(async (datasetIds: string[]): Promise<any[]> => {
-      const results = await ctx.entityManager.query(
-        'SELECT id, thumbnail, ion_thumbnail, transform FROM public.dataset WHERE id = ANY($1)',
+      const results = await ctx.entityManager.query(`
+      SELECT ds.id, ds.thumbnail, ds.ion_thumbnail, ds.transform, gds.external_links
+      FROM public.dataset ds
+      JOIN graphql.dataset gds on ds.id = gds.id
+      WHERE ds.id = ANY($1)`,
         [datasetIds]);
       const keyedResults = _.keyBy(results, 'id');
       return datasetIds.map(id => keyedResults[id] || null);
@@ -71,6 +76,7 @@ export const rawOpticalImage = async (datasetId: string, ctx: Context) => {
   }
   return null;
 };
+
 
 const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   id(ds) {
@@ -287,6 +293,11 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     } else {
       return null;
     }
+  },
+
+  async externalLinks(ds, args, ctx) {
+    const dbDs = await getDbDatasetById(ctx, ds._source.ds_id);
+    return dbDs && dbDs.external_links || [];
   }
 };
 

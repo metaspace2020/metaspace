@@ -40,6 +40,14 @@ const createTransactionEntityManager = async () => {
     rejectTxn();
     try { await txn; } catch {}
   };
+  // Replace transaction implementation to prevent issues with nested transactions
+  manager.transaction = async (...args: any[]) => {
+    if (args.length == 1) {
+      return await args[0](manager);
+    } else {
+      return await args[1](manager);
+    }
+  };
   return manager;
 };
 
@@ -91,14 +99,16 @@ export const onAfterEach = async () => {
 };
 
 export const doQuery = async <T = any>(query: string, variables?: object, options?: Partial<QueryOptions>): Promise<T> => {
+  const context = userContext || anonContext;
   const {data, errors} = await runQuery({
     schema,
-    context: userContext || anonContext,
+    context,
     queryString: query,
     variables,
     request: {} as any,
     ...options,
   });
+  (context as any).contextCacheClear();
   if (errors != null && errors.length > 0) {
     throw errors[0];
   }

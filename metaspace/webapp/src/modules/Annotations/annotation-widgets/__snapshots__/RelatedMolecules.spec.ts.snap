@@ -8,7 +8,7 @@ exports[`RelatedMolecules should match snapshot 1`] = `
         <div class="ion-heading">
           <div class="ion-link">
             <div>
-              <!----><span class="ion-formula">[C<sub>10</sub>H<sub>11</sub>NO + Na]⁺</span></div>
+              <!----> <span class="ion-formula">[C<sub>10</sub>H<sub>11</sub>NO + Na]⁺</span></div>
             <div class="fdr-badge fdr-badge-10">10% FDR</div>
             <!---->
           </div>
@@ -24,30 +24,24 @@ exports[`RelatedMolecules should match snapshot 1`] = `
               <figure>
                 <figcaption>
                   Tryptophanol
-                  <br>
-                  <a href="http://www.hmdb.ca/metabolites/HMDB0003447" target="_blank">
+                  <br> <a href="http://www.hmdb.ca/metabolites/HMDB0003447" target="_blank">
                     View on HMDB-v4 website
-                  </a>
-                </figcaption>
-                <img src="/mol-images/HMDB/HMDB0003447.svg" class="compound-image">
+                  </a></figcaption> <img src="/mol-images/HMDB/HMDB0003447.svg" class="compound-image">
               </figure>
             </div>
           </div>
-          <div slot-key="reference">
-            <img src="/mol-images/HMDB/HMDB0003447.svg" class="compound-thumbnail">
-          </div>
-        </mock-el-popover>
-        <br> <span><a href="http://www.hmdb.ca/metabolites/HMDB0003447" target="_blank">
+          <div slot-key="reference"><img src="/mol-images/HMDB/HMDB0003447.svg" class="compound-thumbnail"></div>
+        </mock-el-popover> <br> <span><a href="http://www.hmdb.ca/metabolites/HMDB0003447" target="_blank">
                 Tryptophanol
-              </a></span></div>
+              </a></span>
+      </div>
       <!---->
     </div>
   </div>
   <div>
     <div class="el-divider el-divider--horizontal">
       <div class="el-divider__text is-center">
-        <div class="ion-heading">
-          <a href="/?ds=2019-02-12_15h55m06s&amp;mol=allAnnotations.0.sumFormula&amp;chem_mod=allAnnotations.0.chemMod&amp;nl=allAnnotations.0.neutralLoss&amp;add=allAnnotations.0.adduct&amp;fdr=0.2" class="ion-link">
+        <div class="ion-heading"><a href="/?ds=2019-02-12_15h55m06s&amp;mol=allAnnotations.0.sumFormula&amp;chem_mod=allAnnotations.0.chemMod&amp;nl=allAnnotations.0.neutralLoss&amp;add=allAnnotations.0.adduct&amp;fdr=0.2" class="ion-link">
             <div><span>Isomer:</span> <span class="ion-formula">[C<sub>10</sub>H<sub>13</sub>NO<sub>2</sub> - H<sub>2</sub>O + Na]⁺</span></div>
             <div class="fdr-badge fdr-badge-20">20% FDR</div>
             <!---->
@@ -59,16 +53,16 @@ exports[`RelatedMolecules should match snapshot 1`] = `
                   The False Discovery Rate (FDR) for each annotation is calculated among all ions that share the same adduct.
                 </p>
                 <p>
-                  It is possible for isomeric annotations to show different FDRs due to having different adducts. In these cases, it is an indicator of certain adducts having a higher or lower probability of incorrectly labelling unknown molecules.
+                  It is possible for isomeric annotations to show different FDRs due to having different adducts.
+                  In these cases, it is an indicator of certain adducts having a higher or lower probability of
+                  incorrectly labelling unknown molecules.
                 </p>
                 <p>
                   The FDR should not be used to decide which isomeric molecule is more likely to be correct.
                 </p>
               </div>
             </div>
-            <div slot-key="reference">
-              <i class="el-icon-question help-icon"></i>
-            </div>
+            <div slot-key="reference"><i class="el-icon-question help-icon"></i></div>
           </mock-el-popover>
         </div>
       </div>
@@ -81,22 +75,17 @@ exports[`RelatedMolecules should match snapshot 1`] = `
               <figure>
                 <figcaption>
                   Maltoxazine
-                  <br>
-                  <a href="http://www.hmdb.ca/metabolites/HMDB0030372" target="_blank">
+                  <br> <a href="http://www.hmdb.ca/metabolites/HMDB0030372" target="_blank">
                     View on HMDB-v4 website
-                  </a>
-                </figcaption>
-                <img src="/mol-images/HMDB/HMDB0030372.svg" class="compound-image">
+                  </a></figcaption> <img src="/mol-images/HMDB/HMDB0030372.svg" class="compound-image">
               </figure>
             </div>
           </div>
-          <div slot-key="reference">
-            <img src="/mol-images/HMDB/HMDB0030372.svg" class="compound-thumbnail">
-          </div>
-        </mock-el-popover>
-        <br> <span><a href="http://www.hmdb.ca/metabolites/HMDB0030372" target="_blank">
+          <div slot-key="reference"><img src="/mol-images/HMDB/HMDB0030372.svg" class="compound-thumbnail"></div>
+        </mock-el-popover> <br> <span><a href="http://www.hmdb.ca/metabolites/HMDB0030372" target="_blank">
                 Maltoxazine
-              </a></span></div>
+              </a></span>
+      </div>
       <div class="compound">
         <mock-el-popover placement="left" trigger="click">
           <div slot-key="default">
@@ -104,22 +93,17 @@ exports[`RelatedMolecules should match snapshot 1`] = `
               <figure>
                 <figcaption>
                   Salsolinol
-                  <br>
-                  <a href="http://www.hmdb.ca/metabolites/HMDB0042012" target="_blank">
+                  <br> <a href="http://www.hmdb.ca/metabolites/HMDB0042012" target="_blank">
                     View on HMDB-v4 website
-                  </a>
-                </figcaption>
-                <img src="/mol-images/HMDB/HMDB0042012.svg" class="compound-image">
+                  </a></figcaption> <img src="/mol-images/HMDB/HMDB0042012.svg" class="compound-image">
               </figure>
             </div>
           </div>
-          <div slot-key="reference">
-            <img src="/mol-images/HMDB/HMDB0042012.svg" class="compound-thumbnail">
-          </div>
-        </mock-el-popover>
-        <br> <span><a href="http://www.hmdb.ca/metabolites/HMDB0042012" target="_blank">
+          <div slot-key="reference"><img src="/mol-images/HMDB/HMDB0042012.svg" class="compound-thumbnail"></div>
+        </mock-el-popover> <br> <span><a href="http://www.hmdb.ca/metabolites/HMDB0042012" target="_blank">
                 Salsolinol
-              </a></span></div>
+              </a></span>
+      </div>
       <!---->
     </div>
   </div>

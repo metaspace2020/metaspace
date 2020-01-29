@@ -1,9 +1,10 @@
-import {Column, Entity, JoinColumn, JoinTable, ManyToOne, OneToMany, PrimaryColumn} from 'typeorm';
+import {Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryColumn} from 'typeorm';
 import {Group} from '../group/model';
 import {User} from '../user/model';
 import {Project} from '../project/model';
 import {PublicationStatus} from '../../binding';
 import {PublicationStatusOptions as PSO} from '../project/PublicationStatusOptions';
+import {ExternalLink} from '../project/ExternalLink';
 
 @Entity()
 export class Dataset {
@@ -36,8 +37,10 @@ export class Dataset {
   piEmail: string | null;
 
   @OneToMany(type => DatasetProject, datasetProject => datasetProject.dataset)
-  @JoinTable({ name: 'dataset_project' })
   datasetProjects: DatasetProject[];
+
+  @Column({type: 'json', nullable: true})
+  externalLinks: ExternalLink[] | null;
 }
 
 @Entity({ name: 'dataset_project' })

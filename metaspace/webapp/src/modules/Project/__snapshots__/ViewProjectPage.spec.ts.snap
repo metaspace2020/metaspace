@@ -7,8 +7,7 @@ exports[`ViewProjectPage datasets tab should match snapshot (non-member) 1`] = `
       <div class="header-names">
         <h1>project name</h1>
       </div>
-      <div class="header-buttons">
-        <button type="button" class="el-button el-button--primary">
+      <div class="header-buttons"><button type="button" class="el-button el-button--primary">
           <!---->
           <!----><span>
           Request access
@@ -41,9 +40,7 @@ exports[`ViewProjectPage datasets tab should match snapshot (non-member) 1`] = `
             <datasetitem-stub dataset="[object Object]" currentuser="[object Object]" idx="2" class=""></datasetitem-stub>
             <!---->
           </div>
-          <div class="dataset-list-footer">
-            <a href="/datasets?prj=00000000-1111-2222-3333-444444444444" class="">See all datasets</a>
-          </div>
+          <div class="dataset-list-footer"><a href="/datasets?prj=00000000-1111-2222-3333-444444444444" class="">See all datasets</a></div>
         </div>
         <!---->
         <!---->
@@ -65,8 +62,7 @@ exports[`ViewProjectPage members tab should match snapshot (invited) 1`] = `
         <!---->
         <!---->
       </div>
-      <div role="alert" class="el-alert el-alert--info is-light">
-        <i class="el-alert__icon el-icon-info is-big"></i>
+      <div role="alert" class="el-alert el-alert--info is-light" name="el-alert-fade"><i class="el-alert__icon el-icon-info is-big"></i>
         <div class="el-alert__content">
           <!---->
           <p class="el-alert__description">
@@ -74,22 +70,18 @@ exports[`ViewProjectPage members tab should match snapshot (invited) 1`] = `
               <p>
                 You have been invited to join project name.
               </p>
-              <div>
-                <button type="button" class="el-button el-button--danger">
+              <div><button type="button" class="el-button el-button--danger">
                   <!---->
                   <!----><span>
               Decline invitation
-            </span></button>
-                <button type="button" class="el-button el-button--primary">
+            </span></button> <button type="button" class="el-button el-button--primary">
                   <!---->
                   <!----><span>
               Join project
-            </span></button>
-              </div>
+            </span></button></div>
             </div>
           </p>
-          <!---->
-          <i class="el-alert__closebtn el-icon-close" style="display: none;"></i>
+          <!----><i class="el-alert__closebtn el-icon-close" style="display: none;"></i>
         </div>
       </div>
     </div>
@@ -150,8 +142,7 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
               <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
               <div id="tab-members" aria-controls="pane-members" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
           Members (2)
-          <span class="notification"></span></span>
-              </div>
+          <span class="notification"></span></span></div>
               <div id="tab-settings" aria-controls="pane-settings" role="tab" tabindex="-1" class="el-tabs__item is-top">Settings</div>
             </div>
           </div>
@@ -224,16 +215,12 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
                           </div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
-                          <div class="cell">
-                            <a href="#" title="Change role">
+                          <div class="cell"><a href="#" title="Change role">
                               Project manager
-                            </a>
-                          </div>
+                            </a></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
-                          <div class="cell">
-                            <a href="/datasets?prj=00000000-1111-2222-3333-444444444444&amp;subm=3" class="">123</a>
-                          </div>
+                          <div class="cell"><a href="/datasets?prj=00000000-1111-2222-3333-444444444444&amp;subm=3" class="">123</a></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
                           <div class="cell">
@@ -256,20 +243,15 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
                           </div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
-                          <div class="cell">
-                            <a href="#" title="Change role">
+                          <div class="cell"><a href="#" title="Change role">
                               Member
-                            </a>
-                          </div>
+                            </a></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
-                          <div class="cell">
-                            <a href="/datasets?prj=00000000-1111-2222-3333-444444444444&amp;subm=6" class="">1</a>
-                          </div>
+                          <div class="cell"><a href="/datasets?prj=00000000-1111-2222-3333-444444444444&amp;subm=6" class="">1</a></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
-                          <div class="cell">
-                            <button type="button" class="el-button grid-button el-button--default el-button--mini">
+                          <div class="cell"><button type="button" class="el-button grid-button el-button--default el-button--mini">
                               <!---->
                               <!----><span>
           Remove
@@ -297,25 +279,20 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
         </span></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
-                          <div class="cell">
-                            <a href="/datasets?prj=00000000-1111-2222-3333-444444444444&amp;subm=4" class="">0</a>
-                          </div>
+                          <div class="cell"><a href="/datasets?prj=00000000-1111-2222-3333-444444444444&amp;subm=4" class="">0</a></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
                           <div class="cell">
                             <!---->
-                            <!---->
-                            <button type="button" class="el-button grid-button el-button--success el-button--mini">
+                            <!----> <button type="button" class="el-button grid-button el-button--success el-button--mini">
                               <!---->
                               <!----><span>
           Accept
-        </span></button>
-                            <button type="button" class="el-button grid-button el-button--default el-button--mini">
+        </span></button> <button type="button" class="el-button grid-button el-button--default el-button--mini">
                               <!---->
                               <!----><span>
           Decline
-        </span></button>
-                          </div>
+        </span></button></div>
                         </td>
                       </tr>
                       <tr class="el-table__row">
@@ -335,14 +312,11 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
         </span></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
-                          <div class="cell">
-                            <a href="/datasets?prj=00000000-1111-2222-3333-444444444444&amp;subm=5" class="">0</a>
-                          </div>
+                          <div class="cell"><a href="/datasets?prj=00000000-1111-2222-3333-444444444444&amp;subm=5" class="">0</a></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
                           <div class="cell">
-                            <!---->
-                            <button type="button" class="el-button grid-button el-button--default el-button--mini">
+                            <!----> <button type="button" class="el-button grid-button el-button--default el-button--mini">
                               <!---->
                               <!----><span>
           Cancel
@@ -366,8 +340,7 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
               </div>
               <div class="pagination-row">
                 <!---->
-                <div class="flex-spacer"></div>
-                <button type="button" class="el-button el-button--default">
+                <div class="flex-spacer"></div> <button type="button" class="el-button el-button--default">
                   <!---->
                   <!----><span>Add member</span></button>
               </div>
@@ -406,8 +379,7 @@ exports[`ViewProjectPage members tab should match snapshot (member) 1`] = `
               <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
               <div id="tab-members" aria-controls="pane-members" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
           Members (2)
-          <span class="notification"></span></span>
-              </div>
+          <span class="notification"></span></span></div>
             </div>
           </div>
         </div>
@@ -436,8 +408,7 @@ exports[`ViewProjectPage members tab should match snapshot (non-member) 1`] = `
       <div class="header-names">
         <h1>project name</h1>
       </div>
-      <div class="header-buttons">
-        <button type="button" class="el-button el-button--primary">
+      <div class="header-buttons"><button type="button" class="el-button el-button--primary">
           <!---->
           <!----><span>
           Request access
@@ -518,22 +489,18 @@ exports[`ViewProjectPage settings tab should match snapshot 1`] = `
             <div class="header-row">
               <h2>Project Details</h2>
               <div class="flex-spacer"></div>
-              <div class="header-row-buttons">
-                <button type="button" class="el-button el-button--primary">
+              <div class="header-row-buttons"><button type="button" class="el-button el-button--primary">
                   <!---->
                   <!----><span>
         Save
-      </span></button>
-              </div>
+      </span></button></div>
             </div>
             <form class="el-form el-form--label-top">
               <div>
-                <div class="el-form-item name is-required">
-                  <label for="name" class="el-form-item__label">Name</label>
+                <div class="el-form-item name is-required"><label for="name" class="el-form-item__label">Name</label>
                   <div class="el-form-item__content">
                     <div class="el-input">
-                      <!---->
-                      <input type="text" autocomplete="off" maxlength="50" class="el-input__inner">
+                      <!----><input type="text" autocomplete="off" maxlength="50" class="el-input__inner">
                       <!---->
                       <!---->
                       <!---->
@@ -544,10 +511,7 @@ exports[`ViewProjectPage settings tab should match snapshot 1`] = `
                 </div>
                 <div class="el-form-item isPublic">
                   <!---->
-                  <div class="el-form-item__content">
-                    <label class="el-checkbox"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span>
-                      <input type="checkbox" aria-hidden="false" class="el-checkbox__original" value="">
-                      </span><span class="el-checkbox__label">Allow other users to see this project<!----></span></label>
+                  <div class="el-form-item__content"><label class="el-checkbox"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">Allow other users to see this project<!----></span></label>
                     <!---->
                   </div>
                 </div>
@@ -559,13 +523,11 @@ exports[`ViewProjectPage settings tab should match snapshot 1`] = `
               <p>
                 Datasets will not be deleted, but they will no longer be able to be shared with other users through this project.
               </p>
-              <div style="text-align: right; margin: 1em 0px;">
-                <button type="button" class="el-button el-button--danger">
+              <div style="text-align: right; margin: 1em 0px;"><button type="button" class="el-button el-button--danger">
                   <!---->
                   <!----><span>
         Delete project
-      </span></button>
-              </div>
+      </span></button></div>
             </div>
           </div>
         </div>

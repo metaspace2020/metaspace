@@ -153,7 +153,6 @@ services:
     # ports:
     #   - "8082:8082"
     volumes:
-      - ./sm-webapp/config/conf.js:/opt/metaspace/metaspace/webapp/conf.js:ro
       - ./sm-webapp/config/clientConfig.json:/opt/metaspace/metaspace/webapp/src/clientConfig.json:ro
       - "${DATA_ROOT}:/opt/data:z"
     depends_on:
