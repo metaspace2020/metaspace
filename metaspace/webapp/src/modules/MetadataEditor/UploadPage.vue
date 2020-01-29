@@ -95,7 +95,6 @@
 // TODO: try https://github.com/FineUploader/vue-fineuploader once it's ready for production
 
 import FineUploader from './inputs/FineUploader.vue'
-import { FilterPanel } from '../Filters/index'
 import MetadataEditor from './MetadataEditor.vue'
 import Vue from 'vue'
 
@@ -168,7 +167,6 @@ export default {
   components: {
     FineUploader,
     MetadataEditor,
-    FilterPanel,
   },
 
   data() {
@@ -179,19 +177,19 @@ export default {
       isSubmitting: false,
       uploadedUuid: null,
       features: config.features,
-	     helpDialog: false,
+      helpDialog: false,
       helpLink: 'https://docs.google.com/document/d/e/2PACX-1vTT4QrMQ2RJMjziscaU8S3gbznlv6Rm5ojwrsdAXPbR5bt7Ivp-ThkC0hefrk3ZdVqiyCX7VU_ddA62/pub',
       systemHealth: null,
       currentUser: null,
     }
   },
   computed: {
-	   disabledSubmitMessage() {
-	     return 'Your files must be uploaded first'
+    disabledSubmitMessage() {
+      return 'Your files must be uploaded first'
     },
 
     enableSubmit() {
-     	return this.uploadedUuid != null && !this.isSubmitting
+      return this.uploadedUuid != null && !this.isSubmitting
     },
 
     fineUploaderDataTypeConfig() {
@@ -199,9 +197,7 @@ export default {
       return (activeDataType in DataTypeConfig) ? DataTypeConfig[activeDataType] : DataTypeConfig.default
     },
     isTourRunning() {
-      if (this.$store.state.currentTour != null) {
-        return true
-      }
+      return this.$store.state.currentTour != null
     },
 
     isSignedIn() {
@@ -216,7 +212,7 @@ export default {
   },
 
   methods: {
-   	 onSubmit() {
+    onSubmit() {
       const formValue = this.$refs.editor.getFormValueForSubmit()
       if (formValue != null) {
         const { datasetId, metadataJson, metaspaceOptions } = formValue
@@ -317,9 +313,9 @@ export default {
       }
     },
 
-	   cancel() {
-		   this.$router.go(-1)
-	   },
+    cancel() {
+      this.$router.go(-1)
+    },
   },
 }
 

@@ -58,7 +58,7 @@
       </div>
       <el-tabs v-model="tab">
         <el-tab-pane
-          v-if="canEdit || this.project.projectDescriptionAsHtml !== ''"
+          v-if="canEdit || project.projectDescriptionAsHtml !== ''"
           name="description"
           :label="'Description'"
           lazy
@@ -386,7 +386,7 @@ export default class ViewProjectPage extends Vue {
     }
 
     async refetch() {
-      return await Promise.all([
+      return Promise.all([
         this.$apollo.queries.project.refetch(),
         this.$apollo.queries.data.refetch(),
       ])

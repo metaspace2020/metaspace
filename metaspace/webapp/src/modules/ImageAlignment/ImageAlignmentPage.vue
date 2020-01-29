@@ -105,7 +105,7 @@
           <span style="font-size: 14px; margin-bottom: 5px;">Annotation:</span>
           <el-pagination
             layout="prev,slot,next"
-            :total="this.annotations ? this.annotations.length : 0"
+            :total="annotations ? annotations.length : 0"
             :page-size="1"
             @current-change="updateIndex"
           >

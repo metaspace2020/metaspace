@@ -51,7 +51,7 @@ export default class EditProjectForm extends Vue {
     };
 
     async validate(): Promise<boolean> {
-      return await (this.$refs.form as ElForm).validate()
+      return (this.$refs.form as ElForm).validate()
     }
 }
 

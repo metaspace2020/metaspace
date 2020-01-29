@@ -172,9 +172,12 @@ function plotChart(data, element, relativeIntensityScale, toggleRelativeIntensit
     const s = d3.event.selection
 
     if (!s) { // click event
-      if (!idleTimeout) // not double click => wait for the second click
-        return idleTimeout = setTimeout(() => { idleTimeout = null }, dblClickTimeout)
-        // double click => reset axes
+      if (!idleTimeout) {
+        // not double click => wait for the second click
+        idleTimeout = setTimeout(() => { idleTimeout = null }, dblClickTimeout)
+        return idleTimeout
+      }
+      // double click => reset axes
       xScale.domain(xDomain)
       yScale.domain(yDomain)
     } else {
@@ -186,6 +189,7 @@ function plotChart(data, element, relativeIntensityScale, toggleRelativeIntensit
         mzRange = [mid - 0.005, mid + 0.005]
       }
 
+      // eslint-disable-next-line no-inner-declarations
       function calcMaxIntensity(pts) {
         if (pts) {
           const intensities = pts

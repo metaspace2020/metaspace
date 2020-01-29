@@ -54,9 +54,9 @@ export const migrateLocalStorage = () => {
       }
     } catch (err) { console.error(err) }
     try {
-      const show_descr_hint = cookie.getJSON('show_descr_hint') as any
-      if (show_descr_hint != null) {
-        setLocalStorage('hideMarkdownHint', show_descr_hint === 0, true)
+      const showDescrHint = cookie.getJSON('show_descr_hint') as any
+      if (showDescrHint != null) {
+        setLocalStorage('hideMarkdownHint', showDescrHint === 0, true)
         cookie.remove('show_descr_hint')
       }
     } catch (err) { console.error(err) }

@@ -1,5 +1,5 @@
 const fetchPostJson = async(url: string, body: object) =>
-  await fetch(url, {
+  fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',

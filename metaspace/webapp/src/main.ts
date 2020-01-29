@@ -1,6 +1,6 @@
 import Vue from 'vue'
 
-import config from './config'
+import config, { updateConfigFromQueryString } from './config'
 import * as Raven from 'raven-js'
 import * as RavenVue from 'raven-js/plugins/vue'
 
@@ -20,7 +20,6 @@ import App from './modules/App/App.vue'
 
 import VueAnalytics from 'vue-analytics'
 import { setErrorNotifier } from './lib/reportError'
-import { updateConfigFromQueryString } from './config'
 import { migrateLocalStorage } from './lib/localStorage'
 if (config.ravenDsn != null && config.ravenDsn !== '') {
   Raven.config(config.ravenDsn)

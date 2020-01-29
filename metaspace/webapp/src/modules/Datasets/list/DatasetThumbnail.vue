@@ -107,7 +107,9 @@ export default {
           const metadata = JSON.parse(this.dataset.metadataJson)
           const { Xaxis, Yaxis } = metadata.MS_Analysis.Pixel_Size
           aspectRatio = Xaxis && Yaxis && (Xaxis / Yaxis) || 1
-        } catch {}
+        } catch {
+          // If something is missing in the metadataJson, just fall back to fixed aspect ratio
+        }
       }
 
       return {

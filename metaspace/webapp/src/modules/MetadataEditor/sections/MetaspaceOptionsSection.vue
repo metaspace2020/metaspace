@@ -95,9 +95,9 @@
                   remote
                   :multiple-limit="MAX_NEUTRAL_LOSSES"
                   no-data-text="Please enter a valid molecular formula"
-                  @input="val => onInput('neutralLosses', val)"
                   :remote-method="updateNeutralLossOptions"
                   :loading="false"
+                  @input="val => onInput('neutralLosses', val)"
                 >
                   <el-option
                     v-for="opt in neutralLossOptions"
@@ -253,7 +253,7 @@ const normalizeFormulaModifier = (formula: string, defaultSign: '+'|'-') => {
   if (!formula.startsWith('-') && !formula.startsWith('+')) {
     formula = defaultSign + formula
   }
-  const match = /^([+\-]?[A-Z][a-z]*[0-9]*)+$/.exec(formula)
+  const match = /^([+-]?[A-Z][a-z]*[0-9]*)+$/.exec(formula)
   return match != null ? match[0] : null
 }
 

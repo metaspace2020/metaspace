@@ -150,16 +150,13 @@ export default class CreateAccountDialog extends Vue {
       } catch (err) {
         return
       }
+      const { email, password, firstName, lastName } = this.model
+      this.isSubmitting = true
       try {
-        const { email, password, firstName, lastName } = this.model
-        this.isSubmitting = true
-        try {
-          await createAccountByEmail(email, password, `${firstName} ${lastName}`)
-          this.hasSucceeded = true
-        } catch (err) {
-          reportError(err)
-        }
+        await createAccountByEmail(email, password, `${firstName} ${lastName}`)
+        this.hasSucceeded = true
       } catch (err) {
+        reportError(err)
       } finally {
         this.isSubmitting = false
       }

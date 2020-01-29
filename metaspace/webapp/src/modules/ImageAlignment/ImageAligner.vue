@@ -27,15 +27,17 @@
           v-if="!isNaN(scaleX * scaleY)"
           :transform="layerTransform"
         >
-          <circle
-            v-for="(pos, idx) in handlePositions"
-            v-if="fineTune"
-            class="handle"
-            :cx="pos.x * scaleX + padding"
-            :cy="pos.y * scaleY + padding"
-            r="7"
-            @mousedown="onMouseDown($event, idx)"
-          />
+          <g v-if="fineTune">
+            <circle
+              v-for="(pos, idx) in handlePositions"
+              :key="idx"
+              class="handle"
+              :cx="pos.x * scaleX + padding"
+              :cy="pos.y * scaleY + padding"
+              r="7"
+              @mousedown="onMouseDown($event, idx)"
+            />
+          </g>
 
           <!-- draw a cross showing the center of the original image -->
           <line
@@ -141,7 +143,7 @@ export default {
     },
     initialTransform: {
       type: Array,
-      default: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+      default: () => [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
     },
   },
   data() {

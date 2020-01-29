@@ -26,7 +26,6 @@
 <script>
 import * as cookie from 'js-cookie'
 import MetaspaceHeader from './MetaspaceHeader.vue'
-import MetaspaceFooter from './MetaspaceFooter.vue'
 // import ReleaseNotesDialog from './ReleaseNotesDialog.vue';
 import NewFeaturePopup from './NewFeaturePopup.vue'
 import TourStep from './TourStep.vue'
@@ -40,7 +39,6 @@ export default {
   name: 'App',
   components: {
     MetaspaceHeader,
-    MetaspaceFooter,
     // ReleaseNotesDialog,
     NewFeaturePopup,
     TourStep,

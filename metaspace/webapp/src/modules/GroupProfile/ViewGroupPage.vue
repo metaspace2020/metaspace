@@ -70,7 +70,7 @@
       </div>
       <el-tabs v-model="tab">
         <el-tab-pane
-          v-if="canEdit || this.group.groupDescriptionAsHtml !== ''"
+          v-if="canEdit || group.groupDescriptionAsHtml !== ''"
           name="description"
           :label="'Description'"
           lazy
@@ -413,11 +413,11 @@ export default class ViewGroupPage extends Vue {
     }
 
     async refetchGroup() {
-      return await this.$apollo.queries.group.refetch()
+      return this.$apollo.queries.group.refetch()
     }
 
     async refetch() {
-      return await Promise.all([
+      return Promise.all([
         this.$apollo.queries.group.refetch(),
         this.$apollo.queries.data.refetch(),
       ])

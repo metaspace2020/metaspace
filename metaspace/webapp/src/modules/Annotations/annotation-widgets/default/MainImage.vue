@@ -9,13 +9,13 @@
       class="image-viewer-container"
     >
       <ion-image-viewer
+        ref="imageLoader"
         :ion-image="ionImage"
         :is-loading="ionImageIsLoading"
         :colormap="colormap"
         :pixel-size-x="pixelSizeX"
         :pixel-size-y="pixelSizeY"
         :pixel-aspect-ratio="imageLoaderSettings.pixelAspectRatio"
-        ref="imageLoader"
         :scale-bar-color="scaleBarColor"
         :width="imageViewerWidth"
         :height="imageViewerHeight"

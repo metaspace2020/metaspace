@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import { cloneDeep, mapValues } from 'lodash-es'
 import { Component } from 'vue'
 

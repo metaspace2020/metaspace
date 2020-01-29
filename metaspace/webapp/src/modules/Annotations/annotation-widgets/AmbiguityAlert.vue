@@ -13,7 +13,8 @@
       </p>
       <ul>
         <li
-          v-for="isomer in isomers"
+          v-for="(isomer, i) in isomers"
+          :key="i"
           v-html="renderMolFormulaHtml(isomer.ion)"
         />
       </ul>
@@ -27,7 +28,8 @@
       </p>
       <ul>
         <li
-          v-for="isobar in isobars"
+          v-for="(isobar, i) in isobars"
+          :key="i"
           v-html="renderMolFormulaHtml(isobar.ion)"
         />
       </ul>

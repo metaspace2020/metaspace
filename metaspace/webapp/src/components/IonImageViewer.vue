@@ -202,12 +202,16 @@ export default {
     xScale() {
       if (this.ionImage != null && this.pixelSizeX != null && this.pixelSizeX !== 0) {
         return this.pixelSizeX / this.zoom
+      } else {
+        return 1
       }
     },
 
     yScale() {
       if (this.ionImage != null && this.pixelSizeY != null && this.pixelSizeY !== 0) {
         return this.pixelSizeY / this.zoom * this.pixelAspectRatio
+      } else {
+        return 1
       }
     },
 
@@ -286,10 +290,9 @@ export default {
            && y >= 0 && y < height
            && mask[y * width + x] !== 0) {
           return intensityValues[y * width + x]
-        } else {
-          return null
         }
       }
+      return null
     },
 
     pixelIntensityStyle() {

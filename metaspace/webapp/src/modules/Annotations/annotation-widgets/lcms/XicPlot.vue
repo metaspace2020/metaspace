@@ -84,9 +84,11 @@ function plotChart(intensities, timeSeq, timeUnitName, logIntensity, graphColors
     const s = d3.event.selection
 
     if (!s) { // click event
-      if (!idleTimeout) // not double click => wait for the second click
-        return idleTimeout = setTimeout(() => { idleTimeout = null },
-          dblClickTimeout)
+      if (!idleTimeout) {
+        // not double click => wait for the second click
+        idleTimeout = setTimeout(() => { idleTimeout = null }, dblClickTimeout)
+        return idleTimeout
+      }
       // double click => reset axes
       xScale.domain(xDomain)
       yScale.domain(yDomain)
@@ -94,6 +96,7 @@ function plotChart(intensities, timeSeq, timeUnitName, logIntensity, graphColors
       const xDomainInterval = s.map((n) => n - originTranslation.x)
         .map(xScale.invert, xScale)
 
+      // eslint-disable-next-line no-inner-declarations
       function calcMaxIntensity(pts) {
         const intensities = pts.filter(d => d[0] >= xDomainInterval[0] && d[0] <= xDomainInterval[1])
           .map(d => d[1])
@@ -223,7 +226,7 @@ export default {
     acquisitionGeometry: function() { this.reloadPlot() },
     logIntensity: function() {
       if (this.logIntensity != this.internalLogIntensity) {
-        setLogIntensity(this.logIntensity)
+        this.setLogIntensity(this.logIntensity)
       }
     },
   },
@@ -255,7 +258,7 @@ export default {
     },
     updatePlot() {
       if (!this.currentIntensities) {
-        throw 'XIC data not loaded'
+        throw new Error('XIC data not loaded')
       }
       if (this.acquisitionGeometry.length_unit !== 's') {
         console.log(`Unexpected LC time unit: ${this.acquisitionGeometry.length_unit}`)

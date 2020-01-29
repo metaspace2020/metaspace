@@ -77,6 +77,7 @@ const wsClient = new SubscriptionClient(wsGraphqlUrl, {
     // All subscription operations need to have their JWTs updated before they are reconnected, so do that before
     // supplying the connection params.
     const operations = Object.values(wsClient.operations || {}).map(op => op.options)
+    // @ts-ignore the private unsentMessagesQueue
     const queuedMessages: any[] = wsClient.unsentMessagesQueue.map((m: any) => m.payload)
     const payloads = [...operations, ...queuedMessages]
 

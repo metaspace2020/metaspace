@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import { defaultsDeep } from 'lodash-es'
 import { getLocalStorage, removeLocalStorage, setLocalStorage } from './lib/localStorage'
 const fileConfig = require('./clientConfig.json')

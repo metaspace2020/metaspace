@@ -21,7 +21,7 @@
       @change="onInput"
     >
       <el-option
-        v-for="(item, idx) in joinedOptions"
+        v-for="item in joinedOptions"
         :key="item.value"
         :label="item.label"
         :value="item.value"

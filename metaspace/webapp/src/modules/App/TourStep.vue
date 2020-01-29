@@ -29,7 +29,7 @@
 
         <div class="ts-actions">
           <el-button
-            v-if="this.stepNum > 0"
+            v-if="stepNum > 0"
             size="small"
             @click.native="prevStep"
           >
@@ -41,7 +41,7 @@
             type="primary"
             @click.native="nextStep"
           >
-            {{ this.stepNum == this.tour.steps.length - 1 ? 'Done' : 'Next' }}
+            {{ stepNum == tour.steps.length - 1 ? 'Done' : 'Next' }}
           </el-button>
         </div>
 

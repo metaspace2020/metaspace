@@ -7,11 +7,11 @@
       show-icon
       class="isobar-alert"
     >
-      {{ annotationGroups.filter(g => !g.isReference).length === 1
+      {{ nonReferenceGroups.length === 1
         ? 'Another ion was annotated that is isobaric to the selected annotation.'
         : 'Other ions were annotated that are isobaric to the selected annotation.' }}
       <span v-if="!hasWarnIsobar">
-        {{ annotationGroups.filter(g => !g.isReference).length === 1
+        {{ nonReferenceGroups.length === 1
           ? 'However, as its MSM score is significantly lower, it is likely a false discovery.'
           : 'However, as their MSM scores are significantly lower, they are likely false discoveries.' }}
       </span>
@@ -29,8 +29,7 @@
         clearable
       >
         <el-option
-          v-for="grp in annotationGroups"
-          v-if="!grp.isReference"
+          v-for="grp in nonReferenceGroups"
           :key="grp.ionFormula"
           :value="grp.ionFormula"
           :label="grp.label"
@@ -73,7 +72,10 @@
       class="comp-annotation-header"
     >
       <span v-if="comparisonAnnotationGroup.annotations.length > 1">Isobars: </span>
-      <span v-for="(ann, i) in comparisonAnnotationGroup.annotations">
+      <span
+        v-for="(ann, i) in comparisonAnnotationGroup.annotations"
+        :key="i"
+      >
         <candidate-molecules-popover
           placement="top"
           :possible-compounds="ann.possibleCompounds"
@@ -230,6 +232,10 @@ export default class Diagnostics extends Vue {
         grp => grp.isReference ? 0 : 1,
         grp => -grp.annotations[0].msm,
       ])
+    }
+
+    get nonReferenceGroups() {
+      return this.annotationGroups.filter(g => !g.isReference)
     }
 
     get hasIsobars() {

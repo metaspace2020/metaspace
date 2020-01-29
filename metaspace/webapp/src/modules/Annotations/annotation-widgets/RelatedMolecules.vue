@@ -4,7 +4,7 @@
     class="related-molecules"
   >
     <div
-      v-for="(other, idx) in sortedAnnotations"
+      v-for="other in sortedAnnotations"
       :key="other.ion"
     >
       <el-divider v-if="sortedAnnotations.length > 1">

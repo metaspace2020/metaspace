@@ -4,7 +4,7 @@
     class="plot-legend"
   >
     <div
-      v-for="(item, idx) in items"
+      v-for="item in items"
       :key="item.name"
       class="legend-item"
     >

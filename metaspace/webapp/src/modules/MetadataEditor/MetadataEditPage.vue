@@ -102,6 +102,7 @@ export default {
             })
             this.$router.push('/datasets')
           }
+          // eslint-disable-next-line no-useless-catch
         } catch (e) {
           // Empty catch block needed because babel-plugin-component throws a
           // compilation error when an async function has a try/finally without a catch.
@@ -135,7 +136,7 @@ export default {
               .catch(() => { /* Ignore exception raised when alert is closed */ })
             return false
           } else if (await this.confirmReprocess()) {
-            return await this.saveDataset(datasetId, payload, { ...options, reprocess: true })
+            return this.saveDataset(datasetId, payload, { ...options, reprocess: true })
           }
         } else if (graphQLError && graphQLError.type === 'wrong_moldb_name') {
           this.$refs.editor.resetMetaboliteDatabase()
@@ -147,7 +148,7 @@ export default {
         } else if (graphQLError && graphQLError.type === 'failed_validation') {
           this.validationErrors = graphQLError.validation_errors
           if (this.currentUser && this.currentUser.role === 'admin' && await this.confirmSkipValidation()) {
-            return await this.saveDataset(datasetId, payload, { ...options, skipValidation: true })
+            return this.saveDataset(datasetId, payload, { ...options, skipValidation: true })
           }
           this.$message({
             message: 'Please fix the highlighted fields and submit again',
@@ -203,7 +204,7 @@ export default {
     },
 
     async updateOrReprocess(datasetId, payload, options) {
-      return await this.$apollo.mutate({
+      return this.$apollo.mutate({
         mutation: updateDatasetQuery,
         variables: {
           id: datasetId,

@@ -134,7 +134,7 @@ export default {
       const formattedFileTypes = fileExtensions.length > 1 ? `${fileExtensions.slice(0, -1).join(', ')} and ${fileExtensions[fileExtensions.length - 1]}`
         : fileExtensions[0]
 
-	     return `drop ${formattedFileTypes} file${multipleFilesAllowed ? 's' : ''} here`
+      return `drop ${formattedFileTypes} file${multipleFilesAllowed ? 's' : ''} here`
     },
 
     validate() {
@@ -171,7 +171,7 @@ export default {
         if (response.status < 200 || response.status >= 300) {
           throw new Error('Could not get upload destination. Server responded with error: ')
         }
-        return await response.json()
+        return response.json()
       }
     },
 

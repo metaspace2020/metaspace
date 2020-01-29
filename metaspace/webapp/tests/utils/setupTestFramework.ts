@@ -1,15 +1,14 @@
-import * as VueTestUtils from '@vue/test-utils'
 import Vue from 'vue'
 import ElementUI from 'element-ui'
 import registerMockComponent from './registerMockComponent'
 import VueRouter from 'vue-router'
 import registerMockDirective from './registerMockDirective'
-import { Wrapper } from '@vue/test-utils'
+import { Wrapper, config as vueTestConfig } from '@vue/test-utils'
 import { replaceConfigWithDefaultForTests } from '../../src/config'
 
 window.fetch = jest.fn()
 
-VueTestUtils.config.logModifiedComponents = false
+vueTestConfig.logModifiedComponents = false
 
 Vue.use(VueRouter)
 Vue.use(ElementUI)

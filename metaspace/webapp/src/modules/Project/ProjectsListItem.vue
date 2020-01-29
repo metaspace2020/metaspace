@@ -29,7 +29,10 @@
             class="info-line"
           >
             <span>Manager<span v-if="projectManagers.length>1">s</span>:</span>
-            <span v-for="(manager, ind) in projectManagers">
+            <span
+              v-for="(manager, ind) in projectManagers"
+              :key="manager.user.id"
+            >
               {{ manager.user.name }}<span v-if="(ind < projectManagers.length)">
                 <span v-if="manager.user.primaryGroup || ind+1 < projectManagers.length">, </span></span>
               <router-link

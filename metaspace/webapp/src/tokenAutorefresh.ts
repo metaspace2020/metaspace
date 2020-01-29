@@ -41,7 +41,7 @@ class TokenAutorefresh {
       const payload = decodePayload(this.jwt)
       this.jwtCanExpire = payload.exp != null
     }
-    return await this.getJwt()
+    return this.getJwt()
   }
 
   private async ensureRefreshLoopRunning() {

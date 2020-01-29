@@ -30,7 +30,7 @@
               :pull="8"
             >
               <form-field
-                :value="this.submitter && `${this.submitter.name} (${this.submitter.email})` || null"
+                :value="submitter && `${submitter.name} (${submitter.email})` || null"
                 type="autocomplete"
                 name="Submitter"
                 :fetch-suggestions="handleSearchUsers"

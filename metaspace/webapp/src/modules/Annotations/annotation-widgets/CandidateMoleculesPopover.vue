@@ -7,7 +7,10 @@
     <div>
       <span>Candidate molecules ({{ possibleCompounds.length }}):</span>
       <ul>
-        <li v-for="comp in filteredCompounds">
+        <li
+          v-for="(comp, i) in filteredCompounds"
+          :key="i"
+        >
           {{ comp.name }}
         </li>
         <li

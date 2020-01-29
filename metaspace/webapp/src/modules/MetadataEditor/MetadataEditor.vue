@@ -67,7 +67,6 @@
   */
 
 import { defaultMetadataType, metadataSchemas } from '../../lib/metadataRegistry'
-import { FilterPanel } from '../Filters/index'
 import { deriveFullSchema } from './formStructure'
 import {
   get, set, cloneDeep, defaults,
@@ -113,7 +112,6 @@ export default {
   components: {
     FormSection,
     MetaspaceOptionsSection,
-    FilterPanel,
     VisibilityOptionSection,
     DataManagementSection,
   },

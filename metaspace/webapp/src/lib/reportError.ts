@@ -10,11 +10,10 @@ export function setErrorNotifier(_$notify: ElNotification) {
 
 function isHandled(err: any) {
   try {
-    if (err && err.graphQLErrors && every(err.graphQLErrors, e => e && e.isHandled)) {
-      return true
-    }
-  } catch {}
-  return false
+    return err && err.graphQLErrors && every(err.graphQLErrors, e => e && e.isHandled)
+  } catch {
+    return false
+  }
 }
 
 const DEFAULT_MESSAGE = 'Oops! Something went wrong. Please refresh the page and try again.'

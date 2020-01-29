@@ -112,7 +112,7 @@ class="s-group ds-add-filter"
         </span>
       </div>
       <div
-        v-if="dataset.status == 'FINISHED' && this.dataset.fdrCounts"
+        v-if="dataset.status == 'FINISHED' && dataset.fdrCounts"
         class="ds-item-line"
       >
         <span>
@@ -331,9 +331,9 @@ export default {
     },
 
     formatResolvingPower() {
-      const rp = this.metadata.MS_Analysis.Detector_Resolving_Power
-      const { mz, Resolving_Power } = rp
-      return (Resolving_Power / 1000).toFixed(0) + 'k @ ' + mz
+      const rpSection = this.metadata.MS_Analysis.Detector_Resolving_Power
+      const { mz, Resolving_Power: rp } = rpSection
+      return (rp / 1000).toFixed(0) + 'k @ ' + mz
     },
 
     canEdit() {
@@ -378,6 +378,7 @@ export default {
         ]
         return `These annotation results are not publicly visible. They are visible to ${all.join(', ')} and METASPACE Administrators.`
       }
+      return null
     },
   },
   async created() {

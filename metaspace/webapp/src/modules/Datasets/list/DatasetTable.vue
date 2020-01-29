@@ -153,8 +153,8 @@ export default {
       datasetStatusUpdated: {
         query: datasetStatusUpdatedQuery,
         async result({ data }) {
-          const { dataset, action, stage, is_new } = data.datasetStatusUpdated
-          if (dataset != null && action === 'ANNOTATE' && stage === 'QUEUED' && is_new) {
+          const { dataset, action, stage, is_new: isNew } = data.datasetStatusUpdated
+          if (dataset != null && action === 'ANNOTATE' && stage === 'QUEUED' && isNew) {
             updateApolloCache(this, 'queued', oldVal => {
               return {
                 ...oldVal,

@@ -39,11 +39,11 @@ async function getJWT(): Promise<JWT> {
   const url = '/api_auth/gettoken'
   const response = await fetch(url, { credentials: 'include' })
   checkStatus(response)
-  return await response.text()
+  return response.text()
 }
 
 function decodePayload(jwt: JWT) {
-  return JSON.parse(new Buffer(jwt.split('.')[1], 'base64').toString())
+  return JSON.parse(Buffer.from(jwt.split('.')[1], 'base64').toString())
 }
 
 function pathFromUUID(uuid: string): string {

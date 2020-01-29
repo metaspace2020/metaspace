@@ -4,7 +4,7 @@
     class="adduct-info-container"
   >
     <div
-      v-for="(other, idx) in annotations"
+      v-for="other in annotations"
       :key="other.ion"
       class="small-peak-image"
     >

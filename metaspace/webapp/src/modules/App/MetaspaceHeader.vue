@@ -283,7 +283,7 @@ const MetaspaceHeader = {
       datasetStatusUpdated: {
         query: datasetStatusUpdatedQuery,
         result(data) {
-          const { dataset, relationship, action, stage, is_new } = data.data.datasetStatusUpdated
+          const { dataset, relationship, action, stage, is_new: isNew } = data.data.datasetStatusUpdated
           if (dataset != null && relationship != null) {
             const { name, submitter } = dataset
 
@@ -295,10 +295,10 @@ const MetaspaceHeader = {
               } else if (stage === 'FAILED') {
                 message = `Something went wrong with dataset ${name} :(`
                 type = 'warning'
-              } else if (action === 'ANNOTATE' && stage === 'QUEUED' && is_new) {
+              } else if (action === 'ANNOTATE' && stage === 'QUEUED' && isNew) {
                 message = `Dataset ${name} has been submitted`
                 type = 'info'
-              } else if (action === 'ANNOTATE' && stage === 'QUEUED' && !is_new) {
+              } else if (action === 'ANNOTATE' && stage === 'QUEUED' && !isNew) {
                 message = `Dataset ${name} has been submitted for reprocessing`
                 type = 'info'
               } else if (action === 'ANNOTATE' && stage === 'STARTED') {
@@ -310,7 +310,7 @@ const MetaspaceHeader = {
               if (action === 'ANNOTATE' && stage === 'FINISHED') {
                 message = `Processing of dataset ${name} by ${who} is finished!`
                 type = 'success'
-              } else if (action === 'ANNOTATE' && stage === 'QUEUED' && is_new) {
+              } else if (action === 'ANNOTATE' && stage === 'QUEUED' && isNew) {
                 message = `Dataset ${name} has been submitted by ${who}`
                 type = 'info'
               }

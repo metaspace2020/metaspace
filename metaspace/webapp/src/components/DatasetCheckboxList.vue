@@ -1,7 +1,10 @@
 <template>
   <div>
     <div class="dataset-checkbox-list">
-      <div v-for="dataset in datasets">
+      <div
+        v-for="dataset in datasets"
+        :key="dataset.id"
+      >
         <el-checkbox v-model="selectedDatasets[dataset.id]">
           {{ dataset.name }}
           <span class="reset-color">(Submitted {{ formatDate(dataset.uploadDT) }})</span>
@@ -54,11 +57,11 @@ export default class DatasetCheckboxList extends Vue {
     }
 
     handleSelectNone() {
-      Object.keys(this.selectedDatasets).forEach(key => this.selectedDatasets[key] = false)
+      Object.keys(this.selectedDatasets).forEach(key => { this.selectedDatasets[key] = false })
     }
 
     handleSelectAll() {
-      Object.keys(this.selectedDatasets).forEach(key => this.selectedDatasets[key] = true)
+      Object.keys(this.selectedDatasets).forEach(key => { this.selectedDatasets[key] = true })
     }
 }
 </script>
