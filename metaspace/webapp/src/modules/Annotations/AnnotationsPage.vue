@@ -59,16 +59,21 @@ export default {
       const { group, database, datasetIds, colocalizedWith, fdrLevel } = this.filter
       const hiddenColumns = []
       const singleDatasetSelected = datasetIds && datasetIds.length === 1
-      if (singleDatasetSelected)
+      if (singleDatasetSelected) {
         hiddenColumns.push('Dataset')
-      if (group || singleDatasetSelected)
+      }
+      if (group || singleDatasetSelected) {
         hiddenColumns.push('Group')
-      if (database)
+      }
+      if (database) {
         hiddenColumns.push('Database')
-      if (!singleDatasetSelected || colocalizedWith == null || fdrLevel == null)
+      }
+      if (!singleDatasetSelected || colocalizedWith == null || fdrLevel == null) {
         hiddenColumns.push('ColocalizationCoeff')
-      if (!config.features.off_sample_col)
+      }
+      if (!config.features.off_sample_col) {
         hiddenColumns.push('OffSampleProb')
+      }
       return hiddenColumns
     },
 

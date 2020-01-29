@@ -12,8 +12,9 @@ import gql from 'graphql-tag'
 
 function matrixName(matrix) {
   const match = matrix.replace('_', ' ').match(/\(([A-Z0-9]{2,10})\)/i)
-  if (match)
+  if (match) {
     return match[1]
+  }
   return matrix
 }
 
@@ -86,8 +87,9 @@ const config = {
 
 function drawMaldiCurlyBrace(svg, data, xScale) {
   const maldiData = data.filter(d => strieq(d.sourceType, 'maldi'))
-  if (maldiData.length === 0)
+  if (maldiData.length === 0) {
     return
+  }
 
   const maldiRange = d3.extent(maldiData.map(d => xScale(d.source)))
 
@@ -139,8 +141,9 @@ export default {
 
   computed: {
     data() {
-      if (!this.counts)
+      if (!this.counts) {
         return []
+      }
 
       const result = []
       let prev = null
@@ -148,12 +151,15 @@ export default {
 
       for (const entry of this.counts) {
         const [analyzer, source, matrix, polarity] = entry.fieldValues
-        if (strieq(analyzer, 'n/a') || strieq(source, 'n/a'))
+        if (strieq(analyzer, 'n/a') || strieq(source, 'n/a')) {
           continue
-        if (strieq(source, 'maldi') && strieq(matrix, 'n/a'))
+        }
+        if (strieq(source, 'maldi') && strieq(matrix, 'n/a')) {
           continue
-        if (entry.count < minGroupSize)
+        }
+        if (entry.count < minGroupSize) {
           continue
+        }
 
         const normalizedPolarity = String(polarity).toLowerCase()
         const datum = {
@@ -196,10 +202,12 @@ export default {
           }))
           .sort((a, b) => {
             if (a.sourceType !== b.sourceType) {
-              if (strieq(a.sourceType, 'maldi'))
+              if (strieq(a.sourceType, 'maldi')) {
                 return 1
-              if (strieq(b.sourceType, 'maldi'))
+              }
+              if (strieq(b.sourceType, 'maldi')) {
                 return -1
+              }
             }
             return b.count - a.count
           })
@@ -207,10 +215,11 @@ export default {
       const { scales } = pieScatterPlot(svg, this.data, config, xData)
 
       const brace = drawMaldiCurlyBrace(svg, this.data, scales.x)
-      if (brace)
+      if (brace) {
         brace.attr('transform', function() {
           return this.getAttribute('transform') + ` translate(0, ${geometry.height + 100})`
         })
+      }
 
       const polarities = config.pie.sectors.map(d => d.label + ' mode')
       addLegend(svg, polarities, d3.scaleOrdinal(config.pie.sectors.map(d => d.color)).domain(polarities))

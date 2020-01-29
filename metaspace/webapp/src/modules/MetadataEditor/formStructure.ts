@@ -109,8 +109,9 @@ function getFieldType(prop: JsonSchemaProperty, propName: string): FormFieldEdit
 }
 
 function getWidth(propName: string) {
-  if (propName.endsWith('Freetext'))
+  if (propName.endsWith('Freetext')) {
     return 16
+  }
   return FIELD_WIDTH[propName] || 8
 }
 

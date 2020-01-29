@@ -202,15 +202,18 @@ const FilterPanel = {
       const { filterLists } = this.$store.state
       // dynamically generated options are supported:
       // either specify a function of optionLists or one of its field names
-      if (filterKey === 'simpleFilter')
+      if (filterKey === 'simpleFilter') {
         return this.simpleFilterOptions
-      if (typeof filter.options === 'object')
+      }
+      if (typeof filter.options === 'object') {
         return filter.options
-      if (filterLists == null)
+      }
+      if (filterLists == null) {
         return []
-      if (typeof filter.options === 'string')
+      }
+      if (typeof filter.options === 'string') {
         return filterLists[filter.options]
-      else if (typeof filter.options === 'function') {
+      } else if (typeof filter.options === 'function') {
         return filter.options(filterLists)
       }
       return []

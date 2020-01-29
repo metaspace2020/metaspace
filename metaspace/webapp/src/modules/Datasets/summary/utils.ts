@@ -102,7 +102,7 @@ function pieScatterPlot(svg: any, data: any, config: any,
     })
     .style('fill', (d: any, i: number) => colors(pie.sectors[i].label))
 
-  if (pie.showCounts)
+  if (pie.showCounts) {
     circle.selectAll('text').data(calcPie).enter()
       .append('text')
       .attr('transform', function(this: any, d: any, i: number) {
@@ -114,6 +114,7 @@ function pieScatterPlot(svg: any, data: any, config: any,
     // .attr("text-anchor", function(d) { return (d.endAngle + d.startAngle)/2 > Math.PI ? "end" : "start"; })
       .text((d: any): string => d.data === 0 ? '' : d.data)
       .style('fill', (d: any, i: number) => colors(pie.sectors[i].label))
+  }
 
   if (config.showSideHistograms) {
     if (config.showSideHistograms.x) {

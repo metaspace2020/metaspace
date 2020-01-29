@@ -64,8 +64,9 @@ export default {
 
   computed: {
     data() {
-      if (!this.counts)
+      if (!this.counts) {
         return []
+      }
 
       const result = []
 

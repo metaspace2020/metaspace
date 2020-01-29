@@ -301,8 +301,9 @@ export default {
     this.redraw = throttle(this.redraw, 200)
     this.redraw()
 
-    if (window)
+    if (window) {
       window.addEventListener('resize', () => this.redraw())
+    }
   },
   methods: {
     redraw() {

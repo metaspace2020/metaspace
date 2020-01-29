@@ -75,10 +75,11 @@ export default class SingleSelectFilter extends Vue {
    }
 
    formatOption(option: any): string {
-     if (this.optionFormatter)
+     if (this.optionFormatter) {
        return this.optionFormatter(option, this.options)
-     else
+     } else {
        return option + ''
+     }
    }
 
    formatValue(value: any): string {

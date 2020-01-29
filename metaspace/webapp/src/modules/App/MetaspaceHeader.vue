@@ -211,18 +211,22 @@ const MetaspaceHeader = {
         if (this.currentUser.groups != null) {
           const invitedGroup = this.currentUser.groups.find(g => g.role === UGRO.INVITED)
           const requestGroup = this.currentUser.groups.find(g => g.role === UGRO.GROUP_ADMIN && g.group.hasPendingRequest)
-          if (invitedGroup != null)
+          if (invitedGroup != null) {
             return `You have been invited to join ${invitedGroup.group.name}.`
-          if (requestGroup != null)
+          }
+          if (requestGroup != null) {
             return `${requestGroup.group.name} has a pending membership request.`
+          }
         }
         if (this.currentUser.projects != null) {
           const invitedProject = this.currentUser.projects.find(g => g.role === UPRO.INVITED)
           const requestProject = this.currentUser.projects.find(g => g.role === UPRO.MANAGER && g.project.hasPendingRequest)
-          if (invitedProject != null)
+          if (invitedProject != null) {
             return `You have been invited to join ${invitedProject.project.name}.`
-          if (requestProject != null)
+          }
+          if (requestProject != null) {
             return `${requestProject.project.name} has a pending membership request.`
+          }
         }
       }
       return null

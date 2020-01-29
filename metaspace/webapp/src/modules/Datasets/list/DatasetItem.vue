@@ -277,12 +277,14 @@ export default {
 
     uploadedDateTime() {
       const unknown = { date: '????-??-??', time: '??:??' }
-      if (!this.dataset.id)
+      if (!this.dataset.id) {
         return unknown
+      }
 
       const fields = this.dataset.id.split('_')
-      if (fields.length < 2)
+      if (fields.length < 2) {
         return unknown
+      }
 
       const date = fields[0]
       const time = fields[1].split('m')[0].replace('h', ':')
@@ -312,10 +314,11 @@ export default {
 
     metaboliteDatabases() {
       const dbs = this.dataset.molDBs
-      if (typeof dbs === 'string')
+      if (typeof dbs === 'string') {
         return [dbs]
-      else
+      } else {
         return dbs
+      }
     },
 
     formatOrganism() {
@@ -338,11 +341,13 @@ export default {
 
     canEdit() {
       if (this.currentUser != null) {
-        if (this.currentUser.role === 'admin')
+        if (this.currentUser.role === 'admin') {
           return true
+        }
         if (this.currentUser.id === this.dataset.submitter.id
-           && !['QUEUED', 'ANNOTATING'].includes(this.dataset.status))
+           && !['QUEUED', 'ANNOTATING'].includes(this.dataset.status)) {
           return true
+        }
       }
       return false
     },

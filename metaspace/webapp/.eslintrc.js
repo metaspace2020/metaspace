@@ -25,7 +25,6 @@ module.exports = {
 
     'comma-dangle': ['error', 'always-multiline'], // Opinion
     'space-before-function-paren': ['error', 'never'], // Opinion
-    'curly': 'off', // Auto-fix doesn't work well
     'operator-linebreak': ['error', 'before', {overrides: operatorLinebreakOverrides}], // Opinion
     'vue/max-len': ['warn', { // Opinion
       'code': 120,

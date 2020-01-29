@@ -74,8 +74,9 @@ export function encodeParams(filter: any, path?: string, filterLists?: MetadataL
   let key: FilterKey
   for (key in FILTER_TO_URL) {
     const { levels, encoding } = FILTER_SPECIFICATIONS[key]
-    if (level != null && levels.indexOf(level) === -1)
+    if (level != null && levels.indexOf(level) === -1) {
       continue
+    }
 
     if (key in filter && (defaultFilter == null || filter[key] !== defaultFilter[key])) {
       if (encoding === 'json') {
@@ -98,8 +99,9 @@ export function stripFilteringParams(query: Dictionary<string>): Dictionary<stri
   const q: Dictionary<string> = {}
   for (var key in query) {
     const fKey = URL_TO_FILTER[key]
-    if (!fKey)
+    if (!fKey) {
       q[key] = query[key]
+    }
   }
   return q
 }
@@ -108,23 +110,26 @@ export function decodeParams(location: Location, filterLists: any): Object {
   const { query, path } = location
   const level = path ? getLevel(path) : null
 
-  if (!path || !query || !level)
+  if (!path || !query || !level) {
     return {}
+  }
 
   const filter = getDefaultFilter(level, filterLists)
 
   for (var key in query) {
     const fKey = URL_TO_FILTER[key]
-    if (!fKey)
-      continue // skip params unrelated to filtering
+    if (!fKey) {
+      continue
+    } // skip params unrelated to filtering
 
     const { levels, encoding } = FILTER_SPECIFICATIONS[fKey]
     // If necessary, unwrap array parameters and take their first element. Array-valued parameters can happen
     // if someone changes the URL and adds a second copy of an existing parameter.
     const value = isArray(query[key]) ? query[key][0] : query[key]
 
-    if (levels.indexOf(level) === -1)
+    if (levels.indexOf(level) === -1) {
       continue
+    }
 
     if (encoding === 'json') {
       if ('[{'.indexOf(value[0]) === -1) {
@@ -143,8 +148,9 @@ export function decodeParams(location: Location, filterLists: any): Object {
       filter[fKey] = value
     }
 
-    if (filter[fKey] === null)
+    if (filter[fKey] === null) {
       filter[fKey] = undefined
+    }
   }
   return filter
 }
@@ -173,8 +179,9 @@ export function encodeSections(sections: string[]) {
 
 function decodeSortOrder(str: string): SortSettings {
   const dir = str[0] === '-' ? 'DESCENDING' : 'ASCENDING'
-  if (str[0] === '-')
+  if (str[0] === '-') {
     str = str.slice(1)
+  }
   const by = 'ORDER_BY_' + str.toUpperCase()
   return { by, dir }
 }
@@ -209,8 +216,9 @@ export interface UrlSettings {
 
 export function decodeSettings(location: Location): UrlSettings | undefined {
   let { query, path } = location
-  if (!query || !path)
+  if (!query || !path) {
     return undefined
+  }
 
   // When vue-router encounters the same query parameter more than once it supplies an array instead of a string.
   // To prevent type errors below, find any arrayified parameters and just take their first element
@@ -235,20 +243,26 @@ export function decodeSettings(location: Location): UrlSettings | undefined {
     },
   }
 
-  if (query.page)
+  if (query.page) {
     settings.table.currentPage = parseInt(query.page)
-  if (query.sort)
+  }
+  if (query.sort) {
     settings.table.order = decodeSortOrder(query.sort)
-  if (query.cmap)
+  }
+  if (query.cmap) {
     settings.annotationView.colormap = query.cmap
+  }
   if (query.scale) {
     settings.annotationView.scaleType = (query.scale || DEFAULT_SCALE_TYPE) as ScaleType
   }
-  if (query.sections !== undefined)
+  if (query.sections !== undefined) {
     settings.annotationView.activeSections = decodeSections(query.sections)
-  if (query.alg)
+  }
+  if (query.alg) {
     settings.annotationView.colocalizationAlgo = query.alg
-  if (query.tab !== undefined)
+  }
+  if (query.tab !== undefined) {
     settings.datasets.tab = query.tab
+  }
   return settings
 }

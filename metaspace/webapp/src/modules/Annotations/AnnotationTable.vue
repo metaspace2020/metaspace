@@ -345,8 +345,9 @@ export default {
     singleDatasetSelected() {
       let isSimple = true
       for (var key in this.filter) {
-        if (!this.filter[key])
+        if (!this.filter[key]) {
           continue
+        }
         if (['fdrLevel', 'minMSM', 'database', 'datasetIds', 'metadataType'].indexOf(key) === -1) {
           isSimple = false
           break
@@ -405,8 +406,9 @@ export default {
     paginationLayout() {
       const { datasetIds } = this.filter
       const limitedSpace = datasetIds && datasetIds.length === 1
-      if (limitedSpace)
+      if (limitedSpace) {
         return 'pager'
+      }
 
       return 'prev,pager,next,sizes'
     },
@@ -452,8 +454,9 @@ export default {
           this._onDataArrival(data.allAnnotations)
           this._onDataArrival = (data) => {
             this.clearCurrentRow()
-            if (data)
+            if (data) {
               Vue.nextTick(() => this.setRow(data, 0))
+            }
           }
         }
 
@@ -543,8 +546,9 @@ export default {
 
     onKeyUp(event) {
       const action = KEY_TO_ACTION[event.key]
-      if (!action)
+      if (!action) {
         return
+      }
 
       // WARNING the code below relies on internals of el-table:
       // store.{states.currentRow, mutations.{setData, setCurrentRow}}
@@ -553,16 +557,18 @@ export default {
       const curIdx = this.annotations.indexOf(curRow)
 
       if (action === 'up' && curIdx === 0) {
-        if (this.currentPage === 1)
+        if (this.currentPage === 1) {
           return
+        }
         this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, data.length - 1)) }
         this.currentPage -= 1
         return
       }
 
       if (action === 'down' && curIdx === this.annotations.length - 1) {
-        if (this.currentPage === this.numberOfPages)
+        if (this.currentPage === this.numberOfPages) {
           return
+        }
         this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, 0)) }
         this.currentPage += 1
         return
@@ -587,8 +593,9 @@ export default {
 
     clearCurrentRow() {
       var currentRow = document.querySelector('.current-row')
-      if (currentRow)
+      if (currentRow) {
         currentRow.classList.remove('current-row')
+      }
       // filed a bug: https://github.com/ElemeFE/element/issues/1890
       // TODO check if it's really fixed
     },

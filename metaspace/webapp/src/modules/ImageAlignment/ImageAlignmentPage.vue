@@ -312,8 +312,9 @@ export default {
     },
 
     currentAnnotation() {
-      if (!this.annotations || this.annotations.length === 0)
+      if (!this.annotations || this.annotations.length === 0) {
         return null
+      }
       return this.annotations[this.annotationIndex]
     },
 
@@ -323,10 +324,12 @@ export default {
     },
 
     currentSumFormula() {
-      if (!this.annotations)
+      if (!this.annotations) {
         return 'loading...'
-      if (this.annotations.length === 0)
+      }
+      if (this.annotations.length === 0) {
         return 'no results'
+      }
       return this.renderAnnotation(this.currentAnnotation)
     },
 
@@ -358,8 +361,9 @@ export default {
     onFileChange(event) {
       const file = event.target.files[0]
 
-      if (!file)
+      if (!file) {
         return
+      }
 
       if (file.size > this.limitMB * 1024 * 1024) {
         this.$message({

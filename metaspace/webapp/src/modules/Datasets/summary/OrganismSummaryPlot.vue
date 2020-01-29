@@ -97,8 +97,9 @@ export default {
 
   computed: {
     data() {
-      if (!this.counts)
+      if (!this.counts) {
         return []
+      }
 
       const countBy = (array, iterator) => {
         const groups = groupBy(array, iterator)

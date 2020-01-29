@@ -119,18 +119,21 @@ export default {
           continue // hide e-mails from the interface
         }
         const child = this.objToTreeNode(key, data, childSchema)
-        if (child.children && child.children.length === 0)
+        if (child.children && child.children.length === 0) {
           continue
+        }
         children.push(child)
       }
 
-      if (label === null)
+      if (label === null) {
         return children
+      }
 
       label = this.prettify(label)
       const id = label
-      if (isLeaf)
+      if (isLeaf) {
         return { id, label: `${label}: ${Array.isArray(obj) ? JSON.stringify(obj) : this.prettify(obj)}` }
+      }
 
       return { id, label, children }
     },

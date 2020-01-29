@@ -82,8 +82,9 @@ export default {
   },
   computed: {
     step() {
-      if (!this.tour)
+      if (!this.tour) {
         return null
+      }
       return this.tour.steps[this.stepNum]
     },
   },
@@ -104,12 +105,14 @@ export default {
     })
   },
   mounted() {
-    if (this.tour)
+    if (this.tour) {
       this.render()
+    }
   },
   updated() {
-    if (this.tour)
+    if (this.tour) {
       this.render()
+    }
   },
   methods: {
     nextStep() {
@@ -124,8 +127,9 @@ export default {
     },
 
     prevStep() {
-      if (this.stepNum === 0)
-        return // shouldn't happen
+      if (this.stepNum === 0) {
+        return
+      } // shouldn't happen
       this.stepNum -= 1
       this.popper.destroy()
       this.render()
@@ -136,10 +140,11 @@ export default {
       if (this.step.route && this.lastRoute !== this.step.route) {
         this.lastRoute = this.step.route
         this.routeTransition = true
-        if (this.step.query)
+        if (this.step.query) {
           router.push({ path: this.lastRoute, query: this.step.query })
-        else
+        } else {
           router.push({ path: this.lastRoute })
+        }
       } else if (this.step.query) {
         router.replace({ query: this.step.query })
       }
@@ -156,8 +161,9 @@ export default {
           const el = document.querySelector(self.step.target)
           if (!el) {
             timeout *= factor
-            if (timeout > maxTimeout)
+            if (timeout > maxTimeout) {
               return
+            }
             window.setTimeout(showStep, timeout)
             return
           }
@@ -172,8 +178,9 @@ export default {
     },
 
     close() {
-      if (this.popper)
+      if (this.popper) {
         this.popper.destroy()
+      }
       this.stepNum = 0
       this.lastRoute = startingRoute
       this.routeTransition = false

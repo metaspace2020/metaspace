@@ -47,10 +47,11 @@ function decodePayload(jwt: JWT) {
 }
 
 function pathFromUUID(uuid: string): string {
-  if (fuConfig.storage === 's3')
+  if (fuConfig.storage === 's3') {
     return 's3a://' + fuConfig.aws.s3_bucket + '/' + uuid
-  else
+  } else {
     return fuConfig.storage + '/' + uuid + '/'
+  }
 }
 
 function mzFilterPrecision(value: number | string): string {

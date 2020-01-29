@@ -102,8 +102,9 @@ export default {
   computed: {
     noFilters() {
       const df = this.$store.getters.filter
-      for (var key in df)
+      for (var key in df) {
         if (df[key]) return false
+      }
       return true
     },
 
@@ -243,12 +244,15 @@ export default {
       let count = null
       // assume not too many items are failed/queued/annotating so they are all visible in the web app,
       // but check all lists because they may be in the wrong list due to status updates after they were loaded
-      if (stage === 'failed')
+      if (stage === 'failed') {
         count = this.allDatasets.filter(ds => ds.status === 'FAILED').length
-      if (stage === 'queued')
+      }
+      if (stage === 'queued') {
         count = this.allDatasets.filter(ds => ds.status === 'QUEUED').length
-      if (stage === 'started')
+      }
+      if (stage === 'started') {
         count = this.allDatasets.filter(ds => ds.status === 'ANNOTATING').length
+      }
       if (stage === 'finished') {
         const inOtherLists = this.allDatasets.filter(ds => ds.status === 'FINISHED').length
            - (this.finished && this.finished.length || 0)
@@ -319,8 +323,9 @@ export default {
         await delay(50)
       }
 
-      if (!self.isExporting)
+      if (!self.isExporting) {
         return
+      }
 
       self.isExporting = false
 

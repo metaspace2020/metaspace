@@ -100,8 +100,9 @@ export default class SearchableFilter extends Vue {
       // adds/moves selected values to the top of the options list
 
       const valueToLabel: Record<string, string> = {}
-      for (const { value, label } of this.cachedOptions)
+      for (const { value, label } of this.cachedOptions) {
         valueToLabel[value] = label
+      }
 
       const values = this.valueAsArray.slice()
       const options = values.map(value => ({ value, label: valueToLabel[value] }))

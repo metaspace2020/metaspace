@@ -301,14 +301,16 @@ export default {
     },
 
     onResize() {
-      if (this.resizeThrottled)
+      if (this.resizeThrottled) {
         return
+      }
 
       this.resizeThrottled = true
       setTimeout(() => { this.resizeThrottled = false }, 50)
 
-      if (!this.$refs.scan)
+      if (!this.$refs.scan) {
         return
+      }
 
       this.opticalImageWidth = this.$refs.scan.width
       this.opticalImageHeight = this.$refs.scan.height
@@ -359,11 +361,12 @@ export default {
           x: this.handleStartX + (event.clientX - this.dragStartX) / this.scaleX,
           y: this.handleStartY + (event.clientY - this.dragStartY) / this.scaleY,
         }
-        for (let i = 1; i < 4; i++)
+        for (let i = 1; i < 4; i++) {
           pos[i] = {
             x: this.handlePositions[i].x - this.handlePositions[0].x + pos[0].x,
             y: this.handlePositions[i].y - this.handlePositions[0].y + pos[0].y,
           }
+        }
       }
 
       try {
@@ -402,8 +405,9 @@ export default {
     },
 
     onImageDrag(event) {
-      if (this.dragStartX === null || this.dragThrottled)
+      if (this.dragStartX === null || this.dragThrottled) {
         return
+      }
 
       this.dragThrottled = true
       setTimeout(() => { this.dragThrottled = false }, 30)
@@ -411,8 +415,9 @@ export default {
     },
 
     onImageRotate(event) {
-      if (this.dragStartX === null || this.dragThrottled)
+      if (this.dragStartX === null || this.dragThrottled) {
         return
+      }
       this.dragThrottled = true
       setTimeout(() => { this.dragThrottled = false }, 30)
       const cp = {

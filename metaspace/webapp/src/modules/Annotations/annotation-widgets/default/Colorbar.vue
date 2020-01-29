@@ -33,8 +33,9 @@ export default class Colorbar extends Vue {
        const direction = this.map[0] === '-' ? 'bottom' : 'top'
 
        const colors = []
-       for (let i = 0; i < domain.length; i++)
+       for (let i = 0; i < domain.length; i++) {
          colors.push(range[i] + ' ' + (domain[i] * 100 + '%'))
+       }
 
        return {
          background: `linear-gradient(to ${this.horizontal ? 'right' : 'top'}, ${colors.join(', ')}`,
