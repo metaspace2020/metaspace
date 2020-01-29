@@ -139,10 +139,7 @@
   </el-row>
 </template>
 
-<script lang="ts">
- import AnnotationView from './AnnotationView';
- export default AnnotationView;
-</script>
+<script lang="ts" src="./AnnotationView.ts" />
 
 <style scoped lang="scss">
   /deep/ .av-header {

@@ -6,7 +6,7 @@
 
 - name: Install python-simplejson
   become: yes
-  raw: apt-get install -y python-simplejson
+  raw: apt-get install -y python3-simplejson
 
 - name: Reconfigure buggy ubuntu locales
   become: yes

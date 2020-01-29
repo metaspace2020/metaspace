@@ -1,5 +1,6 @@
 clientConfig.json
 db.sqlite
+coverage*
 
 # Dereferenced metadata files
 /src/lib/metadataSchemas
@@ -16,3 +17,6 @@ src/clientConfig.json
 
 # Screenshots taken by testcafe
 tests/e2e/screenshots
+
+# Build output
+/dist

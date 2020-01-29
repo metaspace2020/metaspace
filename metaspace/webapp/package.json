@@ -2,18 +2,29 @@
   "name": "sm-webapp-ng",
   "description": "Metaspace web application",
   "version": "1.0.1",
-  "author": "Artem Tarasov <artem.tarasov@embl.de>",
+  "author": "Alexandrov Team, EMBL",
+  "contributors": [
+    "Andrew Palmer <andrew.palmer@embl.de>",
+    "Artem Tarasov <artem.tarasov@embl.de>",
+    "Ivan Protsyuk <ivan.protsyuk@embl.de>",
+    "Lachlan Stuart <lachlan.stuart@embl.de>",
+    "Renat Nigmetzianov <renat.nigmetzianov@embl.de>",
+    "Theodore Alexandrov <theodore.alexandrov@embl.de>",
+    "Vitaly Kovalev <vitaly.kovalev@embl.de>"
+  ],
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_ENV=development node --max_old_space_size=4096 server.js",
-    "build": "yarn run deref-schema && cross-env NODE_ENV=production webpack --progress --hide-modules",
-    "build-ci": "yarn run deref-schema && cross-env NODE_ENV=production webpack --hide-modules",
+    "dev": "cross-env NODE_ENV=development vue-cli-service serve",
     "test": "yarn run generate-local-graphql-schema && cross-env NODE_ENV=test jest",
-    "test-ci": "cross-env NODE_ENV=test jest",
+    "test-ci": "cross-env NODE_ENV=test jest --ci --maxWorkers 1",
     "coverage": "cross-env NODE_ENV=test jest --coverage",
     "deref-schema": "node ./deref_schema.js src/lib/metadataSchemas",
     "generate-local-graphql-schema": "cd ../graphql && yarn run gen-graphql-schema",
-    "fetch-prod-graphql-schema": "apollo schema:download tests/utils/graphql-schema.json --endpoint https://metaspace2020.eu/graphql"
+    "fetch-prod-graphql-schema": "apollo schema:download tests/utils/graphql-schema.json --endpoint https://metaspace2020.eu/graphql",
+    "build": "yarn run deref-schema && cross-env NODE_ENV=production vue-cli-service build --modern",
+    "build-ci": "yarn run deref-schema && cross-env NODE_ENV=production vue-cli-service build --modern --no-progress --hide-modules",
+    "lint": "vue-cli-service lint",
+    "analyze-size": "rm -rf dist ; NODE_ENV=production WEBPACK_STATS=true vue-cli-service build ; npx webpack-bundle-analyzer dist/stats.json dist/ -p 9900 -O"
   },
   "dependencies": {
     "@types/js-cookie": "^2.1.0",
@@ -21,134 +32,96 @@
     "@types/sanitize-html": "^1.18.2",
     "@types/upng-js": "^2.1.1",
     "@types/ws": "^5.1.2",
-    "apollo-client": "^2.6.4",
+    "@vue/cli": "^3.11.0",
     "apollo-client-preset": "^1.0.8",
     "apollo-link-batch-http": "^1.2.12",
-    "apollo-link-context": "^1.0.18",
-    "apollo-link-error": "^1.1.11",
-    "apollo-link-ws": "^1.0.18",
-    "body-parser": "^1.16.0",
-    "compression": "^1.6.2",
-    "concat-files": "^0.1.1",
-    "connect-history-api-fallback": "^1.5.0",
+    "core-js": "^3.4.4",
     "d3": "^5.11.0",
     "date-fns": "^1.29.0",
-    "deepcopy": "^0.6.3",
     "dom-to-image-google-font-issue": "^2.6.2",
     "element-ui": "^2.12.0",
-    "express": "^4.14.0",
     "file-saver": "^1.3.3",
     "fine-uploader": "^5.13.0",
-    "fork-ts-checker-webpack-plugin": "^1.5.0",
     "graphql": "^14.5.3",
-    "graphql-tag": "^2.9.2",
     "js-cookie": "^2.2.0",
-    "json-loader": "^0.5.7",
     "lodash": "^4.17.4",
     "lodash-es": "^4.17.10",
     "marked": "^0.6.1",
-    "mkdirp": "^0.5.1",
-    "multer": "^1.3.0",
     "numeric": "^1.2.6",
     "plotly.js": "^1.34.0",
     "popper.js": "^1.14.7",
-    "raven": "^2.6.2",
     "raven-js": "^3.25.2",
     "sanitize-html": "^1.20.0",
-    "serve-favicon": "^2.3.2",
     "simple-statistics": "^7.0.2",
-    "subscriptions-transport-ws": "^0.9.14",
-    "ts-loader": "^6.0.4",
+    "subscriptions-transport-ws": "^0.9.16",
+    "ts-essentials": "3.0.4",
     "upng-js": "https://github.com/photopea/UPNG.js.git#f550095",
     "uuid": "^3.0.1",
-    "vue": "^2.6.10",
+    "vue": "^2.6.11",
     "vue-analytics": "^5.9.1",
     "vue-apollo": "^3.0.0-rc.2",
+    "vue-class-component": "^7.1.0",
     "vue-clickaway": "^2.1.0",
     "vue-lazyload": "^1.0.0-rc5",
+    "vue-property-decorator": "^8.2.2",
     "vue-resize-directive": "^1.2.0",
-    "vue-router": "^3.0.1",
+    "vue-router": "3.0.1",
     "vue-slide-up-down": "^1.3.3",
-    "vuex": "~3.0.1",
-    "vuex-router-sync": "^5.0.0",
-    "zen-observable-ts": "^0.8.9"
+    "vuex": "^3.1.1",
+    "vuex-router-sync": "^5.0.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.0.0",
-    "@babel/plugin-proposal-object-rest-spread": "^7.0.0",
-    "@babel/plugin-syntax-dynamic-import": "^7.0.0",
-    "@babel/plugin-transform-runtime": "^7.0.0",
-    "@babel/preset-env": "^7.0.0",
-    "@babel/runtime": "^7.0.0",
-    "@types/cucumber": "2.0.4",
     "@types/d3": "^5.7.2",
     "@types/file-saver": "0.0.1",
-    "@types/jest": "^23.1.5",
+    "@types/jest": "^24.0.18",
     "@types/lodash-es": "~4.17.0",
-    "@types/node": "^8",
-    "@types/node-fetch": "^2.5.0",
     "@types/plotly.js": "1.28.11",
-    "@types/webpack-env": "1.13.1",
-    "@vue/test-utils": "^1.0.0-beta.24",
-    "apollo": "^2.18.0",
+    "@vue/cli-plugin-babel": "^4.1.2",
+    "@vue/cli-plugin-typescript": "^4.1.2",
+    "@vue/cli-plugin-unit-jest": "^4.1.2",
+    "@vue/cli-service": "^4.1.2",
+    "@vue/eslint-config-typescript": "^4.0.0",
+    "@vue/test-utils": "^1.0.0-beta.29",
     "apollo-link-schema": "^1.2.3",
-    "autoprefixer": "^6.7.2",
-    "babel-jest": "^24.9.0",
-    "babel-loader": "^8.0.0",
+    "babel-eslint": "^10.0.3",
+    "babel-jest": "24.9.0",
+    "babel-loader": "^8.0.6",
     "babel-plugin-component": "^1.1.1",
+    "brotli-webpack-plugin": "^1.1.0",
+    "compression-webpack-plugin": "^3.1.0",
     "cross-env": "^3.0.0",
-    "css-loader": "^0.28.11",
-    "file-loader": "^1.1.11",
+    "eslint": "^6.8.0",
+    "eslint-plugin-vue": "^6.1.2",
     "frontmatter-markdown-loader": "^1.8.0",
-    "generate-json-webpack-plugin": "^0.3.1",
-    "graphql-tools": "^3.1.1",
-    "html-loader": "^0.5.5",
-    "jest": "^24.9.0",
-    "jest-serializer-vue": "^2.0.2",
+    "graphql-tag": "^2.10.1",
+    "graphql-tools": "^4.0.5",
     "json-schema-deref-sync": "^0.10.1",
-    "node-sass": "4.5.3",
-    "postcss-loader": "~2.1.5",
-    "sass-loader": "7.0.1",
-    "source-map-loader": "0.2.3",
-    "style-loader": "~0.21.0",
-    "supertest": "^3.4.2",
-    "ts-jest": "^23.1.4",
-    "ts-node": "^8.3.0",
-    "typescript": "^3.6.2",
-    "vue-class-component": "6.2.0",
-    "vue-jest": "^2.6.0",
-    "vue-loader": "^15.7.1",
-    "vue-property-decorator": "6.1.0",
-    "vue-template-compiler": "^2.6.10",
-    "webpack": "^4.39.3",
-    "webpack-bundle-analyzer": "^3.3.2",
-    "webpack-cli": "^3.1.0",
-    "webpack-dev-middleware": "^3.1.3",
-    "webpack-dev-server": "^3.8.0",
-    "webpack-hot-middleware": "^2.22.2"
+    "node-sass": "^4.12.0",
+    "sass-loader": "^8.0.0",
+    "stats-webpack-plugin": "^0.7.0",
+    "ts-jest": "^24.3.0",
+    "typescript": "3.6.5",
+    "vue-cli-plugin-apollo": "^0.21.3",
+    "vue-template-compiler": "2.6.11",
+    "webpack-bundle-analyzer": "^3.6.0",
+    "webpack-cli": "^3.3.10"
   },
   "resolutions": {
     "babel-core": "7.0.0-bridge.0"
   },
   "jest": {
     "transform": {
-      "^.+\\.vue$": "<rootDir>/node_modules/vue-jest",
-      "^.+\\.[jt]sx?$": "<rootDir>/node_modules/ts-jest"
+      "^.+\\.vue$": "vue-jest",
+      ".+\\.(css|styl|less|sass|scss|svg|png|jpg|ttf|woff|woff2)$": "jest-transform-stub",
+      "^.+\\.[jt]sx?$": "ts-jest"
     },
     "moduleNameMapper": {
-      "lodash-es": "lodash",
-      "\\.scss$": "<rootDir>/tests/utils/scssMock.js",
-      "\\.(png|jpg|gif|svg)$": "<rootDir>/tests/utils/staticFileMock.js"
+      "lodash-es": "lodash"
     },
     "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
     "setupFilesAfterEnv": [
       "<rootDir>/tests/utils/setupTestFramework.ts"
     ],
-    "globals": {
-      "ts-jest": {
-        "tsConfig": "tsconfig.spec.json"
-      }
-    },
     "clearMocks": true,
     "restoreMocks": true,
     "moduleFileExtensions": [
@@ -162,12 +135,37 @@
       "!src/**/*.{test,spec,d}.{ts,js}"
     ],
     "snapshotSerializers": [
-      "<rootDir>/node_modules/jest-serializer-vue"
+      "jest-serializer-vue"
+    ],
+    "testURL": "http://localhost/",
+    "watchPlugins": [
+      "jest-watch-typeahead/filename",
+      "jest-watch-typeahead/testname"
     ]
   },
-  "browserslist": {
-    "production": [
-      "defaults"
+  "_eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/essential",
+      "eslint:recommended",
+      "@vue/typescript"
+    ],
+    "rules": {},
+    "parserOptions": {
+      "parser": "@typescript-eslint/parser"
+    }
+  },
+  "babel": {
+    "presets": [
+      [
+        "@vue/cli-plugin-babel/preset",
+        {
+          "useBuiltIns": "entry"
+        }
+      ]
     ]
   }
 }

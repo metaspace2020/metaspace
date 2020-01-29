@@ -57,8 +57,8 @@ sm_postgres_password: "{{ vault_sm_postgres_password }}"
 sm_home: "{{ metaspace_home }}/metaspace/engine"
 sm_s3_path: ENGINE_BUCKET_NAME  # bucket for sm engine tmp data in "s3a://bucket-name/tmp" form
 sm_img_service_url: "http://{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}:4201"
-sm_es_host: "{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}"
-sm_es_port: 9210  # cannot be 9200 (nginx proxied)
+sm_es_host: "127.0.0.1"  # ElasticSearch must be accessed via loopback adapter unless `elasticsearch_bound_to_any_host` is set
+sm_es_port: 9200
 sm_es_user: "{{ vault_sm_es_user }}"
 sm_es_password: "{{ vault_sm_es_password }}"
 sm_send_email: true
@@ -158,6 +158,8 @@ sm_graphql_redis_port: "{{ web_redis.port }}"
 sm_graphql_aws_region: "{{ aws_region }}"
 sm_graphql_aws_access_key_id: "{{ vault_sm_web_aws_access_key_id }}"  # sm-web-app user
 sm_graphql_aws_secret_access_key: "{{ vault_sm_web_aws_secret_access_key }}"
+sm_graphql_upload_destination: s3
+sm_graphql_s3_upload_bucket: "{{ vault_sm_web_s3_upload_bucket }}"
 sm_graphql_google_client_id: "{{ vault_sm_web_google_client_id }}"
 sm_graphql_google_client_secret: "{{ vault_sm_web_google_client_secret }}"
 sm_graphql_google_callback_url: "http://{{ sm_webapp_hostname }}/api_auth/google/callback"
@@ -172,19 +174,12 @@ sm_graphql_metadata_lookups:
 
 sm_webapp_hostname: "{{ web_host }}"  # specify manually in production
 sm_webapp_home: "{{ metaspace_home }}/metaspace/webapp"
-sm_webapp_port: 8082
-sm_webapp_cookie_secret: "{{ vault_sm_web_cookie_secret }}"
-sm_webapp_admin_emails: "{{ vault_sm_webapp_admin_emails }}"
+sm_webapp_www: /var/www/webapp
 sm_webapp_aws_region: "{{ aws_region }}"
 sm_webapp_aws_access_key_id: "{{ vault_sm_web_aws_access_key_id }}"  # sm-web-app user
-sm_webapp_aws_secret_access_key: "{{ vault_sm_web_aws_secret_access_key }}"
-sm_webapp_s3_bucket: "{{ vault_sm_webapp_s3_bucket }}"
+sm_webapp_s3_bucket: "{{ vault_sm_web_s3_upload_bucket }}"
 sm_webapp_google_client_id: "{{ vault_sm_web_google_client_id }}"
 sm_webapp_upload_destination: s3
-sm_webapp_jwt_secret: "{{ vault_sm_web_jwt_secret }}"
-sm_webapp_redis_host: "{{ web_redis.host }}"
-sm_webapp_redis_port: "{{ web_redis.port }}"
-sm_webapp_enable_uploads: true
 # metadata types are specified by corresponding filenames in metaspace2020/metadata repository
 # "specialised metadata" subfolder
 sm_webapp_metadata_types: ["ims"]  # set ["ims", "lcms"] to accept both IMS and LC-MS datasets
@@ -233,8 +228,6 @@ ssl:
   key: PRIVATE.key
 
 nginx_upstream_hosts:
-  - name: web_server
-    server: 127.0.0.1:{{ sm_webapp_port }}
   - name: mol_image_server
     server: 127.0.0.1:3020
   - name: isotope_image_server
@@ -262,12 +255,12 @@ nginx_servers:
           - proxy_pass http://kibana_server;
           - include proxy-params.conf;
 
-  - desc: HTTP redirect
+  - desc: HTTPS redirect
     params:
       - listen 80 default_server;
       - listen [::]:80 default_server;
       - server_name _;
-      - return 301 https://$host$request_uri;
+      - return 301 https://{{ sm_webapp_hostname }}$request_uri;
 
   - desc: Endpoint for Web App, GraphQL, GraphQL WebSocket, ion images, mol images, and MolDB
     params:
@@ -277,18 +270,32 @@ nginx_servers:
       - ssl_certificate_key ssl/{{ ssl.key }};
       - proxy_read_timeout 300;
       - send_timeout 300;
+      - gzip_types text/html text/css application/javascript application/json font/woff font/ttf image/svg+xml;
     locations:
       - path: /mol-images/
         params:
           - root /var/www;
+      # Web app static content
       - path: /
         params:
-          - proxy_pass http://web_server;
-          - client_max_body_size 5M;
-      - path: /fs/iso_images/
-        params:
-          - proxy_pass http://isotope_image_server/fs/iso_images/;
-          - limit_except GET {deny all;}
+          - root {{ sm_webapp_www }};
+          # Paths with no extension should fall back to index.html for vue-router to handle
+          - try_files $uri /index.html;
+          - expires 10m;
+          # Unfortunately nginx has awkward priority rules with regex locations, so the following rules must be nested
+          # to avoid interfering with routing to API endpoints
+          # Static assets should cache aggressively and also fall back to the previous version in case
+          # someone loads the page during a deployment
+          - location ~ ^/(js/.*|css/.*|img/.*|fonts/.*) {
+              add_header Cache-Control "public,max-age=31536000,immutable";
+              etag off;
+              expires off;
+              try_files $uri /old_ver/$1 =404;
+            }
+          # Paths with an extension should 404 instead of falling back to index.html
+          - location ~ \.\w*$ {
+              try_files $uri =404;
+            }
       - path: /db/iso_images/
         params:
           - proxy_pass http://isotope_image_server/db/iso_images/;
@@ -305,6 +312,10 @@ nginx_servers:
         params:
           - proxy_pass http://isotope_image_server/fs/ion_thumbnails/;
           - limit_except GET {deny all;}
+      - path: /dataset_upload
+        params:
+          - proxy_pass http://isotope_image_server/dataset_upload;
+          - client_max_body_size 5M;
       - path: /graphql
         params:
           - proxy_pass http://graphql_server/graphql;

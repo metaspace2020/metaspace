@@ -1,15 +1,5 @@
 ---
 
-- debug: var=sm_webapp_admin_emails
-
-- name: Pull config template from the remote host
-  fetch: src={{ sm_webapp_home }}/conf.js.template dest=/tmp/conf.js.template
-         flat=yes fail_on_missing=yes
-
-- name: Save config as ./conf.js
-  template: src=/tmp/conf.js.template dest={{ sm_webapp_home }}/conf.js
-            owner=ubuntu group=ubuntu mode=0600
-
 - name: Pull client config template from the remote host
   fetch: src={{ sm_webapp_home }}/src/clientConfig.json.template dest=/tmp/clientConfig.json.template
          flat=yes fail_on_missing=yes
@@ -38,11 +28,13 @@
     chdir: "{{ sm_webapp_home }}"
     executable: /bin/bash
 
-- name: Copy supervisor config file
-  template: src=sm-web-app.supervisor.j2 dest=/etc/supervisor/{{ sm_web_app_app_name }}.supervisor
-            mode=0600 owner=ubuntu group=ubuntu
-
-- name: Update and restart supervisor app
-  supervisorctl:
-    name: "{{ sm_web_app_app_name }}"
-    state: restarted
+- name: Copy build output
+  become: true
+  shell: >
+    [ -d "{{ sm_webapp_www }}/old_ver" ] && rm -rf "{{ sm_webapp_www }}/old_ver";
+    [ -d "{{ sm_webapp_home }}/dist/old_ver" ] && rm -rf "{{ sm_webapp_home }}/dist/old_ver";
+    [ -d "{{ sm_webapp_www }}" ] && mv "{{ sm_webapp_www }}" "{{ sm_webapp_home }}/dist/old_ver";
+    cp -R "{{ sm_webapp_home }}/dist" "{{ sm_webapp_www }}";
+  args:
+    chdir: "{{ sm_webapp_home }}"
+    executable: /bin/bash

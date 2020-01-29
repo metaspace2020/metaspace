@@ -5,4 +5,3 @@ mol_db_import_mol_images: false
 mol_db_port: 5001
 mol_db_miniconda_env:
   name: mol-db
-mol_db_miniconda_prefix: /opt/dev/miniconda3

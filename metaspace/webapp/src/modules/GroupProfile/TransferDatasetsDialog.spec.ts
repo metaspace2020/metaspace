@@ -37,7 +37,7 @@ describe('TransferDatasetsDialog', () => {
     await Vue.nextTick();
 
     wrapper.find(ElementUI.Checkbox).trigger('click');
-    wrapper.findAll(ElementUI.Button)
+    wrapper.findAll<ElementUI.Button>(ElementUI.Button)
       .filter((b: Wrapper<ElementUI.Button>) => b.props().type === 'primary')
       .at(0)
       .trigger('click');

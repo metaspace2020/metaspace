@@ -19,7 +19,7 @@
   args:
     chdir: "{{ mol_db_home }}"
   command: |
-    {{ mol_db_miniconda_prefix }}/envs/{{ mol_db_miniconda_env.name }}/bin/pip install -e .
+    {{ miniconda_prefix }}/envs/{{ mol_db_miniconda_env.name }}/bin/pip install -e .
 
 - name: Update and restart supervisor app
   supervisorctl:

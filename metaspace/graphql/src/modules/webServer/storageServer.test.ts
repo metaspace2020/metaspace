@@ -8,7 +8,7 @@ import * as fs from 'fs';
 
 import config, {ImageStorageType} from '../../utils/config';
 import logger from '../../utils/logger';
-import {createImageServerApp, initDBConnection} from './imageServer';
+import {createStorageServerApp, initDBConnection} from './storageServer';
 
 
 const getRespMimeMap = {
@@ -26,7 +26,7 @@ describe('imageUploadTest with fs and db backends', () => {
       beforeAll(async () => {
         logger.info('> Before all');
         knex = initDBConnection();
-        server = supertest(await createImageServerApp(config, knex));
+        server = supertest(await createStorageServerApp(config, knex));
       });
 
       afterAll(async () => {

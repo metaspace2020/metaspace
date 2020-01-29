@@ -1,7 +1,7 @@
 import sys
 from os.path import dirname
 
-from app.moldb_import import import_molecular_database
+from app.moldb_import import import_molecules_from_df
 
 sys.path.append(dirname(dirname(__file__)))
 import argparse
@@ -10,7 +10,7 @@ import pandas as pd
 
 from app.model.molecular_db import MolecularDB
 from app.model.molecule import Molecule
-from app.database import init_session, db_session
+from app.database import init_session, db_session as db
 from app.log import logger
 
 
@@ -38,4 +38,9 @@ if __name__ == "__main__":
 
     init_session()
     moldb_df = pd.read_csv(open(args.csv_file, encoding='utf8'), sep=args.sep).fillna('')
-    import_molecular_database(args.name, args.version, moldb_df, drop_moldb=args.drop)
+
+    moldb = MolecularDB(name=args.name, version=args.version)
+    db.add(moldb)
+    db.commit()
+    db.refresh(moldb)
+    import_molecules_from_df(moldb, moldb_df)

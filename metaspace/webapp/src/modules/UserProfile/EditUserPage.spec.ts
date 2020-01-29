@@ -1,5 +1,7 @@
 import { mount, Wrapper } from '@vue/test-utils';
 import Vue from 'vue';
+import 'element-ui'
+import {DeepPartial} from 'ts-essentials';
 import { restoreConsole, suppressConsoleWarn } from '../../../tests/utils/suppressConsole';
 import EditUserPage from './EditUserPage.vue';
 import router from '../../router';
@@ -8,7 +10,7 @@ import { UserProfileQuery } from '../../api/user';
 
 
 describe('EditUserPage', () => {
-  const mockCurrentUser: UserProfileQuery = {
+  const mockCurrentUser: DeepPartial<UserProfileQuery> = {
     id: '22333',
     name: 'foo',
     email: 'foo@bar.baz',
@@ -28,7 +30,7 @@ describe('EditUserPage', () => {
     ],
   };
 
-  const mockUpdateUserMutation = jest.fn(() => ({}));
+  const mockUpdateUserMutation = jest.fn((src: any, args: any, ctx: any) => ({}));
 
   beforeEach(() => {
     suppressConsoleWarn('async-validator:');
@@ -62,7 +64,7 @@ describe('EditUserPage', () => {
     const saveButton = wrapper.find('.saveButton');
     const name = 'foo bar';
     const email = 'changed@bar.baz';
-    wrapper.vm.$confirm = jest.fn(() => Promise.resolve());
+    wrapper.vm.$confirm = jest.fn(() => Promise.resolve('confirm'));
     await Vue.nextTick();
 
     nameInput.setValue(name);
@@ -89,7 +91,7 @@ describe('EditUserPage', () => {
     const nameInput = wrapper.find('input[name="name"]');
     const saveButton = wrapper.find('.saveButton');
     const name = 'foo bar';
-    wrapper.vm.$confirm = jest.fn(() => Promise.resolve());
+    wrapper.vm.$confirm = jest.fn(() => Promise.resolve('confirm'));
 
     nameInput.setValue(name);
     await Vue.nextTick();

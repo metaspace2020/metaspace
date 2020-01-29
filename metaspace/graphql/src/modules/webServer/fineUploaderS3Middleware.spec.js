@@ -1,13 +1,17 @@
-jest.mock('./conf.js', () => {
+jest.mock('../../utils/config', () => {
   return {
-    AWS_ACCESS_KEY_ID: 'aws-access-key-id',
-    AWS_SECRET_ACCESS_KEY: 'aws-secret-access-key',
-    UPLOAD_DESTINATION: "s3",
-    S3_UPLOAD_BUCKET: 's3-upload-bucket',
+    default: {
+      aws: {
+        aws_secret_access_key: 'aws-secret-access-key',
+      },
+      dataset_upload: {
+        bucket: 's3-upload-bucket',
+      },
+    },
   };
 });
-import supertest from 'supertest';
-import express from 'express';
+import * as supertest from 'supertest';
+import * as express from 'express';
 import fineUploaderS3Middleware from './fineUploaderS3Middleware';
 
 

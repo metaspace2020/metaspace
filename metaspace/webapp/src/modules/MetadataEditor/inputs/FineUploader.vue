@@ -212,7 +212,7 @@
 
          if (this.config.storage != 's3') {
            options.request = {
-             endpoint: '/upload',
+             endpoint: '/dataset_upload',
              params: {
                'session_id': sessionStorage.getItem('session_id'),
                'uuid': uuid
@@ -221,7 +221,7 @@
 
            // FIXME: move into fineUploaderConfig.json
            options.chunking.success = {
-             endpoint: '/upload/success',
+             endpoint: '/dataset_upload/success',
              mandatory: true, // to make life easier
              params: { 'uuid': uuid }
            };
