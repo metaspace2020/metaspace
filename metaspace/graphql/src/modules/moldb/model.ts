@@ -1,4 +1,4 @@
-import {Column, Entity, ManyToOne, OneToMany, PrimaryColumn, PrimaryGeneratedColumn} from "typeorm";
+import {Column, Entity, Index, ManyToOne, OneToMany, PrimaryColumn, PrimaryGeneratedColumn} from "typeorm";
 
 
 @Entity({ schema: 'public', name: 'molecular_db' })
@@ -16,6 +16,7 @@ export class MolecularDB {
   @OneToMany(type => Molecule, molecule => molecule.moldb)
   molecules: Molecule[];
 
+  // TODO: add unique constraint (group_id, name, version)
 }
 
 @Entity({ schema: 'public' })
@@ -25,13 +26,20 @@ export class Molecule {
     id: number;
 
     @Column({ type: 'text' })
-    mol_id: string;
+    molId: string;
 
     @Column({ type: 'text' })
-    mol_name: string;
+    molName: string;
 
     @Column({ type: 'text' })
     formula: string;
+
+    @Column({ type: 'text', nullable: true })
+    inchi: string;
+
+    @Index()
+    @Column({ type: 'int'})
+    moldbId: number;
 
     @ManyToOne(type => MolecularDB)
     moldb: MolecularDB;

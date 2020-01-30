@@ -153,9 +153,14 @@ CREATE TABLE "public"."molecule" (
   "mol_id" text NOT NULL, 
   "mol_name" text NOT NULL, 
   "formula" text NOT NULL, 
-  "moldb_id" integer, 
+  "inchi" text, 
+  "moldb_id" integer NOT NULL, 
   CONSTRAINT "PK_d9e3f72bdba412e5cbeea2a1915" PRIMARY KEY ("id")
 );
+
+CREATE INDEX "IDX_01280507c3bd02500e2861fb27" ON "public"."molecule" (
+  "moldb_id"
+) ;
 
 CREATE TABLE "public"."dataset" (
   "id" text NOT NULL, 
