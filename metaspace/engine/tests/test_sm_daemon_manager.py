@@ -3,6 +3,8 @@ from unittest.mock import call
 from unittest.mock import patch, MagicMock
 from datetime import datetime
 
+import numpy as np
+
 from sm.engine.sm_daemons import DatasetManager
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
@@ -63,6 +65,11 @@ def create_daemon_man(db=None, es=None, img_store=None, status_queue=None):
     es_mock = es or MagicMock(spec=ESExporter)
     status_queue_mock = status_queue or MagicMock(QueuePublisher)
     img_store_mock = img_store or MagicMock(spec=ImageStoreServiceWrapper)
+    img_store_mock.get_ion_images_for_analysis.return_value = (
+        [np.zeros((2, 2)), np.zeros((2, 2))],
+        None,
+        (2, 2),
+    )
 
     return DatasetManager(
         db=db, es=es_mock, img_store=img_store_mock, status_queue=status_queue_mock
@@ -77,10 +84,7 @@ class TestSMDaemonDatasetManager:
         def run(self, *args, **kwargs):
             pass
 
-    @patch(
-        'sm.engine.mol_db.MolDBServiceWrapper.find_db_by_name_version', return_value=[mol_db_mock]
-    )
-    def test_annotate_ds(self, find_db_by_name_version_mock, test_db, metadata, ds_config):
+    def test_annotate_ds(self, fill_db, metadata, ds_config):
         es_mock = MagicMock(spec=ESExporter)
         db = DB()
         manager = create_daemon_man(db=db, es=es_mock)

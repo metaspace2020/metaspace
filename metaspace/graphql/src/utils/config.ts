@@ -43,7 +43,6 @@ export interface Config {
     bucket?: string;
   };
   services: {
-    moldb_service_host: string;
     sm_engine_api_host: string;
   };
   db: {

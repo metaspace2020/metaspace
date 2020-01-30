@@ -63,9 +63,7 @@ module.exports = {
   },
 
   services: {
-    /* Molecular database service, used only for internal purposes (peakChartData query) */
-    moldb_service_host: "localhost:5001",
-    /* Internal ad-hoc service with the only endpoint /reindex/:dataset_id */
+    /* Internal ad-hoc service with /v1/datasets and /v1/isotopic_patterns endpoints */
     sm_engine_api_host: "localhost:5123",
   },
 

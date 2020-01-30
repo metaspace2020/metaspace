@@ -37,8 +37,7 @@ config.img_upload = {
 };
 
 config.services = {};
-/* Molecular database service, used only for internal purposes (peakChartData query) */
-config.services.moldb_service_host = "localhost";
+/* Internal ad-hoc service with /v1/datasets and /v1/isotopic_patterns endpoints */
 config.services.sm_engine_api_host = "localhost";
 
 config.db = {};

@@ -17,13 +17,13 @@ from sm.engine.db import DB
 from sm.engine.search_results import SearchResults
 from sm.engine.util import SMConfig, split_s3_path
 from sm.engine.es_export import ESExporter
-from sm.engine.mol_db import MolecularDB
+from sm.engine.molecular_db import MolecularDB
 from sm.engine.queue import QueuePublisher, SM_DS_STATUS
 
 logger = logging.getLogger('engine')
 
-JOB_ID_MOLDB_ID_SEL = "SELECT id, db_id FROM job WHERE ds_id = %s AND status='FINISHED'"
-JOB_INS = "INSERT INTO job (db_id, ds_id, status, start) VALUES (%s, %s, %s, %s) RETURNING id"
+JOB_ID_MOLDB_ID_SEL = "SELECT id, moldb_id FROM job WHERE ds_id = %s AND status='FINISHED'"
+JOB_INS = "INSERT INTO job (moldb_id, ds_id, status, start) VALUES (%s, %s, %s, %s) RETURNING id"
 JOB_UPD_STATUS_FINISH = "UPDATE job set status=%s, finish=%s where id=%s"
 JOB_UPD_FINISH = "UPDATE job set finish=%s where id=%s"
 TARGET_DECOY_ADD_DEL = (
@@ -149,7 +149,7 @@ class AnnotationJob:
                 f"db_name: {moldb.name}, db_version: {moldb.version}"
             )
             self._db.alter(
-                'DELETE FROM job WHERE ds_id = %s and db_id = %s', params=(self._ds.id, moldb.id)
+                'DELETE FROM job WHERE ds_id = %s and moldb_id = %s', params=(self._ds.id, moldb.id)
             )
             self._es.delete_ds(self._ds.id, moldb)
 

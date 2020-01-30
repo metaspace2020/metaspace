@@ -4,7 +4,6 @@ from functools import partial
 
 from sm.engine.colocalization import Colocalization
 from sm.engine.db import DB
-from sm.engine.mol_db import MolDBServiceWrapper
 from sm.engine.util import bootstrap_and_run
 
 CORRUPT_COLOC_JOBS_SEL = """
@@ -30,7 +29,7 @@ SELECT DISTINCT j.ds_id
 FROM dataset ds
 JOIN job j ON ds.id = j.ds_id
 JOIN job_fdr_counts jfc ON j.id = jfc.job_id
-JOIN mol_db_lookup mdb ON j.db_id = mdb.id
+JOIN mol_db_lookup mdb ON j.moldb_id = mdb.id
 CROSS JOIN algorithm_lookup alg
 JOIN coloc_job_fdr_counts cj ON ds.id = cj.ds_id AND cj.mol_db = mdb.name
                                   AND cj.fdr = jfc.fdr AND cj.algorithm = alg.algorithm
@@ -61,7 +60,7 @@ SELECT DISTINCT j.ds_id
 FROM dataset ds
 JOIN job j ON ds.id = j.ds_id
 JOIN job_fdr_counts jfc ON j.id = jfc.job_id
-JOIN mol_db_lookup mdb ON j.db_id = mdb.id
+JOIN mol_db_lookup mdb ON j.moldb_id = mdb.id
 LEFT JOIN coloc_job_fdr_counts cj ON ds.id = cj.ds_id AND cj.mol_db = mdb.name AND cj.fdr = jfc.fdr
 WHERE ds.status = 'FINISHED'
   AND j.status = 'FINISHED'
@@ -70,6 +69,7 @@ ORDER BY j.ds_id DESC;
 """
 
 
+# pylint: disable=unused-argument
 def run_coloc_jobs(sm_config, ds_id_str, sql_where, fix_missing, fix_corrupt, skip_existing):
     assert (
         len(
@@ -92,8 +92,10 @@ def run_coloc_jobs(sm_config, ds_id_str, sql_where, fix_missing, fix_corrupt, sk
             id for (id,) in db.select(f'SELECT DISTINCT dataset.id FROM dataset WHERE {sql_where}')
         ]
     else:
-        mol_db_service = MolDBServiceWrapper(sm_config['services']['mol_db'])
-        mol_dbs = [(db['id'], db['name']) for db in mol_db_service.fetch_all_dbs()]
+        mol_dbs = [
+            (doc['id'], doc['name'])
+            for doc in db.select_with_fields('SELECT id, name FROM molecular_db m')
+        ]
         mol_db_ids, mol_db_names = map(list, zip(*mol_dbs))
         fdrs = [0.05, 0.1, 0.2, 0.5]
         algorithms = ['cosine', 'pca_cosine', 'pca_pearson', 'pca_spearman']

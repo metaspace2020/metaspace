@@ -15,7 +15,7 @@ from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.errors import AnnotationError, ImzMLError, IndexUpdateError, SMError, UnknownDSID
 from sm.engine.ion_thumbnail import generate_ion_thumbnail
 from sm.engine.isocalc_wrapper import IsocalcWrapper
-from sm.engine.mol_db import MolecularDB
+from sm.engine.molecular_db import MolecularDB
 from sm.engine.off_sample_wrapper import classify_dataset_ion_images
 from sm.engine.optical_image import IMG_URLS_BY_ID_SEL, del_optical_image
 from sm.engine.queue import QueueConsumer, QueuePublisher
@@ -92,14 +92,14 @@ class DatasetManager:
         annotation_job_factory(img_store=self._img_store, sm_config=self._sm_config, **kwargs).run(
             ds
         )
-        Colocalization(self._db).run_coloc_job(ds.id, reprocess=del_first)
+        Colocalization(self._db, self._img_store).run_coloc_job(ds.id, reprocess=del_first)
         generate_ion_thumbnail(
             db=self._db, img_store=self._img_store, ds_id=ds.id, only_if_needed=not del_first
         )
 
     def _finished_job_moldbs(self, ds_id):
         for job_id, mol_db_id in self._db.select(
-            'SELECT id, db_id FROM job WHERE ds_id = %s', params=(ds_id,)
+            'SELECT id, moldb_id FROM job WHERE ds_id = %s', params=(ds_id,)
         ):
             yield job_id, MolecularDB(id=mol_db_id).name
 

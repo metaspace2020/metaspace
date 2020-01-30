@@ -19,7 +19,7 @@ pyopenms==2.2.0
 numpy>=1.11.2
 scipy>=0.18.1
 matplotlib>=2
-pandas>=0.22
+pandas>=0.22,<1
 cffi
 psycopg2-binary==2.8.2
 cherrypy<9

@@ -15,7 +15,7 @@ from sm.engine.db import DB
 from sm.engine.fdr import FDR
 from sm.engine.formula_parser import format_ion_formula
 from sm.engine.isocalc_wrapper import IsocalcWrapper
-from sm.engine.mol_db import MolecularDB
+from sm.engine.molecular_db import MolecularDB
 from sm.engine.util import SMConfig
 
 logger = logging.getLogger('engine')
@@ -44,7 +44,7 @@ FROM annotation m
 JOIN job j ON j.id = m.job_id
 JOIN dataset ds ON ds.id = j.ds_id
 LEFT JOIN graphql.ion ON m.ion_id = ion.id
-WHERE ds.id = %s AND j.db_id = %s
+WHERE ds.id = %s AND j.moldb_id = %s
 ORDER BY COALESCE(m.msm, 0::real) DESC'''
 
 DATASET_SEL = '''SELECT
@@ -335,7 +335,7 @@ class ESExporter:
             return self._get_mol_by_formula_dict_cache[mol_db.id]
         except KeyError:
             mols = mol_db.get_molecules()
-            by_formula = mols.groupby('sf')
+            by_formula = mols.groupby('formula')
             # limit IDs and names to 50 each to prevent ES 413 Request Entity Too Large error
             mol_by_formula_df = pd.concat(
                 [

@@ -13,9 +13,6 @@
     - role: supervisorctl
       tags: [always]
 
-    - role: mol_db_app
-      tags: [sm-mol-db]
-
     - role: sm_api
       tags: [sm-api]
 

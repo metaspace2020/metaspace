@@ -64,16 +64,17 @@ def reset_queues():
         queue_pub.delete_queue()
 
 
-def init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock):
-    mol_db_wrapper_mock = MolDBServiceWrapperMock()
-    mol_db_wrapper_mock.find_db_by_name_version.return_value = [
-        {'id': 0, 'name': 'HMDB-v4', 'version': '2018'}
-    ]
-    mol_db_wrapper_mock.find_db_by_id.return_value = {'id': 0, 'name': 'HMDB-v4', 'version': '2018'}
-    mol_db_wrapper_mock.fetch_db_sfs.return_value = ['C12H24O']
-    mol_db_wrapper_mock.fetch_molecules.return_value = [
-        {'sf': 'C12H24O', 'mol_id': 'HMDB0001', 'mol_name': 'molecule name'}
-    ]
+def init_moldb():
+    db = DB()
+    moldb_id = 0
+    db.insert(
+        "INSERT INTO molecular_db (id, name, version) VALUES (%s, %s, %s)",
+        rows=[(moldb_id, 'HMDB-v4', '2018-04-03')],
+    )
+    db.insert(
+        "INSERT INTO molecule (mol_id, mol_name, formula, moldb_id) VALUES (%s, %s, %s, %s)",
+        rows=[('HMDB0001', 'molecule name', 'C12H24O', moldb_id)],
+    )
 
 
 get_ion_images_for_analysis_mock_return = (
@@ -130,7 +131,6 @@ def run_daemons(db, es):
     update_daemon.stop()
 
 
-@patch('sm.engine.mol_db.MolDBServiceWrapper')
 @patch('sm.engine.search_results.post_images_to_image_store')
 @patch(
     'sm.engine.colocalization.ImageStoreServiceWrapper.get_ion_images_for_analysis',
@@ -151,7 +151,6 @@ def test_sm_daemons(
     get_image_by_id_mock,
     get_ion_images_for_analysis_mock,
     post_images_to_annot_service_mock,
-    MolDBServiceWrapperMock,
     # fixtures
     test_db,
     es_dsl_search,
@@ -160,7 +159,7 @@ def test_sm_daemons(
     metadata,
     ds_config,
 ):
-    init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
+    init_moldb()
 
     formula_metrics_df = pd.DataFrame(
         {
@@ -238,7 +237,7 @@ def test_sm_daemons(
         }
 
         # job table asserts
-        rows = db.select('SELECT db_id, ds_id, status, start, finish from job')
+        rows = db.select('SELECT moldb_id, ds_id, status, start, finish from job')
         assert len(rows) == 1
         db_id, ds_id, status, start, finish = rows[0]
         assert (db_id, ds_id, status) == (0, '2000-01-01_00h00m', JobStatus.FINISHED)
@@ -281,13 +280,11 @@ def test_sm_daemons(
             local('rm -rf {}'.format(data_dir_path))
 
 
-@patch('sm.engine.mol_db.MolDBServiceWrapper')
 @patch('sm.engine.search_results.post_images_to_image_store')
 @patch('sm.engine.annotation_job.MSMSearch')
 def test_sm_daemons_annot_fails(
     MSMSearchMock,
     post_images_to_annot_service_mock,
-    MolDBServiceWrapperMock,
     test_db,
     es_dsl_search,
     clean_isotope_storage,
@@ -295,7 +292,7 @@ def test_sm_daemons_annot_fails(
     metadata,
     ds_config,
 ):
-    init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
+    init_moldb()
 
     def throw_exception_function(*args, **kwargs):
         raise Exception('Test exception')
@@ -337,13 +334,11 @@ def test_sm_daemons_annot_fails(
             local('rm -rf {}'.format(data_dir_path))
 
 
-@patch('sm.engine.mol_db.MolDBServiceWrapper')
 @patch('sm.engine.search_results.post_images_to_image_store')
 @patch('sm.engine.annotation_job.MSMSearch')
 def test_sm_daemon_es_export_fails(
     MSMSearchMock,
     post_images_to_annot_service_mock,
-    MolDBServiceWrapperMock,
     test_db,
     es_dsl_search,
     clean_isotope_storage,
@@ -351,7 +346,7 @@ def test_sm_daemon_es_export_fails(
     metadata,
     ds_config,
 ):
-    init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
+    init_moldb()
 
     formula_metrics_df = pd.DataFrame(
         {

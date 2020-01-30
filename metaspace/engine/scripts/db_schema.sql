@@ -141,6 +141,27 @@ CREATE UNIQUE INDEX "IDX_f538e62b7f815edf1a79aa1ee5" ON "graphql"."ion" (
   "charge"
 ) ;
 
+CREATE TABLE "public"."molecular_db" (
+  "id" SERIAL NOT NULL, 
+  "name" text NOT NULL, 
+  "version" text NOT NULL, 
+  CONSTRAINT "PK_1841660e7287891634f1e73d7f2" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "public"."molecule" (
+  "id" SERIAL NOT NULL, 
+  "mol_id" text NOT NULL, 
+  "mol_name" text NOT NULL, 
+  "formula" text NOT NULL, 
+  "inchi" text, 
+  "moldb_id" integer NOT NULL, 
+  CONSTRAINT "PK_d9e3f72bdba412e5cbeea2a1915" PRIMARY KEY ("id")
+);
+
+CREATE INDEX "IDX_01280507c3bd02500e2861fb27" ON "public"."molecule" (
+  "moldb_id"
+) ;
+
 CREATE TABLE "public"."dataset" (
   "id" text NOT NULL, 
   "name" text, 
@@ -176,7 +197,7 @@ CREATE TABLE "public"."optical_image" (
 
 CREATE TABLE "public"."job" (
   "id" SERIAL NOT NULL, 
-  "db_id" integer, 
+  "moldb_id" integer, 
   "ds_id" text, 
   "status" text, 
   "start" TIMESTAMP, 
@@ -249,6 +270,10 @@ ALTER TABLE "graphql"."coloc_annotation" ADD CONSTRAINT "FK_09673424d3aceab89f93
   "coloc_job_id") REFERENCES "graphql"."coloc_job"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
 
+ALTER TABLE "public"."molecule" ADD CONSTRAINT "FK_01280507c3bd02500e2861fb279" FOREIGN KEY (
+  "moldb_id") REFERENCES "public"."molecular_db"("id"
+) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
 ALTER TABLE "public"."optical_image" ADD CONSTRAINT "FK_124906daa616c8e1b88645baef0" FOREIGN KEY (
   "ds_id") REFERENCES "public"."dataset"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
@@ -256,6 +281,10 @@ ALTER TABLE "public"."optical_image" ADD CONSTRAINT "FK_124906daa616c8e1b88645ba
 ALTER TABLE "public"."job" ADD CONSTRAINT "FK_f6baae98b3a2436b6f98318d5d0" FOREIGN KEY (
   "ds_id") REFERENCES "public"."dataset"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."job" ADD CONSTRAINT "FK_07f17ed55cabe0ef556bc0e0c93" FOREIGN KEY (
+  "moldb_id") REFERENCES "public"."molecular_db"("id"
+) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 ALTER TABLE "public"."annotation" ADD CONSTRAINT "FK_bfed30991918671d59fc1f5d5e4" FOREIGN KEY (
   "job_id") REFERENCES "public"."job"("id"

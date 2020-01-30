@@ -1,16 +1,15 @@
+import logging
+
 import numpy as np
 from cpyMSpec import isotopePattern, InstrumentModel
 
-from app import log
-from app.api.base import BaseResource
-
-
-LOG = log.get_logger()
 ISOTOPIC_PEAK_N = 4
 SIGMA_TO_FWHM = 2.3548200450309493  # 2 \sqrt{2 \log 2}
 
+logger = logging.getLogger('api')
 
-class Centroids(object):
+
+class Centroids:
     def __init__(self, isotope_pattern, instrument_model, pts_per_mz=None, n_peaks=ISOTOPIC_PEAK_N):
         self._isotope_pattern = isotope_pattern
         self._instrument_model = instrument_model
@@ -66,18 +65,9 @@ class Centroids(object):
         return (not self.mzs) and (not self.ints)
 
 
-class IsotopicPatternItem(BaseResource):
-    """
-    Handle for endpoint: /v1/isotopic_pattern/{ion}/{instr}/{res_power}/{at_mz}/{charge}
-    """
-
-    # @falcon.before(auth_required)
-    def on_get(self, req, res, ion, instr, res_power, at_mz, charge):
-        try:
-            isotopes = isotopePattern(ion)
-            isotopes.addCharge(int(charge))
-            instrument = InstrumentModel(instr, float(res_power), float(at_mz))
-            centroids = Centroids(isotopes, instrument)
-            self.on_success(res, centroids.spectrum_chart())
-        except Exception as e:
-            LOG.warning('(%s, %s, %s, %s, %s) - %s', ion, instr, res_power, at_mz, charge, e)
+def generate(ion, instr, res_power, at_mz, charge):
+    isotopes = isotopePattern(ion)
+    isotopes.addCharge(int(charge))
+    instrument = InstrumentModel(instr, float(res_power), float(at_mz))
+    centroids = Centroids(isotopes, instrument)
+    return centroids.spectrum_chart()

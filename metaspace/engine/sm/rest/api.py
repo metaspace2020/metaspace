@@ -2,7 +2,7 @@ import argparse
 import json
 import logging
 
-from bottle import post, run
+from bottle import post, run, get
 from bottle import request as req
 from bottle import response as resp
 
@@ -13,6 +13,7 @@ from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_DS_STATUS, SM_UPDATE
 from sm.engine.util import SMConfig, bootstrap_and_run
 from sm.engine.errors import UnknownDSID, DSIsBusy
 from sm.rest.dataset_manager import SMapiDatasetManager, DatasetActionPriority
+from sm.rest import isotopic_pattern
 
 OK = {'status_code': 200, 'status': 'success'}
 
@@ -192,6 +193,16 @@ def del_optical_image(ds_man, ds_id, params):  # pylint: disable=unused-argument
     :return:
     """
     ds_man.del_optical_image(ds_id)
+
+
+@get('/v1/isotopic_patterns/<ion>/<instr>/<res_power>/<at_mz>/<charge>')
+def generate(ion, instr, res_power, at_mz, charge):
+    try:
+        pattern = isotopic_pattern.generate(ion, instr, res_power, at_mz, charge)
+        return {'status': OK['status'], 'data': pattern}
+    except Exception as e:
+        logger.warning(f'({ion}, {instr}, {res_power}, {at_mz}, {charge}) - {e}')
+        return {'status': ERROR['status']}
 
 
 if __name__ == '__main__':

@@ -7,9 +7,7 @@ let config = {};
 config.moldbs = {{ sm_graphql_moldbs | to_json }}
 
 config.services = {};
-/* Molecular database service, used only for internal purposes (peakChartData query) */
-config.services.moldb_service_host = "{{ sm_graphql_moldb_service_host }}";
-/* Internal ad-hoc service with the only endpoint /reindex/:dataset_id */
+/* Internal ad-hoc service with /v1/datasets and /v1/isotopic_patterns endpoints */
 config.services.sm_engine_api_host = "localhost:5123";
 
 config.db = {};

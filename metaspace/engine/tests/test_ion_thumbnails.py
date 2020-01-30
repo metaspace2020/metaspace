@@ -27,8 +27,12 @@ def _make_fake_ds(db, ds_id, metadata, ds_config):
     )
     ds.save(db)
 
+    db.insert(
+        "INSERT INTO molecular_db (id, name, version) VALUES (%s, %s, %s)",
+        rows=[(0, 'HMDB-v4', '2018-04-03')],
+    )
     (job_id,) = db.insert_return(
-        "INSERT INTO job (db_id, ds_id) VALUES (%s, %s) RETURNING id", [(0, ds_id)]
+        "INSERT INTO job (moldb_id, ds_id) VALUES (%s, %s) RETURNING id", [(0, ds_id)]
     )
     db.insert(
         (

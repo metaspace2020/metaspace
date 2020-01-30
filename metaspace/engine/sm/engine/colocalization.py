@@ -9,7 +9,7 @@ from scipy.ndimage import zoom
 
 from sm.engine.dataset import Dataset
 from sm.engine.ion_mapping import get_ion_id_mapping
-from sm.engine.mol_db import MolecularDB
+from sm.engine.molecular_db import MolecularDB
 from sm.engine.util import SMConfig
 from sm.engine.png_generator import ImageStoreServiceWrapper
 
@@ -40,7 +40,7 @@ ANNOTATIONS_SEL = (
     'FROM annotation m '
     'WHERE m.job_id = ('
     '    SELECT id FROM job j '
-    '    WHERE j.ds_id = %s AND j.db_id = %s '
+    '    WHERE j.ds_id = %s AND j.moldb_id = %s '
     '    ORDER BY start DESC '
     '    LIMIT 1) '
     'ORDER BY msm DESC'
