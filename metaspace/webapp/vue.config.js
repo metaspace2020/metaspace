@@ -62,5 +62,4 @@ module.exports = {
       lintGQL: true,
     },
   },
-  lintOnSave: false,
 }
