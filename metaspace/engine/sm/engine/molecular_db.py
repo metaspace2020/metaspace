@@ -4,6 +4,7 @@ from io import StringIO
 import pandas as pd
 from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
 from sm.engine.db import DB
+from sm.engine.errors import SMError
 
 logger = logging.getLogger('engine')
 
@@ -73,15 +74,18 @@ class MolecularDB:
             id (int): Database id
             name (str): Database name
         """
+        assert id is not None or name is not None, 'Either id or name should be provided'
+
         self._db = DB()
         if id is not None:
             data = self._db.select_one_with_fields(self.MOLDB_SEL_BY_ID, params=(id,))
-        elif name is not None:
-            data = self._db.select_one_with_fields(self.MOLDB_SEL_BY_NAME, params=(name,))
         else:
-            raise Exception('MolecularDB id or name should be provided')
+            data = self._db.select_one_with_fields(self.MOLDB_SEL_BY_NAME, params=(name,))
 
-        self.id, self.name, self.version = data['id'], data['name'], data['version']
+        if data:
+            self.id, self.name, self.version = data['id'], data['name'], data['version']
+        else:
+            raise SMError(f'MolecularDB not found: {id}, {name}')
 
     def __repr__(self):
         return '<{}:{}>'.format(self.name, self.version)
