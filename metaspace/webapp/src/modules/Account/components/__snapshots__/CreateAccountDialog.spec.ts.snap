@@ -74,7 +74,9 @@ exports[`CreateAccountDialog should match snapshot 1`] = `
       </div>
       <div class="mid">
         <div class="divider"></div>
-        <div class="text">or</div>
+        <div class="text">
+          or
+        </div>
         <div class="divider"></div>
       </div>
       <div class="right-side"><a href="/api_auth/google" class="google-button">
@@ -101,7 +103,9 @@ exports[`CreateAccountDialog should match snapshot 1`] = `
       </div>
     </div>
     <p style="margin-bottom: 0px;">
-      Already registered? <a href="/account/sign-in">Sign in</a></p>
+      Already registered? <a href="/account/sign-in">
+        Sign in
+      </a></p>
   </div>
 </mock-el-dialog>
 `;

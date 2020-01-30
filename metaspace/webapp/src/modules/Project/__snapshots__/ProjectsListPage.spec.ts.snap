@@ -9,7 +9,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
           <div class="el-form-item name is-required"><label for="name" class="el-form-item__label">Name</label>
             <div class="el-form-item__content">
               <div class="el-input">
-                <!----><input type="text" autocomplete="off" maxlength="50" class="el-input__inner">
+                <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
                 <!---->
                 <!---->
                 <!---->
@@ -20,7 +20,9 @@ exports[`ProjectsListPage should match snapshot 1`] = `
           </div>
           <div class="el-form-item isPublic">
             <!---->
-            <div class="el-form-item__content"><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">Allow other users to see this project<!----></span></label>
+            <div class="el-form-item__content"><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
+        Allow other users to see this project
+      <!----></span></label>
               <!---->
             </div>
           </div>
@@ -46,16 +48,20 @@ exports[`ProjectsListPage should match snapshot 1`] = `
       </div>
       <div class="button-bar"><button type="button" class="el-button el-button--default">
           <!---->
-          <!----><span>Cancel</span></button> <button type="button" class="el-button el-button--primary">
+          <!----><span>
+        Cancel
+      </span></button> <button type="button" class="el-button el-button--primary">
           <!---->
-          <!----><span>Create project and include 2 datasets</span></button></div>
+          <!----><span>
+        Create project and include 2 datasets
+      </span></button></div>
     </div>
   </mock-el-dialog>
   <div class="page-content">
     <div class="header-row">
       <div class="filter-panel">
         <!---->
-        <div class="tf-outer" data-test-key="simpleFilter" filterkey="simpleFilter">
+        <div class="tf-outer" data-test-key="simpleFilter" filter-key="simpleFilter">
           <div class="tf-name"><svg viewBox="190 256 1412 1410" xmlns="http://www.w3.org/2000/svg" class="filter-icon">
               <path d="M1595 295q17 41-14 70l-493 493v742q0 42-39 59-13 5-25 5-27 0-45-19l-256-256q-19-19-19-45v-486l-493-493q-31-29-14-70 17-39 59-39h1280q42 0 59 39z"></path>
             </svg></div>
@@ -64,14 +70,16 @@ exports[`ProjectsListPage should match snapshot 1`] = `
             <mock-el-option value="my-projects" label="My projects"></mock-el-option>
           </mock-el-select>
         </div>
-        <div class="tf-outer" data-test-key="simpleQuery" filterkey="simpleQuery" name="Simple query" options="">
+        <div class="tf-outer" data-test-key="simpleQuery" filter-key="simpleQuery" name="Simple query" options="">
           <div class="tf-name"><i class="el-icon-search" style="color: white;"></i></div> <input type="text" placeholder="enter any keywords" class="tf-value tf-value-input">
           <!---->
         </div>
       </div>
       <div style="flex-grow: 1;"></div> <button type="button" class="el-button el-button--default">
         <!---->
-        <!----><span>Create project</span></button>
+        <!----><span>
+        Create project
+      </span></button>
     </div>
     <div class="clearfix"></div>
     <div style="min-height: 100px;" mock-v-loading="false">
@@ -89,13 +97,15 @@ exports[`ProjectsListPage should match snapshot 1`] = `
                   allProjects.0.members.0.user.primaryGroup.group.shortName</a>
                 <!----></span></div>
               <div class="info-line"><span>
-              Created on <b><span style="font-size: 14px;">2018-08-29</span></b></span></div>
+            Created on <b><span style="font-size: 14px;">2018-08-29</span></b></span></div>
               <!---->
             </div>
           </div>
           <div class="actions">
             <!---->
-            <div><i class="el-icon-edit"></i> <a href="/project/proj-one?tab=settings" class="">Manage project</a></div>
+            <div><i class="el-icon-edit"></i> <a href="/project/proj-one?tab=settings" class="">
+                Manage project
+              </a></div>
             <div class="delete"><i class="el-icon-delete"></i> <a href="#">Delete project</a></div>
           </div>
         </div>
@@ -121,7 +131,9 @@ exports[`ProjectsListPage should match snapshot 1`] = `
             </div>
           </div>
           <div class="actions">
-            <div><i class="el-icon-picture"></i> <a href="/annotations?db=&amp;prj=project%202" class="">Browse annotations</a></div>
+            <div><i class="el-icon-picture"></i> <a href="/annotations?db=&amp;prj=project%202" class="">
+                Browse annotations
+              </a></div>
             <!---->
             <!---->
           </div>

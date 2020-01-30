@@ -35,12 +35,14 @@ exports[`ViewProjectPage datasets tab should match snapshot (non-member) 1`] = `
         <!---->
         <div role="tabpanel" id="pane-datasets" aria-labelledby="tab-datasets" class="el-tab-pane">
           <div class="dataset-list">
-            <datasetitem-stub dataset="[object Object]" currentuser="[object Object]" idx="0" class=""></datasetitem-stub>
-            <datasetitem-stub dataset="[object Object]" currentuser="[object Object]" idx="1" class="odd"></datasetitem-stub>
-            <datasetitem-stub dataset="[object Object]" currentuser="[object Object]" idx="2" class=""></datasetitem-stub>
+            <datasetitem-stub dataset="[object Object]" current-user="[object Object]" idx="0" class=""></datasetitem-stub>
+            <datasetitem-stub dataset="[object Object]" current-user="[object Object]" idx="1" class="odd"></datasetitem-stub>
+            <datasetitem-stub dataset="[object Object]" current-user="[object Object]" idx="2" class=""></datasetitem-stub>
             <!---->
           </div>
-          <div class="dataset-list-footer"><a href="/datasets?prj=00000000-1111-2222-3333-444444444444" class="">See all datasets</a></div>
+          <div class="dataset-list-footer"><a href="/datasets?prj=00000000-1111-2222-3333-444444444444" class="">
+              See all datasets
+            </a></div>
         </div>
         <!---->
         <!---->
@@ -220,7 +222,9 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
                             </a></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
-                          <div class="cell"><a href="/datasets?prj=00000000-1111-2222-3333-444444444444&amp;subm=3" class="">123</a></div>
+                          <div class="cell"><a href="/datasets?prj=00000000-1111-2222-3333-444444444444&amp;subm=3" class="">
+                              123
+                            </a></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
                           <div class="cell">
@@ -248,7 +252,9 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
                             </a></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
-                          <div class="cell"><a href="/datasets?prj=00000000-1111-2222-3333-444444444444&amp;subm=6" class="">1</a></div>
+                          <div class="cell"><a href="/datasets?prj=00000000-1111-2222-3333-444444444444&amp;subm=6" class="">
+                              1
+                            </a></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
                           <div class="cell"><button type="button" class="el-button grid-button el-button--default el-button--mini">
@@ -279,7 +285,9 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
         </span></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
-                          <div class="cell"><a href="/datasets?prj=00000000-1111-2222-3333-444444444444&amp;subm=4" class="">0</a></div>
+                          <div class="cell"><a href="/datasets?prj=00000000-1111-2222-3333-444444444444&amp;subm=4" class="">
+                              0
+                            </a></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
                           <div class="cell">
@@ -312,7 +320,9 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
         </span></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
-                          <div class="cell"><a href="/datasets?prj=00000000-1111-2222-3333-444444444444&amp;subm=5" class="">0</a></div>
+                          <div class="cell"><a href="/datasets?prj=00000000-1111-2222-3333-444444444444&amp;subm=5" class="">
+                              0
+                            </a></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
                           <div class="cell">
@@ -342,7 +352,9 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
                 <!---->
                 <div class="flex-spacer"></div> <button type="button" class="el-button el-button--default">
                   <!---->
-                  <!----><span>Add member</span></button>
+                  <!----><span>
+      Add member
+    </span></button>
               </div>
             </div>
             <!---->
@@ -500,7 +512,7 @@ exports[`ViewProjectPage settings tab should match snapshot 1`] = `
                 <div class="el-form-item name is-required"><label for="name" class="el-form-item__label">Name</label>
                   <div class="el-form-item__content">
                     <div class="el-input">
-                      <!----><input type="text" autocomplete="off" maxlength="50" class="el-input__inner">
+                      <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
                       <!---->
                       <!---->
                       <!---->
@@ -511,7 +523,9 @@ exports[`ViewProjectPage settings tab should match snapshot 1`] = `
                 </div>
                 <div class="el-form-item isPublic">
                   <!---->
-                  <div class="el-form-item__content"><label class="el-checkbox"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">Allow other users to see this project<!----></span></label>
+                  <div class="el-form-item__content"><label class="el-checkbox"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
+        Allow other users to see this project
+      <!----></span></label>
                     <!---->
                   </div>
                 </div>

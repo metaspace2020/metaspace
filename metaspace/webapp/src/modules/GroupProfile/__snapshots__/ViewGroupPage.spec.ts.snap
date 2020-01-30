@@ -7,7 +7,9 @@ exports[`ViewGroupPage datasets tab should match snapshot (non-member) 1`] = `
     <div class="header-row">
       <div class="header-names">
         <h1>group name</h1>
-        <h2 class="short-name">(groupShortName)</h2>
+        <h2 class="short-name">
+          (groupShortName)
+        </h2>
       </div>
       <div class="header-buttons"><button type="button" class="el-button el-button--primary">
           <!---->
@@ -37,12 +39,14 @@ exports[`ViewGroupPage datasets tab should match snapshot (non-member) 1`] = `
         <!---->
         <div role="tabpanel" id="pane-datasets" aria-labelledby="tab-datasets" class="el-tab-pane">
           <div class="dataset-list">
-            <datasetitem-stub dataset="[object Object]" currentuser="[object Object]" idx="0" hidegroupmenu="true" class=""></datasetitem-stub>
-            <datasetitem-stub dataset="[object Object]" currentuser="[object Object]" idx="1" hidegroupmenu="true" class="odd"></datasetitem-stub>
-            <datasetitem-stub dataset="[object Object]" currentuser="[object Object]" idx="2" hidegroupmenu="true" class=""></datasetitem-stub>
+            <datasetitem-stub dataset="[object Object]" current-user="[object Object]" idx="0" hide-group-menu="true" class=""></datasetitem-stub>
+            <datasetitem-stub dataset="[object Object]" current-user="[object Object]" idx="1" hide-group-menu="true" class="odd"></datasetitem-stub>
+            <datasetitem-stub dataset="[object Object]" current-user="[object Object]" idx="2" hide-group-menu="true" class=""></datasetitem-stub>
             <!---->
           </div>
-          <div class="dataset-list-footer"><a href="/datasets?grp=00000000-1111-2222-3333-444444444444" class="">See all datasets</a></div>
+          <div class="dataset-list-footer"><a href="/datasets?grp=00000000-1111-2222-3333-444444444444" class="">
+              See all datasets
+            </a></div>
         </div>
         <!---->
         <!---->
@@ -59,7 +63,9 @@ exports[`ViewGroupPage members tab should match snapshot (invited) 1`] = `
     <div class="header-row">
       <div class="header-names">
         <h1>group name</h1>
-        <h2 class="short-name">(groupShortName)</h2>
+        <h2 class="short-name">
+          (groupShortName)
+        </h2>
       </div>
       <div class="header-buttons">
         <!---->
@@ -128,7 +134,9 @@ exports[`ViewGroupPage members tab should match snapshot (manager, including tab
     <div class="header-row">
       <div class="header-names">
         <h1>group name</h1>
-        <h2 class="short-name">(groupShortName)</h2>
+        <h2 class="short-name">
+          (groupShortName)
+        </h2>
       </div>
       <div class="header-buttons">
         <!---->
@@ -224,7 +232,9 @@ exports[`ViewGroupPage members tab should match snapshot (manager, including tab
                             </a></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
-                          <div class="cell"><a href="/datasets?grp=00000000-1111-2222-3333-444444444444&amp;subm=3" class="">123</a></div>
+                          <div class="cell"><a href="/datasets?grp=00000000-1111-2222-3333-444444444444&amp;subm=3" class="">
+                              123
+                            </a></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
                           <div class="cell">
@@ -252,7 +262,9 @@ exports[`ViewGroupPage members tab should match snapshot (manager, including tab
         </span></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
-                          <div class="cell"><a href="/datasets?grp=00000000-1111-2222-3333-444444444444&amp;subm=4" class="">0</a></div>
+                          <div class="cell"><a href="/datasets?grp=00000000-1111-2222-3333-444444444444&amp;subm=4" class="">
+                              0
+                            </a></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
                           <div class="cell">
@@ -285,7 +297,9 @@ exports[`ViewGroupPage members tab should match snapshot (manager, including tab
         </span></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
-                          <div class="cell"><a href="/datasets?grp=00000000-1111-2222-3333-444444444444&amp;subm=5" class="">0</a></div>
+                          <div class="cell"><a href="/datasets?grp=00000000-1111-2222-3333-444444444444&amp;subm=5" class="">
+                              0
+                            </a></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
                           <div class="cell">
@@ -316,7 +330,9 @@ exports[`ViewGroupPage members tab should match snapshot (manager, including tab
                             </a></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
-                          <div class="cell"><a href="/datasets?grp=00000000-1111-2222-3333-444444444444&amp;subm=6" class="">1</a></div>
+                          <div class="cell"><a href="/datasets?grp=00000000-1111-2222-3333-444444444444&amp;subm=6" class="">
+                              1
+                            </a></div>
                         </td>
                         <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
                           <div class="cell"><button type="button" class="el-button grid-button el-button--default el-button--mini">
@@ -346,7 +362,9 @@ exports[`ViewGroupPage members tab should match snapshot (manager, including tab
                 <!---->
                 <div class="flex-spacer"></div> <button type="button" class="el-button el-button--default">
                   <!---->
-                  <!----><span>Add member</span></button>
+                  <!----><span>
+      Add member
+    </span></button>
               </div>
             </div>
             <!---->
@@ -366,7 +384,9 @@ exports[`ViewGroupPage members tab should match snapshot (member) 1`] = `
     <div class="header-row">
       <div class="header-names">
         <h1>group name</h1>
-        <h2 class="short-name">(groupShortName)</h2>
+        <h2 class="short-name">
+          (groupShortName)
+        </h2>
       </div>
       <div class="header-buttons">
         <!---->
@@ -412,7 +432,9 @@ exports[`ViewGroupPage members tab should match snapshot (non-member) 1`] = `
     <div class="header-row">
       <div class="header-names">
         <h1>group name</h1>
-        <h2 class="short-name">(groupShortName)</h2>
+        <h2 class="short-name">
+          (groupShortName)
+        </h2>
       </div>
       <div class="header-buttons"><button type="button" class="el-button el-button--primary">
           <!---->
@@ -463,7 +485,9 @@ exports[`ViewGroupPage settings tab should match snapshot 1`] = `
     <div class="header-row">
       <div class="header-names">
         <h1>group name</h1>
-        <h2 class="short-name">(groupShortName)</h2>
+        <h2 class="short-name">
+          (groupShortName)
+        </h2>
       </div>
       <div class="header-buttons">
         <!---->
@@ -507,7 +531,7 @@ exports[`ViewGroupPage settings tab should match snapshot 1`] = `
                 <div class="el-form-item name is-required"><label for="name" class="el-form-item__label">Full name</label>
                   <div class="el-form-item__content">
                     <div class="el-input">
-                      <!----><input type="text" autocomplete="off" maxlength="50" class="el-input__inner">
+                      <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
                       <!---->
                       <!---->
                       <!---->
@@ -521,7 +545,7 @@ exports[`ViewGroupPage settings tab should match snapshot 1`] = `
         <mock-el-popover trigger="hover" placement="right"><div slot-key="default"> <p>The short name will be shown whenever space is limited.</p></div><div slot-key="reference"><i class="el-icon-question metadata-help-icon"></i></div></mock-el-popover></span></label>
                   <div class="el-form-item__content">
                     <div class="el-input">
-                      <!----><input type="text" autocomplete="off" maxlength="20" class="el-input__inner">
+                      <!----><input type="text" autocomplete="off" max-length="20" class="el-input__inner">
                       <!---->
                       <!---->
                       <!---->

@@ -82,8 +82,8 @@ exports[`AnnotationTable should match snapshot 1`] = `
             <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
               <div class="cell">
                 <div class="cell-wrapper"><span class="cell-span">
-                Untreated_3_434
-            </span> <img src="../../assets/filter-icon.png" title="Limit results to this dataset"></div>
+            Untreated_3_434
+          </span> <img src="../../assets/filter-icon.png" title="Limit results to this dataset"></div>
               </div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
@@ -122,8 +122,8 @@ exports[`AnnotationTable should match snapshot 1`] = `
             <td rowspan="1" colspan="1" class="el-table_1_column_4  ">
               <div class="cell">
                 <div class="cell-wrapper"><span class="cell-span">
-                449.0482
-            </span> <img src="../../assets/filter-icon.png" title="Limit results to this m/z (with 5 ppm tolerance)"></div>
+            449.0482
+          </span> <img src="../../assets/filter-icon.png" title="Limit results to this m/z (with 5 ppm tolerance)"></div>
               </div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
@@ -156,11 +156,21 @@ exports[`AnnotationTable should match snapshot 1`] = `
       <div id="annot-count"><b>1</b> matching record
       </div>
       <div style="padding-top: 10px;">
-        <div class="fdr-legend-header">FDR levels: </div>
-        <div class="fdr-legend fdr-5">5%</div>
-        <div class="fdr-legend fdr-10">10%</div>
-        <div class="fdr-legend fdr-20">20%</div>
-        <div class="fdr-legend fdr-50">50%</div>
+        <div class="fdr-legend-header">
+          FDR levels:
+        </div>
+        <div class="fdr-legend fdr-5">
+          5%
+        </div>
+        <div class="fdr-legend fdr-10">
+          10%
+        </div>
+        <div class="fdr-legend fdr-20">
+          20%
+        </div>
+        <div class="fdr-legend fdr-50">
+          50%
+        </div>
       </div>
     </div>
     <div><button type="button" class="el-button export-btn el-button--default">
