@@ -70,18 +70,18 @@ def collect_ion_formulas(spark_context, moldb_fdr_list):
     return pd.concat(ion_formula_map_dfs)
 
 
+def _left_merge(df1, df2, on):
+    return pd.merge(df1.reset_index(), df2, how='left', on=on).set_index(df1.index.name)
+
+
 def compute_fdr(fdr, formula_metrics_df, formula_map_df, max_fdr=0.5):
     """ Compute fdr and filter formulas
     """
-    moldb_ion_metrics_df = formula_metrics_df.join(
-        formula_map_df.set_index('ion_formula'), on='ion_formula', how='inner'
-    )
+    moldb_ion_metrics_df = _left_merge(formula_metrics_df, formula_map_df, on='ion_formula')
     formula_fdr_df = fdr.estimate_fdr(moldb_ion_metrics_df[['formula', 'modifier', 'msm']])
     # fdr is computed only for target modification ions
-    moldb_ion_metrics_df = moldb_ion_metrics_df.merge(
-        formula_fdr_df.set_index(['formula', 'modifier']).fdr,
-        left_on=['formula', 'modifier'],
-        right_index=True,
+    moldb_ion_metrics_df = _left_merge(
+        moldb_ion_metrics_df, formula_fdr_df, on=['formula', 'modifier']
     )
     moldb_ion_metrics_df = moldb_ion_metrics_df[moldb_ion_metrics_df.fdr <= max_fdr]
     return moldb_ion_metrics_df
