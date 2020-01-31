@@ -228,7 +228,7 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
             <div slot-key="default">
               This peak's detection window overlaps with the other annotation's 1st peak.
             </div>
-            <div slot-key="reference"><i class="isobar-alert el-icon-warning"></i></div>
+            <div slot-key="reference"><i class="el-icon-warning-outline"></i></div>
           </mock-el-popover> <br>
           <imageloader-stub src="/fs/iso_images/img1" colormap="Viridis" image-fit-params="[object Object]" min-intensity="0" max-intensity="100" show-pixel-intensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
         </div>
@@ -288,7 +288,7 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
           <div slot-key="default">
             This peak's detection window overlaps with the other annotation's 1st peak.
           </div>
-          <div slot-key="reference"><i class="isobar-alert el-icon-warning"></i></div>
+          <div slot-key="reference"><i class="el-icon-warning-outline"></i></div>
         </mock-el-popover> <br>
         <imageloader-stub src="/fs/iso_images/img1" colormap="Viridis" image-fit-params="[object Object]" min-intensity="0" max-intensity="100" show-pixel-intensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
       </div>

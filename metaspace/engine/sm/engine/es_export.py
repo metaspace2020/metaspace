@@ -583,7 +583,11 @@ class ESExporterIsobars:
         for doc in ann_docs:
             doc['isobars'] = []
             for peak_i, mz in enumerate(doc['centroid_mzs']):
-                if mz != 0 and doc['iso_image_ids'][peak_i] is not None:
+                if (
+                    mz != 0
+                    and peak_i < len(doc['iso_image_ids'])
+                    and doc['iso_image_ids'][peak_i] is not None
+                ):
                     peaks.append(
                         (
                             doc['annotation_id'],
