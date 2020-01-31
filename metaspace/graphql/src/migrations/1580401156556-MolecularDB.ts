@@ -12,13 +12,11 @@ export class MolecularDB1580401156556 implements MigrationInterface {
         // await queryRunner.query(`ALTER TABLE "graphql"."coloc_job" ALTER COLUMN "start" SET DEFAULT (now() at time zone 'utc')`);
         // await queryRunner.query(`ALTER TABLE "graphql"."coloc_job" ALTER COLUMN "finish" SET DEFAULT (now() at time zone 'utc')`);
         await queryRunner.query(`ALTER TABLE "public"."molecule" ADD CONSTRAINT "FK_01280507c3bd02500e2861fb279" FOREIGN KEY ("moldb_id") REFERENCES "public"."molecular_db"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "public"."job" ADD CONSTRAINT "FK_f6baae98b3a2436b6f98318d5d0" FOREIGN KEY ("ds_id") REFERENCES "public"."dataset"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         // await queryRunner.query(`ALTER TABLE "public"."job" ADD CONSTRAINT "FK_07f17ed55cabe0ef556bc0e0c93" FOREIGN KEY ("moldb_id") REFERENCES "public"."molecular_db"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
     }
 
     public async down(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "public"."job" DROP CONSTRAINT "FK_07f17ed55cabe0ef556bc0e0c93"`);
-        await queryRunner.query(`ALTER TABLE "public"."job" DROP CONSTRAINT "FK_f6baae98b3a2436b6f98318d5d0"`);
         await queryRunner.query(`ALTER TABLE "public"."molecule" DROP CONSTRAINT "FK_01280507c3bd02500e2861fb279"`);
         // await queryRunner.query(`ALTER TABLE "graphql"."coloc_job" ALTER COLUMN "finish" SET DEFAULT timezone('utc'`);
         // await queryRunner.query(`ALTER TABLE "graphql"."coloc_job" ALTER COLUMN "start" SET DEFAULT timezone('utc'`);
