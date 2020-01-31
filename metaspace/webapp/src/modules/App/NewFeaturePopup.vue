@@ -66,39 +66,24 @@ const STORAGE_KEY = 'dismissedFeaturePopups'
 
 const NEW_FEATURES: FeatureSpec[] = [
   {
-    name: 'offSample',
-    title: 'Off-Sample Prediction',
+    name: 'isomersIsobars',
+    title: 'Isomers and isobars',
     contentHtml: `
-<p>We've trained a deep learning model to filter out annotations which represent molecules localized
-in the off-sample area, such as those corresponding to the MALDI matrix. You can now
-hide these annotations from the results, allowing you to find important molecules faster.</p>
-<p>Add the <u style="white-space: nowrap;">Show/hide off-sample annotations</u> filter to try it out.</p>
-<p>Please keep in mind that the accuracy of this model is greatly improved
-in datasets that include some off-sample area. We recommend including off-sample area around your sample
-during data acquisition.</p>
+<p>METASPACE now warns when there are isomeric and isobaric annotations.</p>
+<p>
+When you see this icon <span class='danger-icon'></span>, it means that that there are
+multiple candidate annotations for this set of peaks. Open the Molecules section for more information.
+</p>
+<p>
+If isobaric annotations have been identified, the Diagnostics section allows comparisons
+between overlapping annotations to help you to determine which annotation is more likely.
+The ion formulas of isomers and isobars are also available in the CSV export. </p>
       `,
-    dontShowAfter: new Date('2019-07-22'),
-    placement: 'bottom',
-    getAnchorIfActive(vue: Vue) {
-      if (config.features.off_sample && vue.$route.path === '/annotations') {
-        return document.querySelector('.tf-outer[data-test-key=offSample]')
-            || document.querySelector('.filter-select')
-      }
-      return null
-    },
-  },
-  {
-    name: 'logScale',
-    title: 'Log-scale colormaps',
-    contentHtml: `
-<p>Ion images can now be viewed with a logarithmic-scale colormap.
-The ion image display options can be configured in this menu.</p>
-      `,
-    dontShowAfter: new Date('2019-08-30'),
-    placement: 'bottom',
+    dontShowAfter: new Date('2020-05-30'),
+    placement: 'top',
     getAnchorIfActive(vue: Vue) {
       if (vue.$route.path === '/annotations') {
-        return document.querySelector('[data-feature-anchor="ion-image-settings"]')
+        return document.querySelector('.ambiguity-alert-icon')
       }
       return null
     },
@@ -283,5 +268,11 @@ export default class NewFeaturePopup extends Vue {
     font-weight: bold;
     background-color: orangered;
     color: white;
+  }
+  .danger-icon {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background-image: url('../../assets/danger.svg');
   }
 </style>
