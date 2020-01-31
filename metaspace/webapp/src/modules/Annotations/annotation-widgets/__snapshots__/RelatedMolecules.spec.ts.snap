@@ -9,7 +9,9 @@ exports[`RelatedMolecules should match snapshot 1`] = `
           <div class="ion-link">
             <div>
               <!----> <span class="ion-formula">[C<sub>10</sub>H<sub>11</sub>NO + Na]⁺</span></div>
-            <div class="fdr-badge fdr-badge-10">10% FDR</div>
+            <div class="fdr-badge fdr-badge-10">
+              10% FDR
+            </div>
             <!---->
           </div>
           <!---->
@@ -32,8 +34,8 @@ exports[`RelatedMolecules should match snapshot 1`] = `
           </div>
           <div slot-key="reference"><img src="/mol-images/HMDB/HMDB0003447.svg" class="compound-thumbnail"></div>
         </mock-el-popover> <br> <span><a href="http://www.hmdb.ca/metabolites/HMDB0003447" target="_blank">
-                Tryptophanol
-              </a></span>
+        Tryptophanol
+      </a></span>
       </div>
       <!---->
     </div>
@@ -43,7 +45,9 @@ exports[`RelatedMolecules should match snapshot 1`] = `
       <div class="el-divider__text is-center">
         <div class="ion-heading"><a href="/?ds=2019-02-12_15h55m06s&amp;mol=allAnnotations.0.sumFormula&amp;chem_mod=allAnnotations.0.chemMod&amp;nl=allAnnotations.0.neutralLoss&amp;add=allAnnotations.0.adduct&amp;fdr=0.2" class="ion-link">
             <div><span>Isomer:</span> <span class="ion-formula">[C<sub>10</sub>H<sub>13</sub>NO<sub>2</sub> - H<sub>2</sub>O + Na]⁺</span></div>
-            <div class="fdr-badge fdr-badge-20">20% FDR</div>
+            <div class="fdr-badge fdr-badge-20">
+              20% FDR
+            </div>
             <!---->
           </a>
           <mock-el-popover trigger="hover" placement="top">
@@ -83,8 +87,8 @@ exports[`RelatedMolecules should match snapshot 1`] = `
           </div>
           <div slot-key="reference"><img src="/mol-images/HMDB/HMDB0030372.svg" class="compound-thumbnail"></div>
         </mock-el-popover> <br> <span><a href="http://www.hmdb.ca/metabolites/HMDB0030372" target="_blank">
-                Maltoxazine
-              </a></span>
+        Maltoxazine
+      </a></span>
       </div>
       <div class="compound">
         <mock-el-popover placement="left" trigger="click">
@@ -101,8 +105,8 @@ exports[`RelatedMolecules should match snapshot 1`] = `
           </div>
           <div slot-key="reference"><img src="/mol-images/HMDB/HMDB0042012.svg" class="compound-thumbnail"></div>
         </mock-el-popover> <br> <span><a href="http://www.hmdb.ca/metabolites/HMDB0042012" target="_blank">
-                Salsolinol
-              </a></span>
+        Salsolinol
+      </a></span>
       </div>
       <!---->
     </div>

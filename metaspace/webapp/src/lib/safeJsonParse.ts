@@ -1,12 +1,12 @@
-import reportError from './reportError';
+import reportError from './reportError'
 
 export default function safeJsonParse(json: string | null | undefined) {
   if (json) {
     try {
-      return JSON.parse(json);
+      return JSON.parse(json)
     } catch (err) {
-      reportError(err, null);
+      reportError(err, null)
     }
   }
-  return undefined;
+  return undefined
 }

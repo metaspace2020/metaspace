@@ -1,54 +1,98 @@
 <template>
   <div>
-    <el-dialog v-if="editingRoleOfMember" visible @close="handleCloseEditRole" :title="`Change ${type} member role`">
+    <el-dialog
+      v-if="editingRoleOfMember"
+      visible
+      :title="`Change ${type} member role`"
+      @close="handleCloseEditRole"
+    >
       <p>
-        Change {{editingRoleOfMember.user.name}}'s role to:
+        Change {{ editingRoleOfMember.user.name }}'s role to:
         <el-select v-model="newRole">
-          <el-option v-for="role in allowedRoles" :key="role" :value="role" :label="getRoleName(role)" />
-          <el-option :value="null" :label="`None (remove from ${type})`" />
+          <el-option
+            v-for="role in allowedRoles"
+            :key="role"
+            :value="role"
+            :label="getRoleName(role)"
+          />
+          <el-option
+            :value="null"
+            :label="`None (remove from ${type})`"
+          />
         </el-select>
       </p>
       <p>
         Changing a member's role this way does not cause any notification emails to be sent.
       </p>
       <el-row align="right">
-        <el-button @click="handleCloseEditRole">Close</el-button>
-        <el-button @click="handleUpdateRole" type="primary">Save</el-button>
+        <el-button @click="handleCloseEditRole">
+          Close
+        </el-button>
+        <el-button
+          type="primary"
+          @click="handleUpdateRole"
+        >
+          Save
+        </el-button>
       </el-row>
     </el-dialog>
-    <el-table :data="currentPageData"
-              :row-key="row => row.user.id"
-              v-loading="loading"
-              element-loading-text="Loading results from the server...">
+    <el-table
+      v-loading="loading"
+      :data="currentPageData"
+      :row-key="row => row.user.id"
+      element-loading-text="Loading results from the server..."
+    >
+      <p slot="empty">
+        You do not have access to view the member list.
+      </p>
 
-      <p slot="empty">You do not have access to view the member list.</p>
-
-      <el-table-column label="Name" min-width="200">
+      <el-table-column
+        label="Name"
+        min-width="200"
+      >
         <template slot-scope="scope">
-          {{scope.row.user.name}}
+          {{ scope.row.user.name }}
         </template>
       </el-table-column>
 
-      <el-table-column label="Email" min-width="200" v-if="shouldShowEmails">
+      <el-table-column
+        v-if="shouldShowEmails"
+        label="Email"
+        min-width="200"
+      >
         <template slot-scope="scope">
-          {{scope.row.user.email}}
+          {{ scope.row.user.email }}
         </template>
       </el-table-column>
 
-      <el-table-column label="Role" width="160">
+      <el-table-column
+        label="Role"
+        width="160"
+      >
         <template slot-scope="scope">
-          <a v-if="canEditRoleFor(scope.row)" href="#" @click.prevent="() => handleEditRole(scope.row)" title="Change role">
-            {{getRoleName(scope.row.role)}}
+          <a
+            v-if="canEditRoleFor(scope.row)"
+            href="#"
+            title="Change role"
+            @click.prevent="() => handleEditRole(scope.row)"
+          >
+            {{ getRoleName(scope.row.role) }}
           </a>
           <span v-else>
-            {{getRoleName(scope.row.role)}}
+            {{ getRoleName(scope.row.role) }}
           </span>
         </template>
       </el-table-column>
 
-      <el-table-column label="Datasets" width="90" align="center">
+      <el-table-column
+        label="Datasets"
+        width="90"
+        align="center"
+      >
         <template slot-scope="scope">
-          <router-link :to="datasetsListLink(scope.row.user)">{{scope.row.numDatasets}}</router-link>
+          <router-link :to="datasetsListLink(scope.row.user)">
+            {{ scope.row.numDatasets }}
+          </router-link>
         </template>
       </el-table-column>
 
@@ -58,14 +102,16 @@
             v-if="canEdit && scope.row.role === 'MEMBER'"
             size="mini"
             class="grid-button"
-            @click="() => handleRemoveUser(scope.row)">
+            @click="() => handleRemoveUser(scope.row)"
+          >
             Remove
           </el-button>
           <el-button
             v-if="canEdit && scope.row.role === 'INVITED'"
             size="mini"
             class="grid-button"
-            @click="() => handleCancelInvite(scope.row)">
+            @click="() => handleCancelInvite(scope.row)"
+          >
             Cancel
           </el-button>
           <el-button
@@ -73,39 +119,48 @@
             size="mini"
             type="success"
             class="grid-button"
-            @click="() => handleAcceptUser(scope.row)">
+            @click="() => handleAcceptUser(scope.row)"
+          >
             Accept
           </el-button>
           <el-button
             v-if="canEdit && scope.row.role === 'PENDING'"
             size="mini"
             class="grid-button"
-            @click="() => handleRejectUser(scope.row)">
+            @click="() => handleRejectUser(scope.row)"
+          >
             Decline
           </el-button>
         </template>
       </el-table-column>
     </el-table>
     <div class="pagination-row">
-      <el-pagination v-if="members.length > pageSize || page !== 1"
-                     :total="members.length"
-                     :page-size="pageSize"
-                     :current-page.sync="page"
-                     layout="prev,pager,next" />
+      <el-pagination
+        v-if="members.length > pageSize || page !== 1"
+        :total="members.length"
+        :page-size="pageSize"
+        :current-page.sync="page"
+        layout="prev,pager,next"
+      />
       <div class="flex-spacer" />
-      <el-button v-if="canEdit" @click="() => handleAddMember()">Add member</el-button>
+      <el-button
+        v-if="canEdit"
+        @click="() => handleAddMember()"
+      >
+        Add member
+      </el-button>
     </div>
   </div>
 </template>
 <script lang="ts">
-  import Vue from 'vue';
-  import { Component, Emit, Prop } from 'vue-property-decorator';
-  import {getRoleName as getGroupRoleName, UserGroupRole, UserGroupRoleOptions} from '../api/group';
-  import {getRoleName as getProjectRoleName, ProjectRole, ProjectRoleOptions} from '../api/project';
-  import { encodeParams } from '../modules/Filters';
-  import {CurrentUserRoleResult} from '../api/user';
+import Vue from 'vue'
+import { Component, Emit, Prop } from 'vue-property-decorator'
+import { getRoleName as getGroupRoleName, UserGroupRole, UserGroupRoleOptions } from '../api/group'
+import { getRoleName as getProjectRoleName, ProjectRole, ProjectRoleOptions } from '../api/project'
+import { encodeParams } from '../modules/Filters'
+import { CurrentUserRoleResult } from '../api/user'
 
-  export interface Member {
+export interface Member {
     role: UserGroupRole | ProjectRole,
     numDatasets: number,
     user: {
@@ -116,18 +171,23 @@
   }
 
   @Component({})
-  export default class MembersList extends Vue {
-    @Prop({type:Boolean, required: true})
+export default class MembersList extends Vue {
+    @Prop({ type: Boolean, required: true })
     loading!: boolean;
-    @Prop({type: Object})
+
+    @Prop({ type: Object })
     currentUser!: CurrentUserRoleResult | null;
-    @Prop({type:Array, required: true})
+
+    @Prop({ type: Array, required: true })
     members!: Member[];
-    @Prop({type:Boolean, required: true})
+
+    @Prop({ type: Boolean, required: true })
     canEdit!: boolean;
-    @Prop({type: String, required: true})
+
+    @Prop({ type: String, required: true })
     type!: 'group' | 'project';
-    @Prop({required: true})
+
+    @Prop({ required: true })
     filter!: any;
 
     pageSize: number = 10;
@@ -136,36 +196,36 @@
     newRole: string | null = null;
 
     get getRoleName() {
-      return this.type === 'group' ? getGroupRoleName : getProjectRoleName;
+      return this.type === 'group' ? getGroupRoleName : getProjectRoleName
     }
 
     get roles(): string[] {
-      return this.type === 'group' ? Object.values(UserGroupRoleOptions) : Object.values(ProjectRoleOptions);
+      return this.type === 'group' ? Object.values(UserGroupRoleOptions) : Object.values(ProjectRoleOptions)
     }
 
     get allowedRoles(): string[] {
       if (this.currentUser != null && this.currentUser.role === 'admin') {
-        return this.roles;
+        return this.roles
       } else {
         return this.type === 'group'
           ? [UserGroupRoleOptions.MEMBER, UserGroupRoleOptions.GROUP_ADMIN]
-          : [ProjectRoleOptions.MEMBER, ProjectRoleOptions.MANAGER];
+          : [ProjectRoleOptions.MEMBER, ProjectRoleOptions.MANAGER]
       }
     }
 
     get currentPageData(): Member[] {
-      return this.members.slice((this.page - 1) * this.pageSize, this.page * this.pageSize);
+      return this.members.slice((this.page - 1) * this.pageSize, this.page * this.pageSize)
     }
 
     get shouldShowEmails() {
-      return this.members.some(m => m.user.email != null);
+      return this.members.some(m => m.user.email != null)
     }
 
     canEditRoleFor(user: Member) {
       return this.canEdit
         && this.currentUser != null
         && (this.currentUser.role === 'admin'
-          || (this.currentUser.id !== user.user.id && this.allowedRoles.includes(user.role)));
+          || (this.currentUser.id !== user.user.id && this.allowedRoles.includes(user.role)))
     }
 
     datasetsListLink(user: Member['user']) {
@@ -174,7 +234,7 @@
         query: encodeParams({
           ...this.filter,
           submitter: user.id,
-        })
+        }),
       }
     }
 
@@ -194,24 +254,24 @@
     handleAddMember() {}
 
     handleEditRole(user: Member) {
-      this.editingRoleOfMember = user;
-      this.newRole = user.role;
+      this.editingRoleOfMember = user
+      this.newRole = user.role
     }
 
     handleCloseEditRole() {
-      this.editingRoleOfMember = null;
-      this.newRole = null;
+      this.editingRoleOfMember = null
+      this.newRole = null
     }
 
     handleUpdateRole() {
-      this.updateRole(this.editingRoleOfMember!, this.newRole);
-      this.editingRoleOfMember = null;
-      this.newRole = null;
+      this.updateRole(this.editingRoleOfMember!, this.newRole)
+      this.editingRoleOfMember = null
+      this.newRole = null
     }
 
     @Emit('updateRole')
     updateRole(user: Member, role: string | null) {}
-  }
+}
 
 </script>
 <style scoped lang="scss">

@@ -1,105 +1,128 @@
 <template>
-  <router-link v-if="editable" :to="opticalImageAlignmentHref">
-    <div class="thumb thumb__editable"
-         :class="showEmpty && 'thumb__empty'"
-         :title="title">
-      <img v-if="hasOpticalImage"
-           class="thumb--img"
-           :style="imageStyle"
-           :src="dataset.thumbnailOpticalImageUrl"
-           alt="Edit optical image"
-           @error="optLoadError = true"/>
-      <img v-if="showIonThumb"
-           class="thumb--img thumb--img__ion"
-           :style="imageStyle"
-           :src="dataset.ionThumbnailUrl"
-           alt="Add optical image"
-           @error="ionLoadError = true"/>
-      <img v-if="showEmpty"
-           class="thumb--img"
-           src="../../../assets/no_opt_image.png"
-           alt="Add optical image"/>
-      <div class="thumb--overlay el-icon-edit"
-           :class="hasOpticalImage ? 'el-icon-edit' : 'el-icon-plus'" />
+  <router-link
+    v-if="editable"
+    :to="opticalImageAlignmentHref"
+  >
+    <div
+      class="thumb thumb__editable"
+      :class="showEmpty && 'thumb__empty'"
+      :title="title"
+    >
+      <img
+        v-if="hasOpticalImage"
+        class="thumb--img"
+        :style="imageStyle"
+        :src="dataset.thumbnailOpticalImageUrl"
+        alt="Edit optical image"
+        @error="optLoadError = true"
+      >
+      <img
+        v-if="showIonThumb"
+        class="thumb--img thumb--img__ion"
+        :style="imageStyle"
+        :src="dataset.ionThumbnailUrl"
+        alt="Add optical image"
+        @error="ionLoadError = true"
+      >
+      <img
+        v-if="showEmpty"
+        class="thumb--img"
+        src="../../../assets/no_opt_image.png"
+        alt="Add optical image"
+      >
+      <div
+        class="thumb--overlay el-icon-edit"
+        :class="hasOpticalImage ? 'el-icon-edit' : 'el-icon-plus'"
+      />
     </div>
   </router-link>
-  <div v-else
-       class="thumb"
-       :class="showEmpty && 'thumb__empty'">
-    <img v-if="hasOpticalImage"
-         class="thumb--img"
-         :style="imageStyle"
-         :src="dataset.thumbnailOpticalImageUrl"
-         alt="Optical image"
-         @error="optLoadError = true"/>
-    <img v-if="showIonThumb"
-         class="thumb--img thumb--img__ion"
-         :style="imageStyle"
-         :src="dataset.ionThumbnailUrl"
-         alt="Ion image thumbnail"
-         @error="ionLoadError = true"/>
-    <img v-if="showEmpty"
-         class="thumb--img"
-         src="../../../assets/no_opt_image.png"
-         alt="No optical image"/>
+  <div
+    v-else
+    class="thumb"
+    :class="showEmpty && 'thumb__empty'"
+  >
+    <img
+      v-if="hasOpticalImage"
+      class="thumb--img"
+      :style="imageStyle"
+      :src="dataset.thumbnailOpticalImageUrl"
+      alt="Optical image"
+      @error="optLoadError = true"
+    >
+    <img
+      v-if="showIonThumb"
+      class="thumb--img thumb--img__ion"
+      :style="imageStyle"
+      :src="dataset.ionThumbnailUrl"
+      alt="Ion image thumbnail"
+      @error="ionLoadError = true"
+    >
+    <img
+      v-if="showEmpty"
+      class="thumb--img"
+      src="../../../assets/no_opt_image.png"
+      alt="No optical image"
+    >
   </div>
 </template>
 
 <script>
-  import config from '../../../config';
-  export default {
-    props: ['dataset', 'editable'],
-    data() {
+import config from '../../../config'
+export default {
+  props: ['dataset', 'editable'],
+  data() {
+    return {
+      ionLoadError: false,
+      optLoadError: false,
+    }
+  },
+  computed: {
+    opticalImageAlignmentHref() {
       return {
-        ionLoadError: false,
-        optLoadError: false,
-      };
+        name: 'add-optical-image',
+        params: { dataset_id: this.dataset.id },
+      }
     },
-    computed: {
-      opticalImageAlignmentHref() {
-        return {
-          name: 'add-optical-image',
-          params: {dataset_id: this.dataset.id}
-        };
-      },
 
-      showIonThumb() {
-        return !this.ionLoadError && config.features.ion_thumbs && this.dataset.ionThumbnailUrl != null;
-      },
+    showIonThumb() {
+      return !this.ionLoadError && config.features.ion_thumbs && this.dataset.ionThumbnailUrl != null
+    },
 
-      hasOpticalImage() {
-        return !this.optLoadError && this.dataset.thumbnailOpticalImageUrl != null;
-      },
+    hasOpticalImage() {
+      return !this.optLoadError && this.dataset.thumbnailOpticalImageUrl != null
+    },
 
-      showEmpty() {
-        return !this.showIonThumb && !this.hasOpticalImage;
-      },
+    showEmpty() {
+      return !this.showIonThumb && !this.hasOpticalImage
+    },
 
-      title() {
-        return this.hasOpticalImage ? 'Edit Optical Image' : 'Add Optical Image';
-      },
+    title() {
+      return this.hasOpticalImage ? 'Edit Optical Image' : 'Add Optical Image'
+    },
 
-      imageStyle() {
-        let aspectRatio = 1;
-        if (!config.features.ignore_pixel_aspect_ratio) {
-          try {
-            const metadata = JSON.parse(this.dataset.metadataJson);
-            const { Xaxis, Yaxis } = metadata.MS_Analysis.Pixel_Size;
-            aspectRatio = Xaxis && Yaxis && (Xaxis / Yaxis) || 1;
-          } catch {}
-        }
-
-        return {
-          transform: `scaleY(${1/aspectRatio}) translateY(${50 - 50 * aspectRatio}%)`,
-          height: `${100 * aspectRatio}px`,
+    imageStyle() {
+      let aspectRatio = 1
+      if (!config.features.ignore_pixel_aspect_ratio) {
+        try {
+          const metadata = JSON.parse(this.dataset.metadataJson)
+          const { Xaxis, Yaxis } = metadata.MS_Analysis.Pixel_Size
+          aspectRatio = Xaxis && Yaxis && (Xaxis / Yaxis) || 1
+        } catch {
+          // If something is missing in the metadataJson, just fall back to fixed aspect ratio
         }
       }
-    }
-  }
+
+      return {
+        transform: `scaleY(${1 / aspectRatio}) translateY(${50 - 50 * aspectRatio}%)`,
+        height: `${100 * aspectRatio}px`,
+      }
+    },
+  },
+}
 </script>
 
 <style lang="scss" scoped>
-  
+
   .thumb {
     position: relative;
     display: block;

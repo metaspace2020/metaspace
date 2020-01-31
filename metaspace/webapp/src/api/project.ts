@@ -1,4 +1,4 @@
-import gql from 'graphql-tag';
+import gql from 'graphql-tag'
 
 export type ProjectRole = 'INVITED' | 'PENDING' | 'MEMBER' | 'MANAGER';
 export const ProjectRoleOptions: {[R in ProjectRole]: R} = {
@@ -6,17 +6,17 @@ export const ProjectRoleOptions: {[R in ProjectRole]: R} = {
   PENDING: 'PENDING',
   MEMBER: 'MEMBER',
   MANAGER: 'MANAGER',
-};
+}
 export const getRoleName = (role: ProjectRole | null | undefined) => {
   switch (role) {
-    case 'INVITED': return 'Invited';
-    case 'PENDING': return 'Requesting access';
-    case 'MEMBER': return 'Member';
-    case 'MANAGER': return 'Project manager';
-    case null: return '';
-    case undefined: return '';
+    case 'INVITED': return 'Invited'
+    case 'PENDING': return 'Requesting access'
+    case 'MEMBER': return 'Member'
+    case 'MANAGER': return 'Project manager'
+    case null: return ''
+    case undefined: return ''
   }
-};
+}
 
 export interface CreateProjectMutation {
   createProject: {
@@ -28,7 +28,7 @@ export const createProjectMutation =
     createProject(projectDetails: $projectDetails) {
       id
     }
-  }`;
+  }`
 
 export interface UpdateProjectMutation {
   data: {
@@ -48,61 +48,60 @@ export const updateProjectMutation =
       isPublic
       currentUserRole
     }
-  }`;
+  }`
 
 export const deleteProjectMutation =
   gql`mutation deleteProject($projectId: ID!) {
     deleteProject(projectId: $projectId)
-  }`;
+  }`
 
 export const removeUserFromProjectMutation =
   gql`mutation removeUserFromProject($projectId: ID!, $userId: ID!) {
     removeUserFromProject(projectId: $projectId, userId: $userId)
-  }`;
+  }`
 
 export const requestAccessToProjectMutation =
   gql`mutation requestAccessToProject($projectId: ID!) { 
     requestAccessToProject(projectId: $projectId) {
       role
     }
-  }`;
+  }`
 
 export const acceptRequestToJoinProjectMutation =
   gql`mutation acceptRequestToJoinProject($projectId: ID!, $userId: ID!) {
     acceptRequestToJoinProject(projectId: $projectId, userId: $userId) {
       role
     }
-  }`;
+  }`
 
 export const inviteUserToProjectMutation =
   gql`mutation inviteUserToProject($projectId: ID!, $email: String!) {
     inviteUserToProject(projectId: $projectId, email: $email) {
       role
     }
-  }`;
+  }`
 
 export const acceptProjectInvitationMutation =
   gql`mutation acceptProjectInvitation($projectId: ID!) { 
     acceptProjectInvitation(projectId: $projectId) {
       role
     }
-  }`;
+  }`
 
 export const leaveProjectMutation =
   gql`mutation leaveProject($projectId: ID!) { 
     leaveProject(projectId: $projectId)
-  }`;
+  }`
 
 export const updateUserProjectMutation =
   gql`mutation updateUserProject($projectId: ID!, $userId: ID!, $update: UpdateUserProjectInput!) {
     updateUserProject(projectId: $projectId, userId: $userId, update: $update)
-  }`;
+  }`
 
 export const importDatasetsIntoProjectMutation =
   gql`mutation($projectId: ID!, $datasetIds: [ID!]!) {
   importDatasetsIntoProject(projectId: $projectId, datasetIds: $datasetIds)
-  }`;
-
+  }`
 
 export const editProjectQuery =
   gql`query EditProjectQuery($projectId: ID!) {
@@ -113,7 +112,7 @@ export const editProjectQuery =
       isPublic
       currentUserRole
     }
-  }`;
+  }`
 
 export interface EditProjectQuery {
   id: string;
@@ -146,7 +145,7 @@ const projectsListItemFragment =
         }
         role
       }
-    }`;
+    }`
 
 export const projectsListQuery =
   gql`query ProjectsListQuery($query: String!, $offset: Int = 0, $limit: Int = 10) {
@@ -154,7 +153,7 @@ export const projectsListQuery =
       ...ProjectsListItem
     }
   }
-  ${projectsListItemFragment}`;
+  ${projectsListItemFragment}`
 
 export const myProjectsListQuery =
   gql`query MyProjectsListQuery {
@@ -167,12 +166,12 @@ export const myProjectsListQuery =
       }
     }
   }
-  ${projectsListItemFragment}`;
+  ${projectsListItemFragment}`
 
 export const projectsCountQuery =
   gql`query ProjectsCountQuery($query: String!) {
     projectsCount(query: $query)
-  }`;
+  }`
 
 export interface ProjectsListQuery {
   allProjects: ProjectsListProject[];
@@ -229,7 +228,7 @@ export const ViewProjectFragment = gql`fragment ViewProjectFragment on Project {
     user { id name email }
   }
   projectDescriptionAsHtml
-}`;
+}`
 
 export interface ViewProjectMember {
   role: ProjectRole,

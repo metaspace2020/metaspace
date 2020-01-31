@@ -1,21 +1,39 @@
 <template>
   <div id="annot-page">
-    <filter-panel level="annotation"></filter-panel>
+    <filter-panel level="annotation" />
 
     <el-row>
-      <el-col id="annot-table-container" :xs="24" :sm="24" :md="24" :lg="tableWidth">
-        <annotation-table :hideColumns="hiddenColumns">
-        </annotation-table>
+      <el-col
+        id="annot-table-container"
+        :xs="24"
+        :sm="24"
+        :md="24"
+        :lg="tableWidth"
+      >
+        <annotation-table :hide-columns="hiddenColumns" />
       </el-col>
 
-      <el-col :xs="24" :sm="24" :md="24" :lg="24 - tableWidth" id="annot-view-container">
-        <annotation-view :annotation="selectedAnnotation"
-                        v-if="selectedAnnotation">
-        </annotation-view>
+      <el-col
+        id="annot-view-container"
+        :xs="24"
+        :sm="24"
+        :md="24"
+        :lg="24 - tableWidth"
+      >
+        <annotation-view
+          v-if="selectedAnnotation"
+          :annotation="selectedAnnotation"
+        />
 
-        <el-col class="av-centered no-selection" v-else>
+        <el-col
+          v-else
+          class="av-centered no-selection"
+        >
           <div style="align-self: center;">
-            <i class="el-icon-loading" v-if="this.$store.state.tableIsLoading"></i>
+            <i
+              v-if="this.$store.state.tableIsLoading"
+              class="el-icon-loading"
+            />
           </div>
         </el-col>
       </el-col>
@@ -24,57 +42,62 @@
 </template>
 
 <script>
- import AnnotationTable from './AnnotationTable.vue';
- import AnnotationView from './AnnotationView.vue';
- import {FilterPanel} from '../Filters/index';
- import config from '../../config';
+import AnnotationTable from './AnnotationTable.vue'
+import AnnotationView from './AnnotationView.vue'
+import { FilterPanel } from '../Filters/index'
+import config from '../../config'
 
- export default {
-   name: 'annotations-page',
-   computed: {
-     hiddenColumns() {
-       const {group, database, datasetIds, colocalizedWith, fdrLevel} = this.filter;
-       let hiddenColumns = [];
-       const singleDatasetSelected = datasetIds && datasetIds.length == 1;
-       if (singleDatasetSelected)
-         hiddenColumns.push('Dataset');
-       if (group || singleDatasetSelected)
-         hiddenColumns.push('Group');
-       if (database)
-         hiddenColumns.push('Database');
-       if (!singleDatasetSelected || colocalizedWith == null || fdrLevel == null)
-         hiddenColumns.push('ColocalizationCoeff');
-       if (!config.features.off_sample_col)
-         hiddenColumns.push('OffSampleProb');
-       return hiddenColumns;
-     },
+export default {
+  name: 'AnnotationsPage',
+  components: {
+    AnnotationTable,
+    AnnotationView,
+    FilterPanel,
+  },
+  computed: {
+    hiddenColumns() {
+      const { group, database, datasetIds, colocalizedWith, fdrLevel } = this.filter
+      const hiddenColumns = []
+      const singleDatasetSelected = datasetIds && datasetIds.length === 1
+      if (singleDatasetSelected) {
+        hiddenColumns.push('Dataset')
+      }
+      if (group || singleDatasetSelected) {
+        hiddenColumns.push('Group')
+      }
+      if (database) {
+        hiddenColumns.push('Database')
+      }
+      if (!singleDatasetSelected || colocalizedWith == null || fdrLevel == null) {
+        hiddenColumns.push('ColocalizationCoeff')
+      }
+      if (!config.features.off_sample_col) {
+        hiddenColumns.push('OffSampleProb')
+      }
+      return hiddenColumns
+    },
 
-     tableWidth() {
-       return (14
+    tableWidth() {
+      return (14
          - (this.hiddenColumns.filter(c => ['Dataset', 'Group'].includes(c)).length * 2)
-         - (this.hiddenColumns.filter(c => ['ColocalizationCoeff', 'OffSampleProb'].includes(c)).length * 1));
-     },
+         - (this.hiddenColumns.filter(c => ['ColocalizationCoeff', 'OffSampleProb'].includes(c)).length * 1))
+    },
 
-     selectedAnnotation() {
-       return this.$store.state.annotation;
-     },
+    selectedAnnotation() {
+      return this.$store.state.annotation
+    },
 
-     filter() {
-       return this.$store.getters.filter;
-     }
-   },
-   created() {
-     this.$store.commit('updateFilter', this.filter);
-   },
-   destroyed() {
-     this.$store.commit('setAnnotation', undefined);
-   },
-   components: {
-     AnnotationTable,
-     AnnotationView,
-     FilterPanel
-   }
- }
+    filter() {
+      return this.$store.getters.filter
+    },
+  },
+  created() {
+    this.$store.commit('updateFilter', this.filter)
+  },
+  destroyed() {
+    this.$store.commit('setAnnotation', undefined)
+  },
+}
 </script>
 
 <style>

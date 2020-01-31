@@ -1,5 +1,5 @@
-import gql from 'graphql-tag';
-import { datasetSubmitterFragment } from './user';
+import gql from 'graphql-tag'
+import { datasetSubmitterFragment } from './user'
 
 export const editDatasetFragment =
   gql`fragment EditDatasetFragment on Dataset {
@@ -22,7 +22,7 @@ export const editDatasetFragment =
     molDBs
     adducts
     name
-  }`;
+  }`
 
 export const editDatasetQuery =
   gql`query editDatasetQuery($id: String!) {
@@ -38,7 +38,7 @@ export const editDatasetQuery =
   }
   ${editDatasetFragment}
   ${datasetSubmitterFragment}
-  `;
+  `
 
 export const editDatasetSubmitterQuery =
   gql`query editDatasetQuery($userId: ID!) {
@@ -47,7 +47,7 @@ export const editDatasetSubmitterQuery =
     }
   }
   ${datasetSubmitterFragment}
-  `;
+  `
 
 export const newDatasetQuery =
   gql`query newDatasetQuery {
@@ -66,7 +66,7 @@ export const newDatasetQuery =
   }
   ${editDatasetFragment}
   ${datasetSubmitterFragment}
-  `;
+  `
 
 export const datasetSubmitterQuery =
   gql`query datasetSubmitterQuery($userId: ID!) {
@@ -75,17 +75,17 @@ export const datasetSubmitterQuery =
     }
   }
   ${datasetSubmitterFragment}
-  `;
+  `
 
 export const fetchAutocompleteSuggestionsQuery =
   gql`query suggestions($field: String!, $query: String!) {
     metadataSuggestions(field: $field, query: $query, limit: 5)
-  }`;
+  }`
 
 export const updateDatasetQuery =
   gql`mutation ($id: String!, $reprocess: Boolean, $skipValidation: Boolean, $input: DatasetUpdateInput!) {
     updateDataset(id: $id, input: $input, reprocess: $reprocess, skipValidation: $skipValidation, priority: 1)
-  }`;
+  }`
 
 // TODO: use autocompletion for filter values, same as on the upload page
 export const fetchOptionListsQuery = gql`query fetchOptionListsQuery {
@@ -99,7 +99,7 @@ export const fetchOptionListsQuery = gql`query fetchOptionListsQuery {
   colocalizationAlgos {id, name}
   molecularDatabases: molecularDatabases(hideDeprecated: false, onlyLastVersion: false){name, default, hidden}
   adducts: adductSuggestions{adduct, name, charge, default, hidden}
-}`;
+}`
 
 export interface MolecularDatabase {
   name: string;
@@ -125,20 +125,20 @@ export interface AdductSuggestion {
 
 export const chemModSuggestionQuery = gql`query chemModSuggestionQuery($query: String) {
   chemMods: chemModSuggestions(query: $query) {chemMod, name}
-}`;
+}`
 
 export const neutralLossSuggestionQuery = gql`query neutralLossSuggestionQuery($query: String) {
   neutralLosses: neutralLossSuggestions(query: $query) {neutralLoss, name}
-}`;
+}`
 
 export const metadataOptionsQuery = gql`query metadataOptionsQuery {
   molecularDatabases: molecularDatabases(hideDeprecated: false, onlyLastVersion: false){name, default, hidden}
   adducts: adductSuggestions{adduct, name, charge, default, hidden}
-}`;
+}`
 
 export const colocalizationAlgosQuery = gql`query colocalizationAlgosQuery {
   colocalizationAlgos {id, name}
-}`;
+}`
 
 export const metadataExportQuery = gql`
   query MetadataExport($dFilter: DatasetFilter, $offset: Int, $limit: Int,
@@ -180,4 +180,4 @@ export const metadataExportQuery = gql`
       }
       rawOpticalImageUrl
     }
-  } `;
+  } `

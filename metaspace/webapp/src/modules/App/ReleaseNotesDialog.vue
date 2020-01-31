@@ -4,7 +4,8 @@
     custom-class="release-notes-dialog"
     top=""
     :visible="visible"
-    @close="handleClose">
+    @close="handleClose"
+  >
     <div>
       <h1>Welcome to METASPACE 1.0!</h1>
       <p>
@@ -13,7 +14,9 @@
       </p>
       <h2>Collaboration with groups and projects</h2>
       <p>We have added new ways for you to share your data with others:</p>
-      <div class="img-grp-container"><div class="img-grp" /></div>
+      <div class="img-grp-container">
+        <div class="img-grp" />
+      </div>
       <h2>User accounts</h2>
       <p>
         To improve your security and control over your data, we now require METASPACE users to have accounts in
@@ -22,7 +25,9 @@
         please create a new account. Please use your institutional email address at first so that you're reconnected
         with your previously submitted datasets. You are free to change your email address after sign-up.
       </p>
-      <div class="img-acct-container"><div class="img-acct" /></div>
+      <div class="img-acct-container">
+        <div class="img-acct" />
+      </div>
       <p>
         With the old email-based logins, we found many people spread their datasets across several email addresses,
         depending on which they had open at the time. As this is no longer a problem with password-based logins, we've
@@ -32,10 +37,17 @@
       </p>
       <div style="display: flex;align-items: center;">
         <div style="flex-grow: 1">
-          <el-checkbox v-model="dontShowAgain">I understand, don't show this again</el-checkbox>
+          <el-checkbox v-model="dontShowAgain">
+            I understand, don't show this again
+          </el-checkbox>
         </div>
         <div style="justify-self: flex-end">
-          <el-button type="primary" @click="handleClose">Close</el-button>
+          <el-button
+            type="primary"
+            @click="handleClose"
+          >
+            Close
+          </el-button>
         </div>
       </div>
     </div>
@@ -43,24 +55,24 @@
 </template>
 
 <script lang="ts">
-  import Vue from 'vue';
-  import Component from 'vue-class-component';
-  import {getLocalStorage, setLocalStorage} from '../../lib/localStorage';
+import Vue from 'vue'
+import Component from 'vue-class-component'
+import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'
 
-  const CURRENT_VERSION = 1;
+const CURRENT_VERSION = 1
 
   @Component
-  export default class ReleaseNotesDialog extends Vue {
+export default class ReleaseNotesDialog extends Vue {
     visible = (getLocalStorage<number>('hideReleaseNotes') || 0) < CURRENT_VERSION;
     dontShowAgain = false;
 
     handleClose() {
-      this.visible = false;
+      this.visible = false
       if (this.dontShowAgain) {
-        setLocalStorage('hideReleaseNotes', CURRENT_VERSION, true);
+        setLocalStorage('hideReleaseNotes', CURRENT_VERSION, true)
       }
     }
-  }
+}
 </script>
 <style lang="scss">
   .release-notes-dialog-wrapper {

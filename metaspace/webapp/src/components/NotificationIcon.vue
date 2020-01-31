@@ -1,16 +1,23 @@
 <template>
-  <el-tooltip v-if="tooltip != null" :content="tooltip" :placement="tooltipPlacement">
+  <el-tooltip
+    v-if="tooltip != null"
+    :content="tooltip"
+    :placement="tooltipPlacement"
+  >
     <span class="notification" />
   </el-tooltip>
-  <span v-else class="notification" />
+  <span
+    v-else
+    class="notification"
+  />
 </template>
 <script>
-  export default {
-    props: {
-      tooltip: String,
-      tooltipPlacement: String
-    }
-  }
+export default {
+  props: {
+    tooltip: String,
+    tooltipPlacement: String,
+  },
+}
 </script>
 <style scoped lang="scss">
   @import "~element-ui/packages/theme-chalk/src/common/var";

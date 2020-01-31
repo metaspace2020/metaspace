@@ -1,77 +1,82 @@
 <template>
-    <div>
-        <el-row id="isotope-plot-container">
-            <isotope-pattern-plot :data="plotData" :legendItems="isotopeLegendItems" />
-        </el-row>
-    </div>
+  <div>
+    <el-row id="isotope-plot-container">
+      <isotope-pattern-plot
+        :data="plotData"
+        :legend-items="isotopeLegendItems"
+      />
+    </el-row>
+  </div>
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
-import { Component, Prop } from 'vue-property-decorator';
+import Vue from 'vue'
+import { Component, Prop } from 'vue-property-decorator'
 
-import PlotLegend from '../PlotLegend.vue';
-import IsotopePatternPlot from '../IsotopePatternPlot.vue';
-import {renderMolFormulaHtml} from '../../../../util';
+import PlotLegend from '../PlotLegend.vue'
+import IsotopePatternPlot from '../IsotopePatternPlot.vue'
+import { renderMolFormulaHtml } from '../../../../util'
 
 @Component({
-    components: {
-        PlotLegend,
-        IsotopePatternPlot
-    }
+  components: {
+    PlotLegend,
+    IsotopePatternPlot,
+  },
 })
 export default class DiagnosticsPlot extends Vue {
     @Prop()
     peakChartData: any;
+
     @Prop()
     ion: any;
+
     @Prop()
     comparisonPeakChartData: any;
+
     @Prop()
     comparisonIon: any;
 
-
     get isotopeLegendItems(): any[] {
-        if (this.peakChartData != null) {
-            const ionHtml = renderMolFormulaHtml(this.ion);
-            if (this.comparisonPeakChartData != null) {
-                const compIonHtml = renderMolFormulaHtml(this.comparisonIon);
-                return [
-                    {labelHtml: `${ionHtml}<br> Theoretical`, cssClass: 'refTheor', type: 'theor'},
-                    {labelHtml: `${ionHtml}<br> Sample`, cssClass: 'refSample', type: 'sample'},
-                    {labelHtml: `${compIonHtml}<br> Theoretical`, cssClass: 'compTheor', type: 'theor'},
-                    {labelHtml: `${compIonHtml}<br> Sample`, cssClass: 'compSample', type: 'sample'},
-                ]
-            } else {
-                return [
-                    {labelHtml: 'Theoretical', cssClass: 'soloTheor', type: 'theor'},
-                    {labelHtml: 'Sample', cssClass: 'soloSample', type: 'sample'},
-                ]
-            }
+      if (this.peakChartData != null) {
+        const ionHtml = renderMolFormulaHtml(this.ion)
+        if (this.comparisonPeakChartData != null) {
+          const compIonHtml = renderMolFormulaHtml(this.comparisonIon)
+          return [
+            { labelHtml: `${ionHtml}<br> Theoretical`, cssClass: 'refTheor', type: 'theor' },
+            { labelHtml: `${ionHtml}<br> Sample`, cssClass: 'refSample', type: 'sample' },
+            { labelHtml: `${compIonHtml}<br> Theoretical`, cssClass: 'compTheor', type: 'theor' },
+            { labelHtml: `${compIonHtml}<br> Sample`, cssClass: 'compSample', type: 'sample' },
+          ]
         } else {
-            return []
+          return [
+            { labelHtml: 'Theoretical', cssClass: 'soloTheor', type: 'theor' },
+            { labelHtml: 'Sample', cssClass: 'soloSample', type: 'sample' },
+          ]
         }
+      } else {
+        return []
+      }
     }
 
     get plotData(): any {
-        if (!this.peakChartData) {
-            return null;
-        }
-        const {sampleData, theor, ppm} = this.peakChartData;
-        const sampleDatas = [sampleData];
-        const theors = [theor];
-        if (this.comparisonPeakChartData) {
-            sampleDatas.push(this.comparisonPeakChartData.sampleData);
-            theors.push(this.comparisonPeakChartData.theor);
-        }
+      if (!this.peakChartData) {
+        return null
+      }
+      const { sampleData, theor, ppm } = this.peakChartData
+      const sampleDatas = [sampleData]
+      const theors = [theor]
+      if (this.comparisonPeakChartData) {
+        sampleDatas.push(this.comparisonPeakChartData.sampleData)
+        theors.push(this.comparisonPeakChartData.theor)
+      }
 
-        return {
-            sampleDatas,
-            theors,
-            ppm,
-            sampleClasses: this.comparisonPeakChartData ? ['refSample', 'compSample'] : ['soloSample'],
-            theorClasses: this.comparisonPeakChartData ? ['refTheor', 'compTheor'] : ['soloTheor'],
-        }
+      return {
+        sampleDatas,
+        theors,
+        ppm,
+        sampleClasses: this.comparisonPeakChartData ? ['refSample', 'compSample'] : ['soloSample'],
+        theorClasses: this.comparisonPeakChartData ? ['refTheor', 'compTheor'] : ['soloTheor'],
+      }
     }
 }
 </script>
@@ -95,7 +100,6 @@ export default class DiagnosticsPlot extends Vue {
             stroke: rgba($refColor, 0.75);
         }
     }
-
 
     #isotope-plot-container /deep/ .refSample {
         circle {

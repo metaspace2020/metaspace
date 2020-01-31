@@ -4,14 +4,14 @@
     class="el-input-number-overrides"
     :controls="false"
     :value="value === null ? undefined : value"
-    @input="val => $emit('input', val === undefined ? null : val)"
     v-bind="$attrs"
+    @input="val => $emit('input', val === undefined ? null : val)"
   />
 </template>
 
 <script lang="ts">
-  import Vue from 'vue'
-  import {Component, Prop} from 'vue-property-decorator'
+import Vue from 'vue'
+import { Component, Prop } from 'vue-property-decorator'
 
   /**
    * Wrapper for el-input-number to make it slightly friendlier in forms:
@@ -23,10 +23,10 @@
   @Component({
     inheritAttrs: false,
   })
-  export default class CustomNumberInput extends Vue {
-    @Prop({default: 0})
+export default class CustomNumberInput extends Vue {
+    @Prop({ default: 0 })
     value!: number | null;
-  }
+}
 </script>
 <style lang="scss" scoped>
   .el-input-number-overrides {

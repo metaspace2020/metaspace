@@ -1,7 +1,7 @@
-import {Vue} from 'vue/types/vue';
-import apolloClient from '../graphqlClient';
-import {DatasetDetailItem} from '../api/dataset';
-import {VueApolloQueryOptions} from 'vue-apollo/types/options';
+import { Vue } from 'vue/types/vue'
+import apolloClient from '../graphqlClient'
+import { DatasetDetailItem } from '../api/dataset'
+import { VueApolloQueryOptions } from 'vue-apollo/types/options'
 
 export const removeDatasetFromAllDatasetsQuery = (vm: Vue, queryName: string, datasetId: string) => {
   updateApolloCache(vm, queryName, oldVal => {
@@ -10,11 +10,11 @@ export const removeDatasetFromAllDatasetsQuery = (vm: Vue, queryName: string, da
         ...oldVal,
         allDatasets: oldVal.allDatasets.filter((ds: DatasetDetailItem) => ds.id !== datasetId),
         countDatasets: oldVal.countDatasets && oldVal.countDatasets - 1,
-      };
+      }
     }
-    return oldVal;
-  });
-};
+    return oldVal
+  })
+}
 
 /**
  * Updates a vue-apollo smart query's results in the Apollo cache.
@@ -25,21 +25,21 @@ export const removeDatasetFromAllDatasetsQuery = (vm: Vue, queryName: string, da
  *                   a copy.
  */
 const updateApolloCache = (vm: Vue, queryName: string, update: (value: any) => any) => {
-  let {query, variables} = (vm.$apollo.queries[queryName] as any).options as VueApolloQueryOptions<any, any>;
-  if (query instanceof Function) query = query.call(vm);
-  if (variables instanceof Function) variables = variables.call(vm);
-  let oldVal: any;
+  let { query, variables } = (vm.$apollo.queries[queryName] as any).options as VueApolloQueryOptions<any, any>
+  if (query instanceof Function) query = query.call(vm)
+  if (variables instanceof Function) variables = variables.call(vm)
+  let oldVal: any
   try {
-    oldVal = apolloClient.readQuery({ query, variables });
+    oldVal = apolloClient.readQuery({ query, variables })
   } catch (err) {
     // Ignore - readQuery throws an error if the query hasn't been executed yet
   }
   if (oldVal != null) {
-    const newVal = update(oldVal);
+    const newVal = update(oldVal)
     if (newVal !== undefined && newVal !== oldVal) {
-      apolloClient.writeQuery({ query, variables, data: newVal });
+      apolloClient.writeQuery({ query, variables, data: newVal })
     }
   }
-};
+}
 
-export default updateApolloCache;
+export default updateApolloCache

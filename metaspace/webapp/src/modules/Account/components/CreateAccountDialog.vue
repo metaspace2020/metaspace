@@ -2,7 +2,7 @@
   <el-dialog
     :title="hasSucceeded ? 'Welcome to METASPACE!' : 'Create an account'"
     visible
-    :lockScroll="false"
+    :lock-scroll="false"
     :close-on-click-modal="!hasSucceeded"
     @close="onClose"
   >
@@ -12,13 +12,17 @@
     <div v-else>
       <div class="container">
         <div class="left-side">
-          <el-form ref="form" :model="model" :rules="rules">
+          <el-form
+            ref="form"
+            :model="model"
+            :rules="rules"
+          >
             <el-row>
               <el-col :span="11">
                 <el-form-item prop="firstName">
                   <el-input
-                    type="text"
                     v-model="model.firstName"
+                    type="text"
                     placeholder="First name"
                     required
                   />
@@ -30,8 +34,8 @@
               <el-col :span="11">
                 <el-form-item prop="lastName">
                   <el-input
-                    type="text"
                     v-model="model.lastName"
+                    type="text"
                     placeholder="Last name"
                     required
                   />
@@ -40,33 +44,43 @@
             </el-row>
             <el-form-item prop="email">
               <el-input
-                type="text"
                 v-model="model.email"
+                type="text"
                 placeholder="Email address"
                 required
               />
             </el-form-item>
             <el-form-item prop="password">
               <el-input
-                type="password"
                 v-model="model.password"
+                type="password"
                 placeholder="Password"
                 required
                 @keypress.native.enter="onSubmit"
               />
             </el-form-item>
-            <el-button type="primary" :loading="isSubmitting" @click="onSubmit">
+            <el-button
+              type="primary"
+              :loading="isSubmitting"
+              @click="onSubmit"
+            >
               Create account
             </el-button>
           </el-form>
         </div>
         <div class="mid">
           <div class="divider" />
-          <div class="text">or</div>
+          <div class="text">
+            or
+          </div>
           <div class="divider" />
         </div>
         <div class="right-side">
-          <a class="google-button" href="/api_auth/google" @click="setSignInReturnUrl">
+          <a
+            class="google-button"
+            href="/api_auth/google"
+            @click="setSignInReturnUrl"
+          >
             <google-button>Sign up with Google</google-button>
           </a>
           <ul style="padding: 0 20px;">
@@ -76,22 +90,24 @@
         </div>
       </div>
       <p style="margin-bottom: 0">
-        Already registered? <inter-dialog-link dialog="signIn">Sign in</inter-dialog-link>
+        Already registered? <inter-dialog-link dialog="signIn">
+          Sign in
+        </inter-dialog-link>
       </p>
     </div>
   </el-dialog>
 </template>
 
 <script lang="ts">
-  import Vue from 'vue';
-  import { Component } from 'vue-property-decorator';
-  import { Form } from 'element-ui';
-  import GoogleButton from './GoogleButton.vue';
-  import InterDialogLink from './InterDialogLink';
-  import { createAccountByEmail } from '../../../api/auth';
-  import reportError from '../../../lib/reportError';
-  import emailRegex from '../../../lib/emailRegex';
-  import {setSignInReturnUrl} from '../signInReturnUrl';
+import Vue from 'vue'
+import { Component } from 'vue-property-decorator'
+import { Form } from 'element-ui'
+import GoogleButton from './GoogleButton.vue'
+import InterDialogLink from './InterDialogLink'
+import { createAccountByEmail } from '../../../api/auth'
+import reportError from '../../../lib/reportError'
+import emailRegex from '../../../lib/emailRegex'
+import { setSignInReturnUrl } from '../signInReturnUrl'
 
   interface Model {
     firstName: string;
@@ -106,56 +122,54 @@
       InterDialogLink,
     },
   })
-  export default class CreateAccountDialog extends Vue {
+export default class CreateAccountDialog extends Vue {
     isSubmitting: boolean = false;
     hasSucceeded: boolean = false;
     model: Model = {
       firstName: '',
       lastName: '',
       email: '',
-      password: ''
+      password: '',
     };
+
     rules = {
       firstName: [{ required: true, min: 2, max: 50, message: 'First name is required' }],
       lastName: [{ required: true, min: 2, max: 50, message: 'Last name is required' }],
       email: [
         { required: true, message: 'Email address is required' },
-        { pattern: emailRegex, message: 'Must be a valid email address' }
+        { pattern: emailRegex, message: 'Must be a valid email address' },
       ],
       password: [
-        { required: true, min: 8, message: 'Password must be at least 8 characters' }
+        { required: true, min: 8, message: 'Password must be at least 8 characters' },
       ],
     };
 
     async onSubmit() {
       try {
-        await (this.$refs.form as Form).validate();
+        await (this.$refs.form as Form).validate()
       } catch (err) {
-        return;
+        return
       }
+      const { email, password, firstName, lastName } = this.model
+      this.isSubmitting = true
       try {
-        const {email, password, firstName, lastName} = this.model;
-        this.isSubmitting = true;
-        try {
-          await createAccountByEmail(email, password, `${firstName} ${lastName}`);
-          this.hasSucceeded = true;
-        } catch (err) {
-          reportError(err);
-        }
+        await createAccountByEmail(email, password, `${firstName} ${lastName}`)
+        this.hasSucceeded = true
       } catch (err) {
+        reportError(err)
       } finally {
-        this.isSubmitting = false;
+        this.isSubmitting = false
       }
     }
 
     setSignInReturnUrl() {
-      setSignInReturnUrl(this.$route);
+      setSignInReturnUrl(this.$route)
     }
 
     onClose() {
-      this.$store.commit('account/hideDialog', 'createAccount');
+      this.$store.commit('account/hideDialog', 'createAccount')
     }
-  }
+}
 </script>
 
 <style scoped lang="scss">

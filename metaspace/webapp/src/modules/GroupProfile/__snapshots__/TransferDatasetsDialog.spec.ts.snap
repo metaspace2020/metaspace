@@ -9,9 +9,13 @@ exports[`TransferDatasetsDialog should match snapshot (datasets to import, invit
       </p>
       <div class="button-bar"><button type="button" class="el-button el-button--default el-button--small">
           <!---->
-          <!----><span>Cancel</span></button> <button type="button" class="el-button el-button--primary el-button--small">
+          <!----><span>
+          Cancel
+        </span></button> <button type="button" class="el-button el-button--primary el-button--small">
           <!---->
-          <!----><span>Join group</span></button></div>
+          <!----><span>
+          Join group
+        </span></button></div>
     </div>
   </div>
 </mock-el-dialog>
@@ -26,9 +30,13 @@ exports[`TransferDatasetsDialog should match snapshot (datasets to import, reque
       </p>
       <div class="button-bar"><button type="button" class="el-button el-button--default el-button--small">
           <!---->
-          <!----><span>Cancel</span></button> <button type="button" class="el-button el-button--primary el-button--small">
+          <!----><span>
+          Cancel
+        </span></button> <button type="button" class="el-button el-button--primary el-button--small">
           <!---->
-          <!----><span>Request access</span></button></div>
+          <!----><span>
+          Request access
+        </span></button></div>
     </div>
   </div>
 </mock-el-dialog>
@@ -43,9 +51,13 @@ exports[`TransferDatasetsDialog should match snapshot (no datasets, invited) 1`]
       </p>
       <div class="button-bar"><button type="button" class="el-button el-button--default el-button--small">
           <!---->
-          <!----><span>Cancel</span></button> <button type="button" class="el-button el-button--primary el-button--small">
+          <!----><span>
+          Cancel
+        </span></button> <button type="button" class="el-button el-button--primary el-button--small">
           <!---->
-          <!----><span>Join group</span></button></div>
+          <!----><span>
+          Join group
+        </span></button></div>
     </div>
   </div>
 </mock-el-dialog>
@@ -60,9 +72,13 @@ exports[`TransferDatasetsDialog should match snapshot (no datasets, requesting a
       </p>
       <div class="button-bar"><button type="button" class="el-button el-button--default el-button--small">
           <!---->
-          <!----><span>Cancel</span></button> <button type="button" class="el-button el-button--primary el-button--small">
+          <!----><span>
+          Cancel
+        </span></button> <button type="button" class="el-button el-button--primary el-button--small">
           <!---->
-          <!----><span>Request access</span></button></div>
+          <!----><span>
+          Request access
+        </span></button></div>
     </div>
   </div>
 </mock-el-dialog>

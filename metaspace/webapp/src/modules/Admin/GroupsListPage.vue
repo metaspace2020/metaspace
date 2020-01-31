@@ -1,26 +1,37 @@
 <template>
-  <div class="page" v-if="currentUser && currentUser.role === 'admin'">
+  <div
+    v-if="currentUser && currentUser.role === 'admin'"
+    class="page"
+  >
     <div class="page-content">
       <search-box v-model="query" />
-      <el-row v-if="currentUser" type="flex" justify="end">
-        <el-button @click="handleCreateGroup">Create group</el-button>
+      <el-row
+        v-if="currentUser"
+        type="flex"
+        justify="end"
+      >
+        <el-button @click="handleCreateGroup">
+          Create group
+        </el-button>
       </el-row>
-      <div class="clearfix"/>
+      <div class="clearfix" />
       <div v-loading="loading !== 0">
-        <groups-list-item v-for="group in allGroups"
-                            :key="group.id"
-                            :group="group" />
+        <groups-list-item
+          v-for="group in allGroups"
+          :key="group.id"
+          :group="group"
+        />
       </div>
     </div>
   </div>
 </template>
 <script lang="ts">
-  import Vue from 'vue';
-  import { Component } from 'vue-property-decorator';
-  import { currentUserRoleQuery } from '../../api/user';
-  import { SearchBox } from '../Filters';
-  import GroupsListItem from './GroupsListItem.vue';
-  import gql from 'graphql-tag';
+import Vue from 'vue'
+import { Component } from 'vue-property-decorator'
+import { currentUserRoleQuery } from '../../api/user'
+import { SearchBox } from '../Filters'
+import GroupsListItem from './GroupsListItem.vue'
+import gql from 'graphql-tag'
 
   @Component({
     components: {
@@ -55,9 +66,9 @@
           }
         },
       },
-    }
+    },
   })
-  export default class GroupsListPage extends Vue {
+export default class GroupsListPage extends Vue {
     loading = 0;
     currentUser: any = null;
     allGroups: any[] | null = null;
@@ -65,9 +76,9 @@
     query = '';
 
     handleCreateGroup() {
-      this.$router.push('/group/create');
+      this.$router.push('/group/create')
     }
-  }
+}
 
 </script>
 <style scoped lang="scss">

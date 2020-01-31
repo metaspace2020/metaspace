@@ -3,11 +3,24 @@
     class="md-form-field"
     :error="typeof error === 'string' ? error : null"
   >
-    <span slot="label" class="field-label">
-      <span>{{ name }}</span><span v-if="required" style="color: red">*</span>
-      <el-popover trigger="hover" placement="right" v-if="help">
-        <component :is="help"></component>
-        <i slot="reference" class="el-icon-question metadata-help-icon"></i>
+    <span
+      slot="label"
+      class="field-label"
+    >
+      <span>{{ name }}</span><span
+        v-if="required"
+        style="color: red"
+      >*</span>
+      <el-popover
+        v-if="help"
+        trigger="hover"
+        placement="right"
+      >
+        <component :is="help" />
+        <i
+          slot="reference"
+          class="el-icon-question metadata-help-icon"
+        />
       </el-popover>
     </span>
 
@@ -15,125 +28,134 @@
       v-if="type === 'autocomplete'"
       class="md-ac"
       :popper-class="wideAutocomplete ? 'md-ac-popper--wide' : ''"
-      @input="onInput"
-      @select="onSelect"
       :value="value"
       :required="required"
       :placeholder="placeholder"
       :trigger-on-focus="true"
       :fetch-suggestions="fetchSuggestionsAndTestWidth"
       v-bind="$attrs"
+      @input="onInput"
+      @select="onSelect"
     />
 
     <el-input
       v-else-if="type === 'textarea'"
       :autosize="{minRows: 1.5, maxRows: 5}"
       type="textarea"
-      @input="onInput"
       :value="value"
       :required="required"
       :placeholder="placeholder"
       v-bind="$attrs"
+      @input="onInput"
     />
 
     <el-input
       v-else-if="type === 'text'"
-      @input="onInput"
       :value="value"
       :required="required"
       :placeholder="placeholder"
       v-bind="$attrs"
+      @input="onInput"
     />
 
     <custom-number-input
       v-else-if="type === 'number'"
-      @input="onInput"
       :value="value"
       :required="required"
       :placeholder="placeholder"
       v-bind="$attrs"
+      @input="onInput"
     />
 
     <el-select
       v-else-if="type === 'select'"
-      @input="onInput"
       :value="value"
       :required="required"
-      v-bind="$attrs">
-      <el-option v-for="opt in options"
-                 :value="optionsAreStrings ? opt : opt.value"
-                 :label="optionsAreStrings ? opt : opt.label"
-                 :key="optionsAreStrings ? opt : opt.value" />
+      v-bind="$attrs"
+      @input="onInput"
+    >
+      <el-option
+        v-for="opt in options"
+        :key="optionsAreStrings ? opt : opt.value"
+        :value="optionsAreStrings ? opt : opt.value"
+        :label="optionsAreStrings ? opt : opt.label"
+      />
     </el-select>
 
     <el-select
       v-else-if="type === 'selectMulti'"
-      @input="onInput"
       :value="value"
       :required="required"
       multiple
-      v-bind="$attrs">
-      <el-option v-for="opt in options"
-                 :value="optionsAreStrings ? opt : opt.value"
-                 :label="optionsAreStrings ? opt : opt.label"
-                 :key="optionsAreStrings ? opt : opt.value" />
+      v-bind="$attrs"
+      @input="onInput"
+    >
+      <el-option
+        v-for="opt in options"
+        :key="optionsAreStrings ? opt : opt.value"
+        :value="optionsAreStrings ? opt : opt.value"
+        :label="optionsAreStrings ? opt : opt.label"
+      />
     </el-select>
 
     <table-input
       v-else-if="type === 'table'"
-      @input="onInput"
       :value="value"
       :fields="fields"
       :required="required"
       :placeholder="placeholder"
       v-bind="$attrs"
+      @input="onInput"
     />
 
     <person-input
       v-else-if="type === 'person'"
-      @input="onInput"
       :value="value"
       :error="typeof error !== 'string' ? error : null"
       :required="required"
-      :fetchSuggestions="fetchSuggestions"
+      :fetch-suggestions="fetchSuggestions"
       :debounce="0"
       v-bind="$attrs"
+      @input="onInput"
     />
 
     <detector-resolving-power-input
       v-else-if="type === 'detectorResolvingPower'"
-      @input="onInput"
       :value="value"
       :error="typeof error !== 'string' ? error : null"
       :required="required"
       v-bind="$attrs"
+      @input="onInput"
     />
 
     <pixel-size-input
       v-else-if="type === 'pixelSize'"
-      @input="onInput"
       :value="value"
       :error="typeof error !== 'string' ? error : null"
       :required="required"
       v-bind="$attrs"
+      @input="onInput"
     />
 
-    <div v-else style="color: red">Unrecognized form field type: {{type}}</div>
-
+    <div
+      v-else
+      style="color: red"
+    >
+      Unrecognized form field type: {{ type }}
+    </div>
   </el-form-item>
-
 </template>
 
 <script lang="ts">
-  import Vue from 'vue';
-  import TableInput from './TableInput.vue';
-  import PersonInput from './PersonInput.vue';
-  import DetectorResolvingPowerInput from './DetectorResolvingPowerInput.vue';
-  import PixelSizeInput from './PixelSizeInput.vue';
-  import { Component, Prop } from 'vue-property-decorator';
-  import { FetchSuggestions, FetchSuggestionsCallback } from 'element-ui/types/autocomplete';
-  import CustomNumberInput from './CustomNumberInput.vue';
-  import {throttle} from 'lodash-es';
+import Vue from 'vue'
+import TableInput from './TableInput.vue'
+import PersonInput from './PersonInput.vue'
+import DetectorResolvingPowerInput from './DetectorResolvingPowerInput.vue'
+import PixelSizeInput from './PixelSizeInput.vue'
+import { Component, Prop } from 'vue-property-decorator'
+import { FetchSuggestions, FetchSuggestionsCallback } from 'element-ui/types/autocomplete'
+import CustomNumberInput from './CustomNumberInput.vue'
+import { throttle } from 'lodash-es'
 
   @Component({
     inheritAttrs: false,
@@ -143,27 +165,36 @@
       DetectorResolvingPowerInput,
       PixelSizeInput,
       CustomNumberInput,
-    }
+    },
   })
-  export default class FormField extends Vue {
+export default class FormField extends Vue {
     @Prop({ type: String, required: true })
     type!: string;
+
     @Prop({ type: String, required: true })
     name!: string;
+
     @Prop()
     help?: any;
+
     @Prop({ validator: val => val !== undefined })
     value!: any;
+
     @Prop([String, Object, Array])
     error?: string | object | any[];
+
     @Prop(Object)
     fields?: object;
+
     @Prop(Array)
     options?: any[];
+
     @Prop({ type: Boolean, default: false })
     required!: Boolean;
+
     @Prop(String)
     placeholder?: String;
+
     @Prop(Function)
     fetchSuggestions!: FetchSuggestions;
 
@@ -174,30 +205,33 @@
       // Fix PR: https://github.com/ElemeFE/element/pull/17302
       // The current workaround is to disable debouncing on the component and instead use throttle here so that
       // the first call happens without delay
-      this.fetchSuggestionsAndTestWidth = throttle(this.fetchSuggestionsAndTestWidth);
+      this.fetchSuggestionsAndTestWidth = throttle(this.fetchSuggestionsAndTestWidth)
     }
 
     get optionsAreStrings() {
-      return this.options && this.options.length > 0 && typeof this.options[0] === 'string';
+      return this.options && this.options.length > 0 && typeof this.options[0] === 'string'
     }
 
     onSelect(val: any) {
-      this.$emit('select', val);
+      this.$emit('select', val)
     }
 
     onInput(val: any) {
-      this.$emit('input', val);
+      this.$emit('input', val)
     }
 
     fetchSuggestionsAndTestWidth(queryString: string, callback: FetchSuggestionsCallback) {
-      const CHARS_BREAKPOINT = 26;
+      const CHARS_BREAKPOINT = 26
       this.fetchSuggestions(queryString, results => {
         this.wideAutocomplete = Array.isArray(results)
-          && results.some(result => result && result.value && result.value.length && result.value.length >= CHARS_BREAKPOINT);
-        callback(results);
+          && results.some(result => result
+            && result.value
+            && result.value.length
+            && result.value.length >= CHARS_BREAKPOINT)
+        callback(results)
       })
     }
-  }
+}
 </script>
 
 <style lang="scss">

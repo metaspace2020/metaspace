@@ -127,6 +127,9 @@ jobs:
           command: |
             yarn run test-ci --coverage --maxWorkers=1
             npx codecov -p ../.. -F webapp
+      - run:
+          name: Lint code
+          command: yarn run lint
 
   test-webapp-e2e:
     docker:

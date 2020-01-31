@@ -1,7 +1,6 @@
 <template>
   <div id="app">
-    <metaspace-header>
-    </metaspace-header>
+    <metaspace-header />
 
     <!--
       :key="$route.path" is used to force the content to be remounted if a non-querystring param in the URL changes.
@@ -16,62 +15,64 @@
     <dialog-controller />
     <!--<release-notes-dialog />-->
 
-    <tour-step ref="tour" :tour="$store.state.currentTour"></tour-step>
-    <new-feature-popup v-if="features.new_feature_popups && $store.state.currentTour == null"/>
+    <tour-step
+      ref="tour"
+      :tour="$store.state.currentTour"
+    />
+    <new-feature-popup v-if="features.new_feature_popups && $store.state.currentTour == null" />
   </div>
 </template>
 
 <script>
- import * as cookie from 'js-cookie';
- import MetaspaceHeader from './MetaspaceHeader.vue';
- import MetaspaceFooter from './MetaspaceFooter.vue';
- // import ReleaseNotesDialog from './ReleaseNotesDialog.vue';
- import NewFeaturePopup from './NewFeaturePopup.vue';
- import TourStep from './TourStep.vue';
- import {DialogController} from '../Account';
- import config from '../../config';
- import Vue, {ComponentOptions} from 'vue';
- import 'element-ui'; // Needed for Vue.$alert augmentation
+import * as cookie from 'js-cookie'
+import MetaspaceHeader from './MetaspaceHeader.vue'
+// import ReleaseNotesDialog from './ReleaseNotesDialog.vue';
+import NewFeaturePopup from './NewFeaturePopup.vue'
+import TourStep from './TourStep.vue'
+import { DialogController } from '../Account'
+import config from '../../config'
+import Vue, { ComponentOptions } from 'vue'
+import 'element-ui' // Needed for Vue.$alert augmentation
 
- /** @type {ComponentOptions<Vue> & Vue} */
- export default {
-   name: 'app',
-   components: {
-     MetaspaceHeader,
-     MetaspaceFooter,
-     // ReleaseNotesDialog,
-     NewFeaturePopup,
-     TourStep,
-     DialogController,
-   },
-   data() {
-     return {
-       features: config.features
-     }
-   },
-   async created() {
-     const flashMessage = cookie.getJSON('flashMessage');
-     if (flashMessage) {
-       try {
-         if (flashMessage.type === 'verify_email_success') {
-           await this.$alert('Your email address was successfully verified. You may now upload datasets to METASPACE.',
-             'Welcome to METASPACE', {type: 'success'});
-         } else if (flashMessage.type === 'verify_email_failure') {
-           await this.$alert('This email verification link is invalid or has expired. Try signing in or resetting your password. ' +
-             'If this keeps happening, please <a href="mailto:contact@metaspace2020.eu">let us know</a>.',
-             'Something went wrong!', {type: 'warning', dangerouslyUseHTMLString: true});
-         } else if (flashMessage.type === 'review_token_success') {
-           await this.$alert('You have been granted access to a private project.',
-             'Welcome to METASPACE', {type: 'success'});
-         }
-       } catch (err) {
-         // Ignore any errors - promise rejection here just means that the user cancelled out of the dialog
-       } finally {
-         cookie.remove('flashMessage');
-       }
-     }
-   }
- };
+/** @type {ComponentOptions<Vue> & Vue} */
+export default {
+  name: 'App',
+  components: {
+    MetaspaceHeader,
+    // ReleaseNotesDialog,
+    NewFeaturePopup,
+    TourStep,
+    DialogController,
+  },
+  data() {
+    return {
+      features: config.features,
+    }
+  },
+  async created() {
+    const flashMessage = cookie.getJSON('flashMessage')
+    if (flashMessage) {
+      try {
+        if (flashMessage.type === 'verify_email_success') {
+          await this.$alert('Your email address was successfully verified. You may now upload datasets to METASPACE.',
+            'Welcome to METASPACE', { type: 'success' })
+        } else if (flashMessage.type === 'verify_email_failure') {
+          await this.$alert('This email verification link is invalid or has expired. '
+            + 'Try signing in or resetting your password. '
+            + 'If this keeps happening, please <a href="mailto:contact@metaspace2020.eu">let us know</a>.',
+          'Something went wrong!', { type: 'warning', dangerouslyUseHTMLString: true })
+        } else if (flashMessage.type === 'review_token_success') {
+          await this.$alert('You have been granted access to a private project.',
+            'Welcome to METASPACE', { type: 'success' })
+        }
+      } catch (err) {
+        // Ignore any errors - promise rejection here just means that the user cancelled out of the dialog
+      } finally {
+        cookie.remove('flashMessage')
+      }
+    }
+  },
+}
 </script>
 
 <style>

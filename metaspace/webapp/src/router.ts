@@ -1,11 +1,12 @@
-import Vue, {AsyncComponent} from 'vue';
-import VueRouter, {RawLocation} from 'vue-router';
-import AboutPage from './modules/App/AboutPage.vue';
-import DatasetsPage from './modules/Datasets/DatasetsPage.vue';
-import {DialogPage, ResetPasswordPage} from './modules/Account';
-import {redirectAfterSignIn} from './modules/Account/signInReturnUrl';
+/* eslint-disable vue/max-len */
+import Vue, { AsyncComponent } from 'vue'
+import VueRouter, { RawLocation } from 'vue-router'
+import AboutPage from './modules/App/AboutPage.vue'
+import DatasetsPage from './modules/Datasets/DatasetsPage.vue'
+import { DialogPage, ResetPasswordPage } from './modules/Account'
+import { redirectAfterSignIn } from './modules/Account/signInReturnUrl'
 
-Vue.use(VueRouter);
+Vue.use(VueRouter)
 
 const asyncPagesFreelyTyped = {
   AnnotationsPage: () => import(/* webpackPrefetch: true, webpackChunkName: "AnnotationsPage" */ './modules/Annotations/AnnotationsPage.vue'),
@@ -26,16 +27,16 @@ const asyncPagesFreelyTyped = {
   // These pages use sanitizeHtml, which is big
   ViewGroupPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle2" */ './modules/GroupProfile/ViewGroupPage.vue'),
   ViewProjectPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle2" */ './modules/Project/ViewProjectPage.vue'),
-};
-const asyncPages = asyncPagesFreelyTyped as Record<keyof typeof asyncPagesFreelyTyped, AsyncComponent>;
+}
+const asyncPages = asyncPagesFreelyTyped as Record<keyof typeof asyncPagesFreelyTyped, AsyncComponent>
 
 const convertLegacyHashUrls = () => {
-  const {pathname, hash} = window.location;
+  const { pathname, hash } = window.location
   if (pathname === '/' && hash && hash.startsWith('#/')) {
-    history.replaceState(undefined, undefined as any, hash.slice(1));
+    history.replaceState(undefined, undefined as any, hash.slice(1))
   }
-};
-convertLegacyHashUrls();
+}
+convertLegacyHashUrls()
 
 const router = new VueRouter({
   mode: 'history',
@@ -47,9 +48,9 @@ const router = new VueRouter({
       path: '/datasets',
       component: DatasetsPage,
       children: [
-        {path: '', component: asyncPages.DatasetTable},
-        {path: 'summary', component: asyncPages.DatasetSummary},
-      ]
+        { path: '', component: asyncPages.DatasetTable },
+        { path: 'summary', component: asyncPages.DatasetSummary },
+      ],
     },
     { path: '/datasets/edit/:dataset_id', name: 'edit-metadata', component: asyncPages.MetadataEditPage },
     { path: '/datasets/:dataset_id/add-optical-image', name: 'add-optical-image', component: asyncPages.ImageAlignmentPage },
@@ -60,10 +61,10 @@ const router = new VueRouter({
     { path: '/admin/health', component: asyncPages.SystemHealthPage },
     { path: '/admin/groups', component: asyncPages.GroupsListPage },
 
-    { path: '/account/sign-in', component: DialogPage, props: {dialog: 'signIn'} },
+    { path: '/account/sign-in', component: DialogPage, props: { dialog: 'signIn' } },
     { path: '/account/sign-in-success', redirect: redirectAfterSignIn },
-    { path: '/account/create-account', component: DialogPage, props: {dialog: 'createAccount'} },
-    { path: '/account/forgot-password', component: DialogPage, props: {dialog: 'forgotPassword'} },
+    { path: '/account/create-account', component: DialogPage, props: { dialog: 'createAccount' } },
+    { path: '/account/forgot-password', component: DialogPage, props: { dialog: 'forgotPassword' } },
     { path: '/account/reset-password', component: ResetPasswordPage },
 
     { path: '/group/create', component: asyncPages.CreateGroupPage },
@@ -71,10 +72,10 @@ const router = new VueRouter({
     { path: '/project/:projectIdOrSlug', name: 'project', component: asyncPages.ViewProjectPage },
     { // Legacy URL sent in "request access" emails up until Feb 2019
       path: '/project/:projectIdOrSlug/manage',
-      redirect: { path: '/project/:projectIdOrSlug', query: { tab: 'members' } } as RawLocation
+      redirect: { path: '/project/:projectIdOrSlug', query: { tab: 'members' } } as RawLocation,
     },
     { path: '/projects', component: asyncPages.ProjectsListPage },
-  ]
-});
+  ],
+})
 
-export default router;
+export default router

@@ -1,7 +1,6 @@
-import Vue, { CreateElement } from 'vue';
-import { Prop, Component } from 'vue-property-decorator';
-import { dialogRoutes } from '../dialogs';
-
+import Vue, { CreateElement } from 'vue'
+import { Prop, Component } from 'vue-property-decorator'
+import { dialogRoutes } from '../dialogs'
 
 /**
  * This component is needed for a weird pattern in CreateAccountDialog/SignInDialog:
@@ -16,7 +15,7 @@ export default class InterDialogLink extends Vue {
   dialog!: string;
 
   get link() {
-    return dialogRoutes[this.dialog];
+    return dialogRoutes[this.dialog]
   }
 
   render(h: CreateElement) {
@@ -26,14 +25,14 @@ export default class InterDialogLink extends Vue {
       },
       on: {
         click: (e: Event) => {
-          e.preventDefault();
+          e.preventDefault()
           if (this.$store.state.account.dialogCloseRedirect != null) {
-            this.$router.push(this.link);
+            this.$router.push(this.link)
           } else {
-            this.$store.commit('account/showDialog', this.dialog);
+            this.$store.commit('account/showDialog', this.dialog)
           }
-        }
-      }
+        },
+      },
     }, this.$slots.default)
   }
 }

@@ -23,8 +23,8 @@ exports[`Diagnostics should match snapshot (no isobars) 1`] = `
             Image analysis gave an off-sample probability of less than 10%.
           </div>
           <div slot-key="reference"><span class="on-sample-tag">
-                On-sample
-            </span></div>
+        On-sample
+      </span></div>
         </mock-el-popover>
       </div>
     </div>
@@ -32,13 +32,13 @@ exports[`Diagnostics should match snapshot (no isobars) 1`] = `
       <div class="el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6">
         <div class="small-peak-image">
           100.0000<br>
-          <imageloader-stub src="/fs/iso_images/img1" colormap="Viridis" imagefitparams="[object Object]" minintensity="0" maxintensity="100" showpixelintensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
+          <imageloader-stub src="/fs/iso_images/img1" colormap="Viridis" image-fit-params="[object Object]" min-intensity="0" max-intensity="100" show-pixel-intensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
         </div>
       </div>
       <div class="el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6">
         <div class="small-peak-image">
           101.0000<br>
-          <imageloader-stub src="/fs/iso_images/img2" colormap="Viridis" imagefitparams="[object Object]" minintensity="100" maxintensity="200" showpixelintensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
+          <imageloader-stub src="/fs/iso_images/img2" colormap="Viridis" image-fit-params="[object Object]" min-intensity="100" max-intensity="200" show-pixel-intensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
         </div>
       </div>
     </div>
@@ -175,12 +175,11 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
   <div class="compare-container">
     Compare selected annotation to:
     <mock-el-select placeholder="None" clearable="" class="compare-select" value="C8H9S2">
-      <!---->
       <mock-el-option value="C8H9S2" label="[M+0.0000]: [C8H10S2 - H]⁻">[M+0.0000]: [C<sub>8</sub>H<sub>10</sub>S<sub>2</sub> - H]⁻</mock-el-option>
     </mock-el-select>
   </div>
   <div class="ref-annotation-header">
-    <mock-el-popover trigger="hover" placement="top" opendelay="100">
+    <mock-el-popover trigger="hover" placement="top" open-delay="100">
       <div slot-key="default">
         <div><span>Candidate molecules (1):</span>
           <ul>
@@ -214,8 +213,8 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
             Image analysis gave an off-sample probability of less than 10%.
           </div>
           <div slot-key="reference"><span class="on-sample-tag">
-                On-sample
-            </span></div>
+        On-sample
+      </span></div>
         </mock-el-popover>
       </div>
     </div>
@@ -223,19 +222,19 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
       <div class="el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6">
         <div class="small-peak-image">
           100.0000<br>
-          <imageloader-stub src="/fs/iso_images/img1" colormap="Viridis" imagefitparams="[object Object]" minintensity="0" maxintensity="100" showpixelintensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
+          <imageloader-stub src="/fs/iso_images/img1" colormap="Viridis" image-fit-params="[object Object]" min-intensity="0" max-intensity="100" show-pixel-intensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
         </div>
       </div>
       <div class="el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6">
         <div class="small-peak-image">
           101.0000<br>
-          <imageloader-stub src="/fs/iso_images/img2" colormap="Viridis" imagefitparams="[object Object]" minintensity="100" maxintensity="200" showpixelintensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
+          <imageloader-stub src="/fs/iso_images/img2" colormap="Viridis" image-fit-params="[object Object]" min-intensity="100" max-intensity="200" show-pixel-intensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
         </div>
       </div>
     </div>
   </div>
   <div class="comp-annotation-header">
-    <!----> <span><mock-el-popover trigger="hover" placement="top" opendelay="100"><div slot-key="default"><div><span>Candidate molecules (1):</span>
+    <!----> <span><mock-el-popover trigger="hover" placement="top" open-delay="100"><div slot-key="default"><div><span>Candidate molecules (1):</span>
     <ul>
       <li>
         C.I. Food Red 6
@@ -267,8 +266,8 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
           Image analysis gave an off-sample probability of 88%.
         </div>
         <div slot-key="reference"><span class="off-sample-tag">
-                Off-sample
-            </span></div>
+        Off-sample
+      </span></div>
       </mock-el-popover>
     </div>
   </div>
@@ -276,13 +275,13 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
     <div class="el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6">
       <div class="small-peak-image">
         100.0000<br>
-        <imageloader-stub src="/fs/iso_images/img1" colormap="Viridis" imagefitparams="[object Object]" minintensity="0" maxintensity="100" showpixelintensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
+        <imageloader-stub src="/fs/iso_images/img1" colormap="Viridis" image-fit-params="[object Object]" min-intensity="0" max-intensity="100" show-pixel-intensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
       </div>
     </div>
     <div class="el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6">
       <div class="small-peak-image">
         101.0000<br>
-        <imageloader-stub src="/fs/iso_images/img2" colormap="Viridis" imagefitparams="[object Object]" minintensity="100" maxintensity="200" showpixelintensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
+        <imageloader-stub src="/fs/iso_images/img2" colormap="Viridis" image-fit-params="[object Object]" min-intensity="100" max-intensity="200" show-pixel-intensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
       </div>
     </div>
   </div>

@@ -4,18 +4,23 @@
       {{ name }}:
     </div>
 
-    <tf-input-box :mode="mode" @change="onChange" :value="value">
-    </tf-input-box>
+    <tf-input-box
+      :mode="mode"
+      :value="value"
+      @change="onChange"
+    />
 
-    <div class="tf-remove el-icon-error"
-         v-if="removable"
-         @click="destroy"></div>
+    <div
+      v-if="removable"
+      class="tf-remove el-icon-error"
+      @click="destroy"
+    />
   </div>
 </template>
 
 <script lang="ts">
- import TagFilterInputBox from './TagFilterInputBox.vue';
- import Vue, { ComponentOptions } from 'vue';
+import TagFilterInputBox from './TagFilterInputBox.vue'
+import Vue, { ComponentOptions } from 'vue'
 
  interface InputFilter extends Vue {
    name: string
@@ -27,25 +32,25 @@
    destroy(): void
  }
 
- export default {
-   name: 'input-filter',
-   components: {
-     'tf-input-box': TagFilterInputBox
-   },
-   props: {
-     name: String,
-     value: [String, Number],
-     removable: {type: Boolean, default: true},
-     mode: {type: String, default: 'text'}
-   },
-   methods: {
-     onChange(val) {
-       this.$emit('input', val);
-       this.$emit('change', val);
-     },
-     destroy() {
-       this.$emit('destroy', this.name);
-     }
-  }
- } as ComponentOptions<InputFilter>;
+export default {
+  name: 'input-filter',
+  components: {
+    'tf-input-box': TagFilterInputBox,
+  },
+  props: {
+    name: String,
+    value: [String, Number],
+    removable: { type: Boolean, default: true },
+    mode: { type: String, default: 'text' },
+  },
+  methods: {
+    onChange(val) {
+      this.$emit('input', val)
+      this.$emit('change', val)
+    },
+    destroy() {
+      this.$emit('destroy', this.name)
+    },
+  },
+} as ComponentOptions<InputFilter>
 </script>

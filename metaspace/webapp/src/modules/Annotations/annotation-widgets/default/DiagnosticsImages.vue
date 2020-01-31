@@ -1,48 +1,56 @@
 <template>
-    <el-row class="isotope-images-container">
-        <el-col :xs="24" :sm="12" :md="12" :lg="6"
-                v-for="(img, idx) in sortedIsotopeImages"
-                :key="annotation.id + idx">
-            <div class="small-peak-image">
-            {{ img.mz.toFixed(4) }}<br/>
-                <image-loader :src="img.url"
-                              :colormap="colormap"
-                              :imageFitParams="{areaMinHeight: 50, areaHeight: 250}"
-                              v-bind="imageLoaderSettings"
-                              style="overflow: hidden"
-                              :minIntensity="img.minIntensity"
-                              :maxIntensity="img.maxIntensity"
-                              showPixelIntensity
-                />
-            </div>
-        </el-col>
-    </el-row>
+  <el-row class="isotope-images-container">
+    <el-col
+      v-for="(img, idx) in sortedIsotopeImages"
+      :key="annotation.id + idx"
+      :xs="24"
+      :sm="12"
+      :md="12"
+      :lg="6"
+    >
+      <div class="small-peak-image">
+        {{ img.mz.toFixed(4) }}<br>
+        <image-loader
+          :src="img.url"
+          :colormap="colormap"
+          :image-fit-params="{areaMinHeight: 50, areaHeight: 250}"
+          v-bind="imageLoaderSettings"
+          style="overflow: hidden"
+          :min-intensity="img.minIntensity"
+          :max-intensity="img.maxIntensity"
+          show-pixel-intensity
+        />
+      </div>
+    </el-col>
+  </el-row>
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
-import { Component, Prop } from 'vue-property-decorator';
+import Vue from 'vue'
+import { Component, Prop } from 'vue-property-decorator'
 
-import ImageLoader from '../../../../components/ImageLoader.vue';
-import {sortBy} from 'lodash-es';
+import ImageLoader from '../../../../components/ImageLoader.vue'
+import { sortBy } from 'lodash-es'
 
 @Component({
-    components: {
-        ImageLoader,
-    }
+  components: {
+    ImageLoader,
+  },
 })
 export default class DiagnosticsImages extends Vue {
     @Prop()
     annotation: any
+
     @Prop()
     colormap: any
+
     @Prop()
     imageLoaderSettings: any
 
     get sortedIsotopeImages(): any[] {
-        // Usually isotope images are pre-sorted by the server, but it's not an explicit guarantee of the API
-        return sortBy(this.annotation.isotopeImages, img => img.mz)
-          .filter(img => img.mz > 0);
+      // Usually isotope images are pre-sorted by the server, but it's not an explicit guarantee of the API
+      return sortBy(this.annotation.isotopeImages, img => img.mz)
+        .filter(img => img.mz > 0)
     }
 }
 </script>

@@ -1,74 +1,104 @@
 <template>
   <div class="project-item">
-    <router-link :to="projectLink" class="underlay" />
+    <router-link
+      :to="projectLink"
+      class="underlay"
+    />
     <div class="item-body">
       <div class="info">
         <div class="info-line project-name">
-          <router-link :to="projectLink"><span style="margin-left: 5px">{{project.name}}</span></router-link>
-          <img v-if="!project.isPublic"
-               class="private-icon"
-               src="../../assets/padlock-icon.svg"
-               title="This project is only visible to its members and METASPACE administrators">
+          <router-link :to="projectLink">
+            <span style="margin-left: 5px">{{ project.name }}</span>
+          </router-link>
+          <img
+            v-if="!project.isPublic"
+            class="private-icon"
+            src="../../assets/padlock-icon.svg"
+            title="This project is only visible to its members and METASPACE administrators"
+          >
         </div>
         <div style="margin-left: 12px">
           <div class="info-line">
             <span v-if="project.numDatasets > 0">
-              <router-link :to="datasetsLink"><span>{{project.numDatasets | plural('Dataset', 'Datasets')}}</span></router-link>,
+              <router-link :to="datasetsLink"><span>{{ project.numDatasets | plural('Dataset', 'Datasets') }}</span></router-link>,
             </span>
-            {{project.numMembers | plural('Member', 'Members')}}
+            {{ project.numMembers | plural('Member', 'Members') }}
           </div>
-          <div class="info-line" v-if="projectManagers.length>0">
+          <div
+            v-if="projectManagers.length>0"
+            class="info-line"
+          >
             <span>Manager<span v-if="projectManagers.length>1">s</span>:</span>
-            <span v-for="(manager, ind) in projectManagers">
-              {{manager.user.name}}<span v-if="(ind < projectManagers.length)">
-              <span v-if="manager.user.primaryGroup || ind+1 < projectManagers.length">, </span></span>
-              <router-link class="group-link" v-if="manager.user.primaryGroup" :to="groupHref(manager)">
-                {{manager.user.primaryGroup.group.shortName}}<!--
+            <span
+              v-for="(manager, ind) in projectManagers"
+              :key="manager.user.id"
+            >
+              {{ manager.user.name }}<span v-if="(ind < projectManagers.length)">
+                <span v-if="manager.user.primaryGroup || ind+1 < projectManagers.length">, </span></span>
+              <router-link
+                v-if="manager.user.primaryGroup"
+                class="group-link"
+                :to="groupHref(manager)"
+              >
+                {{ manager.user.primaryGroup.group.shortName }}<!--
               --></router-link><span v-if="(ind+1 < projectManagers.length) && manager.user.primaryGroup">, </span>
             </span>
           </div>
           <div class="info-line">
-            <span v-if="project.latestUploadDT != null" >
-              Last submission <b><span style="font-size: 14px">{{formatDate(project.latestUploadDT)}}</span></b>
+            <span v-if="project.latestUploadDT != null">
+              Last submission <b><span style="font-size: 14px">{{ formatDate(project.latestUploadDT) }}</span></b>
             </span>
-              <span v-else >
-                Created on <b><span style="font-size: 14px">{{formatDate(project.createdDT)}}</span></b>
+            <span v-else>
+              Created on <b><span style="font-size: 14px">{{ formatDate(project.createdDT) }}</span></b>
             </span>
           </div>
-          <div class="description" v-if="project.description">
-            {{project.description}}
+          <div
+            v-if="project.description"
+            class="description"
+          >
+            {{ project.description }}
           </div>
         </div>
       </div>
       <div class="actions">
         <div v-if="project.numDatasets > 0">
           <i class="el-icon-picture" />
-          <router-link :to="annotationsLink">Browse annotations</router-link>
+          <router-link :to="annotationsLink">
+            Browse annotations
+          </router-link>
         </div>
         <div v-if="canManage">
-          <i class="el-icon-edit"></i>
-          <router-link :to="manageLink">Manage project</router-link>
+          <i class="el-icon-edit" />
+          <router-link :to="manageLink">
+            Manage project
+          </router-link>
         </div>
-        <div v-if="canManage" class="delete">
-          <i class="el-icon-delete"></i>
-          <a href="#" @click.prevent="handleDeleteProject">Delete project</a>
+        <div
+          v-if="canManage"
+          class="delete"
+        >
+          <i class="el-icon-delete" />
+          <a
+            href="#"
+            @click.prevent="handleDeleteProject"
+          >Delete project</a>
         </div>
       </div>
     </div>
   </div>
 </template>
 <script lang="ts">
-  import Vue from 'vue';
-  import { Component, Prop } from 'vue-property-decorator';
-  import { deleteProjectMutation, ProjectsListProject } from '../../api/project';
-  import { encodeParams } from '../Filters';
-  import isValid from 'date-fns/is_valid';
-  import parse from 'date-fns/parse';
-  import format from 'date-fns/format';
-  import { CurrentUserRoleResult } from '../../api/user';
-  import ConfirmAsync from '../../components/ConfirmAsync';
-  import {plural} from '../../lib/vueFilters';
-  import {ProjectRoleOptions as UPRO} from '../../api/project';
+import Vue from 'vue'
+import { Component, Prop } from 'vue-property-decorator'
+import { deleteProjectMutation, ProjectsListProject } from '../../api/project'
+import { encodeParams } from '../Filters'
+import isValid from 'date-fns/is_valid'
+import parse from 'date-fns/parse'
+import format from 'date-fns/format'
+import { CurrentUserRoleResult } from '../../api/user'
+import ConfirmAsync from '../../components/ConfirmAsync'
+import { plural } from '../../lib/vueFilters'
+import { ProjectRoleOptions as UPRO } from '../../api/project'
 
   interface managerGroupName {
     user: {
@@ -85,16 +115,18 @@
 
   @Component({
     filters: {
-      plural
-    }
+      plural,
+    },
   })
 
-  export default class ProjectsListItem extends Vue {
-    @Prop({type: Object})
+export default class ProjectsListItem extends Vue {
+    @Prop({ type: Object })
     currentUser!: CurrentUserRoleResult | null;
-    @Prop({type: Object, required: true})
+
+    @Prop({ type: Object, required: true })
     project!: ProjectsListProject;
-    @Prop({type: Function, required: true})
+
+    @Prop({ type: Function, required: true })
     refreshData!: () => void;
 
     get projectManagers(): Array<Object> {
@@ -104,35 +136,35 @@
     get projectLink() {
       return {
         name: 'project',
-        params: {projectIdOrSlug: this.project.urlSlug || this.project.id}
+        params: { projectIdOrSlug: this.project.urlSlug || this.project.id },
       }
     }
 
     get datasetsLink() {
       return {
         path: '/datasets',
-        query: encodeParams({project: this.project.id })
+        query: encodeParams({ project: this.project.id }),
       }
     }
 
     get annotationsLink() {
       return {
         path: '/annotations',
-        query: encodeParams({project: this.project.id, database: ''})
+        query: encodeParams({ project: this.project.id, database: '' }),
       }
     }
+
     get manageLink() {
       return {
         name: 'project',
-        params: {projectIdOrSlug: this.project.urlSlug || this.project.id},
-        query: {tab: 'settings'},
+        params: { projectIdOrSlug: this.project.urlSlug || this.project.id },
+        query: { tab: 'settings' },
       }
     }
 
     get canManage() {
-      return (this.currentUser && this.currentUser.role === 'admin') || this.project.currentUserRole === 'MANAGER';
+      return (this.currentUser && this.currentUser.role === 'admin') || this.project.currentUserRole === 'MANAGER'
     }
-
 
     shortGroupName(manager: managerGroupName): string|null {
       if (manager.user.primaryGroup !== null) {
@@ -148,31 +180,31 @@
         params: {
           groupIdOrSlug: manager.user.primaryGroup.group.id,
         },
-      };
+      }
     }
 
     formatDate(date: string) {
-      const parsedDate = parse(date);
-      return isValid(parsedDate) ? format(parsedDate, 'YYYY-MM-DD') : '????-??-??';
+      const parsedDate = parse(date)
+      return isValid(parsedDate) ? format(parsedDate, 'YYYY-MM-DD') : '????-??-??'
     }
 
-    @ConfirmAsync(function (this: ProjectsListItem) {
+    @ConfirmAsync(function(this: ProjectsListItem) {
       return {
         message: `Are you sure you want to delete ${this.project.name}?`,
         confirmButtonText: 'Delete project',
-        confirmButtonLoadingText: 'Deleting...'
+        confirmButtonLoadingText: 'Deleting...',
       }
     })
     async handleDeleteProject() {
-      const projectName = this.project.name;
+      const projectName = this.project.name
       await this.$apollo.mutate({
         mutation: deleteProjectMutation,
         variables: { projectId: this.project.id },
-      });
-      await this.refreshData();
-      this.$message({ message: `${projectName} has been deleted`, type: 'success' });
+      })
+      await this.refreshData()
+      this.$message({ message: `${projectName} has been deleted`, type: 'success' })
     }
-  }
+}
 
 </script>
 <style scoped lang="scss">
@@ -287,6 +319,5 @@
     cursor: pointer;
     color: sienna;
   }
-
 
 </style>

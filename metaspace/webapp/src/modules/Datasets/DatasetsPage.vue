@@ -2,7 +2,7 @@
   <el-row>
     <div id="dataset-page">
       <div id="dataset-page-contents">
-        <router-view></router-view>
+        <router-view />
       </div>
     </div>
   </el-row>
@@ -10,12 +10,12 @@
 
 <script>
 
- export default {
-   name: 'datasets-page',
-   created() {
-     this.$store.commit('updateFilter', this.$store.getters.filter);
-   }
- }
+export default {
+  name: 'DatasetsPage',
+  created() {
+    this.$store.commit('updateFilter', this.$store.getters.filter)
+  },
+}
 </script>
 
 <style lang="scss">

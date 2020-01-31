@@ -1,43 +1,66 @@
 <template>
-  <el-popover trigger="hover" v-if="showIsomers || showIsobars" class="popover">
+  <el-popover
+    v-if="showIsomers || showIsobars"
+    trigger="hover"
+    class="popover"
+  >
     <div v-if="showIsomers">
-      <p v-if="isomers.length === 1">An isomeric ion was also annotated:</p>
-      <p v-else>{{isomers.length}} more isomeric ions were also annotated:</p>
+      <p v-if="isomers.length === 1">
+        An isomeric ion was also annotated:
+      </p>
+      <p v-else>
+        {{ isomers.length }} more isomeric ions were also annotated:
+      </p>
       <ul>
-        <li v-for="isomer in isomers" v-html="renderMolFormulaHtml(isomer.ion)" />
+        <li
+          v-for="(isomer, i) in isomers"
+          :key="i"
+          v-html="renderMolFormulaHtml(isomer.ion)"
+        />
       </ul>
     </div>
     <div v-if="showIsobars">
-      <p v-if="isobars.length === 1">An isobaric ion was also annotated:</p>
-      <p v-else>{{isobars.length}} more isobaric ions were also annotated:</p>
+      <p v-if="isobars.length === 1">
+        An isobaric ion was also annotated:
+      </p>
+      <p v-else>
+        {{ isobars.length }} more isobaric ions were also annotated:
+      </p>
       <ul>
-        <li v-for="isobar in isobars" v-html="renderMolFormulaHtml(isobar.ion)" />
+        <li
+          v-for="(isobar, i) in isobars"
+          :key="i"
+          v-html="renderMolFormulaHtml(isobar.ion)"
+        />
       </ul>
     </div>
-    <div class="isomer-warning-icon" slot="reference" />
+    <div
+      slot="reference"
+      class="isomer-warning-icon"
+    />
   </el-popover>
 </template>
 <script>
-  import {renderMolFormulaHtml} from '../../../util';
-  import config from '../../../config';
+import { renderMolFormulaHtml } from '../../../util'
+import config from '../../../config'
 
-  export default {
-    props: {
-      isomers: Array,
-      isobars: Array,
+export default {
+  props: {
+    isomers: Array,
+    isobars: Array,
+  },
+  computed: {
+    showIsomers() {
+      return config.features.isomers && this.isomers && this.isomers.length > 0
     },
-    computed: {
-      showIsomers() {
-        return config.features.isomers && this.isomers && this.isomers.length > 0;
-      },
-      showIsobars() {
-        return config.features.isobars && this.isobars && this.isobars.some(isobar => isobar.shouldWarn);
-      }
+    showIsobars() {
+      return config.features.isobars && this.isobars && this.isobars.some(isobar => isobar.shouldWarn)
     },
-    methods: {
-      renderMolFormulaHtml
-    },
-  }
+  },
+  methods: {
+    renderMolFormulaHtml,
+  },
+}
 </script>
 <style scoped>
   .popover {

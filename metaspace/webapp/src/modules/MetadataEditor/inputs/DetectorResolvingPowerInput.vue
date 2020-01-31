@@ -1,41 +1,63 @@
 <template>
   <el-row>
-    <el-col class="subfield" :span="12">
-      <el-form-item :class="{'is-error': error && error.mz}" required>
+    <el-col
+      class="subfield"
+      :span="12"
+    >
+      <el-form-item
+        :class="{'is-error': error && error.mz}"
+        required
+      >
         <custom-number-input
-          @input="val => onInput('mz', val)"
           :value="value.mz"
           :precision="0"
+          @input="val => onInput('mz', val)"
         />
-        <div class="subfield-label">m/z</div>
-        <span class="error-msg" v-if="error && error.mz">{{ error.mz }}</span>
+        <div class="subfield-label">
+          m/z
+        </div>
+        <span
+          v-if="error && error.mz"
+          class="error-msg"
+        >{{ error.mz }}</span>
       </el-form-item>
     </el-col>
 
-    <el-col class="subfield" :span="12">
-      <el-form-item :class="{'is-error': error && error.Resolving_Power}" required>
+    <el-col
+      class="subfield"
+      :span="12"
+    >
+      <el-form-item
+        :class="{'is-error': error && error.Resolving_Power}"
+        required
+      >
         <custom-number-input
-          @input="val => onInput('Resolving_Power', val)"
           :value="value.Resolving_Power"
           :precision="0"
+          @input="val => onInput('Resolving_Power', val)"
         />
-        <div class="subfield-label">resolving power</div>
-        <span class="error-msg" v-if="error && error.Resolving_Power">{{ error.Resolving_Power }}</span>
+        <div class="subfield-label">
+          resolving power
+        </div>
+        <span
+          v-if="error && error.Resolving_Power"
+          class="error-msg"
+        >{{ error.Resolving_Power }}</span>
       </el-form-item>
     </el-col>
   </el-row>
 </template>
 
 <script lang="ts">
-  import Vue from 'vue';
-  import { Component, Prop } from 'vue-property-decorator';
-  import {DetectorResolvingPower} from '../formStructure';
-  import CustomNumberInput from './CustomNumberInput.vue'
+import Vue from 'vue'
+import { Component, Prop } from 'vue-property-decorator'
+import { DetectorResolvingPower } from '../formStructure'
+import CustomNumberInput from './CustomNumberInput.vue'
 
   @Component({
-    components: {CustomNumberInput}
+    components: { CustomNumberInput },
   })
-  export default class DetectorResolvingPowerInput extends Vue {
+export default class DetectorResolvingPowerInput extends Vue {
     @Prop(Object)
     value!: DetectorResolvingPower;
 
@@ -48,11 +70,11 @@
     onInput(fieldName: keyof DetectorResolvingPower, value: string) {
       const newValue = {
         ...this.value,
-        [fieldName]: value
-      };
-      this.$emit('input', newValue);
-    };
-  }
+        [fieldName]: value,
+      }
+      this.$emit('input', newValue)
+    }
+}
 </script>
 
 <style>

@@ -1,163 +1,193 @@
 <template>
   <div>
-    <div ref="container" class="ts-container" v-if="tour">
+    <div
+      v-if="tour"
+      ref="container"
+      class="ts-container"
+    >
       <div class="bubble-container">
-        <el-progress :percentage="100 * (stepNum + 1) / tour.steps.length"
-                     :stroke-width=10
-                     :show-text=false
-                     style="width: 350px;">
-        </el-progress>
+        <el-progress
+          :percentage="100 * (stepNum + 1) / tour.steps.length"
+          :stroke-width="10"
+          :show-text="false"
+          style="width: 350px;"
+        />
 
         <div class="bubble-content">
-          <h3 class="ts-title" v-if="step.title !== ''">
+          <h3
+            v-if="step.title !== ''"
+            class="ts-title"
+          >
             {{ step.title }}
           </h3>
-          <div class="ts-content" v-if="step.content !== ''"
-               v-html="step.content">
-          </div>
+          <div
+            v-if="step.content !== ''"
+            class="ts-content"
+            v-html="step.content"
+          />
         </div>
 
         <div class="ts-actions">
-          <el-button v-if="this.stepNum > 0" size="small"
-                     @click.native="prevStep">
+          <el-button
+            v-if="stepNum > 0"
+            size="small"
+            @click.native="prevStep"
+          >
             Back
           </el-button>
 
-          <el-button size="small" type="primary" @click.native="nextStep">
-            {{ this.stepNum == this.tour.steps.length - 1 ? 'Done' : 'Next' }}
+          <el-button
+            size="small"
+            type="primary"
+            @click.native="nextStep"
+          >
+            {{ stepNum == tour.steps.length - 1 ? 'Done' : 'Next' }}
           </el-button>
         </div>
 
-        <i class="el-icon-error ts-close" title="Close"
-           @click="close"></i>
+        <i
+          class="el-icon-error ts-close"
+          title="Close"
+          @click="close"
+        />
       </div>
 
-      <div class="popper__arrow" x-arrow=''> </div>
+      <div
+        class="popper__arrow"
+        x-arrow=""
+      />
     </div>
   </div>
 </template>
 
 <script>
- import Vue from 'vue';
- import Popper from 'popper.js';
+import Vue from 'vue'
+import Popper from 'popper.js'
 
- import router from '../../router';
+import router from '../../router'
 
- const startingRoute = 'help';
+const startingRoute = 'help'
 
- export default {
-   name: 'tour-step',
-   props: ['tour'],
-   data() {
-     return {
-       lastRoute: startingRoute,
-       stepNum: 0,
-       popper: null,
-       container: null,
-       routeTransition: false
-     };
-   },
-   computed: {
-     step() {
-       if (!this.tour)
-         return null;
-       return this.tour.steps[this.stepNum];
-     }
-   },
-   created() {
-     router.beforeEach((to, from, next) => {
-       if (!this.tour || to.path == from.path) {
-         next();
-         return;
-       }
+export default {
+  name: 'TourStep',
+  props: ['tour'],
+  data() {
+    return {
+      lastRoute: startingRoute,
+      stepNum: 0,
+      popper: null,
+      container: null,
+      routeTransition: false,
+    }
+  },
+  computed: {
+    step() {
+      if (!this.tour) {
+        return null
+      }
+      return this.tour.steps[this.stepNum]
+    },
+  },
+  created() {
+    router.beforeEach((to, from, next) => {
+      if (!this.tour || to.path === from.path) {
+        next()
+        return
+      }
 
-       if (this.routeTransition) {
-         this.routeTransition = false;
-         next();
-       } else {
-         this.close();
-         next();
-       }
-     });
-   },
-   mounted() {
-     if (this.tour)
-       this.render();
-   },
-   updated() {
-     if (this.tour)
-       this.render();
-   },
-   methods: {
-     nextStep() {
-       this.stepNum += 1;
-       if (this.tour.steps.length == this.stepNum) {
-         this.close();
-         return;
-       }
+      if (this.routeTransition) {
+        this.routeTransition = false
+        next()
+      } else {
+        this.close()
+        next()
+      }
+    })
+  },
+  mounted() {
+    if (this.tour) {
+      this.render()
+    }
+  },
+  updated() {
+    if (this.tour) {
+      this.render()
+    }
+  },
+  methods: {
+    nextStep() {
+      this.stepNum += 1
+      if (this.tour.steps.length === this.stepNum) {
+        this.close()
+        return
+      }
 
-       this.popper.destroy();
-       this.render();
-     },
+      this.popper.destroy()
+      this.render()
+    },
 
-     prevStep() {
-       if (this.stepNum == 0)
-         return; // shouldn't happen
-       this.stepNum -= 1;
-       this.popper.destroy();
-       this.render();
-     },
+    prevStep() {
+      if (this.stepNum === 0) {
+        return
+      } // shouldn't happen
+      this.stepNum -= 1
+      this.popper.destroy()
+      this.render()
+    },
 
-     render() {
-       // FIXME: simplify the logic here and make it more universal
-       if (this.step.route && this.lastRoute != this.step.route) {
-         this.lastRoute = this.step.route;
-         this.routeTransition = true;
-         if (this.step.query)
-           router.push({path: this.lastRoute, query: this.step.query});
-         else
-           router.push({path: this.lastRoute});
-       } else if (this.step.query) {
-         router.replace({query: this.step.query});
-       }
+    render() {
+      // FIXME: simplify the logic here and make it more universal
+      if (this.step.route && this.lastRoute !== this.step.route) {
+        this.lastRoute = this.step.route
+        this.routeTransition = true
+        if (this.step.query) {
+          router.push({ path: this.lastRoute, query: this.step.query })
+        } else {
+          router.push({ path: this.lastRoute })
+        }
+      } else if (this.step.query) {
+        router.replace({ query: this.step.query })
+      }
 
-       const minTimeout = 20 /* ms */,
-             maxTimeout = 2000,
-             factor = 2;
+      const minTimeout = 20 /* ms */
+      const maxTimeout = 2000
+      const factor = 2
 
-       let self = this,
-           timeout = minTimeout;
+      const self = this
+      let timeout = minTimeout
 
-       function showStep() {
-         if (self.step != null) {
-           let el = document.querySelector(self.step.target);
-           if (!el) {
-             timeout *= factor;
-             if (timeout > maxTimeout)
-               return;
-             window.setTimeout(showStep, timeout);
-             return;
-           }
+      function showStep() {
+        if (self.step != null) {
+          const el = document.querySelector(self.step.target)
+          if (!el) {
+            timeout *= factor
+            if (timeout > maxTimeout) {
+              return
+            }
+            window.setTimeout(showStep, timeout)
+            return
+          }
 
-           self.popper = new Popper(el, self.$refs.container, { placement: self.step.placement });
-         }
-       }
+          self.popper = new Popper(el, self.$refs.container, { placement: self.step.placement })
+        }
+      }
 
-       Vue.nextTick(() => {
-         window.setTimeout(showStep, timeout);
-       });
-     },
+      Vue.nextTick(() => {
+        window.setTimeout(showStep, timeout)
+      })
+    },
 
-     close() {
-       if (this.popper)
-         this.popper.destroy();
-       this.stepNum = 0;
-       this.lastRoute = startingRoute;
-       this.routeTransition = false;
-       this.$store.commit('endTour');
-     }
-   }
- };
+    close() {
+      if (this.popper) {
+        this.popper.destroy()
+      }
+      this.stepNum = 0
+      this.lastRoute = startingRoute
+      this.routeTransition = false
+      this.$store.commit('endTour')
+    },
+  },
+}
 </script>
 
 <style lang="scss">

@@ -1,138 +1,213 @@
 <template>
   <el-row>
     <el-col>
-      <el-collapse id="annot-content" :value="activeSections"
-                   @change="onSectionsChange">
-
+      <el-collapse
+        id="annot-content"
+        :value="activeSections"
+        @change="onSectionsChange"
+      >
         <div class="el-collapse-item grey-bg">
           <div class="el-collapse-item__header av-header grey-bg">
-
             <candidate-molecules-popover
               placement="bottom"
-              :possibleCompounds="annotation.possibleCompounds"
+              :possible-compounds="annotation.possibleCompounds"
               :isomers="annotation.isomers"
               :isobars="annotation.isobars"
             >
-              <span class="sf-big" v-html="formattedMolFormula" />
+              <span
+                class="sf-big"
+                v-html="formattedMolFormula"
+              />
             </candidate-molecules-popover>
 
             <span class="mz-big">{{ annotation.mz.toFixed(4) }}</span>
-            <el-popover trigger="hover" placement="bottom">
-              <router-link slot="reference"
-                           target="_blank"
-                           :to="permalinkHref">
-                <img src="../../assets/share-icon.png" class="av-icon">
+            <el-popover
+              trigger="hover"
+              placement="bottom"
+            >
+              <router-link
+                slot="reference"
+                target="_blank"
+                :to="permalinkHref"
+              >
+                <img
+                  src="../../assets/share-icon.png"
+                  class="av-icon"
+                >
               </router-link>
               <div>Link to this annotation (opens in a new tab)</div>
             </el-popover>
 
-            <el-popover v-if="!annotation.dataset.isPublic" trigger="hover" placement="bottom" @show="loadVisibility">
-              <img slot="reference" src="../../assets/padlock-icon.svg" class="av-icon">
+            <el-popover
+              v-if="!annotation.dataset.isPublic"
+              trigger="hover"
+              placement="bottom"
+              @show="loadVisibility"
+            >
+              <img
+                slot="reference"
+                src="../../assets/padlock-icon.svg"
+                class="av-icon"
+              >
               <div v-loading="visibilityText == null">
-                {{visibilityText}}
+                {{ visibilityText }}
               </div>
             </el-popover>
 
-
-            <el-popover v-if="showColoc" trigger="hover" placement="bottom">
-              <img slot="reference" src="../../assets/map-icon.svg" class="av-icon av-icon-link" @click.stop="filterColocSamples">
+            <el-popover
+              v-if="showColoc"
+              trigger="hover"
+              placement="bottom"
+            >
+              <img
+                slot="reference"
+                src="../../assets/map-icon.svg"
+                class="av-icon av-icon-link"
+                @click.stop="filterColocSamples"
+              >
               <div>Show representative spatial patterns for dataset</div>
             </el-popover>
           </div>
         </div>
 
-        <el-collapse-item name="images" id="annot-img-collapse" class="av-centered">
-          <component :is="metadataDependentComponent('main-image-header')"
-                     :annotation="annotation"
-                     :hasOpticalImage="bestOpticalImage != null"
-                     :showOpticalImage="showOpticalImage"
-                     :resetViewport="resetViewport"
-                     :toggleOpticalImage="toggleOpticalImage"
-                     @scaleBarColorChange="setScaleBarColor"
-                     slot="title">
-          </component>
-          <component :is="metadataDependentComponent('main-image')"
-                     :annotation="annotation"
-                     :colormap="colormap"
-                     :opacity="opacity"
-                     :imagePosition="imagePosition"
-                     :imageLoaderSettings="imageLoaderSettings"
-                     :onImageMove="onImageMove"
-                     :acquisitionGeometry="msAcqGeometry"
-                     :pixelSizeX="pixelSizeX"
-                     :pixelSizeY="pixelSizeY"
-                     :scaleBarColor="scaleBarColor"
-                     :scaleType="scaleType"
-                     @opacityInput="newVal => opacity = newVal">
-          </component>
+        <el-collapse-item
+          id="annot-img-collapse"
+          name="images"
+          class="av-centered"
+        >
+          <component
+            :is="metadataDependentComponent('main-image-header')"
+            slot="title"
+            :annotation="annotation"
+            :has-optical-image="bestOpticalImage != null"
+            :show-optical-image="showOpticalImage"
+            :reset-viewport="resetViewport"
+            :toggle-optical-image="toggleOpticalImage"
+            @scaleBarColorChange="setScaleBarColor"
+          />
+          <component
+            :is="metadataDependentComponent('main-image')"
+            :annotation="annotation"
+            :colormap="colormap"
+            :opacity="opacity"
+            :image-position="imagePosition"
+            :image-loader-settings="imageLoaderSettings"
+            :on-image-move="onImageMove"
+            :acquisition-geometry="msAcqGeometry"
+            :pixel-size-x="pixelSizeX"
+            :pixel-size-y="pixelSizeY"
+            :scale-bar-color="scaleBarColor"
+            :scale-type="scaleType"
+            @opacityInput="newVal => opacity = newVal"
+          />
         </el-collapse-item>
 
         <el-collapse-item name="compounds">
-          <div slot="title" style="display: flex; align-items: center">
-            <div>Molecules ({{annotation.countPossibleCompounds}})</div>
-            <ambiguity-alert :isomers="annotation.isomers" :isobars="annotation.isobars" />
+          <div
+            slot="title"
+            style="display: flex; align-items: center"
+          >
+            <div>Molecules ({{ annotation.countPossibleCompounds }})</div>
+            <ambiguity-alert
+              :isomers="annotation.isomers"
+              :isobars="annotation.isobars"
+            />
           </div>
-          <related-molecules v-if="annotation && activeSections.indexOf('compounds') !== -1"
-                             query="isomers"
-                             :annotation="annotation"
-                             :database="this.$store.getters.filter.database" />
+          <related-molecules
+            v-if="annotation && activeSections.indexOf('compounds') !== -1"
+            query="isomers"
+            :annotation="annotation"
+            :database="this.$store.getters.filter.database"
+          />
         </el-collapse-item>
 
-        <el-collapse-item v-if="showColoc" name="colocalized">
-          <div slot="title" style="display: flex; align-items: center; padding-right: 10px">
+        <el-collapse-item
+          v-if="showColoc"
+          name="colocalized"
+        >
+          <div
+            slot="title"
+            style="display: flex; align-items: center; padding-right: 10px"
+          >
             <span style="padding-right: 20px">
               Colocalized annotations
             </span>
 
-            <el-popover placement="bottom" trigger="click">
+            <el-popover
+              placement="bottom"
+              trigger="click"
+            >
               <colocalization-settings />
-              <div slot="reference" @click.stop="">
-                <i class="el-icon-setting" style="font-size: 20px; vertical-align: middle;"></i>
+              <div
+                slot="reference"
+                @click.stop=""
+              >
+                <i
+                  class="el-icon-setting"
+                  style="font-size: 20px; vertical-align: middle;"
+                />
               </div>
             </el-popover>
-            <img src="../../assets/filter-icon.svg"
-                 title="Show in list"
-                 class="av-icon-button"
-                 @click.stop="filterColocalized"
-            />
+            <img
+              src="../../assets/filter-icon.svg"
+              title="Show in list"
+              class="av-icon-button"
+              @click.stop="filterColocalized"
+            >
           </div>
-          <component v-if="activeSections.indexOf('colocalized') !== -1"
-                     :is="metadataDependentComponent('related-annotations')"
-                     query="colocalized"
-                     :annotation="annotation"
-                     :database="this.$store.getters.filter.database"
-                     :acquisitionGeometry="msAcqGeometry"
-                     :image-loader-settings="imageLoaderSettings"
-                     :scaleType="scaleType">
-          </component>
+          <component
+            :is="metadataDependentComponent('related-annotations')"
+            v-if="activeSections.indexOf('colocalized') !== -1"
+            query="colocalized"
+            :annotation="annotation"
+            :database="this.$store.getters.filter.database"
+            :acquisition-geometry="msAcqGeometry"
+            :image-loader-settings="imageLoaderSettings"
+            :scale-type="scaleType"
+          />
         </el-collapse-item>
 
-        <el-collapse-item title="Other adducts" name="adducts">
-          <component v-if="activeSections.indexOf('adducts') !== -1"
-                     :is="metadataDependentComponent('related-annotations')"
-                     query="allAdducts"
-                     :annotation="annotation"
-                     :database="this.$store.getters.filter.database"
-                     :acquisitionGeometry="msAcqGeometry"
-                     :image-loader-settings="imageLoaderSettings"
-                     :scaleType="scaleType">
-          </component>
+        <el-collapse-item
+          title="Other adducts"
+          name="adducts"
+        >
+          <component
+            :is="metadataDependentComponent('related-annotations')"
+            v-if="activeSections.indexOf('adducts') !== -1"
+            query="allAdducts"
+            :annotation="annotation"
+            :database="this.$store.getters.filter.database"
+            :acquisition-geometry="msAcqGeometry"
+            :image-loader-settings="imageLoaderSettings"
+            :scale-type="scaleType"
+          />
         </el-collapse-item>
 
-        <el-collapse-item title="Diagnostics" name="scores" class="tour-diagnostic-tab">
-          <component v-if="activeSections.indexOf('scores') !== -1"
-                     :is="metadataDependentComponent('diagnostics')"
-                     :annotation="annotation"
-                     :colormap="colormap"
-                     :imageLoaderSettings="imageLoaderSettings"
-                     :scaleType="scaleType"
-                     :peakChartData="peakChartData"
-                     :acquisitionGeometry="msAcqGeometry">
-          </component>
+        <el-collapse-item
+          title="Diagnostics"
+          name="scores"
+          class="tour-diagnostic-tab"
+        >
+          <component
+            :is="metadataDependentComponent('diagnostics')"
+            v-if="activeSections.indexOf('scores') !== -1"
+            :annotation="annotation"
+            :colormap="colormap"
+            :image-loader-settings="imageLoaderSettings"
+            :scale-type="scaleType"
+            :peak-chart-data="peakChartData"
+            :acquisition-geometry="msAcqGeometry"
+          />
         </el-collapse-item>
 
-        <el-collapse-item title="Metadata" name="metadata">
-          <dataset-info :metadata="metadata" :currentUser="currentUser" />
+        <el-collapse-item
+          title="Metadata"
+          name="metadata"
+        >
+          <dataset-info
+            :metadata="metadata"
+            :current-user="currentUser"
+          />
         </el-collapse-item>
       </el-collapse>
     </el-col>

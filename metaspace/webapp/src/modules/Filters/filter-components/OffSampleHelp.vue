@@ -13,7 +13,10 @@
         <a href="https://doi.org/10.1101/518977">Recognizing off-sample mass spectrometry images with machine and deep learning</a>, Ovchinnikova <i>et al.</i>
       </p>
     </div>
-    <i slot="reference" class="el-icon-question help-icon"></i>
+    <i
+      slot="reference"
+      class="el-icon-question help-icon"
+    />
   </el-popover>
 </template>
 <style lang="scss" scoped>

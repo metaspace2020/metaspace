@@ -497,7 +497,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
                                 <!---->
                               </div>
                             </div>
-                            <div class="subfield-label">m/z</div>
+                            <div class="subfield-label">
+                              m/z
+                            </div>
                             <!---->
                             <!---->
                           </div>
@@ -518,7 +520,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
                                 <!---->
                               </div>
                             </div>
-                            <div class="subfield-label">resolving power</div>
+                            <div class="subfield-label">
+                              resolving power
+                            </div>
                             <!---->
                             <!---->
                           </div>
@@ -549,7 +553,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
                                 <!---->
                               </div>
                             </div>
-                            <div class="subfield-label">horizontal</div>
+                            <div class="subfield-label">
+                              horizontal
+                            </div>
                             <!---->
                             <!---->
                           </div>
@@ -570,7 +576,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
                                 <!---->
                               </div>
                             </div>
-                            <div class="subfield-label">vertical</div>
+                            <div class="subfield-label">
+                              vertical
+                            </div>
                             <!---->
                             <!---->
                           </div>
@@ -588,8 +596,10 @@ exports[`MetadataEditor should match snapshot 1`] = `
       <div class="metadata-section">
         <mock-el-dialog custom-class="find-group-dialog">
           <h2>Find a group</h2>
-          <p>If you are not member of a group, you can request access here and your dataset will be
-            automatically added to the group once your access has been approved.</p>
+          <p>
+            If you are not member of a group, you can request access here and your dataset will be
+            automatically added to the group once your access has been approved.
+          </p>
           <form class="el-form">
             <div class="el-form-item"><label class="el-form-item__label">Your group:</label>
               <div class="el-form-item__content">
@@ -602,9 +612,12 @@ exports[`MetadataEditor should match snapshot 1`] = `
           </form>
           <div class="el-row" style="margin: 15px 0px;"><button type="button" class="el-button el-button--default">
               <!---->
-              <!----><span>Cancel</span></button> <button disabled="disabled" type="button" class="el-button el-button--primary is-disabled">
+              <!----><span>
+      Cancel
+    </span></button> <button disabled="disabled" type="button" class="el-button el-button--primary is-disabled">
               <!---->
-              <!----><span>Request access
+              <!----><span>
+      Request access
     </span></button></div>
           <div class="el-row">
             <p><b>Can't find your group?</b> <a href="mailto:contact@metaspace2020.eu">Contact us</a> to get your team started,
@@ -619,7 +632,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                 <div class="el-form-item name is-required"><label for="name" class="el-form-item__label">Name</label>
                   <div class="el-form-item__content">
                     <div class="el-input">
-                      <!----><input type="text" autocomplete="off" maxlength="50" class="el-input__inner">
+                      <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
                       <!---->
                       <!---->
                       <!---->
@@ -630,7 +643,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
                 </div>
                 <div class="el-form-item isPublic">
                   <!---->
-                  <div class="el-form-item__content"><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">Allow other users to see this project<!----></span></label>
+                  <div class="el-form-item__content"><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
+        Allow other users to see this project
+      <!----></span></label>
                     <!---->
                   </div>
                 </div>
@@ -656,14 +671,20 @@ exports[`MetadataEditor should match snapshot 1`] = `
             </div>
             <div class="button-bar"><button type="button" class="el-button el-button--default">
                 <!---->
-                <!----><span>Cancel</span></button> <button type="button" class="el-button el-button--primary">
+                <!----><span>
+        Cancel
+      </span></button> <button type="button" class="el-button el-button--primary">
                 <!---->
-                <!----><span>Create project and include 2 datasets</span></button></div>
+                <!----><span>
+        Create project and include 2 datasets
+      </span></button></div>
           </div>
         </mock-el-dialog>
         <div class="el-row">
           <div class="el-col el-col-6">
-            <div class="metadata-section__title">Data management</div>
+            <div class="metadata-section__title">
+              Data management
+            </div>
           </div>
           <div class="el-col el-col-18">
             <div class="el-row" style="margin-left: -4px; margin-right: -4px;">
@@ -725,8 +746,13 @@ exports[`MetadataEditor should match snapshot 1`] = `
               <mock-el-popover trigger="hover" placement="top">
                 <div slot-key="default">
                   <div>
-                    <p><b>Public:</b> Annotations will be available in the METASPACE public knowledge base, sharable and searchable by the community. The uploaded imzML files are not made public.</p>
-                    <p><b>Private:</b> Annotations will be visible to the submitter (and only the submitter) when the submitter is logged in. METASPACE admins can also view these annotations. The uploaded imzML files are also private.</p>
+                    <p><b>Public:</b> Annotations will be available in the METASPACE public knowledge base,
+                      sharable and searchable by the community. The uploaded imzML files are not made public.
+                    </p>
+                    <p><b>Private:</b> Annotations will be visible to the submitter and logged-in members
+                      of the selected group and projects. METASPACE admins can also view these annotations.
+                      The uploaded imzML files are also private.
+                    </p>
                   </div>
                 </div>
                 <div slot-key="reference"><i class="el-icon-question metadata-help-icon"></i></div>
@@ -742,7 +768,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
         <form class="el-form el-form--label-top">
           <div class="el-row">
             <div class="el-col el-col-6">
-              <div class="metadata-section__title">Annotation settings</div>
+              <div class="metadata-section__title">
+                Annotation settings
+              </div>
             </div>
             <div class="el-col el-col-18">
               <div class="el-row" style="margin-left: -4px; margin-right: -4px;">

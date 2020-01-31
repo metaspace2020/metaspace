@@ -2,49 +2,67 @@
   <div class="page">
     <create-project-dialog
       :visible="showCreateProjectDialog && currentUser != null"
-      :currentUserId="currentUser && currentUser.id"
+      :current-user-id="currentUser && currentUser.id"
       @close="handleCloseCreateProject"
       @create="handleProjectCreated"
     />
     <div class="page-content">
       <div class="header-row">
-        <filter-panel level="projects" :simpleFilterOptions="simpleFilterOptions"/>
+        <filter-panel
+          level="projects"
+          :simple-filter-options="simpleFilterOptions"
+        />
         <div style="flex-grow: 1" />
-        <el-button v-if="currentUser" @click="handleOpenCreateProject">Create project</el-button>
+        <el-button
+          v-if="currentUser"
+          @click="handleOpenCreateProject"
+        >
+          Create project
+        </el-button>
       </div>
-      <div class="clearfix"/>
-      <div v-loading="loading !== 0" style="min-height: 100px;">
-        <projects-list-item v-for="(project, i) in projects"
-                            :class="[i%2 ? 'odd': '']"
-                            :key="project.id"
-                            :project="project"
-                            :currentUser="currentUser"
-                            :refreshData="handleRefreshData" />
+      <div class="clearfix" />
+      <div
+        v-loading="loading !== 0"
+        style="min-height: 100px;"
+      >
+        <projects-list-item
+          v-for="(project, i) in projects"
+          :key="project.id"
+          :class="[i%2 ? 'odd': '']"
+          :project="project"
+          :current-user="currentUser"
+          :refresh-data="handleRefreshData"
+        />
       </div>
-      <div style="text-align: center;" v-if="projectsCount > pageSize || page !== 1">
-      <el-pagination :total="projectsCount"
-                     :page-size="pageSize"
-                     :current-page.sync="page"
-                     layout="prev,pager,next" />
+      <div
+        v-if="projectsCount > pageSize || page !== 1"
+        style="text-align: center;"
+      >
+        <el-pagination
+          :total="projectsCount"
+          :page-size="pageSize"
+          :current-page.sync="page"
+          layout="prev,pager,next"
+        />
       </div>
     </div>
   </div>
 </template>
 <script lang="ts">
-  import Vue from 'vue';
-  import { Component, Watch } from 'vue-property-decorator';
-  import {
-    MyProjectsListQuery,
-    myProjectsListQuery,
-    projectsCountQuery,
-    ProjectsListProject,
-    projectsListQuery,
-  } from '../../api/project';
-  import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user';
-  import { FilterPanel } from '../Filters';
-  import QuickFilterBox from '../Filters/filter-components/SimpleFilterBox.vue';
-  import ProjectsListItem from './ProjectsListItem.vue';
-  import CreateProjectDialog from './CreateProjectDialog.vue';
+import Vue from 'vue'
+import { Component, Watch } from 'vue-property-decorator'
+import {
+  MyProjectsListQuery,
+  myProjectsListQuery,
+  projectsCountQuery,
+  ProjectsListProject,
+  projectsListQuery,
+} from '../../api/project'
+import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
+import { FilterPanel } from '../Filters'
+import QuickFilterBox from '../Filters/filter-components/SimpleFilterBox.vue'
+import ProjectsListItem from './ProjectsListItem.vue'
+import CreateProjectDialog from './CreateProjectDialog.vue'
 
   @Component<ProjectsListPage>({
     components: {
@@ -63,7 +81,7 @@
         query: projectsListQuery,
         loadingKey: 'loading',
         skip() {
-          return this.filter !== 'all';
+          return this.filter !== 'all'
         },
         variables() {
           return {
@@ -76,7 +94,7 @@
       allProjectsCount: {
         query: projectsCountQuery,
         skip() {
-          return this.filter !== 'all';
+          return this.filter !== 'all'
         },
         variables() {
           return {
@@ -84,24 +102,24 @@
           }
         },
         update(data: any) {
-          return data.projectsCount;
-        }
+          return data.projectsCount
+        },
       },
       myProjects: {
         query: myProjectsListQuery,
         loadingKey: 'loading',
         skip() {
-          return this.filter !== 'my';
+          return this.filter !== 'my'
         },
         update(data: MyProjectsListQuery) {
           return data.myProjects && data.myProjects.projects
             ? data.myProjects.projects.map(userProject => userProject.project)
-            : [];
-        }
-      }
-    }
+            : []
+        },
+      },
+    },
   })
-  export default class ProjectsListPage extends Vue {
+export default class ProjectsListPage extends Vue {
     loading = 0;
     currentUser: CurrentUserRoleResult | null = null;
     allProjects: ProjectsListProject[] | null = null;
@@ -113,36 +131,41 @@
     pageSize = 10;
 
     get query(): string {
-      return this.$store.getters.filter.simpleQuery || '';
+      return this.$store.getters.filter.simpleQuery || ''
     }
+
     get filter(): 'all' | 'my' {
-      const {simpleFilter} = this.$store.getters.filter;
-      return simpleFilter === 'my-projects' && this.currentUser != null ? 'my' : 'all';
+      const { simpleFilter } = this.$store.getters.filter
+      return simpleFilter === 'my-projects' && this.currentUser != null ? 'my' : 'all'
     }
+
     get filteredMyProjects() {
       if (this.query && this.myProjects != null) {
-        return this.myProjects.filter(p => p.name.toLowerCase().includes(this.query.toLowerCase()));
+        return this.myProjects.filter(p => p.name.toLowerCase().includes(this.query.toLowerCase()))
       } else {
-        return this.myProjects || [];
+        return this.myProjects || []
       }
     }
+
     get projects() {
       if (this.filter === 'my') {
-        return this.filteredMyProjects.slice((this.page - 1) * this.pageSize, this.page * this.pageSize);
+        return this.filteredMyProjects.slice((this.page - 1) * this.pageSize, this.page * this.pageSize)
       } else {
-        return this.allProjects;
+        return this.allProjects
       }
     }
+
     get projectsCount() {
       if (this.filter === 'my') {
-        return this.filteredMyProjects.length;
+        return this.filteredMyProjects.length
       } else {
-        return this.allProjectsCount;
+        return this.allProjectsCount
       }
     }
+
     get simpleFilterOptions() {
       if (this.currentUser == null) {
-        return null;
+        return null
       } else {
         return [
           { value: null, label: 'All projects' },
@@ -154,11 +177,11 @@
     @Watch('query')
     @Watch('tab')
     resetPagination() {
-      this.page = 1;
+      this.page = 1
     }
 
     created() {
-      this.$store.commit('updateFilter', this.$store.getters.filter);
+      this.$store.commit('updateFilter', this.$store.getters.filter)
     }
 
     async handleRefreshData() {
@@ -170,15 +193,17 @@
     }
 
     handleOpenCreateProject() {
-      this.showCreateProjectDialog = true;
+      this.showCreateProjectDialog = true
     }
+
     handleCloseCreateProject() {
-      this.showCreateProjectDialog = false;
+      this.showCreateProjectDialog = false
     }
-    handleProjectCreated({id}: {id: string}) {
-      this.$router.push({name: 'project', params: {projectIdOrSlug: id}});
+
+    handleProjectCreated({ id }: {id: string}) {
+      this.$router.push({ name: 'project', params: { projectIdOrSlug: id } })
     }
-  }
+}
 
 </script>
 <style scoped lang="scss">

@@ -1,29 +1,39 @@
 <template>
-  <div class="page" v-if="canCreate">
+  <div
+    v-if="canCreate"
+    class="page"
+  >
     <div class="page-content">
       <div class="header-row">
         <h1>Create Group</h1>
         <div class="flex-spacer" />
 
         <div class="header-row-buttons">
-          <el-button type="primary"
-                     :loading="isSaving"
-                     @click="handleSave">
+          <el-button
+            type="primary"
+            :loading="isSaving"
+            @click="handleSave"
+          >
             Create
           </el-button>
         </div>
       </div>
-      <edit-group-form ref="form" :model="model" :disabled="isSaving" showGroupAdmin />
+      <edit-group-form
+        ref="form"
+        :model="model"
+        :disabled="isSaving"
+        show-group-admin
+      />
     </div>
   </div>
 </template>
 <script lang="ts">
-  import Vue from 'vue';
-  import { Component } from 'vue-property-decorator';
-  import {createGroupMutation, UserGroupRole} from '../../api/group';
-  import EditGroupForm from './EditGroupForm.vue';
-  import {currentUserRoleQuery, UserRole} from '../../api/user';
-  import reportError from '../../lib/reportError';
+import Vue from 'vue'
+import { Component } from 'vue-property-decorator'
+import { createGroupMutation, UserGroupRole } from '../../api/group'
+import EditGroupForm from './EditGroupForm.vue'
+import { currentUserRoleQuery, UserRole } from '../../api/user'
+import reportError from '../../lib/reportError'
 
   interface CurrentUserQuery {
     id: string;
@@ -39,9 +49,9 @@
         query: currentUserRoleQuery,
         fetchPolicy: 'cache-first',
       },
-    }
+    },
   })
-  export default class CreateGroupPage extends Vue {
+export default class CreateGroupPage extends Vue {
     isSaving = false;
     model = {
       name: '',
@@ -52,40 +62,40 @@
     currentUser: CurrentUserQuery | null = null;
 
     roleNames: Record<UserGroupRole, string> = {
-      'GROUP_ADMIN': 'Group admin',
-      'MEMBER': 'Member',
-      'PENDING': 'Requesting access',
-      'INVITED': 'Invited',
+      GROUP_ADMIN: 'Group admin',
+      MEMBER: 'Member',
+      PENDING: 'Requesting access',
+      INVITED: 'Invited',
     };
 
     get canCreate(): boolean {
-      return this.currentUser && this.currentUser.role === 'admin' || false;
+      return this.currentUser && this.currentUser.role === 'admin' || false
     }
 
     async handleSave() {
-      this.isSaving = true;
+      this.isSaving = true
       try {
-        await (this.$refs.form as any).validate();
+        await (this.$refs.form as any).validate()
         try {
-          const {data} = await this.$apollo.mutate({
+          const { data } = await this.$apollo.mutate({
             mutation: createGroupMutation,
             variables: { groupDetails: this.model },
-          });
-          this.$message({ message: `${this.model.name} was created`, type: 'success' });
+          })
+          this.$message({ message: `${this.model.name} was created`, type: 'success' })
           this.$router.push({
             name: 'edit-group',
-            params: {groupIdOrSlug: data!.createGroup.id}
-          });
+            params: { groupIdOrSlug: data!.createGroup.id },
+          })
         } catch (err) {
-          reportError(err);
+          reportError(err)
         }
       } catch {
         // validation error
       } finally {
-        this.isSaving = false;
+        this.isSaving = false
       }
     }
-  }
+}
 
 </script>
 <style scoped lang="scss">

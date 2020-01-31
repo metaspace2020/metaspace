@@ -13,7 +13,7 @@ const convertTourStep = (step: FrontMatterMarkdownObject) => {
   return {
     ...step.attributes,
     content: step.html,
-  };
-};
+  }
+}
 
-export default convertTourStep;
+export default convertTourStep
