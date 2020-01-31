@@ -48,6 +48,7 @@ def import_moldb_tables(db_config):
         conn.commit()
     except Exception:
         conn.rollback()
+        raise
     finally:
         conn.close()
 
