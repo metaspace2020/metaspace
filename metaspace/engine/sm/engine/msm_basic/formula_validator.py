@@ -141,6 +141,10 @@ def formula_image_metrics(
         f_ints = formula_ints_buffer[f_i]
         add_metrics(f_i, f_images, f_ints)
 
-    formula_metrics_df = pd.DataFrame.from_dict(formula_metrics, orient='index')
+    if formula_metrics:
+        formula_metrics_df = pd.DataFrame.from_dict(formula_metrics, orient='index')
+    else:
+        formula_metrics_df = pd.DataFrame(columns=list(METRICS.keys()))
     formula_metrics_df.index.name = 'formula_i'
+
     return formula_metrics_df, formula_images
