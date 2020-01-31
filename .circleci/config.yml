@@ -209,7 +209,7 @@ jobs:
       - run:
           name: Code format check for .py files in ansible and metaspace directories
           command: |
-            black --check ansible metaspace/mol-db metaspace/off-sample metaspace/python-client
+            black --check ansible metaspace/off-sample metaspace/python-client
 
   test-engine:
     docker:
@@ -298,16 +298,11 @@ jobs:
             createdb -h localhost -U sm sm_test
             psql -h localhost -U sm -d sm_test < scripts/db_schema.sql
       - run:
-          name: Set up and run mol-db
+          name: Import test molecular database
           command: |
-            createuser -h localhost -U sm --createdb mol_db
-            createdb -h localhost -U mol_db mol_db
-            wget -qN https://s3-eu-west-1.amazonaws.com/sm-engine/tests/mol_db_HMDBv25.sql
-            psql -h localhost -U mol_db -d mol_db -f mol_db_HMDBv25.sql
-            cd ../mol-db
-            cp conf/local.ini.template conf/local.ini
-            pip install -e .
-            gunicorn --daemon --bind 0.0.0.0:5001 app.main:application --reload
+            wget -qN https://sm-engine.s3-eu-west-1.amazonaws.com/tests/hmdb_2-5.tsv -O /tmp/hmdb_2-5.tsv
+            python scripts/import_molecular_db.py --config=tests/sci_test/config.json \
+              HMDB-v2.5 2020-01-01 /tmp/hmdb_2-5.tsv
       - run:
           name: Run scientific test
           command: |
