@@ -8,11 +8,11 @@ type JWT = string;
 const NORMAL_TO_SUPERSCRIPT = zipObject('0123456789+-', '⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻')
 const NORMAL_TO_SUPERSCRIPT_RE = /[0-9+-]/g
 
-function superscript(s: string): string {
+export function superscript(s: string): string {
   return s.replace(NORMAL_TO_SUPERSCRIPT_RE, c => NORMAL_TO_SUPERSCRIPT[c])
 }
 
-function renderMolFormula(ion: string): string {
+export function renderMolFormula(ion: string): string {
   const match = /^(.*?)([+-]\d*)?$/.exec(ion)
   const formula = match && match[1] || ion
   const charge = match && match[2] || undefined
@@ -22,11 +22,32 @@ function renderMolFormula(ion: string): string {
   return `[${formattedFormula}]${formattedCharge}`
 }
 
-function renderMolFormulaHtml(ion: string): string {
+export function renderMolFormulaHtml(ion: string): string {
   return renderMolFormula(ion).replace(/(\d+)/g, '<sub>$1</sub>')
 }
 
-function checkStatus(response: Response): Response {
+export function renderMassShift(referenceMz: number, subjectMz: number): string {
+  const deltaMz = subjectMz - referenceMz
+  return `[M${deltaMz >= 0 ? '+' : ''}${deltaMz.toFixed(4)}]`
+}
+
+export function formatNth(n: number): string {
+  return [null, '1st', '2nd', '3rd'][n] || `${n}th`
+}
+
+export function formatHumanReadableList(items: string[]): string {
+  if (items.length < 1) {
+    return ''
+  } else if (items.length === 1) {
+    return items[0]
+  } else if (items.length === 2) {
+    return items.join(' and ')
+  } else {
+    return items.slice(0, -1).join(', ') + ', and' + items[items.length - 1]
+  }
+}
+
+export function checkStatus(response: Response): Response {
   if (response.status >= 200 && response.status < 300) {
     return response
   } else {
@@ -35,18 +56,18 @@ function checkStatus(response: Response): Response {
   }
 }
 
-async function getJWT(): Promise<JWT> {
+export async function getJWT(): Promise<JWT> {
   const url = '/api_auth/gettoken'
   const response = await fetch(url, { credentials: 'include' })
   checkStatus(response)
   return response.text()
 }
 
-function decodePayload(jwt: JWT) {
+export function decodePayload(jwt: JWT) {
   return JSON.parse(Buffer.from(jwt.split('.')[1], 'base64').toString())
 }
 
-function pathFromUUID(uuid: string): string {
+export function pathFromUUID(uuid: string): string {
   if (fuConfig.storage === 's3') {
     return 's3a://' + fuConfig.aws.s3_bucket + '/' + uuid
   } else {
@@ -54,7 +75,7 @@ function pathFromUUID(uuid: string): string {
   }
 }
 
-function mzFilterPrecision(value: number | string): string {
+export function mzFilterPrecision(value: number | string): string {
   // Using parseFloat to remove any extra decimal places that won't actually count toward the precision
   const splitVal = String(parseFloat(String(value))).split('.')
   if (splitVal.length === 1) {
@@ -66,7 +87,7 @@ function mzFilterPrecision(value: number | string): string {
 }
 
 interface WheelEventCompat extends WheelEvent { wheelDelta?: number }
-function scrollDistance(event: WheelEventCompat) {
+export function scrollDistance(event: WheelEventCompat) {
   let sY = 0
   if ('detail' in event) { sY = event.detail * 2 }
   if ('wheelDelta' in event) { sY = -event.wheelDelta! / 120 }
@@ -74,12 +95,12 @@ function scrollDistance(event: WheelEventCompat) {
   return sY
 }
 
-function mdTypeSupportsOpticalImages(mdType: string): boolean {
+export function mdTypeSupportsOpticalImages(mdType: string): boolean {
   const mdTypesToSkipImages = ['LC-MS']
   return !mdTypesToSkipImages.includes(mdType)
 }
 
-function getOS() {
+export function getOS() {
   const userAgent = window.navigator.userAgent
   const platform = window.navigator.platform
   const macosPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K']
@@ -100,16 +121,4 @@ function getOS() {
   }
 
   return os
-}
-
-export {
-  renderMolFormula,
-  renderMolFormulaHtml,
-  getJWT,
-  decodePayload,
-  pathFromUUID,
-  mzFilterPrecision,
-  scrollDistance,
-  mdTypeSupportsOpticalImages,
-  getOS,
 }

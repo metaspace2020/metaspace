@@ -16,7 +16,7 @@
           >
             <div>
               <span v-if="other.isIsomer">Isomer:</span>
-              <span v-else-if="other.isIsobar">Isobar:</span>
+              <span v-else-if="other.isIsobar">Isobar {{ renderMassShift(annotation.mz, other.mz) }}: </span>
               <span
                 class="ion-formula"
                 v-html="renderMolFormulaHtml(other.ion)"
@@ -91,7 +91,7 @@
 
 <script>
 import { omit, sortBy, uniqBy } from 'lodash-es'
-import { renderMolFormulaHtml } from '../../../util'
+import { renderMassShift, renderMolFormulaHtml } from '../../../util'
 import { relatedMoleculesQuery } from '../../../api/annotation'
 import { encodeParams, stripFilteringParams } from '../../Filters'
 import { ANNOTATION_SPECIFIC_FILTERS } from '../../Filters/filterSpecs'
@@ -167,6 +167,7 @@ export default {
     },
   },
   methods: {
+    renderMassShift,
     renderMolFormulaHtml,
     linkToAnnotation(other) {
       const filters = {
@@ -215,6 +216,9 @@ export default {
     color: $--color-text-regular;
 
     .ion-formula {
+      font-weight: bold;
+    }
+    .mass-shift {
       font-weight: bold;
     }
   }

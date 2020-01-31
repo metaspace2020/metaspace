@@ -36,7 +36,7 @@
     </div>
     <div
       slot="reference"
-      class="isomer-warning-icon"
+      class="ambiguity-alert-icon"
     />
   </el-popover>
 </template>
@@ -67,7 +67,7 @@ export default {
     display: inline-block;
     margin: auto 20px;
   }
-  .isomer-warning-icon  {
+  .ambiguity-alert-icon {
     width: 20px;
     height: 20px;
     background-image: url('../../../assets/danger.svg');

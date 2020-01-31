@@ -31,13 +31,15 @@ exports[`Diagnostics should match snapshot (no isobars) 1`] = `
     <div class="isotope-images-container el-row">
       <div class="el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6">
         <div class="small-peak-image">
-          100.0000<br>
+          100.0000
+          <!----> <br>
           <imageloader-stub src="/fs/iso_images/img1" colormap="Viridis" image-fit-params="[object Object]" min-intensity="0" max-intensity="100" show-pixel-intensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
         </div>
       </div>
       <div class="el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6">
         <div class="small-peak-image">
-          101.0000<br>
+          101.0000
+          <!----> <br>
           <imageloader-stub src="/fs/iso_images/img2" colormap="Viridis" image-fit-params="[object Object]" min-intensity="100" max-intensity="200" show-pixel-intensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
         </div>
       </div>
@@ -221,13 +223,20 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
     <div class="isotope-images-container el-row">
       <div class="el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6">
         <div class="small-peak-image">
-          100.0000<br>
+          100.0000
+          <mock-el-popover trigger="hover" placement="top">
+            <div slot-key="default">
+              This peak's detection window overlaps with the other annotation's 1st peak.
+            </div>
+            <div slot-key="reference"><i class="isobar-alert el-icon-warning"></i></div>
+          </mock-el-popover> <br>
           <imageloader-stub src="/fs/iso_images/img1" colormap="Viridis" image-fit-params="[object Object]" min-intensity="0" max-intensity="100" show-pixel-intensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
         </div>
       </div>
       <div class="el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6">
         <div class="small-peak-image">
-          101.0000<br>
+          101.0000
+          <!----> <br>
           <imageloader-stub src="/fs/iso_images/img2" colormap="Viridis" image-fit-params="[object Object]" min-intensity="100" max-intensity="200" show-pixel-intensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
         </div>
       </div>
@@ -274,13 +283,20 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
   <div class="isotope-images-container el-row">
     <div class="el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6">
       <div class="small-peak-image">
-        100.0000<br>
+        100.0000
+        <mock-el-popover trigger="hover" placement="top">
+          <div slot-key="default">
+            This peak's detection window overlaps with the other annotation's 1st peak.
+          </div>
+          <div slot-key="reference"><i class="isobar-alert el-icon-warning"></i></div>
+        </mock-el-popover> <br>
         <imageloader-stub src="/fs/iso_images/img1" colormap="Viridis" image-fit-params="[object Object]" min-intensity="0" max-intensity="100" show-pixel-intensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
       </div>
     </div>
     <div class="el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6">
       <div class="small-peak-image">
-        101.0000<br>
+        101.0000
+        <!----> <br>
         <imageloader-stub src="/fs/iso_images/img2" colormap="Viridis" image-fit-params="[object Object]" min-intensity="100" max-intensity="200" show-pixel-intensity="" annotimageopacity="1" opacitymode="constant" imageposition="[object Object]" pixelaspectratio="1" style="overflow: hidden;"></imageloader-stub>
       </div>
     </div>

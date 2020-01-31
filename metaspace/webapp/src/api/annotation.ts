@@ -170,6 +170,7 @@ export const relatedMoleculesQuery =
       adduct
       ion
       ionFormula
+      mz
       msmScore
       fdrLevel
       possibleCompounds {
