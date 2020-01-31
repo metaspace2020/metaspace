@@ -85,10 +85,6 @@ server {
         proxy_set_header Connection "upgrade";
         include proxy-params.conf;
     }
-    location /mol_db/ {
-        proxy_pass http://sm-mol-db:5001/;
-        include proxy-params.conf;
-    }
     location /app/kibana {
         set $kibana_server kibana:5601;
         proxy_pass http://$kibana_server/;

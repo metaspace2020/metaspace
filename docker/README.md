@@ -40,7 +40,7 @@ container and projects are run from your checked-out code. This makes it much
 easier to make live code changes.
 
 Running `setup-dev-env.sh` will copy the pre-made docker config files into the
-projects in this repository, set up mol-db, and start the docker containers.
+projects in this repository and start the docker containers.
 
 To avoid disruption due to changes in the docker-compose files while updating from git,
 changing branches, etc. it can be useful to compile your configuration into a file
@@ -53,7 +53,7 @@ that is excluded from git. To do this:
 ### Import data
 
 ```bash
-docker-compose run --rm sm-mol-db /install-dbs.sh
+docker-compose run --rm sm-api /install-dbs.sh
 ./fetch-mol-images.sh
 ```
 
@@ -61,15 +61,14 @@ docker-compose run --rm sm-mol-db /install-dbs.sh
 
 If running in a development setup, all config files will need to be updated with the following
 settings. It may help to copy the config files from the configuration directories that are
-used for self-contained docker installations: `./mol-db/config`, `./sm-engine/conf`, etc.
+used for self-contained docker installations: `./sm-engine/conf`, etc.
 
 * Elastic search host/user/pass: `elasticsearch` / `elastic` / `elastic`
 * Postgresql host: `postgres`
     * Admin db/user/pass: `postgres` / `postgres` / `postgres`
-    * Mol-db db/user/pass: `mol_db` / `mol_db` / `password`
     * SM db/user/pass: `sm` / `sm` / `password`
 * RabbitMQ host/user/pass: `rabbitmq` / `rabbitmq` / `rabbitmq`
-* Hosts for SM services: `mol-db`, `sm-api`, `sm-graphql`
+* Hosts for SM services: `sm-api`, `sm-graphql`
 * Data directories: `/opt/data`
 
 > *TODO:* Pull configuration templates from their respective repositories
@@ -89,7 +88,7 @@ Development tools:
 
 Watching application logs:
 
-* `docker-compose logs --tail 5 -f mol-db sm-api sm-update-daemon sm-annotate-daemon sm-graphql sm-webapp`
+* `docker-compose logs --tail 5 -f sm-api sm-update-daemon sm-annotate-daemon sm-graphql sm-webapp`
 
 Rebuilding the Elasticsearch index:
 

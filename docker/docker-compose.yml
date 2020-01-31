@@ -45,24 +45,6 @@ services:
     networks:
       - sm
 
-  sm-mol-db:
-    build:
-      context: ./sm-mol-db
-      args:
-        METASPACE_REPO: "$METASPACE_REPO"
-        METASPACE_BRANCH: "$METASPACE_BRANCH"
-    # ports:
-    #   - "5001:5001"
-    volumes:
-      - ./sm-mol-db/conf/:/opt/metaspace/metaspace/mol-db/conf:ro
-    environment:
-      APP_ENV: dev
-    networks:
-      - sm
-    depends_on:
-      - rabbitmq
-      - postgres
-
   off-sample:
     image: metaspace2020/off-sample
     ports:

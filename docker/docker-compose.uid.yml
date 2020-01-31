@@ -10,9 +10,6 @@ services:
       PGDATA: /pgdata
     user: "$SM_USER"
 
-  sm-mol-db:
-    user: "$SM_USER"
-
   sm-api:
     user: "$SM_USER"
 

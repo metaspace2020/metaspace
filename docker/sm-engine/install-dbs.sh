@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-source activate mol-db
+source activate sm
 
 if [ "$SM_DOCKER_ENV" = "development" ]; then
-  cd /opt/dev/metaspace/metaspace/mol-db
+  cd /opt/dev/metaspace/metaspace/engine
 else
-  cd /opt/metaspace/metaspace/mol-db
+  cd /opt/metaspace/metaspace/engine
 fi
 
 # TODO: This doesn't include all databases, and the only way to exclude databases is to comment them out.

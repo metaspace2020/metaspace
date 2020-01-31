@@ -18,7 +18,6 @@ The METASPACE platform is developed by software engineers, data scientists and
 | [engine](metaspace/engine) | Contains a daemon that runs the metabolite annotation engine, and a REST API for sending jobs to the daemon |
 | [graphql](metaspace/graphql) | A GraphQL API for accessing the annotations database and metabolite annotation engine |
 | [webapp](metaspace/webapp) | A web application for submitting datasets and browsing results |
-| [mol-db](metaspace/mol-db) | A service for importing and serving molecular databases |
 | [python-client](metaspace/python-client) | A Python library and set of example Jupyter notebooks for performing data analysis on the annotations database |
 | [ansible](ansible) | Ansible playbooks for deploying to AWS and Vagrant |
 | [docker](docker) | Docker Compose configuration for making development and testing environments |
