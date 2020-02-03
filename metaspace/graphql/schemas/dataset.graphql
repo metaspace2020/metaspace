@@ -252,7 +252,7 @@ type DatasetStatusUpdate {
   relationship: DatasetRelationship
   action: DatasetAction!
   stage: DatasetActionStage!
-  is_new: Boolean
+  isNew: Boolean
 }
 
 type DatasetDeletion {

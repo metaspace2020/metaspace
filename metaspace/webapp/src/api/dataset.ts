@@ -208,7 +208,7 @@ export const datasetStatusUpdatedQuery = gql`subscription datasetStatusUpdated(
     }
     action
     stage
-    is_new
+    isNew
   }
 }
 ${datasetDetailItemFragment}`
