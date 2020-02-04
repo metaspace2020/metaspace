@@ -21,6 +21,11 @@ import App from './modules/App/App.vue'
 import VueAnalytics from 'vue-analytics'
 import { setErrorNotifier } from './lib/reportError'
 import { migrateLocalStorage } from './lib/localStorage'
+
+import VueCompositionApi from '@vue/composition-api'
+
+Vue.use(VueCompositionApi)
+
 if (config.ravenDsn != null && config.ravenDsn !== '') {
   Raven.config(config.ravenDsn)
     .addPlugin(RavenVue, Vue)
