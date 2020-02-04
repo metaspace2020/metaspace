@@ -332,7 +332,7 @@ workflows:
           filters:
             branches:
               # Replace this with the branch to run sci-test against
-              only: feat/more-moldb-cleanup
+              only: master
 
 ## Disabled until we have time to redo these tests
 #  daily:
