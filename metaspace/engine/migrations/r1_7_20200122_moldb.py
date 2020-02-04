@@ -32,6 +32,13 @@ def import_moldb_tables(db_config):
         with open('/tmp/molecular_db.csv', 'r') as stream:
             curs.copy_from(stream, 'molecular_db', columns=['id', 'name', 'version'])
 
+        curs.execute("select id from molecular_db")
+        existing_moldb_ids = [row[0] for row in curs.fetchall()]
+        curs.execute("select id from job where not (moldb_id = ANY(%s))", (existing_moldb_ids,))
+        job_ids_to_delete = [row[0] for row in curs.fetchall()]
+        logger.warning(f"Deleting jobs: {job_ids_to_delete}")
+        curs.execute("delete from job where not (moldb_id = ANY(%s))", (existing_moldb_ids,))
+
         curs.execute("SELECT setval('molecular_db_id_seq', max(id)) FROM molecular_db;")
         curs.execute(
             (
