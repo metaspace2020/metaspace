@@ -1,9 +1,13 @@
-import ElementUI from 'element-ui'
-import { createComponent, reactive } from '@vue/composition-api';
+import './Table.css'
+
+import Vue, { Component } from 'vue'
+
+import { Button } from 'element-ui'
+import { createComponent, reactive } from '@vue/composition-api'
 
 import { UserProfileQuery, userProfileQuery } from '../../api/user'
 import ConfirmAsync from '../../components/ConfirmAsync'
-import NotificationIcon from '../../components/NotificationIcon'
+// import NotificationIcon from '../../components/NotificationIcon.vue'
 import { TransferDatasetsDialog } from '../GroupProfile'
 
 import {
@@ -16,6 +20,8 @@ import {
 import reportError from '../../lib/reportError'
 import { encodeParams } from '../Filters'
 import apolloClient from '../../graphqlClient'
+
+const RouterLink = Vue.component('router-link') as Component<any>
 
 interface GroupRow {
   id: string;
@@ -59,37 +65,38 @@ function getRows({ currentUser }: Props) {
       }
     })
   }
-  return [];
+  return []
 }
 
 export default createComponent({
   name: 'ProjectsTable',
 
-  setup(props: Props, { }) {
-    const rows = getRows(props);
+  setup(props: Props, { listeners }) {
+    const rows = getRows(props)
+    console.log(rows)
 
     const state = reactive<State>({
       showTransferDatasetsDialog: false,
-      invitingGroup: null
-    });
+      invitingGroup: null,
+    })
 
     async function handleAcceptTransferDatasets(selectedDatasetIds: string[]) {
       try {
         await apolloClient.mutate({
           mutation: acceptGroupInvitationMutation,
-          variables: { groupId: this.invitingGroup!.id },
+          variables: { groupId: state.invitingGroup!.id },
         })
         if (selectedDatasetIds.length > 0) {
           await apolloClient.mutate({
             mutation: importDatasetsIntoGroupMutation,
-            variables: { groupId: this.invitingGroup!.id, datasetIds: selectedDatasetIds },
+            variables: { groupId: state.invitingGroup!.id, datasetIds: selectedDatasetIds },
           })
         }
 
         await props.refetchData()
-        this.$message({
+        listeners.$message({
           type: 'success',
-          message: `You are now a member of ${this.invitingGroup!.name}!`,
+          message: `You are now a member of ${state.invitingGroup!.name}!`,
         })
       } catch (err) {
         reportError(err)
@@ -104,95 +111,87 @@ export default createComponent({
 
     return () => (
       <div>
-        {state.showTransferDatasetsDialog &&
-          <TransferDatasetsDialog
+        {state.showTransferDatasetsDialog
+          && <TransferDatasetsDialog
             groupName={state.invitingGroup && state.invitingGroup.name}
             isInvited
             onAccept={handleAcceptTransferDatasets}
             onClose={handleCloseTransferDatasetsDialog}
           />
         }
-        <p>GroupsTable</p>
-        {/* <div style="padding-left: 15px;">
-          <el-table
-        : data="rows"
-                                                                          class="table"
-                                                                        >
-        <el-table-column label="Group">
-            <template slot-scope="scope">
-              <router-link : to="scope.row.route">
-              {{ scope.row.name }}
-            </router-link>
-            <notification-icon
-              v-if="scope.row.hasPendingRequest"
-              : tooltip="`${scope.row.name} has a pending membership request.`"
-tooltip-placement="right"
-/>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="roleName"
-          label="Role"
-          width="160"
-        />
-        <el-table-column
-          label="Datasets contributed"
-          width="160"
-          align="center"
-        >
-          <template slot-scope="scope">
-            <router-link
-              v-if="scope.row.numDatasets > 0"
-              : to="scope.row.datasetsRoute"
->
-              {{ scope.row.numDatasets }}
-            </router-link>
-          <span v-if="scope.row.numDatasets === 0">{{ scope.row.numDatasets }}</span>
-          </template>
-        </el-table-column>
-      <el-table-column
-        width="240"
-        align="right"
-      >
-        <template slot-scope="scope">
-          <el-button
-            v-if="scope.row.role === 'MEMBER'"
-            size="mini"
-            icon="el-icon-arrow-right"
-              @click="handleLeave(scope.row)"
->
-Leave
-            </el-button>
-        <el-button
-          v-if="scope.row.role === 'GROUP_ADMIN'"
-          size="mini"
-          icon="el-icon-arrow-right"
-          disabled
-        >
-          Leave
-            </el-button>
-        <el-button
-          v-if="scope.row.role === 'INVITED'"
-          size="mini"
-          type="success"
-          icon="el-icon-check"
-              @click="handleAcceptInvitation(scope.row)"
->
-Accept
-            </el-button>
-      <el-button
-        v-if="scope.row.role === 'INVITED'"
-        size="mini"
-        icon="el-icon-close"
-              @click="handleDeclineInvitation(scope.row)"
-      >
-      Decline
-            </el - button >
-          </template >
-        </el - table - column >
-      </el - table >
-    </div > */}
+        <table class="sm-table">
+          <col width="40%" />
+          <col width="20%" />
+          <col width="40%" />
+          <thead>
+            <tr>
+              <th>Group</th>
+              <th>Role</th>
+              <th>Datasets contributed</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length
+              ? rows.map(row =>
+                <tr>
+                  <td>
+                    {/* <RouterLink to={row.route}>{row.name}</RouterLink> */}
+                    {row.name}
+                    { row.hasPendingRequest
+                      && <notification-icon
+                        tooltip={`${row.name} has a pending membership request.`}
+                        tooltip-placement="right"
+                      /> }
+                  </td>
+                  <td>{row.roleName}</td>
+                  <td>
+                    {row.numDatasets > 0
+                      // <RouterLink to={row.datasetsRoute}>{row.numDatasets}</RouterLink>
+                      ? row.name
+                      : '0'
+                    }
+                  </td>
+                  <td>
+                    { row.role === 'MEMBER' && <el-button
+                      size="mini"
+                      icon="el-icon-arrow-right"
+                      onClick="handleLeave(scope.row)"
+                    >
+                      Leave
+                    </el-button> }
+                    { row.role === 'GROUP_ADMIN' && <el-button
+                      size="mini"
+                      icon="el-icon-arrow-right"
+                      disabled
+                    >
+                      Leave
+                    </el-button> }
+                    { row.role === 'INVITED' && <el-button
+                      size="mini"
+                      type="success"
+                      icon="el-icon-check"
+                      onClick="handleAcceptInvitation(scope.row)"
+                    >
+                      Accept
+                    </el-button> }
+                    { row.role === 'INVITED' && <el-button
+                      size="mini"
+                      icon="el-icon-close"
+                      onClick="handleDeclineInvitation(scope.row)"
+                    >
+                      Decline
+                    </el-button> }
+                  </td>
+                </tr>,
+              ) : (
+                <tr class="sm-table-empty-row">
+                  <td colspan="3">No data</td>
+                </tr>
+              )
+            }
+          </tbody>
+        </table>
       </div >
-    );
+    )
   },
-});
+})

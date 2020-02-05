@@ -1,0 +1,18 @@
+.sm-table {
+  width: 100%;
+  color: #909399;
+  font-size: 14px;
+}
+
+.sm-table th {
+  text-align: left;
+  border-bottom: 1px solid #EBEEF5;
+}
+
+.sm-table th, .sm-table td {
+  padding: 16px 0;
+}
+
+.sm-table-empty-row {
+  text-align: center;
+}
