@@ -14,7 +14,8 @@
     ],
     "module": "ESNext",
     "moduleResolution": "node",
-    "noEmit": true
+    "noEmit": true,
+    "jsx": "preserve"
   },
   "include": [
     "src/vue-shims.d.ts",
