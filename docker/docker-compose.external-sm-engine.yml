@@ -21,10 +21,6 @@ services:
   sm-api:
     command: "true" # Immediately quit so that the port doesn't stay in use
 
-  sm-mol-db:
-    ports:
-      - "5001:5001"
-
   sm-graphql:
     extra_hosts:
       - "sm-api:172.17.0.1"

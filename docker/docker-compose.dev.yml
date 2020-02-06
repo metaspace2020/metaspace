@@ -39,20 +39,13 @@ services:
     networks:
       - sm
 
-  sm-mol-db:
-    volumes:
-      - "${DEV_ROOT}/:/opt/dev/metaspace:z"
-      - ./sm-mol-db/install-dbs.sh:/install-dbs.sh:ro
-      - ./sm-mol-db/docker-entrypoint.sh:/docker-entrypoint.sh:ro
-    environment:
-      - SM_DOCKER_ENV=development
-
   sm-api:
     volumes:
       - "${DEV_ROOT}/:/opt/dev/metaspace:z"
       - ./sm-engine/rebuild-es-index.sh:/rebuild-es-index.sh:ro
       - ./sm-engine/start-api.sh:/start-api.sh:ro
       - ./sm-engine/start-common.sh:/start-common.sh:ro
+      - ./sm-engine/install-dbs.sh:/install-dbs.sh:ro
     environment:
       - SM_DOCKER_ENV=development
 
@@ -93,6 +86,5 @@ services:
     # extra_hosts:
     #   - "sm-webapp:172.17.0.1"
     #   - "sm-graphql:172.17.0.1"
-    #   - "mol-db:172.17.0.1"
     depends_on:
       - kibana
