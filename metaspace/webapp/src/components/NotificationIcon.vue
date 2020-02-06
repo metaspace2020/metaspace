@@ -11,13 +11,14 @@
     class="notification"
   />
 </template>
-<script>
-export default {
+<script lang="ts">
+import Vue from 'vue'
+export default Vue.extend({
   props: {
     tooltip: String,
     tooltipPlacement: String,
   },
-}
+})
 </script>
 <style scoped lang="scss">
   @import "~element-ui/packages/theme-chalk/src/common/var";

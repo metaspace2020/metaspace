@@ -1,13 +1,12 @@
 import './Table.css'
 
-import Vue, { Component } from 'vue'
-
+import Vue from 'vue'
 import { Button } from 'element-ui'
 import { createComponent, reactive } from '@vue/composition-api'
 
 import { UserProfileQuery, userProfileQuery } from '../../api/user'
 import ConfirmAsync from '../../components/ConfirmAsync'
-// import NotificationIcon from '../../components/NotificationIcon.vue'
+import NotificationIcon from '../../components/NotificationIcon.vue'
 import { TransferDatasetsDialog } from '../GroupProfile'
 
 import {
@@ -21,8 +20,7 @@ import reportError from '../../lib/reportError'
 import { encodeParams } from '../Filters'
 import apolloClient from '../../graphqlClient'
 
-const RouterLink = Vue.component('router-link') as Component<any>
-
+const RouterLink = Vue.component('router-link')
 interface GroupRow {
   id: string;
   name: string;
@@ -135,13 +133,12 @@ export default createComponent({
               ? rows.map(row =>
                 <tr>
                   <td>
-                    {/* <RouterLink to={row.route}>{row.name}</RouterLink> */}
-                    {row.name}
-                    { row.hasPendingRequest
-                      && <notification-icon
+                    <RouterLink to={row.route}>{row.name}</RouterLink>
+                    {row.hasPendingRequest
+                      && <NotificationIcon
                         tooltip={`${row.name} has a pending membership request.`}
                         tooltip-placement="right"
-                      /> }
+                      />}
                   </td>
                   <td>{row.roleName}</td>
                   <td>
@@ -152,35 +149,35 @@ export default createComponent({
                     }
                   </td>
                   <td>
-                    { row.role === 'MEMBER' && <el-button
+                    {row.role === 'MEMBER' && <el-button
                       size="mini"
                       icon="el-icon-arrow-right"
                       onClick="handleLeave(scope.row)"
                     >
                       Leave
-                    </el-button> }
-                    { row.role === 'GROUP_ADMIN' && <el-button
+                    </el-button>}
+                    {row.role === 'GROUP_ADMIN' && <el-button
                       size="mini"
                       icon="el-icon-arrow-right"
                       disabled
                     >
                       Leave
-                    </el-button> }
-                    { row.role === 'INVITED' && <el-button
+                    </el-button>}
+                    {row.role === 'INVITED' && <el-button
                       size="mini"
                       type="success"
                       icon="el-icon-check"
                       onClick="handleAcceptInvitation(scope.row)"
                     >
                       Accept
-                    </el-button> }
-                    { row.role === 'INVITED' && <el-button
+                    </el-button>}
+                    {row.role === 'INVITED' && <el-button
                       size="mini"
                       icon="el-icon-close"
                       onClick="handleDeclineInvitation(scope.row)"
                     >
                       Decline
-                    </el-button> }
+                    </el-button>}
                   </td>
                 </tr>,
               ) : (
