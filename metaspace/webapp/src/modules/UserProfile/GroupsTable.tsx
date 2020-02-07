@@ -4,8 +4,8 @@ import Vue from 'vue'
 import { Button } from 'element-ui'
 import { createComponent, reactive } from '@vue/composition-api'
 
-import { UserProfileQuery, userProfileQuery } from '../../api/user'
-import ConfirmAsync from '../../components/ConfirmAsync'
+import { UserProfileQuery } from '../../api/user'
+import confirmPrompt from '../../components/confirmPrompt'
 import NotificationIcon from '../../components/NotificationIcon.vue'
 import { TransferDatasetsDialog } from '../GroupProfile'
 
@@ -27,11 +27,6 @@ interface GroupRow {
   role: UserGroupRole;
   roleName: string;
   numDatasets: number;
-}
-
-interface Props {
-  currentUser: UserProfileQuery | null
-  refetchData: () => void
 }
 
 interface State {
@@ -66,12 +61,18 @@ function getRows({ currentUser }: Props) {
   return []
 }
 
-export default createComponent({
-  name: 'ProjectsTable',
+interface Props {
+  currentUser: UserProfileQuery | null
+  refetchData: () => void
+}
 
-  setup(props: Props, { listeners }) {
+export const GroupsTable = createComponent<Props>({
+  props: {
+    refetchData: Function,
+    currentUser: Object,
+  },
+  setup(props, { listeners }) {
     const rows = getRows(props)
-    console.log(rows)
 
     const state = reactive<State>({
       showTransferDatasetsDialog: false,
@@ -103,8 +104,39 @@ export default createComponent({
       }
     }
 
-    function handleCloseTransferDatasetsDialog() {
-      state.showTransferDatasetsDialog = false
+    function handleLeave(groupRow: GroupRow) {
+      confirmPrompt({
+        message: `Are you sure you want to leave ${groupRow.name}?`,
+        confirmButtonText: 'Yes, leave the group',
+        confirmButtonLoadingText: 'Leaving...',
+      }, async() => {
+        await apolloClient.mutate({
+          mutation: leaveGroupMutation,
+          variables: { groupId: groupRow.id },
+        })
+        await props.refetchData()
+        listeners.$message({ message: 'You have successfully left the group' })
+      })
+    }
+
+    async function handleDeclineInvitation(groupRow: GroupRow) {
+      confirmPrompt({
+        message: `Are you sure you want to decline the invitation to ${groupRow.name}?`,
+        confirmButtonText: 'Yes, decline the invitation',
+        confirmButtonLoadingText: 'Leaving...',
+      }, async() => {
+        await apolloClient.mutate({
+          mutation: leaveGroupMutation,
+          variables: { groupId: groupRow.id },
+        })
+        await props.refetchData()
+        listeners.$message({ message: 'You have declined the invitation' })
+      })
+    }
+
+    async function handleAcceptInvitation(groupRow: GroupRow) {
+      state.showTransferDatasetsDialog = true
+      state.invitingGroup = groupRow
     }
 
     return () => (
@@ -114,7 +146,7 @@ export default createComponent({
             groupName={state.invitingGroup && state.invitingGroup.name}
             isInvited
             onAccept={handleAcceptTransferDatasets}
-            onClose={handleCloseTransferDatasetsDialog}
+            onClose={() => { state.showTransferDatasetsDialog = false }}
           />
         }
         <table class="sm-table">
@@ -149,35 +181,35 @@ export default createComponent({
                     }
                   </td>
                   <td>
-                    {row.role === 'MEMBER' && <el-button
+                    {row.role === 'MEMBER' && <Button
                       size="mini"
                       icon="el-icon-arrow-right"
-                      onClick="handleLeave(scope.row)"
+                      onClick={handleLeave(row)}
                     >
                       Leave
-                    </el-button>}
-                    {row.role === 'GROUP_ADMIN' && <el-button
+                    </Button>}
+                    {row.role === 'GROUP_ADMIN' && <Button
                       size="mini"
                       icon="el-icon-arrow-right"
                       disabled
                     >
                       Leave
-                    </el-button>}
-                    {row.role === 'INVITED' && <el-button
+                    </Button>}
+                    {row.role === 'INVITED' && <Button
                       size="mini"
                       type="success"
                       icon="el-icon-check"
-                      onClick="handleAcceptInvitation(scope.row)"
+                      onClick={handleAcceptInvitation(row)}
                     >
                       Accept
-                    </el-button>}
-                    {row.role === 'INVITED' && <el-button
+                    </Button>}
+                    {row.role === 'INVITED' && <Button
                       size="mini"
                       icon="el-icon-close"
-                      onClick="handleDeclineInvitation(scope.row)"
+                      onClick={handleDeclineInvitation(row)}
                     >
                       Decline
-                    </el-button>}
+                    </Button>}
                   </td>
                 </tr>,
               ) : (
@@ -192,3 +224,5 @@ export default createComponent({
     )
   },
 })
+
+export default GroupsTable

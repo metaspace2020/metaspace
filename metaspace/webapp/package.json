@@ -119,6 +119,26 @@
     "babel-core": "7.0.0-bridge.0"
   },
   "jest": {
+    "globals": {
+      "ts-jest": {
+        "babelConfig": {
+          "presets": [
+            "vca-jsx",
+            [
+              "@vue/cli-plugin-babel/preset",
+              {
+                "useBuiltIns": "entry",
+                "modules": "commonjs",
+                "targets": {
+                  "node": "current"
+                }
+              }
+            ]
+          ]
+        },
+        "tsConfig": "tsconfig.json"
+      }
+    },
     "transform": {
       "^.+\\.vue$": "vue-jest",
       ".+\\.(css|styl|less|sass|scss|svg|png|jpg|ttf|woff|woff2)$": "jest-transform-stub",
@@ -135,6 +155,7 @@
     "restoreMocks": true,
     "moduleFileExtensions": [
       "ts",
+      "tsx",
       "js",
       "json",
       "vue"

@@ -5,6 +5,7 @@ import VueRouter from 'vue-router'
 import registerMockDirective from './registerMockDirective'
 import { Wrapper, config as vueTestConfig } from '@vue/test-utils'
 import { replaceConfigWithDefaultForTests } from '../../src/config'
+import VueCompositionApi from '@vue/composition-api'
 
 window.fetch = jest.fn()
 
@@ -12,6 +13,7 @@ vueTestConfig.logModifiedComponents = false
 
 Vue.use(VueRouter)
 Vue.use(ElementUI)
+Vue.use(VueCompositionApi)
 // Mock problematic ElementUI components
 registerMockComponent('el-dialog')
 registerMockComponent('el-popover')

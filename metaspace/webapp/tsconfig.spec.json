@@ -7,14 +7,24 @@
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "lib": ["ES2015", "ESNext", "DOM", "ScriptHost"],
+    "lib": [
+      "ES2015",
+      "ESNext",
+      "DOM",
+      "ScriptHost"
+    ],
     "module": "CommonJS",
     "moduleResolution": "node",
-    "noEmit": true
+    "noEmit": true,
+    "jsx": "preserve"
   },
+  "files": [
+    "src/vue-shims.d.ts",
+  ],
   "include": [
     "src/vue-shims.d.ts",
     "src/**/*.ts",
+    "src/**/*.tsx",
     "src/**/*.vue"
   ],
   "exclude": [
