@@ -216,7 +216,7 @@ export default class Diagnostics extends Vue {
         const isReference = ionFormula === this.annotation.ionFormula
         const isobars = isobarsByIonFormula[ionFormula]
         const annotations = annotationsByIonFormula[ionFormula]
-        const massShiftText = isReference ? '' : renderMassShift(annotations[0].mz, this.annotation.mz) + ': '
+        const massShiftText = isReference ? '' : renderMassShift(this.annotation.mz, annotations[0].mz) + ': '
         const isomersText = annotations.length < 2 ? '' : ' (isomers)'
         return {
           ionFormula,
@@ -229,10 +229,13 @@ export default class Diagnostics extends Vue {
         }
       })
 
-      return sortBy(groups, [
+      // Sort order: reference annotation first, then best by FDR, then best by MSM
+      // (consistent with the default sort in AnnotationsTable and RelatedMolecules)
+      return sortBy<AnnotationGroup>(groups,
         grp => grp.isReference ? 0 : 1,
-        grp => -grp.annotations[0].msm,
-      ])
+        grp => grp.annotations[0].fdrLevel,
+        grp => -grp.annotations[0].msmScore,
+      )
     }
 
     get nonReferenceGroups() {
