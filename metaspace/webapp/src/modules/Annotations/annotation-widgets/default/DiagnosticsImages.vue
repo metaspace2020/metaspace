@@ -1,7 +1,7 @@
 <template>
   <el-row class="isotope-images-container">
     <el-col
-      v-for="(img, idx) in sortedIsotopeImages"
+      v-for="(img, idx) in isotopeImages"
       :key="annotation.id + idx"
       :xs="24"
       :sm="12"
@@ -9,7 +9,19 @@
       :lg="6"
     >
       <div class="small-peak-image">
-        {{ img.mz.toFixed(4) }}<br>
+        {{ img.mz.toFixed(4) }}
+        <el-popover
+          v-if="img.isobarAlert"
+          trigger="hover"
+          placement="top"
+        >
+          {{ img.isobarAlert }}
+          <el-icon
+            slot="reference"
+            name="warning-outline"
+          />
+        </el-popover>
+        <br>
         <image-loader
           :src="img.url"
           :colormap="colormap"
@@ -30,7 +42,8 @@ import Vue from 'vue'
 import { Component, Prop } from 'vue-property-decorator'
 
 import ImageLoader from '../../../../components/ImageLoader.vue'
-import { sortBy } from 'lodash-es'
+import { groupBy, sortBy } from 'lodash-es'
+import { formatHumanReadableList, formatNth } from '../../../../util'
 
 @Component({
   components: {
@@ -47,10 +60,26 @@ export default class DiagnosticsImages extends Vue {
     @Prop()
     imageLoaderSettings: any
 
-    get sortedIsotopeImages(): any[] {
-      // Usually isotope images are pre-sorted by the server, but it's not an explicit guarantee of the API
-      return sortBy(this.annotation.isotopeImages, img => img.mz)
+    @Prop()
+    isobarPeakNs!: [number, number][] | null
+
+    get isotopeImages(): any[] {
+      const images = sortBy(this.annotation.isotopeImages, img => img.mz)
         .filter(img => img.mz > 0)
+        .map((img, i) => {
+          // Add info about peaks that overlap with an isobaric annotation
+          const overlapsPeaks = (this.isobarPeakNs || [])
+            .filter(([a, b]) => a === i + 1)
+            .map(([a, b]) => b)
+          const isobarAlert = overlapsPeaks.length > 0
+            ? 'This peak\'s detection window overlaps with the other annotation\'s '
+                  + formatHumanReadableList(overlapsPeaks.map(formatNth))
+                  + (overlapsPeaks.length > 1 ? ' peaks.' : ' peak.')
+            : null
+          return { ...img, isobarAlert }
+        })
+
+      return images
     }
 }
 </script>

@@ -16,7 +16,7 @@
           >
             <div>
               <span v-if="other.isIsomer">Isomer:</span>
-              <span v-else-if="other.isIsobar">Isobar:</span>
+              <span v-else-if="other.isIsobar">Isobar {{ renderMassShift(annotation.mz, other.mz) }}: </span>
               <span
                 class="ion-formula"
                 v-html="renderMolFormulaHtml(other.ion)"
@@ -91,7 +91,7 @@
 
 <script>
 import { omit, sortBy, uniqBy } from 'lodash-es'
-import { renderMolFormulaHtml } from '../../../util'
+import { renderMassShift, renderMolFormulaHtml } from '../../../util'
 import { relatedMoleculesQuery } from '../../../api/annotation'
 import { encodeParams, stripFilteringParams } from '../../Filters'
 import { ANNOTATION_SPECIFIC_FILTERS } from '../../Filters/filterSpecs'
@@ -160,13 +160,20 @@ export default {
         ...(this.isomerAnnotations || []).map(ann => ({ ...ann, isIsomer: true })),
         ...(this.isobarAnnotations || []).map(ann => ({ ...ann, isIsobar: true })),
       ]
-      annotations = sortBy(annotations, a => a.ion === this.annotation.ion ? 0 : 1)
       annotations = uniqBy(annotations, a => a.ion)
+      // Sort order: reference annotation first, then best by FDR, then best by MSM
+      // (consistent with the default sort in AnnotationsTable and RelatedMolecules)
+      annotations = sortBy(annotations,
+        a => a.ion === this.annotation.ion ? 0 : 1,
+        a => a.fdrLevel,
+        a => -a.msmScore,
+      )
 
       return annotations
     },
   },
   methods: {
+    renderMassShift,
     renderMolFormulaHtml,
     linkToAnnotation(other) {
       const filters = {
@@ -215,6 +222,9 @@ export default {
     color: $--color-text-regular;
 
     .ion-formula {
+      font-weight: bold;
+    }
+    .mass-shift {
       font-weight: bold;
     }
   }
