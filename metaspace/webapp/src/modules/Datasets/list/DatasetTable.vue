@@ -92,7 +92,9 @@ const extractGroupedStatusCounts = (data) => {
     FAILED: 0,
   };
   (data.countDatasetsPerGroup.counts || []).forEach(({ fieldValues: [status], count }) => {
-    counts[status] = count
+    // Upper-case statuses because ElasticSearch only outputs the normalized, lower-case values
+    // from the field-specific index
+    counts[status.toUpperCase()] = count
   })
   return counts
 }
@@ -222,7 +224,9 @@ export default {
         return extractGroupedStatusCounts(data)
       },
       variables() {
-        return this.queryVariables
+        return {
+          ...this.queryVariables,
+        }
       },
     },
   },
@@ -237,17 +241,8 @@ export default {
 
     count(stage) {
       let count = null
-      if (this.allDatasets != null) {
-        // assume not too many items are failed/queued/annotating so they are all visible in the web app,
-        // but check all lists because they may be in the wrong list due to status updates after they were loaded
-        if (stage === 'failed') { count = this.allDatasets.filter(ds => ds.status === 'FAILED').length }
-        if (stage === 'queued') { count = this.allDatasets.filter(ds => ds.status === 'QUEUED').length }
-        if (stage === 'started') { count = this.allDatasets.filter(ds => ds.status === 'ANNOTATING').length }
-        if (stage === 'finished') {
-          const inOtherLists = this.allDatasets.filter(ds => ds.status === 'FINISHED').length
-             - (this.finished && this.finished.length || 0)
-          count = this.finishedCount == null ? null : this.finishedCount + inOtherLists
-        }
+      if (this.datasetCounts != null) {
+        count = this.datasetCounts[stage.toUpperCase()]
       }
 
       return count != null && !isNaN(count) ? `(${count})` : ''

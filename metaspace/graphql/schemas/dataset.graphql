@@ -98,7 +98,8 @@ enum DatasetAggField {
   DF_ORGANISM_PART,
   DF_CONDITION,
   DF_GROWTH_CONDITIONS,
-  DF_MALDI_MATRIX
+  DF_MALDI_MATRIX,
+  DF_STATUS,
 }
 
 enum JobStatus {

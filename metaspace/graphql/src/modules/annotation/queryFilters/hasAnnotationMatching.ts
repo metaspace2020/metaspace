@@ -17,16 +17,19 @@ export const applyHasAnnotationMatchingFilter =
       }, context.user);
 
       const datasetIds = Object.keys(result);
-      const ids = otherDatasetFilters.ids
-        ? _.intersection(datasetIds, otherDatasetFilters.ids.split('|')).join('|')
-        : datasetIds.join('|');
+      let ids = otherDatasetFilters.ids
+        ? _.intersection(datasetIds, otherDatasetFilters.ids.split('|'))
+        : datasetIds;
+      if (ids.length === 0) {
+        ids = ['DONT_MATCH_ANYTHING']
+      }
 
       return {
         args: {
           ...otherArgs,
           datasetFilter: {
             ...otherDatasetFilters,
-            ids,
+            ids: ids.join('|'),
           }
         },
       };

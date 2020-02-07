@@ -67,6 +67,7 @@ export interface FilterSpecification {
   filterable?: boolean;
   multiple?: boolean;
   hidden?: boolean | (() => boolean);
+  debounce?: boolean;
   /** How to encode/decode this filter from the URL */
   encoding?: 'list' | 'json' | 'bool' | 'number';
   /** Callback to format options for display. "options" parameter may be an empty array while the page is loading */
@@ -88,6 +89,7 @@ export const FILTER_COMPONENT_PROPS: (keyof FilterSpecification)[] = [
   'name', 'helpComponent',
   'removable', 'filterable', 'multiple',
   'optionFormatter', 'valueGetter',
+  'debounce',
 ]
 
 export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
@@ -95,7 +97,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: SingleSelectFilter,
     name: 'Database',
     description: 'Select database',
-    levels: ['annotation'],
+    levels: ['annotation', 'dataset'],
     defaultInLevels: ['annotation'],
     initialValue: lists => lists.molecularDatabases
       .filter(d => d.default)
@@ -130,6 +132,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     description: 'Search molecule',
     levels: ['dataset', 'annotation'],
     initialValue: undefined,
+    debounce: true,
   },
 
   chemMod: {

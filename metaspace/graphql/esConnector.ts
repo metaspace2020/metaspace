@@ -359,7 +359,8 @@ const fieldEnumToSchemaPath = {
   DF_ORGANISM_PART: datasetFilters.organismPart.esField,
   DF_CONDITION: datasetFilters.condition.esField,
   DF_GROWTH_CONDITIONS: datasetFilters.growthConditions.esField,
-  DF_MALDI_MATRIX: datasetFilters.maldiMatrix.esField
+  DF_MALDI_MATRIX: datasetFilters.maldiMatrix.esField,
+  DF_STATUS: 'ds_status',
 };
 
 function constructTermAggregations(fields: (keyof typeof fieldEnumToSchemaPath)[]) {

@@ -25,6 +25,10 @@ module.exports = {
           whitespace: 'preserve',
         }
       }))
+
+    config.module.rule('eslint').use('eslint-loader').options({
+      fix: true
+    })
   },
 
   configureWebpack: (config) => {
@@ -62,4 +66,5 @@ module.exports = {
       lintGQL: true,
     },
   },
+  lintOnSave: 'warning'
 }

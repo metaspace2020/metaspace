@@ -113,7 +113,7 @@ class ESIndexManager:
             indices = self._ind_client.get_alias(name=alias)
         except NotFoundError:
             indices = {}
-        logger.warning(f'Could not find ElasticSearch alias "{alias}"')
+            logger.warning(f'Could not find ElasticSearch alias "{alias}"')
 
         index = next(iter(indices.keys()), None)
         if len(indices) > 1:
