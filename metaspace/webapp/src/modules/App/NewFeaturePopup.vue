@@ -69,15 +69,13 @@ const NEW_FEATURES: FeatureSpec[] = [
     name: 'isomersIsobars',
     title: 'Isomers and isobars',
     contentHtml: `
-<p>METASPACE now warns when there are isomeric and isobaric annotations.</p>
-<p>
-When you see this icon <span class='danger-icon'></span>, it means that that there are
-multiple candidate annotations for this set of peaks. Open the Molecules section for more information.
-</p>
-<p>
-If isobaric annotations have been identified, the Diagnostics section allows comparisons
-between overlapping annotations to help you to determine which annotation is more likely.
-The ion formulas of isomers and isobars are also available in the CSV export. </p>
+<p>METASPACE now warns about isomeric and isobaric ambiguity.</p>
+<p>This icon <span class='danger-icon'></span> indicates that for this annotation,
+there are other isomers and/or isobars annotated. These are listed in the <b>Molecules</b> section.</p>
+<p>In case of isobaric annotations, the <b>Diagnostics</b> section allows for comparisons
+between overlapping annotations to help determine which annotation is more likely
+based on their isotopic patterns and images.
+The ion formulas of isomers and isobars are also available in the regular CSV export.</p>
       `,
     dontShowAfter: new Date('2020-05-30'),
     placement: 'top',
