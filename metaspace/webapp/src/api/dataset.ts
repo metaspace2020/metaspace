@@ -91,7 +91,7 @@ export const datasetDetailItemsQuery =
   ${datasetDetailItemFragment}
   `
 
-export const datasetCountQuery =
+export const countDatasetsByStatusQuery =
   gql`query CountDatasets($dFilter: DatasetFilter, $query: String) {
     countDatasetsPerGroup(query: {filter: $dFilter, simpleQuery: $query, fields: [DF_STATUS]}) {
       counts {
@@ -99,6 +99,11 @@ export const datasetCountQuery =
         count
       }
     }
+  }`
+
+export const countDatasetsQuery =
+  gql`query CountDatasets($dFilter: DatasetFilter, $query: String) {
+    countDatasets(filter: $dFilter, simpleQuery: $query)
   }`
 
 export interface DatasetListItem {

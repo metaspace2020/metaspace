@@ -23,26 +23,26 @@
           class="dataset-status-checkboxes"
         >
           <el-checkbox
-            class="cb-started"
-            label="started"
+            class="cb-annotating"
+            label="ANNOTATING"
           >
-            Processing {{ count('started') }}
+            Processing {{ count('ANNOTATING') }}
           </el-checkbox>
           <el-checkbox
             class="cb-queued"
-            label="queued"
+            label="QUEUED"
           >
-            Queued {{ count('queued') }}
+            Queued {{ count('QUEUED') }}
           </el-checkbox>
-          <el-checkbox label="finished">
-            Finished {{ count('finished') }}
+          <el-checkbox label="FINISHED">
+            Finished {{ count('FINISHED') }}
           </el-checkbox>
           <el-checkbox
             v-if="canSeeFailed"
             class="cb-failed"
-            label="failed"
+            label="FAILED"
           >
-            Failed {{ count('failed') }}
+            Failed {{ count('FAILED') }}
           </el-checkbox>
         </el-checkbox-group>
         <div style="flex-grow: 1;" />
@@ -68,9 +68,9 @@
 
 <script>
 import {
-  datasetDetailItemsQuery,
-  datasetCountQuery,
+  countDatasetsByStatusQuery, countDatasetsQuery,
   datasetDeletedQuery,
+  datasetDetailItemsQuery,
   datasetStatusUpdatedQuery,
 } from '../../../api/dataset'
 import { metadataExportQuery } from '../../../api/metadata'
@@ -78,11 +78,10 @@ import DatasetList from './DatasetList.vue'
 import { FilterPanel } from '../../Filters/index'
 import FileSaver from 'file-saver'
 import delay from '../../../lib/delay'
-import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../../lib/formatCsvRow'
+import formatCsvRow, { csvExportHeader } from '../../../lib/formatCsvRow'
 import { currentUserRoleQuery } from '../../../api/user'
-import { removeDatasetFromAllDatasetsQuery } from '../../../lib/updateApolloCache'
-import { orderBy } from 'lodash-es'
-import updateApolloCache from '../../../lib/updateApolloCache'
+import updateApolloCache, { removeDatasetFromAllDatasetsQuery } from '../../../lib/updateApolloCache'
+import { merge, orderBy, pick } from 'lodash-es'
 
 const extractGroupedStatusCounts = (data) => {
   const counts = {
@@ -109,7 +108,7 @@ export default {
     return {
       recordsPerPage: 10,
       csvChunkSize: 1000,
-      categories: ['started', 'queued', 'finished'],
+      categories: ['ANNOTATING', 'QUEUED', 'FINISHED'],
       isExporting: false,
       loading: 0,
       countLoading: 0,
@@ -139,13 +138,13 @@ export default {
     },
 
     datasets() {
+      const statusOrder = ['QUEUED', 'ANNOTATING']
       let datasets = (this.allDatasets || [])
-      datasets = datasets.filter(ds =>
-        (ds.status === 'FAILED' && this.categories.includes('failed'))
-           || (ds.status === 'ANNOTATING' && this.categories.includes('started'))
-           || (ds.status === 'QUEUED' && this.categories.includes('queued'))
-           || (ds.status === 'FINISHED' && this.categories.includes('finished')))
-      datasets = orderBy(datasets, ['ds_status_update_dt'], ['desc'])
+      datasets = datasets.filter(ds => this.categories.includes(ds.status))
+      datasets = orderBy(datasets, [
+        ds => statusOrder.includes(ds.status) ? statusOrder.indexOf(ds.status) : 999,
+        'ds_status_update_dt',
+      ], ['asc', 'desc'])
       return datasets
     },
 
@@ -181,12 +180,12 @@ export default {
               const oldDataset = this.allDatasets.find(ds => ds.id === dataset.id)
               const oldStatus = oldDataset && oldDataset.status
               const newStatus = dataset.status
-              updateApolloCache(this, 'countDatasets', oldVal => {
+              updateApolloCache(this, 'datasetCounts', oldVal => {
                 const oldCounts = extractGroupedStatusCounts(oldVal)
                 return {
                   ...oldVal,
                   counts: Object.entries(oldCounts).map(([status, count]) => ({
-                    fields: [status],
+                    fieldValues: [status],
                     count: count
                        - (status === oldStatus ? 1 : 0)
                        + (status === newStatus ? 1 : 0),
@@ -218,7 +217,7 @@ export default {
     datasetCounts: {
       loadingKey: 'countLoading',
       fetchPolicy: 'cache-and-network',
-      query: datasetCountQuery,
+      query: countDatasetsByStatusQuery,
       throttle: 1000,
       update(data) {
         return extractGroupedStatusCounts(data)
@@ -239,10 +238,10 @@ export default {
     formatResolvingPower: (row, col) =>
       (row.analyzer.resolvingPower / 1000).toFixed(0) * 1000,
 
-    count(stage) {
+    count(status) {
       let count = null
       if (this.datasetCounts != null) {
-        count = this.datasetCounts[stage.toUpperCase()]
+        count = this.datasetCounts[status]
       }
 
       return count != null && !isNaN(count) ? `(${count})` : ''
@@ -292,28 +291,27 @@ export default {
       }
 
       this.isExporting = true
-      const self = this
-
-      const v = { ...this.queryVariables, status: 'FINISHED' }
-      const chunks = []
+      const v = merge({}, this.queryVariables, { dFilter: { status: 'FINISHED' } })
+      const totalCount = (await this.$apollo.query({
+        query: countDatasetsQuery,
+        variables: v,
+      })).data.countDatasets
       let offset = 0
 
-      v.limit = this.csvChunkSize
-
-      while (self.isExporting && offset < self.finishedCount) {
-        const variables = Object.assign(v, { offset })
-        const resp = await self.$apollo.query({ query: metadataExportQuery, variables })
+      while (this.isExporting && offset < totalCount) {
+        const variables = { ...v, offset, limit: this.csvChunkSize }
+        const resp = await this.$apollo.query({ query: metadataExportQuery, variables })
 
         offset += this.csvChunkSize
         writeCsvChunk(resp.data.datasets)
         await delay(50)
       }
 
-      if (!self.isExporting) {
+      if (!this.isExporting) {
         return
       }
 
-      self.isExporting = false
+      this.isExporting = false
 
       const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
       FileSaver.saveAs(blob, 'metaspace_datasets.csv')
@@ -340,7 +338,7 @@ export default {
    align-items: center;
  }
 
- .cb-started .el-checkbox__input.is-checked .el-checkbox__inner {
+ .cb-annotating .el-checkbox__input.is-checked .el-checkbox__inner {
    background: #5eed5e;
  }
 
