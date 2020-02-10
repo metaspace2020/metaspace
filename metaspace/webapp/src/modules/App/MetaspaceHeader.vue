@@ -403,7 +403,7 @@ export default MetaspaceHeader
  }
 
  .spacer {
-   height: $header-height + 8px;
+   height: $header-height;
  }
 
  .spacerWithAlert {

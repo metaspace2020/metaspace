@@ -2,11 +2,17 @@
   <div class="main-content">
     <div class="mainBanner-wrapper">
       <div class="mainBanner">
-        <div style="position: absolute; top: 115px; left: 334px; color: white; font-size: 30px;">
+        <div style="position: absolute; top: 100px; left: 330px; color: white; font-size: 32px; line-height: 40px; margin: 10px 0">
           Welcome to
         </div>
-        <div style="position: absolute; top: 260px; left: 334px; color: white; font-size: 22px;">
-          Platform for metabolite annotation of imaging mass spectrometry data
+        <img
+          src="../../assets/METASPACE_banner.jpg"
+          alt="METASPACE"
+        >
+        <div style="position: absolute; top: 260px; left: 330px; color: white; font-size: 24px; line-height: 30px; min-width: 40ch">
+          The platform for metabolite annotation
+          <br>
+          of imaging mass spectrometry data.
         </div>
       </div>
     </div>
@@ -53,7 +59,7 @@
           <el-col :span="6">
             <h2>Open Access</h2>
             <p>
-              All code is open-source, the input format is the <a
+              All code is <a href="https://github.com/metaspace2020">open-source</a>, the input format is the <a
                 href="http://imzml.org/"
               >imzML</a>
               supported by all mass spec major vendors, the metabolite annotations from the community datasets are public
@@ -125,7 +131,7 @@
               @click.prevent="onShowMailingList"
             >METASPACE mailing list</a>.
           </p>
-          <p>Find out more about the METASPACE consortium at the <a href="http://project.metaspace2020.eu/">project website</a></p>
+          <!-- <p>Find out more about the METASPACE consortium at the <a href="http://project.metaspace2020.eu/">project website</a></p> -->
           <p>
             For all other inquiries or questions,
             <a href="https://gitter.im/metaspace2020/metaspace">chat with us on Gitter</a> or
@@ -239,55 +245,86 @@ export default class AboutPage extends Vue {
 </script>
 
 <style lang="scss">
- #about {
-   display: flex;
-   padding: 0px 20px;
-   align-items: center;
-   justify-content: center;
- }
+  @font-face {
+    font-family: "FuturaBT-Medium";
+    src: url("../../assets/fonts/futura/2FD17E_0_0.eot");
+    src: url("../../assets/fonts/futura/2FD17E_0_0.eot?#iefix") format("embedded-opentype"), url("../../assets/fonts/futura/2FD17E_0_0.woff2") format("woff2"), url("../../assets/fonts/futura/2FD17E_0_0.woff") format("woff"), url("../../assets/fonts/futura/2FD17E_0_0.ttf") format("truetype");
+    font-style: normal;
+    font-weight: normal;
+  }
+  @font-face {
+    font-family: "ProximaNova-Light";
+    src: url("../../assets/fonts/proximaNova/2FD17E_3_0.eot?#iefix") format("embedded-opentype"), url("../../assets/fonts/proximaNova/2FD17E_3_0.woff2") format("woff2"), url("../../assets/fonts/proximaNova/2FD17E_3_0.woff") format("woff"), url("../../assets/fonts/proximaNova/2FD17E_3_0.ttf") format("truetype");
+    src: url("../../assets/fonts/proximaNova/2FD17E_3_0.eot");
+    font-style: normal;
+    font-weight: normal;
+  }
 
- #about > div, #about img {
-   max-width: 900px;
- }
+  // .baseline-grid {
+  //   background-image: linear-gradient(180deg,red 1px,transparent 0);
+  //   background-position: 0 0;
+  //   background-repeat: repeat;
+  //   background-size: 100% 20px
+  // }
 
- .mainBanner {
-   position: relative;
-   height: 400px;
-   max-width: 1100px;
-   width: 100%;
-   background: url("../../assets/METASPACE_banner_blue_bg.jpg") -50px;
-   background-size: cover;
-   margin: -8px auto 0 auto;
-   /*outline: 1px solid red;*/
-   box-sizing: border-box;
- }
- .mainBanner-wrapper {
-   width: 100%;
-   background-color: #008aff;
- }
+  .main-content {
+    line-height: 20px;
+  }
 
- .mailing-list-dialog .el-dialog__body {
-   padding-top: 0;
- }
- /* MailChimp Form Embed Code - converted from http://cdn-images.mailchimp.com/embedcode/horizontal-slim-10_7.css */
- #mc_embed_signup {
-   background:#fff;
-   clear:left;
-   font:14px Helvetica,Arial,sans-serif;
-   width:100%;
+  #about {
+    display: flex;
+    padding: 0px 20px;
+    align-items: center;
+    justify-content: center;
+  }
 
-   form {text-align:center; padding:10px 0 10px 0;}
-   input.email {font-family:"Open Sans","Helvetica Neue",Arial,Helvetica,Verdana,sans-serif; font-size: 15px; border: 1px solid #ABB0B2;  -webkit-border-radius: 3px; -moz-border-radius: 3px; border-radius: 3px; color: #343434; background-color: #fff; box-sizing:border-box; height:32px; padding: 0px 0.4em; display: inline-block; margin: 0; width:350px; vertical-align:top;}
-   label {display:block; font-size:16px; padding-bottom:10px; font-weight:bold;}
-   .clear {display: inline-block;} /* positions button horizontally in line with input */
-   .button {font-size: 13px; border: none; -webkit-border-radius: 3px; -moz-border-radius: 3px; border-radius: 3px; letter-spacing: .03em; color: #fff; background-color: #aaa; box-sizing:border-box; height:32px; line-height:32px; padding:0 18px; display: inline-block; margin: 0; transition: all 0.23s ease-in-out 0s;}
-   .button:hover {background-color:#777; cursor:pointer;}
-   div.response {margin:1em 0; padding:1em .5em .5em 0; font-weight:bold; float:left; top:-1.5em; z-index:1; width:80%;}
-   label.error {display:block; float:none; width:auto; margin-left:1.05em; text-align:left; padding:.5em 0;}
-   @media (max-width: 768px) {
-     input.email {width:100%; margin-bottom:5px;}
-     .clear {display: block; width: 100% }
-     .button {width: 100%; margin:0; }
-   }
- }
+  #about > div, #about img {
+    max-width: 900px;
+  }
+
+  .mainBanner {
+    box-sizing: border-box;
+    font-family: 'FuturaBT-Medium', 'Roboto', Helvetica, sans-serif;
+    height: 400px;
+    margin: 0 auto;
+    max-width: 1100px;
+    position: relative;
+  }
+  .mainBanner-wrapper {
+    background-color: #008aff;
+    overflow: hidden;
+    width: 100%;
+  }
+  .mainBanner img {
+    // max-width: 100%;
+    margin-top: 40px;
+    margin-left: -30px;
+    // position: relative;
+    // z-index: -1;
+  }
+
+  .mailing-list-dialog .el-dialog__body {
+    padding-top: 0;
+  }
+  /* MailChimp Form Embed Code - converted from http://cdn-images.mailchimp.com/embedcode/horizontal-slim-10_7.css */
+  #mc_embed_signup {
+    background:#fff;
+    clear:left;
+    font:14px Helvetica,Arial,sans-serif;
+    width:100%;
+
+    form {text-align:center; padding:10px 0 10px 0;}
+    input.email {font-family:"Open Sans","Helvetica Neue",Arial,Helvetica,Verdana,sans-serif; font-size: 15px; border: 1px solid #ABB0B2;  -webkit-border-radius: 3px; -moz-border-radius: 3px; border-radius: 3px; color: #343434; background-color: #fff; box-sizing:border-box; height:32px; padding: 0px 0.4em; display: inline-block; margin: 0; width:350px; vertical-align:top;}
+    label {display:block; font-size:16px; padding-bottom:10px; font-weight:bold;}
+    .clear {display: inline-block;} /* positions button horizontally in line with input */
+    .button {font-size: 13px; border: none; -webkit-border-radius: 3px; -moz-border-radius: 3px; border-radius: 3px; letter-spacing: .03em; color: #fff; background-color: #aaa; box-sizing:border-box; height:32px; line-height:32px; padding:0 18px; display: inline-block; margin: 0; transition: all 0.23s ease-in-out 0s;}
+    .button:hover {background-color:#777; cursor:pointer;}
+    div.response {margin:1em 0; padding:1em .5em .5em 0; font-weight:bold; float:left; top:-1.5em; z-index:1; width:80%;}
+    label.error {display:block; float:none; width:auto; margin-left:1.05em; text-align:left; padding:.5em 0;}
+    @media (max-width: 768px) {
+      input.email {width:100%; margin-bottom:5px;}
+      .clear {display: block; width: 100% }
+      .button {width: 100%; margin:0; }
+    }
+  }
 </style>
