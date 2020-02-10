@@ -20,7 +20,6 @@ function matrixName(matrix) {
   if (matrix !== OTHER_MATRIX) {
     const match = matrix.replace('_', ' ').match(/\(([A-Z0-9]{2,10})\)/i)
     if (match) {
-      console.log(`${matrix} => ${match[1]}`)
       return match[1]
     }
   }
@@ -238,25 +237,6 @@ export default {
       elem.selectAll('*').remove()
       const svg = configureSvg(elem, geometry)
 
-      // const xData =
-      //   d3.nest().key(d => d.sourceType + '@@' + d.source)
-      //     .entries(this.data)
-      //     .map(({ key, values }) => ({
-      //       key: key.split('@@')[1],
-      //       sourceType: key.split('@@')[0],
-      //       count: values.map(d => d.totalCount).reduce((x, y) => x + y),
-      //     }))
-      //     .sort((a, b) => {
-      //       if (a.sourceType !== b.sourceType && !(isMaldi(a.sourceType) && isMaldi(b.sourceType))) {
-      //         if (isMaldi(a.sourceType)) {
-      //           return 1
-      //         }
-      //         if (isMaldi(b.sourceType)) {
-      //           return -1
-      //         }
-      //       }
-      //       return b.count - a.count
-      //     })
       let xData = map(groupBy(this.data, d => d.isMaldi + '@@' + d.sourceType), (items) => ({
         key: items[0].sourceType,
         count: sumBy(items, 'totalCount'),
@@ -270,8 +250,6 @@ export default {
         isOther: analyzer === OTHER_ANALYZER,
       }))
       yData = orderBy(yData, ['isOther', 'count'], ['desc', 'desc'])
-
-      console.log({ xData, yData })
 
       const { scales } = pieScatterPlot(svg, this.data, config, xData, yData)
 

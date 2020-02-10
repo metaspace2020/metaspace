@@ -422,37 +422,17 @@ export const esCountGroupedResults = async (args: any, docType: DocType, user: C
 
 export const esCountMatchingAnnotationsPerDataset = async (args: any, user: ContextUser): Promise<Record<string, number>> => {
   const body = constructESQuery(args, 'annotation', user, await user.getProjectRoles());
-  if (1) {
-    const aggRequest = {
-      body: {
-        ...body,
-        aggs: { ds_id: { terms: { field: 'ds_id', size: 1000000 } } },
-      },
-      index: esIndex,
-      size: 0,
-    };
-    const resp = await es.search(aggRequest);
-    const counts = resp.aggregations.ds_id.buckets.map(({ key, doc_count }: any) => [key, doc_count]);
-    console.log(resp.took, counts.length);
-    return _.fromPairs(counts);
-  } else {
-    const aggRequest = {
-      body: {
-        ...body,
-        collapse: {
-          field: 'ds_id',
-          inner_hits: {name: 'latest', size: 1},
-        },
-      },
-      index: esIndex,
-      size: 10000,
-    };
-    const resp = await es.search(aggRequest);
-    console.log(resp.took, resp.hits.hits[0]);
-    const counts = resp.hits.hits.map((doc: any) => [doc._source.ds_id, 1]);
-    return _.fromPairs(counts);
-
-  }
+  const aggRequest = {
+    body: {
+      ...body,
+      aggs: { ds_id: { terms: { field: 'ds_id', size: 1000000 } } },
+    },
+    index: esIndex,
+    size: 0,
+  };
+  const resp = await es.search(aggRequest);
+  const counts = resp.aggregations.ds_id.buckets.map(({ key, doc_count }: any) => [key, doc_count]);
+  return _.fromPairs(counts);
 };
 
 export interface FilterValueCountArgs {

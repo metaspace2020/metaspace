@@ -123,7 +123,6 @@ export default {
       }
       return true
     },
-
     queryVariables() {
       return {
         dFilter: this.$store.getters.gqlDatasetFilter,
@@ -132,11 +131,9 @@ export default {
         checkLvl: 10,
       }
     },
-
     nonEmpty() {
       return this.datasets.length > 0
     },
-
     datasets() {
       const statusOrder = ['QUEUED', 'ANNOTATING']
       let datasets = (this.allDatasets || [])
@@ -147,7 +144,6 @@ export default {
       ], ['asc', 'desc'])
       return datasets
     },
-
     canSeeFailed() {
       return this.currentUser != null && this.currentUser.role === 'admin'
     },
@@ -197,13 +193,11 @@ export default {
         },
       },
     },
-
     currentUser: {
       loadingKey: 'loading',
       query: currentUserRoleQuery,
       fetchPolicy: 'cache-first',
     },
-
     allDatasets: {
       loadingKey: 'loading',
       fetchPolicy: 'cache-and-network',
@@ -213,7 +207,6 @@ export default {
         return this.queryVariables
       },
     },
-
     datasetCounts: {
       loadingKey: 'countLoading',
       fetchPolicy: 'cache-and-network',
@@ -239,12 +232,11 @@ export default {
       (row.analyzer.resolvingPower / 1000).toFixed(0) * 1000,
 
     count(status) {
-      let count = null
       if (this.datasetCounts != null) {
-        count = this.datasetCounts[status]
+        return `(${this.datasetCounts[status] || 0})`
+      } else {
+        return ''
       }
-
-      return count != null && !isNaN(count) ? `(${count})` : ''
     },
 
     async startExport() {
