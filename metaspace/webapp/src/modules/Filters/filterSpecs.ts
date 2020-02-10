@@ -97,7 +97,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: SingleSelectFilter,
     name: 'Database',
     description: 'Select database',
-    levels: ['annotation', 'dataset'],
+    levels: ['annotation'],
     defaultInLevels: ['annotation'],
     initialValue: lists => lists.molecularDatabases
       .filter(d => d.default)

@@ -9,6 +9,7 @@
 import { configureSvg, addLegend, pieScatterPlot, setTickSize } from './utils'
 import * as d3 from 'd3'
 import gql from 'graphql-tag'
+import { sortBy } from 'lodash-es'
 
 function matrixName(matrix) {
   const match = matrix.replace('_', ' ').match(/\(([A-Z0-9]{2,10})\)/i)
@@ -33,8 +34,6 @@ const query =
         }
       }
   }`
-
-const minGroupSize = process.env.NODE_ENV === 'development' ? 1 : 10
 
 const geometry = {
   margin: {
@@ -85,8 +84,11 @@ const config = {
   },
 }
 
+const isMaldi = sourceType => /maldi/i.test(sourceType)
+const isNA = sourceType => /n\/a|none|^\s*$/i.test(sourceType)
+
 function drawMaldiCurlyBrace(svg, data, xScale) {
-  const maldiData = data.filter(d => strieq(d.sourceType, 'maldi'))
+  const maldiData = data.filter(d => isMaldi(d.sourceType))
   if (maldiData.length === 0) {
     return
   }
@@ -145,42 +147,45 @@ export default {
         return []
       }
 
-      const result = []
-      let prev = null
+      let result = []
       const inverted = { positive: 'negative', negative: 'positive' }
 
       for (const entry of this.counts) {
-        const [analyzer, source, matrix, polarity] = entry.fieldValues
-        if (strieq(analyzer, 'n/a') || strieq(source, 'n/a')) {
-          continue
+        let [analyzer, source, matrix, polarity] = entry.fieldValues
+        if (isNA(analyzer)) {
+          analyzer = '(Other)'
         }
-        if (strieq(source, 'maldi') && strieq(matrix, 'n/a')) {
-          continue
+        if (isNA(source)) {
+          source = '(Other)'
         }
-        if (entry.count < minGroupSize) {
-          continue
+        if (isMaldi(source) && isNA(matrix)) {
+          matrix = '(Other)'
         }
 
         const normalizedPolarity = String(polarity).toLowerCase()
         const datum = {
           analyzer,
-          source: strieq(source, 'maldi') ? matrixName(matrix) : source,
-          sourceType: source,
+          source: isMaldi(source) ? matrixName(matrix) : source,
+          sourceType: isMaldi(source) ? 'maldi' : source,
           counts: {
             [normalizedPolarity]: entry.count,
             [inverted[normalizedPolarity]]: 0,
           },
           totalCount: entry.count,
         }
-
-        if (prev && ['analyzer', 'source', 'sourceType'].every(f => prev[f] === datum[f])) {
-          ['positive', 'negative'].forEach(pol => { prev.counts[pol] += datum.counts[pol] })
-          prev.totalCount += datum.totalCount
+        const existing = result.find(other => ['analyzer', 'source', 'sourceType'].every(f => other[f] === datum[f]))
+        if (existing) {
+          ['positive', 'negative'].forEach(pol => { existing.counts[pol] += datum.counts[pol] })
+          existing.totalCount += datum.totalCount
         } else {
           result.push(datum)
-          prev = datum
         }
       }
+      result = sortBy(result,
+        datum => datum.sourceType === 'maldi',
+        datum => datum.source === '(Other)',
+        datum => -datum.totalCount,
+      )
 
       return result
     },
@@ -201,11 +206,11 @@ export default {
             count: values.map(d => d.totalCount).reduce((x, y) => x + y),
           }))
           .sort((a, b) => {
-            if (a.sourceType !== b.sourceType) {
-              if (strieq(a.sourceType, 'maldi')) {
+            if (a.sourceType !== b.sourceType && !(isMaldi(a.sourceType) && isMaldi(b.sourceType))) {
+              if (isMaldi(a.sourceType)) {
                 return 1
               }
-              if (strieq(b.sourceType, 'maldi')) {
+              if (isMaldi(b.sourceType)) {
                 return -1
               }
             }
