@@ -7,6 +7,7 @@
 <script>
 
 import { configureSvg, addMainTitle } from './utils'
+import { sortBy } from 'lodash-es'
 import * as d3 from 'd3'
 import gql from 'graphql-tag'
 
@@ -68,7 +69,7 @@ export default {
         return []
       }
 
-      const result = []
+      let result = []
 
       const OTHER = '(Other)'
       const submitters = {}
@@ -110,8 +111,10 @@ export default {
         numDatasets: numDatasets[OTHER],
         numSubmitters: numSubmitters[OTHER],
       })
-
-      result.sort((a, b) => b.numDatasets - a.numDatasets)
+      result = sortBy(result,
+        a => a.lab === OTHER,
+        a => -a.numDatasets,
+      )
       return result.filter(a => a.numDatasets > 0)
     },
   },

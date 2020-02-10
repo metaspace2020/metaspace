@@ -81,7 +81,7 @@ import delay from '../../../lib/delay'
 import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../../lib/formatCsvRow'
 import { currentUserRoleQuery } from '../../../api/user'
 import { removeDatasetFromAllDatasetsQuery } from '../../../lib/updateApolloCache'
-import { sortBy, uniqBy } from 'lodash-es'
+import { orderBy } from 'lodash-es'
 import updateApolloCache from '../../../lib/updateApolloCache'
 
 const extractGroupedStatusCounts = (data) => {
@@ -145,7 +145,7 @@ export default {
            || (ds.status === 'ANNOTATING' && this.categories.includes('started'))
            || (ds.status === 'QUEUED' && this.categories.includes('queued'))
            || (ds.status === 'FINISHED' && this.categories.includes('finished')))
-      datasets = sortBy(datasets, ['ds_status_update_dt'], ['desc'])
+      datasets = orderBy(datasets, ['ds_status_update_dt'], ['desc'])
       return datasets
     },
 

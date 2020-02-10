@@ -9,17 +9,23 @@
 import { configureSvg, addLegend, pieScatterPlot, setTickSize } from './utils'
 import * as d3 from 'd3'
 import gql from 'graphql-tag'
-import { sortBy } from 'lodash-es'
+import { groupBy, map, mapValues, sumBy, sortBy, orderBy, without } from 'lodash-es'
+
+const MALDI = 'maldi'
+const OTHER_ANALYZER = '(other analyzer)'
+const OTHER_SOURCE = '(other ion source)'
+const OTHER_MATRIX = '(other matrix)'
 
 function matrixName(matrix) {
-  const match = matrix.replace('_', ' ').match(/\(([A-Z0-9]{2,10})\)/i)
-  if (match) {
-    return match[1]
+  if (matrix !== OTHER_MATRIX) {
+    const match = matrix.replace('_', ' ').match(/\(([A-Z0-9]{2,10})\)/i)
+    if (match) {
+      console.log(`${matrix} => ${match[1]}`)
+      return match[1]
+    }
   }
   return matrix
 }
-
-const strieq = (a, b) => String(a).localeCompare(String(b), undefined, { sensitivity: 'base' }) === 0
 
 const query =
    gql`query GetMSSetupCounts($filter: DatasetFilter, $query: String) {
@@ -55,7 +61,7 @@ const config = {
   mainTitle: 'Number of datasets per analyzer/ion source/matrix',
 
   variables: {
-    x: d => d.source,
+    x: d => d.sourceType,
     y: d => d.analyzer,
     count: d => d.totalCount,
   },
@@ -84,16 +90,16 @@ const config = {
   },
 }
 
-const isMaldi = sourceType => /maldi/i.test(sourceType)
-const isNA = sourceType => /n\/a|none|^\s*$/i.test(sourceType)
+const isSourceMaldi = sourceType => /maldi/i.test(sourceType)
+const isNA = val => /^(n\/?a|none|other|\s*)$/i.test(val)
 
 function drawMaldiCurlyBrace(svg, data, xScale) {
-  const maldiData = data.filter(d => isMaldi(d.sourceType))
+  const maldiData = data.filter(d => d.isMaldi)
   if (maldiData.length === 0) {
     return
   }
 
-  const maldiRange = d3.extent(maldiData.map(d => xScale(d.source)))
+  const maldiRange = d3.extent(maldiData.map(d => xScale(d.sourceType)))
 
   const makeCurlyBrace = function(len, w, q) {
     return `M 0 0 Q 0 ${-q * w} ${0.25 * len} ${q * w - w} T ${0.5 * len} ${-w}`
@@ -147,45 +153,80 @@ export default {
         return []
       }
 
-      let result = []
       const inverted = { positive: 'negative', negative: 'positive' }
+      const analyzerCounts = {}
+      const sourceCounts = {}
+      const matrixCounts = {}
 
-      for (const entry of this.counts) {
+      const normedCounts = this.counts.map(entry => {
         let [analyzer, source, matrix, polarity] = entry.fieldValues
+        const isMaldi = isSourceMaldi(source)
         if (isNA(analyzer)) {
-          analyzer = '(Other)'
+          analyzer = OTHER_ANALYZER
+        } else {
+          analyzerCounts[analyzer] = (analyzerCounts[analyzer] || 0) + entry.count
         }
         if (isNA(source)) {
-          source = '(Other)'
+          source = OTHER_SOURCE
+        } else if (!isMaldi) {
+          sourceCounts[source] = (sourceCounts[source] || 0) + entry.count
         }
-        if (isMaldi(source) && isNA(matrix)) {
-          matrix = '(Other)'
+        if (isMaldi) {
+          if (isNA(matrix)) {
+            matrix = OTHER_MATRIX
+          } else {
+            matrix = matrixName(matrix)
+            matrixCounts[matrix] = (matrixCounts[matrix] || 0) + entry.count
+          }
         }
+        polarity = String(polarity).toLowerCase()
 
-        const normalizedPolarity = String(polarity).toLowerCase()
+        return {
+          analyzer,
+          sourceType: isMaldi ? matrix : source,
+          isMaldi,
+          polarity,
+          count: entry.count,
+        }
+      })
+
+      // Limit to the top 10 analyzers/sources/matrixes. Change everything else to "Other"
+      const topAnalyzers = sortBy(Object.entries(analyzerCounts), 1).map(([key]) => key).slice(-10)
+      const topSources = sortBy(Object.entries(sourceCounts), 1).map(([key]) => key).slice(-6)
+      const topMatrixes = sortBy(Object.entries(matrixCounts), 1).map(([key]) => key).slice(-10)
+      normedCounts.forEach(entry => {
+        if (!topAnalyzers.includes(entry.analyzer)) {
+          entry.analyzer = OTHER_ANALYZER
+        }
+        if (!entry.isMaldi && !topSources.includes(entry.sourceType)) {
+          entry.sourceType = OTHER_SOURCE
+        }
+        if (entry.isMaldi && !topMatrixes.includes(entry.sourceType)) {
+          entry.sourceType = OTHER_MATRIX
+        }
+      })
+
+      // Group by analyzer, isMaldi and sourceType. Sum counts by polarity.
+      const result = []
+      normedCounts.forEach(({ analyzer, isMaldi, sourceType, polarity, count }) => {
         const datum = {
           analyzer,
-          source: isMaldi(source) ? matrixName(matrix) : source,
-          sourceType: isMaldi(source) ? 'maldi' : source,
+          isMaldi,
+          sourceType,
           counts: {
-            [normalizedPolarity]: entry.count,
-            [inverted[normalizedPolarity]]: 0,
+            [polarity]: count,
+            [inverted[polarity]]: 0,
           },
-          totalCount: entry.count,
+          totalCount: count,
         }
-        const existing = result.find(other => ['analyzer', 'source', 'sourceType'].every(f => other[f] === datum[f]))
+        const existing = result.find(other => ['analyzer', 'isMaldi', 'sourceType'].every(f => other[f] === datum[f]))
         if (existing) {
           ['positive', 'negative'].forEach(pol => { existing.counts[pol] += datum.counts[pol] })
           existing.totalCount += datum.totalCount
         } else {
           result.push(datum)
         }
-      }
-      result = sortBy(result,
-        datum => datum.sourceType === 'maldi',
-        datum => datum.source === '(Other)',
-        datum => -datum.totalCount,
-      )
+      })
 
       return result
     },
@@ -197,27 +238,42 @@ export default {
       elem.selectAll('*').remove()
       const svg = configureSvg(elem, geometry)
 
-      const xData =
-        d3.nest().key(d => d.sourceType + '@@' + d.source)
-          .entries(this.data)
-          .map(({ key, values }) => ({
-            key: key.split('@@')[1],
-            sourceType: key.split('@@')[0],
-            count: values.map(d => d.totalCount).reduce((x, y) => x + y),
-          }))
-          .sort((a, b) => {
-            if (a.sourceType !== b.sourceType && !(isMaldi(a.sourceType) && isMaldi(b.sourceType))) {
-              if (isMaldi(a.sourceType)) {
-                return 1
-              }
-              if (isMaldi(b.sourceType)) {
-                return -1
-              }
-            }
-            return b.count - a.count
-          })
+      // const xData =
+      //   d3.nest().key(d => d.sourceType + '@@' + d.source)
+      //     .entries(this.data)
+      //     .map(({ key, values }) => ({
+      //       key: key.split('@@')[1],
+      //       sourceType: key.split('@@')[0],
+      //       count: values.map(d => d.totalCount).reduce((x, y) => x + y),
+      //     }))
+      //     .sort((a, b) => {
+      //       if (a.sourceType !== b.sourceType && !(isMaldi(a.sourceType) && isMaldi(b.sourceType))) {
+      //         if (isMaldi(a.sourceType)) {
+      //           return 1
+      //         }
+      //         if (isMaldi(b.sourceType)) {
+      //           return -1
+      //         }
+      //       }
+      //       return b.count - a.count
+      //     })
+      let xData = map(groupBy(this.data, d => d.isMaldi + '@@' + d.sourceType), (items) => ({
+        key: items[0].sourceType,
+        count: sumBy(items, 'totalCount'),
+        isMaldi: items[0].isMaldi,
+        isOther: items[0].sourceType === OTHER_SOURCE || items[0].sourceType === OTHER_MATRIX,
+      }))
+      xData = orderBy(xData, ['isMaldi', 'isOther', 'count'], ['asc', 'asc', 'desc'])
+      let yData = map(groupBy(this.data, 'analyzer'), (items, analyzer) => ({
+        key: analyzer,
+        count: sumBy(items, 'totalCount'),
+        isOther: analyzer === OTHER_ANALYZER,
+      }))
+      yData = orderBy(yData, ['isOther', 'count'], ['desc', 'desc'])
 
-      const { scales } = pieScatterPlot(svg, this.data, config, xData)
+      console.log({ xData, yData })
+
+      const { scales } = pieScatterPlot(svg, this.data, config, xData, yData)
 
       const brace = drawMaldiCurlyBrace(svg, this.data, scales.x)
       if (brace) {
