@@ -78,7 +78,7 @@ class Dataset:
     IMG_STORAGE_TYPE_SEL = 'SELECT ion_img_storage_type FROM dataset WHERE id = %s'
     IMG_STORAGE_TYPE_UPD = 'UPDATE dataset SET ion_img_storage_type = %s WHERE id = %s'
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         id=None,  # pylint: disable=redefined-builtin
         name=None,
