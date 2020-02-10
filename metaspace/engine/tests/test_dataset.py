@@ -19,8 +19,8 @@ def fill_db(test_db, metadata, ds_config):
     db.insert(
         (
             'INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, status, '
-            'is_public) '
-            'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'
+            'status_update_dt, is_public) '
+            'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'
         ),
         rows=[
             (
@@ -31,6 +31,7 @@ def fill_db(test_db, metadata, ds_config):
                 json.dumps(metadata),
                 json.dumps(ds_config),
                 DatasetStatus.FINISHED,
+                upload_dt,
                 True,
             )
         ],
@@ -62,6 +63,7 @@ def test_dataset_load_existing_ds_works(fill_db, metadata, ds_config):
         metadata=metadata,
         config=ds_config,
         status=DatasetStatus.FINISHED,
+        status_update_dt=upload_dt,
         is_public=True,
         ion_img_storage_type='fs',
     )
