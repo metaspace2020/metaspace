@@ -25,11 +25,6 @@ module.exports = {
     {adduct: "[M]-", name: "[M]⁻", charge: -1, hidden: true, default: false},
   ],
 
-  moldbs: {
-    deprecated: [],
-    custom: [],
-  },
-
   /* Settings for image storage.
      It's currently co-hosted with the GraphQL server. */
   img_upload: {

@@ -158,7 +158,6 @@ services:
       - sm
     depends_on:
       - elasticsearch
-      - sm-mol-db
       - sm-graphql
       - sm-webapp
 

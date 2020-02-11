@@ -4,8 +4,6 @@
 
 let config = {};
 
-config.moldbs = {{ sm_graphql_moldbs | to_json }}
-
 config.services = {};
 /* Internal ad-hoc service with /v1/datasets and /v1/isotopic_patterns endpoints */
 config.services.sm_engine_api_host = "localhost:5123";

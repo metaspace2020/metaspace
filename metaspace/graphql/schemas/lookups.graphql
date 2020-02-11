@@ -8,14 +8,6 @@ enum SortingOrder {
   DESCENDING
 }
 
-type MolecularDatabase {
-  id: Int!
-  name: String!
-  version: String!
-  default: Boolean!
-  hidden: Boolean!  # True if database is deprecated/superseded and would not be useful for most users
-}
-
 type ChemMod {
   name: String!
   chemMod: String!
@@ -37,9 +29,6 @@ type Query {
   metadataSuggestions(field: String!, query: String!, limit: Int = 10): [String!]!
 
   submitterSuggestions(query: String!): [SubmitterSearchResult!]!
-
-  molecularDatabases(hideDeprecated: Boolean=true,
-    onlyLastVersion: Boolean=true): [MolecularDatabase!]
 
   chemModSuggestions(query: String): [ChemMod!]!
 

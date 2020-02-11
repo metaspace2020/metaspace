@@ -17,6 +17,15 @@ export class MolecularDB {
   molecules: Molecule[];
 
   // TODO: add unique constraint (group_id, name, version)
+
+  @Column({ type: 'bool', default: false })
+  public: Boolean;  // At this point, only the Metaspace provided databases are public
+
+  @Column({ type: 'bool', default: false })
+  archived: Boolean;
+
+  @Column({ type: 'bool', default: false })
+  targeted: Boolean;  // All the Metaspace provided databases are untargeted
 }
 
 @Entity({ schema: 'public' })
