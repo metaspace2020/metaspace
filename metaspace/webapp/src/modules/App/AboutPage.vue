@@ -17,160 +17,171 @@
       </div>
     </div>
     <div id="about">
-      <el-row>
-        <el-row
-          id="threePanelHeader"
-          style="margin:20px 0px 50px 0px"
-          :gutter="20"
-        >
-          <el-col :span="6">
-            <h2>Metabolite Annotation</h2>
-            <p>
-              <router-link to="/upload">
-                Submit
-              </router-link> your high-resolution imaging mass spectrometry data to our high-throughput metabolite annotation engine
-            </p>
-          </el-col>
-
-          <el-col :span="6">
-            <h2>Explore the Knowledgebase</h2>
-            <p>
-              <router-link to="/annotations">
-                Browse
-              </router-link> annotations from all datasets using our interactive interface
-            </p>
-            <p>You can search, filter and compare youre annotations alongside those from the whole imaging mass spectrometry community</p>
-          </el-col>
-
-          <el-col :span="6">
-            <h2>Get Going Fast</h2>
-            <p>
-              Head to the <router-link to="/upload">
-                upload
-              </router-link> page to submit a dataset.
-            </p>
-            <p>
-              We also have interactive <router-link to="/help">
-                tutorials
-              </router-link> prepared to help you.
-            </p>
-          </el-col>
-
-          <el-col :span="6">
-            <h2>Open Access</h2>
-            <p>
-              All code is <a href="https://github.com/metaspace2020">open-source</a>, the input format is the <a
-                href="http://imzml.org/"
-              >imzML</a>
-              supported by all mass spec major vendors, the metabolite annotations from the community datasets are public
-              and can be browsed or exported.
-            </p>
-          </el-col>
-        </el-row>
-        <el-row id="whoAreWe">
-          <h2>What is the METASPACE Platform?</h2>
+      <section class="about-features">
+        <div>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+          ><path
+            class="primary"
+            d="M4 14a1 1 0 0 1 .3-.7l11-11a1 1 0 0 1 1.4 0l3 3a1 1 0 0 1 0 1.4l-11 11a1 1 0 0 1-.7.3H5a1 1 0 0 1-1-1v-3z"
+          /><rect
+            width="20"
+            height="2"
+            x="2"
+            y="20"
+            class="secondary"
+            rx="1"
+          /></svg>
+          <h2>Metabolite annotation</h2>
           <p>
-            The METASPACE platform hosts an engine for metabolite annotation of imaging mass spectrometry data as well as a
-            spatial metabolite knowledgebase of the metabolites from hundreds of public datasets provided by the
-            community.
+            <router-link to="/upload">
+              Submit
+            </router-link>
+            your high-resolution imaging mass spectrometry data to our high-throughput metabolite annotation engine
           </p>
+        </div>
+        <div>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+          ><path
+            class="primary"
+            d="M13.41 20.41a2 2 0 0 1-2.82 0l-.83-.82A2 2 0 0 0 8.34 19H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h4a5 5 0 0 1 4 2 5 5 0 0 1 4-2h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4.34a2 2 0 0 0-1.42.59l-.83.82z"
+          /><path
+            class="secondary"
+            d="M12 21V5a5 5 0 0 1 4-2h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4.34a2 2 0 0 0-1.42.59l-.83.82A2 2 0 0 1 12 21z"
+          /></svg>
+          <h2>Explore the knowledgebase</h2>
           <p>
-            The METASPACE platform is developed by software engineers, data scientists and mass spectrometrists from the <a
-              href="https://www.embl.de/research/units/scb/alexandrov/"
-            >Alexandrov team at EMBL</a>. This work is a part of the
-            <a href="http://project.metaspace2020.eu">European project METASPACE</a>.
+            <router-link to="/annotations">
+              Browse
+            </router-link> annotations from all datasets using our interactive interface. Search, filter and compare your annotations with those from the community.
           </p>
-        </el-row>
-        <el-row id="A public space">
-          <h2 id="open-as-public-space">
-            Open as public space
-          </h2>
+        </div>
+        <div>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            class="w-8 mr-4 icon-bolt"
+          ><circle
+            cx="12"
+            cy="12"
+            r="10"
+            class="primary"
+          /><path
+            class="secondary"
+            d="M14 10h2a1 1 0 0 1 .81 1.58l-5 7A1 1 0 0 1 10 18v-4H8a1 1 0 0 1-.81-1.58l5-7A1 1 0 0 1 14 6v4z"
+          /></svg>
+          <h2>Get going fast</h2>
           <p>
-            We do not hide anything. All code is open-source, the input format is the <a href="http://imzml.org/">imzML</a>
-            supported by all mass spec major vendors, the metabolite annotations from the community datasets are public and
-            can be browsed or exported.
+            Head to the <router-link to="/upload">
+              upload
+            </router-link> page to submit a dataset. We also have interactive <router-link to="/help">
+              tutorials.
+            </router-link>
           </p>
-        </el-row>
-        <el-row id="getInvolved">
-          <h2 id="how-can-i-contribute-">
-            How can I contribute?
-          </h2>
+        </div>
+        <div>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+          ><path
+            class="primary"
+            d="M11 16.73V18a1 1 0 0 0 2 0v-1.27a2 2 0 1 0-2 0zM5 10h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8c0-1.1.9-2 2-2z"
+          /><path
+            class="secondary"
+            d="M12 19a1 1 0 0 0 1-1v-1.27A2 2 0 0 0 12 13v-3h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7v-3zm5-12a1 1 0 0 1-2 0 3 3 0 0 0-6 0v3H7V7a5 5 0 1 1 10 0z"
+          /></svg>
+          <h2>Open access</h2>
           <p>
-            Please read <a href="https://www.nature.com/nmeth/journal/v14/n1/full/nmeth.4072.html">our publication in Nature
-              Methods</a>, follow us on <a href="https://twitter.com/metaspace2020">Twitter</a>, spread the word, and think of
-            us while doing good deeds :)
+            All code is <a href="https://github.com/metaspace2020">open-source</a>, the input format is the <a
+              href="http://imzml.org/"
+            >imzML</a>
+            supported by all mass spec major vendors, the metabolite annotations from the community datasets are public
+            and can be browsed or exported.
           </p>
-          <ul>
-            <li><strong>Have high-resolution imaging mass spectrometry data</strong>? Please consider uploading them.</li>
-            <li>
-              <strong>Are you a data scientist</strong>? Please feel free to the export the metabolite annotations to mine
-              thousands of metabolites found in hundreds of community-provided datasets.
-            </li>
-          </ul>
-        </el-row>
-        <el-row id="citation">
-          <h2 id="how-shall-i-cite-metaspace-in-a-publication-">
-            How shall I cite METASPACE in a publication?
-          </h2>
-          <p>
-            Please cite our publication <a
-              href="http://www.nature.com/nmeth/journal/v14/n1/full/nmeth.4072.html"
-            >(Palmer et al., 2016, Nature Methods)</a>
-            and
-            refer to <a href="https://metaspace2020.eu">https://metaspace2020.eu</a>.
-          </p>
-        </el-row>
-        <el-row id="contact">
-          <h2 id="how-to-stay-in-touch-">
-            How to stay in touch?
-          </h2>
-          <p>
-            Follow us on <a href="https://twitter.com/metaspace2020">Twitter</a>
-            or subscribe to the <a
-              href="#"
-              @click.prevent="onShowMailingList"
-            >METASPACE mailing list</a>.
-          </p>
-          <!-- <p>Find out more about the METASPACE consortium at the <a href="http://project.metaspace2020.eu/">project website</a></p> -->
-          <p>
-            For all other inquiries or questions,
-            <a href="https://gitter.im/metaspace2020/metaspace">chat with us on Gitter</a> or
-            <a href="mailto:contact@metaspace2020.eu">contact us by email</a>.
-          </p>
-        </el-row>
-        <el-row id="funding">
-          <h2 id="please-appreciate-those-who-funded-it">
-            Funding
-          </h2>
-          <div style="display:flex; flex-direction: row; flex-wrap: wrap; width: 100%;">
-            <div style="flex-basis: 200px; padding: 16px 0">
-              <img
-                src="../../assets/eu_flag.jpg"
-                alt="EU"
-                style="width: 90px"
-              >
-              <img
-                src="../../assets/nih_logo.png"
-                alt="NIH"
-                style="width: 90px"
-              >
-            </div>
-            <div style="flex-basis: 70%; flex-grow: 1">
-              <p>
-                We acknowledge funding from the
-                European Union’s Horizon 2020 programme under the grant agreement 634402
-                as well as from the National Institutes of Health NIDDK Kidney Precision Medicine Project.
-              </p>
-            </div>
-          </div>
-        </el-row>
-        <el-row id="acknowledgement">
-          <h2>Other acknowledgements</h2>
-          <p>
-            Icons by <a href="http://www.freepik.com/">Freepik</a> from <a href="http://www.flaticon.com">www.flaticon.com</a>
-          </p>
-        </el-row>
-      </el-row>
+        </div>
+      </section>
+      <section class="about-details">
+        <h1>Frequently asked questions</h1>
+        <h2>What is the METASPACE platform?</h2>
+        <p>
+          The METASPACE platform hosts an engine for metabolite annotation of imaging mass spectrometry data as well as a
+          spatial metabolite knowledgebase of the metabolites from hundreds of public datasets provided by the
+          community.
+        </p>
+        <p>
+          The METASPACE platform is developed by software engineers, data scientists and mass spectrometrists from the <a
+            href="https://www.embl.de/research/units/scb/alexandrov/"
+          >Alexandrov team at EMBL</a>.
+        </p>
+        <h2>
+          How can I contribute?
+        </h2>
+        <p>
+          Please read <a href="https://www.nature.com/nmeth/journal/v14/n1/full/nmeth.4072.html">our publication in Nature
+            Methods</a>, follow us on <a href="https://twitter.com/metaspace2020">Twitter</a>, spread the word, and think of
+          us while doing good deeds :)
+        </p>
+        <ul>
+          <li><strong>Have high-resolution imaging mass spectrometry data</strong>? Please consider uploading.</li>
+          <li>
+            <strong>Are you a data scientist</strong>? Please feel free to the export the metabolite annotations to mine
+            thousands of metabolites found in hundreds of community-provided datasets.
+          </li>
+        </ul>
+        <h2>
+          How shall I cite METASPACE in a publication?
+        </h2>
+        <p>
+          Please cite our publication <a
+            href="http://www.nature.com/nmeth/journal/v14/n1/full/nmeth.4072.html"
+          >(Palmer et al., 2016, Nature Methods)</a>
+          and
+          refer to <a href="https://metaspace2020.eu">https://metaspace2020.eu</a>.
+        </p>
+        <h2>
+          How to stay in touch?
+        </h2>
+        <p>
+          Follow us on <a href="https://twitter.com/metaspace2020">Twitter</a>
+          or subscribe to the <a
+            href="#"
+            @click.prevent="onShowMailingList"
+          >METASPACE mailing list</a>.
+        </p>
+        <!-- <p>Find out more about the METASPACE consortium at the <a href="http://project.metaspace2020.eu/">project website</a></p> -->
+        <p>
+          For all other inquiries or questions,
+          <a href="https://gitter.im/metaspace2020/metaspace">chat with us on Gitter</a> or
+          <a href="mailto:contact@metaspace2020.eu">contact us by email</a>.
+        </p>
+        <h2 id="please-appreciate-those-who-funded-it">
+          Funding
+        </h2>
+        <div style="margin: 0 0 20px; height: 60px">
+          <img
+            src="../../assets/eu_flag.jpg"
+            alt="EU"
+            style="width: auto; height: 60px;"
+          >
+          <img
+            src="../../assets/nih_logo.png"
+            alt="NIH"
+            style="width: auto; height: 60px; margin-left: 10px"
+          >
+        </div>
+        <p>
+          We acknowledge funding from the
+          European Union’s Horizon 2020 programme under the grant agreement 634402
+          as well as from the National Institutes of Health NIDDK Kidney Precision Medicine Project.
+        </p>
+        <h2>Other acknowledgements</h2>
+        <p>
+          Icons by <a href="http://www.freepik.com/">Freepik</a> from <a href="http://www.flaticon.com">www.flaticon.com</a>
+        </p>
+      </section>
     </div>
     <el-dialog
       width="600px"
@@ -264,22 +275,11 @@ export default class AboutPage extends Vue {
   //   background-image: linear-gradient(180deg,red 1px,transparent 0);
   //   background-position: 0 0;
   //   background-repeat: repeat;
-  //   background-size: 100% 20px
+  //   background-size: 100% 20px;
   // }
 
   .main-content {
     line-height: 20px;
-  }
-
-  #about {
-    display: flex;
-    padding: 0px 20px;
-    align-items: center;
-    justify-content: center;
-  }
-
-  #about > div, #about img {
-    max-width: 900px;
   }
 
   .mainBanner {
@@ -301,6 +301,89 @@ export default class AboutPage extends Vue {
     margin-left: -30px;
     // position: relative;
     // z-index: -1;
+  }
+
+  #about {
+    color: rgb(30, 47, 70);
+    font-family: 'ProximaNova-Light', 'Roboto', Helvetica, sans-serif;
+    margin: 40px auto;
+    max-width: 960px;
+    padding: 0px 40px;
+  }
+
+  #about h1 {
+    font-family: 'FuturaBT-Medium', 'Roboto', Helvetica, sans-serif;
+    line-height: 20px;
+    font-size: 16px;
+    text-transform: uppercase;
+    color: #008aff;
+    margin: 20px 0;
+  }
+
+  #about h2 {
+    font-family: 'FuturaBT-Medium', 'Roboto', Helvetica, sans-serif;
+    margin: 0;
+    line-height: 40px;
+  }
+
+  #about p {
+    margin: 0 0 20px;
+  }
+
+  #about a {
+    color: #008aff;
+  }
+
+  #about ul {
+    margin: 0;
+    padding: 0;
+  }
+
+  #about li {
+    margin-bottom: 20px;
+  }
+
+  #about svg {
+    width: 32px;
+    height: 32px;
+    padding: 14px;
+    border-radius: 50%;
+    background-color: hsl(208, 100%, 94%);
+  }
+
+  #about svg .primary {
+    fill: hsl(208, 77%, 34%);
+  }
+
+  #about svg .secondary {
+    fill: hsl(208, 80%, 74%);
+  }
+
+  .about-features {
+    display: grid;
+    grid-gap: 20px;
+    grid-template-columns: 100%;
+    margin-top: 20px;
+  }
+
+  .about-details {
+    max-width: 70ch;
+    margin-top: 40px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  #about .about-details h2:not(:first-of-type) {
+    margin-top: 40px;
+  }
+
+  @media (min-width: 400px) {
+    .about-features {
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    }
+    .about-features p {
+      max-width: 40ch;
+    }
   }
 
   .mailing-list-dialog .el-dialog__body {
