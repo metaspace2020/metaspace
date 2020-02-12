@@ -534,6 +534,7 @@ export default class EditUserPage extends Vue {
 
   .user-edit-page {
     max-width: 950px;
+    width: 100%;
   }
 
   .api-key /deep/ input {
