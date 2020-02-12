@@ -34,7 +34,9 @@ export default {
       adduct: filter.adduct,
       fdrLevel: filter.fdrLevel,
       colocalizedWith: filter.colocalizedWith,
-      colocalizationAlgo,
+      // Only include colocalizationAlgo if there is another filter that uses it. Otherwise the annotations list
+      // refreshes unnecessarily when changing algorithm.
+      colocalizationAlgo: filter.colocalizedWith || filter.colocalizationSamples ? colocalizationAlgo : null,
       colocalizationSamples: filter.colocalizationSamples,
       offSample: filter.offSample == null ? undefined : !!filter.offSample,
     };
