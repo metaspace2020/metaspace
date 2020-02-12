@@ -17,6 +17,7 @@ const schemaFiles = [
   '../schemas/group.graphql',
   '../schemas/project.graphql',
   '../schemas/system.graphql',
+  '../schemas/moldb.graphql',
 ];
 
 const run = async (outputFile) => {
