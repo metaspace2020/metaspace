@@ -215,6 +215,20 @@ def _median_thresholded_cosine(images, h, w):
     return pairwise_kernels(images, metric='cosine')
 
 
+def _get_sample_ion_ids(scores, cluster_max_images, trunc_fdr_mask, trunc_masked_ion_ids):
+    try:
+        trunc_scores = scores[:cluster_max_images, :cluster_max_images]
+        trunc_masked_scores = trunc_scores[trunc_fdr_mask, :][:, trunc_fdr_mask]
+        logger.debug(f'Clustering with ' f'{trunc_masked_scores.shape[0]} annotations')
+        labels = _label_clusters(trunc_masked_scores)
+        clusters = _labels_to_clusters(labels, trunc_masked_scores)
+        # This could be done better, e.g. by returning medoids
+        return [trunc_masked_ion_ids.item(c[0]) for c in clusters]
+    except Exception as e:
+        logger.warning(f'Failed to cluster: {e}', exc_info=True)
+        return []
+
+
 # pylint: disable=cell-var-from-loop
 def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs, h, w, cluster_max_images=5000):
     """ Calculate co-localization of ion images for all algorithms and yield results
@@ -261,38 +275,17 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs, h, w, cluster_m
         trunc_masked_ion_ids = trunc_ion_ids[trunc_fdr_mask]
 
         if len(masked_ion_ids) > 1:
-            logger.debug(
-                f'Finding best colocalizations at FDR {fdr} ({len(masked_ion_ids)} annotations)'
+            sample_ion_ids = _get_sample_ion_ids(
+                med_cos_scores, cluster_max_images, trunc_fdr_mask, trunc_masked_ion_ids
             )
 
-            # NOTE: Keep labels/clusters between algorithms
-            # so that if any algorithm fails to cluster,
-            # it can use the labels/clusters from a previous successful run.
-            # Usually cosine succeeds at clustering and PCA data fails clustering.
-            labels = [0] * len(masked_ion_ids)
-            clusters = []
-
-            def run_alg(algorithm, scores, cluster):
-                nonlocal labels, clusters
-
-                if cluster:
-                    try:
-                        trunc_scores = scores[:cluster_max_images, :cluster_max_images]
-                        trunc_masked_scores = trunc_scores[trunc_fdr_mask, :][:, trunc_fdr_mask]
-                        logger.debug(
-                            f'Clustering {algorithm} at {fdr} FDR with '
-                            f'{trunc_masked_scores.shape[0]} annotations'
-                        )
-                        labels = _label_clusters(trunc_masked_scores)
-                        clusters = _labels_to_clusters(labels, trunc_masked_scores)
-                    except Exception as e:
-                        logger.warning(f'Failed to cluster {algorithm}: {e}', exc_info=True)
-
+            def run_alg(algorithm, scores):
+                logger.debug(
+                    f'Finding best colocalizations with {algorithm} at FDR {fdr} '
+                    f'({len(masked_ion_ids)} annotations)'
+                )
                 masked_scores = scores if fdr_mask.all() else scores[fdr_mask, :][:, fdr_mask]
                 colocs = _get_best_colocs(masked_scores, max_samples=100, min_score=0.3)
-                sample_ion_ids = [
-                    trunc_masked_ion_ids.item(c[0]) for c in clusters
-                ]  # This could be done better
                 coloc_annotations = list(
                     _format_coloc_annotations(masked_ion_ids, masked_scores, colocs)
                 )
@@ -308,8 +301,8 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs, h, w, cluster_m
                     coloc_annotations=coloc_annotations,
                 )
 
-            yield run_alg('median_thresholded_cosine', med_cos_scores, True)
-            yield run_alg('cosine', cos_scores, False)
+            yield run_alg('median_thresholded_cosine', med_cos_scores)
+            yield run_alg('cosine', cos_scores)
         else:
             logger.debug(
                 f'Skipping FDR {fdr} as there are only {len(masked_ion_ids)} annotation(s)'
