@@ -12,6 +12,7 @@ import {Resolvers as ProjectResolvers} from './src/modules/project/controller';
 import {Resolvers as DatasetResolvers} from './src/modules/dataset/controller';
 import {Resolvers as AnnotationResolvers} from './src/modules/annotation/controller';
 import {Resolvers as LookupsResolvers} from './src/modules/lookups/controller';
+import {Resolvers as MolDBResolvers} from './src/modules/moldb/controller';
 import {mergedSchemas} from './schema';
 import addReadOnlyInterceptorToSchema from './src/modules/system/addReadOnlyInterceptorToSchema';
 import {Context} from './src/context';
@@ -29,6 +30,7 @@ export const makeNewExecutableSchema = () => {
       DatasetResolvers,
       AnnotationResolvers,
       LookupsResolvers,
+      MolDBResolvers,
     ],
   });
 };

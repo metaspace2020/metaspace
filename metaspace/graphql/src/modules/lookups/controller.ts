@@ -5,10 +5,6 @@ import config from '../../utils/config';
 import logger from '../../utils/logger';
 import {Context, ContextUser} from '../../context';
 import {IResolvers} from 'graphql-tools';
-import {MolecularDB} from "../moldb/model";
-
-const publicMolDBs = new Set(config.moldbs.public);
-const deprecatedMolDBs = new Set(config.moldbs.deprecated);
 
 
 const getTopFieldValues = async (docType: 'dataset' | 'annotation',
@@ -83,38 +79,6 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       const [id, name] = s.split('/');
       return { id, name }
     });
-  },
-
-  async molecularDatabases(source, args, ctx) {
-    try {
-      const {hideDeprecated, onlyLastVersion} = args;
-
-      const molDBs = await ctx.entityManager.getRepository(MolecularDB).find();
-      let dbs = molDBs.map(molDB => {
-        const isDeprecated = deprecatedMolDBs.has(molDB.name);
-        const isPublic = publicMolDBs.has(molDB.name);
-        const isSuperseded = molDBs.some(db => db.name === molDB.name && db.version > molDB.version);
-        return {
-          ...molDB,
-          default: config.defaults.moldb_names.includes(molDB.name),
-          hidden: !isPublic || isDeprecated || isSuperseded,
-          deprecated: isDeprecated,
-          superseded: isSuperseded,
-        }
-      });
-      if (hideDeprecated) {
-        dbs = dbs.filter(molDB => !molDB.deprecated);
-      }
-      if (onlyLastVersion) {
-        dbs = dbs.filter(molDB => !molDB.superseded);
-      }
-
-      return dbs;
-    }
-    catch (e) {
-      logger.error(e);
-      return 'Server error';
-    }
   },
 
   async colocalizationAlgos() {
