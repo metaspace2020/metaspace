@@ -296,7 +296,7 @@ export default class AboutPage extends Vue {
   .mainBanner {
     box-sizing: border-box;
     font-family: 'FuturaBT-Medium', 'Roboto', Helvetica, sans-serif;
-    height: calc(var(--lineHeight) * 20);
+    height: calc(var(--lineHeight) * 18);
     margin: 0 auto;
     max-width: 1100px;
     position: relative;
