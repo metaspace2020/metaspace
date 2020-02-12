@@ -2,7 +2,7 @@ import './Table.css'
 
 import Vue from 'vue'
 import { Button } from 'element-ui'
-import { createComponent, reactive } from '@vue/composition-api'
+import { createComponent, reactive, computed } from '@vue/composition-api'
 
 import { UserProfileQuery } from '../../api/user'
 import confirmPrompt from '../../components/confirmPrompt'
@@ -34,7 +34,14 @@ interface State {
   invitingGroup: GroupRow | null
 }
 
-function getRows({ currentUser }: Props) {
+type User = UserProfileQuery | null
+
+interface Props {
+  currentUser: User
+  refetchData: () => void
+}
+
+function getRows(currentUser: User) {
   if (currentUser != null && currentUser.groups != null) {
     return currentUser.groups.map((item) => {
       const { group, numDatasets, role } = item
@@ -61,19 +68,13 @@ function getRows({ currentUser }: Props) {
   return []
 }
 
-interface Props {
-  currentUser: UserProfileQuery | null
-  refetchData: () => void
-}
-
-export const GroupsTable = createComponent<Props>({
+const GroupsTable = createComponent<Props>({
   props: {
-    refetchData: Function,
     currentUser: Object,
+    refetchData: Function,
   },
   setup(props, { listeners }) {
-    const rows = getRows(props)
-
+    const rows = computed(() => getRows(props.currentUser))
     const state = reactive<State>({
       showTransferDatasetsDialog: false,
       invitingGroup: null,
