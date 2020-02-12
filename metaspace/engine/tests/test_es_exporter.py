@@ -264,6 +264,7 @@ def test_add_isobar_fields_to_anns(ds_config):
         {
             'annotation_id': 'Base annotation',
             'centroid_mzs': [100, 101, 102, 103],
+            'iso_image_ids': ['img1', 'img2', 'img3', 'img4'],
             'msm': 0.5,
             'ion': 'H1+',
             'ion_formula': 'H1',
@@ -271,6 +272,7 @@ def test_add_isobar_fields_to_anns(ds_config):
         {
             'annotation_id': "Base's 1st centroid overlaps 1st",
             'centroid_mzs': [100.0002, 101.1, 102.1, 103.1],
+            'iso_image_ids': ['img1', 'img2', 'img3', 'img4'],
             'msm': 0.6,
             'ion': 'H2+',
             'ion_formula': 'H2',
@@ -278,6 +280,7 @@ def test_add_isobar_fields_to_anns(ds_config):
         {
             'annotation_id': "Base's 1st centroid overlaps 2nd (shouldn't be reported)",
             'centroid_mzs': [98, 100.0002, 101.2, 102.2],
+            'iso_image_ids': ['img1', 'img2', 'img3', 'img4'],
             'msm': 0.7,
             'ion': 'H3+',
             'ion_formula': 'H3',
@@ -285,6 +288,7 @@ def test_add_isobar_fields_to_anns(ds_config):
         {
             'annotation_id': "Base's 2nd and 3rd centroid overlap 3rd and 4th",
             'centroid_mzs': [96, 97, 101, 102],
+            'iso_image_ids': ['img1', 'img2', 'img3', 'img4'],
             'msm': 0.8,
             'ion': 'H4+',
             'ion_formula': 'H4',

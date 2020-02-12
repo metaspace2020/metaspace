@@ -9,5 +9,5 @@ redirect_stderr = true
 stdout_logfile = {{ sm_home }}/logs/{{ sm_annotate_daemon_app_name }}.log
 numprocs = 1
 numprocs_start = 8000
-autorestart = true
-startretries = 10
+autorestart = false
+startsecs = 10

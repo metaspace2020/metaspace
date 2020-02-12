@@ -1,0 +1,18 @@
+- name: Copy database import files
+  get_url:
+    url: "{{ item.url }}"
+    dest: "/tmp/{{ item.url | basename }}"
+    force: yes
+  with_items: "{{ mol_db_imports }}"
+
+- name: Import databases
+  shell: |
+    source activate {{ miniconda_env.name }} && \
+    cd {{ sm_home }} && \
+    python scripts/import_molecular_db.py \
+      {{ item.name }} \
+      {{ item.version }} \
+      /tmp/{{ item.url | basename }}
+  args:
+    executable: /bin/bash
+  with_items: "{{ mol_db_imports }}"

@@ -63,6 +63,7 @@
         :annotation="annotation"
         :colormap="colormap"
         :image-loader-settings="imageLoaderSettings"
+        :isobar-peak-ns="comparisonAnnotationGroup ? comparisonAnnotationGroup.peakNs : null"
       />
     </div>
 
@@ -100,6 +101,7 @@
         :annotation="comparisonAnnotationGroup.annotations[0]"
         :colormap="colormap"
         :image-loader-settings="imageLoaderSettings"
+        :isobar-peak-ns="comparisonPeakNs"
       />
     </div>
     <diagnostics-plot
@@ -121,7 +123,7 @@ import DiagnosticsPlot from './DiagnosticsPlot.vue'
 import CandidateMoleculesPopover from '../CandidateMoleculesPopover.vue'
 import { groupBy, intersection, sortBy, xor } from 'lodash-es'
 import { isobarsQuery } from '../../../../api/annotation'
-import { renderMolFormula, renderMolFormulaHtml } from '../../../../util'
+import { renderMassShift, renderMolFormula, renderMolFormulaHtml } from '../../../../util'
 import safeJsonParse from '../../../../lib/safeJsonParse'
 import reportError from '../../../../lib/reportError'
 import config from '../../../../config'
@@ -214,24 +216,26 @@ export default class Diagnostics extends Vue {
         const isReference = ionFormula === this.annotation.ionFormula
         const isobars = isobarsByIonFormula[ionFormula]
         const annotations = annotationsByIonFormula[ionFormula]
-        const deltaMz = annotations[0].mz - this.annotation.mz
-        const massShiftText = isReference ? '' : `[M${deltaMz >= 0 ? '+' : ''}${deltaMz.toFixed(4)}]: `
+        const massShiftText = isReference ? '' : renderMassShift(this.annotation.mz, annotations[0].mz) + ': '
         const isomersText = annotations.length < 2 ? '' : ' (isomers)'
         return {
           ionFormula,
           isReference,
           annotations,
-          peakNs: isReference ? 1 : isobars[0].peakNs,
+          peakNs: isReference ? [] : isobars[0].peakNs,
           peakChartData: isReference ? this.peakChartData : safeJsonParse(annotations[0].peakChartData),
           label: massShiftText + annotations.map(ann => renderMolFormula(ann.ion)).join(', ') + isomersText,
           labelHtml: massShiftText + annotations.map(ann => renderMolFormulaHtml(ann.ion)).join(', ') + isomersText,
         }
       })
 
-      return sortBy(groups, [
+      // Sort order: reference annotation first, then best by FDR, then best by MSM
+      // (consistent with the default sort in AnnotationsTable and RelatedMolecules)
+      return sortBy<AnnotationGroup>(groups,
         grp => grp.isReference ? 0 : 1,
-        grp => -grp.annotations[0].msm,
-      ])
+        grp => grp.annotations[0].fdrLevel,
+        grp => -grp.annotations[0].msmScore,
+      )
     }
 
     get nonReferenceGroups() {
@@ -248,6 +252,10 @@ export default class Diagnostics extends Vue {
 
     get comparisonAnnotationGroup() {
       return this.annotationGroups.find(grp => grp.ionFormula === this.comparisonIonFormula)
+    }
+
+    get comparisonPeakNs() {
+      return this.comparisonAnnotationGroup && this.comparisonAnnotationGroup.peakNs.map(([a, b]) => ([b, a]))
     }
 
     get comparisonPeakChartData() {

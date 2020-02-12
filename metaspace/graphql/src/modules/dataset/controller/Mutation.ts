@@ -227,8 +227,10 @@ const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
   if (!skipValidation || !isAdmin) {
     validateMetadata(metadata);
   }
-  // TODO: Many of the inputs are mistyped because of bugs in graphql-binding that should be reported and/or fixed
-  await molDBsExist(ctx.entityManager, input.molDBs as any || []);
+  if (input.molDBs != null) {
+    // TODO: Many of the inputs are mistyped because of bugs in graphql-binding that should be reported and/or fixed
+    await molDBsExist(ctx.entityManager, input.molDBs as any || []);
+  }
 
   const {submitterId, groupId, projectIds, principalInvestigator} = input;
   const saveDSArgs = {

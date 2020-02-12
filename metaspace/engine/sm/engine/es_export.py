@@ -582,13 +582,17 @@ class ESExporterIsobars:
 
         for doc in ann_docs:
             doc['isobars'] = []
-            for peak_n, mz in enumerate(doc['centroid_mzs'], 1):  # pylint: disable=invalid-name
-                if mz != 0:
+            for peak_i, mz in enumerate(doc['centroid_mzs']):
+                if (
+                    mz != 0
+                    and peak_i < len(doc['iso_image_ids'])
+                    and doc['iso_image_ids'][peak_i] is not None
+                ):
                     peaks.append(
                         (
                             doc['annotation_id'],
                             doc,
-                            peak_n,
+                            peak_i + 1,
                             mz,
                             doc['msm'],
                             doc['ion'],

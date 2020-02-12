@@ -51,3 +51,7 @@
     chdir: "{{ sm_home }}"
     executable: /bin/bash
   when: sm_create_es_index
+
+- import_tasks: import_molecular_databases.yml
+
+- import_tasks: import_molecule_images.yml
