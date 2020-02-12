@@ -2,6 +2,7 @@
   width: 100%;
   color: #909399;
   font-size: 14px;
+  border-spacing: 0;
 }
 
 .sm-table th {
@@ -15,4 +16,23 @@
 
 .sm-table-empty-row {
   text-align: center;
+}
+
+
+.sm-table-user-details tr > :nth-child(1) {
+  width: 40%;
+}
+
+.sm-table-user-details tr > :nth-child(2) {
+  width: 20%;
+}
+
+.sm-table-user-details tr > :nth-child(3) {
+  text-align: right;
+  width: 20%;
+}
+
+.sm-table-user-details tr > :nth-child(4) {
+  text-align: right;
+  width: 20%;
 }

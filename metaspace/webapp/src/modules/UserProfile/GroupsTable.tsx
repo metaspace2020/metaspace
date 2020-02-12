@@ -150,76 +150,69 @@ const GroupsTable = createComponent<Props>({
             onClose={() => { state.showTransferDatasetsDialog = false }}
           />
         }
-        <table class="sm-table">
-          <col width="40%" />
-          <col width="20%" />
-          <col width="40%" />
-          <thead>
-            <tr>
-              <th>Group</th>
-              <th>Role</th>
-              <th>Datasets contributed</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length
-              ? rows.map(row =>
-                <tr>
-                  <td>
-                    <RouterLink to={row.route}>{row.name}</RouterLink>
-                    {row.hasPendingRequest
+        <table class="sm-table sm-table-user-details">
+          <tr>
+            <th>Group</th>
+            <th>Role</th>
+            <th>Datasets contributed</th>
+            <th></th>
+          </tr>
+          {rows.value.length
+            ? rows.value.map(row =>
+              <tr>
+                <td>
+                  <RouterLink to={row.route}>{row.name}</RouterLink>
+                  {row.hasPendingRequest
                       && <NotificationIcon
                         tooltip={`${row.name} has a pending membership request.`}
                         tooltip-placement="right"
                       />}
-                  </td>
-                  <td>{row.roleName}</td>
-                  <td>
-                    {row.numDatasets > 0
-                      // <RouterLink to={row.datasetsRoute}>{row.numDatasets}</RouterLink>
-                      ? row.name
-                      : '0'
-                    }
-                  </td>
-                  <td>
-                    {row.role === 'MEMBER' && <Button
-                      size="mini"
-                      icon="el-icon-arrow-right"
-                      onClick={handleLeave(row)}
-                    >
+                </td>
+                <td>{row.roleName}</td>
+                <td>
+                  {row.numDatasets > 0
+                    ? <RouterLink to={row.datasetsRoute}>{row.numDatasets}</RouterLink>
+                    : '0'
+                  }
+                </td>
+                <td>
+                  {row.role === 'MEMBER' && <Button
+                    size="mini"
+                    icon="el-icon-arrow-right"
+                    onClick={handleLeave(row)}
+                  >
                       Leave
-                    </Button>}
-                    {row.role === 'GROUP_ADMIN' && <Button
-                      size="mini"
-                      icon="el-icon-arrow-right"
-                      disabled
-                    >
+                  </Button>}
+                  {row.role === 'GROUP_ADMIN' && <Button
+                    size="mini"
+                    icon="el-icon-arrow-right"
+                    disabled
+                  >
                       Leave
-                    </Button>}
-                    {row.role === 'INVITED' && <Button
-                      size="mini"
-                      type="success"
-                      icon="el-icon-check"
-                      onClick={handleAcceptInvitation(row)}
-                    >
+                  </Button>}
+                  {row.role === 'INVITED' && <Button
+                    size="mini"
+                    type="success"
+                    icon="el-icon-check"
+                    onClick={handleAcceptInvitation(row)}
+                  >
                       Accept
-                    </Button>}
-                    {row.role === 'INVITED' && <Button
-                      size="mini"
-                      icon="el-icon-close"
-                      onClick={handleDeclineInvitation(row)}
-                    >
+                  </Button>}
+                  {row.role === 'INVITED' && <Button
+                    size="mini"
+                    icon="el-icon-close"
+                    onClick={handleDeclineInvitation(row)}
+                  >
                       Decline
-                    </Button>}
-                  </td>
-                </tr>,
-              ) : (
-                <tr class="sm-table-empty-row">
-                  <td colspan="3">No data</td>
-                </tr>
-              )
-            }
-          </tbody>
+                  </Button>}
+                </td>
+              </tr>,
+            ) : (
+              <tr class="sm-table-empty-row">
+                <td colspan="3">No data</td>
+              </tr>
+            )
+          }
         </table>
       </div >
     )
