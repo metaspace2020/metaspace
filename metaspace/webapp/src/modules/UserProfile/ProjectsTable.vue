@@ -6,85 +6,76 @@
       @close="handleCloseCreateProjectDialog"
       @create="handleCreateProject"
     />
-    <div style="padding-left: 15px">
-      <el-table
-        :data="rows"
-        class="table"
+    <table class="sm-table sm-table-user-details">
+      <tr>
+        <th>Project</th>
+        <th>Role</th>
+        <th>Datasets provided</th>
+        <th />
+      </tr>
+      <tr
+        v-for="row in rows"
+        :key="row.name"
       >
-        <el-table-column label="Project">
-          <template slot-scope="scope">
-            <router-link :to="scope.row.route">
-              {{ scope.row.name }}
-            </router-link>
-            <notification-icon
-              v-if="scope.row.hasPendingRequest"
-              :tooltip="`${scope.row.name} has a pending membership request.`"
-              tooltip-placement="right"
-            />
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="roleName"
-          label="Role"
-          width="160"
-        />
-        <el-table-column
-          label="Datasets contributed"
-          width="160"
-          align="center"
-        >
-          <template slot-scope="scope">
-            <router-link
-              v-if="scope.row.numDatasets > 0"
-              :to="scope.row.datasetsRoute"
-            >
-              {{ scope.row.numDatasets }}
-            </router-link>
-            <span v-if="scope.row.numDatasets === 0">{{ scope.row.numDatasets }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column
-          width="240"
-          align="right"
-        >
-          <template slot-scope="scope">
-            <el-button
-              v-if="scope.row.role === 'MEMBER'"
-              size="mini"
-              icon="el-icon-arrow-right"
-              @click="handleLeave(scope.row)"
-            >
-              Leave
-            </el-button>
-            <el-button
-              v-if="scope.row.role === 'MANAGER'"
-              size="mini"
-              icon="el-icon-arrow-right"
-              disabled
-            >
-              Leave
-            </el-button>
-            <el-button
-              v-if="scope.row.role === 'INVITED'"
-              size="mini"
-              type="success"
-              icon="el-icon-check"
-              @click="handleAcceptInvitation(scope.row)"
-            >
-              Accept
-            </el-button>
-            <el-button
-              v-if="scope.row.role === 'INVITED'"
-              size="mini"
-              icon="el-icon-close"
-              @click="handleDeclineInvitation(scope.row)"
-            >
-              Decline
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
+        <td>
+          <router-link :to="row.route">
+            {{ row.name }}
+          </router-link>
+          <notification-icon
+            v-if="row.hasPendingRequest"
+            :tooltip="`${row.name} has a pending membership request.`"
+            tooltip-placement="right"
+          />
+        </td>
+        <td>
+          {{ row.roleName }}
+        </td>
+        <td>
+          <router-link
+            v-if="row.numDatasets > 0"
+            :to="row.datasetsRoute"
+          >
+            {{ row.numDatasets }}
+          </router-link>
+          <span v-if="row.numDatasets === 0">{{ row.numDatasets }}</span>
+        </td>
+        <td>
+          <el-button
+            v-if="row.role === 'MEMBER'"
+            size="mini"
+            icon="el-icon-arrow-right"
+            @click="handleLeave(row)"
+          >
+            Leave
+          </el-button>
+          <el-button
+            v-if="row.role === 'MANAGER'"
+            size="mini"
+            icon="el-icon-arrow-right"
+            disabled
+          >
+            Leave
+          </el-button>
+          <el-button
+            v-if="row.role === 'INVITED'"
+            size="mini"
+            type="success"
+            icon="el-icon-check"
+            @click="handleAcceptInvitation(row)"
+          >
+            Accept
+          </el-button>
+          <el-button
+            v-if="row.role === 'INVITED'"
+            size="mini"
+            icon="el-icon-close"
+            @click="handleDeclineInvitation(row)"
+          >
+            Decline
+          </el-button>
+        </td>
+      </tr>
+    </table>
     <el-row>
       <el-button
         style="float: right; margin: 10px 0;"
