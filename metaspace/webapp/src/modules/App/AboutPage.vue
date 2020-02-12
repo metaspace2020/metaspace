@@ -3,7 +3,7 @@
     <div class="mainBanner-wrapper">
       <div class="mainBanner _baseline-grid">
         <img
-          src="../../assets/METASPACE_logomark.jpg"
+          src="../../assets/METASPACE_logomark.png"
           alt="METASPACE logo"
         >
         <h1>
@@ -296,9 +296,9 @@ export default class AboutPage extends Vue {
   .mainBanner {
     box-sizing: border-box;
     font-family: 'FuturaBT-Medium', 'Roboto', Helvetica, sans-serif;
-    height: calc(var(--lineHeight) * 18);
+    padding: calc(var(--lineHeight) * 2) 0;
     margin: 0 auto;
-    max-width: 1100px;
+    max-width: 960px;
     position: relative;
     display: flex;
     align-items: center;
@@ -307,10 +307,17 @@ export default class AboutPage extends Vue {
     background-color: #008aff;
     overflow: hidden;
     width: 100%;
+    background-image: linear-gradient(
+      to right,
+      #008aff,
+      #008aff,
+      #008aff,
+      hsl(208, 80%, 74%),
+    );
   }
   .mainBanner img {
     display: none;
-    @media (min-width: 1100px) {
+    @media (min-width: 960px) {
       display: block;
       height: calc(var(--lineHeight) * 12);
     }
@@ -322,7 +329,7 @@ export default class AboutPage extends Vue {
     box-sizing: border-box;
     margin: 0;
     padding-left: calc(var(--lineHeight) * 2);
-    @media (min-width: 1100px) {
+    @media (min-width: 960px) {
       padding-top: var(--lineHeight);
     }
   }
@@ -332,7 +339,7 @@ export default class AboutPage extends Vue {
   }
   .mainBanner svg {
     width: auto;
-    height: calc(var(--lineHeight) * 4)
+    height: calc(var(--lineHeight) * 3)
   }
   .mainBanner h1 > :last-child {
     font-size: 24px;
@@ -351,11 +358,11 @@ export default class AboutPage extends Vue {
 
   #about h1 {
     font-family: 'FuturaBT-Medium', 'Roboto', Helvetica, sans-serif;
-    line-height: inherit;
+    line-height: calc(var(--lineHeight) * 2);
     font-size: inherit;
     text-transform: uppercase;
     color: #008aff;
-    margin: var(--lineHeight) 0;
+    margin: 0;
   }
 
   #about h2 {
@@ -465,4 +472,12 @@ export default class AboutPage extends Vue {
       .button {width: 100%; margin:0; }
     }
   }
+
+  /* Hacking */
+  .header-item {
+    font-family: 'FuturaBT-Medium', 'Roboto', Helvetica, sans-serif;
+    font-size: 18px !important;
+    // line-height: 2;
+  }
+
 </style>
