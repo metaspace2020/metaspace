@@ -1,6 +1,6 @@
 <template>
   <span id="colocalization-settings">
-    <el-form>
+    <el-form label-position="top">
       <el-form-item>
         <span slot="label">
           Colocalization algorithm
@@ -10,16 +10,18 @@
           >
             <div style="max-width: 500px;">
               <p>
-                <u>Median-thresholded cosine distance</u> is the best choice for exploring most biological datasets.
-                It was found to outperform other traditional co-localization measures when compared
-                to expert rankings of imaging-MS images.
-                Its description and evaluation can be found in:
+                <b>Median-thresholded cosine distance</b> is the best choice for exploring most biological datasets.
+                It was found to outperform other traditional colocalization measures when compared
+                to expert rankings of imaging mass spectrometry ion images. <br/>
+                Its description and evaluation can be found in: <a href="https://doi.org/10.1101/758425">
+                ColocAI: artificial intelligence approach to quantify colocalization between mass spectrometry images,
+                Ovchinnikova et al.</a>
               </p>
               <p>
-                <a href="https://doi.org/10.1101/758425">ColocAI: artificial intelligence approach to quantify co-localization between mass spectrometry images</a>, Ovchinnikova <i>et al.</i>
+
               </p>
               <p>
-                <u>Cosine distance</u> was previously used as the default colocalization measure.  It has been
+                <b>Cosine distance</b> was previously used as the default colocalization measure.  It has been
                 preserved so that historical data remains consistent, and is comparable against new datasets.
               </p>
             </div>
