@@ -78,6 +78,8 @@
     >
       No annotations found.
     </p>
+
+    <div id="new-feature-popup-coloc" v-if="query === 'colocalized'" />
   </div>
 </template>
 

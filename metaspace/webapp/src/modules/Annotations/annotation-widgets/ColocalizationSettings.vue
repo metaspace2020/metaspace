@@ -1,11 +1,38 @@
 <template>
-  <span id="ion-image-settings">
+  <span id="colocalization-settings">
     <el-form>
-      <el-form-item label="Colocalization Algorithm">
+      <el-form-item>
+        <span slot="label">
+          Colocalization algorithm
+          <el-popover
+            trigger="hover"
+            placement="top"
+          >
+            <div style="max-width: 500px;">
+              <p>
+                <u>Median-thresholded cosine distance</u> is the best choice for exploring most biological datasets.
+                It was found to outperform other traditional co-localization measures when compared
+                to expert rankings of imaging-MS images.
+                Its description and evaluation can be found in:
+              </p>
+              <p>
+                <a href="https://doi.org/10.1101/758425">ColocAI: artificial intelligence approach to quantify co-localization between mass spectrometry images</a>, Ovchinnikova <i>et al.</i>
+              </p>
+              <p>
+                <u>Cosine distance</u> was previously used as the default colocalization measure.  It has been
+                preserved so that historical data remains consistent, and is comparable against new datasets.
+              </p>
+            </div>
+            <i
+              slot="reference"
+              class="el-icon-question help-icon"
+            />
+          </el-popover>
+        </span>
         <el-select
           v-model="colocalizationAlgo"
           style="width: 300px;"
-          title="Colocalization Algorithm"
+          title="Colocalization algorithm"
         >
           <el-option
             v-for="{id, name} in colocalizationAlgoOptions"
@@ -58,13 +85,13 @@ export default class ColocalizationSettings extends Vue {
 </script>
 
 <style>
- #ion-image-settings {
+ #colocalization-settings {
    display: inline-flex;
    flex-direction: column;
    justify-content: center;
  }
 
- #ion-image-settings > .el-select {
+ #colocalization-settings > .el-select {
    display: inline-flex;
  }
 </style>

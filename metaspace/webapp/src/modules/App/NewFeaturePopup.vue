@@ -86,6 +86,25 @@ The ion formulas of isomers and isobars are also available in the regular CSV ex
       return null
     },
   },
+  {
+    name: 'medianCosineColoc',
+    title: 'New Colocalization Algorithm',
+    contentHtml: `
+<p>METASPACE has an improved colocalization algorithm for ion images!</p>
+<p><b>Median-thresholded cosine distance</b> gives better results than plain cosine distance when compared to
+expert judgements. See <a href="https://doi.org/10.1101/758425">our paper</a> for more information.</p>
+<p>This new algorithm is now used by default for ranking colocalized annotations.
+If you wish to go back to the old behavior, <b>cosine distance</b> can be selected in this menu.</p>
+      `,
+    dontShowAfter: new Date('2020-05-30'),
+    placement: 'bottom',
+    getAnchorIfActive(vue: Vue) {
+      if (vue.$route.path === '/annotations' && document.querySelector('#new-feature-popup-coloc') != null) {
+        return document.querySelector('#colocalization-settings-icon')
+      }
+      return null
+    },
+  },
 ]
 
   @Component({})
@@ -196,7 +215,7 @@ export default class NewFeaturePopup extends Vue {
   .nf-container {
     background: $popper-background-color;
     color: black;
-    width: 400px;
+    width: 500px;
     padding: 10px;
     border-radius: 3px;
     margin: 5px;
