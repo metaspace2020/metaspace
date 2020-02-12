@@ -396,6 +396,11 @@ export default class AboutPage extends Vue {
     fill: hsl(208, 80%, 74%);
   }
 
+  #about strong {
+    font-family: 'FuturaBT-Medium', 'Roboto', Helvetica, sans-serif;
+    font-weight: 500;
+  }
+
   #about .about-features {
     display: grid;
     grid-gap: var(--lineHeight);
