@@ -12,9 +12,9 @@ type MolecularDatabase {
 }
 
 type Query {
-  molecularDatabases(hideDeprecated: Boolean=true,
-    onlyLastVersion: Boolean=true): [MolecularDatabase!] @deprecated(reason: "Use molecularDatabasesV2 instead")
-  molecularDatabasesV2(hideArchived: Boolean=true): [MolecularDatabase!]
+  molecularDatabases(hideArchived: Boolean=false,
+    hideDeprecated: Boolean=false @deprecated(reason: "Only hideArchived should be used"),
+    onlyLastVersion: Boolean=false @deprecated(reason: "Only hideArchived should be used")): [MolecularDatabase!]
 }
 
 schema {

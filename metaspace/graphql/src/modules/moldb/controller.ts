@@ -8,15 +8,18 @@ import {Context} from "../../context";
 
 
 const QueryResolvers: FieldResolversFor<Query, void> = {
-  async molecularDatabasesV2(source, {hideArchived}, ctx) {
-      const molDBs = await ctx.entityManager.getRepository(MolecularDB).find();
-      return molDBs.map(molDB => {
-        return {
-          ...molDB,
-          default: config.defaults.moldb_names.includes(molDB.name),
-          hidden: molDB.archived,
-        }
-      });
+  async molecularDatabases(source, {hideArchived}, ctx) {
+    let molDBs = await ctx.entityManager.getRepository(MolecularDB).find();
+    if (hideArchived) {
+      molDBs = molDBs.filter(db => !db.archived)
+    }
+    return molDBs.map(db => {
+      return {
+        ...db,
+        default: config.defaults.moldb_names.includes(db.name),
+        hidden: db.archived,
+      }
+    });
   },
 };
 
