@@ -22,7 +22,8 @@ jobs:
       - run:
           name: Install npm packages
           command: |
-            yarn install
+            yarn install --frozen-lockfile
+            yarn global add codecov
       - save_cache:
           key: graphql-yarn-cache-{{checksum "yarn.lock"}}
           paths:
@@ -30,6 +31,7 @@ jobs:
       - run:
           name: Run tests
           command: |
+            mkdir -p /opt/data/sm_data/public/
             psql -h localhost -U sm -c "CREATE ROLE postgres WITH LOGIN SUPERUSER PASSWORD 'postgres'"
             psql -h localhost -U sm -c "CREATE DATABASE sm_test owner sm"
             psql -h localhost -U sm -d sm_test -c "CREATE EXTENSION \"uuid-ossp\";"
@@ -38,6 +40,11 @@ jobs:
             yarn run deref-schema
             NODE_ENV=test yarn run test --verbose --detectOpenHandles --forceExit
             psql -h localhost -U sm -c "DROP DATABASE sm_test"
+      - run:
+          name: Upload coverage
+          command: |
+            yarn run test --coverage
+            npx codecov -p ../.. -F graphql
 
 
   generate-graphql-schema:
@@ -319,7 +326,7 @@ workflows:
           requires:
             - generate-graphql-schema
 #      - test-engine-sci  # uncomment for debugging
-#      - test-graphql
+      - test-graphql
       - test-webapp:
           requires:
             - generate-graphql-schema
