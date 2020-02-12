@@ -141,7 +141,8 @@ function imageProviderFSBackend(storageRootDir: string) {
           cb(null, dest);
         }
         catch (e) {
-          logger.warn(e);
+          logger.error(e);
+          cb(e, '');
         }
       },
       filename: (req, file, cb) => {
