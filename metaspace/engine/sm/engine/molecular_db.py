@@ -53,7 +53,7 @@ def import_molecules_from_df(moldb, moldb_df):
 def create(name, version):
     # pylint: disable=unbalanced-tuple-unpacking
     (moldb_id,) = DB().insert_return(
-        "INSERT INTO molecular_db (name, version) values (%s, %s) RETURNING id",
+        "INSERT INTO molecular_db (name, version, public) values (%s, %s, true) RETURNING id",
         rows=[(name, version)],
     )
     return MolecularDB(id=moldb_id)
