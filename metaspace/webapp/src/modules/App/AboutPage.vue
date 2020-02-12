@@ -1,19 +1,32 @@
 <template>
   <div class="main-content">
     <div class="mainBanner-wrapper">
-      <div class="mainBanner">
-        <div style="position: absolute; top: 100px; left: 330px; color: white; font-size: 32px; line-height: 40px; margin: 10px 0">
-          Welcome to
-        </div>
+      <div class="mainBanner _baseline-grid">
         <img
-          src="../../assets/METASPACE_banner.jpg"
-          alt="METASPACE"
+          src="../../assets/METASPACE_logomark.jpg"
+          alt="METASPACE logo"
         >
-        <div style="position: absolute; top: 260px; left: 330px; color: white; font-size: 24px; line-height: 30px; min-width: 40ch">
-          The platform for metabolite annotation
+        <h1>
+          <span>Welcome to</span>
           <br>
-          of imaging mass spectrometry data.
-        </div>
+          <svg
+            viewBox="0 0 2060 256"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M1952.29 157.633H2040.99V103.124H1952.29V67.7929H2056.56V9.45909H1890.62V251.154H2059.89V192.814H1952.29V157.633ZM1525.27 174.766L1501.48 125.962L1478.67 174.766H1525.27ZM1502.69 0.547791L1633.63 251.154H1562.52L1547.18 219.7H1457.68L1442.98 251.154H1374.57L1502.69 0.547791ZM1092.07 106.14C1070.9 96.3808 1057.92 89.7504 1057.92 76.9667C1057.92 68.722 1065.09 63.7997 1077.09 63.7997C1097.1 63.7997 1112.08 84.6365 1112.08 84.6365L1145.61 37.497C1145.61 37.497 1121.32 5.45755 1072.42 5.45755C1020.23 5.45755 992.913 41.4298 992.913 76.9667C992.913 124.383 1028.78 141.708 1057.6 155.629C1075.85 164.445 1090.26 171.406 1090.26 182.98C1090.26 191.772 1083.76 196.815 1072.42 196.815C1043.72 196.815 1023.26 166.407 1023.26 166.407L984.224 214.042C984.224 214.042 1010.27 255.155 1071.09 255.155C1119.87 255.155 1155.27 224.52 1155.27 182.313C1155.27 135.28 1120.23 119.121 1092.07 106.14ZM1323.22 90.6357C1323.22 78.2707 1313.16 68.2095 1300.79 68.2095H1273.99V113.062H1300.79C1313.16 113.062 1323.22 103.001 1323.22 90.6357ZM1386.35 91.2898C1386.35 135.623 1350.14 173.075 1307.29 173.075H1273.99V251.41H1212.32V9.60909H1307.29C1350.14 9.60909 1386.35 47.0145 1386.35 91.2898ZM861.518 174.766L837.72 125.962L814.918 174.766H861.518ZM838.936 0.547791L969.872 251.154H898.768L883.43 219.7H793.924L779.228 251.154H710.811L838.936 0.547791ZM1767.86 196.815C1728.7 196.815 1701.35 169.467 1701.35 130.31C1701.35 89.9066 1725.36 63.7997 1762.53 63.7997C1798.86 63.7997 1808.93 82.6347 1808.93 82.6347L1841.22 36.6513C1841.22 36.6513 1815.44 5.45755 1762.53 5.45755C1685.87 5.45755 1636.34 54.4656 1636.34 130.31C1636.34 204.985 1687.19 255.155 1762.86 255.155C1812.06 255.155 1847.47 223.085 1847.47 223.085L1818.31 174.262C1818.31 174.262 1798.17 196.815 1767.86 196.815ZM727.831 9.45909H526.131V67.7929H596.141V251.154H657.817V67.7929H727.831V9.45909ZM374.544 157.633H463.242V103.124H374.544V67.7929H478.809V9.45909H312.869V251.154H482.144V192.814H374.544V157.633ZM121.283 95.0039L239.174 0.970657V251.154H177.501V129.943L121.381 174.583L61.8099 129.366V251.154H0.134644V1.1248L121.283 95.0039Z"
+              fill="white"
+            />
+            <text>METASPACE</text>
+          </svg>
+          <br>
+          <span>
+            The platform for metabolite annotation
+            <br>
+            of imaging mass spectrometry data.
+          </span>
+        </h1>
       </div>
     </div>
     <div id="about">
@@ -150,9 +163,7 @@
             href="#"
             @click.prevent="onShowMailingList"
           >METASPACE mailing list</a>.
-        </p>
-        <!-- <p>Find out more about the METASPACE consortium at the <a href="http://project.metaspace2020.eu/">project website</a></p> -->
-        <p>
+          <br>
           For all other inquiries or questions,
           <a href="https://gitter.im/metaspace2020/metaspace">chat with us on Gitter</a> or
           <a href="mailto:contact@metaspace2020.eu">contact us by email</a>.
@@ -160,22 +171,20 @@
         <h2 id="please-appreciate-those-who-funded-it">
           Funding
         </h2>
-        <div style="margin: 0 0 20px; height: 60px">
+        <div class="funding-logos">
           <img
             src="../../assets/eu_flag.jpg"
             alt="EU"
-            style="width: auto; height: 60px;"
           >
           <img
             src="../../assets/nih_logo.png"
             alt="NIH"
-            style="width: auto; height: 60px; margin-left: 10px"
           >
         </div>
         <p>
           We acknowledge funding from the
-          European Union’s Horizon 2020 programme under the grant agreement 634402
-          as well as from the National Institutes of Health NIDDK Kidney Precision Medicine Project.
+          European Union’s Horizon 2020 programme under grant agreement 634402,
+          and from the National Institutes of Health NIDDK Kidney Precision Medicine Project.
         </p>
         <h2>Other acknowledgements</h2>
         <p>
@@ -265,30 +274,34 @@ export default class AboutPage extends Vue {
   }
   @font-face {
     font-family: "ProximaNova-Light";
-    src: url("../../assets/fonts/proximaNova/2FD17E_3_0.eot?#iefix") format("embedded-opentype"), url("../../assets/fonts/proximaNova/2FD17E_3_0.woff2") format("woff2"), url("../../assets/fonts/proximaNova/2FD17E_3_0.woff") format("woff"), url("../../assets/fonts/proximaNova/2FD17E_3_0.ttf") format("truetype");
     src: url("../../assets/fonts/proximaNova/2FD17E_3_0.eot");
+    src: url("../../assets/fonts/proximaNova/2FD17E_3_0.eot?#iefix") format("embedded-opentype"), url("../../assets/fonts/proximaNova/2FD17E_3_0.woff2") format("woff2"), url("../../assets/fonts/proximaNova/2FD17E_3_0.woff") format("woff"), url("../../assets/fonts/proximaNova/2FD17E_3_0.ttf") format("truetype");
     font-style: normal;
     font-weight: normal;
   }
 
-  // .baseline-grid {
-  //   background-image: linear-gradient(180deg,red 1px,transparent 0);
-  //   background-position: 0 0;
-  //   background-repeat: repeat;
-  //   background-size: 100% 20px;
-  // }
+  .baseline-grid {
+    background-image: linear-gradient(180deg,red 1px,transparent 0);
+    background-position: 0 0;
+    background-repeat: repeat;
+    background-size: 100% var(--lineHeight);
+  }
 
   .main-content {
-    line-height: 20px;
+    --lineHeight: 24px;
+    line-height: var(--lineHeight);
+    font-size: 18px;
   }
 
   .mainBanner {
     box-sizing: border-box;
     font-family: 'FuturaBT-Medium', 'Roboto', Helvetica, sans-serif;
-    height: 400px;
+    height: calc(var(--lineHeight) * 20);
     margin: 0 auto;
     max-width: 1100px;
     position: relative;
+    display: flex;
+    align-items: center;
   }
   .mainBanner-wrapper {
     background-color: #008aff;
@@ -296,38 +309,63 @@ export default class AboutPage extends Vue {
     width: 100%;
   }
   .mainBanner img {
-    // max-width: 100%;
-    margin-top: 40px;
-    margin-left: -30px;
-    // position: relative;
-    // z-index: -1;
+    display: none;
+    @media (min-width: 1100px) {
+      display: block;
+      height: calc(var(--lineHeight) * 12);
+    }
+  }
+
+  .mainBanner h1 {
+    color: #fff;
+    height: calc(var(--lineHeight) * 10);
+    box-sizing: border-box;
+    margin: 0;
+    padding-left: calc(var(--lineHeight) * 2);
+    @media (min-width: 1100px) {
+      padding-top: var(--lineHeight);
+    }
+  }
+  .mainBanner h1 > :first-child {
+    font-size: 32px;
+    line-height: calc(var(--lineHeight) * 2);
+  }
+  .mainBanner svg {
+    width: auto;
+    height: calc(var(--lineHeight) * 4)
+  }
+  .mainBanner h1 > :last-child {
+    font-size: 24px;
+    line-height: calc(var(--lineHeight) * 1.25);
+    margin: calc(var(--lineHeight) / 2) 0 0;
+    display: block;
   }
 
   #about {
     color: rgb(30, 47, 70);
     font-family: 'ProximaNova-Light', 'Roboto', Helvetica, sans-serif;
-    margin: 40px auto;
+    margin: calc(var(--lineHeight) * 2) auto;
     max-width: 960px;
-    padding: 0px 40px;
+    padding: 0px calc(var(--lineHeight) * 2);
   }
 
   #about h1 {
     font-family: 'FuturaBT-Medium', 'Roboto', Helvetica, sans-serif;
-    line-height: 20px;
-    font-size: 16px;
+    line-height: inherit;
+    font-size: inherit;
     text-transform: uppercase;
     color: #008aff;
-    margin: 20px 0;
+    margin: var(--lineHeight) 0;
   }
 
   #about h2 {
     font-family: 'FuturaBT-Medium', 'Roboto', Helvetica, sans-serif;
     margin: 0;
-    line-height: 40px;
+    line-height: calc(var(--lineHeight) * 2)
   }
 
   #about p {
-    margin: 0 0 20px;
+    margin: 0 0 var(--lineHeight);
   }
 
   #about a {
@@ -340,15 +378,7 @@ export default class AboutPage extends Vue {
   }
 
   #about li {
-    margin-bottom: 20px;
-  }
-
-  #about svg {
-    width: 32px;
-    height: 32px;
-    padding: 14px;
-    border-radius: 50%;
-    background-color: hsl(208, 100%, 94%);
+    margin-bottom: var(--lineHeight);
   }
 
   #about svg .primary {
@@ -359,31 +389,56 @@ export default class AboutPage extends Vue {
     fill: hsl(208, 80%, 74%);
   }
 
-  .about-features {
+  #about .about-features {
     display: grid;
-    grid-gap: 20px;
+    grid-gap: var(--lineHeight);
     grid-template-columns: 100%;
-    margin-top: 20px;
+    margin-top: var(--lineHeight);
   }
 
-  .about-details {
+  #about .about-features svg {
+    display: block;
+    width: 32px;
+    height: 32px;
+    padding: 8px;
+    border-radius: 50%;
+    background-color: hsl(208, 100%, 94%);
+    margin: calc(var(--lineHeight) / 2) 0;
+  }
+
+  #about .about-details {
     max-width: 70ch;
-    margin-top: 40px;
-    margin-left: auto;
-    margin-right: auto;
+    margin-top: calc(var(--lineHeight) * 2);
+    // margin-left: auto;
+    // margin-right: auto;
   }
 
   #about .about-details h2:not(:first-of-type) {
-    margin-top: 40px;
+    margin-top: calc(var(--lineHeight) * 2);
   }
 
   @media (min-width: 400px) {
-    .about-features {
+    #about .about-features {
       grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
     }
-    .about-features p {
+    #about .about-features p {
       max-width: 40ch;
+      margin-bottom: 0;
     }
+  }
+
+  #about .funding-logos {
+    height: calc(var(--lineHeight) * 3);
+  }
+
+  #about .funding-logos img {
+    width: auto;
+    height: calc(var(--lineHeight) * 2.5);
+    margin: calc(var(--lineHeight) * .25) 0
+  }
+
+  #about .funding-logos img + img {
+    margin-left: calc(var(--lineHeight) * .25);
   }
 
   .mailing-list-dialog .el-dialog__body {
