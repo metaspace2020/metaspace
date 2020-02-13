@@ -65,6 +65,7 @@
 </template>
 
 <script>
+import Vue from 'vue'
 import {
   datasetDetailItemsQuery,
   datasetCountQuery,
@@ -84,7 +85,7 @@ import updateApolloCache from '../../../lib/updateApolloCache'
 
 const processingStages = ['started', 'queued', 'failed', 'finished']
 
-export default {
+export default Vue.extend({
   name: 'DatasetTable',
   components: {
     DatasetList,
@@ -337,7 +338,7 @@ export default {
       this.$store.commit('setDatasetTab', tab)
     },
   },
-}
+})
 </script>
 
 <style lang="scss">
