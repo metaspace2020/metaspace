@@ -39,7 +39,6 @@ jobs:
             yarn run gen-binding
             yarn run deref-schema
             NODE_ENV=test yarn run test --verbose --detectOpenHandles --forceExit
-            psql -h localhost -U sm -c "DROP DATABASE sm_test"
       - run:
           name: Upload coverage
           command: |
