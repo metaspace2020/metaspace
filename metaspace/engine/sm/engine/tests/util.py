@@ -193,28 +193,6 @@ def sm_index(request):
     request.addfinalizer(fin)
 
 
-@pytest.fixture()
-def mol_db(ds_config):
-    data = {'id': 1, 'name': 'HMDB', 'version': '2016'}
-    service = MagicMock()
-    db = MagicMock()
-    service.find_db_by_id.return_value = data
-    service.find_db_by_name_version.return_value = data
-    SMConfig._config_dict = sm_config
-
-    mol_db = MolecularDB(1, 'name', 'version', mol_db_service=service)
-    mol_db._sf_df = pd.DataFrame(
-        dict(
-            sf_id=[1, 2, 3],
-            adduct=['+H', '+Na', '+H'],
-            mzs=[[100, 101, 102], [200], [150, 151]],
-            centr_ints=[[1, 0.1, 0.05], [1], [1, 0.3]],
-        ),
-        columns=['sf_id', 'adduct', 'mzs', 'centr_ints'],
-    )
-    return mol_db
-
-
 def make_moldb_mock(formulas=('H2O', 'C5H3O')):
     moldb_mock = MagicMock(spec=MolecularDB)
     moldb_mock.id = 0

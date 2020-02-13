@@ -17,7 +17,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       return {
         ...db,
         default: config.defaults.moldb_names.includes(db.name),
-        hidden: db.archived,
+        hidden: db.archived || !db.public,
       }
     });
   },
