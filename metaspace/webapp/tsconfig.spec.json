@@ -19,7 +19,7 @@
     "jsx": "preserve"
   },
   "files": [
-    "src/vue-shims.d.ts",
+    "src/vue-shims.d.ts"
   ],
   "include": [
     "src/vue-shims.d.ts",
