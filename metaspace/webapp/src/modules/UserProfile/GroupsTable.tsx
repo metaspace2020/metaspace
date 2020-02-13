@@ -179,7 +179,7 @@ const GroupsTable = createComponent<Props>({
                   {row.role === 'MEMBER' && <Button
                     size="mini"
                     icon="el-icon-arrow-right"
-                    onClick={handleLeave(row)}
+                    onClick={() => handleLeave(row)}
                   >
                       Leave
                   </Button>}
@@ -194,14 +194,14 @@ const GroupsTable = createComponent<Props>({
                     size="mini"
                     type="success"
                     icon="el-icon-check"
-                    onClick={handleAcceptInvitation(row)}
+                    onClick={() => handleAcceptInvitation(row)}
                   >
                       Accept
                   </Button>}
                   {row.role === 'INVITED' && <Button
                     size="mini"
                     icon="el-icon-close"
-                    onClick={handleDeclineInvitation(row)}
+                    onClick={() => handleDeclineInvitation(row)}
                   >
                       Decline
                   </Button>}
