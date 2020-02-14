@@ -56,7 +56,10 @@
           </div>
         </el-alert>
       </div>
-      <el-tabs v-model="tab">
+      <el-tabs
+        v-model="tab"
+        class="with-badges"
+      >
         <el-tab-pane
           v-if="canEdit || project.projectDescriptionAsHtml !== ''"
           name="description"
@@ -114,6 +117,19 @@
         </el-tab-pane>
         <el-tab-pane
           v-if="canEdit && projectId != null"
+          name="review"
+          class="tab-with-badge"
+          lazy
+        >
+          <span slot="label">
+            <el-badge value="new">
+              Review
+            </el-badge>
+          </span>
+          <review-link :project-id="projectId" />
+        </el-tab-pane>
+        <el-tab-pane
+          v-if="canEdit && projectId != null"
           name="settings"
           label="Settings"
           lazy
@@ -157,6 +173,7 @@ import ProjectSettings from './ProjectSettings.vue'
 import { optionalSuffixInParens, plural } from '../../lib/vueFilters'
 import { removeDatasetFromAllDatasetsQuery } from '../../lib/updateApolloCache'
 import ProjectDescription from './ProjectDescription.vue'
+import ReviewLink from './ReviewLink'
 
   interface ViewProjectPageData {
     allDatasets: DatasetDetailItem[];
@@ -170,6 +187,7 @@ import ProjectDescription from './ProjectDescription.vue'
       ProjectSettings,
       NotificationIcon,
       ProjectDescription,
+      ReviewLink,
     },
     filters: {
       optionalSuffixInParens,
@@ -270,7 +288,7 @@ export default class ViewProjectPage extends Vue {
     }
 
     get tab() {
-      if (['description', 'datasets', 'members', 'settings'].includes(this.$route.query.tab)) {
+      if (['description', 'datasets', 'members', 'review', 'settings'].includes(this.$route.query.tab)) {
         return this.$route.query.tab
       } else {
         return 'datasets'
@@ -409,8 +427,8 @@ export default class ViewProjectPage extends Vue {
   }
   .page-content {
     width: 950px;
-    margin-left: 5px;
-    margin-right: 5px;
+    margin-left: 20px;
+    margin-right: 20px;
   }
 
   .header-row {
@@ -432,5 +450,14 @@ export default class ViewProjectPage extends Vue {
   .hidden-members-text {
     text-align: center;
     color: $--color-text-secondary;
+  }
+</style>
+<style>
+  .el-tabs.with-badges {
+    margin-top: -10px;
+  }
+
+  .el-tabs.with-badges .el-tabs__item {
+    margin-top: 10px;
   }
 </style>

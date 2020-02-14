@@ -196,7 +196,6 @@ export default class ProjectSettings extends Vue {
 </script>
 <style scoped lang="scss">
   .project-settings {
-    width: 950px;
     min-height: 80vh; // Ensure there's space for the loading spinner before is visible
   }
 

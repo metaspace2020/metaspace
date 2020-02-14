@@ -4,11 +4,11 @@ import Vue from 'vue'
 import { Button, Message } from 'element-ui'
 import { createComponent, reactive, computed } from '@vue/composition-api'
 
-import { UserProfileQuery } from '../../api/user'
 import confirmPrompt from '../../components/confirmPrompt'
 import NotificationIcon from '../../components/NotificationIcon.vue'
 import { TransferDatasetsDialog } from '../GroupProfile'
 
+import { UserProfileQuery } from '../../api/user'
 import {
   acceptGroupInvitationMutation,
   getRoleName,
