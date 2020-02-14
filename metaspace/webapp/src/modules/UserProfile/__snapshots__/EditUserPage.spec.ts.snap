@@ -37,7 +37,7 @@ exports[`EditUserPage should match snapshot 1`] = `
     </div>
     <div class="el-row" style="margin-left: -10px; margin-right: -10px;">
       <form class="el-form el-form--label-top">
-        <div style="padding-left: 15px;">
+        <div>
           <div class="el-col el-col-8" style="padding-left: 10px; padding-right: 10px;">
             <div class="el-form-item is-required"><label for="name" class="el-form-item__label">Full name</label>
               <div class="el-form-item__content">
@@ -88,46 +88,62 @@ exports[`EditUserPage should match snapshot 1`] = `
           <tr>
             <th>Group</th>
             <th>Role</th>
-            <th>Datasets contributed</th>
+            <th>Datasets</th>
             <th></th>
           </tr>
           <tr>
-            <td><a href="/group/grp-a" class="">Group A</a>
-              <mock-el-tooltip content="Group A has a pending membership request." placement="right"><span class="notification"></span></mock-el-tooltip>
+            <td>
+              <div class="sm-table-cell"><a href="/group/grp-a" class="">Group A</a>
+                <mock-el-tooltip content="Group A has a pending membership request." placement="right"><span class="notification"></span></mock-el-tooltip>
+              </div>
             </td>
             <td>Member</td>
             <td>0</td>
-            <td><button type="button" class="el-button el-button--default el-button--mini">
-                <!----><i class="el-icon-arrow-right"></i><span>Leave</span></button></td>
+            <td>
+              <div class="sm-table-button-group"><button type="button" class="el-button el-button--default el-button--mini">
+                  <!----><i class="el-icon-arrow-right"></i><span>Leave</span></button></div>
+            </td>
           </tr>
           <tr>
-            <td><a href="/group/BBB" class="">Group B</a></td>
+            <td>
+              <div class="sm-table-cell"><a href="/group/BBB" class="">Group B</a></div>
+            </td>
             <td>Invited</td>
             <td>0</td>
-            <td><button type="button" class="el-button el-button--success el-button--mini">
-                <!----><i class="el-icon-check"></i><span>Accept</span></button><button type="button" class="el-button el-button--default el-button--mini">
-                <!----><i class="el-icon-close"></i><span>Decline</span></button></td>
+            <td>
+              <div class="sm-table-button-group"><button type="button" class="el-button el-button--success el-button--mini">
+                  <!----><i class="el-icon-check"></i><span>Accept</span></button><button type="button" class="el-button el-button--default el-button--mini">
+                  <!----><i class="el-icon-close"></i><span>Decline</span></button></div>
+            </td>
           </tr>
           <tr>
-            <td><a href="/group/CCC" class="">Group C</a>
-              <mock-el-tooltip content="Group C has a pending membership request." placement="right"><span class="notification"></span></mock-el-tooltip>
+            <td>
+              <div class="sm-table-cell"><a href="/group/CCC" class="">Group C</a>
+                <mock-el-tooltip content="Group C has a pending membership request." placement="right"><span class="notification"></span></mock-el-tooltip>
+              </div>
             </td>
             <td>Requesting access</td>
             <td>0</td>
-            <td></td>
+            <td>
+              <div class="sm-table-button-group"></div>
+            </td>
           </tr>
           <tr>
-            <td><a href="/group/DDD" class="">Group D</a></td>
+            <td>
+              <div class="sm-table-cell"><a href="/group/DDD" class="">Group D</a></div>
+            </td>
             <td>Group admin</td>
             <td><a href="/datasets?grp=DDD&amp;subm=22333" class="">20</a></td>
-            <td><button disabled="disabled" type="button" class="el-button el-button--default el-button--mini is-disabled">
-                <!----><i class="el-icon-arrow-right"></i><span>Leave</span></button></td>
+            <td>
+              <div class="sm-table-button-group"><button disabled="disabled" type="button" class="el-button el-button--default el-button--mini is-disabled">
+                  <!----><i class="el-icon-arrow-right"></i><span>Leave</span></button></div>
+            </td>
           </tr>
         </table>
       </div>
       <div>
         <p>Primary group:</p>
-        <mock-el-select placeholder="Select" value="DDD" style="padding-left: 15px; width: 400px;" mock-v-loading="false">
+        <mock-el-select placeholder="Select" value="DDD" style="width: 400px;" mock-v-loading="false">
           <mock-el-option label="Group A" value="AAA"></mock-el-option>
           <mock-el-option label="Group B" value="BBB"></mock-el-option>
           <mock-el-option label="Group C" value="CCC"></mock-el-option>
@@ -197,14 +213,16 @@ exports[`EditUserPage should match snapshot 1`] = `
           <tr>
             <th>Project</th>
             <th>Role</th>
-            <th>Datasets provided</th>
+            <th>Datasets</th>
             <th></th>
           </tr>
           <tr>
-            <td><a href="/project/proj-a" class="">
-                Project A
-              </a>
-              <mock-el-tooltip content="Project A has a pending membership request." placement="right"><span class="notification"></span></mock-el-tooltip>
+            <td>
+              <div class="sm-table-cell"><a href="/project/proj-a" class="">
+                  Project A
+                </a>
+                <mock-el-tooltip content="Project A has a pending membership request." placement="right"><span class="notification"></span></mock-el-tooltip>
+              </div>
             </td>
             <td>
               Member
@@ -221,10 +239,12 @@ exports[`EditUserPage should match snapshot 1`] = `
             </td>
           </tr>
           <tr>
-            <td><a href="/project/BB" class="">
-                Project B
-              </a>
-              <!---->
+            <td>
+              <div class="sm-table-cell"><a href="/project/BB" class="">
+                  Project B
+                </a>
+                <!---->
+              </div>
             </td>
             <td>
               Invited
@@ -242,10 +262,12 @@ exports[`EditUserPage should match snapshot 1`] = `
         </span></button></td>
           </tr>
           <tr>
-            <td><a href="/project/CC" class="">
-                Project C
-              </a>
-              <mock-el-tooltip content="Project C has a pending membership request." placement="right"><span class="notification"></span></mock-el-tooltip>
+            <td>
+              <div class="sm-table-cell"><a href="/project/CC" class="">
+                  Project C
+                </a>
+                <mock-el-tooltip content="Project C has a pending membership request." placement="right"><span class="notification"></span></mock-el-tooltip>
+              </div>
             </td>
             <td>
               Requesting access
@@ -260,10 +282,12 @@ exports[`EditUserPage should match snapshot 1`] = `
             </td>
           </tr>
           <tr>
-            <td><a href="/project/DD" class="">
-                Project D
-              </a>
-              <!---->
+            <td>
+              <div class="sm-table-cell"><a href="/project/DD" class="">
+                  Project D
+                </a>
+                <!---->
+              </div>
             </td>
             <td>
               Project manager
@@ -292,10 +316,13 @@ exports[`EditUserPage should match snapshot 1`] = `
     </div>
     <div>
       <h2>API access</h2>
-      <p style="width: 100%; padding-left: 15px;">
-        To <a href="https://github.com/metaspace2020/metaspace/tree/master/metaspace/python-client">access METASPACE programmatically</a>
-        or integrate with trusted third-party applications, an API key can be used to avoid sharing your password.
-      </p>
+      <div class="action-with-message">
+        <p>
+          To <a href="https://github.com/metaspace2020/metaspace/tree/master/metaspace/python-client">access METASPACE programmatically</a>
+          or integrate with trusted third-party applications, an API key can be used to avoid sharing your password.
+        </p>
+        <!---->
+      </div>
       <div class="el-row">
         <div>
           <div class="api-key el-input el-input-group el-input-group--append">
@@ -316,16 +343,17 @@ exports[`EditUserPage should match snapshot 1`] = `
     </div>
     <div>
       <h2>Delete account</h2>
-      <p style="width: 100%; padding-left: 15px;">
-        If you delete your METASPACE account, you can either delete all your datasets or keep them within METASPACE.
-        For the latter, the private data will still be accessible by the group members only.
-      </p>
+      <div class="action-with-message">
+        <p>
+          If you delete your METASPACE account, you can either delete all your datasets or keep them within METASPACE.
+          For the latter, the private data will still be accessible by the group members only.
+        </p> <button type="button" class="el-button el-button--danger" title="Delete account">
+          <!---->
+          <!----><span>
+          Delete account
+        </span></button>
+      </div>
     </div>
-    <div class="el-row"><button type="button" class="el-button el-button--danger" title="Delete account" style="float: right; margin-top: 15px;">
-        <!---->
-        <!----><span>
-        Delete account
-      </span></button></div>
   </div>
 </div>
 `;
