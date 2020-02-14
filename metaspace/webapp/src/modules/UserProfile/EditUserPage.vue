@@ -197,7 +197,7 @@
             or integrate with trusted third-party applications, an API key can be used to avoid sharing your password.
           </p>
           <el-button
-            v-if="!currentUser.apiKey"
+            v-if="currentUser && !currentUser.apiKey"
             @click="handleGenerateApiKey"
           >
             Generate API key
