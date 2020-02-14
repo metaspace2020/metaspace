@@ -10,7 +10,7 @@
       <tr>
         <th>Project</th>
         <th>Role</th>
-        <th>Datasets provided</th>
+        <th>Datasets</th>
         <th />
       </tr>
       <tr
@@ -18,14 +18,16 @@
         :key="row.name"
       >
         <td>
-          <router-link :to="row.route">
-            {{ row.name }}
-          </router-link>
-          <notification-icon
-            v-if="row.hasPendingRequest"
-            :tooltip="`${row.name} has a pending membership request.`"
-            tooltip-placement="right"
-          />
+          <div class="sm-table-cell">
+            <router-link :to="row.route">
+              {{ row.name }}
+            </router-link>
+            <notification-icon
+              v-if="row.hasPendingRequest"
+              :tooltip="`${row.name} has a pending membership request.`"
+              tooltip-placement="right"
+            />
+          </div>
         </td>
         <td>
           {{ row.roleName }}
@@ -88,6 +90,8 @@
 </template>
 
 <script lang="ts">
+import './Table.css'
+
 import Vue from 'vue'
 import { Component, Prop } from 'vue-property-decorator'
 import { UserProfileQuery } from '../../api/user'

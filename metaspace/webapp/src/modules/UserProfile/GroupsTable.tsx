@@ -154,19 +154,21 @@ const GroupsTable = createComponent<Props>({
           <tr>
             <th>Group</th>
             <th>Role</th>
-            <th>Datasets contributed</th>
+            <th>Datasets</th>
             <th></th>
           </tr>
           {rows.value.length
             ? rows.value.map(row =>
               <tr>
                 <td>
-                  <RouterLink to={row.route}>{row.name}</RouterLink>
-                  {row.hasPendingRequest
+                  <div class="sm-table-cell">
+                    <RouterLink to={row.route}>{row.name}</RouterLink>
+                    {row.hasPendingRequest
                       && <NotificationIcon
                         tooltip={`${row.name} has a pending membership request.`}
                         tooltip-placement="right"
                       />}
+                  </div>
                 </td>
                 <td>{row.roleName}</td>
                 <td>
@@ -176,40 +178,42 @@ const GroupsTable = createComponent<Props>({
                   }
                 </td>
                 <td>
-                  {row.role === 'MEMBER' && <Button
-                    size="mini"
-                    icon="el-icon-arrow-right"
-                    onClick={() => handleLeave(row)}
-                  >
-                      Leave
-                  </Button>}
-                  {row.role === 'GROUP_ADMIN' && <Button
-                    size="mini"
-                    icon="el-icon-arrow-right"
-                    disabled
-                  >
-                      Leave
-                  </Button>}
-                  {row.role === 'INVITED' && <Button
-                    size="mini"
-                    type="success"
-                    icon="el-icon-check"
-                    onClick={() => handleAcceptInvitation(row)}
-                  >
-                      Accept
-                  </Button>}
-                  {row.role === 'INVITED' && <Button
-                    size="mini"
-                    icon="el-icon-close"
-                    onClick={() => handleDeclineInvitation(row)}
-                  >
-                      Decline
-                  </Button>}
+                  <div class="sm-table-button-group">
+                    {row.role === 'MEMBER' && <Button
+                      size="mini"
+                      icon="el-icon-arrow-right"
+                      onClick={() => handleLeave(row)}
+                    >
+                        Leave
+                    </Button>}
+                    {row.role === 'GROUP_ADMIN' && <Button
+                      size="mini"
+                      icon="el-icon-arrow-right"
+                      disabled
+                    >
+                        Leave
+                    </Button>}
+                    {row.role === 'INVITED' && <Button
+                      size="mini"
+                      type="success"
+                      icon="el-icon-check"
+                      onClick={() => handleAcceptInvitation(row)}
+                    >
+                        Accept
+                    </Button>}
+                    {row.role === 'INVITED' && <Button
+                      size="mini"
+                      icon="el-icon-close"
+                      onClick={() => handleDeclineInvitation(row)}
+                    >
+                        Decline
+                    </Button>}
+                  </div>
                 </td>
               </tr>,
             ) : (
               <tr class="sm-table-empty-row">
-                <td colspan="3">No data</td>
+                <td colspan="4">No data</td>
               </tr>
             )
           }
