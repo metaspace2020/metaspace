@@ -1,7 +1,7 @@
 import './Table.css'
 
 import Vue from 'vue'
-import { Button } from 'element-ui'
+import { Button, Message } from 'element-ui'
 import { createComponent, reactive, computed } from '@vue/composition-api'
 
 import { UserProfileQuery } from '../../api/user'
@@ -73,7 +73,7 @@ const GroupsTable = createComponent<Props>({
     currentUser: Object,
     refetchData: Function,
   },
-  setup(props, { listeners }) {
+  setup(props) {
     const rows = computed(() => getRows(props.currentUser))
     const state = reactive<State>({
       showTransferDatasetsDialog: false,
@@ -94,7 +94,7 @@ const GroupsTable = createComponent<Props>({
         }
 
         await props.refetchData()
-        listeners.$message({
+        Message({
           type: 'success',
           message: `You are now a member of ${state.invitingGroup!.name}!`,
         })
@@ -116,7 +116,7 @@ const GroupsTable = createComponent<Props>({
           variables: { groupId: groupRow.id },
         })
         await props.refetchData()
-        listeners.$message({ message: 'You have successfully left the group' })
+        Message({ message: 'You have successfully left the group' })
       })
     }
 
@@ -131,7 +131,7 @@ const GroupsTable = createComponent<Props>({
           variables: { groupId: groupRow.id },
         })
         await props.refetchData()
-        listeners.$message({ message: 'You have declined the invitation' })
+        Message({ message: 'You have declined the invitation' })
       })
     }
 
