@@ -49,7 +49,8 @@
           <h2>Metabolite annotation</h2>
           <p>
             <router-link to="/upload">
-              Submit
+              Submit<!--
+              -->
             </router-link>
             your high-resolution imaging mass spectrometry data to our high-throughput metabolite annotation engine
           </p>
@@ -68,7 +69,8 @@
           <h2>Explore the knowledgebase</h2>
           <p>
             <router-link to="/annotations">
-              Browse
+              Browse<!--
+              -->
             </router-link> annotations from all datasets using our interactive interface. Search, filter and compare your annotations with those from the community.
           </p>
         </div>
@@ -89,7 +91,8 @@
           <h2>Get going fast</h2>
           <p>
             Head to the <router-link to="/upload">
-              upload
+              upload<!--
+              -->
             </router-link> page to submit a dataset. We also have interactive <router-link to="/help">
               tutorials.
             </router-link>
