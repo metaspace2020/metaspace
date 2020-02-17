@@ -23,7 +23,7 @@
     executable: /bin/bash
 
 - name: Run build app
-  shell: yarn run build
+  shell: nice yarn run build
   args:
     chdir: "{{ sm_webapp_home }}"
     executable: /bin/bash

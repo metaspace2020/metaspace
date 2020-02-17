@@ -20,7 +20,8 @@
 
 <script lang="ts">
 import TagFilterInputBox from './TagFilterInputBox.vue'
-import Vue, { ComponentOptions } from 'vue'
+import Vue from 'vue'
+import { debounce } from 'lodash-es'
 
  interface InputFilter extends Vue {
    name: string
@@ -32,8 +33,8 @@ import Vue, { ComponentOptions } from 'vue'
    destroy(): void
  }
 
-export default {
-  name: 'input-filter',
+export default Vue.extend({
+  name: 'InputFilter',
   components: {
     'tf-input-box': TagFilterInputBox,
   },
@@ -42,9 +43,15 @@ export default {
     value: [String, Number],
     removable: { type: Boolean, default: true },
     mode: { type: String, default: 'text' },
+    debounce: Boolean,
+  },
+  created() {
+    if (this.debounce) {
+      this.onChange = debounce(this.onChange, 500)
+    }
   },
   methods: {
-    onChange(val) {
+    onChange(val: any) {
       this.$emit('input', val)
       this.$emit('change', val)
     },
@@ -52,5 +59,5 @@ export default {
       this.$emit('destroy', this.name)
     },
   },
-} as ComponentOptions<InputFilter>
+})
 </script>

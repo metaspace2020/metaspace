@@ -45,6 +45,29 @@ interface PieChartVariables {
   y: (datum: any) => string
   count: (datum: any) => number
 }
+interface PieChartConfig {
+  geometry: {
+    margin: {
+      left: number
+      top: number
+      right: number
+      bottom: number
+    }
+    height: number
+    width: number
+    pie: {
+      maxRadius: number
+    }
+  }
+  mainTitle: string
+  variables: PieChartVariables
+  showSideHistograms: {
+    x: boolean
+    y: boolean
+  }
+  sideHistogramColor: string
+  pie: Pie
+}
 
 interface EdgeHistogramBin {
   key: string
@@ -53,26 +76,13 @@ interface EdgeHistogramBin {
 
 type EdgeHistogram = EdgeHistogramBin[];
 
-function pieScatterPlot(svg: any, data: any, config: any,
-  xData_?: EdgeHistogram, yData_?: EdgeHistogram) {
-  const { geometry, mainTitle } = config
-  const pie = config.pie as Pie
-  const variables = config.variables as PieChartVariables
+function pieScatterPlot(svg: any, data: any, config: PieChartConfig, xData: EdgeHistogram, yData: EdgeHistogram) {
+  const { geometry, mainTitle, pie, variables } = config
   const { margin, height, width } = geometry
 
   const colors = d3.scaleOrdinal()
     .domain(pie.sectors.map(s => s.label))
     .range(pie.sectors.map(s => s.color))
-
-  const add = (x: number, y: number): number => x + y
-
-  const xData = xData_ || d3.nest().key(variables.x).entries(data)
-    .map(({ key, values }) => ({ key, count: values.map(variables.count).reduce(add) }))
-    .sort((a, b) => b.count - a.count)
-
-  const yData = yData_ || d3.nest().key(variables.y).entries(data)
-    .map(({ key, values }) => ({ key, count: values.map(variables.count).reduce(add) }))
-    .sort((a, b) => a.count - b.count)
 
   const xScale = d3.scaleBand().domain(xData.map(x => x.key)).rangeRound([0, width])
   const yScale = d3.scaleBand().domain(yData.map(x => x.key)).rangeRound([height, 0])
@@ -118,7 +128,7 @@ function pieScatterPlot(svg: any, data: any, config: any,
 
   if (config.showSideHistograms) {
     if (config.showSideHistograms.x) {
-      const xL = d3.scaleLinear().domain([0, d3.max(yData.map(d => d.count))]).range([0, -margin.left / 3 + 1])
+      const xL = d3.scaleLinear().domain([0, d3.max(yData.map(d => d.count))!]).range([0, -margin.left / 3 + 1])
       const yL = d3.scaleBand().domain(yData.map(d => d.key)).rangeRound([height, 0])
       svg.append('g').selectAll('rect.lhist').data(yData).enter()
         .append('rect').attr('class', 'lhist')
@@ -132,7 +142,7 @@ function pieScatterPlot(svg: any, data: any, config: any,
 
     if (config.showSideHistograms.y) {
       const yL = d3.scaleLinear()
-        .domain([0, d3.max(xData.map(d => d.count))])
+        .domain([0, d3.max(xData.map(d => d.count))!])
         .range([height, height + margin.bottom / 3 - 1])
       const xL = d3.scaleBand()
         .domain(xData.map(d => d.key))

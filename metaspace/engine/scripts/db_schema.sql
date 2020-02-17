@@ -145,6 +145,9 @@ CREATE TABLE "public"."molecular_db" (
   "id" SERIAL NOT NULL, 
   "name" text NOT NULL, 
   "version" text NOT NULL, 
+  "public" boolean NOT NULL DEFAULT false, 
+  "archived" boolean NOT NULL DEFAULT false, 
+  "targeted" boolean NOT NULL DEFAULT false, 
   CONSTRAINT "PK_1841660e7287891634f1e73d7f2" PRIMARY KEY ("id")
 );
 
@@ -170,6 +173,7 @@ CREATE TABLE "public"."dataset" (
   "config" json, 
   "upload_dt" TIMESTAMP, 
   "status" text, 
+  "status_update_dt" TIMESTAMP NOT NULL DEFAULT (now() at time zone 'utc'), 
   "optical_image" text, 
   "transform" double precision array, 
   "is_public" boolean NOT NULL DEFAULT true, 

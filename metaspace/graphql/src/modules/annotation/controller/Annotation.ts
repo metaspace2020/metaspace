@@ -153,7 +153,7 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
     return isobars.map(({ion, ion_formula, peak_ns,  msm}) =>
       ({
         ion,
-        ionFormula: ion_formula,
+        ionFormula: ion_formula || '',
         peakNs: peak_ns,
         msmScore: msm,
         shouldWarn: msm > hit._source.msm - 0.5,

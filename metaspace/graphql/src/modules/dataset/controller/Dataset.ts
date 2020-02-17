@@ -91,6 +91,10 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     return ds._source.ds_upload_dt;
   },
 
+  statusUpdateDT(ds) {
+    return ds._source.ds_status_update_dt;
+  },
+
   configJson(ds) {
     return JSON.stringify(ds._source.ds_config);
   },

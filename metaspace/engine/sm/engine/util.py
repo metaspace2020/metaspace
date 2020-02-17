@@ -144,3 +144,17 @@ def bootstrap_and_run(config_path, func):
 
     with ConnectionPool(sm_config['db']):
         func(sm_config)
+
+
+class GlobalInit:
+    def __init__(self, config_path='conf/config.json'):
+        SMConfig.set_path(config_path)
+        self.sm_config = SMConfig.get_conf()
+        init_loggers(self.sm_config['logs'])
+        self.pool = ConnectionPool(self.sm_config['db'])
+
+    def __enter__(self):
+        return self.sm_config
+
+    def __exit__(self, ext_type, ext_value, traceback):
+        self.pool.close()

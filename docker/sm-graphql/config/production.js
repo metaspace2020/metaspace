@@ -12,16 +12,8 @@ config.defaults = {
   moldb_names: ['HMDB-v4']
 };
 
-config.moldbs = {
-  deprecated: ['HMDB', 'ChEBI', 'LIPID_MAPS', 'SwissLipids', 'COTTON_HMDB', 'HMDB-v2.5', 'HMDB-v2.5-cotton'],
-  custom: ['EMBL-dev1', 'EMBL-dev2', 'M4I_1'],
-};
-
-
 config.services = {};
-/* Molecular database service, used only for internal purposes (peakChartData query) */
-config.services.moldb_service_host = "nginx:8999/mol_db";
-/* Internal ad-hoc service with the only endpoint /reindex/:dataset_id */
+/* Internal ad-hoc service with /v1/datasets and /v1/isotopic_patterns endpoints */
 config.services.sm_engine_api_host = "sm-api:5123";
 
 config.db = {};
