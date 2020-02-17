@@ -289,7 +289,7 @@ const MetaspaceHeader = {
       datasetStatusUpdated: {
         query: datasetStatusUpdatedQuery,
         result(data) {
-          const { dataset, relationship, action, stage, is_new: isNew } = data.data.datasetStatusUpdated
+          const { dataset, relationship, action, stage, isNew } = data.data.datasetStatusUpdated
           if (dataset != null && relationship != null) {
             const { name, submitter } = dataset
 

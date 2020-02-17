@@ -173,6 +173,7 @@ CREATE TABLE "public"."dataset" (
   "config" json, 
   "upload_dt" TIMESTAMP, 
   "status" text, 
+  "status_update_dt" TIMESTAMP NOT NULL DEFAULT (now() at time zone 'utc'), 
   "optical_image" text, 
   "transform" double precision array, 
   "is_public" boolean NOT NULL DEFAULT true, 

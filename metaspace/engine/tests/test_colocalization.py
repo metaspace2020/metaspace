@@ -44,7 +44,14 @@ def mock_get_ion_images_for_analysis(storage_type, img_ids, **kwargs):
 
 def test_new_ds_saves_to_db(test_db, metadata, ds_config):
     db = DB()
-    ds = Dataset('ds_id', 'ds_name', 'input_path', datetime.now(), metadata, ds_config)
+    ds = Dataset(
+        id='ds_id',
+        name='ds_name',
+        input_path='input_path',
+        upload_dt=datetime.now(),
+        metadata=metadata,
+        config=ds_config,
+    )
     ds.save(db)
 
     ion_metrics_df = pd.DataFrame(

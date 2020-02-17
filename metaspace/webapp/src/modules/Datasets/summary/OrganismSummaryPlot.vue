@@ -25,7 +25,7 @@ const query =
       }
   }`
 
-const OTHER = '(Other)'
+const OTHER = '(other)'
 
 const geometry = {
   margin: {

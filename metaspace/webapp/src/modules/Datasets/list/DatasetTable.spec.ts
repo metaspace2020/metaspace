@@ -50,10 +50,20 @@ describe('DatasetTable', () => {
   it('should match snapshot', async() => {
     initMockGraphqlClient({
       Query: () => ({
-        allDatasets: (_: any, { filter: { status } }: any) => {
-          return [{ ...mockDataset, id: `${status}1`, status }]
+        allDatasets: () => {
+          return [
+            { ...mockDataset, id: 'ANNOTATING1', status: 'ANNOTATING' },
+            { ...mockDataset, id: 'QUEUED1', status: 'QUEUED' },
+            { ...mockDataset, id: 'FINISHED1', status: 'FINISHED' },
+          ]
         },
-        countDatasets: () => 1,
+        countDatasetsPerGroup: () => ({
+          counts: [
+            { fieldValues: ['QUEUED'], count: 2},
+            { fieldValues: ['ANNOTATING'], count: 1},
+            { fieldValues: ['FINISHED'], count: 20},
+          ],
+        }),
       }),
     })
     const wrapper = mount(DatasetTable, { store, router, apolloProvider, sync: false })
