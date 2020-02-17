@@ -61,7 +61,7 @@ export const removeUserFromProjectMutation =
   }`
 
 export const requestAccessToProjectMutation =
-  gql`mutation requestAccessToProject($projectId: ID!) { 
+  gql`mutation requestAccessToProject($projectId: ID!) {
     requestAccessToProject(projectId: $projectId) {
       role
     }
@@ -82,14 +82,14 @@ export const inviteUserToProjectMutation =
   }`
 
 export const acceptProjectInvitationMutation =
-  gql`mutation acceptProjectInvitation($projectId: ID!) { 
+  gql`mutation acceptProjectInvitation($projectId: ID!) {
     acceptProjectInvitation(projectId: $projectId) {
       role
     }
   }`
 
 export const leaveProjectMutation =
-  gql`mutation leaveProject($projectId: ID!) { 
+  gql`mutation leaveProject($projectId: ID!) {
     leaveProject(projectId: $projectId)
   }`
 
@@ -100,7 +100,27 @@ export const updateUserProjectMutation =
 
 export const importDatasetsIntoProjectMutation =
   gql`mutation($projectId: ID!, $datasetIds: [ID!]!) {
-  importDatasetsIntoProject(projectId: $projectId, datasetIds: $datasetIds)
+    importDatasetsIntoProject(projectId: $projectId, datasetIds: $datasetIds)
+  }`
+
+export const createReviewLinkMutation =
+  gql`mutation($projectId: ID!) {
+    createReviewLink(projectId: $projectId) {
+      reviewToken
+      publicationStatus
+    }
+  }`
+
+export const deleteReviewLinkMutation =
+  gql`mutation($projectId: ID!) {
+    deleteReviewLink(projectId: $projectId)
+  }`
+
+export const publishProjectMutation =
+  gql`mutation($projectId: ID!) {
+    publishProject(projectId: $projectId) {
+      publicationStatus
+    }
   }`
 
 export const editProjectQuery =
@@ -214,6 +234,9 @@ export interface ViewProjectResult {
   numMembers: number;
   members: ViewProjectMember[] | null;
   projectDescriptionAsHtml: string | null;
+  reviewToken: string | null;
+  reviewTokenCreatedDT: string | null;
+  publicationStatus: string
 }
 
 export const ViewProjectFragment = gql`fragment ViewProjectFragment on Project {
@@ -228,6 +251,9 @@ export const ViewProjectFragment = gql`fragment ViewProjectFragment on Project {
     user { id name email }
   }
   projectDescriptionAsHtml
+  reviewToken
+  # reviewTokenCreatedDT
+  publicationStatus
 }`
 
 export interface ViewProjectMember {

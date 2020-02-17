@@ -126,7 +126,14 @@
               Review
             </el-badge>
           </span>
-          <review-link :project-id="projectId" />
+          <review-link
+            :project-id="projectId"
+            :review-token="reviewToken"
+            :publication-status="publicationStatus"
+            :create-link="createReviewLink"
+            :delete-link="deleteReviewLink"
+            :publish-project="publishProject"
+          />
         </el-tab-pane>
         <el-tab-pane
           v-if="canEdit && projectId != null"
@@ -160,6 +167,9 @@ import {
   requestAccessToProjectMutation, updateProjectMutation, UpdateProjectMutation,
   ViewProjectFragment,
   ViewProjectResult,
+  createReviewLinkMutation,
+  deleteReviewLinkMutation,
+  publishProjectMutation,
 } from '../../api/project'
 import gql from 'graphql-tag'
 import { encodeParams } from '../Filters'
@@ -327,6 +337,14 @@ export default class ViewProjectPage extends Vue {
       return this.members.some(m => m.role === ProjectRoleOptions.PENDING)
     }
 
+    get reviewToken(): string | null {
+      return this.project && this.project.reviewToken
+    }
+
+    get publicationStatus(): string | null {
+      return this.project && this.project.publicationStatus
+    }
+
     @Watch('$route.params.projectIdOrSlug')
     @Watch('project.urlSlug')
     canonicalizeUrl() {
@@ -402,6 +420,30 @@ export default class ViewProjectPage extends Vue {
         },
       })
       this.refetchProject()
+    }
+
+    async createReviewLink() {
+      await this.$apollo.mutate({
+        mutation: createReviewLinkMutation,
+        variables: { projectId: this.projectId },
+      })
+      await this.refetchProject()
+    }
+
+    async deleteReviewLink() {
+      await this.$apollo.mutate({
+        mutation: deleteReviewLinkMutation,
+        variables: { projectId: this.projectId },
+      })
+      await this.refetchProject()
+    }
+
+    async publishProject() {
+      await this.$apollo.mutate({
+        mutation: publishProjectMutation,
+        variables: { projectId: this.projectId },
+      })
+      await this.refetchProject()
     }
 
     async refetchProject() {
