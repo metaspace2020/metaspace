@@ -437,7 +437,7 @@ export default Vue.extend({
         return this.queryVariables
       },
       update: data => data.allAnnotations,
-      debounce: 200,
+      throttle: 200,
       result({ data }) {
         // For whatever reason (could be a bug), vue-apollo seems to first refetch
         // data for the current page and only then fetch the updated data.

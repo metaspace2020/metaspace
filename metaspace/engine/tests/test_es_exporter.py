@@ -48,10 +48,10 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index, ds_config, metadata):
     db = DB()
     db.insert(
         "INSERT INTO dataset(id, name, input_path, config, metadata, upload_dt, status, "
-        "is_public, ion_img_storage_type, acq_geometry) "
-        "VALUES (%s, 'ds_name', 'ds_input_path', %s, %s, %s, 'ds_status', "
+        "status_update_dt, is_public, ion_img_storage_type, acq_geometry) "
+        "VALUES (%s, 'ds_name', 'ds_input_path', %s, %s, %s, 'ds_status', %s, "
         "true, 'fs', '{}')",
-        [[ds_id, json.dumps(ds_config), json.dumps(metadata), upload_dt]],
+        [[ds_id, json.dumps(ds_config), json.dumps(metadata), upload_dt, upload_dt]],
     )
     db.insert(
         "INSERT INTO molecular_db (id, name, version) VALUES (%s, %s, %s)",
@@ -132,6 +132,7 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index, ds_config, metadata):
         'ds_project_names': [],
         'ds_meta': metadata,
         'ds_status': 'ds_status',
+        'ds_status_update_dt': upload_dt,
         'ds_name': 'ds_name',
         'ds_input_path': 'ds_input_path',
         'ds_id': ds_id,
