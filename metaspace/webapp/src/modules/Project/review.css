@@ -1,0 +1,47 @@
+.sm-workflow {
+  counter-reset: workflow;
+  list-style: none;
+  margin: 24px 0;
+  padding: 0;
+}
+
+.sm-workflow li {
+  border-left: 2px solid hsl(208, 33%, 89%);
+  height: 96px;
+  margin-left: 24px;
+  padding-left: 48px;
+  position: relative;
+}
+
+.sm-workflow li:last-child {
+  border: none;
+}
+
+.sm-workflow li:before {
+  align-items: center;
+  background: #008aff;
+  border-radius: 50%;
+  color: #fff;
+  content: counter(workflow);
+  counter-increment: workflow;
+  display: flex;
+  font-size: 18px;
+  font-weight: 700;
+  height: 48px;
+  justify-content: center;
+  left: -24px;
+  position: absolute;
+  top: 0;
+  width: 48px;
+}
+
+.sm-workflow li.done {
+  color: hsl(208, 22%, 49%);
+}
+
+.sm-workflow li.done:before {
+  content: '✔️';
+  font-size: 24px;
+  background: hsl(208, 33%, 89%);
+  color: hsl(208, 22%, 49%);
+}
