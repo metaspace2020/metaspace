@@ -59,9 +59,9 @@ describe('DatasetTable', () => {
         },
         countDatasetsPerGroup: () => ({
           counts: [
-            { fieldValues: ['QUEUED'], count: 2},
-            { fieldValues: ['ANNOTATING'], count: 1},
-            { fieldValues: ['FINISHED'], count: 20},
+            { fieldValues: ['QUEUED'], count: 2 },
+            { fieldValues: ['ANNOTATING'], count: 1 },
+            { fieldValues: ['FINISHED'], count: 20 },
           ],
         }),
       }),

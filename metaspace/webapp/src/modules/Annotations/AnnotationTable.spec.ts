@@ -23,7 +23,7 @@ const blobToText = (blob: Blob) => new Promise<string>((resolve, reject) => {
 
 // HACK: Prevent AnnotationTable from waiting before loading data
 delete (AnnotationTable as any).options.apollo.annotations.debounce
-                                               
+
 describe('AnnotationTable', () => {
   const mockAnnotation = {
     id: '2019-02-12_15h55m06s_HMDB-v4_2018-04-09_C19H18N2O7S2_minus_H',

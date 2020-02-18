@@ -86,7 +86,7 @@ export function mzFilterPrecision(value: number | string): string {
   }
 }
 
-interface WheelEventCompat extends WheelEvent { wheelDelta?: number }
+export interface WheelEventCompat extends WheelEvent { wheelDelta?: number }
 export function scrollDistance(event: WheelEventCompat) {
   let sY = 0
   if ('detail' in event) { sY = event.detail * 2 }
