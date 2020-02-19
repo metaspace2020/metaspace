@@ -126,7 +126,7 @@
               Review
             </el-badge>
           </span>
-          <review-link
+          <review
             :project-id="projectId"
             :review-token="reviewToken"
             :publication-status="publicationStatus"
@@ -183,7 +183,7 @@ import ProjectSettings from './ProjectSettings.vue'
 import { optionalSuffixInParens, plural } from '../../lib/vueFilters'
 import { removeDatasetFromAllDatasetsQuery } from '../../lib/updateApolloCache'
 import ProjectDescription from './ProjectDescription.vue'
-import ReviewLink from './ReviewLink'
+import Review from './Review'
 
   interface ViewProjectPageData {
     allDatasets: DatasetDetailItem[];
@@ -197,7 +197,7 @@ import ReviewLink from './ReviewLink'
       ProjectSettings,
       NotificationIcon,
       ProjectDescription,
-      ReviewLink,
+      Review,
     },
     filters: {
       optionalSuffixInParens,

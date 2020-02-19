@@ -21,22 +21,25 @@ const ReviewLink = createComponent({
       return `${window.location.origin}/api_auth/review?prj=${props.projectId}&token=${props.reviewToken}`
     })
     return () => (
-      <ol class="sm-workflow sm-hipster-style">
+      <ol class="sm-workflow">
         <li class="done">
-          <h2>Create a review link</h2>
+          <h2 class="sm-workflow-header">Create a review link</h2>
           <p>
-            A review link allows reviewers to access this project and its datasets without making the project public.
+            A <b>review link</b> allows reviewers to access this project and its datasets without making the project public.
           </p>
         </li>
-        <li>
-          <h2>Review in progress</h2>
+        <li class="active">
+          <h2 class="sm-workflow-header">Review in progress</h2>
           <p>Reviewers can access this project using the following link:</p>
           {reviewLink.value
             && <p>
               <a href={reviewLink.value}>{reviewLink.value}</a>
             </p>}
         </li>
-        <li></li>
+        <li>
+          <h2 class="sm-workflow-header">Publish results</h2>
+          <p>This project and its datasets are now public.</p>
+        </li>
       </ol>
       // <div>
       //   <h2>{props.publicationStatus}</h2>
@@ -62,3 +65,4 @@ const ReviewLink = createComponent({
 })
 
 export default ReviewLink
+
