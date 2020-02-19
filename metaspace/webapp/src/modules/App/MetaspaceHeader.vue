@@ -454,7 +454,7 @@ export default MetaspaceHeader
  }
 
  .router-link-active.page-link {
-   font-weight: 700;
+   font-weight: 500;
  }
  .page-link a {
    text-decoration: none;
@@ -483,8 +483,8 @@ export default MetaspaceHeader
    display: flex;
  }
  .submenu-item {
-   padding: 20px;
-   font-size: 16px;
+   padding: 15px 20px;
+   font-size: 14px;
    align-self: stretch;
    justify-content: center;
    white-space: nowrap;

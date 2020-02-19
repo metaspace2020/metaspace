@@ -1,4 +1,3 @@
-
 /**
  * If `suffix` is non-null & non-empty, it is wrapped in parens and appended to `content`.
  * */
