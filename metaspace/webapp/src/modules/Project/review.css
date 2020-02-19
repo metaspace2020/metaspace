@@ -22,8 +22,8 @@
   border: none;
 }
 
-.sm-workflow li > * {
-  margin: 0;
+.sm-workflow li > p {
+  margin: 0 0 12px;
 }
 
 /* hack allows left border to connect to next li */
