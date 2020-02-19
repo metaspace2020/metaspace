@@ -28,7 +28,7 @@
       </el-col>
       <el-col
         :span="18"
-        style="padding: 12px 6px 0;"
+        style="padding: 0 5px"
       >
         <el-switch
           :value="isPublic"

@@ -236,7 +236,7 @@ export default class FormField extends Vue {
 
 <style lang="scss">
   .md-form-field {
-    padding: 5px 5px 8px 5px;
+    padding: 0 5px 10px;
     margin-bottom: 0;
 
     .el-form-item__content {
@@ -249,9 +249,8 @@ export default class FormField extends Vue {
 
     > .el-form-item__label {
       padding: 0;
-      margin-bottom: 2px;
       font-size: 14px;
-      line-height: 16px;
+      line-height: 24px;
     }
 
     .el-select {
