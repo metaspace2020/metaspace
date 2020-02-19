@@ -454,7 +454,7 @@ export default MetaspaceHeader
  }
 
  .router-link-active.page-link {
-   font-weight: 700;
+   font-weight: 500;
  }
  .page-link a {
    text-decoration: none;
