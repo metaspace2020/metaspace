@@ -8,7 +8,7 @@
       <div class="info">
         <div class="info-line project-name">
           <router-link :to="projectLink">
-            <span style="margin-left: 5px">{{ project.name }}</span>
+            {{ project.name }}
           </router-link>
           <img
             v-if="!project.isPublic"
@@ -17,18 +17,18 @@
             title="This project is only visible to its members and METASPACE administrators"
           >
         </div>
-        <div style="margin-left: 12px">
+        <div>
           <div class="info-line">
             <span v-if="project.numDatasets > 0">
               <router-link :to="datasetsLink"><span>{{ project.numDatasets | plural('Dataset', 'Datasets') }}</span></router-link>,
             </span>
-            {{ project.numMembers | plural('Member', 'Members') }}
+            {{ project.numMembers | plural('member', 'members') }}
           </div>
           <div
             v-if="projectManagers.length>0"
             class="info-line"
           >
-            <span>Manager<span v-if="projectManagers.length>1">s</span>:</span>
+            Managed by
             <span
               v-for="(manager, ind) in projectManagers"
               :key="manager.user.id"
@@ -46,10 +46,10 @@
           </div>
           <div class="info-line">
             <span v-if="project.latestUploadDT != null">
-              Last submission <b><span style="font-size: 14px">{{ formatDate(project.latestUploadDT) }}</span></b>
+              Last submission <elapsed-time :date="project.latestUploadDT" />
             </span>
             <span v-else>
-              Created on <b><span style="font-size: 14px">{{ formatDate(project.createdDT) }}</span></b>
+              Created <elapsed-time :date="project.createdDT" />
             </span>
           </div>
           <div
@@ -99,6 +99,7 @@ import { CurrentUserRoleResult } from '../../api/user'
 import ConfirmAsync from '../../components/ConfirmAsync'
 import { plural } from '../../lib/vueFilters'
 import { ProjectRoleOptions as UPRO } from '../../api/project'
+import ElapsedTime from '../../components/ElapsedTime'
 
   interface managerGroupName {
     user: {
@@ -116,6 +117,9 @@ import { ProjectRoleOptions as UPRO } from '../../api/project'
   @Component({
     filters: {
       plural,
+    },
+    components: {
+      ElapsedTime,
     },
   })
 
@@ -188,6 +192,11 @@ export default class ProjectsListItem extends Vue {
       return isValid(parsedDate) ? format(parsedDate, 'YYYY-MM-DD') : '????-??-??'
     }
 
+    toLocaleDT(date: string) {
+      const parsedDate = parse(date)
+      return isValid(parsedDate) ? parsedDate.toLocaleString() : ''
+    }
+
     @ConfirmAsync(function(this: ProjectsListItem) {
       return {
         message: `Are you sure you want to delete ${this.project.name}?`,
@@ -215,9 +224,9 @@ export default class ProjectsListItem extends Vue {
     border-radius: 5px;
     width: 100%;
     max-width: 800px;
-    margin: 8px 0;
-    padding: 8px 0 10px 8px;
-    border: 1px solid #cce4ff;
+    margin: 10px 0;
+    padding: 20px 0 20px 20px;
+    border: 1px solid #DCDFE6;
     box-sizing: border-box;
     > * {
       z-index: 1;
@@ -225,12 +234,18 @@ export default class ProjectsListItem extends Vue {
     > .underlay {
       z-index: 0;
     }
+    transition: 0.2s cubic-bezier(.4, 0, .2, 1);
+    transition-property: box-shadow;
+    line-height: 20px;
+  }
+
+  .project-item:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 5px 15px rgba(0, 0, 0, 0.01);
   }
 
   .info {
     overflow: hidden;
     flex: auto;
-    padding-right: 12px;
   }
 
   .item-body {
@@ -273,12 +288,12 @@ export default class ProjectsListItem extends Vue {
   }
 
   .project-name {
-    margin-bottom: 2px;
-
+    line-height: 30px;
     a {
-      font-size: 1.5em;
-      text-decoration: none;
       color: #333;
+      font-size: 1.5em;
+      font-weight: 500;
+      text-decoration: none;
     }
   }
 
@@ -299,8 +314,6 @@ export default class ProjectsListItem extends Vue {
 
   .actions {
     flex: 0 0 170px;
-    padding-top: 5px;
-    margin-right: 10px;
   }
 
   .annotations {
@@ -315,9 +328,7 @@ export default class ProjectsListItem extends Vue {
     color: #a00;
   }
 
-  .group-link {
-    cursor: pointer;
-    color: sienna;
+  .sm-elapsed-time {
+    font-weight: 500;
   }
-
 </style>

@@ -28,7 +28,6 @@
         <projects-list-item
           v-for="(project, i) in projects"
           :key="project.id"
-          :class="[i%2 ? 'odd': '']"
           :project="project"
           :current-user="currentUser"
           :refresh-data="handleRefreshData"
@@ -222,9 +221,5 @@ export default class ProjectsListPage extends Vue {
     flex-wrap: wrap;
     justify-content: space-between;
     align-items: flex-start;
-  }
-
-  .odd {
-    background-color: #e6f1ff;
   }
 </style>
