@@ -12,7 +12,7 @@ function toLocaleFormat(date: string): string {
 
 export default createComponent({
   props: {
-    date: String,
+    date: { type: String, required: true },
   },
   setup(props) {
     return () => (
