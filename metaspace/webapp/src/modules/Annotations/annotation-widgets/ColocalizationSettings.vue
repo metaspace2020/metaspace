@@ -8,21 +8,24 @@
             trigger="hover"
             placement="top"
           >
-            <div style="max-width: 500px;">
+            <div style="max-width: 550px;">
               <p>
-                <b>Median-thresholded cosine distance</b> is the best choice for exploring most biological datasets.
-                It was found to outperform other traditional colocalization measures when compared
-                to expert rankings of imaging mass spectrometry ion images. <br/>
-                Its description and evaluation can be found in: <a href="https://doi.org/10.1101/758425">
-                ColocAI: artificial intelligence approach to quantify colocalization between mass spectrometry images,
-                Ovchinnikova et al.</a>
+                The <b>median-thresholded cosine distance</b> algorithm is the best choice for
+                exploring most datasets in METASPACE.
+                It was found to highly reproduce expert rankings of mass spectrometry ion images
+                and performed better than other traditional colocalization measures. <br/>
+                Its description and evaluation can be found in:
+                <a href=“https://doi.org/10.1093/bioinformatics/btaa085”>Ovchinnikova et al. (2020) ColocML</a>.
               </p>
               <p>
 
               </p>
               <p>
-                <b>Cosine distance</b> was previously used as the default colocalization measure.  It has been
-                preserved so that historical data remains consistent, and is comparable against new datasets.
+
+              </p>
+              <p>
+                The <b>cosine distance</b> was previously used as the default colocalization measure.
+                It is still available and can be selected from the list.
               </p>
             </div>
             <i
@@ -52,7 +55,6 @@
 import Vue from 'vue'
 import { Component } from 'vue-property-decorator'
 import { colocalizationAlgosQuery } from '../../../api/metadata'
-import { omit } from 'lodash-es'
 
  interface ColocalizationAlgoOption {
    id: string;
