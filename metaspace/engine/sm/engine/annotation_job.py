@@ -217,7 +217,7 @@ class AnnotationJob:
             logger.info('*' * 150)
             start = time.time()
 
-            self._es = ESExporter(self._db)
+            self._es = ESExporter(self._db, self._sm_config)
             self._ds = ds
 
             if self._sm_config['rabbitmq']:

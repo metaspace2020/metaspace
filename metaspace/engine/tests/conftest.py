@@ -2,6 +2,7 @@ import json
 from random import randint
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+import uuid
 
 import pytest
 from elasticsearch import Elasticsearch
@@ -9,8 +10,6 @@ from elasticsearch_dsl import Search
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from pysparkling import Context
-import pandas as pd
-import uuid
 
 from sm.engine.db import DB, ConnectionPool
 from sm.engine.molecular_db import MolecularDB
@@ -19,11 +18,19 @@ from sm.engine.util import proj_root, SMConfig, init_loggers
 from sm.engine.es_export import ESIndexManager
 
 TEST_CONFIG_PATH = 'conf/test_config.json'
-SMConfig.set_path(Path(proj_root()) / TEST_CONFIG_PATH)
-sm_config = SMConfig.get_conf(update=True)
-patch('sm.engine.util.SMConfig.get_conf', new_callable=lambda: lambda: sm_config).start()
 
-init_loggers(sm_config['logs'])
+
+@pytest.fixture(scope='session')
+def sm_config():
+    SMConfig.set_path(Path(proj_root()) / TEST_CONFIG_PATH)
+    sm_config = SMConfig.get_conf()
+    sm_config['db']['database'] = f'sm_test_{hex(randint(0, 0xFFFFFFFF))[2:]}'
+    return sm_config
+
+
+@pytest.fixture(scope='session', autouse=True)
+def global_setup(sm_config):
+    init_loggers(sm_config['logs'])
 
 
 @pytest.fixture()
@@ -76,36 +83,39 @@ def spark_context(request):
     return sc
 
 
-@pytest.fixture()
-def test_db(request):
-    def autocommit_execute(db_config, *sqls):
-        admin_conn = None
-        try:
-            admin_conn = psycopg2.connect(**db_config)
-            admin_conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-            with admin_conn.cursor() as curs:
-                for sql in sqls:
-                    curs.execute(sql)
-        finally:
-            if admin_conn:
-                admin_conn.close()
+def _autocommit_execute(db_config, *sqls):
+    admin_conn = None
+    try:
+        admin_conn = psycopg2.connect(**db_config)
+        admin_conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        with admin_conn.cursor() as curs:
+            for sql in sqls:
+                curs.execute(sql)
+    finally:
+        if admin_conn:
+            admin_conn.close()
 
-    db_name = f'sm_test_{hex(randint(0, 0xFFFFFFFF))[2:]}'
-    sm_config['db']['database'] = db_name
+
+@pytest.fixture()
+def empty_test_db(sm_config, request):
+    db_name = sm_config['db']['database']
     db_config_postgres = {**sm_config['db'], 'database': 'postgres'}
-    autocommit_execute(
+    _autocommit_execute(
         db_config_postgres, f'DROP DATABASE IF EXISTS {db_name}', f'CREATE DATABASE {db_name}'
     )
-
-    autocommit_execute(sm_config['db'], DB_SQL_SCHEMA)
 
     conn_pool = ConnectionPool(sm_config['db'])
 
     def fin():
         conn_pool.close()
-        autocommit_execute(db_config_postgres, f'DROP DATABASE IF EXISTS {db_name}')
+        _autocommit_execute(db_config_postgres, f'DROP DATABASE IF EXISTS {db_name}')
 
     request.addfinalizer(fin)
+
+
+@pytest.fixture()
+def test_db(sm_config, empty_test_db):
+    _autocommit_execute(sm_config['db'], DB_SQL_SCHEMA)
 
 
 @pytest.fixture()
@@ -161,7 +171,7 @@ def fill_db(test_db, metadata, ds_config):
 
 
 @pytest.fixture()
-def es():
+def es(sm_config):
     return Elasticsearch(
         hosts=[
             "{}:{}".format(sm_config['elasticsearch']['host'], sm_config['elasticsearch']['port'])
@@ -170,7 +180,7 @@ def es():
 
 
 @pytest.fixture()
-def es_dsl_search():
+def es_dsl_search(sm_config):
     es = Elasticsearch(
         hosts=[
             "{}:{}".format(sm_config['elasticsearch']['host'], sm_config['elasticsearch']['port'])
@@ -180,7 +190,7 @@ def es_dsl_search():
 
 
 @pytest.fixture()
-def sm_index(request):
+def sm_index(sm_config, request):
     es_config = sm_config['elasticsearch']
     es_man = ESIndexManager(es_config)
     es_man.delete_index(es_config['index'])

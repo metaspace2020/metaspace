@@ -11,7 +11,6 @@ from sm.engine.msm_basic.formula_validator import (
     make_compute_image_metrics,
     replace_nan,
 )
-from sm.engine.tests.util import pysparkling_context as spark_context, ds_config, sm_config
 
 
 @patch('sm.engine.msm_basic.formula_validator.isotope_pattern_match', return_value=0.9)

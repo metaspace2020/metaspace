@@ -5,7 +5,6 @@ from queue import Queue
 import logging
 
 from sm.engine.queue import QueuePublisher, QueueConsumer, SM_ANNOTATE
-from sm.engine.tests.util import sm_config
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -15,7 +14,7 @@ QDESC['name'] = 'sm_test'
 
 
 @fixture(scope='module')
-def delete_queue():
+def delete_queue(sm_config):
     # delete before tests
     queue_pub = QueuePublisher(sm_config['rabbitmq'], QDESC)
     queue_pub.delete_queue()
@@ -49,7 +48,7 @@ def queue_is_empty(config):
     return resp.json()['messages'] == 0
 
 
-def test_queue_msg_published_consumed_on_success_called(delete_queue):
+def test_queue_msg_published_consumed_on_success_called(sm_config, delete_queue):
     config = sm_config['rabbitmq']
     queue_pub = QueuePublisher(config, QDESC)
     msg = {'test': 'message'}
@@ -68,7 +67,7 @@ def test_queue_msg_published_consumed_on_success_called(delete_queue):
     assert queue_is_empty(config)
 
 
-def test_queue_msg_published_consumed_on_failure_called():
+def test_queue_msg_published_consumed_on_failure_called(sm_config):
     config = sm_config['rabbitmq']
     queue_pub = QueuePublisher(config, QDESC)
     msg = {'test': 'message'}

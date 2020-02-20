@@ -1,34 +1,25 @@
 import json
 from datetime import datetime
-from unittest.mock import MagicMock
 import time
+from unittest.mock import MagicMock
 
 import pandas as pd
 
-from sm.engine.molecular_db import MolecularDB
+from sm.engine.db import DB
 from sm.engine.es_export import (
     ESExporter,
-    ESIndexManager,
     ESExporterIsobars,
+    ESIndexManager,
 )
-from sm.engine.db import DB
 from sm.engine.isocalc_wrapper import IsocalcWrapper
-from sm.engine.tests.util import (
-    sm_config,
-    ds_config,
-    metadata,
-    sm_index,
-    es,
-    es_dsl_search,
-    test_db,
-)
+from sm.engine.molecular_db import MolecularDB
 
 
 def wait_for_es(sec=1):
     time.sleep(sec)
 
 
-def test_index_ds_works(test_db, es_dsl_search, sm_index, ds_config, metadata):
+def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, metadata):
     ds_id = '2000-01-01_00h00m'
     upload_dt = datetime.now().isoformat()
     mol_db_id = 0
@@ -110,7 +101,7 @@ def test_index_ds_works(test_db, es_dsl_search, sm_index, ds_config, metadata):
     }[formula]
     isocalc_mock.mass_accuracy_bounds = lambda mzs: (mzs, mzs)
 
-    es_exp = ESExporter(db)
+    es_exp = ESExporter(db, sm_config)
     es_exp.delete_ds(ds_id)
     es_exp.index_ds(ds_id=ds_id, mol_db=mol_db_mock, isocalc=isocalc_mock)
 
@@ -310,7 +301,7 @@ def test_add_isobar_fields_to_anns(ds_config):
     }
 
 
-def test_delete_ds__one_db_ann_only(test_db, es, sm_index):
+def test_delete_ds__one_db_ann_only(sm_config, test_db, es, sm_index):
     index = sm_config['elasticsearch']['index']
     es.create(
         index=index,
@@ -344,7 +335,7 @@ def test_delete_ds__one_db_ann_only(test_db, es, sm_index):
     moldb_mock.name = 'HMDB'
     moldb_mock.version = '2016'
 
-    es_exporter = ESExporter(db_mock)
+    es_exporter = ESExporter(db_mock, sm_config)
     es_exporter.delete_ds(ds_id='dataset1', mol_db=moldb_mock)
 
     wait_for_es(sec=1)
@@ -372,7 +363,7 @@ def test_delete_ds__one_db_ann_only(test_db, es, sm_index):
     assert es.count(index=index, doc_type='dataset', body=body)['count'] == 1
 
 
-def test_delete_ds__completely(test_db, es, sm_index):
+def test_delete_ds__completely(sm_config, test_db, es, sm_index):
     index = sm_config['elasticsearch']['index']
     es.create(
         index=index,
@@ -403,7 +394,7 @@ def test_delete_ds__completely(test_db, es, sm_index):
 
     db_mock = MagicMock(spec=DB)
 
-    es_exporter = ESExporter(db_mock)
+    es_exporter = ESExporter(db_mock, sm_config)
     es_exporter.delete_ds(ds_id='dataset1')
 
     wait_for_es(sec=1)
@@ -431,7 +422,7 @@ def test_delete_ds__completely(test_db, es, sm_index):
     assert es.count(index=index, doc_type='dataset', body=body)['count'] == 0
 
 
-def test_update_ds_works_for_all_fields(test_db, es, sm_index, es_dsl_search):
+def test_update_ds_works_for_all_fields(sm_config, test_db, es, sm_index, es_dsl_search):
     update = {
         'name': 'new_ds_name',
         'submitter_id': 'new_ds_submitter_id',
@@ -485,7 +476,7 @@ def test_update_ds_works_for_all_fields(test_db, es, sm_index, es_dsl_search):
         }
     ]
 
-    es_exporter = ESExporter(db_mock)
+    es_exporter = ESExporter(db_mock, sm_config)
     es_exporter.update_ds('dataset1', fields=list(update.keys()))
     wait_for_es(sec=1)
 
@@ -506,7 +497,7 @@ def test_update_ds_works_for_all_fields(test_db, es, sm_index, es_dsl_search):
         assert v == ann_doc[f'ds_{k}']
 
 
-def test_rename_index_works(test_db):
+def test_rename_index_works(sm_config, test_db):
     es_config = sm_config['elasticsearch']
     alias = es_config['index']
     es_man = ESIndexManager(es_config)
@@ -526,7 +517,7 @@ def test_rename_index_works(test_db):
     assert es_man.exists_index('{}-yin'.format(alias))
 
 
-def test_internal_index_name_return_valid_values():
+def test_internal_index_name_return_valid_values(sm_config):
     es_config = sm_config['elasticsearch']
     alias = es_config['index']
     es_man = ESIndexManager(es_config)

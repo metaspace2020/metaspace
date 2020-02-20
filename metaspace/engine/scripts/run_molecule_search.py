@@ -16,7 +16,7 @@ from sm.engine.annotation_job import AnnotationJob
 def run_search(sm_config):
     db = DB()
     img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
-    manager = DatasetManager(db, ESExporter(db), img_store)
+    manager = DatasetManager(db, ESExporter(db, sm_config), img_store)
 
     config_path = args.config_path or Path(args.input_path) / 'config.json'
     meta_path = args.meta_path or Path(args.input_path) / 'meta.json'

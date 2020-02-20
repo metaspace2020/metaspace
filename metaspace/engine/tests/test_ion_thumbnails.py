@@ -8,7 +8,6 @@ from sm.engine.ion_thumbnail import generate_ion_thumbnail, ALGORITHMS
 from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.db import DB
 from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.tests.util import sm_config, test_db, metadata, ds_config
 
 OLD_IMG_ID = 'old-ion-thumb-id'
 IMG_ID = 'new-ion-thumb-id'

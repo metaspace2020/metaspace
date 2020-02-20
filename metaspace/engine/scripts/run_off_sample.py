@@ -43,7 +43,7 @@ def run_off_sample(sm_config, ds_id_str, sql_where, fix_missing, overwrite_exist
         logger.warning('No datasets match filter')
         return
 
-    es_exp = ESExporter(db)
+    es_exp = ESExporter(db, sm_config)
     for i, ds_id in enumerate(ds_ids):
         try:
             logger.info(f'Running off-sample on {i+1} out of {len(ds_ids)}')

@@ -11,15 +11,6 @@ from sm.engine.es_export import ESExporter
 from sm.engine.queue import QueuePublisher
 from sm.engine.dataset import DatasetStatus, Dataset, generate_ds_config
 from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.tests.util import (
-    sm_config,
-    test_db,
-    fill_db,
-    sm_index,
-    es_dsl_search,
-    metadata,
-    ds_config,
-)
 
 mol_db_mock = {'id': 1, 'name': 'HMDB-v4', 'version': '2001-01-01'}
 
