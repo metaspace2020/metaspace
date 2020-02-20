@@ -1,13 +1,6 @@
-from os import path
-from pathlib import Path
-
 import pytest
-from metaspace.sm_annotation_utils import SMInstance
 
-
-@pytest.fixture()
-def sm():
-    return SMInstance(config_path=path.join(path.dirname(__file__), '../../test_config'))
+from metaspace.tests.utils import sm
 
 
 def test_get_all_projects(sm):

@@ -195,6 +195,8 @@ class GraphQLClient(object):
         sumFormula
         neutralLoss
         adduct
+        ionFormula
+        ion
         mz
         msmScore
         rhoSpatial
@@ -283,12 +285,8 @@ class GraphQLClient(object):
             "$sortingOrder: SortingOrder",
             "$offset: Int",
             "$limit: Int",
+            "$colocalizationCoeffFilter: ColocalizationCoeffFilter",
         ]
-        if colocFilter:
-            query_arguments.append("$colocalizationCoeffFilter: ColocalizationCoeffFilter")
-            self.ANNOTATION_FIELDS += (
-                "colocalizationCoeff( colocalizationCoeffFilter: $colocalizationCoeffFilter)"
-            )
 
         query = """
             query getAnnotations(
@@ -303,6 +301,7 @@ class GraphQLClient(object):
                     limit: $limit,
                 ) {
                 %s
+                colocalizationCoeff(colocalizationCoeffFilter: $colocalizationCoeffFilter)
                 }
             }""" % (
             ','.join(query_arguments),
@@ -719,25 +718,28 @@ class SMDataset(object):
             return pd.DataFrame()
 
         df = pd.io.json.json_normalize(records)
-        return pd.DataFrame(
-            dict(
-                formula=df['sumFormula'],
-                adduct=df['adduct'],
-                msm=df['msmScore'],
-                moc=df['rhoChaos'],
-                rhoSpatial=df['rhoSpatial'],
-                rhoSpectral=df['rhoSpectral'],
-                fdr=df['fdrLevel'],
-                mz=df['mz'],
-                moleculeNames=[[item['name'] for item in lst] for lst in df['possibleCompounds']],
-                moleculeIds=[
-                    [item['information'][0]['databaseId'] for item in lst]
-                    for lst in df['possibleCompounds']
-                ],
-                intensity=[img[0]['maxIntensity'] for img in df['isotopeImages']],
-                colocCoeff=df['colocalizationCoeff'],
+        return (
+            df.assign(
+                moleculeNames=df.possibleCompounds.apply(
+                    lambda lst: [item['name'] for item in lst]
+                ),
+                moleculeIds=df.possibleCompounds.apply(
+                    lambda lst: [item['information'][0]['databaseId'] for item in lst]
+                ),
+                intensity=df.isotopeImages.apply(lambda imgs: imgs[0]['maxIntensity']),
             )
-        ).set_index(['formula', 'adduct'])
+            .drop(columns=['possibleCompounds', 'dataset.id', 'dataset.name', 'offSampleProb',])
+            .rename(
+                columns={
+                    'sumFormula': 'formula',
+                    'msmScore': 'msm',
+                    'rhoChaos': 'moc',
+                    'fdrLevel': 'fdr',
+                    'colocalizationCoeff': 'colocCoeff',
+                }
+            )
+            .set_index(['formula', 'adduct'])
+        )
 
     @property
     def metadata(self):
