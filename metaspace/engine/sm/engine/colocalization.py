@@ -5,7 +5,7 @@ from traceback import format_exc
 import numpy as np
 from sklearn.metrics.pairwise import pairwise_kernels
 from sklearn.cluster import spectral_clustering
-from scipy.ndimage import zoom
+from scipy.ndimage import zoom, median_filter
 
 from sm.engine.dataset import Dataset
 from sm.engine.ion_mapping import get_ion_id_mapping
@@ -208,8 +208,29 @@ def _downscale_image_if_required(img, num_annotations):
         return zoom(img, zoom_factor)
 
 
+def _median_thresholded_cosine(images, h, w):
+    cnt = images.shape[0]
+    images[images < np.quantile(images, 0.5, axis=1, keepdims=True)] = 0
+    images = median_filter(images.reshape((cnt, h, w)), (1, 3, 3)).reshape((cnt, h * w))
+    return pairwise_kernels(images, metric='cosine')
+
+
+def _get_sample_ion_ids(scores, cluster_max_images, trunc_fdr_mask, trunc_masked_ion_ids):
+    try:
+        trunc_scores = scores[:cluster_max_images, :cluster_max_images]
+        trunc_masked_scores = trunc_scores[trunc_fdr_mask, :][:, trunc_fdr_mask]
+        logger.debug(f'Clustering with ' f'{trunc_masked_scores.shape[0]} annotations')
+        labels = _label_clusters(trunc_masked_scores)
+        clusters = _labels_to_clusters(labels, trunc_masked_scores)
+        # This could be done better, e.g. by returning medoids
+        return [trunc_masked_ion_ids.item(c[0]) for c in clusters]
+    except Exception as e:
+        logger.warning(f'Failed to cluster: {e}', exc_info=True)
+        return []
+
+
 # pylint: disable=cell-var-from-loop
-def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs, cluster_max_images=5000):
+def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs, h, w, cluster_max_images=5000):
     """ Calculate co-localization of ion images for all algorithms and yield results
 
     Args
@@ -240,6 +261,7 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs, cluster_max_ima
 
     logger.debug('Calculating colocalization metrics')
     cos_scores = pairwise_kernels(images.ref, metric='cosine')
+    med_cos_scores = _median_thresholded_cosine(images.ref, h, w)
     images.free()
 
     trunc_ion_ids = ion_ids[:cluster_max_images]
@@ -253,38 +275,17 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs, cluster_max_ima
         trunc_masked_ion_ids = trunc_ion_ids[trunc_fdr_mask]
 
         if len(masked_ion_ids) > 1:
-            logger.debug(
-                f'Finding best colocalizations at FDR {fdr} ({len(masked_ion_ids)} annotations)'
+            sample_ion_ids = _get_sample_ion_ids(
+                med_cos_scores, cluster_max_images, trunc_fdr_mask, trunc_masked_ion_ids
             )
 
-            # NOTE: Keep labels/clusters between algorithms
-            # so that if any algorithm fails to cluster,
-            # it can use the labels/clusters from a previous successful run.
-            # Usually cosine succeeds at clustering and PCA data fails clustering.
-            labels = [0] * len(masked_ion_ids)
-            clusters = []
-
-            def run_alg(algorithm, scores, cluster):
-                nonlocal labels, clusters
-
-                if cluster:
-                    try:
-                        trunc_scores = scores[:cluster_max_images, :cluster_max_images]
-                        trunc_masked_scores = trunc_scores[trunc_fdr_mask, :][:, trunc_fdr_mask]
-                        logger.debug(
-                            f'Clustering {algorithm} at {fdr} FDR with '
-                            f'{trunc_masked_scores.shape[0]} annotations'
-                        )
-                        labels = _label_clusters(trunc_masked_scores)
-                        clusters = _labels_to_clusters(labels, trunc_masked_scores)
-                    except Exception as e:
-                        logger.warning(f'Failed to cluster {algorithm}: {e}', exc_info=True)
-
+            def run_alg(algorithm, scores):
+                logger.debug(
+                    f'Finding best colocalizations with {algorithm} at FDR {fdr} '
+                    f'({len(masked_ion_ids)} annotations)'
+                )
                 masked_scores = scores if fdr_mask.all() else scores[fdr_mask, :][:, fdr_mask]
                 colocs = _get_best_colocs(masked_scores, max_samples=100, min_score=0.3)
-                sample_ion_ids = [
-                    trunc_masked_ion_ids.item(c[0]) for c in clusters
-                ]  # This could be done better
                 coloc_annotations = list(
                     _format_coloc_annotations(masked_ion_ids, masked_scores, colocs)
                 )
@@ -300,7 +301,8 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs, cluster_max_ima
                     coloc_annotations=coloc_annotations,
                 )
 
-            yield run_alg('cosine', cos_scores, True)
+            yield run_alg('median_thresholded_cosine', med_cos_scores)
+            yield run_alg('cosine', cos_scores)
         else:
             logger.debug(
                 f'Skipping FDR {fdr} as there are only {len(masked_ion_ids)} annotation(s)'
@@ -335,13 +337,13 @@ class Colocalization:
         annotations = [(job_id, *ann) for ann in job.coloc_annotations]
         self._db.insert(COLOC_ANN_INS, annotations)
 
-    def _analyze_and_save(self, ds_id, mol_db, images, ion_ids, fdrs):
+    def _analyze_and_save(self, ds_id, mol_db, images, ion_ids, fdrs, h, w):
         try:
             # Clear old jobs from DB
             self._db.alter(COLOC_JOB_DEL, [ds_id, mol_db])
 
             if len(ion_ids) > 2:
-                for job in analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
+                for job in analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs, h, w):
                     self._save_job_to_db(job)
             else:
                 # Technically `len(ion_ids) == 2` is enough,
@@ -376,10 +378,11 @@ class Colocalization:
             )
         else:
             images = np.zeros((0, 0), dtype=np.float32)
+            h, w = 1, 1
             ion_ids = np.zeros((0,), dtype=np.int64)
             fdrs = np.zeros((0,), dtype=np.float32)
 
-        return FreeableRef(images), ion_ids, fdrs
+        return FreeableRef(images), ion_ids, fdrs, h, w
 
     def run_coloc_job(self, ds_id, reprocess=False):
         """ Analyze colocalization for a previously annotated dataset,
@@ -399,9 +402,9 @@ class Colocalization:
         for mol_db_name in mol_dbs:
             if reprocess or mol_db_name not in existing_mol_dbs:
                 logger.info(f'Running colocalization job for {ds_id} on {mol_db_name}')
-                images, ion_ids, fdrs = self._get_existing_ds_annotations(
+                images, ion_ids, fdrs, h, w = self._get_existing_ds_annotations(
                     ds_id, mol_db_name, image_storage_type, charge
                 )
-                self._analyze_and_save(ds_id, mol_db_name, images, ion_ids, fdrs)
+                self._analyze_and_save(ds_id, mol_db_name, images, ion_ids, fdrs, h, w)
             else:
                 logger.info(f'Skipping colocalization job for {ds_id} on {mol_db_name}')

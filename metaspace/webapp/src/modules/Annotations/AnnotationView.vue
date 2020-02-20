@@ -143,6 +143,7 @@
                 @click.stop=""
               >
                 <i
+                  id="colocalization-settings-icon"
                   class="el-icon-setting"
                   style="font-size: 20px; vertical-align: middle;"
                 />
