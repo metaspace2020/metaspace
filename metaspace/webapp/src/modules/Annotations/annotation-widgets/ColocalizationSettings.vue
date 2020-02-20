@@ -15,7 +15,7 @@
                 It was found to highly reproduce expert rankings of mass spectrometry ion images
                 and performed better than other traditional colocalization measures. <br/>
                 Its description and evaluation can be found in:
-                <a href=“https://doi.org/10.1093/bioinformatics/btaa085”>Ovchinnikova et al. (2020) ColocML</a>.
+                <a href="https://doi.org/10.1093/bioinformatics/btaa085">Ovchinnikova et al. (2020) ColocML</a>.
               </p>
               <p>
 
