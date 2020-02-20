@@ -93,9 +93,9 @@
             @mouseenter="handleSubmenuEnter('user')"
             @mouseleave="handleSubmenuLeave('user')"
           >
-            <div
-              class="header-item submenu-header"
-              :class="{'router-link-active': matchesRoute('/user/me')}"
+            <router-link
+              to="/user/me"
+              class="header-item submenu-header page-link"
             >
               <div
                 class="limit-width"
@@ -108,7 +108,7 @@
                   tooltip-placement="left"
                 />
               </div>
-            </div>
+            </router-link>
             <div class="submenu">
               <router-link
                 to="/user/me"
