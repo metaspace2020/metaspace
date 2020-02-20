@@ -13,15 +13,12 @@
                 The <b>median-thresholded cosine distance</b> algorithm is the best choice for
                 exploring most datasets in METASPACE.
                 It was found to highly reproduce expert rankings of mass spectrometry ion images
-                and performed better than other traditional colocalization measures. <br/>
+                and performed better than other traditional colocalization measures. <br />
                 Its description and evaluation can be found in:
-                <a href="https://doi.org/10.1093/bioinformatics/btaa085">Ovchinnikova et al. (2020) ColocML</a>.
-              </p>
-              <p>
-
-              </p>
-              <p>
-
+                <a
+                  href="https://doi.org/10.1093/bioinformatics/btaa085"
+                  target="blank"
+                >Ovchinnikova et al. (2020) ColocML</a>.
               </p>
               <p>
                 The <b>cosine distance</b> was previously used as the default colocalization measure.
