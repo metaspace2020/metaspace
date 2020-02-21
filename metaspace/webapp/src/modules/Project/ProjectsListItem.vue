@@ -240,7 +240,7 @@ export default class ProjectsListItem extends Vue {
   }
 
   .project-item:hover {
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   }
 
   .info {
