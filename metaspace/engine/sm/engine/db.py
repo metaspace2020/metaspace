@@ -1,4 +1,5 @@
 import logging
+import threading
 from functools import wraps
 
 from psycopg2.extras import execute_values
@@ -15,17 +16,17 @@ logger = logging.getLogger('engine.db')
 class ConnectionPool:
     pool = None
 
-    def __init__(self, config, min_conn=4, max_conn=12):
+    def __init__(self, config, min_conn=5, max_conn=12):
         logger.info('Initialising database connection pool')
         if not ConnectionPool.pool:
             ConnectionPool.pool = ThreadedConnectionPool(min_conn, max_conn, **config)
 
-    @staticmethod
-    def close():
+    @classmethod
+    def close(cls):
         logger.info('Closing database connection pool')
-        if ConnectionPool.pool:
-            ConnectionPool.pool.closeall()
-        ConnectionPool.pool = None
+        if cls.pool:
+            cls.pool.closeall()
+        cls.pool = None
 
     def __enter__(self):
         pass
@@ -33,34 +34,48 @@ class ConnectionPool:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
+    @classmethod
+    def is_active(cls):
+        return cls.pool is not None
 
-def db_decor(func):
-    @wraps(func)
-    def wrapper(self, sql, *args, **kwargs):
-        assert ConnectionPool.pool, "'with ConnectionPool(config):' should be used"
+    @classmethod
+    def get_conn(cls):
+        return cls.pool.getconn()
 
-        conn = None
-        res = []
-        try:
-            # for cases when SQL queries are written to StringIO
-            value_getter = getattr(sql, 'getvalue', None)
-            debug_output = sql if not value_getter else value_getter()
-            logger.debug(debug_output[:1000])
+    @classmethod
+    def return_conn(cls, conn):
+        return cls.pool.putconn(conn)
 
-            # psycopg commits/rollbacks transaction instead
-            # of closing connection on exit from with block
-            # http://initd.org/psycopg/docs/usage.html#with-statement
-            with ConnectionPool.pool.getconn() as conn:
-                with conn.cursor() as curs:
-                    self._curs = curs  # pylint: disable=protected-access
-                    res = func(self, sql, *args, **kwargs)
-        except (ProgrammingError, IntegrityError, DataError) as e:
-            raise Exception(f'SQL: {sql},\nArgs: {str(args)[:1000]}\n') from e
-        finally:
-            ConnectionPool.pool.putconn(conn)
-        return res
 
-    return wrapper
+class TransactionContext:
+    thread_local = threading.local()
+
+    def __init__(self):
+        pass
+
+    def __enter__(self):
+        logger.debug('Starting transaction')
+        assert ConnectionPool.is_active(), "'with ConnectionPool(config):' should be used"
+        self.thread_local.conn = ConnectionPool.get_conn()
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        logger.debug('Finishing transaction')
+        if exc_type is None:
+            self.thread_local.conn.commit()
+        else:
+            self.thread_local.conn.rollback()
+        ConnectionPool.return_conn(self.thread_local.conn)
+        self.thread_local.conn = None
+
+        return exc_type is None  # return False to re-raise exception
+
+    @classmethod
+    def is_active(cls):
+        return bool(getattr(cls.thread_local, 'conn', None))
+
+    @classmethod
+    def get_conn(cls):
+        return getattr(cls.thread_local, 'conn', None)
 
 
 class DB:
@@ -68,6 +83,32 @@ class DB:
 
     def __init__(self):
         self._curs = None
+
+    def transaction(func):
+
+        @wraps(func)
+        def wrapper(self, sql, *args, **kwargs):
+
+            def get_conn_call_func():
+                # For cases when SQL queries are written to StringIO
+                value_getter = getattr(sql, 'getvalue', None)
+                debug_output = sql if not value_getter else value_getter()
+                logger.debug(debug_output[:1000])
+
+                conn = TransactionContext.get_conn()
+                with conn.cursor() as curs:
+                    self._curs = curs
+                    return func(self, sql, *args, **kwargs)
+
+            res = None
+            if TransactionContext.is_active():
+                res = get_conn_call_func()
+            else:
+                with TransactionContext():
+                    res = get_conn_call_func()
+
+            return res
+        return wrapper
 
     def _add_fields(self, rows):
         fields = [desc[0] for desc in self._curs.description]
@@ -86,7 +127,7 @@ class DB:
             return rows[0] if rows else []
         return rows
 
-    @db_decor
+    @transaction
     def select(self, sql, params=None):
         """ Execute select query
 
@@ -103,11 +144,11 @@ class DB:
         """
         return self._select(sql, params)
 
-    @db_decor
+    @transaction
     def select_with_fields(self, sql, params=None):
         return self._select(sql, params, fields=True)
 
-    @db_decor
+    @transaction
     def select_one(self, sql, params=None):
         """ Execute select query and take the first row
 
@@ -124,11 +165,11 @@ class DB:
         """
         return self._select(sql, params, one=True)
 
-    @db_decor
+    @transaction
     def select_one_with_fields(self, sql, params=None):
         return self._select(sql, params, one=True, fields=True)
 
-    @db_decor
+    @transaction
     def insert(self, sql, rows=None):
         """ Execute insert query
 
@@ -141,7 +182,7 @@ class DB:
         """
         self._curs.executemany(sql, rows)
 
-    @db_decor
+    @transaction
     def insert_return(self, sql, rows=None):
         """ Execute insert query
 
@@ -162,7 +203,7 @@ class DB:
             ids.append(self._curs.fetchone()[0])
         return ids
 
-    @db_decor
+    @transaction
     def alter(self, sql, params=None):
         """ Execute alter query
 
@@ -175,7 +216,7 @@ class DB:
         """
         self._curs.execute(sql, params)
 
-    @db_decor
+    @transaction
     def alter_many(self, sql, rows=None):
         """ Execute alter query
 
@@ -188,7 +229,7 @@ class DB:
         """
         execute_values(self._curs, sql, rows)
 
-    @db_decor
+    @transaction
     def copy(self, inp_file, table, sep='\t', columns=None):
         """ Copy data from a file to a table
 
