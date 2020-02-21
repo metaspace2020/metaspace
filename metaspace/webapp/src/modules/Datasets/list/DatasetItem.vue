@@ -82,8 +82,7 @@
         class="ds-item-line"
         style="font-size: 15px;"
       >
-        Submitted <span class="s-bold">{{ formatDate }}</span>
-        at {{ formatTime }} by
+        Submitted <elapsed-time :date="getDate" /> by
         <span
           class="ds-add-filter"
           title="Filter by submitter"
@@ -93,15 +92,15 @@
           Be careful not to add empty space before the comma
           --><span v-if="dataset.groupApproved && dataset.group">,
           <el-dropdown
-:show-timeout="50"
-                       placement="bottom"
-                       :trigger="hideGroupMenu ? 'never' : 'hover'"
-                       @command="handleDropdownCommand"
->
+            :show-timeout="50"
+            placement="bottom"
+            :trigger="hideGroupMenu ? 'never' : 'hover'"
+            @command="handleDropdownCommand"
+          >
             <span
-class="s-group ds-add-filter"
-@click="addFilter('group')"
->
+              class="s-group ds-add-filter"
+              @click="addFilter('group')"
+            >
               {{ dataset.group.shortName }}
             </span>
             <el-dropdown-menu slot="dropdown">
@@ -227,6 +226,7 @@ import { encodeParams } from '../../Filters/index'
 import reportError from '../../../lib/reportError'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import { plural } from '../../../lib/vueFilters'
+import ElapsedTime from '../../../components/ElapsedTime'
 
 function removeUnderscores(str) {
   return str.replace(/_/g, ' ')
@@ -237,6 +237,7 @@ export default {
   components: {
     DatasetInfo,
     DatasetThumbnail,
+    ElapsedTime,
   },
   filters: {
     plural,
@@ -275,8 +276,8 @@ export default {
       return this.dataset.analyzer.type
     },
 
-    uploadedDateTime() {
-      const unknown = { date: '????-??-??', time: '??:??' }
+    getDate() {
+      const unknown = ''
       if (!this.dataset.id) {
         return unknown
       }
@@ -288,18 +289,7 @@ export default {
 
       const date = fields[0]
       const time = fields[1].split('m')[0].replace('h', ':')
-      return {
-        date,
-        time,
-      }
-    },
-
-    formatDate() {
-      return this.uploadedDateTime.date
-    },
-
-    formatTime() {
-      return this.uploadedDateTime.time
+      return `${date} ${time}`
     },
 
     metadata() {
@@ -538,10 +528,16 @@ export default {
    max-width: 950px;
    margin: 3px;
    padding: 0px;
-   border: 1px solid #cce4ff;
+   border: 1px solid #DCDFE6;
    display: flex;
    flex-direction: row;
    justify-content: space-between;
+   transition: 0.2s cubic-bezier(.4, 0, .2, 1);
+   transition-property: box-shadow;
+ }
+
+ .dataset-item:hover {
+   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.12);
  }
 
  .ds-info{
@@ -570,7 +566,7 @@ export default {
  }
 
  .s-group {
-   color: sienna;
+   color: #0069e0;
  }
 
  .striped-progressbar {

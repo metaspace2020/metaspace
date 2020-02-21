@@ -20,7 +20,7 @@
         <div>
           <div class="info-line">
             <span v-if="project.numDatasets > 0">
-              <router-link :to="datasetsLink"><span>{{ project.numDatasets | plural('Dataset', 'Datasets') }}</span></router-link>,
+              <router-link :to="datasetsLink"><span>{{ project.numDatasets | plural('dataset', 'datasets') }}</span></router-link>,
             </span>
             {{ project.numMembers | plural('member', 'members') }}
           </div>
@@ -225,7 +225,7 @@ export default class ProjectsListItem extends Vue {
     width: 100%;
     max-width: 800px;
     margin: 10px 0;
-    padding: 20px 0 20px 20px;
+    padding: 20px;
     border: 1px solid #DCDFE6;
     box-sizing: border-box;
     > * {
@@ -240,7 +240,7 @@ export default class ProjectsListItem extends Vue {
   }
 
   .project-item:hover {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 5px 15px rgba(0, 0, 0, 0.01);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.12);
   }
 
   .info {
