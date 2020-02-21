@@ -1,12 +1,16 @@
 import './ElapsedTime.css'
 
 import { createComponent } from '@vue/composition-api'
-import formatDistanceToNow from 'date-fns/distance_in_words_to_now'
+import distanceInWords from 'date-fns/distance_in_words_strict'
 import parse from 'date-fns/parse'
 import isValid from 'date-fns/is_valid'
 
 function getTitle(date: Date) {
   return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+}
+
+const opts = {
+  addSuffix: true
 }
 
 export default createComponent({
@@ -21,7 +25,7 @@ export default createComponent({
         class="sm-elapsed-time"
         title={valid ? getTitle(parsedDate) : 'Date unavailable'}
       >
-        {valid ? formatDistanceToNow(parsedDate) : 'some time'} ago
+        {valid ? distanceInWords(new Date(), parsedDate, opts) : 'some time ago'}
       </span>
     )
   },
