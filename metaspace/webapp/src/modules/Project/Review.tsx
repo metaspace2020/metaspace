@@ -2,8 +2,7 @@ import './review.css'
 
 // import Vue from 'vue'
 import { createComponent, computed } from '@vue/composition-api'
-import { Button } from 'element-ui'
-// import classnames from 'classnames'
+import { Button, Input, } from 'element-ui'
 
 const statuses = {
   UNPUBLISHED: 'UNPUBLISHED',
@@ -17,7 +16,6 @@ const WorkflowItem = createComponent({
     done: Boolean,
   },
   setup(props, { slots }) {
-    console.log(props, slots)
     return () => (
       <li class={{ active: props.active, done: props.done }}>
         {slots.default()}
@@ -25,6 +23,26 @@ const WorkflowItem = createComponent({
     )
   },
 })
+
+function handleCopy(text: string | null) {
+  if (!!text) {
+    if ('clipboard' in navigator) {
+      navigator.clipboard.writeText(text)
+    } else {
+      const el = document.createElement('textarea')
+      el.value = text
+      el.style.position = 'absolute'
+      el.style.left = '-9999px'
+      document.body.appendChild(el)
+      try {
+        el.select()
+        document.execCommand('copy')
+      } finally {
+        document.body.removeChild(el)
+      }
+    }
+  }
+}
 
 const ReviewLink = createComponent({
   props: {
@@ -53,17 +71,19 @@ const ReviewLink = createComponent({
         >
           <h2 class="sm-workflow-header">Create a review link</h2>
           <p>
-            A <b>review link</b> allows reviewers to access this project and its datasets without making the project public.
+            A review link allows reviewers to access this project and its datasets
+            <br />
+            <strong>without making the project available to everyone</strong>.
           </p>
           <form>
             {props.publicationStatus === statuses.UNPUBLISHED
               && <Button onClick={props.createLink} type="primary">
-                Create Link
+                Create link
               </Button>
             }
             {props.publicationStatus === statuses.UNDER_REVIEW
               && <Button onClick={props.deleteLink}>
-                Remove Link
+                Remove link
               </Button>
             }
           </form>
@@ -73,36 +93,39 @@ const ReviewLink = createComponent({
           done={props.publicationStatus === statuses.PUBLISHED}
         >
           <h2 class="sm-workflow-header">Review in progress</h2>
-          <p>Reviewers can access this project using the following link:</p>
-          {reviewLink.value
-            && <p>
-              <a href={reviewLink.value}>{reviewLink.value}</a>
-            </p>}
+          {props.publicationStatus === statuses.UNDER_REVIEW ?
+            <form>
+              <p>Reviewers can access this project using the following link:</p>
+              <Input
+                value={reviewLink.value}
+                type="text"
+                readonly
+              >
+                <Button
+                  slot="append"
+                  icon="el-icon-document-copy"
+                  title="Copy to clipboard"
+                  onClick={() => handleCopy(reviewLink.value)}
+                />
+              </Input>
+              <p>Once review is complete, we encourage making data publicly available.</p>
+              <Button onClick={props.publishProject} type="primary">
+                Publish project
+              </Button>
+            </form> :
+            <p>Reviewers can access this project with a link prior to publication.</p>
+          }
         </WorkflowItem>
-        <li>
+        <WorkflowItem
+          active={props.publicationStatus === statuses.PUBLISHED}
+          done={props.publicationStatus === statuses.PUBLISHED}
+        >
           <h2 class="sm-workflow-header">Publish results</h2>
-          <p>This project and its datasets are now public.</p>
-        </li>
+          {props.publicationStatus === statuses.PUBLISHED ?
+            <p>This project and its datasets are now public.</p> :
+            <p>This project and its datasets will be made public.</p>}
+        </WorkflowItem>
       </ol>
-      // <div>
-      //   <h2>{props.publicationStatus}</h2>
-      //   {reviewLink.value && props.publicationStatus === 'UNDER_REVIEW'
-      //   && <p>
-      //     <a href={reviewLink.value}>{reviewLink.value}</a>
-      //   </p>}
-      //   {props.publicationStatus === 'UNPUBLISHED'
-      //   && <Button onClick={props.createLink}>
-      //     Create Link
-      //   </Button>}
-      //   {props.publicationStatus === 'UNDER_REVIEW'
-      //   && <Button onClick={props.deleteLink} type="danger">
-      //       Delete Link
-      //   </Button>}
-      //   {props.publicationStatus === 'UNDER_REVIEW'
-      //   && <Button onClick={props.publishProject} type="success">
-      //     Publish Project
-      //   </Button>}
-      // </div>
     )
   },
 })

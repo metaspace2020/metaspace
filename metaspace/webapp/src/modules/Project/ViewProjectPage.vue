@@ -430,6 +430,11 @@ export default class ViewProjectPage extends Vue {
       await this.refetchProject()
     }
 
+    @ConfirmAsync({
+      title: '',
+      message: 'This will remove access to the project. You will need distribute a new link if the project is enabled for review again.',
+      confirmButtonText: 'Confirm',
+    })
     async deleteReviewLink() {
       await this.$apollo.mutate({
         mutation: deleteReviewLinkMutation,
@@ -438,6 +443,11 @@ export default class ViewProjectPage extends Vue {
       await this.refetchProject()
     }
 
+    @ConfirmAsync({
+      title: '',
+      message: 'Publishing a project is a one-time event and cannot be undone. Please confirm your intention to make this project and its associated data available to the public now.',
+      confirmButtonText: 'Confirm',
+    })
     async publishProject() {
       await this.$apollo.mutate({
         mutation: publishProjectMutation,

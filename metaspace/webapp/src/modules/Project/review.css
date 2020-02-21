@@ -1,7 +1,8 @@
 .sm-workflow {
   counter-reset: workflow;
   list-style: none;
-  margin: 24px 0;
+  line-height: 24px;
+  margin: 12px 0;
   padding: 0;
 }
 
@@ -22,13 +23,19 @@
   border: none;
 }
 
-.sm-workflow li > p {
+.sm-workflow li > *,
+.sm-workflow form > * {
   margin: 0 0 12px;
+}
+
+.sm-workflow li > .sm-workflow-header {
+  margin: 0;
+  line-height: 48px;
 }
 
 /* hack allows left border to connect to next li */
 .sm-workflow li > :last-child {
-  margin-bottom: 48px;
+  margin-bottom: 36px;
 }
 
 .sm-workflow li:before {
@@ -46,6 +53,8 @@
   left: -24px;
   position: absolute;
   top: 0;
+  transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  transition-property: color, background;
   width: 48px;
 }
 
@@ -59,11 +68,5 @@
 }
 
 .sm-workflow li.done:before {
-  content: '✔️';
-  font-size: 24px;
-}
-
-.sm-workflow-header {
-  margin: 0;
-  line-height: 48px;
+  content: '✓';
 }
