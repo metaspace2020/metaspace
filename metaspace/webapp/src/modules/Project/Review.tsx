@@ -2,7 +2,7 @@ import './review.css'
 
 // import Vue from 'vue'
 import { createComponent, computed } from '@vue/composition-api'
-import { Button, Input, } from 'element-ui'
+import { Button, Input } from 'element-ui'
 
 const statuses = {
   UNPUBLISHED: 'UNPUBLISHED',
@@ -25,7 +25,7 @@ const WorkflowItem = createComponent({
 })
 
 function handleCopy(text: string | null) {
-  if (!!text) {
+  if (text) {
     if ('clipboard' in navigator) {
       navigator.clipboard.writeText(text)
     } else {
@@ -82,7 +82,7 @@ const ReviewLink = createComponent({
               </Button>
             }
             {props.publicationStatus === statuses.UNDER_REVIEW
-              && <Button onClick={props.deleteLink}>
+              && <Button onClick={props.deleteLink} type="info">
                 Remove link
               </Button>
             }
@@ -93,8 +93,8 @@ const ReviewLink = createComponent({
           done={props.publicationStatus === statuses.PUBLISHED}
         >
           <h2 class="sm-workflow-header">Review in progress</h2>
-          {props.publicationStatus === statuses.UNDER_REVIEW ?
-            <form>
+          {props.publicationStatus === statuses.UNDER_REVIEW
+            ? <form>
               <p>Reviewers can access this project using the following link:</p>
               <Input
                 value={reviewLink.value}
@@ -112,8 +112,8 @@ const ReviewLink = createComponent({
               <Button onClick={props.publishProject} type="primary">
                 Publish project
               </Button>
-            </form> :
-            <p>Reviewers can access this project with a link prior to publication.</p>
+            </form>
+            : <p>Reviewers can access this project with a link prior to publication.</p>
           }
         </WorkflowItem>
         <WorkflowItem
@@ -121,9 +121,9 @@ const ReviewLink = createComponent({
           done={props.publicationStatus === statuses.PUBLISHED}
         >
           <h2 class="sm-workflow-header">Publish results</h2>
-          {props.publicationStatus === statuses.PUBLISHED ?
-            <p>This project and its datasets are now public.</p> :
-            <p>This project and its datasets will be made public.</p>}
+          {props.publicationStatus === statuses.PUBLISHED
+            ? <p>This project and its datasets are now public.</p>
+            : <p>This project and its datasets will be made public.</p>}
         </WorkflowItem>
       </ol>
     )

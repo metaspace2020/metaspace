@@ -432,7 +432,7 @@ export default class ViewProjectPage extends Vue {
 
     @ConfirmAsync({
       title: '',
-      message: 'This will remove access to the project. You will need distribute a new link if the project is enabled for review again.',
+      message: 'This will remove access to the project. You will need to distribute a new link if the project is enabled for review again.',
       confirmButtonText: 'Confirm',
     })
     async deleteReviewLink() {
