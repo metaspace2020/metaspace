@@ -10,7 +10,7 @@ function getTitle(date: Date) {
 }
 
 const opts = {
-  addSuffix: true
+  addSuffix: true,
 }
 
 export default createComponent({
