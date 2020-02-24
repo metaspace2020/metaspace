@@ -2,7 +2,9 @@ import './review.css'
 
 // import Vue from 'vue'
 import { createComponent, computed } from '@vue/composition-api'
-import { Button, Input } from 'element-ui'
+import { Button } from 'element-ui'
+
+import CopyToClipboard from '../../components/CopyToClipboard'
 
 const statuses = {
   UNPUBLISHED: 'UNPUBLISHED',
@@ -24,26 +26,6 @@ const WorkflowItem = createComponent({
   },
 })
 
-function handleCopy(text: string | null) {
-  if (text) {
-    if ('clipboard' in navigator) {
-      navigator.clipboard.writeText(text)
-    } else {
-      const el = document.createElement('textarea')
-      el.value = text
-      el.style.position = 'absolute'
-      el.style.left = '-9999px'
-      document.body.appendChild(el)
-      try {
-        el.select()
-        document.execCommand('copy')
-      } finally {
-        document.body.removeChild(el)
-      }
-    }
-  }
-}
-
 const ReviewLink = createComponent({
   props: {
     projectId: String,
@@ -56,7 +38,7 @@ const ReviewLink = createComponent({
   setup(props) {
     const reviewLink = computed(() => {
       if (!props.projectId || !props.reviewToken) {
-        return null
+        return undefined
       }
       return `${window.location.origin}/api_auth/review?prj=${props.projectId}&token=${props.reviewToken}`
     })
@@ -96,18 +78,7 @@ const ReviewLink = createComponent({
           {props.publicationStatus === statuses.UNDER_REVIEW
             ? <form>
               <p>Reviewers can access this project using the following link:</p>
-              <Input
-                value={reviewLink.value}
-                type="text"
-                readonly
-              >
-                <Button
-                  slot="append"
-                  icon="el-icon-document-copy"
-                  title="Copy to clipboard"
-                  onClick={() => handleCopy(reviewLink.value)}
-                />
-              </Input>
+              <CopyToClipboard value={reviewLink.value} />
               <p>Once review is complete, we encourage making data publicly available.</p>
               <Button onClick={props.publishProject} type="primary">
                 Publish project

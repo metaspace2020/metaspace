@@ -205,21 +205,10 @@
         </div>
         <el-row v-if="isLoaded && currentUser">
           <div v-if="currentUser.apiKey">
-            <el-input
+            <copy-to-clipboard
               :value="currentUser.apiKey"
-              :type="showApiKey ? 'text' : 'password'"
-              class="api-key"
-              readonly
-              @focus="e => { showApiKey = true; e.target.select(); }"
-              @blur="e => { showApiKey = false; }"
-            >
-              <el-button
-                slot="append"
-                icon="el-icon-document-copy"
-                title="Copy to clipboard"
-                @click="handleCopyApiKey"
-              />
-            </el-input>
+              type="password"
+            />
             <el-button
               type="danger"
               style="float:right; margin-top:15px"
@@ -268,6 +257,7 @@ import GroupsTable from './GroupsTable'
 import ProjectsTable from './ProjectsTable.vue'
 import ConfirmAsync from '../../components/ConfirmAsync'
 import { sendPasswordResetToken } from '../../api/auth'
+import CopyToClipboard from '../../components/CopyToClipboard'
 
   interface Model {
     name: string;
@@ -279,6 +269,7 @@ import { sendPasswordResetToken } from '../../api/auth'
       TransferDatasetsDialog,
       GroupsTable,
       ProjectsTable,
+      CopyToClipboard,
     },
     apollo: {
       currentUser: {

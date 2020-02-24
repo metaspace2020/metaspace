@@ -46,7 +46,7 @@
   content: counter(workflow);
   counter-increment: workflow;
   display: flex;
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 700;
   height: 48px;
   justify-content: center;
