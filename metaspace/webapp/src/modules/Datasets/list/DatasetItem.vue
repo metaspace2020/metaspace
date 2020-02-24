@@ -309,6 +309,7 @@ export default {
         Group: this.dataset.groupApproved ? this.dataset.group : null,
         Projects: this.dataset.projects,
       }
+      console.warn(this.dataset.metadataJson)
       return Object.assign(safeJsonParse(this.dataset.metadataJson), datasetMetadataExternals)
     },
 
