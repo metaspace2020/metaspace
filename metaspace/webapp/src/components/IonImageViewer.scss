@@ -67,8 +67,3 @@
   z-index: 3;
   pointer-events: none;
 }
-
-/* Unscoped, because the tooltip is appended to document.body */
-/deep/ .pointer-events-none {
-  pointer-events: none;
-}
