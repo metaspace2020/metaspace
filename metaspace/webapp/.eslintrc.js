@@ -17,6 +17,7 @@ module.exports = {
   'rules': {
     'vue/require-default-prop': ['off'], // Will props even be relevant if we shift to the Composition API?
     'vue/require-prop-types': ['off'], // Will props even be relevant if we shift to the Composition API?
+    'vue/html-self-closing': ['off'], // Unnecessarily forces template style to differ from TSX
     'vue/no-v-html': ['off'],
     'no-mixed-operators': ['off'], // TODO?
 

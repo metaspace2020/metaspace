@@ -123,11 +123,9 @@ module.exports = {
 
   metadataLookups: {
     colocalizationAlgos: [
+      ['median_thresholded_cosine', 'Median-thresholded cosine distance'],
       ['cosine', 'Cosine distance'],
-      ['pca_cosine', 'PCA + Cosine distance'],
-      ['pca_pearson', 'PCA + Pearson correlation'],
-      ['pca_spearman', 'PCA + Spearman correlation'],
     ],
-    defaultColocalizationAlgo: 'cosine',
+    defaultColocalizationAlgo: 'median_thresholded_cosine',
   },
 };
