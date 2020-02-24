@@ -54,7 +54,7 @@
   position: absolute;
   top: 0;
   transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-  transition-property: background, color;
+  transition-property: color, background;
   width: 48px;
 }
 
@@ -62,19 +62,11 @@
   color: inherit;
 }
 
-.sm-workflow li.done:before {
-  content: '';
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="hsl(208, 22%, 49%)" d="M10 14.59l6.3-6.3a1 1 0 011.4 1.42l-7 7a1 1 0 01-1.4 0l-3-3a1 1 0 011.4-1.42l2.3 2.3z"/></svg>');
-  background-repeat: no-repeat;
-  background-size: 87.5%;
-  background-position: center;
-}
-
 .sm-workflow li.active:before {
-  background-color: #008aff;
+  background: #008aff;
   color: #fff;
 }
 
-.sm-workflow li.active.done:before {
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="hsl(208, 0%, 100%)" d="M10 14.59l6.3-6.3a1 1 0 011.4 1.42l-7 7a1 1 0 01-1.4 0l-3-3a1 1 0 011.4-1.42l2.3 2.3z"/></svg>');
+.sm-workflow li.done:before {
+  content: '✓';
 }
