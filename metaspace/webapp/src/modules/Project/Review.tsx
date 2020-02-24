@@ -93,9 +93,9 @@ const ReviewLink = createComponent({
           active={props.publicationStatus === statuses.PUBLISHED}
           done={props.publicationStatus === statuses.PUBLISHED}
         >
-          <h2 class="sm-workflow-header">Publish results</h2>
+          <h2 class="sm-workflow-header">Publish the data</h2>
           {props.publicationStatus === statuses.PUBLISHED
-            ? <p>This project and its datasets are now public.</p>
+            ? <p>This project and its datasets are now public, thank you for your contribution.</p>
             : <p>This project and its datasets will be made public.</p>}
         </WorkflowItem>
       </ol>
