@@ -72,7 +72,7 @@
           :model="model"
           label-position="top"
         >
-          <div style="padding-left: 15px;">
+          <div>
             <el-col :span="8">
               <el-form-item
                 prop="name"
@@ -128,7 +128,7 @@
             v-model="primaryGroupId"
             v-loading="isChangingPrimaryGroup"
             placeholder="Select"
-            style="padding-left: 15px;width: 400px;"
+            style="width: 400px;"
             @change="handleChangePrimaryGroup"
           >
             <el-option
@@ -191,10 +191,18 @@
       <!--</div>-->
       <div>
         <h2>API access</h2>
-        <p style="width: 100%;padding-left: 15px;">
-          To <a href="https://github.com/metaspace2020/metaspace/tree/master/metaspace/python-client">access METASPACE programmatically</a>
-          or integrate with trusted third-party applications, an API key can be used to avoid sharing your password.
-        </p>
+        <div class="action-with-message">
+          <p>
+            To <a href="https://github.com/metaspace2020/metaspace/tree/master/metaspace/python-client">access METASPACE programmatically</a>
+            or integrate with trusted third-party applications, an API key can be used to avoid sharing your password.
+          </p>
+          <el-button
+            v-if="currentUser && !currentUser.apiKey"
+            @click="handleGenerateApiKey"
+          >
+            Generate API key
+          </el-button>
+        </div>
         <el-row v-if="isLoaded && currentUser">
           <div v-if="currentUser.apiKey">
             <el-input
@@ -220,32 +228,24 @@
               Revoke key
             </el-button>
           </div>
-          <el-button
-            v-else
-            style="float:right; margin-top:15px"
-            @click="handleGenerateApiKey"
-          >
-            Generate API key
-          </el-button>
         </el-row>
       </div>
       <div>
         <h2>Delete account</h2>
-        <p style="width: 100%;padding-left: 15px;">
-          If you delete your METASPACE account, you can either delete all your datasets or keep them within METASPACE.
-          For the latter, the private data will still be accessible by the group members only.
-        </p>
+        <div class="action-with-message">
+          <p>
+            If you delete your METASPACE account, you can either delete all your datasets or keep them within METASPACE.
+            For the latter, the private data will still be accessible by the group members only.
+          </p>
+          <el-button
+            type="danger"
+            title="Delete account"
+            @click="openDeleteAccountDialog()"
+          >
+            Delete account
+          </el-button>
+        </div>
       </div>
-      <el-row>
-        <el-button
-          type="danger"
-          title="Delete account"
-          style="float:right; margin-top:15px"
-          @click="openDeleteAccountDialog()"
-        >
-          Delete account
-        </el-button>
-      </el-row>
     </div>
   </div>
 </template>
@@ -264,7 +264,7 @@ import { refreshLoginStatus } from '../../graphqlClient'
 import { ElForm } from 'element-ui/types/form'
 import { TransferDatasetsDialog } from '../GroupProfile/index'
 import emailRegex from '../../lib/emailRegex'
-import GroupsTable from './GroupsTable.vue'
+import GroupsTable from './GroupsTable'
 import ProjectsTable from './ProjectsTable.vue'
 import ConfirmAsync from '../../components/ConfirmAsync'
 import { sendPasswordResetToken } from '../../api/auth'
@@ -534,6 +534,7 @@ export default class EditUserPage extends Vue {
 
   .user-edit-page {
     max-width: 950px;
+    width: 100%;
   }
 
   .api-key /deep/ input {
@@ -557,4 +558,15 @@ export default class EditUserPage extends Vue {
     /*margin-left: 0;*/
     /*padding: 0;*/
   /*}*/
+
+  .action-with-message {
+    align-items: flex-start;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .action-with-message p {
+    max-width: 70ch;
+    margin-top: 0;
+  }
 </style>

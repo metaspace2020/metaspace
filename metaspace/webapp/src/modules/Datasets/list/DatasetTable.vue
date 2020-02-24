@@ -67,6 +67,7 @@
 </template>
 
 <script>
+import Vue from 'vue'
 import {
   countDatasetsByStatusQuery, countDatasetsQuery,
   datasetDeletedQuery,
@@ -98,7 +99,7 @@ const extractGroupedStatusCounts = (data) => {
   return counts
 }
 
-export default {
+export default Vue.extend({
   name: 'DatasetTable',
   components: {
     DatasetList,
@@ -313,7 +314,7 @@ export default {
       this.$store.commit('setDatasetTab', tab)
     },
   },
-}
+})
 </script>
 
 <style lang="scss">

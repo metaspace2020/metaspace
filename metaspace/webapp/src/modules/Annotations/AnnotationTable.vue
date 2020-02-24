@@ -313,7 +313,7 @@ const SORT_ORDER_TO_COLUMN = {
 }
 const COLUMN_TO_SORT_ORDER = invert(SORT_ORDER_TO_COLUMN)
 
-export default {
+export default Vue.extend({
   name: 'AnnotationTable',
   components: {
     ProgressButton,
@@ -715,7 +715,7 @@ export default {
       this.exportProgress = 0
     },
   },
-}
+})
 </script>
 
 <style lang="scss">
