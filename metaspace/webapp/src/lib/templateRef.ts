@@ -17,9 +17,9 @@ import { onMounted, onUpdated, ref } from '@vue/composition-api'
  *   return <div ref="someStringConstant">
  * }
  */
-export const templateRef = <T extends Vue | Element | null = any>(name: string) => {
+export const templateRef = <T = Vue | Element>(name: string) => {
   const r = ref<T>(null)
-  onMounted(function(this: Vue) { r.value = this.$refs[name] as T })
-  onUpdated(function(this: Vue) { r.value = this.$refs[name] as T })
+  onMounted(function(this: Vue) { r.value = this.$refs[name] as any as T | null })
+  onUpdated(function(this: Vue) { r.value = this.$refs[name] as any as T | null })
   return r
 }

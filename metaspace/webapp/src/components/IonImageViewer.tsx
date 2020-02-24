@@ -115,7 +115,7 @@ const useScaleBar = (props: Props) => {
 }
 
 const usePixelIntensityDisplay = (props: Props, imageLoaderRef: Ref<ReferenceObject | null>) => {
-  const pixelIntensityTooltipRef = templateRef('pixelIntensityTooltip')
+  const pixelIntensityTooltipRef = templateRef<any>('pixelIntensityTooltip')
   const cursorPixelPos = ref<[number, number] | null>(null)
   const zoomX = computed(() => props.zoom)
   const zoomY = computed(() => props.zoom / props.pixelAspectRatio)
@@ -385,7 +385,7 @@ export default createComponent<Props>({
     showPixelIntensity: { type: Boolean, default: false },
   },
   setup(props: Props, { emit }: SetupContext) {
-    const imageLoaderRef = ref<ReferenceObject>(null)
+    const imageLoaderRef = templateRef<ReferenceObject>('imageLoader')
     const { showScrollBlock, renderScrollBlock } = useScrollBlock()
     const { renderScaleBar } = useScaleBar(props)
 
@@ -410,7 +410,7 @@ export default createComponent<Props>({
 
     return () => (
       <div
-        ref={imageLoaderRef}
+        ref="imageLoader"
         v-loading={props.isLoading}
         class="image-loader"
         style={{ width: props.width + 'px', height: props.height + 'px' }}
