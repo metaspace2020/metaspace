@@ -57,18 +57,20 @@ const ReviewLink = createComponent({
             <br />
             <strong>without making the project available to everyone</strong>.
           </p>
-          <form>
-            {props.publicationStatus === statuses.UNPUBLISHED
-              && <Button onClick={props.createLink} type="primary">
+          {props.publicationStatus === statuses.UNPUBLISHED
+            && <form>
+              <Button onClick={props.createLink} type="primary">
                 Create link
               </Button>
-            }
-            {props.publicationStatus === statuses.UNDER_REVIEW
-              && <Button onClick={props.deleteLink} type="info">
+            </form>
+          }
+          {props.publicationStatus === statuses.UNDER_REVIEW
+            && <form>
+              <Button onClick={props.deleteLink} type="info">
                 Remove link
               </Button>
-            }
-          </form>
+            </form>
+          }
         </WorkflowItem>
         <WorkflowItem
           active={props.publicationStatus === statuses.UNDER_REVIEW}
