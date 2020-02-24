@@ -122,7 +122,7 @@
           lazy
         >
           <span slot="label">
-            <el-badge value="new">
+            <el-badge value="New">
               Review
             </el-badge>
           </span>
@@ -445,7 +445,7 @@ export default class ViewProjectPage extends Vue {
 
     @ConfirmAsync({
       title: '',
-      message: 'Publishing a project is a one-time event and cannot be undone. Please confirm your intention to make this project and its associated data available to the public now.',
+      message: 'Publishing a project is a one-time event and cannot be undone. Please confirm your intention to make this project and its associated data available to all METASPACE users.',
       confirmButtonText: 'Confirm',
     })
     async publishProject() {
