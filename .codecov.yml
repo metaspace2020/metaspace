@@ -15,8 +15,12 @@ coverage:
         threshold: 0.2
         flags: engine
       webapp:
-        range: 40...100
-        threshold: 0.2
+        range: 45...100
+        threshold: 0.5
         flags: webapp
+      graphql:
+        range: 55...100
+        threshold: 0.5
+        flags: graphql
     patch: no
     changes: no
