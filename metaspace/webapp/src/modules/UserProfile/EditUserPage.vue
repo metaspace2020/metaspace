@@ -189,7 +189,7 @@
       <!--</el-row>-->
       <!--</div>-->
       <!--</div>-->
-      <div>
+      <section>
         <h2>API access</h2>
         <div class="action-with-message">
           <p>
@@ -204,22 +204,24 @@
           </el-button>
         </div>
         <el-row v-if="isLoaded && currentUser">
-          <div v-if="currentUser.apiKey">
+          <div
+            v-if="currentUser.apiKey"
+            class="action-with-message"
+          >
             <copy-to-clipboard
               :value="currentUser.apiKey"
               type="password"
             />
             <el-button
               type="danger"
-              style="float:right; margin-top:15px"
               @click="handleRevokeApiKey"
             >
               Revoke key
             </el-button>
           </div>
         </el-row>
-      </div>
-      <div>
+      </section>
+      <section>
         <h2>Delete account</h2>
         <div class="action-with-message">
           <p>
@@ -234,7 +236,7 @@
             Delete account
           </el-button>
         </div>
-      </div>
+      </section>
     </div>
   </div>
 </template>
@@ -556,8 +558,13 @@ export default class EditUserPage extends Vue {
     justify-content: space-between;
   }
 
-  .action-with-message p {
+  .action-with-message > :first-child {
     max-width: 70ch;
     margin-top: 0;
+    margin-right: 20px;
+  }
+
+  section + section {
+    margin: 40px 0;
   }
 </style>
