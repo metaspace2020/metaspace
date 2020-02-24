@@ -68,5 +68,7 @@
 }
 
 .sm-workflow li.done:before {
-  content: '✓';
+  content: '\e6da';
+  font-family: element-icons !important;
+  font-size: 26px; /* looked nicer being a few pixels different */
 }
