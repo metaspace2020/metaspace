@@ -35,7 +35,11 @@
 
 /* hack allows left border to connect to next li */
 .sm-workflow li > :last-child {
-  margin-bottom: 36px;
+  margin-bottom: 48px;
+}
+
+.sm-workflow form > :last-child {
+  margin-bottom: 0;
 }
 
 .sm-workflow li:before {
