@@ -118,7 +118,7 @@
         <el-tab-pane
           v-if="canEdit && projectId != null"
           name="review"
-          class="tab-with-badge"
+          class="tab-with-badge sm-review-tab"
           lazy
         >
           <span slot="label">
@@ -505,11 +505,19 @@ export default class ViewProjectPage extends Vue {
   }
 </style>
 <style>
+  .el-tabs__content {
+    overflow: visible; /* prevents shadows getting clipped */
+  }
+
   .el-tabs.with-badges {
     margin-top: -10px;
   }
 
   .el-tabs.with-badges .el-tabs__item {
     margin-top: 10px;
+  }
+
+  .el-tab-pane.sm-review-tab {
+    margin-top: 24px;
   }
 </style>

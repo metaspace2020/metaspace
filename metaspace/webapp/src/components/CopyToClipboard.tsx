@@ -63,7 +63,7 @@ export default createComponent({
           manual
           value={state.copied}
           content="Copied!"
-          placement="bottom"
+          placement="right"
         >
           <Button
             title="Copy to clipboard"
