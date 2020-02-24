@@ -20,7 +20,7 @@
 }
 
 .sm-workflow li:last-child {
-  border: none;
+  border-color: transparent; /* border still required for alignment */
 }
 
 .sm-workflow li > *,
@@ -50,7 +50,7 @@
   font-weight: 700;
   height: 48px;
   justify-content: center;
-  left: -24px;
+  left: -25px; /* 50% plus 1px for the border */
   position: absolute;
   top: 0;
   transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
