@@ -413,14 +413,15 @@ export default MetaspaceHeader
  .header-items {
    display: flex;
    align-items: center;
-   height: 100%
+   height: 100%;
+   font-size: 16px;
  }
 
  .header-item {
    display: flex;
    border: none;
    padding: 0px 20px;
-   font-size: 16px;
+   font-size: inherit;
    align-self: stretch;
    align-items: center;
    justify-content: center;
@@ -430,9 +431,11 @@ export default MetaspaceHeader
  }
 
  @media (max-width: 1279px) {
+   .header-items {
+     font-size: 14px;
+   }
    .header-item {
      padding: 0px 10px;
-     font-size: 14px;
    }
  }
 
@@ -484,11 +487,12 @@ export default MetaspaceHeader
  }
  .submenu-item {
    padding: 15px 20px;
-   font-size: 14px;
+   font-size: inherit;
    align-self: stretch;
    justify-content: center;
    white-space: nowrap;
  }
+
  .limit-width {
    max-width: 250px;
    overflow-wrap: break-word;
