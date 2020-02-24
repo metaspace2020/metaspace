@@ -29,6 +29,7 @@ export default createComponent({
   },
   setup(props) {
     const state = reactive({
+      copied: false,
       focussed: false,
     })
 
@@ -36,6 +37,7 @@ export default createComponent({
 
     function handleCopy() {
       copyText(props.value)
+      state.copied = true
     }
 
     function handleFocus() {
@@ -56,12 +58,20 @@ export default createComponent({
         onBlur={handleBlur}
         readonly
       >
-        <Button
+        <Tooltip
           slot="append"
-          icon="el-icon-document-copy"
-          title="Copy to clipboard"
-          onClick={handleCopy}
-        />
+          manual
+          value={state.copied}
+          content="Copied!"
+          placement="bottom"
+        >
+          <Button
+            title="Copy to clipboard"
+            icon="el-icon-document-copy"
+            onClick={handleCopy}
+            nativeOnMouseleave={() => { state.copied = false }}
+          />
+        </Tooltip>
       </Input>
     )
   },
