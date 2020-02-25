@@ -56,7 +56,7 @@ class CentroidsGenerator:
 
         self._s3 = boto3.client(
             's3',
-            self._sm_config['aws']['aws_region'],
+            self._sm_config['aws']['aws_default_region'],
             aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
             aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'],
         )

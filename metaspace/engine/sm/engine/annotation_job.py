@@ -67,7 +67,7 @@ class AnnotationJob:
             sconf.set("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
             sconf.set(
                 "spark.hadoop.fs.s3a.endpoint",
-                "s3.{}.amazonaws.com".format(self._sm_config['aws']['aws_region']),
+                "s3.{}.amazonaws.com".format(self._sm_config['aws']['aws_default_region']),
             )
 
         self._sc = SparkContext(
