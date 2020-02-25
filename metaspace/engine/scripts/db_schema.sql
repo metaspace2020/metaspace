@@ -19,6 +19,34 @@ CREATE TABLE "graphql"."credentials" (
   CONSTRAINT "PK_756d8ef9c32d9efde516fb3fcfd" PRIMARY KEY ("id")
 );
 
+CREATE TABLE "public"."molecular_db" (
+  "id" SERIAL NOT NULL, 
+  "name" text NOT NULL, 
+  "version" text NOT NULL, 
+  "public" boolean NOT NULL DEFAULT false, 
+  "archived" boolean NOT NULL DEFAULT false, 
+  "targeted" boolean NOT NULL DEFAULT false, 
+  "group_id" uuid DEFAULT null, 
+  CONSTRAINT "molecular_db_uindex" UNIQUE ("group_id", 
+  "name", 
+  "version"), 
+  CONSTRAINT "PK_1841660e7287891634f1e73d7f2" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "public"."molecule" (
+  "id" SERIAL NOT NULL, 
+  "mol_id" text NOT NULL, 
+  "mol_name" text NOT NULL, 
+  "formula" text NOT NULL, 
+  "inchi" text, 
+  "moldb_id" integer NOT NULL, 
+  CONSTRAINT "PK_d9e3f72bdba412e5cbeea2a1915" PRIMARY KEY ("id")
+);
+
+CREATE INDEX "IDX_01280507c3bd02500e2861fb27" ON "public"."molecule" (
+  "moldb_id"
+) ;
+
 CREATE TABLE "graphql"."group" (
   "id" uuid NOT NULL DEFAULT uuid_generate_v1mc(), 
   "name" text NOT NULL, 
@@ -141,30 +169,6 @@ CREATE UNIQUE INDEX "IDX_f538e62b7f815edf1a79aa1ee5" ON "graphql"."ion" (
   "charge"
 ) ;
 
-CREATE TABLE "public"."molecular_db" (
-  "id" SERIAL NOT NULL, 
-  "name" text NOT NULL, 
-  "version" text NOT NULL, 
-  "public" boolean NOT NULL DEFAULT false, 
-  "archived" boolean NOT NULL DEFAULT false, 
-  "targeted" boolean NOT NULL DEFAULT false, 
-  CONSTRAINT "PK_1841660e7287891634f1e73d7f2" PRIMARY KEY ("id")
-);
-
-CREATE TABLE "public"."molecule" (
-  "id" SERIAL NOT NULL, 
-  "mol_id" text NOT NULL, 
-  "mol_name" text NOT NULL, 
-  "formula" text NOT NULL, 
-  "inchi" text, 
-  "moldb_id" integer NOT NULL, 
-  CONSTRAINT "PK_d9e3f72bdba412e5cbeea2a1915" PRIMARY KEY ("id")
-);
-
-CREATE INDEX "IDX_01280507c3bd02500e2861fb27" ON "public"."molecule" (
-  "moldb_id"
-) ;
-
 CREATE TABLE "public"."dataset" (
   "id" text NOT NULL, 
   "name" text, 
@@ -233,6 +237,14 @@ CREATE INDEX "annotation_job_id_index" ON "public"."annotation" (
   "job_id"
 ) ;
 
+ALTER TABLE "public"."molecular_db" ADD CONSTRAINT "FK_a18f5f7d6cc662006d9c849ea1f" FOREIGN KEY (
+  "group_id") REFERENCES "graphql"."group"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."molecule" ADD CONSTRAINT "FK_01280507c3bd02500e2861fb279" FOREIGN KEY (
+  "moldb_id") REFERENCES "public"."molecular_db"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
 ALTER TABLE "graphql"."user_group" ADD CONSTRAINT "FK_24850e25a096ba62e57cf5caf45" FOREIGN KEY (
   "user_id") REFERENCES "graphql"."user"("id"
 ) ON DELETE NO ACTION ON UPDATE NO ACTION;
@@ -272,10 +284,6 @@ ALTER TABLE "graphql"."user" ADD CONSTRAINT "FK_1b5eb1327a74d679537bdc1fa5b" FOR
 ALTER TABLE "graphql"."coloc_annotation" ADD CONSTRAINT "FK_09673424d3aceab89f931b9f20d" FOREIGN KEY (
   "coloc_job_id") REFERENCES "graphql"."coloc_job"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
-
-ALTER TABLE "public"."molecule" ADD CONSTRAINT "FK_01280507c3bd02500e2861fb279" FOREIGN KEY (
-  "moldb_id") REFERENCES "public"."molecular_db"("id"
-) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 ALTER TABLE "public"."optical_image" ADD CONSTRAINT "FK_124906daa616c8e1b88645baef0" FOREIGN KEY (
   "ds_id") REFERENCES "public"."dataset"("id"
