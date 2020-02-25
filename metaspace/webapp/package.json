@@ -139,6 +139,7 @@
         "tsConfig": "tsconfig.json"
       }
     },
+    "globalSetup": "<rootDir>/tests/utils/globalSetup.ts",
     "transform": {
       "^.+\\.vue$": "vue-jest",
       ".+\\.(css|styl|less|sass|scss|svg|png|jpg|ttf|woff|woff2)$": "jest-transform-stub",

@@ -26,7 +26,7 @@
         style="min-height: 100px;"
       >
         <projects-list-item
-          v-for="(project, i) in projects"
+          v-for="project in projects"
           :key="project.id"
           :project="project"
           :current-user="currentUser"

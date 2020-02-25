@@ -56,6 +56,10 @@ describe('ProjectsListPage', () => {
   })
   const mockAllProjects: ProjectsListQuery['allProjects'] = [mockProject1, mockProject2]
 
+  const stubs = {
+    ElapsedTime: '<span title="1/1/2019 00:00" class="sm-elapsed-time">1 year ago</span>',
+  }
+
   sync(store, router)
 
   beforeEach(() => {
@@ -69,7 +73,7 @@ describe('ProjectsListPage', () => {
         countProjects: () => 3,
       }),
     })
-    const wrapper = mount(ProjectsListPage, { router, apolloProvider, store, sync: false })
+    const wrapper = mount(ProjectsListPage, { router, apolloProvider, store, stubs, sync: false })
     await Vue.nextTick()
     await Vue.nextTick()
 
