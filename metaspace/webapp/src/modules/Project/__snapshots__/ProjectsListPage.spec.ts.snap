@@ -86,18 +86,22 @@ exports[`ProjectsListPage should match snapshot 1`] = `
       <div class="project-item"><a href="/project/proj-one" class="underlay"></a>
         <div class="item-body">
           <div class="info">
-            <div class="info-line project-name"><a href="/project/proj-one" class=""><span style="margin-left: 5px;">project one</span></a> <img src="../../assets/padlock-icon.svg" title="This project is only visible to its members and METASPACE administrators" class="private-icon"></div>
-            <div style="margin-left: 12px;">
+            <div class="info-line project-name"><a href="/project/proj-one" class="">
+                project one
+              </a> <img src="../../assets/padlock-icon.svg" title="This project is only visible to its members and METASPACE administrators" class="private-icon"></div>
+            <div>
               <div class="info-line">
                 <!---->
-                1 Member
+                1 member
               </div>
-              <div class="info-line"><span>Manager<!---->:</span> <span>
+              <div class="info-line">
+                Managed by
+                <span>
             TestUser1<span><span>, </span></span> <a href="/group/allProjects.0.members.0.user.primaryGroup.group.id" class="group-link">
                   allProjects.0.members.0.user.primaryGroup.group.shortName</a>
                 <!----></span></div>
               <div class="info-line"><span>
-            Created on <b><span style="font-size: 14px;">2018-08-29</span></b></span></div>
+            Created <mock-elapsed-time date="2018-08-29T05:00:00.000"></mock-elapsed-time></span></div>
               <!---->
             </div>
           </div>
@@ -110,23 +114,27 @@ exports[`ProjectsListPage should match snapshot 1`] = `
           </div>
         </div>
       </div>
-      <div class="project-item odd"><a href="/project/project%202" class="underlay"></a>
+      <div class="project-item"><a href="/project/project%202" class="underlay"></a>
         <div class="item-body">
           <div class="info">
-            <div class="info-line project-name"><a href="/project/project%202" class=""><span style="margin-left: 5px;">project two</span></a>
+            <div class="info-line project-name"><a href="/project/project%202" class="">
+                project two
+              </a>
               <!---->
             </div>
-            <div style="margin-left: 12px;">
-              <div class="info-line"><span><a href="/datasets?prj=project%202" class=""><span>20 Datasets</span></a>,
+            <div>
+              <div class="info-line"><span><a href="/datasets?prj=project%202" class=""><span>20 datasets</span></a>,
                 </span>
-                20 Members
+                20 members
               </div>
-              <div class="info-line"><span>Manager<!---->:</span> <span>
+              <div class="info-line">
+                Managed by
+                <span>
             TestUser1<span><span>, </span></span> <a href="/group/allProjects.1.members.0.user.primaryGroup.group.id" class="group-link">
                   allProjects.1.members.0.user.primaryGroup.group.shortName</a>
                 <!----></span></div>
               <div class="info-line"><span>
-            Last submission <b><span style="font-size: 14px;">2018-08-01</span></b></span></div>
+            Last submission <mock-elapsed-time date="2018-08-01T09:00:00.000"></mock-elapsed-time></span></div>
               <!---->
             </div>
           </div>
