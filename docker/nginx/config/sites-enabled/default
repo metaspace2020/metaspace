@@ -45,36 +45,44 @@ server {
 #    }
 
     location /fs/iso_images/ {
-        proxy_pass http://sm-graphql:4201/fs/iso_images/;
+        set $graphql_storage sm-graphql:4201;
+        proxy_pass http://$graphql_storage$request_uri;
         limit_except GET {deny all;}
     }
     location /db/iso_images/ {
-        proxy_pass http://sm-graphql:4201/db/iso_images/;
+        set $graphql_storage sm-graphql:4201;
+        proxy_pass http://$graphql_storage$request_uri;
         limit_except GET {deny all;}
     }
     location /fs/optical_images/ {
-        proxy_pass http://sm-graphql:4201/fs/optical_images/;
+        set $graphql_storage sm-graphql:4201;
+        proxy_pass http://$graphql_storage$request_uri;
         limit_except GET {deny all;}
     }
     location /fs/raw_optical_images/ {
-        proxy_pass http://sm-graphql:4201/fs/raw_optical_images/;
+        set $graphql_storage sm-graphql:4201;
+        proxy_pass http://$graphql_storage$request_uri;
         client_max_body_size 50M;
     }
     location /fs/ion_thumbnails/ {
-        proxy_pass http://sm-graphql:4201/fs/ion_thumbnails/;
+        set $graphql_storage sm-graphql:4201;
+        proxy_pass http://$graphql_storage$request_uri;
         client_max_body_size 50M;
     }
     location /dataset_upload {
-        proxy_pass http://sm-graphql:4201/dataset_upload;
+        set $graphql_storage sm-graphql:4201;
+        proxy_pass http://$graphql_storage$request_uri;
         # include proxy-params.conf;
         client_max_body_size 5M;
     }
     location /graphql {
-        proxy_pass http://sm-graphql:3010/graphql;
+        set $graphql sm-graphql:3010;
+        proxy_pass http://$graphql$request_uri;
         include proxy-params.conf;
     }
     location /api_auth {
-        proxy_pass http://sm-graphql:3010/api_auth;
+        set $graphql sm-graphql:3010;
+        proxy_pass http://$graphql$request_uri;
         include proxy-params.conf;
     }
     location /ws {
@@ -83,11 +91,6 @@ server {
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
-        include proxy-params.conf;
-    }
-    location /app/kibana {
-        set $kibana_server kibana:5601;
-        proxy_pass http://$kibana_server/;
         include proxy-params.conf;
     }
 }
