@@ -12,6 +12,7 @@ logger = logging.getLogger('engine')
 
 class MalformedCSV(Exception):
     def __init__(self, *errors):
+        super().__init__()
         self.errors = errors
 
 
@@ -97,6 +98,10 @@ class MolecularDB:
             rows=[(name, version, group_id, public)],
         )
         return MolecularDB(id=moldb_id)
+
+    @classmethod
+    def delete(cls, id):
+        DB().alter("DELETE FROM molecular_db WHERE id = %s", params=(id,))
 
     def get_molecules(self):
         """Fetches all molecular database molecules as a DataFrame.

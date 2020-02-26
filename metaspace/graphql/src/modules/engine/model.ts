@@ -97,7 +97,7 @@ export class Job {
 
   @ManyToOne(type => MolecularDB)
   @JoinColumn({ name: 'moldb_id' })
-  moldb: MolecularDB;
+  molecularDB: MolecularDB;
 
   @OneToMany(type => Annotation, annotation => annotation.job)
   annotations: Annotation[];

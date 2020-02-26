@@ -119,3 +119,23 @@ def test_create_moldb_wrong_formulas(request_mock, fill_db):
     db = DB()
     (db_count,) = db.select_one('SELECT COUNT(*) FROM molecular_db')
     assert db_count == 0
+
+
+@patch('sm.rest.api.bottle.request')
+def test_delete_moldb(request_mock, fill_db):
+    input_doc = make_input_doc()
+    request_mock.body.getvalue.return_value = json.dumps(input_doc).encode()
+
+    db = DB()
+    (moldb_id,) = db.insert_return(
+        'INSERT INTO molecular_db (name, version, group_id) VALUES (%s, %s, %s) RETURNING id',
+        rows=[(input_doc['name'], input_doc['version'], input_doc['group_id'])],
+    )
+
+    resp = api.delete_molecular_database(moldb_id)
+
+    assert resp['status'] == 'success'
+
+    db = DB()
+    (db_count,) = db.select_one('SELECT COUNT(*) FROM molecular_db')
+    assert db_count == 0

@@ -217,7 +217,7 @@ def del_optical_image(ds_man, ds_id, params):  # pylint: disable=unused-argument
 def generate(ion, instr, res_power, at_mz, charge):
     try:
         pattern = isotopic_pattern.generate(ion, instr, res_power, at_mz, charge)
-        return {'status': OK['status'], 'data': pattern}
+        return _make_response(OK, data=pattern)
     except Exception as e:
         logger.warning(f'({ion}, {instr}, {res_power}, {at_mz}, {charge}) - {e}')
         return _make_response(INTERNAL_ERROR)
@@ -231,7 +231,7 @@ def create_molecular_database():
         name - database name
         version - database version
         group_id - UUID of group database belongs to
-        file_path - S3 path to database import file
+        file_path - S3 path to database import file (s3://bucket/path)
     }
     """
     params = None
@@ -249,17 +249,34 @@ def create_molecular_database():
             )
             moldb_df = pd.read_csv(params['file_path'], sep='\t')
             import_molecules_from_df(moldb, moldb_df)
+            # TODO: archive previous version of database
+            # TODO: update "targeted" field
 
         return _make_response(OK, data=moldb.to_dict())
-    except psycopg2.errors.UniqueViolation as e:  # pylint: disable=no-member
-        logger.exception(f'Database already exists: {params}')
+    except psycopg2.errors.UniqueViolation:  # pylint: disable=no-member
+        logger.exception(f'Database already exists. Parameters: {params}')
         return _make_response(ALREADY_EXISTS)
     except MalformedCSV as e:
         logger.exception(f'Malformed CSV file. Parameters: {params}')
         return _make_response(MALFORMED_CSV, errors=e.errors)
-    except Exception as e:
+    except Exception:
         logger.exception(f'Server error. Parameters: {params}')
         return _make_response(INTERNAL_ERROR)
+
+
+@app.post('/v1/molecular_dbs/delete/<moldb_id>')
+def delete_molecular_database(moldb_id):
+    """Delete the molecular database and all associated jobs."""
+
+    try:
+        MolecularDB.delete(moldb_id)
+        return _make_response(OK)
+    except Exception:
+        logger.exception(f'Server error. Parameters: {moldb_id}')
+        return _make_response(INTERNAL_ERROR)
+
+
+# TODO: add endpoint to un-archive database
 
 
 if __name__ == '__main__':
