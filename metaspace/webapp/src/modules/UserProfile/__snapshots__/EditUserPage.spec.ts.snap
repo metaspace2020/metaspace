@@ -314,7 +314,7 @@ exports[`EditUserPage should match snapshot 1`] = `
     </span></button></div>
       </div>
     </div>
-    <div>
+    <section>
       <h2>API access</h2>
       <div class="action-with-message">
         <p>
@@ -324,24 +324,26 @@ exports[`EditUserPage should match snapshot 1`] = `
         <!---->
       </div>
       <div class="el-row">
-        <div>
-          <div class="api-key el-input el-input-group el-input-group--append">
+        <div class="action-with-message">
+          <div class="el-input el-input-group el-input-group--append">
             <!----><input type="password" readonly="readonly" autocomplete="off" class="el-input__inner">
             <!---->
             <!---->
-            <div class="el-input-group__append"><button type="button" class="el-button el-button--default" title="Copy to clipboard">
-                <!----><i class="el-icon-document-copy"></i>
-                <!----></button></div>
+            <div class="el-input-group__append">
+              <mock-el-tooltip manual="true" content="Copied!" placement="right"><button type="button" class="el-button el-button--default" title="Copy to clipboard">
+                  <!----><i class="el-icon-document-copy"></i>
+                  <!----></button></mock-el-tooltip>
+            </div>
             <!---->
-          </div> <button type="button" class="el-button el-button--danger" style="float: right; margin-top: 15px;">
+          </div> <button type="button" class="el-button el-button--danger">
             <!---->
             <!----><span>
             Revoke key
           </span></button>
         </div>
       </div>
-    </div>
-    <div>
+    </section>
+    <section>
       <h2>Delete account</h2>
       <div class="action-with-message">
         <p>
@@ -353,7 +355,7 @@ exports[`EditUserPage should match snapshot 1`] = `
           Delete account
         </span></button>
       </div>
-    </div>
+    </section>
   </div>
 </div>
 `;

@@ -1,6 +1,6 @@
 import { createComponent, reactive, ref } from '@vue/composition-api'
 
-import { Button, Input, Tooltip } from 'element-ui'
+import { Input } from 'element-ui'
 
 function copyText(text: string | undefined) {
   if (text) {
@@ -50,7 +50,7 @@ export default createComponent({
     }
 
     return () => (
-      <Input
+      <el-input
         ref={input}
         value={props.value}
         type={state.focussed ? 'text' : props.type}
@@ -58,21 +58,21 @@ export default createComponent({
         onBlur={handleBlur}
         readonly
       >
-        <Tooltip
+        <el-tooltip
           slot="append"
           manual
           value={state.copied}
           content="Copied!"
           placement="right"
         >
-          <Button
+          <el-button
             title="Copy to clipboard"
             icon="el-icon-document-copy"
             onClick={handleCopy}
             nativeOnMouseleave={() => { state.copied = false }}
           />
-        </Tooltip>
-      </Input>
+        </el-tooltip>
+      </el-input>
     )
   },
 })
