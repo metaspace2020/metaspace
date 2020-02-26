@@ -3,7 +3,7 @@ import logging
 
 import pandas as pd
 
-from sm.engine.molecular_db import create, import_molecules_from_df
+from sm.engine.molecular_db import MolecularDB, import_molecules_from_df
 from sm.engine.util import bootstrap_and_run
 
 logger = logging.getLogger('engine')
@@ -27,7 +27,7 @@ def main():
 
     # pylint: disable=unused-argument
     def import_new_database(sm_config):
-        moldb = create(args.name, args.version)
+        moldb = MolecularDB.create(args.name, args.version)
         moldb_df = pd.read_csv(open(args.csv_file, encoding='utf8'), sep=args.sep).fillna('')
         import_molecules_from_df(moldb, moldb_df)
 

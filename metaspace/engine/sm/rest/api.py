@@ -2,33 +2,45 @@ import argparse
 import json
 import logging
 
-from bottle import post, run, get
-from bottle import request as req
-from bottle import response as resp
+import bottle
+import pandas as pd
+import psycopg2.errors
 
-from sm.engine.db import DB
+from sm.engine.db import DB, TransactionContext
 from sm.engine.es_export import ESExporter
+from sm.engine.molecular_db import MolecularDB, import_molecules_from_df, MalformedCSV
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_DS_STATUS, SM_UPDATE
-from sm.engine.util import SMConfig, bootstrap_and_run
+from sm.engine.util import SMConfig, GlobalInit
 from sm.engine.errors import UnknownDSID, DSIsBusy
 from sm.rest.dataset_manager import SMapiDatasetManager, DatasetActionPriority
 from sm.rest import isotopic_pattern
 
 OK = {'status_code': 200, 'status': 'success'}
 
-ERR_DS_NOT_EXIST = {'status_code': 404, 'status': 'not_exist'}
+NOT_EXIST = {'status_code': 404, 'status': 'not_exist'}
 
-ERR_OBJECT_EXISTS = {'status_code': 400, 'status': 'already_exists'}
+ALREADY_EXISTS = {'status_code': 400, 'status': 'already_exists'}
 
-ERR_DS_BUSY = {'status_code': 409, 'status': 'dataset_busy'}
+WRONG_PARAMETERS = {'status_code': 400, 'status': 'wrong_parameters'}
 
-ERROR = {'status_code': 500, 'status': 'server_error'}
+BUSY = {'status_code': 409, 'status': 'dataset_busy'}
+
+MALFORMED_CSV = {'status_code': 400, 'status': 'malformed_csv'}
+
+INTERNAL_ERROR = {'status_code': 500, 'status': 'server_error'}
+
+logger = logging.getLogger('api')
 
 
-def _json_params(request):
+def _body_to_json(request):
     body = request.body.getvalue()
     return json.loads(body.decode('utf-8'))
+
+
+def _make_response(status_doc, **kwargs):
+    bottle.response.status = status_doc['status_code']
+    return {'status': status_doc['status'], **kwargs}
 
 
 def _create_queue_publisher(qdesc):
@@ -37,12 +49,11 @@ def _create_queue_publisher(qdesc):
 
 
 def _create_dataset_manager(db):
-    config = SMConfig.get_conf()
-    img_store = ImageStoreServiceWrapper(config['services']['img_service_url'])
+    img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
     img_store.storage_type = 'fs'
     return SMapiDatasetManager(
         db=db,
-        es=ESExporter(db),
+        es=ESExporter(db, sm_config),
         image_store=img_store,
         annot_queue=_create_queue_publisher(SM_ANNOTATE),
         update_queue=_create_queue_publisher(SM_UPDATE),
@@ -55,32 +66,39 @@ def sm_modify_dataset(request_name):
     def _modify(handler):
         def _func(ds_id=None):
             try:
-                params = _json_params(req)
+                params = _body_to_json(bottle.request)
                 logger.info(f'Received {request_name} request: {params}')
                 ds_man = _create_dataset_manager(DB())
                 res = handler(ds_man, ds_id, params)
-
                 return {'status': OK['status'], 'ds_id': ds_id or res.get('ds_id', None)}
             except UnknownDSID as e:
                 logger.warning(e)
-                resp.status = ERR_DS_NOT_EXIST['status_code']
-                return {'status': ERR_DS_NOT_EXIST['status'], 'ds_id': ds_id}
+                bottle.response.status = NOT_EXIST['status_code']
+                return {'status': NOT_EXIST['status'], 'ds_id': ds_id}
             except DSIsBusy as e:
                 logger.warning(e)
-                resp.status = ERR_DS_BUSY['status_code']
-                return {'status': ERR_DS_BUSY['status'], 'ds_id': ds_id}
+                bottle.response.status = BUSY['status_code']
+                return {'status': BUSY['status'], 'ds_id': ds_id}
             except Exception as e:
-                logger.error(e, exc_info=True)
-                resp.status = ERROR['status_code']
-                return {'status': ERROR['status'], 'ds_id': ds_id}
+                logger.exception(e)
+                bottle.response.status = INTERNAL_ERROR['status_code']
+                return {'status': INTERNAL_ERROR['status'], 'ds_id': ds_id}
 
         return _func
 
     return _modify
 
 
-@post('/v1/datasets/<ds_id>/add')
-@post('/v1/datasets/add')
+app = bottle.Bottle()
+
+
+@app.get('/')
+def root():
+    return _make_response(OK)
+
+
+@app.post('/v1/datasets/<ds_id>/add')
+@app.post('/v1/datasets/add')
 @sm_modify_dataset('ADD')
 def add_ds(ds_man, ds_id=None, params=None):
     """
@@ -120,7 +138,7 @@ def add_ds(ds_man, ds_id=None, params=None):
     return {'ds_id': ds_id}
 
 
-@post('/v1/datasets/<ds_id>/update')
+@app.post('/v1/datasets/<ds_id>/update')
 @sm_modify_dataset('UPDATE')
 def update_ds(ds_man, ds_id, params):
     """
@@ -150,7 +168,7 @@ def update_ds(ds_man, ds_id, params):
         ds_man.update(ds_id=ds_id, doc=doc, force=force, priority=priority)
 
 
-@post('/v1/datasets/<ds_id>/delete')
+@app.post('/v1/datasets/<ds_id>/delete')
 @sm_modify_dataset('DELETE')
 def delete_ds(ds_man, ds_id, params):
     """
@@ -167,7 +185,7 @@ def delete_ds(ds_man, ds_id, params):
     ds_man.delete(ds_id=ds_id, del_raw_data=del_raw, force=force)
 
 
-@post('/v1/datasets/<ds_id>/add-optical-image')
+@app.post('/v1/datasets/<ds_id>/add-optical-image')
 @sm_modify_dataset('ADD_OPTICAL_IMAGE')
 def add_optical_image(ds_man, ds_id, params):
     """
@@ -183,7 +201,7 @@ def add_optical_image(ds_man, ds_id, params):
     ds_man.add_optical_image(ds_id, img_id, params['transform'])
 
 
-@post('/v1/datasets/<ds_id>/del-optical-image')
+@app.post('/v1/datasets/<ds_id>/del-optical-image')
 @sm_modify_dataset('DEL_OPTICAL_IMAGE')
 def del_optical_image(ds_man, ds_id, params):  # pylint: disable=unused-argument
     """
@@ -195,14 +213,53 @@ def del_optical_image(ds_man, ds_id, params):  # pylint: disable=unused-argument
     ds_man.del_optical_image(ds_id)
 
 
-@get('/v1/isotopic_patterns/<ion>/<instr>/<res_power>/<at_mz>/<charge>')
+@app.get('/v1/isotopic_patterns/<ion>/<instr>/<res_power>/<at_mz>/<charge>')
 def generate(ion, instr, res_power, at_mz, charge):
     try:
         pattern = isotopic_pattern.generate(ion, instr, res_power, at_mz, charge)
         return {'status': OK['status'], 'data': pattern}
     except Exception as e:
         logger.warning(f'({ion}, {instr}, {res_power}, {at_mz}, {charge}) - {e}')
-        return {'status': ERROR['status']}
+        return _make_response(INTERNAL_ERROR)
+
+
+@app.post('/v1/molecular_dbs/create')
+def create_molecular_database():
+    """Create a molecular database and import molecules.
+
+    Body format: {
+        name - database name
+        version - database version
+        group_id - UUID of group database belongs to
+        file_path - S3 path to database import file
+    }
+    """
+    params = None
+    try:
+        params = _body_to_json(bottle.request)
+        logger.info(f'Received molecular database create request: {params}')
+
+        required_fields = ['name', 'version', 'group_id', 'file_path']
+        if not all([field in params for field in required_fields]):
+            return _make_response(WRONG_PARAMETERS, data=f'Required fields: {required_fields}')
+
+        with TransactionContext():
+            moldb = MolecularDB.create(
+                params['name'], params['version'], params['group_id'], public=False
+            )
+            moldb_df = pd.read_csv(params['file_path'], sep='\t')
+            import_molecules_from_df(moldb, moldb_df)
+
+        return _make_response(OK, data=moldb.to_dict())
+    except psycopg2.errors.UniqueViolation as e:
+        logger.exception(f'Database already exists: {params}')
+        return _make_response(ALREADY_EXISTS)
+    except MalformedCSV as e:
+        logger.exception(f'Malformed CSV file. Parameters: {params}')
+        return _make_response(MALFORMED_CSV, errors=e.errors)
+    except Exception as e:
+        logger.exception(f'Server error. Parameters: {params}')
+        return _make_response(INTERNAL_ERROR)
 
 
 if __name__ == '__main__':
@@ -211,10 +268,7 @@ if __name__ == '__main__':
         '--config', dest='config_path', default='conf/config.json', type=str, help='SM config path'
     )
     args = parser.parse_args()
-    logger = logging.getLogger('api')
 
-    def run_bottle(sm_config):
+    with GlobalInit(args.config_path) as sm_config:
         logger.info('Starting SM api')
-        run(**sm_config['bottle'])
-
-    bootstrap_and_run(args.config_path, run_bottle)
+        app.run(**sm_config['bottle'])

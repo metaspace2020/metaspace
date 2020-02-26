@@ -14,7 +14,7 @@ from pysparkling import Context
 from sm.engine.db import DB, ConnectionPool
 from sm.engine.molecular_db import MolecularDB
 from sm.engine.tests.db_sql_schema import DB_SQL_SCHEMA
-from sm.engine.util import proj_root, SMConfig, init_loggers
+from sm.engine.util import proj_root, SMConfig, init_loggers, populate_aws_env_vars
 from sm.engine.es_export import ESIndexManager
 
 TEST_CONFIG_PATH = 'conf/test_config.json'
@@ -31,6 +31,7 @@ def sm_config():
 @pytest.fixture(scope='session', autouse=True)
 def global_setup(sm_config):
     init_loggers(sm_config['logs'])
+    populate_aws_env_vars(sm_config['aws'])
 
 
 @pytest.fixture()
@@ -97,7 +98,7 @@ def _autocommit_execute(db_config, *sqls):
 
 
 @pytest.fixture()
-def empty_test_db(sm_config, request):
+def empty_test_db(sm_config):
     db_name = sm_config['db']['database']
     db_config_postgres = {**sm_config['db'], 'database': 'postgres'}
     _autocommit_execute(
@@ -106,11 +107,10 @@ def empty_test_db(sm_config, request):
 
     conn_pool = ConnectionPool(sm_config['db'])
 
-    def fin():
-        conn_pool.close()
-        _autocommit_execute(db_config_postgres, f'DROP DATABASE IF EXISTS {db_name}')
+    yield
 
-    request.addfinalizer(fin)
+    conn_pool.close()
+    _autocommit_execute(db_config_postgres, f'DROP DATABASE IF EXISTS {db_name}')
 
 
 @pytest.fixture()
