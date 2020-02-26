@@ -33,18 +33,6 @@ def make_input_doc(**kwargs):
     return {**input_doc, **kwargs}
 
 
-def test_boto3_access():
-    input_doc = make_input_doc()
-
-    import boto3
-    from sm.engine.util import split_s3_path
-
-    bucket, key = split_s3_path(input_doc['file_path'])
-
-    s3 = boto3.client('s3')
-    s3.download_file(Bucket=bucket, Key=key, Filename='/tmp/test-db-2.tsv')
-
-
 @patch('sm.rest.api.bottle.request')
 def test_create_moldb(request_mock, fill_db):
     input_doc = make_input_doc()
