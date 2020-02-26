@@ -9,11 +9,6 @@ const TestElapsedTime = Vue.component('test', {
   render: (h, { props }) => h(ElapsedTime, { props }),
 })
 
-/**
-  N.B. Date formats are currently relying on Node version <12's fixed locale of en-US.
-  See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toLocaleDateString#Browser_compatibility
-**/
-
 describe('ElapsedTime', () => {
   it('should render correctly', () => {
     const spy = jest.spyOn(global.Date, 'now').mockImplementation(() => new Date('2020-01-03T00:00:00.000').valueOf())
@@ -21,7 +16,7 @@ describe('ElapsedTime', () => {
     const wrapper = mount(TestElapsedTime, { propsData: { date: '2020-01-02T00:00:00.000' } })
 
     expect(wrapper.text()).toEqual('1 day ago')
-    expect(wrapper.attributes().title).toEqual('1/2/2020, 00:00')
+    expect(wrapper.attributes().title).toEqual('2020-1-2 00:00') // N.B. format requires Node 8!
 
     spy.mockRestore()
   })
