@@ -63,6 +63,13 @@ class MolecularDB:
     MOLECULES_SEL_BY_DB = 'SELECT mol_id, mol_name, formula FROM molecule m WHERE m.moldb_id = %s'
     FORMULAS_SEL_BY_DB = 'SELECT DISTINCT formula FROM molecule m WHERE m.moldb_id = %s'
 
+    MOLDB_INS = (
+        'INSERT INTO molecular_db (name, version, group_id, public) '
+        'values (%s, %s, %s, %s) RETURNING id'
+    )
+    MOLDB_UPD = 'UPDATE molecular_db SET archived = %s WHERE id = %s'
+    MOLDB_DEL = 'DELETE FROM molecular_db WHERE id = %s'
+
     # pylint: disable=redefined-builtin
     def __init__(self, id=None, name=None):
         """
@@ -92,16 +99,16 @@ class MolecularDB:
     @classmethod
     def create(cls, name, version, group_id=None, public=True):
         # pylint: disable=unbalanced-tuple-unpacking
-        (moldb_id,) = DB().insert_return(
-            "INSERT INTO molecular_db (name, version, group_id, public) "
-            "values (%s, %s, %s, %s) RETURNING id",
-            rows=[(name, version, group_id, public)],
-        )
+        (moldb_id,) = DB().insert_return(cls.MOLDB_INS, rows=[(name, version, group_id, public)],)
         return MolecularDB(id=moldb_id)
 
     @classmethod
     def delete(cls, id):
-        DB().alter("DELETE FROM molecular_db WHERE id = %s", params=(id,))
+        DB().alter(cls.MOLDB_DEL, params=(id,))
+
+    @classmethod
+    def update(cls, id, archived):
+        DB().alter(cls.MOLDB_UPD, params=(archived, id))
 
     def get_molecules(self):
         """Fetches all molecular database molecules as a DataFrame.

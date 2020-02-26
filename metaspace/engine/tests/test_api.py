@@ -7,6 +7,7 @@ from sm.engine.db import DB
 from sm.rest import api
 
 GROUP_ID = '123e4567-e89b-12d3-a456-426655440000'
+MOLDB_COUNT_SEL = 'SELECT COUNT(*) FROM molecular_db'
 
 
 @pytest.fixture()
@@ -22,38 +23,36 @@ def fill_db(test_db):
     db.alter('TRUNCATE graphql.group CASCADE')
 
 
-def make_input_doc(**kwargs):
-    input_doc = {
+def make_moldb_doc(**kwargs):
+    req_doc = {
         'name': 'test-db',
         'version': '2000-01-01',
         'group_id': GROUP_ID,
         'public': False,
         'file_path': 's3://sm-engine/tests/test-db-2.tsv',
     }
-    return {**input_doc, **kwargs}
+    return {**req_doc, **kwargs}
 
 
 @patch('sm.rest.api.bottle.request')
 def test_create_moldb(request_mock, fill_db):
-    input_doc = make_input_doc()
-    request_mock.body.getvalue.return_value = json.dumps(input_doc).encode()
+    req_doc = make_moldb_doc()
+    request_mock.body.getvalue.return_value = json.dumps(req_doc).encode()
 
     resp = api.create_molecular_database()
 
     assert resp['status'] == 'success'
-    response_doc = resp['data']
+    resp_doc = resp['data']
 
     db = DB()
     doc = db.select_one_with_fields(
         'SELECT id, name, version, group_id, public FROM molecular_db where id = %s',
-        (response_doc['id'],),
+        (resp_doc['id'],),
     )
     for field in ['name', 'version', 'group_id', 'public']:
-        assert doc[field] == input_doc[field]
+        assert doc[field] == req_doc[field]
 
-    docs = db.select_with_fields(
-        'SELECT * FROM molecule WHERE moldb_id = %s', (response_doc['id'],),
-    )
+    docs = db.select_with_fields('SELECT * FROM molecule WHERE moldb_id = %s', (resp_doc['id'],),)
     for doc in docs:
         print(doc)
         for field in ['mol_id', 'mol_name', 'formula', 'inchi']:
@@ -62,20 +61,20 @@ def test_create_moldb(request_mock, fill_db):
 
 @patch('sm.rest.api.bottle.request')
 def test_create_moldb_duplicate(request_mock, fill_db):
-    input_doc = make_input_doc()
-    request_mock.body.getvalue.return_value = json.dumps(input_doc).encode()
+    req_doc = make_moldb_doc()
+    request_mock.body.getvalue.return_value = json.dumps(req_doc).encode()
 
     db = DB()
     db.insert(
         'INSERT INTO molecular_db (name, version, group_id) VALUES (%s, %s, %s)',
-        [(input_doc['name'], input_doc['version'], input_doc['group_id'])],
+        [(req_doc['name'], req_doc['version'], req_doc['group_id'])],
     )
 
     resp = api.create_molecular_database()
 
     assert resp['status'] == api.ALREADY_EXISTS['status']
 
-    (db_count,) = db.select_one('SELECT COUNT(*) FROM molecular_db')
+    (db_count,) = db.select_one(MOLDB_COUNT_SEL)
     assert db_count == 1
 
 
@@ -88,9 +87,9 @@ def test_create_moldb_duplicate(request_mock, fill_db):
 )
 @patch('sm.rest.api.bottle.request')
 def test_create_moldb_malformed_csv(request_mock, file_path, fill_db):
-    input_doc = make_input_doc()
-    input_doc['file_path'] = file_path
-    request_mock.body.getvalue.return_value = json.dumps(input_doc).encode()
+    req_doc = make_moldb_doc()
+    req_doc['file_path'] = file_path
+    request_mock.body.getvalue.return_value = json.dumps(req_doc).encode()
 
     resp = api.create_molecular_database()
 
@@ -98,15 +97,15 @@ def test_create_moldb_malformed_csv(request_mock, file_path, fill_db):
     assert resp['errors']
 
     db = DB()
-    (db_count,) = db.select_one('SELECT COUNT(*) FROM molecular_db')
+    (db_count,) = db.select_one(MOLDB_COUNT_SEL)
     assert db_count == 0
 
 
 @patch('sm.rest.api.bottle.request')
 def test_create_moldb_wrong_formulas(request_mock, fill_db):
-    input_doc = make_input_doc()
-    input_doc['file_path'] = 's3://sm-engine/tests/test-db-wrong-formulas.csv'
-    request_mock.body.getvalue.return_value = json.dumps(input_doc).encode()
+    req_doc = make_moldb_doc()
+    req_doc['file_path'] = 's3://sm-engine/tests/test-db-wrong-formulas.csv'
+    request_mock.body.getvalue.return_value = json.dumps(req_doc).encode()
 
     resp = api.create_molecular_database()
 
@@ -117,19 +116,19 @@ def test_create_moldb_wrong_formulas(request_mock, fill_db):
         assert all(f in err_doc for f in err_fields)
 
     db = DB()
-    (db_count,) = db.select_one('SELECT COUNT(*) FROM molecular_db')
+    (db_count,) = db.select_one(MOLDB_COUNT_SEL)
     assert db_count == 0
 
 
 @patch('sm.rest.api.bottle.request')
 def test_delete_moldb(request_mock, fill_db):
-    input_doc = make_input_doc()
-    request_mock.body.getvalue.return_value = json.dumps(input_doc).encode()
+    req_doc = make_moldb_doc()
+    request_mock.body.getvalue.return_value = json.dumps(req_doc).encode()
 
     db = DB()
     (moldb_id,) = db.insert_return(
         'INSERT INTO molecular_db (name, version, group_id) VALUES (%s, %s, %s) RETURNING id',
-        rows=[(input_doc['name'], input_doc['version'], input_doc['group_id'])],
+        rows=[(req_doc['name'], req_doc['version'], req_doc['group_id'])],
     )
 
     resp = api.delete_molecular_database(moldb_id)
@@ -137,5 +136,31 @@ def test_delete_moldb(request_mock, fill_db):
     assert resp['status'] == 'success'
 
     db = DB()
-    (db_count,) = db.select_one('SELECT COUNT(*) FROM molecular_db')
+    (db_count,) = db.select_one(MOLDB_COUNT_SEL)
     assert db_count == 0
+
+
+@pytest.mark.parametrize(
+    ('archived_before', 'archived_after'), [(False, True), (True, False)],
+)
+@patch('sm.rest.api.bottle.request')
+def test_update_moldb(request_mock, archived_before, archived_after, fill_db):
+    doc = make_moldb_doc(archived=archived_before)
+    db = DB()
+    (moldb_id,) = db.insert_return(
+        'INSERT INTO molecular_db (name, version, group_id, archived) '
+        'VALUES (%s, %s, %s, %s) RETURNING id',
+        rows=[(doc['name'], doc['version'], doc['group_id'], doc['archived'])],
+    )
+
+    req_doc = {'archived': archived_after}
+    request_mock.body.getvalue.return_value = json.dumps(req_doc).encode()
+
+    resp = api.update_molecular_database(moldb_id)
+
+    assert resp['status'] == 'success'
+
+    result_doc = db.select_one_with_fields(
+        'SELECT * FROM molecular_db where id = %s', params=(moldb_id,),
+    )
+    assert result_doc['archived'] == archived_after

@@ -237,7 +237,7 @@ def create_molecular_database():
     params = None
     try:
         params = _body_to_json(bottle.request)
-        logger.info(f'Received molecular database create request: {params}')
+        logger.info(f'Creating molecular database. Params: {params}')
 
         required_fields = ['name', 'version', 'group_id', 'file_path']
         if not all([field in params for field in required_fields]):
@@ -254,13 +254,13 @@ def create_molecular_database():
 
         return _make_response(OK, data=moldb.to_dict())
     except psycopg2.errors.UniqueViolation:  # pylint: disable=no-member
-        logger.exception(f'Database already exists. Parameters: {params}')
+        logger.exception(f'Database already exists. Params: {params}')
         return _make_response(ALREADY_EXISTS)
     except MalformedCSV as e:
-        logger.exception(f'Malformed CSV file. Parameters: {params}')
+        logger.exception(f'Malformed CSV file. Params: {params}')
         return _make_response(MALFORMED_CSV, errors=e.errors)
     except Exception:
-        logger.exception(f'Server error. Parameters: {params}')
+        logger.exception(f'Server error. Params: {params}')
         return _make_response(INTERNAL_ERROR)
 
 
@@ -269,14 +269,32 @@ def delete_molecular_database(moldb_id):
     """Delete the molecular database and all associated jobs."""
 
     try:
+        logger.info(f'Deleting molecular database. ID: {moldb_id}')
         MolecularDB.delete(moldb_id)
         return _make_response(OK)
     except Exception:
-        logger.exception(f'Server error. Parameters: {moldb_id}')
+        logger.exception(f'Server error. ID: {moldb_id}')
         return _make_response(INTERNAL_ERROR)
 
 
-# TODO: add endpoint to un-archive database
+@app.post('/v1/molecular_dbs/update/<moldb_id>')
+def update_molecular_database(moldb_id):
+    """Update a molecular database.
+
+    Body format: {
+        archived: {true/false}
+    }
+    """
+
+    try:
+        params = _body_to_json(bottle.request)
+        logger.info(f'Updating molecular database. ID: {moldb_id}. Params: {params}')
+
+        MolecularDB.update(moldb_id, params['archived'])
+        return _make_response(OK)
+    except Exception:
+        logger.exception(f'Server error. ID: {moldb_id}. Params: {params}')
+        return _make_response(INTERNAL_ERROR)
 
 
 if __name__ == '__main__':

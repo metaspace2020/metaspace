@@ -1,12 +1,6 @@
 from sm.engine.db import ConnectionPool, DB, TransactionContext
 
-TABLE_CREATE = (
-    'CREATE TABLE job ('
-    '   id SERIAL NOT NULL,'
-    '   moldb_id integer,'
-    '   ds_id text'
-    ')'
-)
+TABLE_CREATE = 'CREATE TABLE job (id SERIAL NOT NULL, moldb_id integer, ds_id text)'
 JOB_INS = 'INSERT INTO job (moldb_id, ds_id) VALUES (%s, %s) RETURNING id'
 JOB_SEL = 'SELECT moldb_id, ds_id FROM job WHERE id = %s'
 
