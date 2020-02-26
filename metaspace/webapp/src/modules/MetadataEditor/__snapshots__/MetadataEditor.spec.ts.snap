@@ -759,7 +759,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
               </mock-el-popover>
             </div>
           </div>
-          <div class="el-col el-col-18" style="padding: 12px 6px 0px;">
+          <div class="el-col el-col-18" style="padding: 0px 5px;">
             <div role="switch" aria-checked="true" class="el-switch is-checked"><input type="checkbox" name="" true-value="true" class="el-switch__input"><span class="el-switch__label el-switch__label--left"><!----><span aria-hidden="true">Private</span></span><span class="el-switch__core" style="width: 40px;"></span><span class="el-switch__label el-switch__label--right is-active"><!----><span>Public</span></span></div>
           </div>
         </div>
