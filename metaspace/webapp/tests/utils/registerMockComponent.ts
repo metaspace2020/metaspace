@@ -5,6 +5,9 @@ export interface MockComponentOptions {
   // If abstract is true, it prevents the children from being wrapped in a mock element. This requires
   // the default slot to contain exactly 1 element.
   abstract?: Boolean;
+
+  // Path for `jest.doMock`, useful for tsx components
+  path?: string;
 }
 
 export default (name: string, options?: MockComponentOptions) => {
@@ -43,4 +46,8 @@ export default (name: string, options?: MockComponentOptions) => {
       }
     },
   })
+
+  if (options && options.path) {
+    jest.doMock(options.path, () => Vue.component(name))
+  }
 }

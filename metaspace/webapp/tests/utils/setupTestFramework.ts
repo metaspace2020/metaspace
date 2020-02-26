@@ -44,6 +44,9 @@ registerMockComponent('transition-group')
 // Ignore delay duration
 jest.mock('../../src/lib/delay', () => jest.fn(() => Promise.resolve()))
 
+// Mock elapsed time as it relies on variables such as current time and locale
+registerMockComponent('elapsed-time', { path: '../../src/components/ElapsedTime' })
+
 // Track all components mounted by vue-test-utils and automatically clean them up after each test to prevent stale
 // components from updating due to e.g. route changes
 const mockWrappers: Wrapper<Vue>[] = []
