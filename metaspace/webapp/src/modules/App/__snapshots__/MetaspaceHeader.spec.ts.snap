@@ -22,13 +22,12 @@ exports[`MetaspaceHeader should match snapshot (logged in) 1`] = `
       </a>
       <!---->
       <div class="header-items">
-        <div class="submenu-container user-submenu">
-          <div class="header-item submenu-header">
+        <div class="submenu-container user-submenu"><a href="/user/me" class="header-item submenu-header page-link">
             <div class="limit-width" style="color: white;">
               Test User
               <mock-el-tooltip content="currentUser.projects.1.project.name has a pending membership request." placement="left"><span class="notification"></span></mock-el-tooltip>
             </div>
-          </div>
+          </a>
           <div class="submenu"><a href="/user/me" class="submenu-item page-link">
               My account
               <mock-el-tooltip content="currentUser.projects.1.project.name has a pending membership request." placement="left"><span class="notification"></span></mock-el-tooltip></a>
