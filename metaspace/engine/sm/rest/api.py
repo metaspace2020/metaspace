@@ -2,9 +2,9 @@ import argparse
 import json
 import logging
 
-import bottle
 import pandas as pd
 import psycopg2.errors
+import bottle
 
 from sm.engine.db import DB, TransactionContext
 from sm.engine.es_export import ESExporter
@@ -89,7 +89,7 @@ def sm_modify_dataset(request_name):
     return _modify
 
 
-app = bottle.Bottle()
+app = bottle.Bottle()  # pylint: disable=invalid-name
 
 
 @app.get('/')
@@ -251,7 +251,7 @@ def create_molecular_database():
             import_molecules_from_df(moldb, moldb_df)
 
         return _make_response(OK, data=moldb.to_dict())
-    except psycopg2.errors.UniqueViolation as e:
+    except psycopg2.errors.UniqueViolation as e:  # pylint: disable=no-member
         logger.exception(f'Database already exists: {params}')
         return _make_response(ALREADY_EXISTS)
     except MalformedCSV as e:

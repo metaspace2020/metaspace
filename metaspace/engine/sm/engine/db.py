@@ -1,11 +1,10 @@
+import functools
 import logging
 import threading
-from functools import wraps
 
 from psycopg2.extras import execute_values
 import psycopg2.extensions
 from psycopg2.pool import ThreadedConnectionPool
-from psycopg2 import ProgrammingError, IntegrityError, DataError
 
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
@@ -70,12 +69,38 @@ class TransactionContext:
         return exc_type is None  # return False to re-raise exception
 
     @classmethod
-    def is_active(cls):
-        return bool(getattr(cls.thread_local, 'conn', None))
-
-    @classmethod
     def get_conn(cls):
         return getattr(cls.thread_local, 'conn', None)
+
+    @classmethod
+    def is_active(cls):
+        return bool(cls.get_conn())
+
+
+def transaction(func):
+    @functools.wraps(func)
+    def wrapper(self, sql, *args, **kwargs):
+        def get_conn_call_func():
+            # For cases when SQL queries are written to StringIO
+            value_getter = getattr(sql, 'getvalue', None)
+            debug_output = sql if not value_getter else value_getter()
+            logger.debug(debug_output[:1000])
+
+            conn = TransactionContext.get_conn()
+            with conn.cursor() as curs:
+                self._curs = curs  # pylint: disable=protected-access
+                return func(self, sql, *args, **kwargs)
+
+        res = None
+        if TransactionContext.is_active():
+            res = get_conn_call_func()
+        else:
+            with TransactionContext():
+                res = get_conn_call_func()
+
+        return res
+
+    return wrapper
 
 
 class DB:
@@ -83,32 +108,6 @@ class DB:
 
     def __init__(self):
         self._curs = None
-
-    def transaction(func):
-
-        @wraps(func)
-        def wrapper(self, sql, *args, **kwargs):
-
-            def get_conn_call_func():
-                # For cases when SQL queries are written to StringIO
-                value_getter = getattr(sql, 'getvalue', None)
-                debug_output = sql if not value_getter else value_getter()
-                logger.debug(debug_output[:1000])
-
-                conn = TransactionContext.get_conn()
-                with conn.cursor() as curs:
-                    self._curs = curs
-                    return func(self, sql, *args, **kwargs)
-
-            res = None
-            if TransactionContext.is_active():
-                res = get_conn_call_func()
-            else:
-                with TransactionContext():
-                    res = get_conn_call_func()
-
-            return res
-        return wrapper
 
     def _add_fields(self, rows):
         fields = [desc[0] for desc in self._curs.description]
