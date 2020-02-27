@@ -5,7 +5,8 @@ import psycopg2.errors
 import bottle
 
 from sm.engine.db import TransactionContext
-from sm.engine.molecular_db import MolecularDB, import_molecules_from_df, MalformedCSV
+from sm.engine import molecular_db
+from sm.engine.molecular_db import import_molecules_from_df, MalformedCSV
 from sm.rest.utils import (
     body_to_json,
     make_response,
@@ -42,7 +43,7 @@ def create():
             return make_response(WRONG_PARAMETERS, data=f'Required fields: {required_fields}')
 
         with TransactionContext():
-            moldb = MolecularDB.create(
+            moldb = molecular_db.create(
                 params['name'], params['version'], params['group_id'], public=False
             )
             moldb_df = pd.read_csv(params['file_path'], sep='\t')
@@ -66,7 +67,7 @@ def delete(moldb_id):
     """Delete the molecular database and all associated jobs."""
     try:
         logger.info(f'Deleting molecular database. ID: {moldb_id}')
-        MolecularDB.delete(moldb_id)
+        molecular_db.delete(moldb_id)
         return make_response(OK)
     except Exception:
         logger.exception(f'Server error. ID: {moldb_id}')
@@ -84,7 +85,7 @@ def update(moldb_id):
     try:
         params = body_to_json(bottle.request)
         logger.info(f'Updating molecular database. ID: {moldb_id}. Params: {params}')
-        MolecularDB.update(moldb_id, params['archived'])
+        molecular_db.update(moldb_id, params['archived'])
         return make_response(OK)
     except Exception:
         logger.exception(f'Server error. ID: {moldb_id}. Params: {params}')

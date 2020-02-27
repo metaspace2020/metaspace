@@ -7,6 +7,13 @@ from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
 from sm.engine.db import DB
 from sm.engine.errors import SMError
 
+MOLDB_INS = (
+    'INSERT INTO molecular_db (name, version, group_id, public) '
+    'values (%s, %s, %s, %s) RETURNING id'
+)
+MOLDB_UPD = 'UPDATE molecular_db SET archived = %s WHERE id = %s'
+MOLDB_DEL = 'DELETE FROM molecular_db WHERE id = %s'
+
 logger = logging.getLogger('engine')
 
 
@@ -55,6 +62,20 @@ def import_molecules_from_df(moldb, moldb_df):
     logger.info(f'{moldb}: inserted {len(moldb_df)} molecules')
 
 
+def create(name, version, group_id=None, public=True):
+    # pylint: disable=unbalanced-tuple-unpacking
+    (moldb_id,) = DB().insert_return(MOLDB_INS, rows=[(name, version, group_id, public)],)
+    return MolecularDB(id=moldb_id)
+
+
+def delete(moldb_id):
+    DB().alter(MOLDB_DEL, params=(moldb_id,))
+
+
+def update(moldb_id, archived):
+    DB().alter(MOLDB_UPD, params=(archived, moldb_id))
+
+
 class MolecularDB:
     """Represents a molecular database to search against."""
 
@@ -62,13 +83,6 @@ class MolecularDB:
     MOLDB_SEL_BY_NAME = 'SELECT id, name, version FROM molecular_db WHERE name = %s'
     MOLECULES_SEL_BY_DB = 'SELECT mol_id, mol_name, formula FROM molecule m WHERE m.moldb_id = %s'
     FORMULAS_SEL_BY_DB = 'SELECT DISTINCT formula FROM molecule m WHERE m.moldb_id = %s'
-
-    MOLDB_INS = (
-        'INSERT INTO molecular_db (name, version, group_id, public) '
-        'values (%s, %s, %s, %s) RETURNING id'
-    )
-    MOLDB_UPD = 'UPDATE molecular_db SET archived = %s WHERE id = %s'
-    MOLDB_DEL = 'DELETE FROM molecular_db WHERE id = %s'
 
     # pylint: disable=redefined-builtin
     def __init__(self, id=None, name=None):
@@ -95,20 +109,6 @@ class MolecularDB:
 
     def to_dict(self):
         return {'id': self.id, 'name': self.name, 'version': self.version}
-
-    @classmethod
-    def create(cls, name, version, group_id=None, public=True):
-        # pylint: disable=unbalanced-tuple-unpacking
-        (moldb_id,) = DB().insert_return(cls.MOLDB_INS, rows=[(name, version, group_id, public)],)
-        return MolecularDB(id=moldb_id)
-
-    @classmethod
-    def delete(cls, id):
-        DB().alter(cls.MOLDB_DEL, params=(id,))
-
-    @classmethod
-    def update(cls, id, archived):
-        DB().alter(cls.MOLDB_UPD, params=(archived, id))
 
     def get_molecules(self):
         """Fetches all molecular database molecules as a DataFrame.
