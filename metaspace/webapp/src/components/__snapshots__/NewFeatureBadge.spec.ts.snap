@@ -1,0 +1,8 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`NewFeatureBadge should render a badge 1`] = `
+Array [
+  "el-badge",
+  "sm-feature-badge",
+]
+`;

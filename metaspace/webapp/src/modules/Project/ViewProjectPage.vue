@@ -59,6 +59,7 @@
       <el-tabs
         v-model="tab"
         class="with-badges"
+        @tab-click="checkReviewLinksBadge"
       >
         <el-tab-pane
           v-if="canEdit || project.projectDescriptionAsHtml !== ''"
@@ -122,9 +123,9 @@
           lazy
         >
           <span slot="label">
-            <el-badge value="New">
+            <new-feature-badge feature-key="review_links">
               Review
-            </el-badge>
+            </new-feature-badge>
           </span>
           <review
             :project-id="projectId"
@@ -184,6 +185,7 @@ import { optionalSuffixInParens, plural } from '../../lib/vueFilters'
 import { removeDatasetFromAllDatasetsQuery } from '../../lib/updateApolloCache'
 import ProjectDescription from './ProjectDescription.vue'
 import Review from './Review'
+import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
 
   interface ViewProjectPageData {
     allDatasets: DatasetDetailItem[];
@@ -198,6 +200,7 @@ import Review from './Review'
       NotificationIcon,
       ProjectDescription,
       Review,
+      NewFeatureBadge,
     },
     filters: {
       optionalSuffixInParens,
@@ -307,6 +310,16 @@ export default class ViewProjectPage extends Vue {
 
     set tab(tab: string) {
       this.$router.replace({ query: { tab } })
+    }
+
+    checkReviewLinksBadge() {
+      if (this.tab === 'review') {
+        hideFeatureBadge('review_links')
+      }
+    }
+
+    mounted() {
+      this.checkReviewLinksBadge()
     }
 
     get isInvited(): boolean {

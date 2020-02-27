@@ -15,7 +15,7 @@
   max-width: 65ch;
   padding-left: 48px;
   position: relative;
-  transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   transition-property: color;
 }
 
