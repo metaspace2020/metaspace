@@ -5,6 +5,8 @@ import pytest
 
 from sm.engine.db import DB
 from sm.rest import api
+from sm.rest.databases import MALFORMED_CSV
+from sm.rest.utils import ALREADY_EXISTS
 
 GROUP_ID = '123e4567-e89b-12d3-a456-426655440000'
 MOLDB_COUNT_SEL = 'SELECT COUNT(*) FROM molecular_db'
@@ -39,7 +41,7 @@ def test_create_moldb(request_mock, fill_db):
     req_doc = make_moldb_doc()
     request_mock.body.getvalue.return_value = json.dumps(req_doc).encode()
 
-    resp = api.create_molecular_database()
+    resp = api.databases.create()
 
     assert resp['status'] == 'success'
     resp_doc = resp['data']
@@ -70,9 +72,9 @@ def test_create_moldb_duplicate(request_mock, fill_db):
         [(req_doc['name'], req_doc['version'], req_doc['group_id'])],
     )
 
-    resp = api.create_molecular_database()
+    resp = api.databases.create()
 
-    assert resp['status'] == api.ALREADY_EXISTS['status']
+    assert resp['status'] == ALREADY_EXISTS['status']
 
     (db_count,) = db.select_one(MOLDB_COUNT_SEL)
     assert db_count == 1
@@ -91,9 +93,9 @@ def test_create_moldb_malformed_csv(request_mock, file_path, fill_db):
     req_doc['file_path'] = file_path
     request_mock.body.getvalue.return_value = json.dumps(req_doc).encode()
 
-    resp = api.create_molecular_database()
+    resp = api.databases.create()
 
-    assert resp['status'] == api.MALFORMED_CSV['status']
+    assert resp['status'] == MALFORMED_CSV['status']
     assert resp['errors']
 
     db = DB()
@@ -107,9 +109,9 @@ def test_create_moldb_wrong_formulas(request_mock, fill_db):
     req_doc['file_path'] = 's3://sm-engine/tests/test-db-wrong-formulas.csv'
     request_mock.body.getvalue.return_value = json.dumps(req_doc).encode()
 
-    resp = api.create_molecular_database()
+    resp = api.databases.create()
 
-    assert resp['status'] == api.MALFORMED_CSV['status']
+    assert resp['status'] == MALFORMED_CSV['status']
     assert resp['errors']
     err_fields = ['line', 'formula', 'error']
     for err_doc in resp['errors']:
@@ -131,7 +133,7 @@ def test_delete_moldb(request_mock, fill_db):
         rows=[(req_doc['name'], req_doc['version'], req_doc['group_id'])],
     )
 
-    resp = api.delete_molecular_database(moldb_id)
+    resp = api.databases.delete(moldb_id)
 
     assert resp['status'] == 'success'
 
@@ -156,7 +158,7 @@ def test_update_moldb(request_mock, archived_before, archived_after, fill_db):
     req_doc = {'archived': archived_after}
     request_mock.body.getvalue.return_value = json.dumps(req_doc).encode()
 
-    resp = api.update_molecular_database(moldb_id)
+    resp = api.databases.update(moldb_id)
 
     assert resp['status'] == 'success'
 
