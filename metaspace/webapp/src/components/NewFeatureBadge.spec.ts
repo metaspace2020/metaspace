@@ -14,23 +14,26 @@ describe('NewFeatureBadge', () => {
     const wrapper = mount(TestNewFeatureBadge, { propsData: { featureKey } })
     expect(wrapper.classes()).toMatchSnapshot()
   })
-  it.skip('should hide the badge', () => {
+
+  it('should hide the badge', async() => {
     const wrapper = mount(TestNewFeatureBadge, { propsData: { featureKey } })
     hideFeatureBadge(featureKey)
-    console.log(wrapper.html())
+    wrapper.vm.$forceUpdate() // hacking this for now, works IRL
+    expect(wrapper.classes()).toMatchSnapshot()
   })
+
   it('should not render the badge if already hidden', () => {
     hideFeatureBadge(featureKey)
     const wrapper = mount(TestNewFeatureBadge, { propsData: { featureKey } })
     expect(wrapper.classes()).toMatchSnapshot()
   })
+
   it('should not render the badge if stale', () => {
     const spy = jest.spyOn(global.Date, 'now').mockImplementation(() => new Date('2020-01-02T00:00:00.000').valueOf())
     const wrapper = mount(TestNewFeatureBadge, {
       propsData: { featureKey, showUntil: new Date('2020-01-01T00:00:00.000') },
     })
-    console.log(wrapper.html())
-    // expect(wrapper.classes()).toMatchSnapshot()
+    expect(wrapper.classes()).toMatchSnapshot()
     spy.mockRestore()
   })
 })
