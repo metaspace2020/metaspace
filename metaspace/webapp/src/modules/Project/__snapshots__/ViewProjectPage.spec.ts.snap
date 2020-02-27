@@ -147,7 +147,7 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
               <div id="tab-members" aria-controls="pane-members" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
           Members (2)
           <span class="notification"></span></span></div>
-              <div id="tab-review" aria-controls="pane-review" role="tab" tabindex="-1" class="el-tabs__item is-top"><span><div class="el-badge">
+              <div id="tab-review" aria-controls="pane-review" role="tab" tabindex="-1" class="el-tabs__item is-top"><span><div class="el-badge sm-feature-badge">
             Review
           <sup class="el-badge__content el-badge__content--undefined is-fixed" name="el-zoom-in-center">New</sup></div></span></div>
               <div id="tab-settings" aria-controls="pane-settings" role="tab" tabindex="-1" class="el-tabs__item is-top">Settings</div>
@@ -495,7 +495,7 @@ exports[`ViewProjectPage settings tab should match snapshot 1`] = `
               <div id="tab-members" aria-controls="pane-members" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
           Members (2)
           <!----></span></div>
-              <div id="tab-review" aria-controls="pane-review" role="tab" tabindex="-1" class="el-tabs__item is-top"><span><div class="el-badge">
+              <div id="tab-review" aria-controls="pane-review" role="tab" tabindex="-1" class="el-tabs__item is-top"><span><div class="el-badge sm-feature-badge">
             Review
           <sup class="el-badge__content el-badge__content--undefined is-fixed" name="el-zoom-in-center">New</sup></div></span></div>
               <div id="tab-settings" aria-controls="pane-settings" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active">Settings</div>
