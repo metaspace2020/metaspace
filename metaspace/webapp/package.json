@@ -128,7 +128,6 @@
               "@vue/cli-plugin-babel/preset",
               {
                 "useBuiltIns": "entry",
-                "modules": "commonjs",
                 "targets": {
                   "node": "current"
                 }
