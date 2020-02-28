@@ -7,11 +7,14 @@ import {EngineDataset, OpticalImage as OpticalImageModel} from '../../engine/mod
 import {Dataset, OpticalImage, OpticalImageType} from '../../../binding';
 import getScopeRoleForEsDataset from '../operation/getScopeRoleForEsDataset';
 import logger from '../../../utils/logger';
+import config from '../../../utils/config';
 import {Context} from '../../../context';
 import getGroupAdminNames from '../../group/util/getGroupAdminNames';
 import * as DataLoader from 'dataloader';
 import {esDatasetByID} from '../../../../esConnector';
 import {ExternalLink} from '../../project/ExternalLink';
+import {S3} from 'aws-sdk';
+import canViewEsDataset from '../operation/canViewEsDataset'
 
 interface DbDataset {
   id: string;
@@ -77,6 +80,9 @@ export const rawOpticalImage = async (datasetId: string, ctx: Context) => {
   return null;
 };
 
+const canDownloadDataset = async (ds: DatasetSource, ctx: Context) => {
+  return ctx.isAdmin || (config.features.imzmlDownload && await canViewEsDataset(ds, ctx.user))
+}
 
 const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   id(ds) {
@@ -302,7 +308,53 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   async externalLinks(ds, args, ctx) {
     const dbDs = await getDbDatasetById(ctx, ds._source.ds_id);
     return dbDs && dbDs.external_links || [];
-  }
+  },
+
+  async canDownload(ds, args, ctx) {
+    return await canDownloadDataset(ds, ctx);
+  },
+
+  async downloadLinkJson(ds, args, ctx) {
+    if (await canDownloadDataset(ds, ctx)) {
+      const parsedPath = /s3a:\/\/([^/]+)\/(.*)/.exec(ds._source.ds_input_path);
+      let files: {filename: string, link: string}[];
+      if (parsedPath != null) {
+        const [, bucket, prefix] = parsedPath;
+        const s3 = new S3({
+          region: config.aws.aws_region,
+          credentials: {
+            accessKeyId: config.aws.aws_access_key_id,
+            secretAccessKey: config.aws.aws_secret_access_key,
+          },
+        });
+        const objects = await s3.listObjectsV2({
+          Bucket: bucket,
+          Prefix: prefix,
+        }).promise();
+        const fileKeys = (objects.Contents || [])
+          .map(obj => obj.Key!)
+          .filter(key => key && /(\.imzml|.ibd|.mzml)$/.test(key));
+        files = fileKeys.map(key => ({
+          filename: key.replace(/.*\//, ''),
+          link: s3.getSignedUrl('getObject', { Bucket: bucket, Key: key, Expires: 1800 }),
+        }));
+      } else {
+        files = [];
+      }
+
+      return JSON.stringify({
+        contributors: [
+          {name: ds._source.ds_submitter_name, institution: ds._source.ds_group_name},
+        ],
+        license: ds._source.ds_is_public
+          ? `CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/) You must give appropriate credit when using these files!`
+          : 'No license has been indicated. Contact the author for permission before downloading or using this file.',
+        files,
+      });
+    } else {
+      return null;
+    }
+  },
 };
 
 export default DatasetResolvers;
