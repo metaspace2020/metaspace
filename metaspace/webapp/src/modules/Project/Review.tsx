@@ -1,7 +1,7 @@
 import './review.css'
 
 // import Vue from 'vue'
-import { createComponent, computed } from '@vue/composition-api'
+import { createComponent, computed, reactive } from '@vue/composition-api'
 import { Button } from 'element-ui'
 
 import CopyToClipboard from '../../components/CopyToClipboard'
@@ -42,6 +42,20 @@ const ReviewLink = createComponent({
       }
       return `${window.location.origin}/api_auth/review?prj=${props.projectId}&token=${props.reviewToken}`
     })
+
+    const state = reactive({
+      loading: false,
+    })
+
+    const withLoading = (cb: Function | undefined) => {
+      return async() => {
+        if (!cb) return
+        state.loading = true
+        await cb()
+        state.loading = false
+      }
+    }
+
     return () => (
       <ol class="sm-workflow">
         <WorkflowItem
@@ -59,7 +73,11 @@ const ReviewLink = createComponent({
           </p>
           {props.publicationStatus === statuses.UNPUBLISHED
             && <form>
-              <Button onClick={props.createLink} type="primary">
+              <Button
+                loading={state.loading}
+                onClick={withLoading(props.createLink)}
+                type="primary"
+              >
                 Create link
               </Button>
             </form>
