@@ -24,6 +24,18 @@ export class MolecularDB {
   @Column({ type: 'text' })
   version: string;
 
+  @Column({ type: 'text', default: null })
+  description: string;
+
+  @Column({ type: 'text', default: null })
+  fullName: string;
+
+  @Column({ type: 'text', default: null })
+  link: string;
+
+  @Column({ type: 'text', default: null })
+  citation: string;
+
   @OneToMany(type => Molecule, molecule => molecule.molecularDB)
   molecules: Molecule[];
 

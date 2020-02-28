@@ -8,10 +8,11 @@ from sm.engine.db import DB
 from sm.engine.errors import SMError
 
 MOLDB_INS = (
-    'INSERT INTO molecular_db (name, version, group_id, public) '
-    'values (%s, %s, %s, %s) RETURNING id'
+    'INSERT INTO molecular_db '
+    '   (name, version, group_id, public, description, full_name, link, citation) '
+    'values (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id'
 )
-MOLDB_UPD = 'UPDATE molecular_db SET archived = %s WHERE id = %s'
+MOLDB_UPD_TMPL = 'UPDATE molecular_db SET {} WHERE id = %s'
 MOLDB_DEL = 'DELETE FROM molecular_db WHERE id = %s'
 
 logger = logging.getLogger('engine')
@@ -62,9 +63,22 @@ def import_molecules_from_df(moldb, moldb_df):
     logger.info(f'{moldb}: inserted {len(moldb_df)} molecules')
 
 
-def create(name, version, group_id=None, public=True):
+def create(
+    name=None,
+    version=None,
+    group_id=None,
+    public=True,
+    description=None,
+    full_name=None,
+    link=None,
+    citation=None,
+):
+    assert name and version
+
     # pylint: disable=unbalanced-tuple-unpacking
-    (moldb_id,) = DB().insert_return(MOLDB_INS, rows=[(name, version, group_id, public)],)
+    (moldb_id,) = DB().insert_return(
+        MOLDB_INS, rows=[(name, version, group_id, public, description, full_name, link, citation)],
+    )
     return MolecularDB(id=moldb_id)
 
 
@@ -72,8 +86,20 @@ def delete(moldb_id):
     DB().alter(MOLDB_DEL, params=(moldb_id,))
 
 
-def update(moldb_id, archived):
-    DB().alter(MOLDB_UPD, params=(archived, moldb_id))
+def update(
+    moldb_id, archived=None, description=None, full_name=None, link=None, citation=None,
+):
+    assert archived is not None or description or full_name or link or citation
+
+    kwargs = {k: v for k, v in locals().items() if v is not None}
+    kwargs.pop('moldb_id')
+
+    update_fields = [f'{field} = %s' for field in kwargs.keys()]
+    update_values = list(kwargs.values())
+    update_values.append(moldb_id)
+    DB().alter(MOLDB_UPD_TMPL.format(', '.join(update_fields)), params=update_values)
+
+    return MolecularDB(id=moldb_id)
 
 
 class MolecularDB:

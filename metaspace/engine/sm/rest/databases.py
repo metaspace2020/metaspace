@@ -27,10 +27,14 @@ def create():
     """Create a molecular database and import molecules.
 
     Body format: {
-        name - database name
-        version - database version
+        name - short database name
+        version - database version, any string
         group_id - UUID of group database belongs to
         file_path - S3 path to database import file (s3://bucket/path)
+        description - database description
+        full_name - full database name
+        link - public database URL
+        citation - database citation string
     }
     """
     params = None
@@ -43,10 +47,10 @@ def create():
             return make_response(WRONG_PARAMETERS, data=f'Required fields: {required_fields}')
 
         with TransactionContext():
-            moldb = molecular_db.create(
-                params['name'], params['version'], params['group_id'], public=False
-            )
-            moldb_df = pd.read_csv(params['file_path'], sep='\t')
+            file_path = params.pop('file_path')
+            params['public'] = False
+            moldb = molecular_db.create(**params)
+            moldb_df = pd.read_csv(file_path, sep='\t')
             import_molecules_from_df(moldb, moldb_df)
             # TODO: update "targeted" field
 
@@ -80,13 +84,18 @@ def update(moldb_id):
 
     Body format: {
         archived: {true/false}
+        description - database description
+        full_name - full database name
+        link - public database URL
+        citation - database citation string
     }
     """
+    params = None
     try:
         params = body_to_json(bottle.request)
         logger.info(f'Updating molecular database. ID: {moldb_id}. Params: {params}')
-        molecular_db.update(moldb_id, params['archived'])
-        return make_response(OK)
+        moldb = molecular_db.update(moldb_id, **params)
+        return make_response(OK, data=moldb.to_dict())
     except Exception:
         logger.exception(f'Server error. ID: {moldb_id}. Params: {params}')
         return make_response(INTERNAL_ERROR)

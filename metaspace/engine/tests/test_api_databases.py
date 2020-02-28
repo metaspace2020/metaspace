@@ -32,6 +32,7 @@ def make_moldb_doc(**kwargs):
         'group_id': GROUP_ID,
         'public': False,
         'file_path': 's3://sm-engine/tests/test-db-2.tsv',
+        'description': 'Full database description',
     }
     return {**req_doc, **kwargs}
 
@@ -155,7 +156,7 @@ def test_update_moldb(request_mock, archived_before, archived_after, fill_db):
         rows=[(doc['name'], doc['version'], doc['group_id'], doc['archived'])],
     )
 
-    req_doc = {'archived': archived_after}
+    req_doc = {'archived': archived_after, 'description': 'Database description'}
     request_mock.body.getvalue.return_value = json.dumps(req_doc).encode()
 
     resp = api.databases.update(moldb_id)
@@ -166,3 +167,4 @@ def test_update_moldb(request_mock, archived_before, archived_after, fill_db):
         'SELECT * FROM molecular_db where id = %s', params=(moldb_id,),
     )
     assert result_doc['archived'] == archived_after
+    assert result_doc['description'] == 'Database description'
