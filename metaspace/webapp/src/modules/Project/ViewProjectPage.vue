@@ -134,6 +134,7 @@
             :create-link="createReviewLink"
             :delete-link="deleteReviewLink"
             :publish-project="publishProject"
+            :current-user-name="currentUserName"
           />
         </el-tab-pane>
         <el-tab-pane
@@ -283,6 +284,14 @@ export default class ViewProjectPage extends Vue {
 
     get currentUserId(): string | null { return this.currentUser && this.currentUser.id }
     get roleInProject(): ProjectRole | null { return this.project && this.project.currentUserRole }
+
+    get currentUserName() {
+      if (this.currentUser && this.currentUser.name) {
+        return this.currentUser.name
+      }
+      return ''
+    }
+
     get projectDatasets(): DatasetDetailItem[] {
       return (this.data && this.data.allDatasets || []).filter(ds => ds.status !== 'FAILED')
     }

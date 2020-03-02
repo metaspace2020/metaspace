@@ -26,6 +26,17 @@ const WorkflowItem = createComponent({
   },
 })
 
+function getInitialProjectData(currentUserName = '') {
+  const year = new Date().getFullYear()
+  const nameParts = currentUserName.split(' ')
+  const surname = nameParts.length ? nameParts[nameParts.length - 1] : null
+  return {
+    name: surname ? `${surname} et al. (${year})` : '',
+    url: surname ? `${surname.toLowerCase()}-${year}` : '',
+    description: '',
+  }
+}
+
 const ReviewLink = createComponent({
   props: {
     projectId: String,
@@ -34,6 +45,7 @@ const ReviewLink = createComponent({
     createLink: Function,
     deleteLink: Function,
     publishProject: Function,
+    currentUserName: String,
   },
   setup(props, { root }) {
     const reviewLink = computed(() => {
@@ -53,11 +65,7 @@ const ReviewLink = createComponent({
     const state = reactive({
       loading: false,
       updateProject: false,
-      projectData: {
-        title: '',
-        url: '',
-        description: '',
-      },
+      projectData: getInitialProjectData(props.currentUserName),
     })
 
     const withLoading = (cb: Function | undefined) => {
@@ -89,17 +97,17 @@ const ReviewLink = createComponent({
             && <form>
               <hr />
               <Checkbox value={state.updateProject} onChange={() => { state.updateProject = !state.updateProject }}>
-                Update project details (optional)
+                Update project details (recommended)
               </Checkbox>
               <div class={['sm-workflow-optional-form', { enabled: state.updateProject }]}>
-                <label for="project-review-title">Set the project title:</label>
-                <Input id="project-review-title" value="" disabled={!state.updateProject} />
+                <label for="project-review-title">Set the project name:</label>
+                <Input id="project-review-title" value={state.projectData.name} disabled={!state.updateProject} />
                 <label for="project-review-url">Create a custom URL:</label>
-                <Input id="project-review-url" value="" disabled={!state.updateProject}>
+                <Input id="project-review-url" value={state.projectData.url} disabled={!state.updateProject}>
                   <span slot="prepend">{projectUrlPrefix}</span>
                 </Input>
                 <label for="project-review-description">Add an abstract to the project description:</label>
-                <Input id="project-review-description" type="textarea" rows="4" value="" disabled={!state.updateProject} />
+                <Input id="project-review-description" value={state.projectData.description} type="textarea" rows="4" value="" disabled={!state.updateProject} />
               </div>
               <Button
                 loading={state.loading}

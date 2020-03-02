@@ -67,7 +67,8 @@
   padding-bottom: 12px; /* 4px + 1/2 line (12px) */
 }
 
-.sm-workflow-optional-form {
+.sm-workflow-optional-form,
+.sm-workflow-optional-form .el-input.is-disabled .el-input__inner {
   color: hsl(208, 22%, 49%);
 }
 
@@ -90,7 +91,7 @@
   font-weight: 700;
   height: 48px;
   justify-content: center;
-  left: -25px; /* 50% plus 1px for the border */
+  left: -25px; /* 50% plus 1px for adjoining line */
   position: absolute;
   top: 0;
   transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
@@ -110,7 +111,6 @@
 .sm-workflow li.done:before {
   content: '\e6da';
   font-family: element-icons !important;
-  font-size: 26px; /* looked nicer being a few pixels different */
 }
 
 
@@ -128,6 +128,26 @@
   border-color: hsl(208, 22%, 49%);
 }
 
+.sm-workflow .el-button {
+  transition-property: opacity;
+}
+
+.sm-workflow .el-button--info {
+  background-color: hsl(208, 22%, 49%);
+}
+
+.sm-workflow .el-button--primary {
+  background-color: #008aff;
+}
+
+.sm-workflow .el-button:hover,
+.sm-workflow .el-button:focus {
+  opacity: 0.8;
+}
+
+.sm-workflow .el-button:active {
+  opacity: 1;
+}
 
 /* utils */
 
