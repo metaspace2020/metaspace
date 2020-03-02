@@ -140,7 +140,7 @@ const ReviewLink = createComponent({
                 Publish project
               </Button>
             </form>
-            : <p>Reviewers will have access this project prior to publication.</p>
+            : <p>Reviewers will have access to this project prior to publication.</p>
           }
         </WorkflowItem>
         <WorkflowItem
