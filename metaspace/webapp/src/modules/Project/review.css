@@ -11,8 +11,8 @@
   color: hsl(208, 22%, 49%);
   display: flex;
   flex-direction: column;
-  margin-left: 24px;
-  max-width: 65ch;
+  margin-left: 36px;
+  max-width: 60ch;
   padding-left: 48px;
   position: relative;
   transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
@@ -38,9 +38,45 @@
   margin-bottom: 48px;
 }
 
-.sm-workflow form > :last-child {
+/* .sm-workflow form > :last-child {
   margin-bottom: 0;
+} */
+
+.sm-workflow hr {
+  border: none;
+  border-bottom: 1px solid #DCDFE6; /* Grey from Element */
+  margin-bottom: 11px;
 }
+
+.sm-workflow label {
+  color: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.sm-workflow button,
+.sm-workflow .el-input {
+  margin: 4px 0; /* 2x line height (48px) - height (40px) / 2 */
+}
+
+.sm-workflow .el-textarea {
+  margin-top: 4px;
+}
+
+.sm-workflow .el-input {
+  padding-bottom: 12px; /* 4px + 1/2 line (12px) */
+}
+
+.sm-workflow-optional-form {
+  color: hsl(208, 22%, 49%);
+}
+
+.sm-workflow-optional-form.enabled {
+  color: inherit;
+}
+
+
+/* status indicators */
 
 .sm-workflow li:before {
   align-items: center;
@@ -75,4 +111,29 @@
   content: '\e6da';
   font-family: element-icons !important;
   font-size: 26px; /* looked nicer being a few pixels different */
+}
+
+
+/* Element overrides */
+
+.el-input-group__append, .el-input-group__prepend {
+  color: hsl(208, 22%, 49%);
+}
+
+.sm-workflow .el-checkbox__label  {
+  font-size: 16px;
+}
+
+.sm-workflow .el-checkbox__inner {
+  border-color: hsl(208, 22%, 49%);
+}
+
+
+/* utils */
+
+.baseline-grid {
+  background-image: linear-gradient(180deg,red 1px,transparent 0);
+  background-position: 0 0;
+  background-repeat: repeat;
+  background-size: 100% 24px;
 }

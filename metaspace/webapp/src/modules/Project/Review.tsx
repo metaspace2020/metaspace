@@ -1,8 +1,8 @@
 import './review.css'
 
 // import Vue from 'vue'
-import { createComponent, computed, reactive } from '@vue/composition-api'
-import { Button } from 'element-ui'
+import { createComponent, computed, reactive, ref, createElement } from '@vue/composition-api'
+import { Button, Input, Checkbox } from 'element-ui'
 
 import CopyToClipboard from '../../components/CopyToClipboard'
 
@@ -35,7 +35,7 @@ const ReviewLink = createComponent({
     deleteLink: Function,
     publishProject: Function,
   },
-  setup(props) {
+  setup(props, { root }) {
     const reviewLink = computed(() => {
       if (!props.projectId || !props.reviewToken) {
         return undefined
@@ -43,8 +43,21 @@ const ReviewLink = createComponent({
       return `${window.location.origin}/api_auth/review?prj=${props.projectId}&token=${props.reviewToken}`
     })
 
+    const activeStep = computed(() => {
+      if (!props.publicationStatus) {
+        return 1
+      }
+      return Object.keys(statuses).indexOf(props.publicationStatus) + 1
+    })
+
     const state = reactive({
       loading: false,
+      updateProject: false,
+      projectData: {
+        title: '',
+        url: '',
+        description: '',
+      },
     })
 
     const withLoading = (cb: Function | undefined) => {
@@ -56,23 +69,38 @@ const ReviewLink = createComponent({
       }
     }
 
+    const { href } = root.$router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined, true)
+    const projectUrlPrefix = location.origin + href.replace('REMOVE', '')
+
     return () => (
       <ol class="sm-workflow">
         <WorkflowItem
-          active={props.publicationStatus === statuses.UNPUBLISHED}
-          done={
-            props.publicationStatus === statuses.UNDER_REVIEW
-            || props.publicationStatus === statuses.PUBLISHED
-          }
+          active={activeStep.value === 1}
+          done={activeStep.value > 1}
         >
-          <h2 class="sm-workflow-header">Create a review link</h2>
+          <h2 class="sm-workflow-header">Enable peer review</h2>
           <p>
-            A review link allows reviewers to access this project and its datasets
-            <br />
-            <strong>without making the project available to everyone</strong>.
+            A review link allows reviewers to access this project and its datasets <strong>without making the project available to everyone</strong>.
           </p>
-          {props.publicationStatus === statuses.UNPUBLISHED
+          <p>
+            <em>Reviewers will not need to create an account to gain access.</em>
+          </p>
+          {activeStep.value === 1
             && <form>
+              <hr />
+              <Checkbox value={state.updateProject} onChange={() => { state.updateProject = !state.updateProject }}>
+                Update project details (optional)
+              </Checkbox>
+              <div class={['sm-workflow-optional-form', { enabled: state.updateProject }]}>
+                <label for="project-review-title">Set the project title:</label>
+                <Input id="project-review-title" value="" disabled={!state.updateProject} />
+                <label for="project-review-url">Create a custom URL:</label>
+                <Input id="project-review-url" value="" disabled={!state.updateProject}>
+                  <span slot="prepend">{projectUrlPrefix}</span>
+                </Input>
+                <label for="project-review-description">Add an abstract to the project description:</label>
+                <Input id="project-review-description" type="textarea" rows="4" value="" disabled={!state.updateProject} />
+              </div>
               <Button
                 loading={state.loading}
                 onClick={withLoading(props.createLink)}
@@ -82,7 +110,7 @@ const ReviewLink = createComponent({
               </Button>
             </form>
           }
-          {props.publicationStatus === statuses.UNDER_REVIEW
+          {activeStep.value === 2
             && <form>
               <Button onClick={props.deleteLink} type="info">
                 Remove link
@@ -91,11 +119,11 @@ const ReviewLink = createComponent({
           }
         </WorkflowItem>
         <WorkflowItem
-          active={props.publicationStatus === statuses.UNDER_REVIEW}
-          done={props.publicationStatus === statuses.PUBLISHED}
+          active={activeStep.value === 2}
+          done={activeStep.value > 2}
         >
           <h2 class="sm-workflow-header">Review in progress</h2>
-          {props.publicationStatus === statuses.UNDER_REVIEW
+          {activeStep.value === 2
             ? <form>
               <p>Reviewers can access this project using the following link:</p>
               <CopyToClipboard value={reviewLink.value} />
@@ -104,15 +132,15 @@ const ReviewLink = createComponent({
                 Publish project
               </Button>
             </form>
-            : <p>Reviewers can access this project with a link prior to publication.</p>
+            : <p>Reviewers will have access this project prior to publication.</p>
           }
         </WorkflowItem>
         <WorkflowItem
-          active={props.publicationStatus === statuses.PUBLISHED}
-          done={props.publicationStatus === statuses.PUBLISHED}
+          active={activeStep.value === 3}
+          done={activeStep.value === 3}
         >
           <h2 class="sm-workflow-header">Publish the data</h2>
-          {props.publicationStatus === statuses.PUBLISHED
+          {activeStep.value === 3
             ? <p>This project and its datasets are now public, thank you for your contribution.</p>
             : <p>This project and its datasets will be made public.</p>}
         </WorkflowItem>
