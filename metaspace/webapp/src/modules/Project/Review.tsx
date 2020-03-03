@@ -1,8 +1,8 @@
 import './review.css'
 
 // import Vue from 'vue'
-import { createComponent, computed, reactive, ref, createElement } from '@vue/composition-api'
-import { Button, Input, Checkbox } from 'element-ui'
+import { createComponent, computed, reactive } from '@vue/composition-api'
+import { Button, Input, Checkbox, Collapse, CollapseItem } from 'element-ui'
 
 import CopyToClipboard from '../../components/CopyToClipboard'
 
@@ -95,20 +95,18 @@ const ReviewLink = createComponent({
           </p>
           {activeStep.value === 1
             && <form>
-              <hr />
-              <Checkbox value={state.updateProject} onChange={() => { state.updateProject = !state.updateProject }}>
-                Update project details (recommended)
-              </Checkbox>
-              <div class={['sm-workflow-optional-form', { enabled: state.updateProject }]}>
-                <label for="project-review-title">Set the project name:</label>
-                <Input id="project-review-title" value={state.projectData.name} disabled={!state.updateProject} />
-                <label for="project-review-url">Create a custom URL:</label>
-                <Input id="project-review-url" value={state.projectData.url} disabled={!state.updateProject}>
-                  <span slot="prepend">{projectUrlPrefix}</span>
-                </Input>
-                <label for="project-review-description">Add an abstract to the project description:</label>
-                <Input id="project-review-description" value={state.projectData.description} type="textarea" rows="4" value="" disabled={!state.updateProject} />
-              </div>
+              <Collapse value={state.updateProject ? 'projectdetails' : ''} onChange={() => { state.updateProject = !state.updateProject }}>
+                <CollapseItem title="Update project details (recommended)" name="projectdetails">
+                  <label for="project-review-title">Set the project name:</label>
+                  <Input id="project-review-title" value={state.projectData.name} />
+                  <label for="project-review-url">Create a custom URL:</label>
+                  <Input id="project-review-url" value={state.projectData.url}>
+                    <span slot="prepend">{projectUrlPrefix}</span>
+                  </Input>
+                  <label for="project-review-description">Add an abstract to the project description:</label>
+                  <Input id="project-review-description" value={state.projectData.description} type="textarea" rows="4" />
+                </CollapseItem>
+              </Collapse>
               <Button
                 loading={state.loading}
                 onClick={withLoading(props.createLink)}

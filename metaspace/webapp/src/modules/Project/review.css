@@ -38,10 +38,6 @@
   margin-bottom: 48px;
 }
 
-/* .sm-workflow form > :last-child {
-  margin-bottom: 0;
-} */
-
 .sm-workflow hr {
   border: none;
   border-bottom: 1px solid #DCDFE6; /* Grey from Element */
@@ -50,8 +46,9 @@
 
 .sm-workflow label {
   color: inherit;
-  font-weight: 500;
   cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .sm-workflow button,
@@ -64,7 +61,7 @@
 }
 
 .sm-workflow .el-input {
-  padding-bottom: 12px; /* 4px + 1/2 line (12px) */
+  padding-bottom: 12px;
 }
 
 .sm-workflow-optional-form,
@@ -148,6 +145,42 @@
 .sm-workflow .el-button:active {
   opacity: 1;
 }
+
+.sm-workflow .el-collapse {
+  border-top-width: 2px;
+  border-bottom: none;
+  box-sizing: border-box;
+  margin-bottom: 12px;
+}
+
+.sm-workflow .el-collapse-item__arrow {
+  float: left;
+  text-decoration: none;
+}
+
+.sm-workflow .el-collapse-item__header {
+  border: none;
+  color: inherit;
+  font-size: inherit;
+  height: 48px;
+  padding-left: 0;
+}
+
+.sm-workflow .el-collapse-item.is-active .el-collapse-item__header {
+  background: none;
+}
+
+.sm-workflow .el-collapse-item__content {
+  padding-bottom: 0;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+.sm-workflow .el-collapse-item__wrap {
+  border: none;
+}
+
 
 /* utils */
 
