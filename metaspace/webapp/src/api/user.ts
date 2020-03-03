@@ -153,6 +153,7 @@ export const currentUserIdQuery =
 
 export interface CurrentUserRoleResult {
   id: string;
+  name: string;
   role: UserRole;
 }
 
