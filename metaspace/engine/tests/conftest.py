@@ -125,7 +125,7 @@ def fill_db(test_db, metadata, ds_config):
     db = DB()
     db.insert(
         'INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, '
-        'status, is_public) values (%s, %s, %s, %s, %s, %s, %s, %s)',
+        'status, status_update_dt, is_public) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)',
         rows=[
             (
                 ds_id,
@@ -135,6 +135,7 @@ def fill_db(test_db, metadata, ds_config):
                 json.dumps(metadata),
                 json.dumps(ds_config),
                 'FINISHED',
+                upload_dt,
                 True,
             )
         ],

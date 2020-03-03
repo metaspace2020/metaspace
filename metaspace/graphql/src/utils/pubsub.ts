@@ -10,7 +10,7 @@ interface DatasetStatusUpdatedPayload {
   dataset: ESDataset;
   action: DatasetAction;
   stage: DatasetActionStage;
-  is_new?: boolean;
+  isNew?: boolean;
 }
 
 type SystemHealthPayload = SystemHealth;

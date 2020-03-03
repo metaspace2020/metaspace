@@ -2365,6 +2365,13 @@
     source-map "~0.6.1"
     vue-template-es2015-compiler "^1.9.0"
 
+"@vue/composition-api@^0.3.4":
+  version "0.3.4"
+  resolved "https://registry.yarnpkg.com/@vue/composition-api/-/composition-api-0.3.4.tgz#43d2c3377173cfe1d02e51e3342bcf0fbde9c4b6"
+  integrity sha512-aMbg/pEk0PSQAIFyWWLqbAmaCCTx1kFq+49KZslIBJH9Wqos7eEPLtMv4gGxd/EcciBIgfbtUXaXGg/O3mheRA==
+  dependencies:
+    tslib "^1.9.3"
+
 "@vue/eslint-config-standard@^5.1.0":
   version "5.1.0"
   resolved "https://registry.yarnpkg.com/@vue/eslint-config-standard/-/eslint-config-standard-5.1.0.tgz#48684164db727f97cb3ecab4dff022dad47a7e4b"
@@ -3704,6 +3711,13 @@ babel-preset-jest@^24.9.0:
   dependencies:
     "@babel/plugin-syntax-object-rest-spread" "^7.0.0"
     babel-plugin-jest-hoist "^24.9.0"
+
+babel-preset-vca-jsx@^0.3.4:
+  version "0.3.4"
+  resolved "https://registry.yarnpkg.com/babel-preset-vca-jsx/-/babel-preset-vca-jsx-0.3.4.tgz#2bb0a23208bda7827be371883cce0023ad5b1da8"
+  integrity sha512-kzEPXaBpSSD75wiZ1eg8fQXcBkHmJEKHnyFPaqk43kuicaILIKJo90P+ffcSQ4ZaDDMd4fI8424JFn/l8jI1FQ==
+  dependencies:
+    "@babel/plugin-syntax-jsx" "^7.2.0"
 
 babel-runtime@6.x, babel-runtime@^6.22.0, babel-runtime@^6.26.0:
   version "6.26.0"

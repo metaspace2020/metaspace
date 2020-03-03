@@ -313,7 +313,7 @@ const SORT_ORDER_TO_COLUMN = {
 }
 const COLUMN_TO_SORT_ORDER = invert(SORT_ORDER_TO_COLUMN)
 
-export default {
+export default Vue.extend({
   name: 'AnnotationTable',
   components: {
     ProgressButton,
@@ -437,7 +437,7 @@ export default {
         return this.queryVariables
       },
       update: data => data.allAnnotations,
-      debounce: 200,
+      throttle: 200,
       result({ data }) {
         // For whatever reason (could be a bug), vue-apollo seems to first refetch
         // data for the current page and only then fetch the updated data.
@@ -715,7 +715,7 @@ export default {
       this.exportProgress = 0
     },
   },
-}
+})
 </script>
 
 <style lang="scss">

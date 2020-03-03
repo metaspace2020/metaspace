@@ -153,7 +153,7 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
     return isobars.map(({ion, ion_formula, peak_ns,  msm}) =>
       ({
         ion,
-        ionFormula: ion_formula,
+        ionFormula: ion_formula || '',
         peakNs: peak_ns,
         msmScore: msm,
         shouldWarn: msm > hit._source.msm - 0.5,
@@ -164,7 +164,7 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
     // Actual implementation is in src/modules/annotation/queryFilters.ts
     if ('getColocalizationCoeff' in hit && args.colocalizationCoeffFilter != null) {
       const {colocalizedWith, colocalizationAlgo, database, fdrLevel} = args.colocalizationCoeffFilter;
-      return await hit.getColocalizationCoeff(colocalizedWith, colocalizationAlgo || 'cosine',
+      return await hit.getColocalizationCoeff(colocalizedWith, colocalizationAlgo || config.metadataLookups.defaultColocalizationAlgo,
         database || config.defaults.moldb_names[0], fdrLevel);
     } else {
       return null;

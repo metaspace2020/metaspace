@@ -17,7 +17,7 @@ def test_valid_colocalization_jobs_generated():
     ion_ids = np.array(range(20)) * 4
     fdrs = np.array([[0.05, 0.1, 0.2, 0.5][i % 4] for i in range(20)])
 
-    jobs = list(analyze_colocalization('ds_id', 'HMDB_v4', ion_images, ion_ids, fdrs))
+    jobs = list(analyze_colocalization('ds_id', 'HMDB_v4', ion_images, ion_ids, fdrs, 5, 10))
 
     assert len(jobs) > 1
     assert not any(job.error for job in jobs)
@@ -43,7 +43,14 @@ def mock_get_ion_images_for_analysis(storage_type, img_ids, **kwargs):
 
 def test_new_ds_saves_to_db(test_db, metadata, ds_config):
     db = DB()
-    ds = Dataset('ds_id', 'ds_name', 'input_path', datetime.now(), metadata, ds_config)
+    ds = Dataset(
+        id='ds_id',
+        name='ds_name',
+        input_path='input_path',
+        upload_dt=datetime.now(),
+        metadata=metadata,
+        config=ds_config,
+    )
     ds.save(db)
 
     ion_metrics_df = pd.DataFrame(

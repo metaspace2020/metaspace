@@ -98,7 +98,7 @@ def run_coloc_jobs(sm_config, ds_id_str, sql_where, fix_missing, fix_corrupt, sk
         ]
         mol_db_ids, mol_db_names = map(list, zip(*mol_dbs))
         fdrs = [0.05, 0.1, 0.2, 0.5]
-        algorithms = ['cosine', 'pca_cosine', 'pca_pearson', 'pca_spearman']
+        algorithms = ['median_thresholded_cosine', 'cosine']
 
         if fix_missing:
             logger.info('Checking for missing colocalization jobs...')
@@ -166,7 +166,7 @@ if __name__ == '__main__':
         args.config,
         partial(
             run_coloc_jobs,
-            ds_id=args.ds_id,
+            ds_id_str=args.ds_id,
             sql_where=args.sql_where,
             fix_missing=args.fix_missing,
             fix_corrupt=args.fix_corrupt,

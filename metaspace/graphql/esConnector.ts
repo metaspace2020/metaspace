@@ -33,6 +33,7 @@ export interface ESDatasetSource {
   ds_config: any;
   ds_meta: any;
   ds_status: string;
+  ds_status_update_dt: string;
   ds_input_path: string;
   ds_ion_img_storage: ImageStorageType;
   ds_is_public: boolean;
@@ -144,7 +145,10 @@ function esSort(orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: Sorti
     return [sortTerm('off_sample_prob', order)];
   // dataset orderings
   else if (orderBy === 'ORDER_BY_DATE')
-    return [sortTerm('ds_last_finished', order)];
+    return [
+      sortTerm('ds_status_update_dt', order),
+      sortTerm('ds_last_finished', order),
+    ];
   else if (orderBy === 'ORDER_BY_NAME')
     return [sortTerm('ds_name', order)];
 }
@@ -355,7 +359,8 @@ const fieldEnumToSchemaPath = {
   DF_ORGANISM_PART: datasetFilters.organismPart.esField,
   DF_CONDITION: datasetFilters.condition.esField,
   DF_GROWTH_CONDITIONS: datasetFilters.growthConditions.esField,
-  DF_MALDI_MATRIX: datasetFilters.maldiMatrix.esField
+  DF_MALDI_MATRIX: datasetFilters.maldiMatrix.esField,
+  DF_STATUS: 'ds_status',
 };
 
 function constructTermAggregations(fields: (keyof typeof fieldEnumToSchemaPath)[]) {
@@ -417,17 +422,16 @@ export const esCountGroupedResults = async (args: any, docType: DocType, user: C
 
 export const esCountMatchingAnnotationsPerDataset = async (args: any, user: ContextUser): Promise<Record<string, number>> => {
   const body = constructESQuery(args, 'annotation', user, await user.getProjectRoles());
-
   const aggRequest = {
     body: {
       ...body,
-      aggs: { ds_id: { terms: { field: 'ds_id' } } },
+      aggs: { ds_id: { terms: { field: 'ds_id', size: 1000000 } } },
     },
     index: esIndex,
     size: 0,
   };
   const resp = await es.search(aggRequest);
-  const counts = resp.aggregations.ds_id.buckets.map(({key, doc_count}: any) => [key, doc_count]);
+  const counts = resp.aggregations.ds_id.buckets.map(({ key, doc_count }: any) => [key, doc_count]);
   return _.fromPairs(counts);
 };
 

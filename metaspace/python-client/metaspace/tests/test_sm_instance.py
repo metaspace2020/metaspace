@@ -1,20 +1,5 @@
-from os import path
-from pathlib import Path
-
 import pytest
-from metaspace.sm_annotation_utils import SMInstance
-
-
-@pytest.fixture()
-def sm():
-    return SMInstance(config_path=path.join(path.dirname(__file__), '../../test_config'))
-
-
-@pytest.fixture()
-def my_ds_id(sm):
-    user_id = sm.current_user_id()
-    datasets = sm.get_metadata({'submitter': user_id})
-    return datasets.index[0]
+from metaspace.tests.utils import sm, my_ds_id
 
 
 def test_add_dataset_external_link(sm, my_ds_id):

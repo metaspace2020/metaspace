@@ -32,6 +32,7 @@ type Dataset {
   metadataType: String!
 
   status: JobStatus
+  statusUpdateDT: String!
   inputPath: String
   uploadDateTime: String
   fdrCounts(inpFdrLvls: [Int!]! = [10], checkLvl: Int! = 10): FdrCounts
@@ -97,7 +98,8 @@ enum DatasetAggField {
   DF_ORGANISM_PART,
   DF_CONDITION,
   DF_GROWTH_CONDITIONS,
-  DF_MALDI_MATRIX
+  DF_MALDI_MATRIX,
+  DF_STATUS,
 }
 
 enum JobStatus {
@@ -251,7 +253,7 @@ type DatasetStatusUpdate {
   relationship: DatasetRelationship
   action: DatasetAction!
   stage: DatasetActionStage!
-  is_new: Boolean
+  isNew: Boolean
 }
 
 type DatasetDeletion {

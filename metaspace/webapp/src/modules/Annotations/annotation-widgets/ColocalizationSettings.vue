@@ -1,11 +1,40 @@
 <template>
-  <span id="ion-image-settings">
-    <el-form>
-      <el-form-item label="Colocalization Algorithm">
+  <span id="colocalization-settings">
+    <el-form label-position="top">
+      <el-form-item>
+        <span slot="label">
+          Colocalization algorithm
+          <el-popover
+            trigger="hover"
+            placement="top"
+          >
+            <div style="max-width: 550px;">
+              <p>
+                The <b>median-thresholded cosine distance</b> algorithm is the best choice for
+                exploring most datasets in METASPACE.
+                It was found to highly reproduce expert rankings of mass spectrometry ion images
+                and performed better than other traditional colocalization measures. <br />
+                Its description and evaluation can be found in:
+                <a
+                  href="https://doi.org/10.1093/bioinformatics/btaa085"
+                  target="blank"
+                >Ovchinnikova et al. (2020) ColocML</a>.
+              </p>
+              <p>
+                The <b>cosine distance</b> was previously used as the default colocalization measure.
+                It is still available and can be selected from the list.
+              </p>
+            </div>
+            <i
+              slot="reference"
+              class="el-icon-question help-icon"
+            />
+          </el-popover>
+        </span>
         <el-select
           v-model="colocalizationAlgo"
           style="width: 300px;"
-          title="Colocalization Algorithm"
+          title="Colocalization algorithm"
         >
           <el-option
             v-for="{id, name} in colocalizationAlgoOptions"
@@ -23,7 +52,6 @@
 import Vue from 'vue'
 import { Component } from 'vue-property-decorator'
 import { colocalizationAlgosQuery } from '../../../api/metadata'
-import { omit } from 'lodash-es'
 
  interface ColocalizationAlgoOption {
    id: string;
@@ -58,13 +86,13 @@ export default class ColocalizationSettings extends Vue {
 </script>
 
 <style>
- #ion-image-settings {
+ #colocalization-settings {
    display: inline-flex;
    flex-direction: column;
    justify-content: center;
  }
 
- #ion-image-settings > .el-select {
+ #colocalization-settings > .el-select {
    display: inline-flex;
  }
 </style>

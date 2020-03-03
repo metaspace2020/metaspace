@@ -32,6 +32,9 @@ export class EngineDataset {
   uploadDt: Date | null;
   @Column({ type: 'text', nullable: true })
   status: DatasetStatus | null;
+  @Column({ type: 'timestamp without time zone', default: () => "(now() at time zone 'utc')",
+    transformer: new MomentValueTransformer() })
+  statusUpdateDt: Date | null;
   @Column({ type: 'text', nullable: true })
   opticalImage: string | null;
   @Column({ type: 'double precision', array: true, nullable: true })

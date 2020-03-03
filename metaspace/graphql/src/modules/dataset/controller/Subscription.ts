@@ -13,6 +13,7 @@ import {
   publishDatasetDeleted,
   publishDatasetStatusUpdated,
 } from '../../../utils/pubsub';
+import * as moment from 'moment';
 
 /** From `DaemonAction` in sm-engine, but capitalized */
 type EngineDatasetAction = 'ANNOTATE' | 'UPDATE' | 'INDEX' | 'DELETE';
@@ -25,7 +26,7 @@ interface DatasetStatusPayload {
   ds_id: string;
   action: EngineDatasetAction;
   stage: EngineDatasetActionStage;
-  is_new?: boolean;
+  isNew?: boolean;
 }
 
 const dummyContextUser: ContextUser = {
@@ -102,6 +103,19 @@ async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
   }
 })();
 
+const isDatasetNew = (datasetId: string) => {
+  // WORKAROUND: It's useful for the web UI to know whether a dataset was just uploaded, or is being reprocessed.
+  // However, this isn't easy to determine in the engine when status update messages are sent, because the dataset has
+  // already been inserted into the database. Instead, just guess based on whether the datasetId was generated in the
+  // last few minutes
+  try {
+    const dt = moment(datasetId, 'YYYY-MM-DD_HH[h]mm[m]ss[s]');
+    return moment().diff(dt, 'minutes') < 3
+  } catch (err) {
+    logger.warn(`Could not parse datasetId: ${datasetId}`, err)
+    return false
+  }
+}
 
 const SubscriptionResolvers = {
   datasetStatusUpdated: {
@@ -126,7 +140,7 @@ const SubscriptionResolvers = {
             if (value.dataset && await canViewEsDataset(value.dataset, context.user)) {
               const relationships = await relationshipToDataset(value.dataset, context);
               const payload = {
-                is_new: null,
+                isNew: isDatasetNew(value.dataset._source.ds_id),
                 ...value,
                 relationship: relationships.length > 0 ? relationships[0] : null,
               };
@@ -147,7 +161,7 @@ const SubscriptionResolvers = {
     //     if (payload.dataset && canViewEsDataset(payload.dataset, context.user)) {
     //       const relationships = await relationshipToDataset(payload.dataset, context);
     //       yield {
-    //         is_new: null,
+    //         isNew: isDatasetNew(value.dataset._source.ds_id),
     //         ...payload,
     //         relationship: relationships.length > 0 ? relationships[0] : null,
     //       };

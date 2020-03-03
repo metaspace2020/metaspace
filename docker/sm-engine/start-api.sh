@@ -17,7 +17,7 @@ fi
 curl -I http://elasticsearch:9200/sm 2>/dev/null | head -1 | grep 404 >/dev/null
 if [ $? == 0 ]; then
   echo "Creating Elasticsearch index"
-  python -m scripts.create_es_index
+  python -m scripts.manage_es_index create
 fi
 
 exec python -m sm.rest.api
