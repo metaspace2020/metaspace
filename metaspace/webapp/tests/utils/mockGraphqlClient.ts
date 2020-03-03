@@ -1,10 +1,10 @@
 import { ApolloClient, InMemoryCache, NormalizedCacheObject } from 'apollo-client-preset'
 import { SchemaLink } from 'apollo-link-schema'
-import { addMockFunctionsToSchema, IMocks } from 'graphql-tools'
+import { addMockFunctionsToSchema, makeRemoteExecutableSchema, IMocks } from 'graphql-tools'
 import Vue from 'vue'
 import VueApollo from 'vue-apollo'
 import { buildClientSchema, GraphQLResolveInfo } from 'graphql'
-import makeRemoteExecutableSchema from '../../node_modules/graphql-tools/dist/stitching/makeRemoteExecutableSchema'
+import {makeApolloCache} from '../../src/lib/apolloCache'
 
 const lazyHash = (str: string) => Array.from(str).reduce((hash, char) => hash ^ char.charCodeAt(0), 0)
 
@@ -81,9 +81,20 @@ export const initMockGraphqlClient = (mocks?: IMocks) => {
     },
   })
 
+  // Remove mocked subscriptions so that they don't fire during tests.
+  // It looks like graphql-tools and apollo-link-schema don't support mocking subscriptions yet, so
+  Object.entries(schema.getSubscriptionType()!.getFields()).forEach(([key, field]) => {
+    field.resolve = () => new Promise(() => {})
+  })
+
   graphqlClient = new ApolloClient({
-    cache: new InMemoryCache(),
     link: new SchemaLink({ schema }),
+    cache: makeApolloCache(),
+    defaultOptions: {
+      query: {
+        fetchPolicy: 'network-only',
+      },
+    },
   })
 
   Vue.use(VueApollo)
