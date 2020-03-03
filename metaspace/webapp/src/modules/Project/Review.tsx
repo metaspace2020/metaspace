@@ -2,9 +2,11 @@ import './review.css'
 
 // import Vue from 'vue'
 import { createComponent, computed, reactive } from '@vue/composition-api'
-import { Button, Input, Checkbox, Collapse, CollapseItem } from 'element-ui'
+import { Button, Input, Collapse, CollapseItem } from 'element-ui'
 
 import CopyToClipboard from '../../components/CopyToClipboard'
+
+import { ViewProjectResult } from '../../api/project'
 
 const statuses = {
   UNPUBLISHED: 'UNPUBLISHED',
@@ -26,22 +28,29 @@ const WorkflowItem = createComponent({
   },
 })
 
-function getInitialProjectData(currentUserName = '') {
+function getInitialProjectData(project: ViewProjectResult, currentUserName = '') {
   const year = new Date().getFullYear()
   const nameParts = currentUserName.split(' ')
   const surname = nameParts.length ? nameParts[nameParts.length - 1] : null
   return {
-    name: surname ? `${surname} et al. (${year})` : '',
-    url: surname ? `${surname.toLowerCase()}-${year}` : '',
-    description: '',
+    name: surname ? `${surname} et al. (${year}) ${project.name}` : project.name,
+    url: surname ? `${surname.toLowerCase()}-${year}` : project.urlSlug,
+    description: project.projectDescriptionAsHtml,
   }
 }
 
-const ReviewLink = createComponent({
+interface Props {
+  project: ViewProjectResult
+  currentUserName: string,
+
+  createLink: Function,
+  deleteLink: Function,
+  publishProject: Function,
+}
+
+const ReviewLink = createComponent<Props>({
   props: {
-    projectId: String,
-    reviewToken: String,
-    publicationStatus: String,
+    project: Object,
     createLink: Function,
     deleteLink: Function,
     publishProject: Function,
@@ -49,23 +58,23 @@ const ReviewLink = createComponent({
   },
   setup(props, { root }) {
     const reviewLink = computed(() => {
-      if (!props.projectId || !props.reviewToken) {
+      if (!props.project || !props.project.reviewToken) {
         return undefined
       }
-      return `${window.location.origin}/api_auth/review?prj=${props.projectId}&token=${props.reviewToken}`
+      return `${window.location.origin}/api_auth/review?prj=${props.project.id}&token=${props.project.reviewToken}`
     })
 
     const activeStep = computed(() => {
-      if (!props.publicationStatus) {
+      if (!props.project) {
         return 1
       }
-      return Object.keys(statuses).indexOf(props.publicationStatus) + 1
+      return Object.keys(statuses).indexOf(props.project.publicationStatus) + 1
     })
 
     const state = reactive({
       loading: false,
       updateProject: false,
-      projectData: getInitialProjectData(props.currentUserName),
+      projectData: getInitialProjectData(props.project, props.currentUserName),
     })
 
     const withLoading = (cb: Function | undefined) => {
@@ -76,6 +85,12 @@ const ReviewLink = createComponent({
         state.loading = false
       }
     }
+
+    const enablePeerReview = withLoading(() => {
+      if (props.createLink) {
+        props.createLink(state.updateProject ? state.projectData : null)
+      }
+    })
 
     const { href } = root.$router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined, true)
     const projectUrlPrefix = location.origin + href.replace('REMOVE', '')
@@ -109,10 +124,10 @@ const ReviewLink = createComponent({
               </Collapse>
               <Button
                 loading={state.loading}
-                onClick={withLoading(props.createLink)}
+                onClick={enablePeerReview}
                 type="primary"
               >
-                Create link
+                Create link {state.updateProject && '& update details'}
               </Button>
             </form>
           }

@@ -128,9 +128,7 @@
             </new-feature-badge>
           </span>
           <review
-            :project-id="projectId"
-            :review-token="reviewToken"
-            :publication-status="publicationStatus"
+            :project="project"
             :create-link="createReviewLink"
             :delete-link="deleteReviewLink"
             :publish-project="publishProject"
@@ -357,14 +355,6 @@ export default class ViewProjectPage extends Vue {
 
     get hasMembershipRequest() {
       return this.members.some(m => m.role === ProjectRoleOptions.PENDING)
-    }
-
-    get reviewToken(): string | null {
-      return this.project && this.project.reviewToken
-    }
-
-    get publicationStatus(): string | null {
-      return this.project && this.project.publicationStatus
     }
 
     @Watch('$route.params.projectIdOrSlug')
