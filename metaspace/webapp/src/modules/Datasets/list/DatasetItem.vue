@@ -194,6 +194,17 @@ class="s-group ds-add-filter"
         >Reprocess dataset</a>
       </div>
 
+      <div
+        v-if="dataset.canDownload"
+        class="ds-download"
+      >
+        <i class="el-icon-download" />
+        <a
+          href="#"
+          @click.prevent="() => { showDownloadDialog = true }"
+        >Download</a>
+      </div>
+
       <el-popover
         v-if="!dataset.isPublic"
         trigger="hover"
@@ -210,6 +221,12 @@ class="s-group ds-add-filter"
         >
       </el-popover>
     </div>
+    <DownloadDialog
+      v-if="showDownloadDialog"
+      :datasetId="dataset.id"
+      :datasetName="dataset.name"
+      @close="() => { showDownloadDialog = false }"
+    />
   </div>
 </template>
 
@@ -227,6 +244,7 @@ import { encodeParams } from '../../Filters/index'
 import reportError from '../../../lib/reportError'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import { plural } from '../../../lib/vueFilters'
+import DownloadDialog from './DownloadDialog'
 
 function removeUnderscores(str) {
   return str.replace(/_/g, ' ')
@@ -237,6 +255,7 @@ export default {
   components: {
     DatasetInfo,
     DatasetThumbnail,
+    DownloadDialog,
   },
   filters: {
     plural,
@@ -247,6 +266,7 @@ export default {
       showMetadataDialog: false,
       disabled: false,
       deferRender: this.idx >= 20,
+      showDownloadDialog: this.idx === 11,
     }
   },
 
@@ -516,7 +536,7 @@ export default {
 
     loadVisibility() {
       this.$apollo.queries.datasetVisibility.start()
-    },
+    }
   },
 }
 </script>
@@ -542,6 +562,7 @@ export default {
    display: flex;
    flex-direction: row;
    justify-content: space-between;
+   /*transform: translate3d(0, 0, 0);*/
  }
 
  .ds-info{
@@ -585,6 +606,7 @@ export default {
      rgba(255, 255, 255, .30) 75%, transparent 75%, transparent);
 
    animation: animate-stripes 3s linear infinite;
+   /*transform: translate3d(0, 0, 0);*/
  }
 
  @keyframes animate-stripes {

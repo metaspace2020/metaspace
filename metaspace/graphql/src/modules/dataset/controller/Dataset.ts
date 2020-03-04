@@ -333,7 +333,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
         }).promise();
         const fileKeys = (objects.Contents || [])
           .map(obj => obj.Key!)
-          .filter(key => key && /(\.imzml|.ibd|.mzml)$/.test(key));
+          .filter(key => key && /(\.imzml|.ibd|.mzml)$/i.test(key));
         files = fileKeys.map(key => ({
           filename: key.replace(/.*\//, ''),
           link: s3.getSignedUrl('getObject', { Bucket: bucket, Key: key, Expires: 1800 }),
@@ -347,8 +347,17 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
           {name: ds._source.ds_submitter_name, institution: ds._source.ds_group_name},
         ],
         license: ds._source.ds_is_public
-          ? `CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/) You must give appropriate credit when using these files!`
-          : 'No license has been indicated. Contact the author for permission before downloading or using this file.',
+          ? {
+            code: 'CC BY 4.0',
+            name: 'Creative Commons Attribution 4.0 International Public License',
+            link: 'https://creativecommons.org/licenses/by/4.0/',
+          }
+          : {
+            code: 'NO-LICENSE',
+            name: 'No license was specified. No permission to download or use these files has been given. ' +
+              'Seek permission from the author before downloading these files.',
+            link: 'https://choosealicense.com/no-permission/',
+          },
         files,
       });
     } else {

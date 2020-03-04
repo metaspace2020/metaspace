@@ -33,6 +33,7 @@
     "@types/sanitize-html": "^1.18.2",
     "@types/upng-js": "^2.1.1",
     "@types/ws": "^5.1.2",
+    "@vue/apollo-composable": "^4.0.0-alpha.7",
     "@vue/cli": "^3.11.0",
     "@vue/composition-api": "^0.3.4",
     "apollo-client-preset": "^1.0.8",
