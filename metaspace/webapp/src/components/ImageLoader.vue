@@ -23,7 +23,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import resize from 'vue-resize-directive'
-import config from '../config'
+import config from '../lib/config'
 import { Component, Prop, Watch } from 'vue-property-decorator'
 import IonImageViewer from './IonImageViewer.vue'
 import { IonImage, loadPngFromUrl, processIonImage, ScaleType } from '../lib/ionImageRendering'

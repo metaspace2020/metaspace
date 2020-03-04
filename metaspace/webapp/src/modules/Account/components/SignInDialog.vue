@@ -101,7 +101,7 @@ import { Form } from 'element-ui'
 import GoogleButton from './GoogleButton.vue'
 import InterDialogLink from './InterDialogLink'
 import { signInByEmail } from '../../../api/auth'
-import { refreshLoginStatus } from '../../../graphqlClient'
+import { refreshLoginStatus } from '../../../api/graphqlClient'
 import reportError from '../../../lib/reportError'
 import { setSignInReturnUrl } from '../signInReturnUrl'
 

@@ -88,7 +88,7 @@
 
 <script>
 import { get, omit } from 'lodash-es'
-import { renderMolFormulaHtml } from '../../../../util'
+import { renderMolFormulaHtml } from '../../../../lib/util'
 import ImageLoader from '../../../../components/ImageLoader.vue'
 import { relatedAnnotationsQuery } from '../../../../api/annotation'
 import { encodeParams, stripFilteringParams } from '../../../Filters'

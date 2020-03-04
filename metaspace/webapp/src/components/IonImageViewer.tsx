@@ -1,9 +1,9 @@
 import Vue from 'vue'
 import { computed, createComponent, reactive, Ref, ref, SetupContext, watch } from '@vue/composition-api'
 
-import { getOS, scrollDistance, WheelEventCompat } from '../util'
+import { getOS, scrollDistance, WheelEventCompat } from '../lib/util'
 import createColormap, { OpacityMode } from '../lib/createColormap'
-import config from '../config'
+import config from '../lib/config'
 import { renderIonImage } from '../lib/ionImageRendering'
 import ScaleBar from './ScaleBar.vue'
 import { throttle } from 'lodash-es'

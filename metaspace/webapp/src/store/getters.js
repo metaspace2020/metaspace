@@ -1,6 +1,6 @@
-import {mzFilterPrecision} from '../util';
+import {mzFilterPrecision} from '../lib/util';
 import {decodeParams, decodeSettings, getLevel} from '../modules/Filters';
-import config from '../config';
+import config from '../lib/config';
 
 /** For filters where empty string is a valid client-side value that must be converted to empty string for the API */
 const noneToEmptyString = s => s === 'none' ? '' : s;

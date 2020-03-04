@@ -16,7 +16,7 @@
 
 <script>
 import { schemeCategory10 as graphColors } from 'd3-scale-chromatic'
-import { renderMolFormulaHtml } from '../../../../util'
+import { renderMolFormulaHtml } from '../../../../lib/util'
 import XicPlot from './XicPlot.vue'
 import PlotLegend from '../PlotLegend.vue'
 import { relatedAnnotationsQuery } from '../../../../api/annotation'

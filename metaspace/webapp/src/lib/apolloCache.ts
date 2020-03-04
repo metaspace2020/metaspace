@@ -1,4 +1,4 @@
-import {defaultDataIdFromObject, InMemoryCache} from 'apollo-client-preset'
+import { defaultDataIdFromObject, InMemoryCache } from 'apollo-client-preset'
 
 const nonNormalizableTypes: any[] = ['User', 'DatasetUser', 'DatasetGroup', 'DatasetProject']
 export const makeApolloCache = () => new InMemoryCache({
