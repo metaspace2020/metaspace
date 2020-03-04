@@ -12,7 +12,10 @@ module.exports = {
     port: 8082,
     sockPort: 8888,
   },
-
+  /**
+   *
+   * @param config {import('webpack-chain')}
+   */
   chainWebpack: config => {
     config.module
       .rule('vue')

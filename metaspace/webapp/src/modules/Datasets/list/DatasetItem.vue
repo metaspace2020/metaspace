@@ -222,7 +222,7 @@ import {
   deleteDatasetQuery,
   reprocessDatasetQuery,
 } from '../../../api/dataset'
-import { mdTypeSupportsOpticalImages } from '../../../util'
+import { mdTypeSupportsOpticalImages } from '../../../lib/util'
 import { encodeParams } from '../../Filters/index'
 import reportError from '../../../lib/reportError'
 import safeJsonParse from '../../../lib/safeJsonParse'

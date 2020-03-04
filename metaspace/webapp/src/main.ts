@@ -10,6 +10,7 @@ import apolloClient, { setMaintenanceMessageHandler } from './api/graphqlClient'
 import ElementUI from 'element-ui'
 import './modules/App/element-variables.scss'
 import locale from 'element-ui/lib/locale/lang/en'
+import './modules/App/tailwind.scss'
 
 import store from './store'
 import router from './router'
