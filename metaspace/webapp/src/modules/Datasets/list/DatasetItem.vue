@@ -223,8 +223,8 @@ class="s-group ds-add-filter"
     </div>
     <DownloadDialog
       v-if="showDownloadDialog"
-      :datasetId="dataset.id"
-      :datasetName="dataset.name"
+      :dataset-id="dataset.id"
+      :dataset-name="dataset.name"
       @close="() => { showDownloadDialog = false }"
     />
   </div>
@@ -536,7 +536,7 @@ export default {
 
     loadVisibility() {
       this.$apollo.queries.datasetVisibility.start()
-    }
+    },
   },
 }
 </script>

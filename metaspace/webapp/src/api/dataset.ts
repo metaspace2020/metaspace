@@ -232,7 +232,7 @@ export const datasetDeletedQuery = gql`subscription datasetDeleted {
 
 export const getDatasetDownloadLink = gql`query getDatasetDownloadLink ($datasetId: String!) {
   dataset(id: $datasetId) { downloadLinkJson }
-}`;
+}`
 export interface GetDatasetDownloadLink {
   dataset: {
     downloadLinkJson: string | null

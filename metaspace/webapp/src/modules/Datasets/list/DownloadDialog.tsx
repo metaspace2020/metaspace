@@ -57,7 +57,7 @@ export default createComponent({
     const {
       result: downloadLinkResult,
       loading,
-    } = useQuery<GetDatasetDownloadLink>(getDatasetDownloadLink, { datasetId }, {fetchPolicy: 'no-cache'})
+    } = useQuery<GetDatasetDownloadLink>(getDatasetDownloadLink, { datasetId }, { fetchPolicy: 'no-cache' })
     const downloadLinks = computed<DownloadLinkJson>(() => downloadLinkResult.value != null
       && safeJsonParse(downloadLinkResult.value.dataset.downloadLinkJson))
 
@@ -107,9 +107,9 @@ export default createComponent({
               ))}
             </div>
             <p>
-            <i>
+              <i>
               These download links expire after 30 minutes.
-            </i>
+              </i>
             </p>
           </div>
         )
