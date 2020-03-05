@@ -32,8 +32,10 @@ function getInitialProjectData(project: ViewProjectResult, currentUserName = '')
   const year = new Date().getFullYear()
   const nameParts = currentUserName.split(' ')
   const surname = nameParts.length ? nameParts[nameParts.length - 1] : null
+  const citation = `${surname} et al. (${year})`
+  const newProjectName = surname && !project.name.startsWith(citation) ? `${citation} ${project.name}` : null
   return {
-    name: surname ? `${surname} et al. (${year}) ${project.name}` : project.name,
+    name: newProjectName || project.name,
     url: surname ? `${surname.toLowerCase()}-${year}` : project.urlSlug,
     description: project.projectDescriptionAsHtml,
   }
