@@ -16,7 +16,7 @@ type Project {
   numDatasets: Int!
   createdDT: String!
   latestUploadDT: String
-  projectDescriptionAsHtml: String
+  projectDescription: String
   reviewToken: String
   publicationStatus: PublicationStatus!
   externalLinks: [ExternalLink!]!
@@ -37,7 +37,7 @@ input UpdateProjectInput {
   name: String
   isPublic: Boolean
   urlSlug: String
-  projectDescriptionAsHtml: String
+  projectDescription: String
 }
 
 input UpdateUserProjectInput {

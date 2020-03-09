@@ -1,41 +1,10 @@
 <template>
   <div>
-    <div
-      v-if="modes.saved || modes.preview"
-      v-html="embedMarkdownAsHtml()"
+    <rich-text
+      :content="projectDescription"
+      :editable="modes.edit"
+      :with-menu-bar="canEdit"
     />
-    <el-popover
-      v-if="modes.edit"
-      placement="top-end"
-      trigger="manual"
-      :value="showHint"
-    >
-      <div>
-        You can use markdown language to format your description.
-        <br>
-        <a
-          style="margin-top: 5px"
-          rel="nofollow noopener noreferrer"
-          target="_blank"
-          href="http://www.unexpected-vortices.com/sw/rippledoc/quick-markdown-example.html"
-        >
-          Learn more about it</a>
-        <br><el-button
-          style="margin-top: 5px"
-          type="primary"
-          size="mini"
-          @click="disableHint"
-        >
-          It's clear
-        </el-button>
-      </div>
-      <el-input
-        slot="reference"
-        v-model="projectDescriptionAsHtml"
-        type="textarea"
-        :autosize="{ minRows: 10, maxRows: 50 }"
-      />
-    </el-popover>
     <el-button-group
       v-if="canEdit"
       class="btngroup"
@@ -49,16 +18,6 @@
         @click="editTextDescr"
       >
         Edit
-      </el-button>
-      <el-button
-        v-if="modes.edit"
-        class="btn"
-        type="primary"
-        size="medium"
-        icon="el-icon-view"
-        @click="prevMarkdown"
-      >
-        Preview
       </el-button>
       <el-button
         v-if="modes.edit || modes.preview"
@@ -80,6 +39,7 @@ import { Component, Prop } from 'vue-property-decorator'
 import marked from 'marked'
 import sanitizeIt from '../../lib/sanitizeIt'
 import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'
+import RichText from '../../components/RichText'
 
   interface Modes {
     preview: boolean
@@ -89,6 +49,9 @@ import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'
 
   @Component<ProjectDescription>({
     name: 'project-description',
+    components: {
+      RichText,
+    },
   })
 export default class ProjectDescription extends Vue {
     @Prop()
@@ -97,7 +60,7 @@ export default class ProjectDescription extends Vue {
     @Prop({ required: true, default: false })
     canEdit!: boolean;
 
-    projectDescriptionAsHtml: string = this.project && this.project.projectDescriptionAsHtml || '';
+    projectDescription: string = this.project && this.project.projectDescription || '';
     showHint: boolean = false;
     modes: Modes = {
       preview: false,
@@ -117,7 +80,7 @@ export default class ProjectDescription extends Vue {
     }
 
     async saveMarkdown() {
-      this.$emit('updateProjectDescription', this.projectDescriptionAsHtml)
+      this.$emit('updateProjectDescription', this.projectDescription)
       this.modes = {
         preview: false,
         saved: true,
@@ -147,7 +110,7 @@ export default class ProjectDescription extends Vue {
     }
 
     embedMarkdownAsHtml() {
-      return sanitizeIt(marked(this.projectDescriptionAsHtml))
+      return sanitizeIt(marked(this.projectDescription))
     }
 }
 </script>

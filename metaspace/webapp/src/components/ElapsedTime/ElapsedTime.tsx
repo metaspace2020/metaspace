@@ -1,5 +1,3 @@
-import './ElapsedTime.css'
-
 import { createComponent } from '@vue/composition-api'
 import distanceInWords from 'date-fns/distance_in_words_strict'
 import parse from 'date-fns/parse'

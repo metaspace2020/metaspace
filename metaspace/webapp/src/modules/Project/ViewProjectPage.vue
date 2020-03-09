@@ -62,7 +62,7 @@
         @tab-click="checkReviewLinksBadge"
       >
         <el-tab-pane
-          v-if="canEdit || project.projectDescriptionAsHtml !== ''"
+          v-if="canEdit || project.projectDescription !== null"
           name="description"
           :label="'Description'"
           lazy
@@ -310,6 +310,8 @@ export default class ViewProjectPage extends Vue {
     get tab() {
       if (['description', 'datasets', 'members', 'review', 'settings'].includes(this.$route.query.tab)) {
         return this.$route.query.tab
+      } else if (this.canEdit || this.project && this.project.projectDescription !== null) {
+        return 'description'
       } else {
         return 'datasets'
       }
@@ -427,7 +429,7 @@ export default class ViewProjectPage extends Vue {
         variables: {
           projectId: this.projectId,
           projectDetails: {
-            projectDescriptionAsHtml: newProjectDescription,
+            projectDescription: newProjectDescription,
           },
         },
       })

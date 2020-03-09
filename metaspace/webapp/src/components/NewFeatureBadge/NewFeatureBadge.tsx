@@ -2,7 +2,7 @@ import './NewFeatureBadge.css'
 
 import { createComponent, reactive } from '@vue/composition-api'
 
-import { getLocalStorage, setLocalStorage } from '../lib/localStorage'
+import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'
 
 const storageKey = 'new_feature_badges'
 

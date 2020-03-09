@@ -233,7 +233,7 @@ export interface ViewProjectResult {
   currentUserRole: ProjectRole | null;
   numMembers: number;
   members: ViewProjectMember[] | null;
-  projectDescriptionAsHtml: string | null;
+  projectDescription: string | null;
   reviewToken: string | null;
   reviewTokenCreatedDT: string | null;
   publicationStatus: string
@@ -250,7 +250,7 @@ export const ViewProjectFragment = gql`fragment ViewProjectFragment on Project {
     numDatasets
     user { id name email }
   }
-  projectDescriptionAsHtml
+  projectDescription
   reviewToken
   # reviewTokenCreatedDT
   publicationStatus

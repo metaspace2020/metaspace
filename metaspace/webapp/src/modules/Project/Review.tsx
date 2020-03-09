@@ -37,7 +37,7 @@ function getInitialProjectData(project: ViewProjectResult, currentUserName = '')
   return {
     name: newProjectName || project.name,
     url: surname ? `${surname.toLowerCase()}-${year}` : project.urlSlug,
-    description: project.projectDescriptionAsHtml,
+    description: project.projectDescription,
   }
 }
 

@@ -1,0 +1,45 @@
+.sm-RichText .ProseMirror {
+  transition: ease-in-out 0.2s;
+  transition-property: border;
+  border-color: hsl(208, 33%, 89%);
+  border-style: solid;
+  border-width: 0px;
+}
+
+.sm-RichText.is-editable .ProseMirror {
+  border-width: 1px;
+  border-radius: 4px;
+  padding: 16px;
+}
+
+.sm-RichText .ProseMirror-focused {
+  outline: none;
+}
+
+
+/* Formatting */
+
+.sm-RichText .ProseMirror * {
+  line-height: 24px;
+  margin: 0;
+}
+
+.sm-RichText .ProseMirror * + * {
+  margin-top: 24px;
+}
+
+
+/* Menubar */
+
+.sm-RichText .sm-RichText-menubar {
+  opacity: 0;
+  transition: ease-in-out 0.2s;
+  transition-property: opacity;
+  visibility: hidden;
+  margin: 8px 16px;
+}
+
+.sm-RichText .sm-RichText-menubar.is-visible {
+  opacity: 1;
+  visibility: visible;
+}

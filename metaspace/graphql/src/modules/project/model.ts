@@ -8,13 +8,13 @@ import {
   Index,
 } from 'typeorm';
 
-import {User} from '../user/model';
-import {UserProjectRole, PublicationStatus} from '../../binding'
-import {DatasetProject} from '../dataset/model';
-import {Moment} from 'moment';
-import {MomentValueTransformer} from '../../utils/MomentValueTransformer';
-import {PublicationStatusOptions as PSO} from './PublicationStatusOptions';
-import {ExternalLink} from './ExternalLink';
+import { User } from '../user/model';
+import { UserProjectRole, PublicationStatus } from '../../binding'
+import { DatasetProject } from '../dataset/model';
+import { Moment } from 'moment';
+import { MomentValueTransformer } from '../../utils/MomentValueTransformer';
+import { PublicationStatusOptions as PSO } from './PublicationStatusOptions';
+import { ExternalLink } from './ExternalLink';
 
 export const UserProjectRoleOptions: Record<UserProjectRole, UserProjectRole> = {
   INVITED: 'INVITED',
@@ -45,12 +45,14 @@ export class Project {
   @OneToMany(type => DatasetProject, datasetProject => datasetProject.project)
   datasetProjects: DatasetProject[];
 
-  @Column({ name: 'created_dt', type: 'timestamp without time zone', default: () => "(now() at time zone 'utc')",
-    transformer: new MomentValueTransformer() })
+  @Column({
+    name: 'created_dt', type: 'timestamp without time zone', default: () => "(now() at time zone 'utc')",
+    transformer: new MomentValueTransformer()
+  })
   createdDT: Moment;
 
-  @Column({ type: 'text', name: 'project_description', default: '' })
-  projectDescriptionAsHtml: string;
+  @Column({ type: 'json', nullable: true, name: 'project_description' })
+  projectDescription: string;
 
   @Column({ type: 'text', nullable: true })
   reviewToken: string | null;
@@ -64,7 +66,7 @@ export class Project {
   @Column({ type: 'text', enum: Object.keys(PSO), default: PSO.UNPUBLISHED })
   publicationStatus: PublicationStatus;
 
-  @Column({type: 'json', nullable: true})
+  @Column({ type: 'json', nullable: true })
   externalLinks: ExternalLink[] | null;
 }
 

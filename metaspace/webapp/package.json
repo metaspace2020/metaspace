@@ -56,6 +56,8 @@
     "sanitize-html": "^1.20.0",
     "simple-statistics": "^7.0.2",
     "subscriptions-transport-ws": "^0.9.16",
+    "tiptap": "^1.26.6",
+    "tiptap-extensions": "^1.28.6",
     "ts-essentials": "3.0.4",
     "upng-js": "https://github.com/photopea/UPNG.js.git#f550095",
     "uuid": "^3.0.1",
@@ -116,7 +118,8 @@
     "webpack-cli": "^3.3.10"
   },
   "resolutions": {
-    "babel-core": "7.0.0-bridge.0"
+    "babel-core": "7.0.0-bridge.0",
+    "prosemirror-model": "1.8.2"
   },
   "jest": {
     "globals": {
