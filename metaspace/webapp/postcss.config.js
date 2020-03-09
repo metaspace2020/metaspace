@@ -2,6 +2,7 @@ const autoprefixer = require('autoprefixer')
 const tailwindcss = require('tailwindcss')
 const postcssPurgecss = require('@fullhuman/postcss-purgecss')
 const postcss = require('postcss')
+const tailwindDefaults = require('tailwindcss/defaultConfig')
 
 const tailwindcssWithConfig = tailwindcss({
   // Reference: https://tailwindcss.com/docs/configuration
@@ -10,7 +11,24 @@ const tailwindcssWithConfig = tailwindcss({
     fontFamily: {
       sans: ['Roboto', 'SUPERSCIPT_OVERRIDE', 'Helvetica', 'sans-serif'],
     },
-    placeholderColor: '#C0C4CC'
+    inset: {
+      ...tailwindDefaults.theme.inset,
+      '1/2': '50%',
+    },
+    opacity: {
+      ...tailwindDefaults.theme.opacity,
+      '1': '0.01',
+    },
+    placeholderColor: '#C0C4CC',
+    spacing: {
+      ...tailwindDefaults.theme.spacing,
+      auto: 'auto',
+    },
+    zIndex: {
+      ...tailwindDefaults.theme.zIndex,
+      '-10': '-10', // Use .-z-10 not .z--10
+      '-20': '-20',
+    },
   },
   variants: {},
   plugins: [],

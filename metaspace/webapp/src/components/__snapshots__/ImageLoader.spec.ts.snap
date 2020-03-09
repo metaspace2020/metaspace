@@ -3,7 +3,7 @@
 exports[`ImageLoader should match snapshot (minimal) 1`] = `
 <div>
   <div
-    class="image-loader"
+    class="relative overflow-hidden"
     imagefitparams="[object Object]"
     mock-v-loading="false"
     style="width: 200px; height: 300px; transform: scaleX(1.23);"
@@ -12,7 +12,7 @@ exports[`ImageLoader should match snapshot (minimal) 1`] = `
       style="left: 0px; top: 0px; width: 200px; height: 300px; transform-origin: 0 0; transform: translate(0px, 0px) scale(1, 1);"
     >
       <img
-        class="isotope-image"
+        class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
         src="{\\"url\\":\\"http://placebacon.com/200/300\\"}"
       />
       <div />
@@ -24,7 +24,7 @@ exports[`ImageLoader should match snapshot (minimal) 1`] = `
 exports[`ImageLoader should match snapshot (with everything turned on) 1`] = `
 <div>
   <div
-    class="image-loader"
+    class="relative overflow-hidden"
     imagefitparams="[object Object]"
     mock-v-loading="false"
     style="width: 200px; height: 300px; transform: scaleX(1.23);"
@@ -33,12 +33,12 @@ exports[`ImageLoader should match snapshot (with everything turned on) 1`] = `
       style="left: 0px; top: 0px; width: 200px; height: 300px; transform-origin: 0 0; transform: translate(0px, 0px) scale(1, 1);"
     >
       <img
-        class="isotope-image"
+        class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
         src="{\\"url\\":\\"http://placebacon.com/200/300\\"}"
       />
       <div>
         <img
-          class="optical-image"
+          class="absolute top-0 left-0 -z-10 origin-top-left"
           src="http://placekitten.com/200/300"
           style="transform: matrix3d(1, 4, 0, 7,
              2, 5, 0, 8,
@@ -56,16 +56,16 @@ exports[`ImageLoader should match snapshot (with everything turned on) 1`] = `
         value="true"
       >
         <div
-          class="pixel-intensity"
+          class="absolute block border-solid border-red z-30 pointer-events-none"
           style="left: 47.5px; top: 47.5px; width: 0.5px; height: 0.5px;"
         />
       </mock-el-tooltip>
     </div>
     <div
-      class="image-loader__overlay"
+      class="absolute inset-0 z-30 pointer-events-none bg-white opacity-0 duration-1000"
     >
       <p
-        class="image-loader__overlay-text"
+        class="relative block top-1/2 z-40 -translate-y-1/2 p-auto text-white text-center text-2xl"
       >
         Use CTRL + scroll wheel to zoom the image
       </p>

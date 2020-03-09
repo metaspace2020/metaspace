@@ -26,7 +26,6 @@
         :y-offset="imageLoaderSettings.imagePosition.yOffset"
         scroll-block
         show-pixel-intensity
-        class="image-loader"
         v-bind="imageLoaderSettings"
         @move="handleImageMove"
       />
@@ -104,7 +103,7 @@ import resize from 'vue-resize-directive'
 import { Component, Prop, Watch } from 'vue-property-decorator'
 import { saveAs } from 'file-saver'
 import Colorbar from './Colorbar.vue'
-import IonImageViewer from '../../../../components/IonImageViewer.vue'
+import IonImageViewer from '../../../../components/IonImageViewer'
 import domtoimage from 'dom-to-image-google-font-issue'
 import { IonImage, loadPngFromUrl, processIonImage, ScaleType } from '../../../../lib/ionImageRendering'
 import { get } from 'lodash-es'
