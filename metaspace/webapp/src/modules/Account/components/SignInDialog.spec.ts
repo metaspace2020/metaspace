@@ -12,7 +12,7 @@ import { refreshLoginStatus as _mockRefreshLoginStatus } from '../../../api/grap
 jest.mock('../../../api/auth')
 const mockAuthApi = _mockAuthApi as jest.Mocked<typeof _mockAuthApi>
 
-jest.mock('../../../graphqlClient')
+jest.mock('../../../api/graphqlClient')
 const mockRefreshLoginStatus = _mockRefreshLoginStatus as jest.Mocked<typeof _mockRefreshLoginStatus>
 
 Vue.use(Vuex)

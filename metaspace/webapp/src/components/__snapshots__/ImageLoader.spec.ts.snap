@@ -1,0 +1,75 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ImageLoader should match snapshot (minimal) 1`] = `
+<div>
+  <div
+    class="image-loader"
+    imagefitparams="[object Object]"
+    mock-v-loading="false"
+    style="width: 200px; height: 300px; transform: scaleX(1.23);"
+  >
+    <div
+      style="left: 0px; top: 0px; width: 200px; height: 300px; transform-origin: 0 0; transform: translate(0px, 0px) scale(1, 1);"
+    >
+      <img
+        class="isotope-image"
+        src="{\\"url\\":\\"http://placebacon.com/200/300\\"}"
+      />
+      <div />
+    </div>
+  </div>
+</div>
+`;
+
+exports[`ImageLoader should match snapshot (with everything turned on) 1`] = `
+<div>
+  <div
+    class="image-loader"
+    imagefitparams="[object Object]"
+    mock-v-loading="false"
+    style="width: 200px; height: 300px; transform: scaleX(1.23);"
+  >
+    <div
+      style="left: 0px; top: 0px; width: 200px; height: 300px; transform-origin: 0 0; transform: translate(0px, 0px) scale(1, 1);"
+    >
+      <img
+        class="isotope-image"
+        src="{\\"url\\":\\"http://placebacon.com/200/300\\"}"
+      />
+      <div>
+        <img
+          class="optical-image"
+          src="http://placekitten.com/200/300"
+          style="transform: matrix3d(1, 4, 0, 7,
+             2, 5, 0, 8,
+                      0,          0, 1,          0,
+             3, 6, 0, 9);"
+        />
+      </div>
+    </div>
+    <div>
+      <mock-el-tooltip
+        content="9.65e+3"
+        manual="true"
+        placement="top"
+        popper-class="pointer-events-none"
+        value="true"
+      >
+        <div
+          class="pixel-intensity"
+          style="left: 47.5px; top: 47.5px; width: 0.5px; height: 0.5px;"
+        />
+      </mock-el-tooltip>
+    </div>
+    <div
+      class="image-loader__overlay"
+    >
+      <p
+        class="image-loader__overlay-text"
+      >
+        Use CTRL + scroll wheel to zoom the image
+      </p>
+    </div>
+  </div>
+</div>
+`;

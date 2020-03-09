@@ -49,9 +49,6 @@ export default class ImageLoader extends Vue {
     imagePosition!: any;
 
     @Prop()
-    imageFitParams!: any;
-
-    @Prop()
     imageStyle!: any;
 
     @Prop()
@@ -128,7 +125,6 @@ export default class ImageLoader extends Vue {
         imageHeight: (this.ionImage ? this.ionImage.height : this.containerHeight) / this.pixelAspectRatio,
         areaWidth: this.containerWidth,
         areaHeight: this.containerHeight,
-        ...this.imageFitParams,
       })
     }
 

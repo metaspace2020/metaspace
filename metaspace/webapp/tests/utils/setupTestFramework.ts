@@ -17,7 +17,7 @@ Vue.use(VueCompositionApi)
 // Mock problematic ElementUI components
 registerMockComponent('el-dialog')
 registerMockComponent('el-popover')
-registerMockComponent('el-tooltip')
+registerMockComponent('el-tooltip', { methods: { updatePopper() {} } })
 registerMockComponent('el-autocomplete')
 registerMockComponent('el-select')
 registerMockComponent('el-option')
@@ -35,7 +35,7 @@ registerMockDirective('loading')
 jest.mock('../../src/lib/reportError', () => jest.fn(console.error))
 
 // Prevent JWT requests
-jest.mock('../../src/graphqlClient', () => require('./mockGraphqlClient'))
+jest.mock('../../src/api/graphqlClient', () => require('./mockGraphqlClient'))
 
 // Transitions throw errors because cssstyle doesn't support transition styles
 registerMockComponent('transition', { abstract: true }) //  ElTreeNode relies on Transition being abstract
