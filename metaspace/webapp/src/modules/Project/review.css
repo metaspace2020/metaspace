@@ -135,6 +135,7 @@
 
 .sm-workflow .el-button--primary {
   background-color: #008aff;
+  border-color: #008aff;
 }
 
 .sm-workflow .el-button:hover,

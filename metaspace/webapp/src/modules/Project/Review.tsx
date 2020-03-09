@@ -79,20 +79,13 @@ const ReviewLink = createComponent<Props>({
       projectData: getInitialProjectData(props.project, props.currentUserName),
     })
 
-    const withLoading = (cb: Function | undefined) => {
-      return async() => {
-        if (!cb) return
+    const enablePeerReview = async() => {
+      if (props.createLink) {
         state.loading = true
-        await cb()
+        await props.createLink(state.updateProject ? state.projectData : null)
         state.loading = false
       }
     }
-
-    const enablePeerReview = withLoading(() => {
-      if (props.createLink) {
-        props.createLink(state.updateProject ? state.projectData : null)
-      }
-    })
 
     const { href } = root.$router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined, true)
     const projectUrlPrefix = location.origin + href.replace('REMOVE', '')
