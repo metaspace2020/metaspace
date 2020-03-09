@@ -1,0 +1,69 @@
+/* No attribute exists for MS Edge at the moment, so ion images are antialiased there */
+.isotope-image {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  -ms-interpolation-mode: nearest-neighbor;
+  user-select: none;
+}
+
+.optical-image {
+  position: absolute;
+  z-index: -1;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+
+.optical-image-loading {
+  opacity: 0.01;
+  z-index: -2;
+}
+
+.image-loader {
+  position: relative;
+  overflow: hidden;
+}
+
+.image-loader__overlay-text {
+  font-size: 24px;
+  display: block;
+  position: relative;
+  text-align: center;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4;
+  color: #fff;
+  padding: auto;
+}
+
+.image-loader__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background-color: #fff;
+  opacity: 0;
+  transition: 1.1s;
+  z-index: 3;
+}
+
+.image-loader__overlay--visible {
+  background-color: black;
+  opacity: 0.6;
+  transition: 0.7s;
+}
+
+.pixel-intensity {
+  position: absolute;
+  border: 1px solid red;
+  display: block;
+  z-index: 3;
+  pointer-events: none;
+}

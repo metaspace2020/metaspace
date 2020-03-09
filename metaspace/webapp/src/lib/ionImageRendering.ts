@@ -251,7 +251,7 @@ export const processIonImage = (png: Image, minIntensity: number = 0, maxIntensi
   }
 }
 
-export const renderIonImageToBuffer = (ionImage: IonImage, cmap?: number[][]) => {
+export const renderIonImageToBuffer = (ionImage: IonImage, cmap?: readonly number[][]) => {
   const { clippedValues, mask } = ionImage
   // Treat pixels as 32-bit values instead of four 8-bit values to avoid extra math.
   // Assume little-endian byte order, because big-endian is pretty much gone.
@@ -284,7 +284,7 @@ export const renderIonImageToBuffer = (ionImage: IonImage, cmap?: number[][]) =>
   return outputBuffer
 }
 
-export const renderIonImage = (ionImage: IonImage, cmap?: number[][]) => {
+export const renderIonImage = (ionImage: IonImage, cmap?: readonly number[][]) => {
   const { width, height } = ionImage
 
   const outputBuffer = renderIonImageToBuffer(ionImage, cmap)
