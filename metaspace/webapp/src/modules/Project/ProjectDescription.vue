@@ -4,6 +4,7 @@
       :content="projectDescription"
       :editable="modes.edit"
       :with-menu-bar="canEdit"
+      :get-content="save"
     />
     <el-button-group
       v-if="canEdit"
@@ -25,7 +26,7 @@
         type="success"
         size="medium"
         icon="el-icon-check"
-        @click="saveMarkdown"
+        @click="finishEditing"
       >
         Save
       </el-button>
@@ -41,18 +42,18 @@ import sanitizeIt from '../../lib/sanitizeIt'
 import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'
 import RichText from '../../components/RichText'
 
-  interface Modes {
-    preview: boolean
-    saved: boolean,
-    edit: boolean
-  }
+interface Modes {
+  preview: boolean
+  saved: boolean,
+  edit: boolean
+}
 
-  @Component<ProjectDescription>({
-    name: 'project-description',
-    components: {
-      RichText,
-    },
-  })
+@Component<ProjectDescription>({
+  name: 'project-description',
+  components: {
+    RichText,
+  },
+})
 export default class ProjectDescription extends Vue {
     @Prop()
     project: any;
@@ -60,7 +61,8 @@ export default class ProjectDescription extends Vue {
     @Prop({ required: true, default: false })
     canEdit!: boolean;
 
-    projectDescription: string = this.project && this.project.projectDescription || '';
+    projectDescription: string | null = this.project && this.project.projectDescription
+
     showHint: boolean = false;
     modes: Modes = {
       preview: false,
@@ -79,38 +81,16 @@ export default class ProjectDescription extends Vue {
       })
     }
 
-    async saveMarkdown() {
-      this.$emit('updateProjectDescription', this.projectDescription)
+    finishEditing() {
       this.modes = {
         preview: false,
         saved: true,
         edit: false,
       }
-      this.$nextTick(() => {
-        if (this.showHint) {
-          this.showHint = false
-        }
-      })
     }
 
-    async prevMarkdown() {
-      if (this.showHint) {
-        this.showHint = false
-      }
-      this.modes = {
-        preview: true,
-        saved: false,
-        edit: false,
-      }
-    }
-
-    disableHint() {
-      this.showHint = false
-      setLocalStorage('hideMarkdownHint', true)
-    }
-
-    embedMarkdownAsHtml() {
-      return sanitizeIt(marked(this.projectDescription))
+    async save(newDescription: string) {
+      this.$emit('updateProjectDescription', newDescription)
     }
 }
 </script>

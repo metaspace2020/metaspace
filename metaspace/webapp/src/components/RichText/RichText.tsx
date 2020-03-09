@@ -10,10 +10,20 @@ import {
   History,
 } from 'tiptap-extensions'
 
+const emptyContent = {
+  type: 'doc',
+  content: [
+    {
+      type: 'paragraph',
+    },
+  ],
+}
+
 export default createComponent({
   props: {
-    content: Object,
+    content: String,
     editable: Boolean,
+    getContent: Function,
     withMenuBar: Boolean,
   },
   setup(props) {
@@ -27,7 +37,7 @@ export default createComponent({
         new Link(),
         new Underline(),
       ],
-      content: props.content,
+      content: props.content ? JSON.parse(props.content) : emptyContent,
       editable: props.editable,
     })
 
@@ -37,6 +47,8 @@ export default createComponent({
       })
       if (props.editable) {
         editor.focus()
+      } else if (props.getContent) {
+        props.getContent(JSON.stringify(editor.getJSON()))
       }
     })
 

@@ -424,6 +424,7 @@ export default class ViewProjectPage extends Vue {
     }
 
     async saveMarkdown(newProjectDescription: string) {
+      console.log(newProjectDescription)
       await this.$apollo.mutate<UpdateProjectMutation>({
         mutation: updateProjectMutation,
         variables: {

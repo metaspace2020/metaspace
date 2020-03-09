@@ -51,8 +51,8 @@ export class Project {
   })
   createdDT: Moment;
 
-  @Column({ type: 'json', nullable: true, name: 'project_description' })
-  projectDescription: string;
+  @Column({ type: 'text', nullable: true, name: 'project_description' })
+  projectDescription: string | null;
 
   @Column({ type: 'text', nullable: true })
   reviewToken: string | null;
