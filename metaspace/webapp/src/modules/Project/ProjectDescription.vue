@@ -1,37 +1,10 @@
 <template>
-  <div>
-    <rich-text
-      :content="projectDescription"
-      :editable="modes.edit"
-      :with-menu-bar="canEdit"
-      :get-content="save"
-    />
-    <el-button-group
-      v-if="canEdit"
-      class="btngroup"
-    >
-      <el-button
-        v-if="modes.saved || modes.preview"
-        class="btn"
-        type="primary"
-        size="medium"
-        icon="el-icon-edit"
-        @click="editTextDescr"
-      >
-        Edit
-      </el-button>
-      <el-button
-        v-if="modes.edit || modes.preview"
-        class="btn"
-        type="success"
-        size="medium"
-        icon="el-icon-check"
-        @click="finishEditing"
-      >
-        Save
-      </el-button>
-    </el-button-group>
-  </div>
+  <rich-text
+    :content="projectDescription"
+    :editable="modes.edit"
+    :with-menu-bar="canEdit"
+    :get-content="save"
+  />
 </template>
 
 <script lang="ts">

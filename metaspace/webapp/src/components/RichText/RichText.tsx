@@ -1,5 +1,5 @@
-import { createComponent, onBeforeUnmount, watch } from '@vue/composition-api'
-import { Editor, EditorContent, EditorMenuBar, EditorMenuBubble } from 'tiptap'
+import { createComponent, onBeforeUnmount, watch, reactive } from '@vue/composition-api'
+import { Editor, EditorContent, EditorMenuBar } from 'tiptap'
 import {
   Heading,
   Bold,
@@ -22,11 +22,14 @@ const emptyContent = {
 export default createComponent({
   props: {
     content: String,
-    editable: Boolean,
+    readonly: Boolean,
     getContent: Function,
-    withMenuBar: Boolean,
   },
   setup(props) {
+    const state = reactive({
+      editing: false,
+    })
+
     const editor = new Editor({
       extensions: [
         new Bold(),
@@ -37,17 +40,18 @@ export default createComponent({
         new Link(),
         new Underline(),
       ],
-      content: props.content ? JSON.parse(props.content) : emptyContent,
-      editable: props.editable,
+      content: props.content ? JSON.parse(props.content) : null,
+      editable: !props.readonly,
+      onFocus() {
+        state.editing = true
+      },
+      onBlur() {
+        state.editing = false
+      },
     })
 
-    watch(() => props.editable, () => {
-      editor.setOptions({
-        editable: props.editable,
-      })
-      if (props.editable) {
-        editor.focus()
-      } else if (props.getContent) {
+    watch(() => state.editing, () => {
+      if (!state.editing && props.getContent) {
         props.getContent(JSON.stringify(editor.getJSON()))
       }
     })
@@ -57,24 +61,27 @@ export default createComponent({
     })
 
     return () => (
-      <div class={['sm-RichText', { 'is-editable': props.editable }]}>
-        { props.withMenuBar
-          && <EditorMenuBar editor={editor}>
-            <div class={['sm-RichText-menubar', { 'is-visible': props.editable }]}>
-              <button
-                class={['sm-RichText-menubar-button', { 'is-active': editor.isActive.bold() }]}
-                onClick={editor.commands.bold}
-              >
-                Bold
-              </button>
-              <button
-                class={['sm-RichText-menubar-button', { 'is-active': editor.isActive.italic() }]}
-                onClick={editor.commands.italic}
-              >
-                Italic
-              </button>
-            </div>
-          </EditorMenuBar> }
+      <div class={['sm-RichText', { 'is-editable': state.editing }]}>
+        {!props.readonly && (
+          state.editing
+            ? <EditorMenuBar editor={editor}>
+              <div class={['sm-RichText-menubar', { 'is-visible': state.editing }]}>
+                <button
+                  class={['sm-RichText-menubar-button', { 'is-active': editor.isActive.bold() }]}
+                  onClick={editor.commands.bold}
+                >
+                  Bold
+                </button>
+                <button
+                  class={['sm-RichText-menubar-button', { 'is-active': editor.isActive.italic() }]}
+                  onClick={editor.commands.italic}
+                >
+                  Italic
+                </button>
+              </div>
+            </EditorMenuBar>
+            : <p><em>Click to edit:</em></p>
+        )}
         <EditorContent class="editor__content" editor={editor} />
       </div>
       /* <editor-menu-bubble : editor="editor" : keep-in-bounds="keepInBounds" v-slot="{commands, isActive, menu}">
