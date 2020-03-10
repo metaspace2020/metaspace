@@ -1,9 +1,9 @@
 import Vue from 'vue'
 import { computed, createComponent, reactive, Ref, ref, SetupContext, watch } from '@vue/composition-api'
 
-import { getOS, scrollDistance, WheelEventCompat } from '../util'
+import { getOS, scrollDistance, WheelEventCompat } from '../lib/util'
 import createColormap, { OpacityMode } from '../lib/createColormap'
-import config from '../config'
+import config from '../lib/config'
 import { renderIonImage } from '../lib/ionImageRendering'
 import ScaleBar from './ScaleBar.vue'
 import { throttle } from 'lodash-es'
@@ -76,11 +76,12 @@ const useScrollBlock = () => {
   }
   const renderScrollBlock = () => (<div
     class={{
-      'image-loader__overlay': true,
-      'image-loader__overlay--visible': state.overlayFadingIn,
+      'absolute inset-0 z-30 pointer-events-none': true,
+      'bg-white opacity-0 duration-1000': !state.overlayFadingIn,
+      'bg-black opacity-75 duration-700': state.overlayFadingIn,
     }}
   >
-    <p class="image-loader__overlay-text">
+    <p class="relative block top-1/2 z-40 -translate-y-1/2 p-auto text-white text-center text-2xl">
       Use { messageOS.value } to zoom the image
     </p>
   </div>)
@@ -189,7 +190,7 @@ const usePixelIntensityDisplay = (props: Props, imageLoaderRef: Ref<ReferenceObj
       >
         <div
           style={pixelIntensityStyle.value}
-          class="pixel-intensity"
+          class="absolute block border-solid border-red z-30 pointer-events-none"
         />
       </el-tooltip>
     </div>
@@ -315,7 +316,7 @@ const useBufferedOpticalImage = (props: Props) => {
       && <img
         key={state.loadedOpticalImageUrl}
         src={state.loadedOpticalImageUrl}
-        class="optical-image"
+        class="absolute top-0 left-0 -z-10 origin-top-left"
         style={state.loadedOpticalImageStyle}
       />}
 
@@ -325,7 +326,7 @@ const useBufferedOpticalImage = (props: Props) => {
       && <img
         key={opticalImageUrl.value}
         src={opticalImageUrl.value}
-        class="optical-image optical-image-loading"
+        class="absolute top-0 left-0 -z-20 origin-top-left opacity-1"
         style={opticalImageStyle.value}
         onLoad={onOpticalImageLoaded}
       />}
@@ -339,7 +340,7 @@ const useIonImageView = (props: Props) => {
   const renderIonImageView = () => (props.ionImage
     && <img
       src={ionImageDataUri.value}
-      class="isotope-image"
+      class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
       style={{
         transform: (props.ionImageTransform ? formatMatrix3d(props.ionImageTransform) : ''),
       }}
@@ -412,7 +413,7 @@ export default createComponent<Props>({
       <div
         ref="imageLoader"
         v-loading={props.isLoading}
-        class="image-loader"
+        class="relative overflow-hidden"
         style={{ width: props.width + 'px', height: props.height + 'px' }}
         onwheel={onWheel}
         onmousedown={handlePanStart}

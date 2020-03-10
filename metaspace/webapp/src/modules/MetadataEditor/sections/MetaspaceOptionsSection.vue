@@ -241,7 +241,7 @@ import DatabaseDescriptions from '../inputs/DatabaseDescriptions.vue'
 import AnalysisVersionHelp from '../inputs/AnalysisVersionHelp.vue'
 import { MetaspaceOptions } from '../formStructure'
 import { MAX_MOL_DBS, MAX_NEUTRAL_LOSSES, MAX_CHEM_MODS } from '../../../lib/constants'
-import config from '../../../config'
+import config from '../../../lib/config'
 import './FormSection.scss'
 
 const normalizeFormulaModifier = (formula: string, defaultSign: '+'|'-') => {

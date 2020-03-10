@@ -1,15 +1,16 @@
 import Vue from 'vue'
 
-import config, { updateConfigFromQueryString } from './config'
+import config, { updateConfigFromQueryString } from './lib/config'
 import * as Raven from 'raven-js'
 import * as RavenVue from 'raven-js/plugins/vue'
 
 import VueApollo from 'vue-apollo'
-import apolloClient, { setMaintenanceMessageHandler } from './graphqlClient'
+import apolloClient, { setMaintenanceMessageHandler } from './api/graphqlClient'
 
 import ElementUI from 'element-ui'
-import './element-variables.scss'
+import './modules/App/element-variables.scss'
 import locale from 'element-ui/lib/locale/lang/en'
+import './modules/App/tailwind.scss'
 
 import store from './store'
 import router from './router'

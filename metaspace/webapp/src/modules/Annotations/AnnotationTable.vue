@@ -273,7 +273,7 @@
 </template>
 
 <script>
-import { renderMolFormulaHtml } from '../../util'
+import { renderMolFormulaHtml } from '../../lib/util'
 import ProgressButton from './ProgressButton.vue'
 import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue'
 import {
@@ -285,7 +285,7 @@ import Vue from 'vue'
 import FileSaver from 'file-saver'
 import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../lib/formatCsvRow'
 import { invert } from 'lodash-es'
-import config from '../../config'
+import config from '../../lib/config'
 
 // 38 = up, 40 = down, 74 = j, 75 = k
 const KEY_TO_ACTION = {

@@ -19,10 +19,10 @@
     "jsx": "preserve"
   },
   "files": [
-    "src/vue-shims.d.ts"
+    "src/types/*.d.ts"
   ],
   "include": [
-    "src/vue-shims.d.ts",
+    "src/types/*.d.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
     "src/**/*.vue"

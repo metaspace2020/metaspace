@@ -123,10 +123,10 @@ import DiagnosticsPlot from './DiagnosticsPlot.vue'
 import CandidateMoleculesPopover from '../CandidateMoleculesPopover.vue'
 import { groupBy, intersection, sortBy, xor } from 'lodash-es'
 import { isobarsQuery } from '../../../../api/annotation'
-import { renderMassShift, renderMolFormula, renderMolFormulaHtml } from '../../../../util'
+import { renderMassShift, renderMolFormula, renderMolFormulaHtml } from '../../../../lib/util'
 import safeJsonParse from '../../../../lib/safeJsonParse'
 import reportError from '../../../../lib/reportError'
-import config from '../../../../config'
+import config from '../../../../lib/config'
 
 interface AnnotationGroup {
     isReference: boolean;

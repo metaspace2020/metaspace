@@ -41,8 +41,8 @@
   </el-popover>
 </template>
 <script>
-import { renderMolFormulaHtml } from '../../../util'
-import config from '../../../config'
+import { renderMolFormulaHtml } from '../../../lib/util'
+import config from '../../../lib/config'
 
 export default {
   props: {
