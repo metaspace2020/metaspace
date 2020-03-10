@@ -81,7 +81,7 @@
 import Vue from 'vue'
 import ImageLoader from '../../components/ImageLoader.vue'
 import { inv, dot, diag } from 'numeric'
-import { scrollDistance } from '../../util'
+import { scrollDistance } from '../../lib/util'
 
 function computeTransform(src, dst) {
   // http://franklinta.com/2014/09/08/computing-css-matrix3d-transforms/

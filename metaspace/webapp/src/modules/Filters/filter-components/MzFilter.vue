@@ -23,7 +23,7 @@
 <script lang="ts">
 import Vue, { ComponentOptions } from 'vue'
 import TagFilterInputBox from './TagFilterInputBox.vue'
-import { mzFilterPrecision } from '../../../util'
+import { mzFilterPrecision } from '../../../lib/util'
 
 export default Vue.extend({
   name: 'MzFilter',

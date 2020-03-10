@@ -30,7 +30,7 @@ import MetaspaceHeader from './MetaspaceHeader.vue'
 import NewFeaturePopup from './NewFeaturePopup.vue'
 import TourStep from './TourStep.vue'
 import { DialogController } from '../Account'
-import config from '../../config'
+import config from '../../lib/config'
 import Vue, { ComponentOptions } from 'vue'
 import 'element-ui' // Needed for Vue.$alert augmentation
 

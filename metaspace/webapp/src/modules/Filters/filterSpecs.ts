@@ -1,4 +1,4 @@
-import { renderMolFormula } from '../../util'
+import { renderMolFormula } from '../../lib/util'
 import InputFilter from './filter-components/InputFilter.vue'
 import SingleSelectFilter from './filter-components/SingleSelectFilter.vue'
 import SearchableFilter from './filter-components/SearchableFilter.vue'
@@ -9,7 +9,7 @@ import { metadataTypes, defaultMetadataType } from '../../lib/metadataRegistry'
 import { Component } from 'vue'
 import SimpleFilterBox from './filter-components/SimpleFilterBox.vue'
 import BooleanFilter from './filter-components/BooleanFilter.vue'
-import config from '../../config'
+import config from '../../lib/config'
 import AdductFilter from './filter-components/AdductFilter.vue'
 
 function formatFDR(fdr: number) {

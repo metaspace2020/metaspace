@@ -18,7 +18,7 @@ import {
 } from '../../api/group'
 import reportError from '../../lib/reportError'
 import { encodeParams } from '../Filters'
-import apolloClient from '../../graphqlClient'
+import apolloClient from '../../api/graphqlClient'
 
 const RouterLink = Vue.component('router-link')
 interface GroupRow {

@@ -251,7 +251,7 @@ import {
   UserProfileQuery, resetUserApiKeyMutation,
 } from '../../api/user'
 import reportError from '../../lib/reportError'
-import { refreshLoginStatus } from '../../graphqlClient'
+import { refreshLoginStatus } from '../../api/graphqlClient'
 import { ElForm } from 'element-ui/types/form'
 import { TransferDatasetsDialog } from '../GroupProfile/index'
 import emailRegex from '../../lib/emailRegex'

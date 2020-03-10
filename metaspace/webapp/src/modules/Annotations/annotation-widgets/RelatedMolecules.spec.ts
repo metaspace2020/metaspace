@@ -5,7 +5,7 @@ import store from '../../../store/index'
 import Vue from 'vue'
 import Vuex from 'vuex'
 import { sync } from 'vuex-router-sync'
-import config from '../../../config'
+import config from '../../../lib/config'
 import router from '../../../router'
 
 Vue.use(Vuex)

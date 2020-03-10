@@ -27,6 +27,7 @@
     "analyze-size": "rm -rf dist ; NODE_ENV=production WEBPACK_STATS=true vue-cli-service build ; npx webpack-bundle-analyzer dist/stats.json dist/ -p 9900 -O"
   },
   "dependencies": {
+    "@fullhuman/postcss-purgecss": "^2.1.0",
     "@types/js-cookie": "^2.1.0",
     "@types/marked": "^0.6.2",
     "@types/sanitize-html": "^1.18.2",
@@ -56,6 +57,7 @@
     "sanitize-html": "^1.20.0",
     "simple-statistics": "^7.0.2",
     "subscriptions-transport-ws": "^0.9.16",
+    "tailwindcss": "^1.2.0",
     "tiptap": "^1.26.6",
     "tiptap-extensions": "^1.28.6",
     "ts-essentials": "3.0.4",

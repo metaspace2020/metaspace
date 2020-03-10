@@ -153,7 +153,7 @@ import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/
 import { UserGroupRoleOptions as UGRO } from '../../api/group'
 import { ProjectRoleOptions as UPRO } from '../../api/project'
 import { encodeParams } from '../Filters'
-import { refreshLoginStatus } from '../../graphqlClient'
+import { refreshLoginStatus } from '../../api/graphqlClient'
 import NotificationIcon from '../../components/NotificationIcon.vue'
 import { datasetStatusUpdatedQuery } from '../../api/dataset'
 

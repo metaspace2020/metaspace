@@ -48,7 +48,6 @@
 import Vue from 'vue'
 import Popper, { Placement } from 'popper.js'
 
-import config from '../../config'
 import Component from 'vue-class-component'
 import { debounce, isArray } from 'lodash-es'
 import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'

@@ -43,7 +43,7 @@ import { Component, Prop } from 'vue-property-decorator'
 
 import ImageLoader from '../../../../components/ImageLoader.vue'
 import { groupBy, sortBy } from 'lodash-es'
-import { formatHumanReadableList, formatNth } from '../../../../util'
+import { formatHumanReadableList, formatNth } from '../../../../lib/util'
 
 @Component({
   components: {

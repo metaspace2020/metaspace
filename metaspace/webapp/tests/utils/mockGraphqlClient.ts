@@ -4,7 +4,7 @@ import { addMockFunctionsToSchema, makeRemoteExecutableSchema, IMocks } from 'gr
 import Vue from 'vue'
 import VueApollo from 'vue-apollo'
 import { buildClientSchema, GraphQLResolveInfo } from 'graphql'
-import {makeApolloCache} from '../../src/lib/apolloCache'
+import { makeApolloCache } from '../../src/lib/apolloCache'
 
 const lazyHash = (str: string) => Array.from(str).reduce((hash, char) => hash ^ char.charCodeAt(0), 0)
 

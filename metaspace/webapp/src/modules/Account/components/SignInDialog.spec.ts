@@ -7,12 +7,12 @@ import account from '../store/account'
 import router from '../../../router'
 import { restoreConsole, suppressConsoleWarn } from '../../../../tests/utils/suppressConsole'
 import * as _mockAuthApi from '../../../api/auth'
-import { refreshLoginStatus as _mockRefreshLoginStatus } from '../../../graphqlClient'
+import { refreshLoginStatus as _mockRefreshLoginStatus } from '../../../api/graphqlClient'
 
 jest.mock('../../../api/auth')
 const mockAuthApi = _mockAuthApi as jest.Mocked<typeof _mockAuthApi>
 
-jest.mock('../../../graphqlClient')
+jest.mock('../../../api/graphqlClient')
 const mockRefreshLoginStatus = _mockRefreshLoginStatus as jest.Mocked<typeof _mockRefreshLoginStatus>
 
 Vue.use(Vuex)
