@@ -1,0 +1,7 @@
+.sm-fade-enter-active, .sm-fade-leave-active {
+  @apply duration-200 transition-opacity ease-in-out;
+}
+
+.sm-fade-enter, .sm-fade-leave-to {
+  opacity: 0;
+}

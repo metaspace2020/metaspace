@@ -1,3 +1,17 @@
+/* Resets */
+
+.text-inherit {
+  color: inherit;
+}
+
+.bg-none {
+  background: none;
+}
+
+.button-reset {
+  @apply bg-none text-inherit border-none outline-none cursor-pointer p-0;
+}
+
 @tailwind base;
 
 @tailwind components;

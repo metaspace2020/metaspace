@@ -1,12 +1,12 @@
 .sm-RichText .ProseMirror {
   transition: ease-in-out 0.2s;
-  transition-property: border;
+  transition-property: border padding;
   border-color: hsl(208, 33%, 89%);
   border-style: solid;
   border-width: 0px;
 }
 
-.sm-RichText.is-editable .ProseMirror {
+.sm-RichText.is-editing .ProseMirror {
   border-width: 1px;
   border-radius: 4px;
   padding: 16px;
@@ -25,21 +25,13 @@
 }
 
 .sm-RichText .ProseMirror * + * {
-  margin-top: 24px;
+  margin-top: 12px;
 }
 
-
-/* Menubar */
-
-.sm-RichText .sm-RichText-menubar {
-  opacity: 0;
-  transition: ease-in-out 0.2s;
-  transition-property: opacity;
-  visibility: hidden;
-  margin: 8px 16px;
+.sm-RichText .ProseMirror h2 {
+  line-height: 48px;
 }
 
-.sm-RichText .sm-RichText-menubar.is-visible {
-  opacity: 1;
-  visibility: visible;
+.sm-RichText .ProseMirror h2 + * {
+  margin-top: 0;
 }
