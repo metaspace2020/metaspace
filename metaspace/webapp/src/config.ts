@@ -44,6 +44,7 @@ interface Features {
 interface ClientConfig {
   graphqlUrl: string | null;
   wsGraphqlUrl: string | null;
+  companionUrl: string | null;
   imageStorage?: string | null;
 
   google_client_id: string;

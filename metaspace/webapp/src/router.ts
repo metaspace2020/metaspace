@@ -2,6 +2,7 @@
 import Vue, { AsyncComponent } from 'vue'
 import VueRouter, { RawLocation } from 'vue-router'
 import AboutPage from './modules/App/AboutPage.vue'
+import UppyUploadPage from './modules/MolecularDatabases/UppyUploadPage.vue'
 import DatasetsPage from './modules/Datasets/DatasetsPage.vue'
 import { DialogPage, ResetPasswordPage } from './modules/Account'
 import { redirectAfterSignIn } from './modules/Account/signInReturnUrl'
@@ -43,6 +44,7 @@ const router = new VueRouter({
   routes: [
     { path: '/', component: AboutPage },
     { path: '/about', component: AboutPage },
+    { path: '/database-upload', component: UppyUploadPage },
     { path: '/annotations', component: asyncPages.AnnotationsPage },
     {
       path: '/datasets',
