@@ -33,7 +33,7 @@ export default {
     })
     uppy.use(AwsS3Multipart, {
       limit: 2,
-      companionUrl: config.companionUrl,
+      companionUrl: config.companionUrl || `${window.location.origin}/database_upload`,
     })
   }
 }

@@ -58,6 +58,7 @@ interface ClientConfig {
 const defaultConfig: ClientConfig = {
   graphqlUrl: null,
   wsGraphqlUrl: null,
+  companionUrl: null,
   google_client_id: '',
   fineUploader: {
     storage: 'local',
