@@ -14,7 +14,7 @@
     "Vitaly Kovalev <vitaly.kovalev@embl.de>"
   ],
   "scripts": {
-    "dev": "nodemon -e js,json,ts --require ts-node/register server.js",
+    "dev": "ts-node-dev server.js",
     "start": "ts-node server.js",
     "test": "NODE_ENV=test jest",
     "test-integration": "mocha --timeout 3000 tests/*RegrTest.js # Has not been maintained. Mocha removed due to security advisory in one of its dependencies",
@@ -47,6 +47,7 @@
     "@types/passport-local": "^1.0.33",
     "@types/sprintf-js": "^1.1.1",
     "@types/uuid": "^3.4.3",
+    "@uppy/companion": "^1.9.5",
     "ajv": "4.10.0",
     "amqplib": "^0.5.1",
     "apollo-server-express": "^2.0.4",

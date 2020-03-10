@@ -14,7 +14,7 @@ const unlinkAsync = promisify(fs.unlink);
 
 
 function directory(req: Request) {
-  return `${config.dataset_upload.destination}/${req.body.uuid}`;
+  return `${config.upload.destination}/${req.body.uuid}`;
 }
 
 function filename(req: Request, i?: number) {
