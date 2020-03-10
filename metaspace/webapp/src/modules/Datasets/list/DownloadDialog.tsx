@@ -5,21 +5,22 @@ import safeJsonParse from '../../../lib/safeJsonParse'
 import { Dialog } from 'element-ui'
 import router from '../../../router'
 
-const getExtension = (filename: string) => {
+const getFilenameAndExt = (filename: string) => {
   const lastDot = filename.lastIndexOf('.')
   if (lastDot !== -1) {
+    const name = filename.slice(0, lastDot)
     const ext = filename.slice(lastDot)
     if (ext.toLowerCase() === '.imzml') {
-      return '.imzML'
+      return [name, '.imzML']
     } else {
-      return ext.toLowerCase()
+      return [name, ext.toLowerCase()]
     }
   }
-  return ''
+  return [filename, '']
 }
 
-const FileIcon = createComponent<{filename: string}>({
-  props: { filename: { type: String, required: true } },
+const FileIcon = createComponent({
+  props: { ext: { type: String, required: true } },
   setup(props) {
     return () => (
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 100" style="width: 32px; height: 50px">
@@ -40,10 +41,35 @@ const FileIcon = createComponent<{filename: string}>({
           <stop offset=".908" stop-color="#adbdc7"/>
           <stop offset="1" stop-color="#92a5b0"/>
         </linearGradient>
-        <path d="M45 1L71 27.7H45V1z" fill="url(#b)"/><path d="M45 1l27 26.7H45V1z" fill-opacity="0" stroke="#7191a1" stroke-width="2" stroke-linejoin="bevel"/>
-        <text x="36" y="60" text-length="64" text-anchor="middle" font-size="20px" font-weight="bold" fill="#7191a1">{getExtension(props.filename)}</text>
+        <path d="M45 1L71 27.7H45V1z" fill="url(#b)" stroke-width="2" stroke="#7191a1" stroke-linejoin="bevel"/>
+        <text x="36" y="60" text-length="64" text-anchor="middle" font-size="20px" font-weight="bold" fill="#7191a1">{props.ext}</text>
       </svg>
     )
+  },
+})
+
+const FileItem = createComponent({
+  props: {
+    filename: {type: String, required: true},
+    link: {type: String, required: true},
+  },
+  setup(props) {
+    return () => {
+      const { filename, link } = props
+      const [name, ext] = getFilenameAndExt(filename)
+
+      return (
+        <div class="flex items-center p-1 w-1/2 box-border">
+          <a href={link}>
+            <FileIcon ext={ext} />
+          </a>
+          <a href={link} class="flex mx-3 my-1 truncate">
+            <span class="flex flex-shrink truncate">{name}</span>
+            <span>{ext}</span>
+          </a>
+        </div>
+      )
+    }
   },
 })
 
@@ -69,41 +95,33 @@ export default createComponent({
     return () => {
       let content
       if (loading.value) {
-        content = <div v-loading style='min-height: 500px' />
+        content = <div v-loading class="h-64" />
       } else if (downloadLinks.value == null) {
         content = <div><h1>Error</h1><p>This dataset cannot be downloaded.</p></div>
       } else {
         const { license, contributors, files } = downloadLinks.value
+        const authorStr = contributors.length !== 1 ? 'authors' : 'author'
         content = (
           <div>
-            {license.code === 'NO-LICENSE'
-              ? <p>
-                This dataset's submitter has not selected a license.
-                Please get approval from the submitter before downloading or using this dataset in any way.
-              </p>
-              : <p>
-                This dataset is distributed under the <a href={license.link}>{license.name}</a>.
-                Please check its terms before you download or use this dataset.
-              </p>}
-
             <p>
-              Make sure to credit the {contributors.length !== 1 ? 'authors' : 'author'} of this dataset:
+              {license.code === 'NO-LICENSE'
+                ? <p>
+                  This dataset's submitter has not selected a license.
+                  Please get approval from the {authorStr} before downloading or using this dataset in any way.
+                </p>
+                : <p>
+                  This dataset is distributed under the <a href={license.link}>{license.code}</a> license.
+                  Make sure to credit the {authorStr} of this dataset:
+                </p>}
             </p>
             <ul>
               {contributors.map(({ name, institution }) =>
-                <li>{name}{institution && ', ' + institution}</li>)}
+                <li class="list-none">{name}{institution && `, ${institution}`}</li>)}
             </ul>
             <h4>Files</h4>
-            <div>
-              {files.map(({ filename, link }) => (
-                <div style="display: flex; align-items: center; padding: 5px; margin: 5px 0;">
-                  <a href={link}>
-                    <FileIcon filename={getExtension(filename)} />
-                  </a>
-                  <a href={link} style="margin: 5px 10px">
-                    {filename}
-                  </a>
-                </div>
+            <div class="flex my-1 flex-wrap">
+              {files.map(({filename, link}) => (
+                <FileItem filename={filename} link={link} />
               ))}
             </div>
             <p>
@@ -114,7 +132,6 @@ export default createComponent({
           </div>
         )
       }
-      (window as any).content = content
 
       return (
         <Dialog
@@ -122,6 +139,7 @@ export default createComponent({
           lockScroll={false}
           onclose={() => emit('close')}
           title={`Download ${props.datasetName}`}
+          customClass="el-dialog-lean max-w-xl"
         >
           {content.children}
         </Dialog>
