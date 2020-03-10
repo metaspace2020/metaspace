@@ -34,9 +34,10 @@ export interface Config {
     iso_img_fs_path: string;
     categories: Record<ImageCategory, ImageCategoryConfig>;
   };
-  dataset_upload: {
+  upload: {
     destination: string; // 's3' for S3 storage
     bucket?: string;
+    moldb_prefix: string;
   };
   services: {
     sm_engine_api_host: string;
