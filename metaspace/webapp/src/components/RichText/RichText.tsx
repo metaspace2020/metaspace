@@ -65,7 +65,10 @@ const RichText = createComponent<Props>({
           new Italic(),
           new Link(),
           new ListItem(),
-          new OnEscape(() => { state.editing = false }),
+          new OnEscape(() => {
+            state.editing = false
+            state.editor.blur()
+          }),
           new Sub(),
           new Sup(),
           new Underline(),
@@ -108,7 +111,7 @@ const RichText = createComponent<Props>({
     return () => (
       <section class="sm-RichText" onClick={handleEditorClick}>
         {!props.readonly && (
-          <header class="flex items-center h-8 mb-2">
+          <header class="flex items-baseline h-8 mb-2">
             <FadeTransition mode="out-in">
               {state.editing
                 ? <EditorMenuBar editor={editor}>
@@ -157,7 +160,9 @@ const RichText = createComponent<Props>({
                     </MenuBarButton>
                   </div>
                 </EditorMenuBar>
-                : <button class="button-reset text-sm italic text-gray-700 px-4 leading-6">(click to edit)</button>}
+                : <p class="text-sm italic text-gray-700 px-4 leading-6">
+                  <i class="el-icon-edit" /> click to edit
+                </p>}
             </FadeTransition>
           </header>
         )}
