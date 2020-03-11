@@ -4,9 +4,6 @@
 
 <script>
 
-import '@uppy/core/dist/style.css'
-import '@uppy/dashboard/dist/style.css'
-
 import * as Uppy from '@uppy/core'
 import * as AwsS3Multipart from '@uppy/aws-s3-multipart'
 import * as Dashboard from '@uppy/dashboard'
@@ -39,5 +36,5 @@ export default {
 }
 </script>
 
-<style scoped>
-</style>
+<style src="@uppy/core/dist/style.css"></style>
+<style src="@uppy/dashboard/dist/style.css"></style>
