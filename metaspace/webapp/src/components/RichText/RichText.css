@@ -1,23 +1,12 @@
-.sm-RichText .ProseMirror {
-  transition: ease-in-out 0.2s;
-  transition-property: border padding;
-  border-color: hsl(208, 33%, 89%);
-  border-style: solid;
-  border-width: 0px;
-}
-
-.sm-RichText.is-editing .ProseMirror {
-  border-width: 1px;
-  border-radius: 4px;
-  padding: 16px;
-}
-
 .sm-RichText .ProseMirror-focused {
   outline: none;
 }
 
-
-/* Formatting */
+/*
+  Text formatting
+  ---------------
+  N.B. Numbers here do not follow the same "system" as Tailwind.
+*/
 
 .sm-RichText .ProseMirror * {
   line-height: 24px;
@@ -34,4 +23,13 @@
 
 .sm-RichText .ProseMirror h2 + * {
   margin-top: 0;
+}
+
+.sm-RichText .ProseMirror ul {
+  padding-left: 24px;
+  list-style: outside;
+}
+
+.sm-RichText .ProseMirror li {
+  margin-top: 0px;
 }

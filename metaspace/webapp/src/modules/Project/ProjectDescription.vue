@@ -1,9 +1,11 @@
 <template>
   <rich-text
+    class="sm-project-description mx-auto mb-6"
     :content="projectDescription"
     :editable="modes.edit"
     :with-menu-bar="canEdit"
-    :get-content="save"
+    :on-update="save"
+    :readonly="!canEdit"
   />
 </template>
 
@@ -69,11 +71,7 @@ export default class ProjectDescription extends Vue {
 </script>
 
 <style scoped>
-  .btngroup{
-    margin: 20px 0;
-  }
-
-  .btn {
-    padding: 8px 20px;
+  .sm-project-description {
+    max-width: 75ch;
   }
 </style>
