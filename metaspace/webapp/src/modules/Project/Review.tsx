@@ -5,6 +5,7 @@ import { createComponent, computed, reactive } from '@vue/composition-api'
 import { Button, Input, Collapse, CollapseItem } from 'element-ui'
 
 import CopyToClipboard from '../../components/CopyToClipboard'
+import RichText from '../../components/RichText'
 
 import { ViewProjectResult } from '../../api/project'
 
@@ -104,7 +105,7 @@ const ReviewLink = createComponent<Props>({
             <em>Reviewers will not need to create an account to gain access.</em>
           </p>
           {activeStep.value === 1
-            && <form>
+            && <form onSubmit={(e: Event) => e.preventDefault()}>
               <Collapse value={state.updateProject ? 'projectdetails' : ''} onChange={() => { state.updateProject = !state.updateProject }}>
                 <CollapseItem title="Update project details (recommended)" name="projectdetails">
                   <label for="project-review-title">Set the project name:</label>
@@ -114,7 +115,7 @@ const ReviewLink = createComponent<Props>({
                     <span slot="prepend">{projectUrlPrefix}</span>
                   </Input>
                   <label for="project-review-description">Add an abstract to the project description:</label>
-                  <Input id="project-review-description" value={state.projectData.description} type="textarea" rows="4" />
+                  <RichText content={state.projectData.description} />
                 </CollapseItem>
               </Collapse>
               <Button
@@ -127,7 +128,7 @@ const ReviewLink = createComponent<Props>({
             </form>
           }
           {activeStep.value === 2
-            && <form>
+            && <form onSubmit={(e: Event) => e.preventDefault()}>
               <Button onClick={props.deleteLink} type="info">
                 Remove link
               </Button>
@@ -140,7 +141,7 @@ const ReviewLink = createComponent<Props>({
         >
           <h2 class="sm-workflow-header">Review in progress</h2>
           {activeStep.value === 2
-            ? <form>
+            ? <form onSubmit={(e: Event) => e.preventDefault()}>
               <p>Reviewers can access this project using the following link:</p>
               <CopyToClipboard value={reviewLink.value} />
               <p>Once review is complete, we encourage making data publicly available.</p>

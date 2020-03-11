@@ -2,8 +2,6 @@
   <rich-text
     class="sm-project-description mx-auto mb-6"
     :content="projectDescription"
-    :editable="modes.edit"
-    :with-menu-bar="canEdit"
     :on-update="save"
     :readonly="!canEdit"
   />
@@ -37,32 +35,6 @@ export default class ProjectDescription extends Vue {
     canEdit!: boolean;
 
     projectDescription: string | null = this.project && this.project.projectDescription
-
-    showHint: boolean = false;
-    modes: Modes = {
-      preview: false,
-      saved: true,
-      edit: false,
-    };
-
-    editTextDescr() {
-      this.modes = {
-        preview: false,
-        saved: false,
-        edit: true,
-      }
-      this.$nextTick(() => {
-        this.showHint = !getLocalStorage<boolean>('hideMarkdownHint')
-      })
-    }
-
-    finishEditing() {
-      this.modes = {
-        preview: false,
-        saved: true,
-        edit: false,
-      }
-    }
 
     async save(newDescription: string) {
       this.$emit('updateProjectDescription', newDescription)

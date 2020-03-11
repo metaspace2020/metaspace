@@ -6,7 +6,7 @@
   padding: 0;
 }
 
-.sm-workflow li {
+.sm-workflow > li {
   border-left: 2px solid hsl(208, 33%, 89%);
   color: hsl(208, 22%, 49%);
   display: flex;
@@ -19,22 +19,22 @@
   transition-property: color;
 }
 
-.sm-workflow li:last-child {
+.sm-workflow > li:last-child {
   border-color: transparent; /* border still required for alignment */
 }
 
-.sm-workflow li > *,
+.sm-workflow > li > *,
 .sm-workflow form > * {
   margin: 0 0 12px;
 }
 
-.sm-workflow li > .sm-workflow-header {
+.sm-workflow > li > .sm-workflow-header {
   margin: 0;
   line-height: 48px;
 }
 
 /* hack allows left border to connect to next li */
-.sm-workflow li > :last-child {
+.sm-workflow > li > :last-child {
   margin-bottom: 48px;
 }
 
@@ -56,10 +56,6 @@
   margin: 4px 0; /* 2x line height (48px) - height (40px) / 2 */
 }
 
-.sm-workflow .el-textarea {
-  margin-top: 4px;
-}
-
 .sm-workflow .el-input {
   padding-bottom: 12px;
 }
@@ -73,10 +69,28 @@
   color: inherit;
 }
 
+.sm-workflow .sm-RichText {
+  border: 1px solid #DCDFE6;
+  border-radius: 4px;
+  height: 240px;
+  margin-top: 4px;
+  position: relative;
+}
+
+.sm-workflow .sm-RichText > div {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.sm-workflow .sm-RichText > header {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
 
 /* status indicators */
 
-.sm-workflow li:before {
+.sm-workflow > li:before {
   align-items: center;
   background: hsl(208, 33%, 89%);
   border-radius: 50%;
@@ -96,16 +110,16 @@
   width: 48px;
 }
 
-.sm-workflow li.active {
+.sm-workflow > li.active {
   color: inherit;
 }
 
-.sm-workflow li.active:before {
+.sm-workflow > li.active:before {
   background: #008aff;
   color: #fff;
 }
 
-.sm-workflow li.done:before {
+.sm-workflow > li.done:before {
   content: '\e6da';
   font-family: element-icons !important;
 }
