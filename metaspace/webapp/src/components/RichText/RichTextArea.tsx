@@ -33,11 +33,11 @@ const RichText = createComponent<Props>({
     content: String,
     onUpdate: Function,
   },
-  setup(props) {
+  setup(props, { emit }) {
     const editorRef = ref(
       useEditor({
         content: props.content,
-        onUpdate: props.onUpdate,
+        onUpdate: (content) => emit('update', content),
       }),
     )
 

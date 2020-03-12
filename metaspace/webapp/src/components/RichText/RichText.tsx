@@ -20,7 +20,7 @@ const RichText = createComponent<Props>({
     readonly: Boolean,
     onUpdate: Function,
   },
-  setup(props) {
+  setup(props, { emit }) {
     const state = reactive({
       editing: !props.content,
       editor: useEditor({
@@ -32,7 +32,7 @@ const RichText = createComponent<Props>({
         ],
         editable: !props.readonly,
         content: props.content,
-        onUpdate: props.onUpdate,
+        onUpdate: (content) => emit('update', content),
       }),
     })
 

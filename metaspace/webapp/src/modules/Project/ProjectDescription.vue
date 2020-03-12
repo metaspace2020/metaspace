@@ -2,8 +2,8 @@
   <rich-text
     class="sm-project-description mx-auto mb-6"
     :content="projectDescription"
-    :on-update="save"
     :readonly="!canEdit"
+    @update="save"
   />
 </template>
 

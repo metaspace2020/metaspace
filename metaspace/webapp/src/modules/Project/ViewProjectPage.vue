@@ -424,7 +424,6 @@ export default class ViewProjectPage extends Vue {
     }
 
     async saveMarkdown(newProjectDescription: string) {
-      console.log(newProjectDescription)
       await this.$apollo.mutate<UpdateProjectMutation>({
         mutation: updateProjectMutation,
         variables: {
@@ -437,11 +436,26 @@ export default class ViewProjectPage extends Vue {
       this.refetchProject()
     }
 
-    async createReviewLink() {
-      await this.$apollo.mutate({
+    async createReviewLink(projectDetails: object) {
+      const createLinkPromise = this.$apollo.mutate({
         mutation: createReviewLinkMutation,
         variables: { projectId: this.projectId },
       })
+
+      if (projectDetails) {
+        await Promise.all([
+          createLinkPromise,
+          this.$apollo.mutate<UpdateProjectMutation>({
+            mutation: updateProjectMutation,
+            variables: {
+              projectId: this.projectId,
+              projectDetails,
+            },
+          }),
+        ])
+      } else {
+        await createLinkPromise
+      }
       await this.refetchProject()
     }
 

@@ -1,4 +1,4 @@
-import './review.css'
+import './Review.css'
 
 import { createComponent, computed, reactive } from '@vue/composition-api'
 import { Button, Input, Collapse, CollapseItem } from 'element-ui'
@@ -36,8 +36,8 @@ function getInitialProjectData(project: ViewProjectResult, currentUserName = '')
   const newProjectName = surname && !project.name.startsWith(citation) ? `${citation} ${project.name}` : null
   return {
     name: newProjectName || project.name,
-    url: surname ? `${surname.toLowerCase()}-${year}` : project.urlSlug,
-    description: project.projectDescription,
+    urlSlug: surname ? `${surname.toLowerCase()}-${year}` : project.urlSlug,
+    projectDescription: project.projectDescription,
   }
 }
 
@@ -110,13 +110,15 @@ const ReviewLink = createComponent<Props>({
                   <label for="project-review-title">Set the project name:</label>
                   <Input id="project-review-title" value={state.projectData.name} />
                   <label for="project-review-url">Create a custom URL:</label>
-                  <Input id="project-review-url" value={state.projectData.url}>
+                  <Input id="project-review-url" value={state.projectData.urlSlug}>
                     <span slot="prepend">{projectUrlPrefix}</span>
                   </Input>
                   <label for="project-review-description">Add an abstract to the project description:</label>
                   <RichTextArea
-                    content={state.projectData.description}
-                    onUpdate={(content: string) => { state.projectData.description = content }}
+                    content={state.projectData.projectDescription}
+                    onUpdate={(content: string) => {
+                      state.projectData.projectDescription = content
+                    }}
                   />
                 </CollapseItem>
               </Collapse>
