@@ -1,9 +1,8 @@
 import { createComponent, onMounted, onBeforeUnmount, reactive } from '@vue/composition-api'
-import { EditorContent } from 'tiptap'
-import { debounce } from 'lodash-es'
+import { EditorContent, EditorMenuBar } from 'tiptap'
 
 import FadeTransition from '../../components/FadeTransition'
-import MenuBar from './MenuBar'
+import MenuItems from './MenuItems'
 
 import useEditor from './useEditor'
 import { OnEscape } from './tiptap'
@@ -63,7 +62,9 @@ const RichText = createComponent<Props>({
           <header class="flex items-baseline h-8 mb-2">
             <FadeTransition>
               {state.editing
-                ? <MenuBar editor={editor} />
+                ? <EditorMenuBar editor={editor}>
+                  <MenuItems editor={editor} />
+                </EditorMenuBar>
                 : <p class="text-sm italic text-gray-700 px-4 leading-6">
                   <i class="el-icon-edit" /> click to edit
                 </p>}

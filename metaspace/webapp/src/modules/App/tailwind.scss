@@ -26,3 +26,7 @@
   -ms-interpolation-mode: nearest-neighbor;
   /* Edge still doesn't support pixelated image interpolation, so ion images look bad there */
 }
+
+.transition-fade {
+  transition-property: opacity, visibility;
+}

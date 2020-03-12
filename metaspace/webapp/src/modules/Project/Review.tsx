@@ -1,6 +1,5 @@
 import './review.css'
 
-// import Vue from 'vue'
 import { createComponent, computed, reactive } from '@vue/composition-api'
 import { Button, Input, Collapse, CollapseItem } from 'element-ui'
 
