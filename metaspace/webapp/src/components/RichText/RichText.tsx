@@ -11,7 +11,7 @@ import { OnEscape } from './tiptap'
 interface Props {
   content: string
   formMode: boolean
-  onUpdate: (...args: any[]) => any
+  onUpdate: (content: string) => any
   readonly: boolean
 }
 

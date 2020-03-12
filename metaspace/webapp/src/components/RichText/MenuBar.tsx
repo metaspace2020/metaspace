@@ -11,7 +11,7 @@ const MenuBarButton = createComponent({
     return () => (
       <button
         class={[
-          'button-reset mr-1 px-1 h-8 w-8 inline-flex items-center justify-center rounded-sm hover:bg-gray-200 focus:bg-gray-200',
+          'button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm hover:bg-gray-200 focus:bg-gray-200',
           { 'text-gray-600': !props.isActive },
           { 'text-gray-900 bg-gray-200': props.isActive },
         ]}
@@ -26,12 +26,12 @@ const MenuBarButton = createComponent({
 
 export default createComponent({
   props: {
-    editor: Object,
+    editor: { type: Object, required: true },
   },
   setup(props) {
     return () => (
       <EditorMenuBar editor={props.editor}>
-        <div class="flex items-center">
+        <div class="flex items-start justify-center">
           <MenuBarButton
             isActive={props.editor.isActive.heading({ level: 2 })}
             onClick={() => props.editor.commands.heading({ level: 2 })}
@@ -72,7 +72,7 @@ export default createComponent({
             onClick={props.editor.commands.sub}
             title="Subscript"
           >
-            <span class="text-lg font-bold tracking-wider">H<sub class="text-xs">2</sub></span>
+            <span class="text-lg font-bold tracking-wider">H<sub class="text-xs leading-none">2</sub></span>
           </MenuBarButton>
         </div>
       </EditorMenuBar>

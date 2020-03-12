@@ -26,7 +26,9 @@ module.exports = {
       '-20': '-20',
     },
   },
-  variants: {},
+  variants: {
+    margin: ['last']
+  },
   plugins: [],
   corePlugins: {
     // Disable preflight, as it actively removes parts of the browser stylesheet that existing code relies on,

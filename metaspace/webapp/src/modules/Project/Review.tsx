@@ -5,7 +5,7 @@ import { createComponent, computed, reactive } from '@vue/composition-api'
 import { Button, Input, Collapse, CollapseItem } from 'element-ui'
 
 import CopyToClipboard from '../../components/CopyToClipboard'
-import RichText from '../../components/RichText'
+import { RichTextArea } from '../../components/RichText'
 
 import { ViewProjectResult } from '../../api/project'
 
@@ -22,7 +22,7 @@ const WorkflowItem = createComponent({
   },
   setup(props, { slots }) {
     return () => (
-      <li class={{ active: props.active, done: props.done }}>
+      <li class={['sm-workflow-item', { active: props.active, done: props.done }]}>
         {slots.default()}
       </li>
     )
@@ -115,10 +115,14 @@ const ReviewLink = createComponent<Props>({
                     <span slot="prepend">{projectUrlPrefix}</span>
                   </Input>
                   <label for="project-review-description">Add an abstract to the project description:</label>
-                  <RichText content={state.projectData.description} />
+                  <RichTextArea
+                    content={state.projectData.description}
+                    onUpdate={(content: string) => { state.projectData.description = content }}
+                  />
                 </CollapseItem>
               </Collapse>
               <Button
+                key={props.project.publicationStatus}
                 loading={state.loading}
                 onClick={enablePeerReview}
                 type="primary"
@@ -129,7 +133,11 @@ const ReviewLink = createComponent<Props>({
           }
           {activeStep.value === 2
             && <form onSubmit={(e: Event) => e.preventDefault()}>
-              <Button onClick={props.deleteLink} type="info">
+              <Button
+                onClick={props.deleteLink}
+                type="info"
+                key={props.project.publicationStatus}
+              >
                 Remove link
               </Button>
             </form>
