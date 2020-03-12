@@ -63,8 +63,8 @@
       >
         <el-tab-pane
           v-if="canEdit || project.projectDescription !== null"
-          name="description"
-          :label="'Description'"
+          name="about"
+          label="About"
           lazy
         >
           <project-description
@@ -308,10 +308,10 @@ export default class ViewProjectPage extends Vue {
     }
 
     get tab() {
-      if (['description', 'datasets', 'members', 'review', 'settings'].includes(this.$route.query.tab)) {
+      if (['about', 'datasets', 'members', 'review', 'settings'].includes(this.$route.query.tab)) {
         return this.$route.query.tab
       } else if (this.canEdit || this.project && this.project.projectDescription !== null) {
-        return 'description'
+        return 'about'
       } else {
         return 'datasets'
       }

@@ -9,8 +9,6 @@ import { OnEscape } from './tiptap'
 
 interface Props {
   content: string
-  formMode: boolean
-  onUpdate: (content: string) => any
   readonly: boolean
 }
 
@@ -18,11 +16,10 @@ const RichText = createComponent<Props>({
   props: {
     content: String,
     readonly: Boolean,
-    onUpdate: Function,
   },
   setup(props, { emit }) {
     const state = reactive({
-      editing: !props.content,
+      editing: false,
       editor: useEditor({
         extensions: [
           new OnEscape(() => {

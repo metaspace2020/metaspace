@@ -54,7 +54,6 @@ export class OnEscape extends Extension {
     this.cb = cb;
   }
 
-
   keys() {
     return {
       'Escape': () => this.cb()

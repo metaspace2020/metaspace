@@ -4,11 +4,6 @@ import { EditorContent, EditorMenuBubble } from 'tiptap'
 import MenuItems from './MenuItems'
 import useEditor from './useEditor'
 
-interface Props {
-  content: string
-  onUpdate: (content: string) => any
-}
-
 const MenuElement = createComponent({
   setup(_, { slots, parent }: any) {
     return () =>
@@ -27,6 +22,11 @@ const MenuElement = createComponent({
       ) : <div />
   },
 })
+
+interface Props {
+  content: string
+  onUpdate: (content: string) => any
+}
 
 const RichText = createComponent<Props>({
   props: {
