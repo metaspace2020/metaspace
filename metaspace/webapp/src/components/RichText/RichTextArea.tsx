@@ -1,12 +1,22 @@
 import { createComponent, onMounted, onBeforeUnmount, reactive } from '@vue/composition-api'
-import { EditorContent } from 'tiptap'
+import { Editor, EditorContent } from 'tiptap'
+import {
+  Bold,
+  BulletList,
+  HardBreak,
+  Heading,
+  History,
+  Italic,
+  Link,
+  ListItem,
+  Underline,
+} from 'tiptap-extensions'
 import { debounce } from 'lodash-es'
 
 import FadeTransition from '../../components/FadeTransition'
 import MenuBar from './MenuBar'
 
-import useEditor from './useEditor'
-import { OnEscape } from './tiptap'
+import { Sub, Sup, OnEscape } from './tiptap'
 
 interface Props {
   content: string
@@ -18,26 +28,46 @@ interface Props {
 const RichText = createComponent<Props>({
   props: {
     content: String,
+    formMode: Boolean,
     readonly: Boolean,
     onUpdate: Function,
   },
   setup(props) {
     const state = reactive({
       editing: !props.content,
-      editor: useEditor({
+      editor: new Editor({
         extensions: [
+          new Bold(),
+          new BulletList(),
+          new HardBreak(),
+          new Heading({ levels: [2] }),
+          new History(),
+          new Italic(),
+          new Link(),
+          new ListItem(),
           new OnEscape(() => {
             state.editing = false
             state.editor.blur()
           }),
+          new Sub(),
+          new Sup(),
+          new Underline(),
         ],
+        content: props.content ? JSON.parse(props.content) : null,
         editable: !props.readonly,
-        content: props.content,
-        onUpdate: props.onUpdate,
+        onFocus() {
+          if (!props.readonly) {
+            state.editing = true
+          }
+        },
       }),
     })
 
     const { editor } = state
+
+    if (props.onUpdate) {
+      editor.on('update', debounce(() => props.onUpdate(JSON.stringify(editor.getJSON())), 500))
+    }
 
     const handleEditorClick = (e: Event) => {
       e.stopPropagation()
@@ -54,6 +84,7 @@ const RichText = createComponent<Props>({
     })
 
     onBeforeUnmount(() => {
+      editor.destroy()
       document.body.removeEventListener('click', onOutclick)
     })
 
