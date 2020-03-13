@@ -19,11 +19,10 @@ const RichText = createComponent<Props>({
   },
   setup(props, { emit }) {
     const state = reactive({
-      editing: false,
       editor: useEditor({
         extensions: [
           new OnEscape(() => {
-            state.editing = false
+            editor.editing = false
             state.editor.blur()
           }),
         ],
@@ -37,32 +36,21 @@ const RichText = createComponent<Props>({
 
     const handleEditorClick = (e: Event) => {
       e.stopPropagation()
-      if (!props.readonly && !state.editing) {
-        state.editing = true
+      if (!props.readonly && !editor.editing) {
         editor.focus()
       }
     }
-
-    const onOutclick = () => { state.editing = false }
-
-    onMounted(() => {
-      document.body.addEventListener('click', onOutclick)
-    })
-
-    onBeforeUnmount(() => {
-      document.body.removeEventListener('click', onOutclick)
-    })
 
     return () => (
       <section class="sm-RichText" onClick={handleEditorClick}>
         {!props.readonly && (
           <header class="flex items-baseline h-8 mb-2">
             <FadeTransition>
-              {state.editing
+              {editor.editing
                 ? <EditorMenuBar editor={editor}>
                   <MenuItems editor={editor} />
                 </EditorMenuBar>
-                : <p class="text-sm italic text-gray-700 px-4 leading-6">
+                : <p class="text-sm italic text-gray-700 px-4 leading-6 cursor-pointer">
                   <i class="el-icon-edit" /> click to edit
                 </p>}
             </FadeTransition>
@@ -71,8 +59,8 @@ const RichText = createComponent<Props>({
         <EditorContent
           class={[
             'p-4 transition-colors ease-in-out duration-300 rounded',
-            { 'bg-transparent': !state.editing },
-            { 'bg-gray-200': state.editing },
+            { 'bg-transparent': !editor.editing },
+            { 'bg-gray-200': editor.editing },
           ]}
           editor={editor}
         />

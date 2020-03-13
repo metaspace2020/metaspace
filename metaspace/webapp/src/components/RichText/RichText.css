@@ -38,10 +38,3 @@
 .sm-RichText .ProseMirror sup {
   line-height: 1;
 }
-
-
-/* RichTextArea */
-
-.sm-RichTextArea {
-  border: 1px solid #DCDFE6;
-}

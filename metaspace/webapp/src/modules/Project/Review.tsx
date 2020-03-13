@@ -113,8 +113,9 @@ const ReviewLink = createComponent<Props>({
                   <Input id="project-review-url" value={state.projectData.urlSlug}>
                     <span slot="prepend">{projectUrlPrefix}</span>
                   </Input>
-                  <label for="project-review-description">Add an abstract to the project description:</label>
+                  <label>Add an abstract to the project description:</label>
                   <RichTextArea
+                    class="h-64 mt-1"
                     content={state.projectData.projectDescription}
                     onUpdate={(content: string) => {
                       state.projectData.projectDescription = content

@@ -1,4 +1,4 @@
-import { onBeforeUnmount } from '@vue/composition-api'
+import { onBeforeUnmount, onMounted, ref } from '@vue/composition-api'
 import { Editor } from 'tiptap'
 import {
   Bold,
@@ -42,11 +42,22 @@ export default function({ content, extensions = [], onUpdate, ...options }: Opti
     content: content ? JSON.parse(content) : null,
   })
 
+  editor.editing = ref(false)
+
   if (onUpdate) {
     editor.on('update', debounce(() => onUpdate(JSON.stringify(editor.getJSON())), 500))
   }
 
+  editor.on('focus', () => { editor.editing = true })
+
+  const onOutclick = () => { editor.editing = false }
+
+  onMounted(() => {
+    document.body.addEventListener('click', onOutclick)
+  })
+
   onBeforeUnmount(() => {
+    document.body.removeEventListener('click', onOutclick)
     editor.destroy()
   })
 

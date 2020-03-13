@@ -7,8 +7,9 @@
 }
 
 .sm-workflow-item {
-  border-left: 2px solid hsl(208, 33%, 89%);
-  color: hsl(208, 22%, 49%);
+  @apply border-solid border-0 border-l-2 border-gray-200 text-gray-600;
+  /* border-left: 2px solid hsl(208, 33%, 89%);
+  color: hsl(208, 22%, 49%); */
   display: flex;
   flex-direction: column;
   margin-left: 36px;
@@ -62,7 +63,7 @@
 
 .sm-workflow-optional-form,
 .sm-workflow-optional-form .el-input.is-disabled .el-input__inner {
-  color: hsl(208, 22%, 49%);
+  @apply text-gray-600
 }
 
 .sm-workflow-optional-form.enabled {
@@ -73,10 +74,11 @@
 /* status indicators */
 
 .sm-workflow-item:before {
+  @apply text-gray-600 bg-gray-200;
   align-items: center;
-  background: hsl(208, 33%, 89%);
+  /* background: hsl(208, 33%, 89%); */
   border-radius: 50%;
-  color: hsl(208, 22%, 49%);
+  /* color: hsl(208, 22%, 49%); */
   content: counter(workflow);
   counter-increment: workflow;
   display: flex;
@@ -110,15 +112,7 @@
 /* Element UI overrides */
 
 .el-input-group__append, .el-input-group__prepend {
-  color: hsl(208, 22%, 49%);
-}
-
-.sm-workflow .el-checkbox__label  {
-  font-size: 16px;
-}
-
-.sm-workflow .el-checkbox__inner {
-  border-color: hsl(208, 22%, 49%);
+  @apply text-gray-600;
 }
 
 .sm-workflow .el-button {
@@ -126,7 +120,7 @@
 }
 
 .sm-workflow .el-button--info {
-  background-color: hsl(208, 22%, 49%);
+  @apply bg-gray-600;
 }
 
 .sm-workflow .el-button--primary {
