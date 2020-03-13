@@ -105,7 +105,11 @@ const ReviewLink = createComponent<Props>({
           </p>
           {activeStep.value === 1
             && <form onSubmit={(e: Event) => e.preventDefault()}>
-              <Collapse value={state.updateProject ? 'projectdetails' : ''} onChange={() => { state.updateProject = !state.updateProject }}>
+              <Collapse
+                class="border-t border-b-0 box-border mb-3 border-gray-200"
+                onChange={() => { state.updateProject = !state.updateProject }}
+                value={state.updateProject ? 'projectdetails' : ''}
+              >
                 <CollapseItem title="Update project details (recommended)" name="projectdetails">
                   <label for="project-review-title">Set the project name:</label>
                   <Input id="project-review-title" value={state.projectData.name} />
@@ -113,10 +117,10 @@ const ReviewLink = createComponent<Props>({
                   <Input id="project-review-url" value={state.projectData.urlSlug}>
                     <span slot="prepend">{projectUrlPrefix}</span>
                   </Input>
-                  <label>Add an abstract to the project description:</label>
                   <RichTextArea
-                    class="h-64 mt-1"
+                    class="h-64"
                     content={state.projectData.projectDescription}
+                    label="Add an abstract to the project description:"
                     onUpdate={(content: string) => {
                       state.projectData.projectDescription = content
                     }}

@@ -10,7 +10,7 @@ const MenuElement = createComponent({
       parent && parent.menu ? (
         <div
           class={[
-            'absolute bg-white rounded p-1 border border-solid border-gray-300 shadow mb-2 transform -translate-x-1/2',
+            'absolute bg-white rounded p-1 border border-solid border-gray-100 shadow mb-2 transform -translate-x-1/2',
             'transition-fade ease-in-out duration-150',
             { 'invisible opacity-0': !parent.menu.isActive },
             { 'visible opacity-100': parent.menu.isActive },
@@ -25,15 +25,17 @@ const MenuElement = createComponent({
 
 interface Props {
   content: string
+  label: string
   onUpdate: (content: string) => any
 }
 
 const RichText = createComponent<Props>({
   props: {
     content: String,
+    label: String,
     onUpdate: Function,
   },
-  setup(props, { emit, attrs }) {
+  setup(props, { emit }) {
     const state = reactive({
       editor: useEditor({
         content: props.content,
@@ -45,21 +47,22 @@ const RichText = createComponent<Props>({
 
     editor.on('blur', () => { editor.editing = false })
 
+    const focusOnClick = (e: Event) => {
+      e.stopPropagation()
+      if (!editor.focused) editor.focus()
+    }
+
     return () => (
-      <section
-        class={[
-          'sm-RichText relative rounded border border-solid cursor-text transition-colors ease-in-out duration-150',
-          { 'border-gray-400 hover:border-gray-500': !editor.editing },
-          { 'border-blue-600': editor.editing },
-        ]}
-        onClick={(e: Event) => {
-          e.stopPropagation()
-          if (!editor.focused) editor.focus()
-        }}
-      >
+      <div class="sm-RichText sm-RichTextArea relative flex flex-col items-start">
+        {props.label && <label onClick={focusOnClick}>{props.label}</label>}
         <EditorContent
-          id={attrs.id}
-          class="p-4 h-full box-border overflow-y-auto"
+          onClick={focusOnClick}
+          class={[
+            'flex-grow w-full box-border overflow-y-auto cursor-text text-gray-700',
+            'rounded border border-solid transition-colors ease-in-out duration-150',
+            'border-gray-300 hover:border-gray-400 focus-within:border-blue-500',
+            { 'mt-1': props.label },
+          ]}
           editor={editor}
         />
         <EditorMenuBubble editor={editor} >
@@ -67,7 +70,7 @@ const RichText = createComponent<Props>({
             <MenuItems editor={editor} />
           </MenuElement>
         </EditorMenuBubble>
-      </section>
+      </div>
     )
   },
 })

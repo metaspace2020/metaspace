@@ -58,9 +58,9 @@ const RichText = createComponent<Props>({
         )}
         <EditorContent
           class={[
-            'p-4 transition-colors ease-in-out duration-300 rounded',
+            'transition-colors ease-in-out duration-300 rounded',
             { 'bg-transparent': !editor.editing },
-            { 'bg-gray-200': editor.editing },
+            { 'bg-gray-100': editor.editing },
           ]}
           editor={editor}
         />

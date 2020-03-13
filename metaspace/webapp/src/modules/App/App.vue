@@ -99,9 +99,9 @@ export default {
   }
 
   #app {
+    @apply text-body;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    color: #2c3e50;
     margin: 0;
     min-height: 100%;
     position: relative;

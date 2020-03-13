@@ -1,4 +1,4 @@
-const tailwindDefaults = require('tailwindcss/defaultConfig')
+const defaults = require('tailwindcss/defaultConfig.js')
 
 module.exports = {
   // Reference: https://tailwindcss.com/docs/configuration
@@ -7,27 +7,10 @@ module.exports = {
     fontFamily: {
       sans: ['Roboto', 'SUPERSCIPT_OVERRIDE', 'Helvetica', 'sans-serif'],
     },
-    inset: {
-      ...tailwindDefaults.theme.inset,
-      '1/2': '50%',
-    },
-    opacity: {
-      ...tailwindDefaults.theme.opacity,
-      '1': '0.01',
-    },
     placeholderColor: '#C0C4CC',
-    spacing: {
-      ...tailwindDefaults.theme.spacing,
-      auto: 'auto',
-    },
-    zIndex: {
-      ...tailwindDefaults.theme.zIndex,
-      '-10': '-10', // Use .-z-10 not .z--10
-      '-20': '-20',
-    },
     extend: {
       colors: {
-        text: 'hsl(208, 61%, 16%)',
+        body: 'hsl(208, 61%, 16%)',
         gray: { // greys based on brand colour
           '100': 'hsl(208, 36%, 96%)',
           '200': 'hsl(208, 33%, 89%)',
@@ -38,12 +21,38 @@ module.exports = {
           '700': 'hsl(208, 28%, 39%)',
           '800': 'hsl(208, 34%, 30%)',
           '900': 'hsl(208, 39%, 23%)',
+        },
+        blue: {
+          '100': 'hsl(208, 79%, 92%)',
+          '200': 'hsl(208, 97%, 85%)',
+          '300': 'hsl(208, 84%, 74%)',
+          '400': 'hsl(208, 74%, 65%)',
+          '500': 'hsl(208, 65%, 55%)',
+          '600': 'hsl(208, 67%, 45%)',
+          '700': 'hsl(208, 76%, 39%)',
+          '800': 'hsl(208, 82%, 33%)',
+          '900': 'hsl(208, 87%, 29%)',
+          '999': 'hsl(208, 100%, 21%)',
         }
-      }
+      },
+      inset: {
+        '1/2': '50%',
+      },
+      opacity: {
+        '1': '0.01',
+      },
+      spacing: {
+        auto: 'auto',
+      },
+      zIndex: {
+        '-10': '-10', // Use .-z-10 not .z--10
+        '-20': '-20',
+      },
     }
   },
   variants: {
-    margin: ['last']
+    borderColor: [...defaults.variants.borderColor, 'focus-within'],
+    margin: [...defaults.variants.margin, 'last']
   },
   plugins: [],
   corePlugins: {

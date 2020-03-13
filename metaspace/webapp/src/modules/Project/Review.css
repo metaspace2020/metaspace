@@ -111,8 +111,21 @@
 
 /* Element UI overrides */
 
-.el-input-group__append, .el-input-group__prepend {
-  @apply text-gray-600;
+.sm-workflow .el-input-group__append,
+.sm-workflow .el-input-group__prepend {
+  @apply border-gray-300 text-gray-600 bg-gray-100;
+}
+
+.sm-workflow .el-input__inner {
+  @apply border-gray-300 text-gray-700;
+}
+
+.sm-workflow .el-input__inner:hover {
+  @apply border-gray-400;
+}
+
+.sm-workflow .el-input__inner:focus {
+  @apply border-blue-500;
 }
 
 .sm-workflow .el-button {
@@ -135,13 +148,6 @@
 
 .sm-workflow .el-button:active {
   opacity: 1;
-}
-
-.sm-workflow .el-collapse {
-  border-top-width: 2px;
-  border-bottom: none;
-  box-sizing: border-box;
-  margin-bottom: 12px;
 }
 
 .sm-workflow .el-collapse-item__arrow {
