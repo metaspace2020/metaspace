@@ -45,18 +45,10 @@ const RichText = createComponent<Props>({
 
     const { editor } = state
 
-    editor.on('blur', () => { editor.editing = false })
-
-    const focusOnClick = (e: Event) => {
-      e.stopPropagation()
-      if (!editor.focused) editor.focus()
-    }
-
     return () => (
       <div class="sm-RichText sm-RichTextArea relative flex flex-col items-start">
-        {props.label && <label onClick={focusOnClick}>{props.label}</label>}
+        {props.label && <label onClick={() => { editor.focus() }}>{props.label}</label>}
         <EditorContent
-          onClick={focusOnClick}
           class={[
             'flex-grow w-full box-border overflow-y-auto cursor-text text-gray-700',
             'rounded border border-solid transition-colors ease-in-out duration-150',
