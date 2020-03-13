@@ -4,7 +4,7 @@ import pandas as pd
 import psycopg2.errors
 import bottle
 
-from sm.engine.db import TransactionContext
+from sm.engine.db import transaction_context
 from sm.engine import molecular_db
 from sm.engine.molecular_db import import_molecules_from_df, MalformedCSV
 from sm.rest.utils import (
@@ -46,7 +46,7 @@ def create():
         if not all([field in params for field in required_fields]):
             return make_response(WRONG_PARAMETERS, data=f'Required fields: {required_fields}')
 
-        with TransactionContext():
+        with transaction_context():
             file_path = params.pop('file_path')
             params['public'] = False
             moldb = molecular_db.create(**params)

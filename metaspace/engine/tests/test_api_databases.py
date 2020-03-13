@@ -22,8 +22,6 @@ def fill_db(test_db):
 
     yield
 
-    db.alter('TRUNCATE graphql.group CASCADE')
-
 
 def make_moldb_doc(**kwargs):
     req_doc = {
