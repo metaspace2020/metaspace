@@ -47,7 +47,7 @@ class ConnectionPool:
         return cls.pool.putconn(conn)
 
 
-thread_local = threading.local()
+thread_local = threading.local()  # pylint: disable=invalid-name
 
 
 @contextmanager
