@@ -50,15 +50,11 @@
 
 /* Textarea overrides */
 
-.sm-RichTextArea {
-  font-size: 87.5%; /* font-size: 14px; line-height: 21px */
-}
-
 .sm-RichTextArea .ProseMirror * + * {
   margin-top: 0.5rem;
 }
 
 .sm-RichTextArea .ProseMirror h2 {
   @apply text-lg;
-  line-height: 2.625rem; /* 21px * 2 */
+  line-height: 2.625rem; /* 1.5rem * 0.875 * 2 */
 }

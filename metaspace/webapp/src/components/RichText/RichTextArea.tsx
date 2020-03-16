@@ -15,7 +15,7 @@ const MenuElement = createComponent({
             { 'invisible opacity-0': !parent.menu.isActive },
             { 'visible opacity-100': parent.menu.isActive },
           ]}
-          style={`transform-property: opacity, visibility; left: ${parent.menu.left}px; bottom: ${parent.menu.bottom}px`}
+          style={`left: ${parent.menu.left}px; bottom: ${parent.menu.bottom}px`}
         >
           {slots.default()}
         </div>
@@ -50,7 +50,7 @@ const RichText = createComponent<Props>({
         {props.label && <label onClick={() => { editor.focus() }}>{props.label}</label>}
         <EditorContent
           class={[
-            'flex-grow w-full box-border overflow-y-auto cursor-text text-gray-700',
+            'flex-grow w-full box-border overflow-y-auto cursor-text text-gray-700 text-sm',
             'rounded border border-solid transition-colors ease-in-out duration-150',
             'border-gray-300 hover:border-gray-400 focus-within:border-blue-500',
             { 'mt-1': props.label },

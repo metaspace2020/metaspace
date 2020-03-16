@@ -10,9 +10,9 @@ const MenuButton = createComponent({
     return () => (
       <button
         class={[
-          'button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm hover:bg-gray-100 focus:bg-gray-100',
+          'button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm hover:bg-gray-200 focus:bg-gray-200',
           { 'text-gray-600': !props.isActive },
-          { 'text-gray-900 bg-gray-100': props.isActive },
+          { 'text-gray-900 bg-gray-200': props.isActive },
         ]}
         onClick={listeners.click}
         title={props.title}
