@@ -25,10 +25,9 @@
     >
       <h2>Custom URL</h2>
       <div v-if="canEditUrlSlug">
-        <router-link :to="projectUrlRoute">
-          {{ projectUrlPrefix }}
-        </router-link>
-        <input v-model="model.urlSlug">
+        <el-input v-model="model.urlSlug">
+          <span slot="prepend">{{ projectUrlPrefix }}</span>
+        </el-input>
       </div>
       <div v-if="!canEditUrlSlug && project && project.urlSlug">
         <router-link :to="projectUrlRoute">
@@ -218,5 +217,10 @@ export default class ProjectSettings extends Vue {
     padding: 4px 0;
     background-color: #EEEEEE;
   }
+</style>
 
+<style>
+.project-settings .el-input {
+  max-width: 64ch;
+}
 </style>
