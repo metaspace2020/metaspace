@@ -67,10 +67,12 @@
           label="About"
           lazy
         >
-          <project-description
-            :project="project"
-            :can-edit="canEdit && projectId != null"
-            @updateProjectDescription="saveMarkdown"
+          <rich-text
+            class="max-w-measure-5 mx-auto mb-6"
+            placeholder="Describe this project …"
+            :content="project.projectDescription"
+            :readonly="!canEdit"
+            @update="saveMarkdown"
           />
         </el-tab-pane>
         <el-tab-pane
@@ -182,7 +184,7 @@ import ProjectMembersList from './ProjectMembersList.vue'
 import ProjectSettings from './ProjectSettings.vue'
 import { optionalSuffixInParens, plural } from '../../lib/vueFilters'
 import { removeDatasetFromAllDatasetsQuery } from '../../lib/updateApolloCache'
-import ProjectDescription from './ProjectDescription.vue'
+import RichText from '../../components/RichText'
 import Review from './Review'
 import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
 
@@ -197,7 +199,7 @@ import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBa
       ProjectMembersList,
       ProjectSettings,
       NotificationIcon,
-      ProjectDescription,
+      RichText,
       Review,
       NewFeatureBadge,
     },

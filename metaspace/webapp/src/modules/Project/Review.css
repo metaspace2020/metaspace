@@ -6,20 +6,6 @@
   padding: 0;
 }
 
-.sm-workflow-item {
-  @apply border-solid border-0 border-l-2 border-gray-200 text-gray-600;
-  /* border-left: 2px solid hsl(208, 33%, 89%);
-  color: hsl(208, 22%, 49%); */
-  display: flex;
-  flex-direction: column;
-  margin-left: 36px;
-  max-width: 60ch;
-  padding-left: 48px;
-  position: relative;
-  transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-  transition-property: color;
-}
-
 .sm-workflow-item:last-child {
   border-color: transparent; /* border still required for alignment */
 }

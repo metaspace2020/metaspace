@@ -192,7 +192,7 @@
       <section>
         <h2>API access</h2>
         <div class="action-with-message">
-          <p>
+          <p class="max-w-measure-4">
             To <a href="https://github.com/metaspace2020/metaspace/tree/master/metaspace/python-client">access METASPACE programmatically</a>
             or integrate with trusted third-party applications, an API key can be used to avoid sharing your password.
           </p>
@@ -209,6 +209,7 @@
             class="action-with-message"
           >
             <copy-to-clipboard
+              class="max-w-measure-5"
               :value="currentUser.apiKey"
               type="password"
             />
@@ -224,7 +225,7 @@
       <section>
         <h2>Delete account</h2>
         <div class="action-with-message">
-          <p>
+          <p class="max-w-measure-3">
             If you delete your METASPACE account, you can either delete all your datasets or keep them within METASPACE.
             For the latter, the private data will still be accessible by the group members only.
           </p>
@@ -559,7 +560,6 @@ export default class EditUserPage extends Vue {
   }
 
   .action-with-message > :first-child {
-    max-width: 70ch;
     margin-top: 0;
     margin-right: 20px;
   }

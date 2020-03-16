@@ -7,7 +7,9 @@ module.exports = {
     fontFamily: {
       sans: ['Roboto', 'SUPERSCIPT_OVERRIDE', 'Helvetica', 'sans-serif'],
     },
-    placeholderColor: '#C0C4CC',
+    placeholderColor: {
+      default: theme => theme('colors.gray.600')
+    },
     extend: {
       colors: {
         body: 'hsl(208, 61%, 16%)',
@@ -44,6 +46,13 @@ module.exports = {
       spacing: {
         auto: 'auto',
       },
+      maxWidth: {
+        'measure-1': '44ch',
+        'measure-2': '52ch',
+        'measure-3': '60ch',
+        'measure-4': '68ch',
+        'measure-5': '76ch',
+      },
       zIndex: {
         '-10': '-10', // Use .-z-10 not .z--10
         '-20': '-20',
@@ -52,7 +61,7 @@ module.exports = {
   },
   variants: {
     borderColor: [...defaults.variants.borderColor, 'focus-within'],
-    margin: [...defaults.variants.margin, 'last']
+    margin: [...defaults.variants.margin, 'last'],
   },
   plugins: [],
   corePlugins: {

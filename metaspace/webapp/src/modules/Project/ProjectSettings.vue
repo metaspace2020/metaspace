@@ -221,6 +221,6 @@ export default class ProjectSettings extends Vue {
 
 <style>
 .project-settings .el-input {
-  max-width: 64ch;
+  @apply max-w-measure-3;
 }
 </style>

@@ -21,7 +21,13 @@ const WorkflowItem = createComponent({
   },
   setup(props, { slots }) {
     return () => (
-      <li class={['sm-workflow-item', { active: props.active, done: props.done }]}>
+      <li class={[
+        'sm-workflow-item',
+        'flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12',
+        'border-solid border-0 border-l-2 border-gray-200',
+        'transition-colors ease-in-out duration-300',
+        { active: props.active, done: props.done },
+      ]}>
         {slots.default()}
       </li>
     )
