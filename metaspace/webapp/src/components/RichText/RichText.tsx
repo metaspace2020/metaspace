@@ -1,5 +1,6 @@
-import { createComponent, onMounted, onBeforeUnmount, reactive } from '@vue/composition-api'
+import { createComponent, reactive } from '@vue/composition-api'
 import { EditorContent, EditorMenuBar } from 'tiptap'
+import { Placeholder } from 'tiptap-extensions'
 
 import FadeTransition from '../../components/FadeTransition'
 import MenuItems from './MenuItems'
@@ -9,12 +10,14 @@ import { OnEscape } from './tiptap'
 
 interface Props {
   content: string
+  placeholder: string
   readonly: boolean
 }
 
 const RichText = createComponent<Props>({
   props: {
     content: String,
+    placeholder: String,
     readonly: Boolean,
   },
   setup(props, { emit }) {
@@ -25,7 +28,12 @@ const RichText = createComponent<Props>({
             editor.editing = false
             state.editor.blur()
           }),
-        ],
+        ].concat(
+          props.placeholder ? new Placeholder({
+            emptyNodeText: props.placeholder,
+            emptyNodeClass: 'sm-RichText-placeholder',
+          }) : [],
+        ),
         editable: !props.readonly,
         content: props.content,
         onUpdate: (content) => emit('update', content),

@@ -48,6 +48,11 @@
   cursor: pointer;
 }
 
+.sm-RichText-placeholder:first-child::before {
+  @apply float-left text-gray-600 pointer-events-none italic h-0 text-xl leading-tight;
+  content: attr(data-empty-text);
+}
+
 /* Textarea overrides */
 
 .sm-RichTextArea .ProseMirror * + * {
