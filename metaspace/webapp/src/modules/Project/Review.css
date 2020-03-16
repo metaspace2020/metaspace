@@ -133,7 +133,7 @@
 }
 
 .sm-workflow .el-button--info {
-  @apply bg-gray-600;
+  @apply bg-gray-100 text-gray-600 border-gray-300;
 }
 
 .sm-workflow .el-button--primary {
