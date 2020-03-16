@@ -1,13 +1,13 @@
-import json
 import os
+from os.path import join, dirname
 import sys
 import logging
 from collections import OrderedDict
 from functools import partial
-from os.path import join, dirname
 from unittest.mock import patch
 import time
 from datetime import datetime
+
 import pytest
 from PIL import Image
 from fabric.api import local
@@ -19,48 +19,40 @@ from sm.engine.daemon_action import DaemonAction
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.dataset import Dataset, DatasetStatus
-from sm.engine.msm_basic.msm_basic_search import compute_fdr
 from sm.engine.annotation_job import JobStatus
 from sm.engine.queue import QueueConsumer
-from sm.engine.tests.util import (
-    test_db,
-    init_loggers,
-    sm_index,
-    es_dsl_search,
-    metadata,
-    ds_config,
-    make_moldb_mock,
-)
 from sm.engine.util import SMConfig
 
 os.environ.setdefault('PYSPARK_PYTHON', sys.executable)
-sm_config = SMConfig.get_conf()
-sm_config['colocalization']['enabled'] = False
-
-init_loggers(sm_config['logs'])
 logger = logging.getLogger('annotate-daemon')
-
 test_ds_name = 'imzml_example_ds'
 
 proj_dir_path = dirname(dirname(__file__))
-data_dir_path = join(sm_config['fs']['spark_data_path'], test_ds_name)
+data_dir_path = f'/tmp/abc/{test_ds_name}'
 input_dir_path = join(proj_dir_path, 'tests/data/imzml_example_ds')
 ds_config_path = join(input_dir_path, 'config.json')
 
 
+@pytest.fixture(scope='module')
+def local_sm_config(sm_config):
+    local_sm_config = sm_config
+    local_sm_config['colocalization']['enabled'] = False
+    return local_sm_config
+
+
 @pytest.fixture()
-def clean_isotope_storage():
+def clean_isotope_storage(local_sm_config):
     with warn_only():
-        local('rm -rf {}'.format(sm_config['isotope_storage']['path']))
+        local('rm -rf {}'.format(local_sm_config['isotope_storage']['path']))
 
 
 @pytest.fixture()
-def reset_queues():
+def reset_queues(local_sm_config):
     from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_UPDATE
 
     # Delete queues to clean up remaining messages so that they don't interfere with other tests
     for qdesc in [SM_ANNOTATE, SM_UPDATE]:
-        queue_pub = QueuePublisher(config=sm_config['rabbitmq'], qdesc=qdesc, logger=logger)
+        queue_pub = QueuePublisher(config=local_sm_config['rabbitmq'], qdesc=qdesc, logger=logger)
         queue_pub.delete_queue()
 
 
@@ -84,8 +76,11 @@ get_ion_images_for_analysis_mock_return = (
 )
 
 
-def init_queue_pub(qname='annotate'):
+@pytest.fixture()
+def queue_pub(local_sm_config):
     from sm.engine import queue
+
+    qname = 'annotate'
 
     queue.SM_ANNOTATE['name'] = queue.SM_ANNOTATE['name'] + '_test'
     queue.SM_UPDATE['name'] = queue.SM_UPDATE['name'] + '_test'
@@ -95,14 +90,10 @@ def init_queue_pub(qname='annotate'):
         qdesc = queue.SM_UPDATE
     else:
         raise Exception(f'Wrong qname={qname}')
-    queue_pub = queue.QueuePublisher(config=sm_config['rabbitmq'], qdesc=qdesc, logger=logger)
-    return queue_pub
+    return queue.QueuePublisher(config=local_sm_config['rabbitmq'], qdesc=qdesc, logger=logger)
 
 
-queue_pub = init_queue_pub()
-
-
-def run_daemons(db, es):
+def run_daemons(db, es, sm_config):
     from sm.engine.queue import QueuePublisher, SM_DS_STATUS, SM_ANNOTATE, SM_UPDATE
     from sm.engine.png_generator import ImageStoreServiceWrapper
     from sm.engine.sm_daemons import DatasetManager, SMAnnotateDaemon, SMIndexUpdateDaemon
@@ -158,6 +149,8 @@ def test_sm_daemons(
     reset_queues,
     metadata,
     ds_config,
+    queue_pub,
+    local_sm_config,
 ):
     init_moldb()
 
@@ -198,7 +191,7 @@ def test_sm_daemons(
     post_images_to_annot_service_mock.return_value = {0: url_dict, 1: url_dict, 2: url_dict}
 
     db = DB()
-    es = ESExporter(db)
+    es = ESExporter(db, local_sm_config)
 
     try:
         ds_id = '2000-01-01_00h00m'
@@ -218,7 +211,7 @@ def test_sm_daemons(
             {'ds_id': ds_id, 'ds_name': test_ds_name, 'action': DaemonAction.ANNOTATE}
         )
 
-        run_daemons(db, es)
+        run_daemons(db, es, local_sm_config)
 
         # dataset table asserts
         rows = db.select('SELECT id, name, input_path, upload_dt, status from dataset')
@@ -291,6 +284,8 @@ def test_sm_daemons_annot_fails(
     reset_queues,
     metadata,
     ds_config,
+    queue_pub,
+    local_sm_config,
 ):
     init_moldb()
 
@@ -304,7 +299,7 @@ def test_sm_daemons_annot_fails(
     post_images_to_annot_service_mock.return_value = {0: url_dict, 1: url_dict, 2: url_dict}
 
     db = DB()
-    es = ESExporter(db)
+    es = ESExporter(db, local_sm_config)
 
     try:
         ds_id = '2000-01-01_00h00m'
@@ -323,7 +318,7 @@ def test_sm_daemons_annot_fails(
             {'ds_id': ds_id, 'ds_name': test_ds_name, 'action': DaemonAction.ANNOTATE}
         )
 
-        run_daemons(db, es)
+        run_daemons(db, es, local_sm_config)
 
         # dataset and job tables asserts
         row = db.select_one('SELECT status from dataset')
@@ -345,6 +340,8 @@ def test_sm_daemon_es_export_fails(
     reset_queues,
     metadata,
     ds_config,
+    queue_pub,
+    local_sm_config,
 ):
     init_moldb()
 
@@ -390,7 +387,7 @@ def test_sm_daemon_es_export_fails(
     def throw_exception_function(*args, **kwargs):
         raise Exception('Test')
 
-    es = ESExporter(db)
+    es = ESExporter(db, local_sm_config)
     es.index_ds = throw_exception_function
 
     try:
@@ -410,7 +407,7 @@ def test_sm_daemon_es_export_fails(
             {'ds_id': ds_id, 'ds_name': test_ds_name, 'action': DaemonAction.ANNOTATE}
         )
 
-        run_daemons(db, es)
+        run_daemons(db, es, local_sm_config)
 
         # dataset and job tables asserts
         row = db.select_one('SELECT status from job')

@@ -8,7 +8,6 @@ from sm.engine.colocalization import analyze_colocalization, Colocalization, Fre
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.tests.util import sm_config, test_db, metadata, ds_config
 
 mol_db_mock = {'id': 1, 'name': 'HMDB-v4', 'version': '2001-01-01'}
 

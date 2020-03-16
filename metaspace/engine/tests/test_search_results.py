@@ -1,17 +1,16 @@
 import json
 from collections import OrderedDict
-from os.path import join, dirname
+from unittest.mock import MagicMock, Mock
+
 import pandas as pd
 import pytest
-from unittest.mock import MagicMock, Mock
 import numpy as np
+from scipy.sparse import coo_matrix
 
 from sm.engine.db import DB
 from sm.engine.ion_mapping import ION_SEL
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.search_results import SearchResults, METRICS_INS, post_images_to_image_store
-from sm.engine.tests.util import pysparkling_context
-from scipy.sparse import coo_matrix
 
 db_mock = MagicMock(spec=DB)
 

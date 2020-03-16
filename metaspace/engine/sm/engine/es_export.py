@@ -284,15 +284,13 @@ def retry_on_conflict(num_retries=3):
 
 
 class ESExporter:
-    def __init__(self, db, es_config=None):
-        self.sm_config = SMConfig.get_conf()
-        if not es_config:
-            es_config = self.sm_config['elasticsearch']
-        self._es = init_es_conn(es_config)
+    def __init__(self, db, sm_config=None):
+        self.sm_config = sm_config or SMConfig.get_conf()
+        self._es = init_es_conn(self.sm_config['elasticsearch'])
         self._ingest = IngestClient(self._es)
         self._db = db
         self._ds_locker = DatasetLocker(self.sm_config['db'])
-        self.index = es_config['index']
+        self.index = self.sm_config['elasticsearch']['index']
         self._get_mol_by_formula_dict_cache = dict()
 
     def _remove_mol_db_from_dataset(self, ds_id, mol_db):

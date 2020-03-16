@@ -6,7 +6,6 @@ from unittest.mock import patch
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.off_sample_wrapper import classify_dataset_ion_images
-from sm.engine.tests.util import sm_config, test_db, fill_db, metadata, ds_config, spark_context
 
 
 @patch('sm.engine.off_sample_wrapper.ImageStoreServiceWrapper')

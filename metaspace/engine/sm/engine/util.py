@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from logging.config import dictConfig
 import os
 from copy import deepcopy
@@ -130,7 +131,7 @@ def split_s3_path(path):
         tuple[string, string]
     Returns a pair of (bucket, key)
     """
-    return path.split('s3a://')[-1].split('/', 1)
+    return re.sub(r's3a?://', '', path).split(sep='/', maxsplit=1)
 
 
 def find_file_by_ext(path, ext):
@@ -146,11 +147,18 @@ def bootstrap_and_run(config_path, func):
         func(sm_config)
 
 
+def populate_aws_env_vars(aws_config):
+    for env_var, val in aws_config.items():
+        os.environ.setdefault(env_var.upper(), val)
+
+
 class GlobalInit:
     def __init__(self, config_path='conf/config.json'):
         SMConfig.set_path(config_path)
         self.sm_config = SMConfig.get_conf()
+
         init_loggers(self.sm_config['logs'])
+        populate_aws_env_vars(self.sm_config['aws'])
         self.pool = ConnectionPool(self.sm_config['db'])
 
     def __enter__(self):

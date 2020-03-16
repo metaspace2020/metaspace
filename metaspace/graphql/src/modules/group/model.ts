@@ -9,6 +9,7 @@ import {
 
 import {User} from '../user/model';
 import {UserGroupRole} from '../../binding'
+import {MolecularDB} from "../moldb/model";
 
 export const UserGroupRoleOptions: Record<UserGroupRole, UserGroupRole> = {
   INVITED: 'INVITED',
@@ -37,6 +38,9 @@ export class Group {
 
   @OneToMany(type => UserGroup, userGroup => userGroup.group)
   members: UserGroup[];
+
+  @OneToMany(type => MolecularDB, molecularDB => molecularDB.group)
+  molecularDBs: MolecularDB[];
 }
 
 @Entity('user_group')

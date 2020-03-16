@@ -1,7 +1,7 @@
 from itertools import product
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import MagicMock, patch, Mock
+from unittest.mock import patch, Mock
 
 import numpy as np
 import pandas as pd
@@ -13,7 +13,7 @@ from sm.engine.msm_basic.msm_basic_search import (
     collect_ion_formulas,
     compute_fdr,
 )
-from sm.engine.tests.util import spark_context, ds_config, make_moldb_mock
+from tests.conftest import make_moldb_mock
 
 
 def make_imzml_parser_mock(sp_n=100):

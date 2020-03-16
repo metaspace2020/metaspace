@@ -6,9 +6,6 @@ from pytest import fixture
 from sm.engine.dataset import DatasetStatus, Dataset, generate_ds_config
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
-from sm.engine.queue import QueuePublisher
-from sm.engine.daemon_action import DaemonAction, DaemonActionStage
-from sm.engine.tests.util import sm_config, test_db, metadata, ds_config
 
 
 @fixture
