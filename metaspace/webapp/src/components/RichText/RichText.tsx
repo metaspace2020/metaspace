@@ -1,4 +1,4 @@
-import { createComponent, reactive } from '@vue/composition-api'
+import { createComponent, reactive, onMounted, onBeforeUnmount } from '@vue/composition-api'
 import { EditorContent, EditorMenuBar } from 'tiptap'
 import { Placeholder } from 'tiptap-extensions'
 
@@ -38,40 +38,64 @@ const RichText = createComponent<Props>({
         content: props.content,
         onUpdate: (content) => emit('update', content),
       }),
+      editing: false,
     })
 
     const { editor } = state
 
+    if (!props.readonly) {
+      editor.on('focus', () => { state.editing = true })
+
+      const onOutclick = () => { state.editing = false }
+
+      onMounted(() => {
+        document.body.addEventListener('click', onOutclick)
+      })
+
+      onBeforeUnmount(() => {
+        document.body.removeEventListener('click', onOutclick)
+      })
+    }
+
+    const stopPropagation = (e: Event) => { e.stopPropagation() }
+
     const handleEditorClick = (e: Event) => {
       e.stopPropagation()
-      if (!props.readonly && !editor.editing) {
+      if (!props.readonly && !state.editing) {
         editor.focus()
       }
     }
 
     return () => (
-      <section class="sm-RichText" onClick={handleEditorClick}>
+      <section class="sm-RichText">
         {!props.readonly && (
-          <header class="flex items-baseline h-8 mb-2">
+          <header class="flex items-end h-8 mb-1">
             <FadeTransition>
-              {editor.editing
-                ? <EditorMenuBar editor={editor}>
-                  <MenuItems editor={editor} />
-                </EditorMenuBar>
-                : <p class="text-sm italic text-gray-700 px-4 leading-6 cursor-pointer">
+              {state.editing
+                ? <div onClick={stopPropagation}>
+                  <EditorMenuBar editor={editor}>
+                    <MenuItems editor={editor} />
+                  </EditorMenuBar>
+                </div>
+                : <button
+                  onClick={handleEditorClick}
+                  class="button-reset text-sm italic text-gray-700 px-4 leading-6"
+                >
                   <i class="el-icon-edit" /> click to edit
-                </p>}
+                </button>}
             </FadeTransition>
           </header>
         )}
-        <EditorContent
-          class={[
-            'transition-colors ease-in-out duration-300 rounded',
-            { 'bg-transparent': !editor.editing },
-            { 'bg-gray-100': editor.editing },
-          ]}
-          editor={editor}
-        />
+        <div onClick={stopPropagation}>
+          <EditorContent
+            class={[
+              'transition-colors ease-in-out duration-300 rounded',
+              { 'bg-transparent': !state.editing },
+              { 'bg-gray-100': state.editing },
+            ]}
+            editor={editor}
+          />
+        </div>
       </section>
     )
   },
