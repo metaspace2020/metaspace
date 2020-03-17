@@ -69,10 +69,10 @@
         >
           <rich-text
             class="max-w-measure-5 mx-auto mb-6"
-            placeholder="Describe this project …"
+            :placeholder="descriptionPlaceholder"
             :content="project.projectDescription"
             :readonly="!canEdit"
-            @update="saveMarkdown"
+            @update="updateDescription"
           />
         </el-tab-pane>
         <el-tab-pane
@@ -425,7 +425,14 @@ export default class ViewProjectPage extends Vue {
       await this.refetch()
     }
 
-    async saveMarkdown(newProjectDescription: string) {
+    get descriptionPlaceholder() {
+      if (this.canEdit) {
+        return 'Describe this project …'
+      }
+      return 'Project has no description.'
+    }
+
+    async updateDescription(newProjectDescription: string) {
       await this.$apollo.mutate<UpdateProjectMutation>({
         mutation: updateProjectMutation,
         variables: {

@@ -32,6 +32,7 @@ const RichText = createComponent<Props>({
           props.placeholder ? new Placeholder({
             emptyNodeText: props.placeholder,
             emptyNodeClass: 'sm-RichText-placeholder',
+            showOnlyWhenEditable: false,
           }) : [],
         ),
         editable: !props.readonly,
