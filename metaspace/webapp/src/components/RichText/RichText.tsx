@@ -25,7 +25,7 @@ const RichText = createComponent<Props>({
       editor: useEditor({
         extensions: [
           new OnEscape(() => {
-            editor.editing = false
+            state.editing = false
             state.editor.blur()
           }),
         ].concat(

@@ -1,5 +1,5 @@
 .sm-RichText .ProseMirror {
-  @apply leading-normal min-h-full p-4;
+  @apply leading-normal min-h-full p-4 box-border;
 }
 
 .sm-RichText .ProseMirror-focused {
