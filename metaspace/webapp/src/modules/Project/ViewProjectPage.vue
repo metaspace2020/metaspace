@@ -364,12 +364,13 @@ export default class ViewProjectPage extends Vue {
     @Watch('$route.params.projectIdOrSlug')
     @Watch('project.urlSlug')
     canonicalizeUrl() {
-      if (isUuid(this.$route.params.projectIdOrSlug) && this.project != null && this.project.urlSlug) {
-        this.$router.replace({
-          params: { projectIdOrSlug: this.project.urlSlug },
-          query: this.$route.query,
-        })
+      if (this.project === null || this.projectId === null) {
+        return
       }
+      this.$router.replace({
+        params: { projectIdOrSlug: this.project.urlSlug || this.projectId },
+        query: this.$route.query,
+      })
     }
 
     @ConfirmAsync({
