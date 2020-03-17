@@ -80,9 +80,10 @@ const ReviewLink = createComponent<Props>({
     })
 
     const state = reactive({
+      doi: '',
       loading: false,
-      updateProject: false,
       projectData: getInitialProjectData(props.project, props.currentUserName),
+      updateProject: false,
     })
 
     const enablePeerReview = async() => {
@@ -118,9 +119,9 @@ const ReviewLink = createComponent<Props>({
               >
                 <CollapseItem title="Update project details (recommended)" name="projectdetails">
                   <label for="project-review-title">Set the project name:</label>
-                  <Input id="project-review-title" value={state.projectData.name} />
+                  <Input id="project-review-title" v-model={state.projectData.name} />
                   <label for="project-review-url">Create a custom URL:</label>
-                  <Input id="project-review-url" value={state.projectData.urlSlug}>
+                  <Input id="project-review-url" v-model={state.projectData.urlSlug}>
                     <span slot="prepend">{projectUrlPrefix}</span>
                   </Input>
                   <RichTextArea
@@ -165,6 +166,10 @@ const ReviewLink = createComponent<Props>({
               <p>Reviewers can access this project using the following link:</p>
               <CopyToClipboard value={reviewLink.value} />
               <p>Once review is complete, we encourage making data publicly available.</p>
+              <label for="project-review-doi">Add the DOI for your paper to the project:</label>
+              <Input id="project-review-doi" v-model={state.doi}>
+                <span slot="prepend">https://doi.org/</span>
+              </Input>
               <Button onClick={props.publishProject} type="primary">
                 Publish project
               </Button>
