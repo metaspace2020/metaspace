@@ -37,15 +37,6 @@
   font-weight: 500;
 }
 
-.sm-workflow > button,
-.sm-workflow .el-input {
-  padding: 4px 0; /* 2x line height (48px) - height (40px) / 2 */
-}
-
-.sm-workflow-item p + .el-input {
-  margin-top: 8px; /* 8px + 4px padding = 1/2 line */
-}
-
 
 /* status indicators */
 
@@ -107,7 +98,7 @@
 }
 
 .sm-workflow .el-button--info {
-  @apply bg-gray-100 text-gray-600 border-gray-300;
+  @apply bg-gray-100 text-gray-600 border-gray-400;
 }
 
 .sm-workflow .el-button--primary {

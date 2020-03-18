@@ -49,12 +49,11 @@ const RichText = createComponent<Props>({
       <div class="sm-RichText sm-RichTextArea relative flex flex-col items-start">
         {props.label && <label onClick={() => { editor.focus() }}>{props.label}</label>}
         <EditorContent
-          class={[
-            'flex-grow w-full box-border overflow-y-auto cursor-text text-gray-700 text-sm',
-            'rounded border border-solid transition-colors ease-in-out duration-150',
-            'border-gray-300 hover:border-gray-400 focus-within:border-blue-500',
-            { 'mt-1': props.label },
-          ]}
+          class={`
+            flex-grow w-full box-border overflow-y-auto cursor-text text-gray-700 text-sm
+            rounded border border-solid transition-colors ease-in-out duration-150
+            border-gray-300 hover:border-gray-400 focus-within:border-blue-500
+          `}
           editor={editor}
         />
         <EditorMenuBubble editor={editor} >

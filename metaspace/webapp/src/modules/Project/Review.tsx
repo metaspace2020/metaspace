@@ -129,7 +129,7 @@ const ReviewLink = createComponent<Props>({
                     </Input>
                   </div>
                   <RichTextArea
-                    class="h-64 mt-3 mb-1"
+                    class="h-64 mt-3"
                     content={state.projectData.projectDescription}
                     label="Add an abstract to the project description:"
                     onUpdate={(content: string) => {
