@@ -43,7 +43,15 @@ export default function({ content, extensions = [], onUpdate, ...options }: Opti
   })
 
   if (onUpdate) {
-    editor.on('update', debounce(() => onUpdate(JSON.stringify(editor.getJSON())), 500))
+    editor.on('update', debounce(() => {
+      const doc = editor.getJSON()
+      if (doc.content.length === 1
+        && doc.content[0].content === undefined) {
+        onUpdate(null)
+      } else {
+        onUpdate(JSON.stringify(doc))
+      }
+    }, 500))
   }
 
   onBeforeUnmount(() => {
