@@ -25,7 +25,10 @@
     >
       <h2>Custom URL</h2>
       <div v-if="canEditUrlSlug">
-        <el-input v-model="model.urlSlug">
+        <el-input
+          v-model="model.urlSlug"
+          class="max-w-measure-4"
+        >
           <span slot="prepend">{{ projectUrlPrefix }}</span>
         </el-input>
       </div>
@@ -217,10 +220,4 @@ export default class ProjectSettings extends Vue {
     padding: 4px 0;
     background-color: #EEEEEE;
   }
-</style>
-
-<style>
-.project-settings .el-input {
-  @apply max-w-measure-3;
-}
 </style>

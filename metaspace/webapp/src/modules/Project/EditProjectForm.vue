@@ -14,6 +14,7 @@
       >
         <el-input
           v-model="value.name"
+          class="max-w-measure-4"
           :max-length="50"
         />
       </el-form-item>
