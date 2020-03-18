@@ -62,7 +62,7 @@
         @tab-click="checkReviewLinksBadge"
       >
         <el-tab-pane
-          v-if="canEdit || project.projectDescription !== null"
+          v-if="visibleTabs.includes('about')"
           name="about"
           label="About"
           lazy
@@ -119,7 +119,7 @@
           </div>
         </el-tab-pane>
         <el-tab-pane
-          v-if="canEdit && projectId != null"
+          v-if="visibleTabs.includes('review')"
           name="review"
           class="tab-with-badge sm-review-tab"
           lazy
@@ -138,7 +138,7 @@
           />
         </el-tab-pane>
         <el-tab-pane
-          v-if="canEdit && projectId != null"
+          v-if="visibleTabs.includes('settings')"
           name="settings"
           label="Settings"
           lazy
@@ -309,14 +309,36 @@ export default class ViewProjectPage extends Vue {
       }
     }
 
-    get tab() {
-      if (['about', 'datasets', 'members', 'review', 'settings'].includes(this.$route.query.tab)) {
-        return this.$route.query.tab
-      } else if (this.canEdit || this.project && this.project.projectDescription !== null) {
-        return 'about'
-      } else {
-        return 'datasets'
+    get visibleTabs() {
+      // proxy for "not loaded"
+      if (!this.projectId) {
+        return []
       }
+      if (this.canEdit) {
+        return ['about', 'datasets', 'members', 'review', 'settings']
+      }
+      if (this.project && this.project.projectDescription !== null) {
+        return ['about', 'datasets', 'members']
+      }
+      return ['datasets', 'members']
+    }
+
+    get selectedTab() {
+      return this.$route.query.tab
+    }
+
+    get tab() {
+      const tabs = this.visibleTabs
+      if (tabs.length === 0) {
+        return ''
+      }
+      if (tabs.includes(this.selectedTab)) {
+        return this.selectedTab
+      }
+      if (this.selectedTab !== undefined) {
+        this.tab = tabs[0]
+      }
+      return tabs[0]
     }
 
     set tab(tab: string) {
