@@ -310,8 +310,7 @@ export default class ViewProjectPage extends Vue {
     }
 
     get visibleTabs() {
-      // proxy for "not loaded"
-      if (!this.projectId) {
+      if (!this.loaded || !this.currentUser) {
         return []
       }
       if (this.canEdit) {
@@ -323,26 +322,25 @@ export default class ViewProjectPage extends Vue {
       return ['datasets', 'members']
     }
 
-    get selectedTab() {
-      return this.$route.query.tab
-    }
-
-    get tab() {
+    get tab(): string | null {
       const tabs = this.visibleTabs
       if (tabs.length === 0) {
-        return ''
+        return null
       }
-      if (tabs.includes(this.selectedTab)) {
-        return this.selectedTab
+      const selectedTab = this.$route.query.tab
+      if (tabs.includes(selectedTab)) {
+        return selectedTab
       }
-      if (this.selectedTab !== undefined) {
+      if (selectedTab !== undefined) {
         this.tab = tabs[0]
       }
       return tabs[0]
     }
 
-    set tab(tab: string) {
-      this.$router.replace({ query: { tab } })
+    set tab(tab: string | null) {
+      if (tab !== null && this.visibleTabs.includes(tab)) {
+        this.$router.replace({ query: { tab } })
+      }
     }
 
     checkReviewLinksBadge() {
