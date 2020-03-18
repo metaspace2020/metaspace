@@ -245,7 +245,7 @@ export async function createStorageServerAsync(config: Config) {
     providerOptions: {
       s3: {
         getKey: (req: express.Request, filename: string, metadata: object) =>  {
-          return `${config.upload.moldb_prefix}/${genUuid()}/${filename}`
+          return `${config.upload.moldbPrefix}/${genUuid()}/${filename}`
         },
         key: config.aws.aws_access_key_id,
         secret: config.aws.aws_secret_access_key,

@@ -37,7 +37,7 @@ export interface Config {
   upload: {
     destination: string; // 's3' for S3 storage
     bucket?: string;
-    moldb_prefix: string;
+    moldbPrefix: string;
   };
   services: {
     sm_engine_api_host: string;
