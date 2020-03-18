@@ -113,19 +113,23 @@ const ReviewLink = createComponent<Props>({
           {activeStep.value === 1
             && <form onSubmit={(e: Event) => e.preventDefault()}>
               <Collapse
-                class="border-t border-b-0 box-border mb-3 border-gray-200"
+                class="border-t border-b-0 box-border border-gray-200"
                 onChange={() => { state.updateProject = !state.updateProject }}
                 value={state.updateProject ? 'projectdetails' : ''}
               >
                 <CollapseItem title="Update project details (recommended)" name="projectdetails">
-                  <label for="project-review-title">Set the project name:</label>
-                  <Input id="project-review-title" v-model={state.projectData.name} />
-                  <label for="project-review-url">Create a custom URL:</label>
-                  <Input id="project-review-url" v-model={state.projectData.urlSlug}>
-                    <span slot="prepend">{projectUrlPrefix}</span>
-                  </Input>
+                  <div>
+                    <label for="project-review-title">Set the project name:</label>
+                    <Input id="project-review-title" v-model={state.projectData.name} />
+                  </div>
+                  <div class="mt-3">
+                    <label for="project-review-url">Create a custom URL:</label>
+                    <Input id="project-review-url" v-model={state.projectData.urlSlug}>
+                      <span slot="prepend">{projectUrlPrefix}</span>
+                    </Input>
+                  </div>
                   <RichTextArea
-                    class="h-64"
+                    class="h-64 mt-3 mb-1"
                     content={state.projectData.projectDescription}
                     label="Add an abstract to the project description:"
                     onUpdate={(content: string) => {
@@ -165,11 +169,13 @@ const ReviewLink = createComponent<Props>({
             ? <form onSubmit={(e: Event) => e.preventDefault()}>
               <p>Reviewers can access this project using the following link:</p>
               <CopyToClipboard value={reviewLink.value} />
-              <p>Once review is complete, we encourage making data publicly available.</p>
-              <label for="project-review-doi">Add the DOI for your paper to the project:</label>
-              <Input id="project-review-doi" v-model={state.doi}>
-                <span slot="prepend">https://doi.org/</span>
-              </Input>
+              <p><em>Once review is complete, we encourage making data publicly available.</em></p>
+              <div>
+                <label for="project-review-doi">Add the DOI for your paper to the project:</label>
+                <Input id="project-review-doi" v-model={state.doi}>
+                  <span slot="prepend">https://doi.org/</span>
+                </Input>
+              </div>
               <Button onClick={props.publishProject} type="primary">
                 Publish project
               </Button>

@@ -10,9 +10,14 @@
   border-color: transparent; /* border still required for alignment */
 }
 
-.sm-workflow-item > *,
-.sm-workflow-item > form > * {
-  margin: 0 0 12px;
+.sm-workflow-item > * + *,
+.sm-workflow-item form > * + * {
+  margin: 12px 0 0;
+}
+
+.sm-workflow-header + *,
+.sm-workflow-item form > :first-child {
+  margin: 0;
 }
 
 .sm-workflow-item > .sm-workflow-header {
@@ -25,12 +30,6 @@
   margin-bottom: 48px;
 }
 
-.sm-workflow hr {
-  border: none;
-  border-bottom: 1px solid #DCDFE6; /* Grey from Element */
-  margin-bottom: 11px;
-}
-
 .sm-workflow label {
   color: inherit;
   cursor: pointer;
@@ -40,20 +39,11 @@
 
 .sm-workflow > button,
 .sm-workflow .el-input {
-  margin: 4px 0; /* 2x line height (48px) - height (40px) / 2 */
+  padding: 4px 0; /* 2x line height (48px) - height (40px) / 2 */
 }
 
-.sm-workflow .el-input {
-  padding-bottom: 12px;
-}
-
-.sm-workflow-optional-form,
-.sm-workflow-optional-form .el-input.is-disabled .el-input__inner {
-  @apply text-gray-600
-}
-
-.sm-workflow-optional-form.enabled {
-  color: inherit;
+.sm-workflow-item p + .el-input {
+  margin-top: 8px; /* 8px + 4px padding = 1/2 line */
 }
 
 
@@ -62,9 +52,7 @@
 .sm-workflow-item:before {
   @apply text-gray-600 bg-gray-200;
   align-items: center;
-  /* background: hsl(208, 33%, 89%); */
   border-radius: 50%;
-  /* color: hsl(208, 22%, 49%); */
   content: counter(workflow);
   counter-increment: workflow;
   display: flex;
@@ -134,11 +122,6 @@
 
 .sm-workflow .el-button:active {
   opacity: 1;
-}
-
-.sm-workflow .el-collapse-item__arrow {
-  float: left;
-  text-decoration: none;
 }
 
 .sm-workflow .el-collapse-item__header {
