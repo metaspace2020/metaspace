@@ -156,10 +156,6 @@ services:
       - "${DATA_ROOT}/mol-images:/var/www/mol-images:z"
     networks:
       - sm
-    depends_on:
-      - elasticsearch
-      - sm-graphql
-      - sm-webapp
 
 networks:
   sm:
