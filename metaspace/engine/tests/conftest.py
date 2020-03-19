@@ -101,26 +101,13 @@ def _autocommit_execute(db_config, *sqls):
 
 
 @pytest.fixture()
-def admin_db_config():
-    return {
-        'host': 'localhost',
-        'database': 'postgres',
-        'user': 'postgres',
-        'password': 'postgres',
-    }
-
-
-@pytest.fixture()
-def empty_test_db(sm_config, admin_db_config):
+def empty_test_db(sm_config):
     db_name = sm_config['db']['database']
     db_owner = sm_config['db']['user']
     _autocommit_execute(
-        admin_db_config,
+        {**sm_config['db'], 'database': 'postgres'},
         f'DROP DATABASE IF EXISTS {db_name}',
         f'CREATE DATABASE {db_name} OWNER {db_owner}',
-    )
-    _autocommit_execute(
-        {**admin_db_config, 'database': db_name}, f'CREATE EXTENSION "uuid-ossp"',
     )
 
     conn_pool = ConnectionPool(sm_config['db'])
@@ -128,7 +115,7 @@ def empty_test_db(sm_config, admin_db_config):
     yield
 
     conn_pool.close()
-    _autocommit_execute(admin_db_config, f'DROP DATABASE IF EXISTS {db_name}')
+    _autocommit_execute(sm_config['db'], f'DROP DATABASE IF EXISTS {db_name}')
 
 
 @pytest.fixture()

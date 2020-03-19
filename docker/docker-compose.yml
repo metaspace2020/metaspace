@@ -39,8 +39,8 @@ services:
       - ./postgres/initdb.d/:/docker-entrypoint-initdb.d:ro
       - ./data/pgdata:/var/lib/postgresql/data/pgdata
     environment:
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_USER: postgres
+      POSTGRES_USER: sm
+      POSTGRES_PASSWORD: password
       PGDATA: /var/lib/postgresql/data/pgdata
     networks:
       - sm
