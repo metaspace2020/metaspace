@@ -6,8 +6,10 @@ export interface FieldValidationError {
     message: string
 }
 
+export const FormValidationErrorsType = 'failed_validation' as const
+
 export default class FormValidationErrors extends UserError {
-    type: 'failed_validation'
+    type: string
     errors: FieldValidationError[]
 
     constructor(message: string)
@@ -19,11 +21,11 @@ export default class FormValidationErrors extends UserError {
             : [{message: arg1}]
 
         super(JSON.stringify({
-            type: 'failed_validation',
+            type: FormValidationErrorsType,
             errors,
         }))
 
-        this.type = 'failed_validation'
+        this.type = FormValidationErrorsType
         this.errors = errors
         Error.captureStackTrace(this, FormValidationErrors);
     }

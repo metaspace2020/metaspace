@@ -8,6 +8,7 @@ import {
     testEntityManager,
 } from "../../tests/graphqlTestEnvironment";
 import {createTestProject} from "../../tests/testDataCreation";
+import {FormValidationErrorsType} from "../../utils/FormValidationErrors";
 
 describe('modules/groupOrProject/urlSlug validateUrlSlugChange', () => {
     beforeAll(onBeforeAll);
@@ -26,14 +27,14 @@ describe('modules/groupOrProject/urlSlug validateUrlSlugChange', () => {
     })
     it.each(INVALID_URL_SLUGS)('should throw on invalid urlSlug', async (urlSlug) => {
         await expect(validateUrlSlugChange(testEntityManager, ProjectModel, null, urlSlug))
-            .rejects.toThrow(expect.objectContaining({type: 'failed_validation'}))
+            .rejects.toThrow(expect.objectContaining({type: FormValidationErrorsType}))
     })
     it('should prevent duplicate urlSlugs', async () => {
         const testProject = await createTestProject({urlSlug: EQUIVALENT_SLUG_1})
         const testProject2 = await createTestProject({})
 
         await expect(validateUrlSlugChange(testEntityManager, ProjectModel, testProject2.id, EQUIVALENT_SLUG_2))
-            .rejects.toThrow(expect.objectContaining({type: 'failed_validation'}))
+            .rejects.toThrow(expect.objectContaining({type: FormValidationErrorsType}))
     })
     it('should allow a project to be saved its existing urlSlug', async () => {
         const testProject = await createTestProject({urlSlug: 'foo_bar_baz'})
