@@ -28,6 +28,8 @@ import {getDatasetForEditing} from '../../dataset/operation/getDatasetForEditing
 import {utc} from 'moment';
 import generateRandomToken from '../../../utils/generateRandomToken';
 import {addExternalLink, removeExternalLink} from '../ExternalLink';
+import {validateUrlSlugChange} from "../../groupOrProject/urlSlug";
+import FormValidationErrors from "../../../utils/FormValidationErrors";
 
 
 const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
@@ -43,8 +45,8 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
   async createProject(source, { projectDetails }, ctx): Promise<ProjectSource> {
     const userId = ctx.getUserIdOrFail(); // Exit early if not logged in
     const { name, isPublic, urlSlug } = projectDetails;
-    if (!ctx.isAdmin && urlSlug != null) {
-      throw new UserError('urlSlug can only be set by METASPACE administrators');
+    if (urlSlug != null) {
+      await validateUrlSlugChange(ctx.entityManager, ProjectModel, null, urlSlug)
     }
 
     const projectRepository = ctx.entityManager.getRepository(ProjectModel);
@@ -67,21 +69,29 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
   async updateProject(source, { projectId, projectDetails }, ctx): Promise<ProjectSource> {
     await asyncAssertCanEditProject(ctx, projectId);
 
-    let project = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
-      .findProjectById(ctx.user, projectId);
-    if (project == null) {
-      throw new UserError(`Not found project ${projectId}`);
-    }
-    if (!ctx.isAdmin) {
-      if (project.publicationStatus == PSO.PUBLISHED && projectDetails.isPublic == false) {
-        throw new UserError(`Cannot modify project ${projectId} as it is in ${project.publicationStatus} status`);
+    await ctx.entityManager.transaction(async txn => {
+      const project = await txn.getCustomRepository(ProjectSourceRepository)
+        .findProjectById(ctx.user, projectId);
+      if (project == null) {
+        throw new UserError(`Not found project ${projectId}`);
       }
-    }
+      if (!ctx.isAdmin
+          && project.publicationStatus == PSO.PUBLISHED
+          && projectDetails.isPublic == false) {
+          throw new FormValidationErrors('isPublic',
+              `Cannot modify project ${projectId} as it is in ${project.publicationStatus} status`);
+      }
 
-    await ctx.entityManager.update(ProjectModel, projectId, projectDetails);
+      if (projectDetails.urlSlug != null) {
+        await validateUrlSlugChange(txn, ProjectModel, projectId, projectDetails.urlSlug)
+      }
+
+      await txn.update(ProjectModel, projectId, projectDetails);
+    });
+
     if (projectDetails.name || projectDetails.urlSlug || projectDetails.isPublic) {
       const affectedDatasets = await ctx.entityManager.find(DatasetProjectModel,
-        {where: { projectId }, relations: ['dataset', 'dataset.datasetProjects']});
+          {where: { projectId }, relations: ['dataset', 'dataset.datasetProjects']});
       await Promise.all(affectedDatasets.map(async dp => {
         await smAPIUpdateDataset(dp.datasetId, {
           projectIds: dp.dataset.datasetProjects.map(p => p.projectId)
@@ -89,8 +99,8 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       }));
     }
 
-    project = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
-      .findProjectById(ctx.user, projectId);
+    const project = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
+        .findProjectById(ctx.user, projectId);
     if (project != null) {
       return project;
     } else {
