@@ -116,6 +116,16 @@ export const deleteReviewLinkMutation =
     deleteReviewLink(projectId: $projectId)
   }`
 
+export const updateProjectDOIMutation =
+  gql`mutation($projectId: ID!, $link: String!) {
+    addProjectExternalLink(
+      projectId: $projectId,
+      provider: "DOI",
+      link: $link,
+      replaceExisting: true
+    )
+  }`
+
 export const publishProjectMutation =
   gql`mutation($projectId: ID!) {
     publishProject(projectId: $projectId) {

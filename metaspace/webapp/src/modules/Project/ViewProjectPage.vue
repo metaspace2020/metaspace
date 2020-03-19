@@ -172,6 +172,7 @@ import {
   createReviewLinkMutation,
   deleteReviewLinkMutation,
   publishProjectMutation,
+  updateProjectDOIMutation,
 } from '../../api/project'
 import gql from 'graphql-tag'
 import { encodeParams } from '../Filters'
@@ -507,7 +508,13 @@ export default class ViewProjectPage extends Vue {
       message: 'Publishing a project is a one-time event and cannot be undone. Please confirm your intention to make this project and its associated data available to all METASPACE users.',
       confirmButtonText: 'Confirm',
     })
-    async publishProject() {
+    async publishProject(doi: string) {
+      if (doi && doi.length) {
+        await this.$apollo.mutate({
+          mutation: updateProjectDOIMutation,
+          variables: { projectId: this.projectId, link: `https://doi.org/${doi}` },
+        })
+      }
       await this.$apollo.mutate({
         mutation: publishProjectMutation,
         variables: { projectId: this.projectId },

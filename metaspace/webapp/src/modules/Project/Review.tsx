@@ -176,7 +176,7 @@ const ReviewLink = createComponent<Props>({
                   <span slot="prepend">https://doi.org/</span>
                 </Input>
               </div>
-              <Button onClick={props.publishProject} type="primary">
+              <Button onClick={() => props.publishProject(state.doi)} type="primary">
                 Publish project
               </Button>
             </form>
