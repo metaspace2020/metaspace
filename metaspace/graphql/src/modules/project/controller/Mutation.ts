@@ -89,7 +89,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       await txn.update(ProjectModel, projectId, projectDetails);
     });
 
-    if (projectDetails.name || projectDetails.urlSlug || projectDetails.isPublic) {
+    if (projectDetails.name || projectDetails.isPublic) {
       const affectedDatasets = await ctx.entityManager.find(DatasetProjectModel,
           {where: { projectId }, relations: ['dataset', 'dataset.datasetProjects']});
       await Promise.all(affectedDatasets.map(async dp => {
