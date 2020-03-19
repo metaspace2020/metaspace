@@ -69,25 +69,22 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
   async updateProject(source, { projectId, projectDetails }, ctx): Promise<ProjectSource> {
     await asyncAssertCanEditProject(ctx, projectId);
 
-    await ctx.entityManager.transaction(async txn => {
-      const project = await txn.getCustomRepository(ProjectSourceRepository)
-        .findProjectById(ctx.user, projectId);
-      if (project == null) {
-        throw new UserError(`Not found project ${projectId}`);
-      }
-      if (!ctx.isAdmin
-          && project.publicationStatus == PSO.PUBLISHED
-          && projectDetails.isPublic == false) {
-          throw new FormValidationErrors('isPublic',
-              `Cannot modify project ${projectId} as it is in ${project.publicationStatus} status`);
-      }
+    const project = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
+      .findProjectById(ctx.user, projectId);
+    if (project == null) {
+      throw new UserError(`Not found project ${projectId}`);
+    }
+    if (!ctx.isAdmin
+        && project.publicationStatus == PSO.PUBLISHED
+        && projectDetails.isPublic == false) {
+        throw new FormValidationErrors('isPublic',
+            `Cannot modify project ${projectId} as it is in ${project.publicationStatus} status`);
+    }
+    if (projectDetails.urlSlug != null) {
+      await validateUrlSlugChange(ctx.entityManager, ProjectModel, projectId, projectDetails.urlSlug)
+    }
 
-      if (projectDetails.urlSlug != null) {
-        await validateUrlSlugChange(txn, ProjectModel, projectId, projectDetails.urlSlug)
-      }
-
-      await txn.update(ProjectModel, projectId, projectDetails);
-    });
+    await ctx.entityManager.update(ProjectModel, projectId, projectDetails);
 
     if (projectDetails.name || projectDetails.isPublic) {
       const affectedDatasets = await ctx.entityManager.find(DatasetProjectModel,
@@ -99,10 +96,10 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       }));
     }
 
-    const project = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
+    const updatedProject = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
         .findProjectById(ctx.user, projectId);
-    if (project != null) {
-      return project;
+    if (updatedProject != null) {
+      return updatedProject;
     } else {
       throw new UserError(`Project became invisible to user after update ${projectId}`);
     }
