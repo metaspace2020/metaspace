@@ -310,7 +310,7 @@ export default class ViewProjectPage extends Vue {
     }
 
     get visibleTabs() {
-      if (!this.loaded || !this.currentUser) {
+      if (!this.loaded) {
         return []
       }
       if (this.canEdit) {
