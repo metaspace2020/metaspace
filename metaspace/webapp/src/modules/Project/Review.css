@@ -76,9 +76,16 @@
 
 /* Element UI overrides */
 
+.sm-workflow .el-input-group {
+  display: flex;
+}
+
 .sm-workflow .el-input-group__append,
 .sm-workflow .el-input-group__prepend {
   @apply border-gray-300 text-gray-600 bg-gray-100;
+  align-items: center;
+  display: flex;
+  width: auto;
 }
 
 .sm-workflow .el-input__inner {
@@ -129,7 +136,6 @@
 
 .sm-workflow .el-collapse-item__content {
   color: inherit;
-  font-size: 0; /* spaces labels a bit better */
   line-height: inherit;
   padding-bottom: 0;
 }

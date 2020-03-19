@@ -169,10 +169,10 @@ const ReviewLink = createComponent<Props>({
             ? <form onSubmit={(e: Event) => e.preventDefault()}>
               <p>Reviewers can access this project using the following link:</p>
               <CopyToClipboard value={reviewLink.value} />
-              <p><em>Once review is complete, we encourage making data publicly available.</em></p>
+              <p>Once review is complete, we encourage making data publicly available.</p>
               <div>
-                <label for="project-review-doi">Add the DOI for your paper to the project:</label>
-                <Input id="project-review-doi" v-model={state.doi}>
+                <label for="project-review-doi">Link the project to the publication with a DOI:</label>
+                <Input id="project-review-doi" v-model={state.doi} label="Add the DOI for your paper to the project:">
                   <span slot="prepend">https://doi.org/</span>
                 </Input>
               </div>
