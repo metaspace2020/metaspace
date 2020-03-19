@@ -22,7 +22,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       .countProjectsByQuery(ctx.user, query);
   },
   async projectUrlSlugIsValid(source, {urlSlug, existingProjectId}, ctx): Promise<boolean> {
-    await validateUrlSlugChange(ctx.entityManager, ProjectModel, existingProjectId, urlSlug)
+    await validateUrlSlugChange(ctx.entityManager, ProjectModel, existingProjectId || null, urlSlug)
     return true
   },
 };
