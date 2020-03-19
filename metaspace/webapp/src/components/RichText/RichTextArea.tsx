@@ -25,6 +25,7 @@ const MenuElement = createComponent({
 
 interface Props {
   content: string
+  editorClass: string,
   label: string
   onUpdate: (content: string) => any
 }
@@ -32,6 +33,7 @@ interface Props {
 const RichText = createComponent<Props>({
   props: {
     content: String,
+    editorClass: String,
     label: String,
     onUpdate: Function,
   },
@@ -46,14 +48,15 @@ const RichText = createComponent<Props>({
     const { editor } = state
 
     return () => (
-      <div class="sm-RichText sm-RichTextArea relative flex flex-col items-start">
+      <div class="sm-RichText sm-RichTextArea relative">
         {props.label && <label onClick={() => { editor.focus() }}>{props.label}</label>}
         <EditorContent
-          class={`
-            flex-grow w-full box-border overflow-y-auto cursor-text text-gray-700 text-sm
-            rounded border border-solid transition-colors ease-in-out duration-150
-            border-gray-300 hover:border-gray-400 focus-within:border-blue-500
-          `}
+          class={[
+            'flex-grow w-full box-border overflow-y-auto cursor-text text-gray-700 text-sm',
+            'rounded border border-solid transition-colors ease-in-out duration-150',
+            'border-gray-300 hover:border-gray-400 focus-within:border-blue-500',
+            props.editorClass,
+          ]}
           editor={editor}
         />
         <EditorMenuBubble editor={editor} >

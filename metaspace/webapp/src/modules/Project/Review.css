@@ -128,10 +128,10 @@
 }
 
 .sm-workflow .el-collapse-item__content {
-  padding-bottom: 0;
-  font-size: inherit;
-  line-height: inherit;
   color: inherit;
+  font-size: 0; /* spaces labels a bit better */
+  line-height: inherit;
+  padding-bottom: 0;
 }
 
 .sm-workflow .el-collapse-item__wrap {
