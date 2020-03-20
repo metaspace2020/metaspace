@@ -2,7 +2,6 @@
 -- To regenerate this file, run 'yarn run gen-sql-schema' in the graphql project
 
 CREATE EXTENSION "uuid-ossp";
-
 CREATE SCHEMA IF NOT EXISTS graphql;
 
 CREATE TABLE "graphql"."credentials" (
