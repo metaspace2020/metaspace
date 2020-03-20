@@ -177,6 +177,7 @@ import {
 import gql from 'graphql-tag'
 import { encodeParams } from '../Filters'
 import ConfirmAsync from '../../components/ConfirmAsync'
+import confirmPrompt from '../../components/confirmPrompt'
 import NotificationIcon from '../../components/NotificationIcon.vue'
 import reportError from '../../lib/reportError'
 import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
@@ -490,37 +491,58 @@ export default class ViewProjectPage extends Vue {
       await this.refetchProject()
     }
 
-    @ConfirmAsync({
-      title: '',
-      message: 'This will remove access to the project. You will need to distribute a new link if the project is enabled for review again.',
-      confirmButtonText: 'Confirm',
-    })
     async deleteReviewLink() {
-      await this.$apollo.mutate({
-        mutation: deleteReviewLinkMutation,
-        variables: { projectId: this.projectId },
+      const h = this.$createElement
+      confirmPrompt({
+        title: '',
+        type: 'warning',
+        customClass: 'confirm-async-message-box sm-dialog sm-dialog--warning',
+        message: h('p', undefined, [
+          h('strong', undefined, 'This will remove access to the project.'),
+          ' ',
+          'You will need to distribute a new link if you would like to start the review process again.',
+        ]),
+        confirmButtonText: 'Confirm',
+      },
+      async() => {
+        await this.$apollo.mutate({
+          mutation: deleteReviewLinkMutation,
+          variables: { projectId: this.projectId },
+        })
+        await this.refetchProject()
       })
-      await this.refetchProject()
     }
 
-    @ConfirmAsync({
-      title: '',
-      message: 'Publishing a project is a one-time event and cannot be undone. Please confirm your intention to make this project and its associated data available to all METASPACE users.',
-      confirmButtonText: 'Publish',
-      type: 'warning',
-    })
     async publishProject(doi: string) {
-      if (doi && doi.length) {
+      const h = this.$createElement
+      confirmPrompt({
+        title: '',
+        type: 'warning',
+        confirmButtonText: 'Publish',
+        customClass: 'confirm-async-message-box sm-dialog sm-dialog--danger',
+        message: h('div', undefined, [
+          h('p', undefined, [
+            h('strong', undefined, 'Publishing a project is a one-time event.'),
+          ]),
+          h('p', undefined, 'Please confirm your intention to make this project and its datasets available to all METASPACE users.'),
+          h('p', undefined, [
+            h('em', undefined, 'This cannot be undone.'),
+          ]),
+        ]),
+      },
+      async() => {
+        if (doi && doi.length) {
+          await this.$apollo.mutate({
+            mutation: updateProjectDOIMutation,
+            variables: { projectId: this.projectId, link: `https://doi.org/${doi}` },
+          })
+        }
         await this.$apollo.mutate({
-          mutation: updateProjectDOIMutation,
-          variables: { projectId: this.projectId, link: `https://doi.org/${doi}` },
+          mutation: publishProjectMutation,
+          variables: { projectId: this.projectId },
         })
-      }
-      await this.$apollo.mutate({
-        mutation: publishProjectMutation,
-        variables: { projectId: this.projectId },
+        await this.refetchProject()
       })
-      await this.refetchProject()
     }
 
     async refetchProject() {
@@ -586,5 +608,32 @@ export default class ViewProjectPage extends Vue {
 
   .el-tab-pane.sm-review-tab {
     margin-top: 24px;
+  }
+
+  .sm-dialog {
+    @apply border-0 border-t-4;
+    border-color: currentColor;
+  }
+
+  .sm-dialog--warning {
+    @apply text-yellow-500;
+  }
+
+  .sm-dialog--danger {
+    @apply text-red-700;
+  }
+
+  .sm-dialog .el-message-box__content,
+  .sm-dialog .el-message-box__status.el-icon-warning {
+    color: currentColor;
+  }
+
+  .sm-dialog p {
+    @apply text-body;
+    line-height: 1.5;
+  }
+
+  .sm-dialog p + p {
+    margin-top: 12px;
   }
 </style>
