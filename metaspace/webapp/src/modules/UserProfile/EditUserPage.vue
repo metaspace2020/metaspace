@@ -209,7 +209,7 @@
             class="action-with-message"
           >
             <copy-to-clipboard
-              class="max-w-measure-5"
+              class="max-w-measure-1"
               :value="currentUser.apiKey"
               type="password"
             />
@@ -226,8 +226,8 @@
         <h2>Delete account</h2>
         <div class="action-with-message">
           <p class="max-w-measure-3">
-            If you delete your METASPACE account, you can either delete all your datasets or keep them within METASPACE.
-            For the latter, the private data will still be accessible by the group members only.
+            If you delete your METASPACE account, you can optionally remove all of your datasets.
+            If datasets are not removed, the private data will still be accessible by the group members only.
           </p>
           <el-button
             type="danger"
@@ -562,6 +562,11 @@ export default class EditUserPage extends Vue {
   .action-with-message > :first-child {
     margin-top: 0;
     margin-right: 20px;
+  }
+
+  .action-with-message p {
+    font-size: 16px;
+    line-height: 1.5;
   }
 
   section + section {
