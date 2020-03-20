@@ -237,6 +237,7 @@ export default class ProjectsListItem extends Vue {
     transition: 0.2s cubic-bezier(.4, 0, .2, 1);
     transition-property: box-shadow;
     line-height: 20px;
+    font-variant-numeric: proportional-nums;
   }
 
   .project-item:hover {
