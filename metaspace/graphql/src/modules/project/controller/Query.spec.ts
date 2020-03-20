@@ -166,15 +166,16 @@ describe('modules/project/controller (queries)', () => {
 
     it('should find a project by URL slug', async () => {
       // Create several projects so that we can be sure it's finding the right one, not just the first one
-      const projectPromises = ['abc','def','ghi','jkl','mno']
+      const projectPromises = ['abc','def','foo_bar','jkl','mno']
         .map(async urlSlug => await createTestProject({urlSlug}));
       const projects = await Promise.all(projectPromises);
-      const urlSlugToFind = 'ghi';
-      const matchingProject = projects.find(p => p.urlSlug === urlSlugToFind)!;
 
-      const result = await doQuery<ProjectType>(query, {urlSlug: urlSlugToFind});
+      const result1 = await doQuery<ProjectType>(query, {urlSlug: 'foo_bar'})
+      const result2 = await doQuery<ProjectType>(query, {urlSlug: 'FOO_BAR'})
+      const result3 = await doQuery<ProjectType>(query, {urlSlug: 'foo-BAR'})
 
-      expect(result.id).toEqual(matchingProject.id);
+      expect([result1.id, result2.id, result3.id])
+          .toEqual([projects[2].id, projects[2].id, projects[2].id]);
     });
   });
 

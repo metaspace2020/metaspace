@@ -4,6 +4,7 @@ import {Project as ProjectModel, UserProjectRoleOptions, UserProjectRoleOptions 
 import {ProjectSource} from '../../bindingTypes';
 import * as _ from 'lodash';
 import * as DataLoader from 'dataloader';
+import {urlSlugMatchesClause} from "../groupOrProject/urlSlug";
 
 type SortBy = 'name' | 'popularity';
 
@@ -12,7 +13,8 @@ export class ProjectSourceRepository {
   constructor(private manager: EntityManager) {
   }
 
-  private async queryProjectsWhere(user: ContextUser, whereClause?: string, parameters?: object, sortBy: SortBy = 'name') {
+  private async queryProjectsWhere(user: ContextUser, whereClause?: string | Brackets,
+                                   parameters?: object, sortBy: SortBy = 'name') {
     const columnMap = this.manager.connection
       .getMetadata(ProjectModel)
       .columns
@@ -79,7 +81,7 @@ export class ProjectSourceRepository {
   }
 
   async findProjectByUrlSlug(user: ContextUser, urlSlug: string): Promise<ProjectSource | null> {
-    return await (await this.queryProjectsWhere(user, 'project.urlSlug = :urlSlug', {urlSlug}))
+    return await (await this.queryProjectsWhere(user, urlSlugMatchesClause('project', urlSlug)))
       .getRawOne() || null;
   }
 

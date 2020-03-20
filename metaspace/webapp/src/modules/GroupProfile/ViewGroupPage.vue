@@ -332,7 +332,9 @@ export default class ViewGroupPage extends Vue {
     @Watch('$route.params.groupIdOrSlug')
     @Watch('group.urlSlug')
     canonicalizeUrl() {
-      if (isUuid(this.$route.params.groupIdOrSlug) && this.group != null && this.group.urlSlug) {
+      if (this.group != null
+              && this.group.urlSlug != null
+              && this.$route.params.groupIdOrSlug !== this.group.urlSlug) {
         this.$router.replace({
           params: { groupIdOrSlug: this.group.urlSlug },
           query: this.$route.query,
