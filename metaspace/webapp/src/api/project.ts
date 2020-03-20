@@ -123,7 +123,9 @@ export const updateProjectDOIMutation =
       provider: "DOI",
       link: $link,
       replaceExisting: true
-    )
+    ) {
+      id
+    }
   }`
 
 export const publishProjectMutation =

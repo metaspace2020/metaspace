@@ -506,7 +506,8 @@ export default class ViewProjectPage extends Vue {
     @ConfirmAsync({
       title: '',
       message: 'Publishing a project is a one-time event and cannot be undone. Please confirm your intention to make this project and its associated data available to all METASPACE users.',
-      confirmButtonText: 'Confirm',
+      confirmButtonText: 'Publish',
+      type: 'warning',
     })
     async publishProject(doi: string) {
       if (doi && doi.length) {

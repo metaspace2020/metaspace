@@ -100,13 +100,13 @@ type Mutation {
   unpublishProject(projectId: ID!, isPublic: Boolean): Project!  # for admins only
 
   # Links to related websites (publications, etc.)
-  addProjectExternalLink(projectId: String!,
+  addProjectExternalLink(projectId: ID!,
                          provider: String!,
                          link: String!,
                          # set replaceExisting to True to delete any previous links to the same provider
                          replaceExisting: Boolean! = False): Project!
 
-  removeProjectExternalLink(projectId: String!,
+  removeProjectExternalLink(projectId: ID!,
                             provider: String!,
                             link: String): Project!
 }

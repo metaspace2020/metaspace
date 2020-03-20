@@ -174,6 +174,9 @@ const ReviewLink = createComponent<Props>({
                 <label for="project-review-doi">Link the project to the publication with a DOI:</label>
                 <Input id="project-review-doi" v-model={state.doi} label="Add the DOI for your paper to the project:">
                   <span slot="prepend">https://doi.org/</span>
+                  <a slot="append" href={`https://doi.org/${state.doi}`} target="_blank" rel="noopener" class="text-gray-600">
+                    Test link
+                  </a>
                 </Input>
               </div>
               <Button onClick={() => props.publishProject(state.doi)} type="primary">
