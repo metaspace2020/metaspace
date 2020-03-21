@@ -165,6 +165,7 @@ const projectsListItemFragment =
       numDatasets
       createdDT
       latestUploadDT
+      publicationStatus
       members {
         user {
           name
@@ -232,6 +233,7 @@ export interface ProjectsListProject {
     role: string
   }[];
   latestUploadDT: string | null;
+  publicationStatus: string;
 }
 
 export interface MyProjectsListItem {

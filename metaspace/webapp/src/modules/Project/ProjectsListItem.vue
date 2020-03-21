@@ -45,7 +45,13 @@
             </span>
           </div>
           <div class="info-line">
-            <span v-if="project.latestUploadDT != null">
+            <span
+              v-if="project.publicationStatus === 'PUBLISHED'"
+              class="font-medium"
+            >
+              Published
+            </span>
+            <span v-else-if="project.latestUploadDT != null">
               Last submission <elapsed-time :date="project.latestUploadDT" />
             </span>
             <span v-else>
@@ -167,7 +173,10 @@ export default class ProjectsListItem extends Vue {
     }
 
     get canManage() {
-      return (this.currentUser && this.currentUser.role === 'admin') || this.project.currentUserRole === 'MANAGER'
+      return (this.currentUser && this.currentUser.role === 'admin') || (
+        this.project.currentUserRole === 'MANAGER'
+        && this.project.publicationStatus !== 'PUBLISHED'
+      )
     }
 
     shortGroupName(manager: managerGroupName): string|null {
