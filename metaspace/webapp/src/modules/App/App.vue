@@ -112,7 +112,7 @@ export default {
   }
 
   a {
-    color: #0069e0;
+    @apply text-primary-body;
   }
 
   a:hover {

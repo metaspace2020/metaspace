@@ -13,6 +13,8 @@ module.exports = {
     extend: {
       colors: {
         body: 'hsl(208, 61%, 16%)',
+        primary: 'hsl(208, 87%, 50%)',
+        'primary-body': 'hsl(208, 93%, 44%)',
         gray: { // greys based on brand colour
           '100': 'hsl(208, 36%, 96%)',
           '200': 'hsl(208, 33%, 89%)',
