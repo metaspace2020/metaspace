@@ -3,7 +3,6 @@
     <div class="tf-name">
       <i
         class="el-icon-search"
-        style="color: white"
       />
     </div>
 
@@ -11,7 +10,7 @@
       ref="input"
       class="tf-value tf-value-input"
       type="text"
-      placeholder="enter any keywords"
+      placeholder="Enter keywords"
       :value="value"
       @input="onChange($event.target.value)"
     >

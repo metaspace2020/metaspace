@@ -82,23 +82,23 @@ export default {
 <style lang="scss">
 
  .tf-outer {
+   @apply border-gray-400 border border-solid text-sm;
    display: flex;
    align-items: stretch;
    text-align: center;
    box-sizing: border-box;
-   border: 2px solid rgb(38, 127, 228);
    margin: 5px;
    border-radius: 5px;
    height: 40px; /* Height should match height of element UI inputs */
    max-width: 300px;
+   overflow: hidden;
  }
 
  .tf-name {
+   @apply bg-primary text-white font-medium;
    display: flex;
    align-items: center;
-   padding: 5px;
-   background-color: rgb(38, 127, 228);
-   color: #fff;
+   padding: 5px 10px;
    flex: none;
  }
 
@@ -134,12 +134,13 @@ export default {
 
   .tf-value-input input, input.tf-value-input {
     border: none;
+    outline: none;
     // This takes styles from "html" and "#app" in App.vue to make the text match the other filters
     font-family: 'Roboto', Helvetica, sans-serif;
-    font-size: 1rem;
+    font-size: inherit;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    color: #2c3e50;
+    color: inherit;
 
     &::-ms-clear {
       display: none;

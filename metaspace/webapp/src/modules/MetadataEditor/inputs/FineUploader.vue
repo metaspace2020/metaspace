@@ -261,10 +261,13 @@ export default {
 
 <style>
   .qq-uploader {
+    @apply bg-gray-100 border-gray-300 border-2;
     padding: 10px 0;
     min-height: 45px;
     max-height: 100px;
     margin: 25px 5px 25px 0;
+    display: flex;
+    align-items: center;
   }
 
   .qq-upload-status-text {
@@ -282,11 +285,15 @@ export default {
     height: 4px;
   }
 
- .fu-dropzone-content {
-   font-size: 200%;
-   transform: translateY(15%);
-   width: 100%;
-   text-align: center;
-   opacity: 0.25;
- }
+  .fu-dropzone-content {
+    @apply text-2xl text-gray-400 font-medium;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+  }
+
+  .fu-dropzone-content.qq-upload-button-hover {
+    @apply text-gray-600;
+    background: none;
+  }
 </style>
