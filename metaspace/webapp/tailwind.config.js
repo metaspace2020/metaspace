@@ -8,7 +8,7 @@ module.exports = {
       sans: ['Roboto', 'SUPERSCIPT_OVERRIDE', 'Helvetica', 'sans-serif'],
     },
     placeholderColor: {
-      default: theme => theme('colors.gray.400')
+      default: theme => theme('colors.gray.500')
     },
     extend: {
       colors: {

@@ -88,7 +88,7 @@ export default {
    text-align: center;
    box-sizing: border-box;
    margin: 5px;
-   border-radius: 5px;
+   border-radius: 4px;
    height: 40px; /* Height should match height of element UI inputs */
    max-width: 300px;
    overflow: hidden;
@@ -148,6 +148,9 @@ export default {
     }
     &[type='text'] {
       width: 200px; // IE11 fix - inputs without a "width" won't follow flex-shrink rules
+    }
+    &::placeholder {
+      @apply text-gray-500;
     }
   }
 
