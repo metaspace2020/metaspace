@@ -1,6 +1,6 @@
 <template>
-  <div class="tf-outer">
-    <div class="tf-name">
+  <div class="tf-outer border-gray-300 border border-solid text-sm">
+    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       <i
         class="el-icon-search"
       />
@@ -8,7 +8,7 @@
 
     <input
       ref="input"
-      class="tf-value tf-value-input"
+      class="tf-value tf-value-input px-3"
       type="text"
       placeholder="Enter keywords"
       :value="value"

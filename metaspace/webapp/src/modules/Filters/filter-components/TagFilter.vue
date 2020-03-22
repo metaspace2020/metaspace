@@ -1,8 +1,8 @@
 <template>
-  <div class="tf-outer">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3">
     <div
       v-if="name || 'name' in $slots"
-      class="tf-name"
+      class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300"
     >
       <slot name="name">
         {{ name }}:
@@ -18,7 +18,7 @@
       trigger="click"
       placement="bottom"
       :width="width"
-      class="tf-value-container"
+      class="tf-value-container pl-3"
     >
       <slot name="edit" />
       <div
@@ -45,9 +45,10 @@
       class="tf-spacer"
     />
 
-    <div
+    <button
       v-if="removable"
-      class="tf-remove el-icon-error"
+      title="Remove filter"
+      class="tf-remove button-reset el-icon-close pl-3 text-gray-600 text-base"
       @click="destroy"
     />
   </div>
@@ -82,7 +83,6 @@ export default {
 <style lang="scss">
 
  .tf-outer {
-   @apply border-gray-400 border border-solid text-sm;
    display: flex;
    align-items: stretch;
    text-align: center;
@@ -95,10 +95,8 @@ export default {
  }
 
  .tf-name {
-   @apply bg-primary text-white font-medium;
    display: flex;
    align-items: center;
-   padding: 5px 10px;
    flex: none;
  }
 
@@ -110,7 +108,6 @@ export default {
  .tf-value {
    display: flex;
    align-items: center;
-   padding: 5px;
    overflow: hidden;
    flex: auto;
  }
@@ -161,7 +158,6 @@ export default {
  .tf-remove {
    align-self: center;
    cursor: pointer;
-   padding: 5px 5px 5px 0;
  }
 
  .el-popover > .el-select {

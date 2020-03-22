@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="!deferRender"
-    class="dataset-item"
+    class="dataset-item border border-solid border-gray-200 leading-5"
     :class="disabledClass"
   >
     <el-dialog
@@ -31,10 +31,7 @@
         <b :title="formatDatasetName">{{ formatDatasetName }}</b>
       </div>
 
-      <div
-        class="ds-item-line"
-        style="color: darkblue;"
-      >
+      <div class="ds-item-line text-gray-700">
         <span
           class="ds-add-filter"
           title="Filter by species"
@@ -526,7 +523,6 @@ export default {
    max-width: 950px;
    margin: 3px;
    padding: 0px;
-   border: 1px solid #DCDFE6;
    display: flex;
    flex-direction: row;
    justify-content: space-between;

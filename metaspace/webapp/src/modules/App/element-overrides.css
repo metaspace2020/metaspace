@@ -1,0 +1,55 @@
+/* Original */
+
+.el-collapse-item__header {
+  padding-left: 10px
+}
+
+.el-collapse-item__arrow {
+  line-height: 40px;
+  float: left;
+  margin-left: 8px
+}
+
+.el-collapse-item.is-active .el-collapse-item__header {
+  @apply bg-blue-100;
+}
+
+.el-message {
+  top: 75px
+}
+
+.el-dialog__body,
+.el-popover {
+  word-break: normal;
+}
+
+
+/* New */
+
+.el-select .el-tag__close.el-icon-close {
+  background: none;
+}
+
+.el-tag--small .el-icon-close {
+  transform: none;
+}
+
+.el-tabs__item.is-active,
+.el-tabs__item:hover,
+.el-pager li.active,
+.el-switch__label.is-active {
+  @apply text-primary-body;
+}
+
+.el-table .sort-caret.ascending {
+  border-bottom-color: theme('colors.gray.400')
+}
+.el-table .sort-caret.descending {
+  border-top-color: theme('colors.gray.400')
+}
+.el-table .ascending .sort-caret.ascending {
+  border-bottom-color: theme('colors.gray.900')
+}
+.el-table .descending .sort-caret.descending {
+  border-top-color: theme('colors.gray.900')
+}

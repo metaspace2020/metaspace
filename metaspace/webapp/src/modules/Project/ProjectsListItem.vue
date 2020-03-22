@@ -1,5 +1,5 @@
 <template>
-  <div class="project-item">
+  <div class="project-item border border-solid border-gray-200">
     <router-link
       :to="projectLink"
       class="underlay"
@@ -233,9 +233,7 @@ export default class ProjectsListItem extends Vue {
     border-radius: 5px;
     width: 100%;
     max-width: 800px;
-    margin: 10px 0;
     padding: 20px;
-    border: 1px solid #DCDFE6;
     box-sizing: border-box;
     > * {
       z-index: 1;
@@ -247,6 +245,10 @@ export default class ProjectsListItem extends Vue {
     transition-property: box-shadow;
     line-height: 20px;
     font-variant-numeric: proportional-nums;
+  }
+
+  .project-item + .project-item {
+    margin-top: 10px;
   }
 
   .project-item:hover {

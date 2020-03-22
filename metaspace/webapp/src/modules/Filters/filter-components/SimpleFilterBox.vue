@@ -21,7 +21,7 @@
   -->
   <!-- from assets/filter-icon.svg with viewBox changed to reduce padding-->
 
-  <div class="tf-outer">
+  <div class="tf-outer border-gray-300 border border-solid">
     <div class="tf-name">
       <!-- from assets/filter-icon.svg with viewBox changed to reduce padding-->
       <svg

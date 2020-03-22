@@ -8,13 +8,19 @@ module.exports = {
       sans: ['Roboto', 'SUPERSCIPT_OVERRIDE', 'Helvetica', 'sans-serif'],
     },
     placeholderColor: {
-      default: theme => theme('colors.gray.600')
+      default: theme => theme('colors.gray.400')
     },
     extend: {
       colors: {
-        body: 'hsl(208, 61%, 16%)',
+        // brand
         primary: 'hsl(208, 87%, 50%)',
         'primary-body': 'hsl(208, 93%, 44%)',
+        // states
+        'success': '#2CBA8F',
+        'warning': '#E6A23C',
+        'danger': '#F56C6C',
+        // UI
+        body: 'hsl(208, 61%, 16%)',
         gray: { // greys based on brand colour
           '100': 'hsl(208, 36%, 96%)',
           '200': 'hsl(208, 33%, 89%)',
@@ -26,7 +32,7 @@ module.exports = {
           '800': 'hsl(208, 34%, 30%)',
           '900': 'hsl(208, 39%, 23%)',
         },
-        blue: {
+        blue: { // experimental, could merge with brand
           '100': 'hsl(208, 79%, 92%)',
           '200': 'hsl(208, 97%, 85%)',
           '300': 'hsl(208, 84%, 74%)',
