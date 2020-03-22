@@ -112,6 +112,10 @@ export default {
    flex: auto;
  }
 
+.tf-value.el-popover__reference {
+  cursor: pointer;
+}
+
  .tf-value-suffix {
    align-self: center;
    padding: 5px 5px 6px 0;
