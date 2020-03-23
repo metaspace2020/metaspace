@@ -43,17 +43,22 @@
   @apply text-primary-body;
 }
 
+.el-table th.is-sortable.ascending,
+.el-table th.is-sortable.descending {
+  @apply text-primary-body;
+}
+
 .el-table .sort-caret.ascending {
-  border-bottom-color: theme('colors.gray.400')
+  border-bottom-color: theme('colors.gray.300')
 }
 .el-table .sort-caret.descending {
-  border-top-color: theme('colors.gray.400')
+  border-top-color: theme('colors.gray.300')
 }
 .el-table .ascending .sort-caret.ascending {
-  border-bottom-color: theme('colors.gray.900')
+  border-bottom-color: theme('colors.primary')
 }
 .el-table .descending .sort-caret.descending {
-  border-top-color: theme('colors.gray.900')
+  border-top-color: theme('colors.primary')
 }
 
 .v-modal {
