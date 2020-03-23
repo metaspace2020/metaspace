@@ -66,6 +66,9 @@ export class Project {
   @Column({ type: 'text', enum: Object.keys(PSO), default: PSO.UNPUBLISHED })
   publicationStatus: PublicationStatus;
 
+  @Column({ type: 'timestamp without time zone', default: null, transformer: new MomentValueTransformer() })
+  publishedDT: Moment | null;
+
   @Column({ type: 'json', nullable: true })
   externalLinks: ExternalLink[] | null;
 }

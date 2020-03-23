@@ -1,33 +1,33 @@
-import {Context} from '../../../context';
+import { Context } from '../../../context';
 import {
   Project as ProjectModel,
   UserProject as UserProjectModel,
   UserProjectRoleOptions as UPRO,
 } from '../model';
-import {PublicationStatusOptions as PSO} from '../PublicationStatusOptions';
-import {UserError} from 'graphql-errors';
-import {FieldResolversFor, ProjectSource, ScopeRoleOptions as SRO, UserProjectSource} from '../../../bindingTypes';
-import {Mutation} from '../../../binding';
-import {ProjectSourceRepository} from '../ProjectSourceRepository';
-import {DatasetProject as DatasetProjectModel} from '../../dataset/model';
+import { PublicationStatusOptions as PSO } from '../PublicationStatusOptions';
+import { UserError } from 'graphql-errors';
+import { FieldResolversFor, ProjectSource, ScopeRoleOptions as SRO, UserProjectSource } from '../../../bindingTypes';
+import { Mutation } from '../../../binding';
+import { ProjectSourceRepository } from '../ProjectSourceRepository';
+import { DatasetProject as DatasetProjectModel } from '../../dataset/model';
 import updateUserProjectRole from '../operation/updateUserProjectRole';
-import {convertUserToUserSource} from '../../user/util/convertUserToUserSource';
-import {createInactiveUser} from '../../auth/operation';
+import { convertUserToUserSource } from '../../user/util/convertUserToUserSource';
+import { createInactiveUser } from '../../auth/operation';
 import updateProjectDatasets from '../operation/updateProjectDatasets';
-import {User as UserModel} from '../../user/model';
+import { User as UserModel } from '../../user/model';
 import config from '../../../utils/config';
-import {sendInvitationEmail} from '../../auth';
-import {findUserByEmail} from '../../../utils';
+import { sendInvitationEmail } from '../../auth';
+import { findUserByEmail } from '../../../utils';
 import {
   sendAcceptanceEmail,
   sendRequestAccessEmail,
   sentGroupOrProjectInvitationEmail,
 } from '../../groupOrProject/email';
-import {smAPIUpdateDataset} from '../../../utils/smAPI';
-import {getDatasetForEditing} from '../../dataset/operation/getDatasetForEditing';
-import {utc} from 'moment';
+import { smAPIUpdateDataset } from '../../../utils/smAPI';
+import { getDatasetForEditing } from '../../dataset/operation/getDatasetForEditing';
+import { utc } from 'moment';
 import generateRandomToken from '../../../utils/generateRandomToken';
-import {addExternalLink, removeExternalLink} from '../ExternalLink';
+import { addExternalLink, removeExternalLink } from '../ExternalLink';
 
 
 const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
@@ -51,10 +51,10 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     const newProject = projectRepository.create({ name, isPublic, urlSlug });
     await projectRepository.insert(newProject);
     await ctx.entityManager.insert(UserProjectModel, {
-        projectId: newProject.id,
-        userId,
-        role: UPRO.MANAGER,
-      });
+      projectId: newProject.id,
+      userId,
+      role: UPRO.MANAGER,
+    });
     const project = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, newProject.id);
     if (project != null) {
@@ -81,7 +81,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     await ctx.entityManager.update(ProjectModel, projectId, projectDetails);
     if (projectDetails.name || projectDetails.urlSlug || projectDetails.isPublic) {
       const affectedDatasets = await ctx.entityManager.find(DatasetProjectModel,
-        {where: { projectId }, relations: ['dataset', 'dataset.datasetProjects']});
+        { where: { projectId }, relations: ['dataset', 'dataset.datasetProjects'] });
       await Promise.all(affectedDatasets.map(async dp => {
         await smAPIUpdateDataset(dp.datasetId, {
           projectIds: dp.dataset.datasetProjects.map(p => p.projectId)
@@ -107,7 +107,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     if (project) {
       if (project.publicationStatus == PSO.UNPUBLISHED || ctx.isAdmin) {
         const affectedDatasets = await ctx.entityManager.find(DatasetProjectModel,
-          {where: { projectId }, relations: ['dataset', 'dataset.datasetProjects']});
+          { where: { projectId }, relations: ['dataset', 'dataset.datasetProjects'] });
         await ctx.entityManager.delete(DatasetProjectModel, { projectId });
         await Promise.all(affectedDatasets.map(async dp => {
           await smAPIUpdateDataset(dp.datasetId, {
@@ -255,7 +255,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     await asyncAssertCanEditProject(ctx, projectId);
 
     await ctx.entityManager.update(ProjectModel, projectId,
-      { publicationStatus: PSO.PUBLISHED, isPublic: true });
+      { publicationStatus: PSO.PUBLISHED, publishedDT: utc(), isPublic: true });
     const datasetProjectRepository = await ctx.entityManager.getRepository(DatasetProjectModel);
     datasetProjectRepository.update({ projectId }, { publicationStatus: PSO.PUBLISHED });
 
@@ -295,7 +295,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
   addProjectExternalLink: async (
     source,
-    {projectId, provider, link, replaceExisting},
+    { projectId, provider, link, replaceExisting },
     ctx: Context
   ) => {
     await asyncAssertCanEditProject(ctx, projectId);
@@ -312,7 +312,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
   removeProjectExternalLink: async (
     source,
-    {projectId, provider, link},
+    { projectId, provider, link },
     ctx: Context
   ) => {
     await asyncAssertCanEditProject(ctx, projectId);
