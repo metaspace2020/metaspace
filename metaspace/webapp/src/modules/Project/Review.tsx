@@ -152,7 +152,6 @@ const ReviewLink = createComponent<Props>({
             && <form onSubmit={(e: Event) => e.preventDefault()}>
               <Button
                 onClick={props.deleteLink}
-                type="info"
                 key={props.project.publicationStatus}
               >
                 Remove link
@@ -172,7 +171,11 @@ const ReviewLink = createComponent<Props>({
               <p>Once review is complete, we encourage making data publicly available.</p>
               <div>
                 <label for="project-review-doi">Link the project to the publication with a DOI:</label>
-                <Input id="project-review-doi" v-model={state.doi} label="Add the DOI for your paper to the project:">
+                <Input
+                  v-model={state.doi}
+                  id="project-review-doi"
+                  class="mb-2"
+                >
                   <span slot="prepend">https://doi.org/</span>
                   <a slot="append" href={`https://doi.org/${state.doi}`} target="_blank" rel="noopener" class="text-gray-600">
                     Test link

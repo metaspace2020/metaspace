@@ -1,26 +1,16 @@
 <template>
-  <div class="tf-outer border-gray-300 border border-solid text-sm">
-    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
-      <i
-        class="el-icon-search"
-      />
-    </div>
-
-    <input
-      ref="input"
-      class="tf-value tf-value-input px-3"
-      type="text"
-      placeholder="Enter keywords"
-      :value="value"
-      @input="onChange($event.target.value)"
-    >
-
-    <div
-      v-if="removable"
-      class="tf-remove el-icon-error"
-      @click="destroy"
+  <el-input
+    :value="value"
+    class="tf-outer w-auto"
+    type="text"
+    placeholder="Enter keywords"
+    @input="onChange"
+  >
+    <i
+      slot="prepend"
+      class="el-icon-search -mx-1"
     />
-  </div>
+  </el-input>
 </template>
 
 <script lang="ts">
@@ -51,3 +41,8 @@ export default {
   },
 } as ComponentOptions<SearchBox>
 </script>
+<style>
+  .tf-outer .el-input__inner {
+    width: 200px; /* IE11 fix - inputs without a "width" won't follow flex-shrink rules */
+  }
+</style>

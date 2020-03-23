@@ -77,49 +77,8 @@
 
 /* Element UI overrides */
 
-.sm-workflow .el-input-group {
-  display: flex;
-}
-
-.sm-workflow .el-input-group__append,
-.sm-workflow .el-input-group__prepend {
-  @apply border-gray-300 text-gray-600 bg-gray-100 px-4;
-  align-items: center;
-  display: flex;
-  width: auto;
-}
-
 .sm-workflow .el-input__inner {
-  @apply border-gray-300 text-gray-700 px-4;
-}
-
-.sm-workflow .el-input__inner:hover {
-  @apply border-gray-400;
-}
-
-.sm-workflow .el-input__inner:focus {
-  @apply border-blue-500;
-}
-
-.sm-workflow .el-button {
-  transition-property: opacity;
-}
-
-.sm-workflow .el-button--info {
-  @apply bg-gray-100 text-gray-600 border-gray-400;
-}
-
-.sm-workflow .el-button--primary {
-  @apply bg-primary border-primary;
-}
-
-.sm-workflow .el-button:hover,
-.sm-workflow .el-button:focus {
-  opacity: 0.8;
-}
-
-.sm-workflow .el-button:active {
-  opacity: 1;
+  @apply px-4;
 }
 
 .sm-workflow .el-collapse-item__header {
@@ -129,17 +88,14 @@
   height: 48px;
   padding-left: 0;
 }
-
 .sm-workflow .el-collapse-item.is-active .el-collapse-item__header {
   background: none;
 }
-
 .sm-workflow .el-collapse-item__content {
   color: inherit;
   line-height: inherit;
   padding-bottom: 0;
 }
-
 .sm-workflow .el-collapse-item__wrap {
   border: none;
 }

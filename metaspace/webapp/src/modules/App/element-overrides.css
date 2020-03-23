@@ -55,3 +55,15 @@
 .el-table .descending .sort-caret.descending {
   border-top-color: theme('colors.gray.900')
 }
+
+.v-modal {
+  @apply bg-gray-900;
+}
+
+.el-input-group {
+  display: flex;
+}
+.el-input-group__append,
+.el-input-group__prepend {
+  @apply px-4 flex items-center w-auto;
+}
