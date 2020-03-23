@@ -266,8 +266,10 @@ export default {
     min-height: 45px;
     max-height: 100px;
     margin: 25px 5px 25px 0;
-    display: flex;
-    align-items: center;
+  }
+
+  .qq-uploader:focus-within {
+    @apply border-gray-600;
   }
 
   .qq-upload-status-text {
@@ -292,8 +294,17 @@ export default {
     text-align: center;
   }
 
-  .fu-dropzone-content.qq-upload-button-hover {
+  .fu-dropzone-content.qq-upload-button-focus {
+    outline: none;
+  }
+
+  .fu-dropzone-content.qq-upload-button-hover,
+  .fu-dropzone-content.qq-upload-button-focus {
     @apply text-gray-600;
     background: none;
+  }
+
+  .fu-dropzone-clone {
+    line-height: 2.75rem; /* magic number to centre the text without flexbox */
   }
 </style>

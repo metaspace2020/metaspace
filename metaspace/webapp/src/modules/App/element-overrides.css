@@ -28,8 +28,8 @@
 
 .el-select .el-tag__close.el-icon-close {
   background: none;
+  right: -4px;
 }
-
 .el-tag--small .el-icon-close {
   transform: none;
 }
