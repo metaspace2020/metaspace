@@ -2,7 +2,6 @@
 import Vue, { AsyncComponent } from 'vue'
 import VueRouter, { RawLocation } from 'vue-router'
 import AboutPage from './modules/App/AboutPage.vue'
-import UppyUploadPage from './modules/MolecularDatabases/UppyUploadPage.vue'
 import DatasetsPage from './modules/Datasets/DatasetsPage.vue'
 import { DialogPage, ResetPasswordPage } from './modules/Account'
 import { redirectAfterSignIn } from './modules/Account/signInReturnUrl'
@@ -15,6 +14,7 @@ const asyncPagesFreelyTyped = {
   MetadataEditPage: () => import(/* webpackPrefetch: true, webpackChunkName: "MetadataEditPage" */ './modules/MetadataEditor/MetadataEditPage.vue'),
   ImageAlignmentPage: () => import(/* webpackPrefetch: true, webpackChunkName: "ImageAlignmentPage" */ './modules/ImageAlignment/ImageAlignmentPage.vue'),
   UploadPage: () => import(/* webpackPrefetch: true, webpackChunkName: "UploadPage" */ './modules/MetadataEditor/UploadPage.vue'),
+  UppyUploadPage: () => import(/* webpackPrefetch: true, webpackChunkName: "UploadPage" */ './modules/MolecularDatabases/UppyUploadPage.vue'),
 
   // These pages are relatively small as they don't have any big 3rd party dependencies, so pack them together
   DatasetTable: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Datasets/list/DatasetTable.vue'),
@@ -44,7 +44,7 @@ const router = new VueRouter({
   routes: [
     { path: '/', component: AboutPage },
     { path: '/about', component: AboutPage },
-    { path: '/database-upload', component: UppyUploadPage },
+    { path: '/database-upload', component: asyncPages.UppyUploadPage },
     { path: '/annotations', component: asyncPages.AnnotationsPage },
     {
       path: '/datasets',
