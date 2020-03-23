@@ -271,6 +271,7 @@ export default class FormField extends Vue {
   }
 
   .subfield-label {
+    @apply text-gray-600;
     font-size: 13px;
     padding: 2px 0 5px 5px;
   }
