@@ -72,3 +72,7 @@
 .el-input-group__prepend {
   @apply px-4 flex items-center w-auto;
 }
+
+.el-message-box__headerbtn {
+  z-index: 1;
+}

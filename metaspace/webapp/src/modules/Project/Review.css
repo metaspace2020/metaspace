@@ -100,12 +100,3 @@
   border: none;
 }
 
-
-/* utils */
-
-.baseline-grid {
-  background-image: linear-gradient(180deg,red 1px,transparent 0);
-  background-position: 0 0;
-  background-repeat: repeat;
-  background-size: 100% 24px;
-}

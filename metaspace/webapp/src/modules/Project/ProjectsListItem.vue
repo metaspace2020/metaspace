@@ -1,13 +1,16 @@
 <template>
-  <div class="project-item border border-solid border-gray-200">
+  <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200">
     <router-link
       :to="projectLink"
       class="underlay"
     />
     <div class="item-body">
       <div class="info">
-        <div class="info-line project-name">
-          <router-link :to="projectLink">
+        <div class="info-line project-name leading-none py-2 pr-5">
+          <router-link
+            :to="projectLink"
+            class="text-2xl font-medium text-inherit no-underline"
+          >
             {{ project.name }}
           </router-link>
           <img
@@ -229,22 +232,14 @@ export default class ProjectsListItem extends Vue {
   @import "~element-ui/packages/theme-chalk/src/common/var";
 
   .project-item {
-    position: relative;
-    border-radius: 5px;
-    width: 100%;
     max-width: 800px;
-    padding: 20px;
-    box-sizing: border-box;
+    font-variant-numeric: proportional-nums;
     > * {
       z-index: 1;
     }
     > .underlay {
       z-index: 0;
     }
-    transition: 0.2s cubic-bezier(.4, 0, .2, 1);
-    transition-property: box-shadow;
-    line-height: 20px;
-    font-variant-numeric: proportional-nums;
   }
 
   .project-item + .project-item {
@@ -270,43 +265,9 @@ export default class ProjectsListItem extends Vue {
   }
 
   .info-line {
-    margin-top: 1px;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-  }
-
-  .description {
-    $line-height: 1.2em;
-    $lines: 5;
-    line-height: $line-height;
-    max-height: $line-height * $lines;
-    overflow: hidden;
-    position: relative;
-    // Make content have uniform margins that don't count towards the line limit
-    margin-top: 0.5em;
-    &>*:first-child { margin-top: 0; }
-    &>*:last-child { margin-bottom: 0; }
-    // Fade out content if it's too long
-    &:before {
-      content:'';
-      width:100%;
-      height:100%;
-      position:absolute;
-      left:0;
-      top:0;
-      background:linear-gradient(transparent ($line-height * ($lines - 1.5)), white);
-    }
-  }
-
-  .project-name {
-    line-height: 30px;
-    a {
-      color: #333;
-      font-size: 1.5em;
-      font-weight: 500;
-      text-decoration: none;
-    }
   }
 
   .private-icon {
@@ -337,7 +298,7 @@ export default class ProjectsListItem extends Vue {
   }
 
   .delete, .delete > a {
-    color: #a00;
+    @apply text-red-700;
   }
 
   .sm-elapsed-time {
