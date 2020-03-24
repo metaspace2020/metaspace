@@ -313,6 +313,10 @@ nginx_servers:
         params:
           - proxy_pass http://isotope_image_server/dataset_upload;
           - client_max_body_size 5M;
+      - path: /database_upload
+        params:
+          - proxy_pass http://isotope_image_server/database_upload;
+          - client_max_body_size 5M;
       - path: /graphql
         params:
           - proxy_pass http://graphql_server/graphql;
