@@ -86,5 +86,3 @@ services:
     # extra_hosts:
     #   - "sm-webapp:172.17.0.1"
     #   - "sm-graphql:172.17.0.1"
-    depends_on:
-      - kibana

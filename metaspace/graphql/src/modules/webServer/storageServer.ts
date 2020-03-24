@@ -9,6 +9,9 @@ import * as path from 'path';
 import * as cors from 'cors';
 import * as crypto from 'crypto';
 import * as fs from 'fs-extra';
+import * as companion from '@uppy/companion';
+import * as bodyParser from "body-parser";
+import * as genUuid from "uuid";
 const getPixels = require('get-pixels');
 import logger from '../../utils/logger';
 import config, {Config, ImageCategory} from '../../utils/config';
@@ -232,11 +235,37 @@ export async function createStorageServerAsync(config: Config) {
     httpServer.listen(config.img_storage_port).on('listening', resolve).on('error', reject);
   });
 
-  if (config.dataset_upload.destination === 's3') {
+  if (config.upload.destination === 's3') {
     app.use('/dataset_upload', fineUploaderS3Middleware());
   } else {
     app.use('/dataset_upload', fineUploaderLocalMiddleware());
   }
+
+  const options = {
+    providerOptions: {
+      s3: {
+        getKey: (req: express.Request, filename: string, metadata: object) =>  {
+          return `${config.upload.moldbPrefix}/${genUuid()}/${filename}`
+        },
+        key: config.aws.aws_access_key_id,
+        secret: config.aws.aws_secret_access_key,
+        bucket: config.upload.bucket,
+        region: config.aws.aws_region,
+        useAccelerateEndpoint: false,  // default: false,
+        expires: 300,  // default: 300 (5 minutes)
+        acl: 'private',  // default: public-read
+      }
+    },
+    server: {
+      host: `localhost:${config.img_storage_port}`,
+      protocol: 'http',
+      path: '/database_upload',
+    },
+    filePath: '/tmp',
+    debug: true,
+  };
+  app.use('/database_upload', bodyParser.json(), companion.app(options));
+  companion.socket(httpServer, options);
 
   logger.info(`Storage server is listening on ${config.img_storage_port} port...`);
   return httpServer;

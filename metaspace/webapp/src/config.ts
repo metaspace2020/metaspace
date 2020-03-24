@@ -44,6 +44,7 @@ interface Features {
 interface ClientConfig {
   graphqlUrl: string | null;
   wsGraphqlUrl: string | null;
+  companionUrl: string | null;
   imageStorage?: string | null;
 
   google_client_id: string;
@@ -57,6 +58,7 @@ interface ClientConfig {
 const defaultConfig: ClientConfig = {
   graphqlUrl: null,
   wsGraphqlUrl: null,
+  companionUrl: null,
   google_client_id: '',
   fineUploader: {
     storage: 'local',

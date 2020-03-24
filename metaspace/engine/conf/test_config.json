@@ -9,7 +9,7 @@
     "host": "localhost",
     "database": "sm_test",
     "user": "sm",
-    "password": "securepassword"
+    "password": "password"
   },
   "elasticsearch": {
     "index": "sm_test",

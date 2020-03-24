@@ -1,4 +1,5 @@
 import json
+import logging
 from random import randint
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -85,24 +86,28 @@ def spark_context(request):
 
 
 def _autocommit_execute(db_config, *sqls):
-    admin_conn = None
+    conn = None
     try:
-        admin_conn = psycopg2.connect(**db_config)
-        admin_conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-        with admin_conn.cursor() as curs:
+        conn = psycopg2.connect(**db_config)
+        conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        with conn.cursor() as curs:
             for sql in sqls:
                 curs.execute(sql)
+    except Exception as e:
+        logging.getLogger('engine').error(e)
     finally:
-        if admin_conn:
-            admin_conn.close()
+        if conn:
+            conn.close()
 
 
 @pytest.fixture()
 def empty_test_db(sm_config):
     db_name = sm_config['db']['database']
-    db_config_postgres = {**sm_config['db'], 'database': 'postgres'}
+    db_owner = sm_config['db']['user']
     _autocommit_execute(
-        db_config_postgres, f'DROP DATABASE IF EXISTS {db_name}', f'CREATE DATABASE {db_name}'
+        {**sm_config['db'], 'database': 'postgres'},
+        f'DROP DATABASE IF EXISTS {db_name}',
+        f'CREATE DATABASE {db_name} OWNER {db_owner}',
     )
 
     conn_pool = ConnectionPool(sm_config['db'])
@@ -110,7 +115,7 @@ def empty_test_db(sm_config):
     yield
 
     conn_pool.close()
-    _autocommit_execute(db_config_postgres, f'DROP DATABASE IF EXISTS {db_name}')
+    _autocommit_execute(sm_config['db'], f'DROP DATABASE IF EXISTS {db_name}')
 
 
 @pytest.fixture()

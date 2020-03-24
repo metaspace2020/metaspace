@@ -53,8 +53,10 @@ module.exports = {
     }
   },
 
-  dataset_upload: {
-    destination: '/opt/data/uploads',
+  upload: {
+    destination: '/opt/data/metaspace/uploads',
+    bucket: '',
+    moldbPrefix: 'moldbs'
   },
 
   services: {

@@ -32,15 +32,15 @@ services:
       - sm
 
   postgres:
-    image: postgres
+    image: postgres:9.5
     # ports:
     #   - "5432:5432"
     volumes:
       - ./postgres/initdb.d/:/docker-entrypoint-initdb.d:ro
       - ./data/pgdata:/var/lib/postgresql/data/pgdata
     environment:
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_USER: postgres
+      POSTGRES_USER: sm
+      POSTGRES_PASSWORD: password
       PGDATA: /var/lib/postgresql/data/pgdata
     networks:
       - sm
@@ -156,10 +156,6 @@ services:
       - "${DATA_ROOT}/mol-images:/var/www/mol-images:z"
     networks:
       - sm
-    depends_on:
-      - elasticsearch
-      - sm-graphql
-      - sm-webapp
 
 networks:
   sm:
