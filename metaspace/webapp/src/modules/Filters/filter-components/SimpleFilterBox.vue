@@ -21,44 +21,30 @@
   -->
   <!-- from assets/filter-icon.svg with viewBox changed to reduce padding-->
 
-  <div class="tf-outer border-gray-300 border border-solid">
-    <div class="tf-name">
-      <!-- from assets/filter-icon.svg with viewBox changed to reduce padding-->
-      <svg
-        class="filter-icon"
-        viewBox="190 256 1412 1410"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path d="M1595 295q17 41-14 70l-493 493v742q0 42-39 59-13 5-25 5-27 0-45-19l-256-256q-19-19-19-45v-486l-493-493q-31-29-14-70 17-39 59-39h1280q42 0 59 39z" />
-      </svg>
-    </div>
-
-    <el-select
-      class="tf-value tf-value-input simple-filter"
-      :value="value"
-      size="medium"
-      @change="onChange"
+  <el-select
+    class="filter-select"
+    :value="value"
+    @change="onChange"
+  >
+    <el-option
+      v-for="opt in ungroupedOptions"
+      :key="opt.value"
+      :value="opt.value"
+      :label="opt.label"
+    />
+    <el-option-group
+      v-for="grp in groupedOptions"
+      :key="grp.label"
+      :label="grp.label"
     >
       <el-option
-        v-for="opt in ungroupedOptions"
+        v-for="opt in grp.options"
         :key="opt.value"
         :value="opt.value"
         :label="opt.label"
       />
-      <el-option-group
-        v-for="grp in groupedOptions"
-        :key="grp.label"
-        :label="grp.label"
-      >
-        <el-option
-          v-for="opt in grp.options"
-          :key="opt.value"
-          :value="opt.value"
-          :label="opt.label"
-        />
-      </el-option-group>
-    </el-select>
-  </div>
+    </el-option-group>
+  </el-select>
 </template>
 
 <script lang="ts">
@@ -121,17 +107,3 @@ export default class SimpleFilterBox extends Vue {
    }
 }
 </script>
-<style scoped lang="scss">
-  .filter-icon {
-    fill: white;
-    width: 1em;
-    height: 1em;
-    vertical-align: -3px;
-  }
-  .simple-filter {
-    width: 184px;
-    /deep/ input {
-      padding-left: 5px;
-    }
-  }
-</style>
