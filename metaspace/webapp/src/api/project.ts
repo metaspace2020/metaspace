@@ -143,6 +143,7 @@ export const editProjectQuery =
       urlSlug
       isPublic
       currentUserRole
+      publicationStatus
     }
   }`
 
@@ -152,6 +153,7 @@ export interface EditProjectQuery {
   urlSlug: string | null;
   isPublic: boolean;
   currentUserRole: ProjectRole | null;
+  publicationStatus: string;
 }
 
 const projectsListItemFragment =

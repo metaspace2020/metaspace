@@ -20,11 +20,11 @@
       :disabled="isSaving"
     />
     <div
-      v-if="project != null && (project.isPublic || project.urlSlug || canEditUrlSlug)"
+      v-if="project != null && (project.isPublic || project.urlSlug)"
       style="margin-bottom: 2em"
     >
       <h2>Custom URL</h2>
-      <div v-if="canEditUrlSlug">
+      <div>
         <el-input
           v-model="model.urlSlug"
           class="max-w-measure-4"
@@ -32,26 +32,19 @@
           <span slot="prepend">{{ projectUrlPrefix }}</span>
         </el-input>
       </div>
-      <div v-if="!canEditUrlSlug && project && project.urlSlug">
-        <router-link :to="projectUrlRoute">
-          {{ projectUrlPrefix }}<span class="urlSlug">{{ project.urlSlug }}</span>
-        </router-link>
-      </div>
-      <div v-if="!canEditUrlSlug && project && !project.urlSlug">
-        <p>
-          <router-link :to="projectUrlRoute">
-            {{ projectUrlPrefix }}<span class="urlSlug">{{ project.id }}</span>
-          </router-link>
-        </p>
-        <p><a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up a custom URL for your project.</p>
-      </div>
     </div>
     <div v-if="project">
       <h2>Delete project</h2>
-      <p>
-        Datasets will not be deleted, but they will no longer be able to be shared with other users through this project.
+      <p v-if="project.publicationStatus === 'PUBLISHED'">
+        <em>Published projects cannot be deleted.</em>
       </p>
-      <div style="text-align: right; margin: 1em 0;">
+      <div
+        v-else
+        class="flex justify-between items-start"
+      >
+        <p class="max-w-measure-3 mt-0 leading-snug">
+          Datasets will not be deleted, but they will no longer be able to be shared with other users through this project.
+        </p>
         <el-button
           type="danger"
           :loading="isDeletingProject"
@@ -109,10 +102,6 @@ export default class ProjectSettings extends Vue {
     currentUser: CurrentUserRoleResult | null = null;
     project: EditProjectQuery | null = null;
 
-    get canEditUrlSlug(): boolean {
-      return this.currentUser && this.currentUser.role === 'admin' || false
-    }
-
     get projectName() {
       return this.project ? this.project.name : ''
     }
@@ -168,6 +157,7 @@ export default class ProjectSettings extends Vue {
       this.isSaving = true
       try {
         const { name, isPublic, urlSlug } = this.model
+        const slugChanged = urlSlug !== this.projectUrlRoute.params.projectIdOrSlug
         await this.$apollo.mutate<UpdateProjectMutation>({
           mutation: updateProjectMutation,
           variables: {
@@ -176,12 +166,12 @@ export default class ProjectSettings extends Vue {
               name,
               isPublic,
               // Avoid sending a null urlSlug unless it's being intentionally unset
-              ...(this.canEditUrlSlug ? { urlSlug: urlSlug || null } : {}),
+              ...(slugChanged ? { urlSlug: urlSlug || null } : {}),
             },
           },
         })
         this.$message({ message: `${name} has been saved`, type: 'success' })
-        if (this.canEditUrlSlug) {
+        if (slugChanged) {
           this.$router.replace({
             params: { projectIdOrSlug: urlSlug || this.projectId },
             query: this.$route.query,
