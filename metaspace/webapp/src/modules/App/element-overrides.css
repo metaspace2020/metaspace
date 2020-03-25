@@ -30,13 +30,18 @@
   background: none;
   right: -4px;
 }
-.el-tag--small .el-icon-close {
+.el-tag--small .el-icon-close,
+.el-select .el-tag__close.el-icon-close::before {
   transform: none;
+  width: 14px;
+  height: 14px;
 }
+
 
 .el-tabs__item.is-active,
 .el-tabs__item:hover,
 .el-pager li.active,
+.el-pager li:hover,
 .el-switch__label.is-active,
 .el-checkbox__input.is-checked + .el-checkbox__label,
 .el-select-dropdown__item.selected {
