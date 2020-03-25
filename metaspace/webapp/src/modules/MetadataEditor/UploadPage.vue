@@ -35,7 +35,7 @@
     </el-dialog>
     <div class="upload-page-wrapper">
       <div
-        v-if="enableUploads"
+        v-if="!enableUploads"
         id="maintenance-message"
         class="text-danger border-2 border-dashed border-danger mt-6 p-4 text-2xl text-center font-medium"
       >
