@@ -46,6 +46,10 @@ module.exports = {
       },
       textColor: {
         primary: 'hsl(208, 93%, 44%)',
+        danger: defaults.theme.colors.red[700],
+      },
+      borderColor: {
+        danger: defaults.theme.colors.red[700],
       },
       inset: {
         '1/2': '50%',

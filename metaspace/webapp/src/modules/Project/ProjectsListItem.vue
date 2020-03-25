@@ -79,13 +79,11 @@
             Manage project
           </router-link>
         </div>
-        <div
-          v-if="canManage"
-          class="delete"
-        >
+        <div v-if="canManage">
           <i class="el-icon-delete" />
           <a
             href="#"
+            class="text-danger"
             @click.prevent="handleDeleteProject"
           >Delete project</a>
         </div>
@@ -292,10 +290,6 @@ export default class ProjectsListItem extends Vue {
     right: 20px;
     width: 45px;
     cursor: pointer;
-  }
-
-  .delete, .delete > a {
-    @apply text-red-700;
   }
 
   .sm-elapsed-time {

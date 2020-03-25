@@ -34,12 +34,15 @@
       <p>Have fun using METASPACE!</p>
     </el-dialog>
     <div class="upload-page-wrapper">
-      <div v-if="!enableUploads">
-        <div id="maintenance-message">
+      <div
+        v-if="enableUploads"
+        id="maintenance-message"
+        class="text-danger border-2 border-dashed border-danger mt-6 p-4 text-2xl text-center font-medium"
+      >
+        <p class="max-w-measure-3 my-0 mx-auto leading-snug">
           Dataset uploads have been temporarily disabled. Please try again later. Thank you for understanding!
-        </div>
+        </p>
       </div>
-
       <div v-else-if="isSignedIn || isTourRunning">
         <!--Uncomment below when LCMS support is needed-->
         <!--<div id="filter-panel-container">-->
@@ -325,16 +328,6 @@ export default {
 <style scoped>
   #filter-panel-container > * {
     padding-left: 0;
-  }
-
-  #maintenance-message {
-    font-size: 22px;
-    color: #e44;
-    max-width: 900px;
-    margin: 30px;
-    border: dotted #a00;
-    padding: 10px;
-    text-align: center;
   }
 
   #sign-in-intro {

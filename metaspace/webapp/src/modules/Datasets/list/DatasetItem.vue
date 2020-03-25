@@ -168,11 +168,11 @@
 
       <div
         v-if="canEdit"
-        class="ds-delete"
       >
         <i class="el-icon-delete" />
         <a
           href="#"
+          class="text-danger"
           @click.prevent="openDeleteDialog"
         >Delete dataset</a>
       </div>
@@ -184,6 +184,7 @@
         <i class="el-icon-refresh" />
         <a
           href="#"
+          class="text-danger"
           @click.prevent="handleReprocess"
         >Reprocess dataset</a>
       </div>
@@ -592,10 +593,6 @@ export default {
 
  .db-link-list {
    font-size: initial;
- }
-
- .ds-delete, .ds-delete > a, .ds-reprocess, .ds-reprocess > a {
-   color: #a00;
  }
 
  .ds-item-private-icon {
