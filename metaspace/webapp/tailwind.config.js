@@ -14,7 +14,6 @@ module.exports = {
       colors: {
         // brand
         primary: 'hsl(208, 87%, 50%)',
-        'primary-body': 'hsl(208, 93%, 44%)',
         // states
         'success': '#2CBA8F',
         'warning': '#E6A23C',
@@ -44,6 +43,9 @@ module.exports = {
           '900': 'hsl(208, 87%, 29%)',
           '999': 'hsl(208, 100%, 21%)',
         }
+      },
+      textColor: {
+        primary: 'hsl(208, 93%, 44%)',
       },
       inset: {
         '1/2': '50%',

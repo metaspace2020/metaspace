@@ -82,7 +82,7 @@
 }
 
 .sm-workflow .el-collapse-item__header {
-  @apply text-primary-body;
+  @apply text-primary;
   border: none;
   font-size: inherit;
   height: 48px;

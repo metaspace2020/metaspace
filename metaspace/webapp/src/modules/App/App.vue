@@ -112,7 +112,7 @@ export default {
   }
 
   a {
-    @apply text-primary-body;
+    @apply text-primary;
   }
 
   a:hover {

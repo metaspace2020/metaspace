@@ -37,20 +37,16 @@
   height: 14px;
 }
 
-
 .el-tabs__item.is-active,
 .el-tabs__item:hover,
 .el-pager li.active,
 .el-pager li:hover,
 .el-switch__label.is-active,
 .el-checkbox__input.is-checked + .el-checkbox__label,
-.el-select-dropdown__item.selected {
-  @apply text-primary-body;
-}
-
+.el-select-dropdown__item.selected,
 .el-table th.is-sortable.ascending,
 .el-table th.is-sortable.descending {
-  @apply text-primary-body;
+  @apply text-primary;
 }
 
 .el-table .sort-caret.ascending {
