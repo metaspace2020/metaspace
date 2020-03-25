@@ -47,12 +47,9 @@
               --></router-link><span v-if="(ind+1 < projectManagers.length) && manager.user.primaryGroup">, </span>
             </span>
           </div>
-          <div class="info-line">
-            <span
-              v-if="project.publicationStatus === 'PUBLISHED'"
-              class="font-medium"
-            >
-              Published
+          <div class="info-line font-medium">
+            <span v-if="project.publicationStatus === 'PUBLISHED'">
+              Published <elapsed-time :date="project.publishedDT" />
             </span>
             <span v-else-if="project.latestUploadDT != null">
               Last submission <elapsed-time :date="project.latestUploadDT" />
@@ -302,6 +299,6 @@ export default class ProjectsListItem extends Vue {
   }
 
   .sm-elapsed-time {
-    font-weight: 500;
+    font-weight: 400;
   }
 </style>

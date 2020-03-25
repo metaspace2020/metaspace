@@ -166,6 +166,7 @@ const projectsListItemFragment =
       createdDT
       latestUploadDT
       publicationStatus
+      publishedDT
       members {
         user {
           name
@@ -234,6 +235,7 @@ export interface ProjectsListProject {
   }[];
   latestUploadDT: string | null;
   publicationStatus: string;
+  publishedDT: string | null;
 }
 
 export interface MyProjectsListItem {

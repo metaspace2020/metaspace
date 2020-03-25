@@ -19,6 +19,7 @@ type Project {
   projectDescription: String
   reviewToken: String
   publicationStatus: PublicationStatus!
+  publishedDT: String
   externalLinks: [ExternalLink!]!
 }
 
