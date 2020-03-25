@@ -244,6 +244,11 @@ export interface MyProjectsListItem {
   project: ProjectsListProject
 }
 
+interface ExternalLink {
+  provider: string;
+  link: string
+}
+
 export interface ViewProjectResult {
   id: string;
   name: string;
@@ -255,6 +260,7 @@ export interface ViewProjectResult {
   reviewToken: string | null;
   reviewTokenCreatedDT: string | null;
   publicationStatus: string
+  externalLinks: ExternalLink[]
 }
 
 export const ViewProjectFragment = gql`fragment ViewProjectFragment on Project {
@@ -272,6 +278,10 @@ export const ViewProjectFragment = gql`fragment ViewProjectFragment on Project {
   reviewToken
   # reviewTokenCreatedDT
   publicationStatus
+  externalLinks {
+    provider
+    link
+  }
 }`
 
 export interface ViewProjectMember {

@@ -9,7 +9,26 @@
     >
       <div class="header-row">
         <div class="header-names">
-          <h1>{{ project.name }}</h1>
+          <h1
+            class="py-1 leading-tight"
+            :class="{ 'mb-0': projectDOI }"
+          >
+            {{ project.name }}
+          </h1>
+          <p
+            v-if="projectDOI"
+            class="mt-0 leading-6"
+          >
+            <i class="el-icon-link" />
+            <a
+              :href="projectDOI"
+              class="text-sm font-medium"
+              target="_blank"
+              rel="noopener"
+            >
+              View publication<!-- -->
+            </a>
+          </p>
         </div>
 
         <div class="header-buttons">
@@ -383,6 +402,17 @@ export default class ViewProjectPage extends Vue {
       return this.members.some(m => m.role === ProjectRoleOptions.PENDING)
     }
 
+    get projectDOI() {
+      if (this.project !== null) {
+        for (const item of this.project.externalLinks) {
+          if (item.provider === 'DOI') {
+            return item.link
+          }
+        }
+      }
+      return null
+    }
+
     @Watch('$route.params.projectIdOrSlug')
     @Watch('project.urlSlug')
     canonicalizeUrl() {
@@ -544,10 +574,7 @@ export default class ViewProjectPage extends Vue {
     display: flex;
     flex-wrap: wrap;
   }
-  .header-names {
-    display: flex;
-    align-items: baseline;
-  }
+
   .header-buttons {
     display: flex;
     justify-content: flex-end;
