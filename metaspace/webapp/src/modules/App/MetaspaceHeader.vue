@@ -1,6 +1,9 @@
 <template>
   <div>
-    <div :class="healthMessage ? 'spacerWithAlert' : 'spacer'" />
+    <div
+      class="spacer"
+      :class="{ 'spacer--with-alert': healthMessage }"
+    />
     <div class="b-header">
       <div class="header-items">
         <router-link
@@ -386,9 +389,10 @@ export default MetaspaceHeader
 <style lang="scss" scoped>
   $header-height: 62px;
   $alert-height: 36px;
+  $space: 8px;
 
  .b-header {
-   background-color: rgba(0, 105, 224, 0.85);
+   background-color: hsla(208, 87%, 50%, 0.87);
    position: fixed;
    // z-index should be higher than v-loading's .el-loading-mask (z-index: 2000) so that loading spinners
    // don't overlap the header, but can't be higher than v-tooltip's initial z-index (2001)
@@ -403,11 +407,12 @@ export default MetaspaceHeader
  }
 
  .spacer {
-   height: $header-height + 8px;
+   @apply bg-primary mb-2;
+   height: $header-height;
  }
 
- .spacerWithAlert {
-   height: $header-height + $alert-height + 8px;
+ .spacer--with-alert {
+   height: $header-height + $alert-height;
  }
 
  .header-items {
@@ -441,7 +446,7 @@ export default MetaspaceHeader
 
  .page-link {
    text-align: center;
-   color: #eee;
+   color: #fff;
    cursor: pointer;
    text-decoration: none;
  }
@@ -453,7 +458,6 @@ export default MetaspaceHeader
    outline-color: rgba(0, 0, 0, 0.3);
    outline-style: solid;
    outline-width: 1px;
-   color: white;
  }
 
  .router-link-active.page-link {
@@ -479,8 +483,7 @@ export default MetaspaceHeader
    min-width: 140px;
    max-width: 200px;
 
-   background-color: rgba(0, 105, 224, 0.85);
-   /*background-color: rgb(38, 128, 229);*/
+   background-color: hsla(208, 87%, 50%, 0.87);
  }
  .submenu-container-open > .submenu {
    display: flex;
@@ -520,6 +523,7 @@ export default MetaspaceHeader
    z-index: 1000;
 
    .el-alert {
+     border-radius: 0;
      height: $alert-height;
      justify-content: center;
    }
