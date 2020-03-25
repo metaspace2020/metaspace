@@ -6,10 +6,10 @@
     />
     <div class="item-body">
       <div class="info">
-        <div class="info-line project-name leading-none py-2 pr-5">
+        <div class="info-line project-name pr-5">
           <router-link
             :to="projectLink"
-            class="text-2xl font-medium text-inherit no-underline"
+            class="text-2xl font-medium leading-snug text-inherit no-underline"
           >
             {{ project.name }}
           </router-link>
