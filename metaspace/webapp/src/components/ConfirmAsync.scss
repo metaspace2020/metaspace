@@ -7,3 +7,30 @@
     padding: 20px 20px 0 20px;
   }
 }
+
+.sm-dialog {
+  @apply border-0 border-t-4;
+  border-color: currentColor;
+}
+
+.sm-dialog--warning {
+  @apply text-warning;
+}
+
+.sm-dialog--danger {
+  @apply text-red-700;
+}
+
+.sm-dialog .el-message-box__content,
+.sm-dialog .el-message-box__status.el-icon-warning {
+  color: currentColor;
+}
+
+.sm-dialog p {
+  @apply text-body;
+  line-height: 1.5;
+}
+
+.sm-dialog p + p {
+  margin-top: 12px;
+}

@@ -7,6 +7,7 @@ import CopyToClipboard from '../../components/CopyToClipboard'
 import { RichTextArea } from '../../components/RichText'
 
 import { ViewProjectResult } from '../../api/project'
+import confirmPrompt from '../../components/confirmPrompt'
 
 const statuses = {
   UNPUBLISHED: 'UNPUBLISHED',
@@ -94,6 +95,41 @@ const ReviewLink = createComponent<Props>({
       }
     }
 
+    const deleteReviewLink = () => {
+      confirmPrompt({
+        title: '',
+        type: 'warning',
+        style: 'warning',
+        confirmButtonText: 'Confirm',
+        message: (
+          <p>
+            <strong>This will remove access to the project.</strong> You
+            will need to distribute a new link if you would like to start the review process again.
+          </p>
+        ),
+      }, props.deleteLink)
+    }
+
+    const publishProject = () => {
+      confirmPrompt({
+        title: '',
+        type: 'warning',
+        style: 'danger',
+        confirmButtonText: 'Publish',
+        message: (
+          <div>
+            <p>
+              <strong>Publishing a project is a one-time event.</strong>
+            </p>
+            <p>Please confirm your intention to make this project and its datasets available to all METASPACE users.</p>
+            <p>
+              <em>This cannot be undone.</em>
+            </p>
+          </div>
+        ),
+      }, () => props.publishProject(state.doi))
+    }
+
     const { href } = root.$router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined, true)
     const projectUrlPrefix = location.origin + href.replace('REMOVE', '')
 
@@ -151,7 +187,7 @@ const ReviewLink = createComponent<Props>({
           {activeStep.value === 2
             && <form onSubmit={(e: Event) => e.preventDefault()}>
               <Button
-                onClick={props.deleteLink}
+                onClick={deleteReviewLink}
                 key={props.project.publicationStatus}
               >
                 Remove link
@@ -182,7 +218,7 @@ const ReviewLink = createComponent<Props>({
                   </a>
                 </Input>
               </div>
-              <Button onClick={() => props.publishProject(state.doi)} type="primary">
+              <Button onClick={publishProject} type="primary">
                 Publish project
               </Button>
             </form>

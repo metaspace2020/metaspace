@@ -492,57 +492,25 @@ export default class ViewProjectPage extends Vue {
     }
 
     async deleteReviewLink() {
-      const h = this.$createElement
-      confirmPrompt({
-        title: '',
-        type: 'warning',
-        customClass: 'confirm-async-message-box sm-dialog sm-dialog--warning',
-        message: h('p', undefined, [
-          h('strong', undefined, 'This will remove access to the project.'),
-          ' ',
-          'You will need to distribute a new link if you would like to start the review process again.',
-        ]),
-        confirmButtonText: 'Confirm',
-      },
-      async() => {
-        await this.$apollo.mutate({
-          mutation: deleteReviewLinkMutation,
-          variables: { projectId: this.projectId },
-        })
-        await this.refetchProject()
+      await this.$apollo.mutate({
+        mutation: deleteReviewLinkMutation,
+        variables: { projectId: this.projectId },
       })
+      await this.refetchProject()
     }
 
     async publishProject(doi: string) {
-      const h = this.$createElement
-      confirmPrompt({
-        title: '',
-        type: 'warning',
-        confirmButtonText: 'Publish',
-        customClass: 'confirm-async-message-box sm-dialog sm-dialog--danger',
-        message: h('div', undefined, [
-          h('p', undefined, [
-            h('strong', undefined, 'Publishing a project is a one-time event.'),
-          ]),
-          h('p', undefined, 'Please confirm your intention to make this project and its datasets available to all METASPACE users.'),
-          h('p', undefined, [
-            h('em', undefined, 'This cannot be undone.'),
-          ]),
-        ]),
-      },
-      async() => {
-        if (doi && doi.length) {
-          await this.$apollo.mutate({
-            mutation: updateProjectDOIMutation,
-            variables: { projectId: this.projectId, link: `https://doi.org/${doi}` },
-          })
-        }
+      if (doi && doi.length) {
         await this.$apollo.mutate({
-          mutation: publishProjectMutation,
-          variables: { projectId: this.projectId },
+          mutation: updateProjectDOIMutation,
+          variables: { projectId: this.projectId, link: `https://doi.org/${doi}` },
         })
-        await this.refetchProject()
+      }
+      await this.$apollo.mutate({
+        mutation: publishProjectMutation,
+        variables: { projectId: this.projectId },
       })
+      await this.refetchProject()
     }
 
     async refetchProject() {
@@ -608,32 +576,5 @@ export default class ViewProjectPage extends Vue {
 
   .el-tab-pane.sm-review-tab {
     margin-top: 24px;
-  }
-
-  .sm-dialog {
-    @apply border-0 border-t-4;
-    border-color: currentColor;
-  }
-
-  .sm-dialog--warning {
-    @apply text-yellow-500;
-  }
-
-  .sm-dialog--danger {
-    @apply text-red-700;
-  }
-
-  .sm-dialog .el-message-box__content,
-  .sm-dialog .el-message-box__status.el-icon-warning {
-    color: currentColor;
-  }
-
-  .sm-dialog p {
-    @apply text-body;
-    line-height: 1.5;
-  }
-
-  .sm-dialog p + p {
-    margin-top: 12px;
   }
 </style>
