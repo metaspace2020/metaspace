@@ -6,12 +6,12 @@
 }
 
 .sm-table th {
-  color: #909399;
+  @apply text-gray-600;
   text-align: left;
 }
 
 .sm-table th, .sm-table td {
-  border-bottom: 1px solid #EBEEF5;
+  @apply border-0 border-b border-solid border-gray-200;
   padding: 12px;
   position: relative;
 }
