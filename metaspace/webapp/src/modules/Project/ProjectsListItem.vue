@@ -47,7 +47,7 @@
               --></router-link><span v-if="(ind+1 < projectManagers.length) && manager.user.primaryGroup">, </span>
             </span>
           </div>
-          <div class="info-line font-medium">
+          <div class="info-line">
             <span v-if="project.publicationStatus === 'PUBLISHED'">
               Published <elapsed-time :date="project.publishedDT" />
             </span>
@@ -290,9 +290,5 @@ export default class ProjectsListItem extends Vue {
     right: 20px;
     width: 45px;
     cursor: pointer;
-  }
-
-  .sm-elapsed-time {
-    font-weight: 400;
   }
 </style>

@@ -61,8 +61,7 @@
           />
           <div class="md-editor-submit">
             <el-button
-              type="info"
-              class="el-button__help_metadata"
+              class="el-button__help_metadata text-gray-600"
               icon="el-icon-question"
               @click="helpDialog=true"
             />
