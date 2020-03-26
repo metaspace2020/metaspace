@@ -37,7 +37,7 @@ describe('modules/project/controller (CRUD mutations)', () => {
     };
     const projectDetailsWithSlug = {
       ...projectDetails,
-      urlSlug: 'foo',
+      urlSlug: 'foo_bar',
     };
     const createProject = `mutation ($projectDetails: CreateProjectInput!) {
       createProject(projectDetails: $projectDetails) { ${projectFields} }
@@ -73,17 +73,9 @@ describe('modules/project/controller (CRUD mutations)', () => {
       // Assert
       await expect(promise).rejects.toThrow('Unauthenticated');
     });
-    it('should reject a urlSlug from a user', async () => {
+    it('should not reject a urlSlug from a user', async () => {
       // Act
-      const promise = doQuery<ProjectType>(createProject, { projectDetails: projectDetailsWithSlug });
-
-      // Assert
-      await expect(promise).rejects.toThrow();
-    });
-    it('should not reject a urlSlug from an admin', async () => {
-      // Act
-      const result = await doQuery<ProjectType>(createProject,
-        { projectDetails: projectDetailsWithSlug }, { context: adminContext });
+      const result = await doQuery<ProjectType>(createProject, { projectDetails: projectDetailsWithSlug });
 
       // Assert
       const project = await testEntityManager.findOneOrFail(ProjectModel, result.id);
@@ -101,7 +93,7 @@ describe('modules/project/controller (CRUD mutations)', () => {
     };
     const projectDetailsWithSlug = {
       ...projectDetails,
-      urlSlug: 'bar',
+      urlSlug: 'foo_bar',
     };
     const updateProject = `mutation ($projectId: ID!, $projectDetails: UpdateProjectInput!) {
       updateProject(projectId: $projectId, projectDetails: $projectDetails) { ${projectFields} }
@@ -111,7 +103,7 @@ describe('modules/project/controller (CRUD mutations)', () => {
       initialProject = await createTestProject({
         name: 'foo',
         isPublic: true,
-        urlSlug: 'foo',
+        urlSlug: 'bar_baz',
       });
       projectId = initialProject.id;
     });

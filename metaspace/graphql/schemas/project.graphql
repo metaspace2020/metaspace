@@ -66,6 +66,8 @@ type Query {
   projectByUrlSlug(urlSlug: String!): Project
   allProjects(query: String, offset: Int = 0, limit: Int = 10): [Project!]!
   projectsCount(query: String): Int!
+
+  projectUrlSlugIsValid(urlSlug: String!, existingProjectId: ID): Boolean! # Throws error if invalid, consistent with updateProject
 }
 
 type Mutation {
