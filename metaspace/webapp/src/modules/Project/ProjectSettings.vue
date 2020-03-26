@@ -79,7 +79,7 @@ import EditProjectForm from './EditProjectForm.vue'
 import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
 import ConfirmAsync from '../../components/ConfirmAsync'
 import reportError from '../../lib/reportError'
-import { parseValidationErrors } from './validation'
+import { parseValidationErrors } from '../../api/validation'
 
   @Component<ProjectSettings>({
     components: {

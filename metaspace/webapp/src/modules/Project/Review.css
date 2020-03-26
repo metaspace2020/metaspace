@@ -1,102 +1,25 @@
-.sm-workflow {
-  counter-reset: workflow;
-  list-style: none;
-  line-height: 24px;
-  margin: 0;
-  padding: 0;
-}
-
-.sm-workflow-item:last-child {
-  border-color: transparent; /* border still required for alignment */
-}
-
-.sm-workflow-item > * + *,
-.sm-workflow-item form > * + * {
-  margin: 12px 0 0;
-}
-
-.sm-workflow-header + *,
-.sm-workflow-item form > :first-child {
-  margin: 0;
-}
-
-.sm-workflow-item > .sm-workflow-header {
-  margin: 0;
-  line-height: 48px;
-}
-
-/* hack allows left border to connect to next li */
-.sm-workflow-item > :last-child {
-  margin-bottom: 48px;
-}
-
-.sm-workflow label {
-  color: inherit;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 2;
-}
-
-
-/* status indicators */
-
-.sm-workflow-item:before {
-  @apply text-gray-600 bg-gray-200;
-  align-items: center;
-  border-radius: 50%;
-  content: counter(workflow);
-  counter-increment: workflow;
-  display: flex;
-  font-size: 24px;
-  font-weight: 700;
-  height: 48px;
-  justify-content: center;
-  left: -25px; /* 50% plus 1px for adjoining line */
-  position: absolute;
-  top: 0;
-  transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-  transition-property: color, background;
-  width: 48px;
-}
-
-.sm-workflow-item.active {
-  color: inherit;
-}
-
-.sm-workflow-item.active:before {
-  @apply bg-primary;
-  color: #fff;
-}
-
-.sm-workflow-item.done:before {
-  content: '\e6da';
-  font-family: element-icons !important;
-}
-
-
 /* Element UI overrides */
 
-.sm-workflow .el-input__inner {
+.sm-project-review .el-input__inner {
   @apply px-4;
 }
 
-.sm-workflow .el-collapse-item__header {
+.sm-project-review .el-collapse-item__header {
   @apply text-primary;
   border: none;
   font-size: inherit;
   height: 48px;
   padding-left: 0;
 }
-.sm-workflow .el-collapse-item.is-active .el-collapse-item__header {
+.sm-project-review .el-collapse-item.is-active .el-collapse-item__header {
   background: none;
 }
-.sm-workflow .el-collapse-item__content {
+.sm-project-review .el-collapse-item__content {
   color: inherit;
   line-height: inherit;
   padding-bottom: 0;
 }
-.sm-workflow .el-collapse-item__wrap {
+.sm-project-review .el-collapse-item__wrap {
   border: none;
 }
 

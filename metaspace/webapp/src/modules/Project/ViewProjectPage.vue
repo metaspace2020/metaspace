@@ -149,11 +149,9 @@
             </new-feature-badge>
           </span>
           <review
-            :project="project"
-            :create-link="createReviewLink"
-            :delete-link="deleteReviewLink"
-            :publish-project="publishProject"
             :current-user-name="currentUserName"
+            :project="project"
+            :refetch-project="refetchProject"
           />
         </el-tab-pane>
         <el-tab-pane
@@ -188,10 +186,6 @@ import {
   requestAccessToProjectMutation, updateProjectMutation, UpdateProjectMutation,
   ViewProjectFragment,
   ViewProjectResult,
-  createReviewLinkMutation,
-  deleteReviewLinkMutation,
-  publishProjectMutation,
-  updateProjectDOIMutation,
 } from '../../api/project'
 import gql from 'graphql-tag'
 import { encodeParams } from '../Filters'
@@ -496,51 +490,6 @@ export default class ViewProjectPage extends Vue {
         },
       })
       this.refetchProject()
-    }
-
-    async createReviewLink(projectDetails: object) {
-      const createLinkPromise = this.$apollo.mutate({
-        mutation: createReviewLinkMutation,
-        variables: { projectId: this.projectId },
-      })
-
-      if (projectDetails) {
-        await Promise.all([
-          createLinkPromise,
-          this.$apollo.mutate<UpdateProjectMutation>({
-            mutation: updateProjectMutation,
-            variables: {
-              projectId: this.projectId,
-              projectDetails,
-            },
-          }),
-        ])
-      } else {
-        await createLinkPromise
-      }
-      await this.refetchProject()
-    }
-
-    async deleteReviewLink() {
-      await this.$apollo.mutate({
-        mutation: deleteReviewLinkMutation,
-        variables: { projectId: this.projectId },
-      })
-      await this.refetchProject()
-    }
-
-    async publishProject(doi: string) {
-      if (doi && doi.length) {
-        await this.$apollo.mutate({
-          mutation: updateProjectDOIMutation,
-          variables: { projectId: this.projectId, link: `https://doi.org/${doi}` },
-        })
-      }
-      await this.$apollo.mutate({
-        mutation: publishProjectMutation,
-        variables: { projectId: this.projectId },
-      })
-      await this.refetchProject()
     }
 
     async refetchProject() {
