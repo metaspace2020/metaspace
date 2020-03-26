@@ -17,6 +17,7 @@
     </div>
     <edit-project-form
       v-model="model"
+      :is-published="isPublished"
       :disabled="isSaving"
     />
     <div
@@ -24,10 +25,18 @@
       style="margin-bottom: 2em"
     >
       <h2>Custom URL</h2>
+      <p
+        v-if="errors.urlSlug"
+        class="text-danger text-sm my-2 font-medium"
+      >
+        {{ errors.urlSlug }}
+      </P>
       <div>
         <el-input
           v-model="model.urlSlug"
           class="max-w-measure-4"
+          :class="{ 'sm-form-error': errors.urlSlug }"
+          :disabled="isSaving"
         >
           <span slot="prepend">{{ projectUrlPrefix }}</span>
         </el-input>
@@ -35,7 +44,7 @@
     </div>
     <div v-if="project">
       <h2>Delete project</h2>
-      <p v-if="project.publicationStatus === 'PUBLISHED'">
+      <p v-if="isPublished">
         <em>Published projects cannot be deleted.</em>
       </p>
       <div
@@ -70,6 +79,7 @@ import EditProjectForm from './EditProjectForm.vue'
 import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
 import ConfirmAsync from '../../components/ConfirmAsync'
 import reportError from '../../lib/reportError'
+import { parseValidationErrors } from './validation'
 
   @Component<ProjectSettings>({
     components: {
@@ -99,6 +109,8 @@ export default class ProjectSettings extends Vue {
       urlSlug: '',
     };
 
+    errors: {[field: string]: string} = {}
+
     currentUser: CurrentUserRoleResult | null = null;
     project: EditProjectQuery | null = null;
 
@@ -120,6 +132,10 @@ export default class ProjectSettings extends Vue {
     get projectUrlPrefix() {
       const { href } = this.$router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined, true)
       return location.origin + href.replace('REMOVE', '')
+    }
+
+    get isPublished() {
+      return this.project && this.project.publicationStatus === 'PUBLISHED'
     }
 
     @Watch('project')
@@ -154,10 +170,11 @@ export default class ProjectSettings extends Vue {
     }
 
     async handleSave() {
+      this.errors = {}
       this.isSaving = true
       try {
         const { name, isPublic, urlSlug } = this.model
-        const slugChanged = urlSlug !== this.projectUrlRoute.params.projectIdOrSlug
+        const slugChanged = isPublic && urlSlug !== this.projectUrlRoute.params.projectIdOrSlug
         await this.$apollo.mutate<UpdateProjectMutation>({
           mutation: updateProjectMutation,
           variables: {
@@ -178,7 +195,11 @@ export default class ProjectSettings extends Vue {
           })
         }
       } catch (err) {
-        reportError(err)
+        try {
+          this.errors = parseValidationErrors(err)
+        } finally {
+          reportError(err)
+        }
       } finally {
         this.isSaving = false
       }
@@ -204,10 +225,5 @@ export default class ProjectSettings extends Vue {
 
   .flex-spacer {
     flex-grow: 1;
-  }
-
-  .urlSlug {
-    padding: 4px 0;
-    background-color: #EEEEEE;
   }
 </style>

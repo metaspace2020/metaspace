@@ -77,3 +77,7 @@
 .el-message-box__headerbtn {
   z-index: 1;
 }
+
+.sm-form-error .el-input__inner {
+  @apply border-danger
+}

@@ -5,6 +5,7 @@
     :disabled="disabled"
     :rules="rules"
     label-position="top"
+    @submit="handleSubmit"
   >
     <div>
       <el-form-item
@@ -22,8 +23,13 @@
         prop="isPublic"
         class="isPublic"
       >
-        <el-checkbox v-model="value.isPublic">
-          Allow other users to see this project
+        <el-checkbox
+          v-model="value.isPublic"
+          :disabled="isPublished"
+        >
+          {{ isPublished ?
+            'Published projects must be visible' :
+            'Allow other users to see this project' }}
         </el-checkbox>
       </el-form-item>
     </div>
@@ -47,12 +53,19 @@ export default class EditProjectForm extends Vue {
     @Prop({ type: Boolean, default: false })
     disabled!: Boolean;
 
+    @Prop({ type: Boolean, default: false })
+    isPublished!: Boolean;
+
     rules = {
       name: [{ type: 'string', required: true, min: 2, message: 'Name is required', trigger: 'manual' }],
     };
 
     async validate(): Promise<boolean> {
       return (this.$refs.form as ElForm).validate()
+    }
+
+    handleSubmit(e: Event) {
+      e.preventDefault()
     }
 }
 
