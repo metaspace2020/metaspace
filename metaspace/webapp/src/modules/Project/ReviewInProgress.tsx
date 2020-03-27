@@ -55,7 +55,7 @@ const ReviewInProgress = createComponent({
       >
         <h2 class="sm-workflow-header">Review in progress</h2>
         {props.active
-          ? <form onSubmit={(e: Event) => { e.preventDefault(); submit() }}>
+          ? <form onSubmit={(e: Event) => { e.preventDefault() }}>
             <p>Reviewers can access this project using the following link:</p>
             <CopyToClipboard value={reviewLink.value} />
             <p>Once review is complete, we encourage making data publicly available.</p>
@@ -72,7 +72,7 @@ const ReviewInProgress = createComponent({
                 </a>
               </Input>
             </div>
-            <Button type="primary">
+            <Button type="primary" onClick={submit}>
               Publish project
             </Button>
           </form>
