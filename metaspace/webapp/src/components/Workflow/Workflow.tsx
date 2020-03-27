@@ -1,8 +1,12 @@
 import { createComponent } from '@vue/composition-api'
 
-export const Workflow = createComponent({
+/* prevents ts errors for attributes */
+interface Props {
+  children: []
+}
+
+export const Workflow = createComponent<Props>({
   props: {
-    class: String,
     children: [],
   },
   setup(_, { slots }) {
