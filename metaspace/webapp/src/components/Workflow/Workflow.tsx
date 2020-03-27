@@ -1,6 +1,10 @@
 import { createComponent } from '@vue/composition-api'
 
 export const Workflow = createComponent({
+  props: {
+    class: String,
+    children: [],
+  },
   setup(_, { slots }) {
     return () => (
       <ol class="sm-workflow">
