@@ -8,7 +8,7 @@ import confirmPrompt from '../../components/confirmPrompt'
 import { ViewProjectResult } from '../../api/project'
 import { parseValidationErrors } from '../../api/validation'
 
-function getInitialProjectData(project: ViewProjectResult, currentUserName = '') {
+function getInitialModel(project: ViewProjectResult, currentUserName = '') {
   const year = new Date().getFullYear()
   const nameParts = currentUserName.split(' ')
   const surname = nameParts.length ? nameParts[nameParts.length - 1] : null
@@ -22,13 +22,24 @@ function getInitialProjectData(project: ViewProjectResult, currentUserName = '')
 }
 
 interface Props {
-  active: boolean,
-  canUndo: boolean,
-  createLink: Function,
-  currentUserName: string,
-  deleteLink: Function,
-  done: boolean,
+  active: boolean
+  canUndo: boolean
+  createLink: Function
+  currentUserName: string
+  deleteLink: Function
+  done: boolean
   project: ViewProjectResult
+}
+
+interface State {
+  errors: { [field: string]: string }
+  loading: boolean
+  model: {
+    name: string,
+    urlSlug: string | null,
+    projectDescription: string | null
+  }
+  formActive: boolean
 }
 
 const EnablePeerReview = createComponent<Props>({
@@ -42,23 +53,24 @@ const EnablePeerReview = createComponent<Props>({
     project: Object,
   },
   setup(props, { root }) {
-    const state = reactive({
+    const state = reactive<State>({
       errors: {},
       loading: false,
-      projectData: getInitialProjectData(props.project, props.currentUserName),
-      updateProject: false,
+      model: getInitialModel(props.project, props.currentUserName),
+      formActive: false,
     })
 
     const submit = async() => {
       if (props.createLink) {
-        state.loading = true
         state.errors = {}
+        state.loading = true
         try {
-          await props.createLink(state.updateProject ? state.projectData : null)
+          await props.createLink(state.formActive ? state.model : null)
         } catch (e) {
           state.errors = parseValidationErrors(e)
+        } finally {
+          state.loading = false
         }
-        state.loading = false
       }
     }
 
@@ -96,26 +108,30 @@ const EnablePeerReview = createComponent<Props>({
           && <form onSubmit={(e: Event) => e.preventDefault()}>
             <Collapse
               class="border-t border-b-0 box-border border-gray-200"
-              onChange={() => { state.updateProject = !state.updateProject }}
-              value={state.updateProject ? 'projectdetails' : ''}
+              onChange={() => { state.formActive = !state.formActive }}
+              value={state.formActive ? 'projectdetails' : ''}
             >
               <CollapseItem title="Update project details (recommended)" name="projectdetails">
                 <div>
                   <label for="project-review-title">Set the project name:</label>
-                  <Input id="project-review-title" v-model={state.projectData.name} />
+                  <Input id="project-review-title" v-model={state.model.name} />
                 </div>
-                <div class="mt-3">
+                <div class={['mt-3', { 'sm-form-error': state.errors.urlSlug }]}>
                   <label for="project-review-url">Create a custom URL:</label>
-                  <Input id="project-review-url" v-model={state.projectData.urlSlug}>
+                  { state.errors.urlSlug
+                    && <p class="text-sm text-danger font-medium m-0">
+                      {state.errors.urlSlug}
+                    </p> }
+                  <Input id="project-review-url" v-model={state.model.urlSlug}>
                     <span slot="prepend">{projectUrlPrefix}</span>
                   </Input>
                 </div>
                 <RichTextArea
                   class="mt-3"
-                  content={state.projectData.projectDescription}
+                  content={state.model.projectDescription}
                   label="Add an abstract to the project description:"
                   onUpdate={(content: string) => {
-                    state.projectData.projectDescription = content
+                    state.model.projectDescription = content
                   }}
                 />
               </CollapseItem>
@@ -126,7 +142,7 @@ const EnablePeerReview = createComponent<Props>({
               onClick={submit}
               type="primary"
             >
-              Create link {state.updateProject && '& update details'}
+              Create link {state.formActive && '& update details'}
             </Button>
           </form>
         }
