@@ -53,14 +53,3 @@
   @apply float-left text-gray-600 pointer-events-none italic h-0 text-xl leading-tight;
   content: attr(data-empty-text);
 }
-
-/* Textarea overrides */
-
-.sm-RichTextArea .ProseMirror * + * {
-  margin-top: 0.5rem;
-}
-
-.sm-RichTextArea .ProseMirror h2 {
-  @apply text-lg;
-  line-height: 2.625rem; /* 1.5rem * 0.875 * 2 */
-}

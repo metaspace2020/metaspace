@@ -1,3 +1,5 @@
+import './RichTextArea.css'
+
 import { createComponent, reactive } from '@vue/composition-api'
 import { EditorContent, EditorMenuBubble } from 'tiptap'
 
@@ -29,7 +31,7 @@ interface Props {
   onUpdate: (content: string) => any
 }
 
-const RichText = createComponent<Props>({
+const RichTextArea = createComponent<Props>({
   props: {
     content: String,
     label: String,
@@ -51,8 +53,8 @@ const RichText = createComponent<Props>({
         <EditorContent
           class={[
             'h-40 w-full box-border overflow-y-auto cursor-text text-gray-800 text-sm',
-            'rounded border border-solid transition-colors ease-in-out duration-150',
-            'border-gray-300 hover:border-gray-400 focus-within:border-blue-500',
+            'rounded border border-solid transition-colors ease-in-out duration-200',
+            'border-gray-300 hover:border-gray-500 focus-within:border-primary',
           ]}
           editor={editor}
         />
@@ -66,4 +68,4 @@ const RichText = createComponent<Props>({
   },
 })
 
-export default RichText
+export default RichTextArea
