@@ -130,7 +130,7 @@
             slot="title"
             style="display: flex; align-items: center; padding-right: 10px"
           >
-            <span style="padding-right: 20px">
+            <span>
               Colocalized annotations
             </span>
 
@@ -139,8 +139,9 @@
               trigger="click"
             >
               <colocalization-settings />
-              <div
+              <button
                 slot="reference"
+                class="button-reset av-icon-button"
                 @click.stop=""
               >
                 <i
@@ -148,14 +149,15 @@
                   class="el-icon-setting"
                   style="font-size: 20px; vertical-align: middle;"
                 />
-              </div>
+              </button>
             </el-popover>
-            <img
-              src="../../assets/filter-icon.svg"
+            <button
+              class="button-reset av-icon-button"
               title="Show in list"
-              class="av-icon-button"
               @click.stop="filterColocalized"
             >
+              <img src="../../assets/filter-icon.svg">
+            </button>
           </div>
           <component
             :is="metadataDependentComponent('related-annotations')"
@@ -271,18 +273,22 @@
  #annot-img-collapse .el-collapse-item__header>span {
    display: inline-flex;
  }
-
+</style>
+<style>
   .av-icon-button {
     display: inline-block;
     box-sizing: border-box;
-    margin-left: 20px;
-    width: 20px;
-    height: 20px;
-    font-size: 24px;
+    margin-left: 16px;
+    width: 24px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .av-icon-button img {
+    max-height: 20px;
   }
 
   .av-icon-link {
     cursor: pointer;
   }
-
 </style>
