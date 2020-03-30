@@ -14,7 +14,7 @@ import {findUserById, resetUserApiKey, sendEmailVerificationToken, signout} from
 import {LooselyCompatible} from '../../utils';
 import logger from '../../utils/logger';
 import {convertUserToUserSource} from './util/convertUserToUserSource';
-import {smAPIUpdateDataset} from '../../utils/smAPI';
+import {smAPIUpdateDataset} from '../../utils/smApi/datasets';
 import {deleteDataset} from '../dataset/operation/deleteDataset';
 import {resolveGroupScopeRole} from '../group/util/resolveGroupScopeRole';
 import canSeeUserEmail from './util/canSeeUserEmail';

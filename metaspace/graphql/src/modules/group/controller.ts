@@ -13,7 +13,7 @@ import {sendAcceptanceEmail, sentGroupOrProjectInvitationEmail, sendRequestAcces
 import config from '../../utils/config';
 import logger from '../../utils/logger';
 import {createInactiveUser} from '../auth/operation';
-import {smAPIUpdateDataset} from '../../utils/smAPI';
+import {smAPIUpdateDataset} from '../../utils/smApi/datasets';
 import {getDatasetForEditing} from '../dataset/operation/getDatasetForEditing';
 import {resolveGroupScopeRole} from './util/resolveGroupScopeRole';
 

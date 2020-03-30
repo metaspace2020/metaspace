@@ -23,7 +23,7 @@ import {
   sendRequestAccessEmail,
   sentGroupOrProjectInvitationEmail,
 } from '../../groupOrProject/email';
-import {smAPIUpdateDataset} from '../../../utils/smAPI';
+import {smAPIUpdateDataset} from '../../../utils/smApi/datasets';
 import {getDatasetForEditing} from '../../dataset/operation/getDatasetForEditing';
 import {utc} from 'moment';
 import generateRandomToken from '../../../utils/generateRandomToken';
