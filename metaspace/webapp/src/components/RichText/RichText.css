@@ -42,6 +42,7 @@
 
 .sm-RichText .ProseMirror sub,
 .sm-RichText .ProseMirror sup {
+  @apply text-xs;
   line-height: 1;
 }
 
