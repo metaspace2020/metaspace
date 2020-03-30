@@ -99,9 +99,9 @@ exports[`DatasetTable should match snapshot 1`] = `
       <!---->
       <!----> <span><div title="Waiting in the queue" class="striped-progressbar queued"></div></span> <i class="el-icon-view"></i> <a class="metadata-link">Show full metadata</a>
       <!---->
-      <!---->
-      <!---->
       <div class="ds-download"><i class="el-icon-download"></i> <a href="#">Download</a></div>
+      <!---->
+      <!---->
       <mock-el-popover trigger="hover" placement="top">
         <div slot-key="default">
           <div mock-v-loading="true">

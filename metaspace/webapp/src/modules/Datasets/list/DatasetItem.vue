@@ -173,6 +173,17 @@ class="s-group ds-add-filter"
       </div>
 
       <div
+        v-if="dataset.canDownload"
+        class="ds-download"
+      >
+        <i class="el-icon-download" />
+        <a
+          href="#"
+          @click.prevent="() => { showDownloadDialog = true }"
+        >Download</a>
+      </div>
+
+      <div
         v-if="canEdit"
         class="ds-delete"
       >
@@ -192,17 +203,6 @@ class="s-group ds-add-filter"
           href="#"
           @click.prevent="handleReprocess"
         >Reprocess dataset</a>
-      </div>
-
-      <div
-        v-if="dataset.canDownload"
-        class="ds-download"
-      >
-        <i class="el-icon-download" />
-        <a
-          href="#"
-          @click.prevent="() => { showDownloadDialog = true }"
-        >Download</a>
       </div>
 
       <el-popover
