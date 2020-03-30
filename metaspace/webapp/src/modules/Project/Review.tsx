@@ -88,6 +88,7 @@ const ReviewWorkflow = createComponent<Props>({
           active={activeStep.value === 1}
           canUndo={activeStep.value === 2}
           createLink={createReviewLink}
+          currentUserName={props.currentUserName}
           deleteLink={deleteReviewLink}
           done={activeStep.value > 1}
           project={props.project}

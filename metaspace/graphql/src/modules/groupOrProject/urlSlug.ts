@@ -1,4 +1,4 @@
-import {Brackets, EntityManager, ObjectType} from "typeorm";
+import { Brackets, EntityManager, ObjectType } from "typeorm";
 import FormValidationErrors from "../../utils/FormValidationErrors";
 
 
@@ -12,7 +12,7 @@ export const validateUrlSlugChange = async <EntityType extends ObjectType<Entity
 
     if (/[^a-zA-Z0-9_-]/.test(urlSlug)) {
         throw new FormValidationErrors('urlSlug',
-            'Invalid character in custom URL. Only English letters, numbers, underscore and minus are allowed.')
+            'Invalid characters. Use alphanumerics separated by minus or underscore.')
     }
     if (urlSlug.length < 4 || urlSlug.length > 50) {
         throw new FormValidationErrors('urlSlug', 'Custom URL must be between 4 and 50 characters.')
@@ -22,7 +22,7 @@ export const validateUrlSlugChange = async <EntityType extends ObjectType<Entity
         .where(urlSlugMatchesClause('entity', urlSlug))
         .getMany();
 
-    if (existing.some(({id}) => existingId != null && id != existingId)) {
+    if (existing.some(({ id }) => existingId != null && id != existingId)) {
         throw new FormValidationErrors('urlSlug', 'This custom URL has already been used.')
     }
 }
@@ -30,6 +30,6 @@ export const validateUrlSlugChange = async <EntityType extends ObjectType<Entity
 export const urlSlugMatchesClause = (relationName: string, urlSlug: string) => {
     return new Brackets(qb =>
         qb.where(`LOWER(REPLACE(${relationName}.urlSlug, '-', '_')) = LOWER(REPLACE(:urlSlug, '-', '_'))`,
-            {urlSlug})
+            { urlSlug })
     )
 }
