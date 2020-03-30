@@ -3,11 +3,12 @@
     <el-col>
       <el-collapse
         id="annot-content"
+        class="border-0"
         :value="activeSections"
         @change="onSectionsChange"
       >
-        <div class="el-collapse-item grey-bg">
-          <div class="el-collapse-item__header av-header grey-bg">
+        <div class="el-collapse-item">
+          <div class="el-collapse-item__header av-header">
             <candidate-molecules-popover
               placement="bottom"
               :possible-compounds="annotation.possibleCompounds"
@@ -223,8 +224,7 @@
     text-align: center !important;
     cursor: default !important;
     font-size: 24px;
-    line-height: 40px;
-    vertical-align: center;
+    align-items: baseline;
 
     >*+* {
       margin-left: 8px;
@@ -259,10 +259,6 @@
      // with our existing components: https://github.com/ElemeFE/element/issues/14142
      order: -1;
    }
- }
-
- .grey-bg {
-   background-color: #f9fafc;
  }
 
  .no-selection {

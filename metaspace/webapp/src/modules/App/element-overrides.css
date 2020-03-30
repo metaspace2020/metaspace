@@ -11,7 +11,7 @@
 }
 
 .el-collapse-item.is-active .el-collapse-item__header {
-  @apply bg-blue-100;
+  @apply bg-gray-100;
 }
 
 .el-message {

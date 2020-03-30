@@ -1,16 +1,16 @@
 <template>
   <span slot="title">
-    <span style="padding-right: 20px">
+    <span>
       m/z image
     </span>
-
     <el-popover
       placement="bottom"
       trigger="click"
     >
       <ion-image-settings @scaleBarColorChange="onScaleBarColorChange" />
-      <div
+      <button
         slot="reference"
+        class="button-reset h-full"
         @click="$event.stopPropagation()"
       >
         <i
@@ -18,21 +18,33 @@
           style="font-size: 20px; vertical-align: middle;"
           data-feature-anchor="ion-image-settings"
         />
-      </div>
+      </button>
     </el-popover>
 
-    <span>
-      <img
-        class="reset-image-icon"
-        src="../../../../assets/reset-image-icon.png"
-        title="Reset image zoom and offsets"
-        @click="resetViewport"
+    <button
+      class="button-reset leading-none"
+      title="Reset image zoom and offsets"
+      @click="resetViewport"
+    >
+      <!-- https://material.io/resources/icons/?icon=aspect_ratio&style=round -->
+      <svg
+        class="fill-current text-gray-900"
+        xmlns="http://www.w3.org/2000/svg"
+        height="24"
+        viewBox="0 0 24 24"
+        width="24"
       >
-    </span>
+        <path
+          d="M0 0h24v24H0V0z"
+          fill="none"
+        />
+        <path d="M18 12c-.55 0-1 .45-1 1v2h-2c-.55 0-1 .45-1 1s.45 1 1 1h3c.55 0 1-.45 1-1v-3c0-.55-.45-1-1-1zM7 9h2c.55 0 1-.45 1-1s-.45-1-1-1H6c-.55 0-1 .45-1 1v3c0 .55.45 1 1 1s1-.45 1-1V9zm14-6H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 16.01H4c-.55 0-1-.45-1-1V5.99c0-.55.45-1 1-1h16c.55 0 1 .45 1 1v12.02c0 .55-.45 1-1 1z" />
+      </svg>
+    </button>
 
     <span v-if="hasOpticalImage">
       <img
-        class="show-optical-image-icon"
+        class="button"
         :class="showOpticalImage ? '' : 'png-icon-disabled'"
         src="../../../../assets/microscope-icon.png"
         title="Show/hide optical image"
@@ -76,9 +88,10 @@ export default class MainImageHeader extends Vue {
 </script>
 
 <style>
-.reset-image-icon, .show-optical-image-icon, .show-scale-bar-icon {
+.button,
+button {
     width: 24px;
-    padding-left: 20px;
+    margin-left: 20px;
     vertical-align: middle;
     cursor: pointer;
 }
