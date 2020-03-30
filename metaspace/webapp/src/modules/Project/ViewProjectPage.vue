@@ -17,16 +17,16 @@
           </h1>
           <p
             v-if="projectDOI"
-            class="mt-0 leading-6"
+            class="mt-0 leading-6 text-sm font-medium"
           >
-            <i class="el-icon-link" />
+            Publication:
             <a
               :href="projectDOI"
-              class="text-sm font-medium"
+              class=""
               target="_blank"
               rel="noopener"
             >
-              View publication<!-- -->
+              {{ projectDOI }}
             </a>
           </p>
         </div>
