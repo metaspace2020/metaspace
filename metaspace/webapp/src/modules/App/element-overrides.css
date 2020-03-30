@@ -39,6 +39,9 @@
 .el-tag.el-tag--info {
   @apply bg-gray-100 border-gray-300 text-gray-700;
 }
+.el-tag.el-tag--info .el-tag__close {
+  @apply text-gray-700;
+}
 
 .el-tabs__item.is-active,
 .el-tabs__item:hover,
@@ -83,4 +86,8 @@
 
 .sm-form-error .el-input__inner {
   @apply border-danger
+}
+
+.el-notification__content {
+  text-align: unset;
 }
