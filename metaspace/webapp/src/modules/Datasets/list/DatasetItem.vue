@@ -562,7 +562,6 @@ export default {
    display: flex;
    flex-direction: row;
    justify-content: space-between;
-   /*transform: translate3d(0, 0, 0);*/
  }
 
  .ds-info{
@@ -606,7 +605,6 @@ export default {
      rgba(255, 255, 255, .30) 75%, transparent 75%, transparent);
 
    animation: animate-stripes 3s linear infinite;
-   /*transform: translate3d(0, 0, 0);*/
  }
 
  @keyframes animate-stripes {
