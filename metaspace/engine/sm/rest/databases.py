@@ -26,7 +26,7 @@ app = bottle.Bottle()
 def create():
     """Create a molecular database and import molecules.
 
-    Body format: {
+    Request: {
         name - short database name
         version - database version, any string
         group_id - UUID of group database belongs to
@@ -36,6 +36,16 @@ def create():
         link - public database URL
         citation - database citation string
     }
+
+    Response: {
+        status - success or error type
+        data?: {
+            id - unique int id
+            name
+            version
+        }
+        errors? - list of database import errors
+    }
     """
     params = None
     try:
@@ -44,7 +54,7 @@ def create():
 
         required_fields = ['name', 'version', 'group_id', 'file_path']
         if not all([field in params for field in required_fields]):
-            return make_response(WRONG_PARAMETERS, data=f'Required fields: {required_fields}')
+            return make_response(WRONG_PARAMETERS, errors=[f'Required fields: {required_fields}'])
 
         with transaction_context():
             file_path = params.pop('file_path')
@@ -82,12 +92,22 @@ def delete(moldb_id):
 def update(moldb_id):
     """Update a molecular database.
 
-    Body format: {
+    Request: {
         archived: {true/false}
         description - database description
         full_name - full database name
         link - public database URL
         citation - database citation string
+    }
+
+    Response: {
+        status - success or error type
+        data?: {
+            id - unique int id
+            name
+            version
+        }
+        errors? - list of database import errors
     }
     """
     params = None
