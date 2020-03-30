@@ -68,7 +68,7 @@
             <el-button
               v-if="enableSubmit && !isTourRunning"
               type="primary"
-              class="el-button__submit_metadata"
+              class="text-xl"
               @click="onSubmit"
             >
               Submit
@@ -78,7 +78,7 @@
               type="primary"
               disabled
               :title="disabledSubmitMessage"
-              class="el-button__submit_metadata"
+              class="text-xl"
             >
               Submit
             </el-button>
@@ -357,11 +357,6 @@ export default {
   .md-editor-submit > button {
     flex: 1 auto;
     margin: 25px 5px;
-  }
-
-  .el-button__submit_metadata {
-    padding: 20px;
-    font-size: 150%;
   }
 
   .el-button__help_metadata {
