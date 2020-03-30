@@ -1,17 +1,17 @@
 import * as _ from 'lodash';
-import {dsField} from '../../../../datasetFilters';
-import {DatasetSource, FieldResolversFor} from '../../../bindingTypes';
-import {ProjectSourceRepository} from '../../project/ProjectSourceRepository';
-import {Dataset as DatasetModel} from '../model';
-import {EngineDataset, OpticalImage as OpticalImageModel} from '../../engine/model';
-import {Dataset, OpticalImage, OpticalImageType} from '../../../binding';
+import { dsField } from '../../../../datasetFilters';
+import { DatasetSource, FieldResolversFor } from '../../../bindingTypes';
+import { ProjectSourceRepository } from '../../project/ProjectSourceRepository';
+import { Dataset as DatasetModel } from '../model';
+import { EngineDataset, OpticalImage as OpticalImageModel } from '../../engine/model';
+import { Dataset, OpticalImage, OpticalImageType } from '../../../binding';
 import getScopeRoleForEsDataset from '../operation/getScopeRoleForEsDataset';
 import logger from '../../../utils/logger';
-import {Context} from '../../../context';
+import { Context } from '../../../context';
 import getGroupAdminNames from '../../group/util/getGroupAdminNames';
 import * as DataLoader from 'dataloader';
-import {esDatasetByID} from '../../../../esConnector';
-import {ExternalLink} from '../../project/ExternalLink';
+import { esDatasetByID } from '../../../../esConnector';
+import { ExternalLink } from '../../project/ExternalLink';
 
 interface DbDataset {
   id: string;
@@ -50,7 +50,7 @@ const getOpticalImagesByDsId = async (ctx: Context, id: string): Promise<Optical
     return new DataLoader(async (datasetIds: string[]): Promise<OpticalImage[][]> => {
       const rawResults: OpticalImageModel[] = await ctx.entityManager.query(
         'SELECT * from public.optical_image WHERE ds_id = ANY($1)', [datasetIds]);
-      const results = rawResults.map(({id, type, ...rest}) => ({
+      const results = rawResults.map(({ id, type, ...rest }) => ({
         ...rest,
         id,
         url: `/fs/optical_images/${id}`,
@@ -187,10 +187,11 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       name: p.name,
       isPublic: null,
       urlSlug: null,
+      publicationStatus: p.publicationStatus,
     }));
   },
 
-  async principalInvestigator(ds, _, {cachedGetEntityById, isAdmin, user}: Context) {
+  async principalInvestigator(ds, _, { cachedGetEntityById, isAdmin, user }: Context) {
     const dataset = await cachedGetEntityById(DatasetModel, ds._source.ds_id);
     if (dataset == null) {
       logger.warn(`Elasticsearch DS does not exist in DB: ${ds._source.ds_id}`);
@@ -226,9 +227,9 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     return ds._source.ds_upload_dt;
   },
 
-  fdrCounts(ds, {inpFdrLvls, checkLvl}: {inpFdrLvls: number[], checkLvl: number}) {
+  fdrCounts(ds, { inpFdrLvls, checkLvl }: { inpFdrLvls: number[], checkLvl: number }) {
     let outFdrLvls: number[] = [], outFdrCounts: number[] = [], maxCounts = 0, dbName = '';
-    if(ds._source.annotation_counts && ds._source.ds_status === 'FINISHED') {
+    if (ds._source.annotation_counts && ds._source.ds_status === 'FINISHED') {
       const annotCounts = ds._source.annotation_counts;
       const molDBs = ds._source.ds_mol_dbs;
       const filteredMolDBs: any[] = annotCounts.filter(el => {
@@ -278,7 +279,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     return await thumbnailOpticalImageUrl(ctx, ds._source.ds_id);
   },
 
-  async opticalImages(ds, {type}: {type?: string}, ctx) {
+  async opticalImages(ds, { type }: { type?: string }, ctx) {
     const opticalImages = await getOpticalImagesByDsId(ctx, ds._source.ds_id);
     return type != null
       ? opticalImages.filter(optImg => optImg.type === type)

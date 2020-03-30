@@ -78,6 +78,7 @@ type DatasetGroup {
 type DatasetProject {
   id: ID!
   name: String!
+  publicationStatus: String!
   isPublic: Boolean @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
   urlSlug: String @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
 }

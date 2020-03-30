@@ -153,11 +153,20 @@
         />
       </span>
 
-      <i class="el-icon-view" />
-      <a
-        class="metadata-link"
-        @click="showMetadata"
-      >Show full metadata</a>
+      <div>
+        <i class="el-icon-view" />
+        <a
+          class="metadata-link"
+          @click="showMetadata"
+        >Show full metadata</a>
+      </div>
+
+      <div
+        v-if="isPublished && !canEdit"
+        class="text-gray-700 text-right mt-auto text-sm"
+      >
+        Published
+      </div>
 
       <div v-if="canEdit">
         <i class="el-icon-edit" />
@@ -331,7 +340,8 @@ export default {
           return true
         }
         if (this.currentUser.id === this.dataset.submitter.id
-           && !['QUEUED', 'ANNOTATING'].includes(this.dataset.status)) {
+           && !['QUEUED', 'ANNOTATING'].includes(this.dataset.status)
+           && !this.isPublished) {
           return true
         }
       }
@@ -371,6 +381,10 @@ export default {
           + `They are visible to ${all.join(', ')} and METASPACE Administrators.`
       }
       return null
+    },
+
+    isPublished() {
+      return this.dataset.projects.filter(p => p.publicationStatus === 'PUBLISHED').length > 0
     },
   },
   async created() {
@@ -547,6 +561,8 @@ export default {
    padding: 10px 22px 10px 0px;
    margin: 0px;
    flex: none;
+   display: flex;
+   flex-direction: column;
  }
 
  .metadata-link {
@@ -566,9 +582,9 @@ export default {
  }
 
  .striped-progressbar {
-   height: 12px;
+   height: 14px;
    border-radius: 2px;
-   margin-bottom: 3px;
+   margin: 3px 0;
    width: 100%;
    background-size: 30px 30px;
    background-image: linear-gradient(135deg,
