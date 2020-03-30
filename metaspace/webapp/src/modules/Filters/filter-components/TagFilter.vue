@@ -40,11 +40,6 @@
     >
       <slot name="show" />
     </div>
-    <div
-      v-else
-      class="tf-spacer"
-    />
-
     <button
       v-if="removable"
       title="Remove filter"
@@ -156,10 +151,6 @@ export default {
     &::placeholder {
       @apply text-gray-500;
     }
-  }
-
-  .tf-spacer {
-    padding-left: 5px;
   }
 
  .tf-remove {
