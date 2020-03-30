@@ -24,6 +24,8 @@ describe('ProjectsListPage', () => {
     createdDT: '2018-08-29T05:00:00.000',
     latestUploadDT: null,
     members: [{ user: { name: 'TestUser1' }, role: 'MANAGER' }, { user: { name: 'TestUser2' }, role: 'MEMBER' }],
+    publicationStatus: 'UNPUBLISHED',
+    publishedDT: null,
   }
   const mockProject2: ProjectsListProject = {
     id: 'project 2',
@@ -36,6 +38,8 @@ describe('ProjectsListPage', () => {
     createdDT: '2018-01-01T07:00:00.000',
     latestUploadDT: '2018-08-01T09:00:00.000',
     members: [{ user: { name: 'TestUser1' }, role: 'MANAGER' }, { user: { name: 'TestUser2' }, role: 'MEMBER' }],
+    publicationStatus: 'UNPUBLISHED',
+    publishedDT: null,
   }
   const mockProject3: ProjectsListProject = {
     id: 'project 3',
@@ -48,6 +52,8 @@ describe('ProjectsListPage', () => {
     createdDT: '2018-04-30T11:00:00.000',
     latestUploadDT: '2018-05-15T13:00:00.000',
     members: [{ user: { name: 'TestUser1' }, role: 'MANAGER' }, { user: { name: 'TestUser2' }, role: 'MEMBER' }],
+    publicationStatus: 'UNPUBLISHED',
+    publishedDT: null,
   }
 
   const makeMockMyProjects = (projects: any[]): MyProjectsListQuery['myProjects'] => ({
