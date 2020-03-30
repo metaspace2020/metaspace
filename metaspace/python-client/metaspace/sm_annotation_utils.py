@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Optional
+from shutil import copyfileobj
+from typing import Optional, List
 
 import pandas as pd
 import numpy as np
@@ -8,6 +9,33 @@ import requests, json, os, pprint
 from copy import deepcopy
 from io import BytesIO
 from PIL import Image
+
+try:
+    from typing import TypedDict  # Requires Python 3.8
+except ImportError:
+    TypedDict = dict
+
+
+class DatasetDownloadLicense(TypedDict):
+    code: str
+    name: str
+    link: Optional[str]
+
+
+class DatasetDownloadContributor(TypedDict):
+    name: Optional[str]
+    institution: Optional[str]
+
+
+class DatasetDownloadFile(TypedDict):
+    filename: str
+    link: str
+
+
+class DatasetDownload(TypedDict):
+    license: DatasetDownloadLicense
+    contributors: List[DatasetDownloadContributor]
+    files: List[DatasetDownloadFile]
 
 
 def _extract_data(res):
@@ -497,65 +525,6 @@ class GraphQLClient(object):
             return [d for d in mol_dbs if d['name'] in names]
 
 
-class MolDBClient:
-    def __init__(self, config):
-        self._url = config['moldb_url']
-        self._mol_formula_lists = {}
-        self._session = requests.session()
-
-    def getDatabase(self, name, version=None):
-        url = self._url + '/databases?name={}'.format(name)
-        if version:
-            url += '&version=' + version
-        db_list = _extract_data(self._session.get(url))
-        return MolecularDatabase(db_list[0], self)
-
-    def getDatabaseList(self):
-        url = self._url + '/databases'
-        db_list = _extract_data(self._session.get(url))
-        return [MolecularDatabase(db, self) for db in db_list]
-
-    def getMolFormulaList(self, dbId):
-        if dbId in self._mol_formula_lists:
-            return self._mol_formula_lists[dbId]
-        url = self._url + '/databases/{}/sfs'.format(dbId)
-        self._mol_formula_lists[dbId] = _extract_data(self._session.get(url))
-        return self._mol_formula_lists[dbId]
-
-    def getMolFormulaNames(self, dbId, molFormula):
-        url = (
-            '{}/databases/{}/molecules?sf={}'.format(self._url, dbId, molFormula)
-            + '&limit=100&fields=mol_name'
-        )
-        return [m['mol_name'] for m in _extract_data(self._session.get(url))]
-
-    def getMolFormulaIds(self, dbId, molFormula):
-        url = (
-            '{}/databases/{}/molecules?sf={}'.format(self._url, dbId, molFormula)
-            + '&limit=100&fields=mol_id'
-        )
-        return [m['mol_id'] for m in _extract_data(self._session.get(url))]
-
-    def get_molecules(self, db_id, fields, limit=100):
-        """ Fetch molecules from database
-
-        Args:
-            db_id: int
-            fields: list[string]
-                sf, mol_id, mol_name
-            limit: int
-
-        Return:
-            list[dict]
-        """
-        url = f'{self._url}/databases/{db_id}/molecules?'
-        url += f'limit={limit}&fields={",".join(fields)}'
-        return [m for m in _extract_data(self._session.get(url))]
-
-    def clearCache(self):
-        self._mol_formula_lists = {}
-
-
 def ion(r):
     from pyMSpec.pyisocalc.tools import normalise_sf
 
@@ -875,6 +844,50 @@ class SMDataset(object):
         raw_im = self._gqclient.getRawOpticalImage(self.id)['rawOpticalImage']
         return OpticalImage(fetch_image(raw_im['url']), np.asarray(raw_im['transform']))
 
+    def download_links(self) -> Optional[DatasetDownload]:
+        """Returns a data structure containing links to download the dataset's input files"""
+        result = self._gqclient.query(
+            '''query ($id: String!) {
+            dataset (id: $id) { downloadLinkJson }
+        }''',
+            {'id': self.id},
+        )
+        download_link_json = result and result.get('dataset', {}).get('downloadLinkJson')
+        if download_link_json:
+            return json.loads(download_link_json)
+
+    def download_to_dir(self, path, base_name=None):
+        """
+        Downloads the dataset's input files to the specified directory
+        :param path: Destination directory
+        :param base_name: If specified, overrides the base name (excluding extension) of each file.
+                          e.g. `base_name='foo'` will name the files as 'foo.imzML' and 'foo.ibd'
+        :return:
+        """
+
+        def download_link(file: DatasetDownloadFile):
+            prefix, suffix = os.path.splitext(file['filename'])
+            dest_path = dest_root / ((base_name or prefix) + suffix)
+            if not dest_path.exists():
+                response = requests.get(file['link'], stream=True)
+                with dest_path.open('wb') as dest:
+                    copyfileobj(response.raw, dest)
+                print(f'Wrote {dest_path}')
+            else:
+                print(f'File already exists: {dest_path}. Skipping.')
+
+        dest_root = Path(path)
+        if not dest_root.exists():
+            print(f'Making directory {dest_root}')
+            dest_root.mkdir(parents=True)
+
+        link = self.download_links()
+        if link:
+            # Download in parallel to minimize risk that the imzML link expires before the ibd file
+            # has finished downloading
+            with ThreadPoolExecutor() as ex:
+                ex.map(download_link, link['files'])
+
 
 class SMInstance(object):
     def __init__(self, *args, **kwargs):
@@ -902,10 +915,6 @@ class SMInstance(object):
     def reconnect(self):
         self._gqclient = GraphQLClient(self._config)
         self._es_client = None
-        self.moldb_client = None
-
-        if self._config['moldb_url']:
-            self.moldb_client = MolDBClient(self._config)
 
     def logged_in(self):
         return self._gqclient.logged_in
@@ -916,7 +925,7 @@ class SMInstance(object):
 
         return ProjectsClient(self._gqclient)
 
-    def dataset(self, name=None, id=None):
+    def dataset(self, name=None, id=None) -> SMDataset:
         if id:
             return SMDataset(self._gqclient.getDataset(id), self._gqclient)
         elif name:
@@ -924,7 +933,7 @@ class SMInstance(object):
         else:
             raise Exception("either name or id must be provided")
 
-    def datasets(self, nameMask='', idMask='', **kwargs):
+    def datasets(self, nameMask='', idMask='', **kwargs) -> List[SMDataset]:
         datasetFilter = kwargs.copy()
         if nameMask != '':
             datasetFilter['name'] = nameMask
@@ -985,23 +994,6 @@ class SMInstance(object):
                 moleculeNames=[[item['name'] for item in lst] for lst in df['possibleCompounds']],
             )
         )
-
-        records = self._gqclient.getAnnotations(dict(database=db_name, fdrLevel=fdr))
-        results = pd.io.json.json_normalize(records)
-        results = pd.DataFrame(
-            {
-                'sf': results['sumFormula'],
-                'adduct': results['adduct'],
-                'ds_id': results['dataset.id'],
-            }
-        )
-        annotations = pd.DataFrame.pivot_table(
-            pd.DataFrame.from_records([ion(r) for r in results.itertuples()]),
-            index=0,
-            columns=[2, 1],
-            values=3,
-        ).notnull()
-        return annotations
 
     def get_metadata(self, datasetFilter={}):
         datasets = self._gqclient.getDatasets(datasetFilter=datasetFilter)

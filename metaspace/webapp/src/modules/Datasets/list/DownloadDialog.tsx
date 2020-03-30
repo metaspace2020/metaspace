@@ -1,9 +1,8 @@
-import { computed, createComponent, toRefs, watch } from '@vue/composition-api'
+import { computed, createComponent, toRefs } from '@vue/composition-api'
 import { useQuery } from '@vue/apollo-composable'
 import { DownloadLinkJson, GetDatasetDownloadLink, getDatasetDownloadLink } from '../../../api/dataset'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import { Dialog } from 'element-ui'
-import router from '../../../router'
 
 const getFilenameAndExt = (filename: string) => {
   const lastDot = filename.lastIndexOf('.')
@@ -42,7 +41,16 @@ const FileIcon = createComponent({
           <stop offset="1" stop-color="#92a5b0"/>
         </linearGradient>
         <path d="M45 1L71 27.7H45V1z" fill="url(#b)" stroke-width="2" stroke="#7191a1" stroke-linejoin="bevel"/>
-        <text x="36" y="60" text-length="64" text-anchor="middle" font-size="20px" font-weight="bold" fill="#7191a1">{props.ext}</text>
+        <text
+          x="36"
+          y="60"
+          text-length="64"
+          text-anchor="middle"
+          font-size="20px"
+          font-weight="bold"
+          fill="#7191a1">
+          {props.ext}
+        </text>
       </svg>
     )
   },
@@ -50,8 +58,8 @@ const FileIcon = createComponent({
 
 const FileItem = createComponent({
   props: {
-    filename: {type: String, required: true},
-    link: {type: String, required: true},
+    filename: { type: String, required: true },
+    link: { type: String, required: true },
   },
   setup(props) {
     return () => {
@@ -63,8 +71,8 @@ const FileItem = createComponent({
           <a href={link}>
             <FileIcon ext={ext} />
           </a>
-          <a href={link} class="flex mx-3 my-1 truncate">
-            <span class="flex flex-shrink truncate">{name}</span>
+          <a href={link} class="flex mx-3 my-1 overflow-hidden">
+            <span class="flex-shrink truncate">{name}</span>
             <span>{ext}</span>
           </a>
         </div>
@@ -86,11 +94,6 @@ export default createComponent({
     } = useQuery<GetDatasetDownloadLink>(getDatasetDownloadLink, { datasetId }, { fetchPolicy: 'no-cache' })
     const downloadLinks = computed<DownloadLinkJson>(() => downloadLinkResult.value != null
       && safeJsonParse(downloadLinkResult.value.dataset.downloadLinkJson))
-
-    const datasetShareHref = computed(() => router.resolve({
-      path: '/datasets',
-      query: { ds: datasetId.value },
-    }).href)
 
     return () => {
       let content
@@ -120,7 +123,7 @@ export default createComponent({
             </ul>
             <h4>Files</h4>
             <div class="flex my-1 flex-wrap">
-              {files.map(({filename, link}) => (
+              {files.map(({ filename, link }) => (
                 <FileItem filename={filename} link={link} />
               ))}
             </div>

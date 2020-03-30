@@ -266,7 +266,7 @@ export default {
       showMetadataDialog: false,
       disabled: false,
       deferRender: this.idx >= 20,
-      showDownloadDialog: this.idx === 11,
+      showDownloadDialog: false,
     }
   },
 

@@ -5,7 +5,7 @@ import * as Raven from 'raven-js'
 import * as RavenVue from 'raven-js/plugins/vue'
 
 import VueApollo from 'vue-apollo'
-import { DefaultApolloClient } from "@vue/apollo-composable";
+import { DefaultApolloClient } from '@vue/apollo-composable'
 import apolloClient, { setMaintenanceMessageHandler } from './api/graphqlClient'
 
 import ElementUI from 'element-ui'
