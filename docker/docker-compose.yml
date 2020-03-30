@@ -124,6 +124,7 @@ services:
     networks:
       - sm
     depends_on:
+      - postgres
       - rabbitmq
 
   sm-webapp:
