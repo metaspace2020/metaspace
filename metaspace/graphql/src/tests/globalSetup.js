@@ -16,8 +16,8 @@ module.exports = async () => {
     client: 'postgres',
     connection: {
       host     : config.db.host,
-      user     : 'postgres',
-      password : 'postgres',
+      user     : 'sm',
+      password : 'password',
       database : 'postgres'
     },
     debug: false
@@ -31,8 +31,8 @@ module.exports = async () => {
     connection: {
       host: config.db.host,
       database: config.db.database,
-      user: 'postgres',
-      password : 'postgres'
+      user: 'sm',
+      password : 'password'
     },
     searchPath: ['public', DbSchemaName],
     debug: false

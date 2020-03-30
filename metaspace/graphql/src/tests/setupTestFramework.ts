@@ -9,5 +9,5 @@
 // Mock out libraries/files that connect to external services
 jest.mock('amqplib', () => ({connect: () => new Promise(() => null)}));
 jest.mock('aws-sdk');
-jest.mock('../utils/smAPI');
+jest.mock('../utils/smApi/datasets');
 jest.mock('../utils/sendEmail');
