@@ -331,9 +331,13 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
           Bucket: bucket,
           Prefix: prefix,
         }).promise();
-        const fileKeys = (objects.Contents || [])
+        let fileKeys = (objects.Contents || [])
           .map(obj => obj.Key!)
           .filter(key => key && /(\.imzml|.ibd|.mzml)$/i.test(key));
+
+        // Put the .imzML/.mzml file first
+        fileKeys = _.sortBy(fileKeys, a => a.toLowerCase().endsWith('mzml') ? 0 : 1)
+
         files = fileKeys.map(key => ({
           filename: key.replace(/.*\//, ''),
           link: s3.getSignedUrl('getObject', { Bucket: bucket, Key: key, Expires: 1800 }),
