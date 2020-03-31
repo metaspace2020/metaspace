@@ -29,6 +29,20 @@
       <div class="ds-item-line">
         <!-- title is set to make it easier to see overflowing datasets' names by hovering over the name -->
         <b :title="formatDatasetName">{{ formatDatasetName }}</b>
+        <el-popover
+          v-if="!dataset.isPublic"
+          trigger="hover"
+          placement="top"
+          @show="loadVisibility"
+        >
+          <div v-loading="visibilityText == null">
+            {{ visibilityText }}
+          </div>
+          <i
+            slot="reference"
+            class="el-icon-lock"
+          />
+        </el-popover>
       </div>
 
       <div class="ds-item-line text-gray-700">
@@ -74,9 +88,7 @@
         RP {{ formatResolvingPower }}
       </div>
 
-      <div
-        class="ds-item-line"
-      >
+      <div class="ds-item-line">
         Submitted <elapsed-time :date="getDate" /> by
         <span
           class="ds-add-filter"
@@ -161,13 +173,6 @@
         >Show full metadata</a>
       </div>
 
-      <div
-        v-if="isPublished && !canEdit"
-        class="text-gray-700 text-right mt-auto text-sm"
-      >
-        Published
-      </div>
-
       <div v-if="canEdit">
         <i class="el-icon-edit" />
         <router-link :to="editHref">
@@ -175,9 +180,7 @@
         </router-link>
       </div>
 
-      <div
-        v-if="canEdit"
-      >
+      <div v-if="canDelete">
         <i class="el-icon-delete" />
         <a
           href="#"
@@ -198,21 +201,17 @@
         >Reprocess dataset</a>
       </div>
 
-      <el-popover
-        v-if="!dataset.isPublic"
-        trigger="hover"
-        placement="top"
-        @show="loadVisibility"
+      <div
+        v-else
+        class="mt-auto text-right"
       >
-        <div v-loading="visibilityText == null">
-          {{ visibilityText }}
-        </div>
-        <img
-          slot="reference"
-          class="ds-item-private-icon"
-          src="../../../assets/padlock-icon.svg"
+        <span
+          v-if="isPublished"
+          class="text-gray-700 text-sm"
         >
-      </el-popover>
+          Published
+        </span>
+      </div>
     </div>
   </div>
 </template>
@@ -339,13 +338,18 @@ export default {
         if (this.currentUser.role === 'admin') {
           return true
         }
-        if (this.currentUser.id === this.dataset.submitter.id
-           && !['QUEUED', 'ANNOTATING'].includes(this.dataset.status)
-           && !this.isPublished) {
+        if (
+          this.currentUser.id === this.dataset.submitter.id
+          && !['QUEUED', 'ANNOTATING'].includes(this.dataset.status)
+        ) {
           return true
         }
       }
       return false
+    },
+
+    canDelete() {
+      return this.canEdit && !this.isPublished
     },
 
     canEditOpticalImage() {
@@ -529,7 +533,6 @@ export default {
   }
 
  .dataset-item {
-   position: relative;
    border-radius: 5px;
    // Can't use box-sizing:border-box due to IE11 flexbox limitations, so instead using `calc(100% - 2px)`
    flex: 1 1 calc(100% - 2px);
@@ -611,14 +614,6 @@ export default {
    font-size: initial;
  }
 
- .ds-item-private-icon {
-   position: absolute;
-   opacity: 0.3;
-   width: 22px;
-   height: 32px;
-   right: 10px;
-   bottom: 8px;
- }
  .ds-item-line {
    overflow: hidden;
    white-space: nowrap;
