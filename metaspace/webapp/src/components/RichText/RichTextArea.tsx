@@ -18,6 +18,7 @@ const MenuElement = createComponent({
             { 'visible opacity-100': parent.menu.isActive },
           ]}
           style={`left: ${parent.menu.left}px; bottom: ${parent.menu.bottom}px`}
+          onClick={(e: Event) => { e.preventDefault() /* Prevent form submission */ }}
         >
           {slots.default()}
         </div>
