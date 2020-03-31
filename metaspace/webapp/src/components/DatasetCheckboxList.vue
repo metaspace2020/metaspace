@@ -7,7 +7,7 @@
       >
         <el-checkbox v-model="selectedDatasets[dataset.id]">
           {{ dataset.name }}
-          <span class="reset-color">(Submitted {{ formatDate(dataset.uploadDT) }})</span>
+          <span class="text-gray-700">(Submitted <elapsed-time :date="dataset.uploadDT" />)</span>
         </el-checkbox>
       </div>
     </div>
@@ -29,9 +29,15 @@ import Vue from 'vue'
 import { Component, Model, Prop, Watch } from 'vue-property-decorator'
 import { DatasetListItem } from '../api/dataset'
 import { fromPairs } from 'lodash-es'
-import format from 'date-fns/format'
 
-  @Component
+import ElapsedTime from '../components/ElapsedTime'
+
+@Component({
+  name: 'DatasetCheckboxList',
+  components: {
+    ElapsedTime,
+  },
+})
 export default class DatasetCheckboxList extends Vue {
     @Prop({ type: Array, required: true })
     datasets!: DatasetListItem[];
@@ -52,8 +58,11 @@ export default class DatasetCheckboxList extends Vue {
       this.populateSelectedDatasetIds()
     }
 
-    formatDate(date: string) {
-      return `${format(date, 'YYYY-MM-DD')} at ${format(date, 'HH:mm')}`
+    getDate() {
+      console.log(this.datasets)
+      return ''
+      // console.log(this.dataset && this.date.uploadDT)
+      // return this.datasets !== null && this.dataset.uploadDT
     }
 
     handleSelectNone() {
@@ -76,8 +85,5 @@ export default class DatasetCheckboxList extends Vue {
   .select-buttons {
     text-align: right;
     margin: 20px;
-  }
-  .reset-color {
-    color: $--color-text-regular;
   }
 </style>
