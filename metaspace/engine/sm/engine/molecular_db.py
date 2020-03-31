@@ -4,7 +4,7 @@ from io import StringIO
 import pandas as pd
 from pyMSpec.pyisocalc.canopy.sum_formula_actions import InvalidFormulaError
 from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
-from sm.engine.db import DB
+from sm.engine.db import DB, transaction_context
 from sm.engine.errors import SMError
 
 MOLDB_INS = (
@@ -19,9 +19,10 @@ logger = logging.getLogger('engine')
 
 
 class MalformedCSV(Exception):
-    def __init__(self, *errors):
-        super().__init__()
+    def __init__(self, message, *errors):
         self.errors = errors
+        full_message = '\n'.join([str(m) for m in (message,) + errors])
+        super().__init__(full_message)
 
 
 def validate_moldb_df(df):
@@ -37,7 +38,9 @@ def validate_moldb_df(df):
     return errors
 
 
-def import_molecules_from_df(moldb, moldb_df):
+def import_molecules_from_file(moldb, file_path):
+    moldb_df = pd.read_csv(file_path, sep='\t')
+
     if moldb_df.empty:
         raise MalformedCSV('No data rows found')
 
@@ -50,7 +53,7 @@ def import_molecules_from_df(moldb, moldb_df):
     logger.info(f'{moldb}: importing {len(moldb_df)} molecules')
     parsing_errors = validate_moldb_df(moldb_df)
     if parsing_errors:
-        raise MalformedCSV(*parsing_errors)
+        raise MalformedCSV('Failed to parse some formulas', *parsing_errors)
 
     moldb_df.rename({'id': 'mol_id', 'name': 'mol_name'}, axis='columns', inplace=True)
     moldb_df['moldb_id'] = int(moldb.id)
@@ -66,6 +69,7 @@ def import_molecules_from_df(moldb, moldb_df):
 def create(
     name=None,
     version=None,
+    file_path=None,
     group_id=None,
     public=True,
     description=None,
@@ -73,13 +77,16 @@ def create(
     link=None,
     citation=None,
 ):
-    assert name and version
-
-    # pylint: disable=unbalanced-tuple-unpacking
-    (moldb_id,) = DB().insert_return(
-        MOLDB_INS, rows=[(name, version, group_id, public, description, full_name, link, citation)],
-    )
-    return MolecularDB(id=moldb_id)
+    with transaction_context():
+        # pylint: disable=unbalanced-tuple-unpacking
+        (moldb_id,) = DB().insert_return(
+            MOLDB_INS,
+            rows=[(name, version, group_id, public, description, full_name, link, citation)],
+        )
+        moldb = MolecularDB(id=moldb_id)
+        import_molecules_from_file(moldb, file_path)
+        # TODO: update "targeted" field
+        return moldb
 
 
 def delete(moldb_id):

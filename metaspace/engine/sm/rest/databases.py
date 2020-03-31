@@ -56,13 +56,8 @@ def create():
         if not all([field in params for field in required_fields]):
             return make_response(WRONG_PARAMETERS, errors=[f'Required fields: {required_fields}'])
 
-        with transaction_context():
-            file_path = params.pop('file_path')
-            params['public'] = False
-            moldb = molecular_db.create(**params)
-            moldb_df = pd.read_csv(file_path, sep='\t')
-            import_molecules_from_df(moldb, moldb_df)
-            # TODO: update "targeted" field
+        params['public'] = False
+        moldb = molecular_db.create(*params)
 
         return make_response(OK, data=moldb.to_dict())
     except psycopg2.errors.UniqueViolation:  # pylint: disable=no-member

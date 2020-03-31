@@ -4,7 +4,6 @@ import logging
 import pandas as pd
 
 from sm.engine import molecular_db
-from sm.engine.molecular_db import import_molecules_from_df
 from sm.engine.util import GlobalInit
 
 logger = logging.getLogger('engine')
@@ -29,9 +28,7 @@ def main():
     args = parser.parse_args()
 
     with GlobalInit(args.config_path):
-        moldb = molecular_db.create(args.name, args.version)
-        moldb_df = pd.read_csv(open(args.csv_file, encoding='utf8'), sep=args.sep).fillna('')
-        import_molecules_from_df(moldb, moldb_df)
+        molecular_db.create(args.name, args.version, args.csv_file)
 
 
 if __name__ == "__main__":
