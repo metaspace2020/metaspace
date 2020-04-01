@@ -491,6 +491,8 @@ class ESExporter:
                 ds_doc_upd.update(ds_meta_flat_doc)
             elif f'ds_{field}' in ds_doc:
                 ds_doc_upd[f'ds_{field}'] = ds_doc[f'ds_{field}']
+            else:
+                logger.warning(f'Field ds_{field} not found in ds_doc')
         return ds_doc_upd
 
     @retry_on_conflict()
