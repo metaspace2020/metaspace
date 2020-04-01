@@ -1,12 +1,9 @@
 import logging
 
-import pandas as pd
 import psycopg2.errors
 import bottle
 
-from sm.engine.db import transaction_context
 from sm.engine import molecular_db
-from sm.engine.molecular_db import import_molecules_from_df, MalformedCSV
 from sm.rest.utils import (
     body_to_json,
     make_response,
@@ -63,7 +60,7 @@ def create():
     except psycopg2.errors.UniqueViolation:  # pylint: disable=no-member
         logger.exception(f'Database already exists. Params: {params}')
         return make_response(ALREADY_EXISTS)
-    except MalformedCSV as e:
+    except molecular_db.MalformedCSV as e:
         logger.exception(f'Malformed CSV file. Params: {params}')
         return make_response(MALFORMED_CSV, errors=e.errors)
     except Exception:
