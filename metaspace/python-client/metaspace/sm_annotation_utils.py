@@ -1102,9 +1102,9 @@ class SMInstance(object):
             adducts=adducts,
         )
 
-    def update_dataset_dbs(self, datasetID, molDBs, adducts, priority=1):
+    def update_dataset_dbs(self, datasetID, molDBs=None, adducts=None, priority=1):
         return self._gqclient.update_dataset(
-            ds_id=datasetID, mol_dbs=molDBs, adducts=adducts, priority=priority
+            ds_id=datasetID, mol_dbs=molDBs, adducts=adducts, priority=priority, reprocess=True
         )
 
     def reprocess_dataset(self, dataset_id, force=False):
