@@ -46,7 +46,7 @@ export default (name: string, options?: Options) => {
     },
   })
 
-  if (options && options.path) {
-    jest.doMock(options.path, () => Vue.component(name))
+  if (options && (options as any).path) {
+    jest.doMock((options as any).path, () => Vue.component(name))
   }
 }
