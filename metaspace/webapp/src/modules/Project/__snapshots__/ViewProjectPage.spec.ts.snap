@@ -5,7 +5,10 @@ exports[`ViewProjectPage datasets tab should match snapshot (non-member) 1`] = `
   <div class="page-content">
     <div class="header-row">
       <div class="header-names">
-        <h1>project name</h1>
+        <h1 class="py-1 leading-tight">
+          project name
+        </h1>
+        <!---->
       </div>
       <div class="header-buttons"><button type="button" class="el-button el-button--primary">
           <!---->
@@ -22,7 +25,6 @@ exports[`ViewProjectPage datasets tab should match snapshot (non-member) 1`] = `
           <div class="el-tabs__nav-scroll">
             <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
               <div class="el-tabs__active-bar is-top" style="width: 0px; transform: translateX(NaNpx); webkit-transform: translateX(NaNpx);"></div>
-              <div id="tab-description" aria-controls="pane-description" role="tab" tabindex="-1" class="el-tabs__item is-top">Description</div>
               <div id="tab-datasets" aria-controls="pane-datasets" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active">Datasets (4)</div>
               <div id="tab-members" aria-controls="pane-members" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
           Members (2)
@@ -59,7 +61,10 @@ exports[`ViewProjectPage members tab should match snapshot (invited) 1`] = `
   <div class="page-content">
     <div class="header-row">
       <div class="header-names">
-        <h1>project name</h1>
+        <h1 class="py-1 leading-tight">
+          project name
+        </h1>
+        <!---->
       </div>
       <div class="header-buttons">
         <!---->
@@ -94,7 +99,6 @@ exports[`ViewProjectPage members tab should match snapshot (invited) 1`] = `
           <div class="el-tabs__nav-scroll">
             <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
               <div class="el-tabs__active-bar is-top" style="width: 0px; transform: translateX(NaNpx); webkit-transform: translateX(NaNpx);"></div>
-              <div id="tab-description" aria-controls="pane-description" role="tab" tabindex="-1" class="el-tabs__item is-top">Description</div>
               <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
               <div id="tab-members" aria-controls="pane-members" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
           Members (2)
@@ -128,7 +132,10 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
   <div class="page-content">
     <div class="header-row">
       <div class="header-names">
-        <h1>project name</h1>
+        <h1 class="py-1 leading-tight">
+          project name
+        </h1>
+        <!---->
       </div>
       <div class="header-buttons">
         <!---->
@@ -142,7 +149,7 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
           <div class="el-tabs__nav-scroll">
             <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
               <div class="el-tabs__active-bar is-top" style="width: 0px; transform: translateX(NaNpx); webkit-transform: translateX(NaNpx);"></div>
-              <div id="tab-description" aria-controls="pane-description" role="tab" tabindex="-1" class="el-tabs__item is-top">Description</div>
+              <div id="tab-about" aria-controls="pane-about" role="tab" tabindex="-1" class="el-tabs__item is-top">About</div>
               <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
               <div id="tab-members" aria-controls="pane-members" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
           Members (2)
@@ -379,7 +386,10 @@ exports[`ViewProjectPage members tab should match snapshot (member) 1`] = `
   <div class="page-content">
     <div class="header-row">
       <div class="header-names">
-        <h1>project name</h1>
+        <h1 class="py-1 leading-tight">
+          project name
+        </h1>
+        <!---->
       </div>
       <div class="header-buttons">
         <!---->
@@ -393,7 +403,6 @@ exports[`ViewProjectPage members tab should match snapshot (member) 1`] = `
           <div class="el-tabs__nav-scroll">
             <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
               <div class="el-tabs__active-bar is-top" style="width: 0px; transform: translateX(NaNpx); webkit-transform: translateX(NaNpx);"></div>
-              <div id="tab-description" aria-controls="pane-description" role="tab" tabindex="-1" class="el-tabs__item is-top">Description</div>
               <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
               <div id="tab-members" aria-controls="pane-members" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
           Members (2)
@@ -425,7 +434,10 @@ exports[`ViewProjectPage members tab should match snapshot (non-member) 1`] = `
   <div class="page-content">
     <div class="header-row">
       <div class="header-names">
-        <h1>project name</h1>
+        <h1 class="py-1 leading-tight">
+          project name
+        </h1>
+        <!---->
       </div>
       <div class="header-buttons"><button type="button" class="el-button el-button--primary">
           <!---->
@@ -442,7 +454,6 @@ exports[`ViewProjectPage members tab should match snapshot (non-member) 1`] = `
           <div class="el-tabs__nav-scroll">
             <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
               <div class="el-tabs__active-bar is-top" style="width: 0px; transform: translateX(NaNpx); webkit-transform: translateX(NaNpx);"></div>
-              <div id="tab-description" aria-controls="pane-description" role="tab" tabindex="-1" class="el-tabs__item is-top">Description</div>
               <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
               <div id="tab-members" aria-controls="pane-members" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
           Members (2)
@@ -476,7 +487,10 @@ exports[`ViewProjectPage settings tab should match snapshot 1`] = `
   <div class="page-content">
     <div class="header-row">
       <div class="header-names">
-        <h1>project name</h1>
+        <h1 class="py-1 leading-tight">
+          project name
+        </h1>
+        <!---->
       </div>
       <div class="header-buttons">
         <!---->
@@ -490,7 +504,7 @@ exports[`ViewProjectPage settings tab should match snapshot 1`] = `
           <div class="el-tabs__nav-scroll">
             <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
               <div class="el-tabs__active-bar is-top" style="width: 0px; transform: translateX(NaNpx); webkit-transform: translateX(NaNpx);"></div>
-              <div id="tab-description" aria-controls="pane-description" role="tab" tabindex="-1" class="el-tabs__item is-top">Description</div>
+              <div id="tab-about" aria-controls="pane-about" role="tab" tabindex="-1" class="el-tabs__item is-top">About</div>
               <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
               <div id="tab-members" aria-controls="pane-members" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
           Members (2)
@@ -523,7 +537,7 @@ exports[`ViewProjectPage settings tab should match snapshot 1`] = `
               <div>
                 <div class="el-form-item name is-required"><label for="name" class="el-form-item__label">Name</label>
                   <div class="el-form-item__content">
-                    <div class="el-input">
+                    <div class="max-w-measure-4 el-input">
                       <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
                       <!---->
                       <!---->
@@ -546,14 +560,15 @@ exports[`ViewProjectPage settings tab should match snapshot 1`] = `
             <!---->
             <div>
               <h2>Delete project</h2>
-              <p>
-                Datasets will not be deleted, but they will no longer be able to be shared with other users through this project.
-              </p>
-              <div style="text-align: right; margin: 1em 0px;"><button type="button" class="el-button el-button--danger">
+              <div class="flex justify-between items-start">
+                <p class="max-w-measure-3 mt-0 leading-snug">
+                  Datasets will not be deleted, but they will no longer be able to be shared with other users through this project.
+                </p> <button type="button" class="el-button el-button--danger">
                   <!---->
                   <!----><span>
         Delete project
-      </span></button></div>
+      </span></button>
+              </div>
             </div>
           </div>
         </div>
