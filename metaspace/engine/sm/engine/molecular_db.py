@@ -20,7 +20,6 @@ logger = logging.getLogger('engine')
 
 class MalformedCSV(Exception):
     def __init__(self, message, *errors):
-        self.errors = errors
         full_message = '\n'.join([str(m) for m in (message,) + errors])
         super().__init__(full_message)
 

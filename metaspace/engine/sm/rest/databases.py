@@ -62,7 +62,7 @@ def create():
         return make_response(ALREADY_EXISTS)
     except molecular_db.MalformedCSV as e:
         logger.exception(f'Malformed CSV file. Params: {params}')
-        return make_response(MALFORMED_CSV, errors=e.errors)
+        return make_response(MALFORMED_CSV, errors=e.args[0])
     except Exception:
         logger.exception(f'Server error. Params: {params}')
         return make_response(INTERNAL_ERROR)
