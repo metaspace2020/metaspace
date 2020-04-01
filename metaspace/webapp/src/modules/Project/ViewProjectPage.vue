@@ -89,7 +89,7 @@
           <rich-text
             class="max-w-measure-5 mx-auto mb-6"
             :placeholder="descriptionPlaceholder"
-            :content="project.projectDescription"
+            :content="projectDescription"
             :readonly="!canEdit"
             @update="updateDescription"
           />
@@ -322,6 +322,14 @@ export default class ViewProjectPage extends Vue {
       } else {
         return this.project && this.project.id
       }
+    }
+
+    // extra protection in case `projectDescription` is omitted
+    get projectDescription() {
+      if (this.project && this.project.projectDescription) {
+        return this.project.projectDescription
+      }
+      return null
     }
 
     get visibleTabs() {
