@@ -43,8 +43,8 @@ type Query {
 
 type Mutation {
   createMolecularDB(databaseDetails: CreateMolecularDBInput!): MolecularDB!
-  updateMolecularDB(databaseId: ID!, databaseDetails: UpdateMolecularDBInput!): MolecularDB!
-  deleteMolecularDB(databaseId: ID!): Boolean!
+  updateMolecularDB(databaseId: Int!, databaseDetails: UpdateMolecularDBInput!): MolecularDB!
+  deleteMolecularDB(databaseId: Int!): Boolean!
 }
 
 schema {

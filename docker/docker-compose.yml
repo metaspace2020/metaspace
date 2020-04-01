@@ -6,6 +6,7 @@ services:
     image: elasticsearch:5.5.2
     volumes:
       - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - ./data/elasticsearch:/usr/share/elasticsearch/data
     # ports:
     #   - "9200:9200"
     #   - "9300:9300"

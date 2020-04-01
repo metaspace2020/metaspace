@@ -54,7 +54,7 @@ def create():
             return make_response(WRONG_PARAMETERS, errors=[f'Required fields: {required_fields}'])
 
         params['public'] = False
-        moldb = molecular_db.create(*params)
+        moldb = molecular_db.create(**params)
 
         return make_response(OK, data=moldb.to_dict())
     except psycopg2.errors.UniqueViolation:  # pylint: disable=no-member
