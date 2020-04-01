@@ -58,7 +58,12 @@ const ReviewInProgress = createComponent({
           ? <form onSubmit={(e: Event) => { e.preventDefault() }}>
             <p>Reviewers can access this project using the following link:</p>
             <CopyToClipboard value={reviewLink.value} />
-            <p>Once review is complete, we encourage making data publicly available.</p>
+            <p>
+              Once review is complete, we encourage making data publicly available.
+            </p>
+            <p>
+              <em>You will receive a reminder to complete this step by email.</em>
+            </p>
             <div>
               <label for="project-review-doi">Link the project to the publication with a DOI:</label>
               <Input
