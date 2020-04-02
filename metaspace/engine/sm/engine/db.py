@@ -232,6 +232,6 @@ class DB:
             column names to insert into
         """
         self._curs.copy_expert(
-            f"COPY {table} ({', '.join(columns)}) FROM STDIN WITH (FORMAT CSV, DELIMITER '\t')",
+            f"COPY {table} ({', '.join(columns)}) FROM STDIN WITH (FORMAT CSV, DELIMITER '{sep}')",
             inp_file,
         )

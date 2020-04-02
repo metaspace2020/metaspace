@@ -1,8 +1,6 @@
 import argparse
 import logging
 
-import pandas as pd
-
 from sm.engine import molecular_db
 from sm.engine.util import GlobalInit
 
