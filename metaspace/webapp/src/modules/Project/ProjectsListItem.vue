@@ -9,7 +9,7 @@
         <div class="info-line project-name pr-5">
           <router-link
             :to="projectLink"
-            class="text-2xl font-medium leading-snug text-inherit no-underline"
+            class="text-2xl font-medium leading-normal text-inherit no-underline"
           >
             {{ project.name }}
           </router-link>
@@ -228,7 +228,6 @@ export default class ProjectsListItem extends Vue {
 
   .project-item {
     max-width: 800px;
-    font-variant-numeric: proportional-nums;
     > * {
       z-index: 1;
     }
