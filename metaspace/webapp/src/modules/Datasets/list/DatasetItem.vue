@@ -26,11 +26,15 @@
     </div>
 
     <div class="ds-info">
-      <div class="ds-item-line">
+      <div class="ds-item-line flex">
         <!-- title is set to make it easier to see overflowing datasets' names by hovering over the name -->
-        <b :title="formatDatasetName">{{ formatDatasetName }}</b>
+        <span
+          :title="formatDatasetName"
+          class="font-bold truncate"
+        >{{ formatDatasetName }}</span>
         <el-popover
           v-if="!dataset.isPublic"
+          class="ml-1"
           trigger="hover"
           placement="top"
           @show="loadVisibility"
