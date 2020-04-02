@@ -91,3 +91,8 @@
 .el-notification__content {
   text-align: unset;
 }
+
+.el-dropdown-menu__item:focus,
+.el-dropdown-menu__item:not(.is-disabled):hover {
+  @apply text-primary;
+}
