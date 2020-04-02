@@ -120,7 +120,7 @@ export default {
   }
 
   input, button {
-    font-family: inherit;
+    font: inherit;
   }
 
   .warning {

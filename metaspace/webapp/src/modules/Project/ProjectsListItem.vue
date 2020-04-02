@@ -228,6 +228,7 @@ export default class ProjectsListItem extends Vue {
 
   .project-item {
     max-width: 800px;
+    font-variant-numeric: proportional-nums;
     > * {
       z-index: 1;
     }

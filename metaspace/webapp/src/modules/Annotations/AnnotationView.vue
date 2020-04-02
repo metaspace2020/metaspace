@@ -226,6 +226,7 @@
     cursor: default !important;
     font-size: 24px;
     align-items: baseline;
+    font-variant-numeric: proportional-nums;
 
     >*+* {
       margin-left: 16px;
