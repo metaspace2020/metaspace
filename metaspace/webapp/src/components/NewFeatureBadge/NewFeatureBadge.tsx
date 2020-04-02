@@ -31,7 +31,7 @@ const NewFeatureBadge = createComponent({
     return () => (
       <el-badge
         value="New"
-        class={['sm-feature-badge', { hidden: store[props.featureKey] }]}
+        class={['sm-feature-badge', { 'sm-feature-badge--hidden': store[props.featureKey] }]}
       >
         {slots.default()}
       </el-badge>

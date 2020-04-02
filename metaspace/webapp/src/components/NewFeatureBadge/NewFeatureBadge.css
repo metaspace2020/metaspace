@@ -4,6 +4,6 @@
   transition-property: opacity;
 }
 
-.sm-feature-badge.hidden sup {
+.sm-feature-badge--hidden sup {
   opacity: 0;
 }
