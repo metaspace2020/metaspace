@@ -89,9 +89,6 @@ export default {
   html {
     font-family: 'Roboto', SUPERSCIPT_OVERRIDE, Helvetica, sans-serif;
     overflow-y: scroll; /* always show the right scrollbar to avoid flickering */
-
-    /* Roboto defaults to tabular nums. We want proportional as default and tabular nums, funnily enough, in tables. */
-    font-variant-numeric: proportional-nums;
   }
 
   /* http://matthewjamestaylor.com/blog/keeping-footers-at-the-bottom-of-the-page */
@@ -124,10 +121,6 @@ export default {
 
   input, button {
     font-family: inherit;
-  }
-
-  table {
-    font-variant-numeric: tabular-nums;
   }
 
   .warning {
