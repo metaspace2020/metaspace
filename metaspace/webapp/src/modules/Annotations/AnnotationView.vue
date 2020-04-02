@@ -16,12 +16,11 @@
               :isobars="annotation.isobars"
             >
               <span
-                class="sf-big"
+                class="sf-big text-2xl"
                 v-html="formattedMolFormula"
               />
             </candidate-molecules-popover>
-
-            <span class="mz-big">{{ annotation.mz.toFixed(4) }}</span>
+            <span class="text-2xl">{{ annotation.mz.toFixed(4) }}</span>
             <el-popover
               trigger="hover"
               placement="bottom"
@@ -229,8 +228,7 @@
     align-items: baseline;
 
     >*+* {
-      margin-left: 8px;
-      margin-right: 8px;
+      margin-left: 16px;
     }
 
     .av-icon {
@@ -238,14 +236,8 @@
       height: 20px;
     }
 
-    .sf-big {
-      font-size: 24px;
-      text-shadow : 0 0 0 #000;
-    }
-
-    .mz-big {
-      font-size: 24px;
-      padding: 0 4px;
+    .sf-big sub {
+      @apply text-base;
     }
   }
 
