@@ -36,11 +36,12 @@
               v-for="(manager, ind) in projectManagers"
               :key="manager.user.id"
             >
-              {{ manager.user.name }}<span v-if="(ind < projectManagers.length)">
-                <span v-if="manager.user.primaryGroup || ind+1 < projectManagers.length">, </span></span>
+              <span class="font-medium">{{ manager.user.name }}</span><!--
+              --><span v-if="(ind < projectManagers.length)">
+                <span v-if="manager.user.primaryGroup || ind+1 < projectManagers.length">, </span>
+              </span>
               <router-link
                 v-if="manager.user.primaryGroup"
-                class="group-link"
                 :to="groupHref(manager)"
               >
                 {{ manager.user.primaryGroup.group.shortName }}<!--

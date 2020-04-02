@@ -105,7 +105,7 @@
             @command="handleDropdownCommand"
           >
             <span
-              class="s-group ds-add-filter"
+              class="text-base text-primary cursor-pointer"
               @click="addFilter('group')"
             >
               {{ dataset.group.shortName }}
@@ -168,7 +168,7 @@
       <div>
         <i class="el-icon-view" />
         <a
-          class="metadata-link"
+          href="#"
           @click="showMetadata"
         >Show full metadata</a>
       </div>
@@ -425,7 +425,8 @@ export default {
       }
     },
 
-    showMetadata() {
+    showMetadata(e) {
+      e.preventDefault()
       this.showMetadataDialog = true
     },
 
@@ -568,20 +569,9 @@ export default {
    flex-direction: column;
  }
 
- .metadata-link {
-   text-decoration: underline;
- }
-
- .metadata-link, .ds-add-filter {
+ .ds-add-filter {
    cursor: pointer;
- }
-
- .s-bold {
-   font-weight: bold;
- }
-
- .s-group {
-   color: #0069e0;
+   font-weight: 500;
  }
 
  .striped-progressbar {
