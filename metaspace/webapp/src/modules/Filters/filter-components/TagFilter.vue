@@ -109,6 +109,7 @@ export default {
 
 .tf-value.el-popover__reference {
   cursor: pointer;
+  outline: none; /* Safari visual bug */
 }
 
  .tf-value-suffix {
