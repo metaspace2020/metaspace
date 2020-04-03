@@ -34,9 +34,8 @@
       </div>
     </el-popover>
     <div
-      v-else-if="'show' in $slots || 'reference' in $slots"
-      slot="reference"
-      class="tf-value"
+      v-else-if="'show' in $slots"
+      class="tf-value pl-3"
     >
       <slot name="show" />
     </div>
