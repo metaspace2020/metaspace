@@ -92,4 +92,4 @@ config.yml
 *.DS_Store
 /.idea/
 
-./test_config
+test_config

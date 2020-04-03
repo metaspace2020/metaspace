@@ -173,6 +173,17 @@ class="s-group ds-add-filter"
       </div>
 
       <div
+        v-if="dataset.canDownload"
+        class="ds-download"
+      >
+        <i class="el-icon-download" />
+        <a
+          href="#"
+          @click.prevent="() => { showDownloadDialog = true }"
+        >Download</a>
+      </div>
+
+      <div
         v-if="canEdit"
         class="ds-delete"
       >
@@ -210,6 +221,12 @@ class="s-group ds-add-filter"
         >
       </el-popover>
     </div>
+    <DownloadDialog
+      v-if="showDownloadDialog"
+      :dataset-id="dataset.id"
+      :dataset-name="dataset.name"
+      @close="() => { showDownloadDialog = false }"
+    />
   </div>
 </template>
 
@@ -227,6 +244,7 @@ import { encodeParams } from '../../Filters/index'
 import reportError from '../../../lib/reportError'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import { plural } from '../../../lib/vueFilters'
+import DownloadDialog from './DownloadDialog'
 
 function removeUnderscores(str) {
   return str.replace(/_/g, ' ')
@@ -237,6 +255,7 @@ export default {
   components: {
     DatasetInfo,
     DatasetThumbnail,
+    DownloadDialog,
   },
   filters: {
     plural,
@@ -247,6 +266,7 @@ export default {
       showMetadataDialog: false,
       disabled: false,
       deferRender: this.idx >= 20,
+      showDownloadDialog: false,
     }
   },
 

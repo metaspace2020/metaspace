@@ -119,6 +119,7 @@ module.exports = {
   features: {
     graphqlMocks: false,
     impersonation: false,
+    imzmlDownload: false,
   },
 
   metadataLookups: {
