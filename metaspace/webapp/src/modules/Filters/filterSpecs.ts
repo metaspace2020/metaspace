@@ -166,7 +166,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     name: 'm/z',
     description: 'Search by m/z',
     levels: ['annotation'],
-    initialValue: undefined,
+    initialValue: 0,
   },
 
   fdrLevel: {

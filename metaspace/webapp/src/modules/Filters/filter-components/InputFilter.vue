@@ -1,29 +1,39 @@
 <template>
-  <div class="tf-outer">
-    <div class="tf-name">
-      {{ name }}:
-    </div>
-
-    <tf-input-box
-      :mode="mode"
-      :value="value"
-      @change="onChange"
+  <tag-filter
+    :name="name"
+    :removable="removable"
+    @show="show"
+    @destroy="destroy"
+  >
+    <el-input
+      ref="input"
+      slot="edit"
+      v-model="value"
+      type="text"
+      @input="onChange"
     />
-
-    <div
-      v-if="removable"
-      class="tf-remove el-icon-error"
-      @click="destroy"
-    />
-  </div>
+    <span
+      slot="show"
+      class="tf-value-span"
+    >
+      <span v-if="value">
+        {{ value }}
+      </span>
+      <span
+        v-else
+        class="inline-block w-4"
+      />
+    </span>
+  </tag-filter>
 </template>
 
 <script lang="ts">
-import TagFilterInputBox from './TagFilterInputBox.vue'
+import TagFilter from './TagFilter.vue'
 import Vue from 'vue'
 import { debounce } from 'lodash-es'
+import { ElInput } from 'element-ui/types/input'
 
- interface InputFilter extends Vue {
+interface InputFilter extends Vue {
    name: string
    value: string | number
    removable: boolean
@@ -31,12 +41,13 @@ import { debounce } from 'lodash-es'
 
    onChange(val: string | number): void
    destroy(): void
- }
+   show(): void
+}
 
 export default Vue.extend({
   name: 'InputFilter',
   components: {
-    'tf-input-box': TagFilterInputBox,
+    TagFilter,
   },
   props: {
     name: String,
@@ -44,6 +55,11 @@ export default Vue.extend({
     removable: { type: Boolean, default: true },
     mode: { type: String, default: 'text' },
     debounce: Boolean,
+  },
+  data: function() {
+    return {
+
+    }
   },
   created() {
     if (this.debounce) {
@@ -57,6 +73,13 @@ export default Vue.extend({
     },
     destroy() {
       this.$emit('destroy', this.name)
+    },
+    show() {
+      if (this.$refs.input) {
+        const componentInstance = (this.$refs.input as ElInput)
+        const input = (componentInstance.$refs.input as HTMLInputElement)
+        input.focus()
+      }
     },
   },
 })
