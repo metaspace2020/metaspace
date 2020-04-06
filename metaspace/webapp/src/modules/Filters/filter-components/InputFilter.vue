@@ -8,7 +8,7 @@
     <el-input
       ref="input"
       slot="edit"
-      v-model="value"
+      v-model="localValue"
       type="text"
       @input="onChange"
     />
@@ -27,22 +27,9 @@
   </tag-filter>
 </template>
 
-<script lang="ts">
+<script>
 import TagFilter from './TagFilter.vue'
 import Vue from 'vue'
-import { debounce } from 'lodash-es'
-import { ElInput } from 'element-ui/types/input'
-
-interface InputFilter extends Vue {
-   name: string
-   value: string | number
-   removable: boolean
-   mode: string
-
-   onChange(val: string | number): void
-   destroy(): void
-   show(): void
-}
 
 export default Vue.extend({
   name: 'InputFilter',
@@ -54,20 +41,19 @@ export default Vue.extend({
     value: [String, Number],
     removable: { type: Boolean, default: true },
     mode: { type: String, default: 'text' },
-    debounce: Boolean,
   },
-  data: function() {
+  data(vm) {
     return {
-
+      localValue: vm.value,
     }
   },
-  created() {
-    if (this.debounce) {
-      this.onChange = debounce(this.onChange, 500)
-    }
+  watch: {
+    value: function() {
+      this.localValue = this.value
+    },
   },
   methods: {
-    onChange(val: any) {
+    onChange(val) {
       this.$emit('input', val)
       this.$emit('change', val)
     },
@@ -76,8 +62,8 @@ export default Vue.extend({
     },
     show() {
       if (this.$refs.input) {
-        const componentInstance = (this.$refs.input as ElInput)
-        const input = (componentInstance.$refs.input as HTMLInputElement)
+        const componentInstance = this.$refs.input
+        const input = componentInstance.$refs.input
         input.focus()
       }
     },

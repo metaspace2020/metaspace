@@ -2,23 +2,22 @@
   <tag-filter
     :name="name"
     :removable="removable"
-    :width="200"
+    :width="240"
     @show="show"
     @destroy="destroy"
   >
-    <!-- v-model="value" -->
     <div slot="edit">
       <el-input-number
         ref="input"
-        v-model="value"
+        v-model="localValue"
         :step="0.0001"
         maxlength="10"
-        style="width: 100%"
+        class="w-full"
         controls-position="right"
-        @input="onChange"
+        @change="onChange"
       />
       <p class="m-0 mt-2 leading-none text-xs">
-        <em>Press enter to input value</em>
+        For manual input, press Enter when done
       </p>
     </div>
     <span slot="show">
@@ -39,11 +38,10 @@
   </tag-filter>
 </template>
 
-<script lang="ts">
+<script>
 import Vue, { ComponentOptions } from 'vue'
 import { mzFilterPrecision } from '../../../lib/util'
 import TagFilter from './TagFilter.vue'
-import { ElInputNumber } from 'element-ui/types/input-number'
 
 export default Vue.extend({
   name: 'MzFilter',
@@ -55,25 +53,36 @@ export default Vue.extend({
     value: Number,
     removable: { type: Boolean, default: true },
   },
+  data(vm) {
+    return {
+      localValue: Number(vm.value) || 0,
+    }
+  },
   computed: {
-    precision(): string {
+    precision() {
       return mzFilterPrecision(this.value)
     },
   },
+  watch: {
+    value: function() {
+      this.localValue = Number(this.value) || 0
+    },
+  },
   methods: {
-    onChange(val: number): void {
-      /* undefined causes a crash */
+    onChange(val) {
+      console.log('onChange', val)
+      /* sending undefined causes an issue */
       const v = val === undefined ? 0 : val
       this.$emit('input', v)
       this.$emit('change', v)
     },
-    destroy(): void {
+    destroy() {
       this.$emit('destroy', this.name)
     },
     show() {
       if (this.$refs.input) {
-        const componentInstance = (this.$refs.input as ElInputNumber)
-        const input = (componentInstance.$refs.input as HTMLInputElement)
+        const componentInstance = this.$refs.input
+        const input = componentInstance.$refs.input
         input.focus()
       }
     },
