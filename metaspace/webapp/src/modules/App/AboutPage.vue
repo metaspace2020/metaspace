@@ -1,7 +1,7 @@
 <template>
   <div class="main-content">
     <div class="mainBanner-wrapper">
-      <div class="mainBanner">
+      <div class="mainBanner _baseline-grid">
         <img
           src="../../assets/METASPACE_logomark.png"
           alt="METASPACE logo"
@@ -52,7 +52,7 @@
               Submit<!--
               -->
             </router-link>
-            your high-resolution imaging mass spectrometry data to our high-throughput metabolite annotation engine.
+            your high-resolution imaging mass spectrometry data to our high-throughput metabolite annotation engine
           </p>
         </div>
         <div>
@@ -93,9 +93,9 @@
             Head to the <router-link to="/upload">
               upload<!--
               -->
-            </router-link> page to submit a dataset.<br>We also have <router-link to="/help">
-              interactive tutorials<!-- -->
-            </router-link>.
+            </router-link> page to submit a dataset. We also have interactive <router-link to="/help">
+              tutorials.
+            </router-link>
           </p>
         </div>
         <div>
@@ -111,10 +111,11 @@
           /></svg>
           <h2>Open access</h2>
           <p>
-            All code is <a href="https://github.com/metaspace2020">open-source</a> and the input format is <a
+            All code is <a href="https://github.com/metaspace2020">open-source</a>, the input format is the <a
               href="http://imzml.org/"
-            >imzML</a> as supported by all major mass spec. vendors. Metabolite annotations from community datasets are public
-            and can be exported.
+            >imzML</a>
+            supported by all mass spec major vendors, the metabolite annotations from the community datasets are public
+            and can be browsed or exported.
           </p>
         </div>
       </section>
@@ -274,6 +275,20 @@ export default class AboutPage extends Vue {
     font-style: normal;
     font-weight: normal;
   }
+  @font-face {
+    font-family: "ProximaNova-Light";
+    src: url("../../assets/fonts/proximaNova/2FD17E_3_0.eot");
+    src: url("../../assets/fonts/proximaNova/2FD17E_3_0.eot?#iefix") format("embedded-opentype"), url("../../assets/fonts/proximaNova/2FD17E_3_0.woff2") format("woff2"), url("../../assets/fonts/proximaNova/2FD17E_3_0.woff") format("woff"), url("../../assets/fonts/proximaNova/2FD17E_3_0.ttf") format("truetype");
+    font-style: normal;
+    font-weight: normal;
+  }
+
+  .baseline-grid {
+    background-image: linear-gradient(180deg,red 1px,transparent 0);
+    background-position: 0 0;
+    background-repeat: repeat;
+    background-size: 100% var(--lineHeight);
+  }
 
   .main-content {
     --lineHeight: 24px;
@@ -292,17 +307,16 @@ export default class AboutPage extends Vue {
     align-items: center;
   }
   .mainBanner-wrapper {
-    background-color: theme('colors.primary');
+    background-color: #008aff;
     overflow: hidden;
     width: 100%;
     background-image: linear-gradient(
       to right,
-      theme('colors.primary'),
-      theme('colors.primary'),
-      theme('colors.primary'),
+      #008aff,
+      #008aff,
+      #008aff,
       hsl(208, 80%, 74%),
     );
-    margin-top: -8px;
   }
   .mainBanner img {
     display: none;
@@ -338,17 +352,19 @@ export default class AboutPage extends Vue {
   }
 
   #about {
+    color: rgb(30, 47, 70);
+    font-family: 'ProximaNova-Light', 'Roboto', Helvetica, sans-serif;
     margin: calc(var(--lineHeight) * 2) auto;
     max-width: 960px;
     padding: 0px calc(var(--lineHeight) * 2);
-    box-sizing: border-box;
   }
 
   #about h1 {
-    @apply text-primary;
     font-family: 'FuturaBT-Medium', 'Roboto', Helvetica, sans-serif;
     line-height: calc(var(--lineHeight) * 2);
-    font-variant-caps: all-small-caps;
+    font-size: inherit;
+    text-transform: uppercase;
+    color: #008aff;
     margin: 0;
   }
 
@@ -360,6 +376,10 @@ export default class AboutPage extends Vue {
 
   #about p {
     margin: 0 0 var(--lineHeight);
+  }
+
+  #about a {
+    color: #008aff;
   }
 
   #about ul {
@@ -380,6 +400,7 @@ export default class AboutPage extends Vue {
   }
 
   #about strong {
+    font-family: 'FuturaBT-Medium', 'Roboto', Helvetica, sans-serif;
     font-weight: 500;
   }
 
@@ -463,7 +484,8 @@ export default class AboutPage extends Vue {
   /* Hacking */
   .header-item {
     font-family: 'FuturaBT-Medium', 'Roboto', Helvetica, sans-serif;
-    // font-size: 18px !important;
+    font-size: 18px !important;
     // line-height: 2;
   }
+
 </style>
