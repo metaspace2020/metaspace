@@ -6,19 +6,18 @@
     />
     <div class="item-body">
       <div class="info">
-        <div class="info-line project-name pr-5">
+        <div class="info-line project-name pr-5 flex items-baseline">
           <router-link
             :to="projectLink"
-            class="text-2xl font-medium leading-normal text-inherit no-underline"
+            class="text-2xl font-medium leading-normal text-inherit no-underline truncate"
           >
             {{ project.name }}
           </router-link>
-          <img
+          <i
             v-if="!project.isPublic"
-            class="private-icon"
-            src="../../assets/padlock-icon.svg"
+            class="el-icon-lock ml-2 text-xl"
             title="This project is only visible to its members and METASPACE administrators"
-          >
+          />
         </div>
         <div>
           <div class="info-line">
