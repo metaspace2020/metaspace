@@ -2016,6 +2016,13 @@
     semver "^6.3.0"
     tsutils "^3.17.1"
 
+"@vue/apollo-composable@^4.0.0-alpha.7":
+  version "4.0.0-alpha.7"
+  resolved "https://registry.yarnpkg.com/@vue/apollo-composable/-/apollo-composable-4.0.0-alpha.7.tgz#b6f9aeee69ab5f8922255f3454bcbf87e7d02b44"
+  integrity sha512-riObuF/QxYUXQTdlL+mddSYFtKjGecPfVRry+vy2hejHSDmwWkezqy09VbdhxPct1OnMTzWTjfYQOlMhGzqcOg==
+  dependencies:
+    throttle-debounce "^2.1.0"
+
 "@vue/babel-helper-vue-jsx-merge-props@^1.0.0":
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/@vue/babel-helper-vue-jsx-merge-props/-/babel-helper-vue-jsx-merge-props-1.0.0.tgz#048fe579958da408fb7a8b2a3ec050b50a661040"
