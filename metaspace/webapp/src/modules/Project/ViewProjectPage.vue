@@ -276,7 +276,11 @@ import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBa
           return data
         },
         skip() {
-          return this.projectId == null
+          const skip = this.projectId == null
+          if (skip) {
+            this.loaded = true
+          }
+          return skip
         },
       },
       $subscribe: {
