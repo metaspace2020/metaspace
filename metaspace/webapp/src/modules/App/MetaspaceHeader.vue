@@ -420,10 +420,12 @@ export default MetaspaceHeader
    display: flex;
    border: none;
    padding: 0px 20px;
-   font-size: 16px;
+   font-size: 20px;
+   font-variant-caps: all-small-caps;
    align-self: stretch;
    align-items: center;
    justify-content: center;
+   letter-spacing: 0.05em;
  }
  .header-item.logo {
    padding-left: 15px;
@@ -432,7 +434,7 @@ export default MetaspaceHeader
  @media (max-width: 1279px) {
    .header-item {
      padding: 0px 10px;
-     font-size: 14px;
+     font-size: 18px;
    }
  }
 
