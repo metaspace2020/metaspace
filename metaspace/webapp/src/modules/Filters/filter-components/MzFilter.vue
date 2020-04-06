@@ -70,7 +70,6 @@ export default Vue.extend({
   },
   methods: {
     onChange(val) {
-      console.log('onChange', val)
       /* sending undefined causes an issue */
       const v = val === undefined ? 0 : val
       this.$emit('input', v)
