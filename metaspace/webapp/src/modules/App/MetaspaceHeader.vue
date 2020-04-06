@@ -419,28 +419,28 @@ export default MetaspaceHeader
    display: flex;
    align-items: center;
    height: 100%;
-   font-size: 16px;
+  //  font-size: 16px;
  }
 
  .header-item {
    display: flex;
    border: none;
    padding: 0px 20px;
-   font-size: inherit;
+   font-size: 20px;
+   font-variant-caps: all-small-caps;
    align-self: stretch;
    align-items: center;
    justify-content: center;
+   letter-spacing: 0.05em;
  }
  .header-item.logo {
    padding-left: 15px;
  }
 
  @media (max-width: 1279px) {
-   .header-items {
-     font-size: 14px;
-   }
    .header-item {
      padding: 0px 10px;
+     font-size: 18px;
    }
  }
 
