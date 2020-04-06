@@ -14,5 +14,5 @@ self.addEventListener('activate', () => {
 });
 
 self.addEventListener('fetch', () => {
-  console.log('fetch event fired.')
+  // console.log('fetch event fired.')
 });
