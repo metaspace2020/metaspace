@@ -12,6 +12,7 @@ import {PublicationStatus, UserGroupRole, UserProjectRole} from '../binding';
 import {Dataset, DatasetProject} from '../modules/dataset/model';
 import {EngineDataset} from '../modules/engine/model';
 import {Group, UserGroup as UserGroupModel} from '../modules/group/model';
+import {MolecularDB} from "../modules/moldb/model";
 
 export const createTestUser = async (user?: Partial<User>): Promise<User> => {
   return (await createTestUserWithCredentials(user))[0]
@@ -115,4 +116,18 @@ export const createTestDatasetInProject = async (publicationStatus: PublicationS
     publicationStatus
   });
   return dataset;
+};
+
+export const createTestMolecularDB = async (groupId: string): Promise<MolecularDB> => {
+  return await testEntityManager.save(MolecularDB, {
+    name: 'test-db',
+    version: 'db-version',
+    groupId,
+    public: false,
+    archived: false,
+    fullName: 'Full database name',
+    description: 'Database description',
+    link: 'http://example.org',
+    citation: 'citation string',
+  }) as MolecularDB;
 };

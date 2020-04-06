@@ -7,6 +7,7 @@ import {IResolvers} from "graphql-tools";
 import {Context} from "../../context";
 import {UserError} from "graphql-errors";
 import {smApiCreateDatabase, smApiUpdateDatabase, smApiDeleteDatabase} from "../../utils/smApi/databases";
+import {In} from "typeorm";
 
 
 const addFields = (molDB: MolecularDbModel): any => {
@@ -20,7 +21,14 @@ const addFields = (molDB: MolecularDbModel): any => {
 
 const QueryResolvers: FieldResolversFor<Query, void> = {
   async molecularDatabases(source, {hideArchived}, ctx): Promise<MolecularDB[]> {
-    let molDBs = await ctx.entityManager.getRepository(MolecularDbModel).find();
+    const orCond = [];
+    if (!ctx.isAdmin) {
+      orCond.push({public: true});
+      if (ctx.user.groupIds && ctx.user.groupIds.length > 0) {
+        orCond.push({groupId: In(ctx.user.groupIds)});
+      }
+    }
+    let molDBs = await ctx.entityManager.getRepository(MolecularDbModel).find({ where: orCond });
     if (hideArchived) {
       molDBs = molDBs.filter(db => !db.archived)
     }
@@ -29,9 +37,11 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
 };
 
 const assertUserBelongsToGroup = (ctx: Context, groupId: string) => {
-  ctx.getUserIdOrFail(); // Exit early if not logged in
-  if (!ctx.user.groupIds || !ctx.user.groupIds.includes(groupId)) {
-    throw new UserError(`Unauthorized`);
+  if (!ctx.isAdmin) {
+    ctx.getUserIdOrFail(); // Exit early if not logged in
+    if (!ctx.user.groupIds || !ctx.user.groupIds.includes(groupId)) {
+      throw new UserError(`Unauthorized`);
+    }
   }
 };
 
@@ -53,12 +63,15 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
   async updateMolecularDB(source, { databaseId, databaseDetails }, ctx): Promise<MolecularDB> {
     await assertUserCanEditMolecularDB(ctx, databaseId);
 
-    const molDB = await smApiUpdateDatabase(databaseId, databaseDetails);
+    const { id } = await smApiUpdateDatabase(databaseId, databaseDetails);
+    const molDB = await ctx.entityManager.getRepository(MolecularDbModel).findOneOrFail({ id });
     return addFields(molDB);
   },
 
   async deleteMolecularDB(source, { databaseId}, ctx): Promise<Boolean> {
-    await assertUserCanEditMolecularDB(ctx, databaseId);
+    if (!ctx.isAdmin) {
+      throw new UserError(`Unauthorized`);
+    }
 
     await smApiDeleteDatabase(databaseId);
     return true;

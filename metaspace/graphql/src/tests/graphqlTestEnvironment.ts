@@ -82,9 +82,9 @@ export const onBeforeEach = async () => {
   await initOperation(testEntityManager);
 };
 
-export const setupTestUsers = async () => {
+export const setupTestUsers = async (groupIds?: string[]) => {
   testUser = await createTestUser();
-  userContext = getContextForTest(testUser as any, testEntityManager);
+  userContext = getContextForTest({...testUser, groupIds} as any, testEntityManager);
   adminContext = getContextForTest({ ...testUser, role: 'admin' } as any, testEntityManager);
 };
 
