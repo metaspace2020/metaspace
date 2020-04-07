@@ -196,7 +196,7 @@
       </div>
 
       <div
-        v-if="canEdit"
+        v-if="canDelete"
         class="ds-delete"
       >
         <i class="el-icon-delete" />
@@ -220,15 +220,10 @@
       </div>
 
       <div
-        v-else
-        class="mt-auto text-right"
+        v-else-if="isPublished"
+        class="mt-auto text-right text-gray-700 text-sm"
       >
-        <span
-          v-if="isPublished"
-          class="text-gray-700 text-sm"
-        >
-          Published
-        </span>
+        Published
       </div>
     </div>
     <DownloadDialog
