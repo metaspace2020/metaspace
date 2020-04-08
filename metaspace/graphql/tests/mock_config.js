@@ -15,7 +15,7 @@ const config = {
   },
 
   img_upload: {
-    iso_img_fs_path: "/opt/data/sm_data/public/",
+    iso_img_fs_path: "/opt/data/metaspace/public/",
     backend: "fs", // "fs or "db"
     categories: {
       iso_image: {

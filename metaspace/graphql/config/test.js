@@ -16,7 +16,7 @@ config.defaults = {
 };
 
 config.img_upload = {
-  iso_img_fs_path: '/opt/data/sm_data/public/',
+  iso_img_fs_path: '/opt/data/metaspace/public/',
   categories: {
     iso_image: {
       type: 'image/png',  // applies only to post requests

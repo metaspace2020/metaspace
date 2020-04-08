@@ -63,7 +63,7 @@ services:
     #   - "5123:5123"
     volumes:
       - ./sm-engine/conf/:/opt/metaspace/metaspace/engine/conf:ro
-      - "${DATA_ROOT}:/opt/data:z"
+      - "${DATA_ROOT}:/opt/data/metaspace:z"
     networks:
       - sm
     depends_on:
@@ -99,11 +99,13 @@ services:
     cpu_shares: 512
     volumes:
       - ./sm-engine/conf/:/opt/metaspace/metaspace/engine/conf:ro
-      - "${DATA_ROOT}:/opt/data:z"
+      - "${DATA_ROOT}:/opt/data/metaspace:z"
     environment:
       SPARK_WORKER_CORES: 4
     networks:
       - sm
+    ports:
+      - "4040:4040"
     depends_on:
       - postgres
       - elasticsearch
@@ -121,7 +123,7 @@ services:
     #   - "4201:4201"
     volumes:
       - ./sm-graphql/config/:/opt/metaspace/metaspace/graphql/config:ro
-      - ${DATA_ROOT}:/opt/data:z
+      - "${DATA_ROOT}:/opt/data/metaspace:z"
     networks:
       - sm
     depends_on:
@@ -138,7 +140,7 @@ services:
     #   - "8082:8082"
     volumes:
       - ./sm-webapp/config/clientConfig.json:/opt/metaspace/metaspace/webapp/src/clientConfig.json:ro
-      - "${DATA_ROOT}:/opt/data:z"
+      - "${DATA_ROOT}:/opt/data/metaspace:z"
     depends_on:
       - redis
     networks:
