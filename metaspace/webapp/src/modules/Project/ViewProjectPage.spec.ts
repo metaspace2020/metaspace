@@ -39,6 +39,7 @@ describe('ViewProjectPage', () => {
     numMembers: 2,
     members: mockMembersForPublic,
     projectDescription: null,
+    publicationStatus: 'UNPUBLISHED',
   }
   const mockProjectFn = jest.fn((src: any, args: any, ctx: any, info: any): any => mockProject)
   const graphqlMocks = {
