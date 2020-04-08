@@ -150,7 +150,9 @@ describe('ViewProjectPage', () => {
     })
 
     it('should disable actions when published', async() => {
-      mockProjectFn.mockImplementation(() => ({ ...mockProject, currentUserRole: 'MANAGER', publicationStatus: 'PUBLISHED' }))
+      mockProjectFn.mockImplementation(() => ({
+        ...mockProject, currentUserRole: 'MANAGER', publicationStatus: 'PUBLISHED',
+      }))
       initMockGraphqlClient(graphqlMocks)
       const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider, sync: false })
       await Vue.nextTick()
@@ -174,5 +176,38 @@ describe('ViewProjectPage', () => {
     expect(mockProjectFn.mock.calls[0][3].fieldName).toEqual('project')
     expect(mockProjectFn.mock.calls[1][1].urlSlug).toEqual(urlSlug)
     expect(mockProjectFn.mock.calls[1][3].fieldName).toEqual('projectByUrlSlug')
+  })
+
+  describe('review tab', () => {
+    beforeEach(() => {
+      router.replace({ query: { tab: 'review' } })
+    })
+
+    it('should match snapshot (unpublished)', async() => {
+      mockProjectFn.mockImplementation(() => ({ ...mockProject, currentUserRole: 'MANAGER' }))
+      initMockGraphqlClient(graphqlMocks)
+      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider, sync: false })
+      await Vue.nextTick()
+
+      expect(wrapper).toMatchSnapshot()
+    })
+
+    it('should match snapshot (under review)', async() => {
+      mockProjectFn.mockImplementation(() => ({ ...mockProject, currentUserRole: 'MANAGER', publicationStatus: 'UNDER_REVIEW' }))
+      initMockGraphqlClient(graphqlMocks)
+      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider, sync: false })
+      await Vue.nextTick()
+
+      expect(wrapper).toMatchSnapshot()
+    })
+
+    it('should match snapshot (published)', async() => {
+      mockProjectFn.mockImplementation(() => ({ ...mockProject, currentUserRole: 'MANAGER', publicationStatus: 'PUBLISHED' }))
+      initMockGraphqlClient(graphqlMocks)
+      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider, sync: false })
+      await Vue.nextTick()
+
+      expect(wrapper).toMatchSnapshot()
+    })
   })
 })
