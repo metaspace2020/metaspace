@@ -148,6 +148,15 @@ describe('ViewProjectPage', () => {
 
       expect(wrapper).toMatchSnapshot()
     })
+
+    it('should disable actions when published', async() => {
+      mockProjectFn.mockImplementation(() => ({ ...mockProject, currentUserRole: 'MANAGER', publicationStatus: 'PUBLISHED' }))
+      initMockGraphqlClient(graphqlMocks)
+      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider, sync: false })
+      await Vue.nextTick()
+
+      expect(wrapper).toMatchSnapshot()
+    })
   })
 
   it('should correctly fetch data and update the route if the project has a urlSlug but is accessed by ID', async() => {

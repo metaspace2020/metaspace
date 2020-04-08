@@ -482,6 +482,95 @@ exports[`ViewProjectPage members tab should match snapshot (non-member) 1`] = `
 </div>
 `;
 
+exports[`ViewProjectPage settings tab should disable actions when published 1`] = `
+<div class="page" mock-v-loading="false">
+  <div class="page-content">
+    <div class="header-row">
+      <div class="header-names">
+        <h1 class="py-1 leading-tight">
+          project name
+        </h1>
+        <!---->
+      </div>
+      <div class="header-buttons">
+        <!---->
+        <!---->
+      </div>
+      <!---->
+    </div>
+    <div class="with-badges el-tabs el-tabs--top">
+      <div class="el-tabs__header is-top">
+        <div class="el-tabs__nav-wrap is-top">
+          <div class="el-tabs__nav-scroll">
+            <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
+              <div class="el-tabs__active-bar is-top" style="width: 0px; transform: translateX(NaNpx); webkit-transform: translateX(NaNpx);"></div>
+              <div id="tab-about" aria-controls="pane-about" role="tab" tabindex="-1" class="el-tabs__item is-top">About</div>
+              <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
+              <div id="tab-members" aria-controls="pane-members" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
+          Members (2)
+          <!----></span></div>
+              <div id="tab-review" aria-controls="pane-review" role="tab" tabindex="-1" class="el-tabs__item is-top"><span><div class="el-badge sm-feature-badge">
+            Review
+          <sup class="el-badge__content el-badge__content--undefined is-fixed" name="el-zoom-in-center">New</sup></div></span></div>
+              <div id="tab-settings" aria-controls="pane-settings" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active">Settings</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="el-tabs__content">
+        <!---->
+        <!---->
+        <!---->
+        <!---->
+        <div role="tabpanel" id="pane-settings" aria-labelledby="tab-settings" class="el-tab-pane">
+          <div class="project-settings">
+            <div class="header-row">
+              <h2>Project Details</h2>
+              <div class="flex-spacer"></div>
+              <div class="header-row-buttons"><button type="button" class="el-button el-button--primary">
+                  <!---->
+                  <!----><span>
+        Save
+      </span></button></div>
+            </div>
+            <form class="el-form el-form--label-top">
+              <div>
+                <div class="el-form-item name is-required"><label for="name" class="el-form-item__label">Name</label>
+                  <div class="el-form-item__content">
+                    <div class="max-w-measure-4 el-input">
+                      <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
+                      <!---->
+                      <!---->
+                      <!---->
+                      <!---->
+                    </div>
+                    <!---->
+                  </div>
+                </div>
+                <div class="el-form-item isPublic">
+                  <!---->
+                  <div class="el-form-item__content"><label class="el-checkbox is-disabled"><span class="el-checkbox__input is-disabled"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value="" disabled="disabled"></span><span class="el-checkbox__label">
+        Published projects must be visible
+      <!----></span></label>
+                    <!---->
+                  </div>
+                </div>
+              </div>
+            </form>
+            <!---->
+            <div>
+              <h2>Delete project</h2>
+              <p><em>Published projects cannot be deleted.</em></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!---->
+</div>
+`;
+
 exports[`ViewProjectPage settings tab should match snapshot 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
