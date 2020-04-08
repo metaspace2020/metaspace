@@ -50,7 +50,7 @@ export default Vue.extend({
   },
   props: {
     name: String,
-    value: Number,
+    value: [String, Number], // string if from query string, number if edited
     removable: { type: Boolean, default: true },
   },
   data(vm) {
