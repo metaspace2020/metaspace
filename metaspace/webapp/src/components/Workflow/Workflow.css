@@ -6,27 +6,27 @@
   padding: 0;
 }
 
-.sm-workflow-item:last-child {
+.sm-workflow-step:last-child {
   border-color: transparent; /* border still required for alignment */
 }
 
-.sm-workflow-item > * + *,
-.sm-workflow-item form > * + * {
+.sm-workflow-step > * + *,
+.sm-workflow-step form > * + * {
   margin: 0.75rem 0 0;
 }
 
 .sm-workflow-header + *,
-.sm-workflow-item form > :first-child {
+.sm-workflow-step form > :first-child {
   margin: 0;
 }
 
-.sm-workflow-item > .sm-workflow-header {
+.sm-workflow-step > .sm-workflow-header {
   margin: 0;
   line-height: 3rem;
 }
 
 /* hack allows left border to connect to next li */
-.sm-workflow-item > :last-child {
+.sm-workflow-step > :last-child {
   margin-bottom: 3rem;
 }
 
@@ -39,7 +39,7 @@
 
 /* status indicators */
 
-.sm-workflow-item:before {
+.sm-workflow-step:before {
   @apply text-gray-600 text-2xl font-bold bg-gray-200 transition-colors ease-in-out duration-300 h-12 w-12;
   align-items: center;
   border-radius: 50%;
@@ -52,16 +52,16 @@
   top: 0;
 }
 
-.sm-workflow-item.active {
+.sm-workflow-step.active {
   color: inherit;
 }
 
-.sm-workflow-item.active:before {
+.sm-workflow-step.active:before {
   @apply bg-primary;
   color: #fff;
 }
 
-.sm-workflow-item.done:before {
+.sm-workflow-step.done:before {
   content: '\e6da';
   font-family: element-icons !important;
 }

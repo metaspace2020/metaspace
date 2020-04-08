@@ -523,16 +523,16 @@ exports[`ViewProjectPage review tab should match snapshot (published) 1`] = `
         <!---->
         <div role="tabpanel" id="pane-review" aria-labelledby="tab-review" class="el-tab-pane tab-with-badge sm-review-tab">
           <ol class="sm-workflow sm-project-review">
-            <li class="sm-workflow-item flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-200 transition-colors ease-in-out duration-300 done">
+            <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-200 transition-colors ease-in-out duration-300 done">
               <h2 class="sm-workflow-header">Enable peer review</h2>
               <p>A review link allows reviewers to access this project and its datasets <strong>without making the project available to everyone</strong>.</p>
               <p><em>Reviewers will not need to create an account to gain access.</em></p>
             </li>
-            <li class="sm-workflow-item flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-200 transition-colors ease-in-out duration-300 done">
+            <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-200 transition-colors ease-in-out duration-300 done">
               <h2 class="sm-workflow-header">Review in progress</h2>
               <p>Reviewers will have access to this project prior to publication.</p>
             </li>
-            <li class="sm-workflow-item flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-200 transition-colors ease-in-out duration-300 active done">
+            <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-200 transition-colors ease-in-out duration-300 active done">
               <h2 class="sm-workflow-header">Publish the data</h2>
               <p>This project and its datasets are now public, thank you for your contribution.</p>
             </li>
@@ -587,7 +587,7 @@ exports[`ViewProjectPage review tab should match snapshot (under review) 1`] = `
         <!---->
         <div role="tabpanel" id="pane-review" aria-labelledby="tab-review" class="el-tab-pane tab-with-badge sm-review-tab">
           <ol class="sm-workflow sm-project-review">
-            <li class="sm-workflow-item flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-200 transition-colors ease-in-out duration-300 done">
+            <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-200 transition-colors ease-in-out duration-300 done">
               <h2 class="sm-workflow-header">Enable peer review</h2>
               <p>A review link allows reviewers to access this project and its datasets <strong>without making the project available to everyone</strong>.</p>
               <p><em>Reviewers will not need to create an account to gain access.</em></p>
@@ -595,7 +595,7 @@ exports[`ViewProjectPage review tab should match snapshot (under review) 1`] = `
                   <!---->
                   <!----><span>Remove link</span></button></form>
             </li>
-            <li class="sm-workflow-item flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-200 transition-colors ease-in-out duration-300 active">
+            <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-200 transition-colors ease-in-out duration-300 active">
               <h2 class="sm-workflow-header">Review in progress</h2>
               <form>
                 <p>Reviewers can access this project using the following link:</p>
@@ -625,7 +625,7 @@ exports[`ViewProjectPage review tab should match snapshot (under review) 1`] = `
                   <!----><span>Publish project</span></button>
               </form>
             </li>
-            <li class="sm-workflow-item flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-200 transition-colors ease-in-out duration-300">
+            <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-200 transition-colors ease-in-out duration-300">
               <h2 class="sm-workflow-header">Publish the data</h2>
               <p>This project and its datasets will be made public.</p>
             </li>
@@ -680,17 +680,17 @@ exports[`ViewProjectPage review tab should match snapshot (unpublished) 1`] = `
         <!---->
         <div role="tabpanel" id="pane-review" aria-labelledby="tab-review" class="el-tab-pane tab-with-badge sm-review-tab">
           <ol class="sm-workflow sm-project-review">
-            <li class="sm-workflow-item flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-200 transition-colors ease-in-out duration-300 active">
+            <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-200 transition-colors ease-in-out duration-300 active">
               <h2 class="sm-workflow-header">Enable peer review</h2>
               <p>A review link allows reviewers to access this project and its datasets <strong>without making the project available to everyone</strong>.</p>
               <p><em>Reviewers will not need to create an account to gain access.</em></p>
               <form action="#">
                 <div role="tablist" aria-multiselectable="true" class="el-collapse border-t border-b-0 box-border border-gray-200">
                   <div class="el-collapse-item">
-                    <div role="tab" aria-controls="el-collapse-content-3758" aria-describedby="el-collapse-content-3758">
-                      <div role="button" id="el-collapse-head-3758" tabindex="0" class="el-collapse-item__header">Update project details (recommended)<i class="el-collapse-item__arrow el-icon-arrow-right"></i></div>
+                    <div role="tab" aria-controls="el-collapse-content-3633" aria-describedby="el-collapse-content-3633">
+                      <div role="button" id="el-collapse-head-3633" tabindex="0" class="el-collapse-item__header">Update project details (recommended)<i class="el-collapse-item__arrow el-icon-arrow-right"></i></div>
                     </div>
-                    <div role="tabpanel" aria-hidden="true" aria-labelledby="el-collapse-head-3758" id="el-collapse-content-3758" class="el-collapse-item__wrap" style="display: none;">
+                    <div role="tabpanel" aria-hidden="true" aria-labelledby="el-collapse-head-3633" id="el-collapse-content-3633" class="el-collapse-item__wrap" style="display: none;">
                       <div class="el-collapse-item__content">
                         <div><label for="project-review-title">Set the project name:</label>
                           <div class="el-input">
@@ -724,11 +724,11 @@ exports[`ViewProjectPage review tab should match snapshot (unpublished) 1`] = `
                 </div><button class="el-button el-button--primary"><span>Create link </span></button>
               </form>
             </li>
-            <li class="sm-workflow-item flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-200 transition-colors ease-in-out duration-300">
+            <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-200 transition-colors ease-in-out duration-300">
               <h2 class="sm-workflow-header">Review in progress</h2>
               <p>Reviewers will have access to this project prior to publication.</p>
             </li>
-            <li class="sm-workflow-item flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-200 transition-colors ease-in-out duration-300">
+            <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-200 transition-colors ease-in-out duration-300">
               <h2 class="sm-workflow-header">Publish the data</h2>
               <p>This project and its datasets will be made public.</p>
             </li>

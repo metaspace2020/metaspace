@@ -1,7 +1,7 @@
 import { createComponent, reactive } from '@vue/composition-api'
 import { Button, Input, Collapse, CollapseItem } from 'element-ui'
 
-import { WorkflowItem } from '../../components/Workflow'
+import { WorkflowStep } from '../../components/Workflow'
 import { RichTextArea } from '../../components/RichText'
 import confirmPrompt from '../../components/confirmPrompt'
 
@@ -43,7 +43,7 @@ interface State {
   formActive: boolean
 }
 
-const EnablePeerReview = createComponent<Props>({
+const ReviewStepOne = createComponent<Props>({
   props: {
     active: Boolean,
     canUndo: Boolean,
@@ -94,7 +94,7 @@ const EnablePeerReview = createComponent<Props>({
     const projectUrlPrefix = location.origin + href.replace('REMOVE', '')
 
     return () => (
-      <WorkflowItem
+      <WorkflowStep
         active={props.active}
         done={props.done}
       >
@@ -163,9 +163,9 @@ const EnablePeerReview = createComponent<Props>({
             </Button>
           </form>
         }
-      </WorkflowItem>
+      </WorkflowStep>
     )
   },
 })
 
-export default EnablePeerReview
+export default ReviewStepOne

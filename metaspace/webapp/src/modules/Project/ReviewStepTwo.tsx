@@ -3,12 +3,12 @@ import './Review.css'
 import { createComponent, computed, reactive } from '@vue/composition-api'
 import { Button, Input } from 'element-ui'
 
-import { WorkflowItem } from '../../components/Workflow'
+import { WorkflowStep } from '../../components/Workflow'
 import CopyToClipboard from '../../components/CopyToClipboard'
 
 import confirmPrompt from '../../components/confirmPrompt'
 
-const ReviewInProgress = createComponent({
+const ReviewStepTwo = createComponent({
   props: {
     active: Boolean,
     done: Boolean,
@@ -49,7 +49,7 @@ const ReviewInProgress = createComponent({
     }
 
     return () => (
-      <WorkflowItem
+      <WorkflowStep
         active={props.active}
         done={props.done}
       >
@@ -83,9 +83,9 @@ const ReviewInProgress = createComponent({
           </form>
           : <p>Reviewers will have access to this project prior to publication.</p>
         }
-      </WorkflowItem>
+      </WorkflowStep>
     )
   },
 })
 
-export default ReviewInProgress
+export default ReviewStepTwo
