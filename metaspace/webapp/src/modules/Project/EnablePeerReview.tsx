@@ -7,6 +7,7 @@ import confirmPrompt from '../../components/confirmPrompt'
 
 import { ViewProjectResult } from '../../api/project'
 import { parseValidationErrors } from '../../api/validation'
+import router from '../../router'
 
 function getInitialModel(project: ViewProjectResult, currentUserName = '') {
   const year = new Date().getFullYear()
@@ -52,7 +53,7 @@ const EnablePeerReview = createComponent<Props>({
     done: Boolean,
     project: Object,
   },
-  setup(props, { root }) {
+  setup(props) {
     const state = reactive<State>({
       errors: {},
       loading: false,
@@ -89,7 +90,7 @@ const EnablePeerReview = createComponent<Props>({
       }, props.deleteLink)
     }
 
-    const { href } = root.$router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined, true)
+    const { href } = router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined, true)
     const projectUrlPrefix = location.origin + href.replace('REMOVE', '')
 
     return () => (
