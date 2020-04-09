@@ -687,10 +687,10 @@ exports[`ViewProjectPage review tab should match snapshot (unpublished) 1`] = `
               <form action="#">
                 <div role="tablist" aria-multiselectable="true" class="el-collapse border-t border-b-0 box-border border-gray-200">
                   <div class="el-collapse-item">
-                    <div role="tab" aria-controls="el-collapse-content-3633" aria-describedby="el-collapse-content-3633">
-                      <div role="button" id="el-collapse-head-3633" tabindex="0" class="el-collapse-item__header">Update project details (recommended)<i class="el-collapse-item__arrow el-icon-arrow-right"></i></div>
+                    <div role="tab" aria-controls="el-collapse-content-123" aria-describedby="el-collapse-content-123">
+                      <div role="button" id="el-collapse-head-123" tabindex="0" class="el-collapse-item__header">Update project details (recommended)<i class="el-collapse-item__arrow el-icon-arrow-right"></i></div>
                     </div>
-                    <div role="tabpanel" aria-hidden="true" aria-labelledby="el-collapse-head-3633" id="el-collapse-content-3633" class="el-collapse-item__wrap" style="display: none;">
+                    <div role="tabpanel" aria-hidden="true" aria-labelledby="el-collapse-head-123" id="el-collapse-content-123" class="el-collapse-item__wrap" style="display: none;">
                       <div class="el-collapse-item__content">
                         <div><label for="project-review-title">Set the project name:</label>
                           <div class="el-input">
