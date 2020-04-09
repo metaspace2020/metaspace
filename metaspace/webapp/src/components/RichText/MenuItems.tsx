@@ -1,3 +1,5 @@
+/* tslint max-len: off */
+
 import { createComponent } from '@vue/composition-api'
 
 const MenuButton = createComponent({

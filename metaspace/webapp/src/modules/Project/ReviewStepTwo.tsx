@@ -72,7 +72,13 @@ const ReviewStepTwo = createComponent({
                 class="mb-2"
               >
                 <span slot="prepend">https://doi.org/</span>
-                <a slot="append" href={`https://doi.org/${state.doi}`} target="_blank" rel="noopener" class="text-gray-600">
+                <a
+                  slot="append"
+                  href={`https://doi.org/${state.doi}`}
+                  target="_blank"
+                  rel="noopener"
+                  class="text-gray-600"
+                >
                   Test link
                 </a>
               </Input>
