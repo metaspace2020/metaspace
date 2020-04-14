@@ -3,14 +3,24 @@ import * as _ from 'lodash';
 
 import {processingSettingsChanged} from './Mutation';
 import {
+  adminContext,
   doQuery, onAfterAll, onAfterEach,
   onBeforeAll, onBeforeEach, setupTestUsers, testEntityManager,
 } from '../../../tests/graphqlTestEnvironment';
 import {PublicationStatusOptions as PSO} from '../../project/PublicationStatusOptions';
-import {createTestDatasetInProject} from '../../../tests/testDataCreation';
+import {
+  createTestDataset,
+  createTestDatasetProject,
+  createTestProject
+} from '../../../tests/testDataCreation';
 import {Dataset as DatasetType} from '../../../binding';
 import {Dataset as DatasetModel, DatasetProject as DatasetProjectModel} from '../model';
 import {EngineDataset, EngineDataset as EngineDatasetModel} from '../../engine/model';
+import * as _mockSmApi from '../../../utils/smAPI';
+
+jest.mock('../../../utils/smAPI');
+const mockSmApi = _mockSmApi as jest.Mocked<typeof _mockSmApi>;
+
 
 describe('processingSettingsChanged', () => {
   const metadata = {
@@ -133,33 +143,73 @@ describe('Dataset delete/update/hide not allowed for published ones', () => {
       updateDataset(id: $datasetId, input: $input)
     }`;
 
-  it('Not allowed to delete under review or published dataset', async () => {
-    const dataset = await createTestDatasetInProject(PSO.UNDER_REVIEW);
+  it.each([PSO.UNDER_REVIEW, PSO.PUBLISHED])(
+    'Not allowed to delete dataset in project in %s status', async (status) => {
+    const datasetProject = await createTestDatasetProject(status);
 
-    const promise = doQuery<DatasetType>(deleteDataset, { datasetId: dataset.id });
+    const promise = doQuery<DatasetType>(deleteDataset, { datasetId: datasetProject.datasetId });
 
     await expect(promise).rejects.toThrowError(/Cannot modify dataset/);
-    await testEntityManager.findOneOrFail(DatasetModel, dataset.id);
+    await testEntityManager.findOneOrFail(DatasetModel, datasetProject.datasetId);
   });
 
   it('Not allowed to make published dataset private', async () => {
-    const dataset = await createTestDatasetInProject(PSO.PUBLISHED);
+    const datasetProject = await createTestDatasetProject(PSO.PUBLISHED);
 
-    const promise = doQuery<DatasetType>(updateDataset, { datasetId: dataset.id, input: { isPublic: false }});
+    const promise = doQuery<DatasetType>(
+      updateDataset,{ datasetId: datasetProject.datasetId, input: { isPublic: false }}
+    );
 
     await expect(promise).rejects.toThrowError(/Cannot modify dataset/);
-    const { isPublic } = await testEntityManager.findOneOrFail(EngineDatasetModel, dataset.id);
+    const { isPublic } = await testEntityManager.findOneOrFail(EngineDatasetModel, datasetProject.datasetId);
     expect(isPublic).toBe(true);
   });
 
-  it('Not allowed to remove datasets from published project', async () => {
-    const dataset = await createTestDatasetInProject(PSO.UNDER_REVIEW);
+  it.each([PSO.UNPUBLISHED, PSO.UNDER_REVIEW, PSO.PUBLISHED])(
+      'Allowed to add datasets to project in %s status', async (status) => {
+    const project = await createTestProject({ publicationStatus: status });
+    const dataset = await createTestDataset();
 
-    const promise = doQuery<DatasetType>(updateDataset, { datasetId: dataset.id, input: { projectIds: [] }});
+    mockSmApi.smAPIRequest.mockReturnValue('');
 
-    await expect(promise).rejects.toThrowError(/Cannot modify dataset/);
+    await doQuery<DatasetType>(updateDataset, { datasetId: dataset.id, input: { projectIds: [project.id] }});
+
+    const updDataset = await testEntityManager.findOneOrFail(
+      DatasetModel, dataset.id, {relations: ['datasetProjects']}
+    );
+    expect(updDataset.datasetProjects).toEqual(
+      expect.arrayContaining([expect.objectContaining({ projectId: project.id })])
+    );
+  });
+
+  it.each([PSO.UNDER_REVIEW, PSO.PUBLISHED])(
+      'Not allowed to remove datasets from project in %s status', async (status) => {
+    const datasetProject = await createTestDatasetProject(status);
+
+    const promise = doQuery<DatasetType>(
+      updateDataset, { datasetId: datasetProject.datasetId, input: { projectIds: [] }}
+    );
+
+    await expect(promise).rejects.toThrowError(/under_review_or_published/);
     const { projectId } = await testEntityManager.findOneOrFail(
-      DatasetProjectModel, { datasetId: dataset.id });
+      DatasetProjectModel, { datasetId: datasetProject.datasetId }
+    );
     expect(projectId).toBeDefined();
+  });
+
+  it.each([PSO.UNDER_REVIEW, PSO.PUBLISHED])(
+      'Admins allowed to remove datasets from project in %s status', async (status) => {
+    const datasetProject = await createTestDatasetProject(PSO.UNDER_REVIEW);
+
+    mockSmApi.smAPIRequest.mockReturnValue('');
+
+    await doQuery<DatasetType>(
+      updateDataset,
+      { datasetId: datasetProject.datasetId, input: { projectIds: [] }},
+      { context: adminContext }
+    );
+
+    const updDsProject = await testEntityManager.findOne(DatasetProjectModel, { datasetId: datasetProject.datasetId });
+    expect(updDsProject).toBeFalsy();
   });
 });

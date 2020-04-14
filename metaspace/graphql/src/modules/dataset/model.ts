@@ -63,8 +63,8 @@ export class DatasetProject {
   @Column({ type: 'boolean' })
   approved: Boolean;
 
-  @Column({ type: 'text', enum: Object.keys(PSO), default: PSO.UNPUBLISHED })
-  publicationStatus: PublicationStatus;
+  // @Column({ type: 'text', enum: Object.keys(PSO), default: PSO.UNPUBLISHED })
+  // publicationStatus: PublicationStatus;
 }
 
 export const DATASET_ENTITIES = [
