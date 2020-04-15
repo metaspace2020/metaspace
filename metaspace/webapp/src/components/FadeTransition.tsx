@@ -10,7 +10,7 @@ export default createComponent({
         enter-active-class="duration-150 transition-opacity ease-in-out"
         leave-active-class="duration-150 transition-opacity ease-in-out"
       >
-        {slots.default()}
+        {slots.default && slots.default()}
       </transition>
     )
   },

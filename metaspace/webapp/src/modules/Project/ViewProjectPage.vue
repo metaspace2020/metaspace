@@ -91,7 +91,7 @@
             :placeholder="descriptionPlaceholder"
             :content="projectDescription"
             :readonly="!canEdit"
-            @update="updateDescription"
+            :update="updateDescription"
           />
         </el-tab-pane>
         <el-tab-pane
