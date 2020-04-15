@@ -130,17 +130,17 @@ describe('Project publication status manipulations', () => {
   });
 
   test('Admins can unpublish project', async () => {
-    const project = await createTestProject({ isPublic: true, publicationStatus: PSO.PUBLISHED });
-    await testEntityManager.insert(UserProjectModel,
-      { userId, projectId: project.id, role: UserProjectRoleOptions.MANAGER });
+    const project = await createTestProject(
+      { isPublic: true, reviewToken: 'random-token', publicationStatus: PSO.PUBLISHED }
+    );
 
     const result = await doQuery<ProjectType>(
       unpublishProject, { projectId: project.id, isPublic: false }, { context: adminContext }
     );
 
-    expect(result).toEqual(expect.objectContaining({ isPublic: false, publicationStatus: PSO.UNPUBLISHED }));
+    expect(result).toEqual(expect.objectContaining({ isPublic: false, publicationStatus: PSO.UNDER_REVIEW }));
     let updatedProject = await testEntityManager.findOne(ProjectModel, { id: project.id });
-    expect(updatedProject).toEqual(expect.objectContaining({ isPublic: false, publicationStatus: PSO.UNPUBLISHED }));
+    expect(updatedProject).toEqual(expect.objectContaining({ isPublic: false, publicationStatus: PSO.UNDER_REVIEW }));
   });
 
   test.each([PSO.UNDER_REVIEW, PSO.PUBLISHED])(
@@ -170,18 +170,21 @@ describe('Project publication status manipulations', () => {
     expect(isPublic).toBe(true);
   });
 
-  test('Allowed to update published project', async () => {
-    const project = await createTestProject({ publicationStatus: PSO.PUBLISHED });
-    await testEntityManager.insert(UserProjectModel,
-      { userId, projectId: project.id, role: UserProjectRoleOptions.MANAGER });
-    const projectDetails = { name: 'new name', urlSlug: 'new_slug', projectDescription: 'new description' };
+  test.each([PSO.UNDER_REVIEW, PSO.PUBLISHED])(
+    'Allowed to update project in %s status',
+    async (status) => {
+      const project = await createTestProject({ publicationStatus: status });
+      await testEntityManager.insert(UserProjectModel,
+        { userId, projectId: project.id, role: UserProjectRoleOptions.MANAGER });
+      const projectDetails = { name: 'new name', urlSlug: 'new_slug', projectDescription: 'new description' };
 
-    const result = await doQuery<ProjectType>(updateProject, { projectId: project.id, projectDetails });
+      const result = await doQuery<ProjectType>(updateProject, { projectId: project.id, projectDetails });
 
-    await expect(result).toEqual(expect.objectContaining(projectDetails));
-    const updatedProject = await testEntityManager.findOneOrFail(ProjectModel, project.id);
-    expect(updatedProject).toEqual(expect.objectContaining(projectDetails));
-  });
+      await expect(result).toEqual(expect.objectContaining(projectDetails));
+      const updatedProject = await testEntityManager.findOneOrFail(ProjectModel, project.id);
+      expect(updatedProject).toEqual(expect.objectContaining(projectDetails));
+    }
+  );
 
   test('Allowed to add external link to published project', async () => {
     const project = await createTestProject({ publicationStatus: PSO.PUBLISHED });
