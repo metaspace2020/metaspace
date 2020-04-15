@@ -75,6 +75,17 @@ export default createComponent({
         >
           <span class="text-lg font-bold tracking-wider">H<sub class="text-xs leading-none">2</sub></span>
         </MenuButton>
+        <MenuButton
+          isActive={props.editor.isActive.sup()}
+          onClick={props.editor.commands.sup}
+          title="Superscript"
+        >
+          <span class="text-lg font-bold">
+            {/* &#119909; */}
+            x
+            <sup class="text-xs leading-none">2</sup>
+          </span>
+        </MenuButton>
       </span>
     )
     /* eslint-enable vue/max-len */
