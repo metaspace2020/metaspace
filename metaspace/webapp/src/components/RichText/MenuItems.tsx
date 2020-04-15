@@ -30,6 +30,7 @@ export default createComponent({
     editor: { type: Object, required: true },
   },
   setup(props) {
+    /* eslint-disable vue/max-len */
     return () => (
       <span class="flex items-start justify-center">
         <MenuButton
@@ -76,5 +77,6 @@ export default createComponent({
         </MenuButton>
       </span>
     )
+    /* eslint-enable vue/max-len */
   },
 })
