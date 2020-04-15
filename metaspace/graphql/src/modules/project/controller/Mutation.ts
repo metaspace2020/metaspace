@@ -260,7 +260,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
     await ctx.entityManager.update(ProjectModel, projectId, {
       publicationStatus: PSO.PUBLISHED,
-      publishedDT: utc(),
+      // TODO: publishedDT: utc(),
       isPublic: true
     });
 

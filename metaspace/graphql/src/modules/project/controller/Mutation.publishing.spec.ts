@@ -47,10 +47,10 @@ describe('Project publication status manipulations', () => {
     }`,
     updateProject = `mutation ($projectId: ID!, $projectDetails: UpdateProjectInput!) {
       updateProject(projectId: $projectId, projectDetails: $projectDetails) {
-        id name urlSlug projectDescription
+        id name urlSlug projectDescriptionAsHtml
       }
     }`,
-    addExternalLink = `mutation($projectId: ID!) {
+    addExternalLink = `mutation($projectId: String!) {
       addProjectExternalLink(
         projectId: $projectId,
         provider: "MetaboLights",
@@ -58,7 +58,7 @@ describe('Project publication status manipulations', () => {
         replaceExisting: true
       ) { id }
     }`,
-    removeExternalLink = `mutation($projectId: ID!) {
+    removeExternalLink = `mutation($projectId: String!) {
       removeProjectExternalLink(
         projectId: $projectId,
         provider: "MetaboLights",
@@ -176,7 +176,7 @@ describe('Project publication status manipulations', () => {
       const project = await createTestProject({ publicationStatus: status });
       await testEntityManager.insert(UserProjectModel,
         { userId, projectId: project.id, role: UserProjectRoleOptions.MANAGER });
-      const projectDetails = { name: 'new name', urlSlug: 'new_slug', projectDescription: 'new description' };
+      const projectDetails = { name: 'new name', urlSlug: 'new_slug', projectDescriptionAsHtml: 'new description' };
 
       const result = await doQuery<ProjectType>(updateProject, { projectId: project.id, projectDetails });
 
