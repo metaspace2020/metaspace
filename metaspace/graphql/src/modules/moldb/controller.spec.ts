@@ -25,12 +25,14 @@ jest.mock('../../utils/smApi/databases');
 const mockSmApiDatabases = _mockSmApiDatabases as jest.Mocked<typeof _mockSmApiDatabases>
 
 
-describe('Molecular databases query permissions', () => {
+describe('Molecular databases queries', () => {
+  let group: Group;
+
   beforeAll(onBeforeAll);
   afterAll(onAfterAll);
   beforeEach(async () => {
     await onBeforeEach();
-
+    group = await createTestGroup();
   });
   afterEach(onAfterEach);
 
@@ -40,11 +42,22 @@ describe('Molecular databases query permissions', () => {
       }
     }`;
 
-  test('Group members can see group managed databases', async () => {
-    const group = await createTestGroup();
+  test('Databases are sorted by name', async () => {
     await setupTestUsers([group.id]);
     await createTestUserGroup(testUser.id!, group.id, UGRO.MEMBER, true);
-    const {groupId, id, ...molDbExpResult} = await createTestMolecularDB(group.id);
+    await createTestMolecularDB({ name: 'xyz', groupId: group.id });
+    await createTestMolecularDB({ name: 'abc', groupId: group.id });
+
+    const result = await doQuery(listMolecularDBs, {});
+
+    expect(result[0]).toMatchObject({ name: 'abc' });
+    expect(result[1]).toMatchObject({ name: 'xyz' });
+  });
+
+  test('Group members can see group managed databases', async () => {
+    await setupTestUsers([group.id]);
+    await createTestUserGroup(testUser.id!, group.id, UGRO.MEMBER, true);
+    const {groupId, id, ...molDbExpResult} = await createTestMolecularDB({ groupId: group.id });
 
     const result = await doQuery(listMolecularDBs, {}, { context: userContext });
 
@@ -52,9 +65,8 @@ describe('Molecular databases query permissions', () => {
   });
 
   test('Non-group members cannot see group managed databases', async () => {
-    const group = await createTestGroup();
     await setupTestUsers();
-    await createTestMolecularDB(group.id);
+    await createTestMolecularDB({ groupId: group.id });
 
     const result = await doQuery(listMolecularDBs, {}, { context: userContext });
 
@@ -62,9 +74,8 @@ describe('Molecular databases query permissions', () => {
   });
 
   test('Admins can see all group managed databases', async () => {
-    const group = await createTestGroup();
     await setupTestUsers();
-    const {groupId, id, ...molDbExpResult} = await createTestMolecularDB(group.id);
+    const {groupId, id, ...molDbExpResult} = await createTestMolecularDB({ groupId: group.id });
 
     const result = await doQuery(listMolecularDBs, {}, { context: adminContext });
 
@@ -98,7 +109,7 @@ describe('Molecular database mutation permissions', () => {
       await createTestUserGroup(testUser.id!, group.id, UGRO.MEMBER, true);
 
       mockSmApiDatabases.smApiCreateDatabase.mockImplementation(async () => {
-        return await createTestMolecularDB(group.id);
+        return await createTestMolecularDB({ groupId: group.id });
       });
 
       await doQuery(createMolecularDB, {groupId: group.id}, { context: userContext });
@@ -120,7 +131,7 @@ describe('Molecular database mutation permissions', () => {
       await setupTestUsers();
 
       mockSmApiDatabases.smApiCreateDatabase.mockImplementation(async () => {
-        return await createTestMolecularDB(randomGroup.id);
+        return await createTestMolecularDB({ groupId: randomGroup.id });
       });
 
       await doQuery(createMolecularDB, {groupId: randomGroup.id}, { context: adminContext });
@@ -141,7 +152,7 @@ describe('Molecular database mutation permissions', () => {
       const group = await createTestGroup();
       await setupTestUsers([group.id]);
       await createTestUserGroup(testUser.id!, group.id, UGRO.MEMBER, true);
-      const { id } = await createTestMolecularDB(group.id);
+      const { id } = await createTestMolecularDB({ groupId: group.id });
 
       mockSmApiDatabases.smApiUpdateDatabase.mockImplementation(async () => {
         return { id };
@@ -156,7 +167,7 @@ describe('Molecular database mutation permissions', () => {
       await createTestUserGroup(testUser.id!, group.id, UGRO.MEMBER, true);
 
       const randomGroup = await createTestGroup({id: "123e4567-e89b-12d3-a456-426655440000"});
-      const { id } = await createTestMolecularDB(randomGroup.id);
+      const { id } = await createTestMolecularDB({ groupId: randomGroup.id });
 
       const promise = doQuery(updateMolecularDB, { id }, { context: userContext });
       await expect(promise).rejects.toThrowError(/Unauthorized/);
@@ -165,7 +176,7 @@ describe('Molecular database mutation permissions', () => {
     test('Admins can update database', async () => {
       await setupTestUsers();
       const randomGroup = await createTestGroup();
-      const { id } = await createTestMolecularDB(randomGroup.id);
+      const { id } = await createTestMolecularDB({ groupId: randomGroup.id });
 
       mockSmApiDatabases.smApiUpdateDatabase.mockImplementation(async () => {
         return { id };
@@ -185,7 +196,7 @@ describe('Molecular database mutation permissions', () => {
       const group = await createTestGroup();
       await setupTestUsers([group.id]);
       await createTestUserGroup(testUser.id!, group.id, UGRO.MEMBER, true);
-      const { id } = await createTestMolecularDB(group.id);
+      const { id } = await createTestMolecularDB({ groupId: group.id });
 
       const promise = doQuery(deleteMolecularDB, { id }, { context: userContext });
       await expect(promise).rejects.toThrowError(/Unauthorized/);
@@ -194,7 +205,7 @@ describe('Molecular database mutation permissions', () => {
     test('Admins can delete database', async () => {
       await setupTestUsers();
       const group = await createTestGroup();
-      const { id } = await createTestMolecularDB(group.id);
+      const { id } = await createTestMolecularDB({ groupId: group.id });
 
       await doQuery(deleteMolecularDB, { id }, { context: adminContext });
     });

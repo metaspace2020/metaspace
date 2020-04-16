@@ -10,7 +10,7 @@ import {smApiCreateDatabase, smApiUpdateDatabase, smApiDeleteDatabase} from "../
 import {In} from "typeorm";
 
 
-const addFields = (molDB: MolecularDbModel): any => {
+const mapToGqlMolecularDb = (molDB: MolecularDbModel): MolecularDB => {
   return {
     ...molDB,
     default: config.defaults.moldb_names.includes(molDB.name),
@@ -28,11 +28,12 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
         orCond.push({groupId: In(ctx.user.groupIds)});
       }
     }
-    let molDBs = await ctx.entityManager.getRepository(MolecularDbModel).find({ where: orCond });
+    let molDBs = await ctx.entityManager.getRepository(MolecularDbModel).find(
+        { where: orCond, order: { name: 'ASC' } });
     if (hideArchived) {
       molDBs = molDBs.filter(db => !db.archived)
     }
-    return molDBs.map(db => addFields(db));
+    return molDBs.map(db => mapToGqlMolecularDb(db));
   },
 };
 
@@ -57,7 +58,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
 
     const { id } = await smApiCreateDatabase({ ...databaseDetails, groupId });
     const molDB = await ctx.entityManager.getRepository(MolecularDbModel).findOneOrFail({ id });
-    return addFields(molDB);
+    return mapToGqlMolecularDb(molDB);
   },
 
   async updateMolecularDB(source, { databaseId, databaseDetails }, ctx): Promise<MolecularDB> {
@@ -65,7 +66,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
 
     const { id } = await smApiUpdateDatabase(databaseId, databaseDetails);
     const molDB = await ctx.entityManager.getRepository(MolecularDbModel).findOneOrFail({ id });
-    return addFields(molDB);
+    return mapToGqlMolecularDb(molDB);
   },
 
   async deleteMolecularDB(source, { databaseId}, ctx): Promise<Boolean> {

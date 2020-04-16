@@ -118,16 +118,16 @@ export const createTestDatasetInProject = async (publicationStatus: PublicationS
   return dataset;
 };
 
-export const createTestMolecularDB = async (groupId: string): Promise<MolecularDB> => {
+export const createTestMolecularDB = async (molecularDb: Partial<MolecularDB> = {}): Promise<MolecularDB> => {
   return await testEntityManager.save(MolecularDB, {
     name: 'test-db',
     version: 'db-version',
-    groupId,
     public: false,
     archived: false,
     fullName: 'Full database name',
     description: 'Database description',
     link: 'http://example.org',
     citation: 'citation string',
+    ...molecularDb
   }) as MolecularDB;
 };
