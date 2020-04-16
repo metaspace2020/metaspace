@@ -129,7 +129,6 @@ describe('ProjectsListPage', () => {
     })
     const wrapper = mount(ProjectsListPage, { router, apolloProvider, store, sync: false })
     await Vue.nextTick()
-    // await Vue.nextTick()
 
     expect(wrapper).toMatchSnapshot()
   })
@@ -145,7 +144,6 @@ describe('ProjectsListPage', () => {
     })
     const wrapper = mount(ProjectsListPage, { router, apolloProvider, store, sync: false })
     await Vue.nextTick()
-    // await Vue.nextTick()
 
     expect(wrapper).toMatchSnapshot()
   })
