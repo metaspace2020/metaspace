@@ -20,16 +20,16 @@ const mapToGqlMolecularDb = (molDB: MolecularDbModel): MolecularDB => {
 
 
 const QueryResolvers: FieldResolversFor<Query, void> = {
-  async molecularDatabases(source, {hideArchived}, ctx): Promise<MolecularDB[]> {
+  async molecularDatabases(source, { hideArchived }, ctx): Promise<MolecularDB[]> {
     const orCond = [];
     if (!ctx.isAdmin) {
-      orCond.push({public: true});
+      orCond.push({ public: true });
       if (ctx.user.groupIds && ctx.user.groupIds.length > 0) {
-        orCond.push({groupId: In(ctx.user.groupIds)});
+        orCond.push({ groupId: In(ctx.user.groupIds) });
       }
     }
     let molDBs = await ctx.entityManager.getRepository(MolecularDbModel).find(
-        { where: orCond, order: { name: 'ASC' } });
+      { where: orCond, order: { name: 'ASC' } });
     if (hideArchived) {
       molDBs = molDBs.filter(db => !db.archived)
     }
@@ -53,6 +53,7 @@ const assertUserCanEditMolecularDB = async (ctx: Context, databaseId: number) =>
 
 const MutationResolvers: FieldResolversFor<Mutation, void>  = {
   async createMolecularDB(source, { databaseDetails }, ctx): Promise<MolecularDB> {
+    logger.info(`User ${ctx.user.id} is creating molecular database ${JSON.stringify(databaseDetails)}`);
     const groupId = <string>databaseDetails.groupId;
     assertUserBelongsToGroup(ctx, groupId);
 
@@ -62,6 +63,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
   },
 
   async updateMolecularDB(source, { databaseId, databaseDetails }, ctx): Promise<MolecularDB> {
+    logger.info(`User ${ctx.user.id} is updating molecular database ${JSON.stringify(databaseDetails)}`);
     await assertUserCanEditMolecularDB(ctx, databaseId);
 
     const { id } = await smApiUpdateDatabase(databaseId, databaseDetails);
@@ -70,6 +72,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
   },
 
   async deleteMolecularDB(source, { databaseId}, ctx): Promise<Boolean> {
+    logger.info(`User ${ctx.user.id} is deleting molecular database ${databaseId}`);
     if (!ctx.isAdmin) {
       throw new UserError(`Unauthorized`);
     }
