@@ -150,6 +150,17 @@ describe('ViewProjectPage', () => {
       expect(wrapper).toMatchSnapshot()
     })
 
+    it('should disable actions when under review', async() => {
+      mockProjectFn.mockImplementation(() => ({
+        ...mockProject, currentUserRole: 'MANAGER', publicationStatus: 'UNDER_REVIEW',
+      }))
+      initMockGraphqlClient(graphqlMocks)
+      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider, sync: false })
+      await Vue.nextTick()
+
+      expect(wrapper).toMatchSnapshot()
+    })
+
     it('should disable actions when published', async() => {
       mockProjectFn.mockImplementation(() => ({
         ...mockProject, currentUserRole: 'MANAGER', publicationStatus: 'PUBLISHED',

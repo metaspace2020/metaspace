@@ -47,6 +47,14 @@
       <p v-if="isPublished">
         <em>Published projects cannot be deleted.</em>
       </p>
+      <p v-else-if="isUnderReview">
+        <em>This project is under review.</em>
+        <br /> <!-- hacking the layout -->
+        <br />
+        To delete this project, remove the review link on the <router-link to="?tab=review">
+          Review tab<!-- -->
+        </router-link>.
+      </p>
       <div
         v-else
         class="flex justify-between items-start"
@@ -136,6 +144,10 @@ export default class ProjectSettings extends Vue {
 
     get isPublished() {
       return this.project && this.project.publicationStatus === 'PUBLISHED'
+    }
+
+    get isUnderReview() {
+      return this.project && this.project.publicationStatus === 'UNDER_REVIEW'
     }
 
     @Watch('project')

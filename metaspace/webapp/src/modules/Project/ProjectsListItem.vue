@@ -51,6 +51,9 @@
             <span v-if="project.publicationStatus === 'PUBLISHED'">
               Published <elapsed-time :date="project.publishedDT" />
             </span>
+            <span v-else-if="canManage && project.publicationStatus === 'UNDER_REVIEW'">
+              Under review
+            </span>
             <span v-else-if="project.latestUploadDT != null">
               Last submission <elapsed-time :date="project.latestUploadDT" />
             </span>
@@ -79,7 +82,7 @@
             Manage project
           </router-link>
         </div>
-        <div v-if="canManage">
+        <div v-if="canDelete">
           <i class="el-icon-delete" />
           <a
             href="#"
@@ -173,8 +176,11 @@ export default class ProjectsListItem extends Vue {
     get canManage() {
       return (this.currentUser && this.currentUser.role === 'admin') || (
         this.project.currentUserRole === 'MANAGER'
-        && this.project.publicationStatus !== 'PUBLISHED'
       )
+    }
+
+    get canDelete() {
+      return this.canManage && this.project.publicationStatus === 'UNPUBLISHED'
     }
 
     shortGroupName(manager: managerGroupName): string|null {

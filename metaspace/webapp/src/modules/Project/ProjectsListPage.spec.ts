@@ -117,4 +117,26 @@ describe('ProjectsListPage', () => {
     const projectIds = wrapper.findAll({ name: 'ProjectsListItem' }).wrappers.map(item => item.props().project.id)
     expect(projectIds).toEqual(['ID W'])
   })
+
+  it('should change actions for projects under review', async() => {
+    initMockGraphqlClient({
+      Query: () => ({
+        allProjects: () => [
+          {
+            ...mockProject1,
+            publicationStatus: 'UNDER_REVIEW',
+          },
+          {
+            ...mockProject2,
+            publicationStatus: 'UNDER_REVIEW',
+          },
+        ],
+      }),
+    })
+    const wrapper = mount(ProjectsListPage, { router, apolloProvider, store, sync: false })
+    await Vue.nextTick()
+    // await Vue.nextTick()
+
+    expect(wrapper).toMatchSnapshot()
+  })
 })
