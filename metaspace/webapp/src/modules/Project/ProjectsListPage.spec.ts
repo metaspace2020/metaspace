@@ -122,14 +122,24 @@ describe('ProjectsListPage', () => {
     initMockGraphqlClient({
       Query: () => ({
         allProjects: () => [
-          {
-            ...mockProject1,
-            publicationStatus: 'UNDER_REVIEW',
-          },
-          {
-            ...mockProject2,
-            publicationStatus: 'UNDER_REVIEW',
-          },
+          { ...mockProject1, publicationStatus: 'UNDER_REVIEW' },
+          { ...mockProject2, publicationStatus: 'UNDER_REVIEW' },
+        ],
+      }),
+    })
+    const wrapper = mount(ProjectsListPage, { router, apolloProvider, store, sync: false })
+    await Vue.nextTick()
+    // await Vue.nextTick()
+
+    expect(wrapper).toMatchSnapshot()
+  })
+
+  it('should change actions for published projects', async() => {
+    initMockGraphqlClient({
+      Query: () => ({
+        allProjects: () => [
+          { ...mockProject1, publicationStatus: 'PUBLISHED' },
+          { ...mockProject2, publicationStatus: 'PUBLISHED' },
         ],
       }),
     })

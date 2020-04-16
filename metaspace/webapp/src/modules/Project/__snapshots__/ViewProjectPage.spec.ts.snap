@@ -910,7 +910,7 @@ exports[`ViewProjectPage settings tab should disable actions when under review 1
             <div>
               <h2>Delete project</h2>
               <p><em>This project is under review.</em> <br> <br>
-                To delete this project, remove the review link on the <a href="/project/00000000-1111-2222-3333-444444444444?tab=review" class="router-link-active">
+                To delete this project, first remove the review link on the <a href="/project/00000000-1111-2222-3333-444444444444?tab=review" class="router-link-active">
                   Review tab</a>.
               </p>
             </div>

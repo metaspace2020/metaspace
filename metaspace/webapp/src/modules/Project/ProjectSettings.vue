@@ -51,7 +51,7 @@
         <em>This project is under review.</em>
         <br /> <!-- hacking the layout -->
         <br />
-        To delete this project, remove the review link on the <router-link to="?tab=review">
+        To delete this project, first remove the review link on the <router-link to="?tab=review">
           Review tab<!-- -->
         </router-link>.
       </p>
