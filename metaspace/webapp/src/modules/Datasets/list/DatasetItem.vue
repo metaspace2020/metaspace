@@ -220,10 +220,10 @@
       </div>
 
       <div
-        v-else-if="isPublished"
+        v-else-if="canViewPublicationStatus"
         class="mt-auto text-right text-gray-700 text-sm"
       >
-        Published
+        {{ publicationStatus }}
       </div>
     </div>
     <DownloadDialog
@@ -371,7 +371,10 @@ export default {
     },
 
     canDelete() {
-      return this.canEdit && !this.isPublished
+      return (
+        (this.currentUser && this.currentUser.role === 'admin')
+        || (this.canEdit && this.publicationStatus === null)
+      )
     },
 
     canEditOpticalImage() {
@@ -409,8 +412,26 @@ export default {
       return null
     },
 
-    isPublished() {
-      return this.dataset.projects.filter(p => p.publicationStatus === 'PUBLISHED').length > 0
+    canViewPublicationStatus() {
+      return (
+        this.dataset.status === 'FINISHED'
+        && this.canEdit
+        && this.publicationStatus !== null
+      )
+    },
+
+    publicationStatus() {
+      let status = null
+      for (const project of this.dataset.projects) {
+        if (project.publicationStatus === 'PUBLISHED') {
+          status = 'Published'
+          break
+        }
+        if (project.publicationStatus === 'UNDER_REVIEW') {
+          status = 'Under review'
+        }
+      }
+      return status
     },
   },
   async created() {
