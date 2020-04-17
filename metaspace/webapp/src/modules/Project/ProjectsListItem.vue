@@ -9,7 +9,7 @@
         <div class="info-line project-name pr-5 flex items-baseline">
           <router-link
             :to="projectLink"
-            class="text-2xl font-medium leading-normal text-inherit no-underline truncate"
+            class="text-2xl font-medium text-inherit no-underline truncate"
           >
             {{ project.name }}
           </router-link>
@@ -19,7 +19,7 @@
             title="This project is only visible to its members and METASPACE administrators"
           />
         </div>
-        <div>
+        <div style="margin-top: 10px">
           <div class="info-line">
             <span v-if="project.numDatasets > 0">
               <router-link :to="datasetsLink"><span>{{ project.numDatasets | plural('dataset', 'datasets') }}</span></router-link>,
