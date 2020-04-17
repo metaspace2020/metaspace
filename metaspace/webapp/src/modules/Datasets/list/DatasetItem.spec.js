@@ -51,7 +51,6 @@ describe('DatasetItem', () => {
         projects: [unpublished]
       },
     }
-    // @ts-ignore
     const wrapper = mount(DatasetItem, { router, store, propsData })
     expect(wrapper).toMatchSnapshot()
   })
@@ -64,7 +63,6 @@ describe('DatasetItem', () => {
         projects: [published]
       },
     }
-    // @ts-ignore
     const wrapper = mount(DatasetItem, { router, store, propsData })
     expect(wrapper).toMatchSnapshot()
   })
@@ -78,7 +76,6 @@ describe('DatasetItem', () => {
         status: 'ANNOTATING'
       }
     }
-    // @ts-ignore
     const wrapper = mount(DatasetItem, { router, store, propsData })
     expect(wrapper).toMatchSnapshot()
   })
@@ -91,7 +88,6 @@ describe('DatasetItem', () => {
         projects: [underReview]
       }
     }
-    // @ts-ignore
     const wrapper = mount(DatasetItem, { router, store, propsData })
     expect(wrapper).toMatchSnapshot()
   })
@@ -104,7 +100,6 @@ describe('DatasetItem', () => {
         projects: [published]
       }
     }
-    // @ts-ignore
     const wrapper = mount(DatasetItem, { router, store, propsData })
     expect(wrapper).toMatchSnapshot()
   })
@@ -117,7 +112,6 @@ describe('DatasetItem', () => {
         projects: [published, underReview]
       }
     }
-    // @ts-ignore
     const wrapper = mount(DatasetItem, { router, store, propsData })
     expect(wrapper).toMatchSnapshot()
   })
@@ -130,7 +124,6 @@ describe('DatasetItem', () => {
         projects: [published]
       }
     }
-    // @ts-ignore
     const wrapper = mount(DatasetItem, { router, store, propsData })
     expect(wrapper).toMatchSnapshot()
   })

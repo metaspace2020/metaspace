@@ -59,13 +59,6 @@ export default class DatasetCheckboxList extends Vue {
       this.populateSelectedDatasetIds()
     }
 
-    getDate() {
-      console.log(this.datasets)
-      return ''
-      // console.log(this.dataset && this.date.uploadDT)
-      // return this.datasets !== null && this.dataset.uploadDT
-    }
-
     handleSelectNone() {
       Object.keys(this.selectedDatasets).forEach(key => { this.selectedDatasets[key] = false })
     }
