@@ -50,7 +50,7 @@ describe('Project publication status manipulations', () => {
         id name urlSlug projectDescription
       }
     }`,
-    addExternalLink = `mutation($projectId: String!) {
+    addExternalLink = `mutation($projectId: ID!) {
       addProjectExternalLink(
         projectId: $projectId,
         provider: "MetaboLights",
@@ -58,7 +58,7 @@ describe('Project publication status manipulations', () => {
         replaceExisting: true
       ) { id }
     }`,
-    removeExternalLink = `mutation($projectId: String!) {
+    removeExternalLink = `mutation($projectId: ID!) {
       removeProjectExternalLink(
         projectId: $projectId,
         provider: "MetaboLights",
