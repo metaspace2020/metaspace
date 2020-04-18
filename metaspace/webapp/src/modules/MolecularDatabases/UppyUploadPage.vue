@@ -19,6 +19,7 @@ export default {
       debug: true,
       autoProceed: false,
       restrictions: {
+        maxFileSize: 150 * 2**20,  // 150MB
         maxNumberOfFiles: 1,
         allowedFileTypes: ['.csv']
       },

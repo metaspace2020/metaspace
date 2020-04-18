@@ -57,6 +57,10 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     const groupId = <string>databaseDetails.groupId;
     assertUserBelongsToGroup(ctx, groupId);
 
+    if (!databaseDetails.filePath.startsWith(`s3://${config.upload.bucket}/${config.upload.moldbPrefix}`)) {
+      throw new UserError('Wrong file path prefix');
+    }
+
     const { id } = await smApiCreateDatabase({ ...databaseDetails, groupId });
     const molDB = await ctx.entityManager.getRepository(MolecularDbModel).findOneOrFail({ id });
     return mapToGqlMolecularDb(molDB);

@@ -56,7 +56,7 @@ module.exports = {
   upload: {
     destination: '/opt/data/metaspace/uploads',
     bucket: '',
-    moldbPrefix: 'moldbs'
+    moldbPrefix: 'databases'
   },
 
   services: {
