@@ -1,9 +1,7 @@
 import {
-  createTestDataset,
-  createTestProject,
   createTestGroup,
   createTestUserGroup,
-  createTestMolecularDB, createTestUser
+  createTestMolecularDB
 } from '../../tests/testDataCreation';
 import {
   adminContext,
@@ -12,13 +10,11 @@ import {
   onAfterEach,
   onBeforeAll,
   onBeforeEach, setupTestUsers,
-  testEntityManager,
-  testUser, userContext
+  testUser,
+  userContext,
 } from "../../tests/graphqlTestEnvironment";
-import {UserGroupRole} from "../../binding";
-import {User} from '../../modules/user/model';
 import {Group, UserGroupRoleOptions as UGRO} from "../group/model";
-import {getContextForTest} from "../../getContext";
+import config from '../../utils/config';
 import * as _mockSmApiDatabases from '../../utils/smApi/databases'
 
 jest.mock('../../utils/smApi/databases');
@@ -96,7 +92,7 @@ describe('Molecular database mutation permissions', () => {
       createMolecularDB(databaseDetails: {
         name: "test-db"
         version: "v1"
-        filePath: "s3://database-bucket/test-db.tsv"
+        filePath: "s3://${config.upload.bucket}/${config.upload.moldbPrefix}/abc"
         groupId: $groupId
       }) {
         id name version

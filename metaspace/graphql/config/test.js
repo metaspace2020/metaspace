@@ -40,6 +40,10 @@ config.services = {};
 /* Internal ad-hoc service with /v1/datasets and /v1/isotopic_patterns endpoints */
 config.services.sm_engine_api_host = "localhost";
 
+config.upload = {};
+config.upload.destination = "s3";
+config.upload.bucket = "sm-bucket";
+
 config.db = {};
 config.db.host = "localhost";
 config.db.database = "sm_test";
