@@ -5,7 +5,8 @@ module.exports = {
   // Defaults: https://github.com/tailwindcss/tailwindcss/blob/master/stubs/defaultConfig.stub.js
   theme: {
     fontFamily: {
-      sans: ['Roboto', 'SUPERSCIPT_OVERRIDE', 'Helvetica', 'sans-serif'],
+      sans: ['Roboto', 'SUPERSCIPT_OVERRIDE', 'Helvetica', 'Arial', 'sans-serif'],
+      display: ['FuturaBT-Medium', 'Helvetica', 'Arial', 'sans-serif']
     },
     placeholderColor: {
       default: theme => theme('colors.gray.500')
@@ -59,6 +60,8 @@ module.exports = {
       },
       spacing: {
         auto: 'auto',
+        '18': '4.5rem',
+        '72': '18rem',
       },
       maxWidth: {
         'measure-1': '44ch',
@@ -71,6 +74,10 @@ module.exports = {
         '-10': '-10', // Use .-z-10 not .z--10
         '-20': '-20',
       },
+      lineHeight: {
+        '12': '3rem'
+      },
+
     }
   },
   variants: {

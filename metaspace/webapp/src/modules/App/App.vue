@@ -80,14 +80,21 @@ export default {
   @font-face {
     /* Roboto doesn't contain superscript glyphs, and the fallback is OS-dependent. OSX's fallback, Helvetica,
      looks bad for the superscript + and - characters in formatted ion formulas, because it's too small to read. */
-
     font-family: SUPERSCIPT_OVERRIDE;
     src: local('Lucida Grande'), local('-apple-system'), local('serif');
     unicode-range: U+207A-207B;
   }
 
+  @font-face {
+    font-family: "FuturaBT-Medium";
+    src: url("../../assets/fonts/futura/2FD17E_0_0.eot");
+    src: url("../../assets/fonts/futura/2FD17E_0_0.eot?#iefix") format("embedded-opentype"), url("../../assets/fonts/futura/2FD17E_0_0.woff2") format("woff2"), url("../../assets/fonts/futura/2FD17E_0_0.woff") format("woff"), url("../../assets/fonts/futura/2FD17E_0_0.ttf") format("truetype");
+    font-style: normal;
+    font-weight: normal;
+  }
+
   html {
-    font-family: 'Roboto', SUPERSCIPT_OVERRIDE, Helvetica, sans-serif;
+    @apply font-sans;
     overflow-y: scroll; /* always show the right scrollbar to avoid flickering */
   }
 
