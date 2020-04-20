@@ -12,6 +12,25 @@ interface Props {
   content: string
   placeholder: string
   readonly: boolean
+  update: (content: string) => Promise<void> | void
+}
+
+const saveStates = {
+  UNSAVED: 'UNSAVED',
+  SAVING: 'SAVING',
+  SAVED: 'SAVED',
+  FAILED: 'FAILED',
+}
+
+const getSaveState = (saveState: string) => {
+  switch (saveState) {
+    case saveStates.SAVING:
+      return 'saving…'
+    case saveStates.SAVED:
+      return 'saved.'
+    default:
+      return ''
+  }
 }
 
 const RichText = createComponent<Props>({
@@ -19,8 +38,9 @@ const RichText = createComponent<Props>({
     content: String,
     placeholder: String,
     readonly: Boolean,
+    update: Function,
   },
-  setup(props, { emit }) {
+  setup(props) {
     const state = reactive({
       editor: useEditor({
         extensions: [
@@ -37,9 +57,23 @@ const RichText = createComponent<Props>({
         ),
         editable: !props.readonly,
         content: props.content,
-        onUpdate: (content) => emit('update', content),
+        onUpdate: async(content: string) => {
+          state.saveState = saveStates.SAVING
+          try {
+            // wait a minimum of 500ms for the transition
+            await Promise.all([
+              props.update(content),
+              new Promise(resolve => setTimeout(resolve, 500)),
+            ])
+            state.saveState = saveStates.SAVED
+          } catch (e) {
+            console.error(e)
+            state.saveState = saveStates.FAILED
+          }
+        },
       }),
       editing: false,
+      saveState: saveStates.UNSAVED,
     })
 
     const { editor } = state
@@ -47,7 +81,10 @@ const RichText = createComponent<Props>({
     if (!props.readonly) {
       editor.on('focus', () => { state.editing = true })
 
-      const onOutclick = () => { state.editing = false }
+      const onOutclick = () => {
+        state.editing = false
+        state.saveState = saveStates.UNSAVED
+      }
 
       onMounted(() => {
         document.body.addEventListener('click', onOutclick)
@@ -84,6 +121,19 @@ const RichText = createComponent<Props>({
                 >
                   <i class="el-icon-edit" /> click to edit
                 </button>}
+            </FadeTransition>
+            <FadeTransition>
+              {state.editing && <p class="m-0 ml-auto text-sm leading-6 text-gray-700" onClick={stopPropagation}>
+                <FadeTransition>
+                  {state.saveState === saveStates.FAILED
+                    ? <button class="el-button el-button--mini" onClick={() => editor.emitUpdate()}>
+                        Retry
+                    </button>
+                    : <span key={state.saveState}>
+                      {getSaveState(state.saveState)}
+                    </span>}
+                </FadeTransition>
+              </p> }
             </FadeTransition>
           </header>
         )}

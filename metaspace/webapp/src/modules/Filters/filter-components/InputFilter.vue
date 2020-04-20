@@ -28,6 +28,7 @@
 </template>
 
 <script>
+import { debounce } from 'lodash-es'
 import TagFilter from './TagFilter.vue'
 import Vue from 'vue'
 
@@ -41,6 +42,7 @@ export default Vue.extend({
     value: [String, Number],
     removable: { type: Boolean, default: true },
     mode: { type: String, default: 'text' },
+    debounce: Boolean,
   },
   data(vm) {
     return {
@@ -51,6 +53,11 @@ export default Vue.extend({
     value: function() {
       this.localValue = this.value
     },
+  },
+  created() {
+    if (this.debounce) {
+      this.onChange = debounce(this.onChange, 500)
+    }
   },
   methods: {
     onChange(val) {

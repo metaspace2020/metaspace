@@ -101,3 +101,7 @@
 .el-dialog-lean .el-dialog__body {
   padding: 0 theme('margin.5')
 }
+
+.el-message__content {
+  @apply leading-snug;
+}

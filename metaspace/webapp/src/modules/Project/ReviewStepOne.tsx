@@ -1,12 +1,13 @@
 import { createComponent, reactive } from '@vue/composition-api'
 import { Button, Input, Collapse, CollapseItem } from 'element-ui'
 
-import { WorkflowItem } from '../../components/Workflow'
+import { WorkflowStep } from '../../components/Workflow'
 import { RichTextArea } from '../../components/RichText'
 import confirmPrompt from '../../components/confirmPrompt'
 
 import { ViewProjectResult } from '../../api/project'
 import { parseValidationErrors } from '../../api/validation'
+import router from '../../router'
 
 function getInitialModel(project: ViewProjectResult, currentUserName = '') {
   const year = new Date().getFullYear()
@@ -42,7 +43,7 @@ interface State {
   formActive: boolean
 }
 
-const EnablePeerReview = createComponent<Props>({
+const ReviewStepOne = createComponent<Props>({
   props: {
     active: Boolean,
     canUndo: Boolean,
@@ -52,7 +53,7 @@ const EnablePeerReview = createComponent<Props>({
     done: Boolean,
     project: Object,
   },
-  setup(props, { root }) {
+  setup(props) {
     const state = reactive<State>({
       errors: {},
       loading: false,
@@ -89,17 +90,18 @@ const EnablePeerReview = createComponent<Props>({
       }, props.deleteLink)
     }
 
-    const { href } = root.$router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined, true)
+    const { href } = router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined, true)
     const projectUrlPrefix = location.origin + href.replace('REMOVE', '')
 
     return () => (
-      <WorkflowItem
+      <WorkflowStep
         active={props.active}
         done={props.done}
       >
         <h2 class="sm-workflow-header">Enable peer review</h2>
         <p>
-          A review link allows reviewers to access this project and its datasets <strong>without making the project available to everyone</strong>.
+          A review link allows reviewers to access this project and its datasets{' '}
+          <strong>without making the project available to everyone</strong>.
         </p>
         <p>
           <em>Reviewers will not need to create an account to gain access.</em>
@@ -162,9 +164,9 @@ const EnablePeerReview = createComponent<Props>({
             </Button>
           </form>
         }
-      </WorkflowItem>
+      </WorkflowStep>
     )
   },
 })
 
-export default EnablePeerReview
+export default ReviewStepOne

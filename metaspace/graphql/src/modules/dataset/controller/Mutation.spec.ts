@@ -2,15 +2,8 @@ import config from '../../../utils/config';
 import * as _ from 'lodash';
 
 import {processingSettingsChanged} from './Mutation';
-import {
-  doQuery, onAfterAll, onAfterEach,
-  onBeforeAll, onBeforeEach, setupTestUsers, testEntityManager,
-} from '../../../tests/graphqlTestEnvironment';
-import {PublicationStatusOptions as PSO} from '../../project/PublicationStatusOptions';
-import {createTestDatasetInProject} from '../../../tests/testDataCreation';
-import {Dataset as DatasetType} from '../../../binding';
-import {Dataset as DatasetModel, DatasetProject as DatasetProjectModel} from '../model';
 import {EngineDataset, EngineDataset as EngineDatasetModel} from '../../engine/model';
+
 
 describe('processingSettingsChanged', () => {
   const metadata = {
@@ -114,52 +107,5 @@ describe('processingSettingsChanged', () => {
 
     expect(newDB).toBe(false);
     expect(procSettingsUpd).toBe(false);
-  });
-});
-
-describe('Dataset delete/update/hide not allowed for published ones', () => {
-  beforeAll(onBeforeAll);
-  afterAll(onAfterAll);
-  beforeEach(async () => {
-    await onBeforeEach();
-    await setupTestUsers();
-  });
-  afterEach(onAfterEach);
-
-  const deleteDataset = `mutation ($datasetId: String!) {
-      deleteDataset(id: $datasetId)
-    }`,
-    updateDataset = `mutation ($datasetId: String!, $input: DatasetUpdateInput!) {
-      updateDataset(id: $datasetId, input: $input)
-    }`;
-
-  it('Not allowed to delete under review or published dataset', async () => {
-    const dataset = await createTestDatasetInProject(PSO.UNDER_REVIEW);
-
-    const promise = doQuery<DatasetType>(deleteDataset, { datasetId: dataset.id });
-
-    await expect(promise).rejects.toThrowError(/Cannot modify dataset/);
-    await testEntityManager.findOneOrFail(DatasetModel, dataset.id);
-  });
-
-  it('Not allowed to make published dataset private', async () => {
-    const dataset = await createTestDatasetInProject(PSO.PUBLISHED);
-
-    const promise = doQuery<DatasetType>(updateDataset, { datasetId: dataset.id, input: { isPublic: false }});
-
-    await expect(promise).rejects.toThrowError(/Cannot modify dataset/);
-    const { isPublic } = await testEntityManager.findOneOrFail(EngineDatasetModel, dataset.id);
-    expect(isPublic).toBe(true);
-  });
-
-  it('Not allowed to remove datasets from published project', async () => {
-    const dataset = await createTestDatasetInProject(PSO.UNDER_REVIEW);
-
-    const promise = doQuery<DatasetType>(updateDataset, { datasetId: dataset.id, input: { projectIds: [] }});
-
-    await expect(promise).rejects.toThrowError(/Cannot modify dataset/);
-    const { projectId } = await testEntityManager.findOneOrFail(
-      DatasetProjectModel, { datasetId: dataset.id });
-    expect(projectId).toBeDefined();
   });
 });

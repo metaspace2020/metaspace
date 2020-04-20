@@ -6,6 +6,7 @@ import registerMockDirective from './registerMockDirective'
 import { Wrapper, config as vueTestConfig } from '@vue/test-utils'
 import { replaceConfigWithDefaultForTests } from '../../src/lib/config'
 import VueCompositionApi from '@vue/composition-api'
+import './mockGenerateId'
 
 window.fetch = jest.fn()
 

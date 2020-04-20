@@ -4,7 +4,7 @@ exports[`NewFeatureBadge should hide the badge 1`] = `
 Array [
   "el-badge",
   "sm-feature-badge",
-  "hidden",
+  "sm-feature-badge--hidden",
 ]
 `;
 

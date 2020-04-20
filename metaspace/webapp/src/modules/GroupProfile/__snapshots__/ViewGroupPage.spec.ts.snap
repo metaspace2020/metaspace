@@ -7,7 +7,7 @@ exports[`ViewGroupPage datasets tab should match snapshot (non-member) 1`] = `
     <div class="header-row">
       <div class="header-names">
         <h1>group name</h1>
-        <h2 class="short-name">
+        <h2 class="ml-3 text-gray-600">
           (groupShortName)
         </h2>
       </div>
@@ -63,7 +63,7 @@ exports[`ViewGroupPage members tab should match snapshot (invited) 1`] = `
     <div class="header-row">
       <div class="header-names">
         <h1>group name</h1>
-        <h2 class="short-name">
+        <h2 class="ml-3 text-gray-600">
           (groupShortName)
         </h2>
       </div>
@@ -134,7 +134,7 @@ exports[`ViewGroupPage members tab should match snapshot (manager, including tab
     <div class="header-row">
       <div class="header-names">
         <h1>group name</h1>
-        <h2 class="short-name">
+        <h2 class="ml-3 text-gray-600">
           (groupShortName)
         </h2>
       </div>
@@ -384,7 +384,7 @@ exports[`ViewGroupPage members tab should match snapshot (member) 1`] = `
     <div class="header-row">
       <div class="header-names">
         <h1>group name</h1>
-        <h2 class="short-name">
+        <h2 class="ml-3 text-gray-600">
           (groupShortName)
         </h2>
       </div>
@@ -432,7 +432,7 @@ exports[`ViewGroupPage members tab should match snapshot (non-member) 1`] = `
     <div class="header-row">
       <div class="header-names">
         <h1>group name</h1>
-        <h2 class="short-name">
+        <h2 class="ml-3 text-gray-600">
           (groupShortName)
         </h2>
       </div>
@@ -485,7 +485,7 @@ exports[`ViewGroupPage settings tab should match snapshot 1`] = `
     <div class="header-row">
       <div class="header-names">
         <h1>group name</h1>
-        <h2 class="short-name">
+        <h2 class="ml-3 text-gray-600">
           (groupShortName)
         </h2>
       </div>

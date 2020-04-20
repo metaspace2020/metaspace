@@ -631,7 +631,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
               <div>
                 <div class="el-form-item name is-required"><label for="name" class="el-form-item__label">Name</label>
                   <div class="el-form-item__content">
-                    <div class="el-input">
+                    <div class="max-w-measure-4 el-input">
                       <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
                       <!---->
                       <!---->
@@ -657,13 +657,13 @@ exports[`MetadataEditor should match snapshot 1`] = `
               </h4>
               <div>
                 <div class="dataset-checkbox-list">
-                  <div><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
+                  <div class="mb-1"><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
         allDatasets.0.name
-        <span class="reset-color">(Submitted Invalid Date at Invalid Date)</span>
+        <span class="text-gray-700 proportional-nums">(submitted <mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time>)</span>
                       <!----></span></label></div>
-                  <div><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
+                  <div class="mb-1"><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
         allDatasets.1.name
-        <span class="reset-color">(Submitted Invalid Date at Invalid Date)</span>
+        <span class="text-gray-700 proportional-nums">(submitted <mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time>)</span>
                       <!----></span></label></div>
                 </div>
                 <div class="select-buttons"><a href="#">Select none</a> <span> | </span> <a href="#">Select all</a></div>

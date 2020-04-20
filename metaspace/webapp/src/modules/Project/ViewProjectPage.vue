@@ -91,7 +91,7 @@
             :placeholder="descriptionPlaceholder"
             :content="projectDescription"
             :readonly="!canEdit"
-            @update="updateDescription"
+            :update="updateDescription"
           />
         </el-tab-pane>
         <el-tab-pane
@@ -164,7 +164,7 @@
         </el-tab-pane>
       </el-tabs>
     </div>
-    <div v-if="loaded && project == null">
+    <div v-if="projectLoaded && project == null">
       This project does not exist, or you do not have access to it.
     </div>
   </div>
@@ -244,6 +244,10 @@ import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBa
         variables() {
           return { projectIdOrSlug: this.$route.params.projectIdOrSlug }
         },
+        update(data) {
+          this.projectLoaded = true
+          return data.project
+        },
         // Can't be 'no-cache' because `refetchProject` is used for updating the cache, which in turn updates
         // MetaspaceHeader's project.hasPendingRequest notification
         fetchPolicy: 'network-only',
@@ -295,6 +299,7 @@ import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBa
   })
 export default class ViewProjectPage extends Vue {
     projectLoading = 0;
+    projectLoaded = false;
     loaded = false;
     isAcceptingInvite = false;
     currentUser: CurrentUserRoleResult | null = null;
@@ -337,7 +342,7 @@ export default class ViewProjectPage extends Vue {
     }
 
     get visibleTabs() {
-      if (!this.loaded) {
+      if (this.project === null) {
         return []
       }
       if (this.canEdit) {

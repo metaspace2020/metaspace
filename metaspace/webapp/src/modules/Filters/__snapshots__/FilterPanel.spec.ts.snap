@@ -5,16 +5,19 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
   <mock-el-select placeholder="Add filter" class="filter-select">
     <mock-el-option value="offSample" label="Show/hide off-sample annotations"></mock-el-option>
   </mock-el-select>
-  <div class="tf-outer" data-test-key="simpleQuery" filter-key="simpleQuery" name="Simple query" options="">
-    <div class="tf-name"><i class="el-icon-search" style="color: white;"></i></div> <input type="text" placeholder="enter any keywords" class="tf-value tf-value-input">
+  <div class="tf-outer w-auto el-input el-input-group el-input-group--prepend" data-test-key="simpleQuery" filter-key="simpleQuery" name="Simple query" options="">
+    <div class="el-input-group__prepend"><i class="el-icon-search -mx-1"></i></div><input type="text" autocomplete="off" placeholder="Enter keywords" class="el-input__inner">
+    <!---->
+    <!---->
+    <!---->
     <!---->
   </div>
-  <div class="tf-outer" data-test-key="analyzerType" filter-key="analyzerType">
-    <div class="tf-name">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="analyzerType" filter-key="analyzerType">
+    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Analyzer type:
       <!---->
     </div>
-    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
+    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
         <mock-el-select filterable="true" value="FTICR">
           <mock-el-option label="analyzerTypes" value="analyzerTypes"></mock-el-option>
@@ -26,15 +29,14 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover>
-    <div class="tf-remove el-icon-error"></div>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
   </div>
-  <div class="tf-outer" data-test-key="fdrLevel" filter-key="fdrLevel">
-    <div class="tf-name">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="fdrLevel" filter-key="fdrLevel">
+    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       FDR:
       <!---->
     </div>
-    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
+    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
         <mock-el-select value="0.1">
           <mock-el-option label="5%" value="0.05"></mock-el-option>
@@ -51,12 +53,12 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     </mock-el-popover>
     <!---->
   </div>
-  <div class="tf-outer" data-test-key="metadataType" filter-key="metadataType">
-    <div class="tf-name">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="metadataType" filter-key="metadataType">
+    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Data type:
       <!---->
     </div>
-    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
+    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
         <mock-el-select filterable="true" value="ims">
           <mock-el-option label="Imaging MS" value="Imaging MS"></mock-el-option>
@@ -71,12 +73,12 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     </mock-el-popover>
     <!---->
   </div>
-  <div class="tf-outer" data-test-key="group" options="">
-    <div class="tf-name">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="group" options="">
+    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Group:
       <!---->
     </div>
-    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
+    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
         <mock-el-select placeholder="Start typing name" remote="" filterable="" clearable="" remote-method="function () { [native code] }" loading-text="Loading matching entries..." no-match-text="No matches" multiple-limit="10" value="0123">
           <mock-el-option value="0123" label="group.label"></mock-el-option>
@@ -93,15 +95,14 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover>
-    <div class="tf-remove el-icon-error"></div>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
   </div>
-  <div class="tf-outer" data-test-key="project" options="">
-    <div class="tf-name">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="project" options="">
+    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Project:
       <!---->
     </div>
-    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
+    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
         <mock-el-select placeholder="Start typing name" remote="" filterable="" clearable="" remote-method="function () { [native code] }" loading-text="Loading matching entries..." no-match-text="No matches" multiple-limit="10" value="4567">
           <mock-el-option value="4567" label="project.label"></mock-el-option>
@@ -118,15 +119,14 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover>
-    <div class="tf-remove el-icon-error"></div>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
   </div>
-  <div class="tf-outer" data-test-key="submitter" options="">
-    <div class="tf-name">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="submitter" options="">
+    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Submitter:
       <!---->
     </div>
-    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
+    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
         <mock-el-select placeholder="Start typing name" remote="" filterable="" clearable="" remote-method="function () { [native code] }" loading-text="Loading matching entries..." no-match-text="No matches" multiple-limit="10" value="89AB">
           <mock-el-option value="89AB" label="user.label"></mock-el-option>
@@ -144,15 +144,14 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover>
-    <div class="tf-remove el-icon-error"></div>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
   </div>
-  <div class="tf-outer" data-test-key="datasetIds" options="">
-    <div class="tf-name">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="datasetIds" options="">
+    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Dataset:
       <!---->
     </div>
-    <mock-el-popover trigger="click" placement="bottom" width="900" class="tf-value-container">
+    <mock-el-popover trigger="click" placement="bottom" width="900" class="tf-value-container pl-3">
       <div slot-key="default">
         <mock-el-select placeholder="Start typing name" remote="" filterable="" clearable="" remote-method="function () { [native code] }" loading-text="Loading matching entries..." no-match-text="No matches" multiple="true" multiple-limit="10" value="CDEF,GHIJ">
           <mock-el-option value="CDEF"></mock-el-option>
@@ -169,33 +168,62 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover>
-    <div class="tf-remove el-icon-error"></div>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
   </div>
-  <div class="tf-outer" data-test-key="minMSM" filter-key="minMSM" options="">
-    <div class="tf-name">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="minMSM" filter-key="minMSM" options="">
+    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Min. MSM:
+      <!---->
     </div>
-    <div class="tf-value"><span class="tf-value-span"><span>
+    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
+      <div slot-key="default">
+        <div class="el-input">
+          <!----><input type="text" autocomplete="off" class="el-input__inner">
+          <!---->
+          <!---->
+          <!---->
+          <!---->
+        </div>
+      </div>
+      <div slot-key="reference">
+        <div class="tf-value"><span class="tf-value-span"><span>
       0.5
-    </span></span></div>
-    <div class="tf-remove el-icon-error"></div>
+    </span></span>
+          <!---->
+        </div>
+      </div>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
   </div>
-  <div class="tf-outer" data-test-key="compoundName" filter-key="compoundName" options="">
-    <div class="tf-name">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="compoundName" filter-key="compoundName" options="">
+    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Molecule:
+      <!---->
     </div>
-    <div class="tf-value"><span class="tf-value-span"><span>
+    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
+      <div slot-key="default">
+        <div class="el-input">
+          <!----><input type="text" autocomplete="off" class="el-input__inner">
+          <!---->
+          <!---->
+          <!---->
+          <!---->
+        </div>
+      </div>
+      <div slot-key="reference">
+        <div class="tf-value"><span class="tf-value-span"><span>
       C8H20NO6P
-    </span></span></div>
-    <div class="tf-remove el-icon-error"></div>
+    </span></span>
+          <!---->
+        </div>
+      </div>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
   </div>
-  <div class="tf-outer" data-test-key="database" filter-key="database">
-    <div class="tf-name">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="database" filter-key="database">
+    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Database:
       <!---->
     </div>
-    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
+    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
         <mock-el-select filterable="true" value="HMDBv4">
           <mock-el-option label="molecularDatabases.0.name" value="molecularDatabases.0.name"></mock-el-option>
@@ -209,21 +237,45 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     </mock-el-popover>
     <!---->
   </div>
-  <div class="tf-outer" data-test-key="mz" filter-key="mz" options="">
-    <div class="tf-name">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="mz" filter-key="mz" options="">
+    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       m/z:
+      <!---->
     </div>
-    <div class="tf-value"><span class="tf-value-span"><span>
+    <mock-el-popover trigger="click" placement="bottom" width="240" class="tf-value-container pl-3">
+      <div slot-key="default">
+        <div>
+          <div class="w-full el-input-number is-controls-right" maxlength="10"><span role="button" class="el-input-number__decrease"><i class="el-icon-arrow-down"></i></span><span role="button" class="el-input-number__increase"><i class="el-icon-arrow-up"></i></span>
+            <div class="el-input">
+              <!----><input type="text" autocomplete="off" max="Infinity" min="-Infinity" class="el-input__inner" role="spinbutton" aria-valuemax="Infinity" aria-valuemin="-Infinity" aria-valuenow="296.0659" aria-disabled="undefined">
+              <!---->
+              <!---->
+              <!---->
+              <!---->
+            </div>
+          </div>
+          <p class="m-0 mt-2 leading-none text-xs">
+            For manual input, press Enter when done
+          </p>
+        </div>
+      </div>
+      <div slot-key="reference">
+        <div class="tf-value"><span><span class="tf-value-span">
       296.0659
-    </span></span></div> <span class="tf-value-suffix">± 0.0001</span>
-    <div class="tf-remove el-icon-error"></div>
+    </span> <span class="ml-1">
+      ± 0.0001
+    </span></span>
+          <!---->
+        </div>
+      </div>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
   </div>
-  <div class="tf-outer" data-test-key="polarity" filter-key="polarity">
-    <div class="tf-name">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="polarity" filter-key="polarity">
+    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Polarity:
       <!---->
     </div>
-    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
+    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
         <mock-el-select value="Positive">
           <mock-el-option label="Positive" value="Positive"></mock-el-option>
@@ -235,15 +287,14 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover>
-    <div class="tf-remove el-icon-error"></div>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
   </div>
-  <div class="tf-outer" data-test-key="organism" filter-key="organism">
-    <div class="tf-name">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="organism" filter-key="organism">
+    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Organism:
       <!---->
     </div>
-    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
+    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
         <mock-el-select filterable="true" value="cow">
           <mock-el-option label="organisms" value="organisms"></mock-el-option>
@@ -255,15 +306,14 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover>
-    <div class="tf-remove el-icon-error"></div>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
   </div>
-  <div class="tf-outer" data-test-key="organismPart" filter-key="organismPart">
-    <div class="tf-name">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="organismPart" filter-key="organismPart">
+    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Organism part:
       <!---->
     </div>
-    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
+    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
         <mock-el-select filterable="true" value="stomach">
           <mock-el-option label="organismParts" value="organismParts"></mock-el-option>
@@ -275,15 +325,14 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover>
-    <div class="tf-remove el-icon-error"></div>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
   </div>
-  <div class="tf-outer" data-test-key="condition" filter-key="condition">
-    <div class="tf-name">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="condition" filter-key="condition">
+    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Organism condition:
       <!---->
     </div>
-    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
+    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
         <mock-el-select filterable="true" value="hungry">
           <mock-el-option label="conditions" value="conditions"></mock-el-option>
@@ -295,15 +344,14 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover>
-    <div class="tf-remove el-icon-error"></div>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
   </div>
-  <div class="tf-outer" data-test-key="growthConditions" filter-key="growthConditions">
-    <div class="tf-name">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="growthConditions" filter-key="growthConditions">
+    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Sample growth conditions:
       <!---->
     </div>
-    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
+    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
         <mock-el-select filterable="true" value="paddock">
           <mock-el-option label="growthConditions" value="growthConditions"></mock-el-option>
@@ -315,15 +363,14 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover>
-    <div class="tf-remove el-icon-error"></div>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
   </div>
-  <div class="tf-outer" data-test-key="ionisationSource" filter-key="ionisationSource">
-    <div class="tf-name">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="ionisationSource" filter-key="ionisationSource">
+    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Source:
       <!---->
     </div>
-    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
+    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
         <mock-el-select filterable="true" value="MALDI">
           <mock-el-option label="ionisationSources" value="ionisationSources"></mock-el-option>
@@ -335,15 +382,14 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover>
-    <div class="tf-remove el-icon-error"></div>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
   </div>
-  <div class="tf-outer" data-test-key="maldiMatrix" filter-key="maldiMatrix">
-    <div class="tf-name">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="maldiMatrix" filter-key="maldiMatrix">
+    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Matrix:
       <!---->
     </div>
-    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
+    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
         <mock-el-select filterable="true" value="DHB">
           <mock-el-option label="maldiMatrices" value="maldiMatrices"></mock-el-option>
@@ -355,15 +401,14 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover>
-    <div class="tf-remove el-icon-error"></div>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
   </div>
-  <div class="tf-outer" data-test-key="adduct" filter-key="adduct" name="Adduct">
-    <div class="tf-name">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="adduct" filter-key="adduct" name="Adduct">
+    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Adduct:
       <!---->
     </div>
-    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
+    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
         <div>
           <mock-el-select remote-method="function () { [native code] }" placeholder="Select chemical modification" filterable="" clearable="" remote="">
@@ -390,8 +435,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover>
-    <div class="tf-remove el-icon-error"></div>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
   </div>
 </div>
 `;

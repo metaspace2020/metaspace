@@ -4,10 +4,11 @@
       <div
         v-for="dataset in datasets"
         :key="dataset.id"
+        class="mb-1"
       >
         <el-checkbox v-model="selectedDatasets[dataset.id]">
           {{ dataset.name }}
-          <span class="text-gray-700">(Submitted <elapsed-time :date="dataset.uploadDT" />)</span>
+          <span class="text-gray-700 proportional-nums">(submitted <elapsed-time :date="dataset.uploadDT" />)</span>
         </el-checkbox>
       </div>
     </div>
@@ -56,13 +57,6 @@ export default class DatasetCheckboxList extends Vue {
 
     created() {
       this.populateSelectedDatasetIds()
-    }
-
-    getDate() {
-      console.log(this.datasets)
-      return ''
-      // console.log(this.dataset && this.date.uploadDT)
-      // return this.datasets !== null && this.dataset.uploadDT
     }
 
     handleSelectNone() {
