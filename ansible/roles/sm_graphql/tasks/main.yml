@@ -47,7 +47,7 @@
 
 - name: Make sure folders for images exist
   file:
-    path: /opt/data/sm_data/public/{{ item }}
+    path: /opt/data/metaspace/public/{{ item }}
     state: directory
     mode: 0755
   with_items:

@@ -32,3 +32,4 @@ pysparkling
 docutils<0.15  # botocore requirement
 pylint==2.4.3  # to prevent new pylint rules failing CI job
 black==19.10b0  # to prevent new black rules failing CI job
+s3fs

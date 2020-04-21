@@ -7,7 +7,7 @@ import {EntityManager, In, Not} from 'typeorm';
 import * as moment from 'moment';
 import * as _ from 'lodash';
 
-import {smAPIRequest} from '../../../utils';
+import {smApiDatasetRequest} from '../../../utils/smApi/datasets';
 import {UserProjectRoleOptions as UPRO} from '../../project/model';
 import {PublicationStatusOptions as PSO} from '../../project/PublicationStatusOptions';
 import {UserGroup as UserGroupModel, UserGroupRoleOptions} from '../../group/model';
@@ -244,7 +244,7 @@ const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
   await saveDataset(entityManager, saveDSArgs, !datasetIdWasSpecified);
 
   const url = `/v1/datasets/${datasetId}/add`;
-  await smAPIRequest(url, {
+  await smApiDatasetRequest(url, {
     doc: {...input, metadata},
     priority: priority,
     force: force,
@@ -314,7 +314,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     let smAPIResp;
     if (reprocess) {
       await saveDataset(ctx.entityManager, saveDatasetArgs);
-      smAPIResp = await smAPIRequest(`/v1/datasets/${datasetId}/add`, {
+      smAPIResp = await smApiDatasetRequest(`/v1/datasets/${datasetId}/add`, {
         doc: {...engineDataset, ...update, ...(metadata ? {metadata} : {})},
         del_first: procSettingsUpd || delFirst,  // delete old results if processing settings changed
         priority: priority,
@@ -329,7 +329,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
         }));
       } else {
         await saveDataset(ctx.entityManager, saveDatasetArgs);
-        smAPIResp = await smAPIRequest(`/v1/datasets/${datasetId}/update`, {
+        smAPIResp = await smApiDatasetRequest(`/v1/datasets/${datasetId}/update`, {
           doc: {
             ..._.omit(update, 'metadataJson'),
             ...(metadata ? {metadata} : {})
@@ -361,7 +361,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId);
     // TODO support image storage running on a separate host
     const url = `http://localhost:${config.img_storage_port}${imageUrl}`;
-    const resp = await smAPIRequest(`/v1/datasets/${datasetId}/add-optical-image`, {
+    const resp = await smApiDatasetRequest(`/v1/datasets/${datasetId}/add-optical-image`, {
       url, transform
     });
 
@@ -372,7 +372,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
   deleteOpticalImage: async (source, { datasetId }, ctx: Context) => {
     logger.info(`User '${ctx.getUserIdOrFail()}' deleting optical image from '${datasetId}' dataset...`);
     await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId);
-    const resp = await smAPIRequest(`/v1/datasets/${datasetId}/del-optical-image`, {});
+    const resp = await smApiDatasetRequest(`/v1/datasets/${datasetId}/del-optical-image`, {});
 
     logger.info(`Optical image was deleted from '${datasetId}' dataset`);
     return JSON.stringify(resp);

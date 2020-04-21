@@ -1,5 +1,6 @@
 
-type MolecularDatabase {
+# TODO: update webapp code
+type MolecularDB {
   id: Int!
   name: String!
   version: String!
@@ -9,12 +10,41 @@ type MolecularDatabase {
   public: Boolean!
   archived: Boolean!  # Cannot be used for dataset processing
   targeted: Boolean!  # If true keep all annotations regardless of their FDR
+  fullName: String
+  description: String
+  link: String
+  citation: String
+}
+
+input CreateMolecularDBInput {
+  name: String!
+  version: String!
+  filePath: String!
+  groupId: ID!
+  fullName: String
+  description: String
+  link: String
+  citation: String
+}
+
+input UpdateMolecularDBInput {
+  archived: Boolean
+  fullName: String
+  description: String
+  link: String
+  citation: String
 }
 
 type Query {
   molecularDatabases(hideArchived: Boolean=false,
     hideDeprecated: Boolean=false @deprecated(reason: "Only hideArchived should be used"),
-    onlyLastVersion: Boolean=false @deprecated(reason: "Only hideArchived should be used")): [MolecularDatabase!]
+    onlyLastVersion: Boolean=false @deprecated(reason: "Only hideArchived should be used")): [MolecularDB!]
+}
+
+type Mutation {
+  createMolecularDB(databaseDetails: CreateMolecularDBInput!): MolecularDB!
+  updateMolecularDB(databaseId: Int!, databaseDetails: UpdateMolecularDBInput!): MolecularDB!
+  deleteMolecularDB(databaseId: Int!): Boolean!
 }
 
 schema {

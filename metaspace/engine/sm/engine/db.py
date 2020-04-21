@@ -57,18 +57,18 @@ def transaction_context():
     if hasattr(thread_local, 'conn'):
         yield thread_local.conn
     else:
-        logger.info('Starting transaction')
+        logger.debug('Starting transaction')
         thread_local.conn = ConnectionPool.get_conn()
 
         try:
             yield thread_local.conn
 
         except Exception as e:
-            logger.info('Rolling back transaction')
+            logger.debug('Rolling back transaction')
             thread_local.conn.rollback()
             raise
         else:
-            logger.info('Committing transaction')
+            logger.debug('Committing transaction')
             thread_local.conn.commit()
         finally:
             ConnectionPool.return_conn(thread_local.conn)
@@ -231,4 +231,7 @@ class DB:
         columns : list
             column names to insert into
         """
-        self._curs.copy_from(inp_file, table=table, sep=sep, columns=columns)
+        self._curs.copy_expert(
+            f"COPY {table} ({', '.join(columns)}) FROM STDIN WITH (FORMAT CSV, DELIMITER '{sep}')",
+            inp_file,
+        )

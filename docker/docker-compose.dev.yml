@@ -48,6 +48,8 @@ services:
       - ./sm-engine/install-dbs.sh:/install-dbs.sh:ro
     environment:
       - SM_DOCKER_ENV=development
+    ports:
+      - "5123:5123"
 
   sm-update-daemon:
     volumes:
@@ -71,6 +73,10 @@ services:
       - ./sm-graphql/docker-entrypoint.sh:/docker-entrypoint.sh:ro
     environment:
       - SM_DOCKER_ENV=development
+    ports:
+      - "3010:3010"
+      - "5666:5666"
+      - "4201:4201"
 
   sm-webapp:
     volumes:
@@ -78,6 +84,8 @@ services:
       - ./sm-webapp/docker-entrypoint.sh:/docker-entrypoint.sh:ro
     environment:
       - SM_DOCKER_ENV=development
+    ports:
+      - "8082:8082"
 
   nginx:
     ports:

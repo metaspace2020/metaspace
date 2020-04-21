@@ -1,12 +1,9 @@
 import logging
 
-import pandas as pd
 import psycopg2.errors
 import bottle
 
-from sm.engine.db import transaction_context
 from sm.engine import molecular_db
-from sm.engine.molecular_db import import_molecules_from_df, MalformedCSV
 from sm.rest.utils import (
     body_to_json,
     make_response,
@@ -26,7 +23,7 @@ app = bottle.Bottle()
 def create():
     """Create a molecular database and import molecules.
 
-    Body format: {
+    Request: {
         name - short database name
         version - database version, any string
         group_id - UUID of group database belongs to
@@ -36,6 +33,16 @@ def create():
         link - public database URL
         citation - database citation string
     }
+
+    Response: {
+        status - success or error type
+        data?: {
+            id - unique int id
+            name
+            version
+        }
+        errors? - list of database import errors
+    }
     """
     params = None
     try:
@@ -44,23 +51,18 @@ def create():
 
         required_fields = ['name', 'version', 'group_id', 'file_path']
         if not all([field in params for field in required_fields]):
-            return make_response(WRONG_PARAMETERS, data=f'Required fields: {required_fields}')
+            return make_response(WRONG_PARAMETERS, errors=[f'Required fields: {required_fields}'])
 
-        with transaction_context():
-            file_path = params.pop('file_path')
-            params['public'] = False
-            moldb = molecular_db.create(**params)
-            moldb_df = pd.read_csv(file_path, sep='\t')
-            import_molecules_from_df(moldb, moldb_df)
-            # TODO: update "targeted" field
+        params['public'] = False
+        moldb = molecular_db.create(**params)
 
         return make_response(OK, data=moldb.to_dict())
     except psycopg2.errors.UniqueViolation:  # pylint: disable=no-member
         logger.exception(f'Database already exists. Params: {params}')
         return make_response(ALREADY_EXISTS)
-    except MalformedCSV as e:
+    except molecular_db.MalformedCSV as e:
         logger.exception(f'Malformed CSV file. Params: {params}')
-        return make_response(MALFORMED_CSV, errors=e.errors)
+        return make_response(MALFORMED_CSV, errors=e.args[0])
     except Exception:
         logger.exception(f'Server error. Params: {params}')
         return make_response(INTERNAL_ERROR)
@@ -82,12 +84,22 @@ def delete(moldb_id):
 def update(moldb_id):
     """Update a molecular database.
 
-    Body format: {
+    Request: {
         archived: {true/false}
         description - database description
         full_name - full database name
         link - public database URL
         citation - database citation string
+    }
+
+    Response: {
+        status - success or error type
+        data?: {
+            id - unique int id
+            name
+            version
+        }
+        errors? - list of database import errors
     }
     """
     params = None

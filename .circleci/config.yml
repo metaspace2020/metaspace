@@ -31,7 +31,7 @@ jobs:
       - run:
           name: Run tests
           command: |
-            mkdir -p /opt/data/sm_data/public/
+            mkdir -p /opt/data/metaspace/public/
             psql -h localhost -U sm -c "CREATE ROLE postgres WITH LOGIN SUPERUSER PASSWORD 'postgres'"
             psql -h localhost -U sm -c "CREATE DATABASE sm_test owner sm"
             psql -h localhost -U sm -d sm_test -c "CREATE EXTENSION \"uuid-ossp\";"

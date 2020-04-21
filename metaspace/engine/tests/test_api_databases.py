@@ -112,9 +112,9 @@ def test_create_moldb_wrong_formulas(request_mock, fill_db):
 
     assert resp['status'] == MALFORMED_CSV['status']
     assert resp['errors']
-    err_fields = ['line', 'formula', 'error']
-    for err_doc in resp['errors']:
-        assert all(f in err_doc for f in err_fields)
+    for err_line in resp['errors'].split('\n')[1:]:
+        for err_field in ['line', 'formula', 'error']:
+            assert err_field in err_line
 
     db = DB()
     (db_count,) = db.select_one(MOLDB_COUNT_SEL)

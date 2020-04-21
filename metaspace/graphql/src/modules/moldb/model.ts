@@ -39,14 +39,14 @@ export class MolecularDB {
   @OneToMany(type => Molecule, molecule => molecule.molecularDB)
   molecules: Molecule[];
 
-  @Column({ type: 'bool', default: false })
-  public: Boolean;  // At this point, only the Metaspace provided databases are public
+  @Column({ type: 'boolean', default: false })
+  public: boolean;  // At this point, only the Metaspace provided databases are public
 
-  @Column({ type: 'bool', default: false })
-  archived: Boolean;
+  @Column({ type: 'boolean', default: false })
+  archived: boolean;
 
-  @Column({ type: 'bool', default: false })
-  targeted: Boolean;  // All the Metaspace provided databases are untargeted
+  @Column({ type: 'boolean', default: false })
+  targeted: boolean;  // All the Metaspace provided databases are untargeted
 
   @Column({ type: 'uuid', default: null })
   groupId: string;

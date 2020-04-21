@@ -2,10 +2,10 @@ import {UserError} from 'graphql-errors';
 import fetch from 'node-fetch';
 import * as _ from 'lodash';
 
-import config from './config';
-import logger from './logger';
+import config from '../config';
+import logger from '../logger';
 
-interface SMAPIBody {
+interface DatasetRequestBody {
   doc?: Object;
   email?: string;
   priority?: boolean;
@@ -30,35 +30,35 @@ const fieldRenameMap = {
   analysisVersion: 'analysis_version',
 };
 
-export const smAPIRequest = async (uri: string, args: any={}) => {
-  const body: SMAPIBody = args || {};
+export const smApiDatasetRequest = async (uri: string, args: any={}) => {
+  const reqDoc: DatasetRequestBody = args || {};
   // @ts-ignore
-  body.doc = _.mapKeys(body.doc, (v, k) => fieldRenameMap[k] || k);
+  reqDoc.doc = _.mapKeys(reqDoc.doc, (v, k) => fieldRenameMap[k] || k);
 
-  let rawResp = await fetch(`http://${config.services.sm_engine_api_host}${uri}`, {
+  let resp = await fetch(`http://${config.services.sm_engine_api_host}${uri}`, {
     method: 'POST',
-    body: JSON.stringify(body),
+    body: JSON.stringify(reqDoc),
     headers: {
       'Content-Type': 'application/json'
     }
   });
 
-  const resp = await rawResp.json();
-  if (!rawResp.ok) {
-    if (resp.status === 'dataset_busy') {
+  const respDoc = await resp.json();
+  if (!resp.ok) {
+    if (respDoc.status === 'dataset_busy') {
       throw new UserError(JSON.stringify({
         'type': 'dataset_busy',
         'hint': `Dataset is busy. Try again later.`
       }));
     }
     else {
-      throw new UserError(`smAPIRequest: ${JSON.stringify(resp)}`);
+      throw new UserError(`smAPIRequest: ${JSON.stringify(respDoc)}`);
     }
   }
   else {
     logger.info(`Successful ${uri}`);
-    logger.debug(`Body: ${JSON.stringify(body)}`);
-    return resp;
+    logger.debug(`Body: ${JSON.stringify(reqDoc)}`);
+    return respDoc;
   }
 };
 
@@ -76,7 +76,7 @@ interface UpdateDatasetArgs {
 
 export const smAPIUpdateDataset = async (id: string, updates: UpdateDatasetArgs) => {
   try {
-    await smAPIRequest(`/v1/datasets/${id}/update`, {
+    await smApiDatasetRequest(`/v1/datasets/${id}/update`, {
       doc: updates
     });
   } catch (err) {
@@ -90,5 +90,5 @@ export interface DeleteDatasetArgs {
 }
 
 export const smAPIDeleteDataset = async (dsId: string, args?: DeleteDatasetArgs) => {
-  return await smAPIRequest(`/v1/datasets/${dsId}/delete`, args);
+  return await smApiDatasetRequest(`/v1/datasets/${dsId}/delete`, args);
 };

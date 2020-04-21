@@ -28,7 +28,7 @@ module.exports = {
   /* Settings for image storage.
      It's currently co-hosted with the GraphQL server. */
   img_upload: {
-    iso_img_fs_path: "/opt/data/sm_data/public/",
+    iso_img_fs_path: "/opt/data/metaspace/public/",
     categories: {
       iso_image: {
         type: 'image/png',
@@ -56,7 +56,7 @@ module.exports = {
   upload: {
     destination: '/opt/data/metaspace/uploads',
     bucket: '',
-    moldbPrefix: 'moldbs'
+    moldbPrefix: 'databases'
   },
 
   services: {

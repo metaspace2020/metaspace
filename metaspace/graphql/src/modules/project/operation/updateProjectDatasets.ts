@@ -2,7 +2,7 @@ import * as _ from 'lodash';
 import {Context} from '../../../context';
 import {Dataset as DatasetModel, DatasetProject as DatasetProjectModel} from '../../dataset/model';
 import {In} from 'typeorm';
-import {smAPIUpdateDataset} from '../../../utils/smAPI';
+import {smAPIUpdateDataset} from '../../../utils/smApi/datasets';
 
 
 export default async function (ctx: Context, projectId: string, datasetIds: string[], approved: Boolean | null) {
