@@ -12,13 +12,15 @@ import {
   onBeforeEach, setupTestUsers,
   testUser,
   userContext,
-} from "../../tests/graphqlTestEnvironment";
-import {Group, UserGroupRoleOptions as UGRO} from "../group/model";
+} from '../../tests/graphqlTestEnvironment';
+import {Group, UserGroupRoleOptions as UGRO} from '../group/model';
 import config from '../../utils/config';
-import * as _mockSmApiDatabases from '../../utils/smApi/databases'
 
+import * as smApiDatabases from '../../utils/smApi/databases';
 jest.mock('../../utils/smApi/databases');
-const mockSmApiDatabases = _mockSmApiDatabases as jest.Mocked<typeof _mockSmApiDatabases>
+const mockSmApiDatabases = smApiDatabases as jest.Mocked<typeof smApiDatabases>;
+
+jest.mock('./util/assertImportFileIsValid');
 
 
 describe('Molecular databases queries', () => {

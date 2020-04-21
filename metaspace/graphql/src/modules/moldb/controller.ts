@@ -1,13 +1,14 @@
-import {FieldResolversFor} from "../../bindingTypes";
-import {MolecularDB, Mutation, Query} from "../../binding";
-import {MolecularDB as MolecularDbModel} from "./model";
-import config from "../../utils/config";
-import logger from "../../utils/logger";
-import {IResolvers} from "graphql-tools";
-import {Context} from "../../context";
-import {UserError} from "graphql-errors";
-import {smApiCreateDatabase, smApiUpdateDatabase, smApiDeleteDatabase} from "../../utils/smApi/databases";
-import {In} from "typeorm";
+import {FieldResolversFor} from '../../bindingTypes';
+import {MolecularDB, Mutation, Query} from '../../binding';
+import {MolecularDB as MolecularDbModel} from './model';
+import config from '../../utils/config';
+import logger from '../../utils/logger';
+import {IResolvers} from 'graphql-tools';
+import {Context} from '../../context';
+import {UserError} from 'graphql-errors';
+import {smApiCreateDatabase, smApiUpdateDatabase, smApiDeleteDatabase} from '../../utils/smApi/databases';
+import {In} from 'typeorm';
+import {assertImportFileIsValid} from './util/assertImportFileIsValid';
 
 
 const mapToGqlMolecularDb = (molDB: MolecularDbModel): MolecularDB => {
@@ -17,7 +18,6 @@ const mapToGqlMolecularDb = (molDB: MolecularDbModel): MolecularDB => {
     hidden: molDB.archived || !molDB.public,
   }
 };
-
 
 const QueryResolvers: FieldResolversFor<Query, void> = {
   async molecularDatabases(source, { hideArchived }, ctx): Promise<MolecularDB[]> {
@@ -54,12 +54,10 @@ const assertUserCanEditMolecularDB = async (ctx: Context, databaseId: number) =>
 const MutationResolvers: FieldResolversFor<Mutation, void>  = {
   async createMolecularDB(source, { databaseDetails }, ctx): Promise<MolecularDB> {
     logger.info(`User ${ctx.user.id} is creating molecular database ${JSON.stringify(databaseDetails)}`);
-    const groupId = <string>databaseDetails.groupId;
+    const groupId = databaseDetails.groupId as string;
     assertUserBelongsToGroup(ctx, groupId);
 
-    if (!databaseDetails.filePath.startsWith(`s3://${config.upload.bucket}/${config.upload.moldbPrefix}`)) {
-      throw new UserError('Wrong file path prefix');
-    }
+    await assertImportFileIsValid(databaseDetails.filePath);
 
     const { id } = await smApiCreateDatabase({ ...databaseDetails, groupId });
     const molDB = await ctx.entityManager.getRepository(MolecularDbModel).findOneOrFail({ id });
