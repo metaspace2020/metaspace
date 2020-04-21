@@ -77,7 +77,9 @@ module.exports = {
       lineHeight: {
         '12': '3rem'
       },
-
+      fontSize: {
+        '2xl+': '1.75rem'
+      }
     }
   },
   variants: {

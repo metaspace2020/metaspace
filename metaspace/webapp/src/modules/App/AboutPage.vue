@@ -33,8 +33,14 @@
         </div>
       </div>
     </div>
-    <div id="about">
-      <section class="about-features">
+    <div
+      id="about"
+      class="my-12 mx-auto px-12 box-border max-w-4xl baseline-grid-24"
+    >
+      <section class="sm-about-features mt-6">
+        <h2 class="sr-only">
+          Features
+        </h2>
         <div>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -50,7 +56,7 @@
             class="secondary"
             rx="1"
           /></svg>
-          <h2>Metabolite annotation</h2>
+          <h3>Metabolite annotation</h3>
           <p>
             <router-link to="/upload">
               Submit<!--
@@ -70,7 +76,7 @@
             class="secondary"
             d="M12 21V5a5 5 0 0 1 4-2h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4.34a2 2 0 0 0-1.42.59l-.83.82A2 2 0 0 1 12 21z"
           /></svg>
-          <h2>Explore the knowledgebase</h2>
+          <h3>Explore the knowledgebase</h3>
           <p>
             <router-link to="/annotations">
               Browse<!--
@@ -92,7 +98,7 @@
             class="secondary"
             d="M14 10h2a1 1 0 0 1 .81 1.58l-5 7A1 1 0 0 1 10 18v-4H8a1 1 0 0 1-.81-1.58l5-7A1 1 0 0 1 14 6v4z"
           /></svg>
-          <h2>Get going fast</h2>
+          <h3>Get going fast</h3>
           <p>
             Head to the <router-link to="/upload">
               upload<!--
@@ -113,7 +119,7 @@
             class="secondary"
             d="M12 19a1 1 0 0 0 1-1v-1.27A2 2 0 0 0 12 13v-3h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7v-3zm5-12a1 1 0 0 1-2 0 3 3 0 0 0-6 0v3H7V7a5 5 0 1 1 10 0z"
           /></svg>
-          <h2>Open access</h2>
+          <h3>Open access</h3>
           <p>
             All code is <a href="https://github.com/metaspace2020">open-source</a> and the input format is <a
               href="http://imzml.org/"
@@ -122,9 +128,11 @@
           </p>
         </div>
       </section>
-      <section class="about-details">
-        <h1>Frequently asked questions</h1>
-        <h2>What is the METASPACE platform?</h2>
+      <section class="sm-about-details max-w-measure-4 mt-12">
+        <h2 class="font-display all-small-caps text-primary leading-12 m-0">
+          Frequently asked questions
+        </h2>
+        <h3>What is the METASPACE platform?</h3>
         <p>
           The METASPACE platform hosts an engine for metabolite annotation of imaging mass spectrometry data as well as a
           spatial metabolite knowledgebase of the metabolites from hundreds of public datasets provided by the
@@ -135,9 +143,9 @@
             href="https://www.embl.de/research/units/scb/alexandrov/"
           >Alexandrov team at EMBL</a>.
         </p>
-        <h2>
+        <h3>
           How can I contribute?
-        </h2>
+        </h3>
         <p>
           Please read <a href="https://www.nature.com/nmeth/journal/v14/n1/full/nmeth.4072.html">our publication in Nature
             Methods</a>, follow us on <a href="https://twitter.com/metaspace2020">Twitter</a>, spread the word, and think of
@@ -150,9 +158,9 @@
             thousands of metabolites found in hundreds of community-provided datasets.
           </li>
         </ul>
-        <h2>
+        <h3>
           How shall I cite METASPACE in a publication?
-        </h2>
+        </h3>
         <p>
           Please cite our publication <a
             href="http://www.nature.com/nmeth/journal/v14/n1/full/nmeth.4072.html"
@@ -160,9 +168,9 @@
           and
           refer to <a href="https://metaspace2020.eu">https://metaspace2020.eu</a>.
         </p>
-        <h2>
+        <h3>
           How to stay in touch?
-        </h2>
+        </h3>
         <p>
           Follow us on <a href="https://twitter.com/metaspace2020">Twitter</a>
           or subscribe to the <a
@@ -174,9 +182,9 @@
           <a href="https://gitter.im/metaspace2020/metaspace">chat with us on Gitter</a> or
           <a href="mailto:contact@metaspace2020.eu">contact us by email</a>.
         </p>
-        <h2 id="please-appreciate-those-who-funded-it">
+        <h3 id="please-appreciate-those-who-funded-it">
           Funding
-        </h2>
+        </h3>
         <div class="funding-logos">
           <img
             src="../../assets/eu_flag.jpg"
@@ -192,12 +200,19 @@
           European Union’s Horizon 2020 programme under grant agreement 634402,
           and from the National Institutes of Health NIDDK Kidney Precision Medicine Project.
         </p>
-        <h2>Other acknowledgements</h2>
+        <h3>Other acknowledgements</h3>
         <p>
           Icons by <a href="http://www.freepik.com/">Freepik</a> from <a href="http://www.flaticon.com">www.flaticon.com</a>
         </p>
       </section>
     </div>
+    <footer class="bg-gray-100 border-0 border-t border-solid border-gray-400">
+      <div class="max-w-4xl mx-auto p-12 box-border">
+        <p class="text-sm">
+          &copy; 2020 Alexandrov Lab
+        </p>
+      </div>
+    </footer>
     <el-dialog
       width="600px"
       custom-class="mailing-list-dialog"
@@ -270,7 +285,7 @@ export default class AboutPage extends Vue {
 }
 </script>
 
-<style lang="scss">
+<style>
   .sm-banner-gradient {
     background-image: linear-gradient(
       to right,
@@ -281,29 +296,14 @@ export default class AboutPage extends Vue {
     );
   }
 
-  #about {
-    margin: calc(var(--lineHeight) * 2) auto;
-    max-width: 960px;
-    padding: 0px calc(var(--lineHeight) * 2);
-    box-sizing: border-box;
-  }
-
-  #about h1 {
-    @apply text-primary;
-    font-family: 'FuturaBT-Medium', 'Roboto', Helvetica, sans-serif;
-    line-height: calc(var(--lineHeight) * 2);
-    font-variant-caps: all-small-caps;
+  /* #about h2, */
+  #about h3 {
+    @apply font-display font-medium leading-12 text-2xl+;
     margin: 0;
-  }
-
-  #about h2 {
-    font-family: 'FuturaBT-Medium', 'Roboto', Helvetica, sans-serif;
-    margin: 0;
-    line-height: calc(var(--lineHeight) * 2)
   }
 
   #about p {
-    margin: 0 0 var(--lineHeight);
+    @apply m-0 mb-6;
   }
 
   #about ul {
@@ -312,54 +312,36 @@ export default class AboutPage extends Vue {
   }
 
   #about li {
-    margin-bottom: var(--lineHeight);
+    @apply mb-6;
   }
 
   #about svg .primary {
-    fill: hsl(208, 77%, 34%);
+    fill: theme('colors.blue.800');
   }
 
   #about svg .secondary {
-    fill: hsl(208, 80%, 74%);
+    fill: theme('colors.blue.300');
   }
 
-  #about strong {
-    font-weight: 500;
-  }
-
-  #about .about-features {
+  #about .sm-about-features {
     display: grid;
-    grid-gap: var(--lineHeight);
+    grid-gap: theme('spacing.6');
     grid-template-columns: 100%;
-    margin-top: var(--lineHeight);
   }
 
-  #about .about-features svg {
-    display: block;
-    width: 32px;
-    height: 32px;
-    padding: 8px;
-    border-radius: 50%;
-    background-color: hsl(208, 100%, 94%);
-    margin: calc(var(--lineHeight) / 2) 0;
+  #about .sm-about-features svg {
+    @apply block w-8 h-8 p-2 rounded-full bg-blue-100 my-3;
   }
 
-  #about .about-details {
-    max-width: 70ch;
-    margin-top: calc(var(--lineHeight) * 2);
-    // margin-left: auto;
-    // margin-right: auto;
-  }
-
-  #about .about-details h2:not(:first-of-type) {
-    margin-top: calc(var(--lineHeight) * 2);
+  #about .sm-about-details h3:not(:first-of-type) {
+    @apply mt-12;
   }
 
   @media (min-width: 400px) {
-    #about .about-features {
+    #about .sm-about-features {
       grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
     }
-    #about .about-features p {
+    #about .sm-about-features p {
       max-width: 40ch;
       margin-bottom: 0;
     }
