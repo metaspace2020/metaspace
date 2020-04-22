@@ -8,14 +8,19 @@ import {
   testEntityManager,
   testUser
 } from '../../../tests/graphqlTestEnvironment';
-import { createTestProject } from '../../../tests/testDataCreation';
+import { createTestDataset, createTestProject } from '../../../tests/testDataCreation';
 import {
   Project as ProjectModel,
   UserProject as UserProjectModel,
   UserProjectRoleOptions,
 } from '../model';
+import { DatasetProject as DatasetProjectModel } from '../../dataset/model';
 import { PublicationStatusOptions as PSO } from '../PublicationStatusOptions';
 import { Project as ProjectType } from '../../../binding';
+
+import * as smAPI from '../../../utils/smAPI';
+jest.mock('../../../utils/smAPI');
+const mockSmApi = smAPI as jest.Mocked<typeof smAPI>;
 
 
 describe('Project publication status manipulations', () => {
@@ -100,12 +105,19 @@ describe('Project publication status manipulations', () => {
     const project = await createTestProject({ isPublic: false, publicationStatus: PSO.UNDER_REVIEW });
     await testEntityManager.insert(UserProjectModel,
       { userId, projectId: project.id, role: UserProjectRoleOptions.MANAGER });
+    const datasetBelongsToProject = await createTestDataset({}, { isPublic: false });
+    await testEntityManager.insert(DatasetProjectModel,
+      { datasetId: datasetBelongsToProject.id, projectId: project.id, approved: true });
+    const randomDataset = await createTestDataset({}, { isPublic: false });
 
     const result = await doQuery<ProjectType>(publishProject, { projectId: project.id });
 
     expect(result).toEqual(expect.objectContaining({ publicationStatus: PSO.PUBLISHED, isPublic: true }));
     const updatedProject = await testEntityManager.findOne(ProjectModel, { id: project.id });
     expect(updatedProject).toEqual(expect.objectContaining({ publicationStatus: PSO.PUBLISHED, isPublic: true }));
+
+    expect(mockSmApi.smAPIUpdateDataset).toHaveBeenCalledWith(datasetBelongsToProject.id, { isPublic: true });
+    expect(mockSmApi.smAPIUpdateDataset).not.toHaveBeenCalledWith(randomDataset.id, expect.anything());
   });
 
   test('Project member cannot publish project', async () => {
@@ -133,6 +145,10 @@ describe('Project publication status manipulations', () => {
     const project = await createTestProject(
       { isPublic: true, reviewToken: 'random-token', publicationStatus: PSO.PUBLISHED }
     );
+    const datasetBelongsToProject = await createTestDataset({}, { isPublic: true });
+    await testEntityManager.insert(DatasetProjectModel,
+      { datasetId: datasetBelongsToProject.id, projectId: project.id, approved: true });
+    const randomDataset = await createTestDataset({}, { isPublic: true });
 
     const result = await doQuery<ProjectType>(
       unpublishProject, { projectId: project.id, isPublic: false }, { context: adminContext }
@@ -141,6 +157,9 @@ describe('Project publication status manipulations', () => {
     expect(result).toEqual(expect.objectContaining({ isPublic: false, publicationStatus: PSO.UNDER_REVIEW }));
     let updatedProject = await testEntityManager.findOne(ProjectModel, { id: project.id });
     expect(updatedProject).toEqual(expect.objectContaining({ isPublic: false, publicationStatus: PSO.UNDER_REVIEW }));
+
+    expect(mockSmApi.smAPIUpdateDataset).toHaveBeenCalledWith(datasetBelongsToProject.id, { isPublic: false });
+    expect(mockSmApi.smAPIUpdateDataset).not.toHaveBeenCalledWith(randomDataset.id, expect.anything());
   });
 
   test.each([PSO.UNDER_REVIEW, PSO.PUBLISHED])(
