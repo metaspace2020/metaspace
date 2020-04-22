@@ -73,6 +73,7 @@ type Mutation {
   ## Managing projects
   createProject(projectDetails: CreateProjectInput!): Project!
   updateProject(projectId: ID!, projectDetails: UpdateProjectInput!): Project!
+  # Throws errors of type: "under_review_or_published"
   deleteProject(projectId: ID!): Boolean!
 
   ## Managing project users
