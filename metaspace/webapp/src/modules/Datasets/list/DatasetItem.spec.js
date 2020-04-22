@@ -37,7 +37,8 @@ describe('DatasetItem', () => {
     analyzer: {
       type: 'type'
     },
-    projects: []
+    projects: [],
+    uploadDT: '2020-04-17T11:37:50.318667'
   }
   const unpublished = { name: 'project', publicationStatus: 'UNPUBLISHED' }
   const underReview = { name: 'project', publicationStatus: 'UNDER_REVIEW' }
