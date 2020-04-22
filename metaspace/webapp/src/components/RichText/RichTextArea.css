@@ -1,10 +1,13 @@
-.sm-RichTextArea .ProseMirror * + * {
-  margin-top: 0.5rem;
+.sm-RichTextArea .ProseMirror > * + * {
+  @apply mt-2;
+}
+
+.sm-RichTextArea .ProseMirror > * + h2 {
+  @apply mt-4;
 }
 
 .sm-RichTextArea .ProseMirror h2 {
   @apply text-lg;
-  line-height: 2.625rem; /* 1.5rem * 0.875 * 2 */
 }
 
 .sm-RichTextArea:not(:focus-within) > label:hover + div {
