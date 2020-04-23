@@ -9,23 +9,10 @@
           src="../../assets/METASPACE_logomark.png"
           class="hidden md:block w-72 h-72 -ml-6"
         >
-        <div class="text-white box-border mx-10 h-72">
+        <div class="text-white box-border ml-10 h-72">
           <h1 class="m-0 md:mt-18 flex flex-col items-start">
             <span class="text-3xl leading-7">Welcome to</span>
-            <svg
-              viewBox="0 0 2060 256"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              class="w-auto md:h-18 py-3 -mt-1"
-            >
-              <!-- eslint-disable vue/max-len -->
-              <path
-                d="M1952.29 157.633H2040.99V103.124H1952.29V67.7929H2056.56V9.45909H1890.62V251.154H2059.89V192.814H1952.29V157.633ZM1525.27 174.766L1501.48 125.962L1478.67 174.766H1525.27ZM1502.69 0.547791L1633.63 251.154H1562.52L1547.18 219.7H1457.68L1442.98 251.154H1374.57L1502.69 0.547791ZM1092.07 106.14C1070.9 96.3808 1057.92 89.7504 1057.92 76.9667C1057.92 68.722 1065.09 63.7997 1077.09 63.7997C1097.1 63.7997 1112.08 84.6365 1112.08 84.6365L1145.61 37.497C1145.61 37.497 1121.32 5.45755 1072.42 5.45755C1020.23 5.45755 992.913 41.4298 992.913 76.9667C992.913 124.383 1028.78 141.708 1057.6 155.629C1075.85 164.445 1090.26 171.406 1090.26 182.98C1090.26 191.772 1083.76 196.815 1072.42 196.815C1043.72 196.815 1023.26 166.407 1023.26 166.407L984.224 214.042C984.224 214.042 1010.27 255.155 1071.09 255.155C1119.87 255.155 1155.27 224.52 1155.27 182.313C1155.27 135.28 1120.23 119.121 1092.07 106.14ZM1323.22 90.6357C1323.22 78.2707 1313.16 68.2095 1300.79 68.2095H1273.99V113.062H1300.79C1313.16 113.062 1323.22 103.001 1323.22 90.6357ZM1386.35 91.2898C1386.35 135.623 1350.14 173.075 1307.29 173.075H1273.99V251.41H1212.32V9.60909H1307.29C1350.14 9.60909 1386.35 47.0145 1386.35 91.2898ZM861.518 174.766L837.72 125.962L814.918 174.766H861.518ZM838.936 0.547791L969.872 251.154H898.768L883.43 219.7H793.924L779.228 251.154H710.811L838.936 0.547791ZM1767.86 196.815C1728.7 196.815 1701.35 169.467 1701.35 130.31C1701.35 89.9066 1725.36 63.7997 1762.53 63.7997C1798.86 63.7997 1808.93 82.6347 1808.93 82.6347L1841.22 36.6513C1841.22 36.6513 1815.44 5.45755 1762.53 5.45755C1685.87 5.45755 1636.34 54.4656 1636.34 130.31C1636.34 204.985 1687.19 255.155 1762.86 255.155C1812.06 255.155 1847.47 223.085 1847.47 223.085L1818.31 174.262C1818.31 174.262 1798.17 196.815 1767.86 196.815ZM727.831 9.45909H526.131V67.7929H596.141V251.154H657.817V67.7929H727.831V9.45909ZM374.544 157.633H463.242V103.124H374.544V67.7929H478.809V9.45909H312.869V251.154H482.144V192.814H374.544V157.633ZM121.283 95.0039L239.174 0.970657V251.154H177.501V129.943L121.381 174.583L61.8099 129.366V251.154H0.134644V1.1248L121.283 95.0039Z"
-                fill="white"
-              />
-              <!-- eslint-enable vue/max-len -->
-              <text>METASPACE</text>
-            </svg>
+            <metaspace class="w-auto md:h-18 py-3 -mt-1" />
           </h1>
           <p class="text-2xl leading-7 m-0 py-2">
             The platform for metabolite annotation
@@ -37,27 +24,14 @@
     </div>
     <div
       id="about"
-      class="my-12 mx-auto px-12 box-border max-w-4xl baseline-grid-24"
+      class="p-12 mx-auto box-border max-w-4xl _baseline-grid-24"
     >
-      <section class="sm-about-features mt-6">
+      <section class="sm-about-features">
         <h2 class="sr-only">
           Features
         </h2>
         <div>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-          ><path
-            class="primary"
-            d="M4 14a1 1 0 0 1 .3-.7l11-11a1 1 0 0 1 1.4 0l3 3a1 1 0 0 1 0 1.4l-11 11a1 1 0 0 1-.7.3H5a1 1 0 0 1-1-1v-3z"
-          /><rect
-            width="20"
-            height="2"
-            x="2"
-            y="20"
-            class="secondary"
-            rx="1"
-          /></svg>
+          <edit-icon />
           <h3>Metabolite annotation</h3>
           <p>
             <router-link to="/upload">
@@ -68,65 +42,34 @@
           </p>
         </div>
         <div>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-          ><path
-            class="primary"
-            d="M13.41 20.41a2 2 0 0 1-2.82 0l-.83-.82A2 2 0 0 0 8.34 19H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h4a5 5 0 0 1 4 2 5 5 0 0 1 4-2h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4.34a2 2 0 0 0-1.42.59l-.83.82z"
-          /><path
-            class="secondary"
-            d="M12 21V5a5 5 0 0 1 4-2h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4.34a2 2 0 0 0-1.42.59l-.83.82A2 2 0 0 1 12 21z"
-          /></svg>
+          <book-icon />
           <h3>Explore the knowledgebase</h3>
           <p>
             <router-link to="/annotations">
               Browse<!--
               -->
-            </router-link> annotations from all datasets using our interactive interface. Search, filter and compare your annotations with those from the community.
+            </router-link> annotations from all datasets using our interactive interface. Search and compare your annotations with those from the community.
           </p>
         </div>
         <div>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            class="w-8 mr-4 icon-bolt"
-          ><circle
-            cx="12"
-            cy="12"
-            r="10"
-            class="primary"
-          /><path
-            class="secondary"
-            d="M14 10h2a1 1 0 0 1 .81 1.58l-5 7A1 1 0 0 1 10 18v-4H8a1 1 0 0 1-.81-1.58l5-7A1 1 0 0 1 14 6v4z"
-          /></svg>
+          <bolt-icon />
           <h3>Get going fast</h3>
           <p>
             Head to the <router-link to="/upload">
               upload<!--
               -->
-            </router-link> page to submit a dataset.<br>We also have <router-link to="/help">
+            </router-link> page to submit a dataset. Not sure where to start? Please try our <router-link to="/help">
               interactive tutorials<!-- -->
             </router-link>.
           </p>
         </div>
         <div>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-          ><path
-            class="primary"
-            d="M11 16.73V18a1 1 0 0 0 2 0v-1.27a2 2 0 1 0-2 0zM5 10h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8c0-1.1.9-2 2-2z"
-          /><path
-            class="secondary"
-            d="M12 19a1 1 0 0 0 1-1v-1.27A2 2 0 0 0 12 13v-3h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7v-3zm5-12a1 1 0 0 1-2 0 3 3 0 0 0-6 0v3H7V7a5 5 0 1 1 10 0z"
-          /></svg>
+          <unlock-icon />
           <h3>Open access</h3>
           <p>
             All code is <a href="https://github.com/metaspace2020">open-source</a> and the input format is <a
               href="http://imzml.org/"
-            >imzML</a> as supported by all major mass spec. vendors. Metabolite annotations from community datasets are public
-            and can be exported.
+            >imzML</a> as supported by all major mass spec. vendors. Export metabolite annotations from public datasets.
           </p>
         </div>
       </section>
@@ -154,9 +97,9 @@
           us while doing good deeds :)
         </p>
         <ul>
-          <li><strong>Have high-resolution imaging mass spectrometry data</strong>? Please consider uploading.</li>
+          <li><strong>Have high-resolution imaging mass spectrometry data?</strong> Please consider uploading.</li>
           <li>
-            <strong>Are you a data scientist</strong>? Please feel free to the export the metabolite annotations to mine
+            <strong>Are you a data scientist?</strong> Please feel free to the export the metabolite annotations to mine
             thousands of metabolites found in hundreds of community-provided datasets.
           </li>
         </ul>
@@ -273,7 +216,21 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 
-  @Component
+import Metaspace from '../../assets/METASPACE.svg?inline'
+import EditIcon from '../../assets/icons/refactoring-ui-edit.svg?inline'
+import BookIcon from '../../assets/icons/refactoring-ui-book.svg?inline'
+import BoltIcon from '../../assets/icons/refactoring-ui-bolt.svg?inline'
+import UnlockIcon from '../../assets/icons/refactoring-ui-unlock.svg?inline'
+
+@Component({
+  components: {
+    Metaspace,
+    EditIcon,
+    BookIcon,
+    BoltIcon,
+    UnlockIcon,
+  },
+})
 export default class AboutPage extends Vue {
     showMailingListDialog = false;
 
@@ -325,12 +282,6 @@ export default class AboutPage extends Vue {
     fill: theme('colors.blue.300');
   }
 
-  #about .sm-about-features {
-    display: grid;
-    grid-gap: theme('spacing.6');
-    grid-template-columns: 100%;
-  }
-
   #about .sm-about-features svg {
     @apply block w-8 h-8 p-2 rounded-full bg-blue-100 my-3;
   }
@@ -339,12 +290,15 @@ export default class AboutPage extends Vue {
     @apply mt-12;
   }
 
-  @media (min-width: 400px) {
+  @screen md {
     #about .sm-about-features {
-      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      @apply -m-3 flex flex-wrap;
+    }
+    #about .sm-about-features > div {
+      @apply m-3;
+      width: calc(50% - theme('spacing.6'))
     }
     #about .sm-about-features p {
-      max-width: 40ch;
       margin-bottom: 0;
     }
   }

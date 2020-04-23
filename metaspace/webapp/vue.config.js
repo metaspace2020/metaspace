@@ -28,6 +28,20 @@ module.exports = {
           whitespace: 'preserve',
         }
       }))
+
+    const inlineSVG =
+      config.module
+        .rule('svg')
+        .oneOf('inline')
+
+    inlineSVG.uses.clear()
+    inlineSVG
+      .use('babel-loader')
+      .loader('babel-loader')
+      .end()
+      .use('vue-svg-loader')
+      .loader('vue-svg-loader')
+
   },
 
   configureWebpack: (config) => {
