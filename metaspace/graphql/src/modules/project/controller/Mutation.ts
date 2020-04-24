@@ -9,7 +9,7 @@ import { UserError } from 'graphql-errors';
 import { FieldResolversFor, ProjectSource, ScopeRoleOptions as SRO, UserProjectSource } from '../../../bindingTypes';
 import { Mutation } from '../../../binding';
 import { ProjectSourceRepository } from '../ProjectSourceRepository';
-import { Dataset as DatasetModel, DatasetProject as DatasetProjectModel } from '../../dataset/model';
+import { DatasetProject as DatasetProjectModel } from '../../dataset/model';
 import updateUserProjectRole from '../operation/updateUserProjectRole';
 import { convertUserToUserSource } from '../../user/util/convertUserToUserSource';
 import { createInactiveUser } from '../../auth/operation';
@@ -260,7 +260,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
     await ctx.entityManager.update(ProjectModel, projectId, {
       publicationStatus: PSO.PUBLISHED,
-      // TODO: publishedDT: utc(),
+      publishedDT: utc(),
       isPublic: true
     });
 
