@@ -1,5 +1,4 @@
 import {
-  adminContext,
   doQuery,
   onAfterAll, onAfterEach,
   onBeforeAll,
@@ -16,6 +15,7 @@ import {
 } from '../model';
 import {PublicationStatusOptions as PSO} from '../PublicationStatusOptions';
 import {Project as ProjectType} from '../../../binding';
+import {DatasetProject as DatasetProjectModel} from '../../dataset/model';
 
 
 describe('Project publication status manipulations', () => {
@@ -33,129 +33,59 @@ describe('Project publication status manipulations', () => {
   const createReviewLink = `mutation ($projectId: ID!) {
       createReviewLink(projectId: $projectId) { id isPublic reviewToken publicationStatus }
     }`,
-    deleteReviewLink = `mutation ($projectId: ID!) {
-      deleteReviewLink(projectId: $projectId)
-    }`,
     publishProject = `mutation ($projectId: ID!) {
-      publishProject(projectId: $projectId) { id publicationStatus isPublic }
-    }`,
-    unpublishProject = `mutation ($projectId: ID!, $isPublic: Boolean!) {
-      unpublishProject(projectId: $projectId, isPublic: $isPublic) { id publicationStatus isPublic }
+      publishProject(projectId: $projectId) { id publicationStatus }
     }`,
     deleteProject = `mutation ($projectId: ID!) {
       deleteProject(projectId: $projectId)
     }`,
     updateProject = `mutation ($projectId: ID!, $projectDetails: UpdateProjectInput!) {
-      updateProject(projectId: $projectId, projectDetails: $projectDetails) {
-        id name urlSlug projectDescriptionAsHtml
-      }
-    }`,
-    addExternalLink = `mutation($projectId: String!) {
-      addProjectExternalLink(
-        projectId: $projectId,
-        provider: "MetaboLights",
-        link: "https://www.ebi.ac.uk/metabolights/MTBLS000",
-        replaceExisting: true
-      ) { id }
-    }`,
-    removeExternalLink = `mutation($projectId: String!) {
-      removeProjectExternalLink(
-        projectId: $projectId,
-        provider: "MetaboLights",
-        link: "https://www.ebi.ac.uk/metabolights/MTBLS000"
-      ) { id }
+      updateProject(projectId: $projectId, projectDetails: $projectDetails) { id }
     }`;
 
-  test('Project manager can create/delete review links', async () => {
+  test('Create review link changes publication status', async () => {
     const project = await createTestProject({ isPublic: false, publicationStatus: PSO.UNPUBLISHED });
     await testEntityManager.insert(UserProjectModel,
       { userId, projectId: project.id, role: UserProjectRoleOptions.MANAGER });
+    const dataset = await createTestDataset();
+    await testEntityManager.insert(DatasetProjectModel,
+      { datasetId: dataset.id, projectId: project.id, approved: true });
 
-    let result = await doQuery<ProjectType>(createReviewLink, { projectId: project.id });
+    const result = await doQuery<ProjectType>(createReviewLink, { projectId: project.id });
 
     expect(result).toEqual(expect.objectContaining(
       { isPublic: false, reviewToken: expect.anything(), publicationStatus: PSO.UNDER_REVIEW }));
-    let updatedProject = await testEntityManager.findOne(ProjectModel, { id: project.id });
-    expect(updatedProject).toEqual(expect.objectContaining({ isPublic: false, publicationStatus: PSO.UNDER_REVIEW }));
-
-    result = await doQuery<ProjectType>(deleteReviewLink, { projectId: project.id });
-
-    expect(result).toBe(true);
-    updatedProject = await testEntityManager.findOne(ProjectModel, { id: project.id });
-    expect(updatedProject).toEqual(expect.objectContaining({ isPublic: false, publicationStatus: PSO.UNPUBLISHED }));
+    const datasetProject = await testEntityManager.findOne(DatasetProjectModel,
+      { projectId: project.id, publicationStatus: PSO.UNDER_REVIEW });
+    expect(datasetProject).toBeDefined();
   });
 
-  test('Project member cannot create review link', async () => {
-    const project = await createTestProject({ isPublic: true, publicationStatus: PSO.PUBLISHED });
-    await testEntityManager.insert(
-      UserProjectModel,{ userId, projectId: project.id, role: UserProjectRoleOptions.MEMBER }
-    );
-
-    const promise = doQuery<ProjectType>(createReviewLink, { projectId: project.id });
-
-    await expect(promise).rejects.toThrow(/Unauthorized/);
-  });
-
-  test('Project manager can publish project', async () => {
+  test('Project publish changes publication status and visibility', async () => {
     const project = await createTestProject({ isPublic: false, publicationStatus: PSO.UNDER_REVIEW });
     await testEntityManager.insert(UserProjectModel,
       { userId, projectId: project.id, role: UserProjectRoleOptions.MANAGER });
+    const dataset = await createTestDataset();
+    await testEntityManager.insert(DatasetProjectModel,
+      { datasetId: dataset.id, projectId: project.id, approved: true });
 
     const result = await doQuery<ProjectType>(publishProject, { projectId: project.id });
 
-    expect(result).toEqual(expect.objectContaining({ publicationStatus: PSO.PUBLISHED, isPublic: true }));
-    const updatedProject = await testEntityManager.findOne(ProjectModel, { id: project.id });
-    expect(updatedProject).toEqual(expect.objectContaining({ publicationStatus: PSO.PUBLISHED, isPublic: true }));
+    expect(result.publicationStatus).toBe(PSO.PUBLISHED);
+    const datasetProject = await testEntityManager.findOne(DatasetProjectModel,
+      { projectId: project.id, publicationStatus: PSO.PUBLISHED });
+    expect(datasetProject).toBeDefined();
   });
 
-  test('Project member cannot publish project', async () => {
-    const project = await createTestProject({ isPublic: false, publicationStatus: PSO.UNDER_REVIEW });
-    await testEntityManager.insert(
-      UserProjectModel,{ userId, projectId: project.id, role: UserProjectRoleOptions.MEMBER }
-    );
-
-    const promise = doQuery<ProjectType>(publishProject, { projectId: project.id });
-
-    await expect(promise).rejects.toThrow(/Unauthorized/);
-  });
-
-  test('Project manager cannot unpublish project', async () => {
-    const project = await createTestProject({ isPublic: true, publicationStatus: PSO.PUBLISHED });
+  test('Not allowed to delete published project', async () => {
+    const project = await createTestProject({ publicationStatus: PSO.UNDER_REVIEW });
     await testEntityManager.insert(UserProjectModel,
       { userId, projectId: project.id, role: UserProjectRoleOptions.MANAGER });
 
-    const promise = doQuery<ProjectType>(unpublishProject, { projectId: project.id, isPublic: false });
+    const promise = doQuery<ProjectType>(deleteProject, { projectId: project.id });
 
-    await expect(promise).rejects.toThrow(/Unauthorized/);
+    await expect(promise).rejects.toThrow(/Cannot modify project/);
+    await testEntityManager.findOneOrFail(ProjectModel, project.id);
   });
-
-  test('Admins can unpublish project', async () => {
-    const project = await createTestProject(
-      { isPublic: true, reviewToken: 'random-token', publicationStatus: PSO.PUBLISHED }
-    );
-
-    const result = await doQuery<ProjectType>(
-      unpublishProject, { projectId: project.id, isPublic: false }, { context: adminContext }
-    );
-
-    expect(result).toEqual(expect.objectContaining({ isPublic: false, publicationStatus: PSO.UNDER_REVIEW }));
-    let updatedProject = await testEntityManager.findOne(ProjectModel, { id: project.id });
-    expect(updatedProject).toEqual(expect.objectContaining({ isPublic: false, publicationStatus: PSO.UNDER_REVIEW }));
-  });
-
-  test.each([PSO.UNDER_REVIEW, PSO.PUBLISHED])(
-    'Not allowed to delete project in %s status',
-    async (status) => {
-      const project = await createTestProject({ publicationStatus: status });
-      await testEntityManager.insert(UserProjectModel,
-        { userId, projectId: project.id, role: UserProjectRoleOptions.MANAGER });
-
-      const promise = doQuery<ProjectType>(deleteProject, { projectId: project.id });
-
-      await expect(promise).rejects.toThrow(/Cannot modify project/);
-      await testEntityManager.findOneOrFail(ProjectModel, project.id);
-    }
-  );
 
   test('Not allowed to make published project private', async () => {
     const project = await createTestProject({ publicationStatus: PSO.PUBLISHED });
@@ -168,42 +98,5 @@ describe('Project publication status manipulations', () => {
     await expect(promise).rejects.toThrow(/Cannot modify project/);
     const { isPublic } = await testEntityManager.findOneOrFail(ProjectModel, project.id);
     expect(isPublic).toBe(true);
-  });
-
-  test.each([PSO.UNDER_REVIEW, PSO.PUBLISHED])(
-    'Allowed to update project in %s status',
-    async (status) => {
-      const project = await createTestProject({ publicationStatus: status });
-      await testEntityManager.insert(UserProjectModel,
-        { userId, projectId: project.id, role: UserProjectRoleOptions.MANAGER });
-      const projectDetails = { name: 'new name', urlSlug: 'new_slug', projectDescriptionAsHtml: 'new description' };
-
-      const result = await doQuery<ProjectType>(updateProject, { projectId: project.id, projectDetails });
-
-      await expect(result).toEqual(expect.objectContaining(projectDetails));
-      const updatedProject = await testEntityManager.findOneOrFail(ProjectModel, project.id);
-      expect(updatedProject).toEqual(expect.objectContaining(projectDetails));
-    }
-  );
-
-  test('Allowed to add external link to published project', async () => {
-    const project = await createTestProject({ publicationStatus: PSO.PUBLISHED });
-    await testEntityManager.insert(UserProjectModel,
-      { userId, projectId: project.id, role: UserProjectRoleOptions.MANAGER });
-
-    const result = await doQuery<ProjectType>(addExternalLink, { projectId: project.id });
-
-    await expect(result).toEqual(expect.objectContaining({ id: project.id }));
-  });
-
-  test('Allowed to remove external link from published project', async () => {
-    const project = await createTestProject({ publicationStatus: PSO.PUBLISHED });
-    await testEntityManager.insert(UserProjectModel,
-      { userId, projectId: project.id, role: UserProjectRoleOptions.MANAGER });
-    await doQuery<ProjectType>(addExternalLink, { projectId: project.id });
-
-    const result = await doQuery<ProjectType>(removeExternalLink, { projectId: project.id });
-
-    await expect(result).toEqual(expect.objectContaining({ id: project.id }));
   });
 });

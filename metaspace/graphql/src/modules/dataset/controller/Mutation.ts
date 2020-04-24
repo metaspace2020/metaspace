@@ -19,10 +19,7 @@ import {getUserProjectRoles} from '../../../utils/db';
 import {metadataSchemas} from '../../../../metadataSchemas/metadataRegistry';
 import {getDatasetForEditing} from '../operation/getDatasetForEditing';
 import {deleteDataset} from '../operation/deleteDataset';
-import {
-  checkProjectsPublicationStatus,
-  checkNoPublishedProjectRemoved
-} from '../operation/publicationChecks';
+import {verifyDatasetPublicationStatus} from '../operation/verifyDatasetPublicationStatus';
 import {EngineDataset} from '../../engine/model';
 import {addExternalLink, removeExternalLink} from '../../project/ExternalLink';
 import {esDatasetByID} from '../../../../esConnector';
@@ -170,10 +167,7 @@ const saveDataset = async (entityManager: EntityManager, args: SaveDatasetArgs, 
 
   if (projectIds != null) {
     const datasetProjectRepo = entityManager.getRepository(DatasetProjectModel);
-    const existingDatasetProjects = await datasetProjectRepo.find({
-      relations: ['project'],
-      where: { datasetId: datasetId }
-    });
+    const existingDatasetProjects = await datasetProjectRepo.find({ datasetId: datasetId });
     const userProjectRoles = await getUserProjectRoles(entityManager, submitterId);
     const savePromises = projectIds
       .map((projectId) => ({
@@ -186,7 +180,9 @@ const saveDataset = async (entityManager: EntityManager, args: SaveDatasetArgs, 
         await datasetProjectRepo.save({ datasetId: datasetId, projectId, approved });
       });
     const deletePromises = existingDatasetProjects
-      .filter(({ projectId, project }) => !projectIds.includes(projectId))
+      .filter(({ projectId, publicationStatus }) =>
+        !projectIds.includes(projectId) && publicationStatus == PSO.UNPUBLISHED
+      )
       .map(async ({projectId}) => { await datasetProjectRepo.delete({ datasetId: datasetId, projectId }); });
 
     await Promise.all([...savePromises, ...deletePromises]);
@@ -298,13 +294,8 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
       }
     }
 
-    if (!ctx.isAdmin) {
-      if (update.isPublic == false) {
-        await checkProjectsPublicationStatus(ctx.entityManager, datasetId, [PSO.PUBLISHED]);
-      }
-      if (update.projectIds != null) {
-        await checkNoPublishedProjectRemoved(ctx.entityManager, datasetId, update.projectIds as string[]);
-      }
+    if (update.isPublic == false || update.projectIds != null) {
+      await verifyDatasetPublicationStatus(ctx.entityManager, datasetId);
     }
 
     const engineDataset = await ctx.entityManager.findOneOrFail(EngineDataset, datasetId);
@@ -334,7 +325,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
       if (reprocessingNeeded) {
         throw new UserError(JSON.stringify({
           'type': 'reprocessing_needed',
-          'message': `Reprocessing needed. Provide 'reprocess' flag.`
+          'hint': `Reprocessing needed. Provide 'reprocess' flag.`
         }));
       } else {
         await saveDataset(ctx.entityManager, saveDatasetArgs);
@@ -357,9 +348,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     if (ctx.user.id == null) {
       throw new UserError('Unauthorized');
     }
-    await checkProjectsPublicationStatus(
-      ctx.entityManager, datasetId, [PSO.UNDER_REVIEW, PSO.PUBLISHED]
-    );
+    await verifyDatasetPublicationStatus(ctx.entityManager, datasetId);
     const resp = await deleteDataset(ctx.entityManager, ctx.user, datasetId, { force });
     return JSON.stringify(resp);
   },

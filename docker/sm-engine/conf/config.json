@@ -36,7 +36,6 @@
     "update_daemon_threads": 4
   },
   "fs": {
-    "data_path": "/opt/data/metaspace",
     "spark_data_path": "/tmp/metaspace",
     "s3_base_path": ""
   },

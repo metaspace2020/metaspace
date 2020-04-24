@@ -12,7 +12,7 @@ import {
   setupTestUsers,
   shallowFieldsOfSchemaType,
   testEntityManager,
-  testUser, userContext,
+  testUser,
 } from '../../../tests/graphqlTestEnvironment';
 import {createBackgroundData, validateBackgroundData} from '../../../tests/backgroundDataCreation';
 
@@ -148,13 +148,10 @@ describe('modules/project/controller (CRUD mutations)', () => {
       // Assert
       await expect(promise).rejects.toThrow('Unauthorized');
     });
-    it('should not reject a urlSlug from the manager', async () => {
-      // Arrange
-      await testEntityManager.insert(UserProjectModel, {userId, projectId, role: UPRO.MANAGER});
-
+    it('should not reject a urlSlug from an admin', async () => {
       // Act
       const result = await doQuery<ProjectType>(updateProject,
-        { projectId, projectDetails: projectDetailsWithSlug }, { context: userContext });
+        { projectId, projectDetails: projectDetailsWithSlug }, { context: adminContext });
 
       // Assert
       const project = await testEntityManager.findOneOrFail(ProjectModel, projectId);

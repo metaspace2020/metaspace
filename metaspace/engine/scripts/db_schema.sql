@@ -80,6 +80,7 @@ CREATE TABLE "graphql"."dataset_project" (
   "dataset_id" text NOT NULL, 
   "project_id" uuid NOT NULL, 
   "approved" boolean NOT NULL, 
+  "publication_status" text NOT NULL DEFAULT 'UNPUBLISHED', 
   CONSTRAINT "PK_9511b6cda2f4d4299812106cdd4" PRIMARY KEY ("dataset_id", 
   "project_id")
 );

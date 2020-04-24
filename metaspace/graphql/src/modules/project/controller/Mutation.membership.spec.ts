@@ -187,8 +187,8 @@ describe('modules/project/controller (membership-related mutations)', () => {
 
       expect(await testEntityManager.find(DatasetProjectModel, {datasetId: In(datasetIds)}))
         .toEqual(expect.arrayContaining([
-          {datasetId: datasetIds[0], projectId, approved: true},
-          {datasetId: datasetIds[1], projectId, approved: true},
+          {datasetId: datasetIds[0], projectId, approved: true, publicationStatus: PSO.UNPUBLISHED},
+          {datasetId: datasetIds[1], projectId, approved: true, publicationStatus: PSO.UNPUBLISHED},
         ]));
     });
 
@@ -204,8 +204,8 @@ describe('modules/project/controller (membership-related mutations)', () => {
 
       expect(await testEntityManager.find(DatasetProjectModel, {datasetId: In(datasetIds)}))
         .toEqual(expect.arrayContaining([
-          {datasetId: datasetIds[0], projectId, approved: true},
-          {datasetId: datasetIds[1], projectId, approved: true},
+          {datasetId: datasetIds[0], projectId, approved: true, publicationStatus: PSO.UNPUBLISHED},
+          {datasetId: datasetIds[1], projectId, approved: true, publicationStatus: PSO.UNPUBLISHED},
         ]));
     });
 
@@ -266,8 +266,8 @@ describe('modules/project/controller (membership-related mutations)', () => {
 
       expect(await testEntityManager.find(DatasetProjectModel, {datasetId: In(datasetIds)}))
         .toEqual(expect.arrayContaining([
-          {datasetId: datasetIds[0], projectId, approved},
-          {datasetId: datasetIds[1], projectId, approved},
+          {datasetId: datasetIds[0], projectId, approved, publicationStatus: PSO.UNPUBLISHED},
+          {datasetId: datasetIds[1], projectId, approved, publicationStatus: PSO.UNPUBLISHED},
         ]));
       await validateBackgroundData(bgData);
     });
