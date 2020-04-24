@@ -200,16 +200,6 @@ export default class ProjectsListItem extends Vue {
       }
     }
 
-    formatDate(date: string) {
-      const parsedDate = parse(date)
-      return isValid(parsedDate) ? format(parsedDate, 'YYYY-MM-DD') : '????-??-??'
-    }
-
-    toLocaleDT(date: string) {
-      const parsedDate = parse(date)
-      return isValid(parsedDate) ? parsedDate.toLocaleString() : ''
-    }
-
     @ConfirmAsync(function(this: ProjectsListItem) {
       return {
         message: `Are you sure you want to delete ${this.project.name}?`,
