@@ -98,7 +98,7 @@ const ReviewStepOne = createComponent<Props>({
         active={props.active}
         done={props.done}
       >
-        <h2 class="sm-workflow-header">Enable peer review</h2>
+        <h2 class="sm-workflow-header">Create link for reviewers</h2>
         <p>
           A review link allows reviewers to access this project and its datasets{' '}
           <strong>without making the project available to everyone</strong>.
