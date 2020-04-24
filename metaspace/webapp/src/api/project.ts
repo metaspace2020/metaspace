@@ -104,7 +104,7 @@ export const importDatasetsIntoProjectMutation =
   }`
 
 export const createReviewLinkMutation =
-  gql`mutation($projectId: ID!) {
+  gql`mutation createReviewLinkMutation($projectId: ID!) {
     createReviewLink(projectId: $projectId) {
       reviewToken
       publicationStatus
@@ -112,12 +112,12 @@ export const createReviewLinkMutation =
   }`
 
 export const deleteReviewLinkMutation =
-  gql`mutation($projectId: ID!) {
+  gql`mutation deleteReviewLinkMutation($projectId: ID!) {
     deleteReviewLink(projectId: $projectId)
   }`
 
 export const updateProjectDOIMutation =
-  gql`mutation($projectId: ID!, $link: String!) {
+  gql`mutation updateProjectDOIMutation($projectId: ID!, $link: String!) {
     addProjectExternalLink(
       projectId: $projectId,
       provider: "DOI",
@@ -129,7 +129,7 @@ export const updateProjectDOIMutation =
   }`
 
 export const publishProjectMutation =
-  gql`mutation($projectId: ID!) {
+  gql`mutation publishProjectMutation($projectId: ID!) {
     publishProject(projectId: $projectId) {
       publicationStatus
     }

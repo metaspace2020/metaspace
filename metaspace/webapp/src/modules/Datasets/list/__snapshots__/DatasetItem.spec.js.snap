@@ -39,7 +39,7 @@ exports[`DatasetItem should be able to delete if unpublished 1`] = `
       RP 123k @ 1234
     </div>
     <div class="ds-item-line">
-      Submitted <mock-elapsed-time date=""></mock-elapsed-time> by
+      Submitted <mock-elapsed-time date="2020-04-17T11:37:50.318667"></mock-elapsed-time> by
       <span title="Filter by submitter" class="ds-add-filter">
         </span>
       <!---->
@@ -108,7 +108,7 @@ exports[`DatasetItem should not show the publication status if cannot edit 1`] =
       RP 123k @ 1234
     </div>
     <div class="ds-item-line">
-      Submitted <mock-elapsed-time date=""></mock-elapsed-time> by
+      Submitted <mock-elapsed-time date="2020-04-17T11:37:50.318667"></mock-elapsed-time> by
       <span title="Filter by submitter" class="ds-add-filter">
         </span>
       <!---->
@@ -175,7 +175,7 @@ exports[`DatasetItem should not show the publication status if processing 1`] = 
       RP 123k @ 1234
     </div>
     <div class="ds-item-line">
-      Submitted <mock-elapsed-time date=""></mock-elapsed-time> by
+      Submitted <mock-elapsed-time date="2020-04-17T11:37:50.318667"></mock-elapsed-time> by
       <span title="Filter by submitter" class="ds-add-filter">
         </span>
       <!---->
@@ -234,7 +234,7 @@ exports[`DatasetItem should prefer "Published" status 1`] = `
       RP 123k @ 1234
     </div>
     <div class="ds-item-line">
-      Submitted <mock-elapsed-time date=""></mock-elapsed-time> by
+      Submitted <mock-elapsed-time date="2020-04-17T11:37:50.318667"></mock-elapsed-time> by
       <span title="Filter by submitter" class="ds-add-filter">
         </span>
       <!---->
@@ -307,7 +307,7 @@ exports[`DatasetItem should show "Published" status 1`] = `
       RP 123k @ 1234
     </div>
     <div class="ds-item-line">
-      Submitted <mock-elapsed-time date=""></mock-elapsed-time> by
+      Submitted <mock-elapsed-time date="2020-04-17T11:37:50.318667"></mock-elapsed-time> by
       <span title="Filter by submitter" class="ds-add-filter">
         </span>
       <!---->
@@ -380,7 +380,7 @@ exports[`DatasetItem should show "Under review" status 1`] = `
       RP 123k @ 1234
     </div>
     <div class="ds-item-line">
-      Submitted <mock-elapsed-time date=""></mock-elapsed-time> by
+      Submitted <mock-elapsed-time date="2020-04-17T11:37:50.318667"></mock-elapsed-time> by
       <span title="Filter by submitter" class="ds-add-filter">
         </span>
       <!---->
@@ -453,7 +453,7 @@ exports[`DatasetItem should show admin options 1`] = `
       RP 123k @ 1234
     </div>
     <div class="ds-item-line">
-      Submitted <mock-elapsed-time date=""></mock-elapsed-time> by
+      Submitted <mock-elapsed-time date="2020-04-17T11:37:50.318667"></mock-elapsed-time> by
       <span title="Filter by submitter" class="ds-add-filter">
         </span>
       <!---->

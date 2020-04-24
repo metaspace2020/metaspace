@@ -10,34 +10,27 @@
 /*
   Text formatting
   ---------------
-  N.B. Numbers here do not follow the same "system" as Tailwind.
 */
 
 .sm-RichText .ProseMirror * {
   margin: 0;
 }
 
-.sm-RichText .ProseMirror * + * {
-  margin-top: 0.75rem;
+.sm-RichText .ProseMirror > * + * {
+  @apply mt-3;
+}
+
+.sm-RichText .ProseMirror > * + h2 {
+  @apply mt-6;
 }
 
 .sm-RichText .ProseMirror h2 {
-  @apply text-xl;
-  line-height: 3rem;
-}
-
-.sm-RichText .ProseMirror h2 + * {
-  margin-top: 0;
+  @apply text-xl leading-6;
 }
 
 .sm-RichText .ProseMirror ul {
-  padding-left: 1.5rem;
+  @apply pl-6;
   list-style: outside;
-}
-
-.sm-RichText .ProseMirror li,
-.sm-RichText .ProseMirror li > ul {
-  margin-top: 0
 }
 
 .sm-RichText .ProseMirror sub,

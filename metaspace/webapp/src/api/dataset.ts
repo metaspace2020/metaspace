@@ -81,6 +81,7 @@ export const datasetDetailItemFragment =
     thumbnailOpticalImageUrl
     ionThumbnailUrl
     canDownload
+    uploadDT
   }`
 
 export const datasetDetailItemsQuery =

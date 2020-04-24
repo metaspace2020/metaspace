@@ -87,7 +87,7 @@ exports[`DatasetTable should match snapshot 1`] = `
           RP 123k @ 1234
         </div>
         <div class="ds-item-line">
-          Submitted <mock-elapsed-time date=""></mock-elapsed-time> by
+          Submitted <mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time> by
           <span title="Filter by submitter" class="ds-add-filter">
         allDatasets.1.submitter.name</span><span>,
         <mock-el-dropdown show-timeout="50" placement="bottom" trigger="hover"><div slot-key="default"><span class="text-base text-primary cursor-pointer">
@@ -143,7 +143,7 @@ exports[`DatasetTable should match snapshot 1`] = `
         RP 123k @ 1234
       </div>
       <div class="ds-item-line">
-        Submitted <mock-elapsed-time date=""></mock-elapsed-time> by
+        Submitted <mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time> by
         <span title="Filter by submitter" class="ds-add-filter">
         allDatasets.0.submitter.name</span><span>,
         <mock-el-dropdown show-timeout="50" placement="bottom" trigger="hover"><div slot-key="default"><span class="text-base text-primary cursor-pointer">
@@ -199,7 +199,7 @@ exports[`DatasetTable should match snapshot 1`] = `
       RP 123k @ 1234
     </div>
     <div class="ds-item-line">
-      Submitted <mock-elapsed-time date=""></mock-elapsed-time> by
+      Submitted <mock-elapsed-time date="allDatasets.2.uploadDT"></mock-elapsed-time> by
       <span title="Filter by submitter" class="ds-add-filter">
         allDatasets.2.submitter.name</span><span>,
         <mock-el-dropdown show-timeout="50" placement="bottom" trigger="hover"><div slot-key="default"><span class="text-base text-primary cursor-pointer">

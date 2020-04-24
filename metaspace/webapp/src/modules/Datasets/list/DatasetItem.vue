@@ -93,7 +93,7 @@
       </div>
 
       <div class="ds-item-line">
-        Submitted <elapsed-time :date="getDate" /> by
+        Submitted <elapsed-time :date="dataset.uploadDT" /> by
         <span
           class="ds-add-filter"
           title="Filter by submitter"
@@ -300,22 +300,6 @@ export default {
 
     analyzerType() {
       return this.dataset.analyzer.type
-    },
-
-    getDate() {
-      const unknown = ''
-      if (!this.dataset.id) {
-        return unknown
-      }
-
-      const fields = this.dataset.id.split('_')
-      if (fields.length < 2) {
-        return unknown
-      }
-
-      const date = fields[0]
-      const time = fields[1].split('m')[0].replace('h', ':')
-      return `${date} ${time}`
     },
 
     metadata() {

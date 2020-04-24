@@ -17,6 +17,15 @@ function getTitle(date: Date) {
 }
 
 const dateConfig = { addSuffix: true }
+const seconds = /seconds/
+
+function getValue(date: Date) {
+  const value = distanceInWords(Date.now(), date, dateConfig)
+  if (seconds.test(value)) {
+    return 'just now'
+  }
+  return value
+}
 
 export default createComponent({
   props: {
@@ -30,7 +39,7 @@ export default createComponent({
         class="sm-elapsed-time"
         title={valid ? getTitle(parsedDate) : 'Date unavailable'}
       >
-        {valid ? distanceInWords(Date.now(), parsedDate, dateConfig) : 'some time ago'}
+        {valid ? getValue(parsedDate) : 'some time ago'}
       </span>
     )
   },

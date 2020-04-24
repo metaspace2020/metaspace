@@ -5,7 +5,7 @@ import { UserError } from 'graphql-errors';
 import { PublicationStatus } from "../../../binding";
 
 
-const fetchDsProjectsPublished = async (
+const fetchDatasetProjectsInStatus = async (
   entityManager: EntityManager, datasetId: string, statuses: PublicationStatus[]
 ) => {
   return await entityManager.createQueryBuilder(DatasetProjectModel, 'dsProj')
@@ -18,14 +18,13 @@ const fetchDsProjectsPublished = async (
 export const checkProjectsPublicationStatus = async (
   entityManager: EntityManager, datasetId: string, statuses: PublicationStatus[]
 ) => {
-  const dsProjectPublished = (await fetchDsProjectsPublished(entityManager, datasetId, statuses))
-    .find(pd => true);
-
-  if (dsProjectPublished) {
+  const dsProjectPublished = await fetchDatasetProjectsInStatus(entityManager, datasetId, statuses);
+  if (dsProjectPublished.length > 0) {
+    const projectStatusList = dsProjectPublished
+      .map(dp => ({ projectId: dp.projectId, status: dp.project.publicationStatus }));
     throw new UserError(JSON.stringify({
       type: 'under_review_or_published',
-      message: `Cannot modify dataset ${datasetId} as it belongs to ${dsProjectPublished.projectId} project ` +
-      ` in ${dsProjectPublished.project.publicationStatus} status`
+      message: `Cannot modify dataset ${datasetId}, it belongs to projects: ${JSON.stringify(projectStatusList)}`
     }));
   }
 };
@@ -34,7 +33,7 @@ export const checkNoPublishedProjectRemoved = async (
   entityManager: EntityManager, datasetId: string, updatedProjectIds: string[]
 ) => {
   const removedDsProject = (
-    await fetchDsProjectsPublished(entityManager, datasetId, [PSO.PUBLISHED, PSO.UNDER_REVIEW])
+    await fetchDatasetProjectsInStatus(entityManager, datasetId, [PSO.PUBLISHED, PSO.UNDER_REVIEW])
   ).find(dsProj => !updatedProjectIds.includes(dsProj.projectId));
 
   if (removedDsProject) {
