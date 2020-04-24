@@ -105,14 +105,13 @@ export const createTestDataset = async (dataset: Partial<Dataset> = {}, engineDa
   return (await datasetPromise) as Dataset;
 };
 
-export const createTestDatasetInProject = async (publicationStatus: PublicationStatus) => {
+export const createTestDatasetProject = async (publicationStatus: PublicationStatus): Promise<DatasetProject> => {
   const dataset = await createTestDataset(),
-    project = await createTestProject();
-  await testEntityManager.save(DatasetProject, {
+    project = await createTestProject({ publicationStatus });
+  const datasetProjectPromise = testEntityManager.save(DatasetProject, {
     projectId: project.id,
     datasetId: dataset.id,
-    approved: true,
-    publicationStatus
-  });
-  return dataset;
+    approved: true
+  } as Partial<DatasetProject>);
+  return (await datasetProjectPromise) as DatasetProject;
 };
