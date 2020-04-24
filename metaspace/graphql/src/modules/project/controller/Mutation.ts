@@ -264,9 +264,11 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       isPublic: true
     });
 
-    const affectedDatasets = await ctx.entityManager.find(DatasetProjectModel, { where: { projectId } });
-    await Promise.all(affectedDatasets.map(async dp => {
-      await smAPIUpdateDataset(dp.datasetId, { isPublic: true });
+    const affectedDatasets = await ctx.entityManager.find(DatasetModel, {
+      where: { datasetProjects: { projectId } },
+    });
+    await Promise.all(affectedDatasets.map(async ds => {
+      await smAPIUpdateDataset(ds.id, { isPublic: true });
     }));
 
     return await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
@@ -285,9 +287,11 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     });
 
     if (isPublic != null) {
-      const affectedDatasets = await ctx.entityManager.find(DatasetProjectModel, { where: { projectId } });
-      await Promise.all(affectedDatasets.map(async dp => {
-        await smAPIUpdateDataset(dp.datasetId, { isPublic });
+      const affectedDatasets = await ctx.entityManager.find(DatasetModel, {
+        where: { datasetProjects: { projectId } },
+      });
+      await Promise.all(affectedDatasets.map(async ds => {
+        await smAPIUpdateDataset(ds.id, { isPublic });
       }));
     }
 
