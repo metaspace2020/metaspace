@@ -94,11 +94,12 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   },
 
   uploadDT(ds) {
-    return ds._source.ds_upload_dt;
+    return new Date(ds._source.ds_upload_dt).toISOString();
   },
 
   statusUpdateDT(ds) {
-    return ds._source.ds_status_update_dt || ds._source.ds_upload_dt;
+    const date = ds._source.ds_status_update_dt || ds._source.ds_upload_dt;
+    return new Date(date).toISOString();
   },
 
   configJson(ds) {
