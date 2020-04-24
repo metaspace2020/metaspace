@@ -1,6 +1,6 @@
 <template>
   <div
-    class="leading-6 text-lg"
+    class="leading-6 text-lg proportional-nums"
     style="--lineHeight: 24px"
   >
     <div class="bg-primary overflow-hidden w-full -mt-2 pb-6 sm-banner-gradient">
@@ -130,31 +130,44 @@
         <h3 id="please-appreciate-those-who-funded-it">
           Funding
         </h3>
-        <div class="funding-logos">
-          <img
-            src="../../assets/eu_flag.jpg"
-            alt="EU"
-          >
-          <img
-            src="../../assets/nih_logo.png"
-            alt="NIH"
-          >
-        </div>
         <p>
-          We acknowledge funding from the
-          European Union’s Horizon 2020 programme under grant agreement 634402,
-          and from the National Institutes of Health NIDDK Kidney Precision Medicine Project.
+          We acknowledge funding from the following sources:
         </p>
+        <ul class="sm-about-funding">
+          <li>
+            <img
+              src="../../assets/eu_flag.jpg"
+              alt="EU"
+            >
+            <span>
+              <b>The European Union Horizon 2020 Programme</b>
+              <br>
+              under grant agreement 634402
+            </span>
+          </li>
+          <li>
+            <img
+              src="../../assets/nih_logo.png"
+              alt="NIH"
+            >
+            <span>
+              <b>The National Institutes of Health</b>
+              <br>
+              NIDDK Kidney Precision Medicine Project
+            </span>
+          </li>
+        </ul>
         <h3>Other acknowledgements</h3>
         <p>
-          Icons by <a href="http://www.freepik.com/">Freepik</a> from <a href="http://www.flaticon.com">www.flaticon.com</a>
+          Icons by <a href="http://www.freepik.com/">Freepik</a> from <a href="http://www.flaticon.com">www.flaticon.com</a>,
+          <a href="https://refactoringui.com/book/">Refactoring UI</a> and <a href="https://material.io/icons">Material Icons</a>.
         </p>
       </section>
     </div>
     <footer class="bg-gray-100 border-0 border-t border-solid border-gray-400">
       <div class="max-w-4xl mx-auto p-12 box-border">
         <p class="text-sm">
-          &copy; 2020 Alexandrov Lab
+          &copy; 2020 Alexandrov Team
         </p>
       </div>
     </footer>
@@ -257,7 +270,7 @@ export default class AboutPage extends Vue {
 
   /* #about h2, */
   #about h3 {
-    @apply font-display font-medium leading-12 text-2xl+;
+    @apply font-display font-medium leading-8 text-2xl+ py-2;
     margin: 0;
   }
 
@@ -303,18 +316,20 @@ export default class AboutPage extends Vue {
     }
   }
 
-  #about .funding-logos {
-    height: calc(var(--lineHeight) * 3);
+  #about .sm-about-funding {
+    list-style: none;
   }
 
-  #about .funding-logos img {
-    width: auto;
-    height: calc(var(--lineHeight) * 2.5);
-    margin: calc(var(--lineHeight) * .25) 0
+  #about .sm-about-funding li {
+    @apply flex h-12;
   }
 
-  #about .funding-logos img + img {
-    margin-left: calc(var(--lineHeight) * .25);
+  #about .sm-about-funding img {
+    @apply w-20 h-auto object-contain object-left mr-3;
+  }
+
+  #about .sm-about-funding b {
+    @apply font-medium;
   }
 
   .mailing-list-dialog .el-dialog__body {
