@@ -1,5 +1,5 @@
-import { Project, UserProjectRole } from '../../../binding';
-import { UserProject as UserProjectModel, UserProjectRoleOptions as UPRO } from '../model';
+import {Project, UserProjectRole} from '../../../binding';
+import {UserProject as UserProjectModel, UserProjectRoleOptions as UPRO} from '../model';
 import {
   FieldResolversFor,
   ProjectSource,
@@ -7,10 +7,10 @@ import {
   ScopeRoleOptions as SRO,
   UserProjectSource,
 } from '../../../bindingTypes';
-import { Context } from '../../../context';
-import { convertUserToUserSource } from '../../user/util/convertUserToUserSource';
-import { In } from 'typeorm';
-import { DatasetProject as DatasetProjectModel } from '../../dataset/model';
+import {Context} from '../../../context';
+import {convertUserToUserSource} from '../../user/util/convertUserToUserSource';
+import {In} from 'typeorm';
+import {DatasetProject as DatasetProjectModel} from '../../dataset/model';
 
 const canViewProjectMembersAndDatasets = (currentUserRole: UserProjectRole | null, isAdmin: boolean) =>
   isAdmin || ([UPRO.MANAGER, UPRO.MEMBER] as (UserProjectRole | null)[]).includes(currentUserRole);
@@ -49,12 +49,12 @@ const ProjectResolvers: FieldResolversFor<Project, ProjectSource> = {
       .where(filter)
       .leftJoinAndSelect('user_project.user', 'user')
       .leftJoinAndSelect('user_project.project', 'project')
-      .orderBy(`CASE user_project.role
-                         WHEN '${UPRO.PENDING}' THEN 1
-                         WHEN '${UPRO.INVITED}' THEN 2
-                         WHEN '${UPRO.MANAGER}' THEN 3
-                         WHEN '${UPRO.MEMBER}' THEN 4
-                         ELSE 5
+      .orderBy(`CASE user_project.role 
+                         WHEN '${UPRO.PENDING}' THEN 1 
+                         WHEN '${UPRO.INVITED}' THEN 2 
+                         WHEN '${UPRO.MANAGER}' THEN 3 
+                         WHEN '${UPRO.MEMBER}' THEN 4 
+                         ELSE 5 
                      END`)
       .addOrderBy('user.name')
       .getMany();
@@ -98,7 +98,7 @@ const ProjectResolvers: FieldResolversFor<Project, ProjectSource> = {
       query = query.andWhere('engine_dataset.is_public = TRUE');
     }
     const { upload_dt } = await query.getRawOne();
-    return upload_dt;
+    return upload_dt != null ? upload_dt.toISOString() : null;
   },
 
   async createdDT(project, args, ctx: Context): Promise<string> {
