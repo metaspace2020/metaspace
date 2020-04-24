@@ -8,7 +8,10 @@ import {
   testEntityManager,
   testUser
 } from '../../../tests/graphqlTestEnvironment';
-import { createTestProject } from '../../../tests/testDataCreation';
+import {
+  createTestDataset,
+  createTestProject
+} from '../../../tests/testDataCreation';
 import {
   Project as ProjectModel,
   UserProject as UserProjectModel,
