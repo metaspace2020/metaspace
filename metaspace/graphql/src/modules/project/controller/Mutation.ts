@@ -30,6 +30,7 @@ import generateRandomToken from '../../../utils/generateRandomToken';
 import { addExternalLink, removeExternalLink } from '../ExternalLink';
 import { validateUrlSlugChange } from "../../groupOrProject/urlSlug";
 import FormValidationErrors from "../../../utils/FormValidationErrors";
+import moment = require('moment')
 
 
 const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
@@ -50,7 +51,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     }
 
     const projectRepository = ctx.entityManager.getRepository(ProjectModel);
-    const newProject = projectRepository.create({ name, isPublic, urlSlug });
+    const newProject = projectRepository.create({ name, isPublic, urlSlug, createdDT: moment.utc() });
     await projectRepository.insert(newProject);
     await ctx.entityManager.insert(UserProjectModel, {
       projectId: newProject.id,

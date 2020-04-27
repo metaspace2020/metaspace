@@ -46,8 +46,7 @@ export class Project {
   datasetProjects: DatasetProject[];
 
   @Column({
-    name: 'created_dt', type: 'timestamp without time zone', default: () => "(now() at time zone 'utc')",
-    transformer: new MomentValueTransformer()
+    name: 'created_dt', type: 'timestamp without time zone', transformer: new MomentValueTransformer()
   })
   createdDT: Moment;
 
@@ -57,7 +56,7 @@ export class Project {
   @Column({ type: 'text', nullable: true })
   reviewToken: string | null;
 
-  @Column({ type: 'timestamp without time zone', default: null, transformer: new MomentValueTransformer() })
+  @Column({ type: 'timestamp without time zone', nullable: true, transformer: new MomentValueTransformer() })
   reviewTokenCreatedDT: Moment | null;
 
   @Column({ type: 'int', default: 0 })
@@ -66,7 +65,7 @@ export class Project {
   @Column({ type: 'text', enum: Object.keys(PSO), default: PSO.UNPUBLISHED })
   publicationStatus: PublicationStatus;
 
-  @Column({ type: 'timestamp without time zone', default: null, transformer: new MomentValueTransformer() })
+  @Column({ type: 'timestamp without time zone', nullable: true, transformer: new MomentValueTransformer() })
   publishedDT: Moment | null;
 
   @Column({ type: 'json', nullable: true })
