@@ -74,7 +74,7 @@
         </div>
       </section>
       <section class="sm-about-details max-w-measure-4 mt-12">
-        <h2 class="font-display all-small-caps text-primary leading-12 m-0">
+        <h2 class="font-display text-primary leading-12 m-0 text-lg uppercase tracking-wide">
           Frequently asked questions
         </h2>
         <h3>What is the METASPACE platform?</h3>
