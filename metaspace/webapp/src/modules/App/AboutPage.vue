@@ -136,24 +136,41 @@
         <ul class="sm-about-funding">
           <li>
             <img
-              src="../../assets/eu_flag.jpg"
+              src="../../assets/Flag_of_Europe.svg"
               alt="EU"
             >
             <span>
-              <b>The European Union Horizon 2020 Programme</b>
+              <b>European Union Horizon 2020 Programme</b>
               <br>
-              under grant agreement 634402
+              under grant agreements 634402 and 773089
             </span>
           </li>
           <li>
             <img
-              src="../../assets/nih_logo.png"
-              alt="NIH"
+              src="../../assets/NIDDK.svg"
+              alt="NIDDK"
             >
             <span>
-              <b>The National Institutes of Health</b>
+              <b>
+                National Institutes of Health
+                <abbr title="National Institute of Diabetes and Digestive and Kidney Diseases">NIDDK</abbr>
+              </b>
               <br>
-              NIDDK Kidney Precision Medicine Project
+              Kidney Precision Medicine Project
+            </span>
+          </li>
+          <li>
+            <img
+              src="../../assets/NHLBI.svg"
+              alt="NHLBI"
+            >
+            <span>
+              <b>
+                National Institutes of Health
+                <abbr title="National Heart, Lung, and Blood Institute">NHLBI</abbr>
+              </b>
+              <br>
+              LungMAP Phase 2
             </span>
           </li>
         </ul>
@@ -321,15 +338,21 @@ export default class AboutPage extends Vue {
   }
 
   #about .sm-about-funding li {
-    @apply flex h-12;
+    @apply flex;
   }
 
   #about .sm-about-funding img {
-    @apply w-20 h-auto object-contain object-left mr-3;
+    @apply w-20 h-12 object-contain object-left mr-3;
   }
 
   #about .sm-about-funding b {
     @apply font-medium;
+  }
+
+  #about .sm-about-funding abbr[title] {
+    text-decoration: none;
+    cursor: help;
+    border-bottom: 1px dashed currentColor;
   }
 
   .mailing-list-dialog .el-dialog__body {
