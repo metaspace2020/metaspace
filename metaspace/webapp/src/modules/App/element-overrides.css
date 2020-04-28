@@ -75,10 +75,12 @@
 .el-input-group {
   display: flex;
 }
-/* Fix for IE11 */
 .el-input-group .el-input__inner {
+  /* Fix for IE11 */
   flex-grow: 1;
   width: auto;
+  /* Fix for Safari */
+  margin: 0;
 }
 .el-input-group__append,
 .el-input-group__prepend {
