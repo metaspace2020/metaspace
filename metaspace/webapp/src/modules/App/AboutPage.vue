@@ -379,9 +379,4 @@ export default class AboutPage extends Vue {
       .button {width: 100%; margin:0; }
     }
   }
-
-  /* Hacking */
-  .header-item {
-    font-family: 'FuturaBT-Medium', 'Roboto', Helvetica, sans-serif;
-  }
 </style>

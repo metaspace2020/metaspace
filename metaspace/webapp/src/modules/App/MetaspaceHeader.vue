@@ -8,7 +8,7 @@
       <div class="header-items">
         <router-link
           to="/"
-          class="header-item logo"
+          class="flex pl-3 pr-4"
         >
           <img
             src="../../assets/logo.png"
@@ -17,69 +17,61 @@
           >
         </router-link>
 
-        <router-link
+        <header-link
           id="upload-link"
           :to="uploadHref"
-          class="header-item page-link"
         >
           Upload
-        </router-link>
+        </header-link>
 
-        <router-link
+        <header-link
           id="annotations-link"
           :to="annotationsHref"
-          class="header-item page-link"
         >
           Annotations
-        </router-link>
+        </header-link>
 
-        <router-link
+        <header-link
           id="datasets-link"
           :to="datasetsHref"
-          class="header-item page-link"
         >
           Datasets
-        </router-link>
+        </header-link>
 
-        <router-link
+        <header-link
           to="/projects"
-          class="header-item page-link"
         >
           Projects
-        </router-link>
+        </header-link>
 
-        <router-link
+        <header-link
           v-if="currentUser && currentUser.primaryGroup"
           :to="primaryGroupHref"
-          class="header-item page-link"
         >
           <div class="limit-width">
             {{ currentUser.primaryGroup.group.shortName }}
           </div>
-        </router-link>
+        </header-link>
       </div>
 
       <div class="header-items">
-        <router-link
+        <header-link
           to="/help"
-          class="header-item page-link"
         >
           Help
-        </router-link>
+        </header-link>
 
         <div
           v-if="loadingUser === 0 && currentUser == null"
           class="header-items"
         >
           <div
-            class="header-item page-link"
             @click="showCreateAccount"
           >
             Create account
           </div>
 
           <div
-            class="header-item page-link"
             @click="showSignIn"
           >
             Sign in
@@ -91,14 +83,14 @@
           class="header-items"
         >
           <div
-            class="submenu-container user-submenu"
-            :class="{'submenu-container-open': openSubmenu === 'user'}"
+            class="relative flex mr-1 lg:mr-2 py-2"
             @mouseenter="handleSubmenuEnter('user')"
             @mouseleave="handleSubmenuLeave('user')"
           >
-            <router-link
+            <header-link
+              id="user-menu"
               to="/user/me"
-              class="header-item submenu-header page-link"
+              :class="{'bg-blue-700': menuIsOpen}"
             >
               <div
                 class="limit-width"
@@ -111,26 +103,45 @@
                   tooltip-placement="left"
                 />
               </div>
-            </router-link>
-            <div class="submenu">
-              <router-link
-                to="/user/me"
-                class="submenu-item page-link"
-              >
-                My account
-                <notification-icon
-                  v-if="pendingRequestMessage != null"
-                  :tooltip="pendingRequestMessage"
-                  tooltip-placement="left"
-                />
-              </router-link>
+            </header-link>
+            <transition
+              enter-class="transform opacity-0 scale-95"
+              enter-to-class="transform opacity-100 scale-100"
+              leave-class="transform opacity-100 scale-100"
+              leave-to-class="transform opacity-0 scale-95"
+              enter-active-class="transition ease-out duration-100"
+              leave-active-class="transition ease-in duration-75"
+            >
               <div
-                class="submenu-item page-link"
-                @click="logout"
+                v-if="menuIsOpen"
+                class="origin-top-right absolute right-0 top-1/2 mt-6 w-40 rounded-md shadow-lg"
               >
-                Sign out
+                <div
+                  class="py-1 rounded-md bg-white shadow-xs text-sm lg:text-base"
+                  role="menu"
+                  aria-orientation="vertical"
+                  aria-labelledby="user-menu"
+                >
+                  <router-link
+                    to="/user/me"
+                    class="no-underline block px-4 py-2 text-gray-700 hover:bg-gray-100"
+                  >
+                    My account
+                    <notification-icon
+                      v-if="pendingRequestMessage != null"
+                      :tooltip="pendingRequestMessage"
+                      tooltip-placement="left"
+                    />
+                  </router-link>
+                  <button
+                    class="button-reset w-full text-left block px-4 py-2 text-gray-700 hover:bg-gray-100"
+                    @click="logout"
+                  >
+                    Sign out
+                  </button>
+                </div>
               </div>
-            </div>
+            </transition>
           </div>
         </div>
       </div>
@@ -159,6 +170,7 @@ import { encodeParams } from '../Filters'
 import { refreshLoginStatus } from '../../api/graphqlClient'
 import NotificationIcon from '../../components/NotificationIcon.vue'
 import { datasetStatusUpdatedQuery } from '../../api/dataset'
+import HeaderLink from './HeaderLink'
 
 /** @type {ComponentOptions<Vue> & Vue} */
 const MetaspaceHeader = {
@@ -166,6 +178,7 @@ const MetaspaceHeader = {
 
   components: {
     NotificationIcon,
+    HeaderLink,
   },
 
   computed: {
@@ -235,6 +248,9 @@ const MetaspaceHeader = {
         }
       }
       return null
+    },
+    menuIsOpen() {
+      return this.openSubmenu === 'user'
     },
   },
 
@@ -387,7 +403,7 @@ export default MetaspaceHeader
 </script>
 
 <style lang="scss" scoped>
-  $header-height: 62px;
+  $header-height: 64px;
   $alert-height: 36px;
   $space: 8px;
 
@@ -400,10 +416,10 @@ export default MetaspaceHeader
    top: 0;
    left: 0;
    right: 0;
-   height: 62px;
    display: flex;
    align-items: center;
    justify-content: space-between;
+   height: $header-height;
  }
 
  .spacer {
@@ -419,80 +435,6 @@ export default MetaspaceHeader
    display: flex;
    align-items: center;
    height: 100%;
- }
-
- .header-item {
-   display: flex;
-   border: none;
-   padding: 0px 20px;
-   font-size: 20px;
-   font-variant-caps: all-small-caps;
-   align-self: stretch;
-   align-items: center;
-   justify-content: center;
-   letter-spacing: 0.05em;
- }
- .header-item.logo {
-   padding-left: 15px;
- }
-
- @media (max-width: 1279px) {
-   .header-item {
-     padding: 0px 10px;
-     font-size: 18px;
-   }
- }
-
- .page-link {
-   text-align: center;
-   color: #fff;
-   cursor: pointer;
-   text-decoration: none;
- }
-
- .router-link-active.page-link, .page-link:hover,
- .submenu-container:not(.submenu-container-open) > .router-link-active.submenu-header {
-   background: rgba(0, 0, 0, 0.1);
-   outline-offset: -1px;
-   outline-color: rgba(0, 0, 0, 0.3);
-   outline-style: solid;
-   outline-width: 1px;
- }
-
- .router-link-active.page-link {
-   font-weight: 500;
- }
- .page-link a {
-   text-decoration: none;
- }
-
- .submenu-container {
-   position: relative;
-   display: flex;
-   align-items: center;
-   height: 100%
- }
- .submenu {
-   display: none;
-   position: absolute;
-   flex-direction: column;
-   top: 100%;
-   right: 0;
-   width: 100%;
-   min-width: 140px;
-   max-width: 200px;
-
-   background-color: hsla(208, 87%, 50%, 0.87);
- }
- .submenu-container-open > .submenu {
-   display: flex;
- }
- .submenu-item {
-   padding: 15px 20px;
-   font-size: inherit;
-   align-self: stretch;
-   justify-content: center;
-   white-space: nowrap;
  }
 
  .limit-width {
