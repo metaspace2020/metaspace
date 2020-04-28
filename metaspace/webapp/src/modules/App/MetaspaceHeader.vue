@@ -63,34 +63,34 @@
 
         <div
           v-if="loadingUser === 0 && currentUser == null"
-          class="header-items"
+          class="header-items mr-1 lg:mr-2"
         >
-          <div
+          <header-button
             @click="showCreateAccount"
           >
             Create account
-          </div>
+          </header-button>
 
-          <div
+          <header-button
             @click="showSignIn"
           >
             Sign in
-          </div>
+          </header-button>
         </div>
 
         <div
           v-if="loadingUser === 0 && currentUser != null"
-          class="header-items"
+          class="header-items mr-1 lg:mr-2"
         >
           <div
-            class="relative flex mr-1 lg:mr-2 py-2"
+            class="relative flex py-2"
             @mouseenter="handleSubmenuEnter('user')"
             @mouseleave="handleSubmenuLeave('user')"
           >
             <header-link
               id="user-menu"
               to="/user/me"
-              :class="{'bg-blue-700': menuIsOpen}"
+              :is-active="menuIsOpen"
             >
               <div
                 class="limit-width"
@@ -117,10 +117,11 @@
                 class="origin-top-right absolute right-0 top-1/2 mt-6 w-40 rounded-md shadow-lg"
               >
                 <div
-                  class="py-1 rounded-md bg-white shadow-xs text-sm lg:text-base"
+                  class="py-1 rounded-md bg-white shadow-xs text-sm"
                   role="menu"
                   aria-orientation="vertical"
                   aria-labelledby="user-menu"
+                  @click="handleSubmenuLeave('user')"
                 >
                   <router-link
                     to="/user/me"
@@ -170,7 +171,7 @@ import { encodeParams } from '../Filters'
 import { refreshLoginStatus } from '../../api/graphqlClient'
 import NotificationIcon from '../../components/NotificationIcon.vue'
 import { datasetStatusUpdatedQuery } from '../../api/dataset'
-import HeaderLink from './HeaderLink'
+import { HeaderLink, HeaderButton } from './HeaderLink'
 
 /** @type {ComponentOptions<Vue> & Vue} */
 const MetaspaceHeader = {
@@ -179,6 +180,7 @@ const MetaspaceHeader = {
   components: {
     NotificationIcon,
     HeaderLink,
+    HeaderButton,
   },
 
   computed: {
