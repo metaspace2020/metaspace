@@ -75,6 +75,11 @@
 .el-input-group {
   display: flex;
 }
+/* Fix for IE11 */
+.el-input-group .el-input__inner {
+  flex-grow: 1;
+  width: auto;
+}
 .el-input-group__append,
 .el-input-group__prepend {
   @apply px-4 flex items-center w-auto;

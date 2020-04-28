@@ -11,11 +11,10 @@
       <el-form-item
         label="Name"
         prop="name"
-        class="name"
+        class="name max-w-measure-3"
       >
         <el-input
           v-model="value.name"
-          class="max-w-measure-4"
           :max-length="50"
         />
       </el-form-item>
