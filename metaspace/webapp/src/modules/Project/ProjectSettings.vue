@@ -31,10 +31,9 @@
       >
         {{ errors.urlSlug }}
       </P>
-      <div>
+      <div class="max-w-measure-3">
         <el-input
           v-model="model.urlSlug"
-          class="max-w-measure-4"
           :class="{ 'sm-form-error': errors.urlSlug }"
           :disabled="isSaving"
         >

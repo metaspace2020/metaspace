@@ -13,6 +13,7 @@ import {ESAnnotation} from '../../../../esConnector';
 import {DeepPartial} from 'typeorm';
 import {ESAnnotationWithColoc} from './index';
 import {QueryFilterArgs} from './types';
+import * as moment from 'moment';
 
 describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
   beforeAll(onBeforeAll);
@@ -42,6 +43,8 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
       fdr: 0.1,
       algorithm: 'cosine',
       sampleIonIds: [ions[1].id, ions[2].id],
+      start: moment(),
+      finish: moment(),
     });
     const res = await testEntityManager.insert(ColocJob, job);
 

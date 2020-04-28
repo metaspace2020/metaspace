@@ -9,14 +9,6 @@ import { ANNOTATION_ENTITIES } from '../modules/annotation/model';
 import { ENGINE_ENTITIES } from '../modules/engine/model';
 import { MOLECULAR_DB_ENTITIES } from '../modules/moldb/model';
 import { SnakeCaseNamingStrategy } from './SnakeCaseNamingStrategy';
-import * as pg from 'pg'
-
-// https://github.com/typeorm/typeorm/issues/4519#issuecomment-606319943
-// all `Date`s should be assumed to be in UTC when being sent to Postgres
-pg.defaults.parseInputDatesAsUTC = true;
-// all dates received from Postgres should be assumed to be UTC when converted to `Date`s
-const TIMESTAMP = '1114' // https://github.com/brianc/node-pg-types/blob/master/lib/builtins.js#L47
-pg.types.setTypeParser(TIMESTAMP, (stringValue: string) => new Date(`${stringValue}Z`));
 
 export const DbSchemaName = 'graphql';
 
