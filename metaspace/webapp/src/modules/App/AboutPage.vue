@@ -107,11 +107,10 @@
           How shall I cite METASPACE in a publication?
         </h3>
         <p>
-          Please cite our publication <a
+          Please cite our publication (<a
             href="http://www.nature.com/nmeth/journal/v14/n1/full/nmeth.4072.html"
-          >(Palmer et al., 2016, Nature Methods)</a>
-          and
-          refer to <a href="https://metaspace2020.eu">https://metaspace2020.eu</a>.
+          >Palmer et al., 2016, Nature Methods</a>)
+          and refer to <a href="https://metaspace2020.eu">https://metaspace2020.eu</a>.
         </p>
         <h3>
           How to stay in touch?
