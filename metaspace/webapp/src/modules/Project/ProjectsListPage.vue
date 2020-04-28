@@ -222,4 +222,8 @@ export default class ProjectsListPage extends Vue {
     justify-content: space-between;
     align-items: flex-start;
   }
+
+  .el-pagination {
+    margin: 10px 0;
+  }
 </style>

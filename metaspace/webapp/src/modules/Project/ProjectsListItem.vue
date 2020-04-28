@@ -234,7 +234,7 @@ export default class ProjectsListItem extends Vue {
   }
 
   .project-item + .project-item {
-    margin-top: 10px;
+    margin: 10px 0;
   }
 
   .project-item:hover {
