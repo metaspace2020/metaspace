@@ -84,7 +84,7 @@
 }
 .el-input-group__append,
 .el-input-group__prepend {
-  @apply px-4 flex items-center w-auto;
+  @apply px-4 flex items-center w-auto text-gray-700;
 }
 
 .el-message-box__headerbtn {
