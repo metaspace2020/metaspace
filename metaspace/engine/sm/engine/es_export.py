@@ -15,7 +15,7 @@ from sm.engine.db import DB
 from sm.engine.fdr import FDR
 from sm.engine.formula_parser import format_ion_formula
 from sm.engine.isocalc_wrapper import IsocalcWrapper
-from sm.engine.molecular_db import MolecularDB
+from sm.engine import molecular_db
 from sm.engine.util import SMConfig
 
 logger = logging.getLogger('engine')
@@ -333,7 +333,7 @@ class ESExporter:
         try:
             return self._get_mol_by_formula_dict_cache[mol_db.id]
         except KeyError:
-            mols = mol_db.get_molecules()
+            mols = mol_db.fetch_molecules()
             by_formula = mols.groupby('formula')
             # limit IDs and names to 50 each to prevent ES 413 Request Entity Too Large error
             mol_by_formula_df = pd.concat(
@@ -452,13 +452,15 @@ class ESExporter:
         """Delete and index dataset documents for all moldbs defined in the dataset config."""
         self.delete_ds(ds_id)
 
-        res = DB().select_one("select name, config from dataset where id = %s", params=(ds_id,))
+        res = DB().select_one("SELECT name, config FROM dataset WHERE id = %s", params=(ds_id,))
         if res:
             ds_name, ds_config = res
             isocalc = IsocalcWrapper(ds_config)
             for moldb_name in ds_config['databases']:
                 try:
-                    self.index_ds(ds_id, mol_db=MolecularDB(name=moldb_name), isocalc=isocalc)
+                    self.index_ds(
+                        ds_id, mol_db=molecular_db.find_by_name(moldb_name), isocalc=isocalc
+                    )
                 except Exception as e:
                     new_msg = (
                         f'Failed to reindex(ds_id={ds_id}, ds_name={ds_name}, '

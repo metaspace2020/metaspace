@@ -17,7 +17,7 @@ from sm.engine.db import DB
 from sm.engine.search_results import SearchResults
 from sm.engine.util import SMConfig, split_s3_path
 from sm.engine.es_export import ESExporter
-from sm.engine.molecular_db import MolecularDB
+from sm.engine import molecular_db
 from sm.engine.queue import QueuePublisher, SM_DS_STATUS
 
 logger = logging.getLogger('engine')
@@ -91,10 +91,6 @@ class AnnotationJob:
         logger.info('Parsing imzml')
         return ImzMLParserWrapper(self._ds_data_path)
 
-    @staticmethod
-    def create_mol_dbs(moldb_ids):
-        return [MolecularDB(id=id) for id in moldb_ids]
-
     def _run_annotation_jobs(self, imzml_parser, moldbs):
         if moldbs:
             logger.info(
@@ -158,7 +154,8 @@ class AnnotationJob:
             db_id for (_, db_id) in self._db.select(JOB_ID_MOLDB_ID_SEL, params=(self._ds.id,))
         }
         new_moldb_ids = {
-            MolecularDB(name=moldb_name).id for moldb_name in self._ds.config['databases']
+            molecular_db.find_by_name(name=moldb_name).id
+            for moldb_name in self._ds.config['databases']
         }
         return completed_moldb_ids, new_moldb_ids
 
@@ -236,9 +233,11 @@ class AnnotationJob:
             logger.info(f'Dataset config:\n{pformat(self._ds.config)}')
 
             completed_moldb_ids, new_moldb_ids = self._moldb_ids()
-            self._remove_annotation_jobs(self.create_mol_dbs(completed_moldb_ids - new_moldb_ids))
+            self._remove_annotation_jobs(
+                molecular_db.find_by_ids(completed_moldb_ids - new_moldb_ids)
+            )
             self._run_annotation_jobs(
-                imzml_parser, self.create_mol_dbs(new_moldb_ids - completed_moldb_ids)
+                imzml_parser, molecular_db.find_by_ids(new_moldb_ids - completed_moldb_ids)
             )
 
             logger.info("All done!")

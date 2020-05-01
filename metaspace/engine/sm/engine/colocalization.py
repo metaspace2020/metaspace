@@ -9,7 +9,7 @@ from scipy.ndimage import zoom, median_filter
 
 from sm.engine.dataset import Dataset
 from sm.engine.ion_mapping import get_ion_id_mapping
-from sm.engine.molecular_db import MolecularDB
+from sm.engine import molecular_db
 from sm.engine.util import SMConfig
 from sm.engine.png_generator import ImageStoreServiceWrapper
 
@@ -356,7 +356,7 @@ class Colocalization:
             raise
 
     def _get_existing_ds_annotations(self, ds_id, mol_db_name, image_storage_type, charge):
-        mol_db = MolecularDB(name=mol_db_name)
+        mol_db = molecular_db.find_by_name(mol_db_name)
         annotation_rows = self._db.select(ANNOTATIONS_SEL, [ds_id, mol_db.id])
         num_annotations = len(annotation_rows)
         if num_annotations != 0:

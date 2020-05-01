@@ -20,3 +20,5 @@ tests/e2e/screenshots
 
 # Build output
 /dist
+/src/assets/ims.json
+/src/assets/metadataMapping.js

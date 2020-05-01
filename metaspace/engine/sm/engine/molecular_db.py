@@ -24,7 +24,7 @@ class MalformedCSV(Exception):
         super().__init__(full_message)
 
 
-def validate_moldb_df(df):
+def _validate_moldb_df(df):
     errors = []
     for row in df.itertuples():
         try:
@@ -37,7 +37,7 @@ def validate_moldb_df(df):
     return errors
 
 
-def import_molecules_from_file(moldb, file_path):
+def _import_molecules_from_file(moldb, file_path, targeted_threshold=1000):
     moldb_df = pd.read_csv(file_path, sep='\t')
 
     if moldb_df.empty:
@@ -50,7 +50,7 @@ def import_molecules_from_file(moldb, file_path):
         )
 
     logger.info(f'{moldb}: importing {len(moldb_df)} molecules')
-    parsing_errors = validate_moldb_df(moldb_df)
+    parsing_errors = _validate_moldb_df(moldb_df)
     if parsing_errors:
         raise MalformedCSV('Failed to parse some formulas', *parsing_errors)
 
@@ -82,9 +82,8 @@ def create(
             MOLDB_INS,
             rows=[(name, version, group_id, public, description, full_name, link, citation)],
         )
-        moldb = MolecularDB(id=moldb_id)
-        import_molecules_from_file(moldb, file_path)
-        # TODO: update "targeted" field
+        moldb = find_by_id(moldb_id)
+        _import_molecules_from_file(moldb, file_path)
         return moldb
 
 
@@ -105,54 +104,80 @@ def update(
     update_values.append(moldb_id)
     DB().alter(MOLDB_UPD_TMPL.format(', '.join(update_fields)), params=update_values)
 
-    return MolecularDB(id=moldb_id)
+    return find_by_id(moldb_id)
+
+
+# pylint: disable=redefined-builtin
+def find_by_id(id):
+    """Find database by id."""
+
+    data = DB().select_one_with_fields(
+        'SELECT id, name, version, targeted FROM molecular_db WHERE id = %s', params=(id,)
+    )
+    if not data:
+        raise SMError(f'MolecularDB not found: {id}')
+    return MolecularDB(**data)
+
+
+def find_by_ids(ids):
+    """Find multiple databases by ids."""
+
+    data = DB().select_one_with_fields(
+        'SELECT id, name, version, targeted FROM molecular_db WHERE id IN %s', params=(ids,)
+    )
+    return [MolecularDB(**row) for row in data]
+
+
+def find_by_name(name):
+    """Find database by name."""
+
+    data = DB().select_one_with_fields(
+        'SELECT id, name, version, targeted FROM molecular_db WHERE name = %s', params=(name,)
+    )
+    if not data:
+        raise SMError(f'MolecularDB not found: {name}')
+    return MolecularDB(**data)
+
+
+def fetch_molecules(moldb_id):
+    """Fetch all database molecules as a DataFrame.
+
+    Returns:
+        pd.DataFrame
+    """
+    data = DB().select_with_fields(
+        'SELECT mol_id, mol_name, formula FROM molecule m WHERE m.moldb_id = %s', params=(moldb_id,)
+    )
+    return pd.DataFrame(data)
+
+
+def fetch_formulas(moldb_id):
+    """Fetch all unique database formulas.
+
+    Returns:
+        List[str]
+    """
+
+    data = DB().select(
+        'SELECT DISTINCT formula FROM molecule m WHERE m.moldb_id = %s', params=(moldb_id,)
+    )
+    return [row[0] for row in data]
 
 
 class MolecularDB:
     """Represents a molecular database to search against."""
 
-    MOLDB_SEL_BY_ID = 'SELECT id, name, version FROM molecular_db WHERE id = %s'
-    MOLDB_SEL_BY_NAME = 'SELECT id, name, version FROM molecular_db WHERE name = %s'
-    MOLECULES_SEL_BY_DB = 'SELECT mol_id, mol_name, formula FROM molecule m WHERE m.moldb_id = %s'
-    FORMULAS_SEL_BY_DB = 'SELECT DISTINCT formula FROM molecule m WHERE m.moldb_id = %s'
-
     # pylint: disable=redefined-builtin
-    def __init__(self, id=None, name=None):
-        """
-        Args:
-            id (int): Database id
-            name (str): Database name
-        """
-        assert id is not None or name is not None, 'Either id or name should be provided'
-
-        self._db = DB()
-        if id is not None:
-            data = self._db.select_one_with_fields(self.MOLDB_SEL_BY_ID, params=(id,))
-        else:
-            data = self._db.select_one_with_fields(self.MOLDB_SEL_BY_NAME, params=(name,))
-
-        if data:
-            self.id, self.name, self.version = data['id'], data['name'], data['version']
-        else:
-            raise SMError(f'MolecularDB not found: {id}, {name}')
+    def __init__(
+        self, id: int = None, name: str = None, version: str = None, targeted: bool = None
+    ):
+        self.id = id
+        self.name = name
+        self.version = version
+        self.targeted = targeted
 
     def __repr__(self):
         return '<{}:{}>'.format(self.name, self.version)
 
     def to_dict(self):
         return {'id': self.id, 'name': self.name, 'version': self.version}
-
-    def get_molecules(self):
-        """Fetches all molecular database molecules as a DataFrame.
-
-        Returns:
-            pd.DataFrame
-        """
-        res = self._db.select_with_fields(self.MOLECULES_SEL_BY_DB, (self.id,))
-        return pd.DataFrame(res)
-
-    @property
-    def formulas(self):
-        """List[str]: List of molecular database formulas fetched from the database."""
-        res = self._db.select(self.FORMULAS_SEL_BY_DB, (self.id,))
-        return [row[0] for row in res]

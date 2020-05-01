@@ -15,7 +15,7 @@ from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.errors import AnnotationError, ImzMLError, IndexUpdateError, SMError, UnknownDSID
 from sm.engine.ion_thumbnail import generate_ion_thumbnail
 from sm.engine.isocalc_wrapper import IsocalcWrapper
-from sm.engine.molecular_db import MolecularDB
+from sm.engine import molecular_db
 from sm.engine.off_sample_wrapper import classify_dataset_ion_images
 from sm.engine.optical_image import IMG_URLS_BY_ID_SEL, del_optical_image
 from sm.engine.queue import QueueConsumer, QueuePublisher
@@ -101,7 +101,7 @@ class DatasetManager:
         for job_id, mol_db_id in self._db.select(
             'SELECT id, moldb_id FROM job WHERE ds_id = %s', params=(ds_id,)
         ):
-            yield job_id, MolecularDB(id=mol_db_id).name
+            yield job_id, molecular_db.find_by_id(mol_db_id).name
 
     def index(self, ds):
         """ Re-index all search results for the dataset """
@@ -111,7 +111,7 @@ class DatasetManager:
             if mol_db_name not in ds.config['databases']:
                 self._db.alter('DELETE FROM job WHERE id = %s', params=(job_id,))
             else:
-                mol_db = MolecularDB(name=mol_db_name)
+                mol_db = molecular_db.find_by_name(mol_db_name)
                 isocalc = IsocalcWrapper(ds.config)
                 self._es.index_ds(ds_id=ds.id, mol_db=mol_db, isocalc=isocalc)
 
