@@ -1,19 +1,12 @@
 import logging
 from io import StringIO
+from typing import List
 
 import pandas as pd
 from pyMSpec.pyisocalc.canopy.sum_formula_actions import InvalidFormulaError
 from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
 from sm.engine.db import DB, transaction_context
 from sm.engine.errors import SMError
-
-MOLDB_INS = (
-    'INSERT INTO molecular_db '
-    '   (name, version, group_id, public, description, full_name, link, citation) '
-    'values (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id'
-)
-MOLDB_UPD_TMPL = 'UPDATE molecular_db SET {} WHERE id = %s'
-MOLDB_DEL = 'DELETE FROM molecular_db WHERE id = %s'
 
 logger = logging.getLogger('engine')
 
@@ -22,6 +15,25 @@ class MalformedCSV(Exception):
     def __init__(self, message, *errors):
         full_message = '\n'.join([str(m) for m in (message,) + errors])
         super().__init__(full_message)
+
+
+class MolecularDB:
+    """Represents a molecular database to search against."""
+
+    # pylint: disable=redefined-builtin
+    def __init__(
+        self, id: int = None, name: str = None, version: str = None, targeted: bool = None
+    ):
+        self.id = id
+        self.name = name
+        self.version = version
+        self.targeted = targeted
+
+    def __repr__(self):
+        return '<{}:{}>'.format(self.name, self.version)
+
+    def to_dict(self):
+        return {'id': self.id, 'name': self.name, 'version': self.version}
 
 
 def _validate_moldb_df(df):
@@ -37,7 +49,7 @@ def _validate_moldb_df(df):
     return errors
 
 
-def _import_molecules_from_file(moldb, file_path, targeted_threshold=1000):
+def _import_molecules_from_file(moldb, file_path, targeted_threshold):
     moldb_df = pd.read_csv(file_path, sep='\t')
 
     if moldb_df.empty:
@@ -66,34 +78,44 @@ def _import_molecules_from_file(moldb, file_path, targeted_threshold=1000):
 
 
 def create(
-    name=None,
-    version=None,
-    file_path=None,
-    group_id=None,
-    public=True,
-    description=None,
-    full_name=None,
-    link=None,
-    citation=None,
-):
+    name: str = None,
+    version: str = None,
+    file_path: str = None,
+    group_id: str = None,
+    public: bool = True,
+    description: str = None,
+    full_name: str = None,
+    link: str = None,
+    citation: str = None,
+) -> MolecularDB:
     with transaction_context():
+        moldb_insert = (
+            'INSERT INTO molecular_db '
+            '   (name, version, group_id, public, description, full_name, link, citation) '
+            'values (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id'
+        )
         # pylint: disable=unbalanced-tuple-unpacking
         (moldb_id,) = DB().insert_return(
-            MOLDB_INS,
+            moldb_insert,
             rows=[(name, version, group_id, public, description, full_name, link, citation)],
         )
         moldb = find_by_id(moldb_id)
-        _import_molecules_from_file(moldb, file_path)
+        _import_molecules_from_file(moldb, file_path, targeted_threshold=1000)
         return moldb
 
 
-def delete(moldb_id):
-    DB().alter(MOLDB_DEL, params=(moldb_id,))
+def delete(moldb_id: int):
+    DB().alter('DELETE FROM molecular_db WHERE id = %s', params=(moldb_id,))
 
 
 def update(
-    moldb_id, archived=None, description=None, full_name=None, link=None, citation=None,
-):
+    moldb_id: int,
+    archived: bool = None,
+    description: str = None,
+    full_name: str = None,
+    link: str = None,
+    citation: str = None,
+) -> MolecularDB:
     assert archived is not None or description or full_name or link or citation
 
     kwargs = {k: v for k, v in locals().items() if v is not None}
@@ -101,14 +123,15 @@ def update(
 
     update_fields = [f'{field} = %s' for field in kwargs.keys()]
     update_values = list(kwargs.values())
-    update_values.append(moldb_id)
-    DB().alter(MOLDB_UPD_TMPL.format(', '.join(update_fields)), params=update_values)
+
+    moldb_update = 'UPDATE molecular_db SET {} WHERE id = %s'.format(', '.join(update_fields))
+    DB().alter(moldb_update, params=[*update_values, moldb_id])
 
     return find_by_id(moldb_id)
 
 
 # pylint: disable=redefined-builtin
-def find_by_id(id):
+def find_by_id(id: int) -> MolecularDB:
     """Find database by id."""
 
     data = DB().select_one_with_fields(
@@ -119,16 +142,16 @@ def find_by_id(id):
     return MolecularDB(**data)
 
 
-def find_by_ids(ids):
+def find_by_ids(ids: List[int]) -> MolecularDB:
     """Find multiple databases by ids."""
 
-    data = DB().select_one_with_fields(
-        'SELECT id, name, version, targeted FROM molecular_db WHERE id IN %s', params=(ids,)
+    data = DB().select_with_fields(
+        'SELECT id, name, version, targeted FROM molecular_db WHERE id = ANY (%s)', params=(ids,)
     )
     return [MolecularDB(**row) for row in data]
 
 
-def find_by_name(name):
+def find_by_name(name: str) -> MolecularDB:
     """Find database by name."""
 
     data = DB().select_one_with_fields(
@@ -139,45 +162,18 @@ def find_by_name(name):
     return MolecularDB(**data)
 
 
-def fetch_molecules(moldb_id):
-    """Fetch all database molecules as a DataFrame.
-
-    Returns:
-        pd.DataFrame
-    """
+def fetch_molecules(moldb_id: int) -> pd.DataFrame:
+    """Fetch all database molecules as a DataFrame."""
     data = DB().select_with_fields(
         'SELECT mol_id, mol_name, formula FROM molecule m WHERE m.moldb_id = %s', params=(moldb_id,)
     )
     return pd.DataFrame(data)
 
 
-def fetch_formulas(moldb_id):
-    """Fetch all unique database formulas.
-
-    Returns:
-        List[str]
-    """
+def fetch_formulas(moldb_id: int) -> List[str]:
+    """Fetch all unique database formulas."""
 
     data = DB().select(
         'SELECT DISTINCT formula FROM molecule m WHERE m.moldb_id = %s', params=(moldb_id,)
     )
     return [row[0] for row in data]
-
-
-class MolecularDB:
-    """Represents a molecular database to search against."""
-
-    # pylint: disable=redefined-builtin
-    def __init__(
-        self, id: int = None, name: str = None, version: str = None, targeted: bool = None
-    ):
-        self.id = id
-        self.name = name
-        self.version = version
-        self.targeted = targeted
-
-    def __repr__(self):
-        return '<{}:{}>'.format(self.name, self.version)
-
-    def to_dict(self):
-        return {'id': self.id, 'name': self.name, 'version': self.version}

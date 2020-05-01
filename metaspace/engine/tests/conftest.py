@@ -115,7 +115,9 @@ def empty_test_db(sm_config):
     yield
 
     conn_pool.close()
-    _autocommit_execute(sm_config['db'], f'DROP DATABASE IF EXISTS {db_name}')
+    _autocommit_execute(
+        {**sm_config['db'], 'database': 'postgres'}, f'DROP DATABASE IF EXISTS {db_name}'
+    )
 
 
 @pytest.fixture()
