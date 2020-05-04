@@ -1,43 +1,46 @@
 <template>
-  <div class="project-item">
+  <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200">
     <router-link
       :to="projectLink"
       class="underlay"
     />
     <div class="item-body">
       <div class="info">
-        <div class="info-line project-name">
-          <router-link :to="projectLink">
-            <span style="margin-left: 5px">{{ project.name }}</span>
-          </router-link>
-          <img
-            v-if="!project.isPublic"
-            class="private-icon"
-            src="../../assets/padlock-icon.svg"
-            title="This project is only visible to its members and METASPACE administrators"
+        <div class="info-line project-name pr-5 flex items-baseline">
+          <router-link
+            :to="projectLink"
+            class="text-2xl font-medium text-inherit no-underline truncate leading-none pb-2"
           >
+            {{ project.name }}
+          </router-link>
+          <i
+            v-if="!project.isPublic"
+            class="el-icon-lock ml-2 text-xl"
+            title="This project is only visible to its members and METASPACE administrators"
+          />
         </div>
-        <div style="margin-left: 12px">
+        <div>
           <div class="info-line">
             <span v-if="project.numDatasets > 0">
-              <router-link :to="datasetsLink"><span>{{ project.numDatasets | plural('Dataset', 'Datasets') }}</span></router-link>,
+              <router-link :to="datasetsLink"><span>{{ project.numDatasets | plural('dataset', 'datasets') }}</span></router-link>,
             </span>
-            {{ project.numMembers | plural('Member', 'Members') }}
+            {{ project.numMembers | plural('member', 'members') }}
           </div>
           <div
             v-if="projectManagers.length>0"
             class="info-line"
           >
-            <span>Manager<span v-if="projectManagers.length>1">s</span>:</span>
+            Managed by
             <span
               v-for="(manager, ind) in projectManagers"
               :key="manager.user.id"
             >
-              {{ manager.user.name }}<span v-if="(ind < projectManagers.length)">
-                <span v-if="manager.user.primaryGroup || ind+1 < projectManagers.length">, </span></span>
+              <span class="font-medium">{{ manager.user.name }}</span><!--
+              --><span v-if="(ind < projectManagers.length)">
+                <span v-if="manager.user.primaryGroup || ind+1 < projectManagers.length">, </span>
+              </span>
               <router-link
                 v-if="manager.user.primaryGroup"
-                class="group-link"
                 :to="groupHref(manager)"
               >
                 {{ manager.user.primaryGroup.group.shortName }}<!--
@@ -45,11 +48,17 @@
             </span>
           </div>
           <div class="info-line">
-            <span v-if="project.latestUploadDT != null">
-              Last submission <b><span style="font-size: 14px">{{ formatDate(project.latestUploadDT) }}</span></b>
+            <span v-if="project.publicationStatus === 'PUBLISHED'">
+              Published <elapsed-time :date="project.publishedDT" />
+            </span>
+            <span v-else-if="canManage && project.publicationStatus === 'UNDER_REVIEW'">
+              Under review
+            </span>
+            <span v-else-if="project.latestUploadDT != null">
+              Last submission <elapsed-time :date="project.latestUploadDT" />
             </span>
             <span v-else>
-              Created on <b><span style="font-size: 14px">{{ formatDate(project.createdDT) }}</span></b>
+              Created <elapsed-time :date="project.createdDT" />
             </span>
           </div>
           <div
@@ -73,13 +82,11 @@
             Manage project
           </router-link>
         </div>
-        <div
-          v-if="canManage"
-          class="delete"
-        >
+        <div v-if="canDelete">
           <i class="el-icon-delete" />
           <a
             href="#"
+            class="text-danger"
             @click.prevent="handleDeleteProject"
           >Delete project</a>
         </div>
@@ -99,6 +106,7 @@ import { CurrentUserRoleResult } from '../../api/user'
 import ConfirmAsync from '../../components/ConfirmAsync'
 import { plural } from '../../lib/vueFilters'
 import { ProjectRoleOptions as UPRO } from '../../api/project'
+import ElapsedTime from '../../components/ElapsedTime'
 
   interface managerGroupName {
     user: {
@@ -116,6 +124,9 @@ import { ProjectRoleOptions as UPRO } from '../../api/project'
   @Component({
     filters: {
       plural,
+    },
+    components: {
+      ElapsedTime,
     },
   })
 
@@ -162,8 +173,24 @@ export default class ProjectsListItem extends Vue {
       }
     }
 
+    get userIsAdmin() {
+      return this.currentUser && this.currentUser.role === 'admin'
+    }
+
+    get userIsManager() {
+      return this.project.currentUserRole === 'MANAGER'
+    }
+
     get canManage() {
-      return (this.currentUser && this.currentUser.role === 'admin') || this.project.currentUserRole === 'MANAGER'
+      return this.userIsAdmin || this.userIsManager
+    }
+
+    get canDelete() {
+      return (
+        this.userIsAdmin || (
+          this.userIsManager && this.project.publicationStatus === 'UNPUBLISHED'
+        )
+      )
     }
 
     shortGroupName(manager: managerGroupName): string|null {
@@ -181,11 +208,6 @@ export default class ProjectsListItem extends Vue {
           groupIdOrSlug: manager.user.primaryGroup.group.id,
         },
       }
-    }
-
-    formatDate(date: string) {
-      const parsedDate = parse(date)
-      return isValid(parsedDate) ? format(parsedDate, 'YYYY-MM-DD') : '????-??-??'
     }
 
     @ConfirmAsync(function(this: ProjectsListItem) {
@@ -211,14 +233,8 @@ export default class ProjectsListItem extends Vue {
   @import "~element-ui/packages/theme-chalk/src/common/var";
 
   .project-item {
-    position: relative;
-    border-radius: 5px;
-    width: 100%;
     max-width: 800px;
-    margin: 8px 0;
-    padding: 8px 0 10px 8px;
-    border: 1px solid #cce4ff;
-    box-sizing: border-box;
+    font-variant-numeric: proportional-nums;
     > * {
       z-index: 1;
     }
@@ -227,10 +243,17 @@ export default class ProjectsListItem extends Vue {
     }
   }
 
+  .project-item + .project-item {
+    margin: 10px 0;
+  }
+
+  .project-item:hover {
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  }
+
   .info {
     overflow: hidden;
     flex: auto;
-    padding-right: 12px;
   }
 
   .item-body {
@@ -243,43 +266,9 @@ export default class ProjectsListItem extends Vue {
   }
 
   .info-line {
-    margin-top: 1px;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-  }
-
-  .description {
-    $line-height: 1.2em;
-    $lines: 5;
-    line-height: $line-height;
-    max-height: $line-height * $lines;
-    overflow: hidden;
-    position: relative;
-    // Make content have uniform margins that don't count towards the line limit
-    margin-top: 0.5em;
-    &>*:first-child { margin-top: 0; }
-    &>*:last-child { margin-bottom: 0; }
-    // Fade out content if it's too long
-    &:before {
-      content:'';
-      width:100%;
-      height:100%;
-      position:absolute;
-      left:0;
-      top:0;
-      background:linear-gradient(transparent ($line-height * ($lines - 1.5)), white);
-    }
-  }
-
-  .project-name {
-    margin-bottom: 2px;
-
-    a {
-      font-size: 1.5em;
-      text-decoration: none;
-      color: #333;
-    }
   }
 
   .private-icon {
@@ -299,8 +288,6 @@ export default class ProjectsListItem extends Vue {
 
   .actions {
     flex: 0 0 170px;
-    padding-top: 5px;
-    margin-right: 10px;
   }
 
   .annotations {
@@ -310,14 +297,4 @@ export default class ProjectsListItem extends Vue {
     width: 45px;
     cursor: pointer;
   }
-
-  .delete, .delete > a {
-    color: #a00;
-  }
-
-  .group-link {
-    cursor: pointer;
-    color: sienna;
-  }
-
 </style>

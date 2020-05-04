@@ -1,52 +1,89 @@
 <template>
-  <div class="tf-outer">
-    <div class="tf-name">
-      {{ name }}:
+  <tag-filter
+    :name="name"
+    :removable="removable"
+    :width="240"
+    @show="show"
+    @destroy="destroy"
+  >
+    <div slot="edit">
+      <el-input-number
+        ref="input"
+        v-model="localValue"
+        :step="0.0001"
+        maxlength="10"
+        class="w-full"
+        controls-position="right"
+        @change="onChange"
+      />
+      <p class="m-0 mt-2 leading-none text-xs">
+        For manual input, press Enter when done
+      </p>
     </div>
-
-    <tf-input-box
-      mode="number"
-      :value="value"
-      @change="onChange"
-    />
-
-    <span class="tf-value-suffix">± {{ precision }}</span>
-
-    <div
-      v-if="removable"
-      class="tf-remove el-icon-error"
-      @click="destroy"
-    />
-  </div>
+    <span slot="show">
+      <span
+        v-if="value"
+        class="tf-value-span"
+      >
+        {{ value }}
+      </span>
+      <span
+        v-else
+        class="inline-block w-4 tf-value-span"
+      />
+      <span class="ml-1">
+        ± {{ precision }}
+      </span>
+    </span>
+  </tag-filter>
 </template>
 
-<script lang="ts">
+<script>
 import Vue, { ComponentOptions } from 'vue'
-import TagFilterInputBox from './TagFilterInputBox.vue'
 import { mzFilterPrecision } from '../../../lib/util'
+import TagFilter from './TagFilter.vue'
 
 export default Vue.extend({
   name: 'MzFilter',
   components: {
-    'tf-input-box': TagFilterInputBox,
+    TagFilter,
   },
   props: {
     name: String,
-    value: String,
+    value: [String, Number], // string if from query string, number if edited
     removable: { type: Boolean, default: true },
   },
+  data(vm) {
+    return {
+      localValue: Number(vm.value) || 0,
+    }
+  },
   computed: {
-    precision(): string {
+    precision() {
       return mzFilterPrecision(this.value)
     },
   },
-  methods: {
-    onChange(val: string): void {
-      this.$emit('input', val)
-      this.$emit('change', val)
+  watch: {
+    value: function() {
+      this.localValue = Number(this.value) || 0
     },
-    destroy(): void {
+  },
+  methods: {
+    onChange(val) {
+      /* sending undefined causes an issue */
+      const v = val === undefined ? 0 : val
+      this.$emit('input', v)
+      this.$emit('change', v)
+    },
+    destroy() {
       this.$emit('destroy', this.name)
+    },
+    show() {
+      if (this.$refs.input) {
+        const componentInstance = this.$refs.input
+        const input = componentInstance.$refs.input
+        input.focus()
+      }
     },
   },
 })

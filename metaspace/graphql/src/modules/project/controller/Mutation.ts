@@ -9,7 +9,7 @@ import { UserError } from 'graphql-errors';
 import { FieldResolversFor, ProjectSource, ScopeRoleOptions as SRO, UserProjectSource } from '../../../bindingTypes';
 import { Mutation } from '../../../binding';
 import { ProjectSourceRepository } from '../ProjectSourceRepository';
-import { Dataset as DatasetModel, DatasetProject as DatasetProjectModel } from '../../dataset/model';
+import { DatasetProject as DatasetProjectModel } from '../../dataset/model';
 import updateUserProjectRole from '../operation/updateUserProjectRole';
 import { convertUserToUserSource } from '../../user/util/convertUserToUserSource';
 import { createInactiveUser } from '../../auth/operation';
@@ -30,6 +30,7 @@ import generateRandomToken from '../../../utils/generateRandomToken';
 import { addExternalLink, removeExternalLink } from '../ExternalLink';
 import { validateUrlSlugChange } from "../../groupOrProject/urlSlug";
 import FormValidationErrors from "../../../utils/FormValidationErrors";
+import moment = require('moment')
 
 
 const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
@@ -50,7 +51,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     }
 
     const projectRepository = ctx.entityManager.getRepository(ProjectModel);
-    const newProject = projectRepository.create({ name, isPublic, urlSlug });
+    const newProject = projectRepository.create({ name, isPublic, urlSlug, createdDT: moment.utc() });
     await projectRepository.insert(newProject);
     await ctx.entityManager.insert(UserProjectModel, {
       projectId: newProject.id,
@@ -260,7 +261,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
     await ctx.entityManager.update(ProjectModel, projectId, {
       publicationStatus: PSO.PUBLISHED,
-      // TODO: publishedDT: utc(),
+      publishedDT: utc(),
       isPublic: true
     });
 

@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="!deferRender"
-    class="dataset-item"
+    class="dataset-item border border-solid border-gray-200 leading-5"
     :class="disabledClass"
   >
     <el-dialog
@@ -26,15 +26,30 @@
     </div>
 
     <div class="ds-info">
-      <div class="ds-item-line">
+      <div class="ds-item-line flex">
         <!-- title is set to make it easier to see overflowing datasets' names by hovering over the name -->
-        <b :title="formatDatasetName">{{ formatDatasetName }}</b>
+        <span
+          :title="formatDatasetName"
+          class="font-bold truncate"
+        >{{ formatDatasetName }}</span>
+        <el-popover
+          v-if="!dataset.isPublic"
+          class="ml-1"
+          trigger="hover"
+          placement="top"
+          @show="loadVisibility"
+        >
+          <div v-loading="visibilityText == null">
+            {{ visibilityText }}
+          </div>
+          <i
+            slot="reference"
+            class="el-icon-lock"
+          />
+        </el-popover>
       </div>
 
-      <div
-        class="ds-item-line"
-        style="color: darkblue;"
-      >
+      <div class="ds-item-line text-gray-700">
         <span
           class="ds-add-filter"
           title="Filter by species"
@@ -55,7 +70,6 @@
         >
           ({{ formatCondition }})</span>
       </div>
-
       <div class="ds-item-line">
         <span
           class="ds-add-filter"
@@ -78,12 +92,8 @@
         RP {{ formatResolvingPower }}
       </div>
 
-      <div
-        class="ds-item-line"
-        style="font-size: 15px;"
-      >
-        Submitted <span class="s-bold">{{ formatDate }}</span>
-        at {{ formatTime }} by
+      <div class="ds-item-line">
+        Submitted <elapsed-time :date="dataset.uploadDT" /> by
         <span
           class="ds-add-filter"
           title="Filter by submitter"
@@ -93,15 +103,15 @@
           Be careful not to add empty space before the comma
           --><span v-if="dataset.groupApproved && dataset.group">,
           <el-dropdown
-:show-timeout="50"
-                       placement="bottom"
-                       :trigger="hideGroupMenu ? 'never' : 'hover'"
-                       @command="handleDropdownCommand"
->
+            :show-timeout="50"
+            placement="bottom"
+            :trigger="hideGroupMenu ? 'never' : 'hover'"
+            @command="handleDropdownCommand"
+          >
             <span
-class="s-group ds-add-filter"
-@click="addFilter('group')"
->
+              class="text-base text-primary cursor-pointer"
+              @click="addFilter('group')"
+            >
               {{ dataset.group.shortName }}
             </span>
             <el-dropdown-menu slot="dropdown">
@@ -159,11 +169,13 @@ class="s-group ds-add-filter"
         />
       </span>
 
-      <i class="el-icon-view" />
-      <a
-        class="metadata-link"
-        @click="showMetadata"
-      >Show full metadata</a>
+      <div>
+        <i class="el-icon-view" />
+        <a
+          href="#"
+          @click="showMetadata"
+        >Show full metadata</a>
+      </div>
 
       <div v-if="canEdit">
         <i class="el-icon-edit" />
@@ -184,12 +196,13 @@ class="s-group ds-add-filter"
       </div>
 
       <div
-        v-if="canEdit"
+        v-if="canDelete"
         class="ds-delete"
       >
         <i class="el-icon-delete" />
         <a
           href="#"
+          class="text-danger"
           @click.prevent="openDeleteDialog"
         >Delete dataset</a>
       </div>
@@ -201,25 +214,17 @@ class="s-group ds-add-filter"
         <i class="el-icon-refresh" />
         <a
           href="#"
+          class="text-danger"
           @click.prevent="handleReprocess"
         >Reprocess dataset</a>
       </div>
 
-      <el-popover
-        v-if="!dataset.isPublic"
-        trigger="hover"
-        placement="top"
-        @show="loadVisibility"
+      <div
+        v-else-if="canViewPublicationStatus"
+        class="mt-auto text-right text-gray-700 text-sm"
       >
-        <div v-loading="visibilityText == null">
-          {{ visibilityText }}
-        </div>
-        <img
-          slot="reference"
-          class="ds-item-private-icon"
-          src="../../../assets/padlock-icon.svg"
-        >
-      </el-popover>
+        {{ publicationStatus }}
+      </div>
     </div>
     <DownloadDialog
       v-if="showDownloadDialog"
@@ -244,6 +249,7 @@ import { encodeParams } from '../../Filters/index'
 import reportError from '../../../lib/reportError'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import { plural } from '../../../lib/vueFilters'
+import ElapsedTime from '../../../components/ElapsedTime'
 import DownloadDialog from './DownloadDialog'
 
 function removeUnderscores(str) {
@@ -255,6 +261,7 @@ export default {
   components: {
     DatasetInfo,
     DatasetThumbnail,
+    ElapsedTime,
     DownloadDialog,
   },
   filters: {
@@ -293,33 +300,6 @@ export default {
 
     analyzerType() {
       return this.dataset.analyzer.type
-    },
-
-    uploadedDateTime() {
-      const unknown = { date: '????-??-??', time: '??:??' }
-      if (!this.dataset.id) {
-        return unknown
-      }
-
-      const fields = this.dataset.id.split('_')
-      if (fields.length < 2) {
-        return unknown
-      }
-
-      const date = fields[0]
-      const time = fields[1].split('m')[0].replace('h', ':')
-      return {
-        date,
-        time,
-      }
-    },
-
-    formatDate() {
-      return this.uploadedDateTime.date
-    },
-
-    formatTime() {
-      return this.uploadedDateTime.time
     },
 
     metadata() {
@@ -364,12 +344,21 @@ export default {
         if (this.currentUser.role === 'admin') {
           return true
         }
-        if (this.currentUser.id === this.dataset.submitter.id
-           && !['QUEUED', 'ANNOTATING'].includes(this.dataset.status)) {
+        if (
+          this.currentUser.id === this.dataset.submitter.id
+          && !['QUEUED', 'ANNOTATING'].includes(this.dataset.status)
+        ) {
           return true
         }
       }
       return false
+    },
+
+    canDelete() {
+      return (
+        (this.currentUser && this.currentUser.role === 'admin')
+        || (this.canEdit && this.publicationStatus === null)
+      )
     },
 
     canEditOpticalImage() {
@@ -406,6 +395,28 @@ export default {
       }
       return null
     },
+
+    canViewPublicationStatus() {
+      return (
+        this.dataset.status === 'FINISHED'
+        && this.canEdit
+        && this.publicationStatus !== null
+      )
+    },
+
+    publicationStatus() {
+      let status = null
+      for (const project of this.dataset.projects) {
+        if (project.publicationStatus === 'PUBLISHED') {
+          status = 'Published'
+          break
+        }
+        if (project.publicationStatus === 'UNDER_REVIEW') {
+          status = 'Under review'
+        }
+      }
+      return status
+    },
   },
   async created() {
     // Defer rendering of most elements until after the first render, so that the page becomes interactive sooner
@@ -441,7 +452,8 @@ export default {
       }
     },
 
-    showMetadata() {
+    showMetadata(e) {
+      e.preventDefault()
       this.showMetadataDialog = true
     },
 
@@ -549,7 +561,6 @@ export default {
   }
 
  .dataset-item {
-   position: relative;
    border-radius: 5px;
    // Can't use box-sizing:border-box due to IE11 flexbox limitations, so instead using `calc(100% - 2px)`
    flex: 1 1 calc(100% - 2px);
@@ -558,13 +569,19 @@ export default {
    max-width: 950px;
    margin: 3px;
    padding: 0px;
-   border: 1px solid #cce4ff;
    display: flex;
    flex-direction: row;
    justify-content: space-between;
+   transition: 0.2s cubic-bezier(.4, 0, .2, 1);
+   transition-property: box-shadow;
+   font-variant-numeric: proportional-nums;
  }
 
- .ds-info{
+ .dataset-item:hover {
+   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+ }
+
+ .ds-info {
    padding: 10px;
    margin: 0px;
    flex-grow: 1;
@@ -575,28 +592,19 @@ export default {
    padding: 10px 22px 10px 0px;
    margin: 0px;
    flex: none;
+   display: flex;
+   flex-direction: column;
  }
 
- .metadata-link {
-   text-decoration: underline;
- }
-
- .metadata-link, .ds-add-filter {
+ .ds-add-filter {
    cursor: pointer;
- }
-
- .s-bold {
-   font-weight: bold;
- }
-
- .s-group {
-   color: sienna;
+   font-weight: 500;
  }
 
  .striped-progressbar {
-   height: 12px;
+   height: 14px;
    border-radius: 2px;
-   margin-bottom: 3px;
+   margin: 3px 0;
    width: 100%;
    background-size: 30px 30px;
    background-image: linear-gradient(135deg,
@@ -623,18 +631,6 @@ export default {
    font-size: initial;
  }
 
- .ds-delete, .ds-delete > a, .ds-reprocess, .ds-reprocess > a {
-   color: #a00;
- }
-
- .ds-item-private-icon {
-   position: absolute;
-   opacity: 0.3;
-   width: 22px;
-   height: 32px;
-   right: 10px;
-   bottom: 8px;
- }
  .ds-item-line {
    overflow: hidden;
    white-space: nowrap;

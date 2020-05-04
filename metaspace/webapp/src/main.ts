@@ -9,7 +9,7 @@ import { DefaultApolloClient } from '@vue/apollo-composable'
 import apolloClient, { setMaintenanceMessageHandler } from './api/graphqlClient'
 
 import ElementUI from 'element-ui'
-import './modules/App/element-variables.scss'
+import './modules/App/element-overrides.css'
 import locale from 'element-ui/lib/locale/lang/en'
 import './modules/App/tailwind.scss'
 

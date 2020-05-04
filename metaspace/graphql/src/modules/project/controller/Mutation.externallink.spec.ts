@@ -6,9 +6,9 @@ import {
   onBeforeEach,
   setupTestUsers, testEntityManager, testUser,
 } from '../../../tests/graphqlTestEnvironment';
-import {Project as ProjectModel, UserProjectRoleOptions as UPRO} from '../model';
-import {ExternalLink} from '../ExternalLink';
-import {createTestProject, createTestUserProject} from '../../../tests/testDataCreation';
+import { Project as ProjectModel, UserProjectRoleOptions as UPRO } from '../model';
+import { ExternalLink } from '../ExternalLink';
+import { createTestProject, createTestUserProject } from '../../../tests/testDataCreation';
 
 describe('Project external links', () => {
   beforeAll(onBeforeAll);
@@ -25,20 +25,20 @@ describe('Project external links', () => {
   }
   const addLink = async (projectId: string, provider: string, link: string, replaceExisting: boolean) =>
     await doQuery<ResultType>(`
-    mutation($projectId: String!, $provider: String!, $link: String!, $replaceExisting: Boolean!) {
+    mutation($projectId: ID!, $provider: String!, $link: String!, $replaceExisting: Boolean!) {
       addProjectExternalLink(projectId: $projectId, provider: $provider, link: $link, replaceExisting: $replaceExisting) {
         id
         externalLinks { provider link }
-      } 
-    }`, {projectId, provider, link, replaceExisting });
+      }
+    }`, { projectId, provider, link, replaceExisting });
   const removeLink = async (projectId: string, provider: string, link?: string) =>
     await doQuery<ResultType>(`
-    mutation($projectId: String!, $provider: String!, $link: String) {
+    mutation($projectId: ID!, $provider: String!, $link: String) {
       removeProjectExternalLink(projectId: $projectId, provider: $provider, link: $link) {
         id
         externalLinks { provider link }
-      } 
-    }`, {projectId, provider, link });
+      }
+    }`, { projectId, provider, link });
   const provider = 'MetaboLights';
   const provider4 = 'DOI';
   const link = 'https://www.ebi.ac.uk/metabolights/MTBLS313';
@@ -56,9 +56,9 @@ describe('Project external links', () => {
     const result2 = await addLink(projectId, provider, link2, false);
 
     const updatedProject = await testEntityManager.findOneOrFail(ProjectModel, projectId);
-    expect(updatedProject.externalLinks).toEqual([{provider, link}, {provider, link: link2}]);
+    expect(updatedProject.externalLinks).toEqual([{ provider, link }, { provider, link: link2 }]);
     expect(result1.id).toEqual(projectId);
-    expect(result1.externalLinks).toEqual([{provider, link}]);
+    expect(result1.externalLinks).toEqual([{ provider, link }]);
     expect(result2.externalLinks).toEqual(updatedProject.externalLinks);
   });
 
@@ -74,8 +74,8 @@ describe('Project external links', () => {
     const updatedProject = await testEntityManager.findOneOrFail(ProjectModel, projectId);
     expect(result.id).toEqual(projectId);
     expect(result.externalLinks).toEqual([
-      {provider: provider4, link: link4},
-      {provider, link: link3},
+      { provider: provider4, link: link4 },
+      { provider, link: link3 },
     ]);
     expect(updatedProject.externalLinks).toEqual(result.externalLinks);
   });
@@ -91,8 +91,8 @@ describe('Project external links', () => {
 
     const updatedProject = await testEntityManager.findOneOrFail(ProjectModel, projectId);
     expect(updatedProject.externalLinks).toEqual([
-      {provider, link},
-      {provider: provider4, link: link4},
+      { provider, link },
+      { provider: provider4, link: link4 },
     ]);
     expect(result.id).toEqual(projectId);
     expect(result.externalLinks).toEqual(updatedProject.externalLinks);

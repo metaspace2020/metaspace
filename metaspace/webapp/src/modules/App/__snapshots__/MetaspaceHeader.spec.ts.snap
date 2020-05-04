@@ -2,7 +2,7 @@
 
 exports[`MetaspaceHeader should match snapshot (logged in) 1`] = `
 <div>
-  <div class="spacerWithAlert"></div>
+  <div class="spacer spacer--with-alert"></div>
   <div class="b-header">
     <div class="header-items"><a href="/" class="header-item logo router-link-exact-active router-link-active"><img src="../../assets/logo.png" alt="Metaspace" title="Metaspace"></a> <a href="/upload" class="header-item page-link" id="upload-link">
         Upload
@@ -22,13 +22,12 @@ exports[`MetaspaceHeader should match snapshot (logged in) 1`] = `
       </a>
       <!---->
       <div class="header-items">
-        <div class="submenu-container user-submenu">
-          <div class="header-item submenu-header">
+        <div class="submenu-container user-submenu"><a href="/user/me" class="header-item submenu-header page-link">
             <div class="limit-width" style="color: white;">
               Test User
               <mock-el-tooltip content="currentUser.projects.1.project.name has a pending membership request." placement="left"><span class="notification"></span></mock-el-tooltip>
             </div>
-          </div>
+          </a>
           <div class="submenu"><a href="/user/me" class="submenu-item page-link">
               My account
               <mock-el-tooltip content="currentUser.projects.1.project.name has a pending membership request." placement="left"><span class="notification"></span></mock-el-tooltip></a>
@@ -52,7 +51,7 @@ exports[`MetaspaceHeader should match snapshot (logged in) 1`] = `
 
 exports[`MetaspaceHeader should match snapshot (logged out) 1`] = `
 <div>
-  <div class="spacerWithAlert"></div>
+  <div class="spacer spacer--with-alert"></div>
   <div class="b-header">
     <div class="header-items"><a href="/" class="header-item logo router-link-exact-active router-link-active"><img src="../../assets/logo.png" alt="Metaspace" title="Metaspace"></a> <a href="/upload" class="header-item page-link" id="upload-link">
         Upload

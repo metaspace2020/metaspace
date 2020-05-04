@@ -69,6 +69,7 @@ const router = new VueRouter({
 
     { path: '/group/create', component: asyncPages.CreateGroupPage },
     { path: '/group/:groupIdOrSlug', name: 'group', component: asyncPages.ViewGroupPage },
+
     { path: '/project/:projectIdOrSlug', name: 'project', component: asyncPages.ViewProjectPage },
     { // Legacy URL sent in "request access" emails up until Feb 2019
       path: '/project/:projectIdOrSlug/manage',

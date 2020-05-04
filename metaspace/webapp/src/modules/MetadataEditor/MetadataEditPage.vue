@@ -1,6 +1,35 @@
 <template>
   <div class="page">
     <div class="content">
+      <fade-transition>
+        <div
+          v-if="errorMessage"
+          class="flex justify-center"
+        >
+          <div class="text-danger leading-normal mb-6">
+            <p class="font-bold m-0">
+              {{ errorMessage }}
+            </p>
+            <p class="text-sm m-0">
+              If this is a problem please contact us at <a
+                class="text-inherit font-medium"
+                target="_blank"
+                rel="noopener"
+                href="mailto:contact@metaspace2020.eu"
+              >contact@metaspace2020.eu</a>.
+            </p>
+            <p class="mb-0 mt-2">
+              <a
+                href="#"
+                class="text-inherit text-sm font-medium"
+                @click.prevent="reload"
+              >
+                Refresh page
+              </a>
+            </p>
+          </div>
+        </div>
+      </fade-transition>
       <div class="button-bar">
         <el-button @click="handleCancel">
           Cancel
@@ -25,6 +54,7 @@
 
 <script>
 import MetadataEditor from './MetadataEditor.vue'
+import FadeTransition from '../../components/FadeTransition'
 import { updateDatasetQuery } from '../../api/metadata'
 import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system'
 import { isArray, isEqual, get } from 'lodash-es'
@@ -34,9 +64,11 @@ export default {
   name: 'MetadataEditPage',
   components: {
     MetadataEditor,
+    FadeTransition,
   },
   data() {
     return {
+      errorMessage: null,
       validationErrors: [],
       isSubmitting: false,
       systemHealth: null,
@@ -156,6 +188,9 @@ export default {
             message: 'Please fix the highlighted fields and submit again',
             type: 'error',
           })
+        } else if (graphQLError && graphQLError.type === 'under_review_or_published') {
+          this.errorMessage =
+            'Your changes could not be saved because the dataset is under review or published.'
         } else {
           this.$message({
             message: 'There was an unexpected problem submitting the dataset. Please refresh the page and try again.'
@@ -214,6 +249,10 @@ export default {
           ...options,
         },
       })
+    },
+
+    reload() {
+      window.location.reload()
     },
   },
 }

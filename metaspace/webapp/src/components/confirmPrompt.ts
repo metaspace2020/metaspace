@@ -9,8 +9,17 @@ import './ConfirmAsync.scss'
 
 interface ExtraOptions {
   confirmButtonLoadingText?: string;
+  style?: 'warning' | 'danger';
 }
 type ValueOrCallback<T> = T | ((...args: any[]) => T);
+
+const createCustomClass = (options: ExtraOptions) => {
+  let customClass = 'confirm-async-message-box'
+  if (options.style) {
+    customClass += ` sm-dialog sm-dialog--${options.style}`
+  }
+  return customClass
+}
 
 /**
  * same as @ConfirmAsync without the decorator API
@@ -22,8 +31,8 @@ async function confirmPrompt(options: ElMessageBoxOptions & ExtraOptions, callba
       showCancelButton: true,
       lockScroll: false,
       showInput,
-      customClass: 'confirm-async-message-box',
       ...baseOptions,
+      customClass: createCustomClass(options),
       beforeClose: async(action: MessageBoxCloseAction, instance: ElMessageBoxComponent, done: Function) => {
         const originalConfirmText = instance.confirmButtonText
         if (action === 'confirm') {

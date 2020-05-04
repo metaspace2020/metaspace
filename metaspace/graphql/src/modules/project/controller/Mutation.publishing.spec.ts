@@ -8,15 +8,18 @@ import {
   testEntityManager,
   testUser
 } from '../../../tests/graphqlTestEnvironment';
-import {createTestDataset, createTestProject} from '../../../tests/testDataCreation';
+import {
+  createTestDataset,
+  createTestProject
+} from '../../../tests/testDataCreation';
 import {
   Project as ProjectModel,
   UserProject as UserProjectModel,
   UserProjectRoleOptions,
 } from '../model';
 import { DatasetProject as DatasetProjectModel } from '../../dataset/model';
-import {PublicationStatusOptions as PSO} from '../PublicationStatusOptions';
-import {Project as ProjectType} from '../../../binding';
+import { PublicationStatusOptions as PSO } from '../PublicationStatusOptions';
+import { Project as ProjectType } from '../../../binding';
 
 import * as smAPI from '../../../utils/smAPI';
 jest.mock('../../../utils/smAPI');
@@ -52,10 +55,10 @@ describe('Project publication status manipulations', () => {
     }`,
     updateProject = `mutation ($projectId: ID!, $projectDetails: UpdateProjectInput!) {
       updateProject(projectId: $projectId, projectDetails: $projectDetails) {
-        id name urlSlug projectDescriptionAsHtml
+        id name urlSlug projectDescription
       }
     }`,
-    addExternalLink = `mutation($projectId: String!) {
+    addExternalLink = `mutation($projectId: ID!) {
       addProjectExternalLink(
         projectId: $projectId,
         provider: "MetaboLights",
@@ -63,7 +66,7 @@ describe('Project publication status manipulations', () => {
         replaceExisting: true
       ) { id }
     }`,
-    removeExternalLink = `mutation($projectId: String!) {
+    removeExternalLink = `mutation($projectId: ID!) {
       removeProjectExternalLink(
         projectId: $projectId,
         provider: "MetaboLights",
@@ -93,7 +96,7 @@ describe('Project publication status manipulations', () => {
   test('Project member cannot create review link', async () => {
     const project = await createTestProject({ isPublic: true, publicationStatus: PSO.PUBLISHED });
     await testEntityManager.insert(
-      UserProjectModel,{ userId, projectId: project.id, role: UserProjectRoleOptions.MEMBER }
+      UserProjectModel, { userId, projectId: project.id, role: UserProjectRoleOptions.MEMBER }
     );
 
     const promise = doQuery<ProjectType>(createReviewLink, { projectId: project.id });
@@ -123,7 +126,7 @@ describe('Project publication status manipulations', () => {
   test('Project member cannot publish project', async () => {
     const project = await createTestProject({ isPublic: false, publicationStatus: PSO.UNDER_REVIEW });
     await testEntityManager.insert(
-      UserProjectModel,{ userId, projectId: project.id, role: UserProjectRoleOptions.MEMBER }
+      UserProjectModel, { userId, projectId: project.id, role: UserProjectRoleOptions.MEMBER }
     );
 
     const promise = doQuery<ProjectType>(publishProject, { projectId: project.id });
@@ -182,7 +185,7 @@ describe('Project publication status manipulations', () => {
       { userId, projectId: project.id, role: UserProjectRoleOptions.MANAGER });
 
     const promise = doQuery<ProjectType>(updateProject,
-      { projectId: project.id, projectDetails: { isPublic: false }});
+      { projectId: project.id, projectDetails: { isPublic: false } });
 
     await expect(promise).rejects.toThrow(/Cannot modify project/);
     const { isPublic } = await testEntityManager.findOneOrFail(ProjectModel, project.id);
@@ -195,7 +198,12 @@ describe('Project publication status manipulations', () => {
       const project = await createTestProject({ publicationStatus: status });
       await testEntityManager.insert(UserProjectModel,
         { userId, projectId: project.id, role: UserProjectRoleOptions.MANAGER });
-      const projectDetails = { name: 'new name', urlSlug: 'new_slug', projectDescriptionAsHtml: 'new description' };
+      const projectDetails = {
+        name: 'new name',
+        urlSlug: 'new_slug',
+        projectDescription:
+          '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"new description"}]}]}'
+      };
 
       const result = await doQuery<ProjectType>(updateProject, { projectId: project.id, projectDetails });
 

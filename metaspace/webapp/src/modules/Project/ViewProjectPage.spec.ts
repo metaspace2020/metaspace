@@ -3,6 +3,7 @@ import Vue from 'vue'
 import ViewProjectPage from './ViewProjectPage.vue'
 import router from '../../router'
 import { initMockGraphqlClient, apolloProvider } from '../../../tests/utils/mockGraphqlClient'
+import { mockGenerateId, resetGenerateId } from '../../../tests/utils/mockGenerateId'
 
 describe('ViewProjectPage', () => {
   const mockMembersForManagers = [
@@ -38,6 +39,8 @@ describe('ViewProjectPage', () => {
     currentUserRole: null,
     numMembers: 2,
     members: mockMembersForPublic,
+    projectDescription: null,
+    publicationStatus: 'UNPUBLISHED',
   }
   const mockProjectFn = jest.fn((src: any, args: any, ctx: any, info: any): any => mockProject)
   const graphqlMocks = {
@@ -85,7 +88,7 @@ describe('ViewProjectPage', () => {
       expect(wrapper.findAll('button').wrappers.map(w => w.text()))
         .toEqual(expect.arrayContaining(['Request access']))
       expect(wrapper.findAll('[role="tab"]').wrappers.map(w => w.text()))
-        .toEqual(['Description', 'Datasets (4)', 'Members (2)'])
+        .toEqual(['Datasets (4)', 'Members (2)'])
       expect(wrapper.findAll('.dataset-list > *')).toHaveLength(maxVisibleDatasets)
     })
   })
@@ -146,6 +149,28 @@ describe('ViewProjectPage', () => {
 
       expect(wrapper).toMatchSnapshot()
     })
+
+    it('should disable actions when under review', async() => {
+      mockProjectFn.mockImplementation(() => ({
+        ...mockProject, currentUserRole: 'MANAGER', publicationStatus: 'UNDER_REVIEW',
+      }))
+      initMockGraphqlClient(graphqlMocks)
+      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider, sync: false })
+      await Vue.nextTick()
+
+      expect(wrapper).toMatchSnapshot()
+    })
+
+    it('should disable actions when published', async() => {
+      mockProjectFn.mockImplementation(() => ({
+        ...mockProject, currentUserRole: 'MANAGER', publicationStatus: 'PUBLISHED',
+      }))
+      initMockGraphqlClient(graphqlMocks)
+      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider, sync: false })
+      await Vue.nextTick()
+
+      expect(wrapper).toMatchSnapshot()
+    })
   })
 
   it('should correctly fetch data and update the route if the project has a urlSlug but is accessed by ID', async() => {
@@ -163,5 +188,44 @@ describe('ViewProjectPage', () => {
     expect(mockProjectFn.mock.calls[0][3].fieldName).toEqual('project')
     expect(mockProjectFn.mock.calls[1][1].urlSlug).toEqual(urlSlug)
     expect(mockProjectFn.mock.calls[1][3].fieldName).toEqual('projectByUrlSlug')
+  })
+
+  describe('review tab', () => {
+    beforeEach(() => {
+      router.replace({ query: { tab: 'review' } })
+      resetGenerateId()
+    })
+
+    it('should match snapshot (unpublished)', async() => {
+      mockGenerateId(123)
+      mockProjectFn.mockImplementation(() => ({ ...mockProject, currentUserRole: 'MANAGER' }))
+      initMockGraphqlClient(graphqlMocks)
+      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider, sync: false })
+      await Vue.nextTick()
+
+      expect(wrapper).toMatchSnapshot()
+    })
+
+    it('should match snapshot (under review)', async() => {
+      mockProjectFn.mockImplementation(() => ({
+        ...mockProject, currentUserRole: 'MANAGER', publicationStatus: 'UNDER_REVIEW',
+      }))
+      initMockGraphqlClient(graphqlMocks)
+      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider, sync: false })
+      await Vue.nextTick()
+
+      expect(wrapper).toMatchSnapshot()
+    })
+
+    it('should match snapshot (published)', async() => {
+      mockProjectFn.mockImplementation(() => ({
+        ...mockProject, currentUserRole: 'MANAGER', publicationStatus: 'PUBLISHED',
+      }))
+      initMockGraphqlClient(graphqlMocks)
+      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider, sync: false })
+      await Vue.nextTick()
+
+      expect(wrapper).toMatchSnapshot()
+    })
   })
 })

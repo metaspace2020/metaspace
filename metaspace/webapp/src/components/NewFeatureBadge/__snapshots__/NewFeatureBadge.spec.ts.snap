@@ -1,0 +1,20 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`NewFeatureBadge should hide the badge 1`] = `
+Array [
+  "el-badge",
+  "sm-feature-badge",
+  "sm-feature-badge--hidden",
+]
+`;
+
+exports[`NewFeatureBadge should not render the badge if already hidden 1`] = `Array []`;
+
+exports[`NewFeatureBadge should not render the badge if stale 1`] = `Array []`;
+
+exports[`NewFeatureBadge should render a badge 1`] = `
+Array [
+  "el-badge",
+  "sm-feature-badge",
+]
+`;

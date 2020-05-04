@@ -24,12 +24,10 @@ export class ColocJob {
   @Column({ type: 'text' })
   algorithm: string;
 
-  @Column({ type: 'timestamp without time zone', default: () => "(now() at time zone 'utc')",
-    transformer: new MomentValueTransformer() })
+  @Column({ type: 'timestamp without time zone', transformer: new MomentValueTransformer() })
   start: Moment;
 
-  @Column({ type: 'timestamp without time zone', default: () => "(now() at time zone 'utc')",
-    transformer: new MomentValueTransformer() })
+  @Column({ type: 'timestamp without time zone', transformer: new MomentValueTransformer() })
   finish: Moment;
 
   @Column({ type: 'text', nullable: true })

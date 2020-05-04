@@ -3,11 +3,12 @@
     <el-col>
       <el-collapse
         id="annot-content"
+        class="border-0"
         :value="activeSections"
         @change="onSectionsChange"
       >
-        <div class="el-collapse-item grey-bg">
-          <div class="el-collapse-item__header av-header grey-bg">
+        <div class="el-collapse-item">
+          <div class="el-collapse-item__header av-header">
             <candidate-molecules-popover
               placement="bottom"
               :possible-compounds="annotation.possibleCompounds"
@@ -15,12 +16,11 @@
               :isobars="annotation.isobars"
             >
               <span
-                class="sf-big"
+                class="sf-big text-2xl"
                 v-html="formattedMolFormula"
               />
             </candidate-molecules-popover>
-
-            <span class="mz-big">{{ annotation.mz.toFixed(4) }}</span>
+            <span class="text-2xl">{{ annotation.mz.toFixed(4) }}</span>
             <el-popover
               trigger="hover"
               placement="bottom"
@@ -129,7 +129,7 @@
             slot="title"
             style="display: flex; align-items: center; padding-right: 10px"
           >
-            <span style="padding-right: 20px">
+            <span>
               Colocalized annotations
             </span>
 
@@ -138,8 +138,9 @@
               trigger="click"
             >
               <colocalization-settings />
-              <div
+              <button
                 slot="reference"
+                class="button-reset av-icon-button"
                 @click.stop=""
               >
                 <i
@@ -147,14 +148,15 @@
                   class="el-icon-setting"
                   style="font-size: 20px; vertical-align: middle;"
                 />
-              </div>
+              </button>
             </el-popover>
-            <img
-              src="../../assets/filter-icon.svg"
+            <button
+              class="button-reset av-icon-button"
               title="Show in list"
-              class="av-icon-button"
               @click.stop="filterColocalized"
             >
+              <img src="../../assets/filter-icon.svg">
+            </button>
           </div>
           <component
             :is="metadataDependentComponent('related-annotations')"
@@ -223,12 +225,11 @@
     text-align: center !important;
     cursor: default !important;
     font-size: 24px;
-    line-height: 40px;
-    vertical-align: center;
+    align-items: baseline;
+    font-variant-numeric: proportional-nums;
 
     >*+* {
-      margin-left: 8px;
-      margin-right: 8px;
+      margin-left: 16px;
     }
 
     .av-icon {
@@ -236,14 +237,8 @@
       height: 20px;
     }
 
-    .sf-big {
-      font-size: 24px;
-      text-shadow : 0 0 0 #000;
-    }
-
-    .mz-big {
-      font-size: 24px;
-      padding: 0 4px;
+    .sf-big sub {
+      @apply text-base;
     }
   }
 
@@ -261,10 +256,6 @@
    }
  }
 
- .grey-bg {
-   background-color: #f9fafc;
- }
-
  .no-selection {
    height: 500px;
    display: flex;
@@ -275,18 +266,22 @@
  #annot-img-collapse .el-collapse-item__header>span {
    display: inline-flex;
  }
-
+</style>
+<style>
   .av-icon-button {
     display: inline-block;
     box-sizing: border-box;
-    margin-left: 20px;
-    width: 20px;
-    height: 20px;
-    font-size: 24px;
+    margin-left: 16px;
+    width: 24px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .av-icon-button img {
+    max-height: 20px;
   }
 
   .av-icon-link {
     cursor: pointer;
   }
-
 </style>

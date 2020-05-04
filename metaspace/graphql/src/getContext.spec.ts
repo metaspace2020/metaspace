@@ -36,7 +36,7 @@ describe('getContext', () => {
       // testIds are shared between different tables intentionally to ensure that cachedGetEntityById is correctly
       // isolating between entity types. A mix of both single-primary-key and composite-primary-key tables is included.
       await testEntityManager.insert(Dataset, testIds.map(id => ({id, userId, piName: id})));
-      await testEntityManager.insert(Project, testIds.map(id => ({id, name: id})));
+      await Promise.all(testIds.map(id => createTestProject({id, name: id})));
       await Promise.all(testIds.map(id => createTestUser({id: id, name: id})));
       await testEntityManager.insert(DatasetProject, testDatasetProjectIds.map(id => ({...id, approved: true})));
       await testEntityManager.insert(UserProject, testUserProjectIds.map(id => ({...id, role: 'MEMBER' as 'MEMBER'})));

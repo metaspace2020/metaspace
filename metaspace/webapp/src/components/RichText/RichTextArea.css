@@ -1,0 +1,15 @@
+.sm-RichTextArea .ProseMirror > * + * {
+  @apply mt-2;
+}
+
+.sm-RichTextArea .ProseMirror > * + h2 {
+  @apply mt-4;
+}
+
+.sm-RichTextArea .ProseMirror h2 {
+  @apply text-lg;
+}
+
+.sm-RichTextArea:not(:focus-within) > label:hover + div {
+  @apply border-gray-500
+}

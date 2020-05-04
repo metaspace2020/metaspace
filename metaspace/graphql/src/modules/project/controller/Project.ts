@@ -102,9 +102,11 @@ const ProjectResolvers: FieldResolversFor<Project, ProjectSource> = {
   },
 
   async createdDT(project, args, ctx: Context): Promise<string> {
-    // TODO: Use a custom GraphQL scalar type so that Moment and Date are automatically converted to ISO strings.
-    // graphql-binding translates all custom scalar types to strings, unless you run it programmatically and change its config
     return project.createdDT.toISOString();
+  },
+
+  async publishedDT(project, args, ctx: Context): Promise<string | null> {
+    return project.publishedDT != null ? project.publishedDT.toISOString() : null;
   },
 
   async externalLinks(project, args, ctx) {

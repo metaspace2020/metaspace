@@ -1,14 +1,14 @@
-import {ConnectionOptions} from 'typeorm';
+import { ConnectionOptions } from 'typeorm';
 import config from './config';
-import {AUTH_ENTITIES} from '../modules/auth/model';
-import {USER_ENTITIES} from '../modules/user/model';
-import {DATASET_ENTITIES} from '../modules/dataset/model';
-import {GROUP_ENTITIES} from '../modules/group/model';
-import {PROJECT_ENTITIES} from '../modules/project/model';
-import {ANNOTATION_ENTITIES} from '../modules/annotation/model';
-import {ENGINE_ENTITIES} from '../modules/engine/model';
-import {MOLECULAR_DB_ENTITIES} from '../modules/moldb/model';
-import {SnakeCaseNamingStrategy} from './SnakeCaseNamingStrategy';
+import { AUTH_ENTITIES } from '../modules/auth/model';
+import { USER_ENTITIES } from '../modules/user/model';
+import { DATASET_ENTITIES } from '../modules/dataset/model';
+import { GROUP_ENTITIES } from '../modules/group/model';
+import { PROJECT_ENTITIES } from '../modules/project/model';
+import { ANNOTATION_ENTITIES } from '../modules/annotation/model';
+import { ENGINE_ENTITIES } from '../modules/engine/model';
+import { MOLECULAR_DB_ENTITIES } from '../modules/moldb/model';
+import { SnakeCaseNamingStrategy } from './SnakeCaseNamingStrategy';
 
 export const DbSchemaName = 'graphql';
 

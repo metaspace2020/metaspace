@@ -26,9 +26,8 @@
         style="min-height: 100px;"
       >
         <projects-list-item
-          v-for="(project, i) in projects"
+          v-for="project in projects"
           :key="project.id"
-          :class="[i%2 ? 'odd': '']"
           :project="project"
           :current-user="currentUser"
           :refresh-data="handleRefreshData"
@@ -224,7 +223,7 @@ export default class ProjectsListPage extends Vue {
     align-items: flex-start;
   }
 
-  .odd {
-    background-color: #e6f1ff;
+  .el-pagination {
+    margin: 10px 0;
   }
 </style>

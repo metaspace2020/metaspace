@@ -53,6 +53,11 @@ export const createTestProject = async (project?: Partial<Project>): Promise<Pro
     name: 'test project',
     isPublic: true,
     publicationStatus: PSO.UNPUBLISHED,
+    // WORKAROUND: Jest considers moment instances different if they're created from a Date vs created by moment.utc()
+    // due to the presence/absense of an internal `_i` property.
+    // Create from a Date() instance here so that validateBackgroundData doesn't see an invisible difference between
+    // the `createTestProject` return value and the retrieved results from the database.
+    createdDT: moment.utc(moment.utc().toDate()),
   };
   return await testEntityManager.save(Project, {...projectDefaultFields, ...project}) as Project;
 };
@@ -96,6 +101,7 @@ export const createTestDataset = async (dataset: Partial<Dataset> = {}, engineDa
     id: datasetId,
     name: 'test dataset',
     uploadDt: moment.utc(),
+    statusUpdateDt: moment.utc(),
     metadata: {},
     status: 'FINISHED',
     isPublic: true,

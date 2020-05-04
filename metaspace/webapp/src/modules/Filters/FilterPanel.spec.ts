@@ -81,7 +81,7 @@ describe('FilterPanel', () => {
       project: 'abc',
       datasetIds: ['aaa', 'bbb'],
       minMSM: '0.1',
-      mz: '296.1',
+      mz: 296.1,
     }
     await Vue.nextTick()
 
@@ -101,6 +101,8 @@ describe('FilterPanel', () => {
     wrapper.find('[data-test-key="mz"] .tf-value-span').trigger('click')
     await Vue.nextTick()
     wrapper.find('[data-test-key="mz"] input').setValue(newFilters.mz)
+    await Vue.nextTick()
+    wrapper.find('[data-test-key="mz"] input').trigger('change')
     await Vue.nextTick()
 
     expect(router.currentRoute.query).toEqual(expect.objectContaining(encodeParams(newFilters)))

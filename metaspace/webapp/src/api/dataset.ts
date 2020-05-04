@@ -56,7 +56,7 @@ export const datasetDetailItemFragment =
     principalInvestigator { name email }
     group { id name shortName }
     groupApproved
-    projects { id name }
+    projects { id name publicationStatus }
     polarity
     ionisationSource
     analyzer {
@@ -81,6 +81,7 @@ export const datasetDetailItemFragment =
     thumbnailOpticalImageUrl
     ionThumbnailUrl
     canDownload
+    uploadDT
   }`
 
 export const datasetDetailItemsQuery =
