@@ -50,8 +50,8 @@
         <em>This project is under review.</em>
         <br /> <!-- hacking the layout -->
         <br />
-        To delete this project, first remove the review link on the <router-link to="?tab=review">
-          Review tab<!-- -->
+        To delete this project, first remove the review link on the <router-link to="?tab=publishing">
+          Publishing tab<!-- -->
         </router-link>.
       </p>
       <div

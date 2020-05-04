@@ -1,5 +1,3 @@
-import './Review.css'
-
 import { createComponent, computed, reactive } from '@vue/composition-api'
 import { Button, Input } from 'element-ui'
 
@@ -65,10 +63,10 @@ const ReviewStepTwo = createComponent({
               <em>You will receive a reminder to complete this step by email.</em>
             </p>
             <div>
-              <label for="project-review-doi">Link the project to the publication with a DOI:</label>
+              <label for="scientific-publishing-doi">Link the project to the publication with a DOI:</label>
               <Input
                 v-model={state.doi}
-                id="project-review-doi"
+                id="scientific-publishing-doi"
                 class="mb-2"
               >
                 <span slot="prepend">https://doi.org/</span>

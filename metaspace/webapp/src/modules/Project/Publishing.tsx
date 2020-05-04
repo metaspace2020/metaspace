@@ -1,10 +1,10 @@
-import './Review.css'
+import './Publishing.css'
 
 import { createComponent, computed } from '@vue/composition-api'
 
 import { Workflow, WorkflowStep } from '../../components/Workflow'
-import ReviewStepOne from './ReviewStepOne'
-import ReviewStepTwo from './ReviewStepTwo'
+import PublishingStepOne from './PublishingStepOne'
+import PublishingStepTwo from './PublishingStepTwo'
 
 import {
   updateProjectMutation, UpdateProjectMutation,
@@ -83,8 +83,8 @@ const ReviewWorkflow = createComponent<Props>({
     }
 
     return () => (
-      <Workflow class="sm-project-review">
-        <ReviewStepOne
+      <Workflow class="sm-scientific-publishing">
+        <PublishingStepOne
           active={activeStep.value === 1}
           canUndo={activeStep.value === 2}
           createLink={createReviewLink}
@@ -93,7 +93,7 @@ const ReviewWorkflow = createComponent<Props>({
           done={activeStep.value > 1}
           project={props.project}
         />
-        <ReviewStepTwo
+        <PublishingStepTwo
           active={activeStep.value === 2}
           done={activeStep.value > 2}
           projectId={projectId.value}

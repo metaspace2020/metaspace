@@ -1,0 +1,25 @@
+/* Element UI overrides */
+
+.sm-scientific-publishing .el-input__inner {
+  @apply px-4;
+}
+
+.sm-scientific-publishing .el-collapse-item__header {
+  @apply text-primary;
+  border: none;
+  font-size: inherit;
+  height: 48px;
+  padding-left: 0;
+}
+.sm-scientific-publishing .el-collapse-item.is-active .el-collapse-item__header {
+  background: none;
+}
+.sm-scientific-publishing .el-collapse-item__content {
+  color: inherit;
+  line-height: inherit;
+  padding-bottom: 0;
+}
+.sm-scientific-publishing .el-collapse-item__wrap {
+  border: none;
+}
+

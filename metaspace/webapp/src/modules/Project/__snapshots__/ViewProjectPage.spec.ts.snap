@@ -154,8 +154,8 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
               <div id="tab-members" aria-controls="pane-members" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
           Members (2)
           <span class="notification"></span></span></div>
-              <div id="tab-review" aria-controls="pane-review" role="tab" tabindex="-1" class="el-tabs__item is-top"><span><div class="el-badge sm-feature-badge">
-            Review
+              <div id="tab-publishing" aria-controls="pane-publishing" role="tab" tabindex="-1" class="el-tabs__item is-top"><span><div class="el-badge sm-feature-badge">
+            Publishing
           <sup class="el-badge__content el-badge__content--undefined is-fixed" name="el-zoom-in-center">New</sup></div></span></div>
               <div id="tab-settings" aria-controls="pane-settings" role="tab" tabindex="-1" class="el-tabs__item is-top">Settings</div>
             </div>
@@ -482,7 +482,7 @@ exports[`ViewProjectPage members tab should match snapshot (non-member) 1`] = `
 </div>
 `;
 
-exports[`ViewProjectPage review tab should match snapshot (published) 1`] = `
+exports[`ViewProjectPage publishing tab should match snapshot (published) 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
     <div class="header-row">
@@ -509,9 +509,9 @@ exports[`ViewProjectPage review tab should match snapshot (published) 1`] = `
               <div id="tab-members" aria-controls="pane-members" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
           Members (2)
           <!----></span></div>
-              <div id="tab-review" aria-controls="pane-review" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span><div class="el-badge sm-feature-badge">
-            Review
-          <sup class="el-badge__content el-badge__content--undefined is-fixed" name="el-zoom-in-center">New</sup></div></span></div>
+              <div id="tab-publishing" aria-controls="pane-publishing" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
+            Publishing
+          </span></div>
               <div id="tab-settings" aria-controls="pane-settings" role="tab" tabindex="-1" class="el-tabs__item is-top">Settings</div>
             </div>
           </div>
@@ -521,8 +521,8 @@ exports[`ViewProjectPage review tab should match snapshot (published) 1`] = `
         <!---->
         <!---->
         <!---->
-        <div role="tabpanel" id="pane-review" aria-labelledby="tab-review" class="el-tab-pane tab-with-badge sm-review-tab">
-          <ol class="sm-workflow sm-project-review">
+        <div role="tabpanel" id="pane-publishing" aria-labelledby="tab-publishing" class="el-tab-pane tab-with-badge sm-publishing-tab">
+          <ol class="sm-workflow sm-scientific-publishing">
             <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-200 transition-colors ease-in-out duration-300 done">
               <h2 class="sm-workflow-header">Create link for reviewers</h2>
               <p>A review link allows reviewers to access this project and its datasets <strong>without making the project available to everyone</strong>.</p>
@@ -546,7 +546,7 @@ exports[`ViewProjectPage review tab should match snapshot (published) 1`] = `
 </div>
 `;
 
-exports[`ViewProjectPage review tab should match snapshot (under review) 1`] = `
+exports[`ViewProjectPage publishing tab should match snapshot (under review) 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
     <div class="header-row">
@@ -573,9 +573,9 @@ exports[`ViewProjectPage review tab should match snapshot (under review) 1`] = `
               <div id="tab-members" aria-controls="pane-members" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
           Members (2)
           <!----></span></div>
-              <div id="tab-review" aria-controls="pane-review" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span><div class="el-badge sm-feature-badge">
-            Review
-          <sup class="el-badge__content el-badge__content--undefined is-fixed" name="el-zoom-in-center">New</sup></div></span></div>
+              <div id="tab-publishing" aria-controls="pane-publishing" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
+            Publishing
+          </span></div>
               <div id="tab-settings" aria-controls="pane-settings" role="tab" tabindex="-1" class="el-tabs__item is-top">Settings</div>
             </div>
           </div>
@@ -585,8 +585,8 @@ exports[`ViewProjectPage review tab should match snapshot (under review) 1`] = `
         <!---->
         <!---->
         <!---->
-        <div role="tabpanel" id="pane-review" aria-labelledby="tab-review" class="el-tab-pane tab-with-badge sm-review-tab">
-          <ol class="sm-workflow sm-project-review">
+        <div role="tabpanel" id="pane-publishing" aria-labelledby="tab-publishing" class="el-tab-pane tab-with-badge sm-publishing-tab">
+          <ol class="sm-workflow sm-scientific-publishing">
             <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-200 transition-colors ease-in-out duration-300 done">
               <h2 class="sm-workflow-header">Create link for reviewers</h2>
               <p>A review link allows reviewers to access this project and its datasets <strong>without making the project available to everyone</strong>.</p>
@@ -612,9 +612,9 @@ exports[`ViewProjectPage review tab should match snapshot (under review) 1`] = `
                 </div>
                 <p>Once review is complete, we encourage making data publicly available.</p>
                 <p><em>You will receive a reminder to complete this step by email.</em></p>
-                <div><label for="project-review-doi">Link the project to the publication with a DOI:</label>
+                <div><label for="scientific-publishing-doi">Link the project to the publication with a DOI:</label>
                   <div class="el-input el-input-group el-input-group--append el-input-group--prepend mb-2">
-                    <div class="el-input-group__prepend"><span>https://doi.org/</span></div><input type="text" autocomplete="off" id="project-review-doi" class="el-input__inner">
+                    <div class="el-input-group__prepend"><span>https://doi.org/</span></div><input type="text" autocomplete="off" id="scientific-publishing-doi" class="el-input__inner">
                     <!---->
                     <!---->
                     <div class="el-input-group__append"><a href="https://doi.org/" target="_blank" rel="noopener" class="text-gray-600">Test link</a></div>
@@ -639,7 +639,7 @@ exports[`ViewProjectPage review tab should match snapshot (under review) 1`] = `
 </div>
 `;
 
-exports[`ViewProjectPage review tab should match snapshot (unpublished) 1`] = `
+exports[`ViewProjectPage publishing tab should match snapshot (unpublished) 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
     <div class="header-row">
@@ -666,9 +666,9 @@ exports[`ViewProjectPage review tab should match snapshot (unpublished) 1`] = `
               <div id="tab-members" aria-controls="pane-members" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
           Members (2)
           <!----></span></div>
-              <div id="tab-review" aria-controls="pane-review" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span><div class="el-badge sm-feature-badge">
-            Review
-          <sup class="el-badge__content el-badge__content--undefined is-fixed" name="el-zoom-in-center">New</sup></div></span></div>
+              <div id="tab-publishing" aria-controls="pane-publishing" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
+            Publishing
+          </span></div>
               <div id="tab-settings" aria-controls="pane-settings" role="tab" tabindex="-1" class="el-tabs__item is-top">Settings</div>
             </div>
           </div>
@@ -678,8 +678,8 @@ exports[`ViewProjectPage review tab should match snapshot (unpublished) 1`] = `
         <!---->
         <!---->
         <!---->
-        <div role="tabpanel" id="pane-review" aria-labelledby="tab-review" class="el-tab-pane tab-with-badge sm-review-tab">
-          <ol class="sm-workflow sm-project-review">
+        <div role="tabpanel" id="pane-publishing" aria-labelledby="tab-publishing" class="el-tab-pane tab-with-badge sm-publishing-tab">
+          <ol class="sm-workflow sm-scientific-publishing">
             <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-200 transition-colors ease-in-out duration-300 active">
               <h2 class="sm-workflow-header">Create link for reviewers</h2>
               <p>A review link allows reviewers to access this project and its datasets <strong>without making the project available to everyone</strong>.</p>
@@ -769,8 +769,8 @@ exports[`ViewProjectPage settings tab should disable actions when published 1`] 
               <div id="tab-members" aria-controls="pane-members" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
           Members (2)
           <!----></span></div>
-              <div id="tab-review" aria-controls="pane-review" role="tab" tabindex="-1" class="el-tabs__item is-top"><span><div class="el-badge sm-feature-badge">
-            Review
+              <div id="tab-publishing" aria-controls="pane-publishing" role="tab" tabindex="-1" class="el-tabs__item is-top"><span><div class="el-badge sm-feature-badge">
+            Publishing
           <sup class="el-badge__content el-badge__content--undefined is-fixed" name="el-zoom-in-center">New</sup></div></span></div>
               <div id="tab-settings" aria-controls="pane-settings" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active">Settings</div>
             </div>
@@ -858,8 +858,8 @@ exports[`ViewProjectPage settings tab should disable actions when under review 1
               <div id="tab-members" aria-controls="pane-members" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
           Members (2)
           <!----></span></div>
-              <div id="tab-review" aria-controls="pane-review" role="tab" tabindex="-1" class="el-tabs__item is-top"><span><div class="el-badge sm-feature-badge">
-            Review
+              <div id="tab-publishing" aria-controls="pane-publishing" role="tab" tabindex="-1" class="el-tabs__item is-top"><span><div class="el-badge sm-feature-badge">
+            Publishing
           <sup class="el-badge__content el-badge__content--undefined is-fixed" name="el-zoom-in-center">New</sup></div></span></div>
               <div id="tab-settings" aria-controls="pane-settings" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active">Settings</div>
             </div>
@@ -910,8 +910,8 @@ exports[`ViewProjectPage settings tab should disable actions when under review 1
             <div>
               <h2>Delete project</h2>
               <p><em>This project is under review.</em> <br> <br>
-                To delete this project, first remove the review link on the <a href="/project/00000000-1111-2222-3333-444444444444?tab=review" class="router-link-active">
-                  Review tab</a>.
+                To delete this project, first remove the review link on the <a href="/project/00000000-1111-2222-3333-444444444444?tab=publishing" class="router-link-active">
+                  Publishing tab</a>.
               </p>
             </div>
           </div>
@@ -950,8 +950,8 @@ exports[`ViewProjectPage settings tab should match snapshot 1`] = `
               <div id="tab-members" aria-controls="pane-members" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
           Members (2)
           <!----></span></div>
-              <div id="tab-review" aria-controls="pane-review" role="tab" tabindex="-1" class="el-tabs__item is-top"><span><div class="el-badge sm-feature-badge">
-            Review
+              <div id="tab-publishing" aria-controls="pane-publishing" role="tab" tabindex="-1" class="el-tabs__item is-top"><span><div class="el-badge sm-feature-badge">
+            Publishing
           <sup class="el-badge__content el-badge__content--undefined is-fixed" name="el-zoom-in-center">New</sup></div></span></div>
               <div id="tab-settings" aria-controls="pane-settings" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active">Settings</div>
             </div>
