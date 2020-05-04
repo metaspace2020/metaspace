@@ -1,19 +1,22 @@
 from itertools import product
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import patch, Mock
+import pytest
+from unittest.mock import patch, Mock, MagicMock
 
 import numpy as np
 import pandas as pd
 
+from sm.engine.fdr import FDR
 from sm.engine.formula_centroids import FormulaCentroids
+from sm.engine.molecular_db import MolecularDB
 from sm.engine.msm_basic.msm_basic_search import (
     MSMSearch,
     init_fdr,
     collect_ion_formulas,
     compute_fdr,
+    compute_fdr_and_filter_results,
 )
-from tests.conftest import make_moldb_mock
 
 
 def make_imzml_parser_mock(sp_n=100):
@@ -64,8 +67,9 @@ def make_formula_image_metrics_mock_side_effect():
     return formula_image_metrics_mock
 
 
+@patch('sm.engine.molecular_db.fetch_formulas', lambda moldb_id: ['H2O', 'C5H3O'])
 def test_compute_fdr(spark_context, ds_config):
-    moldb_fdr_list = init_fdr(ds_config, [make_moldb_mock()])
+    moldb_fdr_list = init_fdr(ds_config, [MolecularDB(0, 'test_db', 'version')])
     _, fdr = moldb_fdr_list[0]
     formula_map_df = collect_ion_formulas(spark_context, moldb_fdr_list).drop('moldb_id', axis=1)
 
@@ -82,28 +86,56 @@ def test_compute_fdr(spark_context, ds_config):
     )
 
 
+def make_search_results(spark_context):
+    fdr_mock = MagicMock(FDR)
+    fdr_mock.estimate_fdr.side_effect = lambda df: df.assign(fdr=[0.5, 1.0])
+    fdr_mock.target_modifiers_df = pd.DataFrame(
+        {'target_modifier': ['+H'], 'adduct': ['+H']}
+    ).set_index('target_modifier')
+    ion_formula_map_df = pd.DataFrame(
+        {
+            'moldb_id': [0, 0],
+            'ion_formula': ['H30', 'C2H70'],
+            'formula': ['H20', 'C2H60'],
+            'modifier': ['+H', '+H'],
+        }
+    )
+    formula_metrics_df = pd.DataFrame(
+        {'formula_i': [0, 1], 'msm': [0.9, 0.95], 'ion_formula': ['H30', 'C2H70']}
+    ).set_index('formula_i')
+    formula_images_rdd = spark_context.parallelize([(0, np.array([[0.0]])), (1, np.array([[0.0]]))])
+    return fdr_mock, ion_formula_map_df, formula_metrics_df, formula_images_rdd
+
+
+@pytest.mark.parametrize("targeted,exp_annot_n", [(False, 1), (True, 2)])
+def test_compute_fdr_and_filter_results(targeted, exp_annot_n, spark_context):
+    moldb = MolecularDB(0, 'test_db', 'version', targeted=targeted)
+    fdr, ion_formula_map_df, formula_metrics_df, formula_images_rdd = make_search_results(
+        spark_context
+    )
+
+    moldb_ion_metrics_df, moldb_ion_images_rdd = compute_fdr_and_filter_results(
+        moldb, fdr, ion_formula_map_df, formula_metrics_df, formula_images_rdd
+    )
+
+    assert moldb_ion_metrics_df.shape[0] == exp_annot_n
+    assert moldb_ion_images_rdd.count() == exp_annot_n
+
+
 @patch('sm.engine.msm_basic.formula_imager.formula_image_metrics')
+@patch('sm.engine.molecular_db.fetch_formulas', lambda moldb_id: ['H2O', 'C5H3O'])
 def test_search(formula_image_metrics_mock, spark_context, ds_config):
     with TemporaryDirectory() as tmpdir:
         ds_data_path = Path(tmpdir)
         print(ds_data_path)
         msm_search = MSMSearch(
-            spark_context, make_imzml_parser_mock(), [make_moldb_mock()], ds_config, ds_data_path
+            spark_context,
+            make_imzml_parser_mock(),
+            [MolecularDB(0, 'tests_db', 'version')],
+            ds_config,
+            ds_data_path,
         )
-        formulas_df = pd.DataFrame(
-            [(0, 'H3O'), (1, 'C5H4O')], columns=['formula_i', 'formula']
-        ).set_index('formula_i')
-        centroids_df = (
-            pd.DataFrame(
-                data=[(0, 0, 1, 100), (0, 1, 2, 10), (1, 0, 2, 100), (1, 1, 3, 100)],
-                columns=['formula_i', 'peak_i', 'mz', 'int'],
-            )
-            .sort_values(by='mz')
-            .set_index('formula_i')
-        )
-        msm_search._fetch_formula_centroids = lambda args: FormulaCentroids(
-            formulas_df, centroids_df
-        )
+        msm_search._fetch_formula_centroids = make_fetch_formula_centroids_mock()
 
         msm_search.process_segments = lambda centr_segm_n, func: spark_context.parallelize(
             map(func, range(centr_segm_n))
@@ -128,7 +160,10 @@ def test_search(formula_image_metrics_mock, spark_context, ds_config):
 
 
 @patch('sm.engine.msm_basic.formula_imager.formula_image_metrics')
-def test_ambiguous_modifiers(formula_image_metrics_mock, spark_context, ds_config):
+@patch('sm.engine.molecular_db.fetch_formulas')
+def test_ambiguous_modifiers(
+    fetch_formulas_mock, formula_image_metrics_mock, spark_context, ds_config
+):
     with TemporaryDirectory() as tmpdir:
         ds_data_path = Path(tmpdir)
         print(ds_data_path)
@@ -145,7 +180,7 @@ def test_ambiguous_modifiers(formula_image_metrics_mock, spark_context, ds_confi
             },
         }
 
-        formulas = [
+        fetch_formulas_mock.return_value = [
             'H3O',
             'H4O',
             'H5O2',
@@ -154,11 +189,10 @@ def test_ambiguous_modifiers(formula_image_metrics_mock, spark_context, ds_confi
         msm_search = MSMSearch(
             spark_context,
             make_imzml_parser_mock(),
-            [make_moldb_mock(formulas)],
+            [MolecularDB(0, 'test_db', 'version')],
             ds_config,
             ds_data_path,
         )
-
         msm_search._fetch_formula_centroids = make_fetch_formula_centroids_mock()
         msm_search.process_segments = lambda centr_segm_n, func: spark_context.parallelize(
             map(func, range(centr_segm_n))

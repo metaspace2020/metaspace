@@ -209,11 +209,3 @@ def sm_index(sm_config, request):
         es_man.delete_index(sm_config['elasticsearch']['index'])
 
     request.addfinalizer(fin)
-
-
-def make_moldb_mock(formulas=('H2O', 'C5H3O')):
-    moldb_mock = MagicMock(spec=MolecularDB)
-    moldb_mock.id = 0
-    moldb_mock.name = 'test_db'
-    moldb_mock.formulas = list(formulas)
-    return moldb_mock

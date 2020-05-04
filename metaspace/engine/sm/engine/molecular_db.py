@@ -1,6 +1,6 @@
 import logging
 from io import StringIO
-from typing import List
+from typing import List, Iterable
 
 import pandas as pd
 from pyMSpec.pyisocalc.canopy.sum_formula_actions import InvalidFormulaError
@@ -76,6 +76,9 @@ def _import_molecules_from_file(moldb, file_path, targeted_threshold):
     DB().copy(buffer, sep='\t', table='molecule', columns=columns)
     logger.info(f'{moldb}: inserted {len(moldb_df)} molecules')
 
+    targeted = moldb_df.formula.unique().shape[0] <= targeted_threshold
+    DB().alter('UPDATE molecular_db SET targeted = % WHERE id = %s', params=(targeted, moldb.id))
+
 
 def create(
     name: str = None,
@@ -142,7 +145,7 @@ def find_by_id(id: int) -> MolecularDB:
     return MolecularDB(**data)
 
 
-def find_by_ids(ids: List[int]) -> MolecularDB:
+def find_by_ids(ids: Iterable[int]) -> List[MolecularDB]:
     """Find multiple databases by ids."""
 
     data = DB().select_with_fields(

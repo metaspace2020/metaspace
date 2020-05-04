@@ -88,7 +88,7 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
     mol_db_mock.id = mol_db_id
     mol_db_mock.name = 'HMDB-v4'
     mol_db_mock.version = '2018-04-03'
-    mol_db_mock.get_molecules.return_value = pd.DataFrame(
+    mol_db_mock.fetch_molecules.return_value = pd.DataFrame(
         [('H2O', 'mol_id', 'mol_name'), ('Au', 'mol_id', 'mol_name')],
         columns=['formula', 'mol_id', 'mol_name'],
     )
