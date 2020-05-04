@@ -13,7 +13,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     <!---->
   </div>
   <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="analyzerType" filter-key="analyzerType">
-    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
+    <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Analyzer type:
       <!---->
     </div>
@@ -29,10 +29,10 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"></button>
   </div>
   <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="fdrLevel" filter-key="fdrLevel">
-    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
+    <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       FDR:
       <!---->
     </div>
@@ -54,7 +54,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     <!---->
   </div>
   <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="metadataType" filter-key="metadataType">
-    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
+    <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Data type:
       <!---->
     </div>
@@ -74,7 +74,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     <!---->
   </div>
   <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="group" options="">
-    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
+    <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Group:
       <!---->
     </div>
@@ -95,10 +95,10 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"></button>
   </div>
   <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="project" options="">
-    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
+    <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Project:
       <!---->
     </div>
@@ -119,10 +119,10 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"></button>
   </div>
   <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="submitter" options="">
-    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
+    <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Submitter:
       <!---->
     </div>
@@ -144,10 +144,10 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"></button>
   </div>
   <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="datasetIds" options="">
-    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
+    <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Dataset:
       <!---->
     </div>
@@ -168,10 +168,10 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"></button>
   </div>
   <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="minMSM" filter-key="minMSM" options="">
-    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
+    <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Min. MSM:
       <!---->
     </div>
@@ -192,10 +192,10 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"></button>
   </div>
   <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="compoundName" filter-key="compoundName" options="">
-    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
+    <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Molecule:
       <!---->
     </div>
@@ -216,10 +216,10 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"></button>
   </div>
   <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="database" filter-key="database">
-    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
+    <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Database:
       <!---->
     </div>
@@ -238,7 +238,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     <!---->
   </div>
   <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="mz" filter-key="mz" options="">
-    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
+    <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       m/z:
       <!---->
     </div>
@@ -268,10 +268,10 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"></button>
   </div>
   <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="polarity" filter-key="polarity">
-    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
+    <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Polarity:
       <!---->
     </div>
@@ -287,10 +287,10 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"></button>
   </div>
   <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="organism" filter-key="organism">
-    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
+    <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Organism:
       <!---->
     </div>
@@ -306,10 +306,10 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"></button>
   </div>
   <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="organismPart" filter-key="organismPart">
-    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
+    <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Organism part:
       <!---->
     </div>
@@ -325,10 +325,10 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"></button>
   </div>
   <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="condition" filter-key="condition">
-    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
+    <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Organism condition:
       <!---->
     </div>
@@ -344,10 +344,10 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"></button>
   </div>
   <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="growthConditions" filter-key="growthConditions">
-    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
+    <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Sample growth conditions:
       <!---->
     </div>
@@ -363,10 +363,10 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"></button>
   </div>
   <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="ionisationSource" filter-key="ionisationSource">
-    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
+    <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Source:
       <!---->
     </div>
@@ -382,10 +382,10 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"></button>
   </div>
   <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="maldiMatrix" filter-key="maldiMatrix">
-    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
+    <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Matrix:
       <!---->
     </div>
@@ -401,10 +401,10 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"></button>
   </div>
   <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="adduct" filter-key="adduct" name="Adduct">
-    <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
+    <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Adduct:
       <!---->
     </div>
@@ -435,7 +435,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
         </div>
       </div>
-    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"></button>
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"></button>
   </div>
 </div>
 `;
