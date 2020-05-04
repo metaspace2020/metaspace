@@ -193,6 +193,7 @@ describe('ViewProjectPage', () => {
   describe('review tab', () => {
     beforeEach(() => {
       router.replace({ query: { tab: 'review' } })
+      resetGenerateId()
     })
 
     it('should match snapshot (unpublished)', async() => {
@@ -203,8 +204,6 @@ describe('ViewProjectPage', () => {
       await Vue.nextTick()
 
       expect(wrapper).toMatchSnapshot()
-
-      resetGenerateId()
     })
 
     it('should match snapshot (under review)', async() => {

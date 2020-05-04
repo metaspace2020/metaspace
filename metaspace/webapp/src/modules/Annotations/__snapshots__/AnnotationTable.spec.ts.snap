@@ -150,12 +150,12 @@ exports[`AnnotationTable should match snapshot 1`] = `
     <!---->
     <div class="el-table__column-resize-proxy" style="display: none;"></div>
   </div>
-  <div id="annot-table-controls">
+  <div class="flex justify-between items-start mt-2">
     <div>
       <mock-el-pagination total="1" page-size="15" page-sizes="15,20,25,30" current-page="1" layout="prev,pager,next,sizes"></mock-el-pagination>
-      <div id="annot-count"><b>1</b> matching record
+      <div id="annot-count" class="mt-2"><b>1</b> matching record
       </div>
-      <div style="padding-top: 10px;">
+      <div class="mt-2">
         <div class="fdr-legend-header">
           FDR levels:
         </div>

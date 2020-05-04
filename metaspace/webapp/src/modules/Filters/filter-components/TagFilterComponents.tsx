@@ -13,7 +13,7 @@ export const TagFilterOuter = createComponent({
 export const TagFilterName = createComponent({
   setup(_, { slots }) {
     return () => (
-      <div class="tf-name bg-gray-100 text-gray-600 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
+      <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
         {slots.default()}
       </div>
     )
@@ -25,7 +25,7 @@ export const TagFilterRemove = createComponent({
     return () => (
       <button
         title="Remove filter"
-        class="tf-remove button-reset el-icon-close ml-3 text-gray-600 text-base"
+        class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"
         onClick={listeners.click}
       />
     )

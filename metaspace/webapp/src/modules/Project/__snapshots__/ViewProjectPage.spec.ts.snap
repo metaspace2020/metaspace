@@ -524,7 +524,7 @@ exports[`ViewProjectPage review tab should match snapshot (published) 1`] = `
         <div role="tabpanel" id="pane-review" aria-labelledby="tab-review" class="el-tab-pane tab-with-badge sm-review-tab">
           <ol class="sm-workflow sm-project-review">
             <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-200 transition-colors ease-in-out duration-300 done">
-              <h2 class="sm-workflow-header">Enable peer review</h2>
+              <h2 class="sm-workflow-header">Create link for reviewers</h2>
               <p>A review link allows reviewers to access this project and its datasets <strong>without making the project available to everyone</strong>.</p>
               <p><em>Reviewers will not need to create an account to gain access.</em></p>
             </li>
@@ -588,7 +588,7 @@ exports[`ViewProjectPage review tab should match snapshot (under review) 1`] = `
         <div role="tabpanel" id="pane-review" aria-labelledby="tab-review" class="el-tab-pane tab-with-badge sm-review-tab">
           <ol class="sm-workflow sm-project-review">
             <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-200 transition-colors ease-in-out duration-300 done">
-              <h2 class="sm-workflow-header">Enable peer review</h2>
+              <h2 class="sm-workflow-header">Create link for reviewers</h2>
               <p>A review link allows reviewers to access this project and its datasets <strong>without making the project available to everyone</strong>.</p>
               <p><em>Reviewers will not need to create an account to gain access.</em></p>
               <form><button type="button" class="el-button el-button--default">
@@ -681,7 +681,7 @@ exports[`ViewProjectPage review tab should match snapshot (unpublished) 1`] = `
         <div role="tabpanel" id="pane-review" aria-labelledby="tab-review" class="el-tab-pane tab-with-badge sm-review-tab">
           <ol class="sm-workflow sm-project-review">
             <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-200 transition-colors ease-in-out duration-300 active">
-              <h2 class="sm-workflow-header">Enable peer review</h2>
+              <h2 class="sm-workflow-header">Create link for reviewers</h2>
               <p>A review link allows reviewers to access this project and its datasets <strong>without making the project available to everyone</strong>.</p>
               <p><em>Reviewers will not need to create an account to gain access.</em></p>
               <form action="#">
@@ -795,9 +795,9 @@ exports[`ViewProjectPage settings tab should disable actions when published 1`] 
             </div>
             <form class="el-form el-form--label-top">
               <div>
-                <div class="el-form-item name is-required"><label for="name" class="el-form-item__label">Name</label>
+                <div class="el-form-item name max-w-measure-3 is-required"><label for="name" class="el-form-item__label">Name</label>
                   <div class="el-form-item__content">
-                    <div class="max-w-measure-4 el-input">
+                    <div class="el-input">
                       <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
                       <!---->
                       <!---->
@@ -884,9 +884,9 @@ exports[`ViewProjectPage settings tab should disable actions when under review 1
             </div>
             <form class="el-form el-form--label-top">
               <div>
-                <div class="el-form-item name is-required"><label for="name" class="el-form-item__label">Name</label>
+                <div class="el-form-item name max-w-measure-3 is-required"><label for="name" class="el-form-item__label">Name</label>
                   <div class="el-form-item__content">
-                    <div class="max-w-measure-4 el-input">
+                    <div class="el-input">
                       <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
                       <!---->
                       <!---->
@@ -976,9 +976,9 @@ exports[`ViewProjectPage settings tab should match snapshot 1`] = `
             </div>
             <form class="el-form el-form--label-top">
               <div>
-                <div class="el-form-item name is-required"><label for="name" class="el-form-item__label">Name</label>
+                <div class="el-form-item name max-w-measure-3 is-required"><label for="name" class="el-form-item__label">Name</label>
                   <div class="el-form-item__content">
-                    <div class="max-w-measure-4 el-input">
+                    <div class="el-input">
                       <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
                       <!---->
                       <!---->

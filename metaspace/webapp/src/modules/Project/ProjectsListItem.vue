@@ -173,14 +173,24 @@ export default class ProjectsListItem extends Vue {
       }
     }
 
+    get userIsAdmin() {
+      return this.currentUser && this.currentUser.role === 'admin'
+    }
+
+    get userIsManager() {
+      return this.project.currentUserRole === 'MANAGER'
+    }
+
     get canManage() {
-      return (this.currentUser && this.currentUser.role === 'admin') || (
-        this.project.currentUserRole === 'MANAGER'
-      )
+      return this.userIsAdmin || this.userIsManager
     }
 
     get canDelete() {
-      return this.canManage && this.project.publicationStatus === 'UNPUBLISHED'
+      return (
+        this.userIsAdmin || (
+          this.userIsManager && this.project.publicationStatus === 'UNPUBLISHED'
+        )
+      )
     }
 
     shortGroupName(manager: managerGroupName): string|null {

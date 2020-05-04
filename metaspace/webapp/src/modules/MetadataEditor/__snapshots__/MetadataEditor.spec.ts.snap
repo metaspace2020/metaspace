@@ -629,9 +629,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
           <div mock-v-loading="1">
             <form class="el-form el-form--label-top" size="mini">
               <div>
-                <div class="el-form-item name is-required"><label for="name" class="el-form-item__label">Name</label>
+                <div class="el-form-item name max-w-measure-3 is-required"><label for="name" class="el-form-item__label">Name</label>
                   <div class="el-form-item__content">
-                    <div class="max-w-measure-4 el-input">
+                    <div class="el-input">
                       <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
                       <!---->
                       <!---->
