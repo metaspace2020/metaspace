@@ -1,69 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`MetadataEditor should be able to load an existing dataset: metadata 1`] = `
-Object {
-  "Additional_Information": Object {
-    "Supplementary": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-  },
-  "Data_Type": "Imaging MS",
-  "MS_Analysis": Object {
-    "Analyzer": "none",
-    "Detector_Resolving_Power": Object {
-      "Resolving_Power": 123456,
-      "mz": 123,
-    },
-    "Ionisation_Source": "none",
-    "Pixel_Size": Object {
-      "Xaxis": 0,
-      "Yaxis": 0,
-    },
-    "Polarity": "Positive",
-  },
-  "Sample_Information": Object {
-    "Condition": "Live",
-    "Organism": "Human",
-    "Organism_Part": "Liver",
-    "Sample_Growth_Conditions": "N/A",
-  },
-  "Sample_Preparation": Object {
-    "MALDI_Matrix": "baz",
-    "MALDI_Matrix_Application": "qux",
-    "Sample_Stabilisation": "foo",
-    "Solvent": "quux",
-    "Tissue_Modification": "bar",
-  },
-}
-`;
-
-exports[`MetadataEditor should be able to load an existing dataset: metaspaceOptions 1`] = `
-Object {
-  "adducts": Array [
-    "adducts.0.adduct",
-  ],
-  "analysisVersion": 1,
-  "chemMods": Array [],
-  "decoySampleSize": null,
-  "groupId": "123",
-  "isPublic": true,
-  "molDBs": Array [
-    "molecularDatabases.1.name",
-  ],
-  "name": "dataset.name",
-  "neutralLosses": Array [],
-  "numPeaks": null,
-  "ppm": null,
-  "principalInvestigator": Object {
-    "email": "dataset.principalInvestigator.email",
-    "name": "dataset.principalInvestigator.name",
-  },
-  "projectIds": Array [
-    "dataset.projects.0.id",
-    "dataset.projects.1.id",
-  ],
-  "submitterId": "123",
-}
-`;
-
 exports[`MetadataEditor should match snapshot 1`] = `
 <div id="md-editor-container">
   <div mock-v-loading="true" style="position: relative;">
@@ -629,9 +565,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
           <div mock-v-loading="1">
             <form class="el-form el-form--label-top" size="mini">
               <div>
-                <div class="el-form-item name is-required"><label for="name" class="el-form-item__label">Name</label>
+                <div class="el-form-item name max-w-measure-3 is-required"><label for="name" class="el-form-item__label">Name</label>
                   <div class="el-form-item__content">
-                    <div class="max-w-measure-4 el-input">
+                    <div class="el-input">
                       <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
                       <!---->
                       <!---->
