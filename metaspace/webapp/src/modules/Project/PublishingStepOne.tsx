@@ -40,7 +40,6 @@ interface State {
     urlSlug: string | null,
     projectDescription: string | null
   }
-  formActive: boolean
 }
 
 const ReviewStepOne = createComponent<Props>({
@@ -58,7 +57,6 @@ const ReviewStepOne = createComponent<Props>({
       errors: {},
       loading: false,
       model: getInitialModel(props.project, props.currentUserName),
-      formActive: false,
     })
 
     const submit = async() => {
@@ -66,7 +64,7 @@ const ReviewStepOne = createComponent<Props>({
         state.errors = {}
         state.loading = true
         try {
-          await props.createLink(state.formActive ? state.model : null)
+          await props.createLink(state.model)
         } catch (e) {
           state.errors = parseValidationErrors(e)
         } finally {
@@ -103,53 +101,56 @@ const ReviewStepOne = createComponent<Props>({
           A review link allows reviewers to access this project and its datasets{' '}
           <strong>without making the project available to everyone</strong>.
         </p>
-        <p>
-          <em>Reviewers will not need to create an account to gain access.</em>
-        </p>
         {props.active
-          && <form action="#" onSubmit={(e: Event) => { e.preventDefault(); submit() }}>
-            <Collapse
-              class="border-t border-b-0 box-border border-gray-200"
-              onChange={() => { state.formActive = !state.formActive }}
-              value={state.formActive ? 'projectdetails' : ''}
-            >
-              <CollapseItem title="Update project details (recommended)" name="projectdetails">
-                <div>
-                  <label for="project-review-title">Set the project name:</label>
-                  <Input id="project-review-title" v-model={state.model.name} />
-                </div>
-                <div class={['mt-3', { 'sm-form-error': state.errors.urlSlug }]}>
-                  <label for="project-review-url">Create a custom URL (a-z, 0-9, minus or underscore):</label>
-                  { state.errors.urlSlug
-                    && <p class="text-sm text-danger font-medium leading-4 m-0 mb-2">
-                      {state.errors.urlSlug}
-                    </p> }
-                  <Input
-                    id="project-review-url"
-                    v-model={state.model.urlSlug}
-                    pattern="[a-zA-Z0-9_-]+"
-                    minlength="4"
-                    maxlength="50"
-                    title="(a-z, 0-9, minus or underscore)"
-                  >
-                    <span slot="prepend">{projectUrlPrefix}</span>
-                  </Input>
-                </div>
-                <RichTextArea
-                  class="mt-3"
-                  content={state.model.projectDescription}
-                  label="Add an abstract to the project description:"
-                  onUpdate={(content: string) => {
-                    state.model.projectDescription = content
-                  }}
-                />
-              </CollapseItem>
-            </Collapse>
+          && <form
+            action="#"
+            class="border-0 border-t border-gray-200"
+            onSubmit={(e: Event) => { e.preventDefault(); submit() }}
+          >
+            <p><em>Please review the suggested updates below before continuing:</em></p>
+            <div class={{ 'sm-form-error': state.errors.urlSlug }}>
+              <label for="project-review-url">
+                <span class="text-base font-bold">Custom URL</span>
+                <br />
+                <span class="block text-sm font-medium leading-5">
+                  This is the link that you should use in the manuscript.
+                </span>
+                <span class="block text-sm leading-5">
+                  It must be unique and use characters a-z, 0-9, minus or underscore.
+                </span>
+              </label>
+              { state.errors.urlSlug
+                && <p class="text-sm text-danger font-medium leading-5 mt-1 mb-2">
+                  {state.errors.urlSlug}
+                </p> }
+              <Input
+                id="project-review-url"
+                class="mt-1"
+                v-model={state.model.urlSlug}
+                pattern="[a-zA-Z0-9_-]+"
+                minlength="4"
+                maxlength="50"
+                title="a-z, 0-9, minus or underscore"
+              >
+                <span slot="prepend">{projectUrlPrefix}</span>
+              </Input>
+            </div>
+            <div>
+              <label for="project-review-title">Set the project name:</label>
+              <Input id="project-review-title" v-model={state.model.name} />
+            </div>
+            <RichTextArea
+              content={state.model.projectDescription}
+              label="Add an abstract to the project description:"
+              onUpdate={(content: string) => {
+                state.model.projectDescription = content
+              }}
+            />
             {/* Button component does not submit the form *shrug* */}
             <button class="el-button el-button--primary">
               {state.loading && <i class="el-icon-loading" />}
               <span>
-                Create link {state.formActive && '& update details'}
+                Update & create link
               </span>
             </button>
           </form>

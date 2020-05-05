@@ -44,10 +44,6 @@ const ReviewWorkflow = createComponent<Props>({
     const projectId = computed(() => props.project ? props.project.id : undefined)
 
     const createReviewLink = async(projectDetails: object) => {
-      await root.$apollo.mutate({
-        mutation: createReviewLinkMutation,
-        variables: { projectId: projectId.value },
-      })
       if (projectDetails) {
         await root.$apollo.mutate<UpdateProjectMutation>({
           mutation: updateProjectMutation,
@@ -57,6 +53,10 @@ const ReviewWorkflow = createComponent<Props>({
           },
         })
       }
+      await root.$apollo.mutate({
+        mutation: createReviewLinkMutation,
+        variables: { projectId: projectId.value },
+      })
       await props.refetchProject()
     }
 
