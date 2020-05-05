@@ -23,7 +23,7 @@ export const validateUrlSlugChange = async <EntityType extends ObjectType<Entity
         .getMany();
 
     if (existing.some(({ id }) => existingId != null && id != existingId)) {
-        throw new FormValidationErrors('urlSlug', 'This custom URL has already been used.')
+        throw new FormValidationErrors('urlSlug', 'This project URL has already been used.')
     }
 }
 

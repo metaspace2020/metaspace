@@ -1,10 +1,9 @@
-import './Publishing.css'
-
 import { createComponent, computed } from '@vue/composition-api'
 
-import { Workflow, WorkflowStep } from '../../components/Workflow'
-import PublishingStepOne from './PublishingStepOne'
-import PublishingStepTwo from './PublishingStepTwo'
+import { Workflow } from '../../../components/Workflow'
+import PrepareProject from './PrepareProject'
+import CreateReviewLink from './CreateReviewLink'
+import PublishData from './PublishData'
 
 import {
   updateProjectMutation, UpdateProjectMutation,
@@ -13,7 +12,7 @@ import {
   deleteReviewLinkMutation,
   publishProjectMutation,
   updateProjectDOIMutation,
-} from '../../api/project'
+} from '../../../api/project'
 
 const statuses = {
   UNPUBLISHED: 'UNPUBLISHED',
@@ -84,31 +83,32 @@ const ReviewWorkflow = createComponent<Props>({
 
     return () => (
       <Workflow class="sm-scientific-publishing">
-        <PublishingStepOne
+        <PrepareProject
           active={activeStep.value === 1}
-          canUndo={activeStep.value === 2}
-          createLink={createReviewLink}
           currentUserName={props.currentUserName}
-          deleteLink={deleteReviewLink}
           done={activeStep.value > 1}
           project={props.project}
         />
-        <PublishingStepTwo
+        <CreateReviewLink
           active={activeStep.value === 2}
           done={activeStep.value > 2}
+          canUndo={activeStep.value === 3}
+          createLink={createReviewLink}
+          deleteLink={deleteReviewLink}
+          project={props.project}
+        />
+        <PublishData
+          active={activeStep.value === 3}
+          done={props.project.publicationStatus === 'PUBLISHED'}
           projectId={projectId.value}
           publishProject={publishProject}
           reviewToken={props.project.reviewToken || undefined}
         />
-        <WorkflowStep
-          active={activeStep.value === 3}
-          done={activeStep.value === 3}
-        >
-          <h2 class="sm-workflow-header">Publish the data</h2>
+        {/* <h2 class="sm-workflow-header">Publish the data</h2>
           {activeStep.value === 3
             ? <p>This project and its datasets are now public, thank you for your contribution.</p>
             : <p>This project and its datasets will be made public.</p>}
-        </WorkflowStep>
+        </WorkflowStep> */}
       </Workflow>
     )
   },

@@ -30,12 +30,6 @@
   margin-bottom: 3rem;
 }
 
-.sm-workflow label {
-  @apply text-sm leading-loose font-medium;
-  color: inherit;
-  cursor: pointer;
-}
-
 
 /* status indicators */
 

@@ -199,7 +199,7 @@ import ProjectSettings from './ProjectSettings.vue'
 import { optionalSuffixInParens, plural } from '../../lib/vueFilters'
 import { removeDatasetFromAllDatasetsQuery } from '../../lib/updateApolloCache'
 import RichText from '../../components/RichText'
-import Publishing from './Publishing'
+import Publishing from './publishing'
 import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
 
   interface ViewProjectPageData {

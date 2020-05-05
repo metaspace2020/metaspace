@@ -1,12 +1,12 @@
 import { createComponent, computed, reactive } from '@vue/composition-api'
 import { Button, Input } from 'element-ui'
 
-import { WorkflowStep } from '../../components/Workflow'
-import CopyToClipboard from '../../components/CopyToClipboard'
+import { WorkflowStep } from '../../../components/Workflow'
+import CopyToClipboard from '../../../components/CopyToClipboard'
 
-import confirmPrompt from '../../components/confirmPrompt'
+import confirmPrompt from '../../../components/confirmPrompt'
 
-const ReviewStepTwo = createComponent({
+const PublishData = createComponent({
   props: {
     active: Boolean,
     done: Boolean,
@@ -51,9 +51,10 @@ const ReviewStepTwo = createComponent({
         active={props.active}
         done={props.done}
       >
-        <h2 class="sm-workflow-header">Review in progress</h2>
+        <h2 class="sm-workflow-header">Publish the data</h2>
+        <p>This project and its datasets will be made public.</p>
         {props.active
-          ? <form onSubmit={(e: Event) => { e.preventDefault() }}>
+          && <form onSubmit={(e: Event) => { e.preventDefault() }}>
             <p>Reviewers can access this project using the following link:</p>
             <CopyToClipboard value={reviewLink.value} />
             <p>
@@ -85,11 +86,10 @@ const ReviewStepTwo = createComponent({
               Publish project
             </Button>
           </form>
-          : <p>Reviewers will have access to this project prior to publication.</p>
         }
       </WorkflowStep>
     )
   },
 })
 
-export default ReviewStepTwo
+export default PublishData

@@ -1,13 +1,12 @@
 import { createComponent, reactive } from '@vue/composition-api'
-import { Button, Input, Collapse, CollapseItem } from 'element-ui'
+import { Button, Input } from 'element-ui'
 
-import { WorkflowStep } from '../../components/Workflow'
-import { RichTextArea } from '../../components/RichText'
-import confirmPrompt from '../../components/confirmPrompt'
+import { WorkflowStep } from '../../../components/Workflow'
+import { RichTextArea } from '../../../components/RichText'
 
-import { ViewProjectResult } from '../../api/project'
-import { parseValidationErrors } from '../../api/validation'
-import router from '../../router'
+import { ViewProjectResult } from '../../../api/project'
+import { parseValidationErrors } from '../../../api/validation'
+import router from '../../../router'
 
 function getInitialModel(project: ViewProjectResult, currentUserName = '') {
   const year = new Date().getFullYear()
@@ -25,9 +24,8 @@ function getInitialModel(project: ViewProjectResult, currentUserName = '') {
 interface Props {
   active: boolean
   canUndo: boolean
-  createLink: Function
+  updateProject: Function
   currentUserName: string
-  deleteLink: Function
   done: boolean
   project: ViewProjectResult
 }
@@ -42,15 +40,13 @@ interface State {
   }
 }
 
-const ReviewStepOne = createComponent<Props>({
+const PrepareProject = createComponent<Props>({
   props: {
     active: Boolean,
-    canUndo: Boolean,
-    createLink: Function,
     currentUserName: String,
-    deleteLink: Function,
     done: Boolean,
     project: Object,
+    updateProject: Function,
   },
   setup(props) {
     const state = reactive<State>({
@@ -60,32 +56,17 @@ const ReviewStepOne = createComponent<Props>({
     })
 
     const submit = async() => {
-      if (props.createLink) {
+      if (props.updateProject) {
         state.errors = {}
         state.loading = true
         try {
-          await props.createLink(state.model)
+          await props.updateProject(state.model)
         } catch (e) {
           state.errors = parseValidationErrors(e)
         } finally {
           state.loading = false
         }
       }
-    }
-
-    const undo = () => {
-      confirmPrompt({
-        title: '',
-        type: 'warning',
-        style: 'warning',
-        confirmButtonText: 'Confirm',
-        message: (
-          <p>
-            <strong>This will remove access to the project.</strong> You
-            will need to distribute a new link if you would like to start the review process again.
-          </p>
-        ),
-      }, props.deleteLink)
     }
 
     const { href } = router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined, true)
@@ -96,78 +77,76 @@ const ReviewStepOne = createComponent<Props>({
         active={props.active}
         done={props.done}
       >
-        <h2 class="sm-workflow-header">Create link for reviewers</h2>
-        <p>
-          A review link allows reviewers to access this project and its datasets{' '}
-          <strong>without making the project available to everyone</strong>.
-        </p>
+        <h2 class="sm-workflow-header">Update project details</h2>
+        {/* <p>Amend the suggestions below.</p> */}
         {props.active
-          && <form
+          ? <form
             action="#"
             class="border-0 border-t border-gray-200"
             onSubmit={(e: Event) => { e.preventDefault(); submit() }}
           >
-            <p><em>Please review the suggested updates below before continuing:</em></p>
             <div class={{ 'sm-form-error': state.errors.urlSlug }}>
               <label for="project-review-url">
-                <span class="text-base font-bold">Custom URL</span>
-                <br />
-                <span class="block text-sm font-medium leading-5">
-                  This is the link that you should use in the manuscript.
+                <span class="text-base font-medium">Link to be used in the manuscript</span>
+                <span class="block text-sm text-gray-800">
+                  Must be unique and use characters a-z, 0-9, hyphen or underscore
                 </span>
-                <span class="block text-sm leading-5">
-                  It must be unique and use characters a-z, 0-9, minus or underscore.
-                </span>
-              </label>
-              { state.errors.urlSlug
-                && <p class="text-sm text-danger font-medium leading-5 mt-1 mb-2">
+                {state.errors.urlSlug
+                && <span class="block text-sm font-medium text-danger">
                   {state.errors.urlSlug}
-                </p> }
+                </span>}
+              </label>
               <Input
                 id="project-review-url"
-                class="mt-1"
+                class="py-1"
                 v-model={state.model.urlSlug}
                 pattern="[a-zA-Z0-9_-]+"
                 minlength="4"
                 maxlength="50"
-                title="a-z, 0-9, minus or underscore"
+                title="a-z, 0-9, hyphen or underscore"
               >
                 <span slot="prepend">{projectUrlPrefix}</span>
               </Input>
             </div>
             <div>
-              <label for="project-review-title">Set the project name:</label>
-              <Input id="project-review-title" v-model={state.model.name} />
+              <label for="project-review-title">
+                <span class="text-base font-medium">Project title</span>
+                <span class="block text-sm text-gray-800">
+                  Suggested format: Author et al. (year) title
+                </span>
+              </label>
+              <Input id="project-review-title" class="py-1" v-model={state.model.name} />
             </div>
             <RichTextArea
               content={state.model.projectDescription}
-              label="Add an abstract to the project description:"
               onUpdate={(content: string) => {
                 state.model.projectDescription = content
               }}
-            />
+            >
+              <span slot="label" class="text-base font-medium">Abstract</span>
+              <span slot="label" class="block text-sm text-gray-800">Copy and paste here</span>
+            </RichTextArea>
             {/* Button component does not submit the form *shrug* */}
             <button class="el-button el-button--primary">
               {state.loading && <i class="el-icon-loading" />}
               <span>
-                Update & create link
+                Update
               </span>
             </button>
           </form>
-        }
-        {props.canUndo
-          && <form onSubmit={(e: Event) => e.preventDefault()}>
-            <Button
-              onClick={undo}
-              key={props.project.publicationStatus}
-            >
-              Remove link
-            </Button>
-          </form>
+          : <div>
+            <p>
+              Link to this project in your manuscript using:
+              <br />
+              <a href={projectUrlPrefix + props.project.urlSlug} class="text-lg font-medium">
+                {projectUrlPrefix + props.project.urlSlug}
+              </a>
+            </p>
+          </div>
         }
       </WorkflowStep>
     )
   },
 })
 
-export default ReviewStepOne
+export default PrepareProject
