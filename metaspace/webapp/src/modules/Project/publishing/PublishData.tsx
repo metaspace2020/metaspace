@@ -47,9 +47,6 @@ const PublishData = createComponent({
         {props.active
           && <form onSubmit={(e: Event) => { e.preventDefault() }}>
             <p>
-              Once review is complete, we encourage making data publicly available.
-            </p>
-            <p>
               <em>You will receive a reminder to complete this step by email.</em>
             </p>
             <div>

@@ -80,7 +80,7 @@ const CreateReviewLink = createComponent<Props>({
           </p>}
         {props.active
           && <form onSubmit={(e: Event) => e.preventDefault()}>
-            <p class="italic">N.B. creating a review link will change the following permissions:</p>
+            <p class="italic">Creating a review link will prevent certain actions:</p>
             <ul class="italic p-0 list-disc">
               <li>
                 The project cannot be deleted
@@ -92,7 +92,7 @@ const CreateReviewLink = createComponent<Props>({
                 Datasets in the project cannot be removed
               </li>
             </ul>
-            <p class="italic">These permissions can be restored by removing the link.</p>
+            <p class="italic">These actions can be restored by removing the link.</p>
             <Button
               onClick={submit}
               loading={state.loading}
@@ -104,10 +104,11 @@ const CreateReviewLink = createComponent<Props>({
         }
         {props.done && props.canUndo
           && <form>
-            <div>
-              <p class="m-0">Reviewers can access the project using this link:</p>
+            <p class="pb-3"><em>Review links are temporary and will not work after the project is published.</em></p>
+            <label>
+              <span class="font-medium text-primary">Reviewers can access the project using this link:</span>
               <CopyToClipboard value={reviewLink.value} class="py-1" />
-            </div>
+            </label>
             {props.canUndo
               && <Button
                 onClick={undo}

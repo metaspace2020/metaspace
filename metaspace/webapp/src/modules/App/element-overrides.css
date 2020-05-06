@@ -51,7 +51,8 @@
 .el-checkbox__input.is-checked + .el-checkbox__label,
 .el-select-dropdown__item.selected,
 .el-table th.is-sortable.ascending,
-.el-table th.is-sortable.descending {
+.el-table th.is-sortable.descending,
+.el-button--text {
   @apply text-primary;
 }
 

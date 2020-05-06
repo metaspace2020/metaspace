@@ -18,7 +18,7 @@ function getInitialModel(project: ViewProjectResult, currentUserName = '') {
   const newProjectName = surname && !project.name.startsWith(citation) ? `${citation} ${project.name}` : null
   return {
     name: newProjectName || project.name,
-    urlSlug: surname ? `${surname.toLowerCase()}-${year}` : project.urlSlug,
+    urlSlug: surname && !project.urlSlug ? `${surname.toLowerCase()}-${year}` : project.urlSlug,
     projectDescription: project.projectDescription,
   }
 }
@@ -33,6 +33,7 @@ interface Props {
 }
 
 interface State {
+  editing: boolean
   errors: { [field: string]: string }
   loading: boolean
   model: {
@@ -53,6 +54,7 @@ const PrepareProject = createComponent<Props>({
   },
   setup(props) {
     const state = reactive<State>({
+      editing: false,
       errors: {},
       loading: false,
       model: getInitialModel(props.project, props.currentUserName),
@@ -68,8 +70,14 @@ const PrepareProject = createComponent<Props>({
           state.errors = parseValidationErrors(e)
         } finally {
           state.loading = false
+          state.editing = false
         }
       }
+    }
+
+    const cancel = () => {
+      state.editing = false
+      state.model = getInitialModel(props.project, props.currentUserName)
     }
 
     const { href } = router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined, true)
@@ -81,11 +89,15 @@ const PrepareProject = createComponent<Props>({
         done={props.done}
       >
         <h2 class="sm-workflow-header">Update project details</h2>
-        {props.active
+        {(props.active || state.editing)
           && <form
             action="#"
             onSubmit={(e: Event) => { e.preventDefault(); submit() }}
           >
+            <p>
+              Create a short project link to use in the manuscript.
+              We also suggest updating the project title and adding an abstract to the project description.
+            </p>
             <div class={{ 'sm-form-error': state.errors.urlSlug }}>
               <label for="project-review-url">
                 <span class="text-base font-medium">Link to be used in the manuscript</span>
@@ -125,7 +137,7 @@ const PrepareProject = createComponent<Props>({
               }}
             >
               <span slot="label" class="text-base font-medium">Abstract</span>
-              <span slot="label" class="block text-sm text-gray-800">Copy and paste here</span>
+              <span slot="label" class="block text-sm text-gray-800">Copy and paste here, will be displayed in the About section</span>
             </RichTextArea>
             {/* Button component does not submit the form *shrug* */}
             <button class="el-button el-button--primary">
@@ -134,22 +146,34 @@ const PrepareProject = createComponent<Props>({
                 Update
               </span>
             </button>
+            { state.editing
+            && <Button
+              key="cancel"
+              type="text"
+              nativeType="reset"
+              class="px-3"
+              onClick={cancel}
+            >
+              Cancel
+            </Button> }
           </form>}
-        { props.done && props.canUndo
+        { props.done && !state.editing
         && <form
           action="#"
           onSubmit={(e: Event) => { e.preventDefault(); submit() }}
         >
-          <div>
-            <p class="m-0">Reference the project in the manuscript using this link:</p>
-            <CopyToClipboard value={projectUrlPrefix + props.project.urlSlug} class="pt-1" />
-          </div>
-          <p>
-              Edit the link in{' '}
-            <router-link to="?tab=settings">
-                Settings
-            </router-link>
-          </p>
+          <label>
+            <span class="font-medium text-primary">Reference the project in the manuscript using this link:</span>
+            <CopyToClipboard value={projectUrlPrefix + props.project.urlSlug} class="py-1" />
+          </label>
+          {props.canUndo
+            && <Button
+              key="edit"
+              onClick={() => { state.editing = true }}
+            >
+              Edit details
+            </Button>
+          }
         </form>}
       </WorkflowStep>
     )
