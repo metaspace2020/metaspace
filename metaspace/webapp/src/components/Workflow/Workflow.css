@@ -34,7 +34,7 @@
 /* status indicators */
 
 .sm-workflow-step:before {
-  @apply text-gray-600 text-2xl font-bold bg-gray-200 transition-colors ease-in-out duration-300 h-12 w-12;
+  @apply text-gray-700 text-2xl font-bold bg-gray-200 transition-colors ease-in-out duration-300 h-12 w-12;
   align-items: center;
   border-radius: 50%;
   content: counter(workflow);
@@ -46,13 +46,13 @@
   top: 0;
 }
 
-.sm-workflow-step.active {
+.sm-workflow-step.active,
+.sm-workflow-step.done {
   color: inherit;
 }
 
 .sm-workflow-step.active:before {
-  @apply bg-primary;
-  color: #fff;
+  @apply bg-primary text-white;
 }
 
 .sm-workflow-step.done:before {

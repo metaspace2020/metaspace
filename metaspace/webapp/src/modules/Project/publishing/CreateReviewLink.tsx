@@ -21,10 +21,8 @@ const CreateReviewLink = createComponent<Props>({
     active: Boolean,
     canUndo: Boolean,
     createLink: Function,
-    currentUserName: String,
     deleteLink: Function,
     done: Boolean,
-    project: Object,
   },
   setup(props) {
     const state = reactive<State>({
@@ -67,11 +65,15 @@ const CreateReviewLink = createComponent<Props>({
           A review link allows reviewers to access this project and its datasets{' '}
           <strong>without making the project available to everyone.</strong>
         </p>
+        <p>
+          <em>Reviewers will not need an account to gain access.</em>
+        </p>
         {props.active
           && <form onSubmit={(e: Event) => e.preventDefault()}>
             <Button
-              onClick={undo}
+              onClick={submit}
               loading={state.loading}
+              type="primary"
             >
               Create link
             </Button>

@@ -34,24 +34,29 @@ const ReviewWorkflow = createComponent<Props>({
   },
   setup(props, { root }) {
     const activeStep = computed(() => {
-      if (!props.project) {
-        return 1
+      if (props.project.publicationStatus !== statuses.UNPUBLISHED) {
+        return 3
       }
-      return Object.keys(statuses).indexOf(props.project.publicationStatus) + 1
+      if (props.project.urlSlug) {
+        return 2
+      }
+      return 1
     })
 
     const projectId = computed(() => props.project ? props.project.id : undefined)
 
-    const createReviewLink = async(projectDetails: object) => {
-      if (projectDetails) {
-        await root.$apollo.mutate<UpdateProjectMutation>({
-          mutation: updateProjectMutation,
-          variables: {
-            projectId: projectId.value,
-            projectDetails,
-          },
-        })
-      }
+    const updateProject = async(projectDetails: object) => {
+      await root.$apollo.mutate<UpdateProjectMutation>({
+        mutation: updateProjectMutation,
+        variables: {
+          projectId: projectId.value,
+          projectDetails,
+        },
+      })
+      await props.refetchProject()
+    }
+
+    const createReviewLink = async() => {
       await root.$apollo.mutate({
         mutation: createReviewLinkMutation,
         variables: { projectId: projectId.value },
@@ -88,6 +93,7 @@ const ReviewWorkflow = createComponent<Props>({
           currentUserName={props.currentUserName}
           done={activeStep.value > 1}
           project={props.project}
+          updateProject={updateProject}
         />
         <CreateReviewLink
           active={activeStep.value === 2}
@@ -95,11 +101,10 @@ const ReviewWorkflow = createComponent<Props>({
           canUndo={activeStep.value === 3}
           createLink={createReviewLink}
           deleteLink={deleteReviewLink}
-          project={props.project}
         />
         <PublishData
           active={activeStep.value === 3}
-          done={props.project.publicationStatus === 'PUBLISHED'}
+          done={props.project.publicationStatus === statuses.PUBLISHED}
           projectId={projectId.value}
           publishProject={publishProject}
           reviewToken={props.project.reviewToken || undefined}

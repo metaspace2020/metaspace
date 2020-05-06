@@ -3,6 +3,7 @@ import { Button, Input } from 'element-ui'
 
 import { WorkflowStep } from '../../../components/Workflow'
 import { RichTextArea } from '../../../components/RichText'
+import CopyToClipboard from '../../../components/CopyToClipboard'
 
 import { ViewProjectResult } from '../../../api/project'
 import { parseValidationErrors } from '../../../api/validation'
@@ -82,7 +83,6 @@ const PrepareProject = createComponent<Props>({
         {props.active
           ? <form
             action="#"
-            class="border-0 border-t border-gray-200"
             onSubmit={(e: Event) => { e.preventDefault(); submit() }}
           >
             <div class={{ 'sm-form-error': state.errors.urlSlug }}>
@@ -134,15 +134,19 @@ const PrepareProject = createComponent<Props>({
               </span>
             </button>
           </form>
-          : <div>
+          : <form
+            action="#"
+            onSubmit={(e: Event) => { e.preventDefault(); submit() }}
+          >
+            <p>Use this link in your manuscript:</p>
+            <CopyToClipboard value={projectUrlPrefix + props.project.urlSlug} />
             <p>
-              Link to this project in your manuscript using:
-              <br />
-              <a href={projectUrlPrefix + props.project.urlSlug} class="text-lg font-medium">
-                {projectUrlPrefix + props.project.urlSlug}
-              </a>
+              Edit the link in{' '}
+              <router-link to="?tab=settings">
+                Settings
+              </router-link>
             </p>
-          </div>
+          </form>
         }
       </WorkflowStep>
     )
