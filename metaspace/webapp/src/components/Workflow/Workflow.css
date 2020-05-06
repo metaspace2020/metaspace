@@ -1,9 +1,6 @@
 .sm-workflow {
   counter-reset: workflow;
   list-style: none;
-  line-height: 1.5rem;
-  margin: 0;
-  padding: 0;
 }
 
 .sm-workflow-step:last-child {
@@ -53,6 +50,10 @@
 
 .sm-workflow-step.active:before {
   @apply bg-primary text-white;
+}
+
+.sm-workflow-step.done:before {
+  @apply bg-blue-100 text-blue-800;
 }
 
 .sm-workflow-step.done:before {

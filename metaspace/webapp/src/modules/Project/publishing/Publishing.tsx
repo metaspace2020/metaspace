@@ -34,7 +34,10 @@ const ReviewWorkflow = createComponent<Props>({
   },
   setup(props, { root }) {
     const activeStep = computed(() => {
-      if (props.project.publicationStatus !== statuses.UNPUBLISHED) {
+      if (props.project.publicationStatus === statuses.PUBLISHED) {
+        return 4
+      }
+      if (props.project.publicationStatus === statuses.UNDER_REVIEW) {
         return 3
       }
       if (props.project.urlSlug) {
@@ -90,6 +93,7 @@ const ReviewWorkflow = createComponent<Props>({
       <Workflow class="sm-scientific-publishing">
         <PrepareProject
           active={activeStep.value === 1}
+          canUndo={props.project.publicationStatus !== statuses.PUBLISHED}
           currentUserName={props.currentUserName}
           done={activeStep.value > 1}
           project={props.project}
@@ -101,19 +105,14 @@ const ReviewWorkflow = createComponent<Props>({
           canUndo={activeStep.value === 3}
           createLink={createReviewLink}
           deleteLink={deleteReviewLink}
+          projectId={projectId.value}
+          reviewToken={props.project.reviewToken || undefined}
         />
         <PublishData
           active={activeStep.value === 3}
           done={props.project.publicationStatus === statuses.PUBLISHED}
-          projectId={projectId.value}
           publishProject={publishProject}
-          reviewToken={props.project.reviewToken || undefined}
         />
-        {/* <h2 class="sm-workflow-header">Publish the data</h2>
-          {activeStep.value === 3
-            ? <p>This project and its datasets are now public, thank you for your contribution.</p>
-            : <p>This project and its datasets will be made public.</p>}
-        </WorkflowStep> */}
       </Workflow>
     )
   },

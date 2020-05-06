@@ -7,6 +7,7 @@ import CopyToClipboard from '../../../components/CopyToClipboard'
 
 import { ViewProjectResult } from '../../../api/project'
 import { parseValidationErrors } from '../../../api/validation'
+
 import router from '../../../router'
 
 function getInitialModel(project: ViewProjectResult, currentUserName = '') {
@@ -44,6 +45,7 @@ interface State {
 const PrepareProject = createComponent<Props>({
   props: {
     active: Boolean,
+    canUndo: Boolean,
     currentUserName: String,
     done: Boolean,
     project: Object,
@@ -79,9 +81,8 @@ const PrepareProject = createComponent<Props>({
         done={props.done}
       >
         <h2 class="sm-workflow-header">Update project details</h2>
-        {/* <p>Amend the suggestions below.</p> */}
         {props.active
-          ? <form
+          && <form
             action="#"
             onSubmit={(e: Event) => { e.preventDefault(); submit() }}
           >
@@ -133,21 +134,23 @@ const PrepareProject = createComponent<Props>({
                 Update
               </span>
             </button>
-          </form>
-          : <form
-            action="#"
-            onSubmit={(e: Event) => { e.preventDefault(); submit() }}
-          >
-            <p>Use this link in your manuscript:</p>
-            <CopyToClipboard value={projectUrlPrefix + props.project.urlSlug} />
-            <p>
+          </form>}
+        { props.done && props.canUndo
+        && <form
+          action="#"
+          onSubmit={(e: Event) => { e.preventDefault(); submit() }}
+        >
+          <div>
+            <p class="m-0">Reference the project in the manuscript using this link:</p>
+            <CopyToClipboard value={projectUrlPrefix + props.project.urlSlug} class="pt-1" />
+          </div>
+          <p>
               Edit the link in{' '}
-              <router-link to="?tab=settings">
+            <router-link to="?tab=settings">
                 Settings
-              </router-link>
-            </p>
-          </form>
-        }
+            </router-link>
+          </p>
+        </form>}
       </WorkflowStep>
     )
   },

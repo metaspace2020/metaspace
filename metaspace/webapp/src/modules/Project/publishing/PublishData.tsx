@@ -2,7 +2,6 @@ import { createComponent, computed, reactive } from '@vue/composition-api'
 import { Button, Input } from 'element-ui'
 
 import { WorkflowStep } from '../../../components/Workflow'
-import CopyToClipboard from '../../../components/CopyToClipboard'
 
 import confirmPrompt from '../../../components/confirmPrompt'
 
@@ -10,18 +9,9 @@ const PublishData = createComponent({
   props: {
     active: Boolean,
     done: Boolean,
-    projectId: String,
-    reviewToken: String,
     publishProject: { type: Function, required: true },
   },
   setup(props) {
-    const reviewLink = computed(() => {
-      if (!props.projectId || !props.reviewToken) {
-        return undefined
-      }
-      return `${window.location.origin}/api_auth/review?prj=${props.projectId}&token=${props.reviewToken}`
-    })
-
     const state = reactive({
       doi: '',
     })
@@ -52,11 +42,10 @@ const PublishData = createComponent({
         done={props.done}
       >
         <h2 class="sm-workflow-header">Publish the data</h2>
-        <p>This project and its datasets will be made public.</p>
+        {!props.active && !props.done
+        && <p>This project and its datasets will be made public.</p>}
         {props.active
           && <form onSubmit={(e: Event) => { e.preventDefault() }}>
-            <p>Reviewers can access this project using the following link:</p>
-            <CopyToClipboard value={reviewLink.value} />
             <p>
               Once review is complete, we encourage making data publicly available.
             </p>
@@ -64,11 +53,14 @@ const PublishData = createComponent({
               <em>You will receive a reminder to complete this step by email.</em>
             </p>
             <div>
-              <label for="scientific-publishing-doi">Link the project to the publication with a DOI:</label>
+              <label for="scientific-publishing-doi">
+                <span class="font-medium">Publication DOI</span>
+                <span class="text-sm block">Should link to the published paper</span>
+              </label>
               <Input
                 v-model={state.doi}
                 id="scientific-publishing-doi"
-                class="mb-2"
+                class="py-1"
               >
                 <span slot="prepend">https://doi.org/</span>
                 <a
@@ -87,6 +79,7 @@ const PublishData = createComponent({
             </Button>
           </form>
         }
+        {props.done && <p>The project and its datasets are now public, thank you for your contribution.</p>}
       </WorkflowStep>
     )
   },
