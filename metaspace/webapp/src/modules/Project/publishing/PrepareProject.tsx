@@ -25,7 +25,6 @@ function getInitialModel(project: ViewProjectResult, currentUserName = '') {
 
 interface Props {
   active: boolean
-  canUndo: boolean
   updateProject: Function
   currentUserName: string
   done: boolean
@@ -46,7 +45,6 @@ interface State {
 const PrepareProject = createComponent<Props>({
   props: {
     active: Boolean,
-    canUndo: Boolean,
     currentUserName: String,
     done: Boolean,
     project: Object,
@@ -166,14 +164,12 @@ const PrepareProject = createComponent<Props>({
             <span class="font-medium text-primary">Reference the project in the manuscript using this link:</span>
             <CopyToClipboard value={projectUrlPrefix + props.project.urlSlug} class="py-1" />
           </label>
-          {props.canUndo
-            && <Button
-              key="edit"
-              onClick={() => { state.editing = true }}
-            >
-              Edit details
-            </Button>
-          }
+          <Button
+            key="edit"
+            onClick={() => { state.editing = true }}
+          >
+            Edit details
+          </Button>
         </form>}
       </WorkflowStep>
     )
