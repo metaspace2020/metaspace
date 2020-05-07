@@ -22,24 +22,46 @@
     />
     <div
       v-if="project != null && (project.isPublic || project.urlSlug)"
-      style="margin-bottom: 2em"
+      class="max-w-measure-3 mb-12 leading-6"
     >
-      <h2>Custom URL</h2>
-      <p
-        v-if="errors.urlSlug"
-        class="text-danger text-sm my-2 font-medium"
-      >
-        {{ errors.urlSlug }}
-      </P>
-      <div class="max-w-measure-3">
+      <label>
+        <span class="font-medium">Short link</span>
+        <span class="block text-sm text-gray-800">
+          Must be unique and use characters a-z, 0-9, hyphen or underscore
+        </span>
+        <span
+          v-if="errors.urlSlug"
+          class="block text-danger text-sm my-2 font-medium"
+        >
+          {{ errors.urlSlug }}
+        </span>
         <el-input
           v-model="model.urlSlug"
+          class="py-1 mb-6"
           :class="{ 'sm-form-error': errors.urlSlug }"
           :disabled="isSaving"
         >
           <span slot="prepend">{{ projectUrlPrefix }}</span>
         </el-input>
-      </div>
+      </label>
+      <label>
+        <span class="font-medium">Publication DOI</span>
+        <span class="block text-sm text-gray-800">
+          Should link to a published paper
+        </span>
+        <el-input
+          class="py-1"
+          :disabled="isSaving"
+        >
+          <span slot="prepend">https://doi.org/</span>
+          <span slot="append">
+            <a
+              href="#"
+              class="text-inherit"
+            >Test link</a>
+          </span>
+        </el-input>
+      </label>
     </div>
     <div v-if="project">
       <h2>Delete project</h2>
@@ -50,7 +72,7 @@
         <em>This project is under review.</em>
         <br /> <!-- hacking the layout -->
         <br />
-        To delete this project, first remove the review link on the <router-link to="?tab=publishing">
+        To delete the project, first remove the review link on the <router-link to="?tab=publishing">
           Publishing tab<!-- -->
         </router-link>.
       </p>
