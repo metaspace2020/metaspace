@@ -185,7 +185,7 @@ export default class ProjectSettings extends Vue {
       this.isSaving = true
       try {
         const { name, isPublic, urlSlug } = this.model
-        const slugChanged = isPublic && urlSlug !== this.projectUrlRoute.params.projectIdOrSlug
+        const slugChanged = urlSlug !== this.projectUrlRoute.params.projectIdOrSlug
         await this.$apollo.mutate<UpdateProjectMutation>({
           mutation: updateProjectMutation,
           variables: {
