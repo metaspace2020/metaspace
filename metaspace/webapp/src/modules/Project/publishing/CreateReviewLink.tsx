@@ -7,7 +7,6 @@ import CopyToClipboard from '../../../components/CopyToClipboard'
 
 interface Props {
   active: boolean
-  canUndo: boolean
   createLink: Function
   deleteLink: Function
   done: boolean
@@ -22,7 +21,6 @@ interface State {
 const CreateReviewLink = createComponent<Props>({
   props: {
     active: Boolean,
-    canUndo: Boolean,
     createLink: Function,
     deleteLink: Function,
     done: Boolean,
@@ -60,8 +58,9 @@ const CreateReviewLink = createComponent<Props>({
         confirmButtonText: 'Confirm',
         message: (
           <p>
-            <strong>This will remove access to the project.</strong> You
-            will need to distribute a new link if you would like to start the review process again.
+            <strong>This will remove access to the project.</strong>
+            <br />
+            You will need to create a new link and send it to reviewers to grant access again.
           </p>
         ),
       }, props.deleteLink)
@@ -102,20 +101,18 @@ const CreateReviewLink = createComponent<Props>({
             </Button>
           </form>
         }
-        {props.done && props.canUndo
+        {props.done
           && <form>
             <p class="pb-3"><em>Review links are temporary and will not work after the project is published.</em></p>
             <label>
               <span class="font-medium text-primary">Reviewers can access the project using this link:</span>
               <CopyToClipboard value={reviewLink.value} class="py-1" />
             </label>
-            {props.canUndo
-              && <Button
-                onClick={undo}
-              >
-                Remove link
-              </Button>
-            }
+            <Button
+              onClick={undo}
+            >
+              Remove link
+            </Button>
           </form>
         }
       </WorkflowStep>

@@ -46,8 +46,10 @@ const PublishData = createComponent({
         && <p>This project and its datasets will be made public.</p>}
         {props.active
           && <form onSubmit={(e: Event) => { e.preventDefault() }}>
-            <p>
-              <em>You will receive a reminder to complete this step by email.</em>
+            <p class="italic">
+              Complete this step after the DOI for your paper has been issued.
+              <br />
+              You will receive a reminder by email.
             </p>
             <div>
               <label for="scientific-publishing-doi">

@@ -4,6 +4,7 @@ import { Button, Input } from 'element-ui'
 import { WorkflowStep } from '../../../components/Workflow'
 import { RichTextArea } from '../../../components/RichText'
 import CopyToClipboard from '../../../components/CopyToClipboard'
+import FadeTransition from '../../../components/FadeTransition'
 
 import { ViewProjectResult } from '../../../api/project'
 import { parseValidationErrors } from '../../../api/validation'
@@ -64,17 +65,18 @@ const PrepareProject = createComponent<Props>({
         state.loading = true
         try {
           await props.updateProject(state.model)
+          state.editing = false
         } catch (e) {
           state.errors = parseValidationErrors(e)
         } finally {
           state.loading = false
-          state.editing = false
         }
       }
     }
 
     const cancel = () => {
       state.editing = false
+      state.errors = {}
       state.model = getInitialModel(props.project, props.currentUserName)
     }
 
@@ -87,90 +89,96 @@ const PrepareProject = createComponent<Props>({
         done={props.done}
       >
         <h2 class="sm-workflow-header">Update project details</h2>
-        {(props.active || state.editing)
+        <FadeTransition>
+          {(props.active || state.editing)
+            && <form
+              key="editing"
+              action="#"
+              onSubmit={(e: Event) => { e.preventDefault(); submit() }}
+            >
+              <p>
+                Create a short project link to use in the manuscript.
+                We also suggest updating the project title and adding an abstract to the project description.
+              </p>
+              <div class={{ 'sm-form-error': state.errors.urlSlug }}>
+                <label for="project-review-url">
+                  <span class="text-base font-medium">Link to be used in the manuscript</span>
+                  <span class="block text-sm text-gray-800">
+                    Must be unique and use characters a-z, 0-9, hyphen or underscore
+                  </span>
+                  {state.errors.urlSlug
+                  && <span class="block text-sm font-medium text-danger">
+                    {state.errors.urlSlug}
+                  </span>}
+                </label>
+                <Input
+                  id="project-review-url"
+                  class="py-1"
+                  v-model={state.model.urlSlug}
+                  pattern="[a-zA-Z0-9_-]+"
+                  minlength="4"
+                  maxlength="50"
+                  title="a-z, 0-9, hyphen or underscore"
+                >
+                  <span slot="prepend">{projectUrlPrefix}</span>
+                </Input>
+              </div>
+              <div>
+                <label for="project-review-title">
+                  <span class="text-base font-medium">Project title</span>
+                  <span class="block text-sm text-gray-800">
+                    Suggested format: Author et al. (year) title
+                  </span>
+                </label>
+                <Input id="project-review-title" class="py-1" v-model={state.model.name} />
+              </div>
+              <RichTextArea
+                content={state.model.projectDescription}
+                onUpdate={(content: string) => {
+                  state.model.projectDescription = content
+                }}
+              >
+                <span slot="label" class="text-base font-medium">Abstract</span>
+                <span slot="label" class="block text-sm text-gray-800">
+                  Copy and paste here, will be displayed in the About section
+                </span>
+              </RichTextArea>
+              {/* Button component does not submit the form *shrug* */}
+              <button class="el-button el-button--primary">
+                {state.loading && <i class="el-icon-loading" />}
+                <span>
+                  Update
+                </span>
+              </button>
+              { state.editing
+              && <Button
+                key="cancel"
+                type="text"
+                nativeType="reset"
+                class="px-3"
+                onClick={cancel}
+              >
+                Cancel
+              </Button> }
+            </form>}
+          { props.done && !state.editing
           && <form
+            key="done"
             action="#"
             onSubmit={(e: Event) => { e.preventDefault(); submit() }}
           >
-            <p>
-              Create a short project link to use in the manuscript.
-              We also suggest updating the project title and adding an abstract to the project description.
-            </p>
-            <div class={{ 'sm-form-error': state.errors.urlSlug }}>
-              <label for="project-review-url">
-                <span class="text-base font-medium">Link to be used in the manuscript</span>
-                <span class="block text-sm text-gray-800">
-                  Must be unique and use characters a-z, 0-9, hyphen or underscore
-                </span>
-                {state.errors.urlSlug
-                && <span class="block text-sm font-medium text-danger">
-                  {state.errors.urlSlug}
-                </span>}
-              </label>
-              <Input
-                id="project-review-url"
-                class="py-1"
-                v-model={state.model.urlSlug}
-                pattern="[a-zA-Z0-9_-]+"
-                minlength="4"
-                maxlength="50"
-                title="a-z, 0-9, hyphen or underscore"
-              >
-                <span slot="prepend">{projectUrlPrefix}</span>
-              </Input>
-            </div>
-            <div>
-              <label for="project-review-title">
-                <span class="text-base font-medium">Project title</span>
-                <span class="block text-sm text-gray-800">
-                  Suggested format: Author et al. (year) title
-                </span>
-              </label>
-              <Input id="project-review-title" class="py-1" v-model={state.model.name} />
-            </div>
-            <RichTextArea
-              content={state.model.projectDescription}
-              onUpdate={(content: string) => {
-                state.model.projectDescription = content
-              }}
+            <label>
+              <span class="font-medium text-primary">Reference the project in the manuscript using this link:</span>
+              <CopyToClipboard value={projectUrlPrefix + props.project.urlSlug} class="py-1" />
+            </label>
+            <Button
+              key="edit"
+              onClick={() => { state.editing = true }}
             >
-              <span slot="label" class="text-base font-medium">Abstract</span>
-              <span slot="label" class="block text-sm text-gray-800">Copy and paste here, will be displayed in the About section</span>
-            </RichTextArea>
-            {/* Button component does not submit the form *shrug* */}
-            <button class="el-button el-button--primary">
-              {state.loading && <i class="el-icon-loading" />}
-              <span>
-                Update
-              </span>
-            </button>
-            { state.editing
-            && <Button
-              key="cancel"
-              type="text"
-              nativeType="reset"
-              class="px-3"
-              onClick={cancel}
-            >
-              Cancel
-            </Button> }
+              Edit details
+            </Button>
           </form>}
-        { props.done && !state.editing
-        && <form
-          action="#"
-          onSubmit={(e: Event) => { e.preventDefault(); submit() }}
-        >
-          <label>
-            <span class="font-medium text-primary">Reference the project in the manuscript using this link:</span>
-            <CopyToClipboard value={projectUrlPrefix + props.project.urlSlug} class="py-1" />
-          </label>
-          <Button
-            key="edit"
-            onClick={() => { state.editing = true }}
-          >
-            Edit details
-          </Button>
-        </form>}
+        </FadeTransition>
       </WorkflowStep>
     )
   },
