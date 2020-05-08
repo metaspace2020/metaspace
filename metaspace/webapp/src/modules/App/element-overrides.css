@@ -87,6 +87,10 @@
 .el-input-group__prepend {
   @apply px-4 flex items-center w-auto text-gray-700;
 }
+.el-input.is-disabled .el-input-group__append,
+.el-input.is-disabled .el-input-group__prepend {
+  @apply border-gray-200;
+}
 
 .el-message-box__headerbtn {
   z-index: 1;

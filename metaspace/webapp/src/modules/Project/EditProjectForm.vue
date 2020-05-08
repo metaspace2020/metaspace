@@ -7,7 +7,7 @@
     label-position="top"
     @submit="handleSubmit"
   >
-    <div class="max-w-measure-3">
+    <div>
       <label class="leading-6">
         <span class="font-medium">Title</span>
         <el-input

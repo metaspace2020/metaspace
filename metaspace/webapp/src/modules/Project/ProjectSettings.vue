@@ -1,95 +1,99 @@
 <template>
-  <div class="project-settings">
-    <div class="header-row">
-      <h2>Project Details</h2>
-      <div class="flex-spacer" />
-
-      <div class="header-row-buttons">
-        <el-button
-          v-if="project"
-          type="primary"
-          :loading="isSaving"
-          @click="handleSave"
-        >
-          Save
-        </el-button>
-      </div>
-    </div>
-    <edit-project-form
-      v-model="model"
-      :is-published="isPublished"
-      :disabled="isSaving"
-    />
+  <div class="project-settings max-w-measure-3 mx-auto leading-6">
     <div
-      v-if="project != null && (project.isPublic || project.urlSlug)"
-      class="max-w-measure-3 mb-12 leading-6"
+      v-if="project != null"
+      class="mt-6 mb-12"
     >
-      <label>
-        <span class="font-medium">Short link</span>
-        <span class="block text-sm text-gray-800">
-          Must be unique and use characters a-z, 0-9, hyphen or underscore
-        </span>
-        <span
-          v-if="errors.urlSlug"
-          class="block text-danger text-sm my-2 font-medium"
-        >
-          {{ errors.urlSlug }}
-        </span>
+      <h2>Project Details</h2>
+      <edit-project-form
+        v-model="model"
+        class="mt-3"
+        :is-published="isPublished"
+        :disabled="isSaving"
+      />
+      <div class="mb-6">
+        <label for="project-settings-short-link">
+          <span class="font-medium">
+            Short link
+          </span>
+          <span class="block text-sm text-gray-800">
+            Must be unique and use characters a-z, 0-9, hyphen or underscore
+          </span>
+          <span
+            v-if="errors.urlSlug"
+            class="block text-danger text-sm font-medium"
+          >
+            {{ errors.urlSlug }}
+          </span>
+        </label>
         <el-input
+          id="project-settings-short-link"
           v-model="model.urlSlug"
-          class="py-1 mb-6"
+          class="py-1"
           :class="{ 'sm-form-error': errors.urlSlug }"
-          :disabled="isSaving"
+          :disabled="isSaving || isPublished"
         >
           <span slot="prepend">{{ projectUrlPrefix }}</span>
         </el-input>
-      </label>
-      <label>
-        <span class="font-medium">Publication DOI</span>
-        <span class="block text-sm text-gray-800">
-          Should link to a published paper
-        </span>
+      </div>
+      <div v-if="isPublished">
+        <label for="project-settings-doi">
+          <span class="font-medium">Publication DOI</span>
+          <span class="block text-sm text-gray-800">
+            Should link to the published paper
+          </span>
+        </label>
         <el-input
+          id="project-settings-doi"
+          v-model="model.doi"
           class="py-1"
           :disabled="isSaving"
         >
           <span slot="prepend">{{ DOI_ORG_DOMAIN }}</span>
           <span slot="append">
             <a
-              href="#"
+              :href="doiLink"
+              target="_blank"
+              rel="noopener"
               class="text-inherit"
             >Test link</a>
           </span>
         </el-input>
-      </label>
-    </div>
-    <div v-if="project">
-      <h2>Delete project</h2>
-      <p v-if="isPublished">
-        <em>Published projects cannot be deleted.</em>
-      </p>
-      <p v-else-if="isUnderReview">
-        <em>This project is under review.</em>
-        <br /> <!-- hacking the layout -->
-        <br />
-        To delete the project, first remove the review link on the <router-link to="?tab=publishing">
-          Publishing tab<!-- -->
-        </router-link>.
-      </p>
-      <div
-        v-else
-        class="flex justify-between items-start"
-      >
-        <p class="max-w-measure-3 mt-0 leading-snug">
-          Datasets will not be deleted, but they will no longer be able to be shared with other users through this project.
-        </p>
+      </div>
+      <div class="mt-6">
         <el-button
-          type="danger"
-          :loading="isDeletingProject"
-          @click="handleDeleteProject"
+          type="primary"
+          :loading="isSaving"
+          @click="handleSave"
         >
-          Delete project
+          Update details
         </el-button>
+      </div>
+      <div class="mt-12">
+        <h2>Delete project</h2>
+        <p v-if="isPublished">
+          <em>Published projects cannot be deleted.</em>
+        </p>
+        <p v-else-if="isUnderReview">
+          <em>This project is under review.</em>
+          <br />
+          To delete the project, remove the review link on the <router-link to="?tab=publishing">
+            Publishing tab<!-- -->
+          </router-link>.
+        </p>
+        <div v-else>
+          <p>
+            Datasets will not be deleted, but they will no longer be able to be shared with other users through this project.
+          </p>
+          <el-button
+            class="mt-6"
+            type="danger"
+            :loading="isDeletingProject"
+            @click="handleDeleteProject"
+          >
+            Delete project
+          </el-button>
+        </div>
       </div>
     </div>
   </div>
@@ -104,6 +108,7 @@ import {
   UpdateProjectMutation,
   updateProjectMutation,
   updateProjectDOIMutation,
+  removeProjectDOIMutation,
 } from '../../api/project'
 import EditProjectForm from './EditProjectForm.vue'
 import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
@@ -185,6 +190,10 @@ export default class ProjectSettings extends Vue {
       return ''
     }
 
+    get doiLink() {
+      return `${this.DOI_ORG_DOMAIN}${this.model.doi}`
+    }
+
     @Watch('project')
     setModel() {
       this.model.name = this.project && this.project.name || ''
@@ -229,19 +238,28 @@ export default class ProjectSettings extends Vue {
             projectDetails: {
               name,
               isPublic,
-              urlSlug,
+              urlSlug: urlSlug.length ? urlSlug : null,
             },
           },
         })
-        if (doi !== this.publicationDOI) {
+
+        if (this.publicationDOI && doi.length === 0) {
+          await this.$apollo.mutate({
+            mutation: removeProjectDOIMutation,
+            variables: {
+              projectId: this.projectId,
+            },
+          })
+        } else if (doi !== this.publicationDOI) {
           await this.$apollo.mutate({
             mutation: updateProjectDOIMutation,
             variables: {
               projectId: this.projectId,
-              link: `${this.DOI_ORG_DOMAIN}${doi}`,
+              link: doi.length ? this.doiLink : null,
             },
           })
         }
+
         this.$message({ message: `${name} has been saved`, type: 'success' })
         if (urlSlug !== this.projectUrlRoute.params.projectIdOrSlug) {
           this.$router.replace({
@@ -267,18 +285,11 @@ export default class ProjectSettings extends Vue {
     min-height: 80vh; // Ensure there's space for the loading spinner before is visible
   }
 
-  .header-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+  h2 {
+    @apply text-2xl leading-8 py-2 m-0;
   }
 
-  .header-row-buttons {
-    display: flex;
-    margin-right: 3px;
-  }
-
-  .flex-spacer {
-    flex-grow: 1;
+  p {
+    @apply my-0;
   }
 </style>
