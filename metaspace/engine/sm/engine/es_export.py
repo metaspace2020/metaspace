@@ -333,7 +333,7 @@ class ESExporter:
         try:
             return self._get_mol_by_formula_dict_cache[mol_db.id]
         except KeyError:
-            mols = mol_db.fetch_molecules()
+            mols = molecular_db.fetch_molecules(mol_db.id)
             by_formula = mols.groupby('formula')
             # limit IDs and names to 50 each to prevent ES 413 Request Entity Too Large error
             mol_by_formula_df = pd.concat(

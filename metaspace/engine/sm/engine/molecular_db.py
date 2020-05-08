@@ -77,7 +77,7 @@ def _import_molecules_from_file(moldb, file_path, targeted_threshold):
     logger.info(f'{moldb}: inserted {len(moldb_df)} molecules')
 
     targeted = moldb_df.formula.unique().shape[0] <= targeted_threshold
-    DB().alter('UPDATE molecular_db SET targeted = % WHERE id = %s', params=(targeted, moldb.id))
+    DB().alter('UPDATE molecular_db SET targeted = %s WHERE id = %s', params=(targeted, moldb.id))
 
 
 def create(
@@ -149,7 +149,8 @@ def find_by_ids(ids: Iterable[int]) -> List[MolecularDB]:
     """Find multiple databases by ids."""
 
     data = DB().select_with_fields(
-        'SELECT id, name, version, targeted FROM molecular_db WHERE id = ANY (%s)', params=(ids,)
+        'SELECT id, name, version, targeted FROM molecular_db WHERE id = ANY (%s)',
+        params=(list(ids),),
     )
     return [MolecularDB(**row) for row in data]
 

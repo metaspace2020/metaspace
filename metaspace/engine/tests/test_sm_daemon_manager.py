@@ -107,15 +107,12 @@ class TestSMDaemonDatasetManager:
         ds_id = '2000-01-01'
         ds = create_ds(ds_id=ds_id, metadata=metadata)
 
-        with patch('sm.engine.sm_daemons.MolecularDB') as MolecularDB:
-            molecular_db_mock = MolecularDB.return_value
-            molecular_db_mock.name = 'HMDB-v4'
+        manager.index(ds)
 
-            manager.index(ds)
-
-            es_mock.delete_ds.assert_called_with(ds_id, delete_dataset=False)
-            call_args = es_mock.index_ds.call_args[1].values()
-            assert ds_id in call_args and molecular_db_mock in call_args
+        es_mock.delete_ds.assert_called_with(ds_id, delete_dataset=False)
+        index_ds_kw_args = es_mock.index_ds.call_args[1]
+        assert index_ds_kw_args.get('ds_id') == ds_id
+        assert index_ds_kw_args.get('mol_db').name == 'HMDB-v4'
 
     def test_delete_ds(self, fill_db):
         db = DB()

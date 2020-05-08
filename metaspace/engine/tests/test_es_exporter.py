@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 import time
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
@@ -84,15 +84,6 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         ],
     )
 
-    mol_db_mock = MagicMock(MolecularDB)
-    mol_db_mock.id = mol_db_id
-    mol_db_mock.name = 'HMDB-v4'
-    mol_db_mock.version = '2018-04-03'
-    mol_db_mock.fetch_molecules.return_value = pd.DataFrame(
-        [('H2O', 'mol_id', 'mol_name'), ('Au', 'mol_id', 'mol_name')],
-        columns=['formula', 'mol_id', 'mol_name'],
-    )
-
     isocalc_mock = MagicMock(IsocalcWrapper)
     isocalc_mock.centroids = lambda formula: {
         'H2O+H': ([100.0, 200.0], None),
@@ -101,9 +92,20 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
     }[formula]
     isocalc_mock.mass_accuracy_bounds = lambda mzs: (mzs, mzs)
 
-    es_exp = ESExporter(db, sm_config)
-    es_exp.delete_ds(ds_id)
-    es_exp.index_ds(ds_id=ds_id, mol_db=mol_db_mock, isocalc=isocalc_mock)
+    with patch(
+        'sm.engine.es_export.molecular_db.fetch_molecules',
+        return_value=pd.DataFrame(
+            [('H2O', 'mol_id', 'mol_name'), ('Au', 'mol_id', 'mol_name')],
+            columns=['formula', 'mol_id', 'mol_name'],
+        ),
+    ):
+        es_exp = ESExporter(db, sm_config)
+        es_exp.delete_ds(ds_id)
+        es_exp.index_ds(
+            ds_id=ds_id,
+            mol_db=MolecularDB(mol_db_id, 'HMDB-v4', '2018-04-03'),
+            isocalc=isocalc_mock,
+        )
 
     wait_for_es(sec=1)
 
