@@ -11,7 +11,7 @@
         :is-published="isPublished"
         :disabled="isSaving"
       />
-      <div class="mb-6">
+      <div>
         <label for="project-settings-short-link">
           <span class="font-medium">
             Short link
@@ -36,7 +36,10 @@
           <span slot="prepend">{{ projectUrlPrefix }}</span>
         </el-input>
       </div>
-      <div v-if="isPublished">
+      <div
+        v-if="isPublished"
+        class="mt-6"
+      >
         <label for="project-settings-doi">
           <span class="font-medium">Publication DOI</span>
           <span class="block text-sm text-gray-800">
@@ -60,15 +63,14 @@
           </span>
         </el-input>
       </div>
-      <div class="mt-6">
-        <el-button
-          type="primary"
-          :loading="isSaving"
-          @click="handleSave"
-        >
-          Update details
-        </el-button>
-      </div>
+      <el-button
+        class="mt-5"
+        type="primary"
+        :loading="isSaving"
+        @click="handleSave"
+      >
+        Update details
+      </el-button>
       <div class="mt-12">
         <h2>Delete project</h2>
         <p v-if="isPublished">
@@ -86,7 +88,7 @@
             Datasets will not be deleted, but they will no longer be able to be shared with other users through this project.
           </p>
           <el-button
-            class="mt-6"
+            class="mt-3"
             type="danger"
             :loading="isDeletingProject"
             @click="handleDeleteProject"
