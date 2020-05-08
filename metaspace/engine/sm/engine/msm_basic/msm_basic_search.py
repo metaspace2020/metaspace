@@ -85,7 +85,7 @@ def merge_results(results_rdd, formulas_df):
     return formula_metrics_df, formula_images_rdd
 
 
-def target_modifiers(moldb_fdr_list):
+def union_target_modifiers(moldb_fdr_list):
     return set().union(*(fdr.target_modifiers() for moldb, fdr in moldb_fdr_list))
 
 
@@ -247,7 +247,7 @@ class MSMSearch:
         target_formula_inds = select_target_formula_ids(
             formulas_df=formula_centroids.formulas_df,
             ion_formula_map_df=ion_formula_map_df,
-            target_modifiers=target_modifiers(moldb_fdr_list),
+            target_modifiers=union_target_modifiers(moldb_fdr_list),
         )
         process_centr_segment = create_process_segment(
             ds_segments, self._imzml_parser.coordinates, self._ds_config, target_formula_inds
