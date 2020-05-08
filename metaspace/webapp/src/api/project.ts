@@ -144,6 +144,10 @@ export const editProjectQuery =
       isPublic
       currentUserRole
       publicationStatus
+      externalLinks {
+        provider
+        link
+      }
     }
   }`
 
@@ -154,6 +158,7 @@ export interface EditProjectQuery {
   isPublic: boolean;
   currentUserRole: ProjectRole | null;
   publicationStatus: string;
+  externalLinks: ExternalLink[];
 }
 
 const projectsListItemFragment =

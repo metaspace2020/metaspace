@@ -53,7 +53,7 @@
           class="py-1"
           :disabled="isSaving"
         >
-          <span slot="prepend">https://doi.org/</span>
+          <span slot="prepend">{{ DOI_ORG_DOMAIN }}</span>
           <span slot="append">
             <a
               href="#"
@@ -103,6 +103,7 @@ import {
   EditProjectQuery,
   UpdateProjectMutation,
   updateProjectMutation,
+  updateProjectDOIMutation,
 } from '../../api/project'
 import EditProjectForm from './EditProjectForm.vue'
 import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
@@ -136,12 +137,15 @@ export default class ProjectSettings extends Vue {
       name: '',
       isPublic: true,
       urlSlug: '',
+      doi: '',
     };
 
     errors: {[field: string]: string} = {}
 
     currentUser: CurrentUserRoleResult | null = null;
     project: EditProjectQuery | null = null;
+
+    DOI_ORG_DOMAIN = 'https://doi.org/'
 
     get projectName() {
       return this.project ? this.project.name : ''
@@ -171,11 +175,22 @@ export default class ProjectSettings extends Vue {
       return this.project && this.project.publicationStatus === 'UNDER_REVIEW'
     }
 
+    get publicationDOI() {
+      if (this.project) {
+        const doi = this.project.externalLinks.find(_ => _.provider === 'DOI')
+        if (doi && doi.link) {
+          return doi.link.replace(this.DOI_ORG_DOMAIN, '')
+        }
+      }
+      return ''
+    }
+
     @Watch('project')
     setModel() {
       this.model.name = this.project && this.project.name || ''
       this.model.isPublic = this.project ? this.project.isPublic : true
       this.model.urlSlug = this.project && this.project.urlSlug || ''
+      this.model.doi = this.publicationDOI
     }
 
     @ConfirmAsync(function(this: ProjectSettings) {
@@ -206,8 +221,7 @@ export default class ProjectSettings extends Vue {
       this.errors = {}
       this.isSaving = true
       try {
-        const { name, isPublic, urlSlug } = this.model
-        const slugChanged = urlSlug !== this.projectUrlRoute.params.projectIdOrSlug
+        const { name, isPublic, urlSlug, doi } = this.model
         await this.$apollo.mutate<UpdateProjectMutation>({
           mutation: updateProjectMutation,
           variables: {
@@ -215,13 +229,21 @@ export default class ProjectSettings extends Vue {
             projectDetails: {
               name,
               isPublic,
-              // Avoid sending a null urlSlug unless it's being intentionally unset
-              ...(slugChanged ? { urlSlug: urlSlug || null } : {}),
+              urlSlug,
             },
           },
         })
+        if (doi !== this.publicationDOI) {
+          await this.$apollo.mutate({
+            mutation: updateProjectDOIMutation,
+            variables: {
+              projectId: this.projectId,
+              link: `${this.DOI_ORG_DOMAIN}${doi}`,
+            },
+          })
+        }
         this.$message({ message: `${name} has been saved`, type: 'success' })
-        if (slugChanged) {
+        if (urlSlug !== this.projectUrlRoute.params.projectIdOrSlug) {
           this.$router.replace({
             params: { projectIdOrSlug: urlSlug || this.projectId },
             query: this.$route.query,
