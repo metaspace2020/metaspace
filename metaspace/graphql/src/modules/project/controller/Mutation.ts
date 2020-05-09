@@ -23,7 +23,7 @@ import {
   sendRequestAccessEmail,
   sentGroupOrProjectInvitationEmail,
 } from '../../groupOrProject/email';
-import { smAPIUpdateDataset } from '../../../utils/smApi/datasets';
+import { smApiUpdateDataset } from '../../../utils/smApi/datasets';
 import { getDatasetForEditing } from '../../dataset/operation/getDatasetForEditing';
 import { utc } from 'moment';
 import generateRandomToken from '../../../utils/generateRandomToken';
@@ -91,7 +91,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       const affectedDatasets = await ctx.entityManager.find(DatasetProjectModel,
         { where: { projectId }, relations: ['dataset', 'dataset.datasetProjects'] });
       await Promise.all(affectedDatasets.map(async dp => {
-        await smAPIUpdateDataset(dp.datasetId, {
+        await smApiUpdateDataset(dp.datasetId, {
           projectIds: dp.dataset.datasetProjects.map(p => p.projectId)
         })
       }));
@@ -118,7 +118,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
           { where: { projectId }, relations: ['dataset', 'dataset.datasetProjects'] });
         await ctx.entityManager.delete(DatasetProjectModel, { projectId });
         await Promise.all(affectedDatasets.map(async dp => {
-          await smAPIUpdateDataset(dp.datasetId, {
+          await smApiUpdateDataset(dp.datasetId, {
             projectIds: dp.dataset.datasetProjects
               .filter(p => p.projectId !== projectId)
               .map(p => p.projectId)
@@ -267,7 +267,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
     const affectedDatasets = await ctx.entityManager.find(DatasetProjectModel, { where: { projectId } });
     await Promise.all(affectedDatasets.map(async dp => {
-      await smAPIUpdateDataset(dp.datasetId, { isPublic: true });
+      await smApiUpdateDataset(dp.datasetId, { isPublic: true });
     }));
 
     return await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
@@ -288,7 +288,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     if (isPublic != null) {
       const affectedDatasets = await ctx.entityManager.find(DatasetProjectModel, { where: { projectId } });
       await Promise.all(affectedDatasets.map(async dp => {
-        await smAPIUpdateDataset(dp.datasetId, { isPublic });
+        await smApiUpdateDataset(dp.datasetId, { isPublic });
       }));
     }
 

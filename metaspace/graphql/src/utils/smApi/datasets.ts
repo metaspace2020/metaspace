@@ -74,7 +74,7 @@ interface UpdateDatasetArgs {
   projectIds?: string[];
 }
 
-export const smAPIUpdateDataset = async (id: string, updates: UpdateDatasetArgs) => {
+export const smApiUpdateDataset = async (id: string, updates: UpdateDatasetArgs) => {
   try {
     await smApiDatasetRequest(`/v1/datasets/${id}/update`, {
       doc: updates
@@ -89,6 +89,6 @@ export interface DeleteDatasetArgs {
   force?: boolean;
 }
 
-export const smAPIDeleteDataset = async (dsId: string, args?: DeleteDatasetArgs) => {
+export const smApiDeleteDataset = async (dsId: string, args?: DeleteDatasetArgs) => {
   return await smApiDatasetRequest(`/v1/datasets/${dsId}/delete`, args);
 };

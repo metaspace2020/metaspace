@@ -3,7 +3,7 @@ import {ContextUser} from '../../../context';
 import logger from '../../../utils/logger';
 import {getDatasetForEditing} from './getDatasetForEditing';
 import {Dataset as DatasetModel, DatasetProject as DatasetProjectModel} from '../model';
-import {DeleteDatasetArgs, smAPIDeleteDataset} from '../../../utils/smApi/datasets';
+import {DeleteDatasetArgs, smApiDeleteDataset} from '../../../utils/smApi/datasets';
 
 export const deleteDataset = async (entityManager: EntityManager, user: ContextUser, datasetId: string,
                                     args?: DeleteDatasetArgs) => {
@@ -15,7 +15,7 @@ export const deleteDataset = async (entityManager: EntityManager, user: ContextU
 
   await entityManager.getRepository(DatasetProjectModel).delete({ datasetId: datasetId });
   await entityManager.getRepository(DatasetModel).delete(datasetId);
-  const resp = await smAPIDeleteDataset(datasetId, args);
+  const resp = await smApiDeleteDataset(datasetId, args);
 
   logger.info(`Dataset '${datasetId}' was deleted`);
   return resp;
