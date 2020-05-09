@@ -69,7 +69,7 @@ export const findUserByApiKey = async (apiKey: string, groups: boolean = false) 
     .where(`api_key = :apiKey`, { apiKey: apiKey });
 
   if (groups) {
-    query = query.innerJoinAndSelect('user.groups', 'groups');
+    query = query.leftJoinAndSelect('user.groups', 'groups');
   }
   return (await query.getOne()) || null;
 };

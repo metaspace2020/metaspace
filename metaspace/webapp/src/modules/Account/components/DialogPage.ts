@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import { Component, Prop, Watch } from 'vue-property-decorator'
 import { DialogType } from '../dialogs'
-import config from '../../../config'
+import config from '../../../lib/config'
 
 @Component
 export default class DialogPage extends Vue {

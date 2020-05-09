@@ -51,12 +51,19 @@ def _reindex_datasets(ds_ids, es_exp):
         es_exp.reindex_ds(ds_id)
 
 
-def reindex_results(sm_config, ds_id, ds_mask, use_inactive_index):
-    assert ds_id or ds_mask
+def _partial_update_datasets(ds_ids, es_exp, fields):
+    logger.info(f'Updating {len(ds_ids)} dataset(s)')
+    for i, ds_id in enumerate(ds_ids, 1):
+        logger.info(f'Updating {i} out of {len(ds_ids)}')
+        es_exp.update_ds(ds_id, fields)
+
+
+def reindex_results(sm_config, ds_id, ds_mask, use_inactive_index, offline_reindex, update_fields):
+    assert ds_id or ds_mask or offline_reindex
 
     IsocalcWrapper.set_centroids_cache_enabled(True)
 
-    if ds_mask == '_all_':
+    if offline_reindex:
         _reindex_all(sm_config)
     else:
         es_config = sm_config['elasticsearch']
@@ -78,18 +85,23 @@ def reindex_results(sm_config, ds_id, ds_mask, use_inactive_index):
         else:
             ds_ids = []
 
-        _reindex_datasets(ds_ids, es_exp)
+        if update_fields:
+            _partial_update_datasets(ds_ids, es_exp, update_fields.split(','))
+        else:
+            _reindex_datasets(ds_ids, es_exp)
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Reindex dataset results')
+    parser = argparse.ArgumentParser(description='Reindex or update dataset results')
     parser.add_argument('--config', default='conf/config.json', help='SM config path')
     parser.add_argument('--inactive', action='store_true', help='Run against the inactive index')
+    parser.add_argument('--ds-id', help='DS id (or comma-separated list of ids)')
+    parser.add_argument('--ds-name', help='DS name prefix mask')
+    parser.add_argument('--offline-reindex', help='Create and populate inactive index then swap')
     parser.add_argument(
-        '--ds-id', dest='ds_id', default='', help='DS id (or comma-separated list of ids)'
-    )
-    parser.add_argument(
-        '--ds-name', dest='ds_name', default='', help='DS name prefix mask (_all_ for all datasets)'
+        '--update-fields',
+        help='Comma-separated list of specific fields for update '
+        '(runs faster in-place update instead of full reindex)',
     )
     args = parser.parse_args()
 
@@ -100,5 +112,7 @@ if __name__ == '__main__':
             ds_id=args.ds_id,
             ds_mask=args.ds_name,
             use_inactive_index=args.inactive,
+            offline_reindex=args.offline_reindex,
+            update_fields=args.update_fields,
         ),
     )

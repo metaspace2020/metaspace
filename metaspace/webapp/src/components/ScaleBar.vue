@@ -25,6 +25,7 @@
 </template>
 
 <script>
+import Vue from 'vue'
 
 const getNiceBarLength = (scale, minLength = 50) => {
   const STEPS = [1, 2, 2.5, 5, 10, 20, 25, 50, 100, 200, 250, 500]
@@ -53,7 +54,7 @@ const getNiceBarLength = (scale, minLength = 50) => {
   return null
 }
 
-export default {
+export default Vue.extend({
   props: {
     xScale: Number, // In microns-per-pixel
     yScale: Number,
@@ -119,7 +120,7 @@ export default {
       return {}
     },
   },
-}
+})
 </script>
 
 <style lang="scss" scoped>

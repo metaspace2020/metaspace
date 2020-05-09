@@ -59,7 +59,7 @@ import { Component } from 'vue-property-decorator'
 import { Form } from 'element-ui'
 import { validatePasswordResetToken, resetPassword } from '../../../api/auth'
 import reportError from '../../../lib/reportError'
-import { refreshLoginStatus } from '../../../graphqlClient'
+import { refreshLoginStatus } from '../../../api/graphqlClient'
 
   interface Model {
     password: string;

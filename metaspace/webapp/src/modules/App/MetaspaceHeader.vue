@@ -1,6 +1,9 @@
 <template>
   <div>
-    <div :class="healthMessage ? 'spacerWithAlert' : 'spacer'" />
+    <div
+      class="spacer"
+      :class="{ 'spacer--with-alert': healthMessage }"
+    />
     <div class="b-header">
       <div class="header-items">
         <router-link
@@ -93,9 +96,9 @@
             @mouseenter="handleSubmenuEnter('user')"
             @mouseleave="handleSubmenuLeave('user')"
           >
-            <div
-              class="header-item submenu-header"
-              :class="{'router-link-active': matchesRoute('/user/me')}"
+            <router-link
+              to="/user/me"
+              class="header-item submenu-header page-link"
             >
               <div
                 class="limit-width"
@@ -108,7 +111,7 @@
                   tooltip-placement="left"
                 />
               </div>
-            </div>
+            </router-link>
             <div class="submenu">
               <router-link
                 to="/user/me"
@@ -153,7 +156,7 @@ import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/
 import { UserGroupRoleOptions as UGRO } from '../../api/group'
 import { ProjectRoleOptions as UPRO } from '../../api/project'
 import { encodeParams } from '../Filters'
-import { refreshLoginStatus } from '../../graphqlClient'
+import { refreshLoginStatus } from '../../api/graphqlClient'
 import NotificationIcon from '../../components/NotificationIcon.vue'
 import { datasetStatusUpdatedQuery } from '../../api/dataset'
 
@@ -386,9 +389,10 @@ export default MetaspaceHeader
 <style lang="scss" scoped>
   $header-height: 62px;
   $alert-height: 36px;
+  $space: 8px;
 
  .b-header {
-   background-color: rgba(0, 105, 224, 0.85);
+   background-color: hsla(208, 87%, 50%, 0.87);
    position: fixed;
    // z-index should be higher than v-loading's .el-loading-mask (z-index: 2000) so that loading spinners
    // don't overlap the header, but can't be higher than v-tooltip's initial z-index (2001)
@@ -403,24 +407,26 @@ export default MetaspaceHeader
  }
 
  .spacer {
-   height: $header-height + 8px;
+   @apply bg-primary mb-2;
+   height: $header-height;
  }
 
- .spacerWithAlert {
-   height: $header-height + $alert-height + 8px;
+ .spacer--with-alert {
+   height: $header-height + $alert-height;
  }
 
  .header-items {
    display: flex;
    align-items: center;
-   height: 100%
+   height: 100%;
+   font-size: 16px;
  }
 
  .header-item {
    display: flex;
    border: none;
    padding: 0px 20px;
-   font-size: 16px;
+   font-size: inherit;
    align-self: stretch;
    align-items: center;
    justify-content: center;
@@ -430,15 +436,17 @@ export default MetaspaceHeader
  }
 
  @media (max-width: 1279px) {
+   .header-items {
+     font-size: 14px;
+   }
    .header-item {
      padding: 0px 10px;
-     font-size: 14px;
    }
  }
 
  .page-link {
    text-align: center;
-   color: #eee;
+   color: #fff;
    cursor: pointer;
    text-decoration: none;
  }
@@ -450,11 +458,10 @@ export default MetaspaceHeader
    outline-color: rgba(0, 0, 0, 0.3);
    outline-style: solid;
    outline-width: 1px;
-   color: white;
  }
 
  .router-link-active.page-link {
-   font-weight: 700;
+   font-weight: 500;
  }
  .page-link a {
    text-decoration: none;
@@ -476,19 +483,19 @@ export default MetaspaceHeader
    min-width: 140px;
    max-width: 200px;
 
-   background-color: rgba(0, 105, 224, 0.85);
-   /*background-color: rgb(38, 128, 229);*/
+   background-color: hsla(208, 87%, 50%, 0.87);
  }
  .submenu-container-open > .submenu {
    display: flex;
  }
  .submenu-item {
-   padding: 20px;
-   font-size: 16px;
+   padding: 15px 20px;
+   font-size: inherit;
    align-self: stretch;
    justify-content: center;
    white-space: nowrap;
  }
+
  .limit-width {
    max-width: 250px;
    overflow-wrap: break-word;
@@ -516,6 +523,7 @@ export default MetaspaceHeader
    z-index: 1000;
 
    .el-alert {
+     border-radius: 0;
      height: $alert-height;
      justify-content: center;
    }

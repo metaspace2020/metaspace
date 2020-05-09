@@ -17,39 +17,50 @@
     </div>
     <edit-project-form
       v-model="model"
+      :is-published="isPublished"
       :disabled="isSaving"
     />
     <div
-      v-if="project != null && (project.isPublic || project.urlSlug || canEditUrlSlug)"
+      v-if="project != null && (project.isPublic || project.urlSlug)"
       style="margin-bottom: 2em"
     >
       <h2>Custom URL</h2>
-      <div v-if="canEditUrlSlug">
-        <router-link :to="projectUrlRoute">
-          {{ projectUrlPrefix }}
-        </router-link>
-        <input v-model="model.urlSlug">
-      </div>
-      <div v-if="!canEditUrlSlug && project && project.urlSlug">
-        <router-link :to="projectUrlRoute">
-          {{ projectUrlPrefix }}<span class="urlSlug">{{ project.urlSlug }}</span>
-        </router-link>
-      </div>
-      <div v-if="!canEditUrlSlug && project && !project.urlSlug">
-        <p>
-          <router-link :to="projectUrlRoute">
-            {{ projectUrlPrefix }}<span class="urlSlug">{{ project.id }}</span>
-          </router-link>
-        </p>
-        <p><a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up a custom URL for your project.</p>
+      <p
+        v-if="errors.urlSlug"
+        class="text-danger text-sm my-2 font-medium"
+      >
+        {{ errors.urlSlug }}
+      </P>
+      <div class="max-w-measure-3">
+        <el-input
+          v-model="model.urlSlug"
+          :class="{ 'sm-form-error': errors.urlSlug }"
+          :disabled="isSaving"
+        >
+          <span slot="prepend">{{ projectUrlPrefix }}</span>
+        </el-input>
       </div>
     </div>
     <div v-if="project">
       <h2>Delete project</h2>
-      <p>
-        Datasets will not be deleted, but they will no longer be able to be shared with other users through this project.
+      <p v-if="isPublished">
+        <em>Published projects cannot be deleted.</em>
       </p>
-      <div style="text-align: right; margin: 1em 0;">
+      <p v-else-if="isUnderReview">
+        <em>This project is under review.</em>
+        <br /> <!-- hacking the layout -->
+        <br />
+        To delete this project, first remove the review link on the <router-link to="?tab=review">
+          Review tab<!-- -->
+        </router-link>.
+      </p>
+      <div
+        v-else
+        class="flex justify-between items-start"
+      >
+        <p class="max-w-measure-3 mt-0 leading-snug">
+          Datasets will not be deleted, but they will no longer be able to be shared with other users through this project.
+        </p>
         <el-button
           type="danger"
           :loading="isDeletingProject"
@@ -75,6 +86,7 @@ import EditProjectForm from './EditProjectForm.vue'
 import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
 import ConfirmAsync from '../../components/ConfirmAsync'
 import reportError from '../../lib/reportError'
+import { parseValidationErrors } from '../../api/validation'
 
   @Component<ProjectSettings>({
     components: {
@@ -104,12 +116,10 @@ export default class ProjectSettings extends Vue {
       urlSlug: '',
     };
 
+    errors: {[field: string]: string} = {}
+
     currentUser: CurrentUserRoleResult | null = null;
     project: EditProjectQuery | null = null;
-
-    get canEditUrlSlug(): boolean {
-      return this.currentUser && this.currentUser.role === 'admin' || false
-    }
 
     get projectName() {
       return this.project ? this.project.name : ''
@@ -129,6 +139,14 @@ export default class ProjectSettings extends Vue {
     get projectUrlPrefix() {
       const { href } = this.$router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined, true)
       return location.origin + href.replace('REMOVE', '')
+    }
+
+    get isPublished() {
+      return this.project && this.project.publicationStatus === 'PUBLISHED'
+    }
+
+    get isUnderReview() {
+      return this.project && this.project.publicationStatus === 'UNDER_REVIEW'
     }
 
     @Watch('project')
@@ -163,9 +181,11 @@ export default class ProjectSettings extends Vue {
     }
 
     async handleSave() {
+      this.errors = {}
       this.isSaving = true
       try {
         const { name, isPublic, urlSlug } = this.model
+        const slugChanged = isPublic && urlSlug !== this.projectUrlRoute.params.projectIdOrSlug
         await this.$apollo.mutate<UpdateProjectMutation>({
           mutation: updateProjectMutation,
           variables: {
@@ -174,19 +194,23 @@ export default class ProjectSettings extends Vue {
               name,
               isPublic,
               // Avoid sending a null urlSlug unless it's being intentionally unset
-              ...(this.canEditUrlSlug ? { urlSlug: urlSlug || null } : {}),
+              ...(slugChanged ? { urlSlug: urlSlug || null } : {}),
             },
           },
         })
         this.$message({ message: `${name} has been saved`, type: 'success' })
-        if (this.canEditUrlSlug) {
+        if (slugChanged) {
           this.$router.replace({
             params: { projectIdOrSlug: urlSlug || this.projectId },
             query: this.$route.query,
           })
         }
       } catch (err) {
-        reportError(err)
+        try {
+          this.errors = parseValidationErrors(err)
+        } finally {
+          reportError(err)
+        }
       } finally {
         this.isSaving = false
       }
@@ -196,7 +220,6 @@ export default class ProjectSettings extends Vue {
 </script>
 <style scoped lang="scss">
   .project-settings {
-    width: 950px;
     min-height: 80vh; // Ensure there's space for the loading spinner before is visible
   }
 
@@ -214,10 +237,4 @@ export default class ProjectSettings extends Vue {
   .flex-spacer {
     flex-grow: 1;
   }
-
-  .urlSlug {
-    padding: 4px 0;
-    background-color: #EEEEEE;
-  }
-
 </style>

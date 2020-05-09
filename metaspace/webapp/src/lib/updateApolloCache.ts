@@ -1,5 +1,5 @@
 import { Vue } from 'vue/types/vue'
-import apolloClient from '../graphqlClient'
+import apolloClient from '../api/graphqlClient'
 import { DatasetDetailItem } from '../api/dataset'
 import { VueApolloQueryOptions } from 'vue-apollo/types/options'
 

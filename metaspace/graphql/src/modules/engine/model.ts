@@ -32,8 +32,7 @@ export class EngineDataset {
   uploadDt: Date | null;
   @Column({ type: 'text', nullable: true })
   status: DatasetStatus | null;
-  @Column({ type: 'timestamp without time zone', default: () => "(now() at time zone 'utc')",
-    transformer: new MomentValueTransformer() })
+  @Column({ type: 'timestamp without time zone', transformer: new MomentValueTransformer() })
   statusUpdateDt: Date | null;
   @Column({ type: 'text', nullable: true })
   opticalImage: string | null;
@@ -90,9 +89,9 @@ export class Job {
   @Column({ type: 'text', nullable: true })
   status: DatasetStatus | null;
   @Column({ type: 'timestamp', nullable: true })
-  start: number;
+  start: Date | null;
   @Column({ type: 'timestamp', nullable: true })
-  finish: number;
+  finish: Date | null;
 
   @ManyToOne(type => EngineDataset, dataset => dataset.jobs, {onDelete: 'CASCADE'})
   @JoinColumn({ name: 'ds_id' })

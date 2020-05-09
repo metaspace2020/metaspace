@@ -87,7 +87,7 @@ import FormSection from './sections/FormSection.vue'
 import DataManagementSection from './sections/DataManagementSection.vue'
 import emailRegex from '../../lib/emailRegex'
 import safeJsonParse from '../../lib/safeJsonParse'
-import config from '../../config'
+import config from '../../lib/config'
 
 const factories = {
   string: schema => schema.default || '',
@@ -156,9 +156,11 @@ export default {
     },
     adductOptions() {
       const polarity = get(this.value, ['MS_Analysis', 'Polarity']) || 'Positive'
-      return this.possibleAdducts[polarity].map(({ adduct, name }) => ({
+      return this.possibleAdducts[polarity].map(({ adduct, name, ...ad }) => ({
+        ...ad,
         value: adduct,
-        label: name,
+        // Without the feature flag, keep old-style names e.g. +H instead of [M+H]⁺
+        label: config.features.all_adducts ? name : adduct,
       }))
     },
   },
@@ -259,10 +261,7 @@ export default {
         ...data,
         adducts: config.features.all_adducts
           ? data.adducts
-          : data.adducts
-            .filter(ad => !ad.hidden)
-          // Also use this as a feature flag to keep old-style names e.g. +H instead of [M+H]⁺
-            .map(ad => ({ ...ad, name: ad.adduct })),
+          : data.adducts.filter(ad => !ad.hidden),
         molecularDatabases: config.features.all_dbs
           ? data.molecularDatabases
           : data.molecularDatabases.filter(db => !db.hidden),
@@ -423,9 +422,11 @@ export default {
     updateCurrentAdductOptions() {
       const selectedAdducts = this.metaspaceOptions.adducts
       let newAdducts = selectedAdducts.filter(adduct => this.adductOptions.some(option => option.value === adduct))
-      // Default to selecting all valid adducts (at least until the less common adducts are added)
+      // If no selected adducts are still valid, reset to the default adducts
       if (newAdducts.length === 0) {
-        newAdducts = this.adductOptions.map(option => option.value)
+        newAdducts = this.adductOptions
+          .filter(option => option.default)
+          .map(option => option.value)
       }
       this.metaspaceOptions.adducts = newAdducts
     },

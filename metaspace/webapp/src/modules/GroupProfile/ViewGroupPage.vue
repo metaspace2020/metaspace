@@ -19,7 +19,7 @@
           <h1>{{ group.name }}</h1>
           <h2
             v-if="group.name !== group.shortName"
-            class="short-name"
+            class="ml-3 text-gray-600"
           >
             ({{ group.shortName }})
           </h2>
@@ -332,7 +332,9 @@ export default class ViewGroupPage extends Vue {
     @Watch('$route.params.groupIdOrSlug')
     @Watch('group.urlSlug')
     canonicalizeUrl() {
-      if (isUuid(this.$route.params.groupIdOrSlug) && this.group != null && this.group.urlSlug) {
+      if (this.group != null
+              && this.group.urlSlug != null
+              && this.$route.params.groupIdOrSlug !== this.group.urlSlug) {
         this.$router.replace({
           params: { groupIdOrSlug: this.group.urlSlug },
           query: this.$route.query,
@@ -440,8 +442,8 @@ export default class ViewGroupPage extends Vue {
   }
   .page-content {
     width: 950px;
-    margin-left: 5px;
-    margin-right: 5px;
+    margin-left: 20px;
+    margin-right: 20px;
   }
 
   .header-row {
@@ -451,10 +453,6 @@ export default class ViewGroupPage extends Vue {
   .header-names {
     display: flex;
     align-items: baseline;
-  }
-  .short-name {
-    margin-left: 16px;
-    color: grey;
   }
   .header-buttons {
     display: flex;

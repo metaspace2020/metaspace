@@ -4,15 +4,26 @@ import {Project as ProjectModel, UserProjectRoleOptions, UserProjectRoleOptions 
 import {ProjectSource} from '../../bindingTypes';
 import * as _ from 'lodash';
 import * as DataLoader from 'dataloader';
+import {urlSlugMatchesClause} from "../groupOrProject/urlSlug";
+import moment = require('moment')
 
 type SortBy = 'name' | 'popularity';
+
+function fixDateFields (project: ProjectSource): ProjectSource {
+  // WORKAROUND: .getRawMany doesn't apply MomentValueTransformer, so manually convert Dates to Moments here.
+  project.createdDT = moment(project.createdDT);
+  project.reviewTokenCreatedDT = project.reviewTokenCreatedDT && moment(project.reviewTokenCreatedDT);
+  project.publishedDT = project.publishedDT && moment(project.publishedDT);
+  return project;
+}
 
 @EntityRepository()
 export class ProjectSourceRepository {
   constructor(private manager: EntityManager) {
   }
 
-  private async queryProjectsWhere(user: ContextUser, whereClause?: string, parameters?: object, sortBy: SortBy = 'name') {
+  private async queryProjectsWhere(user: ContextUser, whereClause?: string | Brackets,
+                                   parameters?: object, sortBy: SortBy = 'name') {
     const columnMap = this.manager.connection
       .getMetadata(ProjectModel)
       .columns
@@ -69,18 +80,21 @@ export class ProjectSourceRepository {
   }
 
   async findProjectById(user: ContextUser, projectId: string): Promise<ProjectSource | null> {
-    return await (await this.queryProjectsWhere(user, 'project.id = :projectId', {projectId}))
-      .getRawOne() || null;
+    const query = await this.queryProjectsWhere(user, 'project.id = :projectId', { projectId })
+    const project = await query.getRawOne();
+    return project == null ? null : fixDateFields(project);
   }
 
   async findProjectsByIds(user: ContextUser, projectIds: string[]): Promise<ProjectSource[]> {
-    return await (await this.queryProjectsWhere(user, 'project.id = ANY(:projectIds)', {projectIds}))
-      .getRawMany();
+    const query = await this.queryProjectsWhere(user, 'project.id = ANY(:projectIds)', {projectIds})
+    const projects = await query.getRawMany();
+    return projects.map(fixDateFields);
   }
 
   async findProjectByUrlSlug(user: ContextUser, urlSlug: string): Promise<ProjectSource | null> {
-    return await (await this.queryProjectsWhere(user, 'project.urlSlug = :urlSlug', {urlSlug}))
-      .getRawOne() || null;
+    const query = await this.queryProjectsWhere(user, urlSlugMatchesClause('project', urlSlug))
+    const project = await query.getRawOne();
+    return project == null ? null : fixDateFields(project);
   }
 
   async findProjectsByDatasetId(ctx: Context, datasetId: string): Promise<ProjectSource[]> {
@@ -93,7 +107,7 @@ export class ProjectSourceRepository {
   }
 
   async findProjectsByDatasetIds(user: ContextUser, datasetIds: string[]): Promise<ProjectSource[][]> {
-    const rows = await (await this.queryProjectsWhere(user, `
+    let rows = await (await this.queryProjectsWhere(user, `
         (:isAdmin OR dataset_project.approved OR project.id = ANY(:projectIds))
         AND dataset_project.dataset_id = ANY(:datasetIds)`,
       {
@@ -104,6 +118,7 @@ export class ProjectSourceRepository {
       .innerJoin('dataset_project', 'dataset_project', 'dataset_project.project_id = project.id')
       .addSelect('dataset_project.dataset_id', 'datasetId')
       .getRawMany();
+    rows = rows.map(fixDateFields);
     const groupedRows = _.groupBy(rows, 'datasetId') as Record<string, ProjectSource[]>;
     return datasetIds.map(id => groupedRows[id] || []);
   }
@@ -135,7 +150,7 @@ export class ProjectSourceRepository {
     if (limit != null) {
       queryBuilder = queryBuilder.limit(limit);
     }
-    return await queryBuilder.getRawMany();
+    return (await queryBuilder.getRawMany()).map(fixDateFields);
   }
 
   async countProjectsByQuery(user: ContextUser, query?: string): Promise<number> {

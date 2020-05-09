@@ -1,26 +1,28 @@
-import Vue, { CreateElement, VNodeChildrenArrayContents } from 'vue'
+import Vue, { CreateElement, VNode, VNodeChildrenArrayContents } from 'vue'
 import { flattenDeep } from 'lodash-es'
+import { ComponentOptions, ThisTypedComponentOptionsWithRecordProps } from 'vue/types/options'
 
 export interface MockComponentOptions {
   // If abstract is true, it prevents the children from being wrapped in a mock element. This requires
   // the default slot to contain exactly 1 element.
   abstract?: Boolean;
-}
 
-export default (name: string, options?: MockComponentOptions) => {
+  // Path for `jest.doMock`, useful for tsx components
+  path?: string;
+}
+type Options = Partial<ThisTypedComponentOptionsWithRecordProps<Vue, any, any, any, any> | MockComponentOptions>
+
+export default (name: string, options?: Options) => {
   const mockName = `mock-${name}`
   Vue.config.ignoredElements.push(mockName)
-  const abstractFlag = {
-    abstract: options && options.abstract || false, // WORKAROUND: Vue's types don't include the abstract flag
-  } as any
 
   Vue.component(name, {
+    ...options,
     name,
-    ...abstractFlag,
-    render(h: CreateElement) {
+    render(h: CreateElement): VNode {
       const slotKeys = Object.keys(this.$slots)
-      if (options && options.abstract) {
-        const children = flattenDeep(Object.values(this.$slots))
+      if (options && (options as any).abstract) {
+        const children = flattenDeep<VNode>(Object.values(this.$slots))
         if (slotKeys.length > 1 || (slotKeys.length === 1 && slotKeys[0] !== 'default')) {
           throw new Error(`Mocked ${name} component is an abstract component `
           + `and cannot have slots other than 'default'. It has these slots: ${slotKeys.join(', ')}.`)
@@ -43,4 +45,8 @@ export default (name: string, options?: MockComponentOptions) => {
       }
     },
   })
+
+  if (options && (options as any).path) {
+    jest.doMock((options as any).path, () => Vue.component(name))
+  }
 }

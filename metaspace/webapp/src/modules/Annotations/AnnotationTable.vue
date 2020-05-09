@@ -212,7 +212,7 @@
       </el-table-column>
     </el-table>
 
-    <div id="annot-table-controls">
+    <div class="flex justify-between items-start mt-2">
       <div>
         <el-pagination
           v-if="!initialLoading"
@@ -224,11 +224,14 @@
           @size-change="onPageSizeChange"
         />
 
-        <div id="annot-count">
+        <div
+          id="annot-count"
+          class="mt-2"
+        >
           <b>{{ totalCount }}</b> matching {{ totalCount == 1 ? 'record': 'records' }}
         </div>
 
-        <div style="padding-top: 10px;">
+        <div class="mt-2">
           <div class="fdr-legend-header">
             FDR levels:
           </div>
@@ -251,14 +254,13 @@
         <progress-button
           v-if="isExporting && totalCount > 5000"
           class="export-btn"
-          :width="150"
-          :height="36"
+          :width="130"
+          :height="40"
           :percentage="exportProgress * 100"
           @click="abortExport"
         >
           Cancel
         </progress-button>
-
         <el-button
           v-else
           class="export-btn"
@@ -273,7 +275,7 @@
 </template>
 
 <script>
-import { renderMolFormulaHtml } from '../../util'
+import { renderMolFormulaHtml } from '../../lib/util'
 import ProgressButton from './ProgressButton.vue'
 import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue'
 import {
@@ -285,7 +287,7 @@ import Vue from 'vue'
 import FileSaver from 'file-saver'
 import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../lib/formatCsvRow'
 import { invert } from 'lodash-es'
-import config from '../../config'
+import config from '../../lib/config'
 
 // 38 = up, 40 = down, 74 = j, 75 = k
 const KEY_TO_ACTION = {
@@ -720,8 +722,9 @@ export default Vue.extend({
 
 <style lang="scss">
 
- #annot-table {
-   border: 0px;
+ #annot-table:focus {
+   outline: 1px solid theme('colors.primary');
+   outline-offset: 1px;
  }
 
  /* fix cell height and align text in the center */
@@ -840,19 +843,7 @@ export default Vue.extend({
    background-color: white;
  }
 
- .export-btn {
-   margin-top: 7px;
-   width: 135px;
-   height: 36px;
- }
-
- #annot-table-controls {
-   display: flex;
-   flex-direction: row;
-   justify-content: space-between;
- }
-
  #annot-count {
-   padding: 10px 0 0 5px;
+   padding-left: 5px;
  }
 </style>

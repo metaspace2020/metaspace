@@ -4,11 +4,11 @@ import Vue from 'vue'
 import { Button, Message } from 'element-ui'
 import { createComponent, reactive, computed } from '@vue/composition-api'
 
-import { UserProfileQuery } from '../../api/user'
 import confirmPrompt from '../../components/confirmPrompt'
 import NotificationIcon from '../../components/NotificationIcon.vue'
 import { TransferDatasetsDialog } from '../GroupProfile'
 
+import { UserProfileQuery } from '../../api/user'
 import {
   acceptGroupInvitationMutation,
   getRoleName,
@@ -18,7 +18,7 @@ import {
 } from '../../api/group'
 import reportError from '../../lib/reportError'
 import { encodeParams } from '../Filters'
-import apolloClient from '../../graphqlClient'
+import apolloClient from '../../api/graphqlClient'
 
 const RouterLink = Vue.component('router-link')
 interface GroupRow {

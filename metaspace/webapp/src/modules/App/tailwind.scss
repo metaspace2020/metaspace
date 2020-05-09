@@ -1,0 +1,54 @@
+/* Resets */
+
+.text-inherit {
+  color: inherit;
+}
+
+.bg-none {
+  background: none;
+}
+
+.button-reset {
+  @apply bg-none text-inherit border-none outline-none cursor-pointer p-0;
+}
+
+@tailwind base;
+
+@tailwind components;
+
+@tailwind utilities;
+
+/* Extra utilities */
+
+.pixelated {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  -ms-interpolation-mode: nearest-neighbor;
+  /* Edge still doesn't support pixelated image interpolation, so ion images look bad there */
+}
+
+.transition-fade {
+  transition-property: opacity, visibility;
+}
+
+.proportional-nums {
+  font-variant-numeric: proportional-nums;
+}
+
+/* Debug */
+
+.baseline-grid {
+  background-image: linear-gradient(180deg,red 1px,transparent 0);
+  background-position: 0 0;
+  background-repeat: repeat;
+}
+
+.baseline-grid-24 {
+  @apply baseline-grid;
+  background-size: 100% 1.5rem;
+}
+
+.baseline-grid-20 {
+  @apply baseline-grid;
+  background-size: 100% 1.25rem;
+}

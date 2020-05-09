@@ -189,10 +189,10 @@
       <!--</el-row>-->
       <!--</div>-->
       <!--</div>-->
-      <div>
+      <section>
         <h2>API access</h2>
         <div class="action-with-message">
-          <p>
+          <p class="max-w-measure-4">
             To <a href="https://github.com/metaspace2020/metaspace/tree/master/metaspace/python-client">access METASPACE programmatically</a>
             or integrate with trusted third-party applications, an API key can be used to avoid sharing your password.
           </p>
@@ -204,38 +204,30 @@
           </el-button>
         </div>
         <el-row v-if="isLoaded && currentUser">
-          <div v-if="currentUser.apiKey">
-            <el-input
+          <div
+            v-if="currentUser.apiKey"
+            class="action-with-message"
+          >
+            <copy-to-clipboard
+              class="max-w-measure-1"
               :value="currentUser.apiKey"
-              :type="showApiKey ? 'text' : 'password'"
-              class="api-key"
-              readonly
-              @focus="e => { showApiKey = true; e.target.select(); }"
-              @blur="e => { showApiKey = false; }"
-            >
-              <el-button
-                slot="append"
-                icon="el-icon-document-copy"
-                title="Copy to clipboard"
-                @click="handleCopyApiKey"
-              />
-            </el-input>
+              type="password"
+            />
             <el-button
               type="danger"
-              style="float:right; margin-top:15px"
               @click="handleRevokeApiKey"
             >
               Revoke key
             </el-button>
           </div>
         </el-row>
-      </div>
-      <div>
+      </section>
+      <section>
         <h2>Delete account</h2>
         <div class="action-with-message">
-          <p>
-            If you delete your METASPACE account, you can either delete all your datasets or keep them within METASPACE.
-            For the latter, the private data will still be accessible by the group members only.
+          <p class="max-w-measure-3">
+            If you delete your METASPACE account, you can optionally remove all of your datasets.
+            If datasets are not removed, the private data will still be accessible by the group members only.
           </p>
           <el-button
             type="danger"
@@ -245,7 +237,7 @@
             Delete account
           </el-button>
         </div>
-      </div>
+      </section>
     </div>
   </div>
 </template>
@@ -260,7 +252,7 @@ import {
   UserProfileQuery, resetUserApiKeyMutation,
 } from '../../api/user'
 import reportError from '../../lib/reportError'
-import { refreshLoginStatus } from '../../graphqlClient'
+import { refreshLoginStatus } from '../../api/graphqlClient'
 import { ElForm } from 'element-ui/types/form'
 import { TransferDatasetsDialog } from '../GroupProfile/index'
 import emailRegex from '../../lib/emailRegex'
@@ -268,6 +260,7 @@ import GroupsTable from './GroupsTable'
 import ProjectsTable from './ProjectsTable.vue'
 import ConfirmAsync from '../../components/ConfirmAsync'
 import { sendPasswordResetToken } from '../../api/auth'
+import CopyToClipboard from '../../components/CopyToClipboard'
 
   interface Model {
     name: string;
@@ -279,6 +272,7 @@ import { sendPasswordResetToken } from '../../api/auth'
       TransferDatasetsDialog,
       GroupsTable,
       ProjectsTable,
+      CopyToClipboard,
     },
     apollo: {
       currentUser: {
@@ -565,8 +559,17 @@ export default class EditUserPage extends Vue {
     justify-content: space-between;
   }
 
-  .action-with-message p {
-    max-width: 70ch;
+  .action-with-message > :first-child {
     margin-top: 0;
+    margin-right: 20px;
+  }
+
+  .action-with-message p {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  section + section {
+    margin: 40px 0;
   }
 </style>

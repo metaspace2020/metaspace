@@ -15,7 +15,7 @@ import { Component, Prop } from 'vue-property-decorator'
 
 import PlotLegend from '../PlotLegend.vue'
 import IsotopePatternPlot from '../IsotopePatternPlot.vue'
-import { renderMolFormulaHtml } from '../../../../util'
+import { renderMolFormulaHtml } from '../../../../lib/util'
 
 @Component({
   components: {

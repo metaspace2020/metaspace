@@ -135,7 +135,7 @@ jobs:
             npx codecov -p ../.. -F webapp
       - run:
           name: Lint code
-          command: yarn run lint
+          command: yarn run lint --max-warnings 0 --no-fix
 
   test-webapp-e2e:
     docker:

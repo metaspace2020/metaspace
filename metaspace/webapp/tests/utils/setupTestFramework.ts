@@ -4,8 +4,9 @@ import registerMockComponent from './registerMockComponent'
 import VueRouter from 'vue-router'
 import registerMockDirective from './registerMockDirective'
 import { Wrapper, config as vueTestConfig } from '@vue/test-utils'
-import { replaceConfigWithDefaultForTests } from '../../src/config'
+import { replaceConfigWithDefaultForTests } from '../../src/lib/config'
 import VueCompositionApi from '@vue/composition-api'
+import './mockGenerateId'
 
 window.fetch = jest.fn()
 
@@ -17,7 +18,7 @@ Vue.use(VueCompositionApi)
 // Mock problematic ElementUI components
 registerMockComponent('el-dialog')
 registerMockComponent('el-popover')
-registerMockComponent('el-tooltip')
+registerMockComponent('el-tooltip', { methods: { updatePopper() {} } })
 registerMockComponent('el-autocomplete')
 registerMockComponent('el-select')
 registerMockComponent('el-option')
@@ -35,7 +36,7 @@ registerMockDirective('loading')
 jest.mock('../../src/lib/reportError', () => jest.fn(console.error))
 
 // Prevent JWT requests
-jest.mock('../../src/graphqlClient', () => require('./mockGraphqlClient'))
+jest.mock('../../src/api/graphqlClient', () => require('./mockGraphqlClient'))
 
 // Transitions throw errors because cssstyle doesn't support transition styles
 registerMockComponent('transition', { abstract: true }) //  ElTreeNode relies on Transition being abstract
@@ -43,6 +44,9 @@ registerMockComponent('transition-group')
 
 // Ignore delay duration
 jest.mock('../../src/lib/delay', () => jest.fn(() => Promise.resolve()))
+
+// Mock elapsed time as it relies on variables such as current time and locale
+registerMockComponent('elapsed-time', { path: '../../src/components/ElapsedTime' })
 
 // Track all components mounted by vue-test-utils and automatically clean them up after each test to prevent stale
 // components from updating due to e.g. route changes

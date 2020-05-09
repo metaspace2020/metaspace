@@ -9,7 +9,26 @@
     >
       <div class="header-row">
         <div class="header-names">
-          <h1>{{ project.name }}</h1>
+          <h1
+            class="py-1 leading-tight"
+            :class="{ 'mb-0': projectDOI }"
+          >
+            {{ project.name }}
+          </h1>
+          <p
+            v-if="projectDOI"
+            class="mt-0 leading-6 text-sm font-medium"
+          >
+            Publication:
+            <a
+              :href="projectDOI"
+              class=""
+              target="_blank"
+              rel="noopener"
+            >
+              {{ projectDOI }}
+            </a>
+          </p>
         </div>
 
         <div class="header-buttons">
@@ -56,17 +75,23 @@
           </div>
         </el-alert>
       </div>
-      <el-tabs v-model="tab">
+      <el-tabs
+        v-model="tab"
+        class="with-badges"
+        @tab-click="checkReviewLinksBadge"
+      >
         <el-tab-pane
-          v-if="canEdit || project.projectDescriptionAsHtml !== ''"
-          name="description"
-          :label="'Description'"
+          v-if="visibleTabs.includes('about')"
+          name="about"
+          label="About"
           lazy
         >
-          <project-description
-            :project="project"
-            :can-edit="canEdit && projectId != null"
-            @updateProjectDescription="saveMarkdown"
+          <rich-text
+            class="max-w-measure-5 mx-auto mb-6"
+            :placeholder="descriptionPlaceholder"
+            :content="projectDescription"
+            :readonly="!canEdit"
+            :update="updateDescription"
           />
         </el-tab-pane>
         <el-tab-pane
@@ -113,7 +138,24 @@
           </div>
         </el-tab-pane>
         <el-tab-pane
-          v-if="canEdit && projectId != null"
+          v-if="visibleTabs.includes('review')"
+          name="review"
+          class="tab-with-badge sm-review-tab"
+          lazy
+        >
+          <span slot="label">
+            <new-feature-badge feature-key="review_links">
+              Review
+            </new-feature-badge>
+          </span>
+          <review
+            :current-user-name="currentUserName"
+            :project="project"
+            :refetch-project="refetchProject"
+          />
+        </el-tab-pane>
+        <el-tab-pane
+          v-if="visibleTabs.includes('settings')"
           name="settings"
           label="Settings"
           lazy
@@ -122,7 +164,7 @@
         </el-tab-pane>
       </el-tabs>
     </div>
-    <div v-if="loaded && project == null">
+    <div v-if="projectLoaded && project == null">
       This project does not exist, or you do not have access to it.
     </div>
   </div>
@@ -148,6 +190,7 @@ import {
 import gql from 'graphql-tag'
 import { encodeParams } from '../Filters'
 import ConfirmAsync from '../../components/ConfirmAsync'
+import confirmPrompt from '../../components/confirmPrompt'
 import NotificationIcon from '../../components/NotificationIcon.vue'
 import reportError from '../../lib/reportError'
 import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
@@ -156,7 +199,9 @@ import ProjectMembersList from './ProjectMembersList.vue'
 import ProjectSettings from './ProjectSettings.vue'
 import { optionalSuffixInParens, plural } from '../../lib/vueFilters'
 import { removeDatasetFromAllDatasetsQuery } from '../../lib/updateApolloCache'
-import ProjectDescription from './ProjectDescription.vue'
+import RichText from '../../components/RichText'
+import Review from './Review'
+import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
 
   interface ViewProjectPageData {
     allDatasets: DatasetDetailItem[];
@@ -169,7 +214,9 @@ import ProjectDescription from './ProjectDescription.vue'
       ProjectMembersList,
       ProjectSettings,
       NotificationIcon,
-      ProjectDescription,
+      RichText,
+      Review,
+      NewFeatureBadge,
     },
     filters: {
       optionalSuffixInParens,
@@ -196,6 +243,10 @@ import ProjectDescription from './ProjectDescription.vue'
         },
         variables() {
           return { projectIdOrSlug: this.$route.params.projectIdOrSlug }
+        },
+        update(data) {
+          this.projectLoaded = true
+          return data.project
         },
         // Can't be 'no-cache' because `refetchProject` is used for updating the cache, which in turn updates
         // MetaspaceHeader's project.hasPendingRequest notification
@@ -229,7 +280,11 @@ import ProjectDescription from './ProjectDescription.vue'
           return data
         },
         skip() {
-          return this.projectId == null
+          const skip = this.projectId == null
+          if (skip) {
+            this.loaded = true
+          }
+          return skip
         },
       },
       $subscribe: {
@@ -244,6 +299,7 @@ import ProjectDescription from './ProjectDescription.vue'
   })
 export default class ViewProjectPage extends Vue {
     projectLoading = 0;
+    projectLoaded = false;
     loaded = false;
     isAcceptingInvite = false;
     currentUser: CurrentUserRoleResult | null = null;
@@ -252,6 +308,14 @@ export default class ViewProjectPage extends Vue {
 
     get currentUserId(): string | null { return this.currentUser && this.currentUser.id }
     get roleInProject(): ProjectRole | null { return this.project && this.project.currentUserRole }
+
+    get currentUserName() {
+      if (this.currentUser && this.currentUser.name) {
+        return this.currentUser.name
+      }
+      return ''
+    }
+
     get projectDatasets(): DatasetDetailItem[] {
       return (this.data && this.data.allDatasets || []).filter(ds => ds.status !== 'FAILED')
     }
@@ -269,16 +333,56 @@ export default class ViewProjectPage extends Vue {
       }
     }
 
-    get tab() {
-      if (['description', 'datasets', 'members', 'settings'].includes(this.$route.query.tab)) {
-        return this.$route.query.tab
-      } else {
-        return 'datasets'
+    // extra protection in case `projectDescription` is omitted
+    get projectDescription() {
+      if (this.project && this.project.projectDescription) {
+        return this.project.projectDescription
+      }
+      return null
+    }
+
+    get visibleTabs() {
+      if (this.project === null) {
+        return []
+      }
+      if (this.canEdit) {
+        return ['about', 'datasets', 'members', 'review', 'settings']
+      }
+      if (this.project && this.project.projectDescription !== null) {
+        return ['about', 'datasets', 'members']
+      }
+      return ['datasets', 'members']
+    }
+
+    get tab(): string | null {
+      const tabs = this.visibleTabs
+      if (tabs.length === 0) {
+        return null
+      }
+      const selectedTab = this.$route.query.tab
+      if (tabs.includes(selectedTab)) {
+        return selectedTab
+      }
+      if (selectedTab !== undefined) {
+        this.tab = tabs[0]
+      }
+      return tabs[0]
+    }
+
+    set tab(tab: string | null) {
+      if (tab !== null && this.visibleTabs.includes(tab)) {
+        this.$router.replace({ query: { tab } })
       }
     }
 
-    set tab(tab: string) {
-      this.$router.replace({ query: { tab } })
+    checkReviewLinksBadge() {
+      if (this.tab === 'review') {
+        hideFeatureBadge('review_links')
+      }
+    }
+
+    mounted() {
+      this.checkReviewLinksBadge()
     }
 
     get isInvited(): boolean {
@@ -309,12 +413,27 @@ export default class ViewProjectPage extends Vue {
       return this.members.some(m => m.role === ProjectRoleOptions.PENDING)
     }
 
+    get projectDOI() {
+      if (this.project !== null) {
+        for (const item of this.project.externalLinks) {
+          if (item.provider === 'DOI') {
+            return item.link
+          }
+        }
+      }
+      return null
+    }
+
     @Watch('$route.params.projectIdOrSlug')
     @Watch('project.urlSlug')
     canonicalizeUrl() {
-      if (isUuid(this.$route.params.projectIdOrSlug) && this.project != null && this.project.urlSlug) {
+      if (
+        this.project !== null
+        && this.projectId !== null
+        && this.$route.params.projectIdOrSlug !== this.project.urlSlug
+      ) {
         this.$router.replace({
-          params: { projectIdOrSlug: this.project.urlSlug },
+          params: { projectIdOrSlug: this.project.urlSlug || this.projectId },
           query: this.$route.query,
         })
       }
@@ -373,13 +492,20 @@ export default class ViewProjectPage extends Vue {
       await this.refetch()
     }
 
-    async saveMarkdown(newProjectDescription: string) {
+    get descriptionPlaceholder() {
+      if (this.canEdit) {
+        return 'Describe this project …'
+      }
+      return 'Project has no description.'
+    }
+
+    async updateDescription(newProjectDescription: string) {
       await this.$apollo.mutate<UpdateProjectMutation>({
         mutation: updateProjectMutation,
         variables: {
           projectId: this.projectId,
           projectDetails: {
-            projectDescriptionAsHtml: newProjectDescription,
+            projectDescription: newProjectDescription,
           },
         },
       })
@@ -409,18 +535,15 @@ export default class ViewProjectPage extends Vue {
   }
   .page-content {
     width: 950px;
-    margin-left: 5px;
-    margin-right: 5px;
+    margin-left: 20px;
+    margin-right: 20px;
   }
 
   .header-row {
     display: flex;
     flex-wrap: wrap;
   }
-  .header-names {
-    display: flex;
-    align-items: baseline;
-  }
+
   .header-buttons {
     display: flex;
     justify-content: flex-end;
@@ -432,5 +555,22 @@ export default class ViewProjectPage extends Vue {
   .hidden-members-text {
     text-align: center;
     color: $--color-text-secondary;
+  }
+</style>
+<style>
+  .el-tabs__content {
+    overflow: visible; /* prevents shadows getting clipped */
+  }
+
+  .el-tabs.with-badges {
+    margin-top: -10px;
+  }
+
+  .el-tabs.with-badges .el-tabs__item {
+    margin-top: 10px;
+  }
+
+  .el-tab-pane.sm-review-tab {
+    margin-top: 24px;
   }
 </style>

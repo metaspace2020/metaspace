@@ -16,9 +16,10 @@ type Project {
   numDatasets: Int!
   createdDT: String!
   latestUploadDT: String
-  projectDescriptionAsHtml: String
+  projectDescription: String
   reviewToken: String
   publicationStatus: PublicationStatus!
+  publishedDT: String
   externalLinks: [ExternalLink!]!
 }
 
@@ -37,7 +38,7 @@ input UpdateProjectInput {
   name: String
   isPublic: Boolean
   urlSlug: String
-  projectDescriptionAsHtml: String
+  projectDescription: String
 }
 
 input UpdateUserProjectInput {
@@ -65,12 +66,15 @@ type Query {
   projectByUrlSlug(urlSlug: String!): Project
   allProjects(query: String, offset: Int = 0, limit: Int = 10): [Project!]!
   projectsCount(query: String): Int!
+
+  projectUrlSlugIsValid(urlSlug: String!, existingProjectId: ID): Boolean! # Throws error if invalid, consistent with updateProject
 }
 
 type Mutation {
   ## Managing projects
   createProject(projectDetails: CreateProjectInput!): Project!
   updateProject(projectId: ID!, projectDetails: UpdateProjectInput!): Project!
+  # Throws errors of type: "under_review_or_published"
   deleteProject(projectId: ID!): Boolean!
 
   ## Managing project users
@@ -100,13 +104,13 @@ type Mutation {
   unpublishProject(projectId: ID!, isPublic: Boolean): Project!  # for admins only
 
   # Links to related websites (publications, etc.)
-  addProjectExternalLink(projectId: String!,
+  addProjectExternalLink(projectId: ID!,
                          provider: String!,
                          link: String!,
                          # set replaceExisting to True to delete any previous links to the same provider
                          replaceExisting: Boolean! = False): Project!
 
-  removeProjectExternalLink(projectId: String!,
+  removeProjectExternalLink(projectId: ID!,
                             provider: String!,
                             link: String): Project!
 }

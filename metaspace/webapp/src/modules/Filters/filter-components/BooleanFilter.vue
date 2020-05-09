@@ -3,7 +3,7 @@
     :removable="removable"
     @destroy="destroy"
   >
-    <span slot="name">{{ name }}</span>
+    <span slot="show">{{ name }}</span>
   </tag-filter>
 </template>
 

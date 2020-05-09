@@ -46,6 +46,13 @@ type Dataset {
   thumbnailOpticalImageUrl: String
   ionThumbnailUrl: String
   externalLinks: [ExternalLink!]!
+
+  canDownload: Boolean!
+  # JSON string containing:
+  # a list of authors,
+  # the licence (if any) the authors allow the dataset to be used under,
+  # time-limited download links to the dataset files
+  downloadLinkJson: String
 }
 
 type FdrCounts {
@@ -78,6 +85,7 @@ type DatasetGroup {
 type DatasetProject {
   id: ID!
   name: String!
+  publicationStatus: String!
   isPublic: Boolean @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
   urlSlug: String @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
 }
@@ -287,11 +295,13 @@ type Mutation {
   createDataset(id: String, input: DatasetCreateInput!,
         priority: Int=0): String!
 
+  # Throws errors of types: "under_review_or_published", "reprocessing_needed", "failed_validation"
   updateDataset(id: String!, input: DatasetUpdateInput!,
         reprocess: Boolean=false, delFirst: Boolean=false,
         skipValidation: Boolean=false, # ignored for non-admins
         force: Boolean=false, priority: Int=0): String!
 
+  # Throws errors of types: "under_review_or_published"
   deleteDataset(id: String!, force: Boolean=false, priority: Int=0): String!
 
   # for dev purposes only

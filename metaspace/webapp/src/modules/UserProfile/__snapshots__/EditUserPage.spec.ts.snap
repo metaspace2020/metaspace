@@ -158,7 +158,7 @@ exports[`EditUserPage should match snapshot 1`] = `
           <div mock-v-loading="0">
             <form class="el-form el-form--label-top" size="mini">
               <div>
-                <div class="el-form-item name is-required"><label for="name" class="el-form-item__label">Name</label>
+                <div class="el-form-item name max-w-measure-3 is-required"><label for="name" class="el-form-item__label">Name</label>
                   <div class="el-form-item__content">
                     <div class="el-input">
                       <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
@@ -186,13 +186,13 @@ exports[`EditUserPage should match snapshot 1`] = `
               </h4>
               <div>
                 <div class="dataset-checkbox-list">
-                  <div><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
+                  <div class="mb-1"><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
         allDatasets.0.name
-        <span class="reset-color">(Submitted Invalid Date at Invalid Date)</span>
+        <span class="text-gray-700 proportional-nums">(submitted <mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time>)</span>
                       <!----></span></label></div>
-                  <div><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
+                  <div class="mb-1"><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
         allDatasets.1.name
-        <span class="reset-color">(Submitted Invalid Date at Invalid Date)</span>
+        <span class="text-gray-700 proportional-nums">(submitted <mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time>)</span>
                       <!----></span></label></div>
                 </div>
                 <div class="select-buttons"><a href="#">Select none</a> <span> | </span> <a href="#">Select all</a></div>
@@ -314,46 +314,48 @@ exports[`EditUserPage should match snapshot 1`] = `
     </span></button></div>
       </div>
     </div>
-    <div>
+    <section>
       <h2>API access</h2>
       <div class="action-with-message">
-        <p>
+        <p class="max-w-measure-4">
           To <a href="https://github.com/metaspace2020/metaspace/tree/master/metaspace/python-client">access METASPACE programmatically</a>
           or integrate with trusted third-party applications, an API key can be used to avoid sharing your password.
         </p>
         <!---->
       </div>
       <div class="el-row">
-        <div>
-          <div class="api-key el-input el-input-group el-input-group--append">
+        <div class="action-with-message">
+          <div class="max-w-measure-1 el-input el-input-group el-input-group--append">
             <!----><input type="password" readonly="readonly" autocomplete="off" class="el-input__inner">
             <!---->
             <!---->
-            <div class="el-input-group__append"><button type="button" class="el-button el-button--default" title="Copy to clipboard">
-                <!----><i class="el-icon-document-copy"></i>
-                <!----></button></div>
+            <div class="el-input-group__append">
+              <mock-el-tooltip manual="true" content="Copied!" placement="right"><button type="button" class="el-button el-button--default" title="Copy to clipboard">
+                  <!----><i class="el-icon-document-copy"></i>
+                  <!----></button></mock-el-tooltip>
+            </div>
             <!---->
-          </div> <button type="button" class="el-button el-button--danger" style="float: right; margin-top: 15px;">
+          </div> <button type="button" class="el-button el-button--danger">
             <!---->
             <!----><span>
             Revoke key
           </span></button>
         </div>
       </div>
-    </div>
-    <div>
+    </section>
+    <section>
       <h2>Delete account</h2>
       <div class="action-with-message">
-        <p>
-          If you delete your METASPACE account, you can either delete all your datasets or keep them within METASPACE.
-          For the latter, the private data will still be accessible by the group members only.
+        <p class="max-w-measure-3">
+          If you delete your METASPACE account, you can optionally remove all of your datasets.
+          If datasets are not removed, the private data will still be accessible by the group members only.
         </p> <button type="button" class="el-button el-button--danger" title="Delete account">
           <!---->
           <!----><span>
           Delete account
         </span></button>
       </div>
-    </div>
+    </section>
   </div>
 </div>
 `;

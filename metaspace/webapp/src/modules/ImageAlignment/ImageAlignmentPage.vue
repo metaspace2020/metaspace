@@ -209,11 +209,11 @@
 import ImageAligner from './ImageAligner.vue'
 import { annotationListQuery } from '../../api/annotation'
 import { addOpticalImageQuery, deleteOpticalImageQuery, rawOpticalImageQuery } from '../../api/dataset'
-import { renderMolFormula, renderMolFormulaHtml } from '../../util'
+import { renderMolFormula, renderMolFormulaHtml } from '../../lib/util'
 
 import gql from 'graphql-tag'
 import reportError from '../../lib/reportError'
-import graphqlClient from '../../graphqlClient'
+import graphqlClient from '../../api/graphqlClient'
 
 export default {
   name: 'ImageAlignmentPage',

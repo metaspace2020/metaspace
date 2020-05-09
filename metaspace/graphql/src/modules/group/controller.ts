@@ -16,6 +16,7 @@ import {createInactiveUser} from '../auth/operation';
 import {smAPIUpdateDataset} from '../../utils/smApi/datasets';
 import {getDatasetForEditing} from '../dataset/operation/getDatasetForEditing';
 import {resolveGroupScopeRole} from './util/resolveGroupScopeRole';
+import {urlSlugMatchesClause, validateUrlSlugChange} from "../groupOrProject/urlSlug";
 
 const assertCanCreateGroup = (user: ContextUser) => {
   if (!user.id || user.role !== 'admin')
@@ -153,22 +154,26 @@ export const Resolvers = {
   },
 
   Query: {
-    async group(_: any, {groupId}: any, ctx: Context): Promise<LooselyCompatible<Group & Scope>> {
-      const scopeRole = await resolveGroupScopeRole(ctx, groupId);
-
-      const group = await ctx.entityManager.getRepository(GroupModel).findOneOrFail(groupId);
-      return {
-        ...group,
-        scopeRole
-      };
+    async group(_: any, {groupId}: any, ctx: Context): Promise<LooselyCompatible<Group & Scope> | null> {
+      const group = await ctx.entityManager.getRepository(GroupModel).findOne(groupId);
+      if (group != null) {
+        const scopeRole = await resolveGroupScopeRole(ctx, groupId);
+        return {...group, scopeRole};
+      } else {
+        return null;
+      }
     },
 
-    async groupByUrlSlug(_: any, {urlSlug}: any, ctx: Context): Promise<LooselyCompatible<Group & Scope>> {
-      const group = await ctx.entityManager.getRepository(GroupModel).findOneOrFail({
-        where: { urlSlug }
-      });
-      const scopeRole = await resolveGroupScopeRole(ctx, group.id);
-      return {...group, scopeRole};
+    async groupByUrlSlug(_: any, {urlSlug}: any, ctx: Context): Promise<LooselyCompatible<Group & Scope> | null> {
+      const group = await ctx.entityManager.createQueryBuilder(GroupModel, 'grp')
+          .where(urlSlugMatchesClause('grp', urlSlug))
+          .getOne();
+      if (group != null) {
+        const scopeRole = await resolveGroupScopeRole(ctx, group.id);
+        return {...group, scopeRole};
+      } else {
+        return null;
+      }
     },
 
     async allGroups(_: any, {query}: any, ctx: Context): Promise<LooselyCompatible<Group & Scope>[]|null> {
@@ -180,6 +185,11 @@ export const Resolvers = {
       .getMany();
       return groups.map(g => ({...g, scopeRole}));
     },
+
+    async groupUrlSlugIsValid(source: any, {urlSlug, existingGroupId}: any, ctx: Context): Promise<boolean> {
+      await validateUrlSlugChange(ctx.entityManager, GroupModel, existingGroupId, urlSlug)
+      return true
+    },
   },
 
   Mutation: {
@@ -187,6 +197,10 @@ export const Resolvers = {
       const {groupAdminEmail, ...groupInput} = groupDetails;
       assertCanCreateGroup(user);
       logger.info(`Creating ${groupInput.name} group by '${user!.id}' user...`);
+
+      if (groupDetails.urlSlug != null) {
+        await validateUrlSlugChange(entityManager, GroupModel, null, groupDetails.urlSlug)
+      }
 
       const group = await entityManager.getRepository(GroupModel).save(groupInput) as GroupModel;
 
@@ -206,6 +220,9 @@ export const Resolvers = {
 
     async updateGroup(_: any, {groupId, groupDetails}: any, {user, entityManager}: Context): Promise<Group> {
       await assertCanEditGroup(entityManager, user, groupId);
+      if (groupDetails.urlSlug != null) {
+        await validateUrlSlugChange(entityManager, GroupModel, groupId, groupDetails.urlSlug)
+      }
       logger.info(`Updating '${groupId}' group by '${user!.id}' user...`);
       const groupRepo = entityManager.getRepository(GroupModel);
       const group = {...(await groupRepo.findOneOrFail(groupId)), ...groupDetails};

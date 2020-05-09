@@ -61,7 +61,7 @@ export const removeUserFromProjectMutation =
   }`
 
 export const requestAccessToProjectMutation =
-  gql`mutation requestAccessToProject($projectId: ID!) { 
+  gql`mutation requestAccessToProject($projectId: ID!) {
     requestAccessToProject(projectId: $projectId) {
       role
     }
@@ -82,14 +82,14 @@ export const inviteUserToProjectMutation =
   }`
 
 export const acceptProjectInvitationMutation =
-  gql`mutation acceptProjectInvitation($projectId: ID!) { 
+  gql`mutation acceptProjectInvitation($projectId: ID!) {
     acceptProjectInvitation(projectId: $projectId) {
       role
     }
   }`
 
 export const leaveProjectMutation =
-  gql`mutation leaveProject($projectId: ID!) { 
+  gql`mutation leaveProject($projectId: ID!) {
     leaveProject(projectId: $projectId)
   }`
 
@@ -100,7 +100,39 @@ export const updateUserProjectMutation =
 
 export const importDatasetsIntoProjectMutation =
   gql`mutation($projectId: ID!, $datasetIds: [ID!]!) {
-  importDatasetsIntoProject(projectId: $projectId, datasetIds: $datasetIds)
+    importDatasetsIntoProject(projectId: $projectId, datasetIds: $datasetIds)
+  }`
+
+export const createReviewLinkMutation =
+  gql`mutation createReviewLinkMutation($projectId: ID!) {
+    createReviewLink(projectId: $projectId) {
+      reviewToken
+      publicationStatus
+    }
+  }`
+
+export const deleteReviewLinkMutation =
+  gql`mutation deleteReviewLinkMutation($projectId: ID!) {
+    deleteReviewLink(projectId: $projectId)
+  }`
+
+export const updateProjectDOIMutation =
+  gql`mutation updateProjectDOIMutation($projectId: ID!, $link: String!) {
+    addProjectExternalLink(
+      projectId: $projectId,
+      provider: "DOI",
+      link: $link,
+      replaceExisting: true
+    ) {
+      id
+    }
+  }`
+
+export const publishProjectMutation =
+  gql`mutation publishProjectMutation($projectId: ID!) {
+    publishProject(projectId: $projectId) {
+      publicationStatus
+    }
   }`
 
 export const editProjectQuery =
@@ -111,6 +143,7 @@ export const editProjectQuery =
       urlSlug
       isPublic
       currentUserRole
+      publicationStatus
     }
   }`
 
@@ -120,6 +153,7 @@ export interface EditProjectQuery {
   urlSlug: string | null;
   isPublic: boolean;
   currentUserRole: ProjectRole | null;
+  publicationStatus: string;
 }
 
 const projectsListItemFragment =
@@ -133,6 +167,8 @@ const projectsListItemFragment =
       numDatasets
       createdDT
       latestUploadDT
+      publicationStatus
+      publishedDT
       members {
         user {
           name
@@ -200,10 +236,17 @@ export interface ProjectsListProject {
     role: string
   }[];
   latestUploadDT: string | null;
+  publicationStatus: string;
+  publishedDT: string | null;
 }
 
 export interface MyProjectsListItem {
   project: ProjectsListProject
+}
+
+interface ExternalLink {
+  provider: string;
+  link: string
 }
 
 export interface ViewProjectResult {
@@ -213,7 +256,11 @@ export interface ViewProjectResult {
   currentUserRole: ProjectRole | null;
   numMembers: number;
   members: ViewProjectMember[] | null;
-  projectDescriptionAsHtml: string | null;
+  projectDescription: string | null;
+  reviewToken: string | null;
+  reviewTokenCreatedDT: string | null;
+  publicationStatus: string
+  externalLinks: ExternalLink[]
 }
 
 export const ViewProjectFragment = gql`fragment ViewProjectFragment on Project {
@@ -227,7 +274,14 @@ export const ViewProjectFragment = gql`fragment ViewProjectFragment on Project {
     numDatasets
     user { id name email }
   }
-  projectDescriptionAsHtml
+  projectDescription
+  reviewToken
+  # reviewTokenCreatedDT
+  publicationStatus
+  externalLinks {
+    provider
+    link
+  }
 }`
 
 export interface ViewProjectMember {

@@ -45,7 +45,7 @@
 import AnnotationTable from './AnnotationTable.vue'
 import AnnotationView from './AnnotationView.vue'
 import { FilterPanel } from '../Filters/index'
-import config from '../../config'
+import config from '../../lib/config'
 
 export default {
   name: 'AnnotationsPage',

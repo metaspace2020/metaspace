@@ -30,7 +30,7 @@ import MetaspaceHeader from './MetaspaceHeader.vue'
 import NewFeaturePopup from './NewFeaturePopup.vue'
 import TourStep from './TourStep.vue'
 import { DialogController } from '../Account'
-import config from '../../config'
+import config from '../../lib/config'
 import Vue, { ComponentOptions } from 'vue'
 import 'element-ui' // Needed for Vue.$alert augmentation
 
@@ -86,73 +86,81 @@ export default {
     unicode-range: U+207A-207B;
   }
 
- html {
-   font-family: 'Roboto', SUPERSCIPT_OVERRIDE, Helvetica, sans-serif;
-   overflow-y: scroll; /* always show the right scrollbar to avoid flickering */
- }
+  html {
+    font-family: 'Roboto', SUPERSCIPT_OVERRIDE, Helvetica, sans-serif;
+    overflow-y: scroll; /* always show the right scrollbar to avoid flickering */
+  }
 
- /* http://matthewjamestaylor.com/blog/keeping-footers-at-the-bottom-of-the-page */
- html, body {
-   height: 100%;
-   margin: 0;
-   padding: 0;
- }
+  /* http://matthewjamestaylor.com/blog/keeping-footers-at-the-bottom-of-the-page */
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
 
- #app {
-   -webkit-font-smoothing: antialiased;
-   -moz-osx-font-smoothing: grayscale;
-   color: #2c3e50;
-   margin: 0;
-   min-height: 100%;
-   position: relative;
- }
+  #app {
+    @apply text-body;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+    min-height: 100%;
+    position: relative;
+  }
 
- h1, h2 {
-   font-weight: normal;
- }
+  h1, h2 {
+    font-weight: 500;
+  }
 
- a {
-   color: #428943;
- }
+  a {
+    @apply text-primary;
+  }
 
- .warning {
-   position: fixed;
-   z-index: 1000;
-   top: 62px;
-   left: 0;
-   right: 0;
-   height: 28px;
-   text-align: center;
-   background-color: #fd8;
- }
+  a:hover {
+    text-decoration: none;
+  }
 
- #signin-div {
-   position: fixed;
-   align-self: center;
-   display: none;
-   top: 18px;
-   font-size: 18px;
-   right: 81px;
-   color: white;
-   z-index: 1000;
- }
+  input, button {
+    font: inherit;
+  }
 
- .signin-button, .signout-button {
-   position: fixed;
-   cursor: pointer;
-   z-index: 1000;
-   top: 11px;
-   right: 11px;
-   font-size: 18px;
-   color: rgb(0, 105, 224);
-   background-color: #f8f8f8;
-   border-radius: 5px;
-   padding: 5px;
-   text-decoration: none;
- }
+  .warning {
+    position: fixed;
+    z-index: 1000;
+    top: 62px;
+    left: 0;
+    right: 0;
+    height: 28px;
+    text-align: center;
+    background-color: #fd8;
+  }
 
- .el-loading-mask {
-   /* otherwise filter dropdowns are behind it */
-   z-index: 2000;
- }
+  #signin-div {
+    position: fixed;
+    align-self: center;
+    display: none;
+    top: 18px;
+    font-size: 18px;
+    right: 81px;
+    color: white;
+    z-index: 1000;
+  }
+
+  .signin-button, .signout-button {
+    position: fixed;
+    cursor: pointer;
+    z-index: 1000;
+    top: 11px;
+    right: 11px;
+    font-size: 18px;
+    color: rgb(0, 105, 224);
+    background-color: #f8f8f8;
+    border-radius: 5px;
+    padding: 5px;
+    text-decoration: none;
+  }
+
+  .el-loading-mask {
+    /* otherwise filter dropdowns are behind it */
+    z-index: 2000;
+  }
 </style>

@@ -71,7 +71,7 @@
 import TagFilter from './TagFilter.vue'
 import Vue from 'vue'
 import { Component, Prop } from 'vue-property-decorator'
-import config from '../../../config'
+import config from '../../../lib/config'
 import {
   AdductSuggestion,
   ChemModSuggestion,

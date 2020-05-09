@@ -15,7 +15,7 @@
       </tr>
       <tr
         v-for="row in rows"
-        :key="row.name"
+        :key="row.id"
       >
         <td>
           <div class="sm-table-cell">

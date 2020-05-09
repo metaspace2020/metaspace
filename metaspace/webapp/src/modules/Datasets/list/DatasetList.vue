@@ -7,7 +7,6 @@
       v-for="(dataset, i) in datasets"
       :key="dataset.id"
       :dataset="dataset"
-      :class="i%2 ? 'odd': ''"
       :current-user="currentUser"
       :idx="i"
       :hide-group-menu="hideGroupMenu"
@@ -91,12 +90,6 @@ export default DatasetList
     flex-wrap: wrap;
     align-items: stretch;
     margin: -3px;
-
-    &:not(.double-column) {
-      .odd {
-        background-color: #e6f1ff;
-      }
-    }
   }
 
   .datasets-list-empty {

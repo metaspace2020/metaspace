@@ -73,12 +73,13 @@ CREATE TABLE "graphql"."project" (
   "name" text NOT NULL, 
   "url_slug" text, 
   "is_public" boolean NOT NULL DEFAULT true, 
-  "created_dt" TIMESTAMP NOT NULL DEFAULT (now() at time zone 'utc'), 
-  "project_description" text NOT NULL DEFAULT '', 
+  "created_dt" TIMESTAMP NOT NULL, 
+  "project_description" text, 
   "review_token" text, 
-  "review_token_created_dt" TIMESTAMP DEFAULT null, 
+  "review_token_created_dt" TIMESTAMP, 
   "publish_notifications_sent" integer NOT NULL DEFAULT 0, 
   "publication_status" text NOT NULL DEFAULT 'UNPUBLISHED', 
+  "published_dt" TIMESTAMP, 
   "external_links" json, 
   CONSTRAINT "PK_486ca2f737a2dfd930e46d254aa" PRIMARY KEY ("id")
 );
@@ -110,7 +111,6 @@ CREATE TABLE "graphql"."dataset_project" (
   "dataset_id" text NOT NULL, 
   "project_id" uuid NOT NULL, 
   "approved" boolean NOT NULL, 
-  "publication_status" text NOT NULL DEFAULT 'UNPUBLISHED', 
   CONSTRAINT "PK_9511b6cda2f4d4299812106cdd4" PRIMARY KEY ("dataset_id", 
   "project_id")
 );
@@ -132,8 +132,8 @@ CREATE TABLE "graphql"."coloc_job" (
   "mol_db" text, 
   "fdr" numeric(2,2) NOT NULL, 
   "algorithm" text NOT NULL, 
-  "start" TIMESTAMP NOT NULL DEFAULT (now() at time zone 'utc'), 
-  "finish" TIMESTAMP NOT NULL DEFAULT (now() at time zone 'utc'), 
+  "start" TIMESTAMP NOT NULL, 
+  "finish" TIMESTAMP NOT NULL, 
   "error" text, 
   "sample_ion_ids" integer array NOT NULL, 
   CONSTRAINT "PK_0d9546a0ec598ef6ca4bd835fbf" PRIMARY KEY ("id")
@@ -180,7 +180,7 @@ CREATE TABLE "public"."dataset" (
   "config" json, 
   "upload_dt" TIMESTAMP, 
   "status" text, 
-  "status_update_dt" TIMESTAMP NOT NULL DEFAULT (now() at time zone 'utc'), 
+  "status_update_dt" TIMESTAMP NOT NULL, 
   "optical_image" text, 
   "transform" double precision array, 
   "is_public" boolean NOT NULL DEFAULT true, 

@@ -54,7 +54,7 @@
 
       <p>
         <b>Format:</b> We can receive only data in the imzML centroided format.
-        Please check out <a href="http://project.metaspace2020.eu/imzml">our instructions</a>
+        Please check out <a href="https://docs.google.com/document/d/e/2PACX-1vTT4QrMQ2RJMjziscaU8S3gbznlv6Rm5ojwrsdAXPbR5bt7Ivp-ThkC0hefrk3ZdVqiyCX7VU_ddA62/pub">our instructions</a>
         for converting datasets into this format.
         If you experience difficulties, please contact your instrument vendor.
       </p>

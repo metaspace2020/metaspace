@@ -6,11 +6,11 @@ import { SubscriptionClient } from 'subscriptions-transport-ws'
 import { getOperationAST } from 'graphql/utilities/getOperationAST'
 import { onError } from 'apollo-link-error'
 
-import config from './config'
+import config from '../lib/config'
 import tokenAutorefresh from './tokenAutorefresh'
-import reportError from './lib/reportError'
+import reportError from '../lib/reportError'
 import { get } from 'lodash-es'
-import { makeApolloCache } from './lib/apolloCache'
+import { makeApolloCache } from '../lib/apolloCache'
 
 const graphqlUrl = config.graphqlUrl || `${window.location.origin}/graphql`
 const wsGraphqlUrl = config.wsGraphqlUrl || `${window.location.origin.replace(/^http/, 'ws')}/ws`

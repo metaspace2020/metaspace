@@ -56,7 +56,7 @@ export const datasetDetailItemFragment =
     principalInvestigator { name email }
     group { id name shortName }
     groupApproved
-    projects { id name }
+    projects { id name publicationStatus }
     polarity
     ionisationSource
     analyzer {
@@ -80,6 +80,8 @@ export const datasetDetailItemFragment =
     }
     thumbnailOpticalImageUrl
     ionThumbnailUrl
+    canDownload
+    uploadDT
   }`
 
 export const datasetDetailItemsQuery =
@@ -228,3 +230,17 @@ export const datasetDeletedQuery = gql`subscription datasetDeleted {
     id
   }
 }`
+
+export const getDatasetDownloadLink = gql`query getDatasetDownloadLink ($datasetId: String!) {
+  dataset(id: $datasetId) { downloadLinkJson }
+}`
+export interface GetDatasetDownloadLink {
+  dataset: {
+    downloadLinkJson: string | null
+  }
+}
+export interface DownloadLinkJson {
+  contributors: {name: string, institution?: string}[],
+  license: {code: string, name: string, link: string},
+  files: {filename: string, link: string}[],
+}

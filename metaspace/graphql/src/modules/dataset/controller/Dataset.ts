@@ -1,17 +1,20 @@
 import * as _ from 'lodash';
-import {dsField} from '../../../../datasetFilters';
-import {DatasetSource, FieldResolversFor} from '../../../bindingTypes';
-import {ProjectSourceRepository} from '../../project/ProjectSourceRepository';
-import {Dataset as DatasetModel} from '../model';
-import {EngineDataset, OpticalImage as OpticalImageModel} from '../../engine/model';
-import {Dataset, OpticalImage, OpticalImageType} from '../../../binding';
+import { dsField } from '../../../../datasetFilters';
+import { DatasetSource, FieldResolversFor } from '../../../bindingTypes';
+import { ProjectSourceRepository } from '../../project/ProjectSourceRepository';
+import { Dataset as DatasetModel } from '../model';
+import { EngineDataset, OpticalImage as OpticalImageModel } from '../../engine/model';
+import { Dataset, OpticalImage, OpticalImageType } from '../../../binding';
 import getScopeRoleForEsDataset from '../operation/getScopeRoleForEsDataset';
 import logger from '../../../utils/logger';
-import {Context} from '../../../context';
+import config from '../../../utils/config';
+import { Context } from '../../../context';
 import getGroupAdminNames from '../../group/util/getGroupAdminNames';
 import * as DataLoader from 'dataloader';
-import {esDatasetByID} from '../../../../esConnector';
-import {ExternalLink} from '../../project/ExternalLink';
+import { esDatasetByID } from '../../../../esConnector';
+import { ExternalLink } from '../../project/ExternalLink';
+import { S3 } from 'aws-sdk';
+import canViewEsDataset from '../operation/canViewEsDataset'
 
 interface DbDataset {
   id: string;
@@ -50,7 +53,7 @@ const getOpticalImagesByDsId = async (ctx: Context, id: string): Promise<Optical
     return new DataLoader(async (datasetIds: string[]): Promise<OpticalImage[][]> => {
       const rawResults: OpticalImageModel[] = await ctx.entityManager.query(
         'SELECT * from public.optical_image WHERE ds_id = ANY($1)', [datasetIds]);
-      const results = rawResults.map(({id, type, ...rest}) => ({
+      const results = rawResults.map(({ id, type, ...rest }) => ({
         ...rest,
         id,
         url: `/fs/optical_images/${id}`,
@@ -77,6 +80,9 @@ export const rawOpticalImage = async (datasetId: string, ctx: Context) => {
   return null;
 };
 
+const canDownloadDataset = async (ds: DatasetSource, ctx: Context) => {
+  return ctx.isAdmin || (config.features.imzmlDownload && await canViewEsDataset(ds, ctx.user))
+}
 
 const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   id(ds) {
@@ -88,11 +94,12 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   },
 
   uploadDT(ds) {
-    return ds._source.ds_upload_dt;
+    return new Date(ds._source.ds_upload_dt).toISOString();
   },
 
   statusUpdateDT(ds) {
-    return ds._source.ds_status_update_dt;
+    const date = ds._source.ds_status_update_dt || ds._source.ds_upload_dt;
+    return new Date(date).toISOString();
   },
 
   configJson(ds) {
@@ -187,10 +194,11 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       name: p.name,
       isPublic: null,
       urlSlug: null,
+      publicationStatus: p.publicationStatus,
     }));
   },
 
-  async principalInvestigator(ds, _, {cachedGetEntityById, isAdmin, user}: Context) {
+  async principalInvestigator(ds, _, { cachedGetEntityById, isAdmin, user }: Context) {
     const dataset = await cachedGetEntityById(DatasetModel, ds._source.ds_id);
     if (dataset == null) {
       logger.warn(`Elasticsearch DS does not exist in DB: ${ds._source.ds_id}`);
@@ -226,9 +234,9 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     return ds._source.ds_upload_dt;
   },
 
-  fdrCounts(ds, {inpFdrLvls, checkLvl}: {inpFdrLvls: number[], checkLvl: number}) {
+  fdrCounts(ds, { inpFdrLvls, checkLvl }: { inpFdrLvls: number[], checkLvl: number }) {
     let outFdrLvls: number[] = [], outFdrCounts: number[] = [], maxCounts = 0, dbName = '';
-    if(ds._source.annotation_counts && ds._source.ds_status === 'FINISHED') {
+    if (ds._source.annotation_counts && ds._source.ds_status === 'FINISHED') {
       const annotCounts = ds._source.annotation_counts;
       const molDBs = ds._source.ds_mol_dbs;
       const filteredMolDBs: any[] = annotCounts.filter(el => {
@@ -278,7 +286,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     return await thumbnailOpticalImageUrl(ctx, ds._source.ds_id);
   },
 
-  async opticalImages(ds, {type}: {type?: string}, ctx) {
+  async opticalImages(ds, { type }: { type?: string }, ctx) {
     const opticalImages = await getOpticalImagesByDsId(ctx, ds._source.ds_id);
     return type != null
       ? opticalImages.filter(optImg => optImg.type === type)
@@ -302,7 +310,66 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   async externalLinks(ds, args, ctx) {
     const dbDs = await getDbDatasetById(ctx, ds._source.ds_id);
     return dbDs && dbDs.external_links || [];
-  }
+  },
+
+  async canDownload(ds, args, ctx) {
+    return await canDownloadDataset(ds, ctx);
+  },
+
+  async downloadLinkJson(ds, args, ctx) {
+    if (await canDownloadDataset(ds, ctx)) {
+      const parsedPath = /s3a:\/\/([^/]+)\/(.*)/.exec(ds._source.ds_input_path);
+      let files: { filename: string, link: string }[];
+      if (parsedPath != null) {
+        const [, bucket, prefix] = parsedPath;
+        const s3 = new S3({
+          region: config.aws.aws_region,
+          credentials: {
+            accessKeyId: config.aws.aws_access_key_id,
+            secretAccessKey: config.aws.aws_secret_access_key,
+          },
+        });
+        const objects = await s3.listObjectsV2({
+          Bucket: bucket,
+          Prefix: prefix,
+        }).promise();
+        let fileKeys = (objects.Contents || [])
+          .map(obj => obj.Key!)
+          .filter(key => key && /(\.imzml|.ibd|.mzml)$/i.test(key));
+
+        // Put the .imzML/.mzml file first
+        fileKeys = _.sortBy(fileKeys, a => a.toLowerCase().endsWith('mzml') ? 0 : 1)
+
+        files = fileKeys.map(key => ({
+          filename: key.replace(/.*\//, ''),
+          link: s3.getSignedUrl('getObject', { Bucket: bucket, Key: key, Expires: 1800 }),
+        }));
+      } else {
+        files = [];
+      }
+
+      return JSON.stringify({
+        contributors: [
+          { name: ds._source.ds_submitter_name, institution: ds._source.ds_group_name },
+        ],
+        license: ds._source.ds_is_public
+          ? {
+            code: 'CC BY 4.0',
+            name: 'Creative Commons Attribution 4.0 International Public License',
+            link: 'https://creativecommons.org/licenses/by/4.0/',
+          }
+          : {
+            code: 'NO-LICENSE',
+            name: 'No license was specified. No permission to download or use these files has been given. ' +
+              'Seek permission from the author before downloading these files.',
+            link: 'https://choosealicense.com/no-permission/',
+          },
+        files,
+      });
+    } else {
+      return null;
+    }
+  },
 };
 
 export default DatasetResolvers;

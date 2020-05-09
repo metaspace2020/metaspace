@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 import { defaultsDeep } from 'lodash-es'
-import { getLocalStorage, removeLocalStorage, setLocalStorage } from './lib/localStorage'
-const fileConfig = require('./clientConfig.json')
+import { getLocalStorage, removeLocalStorage, setLocalStorage } from './localStorage'
+const fileConfig = require('../clientConfig.json')
 
 interface AWSConfig {
   access_key_id: string;

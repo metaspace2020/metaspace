@@ -91,14 +91,14 @@
 
 <script>
 import { omit, sortBy, uniqBy } from 'lodash-es'
-import { renderMassShift, renderMolFormulaHtml } from '../../../util'
+import { renderMassShift, renderMolFormulaHtml } from '../../../lib/util'
 import { relatedMoleculesQuery } from '../../../api/annotation'
 import { encodeParams, stripFilteringParams } from '../../Filters'
 import { ANNOTATION_SPECIFIC_FILTERS } from '../../Filters/filterSpecs'
 import CompoundsList from './CompoundsList.vue'
 import FdrBadge from './FdrBadge.vue'
 import MsmBadge from './MsmBadge.vue'
-import config from '../../../config'
+import config from '../../../lib/config'
 
 export default {
   components: {

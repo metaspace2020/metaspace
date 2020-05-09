@@ -332,15 +332,15 @@ export default Vue.extend({
  }
 
  .cb-annotating .el-checkbox__input.is-checked .el-checkbox__inner {
-   background: #5eed5e;
+   @apply bg-success border-success;
  }
 
  .cb-queued .el-checkbox__input.is-checked .el-checkbox__inner {
-   background: #72c8e5;
+   @apply bg-gray-500 border-gray-500;
  }
 
  .cb-failed .el-checkbox__input.is-checked .el-checkbox__inner {
-   background: #f56c6c;
+   @apply bg-danger border-danger;
  }
 
  #dataset-list-header {

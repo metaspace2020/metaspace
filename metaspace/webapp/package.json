@@ -22,11 +22,12 @@
     "generate-local-graphql-schema": "cd ../graphql && yarn run gen-graphql-schema",
     "fetch-prod-graphql-schema": "apollo schema:download tests/utils/graphql-schema.json --endpoint https://metaspace2020.eu/graphql",
     "build": "yarn run deref-schema && cross-env NODE_ENV=production vue-cli-service build --modern",
-    "build-ci": "yarn run deref-schema && cross-env NODE_ENV=production vue-cli-service build --modern --no-progress --hide-modules",
+    "build-ci": "yarn run deref-schema && cross-env NODE_ENV=production vue-cli-service build --no-progress --hide-modules",
     "lint": "vue-cli-service lint",
     "analyze-size": "rm -rf dist ; NODE_ENV=production WEBPACK_STATS=true vue-cli-service build ; npx webpack-bundle-analyzer dist/stats.json dist/ -p 9900 -O"
   },
   "dependencies": {
+    "@fullhuman/postcss-purgecss": "^2.1.0",
     "@types/js-cookie": "^2.1.0",
     "@types/marked": "^0.6.2",
     "@types/sanitize-html": "^1.18.2",
@@ -35,6 +36,7 @@
     "@uppy/aws-s3-multipart": "^1.5.2",
     "@uppy/core": "^1.8.2",
     "@uppy/dashboard": "^1.6.2",
+    "@vue/apollo-composable": "^4.0.0-alpha.7",
     "@vue/cli": "^3.11.0",
     "@vue/composition-api": "^0.3.4",
     "apollo-client-preset": "^1.0.8",
@@ -59,6 +61,9 @@
     "sanitize-html": "^1.20.0",
     "simple-statistics": "^7.0.2",
     "subscriptions-transport-ws": "^0.9.16",
+    "tailwindcss": "^1.2.0",
+    "tiptap": "^1.26.6",
+    "tiptap-extensions": "^1.28.6",
     "ts-essentials": "3.0.4",
     "upng-js": "https://github.com/photopea/UPNG.js.git#f550095",
     "uuid": "^3.0.1",
@@ -119,7 +124,8 @@
     "webpack-cli": "^3.3.10"
   },
   "resolutions": {
-    "babel-core": "7.0.0-bridge.0"
+    "babel-core": "7.0.0-bridge.0",
+    "prosemirror-model": "1.8.2"
   },
   "jest": {
     "globals": {
@@ -131,7 +137,6 @@
               "@vue/cli-plugin-babel/preset",
               {
                 "useBuiltIns": "entry",
-                "modules": "commonjs",
                 "targets": {
                   "node": "current"
                 }
@@ -142,6 +147,7 @@
         "tsConfig": "tsconfig.json"
       }
     },
+    "globalSetup": "<rootDir>/tests/utils/globalSetup.ts",
     "transform": {
       "^.+\\.vue$": "vue-jest",
       ".+\\.(css|styl|less|sass|scss|svg|png|jpg|ttf|woff|woff2)$": "jest-transform-stub",

@@ -4,7 +4,9 @@ import { addMockFunctionsToSchema, makeRemoteExecutableSchema, IMocks } from 'gr
 import Vue from 'vue'
 import VueApollo from 'vue-apollo'
 import { buildClientSchema, GraphQLResolveInfo } from 'graphql'
-import {makeApolloCache} from '../../src/lib/apolloCache'
+import { makeApolloCache } from '../../src/lib/apolloCache'
+import { DefaultApolloClient } from '@vue/apollo-composable'
+import apolloClient from '../../src/api/graphqlClient'
 
 const lazyHash = (str: string) => Array.from(str).reduce((hash, char) => hash ^ char.charCodeAt(0), 0)
 
@@ -98,6 +100,13 @@ export const initMockGraphqlClient = (mocks?: IMocks) => {
   })
 
   Vue.use(VueApollo)
+
+  // WORKAROUND: inject apollo client into context for apollo-composable
+  const vueOptions = (Vue as any).options
+  if (vueOptions.provide == null) {
+    vueOptions.provide = {}
+  }
+  vueOptions.provide[DefaultApolloClient] = apolloClient
 
   apolloProvider = new VueApollo({ defaultClient: graphqlClient })
 }
