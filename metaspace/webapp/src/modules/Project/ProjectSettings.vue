@@ -31,7 +31,7 @@
           v-model="model.urlSlug"
           class="py-1"
           :class="{ 'sm-form-error': errors.urlSlug }"
-          :disabled="isSaving || isPublished"
+          :disabled="isSaving || (isPublished && !userisAdmin)"
         >
           <span slot="prepend">{{ projectUrlPrefix }}</span>
         </el-input>
@@ -194,6 +194,10 @@ export default class ProjectSettings extends Vue {
 
     get doiLink() {
       return `${this.DOI_ORG_DOMAIN}${this.model.doi}`
+    }
+
+    get userisAdmin() {
+      return this.currentUser && this.currentUser.role === 'admin'
     }
 
     @Watch('project')
