@@ -1,10 +1,10 @@
-import {Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryColumn} from 'typeorm';
-import {Group} from '../group/model';
-import {User} from '../user/model';
-import {Project} from '../project/model';
-import {PublicationStatus} from '../../binding';
-import {PublicationStatusOptions as PSO} from '../project/PublicationStatusOptions';
-import {ExternalLink} from '../project/ExternalLink';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryColumn } from 'typeorm';
+import { Group } from '../group/model';
+import { User } from '../user/model';
+import { Project } from '../project/model';
+import { PublicationStatus } from '../../binding';
+import { PublicationStatusOptions as PSO } from '../project/Publishing';
+import { ExternalLink } from '../project/ExternalLink';
 
 @Entity()
 export class Dataset {
@@ -39,7 +39,7 @@ export class Dataset {
   @OneToMany(type => DatasetProject, datasetProject => datasetProject.dataset)
   datasetProjects: DatasetProject[];
 
-  @Column({type: 'json', nullable: true})
+  @Column({ type: 'json', nullable: true })
   externalLinks: ExternalLink[] | null;
 }
 

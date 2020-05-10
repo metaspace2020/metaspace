@@ -4,7 +4,7 @@ import {
   UserProject as UserProjectModel,
   UserProjectRoleOptions as UPRO,
 } from '../model';
-import { PublicationStatusOptions as PSO } from '../PublicationStatusOptions';
+import { PublicationStatusOptions as PSO, validatePublishingRules } from '../Publishing';
 import { UserError } from 'graphql-errors';
 import { FieldResolversFor, ProjectSource, ScopeRoleOptions as SRO, UserProjectSource } from '../../../bindingTypes';
 import { Mutation } from '../../../binding';
@@ -29,9 +29,7 @@ import { utc } from 'moment';
 import generateRandomToken from '../../../utils/generateRandomToken';
 import { addExternalLink, removeExternalLink } from '../ExternalLink';
 import { validateUrlSlugChange } from "../../groupOrProject/urlSlug";
-import FormValidationErrors from "../../../utils/FormValidationErrors";
 import moment = require('moment')
-
 
 const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
   const userProject = await ctx.entityManager.findOne(UserProjectModel, {
@@ -72,15 +70,13 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
     const project = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, projectId);
+
     if (project == null) {
       throw new UserError(`Not found project ${projectId}`);
     }
-    if (!ctx.isAdmin
-      && project.publicationStatus == PSO.PUBLISHED
-      && projectDetails.isPublic == false) {
-      throw new FormValidationErrors('isPublic',
-        `Cannot modify project ${projectId} as it is in ${project.publicationStatus} status`);
-    }
+
+    validatePublishingRules(ctx, project, projectDetails)
+
     if (projectDetails.urlSlug != null) {
       await validateUrlSlugChange(ctx.entityManager, ProjectModel, projectId, projectDetails.urlSlug)
     }
@@ -305,7 +301,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     await ctx.entityManager.transaction(async txn => {
       const project = await ctx.entityManager.findOneOrFail(ProjectModel, projectId);
       await txn.update(ProjectModel, projectId, {
-        externalLinks: addExternalLink(project.externalLinks, provider, link, replaceExisting),
+        externalLinks: addExternalLink(project, provider, link, replaceExisting),
       });
     });
 
@@ -322,7 +318,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     await ctx.entityManager.transaction(async txn => {
       const project = await ctx.entityManager.findOneOrFail(ProjectModel, projectId);
       await txn.update(ProjectModel, projectId, {
-        externalLinks: removeExternalLink(project.externalLinks, provider, link),
+        externalLinks: removeExternalLink(project, provider, link),
       });
     });
 

@@ -18,7 +18,7 @@ import {
   UserProjectRoleOptions,
 } from '../model';
 import { DatasetProject as DatasetProjectModel } from '../../dataset/model';
-import { PublicationStatusOptions as PSO } from '../PublicationStatusOptions';
+import { PublicationStatusOptions as PSO } from '../Publishing';
 import { Project as ProjectType } from '../../../binding';
 
 import * as smAPI from '../../../utils/smAPI';
