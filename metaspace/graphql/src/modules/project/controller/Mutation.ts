@@ -27,7 +27,7 @@ import { smAPIUpdateDataset } from '../../../utils/smAPI';
 import { getDatasetForEditing } from '../../dataset/operation/getDatasetForEditing';
 import { utc } from 'moment';
 import generateRandomToken from '../../../utils/generateRandomToken';
-import { addExternalLink, removeExternalLink } from '../ExternalLink';
+import { addExternalLink, removeExternalLink, ExternalLinkProviderOptions as ELPO } from '../ExternalLink';
 import { validateUrlSlugChange } from "../../groupOrProject/urlSlug";
 import moment = require('moment')
 
@@ -300,8 +300,13 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     await asyncAssertCanEditProject(ctx, projectId);
     await ctx.entityManager.transaction(async txn => {
       const project = await ctx.entityManager.findOneOrFail(ProjectModel, projectId);
+
+      if (provider == ELPO.DOI && project.publicationStatus !== PSO.PUBLISHED) {
+        throw new UserError('Cannot add DOI, project is not published')
+      }
+
       await txn.update(ProjectModel, projectId, {
-        externalLinks: addExternalLink(project, provider, link, replaceExisting),
+        externalLinks: addExternalLink(project.externalLinks, provider, link, replaceExisting),
       });
     });
 
@@ -318,7 +323,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     await ctx.entityManager.transaction(async txn => {
       const project = await ctx.entityManager.findOneOrFail(ProjectModel, projectId);
       await txn.update(ProjectModel, projectId, {
-        externalLinks: removeExternalLink(project, provider, link),
+        externalLinks: removeExternalLink(project.externalLinks, provider, link),
       });
     });
 

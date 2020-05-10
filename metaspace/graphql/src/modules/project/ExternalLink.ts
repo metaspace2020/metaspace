@@ -22,7 +22,7 @@ const isExternalLinkProvider = (val: any): val is ExternalLinkProvider => {
 const DOI_ORG_DOMAIN = 'https://doi.org/'
 
 export const addExternalLink = (
-  project: Project,
+  oldLinks: ExternalLink[] | null,
   provider: string,
   link: string,
   replaceExisting: boolean
@@ -33,16 +33,11 @@ export const addExternalLink = (
   if (link.length > 100) {
     throw new UserError('Link too long');
   }
-  if (provider == ELPO.DOI) {
-    if (project.publicationStatus !== PSO.PUBLISHED) {
-      throw new UserError('Cannot add DOI, project is not published')
-    }
-    if (!link.startsWith(DOI_ORG_DOMAIN)) {
-      throw new UserError(`DOI link must start with "${DOI_ORG_DOMAIN}"`)
-    }
+  if (provider == ELPO.DOI && !link.startsWith(DOI_ORG_DOMAIN)) {
+    throw new UserError(`DOI link should start with "${DOI_ORG_DOMAIN}"`)
   }
 
-  let newLinks = project.externalLinks || [];
+  let newLinks = oldLinks || [];
   if (replaceExisting) {
     newLinks = newLinks.filter(el => el.provider !== provider || el.link === link);
   }
@@ -57,19 +52,18 @@ export const addExternalLink = (
 };
 
 export const removeExternalLink = (
-  project: Project,
+  oldLinks: ExternalLink[] | null,
   provider: string,
   link?: string | null,
 ): ExternalLink[] => {
   if (!isExternalLinkProvider(provider)) {
     throw new UserError('Invalid provider. Allowed providers are: ' + Object.values(ELPO).join(', '));
   }
-
-  const oldLinks = project.externalLinks
   if (link != null
     && (oldLinks == null || !oldLinks.some(el => el.provider === provider && el.link === link))) {
     throw new UserError('Specified external link does not exist');
   }
+
   if (link != null) {
     return (oldLinks || []).filter(el => el.provider !== provider || el.link !== link);
   } else {

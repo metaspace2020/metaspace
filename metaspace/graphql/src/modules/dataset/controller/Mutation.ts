@@ -22,7 +22,7 @@ import { deleteDataset } from '../operation/deleteDataset';
 import {
   checkProjectsPublicationStatus,
   checkNoPublishedProjectRemoved
-} from '../operation/PublishingChecks';
+} from '../operation/publicationChecks';
 import { EngineDataset } from '../../engine/model';
 import { addExternalLink, removeExternalLink } from '../../project/ExternalLink';
 import { esDatasetByID } from '../../../../esConnector';
