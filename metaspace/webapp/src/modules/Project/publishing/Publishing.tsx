@@ -74,16 +74,16 @@ const ReviewWorkflow = createComponent<Props>({
     }
 
     const publishProject = async(doi: string) => {
+      await root.$apollo.mutate({
+        mutation: publishProjectMutation,
+        variables: { projectId: projectId.value },
+      })
       if (doi && doi.length) {
         await root.$apollo.mutate({
           mutation: updateProjectDOIMutation,
           variables: { projectId: projectId.value, link: `https://doi.org/${doi}` },
         })
       }
-      await root.$apollo.mutate({
-        mutation: publishProjectMutation,
-        variables: { projectId: projectId.value },
-      })
       await props.refetchProject()
     }
 

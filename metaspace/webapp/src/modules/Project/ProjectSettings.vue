@@ -88,7 +88,7 @@
             Datasets will not be deleted, but they will no longer be able to be shared with other users through this project.
           </p>
           <el-button
-            class="mt-3"
+            class="mt-5"
             type="danger"
             :loading="isDeletingProject"
             @click="handleDeleteProject"
