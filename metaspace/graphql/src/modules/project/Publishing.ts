@@ -9,17 +9,24 @@ export const PublicationStatusOptions: Record<PublicationStatus, PublicationStat
   PUBLISHED: 'PUBLISHED',
 };
 
+const PSO = PublicationStatusOptions
+
 export function validatePublishingRules(ctx: Context, project: ProjectSource, projectDetails: UpdateProjectInput) {
-  if (!ctx.isAdmin
-    && project.publicationStatus == PublicationStatusOptions.PUBLISHED
-    && projectDetails.isPublic == false) {
-    throw new FormValidationErrors('isPublic', `Published projects must be visible`);
+  if (ctx.isAdmin) {
+    return
   }
 
-  if (!ctx.isAdmin
-    && projectDetails.urlSlug == null
+  if (project.publicationStatus != PSO.UNPUBLISHED
     && project.urlSlug != null
-    && project.publicationStatus == PublicationStatusOptions.UNDER_REVIEW) {
-    throw new FormValidationErrors('urlSlug', `Cannot remove project link as the project is under review`);
+    && projectDetails.urlSlug == null) {
+    throw new FormValidationErrors(
+      'urlSlug',
+      `Cannot remove short link as the project is ${PSO.UNDER_REVIEW ? 'under review' : 'published'}`
+    )
+  }
+
+  if (project.publicationStatus == PSO.PUBLISHED
+    && projectDetails.isPublic == false) {
+    throw new FormValidationErrors('isPublic', `Published projects must be visible`);
   }
 }
