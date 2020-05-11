@@ -208,7 +208,6 @@ describe('Project publication status manipulations', () => {
         { userId, projectId: project.id, role: UserProjectRoleOptions.MANAGER });
       const projectDetails = {
         name: 'new name',
-        urlSlug: 'new_slug',
         projectDescription:
           '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"new description"}]}]}'
       };
@@ -262,5 +261,29 @@ describe('Project publication status manipulations', () => {
     await expect(promise).rejects.toThrow(/Cannot add DOI, project is not published/);
     const { externalLinks } = await testEntityManager.findOneOrFail(ProjectModel, project.id);
     expect(externalLinks).toBe(null);
+  });
+
+  test('Not allowed to remove urlSlug from project under review', async () => {
+    const project = await createTestProject({ urlSlug: 'old-link', publicationStatus: PSO.UNDER_REVIEW });
+    await testEntityManager.insert(UserProjectModel,
+      { userId, projectId: project.id, role: UserProjectRoleOptions.MANAGER });
+
+    const promise = doQuery<ProjectType>(updateProject, { projectId: project.id, projectDetails: { urlSlug: null } });
+
+    await expect(promise).rejects.toThrow(/Cannot remove short link as the project is under review/);
+    const { urlSlug } = await testEntityManager.findOneOrFail(ProjectModel, project.id);
+    expect(urlSlug).toBe('old-link');
+  });
+
+  test('Not allowed to edit urlSlug on published project', async () => {
+    const project = await createTestProject({ urlSlug: 'old-link', publicationStatus: PSO.PUBLISHED });
+    await testEntityManager.insert(UserProjectModel,
+      { userId, projectId: project.id, role: UserProjectRoleOptions.MANAGER });
+
+    const promise = doQuery<ProjectType>(updateProject, { projectId: project.id, projectDetails: { urlSlug: 'new-link' } });
+
+    await expect(promise).rejects.toThrow(/Cannot edit short link as the project is published/);
+    const { urlSlug } = await testEntityManager.findOneOrFail(ProjectModel, project.id);
+    expect(urlSlug).toBe('old-link');
   });
 });

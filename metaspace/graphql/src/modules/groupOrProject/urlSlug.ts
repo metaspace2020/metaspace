@@ -12,10 +12,10 @@ export const validateUrlSlugChange = async <EntityType extends ObjectType<Entity
 
     if (/[^a-zA-Z0-9_-]/.test(urlSlug)) {
         throw new FormValidationErrors('urlSlug',
-            'Invalid characters. Use alphanumerics separated by minus or underscore.')
+            'Invalid characters - use alphanumerics separated by minus or underscore')
     }
     if (urlSlug.length < 4 || urlSlug.length > 50) {
-        throw new FormValidationErrors('urlSlug', 'Project link must be between 4 and 50 characters.')
+        throw new FormValidationErrors('urlSlug', 'Project link must be between 4 and 50 characters')
     }
 
     const existing = await entityManager.createQueryBuilder(model, 'entity')
@@ -23,7 +23,7 @@ export const validateUrlSlugChange = async <EntityType extends ObjectType<Entity
         .getMany();
 
     if (existing.some(({ id }) => existingId != null && id != existingId)) {
-        throw new FormValidationErrors('urlSlug', 'This project link has already been used.')
+        throw new FormValidationErrors('urlSlug', 'This project link has already been used')
     }
 }
 
