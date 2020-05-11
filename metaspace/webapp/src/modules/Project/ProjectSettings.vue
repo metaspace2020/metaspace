@@ -2,7 +2,7 @@
   <div class="project-settings max-w-measure-3 mx-auto leading-6">
     <div
       v-if="project != null"
-      class="mt-6 mb-12"
+      class="mt-6 mb-12 sm-form"
     >
       <h2>Project Details</h2>
       <edit-project-form
@@ -13,55 +13,40 @@
       />
       <div>
         <label for="project-settings-short-link">
-          <span class="font-medium">
+          <primary-label-text>
             Short link
-          </span>
-          <span class="block text-sm text-gray-800">
+          </primary-label-text>
+          <secondary-label-text>
             Must be unique and use characters a-z, 0-9, hyphen or underscore
-          </span>
-          <span
-            v-if="errors.urlSlug"
-            class="block text-danger text-sm font-medium"
-          >
+          </secondary-label-text>
+          <error-label-text v-if="errors.urlSlug">
             {{ errors.urlSlug }}
-          </span>
+          </error-label-text>
         </label>
-        <el-input
+        <short-link-field
           id="project-settings-short-link"
           v-model="model.urlSlug"
-          class="py-1"
-          :class="{ 'sm-form-error': errors.urlSlug }"
+          :has-error="!!errors.urlSlug"
           :disabled="isSaving || (isPublished && !userisAdmin)"
-        >
-          <span slot="prepend">{{ projectUrlPrefix }}</span>
-        </el-input>
+        />
       </div>
       <div
         v-if="isPublished"
         class="mt-6"
       >
         <label for="project-settings-doi">
-          <span class="font-medium">Publication DOI</span>
-          <span class="block text-sm text-gray-800">
+          <primary-label-text>
+            Publication DOI
+          </primary-label-text>
+          <secondary-label-text>
             Should link to the published paper
-          </span>
+          </secondary-label-text>
         </label>
-        <el-input
+        <doi-field
           id="project-settings-doi"
           v-model="model.doi"
-          class="py-1"
           :disabled="isSaving"
-        >
-          <span slot="prepend">{{ DOI_ORG_DOMAIN }}</span>
-          <span slot="append">
-            <a
-              :href="doiLink"
-              target="_blank"
-              rel="noopener"
-              class="text-inherit"
-            >Test link</a>
-          </span>
-        </el-input>
+        />
       </div>
       <el-button
         class="mt-5"
@@ -117,22 +102,28 @@ import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
 import ConfirmAsync from '../../components/ConfirmAsync'
 import reportError from '../../lib/reportError'
 import { parseValidationErrors } from '../../api/validation'
+import * as FormComponents from '../../components/Form'
+import DoiField from './DoiField'
+import ShortLinkField from './ShortLinkField'
 
-  @Component<ProjectSettings>({
-    components: {
-      EditProjectForm,
+@Component<ProjectSettings>({
+  components: {
+    EditProjectForm,
+    ...FormComponents,
+    DoiField,
+    ShortLinkField,
+  },
+  apollo: {
+    currentUser: {
+      query: currentUserRoleQuery,
+      fetchPolicy: 'cache-first',
     },
-    apollo: {
-      currentUser: {
-        query: currentUserRoleQuery,
-        fetchPolicy: 'cache-first',
-      },
-      project: {
-        query: editProjectQuery,
-        variables() { return { projectId: this.projectId } },
-      },
+    project: {
+      query: editProjectQuery,
+      variables() { return { projectId: this.projectId } },
     },
-  })
+  },
+})
 export default class ProjectSettings extends Vue {
     @Prop()
     projectId!: string;
@@ -151,8 +142,6 @@ export default class ProjectSettings extends Vue {
 
     currentUser: CurrentUserRoleResult | null = null;
     project: EditProjectQuery | null = null;
-
-    DOI_ORG_DOMAIN = 'https://doi.org/'
 
     get projectName() {
       return this.project ? this.project.name : ''
@@ -186,14 +175,10 @@ export default class ProjectSettings extends Vue {
       if (this.project) {
         const doi = this.project.externalLinks.find(_ => _.provider === 'DOI')
         if (doi && doi.link) {
-          return doi.link.replace(this.DOI_ORG_DOMAIN, '')
+          return doi.link
         }
       }
       return ''
-    }
-
-    get doiLink() {
-      return `${this.DOI_ORG_DOMAIN}${this.model.doi}`
     }
 
     get userisAdmin() {
@@ -261,7 +246,7 @@ export default class ProjectSettings extends Vue {
             mutation: updateProjectDOIMutation,
             variables: {
               projectId: this.projectId,
-              link: doi.length ? this.doiLink : null,
+              link: doi,
             },
           })
         }
