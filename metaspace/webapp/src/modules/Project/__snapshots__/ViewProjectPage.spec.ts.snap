@@ -774,44 +774,54 @@ exports[`ViewProjectPage settings tab should disable actions when published 1`] 
         <!---->
         <!---->
         <div role="tabpanel" id="pane-settings" aria-labelledby="tab-settings" class="el-tab-pane">
-          <div class="project-settings">
-            <div class="header-row">
-              <h2>Project Details</h2>
-              <div class="flex-spacer"></div>
-              <div class="header-row-buttons"><button type="button" class="el-button el-button--primary">
-                  <!---->
-                  <!----><span>
-        Save
-      </span></button></div>
-            </div>
-            <form class="el-form el-form--label-top">
-              <div>
-                <div class="el-form-item name max-w-measure-3 is-required"><label for="name" class="el-form-item__label">Name</label>
-                  <div class="el-form-item__content">
-                    <div class="el-input">
-                      <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
-                      <!---->
-                      <!---->
-                      <!---->
+          <div class="project-settings max-w-measure-3 mx-auto leading-6">
+            <div class="mt-6 mb-12">
+              <form action="#" class="sm-form">
+                <h2>Project Details</h2>
+                <form class="el-form mt-3 el-form--label-top">
+                  <div><label class="leading-6"><span class="font-medium">Title</span>
+                      <div class="py-1 el-input">
+                        <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
+                        <!---->
+                        <!---->
+                        <!---->
+                        <!---->
+                      </div></label></div>
+                  <div class="el-form-item my-3">
+                    <!---->
+                    <div class="el-form-item__content"><label class="el-checkbox is-disabled"><span class="el-checkbox__input is-disabled"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" disabled="disabled" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
+      Published projects must be visible
+    <!----></span></label>
                       <!---->
                     </div>
+                  </div>
+                </form>
+                <div><label for="project-settings-short-link"><span class="text-base font-medium">Short link</span><span class="block text-sm text-gray-800">Must be unique, min. 4 characters, using a–z, 0–9, hyphen or underscore</span></label>
+                  <div class="el-input is-disabled el-input-group el-input-group--prepend">
+                    <div class="el-input-group__prepend"><span>http://localhost/project/</span></div><input type="text" disabled="disabled" autocomplete="off" id="project-settings-short-link" maxlength="50" minlength="4" pattern="[a-zA-Z0-9_-]+" title="min. 4 characters, a–z, 0–9, hyphen or underscore" class="el-input__inner">
+                    <!---->
+                    <!---->
+                    <!---->
                     <!---->
                   </div>
                 </div>
-                <div class="el-form-item isPublic">
-                  <!---->
-                  <div class="el-form-item__content"><label class="el-checkbox is-disabled"><span class="el-checkbox__input is-disabled"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value="" disabled="disabled"></span><span class="el-checkbox__label">
-        Published projects must be visible
-      <!----></span></label>
+                <div class="mt-6"><label for="project-settings-doi"><span class="text-base font-medium">Publication DOI</span><span class="block text-sm text-gray-800">Should link to the published paper</span></label>
+                  <div class="el-input el-input-group el-input-group--append el-input-group--prepend">
+                    <div class="el-input-group__prepend"><span>https://doi.org/</span></div><input type="text" autocomplete="off" id="project-settings-doi" class="el-input__inner">
+                    <!---->
+                    <!---->
+                    <div class="el-input-group__append"><span><a target="_blank" rel="noopener" class="text-inherit">Test link</a></span></div>
                     <!---->
                   </div>
-                </div>
+                </div> <button class="el-button el-button--primary mt-5">
+                  <!----> <span>
+          Update details
+        </span></button>
+              </form>
+              <div class="mt-12">
+                <h2>Delete project</h2>
+                <p><em>Published projects cannot be deleted.</em></p>
               </div>
-            </form>
-            <!---->
-            <div>
-              <h2>Delete project</h2>
-              <p><em>Published projects cannot be deleted.</em></p>
             </div>
           </div>
         </div>
@@ -863,47 +873,49 @@ exports[`ViewProjectPage settings tab should disable actions when under review 1
         <!---->
         <!---->
         <div role="tabpanel" id="pane-settings" aria-labelledby="tab-settings" class="el-tab-pane">
-          <div class="project-settings">
-            <div class="header-row">
-              <h2>Project Details</h2>
-              <div class="flex-spacer"></div>
-              <div class="header-row-buttons"><button type="button" class="el-button el-button--primary">
-                  <!---->
-                  <!----><span>
-        Save
-      </span></button></div>
-            </div>
-            <form class="el-form el-form--label-top">
-              <div>
-                <div class="el-form-item name max-w-measure-3 is-required"><label for="name" class="el-form-item__label">Name</label>
-                  <div class="el-form-item__content">
-                    <div class="el-input">
-                      <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
-                      <!---->
-                      <!---->
-                      <!---->
+          <div class="project-settings max-w-measure-3 mx-auto leading-6">
+            <div class="mt-6 mb-12">
+              <form action="#" class="sm-form">
+                <h2>Project Details</h2>
+                <form class="el-form mt-3 el-form--label-top">
+                  <div><label class="leading-6"><span class="font-medium">Title</span>
+                      <div class="py-1 el-input">
+                        <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
+                        <!---->
+                        <!---->
+                        <!---->
+                        <!---->
+                      </div></label></div>
+                  <div class="el-form-item my-3">
+                    <!---->
+                    <div class="el-form-item__content"><label class="el-checkbox"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
+      Allow other users to see this project
+    <!----></span></label>
                       <!---->
                     </div>
+                  </div>
+                </form>
+                <div><label for="project-settings-short-link"><span class="text-base font-medium">Short link</span><span class="block text-sm text-gray-800">Must be unique, min. 4 characters, using a–z, 0–9, hyphen or underscore</span></label>
+                  <div class="el-input el-input-group el-input-group--prepend">
+                    <div class="el-input-group__prepend"><span>http://localhost/project/</span></div><input type="text" autocomplete="off" id="project-settings-short-link" maxlength="50" minlength="4" pattern="[a-zA-Z0-9_-]+" title="min. 4 characters, a–z, 0–9, hyphen or underscore" class="el-input__inner">
+                    <!---->
+                    <!---->
+                    <!---->
                     <!---->
                   </div>
                 </div>
-                <div class="el-form-item isPublic">
-                  <!---->
-                  <div class="el-form-item__content"><label class="el-checkbox"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-        Allow other users to see this project
-      <!----></span></label>
-                    <!---->
-                  </div>
-                </div>
+                <!----> <button class="el-button el-button--primary mt-5">
+                  <!----> <span>
+          Update details
+        </span></button>
+              </form>
+              <div class="mt-12">
+                <h2>Delete project</h2>
+                <p><em>This project is under review.</em> <br>
+                  To delete the project, remove the review link on the <a href="/project/00000000-1111-2222-3333-444444444444?tab=publishing" class="router-link-active">
+                    Publishing tab</a>.
+                </p>
               </div>
-            </form>
-            <!---->
-            <div>
-              <h2>Delete project</h2>
-              <p><em>This project is under review.</em> <br> <br>
-                To delete this project, first remove the review link on the <a href="/project/00000000-1111-2222-3333-444444444444?tab=publishing" class="router-link-active">
-                  Publishing tab</a>.
-              </p>
             </div>
           </div>
         </div>
@@ -955,51 +967,53 @@ exports[`ViewProjectPage settings tab should match snapshot 1`] = `
         <!---->
         <!---->
         <div role="tabpanel" id="pane-settings" aria-labelledby="tab-settings" class="el-tab-pane">
-          <div class="project-settings">
-            <div class="header-row">
-              <h2>Project Details</h2>
-              <div class="flex-spacer"></div>
-              <div class="header-row-buttons"><button type="button" class="el-button el-button--primary">
-                  <!---->
-                  <!----><span>
-        Save
-      </span></button></div>
-            </div>
-            <form class="el-form el-form--label-top">
-              <div>
-                <div class="el-form-item name max-w-measure-3 is-required"><label for="name" class="el-form-item__label">Name</label>
-                  <div class="el-form-item__content">
-                    <div class="el-input">
-                      <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
-                      <!---->
-                      <!---->
-                      <!---->
+          <div class="project-settings max-w-measure-3 mx-auto leading-6">
+            <div class="mt-6 mb-12">
+              <form action="#" class="sm-form">
+                <h2>Project Details</h2>
+                <form class="el-form mt-3 el-form--label-top">
+                  <div><label class="leading-6"><span class="font-medium">Title</span>
+                      <div class="py-1 el-input">
+                        <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
+                        <!---->
+                        <!---->
+                        <!---->
+                        <!---->
+                      </div></label></div>
+                  <div class="el-form-item my-3">
+                    <!---->
+                    <div class="el-form-item__content"><label class="el-checkbox"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
+      Allow other users to see this project
+    <!----></span></label>
                       <!---->
                     </div>
+                  </div>
+                </form>
+                <div><label for="project-settings-short-link"><span class="text-base font-medium">Short link</span><span class="block text-sm text-gray-800">Must be unique, min. 4 characters, using a–z, 0–9, hyphen or underscore</span></label>
+                  <div class="el-input el-input-group el-input-group--prepend">
+                    <div class="el-input-group__prepend"><span>http://localhost/project/</span></div><input type="text" autocomplete="off" id="project-settings-short-link" maxlength="50" minlength="4" pattern="[a-zA-Z0-9_-]+" title="min. 4 characters, a–z, 0–9, hyphen or underscore" class="el-input__inner">
+                    <!---->
+                    <!---->
+                    <!---->
                     <!---->
                   </div>
                 </div>
-                <div class="el-form-item isPublic">
-                  <!---->
-                  <div class="el-form-item__content"><label class="el-checkbox"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-        Allow other users to see this project
-      <!----></span></label>
+                <!----> <button class="el-button el-button--primary mt-5">
+                  <!----> <span>
+          Update details
+        </span></button>
+              </form>
+              <div class="mt-12">
+                <h2>Delete project</h2>
+                <div>
+                  <p>
+                    Datasets will not be deleted, but they will no longer be able to be shared with other users through this project.
+                  </p> <button type="button" class="el-button mt-5 el-button--danger">
                     <!---->
-                  </div>
+                    <!----><span>
+          Delete project
+        </span></button>
                 </div>
-              </div>
-            </form>
-            <!---->
-            <div>
-              <h2>Delete project</h2>
-              <div class="flex justify-between items-start">
-                <p class="max-w-measure-3 mt-0 leading-snug">
-                  Datasets will not be deleted, but they will no longer be able to be shared with other users through this project.
-                </p> <button type="button" class="el-button el-button--danger">
-                  <!---->
-                  <!----><span>
-        Delete project
-      </span></button>
               </div>
             </div>
           </div>
