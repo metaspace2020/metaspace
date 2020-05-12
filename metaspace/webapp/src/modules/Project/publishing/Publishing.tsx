@@ -1,7 +1,7 @@
 import { createComponent, computed } from '@vue/composition-api'
 
 import { Workflow } from '../../../components/Workflow'
-import PrepareProject from './PrepareProject'
+import UpdateProjectDetails from './UpdateProjectDetails'
 import CreateReviewLink from './CreateReviewLink'
 import PublishData from './PublishData'
 import FadeTransition from '../../../components/FadeTransition'
@@ -81,7 +81,7 @@ const ReviewWorkflow = createComponent<Props>({
       if (doi && doi.length) {
         await root.$apollo.mutate({
           mutation: updateProjectDOIMutation,
-          variables: { projectId: projectId.value, link: `https://doi.org/${doi}` },
+          variables: { projectId: projectId.value, link: doi },
         })
       }
       await props.refetchProject()
@@ -109,7 +109,7 @@ const ReviewWorkflow = createComponent<Props>({
             </p>
           </div>
           : <Workflow class="sm-scientific-publishing">
-            <PrepareProject
+            <UpdateProjectDetails
               active={activeStep.value === 1}
               currentUserName={props.currentUserName}
               done={activeStep.value > 1}

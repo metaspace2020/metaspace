@@ -5,6 +5,7 @@ import { WorkflowStep } from '../../../components/Workflow'
 import { RichTextArea } from '../../../components/RichText'
 import CopyToClipboard from '../../../components/CopyToClipboard'
 import FadeTransition from '../../../components/FadeTransition'
+import ShortLinkField from '../ShortLinkField'
 
 import { ViewProjectResult } from '../../../api/project'
 import { parseValidationErrors } from '../../../api/validation'
@@ -93,6 +94,7 @@ const PrepareProject = createComponent<Props>({
           {(props.active || state.editing)
             && <form
               key="editing"
+              class="sm-form"
               action="#"
               onSubmit={(e: Event) => { e.preventDefault(); submit() }}
             >
@@ -100,29 +102,12 @@ const PrepareProject = createComponent<Props>({
                 Create a short project link to use in the manuscript.
                 We also suggest updating the project title and adding an abstract to the project description.
               </p>
-              <div class={{ 'sm-form-error': state.errors.urlSlug }}>
-                <label for="project-review-url">
-                  <span class="text-base font-medium">Link to be used in the manuscript</span>
-                  <span class="block text-sm text-gray-800">
-                    Must be unique and use characters a-z, 0-9, hyphen or underscore
-                  </span>
-                  {state.errors.urlSlug
-                  && <span class="block text-sm font-medium text-danger">
-                    {state.errors.urlSlug}
-                  </span>}
-                </label>
-                <Input
-                  id="project-review-url"
-                  class="py-1"
-                  v-model={state.model.urlSlug}
-                  pattern="[a-zA-Z0-9_-]+"
-                  minlength="4"
-                  maxlength="50"
-                  title="a-z, 0-9, hyphen or underscore"
-                >
-                  <span slot="prepend">{projectUrlPrefix}</span>
-                </Input>
-              </div>
+              <ShortLinkField
+                v-model={state.model.urlSlug}
+                id="publishing-project-link"
+                label="Link to be used in the manuscript"
+                error={state.errors.urlSlug}
+              />
               <div>
                 <label for="project-review-title">
                   <span class="text-base font-medium">Project title</span>

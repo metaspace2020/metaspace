@@ -2,60 +2,44 @@
   <div class="project-settings max-w-measure-3 mx-auto leading-6">
     <div
       v-if="project != null"
-      class="mt-6 mb-12 sm-form"
+      class="mt-6 mb-12"
     >
-      <h2>Project Details</h2>
-      <edit-project-form
-        v-model="model"
-        class="mt-3"
-        :is-published="isPublished"
-        :disabled="isSaving"
-      />
-      <div>
-        <label for="project-settings-short-link">
-          <primary-label-text>
-            Short link
-          </primary-label-text>
-          <secondary-label-text>
-            Must be unique and use characters a-z, 0-9, hyphen or underscore
-          </secondary-label-text>
-          <error-label-text v-if="errors.urlSlug">
-            {{ errors.urlSlug }}
-          </error-label-text>
-        </label>
+      <form
+        class="sm-form"
+        action="#"
+        @submit="e => { e.preventDefault(); handleSave() }"
+      >
+        <h2>Project Details</h2>
+        <edit-project-form
+          v-model="model"
+          class="mt-3"
+          :is-published="isPublished"
+          :disabled="isSaving"
+        />
         <short-link-field
           id="project-settings-short-link"
           v-model="model.urlSlug"
-          :has-error="!!errors.urlSlug"
+          :error="errors.urlSlug"
           :disabled="isSaving || (isPublished && !userisAdmin)"
         />
-      </div>
-      <div
-        v-if="isPublished"
-        class="mt-6"
-      >
-        <label for="project-settings-doi">
-          <primary-label-text>
-            Publication DOI
-          </primary-label-text>
-          <secondary-label-text>
-            Should link to the published paper
-          </secondary-label-text>
-        </label>
         <doi-field
+          v-if="isPublished"
           id="project-settings-doi"
           v-model="model.doi"
+          class="mt-6"
           :disabled="isSaving"
         />
-      </div>
-      <el-button
-        class="mt-5"
-        type="primary"
-        :loading="isSaving"
-        @click="handleSave"
-      >
-        Update details
-      </el-button>
+        <!-- el-button does not submit the form *shrug* -->
+        <button class="el-button el-button--primary mt-5">
+          <i
+            v-if="isSaving"
+            class="el-icon-loading"
+          />
+          <span>
+            Update details
+          </span>
+        </button>
+      </form>
       <div class="mt-12">
         <h2>Delete project</h2>
         <p v-if="isPublished">

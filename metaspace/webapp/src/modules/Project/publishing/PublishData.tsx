@@ -1,7 +1,8 @@
-import { createComponent, computed, reactive } from '@vue/composition-api'
+import { createComponent, reactive } from '@vue/composition-api'
 import { Button, Input } from 'element-ui'
 
 import { WorkflowStep } from '../../../components/Workflow'
+import DoiField from '../DoiField'
 
 import confirmPrompt from '../../../components/confirmPrompt'
 
@@ -45,34 +46,16 @@ const PublishData = createComponent({
         {!props.active && !props.done
         && <p>This project and its datasets will be made public.</p>}
         {props.active
-          && <form onSubmit={(e: Event) => { e.preventDefault() }}>
+          && <form class="sm-form" onSubmit={(e: Event) => { e.preventDefault() }}>
             <p class="italic">
               Complete this step after the DOI for your paper has been issued.
               <br />
               You will receive a reminder by email.
             </p>
-            <div>
-              <label for="scientific-publishing-doi">
-                <span class="font-medium">Publication DOI</span>
-                <span class="text-sm block">Should link to the published paper</span>
-              </label>
-              <Input
-                v-model={state.doi}
-                id="scientific-publishing-doi"
-                class="py-1"
-              >
-                <span slot="prepend">https://doi.org/</span>
-                <a
-                  slot="append"
-                  href={`https://doi.org/${state.doi}`}
-                  target="_blank"
-                  rel="noopener"
-                  class="text-gray-600"
-                >
-                  Test link
-                </a>
-              </Input>
-            </div>
+            <DoiField
+              v-model={state.doi}
+              id="scientific-publishing-doi"
+            />
             <Button type="primary" onClick={submit}>
               Publish project
             </Button>
