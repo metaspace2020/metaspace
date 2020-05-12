@@ -86,14 +86,12 @@ import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
 import ConfirmAsync from '../../components/ConfirmAsync'
 import reportError from '../../lib/reportError'
 import { parseValidationErrors } from '../../api/validation'
-import * as FormComponents from '../../components/Form'
 import DoiField from './DoiField'
 import ShortLinkField from './ShortLinkField'
 
 @Component<ProjectSettings>({
   components: {
     EditProjectForm,
-    ...FormComponents,
     DoiField,
     ShortLinkField,
   },
