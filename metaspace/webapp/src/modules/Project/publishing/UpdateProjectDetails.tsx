@@ -10,7 +10,7 @@ import ShortLinkField from '../ShortLinkField'
 import { ViewProjectResult } from '../../../api/project'
 import { parseValidationErrors } from '../../../api/validation'
 
-import router from '../../../router'
+import { PROJECT_URL_PREFIX } from '../../../router'
 
 function getInitialModel(project: ViewProjectResult, currentUserName = '') {
   const year = new Date().getFullYear()
@@ -81,9 +81,6 @@ const PrepareProject = createComponent<Props>({
       state.model = getInitialModel(props.project, props.currentUserName)
     }
 
-    const { href } = router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined, true)
-    const projectUrlPrefix = location.origin + href.replace('REMOVE', '')
-
     return () => (
       <WorkflowStep
         active={props.active}
@@ -115,7 +112,7 @@ const PrepareProject = createComponent<Props>({
                     Suggested format: Author et al. (year) title
                   </span>
                 </label>
-                <Input id="project-review-title" class="py-1" v-model={state.model.name} />
+                <Input id="project-review-title" v-model={state.model.name} />
               </div>
               <RichTextArea
                 content={state.model.projectDescription}
@@ -154,7 +151,7 @@ const PrepareProject = createComponent<Props>({
           >
             <label>
               <span class="font-medium text-primary">Reference the project in the manuscript using this link:</span>
-              <CopyToClipboard value={projectUrlPrefix + props.project.urlSlug} class="py-1" />
+              <CopyToClipboard value={PROJECT_URL_PREFIX + props.project.urlSlug} class="py-1" />
             </label>
             <Button
               key="edit"

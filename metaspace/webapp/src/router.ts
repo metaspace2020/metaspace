@@ -79,4 +79,7 @@ const router = new VueRouter({
   ],
 })
 
+const { href } = router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined, true)
+export const PROJECT_URL_PREFIX = location.origin + href.replace('REMOVE', '')
+
 export default router

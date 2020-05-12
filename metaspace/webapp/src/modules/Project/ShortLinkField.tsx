@@ -2,10 +2,7 @@ import { createComponent } from '@vue/composition-api'
 import { Input } from 'element-ui'
 
 import * as Form from '../../components/Form'
-import router from '../../router'
-
-const { href } = router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined, true)
-const PROJECT_URL_PREFIX = location.origin + href.replace('REMOVE', '')
+import { PROJECT_URL_PREFIX } from '../../router'
 
 interface Props {
   error: string
