@@ -25,6 +25,7 @@ describe('MetadataEditor', () => {
     testConfig.logModifiedComponents = false
     store.replaceState({
       ...store.state,
+      // @ts-ignore
       route: { path: '/upload', query: {} },
     })
   })
