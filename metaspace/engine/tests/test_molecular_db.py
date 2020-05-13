@@ -15,11 +15,10 @@ def test_create_find_by_id_name(test_db):
     moldb_resp = crete_test_database('test_db', 'version')
 
     moldb_by_id = molecular_db.find_by_id(moldb_resp.id)
-    moldb_by_name = molecular_db.find_by_name(moldb_resp.name)
 
-    assert moldb_resp.id == moldb_by_id.id == moldb_by_name.id
-    assert moldb_resp.name == moldb_by_id.name == moldb_by_name.name == 'test_db'
-    assert moldb_resp.version == moldb_by_id.version == moldb_by_name.version == 'version'
+    assert moldb_resp.id == moldb_by_id.id
+    assert moldb_resp.name == moldb_by_id.name == 'test_db'
+    assert moldb_resp.version == moldb_by_id.version == 'version'
 
 
 def test_update(test_db):

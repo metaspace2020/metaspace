@@ -396,7 +396,8 @@ class Colocalization:
         """
 
         image_storage_type = Dataset(ds_id).get_ion_img_storage_type(self._db)
-        mol_dbs, charge = self._db.select_one(DATASET_CONFIG_SEL, [ds_id])
+        mol_dbs_ids, charge = self._db.select_one(DATASET_CONFIG_SEL, [ds_id])
+        mol_dbs = [molecular_db.find_by_id(moldb_id).name for moldb_id in mol_dbs_ids]
         existing_mol_dbs = set(db for db, in self._db.select(SUCCESSFUL_COLOC_JOB_SEL, [ds_id]))
 
         for mol_db_name in mol_dbs:

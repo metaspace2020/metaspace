@@ -12,8 +12,6 @@ from sm.engine.queue import QueuePublisher
 from sm.engine.dataset import DatasetStatus, Dataset, generate_ds_config
 from sm.engine.png_generator import ImageStoreServiceWrapper
 
-mol_db_mock = {'id': 1, 'name': 'HMDB-v4', 'version': '2001-01-01'}
-
 
 def create_ds(
     ds_id='2000-01-01',
@@ -22,12 +20,11 @@ def create_ds(
     upload_dt=None,
     metadata=None,
     status=DatasetStatus.QUEUED,
-    mol_dbs=None,
+    moldbs_ids=None,
     adducts=None,
 ):
     upload_dt = upload_dt or datetime.now()
-    if not mol_dbs:
-        mol_dbs = ['HMDB-v4']
+    moldbs_ids = moldbs_ids or [0]
     if not adducts:
         adducts = ['+H', '+Na', '+K', '[M]+']
     if not metadata:
@@ -38,7 +35,7 @@ def create_ds(
                 'Detector_Resolving_Power': {'mz': 200, 'Resolving_Power': 140000},
             }
         }
-    config = generate_ds_config(metadata, mol_dbs=mol_dbs, adducts=adducts)
+    config = generate_ds_config(metadata, moldb_ids=moldbs_ids, adducts=adducts)
     return Dataset(
         id=ds_id,
         name=ds_name,
@@ -112,7 +109,7 @@ class TestSMDaemonDatasetManager:
         es_mock.delete_ds.assert_called_with(ds_id, delete_dataset=False)
         index_ds_kw_args = es_mock.index_ds.call_args[1]
         assert index_ds_kw_args.get('ds_id') == ds_id
-        assert index_ds_kw_args.get('mol_db').name == 'HMDB-v4'
+        assert index_ds_kw_args.get('moldb').name == 'HMDB-v4'
 
     def test_delete_ds(self, fill_db):
         db = DB()

@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 
+from sm.engine import molecular_db
 from sm.engine.dataset import (
     DatasetStatus,
     Dataset,
@@ -56,13 +57,37 @@ class SMapiDatasetManager:
         queue.publish(msg, priority)
         self.logger.info(f'New message posted to {queue}: {msg}')
 
+    def _add_moldb_ids(self, ds_config_kwargs):
+        mol_dbs = ds_config_kwargs.pop('mol_dbs', None)
+        if mol_dbs:
+            self.logger.warning(f'Deprecated parameter mol_dbs provided: {mol_dbs}')
+
+        moldb_ids = ds_config_kwargs.pop('moldb_ids', None)
+        if not moldb_ids:
+            moldb_ids = [molecular_db.find_by_name(name).id for name in mol_dbs or []]
+        ds_config_kwargs['moldb_ids'] = moldb_ids
+
+    def _add_default_moldb_ids(self, ds_config_kwargs):
+        default_moldb_ids = [
+            molecular_db.find_by_name(name).id
+            for name in self._sm_config['ds_config_defaults']['moldb_names']
+        ]
+        ds_config_kwargs['moldb_ids'] = list(
+            set(ds_config_kwargs['moldb_ids']) | set(default_moldb_ids)
+        )
+
     def add(self, doc, **kwargs):
-        """ Save dataset and send add message to the queue """
+        """Save dataset and send ANNOTATE message to the queue."""
         now = datetime.now()
         if 'id' not in doc:
             doc['id'] = now.strftime('%Y-%m-%d_%Hh%Mm%Ss')
 
         ds_config_kwargs = dict((k, v) for k, v in doc.items() if k in FLAT_DS_CONFIG_KEYS)
+        ds_config_kwargs['mol_dbs'] = kwargs.get(
+            'mol_dbs', None
+        )  # TODO: deprecated, use 'moldb_ids' instead
+        self._add_moldb_ids(ds_config_kwargs)
+        self._add_default_moldb_ids(ds_config_kwargs)
 
         try:
             ds = Dataset.load(self._db, doc['id'])

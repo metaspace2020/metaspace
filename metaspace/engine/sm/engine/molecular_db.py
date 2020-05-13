@@ -22,18 +22,33 @@ class MolecularDB:
 
     # pylint: disable=redefined-builtin
     def __init__(
-        self, id: int = None, name: str = None, version: str = None, targeted: bool = None
+        self,
+        id: int = None,
+        name: str = None,
+        version: str = None,
+        targeted: bool = None,
+        group_id: str = None,
     ):
         self.id = id
         self.name = name
         self.version = version
         self.targeted = targeted
+        self.group_id = group_id
 
     def __repr__(self):
         return '<{}:{}>'.format(self.name, self.version)
 
     def to_dict(self):
-        return {'id': self.id, 'name': self.name, 'version': self.version}
+        return {
+            'id': self.id,
+            'name': self.name,
+            'version': self.version,
+            'group_id': self.group_id,
+        }
+
+    @property
+    def compound_name(self):
+        return f'{self.group_id}:{self.name}:{self.version}'
 
 
 def _validate_moldb_df(df):
@@ -138,7 +153,7 @@ def find_by_id(id: int) -> MolecularDB:
     """Find database by id."""
 
     data = DB().select_one_with_fields(
-        'SELECT id, name, version, targeted FROM molecular_db WHERE id = %s', params=(id,)
+        'SELECT id, name, version, targeted, group_id FROM molecular_db WHERE id = %s', params=(id,)
     )
     if not data:
         raise SMError(f'MolecularDB not found: {id}')
@@ -149,17 +164,19 @@ def find_by_ids(ids: Iterable[int]) -> List[MolecularDB]:
     """Find multiple databases by ids."""
 
     data = DB().select_with_fields(
-        'SELECT id, name, version, targeted FROM molecular_db WHERE id = ANY (%s)',
+        'SELECT id, name, version, targeted, group_id FROM molecular_db WHERE id = ANY (%s)',
         params=(list(ids),),
     )
     return [MolecularDB(**row) for row in data]
 
 
+# TODO: remove
 def find_by_name(name: str) -> MolecularDB:
-    """Find database by name."""
+    """Find database by name name."""
 
     data = DB().select_one_with_fields(
-        'SELECT id, name, version, targeted FROM molecular_db WHERE name = %s', params=(name,)
+        'SELECT id, name, version, targeted, group_id FROM molecular_db WHERE name = %s',
+        params=(name,),
     )
     if not data:
         raise SMError(f'MolecularDB not found: {name}')
@@ -168,6 +185,7 @@ def find_by_name(name: str) -> MolecularDB:
 
 def fetch_molecules(moldb_id: int) -> pd.DataFrame:
     """Fetch all database molecules as a DataFrame."""
+
     data = DB().select_with_fields(
         'SELECT mol_id, mol_name, formula FROM molecule m WHERE m.moldb_id = %s', params=(moldb_id,)
     )

@@ -39,12 +39,12 @@ def create_ds_doc(
     upload_dt=None,
     metadata=None,
     status=DatasetStatus.QUEUED,
-    mol_dbs=None,
+    moldb_ids=None,
     adducts=None,
 ):
     upload_dt = upload_dt or datetime.now()
-    if not mol_dbs:
-        mol_dbs = ['HMDB-v4']
+    if not moldb_ids:
+        moldb_ids = [0]
     if not adducts:
         adducts = ['+H', '+Na', '+K', '[M]+']
     if not metadata:
@@ -62,7 +62,7 @@ def create_ds_doc(
         upload_dt=upload_dt,
         metadata=metadata,
         status=status,
-        mol_dbs=mol_dbs,
+        moldb_ids=moldb_ids,
         adducts=adducts,
         img_storage_type='fs',
         is_public=True,
@@ -70,7 +70,7 @@ def create_ds_doc(
 
 
 class TestSMapiDatasetManager:
-    def test_add_new_ds(self, test_db, ds_config):
+    def test_add_new_ds(self, fill_db, ds_config):
         action_queue_mock = MagicMock(spec=QueuePublisher)
         ds_man = create_api_ds_man(annot_queue=action_queue_mock)
 
@@ -82,7 +82,7 @@ class TestSMapiDatasetManager:
         msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'action': DaemonAction.ANNOTATE}
         action_queue_mock.publish.assert_has_calls([call(msg, DatasetActionPriority.HIGH)])
 
-    def test_delete_ds(self, test_db, metadata, ds_config):
+    def test_delete_ds(self, fill_db, metadata, ds_config):
         update_queue = MagicMock(spec=QueuePublisher)
         ds_man = create_api_ds_man(update_queue=update_queue)
         ds_id = '2000-01-01'

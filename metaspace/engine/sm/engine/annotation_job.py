@@ -38,7 +38,7 @@ class JobStatus:
 
 
 class AnnotationJob:
-    """ Main class responsible for molecule search. Uses the other modules of the engine """
+    """Class responsible for dataset annotation."""
 
     def __init__(self, img_store=None, sm_config=None):
         self._img_store = img_store
@@ -74,12 +74,13 @@ class AnnotationJob:
             master=self._sm_config['spark']['master'], conf=sconf, appName='SM engine'
         )
 
-    def _store_job_meta(self, mol_db_id):
-        """ Store search job metadata in the database """
+    def _store_job_meta(self, moldb_id: int):
+        """Store search job metadata in the database."""
+
         logger.info('Storing job metadata')
         rows = [
             (
-                mol_db_id,
+                moldb_id,
                 self._ds.id,
                 JobStatus.RUNNING,
                 datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
@@ -153,10 +154,7 @@ class AnnotationJob:
         completed_moldb_ids = {
             db_id for (_, db_id) in self._db.select(JOB_ID_MOLDB_ID_SEL, params=(self._ds.id,))
         }
-        new_moldb_ids = {
-            molecular_db.find_by_name(name=moldb_name).id
-            for moldb_name in self._ds.config['databases']
-        }
+        new_moldb_ids = set(self._ds.config['databases'])
         return completed_moldb_ids, new_moldb_ids
 
     def _save_data_from_raw_ms_file(self, imzml_parser):

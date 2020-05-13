@@ -64,7 +64,7 @@ def ds_config():
             "chem_mods": [],
         },
         "fdr": {"decoy_sample_size": 20},
-        "databases": ["HMDB-v4"],
+        "databases": [0],
     }
 
 
@@ -149,7 +149,7 @@ def fill_db(test_db, metadata, ds_config):
     )
     db.insert(
         "INSERT INTO molecular_db (id, name, version) VALUES (%s, %s, %s)",
-        rows=[(0, 'HMDB-v4', '2018-04-03')],
+        rows=[(0, 'HMDB-v4', '2000-01-01')],
     )
     db.insert("INSERT INTO job (id, moldb_id, ds_id) VALUES (%s, %s, %s)", rows=[(0, 0, ds_id)])
     db.insert(
