@@ -42,7 +42,7 @@ jobs:
       - run:
           name: Upload coverage
           command: |
-            yarn run test --coverage
+            yarn run test --coverage --maxWorkers=1
             npx codecov -p ../.. -F graphql
 
 
