@@ -126,6 +126,7 @@
       "node"
     ],
     "testEnvironment": "node",
+    "testTimeout": 15000,
     "setupFilesAfterEnv": [
       "<rootDir>/src/tests/setupTestFramework.ts"
     ],

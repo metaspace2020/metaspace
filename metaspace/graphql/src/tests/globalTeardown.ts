@@ -1,7 +1,7 @@
 import * as Knex from 'knex';
 import config from '../utils/config';
 
-module.exports = async () => {
+export = async () => {
   const knexAdmin = Knex({
     client: 'postgres',
     connection: {

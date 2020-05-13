@@ -3,7 +3,7 @@ import config from '../utils/config';
 import {createConnection} from '../utils/db';
 import {DbSchemaName}  from '../utils/typeOrmConfig';
 
-module.exports = async () => {
+export = async () => {
 
   if (config.db.database === 'sm'
     || config.util.getConfigSources().some(({name}) => name.endsWith('development.js') || name.endsWith('production.js'))) {
