@@ -14,7 +14,7 @@
     "Vitaly Kovalev <vitaly.kovalev@embl.de>"
   ],
   "scripts": {
-    "dev": "nodemon -e js,json,ts --require ts-node/register server.js",
+    "dev": "ts-node-dev server.js --respawn server.js",
     "start": "ts-node server.js",
     "test": "NODE_ENV=test jest",
     "test-integration": "mocha --timeout 3000 tests/*RegrTest.js # Has not been maintained. Mocha removed due to security advisory in one of its dependencies",
@@ -102,7 +102,6 @@
     "@types/supertest": "^2.0.7",
     "graphql-binding": "^2.2.2",
     "jest": "25.5.4",
-    "nodemon": "^2.0.3",
     "random-js": "^2.0.0-rc2",
     "request-promise": "^4.2.1",
     "supertest": "^4.0.2",
