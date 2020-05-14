@@ -19,9 +19,9 @@ export default {
       debug: true,
       autoProceed: false,
       restrictions: {
-        maxFileSize: 150 * 2**20,  // 150MB
+        maxFileSize: 150 * 2 ** 20, // 150MB
         maxNumberOfFiles: 1,
-        allowedFileTypes: ['.csv']
+        allowedFileTypes: ['.csv'],
       },
       meta: {},
     })
@@ -33,7 +33,7 @@ export default {
       limit: 2,
       companionUrl: config.companionUrl || `${window.location.origin}/database_upload`,
     })
-  }
+  },
 }
 </script>
 
