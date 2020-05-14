@@ -60,8 +60,14 @@ module.exports = {
       },
       spacing: {
         auto: 'auto',
-        '18': '4.5rem',
-        '72': '18rem',
+        '1.75': '0.4375rem',
+        '3.5': '0.875rem',
+        '7': '1.75rem',
+        '14': '3.5rem',
+        '21': '5.25rem',
+        '28': '7rem',
+        '70': '17.5rem', // 10 * 28px/1.75rem
+        '77': '19.25rem' // 11 * 28px/1.75rem
       },
       maxWidth: {
         'measure-1': '44ch',
@@ -75,11 +81,9 @@ module.exports = {
         '-20': '-20',
       },
       lineHeight: {
-        '12': '3rem'
+        '12': '3rem',
+        '14': '3.5rem'
       },
-      fontSize: {
-        '2xl+': '1.75rem'
-      }
     }
   },
   variants: {

@@ -1,20 +1,17 @@
 <template>
-  <div
-    class="leading-6 text-lg proportional-nums"
-    style="--lineHeight: 24px"
-  >
-    <div class="bg-primary overflow-hidden w-full -mt-2 pb-6 sm-banner-gradient">
-      <div class="box-border font-display py-12 mx-auto max-w-4xl flex items-center _baseline-grid-24">
+  <div class="text-lg proportional-nums leading-7">
+    <div class="bg-primary overflow-hidden w-full -mt-2 pb-7 sm-banner-gradient">
+      <div class="box-border font-display py-14 mx-auto max-w-4xl flex items-center _baseline-grid-28">
         <img
           src="../../assets/METASPACE_logomark.png"
-          class="hidden md:block w-72 h-72 -ml-6"
+          class="hidden md:block w-77 h-77 -ml-14 p-3.5 box-border"
         >
-        <div class="text-white box-border ml-10 h-72">
-          <h1 class="m-0 md:mt-18 flex flex-col items-start">
+        <div class="text-white box-border ml-7 h-77">
+          <h1 class="m-0 md:mt-21 flex flex-col items-start">
             <span class="text-3xl leading-7">Welcome to</span>
-            <metaspace class="w-auto md:h-18 py-3 -mt-1" />
+            <metaspace class="w-auto md:h-21 py-1.75 box-border" />
           </h1>
-          <p class="text-2xl leading-7 m-0 py-2">
+          <p class="text-2xl leading-7 m-0 py-3.5">
             The platform for metabolite annotation
             <br>
             of imaging mass spectrometry data
@@ -24,7 +21,7 @@
     </div>
     <div
       id="about"
-      class="p-12 mx-auto box-border max-w-4xl _baseline-grid-24"
+      class="p-14 mx-auto box-border max-w-4xl _baseline-grid-28"
     >
       <section class="sm-about-features">
         <h2 class="sr-only">
@@ -73,8 +70,8 @@
           </p>
         </div>
       </section>
-      <section class="sm-about-details max-w-measure-4 mt-12">
-        <h2 class="font-display text-primary leading-12 m-0 text-lg uppercase tracking-wide">
+      <section class="sm-about-details max-w-measure-4 mt-14">
+        <h2 class="font-display text-primary leading-12 py-1 m-0 text-lg uppercase tracking-wide">
           Frequently asked questions
         </h2>
         <h3>What is the METASPACE platform?</h3>
@@ -104,7 +101,7 @@
           </li>
         </ul>
         <h3>
-          How shall I cite METASPACE in a publication?
+          How should I cite METASPACE?
         </h3>
         <p>
           Please cite our publication (<a
@@ -286,21 +283,16 @@ export default class AboutPage extends Vue {
 
   /* #about h2, */
   #about h3 {
-    @apply font-display font-medium leading-8 text-2xl+ py-2;
-    margin: 0;
+    @apply font-display font-medium leading-12 text-3xl m-0 py-1;
   }
 
   #about p {
-    @apply m-0 mb-6;
+    @apply m-0 mb-7;
   }
 
   #about ul {
     margin: 0;
     padding: 0;
-  }
-
-  #about li {
-    @apply mb-6;
   }
 
   #about svg .primary {
@@ -312,20 +304,20 @@ export default class AboutPage extends Vue {
   }
 
   #about .sm-about-features svg {
-    @apply block w-8 h-8 p-2 rounded-full bg-blue-100 my-3;
+    @apply block rounded-full bg-blue-100 w-12 h-12 p-2 box-border my-1;
   }
 
   #about .sm-about-details h3:not(:first-of-type) {
-    @apply mt-12;
+    @apply mt-14;
   }
 
   @screen md {
     #about .sm-about-features {
-      @apply -m-3 flex flex-wrap;
+      @apply -m-3.5 flex flex-wrap;
     }
     #about .sm-about-features > div {
-      @apply m-3;
-      width: calc(50% - theme('spacing.6'))
+      @apply m-3.5;
+      width: calc(50% - theme('spacing.7'))
     }
     #about .sm-about-features p {
       margin-bottom: 0;
@@ -337,11 +329,11 @@ export default class AboutPage extends Vue {
   }
 
   #about .sm-about-funding li {
-    @apply flex;
+    @apply flex mb-7;
   }
 
   #about .sm-about-funding img {
-    @apply w-20 h-12 object-contain object-left mr-3;
+    @apply w-20 h-12 object-contain object-left mr-3.5 py-1;
   }
 
   #about .sm-about-funding b {
