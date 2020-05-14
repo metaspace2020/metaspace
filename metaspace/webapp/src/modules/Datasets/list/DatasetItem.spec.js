@@ -44,6 +44,15 @@ describe('DatasetItem', () => {
   const underReview = { name: 'project', publicationStatus: 'UNDER_REVIEW' }
   const published = { name: 'project', publicationStatus: 'PUBLISHED' }
 
+  it('should match snapshot', () => {
+    const propsData = {
+      currentUser: submitter,
+      dataset,
+    }
+    const wrapper = mount(DatasetItem, { router, store, propsData })
+    expect(wrapper).toMatchSnapshot()
+  })
+
   it('should be able to delete if unpublished', () => {
     const propsData = {
       currentUser: submitter,
@@ -53,7 +62,7 @@ describe('DatasetItem', () => {
       },
     }
     const wrapper = mount(DatasetItem, { router, store, propsData })
-    expect(wrapper).toMatchSnapshot()
+    expect(wrapper.find('.ds-delete').exists()).toBe(true)
   })
 
   it('should not show the publication status if cannot edit', () => {
@@ -65,7 +74,7 @@ describe('DatasetItem', () => {
       },
     }
     const wrapper = mount(DatasetItem, { router, store, propsData })
-    expect(wrapper).toMatchSnapshot()
+    expect(wrapper.find('.test-publication-status').exists()).toBe(false)
   })
 
   it('should not show the publication status if processing', () => {
@@ -78,7 +87,7 @@ describe('DatasetItem', () => {
       }
     }
     const wrapper = mount(DatasetItem, { router, store, propsData })
-    expect(wrapper).toMatchSnapshot()
+    expect(wrapper.find('.test-publication-status').exists()).toBe(false)
   })
 
   it('should show "Under review" status', () => {
@@ -90,7 +99,7 @@ describe('DatasetItem', () => {
       }
     }
     const wrapper = mount(DatasetItem, { router, store, propsData })
-    expect(wrapper).toMatchSnapshot()
+    expect(wrapper.find('.test-publication-status').text()).toBe('Under review')
   })
 
   it('should show "Published" status', () => {
@@ -102,7 +111,7 @@ describe('DatasetItem', () => {
       }
     }
     const wrapper = mount(DatasetItem, { router, store, propsData })
-    expect(wrapper).toMatchSnapshot()
+    expect(wrapper.find('.test-publication-status').text()).toBe('Published')
   })
 
   it('should prefer "Published" status', () => {
@@ -114,7 +123,7 @@ describe('DatasetItem', () => {
       }
     }
     const wrapper = mount(DatasetItem, { router, store, propsData })
-    expect(wrapper).toMatchSnapshot()
+    expect(wrapper.find('.test-publication-status').text()).toBe('Published')
   })
 
   it('should show admin options', () => {
@@ -126,6 +135,7 @@ describe('DatasetItem', () => {
       }
     }
     const wrapper = mount(DatasetItem, { router, store, propsData })
-    expect(wrapper).toMatchSnapshot()
+    expect(wrapper.find('.ds-delete').exists()).toBe(true)
+    expect(wrapper.find('.ds-reprocess').exists()).toBe(true)
   })
 })

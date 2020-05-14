@@ -11,7 +11,7 @@ export const Workflow = createComponent<Props>({
   },
   setup(_, { slots }) {
     return () => (
-      <ol class="sm-workflow">
+      <ol class="sm-workflow leading-6 m-0 p-0">
         {...slots.default()}
       </ol>
     )
@@ -28,9 +28,9 @@ export const WorkflowStep = createComponent({
       <li class={[
         'sm-workflow-step',
         'flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12',
-        'border-solid border-0 border-l-2 border-gray-200',
+        'border-solid border-0 border-l-2 border-gray-300',
         'transition-colors ease-in-out duration-300',
-        { active: props.active, done: props.done },
+        { active: props.active, 'done border-blue-200': props.done },
       ]}>
         {slots.default()}
       </li>
