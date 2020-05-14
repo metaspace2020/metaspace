@@ -86,6 +86,7 @@ export default {
   }
 
   @font-face {
+    font-display: swap;
     font-family: "FuturaBT-Medium";
     src: url("../../assets/fonts/futura/2FD17E_0_0.eot");
     src: url("../../assets/fonts/futura/2FD17E_0_0.eot?#iefix") format("embedded-opentype"), url("../../assets/fonts/futura/2FD17E_0_0.woff2") format("woff2"), url("../../assets/fonts/futura/2FD17E_0_0.woff") format("woff"), url("../../assets/fonts/futura/2FD17E_0_0.ttf") format("truetype");

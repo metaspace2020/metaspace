@@ -55,23 +55,23 @@
             Head to the <router-link to="/upload">
               upload<!--
               -->
-            </router-link> page to submit a dataset. Not sure where to start? Please try our <router-link to="/help">
+            </router-link> page to submit a dataset. Try our <router-link to="/help">
               interactive tutorials<!-- -->
-            </router-link>.
+            </router-link> if it is your first time and you would like to get up to speed.
           </p>
         </div>
         <div>
           <unlock-icon />
           <h3>Open access</h3>
           <p>
-            All code is <a href="https://github.com/metaspace2020">open-source</a> and the input format is <a
+            All code is <a href="https://github.com/metaspace2020">open-source</a> and the <a
               href="http://imzml.org/"
-            >imzML</a> as supported by all major mass spec. vendors. Export metabolite annotations from public datasets.
+            >imzML input format</a> is open and supported by all major mass spectrometer vendors.
           </p>
         </div>
       </section>
       <section class="sm-about-details max-w-measure-4 mt-14">
-        <h2 class="font-display text-primary leading-12 py-1 m-0 text-lg uppercase tracking-wide">
+        <h2 class="font-display text-primary leading-14 m-0 text-lg uppercase tracking-wide">
           Frequently asked questions
         </h2>
         <h3>What is the METASPACE platform?</h3>
@@ -295,6 +295,10 @@ export default class AboutPage extends Vue {
     padding: 0;
   }
 
+  #about strong {
+    @apply font-medium;
+  }
+
   #about svg .primary {
     fill: theme('colors.blue.800');
   }
@@ -333,11 +337,11 @@ export default class AboutPage extends Vue {
   }
 
   #about .sm-about-funding img {
-    @apply w-20 h-12 object-contain object-left mr-3.5 py-1;
+    @apply w-21 h-14 object-contain object-left mr-7;
   }
 
   #about .sm-about-funding b {
-    @apply font-medium;
+    @apply font-medium text-xl;
   }
 
   #about .sm-about-funding abbr[title] {
