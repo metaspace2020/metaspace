@@ -283,7 +283,7 @@ export default class AboutPage extends Vue {
 
   /* #about h2, */
   #about h3 {
-    @apply font-display font-medium leading-12 text-3xl m-0 py-1;
+    @apply font-display font-medium leading-14 text-3xl m-0;
   }
 
   #about p {
@@ -308,7 +308,7 @@ export default class AboutPage extends Vue {
   }
 
   #about .sm-about-features svg {
-    @apply block rounded-full bg-blue-100 w-12 h-12 p-2 box-border my-1;
+    @apply block rounded-full bg-blue-100 w-12 h-12 p-2 box-border mb-2;
   }
 
   #about .sm-about-details h3:not(:first-of-type) {
@@ -317,10 +317,10 @@ export default class AboutPage extends Vue {
 
   @screen md {
     #about .sm-about-features {
-      @apply -m-3.5 flex flex-wrap;
+      @apply -mx-3.5 -my-7 flex flex-wrap;
     }
     #about .sm-about-features > div {
-      @apply m-3.5;
+      @apply mx-3.5 my-7;
       width: calc(50% - theme('spacing.7'))
     }
     #about .sm-about-features p {
