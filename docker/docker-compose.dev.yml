@@ -64,6 +64,8 @@ services:
       - "${DEV_ROOT}/:/opt/dev/metaspace:z"
       - ./sm-engine/start-annotate-daemon.sh:/start-annotate-daemon.sh:ro
       - ./sm-engine/start-common.sh:/start-common.sh:ro
+    ports:
+      - "4040:4040"
     environment:
       - SM_DOCKER_ENV=development
 
@@ -85,7 +87,10 @@ services:
     environment:
       - SM_DOCKER_ENV=development
     ports:
+      - "${WWW_PORT}:8999" # main web server
       - "8082:8082"
+    expose:
+      - "${WWW_PORT}"
 
   nginx:
     ports:

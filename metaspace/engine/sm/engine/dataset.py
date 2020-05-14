@@ -2,7 +2,6 @@ import json
 import logging
 from datetime import datetime
 
-from sm.engine import molecular_db
 from sm.engine.errors import UnknownDSID
 from sm.engine.util import SMConfig
 

@@ -8,7 +8,7 @@ import * as Uppy from '@uppy/core'
 import * as AwsS3Multipart from '@uppy/aws-s3-multipart'
 import * as Dashboard from '@uppy/dashboard'
 
-import config from '../../config'
+import config from '../../lib/config'
 
 export default {
   name: 'UppyUploadPage',
