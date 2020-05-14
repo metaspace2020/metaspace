@@ -48,6 +48,7 @@ describe('ImageLoader', () => {
 
   beforeEach(() => {
     // Set HTMLElements to have non-zero dimensions
+    // @ts-ignore
     jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() =>
       ({ left: 200, right: 200 + W, top: 100, bottom: 100 + H, width: W, height: H }))
     jest.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(() => W)

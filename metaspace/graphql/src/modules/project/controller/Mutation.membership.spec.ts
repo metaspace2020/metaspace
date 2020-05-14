@@ -17,12 +17,12 @@ import {
   testEntityManager,
   testUser, userContext,
 } from '../../../tests/graphqlTestEnvironment';
-import { getContextForTest } from '../../../getContext';
-import { BackgroundData, createBackgroundData, validateBackgroundData } from '../../../tests/backgroundDataCreation';
-import { DatasetProject as DatasetProjectModel } from '../../dataset/model';
-import { In } from 'typeorm';
-import { Context } from '../../../context';
-import * as auth from '../../auth';
+import {getContextForTest} from '../../../getContext';
+import {BackgroundData, createBackgroundData, validateBackgroundData} from '../../../tests/backgroundDataCreation';
+import {DatasetProject as DatasetProjectModel} from '../../dataset/model';
+import {In} from 'typeorm';
+import {Context} from '../../../context';
+import * as authEmails from '../../auth/email';
 import * as projectEmails from '../../groupOrProject/email';
 import { createUserCredentials, verifyEmail } from '../../auth/operation';
 
@@ -148,7 +148,7 @@ describe('modules/project/controller (membership-related mutations)', () => {
     });
 
     test('Manager invites non-existent user, user creates account and accepts', async () => {
-      const invitationEmailSpy = jest.spyOn(auth, 'sendInvitationEmail');
+      const invitationEmailSpy = jest.spyOn(authEmails, 'sendInvitationEmail');
       const email = 'newuser123@example.com';
 
       await doQuery(inviteUserToProjectQuery, { projectId, email }, { context: managerContext });
