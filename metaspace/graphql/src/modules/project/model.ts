@@ -13,7 +13,7 @@ import { UserProjectRole, PublicationStatus } from '../../binding'
 import { DatasetProject } from '../dataset/model';
 import { Moment } from 'moment';
 import { MomentValueTransformer } from '../../utils/MomentValueTransformer';
-import { PublicationStatusOptions as PSO } from './PublicationStatusOptions';
+import { PublicationStatusOptions as PSO } from './Publishing';
 import { ExternalLink } from './ExternalLink';
 
 export const UserProjectRoleOptions: Record<UserProjectRole, UserProjectRole> = {

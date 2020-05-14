@@ -221,7 +221,7 @@
 
       <div
         v-else-if="canViewPublicationStatus"
-        class="mt-auto text-right text-gray-700 text-sm"
+        class="mt-auto text-right text-gray-700 text-sm test-publication-status"
       >
         {{ publicationStatus }}
       </div>

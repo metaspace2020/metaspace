@@ -247,7 +247,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
         <div>
           <div class="w-full el-input-number is-controls-right" maxlength="10"><span role="button" class="el-input-number__decrease"><i class="el-icon-arrow-down"></i></span><span role="button" class="el-input-number__increase"><i class="el-icon-arrow-up"></i></span>
             <div class="el-input">
-              <!----><input type="text" autocomplete="off" max="Infinity" min="-Infinity" class="el-input__inner" role="spinbutton" aria-valuemax="Infinity" aria-valuemin="-Infinity" aria-valuenow="296.0659" aria-disabled="undefined">
+              <!----><input type="text" autocomplete="off" max="Infinity" min="-Infinity" class="el-input__inner" role="spinbutton" aria-valuemax="Infinity" aria-valuemin="-Infinity" aria-valuenow="296.0659" aria-disabled="false">
               <!---->
               <!---->
               <!---->

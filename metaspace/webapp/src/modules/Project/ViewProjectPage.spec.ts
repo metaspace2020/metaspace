@@ -190,9 +190,9 @@ describe('ViewProjectPage', () => {
     expect(mockProjectFn.mock.calls[1][3].fieldName).toEqual('projectByUrlSlug')
   })
 
-  describe('review tab', () => {
+  describe('publishing tab', () => {
     beforeEach(() => {
-      router.replace({ query: { tab: 'review' } })
+      router.replace({ query: { tab: 'publishing' } })
       resetGenerateId()
     })
 
