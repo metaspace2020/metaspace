@@ -5,6 +5,8 @@ import AboutPage from './modules/App/AboutPage.vue'
 import DatasetsPage from './modules/Datasets/DatasetsPage.vue'
 import { DialogPage, ResetPasswordPage } from './modules/Account'
 import { redirectAfterSignIn } from './modules/Account/signInReturnUrl'
+import PrivacyPage from './modules/App/PrivacyPage'
+import TermsPage from './modules/App/TermsPage'
 
 Vue.use(VueRouter)
 
@@ -76,6 +78,9 @@ const router = new VueRouter({
       redirect: { path: '/project/:projectIdOrSlug', query: { tab: 'members' } } as RawLocation,
     },
     { path: '/projects', component: asyncPages.ProjectsListPage },
+
+    { path: '/terms', component: TermsPage },
+    { path: '/privacy', component: PrivacyPage },
   ],
 })
 

@@ -1,7 +1,7 @@
 <template>
   <div class="text-lg proportional-nums leading-7">
     <div class="bg-primary overflow-hidden w-full -mt-2 pb-7 sm-banner-gradient">
-      <div class="box-border font-display py-14 mx-auto max-w-4xl flex items-center _baseline-grid-28">
+      <div class="box-border font-display py-14 mx-auto max-w-4xl flex items-center">
         <img
           src="../../assets/METASPACE_logomark.png"
           class="hidden md:block w-77 h-77 -ml-14 p-3.5 box-border"
@@ -21,7 +21,7 @@
     </div>
     <div
       id="about"
-      class="p-14 mx-auto box-border max-w-4xl _baseline-grid-28"
+      class="p-14 mx-auto box-border max-w-4xl"
     >
       <section class="sm-about-features">
         <h2 class="sr-only">
@@ -177,11 +177,15 @@
         </p>
       </section>
     </div>
-    <footer class="bg-gray-100 border-0 border-t border-solid border-gray-400 sm-about-footer">
-      <div class="max-w-4xl mx-auto p-14 box-border text-gray-800 text-base text-center">
+    <footer class="bg-gray-100 sm-about-footer">
+      <div class="max-w-4xl mx-auto p-14 box-border text-800 text-base text-center">
         <p class="flex justify-center m-0 font-medium">
-          <a href="#">Terms of service</a>
-          <a href="#">Privacy policy</a>
+          <router-link to="/privacy">
+            Privacy
+          </router-link>
+          <router-link to="/terms">
+            Terms
+          </router-link>
           <a href="mailto:contact@metaspace2020.eu">Contact us</a>
           <a href="https://twitter.com/metaspace2020">Follow us on Twitter</a>
         </p>
@@ -220,16 +224,6 @@
               placeholder="email address"
               required
             />
-            <!-- <input
-              id="mce-EMAIL"
-              type="email"
-              value=""
-              name="EMAIL"
-              class="email"
-              placeholder="email address"
-              required
-            > -->
-
             <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
             <div
               style="position: absolute; left: -5000px;"
