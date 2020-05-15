@@ -14,10 +14,6 @@ const mockFileSaver = FileSaver as jest.Mocked<typeof FileSaver>
 
 Vue.use(Vuex)
 sync(store, router)
-// @ts-ignore
-Vue.options.router = router
-// @ts-ignore
-Vue.options.store = store
 
 const blobToText = (blob: Blob) => new Promise<string>((resolve, reject) => {
   const reader = new FileReader()
@@ -73,7 +69,7 @@ describe('DatasetTable', () => {
         }),
       }),
     })
-    const wrapper = mount(DatasetTable, { store, router, apolloProvider })
+    const wrapper = mount(DatasetTable, { parentComponent: { store, router }, apolloProvider })
     await Vue.nextTick()
 
     expect(wrapper.element).toMatchSnapshot()
@@ -102,7 +98,7 @@ describe('DatasetTable', () => {
         countDatasets: () => 4,
       }),
     })
-    const wrapper = mount(DatasetTable, { store, router, apolloProvider })
+    const wrapper = mount(DatasetTable, { parentComponent: { store, router }, apolloProvider })
     wrapper.setData({ csvChunkSize: 2 })
     await Vue.nextTick()
 

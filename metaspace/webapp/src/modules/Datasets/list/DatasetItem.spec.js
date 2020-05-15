@@ -9,8 +9,7 @@ import { mockGenerateId, resetGenerateId } from '../../../../tests/utils/mockGen
 
 Vue.use(Vuex)
 sync(store, router)
-Vue.options.router = router
-Vue.options.store = store
+
 
 describe('DatasetItem', () => {
   const user = { id: 'user' }
@@ -57,7 +56,7 @@ describe('DatasetItem', () => {
       currentUser: submitter,
       dataset,
     }
-    const wrapper = mount(DatasetItem, { router, store, propsData })
+    const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
     expect(wrapper.element).toMatchSnapshot()
   })
 
@@ -69,7 +68,7 @@ describe('DatasetItem', () => {
         projects: [unpublished]
       },
     }
-    const wrapper = mount(DatasetItem, { router, store, propsData })
+    const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
     expect(wrapper.find('.ds-delete').exists()).toBe(true)
   })
 
@@ -81,7 +80,7 @@ describe('DatasetItem', () => {
         projects: [published]
       },
     }
-    const wrapper = mount(DatasetItem, { router, store, propsData })
+    const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
     expect(wrapper.find('.test-publication-status').exists()).toBe(false)
   })
 
@@ -94,7 +93,7 @@ describe('DatasetItem', () => {
         status: 'ANNOTATING'
       }
     }
-    const wrapper = mount(DatasetItem, { router, store, propsData })
+    const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
     expect(wrapper.find('.test-publication-status').exists()).toBe(false)
   })
 
@@ -106,7 +105,7 @@ describe('DatasetItem', () => {
         projects: [underReview]
       }
     }
-    const wrapper = mount(DatasetItem, { router, store, propsData })
+    const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
     expect(wrapper.find('.test-publication-status').text()).toBe('Under review')
   })
 
@@ -118,7 +117,7 @@ describe('DatasetItem', () => {
         projects: [published]
       }
     }
-    const wrapper = mount(DatasetItem, { router, store, propsData })
+    const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
     expect(wrapper.find('.test-publication-status').text()).toBe('Published')
   })
 
@@ -130,7 +129,7 @@ describe('DatasetItem', () => {
         projects: [published, underReview]
       }
     }
-    const wrapper = mount(DatasetItem, { router, store, propsData })
+    const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
     expect(wrapper.find('.test-publication-status').text()).toBe('Published')
   })
 
@@ -142,7 +141,7 @@ describe('DatasetItem', () => {
         projects: [published]
       }
     }
-    const wrapper = mount(DatasetItem, { router, store, propsData })
+    const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
     expect(wrapper.find('.ds-delete').exists()).toBe(true)
     expect(wrapper.find('.ds-reprocess').exists()).toBe(true)
   })
