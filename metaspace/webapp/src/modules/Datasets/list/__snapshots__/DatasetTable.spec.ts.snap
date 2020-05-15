@@ -243,21 +243,6 @@ exports[`DatasetTable should match snapshot 1`] = `
     <div
       class="dataset-item border border-solid border-gray-200 leading-5"
     >
-      <mock-el-dialog
-        title="Provided metadata"
-      >
-        <div
-          class="el-row"
-        >
-          <mock-el-tree
-            data="[object Object],[object Object]"
-            default-expanded-keys="MS analysis,Detector resolving power,Data Management"
-            id="metadata-tree"
-            node-key="id"
-          />
-        </div>
-      </mock-el-dialog>
-       
       <div
         class="opt-image--container"
       >
@@ -294,34 +279,33 @@ exports[`DatasetTable should match snapshot 1`] = `
           >
             allDatasets.1.name
           </span>
-           
-          <mock-el-popover
+          <span
             class="ml-1"
-            placement="top"
-            trigger="hover"
           >
-            <div
-              slot-key="default"
+            <transition-stub
+              name="fade-in-linear"
             >
               <div
-                mock-v-loading="true"
+                aria-hidden="true"
+                class="el-popover el-popper"
+                id="el-popover-123"
+                role="tooltip"
+                style="display: none;"
+                tabindex="0"
               >
-                
-          
-        
+                <!---->
+                <div
+                  mock-v-loading="true"
+                />
               </div>
-               
-            </div>
-            <div
-              slot-key="reference"
-            >
-              <i
-                class="el-icon-lock"
-              />
-            </div>
-          </mock-el-popover>
+            </transition-stub>
+            <i
+              aria-describedby="el-popover-123"
+              class="el-icon-lock el-popover__reference"
+              tabindex="0"
+            />
+          </span>
         </div>
-         
         <div
           class="ds-item-line text-gray-700"
         >
@@ -329,28 +313,23 @@ exports[`DatasetTable should match snapshot 1`] = `
             class="ds-add-filter"
             title="Filter by species"
           >
-            
-        allDatasets.1.organism
+            allDatasets.1.organism
           </span>
-          ,
-      
+          , 
           <span
             class="ds-add-filter"
             title="Filter by organism part"
           >
-            
-        alldatasets.1.organismpart
+            alldatasets.1.organismpart
           </span>
            
           <span
             class="ds-add-filter"
             title="Filter by condition"
           >
-            
-        (alldatasets.1.condition)
+            (alldatasets.1.condition)
           </span>
         </div>
-         
         <div
           class="ds-item-line"
         >
@@ -358,52 +337,40 @@ exports[`DatasetTable should match snapshot 1`] = `
             class="ds-add-filter"
             title="Filter by ionisation source"
           >
-            
-        allDatasets.1.ionisationSource
+            allDatasets.1.ionisationSource
           </span>
-           +
-      
+           + 
           <span
             class="ds-add-filter"
             title="Filter by analyzer type"
           >
-            
-        allDatasets.1.analyzer.type
+            allDatasets.1.analyzer.type
           </span>
-          ,
-      
+          , 
           <span
             class="ds-add-filter"
             title="Filter by polarity"
           >
-            
-        positive mode
+            positive mode
           </span>
-          ,
-      RP 123k @ 1234
-    
+          , RP 123k @ 1234
         </div>
-         
         <div
           class="ds-item-line"
         >
-          
-      Submitted 
+          Submitted 
           <mock-elapsed-time
             date="allDatasets.1.uploadDT"
           />
-           by
-      
+           by 
           <span
             class="ds-add-filter"
             title="Filter by submitter"
           >
-            
-        allDatasets.1.submitter.name
+            allDatasets.1.submitter.name
           </span>
           <span>
-            ,
-        
+            , 
             <mock-el-dropdown
               placement="bottom"
               show-timeout="50"
@@ -415,11 +382,8 @@ exports[`DatasetTable should match snapshot 1`] = `
                 <span
                   class="text-base text-primary cursor-pointer"
                 >
-                  
-            allDatasets.1.group.shortName
-          
+                  allDatasets.1.group.shortName
                 </span>
-                 
               </div>
               <div
                 slot-key="dropdown"
@@ -430,7 +394,6 @@ exports[`DatasetTable should match snapshot 1`] = `
                   >
                     Filter by this group
                   </mock-el-dropdown-item>
-                   
                   <mock-el-dropdown-item
                     command="view_group"
                   >
@@ -441,77 +404,58 @@ exports[`DatasetTable should match snapshot 1`] = `
             </mock-el-dropdown>
           </span>
         </div>
-         
-        <!---->
       </div>
        
       <div
         class="ds-actions"
       >
-        <!---->
-         
-        <!---->
-         
+        <mock-el-dialog
+          title="Provided metadata"
+        >
+          <div
+            class="el-row"
+          >
+            <mock-el-tree
+              data="[object Object],[object Object]"
+              default-expanded-keys="MS analysis,Detector resolving power,Data Management"
+              id="metadata-tree"
+              node-key="id"
+            />
+          </div>
+        </mock-el-dialog>
         <span>
           <div
             class="striped-progressbar queued"
             title="Waiting in the queue"
           />
         </span>
-         
         <div>
           <i
             class="el-icon-view"
           />
-           
           <a
             href="#"
           >
             Show full metadata
           </a>
         </div>
-         
-        <!---->
-         
         <div
           class="ds-download"
         >
           <i
             class="el-icon-download"
           />
-           
           <a
             href="#"
           >
             Download
           </a>
         </div>
-         
-        <!---->
-         
-        <!---->
       </div>
-       
-      <!---->
     </div>
     <div
       class="dataset-item border border-solid border-gray-200 leading-5"
     >
-      <mock-el-dialog
-        title="Provided metadata"
-      >
-        <div
-          class="el-row"
-        >
-          <mock-el-tree
-            data="[object Object],[object Object]"
-            default-expanded-keys="MS analysis,Detector resolving power,Data Management"
-            id="metadata-tree"
-            node-key="id"
-          />
-        </div>
-      </mock-el-dialog>
-       
       <div
         class="opt-image--container"
       >
@@ -548,10 +492,7 @@ exports[`DatasetTable should match snapshot 1`] = `
           >
             allDatasets.0.name
           </span>
-           
-          <!---->
         </div>
-         
         <div
           class="ds-item-line text-gray-700"
         >
@@ -559,28 +500,23 @@ exports[`DatasetTable should match snapshot 1`] = `
             class="ds-add-filter"
             title="Filter by species"
           >
-            
-        allDatasets.0.organism
+            allDatasets.0.organism
           </span>
-          ,
-      
+          , 
           <span
             class="ds-add-filter"
             title="Filter by organism part"
           >
-            
-        alldatasets.0.organismpart
+            alldatasets.0.organismpart
           </span>
            
           <span
             class="ds-add-filter"
             title="Filter by condition"
           >
-            
-        (alldatasets.0.condition)
+            (alldatasets.0.condition)
           </span>
         </div>
-         
         <div
           class="ds-item-line"
         >
@@ -588,52 +524,40 @@ exports[`DatasetTable should match snapshot 1`] = `
             class="ds-add-filter"
             title="Filter by ionisation source"
           >
-            
-        allDatasets.0.ionisationSource
+            allDatasets.0.ionisationSource
           </span>
-           +
-      
+           + 
           <span
             class="ds-add-filter"
             title="Filter by analyzer type"
           >
-            
-        allDatasets.0.analyzer.type
+            allDatasets.0.analyzer.type
           </span>
-          ,
-      
+          , 
           <span
             class="ds-add-filter"
             title="Filter by polarity"
           >
-            
-        positive mode
+            positive mode
           </span>
-          ,
-      RP 123k @ 1234
-    
+          , RP 123k @ 1234
         </div>
-         
         <div
           class="ds-item-line"
         >
-          
-      Submitted 
+          Submitted 
           <mock-elapsed-time
             date="allDatasets.0.uploadDT"
           />
-           by
-      
+           by 
           <span
             class="ds-add-filter"
             title="Filter by submitter"
           >
-            
-        allDatasets.0.submitter.name
+            allDatasets.0.submitter.name
           </span>
           <span>
-            ,
-        
+            , 
             <mock-el-dropdown
               placement="bottom"
               show-timeout="50"
@@ -645,11 +569,8 @@ exports[`DatasetTable should match snapshot 1`] = `
                 <span
                   class="text-base text-primary cursor-pointer"
                 >
-                  
-            allDatasets.0.group.shortName
-          
+                  allDatasets.0.group.shortName
                 </span>
-                 
               </div>
               <div
                 slot-key="dropdown"
@@ -660,7 +581,6 @@ exports[`DatasetTable should match snapshot 1`] = `
                   >
                     Filter by this group
                   </mock-el-dropdown-item>
-                   
                   <mock-el-dropdown-item
                     command="view_group"
                   >
@@ -671,65 +591,46 @@ exports[`DatasetTable should match snapshot 1`] = `
             </mock-el-dropdown>
           </span>
         </div>
-         
-        <!---->
       </div>
        
       <div
         class="ds-actions"
       >
-        <!---->
-         
+        <mock-el-dialog
+          title="Provided metadata"
+        >
+          <div
+            class="el-row"
+          >
+            <mock-el-tree
+              data="[object Object],[object Object]"
+              default-expanded-keys="MS analysis,Detector resolving power,Data Management"
+              id="metadata-tree"
+              node-key="id"
+            />
+          </div>
+        </mock-el-dialog>
         <span>
           <div
             class="striped-progressbar processing"
             title="Processing is under way"
           />
         </span>
-         
-        <!---->
-         
         <div>
           <i
             class="el-icon-view"
           />
-           
           <a
             href="#"
           >
             Show full metadata
           </a>
         </div>
-         
-        <!---->
-         
-        <!---->
-         
-        <!---->
-         
-        <!---->
       </div>
-       
-      <!---->
     </div>
     <div
       class="dataset-item border border-solid border-gray-200 leading-5"
     >
-      <mock-el-dialog
-        title="Provided metadata"
-      >
-        <div
-          class="el-row"
-        >
-          <mock-el-tree
-            data="[object Object],[object Object]"
-            default-expanded-keys="MS analysis,Detector resolving power,Data Management"
-            id="metadata-tree"
-            node-key="id"
-          />
-        </div>
-      </mock-el-dialog>
-       
       <div
         class="opt-image--container"
       >
@@ -766,10 +667,7 @@ exports[`DatasetTable should match snapshot 1`] = `
           >
             allDatasets.2.name
           </span>
-           
-          <!---->
         </div>
-         
         <div
           class="ds-item-line text-gray-700"
         >
@@ -777,28 +675,23 @@ exports[`DatasetTable should match snapshot 1`] = `
             class="ds-add-filter"
             title="Filter by species"
           >
-            
-        allDatasets.2.organism
+            allDatasets.2.organism
           </span>
-          ,
-      
+          , 
           <span
             class="ds-add-filter"
             title="Filter by organism part"
           >
-            
-        alldatasets.2.organismpart
+            alldatasets.2.organismpart
           </span>
            
           <span
             class="ds-add-filter"
             title="Filter by condition"
           >
-            
-        (alldatasets.2.condition)
+            (alldatasets.2.condition)
           </span>
         </div>
-         
         <div
           class="ds-item-line"
         >
@@ -806,52 +699,40 @@ exports[`DatasetTable should match snapshot 1`] = `
             class="ds-add-filter"
             title="Filter by ionisation source"
           >
-            
-        allDatasets.2.ionisationSource
+            allDatasets.2.ionisationSource
           </span>
-           +
-      
+           + 
           <span
             class="ds-add-filter"
             title="Filter by analyzer type"
           >
-            
-        allDatasets.2.analyzer.type
+            allDatasets.2.analyzer.type
           </span>
-          ,
-      
+          , 
           <span
             class="ds-add-filter"
             title="Filter by polarity"
           >
-            
-        positive mode
+            positive mode
           </span>
-          ,
-      RP 123k @ 1234
-    
+          , RP 123k @ 1234
         </div>
-         
         <div
           class="ds-item-line"
         >
-          
-      Submitted 
+          Submitted 
           <mock-elapsed-time
             date="allDatasets.2.uploadDT"
           />
-           by
-      
+           by 
           <span
             class="ds-add-filter"
             title="Filter by submitter"
           >
-            
-        allDatasets.2.submitter.name
+            allDatasets.2.submitter.name
           </span>
           <span>
-            ,
-        
+            , 
             <mock-el-dropdown
               placement="bottom"
               show-timeout="50"
@@ -863,11 +744,8 @@ exports[`DatasetTable should match snapshot 1`] = `
                 <span
                   class="text-base text-primary cursor-pointer"
                 >
-                  
-            allDatasets.2.group.shortName
-          
+                  allDatasets.2.group.shortName
                 </span>
-                 
               </div>
               <div
                 slot-key="dropdown"
@@ -878,7 +756,6 @@ exports[`DatasetTable should match snapshot 1`] = `
                   >
                     Filter by this group
                   </mock-el-dropdown-item>
-                   
                   <mock-el-dropdown-item
                     command="view_group"
                   >
@@ -889,20 +766,17 @@ exports[`DatasetTable should match snapshot 1`] = `
             </mock-el-dropdown>
           </span>
         </div>
-         
         <div
           class="ds-item-line"
         >
           <span>
             <a
               class=""
-              href="/annotations?db=HMDB-v2.5&ds=FINISHED1&mdtype=allDatasets.2.metadataType"
+              href="/annotations?db=HMDB-v2.5&ds=FINISHED1"
             >
               20 annotations
             </a>
-            
-        @ FDR 10% (HMDB-v2.5)
-      
+             @ FDR 10% (HMDB-v2.5)
           </span>
         </div>
       </div>
@@ -910,11 +784,24 @@ exports[`DatasetTable should match snapshot 1`] = `
       <div
         class="ds-actions"
       >
+        <mock-el-dialog
+          title="Provided metadata"
+        >
+          <div
+            class="el-row"
+          >
+            <mock-el-tree
+              data="[object Object],[object Object]"
+              default-expanded-keys="MS analysis,Detector resolving power,Data Management"
+              id="metadata-tree"
+              node-key="id"
+            />
+          </div>
+        </mock-el-dialog>
         <span>
           <i
             class="el-icon-picture"
           />
-           
           <mock-el-popover
             placement="top"
             trigger="hover"
@@ -925,41 +812,32 @@ exports[`DatasetTable should match snapshot 1`] = `
               <div
                 class="db-link-list"
               >
-                
-          Select a database:
-          
+                Select a database:
                 <div>
                   <a
                     class=""
-                    href="/annotations?db=HMDB-v2.5&ds=FINISHED1&mdtype=allDatasets.2.metadataType"
+                    href="/annotations?db=HMDB-v2.5&ds=FINISHED1"
                   >
-                    
-              HMDB-v2.5
-            
+                    HMDB-v2.5
                   </a>
                 </div>
                 <div>
                   <a
                     class=""
-                    href="/annotations?db=HMDB-v4&ds=FINISHED1&mdtype=allDatasets.2.metadataType"
+                    href="/annotations?db=HMDB-v4&ds=FINISHED1"
                   >
-                    
-              HMDB-v4
-            
+                    HMDB-v4
                   </a>
                 </div>
                 <div>
                   <a
                     class=""
-                    href="/annotations?db=CHEBI&ds=FINISHED1&mdtype=allDatasets.2.metadataType"
+                    href="/annotations?db=CHEBI&ds=FINISHED1"
                   >
-                    
-              CHEBI
-            
+                    CHEBI
                   </a>
                 </div>
               </div>
-               
             </div>
             <div
               slot-key="reference"
@@ -969,36 +847,19 @@ exports[`DatasetTable should match snapshot 1`] = `
               </a>
             </div>
           </mock-el-popover>
-           
           <br />
         </span>
-         
-        <!---->
-         
-        <!---->
-         
         <div>
           <i
             class="el-icon-view"
           />
-           
           <a
             href="#"
           >
             Show full metadata
           </a>
         </div>
-         
-        <!---->
-         
-        <!---->
-         
-        <!---->
-         
-        <!---->
       </div>
-       
-      <!---->
     </div>
      
     <!---->

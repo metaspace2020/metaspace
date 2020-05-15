@@ -44,20 +44,23 @@ exports[`DatasetItem should match snapshot 1`] = `
       <span
         class="ml-1"
       >
-        <div
-          aria-hidden="true"
-          class="el-popover el-popper"
-          id="el-popover-123"
+        <transition-stub
           name="fade-in-linear"
-          role="tooltip"
-          style="display: none;"
-          tabindex="0"
         >
-          <!---->
           <div
-            mock-v-loading="true"
-          />
-        </div>
+            aria-hidden="true"
+            class="el-popover el-popper"
+            id="el-popover-123"
+            role="tooltip"
+            style="display: none;"
+            tabindex="0"
+          >
+            <!---->
+            <div
+              mock-v-loading="true"
+            />
+          </div>
+        </transition-stub>
         <i
           aria-describedby="el-popover-123"
           class="el-icon-lock el-popover__reference"

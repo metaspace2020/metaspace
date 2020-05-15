@@ -1,4 +1,4 @@
-import { mount, config as testConfig } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
 import DatasetTable from './DatasetTable.vue'
 import router from '../../../router'
 import { initMockGraphqlClient, apolloProvider } from '../../../../tests/utils/mockGraphqlClient'
@@ -8,11 +8,16 @@ import Vuex from 'vuex'
 import { sync } from 'vuex-router-sync'
 import * as FileSaver from 'file-saver'
 import { merge } from 'lodash-es'
+import { mockGenerateId, resetGenerateId } from '../../../../tests/utils/mockGenerateId'
 jest.mock('file-saver')
 const mockFileSaver = FileSaver as jest.Mocked<typeof FileSaver>
 
 Vue.use(Vuex)
 sync(store, router)
+// @ts-ignore
+Vue.options.router = router
+// @ts-ignore
+Vue.options.store = store
 
 const blobToText = (blob: Blob) => new Promise<string>((resolve, reject) => {
   const reader = new FileReader()
@@ -45,9 +50,11 @@ describe('DatasetTable', () => {
 
   afterEach(() => {
     jest.useRealTimers()
+    resetGenerateId()
   })
 
   it('should match snapshot', async() => {
+    mockGenerateId(123)
     initMockGraphqlClient({
       Query: () => ({
         allDatasets: () => {
