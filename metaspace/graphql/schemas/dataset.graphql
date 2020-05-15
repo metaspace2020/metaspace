@@ -24,7 +24,7 @@ type Dataset {
   # https://github.com/metaspace2020/metaspace/tree/master/metaspace/metadata
   metadataJson: String!
   isPublic: Boolean!
-  molDBs: [String!]!  # TODO: replace with databaseIds
+  molDBs: [String!]!
   adducts: [String!]!
   neutralLosses: [String!]!
   chemMods: [String!]!
@@ -163,7 +163,7 @@ input DatasetCreateInput {
   inputPath: String!
   uploadDT: String
   metadataJson: String!
-  molDBs: [String!]!  # TODO: replace with databaseIds
+  molDBs: [String!]!
   adducts: [String!]!
   neutralLosses: [String!]
   chemMods: [String!]
@@ -184,7 +184,7 @@ input DatasetUpdateInput {
   name: String
   uploadDT: String
   metadataJson: String
-  molDBs: [String!]  # TODO: replace with databaseIds
+  molDBs: [String!]
   adducts: [String!]
   neutralLosses: [String!]
   chemMods: [String!]

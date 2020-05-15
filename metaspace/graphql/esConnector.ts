@@ -62,6 +62,8 @@ export interface Isobar {
 
 export interface ESAnnotationSource extends ESDatasetSource {
   job_id: number;
+
+  db_id: string;
   db_name: string;
   db_version: any;
 
@@ -248,7 +250,7 @@ function constructAnnotationFilters(filter: AnnotationFilter & ExtraAnnotationFi
   if (annId)
     filters.push({term: { _id: annId }});
   if (database)
-    filters.push({term: {db_name: database}});
+    filters.push({term: {db_id: database}});
   if (sumFormula)
     filters.push({term: {formula: sumFormula}});
   if (chemMod != null)

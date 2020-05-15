@@ -80,7 +80,7 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
 
   ionFormula: (hit) => hit._source.ion_formula || '', // TODO: Remove " || ''" after prod has been migrated
 
-  database: (hit) => hit._source.db_name,
+  database: (hit) => hit._source.db_id,
 
   mz: (hit) => parseFloat(hit._source.centroid_mzs[0] as any),
 

@@ -287,8 +287,8 @@ def retry_on_conflict(num_retries=3):
 class ESExporter:
     def __init__(self, db, sm_config=None):
         self.sm_config = sm_config or SMConfig.get_conf()
-        self._es = init_es_conn(self.sm_config['elasticsearch'])
-        self._ingest = IngestClient(self._es)
+        self._es: Elasticsearch = init_es_conn(self.sm_config['elasticsearch'])
+        self._ingest: IngestClient = IngestClient(self._es)
         self._db = db
         self._ds_locker = DatasetLocker(self.sm_config['db'])
         self.index = self.sm_config['elasticsearch']['index']
@@ -297,7 +297,7 @@ class ESExporter:
     def _remove_mol_db_from_dataset(self, ds_id, moldb):
         ds_doc = self._es.get_source(self.index, id=ds_id, doc_type='dataset')
         ds_doc['annotation_counts'] = [
-            entry for entry in ds_doc.get('annotation_counts', []) if entry['id'] != moldb.id
+            entry for entry in ds_doc.get('annotation_counts', []) if entry['db']['id'] != moldb.id
         ]
         self._es.update(self.index, id=ds_id, body={'doc': ds_doc}, doc_type='dataset')
         return ds_doc
