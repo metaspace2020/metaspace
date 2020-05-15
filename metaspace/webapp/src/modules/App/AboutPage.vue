@@ -177,9 +177,15 @@
         </p>
       </section>
     </div>
-    <footer class="bg-gray-100 border-0 border-t border-solid border-gray-400">
-      <div class="max-w-4xl mx-auto p-12 box-border">
-        <p class="text-sm">
+    <footer class="bg-gray-100 border-0 border-t border-solid border-gray-400 sm-about-footer">
+      <div class="max-w-4xl mx-auto p-14 box-border text-gray-800 text-base text-center">
+        <p class="flex justify-center m-0 font-medium">
+          <a href="#">Terms of service</a>
+          <a href="#">Privacy policy</a>
+          <a href="mailto:contact@metaspace2020.eu">Contact us</a>
+          <a href="https://twitter.com/metaspace2020">Follow us on Twitter</a>
+        </p>
+        <p class="m-0 mt-7">
           &copy; 2020 Alexandrov Team
         </p>
       </div>
@@ -195,41 +201,56 @@
           action="https://metaspace2020.us18.list-manage.com/subscribe/post?u=bdddf29f72b79bb8498418e35&amp;id=ef39f45bf3"
           method="post"
           name="mc-embedded-subscribe-form"
-          class="validate"
+          class="validate leading-6 mt-6"
           target="_blank"
           novalidate
           @submit="onSubmitMailingList"
         >
-          <label for="mce-EMAIL">Subscribe to the METASPACE mailing list</label>
-          <input
-            id="mce-EMAIL"
-            type="email"
-            value=""
-            name="EMAIL"
-            class="email"
-            placeholder="email address"
-            required
-          >
-          <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
-          <div
-            style="position: absolute; left: -5000px;"
-            aria-hidden="true"
-          >
-            <input
-              type="text"
-              name="b_bdddf29f72b79bb8498418e35_ef39f45bf3"
-              tabindex="-1"
+          <div class="max-w-md">
+            <label
+              for="mce-EMAIL"
+              class="text-base font-medium"
+            >Subscribe to the METASPACE mailing list</label>
+            <el-input
+              id="mce-EMAIL"
+              type="email"
               value=""
+              name="EMAIL"
+              class="email py-1"
+              placeholder="email address"
+              required
+            />
+            <!-- <input
+              id="mce-EMAIL"
+              type="email"
+              value=""
+              name="EMAIL"
+              class="email"
+              placeholder="email address"
+              required
+            > -->
+
+            <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+            <div
+              style="position: absolute; left: -5000px;"
+              aria-hidden="true"
             >
-          </div>
-          <div class="clear">
-            <input
-              id="mc-embedded-subscribe"
-              type="submit"
-              value="Subscribe"
-              name="subscribe"
-              class="button"
-            >
+              <input
+                type="text"
+                name="b_bdddf29f72b79bb8498418e35_ef39f45bf3"
+                tabindex="-1"
+                value=""
+              >
+            </div>
+            <div class="clear mt-3">
+              <input
+                id="mc-embedded-subscribe"
+                type="submit"
+                value="Subscribe"
+                name="subscribe"
+                class="button el-button el-button--primary"
+              >
+            </div>
           </div>
         </form>
       </div>
@@ -350,6 +371,11 @@ export default class AboutPage extends Vue {
     border-bottom: 1px dashed currentColor;
   }
 
+  #about + footer a {
+    @apply mx-7;
+    color: inherit;
+  }
+
   .mailing-list-dialog .el-dialog__body {
     padding-top: 0;
   }
@@ -357,11 +383,9 @@ export default class AboutPage extends Vue {
   #mc_embed_signup {
     background:#fff;
     clear:left;
-    font:14px Helvetica,Arial,sans-serif;
     width:100%;
 
     form {text-align:center; padding:10px 0 10px 0;}
-    input.email {font-family:"Open Sans","Helvetica Neue",Arial,Helvetica,Verdana,sans-serif; font-size: 15px; border: 1px solid #ABB0B2;  -webkit-border-radius: 3px; -moz-border-radius: 3px; border-radius: 3px; color: #343434; background-color: #fff; box-sizing:border-box; height:32px; padding: 0px 0.4em; display: inline-block; margin: 0; width:350px; vertical-align:top;}
     label {display:block; font-size:16px; padding-bottom:10px; font-weight:bold;}
     .clear {display: inline-block;} /* positions button horizontally in line with input */
     .button {font-size: 13px; border: none; -webkit-border-radius: 3px; -moz-border-radius: 3px; border-radius: 3px; letter-spacing: .03em; color: #fff; background-color: #aaa; box-sizing:border-box; height:32px; line-height:32px; padding:0 18px; display: inline-block; margin: 0; transition: all 0.23s ease-in-out 0s;}
@@ -369,7 +393,6 @@ export default class AboutPage extends Vue {
     div.response {margin:1em 0; padding:1em .5em .5em 0; font-weight:bold; float:left; top:-1.5em; z-index:1; width:80%;}
     label.error {display:block; float:none; width:auto; margin-left:1.05em; text-align:left; padding:.5em 0;}
     @media (max-width: 768px) {
-      input.email {width:100%; margin-bottom:5px;}
       .clear {display: block; width: 100% }
       .button {width: 100%; margin:0; }
     }
