@@ -18,8 +18,8 @@ export function validatePublishingRules(ctx: Context, project: ProjectSource, pr
 
   if ('urlSlug' in projectDetails) {
     if (project.publicationStatus === PSO.UNDER_REVIEW
-      && project.urlSlug !== null
-      && projectDetails.urlSlug === null) {
+      && project.urlSlug != null
+      && projectDetails.urlSlug == null) {
       throw new FormValidationErrors(
         'urlSlug',
         `Cannot remove short link as the project is under review`
