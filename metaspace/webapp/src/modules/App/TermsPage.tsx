@@ -1,11 +1,13 @@
+import './legal.css'
+
 import { createComponent } from '@vue/composition-api'
 
 export default createComponent({
   setup() {
     return () => (
-      <div class="leading-7">
+      <div class="sm-legal-page">
         <h1>Terms of Service of METASPACE</h1>
-        <h2>METASPACE</h2>
+        <h2>Service definition</h2>
         <ul>
           <li>
             <p>
@@ -48,7 +50,7 @@ export default createComponent({
             </p>
           </li>
         </ul>
-        <h2>Ownership</h2>
+        <h2>Data Ownership</h2>
         <ul>
           <li>
             <p>
