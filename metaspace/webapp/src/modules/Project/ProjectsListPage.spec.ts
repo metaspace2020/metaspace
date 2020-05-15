@@ -80,7 +80,9 @@ describe('ProjectsListPage', () => {
     await Vue.nextTick()
 
     expect(wrapper).toMatchSnapshot()
-    const projectIds = wrapper.findAllComponents({ name: 'ProjectsListItem' }).wrappers.map(item => item.props().project.id)
+    const projectIds = wrapper.findAllComponents({ name: 'ProjectsListItem' })
+      .wrappers
+      .map(item => item.props().project.id)
     expect(projectIds).toEqual(['project 1', 'project 2'])
   })
 
@@ -96,7 +98,9 @@ describe('ProjectsListPage', () => {
     store.commit('updateFilter', { simpleFilter: 'my-projects' })
     await Vue.nextTick()
 
-    const projectIds = wrapper.findAllComponents({ name: 'ProjectsListItem' }).wrappers.map(item => item.props().project.id)
+    const projectIds = wrapper.findAllComponents({ name: 'ProjectsListItem' })
+      .wrappers
+      .map(item => item.props().project.id)
     expect(projectIds).toEqual(['project 3', 'project 1'])
   })
 
@@ -114,7 +118,9 @@ describe('ProjectsListPage', () => {
     store.commit('updateFilter', { simpleFilter: 'my-projects', simpleQuery: 'ww' })
     await Vue.nextTick()
 
-    const projectIds = wrapper.findAllComponents({ name: 'ProjectsListItem' }).wrappers.map(item => item.props().project.id)
+    const projectIds = wrapper.findAllComponents({ name: 'ProjectsListItem' })
+      .wrappers
+      .map(item => item.props().project.id)
     expect(projectIds).toEqual(['ID W'])
   })
 
