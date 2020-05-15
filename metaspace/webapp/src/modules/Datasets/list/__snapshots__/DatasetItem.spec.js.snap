@@ -55,37 +55,31 @@ exports[`DatasetItem should match snapshot 1`] = `
     >
       <span
         class="font-bold truncate"
-      >
-        
-      </span>
-       
-      <mock-el-popover
+      />
+      <span
         class="ml-1"
-        placement="top"
-        trigger="hover"
       >
         <div
-          slot-key="default"
+          aria-hidden="true"
+          class="el-popover el-popper"
+          id="el-popover-4000"
+          name="fade-in-linear"
+          role="tooltip"
+          style="display: none;"
+          tabindex="0"
         >
+          <!---->
           <div
             mock-v-loading="true"
-          >
-            
-          
-        
-          </div>
-           
-        </div>
-        <div
-          slot-key="reference"
-        >
-          <i
-            class="el-icon-lock"
           />
         </div>
-      </mock-el-popover>
+        <i
+          aria-describedby="el-popover-4000"
+          class="el-icon-lock el-popover__reference"
+          tabindex="0"
+        />
+      </span>
     </div>
-     
     <div
       class="ds-item-line text-gray-700"
     >
@@ -93,16 +87,13 @@ exports[`DatasetItem should match snapshot 1`] = `
         class="ds-add-filter"
         title="Filter by species"
       >
-        
         organism
       </span>
-      ,
-      
+      , 
       <span
         class="ds-add-filter"
         title="Filter by organism part"
       >
-        
         organismpart
       </span>
        
@@ -110,64 +101,45 @@ exports[`DatasetItem should match snapshot 1`] = `
         class="ds-add-filter"
         title="Filter by condition"
       >
-        
         (condition)
       </span>
     </div>
-     
     <div
       class="ds-item-line"
     >
       <span
         class="ds-add-filter"
         title="Filter by ionisation source"
-      >
-        
-        
-      </span>
-       +
-      
+      />
+       + 
       <span
         class="ds-add-filter"
         title="Filter by analyzer type"
       >
-        
         type
       </span>
-      ,
-      
+      , 
       <span
         class="ds-add-filter"
         title="Filter by polarity"
       >
-        
         positive mode
       </span>
-      ,
-      RP 123k @ 1234
-    
+      , RP 123k @ 1234
     </div>
-     
     <div
       class="ds-item-line"
     >
-      
       Submitted 
       <mock-elapsed-time
         date="2020-04-17T11:37:50.318667"
       />
-       by
-      
+       by 
       <span
         class="ds-add-filter"
         title="Filter by submitter"
-      >
-        
-        
-      </span>
-      <!---->
+      />
     </div>
-     
     <div
       class="ds-item-line"
     >
@@ -178,9 +150,7 @@ exports[`DatasetItem should match snapshot 1`] = `
         >
           20 annotations
         </a>
-        
-        @ FDR 10% (HMDB-v2.5)
-      
+         @ FDR 10% (HMDB-v2.5)
       </span>
     </div>
   </div>

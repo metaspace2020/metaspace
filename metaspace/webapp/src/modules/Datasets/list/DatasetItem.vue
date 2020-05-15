@@ -25,112 +25,11 @@
       />
     </div>
 
-    <div class="ds-info">
-      <div class="ds-item-line flex">
-        <!-- title is set to make it easier to see overflowing datasets' names by hovering over the name -->
-        <span
-          :title="formatDatasetName"
-          class="font-bold truncate"
-        >{{ formatDatasetName }}</span>
-        <el-popover
-          v-if="!dataset.isPublic"
-          class="ml-1"
-          trigger="hover"
-          placement="top"
-          @show="loadVisibility"
-        >
-          <div v-loading="visibilityText == null">
-            {{ visibilityText }}
-          </div>
-          <i
-            slot="reference"
-            class="el-icon-lock"
-          />
-        </el-popover>
-      </div>
-
-      <div class="ds-item-line text-gray-700">
-        <span
-          class="ds-add-filter"
-          title="Filter by species"
-          @click="addFilter('organism')"
-        >
-          {{ formatOrganism }}</span>,
-        <span
-          class="ds-add-filter"
-          title="Filter by organism part"
-          @click="addFilter('organismPart')"
-        >
-          {{ formatOrganismPart }}</span>
-
-        <span
-          class="ds-add-filter"
-          title="Filter by condition"
-          @click="addFilter('condition')"
-        >
-          ({{ formatCondition }})</span>
-      </div>
-      <div class="ds-item-line">
-        <span
-          class="ds-add-filter"
-          title="Filter by ionisation source"
-          @click="addFilter('ionisationSource')"
-        >
-          {{ dataset.ionisationSource }}</span> +
-        <span
-          class="ds-add-filter"
-          title="Filter by analyzer type"
-          @click="addFilter('analyzerType')"
-        >
-          {{ dataset.analyzer.type }}</span>,
-        <span
-          class="ds-add-filter"
-          title="Filter by polarity"
-          @click="addFilter('polarity')"
-        >
-          {{ dataset.polarity.toLowerCase() }} mode</span>,
-        RP {{ formatResolvingPower }}
-      </div>
-
-      <div class="ds-item-line">
-        Submitted <elapsed-time :date="dataset.uploadDT" /> by
-        <span
-          class="ds-add-filter"
-          title="Filter by submitter"
-          @click="addFilter('submitter')"
-        >
-          {{ formatSubmitter }}</span><!--
-          Be careful not to add empty space before the comma
-          --><span v-if="dataset.groupApproved && dataset.group">,
-          <el-dropdown
-            :show-timeout="50"
-            placement="bottom"
-            :trigger="hideGroupMenu ? 'never' : 'hover'"
-            @command="handleDropdownCommand"
-          >
-            <span
-              class="text-base text-primary cursor-pointer"
-              @click="addFilter('group')"
-            >
-              {{ dataset.group.shortName }}
-            </span>
-            <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item command="filter_group">Filter by this group</el-dropdown-item>
-              <el-dropdown-item command="view_group">View group</el-dropdown-item>
-            </el-dropdown-menu>
-          </el-dropdown>
-        </span>
-      </div>
-      <div
-        v-if="dataset.status == 'FINISHED' && dataset.fdrCounts"
-        class="ds-item-line"
-      >
-        <span>
-          <router-link :to="resultsHref(formatDbName())">{{ formatFdrCounts() | plural('annotation', 'annotations') }}</router-link>
-          @ FDR {{ formatFdrLevel() }}% ({{ formatDbName() }})
-        </span>
-      </div>
-    </div>
+    <DatasetItemMetadata
+      :dataset="dataset"
+      :metadata="metadata"
+      :hide-group-menu="hideGroupMenu"
+    />
 
     <div class="ds-actions">
       <span v-if="dataset.status == 'FINISHED'">
@@ -145,9 +44,9 @@
               v-for="database in metaboliteDatabases"
               :key="database"
             >
-              <router-link :to="resultsHref(database)">
+              <FilterLink :filter="{database, datasetIds: [dataset.id]}">
                 {{ database }}
-              </router-link>
+              </FilterLink>
             </div>
           </div>
           <a slot="reference">Browse annotations</a>
@@ -238,31 +137,28 @@
 <script>
 import DatasetInfo from '../../../components/DatasetInfo.vue'
 import DatasetThumbnail from './DatasetThumbnail.vue'
-import { capitalize } from 'lodash-es'
+import { get } from 'lodash-es'
 import {
-  datasetVisibilityQuery,
   deleteDatasetQuery,
   reprocessDatasetQuery,
 } from '../../../api/dataset'
 import { mdTypeSupportsOpticalImages } from '../../../lib/util'
-import { encodeParams } from '../../Filters/index'
 import reportError from '../../../lib/reportError'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import { plural } from '../../../lib/vueFilters'
-import ElapsedTime from '../../../components/ElapsedTime'
 import DownloadDialog from './DownloadDialog'
-
-function removeUnderscores(str) {
-  return str.replace(/_/g, ' ')
-}
+import { defaultMetadataType } from '../../../lib/metadataRegistry'
+import DatasetItemMetadata from './DatasetItemMetadata'
+import FilterLink from './FilterLink'
 
 export default {
   name: 'DatasetItem',
   components: {
     DatasetInfo,
     DatasetThumbnail,
-    ElapsedTime,
     DownloadDialog,
+    DatasetItemMetadata,
+    FilterLink,
   },
   filters: {
     plural,
@@ -286,20 +182,7 @@ export default {
     },
 
     isOpticalImageSupported() {
-      return mdTypeSupportsOpticalImages(this.$store.getters.filter.metadataType)
-    },
-
-    formatSubmitter() {
-      const { name } = this.dataset.submitter
-      return name
-    },
-
-    formatDatasetName() {
-      return this.dataset.name
-    },
-
-    analyzerType() {
-      return this.dataset.analyzer.type
+      return mdTypeSupportsOpticalImages(get(this.metadata, 'Data_Type') || defaultMetadataType)
     },
 
     metadata() {
@@ -319,24 +202,6 @@ export default {
       } else {
         return dbs
       }
-    },
-
-    formatOrganism() {
-      return removeUnderscores(this.dataset.organism)
-    },
-
-    formatCondition() {
-      return removeUnderscores(this.dataset.condition).toLowerCase()
-    },
-
-    formatOrganismPart() {
-      return removeUnderscores(this.dataset.organismPart).toLowerCase()
-    },
-
-    formatResolvingPower() {
-      const rpSection = this.metadata.MS_Analysis.Detector_Resolving_Power
-      const { mz, Resolving_Power: rp } = rpSection
-      return (rp / 1000).toFixed(0) + 'k @ ' + mz
     },
 
     canEdit() {
@@ -381,21 +246,6 @@ export default {
       return this.disabled ? 'ds-item-disabled' : ''
     },
 
-    visibilityText() {
-      if (this.datasetVisibility != null) {
-        const { submitter, group, projects } = this.datasetVisibility
-        const submitterName = this.currentUser && submitter.id === this.currentUser.id ? 'you' : submitter.name
-        const all = [
-          submitterName,
-          ...(group ? [group.name] : []),
-          ...(projects || []).map(p => p.name),
-        ]
-        return 'These annotation results are not publicly visible. '
-          + `They are visible to ${all.join(', ')} and METASPACE Administrators.`
-      }
-      return null
-    },
-
     canViewPublicationStatus() {
       return (
         this.dataset.status === 'FINISHED'
@@ -428,48 +278,11 @@ export default {
     } catch (err) { /* Browser/test doesn't support requestAnimationFrame? */ }
     this.deferRender = false
   },
-  apollo: {
-    datasetVisibility: {
-      query: datasetVisibilityQuery,
-      skip: true,
-      variables() {
-        return { id: this.dataset.id }
-      },
-    },
-  },
 
   methods: {
-    resultsHref(databaseName) {
-      const filter = Object.assign({}, this.$store.getters.filter, {
-        database: databaseName,
-        datasetIds: [this.dataset.id],
-      })
-      return {
-        path: '/annotations',
-        query: Object.assign({},
-          encodeParams(filter, '/annotations', this.$store.state.filterLists),
-          { mdtype: this.dataset.metadataType }),
-      }
-    },
-
     showMetadata(e) {
       e.preventDefault()
       this.showMetadataDialog = true
-    },
-
-    addFilter(field) {
-      const filter = Object.assign({}, this.$store.getters.filter)
-      if (field === 'polarity') {
-        filter.polarity = capitalize(this.dataset.polarity)
-      } else if (field === 'submitter') {
-        filter[field] = this.dataset.submitter.id
-      } else if (field === 'group') {
-        filter[field] = this.dataset.group.id
-      } else {
-        filter[field] = this.dataset[field] || this[field]
-      }
-      this.$store.commit('updateFilter', filter)
-      this.$emit('filterUpdate', filter)
     },
 
     async openDeleteDialog() {
@@ -521,34 +334,6 @@ export default {
       }
     },
 
-    handleDropdownCommand(command) {
-      if (command.startsWith('filter_')) {
-        this.addFilter(command.substring('filter_'.length))
-      } else if (command === 'view_group') {
-        this.$router.push({
-          name: 'group',
-          params: {
-            groupIdOrSlug: this.dataset.group.id,
-          },
-        })
-      }
-    },
-
-    formatFdrLevel() {
-      return this.dataset.fdrCounts.levels.join(', ')
-    },
-
-    formatFdrCounts() {
-      return this.dataset.fdrCounts.counts.join(', ')
-    },
-
-    formatDbName() {
-      return this.dataset.fdrCounts.dbName
-    },
-
-    loadVisibility() {
-      this.$apollo.queries.datasetVisibility.start()
-    },
   },
 }
 </script>

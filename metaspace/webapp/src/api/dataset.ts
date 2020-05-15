@@ -42,6 +42,7 @@ export interface DatasetDetailItem {
     counts: number[];
   };
   rawOpticalImageUrl: string;
+  uploadDT: string;
 }
 
 export const datasetDetailItemFragment =
