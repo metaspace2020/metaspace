@@ -71,28 +71,30 @@ exports[`ViewGroupPage members tab should match snapshot (invited) 1`] = `
         <!---->
         <!---->
       </div>
-      <div role="alert" class="el-alert el-alert--info is-light" name="el-alert-fade"><i class="el-alert__icon el-icon-info is-big"></i>
-        <div class="el-alert__content">
-          <!---->
-          <p class="el-alert__description">
-            <div style="padding: 0px 0px 20px 20px;">
-              <p>
-                You have been invited to join group name.
-              </p>
-              <div><button type="button" class="el-button el-button--danger">
-                  <!---->
-                  <!----><span>
+      <transition-stub name="el-alert-fade">
+        <div role="alert" class="el-alert el-alert--info is-light"><i class="el-alert__icon el-icon-info is-big"></i>
+          <div class="el-alert__content">
+            <!---->
+            <p class="el-alert__description">
+              <div style="padding: 0px 0px 20px 20px;">
+                <p>
+                  You have been invited to join group name.
+                </p>
+                <div><button type="button" class="el-button el-button--danger">
+                    <!---->
+                    <!----><span>
               Decline invitation
             </span></button> <button type="button" class="el-button el-button--primary">
-                  <!---->
-                  <!----><span>
+                    <!---->
+                    <!----><span>
               Join group
             </span></button></div>
-            </div>
-          </p>
-          <!----><i class="el-alert__closebtn el-icon-close" style="display: none;"></i>
+              </div>
+            </p>
+            <!----><i class="el-alert__closebtn el-icon-close" style="display: none;"></i>
+          </div>
         </div>
-      </div>
+      </transition-stub>
     </div>
     <div class="el-tabs el-tabs--top">
       <div class="el-tabs__header is-top">
@@ -537,7 +539,9 @@ exports[`ViewGroupPage settings tab should match snapshot 1`] = `
                       <!---->
                       <!---->
                     </div>
-                    <!---->
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
                   </div>
                 </div>
                 <div class="el-form-item shortName is-required"><label for="shortName" class="el-form-item__label"><span>
@@ -551,7 +555,9 @@ exports[`ViewGroupPage settings tab should match snapshot 1`] = `
                       <!---->
                       <!---->
                     </div>
-                    <!---->
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
                   </div>
                 </div>
               </div>

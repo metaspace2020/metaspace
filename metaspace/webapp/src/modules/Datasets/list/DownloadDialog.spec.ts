@@ -45,7 +45,7 @@ describe('Datasets/DownloadDialog', () => {
       datasetId: '2020-01-02_03h04m05s',
       datasetName: 'Mouse whole body DHB',
     }
-    const wrapper = mount(TestDownloadDialog, { router, apolloProvider, propsData, sync: false })
+    const wrapper = mount(TestDownloadDialog, { router, apolloProvider, propsData })
     await Vue.nextTick()
 
     expect(wrapper.element).toMatchSnapshot()

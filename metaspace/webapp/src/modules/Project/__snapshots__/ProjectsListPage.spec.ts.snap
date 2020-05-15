@@ -18,7 +18,9 @@ exports[`ProjectsListPage should change actions for projects under review 1`] = 
           <div class="el-form-item__content"><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
       Allow other users to see this project
     <!----></span></label>
-            <!---->
+            <transition-stub name="el-zoom-in-top">
+              <!---->
+            </transition-stub>
           </div>
         </div>
       </form>
@@ -168,7 +170,9 @@ exports[`ProjectsListPage should change actions for published projects 1`] = `
           <div class="el-form-item__content"><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
       Allow other users to see this project
     <!----></span></label>
-            <!---->
+            <transition-stub name="el-zoom-in-top">
+              <!---->
+            </transition-stub>
           </div>
         </div>
       </form>
@@ -317,7 +321,9 @@ exports[`ProjectsListPage should match snapshot 1`] = `
           <div class="el-form-item__content"><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
       Allow other users to see this project
     <!----></span></label>
-            <!---->
+            <transition-stub name="el-zoom-in-top">
+              <!---->
+            </transition-stub>
           </div>
         </div>
       </form>

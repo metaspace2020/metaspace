@@ -56,14 +56,14 @@ describe('ImageLoader', () => {
   })
 
   it('should match snapshot (minimal)', async() => {
-    const wrapper = mount(ImageLoader, { propsData: baseProps, sync: false })
+    const wrapper = mount(ImageLoader, { propsData: baseProps })
     await Vue.nextTick()
 
     expect(wrapper.element).toMatchSnapshot()
   })
 
   it('should match snapshot (with everything turned on)', async() => {
-    const wrapper = mount(ImageLoader, { propsData: fullProps, sync: false })
+    const wrapper = mount(ImageLoader, { propsData: fullProps })
     await Vue.nextTick()
 
     // Trigger mouseover to show the intensity popup.

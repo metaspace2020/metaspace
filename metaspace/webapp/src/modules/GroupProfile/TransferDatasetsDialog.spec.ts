@@ -25,7 +25,7 @@ describe('TransferDatasetsDialog', () => {
         + `${hasDatasets ? 'datasets to import' : 'no datasets'}, `
         + `${isInvited ? 'invited' : 'requesting access'})`, () => {
         const propsData = { ...mockProps, isInvited }
-        const wrapper = mount(TransferDatasetsDialog, { router, propsData, stubs, sync: false })
+        const wrapper = mount(TransferDatasetsDialog, { router, propsData, stubs })
         wrapper.setData({ allDatasets: hasDatasets ? mockDatasets : [] })
 
         expect(wrapper).toMatchSnapshot()
@@ -34,12 +34,12 @@ describe('TransferDatasetsDialog', () => {
   })
 
   it('should call back on success when some datasets are selected', async() => {
-    const wrapper = mount(TransferDatasetsDialog, { router, propsData: mockProps, stubs, sync: false })
+    const wrapper = mount(TransferDatasetsDialog, { router, propsData: mockProps, stubs })
     wrapper.setData({ allDatasets: mockDatasets })
     await Vue.nextTick()
 
-    wrapper.find(ElementUI.Checkbox).trigger('click')
-    wrapper.findAll<ElementUI.Button>(ElementUI.Button)
+    wrapper.findComponent(ElementUI.Checkbox).trigger('click')
+    wrapper.findAllComponents<ElementUI.Button>(ElementUI.Button)
       .filter((b: Wrapper<ElementUI.Button>) => b.props().type === 'primary')
       .at(0)
       .trigger('click')

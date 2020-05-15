@@ -64,7 +64,7 @@ describe('AnnotationTable', () => {
         countAnnotations: () => 1,
       }),
     })
-    const wrapper = mount(AnnotationTable, { store, router, apolloProvider, propsData, sync: false })
+    const wrapper = mount(AnnotationTable, { store, router, apolloProvider, propsData })
     await Vue.nextTick()
 
     expect(wrapper).toMatchSnapshot()
@@ -86,7 +86,7 @@ describe('AnnotationTable', () => {
         countAnnotations: () => 4,
       }),
     })
-    const wrapper = mount(AnnotationTable, { store, router, apolloProvider, propsData, sync: false })
+    const wrapper = mount(AnnotationTable, { store, router, apolloProvider, propsData })
     wrapper.setData({ csvChunkSize: 2 })
     await new Promise(resolve => setTimeout(resolve, 1))
 
