@@ -36,10 +36,6 @@ jest.mock('../../src/lib/reportError', () => jest.fn(console.error))
 // Prevent JWT requests
 jest.mock('../../src/api/graphqlClient', () => require('./mockGraphqlClient'))
 
-// Transitions throw errors because cssstyle doesn't support transition styles
-registerMockComponent('transition', { abstract: true }) //  ElTreeNode relies on Transition being abstract
-registerMockComponent('transition-group')
-
 // Ignore delay duration
 jest.mock('../../src/lib/delay', () => jest.fn(() => Promise.resolve()))
 

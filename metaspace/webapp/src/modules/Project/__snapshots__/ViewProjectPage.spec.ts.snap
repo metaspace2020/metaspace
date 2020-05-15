@@ -524,7 +524,7 @@ exports[`ViewProjectPage publishing tab should match snapshot (published) 1`] = 
         <!---->
         <!---->
         <div role="tabpanel" id="pane-publishing" aria-labelledby="tab-publishing" class="el-tab-pane tab-with-badge sm-publishing-tab">
-          <transition-stub mode="out-in" enter-class="opacity-0" leave-to-class="opacity-0" enter-active-class="duration-150 transition-opacity ease-in-out" leave-active-class="duration-150 transition-opacity ease-in-out">
+          <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
             <div class="leading-6 text-center mt-12"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-6 w-6 block w-8 h-8 p-2 rounded-full bg-blue-100 mx-auto">
                 <circle cx="12" cy="12" r="10" class="fill-current text-blue-800"></circle>
                 <path d="M2.05 11A10 10 0 0 1 15 2.46V6a2 2 0 0 1-2 2h-1v1a2 2 0 0 1-1 1.73V12h2a2 2 0 0 1 2 2v1h2a2 2 0 0 1 2 2v2.14A9.97 9.97 0 0 1 12 22v-4h-1a2 2 0 0 1-2-2v-2a2 2 0 0 1-2-2v-1H2.05z" class="fill-current text-blue-300"></path>
@@ -582,11 +582,11 @@ exports[`ViewProjectPage publishing tab should match snapshot (under review) 1`]
         <!---->
         <!---->
         <div role="tabpanel" id="pane-publishing" aria-labelledby="tab-publishing" class="el-tab-pane tab-with-badge sm-publishing-tab">
-          <transition-stub mode="out-in" enter-class="opacity-0" leave-to-class="opacity-0" enter-active-class="duration-150 transition-opacity ease-in-out" leave-active-class="duration-150 transition-opacity ease-in-out">
+          <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
             <ol class="sm-workflow leading-6 m-0 p-0 sm-scientific-publishing">
               <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-300 transition-colors ease-in-out duration-300 done border-blue-200">
                 <h2 class="sm-workflow-header">Update project details</h2>
-                <transition-stub mode="out-in" enter-class="opacity-0" leave-to-class="opacity-0" enter-active-class="duration-150 transition-opacity ease-in-out" leave-active-class="duration-150 transition-opacity ease-in-out">
+                <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
                   <form action="#"><label><span class="font-medium text-primary">Reference the project in the manuscript using this link:</span>
                       <div class="el-input el-input-group el-input-group--append py-1">
                         <!----><input type="text" readonly="readonly" autocomplete="off" class="el-input__inner">
@@ -690,11 +690,11 @@ exports[`ViewProjectPage publishing tab should match snapshot (unpublished) 1`] 
         <!---->
         <!---->
         <div role="tabpanel" id="pane-publishing" aria-labelledby="tab-publishing" class="el-tab-pane tab-with-badge sm-publishing-tab">
-          <transition-stub mode="out-in" enter-class="opacity-0" leave-to-class="opacity-0" enter-active-class="duration-150 transition-opacity ease-in-out" leave-active-class="duration-150 transition-opacity ease-in-out">
+          <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
             <ol class="sm-workflow leading-6 m-0 p-0 sm-scientific-publishing">
               <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-300 transition-colors ease-in-out duration-300 active">
                 <h2 class="sm-workflow-header">Update project details</h2>
-                <transition-stub mode="out-in" enter-class="opacity-0" leave-to-class="opacity-0" enter-active-class="duration-150 transition-opacity ease-in-out" leave-active-class="duration-150 transition-opacity ease-in-out">
+                <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
                   <form action="#" class="sm-form">
                     <p>Create a short project link to use in the manuscript. We also suggest updating the project title and adding an abstract to the project description.</p>
                     <div><label for="publishing-project-link"><span class="text-base font-medium">Link to be used in the manuscript</span><span class="block text-sm text-gray-800">Must be unique, min. 4 characters, using a–z, 0–9, hyphen or underscore</span></label>
