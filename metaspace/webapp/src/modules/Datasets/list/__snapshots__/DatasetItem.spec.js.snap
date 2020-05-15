@@ -4,21 +4,6 @@ exports[`DatasetItem should match snapshot 1`] = `
 <div
   class="dataset-item border border-solid border-gray-200 leading-5"
 >
-  <mock-el-dialog
-    title="Provided metadata"
-  >
-    <div
-      class="el-row"
-    >
-      <mock-el-tree
-        data="[object Object],[object Object]"
-        default-expanded-keys="MS analysis,Detector resolving power,Data Management"
-        id="metadata-tree"
-        node-key="id"
-      />
-    </div>
-  </mock-el-dialog>
-   
   <div
     class="opt-image--container"
   >
@@ -62,7 +47,7 @@ exports[`DatasetItem should match snapshot 1`] = `
         <div
           aria-hidden="true"
           class="el-popover el-popper"
-          id="el-popover-4000"
+          id="el-popover-123"
           name="fade-in-linear"
           role="tooltip"
           style="display: none;"
@@ -74,7 +59,7 @@ exports[`DatasetItem should match snapshot 1`] = `
           />
         </div>
         <i
-          aria-describedby="el-popover-4000"
+          aria-describedby="el-popover-123"
           class="el-icon-lock el-popover__reference"
           tabindex="0"
         />
@@ -158,11 +143,24 @@ exports[`DatasetItem should match snapshot 1`] = `
   <div
     class="ds-actions"
   >
+    <mock-el-dialog
+      title="Provided metadata"
+    >
+      <div
+        class="el-row"
+      >
+        <mock-el-tree
+          data="[object Object],[object Object]"
+          default-expanded-keys="MS analysis,Detector resolving power,Data Management"
+          id="metadata-tree"
+          node-key="id"
+        />
+      </div>
+    </mock-el-dialog>
     <span>
       <i
         class="el-icon-picture"
       />
-       
       <mock-el-popover
         placement="top"
         trigger="hover"
@@ -173,17 +171,13 @@ exports[`DatasetItem should match snapshot 1`] = `
           <div
             class="db-link-list"
           >
-            
-          Select a database:
-          
+            Select a database:
             <div>
               <a
                 class=""
                 href="/annotations?db=HMDB-v2.5&ds=mockdataset"
               >
-                
-              HMDB-v2.5
-            
+                HMDB-v2.5
               </a>
             </div>
             <div>
@@ -191,9 +185,7 @@ exports[`DatasetItem should match snapshot 1`] = `
                 class=""
                 href="/annotations?db=HMDB-v4&ds=mockdataset"
               >
-                
-              HMDB-v4
-            
+                HMDB-v4
               </a>
             </div>
             <div>
@@ -201,13 +193,10 @@ exports[`DatasetItem should match snapshot 1`] = `
                 class=""
                 href="/annotations?db=CHEBI&ds=mockdataset"
               >
-                
-              CHEBI
-            
+                CHEBI
               </a>
             </div>
           </div>
-           
         </div>
         <div
           slot-key="reference"
@@ -217,50 +206,35 @@ exports[`DatasetItem should match snapshot 1`] = `
           </a>
         </div>
       </mock-el-popover>
-       
       <br />
     </span>
-     
-    <!---->
-     
-    <!---->
-     
     <div>
       <i
         class="el-icon-view"
       />
-       
       <a
         href="#"
       >
         Show full metadata
       </a>
     </div>
-     
     <div>
       <i
         class="el-icon-edit"
       />
-       
       <a
         class=""
         href="/datasets/edit/mockdataset"
       >
-        
         Edit metadata
-      
       </a>
     </div>
-     
-    <!---->
-     
     <div
       class="ds-delete"
     >
       <i
         class="el-icon-delete"
       />
-       
       <a
         class="text-danger"
         href="#"
@@ -268,10 +242,6 @@ exports[`DatasetItem should match snapshot 1`] = `
         Delete dataset
       </a>
     </div>
-     
-    <!---->
   </div>
-   
-  <!---->
 </div>
 `;

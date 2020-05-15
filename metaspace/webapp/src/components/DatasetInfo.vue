@@ -12,12 +12,13 @@
 </template>
 
 <script>
+import Vue from 'vue'
 import { defaultMetadataType, metadataSchemas } from '../lib/metadataRegistry'
 import { get, flatMap } from 'lodash-es'
 import { optionalSuffixInParens } from '../lib/vueFilters'
 import { getLocalStorage, setLocalStorage } from '../lib/localStorage'
 
-export default {
+export default Vue.extend({
   name: 'DatasetInfo',
   props: ['metadata', 'expandedKeys', 'currentUser'],
   data() {
@@ -147,7 +148,7 @@ export default {
       }
     },
   },
-}
+})
 </script>
 
 <style lang="scss" scoped>

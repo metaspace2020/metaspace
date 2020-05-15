@@ -8,10 +8,6 @@ import FilterLink from './FilterLink'
 
 type FilterField = keyof DatasetDetailItem | 'analyzerType';
 
-function removeUnderscores(str: string) {
-  return str.replace(/_/g, ' ')
-}
-
 const DatasetItemMetadata = createComponent({
   props: {
     dataset: { type: Object as () => DatasetDetailItem, required: true },
@@ -53,7 +49,8 @@ const DatasetItemMetadata = createComponent({
 
     return () => {
       const { dataset, metadata, hideGroupMenu } = props
-      const { mz: rpAtMz = 0, Resolving_Power: rp = 0 } = get(metadata, ['MS_Analysis', 'Detector_Resolving_Power']) || {}
+      const { mz: rpAtMz = 0, Resolving_Power: rp = 0 } =
+        get(metadata, ['MS_Analysis', 'Detector_Resolving_Power']) || {}
 
       const filterableItem = (field: FilterField, name: string, text: string) => (
         <span
