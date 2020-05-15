@@ -53,7 +53,7 @@ describe('RelatedMolecules', () => {
         ]),
       }),
     })
-    const wrapper = mount(RelatedMolecules, { store, router, apolloProvider, propsData, sync: false })
+    const wrapper = mount(RelatedMolecules, { store, router, apolloProvider, propsData })
     await Vue.nextTick()
 
     expect(wrapper).toMatchSnapshot()
@@ -80,7 +80,7 @@ describe('RelatedMolecules', () => {
         ]),
       }),
     })
-    const wrapper = mount(RelatedMolecules, { store, router, apolloProvider, propsData, sync: false })
+    const wrapper = mount(RelatedMolecules, { store, router, apolloProvider, propsData })
     await Vue.nextTick()
 
     expect(wrapper.find('.ion-link').exists()).toBe(false)

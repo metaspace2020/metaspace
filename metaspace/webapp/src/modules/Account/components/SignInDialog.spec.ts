@@ -19,7 +19,7 @@ Vue.use(Vuex)
 
 const setFormField = (wrapper: Wrapper<Vue>, fieldName: string, value: string) => {
   wrapper
-    .findAll<ElementUI.FormItem>(ElementUI.FormItem)
+    .findAllComponents<ElementUI.FormItem>(ElementUI.FormItem)
     .filter((fi: Wrapper<ElementUI.FormItem>) => fi.props().prop === fieldName)
     .at(0)
     .find('input')
@@ -51,14 +51,14 @@ describe('SignInDialog', () => {
     // Arrange
     const email = 'test@example.com'
     const password = 'baz'
-    const wrapper = mount(SignInDialog, { store, router, sync: false }) as Wrapper<SignInDialog>
+    const wrapper = mount(SignInDialog, { store, router }) as Wrapper<SignInDialog>
     mockAuthApi.signInByEmail.mockImplementation(() => Promise.resolve(true))
     store.commit('account/showDialog', 'signIn')
 
     // Act
     setFormField(wrapper, 'email', email)
     setFormField(wrapper, 'password', password)
-    wrapper.find(ElementUI.Button).trigger('click')
+    wrapper.findComponent(ElementUI.Button).trigger('click')
     await Vue.nextTick()
 
     // Assert

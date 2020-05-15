@@ -76,7 +76,7 @@ describe('ViewGroupPage', () => {
     it('should match snapshot (non-member)', async() => {
       initMockGraphqlClient(graphqlMocks)
       const maxVisibleDatasets = 3
-      const wrapper = mount(ViewGroupPage, { router, stubs, apolloProvider, sync: false })
+      const wrapper = mount(ViewGroupPage, { router, stubs, apolloProvider })
       wrapper.setData({ maxVisibleDatasets }) // Also test that the datasets list is correctly clipped
       await Vue.nextTick()
 
@@ -97,7 +97,7 @@ describe('ViewGroupPage', () => {
 
     it('should match snapshot (non-member)', async() => {
       initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewGroupPage, { router, stubs: stubsWithMembersList, apolloProvider, sync: false })
+      const wrapper = mount(ViewGroupPage, { router, stubs: stubsWithMembersList, apolloProvider })
       await Vue.nextTick()
 
       expect(wrapper).toMatchSnapshot()
@@ -106,7 +106,7 @@ describe('ViewGroupPage', () => {
     it('should match snapshot (invited)', async() => {
       mockGroupFn.mockImplementation(() => ({ ...mockGroup, currentUserRole: 'INVITED' }))
       initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewGroupPage, { router, stubs: stubsWithMembersList, apolloProvider, sync: false })
+      const wrapper = mount(ViewGroupPage, { router, stubs: stubsWithMembersList, apolloProvider })
       await Vue.nextTick()
 
       expect(wrapper).toMatchSnapshot()
@@ -116,7 +116,7 @@ describe('ViewGroupPage', () => {
       mockGroupFn.mockImplementation(() =>
         ({ ...mockGroup, currentUserRole: 'MEMBER', members: mockMembersForMembers }))
       initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewGroupPage, { router, stubs: stubsWithMembersList, apolloProvider, sync: false })
+      const wrapper = mount(ViewGroupPage, { router, stubs: stubsWithMembersList, apolloProvider })
       await Vue.nextTick()
 
       expect(wrapper).toMatchSnapshot()
@@ -126,7 +126,7 @@ describe('ViewGroupPage', () => {
       mockGroupFn.mockImplementation(() =>
         ({ ...mockGroup, currentUserRole: 'GROUP_ADMIN', members: mockMembersForAdmins }))
       initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewGroupPage, { router, stubs, apolloProvider, sync: false })
+      const wrapper = mount(ViewGroupPage, { router, stubs, apolloProvider })
       await Vue.nextTick()
 
       expect(wrapper).toMatchSnapshot()
@@ -141,7 +141,7 @@ describe('ViewGroupPage', () => {
     it('should match snapshot', async() => {
       mockGroupFn.mockImplementation(() => ({ ...mockGroup, currentUserRole: 'GROUP_ADMIN' }))
       initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewGroupPage, { router, stubs, apolloProvider, sync: false })
+      const wrapper = mount(ViewGroupPage, { router, stubs, apolloProvider })
       await Vue.nextTick()
 
       expect(wrapper).toMatchSnapshot()
@@ -153,7 +153,7 @@ describe('ViewGroupPage', () => {
     mockGroupFn.mockImplementation(() => ({ ...mockGroup, urlSlug }))
     initMockGraphqlClient(graphqlMocks)
 
-    const wrapper = mount(ViewGroupPage, { router, stubs, apolloProvider, sync: false })
+    const wrapper = mount(ViewGroupPage, { router, stubs, apolloProvider })
     await Vue.nextTick()
 
     expect(router.currentRoute.params.groupIdOrSlug).toEqual(urlSlug)

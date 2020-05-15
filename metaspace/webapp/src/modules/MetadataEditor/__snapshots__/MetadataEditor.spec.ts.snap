@@ -106,7 +106,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
         }
         return result;
       }" class="md-ac"></mock-el-autocomplete>
-                    <!---->
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
                   </div>
                 </div>
               </div>
@@ -138,7 +140,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
         }
         return result;
       }" class="md-ac"></mock-el-autocomplete>
-                    <!---->
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
                   </div>
                 </div>
               </div>
@@ -170,7 +174,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
         }
         return result;
       }" class="md-ac"></mock-el-autocomplete>
-                    <!---->
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
                   </div>
                 </div>
               </div>
@@ -203,7 +209,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
         }
         return result;
       }" class="md-ac"></mock-el-autocomplete>
-                    <!---->
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
                   </div>
                 </div>
               </div>
@@ -249,7 +257,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
         }
         return result;
       }" class="md-ac"></mock-el-autocomplete>
-                    <!---->
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
                   </div>
                 </div>
               </div>
@@ -281,7 +291,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
         }
         return result;
       }" class="md-ac"></mock-el-autocomplete>
-                    <!---->
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
                   </div>
                 </div>
               </div>
@@ -313,7 +325,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
         }
         return result;
       }" class="md-ac"></mock-el-autocomplete>
-                    <!---->
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
                   </div>
                 </div>
               </div>
@@ -345,7 +359,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
         }
         return result;
       }" class="md-ac"></mock-el-autocomplete>
-                    <!---->
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
                   </div>
                 </div>
               </div>
@@ -378,7 +394,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
         }
         return result;
       }" class="md-ac"></mock-el-autocomplete>
-                    <!---->
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
                   </div>
                 </div>
               </div>
@@ -409,7 +427,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
                       <mock-el-option value="Positive" label="Positive"></mock-el-option>
                       <mock-el-option value="Negative" label="Negative"></mock-el-option>
                     </mock-el-select>
-                    <!---->
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
                   </div>
                 </div>
               </div>
@@ -441,7 +461,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
         }
         return result;
       }" class="md-ac"></mock-el-autocomplete>
-                    <!---->
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
                   </div>
                 </div>
               </div>
@@ -473,7 +495,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
         }
         return result;
       }" class="md-ac"></mock-el-autocomplete>
-                    <!---->
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
                   </div>
                 </div>
               </div>
@@ -501,7 +525,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
                               m/z
                             </div>
                             <!---->
-                            <!---->
+                            <transition-stub name="el-zoom-in-top">
+                              <!---->
+                            </transition-stub>
                           </div>
                         </div>
                       </div>
@@ -524,12 +550,16 @@ exports[`MetadataEditor should match snapshot 1`] = `
                               resolving power
                             </div>
                             <!---->
-                            <!---->
+                            <transition-stub name="el-zoom-in-top">
+                              <!---->
+                            </transition-stub>
                           </div>
                         </div>
                       </div>
                     </div>
-                    <!---->
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
                   </div>
                 </div>
               </div>
@@ -557,7 +587,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
                               horizontal
                             </div>
                             <!---->
-                            <!---->
+                            <transition-stub name="el-zoom-in-top">
+                              <!---->
+                            </transition-stub>
                           </div>
                         </div>
                       </div>
@@ -580,12 +612,16 @@ exports[`MetadataEditor should match snapshot 1`] = `
                               vertical
                             </div>
                             <!---->
-                            <!---->
+                            <transition-stub name="el-zoom-in-top">
+                              <!---->
+                            </transition-stub>
                           </div>
                         </div>
                       </div>
                     </div>
-                    <!---->
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
                   </div>
                 </div>
               </div>
@@ -606,7 +642,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
                 <div class="el-row">
                   <mock-el-select filterable="" remote="" remote-method="function () { [native code] }" placeholder="Enter group name"></mock-el-select>
                 </div>
-                <!---->
+                <transition-stub name="el-zoom-in-top">
+                  <!---->
+                </transition-stub>
               </div>
             </div>
           </form>
@@ -641,7 +679,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
                 <div class="el-form-item__content"><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
       Allow other users to see this project
     <!----></span></label>
-                  <!---->
+                  <transition-stub name="el-zoom-in-top">
+                    <!---->
+                  </transition-stub>
                 </div>
               </div>
             </form>
@@ -698,7 +738,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
                         <!---->
                         <!---->
                       </div>
-                      <!---->
+                      <transition-stub name="el-zoom-in-top">
+                        <!---->
+                      </transition-stub>
                     </div>
                   </div>
                 </div>
@@ -712,7 +754,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
                         <mock-el-option value="FIND_GROUP" label="Find my group..."></mock-el-option>
                         <mock-el-option value="NO_GROUP" label="No group (Enter PI instead)"></mock-el-option>
                       </mock-el-select>
-                      <!---->
+                      <transition-stub name="el-zoom-in-top">
+                        <!---->
+                      </transition-stub>
                     </div>
                   </div>
                 </div>
@@ -726,7 +770,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
                         <mock-el-option value="currentUser.projects.1.project.id" label="currentUser.projects.1.project.name"></mock-el-option>
                         <mock-el-option value="CREATE_PROJECT" label="Create a new project..."></mock-el-option>
                       </mock-el-select>
-                      <!---->
+                      <transition-stub name="el-zoom-in-top">
+                        <!---->
+                      </transition-stub>
                     </div>
                   </div>
                 </div>
@@ -734,7 +780,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
             </div>
           </div>
         </div>
-        <!---->
+        <transition-stub>
+          <!---->
+        </transition-stub>
       </div>
       <div class="metadata-section">
         <div class="el-row">
@@ -884,7 +932,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
                       <mock-el-select value="molecularDatabases.0.name" required="true" multiple="" multiple-limit="3">
                         <mock-el-option value="molecularDatabases.0.name" label="molecularDatabases.0.name"></mock-el-option>
                       </mock-el-select>
-                      <!---->
+                      <transition-stub name="el-zoom-in-top">
+                        <!---->
+                      </transition-stub>
                     </div>
                   </div>
                 </div>
@@ -897,7 +947,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
                         <mock-el-option value="+Na" label="+Na"></mock-el-option>
                         <mock-el-option value="+K" label="+K"></mock-el-option>
                       </mock-el-select>
-                      <!---->
+                      <transition-stub name="el-zoom-in-top">
+                        <!---->
+                      </transition-stub>
                     </div>
                   </div>
                 </div>
@@ -912,7 +964,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
                         <!---->
                         <!---->
                       </div>
-                      <!---->
+                      <transition-stub name="el-zoom-in-top">
+                        <!---->
+                      </transition-stub>
                     </div>
                   </div>
                 </div>
@@ -941,7 +995,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
                     <div class="el-textarea el-input--medium"><textarea autocomplete="off" class="el-textarea__inner" style="min-height: -6px; height: -20px;"></textarea>
                       <!---->
                     </div>
-                    <!---->
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
                   </div>
                 </div>
               </div>

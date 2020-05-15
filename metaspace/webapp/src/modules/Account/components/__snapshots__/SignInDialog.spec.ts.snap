@@ -15,7 +15,9 @@ exports[`SignInDialog should match snapshot 1`] = `
               <!---->
               <!---->
             </div>
-            <!---->
+            <transition-stub name="el-zoom-in-top">
+              <!---->
+            </transition-stub>
           </div>
         </div>
         <div class="el-form-item is-required">
@@ -28,7 +30,9 @@ exports[`SignInDialog should match snapshot 1`] = `
               <!---->
               <!---->
             </div>
-            <!---->
+            <transition-stub name="el-zoom-in-top">
+              <!---->
+            </transition-stub>
           </div>
         </div>
         <div style="overflow: hidden; transition-property: height; height: auto; transition-duration: 500ms;">
