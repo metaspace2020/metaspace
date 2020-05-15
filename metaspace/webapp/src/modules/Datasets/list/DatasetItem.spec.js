@@ -5,9 +5,12 @@ import router from '../../../router'
 import store from '../../../store'
 import { sync } from 'vuex-router-sync'
 import DatasetItem from './DatasetItem.vue'
+import { mockGenerateId, resetGenerateId } from '../../../../tests/utils/mockGenerateId'
 
 Vue.use(Vuex)
 sync(store, router)
+Vue.options.router = router
+Vue.options.store = store
 
 describe('DatasetItem', () => {
   const user = { id: 'user' }
@@ -44,13 +47,18 @@ describe('DatasetItem', () => {
   const underReview = { name: 'project', publicationStatus: 'UNDER_REVIEW' }
   const published = { name: 'project', publicationStatus: 'PUBLISHED' }
 
+  beforeEach(() => {
+    resetGenerateId()
+  })
+
   it('should match snapshot', () => {
+    mockGenerateId(123)
     const propsData = {
       currentUser: submitter,
       dataset,
     }
     const wrapper = mount(DatasetItem, { router, store, propsData })
-    expect(wrapper).toMatchSnapshot()
+    expect(wrapper.element).toMatchSnapshot()
   })
 
   it('should be able to delete if unpublished', () => {

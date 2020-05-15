@@ -69,7 +69,7 @@ describe('DatasetTable', () => {
     const wrapper = mount(DatasetTable, { store, router, apolloProvider })
     await Vue.nextTick()
 
-    expect(wrapper).toMatchSnapshot()
+    expect(wrapper.element).toMatchSnapshot()
   })
 
   it('should be able to export a CSV', async() => {
