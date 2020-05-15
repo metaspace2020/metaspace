@@ -16,25 +16,27 @@ export function validatePublishingRules(ctx: Context, project: ProjectSource, pr
     return
   }
 
-  if (project.publicationStatus == PSO.UNDER_REVIEW
-    && project.urlSlug != null
-    && projectDetails.urlSlug == null) {
-    throw new FormValidationErrors(
-      'urlSlug',
-      `Cannot remove short link as the project is under review`
-    )
+  if ('urlSlug' in projectDetails) {
+    if (project.publicationStatus === PSO.UNDER_REVIEW
+      && project.urlSlug != null
+      && projectDetails.urlSlug == null) {
+      throw new FormValidationErrors(
+        'urlSlug',
+        `Cannot remove short link as the project is under review`
+      )
+    }
+
+    if (project.publicationStatus === PSO.PUBLISHED
+      && project.urlSlug !== projectDetails.urlSlug) {
+      throw new FormValidationErrors(
+        'urlSlug',
+        `Cannot edit short link as the project is published`
+      )
+    }
   }
 
-  if (project.publicationStatus == PSO.PUBLISHED
-    && project.urlSlug != projectDetails.urlSlug) {
-    throw new FormValidationErrors(
-      'urlSlug',
-      `Cannot edit short link as the project is published`
-    )
-  }
-
-  if (project.publicationStatus == PSO.PUBLISHED
-    && projectDetails.isPublic == false) {
+  if (project.publicationStatus === PSO.PUBLISHED
+    && projectDetails.isPublic === false) {
     throw new FormValidationErrors('isPublic', `Published projects must be visible`);
   }
 }
