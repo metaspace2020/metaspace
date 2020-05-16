@@ -13,7 +13,7 @@ from sm.engine import molecular_db
 from sm.engine.util import SMConfig
 from sm.engine.png_generator import ImageStoreServiceWrapper
 
-COLOC_JOB_DEL = 'DELETE FROM graphql.coloc_job ' 'WHERE ds_id = %s AND mol_db = %s'
+COLOC_JOB_DEL = 'DELETE FROM graphql.coloc_job WHERE ds_id = %s AND mol_db = %s::text'
 
 COLOC_JOB_INS = (
     'INSERT INTO graphql.coloc_job ('
@@ -230,13 +230,13 @@ def _get_sample_ion_ids(scores, cluster_max_images, trunc_fdr_mask, trunc_masked
 
 
 # pylint: disable=cell-var-from-loop
-def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs, h, w, cluster_max_images=5000):
+def analyze_colocalization(ds_id, moldb_id, images, ion_ids, fdrs, h, w, cluster_max_images=5000):
     """ Calculate co-localization of ion images for all algorithms and yield results
 
     Args
     ----------
     ds_id: str
-    mol_db: str
+    moldb_id: str
     images: FreeableRef[np.ndarray]
         2D array where each row contains the pixels from one image
         WARNING: This FreeableRef is released during use to save memory
@@ -291,7 +291,7 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs, h, w, cluster_m
                 )
                 return ColocalizationJob(
                     ds_id,
-                    mol_db,
+                    moldb_id,
                     fdr,
                     algorithm,
                     start,
@@ -337,13 +337,13 @@ class Colocalization:
         annotations = [(job_id, *ann) for ann in job.coloc_annotations]
         self._db.insert(COLOC_ANN_INS, annotations)
 
-    def _analyze_and_save(self, ds_id, mol_db, images, ion_ids, fdrs, h, w):
+    def _analyze_and_save(self, ds_id, moldb_id, images, ion_ids, fdrs, h, w):
         try:
             # Clear old jobs from DB
-            self._db.alter(COLOC_JOB_DEL, [ds_id, mol_db])
+            self._db.alter(COLOC_JOB_DEL, [ds_id, moldb_id])
 
             if len(ion_ids) > 2:
-                for job in analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs, h, w):
+                for job in analyze_colocalization(ds_id, moldb_id, images, ion_ids, fdrs, h, w):
                     self._save_job_to_db(job)
             else:
                 # Technically `len(ion_ids) == 2` is enough,
@@ -352,12 +352,11 @@ class Colocalization:
                 logger.info('Not enough annotations to perform colocalization')
         except Exception:
             logger.warning('Colocalization job failed', exc_info=True)
-            self._save_job_to_db(ColocalizationJob(ds_id, mol_db, 0, error=format_exc()))
+            self._save_job_to_db(ColocalizationJob(ds_id, moldb_id, 0, error=format_exc()))
             raise
 
-    def _get_existing_ds_annotations(self, ds_id, mol_db_name, image_storage_type, charge):
-        mol_db = molecular_db.find_by_name(mol_db_name)
-        annotation_rows = self._db.select(ANNOTATIONS_SEL, [ds_id, mol_db.id])
+    def _get_existing_ds_annotations(self, ds_id, moldb_id, image_storage_type, charge):
+        annotation_rows = self._db.select(ANNOTATIONS_SEL, [ds_id, moldb_id])
         num_annotations = len(annotation_rows)
         if num_annotations != 0:
             ion_tuples = [
@@ -368,14 +367,12 @@ class Colocalization:
             ion_ids = np.array([ion_id_mapping[ion_tuple] for ion_tuple in ion_tuples])
             fdrs = np.array([row[5] for row in annotation_rows])
 
-            logger.debug(f'Getting {num_annotations} images for "{ds_id}" {mol_db_name}')
+            logger.debug(f'Getting {num_annotations} images for "{ds_id}" {moldb_id}')
             image_ids = [row[0] for row in annotation_rows]
             images, _, (h, w) = self._img_store.get_ion_images_for_analysis(
                 image_storage_type, image_ids
             )
-            logger.debug(
-                f'Finished getting images for "{ds_id}" {mol_db_name}. Image size: {h}x{w}'
-            )
+            logger.debug(f'Finished getting images for "{ds_id}" {moldb_id}. Image size: {h}x{w}')
         else:
             images = np.zeros((0, 0), dtype=np.float32)
             h, w = 1, 1
@@ -396,16 +393,17 @@ class Colocalization:
         """
 
         image_storage_type = Dataset(ds_id).get_ion_img_storage_type(self._db)
-        mol_dbs_ids, charge = self._db.select_one(DATASET_CONFIG_SEL, [ds_id])
-        mol_dbs = [molecular_db.find_by_id(moldb_id).name for moldb_id in mol_dbs_ids]
-        existing_mol_dbs = set(db for db, in self._db.select(SUCCESSFUL_COLOC_JOB_SEL, [ds_id]))
+        moldbs_ids, charge = self._db.select_one(DATASET_CONFIG_SEL, [ds_id])
+        existing_moldbs_ids = set(
+            int(db) for db, in self._db.select(SUCCESSFUL_COLOC_JOB_SEL, [ds_id])
+        )
 
-        for mol_db_name in mol_dbs:
-            if reprocess or mol_db_name not in existing_mol_dbs:
-                logger.info(f'Running colocalization job for {ds_id} on {mol_db_name}')
+        for moldbs_id in moldbs_ids:
+            if reprocess or moldbs_id not in existing_moldbs_ids:
+                logger.info(f'Running colocalization job for {ds_id} on {moldbs_id}')
                 images, ion_ids, fdrs, h, w = self._get_existing_ds_annotations(
-                    ds_id, mol_db_name, image_storage_type, charge
+                    ds_id, moldbs_id, image_storage_type, charge
                 )
-                self._analyze_and_save(ds_id, mol_db_name, images, ion_ids, fdrs, h, w)
+                self._analyze_and_save(ds_id, moldbs_id, images, ion_ids, fdrs, h, w)
             else:
-                logger.info(f'Skipping colocalization job for {ds_id} on {mol_db_name}')
+                logger.info(f'Skipping colocalization job for {ds_id} on {moldbs_id}')

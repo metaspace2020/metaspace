@@ -148,6 +148,7 @@ class ESIndexManager:
                 "type": "keyword",
                 "fields": {"searchable": {"type": "text", "analyzer": "delimited_ds_names"}},
             },
+            "annotation_counts.db.version": {"type": "keyword"},
         }
         body = {
             "settings": {
@@ -461,7 +462,7 @@ class ESExporter:
         )
         if ds_doc:
             isocalc = IsocalcWrapper(ds_doc['config'])
-            for moldb_id, _ in ds_doc['config']['databases']:
+            for moldb_id in ds_doc['config']['databases']:
                 moldb = molecular_db.find_by_id(moldb_id)
                 try:
                     self.index_ds(ds_id, moldb=moldb, isocalc=isocalc)

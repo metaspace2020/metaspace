@@ -91,7 +91,6 @@ def add(ds_man, ds_id=None, params=None):
         email
     }
     """
-    logger.info(f'Received ADD request: {params}')
     doc = params.get('doc', None)
     if not doc:
         msg = 'No input to create a dataset'
