@@ -7,11 +7,10 @@
           class="hidden md:block w-77 h-77 -ml-14 p-3.5 box-border"
         >
         <div class="text-white box-border ml-7 h-77">
-          <h1 class="m-0 md:mt-21 flex flex-col items-start">
-            <span class="text-2xl leading-7">Welcome to</span>
+          <h1 class="m-0 md:mt-28 flex flex-col items-start">
             <metaspace class="w-auto md:h-21 py-1.75 box-border" />
           </h1>
-          <p class="text-2xl leading-7 m-0 py-3.5">
+          <p class="text-3xl leading-8.75 m-0 pt-3.5">
             The platform for metabolite annotation
             <br>
             of imaging mass spectrometry data
