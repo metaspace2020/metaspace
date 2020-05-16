@@ -8,7 +8,7 @@
         >
         <div class="text-white box-border ml-7 h-77">
           <h1 class="m-0 md:mt-21 flex flex-col items-start">
-            <span class="text-3xl leading-7">Welcome to</span>
+            <span class="text-2xl leading-7">Welcome to</span>
             <metaspace class="w-auto md:h-21 py-1.75 box-border" />
           </h1>
           <p class="text-2xl leading-7 m-0 py-3.5">
@@ -178,7 +178,7 @@
       </section>
     </div>
     <footer class="bg-gray-100 sm-about-footer">
-      <div class="max-w-4xl mx-auto p-14 box-border text-800 text-base text-center">
+      <div class="max-w-4xl mx-auto p-14 box-border text-gray-700 text-base text-center">
         <p class="flex justify-center m-0 font-medium">
           <router-link to="/privacy">
             Privacy

@@ -6,7 +6,7 @@ export default createComponent({
   setup() {
     return () => (
       <div class="sm-legal-page">
-        <h1>Terms of Service of METASPACE</h1>
+        <h1>Terms of Service</h1>
         <h2>Service definition</h2>
         <ul>
           <li>

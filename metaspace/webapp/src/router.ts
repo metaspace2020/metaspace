@@ -82,6 +82,9 @@ const router = new VueRouter({
     { path: '/terms', component: TermsPage },
     { path: '/privacy', component: PrivacyPage },
   ],
+  scrollBehavior(to, from, savedPosition) {
+    return savedPosition || { x: 0, y: 0 }
+  },
 })
 
 const { href } = router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined, true)
