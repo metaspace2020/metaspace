@@ -9,7 +9,6 @@ from scipy.ndimage import zoom, median_filter
 
 from sm.engine.dataset import Dataset
 from sm.engine.ion_mapping import get_ion_id_mapping
-from sm.engine import molecular_db
 from sm.engine.util import SMConfig
 from sm.engine.png_generator import ImageStoreServiceWrapper
 

@@ -46,10 +46,6 @@ class MolecularDB:
             'group_id': self.group_id,
         }
 
-    @property
-    def compound_name(self):
-        return f'{self.group_id}:{self.name}:{self.version}'
-
 
 def _validate_moldb_df(df):
     errors = []
