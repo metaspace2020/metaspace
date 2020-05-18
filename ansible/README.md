@@ -1,8 +1,9 @@
 # Ansible project for setting up machines running SM platform
 
 ## Installation Types Supported
-* [Virtual Box Installation](vbox/README.md)
+* ~[Vagrant virtualbox Installation](vbox/README.md)~ (Removed in favor of Docker installations)
 * [AWS Installation](aws/README.md)
+* [Docker installation](../docker/README.md)
 
 ## Funding
 
