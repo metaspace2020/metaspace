@@ -158,11 +158,11 @@ python -m scripts.manage_es_index --inactive drop
 # Create inactive index
 python -m scripts.manage_es_index --inactive create
 
-# Populate inactive index
+# Populate inactive index (this can take several days)
 nice python -m scripts.update_es_index --inactive --ds-name "%' ORDER BY id DESC; --"
 # Disable dataset processing once this is done
  
-# Add datasets that were created after the reindexing started
+# Add datasets that were created after the reindexing started (Change the date to when you started this process)
 nice python -m scripts.update_es_index --inactive --ds-name "%' AND id > '2020-05-18'; --"
 
 # Swap inactive and active indexes
