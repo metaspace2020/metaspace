@@ -42,7 +42,7 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
       let dbName = hit._source.db_name,
         dbBaseName = dbName.split('-')[0];
 
-      let infoURL;
+      let infoURL: string | null = null;
       if (dbBaseName === 'HMDB') {
         infoURL = `http://www.hmdb.ca/metabolites/${id}`;
       } else if (dbBaseName === 'ChEBI') {
@@ -72,9 +72,9 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
 
   adduct: (hit) => hit._source.adduct,
 
-  neutralLoss: (hit) => hit._source.neutral_loss,
+  neutralLoss: (hit) => hit._source.neutral_loss || '',
 
-  chemMod: (hit) => hit._source.chem_mod,
+  chemMod: (hit) => hit._source.chem_mod || '',
 
   ion: (hit) => hit._source.ion,
 
