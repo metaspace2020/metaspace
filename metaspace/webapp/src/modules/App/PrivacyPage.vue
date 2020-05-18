@@ -1,7 +1,7 @@
 <template>
   <div class="sm-content-page">
     <h1>Privacy and Personal Data</h1>
-    <h2>Privacy Policy</h2>
+    <h2>Privacy policy</h2>
     <p>
       We do our best to balance the interests of individual users with delivering a useful resource for the wider
       imaging mass spectrometry community. If you have any concerns or feedback about our terms of use or privacy

@@ -5,8 +5,6 @@ import AboutPage from './modules/App/AboutPage.vue'
 import DatasetsPage from './modules/Datasets/DatasetsPage.vue'
 import { DialogPage, ResetPasswordPage } from './modules/Account'
 import { redirectAfterSignIn } from './modules/Account/signInReturnUrl'
-import PrivacyPage from './modules/App/PrivacyPage.vue'
-import TermsPage from './modules/App/TermsPage.vue'
 
 Vue.use(VueRouter)
 
@@ -25,6 +23,8 @@ const asyncPagesFreelyTyped = {
   ProjectsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Project/ProjectsListPage.vue'),
   SystemHealthPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Admin/SystemHealthPage.vue'),
   GroupsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Admin/GroupsListPage.vue'),
+  PrivacyPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/App/PrivacyPage.vue'),
+  TermsPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/App/TermsPage.vue'),
 
   // These pages use sanitizeHtml, which is big
   ViewGroupPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle2" */ './modules/GroupProfile/ViewGroupPage.vue'),
@@ -79,8 +79,8 @@ const router = new VueRouter({
     },
     { path: '/projects', component: asyncPages.ProjectsListPage },
 
-    { path: '/terms', component: TermsPage, meta: { footer: true } },
-    { path: '/privacy', component: PrivacyPage, meta: { footer: true } },
+    { path: '/terms', component: asyncPages.TermsPage, meta: { footer: true } },
+    { path: '/privacy', component: asyncPages.PrivacyPage, meta: { footer: true } },
   ],
   scrollBehavior(to, from, savedPosition) {
     return savedPosition || { x: 0, y: 0 }
