@@ -44,60 +44,63 @@ e.g. if a function the PR depends on is renamed after the PR branches from maste
 # Choose a deployment strategy
 
 Select one of the following based on whether the new code is compatible with the existing data. 
-We should not have more than 1 minute of downtime without at least a visible message.  
+We should not have more than 1 minute of downtime without at least a visible message.
+
+Copy these checklists into a new task if desired, or if any customization of the process is needed.
 
 #### In-place deployment
 
 If there are no significant changes to ElasticSearch or Postgres:
 
-1. Let the #metaspace_dev slack channel know you're starting deployment.
-2. Run [the Ansible web deployment](README.md).
-3. Let the #metaspace_dev slack channel know that deployment was successful.
+- [ ] Let the #metaspace_dev slack channel know you're starting deployment.
+- [ ] Run [the Ansible web deployment](README.md).
+- [ ] Let the #metaspace_dev slack channel know that deployment was successful.
 
 #### Deployment followed by ElasticSearch update
 
 If there are new fields in ElasticSearch, but it's ok for them to be populated over the course of several days:
 
-1. Let the #metaspace_dev slack channel know you're starting deployment.
-2. Run [the Ansible web deployment](README.md).
-3. Run an [ElasticSearch incremental update](#es-update).
-4. Let the #metaspace_dev slack channel know that deployment was successful once the ElasticSearch update is running. 
+- [ ] Let the #metaspace_dev slack channel know you're starting deployment.
+- [ ] Run [the Ansible web deployment](README.md).
+- [ ] Run an [ElasticSearch incremental update](#es-update).
+- [ ] Let the #metaspace_dev slack channel know that deployment was successful once the ElasticSearch update is running. 
 
 #### ElasticSearch reindex before deployment
 
 If there are new fields in ElasticSearch that are necessary for the new code:
 
-1. Check out the new code into a temp directory on the server.
-2. Create an inactive ElasticSearch index.
-3. Use the new code to reindex into the inactive index. This can take multiple days.
-4. Turn off dataset processing in https://metaspace2020.eu/admin/health 
-5. Run a partial ElasticSearch update in the inactive index for any datasets that were created while indexing. 
+- [ ] Check out the new code into a temp directory on the server.
+- [ ] Create an inactive ElasticSearch index.
+- [ ] Use the new code to reindex into the inactive index. This can take multiple days.
+- [ ] Turn off dataset processing in https://metaspace2020.eu/admin/health 
+- [ ] Run a partial ElasticSearch update in the inactive index for any datasets that were created while indexing. 
     This is just to prevent users from wondering "Where is my data?" for recently submitted datasets.
-6. Let the #metaspace_dev slack channel know you're starting deployment.
-7. Swap the inactive index with the active index.
-8. Deploy the new code. 
-9. Turn dataset reprocessing back on.
-10. Run a full incremental update just in case an old dataset was updated and its changes weren't
+- [ ] Let the #metaspace_dev slack channel know you're starting deployment.
+- [ ] Swap the inactive index with the active index.
+- [ ] Deploy the new code. 
+- [ ] Turn dataset reprocessing back on.
+- [ ] Run a full incremental update just in case an old dataset was updated and its changes weren't
     propagated to the new ElasticSearch index.
-11. Let the #metaspace_dev slack channel know that deployment was successful once the ElasticSearch update is running.
-12. Delete the old index (now the inactive index).
+- [ ] Let the #metaspace_dev slack channel know that deployment was successful once the ElasticSearch update is running.
+- [ ] Delete the old index (now the inactive index).
+- [ ] Delete the temp directory containing the new code.
 
 #### Fork the VM, update, then swap to the new VM
 
 If there are DB or infrastructure changes that require substantial downtime.
 
-1. Let the #metaspace_dev slack channel know you're starting deployment.
-2. Turn METASPACE to read-only mode in https://metaspace2020.eu/admin/health 
-3. Use AWS to snapshot the EC2 instance, then create a new instance from the snapshot.
+- [ ] Let the #metaspace_dev slack channel know you're starting deployment.
+- [ ] Turn METASPACE to read-only mode in https://metaspace2020.eu/admin/health 
+- [ ] Use AWS to snapshot the EC2 instance, then create a new instance from the snapshot.
     * Copy all the properties from the previous instance, and make sure Termination Protection is turned on.
-4. Update your Ansible `/env/prod/hosts` file to link to the IP address of the new instance.
-5. Deploy to the new VM and apply the migrations.
-6. Swap the Elastic IP address for metaspace2020.eu to point to the new VM.
-7. Confirm everything is working on the new instance, then turn off read-only mode.
-8. Shut down the old instance. 
-9. Let the #metaspace_dev slack channel know that deployment was successful once the ElasticSearch update is running.
-10. Terminate the old instance once you're happy that the migration has succeeded. 
-11. Revert your ansible `/env/prod/hosts` change, as the new instance now has the old instance's public IP address.
+- [ ] Update your Ansible `/env/prod/hosts` file to link to the IP address of the new instance.
+- [ ] Deploy to the new VM and apply the migrations.
+- [ ] Swap the Elastic IP address for metaspace2020.eu to point to the new VM.
+- [ ] Confirm everything is working on the new instance, then turn off read-only mode.
+- [ ] Shut down the old instance. 
+- [ ] Let the #metaspace_dev slack channel know that deployment was successful once the ElasticSearch update is running.
+- [ ] Terminate the old instance once you're happy that the migration has succeeded. 
+- [ ] Revert your ansible `/env/prod/hosts` change, as the new instance now has the old instance's public IP address.
 
 
 # ElasticSearch Commands
