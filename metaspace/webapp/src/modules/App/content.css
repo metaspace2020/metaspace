@@ -1,0 +1,33 @@
+.sm-content-page {
+  @apply py-21 px-14 max-w-measure-3 mx-auto leading-7 text-lg -mt-2;
+}
+
+.sm-content-page * {
+  margin: 0;
+}
+
+.sm-content-page > * + *,
+.sm-content-page li + li {
+  @apply mt-7;
+}
+
+.sm-content-page h1,
+.sm-content-page h2 {
+  @apply font-display;
+}
+
+.sm-content-page h1 {
+  @apply text-5xl leading-14;
+}
+
+.sm-content-page h2 {
+  @apply mt-14 text-3xl leading-7;
+}
+
+.sm-content-page ul {
+  @apply p-0;
+}
+
+.sm-content-page b {
+  @apply font-medium;
+}

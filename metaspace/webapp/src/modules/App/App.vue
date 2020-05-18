@@ -9,8 +9,7 @@
     -->
     <router-view :key="$route.path" />
 
-    <!--metaspace-footer>
-    </metaspace-footer-->
+    <metaspace-footer v-if="$route.meta.footer" />
 
     <dialog-controller />
     <!--<release-notes-dialog />-->
@@ -26,6 +25,7 @@
 <script>
 import * as cookie from 'js-cookie'
 import MetaspaceHeader from './MetaspaceHeader.vue'
+import MetaspaceFooter from './MetaspaceFooter.vue'
 // import ReleaseNotesDialog from './ReleaseNotesDialog.vue';
 import NewFeaturePopup from './NewFeaturePopup.vue'
 import TourStep from './TourStep.vue'
@@ -39,6 +39,7 @@ export default {
   name: 'App',
   components: {
     MetaspaceHeader,
+    MetaspaceFooter,
     // ReleaseNotesDialog,
     NewFeaturePopup,
     TourStep,
@@ -71,6 +72,9 @@ export default {
         cookie.remove('flashMessage')
       }
     }
+  },
+  updated() {
+    console.log(this.$route)
   },
 }
 </script>

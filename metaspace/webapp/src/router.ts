@@ -5,8 +5,8 @@ import AboutPage from './modules/App/AboutPage.vue'
 import DatasetsPage from './modules/Datasets/DatasetsPage.vue'
 import { DialogPage, ResetPasswordPage } from './modules/Account'
 import { redirectAfterSignIn } from './modules/Account/signInReturnUrl'
-import PrivacyPage from './modules/App/PrivacyPage'
-import TermsPage from './modules/App/TermsPage'
+import PrivacyPage from './modules/App/PrivacyPage.vue'
+import TermsPage from './modules/App/TermsPage.vue'
 
 Vue.use(VueRouter)
 
@@ -43,8 +43,8 @@ convertLegacyHashUrls()
 const router = new VueRouter({
   mode: 'history',
   routes: [
-    { path: '/', component: AboutPage },
-    { path: '/about', component: AboutPage },
+    { path: '/', component: AboutPage, meta: { footer: true } },
+    { path: '/about', component: AboutPage, meta: { footer: true } },
     { path: '/annotations', component: asyncPages.AnnotationsPage },
     {
       path: '/datasets',
@@ -57,7 +57,7 @@ const router = new VueRouter({
     { path: '/datasets/edit/:dataset_id', name: 'edit-metadata', component: asyncPages.MetadataEditPage },
     { path: '/datasets/:dataset_id/add-optical-image', name: 'add-optical-image', component: asyncPages.ImageAlignmentPage },
     { path: '/upload', component: asyncPages.UploadPage },
-    { path: '/help', component: asyncPages.HelpPage },
+    { path: '/help', component: asyncPages.HelpPage, meta: { footer: true } },
     { path: '/user/me', component: asyncPages.EditUserPage },
 
     { path: '/admin/health', component: asyncPages.SystemHealthPage },
@@ -79,8 +79,8 @@ const router = new VueRouter({
     },
     { path: '/projects', component: asyncPages.ProjectsListPage },
 
-    { path: '/terms', component: TermsPage },
-    { path: '/privacy', component: PrivacyPage },
+    { path: '/terms', component: TermsPage, meta: { footer: true } },
+    { path: '/privacy', component: PrivacyPage, meta: { footer: true } },
   ],
   scrollBehavior(to, from, savedPosition) {
     return savedPosition || { x: 0, y: 0 }

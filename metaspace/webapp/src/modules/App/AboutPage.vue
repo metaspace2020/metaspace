@@ -1,12 +1,12 @@
 <template>
   <div class="text-lg proportional-nums leading-7">
-    <div class="bg-primary overflow-hidden w-full -mt-2 pb-7 sm-banner-gradient">
-      <div class="box-border font-display py-14 mx-auto max-w-4xl flex items-center">
+    <div class="bg-primary overflow-hidden w-full -mt-2">
+      <div class="box-border font-display pt-14 pb-28 mx-auto max-w-4xl flex items-center">
         <img
           src="../../assets/METASPACE_logomark.png"
-          class="hidden md:block w-77 h-77 -ml-14 p-3.5 box-border"
+          class="hidden md:block w-77 h-77 -ml-7 lg:-ml-14 p-3.5 box-border"
         >
-        <div class="text-white box-border ml-7 h-77">
+        <div class="text-white box-border ml-6 h-77">
           <h1 class="m-0 md:mt-28 flex flex-col items-start">
             <metaspace class="w-auto md:h-21 py-1.75 box-border" />
           </h1>
@@ -176,23 +176,6 @@
         </p>
       </section>
     </div>
-    <footer class="bg-gray-100 sm-about-footer">
-      <div class="max-w-4xl mx-auto p-14 box-border text-gray-700 text-base text-center">
-        <p class="flex justify-center m-0 font-medium">
-          <router-link to="/privacy">
-            Privacy
-          </router-link>
-          <router-link to="/terms">
-            Terms
-          </router-link>
-          <a href="mailto:contact@metaspace2020.eu">Contact us</a>
-          <a href="https://twitter.com/metaspace2020">Follow us on Twitter</a>
-        </p>
-        <p class="m-0 mt-7">
-          &copy; 2020 Alexandrov Team
-        </p>
-      </div>
-    </footer>
     <el-dialog
       width="600px"
       custom-class="mailing-list-dialog"
@@ -362,11 +345,6 @@ export default class AboutPage extends Vue {
     text-decoration: none;
     cursor: help;
     border-bottom: 1px dashed currentColor;
-  }
-
-  #about + footer a {
-    @apply mx-7;
-    color: inherit;
   }
 
   .mailing-list-dialog .el-dialog__body {
