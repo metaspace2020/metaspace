@@ -127,6 +127,15 @@ python -m scripts.manage_es_index --inactive drop
 
 ## Reindexing
 
+NOTE: The default SSH configuration will lose connection to the server after a period of idleness. 
+This can cause these long-running jobs to be terminated. It's a good idea to run all of these commands from 
+within a `tmux` shell, so that they continue running after a disconnection, and can be re-opened after reconnection.
+
+[Tmux Cheat Sheet](https://tmuxcheatsheet.com/)
+
+If you enter "copy mode" by scrolling or selecting text, make sure to exit copy mode afterwards, 
+because the running process will be stalled during copy mode. 
+
 #### <a name="es-update"></a>Full in-place update
 
 This will update the existing documents in-place.
