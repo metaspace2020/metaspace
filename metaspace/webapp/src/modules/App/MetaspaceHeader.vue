@@ -458,7 +458,7 @@ export default MetaspaceHeader
  }
 
  .alert {
-   position: fixed;
+   position: absolute;
    top: $header-height;
    left: 0;
    right: 0;
@@ -466,6 +466,7 @@ export default MetaspaceHeader
    z-index: 1000;
 
    .el-alert {
+     @apply bg-blue-900 text-white;
      border-radius: 0;
      height: $alert-height;
      justify-content: center;
