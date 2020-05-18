@@ -50,14 +50,18 @@ We should not have more than 1 minute of downtime without at least a visible mes
 
 If there are no significant changes to ElasticSearch or Postgres:
 
-1. Run [the Ansible web deployment](README.md).
+1. Let the #metaspace_dev slack channel know you're starting deployment.
+2. Run [the Ansible web deployment](README.md).
+3. Let the #metaspace_dev slack channel know that deployment was successful.
 
 #### Deployment followed by ElasticSearch update
 
 If there are new fields in ElasticSearch, but it's ok for them to be populated over the course of several days:
 
-1. Run [the Ansible web deployment](README.md).
-2. Run an [ElasticSearch incremental update](#es-update).
+1. Let the #metaspace_dev slack channel know you're starting deployment.
+2. Run [the Ansible web deployment](README.md).
+3. Run an [ElasticSearch incremental update](#es-update).
+4. Let the #metaspace_dev slack channel know that deployment was successful once the ElasticSearch update is running. 
 
 #### ElasticSearch reindex before deployment
 
@@ -69,27 +73,31 @@ If there are new fields in ElasticSearch that are necessary for the new code:
 4. Turn off dataset processing in https://metaspace2020.eu/admin/health 
 5. Run a partial ElasticSearch update in the inactive index for any datasets that were created while indexing. 
     This is just to prevent users from wondering "Where is my data?" for recently submitted datasets.
-5. Swap the inactive index with the active index.
-6. Deploy the new code. 
-7. Turn dataset reprocessing back on
-8. Run a full incremental update just in case an old dataset was updated and its changes weren't
+6. Let the #metaspace_dev slack channel know you're starting deployment.
+7. Swap the inactive index with the active index.
+8. Deploy the new code. 
+9. Turn dataset reprocessing back on.
+10. Run a full incremental update just in case an old dataset was updated and its changes weren't
     propagated to the new ElasticSearch index.
-9. Delete the old index (now the inactive index)  
+11. Let the #metaspace_dev slack channel know that deployment was successful once the ElasticSearch update is running.
+12. Delete the old index (now the inactive index).
 
 #### Fork the VM, update, then swap to the new VM
 
 If there are DB or infrastructure changes that require substantial downtime.
 
-1. Turn METASPACE to full read-only mode on https://metaspace2020.eu/admin/health 
-2. Use AWS to snapshot the EC2 instance, then create a new instance from the snapshot.
-    * Copy all the properties from the previous instance, and make sure Termination Protection is turned off
-3. Update your Ansible `/env/prod/hosts` file to link to the IP address of the new instance.
-4. Deploy to the new VM and apply the migrations.
-5. Swap the Elastic IP address for metaspace2020.eu to point to the new VM.
-6. Confirm everything is working on the new instance, then turn off read-only mode.
-7. Shut down the old instance. 
-8. Terminate the old instance once you're happy that the migration has succeeded. 
-9. Revert your ansible `/env/prod/hosts` change, as the new instance now has the old instance's public IP address
+1. Let the #metaspace_dev slack channel know you're starting deployment.
+2. Turn METASPACE to read-only mode in https://metaspace2020.eu/admin/health 
+3. Use AWS to snapshot the EC2 instance, then create a new instance from the snapshot.
+    * Copy all the properties from the previous instance, and make sure Termination Protection is turned on.
+4. Update your Ansible `/env/prod/hosts` file to link to the IP address of the new instance.
+5. Deploy to the new VM and apply the migrations.
+6. Swap the Elastic IP address for metaspace2020.eu to point to the new VM.
+7. Confirm everything is working on the new instance, then turn off read-only mode.
+8. Shut down the old instance. 
+9. Let the #metaspace_dev slack channel know that deployment was successful once the ElasticSearch update is running.
+10. Terminate the old instance once you're happy that the migration has succeeded. 
+11. Revert your ansible `/env/prod/hosts` change, as the new instance now has the old instance's public IP address.
 
 
 # ElasticSearch Commands
