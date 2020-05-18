@@ -81,12 +81,16 @@ If there are new fields in ElasticSearch that are necessary for the new code:
 If there are DB or infrastructure changes that require substantial downtime.
 
 1. Turn METASPACE to full read-only mode on https://metaspace2020.eu/admin/health 
-2. Use AWS to snapshot the VM, then create a new VM from the snapshot.
-3. Update your Ansible `/env/prod/hosts` file to link to the IP address of the new VM.
+2. Use AWS to snapshot the EC2 instance, then create a new instance from the snapshot.
+    * Copy all the properties from the previous instance, and make sure Termination Protection is turned off
+3. Update your Ansible `/env/prod/hosts` file to link to the IP address of the new instance.
 4. Deploy to the new VM and apply the migrations.
-5. Swap the Elastic IP address for metaspace2020.eu to the new VM's IP address.
-6. Confirm everything is working and that the IP address change has propagated to your local computer, then turn off read-only mode.
-7. Leave the old VM running (in read-only mode) for ~1 hour to account for slow DNS propagation 
+5. Swap the Elastic IP address for metaspace2020.eu to point to the new VM.
+6. Confirm everything is working on the new instance, then turn off read-only mode.
+7. Shut down the old instance. 
+8. Terminate the old instance once you're happy that the migration has succeeded. 
+9. Revert your ansible `/env/prod/hosts` change, as the new instance now has the old instance's public IP address
+
 
 # ElasticSearch Commands
 
