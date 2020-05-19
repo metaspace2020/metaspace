@@ -83,6 +83,9 @@ const router = new VueRouter({
     { path: '/privacy', component: asyncPages.PrivacyPage, meta: { footer: true } },
   ],
   scrollBehavior(to, from, savedPosition) {
+    if (to.hash) {
+      return { selector: to.hash, offset: { x: 0, y: 64 } } // offset header height
+    }
     return savedPosition || { x: 0, y: 0 }
   },
 })

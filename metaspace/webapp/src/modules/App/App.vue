@@ -19,6 +19,7 @@
       :tour="$store.state.currentTour"
     />
     <new-feature-popup v-if="features.new_feature_popups && $store.state.currentTour == null" />
+    <cookie-banner />
   </div>
 </template>
 
@@ -33,6 +34,7 @@ import { DialogController } from '../Account'
 import config from '../../lib/config'
 import Vue, { ComponentOptions } from 'vue'
 import 'element-ui' // Needed for Vue.$alert augmentation
+import CookieBanner from './CookieBanner'
 
 /** @type {ComponentOptions<Vue> & Vue} */
 export default {
@@ -44,6 +46,7 @@ export default {
     NewFeaturePopup,
     TourStep,
     DialogController,
+    CookieBanner,
   },
   data() {
     return {

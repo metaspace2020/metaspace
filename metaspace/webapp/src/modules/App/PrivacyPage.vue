@@ -116,7 +116,9 @@
         dpo@embl.org<!-- -->
       </a>.
     </p>
-    <h2>Cookies</h2>
+    <h2 id="cookies">
+      Cookies
+    </h2>
     <p>
       To enrich and perfect your online experience, METASPACE uses "Cookies", similar technologies and services provided
       by others to display personalized content, appropriate advertising and store your preferences on your computer.

@@ -21,7 +21,7 @@
 }
 
 .sm-content-page h2 {
-  @apply mt-14 text-3xl leading-7;
+  @apply mt-7 pt-7 text-3xl leading-7; /* padding is for anchor links */
 }
 
 .sm-content-page ul {

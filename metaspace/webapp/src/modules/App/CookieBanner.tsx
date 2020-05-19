@@ -1,0 +1,32 @@
+import { createComponent, reactive } from '@vue/composition-api'
+
+import cookiejar from './cookies'
+
+const cookie = 'cookiebanner-accepted'
+
+export default createComponent({
+  setup() {
+    const state = reactive({
+      agreed: cookiejar.has(cookie),
+    })
+
+    const agree = () => {
+      cookiejar.set({ key: cookie })
+      state.agreed = true
+    }
+
+    return () => (
+      state.agreed
+        ? null
+        : <div class="fixed bottom-0 left-0 right-0 bg-body text-white leading-7 text-sm" style="z-index: 999">
+          <button class="button-reset float-right cursor-pointer px-2 text-blue-100" onClick={agree}>
+            &#128473;
+          </button>
+          <p class="m-0 text-center px-2">
+            We use cookies to enhance your experience. By continuing to visit this site you agree to our use of cookies.
+            {' '}<router-link to="/privacy#cookies" class="text-blue-300">Learn more</router-link>
+          </p>
+        </div>
+    )
+  },
+})
