@@ -1,5 +1,5 @@
 .sm-content-page {
-  @apply py-21 px-14 max-w-measure-3 mx-auto leading-7 text-lg -mt-2;
+  @apply py-21 px-14 max-w-measure-3 mx-auto leading-7 text-lg;
 }
 
 .sm-content-page * {

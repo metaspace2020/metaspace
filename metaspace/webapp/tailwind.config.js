@@ -52,6 +52,9 @@ module.exports = {
       borderColor: {
         danger: defaults.theme.colors.red[700],
       },
+      backgroundColor: {
+        'primary-alpha': 'hsla(208, 87%, 50%, 87%)',
+      },
       inset: {
         '1/2': '50%',
       },

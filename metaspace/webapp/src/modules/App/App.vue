@@ -7,7 +7,10 @@
       This ensures that a loading screen is displayed and no unnecessary state is retained when e.g. switching
       between group profile pages or datasets
     -->
-    <router-view :key="$route.path" />
+    <router-view
+      :key="$route.path"
+      class="sm-main-content"
+    />
 
     <metaspace-footer v-if="$route.meta.footer" />
 
@@ -75,9 +78,6 @@ export default {
         cookie.remove('flashMessage')
       }
     }
-  },
-  updated() {
-    console.log(this.$route)
   },
 }
 </script>
@@ -177,5 +177,10 @@ export default {
   .el-loading-mask {
     /* otherwise filter dropdowns are behind it */
     z-index: 2000;
+  }
+
+  .sm-main-content {
+    margin-top: 64px;
+    padding-top: 10px;
   }
 </style>

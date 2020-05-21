@@ -102,7 +102,8 @@ export default {
 
 <style>
   #annot-page {
-    padding: 0 5px;
+    padding-left: 5px;
+    padding-right: 5px;
   }
 
   #annot-table-container {

@@ -1,10 +1,9 @@
 <template>
-  <div>
+  <div class="fixed top-0 left-0 right-0 sm-header">
     <div
-      class="spacer"
-      :class="{ 'spacer--with-alert': healthMessage }"
-    />
-    <div class="b-header">
+      class="transition-colors duration-300 ease-in-out h-16 flex items-center justify-between"
+      :class="{ 'bg-primary': scrolled === false, 'bg-primary-alpha': scrolled === true }"
+    >
       <div class="header-items">
         <router-link
           to="/"
@@ -263,7 +262,16 @@ const MetaspaceHeader = {
       currentUser: null,
       systemHealth: null,
       openSubmenu: null,
+      scrolled: false,
     }
+  },
+
+  mounted() {
+    window.addEventListener('scroll', this.scrollListener, { captive: true, passive: true })
+  },
+
+  beforeDestroy() {
+    window.removeEventListener('scroll', this.scrollListener)
   },
 
   apollo: {
@@ -398,6 +406,14 @@ const MetaspaceHeader = {
         this.openSubmenu = null
       }
     },
+
+    scrollListener() {
+      if (window.scrollY > 0 && this.scrolled === true
+      || window.scrollY === 0 && this.scrolled === false) {
+        return
+      }
+      this.scrolled = window.scrollY > 0
+    },
   },
 }
 
@@ -407,69 +423,50 @@ export default MetaspaceHeader
 <style lang="scss" scoped>
   $header-height: 64px;
   $alert-height: 36px;
-  $space: 8px;
 
- .b-header {
-   background-color: hsla(208, 87%, 50%, 0.87);
-   position: fixed;
-   // z-index should be higher than v-loading's .el-loading-mask (z-index: 2000) so that loading spinners
-   // don't overlap the header, but can't be higher than v-tooltip's initial z-index (2001)
-   z-index: 2001;
-   top: 0;
-   left: 0;
-   right: 0;
-   display: flex;
-   align-items: center;
-   justify-content: space-between;
-   height: $header-height;
- }
+  .sm-header {
+    // z-index should be higher than v-loading's .el-loading-mask (z-index: 2000) so that loading spinners
+    // don't overlap the header, but can't be higher than v-tooltip's initial z-index (2001)
+    z-index: 2001;
+  }
 
- .spacer {
-   @apply bg-primary mb-2;
-   height: $header-height;
- }
+  .header-items {
+    display: flex;
+    align-items: center;
+    height: 100%;
+  }
 
- .spacer--with-alert {
-   height: $header-height + $alert-height;
- }
+  .limit-width {
+    max-width: 250px;
+    overflow-wrap: break-word;
+    text-align: center;
+    overflow: hidden;
+    line-height: 1.2em;
+    max-height: 2.4em;
+  }
+  @media (max-width: 1279px) {
+    .limit-width {
+      max-width: 150px;
+    }
+  }
 
- .header-items {
-   display: flex;
-   align-items: center;
-   height: 100%;
- }
+  #email-link-container {
+    display: inline-flex;
+  }
 
- .limit-width {
-   max-width: 250px;
-   overflow-wrap: break-word;
-   text-align: center;
-   overflow: hidden;
-   line-height: 1.2em;
-   max-height: 2.4em;
- }
- @media (max-width: 1279px) {
-   .limit-width {
-     max-width: 150px;
-   }
- }
+  .alert {
+    position: absolute;
+    top: $header-height;
+    left: 0;
+    right: 0;
+    border-radius: 0;
+    z-index: 1000;
 
- #email-link-container {
-   display: inline-flex;
- }
-
- .alert {
-   position: absolute;
-   top: $header-height;
-   left: 0;
-   right: 0;
-   border-radius: 0;
-   z-index: 1000;
-
-   .el-alert {
-     @apply bg-blue-900 text-white;
-     border-radius: 0;
-     height: $alert-height;
-     justify-content: center;
-   }
- }
+    .el-alert {
+      @apply bg-blue-900 text-white;
+      border-radius: 0;
+      height: $alert-height;
+      justify-content: center;
+    }
+  }
 </style>

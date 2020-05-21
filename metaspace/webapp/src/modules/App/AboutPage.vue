@@ -1,6 +1,6 @@
 <template>
   <div class="text-lg proportional-nums leading-7">
-    <div class="bg-primary overflow-hidden w-full -mt-2">
+    <div class="bg-primary overflow-hidden w-full pt-16">
       <div class="box-border font-display pt-14 pb-28 mx-auto max-w-4xl flex items-center">
         <img
           src="../../assets/METASPACE_logomark.png"
@@ -267,6 +267,12 @@ export default class AboutPage extends Vue {
 }
 </script>
 
+<style scoped>
+  .sm-main-content {
+    @apply mt-0 pt-0;
+  }
+</style>
+
 <style>
   .sm-banner-gradient {
     background-image: linear-gradient(
@@ -278,7 +284,6 @@ export default class AboutPage extends Vue {
     );
   }
 
-  /* #about h2, */
   #about h3 {
     @apply font-display font-medium leading-14 text-3xl m-0;
   }
