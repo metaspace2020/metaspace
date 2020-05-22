@@ -4,13 +4,13 @@
       <div class="box-border font-display pt-12 pb-24 mx-auto max-w-4xl flex items-center">
         <img
           src="../../assets/METASPACE_logomark.png"
-          class="hidden md:block w-66 h-66 -ml-6 lg:-ml-12 p-3 box-border"
+          class="hidden md:block w-66 h-66 -ml-3 lg:-ml-6 p-3 box-border"
         >
-        <div class="text-white box-border ml-6 h-66">
+        <div class="text-white box-border ml-4 h-66">
           <h1 class="m-0 md:mt-24 flex flex-col items-start">
-            <metaspace class="w-auto md:h-18 box-border" />
+            <metaspace class="w-auto md:h-18 box-border py-1" />
           </h1>
-          <p class="text-2xl leading-7 m-0 pt-4">
+          <p class="text-2xl leading-7 m-0 pt-3">
             The platform for metabolite annotation
             <br>
             of imaging mass spectrometry data
@@ -20,7 +20,7 @@
     </div>
     <div
       id="about"
-      class="p-12 mx-auto box-border max-w-4xl"
+      class="py-12 px-18 mx-auto box-border max-w-4xl"
     >
       <section class="sm-about-features">
         <h2 class="sr-only">
@@ -34,8 +34,7 @@
               Submit<!--
               -->
             </router-link>
-            your high-resolution imaging mass spectrometry data to our high-throughput metabolite annotation engine,
-            no installation required.
+            your high-resolution imaging mass spectrometry data to our high-throughput metabolite annotation engine.
           </p>
         </div>
         <div>
@@ -67,8 +66,8 @@
           <p>
             The <a
               href="http://imzml.org/"
-            >imzML input format</a> is an open standard supported by all major mass spectrometer vendors.
-            All code is open-source, available on <a href="https://github.com/metaspace2020">Github</a>.
+            >imzML input format</a> is an open standard supported by all major mass spectrometer vendors,
+            and all code is <a href="https://github.com/metaspace2020">open-source</a>.
           </p>
         </div>
       </section>
@@ -303,7 +302,7 @@ export default class AboutPage extends Vue {
   }
 
   #about .sm-about-features svg {
-    @apply block rounded-full bg-blue-100 w-10 h-10 p-2 box-border my-1;
+    @apply block rounded-full bg-blue-100 w-10 h-10 p-2 box-border mb-2;
   }
 
   @screen md {
@@ -315,7 +314,7 @@ export default class AboutPage extends Vue {
       width: calc(50% - theme('spacing.12'))
     }
     #about .sm-about-features p {
-      @apply mb-0 max-w-measure-1;
+      @apply mb-0;
     }
   }
 
