@@ -35,7 +35,7 @@
               -->
             </router-link>
             your high-resolution imaging mass spectrometry data to our high-throughput metabolite annotation engine,
-            no command line required.
+            no installation required.
           </p>
         </div>
         <div>
@@ -277,16 +277,6 @@ export default class AboutPage extends Vue {
 </style>
 
 <style>
-  .sm-banner-gradient {
-    background-image: linear-gradient(
-      to right,
-      theme('colors.primary'),
-      theme('colors.primary'),
-      theme('colors.primary'),
-      theme('colors.blue.300')
-    );
-  }
-
   #about h3 {
     @apply font-display font-medium leading-6 text-2xl py-3 m-0;
   }

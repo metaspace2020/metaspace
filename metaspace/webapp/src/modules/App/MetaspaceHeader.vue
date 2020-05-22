@@ -1,5 +1,8 @@
 <template>
-  <div class="fixed top-0 left-0 right-0 sm-header">
+  <div
+    class="fixed top-0 left-0 right-0 sm-header"
+    :class="{ 'sm-header--with-alert': healthMessage }"
+  >
     <div
       class="transition-colors duration-300 ease-in-out h-16 flex items-center justify-between"
       :class="{ 'bg-primary': scrolled === false, 'bg-primary-alpha': scrolled === true }"
@@ -113,7 +116,7 @@
             >
               <div
                 v-if="menuIsOpen"
-                class="origin-top-right absolute right-0 top-1/2 mt-6 w-40 rounded-md shadow-lg"
+                class="origin-top-right absolute right-0 top-1/2 mt-6 w-40 rounded-md shadow-lg z-10"
               >
                 <div
                   class="py-1 rounded-md bg-white shadow-xs text-sm"
@@ -148,7 +151,8 @@
     </div>
     <el-row
       v-if="healthMessage"
-      class="alert"
+      class="alert transition-colors duration-300 ease-in-out"
+      :class="{ 'bg-blue-700': scrolled === false, 'bg-blue-700-alpha': scrolled === true }"
     >
       <el-alert
         show-icon
@@ -420,53 +424,59 @@ const MetaspaceHeader = {
 export default MetaspaceHeader
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
   $header-height: 64px;
-  $alert-height: 36px;
+  $alert-height: 32px;
 
   .sm-header {
     // z-index should be higher than v-loading's .el-loading-mask (z-index: 2000) so that loading spinners
     // don't overlap the header, but can't be higher than v-tooltip's initial z-index (2001)
     z-index: 2001;
-  }
 
-  .header-items {
-    display: flex;
-    align-items: center;
-    height: 100%;
-  }
+    .header-items {
+      display: flex;
+      align-items: center;
+      height: 100%;
+    }
 
-  .limit-width {
-    max-width: 250px;
-    overflow-wrap: break-word;
-    text-align: center;
-    overflow: hidden;
-    line-height: 1.2em;
-    max-height: 2.4em;
-  }
-  @media (max-width: 1279px) {
     .limit-width {
-      max-width: 150px;
+      max-width: 250px;
+      overflow-wrap: break-word;
+      text-align: center;
+      overflow: hidden;
+      line-height: 1.2em;
+      max-height: 2.4em;
     }
-  }
+    @media (max-width: 1279px) {
+      .limit-width {
+        max-width: 150px;
+      }
+    }
 
-  #email-link-container {
-    display: inline-flex;
-  }
+    #email-link-container {
+      display: inline-flex;
+    }
 
-  .alert {
-    position: absolute;
-    top: $header-height;
-    left: 0;
-    right: 0;
-    border-radius: 0;
-    z-index: 1000;
-
-    .el-alert {
-      @apply bg-blue-900 text-white;
+    .alert {
       border-radius: 0;
-      height: $alert-height;
-      justify-content: center;
+
+      .el-alert {
+        @apply text-white;
+        border-radius: 0;
+        height: $alert-height;
+        justify-content: center;
+        background: inherit;
+        z-index: 0;
+      }
     }
   }
+
+  .sm-header + * {
+    margin-top: $header-height
+  }
+
+  .sm-header--with-alert + * {
+    margin-top: $header-height + $alert-height
+  }
+
 </style>

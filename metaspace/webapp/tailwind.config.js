@@ -54,6 +54,7 @@ module.exports = {
       },
       backgroundColor: {
         'primary-alpha': 'hsla(208, 87%, 50%, 87%)',
+        'blue-700-alpha': 'hsla(208, 76%, 39%, 75%)',
       },
       inset: {
         '1/2': '50%',

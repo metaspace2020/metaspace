@@ -83,7 +83,6 @@ export default {
 </script>
 
 <style>
-
   @font-face {
     /* Roboto doesn't contain superscript glyphs, and the fallback is OS-dependent. OSX's fallback, Helvetica,
      looks bad for the superscript + and - characters in formatted ion formulas, because it's too small to read. */
@@ -138,49 +137,12 @@ export default {
     font: inherit;
   }
 
-  .warning {
-    position: fixed;
-    z-index: 1000;
-    top: 62px;
-    left: 0;
-    right: 0;
-    height: 28px;
-    text-align: center;
-    background-color: #fd8;
-  }
-
-  #signin-div {
-    position: fixed;
-    align-self: center;
-    display: none;
-    top: 18px;
-    font-size: 18px;
-    right: 81px;
-    color: white;
-    z-index: 1000;
-  }
-
-  .signin-button, .signout-button {
-    position: fixed;
-    cursor: pointer;
-    z-index: 1000;
-    top: 11px;
-    right: 11px;
-    font-size: 18px;
-    color: rgb(0, 105, 224);
-    background-color: #f8f8f8;
-    border-radius: 5px;
-    padding: 5px;
-    text-decoration: none;
-  }
-
   .el-loading-mask {
     /* otherwise filter dropdowns are behind it */
     z-index: 2000;
   }
 
   .sm-main-content {
-    margin-top: 64px;
     padding-top: 10px;
   }
 </style>
