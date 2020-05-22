@@ -1,14 +1,14 @@
 .sm-content-page {
-  @apply py-21 px-14 max-w-measure-3 mx-auto leading-7 text-lg;
+  @apply py-18 px-12 max-w-measure-3 mx-auto leading-6 text-base;
 }
 
 .sm-content-page * {
   margin: 0;
 }
 
-.sm-content-page > * + *,
+.sm-content-page > *:not(h1):not(h2) + *,
 .sm-content-page li + li {
-  @apply mt-7;
+  @apply mt-6;
 }
 
 .sm-content-page h1,
@@ -17,11 +17,11 @@
 }
 
 .sm-content-page h1 {
-  @apply text-5xl leading-14;
+  @apply text-4xl leading-12;
 }
 
 .sm-content-page h2 {
-  @apply mt-7 pt-7 text-3xl leading-7; /* padding is for anchor links */
+  @apply text-2xl leading-6 pb-3 pt-9; /* top padding is for anchor links */
 }
 
 .sm-content-page ul {
@@ -30,4 +30,12 @@
 
 .sm-content-page b {
   @apply font-medium;
+}
+
+.sm-content-page table {
+  @apply border-collapse text-sm leading-5;
+}
+
+.sm-content-page td {
+  @apply p-0 py-1 align-top;
 }

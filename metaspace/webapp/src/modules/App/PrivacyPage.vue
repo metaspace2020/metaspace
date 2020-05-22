@@ -159,7 +159,7 @@
       </a>:&nbsp;
     </p>
     <table>
-      <tbody class="align-top text-base leading-6">
+      <tbody>
         <tr>
           <td>
             <span>ga</span>,
@@ -246,8 +246,7 @@ export default {
 <style src="./content.css" />
 <style scoped>
   td {
-    @apply py-1;
-    min-height: theme('spacing.12');
+    min-height: theme('spacing.18');
   }
   td:first-child span {
     @apply bg-gray-100 px-1 rounded-sm leading-normal;

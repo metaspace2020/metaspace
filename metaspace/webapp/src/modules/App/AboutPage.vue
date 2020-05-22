@@ -1,16 +1,16 @@
 <template>
-  <div class="text-lg proportional-nums leading-7">
+  <div class="text-base proportional-nums leading-6">
     <div class="bg-primary overflow-hidden w-full pt-16">
-      <div class="box-border font-display pt-14 pb-28 mx-auto max-w-4xl flex items-center">
+      <div class="box-border font-display pt-12 pb-24 mx-auto max-w-4xl flex items-center">
         <img
           src="../../assets/METASPACE_logomark.png"
-          class="hidden md:block w-77 h-77 -ml-7 lg:-ml-14 p-3.5 box-border"
+          class="hidden md:block w-66 h-66 -ml-6 lg:-ml-12 p-3 box-border"
         >
-        <div class="text-white box-border ml-6 h-77">
-          <h1 class="m-0 md:mt-28 flex flex-col items-start">
-            <metaspace class="w-auto md:h-21 py-1.75 box-border" />
+        <div class="text-white box-border ml-6 h-66">
+          <h1 class="m-0 md:mt-24 flex flex-col items-start">
+            <metaspace class="w-auto md:h-18 box-border" />
           </h1>
-          <p class="text-3xl leading-8.75 m-0 pt-3.5">
+          <p class="text-2xl leading-7 m-0 pt-4">
             The platform for metabolite annotation
             <br>
             of imaging mass spectrometry data
@@ -20,7 +20,7 @@
     </div>
     <div
       id="about"
-      class="p-14 mx-auto box-border max-w-4xl"
+      class="p-12 mx-auto box-border max-w-4xl"
     >
       <section class="sm-about-features">
         <h2 class="sr-only">
@@ -34,7 +34,8 @@
               Submit<!--
               -->
             </router-link>
-            your high-resolution imaging mass spectrometry data to our high-throughput metabolite annotation engine.
+            your high-resolution imaging mass spectrometry data to our high-throughput metabolite annotation engine,
+            no command line required.
           </p>
         </div>
         <div>
@@ -44,7 +45,8 @@
             <router-link to="/annotations">
               Browse<!--
               -->
-            </router-link> annotations from all datasets using our interactive interface. Search and compare your annotations with those from the community.
+            </router-link> annotations from all datasets using our interactive interface. Search and compare your
+            annotations with those from the community.
           </p>
         </div>
         <div>
@@ -54,23 +56,24 @@
             Head to the <router-link to="/upload">
               upload<!--
               -->
-            </router-link> page to submit a dataset. Try our <router-link to="/help">
+            </router-link> page to submit a dataset, or try our <router-link to="/help">
               interactive tutorials<!-- -->
-            </router-link> if it is your first time and you would like to get up to speed.
+            </router-link> if it is your first visit and you would like to get up to speed.
           </p>
         </div>
         <div>
           <unlock-icon />
           <h3>Open access</h3>
           <p>
-            All code is <a href="https://github.com/metaspace2020">open-source</a> and the <a
+            The <a
               href="http://imzml.org/"
-            >imzML input format</a> is open and supported by all major mass spectrometer vendors.
+            >imzML input format</a> is an open standard supported by all major mass spectrometer vendors.
+            All code is open-source, available on <a href="https://github.com/metaspace2020">Github</a>.
           </p>
         </div>
       </section>
-      <section class="sm-about-details max-w-measure-4 mt-14">
-        <h2 class="font-display text-primary leading-14 m-0 text-lg uppercase tracking-wide">
+      <section class="sm-about-details max-w-measure-4 mt-12">
+        <h2 class="font-display text-primary leading-12 m-0 text-base uppercase tracking-wide">
           Frequently asked questions
         </h2>
         <h3>What is the METASPACE platform?</h3>
@@ -285,11 +288,11 @@ export default class AboutPage extends Vue {
   }
 
   #about h3 {
-    @apply font-display font-medium leading-14 text-3xl m-0;
+    @apply font-display font-medium leading-6 text-2xl py-3 m-0;
   }
 
   #about p {
-    @apply m-0 mb-7;
+    @apply m-0 mb-6;
   }
 
   #about ul {
@@ -310,24 +313,24 @@ export default class AboutPage extends Vue {
   }
 
   #about .sm-about-features svg {
-    @apply block rounded-full bg-blue-100 w-12 h-12 p-2 box-border mb-2;
-  }
-
-  #about .sm-about-details h3:not(:first-of-type) {
-    @apply mt-14;
+    @apply block rounded-full bg-blue-100 w-10 h-10 p-2 box-border my-1;
   }
 
   @screen md {
     #about .sm-about-features {
-      @apply -mx-3.5 -my-7 flex flex-wrap;
+      @apply -mx-6 -my-6 flex flex-wrap;
     }
     #about .sm-about-features > div {
-      @apply mx-3.5 my-7;
-      width: calc(50% - theme('spacing.7'))
+      @apply mx-6 my-6;
+      width: calc(50% - theme('spacing.12'))
     }
     #about .sm-about-features p {
-      margin-bottom: 0;
+      @apply mb-0 max-w-measure-1;
     }
+  }
+
+  #about .sm-about-details h3:not(:first-of-type) {
+    @apply mt-12;
   }
 
   #about .sm-about-funding {
@@ -335,15 +338,15 @@ export default class AboutPage extends Vue {
   }
 
   #about .sm-about-funding li {
-    @apply flex mb-7;
+    @apply flex mb-6 h-12;
   }
 
   #about .sm-about-funding img {
-    @apply w-21 h-14 object-contain object-left mr-7;
+    @apply w-18 h-12 object-contain object-left mr-6;
   }
 
   #about .sm-about-funding b {
-    @apply font-medium text-xl;
+    @apply font-medium text-lg;
   }
 
   #about .sm-about-funding abbr[title] {

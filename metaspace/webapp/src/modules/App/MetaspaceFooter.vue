@@ -1,6 +1,6 @@
 <template>
   <footer class="bg-gray-100">
-    <div class="leading-7 max-w-4xl mx-auto p-14 box-border text-gray-700 text-base text-center">
+    <div class="leading-6 max-w-4xl mx-auto px-12 py-18 box-border text-gray-700 text-base text-center">
       <p class="flex justify-center m-0 font-medium">
         <router-link to="/privacy">
           Privacy
@@ -12,7 +12,7 @@
         <a href="mailto:contact@metaspace2020.eu">Contact us</a>
         <a href="https://twitter.com/metaspace2020">Follow on Twitter</a>
       </p>
-      <p class="m-0 mt-7 text-sm">
+      <p class="m-0 mt-9 text-sm">
         &copy; 2014&ndash;2020 <a href="https://www.embl.de/research/units/scb/alexandrov/">Alexandrov Team</a>
       </p>
     </div>
@@ -30,6 +30,6 @@ export default {
     color: inherit;
   }
   .flex > a {
-    @apply mx-7
+    @apply mx-6
   }
 </style>
