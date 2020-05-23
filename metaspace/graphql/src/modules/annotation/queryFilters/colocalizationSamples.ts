@@ -8,7 +8,7 @@ import {setOrMerge} from '../../../utils/setOrMerge';
 const getColocSampleIons = async (context: Context, datasetId: string, fdrLevel: number, databaseId: number | null,
                                   colocalizationAlgo: string) => {
   const result = await context.entityManager.findOne(ColocJob,
-    { datasetId, fdr: fdrLevel, molDb: databaseId ? databaseId.toString() : null, algorithm: colocalizationAlgo },
+    { datasetId, fdr: fdrLevel, molDb: databaseId != null ? databaseId.toString() : null, algorithm: colocalizationAlgo },
     { select: ['sampleIonIds'] });
   if (result == null) {
     return null;
