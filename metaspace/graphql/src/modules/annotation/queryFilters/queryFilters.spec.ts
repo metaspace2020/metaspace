@@ -14,6 +14,7 @@ import {DeepPartial} from 'typeorm';
 import {ESAnnotationWithColoc} from './index';
 import {QueryFilterArgs} from './types';
 import * as moment from 'moment';
+import {MolecularDB} from "../../moldb/model";
 
 describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
   beforeAll(onBeforeAll);
@@ -37,9 +38,12 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
     })));
     await testEntityManager.insert(Ion, ions);
 
+    const database = testEntityManager.create(MolecularDB, {name: 'HMDB-v4', version: "version"});
+    await testEntityManager.insert(MolecularDB, database);
+
     job = testEntityManager.create(ColocJob, {
       datasetId: 'datasetId',
-      molDb: 'HMDB-v4',
+      molDb: database.id.toString(),
       fdr: 0.1,
       algorithm: 'cosine',
       sampleIonIds: [ions[1].id, ions[2].id],
@@ -61,7 +65,7 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
     const argsWithColocWith: QueryFilterArgs = {
       datasetFilter: { ids: job.datasetId },
       filter: {
-        database: job.molDb!,
+        databaseId: Number(job.molDb!),
         fdrLevel: job.fdr,
         colocalizedWith: ions[1].ion,
         colocalizationAlgo: job.algorithm,
@@ -84,7 +88,7 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
     const argsWithColocWith: QueryFilterArgs = {
       datasetFilter: { ids: job.datasetId },
       filter: {
-        database: job.molDb!,
+        databaseId: Number(job.molDb!),
         fdrLevel: job.fdr,
         colocalizationSamples: true,
         colocalizationAlgo: job.algorithm,
@@ -105,7 +109,7 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
     const argsWithColocWith: QueryFilterArgs = {
       datasetFilter: { ids: job.datasetId },
       filter: {
-        database: job.molDb!,
+        databaseId: Number(job.molDb!),
         fdrLevel: job.fdr,
         colocalizedWith: ions[1].ion,
         colocalizationAlgo: job.algorithm,
@@ -127,8 +131,8 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
       {_source: ionAnnotations[2], _isColocReference: false},
       {_source: ionAnnotations[3], _isColocReference: false},
     ]);
-    expect(await result[0].getColocalizationCoeff(ions[1].ion, job.algorithm, job.molDb!, job.fdr)).toEqual(1);
-    expect(await result[1].getColocalizationCoeff(ions[1].ion, job.algorithm, job.molDb!, job.fdr)).toEqual(0.9);
-    expect(await result[2].getColocalizationCoeff(ions[1].ion, job.algorithm, job.molDb!, job.fdr)).toEqual(0.7);
+    expect(await result[0].getColocalizationCoeff(ions[1].ion, job.algorithm, Number(job.molDb!), job.fdr)).toEqual(1);
+    expect(await result[1].getColocalizationCoeff(ions[1].ion, job.algorithm, Number(job.molDb!), job.fdr)).toEqual(0.9);
+    expect(await result[2].getColocalizationCoeff(ions[1].ion, job.algorithm, Number(job.molDb!), job.fdr)).toEqual(0.7);
   });
 });

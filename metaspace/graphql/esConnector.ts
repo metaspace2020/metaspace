@@ -63,7 +63,7 @@ export interface Isobar {
 export interface ESAnnotationSource extends ESDatasetSource {
   job_id: number;
 
-  db_id: string;
+  db_id: number;
   db_name: string;
   db_version: any;
 
@@ -229,7 +229,7 @@ interface ExtraAnnotationFilters {
 }
 function constructAnnotationFilters(filter: AnnotationFilter & ExtraAnnotationFilters) {
   const {
-    database, datasetName, mzFilter, msmScoreFilter, fdrLevel,
+    databaseId, datasetName, mzFilter, msmScoreFilter, fdrLevel,
     sumFormula, chemMod, neutralLoss, adduct, ion, ionFormula, offSample, compoundQuery, annId,
     isobaricWith, hasNeutralLoss, hasChemMod, hasHiddenAdduct
   } = filter;
@@ -249,8 +249,8 @@ function constructAnnotationFilters(filter: AnnotationFilter & ExtraAnnotationFi
 
   if (annId)
     filters.push({term: { _id: annId }});
-  if (database)
-    filters.push({term: {db_id: database}});
+  if (databaseId)
+    filters.push({term: {db_id: databaseId}});
   if (sumFormula)
     filters.push({term: {formula: sumFormula}});
   if (chemMod != null)

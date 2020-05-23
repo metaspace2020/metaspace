@@ -1,6 +1,4 @@
-import * as _ from 'lodash';
 import fetch from 'node-fetch';
-import logger from '../../../utils/logger';
 import {FieldResolversFor} from '../../../bindingTypes';
 import {Annotation, ColocalizationCoeffFilter} from '../../../binding';
 import {ESAnnotation} from '../../../../esConnector';
@@ -160,12 +158,19 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
       }));
   },
 
-  async colocalizationCoeff(hit, args: {colocalizationCoeffFilter: ColocalizationCoeffFilter | null}, context) {
+  async colocalizationCoeff(hit, args: {colocalizationCoeffFilter: ColocalizationCoeffFilter | null}, ctx) {
     // Actual implementation is in src/modules/annotation/queryFilters.ts
     if ('getColocalizationCoeff' in hit && args.colocalizationCoeffFilter != null) {
-      const {colocalizedWith, colocalizationAlgo, database, fdrLevel} = args.colocalizationCoeffFilter;
-      return await hit.getColocalizationCoeff(colocalizedWith, colocalizationAlgo || config.metadataLookups.defaultColocalizationAlgo,
-        database || config.defaults.moldb_names[0], fdrLevel);
+      const {colocalizedWith, colocalizationAlgo, databaseId, fdrLevel} = args.colocalizationCoeffFilter;
+      const defaultDatabase = await ctx.entityManager.findOneOrFail(
+        MolecularDbModel, {'name': config.defaults.moldb_names[0]}
+      );
+      return await hit.getColocalizationCoeff(
+        colocalizedWith,
+        colocalizationAlgo || config.metadataLookups.defaultColocalizationAlgo,
+        databaseId || defaultDatabase.id,
+          fdrLevel
+      );
     } else {
       return null;
     }

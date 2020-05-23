@@ -4,6 +4,7 @@ import {applyColocalizationSamplesFilter} from './colocalizationSamples';
 import {applyColocalizedWithFilter} from './colocalizedWith';
 import * as _ from 'lodash';
 import {applyHasAnnotationMatchingFilter} from './hasAnnotationMatching';
+import {mapDatabaseToDatabaseId} from "../util/mapDatabaseToDatabaseId";
 
 export {ESAnnotationWithColoc} from './types';
 
@@ -25,6 +26,11 @@ const queryFilters = [
 export const applyQueryFilters = async (context: Context, args: QueryFilterArgs): Promise<QueryFilterResult> => {
   let newArgs = args;
   let postprocessFuncs: PostProcessFunc[] = [];
+
+  await mapDatabaseToDatabaseId(context.entityManager, newArgs.filter);
+  if (newArgs.datasetFilter) {
+    await mapDatabaseToDatabaseId(context.entityManager, newArgs.datasetFilter.hasAnnotationMatching);
+  }
 
   for (const filter of queryFilters) {
     const result = await filter(context, newArgs);

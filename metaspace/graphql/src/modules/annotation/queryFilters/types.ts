@@ -30,6 +30,6 @@ export interface ESAnnotationWithColoc extends ESAnnotation {
   _isColocReference: boolean;
 
   getColocalizationCoeff(_colocalizedWith: string, _colocalizationAlgo: string,
-                         _database: string, _fdrLevel: number): Promise<number | null>;
+                         _databaseId: number, _fdrLevel: number): Promise<number | null>;
 }
 
