@@ -5,6 +5,9 @@ import {ESAnnotation} from '../../../../esConnector';
 import config from '../../../utils/config';
 import {ESAnnotationWithColoc} from '../queryFilters';
 import {AllHtmlEntities} from 'html-entities';
+import {getMolecularDbModel} from '../../moldb/util/getMolecularDbModel';
+import {MolecularDB as MolecularDbModel} from '../../moldb/model';
+import {mapToMolecularDB} from '../../moldb/util/mapToMolecularDB';
 
 const cleanMoleculeName = (name: string) =>
   // Decode &alpha; &beta; &gamma; etc.
@@ -76,9 +79,13 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
 
   ion: (hit) => hit._source.ion,
 
-  ionFormula: (hit) => hit._source.ion_formula || '', // TODO: Remove " || ''" after prod has been migrated
+  ionFormula: (hit) => hit._source.ion_formula || '', // TODO: Remove ' || ''' after prod has been migrated
 
-  database: (hit) => hit._source.db_id,
+  databaseId: (hit) => hit._source.db_id,
+
+  database2: async (hit, _, ctx) => mapToMolecularDB(await getMolecularDbModel(ctx, hit._source.db_id)),
+
+  database: async (hit, _, ctx) => (await getMolecularDbModel(ctx, hit._source.db_id)).name,
 
   mz: (hit) => parseFloat(hit._source.centroid_mzs[0] as any),
 
