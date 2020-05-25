@@ -120,14 +120,6 @@ export default {
 </script>
 
 <style>
-  .sm-content-page.sm-help {
-    @apply max-w-4xl box-border;
-  }
-
-  .sm-help p {
-    @apply max-w-measure-3;
-  }
-
   .sm-help-items {
     @apply flex flex-wrap justify-center -mx-3;
   }

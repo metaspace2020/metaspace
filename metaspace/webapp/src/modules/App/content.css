@@ -1,5 +1,5 @@
 .sm-content-page {
-  @apply py-18 px-12 max-w-measure-3 mx-auto leading-6 text-base;
+  @apply p-18 max-w-4xl box-border mx-auto leading-6 text-base;
 }
 
 .sm-content-page > * {
@@ -11,17 +11,12 @@
   @apply mt-6;
 }
 
-.sm-content-page h1,
-.sm-content-page h2 {
-  @apply font-display;
-}
-
 .sm-content-page h1 {
-  @apply text-4xl leading-12;
+  @apply text-4xl leading-12 font-display;
 }
 
 .sm-content-page h2 {
-  @apply text-2xl leading-6 pb-3 pt-9; /* top padding is for anchor links */
+  @apply text-2xl leading-6 font-display pb-3 pt-9; /* top padding is for anchor links */
 }
 
 .sm-content-page h3 {
@@ -33,7 +28,7 @@
 }
 
 .sm-content-page p {
-  @apply my-0;
+  @apply my-0 max-w-measure-4;
 }
 
 .sm-content-page b {
@@ -41,9 +36,19 @@
 }
 
 .sm-content-page table {
-  @apply border-collapse text-sm leading-5;
+  @apply border-collapse;
 }
 
 .sm-content-page td {
-  @apply p-0 py-1 align-top;
+  @apply p-0 align-top;
+}
+
+.sm-content-page tr + tr > td {
+  @apply pt-6;
+}
+
+.sm-content-page code {
+  @apply bg-gray-100 px-1 rounded-sm leading-normal;
+  display: inline-block;
+  font-family: monospace;
 }

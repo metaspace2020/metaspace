@@ -122,7 +122,11 @@ export default {
   }
 
   h1, h2 {
-    font-weight: 500;
+    @apply font-medium;
+  }
+
+  h1 {
+    @apply tracking-tight;
   }
 
   a {

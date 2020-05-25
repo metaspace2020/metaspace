@@ -162,13 +162,14 @@
       <tbody>
         <tr>
           <td>
-            <span>ga</span>,
-            <span>gat</span>,
-            <span>_gid</span>,
-            <span>IDE</span>
+            <code>ga</code>,
+            <code>gat</code>,
+            <code>_gid</code>,
+            <code>IDE</code>
           </td>
           <td>
             Used by Google Analytics to distinguish visitors to the site.
+            <br>
             <a
               href="https://developers.google.com/analytics/devguides/collection/analyticsjs/cookie-usage#analyticsjs"
               rel="noopener noreferrer nofollow"
@@ -179,15 +180,15 @@
         </tr>
         <tr>
           <td>
-            <span>api.sid</span>
+            <code>api.sid</code>
           </td>
           <td>
-            Session id for associating your browser with your current login state
+            Session id for associating your browser to your current login state
           </td>
         </tr>
         <tr>
           <td>
-            <span>cookiebanner-accepted</span>
+            <code>cookiebanner-accepted</code>
           </td>
           <td>
             Stores whether the cookie informational notice has been dismissed
@@ -195,15 +196,17 @@
         </tr>
         <tr>
           <td>
-            <span>_cfduid</span>,
-            <span>bizflagsA</span>,
-            <span>biznA</span>,
-            <span>bizpendingA</span>,
-            <span>bizsid</span>,
-            <span>biz_uid</span>
+            <code>_cfduid</code>,
+            <code>bizflagsA</code>,
+            <code>biznA</code>,
+            <code>bizpendingA</code>,
+            <code>bizsid</code>,
+            <code>biz_uid</code>
           </td>
           <td>
-            Used by the CloudFlare content delivery network to identify users. <a
+            Used by the CloudFlare content delivery network to identify users.
+            <br>
+            <a
               href="https://www.cloudflare.com/cookie-policy/"
               rel="noopener noreferrer nofollow"
             >
@@ -245,12 +248,7 @@ export default {
 </script>
 <style src="./content.css" />
 <style scoped>
-  td {
-    min-height: theme('spacing.18');
-  }
-  td:first-child span {
-    @apply bg-gray-100 px-1 rounded-sm leading-normal;
-    display: inline-block;
-    font-family: monospace;
+  td:first-child {
+    @apply w-4/12;
   }
 </style>
