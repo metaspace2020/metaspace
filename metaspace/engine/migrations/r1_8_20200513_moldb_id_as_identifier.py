@@ -61,7 +61,7 @@ def update_es_docs(doc_type, search_terms, update_values):
 
 
 # _type: annotation
-# fields: ds_mol_dbs, ds_config.databases, db_id
+# fields: ds_moldb_ids, ds_config.databases, db_id
 def update_es_annotation(ds_doc, moldb_name_id_map_rev):
     ds_id = ds_doc['id']
     moldb_ids = ds_doc['config']['databases']
@@ -73,7 +73,7 @@ def update_es_annotation(ds_doc, moldb_name_id_map_rev):
             doc_type='annotation',
             search_terms={'ds_id': ds_id, 'db_name': moldb_name},
             update_values={
-                'ds_mol_dbs': moldb_ids,
+                'ds_moldb_ids': moldb_ids,
                 'ds_config.databases': moldb_ids,
                 'db_id': moldb_id,
             },
@@ -81,7 +81,7 @@ def update_es_annotation(ds_doc, moldb_name_id_map_rev):
 
 
 # _type: dataset
-# fields: ds_config.databases, ds_mol_dbs, annotation_counts.db.id
+# fields: ds_config.databases, ds_moldb_ids, annotation_counts.db.id
 def update_es_dataset(ds_doc, moldb_name_id_map):
     ds_id = ds_doc['id']
     moldb_ids = ds_doc['config']['databases']
@@ -98,7 +98,7 @@ def update_es_dataset(ds_doc, moldb_name_id_map):
         doc_type='dataset',
         search_terms={'ds_id': ds_id},
         update_values={
-            'ds_mol_dbs': moldb_ids,
+            'ds_moldb_ids': moldb_ids,
             'ds_config.databases': moldb_ids,
             'annotation_counts': annotation_counts,
         },

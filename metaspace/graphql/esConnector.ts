@@ -37,7 +37,7 @@ export interface ESDatasetSource {
   ds_input_path: string;
   ds_ion_img_storage: ImageStorageType;
   ds_is_public: boolean;
-  ds_mol_dbs: string[];
+  ds_moldb_ids: number[];
   ds_adducts: string[];
   ds_neutral_losses: string[];
   ds_chem_mods: string[];

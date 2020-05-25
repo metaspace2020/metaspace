@@ -71,7 +71,7 @@ FROM (
     d.status_update_dt as ds_status_update_dt,
     to_char(max(job.finish), 'YYYY-MM-DD HH24:MI:SS') AS ds_last_finished,
     d.is_public AS ds_is_public,
-    d.config #> '{databases}' AS ds_mol_dbs,
+    d.config #> '{databases}' AS ds_moldb_ids,
     d.config #> '{isotope_generation,adducts}' AS ds_adducts,
     d.config #> '{isotope_generation,neutral_losses}' AS ds_neutral_losses,
     d.config #> '{isotope_generation,chem_mods}' AS ds_chem_mods,
@@ -148,7 +148,6 @@ class ESIndexManager:
                 "type": "keyword",
                 "fields": {"searchable": {"type": "text", "analyzer": "delimited_ds_names"}},
             },
-            "annotation_counts.db.version": {"type": "keyword"},
         }
         body = {
             "settings": {

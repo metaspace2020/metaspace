@@ -24,7 +24,8 @@ type Dataset {
   # https://github.com/metaspace2020/metaspace/tree/master/metaspace/metadata
   metadataJson: String!
   isPublic: Boolean!
-  molDBs: [String!]!
+  databaseIds: [Int!]!
+  molDBs: [String!]! @deprecated(reason: "Use \"databaseIds\" instead")
   adducts: [String!]!
   neutralLosses: [String!]!
   chemMods: [String!]!
@@ -56,6 +57,7 @@ type Dataset {
 }
 
 type FdrCounts {
+  databaseId: Int!
   dbName: String!
   levels: [Float!]!
   counts: [Float!]!
