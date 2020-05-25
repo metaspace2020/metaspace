@@ -82,6 +82,9 @@ module.exports = {
       lineHeight: {
         '12': '3rem', // 2 * 24px/1.5rem
       },
+      letterSpacing: {
+        'snug': '-0.0125em',
+      },
     }
   },
   variants: {

@@ -277,7 +277,7 @@ export default class AboutPage extends Vue {
 
 <style>
   #about h3 {
-    @apply font-display font-medium leading-6 text-2xl py-3 m-0;
+    @apply font-display font-medium leading-6 text-2xl tracking-snug py-3 m-0;
   }
 
   #about p {

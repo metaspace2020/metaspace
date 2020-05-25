@@ -129,6 +129,10 @@ export default {
     @apply tracking-tight;
   }
 
+  h2 {
+    @apply tracking-snug;
+  }
+
   a {
     @apply text-primary;
   }
