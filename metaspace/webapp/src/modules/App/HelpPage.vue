@@ -1,43 +1,37 @@
 <template>
-  <div class="sm-content-page sm-help">
+  <div class="sm-content-page">
     <h1>Help</h1>
-    <h2>Take a tour</h2>
+    <h2>Interactive tours</h2>
     <p>
-      Interactively learn to use features that may be hard to discover:
+      Learn to use features that may be hard to discover:
     </p>
-    <div class="sm-help-tours sm-help-items">
+    <div class="tours column-layout">
       <div>
-        <el-button
-          icon="el-icon-caret-right"
-          @click="intro"
-        >
-          Introduction
-        </el-button>
+        <h3>Introduction</h3>
         <p>
-          Just enough to get you started.
+          An overview with just enough to get you started.
         </p>
+        <tour-button @click="intro">
+          Take the tour
+        </tour-button>
       </div>
       <div>
-        <el-button
-          icon="el-icon-caret-right"
-          @click="filtering"
-        >
-          Filtering
-        </el-button>
+        <h3>Filtering</h3>
         <p>
-          Learn to steer through the sea of molecular annotations.
+          Navigate the sea of molecular annotations effectively.
         </p>
+        <tour-button @click="filtering">
+          Take the tour
+        </tour-button>
       </div>
       <div>
-        <el-button
-          icon="el-icon-caret-right"
-          @click="diagnostics"
-        >
-          Diagnostic plots
-        </el-button>
+        <h3>Diagnostic plots</h3>
         <p>
           Gain insight into how scores are assigned to molecular formulae.
         </p>
+        <tour-button @click="diagnostics">
+          Take the tour
+        </tour-button>
       </div>
     </div>
     <h2>Step-by-step tutorial</h2>
@@ -52,34 +46,39 @@
       <a href="https://docs.google.com/document/d/e/2PACX-1vTT4QrMQ2RJMjziscaU8S3gbznlv6Rm5ojwrsdAXPbR5bt7Ivp-ThkC0hefrk3ZdVqiyCX7VU_ddA62/pub">our instructions</a>
       for converting datasets into imzML centroided format. If you experience difficulties, contact your instrument vendor.
     </p>
-    <h2>Groups and projects</h2>
-    <p>Ways for you to share your data with others:</p>
-    <div class="sm-help-collaboration sm-help-items">
+    <h2>Collaboration</h2>
+    <p>Share your data with others in the following ways:</p>
+    <div
+      class="collaboration column-layout"
+    >
       <div>
+        <user-icon class="sm-colour-icon" />
         <h3>User</h3>
         <ul>
-          <li>Owner of their data</li>
+          <li>owner of their data</li>
           <li>can make their data public</li>
           <li>can edit metadata</li>
           <li>can delete their data</li>
         </ul>
       </div>
       <div>
+        <group-icon class="sm-colour-icon" />
         <h3>Group</h3>
         <ul>
-          <li>Users from same lab</li>
+          <li>users from same lab</li>
           <li>PI invites group members</li>
-          <li>Members trust each other</li>
-          <li>Members share private data</li>
+          <li>members trust each other</li>
+          <li>members share private data</li>
         </ul>
       </div>
       <div>
+        <work-icon class="sm-colour-icon" />
         <h3>Project</h3>
         <ul>
-          <li>Organise and share data</li>
-          <li>Project manager invites members</li>
-          <li>Members share private data</li>
-          <li>Projects can be linked to publications</li>
+          <li>organise and share data</li>
+          <li>manager invites members</li>
+          <li>members share private data</li>
+          <li>can be linked to a publication</li>
         </ul>
       </div>
     </div>
@@ -94,8 +93,14 @@
 
 <script>
 import './content.css'
+import '../../components/ColourIcon.css'
 
 import Vue from 'vue'
+
+import TourButton from './TourButton'
+import UserIcon from '../../assets/refactoring-ui/user.svg?inline'
+import GroupIcon from '../../assets/refactoring-ui/group.svg?inline'
+import WorkIcon from '../../assets/refactoring-ui/work.svg?inline'
 
 import introTour from '../../tours/intro.ts'
 import filteringTour from '../../tours/filtering.ts'
@@ -103,6 +108,12 @@ import diagnosticsTour from '../../tours/diagnostics.ts'
 
 export default {
   name: 'HelpPage',
+  components: {
+    TourButton,
+    UserIcon,
+    GroupIcon,
+    WorkIcon,
+  },
   methods: {
     intro() {
       this.$store.commit('startTour', introTour)
@@ -119,35 +130,30 @@ export default {
 }
 </script>
 
-<style>
-  .sm-help-items {
+<style scoped>
+  h3 {
+    @apply leading-12;
+  }
+
+  .column-layout {
     @apply flex flex-wrap justify-center -mx-3;
   }
 
-  .sm-help-items > * {
+  .column-layout > * {
     @apply mx-3;
-    width: calc(33% - theme('spacing.6'));
+    width: calc(33.333% - theme('spacing.6'));
   }
 
-  .sm-help-items li + li {
+  .column-layout li + li {
     margin-top: 0;
   }
 
-  .sm-help-tours .el-button {
-    @apply text-primary flex flex-row-reverse mb-3;
+  .tours,
+  .tours button {
+    @apply mt-3;
   }
 
-  .sm-help-tours .el-button span {
-    margin-left: 0;
-    margin-right: 8px;
-  }
-
-  .sm-help-collaboration li:first-child {
+  .collaboration li:first-child {
     @apply font-medium;
   }
-
-  .sm-help-collaboration h3 {
-    @apply mb-3;
-  }
-
 </style>

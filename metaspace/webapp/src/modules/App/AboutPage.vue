@@ -27,7 +27,7 @@
           Features
         </h2>
         <div>
-          <edit-icon />
+          <edit-icon class="sm-colour-icon" />
           <h3>Metabolite annotation</h3>
           <p>
             <router-link to="/upload">
@@ -38,7 +38,7 @@
           </p>
         </div>
         <div>
-          <book-icon />
+          <book-icon class="sm-colour-icon" />
           <h3>Explore the knowledgebase</h3>
           <p>
             <router-link to="/annotations">
@@ -49,7 +49,7 @@
           </p>
         </div>
         <div>
-          <bolt-icon />
+          <bolt-icon class="sm-colour-icon" />
           <h3>Get going fast</h3>
           <p>
             Head to the <router-link to="/upload">
@@ -61,7 +61,7 @@
           </p>
         </div>
         <div>
-          <unlock-icon />
+          <unlock-icon class="sm-colour-icon" />
           <h3>Open access</h3>
           <p>
             The <a
@@ -242,10 +242,10 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 
 import Metaspace from '../../assets/METASPACE.svg?inline'
-import EditIcon from '../../assets/icons/refactoring-ui-edit.svg?inline'
-import BookIcon from '../../assets/icons/refactoring-ui-book.svg?inline'
-import BoltIcon from '../../assets/icons/refactoring-ui-bolt.svg?inline'
-import UnlockIcon from '../../assets/icons/refactoring-ui-unlock.svg?inline'
+import EditIcon from '../../assets/refactoring-ui/edit.svg?inline'
+import BookIcon from '../../assets/refactoring-ui/book.svg?inline'
+import BoltIcon from '../../assets/refactoring-ui/bolt.svg?inline'
+import UnlockIcon from '../../assets/refactoring-ui/unlock.svg?inline'
 
 @Component({
   components: {
@@ -274,8 +274,9 @@ export default class AboutPage extends Vue {
     @apply mt-0 pt-0;
   }
 </style>
-
 <style>
+  @import "../../components/ColourIcon.css";
+
   #about h3 {
     @apply font-display font-medium leading-6 text-2xl tracking-snug py-3 m-0;
   }
@@ -291,18 +292,6 @@ export default class AboutPage extends Vue {
 
   #about strong {
     @apply font-medium;
-  }
-
-  #about svg .primary {
-    fill: theme('colors.blue.800');
-  }
-
-  #about svg .secondary {
-    fill: theme('colors.blue.300');
-  }
-
-  #about .sm-about-features svg {
-    @apply block rounded-full bg-blue-100 w-10 h-10 p-2 box-border mb-2;
   }
 
   @screen md {
