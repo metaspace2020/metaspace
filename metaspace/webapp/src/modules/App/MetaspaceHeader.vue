@@ -88,6 +88,7 @@
             class="relative flex py-2"
             @mouseenter="handleSubmenuEnter('user')"
             @mouseleave="handleSubmenuLeave('user')"
+            @click="handleSubmenuLeave('user')"
           >
             <header-link
               id="user-menu"
@@ -102,7 +103,7 @@
                 <notification-icon
                   v-if="pendingRequestMessage != null"
                   :tooltip="pendingRequestMessage"
-                  tooltip-placement="left"
+                  tooltip-placement="bottom"
                 />
               </div>
             </header-link>
@@ -123,18 +124,12 @@
                   role="menu"
                   aria-orientation="vertical"
                   aria-labelledby="user-menu"
-                  @click="handleSubmenuLeave('user')"
                 >
                   <router-link
                     to="/user/me"
                     class="no-underline block px-4 py-2 text-gray-700 hover:bg-gray-100 font-medium"
                   >
                     My account
-                    <notification-icon
-                      v-if="pendingRequestMessage != null"
-                      :tooltip="pendingRequestMessage"
-                      tooltip-placement="left"
-                    />
                   </router-link>
                   <button
                     class="button-reset w-full text-left block px-4 py-2 text-gray-700 hover:bg-gray-100"
