@@ -9,12 +9,17 @@
 
 .sm-workflow-step > * + *,
 .sm-workflow-step form > * + * {
-  margin: 0.75rem 0 0;
+  @apply m-0 mt-6;
 }
 
 .sm-workflow-header + *,
 .sm-workflow-step form > :first-child {
   margin: 0;
+}
+
+/* action buttons look better slightly closer to preceding element */
+.sm-workflow-step form > button:last-child {
+  @apply mt-5;
 }
 
 .sm-workflow-step > .sm-workflow-header {
