@@ -26,7 +26,7 @@ import {
 import {EngineDataset} from '../../engine/model';
 import {addExternalLink, removeExternalLink} from '../../project/ExternalLink';
 import {esDatasetByID} from '../../../../esConnector';
-import {MolecularDB} from "../../moldb/model";
+import {mapDatabaseToDatabaseId} from "../../moldb/util/mapDatabaseToDatabaseId";
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -79,24 +79,11 @@ function validateMetadata(metadata: MetadataNode) {
   }
 }
 
-async function molDBsExist(entityManager: EntityManager, molDBNames: string[]) {
-  const foundMolDBNames = (await entityManager.getRepository(MolecularDB)
-    .find({ where: { name: In(molDBNames) } }))
-    .map(moldb => moldb.name);
-
-  if (foundMolDBNames.length < molDBNames.length) {
-    const missingMolDBNames = molDBNames.map(name => !foundMolDBNames.includes(name));
-    throw new UserError(JSON.stringify({
-      'type': 'wrong_moldb_name',
-      'moldb_name': missingMolDBNames
-    }));
-  }
-}
-
 export function processingSettingsChanged(ds: EngineDataset, update: DatasetUpdateInput & {metadata: MetadataRoot}) {
   let newDB = false, procSettingsUpd = false, metaDiff = null;
-  if (update.molDBs)
+  if (update.databaseIds) {
     newDB = true;
+  }
 
   if (update.adducts || update.neutralLosses || update.chemMods
     || update.ppm || update.numPeaks || update.decoySampleSize
@@ -122,7 +109,7 @@ export function processingSettingsChanged(ds: EngineDataset, update: DatasetUpda
     }
   }
 
-  return {newDB: newDB, procSettingsUpd: procSettingsUpd, metaDiff: metaDiff}
+  return {newDB: newDB, procSettingsUpd: procSettingsUpd, metaDiff: metaDiff};
 }
 
 const isMemberOf = async (entityManager: EntityManager, userId: string, groupId: string) => {
@@ -212,40 +199,46 @@ type CreateDatasetArgs = {
   skipValidation?: boolean,  // Only used by reprocess
 };
 
-const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
-  const {input, priority, force, delFirst, skipValidation} = args;
-  const {user, entityManager, isAdmin, getUserIdOrFail} = ctx;
-  const datasetId = args.datasetId || newDatasetId();
-  const datasetIdWasSpecified = !!args.datasetId;
-  const userId = getUserIdOrFail();
+const setDatabaseIdsInInput = async (
+  entityManager: EntityManager, input: DatasetCreateInput | DatasetUpdateInput
+): Promise<void> => {
+  if (input.databaseIds == null && input.molDBs != null) {
+    input.databaseIds = await Promise.all(
+      (input.molDBs as string[]).map(async (database) => await mapDatabaseToDatabaseId(entityManager, database))
+    );
+  }
+};
 
-  logger.info(`Creating dataset '${datasetId}' by '${userId}' user ...`);
+const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
+  const {input, priority, force, delFirst, skipValidation} = args,
+    datasetId = args.datasetId || newDatasetId(),
+    datasetIdWasSpecified = args.datasetId != null;
+
+  logger.info(`Creating dataset '${datasetId}' by '${ctx.user.id}' user ...`);
   let dataset;
   if (datasetIdWasSpecified) {
-    dataset = await getDatasetForEditing(entityManager, user, datasetId);
+    dataset = await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId);
   } else {
-    assertCanCreateDataset(user);
+    assertCanCreateDataset(ctx.user);
   }
 
   const metadata = JSON.parse(input.metadataJson);
-  if (!skipValidation || !isAdmin) {
+  if (!skipValidation || !ctx.isAdmin) {
     validateMetadata(metadata);
   }
-  if (input.molDBs != null) {
-    // TODO: Many of the inputs are mistyped because of bugs in graphql-binding that should be reported and/or fixed
-    await molDBsExist(ctx.entityManager, input.molDBs as any || []);
-  }
 
-  const {submitterId, groupId, projectIds, principalInvestigator} = input;
-  const saveDSArgs = {
+  await setDatabaseIdsInInput(ctx.entityManager, input);
+
+  // Only admins can specify the submitterId
+  const submitterId = (ctx.isAdmin && input.submitterId) || (dataset && dataset.userId) || ctx.user.id;
+  const saveDsArgs = {
     datasetId,
-    // Only admins can specify the submitterId
-    submitterId: (isAdmin ? submitterId as (string | undefined) : null) || (dataset && dataset.userId) || userId,
-    groupId: groupId as (string | undefined),
-    projectIds: projectIds as string[],
-    principalInvestigator
+    submitterId: submitterId as string,
+    groupId: input.groupId as (string | undefined),
+    projectIds: input.projectIds as string[],
+    principalInvestigator: input.principalInvestigator
   };
-  await saveDataset(entityManager, saveDSArgs, !datasetIdWasSpecified);
+  await saveDataset(ctx.entityManager, saveDsArgs, !datasetIdWasSpecified);
 
   const url = `/v1/datasets/${datasetId}/add`;
   await smApiDatasetRequest(url, {
@@ -253,7 +246,7 @@ const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
     priority: priority,
     force: force,
     del_first: delFirst,
-    email: user!.email,
+    email: ctx.user.email,
   });
 
   logger.info(`Dataset '${datasetId}' was created`);
@@ -307,17 +300,19 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
       }
     }
 
+    await setDatabaseIdsInInput(ctx.entityManager, update);
+
     const engineDataset = await ctx.entityManager.findOneOrFail(EngineDataset, datasetId);
     const {newDB, procSettingsUpd} = await processingSettingsChanged(engineDataset, {...update, metadata});
     const reprocessingNeeded = newDB || procSettingsUpd;
 
-    const {submitterId, groupId, projectIds, principalInvestigator} = update;
+    const submitterId = (ctx.isAdmin && update.submitterId) || dataset.userId;
     const saveDatasetArgs = {
       datasetId,
-      submitterId: (ctx.isAdmin ? submitterId as (string | undefined) : null) || dataset.userId,
-      groupId: groupId as (string | undefined),
-      projectIds: projectIds as string[],
-      principalInvestigator
+      submitterId: submitterId as string,
+      groupId: update.groupId as (string | undefined),
+      projectIds: update.projectIds as string[],
+      principalInvestigator: update.principalInvestigator
     };
 
     let smAPIResp;

@@ -99,7 +99,7 @@ input NumericRange {
 
 input AnnotationFilter {
   databaseId: Int
-  database: String @deprecated(reason: "This field is deprecated and will be removed. Use databaseId instead.")
+  database: String @deprecated(reason: "This field will be removed. Use \"databaseId\" instead.")
   datasetName: String
   mzFilter: NumericRange
   msmScoreFilter: NumericRange
@@ -125,7 +125,7 @@ input ColocalizationCoeffFilter {
   colocalizedWith: String!
   colocalizationAlgo: String
   databaseId: Int
-  database: String @deprecated(reason: "This field is deprecated and will be removed. Use databaseId instead.")
+  database: String @deprecated(reason: "This field will be removed. Use \"databaseId\" instead.")
   fdrLevel: Float!
 }
 
