@@ -19,10 +19,6 @@
   @apply text-2xl leading-6 font-display pb-3 pt-9; /* top padding is for anchor links */
 }
 
-.sm-content-page h3 {
-  @apply text-lg leading-6 font-medium my-0;
-}
-
 .sm-content-page ul {
   @apply p-0 my-0;
 }

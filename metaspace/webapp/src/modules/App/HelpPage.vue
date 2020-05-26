@@ -132,7 +132,7 @@ export default {
 
 <style scoped>
   h3 {
-    @apply leading-12;
+    @apply text-lg leading-9 font-medium my-0;
   }
 
   .column-layout {
@@ -148,7 +148,6 @@ export default {
     margin-top: 0;
   }
 
-  .tours,
   .tours button {
     @apply mt-3;
   }
