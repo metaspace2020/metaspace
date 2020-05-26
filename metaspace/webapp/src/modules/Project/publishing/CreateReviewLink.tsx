@@ -82,13 +82,13 @@ const CreateReviewLink = createComponent<Props>({
             <p class="italic">Creating a review link will prevent certain actions:</p>
             <ul class="italic p-0 list-disc">
               <li>
-                The project cannot be deleted
+                the project cannot be deleted
               </li>
               <li>
-                Datasets in the project cannot be deleted
+                datasets cannot be removed from the project
               </li>
               <li>
-                Datasets in the project cannot be removed
+                datasets in the project cannot be deleted
               </li>
             </ul>
             <p class="italic">These actions can be restored by removing the link.</p>
