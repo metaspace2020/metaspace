@@ -3,15 +3,16 @@
     <div
       v-if="tour"
       ref="container"
-      class="ts-container"
+      class="ts-container bg-white shadow-md text-inherit text-sm leading-5 p-4 rounded w-full box-border max-w-md border-solid border-gray-100"
     >
       <div class="bubble-container">
-        <el-progress
-          :percentage="100 * (stepNum + 1) / tour.steps.length"
-          :stroke-width="10"
-          :show-text="false"
-          style="width: 350px;"
-        />
+        <div class="h-5 pb-1 pr-8">
+          <el-progress
+            :percentage="100 * (stepNum + 1) / tour.steps.length"
+            :stroke-width="10"
+            :show-text="false"
+          />
+        </div>
 
         <div class="bubble-content">
           <h3
@@ -30,6 +31,7 @@
         <div class="ts-actions">
           <el-button
             v-if="stepNum > 0"
+            :key="step.title"
             size="small"
             @click.native="prevStep"
           >
@@ -37,6 +39,7 @@
           </el-button>
 
           <el-button
+            :key="step.title"
             size="small"
             type="primary"
             @click.native="nextStep"
@@ -45,11 +48,16 @@
           </el-button>
         </div>
 
-        <i
-          class="el-icon-error ts-close"
-          title="Close"
+        <button
+          class="button-reset ts-close"
+          title="Exit tour"
           @click="close"
-        />
+        >
+          &#128473;
+          <!-- <i
+            class="el-icon-close"
+          /> -->
+        </button>
       </div>
 
       <div
@@ -192,98 +200,112 @@ export default {
 
 <style lang="scss">
 
- .ts-actions {
-   display: flex;
-   justify-content: flex-end;
- }
+  .ts-actions {
+    @apply h-10 mt-5 flex justify-end items-center;
+  }
 
- $popper-background-color: rgba(250, 250, 250, 0.95);
- $popper-border-color: #ddddce;
- $popper-arrow-color: black;
+  $popper-arrow-color: theme('colors.gray.300');
+  $popper-arrow-size: 6px;
+  $border-width: 1px;
 
  .ts-container {
-   background: $popper-background-color;
-   color: black;
-   width: 400px;
-   padding: 10px;
-   border-radius: 3px;
-   z-index: 10100;
-   box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.1);
-   border: 2px solid $popper-border-color;
-   font-size: 14px;
+    z-index: 10100;
+    border-width: $border-width;
 
-   .ts-close {
-     position: absolute;
-     top: 8px;
-     right: 8px;
-     color: black;
-     background: transparent;
-     border: none;
+    .ts-close {
+      @apply h-6 w-6 p-1 leading-none flex items-center justify-center rounded-full text-gray-700;
+      position: absolute;
+      top: 9px; // hard coded to center it against progress bar
+      right: 12px;
+      background: transparent;
+      border: none;
+      font-size: 14px;
 
-     &:active,
-     &:focus {
-       outline: none;
-     }
-   }
+      &:active,
+      &:focus {
+        outline: none;
+      }
+
+      &:hover,
+      &:focus {
+        @apply bg-blue-100 text-blue-800;
+      }
+    }
 
    .popper__arrow {
      width: 0;
      height: 0;
      border-style: solid;
      position: absolute;
-     margin: 5px;
+     margin: $popper-arrow-size;
    }
 
    &[x-placement^="top"] {
-     margin-bottom: 5px;
+     margin-bottom: $popper-arrow-size;
 
      .popper__arrow {
-       border-width: 5px 5px 0 5px;
+       border-width: $popper-arrow-size $popper-arrow-size 0 $popper-arrow-size;
        border-color: $popper-arrow-color transparent transparent transparent;
-       bottom: -5px;
-       left: calc(50% - 5px);
+       bottom: -$popper-arrow-size - $border-width;
+       left: calc(50% - $popper-arrow-size);
        margin-top: 0;
        margin-bottom: 0;
      }
    }
 
    &[x-placement^="bottom"] {
-     margin-top: 5px;
+     margin-top: $popper-arrow-size;
 
      .popper__arrow {
-       border-width: 0 5px 5px 5px;
+       border-width: 0 $popper-arrow-size $popper-arrow-size $popper-arrow-size;
        border-color: transparent transparent $popper-arrow-color transparent;
-       top: -5px;
-       left: calc(50% - 5px);
+       top: -$popper-arrow-size - $border-width;
+       left: calc(50% - $popper-arrow-size);
        margin-top: 0;
        margin-bottom: 0;
      }
    }
 
    &[x-placement^="right"] {
-     margin-left: 5px;
+     margin-left: $popper-arrow-size;
 
      .popper__arrow {
-       border-width: 5px 5px 5px 0;
+       border-width: $popper-arrow-size $popper-arrow-size $popper-arrow-size 0;
        border-color: transparent $popper-arrow-color transparent transparent;
-       left: -5px;
-       top: calc(50% - 5px);
+       left: -$popper-arrow-size - $border-width;
+       top: calc(50% - $popper-arrow-size);
        margin-left: 0;
        margin-right: 0;
      }
    }
 
    &[x-placement^="left"] {
-     margin-right: 5px;
+     margin-right: $popper-arrow-size;
 
      .popper__arrow {
-       border-width: 5px 0 5px 5px;
+       border-width: $popper-arrow-size 0 $popper-arrow-size $popper-arrow-size;
        border-color: transparent transparent transparent $popper-arrow-color;
-       right: -5px;
-       top: calc(50% - 5px);
+       right: -$popper-arrow-size - $border-width;
+       top: calc(50% - $popper-arrow-size);
        margin-left: 0;
        margin-right: 0;
      }
    }
+
+    .ts-title {
+      @apply leading-10 m-0;
+    }
+
+    .ts-content {
+      > * {
+        margin: 0;
+      }
+      > * + * {
+        @apply mt-5;
+      }
+      ul {
+        @apply pl-4;
+      }
+    }
  }
 </style>
