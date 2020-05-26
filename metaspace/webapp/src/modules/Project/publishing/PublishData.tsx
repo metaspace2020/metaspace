@@ -61,7 +61,6 @@ const PublishData = createComponent({
             </Button>
           </form>
         }
-        {props.done && <p>The project and its datasets are now public, thank you for your contribution.</p>}
       </WorkflowStep>
     )
   },
