@@ -219,7 +219,7 @@ export default {
     text-decoration: none;
     white-space: nowrap;
     font-size: 1.2em;
-    color: $--color-text-regular;
+    color: inherit;
 
     .ion-formula {
       font-weight: bold;
@@ -230,6 +230,6 @@ export default {
   }
   .help-icon {
     font-size: 16px;
-    color: $--color-text-regular;
+    color: inherit;
   }
 </style>
