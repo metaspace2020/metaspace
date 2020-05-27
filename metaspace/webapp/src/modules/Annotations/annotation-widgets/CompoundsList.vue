@@ -121,7 +121,7 @@ export default {
   }
 
   .empty-message {
-    color: #909399;
+    @apply text-gray-600;
     text-align: center;
     padding: 100px 50px;
   }

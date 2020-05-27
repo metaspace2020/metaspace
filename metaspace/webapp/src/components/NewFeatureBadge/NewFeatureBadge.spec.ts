@@ -18,7 +18,7 @@ describe('NewFeatureBadge', () => {
   it('should hide the badge', async() => {
     const wrapper = mount(TestNewFeatureBadge, { propsData: { featureKey } })
     hideFeatureBadge(featureKey)
-    wrapper.vm.$forceUpdate() // hacking this for now, works IRL
+    await Vue.nextTick()
     expect(wrapper.classes()).toMatchSnapshot()
   })
 

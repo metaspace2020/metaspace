@@ -549,8 +549,8 @@ export default class ViewProjectPage extends Vue {
   }
 
   .hidden-members-text {
+    @apply text-gray-600;
     text-align: center;
-    color: $--color-text-secondary;
   }
 </style>
 <style>

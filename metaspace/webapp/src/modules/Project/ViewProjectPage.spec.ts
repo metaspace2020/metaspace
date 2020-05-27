@@ -79,7 +79,7 @@ describe('ViewProjectPage', () => {
     it('should match snapshot (non-member)', async() => {
       initMockGraphqlClient(graphqlMocks)
       const maxVisibleDatasets = 3
-      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider, sync: false })
+      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider })
       wrapper.setData({ maxVisibleDatasets }) // Also test that the datasets list is correctly clipped
       await Vue.nextTick()
 
@@ -100,7 +100,7 @@ describe('ViewProjectPage', () => {
 
     it('should match snapshot (non-member)', async() => {
       initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewProjectPage, { router, stubs: stubsWithMembersList, apolloProvider, sync: false })
+      const wrapper = mount(ViewProjectPage, { router, stubs: stubsWithMembersList, apolloProvider })
       await Vue.nextTick()
 
       expect(wrapper).toMatchSnapshot()
@@ -109,7 +109,7 @@ describe('ViewProjectPage', () => {
     it('should match snapshot (invited)', async() => {
       mockProjectFn.mockImplementation(() => ({ ...mockProject, currentUserRole: 'INVITED' }))
       initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewProjectPage, { router, stubs: stubsWithMembersList, apolloProvider, sync: false })
+      const wrapper = mount(ViewProjectPage, { router, stubs: stubsWithMembersList, apolloProvider })
       await Vue.nextTick()
 
       expect(wrapper).toMatchSnapshot()
@@ -119,7 +119,7 @@ describe('ViewProjectPage', () => {
       mockProjectFn.mockImplementation(() =>
         ({ ...mockProject, currentUserRole: 'MEMBER', members: mockMembersForMembers }))
       initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewProjectPage, { router, stubs: stubsWithMembersList, apolloProvider, sync: false })
+      const wrapper = mount(ViewProjectPage, { router, stubs: stubsWithMembersList, apolloProvider })
       await Vue.nextTick()
 
       expect(wrapper).toMatchSnapshot()
@@ -129,7 +129,7 @@ describe('ViewProjectPage', () => {
       mockProjectFn.mockImplementation(() =>
         ({ ...mockProject, currentUserRole: 'MANAGER', members: mockMembersForManagers }))
       initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider, sync: false })
+      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider })
       await Vue.nextTick()
 
       expect(wrapper).toMatchSnapshot()
@@ -144,7 +144,7 @@ describe('ViewProjectPage', () => {
     it('should match snapshot', async() => {
       mockProjectFn.mockImplementation(() => ({ ...mockProject, currentUserRole: 'MANAGER' }))
       initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider, sync: false })
+      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider })
       await Vue.nextTick()
 
       expect(wrapper).toMatchSnapshot()
@@ -155,7 +155,7 @@ describe('ViewProjectPage', () => {
         ...mockProject, currentUserRole: 'MANAGER', publicationStatus: 'UNDER_REVIEW',
       }))
       initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider, sync: false })
+      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider })
       await Vue.nextTick()
 
       expect(wrapper).toMatchSnapshot()
@@ -166,7 +166,7 @@ describe('ViewProjectPage', () => {
         ...mockProject, currentUserRole: 'MANAGER', publicationStatus: 'PUBLISHED',
       }))
       initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider, sync: false })
+      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider })
       await Vue.nextTick()
 
       expect(wrapper).toMatchSnapshot()
@@ -178,7 +178,7 @@ describe('ViewProjectPage', () => {
     mockProjectFn.mockImplementation(() => ({ ...mockProject, urlSlug }))
     initMockGraphqlClient(graphqlMocks)
 
-    const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider, sync: false })
+    const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider })
     await Vue.nextTick()
 
     expect(router.currentRoute.params.projectIdOrSlug).toEqual(urlSlug)
@@ -200,7 +200,7 @@ describe('ViewProjectPage', () => {
       mockGenerateId(123)
       mockProjectFn.mockImplementation(() => ({ ...mockProject, currentUserRole: 'MANAGER' }))
       initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider, sync: false })
+      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider })
       await Vue.nextTick()
 
       expect(wrapper).toMatchSnapshot()
@@ -211,7 +211,7 @@ describe('ViewProjectPage', () => {
         ...mockProject, currentUserRole: 'MANAGER', publicationStatus: 'UNDER_REVIEW',
       }))
       initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider, sync: false })
+      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider })
       await Vue.nextTick()
 
       expect(wrapper).toMatchSnapshot()
@@ -222,7 +222,7 @@ describe('ViewProjectPage', () => {
         ...mockProject, currentUserRole: 'MANAGER', publicationStatus: 'PUBLISHED',
       }))
       initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider, sync: false })
+      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider })
       await Vue.nextTick()
 
       expect(wrapper).toMatchSnapshot()

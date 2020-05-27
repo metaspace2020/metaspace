@@ -22,7 +22,6 @@ describe('MetadataEditor', () => {
   }
 
   beforeAll(async() => {
-    testConfig.logModifiedComponents = false
     store.replaceState({
       ...store.state,
       // @ts-ignore
@@ -46,7 +45,7 @@ describe('MetadataEditor', () => {
         adductSuggestions: mockAdductSuggestions,
       }),
     })
-    const wrapper = mount(MetadataEditor, { store, router, apolloProvider, sync: false })
+    const wrapper = mount(MetadataEditor, { store, router, apolloProvider })
     await wrapper.vm.$data.loadingPromise
 
     expect(wrapper).toMatchSnapshot()
@@ -59,7 +58,7 @@ describe('MetadataEditor', () => {
       }),
     })
     const propsData = { datasetId: '123' }
-    const wrapper = mount(MetadataEditor, { store, router, apolloProvider, propsData, sync: false })
+    const wrapper = mount(MetadataEditor, { store, router, apolloProvider, propsData })
     await wrapper.vm.$data.loadingPromise
 
     expect(wrapper.vm.$data.value).toMatchSnapshot('metadata')
@@ -73,11 +72,11 @@ describe('MetadataEditor', () => {
       }),
     })
 
-    const wrapper = mount(MetadataEditor, { store, router, apolloProvider, sync: false })
+    const wrapper = mount(MetadataEditor, { store, router, apolloProvider })
     await wrapper.vm.$data.loadingPromise
 
     const fieldValues: Record<string, string> = {}
-    wrapper.findAll({ name: 'FormField' }).wrappers
+    wrapper.findAllComponents({ name: 'FormField' }).wrappers
       .forEach(field => { fieldValues[field.vm.$props.name] = field.vm.$props.value })
 
     expect(fieldValues.Organism).toEqual(mockMetadata.Sample_Information.Organism)
@@ -101,7 +100,7 @@ describe('MetadataEditor', () => {
       }),
     })
     const propsData = { datasetId: '123' }
-    const wrapper = mount(MetadataEditor, { store, router, apolloProvider, propsData, sync: false })
+    const wrapper = mount(MetadataEditor, { store, router, apolloProvider, propsData })
     await wrapper.vm.$data.loadingPromise
 
     expect(mockUserFn).toHaveBeenCalledTimes(1)

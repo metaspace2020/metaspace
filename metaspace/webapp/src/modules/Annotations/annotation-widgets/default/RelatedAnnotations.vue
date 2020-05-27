@@ -217,11 +217,11 @@ export default {
   }
 
   .ion-link, a.ion-link:link {
-    color: $--color-text-primary;
+    color: inherit;
     text-decoration: none;
   }
   .empty-message {
-    color: #909399;
+    @apply text-gray-600;
     text-align: center;
   }
 </style>

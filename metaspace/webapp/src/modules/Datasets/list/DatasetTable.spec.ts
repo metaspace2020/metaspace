@@ -66,7 +66,7 @@ describe('DatasetTable', () => {
         }),
       }),
     })
-    const wrapper = mount(DatasetTable, { store, router, apolloProvider, sync: false })
+    const wrapper = mount(DatasetTable, { store, router, apolloProvider })
     await Vue.nextTick()
 
     expect(wrapper).toMatchSnapshot()
@@ -95,7 +95,7 @@ describe('DatasetTable', () => {
         countDatasets: () => 4,
       }),
     })
-    const wrapper = mount(DatasetTable, { store, router, apolloProvider, sync: false })
+    const wrapper = mount(DatasetTable, { store, router, apolloProvider })
     wrapper.setData({ csvChunkSize: 2 })
     await Vue.nextTick()
 

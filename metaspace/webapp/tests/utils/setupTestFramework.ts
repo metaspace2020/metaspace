@@ -3,14 +3,12 @@ import ElementUI from 'element-ui'
 import registerMockComponent from './registerMockComponent'
 import VueRouter from 'vue-router'
 import registerMockDirective from './registerMockDirective'
-import { Wrapper, config as vueTestConfig } from '@vue/test-utils'
+import * as vueTestUtils from '@vue/test-utils'
 import { replaceConfigWithDefaultForTests } from '../../src/lib/config'
 import VueCompositionApi from '@vue/composition-api'
 import './mockGenerateId'
 
 window.fetch = jest.fn()
-
-vueTestConfig.logModifiedComponents = false
 
 Vue.use(VueRouter)
 Vue.use(ElementUI)
@@ -38,39 +36,15 @@ jest.mock('../../src/lib/reportError', () => jest.fn(console.error))
 // Prevent JWT requests
 jest.mock('../../src/api/graphqlClient', () => require('./mockGraphqlClient'))
 
-// Transitions throw errors because cssstyle doesn't support transition styles
-registerMockComponent('transition', { abstract: true }) //  ElTreeNode relies on Transition being abstract
-registerMockComponent('transition-group')
-
 // Ignore delay duration
 jest.mock('../../src/lib/delay', () => jest.fn(() => Promise.resolve()))
 
 // Mock elapsed time as it relies on variables such as current time and locale
 registerMockComponent('elapsed-time', { path: '../../src/components/ElapsedTime' })
 
-// Track all components mounted by vue-test-utils and automatically clean them up after each test to prevent stale
-// components from updating due to e.g. route changes
-const mockWrappers: Wrapper<Vue>[] = []
-jest.mock('@vue/test-utils', () => {
-  const wrapVueTestToolsFunction = (originalFunc: ((...args: any[]) => Wrapper<Vue>)) => {
-    return function(...args: any[]) {
-      const wrapper = originalFunc(...args)
-      mockWrappers.push(wrapper)
-      return wrapper
-    }
-  }
-  const actual = require.requireActual('@vue/test-utils')
-  return Object.assign({}, actual, {
-    mount: wrapVueTestToolsFunction(actual.mount),
-    shallowMount: wrapVueTestToolsFunction(actual.shallowMount),
-  })
-})
-
-afterEach(() => {
-  while (mockWrappers.length > 0) {
-    mockWrappers.pop()!.destroy()
-  }
-})
+// Automatically clean up components after each test to prevent stale components from updating due to e.g. route changes
+// @ts-ignore
+vueTestUtils.enableAutoDestroy(afterEach)
 
 // Use consistent config
 // TODO: Change metadata to always ship with all available types, but filter at runtime based on config

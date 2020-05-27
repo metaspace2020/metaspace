@@ -40,11 +40,13 @@ exports[`MetaspaceHeader should match snapshot (logged in) 1`] = `
     </div>
   </div>
   <div class="alert el-row">
-    <div role="alert" class="el-alert el-alert--info is-light" name="el-alert-fade"><i class="el-alert__icon el-icon-info"></i>
-      <div class="el-alert__content"><span class="el-alert__title">systemHealth.message</span>
-        <!---->
-        <!----><i class="el-alert__closebtn el-icon-close" style="display: none;"></i></div>
-    </div>
+    <transition-stub name="el-alert-fade">
+      <div role="alert" class="el-alert el-alert--info is-light"><i class="el-alert__icon el-icon-info"></i>
+        <div class="el-alert__content"><span class="el-alert__title">systemHealth.message</span>
+          <!---->
+          <!----><i class="el-alert__closebtn el-icon-close" style="display: none;"></i></div>
+      </div>
+    </transition-stub>
   </div>
 </div>
 `;
@@ -79,11 +81,13 @@ exports[`MetaspaceHeader should match snapshot (logged out) 1`] = `
     </div>
   </div>
   <div class="alert el-row">
-    <div role="alert" class="el-alert el-alert--info is-light" name="el-alert-fade"><i class="el-alert__icon el-icon-info"></i>
-      <div class="el-alert__content"><span class="el-alert__title">systemHealth.message</span>
-        <!---->
-        <!----><i class="el-alert__closebtn el-icon-close" style="display: none;"></i></div>
-    </div>
+    <transition-stub name="el-alert-fade">
+      <div role="alert" class="el-alert el-alert--info is-light"><i class="el-alert__icon el-icon-info"></i>
+        <div class="el-alert__content"><span class="el-alert__title">systemHealth.message</span>
+          <!---->
+          <!----><i class="el-alert__closebtn el-icon-close" style="display: none;"></i></div>
+      </div>
+    </transition-stub>
   </div>
 </div>
 `;

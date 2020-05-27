@@ -163,17 +163,19 @@ exports[`Diagnostics should match snapshot (no isobars) 1`] = `
 
 exports[`Diagnostics should match snapshot (with isobar) 1`] = `
 <div mock-v-loading="0">
-  <div role="alert" class="el-alert isobar-alert el-alert--warning is-light" name="el-alert-fade"><i class="el-alert__icon el-icon-warning is-big"></i>
-    <div class="el-alert__content">
-      <!---->
-      <p class="el-alert__description">
-        Another ion was annotated that is isobaric to the selected annotation.
+  <transition-stub name="el-alert-fade" class="isobar-alert">
+    <div role="alert" class="el-alert el-alert--warning is-light"><i class="el-alert__icon el-icon-warning is-big"></i>
+      <div class="el-alert__content">
         <!---->
-        Select an isobaric annotation below to compare against.
-      </p>
-      <!----><i class="el-alert__closebtn el-icon-close" style="display: none;"></i>
+        <p class="el-alert__description">
+          Another ion was annotated that is isobaric to the selected annotation.
+          <!---->
+          Select an isobaric annotation below to compare against.
+        </p>
+        <!----><i class="el-alert__closebtn el-icon-close" style="display: none;"></i>
+      </div>
     </div>
-  </div>
+  </transition-stub>
   <div class="compare-container">
     Compare selected annotation to:
     <mock-el-select placeholder="None" clearable="" class="compare-select" value="C8H9S2">

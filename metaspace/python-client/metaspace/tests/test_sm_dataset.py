@@ -5,7 +5,7 @@ import pytest
 import numpy as np
 
 from metaspace.sm_annotation_utils import IsotopeImages, SMDataset, GraphQLClient, SMInstance
-from metaspace.tests.utils import sm, my_ds_id
+from metaspace.tests.utils import sm, my_ds_id, advanced_ds_id
 
 
 EXPECTED_RESULTS_COLS = [
@@ -28,6 +28,11 @@ def dataset(sm, my_ds_id):
 
 
 @pytest.fixture()
+def advanced_dataset(sm, advanced_ds_id):
+    return sm.dataset(id=advanced_ds_id)
+
+
+@pytest.fixture()
 def downloadable_dataset_id(sm: SMInstance):
     OLD_DATASET_FIELDS = GraphQLClient.DATASET_FIELDS
     GraphQLClient.DATASET_FIELDS += ' canDownload'
@@ -47,24 +52,75 @@ def test_annotations(dataset: SMDataset):
 
 
 def test_results(dataset: SMDataset):
-    # Test normal config
     annotations = dataset.results('HMDB-v4', fdr=0.5)
 
     assert len(annotations) > 0
     assert all(col in annotations.columns for col in EXPECTED_RESULTS_COLS)
+    assert list(annotations.index.names) == ['formula', 'adduct']
 
-    # Test with colocalization
-    coloc_with = annotations.ion[0]
+
+def test_results_with_coloc(dataset: SMDataset):
+    coloc_with = dataset.results('HMDB-v4', fdr=0.5).ion[0]
     coloc_annotations = dataset.results('HMDB-v4', fdr=0.5, coloc_with=coloc_with)
 
     assert len(coloc_annotations) > 0
     assert coloc_annotations.colocCoeff.all()
 
 
+def test_results_neutral_loss_chem_mod(advanced_dataset: SMDataset):
+    """
+    Test setup: Create a dataset with a -H2O neutral loss and a -H+C chem mod.
+    """
+    annotations = advanced_dataset.results('HMDB-v4', fdr=0.5)
+    annotations_cm = advanced_dataset.results('HMDB-v4', fdr=0.5, include_chem_mods=True)
+    annotations_nl = advanced_dataset.results('HMDB-v4', fdr=0.5, include_neutral_losses=True)
+    annotations_cm_nl = advanced_dataset.results(
+        'HMDB-v4', fdr=0.5, include_chem_mods=True, include_neutral_losses=True
+    )
+
+    # Check expected columns
+    assert list(annotations_cm.index.names) == ['formula', 'adduct', 'chemMod']
+    assert list(annotations_nl.index.names) == ['formula', 'adduct', 'neutralLoss']
+    assert list(annotations_cm_nl.index.names) == ['formula', 'adduct', 'chemMod', 'neutralLoss']
+
+    # Check CMs / NLs are present when explicitly included
+    assert len(annotations_cm[annotations_cm.index.get_level_values('chemMod') != '']) > 0
+    assert len(annotations_nl[annotations_nl.index.get_level_values('neutralLoss') != '']) > 0
+    assert len(annotations_cm_nl[annotations_cm_nl.index.get_level_values('chemMod') != '']) > 0
+    assert len(annotations_cm_nl[annotations_cm_nl.index.get_level_values('neutralLoss') != '']) > 0
+
+    # Check CMs / NLs are excluded if they're not explicitly included
+    assert annotations.index.is_unique
+    assert annotations_cm.index.is_unique
+    assert annotations_nl.index.is_unique
+    assert annotations_cm_nl.index.is_unique
+    assert len(annotations) < len(annotations_cm) < len(annotations_cm_nl)
+    assert len(annotations) < len(annotations_nl) < len(annotations_cm_nl)
+    plain_annotations = set(
+        annotations_cm_nl.reset_index(['chemMod', 'neutralLoss'])[
+            lambda df: (df.chemMod == '') & (df.neutralLoss == '')
+        ].index
+    )
+    assert set(annotations.index) == plain_annotations
+
+
 def test_isotope_images(dataset: SMDataset):
-    sf, adduct = dataset.annotations()[0]
+    sf, adduct = dataset.annotations(neutralLoss='', chemMod='')[0]
 
     images = dataset.isotope_images(sf, adduct)
+
+    assert len(images) > 1
+    assert isinstance(images[0], np.ndarray)
+
+
+def test_isotope_images_advanced(advanced_dataset: SMDataset):
+    sf, cm, nl, adduct = advanced_dataset.annotations(
+        return_vals=('sumFormula', 'chemMod', 'neutralLoss', 'adduct'),
+        neutralLoss='-H2O',
+        chemMod='-H+C',
+    )[0]
+
+    images = advanced_dataset.isotope_images(sf, adduct, chem_mod=cm, neutral_loss=nl)
 
     assert len(images) > 1
     assert isinstance(images[0], np.ndarray)
@@ -77,6 +133,16 @@ def test_all_annotation_images(dataset: SMDataset):
     assert len(image_list) > 0
     assert all(len(isotope_images) == 1 for isotope_images in image_list)
     assert isinstance(image_list[0][0], np.ndarray)
+
+
+def test_all_annotation_images_advanced(advanced_dataset: SMDataset):
+    image_list = advanced_dataset.all_annotation_images(only_first_isotope=True)
+
+    # Assert images were returned for annotations with and without CMs / NLs
+    assert any(isotope_images.chem_mod for isotope_images in image_list)
+    assert any(not isotope_images.chem_mod for isotope_images in image_list)
+    assert any(isotope_images.neutral_loss for isotope_images in image_list)
+    assert any(not isotope_images.neutral_loss for isotope_images in image_list)
 
 
 def test_download(sm: SMInstance, downloadable_dataset_id: str):
