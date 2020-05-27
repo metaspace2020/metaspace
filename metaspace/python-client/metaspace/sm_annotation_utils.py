@@ -728,7 +728,7 @@ class SMDataset(object):
 
     @property
     def databases(self):
-        return self._config['databases']
+        return self._config['databases']  # TODO: update to use 'database_ids'
 
     @property
     def database(self):

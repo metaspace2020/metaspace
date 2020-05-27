@@ -110,7 +110,7 @@ class DatasetManager:
         job_docs = self._db.select_with_fields(
             'SELECT id, moldb_id FROM job WHERE ds_id = %s', params=(ds.id,)
         )
-        moldb_ids = ds.config['databases']
+        moldb_ids = ds.config['database_ids']
         for job_doc in job_docs:
             moldb = molecular_db.find_by_id(job_doc['moldb_id'])
             if job_doc['moldb_id'] not in moldb_ids:

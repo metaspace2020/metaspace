@@ -251,7 +251,7 @@ def generate_ds_config(
     default_adducts, charge, isocalc_sigma, instrument = iso_params
 
     return {
-        'databases': moldb_ids,
+        'database_ids': moldb_ids,
         'analysis_version': analysis_version,
         'isotope_generation': {
             'adducts': adducts or default_adducts,
@@ -281,7 +281,7 @@ def update_ds_config(old_config, metadata, **kwargs):
     image_generation = old_config.get('image_generation', {})
     old_vals = {
         'analysis_version': old_config.get('analysis_version'),
-        'moldb_ids': old_config.get('databases'),
+        'moldb_ids': old_config.get('database_ids'),
         'adducts': isotope_generation.get('adducts'),
         'n_peaks': isotope_generation.get('n_peaks'),
         'neutral_losses': isotope_generation.get('neutral_losses'),

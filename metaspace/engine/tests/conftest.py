@@ -64,7 +64,7 @@ def ds_config():
             "chem_mods": [],
         },
         "fdr": {"decoy_sample_size": 20},
-        "databases": [0],
+        "database_ids": [0],
     }
 
 

@@ -46,7 +46,7 @@ ANNOTATIONS_SEL = (
 )
 
 DATASET_CONFIG_SEL = (
-    "SELECT config #> '{databases}', config #> '{isotope_generation,charge}' "
+    "SELECT config #> '{database_ids}', config #> '{isotope_generation,charge}' "
     "FROM dataset "
     "WHERE id = %s"
 )

@@ -121,7 +121,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
 
   async molDBs(ds, _, ctx) {
     return await Promise.all(
-      ds._source.ds_moldb_ids.map(async (db_id) => (await getMolecularDbModel(ctx, db_id)).name)
+      ds._source.ds_moldb_ids.map(async (databaseId) => (await getMolecularDbModel(ctx, databaseId)).name)
     );
   },
 
@@ -272,7 +272,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
         'dbName': (await getMolecularDbModel(ctx, databaseId)).name,
         'levels': outFdrLvls,
         'counts': outFdrCounts
-      }
+      };
     }
     return null;
   },

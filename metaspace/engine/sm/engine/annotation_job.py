@@ -154,7 +154,7 @@ class AnnotationJob:
         completed_moldb_ids = {
             db_id for (_, db_id) in self._db.select(JOB_ID_MOLDB_ID_SEL, params=(self._ds.id,))
         }
-        new_moldb_ids = set(self._ds.config['databases'])
+        new_moldb_ids = set(self._ds.config['database_ids'])
         return completed_moldb_ids, new_moldb_ids
 
     def _save_data_from_raw_ms_file(self, imzml_parser):

@@ -41,7 +41,7 @@ def mock_get_ion_images_for_analysis(storage_type, img_ids, **kwargs):
 
 def test_new_ds_saves_to_db(test_db, metadata, ds_config):
     db = DB()
-    (moldb_id,) = ds_config['databases']
+    (moldb_id,) = ds_config['database_ids']
     ds = Dataset(
         id='ds_id',
         name='ds_name',

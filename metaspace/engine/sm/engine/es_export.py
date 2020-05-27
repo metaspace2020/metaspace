@@ -71,7 +71,7 @@ FROM (
     d.status_update_dt as ds_status_update_dt,
     to_char(max(job.finish), 'YYYY-MM-DD HH24:MI:SS') AS ds_last_finished,
     d.is_public AS ds_is_public,
-    d.config #> '{databases}' AS ds_moldb_ids,
+    d.config #> '{database_ids}' AS ds_moldb_ids,
     d.config #> '{isotope_generation,adducts}' AS ds_adducts,
     d.config #> '{isotope_generation,neutral_losses}' AS ds_neutral_losses,
     d.config #> '{isotope_generation,chem_mods}' AS ds_chem_mods,
@@ -440,7 +440,7 @@ class ESExporter:
                 annotation_counts[level] += annotation_counts[fdr_levels[i]]
             ds_doc['annotation_counts'].append(
                 {
-                    'db': {'id': moldb.id, 'name': moldb.name, 'version': moldb.version},
+                    'db': {'id': moldb.id, 'name': moldb.name},
                     'counts': [
                         {'level': level, 'n': annotation_counts[level]} for level in fdr_levels
                     ],
@@ -461,7 +461,7 @@ class ESExporter:
         )
         if ds_doc:
             isocalc = IsocalcWrapper(ds_doc['config'])
-            for moldb_id in ds_doc['config']['databases']:
+            for moldb_id in ds_doc['config']['database_ids']:
                 moldb = molecular_db.find_by_id(moldb_id)
                 try:
                     self.index_ds(ds_id, moldb=moldb, isocalc=isocalc)

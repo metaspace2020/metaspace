@@ -5,11 +5,11 @@ import logger from '../../../utils/logger';
 
 export const mapDatabaseToDatabaseId =
   async (entityManager: EntityManager, database: string): Promise<number> => {
-    logger.warn('Addressing private databases by name was deprecated. Use database ids instead.');
+    logger.warn('Addressing private databases by name was deprecated. Use database id instead.');
     const databaseModel = await entityManager.findOneOrFail(MolecularDbModel, { 'name': database });
     if (!databaseModel.public) {
       throw new UserError(
-        'Using "database" field to access a non-public MolecularDB by name. Use "databaseId" field instead.'
+        'Addressing a non-public molecular database by name. Use database id instead.'
       );
     }
     return databaseModel.id;
