@@ -114,7 +114,7 @@ export default {
     margin: 0;
   }
   .title {
-    @apply font-bold text-gray-600;
+    @apply font-medium text-gray-600;
   }
   .content > * + * {
     @apply mt-4;

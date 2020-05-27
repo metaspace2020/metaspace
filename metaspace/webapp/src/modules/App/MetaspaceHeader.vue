@@ -266,7 +266,10 @@ const MetaspaceHeader = {
   },
 
   mounted() {
-    window.addEventListener('scroll', this.scrollListener, { captive: true, passive: true })
+    // not supporting this on IE due to lack of hsla and passive listener support
+    if (window.scrollY) {
+      window.addEventListener('scroll', this.scrollListener, { captive: true, passive: true })
+    }
   },
 
   beforeDestroy() {

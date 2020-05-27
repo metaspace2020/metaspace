@@ -562,8 +562,6 @@ export default {
 
  .dataset-item {
    border-radius: 5px;
-   // Can't use box-sizing:border-box due to IE11 flexbox limitations, so instead using `calc(100% - 2px)`
-   flex: 1 1 calc(100% - 2px);
    min-height: 120px;
    min-width: 600px;
    max-width: 950px;

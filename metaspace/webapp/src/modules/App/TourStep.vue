@@ -48,7 +48,7 @@
         title="Exit tour"
         @click="close"
       >
-        &#128473;
+        <close-icon class="h-6 w-6 leading-6 block" />
       </button>
       <div
         class="popper__arrow"
@@ -63,11 +63,15 @@ import Vue from 'vue'
 import Popper from 'popper.js'
 
 import router from '../../router'
+import CloseIcon from '../../assets/refactoring-ui/close-circle.svg?inline'
 
 const startingRoute = 'help'
 
 export default {
   name: 'TourStep',
+  components: {
+    CloseIcon,
+  },
   props: ['tour'],
   data() {
     return {
@@ -194,9 +198,8 @@ export default {
   }
 
   /deep/ .ts-close {
-    @apply h-6 w-6 p-1 leading-none flex items-center justify-center rounded-full text-gray-700;
+    @apply rounded-full text-gray-700;
     position: absolute;
-
     // hard coded to center it against progress bar
     top: 18px;
     right: 14px;
@@ -208,7 +211,10 @@ export default {
 
     &:hover,
     &:focus {
-      @apply bg-blue-100 text-blue-800;
+      @apply text-blue-800;
+      svg .primary {
+        @apply fill-current text-blue-100;
+      }
     }
   }
 
