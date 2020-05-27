@@ -28,14 +28,14 @@
       <div class="h-10 mt-5 flex justify-end items-center">
         <el-button
           v-if="stepNum > 0"
-          :key="step.title"
+          :key="step.title + '-back'"
           size="small"
           @click.native="prevStep"
         >
           Back
         </el-button>
         <el-button
-          :key="step.title"
+          :key="step.title + '-next'"
           size="small"
           type="primary"
           @click.native="nextStep"
@@ -194,7 +194,7 @@ export default {
 
 <style lang="scss" scoped>
   .el-popover {
-    z-index: 2002; // should appear above header
+    z-index: 10100;
   }
 
   /deep/ .ts-close {
@@ -222,11 +222,15 @@ export default {
     > * {
       margin: 0;
     }
-    > * + * {
+    > * + *,
+    ul > li + li {
       @apply mt-5;
     }
-    ul {
+    ul, ol {
       @apply pl-4;
+    }
+    sub {
+      line-height: 1;
     }
   }
 </style>
