@@ -143,7 +143,7 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         'ds_acq_geometry': {},
         'annotation_counts': [
             {
-                'db': {'id': 0, 'name': 'HMDB-v4', 'version': '2018-04-03'},
+                'db': {'id': 0, 'name': 'HMDB-v4'},
                 'counts': [
                     {'level': 5, 'n': 1},
                     {'level': 10, 'n': 2},

@@ -168,7 +168,7 @@ def find_by_ids(ids: Iterable[int]) -> List[MolecularDB]:
 
 # TODO: remove
 def find_by_name(name: str) -> MolecularDB:
-    """DEPRECATED Find database by name name."""
+    """DEPRECATED Find database by name."""
 
     data = DB().select_one_with_fields(
         'SELECT id, name, version, targeted, group_id FROM molecular_db WHERE name = %s',
