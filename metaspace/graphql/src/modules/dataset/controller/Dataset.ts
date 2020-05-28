@@ -16,6 +16,7 @@ import { ExternalLink } from '../../project/ExternalLink';
 import { S3 } from 'aws-sdk';
 import canViewEsDataset from '../operation/canViewEsDataset'
 import {getMolecularDbModel} from "../../moldb/util/getMolecularDbModel";
+import {MolecularDB} from "../../moldb/model";
 
 interface DbDataset {
   id: string;
@@ -115,8 +116,10 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     return ds._source.ds_is_public;
   },
 
-  databaseIds(ds) {
-    return ds._source.ds_moldb_ids;
+  async databases(ds, _, ctx): Promise<MolecularDB[]> {
+    return await Promise.all(
+      ds._source.ds_moldb_ids.map(async (databaseId) => (await getMolecularDbModel(ctx, databaseId)))
+    );
   },
 
   async molDBs(ds, _, ctx) {

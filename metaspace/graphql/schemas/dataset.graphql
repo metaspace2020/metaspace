@@ -24,8 +24,8 @@ type Dataset {
   # https://github.com/metaspace2020/metaspace/tree/master/metaspace/metadata
   metadataJson: String!
   isPublic: Boolean!
-  databaseIds: [Int!]!
-  molDBs: [String!]! @deprecated(reason: "Use \"databaseIds\" instead")
+  databases: [MolecularDB!]!
+  molDBs: [String!]! @deprecated(reason: "Use \"databases\" instead")
   adducts: [String!]!
   neutralLosses: [String!]!
   chemMods: [String!]!
