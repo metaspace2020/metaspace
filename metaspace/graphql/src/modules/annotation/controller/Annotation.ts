@@ -81,8 +81,6 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
 
   ionFormula: (hit) => hit._source.ion_formula || '', // TODO: Remove ' || ''' after prod has been migrated
 
-  databaseId: (hit) => hit._source.db_id,
-
   database2: async (hit, _, ctx) => mapToMolecularDB(await getMolecularDbModel(ctx, hit._source.db_id)),
 
   database: async (hit, _, ctx) => (await getMolecularDbModel(ctx, hit._source.db_id)).name,
