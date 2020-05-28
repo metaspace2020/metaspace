@@ -85,6 +85,7 @@ export default createComponent({
   props: {
     datasetName: { type: String, required: true },
     datasetId: { type: String, required: true },
+    onClose: Function,
   },
   setup(props, { emit }) {
     const { datasetId } = toRefs(props)
