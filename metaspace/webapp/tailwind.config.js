@@ -6,7 +6,7 @@ module.exports = {
   theme: {
     fontFamily: {
       sans: ['Roboto', 'SUPERSCIPT_OVERRIDE', 'Helvetica', 'Arial', 'sans-serif'],
-      display: ['FuturaBT-Medium', 'Helvetica', 'Arial', 'sans-serif']
+      display: ['FuturaBT-Medium', 'Roboto', 'Helvetica', 'Arial', 'sans-serif']
     },
     placeholderColor: {
       default: theme => theme('colors.gray.500')
