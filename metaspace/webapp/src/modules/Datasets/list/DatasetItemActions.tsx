@@ -6,6 +6,7 @@ import DownloadDialog from './DownloadDialog'
 import reportError from '../../../lib/reportError'
 
 const DatasetItemActions = createComponent({
+  name: 'DatasetItemActions',
   props: {
     dataset: { type: Object as () => DatasetDetailItem, required: true },
     metadata: { type: Object as () => any, required: true },

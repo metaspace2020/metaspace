@@ -9,6 +9,7 @@ import FilterLink from './FilterLink'
 type FilterField = keyof DatasetDetailItem | 'analyzerType';
 
 const DatasetItemMetadata = createComponent({
+  name: 'DatasetItemMetadata',
   props: {
     dataset: { type: Object as () => DatasetDetailItem, required: true },
     metadata: { type: Object as () => any, required: true },
