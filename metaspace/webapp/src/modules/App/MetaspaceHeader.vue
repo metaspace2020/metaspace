@@ -420,8 +420,8 @@ export default MetaspaceHeader
 </script>
 
 <style lang="scss">
-  $header-height: 64px;
-  $alert-height: 32px;
+  $header-height: theme('spacing.16');
+  $alert-height: theme('spacing.8');
 
   .sm-header {
     // z-index should be higher than v-loading's .el-loading-mask (z-index: 2000) so that loading spinners

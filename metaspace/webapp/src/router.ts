@@ -5,6 +5,7 @@ import AboutPage from './modules/App/AboutPage.vue'
 import DatasetsPage from './modules/Datasets/DatasetsPage.vue'
 import { DialogPage, ResetPasswordPage } from './modules/Account'
 import { redirectAfterSignIn } from './modules/Account/signInReturnUrl'
+import NotFoundPage from './modules/App/NotFoundPage.vue'
 
 Vue.use(VueRouter)
 
@@ -81,6 +82,8 @@ const router = new VueRouter({
 
     { path: '/terms', component: asyncPages.TermsPage, meta: { footer: true } },
     { path: '/privacy', component: asyncPages.PrivacyPage, meta: { footer: true } },
+
+    { path: '*', component: NotFoundPage, meta: { footer: true, flex: true } },
   ],
   scrollBehavior(to, from, savedPosition) {
     if (to.hash) {

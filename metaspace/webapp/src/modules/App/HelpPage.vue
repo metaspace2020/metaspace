@@ -37,7 +37,7 @@
     <h2>Step-by-step tutorial</h2>
     <p>
       Our
-      <a href="https://speakerdeck.com/metaspace2020/metaspace-training-guide">training guide</a>
+      <a href="https://docs.google.com/presentation/d/10h6Kle2hdW_Ma9SdkuFIUiUOT5lBXexZs1jFDb7X08Q/edit?usp=sharing">training guide</a>
       provides a step-by-step tutorial with screenshots.
     </p>
     <h2>Input format</h2>

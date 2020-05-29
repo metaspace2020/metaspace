@@ -1,5 +1,8 @@
 <template>
-  <div id="app">
+  <div
+    id="app"
+    :class="{ 'flex flex-col': $route.meta.flex }"
+  >
     <metaspace-header />
 
     <!--
@@ -10,6 +13,7 @@
     <router-view
       :key="$route.path"
       class="sm-main-content"
+      :class="{ 'flex-grow': $route.meta.flex }"
     />
 
     <metaspace-footer v-if="$route.meta.footer" />
@@ -107,7 +111,7 @@ export default {
 
   /* http://matthewjamestaylor.com/blog/keeping-footers-at-the-bottom-of-the-page */
   html, body {
-    height: 100%;
+    height: calc(100% - theme('spacing.16'));
     margin: 0;
     padding: 0;
   }
