@@ -1,5 +1,5 @@
 <template>
-  <div class="sm-content-page min-h-full">
+  <div class="sm-content-page">
     <SignIcon class="sm-colour-icon sm-colour-icon--large" />
     <h1>This page could not be found</h1>
     <p class="pt-6">
