@@ -7,7 +7,7 @@ import PublishData from './PublishData'
 import FadeTransition from '../../../components/FadeTransition'
 
 import '../../../components/ColourIcon.css'
-import GlobeIcon from '../../../assets/refactoring-ui/globe.svg?inline'
+import GlobeIcon from '../../../assets/inline/refactoring-ui/globe.svg'
 
 import {
   updateProjectMutation, UpdateProjectMutation,

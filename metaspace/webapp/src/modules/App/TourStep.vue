@@ -63,7 +63,7 @@ import Vue from 'vue'
 import Popper from 'popper.js'
 
 import router from '../../router'
-import CloseIcon from '../../assets/refactoring-ui/close-circle.svg?inline'
+import CloseIcon from '../../assets/inline/refactoring-ui/close-circle.svg'
 
 const startingRoute = 'help'
 

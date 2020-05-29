@@ -98,9 +98,9 @@ import '../../components/ColourIcon.css'
 import Vue from 'vue'
 
 import TourButton from './TourButton'
-import UserIcon from '../../assets/refactoring-ui/user.svg?inline'
-import GroupIcon from '../../assets/refactoring-ui/group.svg?inline'
-import WorkIcon from '../../assets/refactoring-ui/work.svg?inline'
+import UserIcon from '../../assets/inline/refactoring-ui/user.svg'
+import GroupIcon from '../../assets/inline/refactoring-ui/group.svg'
+import WorkIcon from '../../assets/inline/refactoring-ui/work.svg'
 
 import introTour from '../../tours/intro.ts'
 import filteringTour from '../../tours/filtering.ts'

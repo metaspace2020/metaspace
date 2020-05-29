@@ -241,11 +241,11 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 
-import Metaspace from '../../assets/METASPACE.svg?inline'
-import EditIcon from '../../assets/refactoring-ui/edit.svg?inline'
-import BookIcon from '../../assets/refactoring-ui/book.svg?inline'
-import BoltIcon from '../../assets/refactoring-ui/bolt.svg?inline'
-import UnlockIcon from '../../assets/refactoring-ui/unlock.svg?inline'
+import Metaspace from '../../assets/inline/METASPACE.svg'
+import EditIcon from '../../assets/inline/refactoring-ui/edit.svg'
+import BookIcon from '../../assets/inline/refactoring-ui/book.svg'
+import BoltIcon from '../../assets/inline/refactoring-ui/bolt.svg'
+import UnlockIcon from '../../assets/inline/refactoring-ui/unlock.svg'
 
 @Component({
   components: {
