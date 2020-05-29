@@ -9,6 +9,7 @@ import VueCompositionApi from '@vue/composition-api'
 import './mockGenerateId'
 
 window.fetch = jest.fn()
+window.scrollTo = jest.fn()
 
 Vue.use(VueRouter)
 Vue.use(ElementUI)

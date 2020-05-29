@@ -95,10 +95,7 @@
               to="/user/me"
               :is-active="menuIsOpen"
             >
-              <div
-                class="limit-width"
-                style="color: white;"
-              >
+              <div class="limit-width">
                 {{ userNameOrEmail }}
                 <notification-icon
                   v-if="pendingRequestMessage != null"

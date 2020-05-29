@@ -50,7 +50,7 @@ exports[`Diagnostics should match snapshot (no isobars) 1`] = `
   <div>
     <div class="el-row" id="isotope-plot-container">
       <div class="peak-chart">
-        <div style="height: 300px;"><svg width="0" height="0">
+        <div style="height: 300px;"><svg width="200" height="300">
             <defs>
               <pattern id="pattern-stripe" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
                 <rect width="3" height="6" transform="translate(0,0)" fill="white"></rect>
@@ -60,69 +60,69 @@ exports[`Diagnostics should match snapshot (no isobars) 1`] = `
               </mask>
             </defs>
             <g transform="translate(40, 10)">
-              <g transform="translate(0, -60)" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle">
-                <path class="domain" stroke="currentColor" d="M0.5,6V0.5H-79.5V6"></path>
-                <g class="tick" opacity="1" transform="translate(-6.166666666666351,0)">
+              <g transform="translate(0, 240)" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle">
+                <path class="domain" stroke="currentColor" d="M0.5,6V0.5H120.5V6"></path>
+                <g class="tick" opacity="1" transform="translate(10.499999999999526,0)">
                   <line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">100.0</text>
                 </g>
-                <g class="tick" opacity="1" transform="translate(-19.5,0)">
+                <g class="tick" opacity="1" transform="translate(30.5,0)">
                   <line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">100.2</text>
                 </g>
-                <g class="tick" opacity="1" transform="translate(-32.83333333333365,0)">
+                <g class="tick" opacity="1" transform="translate(50.500000000000476,0)">
                   <line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">100.4</text>
                 </g>
-                <g class="tick" opacity="1" transform="translate(-46.16666666666635,0)">
+                <g class="tick" opacity="1" transform="translate(70.49999999999953,0)">
                   <line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">100.6</text>
                 </g>
-                <g class="tick" opacity="1" transform="translate(-59.5,0)">
+                <g class="tick" opacity="1" transform="translate(90.5,0)">
                   <line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">100.8</text>
                 </g>
-                <g class="tick" opacity="1" transform="translate(-72.83333333333366,0)">
+                <g class="tick" opacity="1" transform="translate(110.50000000000047,0)">
                   <line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">101.0</text>
                 </g>
               </g>
               <g fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
-                <path class="domain" stroke="currentColor" d="M-6,-59.5H0.5V0.5H-6"></path>
-                <g class="tick" opacity="1" transform="translate(0,-59.5)">
+                <path class="domain" stroke="currentColor" d="M-6,240.5H0.5V0.5H-6"></path>
+                <g class="tick" opacity="1" transform="translate(0,240.5)">
                   <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">0</text>
                 </g>
-                <g class="tick" opacity="1" transform="translate(0,-47.5)">
+                <g class="tick" opacity="1" transform="translate(0,192.5)">
                   <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">20</text>
                 </g>
-                <g class="tick" opacity="1" transform="translate(0,-35.5)">
+                <g class="tick" opacity="1" transform="translate(0,144.5)">
                   <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">40</text>
                 </g>
-                <g class="tick" opacity="1" transform="translate(0,-23.5)">
+                <g class="tick" opacity="1" transform="translate(0,96.5)">
                   <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">60</text>
                 </g>
-                <g class="tick" opacity="1" transform="translate(0,-11.5)">
+                <g class="tick" opacity="1" transform="translate(0,48.5)">
                   <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">80</text>
                 </g>
                 <g class="tick" opacity="1" transform="translate(0,0.5)">
                   <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">100</text>
                 </g>
-              </g><text class="intensity-axis-label" transform="translate(-30, -30) rotate(-90)">Relative intensity</text><text style="text-anchor: middle;" transform="translate(-40, -30) ">m/z</text>
+              </g><text class="intensity-axis-label" transform="translate(-30, 120) rotate(-90)">Relative intensity</text><text style="text-anchor: middle;" transform="translate(60, 270) ">m/z</text>
               <g class="sample-graph soloSample">
                 <g>
-                  <circle cx="-6.666666666666351" cy="0" r="4"></circle>
-                  <circle cx="-73.33333333333366" cy="-24" r="4"></circle>
+                  <circle cx="9.999999999999526" cy="0" r="4"></circle>
+                  <circle cx="110.00000000000047" cy="96" r="4"></circle>
                 </g>
                 <g>
-                  <line x1="-6.666666666666351" x2="-6.666666666666351" y1="0" y2="-60"></line>
-                  <line x1="-73.33333333333366" x2="-73.33333333333366" y1="-24" y2="-60"></line>
+                  <line x1="9.999999999999526" x2="9.999999999999526" y1="0" y2="240"></line>
+                  <line x1="110.00000000000047" x2="110.00000000000047" y1="96" y2="240"></line>
                 </g>
                 <g>
-                  <rect width="-0.03999999999943338" height="-60" x="-6.6466666666666345" y="0"></rect>
-                  <rect width="-0.04040000000031796" height="-36" x="-73.3131333333335" y="-24"></rect>
+                  <rect width="0.0599999999991514" height="240" x="9.969999999999951" y="0"></rect>
+                  <rect width="0.06060000000047694" height="144" x="109.96970000000023" y="96"></rect>
                 </g>
               </g>
               <g class="theor-graph soloTheor">
                 <g>
-                  <path d="M0,-60L-6.666666666666351,-59.4L-13.333333333332702,-60L-66.6666666666673,-60L-73.33333333333366,-59.7L-80,-60"></path>
+                  <path d="M0,240L9.999999999999526,237.6L19.99999999999905,240L100.00000000000095,240L110.00000000000047,238.8L120,240"></path>
                 </g>
               </g>
               <g fill="none" pointer-events="all">
-                <rect class="overlay" pointer-events="all" cursor="crosshair" x="0" y="0" width="-80" height="-60"></rect>
+                <rect class="overlay" pointer-events="all" cursor="crosshair" x="0" y="0" width="120" height="240"></rect>
                 <rect class="selection" cursor="move" fill="#777" fill-opacity="0.3" stroke="#fff" shape-rendering="crispEdges" style="display: none;"></rect>
                 <rect class="handle handle--w" cursor="ew-resize" style="display: none;"></rect>
                 <rect class="handle handle--e" cursor="ew-resize" style="display: none;"></rect>
@@ -185,8 +185,12 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
   <div class="ref-annotation-header">
     <mock-el-popover trigger="hover" placement="top" open-delay="100">
       <div slot-key="default">
-        <div><span>Candidate molecules (1):</span>
-          <ul>
+        <div class="leading-6 py-2 px-3 font-normal content">
+          <!---->
+          <p class="title">
+            Candidate molecule
+          </p>
+          <ul class="p-0 m-0 list-none text-xs tracking-wide">
             <li>
               C.I. Food Red 6
             </li>
@@ -245,20 +249,14 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
     </div>
   </div>
   <div class="comp-annotation-header">
-    <!----> <span><mock-el-popover trigger="hover" placement="top" open-delay="100"><div slot-key="default"><div><span>Candidate molecules (1):</span>
-    <ul>
-      <li>
+    <!----> <span><mock-el-popover trigger="hover" placement="top" open-delay="100"><div slot-key="default"><div class="leading-6 py-2 px-3 font-normal content"><!----> <p class="title">
+      Candidate molecule
+    </p> <ul class="p-0 m-0 list-none text-xs tracking-wide"><li>
         C.I. Food Red 6
-      </li>
-      <!---->
-    </ul>
-    <!---->
-    <!---->
-  </div>
+      </li> <!----></ul> <!----> <!----></div> </div><div slot-key="reference"><span class="annotation-ion">[C<sub>8</sub>H<sub>10</sub>S<sub>2</sub> - H]⁻</span></div>
+  </mock-el-popover>
+  <!----></span>
 </div>
-<div slot-key="reference"><span class="annotation-ion">[C<sub>8</sub>H<sub>10</sub>S<sub>2</sub> - H]⁻</span></div>
-</mock-el-popover>
-<!----></span></div>
 <div class="comp-annotation-container">
   <div class="el-row" id="scores-table">
     <div class="msm-score-calc">
@@ -307,7 +305,7 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
 <div>
   <div class="el-row" id="isotope-plot-container">
     <div class="peak-chart">
-      <div style="height: 300px;"><svg width="0" height="0">
+      <div style="height: 300px;"><svg width="200" height="300">
           <defs>
             <pattern id="pattern-stripe" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
               <rect width="3" height="6" transform="translate(0,0)" fill="white"></rect>
@@ -317,69 +315,69 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
             </mask>
           </defs>
           <g transform="translate(40, 10)">
-            <g transform="translate(0, -60)" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle">
-              <path class="domain" stroke="currentColor" d="M0.5,6V0.5H-79.5V6"></path>
-              <g class="tick" opacity="1" transform="translate(-6.166666666666351,0)">
+            <g transform="translate(0, 240)" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle">
+              <path class="domain" stroke="currentColor" d="M0.5,6V0.5H120.5V6"></path>
+              <g class="tick" opacity="1" transform="translate(10.499999999999526,0)">
                 <line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">100.0</text>
               </g>
-              <g class="tick" opacity="1" transform="translate(-19.5,0)">
+              <g class="tick" opacity="1" transform="translate(30.5,0)">
                 <line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">100.2</text>
               </g>
-              <g class="tick" opacity="1" transform="translate(-32.83333333333365,0)">
+              <g class="tick" opacity="1" transform="translate(50.500000000000476,0)">
                 <line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">100.4</text>
               </g>
-              <g class="tick" opacity="1" transform="translate(-46.16666666666635,0)">
+              <g class="tick" opacity="1" transform="translate(70.49999999999953,0)">
                 <line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">100.6</text>
               </g>
-              <g class="tick" opacity="1" transform="translate(-59.5,0)">
+              <g class="tick" opacity="1" transform="translate(90.5,0)">
                 <line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">100.8</text>
               </g>
-              <g class="tick" opacity="1" transform="translate(-72.83333333333366,0)">
+              <g class="tick" opacity="1" transform="translate(110.50000000000047,0)">
                 <line stroke="currentColor" y2="6"></line><text fill="currentColor" y="9" dy="0.71em">101.0</text>
               </g>
             </g>
             <g fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
-              <path class="domain" stroke="currentColor" d="M-6,-59.5H0.5V0.5H-6"></path>
-              <g class="tick" opacity="1" transform="translate(0,-59.5)">
+              <path class="domain" stroke="currentColor" d="M-6,240.5H0.5V0.5H-6"></path>
+              <g class="tick" opacity="1" transform="translate(0,240.5)">
                 <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">0</text>
               </g>
-              <g class="tick" opacity="1" transform="translate(0,-47.5)">
+              <g class="tick" opacity="1" transform="translate(0,192.5)">
                 <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">20</text>
               </g>
-              <g class="tick" opacity="1" transform="translate(0,-35.5)">
+              <g class="tick" opacity="1" transform="translate(0,144.5)">
                 <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">40</text>
               </g>
-              <g class="tick" opacity="1" transform="translate(0,-23.5)">
+              <g class="tick" opacity="1" transform="translate(0,96.5)">
                 <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">60</text>
               </g>
-              <g class="tick" opacity="1" transform="translate(0,-11.5)">
+              <g class="tick" opacity="1" transform="translate(0,48.5)">
                 <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">80</text>
               </g>
               <g class="tick" opacity="1" transform="translate(0,0.5)">
                 <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">100</text>
               </g>
-            </g><text class="intensity-axis-label" transform="translate(-30, -30) rotate(-90)">Relative intensity</text><text style="text-anchor: middle;" transform="translate(-40, -30) ">m/z</text>
+            </g><text class="intensity-axis-label" transform="translate(-30, 120) rotate(-90)">Relative intensity</text><text style="text-anchor: middle;" transform="translate(60, 270) ">m/z</text>
             <g class="sample-graph soloSample">
               <g>
-                <circle cx="-6.666666666666351" cy="0" r="4"></circle>
-                <circle cx="-73.33333333333366" cy="-24" r="4"></circle>
+                <circle cx="9.999999999999526" cy="0" r="4"></circle>
+                <circle cx="110.00000000000047" cy="96" r="4"></circle>
               </g>
               <g>
-                <line x1="-6.666666666666351" x2="-6.666666666666351" y1="0" y2="-60"></line>
-                <line x1="-73.33333333333366" x2="-73.33333333333366" y1="-24" y2="-60"></line>
+                <line x1="9.999999999999526" x2="9.999999999999526" y1="0" y2="240"></line>
+                <line x1="110.00000000000047" x2="110.00000000000047" y1="96" y2="240"></line>
               </g>
               <g>
-                <rect width="-0.03999999999943338" height="-60" x="-6.6466666666666345" y="0"></rect>
-                <rect width="-0.04040000000031796" height="-36" x="-73.3131333333335" y="-24"></rect>
+                <rect width="0.0599999999991514" height="240" x="9.969999999999951" y="0"></rect>
+                <rect width="0.06060000000047694" height="144" x="109.96970000000023" y="96"></rect>
               </g>
             </g>
             <g class="theor-graph soloTheor">
               <g>
-                <path d="M0,-60L-6.666666666666351,-59.4L-13.333333333332702,-60L-66.6666666666673,-60L-73.33333333333366,-59.7L-80,-60"></path>
+                <path d="M0,240L9.999999999999526,237.6L19.99999999999905,240L100.00000000000095,240L110.00000000000047,238.8L120,240"></path>
               </g>
             </g>
             <g fill="none" pointer-events="all">
-              <rect class="overlay" pointer-events="all" cursor="crosshair" x="0" y="0" width="-80" height="-60"></rect>
+              <rect class="overlay" pointer-events="all" cursor="crosshair" x="0" y="0" width="120" height="240"></rect>
               <rect class="selection" cursor="move" fill="#777" fill-opacity="0.3" stroke="#fff" shape-rendering="crispEdges" style="display: none;"></rect>
               <rect class="handle handle--w" cursor="ew-resize" style="display: none;"></rect>
               <rect class="handle handle--e" cursor="ew-resize" style="display: none;"></rect>

@@ -62,10 +62,10 @@ exports[`ImageLoader should match snapshot (with everything turned on) 1`] = `
       </mock-el-tooltip>
     </div>
     <div
-      class="absolute inset-0 z-30 pointer-events-none bg-white opacity-0 duration-1000"
+      class="absolute inset-0 z-30 pointer-events-none bg-body flex items-center justify-center opacity-0 duration-1000"
     >
       <p
-        class="relative block top-1/2 z-40 -translate-y-1/2 p-auto text-white text-center text-2xl"
+        class="relative block z-40 m-0 text-white text-2xl"
       >
         Use CTRL + scroll wheel to zoom the image
       </p>
