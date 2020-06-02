@@ -11,6 +11,17 @@ from sm.engine.util import GlobalInit, SMConfig
 logger = logging.getLogger('engine')
 
 
+def update_non_public_molecular_dbs():
+    logger.info('Updating non-public molecular databases')
+    DB().alter(
+        "UPDATE molecular_db "
+        "SET group_id = ("
+        "   SELECT id FROM graphql.\"group\" WHERE name = 'European Molecular Biology Laboratory'"
+        ") "
+        "WHERE public = false;"
+    )
+
+
 def build_moldb_map():
     data = DB().select_with_fields('SELECT id, name FROM molecular_db')
     moldb_name_id_map = {}
@@ -56,7 +67,7 @@ def update_es_docs(doc_type, search_terms, update_values):
     logger.info(f'delete pipeline {pipeline_id}: {resp}')
 
 
-def update_es_annotation(ds_doc, moldb_name_id_map_rev):
+def update_es_annotations(ds_doc, moldb_name_id_map_rev):
     ds_id = ds_doc['id']
     moldb_ids = ds_doc['config']['database_ids']
     moldb_names = [moldb_name_id_map_rev[id] for id in moldb_ids]
@@ -98,6 +109,8 @@ def update_es_dataset(ds_doc, moldb_name_id_map):
 
 
 def migrate_moldbs():
+    update_non_public_molecular_dbs()
+
     moldb_name_id_map = build_moldb_map()
     moldb_name_id_map_rev = {v: k for k, v in moldb_name_id_map.items()}
 
@@ -110,7 +123,7 @@ def migrate_moldbs():
 
             update_db_dataset(ds_doc)
             update_es_dataset(ds_doc, moldb_name_id_map)
-            update_es_annotation(ds_doc, moldb_name_id_map_rev)
+            update_es_annotations(ds_doc, moldb_name_id_map_rev)
         except Exception as e:
             logger.warning(f'Failed to migrate dataset {ds_doc["id"]}: {e}')
             failed_datasets.append((ds_doc['id'], e))
