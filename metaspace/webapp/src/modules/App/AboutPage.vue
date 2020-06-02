@@ -200,7 +200,7 @@ export default {
 
 <style scoped>
   .sm-main-content {
-    @apply mt-0 pt-0;
+    @apply pt-0 top-0;
   }
   .sm-about h3 {
     @apply font-display font-medium leading-6 text-2xl tracking-snug py-3 m-0;

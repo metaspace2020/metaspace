@@ -420,8 +420,8 @@ export default MetaspaceHeader
 </script>
 
 <style lang="scss">
-  $header-height: theme('spacing.16');
-  $alert-height: theme('spacing.8');
+  $header-height: 4rem;
+  $alert-height: 2rem;
 
   .sm-header {
     // z-index should be higher than v-loading's .el-loading-mask (z-index: 2000) so that loading spinners
@@ -448,10 +448,6 @@ export default MetaspaceHeader
       }
     }
 
-    #email-link-container {
-      display: inline-flex;
-    }
-
     .alert {
       border-radius: 0;
 
@@ -467,11 +463,12 @@ export default MetaspaceHeader
   }
 
   .sm-header + * {
-    margin-top: $header-height
+    position: relative;
+    top: $header-height
   }
 
   .sm-header--with-alert + * {
-    margin-top: $header-height + $alert-height
+    top: $header-height + $alert-height
   }
 
 </style>
