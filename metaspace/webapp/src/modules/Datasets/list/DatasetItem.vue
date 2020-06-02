@@ -121,11 +121,15 @@ export default {
  }
 
  .ds-actions {
-   padding: 10px 22px 10px 0px;
+   padding: 10px 20px 10px 0px;
    margin: 0px;
    flex: none;
    display: flex;
    flex-direction: column;
+ }
+
+ .ds-actions i {
+   margin-right: 5px;
  }
 
  .ds-add-filter {
