@@ -2,10 +2,14 @@ import {MolecularDB as MolecularDbModel} from '../model';
 import {MolecularDB} from '../../../binding';
 import config from '../../../utils/config';
 
-export const mapToMolecularDB = (molDB: MolecularDbModel): MolecularDB => {
+export const mapToMolecularDB = (moldb: MolecularDbModel): MolecularDB => {
   return {
-    ...molDB,
-    default: config.defaults.moldb_names.includes(molDB.name),
-    hidden: molDB.archived || !molDB.public,
+    ...moldb,
+    description: moldb.description || undefined,
+    fullName: moldb.fullName || undefined,
+    link: moldb.link || undefined,
+    citation: moldb.citation || undefined,
+    default: config.defaults.moldb_names.includes(moldb.name),
+    hidden: moldb.archived || !moldb.public,
   }
 };

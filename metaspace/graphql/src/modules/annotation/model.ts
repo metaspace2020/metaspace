@@ -15,8 +15,8 @@ export class ColocJob {
   @Column({ type: 'text', name: 'ds_id' })
   datasetId: string;
 
-  @Column({ type: 'text', nullable: true })
-  molDb: string | null;
+  @Column({ type: 'int', nullable: false })
+  moldbId: number;
 
   @Column({ type: 'numeric', precision: 2, scale: 2 })
   fdr: number;

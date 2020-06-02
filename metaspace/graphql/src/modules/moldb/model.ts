@@ -24,17 +24,17 @@ export class MolecularDB {
   @Column({ type: 'text' })
   version: string;
 
-  @Column({ type: 'text', default: null })
-  description: string;
+  @Column({ type: 'text', nullable: true })
+  description: string | null;
 
-  @Column({ type: 'text', default: null })
-  fullName: string;
+  @Column({ type: 'text', nullable: true })
+  fullName: string | null;
 
-  @Column({ type: 'text', default: null })
-  link: string;
+  @Column({ type: 'text', nullable: true })
+  link: string | null;
 
-  @Column({ type: 'text', default: null })
-  citation: string;
+  @Column({ type: 'text', nullable: true })
+  citation: string | null;
 
   @OneToMany(type => Molecule, molecule => molecule.molecularDB)
   molecules: Molecule[];
@@ -48,8 +48,8 @@ export class MolecularDB {
   @Column({ type: 'boolean', default: false })
   targeted: boolean;  // All the Metaspace provided databases are untargeted
 
-  @Column({ type: 'uuid', default: null })
-  groupId: string;
+  @Column({ type: 'uuid', nullable: true })
+  groupId: string | null;
 
   @ManyToOne(type => Group, group => group.molecularDBs, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'group_id' })

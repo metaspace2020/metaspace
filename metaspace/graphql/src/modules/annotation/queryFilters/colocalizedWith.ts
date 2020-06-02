@@ -21,7 +21,7 @@ const getColocAnnotation = async (context: Context, datasetId: string, fdrLevel:
       const annotation = await context.entityManager.createQueryBuilder(ColocAnnotation, 'colocAnnotation')
         .innerJoinAndSelect('colocAnnotation.colocJob', 'colocJob')
         .innerJoin(Ion, 'ion', 'colocAnnotation.ionId = ion.id')
-        .where('colocJob.datasetId = :datasetId AND colocJob.fdr = :fdrLevel AND colocJob.molDb = :databaseId ' +
+        .where('colocJob.datasetId = :datasetId AND colocJob.fdr = :fdrLevel AND colocJob.moldbId = :databaseId ' +
           'AND colocJob.algorithm = :colocalizationAlgo AND ion.ion = :colocalizedWith',
           { datasetId, fdrLevel, databaseId, colocalizationAlgo, colocalizedWith })
         .getOne();

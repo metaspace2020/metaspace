@@ -42,7 +42,7 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
 
     job = testEntityManager.create(ColocJob, {
       datasetId: 'datasetId',
-      molDb: database.id.toString(),
+      moldbId: database.id,
       fdr: 0.1,
       algorithm: 'cosine',
       sampleIonIds: [ions[1].id, ions[2].id],
@@ -64,7 +64,7 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
     const argsWithColocWith: QueryFilterArgs = {
       datasetFilter: { ids: job.datasetId },
       filter: {
-        databaseId: Number(job.molDb!),
+        databaseId: job.moldbId,
         fdrLevel: job.fdr,
         colocalizedWith: ions[1].ion,
         colocalizationAlgo: job.algorithm,
@@ -87,7 +87,7 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
     const argsWithColocWith: QueryFilterArgs = {
       datasetFilter: { ids: job.datasetId },
       filter: {
-        databaseId: Number(job.molDb!),
+        databaseId: job.moldbId,
         fdrLevel: job.fdr,
         colocalizationSamples: true,
         colocalizationAlgo: job.algorithm,
@@ -108,7 +108,7 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
     const argsWithColocWith: QueryFilterArgs = {
       datasetFilter: { ids: job.datasetId },
       filter: {
-        databaseId: Number(job.molDb!),
+        databaseId: job.moldbId,
         fdrLevel: job.fdr,
         colocalizedWith: ions[1].ion,
         colocalizationAlgo: job.algorithm,
@@ -130,8 +130,8 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
       {_source: ionAnnotations[2], _isColocReference: false},
       {_source: ionAnnotations[3], _isColocReference: false},
     ]);
-    expect(await result[0].getColocalizationCoeff(ions[1].ion, job.algorithm, Number(job.molDb!), job.fdr)).toEqual(1);
-    expect(await result[1].getColocalizationCoeff(ions[1].ion, job.algorithm, Number(job.molDb!), job.fdr)).toEqual(0.9);
-    expect(await result[2].getColocalizationCoeff(ions[1].ion, job.algorithm, Number(job.molDb!), job.fdr)).toEqual(0.7);
+    expect(await result[0].getColocalizationCoeff(ions[1].ion, job.algorithm, job.moldbId, job.fdr)).toEqual(1);
+    expect(await result[1].getColocalizationCoeff(ions[1].ion, job.algorithm, job.moldbId, job.fdr)).toEqual(0.9);
+    expect(await result[2].getColocalizationCoeff(ions[1].ion, job.algorithm, job.moldbId, job.fdr)).toEqual(0.7);
   });
 });

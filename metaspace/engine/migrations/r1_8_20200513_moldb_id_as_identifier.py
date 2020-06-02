@@ -27,16 +27,6 @@ def update_db_dataset(ds_doc):
     )
 
 
-def update_db_coloc_job(moldb_name_id_map):
-    logger.info(f'Updating coloc jobs')
-    for moldb_name, moldb_id in moldb_name_id_map.items():
-        logger.info(f'Replacing {moldb_name} with {moldb_id}')
-        DB().alter(
-            'UPDATE graphql.coloc_job SET mol_db = %s WHERE mol_db = %s',
-            params=(moldb_id, moldb_name),
-        )
-
-
 def update_es_docs(doc_type, search_terms, update_values):
     pipeline_id = f'update-fields-{doc_type}-{"-".join(search_terms.values())}'
     processors = []
@@ -110,8 +100,6 @@ def update_es_dataset(ds_doc, moldb_name_id_map):
 def migrate_moldbs():
     moldb_name_id_map = build_moldb_map()
     moldb_name_id_map_rev = {v: k for k, v in moldb_name_id_map.items()}
-
-    update_db_coloc_job(moldb_name_id_map)
 
     datasets = DB().select_with_fields('SELECT id, config FROM dataset')
     failed_datasets = []

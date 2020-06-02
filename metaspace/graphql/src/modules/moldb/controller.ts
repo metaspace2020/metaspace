@@ -39,8 +39,13 @@ const assertUserBelongsToGroup = (ctx: Context, groupId: string) => {
 };
 
 const assertUserCanEditMolecularDB = async (ctx: Context, databaseId: number) => {
-  const molDB = await ctx.entityManager.getRepository(MolecularDbModel).findOneOrFail({ id: databaseId });
-  assertUserBelongsToGroup(ctx, molDB.groupId);
+  const moldb = await ctx.entityManager.getRepository(MolecularDbModel).findOneOrFail({ id: databaseId });
+  if (moldb.public) {
+    throw new UserError('Cannot edit public database');
+  }
+  if (moldb.groupId != null) {
+    assertUserBelongsToGroup(ctx, moldb.groupId);
+  }
 };
 
 const MutationResolvers: FieldResolversFor<Mutation, void>  = {
