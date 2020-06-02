@@ -4,7 +4,7 @@
     class="min-h-full m-0 relative"
     :class="{ 'flex flex-col': $route.meta.flex }"
   >
-    <metaspace-header />
+    <metaspace-header :class="$route.meta.headerClass" />
 
     <!--
       :key="$route.path" is used to force the content to be remounted if a non-querystring param in the URL changes.

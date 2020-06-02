@@ -44,8 +44,7 @@ convertLegacyHashUrls()
 const router = new VueRouter({
   mode: 'history',
   routes: [
-    { path: '/', component: AboutPage, meta: { footer: true } },
-    { path: '/about', component: AboutPage, meta: { footer: true } },
+    { path: '/(about)?', component: AboutPage, meta: { footer: true, headerClass: 'bg-primary' } },
     { path: '/annotations', component: asyncPages.AnnotationsPage },
     {
       path: '/datasets',

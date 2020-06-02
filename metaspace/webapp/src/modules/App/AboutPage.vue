@@ -1,6 +1,6 @@
 <template>
   <div class="text-base proportional-nums leading-6">
-    <div class="bg-primary overflow-hidden w-full pt-16">
+    <div class="bg-primary overflow-hidden w-full">
       <div class="box-border font-display pt-12 pb-24 mx-auto max-w-4xl flex items-center">
         <img
           src="../../assets/METASPACE_logomark.png"
@@ -133,8 +133,8 @@
               <b>European Union Horizon 2020 Programme</b>
               <br>
               under grant agreements
-              <a href="https://cordis.europa.eu/project/id/634402">634402</a>,
-              <a href="https://cordis.europa.eu/project/id/773089">773089</a>,
+              <a href="https://cordis.europa.eu/project/id/634402">634402</a> /
+              <a href="https://cordis.europa.eu/project/id/773089">773089</a> /
               <a href="https://cordis.europa.eu/project/id/825184">825184</a>
             </span>
           </li>
@@ -200,8 +200,9 @@ export default {
 
 <style scoped>
   .sm-main-content {
-    @apply pt-0 top-0;
+    @apply pt-0;
   }
+
   .sm-about h3 {
     @apply font-display font-medium leading-6 text-2xl tracking-snug py-3 m-0;
   }

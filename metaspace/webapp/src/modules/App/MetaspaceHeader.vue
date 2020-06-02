@@ -1,158 +1,161 @@
 <template>
   <div
-    class="fixed top-0 left-0 right-0 sm-header"
-    :class="{ 'sm-header--with-alert': healthMessage }"
+    class="sm-header"
+    :class="healthMessage ? 'h-24' : 'h-16'"
   >
-    <div
-      class="transition-colors duration-300 ease-in-out h-16 flex items-center justify-between"
-      :class="{ 'bg-primary': scrolled === false, 'bg-primary-alpha': scrolled === true }"
-    >
-      <div class="header-items">
-        <router-link
-          to="/"
-          class="flex pl-3 pr-4"
-        >
-          <img
-            src="../../assets/logo.png"
-            alt="Metaspace"
-            title="Metaspace"
+    <div class="fixed top-0 left-0 right-0">
+      <div
+        class="transition-colors duration-300 ease-in-out h-16 flex items-center justify-between"
+        :class="{ 'bg-primary': scrolled === false, 'bg-primary-alpha': scrolled === true }"
+      >
+        <div class="header-items">
+          <router-link
+            to="/"
+            class="flex pl-3 pr-4"
           >
-        </router-link>
+            <img
+              src="../../assets/logo.png"
+              alt="Metaspace"
+              title="Metaspace"
+            >
+          </router-link>
 
-        <header-link
-          id="upload-link"
-          :to="uploadHref"
-        >
-          Upload
-        </header-link>
-
-        <header-link
-          id="annotations-link"
-          :to="annotationsHref"
-        >
-          Annotations
-        </header-link>
-
-        <header-link
-          id="datasets-link"
-          :to="datasetsHref"
-        >
-          Datasets
-        </header-link>
-
-        <header-link
-          to="/projects"
-        >
-          Projects
-        </header-link>
-
-        <header-link
-          v-if="currentUser && currentUser.primaryGroup"
-          :to="primaryGroupHref"
-        >
-          <div class="limit-width">
-            {{ currentUser.primaryGroup.group.shortName }}
-          </div>
-        </header-link>
-      </div>
-
-      <div class="header-items">
-        <header-link
-          to="/help"
-        >
-          Help
-        </header-link>
-
-        <div
-          v-if="loadingUser === 0 && currentUser == null"
-          class="header-items mr-1 lg:mr-2"
-        >
-          <header-button
-            @click="showCreateAccount"
+          <header-link
+            id="upload-link"
+            :to="uploadHref"
           >
-            Create account
-          </header-button>
+            Upload
+          </header-link>
 
-          <header-button
-            @click="showSignIn"
+          <header-link
+            id="annotations-link"
+            :to="annotationsHref"
           >
-            Sign in
-          </header-button>
+            Annotations
+          </header-link>
+
+          <header-link
+            id="datasets-link"
+            :to="datasetsHref"
+          >
+            Datasets
+          </header-link>
+
+          <header-link
+            to="/projects"
+          >
+            Projects
+          </header-link>
+
+          <header-link
+            v-if="currentUser && currentUser.primaryGroup"
+            :to="primaryGroupHref"
+          >
+            <div class="limit-width">
+              {{ currentUser.primaryGroup.group.shortName }}
+            </div>
+          </header-link>
         </div>
 
-        <div
-          v-if="loadingUser === 0 && currentUser != null"
-          class="header-items mr-1 lg:mr-2"
-        >
-          <div
-            class="relative flex py-2"
-            @mouseenter="handleSubmenuEnter('user')"
-            @mouseleave="handleSubmenuLeave('user')"
-            @click="handleSubmenuLeave('user')"
+        <div class="header-items">
+          <header-link
+            to="/help"
           >
-            <header-link
-              id="user-menu"
-              to="/user/me"
-              :is-active="menuIsOpen"
+            Help
+          </header-link>
+
+          <div
+            v-if="loadingUser === 0 && currentUser == null"
+            class="header-items mr-1 lg:mr-2"
+          >
+            <header-button
+              @click="showCreateAccount"
             >
-              <div class="limit-width">
-                {{ userNameOrEmail }}
-                <notification-icon
-                  v-if="pendingRequestMessage != null"
-                  :tooltip="pendingRequestMessage"
-                  tooltip-placement="bottom"
-                />
-              </div>
-            </header-link>
-            <transition
-              enter-class="transform opacity-0 scale-95"
-              enter-to-class="transform opacity-100 scale-100"
-              leave-class="transform opacity-100 scale-100"
-              leave-to-class="transform opacity-0 scale-95"
-              enter-active-class="transition ease-out duration-100"
-              leave-active-class="transition ease-in duration-75"
+              Create account
+            </header-button>
+
+            <header-button
+              @click="showSignIn"
             >
-              <div
-                v-if="menuIsOpen"
-                class="origin-top-right absolute right-0 top-1/2 mt-6 w-40 rounded-md shadow-lg z-10"
+              Sign in
+            </header-button>
+          </div>
+
+          <div
+            v-if="loadingUser === 0 && currentUser != null"
+            class="header-items mr-1 lg:mr-2"
+          >
+            <div
+              class="relative flex py-2"
+              @mouseenter="handleSubmenuEnter('user')"
+              @mouseleave="handleSubmenuLeave('user')"
+              @click="handleSubmenuLeave('user')"
+            >
+              <header-link
+                id="user-menu"
+                to="/user/me"
+                :is-active="menuIsOpen"
+              >
+                <div class="limit-width">
+                  {{ userNameOrEmail }}
+                  <notification-icon
+                    v-if="pendingRequestMessage != null"
+                    :tooltip="pendingRequestMessage"
+                    tooltip-placement="bottom"
+                  />
+                </div>
+              </header-link>
+              <transition
+                enter-class="transform opacity-0 scale-95"
+                enter-to-class="transform opacity-100 scale-100"
+                leave-class="transform opacity-100 scale-100"
+                leave-to-class="transform opacity-0 scale-95"
+                enter-active-class="transition ease-out duration-100"
+                leave-active-class="transition ease-in duration-75"
               >
                 <div
-                  class="py-1 rounded-md bg-white shadow-xs text-sm"
-                  role="menu"
-                  aria-orientation="vertical"
-                  aria-labelledby="user-menu"
+                  v-if="menuIsOpen"
+                  class="origin-top-right absolute right-0 top-1/2 mt-6 w-40 rounded-md shadow-lg z-10"
                 >
-                  <router-link
-                    to="/user/me"
-                    class="no-underline block px-4 py-2 text-gray-700 hover:bg-gray-100 font-medium"
+                  <div
+                    class="py-1 rounded-md bg-white shadow-xs text-sm"
+                    role="menu"
+                    aria-orientation="vertical"
+                    aria-labelledby="user-menu"
                   >
-                    My account
-                  </router-link>
-                  <button
-                    class="button-reset w-full text-left block px-4 py-2 text-gray-700 hover:bg-gray-100"
-                    @click="logout"
-                  >
-                    Sign out
-                  </button>
+                    <router-link
+                      to="/user/me"
+                      class="no-underline block px-4 py-2 text-gray-700 hover:bg-gray-100 font-medium"
+                    >
+                      My account
+                    </router-link>
+                    <button
+                      class="button-reset w-full text-left block px-4 py-2 text-gray-700 hover:bg-gray-100"
+                      @click="logout"
+                    >
+                      Sign out
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </transition>
+              </transition>
+            </div>
           </div>
         </div>
       </div>
+      <el-row
+        v-if="healthMessage"
+        class="transition-colors duration-300 ease-in-out text-white"
+        :class="{ 'bg-blue-700': scrolled === false, 'bg-blue-700-alpha': scrolled === true }"
+      >
+        <el-alert
+          show-icon
+          class="h-8 rounded-none justify-center z-0"
+          :title="healthMessage"
+          :type="healthSeverity"
+          :closable="false"
+        />
+      </el-row>
     </div>
-    <el-row
-      v-if="healthMessage"
-      class="alert transition-colors duration-300 ease-in-out"
-      :class="{ 'bg-blue-700': scrolled === false, 'bg-blue-700-alpha': scrolled === true }"
-    >
-      <el-alert
-        show-icon
-        :title="healthMessage"
-        :type="healthSeverity"
-        :closable="false"
-      />
-    </el-row>
   </div>
 </template>
 
@@ -212,7 +215,7 @@ const MetaspaceHeader = {
       const { canMutate = true, message = null } = this.systemHealth || {}
       if (message) {
         return message
-      } else if (!canMutate) {
+      } else if (canMutate) {
         return 'METASPACE is currently in read-only mode for scheduled maintenance.'
       }
     },
@@ -420,13 +423,12 @@ export default MetaspaceHeader
 </script>
 
 <style lang="scss">
-  $header-height: 4rem;
-  $alert-height: 2rem;
-
   .sm-header {
-    // z-index should be higher than v-loading's .el-loading-mask (z-index: 2000) so that loading spinners
-    // don't overlap the header, but can't be higher than v-tooltip's initial z-index (2001)
-    z-index: 2001;
+    .fixed {
+      // z-index should be higher than v-loading's .el-loading-mask (z-index: 2000) so that loading spinners
+      // don't overlap the header, but can't be higher than v-tooltip's initial z-index (2001)
+      z-index: 2001;
+    }
 
     .header-items {
       display: flex;
@@ -441,34 +443,15 @@ export default MetaspaceHeader
       overflow: hidden;
       line-height: 1.2em;
       max-height: 2.4em;
-    }
-    @media (max-width: 1279px) {
-      .limit-width {
+
+      @media (max-width: 1279px) {
         max-width: 150px;
       }
     }
 
-    .alert {
-      border-radius: 0;
-
-      .el-alert {
-        @apply text-white;
-        border-radius: 0;
-        height: $alert-height;
-        justify-content: center;
-        background: inherit;
-        z-index: 0;
-      }
+    .el-alert.is-light {
+      color: inherit;
+      background: inherit;
     }
   }
-
-  .sm-header + * {
-    position: relative;
-    top: $header-height
-  }
-
-  .sm-header--with-alert + * {
-    top: $header-height + $alert-height
-  }
-
 </style>
