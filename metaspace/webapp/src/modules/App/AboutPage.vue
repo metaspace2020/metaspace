@@ -78,7 +78,7 @@
         <h3>What is the METASPACE platform?</h3>
         <p>
           The METASPACE platform hosts an engine for metabolite annotation of imaging mass spectrometry data as well as a
-          spatial metabolite knowledgebase of the metabolites from hundreds of public datasets provided by the
+          spatial metabolite knowledgebase of the metabolites from thousands of public datasets provided by the
           community.
         </p>
         <p>
@@ -149,7 +149,7 @@
                 <abbr title="National Institute of Diabetes and Digestive and Kidney Diseases">NIDDK</abbr>
               </b>
               <br>
-              Kidney Precision Medicine Project (<a href="http://kpmp.org/">kpmp.org</a>)
+              Kidney Precision Medicine Project (<a href="https://kpmp.org/">kpmp.org</a>)
             </span>
           </li>
           <li>

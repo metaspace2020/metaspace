@@ -20,7 +20,7 @@ export const HeaderLink = createComponent({
     return () => (
       <router-link
         to={props.to}
-        class={classes.concat(props.isActive ? activeClass : '')}
+        class={[classes, props.isActive && activeClass]}
         activeClass={activeClass}
       >
         {slots.default()}

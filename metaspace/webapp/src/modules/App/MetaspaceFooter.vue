@@ -8,7 +8,7 @@
         <router-link to="/terms">
           Terms
         </router-link>
-        <a href="https://github.com/metaspace2020">Github</a>
+        <a href="https://github.com/metaspace2020">GitHub</a>
         <a href="mailto:contact@metaspace2020.eu">Contact us</a>
         <a href="https://twitter.com/metaspace2020">Follow on Twitter</a>
       </p>
