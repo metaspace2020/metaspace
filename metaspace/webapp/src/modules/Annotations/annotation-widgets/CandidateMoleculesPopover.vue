@@ -4,7 +4,7 @@
     trigger="hover"
     v-bind="$attrs"
   >
-    <div class="leading-6 py-2 px-3 font-normal content">
+    <div class="leading-5 py-2 px-3 font-normal content text-sm text-left">
       <p
         v-if="possibleCompounds.length > 1"
         class="title proportional-nums"
@@ -17,7 +17,7 @@
       >
         Candidate molecule
       </p>
-      <ul class="p-0 m-0 list-none text-xs tracking-wide">
+      <ul class="m-0 p-0 list-none leading-7">
         <li
           v-for="(comp, i) in filteredCompounds"
           :key="i"
@@ -26,7 +26,7 @@
         </li>
         <li
           v-if="moreCount"
-          class="proportional-nums text-gray-600 font-medium"
+          class="proportional-nums text-xs tracking-wide font-medium"
         >
           + {{ moreCount }} more
         </li>
@@ -34,22 +34,22 @@
       <div
         v-if="showIsomers"
       >
-        <p class="m-0 font-bold">
-          <span v-if="isomers.length == 1">An isomeric ion was annotated.</span>
-          <span v-else>{{ isomers.length }} isomeric ions were annotated.</span>
+        <p class="title">
+          <span v-if="isomers.length == 1">An isomeric ion was annotated</span>
+          <span v-else>{{ isomers.length }} isomeric ions were annotated</span>
         </p>
-        <p class="m-0 leading-5 max-w-measure-1">
+        <p>
           Check the <b>Molecules</b> panel for more candidates.
         </p>
       </div>
       <div
         v-if="showIsobars"
       >
-        <p class="m-0 font-bold">
-          <span v-if="isobars.length == 1">An isobaric ion was annotated.</span>
-          <span v-else>{{ isobars.length }} isobaric ions were annotated.</span>
+        <p class="title">
+          <span v-if="isobars.length == 1">An isobaric ion was annotated</span>
+          <span v-else>{{ isobars.length }} isobaric ions were annotated</span>
         </p>
-        <p class="m-0 leading-5 max-w-measure-1">
+        <p class="max-w-measure-1">
           Check the <b>Molecules</b> panel to see candidate molecules from the isobaric {{ isobars.length == 1 ? 'ion' : 'ions' }},
           and the <b>Diagnostics</b> panel to compare the isotopic images and spectra.
         </p>
@@ -110,16 +110,19 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  .content > * {
+  .content * {
     margin: 0;
-  }
-  .title {
-    @apply font-medium text-gray-600;
   }
   .content > * + * {
     @apply mt-4;
   }
   .content > .title + * {
     @apply mt-2;
+  }
+  .title + * {
+    @apply mt-1;
+  }
+  .title {
+    @apply font-bold;
   }
 </style>
