@@ -8,8 +8,8 @@ type Annotation {
   adduct: String!
   ion: String!          # Formula+adducts+polarity
   ionFormula: String!   # "Compiled" formula, such that there are no +/-s, each element is only included once, in CHNOPS order
-  database2: MolecularDB!
-  database: String! @deprecated(reason: "This field is deprecated and will be removed. Use database2 instead.")
+  databaseDetails: MolecularDB!
+  database: String! @deprecated(reason: "This field is deprecated and will be removed. Use databaseDetails instead.")
   mz: Float!
   countPossibleCompounds(includeIsomers: Boolean = False): Int!
   possibleCompounds: [Compound!]!
