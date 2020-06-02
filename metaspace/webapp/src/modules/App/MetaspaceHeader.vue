@@ -215,7 +215,7 @@ const MetaspaceHeader = {
       const { canMutate = true, message = null } = this.systemHealth || {}
       if (message) {
         return message
-      } else if (canMutate) {
+      } else if (!canMutate) {
         return 'METASPACE is currently in read-only mode for scheduled maintenance.'
       }
     },
