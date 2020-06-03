@@ -110,6 +110,12 @@
           >Palmer et al., 2016, Nature Methods</a>)
           and refer to <a href="https://metaspace2020.eu">https://metaspace2020.eu</a>.
         </p>
+        <p>
+          If you are preparing a scientific publication based on METASPACE annotations, please create a
+          <router-link to="/projects">
+            project<!-- -->
+          </router-link> and follow the &lsquo;Scientific Publishing&rsquo; workflow.
+        </p>
         <h3>
           How to stay in touch?
         </h3>
