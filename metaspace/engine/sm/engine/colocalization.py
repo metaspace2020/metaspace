@@ -12,11 +12,11 @@ from sm.engine.ion_mapping import get_ion_id_mapping
 from sm.engine.util import SMConfig
 from sm.engine.png_generator import ImageStoreServiceWrapper
 
-COLOC_JOB_DEL = 'DELETE FROM graphql.coloc_job WHERE ds_id = %s AND mol_db = %s::text'
+COLOC_JOB_DEL = 'DELETE FROM graphql.coloc_job WHERE ds_id = %s AND moldb_id = %s'
 
 COLOC_JOB_INS = (
     'INSERT INTO graphql.coloc_job ('
-    '   ds_id, mol_db, fdr, algorithm, start, finish, error, sample_ion_ids'
+    '   ds_id, moldb_id, fdr, algorithm, start, finish, error, sample_ion_ids'
     ') '
     'VALUES (%s, %s, %s, %s, %s, %s, %s, %s) '
     'RETURNING id'
@@ -28,9 +28,9 @@ COLOC_ANN_INS = (
 )
 
 SUCCESSFUL_COLOC_JOB_SEL = (
-    'SELECT mol_db FROM graphql.coloc_job '
+    'SELECT moldb_id FROM graphql.coloc_job '
     'WHERE ds_id = %s '
-    'GROUP BY mol_db '
+    'GROUP BY moldb_id '
     'HAVING not bool_or(error IS NOT NULL)'
 )
 
@@ -59,7 +59,7 @@ class ColocalizationJob:
     def __init__(
         self,
         ds_id,
-        mol_db,
+        moldb_id,
         fdr,
         algorithm_name=None,
         start=None,
@@ -73,7 +73,7 @@ class ColocalizationJob:
         Args
         ----------
         ds_id: str
-        mol_db: str
+        moldb_id: int
         fdr: float
         algorithm_name: str
         start: datetime
@@ -95,7 +95,7 @@ class ColocalizationJob:
         )
 
         self.ds_id = ds_id
-        self.mol_db = mol_db
+        self.moldb_id = moldb_id
         self.fdr = fdr
         self.algorithm_name = algorithm_name or 'error'
         self.start = start or datetime.now()
@@ -235,7 +235,7 @@ def analyze_colocalization(ds_id, moldb_id, images, ion_ids, fdrs, h, w, cluster
     Args
     ----------
     ds_id: str
-    moldb_id: str
+    moldb_id: int
     images: FreeableRef[np.ndarray]
         2D array where each row contains the pixels from one image
         WARNING: This FreeableRef is released during use to save memory
@@ -322,7 +322,7 @@ class Colocalization:
             [
                 [
                     job.ds_id,
-                    job.mol_db,
+                    job.moldb_id,
                     job.fdr,
                     job.algorithm_name,
                     job.start,
@@ -380,29 +380,26 @@ class Colocalization:
 
         return FreeableRef(images), ion_ids, fdrs, h, w
 
-    def run_coloc_job(self, ds_id, reprocess=False):
-        """ Analyze colocalization for a previously annotated dataset,
-        querying the dataset's annotations from the db, and downloading the exported ion images
-        Args
-        ====
-        ds_id: str
-        reprocess: bool
-            Whether to re-run colocalization jobs against databases
-            that have already successfully run
+    def run_coloc_job(self, ds_id: str, reprocess: bool = False):
+        """Analyze colocalization for a previously annotated dataset.
+
+        Querying the dataset's annotations from the db, and downloading the exported ion images.
+
+        Args:
+            ds_id: dataset id
+            reprocess: Whether to re-run colocalization jobs against databases
+                that have already successfully run
         """
-
         image_storage_type = Dataset(ds_id).get_ion_img_storage_type(self._db)
-        moldbs_ids, charge = self._db.select_one(DATASET_CONFIG_SEL, [ds_id])
-        existing_moldbs_ids = set(
-            int(db) for db, in self._db.select(SUCCESSFUL_COLOC_JOB_SEL, [ds_id])
-        )
+        moldb_ids, charge = self._db.select_one(DATASET_CONFIG_SEL, [ds_id])
+        existing_moldb_ids = set(db for db, in self._db.select(SUCCESSFUL_COLOC_JOB_SEL, [ds_id]))
 
-        for moldbs_id in moldbs_ids:
-            if reprocess or moldbs_id not in existing_moldbs_ids:
-                logger.info(f'Running colocalization job for {ds_id} on {moldbs_id}')
+        for moldb_id in moldb_ids:
+            if reprocess or moldb_id not in existing_moldb_ids:
+                logger.info(f'Running colocalization job for {ds_id} on {moldb_id}')
                 images, ion_ids, fdrs, h, w = self._get_existing_ds_annotations(
-                    ds_id, moldbs_id, image_storage_type, charge
+                    ds_id, moldb_id, image_storage_type, charge
                 )
-                self._analyze_and_save(ds_id, moldbs_id, images, ion_ids, fdrs, h, w)
+                self._analyze_and_save(ds_id, moldb_id, images, ion_ids, fdrs, h, w)
             else:
-                logger.info(f'Skipping colocalization job for {ds_id} on {moldbs_id}')
+                logger.info(f'Skipping colocalization job for {ds_id} on {moldb_id}')
