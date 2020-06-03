@@ -1,5 +1,5 @@
 ---
-title: Overview
+title: Diagnostics
 target: '.tour-diagnostic-tab .el-collapse-item__header'
 placement: left
 route: '/annotations'

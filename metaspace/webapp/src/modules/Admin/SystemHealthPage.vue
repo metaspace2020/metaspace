@@ -2,7 +2,7 @@
   <div
     v-if="isAdmin"
     v-loading="loading"
-    style="width: 900px; margin: 20px auto;"
+    class="mx-auto max-w-4xl"
   >
     <el-form label-position="top">
       <el-form-item>

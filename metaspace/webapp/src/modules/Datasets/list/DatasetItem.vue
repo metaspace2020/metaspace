@@ -96,8 +96,6 @@ export default {
 
  .dataset-item {
    border-radius: 5px;
-   // Can't use box-sizing:border-box due to IE11 flexbox limitations, so instead using `calc(100% - 2px)`
-   flex: 1 1 calc(100% - 2px);
    min-height: 120px;
    min-width: 600px;
    max-width: 950px;
@@ -123,11 +121,15 @@ export default {
  }
 
  .ds-actions {
-   padding: 10px 22px 10px 0px;
+   padding: 10px 20px 10px 0px;
    margin: 0px;
    flex: none;
    display: flex;
    flex-direction: column;
+ }
+
+ .ds-actions i {
+   margin-right: 5px;
  }
 
  .ds-add-filter {

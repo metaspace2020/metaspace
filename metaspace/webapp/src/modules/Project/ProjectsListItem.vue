@@ -9,7 +9,7 @@
         <div class="info-line project-name pr-5 flex items-baseline">
           <router-link
             :to="projectLink"
-            class="text-2xl font-medium text-inherit no-underline truncate leading-none pb-2"
+            class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2"
           >
             {{ project.name }}
           </router-link>

@@ -1,151 +1,161 @@
 <template>
-  <div>
-    <div
-      class="spacer"
-      :class="{ 'spacer--with-alert': healthMessage }"
-    />
-    <div class="b-header">
-      <div class="header-items">
-        <router-link
-          to="/"
-          class="header-item logo"
-        >
-          <img
-            src="../../assets/logo.png"
-            alt="Metaspace"
-            title="Metaspace"
+  <div
+    class="sm-header"
+    :class="healthMessage ? 'h-24' : 'h-16'"
+  >
+    <div class="fixed top-0 left-0 right-0">
+      <div
+        class="transition-colors duration-300 ease-in-out h-16 flex items-center justify-between"
+        :class="{ 'bg-primary': scrolled === false, 'bg-primary-alpha': scrolled === true }"
+      >
+        <div class="header-items">
+          <router-link
+            to="/"
+            class="flex pl-3 pr-4"
           >
-        </router-link>
+            <img
+              src="../../assets/logo.png"
+              alt="Metaspace"
+              title="Metaspace"
+            >
+          </router-link>
 
-        <router-link
-          id="upload-link"
-          :to="uploadHref"
-          class="header-item page-link"
-        >
-          Upload
-        </router-link>
-
-        <router-link
-          id="annotations-link"
-          :to="annotationsHref"
-          class="header-item page-link"
-        >
-          Annotations
-        </router-link>
-
-        <router-link
-          id="datasets-link"
-          :to="datasetsHref"
-          class="header-item page-link"
-        >
-          Datasets
-        </router-link>
-
-        <router-link
-          to="/projects"
-          class="header-item page-link"
-        >
-          Projects
-        </router-link>
-
-        <router-link
-          v-if="currentUser && currentUser.primaryGroup"
-          :to="primaryGroupHref"
-          class="header-item page-link"
-        >
-          <div class="limit-width">
-            {{ currentUser.primaryGroup.group.shortName }}
-          </div>
-        </router-link>
-      </div>
-
-      <div class="header-items">
-        <router-link
-          to="/help"
-          class="header-item page-link"
-        >
-          Help
-        </router-link>
-
-        <div
-          v-if="loadingUser === 0 && currentUser == null"
-          class="header-items"
-        >
-          <div
-            class="header-item page-link"
-            @click="showCreateAccount"
+          <header-link
+            id="upload-link"
+            :to="uploadHref"
           >
-            Create account
-          </div>
+            Upload
+          </header-link>
 
-          <div
-            class="header-item page-link"
-            @click="showSignIn"
+          <header-link
+            id="annotations-link"
+            :to="annotationsHref"
           >
-            Sign in
-          </div>
+            Annotations
+          </header-link>
+
+          <header-link
+            id="datasets-link"
+            :to="datasetsHref"
+          >
+            Datasets
+          </header-link>
+
+          <header-link
+            to="/projects"
+          >
+            Projects
+          </header-link>
+
+          <header-link
+            v-if="currentUser && currentUser.primaryGroup"
+            :to="primaryGroupHref"
+          >
+            <div class="limit-width">
+              {{ currentUser.primaryGroup.group.shortName }}
+            </div>
+          </header-link>
         </div>
 
-        <div
-          v-if="loadingUser === 0 && currentUser != null"
-          class="header-items"
-        >
-          <div
-            class="submenu-container user-submenu"
-            :class="{'submenu-container-open': openSubmenu === 'user'}"
-            @mouseenter="handleSubmenuEnter('user')"
-            @mouseleave="handleSubmenuLeave('user')"
+        <div class="header-items">
+          <header-link
+            to="/help"
           >
-            <router-link
-              to="/user/me"
-              class="header-item submenu-header page-link"
+            Help
+          </header-link>
+
+          <div
+            v-if="loadingUser === 0 && currentUser == null"
+            class="header-items mr-1 lg:mr-2"
+          >
+            <header-button
+              @click="showCreateAccount"
             >
-              <div
-                class="limit-width"
-                style="color: white;"
-              >
-                {{ userNameOrEmail }}
-                <notification-icon
-                  v-if="pendingRequestMessage != null"
-                  :tooltip="pendingRequestMessage"
-                  tooltip-placement="left"
-                />
-              </div>
-            </router-link>
-            <div class="submenu">
-              <router-link
+              Create account
+            </header-button>
+
+            <header-button
+              @click="showSignIn"
+            >
+              Sign in
+            </header-button>
+          </div>
+
+          <div
+            v-if="loadingUser === 0 && currentUser != null"
+            class="header-items mr-1 lg:mr-2"
+          >
+            <div
+              class="relative flex py-2"
+              @mouseenter="handleSubmenuEnter('user')"
+              @mouseleave="handleSubmenuLeave('user')"
+              @click="handleSubmenuLeave('user')"
+            >
+              <header-link
+                id="user-menu"
                 to="/user/me"
-                class="submenu-item page-link"
+                :is-active="menuIsOpen"
               >
-                My account
-                <notification-icon
-                  v-if="pendingRequestMessage != null"
-                  :tooltip="pendingRequestMessage"
-                  tooltip-placement="left"
-                />
-              </router-link>
-              <div
-                class="submenu-item page-link"
-                @click="logout"
+                <div class="limit-width">
+                  {{ userNameOrEmail }}
+                  <notification-icon
+                    v-if="pendingRequestMessage != null"
+                    :tooltip="pendingRequestMessage"
+                    tooltip-placement="bottom"
+                  />
+                </div>
+              </header-link>
+              <transition
+                enter-class="transform opacity-0 scale-95"
+                enter-to-class="transform opacity-100 scale-100"
+                leave-class="transform opacity-100 scale-100"
+                leave-to-class="transform opacity-0 scale-95"
+                enter-active-class="transition ease-out duration-100"
+                leave-active-class="transition ease-in duration-75"
               >
-                Sign out
-              </div>
+                <div
+                  v-if="menuIsOpen"
+                  class="origin-top-right absolute right-0 top-1/2 mt-6 w-40 rounded-md shadow-lg z-10"
+                >
+                  <div
+                    class="py-1 rounded-md bg-white shadow-xs text-sm"
+                    role="menu"
+                    aria-orientation="vertical"
+                    aria-labelledby="user-menu"
+                  >
+                    <router-link
+                      to="/user/me"
+                      class="no-underline block px-4 py-2 text-gray-700 hover:bg-gray-100 font-medium"
+                    >
+                      My account
+                    </router-link>
+                    <button
+                      class="button-reset w-full text-left block px-4 py-2 text-gray-700 hover:bg-gray-100"
+                      @click="logout"
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                </div>
+              </transition>
             </div>
           </div>
         </div>
       </div>
+      <el-row
+        v-if="healthMessage"
+        class="transition-colors duration-300 ease-in-out text-white"
+        :class="{ 'bg-blue-700': scrolled === false, 'bg-blue-700-alpha': scrolled === true }"
+      >
+        <el-alert
+          show-icon
+          class="h-8 rounded-none justify-center z-0"
+          :title="healthMessage"
+          :type="healthSeverity"
+          :closable="false"
+        />
+      </el-row>
     </div>
-    <el-row
-      v-if="healthMessage"
-      class="alert"
-    >
-      <el-alert
-        show-icon
-        :title="healthMessage"
-        :type="healthSeverity"
-        :closable="false"
-      />
-    </el-row>
   </div>
 </template>
 
@@ -159,6 +169,7 @@ import { encodeParams } from '../Filters'
 import { refreshLoginStatus } from '../../api/graphqlClient'
 import NotificationIcon from '../../components/NotificationIcon.vue'
 import { datasetStatusUpdatedQuery } from '../../api/dataset'
+import { HeaderLink, HeaderButton } from './HeaderLink'
 
 /** @type {ComponentOptions<Vue> & Vue} */
 const MetaspaceHeader = {
@@ -166,6 +177,8 @@ const MetaspaceHeader = {
 
   components: {
     NotificationIcon,
+    HeaderLink,
+    HeaderButton,
   },
 
   computed: {
@@ -236,6 +249,9 @@ const MetaspaceHeader = {
       }
       return null
     },
+    menuIsOpen() {
+      return this.openSubmenu === 'user'
+    },
   },
 
   data() {
@@ -245,7 +261,19 @@ const MetaspaceHeader = {
       currentUser: null,
       systemHealth: null,
       openSubmenu: null,
+      scrolled: false,
     }
+  },
+
+  mounted() {
+    // not supporting this on IE due to lack of hsla and passive listener support
+    if ('scrollY' in window) {
+      window.addEventListener('scroll', this.scrollListener, { captive: true, passive: true })
+    }
+  },
+
+  beforeDestroy() {
+    window.removeEventListener('scroll', this.scrollListener)
   },
 
   apollo: {
@@ -380,152 +408,50 @@ const MetaspaceHeader = {
         this.openSubmenu = null
       }
     },
+
+    scrollListener() {
+      if (window.scrollY > 0 && this.scrolled === true
+      || window.scrollY === 0 && this.scrolled === false) {
+        return
+      }
+      this.scrolled = window.scrollY > 0
+    },
   },
 }
 
 export default MetaspaceHeader
 </script>
 
-<style lang="scss" scoped>
-  $header-height: 62px;
-  $alert-height: 36px;
-  $space: 8px;
+<style lang="scss">
+  .sm-header {
+    .fixed {
+      // z-index should be higher than v-loading's .el-loading-mask (z-index: 2000) so that loading spinners
+      // don't overlap the header, but can't be higher than v-tooltip's initial z-index (2001)
+      z-index: 2001;
+    }
 
- .b-header {
-   background-color: hsla(208, 87%, 50%, 0.87);
-   position: fixed;
-   // z-index should be higher than v-loading's .el-loading-mask (z-index: 2000) so that loading spinners
-   // don't overlap the header, but can't be higher than v-tooltip's initial z-index (2001)
-   z-index: 2001;
-   top: 0;
-   left: 0;
-   right: 0;
-   height: 62px;
-   display: flex;
-   align-items: center;
-   justify-content: space-between;
- }
+    .header-items {
+      display: flex;
+      align-items: center;
+      height: 100%;
+    }
 
- .spacer {
-   @apply bg-primary mb-2;
-   height: $header-height;
- }
+    .limit-width {
+      max-width: 250px;
+      overflow-wrap: break-word;
+      text-align: center;
+      overflow: hidden;
+      line-height: 1.2em;
+      max-height: 2.4em;
 
- .spacer--with-alert {
-   height: $header-height + $alert-height;
- }
+      @media (max-width: 1279px) {
+        max-width: 150px;
+      }
+    }
 
- .header-items {
-   display: flex;
-   align-items: center;
-   height: 100%;
-   font-size: 16px;
- }
-
- .header-item {
-   display: flex;
-   border: none;
-   padding: 0px 20px;
-   font-size: inherit;
-   align-self: stretch;
-   align-items: center;
-   justify-content: center;
- }
- .header-item.logo {
-   padding-left: 15px;
- }
-
- @media (max-width: 1279px) {
-   .header-items {
-     font-size: 14px;
-   }
-   .header-item {
-     padding: 0px 10px;
-   }
- }
-
- .page-link {
-   text-align: center;
-   color: #fff;
-   cursor: pointer;
-   text-decoration: none;
- }
-
- .router-link-active.page-link, .page-link:hover,
- .submenu-container:not(.submenu-container-open) > .router-link-active.submenu-header {
-   background: rgba(0, 0, 0, 0.1);
-   outline-offset: -1px;
-   outline-color: rgba(0, 0, 0, 0.3);
-   outline-style: solid;
-   outline-width: 1px;
- }
-
- .router-link-active.page-link {
-   font-weight: 500;
- }
- .page-link a {
-   text-decoration: none;
- }
-
- .submenu-container {
-   position: relative;
-   display: flex;
-   align-items: center;
-   height: 100%
- }
- .submenu {
-   display: none;
-   position: absolute;
-   flex-direction: column;
-   top: 100%;
-   right: 0;
-   width: 100%;
-   min-width: 140px;
-   max-width: 200px;
-
-   background-color: hsla(208, 87%, 50%, 0.87);
- }
- .submenu-container-open > .submenu {
-   display: flex;
- }
- .submenu-item {
-   padding: 15px 20px;
-   font-size: inherit;
-   align-self: stretch;
-   justify-content: center;
-   white-space: nowrap;
- }
-
- .limit-width {
-   max-width: 250px;
-   overflow-wrap: break-word;
-   text-align: center;
-   overflow: hidden;
-   line-height: 1.2em;
-   max-height: 2.4em;
- }
- @media (max-width: 1279px) {
-   .limit-width {
-     max-width: 150px;
-   }
- }
-
- #email-link-container {
-   display: inline-flex;
- }
-
- .alert {
-   position: fixed;
-   top: $header-height;
-   left: 0;
-   right: 0;
-   border-radius: 0;
-   z-index: 1000;
-
-   .el-alert {
-     border-radius: 0;
-     height: $alert-height;
-     justify-content: center;
-   }
- }
+    .el-alert.is-light {
+      color: inherit;
+      background: inherit;
+    }
+  }
 </style>
