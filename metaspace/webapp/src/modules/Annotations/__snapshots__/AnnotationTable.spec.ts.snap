@@ -90,26 +90,26 @@ exports[`AnnotationTable should match snapshot 1`] = `
               <div class="cell">
                 <mock-el-popover trigger="hover" placement="right">
                   <div slot-key="default">
-                    <div class="leading-6 py-2 px-3 font-normal content">
+                    <div class="leading-5 py-2 px-3 font-normal content text-sm text-left">
                       <!---->
                       <p class="title">
                         Candidate molecule
                       </p>
-                      <ul class="p-0 m-0 list-none text-xs tracking-wide">
+                      <ul class="p-0 list-none leading-7">
                         <li>
                           C.I. Food Red 6
                         </li>
                         <!---->
                       </ul>
                       <div>
-                        <p class="m-0 font-bold"><span>2 isomeric ions were annotated.</span></p>
-                        <p class="m-0 leading-5 max-w-measure-1">
+                        <p class="title"><span>2 isomeric ions were annotated</span></p>
+                        <p>
                           Check the <b>Molecules</b> panel for more candidates.
                         </p>
                       </div>
                       <div>
-                        <p class="m-0 font-bold"><span>2 isobaric ions were annotated.</span></p>
-                        <p class="m-0 leading-5 max-w-measure-1">
+                        <p class="title"><span>2 isobaric ions were annotated</span></p>
+                        <p class="max-w-measure-1">
                           Check the <b>Molecules</b> panel to see candidate molecules from the isobaric ions,
                           and the <b>Diagnostics</b> panel to compare the isotopic images and spectra.
                         </p>

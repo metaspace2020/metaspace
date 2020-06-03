@@ -17,7 +17,7 @@
       >
         Candidate molecule
       </p>
-      <ul class="m-0 p-0 list-none leading-7">
+      <ul class="p-0 list-none leading-7">
         <li
           v-for="(comp, i) in filteredCompounds"
           :key="i"
