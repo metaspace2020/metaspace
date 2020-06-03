@@ -8,9 +8,12 @@
         <router-link to="/terms">
           Terms
         </router-link>
+        <router-link to="/publications">
+          Publications
+        </router-link>
         <a href="https://github.com/metaspace2020/metaspace">GitHub</a>
-        <a href="mailto:contact@metaspace2020.eu">Contact us</a>
-        <a href="https://twitter.com/metaspace2020">Follow on Twitter</a>
+        <a href="https://twitter.com/metaspace2020">Twitter</a>
+        <a href="mailto:contact@metaspace2020.eu">Contact</a>
       </p>
       <p class="m-0 mt-8">
         &copy; 2014&ndash;2020 <a href="https://www.embl.de/research/units/scb/alexandrov/">Alexandrov Team</a>
