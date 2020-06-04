@@ -556,8 +556,6 @@ class ESExporter:
             must = [{'term': {'ds_id': ds_id}}]
             if moldb:
                 must.append({'term': {'db_id': moldb.id}})
-                must.append({'term': {'db_name': moldb.name}})
-                must.append({'term': {'db_version': moldb.version}})
 
             try:
                 body = {'query': {'constant_score': {'filter': {'bool': {'must': must}}}}}

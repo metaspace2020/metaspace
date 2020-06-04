@@ -38,7 +38,8 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
     })));
     await testEntityManager.insert(Ion, ions);
 
-    const database = testEntityManager.create(MolecularDB, {id: 0, name: 'HMDB-v4', version: 'version'});
+    const database = testEntityManager.create(MolecularDB, {name: 'HMDB-v4', version: 'version'});
+    await testEntityManager.insert(MolecularDB, database);
 
     job = testEntityManager.create(ColocJob, {
       datasetId: 'datasetId',
@@ -49,7 +50,7 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
       start: moment(),
       finish: moment(),
     });
-    const res = await testEntityManager.insert(ColocJob, job);
+    await testEntityManager.insert(ColocJob, job);
 
     const annotations = testEntityManager.create(ColocAnnotation, _.range(ions.length).map(i => ({
       colocJobId: job.id,

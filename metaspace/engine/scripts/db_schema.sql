@@ -208,7 +208,7 @@ CREATE TABLE "public"."optical_image" (
 
 CREATE TABLE "public"."job" (
   "id" SERIAL NOT NULL, 
-  "moldb_id" integer, 
+  "moldb_id" integer NOT NULL, 
   "ds_id" text, 
   "status" text, 
   "start" TIMESTAMP, 
@@ -283,6 +283,10 @@ ALTER TABLE "graphql"."dataset_project" ADD CONSTRAINT "FK_e192464449c2ac136fd4f
 
 ALTER TABLE "graphql"."user" ADD CONSTRAINT "FK_1b5eb1327a74d679537bdc1fa5b" FOREIGN KEY (
   "credentials_id") REFERENCES "graphql"."credentials"("id"
+) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE "graphql"."coloc_job" ADD CONSTRAINT "FK_b0adf5ffef6529f187f48231e38" FOREIGN KEY (
+  "moldb_id") REFERENCES "public"."molecular_db"("id"
 ) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 ALTER TABLE "graphql"."coloc_annotation" ADD CONSTRAINT "FK_09673424d3aceab89f931b9f20d" FOREIGN KEY (
