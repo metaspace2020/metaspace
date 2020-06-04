@@ -8,7 +8,7 @@ Object {
   "filter": Object {
     "colocalizationAlgo": "cosine",
     "colocalizationSamples": true,
-    "databaseId": 2,
+    "databaseId": 1,
     "fdrLevel": 0.1,
     "ion": Array [
       "H2O+H+",

@@ -24,6 +24,7 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
 
   let ions: Ion[];
   let job: ColocJob;
+  let database: MolecularDB;
 
   beforeEach(async () => {
     await onBeforeEach();
@@ -38,7 +39,7 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
     })));
     await testEntityManager.insert(Ion, ions);
 
-    const database = testEntityManager.create(MolecularDB, {name: 'HMDB-v4', version: 'version'});
+    database = testEntityManager.create(MolecularDB, {id: 0, name: 'HMDB-v4', version: 'version'});
     await testEntityManager.insert(MolecularDB, database);
 
     job = testEntityManager.create(ColocJob, {
@@ -74,14 +75,16 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
 
     const {args, postprocess} = await applyQueryFilters(anonContext, argsWithColocWith);
 
-    expect(args).toMatchSnapshot();
     expect(args).toMatchObject({
       offset: 0,
       limit: 1000,
       filter: {
+        databaseId: database.id,
         ion: ions.slice(1,4).map(ion => ion.ion),
       } as any
     });
+    args.filter!.databaseId = 1;
+    expect(args).toMatchSnapshot();
   });
 
   it('should transform the args of a request with a colocalizationSamples filter', async () => {
@@ -97,12 +100,14 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
 
     const {args, postprocess} = await applyQueryFilters(anonContext, argsWithColocWith);
 
-    expect(args).toMatchSnapshot();
     expect(args).toMatchObject({
       filter: {
+        databaseId: database.id,
         ion: ions.slice(1,3).map(ion => ion.ion)
       } as any
     });
+    args.filter!.databaseId = 1;
+    expect(args).toMatchSnapshot();
   });
 
   it('should add colocalizationCoeffs to annotations', async () => {
