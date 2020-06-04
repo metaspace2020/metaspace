@@ -130,7 +130,7 @@ export default Vue.extend({
         query: this.$store.getters.ftsQuery,
         inpFdrLvls: [10],
         checkLvl: 10,
-        offset: Math.max(0, this.$store.getters.settings.datasets.page - 1),
+        offset: Math.max(0, (this.$store.getters.settings.datasets.page - 1) * 100),
       }
     },
     nonEmpty() {
