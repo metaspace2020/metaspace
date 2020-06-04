@@ -95,7 +95,7 @@ export const datasetDetailItemsQuery =
   gql`query GetDatasets(
     $dFilter: DatasetFilter, $query: String, $inpFdrLvls: [Int!]!, $checkLvl: Int!, $offset: Int = 0
   ) {
-    allDatasets(offset: $offset, limit: 2, filter: $dFilter, simpleQuery: $query) {
+    allDatasets(offset: $offset, limit: 100, filter: $dFilter, simpleQuery: $query) {
       ...DatasetDetailItem
     }
   }
