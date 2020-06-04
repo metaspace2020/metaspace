@@ -6,7 +6,7 @@
     </h2>
     <ul>
       <publication-item
-        title="METASPACE: A community-populated knowledge base of spatial metabolomes in health and disease"
+        title="Spatial Metabolomics and Imaging Mass Spectrometry in the Age of Artificial Intelligence"
         authors="Alexandrov T"
         publisher="Annu. Rev. Biomed. Data Sci."
         year="2020"
@@ -27,22 +27,22 @@
         link="https://doi.org/10.1093/bioinformatics/btaa085"
       />
       <publication-item
-        title="Determination of Optimal Electrospray Parameters for Lipidomics in Infrared-Matrix-Assisted Laser Desorption Electrospray Ionization Mass Spectrometry Imaging"
-        authors="Bagley MC, Ekelöf M, Muddiman DC"
-        publisher="J. Am. Soc. Mass Spectrom."
-        year="2020"
-        link="https://doi.org/10.1021/jasms.9b00063"
-      />
-      <publication-item
         title="METASPACE: A community-populated knowledge base of spatial metabolomes in health and disease"
         authors="Alexandrov T, Ovchnnikova K, Palmer A, Kovalev V, et al."
         publisher="BioRxiv"
         year="2019"
         link="https://www.biorxiv.org/content/10.1101/539478v1.abstract"
       />
+      <publication-item
+        title="FDR-controlled metabolite annotation for high-resolution imaging mass spectrometry"
+        authors="Palmer A, Phapale P, Chernyavsky I, Lavigne R, Fay D, Tarasov A, Kovalev V, Fuchser J, Nikolenko S, Pineau C, Becker M, Alexandrov T"
+        publisher="Nat. Methods"
+        year="2017"
+        link="https://doi.org/10.1038/nmeth.4072"
+      />
     </ul>
     <h2 id="community">
-      Research articles using METASPACE (27)
+      Research articles using METASPACE (28)
     </h2>
     <ul>
       <publication-item
@@ -65,6 +65,13 @@
         publisher="Hypertension"
         year="2020"
         link="https://doi.org/10.1161/HYPERTENSIONAHA.119.14041"
+      />
+      <publication-item
+        title="Determination of Optimal Electrospray Parameters for Lipidomics in Infrared-Matrix-Assisted Laser Desorption Electrospray Ionization Mass Spectrometry Imaging"
+        authors="Bagley MC, Ekelöf M, Muddiman DC"
+        publisher="J. Am. Soc. Mass Spectrom."
+        year="2020"
+        link="https://doi.org/10.1021/jasms.9b00063"
       />
       <publication-item
         title="Spatial metabolomics of in situ host–microbe interactions at the micrometre scale"
@@ -348,7 +355,7 @@ import PublicationItem from './PublicationItem'
 Script to parse Paperpile lists
 -------------------------------
 ```
-const items = document.querySelectorAll('.pp-pub-item')
+items = document.querySelectorAll('.pp-pub-item')
 Array.from(items)
   .map(i => ({
     title: i.querySelector('.pp-pub-title').innerText,
@@ -365,6 +372,7 @@ Array.from(items)
     if (_b > _a) return 1
     return 0
   })
+  .map(({ published, ...i }) => i)
 ```
 */
 export default {
