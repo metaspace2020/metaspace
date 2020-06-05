@@ -1,3 +1,4 @@
+import argparse
 import json
 import logging
 
@@ -205,16 +206,22 @@ def update_es_dataset(ds_doc, moldb_name_id_map):
     )
 
 
-def migrate_moldbs():
+def migrate_moldbs(from_date: str = None):
     update_public_database_descriptions()
     update_non_public_databases()
 
     moldb_name_id_map = build_moldb_map()
     moldb_name_id_map_rev = {v: k for k, v in moldb_name_id_map.items()}
 
-    datasets = DB().select_with_fields(
-        "SELECT id, config FROM dataset WHERE config->>'database_ids' IS NULL"
-    )
+    if from_date:
+        datasets = DB().select_with_fields(
+            f"SELECT id, config FROM dataset WHERE status_update_dt > %s", params=(from_date,)
+        )
+    else:
+        datasets = DB().select_with_fields(
+            "SELECT id, config FROM dataset WHERE config->>'database_ids' IS NULL"
+        )
+
     failed_datasets = []
     for n, ds_doc in enumerate(datasets, start=1):
         logger.info(f'Processing dataset: {n}/{len(datasets)}')
@@ -234,8 +241,15 @@ def migrate_moldbs():
 
 
 if __name__ == '__main__':
-    with GlobalInit() as sm_config:
+    parser = argparse.ArgumentParser(description='Migrate moldb names -> moldb ids')
+    parser.add_argument('--config', default='conf/config.json')
+    parser.add_argument(
+        '--from-date', help='Migrate only datasets that changed status after "date"'
+    )
+    args = parser.parse_args()
+
+    with GlobalInit(args.config) as sm_config:
         es: Elasticsearch = init_es_conn(sm_config['elasticsearch'])
         ingest: IngestClient = IngestClient(es)
 
-        migrate_moldbs()
+        migrate_moldbs(args.from_date)
