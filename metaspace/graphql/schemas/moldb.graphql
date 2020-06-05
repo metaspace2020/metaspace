@@ -36,7 +36,7 @@ input UpdateMolecularDBInput {
 }
 
 type Query {
-  molecularDatabases(hideArchived: Boolean=false,
+  molecularDatabases(hideArchived: Boolean=true,
     hideDeprecated: Boolean=false @deprecated(reason: "Only hideArchived should be used"),
     onlyLastVersion: Boolean=false @deprecated(reason: "Only hideArchived should be used")): [MolecularDB!]
 }

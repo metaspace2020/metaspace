@@ -1,6 +1,7 @@
 <template>
   <tag-filter
     :name="name"
+    :removable="removable"
     :width="multiple ? 900 : 300"
     @destroy="destroy"
   >
@@ -69,6 +70,9 @@ export default class SearchableFilter extends Vue {
 
     @Prop({ type: String, required: true })
     filterKey!: SearchableFilterKey;
+
+    @Prop({ type: Boolean, required: false })
+    removable: boolean = false;
 
     loading = false;
     options: Option[] = [];
