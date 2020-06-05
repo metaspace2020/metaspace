@@ -212,9 +212,12 @@ def migrate_moldbs():
     moldb_name_id_map = build_moldb_map()
     moldb_name_id_map_rev = {v: k for k, v in moldb_name_id_map.items()}
 
-    datasets = DB().select_with_fields('SELECT id, config FROM dataset')
+    datasets = DB().select_with_fields(
+        "SELECT id, config FROM dataset WHERE config->>'database_ids' IS NULL"
+    )
     failed_datasets = []
-    for ds_doc in datasets:
+    for n, ds_doc in enumerate(datasets, start=1):
+        logger.info(f'Processing dataset: {n}/{len(datasets)}')
         try:
             moldb_ids = [moldb_name_id_map[name] for name in ds_doc['config'].get('databases', [])]
             ds_doc['config']['database_ids'] = moldb_ids
