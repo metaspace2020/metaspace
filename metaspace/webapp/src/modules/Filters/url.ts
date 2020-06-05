@@ -87,6 +87,12 @@ export function encodeParams(filter: any, path?: string, filterLists?: MetadataL
         q[FILTER_TO_URL[key]] = filter[key] ? '1' : '0'
       } else if (encoding === 'number') {
         q[FILTER_TO_URL[key]] = String(filter[key])
+      } else if (encoding === 'idOrName') {
+        if (typeof filter[key] === 'number') {
+          q[FILTER_TO_URL[key]] = `id:${filter[key]}`
+        } else {
+          q[FILTER_TO_URL[key]] = filter[key]
+        }
       } else {
         q[FILTER_TO_URL[key]] = filter[key]
       }
@@ -144,6 +150,12 @@ export function decodeParams(location: Location, filterLists: any): Object {
       filter[fKey] = value === '1'
     } else if (encoding === 'number') {
       filter[fKey] = parseFloat(value)
+    } else if (encoding === 'idOrName') {
+      if (value.startsWith('id:')) {
+        filter[fKey] = parseInt(value.slice(3), 10)
+      } else {
+        filter[fKey] = value
+      }
     } else {
       filter[fKey] = value
     }

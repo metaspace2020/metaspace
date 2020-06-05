@@ -1,5 +1,6 @@
 import gql from 'graphql-tag'
 import { omit } from 'lodash-es'
+import { MolecularDB } from '../../../api/moldb'
 
 export interface Option {
   value: string;
@@ -10,7 +11,7 @@ export interface FilterQueries {
   getById($apollo: any, ids: string[]): Promise<Option[]>;
 }
 
-export type SearchableFilterKey = 'datasetIds' | 'group' | 'project' | 'submitter';
+export type SearchableFilterKey = 'database' | 'datasetIds' | 'group' | 'project' | 'submitter';
 
 const datasetQueries: FilterQueries = {
   async search($apollo, $store, query) {
@@ -232,7 +233,54 @@ const submitterQueries: FilterQueries = {
   },
 }
 
+const databaseQueries: FilterQueries = {
+  async search($apollo, $store, query) {
+    const { data } = await $apollo.query({
+      query: gql`query DatabaseOptions {
+        options: molecularDatabases {
+          id
+          value: id
+          label: name
+        }
+      }`,
+      fetchPolicy: 'cache-first',
+      variables: {
+        // filter: {
+        //   ...omit($store.getters.gqlDatasetFilter, 'ids'),
+        //   ...(query ? { name: query } : {}),
+        //   status: 'FINISHED',
+        // },
+        // orderBy: query ? 'ORDER_BY_NAME' : 'ORDER_BY_DATE',
+        // sortingOrder: query ? 'ASCENDING' : 'DESCENDING',
+      },
+    })
+    return data.options as Option[]
+  },
+  async getById($apollo, ids) {
+    const { data } = await $apollo.query({
+      query: gql`query DatabaseNames {
+        options: molecularDatabases {
+          id
+          value: id
+          label: name
+        }
+      }`,
+      fetchPolicy: 'cache-first',
+      // variables: { ids: ids.join('|') },
+    })
+
+    for (const option of data.options) {
+      if (option.id === parseInt(ids[0], 10)) {
+        return [option] as Option[]
+      }
+    }
+
+    return []
+  },
+}
+
 const searchableFilterQueries: Record<SearchableFilterKey, FilterQueries> = {
+  database: databaseQueries,
   datasetIds: datasetQueries,
   group: groupQueries,
   project: projectQueries,

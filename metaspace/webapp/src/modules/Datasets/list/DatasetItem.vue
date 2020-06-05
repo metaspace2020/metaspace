@@ -126,8 +126,8 @@
         class="ds-item-line"
       >
         <span>
-          <router-link :to="resultsHref(formatDbName())">{{ formatFdrCounts() | plural('annotation', 'annotations') }}</router-link>
-          @ FDR {{ formatFdrLevel() }}% ({{ formatDbName() }})
+          <router-link :to="resultsHref()">{{ formatFdrCounts() | plural('annotation', 'annotations') }}</router-link>
+          @ FDR {{ formatFdrLevel() }}% in {{ formatDbName() }}
         </span>
       </div>
     </div>
@@ -140,13 +140,13 @@
           placement="top"
         >
           <div class="db-link-list">
-            Select a database:
+            <span class="text-sm text-gray-700">Select database:</span>
             <div
-              v-for="database in metaboliteDatabases"
-              :key="database"
+              v-for="db in dataset.databases"
+              :key="db.id"
             >
-              <router-link :to="resultsHref(database)">
-                {{ database }}
+              <router-link :to="resultsHref(db.id)">
+                {{ db.name }}
               </router-link>
             </div>
           </div>
@@ -312,15 +312,6 @@ export default {
       return Object.assign(safeJsonParse(this.dataset.metadataJson), datasetMetadataExternals)
     },
 
-    metaboliteDatabases() {
-      const dbs = this.dataset.molDBs
-      if (typeof dbs === 'string') {
-        return [dbs]
-      } else {
-        return dbs
-      }
-    },
-
     formatOrganism() {
       return removeUnderscores(this.dataset.organism)
     },
@@ -439,9 +430,9 @@ export default {
   },
 
   methods: {
-    resultsHref(databaseName) {
+    resultsHref(database = this.dataset.fdrCounts.dbName) {
       const filter = Object.assign({}, this.$store.getters.filter, {
-        database: databaseName,
+        database,
         datasetIds: [this.dataset.id],
       })
       return {

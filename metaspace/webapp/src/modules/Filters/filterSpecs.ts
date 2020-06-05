@@ -69,7 +69,7 @@ export interface FilterSpecification {
   hidden?: boolean | (() => boolean);
   debounce?: boolean;
   /** How to encode/decode this filter from the URL */
-  encoding?: 'list' | 'json' | 'bool' | 'number';
+  encoding?: 'list' | 'json' | 'bool' | 'number' | 'idOrName';
   /** Callback to format options for display. "options" parameter may be an empty array while the page is loading */
   optionFormatter?(value: any, options: any[]): string;
   /** Callback to extract the "value" of an object-based option */
@@ -94,18 +94,14 @@ export const FILTER_COMPONENT_PROPS: (keyof FilterSpecification)[] = [
 
 export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
   database: {
-    type: SingleSelectFilter,
+    type: SearchableFilter,
     name: 'Database',
     description: 'Select database',
     levels: ['annotation'],
     defaultInLevels: ['annotation'],
-    initialValue: lists => lists.molecularDatabases
-      .filter(d => d.default)
-      .map(d => d.id)[0],
-    options: lists => lists.molecularDatabases
-      .filter(d => config.features.all_dbs || !d.hidden)
-      .map(d => d.id),
+    initialValue: undefined,
     removable: false,
+    encoding: 'idOrName',
   },
 
   datasetIds: {
