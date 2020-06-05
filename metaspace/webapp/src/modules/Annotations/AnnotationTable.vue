@@ -788,6 +788,7 @@ export default Vue.extend({
  }
 
  .cell-span {
+   @apply tracking-wide;
    width: 80%;
  }
 

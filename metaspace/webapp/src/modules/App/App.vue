@@ -1,16 +1,23 @@
 <template>
-  <div id="app">
-    <metaspace-header />
+  <div
+    id="app"
+    class="min-h-full m-0 relative"
+    :class="{ 'flex flex-col': $route.meta.flex }"
+  >
+    <metaspace-header :class="$route.meta.headerClass" />
 
     <!--
       :key="$route.path" is used to force the content to be remounted if a non-querystring param in the URL changes.
       This ensures that a loading screen is displayed and no unnecessary state is retained when e.g. switching
       between group profile pages or datasets
     -->
-    <router-view :key="$route.path" />
+    <router-view
+      :key="$route.path"
+      class="sm-main-content"
+      :class="{ 'flex-grow w-full': $route.meta.flex }"
+    />
 
-    <!--metaspace-footer>
-    </metaspace-footer-->
+    <metaspace-footer v-if="$route.meta.footer" />
 
     <dialog-controller />
     <!--<release-notes-dialog />-->
@@ -20,12 +27,14 @@
       :tour="$store.state.currentTour"
     />
     <new-feature-popup v-if="features.new_feature_popups && $store.state.currentTour == null" />
+    <cookie-banner />
   </div>
 </template>
 
 <script>
 import * as cookie from 'js-cookie'
 import MetaspaceHeader from './MetaspaceHeader.vue'
+import MetaspaceFooter from './MetaspaceFooter.vue'
 // import ReleaseNotesDialog from './ReleaseNotesDialog.vue';
 import NewFeaturePopup from './NewFeaturePopup.vue'
 import TourStep from './TourStep.vue'
@@ -33,16 +42,19 @@ import { DialogController } from '../Account'
 import config from '../../lib/config'
 import Vue, { ComponentOptions } from 'vue'
 import 'element-ui' // Needed for Vue.$alert augmentation
+import CookieBanner from './CookieBanner'
 
 /** @type {ComponentOptions<Vue> & Vue} */
 export default {
   name: 'App',
   components: {
     MetaspaceHeader,
+    MetaspaceFooter,
     // ReleaseNotesDialog,
     NewFeaturePopup,
     TourStep,
     DialogController,
+    CookieBanner,
   },
   data() {
     return {
@@ -76,18 +88,25 @@ export default {
 </script>
 
 <style>
-
   @font-face {
     /* Roboto doesn't contain superscript glyphs, and the fallback is OS-dependent. OSX's fallback, Helvetica,
      looks bad for the superscript + and - characters in formatted ion formulas, because it's too small to read. */
-
     font-family: SUPERSCIPT_OVERRIDE;
     src: local('Lucida Grande'), local('-apple-system'), local('serif');
     unicode-range: U+207A-207B;
   }
 
+  @font-face {
+    font-display: swap;
+    font-family: "FuturaBT-Medium";
+    src: url("../../assets/fonts/futura/2FD17E_0_0.eot");
+    src: url("../../assets/fonts/futura/2FD17E_0_0.eot?#iefix") format("embedded-opentype"), url("../../assets/fonts/futura/2FD17E_0_0.woff2") format("woff2"), url("../../assets/fonts/futura/2FD17E_0_0.woff") format("woff"), url("../../assets/fonts/futura/2FD17E_0_0.ttf") format("truetype");
+    font-style: normal;
+    font-weight: normal;
+  }
+
   html {
-    font-family: 'Roboto', SUPERSCIPT_OVERRIDE, Helvetica, sans-serif;
+    @apply font-sans;
     overflow-y: scroll; /* always show the right scrollbar to avoid flickering */
   }
 
@@ -102,13 +121,18 @@ export default {
     @apply text-body;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    margin: 0;
-    min-height: 100%;
-    position: relative;
   }
 
   h1, h2 {
-    font-weight: 500;
+    @apply font-medium;
+  }
+
+  h1 {
+    @apply tracking-tight;
+  }
+
+  h2 {
+    @apply tracking-snug;
   }
 
   a {
@@ -123,44 +147,12 @@ export default {
     font: inherit;
   }
 
-  .warning {
-    position: fixed;
-    z-index: 1000;
-    top: 62px;
-    left: 0;
-    right: 0;
-    height: 28px;
-    text-align: center;
-    background-color: #fd8;
-  }
-
-  #signin-div {
-    position: fixed;
-    align-self: center;
-    display: none;
-    top: 18px;
-    font-size: 18px;
-    right: 81px;
-    color: white;
-    z-index: 1000;
-  }
-
-  .signin-button, .signout-button {
-    position: fixed;
-    cursor: pointer;
-    z-index: 1000;
-    top: 11px;
-    right: 11px;
-    font-size: 18px;
-    color: rgb(0, 105, 224);
-    background-color: #f8f8f8;
-    border-radius: 5px;
-    padding: 5px;
-    text-decoration: none;
-  }
-
   .el-loading-mask {
     /* otherwise filter dropdowns are behind it */
     z-index: 2000;
+  }
+
+  .sm-main-content {
+    padding-top: 10px;
   }
 </style>

@@ -14,8 +14,8 @@
         size="mini"
       />
       <div v-if="allDatasets.length > 0">
-        <h4 style="margin-top: 0">
-          Would you like to include any of your previously submitted datasets?
+        <h4 class="m-0">
+          Would you like to include previously submitted datasets?
         </h4>
         <dataset-checkbox-list
           v-model="selectedDatasets"
@@ -145,16 +145,19 @@ export default class CreateProjectDialog extends Vue {
   .dialog /deep/ .el-dialog {
     max-width: 600px;
 
-    .el-form {
-      margin-left: 10px;
-      margin-right: 10px;
-    }
     .el-form-item {
       margin-bottom: 10px;
     }
     .el-form-item__label {
       line-height: 1.2em;
     }
+  }
+  .dialog /deep/ .el-dialog__header {
+    padding-bottom: 0;
+  }
+
+  .dialog /deep/ .el-dialog__body {
+    padding: 20px;
   }
   .button-bar {
     display: flex;

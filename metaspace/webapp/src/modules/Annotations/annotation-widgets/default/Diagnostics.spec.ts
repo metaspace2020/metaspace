@@ -106,7 +106,7 @@ describe('Diagnostics', () => {
         isobars: [],
       },
     }
-    const wrapper = mount(Diagnostics, { store, router, apolloProvider, stubs, propsData, sync: false })
+    const wrapper = mount(Diagnostics, { store, router, apolloProvider, stubs, propsData })
     await Vue.nextTick()
 
     expect(wrapper).toMatchSnapshot()
@@ -120,7 +120,7 @@ describe('Diagnostics', () => {
     })
     console.error = (...args: any[]) => { throw new Error(...args) }
 
-    const wrapper = mount(Diagnostics, { store, router, apolloProvider, stubs, propsData: props, sync: false })
+    const wrapper = mount(Diagnostics, { store, router, apolloProvider, stubs, propsData: props })
     await Vue.nextTick()
     wrapper.setData({ comparisonIonFormula: isobarAnnotation.ionFormula })
     await Vue.nextTick()

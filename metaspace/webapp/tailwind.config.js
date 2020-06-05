@@ -5,7 +5,8 @@ module.exports = {
   // Defaults: https://github.com/tailwindcss/tailwindcss/blob/master/stubs/defaultConfig.stub.js
   theme: {
     fontFamily: {
-      sans: ['Roboto', 'SUPERSCIPT_OVERRIDE', 'Helvetica', 'sans-serif'],
+      sans: ['Roboto', 'SUPERSCIPT_OVERRIDE', 'Helvetica', 'Arial', 'sans-serif'],
+      display: ['FuturaBT-Medium', 'Roboto', 'Helvetica', 'Arial', 'sans-serif']
     },
     placeholderColor: {
       default: theme => theme('colors.gray.500')
@@ -51,6 +52,10 @@ module.exports = {
       borderColor: {
         danger: defaults.theme.colors.red[700],
       },
+      backgroundColor: {
+        'primary-alpha': 'hsla(208, 87%, 50%, 87%)',
+        'blue-700-alpha': 'hsla(208, 76%, 39%, 75%)',
+      },
       inset: {
         '1/2': '50%',
       },
@@ -59,6 +64,9 @@ module.exports = {
       },
       spacing: {
         auto: 'auto',
+        '9': '2.25rem', // 1.5 * 24px/1.5rem
+        '18': '4.5rem', // 3 * 24px/1.5rem
+        '66': '16.5rem', // 11 * 24px/1.5rem
       },
       maxWidth: {
         'measure-1': '44ch',
@@ -70,6 +78,12 @@ module.exports = {
       zIndex: {
         '-10': '-10', // Use .-z-10 not .z--10
         '-20': '-20',
+      },
+      lineHeight: {
+        '12': '3rem', // 2 * 24px/1.5rem
+      },
+      letterSpacing: {
+        'snug': '-0.0125em',
       },
     }
   },

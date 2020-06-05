@@ -1,17 +1,5 @@
 <template>
   <div>
-    <div class="dataset-checkbox-list">
-      <div
-        v-for="dataset in datasets"
-        :key="dataset.id"
-        class="mb-1"
-      >
-        <el-checkbox v-model="selectedDatasets[dataset.id]">
-          {{ dataset.name }}
-          <span class="text-gray-700 proportional-nums">(submitted <elapsed-time :date="dataset.uploadDT" />)</span>
-        </el-checkbox>
-      </div>
-    </div>
     <div class="select-buttons">
       <a
         href="#"
@@ -22,6 +10,19 @@
         href="#"
         @click.prevent="handleSelectAll"
       >Select all</a>
+    </div>
+    <div class="dataset-checkbox-list leading-6 proportional-nums">
+      <div
+        v-for="dataset in datasets"
+        :key="dataset.id"
+      >
+        <el-checkbox v-model="selectedDatasets[dataset.id]">
+          {{ dataset.name }}
+          <span class="text-gray-700">
+            (submitted <elapsed-time :date="dataset.uploadDT" />)
+          </span>
+        </el-checkbox>
+      </div>
     </div>
   </div>
 </template>
@@ -69,15 +70,12 @@ export default class DatasetCheckboxList extends Vue {
 }
 </script>
 <style scoped lang="scss">
-  @import "~element-ui/packages/theme-chalk/src/common/var";
-
   .dataset-checkbox-list {
-    margin: 20px;
+    margin: 12px 0;
     max-height: 50vh;
     overflow: auto;
   }
   .select-buttons {
-    text-align: right;
-    margin: 20px;
+    margin: 12px 0;
   }
 </style>

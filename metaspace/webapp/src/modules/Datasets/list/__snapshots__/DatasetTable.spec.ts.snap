@@ -12,231 +12,857 @@ exports[`DatasetTable should be able to export a CSV 1`] = `
 
 exports[`DatasetTable should match snapshot 1`] = `
 <div>
-  <div class="filter-panel">
-    <mock-el-select placeholder="Add filter" class="filter-select">
-      <mock-el-option value="group" label="Select group"></mock-el-option>
-      <mock-el-option value="project" label="Select project"></mock-el-option>
-      <mock-el-option value="submitter" label="Select submitter"></mock-el-option>
-      <mock-el-option value="datasetIds" label="Select dataset"></mock-el-option>
-      <mock-el-option value="compoundName" label="Search molecule"></mock-el-option>
-      <mock-el-option value="polarity" label="Select polarity"></mock-el-option>
-      <mock-el-option value="organism" label="Select organism"></mock-el-option>
-      <mock-el-option value="organismPart" label="Select organism part"></mock-el-option>
-      <mock-el-option value="condition" label="Select organism condition"></mock-el-option>
-      <mock-el-option value="growthConditions" label="Select sample growth conditions"></mock-el-option>
-      <mock-el-option value="analyzerType" label="Select analyzer"></mock-el-option>
-      <mock-el-option value="ionisationSource" label="Select ionisation source"></mock-el-option>
-      <mock-el-option value="maldiMatrix" label="Select MALDI matrix"></mock-el-option>
-      <mock-el-option value="simpleQuery" label="Search anything"></mock-el-option>
-      <mock-el-option value="metadataType" label="Select data type"></mock-el-option>
+  <div
+    class="filter-panel"
+  >
+    <mock-el-select
+      class="filter-select"
+      placeholder="Add filter"
+    >
+      <mock-el-option
+        label="Select group"
+        value="group"
+      />
+      <mock-el-option
+        label="Select project"
+        value="project"
+      />
+      <mock-el-option
+        label="Select submitter"
+        value="submitter"
+      />
+      <mock-el-option
+        label="Select dataset"
+        value="datasetIds"
+      />
+      <mock-el-option
+        label="Search molecule"
+        value="compoundName"
+      />
+      <mock-el-option
+        label="Select polarity"
+        value="polarity"
+      />
+      <mock-el-option
+        label="Select organism"
+        value="organism"
+      />
+      <mock-el-option
+        label="Select organism part"
+        value="organismPart"
+      />
+      <mock-el-option
+        label="Select organism condition"
+        value="condition"
+      />
+      <mock-el-option
+        label="Select sample growth conditions"
+        value="growthConditions"
+      />
+      <mock-el-option
+        label="Select analyzer"
+        value="analyzerType"
+      />
+      <mock-el-option
+        label="Select ionisation source"
+        value="ionisationSource"
+      />
+      <mock-el-option
+        label="Select MALDI matrix"
+        value="maldiMatrix"
+      />
+      <mock-el-option
+        label="Search anything"
+        value="simpleQuery"
+      />
+      <mock-el-option
+        label="Select data type"
+        value="metadataType"
+      />
     </mock-el-select>
+     
   </div>
+   
   <div>
-    <form class="el-form el-form--inline" id="dataset-list-header">
-      <div role="radiogroup" class="el-radio-group"><label role="radio" aria-checked="true" tabindex="0" class="el-radio-button el-radio-button--small is-active"><input type="radio" tabindex="-1" class="el-radio-button__orig-radio" value="List"><span class="el-radio-button__inner">List</span></label> <label role="radio" tabindex="-1" class="el-radio-button el-radio-button--small"><input type="radio" tabindex="-1" class="el-radio-button__orig-radio" value="Summary"><span class="el-radio-button__inner">Summary</span></label></div>
-      <div role="group" aria-label="checkbox-group" class="el-checkbox-group dataset-status-checkboxes" mock-v-loading="0"><label class="el-checkbox cb-annotating is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value="ANNOTATING"></span><span class="el-checkbox__label">
+    <form
+      class="el-form el-form--inline"
+      id="dataset-list-header"
+    >
+      <div
+        class="el-radio-group"
+        role="radiogroup"
+      >
+        <label
+          aria-checked="true"
+          class="el-radio-button el-radio-button--small is-active"
+          role="radio"
+          tabindex="0"
+        >
+          <input
+            class="el-radio-button__orig-radio"
+            tabindex="-1"
+            type="radio"
+            value="List"
+          />
+          <span
+            class="el-radio-button__inner"
+          >
+            List
+          </span>
+        </label>
+         
+        <label
+          class="el-radio-button el-radio-button--small"
+          role="radio"
+          tabindex="-1"
+        >
+          <input
+            class="el-radio-button__orig-radio"
+            tabindex="-1"
+            type="radio"
+            value="Summary"
+          />
+          <span
+            class="el-radio-button__inner"
+          >
+            Summary
+          </span>
+        </label>
+      </div>
+       
+      <div
+        aria-label="checkbox-group"
+        class="el-checkbox-group dataset-status-checkboxes"
+        mock-v-loading="0"
+        role="group"
+      >
+        <label
+          class="el-checkbox cb-annotating is-checked"
+        >
+          <span
+            class="el-checkbox__input is-checked"
+          >
+            <span
+              class="el-checkbox__inner"
+            />
+            <input
+              aria-hidden="false"
+              class="el-checkbox__original"
+              type="checkbox"
+              value="ANNOTATING"
+            />
+          </span>
+          <span
+            class="el-checkbox__label"
+          >
+            
           Processing (1)
-        <!----></span></label> <label class="el-checkbox cb-queued is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value="QUEUED"></span><span class="el-checkbox__label">
+        
+            <!---->
+          </span>
+        </label>
+         
+        <label
+          class="el-checkbox cb-queued is-checked"
+        >
+          <span
+            class="el-checkbox__input is-checked"
+          >
+            <span
+              class="el-checkbox__inner"
+            />
+            <input
+              aria-hidden="false"
+              class="el-checkbox__original"
+              type="checkbox"
+              value="QUEUED"
+            />
+          </span>
+          <span
+            class="el-checkbox__label"
+          >
+            
           Queued (2)
-        <!----></span></label> <label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value="FINISHED"></span><span class="el-checkbox__label">
+        
+            <!---->
+          </span>
+        </label>
+         
+        <label
+          class="el-checkbox is-checked"
+        >
+          <span
+            class="el-checkbox__input is-checked"
+          >
+            <span
+              class="el-checkbox__inner"
+            />
+            <input
+              aria-hidden="false"
+              class="el-checkbox__original"
+              type="checkbox"
+              value="FINISHED"
+            />
+          </span>
+          <span
+            class="el-checkbox__label"
+          >
+            
           Finished (20)
-        <!----></span></label>
+        
+            <!---->
+          </span>
+        </label>
+         
         <!---->
       </div>
-      <div style="flex-grow: 1;"></div> <button type="button" class="el-button el-button--default el-button--small">
+       
+      <div
+        style="flex-grow: 1;"
+      />
+       
+      <button
+        class="el-button el-button--default el-button--small"
+        type="button"
+      >
         <!---->
-        <!----><span>
+        <!---->
+        <span>
+          
         Export to CSV
-      </span></button>
+      
+        </span>
+      </button>
     </form>
   </div>
-  <div class="dataset-list allow-double-column" mock-v-loading="0">
-    <div class="dataset-item border border-solid border-gray-200 leading-5">
-      <mock-el-dialog title="Provided metadata">
-        <div class="el-row">
-          <mock-el-tree id="metadata-tree" data="[object Object],[object Object]" node-key="id" default-expanded-keys="MS analysis,Detector resolving power,Data Management"></mock-el-tree>
-        </div>
-      </mock-el-dialog>
-      <div class="opt-image--container">
-        <div class="thumb"><img src="allDatasets.1.thumbnailOpticalImageUrl" alt="Optical image" class="thumb--img" style="transform: scaleY(1) translateY(0%); height: 100px;"> <img src="allDatasets.1.ionThumbnailUrl" alt="Ion image thumbnail" class="thumb--img thumb--img__ion" style="transform: scaleY(1) translateY(0%); height: 100px;">
+   
+  <div
+    class="dataset-list allow-double-column"
+    mock-v-loading="0"
+  >
+    <div
+      class="dataset-item border border-solid border-gray-200 leading-5"
+    >
+      <div
+        class="opt-image--container"
+      >
+        <div
+          class="thumb"
+        >
+          <img
+            alt="Optical image"
+            class="thumb--img"
+            src="allDatasets.1.thumbnailOpticalImageUrl"
+            style="transform: scaleY(1) translateY(0%); height: 100px;"
+          />
+           
+          <img
+            alt="Ion image thumbnail"
+            class="thumb--img thumb--img__ion"
+            src="allDatasets.1.ionThumbnailUrl"
+            style="transform: scaleY(1) translateY(0%); height: 100px;"
+          />
+           
           <!---->
         </div>
       </div>
-      <div class="ds-info">
-        <div class="ds-item-line flex"><span title="allDatasets.1.name" class="font-bold truncate">allDatasets.1.name</span>
-          <mock-el-popover trigger="hover" placement="top" class="ml-1">
-            <div slot-key="default">
-              <div mock-v-loading="true">
-
+       
+      <div
+        class="ds-info"
+      >
+        <div
+          class="ds-item-line flex"
+        >
+          <span
+            class="font-bold truncate"
+            title="allDatasets.1.name"
+          >
+            allDatasets.1.name
+          </span>
+          <span
+            class="ml-1"
+          >
+            <transition-stub
+              name="fade-in-linear"
+            >
+              <div
+                aria-hidden="true"
+                class="el-popover el-popper"
+                id="el-popover-123"
+                role="tooltip"
+                style="display: none;"
+                tabindex="0"
+              >
+                <!---->
+                <div
+                  mock-v-loading="true"
+                />
+              </div>
+            </transition-stub>
+            <i
+              aria-describedby="el-popover-123"
+              class="el-icon-lock el-popover__reference"
+              tabindex="0"
+            />
+          </span>
+        </div>
+        <div
+          class="ds-item-line text-gray-700"
+        >
+          <span
+            class="ds-add-filter"
+            title="Filter by species"
+          >
+            allDatasets.1.organism
+          </span>
+          , 
+          <span
+            class="ds-add-filter"
+            title="Filter by organism part"
+          >
+            alldatasets.1.organismpart
+          </span>
+           
+          <span
+            class="ds-add-filter"
+            title="Filter by condition"
+          >
+            (alldatasets.1.condition)
+          </span>
+        </div>
+        <div
+          class="ds-item-line"
+        >
+          <span
+            class="ds-add-filter"
+            title="Filter by ionisation source"
+          >
+            allDatasets.1.ionisationSource
+          </span>
+           + 
+          <span
+            class="ds-add-filter"
+            title="Filter by analyzer type"
+          >
+            allDatasets.1.analyzer.type
+          </span>
+          , 
+          <span
+            class="ds-add-filter"
+            title="Filter by polarity"
+          >
+            positive mode
+          </span>
+          , RP 123k @ 1234
+        </div>
+        <div
+          class="ds-item-line"
+        >
+          Submitted 
+          <mock-elapsed-time
+            date="allDatasets.1.uploadDT"
+          />
+           by 
+          <span
+            class="ds-add-filter"
+            title="Filter by submitter"
+          >
+            allDatasets.1.submitter.name
+          </span>
+          <span>
+            , 
+            <mock-el-dropdown
+              placement="bottom"
+              show-timeout="50"
+              trigger="hover"
+            >
+              <div
+                slot-key="default"
+              >
+                <span
+                  class="text-base text-primary cursor-pointer"
+                >
+                  allDatasets.1.group.shortName
+                </span>
+              </div>
+              <div
+                slot-key="dropdown"
+              >
+                <mock-el-dropdown-menu>
+                  <mock-el-dropdown-item
+                    command="filter_group"
+                  >
+                    Filter by this group
+                  </mock-el-dropdown-item>
+                  <mock-el-dropdown-item
+                    command="view_group"
+                  >
+                    View group
+                  </mock-el-dropdown-item>
+                </mock-el-dropdown-menu>
+              </div>
+            </mock-el-dropdown>
+          </span>
+        </div>
+      </div>
+       
+      <div
+        class="ds-actions"
+      >
+        <mock-el-dialog
+          title="Provided metadata"
+        >
+          <div
+            class="el-row"
+          >
+            <mock-el-tree
+              data="[object Object],[object Object]"
+              default-expanded-keys="MS analysis,Detector resolving power,Data Management"
+              id="metadata-tree"
+              node-key="id"
+            />
+          </div>
+        </mock-el-dialog>
+        <span>
+          <div
+            class="striped-progressbar queued"
+            title="Waiting in the queue"
+          />
+        </span>
+        <div>
+          <i
+            class="el-icon-view"
+          />
+          <a
+            href="#"
+          >
+            Show full metadata
+          </a>
+        </div>
+        <div
+          class="ds-download"
+        >
+          <i
+            class="el-icon-download"
+          />
+          <a
+            href="#"
+          >
+            Download
+          </a>
+        </div>
+      </div>
+    </div>
+    <div
+      class="dataset-item border border-solid border-gray-200 leading-5"
+    >
+      <div
+        class="opt-image--container"
+      >
+        <div
+          class="thumb"
+        >
+          <img
+            alt="Optical image"
+            class="thumb--img"
+            src="allDatasets.0.thumbnailOpticalImageUrl"
+            style="transform: scaleY(1) translateY(0%); height: 100px;"
+          />
+           
+          <img
+            alt="Ion image thumbnail"
+            class="thumb--img thumb--img__ion"
+            src="allDatasets.0.ionThumbnailUrl"
+            style="transform: scaleY(1) translateY(0%); height: 100px;"
+          />
+           
+          <!---->
+        </div>
+      </div>
+       
+      <div
+        class="ds-info"
+      >
+        <div
+          class="ds-item-line flex"
+        >
+          <span
+            class="font-bold truncate"
+            title="allDatasets.0.name"
+          >
+            allDatasets.0.name
+          </span>
+        </div>
+        <div
+          class="ds-item-line text-gray-700"
+        >
+          <span
+            class="ds-add-filter"
+            title="Filter by species"
+          >
+            allDatasets.0.organism
+          </span>
+          , 
+          <span
+            class="ds-add-filter"
+            title="Filter by organism part"
+          >
+            alldatasets.0.organismpart
+          </span>
+           
+          <span
+            class="ds-add-filter"
+            title="Filter by condition"
+          >
+            (alldatasets.0.condition)
+          </span>
+        </div>
+        <div
+          class="ds-item-line"
+        >
+          <span
+            class="ds-add-filter"
+            title="Filter by ionisation source"
+          >
+            allDatasets.0.ionisationSource
+          </span>
+           + 
+          <span
+            class="ds-add-filter"
+            title="Filter by analyzer type"
+          >
+            allDatasets.0.analyzer.type
+          </span>
+          , 
+          <span
+            class="ds-add-filter"
+            title="Filter by polarity"
+          >
+            positive mode
+          </span>
+          , RP 123k @ 1234
+        </div>
+        <div
+          class="ds-item-line"
+        >
+          Submitted 
+          <mock-elapsed-time
+            date="allDatasets.0.uploadDT"
+          />
+           by 
+          <span
+            class="ds-add-filter"
+            title="Filter by submitter"
+          >
+            allDatasets.0.submitter.name
+          </span>
+          <span>
+            , 
+            <mock-el-dropdown
+              placement="bottom"
+              show-timeout="50"
+              trigger="hover"
+            >
+              <div
+                slot-key="default"
+              >
+                <span
+                  class="text-base text-primary cursor-pointer"
+                >
+                  allDatasets.0.group.shortName
+                </span>
+              </div>
+              <div
+                slot-key="dropdown"
+              >
+                <mock-el-dropdown-menu>
+                  <mock-el-dropdown-item
+                    command="filter_group"
+                  >
+                    Filter by this group
+                  </mock-el-dropdown-item>
+                  <mock-el-dropdown-item
+                    command="view_group"
+                  >
+                    View group
+                  </mock-el-dropdown-item>
+                </mock-el-dropdown-menu>
+              </div>
+            </mock-el-dropdown>
+          </span>
+        </div>
+      </div>
+       
+      <div
+        class="ds-actions"
+      >
+        <mock-el-dialog
+          title="Provided metadata"
+        >
+          <div
+            class="el-row"
+          >
+            <mock-el-tree
+              data="[object Object],[object Object]"
+              default-expanded-keys="MS analysis,Detector resolving power,Data Management"
+              id="metadata-tree"
+              node-key="id"
+            />
+          </div>
+        </mock-el-dialog>
+        <span>
+          <div
+            class="striped-progressbar processing"
+            title="Processing is under way"
+          />
+        </span>
+        <div>
+          <i
+            class="el-icon-view"
+          />
+          <a
+            href="#"
+          >
+            Show full metadata
+          </a>
+        </div>
+      </div>
+    </div>
+    <div
+      class="dataset-item border border-solid border-gray-200 leading-5"
+    >
+      <div
+        class="opt-image--container"
+      >
+        <div
+          class="thumb"
+        >
+          <img
+            alt="Optical image"
+            class="thumb--img"
+            src="allDatasets.2.thumbnailOpticalImageUrl"
+            style="transform: scaleY(1) translateY(0%); height: 100px;"
+          />
+           
+          <img
+            alt="Ion image thumbnail"
+            class="thumb--img thumb--img__ion"
+            src="allDatasets.2.ionThumbnailUrl"
+            style="transform: scaleY(1) translateY(0%); height: 100px;"
+          />
+           
+          <!---->
+        </div>
+      </div>
+       
+      <div
+        class="ds-info"
+      >
+        <div
+          class="ds-item-line flex"
+        >
+          <span
+            class="font-bold truncate"
+            title="allDatasets.2.name"
+          >
+            allDatasets.2.name
+          </span>
+        </div>
+        <div
+          class="ds-item-line text-gray-700"
+        >
+          <span
+            class="ds-add-filter"
+            title="Filter by species"
+          >
+            allDatasets.2.organism
+          </span>
+          , 
+          <span
+            class="ds-add-filter"
+            title="Filter by organism part"
+          >
+            alldatasets.2.organismpart
+          </span>
+           
+          <span
+            class="ds-add-filter"
+            title="Filter by condition"
+          >
+            (alldatasets.2.condition)
+          </span>
+        </div>
+        <div
+          class="ds-item-line"
+        >
+          <span
+            class="ds-add-filter"
+            title="Filter by ionisation source"
+          >
+            allDatasets.2.ionisationSource
+          </span>
+           + 
+          <span
+            class="ds-add-filter"
+            title="Filter by analyzer type"
+          >
+            allDatasets.2.analyzer.type
+          </span>
+          , 
+          <span
+            class="ds-add-filter"
+            title="Filter by polarity"
+          >
+            positive mode
+          </span>
+          , RP 123k @ 1234
+        </div>
+        <div
+          class="ds-item-line"
+        >
+          Submitted 
+          <mock-elapsed-time
+            date="allDatasets.2.uploadDT"
+          />
+           by 
+          <span
+            class="ds-add-filter"
+            title="Filter by submitter"
+          >
+            allDatasets.2.submitter.name
+          </span>
+          <span>
+            , 
+            <mock-el-dropdown
+              placement="bottom"
+              show-timeout="50"
+              trigger="hover"
+            >
+              <div
+                slot-key="default"
+              >
+                <span
+                  class="text-base text-primary cursor-pointer"
+                >
+                  allDatasets.2.group.shortName
+                </span>
+              </div>
+              <div
+                slot-key="dropdown"
+              >
+                <mock-el-dropdown-menu>
+                  <mock-el-dropdown-item
+                    command="filter_group"
+                  >
+                    Filter by this group
+                  </mock-el-dropdown-item>
+                  <mock-el-dropdown-item
+                    command="view_group"
+                  >
+                    View group
+                  </mock-el-dropdown-item>
+                </mock-el-dropdown-menu>
+              </div>
+            </mock-el-dropdown>
+          </span>
+        </div>
+        <div
+          class="ds-item-line"
+        >
+          <span>
+            <a
+              class=""
+              href="/annotations?db=HMDB-v2.5&ds=FINISHED1"
+            >
+              20 annotations
+            </a>
+             @ FDR 10% (HMDB-v2.5)
+          </span>
+        </div>
+      </div>
+       
+      <div
+        class="ds-actions"
+      >
+        <mock-el-dialog
+          title="Provided metadata"
+        >
+          <div
+            class="el-row"
+          >
+            <mock-el-tree
+              data="[object Object],[object Object]"
+              default-expanded-keys="MS analysis,Detector resolving power,Data Management"
+              id="metadata-tree"
+              node-key="id"
+            />
+          </div>
+        </mock-el-dialog>
+        <span>
+          <i
+            class="el-icon-picture"
+          />
+          <mock-el-popover
+            placement="top"
+            trigger="hover"
+          >
+            <div
+              slot-key="default"
+            >
+              <div
+                class="db-link-list"
+              >
+                Select a database:
+                <div>
+                  <a
+                    class=""
+                    href="/annotations?db=HMDB-v2.5&ds=FINISHED1"
+                  >
+                    HMDB-v2.5
+                  </a>
+                </div>
+                <div>
+                  <a
+                    class=""
+                    href="/annotations?db=HMDB-v4&ds=FINISHED1"
+                  >
+                    HMDB-v4
+                  </a>
+                </div>
+                <div>
+                  <a
+                    class=""
+                    href="/annotations?db=CHEBI&ds=FINISHED1"
+                  >
+                    CHEBI
+                  </a>
+                </div>
               </div>
             </div>
-            <div slot-key="reference"><i class="el-icon-lock"></i></div>
+            <div
+              slot-key="reference"
+            >
+              <a>
+                Browse annotations
+              </a>
+            </div>
           </mock-el-popover>
+          <br />
+        </span>
+        <div>
+          <i
+            class="el-icon-view"
+          />
+          <a
+            href="#"
+          >
+            Show full metadata
+          </a>
         </div>
-        <div class="ds-item-line text-gray-700"><span title="Filter by species" class="ds-add-filter">
-        allDatasets.1.organism</span>,
-          <span title="Filter by organism part" class="ds-add-filter">
-        alldatasets.1.organismpart</span> <span title="Filter by condition" class="ds-add-filter">
-        (alldatasets.1.condition)</span></div>
-        <div class="ds-item-line"><span title="Filter by ionisation source" class="ds-add-filter">
-        allDatasets.1.ionisationSource</span> +
-          <span title="Filter by analyzer type" class="ds-add-filter">
-        allDatasets.1.analyzer.type</span>,
-          <span title="Filter by polarity" class="ds-add-filter">
-        positive mode</span>,
-          RP 123k @ 1234
-        </div>
-        <div class="ds-item-line">
-          Submitted <mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time> by
-          <span title="Filter by submitter" class="ds-add-filter">
-        allDatasets.1.submitter.name</span><span>,
-        <mock-el-dropdown show-timeout="50" placement="bottom" trigger="hover"><div slot-key="default"><span class="text-base text-primary cursor-pointer">
-            allDatasets.1.group.shortName
-          </span> </div>
-        <div slot-key="dropdown">
-          <mock-el-dropdown-menu>
-            <mock-el-dropdown-item command="filter_group">Filter by this group</mock-el-dropdown-item>
-            <mock-el-dropdown-item command="view_group">View group</mock-el-dropdown-item>
-          </mock-el-dropdown-menu>
-        </div>
-        </mock-el-dropdown></span>
       </div>
-      <!---->
     </div>
-    <div class="ds-actions">
-      <!---->
-      <!----> <span><div title="Waiting in the queue" class="striped-progressbar queued"></div></span>
-      <div><i class="el-icon-view"></i> <a href="#">Show full metadata</a></div>
-      <!---->
-      <div class="ds-download"><i class="el-icon-download"></i> <a href="#">Download</a></div>
-      <!---->
-      <!---->
-    </div>
+     
     <!---->
   </div>
-  <div class="dataset-item border border-solid border-gray-200 leading-5">
-    <mock-el-dialog title="Provided metadata">
-      <div class="el-row">
-        <mock-el-tree id="metadata-tree" data="[object Object],[object Object]" node-key="id" default-expanded-keys="MS analysis,Detector resolving power,Data Management"></mock-el-tree>
-      </div>
-    </mock-el-dialog>
-    <div class="opt-image--container">
-      <div class="thumb"><img src="allDatasets.0.thumbnailOpticalImageUrl" alt="Optical image" class="thumb--img" style="transform: scaleY(1) translateY(0%); height: 100px;"> <img src="allDatasets.0.ionThumbnailUrl" alt="Ion image thumbnail" class="thumb--img thumb--img__ion" style="transform: scaleY(1) translateY(0%); height: 100px;">
-        <!---->
-      </div>
-    </div>
-    <div class="ds-info">
-      <div class="ds-item-line flex"><span title="allDatasets.0.name" class="font-bold truncate">allDatasets.0.name</span>
-        <!---->
-      </div>
-      <div class="ds-item-line text-gray-700"><span title="Filter by species" class="ds-add-filter">
-        allDatasets.0.organism</span>,
-        <span title="Filter by organism part" class="ds-add-filter">
-        alldatasets.0.organismpart</span> <span title="Filter by condition" class="ds-add-filter">
-        (alldatasets.0.condition)</span></div>
-      <div class="ds-item-line"><span title="Filter by ionisation source" class="ds-add-filter">
-        allDatasets.0.ionisationSource</span> +
-        <span title="Filter by analyzer type" class="ds-add-filter">
-        allDatasets.0.analyzer.type</span>,
-        <span title="Filter by polarity" class="ds-add-filter">
-        positive mode</span>,
-        RP 123k @ 1234
-      </div>
-      <div class="ds-item-line">
-        Submitted <mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time> by
-        <span title="Filter by submitter" class="ds-add-filter">
-        allDatasets.0.submitter.name</span><span>,
-        <mock-el-dropdown show-timeout="50" placement="bottom" trigger="hover"><div slot-key="default"><span class="text-base text-primary cursor-pointer">
-            allDatasets.0.group.shortName
-          </span> </div>
-      <div slot-key="dropdown">
-        <mock-el-dropdown-menu>
-          <mock-el-dropdown-item command="filter_group">Filter by this group</mock-el-dropdown-item>
-          <mock-el-dropdown-item command="view_group">View group</mock-el-dropdown-item>
-        </mock-el-dropdown-menu>
-      </div>
-      </mock-el-dropdown></span>
-    </div>
-    <!---->
-  </div>
-  <div class="ds-actions">
-    <!----> <span><div title="Processing is under way" class="striped-progressbar processing"></div></span>
-    <!---->
-    <div><i class="el-icon-view"></i> <a href="#">Show full metadata</a></div>
-    <!---->
-    <!---->
-    <!---->
-    <!---->
-  </div>
-  <!---->
-</div>
-<div class="dataset-item border border-solid border-gray-200 leading-5">
-  <mock-el-dialog title="Provided metadata">
-    <div class="el-row">
-      <mock-el-tree id="metadata-tree" data="[object Object],[object Object]" node-key="id" default-expanded-keys="MS analysis,Detector resolving power,Data Management"></mock-el-tree>
-    </div>
-  </mock-el-dialog>
-  <div class="opt-image--container">
-    <div class="thumb"><img src="allDatasets.2.thumbnailOpticalImageUrl" alt="Optical image" class="thumb--img" style="transform: scaleY(1) translateY(0%); height: 100px;"> <img src="allDatasets.2.ionThumbnailUrl" alt="Ion image thumbnail" class="thumb--img thumb--img__ion" style="transform: scaleY(1) translateY(0%); height: 100px;">
-      <!---->
-    </div>
-  </div>
-  <div class="ds-info">
-    <div class="ds-item-line flex"><span title="allDatasets.2.name" class="font-bold truncate">allDatasets.2.name</span>
-      <!---->
-    </div>
-    <div class="ds-item-line text-gray-700"><span title="Filter by species" class="ds-add-filter">
-        allDatasets.2.organism</span>,
-      <span title="Filter by organism part" class="ds-add-filter">
-        alldatasets.2.organismpart</span> <span title="Filter by condition" class="ds-add-filter">
-        (alldatasets.2.condition)</span></div>
-    <div class="ds-item-line"><span title="Filter by ionisation source" class="ds-add-filter">
-        allDatasets.2.ionisationSource</span> +
-      <span title="Filter by analyzer type" class="ds-add-filter">
-        allDatasets.2.analyzer.type</span>,
-      <span title="Filter by polarity" class="ds-add-filter">
-        positive mode</span>,
-      RP 123k @ 1234
-    </div>
-    <div class="ds-item-line">
-      Submitted <mock-elapsed-time date="allDatasets.2.uploadDT"></mock-elapsed-time> by
-      <span title="Filter by submitter" class="ds-add-filter">
-        allDatasets.2.submitter.name</span><span>,
-        <mock-el-dropdown show-timeout="50" placement="bottom" trigger="hover"><div slot-key="default"><span class="text-base text-primary cursor-pointer">
-            allDatasets.2.group.shortName
-          </span> </div>
-    <div slot-key="dropdown">
-      <mock-el-dropdown-menu>
-        <mock-el-dropdown-item command="filter_group">Filter by this group</mock-el-dropdown-item>
-        <mock-el-dropdown-item command="view_group">View group</mock-el-dropdown-item>
-      </mock-el-dropdown-menu>
-    </div>
-    </mock-el-dropdown></span>
-  </div>
-  <div class="ds-item-line"><span><a href="/annotations?db=HMDB-v2.5&amp;ds=FINISHED1&amp;mdtype=allDatasets.2.metadataType" class="">20 annotations</a>
-        @ FDR 10% (HMDB-v2.5)
-      </span></div>
-</div>
-<div class="ds-actions"><span><i class="el-icon-picture"></i> <mock-el-popover trigger="hover" placement="top"><div slot-key="default"><div class="db-link-list">
-          Select a database:
-          <div><a href="/annotations?db=HMDB-v2.5&amp;ds=FINISHED1&amp;mdtype=allDatasets.2.metadataType" class="">
-              HMDB-v2.5
-            </a></div><div><a href="/annotations?db=HMDB-v4&amp;ds=FINISHED1&amp;mdtype=allDatasets.2.metadataType" class="">
-              HMDB-v4
-            </a></div><div><a href="/annotations?db=CHEBI&amp;ds=FINISHED1&amp;mdtype=allDatasets.2.metadataType" class="">
-              CHEBI
-            </a></div></div> </div><div slot-key="reference"><a>Browse annotations</a></div></mock-el-popover> <br></span>
-  <!---->
-  <!---->
-  <div><i class="el-icon-view"></i> <a href="#">Show full metadata</a></div>
-  <!---->
-  <!---->
-  <!---->
-  <!---->
-</div>
-<!---->
-</div>
-<!---->
-</div>
 </div>
 `;

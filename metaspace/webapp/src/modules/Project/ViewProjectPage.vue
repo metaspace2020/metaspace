@@ -78,7 +78,6 @@
       <el-tabs
         v-model="tab"
         class="with-badges"
-        @tab-click="checkReviewLinksBadge"
       >
         <el-tab-pane
           v-if="visibleTabs.includes('about')"
@@ -138,17 +137,17 @@
           </div>
         </el-tab-pane>
         <el-tab-pane
-          v-if="visibleTabs.includes('review')"
-          name="review"
-          class="tab-with-badge sm-review-tab"
+          v-if="visibleTabs.includes('publishing')"
+          name="publishing"
+          class="tab-with-badge sm-publishing-tab"
           lazy
         >
           <span slot="label">
-            <new-feature-badge feature-key="review_links">
-              Review
+            <new-feature-badge feature-key="scientific_publishing">
+              Publishing
             </new-feature-badge>
           </span>
-          <review
+          <publishing
             :current-user-name="currentUserName"
             :project="project"
             :refetch-project="refetchProject"
@@ -200,7 +199,7 @@ import ProjectSettings from './ProjectSettings.vue'
 import { optionalSuffixInParens, plural } from '../../lib/vueFilters'
 import { removeDatasetFromAllDatasetsQuery } from '../../lib/updateApolloCache'
 import RichText from '../../components/RichText'
-import Review from './Review'
+import Publishing from './publishing'
 import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
 
   interface ViewProjectPageData {
@@ -215,7 +214,7 @@ import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBa
       ProjectSettings,
       NotificationIcon,
       RichText,
-      Review,
+      Publishing,
       NewFeatureBadge,
     },
     filters: {
@@ -346,7 +345,7 @@ export default class ViewProjectPage extends Vue {
         return []
       }
       if (this.canEdit) {
-        return ['about', 'datasets', 'members', 'review', 'settings']
+        return ['about', 'datasets', 'members', 'publishing', 'settings']
       }
       if (this.project && this.project.projectDescription !== null) {
         return ['about', 'datasets', 'members']
@@ -375,14 +374,11 @@ export default class ViewProjectPage extends Vue {
       }
     }
 
-    checkReviewLinksBadge() {
-      if (this.tab === 'review') {
-        hideFeatureBadge('review_links')
+    @Watch('tab')
+    checkFeatureBadges() {
+      if (this.tab === 'publishing') {
+        hideFeatureBadge('scientific_publishing')
       }
-    }
-
-    mounted() {
-      this.checkReviewLinksBadge()
     }
 
     get isInvited(): boolean {
@@ -553,8 +549,8 @@ export default class ViewProjectPage extends Vue {
   }
 
   .hidden-members-text {
+    @apply text-gray-600;
     text-align: center;
-    color: $--color-text-secondary;
   }
 </style>
 <style>
@@ -570,7 +566,7 @@ export default class ViewProjectPage extends Vue {
     margin-top: 10px;
   }
 
-  .el-tab-pane.sm-review-tab {
+  .el-tab-pane.sm-publishing-tab {
     margin-top: 24px;
   }
 </style>

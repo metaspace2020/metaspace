@@ -1,486 +1,250 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`DatasetItem should be able to delete if unpublished 1`] = `
-<div class="dataset-item border border-solid border-gray-200 leading-5">
-  <mock-el-dialog title="Provided metadata">
-    <div class="el-row">
-      <mock-el-tree id="metadata-tree" data="[object Object],[object Object]" node-key="id" default-expanded-keys="MS analysis,Detector resolving power,Data Management"></mock-el-tree>
-    </div>
-  </mock-el-dialog>
-  <div class="opt-image--container"><a href="/datasets/mockdataset/add-optical-image" class="">
-      <div title="Add Optical Image" class="thumb thumb__editable thumb__empty">
+exports[`DatasetItem should match snapshot 1`] = `
+<div
+  class="dataset-item border border-solid border-gray-200 leading-5"
+>
+  <div
+    class="opt-image--container"
+  >
+    <a
+      class=""
+      href="/datasets/mockdataset/add-optical-image"
+    >
+      <div
+        class="thumb thumb__editable thumb__empty"
+        title="Add Optical Image"
+      >
         <!---->
-        <!----> <img src="../../../assets/no_opt_image.png" alt="Add optical image" class="thumb--img">
-        <div class="thumb--overlay el-icon-edit el-icon-plus"></div>
-      </div>
-    </a></div>
-  <div class="ds-info">
-    <div class="ds-item-line flex"><span class="font-bold truncate"></span>
-      <mock-el-popover trigger="hover" placement="top" class="ml-1">
-        <div slot-key="default">
-          <div mock-v-loading="true">
-
-          </div>
-        </div>
-        <div slot-key="reference"><i class="el-icon-lock"></i></div>
-      </mock-el-popover>
-    </div>
-    <div class="ds-item-line text-gray-700"><span title="Filter by species" class="ds-add-filter">
-        organism</span>,
-      <span title="Filter by organism part" class="ds-add-filter">
-        organismpart</span> <span title="Filter by condition" class="ds-add-filter">
-        (condition)</span></div>
-    <div class="ds-item-line"><span title="Filter by ionisation source" class="ds-add-filter">
-        </span> +
-      <span title="Filter by analyzer type" class="ds-add-filter">
-        type</span>,
-      <span title="Filter by polarity" class="ds-add-filter">
-        positive mode</span>,
-      RP 123k @ 1234
-    </div>
-    <div class="ds-item-line">
-      Submitted <mock-elapsed-time date="2020-04-17T11:37:50.318667"></mock-elapsed-time> by
-      <span title="Filter by submitter" class="ds-add-filter">
-        </span>
-      <!---->
-    </div>
-    <div class="ds-item-line"><span><a href="/annotations?db=HMDB-v2.5&amp;ds=mockdataset" class="">20 annotations</a>
-        @ FDR 10% (HMDB-v2.5)
-      </span></div>
-  </div>
-  <div class="ds-actions"><span><i class="el-icon-picture"></i> <mock-el-popover trigger="hover" placement="top"><div slot-key="default"><div class="db-link-list">
-          Select a database:
-          <div><a href="/annotations?db=HMDB-v2.5&amp;ds=mockdataset" class="">
-              HMDB-v2.5
-            </a></div><div><a href="/annotations?db=HMDB-v4&amp;ds=mockdataset" class="">
-              HMDB-v4
-            </a></div><div><a href="/annotations?db=CHEBI&amp;ds=mockdataset" class="">
-              CHEBI
-            </a></div></div> </div><div slot-key="reference"><a>Browse annotations</a></div></mock-el-popover> <br></span>
-    <!---->
-    <!---->
-    <div><i class="el-icon-view"></i> <a href="#">Show full metadata</a></div>
-    <div><i class="el-icon-edit"></i> <a href="/datasets/edit/mockdataset" class="">
-        Edit metadata
-      </a></div>
-    <!---->
-    <div class="ds-delete"><i class="el-icon-delete"></i> <a href="#" class="text-danger">Delete dataset</a></div>
-    <!---->
-  </div>
-  <!---->
-</div>
-`;
-
-exports[`DatasetItem should not show the publication status if cannot edit 1`] = `
-<div class="dataset-item border border-solid border-gray-200 leading-5">
-  <mock-el-dialog title="Provided metadata">
-    <div class="el-row">
-      <mock-el-tree id="metadata-tree" data="[object Object],[object Object]" node-key="id" default-expanded-keys="MS analysis,Detector resolving power,Data Management"></mock-el-tree>
-    </div>
-  </mock-el-dialog>
-  <div class="opt-image--container">
-    <div class="thumb thumb__empty">
-      <!---->
-      <!----> <img src="../../../assets/no_opt_image.png" alt="No optical image" class="thumb--img"></div>
-  </div>
-  <div class="ds-info">
-    <div class="ds-item-line flex"><span class="font-bold truncate"></span>
-      <mock-el-popover trigger="hover" placement="top" class="ml-1">
-        <div slot-key="default">
-          <div mock-v-loading="true">
-
-          </div>
-        </div>
-        <div slot-key="reference"><i class="el-icon-lock"></i></div>
-      </mock-el-popover>
-    </div>
-    <div class="ds-item-line text-gray-700"><span title="Filter by species" class="ds-add-filter">
-        organism</span>,
-      <span title="Filter by organism part" class="ds-add-filter">
-        organismpart</span> <span title="Filter by condition" class="ds-add-filter">
-        (condition)</span></div>
-    <div class="ds-item-line"><span title="Filter by ionisation source" class="ds-add-filter">
-        </span> +
-      <span title="Filter by analyzer type" class="ds-add-filter">
-        type</span>,
-      <span title="Filter by polarity" class="ds-add-filter">
-        positive mode</span>,
-      RP 123k @ 1234
-    </div>
-    <div class="ds-item-line">
-      Submitted <mock-elapsed-time date="2020-04-17T11:37:50.318667"></mock-elapsed-time> by
-      <span title="Filter by submitter" class="ds-add-filter">
-        </span>
-      <!---->
-    </div>
-    <div class="ds-item-line"><span><a href="/annotations?db=HMDB-v2.5&amp;ds=mockdataset" class="">20 annotations</a>
-        @ FDR 10% (HMDB-v2.5)
-      </span></div>
-  </div>
-  <div class="ds-actions"><span><i class="el-icon-picture"></i> <mock-el-popover trigger="hover" placement="top"><div slot-key="default"><div class="db-link-list">
-          Select a database:
-          <div><a href="/annotations?db=HMDB-v2.5&amp;ds=mockdataset" class="">
-              HMDB-v2.5
-            </a></div><div><a href="/annotations?db=HMDB-v4&amp;ds=mockdataset" class="">
-              HMDB-v4
-            </a></div><div><a href="/annotations?db=CHEBI&amp;ds=mockdataset" class="">
-              CHEBI
-            </a></div></div> </div><div slot-key="reference"><a>Browse annotations</a></div></mock-el-popover> <br></span>
-    <!---->
-    <!---->
-    <div><i class="el-icon-view"></i> <a href="#">Show full metadata</a></div>
-    <!---->
-    <!---->
-    <!---->
-    <!---->
-  </div>
-  <!---->
-</div>
-`;
-
-exports[`DatasetItem should not show the publication status if processing 1`] = `
-<div class="dataset-item border border-solid border-gray-200 leading-5">
-  <mock-el-dialog title="Provided metadata">
-    <div class="el-row">
-      <mock-el-tree id="metadata-tree" data="[object Object],[object Object]" node-key="id" default-expanded-keys="MS analysis,Detector resolving power,Data Management"></mock-el-tree>
-    </div>
-  </mock-el-dialog>
-  <div class="opt-image--container">
-    <div class="thumb thumb__empty">
-      <!---->
-      <!----> <img src="../../../assets/no_opt_image.png" alt="No optical image" class="thumb--img"></div>
-  </div>
-  <div class="ds-info">
-    <div class="ds-item-line flex"><span class="font-bold truncate"></span>
-      <mock-el-popover trigger="hover" placement="top" class="ml-1">
-        <div slot-key="default">
-          <div mock-v-loading="true">
-
-          </div>
-        </div>
-        <div slot-key="reference"><i class="el-icon-lock"></i></div>
-      </mock-el-popover>
-    </div>
-    <div class="ds-item-line text-gray-700"><span title="Filter by species" class="ds-add-filter">
-        organism</span>,
-      <span title="Filter by organism part" class="ds-add-filter">
-        organismpart</span> <span title="Filter by condition" class="ds-add-filter">
-        (condition)</span></div>
-    <div class="ds-item-line"><span title="Filter by ionisation source" class="ds-add-filter">
-        </span> +
-      <span title="Filter by analyzer type" class="ds-add-filter">
-        type</span>,
-      <span title="Filter by polarity" class="ds-add-filter">
-        positive mode</span>,
-      RP 123k @ 1234
-    </div>
-    <div class="ds-item-line">
-      Submitted <mock-elapsed-time date="2020-04-17T11:37:50.318667"></mock-elapsed-time> by
-      <span title="Filter by submitter" class="ds-add-filter">
-        </span>
-      <!---->
-    </div>
-    <!---->
-  </div>
-  <div class="ds-actions">
-    <!----> <span><div title="Processing is under way" class="striped-progressbar processing"></div></span>
-    <!---->
-    <div><i class="el-icon-view"></i> <a href="#">Show full metadata</a></div>
-    <!---->
-    <!---->
-    <!---->
-    <!---->
-  </div>
-  <!---->
-</div>
-`;
-
-exports[`DatasetItem should prefer "Published" status 1`] = `
-<div class="dataset-item border border-solid border-gray-200 leading-5">
-  <mock-el-dialog title="Provided metadata">
-    <div class="el-row">
-      <mock-el-tree id="metadata-tree" data="[object Object],[object Object]" node-key="id" default-expanded-keys="MS analysis,Detector resolving power,Data Management"></mock-el-tree>
-    </div>
-  </mock-el-dialog>
-  <div class="opt-image--container"><a href="/datasets/mockdataset/add-optical-image" class="">
-      <div title="Add Optical Image" class="thumb thumb__editable thumb__empty">
+         
         <!---->
-        <!----> <img src="../../../assets/no_opt_image.png" alt="Add optical image" class="thumb--img">
-        <div class="thumb--overlay el-icon-edit el-icon-plus"></div>
+         
+        <img
+          alt="Add optical image"
+          class="thumb--img"
+          src="../../../assets/no_opt_image.png"
+        />
+         
+        <div
+          class="thumb--overlay el-icon-edit el-icon-plus"
+        />
       </div>
-    </a></div>
-  <div class="ds-info">
-    <div class="ds-item-line flex"><span class="font-bold truncate"></span>
-      <mock-el-popover trigger="hover" placement="top" class="ml-1">
-        <div slot-key="default">
-          <div mock-v-loading="true">
-
+    </a>
+  </div>
+   
+  <div
+    class="ds-info"
+  >
+    <div
+      class="ds-item-line flex"
+    >
+      <span
+        class="font-bold truncate"
+      />
+      <span
+        class="ml-1"
+      >
+        <transition-stub
+          name="fade-in-linear"
+        >
+          <div
+            aria-hidden="true"
+            class="el-popover el-popper"
+            id="el-popover-123"
+            role="tooltip"
+            style="display: none;"
+            tabindex="0"
+          >
+            <!---->
+            <div
+              mock-v-loading="true"
+            />
+          </div>
+        </transition-stub>
+        <i
+          aria-describedby="el-popover-123"
+          class="el-icon-lock el-popover__reference"
+          tabindex="0"
+        />
+      </span>
+    </div>
+    <div
+      class="ds-item-line text-gray-700"
+    >
+      <span
+        class="ds-add-filter"
+        title="Filter by species"
+      >
+        organism
+      </span>
+      , 
+      <span
+        class="ds-add-filter"
+        title="Filter by organism part"
+      >
+        organismpart
+      </span>
+       
+      <span
+        class="ds-add-filter"
+        title="Filter by condition"
+      >
+        (condition)
+      </span>
+    </div>
+    <div
+      class="ds-item-line"
+    >
+      <span
+        class="ds-add-filter"
+        title="Filter by ionisation source"
+      />
+       + 
+      <span
+        class="ds-add-filter"
+        title="Filter by analyzer type"
+      >
+        type
+      </span>
+      , 
+      <span
+        class="ds-add-filter"
+        title="Filter by polarity"
+      >
+        positive mode
+      </span>
+      , RP 123k @ 1234
+    </div>
+    <div
+      class="ds-item-line"
+    >
+      Submitted 
+      <mock-elapsed-time
+        date="2020-04-17T11:37:50.318667"
+      />
+       by 
+      <span
+        class="ds-add-filter"
+        title="Filter by submitter"
+      />
+    </div>
+    <div
+      class="ds-item-line"
+    >
+      <span>
+        <a
+          class=""
+          href="/annotations?db=HMDB-v2.5&ds=mockdataset"
+        >
+          20 annotations
+        </a>
+         @ FDR 10% (HMDB-v2.5)
+      </span>
+    </div>
+  </div>
+   
+  <div
+    class="ds-actions"
+  >
+    <mock-el-dialog
+      title="Provided metadata"
+    >
+      <div
+        class="el-row"
+      >
+        <mock-el-tree
+          data="[object Object],[object Object]"
+          default-expanded-keys="MS analysis,Detector resolving power,Data Management"
+          id="metadata-tree"
+          node-key="id"
+        />
+      </div>
+    </mock-el-dialog>
+    <span>
+      <i
+        class="el-icon-picture"
+      />
+      <mock-el-popover
+        placement="top"
+        trigger="hover"
+      >
+        <div
+          slot-key="default"
+        >
+          <div
+            class="db-link-list"
+          >
+            Select a database:
+            <div>
+              <a
+                class=""
+                href="/annotations?db=HMDB-v2.5&ds=mockdataset"
+              >
+                HMDB-v2.5
+              </a>
+            </div>
+            <div>
+              <a
+                class=""
+                href="/annotations?db=HMDB-v4&ds=mockdataset"
+              >
+                HMDB-v4
+              </a>
+            </div>
+            <div>
+              <a
+                class=""
+                href="/annotations?db=CHEBI&ds=mockdataset"
+              >
+                CHEBI
+              </a>
+            </div>
           </div>
         </div>
-        <div slot-key="reference"><i class="el-icon-lock"></i></div>
-      </mock-el-popover>
-    </div>
-    <div class="ds-item-line text-gray-700"><span title="Filter by species" class="ds-add-filter">
-        organism</span>,
-      <span title="Filter by organism part" class="ds-add-filter">
-        organismpart</span> <span title="Filter by condition" class="ds-add-filter">
-        (condition)</span></div>
-    <div class="ds-item-line"><span title="Filter by ionisation source" class="ds-add-filter">
-        </span> +
-      <span title="Filter by analyzer type" class="ds-add-filter">
-        type</span>,
-      <span title="Filter by polarity" class="ds-add-filter">
-        positive mode</span>,
-      RP 123k @ 1234
-    </div>
-    <div class="ds-item-line">
-      Submitted <mock-elapsed-time date="2020-04-17T11:37:50.318667"></mock-elapsed-time> by
-      <span title="Filter by submitter" class="ds-add-filter">
-        </span>
-      <!---->
-    </div>
-    <div class="ds-item-line"><span><a href="/annotations?db=HMDB-v2.5&amp;ds=mockdataset" class="">20 annotations</a>
-        @ FDR 10% (HMDB-v2.5)
-      </span></div>
-  </div>
-  <div class="ds-actions"><span><i class="el-icon-picture"></i> <mock-el-popover trigger="hover" placement="top"><div slot-key="default"><div class="db-link-list">
-          Select a database:
-          <div><a href="/annotations?db=HMDB-v2.5&amp;ds=mockdataset" class="">
-              HMDB-v2.5
-            </a></div><div><a href="/annotations?db=HMDB-v4&amp;ds=mockdataset" class="">
-              HMDB-v4
-            </a></div><div><a href="/annotations?db=CHEBI&amp;ds=mockdataset" class="">
-              CHEBI
-            </a></div></div> </div><div slot-key="reference"><a>Browse annotations</a></div></mock-el-popover> <br></span>
-    <!---->
-    <!---->
-    <div><i class="el-icon-view"></i> <a href="#">Show full metadata</a></div>
-    <div><i class="el-icon-edit"></i> <a href="/datasets/edit/mockdataset" class="">
-        Edit metadata
-      </a></div>
-    <!---->
-    <!---->
-    <div class="mt-auto text-right text-gray-700 text-sm">
-      Published
-    </div>
-  </div>
-  <!---->
-</div>
-`;
-
-exports[`DatasetItem should show "Published" status 1`] = `
-<div class="dataset-item border border-solid border-gray-200 leading-5">
-  <mock-el-dialog title="Provided metadata">
-    <div class="el-row">
-      <mock-el-tree id="metadata-tree" data="[object Object],[object Object]" node-key="id" default-expanded-keys="MS analysis,Detector resolving power,Data Management"></mock-el-tree>
-    </div>
-  </mock-el-dialog>
-  <div class="opt-image--container"><a href="/datasets/mockdataset/add-optical-image" class="">
-      <div title="Add Optical Image" class="thumb thumb__editable thumb__empty">
-        <!---->
-        <!----> <img src="../../../assets/no_opt_image.png" alt="Add optical image" class="thumb--img">
-        <div class="thumb--overlay el-icon-edit el-icon-plus"></div>
-      </div>
-    </a></div>
-  <div class="ds-info">
-    <div class="ds-item-line flex"><span class="font-bold truncate"></span>
-      <mock-el-popover trigger="hover" placement="top" class="ml-1">
-        <div slot-key="default">
-          <div mock-v-loading="true">
-
-          </div>
+        <div
+          slot-key="reference"
+        >
+          <a>
+            Browse annotations
+          </a>
         </div>
-        <div slot-key="reference"><i class="el-icon-lock"></i></div>
       </mock-el-popover>
+      <br />
+    </span>
+    <div>
+      <i
+        class="el-icon-view"
+      />
+      <a
+        href="#"
+      >
+        Show full metadata
+      </a>
     </div>
-    <div class="ds-item-line text-gray-700"><span title="Filter by species" class="ds-add-filter">
-        organism</span>,
-      <span title="Filter by organism part" class="ds-add-filter">
-        organismpart</span> <span title="Filter by condition" class="ds-add-filter">
-        (condition)</span></div>
-    <div class="ds-item-line"><span title="Filter by ionisation source" class="ds-add-filter">
-        </span> +
-      <span title="Filter by analyzer type" class="ds-add-filter">
-        type</span>,
-      <span title="Filter by polarity" class="ds-add-filter">
-        positive mode</span>,
-      RP 123k @ 1234
-    </div>
-    <div class="ds-item-line">
-      Submitted <mock-elapsed-time date="2020-04-17T11:37:50.318667"></mock-elapsed-time> by
-      <span title="Filter by submitter" class="ds-add-filter">
-        </span>
-      <!---->
-    </div>
-    <div class="ds-item-line"><span><a href="/annotations?db=HMDB-v2.5&amp;ds=mockdataset" class="">20 annotations</a>
-        @ FDR 10% (HMDB-v2.5)
-      </span></div>
-  </div>
-  <div class="ds-actions"><span><i class="el-icon-picture"></i> <mock-el-popover trigger="hover" placement="top"><div slot-key="default"><div class="db-link-list">
-          Select a database:
-          <div><a href="/annotations?db=HMDB-v2.5&amp;ds=mockdataset" class="">
-              HMDB-v2.5
-            </a></div><div><a href="/annotations?db=HMDB-v4&amp;ds=mockdataset" class="">
-              HMDB-v4
-            </a></div><div><a href="/annotations?db=CHEBI&amp;ds=mockdataset" class="">
-              CHEBI
-            </a></div></div> </div><div slot-key="reference"><a>Browse annotations</a></div></mock-el-popover> <br></span>
-    <!---->
-    <!---->
-    <div><i class="el-icon-view"></i> <a href="#">Show full metadata</a></div>
-    <div><i class="el-icon-edit"></i> <a href="/datasets/edit/mockdataset" class="">
+    <div>
+      <i
+        class="el-icon-edit"
+      />
+      <a
+        class=""
+        href="/datasets/edit/mockdataset"
+      >
         Edit metadata
-      </a></div>
-    <!---->
-    <!---->
-    <div class="mt-auto text-right text-gray-700 text-sm">
-      Published
+      </a>
+    </div>
+    <div
+      class="ds-delete"
+    >
+      <i
+        class="el-icon-delete"
+      />
+      <a
+        class="text-danger"
+        href="#"
+      >
+        Delete dataset
+      </a>
     </div>
   </div>
-  <!---->
-</div>
-`;
-
-exports[`DatasetItem should show "Under review" status 1`] = `
-<div class="dataset-item border border-solid border-gray-200 leading-5">
-  <mock-el-dialog title="Provided metadata">
-    <div class="el-row">
-      <mock-el-tree id="metadata-tree" data="[object Object],[object Object]" node-key="id" default-expanded-keys="MS analysis,Detector resolving power,Data Management"></mock-el-tree>
-    </div>
-  </mock-el-dialog>
-  <div class="opt-image--container"><a href="/datasets/mockdataset/add-optical-image" class="">
-      <div title="Add Optical Image" class="thumb thumb__editable thumb__empty">
-        <!---->
-        <!----> <img src="../../../assets/no_opt_image.png" alt="Add optical image" class="thumb--img">
-        <div class="thumb--overlay el-icon-edit el-icon-plus"></div>
-      </div>
-    </a></div>
-  <div class="ds-info">
-    <div class="ds-item-line flex"><span class="font-bold truncate"></span>
-      <mock-el-popover trigger="hover" placement="top" class="ml-1">
-        <div slot-key="default">
-          <div mock-v-loading="true">
-
-          </div>
-        </div>
-        <div slot-key="reference"><i class="el-icon-lock"></i></div>
-      </mock-el-popover>
-    </div>
-    <div class="ds-item-line text-gray-700"><span title="Filter by species" class="ds-add-filter">
-        organism</span>,
-      <span title="Filter by organism part" class="ds-add-filter">
-        organismpart</span> <span title="Filter by condition" class="ds-add-filter">
-        (condition)</span></div>
-    <div class="ds-item-line"><span title="Filter by ionisation source" class="ds-add-filter">
-        </span> +
-      <span title="Filter by analyzer type" class="ds-add-filter">
-        type</span>,
-      <span title="Filter by polarity" class="ds-add-filter">
-        positive mode</span>,
-      RP 123k @ 1234
-    </div>
-    <div class="ds-item-line">
-      Submitted <mock-elapsed-time date="2020-04-17T11:37:50.318667"></mock-elapsed-time> by
-      <span title="Filter by submitter" class="ds-add-filter">
-        </span>
-      <!---->
-    </div>
-    <div class="ds-item-line"><span><a href="/annotations?db=HMDB-v2.5&amp;ds=mockdataset" class="">20 annotations</a>
-        @ FDR 10% (HMDB-v2.5)
-      </span></div>
-  </div>
-  <div class="ds-actions"><span><i class="el-icon-picture"></i> <mock-el-popover trigger="hover" placement="top"><div slot-key="default"><div class="db-link-list">
-          Select a database:
-          <div><a href="/annotations?db=HMDB-v2.5&amp;ds=mockdataset" class="">
-              HMDB-v2.5
-            </a></div><div><a href="/annotations?db=HMDB-v4&amp;ds=mockdataset" class="">
-              HMDB-v4
-            </a></div><div><a href="/annotations?db=CHEBI&amp;ds=mockdataset" class="">
-              CHEBI
-            </a></div></div> </div><div slot-key="reference"><a>Browse annotations</a></div></mock-el-popover> <br></span>
-    <!---->
-    <!---->
-    <div><i class="el-icon-view"></i> <a href="#">Show full metadata</a></div>
-    <div><i class="el-icon-edit"></i> <a href="/datasets/edit/mockdataset" class="">
-        Edit metadata
-      </a></div>
-    <!---->
-    <!---->
-    <div class="mt-auto text-right text-gray-700 text-sm">
-      Under review
-    </div>
-  </div>
-  <!---->
-</div>
-`;
-
-exports[`DatasetItem should show admin options 1`] = `
-<div class="dataset-item border border-solid border-gray-200 leading-5">
-  <mock-el-dialog title="Provided metadata">
-    <div class="el-row">
-      <mock-el-tree id="metadata-tree" data="[object Object],[object Object]" node-key="id" default-expanded-keys="MS analysis,Detector resolving power,Data Management"></mock-el-tree>
-    </div>
-  </mock-el-dialog>
-  <div class="opt-image--container"><a href="/datasets/mockdataset/add-optical-image" class="">
-      <div title="Add Optical Image" class="thumb thumb__editable thumb__empty">
-        <!---->
-        <!----> <img src="../../../assets/no_opt_image.png" alt="Add optical image" class="thumb--img">
-        <div class="thumb--overlay el-icon-edit el-icon-plus"></div>
-      </div>
-    </a></div>
-  <div class="ds-info">
-    <div class="ds-item-line flex"><span class="font-bold truncate"></span>
-      <mock-el-popover trigger="hover" placement="top" class="ml-1">
-        <div slot-key="default">
-          <div mock-v-loading="true">
-
-          </div>
-        </div>
-        <div slot-key="reference"><i class="el-icon-lock"></i></div>
-      </mock-el-popover>
-    </div>
-    <div class="ds-item-line text-gray-700"><span title="Filter by species" class="ds-add-filter">
-        organism</span>,
-      <span title="Filter by organism part" class="ds-add-filter">
-        organismpart</span> <span title="Filter by condition" class="ds-add-filter">
-        (condition)</span></div>
-    <div class="ds-item-line"><span title="Filter by ionisation source" class="ds-add-filter">
-        </span> +
-      <span title="Filter by analyzer type" class="ds-add-filter">
-        type</span>,
-      <span title="Filter by polarity" class="ds-add-filter">
-        positive mode</span>,
-      RP 123k @ 1234
-    </div>
-    <div class="ds-item-line">
-      Submitted <mock-elapsed-time date="2020-04-17T11:37:50.318667"></mock-elapsed-time> by
-      <span title="Filter by submitter" class="ds-add-filter">
-        </span>
-      <!---->
-    </div>
-    <div class="ds-item-line"><span><a href="/annotations?db=HMDB-v2.5&amp;ds=mockdataset" class="">20 annotations</a>
-        @ FDR 10% (HMDB-v2.5)
-      </span></div>
-  </div>
-  <div class="ds-actions"><span><i class="el-icon-picture"></i> <mock-el-popover trigger="hover" placement="top"><div slot-key="default"><div class="db-link-list">
-          Select a database:
-          <div><a href="/annotations?db=HMDB-v2.5&amp;ds=mockdataset" class="">
-              HMDB-v2.5
-            </a></div><div><a href="/annotations?db=HMDB-v4&amp;ds=mockdataset" class="">
-              HMDB-v4
-            </a></div><div><a href="/annotations?db=CHEBI&amp;ds=mockdataset" class="">
-              CHEBI
-            </a></div></div> </div><div slot-key="reference"><a>Browse annotations</a></div></mock-el-popover> <br></span>
-    <!---->
-    <!---->
-    <div><i class="el-icon-view"></i> <a href="#">Show full metadata</a></div>
-    <div><i class="el-icon-edit"></i> <a href="/datasets/edit/mockdataset" class="">
-        Edit metadata
-      </a></div>
-    <!---->
-    <div class="ds-delete"><i class="el-icon-delete"></i> <a href="#" class="text-danger">Delete dataset</a></div>
-    <div class="ds-reprocess"><i class="el-icon-refresh"></i> <a href="#" class="text-danger">Reprocess dataset</a></div>
-  </div>
-  <!---->
 </div>
 `;

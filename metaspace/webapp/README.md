@@ -11,10 +11,6 @@ Web application for browsing results produced by [METASPACE engine](../engine).
 ## Running in development mode
 
 `yarn run dev` will start webpack-dev-server, which will serve and dynamically rebuild client-side code.
-However, there is a small amount of server-side code in this project that won't be automatically reloaded when changed.
-If you are changing the server-side code and want it to hot-reload, use `NODE_ENV=development nodemon server.js`.
-Note that using `nodemon` is much slower for client-side development, as it completely restarts the process
-instead of allowing webpack-dev-server to do an incremental rebuild.
 
 ## Testing
 

@@ -22,7 +22,12 @@ function copyText(text: string | undefined) {
   }
 }
 
-export default createComponent({
+interface Props {
+  value: string
+  type: string
+}
+
+export default createComponent<Props>({
   props: {
     value: { type: String },
     type: { type: String, default: 'text' },

@@ -56,7 +56,7 @@ describe('FilterPanel', () => {
   it('should match snapshot (no filters)', async() => {
     await updateFilter({})
     const propsData = { level: 'annotation' }
-    const wrapper = mount(FilterPanel, { router, apolloProvider, store, propsData, sync: false })
+    const wrapper = mount(FilterPanel, { router, apolloProvider, store, propsData })
     await Vue.nextTick()
 
     expect(wrapper).toMatchSnapshot()
@@ -65,7 +65,7 @@ describe('FilterPanel', () => {
   it('should match snapshot (all annotation filters)', async() => {
     await updateFilter(allFilters)
     const propsData = { level: 'annotation' }
-    const wrapper = mount(FilterPanel, { router, apolloProvider, store, propsData, sync: false })
+    const wrapper = mount(FilterPanel, { router, apolloProvider, store, propsData })
     await Vue.nextTick()
 
     expect(wrapper).toMatchSnapshot()
@@ -74,7 +74,7 @@ describe('FilterPanel', () => {
   it('should update the route when filters change', async() => {
     await updateFilter(allFilters)
     const propsData = { level: 'annotation' }
-    const wrapper = mount(FilterPanel, { router, apolloProvider, store, propsData, sync: false })
+    const wrapper = mount(FilterPanel, { router, apolloProvider, store, propsData })
     const newFilters = {
       simpleQuery: 'lorem ipsum',
       database: 'CHEBI',
@@ -111,7 +111,7 @@ describe('FilterPanel', () => {
   it('should be able to add a filter', async() => {
     await updateFilter({})
     const propsData = { level: 'annotation' }
-    const wrapper = mount(FilterPanel, { router, apolloProvider, store, propsData, sync: false })
+    const wrapper = mount(FilterPanel, { router, apolloProvider, store, propsData })
     await Vue.nextTick()
     expect(wrapper.find('[data-test-key="project"]').exists()).toEqual(false)
 
@@ -124,7 +124,7 @@ describe('FilterPanel', () => {
   it('should be able to remove a filter', async() => {
     await updateFilter(allFilters)
     const propsData = { level: 'annotation' }
-    const wrapper = mount(FilterPanel, { router, apolloProvider, store, propsData, sync: false })
+    const wrapper = mount(FilterPanel, { router, apolloProvider, store, propsData })
     await Vue.nextTick()
     expect(wrapper.find('[data-test-key="project"]').exists()).toEqual(true)
 

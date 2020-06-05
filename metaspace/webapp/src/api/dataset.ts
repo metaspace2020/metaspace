@@ -20,6 +20,11 @@ export interface DatasetDetailItem {
     name: string;
     shortName: string;
   };
+  projects: {
+    id: string;
+    name: string;
+    publicationStatus: String;
+  }[],
   groupApproved: boolean;
   polarity: GqlPolarity;
   ionisationSource: string;
@@ -42,6 +47,8 @@ export interface DatasetDetailItem {
     counts: number[];
   };
   rawOpticalImageUrl: string;
+  canDownload: boolean;
+  uploadDT: string;
 }
 
 export const datasetDetailItemFragment =
@@ -196,8 +203,12 @@ export const datasetVisibilityQuery =
        group { id name }
        projects { id name }
      }
+     currentUser { id }
    }`
-
+export interface DatasetVisibilityQuery {
+  datasetVisibility: DatasetVisibilityResult | null
+  currentUser: { id: string } | null
+}
 export interface DatasetVisibilityResult {
   id: string;
   submitter: { id: string, name: string };

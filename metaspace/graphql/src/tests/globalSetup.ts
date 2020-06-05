@@ -1,10 +1,9 @@
-require('ts-node/register');
-const Knex = require('knex');
-const config = require('../utils/config').default;
-const {createConnection} = require('../utils/db');
-const {DbSchemaName} = require('../utils/typeOrmConfig');
+import * as Knex from 'knex';
+import config from '../utils/config';
+import {createConnection} from '../utils/db';
+import {DbSchemaName}  from '../utils/typeOrmConfig';
 
-module.exports = async () => {
+export = async () => {
 
   if (config.db.database === 'sm'
     || config.util.getConfigSources().some(({name}) => name.endsWith('development.js') || name.endsWith('production.js'))) {
@@ -33,6 +32,9 @@ module.exports = async () => {
       GRANT ALL ON ALL TABLES IN SCHEMA public TO ${config.db.user}`);
   await knex.destroy();
 
+  // For some reason the ts-jest transformer doesn't work automatically for the TypeORM migrations,
+  // so manually register ts-node before running migrations.
+  require('ts-node/register');
   // Create a TypeORM connection just to apply migrations, so that parallel tests don't conflict during initialization
   const conn = await createConnection();
   await conn.runMigrations();

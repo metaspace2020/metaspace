@@ -8,30 +8,28 @@
     @submit="handleSubmit"
   >
     <div>
-      <el-form-item
-        label="Name"
-        prop="name"
-        class="name max-w-measure-3"
-      >
+      <label class="leading-6">
+        <span class="font-medium">Title</span>
         <el-input
           v-model="value.name"
+          class="py-1"
           :max-length="50"
         />
-      </el-form-item>
-      <el-form-item
-        prop="isPublic"
-        class="isPublic"
-      >
-        <el-checkbox
-          v-model="value.isPublic"
-          :disabled="isPublished"
-        >
-          {{ isPublished ?
-            'Published projects must be visible' :
-            'Allow other users to see this project' }}
-        </el-checkbox>
-      </el-form-item>
+      </label>
     </div>
+    <el-form-item
+      prop="isPublic"
+      class="my-3"
+    >
+      <el-checkbox
+        v-model="value.isPublic"
+        :disabled="isPublished"
+      >
+        {{ isPublished ?
+          'Published projects must be visible' :
+          'Allow other users to see this project' }}
+      </el-checkbox>
+    </el-form-item>
   </el-form>
 </template>
 <script lang="ts">
@@ -69,20 +67,3 @@ export default class EditProjectForm extends Vue {
 }
 
 </script>
-<style scoped lang="scss">
-  .name {
-  }
-
-  .isPublic {
-    margin-left: 20px;
-  }
-  /*.urlSlug {*/
-    /*/deep/ .el-input {*/
-      /*display: inline-block;*/
-      /*width: 150px;*/
-      /*input {*/
-        /*padding: 0 5px;*/
-      /*}*/
-    /*}*/
-  /*}*/
-</style>
