@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from shutil import copyfileobj
-from typing import Optional, List
+from typing import Optional, List, Iterable, Dict
 
 import pandas as pd
 import numpy as np
@@ -213,6 +213,7 @@ class GraphQLClient(object):
         configJson
         metadataJson
         isPublic
+        databases
         molDBs
         adducts
         acquisitionGeometry
@@ -427,7 +428,8 @@ class GraphQLClient(object):
         priority=0,
         ds_name=None,
         is_public=None,
-        mol_dbs=None,
+        database_ids=None,
+        mol_dbs=None,  # DEPRECATED
         adducts=None,
         ppm=None,
         ds_id=None,
@@ -448,13 +450,16 @@ class GraphQLClient(object):
                 'name': ds_name,
                 'inputPath': data_path,
                 'isPublic': is_public,
-                'molDBs': mol_dbs,
                 'adducts': adducts,
                 'ppm': ppm,
                 'submitterId': submitter_id,
                 'metadataJson': metadata,
             },
         }
+        if database_ids:
+            variables['input']['databaseIds'] = database_ids
+        else:
+            variables['input']['molDBs'] = mol_dbs
         return self.query(query, variables)
 
     def delete_dataset(self, ds_id, force=False):
@@ -473,7 +478,8 @@ class GraphQLClient(object):
         self,
         ds_id,
         name=None,
-        mol_dbs=None,
+        database_ids=None,
+        mol_dbs=None,  # DEPRECATED
         adducts=None,
         ppm=None,
         reprocess=False,
@@ -495,8 +501,12 @@ class GraphQLClient(object):
         input_field = {}
         if name:
             input_field['name'] = name
-        if mol_dbs:
+
+        if database_ids:
+            input_field['databaseIds'] = database_ids
+        elif mol_dbs:
             input_field['molDBs'] = mol_dbs
+
         if adducts:
             input_field['adducts'] = adducts
         if ppm:
@@ -511,7 +521,7 @@ class GraphQLClient(object):
 
         return self.query(query, variables)
 
-    def get_molecular_databases(self, names=None):
+    def get_molecular_databases(self, ids=None, names=None):
         query = '''{
           molecularDatabases {
             id name version
@@ -520,11 +530,13 @@ class GraphQLClient(object):
         resp = self.query(query)
         if 'molecularDatabases' not in resp:
             raise Exception('GraphQL error: {}'.format(resp))
-        mol_dbs = resp['molecularDatabases']
-        if not names:
-            return mol_dbs
+        databases = resp['molecularDatabases']
+        if ids:
+            return [d for d in databases if d['id'] in ids]
+        elif names:
+            return [d for d in databases if d['name'] in names]
         else:
-            return [d for d in mol_dbs if d['name'] in names]
+            return databases
 
 
 def ion(r):
@@ -636,7 +648,7 @@ NYI = Exception("NOT IMPLEMENTED YET")
 class SMDataset(object):
     def __init__(self, _info, gqclient):
         self._info = _info
-        self._gqclient = gqclient
+        self._gqclient: GraphQLClient = gqclient
         self._config = json.loads(self._info['configJson'])
         self._metadata = Metadata(self._info['metadataJson'])
         self._session = requests.session()
@@ -657,10 +669,28 @@ class SMDataset(object):
         return "SMDataset({} | ID: {})".format(self.name, self.id)
 
     def annotations(
-        self, fdr=0.1, database=None, return_vals=('sumFormula', 'adduct'), **annotation_filter
-    ):
+        self,
+        fdr: float = 0.1,
+        database_id: int = None,
+        database: str = None,
+        return_vals: Iterable = ('sumFormula', 'adduct'),
+        **annotation_filter,
+    ) -> List[list]:
+        """Fetch dataset annotations.
+
+        Args:
+            fdr: Max FDR level.
+            database: DEPRECATED, use 'database_id' instead.
+            database_id: Molecular database id.
+            return_vals: Tuple of fields to return.
+
+        Returns:
+            List of annotations with requested fields.
+        """
         annotation_filter.setdefault('fdrLevel', fdr)
-        if database:
+        if database_id:
+            annotation_filter['databaseId'] = database
+        elif database:
             annotation_filter['database'] = database
         dataset_filter = {'ids': self.id}
 
@@ -669,13 +699,28 @@ class SMDataset(object):
 
     def results(
         self,
-        database,
-        fdr=None,
-        coloc_with=None,
-        include_chem_mods=False,
-        include_neutral_losses=False,
+        database: str = None,
+        database_id: int = None,
+        fdr: float = None,
+        coloc_with: str = None,
+        include_chem_mods: bool = False,
+        include_neutral_losses: bool = False,
         **annotation_filter,
-    ):
+    ) -> pd.DataFrame:
+        """Fetch all dataset annotations as dataframe.
+
+        Args:
+            database: DEPRECATED, use 'database_id' instead.
+            database_id: Molecular database id.
+            fdr: Max FDR level.
+            coloc_with: Fetch only results colocalized with formula.
+            include_chem_mods: Include results with chemical modifications.
+            include_neutral_losses: Include results with neutral losses.
+
+        Returns:
+            List of annotations with requested fields.
+        """
+
         def get_compound_database_ids(possibleCompounds):
             return [
                 compound['information'] and compound['information'][0]['databaseId']
@@ -685,14 +730,20 @@ class SMDataset(object):
         if coloc_with:
             assert fdr
             coloc_coeff_filter = {
-                'database': database,
                 'colocalizedWith': coloc_with,
                 'fdrLevel': fdr,
             }
+            if database_id:
+                coloc_coeff_filter['databaseId'] = database_id
+            elif database:
+                coloc_coeff_filter['database'] = database
             annotation_filter.update(coloc_coeff_filter)
         else:
             coloc_coeff_filter = None
-            annotation_filter['database'] = database
+            if database_id:
+                annotation_filter['databaseId'] = database_id
+            elif database:
+                annotation_filter['database'] = database
             if fdr:
                 annotation_filter['fdrLevel'] = fdr
 
@@ -755,11 +806,17 @@ class SMDataset(object):
         return 'Positive' if self._config['isotope_generation']['charge'] > 0 else 'Negative'
 
     @property
+    def databases_details(self):
+        return self._info['databases']
+
+    @property
     def databases(self):
-        return self._config['databases']  # TODO: update to use 'database_ids'
+        """DEPRECATED. Use 'databases_details' instead."""
+        return [d['name'] for d in self.databases_details]
 
     @property
     def database(self):
+        """DEPRECATED. Use 'databases_details' instead."""
         return self.databases[0]
 
     @property
@@ -840,23 +897,27 @@ class SMDataset(object):
 
     def all_annotation_images(
         self,
-        fdr=0.1,
-        database=None,
-        only_first_isotope=False,
-        scale_intensity=True,
+        fdr: float = 0.1,
+        database_id: int = None,
+        database: str = None,
+        only_first_isotope: bool = False,
+        scale_intensity: bool = True,
         **annotation_filter,
-    ):
-        """
-        Retrieve all ion images for the dataset and given annotation filters.
-        :param float fdr:                Maximum FDR level of annotations
-        :param str   database:           Molecular database to use (e.g. HMDBv4)
-        :param bool  only_first_isotope: Only retrieve the first (most abundant) isotopic ion image for each annotation.
-                                         Typically this is all you need for data analysis, as the less abundant isotopes
-                                         are usually lower quality copies of the first isotopic ion image.
-        :param bool  scale_intensity:    When True, the output values will be scaled to the intensity range of the original data.
-                                         When False, the output values will be in the 0.0 to 1.0 range.
-        :param       annotation_filter:  Additional filters passed to `SMDataset.annotations`
-        :return list[IsotopeImages]:
+    ) -> List[IsotopeImages]:
+        """Retrieve all ion images for the dataset and given annotation filters.
+
+        Args:
+            fdr: Maximum FDR level of annotations.
+            database_id: Molecular database id to use.
+            database: DEPRECATED, use 'database_id' instead.
+            only_first_isotope: Only retrieve the first (most abundant) isotopic ion image for each
+                annotation. Typically this is all you need for data analysis, as the less abundant
+                isotopes are usually lower quality copies of the first isotopic ion image.
+            scale_intensity: When True, the output values will be scaled to the intensity range of
+                the original data. When False, the output values will be in the 0.0 to 1.0 range.
+            annotation_filter: Additional filters passed to `SMDataset.annotations`.
+        Returns:
+            list of isotope images
         """
         with ThreadPoolExecutor() as pool:
 
@@ -873,6 +934,7 @@ class SMDataset(object):
 
             annotations = self.annotations(
                 fdr=fdr,
+                database_id=database_id,
                 database=database,
                 return_vals=('sumFormula', 'adduct', 'neutralLoss', 'chemMod'),
                 **annotation_filter,
@@ -995,13 +1057,23 @@ class SMInstance(object):
     def all_adducts(self):
         raise NYI
 
-    def database(self, name, version=None):
-        assert self._moldb_client, 'provide moldb_url in the config'
-        return self._moldb_client.getDatabase(name, version)
+    def database(self, name: str = None, version: str = None, id: int = None) -> Dict:
+        """Fetch molecular database by id.
+
+        Args:
+            id: Database id.
+            name: DEPRECATED, use id instead.
+            version: DEPRECATED, use id instead.
+        """
+        kwargs = {}
+        if id:
+            kwargs['ids'] = [id]
+        elif name:
+            kwargs['names'] = [name]
+        return self._gqclient.get_molecular_databases(**kwargs)[0]
 
     def databases(self):
-        assert self._moldb_client, 'provide moldb_url in the config'
-        return self._moldb_client.getDatabaseList()
+        return self._gqclient.get_molecular_databases()
 
     def metadata(self, datasets):
         """
@@ -1048,7 +1120,6 @@ class SMInstance(object):
         )
         df.index = [dataset['id'] for dataset in datasets]
         return df
-        # return pd.DataFrame.from_records([pd.io.json.json_normalize(json.loads(dataset['metadataJson'])) for dataset in datasets])
 
     def submit_dataset(
         self,
@@ -1064,8 +1135,7 @@ class SMInstance(object):
         s3bucket=None,
         priority=0,
     ):
-        """
-        Submit a dataset for processing on the SM Instance
+        """DEPRECATED. Submit a dataset for processing on the SM Instance
         :param imzml_fn: file path to imzml
         :param ibd_fn: file path to ibd
         :param metadata: a properly formatted metadata json string
@@ -1105,29 +1175,33 @@ class SMInstance(object):
 
     def submit_dataset_v2(
         self,
-        imzml_fn,
-        ibd_fn,
-        ds_name,
-        metadata,
+        imzml_fn: str,
+        ibd_fn: str,
+        ds_name: str,
+        metadata: str,
         s3_bucket,
-        is_public=None,
-        moldbs=None,
-        adducts=None,
-        priority=0,
+        is_public: bool = None,
+        database_ids: List[int] = None,
+        moldbs: List[str] = None,
+        adducts: List[str] = None,
+        priority: int = 0,
     ):
-        """
-        Submit a dataset for processing on the SM Instance
+        """Submit a dataset for processing in Metaspace.
 
-        :param imzml_fn: file path to imzml
-        :param ibd_fn: file path to ibd
-        :param ds_name: dataset name
-        :param metadata: a properly formatted metadata json string
-        :param s3_bucket: boto3 s3 bucket object, both the user has write permission to
-        and METASPACE can access
-        :param is_public: make dataset public
-        :param moldbs: list molecular databases
-        :param adducts: list of adducts
-        :return:
+        Args:
+            imzml_fn: Imzml file path.
+            ibd_fn: Ibd file path.
+            ds_name: Dataset name.
+            metadata: Properly formatted metadata json string.
+            s3_bucket: boto3 s3 bucket object, both the user has write permission to
+                and METASPACE can access.
+            is_public: Make dataset public.
+            database_ids: List of database ids.
+            moldbs: DEPRECATED, use 'databaseIds' instead.
+            adducts: List of adducts.
+
+        Returns:
+            Request status.
         """
         import uuid
 
@@ -1141,13 +1215,24 @@ class SMInstance(object):
             priority=priority,
             ds_name=ds_name,
             is_public=is_public,
+            database_ids=database_ids,
             mol_dbs=moldbs,
             adducts=adducts,
         )
 
     def update_dataset_dbs(self, datasetID, molDBs=None, adducts=None, priority=1):
+        """DEPRECATED"""
         return self._gqclient.update_dataset(
             ds_id=datasetID, mol_dbs=molDBs, adducts=adducts, reprocess=True, priority=priority
+        )
+
+    def update_dataset_dbs_v2(self, dataset_id, database_ids=None, adducts=None, priority=1):
+        return self._gqclient.update_dataset(
+            ds_id=dataset_id,
+            database_ids=database_ids,
+            adducts=adducts,
+            reprocess=True,
+            priority=priority,
         )
 
     def reprocess_dataset(self, dataset_id, force=False):
@@ -1215,6 +1300,8 @@ class SMInstance(object):
 
 
 class MolecularDatabase:
+    """DEPRECATED. Use 'SMInstance.databases' instead."""
+
     def __init__(self, metadata, client):
         self._metadata = metadata
         self._id = self._metadata['id']
