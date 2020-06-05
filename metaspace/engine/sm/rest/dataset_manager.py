@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 
+from sm.engine import molecular_db
 from sm.engine.dataset import (
     DatasetStatus,
     Dataset,
@@ -56,12 +57,20 @@ class SMapiDatasetManager:
         queue.publish(msg, priority)
         self.logger.info(f'New message posted to {queue}: {msg}')
 
+    def _add_default_moldbs(self, moldb_ids):
+        default_moldb_ids = [
+            molecular_db.find_by_name(name).id
+            for name in self._sm_config['ds_config_defaults']['moldb_names']
+        ]
+        return list(set(moldb_ids) | set(default_moldb_ids))
+
     def add(self, doc, **kwargs):
-        """ Save dataset and send add message to the queue """
+        """Save dataset and send ANNOTATE message to the queue."""
         now = datetime.now()
         if 'id' not in doc:
             doc['id'] = now.strftime('%Y-%m-%d_%Hh%Mm%Ss')
 
+        doc['moldb_ids'] = self._add_default_moldbs(doc['moldb_ids'])
         ds_config_kwargs = dict((k, v) for k, v in doc.items() if k in FLAT_DS_CONFIG_KEYS)
 
         try:

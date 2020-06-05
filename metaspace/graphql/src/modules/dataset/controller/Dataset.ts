@@ -15,6 +15,8 @@ import { esDatasetByID } from '../../../../esConnector';
 import { ExternalLink } from '../../project/ExternalLink';
 import { S3 } from 'aws-sdk';
 import canViewEsDataset from '../operation/canViewEsDataset'
+import {getMolecularDbModel} from "../../moldb/util/getMolecularDbModel";
+import {MolecularDB} from "../../moldb/model";
 
 interface DbDataset {
   id: string;
@@ -114,8 +116,16 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     return ds._source.ds_is_public;
   },
 
-  molDBs(ds) {
-    return ds._source.ds_mol_dbs;
+  async databases(ds, _, ctx): Promise<MolecularDB[]> {
+    return await Promise.all(
+      ds._source.ds_moldb_ids.map(async (databaseId) => (await getMolecularDbModel(ctx, databaseId)))
+    );
+  },
+
+  async molDBs(ds, _, ctx) {
+    return await Promise.all(
+      ds._source.ds_moldb_ids.map(async (databaseId) => (await getMolecularDbModel(ctx, databaseId)).name)
+    );
   },
 
   adducts(ds) {
@@ -234,39 +244,38 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     return ds._source.ds_upload_dt;
   },
 
-  fdrCounts(ds, { inpFdrLvls, checkLvl }: { inpFdrLvls: number[], checkLvl: number }) {
-    let outFdrLvls: number[] = [], outFdrCounts: number[] = [], maxCounts = 0, dbName = '';
+  async fdrCounts(ds, { inpFdrLvls, checkLvl }: { inpFdrLvls: number[], checkLvl: number }, ctx) {
+    let outFdrLvls: number[] = [], outFdrCounts: number[] = [], maxCounts = 0, databaseId = null;
     if (ds._source.annotation_counts && ds._source.ds_status === 'FINISHED') {
-      const annotCounts = ds._source.annotation_counts;
-      const molDBs = ds._source.ds_mol_dbs;
-      const filteredMolDBs: any[] = annotCounts.filter(el => {
-        return molDBs.includes(el.db.name);
-      });
-      for (let db of filteredMolDBs) {
-        let maxCountsCand = db.counts.find((lvlObj: any) => {
+      const annotCounts: any[] = ds._source.annotation_counts.filter(
+        el => ds._source.ds_moldb_ids.includes(el.db.id)
+      );
+      for (let el of annotCounts) {
+        let maxCountsCand = el.counts.find((lvlObj: any) => {
           return lvlObj.level === checkLvl
         });
         if (maxCountsCand.n >= maxCounts) {
           maxCounts = maxCountsCand.n;
           outFdrLvls = [];
           outFdrCounts = [];
-          inpFdrLvls.forEach(inpLvl => {
-            let findRes = db.counts.find((lvlObj: any) => {
+          for (const inpLvl of inpFdrLvls) {
+            let findRes = el.counts.find((lvlObj: any) => {
               return lvlObj.level === inpLvl
             });
             if (findRes) {
-              dbName = db.db.name;
+              databaseId = el.db.id;
               outFdrLvls.push(findRes.level);
               outFdrCounts.push(findRes.n);
             }
-          })
+          }
         }
       }
       return {
-        'dbName': dbName,
+        'databaseId': databaseId,
+        'dbName': (await getMolecularDbModel(ctx, databaseId)).name,
         'levels': outFdrLvls,
         'counts': outFdrCounts
-      }
+      };
     }
     return null;
   },

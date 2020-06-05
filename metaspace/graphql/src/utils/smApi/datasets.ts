@@ -1,6 +1,7 @@
 import {UserError} from 'graphql-errors';
 import fetch from 'node-fetch';
 import * as _ from 'lodash';
+import {snakeCase} from "typeorm/util/StringUtils";
 
 import config from '../config';
 import logger from '../logger';
@@ -15,25 +16,15 @@ interface DatasetRequestBody {
   transform?: Object;
 }
 
-const fieldRenameMap = {
-  inputPath: 'input_path',
-  uploadDT: 'upload_dt',
-  isPublic: 'is_public',
-  submitterId: 'submitter_id',
-  groupId: 'group_id',
-  projectIds: 'project_ids',
-  molDBs: 'mol_dbs',
-  neutralLosses: 'neutral_losses',
-  chemMods: 'chem_mods',
+const datasetDocFieldMapping = {
+  databaseIds: 'moldb_ids',
   numPeaks: 'n_peaks',
-  decoySampleSize: 'decoy_sample_size',
-  analysisVersion: 'analysis_version',
 };
 
 export const smApiDatasetRequest = async (uri: string, args: any={}) => {
   const reqDoc: DatasetRequestBody = args || {};
   // @ts-ignore
-  reqDoc.doc = _.mapKeys(reqDoc.doc, (v, k) => fieldRenameMap[k] || k);
+  reqDoc.doc = _.mapKeys(reqDoc.doc, (v, k) => datasetDocFieldMapping[k] || snakeCase(k));
 
   let resp = await fetch(`http://${config.services.sm_engine_api_host}${uri}`, {
     method: 'POST',
@@ -74,7 +65,7 @@ interface UpdateDatasetArgs {
   projectIds?: string[];
 }
 
-export const smAPIUpdateDataset = async (id: string, updates: UpdateDatasetArgs) => {
+export const smApiUpdateDataset = async (id: string, updates: UpdateDatasetArgs) => {
   try {
     await smApiDatasetRequest(`/v1/datasets/${id}/update`, {
       doc: updates
@@ -89,6 +80,6 @@ export interface DeleteDatasetArgs {
   force?: boolean;
 }
 
-export const smAPIDeleteDataset = async (dsId: string, args?: DeleteDatasetArgs) => {
+export const smApiDeleteDataset = async (dsId: string, args?: DeleteDatasetArgs) => {
   return await smApiDatasetRequest(`/v1/datasets/${dsId}/delete`, args);
 };

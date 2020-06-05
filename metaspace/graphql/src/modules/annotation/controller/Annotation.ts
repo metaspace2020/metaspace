@@ -1,12 +1,13 @@
-import * as _ from 'lodash';
 import fetch from 'node-fetch';
-import logger from '../../../utils/logger';
 import {FieldResolversFor} from '../../../bindingTypes';
 import {Annotation, ColocalizationCoeffFilter} from '../../../binding';
 import {ESAnnotation} from '../../../../esConnector';
 import config from '../../../utils/config';
 import {ESAnnotationWithColoc} from '../queryFilters';
 import {AllHtmlEntities} from 'html-entities';
+import {getMolecularDbModel} from '../../moldb/util/getMolecularDbModel';
+import {MolecularDB as MolecularDbModel} from '../../moldb/model';
+import {mapToMolecularDB} from '../../moldb/util/mapToMolecularDB';
 
 const cleanMoleculeName = (name: string) =>
   // Decode &alpha; &beta; &gamma; etc.
@@ -78,9 +79,11 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
 
   ion: (hit) => hit._source.ion,
 
-  ionFormula: (hit) => hit._source.ion_formula || '', // TODO: Remove " || ''" after prod has been migrated
+  ionFormula: (hit) => hit._source.ion_formula || '', // TODO: Remove ' || ''' after prod has been migrated
 
-  database: (hit) => hit._source.db_name,
+  databaseDetails: async (hit, _, ctx) => mapToMolecularDB(await getMolecularDbModel(ctx, hit._source.db_id)),
+
+  database: async (hit, _, ctx) => (await getMolecularDbModel(ctx, hit._source.db_id)).name,
 
   mz: (hit) => parseFloat(hit._source.centroid_mzs[0] as any),
 
@@ -160,12 +163,19 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
       }));
   },
 
-  async colocalizationCoeff(hit, args: {colocalizationCoeffFilter: ColocalizationCoeffFilter | null}, context) {
+  async colocalizationCoeff(hit, args: {colocalizationCoeffFilter: ColocalizationCoeffFilter | null}, ctx) {
     // Actual implementation is in src/modules/annotation/queryFilters.ts
     if ('getColocalizationCoeff' in hit && args.colocalizationCoeffFilter != null) {
-      const {colocalizedWith, colocalizationAlgo, database, fdrLevel} = args.colocalizationCoeffFilter;
-      return await hit.getColocalizationCoeff(colocalizedWith, colocalizationAlgo || config.metadataLookups.defaultColocalizationAlgo,
-        database || config.defaults.moldb_names[0], fdrLevel);
+      const {colocalizedWith, colocalizationAlgo, databaseId, fdrLevel} = args.colocalizationCoeffFilter;
+      const defaultDatabase = await ctx.entityManager.findOneOrFail(
+        MolecularDbModel, {'name': config.defaults.moldb_names[0]}
+      );
+      return await hit.getColocalizationCoeff(
+        colocalizedWith,
+        colocalizationAlgo || config.metadataLookups.defaultColocalizationAlgo,
+        databaseId || defaultDatabase.id,
+        fdrLevel
+      );
     } else {
       return null;
     }

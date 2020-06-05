@@ -15,11 +15,10 @@ import {
 import {Dataset as DatasetType} from "../../../binding";
 import {Dataset as DatasetModel, DatasetProject as DatasetProjectModel} from "../model";
 import {EngineDataset as EngineDatasetModel} from "../../engine/model";
-import * as _mockSmApi from '../../../utils/smAPI';
+import * as _mockSmApiDatasets from '../../../utils/smApi/datasets';
 
-
-jest.mock('../../../utils/smAPI');
-const mockSmApi = _mockSmApi as jest.Mocked<typeof _mockSmApi>;
+jest.mock('../../../utils/smApi/datasets');
+const mockSmApiDatasets = _mockSmApiDatasets as jest.Mocked<typeof _mockSmApiDatasets>;
 
 describe('Operations on datasets in publishing process', () => {
   beforeAll(onBeforeAll);
@@ -64,7 +63,7 @@ describe('Operations on datasets in publishing process', () => {
     const project = await createTestProject({ publicationStatus: status });
     const dataset = await createTestDataset();
 
-    mockSmApi.smAPIRequest.mockReturnValue('');
+    mockSmApiDatasets.smApiDatasetRequest.mockReturnValue('');
 
     await doQuery<DatasetType>(updateDataset, { datasetId: dataset.id, input: { projectIds: [project.id] }});
 
@@ -95,7 +94,7 @@ describe('Operations on datasets in publishing process', () => {
       'Admins allowed to remove datasets from project in %s status', async (status) => {
     const datasetProject = await createTestDatasetProject(PSO.UNDER_REVIEW);
 
-    mockSmApi.smAPIRequest.mockReturnValue('');
+    mockSmApiDatasets.smApiDatasetRequest.mockReturnValue('');
 
     await doQuery<DatasetType>(
       updateDataset,

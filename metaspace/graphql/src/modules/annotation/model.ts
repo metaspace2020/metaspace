@@ -5,6 +5,7 @@ import {
 } from 'typeorm';
 import {MomentValueTransformer} from '../../utils/MomentValueTransformer';
 import {Moment} from 'moment';
+import {MolecularDB} from '../moldb/model';
 
 @Entity('coloc_job')
 export class ColocJob {
@@ -15,8 +16,8 @@ export class ColocJob {
   @Column({ type: 'text', name: 'ds_id' })
   datasetId: string;
 
-  @Column({ type: 'text', nullable: true })
-  molDb: string | null;
+  @Column({ type: 'int' })
+  moldbId: number;
 
   @Column({ type: 'numeric', precision: 2, scale: 2 })
   fdr: number;
@@ -38,6 +39,10 @@ export class ColocJob {
 
   @OneToMany(type => ColocAnnotation, colocAnnotation => colocAnnotation.colocJob)
   colocAnnotations: ColocAnnotation[];
+
+  @ManyToOne(type => MolecularDB)
+  @JoinColumn({ name: 'moldb_id' })
+  molecularDB: MolecularDB;
 }
 
 @Entity('coloc_annotation')

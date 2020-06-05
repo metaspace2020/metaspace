@@ -82,8 +82,8 @@ export class OpticalImage {
 export class Job {
   @PrimaryGeneratedColumn()
   id: number;
-  @Column({ name: 'moldb_id', type: 'int', nullable: true })
-  dbId: number | null;
+  @Column({ name: 'moldb_id', type: 'int' })
+  moldbId: number;
   @Column({ name: 'ds_id', nullable: true })
   datasetId: string | null;
   @Column({ type: 'text', nullable: true })

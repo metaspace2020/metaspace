@@ -1,7 +1,6 @@
 import {FieldResolversFor} from '../../bindingTypes';
 import {MolecularDB, Mutation, Query} from '../../binding';
 import {MolecularDB as MolecularDbModel} from './model';
-import config from '../../utils/config';
 import logger from '../../utils/logger';
 import {IResolvers} from 'graphql-tools';
 import {Context} from '../../context';
@@ -9,15 +8,8 @@ import {UserError} from 'graphql-errors';
 import {smApiCreateDatabase, smApiUpdateDatabase, smApiDeleteDatabase} from '../../utils/smApi/databases';
 import {In} from 'typeorm';
 import {assertImportFileIsValid} from './util/assertImportFileIsValid';
+import {mapToMolecularDB} from './util/mapToMolecularDB';
 
-
-const mapToGqlMolecularDb = (molDB: MolecularDbModel): MolecularDB => {
-  return {
-    ...molDB,
-    default: config.defaults.moldb_names.includes(molDB.name),
-    hidden: molDB.archived || !molDB.public,
-  }
-};
 
 const QueryResolvers: FieldResolversFor<Query, void> = {
   async molecularDatabases(source, { hideArchived }, ctx): Promise<MolecularDB[]> {
@@ -28,12 +20,12 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
         orCond.push({ groupId: In(ctx.user.groupIds) });
       }
     }
-    let molDBs = await ctx.entityManager.getRepository(MolecularDbModel).find(
+    let databases = await ctx.entityManager.getRepository(MolecularDbModel).find(
       { where: orCond, order: { name: 'ASC' } });
     if (hideArchived) {
-      molDBs = molDBs.filter(db => !db.archived)
+      databases = databases.filter(db => !db.archived)
     }
-    return molDBs.map(db => mapToGqlMolecularDb(db));
+    return databases.map(db => mapToMolecularDB(db));
   },
 };
 
@@ -47,8 +39,13 @@ const assertUserBelongsToGroup = (ctx: Context, groupId: string) => {
 };
 
 const assertUserCanEditMolecularDB = async (ctx: Context, databaseId: number) => {
-  const molDB = await ctx.entityManager.getRepository(MolecularDbModel).findOneOrFail({ id: databaseId });
-  assertUserBelongsToGroup(ctx, molDB.groupId);
+  const moldb = await ctx.entityManager.getRepository(MolecularDbModel).findOneOrFail({ id: databaseId });
+  if (moldb.public) {
+    throw new UserError('Cannot edit public database');
+  }
+  if (moldb.groupId != null) {
+    assertUserBelongsToGroup(ctx, moldb.groupId);
+  }
 };
 
 const MutationResolvers: FieldResolversFor<Mutation, void>  = {
@@ -60,8 +57,8 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     await assertImportFileIsValid(databaseDetails.filePath);
 
     const { id } = await smApiCreateDatabase({ ...databaseDetails, groupId });
-    const molDB = await ctx.entityManager.getRepository(MolecularDbModel).findOneOrFail({ id });
-    return mapToGqlMolecularDb(molDB);
+    const database = await ctx.entityManager.getRepository(MolecularDbModel).findOneOrFail({ id });
+    return mapToMolecularDB(database);
   },
 
   async updateMolecularDB(source, { databaseId, databaseDetails }, ctx): Promise<MolecularDB> {
@@ -69,8 +66,8 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     await assertUserCanEditMolecularDB(ctx, databaseId);
 
     const { id } = await smApiUpdateDatabase(databaseId, databaseDetails);
-    const molDB = await ctx.entityManager.getRepository(MolecularDbModel).findOneOrFail({ id });
-    return mapToGqlMolecularDb(molDB);
+    const database = await ctx.entityManager.getRepository(MolecularDbModel).findOneOrFail({ id });
+    return mapToMolecularDB(database);
   },
 
   async deleteMolecularDB(source, { databaseId}, ctx): Promise<Boolean> {

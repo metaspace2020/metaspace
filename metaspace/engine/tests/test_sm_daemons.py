@@ -237,7 +237,7 @@ def test_sm_daemons(
         assert start <= finish
 
         # image metrics asserts
-        rows = db.select(('SELECT formula, adduct, stats, iso_image_ids ' 'FROM annotation'))
+        rows = db.select('SELECT formula, adduct, stats, iso_image_ids FROM annotation')
         rows = sorted(
             rows, key=lambda row: row[1]
         )  # Sort in Python because postgres sorts symbols inconsistently between locales

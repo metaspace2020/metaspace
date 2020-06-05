@@ -1,8 +1,10 @@
 import logging
 from shutil import rmtree
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
+import pyspark
 from pyspark.files import SparkFiles
 from pyspark.storagelevel import StorageLevel
 
@@ -10,6 +12,8 @@ from sm.engine.fdr import FDR
 from sm.engine.formula_centroids import CentroidsGenerator
 from sm.engine.formula_parser import safe_generate_ion_formula
 from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine import molecular_db
+from sm.engine.molecular_db import MolecularDB
 from sm.engine.msm_basic.formula_imager import create_process_segment, get_ds_dims
 from sm.engine.msm_basic.segmenter import (
     calculate_centroids_segments_n,
@@ -40,7 +44,7 @@ def init_fdr(ds_config, moldbs):
             target_adducts=isotope_gen_config['adducts'],
             analysis_version=ds_config.get('analysis_version', 1),
         )
-        fdr.decoy_adducts_selection(moldb.formulas)
+        fdr.decoy_adducts_selection(molecular_db.fetch_formulas(moldb.id))
         moldb_fdr_list.append((moldb, fdr))
     return moldb_fdr_list
 
@@ -70,23 +74,6 @@ def collect_ion_formulas(spark_context, moldb_fdr_list):
     return pd.concat(ion_formula_map_dfs)
 
 
-def _left_merge(df1, df2, on):
-    return pd.merge(df1.reset_index(), df2, how='left', on=on).set_index(df1.index.name)
-
-
-def compute_fdr(fdr, formula_metrics_df, formula_map_df, max_fdr=0.5):
-    """ Compute fdr and filter formulas
-    """
-    moldb_ion_metrics_df = _left_merge(formula_metrics_df, formula_map_df, on='ion_formula')
-    formula_fdr_df = fdr.estimate_fdr(moldb_ion_metrics_df[['formula', 'modifier', 'msm']])
-    # fdr is computed only for target modification ions
-    moldb_ion_metrics_df = _left_merge(
-        moldb_ion_metrics_df, formula_fdr_df, on=['formula', 'modifier']
-    )
-    moldb_ion_metrics_df = moldb_ion_metrics_df[moldb_ion_metrics_df.fdr <= max_fdr]
-    return moldb_ion_metrics_df
-
-
 def merge_results(results_rdd, formulas_df):
     formula_metrics_df = pd.concat(results_rdd.map(lambda t: t[0]).collect())
     formula_metrics_df = formula_metrics_df.join(formulas_df, how='left')
@@ -96,6 +83,58 @@ def merge_results(results_rdd, formulas_df):
 
     formula_images_rdd = results_rdd.flatMap(lambda t: t[1].items())
     return formula_metrics_df, formula_images_rdd
+
+
+def union_target_modifiers(moldb_fdr_list):
+    return set().union(*(fdr.target_modifiers() for moldb, fdr in moldb_fdr_list))
+
+
+def select_target_formula_ids(formulas_df, ion_formula_map_df, target_modifiers):
+    logger.info('Selecting target formula ids')
+    target_formulas_mask = ion_formula_map_df.modifier.isin(target_modifiers)
+    target_formulas = set(ion_formula_map_df[target_formulas_mask].ion_formula.values)
+    target_formula_inds = set(formulas_df[formulas_df.formula.isin(target_formulas)].index)
+    return target_formula_inds
+
+
+def _left_merge(df1, df2, on):
+    return pd.merge(df1.reset_index(), df2, how='left', on=on).set_index(df1.index.name)
+
+
+def compute_fdr(fdr, formula_metrics_df, formula_map_df) -> pd.DataFrame:
+    """Compute fdr and filter formulas."""
+
+    moldb_ion_metrics_df = _left_merge(formula_metrics_df, formula_map_df, on='ion_formula')
+    formula_fdr_df = fdr.estimate_fdr(moldb_ion_metrics_df[['formula', 'modifier', 'msm']])
+    # fdr is computed only for target modification ions
+    moldb_ion_metrics_df = _left_merge(
+        moldb_ion_metrics_df, formula_fdr_df, on=['formula', 'modifier']
+    )
+    return moldb_ion_metrics_df
+
+
+def compute_fdr_and_filter_results(
+    moldb: MolecularDB,
+    fdr: FDR,
+    ion_formula_map_df: pd.DataFrame,
+    formula_metrics_df: pd.DataFrame,
+    formula_images_rdd: pyspark.RDD,
+) -> Tuple[pd.DataFrame, pyspark.RDD]:
+    """Compute FDR for database annotations and filter them."""
+
+    moldb_formula_map_df = ion_formula_map_df[ion_formula_map_df.moldb_id == moldb.id].drop(
+        'moldb_id', axis=1
+    )
+    moldb_metrics_fdr_df = compute_fdr(fdr, formula_metrics_df, moldb_formula_map_df)
+    max_fdr = 1.0 if moldb.targeted else 0.5
+    moldb_metrics_fdr_df = moldb_metrics_fdr_df[moldb_metrics_fdr_df.fdr <= max_fdr]
+    moldb_ion_images_rdd = formula_images_rdd.filter(
+        lambda kv: kv[0] in moldb_metrics_fdr_df.index  # pylint: disable=cell-var-from-loop
+    )
+    moldb_ion_metrics_df = moldb_metrics_fdr_df.merge(
+        fdr.target_modifiers_df, left_on='modifier', right_index=True
+    )
+    return moldb_ion_metrics_df, moldb_ion_images_rdd
 
 
 class MSMSearch:
@@ -127,14 +166,6 @@ class MSMSearch:
             .persist(storageLevel=StorageLevel.MEMORY_AND_DISK)
         )
         return results_rdd
-
-    @staticmethod
-    def select_target_formula_ids(formulas_df, ion_formula_map_df, target_modifiers):
-        logger.info('Selecting target formula ids')
-        target_formulas_mask = ion_formula_map_df.modifier.isin(target_modifiers)
-        target_formulas = set(ion_formula_map_df[target_formulas_mask].ion_formula.values)
-        target_formula_inds = set(formulas_df[formulas_df.formula.isin(target_formulas)].index)
-        return target_formula_inds
 
     def put_segments_to_workers(self, path):
         logger.debug(f'Adding segment files from local path {path}')
@@ -190,32 +221,7 @@ class MSMSearch:
 
         return centr_segm_n
 
-    @staticmethod
-    def compute_fdr_and_filter_results(
-        moldb_fdr_list, ion_formula_map_df, formula_metrics_df, formula_images_rdd
-    ):
-        """Compute FDR for each moldb search result set."""
-        for moldb, fdr in moldb_fdr_list:
-            moldb_formula_map_df = ion_formula_map_df[ion_formula_map_df.moldb_id == moldb.id].drop(
-                'moldb_id', axis=1
-            )
-
-            moldb_metrics_fdr_df = compute_fdr(
-                fdr, formula_metrics_df, moldb_formula_map_df, max_fdr=0.5
-            )
-            moldb_ion_images_rdd = formula_images_rdd.filter(
-                lambda kv: kv[0] in moldb_metrics_fdr_df.index  # pylint: disable=cell-var-from-loop
-            )
-            moldb_ion_metrics_df = moldb_metrics_fdr_df.merge(
-                fdr.target_modifiers_df, left_on='modifier', right_index=True
-            )
-            yield moldb_ion_metrics_df, moldb_ion_images_rdd
-
-    @staticmethod
-    def target_modifiers(moldb_fdr_list):
-        return set().union(*(fdr.target_modifiers() for moldb, fdr in moldb_fdr_list))
-
-    def search(self):
+    def search(self) -> Tuple[pd.DataFrame, pyspark.RDD]:
         """ Search, score, and compute FDR for all MolDB formulas
 
         Returns
@@ -238,10 +244,10 @@ class MSMSearch:
         )
 
         logger.info('Processing segments...')
-        target_formula_inds = self.select_target_formula_ids(
+        target_formula_inds = select_target_formula_ids(
             formulas_df=formula_centroids.formulas_df,
             ion_formula_map_df=ion_formula_map_df,
-            target_modifiers=self.target_modifiers(moldb_fdr_list),
+            target_modifiers=union_target_modifiers(moldb_fdr_list),
         )
         process_centr_segment = create_process_segment(
             ds_segments, self._imzml_parser.coordinates, self._ds_config, target_formula_inds
@@ -252,6 +258,7 @@ class MSMSearch:
         )
         self.remove_spark_temp_files()
 
-        return self.compute_fdr_and_filter_results(
-            moldb_fdr_list, ion_formula_map_df, formula_metrics_df, formula_images_rdd
-        )
+        for moldb, fdr in moldb_fdr_list:
+            yield compute_fdr_and_filter_results(
+                moldb, fdr, ion_formula_map_df, formula_metrics_df, formula_images_rdd
+            )

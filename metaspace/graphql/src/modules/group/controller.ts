@@ -13,7 +13,7 @@ import {sendAcceptanceEmail, sentGroupOrProjectInvitationEmail, sendRequestAcces
 import config from '../../utils/config';
 import logger from '../../utils/logger';
 import {createInactiveUser} from '../auth/operation';
-import {smAPIUpdateDataset} from '../../utils/smApi/datasets';
+import {smApiUpdateDataset} from '../../utils/smApi/datasets';
 import {getDatasetForEditing} from '../dataset/operation/getDatasetForEditing';
 import {resolveGroupScopeRole} from './util/resolveGroupScopeRole';
 import {urlSlugMatchesClause, validateUrlSlugChange} from "../groupOrProject/urlSlug";
@@ -68,7 +68,7 @@ const updateUserGroupDatasets = async (entityManager: EntityManager, userId: str
   });
   await Promise.all(datasetsToUpdate.map(async ds => {
     await datasetRepo.update({id: ds.id}, {groupApproved});
-    await smAPIUpdateDataset(ds.id, {groupId});
+    await smApiUpdateDataset(ds.id, {groupId});
   }));
 };
 
@@ -231,7 +231,7 @@ export const Resolvers = {
         logger.info(`Updating '${groupId}' group datasets...`);
         const groupDSs = await entityManager.getRepository(DatasetModel).find({ groupId });
         await Promise.all(groupDSs.map(async ds => {
-          await smAPIUpdateDataset(ds.id, {groupId});
+          await smApiUpdateDataset(ds.id, {groupId});
         }));
       }
       logger.info(`'${groupId}' group updated`);
@@ -453,7 +453,7 @@ export const Resolvers = {
       const dsRepo = entityManager.getRepository(DatasetModel);
       await Promise.all(datasetIds.map(async (dsId: string) => {
         await dsRepo.update(dsId, { groupId, groupApproved: true });
-        await smAPIUpdateDataset(dsId, {groupId});
+        await smApiUpdateDataset(dsId, {groupId});
       }));
       logger.info(`User '${user!.id}' imported datasets to '${groupId}' group`);
       return true;

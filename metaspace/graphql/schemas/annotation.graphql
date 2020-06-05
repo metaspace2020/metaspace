@@ -8,7 +8,8 @@ type Annotation {
   adduct: String!
   ion: String!          # Formula+adducts+polarity
   ionFormula: String!   # "Compiled" formula, such that there are no +/-s, each element is only included once, in CHNOPS order
-  database: String!
+  databaseDetails: MolecularDB!
+  database: String! @deprecated(reason: "This field is deprecated and will be removed. Use databaseDetails instead.")
   mz: Float!
   countPossibleCompounds(includeIsomers: Boolean = False): Int!
   possibleCompounds: [Compound!]!
@@ -96,7 +97,8 @@ input NumericRange {
 }
 
 input AnnotationFilter {
-  database: String
+  databaseId: Int
+  database: String @deprecated(reason: "This field will be removed. Use \"databaseId\" instead.")
   datasetName: String
   mzFilter: NumericRange
   msmScoreFilter: NumericRange
@@ -121,7 +123,8 @@ input AnnotationFilter {
 input ColocalizationCoeffFilter {
   colocalizedWith: String!
   colocalizationAlgo: String
-  database: String
+  databaseId: Int
+  database: String @deprecated(reason: "This field will be removed. Use \"databaseId\" instead.")
   fdrLevel: Float!
 }
 

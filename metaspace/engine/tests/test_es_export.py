@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 import time
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
@@ -22,7 +22,7 @@ def wait_for_es(sec=1):
 def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, metadata):
     ds_id = '2000-01-01_00h00m'
     upload_dt = datetime.now().isoformat()
-    mol_db_id = 0
+    moldb_id = 0
     last_finished = '2017-01-01 00:00:00'
     iso_image_ids = ['iso_img_id_1', 'iso_img_id_2']
     annotation_stats = json.dumps(
@@ -84,15 +84,6 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         ],
     )
 
-    mol_db_mock = MagicMock(MolecularDB)
-    mol_db_mock.id = mol_db_id
-    mol_db_mock.name = 'HMDB-v4'
-    mol_db_mock.version = '2018-04-03'
-    mol_db_mock.get_molecules.return_value = pd.DataFrame(
-        [('H2O', 'mol_id', 'mol_name'), ('Au', 'mol_id', 'mol_name')],
-        columns=['formula', 'mol_id', 'mol_name'],
-    )
-
     isocalc_mock = MagicMock(IsocalcWrapper)
     isocalc_mock.centroids = lambda formula: {
         'H2O+H': ([100.0, 200.0], None),
@@ -101,9 +92,18 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
     }[formula]
     isocalc_mock.mass_accuracy_bounds = lambda mzs: (mzs, mzs)
 
-    es_exp = ESExporter(db, sm_config)
-    es_exp.delete_ds(ds_id)
-    es_exp.index_ds(ds_id=ds_id, mol_db=mol_db_mock, isocalc=isocalc_mock)
+    with patch(
+        'sm.engine.es_export.molecular_db.fetch_molecules',
+        return_value=pd.DataFrame(
+            [('H2O', 'mol_id', 'mol_name'), ('Au', 'mol_id', 'mol_name')],
+            columns=['formula', 'mol_id', 'mol_name'],
+        ),
+    ):
+        es_exp = ESExporter(db, sm_config)
+        es_exp.delete_ds(ds_id)
+        es_exp.index_ds(
+            ds_id=ds_id, moldb=MolecularDB(moldb_id, 'HMDB-v4', '2018-04-03'), isocalc=isocalc_mock,
+        )
 
     wait_for_es(sec=1)
 
@@ -116,7 +116,7 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         'ds_last_finished': last_finished,
         'ds_config': ds_config,
         'ds_adducts': ds_config['isotope_generation']['adducts'],
-        'ds_mol_dbs': ds_config['databases'],
+        'ds_moldb_ids': ds_config['database_ids'],
         'ds_chem_mods': [],
         'ds_neutral_losses': [],
         'ds_project_ids': [],
@@ -143,7 +143,7 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         'ds_acq_geometry': {},
         'annotation_counts': [
             {
-                'db': {'name': 'HMDB-v4', 'version': '2018-04-03'},
+                'db': {'id': 0, 'name': 'HMDB-v4'},
                 'counts': [
                     {'level': 5, 'n': 1},
                     {'level': 10, 'n': 2},
@@ -181,10 +181,11 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         'neutral_loss': '-H',
         'chem_mod': '-H+O',
         'annotation_counts': [],
-        'db_version': '2018-04-03',
         'comp_names': ['mol_name'],
         'comps_count_with_isomers': 1,
+        'db_id': 0,
         'db_name': 'HMDB-v4',
+        'db_version': '2018-04-03',
         'mz': 100.0,
         'comp_ids': ['mol_id'],
         'annotation_id': 1,
@@ -217,10 +218,11 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         'neutral_loss': '',
         'chem_mod': '',
         'annotation_counts': [],
-        'db_version': '2018-04-03',
         'comp_names': ['mol_name'],
         'comps_count_with_isomers': 1,
+        'db_id': 0,
         'db_name': 'HMDB-v4',
+        'db_version': '2018-04-03',
         'mz': 10.0,
         'comp_ids': ['mol_id'],
         'annotation_id': 2,
@@ -303,58 +305,77 @@ def test_add_isobar_fields_to_anns(ds_config):
 
 
 def test_delete_ds__one_db_ann_only(sm_config, test_db, es, sm_index):
+    moldb = MolecularDB(0, 'HMDB', '2016')
+    moldb2 = MolecularDB(1, 'ChEBI', '2016')
+
     index = sm_config['elasticsearch']['index']
     es.create(
         index=index,
         doc_type='annotation',
         id='id1',
-        body={'ds_id': 'dataset1', 'db_name': 'HMDB', 'db_version': '2016'},
+        body={
+            'ds_id': 'dataset1',
+            'db_id': moldb.id,
+            'db_name': moldb.name,
+            'db_version': moldb.version,
+        },
     )
     es.create(
         index=index,
         doc_type='annotation',
         id='id2',
-        body={'ds_id': 'dataset1', 'db_name': 'ChEBI', 'db_version': '2016'},
+        body={
+            'ds_id': 'dataset1',
+            'db_id': moldb2.id,
+            'db_name': moldb2.name,
+            'db_version': moldb2.version,
+        },
     )
     es.create(
         index=index,
         doc_type='annotation',
         id='id3',
-        body={'ds_id': 'dataset2', 'db_name': 'HMDB', 'db_version': '2016'},
+        body={
+            'ds_id': 'dataset2',
+            'db_id': moldb.id,
+            'db_name': moldb.name,
+            'db_version': moldb.version,
+        },
     )
     es.create(
         index=index,
         doc_type='dataset',
         id='id4',
-        body={'ds_id': 'dataset1', 'db_name': 'HMDB', 'db_version': '2016'},
+        body={
+            'ds_id': 'dataset1',
+            'db_id': moldb.id,
+            'db_name': moldb.name,
+            'db_version': moldb.version,
+        },
     )
 
     wait_for_es(sec=1)
 
     db_mock = MagicMock(spec=DB)
-    moldb_mock = MagicMock(spec=MolecularDB)
-    moldb_mock.name = 'HMDB'
-    moldb_mock.version = '2016'
-
     es_exporter = ESExporter(db_mock, sm_config)
-    es_exporter.delete_ds(ds_id='dataset1', mol_db=moldb_mock)
+    es_exporter.delete_ds(ds_id='dataset1', moldb=moldb)
 
     wait_for_es(sec=1)
 
     body = {'query': {'bool': {'filter': []}}}
     body['query']['bool']['filter'] = [
         {'term': {'ds_id': 'dataset1'}},
-        {'term': {'db_name': 'HMDB'}},
+        {'term': {'db_id': moldb.id}},
     ]
     assert es.count(index=index, doc_type='annotation', body=body)['count'] == 0
     body['query']['bool']['filter'] = [
         {'term': {'ds_id': 'dataset1'}},
-        {'term': {'db_name': 'ChEBI'}},
+        {'term': {'db_id': moldb2.id}},
     ]
     assert es.count(index=index, doc_type='annotation', body=body)['count'] == 1
     body['query']['bool']['filter'] = [
         {'term': {'ds_id': 'dataset2'}},
-        {'term': {'db_name': 'HMDB'}},
+        {'term': {'db_id': moldb.id}},
     ]
     assert es.count(index=index, doc_type='annotation', body=body)['count'] == 1
     body['query']['bool']['filter'] = [
@@ -365,30 +386,53 @@ def test_delete_ds__one_db_ann_only(sm_config, test_db, es, sm_index):
 
 
 def test_delete_ds__completely(sm_config, test_db, es, sm_index):
+    moldb = MolecularDB(0, 'HMDB', '2016')
+    moldb2 = MolecularDB(1, 'ChEBI', '2016')
+
     index = sm_config['elasticsearch']['index']
     es.create(
         index=index,
         doc_type='annotation',
         id='id1',
-        body={'ds_id': 'dataset1', 'db_name': 'HMDB', 'db_version': '2016'},
+        body={
+            'ds_id': 'dataset1',
+            'db_id': moldb.id,
+            'db_name': moldb.name,
+            'db_version': moldb.version,
+        },
     )
     es.create(
         index=index,
         doc_type='annotation',
         id='id2',
-        body={'ds_id': 'dataset1', 'db_name': 'ChEBI', 'db_version': '2016'},
+        body={
+            'ds_id': 'dataset1',
+            'db_id': moldb2.id,
+            'db_name': moldb2.name,
+            'db_version': moldb2.version,
+        },
     )
     es.create(
         index=index,
         doc_type='annotation',
         id='id3',
-        body={'ds_id': 'dataset2', 'db_name': 'HMDB', 'db_version': '2016'},
+        body={
+            'ds_id': 'dataset2',
+            'db_id': moldb.id,
+            'db_name': moldb.name,
+            'db_version': moldb.version,
+        },
     )
     es.create(
         index=index,
         doc_type='dataset',
         id='dataset1',
-        body={'ds_id': 'dataset1', 'db_name': 'HMDB', 'db_version': '2016'},
+        body={
+            'ds_id': 'dataset1',
+            'db_id': moldb.id,
+            'db_name': moldb.name,
+            'db_version': moldb.version,
+        },
     )
 
     wait_for_es(sec=1)
@@ -403,17 +447,17 @@ def test_delete_ds__completely(sm_config, test_db, es, sm_index):
     body = {'query': {'bool': {'filter': []}}}
     body['query']['bool']['filter'] = [
         {'term': {'ds_id': 'dataset1'}},
-        {'term': {'db_name': 'HMDB'}},
+        {'term': {'db_id': moldb.id}},
     ]
     assert es.count(index=index, doc_type='annotation', body=body)['count'] == 0
     body['query']['bool']['filter'] = [
         {'term': {'ds_id': 'dataset1'}},
-        {'term': {'db_name': 'ChEBI'}},
+        {'term': {'db_id': moldb2.id}},
     ]
     assert es.count(index=index, doc_type='annotation', body=body)['count'] == 0
     body['query']['bool']['filter'] = [
         {'term': {'ds_id': 'dataset2'}},
-        {'term': {'db_name': 'HMDB'}},
+        {'term': {'db_id': moldb.id}},
     ]
     assert es.count(index=index, doc_type='annotation', body=body)['count'] == 1
     body['query']['bool']['filter'] = [

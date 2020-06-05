@@ -33,11 +33,15 @@ def fill_db(test_db, metadata, ds_config):
             )
         ],
     )
+    db.insert(
+        'INSERT INTO molecular_db (id, name, version) VALUES (%s, %s, %s)',
+        rows=[(0, 'HMDB-v4', '2000-01-01')],
+    )
 
 
-def test_generate_ds_config(metadata, ds_config):
+def test_generate_ds_config(fill_db, metadata, ds_config):
     generated_config = generate_ds_config(
-        metadata, mol_dbs=['HMDB-v4'], adducts=["+H", "+Na", "+K", "[M]+"]
+        metadata, moldb_ids=[0], adducts=["+H", "+Na", "+K", "[M]+"]
     )
 
     assert generated_config == ds_config

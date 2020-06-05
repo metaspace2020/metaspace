@@ -1,8 +1,7 @@
-import config from '../../../utils/config';
 import * as _ from 'lodash';
 
 import {processingSettingsChanged} from './Mutation';
-import {EngineDataset, EngineDataset as EngineDatasetModel} from '../../engine/model';
+import {EngineDataset} from '../../engine/model';
 
 
 describe('processingSettingsChanged', () => {
@@ -64,7 +63,7 @@ describe('processingSettingsChanged', () => {
         "isocalc_sigma": 0.000619,
         "isocalc_pts_per_mz": 8078
       },
-      "databases": config.defaults.moldb_names
+      "databases": [0]
     },
     ds = {
       config: dsConfig,
@@ -72,29 +71,29 @@ describe('processingSettingsChanged', () => {
     } as EngineDataset;
 
   it('Reprocessing needed when database list changed', () => {
-    const updDS = {
-      molDBs: [...(ds.config as any).databases, 'ChEBI'],
+    const update = {
+      databaseIds: [...(ds.config as any).databases, 1],
       metadata: ds.metadata,
     };
 
-    const {newDB} = processingSettingsChanged(ds, updDS);
+    const { newDB } = processingSettingsChanged(ds, update);
 
     expect(newDB).toBe(true);
   });
 
-  it('Drop reprocessing needed when instrument settings changed', () => {
-    const updDS = {
+  it('Drop reprocessing needed when instrument settings changed', async () => {
+    const update = {
       molDBs: (ds.config as any).databases,
       metadata: _.defaultsDeep({ MS_Analysis: { Detector_Resolving_Power: { mz: 100 }}}, ds.metadata),
     };
 
-    const { procSettingsUpd } = processingSettingsChanged(ds, updDS);
+    const { procSettingsUpd } = processingSettingsChanged(ds, update);
 
     expect(procSettingsUpd).toBe(true);
   });
 
   it('Reprocessing not needed when just metadata changed', () => {
-    const updDS = {
+    const update = {
       metadata: _.defaultsDeep({
         Sample_Preparation: { MALDI_Matrix: 'New matrix' },
         MS_Analysis: { ionisationSource: 'DESI' },
@@ -103,7 +102,7 @@ describe('processingSettingsChanged', () => {
       name: 'New DS name'
     };
 
-    const {newDB, procSettingsUpd} = processingSettingsChanged(ds, updDS);
+    const { newDB, procSettingsUpd } = processingSettingsChanged(ds, update);
 
     expect(newDB).toBe(false);
     expect(procSettingsUpd).toBe(false);

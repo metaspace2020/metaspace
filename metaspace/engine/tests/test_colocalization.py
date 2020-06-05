@@ -9,8 +9,6 @@ from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.png_generator import ImageStoreServiceWrapper
 
-mol_db_mock = {'id': 1, 'name': 'HMDB-v4', 'version': '2001-01-01'}
-
 
 def test_valid_colocalization_jobs_generated():
     ion_images = FreeableRef(np.array([np.linspace(0, 50, 50, False) % (i + 2) for i in range(20)]))
@@ -43,6 +41,7 @@ def mock_get_ion_images_for_analysis(storage_type, img_ids, **kwargs):
 
 def test_new_ds_saves_to_db(test_db, metadata, ds_config):
     db = DB()
+    (moldb_id,) = ds_config['database_ids']
     ds = Dataset(
         id='ds_id',
         name='ds_name',
@@ -63,11 +62,11 @@ def test_new_ds_saves_to_db(test_db, metadata, ds_config):
     )
     db.insert(
         'INSERT INTO molecular_db (id, name, version) VALUES (%s, %s, %s)',
-        rows=[(1, 'HMDB-v4', '2018-04-03')],
+        rows=[(moldb_id, 'HMDB-v4', '2018-04-03')],
     )
     (job_id,) = db.insert_return(
-        "INSERT INTO job (moldb_id, ds_id, status) " "VALUES (1, %s, 'FINISHED') " "RETURNING id",
-        [[ds.id]],
+        "INSERT INTO job (moldb_id, ds_id, status) " "VALUES (%s, %s, 'FINISHED') " "RETURNING id",
+        [(moldb_id, ds.id)],
     )
     db.insert(
         'INSERT INTO annotation(job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids) '

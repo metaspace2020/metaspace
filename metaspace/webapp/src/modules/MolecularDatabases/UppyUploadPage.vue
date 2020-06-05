@@ -8,7 +8,7 @@ import * as Uppy from '@uppy/core'
 import * as AwsS3Multipart from '@uppy/aws-s3-multipart'
 import * as Dashboard from '@uppy/dashboard'
 
-import config from '../../config'
+import config from '../../lib/config'
 
 export default {
   name: 'UppyUploadPage',
@@ -19,9 +19,9 @@ export default {
       debug: true,
       autoProceed: false,
       restrictions: {
-        maxFileSize: 150 * 2**20,  // 150MB
+        maxFileSize: 150 * 2 ** 20, // 150MB
         maxNumberOfFiles: 1,
-        allowedFileTypes: ['.csv']
+        allowedFileTypes: ['.csv'],
       },
       meta: {},
     })
@@ -33,7 +33,7 @@ export default {
       limit: 2,
       companionUrl: config.companionUrl || `${window.location.origin}/database_upload`,
     })
-  }
+  },
 }
 </script>
 

@@ -7,9 +7,6 @@ services:
     volumes:
       - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
       - ./data/elasticsearch:/usr/share/elasticsearch/data
-    # ports:
-    #   - "9200:9200"
-    #   - "9300:9300"
     environment:
       ES_JAVA_OPTS: "-Xmx256m -Xms256m"
     networks:
@@ -17,15 +14,11 @@ services:
 
   redis:
     image: redis:4.0.9-alpine
-    # ports:
-    #   - "6379:6379"
     networks:
       - sm
 
   rabbitmq:
     image: rabbitmq
-    # ports:
-    #   - "5672:5672"
     environment:
       RABBITMQ_DEFAULT_USER: sm
       RABBITMQ_DEFAULT_PASS: password
@@ -33,9 +26,7 @@ services:
       - sm
 
   postgres:
-    image: postgres:9.5
-    # ports:
-    #   - "5432:5432"
+    image: postgres:9.5-alpine
     volumes:
       - ./postgres/initdb.d/:/docker-entrypoint-initdb.d:ro
       - ./data/pgdata:/var/lib/postgresql/data/pgdata
@@ -59,10 +50,7 @@ services:
       args:
         METASPACE_REPO: "$METASPACE_REPO"
         METASPACE_BRANCH: "$METASPACE_BRANCH"
-    # ports:
-    #   - "5123:5123"
     volumes:
-      - ./sm-engine/conf/:/opt/metaspace/metaspace/engine/conf:ro
       - "${DATA_ROOT}:/opt/data/metaspace:z"
     networks:
       - sm
@@ -79,7 +67,6 @@ services:
         METASPACE_BRANCH: "$METASPACE_BRANCH"
     command: /start-update-daemon.sh
     volumes:
-      - ./sm-engine/conf/:/opt/metaspace/metaspace/engine/conf:ro
       - "${DATA_ROOT}:/opt/data:z"
     networks:
       - sm
@@ -98,14 +85,11 @@ services:
     mem_limit: 8g
     cpu_shares: 512
     volumes:
-      - ./sm-engine/conf/:/opt/metaspace/metaspace/engine/conf:ro
       - "${DATA_ROOT}:/opt/data/metaspace:z"
     environment:
       SPARK_WORKER_CORES: 4
     networks:
       - sm
-    ports:
-      - "4040:4040"
     depends_on:
       - postgres
       - elasticsearch
@@ -117,12 +101,7 @@ services:
       args:
         METASPACE_REPO: "$METASPACE_REPO"
         METASPACE_BRANCH: "$METASPACE_BRANCH"
-    # ports:
-    #   - "3010:3010"
-    #   - "5666:5666"
-    #   - "4201:4201"
     volumes:
-      - ./sm-graphql/config/:/opt/metaspace/metaspace/graphql/config:ro
       - "${DATA_ROOT}:/opt/data/metaspace:z"
     networks:
       - sm
@@ -136,10 +115,7 @@ services:
       args:
         METASPACE_REPO: "$METASPACE_REPO"
         METASPACE_BRANCH: "$METASPACE_BRANCH"
-    # ports:
-    #   - "8082:8082"
     volumes:
-      - ./sm-webapp/config/clientConfig.json:/opt/metaspace/metaspace/webapp/src/clientConfig.json:ro
       - "${DATA_ROOT}:/opt/data/metaspace:z"
     depends_on:
       - redis
@@ -148,10 +124,6 @@ services:
 
   nginx:
     image: nginx
-    ports:
-      - "${WWW_PORT}:8999" # main web server
-    expose:
-      - "${WWW_PORT}"
     volumes:
       - ./nginx/config/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/config/proxy-params.conf:/etc/nginx/proxy-params.conf:ro
