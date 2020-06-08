@@ -262,4 +262,4 @@ if __name__ == '__main__':
         es: Elasticsearch = init_es_conn(sm_config['elasticsearch'])
         ingest: IngestClient = IngestClient(es)
 
-        migrate_moldbs(args.from_date, args.ds_ids)
+        migrate_moldbs(args.from_date, args.ds_ids.split(','))
