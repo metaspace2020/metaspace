@@ -191,7 +191,7 @@ def update_es_dataset(ds_doc, moldb_name_id_map):
 
     res = es.search(index='sm', doc_type='dataset', body={'query': {'term': {'ds_id': ds_id}}})
     ds_es_doc = res['hits']['hits'][0]['_source']
-    annotation_counts = ds_es_doc['annotation_counts']
+    annotation_counts = ds_es_doc.get('annotation_counts', [])
     for entry in annotation_counts:
         name = entry['db']['name']
         entry['db']['id'] = moldb_name_id_map.get(name, name)
@@ -207,26 +207,22 @@ def update_es_dataset(ds_doc, moldb_name_id_map):
     )
 
 
-def migrate_moldbs(from_date: str = None, ds_ids: List[str] = None):
+def migrate_moldbs(where: str = None, ds_ids: List[str] = None):
     update_public_database_descriptions()
     update_non_public_databases()
 
     moldb_name_id_map = build_moldb_map()
     moldb_name_id_map_rev = {v: k for k, v in moldb_name_id_map.items()}
 
-    if from_date:
-        datasets = DB().select_with_fields(
-            "SELECT id, config FROM dataset WHERE status = 'FINISHED' AND status_update_dt > %s",
-            params=(from_date,),
-        )
+    if where:
+        datasets = DB().select_with_fields(f"SELECT id, config FROM dataset {where}")
     elif ds_ids:
         datasets = DB().select_with_fields(
             "SELECT id, config FROM dataset WHERE id = ANY(%s)", params=(ds_ids,),
         )
     else:
         datasets = DB().select_with_fields(
-            "SELECT id, config FROM dataset "
-            "WHERE status = 'FINISHED' AND config->>'database_ids' IS NULL"
+            "SELECT id, config FROM dataset WHERE config->>'database_ids' IS NULL"
         )
 
     failed_datasets = []
@@ -252,9 +248,7 @@ def migrate_moldbs(from_date: str = None, ds_ids: List[str] = None):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Migrate moldb names -> moldb ids')
     parser.add_argument('--config', default='conf/config.json')
-    parser.add_argument(
-        '--from-date', help='Migrate only datasets that changed status after "date"'
-    )
+    parser.add_argument('--where', help='SQL WHERE statement')
     parser.add_argument('--ds-ids', help='Dataset ids, comma separated list')
     args = parser.parse_args()
 
@@ -262,4 +256,5 @@ if __name__ == '__main__':
         es: Elasticsearch = init_es_conn(sm_config['elasticsearch'])
         ingest: IngestClient = IngestClient(es)
 
-        migrate_moldbs(args.from_date, args.ds_ids.split(','))
+        ds_ids = args.ds_ids.split(',') if args.ds_ids else None
+        migrate_moldbs(args.where, ds_ids)
