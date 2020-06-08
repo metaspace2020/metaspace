@@ -125,7 +125,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   async molDBs(ds, _, ctx) {
     if (ds._source.ds_moldb_ids == null) {
       // To handle datasets that failed to migrate for some reason
-      logger.error(`Empty "ds_moldb_ids" field for "${ds._source.ds_id}"`);
+      logger.error(`Empty "ds_moldb_ids" field for "${ds._source.ds_id}" dataset`);
       return [];
     }
     return await Promise.all(
@@ -277,7 +277,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       }
       if (databaseId == null) {
         logger.error(`"annotation_counts" field for dataset "${ds._source.ds_id}" is incomplete: \
-          ${JSON.stringify(ds._source.annotation_counts)}`);
+${JSON.stringify(ds._source.annotation_counts)}`);
       }
       const dbName = (databaseId != null) ? (await getMolecularDbModel(ctx, databaseId)).name : '';
       return {

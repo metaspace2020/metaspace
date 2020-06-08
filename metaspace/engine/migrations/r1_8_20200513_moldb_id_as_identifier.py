@@ -1,6 +1,7 @@
 import argparse
 import json
 import logging
+from typing import List
 
 from elasticsearch import Elasticsearch
 from elasticsearch.client import IngestClient
@@ -206,7 +207,7 @@ def update_es_dataset(ds_doc, moldb_name_id_map):
     )
 
 
-def migrate_moldbs(from_date: str = None):
+def migrate_moldbs(from_date: str = None, ds_ids: List[str] = None):
     update_public_database_descriptions()
     update_non_public_databases()
 
@@ -215,11 +216,17 @@ def migrate_moldbs(from_date: str = None):
 
     if from_date:
         datasets = DB().select_with_fields(
-            f"SELECT id, config FROM dataset WHERE status_update_dt > %s", params=(from_date,)
+            "SELECT id, config FROM dataset WHERE status = 'FINISHED' AND status_update_dt > %s",
+            params=(from_date,),
+        )
+    elif ds_ids:
+        datasets = DB().select_with_fields(
+            "SELECT id, config FROM dataset WHERE id IN %s", params=(ds_ids,),
         )
     else:
         datasets = DB().select_with_fields(
-            "SELECT id, config FROM dataset WHERE config->>'database_ids' IS NULL"
+            "SELECT id, config FROM dataset "
+            "WHERE status = 'FINISHED' AND config->>'database_ids' IS NULL"
         )
 
     failed_datasets = []
@@ -248,10 +255,11 @@ if __name__ == '__main__':
     parser.add_argument(
         '--from-date', help='Migrate only datasets that changed status after "date"'
     )
+    parser.add_argument('--ds-ids', help='Dataset ids, comma separated list')
     args = parser.parse_args()
 
     with GlobalInit(args.config) as sm_config:
         es: Elasticsearch = init_es_conn(sm_config['elasticsearch'])
         ingest: IngestClient = IngestClient(es)
 
-        migrate_moldbs(args.from_date)
+        migrate_moldbs(args.from_date, args.ds_ids)
