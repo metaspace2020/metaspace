@@ -229,9 +229,9 @@ def migrate_moldbs(from_date: str = None):
             moldb_ids = [moldb_name_id_map[name] for name in ds_doc['config'].get('databases', [])]
             ds_doc['config']['database_ids'] = moldb_ids
 
-            update_db_dataset(ds_doc)
             update_es_dataset(ds_doc, moldb_name_id_map)
             update_es_annotations(ds_doc, moldb_name_id_map_rev)
+            update_db_dataset(ds_doc)
         except Exception as e:
             logger.warning(f'Failed to migrate dataset {ds_doc["id"]}: {e}')
             failed_datasets.append((ds_doc['id'], e))
