@@ -237,7 +237,9 @@ def migrate_moldbs(from_date: str = None):
             failed_datasets.append((ds_doc['id'], e))
 
     if failed_datasets:
-        print(f'Failed datasets: {failed_datasets}')
+        print('FAILED DATASETS:')
+        for ds, err in failed_datasets:
+            print(ds, err)
 
 
 if __name__ == '__main__':
