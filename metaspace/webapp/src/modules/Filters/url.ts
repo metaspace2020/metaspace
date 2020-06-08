@@ -4,6 +4,7 @@ import { invert, isArray, mapValues } from 'lodash-es'
 import { Location } from 'vue-router'
 import { ScaleType } from '../../lib/ionImageRendering'
 import { DEFAULT_SCALE_TYPE } from '../../lib/constants'
+import qs from 'querystring'
 
 interface Dictionary<T> {
   [key: string]: T;
@@ -15,7 +16,7 @@ interface SortSettings {
 }
 
 const FILTER_TO_URL: Record<FilterKey, string> = {
-  database: 'db',
+  database: 'db_id',
   group: 'grp',
   project: 'prj',
   submitter: 'subm',
@@ -87,12 +88,6 @@ export function encodeParams(filter: any, path?: string, filterLists?: MetadataL
         q[FILTER_TO_URL[key]] = filter[key] ? '1' : '0'
       } else if (encoding === 'number') {
         q[FILTER_TO_URL[key]] = String(filter[key])
-      } else if (encoding === 'idOrName') {
-        if (typeof filter[key] === 'number') {
-          q[FILTER_TO_URL[key]] = `id:${filter[key]}`
-        } else {
-          q[FILTER_TO_URL[key]] = filter[key]
-        }
       } else {
         q[FILTER_TO_URL[key]] = filter[key]
       }
@@ -150,12 +145,6 @@ export function decodeParams(location: Location, filterLists: any): Object {
       filter[fKey] = value === '1'
     } else if (encoding === 'number') {
       filter[fKey] = parseFloat(value)
-    } else if (encoding === 'idOrName') {
-      if (value.startsWith('id:')) {
-        filter[fKey] = parseInt(value.slice(3), 10)
-      } else {
-        filter[fKey] = value
-      }
     } else {
       filter[fKey] = value
     }
@@ -277,4 +266,42 @@ export function decodeSettings(location: Location): UrlSettings | undefined {
     settings.datasets.tab = query.tab
   }
   return settings
+}
+
+const dbIds: Record<string, number> = {
+  'EMBL-dev1': 30,
+  'EMBL-dev2': 32,
+  'M4I_1-2019-06': 34,
+  'GNPS-pseudomonas-2019-09': 35,
+  'NPA-2019-08': 36,
+  'BraChemDB-2018-01': 18,
+  'ChEBI-2018-01': 19,
+  'HMDB-v4': 22,
+  'HMDB-v4-endogenous': 23,
+  'LipidMaps-2017-12-12': 24,
+  'PAMDB-v1.0': 25,
+  'SwissLipids-2018-02-02': 26,
+  'HMDB-v4-cotton': 27,
+  'ECMDB-2018-12': 33,
+  LIPID_MAPS: 3,
+  SwissLipids: 4,
+  ChEBI: 2,
+  'HMDB-v2.5': 6,
+  'HMDB-v2.5-cotton': 8,
+  core_metabolome_v2: 37,
+  core_metabolome_v3: 38,
+  whole_body_MSMS_test: 40,
+  whole_body_MSMS_test_v2: 41,
+  whole_body_MSMS_test_v3: 42,
+}
+
+export function updateDBParam(queryString: string): string | null {
+  const { db, ...params } = qs.parse(queryString)
+  if (typeof db === 'string') {
+    if (db in dbIds) {
+      return qs.stringify({ ...params, [FILTER_TO_URL.database]: dbIds[db] })
+    }
+    // return not found?
+  }
+  return null
 }

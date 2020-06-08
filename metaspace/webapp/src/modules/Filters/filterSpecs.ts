@@ -69,7 +69,7 @@ export interface FilterSpecification {
   hidden?: boolean | (() => boolean);
   debounce?: boolean;
   /** How to encode/decode this filter from the URL */
-  encoding?: 'list' | 'json' | 'bool' | 'number' | 'idOrName';
+  encoding?: 'list' | 'json' | 'bool' | 'number';
   /** Callback to format options for display. "options" parameter may be an empty array while the page is loading */
   optionFormatter?(value: any, options: any[]): string;
   /** Callback to extract the "value" of an object-based option */
@@ -99,9 +99,11 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     description: 'Select database',
     levels: ['annotation'],
     defaultInLevels: ['annotation'],
-    initialValue: undefined,
+    initialValue: lists =>
+      lists.molecularDatabases
+        .filter(d => d.default)[0].id,
     removable: false,
-    encoding: 'idOrName',
+    encoding: 'number',
   },
 
   datasetIds: {

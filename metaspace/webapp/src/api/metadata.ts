@@ -97,7 +97,7 @@ export const fetchOptionListsQuery = gql`query fetchOptionListsQuery {
   maldiMatrices: metadataSuggestions(field: "Sample_Preparation.MALDI_Matrix", query: "", limit: 1000)
   analyzerTypes: metadataSuggestions(field: "MS_Analysis.Analyzer", query: "", limit: 1000)
   colocalizationAlgos {id, name}
-  molecularDatabases: molecularDatabases(hideDeprecated: false, onlyLastVersion: false){name, default, hidden}
+  molecularDatabases: molecularDatabases(hideDeprecated: false, onlyLastVersion: false){id, name, default, hidden}
   adducts: adductSuggestions{adduct, name, charge, default, hidden}
 }`
 
