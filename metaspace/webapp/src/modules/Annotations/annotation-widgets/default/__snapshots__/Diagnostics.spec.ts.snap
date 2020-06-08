@@ -185,12 +185,12 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
   <div class="ref-annotation-header">
     <mock-el-popover trigger="hover" placement="top" open-delay="100">
       <div slot-key="default">
-        <div class="leading-6 py-2 px-3 font-normal content">
+        <div class="leading-5 py-2 px-3 font-normal content text-sm text-left">
           <!---->
           <p class="title">
             Candidate molecule
           </p>
-          <ul class="p-0 m-0 list-none text-xs tracking-wide">
+          <ul class="p-0 list-none leading-7">
             <li>
               C.I. Food Red 6
             </li>
@@ -249,9 +249,9 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
     </div>
   </div>
   <div class="comp-annotation-header">
-    <!----> <span><mock-el-popover trigger="hover" placement="top" open-delay="100"><div slot-key="default"><div class="leading-6 py-2 px-3 font-normal content"><!----> <p class="title">
+    <!----> <span><mock-el-popover trigger="hover" placement="top" open-delay="100"><div slot-key="default"><div class="leading-5 py-2 px-3 font-normal content text-sm text-left"><!----> <p class="title">
       Candidate molecule
-    </p> <ul class="p-0 m-0 list-none text-xs tracking-wide"><li>
+    </p> <ul class="p-0 list-none leading-7"><li>
         C.I. Food Red 6
       </li> <!----></ul> <!----> <!----></div> </div><div slot-key="reference"><span class="annotation-ion">[C<sub>8</sub>H<sub>10</sub>S<sub>2</sub> - H]⁻</span></div>
   </mock-el-popover>
