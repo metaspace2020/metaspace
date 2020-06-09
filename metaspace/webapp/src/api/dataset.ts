@@ -40,6 +40,7 @@ export interface DatasetDetailItem {
   status: GqlJobStatus | null;
   metadataType: string;
   fdrCounts: {
+    databaseId: number,
     dbName: string;
     levels: number[];
     counts: number[];

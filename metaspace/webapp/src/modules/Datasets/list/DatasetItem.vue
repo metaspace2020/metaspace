@@ -126,7 +126,7 @@
         class="ds-item-line"
       >
         <span>
-          <router-link :to="resultsHref()">{{ formatFdrCounts() | plural('annotation', 'annotations') }}</router-link>
+          <router-link :to="resultsHref(dataset.fdrCounts.databaseId)">{{ formatFdrCounts() | plural('annotation', 'annotations') }}</router-link>
           @ FDR {{ formatFdrLevel() }}% in {{ formatDbName() }}
         </span>
       </div>
@@ -430,7 +430,7 @@ export default {
   },
 
   methods: {
-    resultsHref(database = this.dataset.fdrCounts.dbName) {
+    resultsHref(database) {
       const filter = Object.assign({}, this.$store.getters.filter, {
         database,
         datasetIds: [this.dataset.id],

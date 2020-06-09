@@ -12,7 +12,7 @@ describe('searchableFilterQueries', () => {
 
   const validOption = expect.objectContaining({
     label: expect.any(String),
-    value: expect.any(String),
+    value: expect.anything(),
   })
 
   const filterKeys = Object.keys(searchableFilterQueries) as SearchableFilterKey[]
