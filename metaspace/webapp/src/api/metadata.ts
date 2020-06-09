@@ -19,7 +19,10 @@ export const editDatasetFragment =
       name
       email
     }
-    molDBs
+    databases {
+      id
+      name
+    }
     adducts
     name
   }`
@@ -101,12 +104,6 @@ export const fetchOptionListsQuery = gql`query fetchOptionListsQuery {
   adducts: adductSuggestions{adduct, name, charge, default, hidden}
 }`
 
-export interface MolecularDatabase {
-  name: string;
-  default: boolean;
-  hidden: boolean;
-}
-
 export interface ChemModSuggestion {
   chemMod: string;
   name: string;
@@ -132,7 +129,7 @@ export const neutralLossSuggestionQuery = gql`query neutralLossSuggestionQuery($
 }`
 
 export const metadataOptionsQuery = gql`query metadataOptionsQuery {
-  molecularDatabases: molecularDatabases(hideDeprecated: false, onlyLastVersion: false){name, default, hidden}
+  molecularDatabases: molecularDatabases(hideDeprecated: false, onlyLastVersion: false){id, name, default, hidden}
   adducts: adductSuggestions{adduct, name, charge, default, hidden}
 }`
 
