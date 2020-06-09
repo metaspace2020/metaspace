@@ -30,6 +30,7 @@ describe('DatasetTable', () => {
     },
   })
   const mockFdrCounts = {
+    databaseId: 6,
     dbName: 'HMDB-v2.5',
     levels: [10],
     counts: [20],
@@ -38,7 +39,11 @@ describe('DatasetTable', () => {
     id: 'REPLACEME',
     status: 'FINISHED',
     metadataJson: mockMetadataJson,
-    molDBs: ['HMDB-v2.5', 'HMDB-v4', 'CHEBI'],
+    databases: [
+      { name: 'CHEBI', id: 2 },
+      { name: 'HMDB-v2.5', id: 6 },
+      { name: 'HMDB-v4', id: 22 },
+    ],
     polarity: 'POSITIVE',
     fdrCounts: mockFdrCounts,
     groupApproved: true,

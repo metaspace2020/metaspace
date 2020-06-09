@@ -772,7 +772,7 @@ exports[`DatasetTable should match snapshot 1`] = `
           <span>
             <a
               class=""
-              href="/annotations?db=HMDB-v2.5&ds=FINISHED1"
+              href="/annotations?db_id=6&ds=FINISHED1"
             >
               20 annotations
             </a>
@@ -816,7 +816,15 @@ exports[`DatasetTable should match snapshot 1`] = `
                 <div>
                   <a
                     class=""
-                    href="/annotations?db=HMDB-v2.5&ds=FINISHED1"
+                    href="/annotations?db_id=2&ds=FINISHED1"
+                  >
+                    CHEBI
+                  </a>
+                </div>
+                <div>
+                  <a
+                    class=""
+                    href="/annotations?db_id=6&ds=FINISHED1"
                   >
                     HMDB-v2.5
                   </a>
@@ -824,17 +832,9 @@ exports[`DatasetTable should match snapshot 1`] = `
                 <div>
                   <a
                     class=""
-                    href="/annotations?db=HMDB-v4&ds=FINISHED1"
+                    href="/annotations?db_id=22&ds=FINISHED1"
                   >
                     HMDB-v4
-                  </a>
-                </div>
-                <div>
-                  <a
-                    class=""
-                    href="/annotations?db=CHEBI&ds=FINISHED1"
-                  >
-                    CHEBI
                   </a>
                 </div>
               </div>
