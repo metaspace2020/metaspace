@@ -33,6 +33,9 @@ export class ProjectSourceRepository {
       .createQueryBuilder(ProjectModel, 'project')
       .select(columnMap);
 
+    const memberOfProjectIds = Object.entries(await user.getProjectRoles())
+      .filter(([id, role]) => role != UPRO.PENDING).map(([id, role]) => id);
+
     if (sortBy === 'name') {
       qb = qb.orderBy('project.name');
     } else {
@@ -43,11 +46,15 @@ export class ProjectSourceRepository {
                             WHERE role IN ('${UPRO.MEMBER}','${UPRO.MANAGER}') 
                             GROUP BY project_id)`,
           'num_members', 'project.id = num_members.project_id')
-        .leftJoin(`(SELECT project_id, COUNT(*) as cnt 
-                            FROM graphql.dataset_project 
-                            WHERE approved = true
-                            GROUP BY project_id)`,
-          'num_datasets', 'project.id = num_datasets.project_id')
+        .leftJoin(`(SELECT dp.project_id, COUNT(*) as cnt 
+                            FROM graphql.dataset_project dp 
+                            JOIN dataset ds ON dp.dataset_id = ds.id 
+                            WHERE dp.approved = true 
+                              AND (ds.is_public = true OR dp.project_id = ANY(:memberOfProjectIds))
+                            GROUP BY dp.project_id)`,
+          'num_datasets',
+          'project.id = num_datasets.project_id',
+          { memberOfProjectIds })
         .orderBy('(COALESCE(num_members.cnt * 20, 0) + COALESCE(num_datasets.cnt, 0))', 'DESC')
         .addOrderBy('project.name');
     }
@@ -56,10 +63,8 @@ export class ProjectSourceRepository {
     if (user.id && user.role === 'admin') {
       qb = qb.where('true'); // For consistency, in case anything weird happens when `andWhere` is called without first calling `where`
     } else {
-      const allowedToSeeProjectIds = Object.entries(await user.getProjectRoles())
-        .filter(([id, role]) => role != UPRO.PENDING).map(([id, role]) => id);
       qb = qb.where(new Brackets(qb => qb.where('project.is_public = True')
-        .orWhere('project.id = ANY(:allowedToSeeProjectIds)', { allowedToSeeProjectIds })));
+        .orWhere('project.id = ANY(:memberOfProjectIds)', { memberOfProjectIds })));
     }
     // Add caller-supplied filter
     if (whereClause) {

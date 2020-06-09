@@ -107,7 +107,7 @@
 
 /* Use `<el-dialog customClass="el-dialog-lean">` to remove excessive padding above/below body */
 .el-dialog-lean .el-dialog__body {
-  padding: 0 theme('margin.5')
+  padding: 0 theme('margin.5') theme('margin.2')
 }
 
 .el-message__content {

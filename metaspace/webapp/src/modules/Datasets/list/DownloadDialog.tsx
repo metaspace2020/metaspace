@@ -94,7 +94,8 @@ export default createComponent({
       loading,
     } = useQuery<GetDatasetDownloadLink>(getDatasetDownloadLink, { datasetId }, { fetchPolicy: 'no-cache' })
     const downloadLinks = computed<DownloadLinkJson>(() => downloadLinkResult.value != null
-      && safeJsonParse(downloadLinkResult.value.dataset.downloadLinkJson))
+      ? safeJsonParse(downloadLinkResult.value.dataset.downloadLinkJson)
+      : null)
 
     return () => {
       let content
@@ -114,7 +115,13 @@ export default createComponent({
                   Please get approval from the {authorStr} before downloading or using this dataset in any way.
                 </p>
                 : <p>
-                  This dataset is distributed under the <a href={license.link}>{license.code}</a> license.
+                  This dataset is distributed under the{' '}
+                  <a
+                    href={license.link}
+                    rel="noopener noreferrer nofollow"
+                    target="_blank"
+                  >{license.code}</a>
+                  {' '}license.
                   Make sure to credit the {authorStr} of this dataset:
                 </p>}
             </p>
@@ -123,11 +130,15 @@ export default createComponent({
                 <li class="list-none">{name}{institution && `, ${institution}`}</li>)}
             </ul>
             <h4>Files</h4>
-            <div class="flex my-1 flex-wrap">
-              {files.map(({ filename, link }) => (
-                <FileItem filename={filename} link={link} />
-              ))}
-            </div>
+            {files != null && files.length > 0
+              ? <div class="flex my-1 flex-wrap">
+                {files.map(({ filename, link }) => (
+                  <FileItem filename={filename} link={link} />
+                ))}
+              </div>
+              : <div class="text-gray-600 text-center items-center my-6">
+                No files were found for this dataset.
+              </div>}
             <p>
               <i>
               These download links expire after 30 minutes.
