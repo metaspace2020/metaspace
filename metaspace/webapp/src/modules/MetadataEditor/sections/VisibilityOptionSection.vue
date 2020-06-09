@@ -11,7 +11,7 @@
             <div class="max-w-sm">
               <p>
                 <b>Public:</b> Annotations will be available in the METASPACE public knowledge base,
-                sharable and searchable by the community. The data files will be made available to download under the
+                sharable and searchable by the community. The imzML files will be made available to download under the
                 <a
                   href="https://creativecommons.org/licenses/by/4.0/"
                   rel="noopener noreferrer nofollow"
@@ -23,7 +23,7 @@
               <p>
                 <b>Private:</b> The dataset and its annotation results will only be visible to you,
                 logged-in members of the selected group and projects, and METASPACE administrators.
-                These people will also be able to download the data files, but no automatic license for usage will be granted.
+                These people will also be able to download the imzML files, but no automatic license for usage will be granted.
               </p>
             </div>
             <i
