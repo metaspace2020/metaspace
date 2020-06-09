@@ -43,10 +43,11 @@ export class ProjectSourceRepository {
                             WHERE role IN ('${UPRO.MEMBER}','${UPRO.MANAGER}') 
                             GROUP BY project_id)`,
           'num_members', 'project.id = num_members.project_id')
-        .leftJoin(`(SELECT project_id, COUNT(*) as cnt 
-                            FROM graphql.dataset_project 
-                            WHERE approved = true
-                            GROUP BY project_id)`,
+        .leftJoin(`(SELECT dp.project_id, COUNT(*) as cnt 
+                            FROM graphql.dataset_project dp 
+                            JOIN dataset ds ON dp.dataset_id = ds.id 
+                            WHERE dp.approved = true AND ds.is_public = true
+                            GROUP BY dp.project_id)`,
           'num_datasets', 'project.id = num_datasets.project_id')
         .orderBy('(COALESCE(num_members.cnt * 20, 0) + COALESCE(num_datasets.cnt, 0))', 'DESC')
         .addOrderBy('project.name');
