@@ -1,6 +1,6 @@
 import { EntityManager } from 'typeorm';
 import { DatasetProject as DatasetProjectModel } from '../model';
-import { PublicationStatusOptions as PSO } from '../../project/PublicationStatusOptions';
+import { PublicationStatusOptions as PSO } from '../../project/Publishing';
 import { UserError } from 'graphql-errors';
 import { PublicationStatus } from "../../../binding";
 
@@ -40,7 +40,7 @@ export const checkNoPublishedProjectRemoved = async (
     throw new UserError(JSON.stringify({
       type: 'under_review_or_published',
       message: `Cannot remove dataset ${datasetId} from ${removedDsProject.projectId} project ` +
-      ` in ${removedDsProject.project.publicationStatus} status`
+        ` in ${removedDsProject.project.publicationStatus} status`
     }));
   }
 };

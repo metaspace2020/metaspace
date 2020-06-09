@@ -18,7 +18,7 @@ import {
   UserProjectRoleOptions,
 } from '../model';
 import { DatasetProject as DatasetProjectModel } from '../../dataset/model';
-import { PublicationStatusOptions as PSO } from '../PublicationStatusOptions';
+import { PublicationStatusOptions as PSO } from '../Publishing';
 import { Project as ProjectType } from '../../../binding';
 
 import * as _smApiDatasets from '../../../utils/smApi/datasets';
@@ -39,40 +39,48 @@ describe('Project publication status manipulations', () => {
   afterEach(onAfterEach);
 
   const createReviewLink = `mutation ($projectId: ID!) {
-      createReviewLink(projectId: $projectId) { id isPublic reviewToken publicationStatus }
-    }`,
-    deleteReviewLink = `mutation ($projectId: ID!) {
-      deleteReviewLink(projectId: $projectId)
-    }`,
-    publishProject = `mutation ($projectId: ID!) {
-      publishProject(projectId: $projectId) { id publicationStatus isPublic }
-    }`,
-    unpublishProject = `mutation ($projectId: ID!, $isPublic: Boolean!) {
-      unpublishProject(projectId: $projectId, isPublic: $isPublic) { id publicationStatus isPublic }
-    }`,
-    deleteProject = `mutation ($projectId: ID!) {
-      deleteProject(projectId: $projectId)
-    }`,
-    updateProject = `mutation ($projectId: ID!, $projectDetails: UpdateProjectInput!) {
-      updateProject(projectId: $projectId, projectDetails: $projectDetails) {
-        id name urlSlug projectDescription
-      }
-    }`,
-    addExternalLink = `mutation($projectId: ID!) {
-      addProjectExternalLink(
-        projectId: $projectId,
-        provider: "MetaboLights",
-        link: "https://www.ebi.ac.uk/metabolights/MTBLS000",
-        replaceExisting: true
-      ) { id }
-    }`,
-    removeExternalLink = `mutation($projectId: ID!) {
-      removeProjectExternalLink(
-        projectId: $projectId,
-        provider: "MetaboLights",
-        link: "https://www.ebi.ac.uk/metabolights/MTBLS000"
-      ) { id }
-    }`;
+    createReviewLink(projectId: $projectId) { id isPublic reviewToken publicationStatus }
+  }`
+  const deleteReviewLink = `mutation ($projectId: ID!) {
+    deleteReviewLink(projectId: $projectId)
+  }`
+  const publishProject = `mutation ($projectId: ID!) {
+    publishProject(projectId: $projectId) { id publicationStatus isPublic }
+  }`
+  const unpublishProject = `mutation ($projectId: ID!, $isPublic: Boolean!) {
+    unpublishProject(projectId: $projectId, isPublic: $isPublic) { id publicationStatus isPublic }
+  }`
+  const deleteProject = `mutation ($projectId: ID!) {
+    deleteProject(projectId: $projectId)
+  }`
+  const updateProject = `mutation ($projectId: ID!, $projectDetails: UpdateProjectInput!) {
+    updateProject(projectId: $projectId, projectDetails: $projectDetails) {
+      id name urlSlug projectDescription
+    }
+  }`
+  const addExternalLink = `mutation($projectId: ID!) {
+    addProjectExternalLink(
+      projectId: $projectId,
+      provider: "MetaboLights",
+      link: "https://www.ebi.ac.uk/metabolights/MTBLS000",
+      replaceExisting: true
+    ) { id }
+  }`
+  const removeExternalLink = `mutation($projectId: ID!) {
+    removeProjectExternalLink(
+      projectId: $projectId,
+      provider: "MetaboLights",
+      link: "https://www.ebi.ac.uk/metabolights/MTBLS000"
+    ) { id }
+  }`
+  const addDOI = `mutation($projectId: ID!) {
+    addProjectExternalLink(
+      projectId: $projectId,
+      provider: "DOI",
+      link: "https://doi.org/xzy123",
+      replaceExisting: true
+    ) { id }
+  }`
 
   test('Project manager can create/delete review links', async () => {
     const project = await createTestProject({ isPublic: false, publicationStatus: PSO.UNPUBLISHED });
@@ -187,7 +195,7 @@ describe('Project publication status manipulations', () => {
     const promise = doQuery<ProjectType>(updateProject,
       { projectId: project.id, projectDetails: { isPublic: false } });
 
-    await expect(promise).rejects.toThrow(/Cannot modify project/);
+    await expect(promise).rejects.toThrow(/Published projects must be visible/);
     const { isPublic } = await testEntityManager.findOneOrFail(ProjectModel, project.id);
     expect(isPublic).toBe(true);
   });
@@ -200,7 +208,6 @@ describe('Project publication status manipulations', () => {
         { userId, projectId: project.id, role: UserProjectRoleOptions.MANAGER });
       const projectDetails = {
         name: 'new name',
-        urlSlug: 'new_slug',
         projectDescription:
           '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"new description"}]}]}'
       };
@@ -232,5 +239,51 @@ describe('Project publication status manipulations', () => {
     const result = await doQuery<ProjectType>(removeExternalLink, { projectId: project.id });
 
     await expect(result).toEqual(expect.objectContaining({ id: project.id }));
+  });
+
+  test('Allowed to add DOI to published project', async () => {
+    const project = await createTestProject({ publicationStatus: PSO.PUBLISHED });
+    await testEntityManager.insert(UserProjectModel,
+      { userId, projectId: project.id, role: UserProjectRoleOptions.MANAGER });
+
+    const result = await doQuery<ProjectType>(addDOI, { projectId: project.id });
+
+    await expect(result).toEqual(expect.objectContaining({ id: project.id }));
+  });
+
+  test('Not allowed to add DOI to unpublished project', async () => {
+    const project = await createTestProject({ publicationStatus: PSO.UNDER_REVIEW });
+    await testEntityManager.insert(UserProjectModel,
+      { userId, projectId: project.id, role: UserProjectRoleOptions.MANAGER });
+
+    const promise = doQuery<ProjectType>(addDOI, { projectId: project.id });
+
+    await expect(promise).rejects.toThrow(/Cannot add DOI, project is not published/);
+    const { externalLinks } = await testEntityManager.findOneOrFail(ProjectModel, project.id);
+    expect(externalLinks).toBe(null);
+  });
+
+  test('Not allowed to remove urlSlug from project under review', async () => {
+    const project = await createTestProject({ urlSlug: 'old-link', publicationStatus: PSO.UNDER_REVIEW });
+    await testEntityManager.insert(UserProjectModel,
+      { userId, projectId: project.id, role: UserProjectRoleOptions.MANAGER });
+
+    const promise = doQuery<ProjectType>(updateProject, { projectId: project.id, projectDetails: { urlSlug: null } });
+
+    await expect(promise).rejects.toThrow(/Cannot remove short link as the project is under review/);
+    const { urlSlug } = await testEntityManager.findOneOrFail(ProjectModel, project.id);
+    expect(urlSlug).toBe('old-link');
+  });
+
+  test('Not allowed to edit urlSlug on published project', async () => {
+    const project = await createTestProject({ urlSlug: 'old-link', publicationStatus: PSO.PUBLISHED });
+    await testEntityManager.insert(UserProjectModel,
+      { userId, projectId: project.id, role: UserProjectRoleOptions.MANAGER });
+
+    const promise = doQuery<ProjectType>(updateProject, { projectId: project.id, projectDetails: { urlSlug: 'new-link' } });
+
+    await expect(promise).rejects.toThrow(/Cannot edit short link as the project is published/);
+    const { urlSlug } = await testEntityManager.findOneOrFail(ProjectModel, project.id);
+    expect(urlSlug).toBe('old-link');
   });
 });

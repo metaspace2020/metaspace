@@ -17,7 +17,7 @@ describe('MetaspaceHeader', () => {
         currentUser: () => null, // Prevent automatic mocking
       }),
     })
-    const wrapper = mount(MetaspaceHeader, { store, router, apolloProvider, sync: false })
+    const wrapper = mount(MetaspaceHeader, { store, router, apolloProvider })
     await Vue.nextTick()
 
     expect(wrapper).toMatchSnapshot()
@@ -48,7 +48,7 @@ describe('MetaspaceHeader', () => {
         }),
       }),
     })
-    const wrapper = mount(MetaspaceHeader, { store, router, apolloProvider, sync: false })
+    const wrapper = mount(MetaspaceHeader, { store, router, apolloProvider })
     await Vue.nextTick()
 
     expect(wrapper).toMatchSnapshot()
@@ -57,7 +57,7 @@ describe('MetaspaceHeader', () => {
   it('should include current filters in annotations & dataset links', async() => {
     initMockGraphqlClient({})
     router.push({ path: '/annotations', query: { db_id: '22', organism: 'human' } })
-    const wrapper = mount(MetaspaceHeader, { store, router, apolloProvider, sync: false })
+    const wrapper = mount(MetaspaceHeader, { store, router, apolloProvider })
     await Vue.nextTick()
 
     expect(wrapper.find('#annotations-link').attributes().href).toEqual('/annotations?db_id=22&organism=human')

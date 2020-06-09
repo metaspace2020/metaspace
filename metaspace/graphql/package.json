@@ -25,7 +25,7 @@
   },
   "license": "ISC",
   "dependencies": {
-    "@sentry/node": "5.4.0",
+    "@sentry/node": "^5.15.5",
     "@types/amqplib": "^0.5.9",
     "@types/aws-sdk": "^2.7.0",
     "@types/bcrypt": "^2.0.0",
@@ -73,7 +73,7 @@
     "json-schema-deref-sync": "^0.10.1",
     "jsondiffpatch": "^0.3.9",
     "jsonwebtoken": "^8.5.1",
-    "knex": "^0.19.5",
+    "knex": "0.20.15",
     "lodash": "^4.17.4",
     "merge-graphql-schemas": "^1.5.3",
     "mkdirp": "^0.5.1",
@@ -92,7 +92,7 @@
     "subscriptions-transport-ws": "^0.9.14",
     "ts-node": "^8.3.0",
     "typeorm": "0.2.18",
-    "typescript": "^3.6.2",
+    "typescript": "^3.9.2",
     "uuid": "^3.3.2",
     "winston": "^2.4.4"
   },
@@ -102,12 +102,11 @@
     "@types/node": "^8",
     "@types/supertest": "^2.0.7",
     "graphql-binding": "^2.2.2",
-    "jest": "^24.9.0",
-    "nodemon": "^1.19.1",
+    "jest": "25.5.4",
     "random-js": "^2.0.0-rc2",
     "request-promise": "^4.2.1",
     "supertest": "^4.0.2",
-    "ts-jest": "^23.1.3",
+    "ts-jest": "25.5.0",
     "ts-node-dev": "^1.0.0-pre.42"
   },
   "jest": {
@@ -128,6 +127,7 @@
       "node"
     ],
     "testEnvironment": "node",
+    "testTimeout": 15000,
     "setupFilesAfterEnv": [
       "<rootDir>/src/tests/setupTestFramework.ts"
     ],
@@ -135,8 +135,8 @@
       "node_modules",
       "src/migrations"
     ],
-    "globalSetup": "<rootDir>/src/tests/globalSetup.js",
-    "globalTeardown": "<rootDir>/src/tests/globalTeardown.js",
+    "globalSetup": "<rootDir>/src/tests/globalSetup.ts",
+    "globalTeardown": "<rootDir>/src/tests/globalTeardown.ts",
     "clearMocks": true
   }
 }

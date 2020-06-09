@@ -1,17 +1,17 @@
 import * as moment from 'moment';
-import {User} from '../modules/user/model';
-import {Credentials} from '../modules/auth/model';
-import {testEntityManager, userContext} from './graphqlTestEnvironment';
+import { User } from '../modules/user/model';
+import { Credentials } from '../modules/auth/model';
+import { testEntityManager, userContext } from './graphqlTestEnvironment';
 import {
   Project,
   UserProject as UserProjectModel,
   UserProjectRoleOptions as UPRO,
 } from '../modules/project/model';
-import {PublicationStatusOptions as PSO} from '../modules/project/PublicationStatusOptions';
-import {PublicationStatus, UserGroupRole, UserProjectRole} from '../binding';
-import {Dataset, DatasetProject} from '../modules/dataset/model';
-import {EngineDataset} from '../modules/engine/model';
-import {Group, UserGroup as UserGroupModel} from '../modules/group/model';
+import { PublicationStatusOptions as PSO } from '../modules/project/Publishing';
+import { PublicationStatus, UserGroupRole, UserProjectRole } from '../binding';
+import { Dataset, DatasetProject } from '../modules/dataset/model';
+import { EngineDataset } from '../modules/engine/model';
+import { Group, UserGroup as UserGroupModel } from '../modules/group/model';
 import {MolecularDB} from "../modules/moldb/model";
 
 export const createTestUser = async (user?: Partial<User>): Promise<User> => {
@@ -36,11 +36,11 @@ export const createTestGroup = async (group?: Partial<Group>): Promise<Group> =>
     shortName: 'tstgrp',
     isPublic: true,
   };
-  return await testEntityManager.save(Group, {...groupDefaultFields, ...group}) as Group;
+  return await testEntityManager.save(Group, { ...groupDefaultFields, ...group }) as Group;
 };
 
 export const createTestUserGroup = async (userId: string, groupId: string, role: UserGroupRole | null,
-                                          primary: boolean): Promise<UserGroupModel | null> => {
+  primary: boolean): Promise<UserGroupModel | null> => {
   if (role != null) {
     return await testEntityManager.save(UserGroupModel, { userId, groupId, role, primary }) as UserGroupModel;
   } else {
@@ -60,11 +60,11 @@ export const createTestProject = async (project?: Partial<Project>): Promise<Pro
     // the `createTestProject` return value and the retrieved results from the database.
     createdDT: moment.utc(moment.utc().toDate()),
   };
-  return await testEntityManager.save(Project, {...projectDefaultFields, ...project}) as Project;
+  return await testEntityManager.save(Project, { ...projectDefaultFields, ...project }) as Project;
 };
 
 export const createTestUserProject = async (userId: string, projectId: string,
-                                            role: UserProjectRole | null): Promise<UserProjectModel | null> => {
+  role: UserProjectRole | null): Promise<UserProjectModel | null> => {
   if (role != null) {
     return await testEntityManager.save(UserProjectModel, { userId, projectId, role }) as UserProjectModel;
   } else {
@@ -73,9 +73,9 @@ export const createTestUserProject = async (userId: string, projectId: string,
   }
 };
 
-export const createTestProjectMember = async (projectOrId: string | {id: string},
-                                              role: UserProjectRole = UPRO.MEMBER) => {
-  const user = await createTestUser({name: 'project member'}) as User;
+export const createTestProjectMember = async (projectOrId: string | { id: string },
+  role: UserProjectRole = UPRO.MEMBER) => {
+  const user = await createTestUser({ name: 'project member' }) as User;
   await testEntityManager.save(UserProjectModel, {
     userId: user.id,
     projectId: typeof projectOrId === 'string' ? projectOrId : projectOrId.id,

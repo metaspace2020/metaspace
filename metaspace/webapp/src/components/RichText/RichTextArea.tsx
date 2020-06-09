@@ -28,17 +28,15 @@ const MenuElement = createComponent({
 
 interface Props {
   content: string
-  label: string
   onUpdate: (content: string) => any
 }
 
 const RichTextArea = createComponent<Props>({
   props: {
     content: String,
-    label: String,
     onUpdate: Function,
   },
-  setup(props, { emit }) {
+  setup(props, { emit, slots }) {
     const state = reactive({
       editor: useEditor({
         content: props.content,
@@ -50,12 +48,13 @@ const RichTextArea = createComponent<Props>({
 
     return () => (
       <div class="sm-RichText sm-RichTextArea relative">
-        {props.label && <label onClick={() => { editor.focus() }}>{props.label}</label>}
+        {slots.label && <label onClick={() => { editor.focus() }}>{slots.label()}</label>}
         <EditorContent
           class={[
             'h-40 w-full box-border overflow-y-auto cursor-text text-gray-800 text-sm',
             'rounded border border-solid transition-colors ease-in-out duration-200',
             'border-gray-300 hover:border-gray-500 focus-within:border-primary',
+            { 'mt-1': slots.label },
           ]}
           editor={editor}
         />

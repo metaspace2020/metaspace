@@ -48,6 +48,7 @@ describe('ImageLoader', () => {
 
   beforeEach(() => {
     // Set HTMLElements to have non-zero dimensions
+    // @ts-ignore
     jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() =>
       ({ left: 200, right: 200 + W, top: 100, bottom: 100 + H, width: W, height: H }))
     jest.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(() => W)
@@ -55,14 +56,14 @@ describe('ImageLoader', () => {
   })
 
   it('should match snapshot (minimal)', async() => {
-    const wrapper = mount(ImageLoader, { propsData: baseProps, sync: false })
+    const wrapper = mount(ImageLoader, { propsData: baseProps })
     await Vue.nextTick()
 
     expect(wrapper.element).toMatchSnapshot()
   })
 
   it('should match snapshot (with everything turned on)', async() => {
-    const wrapper = mount(ImageLoader, { propsData: fullProps, sync: false })
+    const wrapper = mount(ImageLoader, { propsData: fullProps })
     await Vue.nextTick()
 
     // Trigger mouseover to show the intensity popup.

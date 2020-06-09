@@ -51,7 +51,8 @@
 .el-checkbox__input.is-checked + .el-checkbox__label,
 .el-select-dropdown__item.selected,
 .el-table th.is-sortable.ascending,
-.el-table th.is-sortable.descending {
+.el-table th.is-sortable.descending,
+.el-button--text {
   @apply text-primary;
 }
 
@@ -86,13 +87,13 @@
 .el-input-group__prepend {
   @apply px-4 flex items-center w-auto text-gray-700;
 }
+.el-input.is-disabled .el-input-group__append,
+.el-input.is-disabled .el-input-group__prepend {
+  @apply border-gray-200;
+}
 
 .el-message-box__headerbtn {
   z-index: 1;
-}
-
-.sm-form-error .el-input__inner {
-  @apply border-danger
 }
 
 .el-notification__content {

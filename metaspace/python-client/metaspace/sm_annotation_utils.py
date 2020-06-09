@@ -167,14 +167,16 @@ class GraphQLClient(object):
             yield self.query(query, v)
             offset += batch_size
 
-    def listQuery(self, field_name, query, variables={}, batch_size=50000):
+    def listQuery(self, field_name, query, variables={}, batch_size=50000, limit=None):
         """
         Gets all results of an iterQuery as a list.
         Field name must be provided in addition to the query (e.g. 'allDatasets')
         """
+        if limit is not None:
+            batch_size = min(batch_size, limit)
         records = []
         for res in self.iterQuery(query, variables, batch_size):
-            if not res[field_name]:
+            if not res[field_name] or limit is not None and len(records) >= limit:
                 break
             records.extend(res[field_name])
         return records
@@ -222,6 +224,7 @@ class GraphQLClient(object):
     ANNOTATION_FIELDS = """
         sumFormula
         neutralLoss
+        chemMod
         adduct
         ionFormula
         ion
@@ -240,9 +243,6 @@ class GraphQLClient(object):
 
     DEFAULT_ANNOTATION_FILTER = {
         'database': 'HMDB-v4',
-        'hasNeutralLoss': False,
-        'hasChemMod': False,
-        'hasHiddenAdduct': False,
     }
 
     def getDataset(self, datasetId):
@@ -305,7 +305,9 @@ class GraphQLClient(object):
         else:
             return matches[0]
 
-    def getAnnotations(self, annotationFilter=None, datasetFilter=None, colocFilter=None):
+    def getAnnotations(
+        self, annotationFilter=None, datasetFilter=None, colocFilter=None, limit=None
+    ):
         query_arguments = [
             "$filter: AnnotationFilter",
             "$dFilter: DatasetFilter",
@@ -357,7 +359,7 @@ class GraphQLClient(object):
             'colocalizationCoeffFilter': colocFilter,
             'orderBy': order_by,
         }
-        return self.listQuery(field_name='allAnnotations', query=query, variables=vars)
+        return self.listQuery(field_name='allAnnotations', query=query, variables=vars, limit=limit)
 
     def countAnnotations(self, annotationFilter=None, datasetFilter=None):
         query = """
@@ -532,11 +534,13 @@ def ion(r):
 
 
 class IsotopeImages(object):
-    def __init__(self, images, sf, adduct, centroids, urls):
+    def __init__(self, images, sf, chem_mod, neutral_loss, adduct, centroids, urls):
         self._images = images
         # Keeping the private self._sf, self._adduct fields for backwards compatibility. There is no other easy way
         # to get that data, so it's probable that there is code somewhere that depends on the private fields.
         self.formula = self._sf = sf
+        self.chem_mod = chem_mod
+        self.neutral_loss = neutral_loss
         self.adduct = self._adduct = adduct
         self._centroids = centroids
         self._urls = urls
@@ -545,7 +549,7 @@ class IsotopeImages(object):
         return self._images[index]
 
     def __repr__(self):
-        return "IsotopeImages({}{})".format(self._sf, self._adduct)
+        return f"IsotopeImages({self.formula}{self.chem_mod or ''}{self.neutral_loss or ''}{self.adduct})"
 
     def __len__(self):
         return len(self._images)
@@ -663,7 +667,21 @@ class SMDataset(object):
         records = self._gqclient.getAnnotations(annotation_filter, dataset_filter)
         return [list(r[val] for val in return_vals) for r in records]
 
-    def results(self, database, fdr=None, coloc_with=None):
+    def results(
+        self,
+        database,
+        fdr=None,
+        coloc_with=None,
+        include_chem_mods=False,
+        include_neutral_losses=False,
+        **annotation_filter,
+    ):
+        def get_compound_database_ids(possibleCompounds):
+            return [
+                compound['information'] and compound['information'][0]['databaseId']
+                for compound in possibleCompounds
+            ]
+
         if coloc_with:
             assert fdr
             coloc_coeff_filter = {
@@ -671,12 +689,22 @@ class SMDataset(object):
                 'colocalizedWith': coloc_with,
                 'fdrLevel': fdr,
             }
-            annotation_filter = coloc_coeff_filter.copy()
+            annotation_filter.update(coloc_coeff_filter)
         else:
             coloc_coeff_filter = None
-            annotation_filter = {'database': database}
+            annotation_filter['database'] = database
             if fdr:
                 annotation_filter['fdrLevel'] = fdr
+
+        index_fields = ['formula', 'adduct']
+        if include_chem_mods:
+            index_fields.append('chemMod')
+        else:
+            annotation_filter['hasChemMod'] = False
+        if include_neutral_losses:
+            index_fields.append('neutralLoss')
+        else:
+            annotation_filter['hasNeutralLoss'] = False
 
         records = self._gqclient.getAnnotations(
             annotationFilter=annotation_filter,
@@ -692,9 +720,7 @@ class SMDataset(object):
                 moleculeNames=df.possibleCompounds.apply(
                     lambda lst: [item['name'] for item in lst]
                 ),
-                moleculeIds=df.possibleCompounds.apply(
-                    lambda lst: [item['information'][0]['databaseId'] for item in lst]
-                ),
+                moleculeIds=df.possibleCompounds.apply(get_compound_database_ids),
                 intensity=df.isotopeImages.apply(lambda imgs: imgs[0]['maxIntensity']),
             )
             .drop(columns=['possibleCompounds', 'dataset.id', 'dataset.name', 'offSampleProb',])
@@ -707,7 +733,9 @@ class SMDataset(object):
                     'colocalizationCoeff': 'colocCoeff',
                 }
             )
-            .set_index(['formula', 'adduct'])
+            .set_index(index_fields)
+            # Don't include chemMod/neutralLoss columns if they have been excluded
+            .drop(columns=['chemMod', 'neutralLoss'], errors='ignore')
         )
 
     @property
@@ -742,7 +770,15 @@ class SMDataset(object):
     def _baseurl(self):
         return self._gqclient.host
 
-    def isotope_images(self, sf, adduct, only_first_isotope=False, scale_intensity=True):
+    def isotope_images(
+        self,
+        sf,
+        adduct,
+        only_first_isotope=False,
+        scale_intensity=True,
+        neutral_loss='',
+        chem_mod='',
+    ):
         """
         Retrieve ion images for a specific sf and adduct
         :param str   sf:
@@ -752,10 +788,19 @@ class SMDataset(object):
                                          are usually lower quality copies of the first isotopic ion image.
         :param bool  scale_intensity:    When True, the output values will be scaled to the intensity range of the original data.
                                          When False, the output values will be in the 0.0 to 1.0 range.
+        :param str   neutral_loss:
+        :param str   chem_mod:
         :return IsotopeImages:
         """
         records = self._gqclient.getAnnotations(
-            dict(sumFormula=sf, adduct=adduct, database=None), dict(ids=self.id)
+            {
+                'sumFormula': sf,
+                'adduct': adduct,
+                'database': None,
+                'neutralLoss': neutral_loss,
+                'chemMod': chem_mod,
+            },
+            {'ids': self.id},
         )
 
         import matplotlib.image as mpimg
@@ -774,7 +819,7 @@ class SMDataset(object):
         if records:
             image_metadata = records[0]['isotopeImages']
         else:
-            image_metadata = []
+            raise LookupError(f'Isotope image for "{sf}{chem_mod}{neutral_loss}{adduct}" not found')
         if only_first_isotope:
             image_metadata = image_metadata[:1]
 
@@ -791,7 +836,7 @@ class SMDataset(object):
                 else:
                     images[i] *= float(image_metadata[i]['maxIntensity'])
 
-        return IsotopeImages(images, sf, adduct, image_mzs, image_urls)
+        return IsotopeImages(images, sf, chem_mod, neutral_loss, adduct, image_mzs, image_urls)
 
     def all_annotation_images(
         self,
@@ -816,20 +861,23 @@ class SMDataset(object):
         with ThreadPoolExecutor() as pool:
 
             def get_annotation_images(row):
-                sf, adduct = row
+                sf, adduct, neutral_loss, chem_mod = row
                 return self.isotope_images(
                     sf,
                     adduct,
                     only_first_isotope=only_first_isotope,
                     scale_intensity=scale_intensity,
+                    neutral_loss=neutral_loss,
+                    chem_mod=chem_mod,
                 )
 
-            return list(
-                pool.map(
-                    get_annotation_images,
-                    self.annotations(fdr=fdr, database=database, **annotation_filter),
-                )
+            annotations = self.annotations(
+                fdr=fdr,
+                database=database,
+                return_vals=('sumFormula', 'adduct', 'neutralLoss', 'chemMod'),
+                **annotation_filter,
             )
+            return list(pool.map(get_annotation_images, annotations,))
 
     def optical_images(self):
         def fetch_image(url):
@@ -966,14 +1014,9 @@ class SMInstance(object):
 
     def get_annotations(self, fdr=0.1, db_name="HMDB-v4", datasetFilter={}):
         """
-        Returns: a table of booleans indicating which ions were annotated in a
-        particular dataset at the specified fdr.
-        Only returns datasets with at least one anntotation at the given FDR level.
-        Use in conjunction with get_metadata() to get a full dataset list.
-        :param fdr: fdr level to export annotations at
-        :param db_name: database to search against
-        :return: pandas dataframe indexed by dataset ids,
-                 with multi-index adduct / molecular formula on columns
+        DEPRECATED
+        This function does not work as previously described, and is kept only for backwards compatibility.
+        Use sm.dataset(id='...').results() or sm.dataset(id='...').annotations() instead.
         """
         records = self._gqclient.getAnnotations(
             annotationFilter={'database': db_name, 'fdrLevel': fdr}, datasetFilter=datasetFilter

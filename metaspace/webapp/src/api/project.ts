@@ -125,6 +125,24 @@ export const updateProjectDOIMutation =
       replaceExisting: true
     ) {
       id
+      externalLinks {
+        provider
+        link
+      }
+    }
+  }`
+
+export const removeProjectDOIMutation =
+  gql`mutation removeProjectDOIMutation($projectId: ID!) {
+    removeProjectExternalLink(
+      projectId: $projectId,
+      provider: "DOI",
+    ) {
+      id
+      externalLinks {
+        provider
+        link
+      }
     }
   }`
 
@@ -144,6 +162,10 @@ export const editProjectQuery =
       isPublic
       currentUserRole
       publicationStatus
+      externalLinks {
+        provider
+        link
+      }
     }
   }`
 
@@ -154,6 +176,7 @@ export interface EditProjectQuery {
   isPublic: boolean;
   currentUserRole: ProjectRole | null;
   publicationStatus: string;
+  externalLinks: ExternalLink[];
 }
 
 const projectsListItemFragment =

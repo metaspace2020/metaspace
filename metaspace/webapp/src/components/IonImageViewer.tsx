@@ -76,12 +76,12 @@ const useScrollBlock = () => {
   }
   const renderScrollBlock = () => (<div
     class={{
-      'absolute inset-0 z-30 pointer-events-none': true,
-      'bg-white opacity-0 duration-1000': !state.overlayFadingIn,
-      'bg-black opacity-75 duration-700': state.overlayFadingIn,
+      'absolute inset-0 z-30 pointer-events-none bg-body flex items-center justify-center': true,
+      'opacity-0 duration-1000': !state.overlayFadingIn,
+      'opacity-75 duration-700': state.overlayFadingIn,
     }}
   >
-    <p class="relative block top-1/2 z-40 -translate-y-1/2 p-auto text-white text-center text-2xl">
+    <p class="relative block z-40 m-0 text-white text-2xl">
       Use { messageOS.value } to zoom the image
     </p>
   </div>)

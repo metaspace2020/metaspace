@@ -3,55 +3,53 @@
     <div
       v-if="tour"
       ref="container"
-      class="ts-container"
+      class="el-popover el-popper el-popover--plain max-w-sm leading-5 p-5 text-left relative"
     >
-      <div class="bubble-container">
+      <div class="h-5 pr-8 flex items-center">
         <el-progress
+          class="w-full"
           :percentage="100 * (stepNum + 1) / tour.steps.length"
           :stroke-width="10"
           :show-text="false"
-          style="width: 350px;"
-        />
-
-        <div class="bubble-content">
-          <h3
-            v-if="step.title !== ''"
-            class="ts-title"
-          >
-            {{ step.title }}
-          </h3>
-          <div
-            v-if="step.content !== ''"
-            class="ts-content"
-            v-html="step.content"
-          />
-        </div>
-
-        <div class="ts-actions">
-          <el-button
-            v-if="stepNum > 0"
-            size="small"
-            @click.native="prevStep"
-          >
-            Back
-          </el-button>
-
-          <el-button
-            size="small"
-            type="primary"
-            @click.native="nextStep"
-          >
-            {{ stepNum == tour.steps.length - 1 ? 'Done' : 'Next' }}
-          </el-button>
-        </div>
-
-        <i
-          class="el-icon-error ts-close"
-          title="Close"
-          @click="close"
         />
       </div>
 
+      <h3
+        v-if="step.title !== ''"
+        class="leading-10 m-0 mt-5"
+      >
+        {{ step.title }}
+      </h3>
+      <div
+        v-if="step.content !== ''"
+        class="ts-content"
+        v-html="step.content"
+      />
+      <div class="h-10 mt-5 flex justify-end items-center">
+        <el-button
+          v-if="stepNum > 0"
+          :key="step.title + '-back'"
+          size="small"
+          @click.native="prevStep"
+        >
+          Back
+        </el-button>
+        <el-button
+          :key="step.title + '-next'"
+          size="small"
+          type="primary"
+          @click.native="nextStep"
+        >
+          {{ stepNum == tour.steps.length - 1 ? 'Done' : 'Next' }}
+        </el-button>
+      </div>
+      <button
+        class="button-reset ts-close"
+        title="Exit tour"
+        @click="close"
+      >
+        <close-icon class="h-6 w-6 leading-6 block" />
+      </button>
       <div
         class="popper__arrow"
         x-arrow=""
@@ -65,11 +63,15 @@ import Vue from 'vue'
 import Popper from 'popper.js'
 
 import router from '../../router'
+import CloseIcon from '../../assets/inline/refactoring-ui/close-circle.svg'
 
 const startingRoute = 'help'
 
 export default {
   name: 'TourStep',
+  components: {
+    CloseIcon,
+  },
   props: ['tour'],
   data() {
     return {
@@ -190,100 +192,45 @@ export default {
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
+  .el-popover {
+    z-index: 10100;
+  }
 
- .ts-actions {
-   display: flex;
-   justify-content: flex-end;
- }
+  /deep/ .ts-close {
+    @apply rounded-full text-gray-700;
+    position: absolute;
+    // hard coded to center it against progress bar
+    top: 18px;
+    right: 14px;
 
- $popper-background-color: rgba(250, 250, 250, 0.95);
- $popper-border-color: #ddddce;
- $popper-arrow-color: black;
+    &:active,
+    &:focus {
+      outline: none;
+    }
 
- .ts-container {
-   background: $popper-background-color;
-   color: black;
-   width: 400px;
-   padding: 10px;
-   border-radius: 3px;
-   z-index: 10100;
-   box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.1);
-   border: 2px solid $popper-border-color;
-   font-size: 14px;
+    &:hover,
+    &:focus {
+      @apply text-blue-800;
+      svg .primary {
+        @apply fill-current text-blue-100;
+      }
+    }
+  }
 
-   .ts-close {
-     position: absolute;
-     top: 8px;
-     right: 8px;
-     color: black;
-     background: transparent;
-     border: none;
-
-     &:active,
-     &:focus {
-       outline: none;
-     }
-   }
-
-   .popper__arrow {
-     width: 0;
-     height: 0;
-     border-style: solid;
-     position: absolute;
-     margin: 5px;
-   }
-
-   &[x-placement^="top"] {
-     margin-bottom: 5px;
-
-     .popper__arrow {
-       border-width: 5px 5px 0 5px;
-       border-color: $popper-arrow-color transparent transparent transparent;
-       bottom: -5px;
-       left: calc(50% - 5px);
-       margin-top: 0;
-       margin-bottom: 0;
-     }
-   }
-
-   &[x-placement^="bottom"] {
-     margin-top: 5px;
-
-     .popper__arrow {
-       border-width: 0 5px 5px 5px;
-       border-color: transparent transparent $popper-arrow-color transparent;
-       top: -5px;
-       left: calc(50% - 5px);
-       margin-top: 0;
-       margin-bottom: 0;
-     }
-   }
-
-   &[x-placement^="right"] {
-     margin-left: 5px;
-
-     .popper__arrow {
-       border-width: 5px 5px 5px 0;
-       border-color: transparent $popper-arrow-color transparent transparent;
-       left: -5px;
-       top: calc(50% - 5px);
-       margin-left: 0;
-       margin-right: 0;
-     }
-   }
-
-   &[x-placement^="left"] {
-     margin-right: 5px;
-
-     .popper__arrow {
-       border-width: 5px 0 5px 5px;
-       border-color: transparent transparent transparent $popper-arrow-color;
-       right: -5px;
-       top: calc(50% - 5px);
-       margin-left: 0;
-       margin-right: 0;
-     }
-   }
- }
+  /deep/ .ts-content {
+    > * {
+      margin: 0;
+    }
+    > * + *,
+    ul > li + li {
+      @apply mt-5;
+    }
+    ul, ol {
+      @apply pl-4;
+    }
+    sub {
+      line-height: 1;
+    }
+  }
 </style>

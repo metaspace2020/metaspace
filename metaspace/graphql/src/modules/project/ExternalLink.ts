@@ -1,11 +1,13 @@
-import {UserError} from "graphql-errors";
+import { UserError } from "graphql-errors";
+import { Project } from './model';
+import { PublicationStatusOptions as PSO } from './Publishing'
 
 export type ExternalLinkProvider =
   'MetaboLights'
-| 'PubMed'
-| 'DOI';
+  | 'PubMed'
+  | 'DOI';
 
-export const ExternalLinkProviderOptions: {[K in ExternalLinkProvider]: K} = {
+export const ExternalLinkProviderOptions: { [K in ExternalLinkProvider]: K } = {
   MetaboLights: 'MetaboLights',
   PubMed: 'PubMed',
   DOI: 'DOI',
@@ -16,6 +18,8 @@ const ELPO = ExternalLinkProviderOptions;
 const isExternalLinkProvider = (val: any): val is ExternalLinkProvider => {
   return (Object.values(ELPO) as any[]).includes(val);
 };
+
+const DOI_ORG_DOMAIN = 'https://doi.org/'
 
 export const addExternalLink = (
   oldLinks: ExternalLink[] | null,
@@ -29,13 +33,16 @@ export const addExternalLink = (
   if (link.length > 100) {
     throw new UserError('Link too long');
   }
+  if (provider == ELPO.DOI && !link.startsWith(DOI_ORG_DOMAIN)) {
+    throw new UserError(`DOI link should start with "${DOI_ORG_DOMAIN}"`)
+  }
 
   let newLinks = oldLinks || [];
   if (replaceExisting) {
     newLinks = newLinks.filter(el => el.provider !== provider || el.link === link);
   }
   if (!newLinks.some(el => el.provider === provider && el.link === link)) {
-    newLinks.push({provider: provider, link: link});
+    newLinks.push({ provider: provider, link: link });
   }
   if (newLinks.length > 100) {
     throw new UserError('Too many links');
@@ -58,9 +65,9 @@ export const removeExternalLink = (
   }
 
   if (link != null) {
-    return (oldLinks||[]).filter(el => el.provider !== provider || el.link !== link);
+    return (oldLinks || []).filter(el => el.provider !== provider || el.link !== link);
   } else {
-    return (oldLinks||[]).filter(el => el.provider !== provider);
+    return (oldLinks || []).filter(el => el.provider !== provider);
   }
 };
 

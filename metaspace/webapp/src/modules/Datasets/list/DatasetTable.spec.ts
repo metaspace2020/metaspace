@@ -1,4 +1,4 @@
-import { mount, config as testConfig } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
 import DatasetTable from './DatasetTable.vue'
 import router from '../../../router'
 import { initMockGraphqlClient, apolloProvider } from '../../../../tests/utils/mockGraphqlClient'
@@ -8,6 +8,7 @@ import Vuex from 'vuex'
 import { sync } from 'vuex-router-sync'
 import * as FileSaver from 'file-saver'
 import { merge } from 'lodash-es'
+import { mockGenerateId, resetGenerateId } from '../../../../tests/utils/mockGenerateId'
 jest.mock('file-saver')
 const mockFileSaver = FileSaver as jest.Mocked<typeof FileSaver>
 
@@ -45,9 +46,11 @@ describe('DatasetTable', () => {
 
   afterEach(() => {
     jest.useRealTimers()
+    resetGenerateId()
   })
 
   it('should match snapshot', async() => {
+    mockGenerateId(123)
     initMockGraphqlClient({
       Query: () => ({
         allDatasets: () => {
@@ -66,10 +69,10 @@ describe('DatasetTable', () => {
         }),
       }),
     })
-    const wrapper = mount(DatasetTable, { store, router, apolloProvider, sync: false })
+    const wrapper = mount(DatasetTable, { parentComponent: { store, router }, apolloProvider })
     await Vue.nextTick()
 
-    expect(wrapper).toMatchSnapshot()
+    expect(wrapper.element).toMatchSnapshot()
   })
 
   it('should be able to export a CSV', async() => {
@@ -95,7 +98,7 @@ describe('DatasetTable', () => {
         countDatasets: () => 4,
       }),
     })
-    const wrapper = mount(DatasetTable, { store, router, apolloProvider, sync: false })
+    const wrapper = mount(DatasetTable, { parentComponent: { store, router }, apolloProvider })
     wrapper.setData({ csvChunkSize: 2 })
     await Vue.nextTick()
 

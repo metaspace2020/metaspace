@@ -15,7 +15,7 @@ Vue.use(Vuex)
 
 const setFormField = (wrapper: Wrapper<Vue>, fieldName: string, value: string) => {
   wrapper
-    .findAll<ElementUI.FormItem>(ElementUI.FormItem)
+    .findAllComponents<ElementUI.FormItem>(ElementUI.FormItem)
     .filter((fi: Wrapper<ElementUI.FormItem>) => fi.props().prop === fieldName)
     .at(0)
     .find('input')
@@ -49,14 +49,14 @@ describe('CreateAccountDialog', () => {
     const lastName = 'bar'
     const email = 'test@example.com'
     const password = 'abcd1234'
-    const wrapper = mount(CreateAccountDialog, { store, router, sync: false }) as Wrapper<CreateAccountDialog>
+    const wrapper = mount(CreateAccountDialog, { store, router }) as Wrapper<CreateAccountDialog>
 
     // Act
     setFormField(wrapper, 'firstName', firstName)
     setFormField(wrapper, 'lastName', lastName)
     setFormField(wrapper, 'email', email)
     setFormField(wrapper, 'password', password)
-    wrapper.find(ElementUI.Button).trigger('click')
+    wrapper.findComponent(ElementUI.Button).trigger('click')
     await Vue.nextTick()
 
     // Assert
@@ -66,14 +66,14 @@ describe('CreateAccountDialog', () => {
 
   it('should not submit an invalid form', async() => {
     // Arrange
-    const wrapper = mount(CreateAccountDialog, { store, router, sync: false }) as Wrapper<CreateAccountDialog>
+    const wrapper = mount(CreateAccountDialog, { store, router }) as Wrapper<CreateAccountDialog>
 
     // Act
     setFormField(wrapper, 'firstName', 'foo')
     setFormField(wrapper, 'lastName', 'bar')
     setFormField(wrapper, 'email', 'test@email.com')
     setFormField(wrapper, 'password', '') // Intentionally left empty
-    wrapper.find(ElementUI.Button).trigger('click')
+    wrapper.findComponent(ElementUI.Button).trigger('click')
     await Vue.nextTick()
 
     // Assert
