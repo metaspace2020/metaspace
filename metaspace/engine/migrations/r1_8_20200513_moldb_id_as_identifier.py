@@ -1,5 +1,7 @@
+import argparse
 import json
 import logging
+from typing import List
 
 from elasticsearch import Elasticsearch
 from elasticsearch.client import IngestClient
@@ -189,7 +191,7 @@ def update_es_dataset(ds_doc, moldb_name_id_map):
 
     res = es.search(index='sm', doc_type='dataset', body={'query': {'term': {'ds_id': ds_id}}})
     ds_es_doc = res['hits']['hits'][0]['_source']
-    annotation_counts = ds_es_doc['annotation_counts']
+    annotation_counts = ds_es_doc.get('annotation_counts', [])
     for entry in annotation_counts:
         name = entry['db']['name']
         entry['db']['id'] = moldb_name_id_map.get(name, name)
@@ -205,34 +207,54 @@ def update_es_dataset(ds_doc, moldb_name_id_map):
     )
 
 
-def migrate_moldbs():
+def migrate_moldbs(where: str = None, ds_ids: List[str] = None):
     update_public_database_descriptions()
     update_non_public_databases()
 
     moldb_name_id_map = build_moldb_map()
     moldb_name_id_map_rev = {v: k for k, v in moldb_name_id_map.items()}
 
-    datasets = DB().select_with_fields('SELECT id, config FROM dataset')
+    if where:
+        datasets = DB().select_with_fields(f"SELECT id, config FROM dataset {where}")
+    elif ds_ids:
+        datasets = DB().select_with_fields(
+            "SELECT id, config FROM dataset WHERE id = ANY(%s)", params=(ds_ids,),
+        )
+    else:
+        datasets = DB().select_with_fields(
+            "SELECT id, config FROM dataset WHERE config->>'database_ids' IS NULL"
+        )
+
     failed_datasets = []
-    for ds_doc in datasets:
+    for n, ds_doc in enumerate(datasets, start=1):
+        logger.info(f'Processing dataset: {n}/{len(datasets)}')
         try:
             moldb_ids = [moldb_name_id_map[name] for name in ds_doc['config'].get('databases', [])]
             ds_doc['config']['database_ids'] = moldb_ids
 
-            update_db_dataset(ds_doc)
             update_es_dataset(ds_doc, moldb_name_id_map)
             update_es_annotations(ds_doc, moldb_name_id_map_rev)
+            update_db_dataset(ds_doc)
         except Exception as e:
             logger.warning(f'Failed to migrate dataset {ds_doc["id"]}: {e}')
             failed_datasets.append((ds_doc['id'], e))
 
     if failed_datasets:
-        print(f'Failed datasets: {failed_datasets}')
+        print('FAILED DATASETS:')
+        for ds, err in failed_datasets:
+            print(ds, err)
 
 
 if __name__ == '__main__':
-    with GlobalInit() as sm_config:
+    parser = argparse.ArgumentParser(description='Migrate moldb names -> moldb ids')
+    parser.add_argument('--config', default='conf/config.json')
+    parser.add_argument('--where', help='SQL WHERE statement')
+    parser.add_argument('--ds-ids', help='Dataset ids, comma separated list')
+    args = parser.parse_args()
+
+    with GlobalInit(args.config) as sm_config:
         es: Elasticsearch = init_es_conn(sm_config['elasticsearch'])
         ingest: IngestClient = IngestClient(es)
 
-        migrate_moldbs()
+        ds_ids = args.ds_ids.split(',') if args.ds_ids else None
+        migrate_moldbs(args.where, ds_ids)
