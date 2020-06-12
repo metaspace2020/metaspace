@@ -17,12 +17,12 @@
                 type="selectMulti"
                 name="Metabolite database"
                 :help="dbHelp"
-                :value="value.databases"
-                :error="error && error.databases"
+                :value="value.databaseIds"
+                :error="error && error.databaseIds"
                 :options="databaseOptions"
                 :multiple-limit="MAX_MOL_DBS"
                 required
-                @input="val => onInput('databases', val)"
+                @input="val => onInput('databaseIds', val)"
               />
             </el-col>
             <el-col :span="8">
