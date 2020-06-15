@@ -226,7 +226,7 @@ export default {
               : data.currentUser.primaryGroup && data.currentUser.primaryGroup.group.id,
           },
           submitter: data.currentUser,
-          databases: dataset.databases,
+          databases: dataset ? dataset.databases : [],
         }
       } else {
         const { data } = await this.$apollo.query({
