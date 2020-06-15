@@ -350,6 +350,8 @@
   </div>
 </template>
 <script>
+import './content.css'
+
 import PublicationItem from './PublicationItem'
 /*
 Script to parse Paperpile lists
@@ -382,7 +384,6 @@ export default {
   },
 }
 </script>
-<style src="./content.css" />
 <style scoped>
   .sm-content-page ul {
     @apply mt-3;

@@ -242,11 +242,12 @@
   </div>
 </template>
 <script>
+import './content.css'
+
 export default {
   name: 'PrivacyPage',
 }
 </script>
-<style src="./content.css" />
 <style scoped>
   td:first-child {
     @apply w-4/12;
