@@ -67,7 +67,7 @@
             The <a
               href="http://imzml.org/"
             >imzML input format</a> is an open standard supported by all major mass spectrometer vendors,
-            and all code is <a href="https://github.com/metaspace2020">open-source</a>.
+            and all code is <a href="https://github.com/metaspace2020/metaspace">open-source</a>.
           </p>
         </div>
       </section>
