@@ -1,6 +1,5 @@
 import gql from 'graphql-tag'
 import { omit } from 'lodash-es'
-import { MolecularDB } from '../../../api/moldb'
 
 export interface Option {
   value: string;
@@ -244,17 +243,8 @@ const databaseQueries: FilterQueries = {
         }
       }`,
       fetchPolicy: 'cache-first',
-      variables: {
-        // filter: {
-        //   ...omit($store.getters.gqlDatasetFilter, 'ids'),
-        //   ...(query ? { name: query } : {}),
-        //   status: 'FINISHED',
-        // },
-        // orderBy: query ? 'ORDER_BY_NAME' : 'ORDER_BY_DATE',
-        // sortingOrder: query ? 'ASCENDING' : 'DESCENDING',
-      },
     })
-    return data.options as Option[]
+    return data.options.filter((_: any) => _.label.includes(query)) as Option[]
   },
   async getById($apollo, ids) {
     const { data } = await $apollo.query({
@@ -266,16 +256,16 @@ const databaseQueries: FilterQueries = {
         }
       }`,
       fetchPolicy: 'cache-first',
-      // variables: { ids: ids.join('|') },
     })
 
+    const parsedIds = ids.map(id => parseInt(id, 10))
+    const results: Option[] = []
     for (const option of data.options) {
-      if (option.id === parseInt(ids[0], 10)) {
-        return [option] as Option[]
+      if (parsedIds.includes(option.id)) {
+        results.push(option)
       }
     }
-
-    return []
+    return results
   },
 }
 
