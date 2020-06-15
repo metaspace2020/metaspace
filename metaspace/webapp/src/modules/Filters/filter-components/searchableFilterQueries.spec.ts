@@ -1,12 +1,17 @@
 import searchableFilterQueries, { SearchableFilterKey } from './searchableFilterQueries'
 import graphqlClient, { initMockGraphqlClient } from '../../../../tests/utils/mockGraphqlClient'
+import { mockMolecularDatabases } from '../../../../tests/utils/mockGraphqlData'
 import store from '../../../store'
 import { sync } from 'vuex-router-sync'
 import router from '../../../router'
 
 describe('searchableFilterQueries', () => {
   beforeAll(() => {
-    initMockGraphqlClient()
+    initMockGraphqlClient({
+      Query: () => ({
+        molecularDatabases: mockMolecularDatabases,
+      }),
+    })
     sync(store, router)
   })
 

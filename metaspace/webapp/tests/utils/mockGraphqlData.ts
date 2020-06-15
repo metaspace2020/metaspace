@@ -10,3 +10,8 @@ export const mockAdductSuggestions = () => [
   { adduct: '+Cl', name: '[M + Cl]⁻', charge: -1, hidden: false, default: true },
   { adduct: '[M]-', name: '[M]⁻', charge: -1, hidden: true, default: false },
 ]
+
+export const mockMolecularDatabases = () => [
+  { id: 1, name: 'foo' },
+  { id: 2, name: 'bar' },
+]
