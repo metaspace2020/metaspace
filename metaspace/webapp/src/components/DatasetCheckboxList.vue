@@ -16,10 +16,18 @@
         v-for="dataset in datasets"
         :key="dataset.id"
       >
-        <el-checkbox v-model="selectedDatasets[dataset.id]">
-          {{ dataset.name }}
-          <span class="text-gray-700">
-            (submitted <elapsed-time :date="dataset.uploadDT" />)
+        <el-checkbox
+          v-model="selectedDatasets[dataset.id]"
+          class="flex h-6 items-center"
+        >
+          <span
+            class="truncate"
+            :title="dataset.name"
+          >
+            {{ dataset.name }}
+          </span>
+          <span class="text-gray-700 text-xs tracking-wide pl-1">
+            <elapsed-time :date="dataset.uploadDT" />
           </span>
         </el-checkbox>
       </div>
@@ -44,6 +52,9 @@ export default class DatasetCheckboxList extends Vue {
     @Prop({ type: Array, required: true })
     datasets!: DatasetListItem[];
 
+    @Prop({ default: false })
+    initSelectAll!: boolean;
+
     @Model('input')
     selectedDatasets!: Record<string, boolean>;
 
@@ -51,7 +62,7 @@ export default class DatasetCheckboxList extends Vue {
     populateSelectedDatasetIds() {
       // Rebuild `selectedDatasets` so that the keys are in sync with the ids from `datasets`
       const selectedDatasets = fromPairs(this.datasets.map(({ id }) => {
-        return [id, id in this.selectedDatasets ? this.selectedDatasets[id] : true]
+        return [id, id in this.selectedDatasets ? this.selectedDatasets[id] : this.initSelectAll]
       }))
       this.$emit('input', selectedDatasets)
     }
@@ -77,5 +88,8 @@ export default class DatasetCheckboxList extends Vue {
   }
   .select-buttons {
     margin: 12px 0;
+  }
+  /deep/ .el-checkbox__label {
+    @apply inline-flex flex-grow justify-between items-baseline overflow-hidden;
   }
 </style>
