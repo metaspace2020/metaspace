@@ -8,7 +8,7 @@ import {getUserProjectRoles} from './utils/db';
 import {Request, Response} from 'express';
 import * as _ from 'lodash';
 import * as DataLoader from 'dataloader';
-import {MolecularDB as MolecularDbModel} from './modules/moldb/model';
+import {MolecularDbRepository} from './modules/moldb/MolecularDbRepository';
 
 const getBaseContext = (userFromRequest: JwtUser | UserModel | null, entityManager: EntityManager,
                         req?: Request, res?: Response) => {
@@ -52,13 +52,8 @@ const getBaseContext = (userFromRequest: JwtUser | UserModel | null, entityManag
   };
 
   const getVisibleDatabaseIds = async (): Promise<number[]> => {
-    const where: FindConditions<MolecularDbModel>[] = [{ public: true }];
-    const userGroupIds = user != null ? (user as JwtUser).groupIds : null;
-    if (userGroupIds != null) {
-      where.push({ groupId: In(userGroupIds) });
-    }
-    const databases = await entityManager.getRepository(MolecularDbModel)
-      .find({ select: ['id'], where });
+    const databases = await entityManager.getCustomRepository(MolecularDbRepository)
+      .findDatabases(user as any);
     return databases.map(db => db.id);
   };
 

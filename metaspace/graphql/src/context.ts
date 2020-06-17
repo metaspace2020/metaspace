@@ -24,7 +24,7 @@ export interface ContextUser {
   groupIds?: string[]; // used in esConnector for ES visibility filters
   getProjectRoles: () => Promise<UserProjectRoles>;
   getMemberOfProjectIds: () => Promise<string[]>;  // only projects where user has UPRO.MEMBER, UPRO.MANAGER role
-  getVisibleDatabaseIds: () => Promise<number[]>;  // only projects where user has UPRO.MEMBER, UPRO.MANAGER role
+  getVisibleDatabaseIds: () => Promise<number[]>;  // only databases user has access to
 }
 
 export interface BaseContext {

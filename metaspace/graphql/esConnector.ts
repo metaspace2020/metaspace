@@ -5,9 +5,8 @@ import {UserProjectRoleOptions as UPRO} from './src/modules/project/model';
 import * as elasticsearch from 'elasticsearch';
 import * as sprintf from 'sprintf-js';
 import config from './src/utils/config';
-import logger from './src/utils/logger';
 import {datasetFilters} from './datasetFilters';
-import {ContextUser, UserProjectRoles} from './src/context';
+import {ContextUser} from './src/context';
 import {AnnotationFilter, AnnotationOrderBy, DatasetFilter, DatasetOrderBy, SortingOrder} from './src/binding';
 import * as _ from 'lodash';
 

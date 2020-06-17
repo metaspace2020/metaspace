@@ -12,7 +12,7 @@ export class MolecularDbRepository {
   constructor(private manager: EntityManager) {
   }
 
-  private queryWhere(user: ContextUser, whereClause?: string | Brackets, parameters?: object) {
+  private queryWhere(user: ContextUser | null, whereClause?: string | Brackets, parameters?: object) {
     const columnMap = this.manager.connection
       .getMetadata(MolecularDB)
       .columns
@@ -21,12 +21,16 @@ export class MolecularDbRepository {
     let qb = this.manager.createQueryBuilder(MolecularDB, 'moldb').select(columnMap).orderBy('moldb.name');
 
     // Hide databases the user doesn't have access to
-    if (user.id && user.role === 'admin') {
+    if (user && user.id && user.role === 'admin') {
       qb = qb.where('true'); // For consistency, in case `andWhere` is called without first calling `where`
     } else {
+      const userGroupIds = user && user.groupIds;
       qb = qb.where(new Brackets(
         qb => qb.where('moldb.public = True')
-          .orWhere('moldb.group_id = ANY(:userGroupIds)',{ userGroupIds: user.groupIds })
+          .orWhere(
+            userGroupIds ? 'moldb.group_id = ANY(:userGroupIds)' : 'false',
+            { userGroupIds }
+          )
         )
       );
     }
@@ -51,7 +55,7 @@ export class MolecularDbRepository {
     });
   }
 
-  async findDatabases(user: ContextUser): Promise<MolecularDB[]> {
+  async findDatabases(user: ContextUser | null): Promise<MolecularDB[]> {
     const query = this.queryWhere(user);
     return await query.getRawMany();
   }
