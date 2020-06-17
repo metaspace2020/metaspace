@@ -64,13 +64,7 @@ export default {
       };
     }
 
-    if ('database' in filter) {
-      if (typeof filter.database === 'number') {
-        f.databaseId = filter.database
-      } else {
-        f.database = filter.database
-      }
-    }
+    f.databaseId = filter.database
 
     return f;
   },

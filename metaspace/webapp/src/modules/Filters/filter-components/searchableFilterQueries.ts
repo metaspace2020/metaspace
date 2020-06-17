@@ -244,7 +244,8 @@ const databaseQueries: FilterQueries = {
       }`,
       fetchPolicy: 'cache-first',
     })
-    return data.options.filter((_: any) => _.label.includes(query)) as Option[]
+    const queryRegex = new RegExp(query, 'i')
+    return data.options.filter((_: any) => queryRegex.test(_.label)) as Option[]
   },
   async getById($apollo, ids) {
     const { data } = await $apollo.query({

@@ -101,7 +101,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     defaultInLevels: ['annotation'],
     initialValue: lists =>
       lists.molecularDatabases
-        .filter(d => d.default)[0].id,
+        .filter(d => d.default)[0]?.id,
     removable: false,
     encoding: 'number',
   },

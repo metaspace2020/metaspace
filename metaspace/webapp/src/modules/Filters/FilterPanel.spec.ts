@@ -14,7 +14,7 @@ sync(store, router)
 
 describe('FilterPanel', () => {
   const allFilters = {
-    database: '1',
+    database: 1,
     group: '0123',
     project: '4567',
     submitter: '89AB',
@@ -22,8 +22,8 @@ describe('FilterPanel', () => {
     minMSM: '0.5',
     compoundName: 'C8H20NO6P',
     adduct: '+K',
-    mz: '296.0659',
-    fdrLevel: '0.1',
+    mz: 296.0659,
+    fdrLevel: 0.1,
     polarity: 'Positive',
     organism: 'cow',
     organismPart: 'stomach',
