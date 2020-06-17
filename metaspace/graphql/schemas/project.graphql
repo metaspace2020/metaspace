@@ -16,7 +16,7 @@ type Project {
   numDatasets: Int!
   createdDT: String!
   latestUploadDT: String
-  projectDescription: String
+  projectDescription: String  # JSON-based rich text, in a format defined by tiptap (https://tiptap.scrumpy.io/)
   reviewToken: String
   publicationStatus: PublicationStatus!
   publishedDT: String
@@ -38,7 +38,7 @@ input UpdateProjectInput {
   name: String
   isPublic: Boolean
   urlSlug: String
-  projectDescription: String
+  projectDescription: String  # JSON-based rich text, in a format defined by tiptap (https://tiptap.scrumpy.io/)
 }
 
 input UpdateUserProjectInput {

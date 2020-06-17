@@ -30,6 +30,7 @@ import generateRandomToken from '../../../utils/generateRandomToken';
 import { addExternalLink, removeExternalLink, ExternalLinkProviderOptions as ELPO } from '../ExternalLink';
 import { validateUrlSlugChange } from "../../groupOrProject/urlSlug";
 import moment = require('moment')
+import { validateTiptapJson } from '../../../utils/tiptap'
 
 const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
   const userProject = await ctx.entityManager.findOne(UserProjectModel, {
@@ -79,6 +80,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
     if (projectDetails.urlSlug != null) {
       await validateUrlSlugChange(ctx.entityManager, ProjectModel, projectId, projectDetails.urlSlug)
+    }
+    if (projectDetails.projectDescription != null) {
+      validateTiptapJson(projectDetails.projectDescription, 'projectDescription')
     }
 
     await ctx.entityManager.update(ProjectModel, projectId, projectDetails);

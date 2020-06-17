@@ -9,6 +9,7 @@ import {smApiCreateDatabase, smApiUpdateDatabase, smApiDeleteDatabase} from '../
 import {In} from 'typeorm';
 import {assertImportFileIsValid} from './util/assertImportFileIsValid';
 import {mapToMolecularDB} from './util/mapToMolecularDB';
+import { validateTiptapJson } from '../../utils/tiptap'
 
 
 const QueryResolvers: FieldResolversFor<Query, void> = {
@@ -53,6 +54,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     logger.info(`User ${ctx.user.id} is creating molecular database ${JSON.stringify(databaseDetails)}`);
     const groupId = databaseDetails.groupId as string;
     assertUserBelongsToGroup(ctx, groupId);
+    if (databaseDetails.citation != null) {
+      validateTiptapJson(databaseDetails.citation, 'citation')
+    }
 
     await assertImportFileIsValid(databaseDetails.filePath);
 
@@ -64,6 +68,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
   async updateMolecularDB(source, { databaseId, databaseDetails }, ctx): Promise<MolecularDB> {
     logger.info(`User ${ctx.user.id} is updating molecular database ${JSON.stringify(databaseDetails)}`);
     await assertUserCanEditMolecularDB(ctx, databaseId);
+    if (databaseDetails.citation != null) {
+      validateTiptapJson(databaseDetails.citation, 'citation')
+    }
 
     const { id } = await smApiUpdateDatabase(databaseId, databaseDetails);
     const database = await ctx.entityManager.getRepository(MolecularDbModel).findOneOrFail({ id });

@@ -1,16 +1,28 @@
 import argparse
 import json
 import logging
-from typing import List
+from typing import List, Dict
 
 from elasticsearch import Elasticsearch
 from elasticsearch.client import IngestClient
 
-from sm.engine.db import DB, ConnectionPool
+from sm.engine.db import DB
 from sm.engine.es_export import init_es_conn
-from sm.engine.util import GlobalInit, SMConfig
+from sm.engine.util import GlobalInit
 
 logger = logging.getLogger('engine')
+
+
+def ttdoc(*content: Dict) -> str:
+    return json.dumps({'type': 'doc', 'content': [{'type': 'paragraph', 'content': [*content]}]})
+
+
+def tttext(text: str):
+    return {'type': 'text', 'text': text}
+
+
+def ttlink(text: str, href: str):
+    return {'type': 'text', 'marks': [{'type': 'link', 'attrs': {'href': href}}], 'text': text}
 
 
 database_descriptions = {
@@ -18,70 +30,100 @@ database_descriptions = {
         'description': 'Database containing small molecule metabolites known to be in the human body.',
         'full_name': 'Human Metabolome Database',
         'link': 'http://www.hmdb.ca/about',
-        'citation': '''Wishart DS, Feunang YD, Marcu A, Guo AC, Liang K, et al.,
-HMDB 4.0 &mdash; The Human Metabolome Database for 2018.
-Nucleic Acids Res. 2018. Jan 4;46(D1):D608-17.
-<a href="http://www.ncbi.nlm.nih.gov/pubmed/29140435">29140435</a>''',
+        'citation': ttdoc(
+            tttext('Wishart DS, Feunang YD, Marcu A, Guo AC, Liang K, et al.\n'),
+            tttext('HMDB 4.0 — The Human Metabolome Database for 2018.\n'),
+            tttext('Nucleic Acids Res. 2018 Jan 4;46(D1):D608-17.\n'),
+            ttlink('https://doi.org/10.1093/nar/gkx1089', 'https://doi.org/10.1093/nar/gkx1089'),
+        ),
     },
     'HMDB-v4-endogenous': {
         'description': 'A filtered version of HMDB that contains only molecules labelled in the database as endogenously produced.',
         'full_name': 'Human Metabolome Database Endogenous',
         'link': 'http://www.hmdb.ca/about',
-        'citation': '''Wishart DS, Feunang YD, Marcu A, Guo AC, Liang K, et al.,
-HMDB 4.0 &mdash; The Human Metabolome Database for 2018.
-Nucleic Acids Res. 2018. Jan 4;46(D1):D608-17.
-<a href="http://www.ncbi.nlm.nih.gov/pubmed/29140435">29140435</a>''',
+        'citation': ttdoc(
+            tttext('Wishart DS, Feunang YD, Marcu A, Guo AC, Liang K, et al.\n'),
+            tttext('HMDB 4.0 — The Human Metabolome Database for 2018.\n'),
+            tttext('Nucleic Acids Res. 2018 Jan 4;46(D1):D608-17.\n'),
+            ttlink('https://doi.org/10.1093/nar/gkx1089', 'https://doi.org/10.1093/nar/gkx1089'),
+        ),
     },
     'ChEBI-2018-01': {
         'description': 'A database and ontology of products of nature or synthetic products used to intervene in the processes of living organisms.',
         'full_name': 'Chemical Entities of Biological Interest',
         'link': 'https://www.ebi.ac.uk/chebi/aboutChebiForward.do',
-        'citation': '''Hastings J, Owen G, Dekker A, Ennis M, Kale N, Muthukrishnan V, Turner S, Swainston N, Mendes P, Steinbeck C. (2016).
-ChEBI in 2016: Improved services and an expanding collection of metabolites.
-<a href="http://europepmc.org/abstract/MED/26467479">Nucleic Acids Res.</a>''',
+        'citation': ttdoc(
+            tttext(
+                'Hastings J, Owen G, Dekker A, Ennis M, Kale N, Muthukrishnan V, Turner S, Swainston N, Mendes P, Steinbeck C. (2016).\n'
+            ),
+            tttext(
+                'ChEBI in 2016: Improved services and an expanding collection of metabolites.\n'
+            ),
+            tttext('Nucleic Acids Res. 2016 Jan;44(D1) D1214-9.\n'),
+            ttlink('https://doi.org/10.1093/nar/gkv1031', 'https://doi.org/10.1093/nar/gkv1031'),
+        ),
     },
     'LipidMaps-2017-12-12': {
         'description': 'An experimentally determined list of all of the major and many minor lipid species in mammalian cells.',
         'full_name': 'LIPID Metabolites And Pathways Strategy',
         'link': 'http://www.lipidmaps.org/data/databases.html',
-        'citation': '''LIPID MAPS structure database.
-Sud M., Fahy E., Cotter D., Brown A., Dennis E., Glass C., Murphy R., Raetz C., Russell D., and Subramaniam S.,
-Nucleic Acids Research 35, D527-32 (2006)''',
+        'citation': ttdoc(
+            tttext(
+                'Sud M, Fahy E, Cotter D, Brown A, Dennis EA, Glass CK, Merrill AH Jr, Murphy RC, Raetz CR, Russell DW, Subramaniam S.\n'
+            ),
+            tttext('LMSD: LIPID MAPS structure database.\n'),
+            tttext('Nucleic Acids Res. 2007 Jan;35(Database issue):D527-32.\n'),
+            ttlink('http://doi.org/10.1093/nar/gkl838', 'http://doi.org/10.1093/nar/gkl838'),
+        ),
     },
     'BraChemDB-2018-01': {
         'description': 'A curated rapeseed database from LC-MS/MS measurements.',
         'full_name': 'Brassica Napus database',
-        'link': '',
-        'citation': '<i>University of Rennes 1</i>',
+        'link': None,
+        'citation': ttdoc(tttext('University of Rennes 1')),
     },
     'PAMDB-v1.0': {
         'description': 'An experimentally determined database containing extensive metabolomic data and metabolic pathway diagrams about Pseudomonas aeruginosa (reference strain PAO1).',
         'full_name': 'Pseudomonas aeruginosa Metabolome Database',
         'link': 'http://pseudomonas.umaryland.edu/PAMDB',
-        'citation': '''Weiliang Huang, Luke K. Brewer, Jace W. Jones, Angela T. Nguyen, Ana Marcu, David S. Wishart,
-Amanda G. Oglesby-Sherrouse, Maureen A. Kane, and Angela Wilks (2018).
-PAMDB: a comprehensive Pseudomonas aeruginosa metabolome database.
-Nucleic Acids Res. 46(D1):D575-D580.
-DOI: <a href="https://academic.oup.com/nar/article-lookup/doi/10.1093/nar/gkx1061">10.1093/nar/gkx1061</a>''',
+        'citation': ttdoc(
+            tttext(
+                'Huang W, Brewer LK, Jones JW, Nguyen AT, Marcu A, Wishart DS, Oglesby-Sherrouse AG, Kane MA, Wilks A.\n'
+            ),
+            tttext('PAMDB: a comprehensive Pseudomonas aeruginosa metabolome database.\n'),
+            tttext('Nucleic Acids Res. 2018 Jan 4;46(D1):D575-D580.\n'),
+            ttlink('https://doi.org/10.1093/nar/gkx1061', 'https://doi.org/10.1093/nar/gkx1061'),
+        ),
     },
     'SwissLipids-2018-02-02': {
         'description': 'The set of known, expert curated lipids provided plus a library of theoretical lipid structures.',
         'full_name': 'SwissLipids',
         'link': 'http://www.swisslipids.org/#/about',
-        'citation': '''Lucila Aimo, Robin Liechti, Nevila Hyka-Nouspikel, Anne Niknejad, Anne Gleizes, Lou Götz, Dmitry Kuznetsov,
-Fabrice P.A. David, F. Gisou van der Goot, Howard Riezman, Lydie Bougueleret, Ioannis Xenarios, Alan Bridge;
-The SwissLipids knowledgebase for lipid biology, <i>Bioinformatics</i>,
-Volume 31, Issue 17, 1 September 2015, Pages 2860–2866,
-<a href="https://doi.org/10.1093/bioinformatics/btv285">https://doi.org/10.1093/bioinformatics/btv285</a>''',
+        'citation': ttdoc(
+            tttext(
+                'Lucila Aimo, Robin Liechti, Nevila Hyka-Nouspikel, Anne Niknejad, Anne Gleizes, Lou Götz, Dmitry Kuznetsov,'
+                ' Fabrice P.A. David, F. Gisou van der Goot, Howard Riezman, Lydie Bougueleret, Ioannis Xenarios, Alan Bridge\n'
+            ),
+            tttext('The SwissLipids knowledgebase for lipid biology\n'),
+            tttext('Bioinformatics, Volume 31, Issue 17, 1 September 2015, Pages 2860–2866\n'),
+            ttlink(
+                'https://doi.org/10.1093/bioinformatics/btv285',
+                'https://doi.org/10.1093/bioinformatics/btv285',
+            ),
+        ),
     },
     'ECMDB-2018-12': {
         'description': 'An expertly curated database containing extensive metabolomic data and metabolic pathway diagrams about Escherichia coli (strain K12, MG1655).',
         'full_name': 'E. coli Metabolome Database',
         'link': 'http://ecmdb.ca/about',
-        'citation': ''' Sajed, T., Marcu, A., Ramirez, M., Pon, A., Guo, A., Knox, C., Wilson, M., Grant, J., Djoumbou,
-Y. and Wishart, D. (2015). ECMDB 2.0: A richer resource for understanding the biochemistry of
-E. coli. Nucleic Acids Res, p.gkv1060
-<a href="https://www.ncbi.nlm.nih.gov/pubmed/26481353">https://www.ncbi.nlm.nih.gov/pubmed/26481353</a>''',
+        'citation': ttdoc(
+            tttext(
+                'Sajed T, Marcu A, Ramirez M, Pon A, Guo AC, Knox C, Wilson M, Grant JR, Djoumbou Y, Wishart DS.\n'
+            ),
+            tttext('ECMDB 2.0: A richer resource for understanding the biochemistry of E. coli.\n'),
+            tttext('Nucleic Acids Res. 2016 Jan 4;44(D1):D495-501.\n'),
+            ttlink('https://doi.org/10.1093/nar/gkv1060', 'https://doi.org/10.1093/nar/gkv1060'),
+        ),
     },
 }
 
