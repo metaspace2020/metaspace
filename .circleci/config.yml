@@ -38,11 +38,11 @@ jobs:
             psql -h localhost -U sm -d sm_test -c "CREATE SCHEMA graphql;"
             yarn run gen-binding
             yarn run deref-schema
-            NODE_ENV=test yarn run test --verbose --detectOpenHandles --forceExit
+            NODE_ENV=test yarn run test-ci --verbose --detectOpenHandles --forceExit
       - run:
           name: Upload coverage
           command: |
-            yarn run test --coverage --maxWorkers=1
+            yarn run test-ci --coverage
             npx codecov -p ../.. -F graphql
 
 
