@@ -40,24 +40,20 @@ export class MolecularDbRepository {
     return qb;
   }
 
-  async findDatabases(user: ContextUser): Promise<MolecularDB[]> {
-    const query = this.queryWhere(user);
-    return await query.getRawMany();
-  }
-
-  private async queryByIds(user: ContextUser, databaseIds: number[]): Promise<MolecularDB[]> {
-    const query = this.queryWhere(user, 'moldb.id = ANY(:databaseIds)', { databaseIds });
-    return await query.getRawMany();
-  }
-
   private createDataLoader(ctx: Context, functionName: string) {
     return ctx.contextCacheGet(functionName, [], () => {
       return new DataLoader(async (databaseIds: number[]): Promise<any[]> => {
-        const results = await this.queryByIds(ctx.user, databaseIds);
+        const query = this.queryWhere(ctx.user, 'moldb.id = ANY(:databaseIds)', { databaseIds });
+        const results = await query.getRawMany();
         const keyedResults = _.keyBy(results, 'id');
         return databaseIds.map(id => keyedResults[id]);
       });
     });
+  }
+
+  async findDatabases(user: ContextUser): Promise<MolecularDB[]> {
+    const query = this.queryWhere(user);
+    return await query.getRawMany();
   }
 
   async findDatabaseById(ctx: Context, databaseId: number): Promise<MolecularDB> {
@@ -67,10 +63,10 @@ export class MolecularDbRepository {
       throw new UserError(`Unauthorized or database does not exist`);
     }
     return database;
-  };
+  }
 
   async findDatabasesByIds(ctx: Context, databaseIds: number[]): Promise<MolecularDB[]> {
     const dataLoader = this.createDataLoader(ctx, 'findDatabasesByIdsDataLoader');
     return await dataLoader.loadMany(databaseIds);
-  };
+  }
 }

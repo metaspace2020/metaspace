@@ -60,7 +60,7 @@ const getBaseContext = (userFromRequest: JwtUser | UserModel | null, entityManag
     const databases = await entityManager.getRepository(MolecularDbModel)
       .find({ select: ['id'], where });
     return databases.map(db => db.id);
-  }
+  };
 
   const cachedGetEntityById = async <T>(Model: ObjectType<T> & {}, entityId: any): Promise<T | null> => {
     const modelMetadata = entityManager.connection.getMetadata(Model);
