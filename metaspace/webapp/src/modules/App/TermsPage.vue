@@ -115,8 +115,9 @@
   </div>
 </template>
 <script>
+import './content.css'
+
 export default {
   name: 'TermsPage',
 }
 </script>
-<style src="./content.css" />
