@@ -90,7 +90,12 @@ const router = new VueRouter({
     if (to.hash) {
       return { selector: to.hash, offset: { x: 0, y: 64 } } // offset header height
     }
-    return savedPosition || { x: 0, y: 0 }
+    if (savedPosition) {
+      return savedPosition
+    }
+    if (to.path !== from.path) {
+      return { x: 0, y: 0 }
+    }
   },
 })
 
