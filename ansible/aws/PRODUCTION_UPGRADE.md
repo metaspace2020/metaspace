@@ -49,7 +49,7 @@ e.g. if a function the PR depends on is renamed after the PR branches from maste
 git switch master
 git merge release  # Ideally this should do nothing, as hotfixes should be merged from release back into master ASAP
 git switch release
-git merge master  # Make sure this does a "fast-forward" merge
+git merge master --ff-only  # Enforce a "fast-forward" merge to ensure release doesn't diverge from master
 git push origin master release
 ```
 
