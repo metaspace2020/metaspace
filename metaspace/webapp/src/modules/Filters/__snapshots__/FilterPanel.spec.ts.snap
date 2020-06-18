@@ -80,7 +80,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
-        <mock-el-select placeholder="Start typing name" remote="" filterable="" clearable="" remote-method="function () { [native code] }" loading-text="Loading matching entries..." no-match-text="No matches" multiple-limit="10" value="0123">
+        <mock-el-select placeholder="Start typing name" remote="" filterable="" clearable="true" remote-method="function () { [native code] }" loading-text="Loading matching entries..." no-match-text="No matches" multiple-limit="10" value="0123">
           <mock-el-option value="0123" label="group.label"></mock-el-option>
           <mock-el-option label="currentUser.groups.0.group.label" value="currentUser.groups.0.group.value"></mock-el-option>
           <mock-el-option label="currentUser.groups.1.group.label" value="currentUser.groups.1.group.value"></mock-el-option>
@@ -104,7 +104,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
-        <mock-el-select placeholder="Start typing name" remote="" filterable="" clearable="" remote-method="function () { [native code] }" loading-text="Loading matching entries..." no-match-text="No matches" multiple-limit="10" value="4567">
+        <mock-el-select placeholder="Start typing name" remote="" filterable="" clearable="true" remote-method="function () { [native code] }" loading-text="Loading matching entries..." no-match-text="No matches" multiple-limit="10" value="4567">
           <mock-el-option value="4567" label="project.label"></mock-el-option>
           <mock-el-option label="currentUser.projects.0.project.label" value="currentUser.projects.0.project.value"></mock-el-option>
           <mock-el-option label="currentUser.projects.1.project.label" value="currentUser.projects.1.project.value"></mock-el-option>
@@ -128,7 +128,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
-        <mock-el-select placeholder="Start typing name" remote="" filterable="" clearable="" remote-method="function () { [native code] }" loading-text="Loading matching entries..." no-match-text="No matches" multiple-limit="10" value="89AB">
+        <mock-el-select placeholder="Start typing name" remote="" filterable="" clearable="true" remote-method="function () { [native code] }" loading-text="Loading matching entries..." no-match-text="No matches" multiple-limit="10" value="89AB">
           <mock-el-option value="89AB" label="user.label"></mock-el-option>
           <mock-el-option label="currentUser.label" value="currentUser.id"></mock-el-option>
           <mock-el-option label="currentUser.primaryGroup.group.members.0.user.label" value="currentUser.primaryGroup.group.members.0.user.value"></mock-el-option>
@@ -153,7 +153,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="900" class="tf-value-container pl-3">
       <div slot-key="default">
-        <mock-el-select placeholder="Start typing name" remote="" filterable="" clearable="" remote-method="function () { [native code] }" loading-text="Loading matching entries..." no-match-text="No matches" multiple="true" multiple-limit="10" value="CDEF,GHIJ">
+        <mock-el-select placeholder="Start typing name" remote="" filterable="" clearable="true" remote-method="function () { [native code] }" loading-text="Loading matching entries..." no-match-text="No matches" multiple="true" multiple-limit="10" value="CDEF,GHIJ">
           <mock-el-option value="CDEF"></mock-el-option>
           <mock-el-option value="GHIJ"></mock-el-option>
           <mock-el-option label="options.0.label" value="options.0.value"></mock-el-option>
@@ -225,7 +225,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
-        <mock-el-select placeholder="Start typing name" remote="" filterable="" clearable="" remote-method="function () { [native code] }" loading-text="Loading matching entries..." no-match-text="No matches" multiple-limit="10" value="1">
+        <mock-el-select placeholder="Start typing name" remote="" filterable="" remote-method="function () { [native code] }" loading-text="Loading matching entries..." no-match-text="No matches" multiple-limit="10" value="1">
           <mock-el-option value="1" label="foo"></mock-el-option>
           <mock-el-option label="bar" value="2"></mock-el-option>
         </mock-el-select>
