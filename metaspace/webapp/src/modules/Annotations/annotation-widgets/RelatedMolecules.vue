@@ -108,7 +108,7 @@ export default {
   },
   props: {
     annotation: { type: Object, required: true },
-    database: { type: String, requried: true },
+    databaseId: { type: Number, requried: true },
   },
   data() {
     return {
@@ -125,7 +125,7 @@ export default {
       variables() {
         return {
           datasetId: this.annotation.dataset.id,
-          filter: { database: this.database, ionFormula: this.annotation.ionFormula },
+          filter: { databaseId: this.databaseId, ionFormula: this.annotation.ionFormula },
           orderBy: 'ORDER_BY_FDR_MSM',
           sortingOrder: 'ASCENDING',
         }
@@ -143,7 +143,7 @@ export default {
       variables() {
         return {
           datasetId: this.annotation.dataset.id,
-          filter: { database: this.database, isobaricWith: this.annotation.ionFormula },
+          filter: { databaseId: this.databaseId, isobaricWith: this.annotation.ionFormula },
           orderBy: 'ORDER_BY_FDR_MSM',
           sortingOrder: 'ASCENDING',
         }

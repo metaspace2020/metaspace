@@ -78,7 +78,7 @@ describe('FilterPanel', () => {
     const wrapper = mount(FilterPanel, { router, apolloProvider, store, propsData })
     const newFilters = {
       simpleQuery: 'lorem ipsum',
-      database: '2',
+      database: 2,
       project: 'abc',
       datasetIds: ['aaa', 'bbb'],
       minMSM: '0.1',
