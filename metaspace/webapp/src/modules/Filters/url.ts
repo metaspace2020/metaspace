@@ -87,9 +87,7 @@ export function encodeParams(filter: any, path?: string, filterLists?: MetadataL
       } else if (encoding === 'bool') {
         q[FILTER_TO_URL[key]] = filter[key] ? '1' : '0'
       } else if (encoding === 'number') {
-        if (filter[key] !== undefined) {
-          q[FILTER_TO_URL[key]] = String(filter[key])
-        }
+        q[FILTER_TO_URL[key]] = String(filter[key] ?? '')
       } else {
         q[FILTER_TO_URL[key]] = filter[key]
       }
@@ -147,7 +145,7 @@ export function decodeParams(location: Location, filterLists: any): Object {
       filter[fKey] = value === '1'
     } else if (encoding === 'number') {
       const number = parseFloat(value)
-      filter[fKey] = isNaN(number) ? null : number
+      filter[fKey] = isNaN(number) ? undefined : number
     } else {
       filter[fKey] = value
     }

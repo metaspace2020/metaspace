@@ -11,7 +11,7 @@
       placeholder="Start typing name"
       remote
       filterable
-      clearable
+      :clearable="clearable"
       :remote-method="fetchOptions"
       :loading="loading"
       loading-text="Loading matching entries..."
@@ -64,6 +64,9 @@ export default class SearchableFilter extends Vue {
 
     @Prop({ type: Boolean, default: false })
     multiple!: boolean;
+
+    @Prop({ type: Boolean, default: true })
+    clearable!: boolean;
 
     @Prop()
     value!: string[] | string | undefined;

@@ -66,6 +66,7 @@ export interface FilterSpecification {
   removable?: boolean;
   filterable?: boolean;
   multiple?: boolean;
+  clearable?: boolean;
   hidden?: boolean | (() => boolean);
   debounce?: boolean;
   /** How to encode/decode this filter from the URL */
@@ -87,7 +88,7 @@ export interface FilterSpecification {
 /** Attrs to pass to the component that will render the filter */
 export const FILTER_COMPONENT_PROPS: (keyof FilterSpecification)[] = [
   'name', 'helpComponent',
-  'removable', 'filterable', 'multiple',
+  'removable', 'filterable', 'multiple', 'clearable',
   'optionFormatter', 'valueGetter',
   'debounce',
 ]
@@ -103,6 +104,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
       lists.molecularDatabases
         .filter(d => d.default)[0]?.id,
     removable: false,
+    clearable: false,
     encoding: 'number',
   },
 
