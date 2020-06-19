@@ -40,7 +40,7 @@ const relatedAnnotation = {
 }
 
 describe('RelatedMolecules', () => {
-  const propsData = { annotation: referenceAnnotation, database: 'HMDB-v4' }
+  const propsData = { annotation: referenceAnnotation, databaseId: 22 }
 
   it('should match snapshot', async() => {
     config.features.isomers = true

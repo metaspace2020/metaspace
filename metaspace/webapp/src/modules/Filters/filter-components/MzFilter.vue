@@ -16,8 +16,8 @@
         controls-position="right"
         @change="onChange"
       />
-      <p class="m-0 mt-2 leading-none text-xs">
-        For manual input, press Enter when done
+      <p class="m-0 mt-2 leading-none text-xs tracking-wide">
+        For manual input, press <span class="font-medium">Enter</span> to confirm
       </p>
     </div>
     <span slot="show">

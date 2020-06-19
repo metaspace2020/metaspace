@@ -1,5 +1,5 @@
-import {mzFilterPrecision} from '../lib/util';
-import {decodeParams, decodeSettings, getLevel} from '../modules/Filters';
+import { mzFilterPrecision } from '../lib/util';
+import { decodeParams, decodeSettings, getLevel } from '../modules/Filters';
 import config from '../lib/config';
 
 /** For filters where empty string is a valid client-side value that must be converted to empty string for the API */
@@ -27,7 +27,6 @@ export default {
     const colocalizationAlgo = getters.settings.annotationView.colocalizationAlgo;
 
     const f = {
-      database: filter.database,
       compoundQuery: filter.compoundName,
       chemMod: noneToEmptyString(filter.chemMod),
       neutralLoss: noneToEmptyString(filter.neutralLoss),
@@ -54,26 +53,28 @@ export default {
     }
 
     if (filter.minMSM)
-      f.msmScoreFilter = {min: filter.minMSM, max: 1.0};
+      f.msmScoreFilter = { min: filter.minMSM, max: 1.0 };
 
     if (filter.mz) {
       const mz = parseFloat(filter.mz),
-            deltamz = parseFloat(mzFilterPrecision(mz));
+        deltamz = parseFloat(mzFilterPrecision(mz));
       f.mzFilter = {
         min: mz - deltamz,
         max: mz + deltamz
       };
     }
 
+    f.databaseId = filter.database
+
     return f;
   },
 
   gqlDatasetFilter(state, getters) {
     const filter = getters.filter;
-    const {group, project, submitter, datasetIds, polarity,
-           organism, organismPart, condition, growthConditions,
-           ionisationSource, analyzerType, maldiMatrix, metadataType,
-           compoundName} = filter;
+    const { group, project, submitter, datasetIds, polarity,
+      organism, organismPart, condition, growthConditions,
+      ionisationSource, analyzerType, maldiMatrix, metadataType,
+      compoundName } = filter;
     const level = getters.filterLevel;
     const hasAnnotationMatching = level === 'dataset' && compoundName ? { compoundQuery: compoundName } : undefined;
     return {
@@ -98,10 +99,10 @@ export default {
   },
 
   gqlColocalizationFilter(state, getters) {
-    const {datasetIds, colocalizedWith, database, fdrLevel} = getters.filter;
+    const { datasetIds, colocalizedWith, database, fdrLevel } = getters.filter;
     const colocalizationAlgo = getters.settings.annotationView.colocalizationAlgo;
     if (datasetIds && !datasetIds.includes('|') && colocalizedWith != null && database != null && fdrLevel != null) {
-      return {colocalizedWith, colocalizationAlgo, database, fdrLevel};
+      return { colocalizedWith, colocalizationAlgo, database, fdrLevel };
     } else {
       return null;
     }

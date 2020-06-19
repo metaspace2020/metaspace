@@ -136,7 +136,7 @@ exports[`ProjectsListPage should change actions for projects under review 1`] = 
             </div>
           </div>
           <div class="actions">
-            <div><i class="el-icon-picture"></i> <a href="/annotations?db=&amp;prj=project%202" class="">
+            <div><i class="el-icon-picture"></i> <a href="/annotations?db_id=&amp;prj=project%202" class="">
                 Browse annotations
               </a></div>
             <!---->
@@ -287,7 +287,7 @@ exports[`ProjectsListPage should change actions for published projects 1`] = `
             </div>
           </div>
           <div class="actions">
-            <div><i class="el-icon-picture"></i> <a href="/annotations?db=&amp;prj=project%202" class="">
+            <div><i class="el-icon-picture"></i> <a href="/annotations?db_id=&amp;prj=project%202" class="">
                 Browse annotations
               </a></div>
             <!---->
@@ -438,7 +438,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
             </div>
           </div>
           <div class="actions">
-            <div><i class="el-icon-picture"></i> <a href="/annotations?db=&amp;prj=project%202" class="">
+            <div><i class="el-icon-picture"></i> <a href="/annotations?db_id=&amp;prj=project%202" class="">
                 Browse annotations
               </a></div>
             <!---->

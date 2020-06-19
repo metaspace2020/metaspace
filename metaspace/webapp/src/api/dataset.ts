@@ -1,5 +1,7 @@
 import gql from 'graphql-tag'
 
+import { MolecularDB } from './moldb'
+
 // Prefixing these with `Gql` because differently-cased variants are used elsewhere
 export type GqlPolarity = 'POSITIVE' | 'NEGATIVE';
 export type GqlJobStatus = 'QUEUED' | 'ANNOTATING' | 'FINISHED' | 'FAILED';
@@ -39,9 +41,11 @@ export interface DatasetDetailItem {
   metadataJson: string;
   isPublic: boolean;
   molDBs: string[];
+  databases: MolecularDB[];
   status: GqlJobStatus | null;
   metadataType: string;
   fdrCounts: {
+    databaseId: number,
     dbName: string;
     levels: number[];
     counts: number[];
@@ -76,11 +80,15 @@ export const datasetDetailItemFragment =
     growthConditions
     metadataJson
     isPublic
-    molDBs
+    databases {
+      id
+      name
+    }
     status
     statusUpdateDT
     metadataType
     fdrCounts(inpFdrLvls: $inpFdrLvls, checkLvl: $checkLvl) {
+      databaseId
       dbName
       levels
       counts

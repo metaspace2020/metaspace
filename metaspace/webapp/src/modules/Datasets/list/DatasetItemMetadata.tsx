@@ -119,7 +119,7 @@ const DatasetItemMetadata = createComponent({
           </div>
           {dataset.status === 'FINISHED' && dataset.fdrCounts && <div class="ds-item-line">
             <span>
-              <FilterLink filter={{ database: dataset.fdrCounts.dbName, datasetIds: [dataset.id] }}>
+              <FilterLink filter={{ database: dataset.fdrCounts.databaseId, datasetIds: [dataset.id] }}>
                 {plural(dataset.fdrCounts.counts.join(', '), 'annotation', 'annotations')}
               </FilterLink>
               {' @ FDR '}

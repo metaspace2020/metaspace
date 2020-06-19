@@ -5,6 +5,7 @@ import AboutPage from './modules/App/AboutPage.vue'
 import DatasetsPage from './modules/Datasets/DatasetsPage.vue'
 import { DialogPage, ResetPasswordPage } from './modules/Account'
 import { redirectAfterSignIn } from './modules/Account/signInReturnUrl'
+import { updateDBParam } from './modules/Filters/url'
 import NotFoundPage from './modules/App/NotFoundPage.vue'
 
 Vue.use(VueRouter)
@@ -34,13 +35,19 @@ const asyncPagesFreelyTyped = {
 }
 const asyncPages = asyncPagesFreelyTyped as Record<keyof typeof asyncPagesFreelyTyped, AsyncComponent>
 
-const convertLegacyHashUrls = () => {
-  const { pathname, hash } = window.location
+const convertLegacyUrls = () => {
+  const { pathname, hash, search } = window.location
   if (pathname === '/' && hash && hash.startsWith('#/')) {
     history.replaceState(undefined, undefined as any, hash.slice(1))
   }
+  if (pathname === '/annotations') {
+    const updatedQueryString = updateDBParam(search.slice(1))
+    if (updatedQueryString !== null) {
+      history.replaceState(undefined, undefined as any, `${pathname}?${updatedQueryString}`)
+    }
+  }
 }
-convertLegacyHashUrls()
+convertLegacyUrls()
 
 const router = new VueRouter({
   mode: 'history',

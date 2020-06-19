@@ -97,7 +97,7 @@ import CandidateMoleculesPopover from '../CandidateMoleculesPopover'
 
 export default {
   components: { ImageLoader, CandidateMoleculesPopover },
-  props: ['query', 'annotation', 'database', 'imageLoaderSettings'],
+  props: ['query', 'annotation', 'databaseId', 'imageLoaderSettings'],
   data() {
     return {
       loading: 0,
@@ -122,14 +122,14 @@ export default {
         const vars = { datasetId: this.annotation.dataset.id }
 
         if (this.query === 'allAdducts') {
-          vars.filter = { database: this.database, sumFormula: this.annotation.sumFormula }
+          vars.filter = { databaseId: this.databaseId, sumFormula: this.annotation.sumFormula }
           vars.orderBy = 'ORDER_BY_MZ'
           vars.sortingOrder = 'ASCENDING'
         } else if (this.query === 'colocalized') {
           const mol = this.annotation.ion
           const colocalizationAlgo = this.$store.getters.settings.annotationView.colocalizationAlgo
           const fdrLevel = this.$store.getters.filter.fdrLevel || this.annotation.fdrLevel
-          vars.filter = { database: this.database, colocalizedWith: mol, fdrLevel, colocalizationAlgo }
+          vars.filter = { databaseId: this.databaseId, colocalizedWith: mol, fdrLevel, colocalizationAlgo }
           vars.colocalizationCoeffFilter = vars.filter
           vars.orderBy = 'ORDER_BY_COLOCALIZATION'
           vars.sortingOrder = 'DESCENDING'

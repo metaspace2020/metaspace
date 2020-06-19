@@ -26,16 +26,16 @@ export default {
     PlotLegend,
     XicPlot,
   },
-  props: ['query', 'annotation', 'database', 'acquisitionGeometry'],
+  props: ['query', 'annotation', 'databaseId', 'acquisitionGeometry'],
   apollo: {
     annotations: {
       query: relatedAnnotationsQuery,
       variables() {
         let filter
         if (this.query === 'allAdducts') {
-          filter = { database: this.database, sumFormula: this.annotation.sumFormula }
+          filter = { databaseId: this.databaseId, sumFormula: this.annotation.sumFormula }
         } else if (this.query === 'colocalized') {
-          filter = { database: this.database, colocalizedWith: this.annotation.id }
+          filter = { databaseId: this.databaseId, colocalizedWith: this.annotation.id }
         }
         return { datasetId: this.annotation.dataset.id, filter }
       },

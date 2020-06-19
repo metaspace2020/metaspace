@@ -150,10 +150,10 @@ const DatasetItemActions = createComponent({
             >
               <div class="db-link-list">
               Select a database:
-                {dataset.molDBs.map(database => (
-                  <div key={database}>
-                    <FilterLink filter={{ database, datasetIds: [dataset.id] }}>
-                      {database}
+                {dataset.databases.map(db => (
+                  <div key={db.id}>
+                    <FilterLink filter={{ database: db.id, datasetIds: [dataset.id] }}>
+                      {db.name}
                     </FilterLink>
                   </div>
                 ))}

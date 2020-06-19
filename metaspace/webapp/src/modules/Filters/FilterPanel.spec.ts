@@ -7,14 +7,14 @@ import Vuex from 'vuex'
 import store from '../../store/index'
 import { sync } from 'vuex-router-sync'
 import { encodeParams } from './url'
-import { mockAdductSuggestions } from '../../../tests/utils/mockGraphqlData'
+import { mockAdductSuggestions, mockMolecularDatabases } from '../../../tests/utils/mockGraphqlData'
 
 Vue.use(Vuex)
 sync(store, router)
 
 describe('FilterPanel', () => {
   const allFilters = {
-    database: 'HMDBv4',
+    database: 1,
     group: '0123',
     project: '4567',
     submitter: '89AB',
@@ -22,8 +22,8 @@ describe('FilterPanel', () => {
     minMSM: '0.5',
     compoundName: 'C8H20NO6P',
     adduct: '+K',
-    mz: '296.0659',
-    fdrLevel: '0.1',
+    mz: 296.0659,
+    fdrLevel: 0.1,
     polarity: 'Positive',
     organism: 'cow',
     organismPart: 'stomach',
@@ -40,6 +40,7 @@ describe('FilterPanel', () => {
     initMockGraphqlClient({
       Query: () => ({
         adductSuggestions: mockAdductSuggestions,
+        molecularDatabases: mockMolecularDatabases,
       }),
     })
     store.commit('setFilterLists', null)
@@ -77,7 +78,7 @@ describe('FilterPanel', () => {
     const wrapper = mount(FilterPanel, { router, apolloProvider, store, propsData })
     const newFilters = {
       simpleQuery: 'lorem ipsum',
-      database: 'CHEBI',
+      database: 2,
       project: 'abc',
       datasetIds: ['aaa', 'bbb'],
       minMSM: '0.1',

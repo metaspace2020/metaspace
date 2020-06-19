@@ -17,12 +17,12 @@
                 type="selectMulti"
                 name="Metabolite database"
                 :help="dbHelp"
-                :value="value.molDBs"
-                :error="error && error.molDBs"
-                :options="molDBOptions"
+                :value="value.databaseIds"
+                :error="error && error.databaseIds"
+                :options="databaseOptions"
                 :multiple-limit="MAX_MOL_DBS"
                 required
-                @input="val => onInput('molDBs', val)"
+                @input="val => onInput('databaseIds', val)"
               />
             </el-col>
             <el-col :span="8">
@@ -270,7 +270,7 @@ export default class MetaspaceOptionsSection extends Vue {
     error?: Record<string, any>;
 
     @Prop({ type: Array, required: true })
-    molDBOptions!: string[];
+    molDBOptions!: { id: number, name: string }[];
 
     @Prop({ type: Array, required: true })
     adductOptions!: {value: string, label: string}[];
@@ -291,6 +291,10 @@ export default class MetaspaceOptionsSection extends Vue {
 
     neutralLossOptions: string[] = [];
     chemModOptions: string[] = [];
+
+    get databaseOptions() {
+      return this.molDBOptions.map(db => ({ value: db.id, label: db.name }))
+    }
 
     onInput<TKey extends keyof MetaspaceOptions>(field: TKey, val: MetaspaceOptions[TKey]) {
       this.$emit('input', { ...this.value, [field]: val })
