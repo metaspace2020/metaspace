@@ -1,14 +1,14 @@
 import {
-  GraphQLField, GraphQLInputField,
+  graphql,
+  GraphQLField,
+  GraphQLInputField,
   GraphQLInputObjectType,
   GraphQLObjectType,
   GraphQLType,
   isEnumType,
   isNonNullType,
   isScalarType,
-} from 'graphql';
-import {runQuery} from 'apollo-server-core';
-import {QueryOptions} from 'apollo-server-core/dist/runQuery';
+} from 'graphql'
 
 import {createConnection} from '../utils/db';
 import {Connection, EntityManager} from 'typeorm';
@@ -98,15 +98,17 @@ export const onAfterEach = async () => {
   (adminContext as any) = undefined;
 };
 
-export const doQuery = async <T = any>(query: string, variables?: object, options?: Partial<QueryOptions>): Promise<T> => {
-  const context = userContext || anonContext;
-  const {data, errors} = await runQuery({
+interface DoQueryOptions {
+  context?: Context
+}
+
+export const doQuery = async <T = any>(query: string, variables?: object, options?: DoQueryOptions): Promise<T> => {
+  const context = options?.context || userContext || anonContext;
+  const {data, errors} = await graphql({
     schema,
-    context,
-    queryString: query,
-    variables,
-    request: {} as any,
-    ...options,
+    contextValue: context,
+    source: query,
+    variableValues: variables,
   });
   (context as any).contextCacheClear();
   if (errors != null && errors.length > 0) {
