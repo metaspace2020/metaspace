@@ -117,7 +117,7 @@
             v-if="annotation && activeSections.indexOf('compounds') !== -1"
             query="isomers"
             :annotation="annotation"
-            :database="this.$store.getters.filter.database"
+            :database-id="this.$store.getters.filter.database"
           />
         </el-collapse-item>
 
@@ -163,7 +163,7 @@
             v-if="activeSections.indexOf('colocalized') !== -1"
             query="colocalized"
             :annotation="annotation"
-            :database="this.$store.getters.filter.database"
+            :database-id="this.$store.getters.filter.database"
             :acquisition-geometry="msAcqGeometry"
             :image-loader-settings="imageLoaderSettings"
             :scale-type="scaleType"
@@ -179,7 +179,7 @@
             v-if="activeSections.indexOf('adducts') !== -1"
             query="allAdducts"
             :annotation="annotation"
-            :database="this.$store.getters.filter.database"
+            :database-id="this.$store.getters.filter.database"
             :acquisition-geometry="msAcqGeometry"
             :image-loader-settings="imageLoaderSettings"
             :scale-type="scaleType"

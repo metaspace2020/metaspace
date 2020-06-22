@@ -252,7 +252,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     let outFdrLvls: number[] = [], outFdrCounts: number[] = [], maxCounts = 0, databaseId = null;
     if (ds._source.annotation_counts && ds._source.ds_status === 'FINISHED') {
       const annotCounts: any[] = ds._source.annotation_counts.filter(
-        el => ds._source.ds_moldb_ids.includes(el.db.id)
+        el => ds._source.ds_moldb_ids?.includes(el.db.id) ?? []
       );
       for (let el of annotCounts) {
         let maxCountsCand = el.counts.find((lvlObj: any) => {

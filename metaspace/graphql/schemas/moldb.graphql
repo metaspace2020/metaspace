@@ -24,7 +24,7 @@ input CreateMolecularDBInput {
   fullName: String
   description: String
   link: String
-  citation: String
+  citation: String  # JSON-based rich text, in a format defined by tiptap (https://tiptap.scrumpy.io/)
 }
 
 input UpdateMolecularDBInput {
@@ -32,11 +32,11 @@ input UpdateMolecularDBInput {
   fullName: String
   description: String
   link: String
-  citation: String
+  citation: String  # JSON-based rich text, in a format defined by tiptap (https://tiptap.scrumpy.io/)
 }
 
 type Query {
-  molecularDatabases(hideArchived: Boolean=false,
+  molecularDatabases(hideArchived: Boolean=true,
     hideDeprecated: Boolean=false @deprecated(reason: "Only hideArchived should be used"),
     onlyLastVersion: Boolean=false @deprecated(reason: "Only hideArchived should be used")): [MolecularDB!]
 }

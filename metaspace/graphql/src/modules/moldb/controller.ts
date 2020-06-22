@@ -1,14 +1,15 @@
+import {IResolvers} from 'graphql-tools';
+import {UserError} from 'graphql-errors';
+import { validateTiptapJson } from '../../utils/tiptap';
+
+import logger from '../../utils/logger';
+import {Context} from '../../context';
 import {FieldResolversFor} from '../../bindingTypes';
 import {MolecularDB, Mutation, Query} from '../../binding';
-import {MolecularDB as MolecularDbModel} from './model';
-import logger from '../../utils/logger';
-import {IResolvers} from 'graphql-tools';
-import {Context} from '../../context';
-import {UserError} from 'graphql-errors';
 import {smApiCreateDatabase, smApiUpdateDatabase, smApiDeleteDatabase} from '../../utils/smApi/databases';
 import {assertImportFileIsValid} from './util/assertImportFileIsValid';
 import {mapToMolecularDB} from './util/mapToMolecularDB';
-import {MolecularDbRepository} from './MolecularDbRepository'
+import {MolecularDbRepository} from './MolecularDbRepository';
 
 
 const QueryResolvers: FieldResolversFor<Query, void> = {
@@ -53,6 +54,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     logger.info(`User ${ctx.user.id} is creating molecular database ${JSON.stringify(databaseDetails)}`);
     const groupId = databaseDetails.groupId as string;
     assertUserBelongsToGroup(ctx, groupId);
+    if (databaseDetails.citation != null) {
+      validateTiptapJson(databaseDetails.citation, 'citation')
+    }
 
     await assertImportFileIsValid(databaseDetails.filePath);
 
@@ -64,6 +68,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
   async updateMolecularDB(source, { databaseId, databaseDetails }, ctx): Promise<MolecularDB> {
     logger.info(`User ${ctx.user.id} is updating molecular database ${JSON.stringify(databaseDetails)}`);
     await assertUserCanEditMolecularDB(ctx, databaseId);
+    if (databaseDetails.citation != null) {
+      validateTiptapJson(databaseDetails.citation, 'citation')
+    }
 
     const { id } = await smApiUpdateDatabase(databaseId, databaseDetails);
     const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository)

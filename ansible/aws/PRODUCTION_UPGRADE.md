@@ -3,7 +3,7 @@
 https://github.com/metaspace2020/metaspace/compare/release...master
 
 Review all outstanding changes. If you're unfamiliar with any changes, 
-ask the author if there are any manual steps needed. In addition  
+ask the author if there are any manual steps needed. 
 
 ### Main places to check for changes:
 
@@ -40,6 +40,31 @@ where to start looking if something goes wrong.
 Make sure `webapp` and `graphql` builds are passing in the `master` branch in CircleCI. 
 It's possible for PRs that pass all tests to break the build after merging, 
 e.g. if a function the PR depends on is renamed after the PR branches from master.  
+
+# Update git branches and tags
+
+#### Update the `release` branch
+ 
+```bash
+git switch master
+git merge release  # Ideally this should do nothing, as hotfixes should be merged from release back into master ASAP
+git switch release
+git merge master --ff-only  # Enforce a "fast-forward" merge to ensure release doesn't diverge from master
+git push origin master release
+```
+
+#### Create a release tag
+
+Check the [release list](https://github.com/metaspace2020/metaspace/releases) for the latest release tag.
+If the release contains a milestone feature, or backwards-incompatible API changes, increment the minor version. 
+Otherwise increment the patch version.
+
+Create and push a tag with the new version, e.g.
+```bash
+git switch release
+git tag 1.7.6
+git push origin 1.7.6
+```
 
 # Choose a deployment strategy
 

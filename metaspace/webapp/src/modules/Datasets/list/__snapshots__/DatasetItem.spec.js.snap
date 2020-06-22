@@ -134,7 +134,7 @@ exports[`DatasetItem should match snapshot 1`] = `
       <span>
         <a
           class=""
-          href="/annotations?db=HMDB-v2.5&ds=mockdataset"
+          href="/annotations?db_id=6&ds=mockdataset"
         >
           20 annotations
         </a>
@@ -178,7 +178,15 @@ exports[`DatasetItem should match snapshot 1`] = `
             <div>
               <a
                 class=""
-                href="/annotations?db=HMDB-v2.5&ds=mockdataset"
+                href="/annotations?db_id=2&ds=mockdataset"
+              >
+                CHEBI
+              </a>
+            </div>
+            <div>
+              <a
+                class=""
+                href="/annotations?db_id=6&ds=mockdataset"
               >
                 HMDB-v2.5
               </a>
@@ -186,17 +194,9 @@ exports[`DatasetItem should match snapshot 1`] = `
             <div>
               <a
                 class=""
-                href="/annotations?db=HMDB-v4&ds=mockdataset"
+                href="/annotations?db_id=22&ds=mockdataset"
               >
                 HMDB-v4
-              </a>
-            </div>
-            <div>
-              <a
-                class=""
-                href="/annotations?db=CHEBI&ds=mockdataset"
-              >
-                CHEBI
               </a>
             </div>
           </div>

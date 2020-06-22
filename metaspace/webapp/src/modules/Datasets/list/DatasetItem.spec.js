@@ -24,9 +24,14 @@ describe('DatasetItem', () => {
         Detector_Resolving_Power: { mz: 1234, Resolving_Power: 123456 },
       },
     }),
-    molDBs: ['HMDB-v2.5', 'HMDB-v4', 'CHEBI'],
+    databases: [
+      { name: 'CHEBI', id: 2 },
+      { name: 'HMDB-v2.5', id: 6 },
+      { name: 'HMDB-v4', id: 22 },
+    ],
     polarity: 'POSITIVE',
     fdrCounts: {
+      databaseId: 6,
       dbName: 'HMDB-v2.5',
       levels: [10],
       counts: [20],
