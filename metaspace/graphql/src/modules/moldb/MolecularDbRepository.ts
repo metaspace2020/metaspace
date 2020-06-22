@@ -1,10 +1,10 @@
 import {Brackets, EntityManager, EntityRepository, In} from 'typeorm';
-import {Context, ContextUser} from '../../context';
 import {UserError} from 'graphql-errors';
 import * as DataLoader from 'dataloader';
 import * as _ from 'lodash';
 
 import {MolecularDB} from './model';
+import {Context, ContextUser} from '../../context';
 
 
 @EntityRepository()
@@ -13,12 +13,7 @@ export class MolecularDbRepository {
   }
 
   private queryWhere(user: ContextUser | null, whereClause?: string | Brackets, parameters?: object) {
-    const columnMap = this.manager.connection
-      .getMetadata(MolecularDB)
-      .columns
-      .map(c => `"moldb"."${c.databasePath}" AS "${c.propertyName}"`);
-
-    let qb = this.manager.createQueryBuilder(MolecularDB, 'moldb').select(columnMap).orderBy('moldb.name');
+    let qb = this.manager.createQueryBuilder(MolecularDB, 'moldb').orderBy('moldb.name');
 
     // Hide databases the user doesn't have access to
     if (user && user.id && user.role === 'admin') {
@@ -44,11 +39,11 @@ export class MolecularDbRepository {
     return qb;
   }
 
-  private createDataLoader(ctx: Context, functionName: string) {
-    return ctx.contextCacheGet(functionName, [], () => {
+  private getDataLoader(ctx: Context) {
+    return ctx.contextCacheGet('MolecularDbRepository.getDataLoader', [], () => {
       return new DataLoader(async (databaseIds: number[]): Promise<any[]> => {
         const query = this.queryWhere(ctx.user, 'moldb.id = ANY(:databaseIds)', { databaseIds });
-        const results = await query.getRawMany();
+        const results = await query.getMany();
         const keyedResults = _.keyBy(results, 'id');
         return databaseIds.map(id => keyedResults[id]);
       });
@@ -57,11 +52,11 @@ export class MolecularDbRepository {
 
   async findDatabases(user: ContextUser | null): Promise<MolecularDB[]> {
     const query = this.queryWhere(user);
-    return await query.getRawMany();
+    return await query.getMany();
   }
 
   async findDatabaseById(ctx: Context, databaseId: number): Promise<MolecularDB> {
-    const dataLoader = this.createDataLoader(ctx, 'findDatabaseByIdDataLoader');
+    const dataLoader = this.getDataLoader(ctx);
     const database =  await dataLoader.load(databaseId);
     if (database == null) {
       throw new UserError(`Unauthorized or database does not exist`);
@@ -70,7 +65,7 @@ export class MolecularDbRepository {
   }
 
   async findDatabasesByIds(ctx: Context, databaseIds: number[]): Promise<MolecularDB[]> {
-    const dataLoader = this.createDataLoader(ctx, 'findDatabasesByIdsDataLoader');
+    const dataLoader = this.getDataLoader(ctx);
     return await dataLoader.loadMany(databaseIds);
   }
 }
