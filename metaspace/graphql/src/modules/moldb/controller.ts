@@ -22,23 +22,29 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
 };
 
 const assertUserBelongsToGroup = (ctx: Context, groupId: string) => {
-  if (!ctx.isAdmin) {
-    ctx.getUserIdOrFail(); // Exit early if not logged in
-    if (!ctx.user.groupIds || !ctx.user.groupIds.includes(groupId)) {
-      throw new UserError(`Unauthorized`);
-    }
+  ctx.getUserIdOrFail(); // Exit early if not logged in
+
+  if (ctx.isAdmin) {
+    return;
+  }
+
+  if (!ctx.user.groupIds || !ctx.user.groupIds.includes(groupId)) {
+    throw new UserError(`Unauthorized`);
   }
 };
 
 const assertUserCanEditMolecularDB = async (ctx: Context, databaseId: number) => {
   const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
     .findDatabaseById(ctx, databaseId);
-  if (database.public) {
-    throw new UserError('Cannot edit public database');
+  if (ctx.isAdmin) {
+    return;
   }
-  if (database.groupId != null) {
-    assertUserBelongsToGroup(ctx, database.groupId);
+
+  if (database.groupId == null) {
+    throw new UserError('Only admins can manage Metaspace public databases');
   }
+
+  assertUserBelongsToGroup(ctx, database.groupId);
 };
 
 const MutationResolvers: FieldResolversFor<Mutation, void>  = {

@@ -53,7 +53,7 @@ const getBaseContext = (userFromRequest: JwtUser | UserModel | null, entityManag
 
   const getVisibleDatabaseIds = async (): Promise<number[]> => {
     const databases = await entityManager.getCustomRepository(MolecularDbRepository)
-      .findDatabases(user as any);
+      .findDatabases(contextUser);
     return databases.map(db => db.id);
   };
 
