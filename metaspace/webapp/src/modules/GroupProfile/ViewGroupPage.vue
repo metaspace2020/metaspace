@@ -39,6 +39,12 @@
           >
             Request sent
           </el-button>
+          <el-button
+            v-if="isGroupMember && tab === 'databases'"
+            type="primary"
+          >
+            Upload database
+          </el-button>
         </div>
         <el-alert
           v-if="roleInGroup === 'INVITED'"
@@ -68,7 +74,10 @@
           </div>
         </el-alert>
       </div>
-      <el-tabs v-model="tab">
+      <el-tabs
+        v-model="tab"
+        class="with-badges"
+      >
         <el-tab-pane
           v-if="canEdit || group.groupDescriptionAsHtml !== ''"
           name="description"
@@ -108,20 +117,31 @@
             {{ 'Members' | optionalSuffixInParens(countMembers) }}
             <notification-icon v-if="hasMembershipRequest" />
           </span>
-          <div style="max-width: 950px">
-            <group-members-list
-              :loading="groupLoading !== 0"
-              :current-user="currentUser"
-              :group="group"
-              :members="members"
-              :refresh-data="refetchGroup"
-            />
-            <p
-              v-if="countHiddenMembers > 0"
-              class="hidden-members-text"
-            >
-              + {{ countHiddenMembers | plural('hidden member', 'hidden members') }}.
-            </p>
+          <group-members-list
+            :loading="groupLoading !== 0"
+            :current-user="currentUser"
+            :group="group"
+            :members="members"
+            :refresh-data="refetchGroup"
+          />
+          <p
+            v-if="countHiddenMembers > 0"
+            class="hidden-members-text"
+          >
+            + {{ countHiddenMembers | plural('hidden member', 'hidden members') }}.
+          </p>
+        </el-tab-pane>
+        <el-tab-pane
+          name="databases"
+          lazy
+        >
+          <span slot="label">
+            <new-feature-badge feature-key="custom_databases">
+              {{ 'Databases' | optionalSuffixInParens(0) }}
+            </new-feature-badge>
+          </span>
+          <div>
+            <databases-table />
           </div>
         </el-tab-pane>
         <el-tab-pane
@@ -166,6 +186,8 @@ import isUuid from '../../lib/isUuid'
 import { optionalSuffixInParens, plural } from '../../lib/vueFilters'
 import { removeDatasetFromAllDatasetsQuery } from '../../lib/updateApolloCache'
 import GroupDescription from './GroupDescription.vue'
+import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
+import DatabasesTable from '../MolecularDatabases/DatabasesTable'
 
   interface ViewGroupProfileData {
     allDatasets: DatasetDetailItem[];
@@ -180,6 +202,8 @@ import GroupDescription from './GroupDescription.vue'
       TransferDatasetsDialog,
       NotificationIcon,
       GroupDescription,
+      NewFeatureBadge,
+      DatabasesTable,
     },
     filters: {
       optionalSuffixInParens,
@@ -271,6 +295,10 @@ export default class ViewGroupPage extends Vue {
     get countMembers() { return this.group && this.group.numMembers }
     maxVisibleDatasets = 8;
 
+    get isGroupMember() {
+      return this.roleInGroup === 'MEMBER' || this.roleInGroup === 'GROUP_ADMIN'
+    }
+
     // get canEditGroupDescr() {
     //   if (!this.canEdit() && this.group.groupDescriptionAsHtml === '') {
     //     return false
@@ -288,7 +316,7 @@ export default class ViewGroupPage extends Vue {
     }
 
     get tab() {
-      if (['description', 'datasets', 'members', 'settings'].includes(this.$route.query.tab)) {
+      if (['description', 'datasets', 'members', 'databases', 'settings'].includes(this.$route.query.tab)) {
         return this.$route.query.tab
       } else {
         return 'datasets'
@@ -297,6 +325,13 @@ export default class ViewGroupPage extends Vue {
 
     set tab(tab: string) {
       this.$router.replace({ query: { tab } })
+    }
+
+    @Watch('tab')
+    checkFeatureBadges() {
+      if (this.tab === 'databases') {
+        hideFeatureBadge('custom_databases')
+      }
     }
 
     get isInvited(): boolean {
