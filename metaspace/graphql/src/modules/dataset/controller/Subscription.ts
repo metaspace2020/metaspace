@@ -34,6 +34,7 @@ const dummyContextUser: ContextUser = {
   authMethod: AuthMethodOptions.UNKNOWN,
   getProjectRoles: async () => { return {}; },
   getMemberOfProjectIds: async () => { return []; },
+  getVisibleDatabaseIds: async () => { return []; },
 };
 
 async function waitForChangeAndPublish(payload: DatasetStatusPayload) {

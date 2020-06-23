@@ -17,7 +17,7 @@
     "dev": "ts-node-dev server.js --respawn server.js",
     "start": "ts-node server.js",
     "test": "NODE_ENV=test jest --maxWorkers=8",
-    "test-ci": "NODE_ENV=test jest --maxWorkers=1",
+    "test-ci": "NODE_ENV=test jest --maxWorkers=2",
     "test-integration": "mocha --timeout 3000 tests/*RegrTest.js # Has not been maintained. Mocha removed due to security advisory in one of its dependencies",
     "gen-binding": "graphql-binding --language typescript --input schema.ts --outputBinding src/binding.ts",
     "deref-schema": "node ./bin/deref_schema.js ./metadataSchemas/",

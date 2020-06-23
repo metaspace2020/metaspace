@@ -5,9 +5,9 @@ import {ESAnnotation} from '../../../../esConnector';
 import config from '../../../utils/config';
 import {ESAnnotationWithColoc} from '../queryFilters';
 import {AllHtmlEntities} from 'html-entities';
-import {getMolecularDbModel} from '../../moldb/util/getMolecularDbModel';
 import {MolecularDB as MolecularDbModel} from '../../moldb/model';
 import {mapToMolecularDB} from '../../moldb/util/mapToMolecularDB';
+import {MolecularDbRepository} from '../../moldb/MolecularDbRepository';
 
 const cleanMoleculeName = (name: string) =>
   // Decode &alpha; &beta; &gamma; etc.
@@ -81,9 +81,17 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
 
   ionFormula: (hit) => hit._source.ion_formula || '', // TODO: Remove ' || ''' after prod has been migrated
 
-  databaseDetails: async (hit, _, ctx) => mapToMolecularDB(await getMolecularDbModel(ctx, hit._source.db_id)),
+  databaseDetails: async (hit, _, ctx) => {
+    const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
+      .findDatabaseById(ctx, hit._source.db_id);
+    return mapToMolecularDB(database);
+  },
 
-  database: async (hit, _, ctx) => (await getMolecularDbModel(ctx, hit._source.db_id)).name,
+  database: async (hit, _, ctx) => {
+    const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
+      .findDatabaseById(ctx, hit._source.db_id);
+    return database.name;
+  },
 
   mz: (hit) => parseFloat(hit._source.centroid_mzs[0] as any),
 

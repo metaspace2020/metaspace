@@ -14,9 +14,9 @@ import * as DataLoader from 'dataloader';
 import { esDatasetByID } from '../../../../esConnector';
 import { ExternalLink } from '../../project/ExternalLink';
 import { S3 } from 'aws-sdk';
-import canViewEsDataset from '../operation/canViewEsDataset'
-import {getMolecularDbModel} from "../../moldb/util/getMolecularDbModel";
-import {MolecularDB} from "../../moldb/model";
+import canViewEsDataset from '../operation/canViewEsDataset';
+import {MolecularDB} from '../../moldb/model';
+import {MolecularDbRepository} from '../../moldb/MolecularDbRepository';
 
 interface DbDataset {
   id: string;
@@ -117,9 +117,8 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   },
 
   async databases(ds, _, ctx): Promise<MolecularDB[]> {
-    return await Promise.all(
-      ds._source.ds_moldb_ids.map(async (databaseId) => (await getMolecularDbModel(ctx, databaseId)))
-    );
+    return await ctx.entityManager.getCustomRepository(MolecularDbRepository)
+      .findDatabasesByIds(ctx, ds._source.ds_moldb_ids);
   },
 
   async molDBs(ds, _, ctx) {
@@ -128,9 +127,9 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       logger.error(`Empty "ds_moldb_ids" field for "${ds._source.ds_id}" dataset`);
       return [];
     }
-    return await Promise.all(
-      ds._source.ds_moldb_ids.map(async (databaseId) => (await getMolecularDbModel(ctx, databaseId)).name)
-    );
+    const databases = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
+      .findDatabasesByIds(ctx, ds._source.ds_moldb_ids);
+    return databases.map(db => db.name);
   },
 
   adducts(ds) {
@@ -279,7 +278,12 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
         logger.error(`"annotation_counts" field for dataset "${ds._source.ds_id}" is incomplete: \
 ${JSON.stringify(ds._source.annotation_counts)}`);
       }
-      const dbName = (databaseId != null) ? (await getMolecularDbModel(ctx, databaseId)).name : '';
+      let dbName = '';
+      if (databaseId != null) {
+        const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
+          .findDatabaseById(ctx, databaseId);
+        dbName = database.name;
+      }
       return {
         'databaseId': databaseId,
         'dbName': dbName,

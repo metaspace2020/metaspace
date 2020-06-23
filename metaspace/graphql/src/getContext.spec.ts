@@ -9,9 +9,16 @@ import {
 } from './tests/graphqlTestEnvironment';
 import {Dataset, DatasetProject} from './modules/dataset/model';
 import {Project, UserProject, UserProjectRoleOptions as UPRO} from './modules/project/model';
-import {createTestProject, createTestProjectMember, createTestUser} from './tests/testDataCreation';
+import {
+  createTestGroup,
+  createTestMolecularDB,
+  createTestProject,
+  createTestProjectMember,
+  createTestUser
+} from './tests/testDataCreation';
 import getContext, {getContextForTest} from './getContext';
 import {MersenneTwister19937, pick} from 'random-js';
+import {MolecularDB} from './modules/moldb/model';
 
 
 describe('getContext', () => {
@@ -156,5 +163,50 @@ describe('getContext', () => {
 
         expect(projectRoles).toMatchObject({[proj1]: UPRO.MANAGER, [proj2]: UPRO.REVIEWER });
       });
+  });
+
+  describe('ContextUser.getVisibleDatabaseIds', () => {
+    const groupId = `00000000-1234-0000-0000-000000000000`;
+    let pubDatabase: MolecularDB;
+    let prvDatabase: MolecularDB;
+
+    const anotherGroupId = `00000000-1234-0000-0000-000000000001`;
+    let anotherPrvDatabase: MolecularDB;
+
+    beforeEach(async () => {
+      await createTestGroup({ id: groupId });
+      pubDatabase = await createTestMolecularDB({ name: 'HMDB-v4', public: true });
+      prvDatabase = await createTestMolecularDB({ name: 'custom-db', public: false, groupId });
+
+      await createTestGroup({ id: anotherGroupId });
+      anotherPrvDatabase = await createTestMolecularDB(
+        { name: 'another-custom-db', public: false, groupId: anotherGroupId }
+      );
+    });
+
+    it('should return only public databases for anonymous user', async () => {
+      const context = getContext({ role: "anonymous" }, testEntityManager, null as any, null as any);
+      const databaseIds = await context.user.getVisibleDatabaseIds();
+
+      expect(databaseIds).toEqual([pubDatabase.id]);
+    });
+
+    it('should return all databases for admin', async () => {
+      const context = getContext(
+        { id: "abc", groupIds: [], role: "admin" }, testEntityManager, null as any, null as any
+      );
+      const databaseIds = await context.user.getVisibleDatabaseIds();
+
+      expect(databaseIds.sort()).toEqual([pubDatabase.id, prvDatabase.id, anotherPrvDatabase.id]);
+    });
+
+    it('should return all public and databases that belong to user group', async () => {
+      const context = getContext(
+        { id: "abc", groupIds: [groupId], role: "user" }, testEntityManager, null as any, null as any
+      );
+      const databaseIds = await context.user.getVisibleDatabaseIds();
+
+      expect(databaseIds.sort()).toEqual([pubDatabase.id, prvDatabase.id]);
+    });
   });
 });
