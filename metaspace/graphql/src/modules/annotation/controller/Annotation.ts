@@ -40,25 +40,37 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
     let compounds = [];
     for (let i = 0; i < names.length; i++) {
       let id = ids[i];
-      let dbName = hit._source.db_name,
-        dbBaseName = dbName.split('-')[0];
+      let dbName = hit._source.db_name;
 
-      let infoURL: string | null = null;
-      if (dbBaseName === 'HMDB') {
+      let infoURL: string | null = null,
+        dbBaseName: string | null = null;
+      if (dbName.startsWith('HMDB')) {
+        dbBaseName = 'HMDB';
         infoURL = `http://www.hmdb.ca/metabolites/${id}`;
-      } else if (dbBaseName === 'ChEBI') {
+      }
+      else if (dbName.startsWith('core_metabolome')) {
+        dbBaseName = 'core_metabolome';
+        infoURL = `http://www.hmdb.ca/metabolites/${id}`;
+      } else if (dbName.startsWith('ChEBI')) {
+        dbBaseName = 'ChEBI';
         infoURL = `http://www.ebi.ac.uk/chebi/searchId.do?chebiId=${id}`;
-      } else if (dbBaseName === 'SwissLipids') {
+      } else if (dbName.startsWith('SwissLipids')) {
+        dbBaseName = 'SwissLipids';
         infoURL = `http://swisslipids.org/#/entity/${id}`;
-      } else if (dbBaseName === 'LipidMaps' || dbBaseName === 'LIPID_MAPS') {
+      } else if (dbName.startsWith('LipidMaps') || dbName.startsWith('LIPID_MAPS')) {
+        dbBaseName = 'LipidMaps';
         infoURL = `http://www.lipidmaps.org/data/LMSDRecord.php?LMID=${id}`;
-      } else if (dbBaseName === 'PAMDB') {
+      } else if (dbName.startsWith('PAMDB')) {
+        dbBaseName = 'PAMDB';
         infoURL = `http://pseudomonas.umaryland.edu/PAMDB?MetID=${id}`;
-      } else if (dbBaseName === 'ECMDB') {
+      } else if (dbName.startsWith('ECMDB')) {
+        dbBaseName = 'ECMDB';
         infoURL = `http://ecmdb.ca/compounds/${id}`;
-      } else if (dbBaseName === 'GNPS') {
+      } else if (dbName.startsWith('GNPS')) {
+        dbBaseName = 'GNPS';
         infoURL = `https://gnps.ucsd.edu/ProteoSAFe/gnpslibraryspectrum.jsp?SpectrumID=${id}`;
-      } else if (dbBaseName === 'NPA') {
+      } else if (dbName.startsWith('NPA')) {
+        dbBaseName = 'NPA';
         infoURL = `https://www.npatlas.org/joomla/index.php/explore/compounds#npaid=${id}`;
       }
 
