@@ -126,8 +126,9 @@ def compute_fdr_and_filter_results(
         'moldb_id', axis=1
     )
     moldb_metrics_fdr_df = compute_fdr(fdr, formula_metrics_df, moldb_formula_map_df)
-    max_fdr = 1.0 if moldb.targeted else 0.5
-    moldb_metrics_fdr_df = moldb_metrics_fdr_df[moldb_metrics_fdr_df.fdr <= max_fdr]
+    if not moldb.targeted:
+        max_fdr = 0.5
+        moldb_metrics_fdr_df = moldb_metrics_fdr_df[moldb_metrics_fdr_df.fdr <= max_fdr]
     moldb_ion_images_rdd = formula_images_rdd.filter(
         lambda kv: kv[0] in moldb_metrics_fdr_df.index  # pylint: disable=cell-var-from-loop
     )

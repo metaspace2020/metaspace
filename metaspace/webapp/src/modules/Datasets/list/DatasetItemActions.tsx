@@ -10,7 +10,7 @@ const DatasetItemActions = createComponent({
   props: {
     dataset: { type: Object as () => DatasetDetailItem, required: true },
     metadata: { type: Object as () => any, required: true },
-    currentUser: { type: Object as () => any, required: true },
+    currentUser: { type: Object as () => any },
   },
   setup(props, { emit, root: { $apollo, $confirm, $notify } }) {
     const state = reactive({

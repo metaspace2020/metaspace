@@ -66,6 +66,7 @@ export class MolecularDbRepository {
 
   async findDatabasesByIds(ctx: Context, databaseIds: number[]): Promise<MolecularDB[]> {
     const dataLoader = this.getDataLoader(ctx);
-    return await dataLoader.loadMany(databaseIds);
+    const databases = await dataLoader.loadMany(databaseIds);
+    return databases.filter(db => db != null);
   }
 }

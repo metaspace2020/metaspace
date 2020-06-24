@@ -70,7 +70,8 @@ class SMapiDatasetManager:
         if 'id' not in doc:
             doc['id'] = now.strftime('%Y-%m-%d_%Hh%Mm%Ss')
 
-        doc['moldb_ids'] = self._add_default_moldbs(doc['moldb_ids'])
+        if 'moldb_ids' in doc:
+            doc['moldb_ids'] = self._add_default_moldbs(doc['moldb_ids'])
         ds_config_kwargs = dict((k, v) for k, v in doc.items() if k in FLAT_DS_CONFIG_KEYS)
 
         try:
