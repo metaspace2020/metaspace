@@ -14,6 +14,10 @@
         @accept="handleAcceptTransferDatasets"
         @close="handleCloseTransferDatasetsDialog"
       />
+      <upload-database-dialog
+        v-if="showUploadDatabaseDialog"
+        @close="showUploadDatabaseDialog = false"
+      />
       <div class="header-row">
         <div class="header-names">
           <h1>{{ group.name }}</h1>
@@ -42,6 +46,7 @@
           <el-button
             v-if="isGroupMember && tab === 'databases'"
             type="primary"
+            @click="showUploadDatabaseDialog = true"
           >
             Upload database
           </el-button>
@@ -188,6 +193,7 @@ import { removeDatasetFromAllDatasetsQuery } from '../../lib/updateApolloCache'
 import GroupDescription from './GroupDescription.vue'
 import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
 import DatabasesTable from '../MolecularDatabases/DatabasesTable'
+import UploadDatabaseDialog from '../MolecularDatabases/UploadDialog'
 
   interface ViewGroupProfileData {
     allDatasets: DatasetDetailItem[];
@@ -204,6 +210,7 @@ import DatabasesTable from '../MolecularDatabases/DatabasesTable'
       GroupDescription,
       NewFeatureBadge,
       DatabasesTable,
+      UploadDatabaseDialog,
     },
     filters: {
       optionalSuffixInParens,
@@ -280,6 +287,7 @@ export default class ViewGroupPage extends Vue {
     groupLoading = 0;
     loaded = false;
     showTransferDatasetsDialog: boolean = false;
+    showUploadDatabaseDialog: boolean = false;
     currentUser: CurrentUserRoleResult | null = null;
     group: ViewGroupResult | null = null;
     data: ViewGroupProfileData | null = null;

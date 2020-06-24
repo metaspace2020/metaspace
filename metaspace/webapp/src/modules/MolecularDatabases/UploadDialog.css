@@ -1,0 +1,50 @@
+.sm-database-upload-dialog .el-dialog {
+  @apply w-full max-w-xl rounded-lg text-body;
+}
+
+.sm-database-upload-dialog .el-dialog__header {
+  @apply p-6 leading-6;
+}
+
+.sm-database-upload-dialog .el-dialog__title {
+  @apply text-base font-medium;
+  color: inherit;
+}
+
+.sm-database-upload-dialog .el-dialog__header {
+  @apply p-6 leading-6;
+}
+
+.sm-database-upload-dialog .el-dialog__body {
+  @apply py-0 px-6 leading-5;
+  color: inherit;
+}
+
+.sm-database-upload-dialog .el-dialog__body > * {
+  @apply m-0;
+}
+
+.sm-database-upload-dialog .el-dialog__body > * + *,
+.sm-database-upload-dialog dl > * + * {
+  @apply mt-3;
+}
+
+.sm-database-upload-dialog dl > div {
+  @apply flex;
+}
+
+.sm-database-upload-dialog dt {
+  @apply font-medium w-1/5;
+}
+
+.sm-database-upload-dialog dd {
+  @apply w-4/5 m-0;
+}
+
+.sm-database-upload-dialog .el-dialog__footer {
+  @apply p-0 pt-6;
+}
+
+.sm-database-upload-dialog .uppy-Dashboard-inner {
+  @apply rounded-t-none rounded-b-lg border-none;
+}
