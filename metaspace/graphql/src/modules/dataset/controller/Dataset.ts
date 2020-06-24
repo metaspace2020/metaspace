@@ -118,7 +118,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
 
   async databases(ds, _, ctx): Promise<MolecularDB[]> {
     return await ctx.entityManager.getCustomRepository(MolecularDbRepository)
-      .findDatabasesByIds(ctx, ds._source.ds_moldb_ids);
+      .findDatabasesByIds(ctx, ds._source.ds_moldb_ids ?? []);
   },
 
   async molDBs(ds, _, ctx) {
@@ -251,8 +251,10 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   async fdrCounts(ds, { inpFdrLvls, checkLvl }: { inpFdrLvls: number[], checkLvl: number }, ctx) {
     let outFdrLvls: number[] = [], outFdrCounts: number[] = [], maxCounts = 0, databaseId = null;
     if (ds._source.annotation_counts && ds._source.ds_status === 'FINISHED') {
+      const visibleDatabaseIds = await ctx.user.getVisibleDatabaseIds()
       const annotCounts: any[] = ds._source.annotation_counts.filter(
-        el => ds._source.ds_moldb_ids?.includes(el.db.id) ?? []
+        el => ds._source.ds_moldb_ids?.includes(el.db.id)
+          && visibleDatabaseIds.includes(el.db.id)
       );
       for (let el of annotCounts) {
         let maxCountsCand = el.counts.find((lvlObj: any) => {
@@ -274,22 +276,16 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
           }
         }
       }
-      if (databaseId == null) {
-        logger.error(`"annotation_counts" field for dataset "${ds._source.ds_id}" is incomplete: \
-${JSON.stringify(ds._source.annotation_counts)}`);
-      }
-      let dbName = '';
       if (databaseId != null) {
         const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
           .findDatabaseById(ctx, databaseId);
-        dbName = database.name;
+        return {
+          'databaseId': databaseId,
+          'dbName': database.name,
+          'levels': outFdrLvls,
+          'counts': outFdrCounts
+        };
       }
-      return {
-        'databaseId': databaseId,
-        'dbName': dbName,
-        'levels': outFdrLvls,
-        'counts': outFdrCounts
-      };
     }
     return null;
   },
