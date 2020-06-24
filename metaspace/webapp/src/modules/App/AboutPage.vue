@@ -67,7 +67,7 @@
             The <a
               href="http://imzml.org/"
             >imzML input format</a> is an open standard supported by all major mass spectrometer vendors,
-            and all code is <a href="https://github.com/metaspace2020">open-source</a>.
+            and all code is <a href="https://github.com/metaspace2020/metaspace">open-source</a>.
           </p>
         </div>
       </section>
@@ -86,21 +86,31 @@
             href="https://www.embl.de/research/units/scb/alexandrov/"
           >Alexandrov team at EMBL</a>.
         </p>
+        <p>
+          For more information on methods, see <router-link to="/publications#ours">
+            our publications<!-- -->
+          </router-link>.
+        </p>
         <h3>
           How can I contribute?
         </h3>
         <p>
-          Please read <a href="https://www.nature.com/nmeth/journal/v14/n1/full/nmeth.4072.html">our publication in Nature
+          Read <a href="https://www.nature.com/nmeth/journal/v14/n1/full/nmeth.4072.html">our publication in Nature
             Methods</a>, follow us on <a href="https://twitter.com/metaspace2020">Twitter</a>, spread the word, and think of
           us while doing good deeds :)
         </p>
-        <ul>
-          <li><strong>Have high-resolution imaging mass spectrometry data?</strong> Please consider uploading.</li>
+        <ul class="mb-6">
+          <li><strong>Have high-resolution imaging mass spectrometry data?</strong> Consider uploading it.</li>
           <li>
-            <strong>Are you a data scientist?</strong> Please feel free to the export the metabolite annotations to mine
-            thousands of metabolites found in hundreds of community-provided datasets.
+            <strong>Are you a data scientist?</strong> Feel free to the export the metabolite annotations and mine
+            hundreds of thousands of metabolites found in community-provided datasets.
           </li>
         </ul>
+        <p>
+          For examples of applications, see <router-link to="/publications#community">
+            publications from other users<!-- -->
+          </router-link>.
+        </p>
         <h3>
           How should I cite METASPACE?
         </h3>
@@ -111,7 +121,7 @@
           and refer to <a href="https://metaspace2020.eu">https://metaspace2020.eu</a>.
         </p>
         <p>
-          If you are preparing a scientific publication based on METASPACE annotations, please create a
+          If you are preparing a scientific publication based on METASPACE annotations, create a
           <router-link to="/projects">
             project<!-- -->
           </router-link> and follow the &lsquo;Scientific Publishing&rsquo; workflow.
@@ -241,6 +251,10 @@ export default {
 
   .sm-about-details h3:not(:first-of-type) {
     @apply mt-12;
+  }
+
+  .sm-about-details ul {
+    @apply mb-6;
   }
 
   .sm-about-funding {

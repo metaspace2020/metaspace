@@ -9,6 +9,8 @@
 </template>
 <script>
 import '../../components/ColourIcon.css'
+import './content.css'
+
 import SignIcon from '../../assets/inline/refactoring-ui/sign.svg'
 
 export default {
@@ -18,4 +20,3 @@ export default {
   },
 }
 </script>
-<style src="./content.css">

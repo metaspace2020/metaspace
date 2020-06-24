@@ -89,18 +89,18 @@
       </li>
       <li>
         <p>
-          Sharing a dataset or parts of it can be shared publicly by the submitter or by any person who is granted
+          A dataset or parts of it can be shared publicly by the submitter or by any person who is granted
           this right from the submitter.
         </p>
       </li>
       <li>
         <p>
-          When shared, a specified dataset or parts of it are shared under the CC-BY 2.0 license
+          When shared, a specified dataset or parts of it are shared under the CC BY 4.0 license
           (<a
-            href="https://creativecommons.org/licenses/by/2.0/"
+            href="https://creativecommons.org/licenses/by/4.0/"
             rel="noopener noreferrer nofollow"
           >
-            <!-- -->https://creativecommons.org/licenses/by/2.0/<!-- -->
+            <!-- -->https://creativecommons.org/licenses/by/4.0/<!-- -->
           </a>) to anyone accessing METASPACE and to the METASPACE team.
         </p>
       </li>
@@ -115,8 +115,9 @@
   </div>
 </template>
 <script>
+import './content.css'
+
 export default {
   name: 'TermsPage',
 }
 </script>
-<style src="./content.css" />

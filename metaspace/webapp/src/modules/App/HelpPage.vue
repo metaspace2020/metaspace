@@ -84,9 +84,7 @@
     </div>
     <h2>Feedback</h2>
     <p>
-      If you have any ideas on how to improve the website, please
-      <a href="https://gitter.im/metaspace2020/metaspace">chat with us on Gitter</a> or
-      send them to <a href="mailto:contact@metaspace2020.eu">our e-mail address</a>.
+      Please send feedback to <a href="mailto:contact@metaspace2020.eu">our e-mail address</a>.
     </p>
   </div>
 </template>

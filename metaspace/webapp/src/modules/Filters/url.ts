@@ -208,6 +208,7 @@ export interface UrlAnnotationViewSettings {
 
 export interface UrlDatasetsSettings {
   tab: string;
+  page: number;
 }
 
 export interface UrlSettings {
@@ -242,11 +243,13 @@ export function decodeSettings(location: Location): UrlSettings | undefined {
 
     datasets: {
       tab: 'List',
+      page: 1,
     },
   }
 
   if (query.page) {
     settings.table.currentPage = parseInt(query.page)
+    settings.datasets.page = parseInt(query.page)
   }
   if (query.sort) {
     settings.table.order = decodeSortOrder(query.sort)

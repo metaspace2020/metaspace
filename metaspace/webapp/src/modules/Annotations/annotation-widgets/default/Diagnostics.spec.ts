@@ -93,6 +93,18 @@ describe('Diagnostics', () => {
 
   const stubs = ['ImageLoader']
 
+  const W = 200
+  const H = 300
+
+  beforeEach(() => {
+    // Set HTMLElements to have non-zero dimensions
+    // @ts-ignore
+    jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() =>
+      ({ left: 200, right: 200 + W, top: 100, bottom: 100 + H, width: W, height: H }))
+    jest.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(() => W)
+    jest.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(() => H)
+  })
+
   it('should match snapshot (no isobars)', async() => {
     initMockGraphqlClient({
       Query: () => ({
