@@ -16,6 +16,7 @@
       />
       <upload-database-dialog
         v-if="showUploadDatabaseDialog"
+        :group-id="groupId"
         @close="showUploadDatabaseDialog = false"
       />
       <div class="header-row">

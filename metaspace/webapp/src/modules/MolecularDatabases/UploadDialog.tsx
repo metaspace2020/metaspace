@@ -3,14 +3,23 @@ import './UploadDialog.css'
 import { createComponent, reactive } from '@vue/composition-api'
 
 import { PrimaryLabelText } from '../../components/Form'
-import UppyUploader from './UppyUploader.vue'
+import UppyUploader from './UppyUploader'
+
+import { createDatabaseQuery } from '../../api/moldb'
+
+const convertToS3 = (url: string) => {
+  const parsedUrl = new URL(url)
+  const bucket = parsedUrl.host.split('.')[0]
+  return `s3://${bucket}/${decodeURIComponent(parsedUrl.pathname.slice(1))}`
+}
 
 const UploadDialog = createComponent({
   props: {
     name: String,
     version: String,
+    groupId: String,
   },
-  setup(props, { emit }) {
+  setup(props, { emit, root }) {
     const state = reactive({
       model: {
         name: props.name,
@@ -23,6 +32,21 @@ const UploadDialog = createComponent({
       // if (!this.isSubmitting) {
       emit('close')
       // }
+    }
+
+    const createDatabase = async(fileName: string, filePath: string) => {
+      await root.$apollo.mutate({
+        mutation: createDatabaseQuery,
+        variables: {
+          input: {
+            name: state.model.name || fileName,
+            version: state.model.version,
+            filePath: convertToS3(filePath),
+            groupId: props.groupId,
+          },
+        },
+      })
+      handleClose()
     }
 
     return () => (
@@ -75,6 +99,7 @@ const UploadDialog = createComponent({
           </div>
         </dl>
         <UppyUploader
+          uploadSuccessful={createDatabase}
           slot="footer"
         />
       </el-dialog>

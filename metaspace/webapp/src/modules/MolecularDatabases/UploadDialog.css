@@ -1,5 +1,5 @@
 .sm-database-upload-dialog .el-dialog {
-  @apply w-full max-w-xl rounded-lg text-body;
+  @apply w-full max-w-xl rounded-lg text-body overflow-hidden;
 }
 
 .sm-database-upload-dialog .el-dialog__header {
@@ -45,6 +45,3 @@
   @apply p-0 pt-6;
 }
 
-.sm-database-upload-dialog .uppy-Dashboard-inner {
-  @apply rounded-t-none rounded-b-lg border-none;
-}

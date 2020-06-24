@@ -35,7 +35,6 @@
     "@types/ws": "^5.1.2",
     "@uppy/aws-s3-multipart": "^1.5.2",
     "@uppy/core": "^1.8.2",
-    "@uppy/dashboard": "^1.6.2",
     "@vue/apollo-composable": "^4.0.0-alpha.7",
     "@vue/cli": "^3.11.0",
     "@vue/composition-api": "^0.3.4",
