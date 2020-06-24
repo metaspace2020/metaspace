@@ -25,7 +25,7 @@ type Dataset {
   metadataJson: String!
   isPublic: Boolean!
   databases: [MolecularDB!]!
-  molDBs: [String!]! @deprecated(reason: "Use \"databases\" instead")
+  molDBs: [String!]!  # @deprecated(reason: "Use \"databases\" instead")
   adducts: [String!]!
   neutralLosses: [String!]!
   chemMods: [String!]!
@@ -38,8 +38,8 @@ type Dataset {
   uploadDateTime: String
   fdrCounts(inpFdrLvls: [Int!]! = [10], checkLvl: Int! = 10): FdrCounts
 
-  opticalImage: String @deprecated(reason: "Use Dataset.opticalImages instead")
-  rawOpticalImageUrl: String @deprecated(reason: "Use Dataset.opticalImages instead")
+  opticalImage: String  # @deprecated(reason: "Use Dataset.opticalImages instead")
+  rawOpticalImageUrl: String  # @deprecated(reason: "Use Dataset.opticalImages instead")
 
   opticalImages(type: OpticalImageType): [OpticalImage!]!
   opticalImageTransform: [[Float!]!]
@@ -80,16 +80,16 @@ type DatasetGroup {
   id: ID!
   name: String!
   shortName: String!
-  urlSlug: String @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
-  members: [UserGroup!] @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
+  urlSlug: String  # @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
+  members: [UserGroup!]  # @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
   adminNames: [String!]
 }
 type DatasetProject {
   id: ID!
   name: String!
   publicationStatus: String!
-  isPublic: Boolean @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
-  urlSlug: String @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
+  isPublic: Boolean  # @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
+  urlSlug: String  # @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
 }
 
 enum DatasetOrderBy {
@@ -166,7 +166,7 @@ input DatasetCreateInput {
   uploadDT: String
   metadataJson: String!
   databaseIds: [Int!]
-  molDBs: [String!] @deprecated(reason: "This field will be removed. Use \"databaseIds\" instead.")
+  molDBs: [String!]  # @deprecated(reason: "This field will be removed. Use \"databaseIds\" instead.")
   adducts: [String!]!
   neutralLosses: [String!]
   chemMods: [String!]
@@ -188,7 +188,7 @@ input DatasetUpdateInput {
   uploadDT: String
   metadataJson: String
   databaseIds: [Int!]
-  molDBs: [String!] @deprecated(reason: "This field will be removed. Use \"databaseIds\" instead.")
+  molDBs: [String!]  # @deprecated(reason: "This field will be removed. Use \"databaseIds\" instead.")
   adducts: [String!]
   neutralLosses: [String!]
   chemMods: [String!]
@@ -286,11 +286,11 @@ type Query {
 
   opticalImageUrl(datasetId: String!, zoom: Float = 1): String
 
-  rawOpticalImage(datasetId: String!): RawOpticalImage @deprecated(reason: "Use Dataset.opticalImages instead")
+  rawOpticalImage(datasetId: String!): RawOpticalImage  # @deprecated(reason: "Use Dataset.opticalImages instead")
 
-  thumbnailImage(datasetId: String!): String @deprecated(reason: "Use Dataset.thumbnailOpticalImageUrl instead")
+  thumbnailImage(datasetId: String!): String  # @deprecated(reason: "Use Dataset.thumbnailOpticalImageUrl instead")
 
-  thumbnailOpticalImageUrl(datasetId: String!): String @deprecated(reason: "Use Dataset.thumbnailOpticalImageUrl instead")
+  thumbnailOpticalImageUrl(datasetId: String!): String  # @deprecated(reason: "Use Dataset.thumbnailOpticalImageUrl instead")
 
   currentUserLastSubmittedDataset: Dataset
 }
