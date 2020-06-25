@@ -1,4 +1,4 @@
-import { createComponent } from '@vue/composition-api'
+import { createComponent, createElement } from '@vue/composition-api'
 
 const DatabasesTable = createComponent({
   props: {
@@ -10,12 +10,21 @@ const DatabasesTable = createComponent({
         data={props.databases}
         style="width: 100%"
       >
-        <el-table-column
-          prop="name"
-          label="Name"
-          min-width={100}
-        >
-        </el-table-column>
+        {createElement('el-table-column', {
+          props: {
+            label: 'Name',
+            minWidth: 100,
+          },
+          scopedSlots: {
+            default: ({ row }) => (
+              <span>
+                <span class="text-body font-medium">{row.name}</span>
+                {' '}
+                <span class="text-gray-700">{row.version}</span>
+              </span>
+            ),
+          },
+        })}
         <el-table-column
           prop="uploadDT"
           label="Uploaded"
