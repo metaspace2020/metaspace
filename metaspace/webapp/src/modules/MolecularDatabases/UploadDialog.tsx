@@ -24,8 +24,10 @@ const UploadDialog = createComponent({
       model: {
         name: props.name,
         version: '',
+        filePath: '',
       },
       isNewVersion: !!props.name,
+      loading: false,
     })
 
     const handleClose = () => {
@@ -34,18 +36,25 @@ const UploadDialog = createComponent({
       // }
     }
 
-    const createDatabase = async(fileName: string, filePath: string) => {
+    const handleUploadSuccess = (fileName: string, filePath: string) => {
+      state.model.filePath = convertToS3(filePath)
+      if (!state.model.name) {
+        state.model.name = fileName.substr(0, fileName.lastIndexOf('.')) || fileName
+      }
+    }
+
+    const createDatabase = async() => {
+      state.loading = true
       await root.$apollo.mutate({
         mutation: createDatabaseQuery,
         variables: {
           input: {
-            name: state.model.name || fileName,
-            version: state.model.version,
-            filePath: convertToS3(filePath),
+            ...state.model,
             groupId: props.groupId,
           },
         },
       })
+      state.loading = false
       handleClose()
     }
 
@@ -78,10 +87,10 @@ const UploadDialog = createComponent({
             />
           </div>
         </form>
-        <p>
+        <p class="mt-3">
           Databases should be provided in CSV format with three columns:
         </p>
-        <dl>
+        <dl class="mt-3">
           <div>
             <dt>id</dt>
             <dd>a numeric identifier</dd>
@@ -98,10 +107,17 @@ const UploadDialog = createComponent({
             </dd>
           </div>
         </dl>
-        <UppyUploader
-          uploadSuccessful={createDatabase}
-          slot="footer"
-        />
+        <UppyUploader uploadSuccessful={handleUploadSuccess} class="text-base leading-6 mt-6" />
+        <span slot="footer">
+          <el-button
+            type="primary"
+            onClick={createDatabase}
+            disabled={!state.model.filePath || !state.model.name}
+            loading={state.loading}
+          >
+            Continue
+          </el-button>
+        </span>
       </el-dialog>
     )
   },

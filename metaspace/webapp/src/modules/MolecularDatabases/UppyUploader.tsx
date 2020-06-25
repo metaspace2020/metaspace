@@ -1,4 +1,4 @@
-import { createComponent, reactive, ref } from '@vue/composition-api'
+import { createComponent, reactive, ref, onUnmounted } from '@vue/composition-api'
 import Uppy from '@uppy/core'
 import AwsS3Multipart from '@uppy/aws-s3-multipart'
 
@@ -15,24 +15,50 @@ const uppyOptions = {
   meta: {},
 }
 
-interface State {
-  status: string
-  error: string | null
-  progress: number
+function preventDropEvents() {
+  const preventDefault = (e) => {
+    e.preventDefault()
+  }
+  window.addEventListener('dragover', preventDefault, false)
+  window.addEventListener('drop', preventDefault, false)
+
+  onUnmounted(() => {
+    window.removeEventListener('dragover', preventDefault)
+    window.removeEventListener('drop', preventDefault)
+  })
 }
 
-const UppyUploader = createComponent({
+interface State {
+  error: string | null
+  fileName: string | null
+  progress: number
+  status: string
+}
+
+interface Props {
+  uploadSuccessful: (filename: string, filePath: string) => void
+}
+
+const UppyUploader = createComponent<Props>({
   props: {
     uploadSuccessful: { type: Function, required: true },
   },
   setup(props, { attrs }) {
     const state = reactive<State>({
       status: 'IDLE',
-      error: null,
+      fileName: null,
       progress: 0,
+      error: null,
     })
 
     const input = ref<HTMLInputElement>(null)
+    const openFilePicker = () => {
+      if (input.value !== null) {
+        input.value.click()
+      }
+    }
+
+    preventDropEvents()
 
     const uppy = Uppy(uppyOptions)
       .use(AwsS3Multipart, {
@@ -47,13 +73,9 @@ const UppyUploader = createComponent({
         state.error = uppy.getState().error || null
       })
       .on('upload-success', async(file, result) => {
-        state.status = 'CREATING'
-        try {
-          await props.uploadSuccessful(file.name, result.uploadURL)
-        } catch (e) {
-          state.status = 'ERROR'
-          state.error = e.message
-        }
+        props.uploadSuccessful(file.name, result.uploadURL)
+        state.fileName = file.name
+        state.status = 'COMPLETE'
       })
 
     const addFile = (file: File) => {
@@ -114,8 +136,8 @@ const UppyUploader = createComponent({
           return 'Uploading...'
         case 'ERROR':
           return state.error
-        case 'CREATING':
-          return 'Creating database...'
+        case 'COMPLETE':
+          return state.fileName
         default:
           return 'Drag and drop, or click to browse'
       }
@@ -126,15 +148,20 @@ const UppyUploader = createComponent({
         class={[
           'h-48 bg-gray-100 text-gray-700 flex items-center justify-center cursor-pointer',
           'transition-colors ease-in-out duration-150',
-          'outline-none border-2 border-dashed border-transparent hover:border-gray-500',
+          'outline-none border-2 border-dashed border-gray-500 hover:border-gray-700',
           'focus:border-primary focus:text-primary focus:bg-blue-100',
           { 'border-primary text-primary bg-blue-100': state.status === 'DRAGOVER' },
         ]}
         tabindex="0"
-        onClick={() => input.value?.click() }
+        onClick={openFilePicker}
         onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
+        onDragover={handleDragOver}
+        onDragleave={handleDragLeave}
+        onKeyup={(e: KeyboardEvent) => {
+          if (e.key === 'Enter' || e.keyCode === 13) {
+            openFilePicker()
+          }
+        }}
       >
         <input
           ref="input"

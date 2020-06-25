@@ -20,11 +20,6 @@
   color: inherit;
 }
 
-.sm-database-upload-dialog .el-dialog__body > * {
-  @apply m-0;
-}
-
-.sm-database-upload-dialog .el-dialog__body > * + *,
 .sm-database-upload-dialog dl > * + * {
   @apply mt-3;
 }
@@ -42,6 +37,5 @@
 }
 
 .sm-database-upload-dialog .el-dialog__footer {
-  @apply p-0 pt-6;
+  @apply p-6;
 }
-
