@@ -3,12 +3,16 @@ import { createComponent, createElement } from '@vue/composition-api'
 const DatabasesTable = createComponent({
   props: {
     databases: Array,
+    handleRowClick: { type: Function, required: true },
   },
   setup(props) {
     return () => (
       <el-table
         data={props.databases}
         style="width: 100%"
+        on={{
+          'row-click': props.handleRowClick,
+        }}
       >
         {createElement('el-table-column', {
           props: {

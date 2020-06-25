@@ -147,7 +147,7 @@
             </new-feature-badge>
           </span>
           <div>
-            <databases-table
+            <databases
               :databases="molecularDatabases"
             />
           </div>
@@ -195,7 +195,7 @@ import { optionalSuffixInParens, plural } from '../../lib/vueFilters'
 import { removeDatasetFromAllDatasetsQuery } from '../../lib/updateApolloCache'
 import GroupDescription from './GroupDescription.vue'
 import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
-import DatabasesTable from '../MolecularDatabases/DatabasesTable'
+import Databases from '../MolecularDatabases'
 import UploadDatabaseDialog from '../MolecularDatabases/UploadDialog'
 import { databaseListItemsQuery, MolecularDB } from '../../api/moldb'
 
@@ -213,7 +213,7 @@ import { databaseListItemsQuery, MolecularDB } from '../../api/moldb'
       NotificationIcon,
       GroupDescription,
       NewFeatureBadge,
-      DatabasesTable,
+      Databases,
       UploadDatabaseDialog,
     },
     filters: {
@@ -279,9 +279,6 @@ import { databaseListItemsQuery, MolecularDB } from '../../api/moldb'
       },
       molecularDatabases: {
         query: databaseListItemsQuery,
-        result(...args: any) {
-          console.log(args)
-        },
       },
       $subscribe: {
         datasetDeleted: {
