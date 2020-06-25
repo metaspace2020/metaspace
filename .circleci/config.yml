@@ -306,9 +306,9 @@ jobs:
       - run:
           name: Import test molecular database
           command: |
-            wget -qN https://sm-engine.s3-eu-west-1.amazonaws.com/tests/hmdb_2-5.tsv -O /tmp/hmdb_2-5.tsv
+            wget -qN https://sm-engine.s3-eu-west-1.amazonaws.com/tests/hmdb_4.tsv -O /tmp/hmdb_4.tsv
             python scripts/import_molecular_db.py --config=tests/sci_test/config.json \
-              HMDB-v2.5 2020-01-01 /tmp/hmdb_2-5.tsv
+              HMDB-v4 2020-01-01 /tmp/hmdb_4.tsv
       - run:
           name: Run scientific test
           command: |
