@@ -90,7 +90,9 @@ const genDatasetId = () => {
     .replace(/([\d\-]+)T(\d+):(\d+):(\d+).*/, '$1_$2h$3m$4s');
 };
 
-export const createTestDataset = async (dataset: Partial<Dataset> = {}, engineDataset: Partial<EngineDataset> = {}): Promise<Dataset> => {
+export const createTestDataset = async (
+  dataset: Partial<Dataset> = {}, engineDataset: Partial<EngineDataset> = {}
+): Promise<Dataset> => {
   const datasetId = engineDataset.id || genDatasetId();
   const datasetPromise = testEntityManager.save(Dataset, {
     id: datasetId,
