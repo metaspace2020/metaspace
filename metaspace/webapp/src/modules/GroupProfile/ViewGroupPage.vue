@@ -143,11 +143,13 @@
         >
           <span slot="label">
             <new-feature-badge feature-key="custom_databases">
-              {{ 'Databases' | optionalSuffixInParens(0) }}
+              {{ 'Databases' | optionalSuffixInParens(countDatabases) }}
             </new-feature-badge>
           </span>
           <div>
-            <databases-table />
+            <databases-table
+              :databases="molecularDatabases"
+            />
           </div>
         </el-tab-pane>
         <el-tab-pane
@@ -195,6 +197,7 @@ import GroupDescription from './GroupDescription.vue'
 import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
 import DatabasesTable from '../MolecularDatabases/DatabasesTable'
 import UploadDatabaseDialog from '../MolecularDatabases/UploadDialog'
+import { databaseListItemsQuery, MolecularDB } from '../../api/moldb'
 
   interface ViewGroupProfileData {
     allDatasets: DatasetDetailItem[];
@@ -274,6 +277,12 @@ import UploadDatabaseDialog from '../MolecularDatabases/UploadDialog'
           return this.groupId == null
         },
       },
+      molecularDatabases: {
+        query: databaseListItemsQuery,
+        result(...args: any) {
+          console.log(args)
+        },
+      },
       $subscribe: {
         datasetDeleted: {
           query: datasetDeletedQuery,
@@ -292,6 +301,7 @@ export default class ViewGroupPage extends Vue {
     currentUser: CurrentUserRoleResult | null = null;
     group: ViewGroupResult | null = null;
     data: ViewGroupProfileData | null = null;
+    molecularDatabases: MolecularDB[] | null = null
 
     get currentUserId(): string | null { return this.currentUser && this.currentUser.id }
     get roleInGroup(): UserGroupRole | null { return this.group && this.group.currentUserRole }
@@ -303,6 +313,8 @@ export default class ViewGroupPage extends Vue {
     get members() { return this.group && this.group.members || [] }
     get countMembers() { return this.group && this.group.numMembers }
     maxVisibleDatasets = 8;
+
+    get countDatabases() { return this.molecularDatabases?.length || 0 }
 
     get isGroupMember() {
       return this.roleInGroup === 'MEMBER' || this.roleInGroup === 'GROUP_ADMIN'

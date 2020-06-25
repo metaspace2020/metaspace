@@ -14,7 +14,8 @@ const DatabasesTable = createComponent({
           prop="name"
           label="Name"
           min-width={100}
-        />
+        >
+        </el-table-column>
         <el-table-column
           prop="uploadDT"
           label="Uploaded"

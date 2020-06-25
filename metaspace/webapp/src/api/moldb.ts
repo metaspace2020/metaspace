@@ -13,3 +13,14 @@ export const createDatabaseQuery =
         id
       }
   }`
+
+export const databaseListItemsQuery =
+  gql`query GetDatabases {
+    molecularDatabases {
+      id
+      name
+      version
+      public
+      archived
+    }
+  }`
