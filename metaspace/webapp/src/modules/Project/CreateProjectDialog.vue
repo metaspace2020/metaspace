@@ -143,7 +143,7 @@ export default class CreateProjectDialog extends Vue {
 </script>
 <style scoped lang="scss">
   .dialog /deep/ .el-dialog {
-    max-width: 600px;
+    @apply max-w-lg;
 
     .el-form-item {
       margin-bottom: 10px;

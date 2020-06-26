@@ -133,7 +133,7 @@ export interface DatasetListItem {
 
 export const datasetListItemsQuery =
   gql`query GetDatasets($dFilter: DatasetFilter, $query: String) {
-    allDatasets(offset: 0, limit: 100, filter: $dFilter, simpleQuery: $query) {
+    allDatasets(offset: 0, limit: 10000, filter: $dFilter, simpleQuery: $query) {
       id
       name
       uploadDT
