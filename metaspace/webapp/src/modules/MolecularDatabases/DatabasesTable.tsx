@@ -9,6 +9,7 @@ const DatabasesTable = createComponent({
     return () => (
       <el-table
         data={props.databases}
+        default-sort={{ prop: 'name' }}
         style="width: 100%"
         on={{
           'row-click': props.handleRowClick,
@@ -16,8 +17,11 @@ const DatabasesTable = createComponent({
       >
         {createElement('el-table-column', {
           props: {
+            prop: 'name',
             label: 'Name',
-            minWidth: 100,
+            minWidth: 144,
+            sortable: true,
+            sortBy: ['name', 'version'],
           },
           scopedSlots: {
             default: ({ row }) => (
@@ -32,31 +36,20 @@ const DatabasesTable = createComponent({
         <el-table-column
           prop="uploadDT"
           label="Uploaded"
-          width={150}
-        />
-        <el-table-column
-          prop="molecules"
-          label="Molecules"
-          align="right"
-          width={150}
-        />
-        <el-table-column
-          prop="annotations"
-          label="Annotations"
-          align="right"
-          width={150}
+          sortable
+          min-width={144}
         />
         <el-table-column
           prop="archived"
-          label="Rxiv'd"
+          label="Archived"
           align="center"
-          width={75}
+          width={144}
         />
         <el-table-column
           prop="public"
           label="Public"
           align="center"
-          width={75}
+          width={144}
         />
       </el-table>
     )

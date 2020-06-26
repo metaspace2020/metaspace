@@ -6,6 +6,9 @@ import FadeTransition from '../../components/FadeTransition'
 import Table from './DatabasesTable'
 import Details from './DatabaseDetails'
 
+import '../../components/MiniIcon.css'
+import ArrowIcon from '../../assets/inline/refactoring-ui/arrow-thin-left-circle.svg'
+
 export default createComponent({
   props: {
     databases: Array,
@@ -33,8 +36,15 @@ export default createComponent({
       <FadeTransition>
         {state.selectedDatabase
           ? <div class="relative">
-            <el-button class="absolute top-0 left-0" onClick={removeSelected}>
-              Go back
+            <el-button
+              class="absolute top-0 left-0 p-0 -mt-1 text-gray-800"
+              onClick={removeSelected}
+              type="text"
+            >
+              <span class="flex items-center">
+                <ArrowIcon class="sm-mini-icon mr-1" />
+                <span class="leading-none mt-1">All databases</span>
+              </span>
             </el-button>
             <Details
               id={state.selectedDatabase}
