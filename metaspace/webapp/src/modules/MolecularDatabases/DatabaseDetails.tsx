@@ -34,7 +34,6 @@ const Details = createComponent({
     })
 
     watch(result, value => {
-      console.log(state.status, value)
       if (value) {
         state.model = value.database
         state.status = 'FETCHED'
