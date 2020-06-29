@@ -20,6 +20,11 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     }
     return databases.map(db => mapToMolecularDB(db));
   },
+  async getMolecularDB(source, { databaseId }, ctx): Promise<MolecularDB> {
+    const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
+      .findDatabaseById(ctx, databaseId);
+    return mapToMolecularDB(database);
+  }
 };
 
 const assertUserBelongsToGroup = (ctx: Context, groupId: string) => {

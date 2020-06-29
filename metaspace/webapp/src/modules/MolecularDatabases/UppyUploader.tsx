@@ -16,7 +16,7 @@ const uppyOptions = {
 }
 
 function preventDropEvents() {
-  const preventDefault = (e) => {
+  const preventDefault = (e: Event) => {
     e.preventDefault()
   }
   window.addEventListener('dragover', preventDefault, false)

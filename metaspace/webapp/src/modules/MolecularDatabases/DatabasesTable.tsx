@@ -14,6 +14,7 @@ const DatabasesTable = createComponent({
         on={{
           'row-click': props.handleRowClick,
         }}
+        row-class-name="cursor-pointer"
       >
         {createElement('el-table-column', {
           props: {

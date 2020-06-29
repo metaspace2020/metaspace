@@ -41,6 +41,7 @@ type Query {
     hideDeprecated: Boolean=false # @deprecated(reason: "Only hideArchived should be used"),
     onlyLastVersion: Boolean=false # @deprecated(reason: "Only hideArchived should be used")
     ): [MolecularDB!]
+  getMolecularDB(databaseId: Int!): MolecularDB!
 }
 
 type Mutation {

@@ -9,18 +9,22 @@ import Details from './DatabaseDetails'
 import '../../components/MiniIcon.css'
 import ArrowIcon from '../../assets/inline/refactoring-ui/arrow-thin-left-circle.svg'
 
+interface State {
+  selectedDatabase: number | null,
+}
+
 export default createComponent({
   props: {
     databases: Array,
   },
   setup(props, { root }) {
-    const state = reactive({
-      selectedDatabase: '',
+    const state = reactive<State>({
+      selectedDatabase: null,
     })
 
     watch(
       () => root.$route.query.db,
-      db => { state.selectedDatabase = db },
+      db => { state.selectedDatabase = parseInt(db, 10) || null },
     )
 
     const selectDatabase = (row: any) => {
@@ -34,7 +38,7 @@ export default createComponent({
 
     return () => (
       <FadeTransition>
-        {state.selectedDatabase
+        {state.selectedDatabase !== null
           ? <div class="relative">
             <el-button
               class="absolute top-0 left-0 p-0 -mt-1 text-gray-800"
