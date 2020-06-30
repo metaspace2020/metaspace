@@ -1,6 +1,6 @@
 import './UploadDialog.css'
 
-import { createComponent, reactive } from '@vue/composition-api'
+import { createComponent, reactive, onMounted, ref } from '@vue/composition-api'
 
 import { PrimaryLabelText } from '../../components/Form'
 import UppyUploader from './UppyUploader'
@@ -58,13 +58,27 @@ const UploadDialog = createComponent({
       handleClose()
     }
 
+    const nameInput = ref<HTMLInputElement>(null)
+    const versionInput = ref<HTMLInputElement>(null)
+    const focusHandler = () => {
+      const inputRef = state.isNewVersion ? versionInput : nameInput
+      if (inputRef.value !== null) {
+        inputRef.value.focus()
+      }
+    }
+
+    // need to do this otherwise the `opened` event doesn't fire
+    const visible = ref(false)
+    onMounted(() => { visible.value = true })
+
     return () => (
       <el-dialog
-        visible
+        visible={visible.value}
         append-to-body
         title="Upload database"
         onClose={handleClose}
         class="sm-database-upload-dialog"
+        onOpened={focusHandler}
       >
         <form class="sm-form flex leading-6">
           <div class="flex-grow">
@@ -72,6 +86,7 @@ const UploadDialog = createComponent({
               <PrimaryLabelText>Name</PrimaryLabelText>
             </label>
             <el-input
+              ref="nameInput"
               id="database-name"
               v-model={state.model.name}
               disabled={state.isNewVersion}
@@ -82,6 +97,7 @@ const UploadDialog = createComponent({
               <PrimaryLabelText>Version</PrimaryLabelText>
             </label>
             <el-input
+              ref="versionInput"
               id="database-version"
               v-model={state.model.version}
             />
