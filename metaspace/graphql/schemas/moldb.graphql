@@ -22,7 +22,7 @@ input CreateMolecularDBInput {
   filePath: String!
   groupId: ID!
   fullName: String
-  description: String
+  description: String # JSON-based rich text, in a format defined by tiptap (https://tiptap.scrumpy.io/)
   link: String
   citation: String  # JSON-based rich text, in a format defined by tiptap (https://tiptap.scrumpy.io/)
 }
@@ -30,7 +30,7 @@ input CreateMolecularDBInput {
 input UpdateMolecularDBInput {
   archived: Boolean
   fullName: String
-  description: String
+  description: String # JSON-based rich text, in a format defined by tiptap (https://tiptap.scrumpy.io/)
   link: String
   citation: String  # JSON-based rich text, in a format defined by tiptap (https://tiptap.scrumpy.io/)
 }

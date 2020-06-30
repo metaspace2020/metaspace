@@ -1,15 +1,22 @@
 import { createComponent, reactive, watch } from '@vue/composition-api'
-import { useQuery } from '@vue/apollo-composable'
+import { useQuery, useMutation } from '@vue/apollo-composable'
 
 import { PrimaryLabelText } from '../../components/Form'
 import FadeTransition from '../../components/FadeTransition'
 import { RichTextArea } from '../../components/RichText'
 
-import { databaseDetailsQuery, DatabaseDetailsQuery, MolecularDB } from '../../api/moldb'
+import {
+  databaseDetailsQuery,
+  DatabaseDetailsQuery,
+  MolecularDB,
+  updateDatabaseDetailsMutation,
+  UpdateDatabaseDetailsMutation,
+} from '../../api/moldb'
 
 interface State {
-  status: 'WAITING' | 'FETCHED' | 'FETCH_ERROR' | 'SUBMIT_ERROR',
-  model: MolecularDB | null
+  model: MolecularDB | undefined
+  name: string | undefined
+  version: string | undefined
 }
 
 const Details = createComponent({
@@ -18,43 +25,74 @@ const Details = createComponent({
   },
   setup(props) {
     const state = reactive<State>({
-      status: 'WAITING',
-      model: null,
+      model: undefined,
+      name: undefined,
+      version: undefined,
     })
 
-    const { result, loading } = useQuery<DatabaseDetailsQuery>(
+    const { result } = useQuery<DatabaseDetailsQuery>(
       databaseDetailsQuery,
       { id: props.id },
+      { fetchPolicy: 'no-cache' },
     )
-
-    watch(loading, isLoading => {
-      if (isLoading) {
-        state.status = 'WAITING'
-      }
-    })
 
     watch(result, value => {
       if (value) {
-        state.model = value.database
-        state.status = 'FETCHED'
+        const {
+          citation,
+          description,
+          fullName,
+          link,
+          name,
+          version,
+        } = value.database
+
+        state.name = name
+        state.version = version
+        state.model = {
+          fullName,
+          description,
+          link,
+          citation,
+          public: false,
+        }
       }
     })
+
+    const {
+      mutate: updateDetails,
+    } = useMutation<UpdateDatabaseDetailsMutation>(updateDatabaseDetailsMutation)
+
+    const handleFormSubmit = async(e: Event) => {
+      e.preventDefault()
+      try {
+        await updateDetails({ id: props.id, details: state.model })
+      } catch (e) {
+        console.log(e)
+      }
+    }
 
     return () => {
       let content
 
-      if (state.status === 'WAITING') {
+      if (state.model === undefined) {
         content = (
           <div class="h-16" v-loading />
         )
-      }
-
-      if (state.status === 'FETCHED' && state.model !== null) {
+      } else {
         content = (
           <div>
-            <h2>Database details</h2>
-            <form class="sm-form v-rhythm-6">
-              <div class="w-1/2">
+            <div class="flex justify-between items-center">
+              <h2 title={`${state.name} - ${state.version}`} class="truncate">
+                {state.name}{' '}
+                <small class="text-gray-700 font-normal">{state.version}</small>
+              </h2>
+              <el-button class="ml-3">
+                Upload new version
+              </el-button>
+            </div>
+            <form class="sm-form v-rhythm-6 mt-3" action="#" onSubmit={handleFormSubmit}>
+              {/* <div class="w-1/2">
                 <label for="database-name">
                   <PrimaryLabelText>Name</PrimaryLabelText>
                 </label>
@@ -76,7 +114,7 @@ const Details = createComponent({
                 <el-button class="ml-3 mb-1">
                   Upload new version
                 </el-button>
-              </div>
+              </div> */}
               <div>
                 <label for="database-full-name">
                   <PrimaryLabelText>Full name</PrimaryLabelText>
@@ -112,11 +150,9 @@ const Details = createComponent({
               >
                 <PrimaryLabelText slot="label">Citation</PrimaryLabelText>
               </RichTextArea>
-              <el-button
-                type="primary"
-              >
+              <button class="el-button el-button--primary">
                 Update details
-              </el-button>
+              </button>
             </form>
             <section class="margin-reset mt-12">
               <h2>Archive database</h2>
