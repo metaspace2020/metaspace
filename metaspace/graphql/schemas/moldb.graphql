@@ -4,10 +4,11 @@ type MolecularDB {
   id: Int!
   name: String!
   version: String!
+  createdDT: String!
   default: Boolean!
   # True if database is deprecated/superseded and would not be useful for most users
   hidden: Boolean! @deprecated(reason: "Use archived field instead")
-  public: Boolean!
+  isPublic: Boolean!
   archived: Boolean!  # Cannot be used for dataset processing
   targeted: Boolean!  # If true keep all annotations regardless of their FDR
   fullName: String
@@ -47,10 +48,4 @@ type Mutation {
   createMolecularDB(databaseDetails: CreateMolecularDBInput!): MolecularDB!
   updateMolecularDB(databaseId: Int!, databaseDetails: UpdateMolecularDBInput!): MolecularDB!
   deleteMolecularDB(databaseId: Int!): Boolean!
-}
-
-schema {
-  query: Query
-  mutation: Mutation
-  subscription: Subscription
 }

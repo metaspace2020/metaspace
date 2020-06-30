@@ -6,6 +6,7 @@ from pytest import fixture
 from sm.engine.dataset import DatasetStatus, Dataset, generate_ds_config
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
+from utils import create_test_molecular_db
 
 
 @fixture
@@ -33,10 +34,7 @@ def fill_db(test_db, metadata, ds_config):
             )
         ],
     )
-    db.insert(
-        'INSERT INTO molecular_db (id, name, version) VALUES (%s, %s, %s)',
-        rows=[(0, 'HMDB-v4', '2000-01-01')],
-    )
+    create_test_molecular_db()
 
 
 def test_generate_ds_config(fill_db, metadata, ds_config):

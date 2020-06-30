@@ -36,7 +36,7 @@ describe('Molecular databases queries', () => {
 
   const listMolecularDBs = `{
       molecularDatabases {
-        name version default public archived targeted fullName description link citation
+        id name version default isPublic archived targeted fullName description link citation
       }
     }`;
 
@@ -55,11 +55,11 @@ describe('Molecular databases queries', () => {
   test('Group members can see group managed databases', async () => {
     await setupTestUsers([group.id]);
     await createTestUserGroup(testUser.id!, group.id, UGRO.MEMBER, true);
-    const {groupId, id, ...molDbExpResult} = await createTestMolecularDB({ groupId: group.id });
+    const { id } = await createTestMolecularDB({ groupId: group.id });
 
     const result = await doQuery(listMolecularDBs, {}, { context: userContext });
 
-    expect(result).toMatchObject([molDbExpResult]);
+    expect(result).toEqual([expect.objectContaining({ id })]);
   });
 
   test('Non-group members cannot see group managed databases', async () => {
@@ -73,11 +73,11 @@ describe('Molecular databases queries', () => {
 
   test('Admins can see all group managed databases', async () => {
     await setupTestUsers();
-    const {groupId, id, ...molDbExpResult} = await createTestMolecularDB({ groupId: group.id });
+    const { id } = await createTestMolecularDB({ groupId: group.id });
 
     const result = await doQuery(listMolecularDBs, {}, { context: adminContext });
 
-    expect(result).toMatchObject([molDbExpResult]);
+    expect(result).toEqual([expect.objectContaining({ id })]);
   });
 });
 
@@ -184,7 +184,6 @@ describe('Molecular database mutation permissions', () => {
     });
   });
 
-
   describe('deleteMolecularDB mutation', () => {
     const deleteMolecularDB = `mutation($id: Int!) {
       deleteMolecularDB(databaseId: $id)
@@ -208,5 +207,4 @@ describe('Molecular database mutation permissions', () => {
       await doQuery(deleteMolecularDB, { id }, { context: adminContext });
     });
   });
-
 });

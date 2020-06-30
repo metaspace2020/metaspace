@@ -175,12 +175,12 @@ describe('getContext', () => {
 
     beforeEach(async () => {
       await createTestGroup({ id: groupId });
-      pubDatabase = await createTestMolecularDB({ name: 'HMDB-v4', public: true });
-      prvDatabase = await createTestMolecularDB({ name: 'custom-db', public: false, groupId });
+      pubDatabase = await createTestMolecularDB({ name: 'HMDB-v4', isPublic: true });
+      prvDatabase = await createTestMolecularDB({ name: 'custom-db', isPublic: false, groupId });
 
       await createTestGroup({ id: anotherGroupId });
       anotherPrvDatabase = await createTestMolecularDB(
-        { name: 'another-custom-db', public: false, groupId: anotherGroupId }
+        { name: 'another-custom-db', isPublic: false, groupId: anotherGroupId }
       );
     });
 

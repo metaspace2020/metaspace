@@ -127,7 +127,7 @@ export const createTestMolecularDB = async (molecularDb: Partial<MolecularDB> = 
   return await testEntityManager.save(MolecularDB, {
     name: 'test-db',
     version: 'db-version',
-    public: false,
+    isPublic: false,
     archived: false,
     fullName: 'Full database name',
     description: 'Database description',

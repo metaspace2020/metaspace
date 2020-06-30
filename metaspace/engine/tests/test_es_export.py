@@ -13,6 +13,7 @@ from sm.engine.es_export import (
 )
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.molecular_db import MolecularDB
+from utils import create_test_molecular_db
 
 
 def wait_for_es(sec=1):
@@ -22,7 +23,6 @@ def wait_for_es(sec=1):
 def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, metadata):
     ds_id = '2000-01-01_00h00m'
     upload_dt = datetime.now().isoformat()
-    moldb_id = 0
     last_finished = '2017-01-01 00:00:00'
     iso_image_ids = ['iso_img_id_1', 'iso_img_id_2']
     annotation_stats = json.dumps(
@@ -44,14 +44,11 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         "true, 'fs', '{}')",
         [[ds_id, json.dumps(ds_config), json.dumps(metadata), upload_dt, upload_dt]],
     )
-    db.insert(
-        "INSERT INTO molecular_db (id, name, version) VALUES (%s, %s, %s)",
-        rows=[(0, 'HMDB-v4', '2018-04-03')],
-    )
+    moldb = create_test_molecular_db()
     (job_id,) = db.insert_return(
         "INSERT INTO job(ds_id, moldb_id, status, start, finish) "
-        "VALUES (%s, 0, 'job_status', %s, %s) RETURNING id",
-        [[ds_id, last_finished, last_finished]],
+        "VALUES (%s, %s, 'job_status', %s, %s) RETURNING id",
+        rows=[(ds_id, moldb.id, last_finished, last_finished)],
     )
     (user_id,) = db.insert_return(
         "INSERT INTO graphql.user (email, name, role) "
@@ -102,7 +99,7 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         es_exp = ESExporter(db, sm_config)
         es_exp.delete_ds(ds_id)
         es_exp.index_ds(
-            ds_id=ds_id, moldb=MolecularDB(moldb_id, 'HMDB-v4', '2018-04-03'), isocalc=isocalc_mock,
+            ds_id=ds_id, moldb=moldb, isocalc=isocalc_mock,
         )
 
     wait_for_es(sec=1)
@@ -143,7 +140,7 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         'ds_acq_geometry': {},
         'annotation_counts': [
             {
-                'db': {'id': 0, 'name': 'HMDB-v4'},
+                'db': {'id': moldb.id, 'name': moldb.name},
                 'counts': [
                     {'level': 5, 'n': 1},
                     {'level': 10, 'n': 2},
@@ -183,9 +180,9 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         'annotation_counts': [],
         'comp_names': ['mol_name'],
         'comps_count_with_isomers': 1,
-        'db_id': 0,
-        'db_name': 'HMDB-v4',
-        'db_version': '2018-04-03',
+        'db_id': moldb.id,
+        'db_name': moldb.name,
+        'db_version': moldb.version,
         'mz': 100.0,
         'comp_ids': ['mol_id'],
         'annotation_id': 1,
@@ -220,9 +217,9 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         'annotation_counts': [],
         'comp_names': ['mol_name'],
         'comps_count_with_isomers': 1,
-        'db_id': 0,
-        'db_name': 'HMDB-v4',
-        'db_version': '2018-04-03',
+        'db_id': moldb.id,
+        'db_name': moldb.name,
+        'db_version': moldb.version,
         'mz': 10.0,
         'comp_ids': ['mol_id'],
         'annotation_id': 2,

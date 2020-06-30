@@ -8,6 +8,7 @@ from sm.engine.ion_thumbnail import generate_ion_thumbnail, ALGORITHMS
 from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.db import DB
 from sm.engine.png_generator import ImageStoreServiceWrapper
+from .utils import create_test_molecular_db
 
 OLD_IMG_ID = 'old-ion-thumb-id'
 IMG_ID = 'new-ion-thumb-id'
@@ -26,16 +27,15 @@ def _make_fake_ds(db, ds_id, metadata, ds_config):
     )
     ds.save(db)
 
-    db.insert(
-        "INSERT INTO molecular_db (id, name, version) VALUES (%s, %s, %s)",
-        rows=[(0, 'HMDB-v4', '2018-04-03')],
-    )
+    moldb = create_test_molecular_db()
     (job_id,) = db.insert_return(
-        "INSERT INTO job (moldb_id, ds_id) VALUES (%s, %s) RETURNING id", [(0, ds_id)]
+        "INSERT INTO job (moldb_id, ds_id) VALUES (%s, %s) RETURNING id", rows=[(moldb.id, ds_id)]
     )
     db.insert(
         (
-            "INSERT INTO annotation (job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids) "
+            "INSERT INTO annotation ("
+            "   job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids"
+            ") "
             "VALUES (%s, %s, '', '', %s, 1, 0, '{}', %s)"
         ),
         rows=[(job_id, f'H{i+1}O', '+H', [str(i), str(1000 + i)]) for i in range(200)],

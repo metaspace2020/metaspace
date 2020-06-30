@@ -38,7 +38,6 @@ type Annotation {
 }
 
 type CompoundInfoEntry {
-  database: String!
   url: String
   databaseId: String!
 }

@@ -8,6 +8,7 @@ from sm.engine.db import DB
 from sm.rest import api
 from sm.rest.databases import MALFORMED_CSV
 from sm.rest.utils import ALREADY_EXISTS
+from .utils import create_test_molecular_db
 
 GROUP_ID = '123e4567-e89b-12d3-a456-426655440000'
 MOLDB_COUNT_SEL = 'SELECT COUNT(*) FROM molecular_db'
@@ -35,7 +36,7 @@ def moldb_input_doc(**kwargs):
     }
 
 
-def moldb_upd_doc(**kwargs):
+def moldb_update_doc(**kwargs):
     return {
         'archived': False,
         'full_name': 'full database name',
@@ -53,8 +54,9 @@ def patch_bottle_request(req_doc):
         yield req_doc
 
 
-def test_create_moldb(fill_db):
-    with patch_bottle_request(req_doc=moldb_input_doc()) as req_doc:
+@pytest.mark.parametrize('is_public', [True, False])
+def test_create_moldb(fill_db, is_public):
+    with patch_bottle_request(req_doc=moldb_input_doc(is_public=is_public)) as req_doc:
 
         resp = api.databases.create()
 
@@ -63,15 +65,14 @@ def test_create_moldb(fill_db):
 
         db = DB()
         doc = db.select_one_with_fields(
-            'SELECT id, name, version, group_id, public FROM molecular_db where id = %s',
-            (resp_doc['id'],),
+            'SELECT id, name, version, group_id, is_public FROM molecular_db where id = %s',
+            params=(resp_doc['id'],),
         )
-        for field in ['name', 'version', 'group_id']:
+        for field in ['name', 'version', 'group_id', 'is_public']:
             assert doc[field] == req_doc[field]
-        assert doc['public'] is False
 
         docs = db.select_with_fields(
-            'SELECT * FROM molecule WHERE moldb_id = %s', (resp_doc['id'],),
+            'SELECT * FROM molecule WHERE moldb_id = %s', params=(resp_doc['id'],),
         )
         for doc in docs:
             print(doc)
@@ -81,17 +82,13 @@ def test_create_moldb(fill_db):
 
 def test_create_moldb_duplicate(fill_db):
     with patch_bottle_request(req_doc=moldb_input_doc()) as req_doc:
-        db = DB()
-        db.insert(
-            'INSERT INTO molecular_db (name, version, group_id) VALUES (%s, %s, %s)',
-            [(req_doc['name'], req_doc['version'], req_doc['group_id'])],
-        )
+        create_test_molecular_db(**req_doc)
 
         resp = api.databases.create()
 
         assert resp['status'] == ALREADY_EXISTS['status']
 
-        (db_count,) = db.select_one(MOLDB_COUNT_SEL)
+        (db_count,) = DB().select_one(MOLDB_COUNT_SEL)
         assert db_count == 1
 
 
@@ -134,15 +131,10 @@ def test_create_moldb_wrong_formulas(fill_db):
 
 
 def test_delete_moldb(fill_db):
-    doc = moldb_input_doc()
-    db = DB()
-    (moldb_id,) = db.insert_return(
-        'INSERT INTO molecular_db (name, version, group_id) VALUES (%s, %s, %s) RETURNING id',
-        rows=[(doc['name'], doc['version'], doc['group_id'])],
-    )
+    moldb = create_test_molecular_db(**moldb_input_doc())
     with patch_bottle_request(req_doc={}):
 
-        resp = api.databases.delete(moldb_id)
+        resp = api.databases.delete(moldb_id=moldb.id)
 
         assert resp['status'] == 'success'
 
@@ -155,23 +147,16 @@ def test_delete_moldb(fill_db):
     ('archived_before', 'archived_after'), [(False, True), (True, False)],
 )
 def test_update_moldb(archived_before, archived_after, fill_db):
-    doc = moldb_input_doc()
-    doc['archived'] = False
-    db = DB()
-    (moldb_id,) = db.insert_return(
-        'INSERT INTO molecular_db (name, version, group_id, archived) '
-        'VALUES (%s, %s, %s, %s) RETURNING id',
-        rows=[(doc['name'], doc['version'], doc['group_id'], doc['archived'])],
-    )
+    moldb = create_test_molecular_db(**moldb_input_doc(archived=False))
     with patch_bottle_request(
-        req_doc=moldb_upd_doc(archived=archived_after, description='New database description')
+        req_doc=moldb_update_doc(archived=archived_after, description='New database description')
     ):
-        resp = api.databases.update(moldb_id)
+        resp = api.databases.update(moldb_id=moldb.id)
 
         assert resp['status'] == 'success'
 
-        result_doc = db.select_one_with_fields(
-            'SELECT * FROM molecular_db where id = %s', params=(moldb_id,),
+        result_doc = DB().select_one_with_fields(
+            'SELECT * FROM molecular_db where id = %s', params=(moldb.id,),
         )
         assert result_doc['archived'] == archived_after
         assert result_doc['description'] == 'New database description'

@@ -7,7 +7,7 @@ export const mapDatabaseToDatabaseId =
   async (entityManager: EntityManager, database: string): Promise<number> => {
     logger.warn('Addressing private databases by name was deprecated. Use database id instead.');
     const databaseModel = await entityManager.findOneOrFail(MolecularDbModel, { 'name': database });
-    if (!databaseModel.public) {
+    if (!databaseModel.isPublic) {
       throw new UserError(
         'Addressing a non-public molecular database by name. Use database id instead.'
       );

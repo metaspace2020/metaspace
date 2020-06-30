@@ -1,6 +1,7 @@
 import logging
 from io import StringIO
 from typing import List, Iterable
+from datetime import datetime
 
 import pandas as pd
 from pyMSpec.pyisocalc.canopy.sum_formula_actions import InvalidFormulaError
@@ -96,7 +97,7 @@ def create(
     version: str = None,
     file_path: str = None,
     group_id: str = None,
-    public: bool = True,
+    is_public: bool = True,
     description: str = None,
     full_name: str = None,
     link: str = None,
@@ -105,13 +106,26 @@ def create(
     with transaction_context():
         moldb_insert = (
             'INSERT INTO molecular_db '
-            '   (name, version, group_id, public, description, full_name, link, citation) '
-            'values (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id'
+            '   (name, version, created_dt, group_id, is_public, '
+            '   description, full_name, link, citation) '
+            'values (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id'
         )
         # pylint: disable=unbalanced-tuple-unpacking
         (moldb_id,) = DB().insert_return(
             moldb_insert,
-            rows=[(name, version, group_id, public, description, full_name, link, citation)],
+            rows=[
+                (
+                    name,
+                    version,
+                    datetime.utcnow(),
+                    group_id,
+                    is_public,
+                    description,
+                    full_name,
+                    link,
+                    citation,
+                )
+            ],
         )
         moldb = find_by_id(moldb_id)
         _import_molecules_from_file(moldb, file_path, targeted_threshold=1000)

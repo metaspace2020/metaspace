@@ -2,7 +2,6 @@ import json
 import logging
 from random import randint
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 import uuid
 
 import pytest
@@ -13,10 +12,10 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from pysparkling import Context
 
 from sm.engine.db import DB, ConnectionPool
-from sm.engine.molecular_db import MolecularDB
 from sm.engine.tests.db_sql_schema import DB_SQL_SCHEMA
 from sm.engine.util import proj_root, SMConfig, init_loggers, populate_aws_env_vars
 from sm.engine.es_export import ESIndexManager
+from .utils import create_test_molecular_db
 
 TEST_CONFIG_PATH = 'conf/test_config.json'
 
@@ -131,8 +130,9 @@ def fill_db(test_db, metadata, ds_config):
     ds_id = '2000-01-01'
     db = DB()
     db.insert(
-        'INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, '
-        'status, status_update_dt, is_public) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)',
+        'INSERT INTO dataset ('
+        '   id, name, input_path, upload_dt, metadata, config, status, status_update_dt, is_public'
+        ') values (%s, %s, %s, %s, %s, %s, %s, %s, %s)',
         rows=[
             (
                 ds_id,
@@ -147,11 +147,10 @@ def fill_db(test_db, metadata, ds_config):
             )
         ],
     )
+    moldb = create_test_molecular_db()
     db.insert(
-        "INSERT INTO molecular_db (id, name, version) VALUES (%s, %s, %s)",
-        rows=[(0, 'HMDB-v4', '2000-01-01')],
+        "INSERT INTO job (id, moldb_id, ds_id) VALUES (%s, %s, %s)", rows=[(0, moldb.id, ds_id)]
     )
-    db.insert("INSERT INTO job (id, moldb_id, ds_id) VALUES (%s, %s, %s)", rows=[(0, 0, ds_id)])
     db.insert(
         (
             "INSERT INTO annotation (job_id, formula, chem_mod, neutral_loss, adduct, "
@@ -176,6 +175,8 @@ def fill_db(test_db, metadata, ds_config):
         "INSERT INTO graphql.dataset (id, user_id, group_id) VALUES (%s, %s, %s)",
         rows=[('dataset id', user_id, group_id)],
     )
+
+    return {"moldb": moldb}
 
 
 @pytest.fixture()

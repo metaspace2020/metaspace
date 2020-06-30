@@ -27,6 +27,7 @@ def create():
         name - short database name
         version - database version, any string
         group_id - UUID of group database belongs to
+        is_public - database search results visible to everybody
         file_path - S3 path to database import file (s3://bucket/path)
         description - database description
         full_name - full database name
@@ -53,7 +54,6 @@ def create():
         if not all([field in params for field in required_fields]):
             return make_response(WRONG_PARAMETERS, errors=[f'Required fields: {required_fields}'])
 
-        params['public'] = False
         moldb = molecular_db.create(**params)
 
         return make_response(OK, data=moldb.to_dict())

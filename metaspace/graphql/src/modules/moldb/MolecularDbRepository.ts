@@ -21,8 +21,7 @@ export class MolecularDbRepository {
     } else {
       const userGroupIds = user && user.groupIds;
       qb = qb.where(new Brackets(
-        qb => qb.where('moldb.public = True')
-          .orWhere(
+        qb => qb.where('moldb.is_public = True').orWhere(
             userGroupIds ? 'moldb.group_id = ANY(:userGroupIds)' : 'false',
             { userGroupIds }
           )
