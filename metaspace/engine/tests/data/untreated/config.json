@@ -17,7 +17,7 @@
         "chem_mods": []
     },
     "fdr": {
-          "decoy_sample_size": 20
+        "decoy_sample_size": 20
     },
-    "databases": ["HMDB-v2.5"]
+    "databases": ["HMDB-v4"]
 }
