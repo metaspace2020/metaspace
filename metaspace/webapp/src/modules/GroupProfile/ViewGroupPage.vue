@@ -14,11 +14,6 @@
         @accept="handleAcceptTransferDatasets"
         @close="handleCloseTransferDatasetsDialog"
       />
-      <upload-database-dialog
-        v-if="showUploadDatabaseDialog"
-        :group-id="groupId"
-        @close="showUploadDatabaseDialog = false"
-      />
       <div class="header-row">
         <div class="header-names">
           <h1>{{ group.name }}</h1>
@@ -43,13 +38,6 @@
             disabled
           >
             Request sent
-          </el-button>
-          <el-button
-            v-if="isGroupMember && tab === 'databases'"
-            type="primary"
-            @click="showUploadDatabaseDialog = true"
-          >
-            Upload database
           </el-button>
         </div>
         <el-alert
@@ -149,6 +137,7 @@
           <div>
             <databases
               :databases="molecularDatabases"
+              :group-id="groupId"
             />
           </div>
         </el-tab-pane>
@@ -196,7 +185,6 @@ import { removeDatasetFromAllDatasetsQuery } from '../../lib/updateApolloCache'
 import GroupDescription from './GroupDescription.vue'
 import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
 import Databases from '../MolecularDatabases'
-import UploadDatabaseDialog from '../MolecularDatabases/UploadDialog'
 import { databaseListItemsQuery, MolecularDB } from '../../api/moldb'
 
   interface ViewGroupProfileData {
@@ -214,7 +202,6 @@ import { databaseListItemsQuery, MolecularDB } from '../../api/moldb'
       GroupDescription,
       NewFeatureBadge,
       Databases,
-      UploadDatabaseDialog,
     },
     filters: {
       optionalSuffixInParens,

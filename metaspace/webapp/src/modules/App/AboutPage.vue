@@ -27,7 +27,7 @@
           Features
         </h2>
         <div>
-          <edit-icon class="sm-colour-icon" />
+          <edit-icon class="sm-colour-icon mb-2" />
           <h3>Metabolite annotation</h3>
           <p>
             <router-link to="/upload">
@@ -38,7 +38,7 @@
           </p>
         </div>
         <div>
-          <book-icon class="sm-colour-icon" />
+          <book-icon class="sm-colour-icon mb-2" />
           <h3>Explore the knowledgebase</h3>
           <p>
             <router-link to="/annotations">
@@ -49,7 +49,7 @@
           </p>
         </div>
         <div>
-          <bolt-icon class="sm-colour-icon" />
+          <bolt-icon class="sm-colour-icon mb-2" />
           <h3>Get going fast</h3>
           <p>
             Head to the <router-link to="/upload">
@@ -61,7 +61,7 @@
           </p>
         </div>
         <div>
-          <unlock-icon class="sm-colour-icon" />
+          <unlock-icon class="sm-colour-icon mb-2" />
           <h3>Open access</h3>
           <p>
             The <a

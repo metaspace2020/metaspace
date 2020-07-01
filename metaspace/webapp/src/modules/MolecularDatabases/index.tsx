@@ -11,15 +11,18 @@ import ArrowIcon from '../../assets/inline/refactoring-ui/arrow-thin-left-circle
 
 interface State {
   selectedDatabase: number | null,
+  showUploadDialog: boolean,
 }
 
 export default createComponent({
   props: {
     databases: Array,
+    groupId: { type: String, required: true },
   },
   setup(props, { root }) {
     const state = reactive<State>({
       selectedDatabase: null,
+      showUploadDialog: false,
     })
 
     watch(
@@ -55,6 +58,7 @@ export default createComponent({
           </DetailsView>
           : <Table
             databases={props.databases}
+            groupId={props.groupId}
             handleRowClick={selectDatabase}
           /> }
       </FadeTransition>
