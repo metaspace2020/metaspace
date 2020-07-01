@@ -6,7 +6,7 @@ from pytest import fixture
 from sm.engine.dataset import DatasetStatus, Dataset, generate_ds_config
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
-from utils import create_test_molecular_db
+from .utils import create_test_molecular_db
 
 
 @fixture

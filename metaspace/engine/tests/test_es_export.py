@@ -13,7 +13,7 @@ from sm.engine.es_export import (
 )
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.molecular_db import MolecularDB
-from utils import create_test_molecular_db
+from .utils import create_test_molecular_db
 
 
 def wait_for_es(sec=1):

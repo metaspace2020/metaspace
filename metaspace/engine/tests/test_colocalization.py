@@ -8,7 +8,7 @@ from sm.engine.colocalization import analyze_colocalization, Colocalization, Fre
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.png_generator import ImageStoreServiceWrapper
-from utils import create_test_molecular_db
+from .utils import create_test_molecular_db
 
 
 def test_valid_colocalization_jobs_generated():
