@@ -16,7 +16,7 @@ const convertToS3 = (url: string) => {
 const UploadDialog = createComponent({
   props: {
     name: String,
-    version: String,
+    details: Object,
     groupId: String,
   },
   setup(props, { emit, root }) {
@@ -26,9 +26,10 @@ const UploadDialog = createComponent({
         version: '',
         filePath: '',
       },
-      isNewVersion: !!props.name,
       loading: false,
     })
+
+    const isNewVersion = !!props.name
 
     const handleClose = () => {
       // if (!this.isSubmitting) {
@@ -49,6 +50,7 @@ const UploadDialog = createComponent({
         mutation: createDatabaseQuery,
         variables: {
           input: {
+            ...props?.details,
             ...state.model,
             groupId: props.groupId,
           },
@@ -61,7 +63,7 @@ const UploadDialog = createComponent({
     const nameInput = ref<HTMLInputElement>(null)
     const versionInput = ref<HTMLInputElement>(null)
     const focusHandler = () => {
-      const inputRef = state.isNewVersion ? versionInput : nameInput
+      const inputRef = isNewVersion ? versionInput : nameInput
       if (inputRef.value !== null) {
         inputRef.value.focus()
       }
@@ -89,7 +91,7 @@ const UploadDialog = createComponent({
               ref="nameInput"
               id="database-name"
               v-model={state.model.name}
-              disabled={state.isNewVersion}
+              disabled={isNewVersion}
             />
           </div>
           <div class="w-1/4 ml-3">

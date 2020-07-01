@@ -1,9 +1,10 @@
-import { createComponent } from '@vue/composition-api'
+import { createComponent, reactive } from '@vue/composition-api'
 import { useQuery } from '@vue/apollo-composable'
 
 import FadeTransition from '../../components/FadeTransition'
 
 import DetailsForm from './DatabaseDetailsForm'
+import UploadDialog from './UploadDialog'
 
 import {
   databaseDetailsQuery,
@@ -11,10 +12,20 @@ import {
   MolecularDB,
 } from '../../api/moldb'
 
-interface State {
-  model: MolecularDB | undefined
-  name: string | undefined
-  version: string | undefined
+const getDetails = (database: MolecularDB) => {
+  const {
+    citation,
+    description,
+    fullName,
+    link,
+  } = database
+
+  return {
+    citation,
+    description,
+    fullName,
+    link,
+  }
 }
 
 const Details = createComponent({
@@ -28,6 +39,10 @@ const Details = createComponent({
       { fetchPolicy: 'no-cache' },
     )
 
+    const state = reactive({
+      showNewVersionDialog: false,
+    })
+
     return () => {
       let content
 
@@ -37,22 +52,30 @@ const Details = createComponent({
         )
       } else {
         const { database } = result.value
+        const details = getDetails(database)
         content = (
           <div class="relative leading-6 h2-leading-12">
             {slots.back()}
+            { state.showNewVersionDialog
+              && <UploadDialog
+                name={database.name}
+                details={details}
+                // groupId={database.group.id} -- future API
+                onClose={() => { state.showNewVersionDialog = false }}
+              /> }
             <div class="max-w-measure-3 mx-auto mt-6 mb-12">
               <div class="flex justify-between items-center">
                 <h2 title={`${database.name} - ${database.version}`} class="truncate">
                   {database.name}{' '}
                   <small class="text-gray-700 font-normal">{database.version}</small>
                 </h2>
-                <el-button class="ml-3">
+                <el-button class="ml-3" onClick={() => { state.showNewVersionDialog = true }}>
                   Upload new version
                 </el-button>
               </div>
               <DetailsForm
                 class="mt-3"
-                database={result.value.database}
+                initialData={details}
               />
               <section class="margin-reset mt-12">
                 <h2>Archive database</h2>

@@ -17,22 +17,12 @@ interface State {
 
 const Details = createComponent({
   props: {
-    database: { type: Object, required: true },
+    initialData: { type: Object, required: true },
   },
   setup(props) {
-    const {
-      citation,
-      description,
-      fullName,
-      link,
-    } = props.database
-
     const state = reactive<State>({
       model: {
-        fullName,
-        description,
-        link,
-        citation,
+        ...props.initialData,
         public: false,
       },
     })
