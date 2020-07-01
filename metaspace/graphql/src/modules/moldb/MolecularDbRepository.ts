@@ -34,6 +34,8 @@ export class MolecularDbRepository {
       qb = qb.andWhere(whereClause, parameters);
     }
 
+    qb = qb.leftJoinAndSelect('moldb.group', 'moldb_group');
+
     // Avoid adding .where clauses to the returned queryBuilder, as it will overwrite the security filters
     return qb;
   }

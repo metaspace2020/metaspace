@@ -6,7 +6,7 @@ import logger from '../../utils/logger';
 import {Context} from '../../context';
 import {FieldResolversFor} from '../../bindingTypes';
 import {MolecularDB as MolecularDbModel} from './model';
-import {MolecularDB, Mutation, Query} from '../../binding';
+import {Group, GroupShortInfo, MolecularDB, Mutation, Query} from '../../binding';
 import {smApiCreateDatabase, smApiUpdateDatabase, smApiDeleteDatabase} from '../../utils/smApi/databases';
 import {assertImportFileIsValid} from './util/assertImportFileIsValid';
 import {MolecularDbRepository} from './MolecularDbRepository';

@@ -37,6 +37,7 @@ describe('Molecular databases queries', () => {
   const listMolecularDBs = `{
       molecularDatabases {
         id name version default isPublic archived targeted fullName description link citation
+        group { id shortName }
       }
     }`;
 
@@ -59,7 +60,9 @@ describe('Molecular databases queries', () => {
 
     const result = await doQuery(listMolecularDBs, {}, { context: userContext });
 
-    expect(result).toEqual([expect.objectContaining({ id })]);
+    expect(result).toEqual([
+      expect.objectContaining({ id, group: { id: group.id, shortName: group.shortName } })
+    ]);
   });
 
   test('Non-group members cannot see group managed databases', async () => {
@@ -77,7 +80,9 @@ describe('Molecular databases queries', () => {
 
     const result = await doQuery(listMolecularDBs, {}, { context: adminContext });
 
-    expect(result).toEqual([expect.objectContaining({ id })]);
+    expect(result).toEqual([
+      expect.objectContaining({ id, group: { id: group.id, shortName: group.shortName } })
+    ]);
   });
 });
 

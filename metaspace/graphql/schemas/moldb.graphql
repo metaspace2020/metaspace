@@ -1,5 +1,9 @@
 
-# TODO: update webapp code
+type GroupShortInfo {
+  id: ID!
+  shortName: String!
+}
+
 type MolecularDB {
   id: Int!
   name: String!
@@ -15,6 +19,7 @@ type MolecularDB {
   description: String
   link: String
   citation: String
+  group: GroupShortInfo
 }
 
 input CreateMolecularDBInput {
