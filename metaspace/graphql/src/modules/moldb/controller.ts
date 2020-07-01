@@ -10,7 +10,7 @@ import {Group, GroupShortInfo, MolecularDB, Mutation, Query} from '../../binding
 import {smApiCreateDatabase, smApiUpdateDatabase, smApiDeleteDatabase} from '../../utils/smApi/databases';
 import {assertImportFileIsValid} from './util/assertImportFileIsValid';
 import {MolecularDbRepository} from './MolecularDbRepository';
-import config from "../../utils/config";
+import config from '../../utils/config';
 
 
 const MolecularDBResolvers: FieldResolversFor<MolecularDB, MolecularDbModel> = {
@@ -26,7 +26,6 @@ const MolecularDBResolvers: FieldResolversFor<MolecularDB, MolecularDbModel> = {
     return database.archived || !database.isPublic;
   },
 };
-
 
 const QueryResolvers: FieldResolversFor<Query, void> = {
   async molecularDatabases(source, { hideArchived }, ctx): Promise<MolecularDbModel[]> {

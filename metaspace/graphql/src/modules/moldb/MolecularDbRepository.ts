@@ -13,7 +13,9 @@ export class MolecularDbRepository {
   }
 
   private queryWhere(user: ContextUser | null, whereClause?: string | Brackets, parameters?: object) {
-    let qb = this.manager.createQueryBuilder(MolecularDB, 'moldb').orderBy('moldb.name');
+    let qb = this.manager.createQueryBuilder(MolecularDB, 'moldb')
+      .leftJoinAndSelect('moldb.group', 'moldb_group')
+      .orderBy('moldb.name');
 
     // Hide databases the user doesn't have access to
     if (user && user.id && user.role === 'admin') {
@@ -34,8 +36,6 @@ export class MolecularDbRepository {
       qb = qb.andWhere(whereClause, parameters);
     }
 
-    qb = qb.leftJoinAndSelect('moldb.group', 'moldb_group');
-
     // Avoid adding .where clauses to the returned queryBuilder, as it will overwrite the security filters
     return qb;
   }
@@ -51,8 +51,10 @@ export class MolecularDbRepository {
     });
   }
 
-  async findDatabases(user: ContextUser | null): Promise<MolecularDB[]> {
-    const query = this.queryWhere(user);
+  async findDatabases(user: ContextUser | null, groupId?: string): Promise<MolecularDB[]> {
+    const query = (groupId != null)
+      ? this.queryWhere(user, 'moldb.group_id = :groupId', { groupId })
+      : this.queryWhere(user);
     return await query.getMany();
   }
 
