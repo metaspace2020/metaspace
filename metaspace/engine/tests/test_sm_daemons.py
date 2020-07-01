@@ -21,8 +21,7 @@ from sm.engine.es_export import ESExporter
 from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.annotation_job import JobStatus
 from sm.engine.queue import QueueConsumer
-from sm.engine.util import SMConfig
-from utils import create_test_molecular_db
+from .utils import create_test_molecular_db
 
 os.environ.setdefault('PYSPARK_PYTHON', sys.executable)
 logger = logging.getLogger('annotate-daemon')

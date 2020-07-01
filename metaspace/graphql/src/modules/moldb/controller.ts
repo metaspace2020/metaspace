@@ -13,7 +13,7 @@ import {MolecularDbRepository} from './MolecularDbRepository';
 import config from '../../utils/config';
 
 
-const MolecularDBResolvers: FieldResolversFor<MolecularDB, MolecularDbModel> = {
+const MolecularDbResolvers: FieldResolversFor<MolecularDB, MolecularDbModel> = {
   async createdDT(database, args, ctx: Context): Promise<string> {
     return database.createdDT.toISOString();
   },
@@ -105,5 +105,5 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
 export const Resolvers = {
   Query: QueryResolvers,
   Mutation: MutationResolvers,
-  MolecularDB: MolecularDBResolvers,
+  MolecularDB: MolecularDbResolvers,
 } as IResolvers<any, Context>;
