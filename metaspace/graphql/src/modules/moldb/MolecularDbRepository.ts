@@ -39,7 +39,7 @@ export class MolecularDbRepository {
     }
 
     // Add caller-supplied filter
-    if (andWhereClause) {
+    if (andWhereClause != null) {
       qb = qb.andWhere(andWhereClause, parameters);
     }
 
