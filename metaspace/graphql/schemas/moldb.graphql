@@ -43,10 +43,10 @@ input UpdateMolecularDBInput {
 
 type Query {
   molecularDatabases(
-  hideArchived: Boolean=true,
+    hideUnusable: Boolean=false,
     hideDeprecated: Boolean=false # @deprecated(reason: "Only hideArchived should be used"),
     onlyLastVersion: Boolean=false # @deprecated(reason: "Only hideArchived should be used")
-    ): [MolecularDB!]
+  ): [MolecularDB!]
 }
 
 type Mutation {

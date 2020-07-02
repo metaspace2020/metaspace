@@ -34,10 +34,11 @@ describe('Molecular databases queries', () => {
   });
   afterEach(onAfterEach);
 
-  const listMolecularDBs = `{
-      molecularDatabases {
-        id name version default isPublic archived targeted fullName description link citation
-        group { id shortName }
+  const listMolecularDBs = `
+    query listMolecularDatabases($hideUnusable: Boolean = false) {
+      molecularDatabases(hideUnusable: $hideUnusable) {
+        id name fullName default isPublic archived targeted description link citation group
+        { id shortName }
       }
     }`;
 
@@ -53,7 +54,7 @@ describe('Molecular databases queries', () => {
     expect(result[1]).toMatchObject({ name: 'xyz' });
   });
 
-  test('Group members can see group managed databases', async () => {
+  test('Group members can see group databases', async () => {
     await setupTestUsers([group.id]);
     await createTestUserGroup(testUser.id!, group.id, UGRO.MEMBER, true);
     const { id } = await createTestMolecularDB({ groupId: group.id });
@@ -65,20 +66,54 @@ describe('Molecular databases queries', () => {
     ]);
   });
 
-  test('Non-group members cannot see group managed databases', async () => {
+  test('Group members can use group databases', async () => {
+    await setupTestUsers([group.id]);
+    await createTestUserGroup(testUser.id!, group.id, UGRO.MEMBER, true);
+    const { id } = await createTestMolecularDB({ groupId: group.id });
+
+    const result = await doQuery(listMolecularDBs, { hideUnusable: true }, { context: userContext });
+
+    expect(result).toEqual([
+      expect.objectContaining({ id, group: { id: group.id, shortName: group.shortName } })
+    ]);
+  });
+
+  test('Non-group members can only see public group databases', async () => {
     await setupTestUsers();
-    await createTestMolecularDB({ groupId: group.id });
+    await createTestMolecularDB({ isPublic: false, groupId: (await createTestGroup()).id });
+    const { id: pubGroupId } = await createTestMolecularDB({ isPublic: true, groupId: group.id });
 
     const result = await doQuery(listMolecularDBs, {}, { context: userContext });
+
+    expect(result).toEqual([expect.objectContaining({ id: pubGroupId } )]);
+  });
+
+  test('Non-group members cannot use public group databases', async () => {
+    await setupTestUsers();
+    await createTestMolecularDB({ isPublic: false, groupId: (await createTestGroup()).id });
+    const { id: pubGroupId } = await createTestMolecularDB({ isPublic: true, groupId: group.id });
+
+    const result = await doQuery(listMolecularDBs, { hideUnusable: true }, { context: userContext });
 
     expect(result).toEqual([]);
   });
 
-  test('Admins can see all group managed databases', async () => {
+  test('Admins can see all group databases', async () => {
     await setupTestUsers();
     const { id } = await createTestMolecularDB({ groupId: group.id });
 
     const result = await doQuery(listMolecularDBs, {}, { context: adminContext });
+
+    expect(result).toEqual([
+      expect.objectContaining({ id, group: { id: group.id, shortName: group.shortName } })
+    ]);
+  });
+
+  test('Admins can use all group databases', async () => {
+    await setupTestUsers();
+    const { id } = await createTestMolecularDB({ groupId: group.id });
+
+    const result = await doQuery(listMolecularDBs, { hideUnusable: true }, { context: adminContext });
 
     expect(result).toEqual([
       expect.objectContaining({ id, group: { id: group.id, shortName: group.shortName } })

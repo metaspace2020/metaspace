@@ -156,7 +156,7 @@ export const Resolvers = {
 
     async molecularDatabases(group: GroupModel, args: any, ctx: Context): Promise<MolecularDbModel[]> {
       return await ctx.entityManager.getCustomRepository(MolecularDbRepository)
-        .findDatabases(ctx.user, group.id);
+        .findVisibleDatabases(ctx.user, group.id);
     },
   },
 

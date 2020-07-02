@@ -12,7 +12,14 @@ export class MolecularDbRepository {
   constructor(private manager: EntityManager) {
   }
 
-  private queryWhere(user: ContextUser | null, whereClause?: string | Brackets, parameters?: object) {
+  private static getUserGroupIds(user: ContextUser | null) {
+    if (user != null && user.groupIds != null && user.groupIds.length > 0) {
+      return user.groupIds;
+    }
+    return null;
+  }
+
+  private queryWhere(user: ContextUser | null, andWhereClause?: string | Brackets, parameters?: object) {
     let qb = this.manager.createQueryBuilder(MolecularDB, 'moldb')
       .leftJoinAndSelect('moldb.group', 'moldb_group')
       .orderBy('moldb.name');
@@ -21,10 +28,10 @@ export class MolecularDbRepository {
     if (user && user.id && user.role === 'admin') {
       qb = qb.where('true'); // For consistency, in case `andWhere` is called without first calling `where`
     } else {
-      const userGroupIds = user && user.groupIds;
+      const userGroupIds = MolecularDbRepository.getUserGroupIds(user);
       qb = qb.where(new Brackets(
         qb => qb.where('moldb.is_public = True').orWhere(
-            userGroupIds ? 'moldb.group_id = ANY(:userGroupIds)' : 'false',
+            userGroupIds != null ? 'moldb.group_id = ANY(:userGroupIds)' : 'false',
             { userGroupIds }
           )
         )
@@ -32,8 +39,8 @@ export class MolecularDbRepository {
     }
 
     // Add caller-supplied filter
-    if (whereClause) {
-      qb = qb.andWhere(whereClause, parameters);
+    if (andWhereClause) {
+      qb = qb.andWhere(andWhereClause, parameters);
     }
 
     // Avoid adding .where clauses to the returned queryBuilder, as it will overwrite the security filters
@@ -51,10 +58,22 @@ export class MolecularDbRepository {
     });
   }
 
-  async findDatabases(user: ContextUser | null, groupId?: string): Promise<MolecularDB[]> {
+  async findVisibleDatabases(user: ContextUser | null, groupId?: string): Promise<MolecularDB[]> {
     const query = (groupId != null)
       ? this.queryWhere(user, 'moldb.group_id = :groupId', { groupId })
       : this.queryWhere(user);
+    return await query.getMany();
+  }
+
+  async findUsableDatabases(user: ContextUser | null): Promise<MolecularDB[]> {
+    const userGroupIds = MolecularDbRepository.getUserGroupIds(user);
+    const groupWhereStmt = userGroupIds != null
+      ? new Brackets(qb => qb.where('moldb.group_id is NULL')
+          .orWhere('moldb.group_id = ANY(:userGroupIds)'))
+      : new Brackets(qb => qb.where('moldb.group_id is NULL'));
+    const query = this.queryWhere(user,
+      new Brackets(qb => qb.where('moldb.archived = false').andWhere(groupWhereStmt)),
+      { userGroupIds });
     return await query.getMany();
   }
 

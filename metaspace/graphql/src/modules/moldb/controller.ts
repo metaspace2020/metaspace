@@ -28,13 +28,11 @@ const MolecularDbResolvers: FieldResolversFor<MolecularDB, MolecularDbModel> = {
 };
 
 const QueryResolvers: FieldResolversFor<Query, void> = {
-  async molecularDatabases(source, { hideArchived }, ctx): Promise<MolecularDbModel[]> {
-    let databases = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
-      .findDatabases(ctx.user);
-    if (hideArchived) {
-      databases = databases.filter(db => !db.archived);
-    }
-    return databases;
+  async molecularDatabases(source, { hideUnusable }, ctx): Promise<MolecularDbModel[]> {
+    const repository = ctx.entityManager.getCustomRepository(MolecularDbRepository);
+    return !ctx.isAdmin && hideUnusable
+      ? await repository.findUsableDatabases(ctx.user)
+      : await repository.findVisibleDatabases(ctx.user);
   },
 };
 
