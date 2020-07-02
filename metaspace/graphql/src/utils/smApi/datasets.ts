@@ -43,7 +43,7 @@ export const smApiDatasetRequest = async (uri: string, args: any={}) => {
       }));
     }
     else {
-      throw new UserError(`smAPIRequest: ${JSON.stringify(respDoc)}`);
+      throw new UserError(`Request to sm-api failed: ${JSON.stringify(respDoc)}`);
     }
   }
   else {

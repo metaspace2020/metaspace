@@ -7,7 +7,7 @@ import { EntityManager, In, Not } from 'typeorm';
 import * as moment from 'moment';
 import * as _ from 'lodash';
 
-import { smApiDatasetRequest } from '../../../utils/smApi/datasets';
+import { smApiDatasetRequest } from '../../../utils';
 import { UserProjectRoleOptions as UPRO } from '../../project/model';
 import { PublicationStatusOptions as PSO } from '../../project/Publishing';
 import { UserGroup as UserGroupModel, UserGroupRoleOptions } from '../../group/model';
@@ -26,7 +26,9 @@ import {
 import { EngineDataset } from '../../engine/model';
 import { addExternalLink, removeExternalLink } from '../../project/ExternalLink';
 import { esDatasetByID } from '../../../../esConnector';
-import { mapDatabaseToDatabaseId } from "../../moldb/util/mapDatabaseToDatabaseId";
+import { mapDatabaseToDatabaseId } from '../../moldb/util/mapDatabaseToDatabaseId';
+import { MolecularDbRepository } from '../../moldb/MolecularDbRepository';
+import { assertUserBelongsToGroup } from '../../moldb/util/assertUserBelongsToGroup';
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -199,6 +201,21 @@ type CreateDatasetArgs = {
   skipValidation?: boolean,  // Only used by reprocess
 };
 
+const assertUserCanUseMolecularDBs = async (ctx: Context, databaseIds: number[]|undefined) => {
+  if (ctx.isAdmin || databaseIds == null) {
+    return;
+  }
+
+  for (const databaseId of databaseIds) {
+    const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
+      .findDatabaseById(ctx, databaseId);
+
+    if (database.groupId != null) {
+      assertUserBelongsToGroup(ctx, database.groupId);
+    }
+  }
+};
+
 const setDatabaseIdsInInput = async (
   entityManager: EntityManager, input: DatasetCreateInput | DatasetUpdateInput
 ): Promise<void> => {
@@ -228,6 +245,7 @@ const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
   }
 
   await setDatabaseIdsInInput(ctx.entityManager, input);
+  await assertUserCanUseMolecularDBs(ctx, input.databaseIds as number[]);
 
   // Only admins can specify the submitterId
   const submitterId = (ctx.isAdmin && input.submitterId) || (dataset && dataset.userId) || ctx.user.id;
@@ -301,6 +319,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     }
 
     await setDatabaseIdsInInput(ctx.entityManager, update);
+    await assertUserCanUseMolecularDBs(ctx, update.databaseIds as number[]|undefined);
 
     const engineDataset = await ctx.entityManager.findOneOrFail(EngineDataset, datasetId);
     const { newDB, procSettingsUpd } = await processingSettingsChanged(engineDataset, { ...update, metadata });
@@ -345,7 +364,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     }
 
     logger.info(`Dataset '${datasetId}' was updated`);
-    return JSON.stringify(smAPIResp);
+    return JSON.stringify({ datasetId, status: 'success' });
   },
 
   deleteDataset: async (source, { id: datasetId, force }, ctx: Context) => {

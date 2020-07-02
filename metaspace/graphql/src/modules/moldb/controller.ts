@@ -10,6 +10,7 @@ import {smApiCreateDatabase, smApiUpdateDatabase, smApiDeleteDatabase} from '../
 import {assertImportFileIsValid} from './util/assertImportFileIsValid';
 import {mapToMolecularDB} from './util/mapToMolecularDB';
 import {MolecularDbRepository} from './MolecularDbRepository';
+import {assertUserBelongsToGroup} from './util/assertUserBelongsToGroup';
 
 
 const QueryResolvers: FieldResolversFor<Query, void> = {
@@ -20,18 +21,6 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     }
     return databases.map(db => mapToMolecularDB(db));
   },
-};
-
-const assertUserBelongsToGroup = (ctx: Context, groupId: string) => {
-  ctx.getUserIdOrFail(); // Exit early if not logged in
-
-  if (ctx.isAdmin) {
-    return;
-  }
-
-  if (!ctx.user.groupIds || !ctx.user.groupIds.includes(groupId)) {
-    throw new UserError(`Unauthorized`);
-  }
 };
 
 const assertUserCanEditMolecularDB = async (ctx: Context, databaseId: number) => {
