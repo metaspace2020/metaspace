@@ -281,6 +281,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
           .findDatabaseById(ctx, databaseId);
         return {
           'databaseId': databaseId,
+          'dbName': database.name,
           'levels': outFdrLvls,
           'counts': outFdrCounts
         };
