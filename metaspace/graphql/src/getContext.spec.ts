@@ -31,6 +31,7 @@ describe('getContext', () => {
     userId = testUser.id;
   });
   afterEach(onAfterEach);
+
   describe('cachedGetEntityById', () => {
     const testIds = [1,2,3].map(n => `00000000-1234-0000-0000-00000000000${n}`);
     const [id1, id2, id3] = testIds;
@@ -133,6 +134,7 @@ describe('getContext', () => {
       });
     });
   });
+
   describe('ContextUser.getProjectRoles', () => {
     const testIds = [1, 2].map(n => `00000000-1234-0000-0000-00000000000${n}`);
 
@@ -167,16 +169,18 @@ describe('getContext', () => {
 
   describe('ContextUser.getVisibleDatabaseIds', () => {
     const groupId = `00000000-1234-0000-0000-000000000000`;
-    let pubDatabase: MolecularDB;
-    let prvDatabase: MolecularDB;
+    let metaspacePubDatabase: MolecularDB,
+      groupPrvDatabase: MolecularDB,
+      groupPubDatabase: MolecularDB;
 
     const anotherGroupId = `00000000-1234-0000-0000-000000000001`;
     let anotherPrvDatabase: MolecularDB;
 
     beforeEach(async () => {
       await createTestGroup({ id: groupId });
-      pubDatabase = await createTestMolecularDB({ name: 'HMDB-v4', isPublic: true });
-      prvDatabase = await createTestMolecularDB({ name: 'custom-db', isPublic: false, groupId });
+      metaspacePubDatabase = await createTestMolecularDB({ name: 'HMDB-v4', isPublic: true });
+      groupPrvDatabase = await createTestMolecularDB({ name: 'custom-db', isPublic: false, groupId });
+      groupPubDatabase = await createTestMolecularDB({ name: 'custom-db-pub', isPublic: true, groupId });
 
       await createTestGroup({ id: anotherGroupId });
       anotherPrvDatabase = await createTestMolecularDB(
@@ -184,29 +188,33 @@ describe('getContext', () => {
       );
     });
 
-    it('should return only public databases for anonymous user', async () => {
-      const context = getContext({ role: "anonymous" }, testEntityManager, null as any, null as any);
+    test('Should return only public databases for anonymous user', async () => {
+      const context = getContext({ role: 'anonymous' }, testEntityManager, null as any, null as any);
       const databaseIds = await context.user.getVisibleDatabaseIds();
 
-      expect(databaseIds).toEqual([pubDatabase.id]);
+      expect(databaseIds.sort()).toEqual([metaspacePubDatabase.id, groupPubDatabase.id].sort());
     });
 
-    it('should return all databases for admin', async () => {
+    test('Should return all databases for admin', async () => {
       const context = getContext(
-        { id: "abc", groupIds: [], role: "admin" }, testEntityManager, null as any, null as any
+        { id: 'abc', groupIds: [], role: 'admin' }, testEntityManager, null as any, null as any
       );
       const databaseIds = await context.user.getVisibleDatabaseIds();
 
-      expect(databaseIds.sort()).toEqual([pubDatabase.id, prvDatabase.id, anotherPrvDatabase.id]);
+      expect(databaseIds.sort()).toEqual(
+        [metaspacePubDatabase.id, groupPrvDatabase.id, groupPubDatabase.id, anotherPrvDatabase.id].sort()
+      );
     });
 
-    it('should return all public and databases that belong to user group', async () => {
+    test('Should return all public and databases that belong to user group', async () => {
       const context = getContext(
-        { id: "abc", groupIds: [groupId], role: "user" }, testEntityManager, null as any, null as any
+        { id: 'abc', groupIds: [groupId], role: 'user' }, testEntityManager, null as any, null as any
       );
       const databaseIds = await context.user.getVisibleDatabaseIds();
 
-      expect(databaseIds.sort()).toEqual([pubDatabase.id, prvDatabase.id]);
+      expect(databaseIds.sort()).toEqual(
+        [metaspacePubDatabase.id, groupPrvDatabase.id, groupPubDatabase.id].sort()
+      );
     });
   });
 });

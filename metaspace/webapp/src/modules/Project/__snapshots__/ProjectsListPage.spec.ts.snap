@@ -31,17 +31,13 @@ exports[`ProjectsListPage should change actions for projects under review 1`] = 
         <div>
           <div class="select-buttons"><a href="#">Select none</a> <span> | </span> <a href="#">Select all</a></div>
           <div class="dataset-checkbox-list leading-6 proportional-nums">
-            <div><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-        allDatasets.0.name
-        <span class="text-gray-700">
-          (submitted <mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time>)
-        </span>
+            <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.0.name" class="truncate">
+          allDatasets.0.name
+        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time></span>
                 <!----></span></label></div>
-            <div><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-        allDatasets.1.name
-        <span class="text-gray-700">
-          (submitted <mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time>)
-        </span>
+            <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.1.name" class="truncate">
+          allDatasets.1.name
+        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time></span>
                 <!----></span></label></div>
           </div>
         </div>
@@ -53,7 +49,7 @@ exports[`ProjectsListPage should change actions for projects under review 1`] = 
       </span></button> <button type="button" class="el-button el-button--primary">
           <!---->
           <!----><span>
-        Create project and include 2 datasets
+        Create project
       </span></button></div>
     </div>
   </mock-el-dialog>
@@ -183,17 +179,13 @@ exports[`ProjectsListPage should change actions for published projects 1`] = `
         <div>
           <div class="select-buttons"><a href="#">Select none</a> <span> | </span> <a href="#">Select all</a></div>
           <div class="dataset-checkbox-list leading-6 proportional-nums">
-            <div><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-        allDatasets.0.name
-        <span class="text-gray-700">
-          (submitted <mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time>)
-        </span>
+            <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.0.name" class="truncate">
+          allDatasets.0.name
+        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time></span>
                 <!----></span></label></div>
-            <div><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-        allDatasets.1.name
-        <span class="text-gray-700">
-          (submitted <mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time>)
-        </span>
+            <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.1.name" class="truncate">
+          allDatasets.1.name
+        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time></span>
                 <!----></span></label></div>
           </div>
         </div>
@@ -205,7 +197,7 @@ exports[`ProjectsListPage should change actions for published projects 1`] = `
       </span></button> <button type="button" class="el-button el-button--primary">
           <!---->
           <!----><span>
-        Create project and include 2 datasets
+        Create project
       </span></button></div>
     </div>
   </mock-el-dialog>
@@ -334,17 +326,13 @@ exports[`ProjectsListPage should match snapshot 1`] = `
         <div>
           <div class="select-buttons"><a href="#">Select none</a> <span> | </span> <a href="#">Select all</a></div>
           <div class="dataset-checkbox-list leading-6 proportional-nums">
-            <div><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-        allDatasets.0.name
-        <span class="text-gray-700">
-          (submitted <mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time>)
-        </span>
+            <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.0.name" class="truncate">
+          allDatasets.0.name
+        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time></span>
                 <!----></span></label></div>
-            <div><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-        allDatasets.1.name
-        <span class="text-gray-700">
-          (submitted <mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time>)
-        </span>
+            <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.1.name" class="truncate">
+          allDatasets.1.name
+        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time></span>
                 <!----></span></label></div>
           </div>
         </div>
@@ -356,7 +344,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
       </span></button> <button type="button" class="el-button el-button--primary">
           <!---->
           <!----><span>
-        Create project and include 2 datasets
+        Create project
       </span></button></div>
     </div>
   </mock-el-dialog>

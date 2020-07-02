@@ -6,12 +6,12 @@ import logger from '../../utils/logger';
 import {Context} from '../../context';
 import {FieldResolversFor} from '../../bindingTypes';
 import {MolecularDB as MolecularDbModel} from './model';
-import {Group, GroupShortInfo, MolecularDB, Mutation, Query} from '../../binding';
+import {MolecularDB, Mutation, Query} from '../../binding';
 import {smApiCreateDatabase, smApiUpdateDatabase, smApiDeleteDatabase} from '../../utils/smApi/databases';
 import {assertImportFileIsValid} from './util/assertImportFileIsValid';
 import {MolecularDbRepository} from './MolecularDbRepository';
 import config from '../../utils/config';
-
+import {assertUserBelongsToGroup} from './util/assertUserBelongsToGroup';
 
 const MolecularDbResolvers: FieldResolversFor<MolecularDB, MolecularDbModel> = {
   async createdDT(database, args, ctx: Context): Promise<string> {
@@ -34,18 +34,6 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       ? await repository.findUsableDatabases(ctx.user)
       : await repository.findVisibleDatabases(ctx.user);
   },
-};
-
-const assertUserBelongsToGroup = (ctx: Context, groupId: string) => {
-  ctx.getUserIdOrFail(); // Exit early if not logged in
-
-  if (ctx.isAdmin) {
-    return;
-  }
-
-  if (!ctx.user.groupIds || !ctx.user.groupIds.includes(groupId)) {
-    throw new UserError(`Unauthorized`);
-  }
 };
 
 const assertUserCanEditMolecularDB = async (ctx: Context, databaseId: number) => {
