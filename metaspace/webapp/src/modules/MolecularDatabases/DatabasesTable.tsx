@@ -1,13 +1,15 @@
-import { createComponent, createElement, reactive } from '@vue/composition-api'
+import { createComponent, createElement, reactive, onBeforeMount } from '@vue/composition-api'
+import { useQuery } from '@vue/apollo-composable'
 
 import '../../components/ColourIcon.css'
 import GroupIcon from '../../assets/inline/refactoring-ui/group.svg'
 
 import UploadDialog from './UploadDialog'
 
+import { databaseListItemsQuery } from '../../api/moldb'
+
 const DatabasesTable = createComponent({
   props: {
-    databases: Array,
     handleRowClick: { type: Function, required: true },
     groupId: { type: String, required: true },
   },
@@ -15,15 +17,25 @@ const DatabasesTable = createComponent({
     const state = reactive({
       showUploadDialog: false,
     })
+
+    const { result, loading, refetch } = useQuery(databaseListItemsQuery)
+
+    onBeforeMount(refetch)
+
+    const onDialogClose = () => {
+      state.showUploadDialog = false
+      refetch()
+    }
+
     return () => (
       <div>
         <header class="flex justify-between items-center py-3">
           <div class="flex items-center">
             <GroupIcon class="sm-colour-icon mx-3 w-6 h-6" />
-            <p class="m-0 ml-2 text-sm leading-5 text-gray-700">
+            <p class="m-0 ml-1 text-sm leading-5 text-gray-700">
               Databases are only available to members of this group.
               <br />
-              You can choose to make the annotations visible to others.
+              You can choose to make derived annotations visible to others.
             </p>
           </div>
           <el-button type="primary" onClick={() => { state.showUploadDialog = true }}>
@@ -31,7 +43,8 @@ const DatabasesTable = createComponent({
           </el-button>
         </header>
         <el-table
-          data={props.databases}
+          v-loading={loading.value}
+          data={result.value?.molecularDatabases}
           default-sort={{ prop: 'name', order: 'ascending' }}
           style="width: 100%"
           on={{
@@ -79,7 +92,7 @@ const DatabasesTable = createComponent({
         { state.showUploadDialog
           && <UploadDialog
             groupId={props.groupId}
-            onClose={() => { state.showUploadDialog = false }}
+            onClose={onDialogClose}
           /> }
       </div>
     )

@@ -1,15 +1,23 @@
 import { createComponent, reactive } from '@vue/composition-api'
-import { useQuery } from '@vue/apollo-composable'
+import { useQuery, useMutation } from '@vue/apollo-composable'
 
 import FadeTransition from '../../components/FadeTransition'
 
 import DetailsForm from './DatabaseDetailsForm'
+import ArchiveForm from './ArchiveDatabaseForm'
+import DeleteForm from './DeleteDatabaseForm'
 import UploadDialog from './UploadDialog'
+
+import '../../components/MiniIcon.css'
+import ArrowIcon from '../../assets/inline/refactoring-ui/arrow-thin-left-circle.svg'
 
 import {
   databaseDetailsQuery,
   DatabaseDetailsQuery,
+  deleteDatabaseMutation,
   MolecularDB,
+  updateDatabaseDetailsMutation,
+  UpdateDatabaseDetailsMutation,
 } from '../../api/moldb'
 
 const getDetails = (database: MolecularDB) => {
@@ -31,17 +39,49 @@ const getDetails = (database: MolecularDB) => {
 const Details = createComponent({
   props: {
     id: { type: Number, required: true },
+    canDelete: { type: Boolean, default: false },
+    close: { type: Function, required: true },
   },
-  setup(props, { slots }) {
-    const { result } = useQuery<DatabaseDetailsQuery>(
+  setup(props, { root }) {
+    const { result, refetch, onResult } = useQuery<DatabaseDetailsQuery>(
       databaseDetailsQuery,
       { id: props.id },
       { fetchPolicy: 'no-cache' },
     )
 
+    onResult(({ error }) => {
+      if (error) {
+        const { message = 'Sorry, something went wrong' } = error.graphQLErrors[0] || {}
+        props.close()
+        root.$message(message)
+      }
+    })
+
     const state = reactive({
       showNewVersionDialog: false,
     })
+
+    const {
+      mutate: updateDatabase,
+    } = useMutation<UpdateDatabaseDetailsMutation>(updateDatabaseDetailsMutation)
+
+    const submitAndRefetch = async(details: MolecularDB) => {
+      await updateDatabase({
+        id: props.id,
+        details,
+      })
+      await refetch()
+    }
+
+    const {
+      mutate: deleteDatabase,
+    } = useMutation(deleteDatabaseMutation)
+
+    const submitDeletion = async() => {
+      await deleteDatabase({ id: props.id })
+      root.$message({ message: 'Database has been deleted', type: 'success' })
+      props.close()
+    }
 
     return () => {
       let content
@@ -55,7 +95,18 @@ const Details = createComponent({
         const details = getDetails(database)
         content = (
           <div class="relative leading-6 h2-leading-12">
-            {slots.back()}
+            <div class="absolute top-0 left-0 h-12 flex items-center">
+              <a
+                class="font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline"
+                onClick={props.close}
+                href="#"
+              >
+                <span class="flex items-center -mt-1">
+                  <ArrowIcon class="sm-mini-icon mr-1" />
+                  <span class="leading-none mt-1">All databases</span>
+                </span>
+              </a>
+            </div>
             { state.showNewVersionDialog
               && <UploadDialog
                 name={database.name}
@@ -63,7 +114,7 @@ const Details = createComponent({
                 // groupId={database.group.id} -- future API
                 onClose={() => { state.showNewVersionDialog = false }}
               /> }
-            <div class="max-w-measure-3 mx-auto mt-6 mb-12">
+            <div class="max-w-measure-3 mx-auto mt-6 mb-18">
               <div class="flex justify-between items-center">
                 <h2 title={`${database.name} - ${database.version}`} class="truncate">
                   {database.name}{' '}
@@ -75,22 +126,20 @@ const Details = createComponent({
               </div>
               <DetailsForm
                 class="mt-3"
+                id={props.id}
                 initialData={details}
+                submit={updateDatabase}
               />
-              <section class="margin-reset mt-12">
-                <h2>Archive database</h2>
-                <p>Database will not be available for processing new datasets.</p>
-                <el-button class="mt-5">
-                  Archive database
-                </el-button>
-              </section>
-              <section class="margin-reset mt-12">
-                <h2>Delete database</h2>
-                <p>Unprocessed dataset jobs using this database will also be removed.</p>
-                <el-button type="danger" class="mt-5">
-                  Delete database
-                </el-button>
-              </section>
+              <ArchiveForm
+                class="mt-12"
+                archived={database.archived}
+                submit={submitAndRefetch}
+              />
+              { props.canDelete
+                && <DeleteForm
+                  class="mt-12"
+                  submit={submitDeletion}
+                /> }
             </div>
           </div>
         )

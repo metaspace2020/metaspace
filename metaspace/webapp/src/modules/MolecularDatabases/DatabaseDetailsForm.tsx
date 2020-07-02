@@ -1,70 +1,52 @@
 import { createComponent, reactive } from '@vue/composition-api'
-import { useMutation } from '@vue/apollo-composable'
 
 import { PrimaryLabelText, SecondaryLabelText } from '../../components/Form'
 import FadeTransition from '../../components/FadeTransition'
 import { RichTextArea } from '../../components/RichText'
 
-import {
-  MolecularDB,
-  updateDatabaseDetailsMutation,
-  UpdateDatabaseDetailsMutation,
-} from '../../api/moldb'
+import { MolecularDB } from '../../api/moldb'
 
 interface State {
-  model: MolecularDB
+  model: MolecularDB,
+  loading: boolean,
+}
+
+interface Props {
+  submit: (details: any) => void
+  id: number,
+  initialData: MolecularDB,
 }
 
 const Details = createComponent({
   props: {
+    submit: { type: Function, required: true },
+    id: { tyoe: Number, required: true },
     initialData: { type: Object, required: true },
   },
-  setup(props) {
+  setup(props, { root }) {
     const state = reactive<State>({
       model: {
         ...props.initialData,
-        public: false,
+        // public: false,
       },
+      loading: false,
     })
-
-    const {
-      mutate: updateDetails,
-    } = useMutation<UpdateDatabaseDetailsMutation>(updateDatabaseDetailsMutation)
 
     const handleFormSubmit = async(e: Event) => {
       e.preventDefault()
       try {
-        await updateDetails({ id: props.id, details: state.model })
+        state.loading = true
+        await props.submit({ id: props.id, details: state.model })
+        root.$message({ message: 'Database details updated', type: 'success' })
       } catch (e) {
         console.log(e)
+      } finally {
+        state.loading = false
       }
     }
 
     return () => (
       <form class="sm-form v-rhythm-6" action="#" onSubmit={handleFormSubmit}>
-        {/* <div class="w-1/2">
-                <label for="database-name">
-                  <PrimaryLabelText>Name</PrimaryLabelText>
-                </label>
-                <el-input
-                  id="database-name"
-                  v-model={state.model.name}
-                />
-              </div>
-              <div class="flex items-end">
-                <div class="w-1/4">
-                  <label for="database-version">
-                    <PrimaryLabelText>Version</PrimaryLabelText>
-                  </label>
-                  <el-input
-                    id="database-version"
-                    v-model={state.model.version}
-                  />
-                </div>
-                <el-button class="ml-3 mb-1">
-                  Upload new version
-                </el-button>
-              </div> */}
         <div>
           <label for="database-full-name">
             <PrimaryLabelText>Full name</PrimaryLabelText>

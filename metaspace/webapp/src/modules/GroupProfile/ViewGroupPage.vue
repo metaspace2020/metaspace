@@ -126,6 +126,7 @@
           </p>
         </el-tab-pane>
         <el-tab-pane
+          v-if="isGroupMember || canEdit"
           name="databases"
           lazy
         >
@@ -138,6 +139,7 @@
             <databases
               :databases="molecularDatabases"
               :group-id="groupId"
+              :can-delete="canEdit"
             />
           </div>
         </el-tab-pane>

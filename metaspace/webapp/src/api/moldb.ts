@@ -54,6 +54,7 @@ export const updateDatabaseDetailsMutation =
   gql`mutation updateDatabaseDetails ($id: Int!, $details: UpdateMolecularDBInput!) {
     updateMolecularDB(databaseId: $id, databaseDetails: $details) {
       id
+      archived
     }
   }`
 
@@ -61,3 +62,8 @@ export interface UpdateDatabaseDetailsMutation {
   id: number,
   details: MolecularDB,
 }
+
+export const deleteDatabaseMutation =
+  gql`mutation deleteDatabaseMutation ($id: Int!) {
+    deleteMolecularDB(databaseId: $id)
+  }`
