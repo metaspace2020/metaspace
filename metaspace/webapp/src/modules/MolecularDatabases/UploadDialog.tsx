@@ -5,7 +5,7 @@ import { createComponent, reactive, onMounted, ref } from '@vue/composition-api'
 import { PrimaryLabelText } from '../../components/Form'
 import UppyUploader from './UppyUploader'
 
-import { createDatabaseQuery } from '../../api/moldb'
+import { createDatabaseQuery, MolecularDB } from '../../api/moldb'
 
 const convertToS3 = (url: string) => {
   const parsedUrl = new URL(url)
@@ -13,7 +13,13 @@ const convertToS3 = (url: string) => {
   return `s3://${bucket}/${decodeURIComponent(parsedUrl.pathname.slice(1))}`
 }
 
-const UploadDialog = createComponent({
+interface Props {
+  name: string,
+  details: MolecularDB,
+  groupId: string,
+}
+
+const UploadDialog = createComponent<Props>({
   props: {
     name: String,
     details: Object,
@@ -32,9 +38,9 @@ const UploadDialog = createComponent({
     const isNewVersion = !!props.name
 
     const handleClose = () => {
-      // if (!this.isSubmitting) {
-      emit('close')
-      // }
+      if (!state.loading) {
+        emit('close')
+      }
     }
 
     const handleUploadSuccess = (fileName: string, filePath: string) => {
@@ -57,7 +63,7 @@ const UploadDialog = createComponent({
         },
       })
       state.loading = false
-      handleClose()
+      emit('done')
     }
 
     const nameInput = ref<HTMLInputElement>(null)

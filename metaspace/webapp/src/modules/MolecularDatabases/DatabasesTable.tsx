@@ -24,6 +24,10 @@ const DatabasesTable = createComponent({
 
     const onDialogClose = () => {
       state.showUploadDialog = false
+    }
+
+    const onUploadComplete = () => {
+      onDialogClose()
       refetch()
     }
 
@@ -93,6 +97,7 @@ const DatabasesTable = createComponent({
           && <UploadDialog
             groupId={props.groupId}
             onClose={onDialogClose}
+            onDone={onUploadComplete}
           /> }
       </div>
     )
