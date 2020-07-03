@@ -35,8 +35,8 @@ describe('Molecular databases queries', () => {
   afterEach(onAfterEach);
 
   const listMolecularDBs = `
-    query listMolecularDatabases($hideUnusable: Boolean = false) {
-      molecularDatabases(hideUnusable: $hideUnusable) {
+    query listMolecularDatabases($onlyUsable: Boolean = false) {
+      molecularDatabases(onlyUsable: $onlyUsable) {
         id name fullName default isPublic archived targeted description link citation group
         { id shortName }
       }
@@ -71,7 +71,7 @@ describe('Molecular databases queries', () => {
     await createTestUserGroup(testUser.id!, group.id, UGRO.MEMBER, true);
     const { id } = await createTestMolecularDB({ groupId: group.id });
 
-    const result = await doQuery(listMolecularDBs, { hideUnusable: true }, { context: userContext });
+    const result = await doQuery(listMolecularDBs, { onlyUsable: true }, { context: userContext });
 
     expect(result).toEqual([
       expect.objectContaining({ id, group: { id: group.id, shortName: group.shortName } })
@@ -93,7 +93,7 @@ describe('Molecular databases queries', () => {
     await createTestMolecularDB({ isPublic: false, groupId: (await createTestGroup()).id });
     const { id: pubGroupId } = await createTestMolecularDB({ isPublic: true, groupId: group.id });
 
-    const result = await doQuery(listMolecularDBs, { hideUnusable: true }, { context: userContext });
+    const result = await doQuery(listMolecularDBs, { onlyUsable: true }, { context: userContext });
 
     expect(result).toEqual([]);
   });
@@ -113,7 +113,7 @@ describe('Molecular databases queries', () => {
     await setupTestUsers();
     const { id } = await createTestMolecularDB({ groupId: group.id });
 
-    const result = await doQuery(listMolecularDBs, { hideUnusable: true }, { context: adminContext });
+    const result = await doQuery(listMolecularDBs, { onlyUsable: true }, { context: adminContext });
 
     expect(result).toEqual([
       expect.objectContaining({ id, group: { id: group.id, shortName: group.shortName } })

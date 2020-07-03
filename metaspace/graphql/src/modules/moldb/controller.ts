@@ -28,9 +28,9 @@ const MolecularDbResolvers: FieldResolversFor<MolecularDB, MolecularDbModel> = {
 };
 
 const QueryResolvers: FieldResolversFor<Query, void> = {
-  async molecularDatabases(source, { hideUnusable }, ctx): Promise<MolecularDbModel[]> {
+  async molecularDatabases(source, { onlyUsable }, ctx): Promise<MolecularDbModel[]> {
     const repository = ctx.entityManager.getCustomRepository(MolecularDbRepository);
-    return !ctx.isAdmin && hideUnusable
+    return !ctx.isAdmin && onlyUsable
       ? await repository.findUsableDatabases(ctx.user)
       : await repository.findVisibleDatabases(ctx.user);
   },
