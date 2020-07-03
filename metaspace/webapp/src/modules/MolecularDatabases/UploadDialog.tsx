@@ -111,27 +111,20 @@ const UploadDialog = createComponent<Props>({
             />
           </div>
         </form>
-        <p class="mt-3">
-          Databases should be provided in CSV format with three columns:
+        <p class="m-0 mt-3">
+          Databases should be provided in{' '}
+          <a href="https://en.wikipedia.org/wiki/Tab-separated_values">TSV format</a>.
         </p>
-        <dl class="mt-3">
-          <div>
-            <dt>id</dt>
-            <dd>a numeric identifier</dd>
-          </div>
-          <div>
-            <dt>name</dt>
-            <dd>the scientific name of the molecule</dd>
-          </div>
-          <div>
-            <dt>formula</dt>
-            <dd>
-              the molecular formula indicating the counts of each element,
-              without structural information such as bonds or repeated groups
-            </dd>
-          </div>
-        </dl>
-        <UppyUploader uploadSuccessful={handleUploadSuccess} class="text-base leading-6 mt-6" />
+        <h4 class="m-0 mt-3 font-medium">
+          Example file:
+        </h4>
+        <pre class="m-0 mt-3">
+          id{'\t'}name{'\t'}formula{'\n'}
+          1{'\t'}1-Methylhistidine{'\t'}C7H11N3O2{'\n'}
+          2{'\t'}13-Diaminopropane{'\t'}C3H10N2{'\n'}
+          5{'\t'}2-Ketobutyric acid{'\t'}C4H6O3{'\n'}
+        </pre>
+        <UppyUploader uploadSuccessful={handleUploadSuccess} class="mt-6" />
         <span slot="footer">
           <el-button
             type="primary"
