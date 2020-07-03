@@ -100,9 +100,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     description: 'Select database',
     levels: ['annotation'],
     defaultInLevels: ['annotation'],
-    initialValue: lists =>
-      lists.molecularDatabases
-        .filter(d => d.default)[0]?.id,
+    initialValue: undefined,
     removable: false,
     clearable: false,
     encoding: 'number',

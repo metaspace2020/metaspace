@@ -129,7 +129,7 @@ export const neutralLossSuggestionQuery = gql`query neutralLossSuggestionQuery($
 }`
 
 export const metadataOptionsQuery = gql`query metadataOptionsQuery {
-  molecularDatabases: molecularDatabases(hideDeprecated: false, onlyLastVersion: false){id, name, default, hidden}
+  molecularDatabases: molecularDatabases(hideDeprecated: false, onlyLastVersion: false){id, name, version, default, hidden}
   adducts: adductSuggestions{adduct, name, charge, default, hidden}
 }`
 

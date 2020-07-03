@@ -1,8 +1,9 @@
 import gql from 'graphql-tag'
 import { omit } from 'lodash-es'
+import { MolecularDB } from '../../../api/moldb'
 
 export interface Option {
-  value: string;
+  value: string | number;
   label: string;
 }
 export interface FilterQueries {
@@ -232,28 +233,41 @@ const submitterQueries: FilterQueries = {
   },
 }
 
+function mapDBtoOption(db: MolecularDB): Option {
+  return {
+    value: db.id,
+    label: db.name + (db.version ? ` (${db.version})` : ''),
+  } as Option
+}
+
 const databaseQueries: FilterQueries = {
   async search($apollo, $store, query) {
     const { data } = await $apollo.query({
       query: gql`query DatabaseOptions {
-        options: molecularDatabases {
+        molecularDatabases {
           id
-          value: id
-          label: name
+          name
+          version
         }
       }`,
       fetchPolicy: 'cache-first',
     })
     const queryRegex = new RegExp(query, 'i')
-    return data.options.filter((_: any) => queryRegex.test(_.label)) as Option[]
+    const results: Option[] = []
+    for (const db of data.molecularDatabases) {
+      if (queryRegex.test(db.name)) {
+        results.push(mapDBtoOption(db))
+      }
+    }
+    return results
   },
   async getById($apollo, ids) {
     const { data } = await $apollo.query({
       query: gql`query DatabaseNames {
-        options: molecularDatabases {
+        molecularDatabases {
           id
-          value: id
-          label: name
+          name
+          version
         }
       }`,
       fetchPolicy: 'cache-first',
@@ -261,9 +275,9 @@ const databaseQueries: FilterQueries = {
 
     const parsedIds = ids.map(id => parseInt(id, 10))
     const results: Option[] = []
-    for (const option of data.options) {
-      if (parsedIds.includes(option.id)) {
-        results.push(option)
+    for (const db of data.molecularDatabases) {
+      if (parsedIds.includes(db.id)) {
+        results.push(mapDBtoOption(db))
       }
     }
     return results

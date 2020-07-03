@@ -270,7 +270,7 @@ export default class MetaspaceOptionsSection extends Vue {
     error?: Record<string, any>;
 
     @Prop({ type: Array, required: true })
-    molDBOptions!: { id: number, name: string }[];
+    molDBOptions!: { id: number, name: string, version?: string }[];
 
     @Prop({ type: Array, required: true })
     adductOptions!: {value: string, label: string}[];
@@ -293,7 +293,10 @@ export default class MetaspaceOptionsSection extends Vue {
     chemModOptions: string[] = [];
 
     get databaseOptions() {
-      return this.molDBOptions.map(db => ({ value: db.id, label: db.name }))
+      return this.molDBOptions.map(db => ({
+        value: db.id,
+        label: db.name + (db.version ? ` (${db.version})` : ''),
+      }))
     }
 
     onInput<TKey extends keyof MetaspaceOptions>(field: TKey, val: MetaspaceOptions[TKey]) {
