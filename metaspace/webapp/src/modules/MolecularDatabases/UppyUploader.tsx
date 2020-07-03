@@ -1,4 +1,4 @@
-import { createComponent, reactive, ref, onUnmounted, watch } from '@vue/composition-api'
+import { createComponent, reactive, ref, onUnmounted } from '@vue/composition-api'
 import Uppy from '@uppy/core'
 import AwsS3Multipart from '@uppy/aws-s3-multipart'
 
@@ -74,9 +74,9 @@ const UppyUploader = createComponent<Props>({
       .on('file-added', file => {
         state.fileName = file.name
       })
-      .on('upload', (...args) => {
-        state.status = 'HAS_FILE'
+      .on('upload', () => {
         state.progress = 0
+        state.status = 'HAS_FILE'
       })
       .on('upload-progress', (file) => {
         const { percentage } = file.progress
@@ -165,15 +165,15 @@ const UppyUploader = createComponent<Props>({
           <div key={state.status} class={[commonClasses, 'text-sm leading-5']}>
             <FadeTransition>
               { state.progress < 100
-                ? <div class="text-center">
+                ? <div class="h-12 flex flex-col items-center justify-center">
                   <p class="m-0">{state.progress}%</p>
                   <el-progress
-                    class="w-48 mt-2"
+                    class="w-48 mt-3"
                     percentage={state.progress}
                     show-text={false}
                   />
                 </div>
-                : <div class="relative">
+                : <div class="relative" key="complete">
                   <button
                     class={[
                       'button-reset absolute top-0 right-0 -mt-3 -mr-3',
