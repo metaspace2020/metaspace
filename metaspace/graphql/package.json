@@ -15,7 +15,7 @@
   ],
   "scripts": {
     "dev": "ts-node-dev server.js --respawn server.js",
-    "start": "ts-node server.js",
+    "start": "node -r ts-node/register --max-old-space-size=4096 server.js",
     "test": "NODE_ENV=test jest --maxWorkers=8",
     "test-ci": "NODE_ENV=test jest --maxWorkers=2",
     "gen-binding": "graphql-binding --language typescript --input schema.ts --outputBinding src/binding.ts",
