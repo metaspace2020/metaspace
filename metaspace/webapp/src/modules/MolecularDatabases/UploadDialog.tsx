@@ -3,7 +3,7 @@ import './UploadDialog.css'
 import { createComponent, reactive, onMounted, ref } from '@vue/composition-api'
 
 import { PrimaryLabelText } from '../../components/Form'
-import UppyUploader from './UppyUploader'
+import UppyUploader from '../../components/UppyUploader'
 
 import { createDatabaseQuery, MolecularDB } from '../../api/moldb'
 
