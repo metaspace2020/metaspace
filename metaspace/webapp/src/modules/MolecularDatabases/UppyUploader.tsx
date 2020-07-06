@@ -55,9 +55,9 @@ const UppyUploader = createComponent<Props>({
     const state = reactive<State>({
       dragover: false,
       error: null,
-      fileName: 'test.csv',
-      progress: 100,
-      status: 'HAS_FILE',
+      fileName: null,
+      progress: 0,
+      status: 'IDLE',
     })
 
     const input = ref<HTMLInputElement>(null)
