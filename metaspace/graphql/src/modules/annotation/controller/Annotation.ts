@@ -52,7 +52,7 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
       compounds.push({
         name: cleanMoleculeName(names[i]),
         imageURL: `/mol-images/${dbBaseName}/${id}.svg`,
-        information: [{url: infoURL, databaseId: id}],
+        information: [{database: database.name, url: infoURL, databaseId: id}],
       });
     }
     return compounds;
