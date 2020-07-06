@@ -50,6 +50,10 @@ const UploadDialog = createComponent<Props>({
       }
     }
 
+    const handleRemoveFile = () => {
+      state.model.filePath = ''
+    }
+
     const createDatabase = async() => {
       state.loading = true
       await root.$apollo.mutate({
@@ -124,7 +128,11 @@ const UploadDialog = createComponent<Props>({
           2{'\t'}13-Diaminopropane{'\t'}C3H10N2{'\n'}
           5{'\t'}2-Ketobutyric acid{'\t'}C4H6O3{'\n'}
         </pre>
-        <UppyUploader uploadSuccessful={handleUploadSuccess} class="mt-6" />
+        <UppyUploader
+          class="mt-6"
+          uploadSuccessful={handleUploadSuccess}
+          removeFile={handleRemoveFile}
+        />
         <span slot="footer">
           <el-button
             type="primary"

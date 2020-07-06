@@ -22,6 +22,7 @@
 
 @tailwind utilities;
 
+
 /* Extra utilities */
 
 .pixelated {
@@ -45,6 +46,14 @@
 
 .v-rhythm-6 > * + * {
   @apply mt-6;
+}
+
+.v-rhythm-3 > * + * {
+  @apply mt-3;
+}
+
+.transition-dashoffset {
+  transition-property: stroke-dashoffset;
 }
 
 

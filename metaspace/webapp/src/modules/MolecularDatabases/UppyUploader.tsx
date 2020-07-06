@@ -4,9 +4,10 @@ import AwsS3Multipart from '@uppy/aws-s3-multipart'
 
 import '../../components/ColourIcon.css'
 import FileIcon from '../../assets/inline/refactoring-ui/document.svg'
+import FadeTransition from '../../components/FadeTransition'
+import ProgressRing from '../../components/ProgressRing'
 
 import config from '../../lib/config'
-import FadeTransition from '../../components/FadeTransition'
 
 const uppyOptions = {
   debug: true,
@@ -42,19 +43,21 @@ interface State {
 
 interface Props {
   uploadSuccessful: (filename: string, filePath: string) => void
+  removeFile: () => void
 }
 
 const UppyUploader = createComponent<Props>({
   props: {
     uploadSuccessful: { type: Function, required: true },
+    removeFile: Function,
   },
   setup(props, { attrs }) {
     const state = reactive<State>({
       dragover: false,
       error: null,
-      fileName: null,
-      progress: 0,
-      status: 'IDLE',
+      fileName: 'test.csv',
+      progress: 100,
+      status: 'HAS_FILE',
     })
 
     const input = ref<HTMLInputElement>(null)
@@ -146,9 +149,11 @@ const UppyUploader = createComponent<Props>({
       state.dragover = false
     }
 
-    const clearFile = () => {
+    const removeFile = () => {
       uppy.reset()
-
+      if (props.removeFile) {
+        props.removeFile()
+      }
       state.dragover = false
       state.fileName = null
       state.progress = 0
@@ -163,31 +168,29 @@ const UppyUploader = createComponent<Props>({
       if (state.status === 'HAS_FILE') {
         content = (
           <div key={state.status} class={[commonClasses, 'text-sm leading-5']}>
-            <FadeTransition>
-              { state.progress < 100
-                ? <div class="h-12 flex flex-col items-center justify-center">
-                  <p class="m-0">{state.progress}%</p>
-                  <el-progress
-                    class="w-48 mt-3"
-                    percentage={state.progress}
-                    show-text={false}
-                  />
-                </div>
-                : <div class="relative" key="complete">
-                  <button
+            <div class="relative">
+              <FileIcon class="sm-colour-icon sm-colour-icon--large" />
+              <ProgressRing
+                class="absolute top-0 left-0 text-primary"
+                radius={24}
+                stroke={4}
+                progress={state.progress}
+              />
+              <FadeTransition class="absolute top-0 right-0 -mt-3 -mr-6">
+                { state.progress === 100
+                  ? <button
                     class={[
-                      'button-reset absolute top-0 right-0 -mt-3 -mr-3',
+                      'button-reset',
                       'text-gray-600 hover:text-primary focus:text-primary',
                     ]}
-                    title="Clear file"
-                    onClick={clearFile}
+                    title="Remove file"
+                    onClick={removeFile}
                   >
                     <i class="el-icon-error text-inherit text-lg"></i>
                   </button>
-                  <FileIcon class="sm-colour-icon sm-colour-icon--large" />
-                </div>
-              }
-            </FadeTransition>
+                  : <span>{state.progress}%</span> }
+              </FadeTransition>
+            </div>
             <p class="m-0 mt-3 font-medium">
               {state.fileName}
             </p>
