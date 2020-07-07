@@ -29,19 +29,9 @@ def moldb_input_doc(**kwargs):
     return {
         'name': 'test-db',
         'version': '2000-01-01',
+        'is_public': False,
         'group_id': GROUP_ID,
         'file_path': 's3://sm-engine/tests/test-db-2.tsv',
-        'description': 'Full database description',
-        **kwargs,
-    }
-
-
-def moldb_update_doc(**kwargs):
-    return {
-        'archived': False,
-        'full_name': 'full database name',
-        'link': 'http://example.org',
-        'citation': 'database citation string',
         'description': 'Full database description',
         **kwargs,
     }
@@ -143,14 +133,18 @@ def test_delete_moldb(fill_db):
         assert db_count == 0
 
 
-@pytest.mark.parametrize(
-    ('archived_before', 'archived_after'), [(False, True), (True, False)],
-)
-def test_update_moldb(archived_before, archived_after, fill_db):
+@pytest.mark.parametrize('is_public', [True, False])
+@pytest.mark.parametrize('archived', [True, False])
+def test_update_moldb(archived, is_public, fill_db):
     moldb = create_test_molecular_db(**moldb_input_doc(archived=False))
     with patch_bottle_request(
-        req_doc=moldb_update_doc(archived=archived_after, description='New database description')
+        req_doc={
+            'archived': archived,
+            'is_public': is_public,
+            'description': 'New database description',
+        }
     ):
+
         resp = api.databases.update(moldb_id=moldb.id)
 
         assert resp['status'] == 'success'
@@ -158,5 +152,6 @@ def test_update_moldb(archived_before, archived_after, fill_db):
         result_doc = DB().select_one_with_fields(
             'SELECT * FROM molecular_db where id = %s', params=(moldb.id,),
         )
-        assert result_doc['archived'] == archived_after
+        assert result_doc['archived'] == archived
+        assert result_doc['is_public'] == is_public
         assert result_doc['description'] == 'New database description'

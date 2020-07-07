@@ -139,6 +139,7 @@ def delete(moldb_id: int):
 def update(
     moldb_id: int,
     archived: bool = None,
+    is_public: bool = None,
     description: str = None,
     full_name: str = None,
     link: str = None,
