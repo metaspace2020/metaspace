@@ -27,7 +27,7 @@ export const databaseListItemsQuery =
       id
       name
       version
-      public
+      isPublic
       archived
     }
   }`
@@ -41,7 +41,7 @@ export const databaseDetailsQuery =
       fullName
       link
       name
-      public
+      isPublic
       version
     }
   }`
