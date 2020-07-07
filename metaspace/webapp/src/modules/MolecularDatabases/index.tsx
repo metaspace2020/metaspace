@@ -14,7 +14,6 @@ interface State {
 export default createComponent({
   props: {
     canDelete: { type: Boolean, default: false },
-    databases: Array,
     groupId: { type: String, required: true },
   },
   setup(props, { root }) {

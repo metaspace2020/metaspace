@@ -3,6 +3,7 @@ import gql from 'graphql-tag'
 export interface MolecularDB {
   archived?: boolean
   citation?: string
+  createdDT?: string
   default?: boolean
   description?: string
   fullName?: string
@@ -10,8 +11,11 @@ export interface MolecularDB {
   id?: number
   link?: string
   name?: string
-  public?: boolean
+  isPublic?: boolean
   version?: string
+  group?: {
+    id?: number
+  }
 }
 
 export const createDatabaseQuery =
@@ -43,6 +47,9 @@ export const databaseDetailsQuery =
       name
       isPublic
       version
+      group {
+        id
+      }
     }
   }`
 

@@ -4,9 +4,14 @@ import { useQuery } from '@vue/apollo-composable'
 import '../../components/ColourIcon.css'
 import GroupIcon from '../../assets/inline/refactoring-ui/group.svg'
 
+import '../../components/MiniIcon.css'
+import CheckIcon from '../../assets/inline/refactoring-ui/check.svg'
+
 import UploadDialog from './UploadDialog'
 
-import { databaseListItemsQuery } from '../../api/moldb'
+import { getGroupDatabasesQuery } from '../../api/group'
+import ElapsedTime from '../../components/ElapsedTime'
+import { MolecularDB } from '../../api/moldb'
 
 const DatabasesTable = createComponent({
   props: {
@@ -18,7 +23,11 @@ const DatabasesTable = createComponent({
       showUploadDialog: false,
     })
 
-    const { result, loading, refetch } = useQuery(databaseListItemsQuery)
+    const { result, loading, refetch } = useQuery(
+      getGroupDatabasesQuery,
+      { groupId: props.groupId },
+      { fetchPolicy: 'no-cache' },
+    )
 
     onBeforeMount(refetch)
 
@@ -48,8 +57,8 @@ const DatabasesTable = createComponent({
         </header>
         <el-table
           v-loading={loading.value}
-          data={result.value?.molecularDatabases}
-          default-sort={{ prop: 'name', order: 'ascending' }}
+          data={result.value?.group?.molecularDatabases}
+          default-sort={{ prop: 'createdDT', order: 'descending' }}
           style="width: 100%"
           on={{
             'row-click': props.handleRowClick,
@@ -74,24 +83,49 @@ const DatabasesTable = createComponent({
               ),
             },
           })}
-          <el-table-column
-            prop="uploadDT"
-            label="Uploaded"
-            sortable
-            min-width={144}
-          />
-          <el-table-column
-            prop="archived"
-            label="Archived"
-            align="center"
-            width={144}
-          />
-          <el-table-column
-            prop="public"
-            label="Public"
-            align="center"
-            width={144}
-          />
+          {createElement('el-table-column', {
+            props: {
+              prop: 'createdDT',
+              label: 'Uploaded',
+              minWidth: 144,
+              sortable: true,
+            },
+            scopedSlots: {
+              default: ({ row }) => (
+                <ElapsedTime key={row.id} date={row.createdDT} />
+              ),
+            },
+          })}
+          {createElement('el-table-column', {
+            props: {
+              prop: 'isPublic',
+              label: 'Results public',
+              width: 144,
+              align: 'center',
+            },
+            scopedSlots: {
+              default: ({ row }) => (
+                row.isPublic
+                  ? <CheckIcon class="sm-mini-icon" />
+                  : null
+              ),
+            },
+          })}
+          {createElement('el-table-column', {
+            props: {
+              prop: 'archived',
+              label: 'Archived',
+              width: 144,
+              align: 'center',
+            },
+            scopedSlots: {
+              default: ({ row }) => (
+                row.archived
+                  ? <CheckIcon class="sm-mini-icon" />
+                  : null
+              ),
+            },
+          })}
         </el-table>
         { state.showUploadDialog
           && <UploadDialog

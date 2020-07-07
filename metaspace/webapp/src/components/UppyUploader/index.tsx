@@ -41,15 +41,18 @@ interface State {
 }
 
 interface Props {
-  uploadSuccessful: (filename: string, filePath: string) => void
+  disabled: boolean
   removeFile: () => void
+  uploadSuccessful: (filename: string, filePath: string) => void
 }
 
 const UppyUploader = createComponent<Props>({
   inheritAttrs: false,
   props: {
-    uploadSuccessful: { type: Function, required: true },
+    disabled: Boolean,
+    formatError: Function,
     removeFile: Function,
+    uploadSuccessful: { type: Function, required: true },
   },
   setup(props, { attrs }) {
     const state = reactive<State>({
@@ -116,7 +119,7 @@ const UppyUploader = createComponent<Props>({
       state.status = 'IDLE'
     }
 
-    const commonClasses = `flex flex-col items-center justify-center ${attrs.class}`
+    const commonClasses = `flex flex-col items-center justify-center ${attrs.class || ''}`
 
     return () => {
       let content
@@ -125,6 +128,7 @@ const UppyUploader = createComponent<Props>({
         content = (
           <HasFileState
             class={commonClasses}
+            disabled={props.disabled}
             fileName={state.fileName}
             progress={state.progress}
             removeFile={removeFile}

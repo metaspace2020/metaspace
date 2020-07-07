@@ -101,7 +101,7 @@ const UploadDialog = createComponent<Props>({
               ref="nameInput"
               id="database-name"
               v-model={state.model.name}
-              disabled={isNewVersion}
+              disabled={isNewVersion || state.loading}
             />
           </div>
           <div class="w-1/4 ml-3">
@@ -112,6 +112,7 @@ const UploadDialog = createComponent<Props>({
               ref="versionInput"
               id="database-version"
               v-model={state.model.version}
+              disabled={state.loading}
             />
           </div>
         </form>
@@ -129,9 +130,10 @@ const UploadDialog = createComponent<Props>({
           5{'\t'}2-Ketobutyric acid{'\t'}C4H6O3{'\n'}
         </pre>
         <UppyUploader
-          class="mt-6"
+          class="mt-6 h-24"
           uploadSuccessful={handleUploadSuccess}
           removeFile={handleRemoveFile}
+          disabled={state.loading}
         />
         <span slot="footer">
           <el-button

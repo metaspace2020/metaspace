@@ -27,7 +27,6 @@ const Details = createComponent({
     const state = reactive<State>({
       model: {
         ...props.initialData,
-        // public: false,
       },
       loading: false,
     })
@@ -69,11 +68,11 @@ const Details = createComponent({
         <div class="flex items-center">
           <el-switch
             id="database-public"
-            v-model={state.model.public}
+            v-model={state.model.isPublic}
             class="mr-6"
           />
           <FadeTransition class="duration-200 cursor-pointer">
-            {state.model.public
+            {state.model.isPublic
               ? <label key="public" for="database-public">
                 <PrimaryLabelText>Annotations are public</PrimaryLabelText>
                 <SecondaryLabelText>Results will be visible to everyone</SecondaryLabelText>

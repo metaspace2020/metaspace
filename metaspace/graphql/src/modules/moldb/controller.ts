@@ -34,6 +34,11 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       ? await repository.findUsableDatabases(ctx.user)
       : await repository.findVisibleDatabases(ctx.user);
   },
+
+  async getMolecularDB(source, { databaseId }, ctx): Promise<MolecularDbModel> {
+    const repository = ctx.entityManager.getCustomRepository(MolecularDbRepository);
+    return repository.findDatabaseById(ctx, databaseId);
+  },
 };
 
 const assertUserCanEditMolecularDB = async (ctx: Context, databaseId: number) => {

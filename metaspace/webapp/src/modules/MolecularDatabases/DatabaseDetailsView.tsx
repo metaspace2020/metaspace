@@ -25,6 +25,7 @@ const getDetails = (database: MolecularDB) => {
     citation,
     description,
     fullName,
+    isPublic,
     link,
   } = database
 
@@ -32,6 +33,7 @@ const getDetails = (database: MolecularDB) => {
     citation,
     description,
     fullName,
+    isPublic,
     link,
   }
 }
@@ -111,7 +113,7 @@ const Details = createComponent({
               && <UploadDialog
                 name={database.name}
                 details={details}
-                // groupId={database.group.id} -- future API
+                groupId={database?.group?.id}
                 onClose={() => { state.showNewVersionDialog = false }}
               /> }
             <div class="max-w-measure-3 mx-auto mt-6 mb-18">
@@ -132,7 +134,7 @@ const Details = createComponent({
               />
               <ArchiveForm
                 class="mt-12"
-                archived={database.archived}
+                archived={database.archived || false}
                 submit={submitAndRefetch}
               />
               { props.canDelete

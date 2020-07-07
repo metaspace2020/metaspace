@@ -137,7 +137,6 @@
           </span>
           <div>
             <databases
-              :databases="molecularDatabases"
               :group-id="groupId"
               :can-delete="canEdit"
             />
@@ -266,9 +265,6 @@ import { databaseListItemsQuery, MolecularDB } from '../../api/moldb'
           return this.groupId == null
         },
       },
-      molecularDatabases: {
-        query: databaseListItemsQuery,
-      },
       $subscribe: {
         datasetDeleted: {
           query: datasetDeletedQuery,
@@ -287,7 +283,6 @@ export default class ViewGroupPage extends Vue {
     currentUser: CurrentUserRoleResult | null = null;
     group: ViewGroupResult | null = null;
     data: ViewGroupProfileData | null = null;
-    molecularDatabases: MolecularDB[] | null = null
 
     get currentUserId(): string | null { return this.currentUser && this.currentUser.id }
     get roleInGroup(): UserGroupRole | null { return this.group && this.group.currentUserRole }
@@ -300,7 +295,7 @@ export default class ViewGroupPage extends Vue {
     get countMembers() { return this.group && this.group.numMembers }
     maxVisibleDatasets = 8;
 
-    get countDatabases() { return this.molecularDatabases?.length || 0 }
+    get countDatabases() { return this.group?.molecularDatabases?.length || 0 }
 
     get isGroupMember() {
       return this.roleInGroup === 'MEMBER' || this.roleInGroup === 'GROUP_ADMIN'
