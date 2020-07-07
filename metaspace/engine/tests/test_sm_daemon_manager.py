@@ -102,11 +102,13 @@ class TestSMDaemonDatasetManager:
         manager = create_daemon_man(es=es_mock)
 
         ds_id = '2000-01-01'
-        ds = create_ds(ds_id=ds_id, metadata=metadata)
+        moldb = fill_db["moldb"]
+        ds = create_ds(ds_id=ds_id, moldbs_ids=[moldb.id], metadata=metadata)
 
         manager.index(ds)
 
         es_mock.delete_ds.assert_called_with(ds_id, delete_dataset=False)
+        assert es_mock.index_ds.call_count == 1
         index_ds_kw_args = es_mock.index_ds.call_args[1]
         assert index_ds_kw_args.get('ds_id') == ds_id
         assert index_ds_kw_args.get('moldb').name == 'HMDB-v4'

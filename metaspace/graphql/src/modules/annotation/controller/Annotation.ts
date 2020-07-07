@@ -6,8 +6,8 @@ import config from '../../../utils/config';
 import {ESAnnotationWithColoc} from '../queryFilters';
 import {AllHtmlEntities} from 'html-entities';
 import {MolecularDB as MolecularDbModel} from '../../moldb/model';
-import {mapToMolecularDB} from '../../moldb/util/mapToMolecularDB';
 import {MolecularDbRepository} from '../../moldb/MolecularDbRepository';
+import {Context} from '../../../context';
 
 const cleanMoleculeName = (name: string) =>
   // Decode &alpha; &beta; &gamma; etc.
@@ -34,50 +34,25 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
     }
   },
 
-  possibleCompounds(hit) {
+  async possibleCompounds(hit, _, ctx: Context) {
+    const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
+      .findDatabaseById(ctx, hit._source.db_id);
+
     const ids = hit._source.comp_ids;
     const names = hit._source.comp_names;
     let compounds = [];
     for (let i = 0; i < names.length; i++) {
       let id = ids[i];
-      let dbName = hit._source.db_name;
 
-      let infoURL: string | null = null,
-        dbBaseName: string | null = null;
-      if (dbName.startsWith('HMDB')) {
-        dbBaseName = 'HMDB';
-        infoURL = `http://www.hmdb.ca/metabolites/${id}`;
-      }
-      else if (dbName.startsWith('core_metabolome')) {
-        dbBaseName = 'core_metabolome';
-        infoURL = `http://www.hmdb.ca/metabolites/${id}`;
-      } else if (dbName.startsWith('ChEBI')) {
-        dbBaseName = 'ChEBI';
-        infoURL = `http://www.ebi.ac.uk/chebi/searchId.do?chebiId=${id}`;
-      } else if (dbName.startsWith('SwissLipids')) {
-        dbBaseName = 'SwissLipids';
-        infoURL = `http://swisslipids.org/#/entity/${id}`;
-      } else if (dbName.startsWith('LipidMaps') || dbName.startsWith('LIPID_MAPS')) {
-        dbBaseName = 'LipidMaps';
-        infoURL = `http://www.lipidmaps.org/data/LMSDRecord.php?LMID=${id}`;
-      } else if (dbName.startsWith('PAMDB')) {
-        dbBaseName = 'PAMDB';
-        infoURL = `http://pseudomonas.umaryland.edu/PAMDB?MetID=${id}`;
-      } else if (dbName.startsWith('ECMDB')) {
-        dbBaseName = 'ECMDB';
-        infoURL = `http://ecmdb.ca/compounds/${id}`;
-      } else if (dbName.startsWith('GNPS')) {
-        dbBaseName = 'GNPS';
-        infoURL = `https://gnps.ucsd.edu/ProteoSAFe/gnpslibraryspectrum.jsp?SpectrumID=${id}`;
-      } else if (dbName.startsWith('NPA')) {
-        dbBaseName = 'NPA';
-        infoURL = `https://www.npatlas.org/joomla/index.php/explore/compounds#npaid=${id}`;
-      }
+      const infoURL: string | null = `${database.moleculeLinkTemplate}${id}`;
+      const dbBaseName = database.name.startsWith('core_metabolome')
+        ? 'core_metabolome'
+        : database.name.split('-')[0];
 
       compounds.push({
         name: cleanMoleculeName(names[i]),
         imageURL: `/mol-images/${dbBaseName}/${id}.svg`,
-        information: [{database: dbName, url: infoURL, databaseId: id}],
+        information: [{database: database.name, url: infoURL, databaseId: id}],
       });
     }
     return compounds;
@@ -94,9 +69,8 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
   ionFormula: (hit) => hit._source.ion_formula || '', // TODO: Remove ' || ''' after prod has been migrated
 
   databaseDetails: async (hit, _, ctx) => {
-    const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
+    return await ctx.entityManager.getCustomRepository(MolecularDbRepository)
       .findDatabaseById(ctx, hit._source.db_id);
-    return mapToMolecularDB(database);
   },
 
   database: async (hit, _, ctx) => {

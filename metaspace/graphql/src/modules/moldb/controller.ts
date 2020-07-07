@@ -5,38 +5,35 @@ import { validateTiptapJson } from '../../utils/tiptap';
 import logger from '../../utils/logger';
 import {Context} from '../../context';
 import {FieldResolversFor} from '../../bindingTypes';
+import {MolecularDB as MolecularDbModel} from './model';
 import {MolecularDB, Mutation, Query} from '../../binding';
 import {smApiCreateDatabase, smApiUpdateDatabase, smApiDeleteDatabase} from '../../utils/smApi/databases';
 import {assertImportFileIsValid} from './util/assertImportFileIsValid';
-import {mapToMolecularDB} from './util/mapToMolecularDB';
 import {MolecularDbRepository} from './MolecularDbRepository';
+import config from '../../utils/config';
+import {assertUserBelongsToGroup} from './util/assertUserBelongsToGroup';
 
-
-const QueryResolvers: FieldResolversFor<Query, void> = {
-  async molecularDatabases(source, { hideArchived }, ctx): Promise<MolecularDB[]> {
-    let databases = await ctx.entityManager.getCustomRepository(MolecularDbRepository).findDatabases(ctx.user);
-    if (hideArchived) {
-      databases = databases.filter(db => !db.archived)
-    }
-    return databases.map(db => mapToMolecularDB(db));
+const MolecularDbResolvers: FieldResolversFor<MolecularDB, MolecularDbModel> = {
+  async createdDT(database, args, ctx: Context): Promise<string> {
+    return database.createdDT.toISOString();
   },
-  async getMolecularDB(source, { databaseId }, ctx): Promise<MolecularDB> {
-    const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
-      .findDatabaseById(ctx, databaseId);
-    return mapToMolecularDB(database);
-  }
+
+  async default(database, args, ctx: Context): Promise<boolean> {
+    return config.defaults.moldb_names.includes(database.name);
+  },
+
+  async hidden(database, args, ctx: Context): Promise<boolean> {
+    return database.archived || !database.isPublic;
+  },
 };
 
-const assertUserBelongsToGroup = (ctx: Context, groupId: string) => {
-  ctx.getUserIdOrFail(); // Exit early if not logged in
-
-  if (ctx.isAdmin) {
-    return;
-  }
-
-  if (!ctx.user.groupIds || !ctx.user.groupIds.includes(groupId)) {
-    throw new UserError(`Unauthorized`);
-  }
+const QueryResolvers: FieldResolversFor<Query, void> = {
+  async molecularDatabases(source, { onlyUsable }, ctx): Promise<MolecularDbModel[]> {
+    const repository = ctx.entityManager.getCustomRepository(MolecularDbRepository);
+    return !ctx.isAdmin && onlyUsable
+      ? await repository.findUsableDatabases(ctx.user)
+      : await repository.findVisibleDatabases(ctx.user);
+  },
 };
 
 const assertUserCanEditMolecularDB = async (ctx: Context, databaseId: number) => {
@@ -55,7 +52,7 @@ const assertUserCanEditMolecularDB = async (ctx: Context, databaseId: number) =>
 
 const MutationResolvers: FieldResolversFor<Mutation, void>  = {
 
-  async createMolecularDB(source, { databaseDetails }, ctx): Promise<MolecularDB> {
+  async createMolecularDB(source, { databaseDetails }, ctx): Promise<MolecularDbModel> {
     logger.info(`User ${ctx.user.id} is creating molecular database ${JSON.stringify(databaseDetails)}`);
     const groupId = databaseDetails.groupId as string;
     assertUserBelongsToGroup(ctx, groupId);
@@ -66,11 +63,10 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     await assertImportFileIsValid(databaseDetails.filePath);
 
     const { id } = await smApiCreateDatabase({ ...databaseDetails, groupId });
-    const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository).findDatabaseById(ctx, id);
-    return mapToMolecularDB(database);
+    return await ctx.entityManager.getCustomRepository(MolecularDbRepository).findDatabaseById(ctx, id);
   },
 
-  async updateMolecularDB(source, { databaseId, databaseDetails }, ctx): Promise<MolecularDB> {
+  async updateMolecularDB(source, { databaseId, databaseDetails }, ctx): Promise<MolecularDbModel> {
     logger.info(`User ${ctx.user.id} is updating molecular database ${JSON.stringify(databaseDetails)}`);
     await assertUserCanEditMolecularDB(ctx, databaseId);
     if (databaseDetails.citation != null) {
@@ -78,9 +74,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     }
 
     const { id } = await smApiUpdateDatabase(databaseId, databaseDetails);
-    const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
-      .findDatabaseById(ctx, id);
-    return mapToMolecularDB(database);
+    return await ctx.entityManager.getCustomRepository(MolecularDbRepository).findDatabaseById(ctx, id);
   },
 
   async deleteMolecularDB(source, { databaseId}, ctx): Promise<Boolean> {
@@ -97,4 +91,5 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
 export const Resolvers = {
   Query: QueryResolvers,
   Mutation: MutationResolvers,
+  MolecularDB: MolecularDbResolvers,
 } as IResolvers<any, Context>;
