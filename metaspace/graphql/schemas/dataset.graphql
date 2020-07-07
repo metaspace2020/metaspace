@@ -59,6 +59,7 @@ type Dataset {
 type FdrCounts {
   databaseId: Int!
   dbName: String!
+  dbVersion: String!
   levels: [Float!]!
   counts: [Float!]!
 }
