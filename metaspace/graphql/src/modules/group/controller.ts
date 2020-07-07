@@ -4,6 +4,7 @@ import {EntityManager, In} from 'typeorm';
 import {Group as GroupModel, UserGroup as UserGroupModel, UserGroupRoleOptions} from './model';
 import {User as UserModel} from '../user/model';
 import {Dataset as DatasetModel} from '../dataset/model';
+import {MolecularDB as MolecularDbModel} from '../moldb/model';
 import {Group, UserGroup, UserGroupRole} from '../../binding';
 import {Context, ContextUser} from '../../context';
 import {Scope, ScopeRoleOptions, UserGroupSource} from '../../bindingTypes';
@@ -16,7 +17,8 @@ import {createInactiveUser} from '../auth/operation';
 import {smApiUpdateDataset} from '../../utils/smApi/datasets';
 import {getDatasetForEditing} from '../dataset/operation/getDatasetForEditing';
 import {resolveGroupScopeRole} from './util/resolveGroupScopeRole';
-import {urlSlugMatchesClause, validateUrlSlugChange} from "../groupOrProject/urlSlug";
+import {urlSlugMatchesClause, validateUrlSlugChange} from '../groupOrProject/urlSlug';
+import {MolecularDbRepository} from "../moldb/MolecularDbRepository";
 
 const assertCanCreateGroup = (user: ContextUser) => {
   if (!user.id || user.role !== 'admin')
@@ -150,6 +152,11 @@ export const Resolvers = {
         ...ug,
         user: {...ug.user, scopeRole},
       }));
+    },
+
+    async molecularDatabases(group: GroupModel, args: any, ctx: Context): Promise<MolecularDbModel[]> {
+      return await ctx.entityManager.getCustomRepository(MolecularDbRepository)
+        .findVisibleDatabases(ctx.user, group.id);
     },
   },
 

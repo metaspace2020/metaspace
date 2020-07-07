@@ -1,19 +1,25 @@
 
-# TODO: update webapp code
+type GroupShortInfo {
+  id: ID!
+  shortName: String!
+}
+
 type MolecularDB {
   id: Int!
   name: String!
   version: String!
+  createdDT: String!
   default: Boolean!
   # True if database is deprecated/superseded and would not be useful for most users
   hidden: Boolean! @deprecated(reason: "Use archived field instead")
-  public: Boolean!
+  isPublic: Boolean!
   archived: Boolean!  # Cannot be used for dataset processing
   targeted: Boolean!  # If true keep all annotations regardless of their FDR
   fullName: String
   description: String
   link: String
   citation: String
+  group: GroupShortInfo
 }
 
 input CreateMolecularDBInput {
@@ -36,21 +42,11 @@ input UpdateMolecularDBInput {
 }
 
 type Query {
-  molecularDatabases(
-  hideArchived: Boolean=true,
-    hideDeprecated: Boolean=false # @deprecated(reason: "Only hideArchived should be used"),
-    onlyLastVersion: Boolean=false # @deprecated(reason: "Only hideArchived should be used")
-    ): [MolecularDB!]
+  molecularDatabases(onlyUsable: Boolean=false): [MolecularDB!]
 }
 
 type Mutation {
   createMolecularDB(databaseDetails: CreateMolecularDBInput!): MolecularDB!
   updateMolecularDB(databaseId: Int!, databaseDetails: UpdateMolecularDBInput!): MolecularDB!
   deleteMolecularDB(databaseId: Int!): Boolean!
-}
-
-schema {
-  query: Query
-  mutation: Mutation
-  subscription: Subscription
 }

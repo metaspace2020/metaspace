@@ -21,7 +21,7 @@ from sm.engine.es_export import ESExporter
 from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.annotation_job import JobStatus
 from sm.engine.queue import QueueConsumer
-from sm.engine.util import SMConfig
+from .utils import create_test_molecular_db
 
 os.environ.setdefault('PYSPARK_PYTHON', sys.executable)
 logger = logging.getLogger('annotate-daemon')
@@ -58,15 +58,12 @@ def reset_queues(local_sm_config):
 
 def init_moldb():
     db = DB()
-    moldb_id = 0
-    db.insert(
-        "INSERT INTO molecular_db (id, name, version) VALUES (%s, %s, %s)",
-        rows=[(moldb_id, 'HMDB-v4', '2018-04-03')],
-    )
+    moldb = create_test_molecular_db()
     db.insert(
         "INSERT INTO molecule (mol_id, mol_name, formula, moldb_id) VALUES (%s, %s, %s, %s)",
-        rows=[('HMDB0001', 'molecule name', 'C12H24O', moldb_id)],
+        rows=[('HMDB0001', 'molecule name', 'C12H24O', moldb.id)],
     )
+    return moldb
 
 
 get_ion_images_for_analysis_mock_return = (
@@ -152,7 +149,7 @@ def test_sm_daemons(
     queue_pub,
     local_sm_config,
 ):
-    init_moldb()
+    moldb = init_moldb()
 
     formula_metrics_df = pd.DataFrame(
         {
@@ -196,6 +193,7 @@ def test_sm_daemons(
     try:
         ds_id = '2000-01-01_00h00m'
         upload_dt = datetime.now()
+        ds_config['database_ids'] = [moldb.id]
         ds = Dataset(
             id=ds_id,
             name=test_ds_name,
@@ -232,8 +230,8 @@ def test_sm_daemons(
         # job table asserts
         rows = db.select('SELECT moldb_id, ds_id, status, start, finish from job')
         assert len(rows) == 1
-        db_id, ds_id, status, start, finish = rows[0]
-        assert (db_id, ds_id, status) == (0, '2000-01-01_00h00m', JobStatus.FINISHED)
+        moldb_id, ds_id, status, start, finish = rows[0]
+        assert (moldb_id, ds_id, status) == (moldb.id, '2000-01-01_00h00m', JobStatus.FINISHED)
         assert start <= finish
 
         # image metrics asserts
@@ -287,7 +285,7 @@ def test_sm_daemons_annot_fails(
     queue_pub,
     local_sm_config,
 ):
-    init_moldb()
+    moldb = init_moldb()
 
     def throw_exception_function(*args, **kwargs):
         raise Exception('Test exception')
@@ -303,6 +301,7 @@ def test_sm_daemons_annot_fails(
 
     try:
         ds_id = '2000-01-01_00h00m'
+        ds_config['database_ids'] = [moldb.id]
         ds = Dataset(
             id=ds_id,
             name=test_ds_name,
@@ -343,7 +342,7 @@ def test_sm_daemon_es_export_fails(
     queue_pub,
     local_sm_config,
 ):
-    init_moldb()
+    moldb = init_moldb()
 
     formula_metrics_df = pd.DataFrame(
         {
@@ -392,6 +391,7 @@ def test_sm_daemon_es_export_fails(
 
     try:
         ds_id = '2000-01-01_00h00m'
+        ds_config['database_ids'] = [moldb.id]
         ds = Dataset(
             id=ds_id,
             name=test_ds_name,

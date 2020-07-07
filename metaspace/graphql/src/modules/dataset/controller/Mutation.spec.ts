@@ -16,7 +16,6 @@ import {
   userContext
 } from '../../../tests/graphqlTestEnvironment';
 import { Group, UserGroupRoleOptions as UGRO } from '../../group/model';
-import { MolecularDB } from '../../moldb/model';
 import { Dataset } from '../model';
 import { getContextForTest } from '../../../getContext';
 
@@ -147,9 +146,9 @@ describe('Dataset mutations: molecular databases permissions', () => {
     dataset = await createTestDataset();
     group = await createTestGroup();
     const databaseDocs = [
-      { name: 'HMDB-v4', public: true, groupId: null },
-      { name: 'custom-db-pub', public: true, groupId: group.id },
-      { name: 'custom-db', public: false, groupId: group.id },
+      { name: 'HMDB-v4', isPublic: true, groupId: null },
+      { name: 'custom-db-pub', isPublic: true, groupId: group.id },
+      { name: 'custom-db', isPublic: false, groupId: group.id },
     ];
     for (const dbDoc of databaseDocs) {
       databaseIds.push((await createTestMolecularDB(dbDoc)).id);
@@ -200,6 +199,6 @@ describe('Dataset mutations: molecular databases permissions', () => {
 
   test('Admin allowed to use Metaspace public and group databases', async () => {
     await doQuery(createDatasetQuery, { databaseIds }, { context: adminContext });
-    await doQuery( updateDatasetQuery, { datasetId: dataset.id, databaseIds }, { context: adminContext });
+    await doQuery(updateDatasetQuery, { datasetId: dataset.id, databaseIds }, { context: adminContext });
   });
 });

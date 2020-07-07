@@ -7,8 +7,10 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   Unique
-} from "typeorm";
-import {Group} from "../group/model";
+} from 'typeorm';
+import { Group } from '../group/model';
+import { MomentValueTransformer } from '../../utils/MomentValueTransformer';
+import { Moment } from 'moment';
 
 
 @Entity({ schema: 'public', name: 'molecular_db' })
@@ -23,6 +25,14 @@ export class MolecularDB {
 
   @Column({ type: 'text' })
   version: string;
+
+  @Column({
+    type: 'timestamp without time zone', transformer: new MomentValueTransformer()
+  })
+  createdDT: Moment;
+
+  @Column({ type: 'text', nullable: true })
+  moleculeLinkTemplate: string | null;
 
   @Column({ type: 'text', nullable: true })
   description: string | null;
@@ -40,7 +50,7 @@ export class MolecularDB {
   molecules: Molecule[];
 
   @Column({ type: 'boolean', default: false })
-  public: boolean;  // At this point, only the Metaspace provided databases are public
+  isPublic: boolean;
 
   @Column({ type: 'boolean', default: false })
   archived: boolean;
