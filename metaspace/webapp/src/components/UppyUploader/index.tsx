@@ -34,7 +34,7 @@ function preventDropEvents() {
 }
 
 interface State {
-  error: string | null
+  error: boolean
   fileName: string | null
   progress: number
   status: 'IDLE' | 'HAS_FILE' | 'ERROR'
@@ -56,7 +56,7 @@ const UppyUploader = createComponent<Props>({
   },
   setup(props, { attrs }) {
     const state = reactive<State>({
-      error: null,
+      error: false,
       fileName: null,
       progress: 0,
       status: 'IDLE',
@@ -71,10 +71,11 @@ const UppyUploader = createComponent<Props>({
       })
       .on('file-added', file => {
         state.fileName = file.name
+        state.status = 'HAS_FILE'
       })
       .on('upload', () => {
+        state.error = false
         state.progress = 0
-        state.status = 'HAS_FILE'
       })
       .on('upload-progress', (file) => {
         const { percentage } = file.progress
@@ -87,8 +88,7 @@ const UppyUploader = createComponent<Props>({
         state.progress = 100
       })
       .on('upload-error', () => {
-        state.status = 'ERROR'
-        state.error = uppy.getState().error || null
+        state.error = true
       })
 
     const addFile = (file: File) => {
@@ -113,6 +113,7 @@ const UppyUploader = createComponent<Props>({
       }
       state.fileName = null
       state.progress = 0
+      state.error = false
       state.status = 'IDLE'
     }
 
@@ -122,20 +123,29 @@ const UppyUploader = createComponent<Props>({
       let content
 
       if (state.status === 'HAS_FILE') {
+        let status
+        let buttonClickHandler
+
+        if (props.disabled) {
+          status = 'DISABLED'
+        } else if (state.error) {
+          status = 'ERROR'
+          buttonClickHandler = () => uppy.retryAll()
+        } else if (state.progress === 100) {
+          status = 'COMPLETE'
+          buttonClickHandler = removeFile
+        } else {
+          status = 'UPLOADING'
+        }
+
         content = (
           <HasFileState
             class={commonClasses}
-            disabled={props.disabled}
+            status={status}
+            buttonClickHandler={buttonClickHandler}
             fileName={state.fileName}
             progress={state.progress}
-            removeFile={removeFile}
           />
-        )
-      } else if (state.status === 'ERROR') {
-        content = (
-          <div key={state.status} class={[commonClasses]}>
-            {state.error}
-          </div>
         )
       } else {
         content = (

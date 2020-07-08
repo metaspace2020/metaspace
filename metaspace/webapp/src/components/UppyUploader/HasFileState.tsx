@@ -10,49 +10,67 @@ interface State {
 }
 
 interface Props {
-  disabled: boolean
+  status: 'UPLOADING' | 'COMPLETE' | 'ERROR' | 'DISABLED'
   fileName: string
   progress: number
-  removeFile?: () => void
+  buttonClickHandler?: () => void
 }
 
 export default createComponent<Props>({
   props: {
+    status: String,
     fileName: String,
     progress: Number,
-    removeFile: Function,
-    disabled: Boolean,
+    buttonClickHandler: Function,
   },
   setup(props) {
     return () => (
-      <div class={['text-sm leading-5 transition-opacity duration-300', props.disabled && 'opacity-50']}>
+      <div class={['text-sm leading-5 transition-opacity duration-300', props.status === 'DISABLED' && 'opacity-50']}>
         <div class="relative mt-3">
           <FileIcon class="sm-colour-icon sm-colour-icon--large" />
           <ProgressRing
             class={[
               'absolute top-0 left-0',
-              props.progress === 100 ? 'text-success' : 'text-primary',
+              {
+                'text-success': props.status === 'COMPLETE',
+                'text-primary': props.status === 'UPLOADING',
+                'text-danger': props.status === 'ERROR',
+              },
             ]}
             radius={24}
             stroke={4}
             progress={props.progress}
           />
           <FadeTransition class="absolute top-0 right-0 -mt-3 -mr-6">
-            { props.progress === 100
-              ? <button
+            { props.status === 'UPLOADING'
+              && <span>{props.progress}%</span> }
+            { props.status === 'COMPLETE'
+              && <button
                 class="button-reset text-gray-600 hover:text-primary focus:text-primary"
                 title="Remove file"
-                onClick={props.removeFile}
-                disabled={!props.removeFile}
+                onClick={props.buttonClickHandler}
               >
                 <i class="el-icon-error text-inherit text-lg"></i>
-              </button>
-              : <span>{props.progress}%</span> }
+              </button> }
+            { props.status === 'ERROR'
+              && <button
+                class="button-reset text-gray-600 hover:text-primary focus:text-primary"
+                title="Retry file"
+                onClick={props.buttonClickHandler}
+              >
+                <i class="el-icon-refresh text-inherit text-lg"></i>
+              </button> }
           </FadeTransition>
         </div>
-        <p class="m-0 mt-3 font-medium">
-          {props.fileName}
-        </p>
+        <FadeTransition>
+          { props.status === 'ERROR'
+            ? <p key="error" class="m-0 mt-3 font-medium text-danger">
+              Upload failed
+            </p>
+            : <p class="m-0 mt-3 font-medium">
+              {props.fileName}
+            </p> }
+        </FadeTransition>
       </div>
     )
   },
