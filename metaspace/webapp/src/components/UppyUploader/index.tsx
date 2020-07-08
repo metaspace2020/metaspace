@@ -91,9 +91,6 @@ const UppyUploader = createComponent<Props>({
         state.error = uppy.getState().error || null
       })
 
-    const uppyFiles = ref(uppy.state.files)
-    watch(() => uppyFiles.value, files => console.log(files))
-
     const addFile = (file: File) => {
       const descriptor = {
         source: attrs.id,

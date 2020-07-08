@@ -11,7 +11,34 @@ import UploadDialog from './UploadDialog'
 
 import { getGroupDatabasesQuery } from '../../api/group'
 import ElapsedTime from '../../components/ElapsedTime'
-import { MolecularDB } from '../../api/moldb'
+
+const CheckColumn = createComponent({
+  props: {
+    prop: { type: String, required: true },
+    label: String,
+  },
+  setup(props) {
+    return () => (
+      createElement('el-table-column', {
+        props: {
+          prop: props.prop,
+          label: props.label,
+          width: 144,
+          align: 'center',
+        },
+        scopedSlots: {
+          default: ({ row }) => (
+            <span class="flex justify-center items-center h-5">
+              { row[props.prop]
+                ? <CheckIcon class="sm-mini-icon" />
+                : null }
+            </span>
+          ),
+        },
+      })
+    )
+  },
+})
 
 const DatabasesTable = createComponent({
   props: {
@@ -96,36 +123,14 @@ const DatabasesTable = createComponent({
               ),
             },
           })}
-          {createElement('el-table-column', {
-            props: {
-              prop: 'isPublic',
-              label: 'Results public',
-              width: 144,
-              align: 'center',
-            },
-            scopedSlots: {
-              default: ({ row }) => (
-                row.isPublic
-                  ? <CheckIcon class="sm-mini-icon" />
-                  : null
-              ),
-            },
-          })}
-          {createElement('el-table-column', {
-            props: {
-              prop: 'archived',
-              label: 'Archived',
-              width: 144,
-              align: 'center',
-            },
-            scopedSlots: {
-              default: ({ row }) => (
-                row.archived
-                  ? <CheckIcon class="sm-mini-icon" />
-                  : null
-              ),
-            },
-          })}
+          <CheckColumn
+            prop="isPublic"
+            label="Results public"
+          />
+          <CheckColumn
+            prop="archived"
+            label="Archived"
+          />
         </el-table>
         { state.showUploadDialog
           && <UploadDialog
