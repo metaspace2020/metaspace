@@ -22,6 +22,10 @@ const formatErrorMsg = (e: ApolloError) => {
     if (message.type === 'already_exists') {
       return 'This database already exists, please use a different name or version.'
     }
+    if (message.type === 'malformed_csv') {
+      return 'The file format does not look correct. Please check that the file is tab-separated'
+        + ' and contains three columns: id, name, and formula.'
+    }
   }
   return 'Something went wrong, please try again later.'
 }
@@ -69,6 +73,7 @@ const UploadDialog = createComponent<Props>({
     }
 
     const createDatabase = async() => {
+      state.error = ''
       state.loading = true
       try {
         await root.$apollo.mutate({
