@@ -1,6 +1,7 @@
 import './UploadDialog.css'
 
 import { createComponent, reactive, onMounted, ref } from '@vue/composition-api'
+import { ApolloError } from 'apollo-client-preset'
 
 import { PrimaryLabelText } from '../../components/Form'
 import UppyUploader from '../../components/UppyUploader'
@@ -14,7 +15,14 @@ const convertToS3 = (url: string) => {
   return `s3://${bucket}/${decodeURIComponent(parsedUrl.pathname.slice(1))}`
 }
 
-const formatErrorMsg = (e: Error) => {
+const formatErrorMsg = (e: ApolloError) => {
+  if (e.graphQLErrors && e.graphQLErrors.length) {
+    const [error] = e.graphQLErrors
+    const message = JSON.parse(error.message)
+    if (message.type === 'already_exists') {
+      return 'This database already exists, please use a different name or version.'
+    }
+  }
   return 'Something went wrong, please try again later.'
 }
 
@@ -67,6 +75,7 @@ const UploadDialog = createComponent<Props>({
           mutation: createDatabaseQuery,
           variables: {
             input: {
+              isPublic: false,
               ...props?.details,
               ...state.model,
               groupId: props.groupId,

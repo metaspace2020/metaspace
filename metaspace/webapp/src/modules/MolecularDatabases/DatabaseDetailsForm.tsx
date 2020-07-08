@@ -38,7 +38,7 @@ const Details = createComponent({
         await props.submit({ id: props.id, details: state.model })
         root.$message({ message: 'Database details updated', type: 'success' })
       } catch (e) {
-        console.log(e)
+        root.$message({ message: 'something went wrong, please try again later', type: 'error' })
       } finally {
         state.loading = false
       }

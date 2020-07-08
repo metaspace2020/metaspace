@@ -14,7 +14,6 @@ import ArrowIcon from '../../assets/inline/refactoring-ui/arrow-thin-left-circle
 import {
   databaseDetailsQuery,
   DatabaseDetailsQuery,
-  deleteDatabaseMutation,
   MolecularDB,
   updateDatabaseDetailsMutation,
   UpdateDatabaseDetailsMutation,
@@ -53,15 +52,20 @@ const Details = createComponent({
 
     onResult(({ error }) => {
       if (error) {
-        const { message = 'Sorry, something went wrong' } = error.graphQLErrors[0] || {}
+        root.$message({ message: 'Sorry, something went wrong', type: 'error' })
         props.close()
-        root.$message(message)
       }
     })
 
     const state = reactive({
       showNewVersionDialog: false,
     })
+
+    const handleNewVersionClose = () => { state.showNewVersionDialog = false }
+    const handleNewVersionDone = () => {
+      handleNewVersionClose()
+      props.close()
+    }
 
     const {
       mutate: updateDatabase,
@@ -73,16 +77,6 @@ const Details = createComponent({
         details,
       })
       await refetch()
-    }
-
-    const {
-      mutate: deleteDatabase,
-    } = useMutation(deleteDatabaseMutation)
-
-    const submitDeletion = async() => {
-      await deleteDatabase({ id: props.id })
-      root.$message({ message: 'Database has been deleted', type: 'success' })
-      props.close()
     }
 
     return () => {
@@ -114,7 +108,8 @@ const Details = createComponent({
                 name={database.name}
                 details={details}
                 groupId={database?.group?.id}
-                onClose={() => { state.showNewVersionDialog = false }}
+                onClose={handleNewVersionClose}
+                onDone={handleNewVersionDone}
               /> }
             <div class="max-w-measure-3 mx-auto mt-6 mb-18">
               <div class="flex justify-between items-center">
@@ -140,7 +135,8 @@ const Details = createComponent({
               { props.canDelete
                 && <DeleteForm
                   class="mt-12"
-                  submit={submitDeletion}
+                  id={props.id}
+                  onDeleted={props.close}
                 /> }
             </div>
           </div>
