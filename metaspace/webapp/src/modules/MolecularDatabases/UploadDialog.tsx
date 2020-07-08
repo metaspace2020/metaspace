@@ -4,6 +4,7 @@ import { createComponent, reactive, onMounted, ref } from '@vue/composition-api'
 
 import { PrimaryLabelText } from '../../components/Form'
 import UppyUploader from '../../components/UppyUploader'
+import FadeTransition from '../../components/FadeTransition'
 
 import { createDatabaseQuery, MolecularDB } from '../../api/moldb'
 
@@ -11,6 +12,10 @@ const convertToS3 = (url: string) => {
   const parsedUrl = new URL(url)
   const bucket = parsedUrl.host.split('.')[0]
   return `s3://${bucket}/${decodeURIComponent(parsedUrl.pathname.slice(1))}`
+}
+
+const formatErrorMsg = (e: Error) => {
+  return 'Something went wrong, please try again later.'
 }
 
 interface Props {
@@ -33,6 +38,7 @@ const UploadDialog = createComponent<Props>({
         filePath: '',
       },
       loading: false,
+      error: '',
     })
 
     const isNewVersion = !!props.name
@@ -56,18 +62,22 @@ const UploadDialog = createComponent<Props>({
 
     const createDatabase = async() => {
       state.loading = true
-      await root.$apollo.mutate({
-        mutation: createDatabaseQuery,
-        variables: {
-          input: {
-            ...props?.details,
-            ...state.model,
-            groupId: props.groupId,
+      try {
+        await root.$apollo.mutate({
+          mutation: createDatabaseQuery,
+          variables: {
+            input: {
+              ...props?.details,
+              ...state.model,
+              groupId: props.groupId,
+            },
           },
-        },
-      })
-      state.loading = false
-      emit('done')
+        })
+        emit('done')
+      } catch (e) {
+        state.error = formatErrorMsg(e)
+        state.loading = false
+      }
     }
 
     const nameInput = ref<HTMLInputElement>(null)
@@ -92,6 +102,15 @@ const UploadDialog = createComponent<Props>({
         class="sm-database-upload-dialog"
         onOpened={focusHandler}
       >
+        <FadeTransition>
+          {state.error
+            && <p class="m-0 mb-3 flex items-start text-danger">
+              <i class="el-icon-warning-outline mr-2 text-lg" />
+              <span class="text-sm leading-5 font-medium">
+                {state.error}
+              </span>
+            </p>}
+        </FadeTransition>
         <form class="sm-form flex leading-6">
           <div class="flex-grow">
             <label for="database-name">
