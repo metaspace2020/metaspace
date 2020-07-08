@@ -136,6 +136,7 @@ def delete(moldb_id: int):
     DB().alter('DELETE FROM molecular_db WHERE id = %s', params=(moldb_id,))
 
 
+# pylint: disable=unused-argument
 def update(
     moldb_id: int,
     archived: bool = None,
