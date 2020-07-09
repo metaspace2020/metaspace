@@ -1,6 +1,7 @@
 import logging
+from pathlib import Path
 from shutil import rmtree
-from typing import Tuple
+from typing import Tuple, List, Dict, Set
 
 import numpy as np
 import pandas as pd
@@ -11,6 +12,7 @@ from pyspark.storagelevel import StorageLevel
 from sm.engine.fdr import FDR
 from sm.engine.formula_centroids import CentroidsGenerator
 from sm.engine.formula_parser import safe_generate_ion_formula
+from sm.engine.imzml_parser import ImzMLParserWrapper
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine import molecular_db
 from sm.engine.molecular_db import MolecularDB
@@ -30,9 +32,9 @@ from sm.engine.util import SMConfig
 logger = logging.getLogger('engine')
 
 
-def init_fdr(ds_config, moldbs):
-    """ Randomly select decoy adducts for each moldb and target adduct
-    """
+def init_fdr(ds_config: Dict, moldbs: List[MolecularDB]) -> List[Tuple[MolecularDB, FDR]]:
+    """Randomly select decoy adducts for each moldb and target adduct."""
+
     isotope_gen_config = ds_config['isotope_generation']
     logger.info('Selecting decoy adducts')
     moldb_fdr_list = []
@@ -49,9 +51,11 @@ def init_fdr(ds_config, moldbs):
     return moldb_fdr_list
 
 
-def collect_ion_formulas(spark_context, moldb_fdr_list):
-    """ Collect all ion formulas that need to be searched for
-    """
+def collect_ion_formulas(
+    spark_context: pyspark.SparkContext, moldb_fdr_list: List[Tuple[MolecularDB, FDR]]
+) -> pd.DataFrame:
+    """Collect all ion formulas that need to be searched for."""
+
     logger.info('Collecting ion formulas')
 
     def gen_ion_formulas(args):
@@ -139,7 +143,14 @@ def compute_fdr_and_filter_results(
 
 
 class MSMSearch:
-    def __init__(self, spark_context, imzml_parser, moldbs, ds_config, ds_data_path):
+    def __init__(
+        self,
+        spark_context: pyspark.SparkContext,
+        imzml_parser: ImzMLParserWrapper,
+        moldbs: List[MolecularDB],
+        ds_config: dict,
+        ds_data_path: Path,
+    ):
         self._spark_context = spark_context
         self._ds_config = ds_config
         self._imzml_parser = imzml_parser
@@ -222,13 +233,18 @@ class MSMSearch:
 
         return centr_segm_n
 
-    def search(self) -> Tuple[pd.DataFrame, pyspark.RDD]:
-        """ Search, score, and compute FDR for all MolDB formulas
+    def select_targeted_database_formula_inds(self, ion_formula_map_df: pd.DataFrame) -> Set[int]:
+        targeted_formulas = set()
+        for moldb in self._moldbs:
+            if moldb.targeted:
+                targeted_formulas |= set(molecular_db.fetch_formulas(moldb.id))
+        return set(ion_formula_map_df[ion_formula_map_df.formula.isin(targeted_formulas)].index)
 
-        Returns
-        -----
-            tuple[sm.engine.mol_db.MolecularDB, pandas.DataFrame, pyspark.rdd.RDD]
-            (moldb, ion metrics, ion images)
+    def search(self) -> Tuple[pd.DataFrame, pyspark.RDD]:
+        """Search, score, and compute FDR for all MolecularDB formulas.
+
+        Yields:
+            tuple of (ion metrics, ion images)
         """
         logger.info('Running molecule search')
 
@@ -250,8 +266,16 @@ class MSMSearch:
             ion_formula_map_df=ion_formula_map_df,
             target_modifiers=union_target_modifiers(moldb_fdr_list),
         )
+        targeted_database_formula_inds = self.select_targeted_database_formula_inds(
+            ion_formula_map_df
+        )
+
         process_centr_segment = create_process_segment(
-            ds_segments, self._imzml_parser.coordinates, self._ds_config, target_formula_inds
+            ds_segments,
+            self._imzml_parser.coordinates,
+            self._ds_config,
+            target_formula_inds,
+            targeted_database_formula_inds,
         )
         results_rdd = self.process_segments(centr_segm_n, process_centr_segment)
         formula_metrics_df, formula_images_rdd = merge_results(

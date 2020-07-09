@@ -54,9 +54,7 @@ def make_fetch_formula_centroids_mock():
 
 
 def make_formula_image_metrics_mock_side_effect():
-    def formula_image_metrics_mock(
-        formula_images_it, compute_metrics, target_formula_inds, n_peaks, min_px
-    ):
+    def formula_image_metrics_mock(formula_images_it, *args, **kwargs):
         formula_is = set(item[0] for item in formula_images_it)
         formula_metrics_df = pd.DataFrame(
             [(i, 0.95) for i in formula_is], columns=['formula_i', 'msm']

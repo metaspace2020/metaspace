@@ -2,6 +2,7 @@
 Classes and functions for isotope image validation
 """
 from collections import OrderedDict, defaultdict
+from typing import Tuple, Dict, Callable, Set, Iterator
 
 import numpy as np
 import pandas as pd
@@ -83,9 +84,15 @@ def make_compute_image_metrics(sample_area_mask, nrows, ncols, img_gen_config):
     return compute_metrics
 
 
-def complete_image_list(images):
+def complete_image_list(images, require_first=True):
     non_empty_image_n = sum(1 for img in images if img is not None)
-    return non_empty_image_n > 1 and images[0] is not None
+    if non_empty_image_n == 0:
+        return False
+
+    if require_first:
+        return images[0] is not None
+
+    return True
 
 
 def nullify_images_with_too_few_pixels(f_images, min_px):
@@ -93,29 +100,35 @@ def nullify_images_with_too_few_pixels(f_images, min_px):
 
 
 def formula_image_metrics(
-    formula_images_it, compute_metrics, target_formula_inds, n_peaks, min_px=1
-):  # function optimized for compute performance
-    """ Compute isotope image metrics for each formula
+    formula_images_it: Iterator,
+    compute_metrics: Callable,
+    target_formula_inds: Set[int],
+    targeted_database_formula_inds: Set[int],
+    n_peaks: int,
+    min_px: int = 1,
+) -> Tuple[pd.DataFrame, Dict]:  # function optimized for compute performance
+    """Compute isotope image metrics for each formula.
 
-    Args
-    ---
-    formula_images_it: Iterator
-    compute_metrics: function
-    target_formula_inds: set
-    n_peaks: int
+    Args:
+        formula_images_it: Iterator over tuples of
+            (formula index, peak index, formula intensity, image).
+        compute_metrics: Metrics function.
+        target_formula_inds: Indices of target ion formulas (non-decoy ion formulas).
+        targeted_database_formula_inds: Indices of ion formulas
+            that correspond to targeted databases.
+        n_peaks: Number of isotopic peaks.
+        min_px: Minimum number of pixels each image should have.
 
-    Returns
-    ---
-        pandas.DataFrame
+    Returns:
+        tuple (metrics, images)
     """
-
     formula_metrics = {}
     formula_images = {}
 
     formula_images_buffer = defaultdict(lambda: [None] * n_peaks)
     formula_ints_buffer = defaultdict(lambda: [0] * n_peaks)
 
-    def add_metrics(f_i, f_images, f_ints):
+    def add_untargeted_database_metrics(f_i, f_images, f_ints):
         f_images = nullify_images_with_too_few_pixels(f_images, min_px)
         if complete_image_list(f_images):
             f_metrics = compute_metrics(f_images, f_ints)
@@ -123,6 +136,18 @@ def formula_image_metrics(
                 formula_metrics[f_i] = f_metrics
                 if f_i in target_formula_inds:
                     formula_images[f_i] = f_images
+
+    def add_targeted_database_metrics(f_i, f_images, f_ints):
+        f_images = nullify_images_with_too_few_pixels(f_images, min_px)
+        if complete_image_list(f_images, require_first=False):
+            formula_metrics[f_i] = compute_metrics(f_images, f_ints)
+            formula_images[f_i] = f_images
+
+    def add_metrics(f_i, f_images, f_ints):
+        if f_i in targeted_database_formula_inds:
+            add_targeted_database_metrics(f_i, f_images, f_ints)
+        else:
+            add_untargeted_database_metrics(f_i, f_images, f_ints)
 
     for f_i, p_i, f_int, image in formula_images_it:
         if formula_images_buffer[f_i][p_i] is None:
