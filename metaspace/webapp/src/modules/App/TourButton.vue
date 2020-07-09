@@ -1,6 +1,6 @@
 <template>
   <button
-    class="button-reset text-primary flex items-center p-0 inline-block"
+    class="button-reset text-primary flex items-center p-0"
     @click="$emit('click')"
   >
     <span class="mr-2 text-sm font-medium">Take the tour</span>
