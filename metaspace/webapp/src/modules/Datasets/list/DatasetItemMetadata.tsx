@@ -1,4 +1,4 @@
-import { createComponent } from '@vue/composition-api'
+import { defineComponent } from '@vue/composition-api'
 import VisibilityBadge from '../common/VisibilityBadge'
 import ElapsedTime from '../../../components/ElapsedTime'
 import { plural } from '../../../lib/vueFilters'
@@ -8,7 +8,7 @@ import FilterLink from './FilterLink'
 
 type FilterField = keyof DatasetDetailItem | 'analyzerType';
 
-const DatasetItemMetadata = createComponent({
+const DatasetItemMetadata = defineComponent({
   name: 'DatasetItemMetadata',
   props: {
     dataset: { type: Object as () => DatasetDetailItem, required: true },

@@ -1,7 +1,7 @@
 import './NewFeatureBadge.css'
 
 import Vue from 'vue'
-import { createComponent, reactive } from '@vue/composition-api'
+import { defineComponent, reactive } from '@vue/composition-api'
 
 import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'
 
@@ -19,7 +19,7 @@ export function hideFeatureBadge(featureKey: string) {
   setLocalStorage(storageKey, store)
 }
 
-const NewFeatureBadge = createComponent({
+const NewFeatureBadge = defineComponent({
   props: {
     featureKey: { type: String, required: true },
     showUntil: Date as any as () => Date,

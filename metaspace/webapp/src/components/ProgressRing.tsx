@@ -1,6 +1,6 @@
 import './ProgressRing.css'
 
-import { createComponent, computed } from '@vue/composition-api'
+import { defineComponent, computed } from '@vue/composition-api'
 
 interface Props {
   radius: number,
@@ -9,7 +9,7 @@ interface Props {
 }
 
 // https://css-tricks.com/building-progress-ring-quickly/
-export default createComponent<Props>({
+export default defineComponent<Props>({
   props: {
     radius: Number,
     progress: Number,

@@ -1,4 +1,4 @@
-import { createComponent } from '@vue/composition-api'
+import { defineComponent } from '@vue/composition-api'
 
 import '../../components/ColourIcon.css'
 import FileIcon from '../../assets/inline/refactoring-ui/document.svg'
@@ -12,7 +12,7 @@ interface Props {
   buttonClickHandler?: () => void
 }
 
-export default createComponent<Props>({
+export default defineComponent<Props>({
   props: {
     status: String,
     fileName: String,

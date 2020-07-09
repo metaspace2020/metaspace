@@ -1,4 +1,4 @@
-import { createComponent } from '@vue/composition-api'
+import { defineComponent } from '@vue/composition-api'
 import distanceInWords from 'date-fns/distance_in_words_strict'
 import parse from 'date-fns/parse'
 import isValid from 'date-fns/is_valid'
@@ -27,7 +27,7 @@ function getValue(date: Date) {
   return value
 }
 
-export default createComponent({
+export default defineComponent({
   props: {
     date: { type: String, required: true },
   },

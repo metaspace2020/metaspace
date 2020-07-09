@@ -1,6 +1,8 @@
-import { createComponent } from '@vue/composition-api'
+import { defineComponent } from '@vue/composition-api'
 
-export default createComponent({
+interface Props {}
+
+export default defineComponent<Props>({
   setup(_, { slots }) {
     return () => (
       <transition

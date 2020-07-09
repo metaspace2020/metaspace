@@ -1,10 +1,10 @@
-import { createComponent, reactive } from '@vue/composition-api'
+import { defineComponent, reactive } from '@vue/composition-api'
 
 import { PrimaryLabelText, SecondaryLabelText } from '../../components/Form'
 import FadeTransition from '../../components/FadeTransition'
 import { RichTextArea } from '../../components/RichText'
 
-import { MolecularDB } from '../../api/moldb'
+import { MolecularDB, UpdateDatabaseDetailsMutation } from '../../api/moldb'
 
 interface State {
   model: MolecularDB,
@@ -12,15 +12,15 @@ interface State {
 }
 
 interface Props {
-  submit: (details: any) => void
+  submit: (update: UpdateDatabaseDetailsMutation) => void
   id: number,
   initialData: MolecularDB,
 }
 
-const Details = createComponent({
+const Details = defineComponent<Props>({
   props: {
     submit: { type: Function, required: true },
-    id: { tyoe: Number, required: true },
+    id: { type: Number, required: true },
     initialData: { type: Object, required: true },
   },
   setup(props, { root }) {

@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import { computed, createComponent, reactive, Ref, ref, SetupContext, watch } from '@vue/composition-api'
+import { computed, defineComponent, reactive, Ref, ref, SetupContext, watch } from '@vue/composition-api'
 
 import { getOS, scrollDistance, WheelEventCompat } from '../lib/util'
 import createColormap, { OpacityMode } from '../lib/createColormap'
@@ -348,7 +348,7 @@ const useIonImageView = (props: Props) => {
   return { renderIonImageView }
 }
 
-export default createComponent<Props>({
+export default defineComponent<Props>({
   props: {
     ionImage: Object,
     isLoading: { type: Boolean, default: false },

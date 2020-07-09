@@ -1,6 +1,6 @@
-import { createComponent } from '@vue/composition-api'
+import { defineComponent } from '@vue/composition-api'
 
-export const PrimaryLabelText = createComponent({
+export const PrimaryLabelText = defineComponent({
   setup(_, { slots }) {
     return () => (
       <span class="text-base font-medium">
@@ -10,7 +10,7 @@ export const PrimaryLabelText = createComponent({
   },
 })
 
-export const SecondaryLabelText = createComponent({
+export const SecondaryLabelText = defineComponent({
   setup(_, { slots }) {
     return () => (
       <span class="block text-sm text-gray-800">
@@ -20,7 +20,7 @@ export const SecondaryLabelText = createComponent({
   },
 })
 
-export const ErrorLabelText = createComponent({
+export const ErrorLabelText = defineComponent({
   setup(_, { slots }) {
     return () => (
       <span class="block text-sm font-medium text-danger">

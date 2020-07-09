@@ -1,8 +1,14 @@
-import { createComponent, reactive } from '@vue/composition-api'
+import { defineComponent, reactive } from '@vue/composition-api'
 
 import FadeTransition from '../../components/FadeTransition'
+import { MolecularDB } from '../../api/moldb'
 
-const Archive = createComponent({
+interface Props {
+  archived: boolean
+  submit: (update: MolecularDB) => void
+}
+
+const Archive = defineComponent<Props>({
   props: {
     archived: { type: Boolean, required: true },
     submit: { type: Function, required: true },

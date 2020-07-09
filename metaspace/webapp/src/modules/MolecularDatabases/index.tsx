@@ -1,4 +1,4 @@
-import { createComponent, watch, reactive } from '@vue/composition-api'
+import { defineComponent, watch, reactive } from '@vue/composition-api'
 
 import router from '../../router'
 import FadeTransition from '../../components/FadeTransition'
@@ -11,7 +11,7 @@ interface State {
   showUploadDialog: boolean,
 }
 
-export default createComponent({
+export default defineComponent({
   props: {
     canDelete: { type: Boolean, default: false },
     groupId: { type: String, required: true },

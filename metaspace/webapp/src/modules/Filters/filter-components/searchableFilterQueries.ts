@@ -3,7 +3,7 @@ import { omit } from 'lodash-es'
 import { MolecularDB } from '../../../api/moldb'
 
 export interface Option {
-  value: string | number;
+  value: string;
   label: string;
 }
 export interface FilterQueries {
@@ -235,9 +235,9 @@ const submitterQueries: FilterQueries = {
 
 function mapDBtoOption(db: MolecularDB): Option {
   return {
-    value: db.id,
+    value: db.id ? (db.id).toString() : '',
     label: db.name + (db.version ? ` (${db.version})` : ''),
-  } as Option
+  }
 }
 
 const databaseQueries: FilterQueries = {

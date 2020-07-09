@@ -1,11 +1,10 @@
 /* tslint max-len: off */
 
-import { createComponent } from '@vue/composition-api'
+import { defineComponent } from '@vue/composition-api'
 
-const MenuButton = createComponent({
+const MenuButton = defineComponent({
   props: {
     isActive: Boolean,
-    onClick: Function,
     title: String,
   },
   setup(props, { slots, listeners }) {
@@ -25,7 +24,7 @@ const MenuButton = createComponent({
   },
 })
 
-export default createComponent({
+export default defineComponent({
   props: {
     editor: { type: Object, required: true },
   },

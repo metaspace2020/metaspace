@@ -1,4 +1,4 @@
-import { createComponent, createElement, reactive, onBeforeMount } from '@vue/composition-api'
+import { defineComponent, reactive, onBeforeMount } from '@vue/composition-api'
 import { useQuery } from '@vue/apollo-composable'
 
 import '../../components/ColourIcon.css'
@@ -8,39 +8,44 @@ import '../../components/MiniIcon.css'
 import CheckIcon from '../../assets/inline/refactoring-ui/check.svg'
 
 import UploadDialog from './UploadDialog'
-
-import { getGroupDatabasesQuery } from '../../api/group'
 import ElapsedTime from '../../components/ElapsedTime'
 
-const CheckColumn = createComponent({
+import { getGroupDatabasesQuery } from '../../api/group'
+
+const CheckColumn = defineComponent({
   props: {
     prop: { type: String, required: true },
     label: String,
   },
   setup(props) {
     return () => (
-      createElement('el-table-column', {
-        props: {
-          prop: props.prop,
-          label: props.label,
-          width: 144,
-          align: 'center',
-        },
-        scopedSlots: {
-          default: ({ row }) => (
-            <span class="flex justify-center items-center h-5">
-              { row[props.prop]
-                ? <CheckIcon class="sm-mini-icon" />
-                : null }
-            </span>
-          ),
-        },
-      })
+      <el-table-column
+        prop={props.prop}
+        label={props.label}
+        width={144}
+        align="center"
+        {...{
+          scopedSlots: {
+            default: (scope: { row: any }) => (
+              <span class="flex justify-center items-center h-5">
+                { scope.row[props.prop]
+                  ? <CheckIcon class="sm-mini-icon" />
+                  : null }
+              </span>
+            ),
+          },
+        }}
+      />
     )
   },
 })
 
-const DatabasesTable = createComponent({
+interface Props {
+  handleRowClick: () => void
+  groupId: string
+}
+
+const DatabasesTable = defineComponent<Props>({
   props: {
     handleRowClick: { type: Function, required: true },
     groupId: { type: String, required: true },
@@ -92,37 +97,37 @@ const DatabasesTable = createComponent({
           }}
           row-class-name="cursor-pointer"
         >
-          {createElement('el-table-column', {
-            props: {
-              prop: 'name',
-              label: 'Name',
-              minWidth: 144,
-              sortable: true,
-              sortBy: ['name', 'version'],
-            },
-            scopedSlots: {
-              default: ({ row }) => (
-                <span>
-                  <span class="text-body font-medium">{row.name}</span>
-                  {' '}
-                  <span class="text-gray-700">{row.version}</span>
-                </span>
-              ),
-            },
-          })}
-          {createElement('el-table-column', {
-            props: {
-              prop: 'createdDT',
-              label: 'Uploaded',
-              minWidth: 144,
-              sortable: true,
-            },
-            scopedSlots: {
-              default: ({ row }) => (
-                <ElapsedTime key={row.id} date={row.createdDT} />
-              ),
-            },
-          })}
+          <el-table-column
+            prop="name"
+            label="Name"
+            minWidth={144}
+            sortable
+            sortBy={['name', 'version']}
+            {...{
+              scopedSlots: {
+                default: ({ row }: { row: any }) => (
+                  <span>
+                    <span class="text-body font-medium">{row.name}</span>
+                    {' '}
+                    <span class="text-gray-700">{row.version}</span>
+                  </span>
+                ),
+              },
+            }}
+          />
+          <el-table-column
+            prop="createdDT"
+            label="Uploaded"
+            minWidth={144}
+            sortable
+            {...{
+              scopedSlots: {
+                default: ({ row }: { row: any }) => (
+                  <ElapsedTime key={row.id} date={row.createdDT} />
+                ),
+              },
+            }}
+          />
           <CheckColumn
             prop="isPublic"
             label="Results public"

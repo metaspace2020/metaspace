@@ -1,18 +1,20 @@
-import { createComponent } from '@vue/composition-api'
+import { defineComponent } from '@vue/composition-api'
 import { useMutation } from '@vue/apollo-composable'
 
 import confirmPrompt from '../../components/confirmPrompt'
 
-import { deleteDatabaseMutation } from '../../api/moldb'
+import {
+  deleteDatabaseMutation,
+  DeleteDatabaseMutation,
+} from '../../api/moldb'
 
-const Delete = createComponent({
+const Delete = defineComponent({
   props: {
     id: { type: Number, required: true },
   },
   setup(props, { root, emit }) {
-    const {
-      mutate: deleteDatabase,
-    } = useMutation(deleteDatabaseMutation)
+    const { mutate } = useMutation(deleteDatabaseMutation)
+    const deleteDatabase = mutate as unknown as (variables: DeleteDatabaseMutation) => void
 
     const handleDelete = () => {
       confirmPrompt({

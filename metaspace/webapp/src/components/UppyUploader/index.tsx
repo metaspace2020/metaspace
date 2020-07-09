@@ -1,4 +1,4 @@
-import { createComponent, reactive, ref, onUnmounted, watch } from '@vue/composition-api'
+import { defineComponent, reactive, ref, onUnmounted, watch } from '@vue/composition-api'
 import Uppy from '@uppy/core'
 import AwsS3Multipart from '@uppy/aws-s3-multipart'
 
@@ -46,7 +46,7 @@ interface Props {
   uploadSuccessful: (filename: string, filePath: string) => void
 }
 
-const UppyUploader = createComponent<Props>({
+const UppyUploader = defineComponent<Props>({
   inheritAttrs: false,
   props: {
     disabled: Boolean,

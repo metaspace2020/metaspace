@@ -1,6 +1,6 @@
 import './UploadDialog.css'
 
-import { createComponent, reactive, onMounted, ref } from '@vue/composition-api'
+import { defineComponent, reactive, onMounted, ref } from '@vue/composition-api'
 import { ApolloError } from 'apollo-client-preset'
 
 import { PrimaryLabelText } from '../../components/Form'
@@ -36,7 +36,7 @@ interface Props {
   groupId: string,
 }
 
-const UploadDialog = createComponent<Props>({
+const UploadDialog = defineComponent<Props>({
   props: {
     name: String,
     details: Object,
@@ -94,8 +94,8 @@ const UploadDialog = createComponent<Props>({
       }
     }
 
-    const nameInput = ref<HTMLInputElement>(null)
-    const versionInput = ref<HTMLInputElement>(null)
+    const nameInput = ref<HTMLInputElement | null>(null)
+    const versionInput = ref<HTMLInputElement | null>(null)
     const focusHandler = () => {
       const inputRef = isNewVersion ? versionInput : nameInput
       if (inputRef.value !== null) {

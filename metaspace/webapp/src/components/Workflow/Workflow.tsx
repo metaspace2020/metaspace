@@ -1,11 +1,11 @@
-import { createComponent } from '@vue/composition-api'
+import { defineComponent } from '@vue/composition-api'
 
 /* prevents ts errors for attributes */
 interface Props {
   children: []
 }
 
-export const Workflow = createComponent<Props>({
+export const Workflow = defineComponent<Props>({
   props: {
     children: [],
   },
@@ -18,7 +18,7 @@ export const Workflow = createComponent<Props>({
   },
 })
 
-export const WorkflowStep = createComponent({
+export const WorkflowStep = defineComponent({
   props: {
     active: Boolean,
     done: Boolean,

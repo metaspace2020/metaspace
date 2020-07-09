@@ -1,11 +1,11 @@
 import FilterLink from './FilterLink'
-import { computed, createComponent, reactive } from '@vue/composition-api'
+import { computed, defineComponent, reactive } from '@vue/composition-api'
 import { DatasetDetailItem, deleteDatasetQuery, reprocessDatasetQuery } from '../../../api/dataset'
 import DatasetInfo from '../../../components/DatasetInfo.vue'
 import DownloadDialog from './DownloadDialog'
 import reportError from '../../../lib/reportError'
 
-const DatasetItemActions = createComponent({
+const DatasetItemActions = defineComponent({
   name: 'DatasetItemActions',
   props: {
     dataset: { type: Object as () => DatasetDetailItem, required: true },

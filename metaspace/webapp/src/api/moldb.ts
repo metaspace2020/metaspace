@@ -74,3 +74,7 @@ export const deleteDatabaseMutation =
   gql`mutation deleteDatabaseMutation ($id: Int!) {
     deleteMolecularDB(databaseId: $id)
   }`
+
+export interface DeleteDatabaseMutation {
+  id: number,
+}

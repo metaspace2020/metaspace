@@ -1,7 +1,12 @@
-import { createComponent } from '@vue/composition-api'
+import { defineComponent } from '@vue/composition-api'
 import { encodeParams } from '../../Filters'
 
-const FilterLink = createComponent({
+interface Props {
+  path?: string
+  filter: any
+}
+
+const FilterLink = defineComponent<Props>({
   name: 'FilterLink',
   props: {
     path: { type: String, default: '/annotations' },

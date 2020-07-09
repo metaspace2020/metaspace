@@ -1,6 +1,6 @@
-import { createComponent } from '@vue/composition-api'
+import { defineComponent } from '@vue/composition-api'
 
-export const TagFilterOuter = createComponent({
+export const TagFilterOuter = defineComponent({
   setup(_, { slots }) {
     return () => (
       <div class="tf-outer border-gray-300 border border-solid text-sm pr-3">
@@ -10,7 +10,7 @@ export const TagFilterOuter = createComponent({
   },
 })
 
-export const TagFilterName = createComponent({
+export const TagFilterName = defineComponent({
   setup(_, { slots }) {
     return () => (
       <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
@@ -20,7 +20,7 @@ export const TagFilterName = createComponent({
   },
 })
 
-export const TagFilterRemove = createComponent({
+export const TagFilterRemove = defineComponent({
   setup(_, { listeners }) {
     return () => (
       <button

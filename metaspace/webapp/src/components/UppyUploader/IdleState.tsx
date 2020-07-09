@@ -1,4 +1,4 @@
-import { createComponent, reactive, ref } from '@vue/composition-api'
+import { defineComponent, reactive, ref } from '@vue/composition-api'
 
 interface State {
   dragover: boolean,
@@ -9,7 +9,7 @@ interface Props {
   upload: (files: File) => void
 }
 
-export default createComponent<Props>({
+export default defineComponent<Props>({
   props: {
     accept: Array,
     upload: { type: Function, required: true },
@@ -19,7 +19,7 @@ export default createComponent<Props>({
       dragover: false,
     })
 
-    const input = ref<HTMLInputElement>(null)
+    const input = ref<HTMLInputElement | null>(null)
     const openFilePicker = () => {
       if (input.value !== null) {
         input.value.click()

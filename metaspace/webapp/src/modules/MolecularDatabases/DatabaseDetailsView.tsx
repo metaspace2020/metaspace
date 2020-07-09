@@ -1,4 +1,4 @@
-import { createComponent, reactive } from '@vue/composition-api'
+import { defineComponent, reactive } from '@vue/composition-api'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 
 import FadeTransition from '../../components/FadeTransition'
@@ -37,7 +37,13 @@ const getDetails = (database: MolecularDB) => {
   }
 }
 
-const Details = createComponent({
+interface Props {
+  id: number
+  canDelete: boolean
+  close: () => void
+}
+
+const Details = defineComponent<Props>({
   props: {
     id: { type: Number, required: true },
     canDelete: { type: Boolean, default: false },
@@ -50,8 +56,8 @@ const Details = createComponent({
       { fetchPolicy: 'no-cache' },
     )
 
-    onResult(({ error }) => {
-      if (error) {
+    onResult(result => {
+      if (result && result.errors) {
         root.$message({ message: 'Sorry, something went wrong', type: 'error' })
         props.close()
       }
@@ -69,10 +75,13 @@ const Details = createComponent({
 
     const {
       mutate: updateDatabase,
-    } = useMutation<UpdateDatabaseDetailsMutation>(updateDatabaseDetailsMutation)
+    } = useMutation(updateDatabaseDetailsMutation)
+
+    // hacking
+    const submit = updateDatabase as unknown as (update: UpdateDatabaseDetailsMutation) => void
 
     const submitAndRefetch = async(details: MolecularDB) => {
-      await updateDatabase({
+      await submit({
         id: props.id,
         details,
       })
