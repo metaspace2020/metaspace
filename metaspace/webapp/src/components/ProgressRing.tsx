@@ -1,3 +1,5 @@
+import './ProgressRing.css'
+
 import { createComponent, computed } from '@vue/composition-api'
 
 interface Props {
@@ -20,9 +22,9 @@ export default createComponent<Props>({
     const strokeDashoffset = computed(() => circumference.value - progress.value / 100 * circumference.value)
 
     return () => (
-      <svg height={props.radius * 2} width={props.radius * 2} class="overflow-visible">
+      <svg height={props.radius * 2} width={props.radius * 2} class="overflow-visible sm-progress-ring">
         <circle
-          class="stroke-current transform origin-center -rotate-90 transition-dashoffset transition-colors duration-300 ease-in-out"
+          class="stroke-current transform origin-center -rotate-90 duration-300 ease-in-out"
           fill="transparent"
           stroke-dasharray={`${circumference.value} ${circumference.value}`}
           style={{ strokeDashoffset: strokeDashoffset.value }}
