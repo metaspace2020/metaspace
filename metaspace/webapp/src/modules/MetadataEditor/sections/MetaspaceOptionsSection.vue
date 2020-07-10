@@ -243,6 +243,7 @@ import { MetaspaceOptions } from '../formStructure'
 import { MAX_MOL_DBS, MAX_NEUTRAL_LOSSES, MAX_CHEM_MODS } from '../../../lib/constants'
 import config from '../../../lib/config'
 import { formatDatabaseLabel } from '../../MolecularDatabases/formatting'
+import { MolecularDB } from '../../../api/moldb'
 
 import './FormSection.scss'
 
@@ -272,7 +273,7 @@ export default class MetaspaceOptionsSection extends Vue {
     error?: Record<string, any>;
 
     @Prop({ type: Array, required: true })
-    molDBOptions!: { id: number, name: string, version?: string }[];
+    molDBOptions!: MolecularDB[];
 
     @Prop({ type: Array, required: true })
     adductOptions!: {value: string, label: string}[];
