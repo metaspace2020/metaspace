@@ -6,26 +6,34 @@ import confirmPrompt from '../../components/confirmPrompt'
 import {
   deleteDatabaseMutation,
   DeleteDatabaseMutation,
+  MolecularDB,
 } from '../../api/moldb'
+import { formatDatabaseLabel } from './formatting'
 
-const Delete = defineComponent({
+interface Props {
+  db: MolecularDB
+}
+
+const Delete = defineComponent<Props>({
   props: {
-    id: { type: Number, required: true },
+    db: { type: Object, required: true },
   },
   setup(props, { root, emit }) {
     const { mutate } = useMutation(deleteDatabaseMutation)
     const deleteDatabase = mutate as unknown as (variables: DeleteDatabaseMutation) => void
 
+    const formattedName = formatDatabaseLabel(props.db)
+
     const handleDelete = () => {
       confirmPrompt({
         title: '',
-        message: 'Are you sure you want to delete this database?',
+        message: `Are you sure you want to delete ${formattedName}?`,
         confirmButtonText: 'Delete',
         confirmButtonLoadingText: 'Deleting...',
       }, async() => {
         try {
-          await deleteDatabase({ id: props.id })
-          root.$message({ message: 'Database deleted', type: 'success' })
+          await deleteDatabase({ id: props.db.id })
+          root.$message({ message: `${formattedName} deleted`, type: 'success' })
           emit('deleted')
         } catch (e) {
           root.$message({ message: 'Something went wrong, please try again', type: 'error' })

@@ -1,4 +1,4 @@
-import { MolecularDB } from '../../api/moldb'
+import { MolecularDB, MolecularDBDetails } from '../../api/moldb'
 
 export function formatDatabaseLabel(db: MolecularDB) {
   let label = ''
@@ -9,4 +9,22 @@ export function formatDatabaseLabel(db: MolecularDB) {
     label += ` (${db.version})`
   }
   return label
+}
+
+export function getDatabaseDetails(database: MolecularDB) : MolecularDBDetails {
+  const {
+    citation,
+    description,
+    fullName,
+    isPublic,
+    link,
+  } = database
+
+  return {
+    citation,
+    description,
+    fullName,
+    isPublic,
+    link,
+  }
 }

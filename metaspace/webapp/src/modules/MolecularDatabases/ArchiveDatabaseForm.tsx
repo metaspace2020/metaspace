@@ -1,11 +1,10 @@
 import { defineComponent, reactive } from '@vue/composition-api'
 
 import FadeTransition from '../../components/FadeTransition'
-import { MolecularDB } from '../../api/moldb'
 
 interface Props {
   archived: boolean
-  submit: (update: MolecularDB) => void
+  submit: (update: { archived: boolean }) => void
 }
 
 const Archive = defineComponent<Props>({

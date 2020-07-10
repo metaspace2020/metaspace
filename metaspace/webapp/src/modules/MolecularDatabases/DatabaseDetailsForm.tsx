@@ -4,30 +4,27 @@ import { PrimaryLabelText, SecondaryLabelText } from '../../components/Form'
 import FadeTransition from '../../components/FadeTransition'
 import { RichTextArea } from '../../components/RichText'
 
-import { MolecularDB, UpdateDatabaseDetailsMutation } from '../../api/moldb'
+import { MolecularDB, MolecularDBDetails, UpdateDatabaseDetailsMutation } from '../../api/moldb'
+import { formatDatabaseLabel, getDatabaseDetails } from './formatting'
 
 interface State {
-  model: MolecularDB,
+  model: MolecularDBDetails,
   loading: boolean,
 }
 
 interface Props {
+  db: MolecularDB,
   submit: (update: UpdateDatabaseDetailsMutation) => void
-  id: number,
-  initialData: MolecularDB,
 }
 
 const Details = defineComponent<Props>({
   props: {
+    db: { type: Object, required: true },
     submit: { type: Function, required: true },
-    id: { type: Number, required: true },
-    initialData: { type: Object, required: true },
   },
   setup(props, { root }) {
     const state = reactive<State>({
-      model: {
-        ...props.initialData,
-      },
+      model: getDatabaseDetails(props.db),
       loading: false,
     })
 
@@ -35,10 +32,10 @@ const Details = defineComponent<Props>({
       e.preventDefault()
       try {
         state.loading = true
-        await props.submit({ id: props.id, details: state.model })
-        root.$message({ message: 'Database details updated', type: 'success' })
+        await props.submit({ id: props.db.id, details: state.model })
+        root.$message({ message: `${formatDatabaseLabel(props.db)} updated`, type: 'success' })
       } catch (e) {
-        root.$message({ message: 'something went wrong, please try again later', type: 'error' })
+        root.$message({ message: 'Something went wrong, please try again later', type: 'error' })
       } finally {
         state.loading = false
       }

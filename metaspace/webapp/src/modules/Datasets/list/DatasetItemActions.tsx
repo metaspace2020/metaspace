@@ -4,6 +4,7 @@ import { DatasetDetailItem, deleteDatasetQuery, reprocessDatasetQuery } from '..
 import DatasetInfo from '../../../components/DatasetInfo.vue'
 import DownloadDialog from './DownloadDialog'
 import reportError from '../../../lib/reportError'
+import { formatDatabaseLabel } from '../../MolecularDatabases/formatting'
 
 const DatasetItemActions = defineComponent({
   name: 'DatasetItemActions',
@@ -153,7 +154,7 @@ const DatasetItemActions = defineComponent({
                 {dataset.databases.map(db => (
                   <div key={db.id}>
                     <FilterLink filter={{ database: db.id, datasetIds: [dataset.id] }}>
-                      {db.name}
+                      {formatDatabaseLabel(db)}
                     </FilterLink>
                   </div>
                 ))}

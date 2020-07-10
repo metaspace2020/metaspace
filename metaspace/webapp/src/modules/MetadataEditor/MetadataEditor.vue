@@ -257,7 +257,7 @@ export default {
     async loadOptions() {
       const { data } = await this.$apollo.query({
         query: metadataOptionsQuery,
-        fetchPolicy: 'cache-first',
+        fetchPolicy: 'network-only',
       })
       return {
         ...data,

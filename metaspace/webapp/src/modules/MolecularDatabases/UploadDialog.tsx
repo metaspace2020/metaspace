@@ -7,7 +7,7 @@ import { PrimaryLabelText } from '../../components/Form'
 import UppyUploader from '../../components/UppyUploader'
 import FadeTransition from '../../components/FadeTransition'
 
-import { createDatabaseQuery, MolecularDB } from '../../api/moldb'
+import { createDatabaseQuery, MolecularDBDetails } from '../../api/moldb'
 
 const convertToS3 = (url: string) => {
   const parsedUrl = new URL(url)
@@ -32,7 +32,7 @@ const formatErrorMsg = (e: ApolloError) => {
 
 interface Props {
   name: string,
-  details: MolecularDB,
+  details?: MolecularDBDetails,
   groupId: string,
 }
 

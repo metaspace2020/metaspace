@@ -1,21 +1,21 @@
 import gql from 'graphql-tag'
 
 export interface MolecularDB {
-  archived?: boolean
-  citation?: string
-  createdDT?: string
-  default?: boolean
-  description?: string
+  id: number
+  name: string
+  version: string
+  isPublic: boolean
   fullName?: string
-  hidden?: boolean
-  id?: number
+  description?: string
   link?: string
-  name?: string
-  isPublic?: boolean
-  version?: string
-  group?: {
-    id?: number
+  citation?: string
+  group: {
+    id: number
   }
+  createdDT: string
+  archived: boolean
+  default?: boolean
+  hidden?: boolean
 }
 
 export const createDatabaseQuery =
@@ -65,9 +65,17 @@ export const updateDatabaseDetailsMutation =
     }
   }`
 
+export interface MolecularDBDetails {
+  isPublic: boolean
+  fullName?: string
+  description?: string
+  link?: string
+  citation?: string
+}
+
 export interface UpdateDatabaseDetailsMutation {
   id: number,
-  details: MolecularDB,
+  details: MolecularDBDetails,
 }
 
 export const deleteDatabaseMutation =

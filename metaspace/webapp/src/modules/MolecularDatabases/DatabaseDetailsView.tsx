@@ -18,24 +18,7 @@ import {
   updateDatabaseDetailsMutation,
   UpdateDatabaseDetailsMutation,
 } from '../../api/moldb'
-
-const getDetails = (database: MolecularDB) => {
-  const {
-    citation,
-    description,
-    fullName,
-    isPublic,
-    link,
-  } = database
-
-  return {
-    citation,
-    description,
-    fullName,
-    isPublic,
-    link,
-  }
-}
+import { getDatabaseDetails } from './formatting'
 
 interface Props {
   id: number
@@ -96,8 +79,10 @@ const Details = defineComponent<Props>({
           <div class="h-16" v-loading />
         )
       } else {
-        const { database } = result.value
-        const details = getDetails(database)
+        const database = {
+          ...result.value.database,
+          id: props.id,
+        }
         content = (
           <div class="relative leading-6 h2-leading-12">
             <div class="absolute top-0 left-0 h-12 flex items-center">
@@ -112,14 +97,6 @@ const Details = defineComponent<Props>({
                 </span>
               </a>
             </div>
-            { state.showNewVersionDialog
-              && <UploadDialog
-                name={database.name}
-                details={details}
-                groupId={database?.group?.id}
-                onClose={handleNewVersionClose}
-                onDone={handleNewVersionDone}
-              /> }
             <div class="max-w-measure-3 mx-auto mt-6 mb-18">
               <div class="flex justify-between items-center">
                 <h2 title={`${database.name} - ${database.version}`} class="truncate">
@@ -132,8 +109,7 @@ const Details = defineComponent<Props>({
               </div>
               <DetailsForm
                 class="mt-3"
-                id={props.id}
-                initialData={details}
+                db={database}
                 submit={updateDatabase}
               />
               <ArchiveForm
@@ -144,10 +120,18 @@ const Details = defineComponent<Props>({
               { props.canDelete
                 && <DeleteForm
                   class="mt-12"
-                  id={props.id}
+                  db={database}
                   onDeleted={props.close}
                 /> }
             </div>
+            { state.showNewVersionDialog
+              && <UploadDialog
+                name={database.name}
+                details={getDatabaseDetails(database)}
+                groupId={database.group.id}
+                onClose={handleNewVersionClose}
+                onDone={handleNewVersionDone}
+              /> }
           </div>
         )
       }
