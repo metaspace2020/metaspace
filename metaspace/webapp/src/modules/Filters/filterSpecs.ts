@@ -1,4 +1,3 @@
-import { renderMolFormula } from '../../lib/util'
 import InputFilter from './filter-components/InputFilter.vue'
 import SingleSelectFilter from './filter-components/SingleSelectFilter.vue'
 import SearchableFilter from './filter-components/SearchableFilter.vue'
@@ -100,7 +99,9 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     description: 'Select database',
     levels: ['annotation'],
     defaultInLevels: ['annotation'],
-    initialValue: undefined,
+    initialValue: lists =>
+      lists.molecularDatabases
+        .filter(d => d.default)[0]?.id.toString(),
     removable: false,
     clearable: false,
     encoding: 'number',

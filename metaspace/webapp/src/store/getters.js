@@ -64,7 +64,7 @@ export default {
       };
     }
 
-    f.databaseId = filter.database
+    f.databaseId = parseInt(filter.database, 10)
 
     return f;
   },

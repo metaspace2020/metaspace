@@ -242,6 +242,8 @@ import AnalysisVersionHelp from '../inputs/AnalysisVersionHelp.vue'
 import { MetaspaceOptions } from '../formStructure'
 import { MAX_MOL_DBS, MAX_NEUTRAL_LOSSES, MAX_CHEM_MODS } from '../../../lib/constants'
 import config from '../../../lib/config'
+import { formatDatabaseLabel } from '../../MolecularDatabases/formatting'
+
 import './FormSection.scss'
 
 const normalizeFormulaModifier = (formula: string, defaultSign: '+'|'-') => {
@@ -295,7 +297,7 @@ export default class MetaspaceOptionsSection extends Vue {
     get databaseOptions() {
       return this.molDBOptions.map(db => ({
         value: db.id,
-        label: db.name + (db.version ? ` (${db.version})` : ''),
+        label: formatDatabaseLabel(db),
       }))
     }
 

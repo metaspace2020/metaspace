@@ -1,6 +1,7 @@
 import gql from 'graphql-tag'
 import { omit } from 'lodash-es'
 import { MolecularDB } from '../../../api/moldb'
+import { formatDatabaseLabel } from '../../MolecularDatabases/formatting'
 
 export interface Option {
   value: string;
@@ -236,7 +237,7 @@ const submitterQueries: FilterQueries = {
 function mapDBtoOption(db: MolecularDB): Option {
   return {
     value: db.id ? (db.id).toString() : '',
-    label: db.name + (db.version ? ` (${db.version})` : ''),
+    label: formatDatabaseLabel(db),
   }
 }
 
@@ -248,6 +249,9 @@ const databaseQueries: FilterQueries = {
           id
           name
           version
+          group {
+            id
+          }
         }
       }`,
       fetchPolicy: 'cache-first',
@@ -268,6 +272,9 @@ const databaseQueries: FilterQueries = {
           id
           name
           version
+          group {
+            id
+          }
         }
       }`,
       fetchPolicy: 'cache-first',
