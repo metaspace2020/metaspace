@@ -117,7 +117,7 @@ def create(
                 (
                     name,
                     version,
-                    datetime.utcnow(),
+                    datetime.now(),
                     group_id,
                     is_public,
                     description,
