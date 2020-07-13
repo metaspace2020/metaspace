@@ -65,6 +65,10 @@ def make_compute_image_metrics(sample_area_mask, nrows, ncols, img_gen_config):
             iso_imgs_flat = [img.flatten()[sample_area_mask_flat] for img in iso_imgs]
             iso_imgs_flat = iso_imgs_flat[: len(formula_ints)]
 
+            doc['total_iso_ints'] = [img.sum() for img in iso_imgs]
+            doc['min_iso_ints'] = [img.min() for img in iso_imgs]
+            doc['max_iso_ints'] = [img.max() for img in iso_imgs]
+
             doc['spectral'] = isotope_pattern_match(iso_imgs_flat, formula_ints)
             if doc['spectral'] > 0:
 
@@ -76,9 +80,6 @@ def make_compute_image_metrics(sample_area_mask, nrows, ncols, img_gen_config):
                     if doc['chaos'] > 0:
 
                         doc['msm'] = doc['chaos'] * doc['spatial'] * doc['spectral']
-                        doc['total_iso_ints'] = [img.sum() for img in iso_imgs]
-                        doc['min_iso_ints'] = [img.min() for img in iso_imgs]
-                        doc['max_iso_ints'] = [img.max() for img in iso_imgs]
         return OrderedDict((k, replace_nan(v)) for k, v in doc.items())
 
     return compute_metrics
