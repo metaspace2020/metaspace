@@ -1,22 +1,14 @@
 ---
 
-# TODO: Move into sm_web tasks after production has been updated, as this is a provisioning step
-- name: Create a database schema
-  become: yes
-  become_user: postgres
-  postgresql_schema:
-    database: sm
-    owner: sm
-    name: graphql
-
-# TODO: Move into sm_web tasks after production has been updated, as this is a provisioning step
-- name: Import uuid-ossp extension into sm postgres database
-  become: yes
-  become_user: postgres
-  postgresql_ext: db=sm name=uuid-ossp
+- name: Install sm-graphql's version of Node.js (if needed)
+  # This only installs a new version if there isn't a matching existing version
+  shell: nvm use || nvm install
+  args:
+    chdir: "{{ sm_graphql_home }}"
+    executable: /bin/bash
 
 - name: Install sm-graphql dependencies
-  shell: yarn install
+  shell: nvm use && yarn install
   args:
     chdir: "{{ sm_graphql_home }}"
     executable: /bin/bash

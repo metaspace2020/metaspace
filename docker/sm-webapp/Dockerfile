@@ -1,14 +1,15 @@
-FROM node:8.16.2
+FROM node:14.5.0-alpine3.12
 
-RUN apt-get update && apt-get install -y netcat && apt-get clean
+RUN apk add --no-cache git netcat-openbsd
 RUN yarn global add nodemon
 
 # Prefetch dependencies before getting the full source code so Docker's image cache
 # reduces the amount that needs to be downloaded to rebuild an image after a code change
-WORKDIR /opt/pkgcache
-RUN curl https://raw.githubusercontent.com/metaspace2020/metaspace/master/metaspace/webapp/package.json -o package.json
-RUN curl https://raw.githubusercontent.com/metaspace2020/metaspace/master/metaspace/webapp/yarn.lock -o yarn.lock
-RUN yarn install
+# Disabled because it's only useful for self-contained docker containers, which are no longer supported
+# WORKDIR /opt/pkgcache
+# RUN curl https://raw.githubusercontent.com/metaspace2020/metaspace/master/metaspace/webapp/package.json -o package.json
+# RUN curl https://raw.githubusercontent.com/metaspace2020/metaspace/master/metaspace/webapp/yarn.lock -o yarn.lock
+# RUN yarn install
 
 # The non-dev copy is not used anymore, so don't install it
 # ARG METASPACE_REPO=https://github.com/metaspace2020/metaspace.git

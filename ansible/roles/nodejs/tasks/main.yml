@@ -10,37 +10,19 @@
   become: yes
   apt: name=software-properties-common state=present
 
-- name: Download Node.js installation setup script
-  get_url:
-    url: https://deb.nodesource.com/setup_{{ nodejs_version | replace('*', 'x') }}
-    dest: /tmp/nodejs_setup.sh
-    mode: 0744
-    force: yes
-
-- name: Run NodeJS setup script
-  become: yes
-  shell: /tmp/nodejs_setup.sh
+- name: Install nvm
+  shell: >
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
   args:
-    executable: /bin/bash
+    creates: "{{ ansible_env.HOME }}/.nvm/nvm.sh"
 
-- name: Install NodeJS
-  become: yes
-  apt: name=nodejs state=latest
+- name: Ensure nvm installs yarn for every version
+  lineinfile:
+    path: "{{ ansible_env.HOME }}/.nvm/default-packages"
+    create: yes
+    line: yarn
 
-- name: Add Yarn apt key
-  become: yes
-  apt_key:
-    url: https://dl.yarnpkg.com/debian/pubkey.gpg
-
-- name: Add Yarn repository
-  become: yes
-  apt_repository:
-    repo: deb https://dl.yarnpkg.com/debian/ stable main
-    state: present
-
-- name: Install Yarn apt package
-  become: yes
-  apt:
-    name: yarn
-    state: present
-    update_cache: yes
+# This controls the default version only.
+# Individual projects can install other versions to match their own requirements.
+- name: Install Node.js
+  shell: nvm install {{ nodejs_version }} && nvm alias default {{ nodejs_version }}

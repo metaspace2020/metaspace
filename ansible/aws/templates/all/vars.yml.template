@@ -136,7 +136,7 @@ mol_db_imports:
 #    name: "ECMDB-2018-12"
 #    version: "2018-12-13"
 
-nodejs_version: 8.*
+nodejs_version: 14
 
 sm_graphql_hostname: "{{ web_host }}"  # specify manually in production
 sm_graphql_home: "{{ metaspace_home }}/metaspace/graphql"

@@ -1,13 +1,3 @@
-// Before loading anything graphql-related, polyfill Symbol.asyncIterator because it's needed by TypeScript to support
-// async iterators, and the 'iterall' package imported by graphql-js will make its own symbol and reject others
-// if this isn't defined when 'iterall' is loaded
-
-Symbol.asyncIterator = Symbol.asyncIterator || Symbol.for("Symbol.asyncIterator");
-if (require('iterall').$$asyncIterator !== Symbol.asyncIterator) {
-  throw new Error('iterall is using the wrong symbol for asyncIterator')
-}
-
-
 import {utc} from 'moment';
 import * as bodyParser from 'body-parser';
 import * as compression from 'compression';

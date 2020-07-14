@@ -41,6 +41,19 @@
   become_user: postgres
   postgresql_db: name=sm owner=sm encoding=UTF8 template=template0
 
+- name: Create a database schema
+  become: yes
+  become_user: postgres
+  postgresql_schema:
+    database: sm
+    owner: sm
+    name: graphql
+
+- name: Import uuid-ossp extension into sm postgres database
+  become: yes
+  become_user: postgres
+  postgresql_ext: db=sm name=uuid-ossp
+
 - name: Create /opt/data/metaspace directory
   file: dest=/opt/data/metaspace state=directory owner=ubuntu group=ubuntu mode=0700
   become: yes
