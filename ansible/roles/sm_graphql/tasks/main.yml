@@ -7,15 +7,23 @@
     chdir: "{{ sm_graphql_home }}"
     executable: /bin/bash
 
+- name: Report currently used node version
+  shell: nvm use && yarn versions
+  register: yarn_versions
+
+- debug: msg="{{ yarn_versions.stdout }}"
+
+- name: Report currently used node version without nvm use
+  shell: yarn versions
+  register: yarn_versions
+
+- debug: msg="{{ yarn_versions.stdout }}"
+
 - name: Install sm-graphql dependencies
   shell: nvm use && yarn install
   args:
     chdir: "{{ sm_graphql_home }}"
     executable: /bin/bash
-
-- name: Re-compile and re-install nodejs binaries
-  command: npm rebuild --update-binary bcrypt
-  when: sm_graphql_update_binary | bool
 
 - name: Dereference metadata schema
   shell: yarn run deref-schema
