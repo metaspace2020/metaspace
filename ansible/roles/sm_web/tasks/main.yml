@@ -65,6 +65,8 @@
     executable: /bin/bash
   when: sm_create_es_index
 
+
+# TODO: The DB schema for this doesn't exist until graphql has run migrations. Run graphql migrations before this step.
 - import_tasks: import_molecular_databases.yml
 
 - import_tasks: import_molecule_images.yml
