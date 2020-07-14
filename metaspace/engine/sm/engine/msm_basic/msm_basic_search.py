@@ -93,16 +93,8 @@ def union_target_modifiers(moldb_fdr_list):
     return set().union(*(fdr.target_modifiers() for moldb, fdr in moldb_fdr_list))
 
 
-def select_target_formula_ids(formulas_df, ion_formula_map_df, target_modifiers):
-    logger.info('Selecting target formula ids')
-    target_formulas_mask = ion_formula_map_df.modifier.isin(target_modifiers)
-    target_formulas = set(ion_formula_map_df[target_formulas_mask].ion_formula.values)
-    target_formula_inds = set(formulas_df[formulas_df.formula.isin(target_formulas)].index)
-    return target_formula_inds
-
-
 def _left_merge(df1, df2, on):
-    return pd.merge(df1.reset_index(), df2, how='left', on=on).set_index(df1.index.name)
+    return pd.merge(df1.reset_index(), df2, how='left', on=on).set_index(df1.index.name or 'index')
 
 
 def compute_fdr(fdr, formula_metrics_df, formula_map_df) -> pd.DataFrame:
@@ -133,6 +125,10 @@ def compute_fdr_and_filter_results(
     if not moldb.targeted:
         max_fdr = 0.5
         moldb_metrics_fdr_df = moldb_metrics_fdr_df[moldb_metrics_fdr_df.fdr <= max_fdr]
+    else:
+        # fdr is not null for target ion formulas
+        moldb_metrics_fdr_df = moldb_metrics_fdr_df[~moldb_metrics_fdr_df.fdr.isnull()]
+
     moldb_ion_images_rdd = formula_images_rdd.filter(
         lambda kv: kv[0] in moldb_metrics_fdr_df.index  # pylint: disable=cell-var-from-loop
     )
@@ -170,6 +166,7 @@ class MSMSearch:
         return formula_centroids
 
     def process_segments(self, centr_segm_n, func):
+        logger.info(f'Processing {centr_segm_n} centroid segments...')
         centr_segm_inds = np.arange(centr_segm_n)
         np.random.shuffle(centr_segm_inds)
         results_rdd = (
@@ -233,12 +230,32 @@ class MSMSearch:
 
         return centr_segm_n
 
-    def select_targeted_database_formula_inds(self, ion_formula_map_df: pd.DataFrame) -> Set[int]:
-        targeted_formulas = set()
-        for moldb in self._moldbs:
-            if moldb.targeted:
-                targeted_formulas |= set(molecular_db.fetch_formulas(moldb.id))
-        return set(ion_formula_map_df[ion_formula_map_df.formula.isin(targeted_formulas)].index)
+    def select_target_formula_inds(
+        self,
+        ion_formula_map_df: pd.DataFrame,
+        formulas_df: pd.DataFrame,
+        target_modifiers: Set[str],
+    ) -> Tuple[Set[int], Set[int]]:
+        logger.info('Selecting target formula and targeted database formula indices')
+
+        ion_formula_map_df = _left_merge(
+            ion_formula_map_df,
+            formulas_df.rename(columns={'formula': 'ion_formula'}).reset_index(),
+            on='ion_formula',
+        )
+
+        target_ion_formula_map_df = ion_formula_map_df[
+            ion_formula_map_df.modifier.isin(target_modifiers)
+        ]
+        target_formula_inds = set(target_ion_formula_map_df.formula_i)
+
+        targeted_moldb_ids = {moldb.id for moldb in self._moldbs if moldb.targeted}
+        targeted_database_ion_formula_map_df = target_ion_formula_map_df[
+            target_ion_formula_map_df.moldb_id.isin(targeted_moldb_ids)
+        ]
+        targeted_database_formula_inds = set(targeted_database_ion_formula_map_df.formula_i)
+
+        return target_formula_inds, targeted_database_formula_inds
 
     def search(self) -> Tuple[pd.DataFrame, pyspark.RDD]:
         """Search, score, and compute FDR for all MolecularDB formulas.
@@ -260,14 +277,10 @@ class MSMSearch:
             ds_dims=get_ds_dims(self._imzml_parser.coordinates),
         )
 
-        logger.info('Processing segments...')
-        target_formula_inds = select_target_formula_ids(
-            formulas_df=formula_centroids.formulas_df,
-            ion_formula_map_df=ion_formula_map_df,
+        target_formula_inds, targeted_database_formula_inds = self.select_target_formula_inds(
+            ion_formula_map_df,
+            formula_centroids.formulas_df,
             target_modifiers=union_target_modifiers(moldb_fdr_list),
-        )
-        targeted_database_formula_inds = self.select_targeted_database_formula_inds(
-            ion_formula_map_df
         )
 
         process_centr_segment = create_process_segment(

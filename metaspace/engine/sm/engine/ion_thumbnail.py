@@ -12,7 +12,7 @@ ISO_IMAGE_SEL = (
     "SELECT iso_image_ids[1] "
     "FROM annotation m "
     "JOIN job j on j.id = m.job_id "
-    "WHERE ds_id = %s "
+    "WHERE ds_id = %s AND iso_image_ids[1] IS NOT NULL "
     "ORDER BY fdr, msm "
     "LIMIT 500"
 )
