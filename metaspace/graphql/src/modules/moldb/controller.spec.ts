@@ -131,16 +131,16 @@ describe('Molecular database mutation permissions', () => {
 
   describe('createMolecularDB mutation', () => {
     const createMolecularDB = `mutation($groupId: ID!) {
-      createMolecularDB(databaseDetails: {
-        name: "test-db"
-        version: "v1"
-        isPublic: true
-        filePath: "s3://${config.upload.bucket}/${config.upload.moldbPrefix}/abc"
-        groupId: $groupId
-      }) {
-        id name version
-      }
-    }`;
+        createMolecularDB(databaseDetails: {
+          name: "test-db"
+          version: "v1"
+          isPublic: true
+          filePath: "s3://${config.upload.bucket}/${config.upload.moldbPrefix}/abc"
+          groupId: $groupId
+        }) {
+          id name version
+        }
+      }`;
 
     test('Group members can create database', async () => {
       const group = await createTestGroup();
@@ -175,11 +175,23 @@ describe('Molecular database mutation permissions', () => {
 
       await doQuery(createMolecularDB, {groupId: randomGroup.id}, { context: adminContext });
     });
+
+    test('Cannot create database if another with same name already exists', async () => {
+      const group = await createTestGroup();
+      await setupTestUsers([group.id]);
+      await createTestUserGroup(testUser.id!, group.id, UGRO.MEMBER, true);
+      await createTestMolecularDB({ name: 'test-db', groupId: null, isPublic: true });
+
+      const promise = doQuery(createMolecularDB, {groupId: group.id}, { context: userContext });
+
+      await expect(promise).rejects.toThrowError(/public_already_exists/);
+    });
   });
 
   describe('updateMolecularDB mutation', () => {
     const updateMolecularDB = `mutation($id: Int!) {
       updateMolecularDB(databaseId: $id, databaseDetails: {
+        isPublic: true
         fullName: "Test database name"
         archived: true
       }) {
@@ -222,6 +234,18 @@ describe('Molecular database mutation permissions', () => {
       });
 
       await doQuery(updateMolecularDB, { id }, { context: adminContext });
+    });
+
+    test('Cannot make database public if another with same name exists', async () => {
+      const group = await createTestGroup();
+      await setupTestUsers([group.id]);
+      await createTestUserGroup(testUser.id!, group.id, UGRO.MEMBER, true);
+      await createTestMolecularDB({ name: 'test-db', groupId: null, isPublic: true });
+      const { id } = await createTestMolecularDB({ name: 'test-db', groupId: group.id, isPublic: false });
+
+      const promise = doQuery(updateMolecularDB, { id }, { context: userContext });
+
+      await expect(promise).rejects.toThrowError(/public_already_exists/);
     });
   });
 

@@ -6,7 +6,7 @@ import logger from '../../utils/logger';
 import {Context} from '../../context';
 import {FieldResolversFor} from '../../bindingTypes';
 import {MolecularDB as MolecularDbModel} from './model';
-import {MolecularDB, Mutation, Query} from '../../binding';
+import { MolecularDB, Mutation, Query } from '../../binding';
 import {smApiCreateDatabase, smApiUpdateDatabase, smApiDeleteDatabase} from '../../utils/smApi/databases';
 import {assertImportFileIsValid} from './util/assertImportFileIsValid';
 import {MolecularDbRepository} from './MolecularDbRepository';
@@ -50,6 +50,28 @@ const assertUserCanEditMolecularDB = async (ctx: Context, databaseId: number) =>
   assertUserBelongsToGroup(ctx, database.groupId);
 };
 
+const assertPublicNameAvailableForCreate = async (ctx: Context, name: string) => {
+  const database = await ctx.entityManager.getRepository(MolecularDbModel).findOne({ name, isPublic: true });
+  if (database != null) {
+    throw new UserError(JSON.stringify({
+      type: 'public_already_exists',
+      hint: 'Public database with this name already exists. Use different "name"',
+    }));
+  }
+};
+
+const assertPublicNameAvailableForUpdate = async (ctx: Context,  databaseId: number) => {
+  const database = await ctx.entityManager.getRepository(MolecularDbModel).findOne(databaseId);
+  const databaseWithSameName = await ctx.entityManager.getRepository(MolecularDbModel)
+    .findOne({name: database!.name, isPublic: true });
+  if (databaseWithSameName != null) {
+    throw new UserError(JSON.stringify({
+      type: 'public_already_exists',
+      hint: 'Public database with this name already exists. Create new database with different "name"',
+    }));
+  }
+};
+
 const MutationResolvers: FieldResolversFor<Mutation, void>  = {
 
   async createMolecularDB(source, { databaseDetails }, ctx): Promise<MolecularDbModel> {
@@ -59,7 +81,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     if (databaseDetails.citation != null) {
       validateTiptapJson(databaseDetails.citation, 'citation')
     }
-
+    if (databaseDetails.isPublic) {
+      await assertPublicNameAvailableForCreate(ctx, databaseDetails.name);
+    }
     await assertImportFileIsValid(databaseDetails.filePath);
 
     const { id } = await smApiCreateDatabase({ ...databaseDetails, groupId });
@@ -71,6 +95,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     await assertUserCanEditMolecularDB(ctx, databaseId);
     if (databaseDetails.citation != null) {
       validateTiptapJson(databaseDetails.citation, 'citation')
+    }
+    if (databaseDetails.isPublic) {
+      await assertPublicNameAvailableForUpdate(ctx, databaseId);
     }
 
     const { id } = await smApiUpdateDatabase(databaseId, databaseDetails);

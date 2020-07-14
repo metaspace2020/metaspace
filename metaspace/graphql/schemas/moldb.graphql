@@ -48,6 +48,7 @@ type Query {
 }
 
 type Mutation {
+  # throws exceptions of types: ["wrong_parameters", "public_already_exists", "already_exists", "malformed_csv"]
   createMolecularDB(databaseDetails: CreateMolecularDBInput!): MolecularDB!
   updateMolecularDB(databaseId: Int!, databaseDetails: UpdateMolecularDBInput!): MolecularDB!
   deleteMolecularDB(databaseId: Int!): Boolean!
