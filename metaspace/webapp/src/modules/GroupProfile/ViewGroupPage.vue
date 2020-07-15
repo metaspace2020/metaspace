@@ -186,7 +186,7 @@ import { removeDatasetFromAllDatasetsQuery } from '../../lib/updateApolloCache'
 import GroupDescription from './GroupDescription.vue'
 import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
 import Databases from '../MolecularDatabases'
-import { databaseListItemsQuery, MolecularDB } from '../../api/moldb'
+import { MolecularDB } from '../../api/moldb'
 
   interface ViewGroupProfileData {
     allDatasets: DatasetDetailItem[];

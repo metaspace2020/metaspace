@@ -5,8 +5,8 @@ export function formatDatabaseLabel(db: MolecularDB) {
   if (db.name) {
     label += db.name
   }
-  if (db.version && db.group) {
-    label += ` (${db.version})`
+  if (db.version) {
+    label += ` - ${db.version}`
   }
   return label
 }

@@ -249,9 +249,6 @@ const databaseQueries: FilterQueries = {
           id
           name
           version
-          group {
-            id
-          }
         }
       }`,
       fetchPolicy: 'cache-first',
@@ -259,7 +256,7 @@ const databaseQueries: FilterQueries = {
     const queryRegex = new RegExp(query, 'i')
     const results: Option[] = []
     for (const db of data.molecularDatabases) {
-      if (queryRegex.test(db.name)) {
+      if (queryRegex.test(db.name) || queryRegex.test(db.version)) {
         results.push(mapDBtoOption(db))
       }
     }
@@ -272,9 +269,6 @@ const databaseQueries: FilterQueries = {
           id
           name
           version
-          group {
-            id
-          }
         }
       }`,
       fetchPolicy: 'cache-first',

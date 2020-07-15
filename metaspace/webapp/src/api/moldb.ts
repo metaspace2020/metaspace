@@ -25,17 +25,6 @@ export const createDatabaseQuery =
       }
   }`
 
-export const databaseListItemsQuery =
-  gql`query GetDatabases {
-    molecularDatabases {
-      id
-      name
-      version
-      isPublic
-      archived
-    }
-  }`
-
 export const databaseDetailsQuery =
   gql`query getDatabaseDetails ($id: Int!) {
     database: getMolecularDB(databaseId: $id) {
