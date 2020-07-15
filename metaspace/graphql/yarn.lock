@@ -3633,7 +3633,7 @@ grant@4.6.5:
     request-compose "^1.2.1"
     request-oauth "0.0.3"
 
-graphql-binding@^2.2.2:
+graphql-binding@2.2.2:
   version "2.2.2"
   resolved "https://registry.yarnpkg.com/graphql-binding/-/graphql-binding-2.2.2.tgz#314623a39e5a877f81ffee4f23062ecb2566897a"
   integrity sha512-xPT3iBlAgK6NiwjL02/z/j6LRkh0mUzbc5n25Kic4Ayf/CP0ea2IpKIAJEd8Rr3T+47RowcppmtBzKhFDGZEdA==
