@@ -10,16 +10,11 @@ import {MolecularDB, Mutation, Query} from '../../binding';
 import {smApiCreateDatabase, smApiUpdateDatabase, smApiDeleteDatabase} from '../../utils/smApi/databases';
 import {assertImportFileIsValid} from './util/assertImportFileIsValid';
 import {MolecularDbRepository} from './MolecularDbRepository';
-import config from '../../utils/config';
 import {assertUserBelongsToGroup} from './util/assertUserBelongsToGroup';
 
 const MolecularDbResolvers: FieldResolversFor<MolecularDB, MolecularDbModel> = {
   async createdDT(database, args, ctx: Context): Promise<string> {
     return database.createdDT.toISOString();
-  },
-
-  async default(database, args, ctx: Context): Promise<boolean> {
-    return config.defaults.moldb_names.includes(database.name);
   },
 
   async hidden(database, args, ctx: Context): Promise<boolean> {
