@@ -24,13 +24,13 @@
     executable: /bin/bash
 
 - name: Install sm-web-app dependencies
-  shell: . ~/.nvm/nvm.sh && yarn install
+  shell: . ~/.nvm/nvm.sh && nvm use && yarn install
   args:
     chdir: "{{ sm_webapp_home }}"
     executable: /bin/bash
 
 - name: Run build app
-  shell: . ~/.nvm/nvm.sh && nice yarn run build
+  shell: . ~/.nvm/nvm.sh && nvm use && nice yarn run build
   args:
     chdir: "{{ sm_webapp_home }}"
     executable: /bin/bash

@@ -7,38 +7,20 @@
     chdir: "{{ sm_graphql_home }}"
     executable: /bin/bash
 
-- name: Report currently used node version
-  shell: . ~/.nvm/nvm.sh && nvm use && yarn versions
-  register: yarn_versions
-  args:
-    chdir: "{{ sm_graphql_home }}"
-    executable: /bin/bash
-
-- debug: msg="{{ yarn_versions.stdout }}"
-
-- name: Report currently used node version without nvm use
-  shell: . ~/.nvm/nvm.sh && yarn versions
-  register: yarn_versions
-  args:
-    chdir: "{{ sm_graphql_home }}"
-    executable: /bin/bash
-
-- debug: msg="{{ yarn_versions.stdout }}"
-
 - name: Install sm-graphql dependencies
-  shell: . ~/.nvm/nvm.sh && && yarn install
+  shell: . ~/.nvm/nvm.sh && nvm use && yarn install
   args:
     chdir: "{{ sm_graphql_home }}"
     executable: /bin/bash
 
 - name: Dereference metadata schema
-  shell: . ~/.nvm/nvm.sh && && yarn run deref-schema
+  shell: . ~/.nvm/nvm.sh && nvm use && yarn run deref-schema
   args:
     chdir: "{{ sm_graphql_home }}"
     executable: /bin/bash
 
 - name: Generate binding.ts
-  shell: . ~/.nvm/nvm.sh && && yarn run gen-binding
+  shell: . ~/.nvm/nvm.sh && nvm use && yarn run gen-binding
   args:
     chdir: "{{ sm_graphql_home }}"
     executable: /bin/bash
