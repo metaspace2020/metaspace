@@ -282,6 +282,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
         return {
           'databaseId': databaseId,
           'dbName': database.name,
+          'dbVersion': database.version,
           'levels': outFdrLvls,
           'counts': outFdrCounts
         };

@@ -117,7 +117,7 @@ def create(
                 (
                     name,
                     version,
-                    datetime.utcnow(),
+                    datetime.now(),
                     group_id,
                     is_public,
                     description,
@@ -136,24 +136,25 @@ def delete(moldb_id: int):
     DB().alter('DELETE FROM molecular_db WHERE id = %s', params=(moldb_id,))
 
 
+# pylint: disable=unused-argument
 def update(
     moldb_id: int,
     archived: bool = None,
+    is_public: bool = None,
     description: str = None,
     full_name: str = None,
     link: str = None,
     citation: str = None,
 ) -> MolecularDB:
-    assert archived is not None or description or full_name or link or citation
-
     kwargs = {k: v for k, v in locals().items() if v is not None}
     kwargs.pop('moldb_id')
 
-    update_fields = [f'{field} = %s' for field in kwargs.keys()]
-    update_values = list(kwargs.values())
+    if kwargs:
+        update_fields = [f'{field} = %s' for field in kwargs.keys()]
+        update_values = list(kwargs.values())
 
-    moldb_update = 'UPDATE molecular_db SET {} WHERE id = %s'.format(', '.join(update_fields))
-    DB().alter(moldb_update, params=[*update_values, moldb_id])
+        moldb_update = 'UPDATE molecular_db SET {} WHERE id = %s'.format(', '.join(update_fields))
+        DB().alter(moldb_update, params=[*update_values, moldb_id])
 
     return find_by_id(moldb_id)
 

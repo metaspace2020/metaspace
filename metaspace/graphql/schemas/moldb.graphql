@@ -26,6 +26,7 @@ input CreateMolecularDBInput {
   name: String!
   version: String!
   filePath: String!
+  isPublic: Boolean! = False
   groupId: ID!
   fullName: String
   description: String
@@ -35,6 +36,7 @@ input CreateMolecularDBInput {
 
 input UpdateMolecularDBInput {
   archived: Boolean
+  isPublic: Boolean
   fullName: String
   description: String
   link: String
