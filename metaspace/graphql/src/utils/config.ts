@@ -26,9 +26,6 @@ export interface Config {
   log: {
     level: string;
   };
-  defaults: {
-    moldb_names: string[];
-  };
   adducts: Adduct[];
   img_upload: {
     iso_img_fs_path: string;
