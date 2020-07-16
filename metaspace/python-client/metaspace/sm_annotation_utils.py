@@ -868,7 +868,10 @@ class SMDataset(object):
             if not url:
                 return None
             url = self._baseurl + url
-            im = mpimg.imread(BytesIO(self._session.get(url).content))
+            try:
+                im = mpimg.imread(BytesIO(self._session.get(url).content))
+            except:
+                im = mpimg.imread(BytesIO(self._session.get(url).content))
             mask = im[:, :, 3]
             data = im[:, :, 0]
             data[mask == 0] = 0
