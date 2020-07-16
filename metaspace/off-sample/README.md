@@ -28,3 +28,7 @@ It accepts POST requests with JSON, images must be Base64 encoded, max 32 per re
 
 
 Jupyter [notebook](api-example.ipynb) with API use example
+
+## Acknowledgements and license
+
+[See the top-level README](../../README.md#acknowledgements)

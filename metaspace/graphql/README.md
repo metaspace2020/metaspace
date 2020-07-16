@@ -64,14 +64,6 @@ The following steps can help debugging, if you have made a mistake in a feature 
 3. Run `yarn exec typeorm migration:run` to ensure you have all migrations from `master` applied.    
 4. Run `yarn exec typeorm schema:sync` to re-synchronize the schema.
 
-## Funding
+## Acknowledgements and license
 
-This project is funded from the [European Horizon2020](https://ec.europa.eu/programmes/horizon2020/)
-project [METASPACE](http://project.metaspace2020.eu/) (no. 634402),
-[NIH NIDDK project KPMP](http://kpmp.org/)
-and internal funds of the [European Molecular Biology Laboratory](https://www.embl.org/).
-
-## License
-
-This project is licensed under the [Apache 2.0 license](LICENSE).
-
+[See the top-level README](../../README.md#acknowledgements)
