@@ -1,12 +1,15 @@
 import logging
-import random
 from collections import MutableMapping, defaultdict
-from functools import wraps
-from time import sleep
 
 import numpy as np
 import pandas as pd
-from elasticsearch import ConflictError, Elasticsearch, ElasticsearchException, NotFoundError
+from elasticsearch import (
+    ConflictError,
+    Elasticsearch,
+    ElasticsearchException,
+    NotFoundError,
+    ConnectionTimeout,
+)
 from elasticsearch.client import IndicesClient, IngestClient
 from elasticsearch.helpers import parallel_bulk
 
@@ -17,7 +20,7 @@ from sm.engine.formula_parser import format_ion_formula
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine import molecular_db
 from sm.engine.molecular_db import MolecularDB
-from sm.engine.util import SMConfig
+from sm.engine.util import SMConfig, retry_on_exception
 
 logger = logging.getLogger('engine')
 
@@ -262,28 +265,6 @@ def flatten_doc(doc, parent_key='', sep='.'):
     return dict(items)
 
 
-def retry_on_conflict(num_retries=3):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            for i in range(num_retries):
-                try:
-                    return func(*args, **kwargs)
-                except ConflictError:
-                    delay = random.uniform(2, 5 + i * 3)
-                    logger.warning(
-                        f'ElasticSearch update conflict on attempt {i+1}. '
-                        f'Retrying after {delay:.1f} seconds...'
-                    )
-                    sleep(delay)
-            # Last attempt, don't catch the exception
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
-
-
 class ESExporter:
     def __init__(self, db, sm_config=None):
         self.sm_config = sm_config or SMConfig.get_conf()
@@ -305,7 +286,7 @@ class ESExporter:
     def _select_ds_by_id(self, ds_id):
         return self._db.select_with_fields(DATASET_SEL, params=(ds_id,))[0]
 
-    @retry_on_conflict()
+    @retry_on_exception(ConflictError)
     def sync_dataset(self, ds_id):
         """ Warning: This will wait till ES index/update is completed
         """
@@ -423,7 +404,7 @@ class ESExporter:
 
         return annotation_counts
 
-    @retry_on_conflict()
+    @retry_on_exception((ConflictError, ConnectionTimeout))
     def index_ds(self, ds_id: str, moldb: MolecularDB, isocalc: IsocalcWrapper):
         with self._ds_locker.lock(ds_id):
             try:
@@ -499,7 +480,7 @@ class ESExporter:
                 logger.warning(f'Field ds_{field} not found in ds_doc')
         return ds_doc_upd
 
-    @retry_on_conflict()
+    @retry_on_exception(ConflictError)
     def update_ds(self, ds_id, fields):
         with self._ds_locker.lock(ds_id):
             pipeline_id = f'update-ds-fields-{ds_id}'
@@ -528,7 +509,7 @@ class ESExporter:
                 finally:
                     self._ingest.delete_pipeline(pipeline_id)
 
-    @retry_on_conflict()
+    @retry_on_exception(ConflictError)
     def delete_ds(self, ds_id: str, moldb: MolecularDB = None, delete_dataset: bool = True):
         """Completely or partially delete dataset.
 
