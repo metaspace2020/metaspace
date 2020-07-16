@@ -82,6 +82,8 @@ export interface FilterSpecification {
   dependsOnFilters?: FilterKey[];
   /** List of other filters whose addition should cause this filter to be removed */
   conflictsWithFilters?: FilterKey[];
+  /* Convert value for component */
+  formatValue?: (value: any) => any
 }
 
 /** Attrs to pass to the component that will render the filter */
@@ -101,10 +103,11 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     defaultInLevels: ['annotation'],
     initialValue: lists =>
       lists.molecularDatabases
-        .filter(d => d.default)[0]?.id.toString(),
+        .filter(d => d.default)[0]?.id,
     removable: false,
     clearable: false,
     encoding: 'number',
+    formatValue: (v) => v?.toString(),
   },
 
   datasetIds: {
