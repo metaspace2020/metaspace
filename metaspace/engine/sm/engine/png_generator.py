@@ -14,7 +14,9 @@ class ImageStoreServiceWrapper:
     def __init__(self, img_service_url):
         self._img_service_url = img_service_url
         self._session = requests.Session()
-        self._session.mount(self._img_service_url, HTTPAdapter(max_retries=5, pool_maxsize=100))
+        self._session.mount(
+            self._img_service_url, HTTPAdapter(max_retries=5, pool_maxsize=50, pool_block=True)
+        )
 
     def _format_url(self, storage_type, img_type, method='', img_id=''):
         assert storage_type, 'Wrong storage_type: %s' % storage_type
