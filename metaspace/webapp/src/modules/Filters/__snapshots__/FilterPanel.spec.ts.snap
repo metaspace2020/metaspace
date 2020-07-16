@@ -226,13 +226,13 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
         <mock-el-select placeholder="Start typing name" remote="" filterable="" remote-method="function () { [native code] }" loading-text="Loading matching entries..." no-match-text="No matches" multiple-limit="10" value="1">
-          <mock-el-option value="1" label="foo"></mock-el-option>
-          <mock-el-option label="bar" value="2"></mock-el-option>
+          <mock-el-option value="1" label="foo - v1"></mock-el-option>
+          <mock-el-option label="bar - v1" value="2"></mock-el-option>
         </mock-el-select>
       </div>
       <div slot-key="reference">
         <div class="tf-value"><span class="tf-value-span"><span>
-      foo
+      foo - v1
     </span>
           <!---->
           <!----></span>
