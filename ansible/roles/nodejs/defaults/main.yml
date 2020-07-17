@@ -1,1 +1,2 @@
 nodejs_version: 14.5
+sm_activate_nvm: source {{ ansible_env.HOME }}/.nvm/nvm.sh && nvm use

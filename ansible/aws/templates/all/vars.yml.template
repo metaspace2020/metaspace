@@ -136,7 +136,7 @@ mol_db_imports:
 #    name: "ECMDB-2018-12"
 #    version: "2018-12-13"
 
-nodejs_version: 14
+nodejs_version: 14.5
 
 sm_graphql_hostname: "{{ web_host }}"  # specify manually in production
 sm_graphql_home: "{{ metaspace_home }}/metaspace/graphql"
@@ -197,6 +197,7 @@ sm_webapp_features:
   advanced_ds_config: false
 
 sm_activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
+sm_activate_nvm: source {{ ansible_env.HOME }}/.nvm/nvm.sh && nvm use
 
 spark_key_file: ~/.ssh/ubuntu_spark
 spark_version: 2.3.3-bin-hadoop2.7

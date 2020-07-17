@@ -25,7 +25,7 @@
 # This controls the default version only.
 # Individual projects can install other versions to match their own requirements.
 # NOTE: To actually use NVM in Ansible, you need to set the executable as /bin/bash and prefix the command
-# with ". ~/.nvm/nvm.sh && nvm use &&". Ansible doesn't support anything tidier: https://github.com/ansible/ansible/issues/4854
+# with "{{ sm_activate_nvm }} &&". Ansible doesn't support anything tidier: https://github.com/ansible/ansible/issues/4854
 - name: Install Node.js
   shell: . ~/.nvm/nvm.sh && nvm install {{ nodejs_version }} && nvm alias default {{ nodejs_version }}
   args:

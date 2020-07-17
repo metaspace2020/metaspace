@@ -2,25 +2,25 @@
 
 - name: Install sm-graphql's version of Node.js (if needed)
   # This only installs a new version if there isn't a matching existing version
-  shell: . ~/.nvm/nvm.sh && nvm use || nvm install
+  shell: "{{ sm_activate_nvm }} || nvm install"
   args:
     chdir: "{{ sm_graphql_home }}"
     executable: /bin/bash
 
 - name: Install sm-graphql dependencies
-  shell: . ~/.nvm/nvm.sh && nvm use && yarn install
+  shell: "{{ sm_activate_nvm }} && yarn install"
   args:
     chdir: "{{ sm_graphql_home }}"
     executable: /bin/bash
 
 - name: Dereference metadata schema
-  shell: . ~/.nvm/nvm.sh && nvm use && yarn run deref-schema
+  shell: "{{ sm_activate_nvm }} && yarn run deref-schema"
   args:
     chdir: "{{ sm_graphql_home }}"
     executable: /bin/bash
 
 - name: Generate binding.ts
-  shell: . ~/.nvm/nvm.sh && nvm use && yarn run gen-binding
+  shell: "{{ sm_activate_nvm }} && yarn run gen-binding"
   args:
     chdir: "{{ sm_graphql_home }}"
     executable: /bin/bash

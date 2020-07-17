@@ -18,19 +18,19 @@
 
 - name: Install sm-webapp's version of Node.js (if needed)
   # This only installs a new version if there isn't a matching existing version
-  shell: . ~/.nvm/nvm.sh && nvm use || nvm install
+  shell: "{{ sm_activate_nvm }} || nvm install"
   args:
     chdir: "{{ sm_webapp_home }}"
     executable: /bin/bash
 
 - name: Install sm-web-app dependencies
-  shell: . ~/.nvm/nvm.sh && nvm use && yarn install
+  shell: "{{ sm_activate_nvm }} && yarn install"
   args:
     chdir: "{{ sm_webapp_home }}"
     executable: /bin/bash
 
 - name: Run build app
-  shell: . ~/.nvm/nvm.sh && nvm use && nice yarn run build
+  shell: "{{ sm_activate_nvm }} && nice yarn run build"
   args:
     chdir: "{{ sm_webapp_home }}"
     executable: /bin/bash
