@@ -66,7 +66,11 @@
   when: sm_create_es_index
 
 
-# TODO: The DB schema for this doesn't exist until graphql has run migrations. Run graphql migrations before this step.
+# TODO: The DB schema for this doesn't exist yet, so this will fail.
+# WORKAROUND: Skip these steps now, run the sm-graphql TypeORM migrations, then re-provision this step
+# Suggested permanent fix: Run `engine/scripts/db_schema.sql` here. However, this will also require updating the
+# `graphql/bin/dump_db_schema.js` script to create & populate the TypeORM migrations table, so that TypeORM
+# doesn't try to run the migrations later, and conflict with `db_schema.sql`-created tables.
 - import_tasks: import_molecular_databases.yml
 
 - import_tasks: import_molecule_images.yml
