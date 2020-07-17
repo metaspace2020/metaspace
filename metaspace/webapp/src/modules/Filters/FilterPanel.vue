@@ -221,8 +221,8 @@ const FilterPanel = {
 
     getFilterValue(filter, filterKey) {
       const value = this.filter[filterKey]
-      if (filter.formatValue) {
-        return filter.formatValue(value)
+      if (filter.convertValueForComponent) {
+        return filter.convertValueForComponent(value)
       }
       return value
     },
