@@ -7,4 +7,4 @@
 
 ## Acknowledgements and license
 
-[See the top-level README](../../README.md#acknowledgements)
+[See the top-level README](../README.md#acknowledgements)
