@@ -52,6 +52,23 @@
   @apply mt-3;
 }
 
+ol.old-style-nums {
+  list-style: none;
+  counter-reset: old-style-nums;
+}
+
+ol.old-style-nums > li {
+  @apply relative;
+}
+
+ol.old-style-nums > li::before {
+  @apply absolute font-medium text-primary;
+  counter-increment: old-style-nums;
+  content: counter(old-style-nums)".";
+  font-variant-numeric: oldstyle-nums;
+  left: calc(-1 * theme('spacing.6'))
+}
+
 
 /* Debug */
 

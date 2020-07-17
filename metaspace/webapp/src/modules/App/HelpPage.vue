@@ -82,6 +82,28 @@
         </ul>
       </div>
     </div>
+    <h2 id="publishing">
+      Scientific publishing
+    </h2>
+    <p>
+      We provide a workflow to allow datasets to be peer-reviewed and published directly in METASPACE.
+      After creating a <router-link to="/projects">
+        project<!-- -->
+      </router-link>, follow the steps on the <em>Publishing</em> tab:
+    </p>
+    <ol class="p-0 max-w-measure-4 old-style-nums">
+      <li>
+        Create a <b>short link</b> to the project to be used in the manuscript, and add an abstract to the project
+        description to provide context for the results.
+      </li>
+      <li>
+        Use a <b>review link</b> to give reviewers access to the project without making the data public.
+        This protects sensitive discoveries and can be revoked at any time.
+      </li>
+      <li>
+        After the paper has been published, add the <b>DOI</b> and make the results available to all.
+      </li>
+    </ol>
     <h2>Feedback</h2>
     <p>
       Please send feedback to <a href="mailto:contact@metaspace2020.eu">our e-mail address</a>.
@@ -152,5 +174,9 @@ export default {
 
   .collaboration li:first-child {
     @apply font-medium;
+  }
+
+  ol > li {
+    @apply mt-6 relative;
   }
 </style>

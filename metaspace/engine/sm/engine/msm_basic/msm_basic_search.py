@@ -1,6 +1,7 @@
 import logging
+from pathlib import Path
 from shutil import rmtree
-from typing import Tuple
+from typing import Tuple, List, Dict, Set
 
 import numpy as np
 import pandas as pd
@@ -11,6 +12,7 @@ from pyspark.storagelevel import StorageLevel
 from sm.engine.fdr import FDR
 from sm.engine.formula_centroids import CentroidsGenerator
 from sm.engine.formula_parser import safe_generate_ion_formula
+from sm.engine.imzml_parser import ImzMLParserWrapper
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine import molecular_db
 from sm.engine.molecular_db import MolecularDB
@@ -30,9 +32,9 @@ from sm.engine.util import SMConfig
 logger = logging.getLogger('engine')
 
 
-def init_fdr(ds_config, moldbs):
-    """ Randomly select decoy adducts for each moldb and target adduct
-    """
+def init_fdr(ds_config: Dict, moldbs: List[MolecularDB]) -> List[Tuple[MolecularDB, FDR]]:
+    """Randomly select decoy adducts for each moldb and target adduct."""
+
     isotope_gen_config = ds_config['isotope_generation']
     logger.info('Selecting decoy adducts')
     moldb_fdr_list = []
@@ -49,9 +51,11 @@ def init_fdr(ds_config, moldbs):
     return moldb_fdr_list
 
 
-def collect_ion_formulas(spark_context, moldb_fdr_list):
-    """ Collect all ion formulas that need to be searched for
-    """
+def collect_ion_formulas(
+    spark_context: pyspark.SparkContext, moldb_fdr_list: List[Tuple[MolecularDB, FDR]]
+) -> pd.DataFrame:
+    """Collect all ion formulas that need to be searched for."""
+
     logger.info('Collecting ion formulas')
 
     def gen_ion_formulas(args):
@@ -89,16 +93,8 @@ def union_target_modifiers(moldb_fdr_list):
     return set().union(*(fdr.target_modifiers() for moldb, fdr in moldb_fdr_list))
 
 
-def select_target_formula_ids(formulas_df, ion_formula_map_df, target_modifiers):
-    logger.info('Selecting target formula ids')
-    target_formulas_mask = ion_formula_map_df.modifier.isin(target_modifiers)
-    target_formulas = set(ion_formula_map_df[target_formulas_mask].ion_formula.values)
-    target_formula_inds = set(formulas_df[formulas_df.formula.isin(target_formulas)].index)
-    return target_formula_inds
-
-
 def _left_merge(df1, df2, on):
-    return pd.merge(df1.reset_index(), df2, how='left', on=on).set_index(df1.index.name)
+    return pd.merge(df1.reset_index(), df2, how='left', on=on).set_index(df1.index.name or 'index')
 
 
 def compute_fdr(fdr, formula_metrics_df, formula_map_df) -> pd.DataFrame:
@@ -129,6 +125,10 @@ def compute_fdr_and_filter_results(
     if not moldb.targeted:
         max_fdr = 0.5
         moldb_metrics_fdr_df = moldb_metrics_fdr_df[moldb_metrics_fdr_df.fdr <= max_fdr]
+    else:
+        # fdr is not null for target ion formulas
+        moldb_metrics_fdr_df = moldb_metrics_fdr_df[~moldb_metrics_fdr_df.fdr.isnull()]
+
     moldb_ion_images_rdd = formula_images_rdd.filter(
         lambda kv: kv[0] in moldb_metrics_fdr_df.index  # pylint: disable=cell-var-from-loop
     )
@@ -139,7 +139,14 @@ def compute_fdr_and_filter_results(
 
 
 class MSMSearch:
-    def __init__(self, spark_context, imzml_parser, moldbs, ds_config, ds_data_path):
+    def __init__(
+        self,
+        spark_context: pyspark.SparkContext,
+        imzml_parser: ImzMLParserWrapper,
+        moldbs: List[MolecularDB],
+        ds_config: dict,
+        ds_data_path: Path,
+    ):
         self._spark_context = spark_context
         self._ds_config = ds_config
         self._imzml_parser = imzml_parser
@@ -159,6 +166,7 @@ class MSMSearch:
         return formula_centroids
 
     def process_segments(self, centr_segm_n, func):
+        logger.info(f'Processing {centr_segm_n} centroid segments...')
         centr_segm_inds = np.arange(centr_segm_n)
         np.random.shuffle(centr_segm_inds)
         results_rdd = (
@@ -222,13 +230,38 @@ class MSMSearch:
 
         return centr_segm_n
 
-    def search(self) -> Tuple[pd.DataFrame, pyspark.RDD]:
-        """ Search, score, and compute FDR for all MolDB formulas
+    def select_target_formula_inds(
+        self,
+        ion_formula_map_df: pd.DataFrame,
+        formulas_df: pd.DataFrame,
+        target_modifiers: Set[str],
+    ) -> Tuple[Set[int], Set[int]]:
+        logger.info('Selecting target formula and targeted database formula indices')
 
-        Returns
-        -----
-            tuple[sm.engine.mol_db.MolecularDB, pandas.DataFrame, pyspark.rdd.RDD]
-            (moldb, ion metrics, ion images)
+        ion_formula_map_df = _left_merge(
+            ion_formula_map_df,
+            formulas_df.rename(columns={'formula': 'ion_formula'}).reset_index(),
+            on='ion_formula',
+        )
+
+        target_ion_formula_map_df = ion_formula_map_df[
+            ion_formula_map_df.modifier.isin(target_modifiers)
+        ]
+        target_formula_inds = set(target_ion_formula_map_df.formula_i)
+
+        targeted_moldb_ids = {moldb.id for moldb in self._moldbs if moldb.targeted}
+        targeted_database_ion_formula_map_df = target_ion_formula_map_df[
+            target_ion_formula_map_df.moldb_id.isin(targeted_moldb_ids)
+        ]
+        targeted_database_formula_inds = set(targeted_database_ion_formula_map_df.formula_i)
+
+        return target_formula_inds, targeted_database_formula_inds
+
+    def search(self) -> Tuple[pd.DataFrame, pyspark.RDD]:
+        """Search, score, and compute FDR for all MolecularDB formulas.
+
+        Yields:
+            tuple of (ion metrics, ion images)
         """
         logger.info('Running molecule search')
 
@@ -244,14 +277,18 @@ class MSMSearch:
             ds_dims=get_ds_dims(self._imzml_parser.coordinates),
         )
 
-        logger.info('Processing segments...')
-        target_formula_inds = select_target_formula_ids(
-            formulas_df=formula_centroids.formulas_df,
-            ion_formula_map_df=ion_formula_map_df,
+        target_formula_inds, targeted_database_formula_inds = self.select_target_formula_inds(
+            ion_formula_map_df,
+            formula_centroids.formulas_df,
             target_modifiers=union_target_modifiers(moldb_fdr_list),
         )
+
         process_centr_segment = create_process_segment(
-            ds_segments, self._imzml_parser.coordinates, self._ds_config, target_formula_inds
+            ds_segments,
+            self._imzml_parser.coordinates,
+            self._ds_config,
+            target_formula_inds,
+            targeted_database_formula_inds,
         )
         results_rdd = self.process_segments(centr_segm_n, process_centr_segment)
         formula_metrics_df, formula_images_rdd = merge_results(
