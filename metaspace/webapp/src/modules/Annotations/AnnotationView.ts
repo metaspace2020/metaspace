@@ -188,12 +188,16 @@ export default class AnnotationView extends Vue {
 
    get bestOpticalImage(): OpticalImage | null {
      if (this.opticalImages != null && this.opticalImages.length > 0) {
-       const { zoom } = this.imagePosition
+       // Try to guess a zoom level that is likely to be close to 1 image pixel per display pixel
+       // MainImage is ~2/3rds of the window width. Optical images are 1000 px wide * zoom level
+       const targetZoom = this.imagePosition.zoom
+         * Math.max(1, window.innerWidth * window.devicePixelRatio * 2 / 3 / 1000)
+
        // Find the best optical image, preferring images with a higher zoom level than the current zoom
        const sortedOpticalImages = sortBy(this.opticalImages, optImg =>
-         optImg.zoom >= zoom
-           ? optImg.zoom - zoom
-           : 100 + (zoom - optImg.zoom))
+         optImg.zoom >= targetZoom
+           ? optImg.zoom - targetZoom
+           : 100 + (targetZoom - optImg.zoom))
 
        return sortedOpticalImages[0]
      }

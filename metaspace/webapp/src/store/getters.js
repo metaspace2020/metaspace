@@ -102,12 +102,7 @@ export default {
     const { datasetIds, colocalizedWith, database, fdrLevel } = getters.filter;
     const colocalizationAlgo = getters.settings.annotationView.colocalizationAlgo;
     if (datasetIds && !datasetIds.includes('|') && colocalizedWith != null && database != null && fdrLevel != null) {
-      return {
-        colocalizedWith,
-        colocalizationAlgo,
-        databaseId: database,
-        fdrLevel
-      };
+      return { colocalizedWith, colocalizationAlgo, databaseId: database, fdrLevel };
     } else {
       return null;
     }
