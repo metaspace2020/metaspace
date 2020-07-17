@@ -1,9 +1,9 @@
-import { mount, config as testConfig } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
 import MetadataEditor from './MetadataEditor.vue'
 import router from '../../router'
 import { initMockGraphqlClient, apolloProvider } from '../../../tests/utils/mockGraphqlClient'
 import store from '../../store/index'
-import { mockAdductSuggestions } from '../../../tests/utils/mockGraphqlData'
+import { mockAdductSuggestions, mockMolecularDatabases } from '../../../tests/utils/mockGraphqlData'
 
 describe('MetadataEditor', () => {
   /* eslint-disable vue/max-len */
@@ -17,7 +17,7 @@ describe('MetadataEditor', () => {
   /* eslint-enable vue/max-len */
 
   const mockDataset = {
-    molDBs: ['molecularDatabases.1.name'],
+    databases: [{ id: mockMolecularDatabases()[0].id }],
     metadataJson: JSON.stringify(mockMetadata),
   }
 
@@ -43,6 +43,7 @@ describe('MetadataEditor', () => {
       Query: () => ({
         currentUserLastSubmittedDataset: () => null, // Prevent automatic mocking
         adductSuggestions: mockAdductSuggestions,
+        molecularDatabases: mockMolecularDatabases,
       }),
     })
     const wrapper = mount(MetadataEditor, { store, router, apolloProvider })

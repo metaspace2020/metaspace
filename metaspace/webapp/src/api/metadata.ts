@@ -21,7 +21,6 @@ export const editDatasetFragment =
     }
     databases {
       id
-      name
     }
     adducts
     name
