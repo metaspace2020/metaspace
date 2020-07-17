@@ -169,6 +169,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     description: 'Search by m/z',
     levels: ['annotation'],
     initialValue: 0,
+    encoding: 'number',
   },
 
   fdrLevel: {
