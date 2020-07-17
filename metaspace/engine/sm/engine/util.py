@@ -7,7 +7,7 @@ import os
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
-from random import random
+import random
 from time import sleep
 
 from sm.engine.db import ConnectionPool
@@ -173,13 +173,13 @@ class GlobalInit:
         self.pool.close()
 
 
-def retry_on_exception(exception_type=Exception, num_attempts=3):
+def retry_on_exception(exception_type=Exception, num_retries=3):
     def decorator(func):
         func_name = getattr(func, '__name__', 'Function')
 
         @wraps(func)
         def wrapper(*args, **kwargs):
-            for i in range(num_attempts - 1):
+            for i in range(num_retries):
                 try:
                     return func(*args, **kwargs)
                 except exception_type as e:

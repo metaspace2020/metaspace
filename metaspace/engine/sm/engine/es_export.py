@@ -4,11 +4,10 @@ from collections import MutableMapping, defaultdict
 import numpy as np
 import pandas as pd
 from elasticsearch import (
-    ConflictError,
+    TransportError,
     Elasticsearch,
     ElasticsearchException,
     NotFoundError,
-    ConnectionTimeout,
 )
 from elasticsearch.client import IndicesClient, IngestClient
 from elasticsearch.helpers import parallel_bulk
@@ -286,7 +285,7 @@ class ESExporter:
     def _select_ds_by_id(self, ds_id):
         return self._db.select_with_fields(DATASET_SEL, params=(ds_id,))[0]
 
-    @retry_on_exception(ConflictError)
+    @retry_on_exception(TransportError)
     def sync_dataset(self, ds_id):
         """ Warning: This will wait till ES index/update is completed
         """
@@ -404,7 +403,7 @@ class ESExporter:
 
         return annotation_counts
 
-    @retry_on_exception((ConflictError, ConnectionTimeout))
+    @retry_on_exception(TransportError)
     def index_ds(self, ds_id: str, moldb: MolecularDB, isocalc: IsocalcWrapper):
         with self._ds_locker.lock(ds_id):
             try:
@@ -480,7 +479,7 @@ class ESExporter:
                 logger.warning(f'Field ds_{field} not found in ds_doc')
         return ds_doc_upd
 
-    @retry_on_exception(ConflictError)
+    @retry_on_exception(TransportError)
     def update_ds(self, ds_id, fields):
         with self._ds_locker.lock(ds_id):
             pipeline_id = f'update-ds-fields-{ds_id}'
@@ -509,7 +508,7 @@ class ESExporter:
                 finally:
                     self._ingest.delete_pipeline(pipeline_id)
 
-    @retry_on_exception(ConflictError)
+    @retry_on_exception(TransportError)
     def delete_ds(self, ds_id: str, moldb: MolecularDB = None, delete_dataset: bool = True):
         """Completely or partially delete dataset.
 
