@@ -1,4 +1,4 @@
-import {Brackets, EntityManager, EntityRepository, In} from 'typeorm';
+import {Brackets, EntityManager, EntityRepository, SelectQueryBuilder} from 'typeorm';
 import {UserError} from 'graphql-errors';
 import * as DataLoader from 'dataloader';
 import * as _ from 'lodash';
@@ -39,6 +39,12 @@ export class MolecularDbRepository {
     return qb;
   }
 
+  private queryWhereGroup(user: ContextUser, groupId?: string): SelectQueryBuilder<MolecularDB> {
+    return (groupId != null)
+      ? this.queryWhere(user, 'moldb.group_id = :groupId', { groupId })
+      : this.queryWhere(user)
+  }
+
   private getDataLoader(ctx: Context) {
     return ctx.contextCacheGet('MolecularDbRepository.getDataLoader', [], () => {
       return new DataLoader(async (databaseIds: number[]): Promise<any[]> => {
@@ -51,10 +57,11 @@ export class MolecularDbRepository {
   }
 
   async findVisibleDatabases(user: ContextUser, groupId?: string): Promise<MolecularDB[]> {
-    const query = (groupId != null)
-      ? this.queryWhere(user, 'moldb.group_id = :groupId', { groupId })
-      : this.queryWhere(user);
-    return await query.getMany();
+    return await this.queryWhereGroup(user, groupId).getMany();
+  }
+
+  async countVisibleDatabases(user: ContextUser, groupId?: string): Promise<number> {
+    return await this.queryWhereGroup(user, groupId).getCount();
   }
 
   async findUsableDatabases(user: ContextUser): Promise<MolecularDB[]> {

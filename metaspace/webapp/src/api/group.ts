@@ -153,7 +153,7 @@ export interface ViewGroupResult {
   numMembers: number;
   groupDescriptionAsHtml: string;
   members: ViewGroupMember[] | null;
-  molecularDatabases: MolecularDB[] | null;
+  numDatabases: number;
 }
 
 interface ViewGroupMember {
@@ -179,9 +179,7 @@ export const ViewGroupFragment = gql`fragment ViewGroupFragment on Group {
     user { id name email }
   }
   groupDescriptionAsHtml
-  molecularDatabases {
-    id
-  }
+  numDatabases
 }`
 
 export const getGroupDatabasesQuery =

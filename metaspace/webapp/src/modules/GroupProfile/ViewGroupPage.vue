@@ -295,7 +295,7 @@ export default class ViewGroupPage extends Vue {
     get countMembers() { return this.group && this.group.numMembers }
     maxVisibleDatasets = 8;
 
-    get countDatabases() { return this.group?.molecularDatabases?.length || 0 }
+    get countDatabases() { return this.group?.numDatabases || 0 }
 
     get isGroupMember() {
       return this.roleInGroup === 'MEMBER' || this.roleInGroup === 'GROUP_ADMIN'
