@@ -899,6 +899,7 @@ class SMDataset(object):
                     images[i] = np.zeros(shape, dtype=non_empty_images[0].dtype)
                 else:
                     images[i] *= float(image_metadata[i]['maxIntensity'])
+                    images[i] += float(image_metadata[i]['minIntensity'])
 
         if hotspot_clipping:
             for i, img in enumerate(images):
