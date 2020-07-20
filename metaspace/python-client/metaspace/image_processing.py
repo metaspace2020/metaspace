@@ -10,8 +10,6 @@ def clip_hotspots(img: np.ndarray):
     """
     min_visible = np.max(img) / 256
     hotspot_threshold = np.quantile(img[img > min_visible], 0.99)
-    print('min_visible', min_visible)
-    print('hotspot_threshold', hotspot_threshold)
     return np.clip(img, None, hotspot_threshold)
 
 
@@ -74,7 +72,7 @@ def colocalization_matrix(images: List[np.ndarray], labels=None):
         similarity_matrix = np.ones((1, 1))
     else:
         h, w = images[0].shape
-        flat_images = np.vstack(images)
+        flat_images = np.vstack([i.flatten() for i in images])
         flat_images[flat_images < np.quantile(flat_images, 0.5, axis=1, keepdims=True)] = 0
         filtered_images = median_filter(flat_images.reshape((count, h, w)), (1, 3, 3)).reshape(
             (count, h * w)
