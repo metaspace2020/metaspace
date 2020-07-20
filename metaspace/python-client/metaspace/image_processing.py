@@ -9,8 +9,11 @@ def clip_hotspots(img: np.ndarray):
     Performs hotspot removal on an ion image to match the METASPACE website's ion image rendering
     """
     min_visible = np.max(img) / 256
-    hotspot_threshold = np.quantile(img[img > min_visible], 0.99)
-    return np.clip(img, None, hotspot_threshold)
+    if min_visible > 0:
+        hotspot_threshold = np.quantile(img[img > min_visible], 0.99)
+        return np.clip(img, None, hotspot_threshold)
+    else:
+        return img
 
 
 def colocalization(img_a: np.ndarray, img_b: np.ndarray):

@@ -222,7 +222,7 @@ class GraphQLClient(object):
         configJson
         metadataJson
         isPublic
-        databases { id name version public archived }
+        databases { id name version isPublic archived }
         adducts
         acquisitionGeometry
         metadataType
@@ -247,7 +247,7 @@ class GraphQLClient(object):
         offSampleProb
         dataset { id name }
         possibleCompounds { name information { url databaseId } }
-        isotopeImages { mz url maxIntensity totalIntensity }
+        isotopeImages { mz url minIntensity maxIntensity totalIntensity }
     """
 
     DEFAULT_ANNOTATION_FILTER = {
@@ -433,7 +433,7 @@ class GraphQLClient(object):
         query = """
             {
               molecularDatabases {
-                id name version public archived
+                id name version isPublic archived
               }
             }
         """
@@ -898,12 +898,17 @@ class SMDataset(object):
                 if images[i] is None:
                     images[i] = np.zeros(shape, dtype=non_empty_images[0].dtype)
                 else:
-                    images[i] *= float(image_metadata[i]['maxIntensity'])
-                    images[i] += float(image_metadata[i]['minIntensity'])
+                    lo = float(image_metadata[i]['minIntensity'])
+                    hi = float(image_metadata[i]['maxIntensity'])
+                    images[i] = lo + images[i] * (hi - lo)
 
         if hotspot_clipping:
-            for i, img in enumerate(images):
-                images[i] = clip_hotspots(img)
+            for i in range(len(images)):
+                if images[i] is not None:
+                    images[i] = clip_hotspots(images[i])
+                    if not scale_intensity:
+                        # Renormalize to 0-1 range
+                        images[i] /= np.max(images[i]) or 1
 
         return IsotopeImages(images, sf, chem_mod, neutral_loss, adduct, image_mzs, image_urls)
 
