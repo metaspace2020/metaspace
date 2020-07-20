@@ -16,14 +16,14 @@ export default defineComponent({
     canDelete: { type: Boolean, default: false },
     groupId: { type: String, required: true },
   },
-  setup(props, { root }) {
+  setup(props) {
     const state = reactive<State>({
       selectedDatabase: null,
       showUploadDialog: false,
     })
 
     watch(
-      () => root.$route.query.db,
+      () => router.app.$route.query.db, // watching router.currentRoute didn't work
       db => { state.selectedDatabase = parseInt(db, 10) || null },
     )
 

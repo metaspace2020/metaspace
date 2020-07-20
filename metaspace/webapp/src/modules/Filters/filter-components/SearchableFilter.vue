@@ -21,12 +21,17 @@
       :value="safeValue"
       @change="onInput"
     >
-      <el-option
-        v-for="item in joinedOptions"
-        :key="item.value"
-        :label="item.label"
-        :value="item.value"
-      />
+      <slot
+        name="options"
+        :options="joinedOptions"
+      >
+        <el-option
+          v-for="item in joinedOptions"
+          :key="item.value"
+          :label="item.label"
+          :value="item.value"
+        />
+      </slot>
     </el-select>
 
     <span
