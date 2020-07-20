@@ -58,7 +58,7 @@ const DatabasesTable = defineComponent<Props>({
     const { result, loading, refetch } = useQuery(
       getGroupDatabasesQuery,
       { groupId: props.groupId },
-      { fetchPolicy: 'no-cache' },
+      { fetchPolicy: 'network-only' },
     )
 
     onBeforeMount(refetch)

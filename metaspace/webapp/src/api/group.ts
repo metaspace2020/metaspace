@@ -185,6 +185,8 @@ export const ViewGroupFragment = gql`fragment ViewGroupFragment on Group {
 export const getGroupDatabasesQuery =
   gql`query GetGroupDatabasesQuery($groupId: ID!) {
     group(groupId: $groupId) {
+      id
+      numDatabases # updates tab count when database is added
       molecularDatabases {
         archived
         createdDT
