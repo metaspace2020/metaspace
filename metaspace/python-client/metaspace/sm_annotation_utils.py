@@ -14,6 +14,8 @@ import pandas as pd
 import requests
 from PIL import Image
 
+from metaspace.image_processing import clip_hotspots
+
 try:
     from typing import TypedDict  # Requires Python 3.8
 except ImportError:
@@ -835,6 +837,7 @@ class SMDataset(object):
         adduct,
         only_first_isotope=False,
         scale_intensity=True,
+        hotspot_clipping=False,
         neutral_loss='',
         chem_mod='',
     ):
@@ -847,6 +850,8 @@ class SMDataset(object):
                                          are usually lower quality copies of the first isotopic ion image.
         :param bool  scale_intensity:    When True, the output values will be scaled to the intensity range of the original data.
                                          When False, the output values will be in the 0.0 to 1.0 range.
+        :param bool  hotspot_clipping:   When True, apply hotspot clipping. Recommended if the images will be used for visualisation.
+                                         This is required to get ion images that match the METASPACE website
         :param str   neutral_loss:
         :param str   chem_mod:
         :return IsotopeImages:
@@ -895,6 +900,10 @@ class SMDataset(object):
                 else:
                     images[i] *= float(image_metadata[i]['maxIntensity'])
 
+        if hotspot_clipping:
+            for i, img in enumerate(images):
+                images[i] = clip_hotspots(img)
+
         return IsotopeImages(images, sf, chem_mod, neutral_loss, adduct, image_mzs, image_urls)
 
     def all_annotation_images(
@@ -903,6 +912,7 @@ class SMDataset(object):
         database: Union[str, int] = None,
         only_first_isotope: bool = False,
         scale_intensity: bool = True,
+        hotspot_clipping: bool = False,
         **annotation_filter,
     ) -> List[IsotopeImages]:
         """Retrieve all ion images for the dataset and given annotation filters.
@@ -915,6 +925,9 @@ class SMDataset(object):
                 isotopes are usually lower quality copies of the first isotopic ion image.
             scale_intensity: When True, the output values will be scaled to the intensity range of
                 the original data. When False, the output values will be in the 0.0 to 1.0 range.
+            hotspot_clipping:   When True, apply hotspot clipping. Recommended if the images will
+                be used for visualisation. This is required to get ion images that match the
+                METASPACE website
             annotation_filter: Additional filters passed to `SMDataset.annotations`.
         Returns:
             list of isotope images
@@ -930,6 +943,7 @@ class SMDataset(object):
                     scale_intensity=scale_intensity,
                     neutral_loss=neutral_loss,
                     chem_mod=chem_mod,
+                    hotspot_clipping=hotspot_clipping,
                 )
 
             annotations = self.annotations(
