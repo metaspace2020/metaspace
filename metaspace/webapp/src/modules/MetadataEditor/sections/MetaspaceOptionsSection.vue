@@ -19,11 +19,24 @@
                 :help="dbHelp"
                 :value="value.databaseIds"
                 :error="error && error.databaseIds"
-                :options="databaseOptions"
                 :multiple-limit="MAX_MOL_DBS"
                 required
                 @input="val => onInput('databaseIds', val)"
-              />
+              >
+                <el-option-group
+                  v-for="group in databaseOptions"
+                  slot="options"
+                  :key="group.label"
+                  :label="group.label"
+                >
+                  <el-option
+                    v-for="option in group.options"
+                    :key="option.value"
+                    :value="option.value"
+                    :label="option.label"
+                  />
+                </el-option-group>
+              </form-field>
             </el-col>
             <el-col :span="8">
               <form-field
@@ -244,8 +257,14 @@ import { MAX_MOL_DBS, MAX_NEUTRAL_LOSSES, MAX_CHEM_MODS } from '../../../lib/con
 import config from '../../../lib/config'
 import { formatDatabaseLabel } from '../../MolecularDatabases/formatting'
 import { MolecularDB } from '../../../api/moldb'
+import { sortBy } from 'lodash-es'
 
 import './FormSection.scss'
+
+interface Option {
+  value: number
+  label: string
+}
 
 const normalizeFormulaModifier = (formula: string, defaultSign: '+'|'-') => {
   if (!formula) return null
@@ -296,10 +315,44 @@ export default class MetaspaceOptionsSection extends Vue {
     chemModOptions: string[] = [];
 
     get databaseOptions() {
-      return this.molDBOptions.map(db => ({
-        value: db.id,
-        label: formatDatabaseLabel(db),
-      }))
+      const dbsByGroupId : Record<string, [Option]> = {}
+      const groupLabelsById : Record<string, string> = {}
+
+      const publicDBs: [Option?] = []
+
+      for (const db of this.molDBOptions) {
+        if (db.group === null) {
+          publicDBs.push({
+            value: db.id,
+            label: formatDatabaseLabel(db),
+          })
+        } else {
+          const groupId = db.group.id
+          if (!(groupId in groupLabelsById)) {
+            groupLabelsById[groupId] = db.group.shortName
+          }
+          const options = dbsByGroupId[groupId] || []
+          options.push({
+            value: db.id,
+            label: formatDatabaseLabel(db),
+          })
+          dbsByGroupId[groupId] = options
+        }
+      }
+
+      const groupOptions = sortBy(Object.keys(dbsByGroupId).map(id => ({
+        label: groupLabelsById[id],
+        options: dbsByGroupId[id],
+      })), 'label')
+
+      if (publicDBs.length) {
+        return [
+          { label: 'Public', options: publicDBs },
+          ...groupOptions,
+        ]
+      }
+
+      return groupOptions
     }
 
     onInput<TKey extends keyof MetaspaceOptions>(field: TKey, val: MetaspaceOptions[TKey]) {

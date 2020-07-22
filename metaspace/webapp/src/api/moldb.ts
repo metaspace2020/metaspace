@@ -11,6 +11,7 @@ export interface MolecularDB {
   citation?: string
   group: {
     id: number
+    shortName: string
   }
   createdDT: string
   archived: boolean

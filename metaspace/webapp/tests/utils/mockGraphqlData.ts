@@ -12,6 +12,6 @@ export const mockAdductSuggestions = () => [
 ]
 
 export const mockMolecularDatabases = () => [
-  { id: 1, name: 'foo', version: 'v1' },
-  { id: 2, name: 'bar', version: 'v1' },
+  { id: 1, name: 'foo', version: 'v1', group: null },
+  { id: 2, name: 'bar', version: 'v1', group: { id: '123' } },
 ]
