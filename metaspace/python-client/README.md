@@ -29,14 +29,6 @@ There are several playbooks available to retrieve dataset information as well as
 | **update_DBs_dataset_api**| Reprocesses a dataset with a different set of databases |
 | **upload_dataset_api**| Uploads a new dataset with the provided metadata |
 
+## Acknowledgements and license
 
-## Funding
-
-This project is funded from the [European Horizon2020](https://ec.europa.eu/programmes/horizon2020/)
-project [METASPACE](http://project.metaspace2020.eu/) (no. 634402),
-[NIH NIDDK project KPMP](https://www.niddk.nih.gov/research-funding/research-programs/kidney-precision-medicine-project-kpmp)
-and internal funds of the [European Molecular Biology Laboratory](https://www.embl.org/).
-
-## License
-
-Unless specified otherwise in file headers, all files are licensed under the [Apache 2.0 license](LICENSE).
+[See the top-level README](../../README.md#acknowledgements)

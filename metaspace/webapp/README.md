@@ -28,13 +28,6 @@ To check code coverage: `yarn run coverage` then open `coverage/lcov-report/inde
 Run `yarn run build` to build and minify the project. 
 The files in the `dist/` directory can then be served by a web server such as nginx.
 
-## Funding
+## Acknowledgements and license
 
-This project is funded from the [European Horizon2020](https://ec.europa.eu/programmes/horizon2020/)
-project [METASPACE](http://project.metaspace2020.eu/) (no. 634402),
-[NIH NIDDK project KPMP](http://kpmp.org/)
-and internal funds of the [European Molecular Biology Laboratory](https://www.embl.org/).
-
-## License
-
-This project is licensed under the [Apache 2.0 license](LICENSE).
+[See the top-level README](../../README.md#acknowledgements)
