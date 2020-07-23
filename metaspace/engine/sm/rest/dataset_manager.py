@@ -58,10 +58,7 @@ class SMapiDatasetManager:
         self.logger.info(f'New message posted to {queue}: {msg}')
 
     def _add_default_moldbs(self, moldb_ids):
-        default_moldb_ids = [
-            molecular_db.find_by_name(name).id
-            for name in self._sm_config['ds_config_defaults']['moldb_names']
-        ]
+        default_moldb_ids = [moldb.id for moldb in molecular_db.find_default()]
         return list(set(moldb_ids) | set(default_moldb_ids))
 
     def add(self, doc, **kwargs):
