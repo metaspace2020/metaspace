@@ -44,7 +44,9 @@ input UpdateMolecularDBInput {
 }
 
 type Query {
-  molecularDatabases(onlyUsable: Boolean=false): [MolecularDB!]
+  visibleMolecularDBs: [MolecularDB!]
+  usableMolecularDBs: [MolecularDB!]
+  publicMolecularDBs: [MolecularDB!]
   getMolecularDB(databaseId: Int!): MolecularDB!
 }
 

@@ -10,6 +10,7 @@ import SimpleFilterBox from './filter-components/SimpleFilterBox.vue'
 import BooleanFilter from './filter-components/BooleanFilter.vue'
 import config from '../../lib/config'
 import AdductFilter from './filter-components/AdductFilter.vue'
+import DatabaseFilter from './filter-components/DatabaseFilter.vue'
 
 function formatFDR(fdr: number) {
   return fdr ? Math.round(fdr * 100) + '%' : ''
@@ -95,7 +96,7 @@ export const FILTER_COMPONENT_PROPS: (keyof FilterSpecification)[] = [
 
 export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
   database: {
-    type: SearchableFilter,
+    type: DatabaseFilter,
     name: 'Database',
     description: 'Select database',
     levels: ['annotation'],
@@ -103,8 +104,6 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     initialValue: lists =>
       lists.molecularDatabases
         .filter(d => d.default)[0]?.id,
-    removable: false,
-    clearable: false,
     encoding: 'number',
     convertValueForComponent: (v) => v?.toString(),
   },

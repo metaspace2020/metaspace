@@ -261,6 +261,11 @@ import { sortBy } from 'lodash-es'
 
 import './FormSection.scss'
 
+interface MolDBsByGroup {
+  label: string
+  molecularDatabases: MolecularDB[]
+}
+
 interface Option {
   value: number
   label: string
@@ -292,7 +297,7 @@ export default class MetaspaceOptionsSection extends Vue {
     error?: Record<string, any>;
 
     @Prop({ type: Array, required: true })
-    molDBOptions!: MolecularDB[];
+    molDBOptions!: MolDBsByGroup[];
 
     @Prop({ type: Array, required: true })
     adductOptions!: {value: string, label: string}[];
@@ -315,44 +320,13 @@ export default class MetaspaceOptionsSection extends Vue {
     chemModOptions: string[] = [];
 
     get databaseOptions() {
-      const dbsByGroupId : Record<string, [Option]> = {}
-      const groupLabelsById : Record<string, string> = {}
-
-      const publicDBs: [Option?] = []
-
-      for (const db of this.molDBOptions) {
-        if (db.group === null) {
-          publicDBs.push({
-            value: db.id,
-            label: formatDatabaseLabel(db),
-          })
-        } else {
-          const groupId = db.group.id
-          if (!(groupId in groupLabelsById)) {
-            groupLabelsById[groupId] = db.group.shortName
-          }
-          const options = dbsByGroupId[groupId] || []
-          options.push({
-            value: db.id,
-            label: formatDatabaseLabel(db),
-          })
-          dbsByGroupId[groupId] = options
-        }
-      }
-
-      const groupOptions = sortBy(Object.keys(dbsByGroupId).map(id => ({
-        label: groupLabelsById[id],
-        options: dbsByGroupId[id],
-      })), 'label')
-
-      if (publicDBs.length) {
-        return [
-          { label: 'Public', options: publicDBs },
-          ...groupOptions,
-        ]
-      }
-
-      return groupOptions
+      return this.molDBOptions.map(({ label, molecularDatabases }) => ({
+        label,
+        options: molecularDatabases.map(db => ({
+          value: db.id,
+          label: formatDatabaseLabel(db),
+        })),
+      }))
     }
 
     onInput<TKey extends keyof MetaspaceOptions>(field: TKey, val: MetaspaceOptions[TKey]) {

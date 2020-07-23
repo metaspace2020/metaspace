@@ -1,7 +1,5 @@
 import gql from 'graphql-tag'
 import { omit } from 'lodash-es'
-import { MolecularDB } from '../../../api/moldb'
-import { formatDatabaseLabel } from '../../MolecularDatabases/formatting'
 
 export interface Option {
   value: string;
@@ -12,7 +10,7 @@ export interface FilterQueries {
   getById($apollo: any, ids: string[]): Promise<Option[]>;
 }
 
-export type SearchableFilterKey = 'database' | 'datasetIds' | 'group' | 'project' | 'submitter';
+export type SearchableFilterKey = 'datasetIds' | 'group' | 'project' | 'submitter';
 
 const datasetQueries: FilterQueries = {
   async search($apollo, $store, query) {
@@ -234,59 +232,7 @@ const submitterQueries: FilterQueries = {
   },
 }
 
-function mapDBtoOption(db: MolecularDB): Option {
-  return {
-    value: db.id ? (db.id).toString() : '',
-    label: formatDatabaseLabel(db),
-  }
-}
-
-const databaseQueries: FilterQueries = {
-  async search($apollo, $store, query) {
-    const { data } = await $apollo.query({
-      query: gql`query DatabaseOptions {
-        molecularDatabases {
-          id
-          name
-          version
-        }
-      }`,
-      fetchPolicy: 'cache-first',
-    })
-    const queryRegex = new RegExp(query, 'i')
-    const results: Option[] = []
-    for (const db of data.molecularDatabases) {
-      if (queryRegex.test(db.name) || queryRegex.test(db.version)) {
-        results.push(mapDBtoOption(db))
-      }
-    }
-    return results
-  },
-  async getById($apollo, ids) {
-    const { data } = await $apollo.query({
-      query: gql`query DatabaseNames {
-        molecularDatabases {
-          id
-          name
-          version
-        }
-      }`,
-      fetchPolicy: 'cache-first',
-    })
-
-    const parsedIds = ids.map(id => parseInt(id, 10))
-    const results: Option[] = []
-    for (const db of data.molecularDatabases) {
-      if (parsedIds.includes(db.id)) {
-        results.push(mapDBtoOption(db))
-      }
-    }
-    return results
-  },
-}
-
 const searchableFilterQueries: Record<SearchableFilterKey, FilterQueries> = {
-  database: databaseQueries,
   datasetIds: datasetQueries,
   group: groupQueries,
   project: projectQueries,

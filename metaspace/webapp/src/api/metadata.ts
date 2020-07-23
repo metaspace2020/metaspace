@@ -99,7 +99,7 @@ export const fetchOptionListsQuery = gql`query fetchOptionListsQuery {
   maldiMatrices: metadataSuggestions(field: "Sample_Preparation.MALDI_Matrix", query: "", limit: 1000)
   analyzerTypes: metadataSuggestions(field: "MS_Analysis.Analyzer", query: "", limit: 1000)
   colocalizationAlgos {id, name}
-  molecularDatabases: molecularDatabases{id, name, default}
+  molecularDatabases: visibleMolecularDBs{id, name, default}
   adducts: adductSuggestions{adduct, name, charge, default, hidden}
 }`
 
@@ -128,14 +128,18 @@ export const neutralLossSuggestionQuery = gql`query neutralLossSuggestionQuery($
 }`
 
 export const metadataOptionsQuery = gql`query metadataOptionsQuery {
-  molecularDatabases: molecularDatabases(onlyUsable: true){
+  molecularDatabases: publicMolecularDBs {
     id,
     name,
     version,
     default,
-    group {
-      id
-      shortName
+  }
+  molDBsByGroup: allGroups {
+    label: shortName
+    molecularDatabases {
+      id,
+      name,
+      version,
     }
   }
   adducts: adductSuggestions{adduct, name, charge, default, hidden}

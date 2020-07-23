@@ -72,6 +72,7 @@ import {
   get, set, cloneDeep, defaults,
   isEmpty, isEqual, isPlainObject,
   mapValues, forEach, without, omit,
+  sortBy,
 } from 'lodash-es'
 import {
   newDatasetQuery,
@@ -267,8 +268,7 @@ export default {
         molecularDatabases:
           config.features.all_dbs
             ? data.molecularDatabases
-            : data.molecularDatabases.filter(db => !db.hidden)
-        ,
+            : data.molecularDatabases.filter(db => !db.hidden),
       }
     },
 
@@ -300,12 +300,15 @@ export default {
       const metadata = this.importMetadata(loadedMetadata, mdType)
 
       // Load options
-      const { adducts, molecularDatabases } = options
+      const { adducts, molecularDatabases, molDBsByGroup } = options
       this.possibleAdducts = {
         Positive: adducts.filter(a => a.charge > 0),
         Negative: adducts.filter(a => a.charge < 0),
       }
-      this.molDBOptions = molecularDatabases
+      this.molDBOptions = [
+        { label: 'Public', molecularDatabases },
+        ...sortBy(molDBsByGroup, 'label'),
+      ]
       this.schema = deriveFullSchema(metadataSchemas[mdType])
 
       if (this.isNew) {
@@ -315,11 +318,17 @@ export default {
         // but if the user has previously selected a value that is now invalid, they should be made aware so that they
         // can choose an appropriate substitute.
         const selectedDbs = dataset.databases || []
-        const optionIds = this.molDBOptions.map(_ => _.id)
-        if (selectedDbs.some(db => !optionIds.includes(db.id))) {
-          metaspaceOptions.databaseIds = []
-        } else if (selectedDbs.length === 0) {
+        if (selectedDbs.length === 0) {
           metaspaceOptions.databaseIds = molecularDatabases.filter(d => d.default).map(_ => _.id)
+        } else {
+          for (const db of selectedDbs) {
+            if (this.molDBOptions.every(group =>
+              group.molecularDatabases.find(_ => _.id === db.id) === null,
+            )) {
+              metaspaceOptions.databaseIds = []
+              break
+            }
+          }
         }
         // Name should be different for each dataset
         metaspaceOptions.name = ''
