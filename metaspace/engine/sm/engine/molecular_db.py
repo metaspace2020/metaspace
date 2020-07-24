@@ -193,6 +193,13 @@ def find_by_name(name: str) -> MolecularDB:
     return MolecularDB(**data)
 
 
+def find_default() -> List[MolecularDB]:
+    data = DB().select_one_with_fields(
+        'SELECT id, name, version, targeted, group_id FROM molecular_db WHERE "default" = TRUE',
+    )
+    return [MolecularDB(**row) for row in data]
+
+
 def fetch_molecules(moldb_id: int) -> pd.DataFrame:
     """Fetch all database molecules as a DataFrame."""
 
