@@ -22,6 +22,11 @@ try:
 except ImportError:
     TypedDict = dict
 
+try:
+    from pandas import json_normalize  # Only in Pandas 1.0.0+
+except ImportError:
+    from pandas.io.json import json_normalize  # Logs DeprecationWarning if used in Pandas 1.0.0+
+
 
 DEFAULT_DATABASE = 'HMDB-v4'
 
@@ -787,7 +792,7 @@ class SMDataset(object):
         if not records:
             return pd.DataFrame()
 
-        df = pd.io.json.json_normalize(records)
+        df = json_normalize(records)
         return (
             df.assign(
                 moleculeNames=df.possibleCompounds.apply(
@@ -1129,7 +1134,7 @@ class SMInstance(object):
         Pandas dataframe for a subset of datasets
         where rows are flattened metadata JSON objects
         """
-        df = pd.io.json.json_normalize([d.metadata.json for d in datasets])
+        df = json_normalize([d.metadata.json for d in datasets])
         df.index = [d.name for d in datasets]
         return df
 
@@ -1142,7 +1147,7 @@ class SMInstance(object):
         records = self._gqclient.getAnnotations(
             annotationFilter={'database': db_name, 'fdrLevel': fdr}, datasetFilter=datasetFilter
         )
-        df = pd.io.json.json_normalize(records)
+        df = json_normalize(records)
         return pd.DataFrame(
             dict(
                 formula=df['sumFormula'],
@@ -1163,7 +1168,7 @@ class SMInstance(object):
         datasets = self._gqclient.getDatasets(datasetFilter=datasetFilter)
         df = pd.concat(
             [
-                pd.DataFrame(pd.io.json.json_normalize(json.loads(dataset['metadataJson'])))
+                pd.DataFrame(json_normalize(json.loads(dataset['metadataJson'])))
                 for dataset in datasets
             ]
         )
