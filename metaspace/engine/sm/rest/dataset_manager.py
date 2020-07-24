@@ -57,7 +57,8 @@ class SMapiDatasetManager:
         queue.publish(msg, priority)
         self.logger.info(f'New message posted to {queue}: {msg}')
 
-    def _add_default_moldbs(self, moldb_ids):
+    @staticmethod
+    def _add_default_moldbs(moldb_ids):
         default_moldb_ids = [moldb.id for moldb in molecular_db.find_default()]
         return list(set(moldb_ids) | set(default_moldb_ids))
 
