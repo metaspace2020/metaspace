@@ -1,6 +1,7 @@
 import json
 import os
 import pprint
+import re
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
@@ -47,6 +48,32 @@ class DatasetDownload(TypedDict):
     files: List[DatasetDownloadFile]
 
 
+class MetaspaceException(Exception):
+    pass
+
+
+class GraphQLException(MetaspaceException):
+    def __init__(self, json, message):
+        super().__init__(message)
+        self.json = json
+        self.message = message
+
+
+class BadRequestException(MetaspaceException):
+    def __init__(self, json, message, type=None):
+        super().__init__(f"{type}: {message}")
+        self.json = json
+        self.message = message
+        self.type = type
+
+
+class InvalidResponseException(MetaspaceException):
+    def __init__(self, json, http_response):
+        super().__init__('Invalid response from server')
+        self.json = json
+        self.http_response = http_response
+
+
 def _extract_data(res):
     if not res.headers.get('Content-Type').startswith('application/json'):
         raise Exception(
@@ -59,12 +86,12 @@ def _extract_data(res):
     else:
         if 'errors' in res_json:
             pprint.pprint(res_json['errors'])
-            raise Exception(res_json['errors'][0]['message'])
+            raise GraphQLException(res_json, res_json['errors'][0]['message'])
         elif 'message' in res_json:
-            raise Exception(res_json['message'])
+            raise BadRequestException(res_json, res_json['message'], res_json.get('type'))
         else:
             pprint.pprint(res_json)
-            raise Exception('Invalid response from server')
+            raise InvalidResponseException(res_json, res)
 
 
 def get_config(
@@ -428,7 +455,12 @@ class GraphQLClient(object):
         return result['molecularDatabases']
 
     def map_database_to_id(self, database):
-        if isinstance(database, int):
+        # Forwards/backwards compatibility issue: the GraphQL Schema may soon change from Int ids
+        # to ID (i.e. str-based) ids. For now, this supports both types, and passes the type on
+        # without modification. When the API has settled, this should be updated to coerce to the
+        # correct type, because we shouldn't burden users with having to figure out why calls are
+        # failing when they pass IDs that look like integers as integers instead of strings.
+        if isinstance(database, int) or re.match('^\d+$', database):
             return database
 
         database_docs = self.get_databases()

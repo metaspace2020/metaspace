@@ -4,7 +4,7 @@ from tempfile import TemporaryDirectory
 import pytest
 import numpy as np
 
-from metaspace.sm_annotation_utils import IsotopeImages, SMDataset, GraphQLClient, SMInstance
+from metaspace.sm_annotation_utils import IsotopeImages, SMDataset, GraphQLClient, SMInstance, GraphQLException
 from metaspace.tests.utils import sm, my_ds_id, advanced_ds_id
 
 
@@ -65,6 +65,22 @@ def test_results_with_coloc(dataset: SMDataset):
 
     assert len(coloc_annotations) > 0
     assert coloc_annotations.colocCoeff.all()
+
+
+def test_results_with_int_database_id(dataset: SMDataset):
+    annotations = dataset.results(22, fdr=0.5)
+
+    assert len(annotations) > 0
+
+
+def test_results_with_str_database_id(dataset: SMDataset):
+    try:
+        annotations = dataset.results('22', fdr=0.5)
+        # If the above code succeeds, it's time to start coercing the databaseId type to fit the API.
+        # See the comment in GraphQLClient.map_database_to_id for context.
+        assert False
+    except GraphQLException:
+        assert True
 
 
 def test_results_neutral_loss_chem_mod(advanced_dataset: SMDataset):
