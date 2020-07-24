@@ -168,7 +168,7 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
         colocalizedWith,
         colocalizationAlgo || config.metadataLookups.defaultColocalizationAlgo,
         databaseId || defaultDatabase.id,
-        fdrLevel
+        fdrLevel || null
       );
     } else {
       return null;
