@@ -4,7 +4,13 @@ from tempfile import TemporaryDirectory
 import pytest
 import numpy as np
 
-from metaspace.sm_annotation_utils import IsotopeImages, SMDataset, GraphQLClient, SMInstance, GraphQLException
+from metaspace.sm_annotation_utils import (
+    IsotopeImages,
+    SMDataset,
+    GraphQLClient,
+    SMInstance,
+    GraphQLException,
+)
 from metaspace.tests.utils import sm, my_ds_id, advanced_ds_id
 
 

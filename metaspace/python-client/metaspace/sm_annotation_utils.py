@@ -400,8 +400,7 @@ class GraphQLClient(object):
             }"""
 
         return self.query(
-            query=query,
-            variables={'filter': annotationFilter, 'dFilter': datasetFilter}
+            query=query, variables={'filter': annotationFilter, 'dFilter': datasetFilter}
         )
 
     def getDatasets(self, datasetFilter=None):
