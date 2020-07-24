@@ -54,7 +54,7 @@ import { sortBy } from 'lodash-es'
 import TagFilter from './TagFilter.vue'
 import { Option } from './searchableFilterQueries'
 import { MolecularDB } from '../../../api/moldb'
-import { formatDatabaseLabel } from '../../MolecularDatabases/formatting'
+import { formatDatabaseLabel, getDatabasesByGroup } from '../../MolecularDatabases/formatting'
 
 interface GroupOption {
   label: string
@@ -112,7 +112,7 @@ export default class DatabaseFilter extends Vue {
             allGroups {
               id
               shortName
-              dbs: molecularDatabases {
+              molecularDatabases {
                 id
                 name
                 version
@@ -122,17 +122,14 @@ export default class DatabaseFilter extends Vue {
           fetchPolicy: 'cache-first',
         })
 
-        const groups = [
-          { shortName: 'Public', dbs: data.publicMolecularDBs },
-          ...sortBy(data.allGroups, 'shortName'),
-        ]
+        const groups = getDatabasesByGroup(data.publicMolecularDBs, data.allGroups)
 
         const groupOptions: GroupOption[] = []
         const queryRegex = new RegExp(query, 'i')
 
         for (const group of groups) {
           const options: Option[] = []
-          for (const db of group.dbs) {
+          for (const db of group.molecularDatabases) {
             const id = db.id.toString()
             if (!(id in this.options)) {
               this.$set(this.options, id, mapDBtoOption(db))

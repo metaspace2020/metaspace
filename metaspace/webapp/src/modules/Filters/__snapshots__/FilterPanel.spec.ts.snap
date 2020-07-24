@@ -227,7 +227,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       <div slot-key="default">
         <mock-el-select placeholder="Start typing name" remote="" remote-method="function () { [native code] }" filterable="" loading-text="Loading matching entries..." no-data-text="No matches" no-match-text="No matches" reserve-keyword="" value="1">
           <ul class="el-select-group__wrap">
-            <li class="el-select-group__title">Public</li>
+            <li class="el-select-group__title">METASPACE</li>
             <li>
               <ul class="el-select-group">
                 <mock-el-option value="1" label="foo - v1"></mock-el-option>

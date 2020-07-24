@@ -255,16 +255,11 @@ import AnalysisVersionHelp from '../inputs/AnalysisVersionHelp.vue'
 import { MetaspaceOptions } from '../formStructure'
 import { MAX_MOL_DBS, MAX_NEUTRAL_LOSSES, MAX_CHEM_MODS } from '../../../lib/constants'
 import config from '../../../lib/config'
-import { formatDatabaseLabel } from '../../MolecularDatabases/formatting'
+import { formatDatabaseLabel, MolDBsByGroup } from '../../MolecularDatabases/formatting'
 import { MolecularDB } from '../../../api/moldb'
 import { sortBy } from 'lodash-es'
 
 import './FormSection.scss'
-
-interface MolDBsByGroup {
-  label: string
-  molecularDatabases: MolecularDB[]
-}
 
 interface Option {
   value: number
@@ -320,8 +315,8 @@ export default class MetaspaceOptionsSection extends Vue {
     chemModOptions: string[] = [];
 
     get databaseOptions() {
-      return this.databasesByGroup.map(({ label, molecularDatabases }) => ({
-        label,
+      return this.databasesByGroup.map(({ shortName, molecularDatabases }) => ({
+        label: shortName,
         options: sortBy(
           molecularDatabases.map(db => ({
             value: db.id,

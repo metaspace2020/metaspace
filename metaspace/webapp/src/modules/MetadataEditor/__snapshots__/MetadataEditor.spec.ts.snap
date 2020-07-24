@@ -928,7 +928,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                     <div class="el-form-item__content">
                       <mock-el-select value="1" required="true" multiple="" multiple-limit="3">
                         <ul class="el-select-group__wrap">
-                          <li class="el-select-group__title">Public</li>
+                          <li class="el-select-group__title">METASPACE</li>
                           <li>
                             <ul class="el-select-group">
                               <mock-el-option value="1" label="foo - v1"></mock-el-option>

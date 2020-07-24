@@ -89,6 +89,7 @@ import DataManagementSection from './sections/DataManagementSection.vue'
 import emailRegex from '../../lib/emailRegex'
 import safeJsonParse from '../../lib/safeJsonParse'
 import config from '../../lib/config'
+import { getDatabasesByGroup } from '../MolecularDatabases/formatting'
 
 const factories = {
   string: schema => schema.default || '',
@@ -305,10 +306,7 @@ export default {
         Positive: adducts.filter(a => a.charge > 0),
         Negative: adducts.filter(a => a.charge < 0),
       }
-      this.molDBsByGroup = [
-        { label: 'Public', molecularDatabases },
-        ...sortBy(molDBsByGroup, 'label'),
-      ]
+      this.molDBsByGroup = getDatabasesByGroup(molecularDatabases, molDBsByGroup)
       this.schema = deriveFullSchema(metadataSchemas[mdType])
 
       if (this.isNew) {

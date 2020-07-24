@@ -135,7 +135,8 @@ export const metadataOptionsQuery = gql`query metadataOptionsQuery {
     default,
   }
   molDBsByGroup: allGroups {
-    label: shortName
+    id
+    shortName
     molecularDatabases {
       id,
       name,
