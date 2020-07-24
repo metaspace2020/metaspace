@@ -22,6 +22,9 @@ except ImportError:
     TypedDict = dict
 
 
+DEFAULT_DATABASE = 'HMDB-v4'
+
+
 class DatasetDownloadLicense(TypedDict):
     code: str
     name: str
@@ -250,10 +253,6 @@ class GraphQLClient(object):
         isotopeImages { mz url minIntensity maxIntensity totalIntensity }
     """
 
-    DEFAULT_ANNOTATION_FILTER = {
-        'database': 'HMDB-v4',
-    }
-
     def getDataset(self, datasetId):
         query = (
             """
@@ -346,17 +345,10 @@ class GraphQLClient(object):
             ','.join(query_arguments),
             self.ANNOTATION_FIELDS,
         )
-        if datasetFilter is None:
-            datasetFilter = {}
-
-        if annotationFilter is None:
-            annot_filter = {}
-        else:
-            annot_filter = deepcopy(annotationFilter)
-            for key, val in self.DEFAULT_ANNOTATION_FILTER.items():
-                annot_filter.setdefault(key, val)
+        annot_filter = annotationFilter
 
         if colocFilter:
+            annot_filter = deepcopy(annot_filter) if annot_filter else {}
             annot_filter.update(colocFilter)
             order_by = 'ORDER_BY_COLOCALIZATION'
         else:
@@ -379,18 +371,13 @@ class GraphQLClient(object):
                 datasetFilter: $dFilter
               )
             }"""
-        if datasetFilter is None:
-            annotationFilter = {}
-        if annotationFilter is None:
-            annotFilter = {}
-        else:
-            annotFilter = deepcopy(annotationFilter)
-            for key, val in self.DEFAULT_ANNOTATION_FILTER.items():
-                annotFilter.setdefault(key, val)
 
-        return self.query(query=query, variables={'filter': annotFilter, 'dFilter': datasetFilter})
+        return self.query(
+            query=query,
+            variables={'filter': annotationFilter, 'dFilter': datasetFilter}
+        )
 
-    def getDatasets(self, datasetFilter={}):
+    def getDatasets(self, datasetFilter=None):
         query = (
             """
         query getDatasets($filter: DatasetFilter,
@@ -487,7 +474,7 @@ class GraphQLClient(object):
                 'name': ds_name,
                 'inputPath': data_path,
                 'isPublic': is_public,
-                'databaseIds': [self.map_database_to_id(db) for db in databases],
+                'databaseIds': databases and [self.map_database_to_id(db) for db in databases],
                 'adducts': adducts,
                 'ppm': ppm,
                 'submitterId': submitter_id,
@@ -685,7 +672,7 @@ class SMDataset(object):
     def annotations(
         self,
         fdr: float = 0.1,
-        database: Union[str, int] = None,
+        database: Union[str, int] = DEFAULT_DATABASE,
         return_vals: Iterable = ('sumFormula', 'adduct'),
         **annotation_filter,
     ) -> List[list]:
@@ -709,7 +696,7 @@ class SMDataset(object):
 
     def results(
         self,
-        database: Union[str, int] = None,
+        database: Union[str, int] = DEFAULT_DATABASE,
         fdr: float = None,
         coloc_with: str = None,
         include_chem_mods: bool = False,
@@ -918,7 +905,7 @@ class SMDataset(object):
     def all_annotation_images(
         self,
         fdr: float = 0.1,
-        database: Union[str, int] = None,
+        database: Union[str, int] = DEFAULT_DATABASE,
         only_first_isotope: bool = False,
         scale_intensity: bool = True,
         hotspot_clipping: bool = False,
