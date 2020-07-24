@@ -1,5 +1,6 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 import pytest
 import numpy as np
@@ -87,6 +88,22 @@ def test_results_with_str_database_id(dataset: SMDataset):
         assert False
     except GraphQLException:
         assert True
+
+
+@patch(
+    'metaspace.sm_annotation_utils.GraphQLClient.get_databases',
+    return_value=[{'id': '22', 'name': 'HMDB-v4'}],
+)
+@patch('metaspace.sm_annotation_utils.GraphQLClient.getAnnotations', return_value=[])
+def test_map_database_works_handles_strs_ids_from_api(
+    mock_getAnnotations, mock_get_databases, dataset: SMDataset
+):
+    # This test is just to ensure that the forward-compatibility with string IDs has the correct behavior
+    dataset.results()
+
+    print(mock_getAnnotations.call_args)
+    annot_filter = mock_getAnnotations.call_args[1]['annotationFilter']
+    assert annot_filter['databaseId'] == '22'
 
 
 def test_results_neutral_loss_chem_mod(advanced_dataset: SMDataset):
