@@ -21,30 +21,36 @@ export default defineComponent<Props>({
   },
   setup(props) {
     return () => {
-      let fileAction
+      const fileAction =
+        (props.status === 'COMPLETE' || props.status === 'ERROR') ? (
+          <button
+            key={props.status}
+            class="button-reset text-gray-600 hover:text-primary focus:text-primary"
+            title={props.status === 'COMPLETE' ? 'Remove file' : 'Retry file'}
+            onClick={props.buttonClickHandler}
+          >
+            <i
+              class={[
+                'text-inherit text-lg',
+                props.status === 'COMPLETE' ? 'el-icon-error' : 'el-icon-refresh',
+              ]}
+            />
+          </button>
+        ) : null
+
+      let statusText = null
 
       switch (props.status) {
         case 'UPLOADING':
-          fileAction = <span>{props.progress}%</span>
-          break
         case 'COMPLETE':
-        case 'ERROR':
-          fileAction = (
-            <button
-              key={props.status}
-              class="button-reset text-gray-600 hover:text-primary focus:text-primary"
-              title={props.status === 'COMPLETE' ? 'Remove file' : 'Retry file'}
-              onClick={props.buttonClickHandler}
-            >
-              <i
-                class={[
-                  'text-inherit text-lg',
-                  props.status === 'COMPLETE' ? 'el-icon-error' : 'el-icon-refresh',
-                ]}
-              />
-            </button>
-          )
+          statusText = <p key="progress">{props.progress}%</p>
           break
+        case 'ERROR':
+          statusText = (
+            <p key="error" class="font-medium text-danger">
+              Upload failed
+            </p>
+          )
       }
 
       return (
@@ -68,14 +74,11 @@ export default defineComponent<Props>({
               {fileAction}
             </FadeTransition>
           </div>
-          <FadeTransition>
-            { props.status === 'ERROR'
-              ? <p key="error" class="m-0 mt-3 font-medium text-danger">
-                Upload failed
-              </p>
-              : <p class="m-0 mt-3 font-medium">
-                {props.fileName}
-              </p> }
+          <p class="m-0 mt-3 font-medium">
+            {props.fileName}
+          </p>
+          <FadeTransition class="m-0">
+            {statusText}
           </FadeTransition>
         </div>
       )
