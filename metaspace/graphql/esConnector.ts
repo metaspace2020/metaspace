@@ -250,8 +250,13 @@ const constructAnnotationFilters = (filter: AnnotationFilter & ExtraAnnotationFi
   if (msmScoreFilter)
     filters.push(constructRangeFilter('msm', msmScoreFilter));
 
-  if (fdrLevel)
-    filters.push(constructRangeFilter('fdr', {min: 0, max: fdrLevel + 1e-3}));
+  if (fdrLevel) {
+    const fdrConditions = [
+      { term: { fdr: -1 } },
+      constructRangeFilter('fdr', { min: 0, max: fdrLevel + 1e-3 })
+    ];
+    filters.push({ bool: { should: fdrConditions } });
+  }
 
   if (annId)
     filters.push({term: { _id: annId }});
