@@ -936,7 +936,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                           </li>
                         </ul>
                         <ul class="el-select-group__wrap">
-                          <li class="el-select-group__title">molecularDatabases.1.group.shortName</li>
+                          <li class="el-select-group__title">test</li>
                           <li>
                             <ul class="el-select-group">
                               <mock-el-option value="2" label="bar - v1"></mock-el-option>

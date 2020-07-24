@@ -26,7 +26,7 @@
         <metaspace-options-section
           v-model="metaspaceOptions"
           :error="errors['metaspaceOptions']"
-          :mol-d-b-options="molDBOptions"
+          :databases-by-group="molDBsByGroup"
           :adduct-options="adductOptions"
           :is-new-dataset="isNew"
         />
@@ -127,7 +127,7 @@ export default {
       schema: null,
       loadingPromise: null,
       localErrors: {},
-      molDBOptions: [],
+      molDBsByGroup: [],
       possibleAdducts: {},
       metaspaceOptions: cloneDeep(defaultMetaspaceOptions),
       submitter: null,
@@ -305,7 +305,7 @@ export default {
         Positive: adducts.filter(a => a.charge > 0),
         Negative: adducts.filter(a => a.charge < 0),
       }
-      this.molDBOptions = [
+      this.molDBsByGroup = [
         { label: 'Public', molecularDatabases },
         ...sortBy(molDBsByGroup, 'label'),
       ]
@@ -322,7 +322,7 @@ export default {
           metaspaceOptions.databaseIds = molecularDatabases.filter(d => d.default).map(_ => _.id)
         } else {
           for (const db of selectedDbs) {
-            if (this.molDBOptions.every(group =>
+            if (this.molDBsByGroup.every(group =>
               group.molecularDatabases.find(_ => _.id === db.id) === null,
             )) {
               metaspaceOptions.databaseIds = []

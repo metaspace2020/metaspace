@@ -1,6 +1,6 @@
 <template>
   <tag-filter
-    :name="name"
+    name="Database"
     :removable="false"
     :width="300"
     @destroy="destroy"
@@ -9,15 +9,18 @@
       slot="edit"
       ref="select"
       placeholder="Start typing name"
-      remote
-      filterable
       :clearable="false"
+      remote
       :remote-method="fetchOptions"
+      filterable
       :loading="loading"
       loading-text="Loading matching entries..."
+      no-data-text="No matches"
       no-match-text="No matches"
+      reserve-keyword
       :value="value"
       @change="onInput"
+      @visible-change="fetchOptions('')"
     >
       <el-option-group
         v-for="group in groups"
@@ -32,17 +35,11 @@
         />
       </el-option-group>
     </el-select>
-
     <span
       slot="show"
       class="tf-value-span"
     >
-      <span v-if="value">
-        {{ currentLabel }}
-      </span>
-      <span v-else>
-        (any)
-      </span>
+      {{ label }}
     </span>
   </tag-filter>
 </template>
@@ -77,29 +74,31 @@ function mapDBtoOption(db: MolecularDB): Option {
   },
 })
 export default class DatabaseFilter extends Vue {
-    @Prop({ type: String, required: true })
-    name!: string;
-
     @Prop()
     value!: string | undefined;
 
     loading = false;
     options: Record<string, Option> = {};
     groups: GroupOption[] = []
+    previousQuery: string | null = null
 
     created() {
       this.fetchOptions('')
     }
 
-    get currentLabel() {
-      if (this.value) {
+    get label() {
+      if (this.value === undefined) {
+        return '(any)'
+      }
+      if (this.options[this.value] !== undefined) {
         return this.options[this.value].label
       }
       return ''
     }
 
     async fetchOptions(query: string) {
-      console.log({ query })
+      if (query === this.previousQuery) return
+
       this.loading = true
 
       try {
@@ -136,7 +135,7 @@ export default class DatabaseFilter extends Vue {
           for (const db of group.dbs) {
             const id = db.id.toString()
             if (!(id in this.options)) {
-              this.options[id] = mapDBtoOption(db)
+              this.$set(this.options, id, mapDBtoOption(db))
             }
             const option = this.options[id]
             if (queryRegex.test(option.label)) {
@@ -152,10 +151,13 @@ export default class DatabaseFilter extends Vue {
         }
 
         this.groups = groupOptions
-        this.loading = false
+        this.previousQuery = query
       } catch (err) {
         this.groups = []
+        this.previousQuery = null
         throw err
+      } finally {
+        this.loading = false
       }
     }
 

@@ -218,24 +218,36 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       </div>
     </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"></button>
   </div>
-  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="database" options="">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="database" filter-key="database" name="Database" options="">
     <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Database:
       <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
-        <mock-el-select placeholder="Start typing name" remote="" filterable="" remote-method="function () { [native code] }" loading-text="Loading matching entries..." no-match-text="No matches" multiple-limit="10" value="1">
-          <mock-el-option value="1" label="foo - v1"></mock-el-option>
-          <mock-el-option label="bar - v1" value="2"></mock-el-option>
+        <mock-el-select placeholder="Start typing name" remote="" remote-method="function () { [native code] }" filterable="" loading-text="Loading matching entries..." no-data-text="No matches" no-match-text="No matches" reserve-keyword="" value="1">
+          <ul class="el-select-group__wrap">
+            <li class="el-select-group__title">Public</li>
+            <li>
+              <ul class="el-select-group">
+                <mock-el-option value="1" label="foo - v1"></mock-el-option>
+              </ul>
+            </li>
+          </ul>
+          <ul class="el-select-group__wrap">
+            <li class="el-select-group__title">test</li>
+            <li>
+              <ul class="el-select-group">
+                <mock-el-option value="2" label="bar - v1"></mock-el-option>
+              </ul>
+            </li>
+          </ul>
         </mock-el-select>
       </div>
       <div slot-key="reference">
-        <div class="tf-value"><span class="tf-value-span"><span>
-      foo - v1
-    </span>
-          <!---->
-          <!----></span>
+        <div class="tf-value"><span class="tf-value-span">
+    foo - v1
+  </span>
           <!---->
         </div>
       </div>

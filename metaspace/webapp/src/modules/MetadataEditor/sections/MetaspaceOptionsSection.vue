@@ -297,7 +297,7 @@ export default class MetaspaceOptionsSection extends Vue {
     error?: Record<string, any>;
 
     @Prop({ type: Array, required: true })
-    molDBOptions!: MolDBsByGroup[];
+    databasesByGroup!: MolDBsByGroup[];
 
     @Prop({ type: Array, required: true })
     adductOptions!: {value: string, label: string}[];
@@ -320,12 +320,15 @@ export default class MetaspaceOptionsSection extends Vue {
     chemModOptions: string[] = [];
 
     get databaseOptions() {
-      return this.molDBOptions.map(({ label, molecularDatabases }) => ({
+      return this.databasesByGroup.map(({ label, molecularDatabases }) => ({
         label,
-        options: molecularDatabases.map(db => ({
-          value: db.id,
-          label: formatDatabaseLabel(db),
-        })),
+        options: sortBy(
+          molecularDatabases.map(db => ({
+            value: db.id,
+            label: formatDatabaseLabel(db),
+          })),
+          'label',
+        ),
       }))
     }
 
