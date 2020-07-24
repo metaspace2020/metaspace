@@ -41,7 +41,6 @@ import TourStep from './TourStep.vue'
 import { DialogController } from '../Account'
 import config from '../../lib/config'
 import Vue, { ComponentOptions } from 'vue'
-import 'element-ui' // Needed for Vue.$alert augmentation
 import CookieBanner from './CookieBanner'
 
 /** @type {ComponentOptions<Vue> & Vue} */

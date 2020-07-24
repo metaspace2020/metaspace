@@ -56,7 +56,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import { Component } from 'vue-property-decorator'
-import { Form } from 'element-ui'
+import { Form } from '../../../lib/element-ui'
 import { validatePasswordResetToken, resetPassword } from '../../../api/auth'
 import reportError from '../../../lib/reportError'
 import { refreshLoginStatus } from '../../../api/graphqlClient'

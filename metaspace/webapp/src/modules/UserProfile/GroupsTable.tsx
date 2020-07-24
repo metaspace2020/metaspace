@@ -1,7 +1,7 @@
 import './Table.css'
 
 import Vue from 'vue'
-import { Button, Message } from 'element-ui'
+import { Button, Message } from '../../lib/element-ui'
 import { createComponent, reactive, computed } from '@vue/composition-api'
 
 import confirmPrompt from '../../components/confirmPrompt'

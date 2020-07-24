@@ -1,5 +1,5 @@
 import { mount, Wrapper } from '@vue/test-utils'
-import ElementUI from 'element-ui'
+import { Button, FormItem } from '../../../lib/element-ui'
 import Vuex from 'vuex'
 import Vue from 'vue'
 import SignInDialog from './SignInDialog.vue'
@@ -19,8 +19,8 @@ Vue.use(Vuex)
 
 const setFormField = (wrapper: Wrapper<Vue>, fieldName: string, value: string) => {
   wrapper
-    .findAllComponents<ElementUI.FormItem>(ElementUI.FormItem)
-    .filter((fi: Wrapper<ElementUI.FormItem>) => fi.props().prop === fieldName)
+    .findAllComponents<FormItem>(FormItem)
+    .filter((fi: Wrapper<FormItem>) => fi.props().prop === fieldName)
     .at(0)
     .find('input')
     .setValue(value)
@@ -58,7 +58,7 @@ describe('SignInDialog', () => {
     // Act
     setFormField(wrapper, 'email', email)
     setFormField(wrapper, 'password', password)
-    wrapper.findComponent(ElementUI.Button).trigger('click')
+    wrapper.findComponent(Button).trigger('click')
     await Vue.nextTick()
 
     // Assert

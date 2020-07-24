@@ -1,6 +1,6 @@
 import { createComponent, reactive, ref } from '@vue/composition-api'
 
-import { Input } from 'element-ui'
+import { Input } from '../lib/element-ui'
 
 function copyText(text: string | undefined) {
   if (text) {

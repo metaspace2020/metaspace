@@ -1,6 +1,5 @@
 import { mount, Wrapper } from '@vue/test-utils'
 import Vue from 'vue'
-import 'element-ui'
 import { DeepPartial } from 'ts-essentials'
 import { restoreConsole, suppressConsoleWarn } from '../../../tests/utils/suppressConsole'
 import EditUserPage from './EditUserPage.vue'
