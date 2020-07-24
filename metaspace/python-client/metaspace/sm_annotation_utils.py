@@ -14,6 +14,8 @@ import pandas as pd
 import requests
 from PIL import Image
 
+from metaspace.image_processing import clip_hotspots
+
 try:
     from typing import TypedDict  # Requires Python 3.8
 except ImportError:
@@ -220,7 +222,7 @@ class GraphQLClient(object):
         configJson
         metadataJson
         isPublic
-        databases { id name version public archived }
+        databases { id name version isPublic archived }
         adducts
         acquisitionGeometry
         metadataType
@@ -245,7 +247,7 @@ class GraphQLClient(object):
         offSampleProb
         dataset { id name }
         possibleCompounds { name information { url databaseId } }
-        isotopeImages { mz url maxIntensity totalIntensity }
+        isotopeImages { mz url minIntensity maxIntensity totalIntensity }
     """
 
     DEFAULT_ANNOTATION_FILTER = {
@@ -431,7 +433,7 @@ class GraphQLClient(object):
         query = """
             {
               molecularDatabases {
-                id name version public archived
+                id name version isPublic archived
               }
             }
         """
@@ -835,6 +837,7 @@ class SMDataset(object):
         adduct,
         only_first_isotope=False,
         scale_intensity=True,
+        hotspot_clipping=False,
         neutral_loss='',
         chem_mod='',
     ):
@@ -847,6 +850,8 @@ class SMDataset(object):
                                          are usually lower quality copies of the first isotopic ion image.
         :param bool  scale_intensity:    When True, the output values will be scaled to the intensity range of the original data.
                                          When False, the output values will be in the 0.0 to 1.0 range.
+        :param bool  hotspot_clipping:   When True, apply hotspot clipping. Recommended if the images will be used for visualisation.
+                                         This is required to get ion images that match the METASPACE website
         :param str   neutral_loss:
         :param str   chem_mod:
         :return IsotopeImages:
@@ -896,7 +901,17 @@ class SMDataset(object):
                 if images[i] is None:
                     images[i] = np.zeros(shape, dtype=non_empty_images[0].dtype)
                 else:
-                    images[i] *= float(image_metadata[i]['maxIntensity'])
+                    lo = float(image_metadata[i]['minIntensity'])
+                    hi = float(image_metadata[i]['maxIntensity'])
+                    images[i] = lo + images[i] * (hi - lo)
+
+        if hotspot_clipping:
+            for i in range(len(images)):
+                if images[i] is not None:
+                    images[i] = clip_hotspots(images[i])
+                    if not scale_intensity:
+                        # Renormalize to 0-1 range
+                        images[i] /= np.max(images[i]) or 1
 
         return IsotopeImages(images, sf, chem_mod, neutral_loss, adduct, image_mzs, image_urls)
 
@@ -906,6 +921,7 @@ class SMDataset(object):
         database: Union[str, int] = None,
         only_first_isotope: bool = False,
         scale_intensity: bool = True,
+        hotspot_clipping: bool = False,
         **annotation_filter,
     ) -> List[IsotopeImages]:
         """Retrieve all ion images for the dataset and given annotation filters.
@@ -918,6 +934,9 @@ class SMDataset(object):
                 isotopes are usually lower quality copies of the first isotopic ion image.
             scale_intensity: When True, the output values will be scaled to the intensity range of
                 the original data. When False, the output values will be in the 0.0 to 1.0 range.
+            hotspot_clipping:   When True, apply hotspot clipping. Recommended if the images will
+                be used for visualisation. This is required to get ion images that match the
+                METASPACE website
             annotation_filter: Additional filters passed to `SMDataset.annotations`.
         Returns:
             list of isotope images
@@ -933,6 +952,7 @@ class SMDataset(object):
                     scale_intensity=scale_intensity,
                     neutral_loss=neutral_loss,
                     chem_mod=chem_mod,
+                    hotspot_clipping=hotspot_clipping,
                 )
 
             annotations = self.annotations(

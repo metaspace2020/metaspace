@@ -126,6 +126,24 @@ def test_isotope_images_advanced(advanced_dataset: SMDataset):
     assert isinstance(images[0], np.ndarray)
 
 
+def test_isotope_images_scaling(dataset: SMDataset):
+    ann = dataset.results(neutralLoss='', chemMod='').iloc[0]
+    formula, adduct = ann.name
+
+    scaled_img = dataset.isotope_images(formula, adduct)[0]
+    unscaled_img = dataset.isotope_images(formula, adduct, scale_intensity=False)[0]
+    clipped_img = dataset.isotope_images(formula, adduct, hotspot_clipping=True)[0]
+    clipped_unscaled_img = dataset.isotope_images(
+        formula, adduct, scale_intensity=False, hotspot_clipping=True
+    )[0]
+
+    assert np.max(scaled_img) == pytest.approx(ann.intensity)
+    assert np.max(unscaled_img) == pytest.approx(1)
+    assert np.max(clipped_img) < ann.intensity
+    assert np.max(clipped_img) > ann.intensity / 2  # Somewhat arbitrary, but generally holds true
+    assert np.max(clipped_unscaled_img) == pytest.approx(1)
+
+
 def test_all_annotation_images(dataset: SMDataset):
     image_list = dataset.all_annotation_images(only_first_isotope=True)
 
