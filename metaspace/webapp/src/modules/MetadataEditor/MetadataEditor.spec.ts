@@ -3,7 +3,12 @@ import MetadataEditor from './MetadataEditor.vue'
 import router from '../../router'
 import { initMockGraphqlClient, apolloProvider } from '../../../tests/utils/mockGraphqlClient'
 import store from '../../store/index'
-import { mockAdductSuggestions, mockMolecularDatabases, mockPublicMolecularDBs, mockMolDBsByGroup } from '../../../tests/utils/mockGraphqlData'
+import {
+  mockAdductSuggestions,
+  mockMolecularDatabases,
+  mockPublicMolecularDBs,
+  mockMolDBsByGroup,
+} from '../../../tests/utils/mockGraphqlData'
 
 describe('MetadataEditor', () => {
   /* eslint-disable vue/max-len */
