@@ -231,16 +231,8 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
         <div>
-          <mock-el-select remote-method="function () { [native code] }" placeholder="Select chemical modification" filterable="" clearable="" remote="">
-            <mock-el-option label="No chemical modification" value="none"></mock-el-option>
-            <mock-el-option label="chemMods.0.name" value="chemMods.0.chemMod"></mock-el-option>
-            <mock-el-option label="chemMods.1.name" value="chemMods.1.chemMod"></mock-el-option>
-          </mock-el-select>
-          <mock-el-select remote-method="function () { [native code] }" placeholder="Select neutral loss" filterable="" clearable="" remote="">
-            <mock-el-option label="No neutral loss" value="none"></mock-el-option>
-            <mock-el-option label="neutralLosses.0.name" value="neutralLosses.0.neutralLoss"></mock-el-option>
-            <mock-el-option label="neutralLosses.1.name" value="neutralLosses.1.neutralLoss"></mock-el-option>
-          </mock-el-select>
+          <!---->
+          <!---->
           <mock-el-select value="+K" placeholder="Select ionising adduct" filterable="" clearable="" remote="">
             <mock-el-option label="[M + H]⁺" value="+H"></mock-el-option>
             <mock-el-option label="[M + Na]⁺" value="+Na"></mock-el-option>
@@ -430,17 +422,10 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
-        <div>
-          <!---->
-          <!---->
-          <mock-el-select value="+K" placeholder="Select ionising adduct" filterable="" clearable="" remote="">
-            <mock-el-option label="[M + H]⁺" value="+H"></mock-el-option>
-            <mock-el-option label="[M + Na]⁺" value="+Na"></mock-el-option>
-            <mock-el-option label="[M + K]⁺" value="+K"></mock-el-option>
-            <mock-el-option label="[M - H]⁻" value="-H"></mock-el-option>
-            <mock-el-option label="[M + Cl]⁻" value="+Cl"></mock-el-option>
-          </mock-el-select>
-        </div>
+        <mock-el-select filterable="true" value="FTICR">
+          <mock-el-option label="analyzerTypes" value="analyzerTypes"></mock-el-option>
+          <mock-el-option label="analyzerTypes" value="analyzerTypes"></mock-el-option>
+        </mock-el-select>
       </div>
       <div slot-key="reference">
         <div class="tf-value"><span class="tf-value-span"><span>FTICR</span></span>
