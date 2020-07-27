@@ -64,7 +64,11 @@ def test_formula_image_metrics():
     ]
 
     metrics_df, _ = formula_image_metrics(
-        ref_images, lambda *args: exp_metrics, target_formula_inds={0, 1}, n_peaks=4
+        ref_images,
+        lambda *args: exp_metrics,
+        target_formula_inds={0, 1},
+        targeted_database_formula_inds=set(),
+        n_peaks=4,
     )
 
     exp_metrics_df = pd.DataFrame(
@@ -73,8 +77,39 @@ def test_formula_image_metrics():
     assert_frame_equal(metrics_df, exp_metrics_df)
 
 
+def test_targeted_database_metrics():
+    exp_metrics = OrderedDict(
+        [
+            ('chaos', 0),
+            ('spatial', 0),
+            ('spectral', 0),
+            ('msm', 0),
+            ('total_iso_ints', [213.0, 120.0]),
+            ('min_iso_ints', [0, 0]),
+            ('max_iso_ints', [100.0, 50.0]),
+        ]
+    )
+
+    ref_images = [
+        (0, 0, 100, csr_matrix([[0, 100, 100], [10, 0, 3]])),  # first formula first peak only
+        (1, 1, 10, csr_matrix([[0, 50, 50], [0, 20, 0]])),  # second formula second peak only
+        (2, 0, 0, csr_matrix([[0, 0, 0], [0, 0, 0]])),  # third formula first peak empty image
+    ]
+
+    metrics_df, _ = formula_image_metrics(
+        ref_images,
+        lambda *args: exp_metrics,
+        target_formula_inds={0, 1, 2},
+        targeted_database_formula_inds={0, 1, 2},
+        n_peaks=4,
+    )
+
+    exp_metrics_df = pd.DataFrame(data=[exp_metrics] * 2, index=pd.Index([0, 1], name='formula_i'))
+    assert_frame_equal(metrics_df, exp_metrics_df)
+
+
 @pytest.mark.parametrize('nan_value', [None, np.NaN, np.NAN, np.inf])
-def test__replace_nan(nan_value):
+def test_replace_nan(nan_value):
     default_v = 1
 
     assert replace_nan(nan_value, default_v) == default_v

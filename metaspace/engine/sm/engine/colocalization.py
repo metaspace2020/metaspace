@@ -41,7 +41,7 @@ ANNOTATIONS_SEL = (
     '    SELECT id FROM job j '
     '    WHERE j.ds_id = %s AND j.moldb_id = %s '
     '    ORDER BY start DESC '
-    '    LIMIT 1) '
+    '    LIMIT 1) AND iso_image_ids[1] IS NOT NULL '
     'ORDER BY msm DESC'
 )
 

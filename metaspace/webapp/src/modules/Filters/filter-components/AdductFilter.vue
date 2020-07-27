@@ -6,6 +6,7 @@
   >
     <div slot="edit">
       <el-select
+        v-if="showChemMods"
         :value="filterValues.chemMod"
         :remote-method="updateChemModQuery"
         :loading="chemModOptionsLoading !== 0"
@@ -24,6 +25,7 @@
         />
       </el-select>
       <el-select
+        v-if="showNeutralLosses"
         :value="filterValues.neutralLoss"
         :remote-method="updateNeutralLossQuery"
         :loading="neutralLossOptionsLoading !== 0"
@@ -134,6 +136,14 @@ export default class AdductFilter extends Vue {
     get adductOptions() {
       return this.filterLists.adducts
         .filter((a: AdductSuggestion) => config.features.all_adducts || !a.hidden)
+    }
+
+    get showChemMods() {
+      return config.features.chem_mods || this.filterValues.chemMod != null
+    }
+
+    get showNeutralLosses() {
+      return config.features.neutral_losses || this.filterValues.neutralLoss != null
     }
 
     formatValue() {

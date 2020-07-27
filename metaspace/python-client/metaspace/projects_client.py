@@ -1,5 +1,5 @@
 from typing import Optional, List
-from metaspace.sm_annotation_utils import SMInstance, GraphQLClient
+from metaspace.sm_annotation_utils import GraphQLClient
 
 try:
     from typing import TypedDict  # Requires Python 3.8

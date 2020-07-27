@@ -1,6 +1,6 @@
 # METASPACE
 
-[![Build Status](https://circleci.com/gh/metaspace2020/metaspace.svg?style=svg)](https://circleci.com/gh/metaspace2020/metaspace) [![Documentation Status](https://readthedocs.org/projects/sm-distributed/badge/?version=latest)](http://sm-distributed.readthedocs.org/en/latest/?badge=latest) [![codecov](https://codecov.io/gh/metaspace2020/metaspace/branch/master/graph/badge.svg)](https://codecov.io/gh/metaspace2020/metaspace) [![Gitter](https://badges.gitter.im/metaspace2020/metaspace.svg)](https://gitter.im/metaspace2020/metaspace?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![Build Status](https://circleci.com/gh/metaspace2020/metaspace.svg?style=svg)](https://circleci.com/gh/metaspace2020/metaspace) [![Documentation Status](https://readthedocs.org/projects/sm-distributed/badge/?version=latest)](http://sm-distributed.readthedocs.org/en/latest/?badge=latest) [![codecov](https://codecov.io/gh/metaspace2020/metaspace/branch/master/graph/badge.svg)](https://codecov.io/gh/metaspace2020/metaspace)
 
 [The METASPACE platform](http://metaspace2020.eu/) hosts an engine for
  metabolite annotation of imaging mass spectrometry data as well as a
@@ -9,7 +9,7 @@
 
 The METASPACE platform is developed by software engineers, data scientists and
  mass spectrometrists from the [Alexandrov team at EMBL](http://www.embl.de/research/units/scb/alexandrov/).
- This work is a part of the [European project METASPACE](http://project.metaspace2020.eu/).
+ This work is a part of the [European project METASPACE](https://cordis.europa.eu/project/id/634402).
 
 ## Projects
 

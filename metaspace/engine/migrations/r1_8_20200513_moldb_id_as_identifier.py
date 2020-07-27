@@ -131,7 +131,7 @@ database_descriptions = {
 def update_public_database_descriptions():
     db = DB()
     public_db_names = db.select(
-        'SELECT name FROM molecular_db WHERE public = true AND archived = false'
+        'SELECT name FROM molecular_db WHERE is_public = true AND archived = false'
     )
     logger.info(f'Updating public molecular databases: {public_db_names}')
 
@@ -159,7 +159,7 @@ def update_non_public_databases():
         "SET group_id = ("
         "   SELECT id FROM graphql.\"group\" WHERE name = 'European Molecular Biology Laboratory'"
         ") "
-        "WHERE public = false;"
+        "WHERE is_public = false;"
     )
 
 

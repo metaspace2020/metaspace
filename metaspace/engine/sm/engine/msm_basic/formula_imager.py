@@ -1,6 +1,7 @@
 import logging
 import pickle
 from pathlib import Path
+from typing import List, Dict, Set
 
 import numpy as np
 import pandas as pd
@@ -113,7 +114,13 @@ def get_file_path(name):
     return Path(SparkFiles.get(name))
 
 
-def create_process_segment(ds_segments, coordinates, ds_config, target_formula_inds):
+def create_process_segment(
+    ds_segments: List,
+    coordinates: np.ndarray,
+    ds_config: Dict,
+    target_formula_inds: Set[int],
+    targeted_database_formula_inds: Set[int],
+):
     sample_area_mask = make_sample_area_mask(coordinates)
     nrows, ncols = get_ds_dims(coordinates)
     compute_metrics = make_compute_image_metrics(
@@ -141,7 +148,12 @@ def create_process_segment(ds_segments, coordinates, ds_config, target_formula_i
                 ds_segm_it, centr_df=centr_df, nrows=nrows, ncols=ncols, isocalc=isocalc
             )
             formula_metrics_df, formula_images = formula_image_metrics(
-                formula_images_it, compute_metrics, target_formula_inds, n_peaks, min_px
+                formula_images_it,
+                compute_metrics,
+                target_formula_inds,
+                targeted_database_formula_inds,
+                n_peaks,
+                min_px,
             )
             logger.info(f'Segment {segm_i} finished')
         else:

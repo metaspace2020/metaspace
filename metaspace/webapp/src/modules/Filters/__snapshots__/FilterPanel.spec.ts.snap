@@ -430,10 +430,17 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
-        <mock-el-select filterable="true" value="FTICR">
-          <mock-el-option label="analyzerTypes" value="analyzerTypes"></mock-el-option>
-          <mock-el-option label="analyzerTypes" value="analyzerTypes"></mock-el-option>
-        </mock-el-select>
+        <div>
+          <!---->
+          <!---->
+          <mock-el-select value="+K" placeholder="Select ionising adduct" filterable="" clearable="" remote="">
+            <mock-el-option label="[M + H]⁺" value="+H"></mock-el-option>
+            <mock-el-option label="[M + Na]⁺" value="+Na"></mock-el-option>
+            <mock-el-option label="[M + K]⁺" value="+K"></mock-el-option>
+            <mock-el-option label="[M - H]⁻" value="-H"></mock-el-option>
+            <mock-el-option label="[M + Cl]⁻" value="+Cl"></mock-el-option>
+          </mock-el-select>
+        </div>
       </div>
       <div slot-key="reference">
         <div class="tf-value"><span class="tf-value-span"><span>FTICR</span></span>

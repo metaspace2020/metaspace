@@ -134,6 +134,7 @@ describe('Molecular database mutation permissions', () => {
       createMolecularDB(databaseDetails: {
         name: "test-db"
         version: "v1"
+        isPublic: true
         filePath: "s3://${config.upload.bucket}/${config.upload.moldbPrefix}/abc"
         groupId: $groupId
       }) {
