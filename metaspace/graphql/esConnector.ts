@@ -154,15 +154,18 @@ const esSort = (orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: Sorti
     return [sortTerm('ds_name', order)];
 };
 
-const constructRangeFilter = (field: keyof ESAnnotationSource, interval: {min: number|string, max: number|string}) => {
-  return {
-    range: {
-      [field]: {
-        gte: interval.min,
-        lt: interval.max,
-      },
-    },
-  };
+const constructRangeFilter = (
+  field: keyof ESAnnotationSource, interval: {min: number|string|null, max: number|string|null}
+) => {
+  const range = {} as any;
+  const { min, max } = interval;
+  if (min != null) {
+    range['gte'] = min;
+  }
+  if (max != null) {
+    range['lt'] = max;
+  }
+  return { range: { [field]: range } };
 };
 
 const constructTermOrTermsFilter = (field: keyof ESAnnotationSource, valueOrValues: any) => {
@@ -251,11 +254,7 @@ const constructAnnotationFilters = (filter: AnnotationFilter & ExtraAnnotationFi
     filters.push(constructRangeFilter('msm', msmScoreFilter));
 
   if (fdrLevel) {
-    const fdrConditions = [
-      { term: { fdr: -1 } },
-      constructRangeFilter('fdr', { min: 0, max: fdrLevel + 1e-3 })
-    ];
-    filters.push({ bool: { should: fdrConditions } });
+    filters.push(constructRangeFilter('fdr', {min: null, max: fdrLevel + 1e-3}));
   }
 
   if (annId)
