@@ -1,6 +1,7 @@
 import json
 import os
 import pprint
+import re
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
@@ -20,6 +21,14 @@ try:
     from typing import TypedDict  # Requires Python 3.8
 except ImportError:
     TypedDict = dict
+
+try:
+    from pandas import json_normalize  # Only in Pandas 1.0.0+
+except ImportError:
+    from pandas.io.json import json_normalize  # Logs DeprecationWarning if used in Pandas 1.0.0+
+
+
+DEFAULT_DATABASE = 'HMDB-v4'
 
 
 class DatasetDownloadLicense(TypedDict):
@@ -44,6 +53,32 @@ class DatasetDownload(TypedDict):
     files: List[DatasetDownloadFile]
 
 
+class MetaspaceException(Exception):
+    pass
+
+
+class GraphQLException(MetaspaceException):
+    def __init__(self, json, message):
+        super().__init__(message)
+        self.json = json
+        self.message = message
+
+
+class BadRequestException(MetaspaceException):
+    def __init__(self, json, message, type=None):
+        super().__init__(f"{type}: {message}")
+        self.json = json
+        self.message = message
+        self.type = type
+
+
+class InvalidResponseException(MetaspaceException):
+    def __init__(self, json, http_response):
+        super().__init__('Invalid response from server')
+        self.json = json
+        self.http_response = http_response
+
+
 def _extract_data(res):
     if not res.headers.get('Content-Type').startswith('application/json'):
         raise Exception(
@@ -56,12 +91,12 @@ def _extract_data(res):
     else:
         if 'errors' in res_json:
             pprint.pprint(res_json['errors'])
-            raise Exception(res_json['errors'][0]['message'])
+            raise GraphQLException(res_json, res_json['errors'][0]['message'])
         elif 'message' in res_json:
-            raise Exception(res_json['message'])
+            raise BadRequestException(res_json, res_json['message'], res_json.get('type'))
         else:
             pprint.pprint(res_json)
-            raise Exception('Invalid response from server')
+            raise InvalidResponseException(res_json, res)
 
 
 def get_config(
@@ -250,10 +285,6 @@ class GraphQLClient(object):
         isotopeImages { mz url minIntensity maxIntensity totalIntensity }
     """
 
-    DEFAULT_ANNOTATION_FILTER = {
-        'database': 'HMDB-v4',
-    }
-
     def getDataset(self, datasetId):
         query = (
             """
@@ -346,17 +377,10 @@ class GraphQLClient(object):
             ','.join(query_arguments),
             self.ANNOTATION_FIELDS,
         )
-        if datasetFilter is None:
-            datasetFilter = {}
-
-        if annotationFilter is None:
-            annot_filter = {}
-        else:
-            annot_filter = deepcopy(annotationFilter)
-            for key, val in self.DEFAULT_ANNOTATION_FILTER.items():
-                annot_filter.setdefault(key, val)
+        annot_filter = annotationFilter
 
         if colocFilter:
+            annot_filter = deepcopy(annot_filter) if annot_filter else {}
             annot_filter.update(colocFilter)
             order_by = 'ORDER_BY_COLOCALIZATION'
         else:
@@ -379,18 +403,12 @@ class GraphQLClient(object):
                 datasetFilter: $dFilter
               )
             }"""
-        if datasetFilter is None:
-            annotationFilter = {}
-        if annotationFilter is None:
-            annotFilter = {}
-        else:
-            annotFilter = deepcopy(annotationFilter)
-            for key, val in self.DEFAULT_ANNOTATION_FILTER.items():
-                annotFilter.setdefault(key, val)
 
-        return self.query(query=query, variables={'filter': annotFilter, 'dFilter': datasetFilter})
+        return self.query(
+            query=query, variables={'filter': annotationFilter, 'dFilter': datasetFilter}
+        )
 
-    def getDatasets(self, datasetFilter={}):
+    def getDatasets(self, datasetFilter=None):
         query = (
             """
         query getDatasets($filter: DatasetFilter,
@@ -441,7 +459,12 @@ class GraphQLClient(object):
         return result['molecularDatabases']
 
     def map_database_to_id(self, database):
-        if isinstance(database, int):
+        # Forwards/backwards compatibility issue: the GraphQL Schema may soon change from Int ids
+        # to ID (i.e. str-based) ids. For now, this supports both types, and passes the type on
+        # without modification. When the API has settled, this should be updated to coerce to the
+        # correct type, because we shouldn't burden users with having to figure out why calls are
+        # failing when they pass IDs that look like integers as integers instead of strings.
+        if isinstance(database, int) or re.match('^\d+$', database):
             return database
 
         database_docs = self.get_databases()
@@ -487,7 +510,7 @@ class GraphQLClient(object):
                 'name': ds_name,
                 'inputPath': data_path,
                 'isPublic': is_public,
-                'databaseIds': [self.map_database_to_id(db) for db in databases],
+                'databaseIds': databases and [self.map_database_to_id(db) for db in databases],
                 'adducts': adducts,
                 'ppm': ppm,
                 'submitterId': submitter_id,
@@ -685,7 +708,7 @@ class SMDataset(object):
     def annotations(
         self,
         fdr: float = 0.1,
-        database: Union[str, int] = None,
+        database: Union[str, int] = DEFAULT_DATABASE,
         return_vals: Iterable = ('sumFormula', 'adduct'),
         **annotation_filter,
     ) -> List[list]:
@@ -709,7 +732,7 @@ class SMDataset(object):
 
     def results(
         self,
-        database: Union[str, int] = None,
+        database: Union[str, int] = DEFAULT_DATABASE,
         fdr: float = None,
         coloc_with: str = None,
         include_chem_mods: bool = False,
@@ -769,7 +792,7 @@ class SMDataset(object):
         if not records:
             return pd.DataFrame()
 
-        df = pd.io.json.json_normalize(records)
+        df = json_normalize(records)
         return (
             df.assign(
                 moleculeNames=df.possibleCompounds.apply(
@@ -918,7 +941,7 @@ class SMDataset(object):
     def all_annotation_images(
         self,
         fdr: float = 0.1,
-        database: Union[str, int] = None,
+        database: Union[str, int] = DEFAULT_DATABASE,
         only_first_isotope: bool = False,
         scale_intensity: bool = True,
         hotspot_clipping: bool = False,
@@ -1111,7 +1134,7 @@ class SMInstance(object):
         Pandas dataframe for a subset of datasets
         where rows are flattened metadata JSON objects
         """
-        df = pd.io.json.json_normalize([d.metadata.json for d in datasets])
+        df = json_normalize([d.metadata.json for d in datasets])
         df.index = [d.name for d in datasets]
         return df
 
@@ -1124,7 +1147,7 @@ class SMInstance(object):
         records = self._gqclient.getAnnotations(
             annotationFilter={'database': db_name, 'fdrLevel': fdr}, datasetFilter=datasetFilter
         )
-        df = pd.io.json.json_normalize(records)
+        df = json_normalize(records)
         return pd.DataFrame(
             dict(
                 formula=df['sumFormula'],
@@ -1145,7 +1168,7 @@ class SMInstance(object):
         datasets = self._gqclient.getDatasets(datasetFilter=datasetFilter)
         df = pd.concat(
             [
-                pd.DataFrame(pd.io.json.json_normalize(json.loads(dataset['metadataJson'])))
+                pd.DataFrame(json_normalize(json.loads(dataset['metadataJson'])))
                 for dataset in datasets
             ]
         )
