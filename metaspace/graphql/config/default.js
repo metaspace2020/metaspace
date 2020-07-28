@@ -100,6 +100,7 @@ module.exports = {
 
   sentry: {
     dsn: null,
+    serverName: "default",
   },
 
   google: {

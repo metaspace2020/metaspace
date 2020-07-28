@@ -52,6 +52,7 @@ config.jwt.algorithm = "HS256";
 
 config.sentry = {
   dsn: "{{ sentry_dsn }}",
+  serverName: "{{ stage }}",
 };
 
 config.aws = {

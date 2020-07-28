@@ -48,7 +48,7 @@ const configureSession = (app) => {
 
 const configureSentryRequestHandler = (app) => {
   if (env !== 'development' && config.sentry.dsn) {
-    Sentry.init({ dsn: config.sentry.dsn });
+    Sentry.init({ dsn: config.sentry.dsn, serverName: config.sentry.serverName });
     // Sentry.Handlers.requestHandler should be the first middleware
     app.use(Sentry.Handlers.requestHandler());
   }
