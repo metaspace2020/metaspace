@@ -17,7 +17,11 @@
     "storage": "{{ sm_webapp_upload_destination }}"
   },
 
-  "ravenDsn": "{{ sentry_dsn }}",
+  "sentry": {
+    "dsn": "{{ sentry_dsn }}",
+    "serverName": "{{ stage }}",
+    "release": "{{ metaspace_repo_revision }}",
+  },
 
   "metadataTypes": {{ sm_webapp_metadata_types | to_json }},
 
