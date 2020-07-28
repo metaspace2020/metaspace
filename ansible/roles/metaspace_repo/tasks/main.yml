@@ -39,6 +39,16 @@
     force: yes
   when: local_deploy is not defined
 
+- name: Save git version as a variable
+  shell: git rev-parse HEAD
+  register: metaspace_repo_revision
+  when: local_deploy is not defined
+
+- name: Save git version as a variable (local_deploy)
+  shell: echo local_deploy
+  register: metaspace_repo_revision
+  when: local_deploy is defined
+
 # Double check all exclude paths
 - name: Upload local files
   synchronize:

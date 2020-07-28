@@ -81,7 +81,8 @@ export interface Config {
   };
   sentry: {
     dsn: string | null;
-    serverName: string;
+    serverName?: string;
+    release?: string;
   };
   features: {
     graphqlMocks: boolean;
