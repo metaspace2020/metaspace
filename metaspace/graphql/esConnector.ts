@@ -155,7 +155,7 @@ const esSort = (orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: Sorti
 };
 
 const constructRangeFilter = (
-  field: keyof ESAnnotationSource, interval: {min: number|string|null, max: number|string|null}
+  field: keyof ESAnnotationSource, interval: { min: number|string|null, max: number|string|null }
 ) => {
   const range = {} as any;
   const { min, max } = interval;
@@ -254,7 +254,7 @@ const constructAnnotationFilters = (filter: AnnotationFilter & ExtraAnnotationFi
     filters.push(constructRangeFilter('msm', msmScoreFilter));
 
   if (fdrLevel) {
-    filters.push(constructRangeFilter('fdr', {min: null, max: fdrLevel + 1e-3}));
+    filters.push(constructRangeFilter('fdr', { min: null, max: fdrLevel + 1e-3 }));
   }
 
   if (annId)
