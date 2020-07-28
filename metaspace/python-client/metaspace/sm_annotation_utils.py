@@ -428,8 +428,8 @@ class GraphQLClient(object):
 
     def getRawOpticalImage(self, dsid):
         query = """
-            query getRawOpticalImages($datasetId: String!){ 
-                rawOpticalImage(datasetId: $datasetId) 
+            query getRawOpticalImages($datasetId: String!){
+                rawOpticalImage(datasetId: $datasetId)
                 {
                     url, transform
                 }
@@ -440,8 +440,8 @@ class GraphQLClient(object):
 
     def getRegisteredImage(self, dsid, zoom_level=8):
         query = """
-            query getRawOpticalImages($datasetId: String!, $zoom: Int){ 
-                rawOpticalImage(datasetId: $datasetId) 
+            query getRawOpticalImages($datasetId: String!, $zoom: Int){
+                rawOpticalImage(datasetId: $datasetId)
             }
         """
         variables = {"datasetId": dsid}
@@ -450,13 +450,13 @@ class GraphQLClient(object):
     def get_databases(self):
         query = """
             {
-              molecularDatabases {
+              visibleMolecularDBs {
                 id name version isPublic archived
               }
             }
         """
         result = self.query(query)
-        return result['molecularDatabases']
+        return result['visibleMolecularDBs']
 
     def map_database_to_id(self, database):
         # Forwards/backwards compatibility issue: the GraphQL Schema may soon change from Int ids
@@ -543,7 +543,7 @@ class GraphQLClient(object):
         priority=1,
     ):
         query = """
-            mutation updateMetadataDatabases($id: String!, $reprocess: Boolean, 
+            mutation updateMetadataDatabases($id: String!, $reprocess: Boolean,
                 $input: DatasetUpdateInput!, $priority: Int, $force: Boolean) {
                     updateDataset(
                       id: $id,
@@ -1193,9 +1193,9 @@ class SMInstance(object):
         :param imzml_fn: file path to imzml
         :param ibd_fn: file path to ibd
         :param metadata: a properly formatted metadata json string
-        :param s3bucket: this should be a bucket that both the user has write permission to and METASPACE can access 
+        :param s3bucket: this should be a bucket that both the user has write permission to and METASPACE can access
         :param folder_uuid: a unique key for the dataset
-        :return: 
+        :return:
         """
         try:
             import boto3
@@ -1299,12 +1299,12 @@ class SMInstance(object):
         """
 
         result = self._gqclient.query(
-            """mutation($datasetId: String!, $provider: String!, $link: String!, 
+            """mutation($datasetId: String!, $provider: String!, $link: String!,
                         $replaceExisting: Boolean!) {
-                addDatasetExternalLink(datasetId: $datasetId, provider: $provider, link: $link, 
+                addDatasetExternalLink(datasetId: $datasetId, provider: $provider, link: $link,
                                        replaceExisting: $replaceExisting) {
                     externalLinks { provider link }
-                } 
+                }
             }""",
             {
                 'datasetId': dataset_id,
@@ -1331,7 +1331,7 @@ class SMInstance(object):
             """mutation($datasetId: String!, $provider: String!, $link: String!) {
                 removeDatasetExternalLink(datasetId: $datasetId, provider: $provider, link: $link) {
                     externalLinks { provider link }
-                } 
+                }
             }""",
             {'datasetId': dataset_id, 'provider': provider, 'link': link},
         )

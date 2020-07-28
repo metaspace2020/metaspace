@@ -34,9 +34,17 @@ describe('Molecular databases queries', () => {
   });
   afterEach(onAfterEach);
 
-  const listMolecularDBs = `
-    query listMolecularDatabases($onlyUsable: Boolean = false) {
-      molecularDatabases(onlyUsable: $onlyUsable) {
+  const visibleMolecularDBs = `
+    query visibleMolecularDBs {
+      visibleMolecularDBs {
+        id name fullName default isPublic archived targeted description link citation group
+        { id shortName }
+      }
+    }`;
+
+  const usableMolecularDBs = `
+    query usableMolecularDBs {
+      usableMolecularDBs {
         id name fullName default isPublic archived targeted description link citation group
         { id shortName }
       }
@@ -48,7 +56,7 @@ describe('Molecular databases queries', () => {
     await createTestMolecularDB({ name: 'xyz', groupId: group.id });
     await createTestMolecularDB({ name: 'abc', groupId: group.id });
 
-    const result = await doQuery(listMolecularDBs, {});
+    const result = await doQuery(visibleMolecularDBs, {});
 
     expect(result[0]).toMatchObject({ name: 'abc' });
     expect(result[1]).toMatchObject({ name: 'xyz' });
@@ -59,7 +67,7 @@ describe('Molecular databases queries', () => {
     await createTestUserGroup(testUser.id!, group.id, UGRO.MEMBER, true);
     const { id } = await createTestMolecularDB({ groupId: group.id });
 
-    const result = await doQuery(listMolecularDBs, {}, { context: userContext });
+    const result = await doQuery(visibleMolecularDBs, {}, { context: userContext });
 
     expect(result).toEqual([
       expect.objectContaining({ id, group: { id: group.id, shortName: group.shortName } })
@@ -71,7 +79,7 @@ describe('Molecular databases queries', () => {
     await createTestUserGroup(testUser.id!, group.id, UGRO.MEMBER, true);
     const { id } = await createTestMolecularDB({ groupId: group.id });
 
-    const result = await doQuery(listMolecularDBs, { onlyUsable: true }, { context: userContext });
+    const result = await doQuery(usableMolecularDBs, {}, { context: userContext });
 
     expect(result).toEqual([
       expect.objectContaining({ id, group: { id: group.id, shortName: group.shortName } })
@@ -83,7 +91,7 @@ describe('Molecular databases queries', () => {
     await createTestMolecularDB({ isPublic: false, groupId: (await createTestGroup()).id });
     const { id: pubGroupId } = await createTestMolecularDB({ isPublic: true, groupId: group.id });
 
-    const result = await doQuery(listMolecularDBs, {}, { context: userContext });
+    const result = await doQuery(visibleMolecularDBs, {}, { context: userContext });
 
     expect(result).toEqual([expect.objectContaining({ id: pubGroupId } )]);
   });
@@ -93,7 +101,7 @@ describe('Molecular databases queries', () => {
     await createTestMolecularDB({ isPublic: false, groupId: (await createTestGroup()).id });
     const { id: pubGroupId } = await createTestMolecularDB({ isPublic: true, groupId: group.id });
 
-    const result = await doQuery(listMolecularDBs, { onlyUsable: true }, { context: userContext });
+    const result = await doQuery(usableMolecularDBs, {}, { context: userContext });
 
     expect(result).toEqual([]);
   });
@@ -102,7 +110,7 @@ describe('Molecular databases queries', () => {
     await setupTestUsers();
     const { id } = await createTestMolecularDB({ groupId: group.id });
 
-    const result = await doQuery(listMolecularDBs, {}, { context: adminContext });
+    const result = await doQuery(visibleMolecularDBs, {}, { context: adminContext });
 
     expect(result).toEqual([
       expect.objectContaining({ id, group: { id: group.id, shortName: group.shortName } })
@@ -113,7 +121,7 @@ describe('Molecular databases queries', () => {
     await setupTestUsers();
     const { id } = await createTestMolecularDB({ groupId: group.id });
 
-    const result = await doQuery(listMolecularDBs, { onlyUsable: true }, { context: adminContext });
+    const result = await doQuery(usableMolecularDBs, {}, { context: adminContext });
 
     expect(result).toEqual([
       expect.objectContaining({ id, group: { id: group.id, shortName: group.shortName } })

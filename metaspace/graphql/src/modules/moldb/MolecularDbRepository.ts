@@ -80,4 +80,8 @@ export class MolecularDbRepository {
     const databases = await dataLoader.loadMany(databaseIds);
     return databases.filter(db => db != null);
   }
+
+  async findMetaspaceDatabases(user: ContextUser): Promise<MolecularDB[]> {
+    return await this.queryWhere(user, 'moldb.group_id is NULL').getMany();
+  }
 }

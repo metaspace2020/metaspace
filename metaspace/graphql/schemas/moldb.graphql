@@ -44,7 +44,10 @@ input UpdateMolecularDBInput {
 }
 
 type Query {
-  molecularDatabases(onlyUsable: Boolean=false): [MolecularDB!]
+  visibleMolecularDBs: [MolecularDB!]
+  usableMolecularDBs: [MolecularDB!]
+  metaspaceMolecularDBs: [MolecularDB!]
+  getMolecularDB(databaseId: Int!): MolecularDB!
 }
 
 type Mutation {
