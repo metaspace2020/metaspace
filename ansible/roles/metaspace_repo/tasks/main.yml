@@ -41,13 +41,22 @@
 
 - name: Save git version as a variable
   shell: git rev-parse HEAD
-  register: metaspace_repo_revision
+  args:
+    chdir: "{{ metaspace_home }}"
+  register: metaspace_repo_revision_git
   when: local_deploy is not defined
 
 - name: Save git version as a variable (local_deploy)
   shell: echo local_deploy
-  register: metaspace_repo_revision
+  register: metaspace_repo_revision_local
   when: local_deploy is defined
+
+# Workaround for Ansible not providing an intuitive way to use "register" in branching tasks
+# https://github.com/ansible/ansible/issues/4297
+- name: Merge git version variables
+  set_fact:
+    metaspace_repo_revision: "{{ metaspace_repo_revision_git.stdout if local_deploy is not defined else metaspace_repo_revision_local.stdout }}"
+
 
 # Double check all exclude paths
 - name: Upload local files

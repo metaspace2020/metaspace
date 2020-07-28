@@ -81,7 +81,7 @@ export interface Config {
   };
   sentry: {
     dsn: string | null;
-    serverName?: string;
+    environment?: string;
     release?: string;
   };
   features: {

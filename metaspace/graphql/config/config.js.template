@@ -52,7 +52,7 @@ config.jwt.algorithm = "HS256";
 
 config.sentry = {
   dsn: "{{ sentry_dsn }}",
-  serverName: "{{ stage }}",
+  environment: "{{ stage | replace('/', '_') }}",
   release: "{{ metaspace_repo_revision }}",
 };
 

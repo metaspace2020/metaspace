@@ -19,8 +19,8 @@
 
   "sentry": {
     "dsn": "{{ sentry_dsn }}",
-    "serverName": "{{ stage }}",
-    "release": "{{ metaspace_repo_revision }}",
+    "environment": "{{ stage | replace('/', '_') }}",
+    "release": "{{ metaspace_repo_revision }}"
   },
 
   "metadataTypes": {{ sm_webapp_metadata_types | to_json }},
