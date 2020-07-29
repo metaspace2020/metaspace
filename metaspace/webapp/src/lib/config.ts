@@ -50,7 +50,11 @@ interface ClientConfig {
   google_client_id: string;
 
   fineUploader: FineUploaderConfig;
-  ravenDsn: string | null;
+  sentry: null | {
+    dsn: string;
+    environment?: string;
+    release?: string;
+  };
   metadataTypes: string[];
   features: Features;
 }
@@ -63,7 +67,7 @@ const defaultConfig: ClientConfig = {
   fineUploader: {
     storage: 'local',
   },
-  ravenDsn: null,
+  sentry: null,
   metadataTypes: ['ims'],
   features: {
     coloc: true,

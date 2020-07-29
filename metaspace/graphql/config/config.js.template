@@ -52,6 +52,8 @@ config.jwt.algorithm = "HS256";
 
 config.sentry = {
   dsn: "{{ sentry_dsn }}",
+  environment: "{{ stage | replace('/', '_') }}",
+  release: "{{ metaspace_repo_revision }}",
 };
 
 config.aws = {
