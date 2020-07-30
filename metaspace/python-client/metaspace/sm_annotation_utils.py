@@ -8,7 +8,7 @@ from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
 from shutil import copyfileobj
-from typing import Optional, List, Iterable, Dict, Union
+from typing import Optional, List, Iterable, Dict, Union, Tuple
 
 import numpy as np
 import pandas as pd
@@ -28,7 +28,7 @@ except ImportError:
     from pandas.io.json import json_normalize  # Logs DeprecationWarning if used in Pandas 1.0.0+
 
 
-DEFAULT_DATABASE = 'HMDB-v4'
+DEFAULT_DATABASE = ('HMDB', 'v4')
 
 
 class DatasetDownloadLicense(TypedDict):
@@ -451,28 +451,54 @@ class GraphQLClient(object):
         query = """
             {
               visibleMolecularDBs {
-                id name version isPublic archived
+                id name version isPublic archived default
               }
             }
         """
         result = self.query(query)
         return result['visibleMolecularDBs']
 
-    def map_database_to_id(self, database):
+    def map_database_to_id(self, database: Union[int, str, Tuple[str, str]]):
         # Forwards/backwards compatibility issue: the GraphQL Schema may soon change from Int ids
         # to ID (i.e. str-based) ids. For now, this supports both types, and passes the type on
         # without modification. When the API has settled, this should be updated to coerce to the
         # correct type, because we shouldn't burden users with having to figure out why calls are
         # failing when they pass IDs that look like integers as integers instead of strings.
-        if isinstance(database, int) or re.match('^\d+$', database):
+        if isinstance(database, int):
             return database
+
+        if isinstance(database, str) and re.match(r'^\d+$', database):
+            return int(database)
 
         database_docs = self.get_databases()
         database_name_id_map = defaultdict(list)
         for db in database_docs:
-            database_name_id_map[db['name']].append(db['id'])
+            database_name_id_map[(db['name'], db['version'])].append(db['id'])
 
-        database_ids = database_name_id_map.get(database, [])
+        # For backwards compatibility map old database names to (name, version) tuples
+        database_name_version_map = {
+            'ChEBI': ('ChEBI', '2016'),
+            'LIPID_MAPS': ('LIPID_MAPS', '2016'),
+            'SwissLipids': ('SwissLipids', '2016'),
+            'HMDB-v2.5': ('HMDB', 'v2.5'),
+            'HMDB-v2.5-cotton': ('HMDB-cotton', 'v2.5'),
+            'BraChemDB-2018-01': ('BraChemDB', '2018-01'),
+            'ChEBI-2018-01': ('ChEBI', '2018-01'),
+            'HMDB-v4': ('HMDB', 'v4'),
+            'HMDB-v4-endogenous': ('HMDB-endogenous', 'v4'),
+            'LipidMaps-2017-12-12': ('LipidMaps', '2017-12-12'),
+            'PAMDB-v1.0': ('PAMDB', 'v1.0'),
+            'SwissLipids-2018-02-02': ('SwissLipids', '2018-02-02'),
+            'HMDB-v4-cotton': ('HMDB-cotton', 'v4'),
+            'ECMDB-2018-12': ('ECMDB', '2018-12'),
+        }
+
+        if isinstance(database, tuple):
+            db_name, db_version = database
+        else:
+            db_name, db_version = database_name_version_map.get(database, (None, None))
+
+        database_ids = database_name_id_map.get((db_name, db_version), [])
         if len(database_ids) == 0:
             raise Exception(
                 f'Database not found or you do not have access to it. Available databases: '
@@ -708,7 +734,7 @@ class SMDataset(object):
     def annotations(
         self,
         fdr: float = 0.1,
-        database: Union[str, int] = DEFAULT_DATABASE,
+        database: Union[int, str, Tuple[str, str]] = DEFAULT_DATABASE,
         return_vals: Iterable = ('sumFormula', 'adduct'),
         **annotation_filter,
     ) -> List[list]:
@@ -732,7 +758,7 @@ class SMDataset(object):
 
     def results(
         self,
-        database: Union[str, int] = DEFAULT_DATABASE,
+        database: Union[int, str, Tuple[str, str]] = DEFAULT_DATABASE,
         fdr: float = None,
         coloc_with: str = None,
         include_chem_mods: bool = False,
@@ -883,7 +909,7 @@ class SMDataset(object):
             {
                 'sumFormula': sf,
                 'adduct': adduct,
-                'database': None,
+                'databaseId': None,
                 'neutralLoss': neutral_loss,
                 'chemMod': chem_mod,
             },
@@ -941,7 +967,7 @@ class SMDataset(object):
     def all_annotation_images(
         self,
         fdr: float = 0.1,
-        database: Union[str, int] = DEFAULT_DATABASE,
+        database: Union[int, str, Tuple[str, str]] = DEFAULT_DATABASE,
         only_first_isotope: bool = False,
         scale_intensity: bool = True,
         hotspot_clipping: bool = False,
