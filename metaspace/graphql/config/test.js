@@ -21,7 +21,7 @@ config.img_upload = {
     iso_image: {
       type: 'image/png',  // applies only to post requests
       path: '/iso_images/',
-      storage_types: ['fs', 'db']
+      storage_types: ['fs']
     },
     optical_image: {
       type: 'image/jpeg',
