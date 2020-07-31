@@ -2,7 +2,7 @@
 
 [program:{{ sm_graphql_app_name }}]
 process_name = {{ sm_graphql_app_name }}
-environment = NODE_ENV="production"
+environment = NODE_ENV="production",TS_NODE_TRANSPILE_ONLY="true"
 directory = {{ sm_graphql_home }}
 command = bash -c '. ~/.nvm/nvm.sh && nvm use && exec yarn run start'
 redirect_stderr = true
