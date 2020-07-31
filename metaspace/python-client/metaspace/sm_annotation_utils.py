@@ -286,17 +286,13 @@ class GraphQLClient(object):
     """
 
     def getDataset(self, datasetId):
-        query = (
-            """
-        query datasetInfo($id: String!) {
-          dataset(id: $id) {
+        query = f"""
+            query datasetInfo($id: String!) {{
+              dataset(id: $id) {{
+                {self.DATASET_FIELDS}
+              }}
+            }}
         """
-            + self.DATASET_FIELDS
-            + """
-          }
-        }
-        """
-        )
         match = self.query(query, {'id': datasetId})['dataset']
         if not match:
             if self.logged_in:
@@ -312,17 +308,13 @@ class GraphQLClient(object):
             return match
 
     def getDatasetByName(self, datasetName):
-        query = (
-            """
-        query datasetInfo($filter: DatasetFilter!) {
-          allDatasets(filter: $filter) {
+        query = f"""
+            query datasetInfo($filter: DatasetFilter!) {{
+              allDatasets(filter: $filter) {{
+                {self.DATASET_FIELDS}
+              }}
+            }}
         """
-            + self.DATASET_FIELDS
-            + """
-          }
-        }
-        """
-        )
         matches = self.query(query, {'filter': {'name': datasetName}})['allDatasets']
         if not matches:
             if self.logged_in:
@@ -357,26 +349,21 @@ class GraphQLClient(object):
             "$limit: Int",
             "$colocalizationCoeffFilter: ColocalizationCoeffFilter",
         ]
-
-        query = """
-            query getAnnotations(
-                %s
-            ) {
-                allAnnotations(
-                    filter: $filter,
-                    datasetFilter: $dFilter,
-                    orderBy: $orderBy,
-                    sortingOrder: $sortingOrder,
-                    offset: $offset,
-                    limit: $limit,
-                ) {
-                %s
+        query = f"""
+            query getAnnotations({','.join(query_arguments)}) {{
+              allAnnotations(
+                filter: $filter,
+                datasetFilter: $dFilter,
+                orderBy: $orderBy,
+                sortingOrder: $sortingOrder,
+                offset: $offset,
+                limit: $limit,
+              ) {{
+                {self.ANNOTATION_FIELDS}
                 colocalizationCoeff(colocalizationCoeffFilter: $colocalizationCoeffFilter)
-                }
-            }""" % (
-            ','.join(query_arguments),
-            self.ANNOTATION_FIELDS,
-        )
+              }}
+            }}
+        """
         annot_filter = annotationFilter
 
         if colocFilter:
@@ -409,21 +396,18 @@ class GraphQLClient(object):
         )
 
     def getDatasets(self, datasetFilter=None):
-        query = (
-            """
-        query getDatasets($filter: DatasetFilter,
-                          $offset: Int, $limit: Int) {
-          allDatasets(
-            filter: $filter,
-            offset: $offset,
-            limit: $limit
-          ) {
+        query = f"""
+            query getDatasets($filter: DatasetFilter,
+                              $offset: Int, $limit: Int) {{
+              allDatasets(
+                filter: $filter,
+                offset: $offset,
+                limit: $limit
+              ) {{
+                {self.DATASET_FIELDS}
+              }}
+            }}
         """
-            + self.DATASET_FIELDS
-            + """
-          }
-        }"""
-        )
         return self.listQuery('allDatasets', query, {'filter': datasetFilter})
 
     def getRawOpticalImage(self, dsid):
@@ -447,7 +431,7 @@ class GraphQLClient(object):
         variables = {"datasetId": dsid}
         return self.query(query, variables)
 
-    def get_databases(self):
+    def get_visible_databases(self):
         query = """
             {
               visibleMolecularDBs {
@@ -458,23 +442,8 @@ class GraphQLClient(object):
         result = self.query(query)
         return result['visibleMolecularDBs']
 
-    def map_database_to_id(self, database: Union[int, str, Tuple[str, str]]):
-        # Forwards/backwards compatibility issue: the GraphQL Schema may soon change from Int ids
-        # to ID (i.e. str-based) ids. For now, this supports both types, and passes the type on
-        # without modification. When the API has settled, this should be updated to coerce to the
-        # correct type, because we shouldn't burden users with having to figure out why calls are
-        # failing when they pass IDs that look like integers as integers instead of strings.
-        if isinstance(database, int):
-            return database
-
-        if isinstance(database, str) and re.match(r'^\d+$', database):
-            return int(database)
-
-        database_docs = self.get_databases()
-        database_name_id_map = defaultdict(list)
-        for db in database_docs:
-            database_name_id_map[(db['name'], db['version'])].append(db['id'])
-
+    @staticmethod
+    def map_database_name_to_name_version(name: str) -> Tuple[str, str]:
         # For backwards compatibility map old database names to (name, version) tuples
         database_name_version_map = {
             'ChEBI': ('ChEBI', '2016'),
@@ -492,11 +461,29 @@ class GraphQLClient(object):
             'HMDB-v4-cotton': ('HMDB-cotton', 'v4'),
             'ECMDB-2018-12': ('ECMDB', '2018-12'),
         }
+        return database_name_version_map.get(name, (None, None))
+
+    def map_database_to_id(self, database: Union[int, str, Tuple[str, str]]):
+        # Forwards/backwards compatibility issue: the GraphQL Schema may soon change from Int ids
+        # to ID (i.e. str-based) ids. For now, this supports both types, and passes the type on
+        # without modification. When the API has settled, this should be updated to coerce to the
+        # correct type, because we shouldn't burden users with having to figure out why calls are
+        # failing when they pass IDs that look like integers as integers instead of strings.
+        if isinstance(database, int):
+            return database
+
+        if isinstance(database, str) and re.match(r'^\d+$', database):
+            return int(database)
+
+        database_docs = self.get_visible_databases()
+        database_name_id_map = defaultdict(list)
+        for db in database_docs:
+            database_name_id_map[(db['name'], db['version'])].append(db['id'])
 
         if isinstance(database, tuple):
             db_name, db_version = database
         else:
-            db_name, db_version = database_name_version_map.get(database, (None, None))
+            db_name, db_version = self.map_database_name_to_name_version(database)
 
         database_ids = database_name_id_map.get((db_name, db_version), [])
         if len(database_ids) == 0:
@@ -1070,6 +1057,35 @@ class SMDataset(object):
                 ex.map(download_link, link['files'])
 
 
+class MolecularDB:
+    def __init__(self, info, gqclient):
+        self._info = info
+        self._gqclient = gqclient
+
+    @property
+    def id(self):
+        return self._info['id']
+
+    @property
+    def name(self):
+        return self._info['name']
+
+    @property
+    def version(self):
+        return self._info['version']
+
+    @property
+    def is_public(self):
+        return self._info['isPublic']
+
+    @property
+    def archived(self):
+        return self._info['archived']
+
+    def __repr__(self):
+        return f'<{self.id}:{self.name}:{self.version}>'
+
+
 class SMInstance(object):
     def __init__(
         self,
@@ -1145,15 +1161,6 @@ class SMInstance(object):
 
     def all_adducts(self):
         raise NYI
-
-    def database(self, name: str = None, version: str = None, id: int = None) -> Dict:
-        """Fetch molecular database by id."""
-        databases = self._gqclient.get_databases()
-        results = [db for db in databases if db['id'] == id or db['name'] == name]
-        return results[0] if len(results) > 0 else None
-
-    def databases(self):
-        return self._gqclient.get_databases()
 
     def metadata(self, datasets):
         """
@@ -1306,6 +1313,43 @@ class SMInstance(object):
     def delete_dataset(self, ds_id, **kwargs):
         return self._gqclient.delete_dataset(ds_id, **kwargs)
 
+    def database(
+        self, name: str = None, version: str = None, id: int = None
+    ) -> Optional[MolecularDB]:
+        """Fetch molecular database by id."""
+
+        databases = self._gqclient.get_visible_databases()
+        db_match = None
+        if id:
+            for db in databases:
+                if db['id'] == id:
+                    db_match = db
+
+        elif name and version:
+            for db in databases:
+                if db['name'] == name and db['version'] == version:
+                    db_match = db
+
+        else:
+            name, version = self._gqclient.map_database_name_to_name_version(name)
+            for db in databases:
+                if db['name'] == name and db['version'] == version:
+                    db_match = db
+
+        return db_match and MolecularDB(db_match, self._gqclient)
+
+    def databases(self) -> List[MolecularDB]:
+        return [MolecularDB(db, self._gqclient) for db in self._gqclient.get_visible_databases()]
+
+    def create_database(self):
+        pass
+
+    def update_database(self):
+        pass
+
+    def delete_database(self):
+        pass
+
     def current_user_id(self):
         result = self._gqclient.query("""query { currentUser { id } }""")
         return result['currentUser'] and result['currentUser']['id']
@@ -1362,38 +1406,6 @@ class SMInstance(object):
             {'datasetId': dataset_id, 'provider': provider, 'link': link},
         )
         return result['removeDatasetExternalLink']['externalLinks']
-
-
-class MolecularDatabase:
-    """DEPRECATED. Use 'SMInstance.databases' instead."""
-
-    def __init__(self, metadata, client):
-        self._metadata = metadata
-        self._id = self._metadata['id']
-        self._client = client
-
-    @property
-    def name(self):
-        return self._metadata['name']
-
-    @property
-    def version(self):
-        return self._metadata['version']
-
-    def __repr__(self):
-        return "MolDB({} [{}])".format(self.name, self.version)
-
-    def sum_formulas(self):
-        return self._client.getMolFormulaList(self._id)
-
-    def names(self, sum_formula):
-        return self._client.getMolFormulaNames(self._id, sum_formula)
-
-    def ids(self, sum_formula):
-        return self._client.getMolFormulaIds(self._id, sum_formula)
-
-    def molecules(self, limit=100):
-        return self._client.get_molecules(self._id, ['sf', 'mol_id', 'mol_name'], limit=limit)
 
 
 def plot_diff(ref_df, dist_df, t='', xlabel='', ylabel='', col='msm'):
