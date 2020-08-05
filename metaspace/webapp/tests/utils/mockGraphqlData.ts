@@ -23,12 +23,16 @@ export const mockPublicMolecularDBs = () => [
   publicDatabase,
 ]
 
-export const mockMolDBsByGroup = () => [
-  {
-    id: '123',
-    shortName: 'test',
-    molecularDatabases: [
-      groupDatabase,
-    ],
-  },
-]
+export const mockMolDBsByGroup = () => ({
+  groups: [
+    {
+      group: {
+        id: '123',
+        shortName: 'test',
+        molecularDatabases: [
+          groupDatabase,
+        ],
+      },
+    },
+  ],
+})

@@ -109,20 +109,27 @@ export default class DatabaseFilter extends Vue {
               name
               version
             }
-            allGroups {
-              id
-              shortName
-              molecularDatabases {
-                id
-                name
-                version
+            currentUser {
+              groups {
+                group {
+                  id
+                  shortName
+                  molecularDatabases {
+                    id
+                    name
+                    version
+                  }
+                }
               }
             }
           }`,
           fetchPolicy: 'cache-first',
         })
 
-        const groups = getDatabasesByGroup(data.publicMolecularDBs, data.allGroups)
+        const groups = getDatabasesByGroup(
+          data.publicMolecularDBs,
+          data.currentUser.groups,
+        )
 
         const groupOptions: GroupOption[] = []
         const queryRegex = new RegExp(query, 'i')

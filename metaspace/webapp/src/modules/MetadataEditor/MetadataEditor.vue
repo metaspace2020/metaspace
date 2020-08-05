@@ -301,12 +301,12 @@ export default {
       const metadata = this.importMetadata(loadedMetadata, mdType)
 
       // Load options
-      const { adducts, molecularDatabases, molDBsByGroup } = options
+      const { adducts, molecularDatabases, molDBsByUserGroup } = options
       this.possibleAdducts = {
         Positive: adducts.filter(a => a.charge > 0),
         Negative: adducts.filter(a => a.charge < 0),
       }
-      this.molDBsByGroup = getDatabasesByGroup(molecularDatabases, molDBsByGroup)
+      this.molDBsByGroup = getDatabasesByGroup(molecularDatabases, molDBsByUserGroup.groups)
       this.schema = deriveFullSchema(metadataSchemas[mdType])
 
       if (this.isNew) {

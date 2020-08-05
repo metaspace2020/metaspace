@@ -134,13 +134,17 @@ export const metadataOptionsQuery = gql`query metadataOptionsQuery {
     version,
     default,
   }
-  molDBsByGroup: allGroups {
-    id
-    shortName
-    molecularDatabases {
-      id,
-      name,
-      version,
+  molDBsByUserGroup: currentUser {
+    groups {
+      group {
+        id
+        shortName
+        molecularDatabases {
+          id,
+          name,
+          version,
+        }
+      }
     }
   }
   adducts: adductSuggestions{adduct, name, charge, default, hidden}

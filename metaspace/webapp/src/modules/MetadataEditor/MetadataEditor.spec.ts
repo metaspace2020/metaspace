@@ -49,7 +49,7 @@ describe('MetadataEditor', () => {
         currentUserLastSubmittedDataset: () => null, // Prevent automatic mocking
         adductSuggestions: mockAdductSuggestions,
         publicMolecularDBs: mockPublicMolecularDBs,
-        allGroups: mockMolDBsByGroup,
+        currentUser: mockMolDBsByGroup,
       }),
     })
     const wrapper = mount(MetadataEditor, { store, router, apolloProvider })

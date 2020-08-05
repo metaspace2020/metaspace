@@ -36,9 +36,13 @@ export interface MolDBsByGroup {
   molecularDatabases: MolecularDB[]
 }
 
-export function getDatabasesByGroup(metaspaceDBs: MolecularDB[], dbsByGroup: MolDBsByGroup[]) {
+interface UserGroup {
+  group: MolDBsByGroup
+}
+
+export function getDatabasesByGroup(metaspaceDBs: MolecularDB[], dbsByGroup: UserGroup[]) : MolDBsByGroup[] {
   return [
     { shortName: 'METASPACE', molecularDatabases: metaspaceDBs },
-    ...sortBy(dbsByGroup, 'shortName'),
+    ...sortBy(dbsByGroup.map(_ => _.group).filter(_ => _.molecularDatabases.length > 0), 'shortName'),
   ]
 }

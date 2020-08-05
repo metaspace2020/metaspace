@@ -44,7 +44,7 @@ describe('FilterPanel', () => {
     initMockGraphqlClient({
       Query: () => ({
         adductSuggestions: mockAdductSuggestions,
-        allGroups: mockMolDBsByGroup,
+        currentUser: mockMolDBsByGroup,
         publicMolecularDBs: mockPublicMolecularDBs,
       }),
     })

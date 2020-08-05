@@ -745,8 +745,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                       <!----></span></label>
                     <div class="el-form-item__content">
                       <mock-el-select value="currentUser.primaryGroup.group.id" required="true">
-                        <mock-el-option value="currentUser.groups.0.group.id" label="currentUser.groups.0.group.name"></mock-el-option>
-                        <mock-el-option value="currentUser.groups.1.group.id" label="currentUser.groups.1.group.name"></mock-el-option>
+                        <mock-el-option value="123" label="currentUser.groups.0.group.name"></mock-el-option>
                         <mock-el-option value="FIND_GROUP" label="Find my group..."></mock-el-option>
                         <mock-el-option value="NO_GROUP" label="No group (Enter PI instead)"></mock-el-option>
                       </mock-el-select>
