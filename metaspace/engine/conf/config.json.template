@@ -41,8 +41,8 @@
   },
   "spark": {
     "master": "{{ spark_master_host | default('local[*]') }}",
-    "spark.executor.memory": "10g",
-    "spark.driver.memory": "4g",
+    "spark.executor.memory": "16g",
+    "spark.driver.memory": "8g",
     "spark.driver.maxResultSize": "3g",
     "spark.serializer": "org.apache.spark.serializer.KryoSerializer",
     "spark.kryoserializer.buffer.max": "512m",

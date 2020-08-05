@@ -1,11 +1,14 @@
 import json
 import logging
 import re
+from functools import wraps
 from logging.config import dictConfig
 import os
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
+import random
+from time import sleep
 
 from sm.engine.db import ConnectionPool
 from sm.engine import molecular_db
@@ -168,3 +171,27 @@ class GlobalInit:
 
     def __exit__(self, ext_type, ext_value, traceback):
         self.pool.close()
+
+
+def retry_on_exception(exception_type=Exception, num_retries=3):
+    def decorator(func):
+        func_name = getattr(func, '__name__', 'Function')
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for i in range(num_retries):
+                try:
+                    return func(*args, **kwargs)
+                except exception_type as e:
+                    delay = random.uniform(2, 5 + i * 3)
+                    logger.warning(
+                        f'{func_name} raised {type(e)} on attempt {i+1}. '
+                        f'Retrying after {delay:.1f} seconds...'
+                    )
+                    sleep(delay)
+            # Last attempt, don't catch the exception
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator

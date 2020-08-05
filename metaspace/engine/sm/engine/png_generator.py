@@ -1,3 +1,4 @@
+import logging
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
 from os import path
@@ -9,18 +10,25 @@ from requests.adapters import HTTPAdapter
 from PIL import Image
 from scipy.ndimage import zoom
 
+from sm.engine.util import retry_on_exception
+
+logger = logging.getLogger('engine')
+
 
 class ImageStoreServiceWrapper:
     def __init__(self, img_service_url):
         self._img_service_url = img_service_url
         self._session = requests.Session()
-        self._session.mount(self._img_service_url, HTTPAdapter(max_retries=5, pool_maxsize=100))
+        self._session.mount(
+            self._img_service_url, HTTPAdapter(max_retries=5, pool_maxsize=50, pool_block=True)
+        )
 
     def _format_url(self, storage_type, img_type, method='', img_id=''):
         assert storage_type, 'Wrong storage_type: %s' % storage_type
         assert img_type, 'Wrong img_type: %s' % img_type
         return path.join(self._img_service_url, storage_type, img_type + 's', method, img_id)
 
+    @retry_on_exception()
     def post_image(self, storage_type, img_type, fp):
         """
         Args
@@ -42,6 +50,7 @@ class ImageStoreServiceWrapper:
         resp.raise_for_status()
         return resp.json()['image_id']
 
+    @retry_on_exception()
     def delete_image(self, url):
         resp = self._session.delete(url)
         if resp.status_code != 202:
@@ -49,6 +58,7 @@ class ImageStoreServiceWrapper:
                 'Failed to delete: {}'.format(url)
             )  # logger has issues with pickle when sent to spark
 
+    @retry_on_exception()
     def get_image_by_id(self, storage_type, img_type, img_id):
         """
         Args
@@ -120,6 +130,7 @@ class ImageStoreServiceWrapper:
             h, w = mask.shape
             value = np.empty((len(img_ids), h * w), dtype=np.float32)
 
+        @retry_on_exception()
         def process_img(img_id, idx, do_setup=False):
             img = self.get_image_by_id(storage_type, 'iso_image', img_id)
             if do_setup:
@@ -152,6 +163,7 @@ class ImageStoreServiceWrapper:
 
         return value, mask, (h, w)
 
+    @retry_on_exception()
     def delete_image_by_id(self, storage_type, img_type, img_id):
         url = self._format_url(
             storage_type=storage_type, img_type=img_type, method='delete', img_id=img_id
