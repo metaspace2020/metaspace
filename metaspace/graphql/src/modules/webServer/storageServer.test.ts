@@ -3,35 +3,30 @@
  * @jest-environment node
  */
 import * as supertest from 'supertest';
-import * as Knex from 'knex';
 import * as fs from 'fs';
 
 import config, {ImageStorageType} from '../../utils/config';
 import logger from '../../utils/logger';
-import {createStorageServerApp, initDBConnection} from './storageServer';
+import {createStorageServerApp} from './storageServer';
 
 
 const getRespMimeMap = {
-  fs: 'image/png',
-  db: 'application/octet-stream'
+  fs: 'image/png'
 };
 
-describe('imageUploadTest with fs and db backends', () => {
-  (['db', 'fs'] as ImageStorageType[]).forEach( (storageType) => {
+describe('imageUploadTest with fs backend', () => {
+  (['fs'] as ImageStorageType[]).forEach( (storageType) => {
 
     describe(`${storageType} storage type`, () => {
       let server: supertest.SuperTest<supertest.Test>;
-      let knex: Knex;
 
       beforeAll(async () => {
         logger.info('> Before all');
-        knex = initDBConnection();
-        server = supertest(await createStorageServerApp(config, knex));
+        server = supertest(await createStorageServerApp(config));
       });
 
       afterAll(async () => {
         logger.info('> After all');
-        await knex.destroy();
       });
 
       let image_id: string;

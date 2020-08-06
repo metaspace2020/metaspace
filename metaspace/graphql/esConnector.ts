@@ -23,7 +23,7 @@ export interface ESAnnotation {
   _source: ESAnnotationSource;
 }
 
-export type ImageStorageType = 'fs' | 'db';
+export type ImageStorageType = 'fs';
 
 export interface ESDatasetSource {
   ds_id: string;
