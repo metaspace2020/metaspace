@@ -238,14 +238,13 @@ describe('Molecular database mutation permissions', () => {
       deleteMolecularDB(databaseId: $id)
     }`;
 
-    test('Group members cannot delete database', async () => {
+    test('Group members can delete database', async () => {
       const group = await createTestGroup();
       await setupTestUsers([group.id]);
       await createTestUserGroup(testUser.id!, group.id, UGRO.MEMBER, true);
       const { id } = await createTestMolecularDB({ groupId: group.id });
 
-      const promise = doQuery(deleteMolecularDB, { id }, { context: userContext });
-      await expect(promise).rejects.toThrowError(/Unauthorized/);
+      await doQuery(deleteMolecularDB, { id }, { context: userContext });
     });
 
     test('Admins can delete database', async () => {
