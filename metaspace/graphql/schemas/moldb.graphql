@@ -25,8 +25,8 @@ type MolecularDB {
 input CreateMolecularDBInput {
   name: String!
   version: String!
-  filePath: String!
-  isPublic: Boolean! = False
+  filePath: String!  # s3://[BUCKET]/path/to-file.tsv
+  isPublic: Boolean = False
   groupId: ID!
   fullName: String
   description: String

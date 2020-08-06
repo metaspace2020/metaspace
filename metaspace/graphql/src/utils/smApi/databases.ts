@@ -41,7 +41,7 @@ export const smApiDatabaseRequest = async (uri: string, args?: any) => {
 interface CreateDatabaseArgs {
     name: string;
     version: string;
-    isPublic: boolean;
+    isPublic?: boolean;
     groupId: string;
     filePath: string;
     fullName?: string;

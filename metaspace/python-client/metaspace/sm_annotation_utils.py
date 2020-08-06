@@ -2,6 +2,7 @@ import json
 import os
 import pprint
 import re
+import urllib.parse
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
@@ -112,7 +113,7 @@ def get_config(
             config_file = default_config_path.read_text()
 
         config_parser = ConfigParser()
-        config_parser.read_string("[metaspace]\n" + config_file)
+        config_parser.read_string('[metaspace]\n' + config_file)
         config = config_parser['metaspace']
 
         if not host:
@@ -135,11 +136,73 @@ def get_config(
         'moldb_url': '{}/mol_db/v1'.format(host),
         'signin_url': '{}/api_auth/signin'.format(host),
         'gettoken_url': '{}/api_auth/gettoken'.format(host),
+        'companion_url': f'{host}/database_upload',
         'usr_email': email,
         'usr_pass': password,
         'usr_api_key': api_key,
         'verify_certificate': verify_certificate,
     }
+
+
+def multipart_upload(local_path, companion_url):
+    def send_request(url, method='GET', json=None, data=None, return_headers=False):
+        if method == 'POST':
+            resp = requests.post(url, data=data, json=json)
+        elif method == 'PUT':
+            resp = requests.put(url, data=data, json=json)
+        else:
+            resp = requests.get(url)
+        resp.raise_for_status()
+        return resp.json() if not return_headers else resp.headers
+
+    def init_multipart_upload(filename, file_type='text/csv'):
+        url = companion_url + '/s3/multipart'
+        data = {
+            'filename': filename,
+            'type': file_type,
+            'metadata': {'name': filename, 'type': file_type},
+        }
+        resp_data = send_request(url, 'POST', json=data)
+        return resp_data['key'], resp_data['uploadId']
+
+    def sign_part_upload(key, upload_id, part):
+        query = urllib.parse.urlencode({'key': key})
+        url = f'{companion_url}/s3/multipart/{upload_id}/{part}?{query}'
+        resp_data = send_request(url)
+        return resp_data['url']
+
+    def upload_part(presigned_url, data):
+        resp_data = send_request(presigned_url, 'PUT', data=data, return_headers=True)
+        return resp_data['ETag']
+
+    def complete_multipart_upload(key, upload_id, etags):
+        query = urllib.parse.urlencode({'key': key})
+        url = f'{companion_url}/s3/multipart/{upload_id}/complete?{query}'
+        data = {'parts': [{'PartNumber': part, 'ETag': etag} for part, etag in etags]}
+        resp_data = send_request(url, 'POST', json=data)
+        location = urllib.parse.unquote(resp_data['location'])
+        (bucket,) = re.findall(r'https://([^.]+)', location)
+        return f's3://{bucket}/{key}'
+
+    key, upload_id = init_multipart_upload(Path(local_path).name)
+
+    PART_SIZE = 5 * 1024 ** 2
+    etags = []
+    part = 0
+    with open(local_path, 'r') as f:
+        while True:
+            file_data = f.read(PART_SIZE)
+            if not file_data:
+                break
+
+            part += 1
+            print(f'Uploading {part} part of {local_path} file...')
+            presigned_url = sign_part_upload(key, upload_id, part)
+            etag = upload_part(presigned_url, file_data)
+            etags.append((part, etag))
+
+    s3_path = complete_multipart_upload(key, upload_id, etags)
+    return s3_path
 
 
 class GraphQLClient(object):
@@ -151,11 +214,11 @@ class GraphQLClient(object):
         self.logged_in = False
 
         if self._config.get('usr_api_key'):
-            self.logged_in = self.query("query { currentUser { id } }") is not None
+            self.logged_in = self.query('query { currentUser { id } }') is not None
         elif self._config['usr_email']:
             login_res = self.session.post(
                 self._config['signin_url'],
-                params={"email": self._config['usr_email'], "password": self._config['usr_pass']},
+                params={'email': self._config['usr_email'], 'password': self._config['usr_pass']},
             )
             if login_res.status_code == 401:
                 print('Login failed. Only public datasets will be accessible.')
@@ -195,6 +258,16 @@ class GraphQLClient(object):
         }
         """
         return self.query(query)['currentUser']['id']
+
+    def get_primary_group_id(self):
+        query = """
+            query {
+              currentUser {
+                primaryGroup { group { id } }
+              }
+            }
+        """
+        return self.query(query)['currentUser']['primaryGroup'].get('group', {}).get('id', None)
 
     def iterQuery(self, query, variables={}, batch_size=50000):
         """
@@ -587,6 +660,52 @@ class GraphQLClient(object):
         }
 
         return self.query(query, variables)
+
+    def create_database(
+        self, local_path: Union[str, Path], name: str, version: str, is_public: bool = False
+    ) -> dict:
+        s3_path = multipart_upload(local_path, self._config['companion_url'])
+
+        query = f"""
+            mutation ($input: CreateMolecularDBInput!) {{
+              createMolecularDB(databaseDetails: $input) {{
+                id
+              }}
+            }}
+        """
+        variables = {
+            "input": {
+                "name": name,
+                "version": version,
+                "isPublic": is_public,
+                "filePath": s3_path,
+                "groupId": self.get_primary_group_id(),
+            }
+        }
+        return self.query(query, variables)['createMolecularDB']
+
+    def update_database(self, id: int, is_public: bool = None, archived: bool = None) -> dict:
+        query = f"""
+            mutation ($databaseId: Int!, $input: UpdateMolecularDBInput!) {{
+              updateMolecularDB(databaseId: $databaseId, databaseDetails: $input) {{
+                id
+              }}
+            }}
+        """
+        variables = {
+            "databaseId": id,
+            "input": {"isPublic": is_public, "archived": archived},
+        }
+        return self.query(query, variables)['updateMolecularDB']
+
+    def delete_database(self, id: int) -> bool:
+        query = f"""
+            mutation ($databaseId: Int!) {{
+              deleteMolecularDB(databaseId: $databaseId)
+            }}
+        """
+        variables = {"databaseId": id}
+        return self.query(query, variables)['deleteMolecularDB']
 
 
 def ion(r):
@@ -1341,14 +1460,14 @@ class SMInstance(object):
     def databases(self) -> List[MolecularDB]:
         return [MolecularDB(db, self._gqclient) for db in self._gqclient.get_visible_databases()]
 
-    def create_database(self):
-        pass
+    def create_database(self, local_path, name, version, is_public=False):
+        return self._gqclient.create_database(local_path, name, version, is_public)
 
-    def update_database(self):
-        pass
+    def update_database(self, id, is_public=None, archived=None):
+        return self._gqclient.update_database(id, is_public, archived)
 
-    def delete_database(self):
-        pass
+    def delete_database(self, id: int) -> bool:
+        return self._gqclient.delete_database(id)
 
     def current_user_id(self):
         result = self._gqclient.query("""query { currentUser { id } }""")

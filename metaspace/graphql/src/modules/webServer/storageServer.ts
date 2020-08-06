@@ -244,7 +244,7 @@ export async function createStorageServerAsync(config: Config) {
   const options = {
     providerOptions: {
       s3: {
-        getKey: (req: express.Request, filename: string, metadata: object) =>  {
+        getKey: (req: express.Request, filename: string, metadata: object) => {
           return `${config.upload.moldbPrefix}/${genUuid()}/${filename}`
         },
         key: config.aws.aws_access_key_id,

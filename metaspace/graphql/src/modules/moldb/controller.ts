@@ -89,9 +89,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
 
   async deleteMolecularDB(source, { databaseId}, ctx): Promise<Boolean> {
     logger.info(`User ${ctx.user.id} is deleting molecular database ${databaseId}`);
-    if (!ctx.isAdmin) {
-      throw new UserError(`Unauthorized`);
-    }
+    await assertUserCanEditMolecularDB(ctx, databaseId);
 
     await smApiDeleteDatabase(databaseId);
     return true;
