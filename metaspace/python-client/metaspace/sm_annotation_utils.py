@@ -1460,10 +1460,12 @@ class SMInstance(object):
     def databases(self) -> List[MolecularDB]:
         return [MolecularDB(db, self._gqclient) for db in self._gqclient.get_visible_databases()]
 
-    def create_database(self, local_path, name, version, is_public=False):
+    def create_database(
+        self, local_path: Union[str, Path], name: str, version: str, is_public: bool = False
+    ) -> dict:
         return self._gqclient.create_database(local_path, name, version, is_public)
 
-    def update_database(self, id, is_public=None, archived=None):
+    def update_database(self, id: int, is_public: bool = None, archived: bool = None) -> dict:
         return self._gqclient.update_database(id, is_public, archived)
 
     def delete_database(self, id: int) -> bool:
