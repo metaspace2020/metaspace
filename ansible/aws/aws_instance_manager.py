@@ -72,17 +72,8 @@ class AWSInstManager:
             for alarm in alarms:
                 self.cloudwatch_client.put_metric_alarm(
                     AlarmName=f"{alarm['prefix']}-{inst.id}",
-                    ComparisonOperator=alarm['comparison'],
-                    EvaluationPeriods=alarm['points'],
-                    MetricName=alarm['metric'],
-                    Namespace='AWS/EC2',
-                    Period=alarm['period'],
-                    Statistic='Average',
-                    Threshold=alarm['threshold'],
-                    ActionsEnabled=True,
-                    AlarmActions=alarm['actions'],
-                    AlarmDescription='Alarm when cluster instance idles',
                     Dimensions=[{'Name': 'InstanceId', 'Value': inst.id}],
+                    **alarm['params'],
                 )
 
     def wait_for_instances(self, instances, status='instance_running'):
