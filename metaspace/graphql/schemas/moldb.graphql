@@ -43,11 +43,14 @@ input UpdateMolecularDBInput {
   citation: String  # JSON-based rich text, in a format defined by tiptap (https://tiptap.scrumpy.io/)
 }
 
+input MolecularDBFilter {
+  usable: Boolean
+  metaspace: Boolean
+}
+
 type Query {
-  visibleMolecularDBs: [MolecularDB!]
-  usableMolecularDBs: [MolecularDB!]
-  metaspaceMolecularDBs: [MolecularDB!]
-  getMolecularDB(databaseId: Int!): MolecularDB!
+  allMolecularDBs(filter: MolecularDBFilter): [MolecularDB!]
+  molecularDB(databaseId: Int!): MolecularDB
 }
 
 type Mutation {
