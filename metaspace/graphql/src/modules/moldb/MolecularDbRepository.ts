@@ -88,7 +88,7 @@ export class MolecularDbRepository {
     return databases.filter(db => db != null);
   }
 
-  async findPublicDatabases(user: ContextUser): Promise<MolecularDB[]> {
+  async findGlobalDatabases(user: ContextUser): Promise<MolecularDB[]> {
     return await this.queryWhere(user, 'moldb.group_id is NULL').getMany();
   }
 }

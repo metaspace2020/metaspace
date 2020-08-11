@@ -37,7 +37,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
 
   async publicMolecularDBs(source, args, ctx): Promise<MolecularDbModel[]> {
     const repository = ctx.entityManager.getCustomRepository(MolecularDbRepository);
-    return repository.findPublicDatabases(ctx.user);
+    return repository.findGlobalDatabases(ctx.user);
   },
 
   async getMolecularDB(source, { databaseId }, ctx): Promise<MolecularDbModel> {
