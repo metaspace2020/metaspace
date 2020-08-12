@@ -45,10 +45,11 @@ input UpdateMolecularDBInput {
 
 input MolecularDBFilter {
   usable: Boolean
-  metaspace: Boolean
+  global: Boolean  # Metaspace managed public databases
 }
 
 type Query {
+  molecularDatabases(onlyUsable: Boolean=False): [MolecularDB!] @deprecated(reason: "Use allMolecularDBs instead")
   allMolecularDBs(filter: MolecularDBFilter): [MolecularDB!]
   molecularDB(databaseId: Int!): MolecularDB
 }

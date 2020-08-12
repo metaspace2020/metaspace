@@ -22,8 +22,15 @@ const mockSmApiDatabases = smApiDatabases as jest.Mocked<typeof smApiDatabases>;
 
 jest.mock('./util/assertImportFileIsValid');
 
+const allMolecularDBs = `
+    query allMolecularDBs($filter: MolecularDBFilter) {
+      allMolecularDBs(filter: $filter) {
+        id name fullName default isPublic archived targeted description link citation group
+        { id shortName }
+      }
+    }`;
 
-describe('Molecular databases queries', () => {
+describe('Molecular databases queries: permissions', () => {
   let group: Group;
 
   beforeAll(onBeforeAll);
@@ -34,29 +41,13 @@ describe('Molecular databases queries', () => {
   });
   afterEach(onAfterEach);
 
-  const visibleMolecularDBs = `
-    query visibleMolecularDBs {
-      visibleMolecularDBs {
-        id name fullName default isPublic archived targeted description link citation group
-        { id shortName }
-      }
-    }`;
-
-  const usableMolecularDBs = `
-    query usableMolecularDBs {
-      usableMolecularDBs {
-        id name fullName default isPublic archived targeted description link citation group
-        { id shortName }
-      }
-    }`;
-
   test('Databases are sorted by name', async () => {
     await setupTestUsers([group.id]);
     await createTestUserGroup(testUser.id!, group.id, UGRO.MEMBER, true);
     await createTestMolecularDB({ name: 'xyz', groupId: group.id });
     await createTestMolecularDB({ name: 'abc', groupId: group.id });
 
-    const result = await doQuery(visibleMolecularDBs, {});
+    const result = await doQuery(allMolecularDBs, {});
 
     expect(result[0]).toMatchObject({ name: 'abc' });
     expect(result[1]).toMatchObject({ name: 'xyz' });
@@ -67,7 +58,7 @@ describe('Molecular databases queries', () => {
     await createTestUserGroup(testUser.id!, group.id, UGRO.MEMBER, true);
     const { id } = await createTestMolecularDB({ groupId: group.id });
 
-    const result = await doQuery(visibleMolecularDBs, {}, { context: userContext });
+    const result = await doQuery(allMolecularDBs, {}, { context: userContext });
 
     expect(result).toEqual([
       expect.objectContaining({ id, group: { id: group.id, shortName: group.shortName } })
@@ -79,7 +70,7 @@ describe('Molecular databases queries', () => {
     await createTestUserGroup(testUser.id!, group.id, UGRO.MEMBER, true);
     const { id } = await createTestMolecularDB({ groupId: group.id });
 
-    const result = await doQuery(usableMolecularDBs, {}, { context: userContext });
+    const result = await doQuery(allMolecularDBs, { filter: { usable: true } }, { context: userContext });
 
     expect(result).toEqual([
       expect.objectContaining({ id, group: { id: group.id, shortName: group.shortName } })
@@ -91,7 +82,7 @@ describe('Molecular databases queries', () => {
     await createTestMolecularDB({ isPublic: false, groupId: (await createTestGroup()).id });
     const { id: pubGroupId } = await createTestMolecularDB({ isPublic: true, groupId: group.id });
 
-    const result = await doQuery(visibleMolecularDBs, {}, { context: userContext });
+    const result = await doQuery(allMolecularDBs, {}, { context: userContext });
 
     expect(result).toEqual([expect.objectContaining({ id: pubGroupId } )]);
   });
@@ -99,9 +90,9 @@ describe('Molecular databases queries', () => {
   test('Non-group members cannot use public group databases', async () => {
     await setupTestUsers();
     await createTestMolecularDB({ isPublic: false, groupId: (await createTestGroup()).id });
-    const { id: pubGroupId } = await createTestMolecularDB({ isPublic: true, groupId: group.id });
+    await createTestMolecularDB({ isPublic: true, groupId: (await createTestGroup()).id });
 
-    const result = await doQuery(usableMolecularDBs, {}, { context: userContext });
+    const result = await doQuery(allMolecularDBs, { filter: { usable: true } }, { context: userContext });
 
     expect(result).toEqual([]);
   });
@@ -110,7 +101,7 @@ describe('Molecular databases queries', () => {
     await setupTestUsers();
     const { id } = await createTestMolecularDB({ groupId: group.id });
 
-    const result = await doQuery(visibleMolecularDBs, {}, { context: adminContext });
+    const result = await doQuery(allMolecularDBs, {}, { context: adminContext });
 
     expect(result).toEqual([
       expect.objectContaining({ id, group: { id: group.id, shortName: group.shortName } })
@@ -121,10 +112,66 @@ describe('Molecular databases queries', () => {
     await setupTestUsers();
     const { id } = await createTestMolecularDB({ groupId: group.id });
 
-    const result = await doQuery(usableMolecularDBs, {}, { context: adminContext });
+    const result = await doQuery(allMolecularDBs, { filter: { usable: true } }, { context: adminContext });
 
     expect(result).toEqual([
       expect.objectContaining({ id, group: { id: group.id, shortName: group.shortName } })
+    ]);
+  });
+});
+
+describe('Molecular databases queries: filters', () => {
+  let group: Group;
+
+  beforeAll(onBeforeAll);
+  afterAll(onAfterAll);
+  beforeEach(async () => {
+    await onBeforeEach();
+    group = await createTestGroup();
+    await setupTestUsers([group.id]);
+    await createTestUserGroup(testUser.id!, group.id, UGRO.MEMBER, true);
+    // Usable, non-global
+    await createTestMolecularDB({ name: 'test-db-1', archived: false, isPublic: true, groupId: group.id });
+    // Usable, global
+    await createTestMolecularDB({ name: 'test-db-2', archived: false, isPublic: true, groupId: null });
+    // Unusable, non-global
+    await createTestMolecularDB({ name: 'test-db-3', archived: true, isPublic: true, groupId: group.id });
+    // Unusable, global
+    await createTestMolecularDB({ name: 'test-db-4', archived: true, isPublic: true, groupId: null });
+  });
+  afterEach(onAfterEach);
+
+  test('Find all databases', async () => {
+    const result = await doQuery(allMolecularDBs, {}, { context: userContext });
+
+    expect(result.length).toEqual(4);
+  });
+
+  test('Find usable databases', async () => {
+    const result = await doQuery(allMolecularDBs, { filter: { usable: true } }, { context: userContext });
+
+    expect(result).toEqual([
+      expect.objectContaining({ archived: false }),
+      expect.objectContaining({ archived: false })
+    ]);
+  });
+
+  test('Find global databases', async () => {
+    const result = await doQuery(allMolecularDBs, { filter: { global: true } }, { context: userContext });
+
+    expect(result).toEqual([
+      expect.objectContaining({ group: null }),
+      expect.objectContaining({ group: null })
+    ]);
+  });
+
+  test('Find usable global databases', async () => {
+    const result = await doQuery(
+      allMolecularDBs, { filter: { usable: true, global: true } }, { context: userContext }
+    );
+
+    expect(result).toEqual([
+      expect.objectContaining({ archived: false, group: null }),
     ]);
   });
 });

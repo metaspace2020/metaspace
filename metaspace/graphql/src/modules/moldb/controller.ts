@@ -22,25 +22,25 @@ const MolecularDbResolvers: FieldResolversFor<MolecularDB, MolecularDbModel> = {
   },
 };
 
+const allMolecularDBs = async (ctx: Context, usable?: boolean, global?: boolean): Promise<MolecularDbModel[]> => {
+  const repository = ctx.entityManager.getCustomRepository(MolecularDbRepository);
+  if (ctx.isAdmin) {
+    usable = undefined;
+  }
+  const groupId = (global === true) ? null : undefined;
+  return repository.findDatabases(ctx.user, usable, groupId);
+};
+
 const QueryResolvers: FieldResolversFor<Query, void> = {
-  async visibleMolecularDBs(source, args, ctx): Promise<MolecularDbModel[]> {
-    const repository = ctx.entityManager.getCustomRepository(MolecularDbRepository);
-    return repository.findVisibleDatabases(ctx.user);
+  async molecularDatabases(source, { onlyUsable }, ctx): Promise<MolecularDbModel[]> {
+    return await allMolecularDBs(ctx, onlyUsable, undefined);
   },
 
-  async usableMolecularDBs(source, args, ctx): Promise<MolecularDbModel[]> {
-    const repository = ctx.entityManager.getCustomRepository(MolecularDbRepository);
-    return !ctx.isAdmin
-      ? await repository.findUsableDatabases(ctx.user)
-      : await repository.findVisibleDatabases(ctx.user);
+  async allMolecularDBs(source, { filter }, ctx): Promise<MolecularDbModel[]> {
+    return await allMolecularDBs(ctx, filter?.usable, filter?.global);
   },
 
-  async metaspaceMolecularDBs(source, args, ctx): Promise<MolecularDbModel[]> {
-    const repository = ctx.entityManager.getCustomRepository(MolecularDbRepository);
-    return repository.findMetaspaceDatabases(ctx.user);
-  },
-
-  async getMolecularDB(source, { databaseId }, ctx): Promise<MolecularDbModel> {
+  async molecularDB(source, { databaseId }, ctx): Promise<MolecularDbModel> {
     const repository = ctx.entityManager.getCustomRepository(MolecularDbRepository);
     return repository.findDatabaseById(ctx, databaseId);
   },
