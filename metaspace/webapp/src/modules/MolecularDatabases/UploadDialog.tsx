@@ -8,6 +8,7 @@ import UppyUploader from '../../components/UppyUploader'
 import FadeTransition from '../../components/FadeTransition'
 
 import { createDatabaseQuery, MolecularDBDetails } from '../../api/moldb'
+import safeJsonParse from '../../lib/safeJsonParse'
 
 const convertToS3 = (url: string) => {
   const parsedUrl = new URL(url)
@@ -18,11 +19,11 @@ const convertToS3 = (url: string) => {
 const formatErrorMsg = (e: ApolloError) => {
   if (e.graphQLErrors && e.graphQLErrors.length) {
     const [error] = e.graphQLErrors
-    const message = JSON.parse(error.message)
-    if (message.type === 'already_exists') {
+    const message = safeJsonParse(error.message)
+    if (message?.type === 'already_exists') {
       return 'This database already exists, please use a different name or version.'
     }
-    if (message.type === 'malformed_csv') {
+    if (message?.type === 'malformed_csv') {
       return 'The file format does not look correct. Please check that the file is tab-separated'
         + ' and contains three columns: id, name, and formula.'
     }
