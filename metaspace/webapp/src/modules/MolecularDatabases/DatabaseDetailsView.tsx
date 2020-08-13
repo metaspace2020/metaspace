@@ -19,6 +19,7 @@ import {
   UpdateDatabaseDetailsMutation,
 } from '../../api/moldb'
 import { getDatabaseDetails } from './formatting'
+import reportError from '../../lib/reportError'
 
 interface Props {
   id: number
@@ -41,7 +42,7 @@ const Details = defineComponent<Props>({
 
     onResult(result => {
       if (result && result.errors) {
-        root.$message({ message: 'Sorry, something went wrong', type: 'error' })
+        reportError(result.errors[0], 'Sorry, something went wrong')
         props.close()
       }
     })
