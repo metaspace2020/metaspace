@@ -30,7 +30,7 @@ module.exports = {
       iso_image: {
         type: 'image/png',
         path: '/iso_images/',
-        storage_types: ['fs', 'db']
+        storage_types: ['fs']
       },
       optical_image: {
         type: 'image/jpeg',

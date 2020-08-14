@@ -143,15 +143,21 @@ def _label_clusters(scores):
 
     results = []
     last_error = None
-    for n_clusters in range(min_clusters, max_clusters + 1):
-        try:
-            labels = spectral_clustering(
-                affinity=scores, n_clusters=n_clusters, random_state=1, n_init=100
-            )
-            cluster_score = np.mean([scores[a, b] for a, b in enumerate(labels)])
-            results.append((n_clusters, cluster_score, labels))
-        except Exception as e:
-            last_error = e
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            'ignore',
+            '.*Graph is not fully connected, spectral embedding may not work as expected.*',
+        )
+        for n_clusters in range(min_clusters, max_clusters + 1):
+            try:
+                labels = spectral_clustering(
+                    affinity=scores, n_clusters=n_clusters, random_state=1, n_init=100
+                )
+                cluster_score = np.mean([scores[a, b] for a, b in enumerate(labels)])
+                results.append((n_clusters, cluster_score, labels))
+            except Exception as e:
+                last_error = e
 
     if not results:
         raise last_error

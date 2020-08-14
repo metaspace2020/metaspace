@@ -59,7 +59,7 @@ def test_annotations(dataset: SMDataset):
 
 
 def test_results(dataset: SMDataset):
-    annotations = dataset.results('HMDB-v4', fdr=0.5)
+    annotations = dataset.results(database=('HMDB', 'v4'), fdr=0.5)
 
     assert len(annotations) > 0
     assert all(col in annotations.columns for col in EXPECTED_RESULTS_COLS)
@@ -67,8 +67,8 @@ def test_results(dataset: SMDataset):
 
 
 def test_results_with_coloc(dataset: SMDataset):
-    coloc_with = dataset.results('HMDB-v4', fdr=0.5).ion[0]
-    coloc_annotations = dataset.results('HMDB-v4', fdr=0.5, coloc_with=coloc_with)
+    coloc_with = dataset.results(database=('HMDB', 'v4'), fdr=0.5).ion[0]
+    coloc_annotations = dataset.results(database=('HMDB', 'v4'), fdr=0.5, coloc_with=coloc_with)
 
     assert len(coloc_annotations) > 0
     assert coloc_annotations.colocCoeff.all()
@@ -92,7 +92,7 @@ def test_results_with_str_database_id(dataset: SMDataset):
 
 @patch(
     'metaspace.sm_annotation_utils.GraphQLClient.get_databases',
-    return_value=[{'id': '22', 'name': 'HMDB-v4'}],
+    return_value=[{'id': '22', 'name': 'HMDB', 'version': 'v4'}],
 )
 @patch('metaspace.sm_annotation_utils.GraphQLClient.getAnnotations', return_value=[])
 def test_map_database_works_handles_strs_ids_from_api(
@@ -110,11 +110,15 @@ def test_results_neutral_loss_chem_mod(advanced_dataset: SMDataset):
     """
     Test setup: Create a dataset with a -H2O neutral loss and a -H+C chem mod.
     """
-    annotations = advanced_dataset.results('HMDB-v4', fdr=0.5)
-    annotations_cm = advanced_dataset.results('HMDB-v4', fdr=0.5, include_chem_mods=True)
-    annotations_nl = advanced_dataset.results('HMDB-v4', fdr=0.5, include_neutral_losses=True)
+    annotations = advanced_dataset.results(database=('HMDB', 'v4'), fdr=0.5)
+    annotations_cm = advanced_dataset.results(
+        database=('HMDB', 'v4'), fdr=0.5, include_chem_mods=True
+    )
+    annotations_nl = advanced_dataset.results(
+        database=('HMDB', 'v4'), fdr=0.5, include_neutral_losses=True
+    )
     annotations_cm_nl = advanced_dataset.results(
-        'HMDB-v4', fdr=0.5, include_chem_mods=True, include_neutral_losses=True
+        database=('HMDB', 'v4'), fdr=0.5, include_chem_mods=True, include_neutral_losses=True
     )
 
     # Check expected columns

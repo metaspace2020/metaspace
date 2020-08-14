@@ -16,6 +16,7 @@ if [ "$SM_DOCKER_ENV" = "development" ]; then
   export NODE_ENV=development
   cd /opt/dev/metaspace/metaspace/webapp
   yarn install
+  npm rebuild node-sass # Ensure the musl version is installed
 else
   export NODE_ENV=production
   cd /opt/metaspace/metaspace/webapp

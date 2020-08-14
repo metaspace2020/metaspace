@@ -194,7 +194,7 @@ def find_by_name(name: str) -> MolecularDB:
 
 
 def find_default() -> List[MolecularDB]:
-    data = DB().select_with_fields(
+    data = DB().select_one_with_fields(
         'SELECT id, name, version, targeted, group_id FROM molecular_db WHERE "default" = TRUE',
     )
     return [MolecularDB(**row) for row in data]

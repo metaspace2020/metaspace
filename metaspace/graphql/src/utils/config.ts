@@ -2,7 +2,7 @@ import * as config from 'config';
 import { IConfig } from 'config';
 import {Algorithm} from 'jsonwebtoken';
 
-export type ImageStorageType = 'db' | 'fs';
+export type ImageStorageType = 'fs';
 export interface ImageCategoryConfig {
   type: string,
   path: string,

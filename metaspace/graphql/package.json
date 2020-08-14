@@ -64,7 +64,6 @@
     "express": "^4.14.0",
     "express-session": "^1.15.6",
     "fs-extra": "^4.0.3",
-    "get-pixels": "^3.3.0",
     "graphql": "^14.5.3",
     "graphql-errors": "^2.1.0",
     "graphql-subscriptions": "^1.1.0",
