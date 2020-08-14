@@ -39,20 +39,7 @@ describe('ViewGroupPage', () => {
     currentUserRole: null,
     numMembers: 2,
     members: mockMembersForPublic,
-    numDatabases: mockMolecularDatabases().length,
-  }
-
-  const database = {
-    ...mockMolecularDatabases()[0],
-    archived: false,
-    citation: null,
-    description: null,
-    fullName: '',
-    link: '',
-    isPublic: false,
-    group: {
-      id: mockGroup.id,
-    },
+    numDatabases: 2,
   }
 
   const mockGroupFn = jest.fn((src: any, args: any, ctx: any, info: any): any => mockGroup)
@@ -68,12 +55,12 @@ describe('ViewGroupPage', () => {
         { id: 'datasetId4', name: 'dataset name 4', status: 'FINISHED' },
       ]),
       countDatasets: () => 4,
-      molecularDB: () => database,
     }),
   }
 
   const stubs: Stubs = {
     DatasetItem: true,
+    MolecularDatabases: true,
   }
   const stubsWithMembersList: Stubs = {
     ...stubs,
@@ -147,53 +134,6 @@ describe('ViewGroupPage', () => {
       await Vue.nextTick()
 
       expect(wrapper).toMatchSnapshot()
-    })
-  })
-
-  describe.only('databases tab', () => {
-    beforeEach(() => {
-      router.replace({ query: { tab: 'databases' } })
-    })
-
-    it('should match snapshot', async() => {
-      mockGroupFn.mockImplementation(() => ({
-        ...mockGroup, currentUserRole: 'MEMBER', molecularDatabases: mockMolecularDatabases,
-      }))
-      initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewGroupPage, { router, stubs, apolloProvider })
-      await Vue.nextTick()
-
-      expect(wrapper).toMatchSnapshot()
-    })
-
-    describe('details view', () => {
-      beforeEach(() => {
-        router.replace({ query: { tab: 'databases', db: database.id.toString() } })
-      })
-
-      it('should match snapshot (member)', async() => {
-        mockGroupFn.mockImplementation(() => ({
-          ...mockGroup,
-          currentUserRole: 'MEMBER',
-        }))
-        initMockGraphqlClient(graphqlMocks)
-        const wrapper = mount(ViewGroupPage, { router, stubs, apolloProvider })
-        await Vue.nextTick()
-
-        expect(wrapper).toMatchSnapshot()
-      })
-
-      it('should match snapshot (manager)', async() => {
-        mockGroupFn.mockImplementation(() => ({
-          ...mockGroup,
-          currentUserRole: 'GROUP_ADMIN',
-        }))
-        initMockGraphqlClient(graphqlMocks)
-        const wrapper = mount(ViewGroupPage, { router, stubs, apolloProvider })
-        await Vue.nextTick()
-
-        expect(wrapper).toMatchSnapshot()
-      })
     })
   })
 

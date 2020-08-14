@@ -126,7 +126,7 @@
           </p>
         </el-tab-pane>
         <el-tab-pane
-          v-if="isGroupMember || canEdit"
+          v-if="showDatabasesTab"
           name="databases"
           lazy
         >
@@ -136,7 +136,7 @@
             </new-feature-badge>
           </span>
           <div>
-            <databases
+            <molecular-databases
               :group-id="groupId"
               :can-delete="canEdit"
             />
@@ -185,8 +185,9 @@ import { optionalSuffixInParens, plural } from '../../lib/vueFilters'
 import { removeDatasetFromAllDatasetsQuery } from '../../lib/updateApolloCache'
 import GroupDescription from './GroupDescription.vue'
 import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
-import Databases from '../MolecularDatabases'
+import MolecularDatabases from '../MolecularDatabases'
 import { MolecularDB } from '../../api/moldb'
+import config from '../../lib/config'
 
   interface ViewGroupProfileData {
     allDatasets: DatasetDetailItem[];
@@ -202,7 +203,7 @@ import { MolecularDB } from '../../api/moldb'
       NotificationIcon,
       GroupDescription,
       NewFeatureBadge,
-      Databases,
+      MolecularDatabases,
     },
     filters: {
       optionalSuffixInParens,
@@ -364,6 +365,10 @@ export default class ViewGroupPage extends Vue {
 
     get hasMembershipRequest() {
       return this.members.some(m => m.role === UserGroupRoleOptions.PENDING)
+    }
+
+    get showDatabasesTab() {
+      return config.features.moldb_mgmt && (this.isGroupMember || this.canEdit)
     }
 
     @Watch('$route.params.groupIdOrSlug')

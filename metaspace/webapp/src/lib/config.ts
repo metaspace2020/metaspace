@@ -39,6 +39,7 @@ interface Features {
   advanced_ds_config: boolean;
   isomers: boolean;
   isobars: boolean;
+  moldb_mgmt: boolean;
 }
 
 interface ClientConfig {
@@ -85,6 +86,7 @@ const defaultConfig: ClientConfig = {
     advanced_ds_config: false,
     isomers: true,
     isobars: true,
+    moldb_mgmt: false,
   },
 }
 
