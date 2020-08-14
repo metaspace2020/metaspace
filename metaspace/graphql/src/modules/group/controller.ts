@@ -161,7 +161,7 @@ export const Resolvers = {
 
     async numDatabases(group: GroupModel & Scope, args: any, ctx: Context): Promise<number> {
       return await ctx.entityManager.getCustomRepository(MolecularDbRepository)
-        .countVisibleDatabases(ctx.user, group.id);
+        .countDatabases(ctx.user, undefined, group.id);
     },
   },
 
