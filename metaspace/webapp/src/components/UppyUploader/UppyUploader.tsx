@@ -94,7 +94,6 @@ const UppyUploader = defineComponent<Props>({
 
     const addFile = (file: File) => {
       const descriptor = {
-        source: attrs.id,
         name: file.name,
         type: file.type,
         data: file,
