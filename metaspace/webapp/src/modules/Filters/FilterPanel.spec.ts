@@ -9,7 +9,7 @@ import { sync } from 'vuex-router-sync'
 import { encodeParams } from './url'
 import {
   mockAdductSuggestions,
-  mockPublicMolecularDBs,
+  mockGlobalMolecularDBs,
   mockMolDBsByGroup,
 } from '../../../tests/utils/mockGraphqlData'
 
@@ -45,7 +45,7 @@ describe('FilterPanel', () => {
       Query: () => ({
         adductSuggestions: mockAdductSuggestions,
         currentUser: mockMolDBsByGroup,
-        publicMolecularDBs: mockPublicMolecularDBs,
+        allMolecularDBs: mockGlobalMolecularDBs,
       }),
     })
     store.commit('setFilterLists', null)

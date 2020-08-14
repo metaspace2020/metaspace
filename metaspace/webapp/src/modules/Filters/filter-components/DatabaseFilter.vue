@@ -104,7 +104,7 @@ export default class DatabaseFilter extends Vue {
       try {
         const { data } = await this.$apollo.query({
           query: gql`query DatabaseOptions {
-            publicMolecularDBs {
+            allMolecularDBs(filter: { global: true }) {
               id
               name
               version
@@ -127,7 +127,7 @@ export default class DatabaseFilter extends Vue {
         })
 
         const groups = getDatabasesByGroup(
-          data.publicMolecularDBs,
+          data.allMolecularDBs,
           data.currentUser.groups,
         )
 

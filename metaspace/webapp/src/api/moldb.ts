@@ -28,7 +28,7 @@ export const createDatabaseQuery =
 
 export const databaseDetailsQuery =
   gql`query getDatabaseDetails ($id: Int!) {
-    database: getMolecularDB(databaseId: $id) {
+    database: molecularDB(databaseId: $id) {
       archived
       citation
       description

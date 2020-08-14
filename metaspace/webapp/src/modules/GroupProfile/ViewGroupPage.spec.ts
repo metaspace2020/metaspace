@@ -68,7 +68,7 @@ describe('ViewGroupPage', () => {
         { id: 'datasetId4', name: 'dataset name 4', status: 'FINISHED' },
       ]),
       countDatasets: () => 4,
-      getMolecularDB: () => database,
+      molecularDB: () => database,
     }),
   }
 

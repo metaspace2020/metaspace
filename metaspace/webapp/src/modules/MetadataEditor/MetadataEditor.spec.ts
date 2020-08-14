@@ -6,7 +6,7 @@ import store from '../../store/index'
 import {
   mockAdductSuggestions,
   mockMolecularDatabases,
-  mockPublicMolecularDBs,
+  mockGlobalMolecularDBs,
   mockMolDBsByGroup,
 } from '../../../tests/utils/mockGraphqlData'
 
@@ -48,7 +48,7 @@ describe('MetadataEditor', () => {
       Query: () => ({
         currentUserLastSubmittedDataset: () => null, // Prevent automatic mocking
         adductSuggestions: mockAdductSuggestions,
-        publicMolecularDBs: mockPublicMolecularDBs,
+        allMolecularDBs: mockGlobalMolecularDBs,
         currentUser: mockMolDBsByGroup,
       }),
     })

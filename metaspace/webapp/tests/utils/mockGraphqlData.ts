@@ -11,16 +11,16 @@ export const mockAdductSuggestions = () => [
   { adduct: '[M]-', name: '[M]⁻', charge: -1, hidden: true, default: false },
 ]
 
-const publicDatabase = { id: 1, name: 'foo', version: 'v1', group: null }
+const globalDatabase = { id: 1, name: 'foo', version: 'v1', group: null }
 const groupDatabase = { id: 2, name: 'bar', version: 'v1', group: { id: '123' } }
 
 export const mockMolecularDatabases = () => [
-  publicDatabase,
+  globalDatabase,
   groupDatabase,
 ]
 
-export const mockPublicMolecularDBs = () => [
-  publicDatabase,
+export const mockGlobalMolecularDBs = () => [
+  globalDatabase,
 ]
 
 export const mockMolDBsByGroup = () => ({
