@@ -162,7 +162,7 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
     if ('getColocalizationCoeff' in hit && args.colocalizationCoeffFilter != null) {
       const {colocalizedWith, colocalizationAlgo, databaseId, fdrLevel} = args.colocalizationCoeffFilter;
       const defaultDatabase = await ctx.entityManager.findOneOrFail(
-        MolecularDbModel, {'name': config.defaults.moldb_names[0]}
+        MolecularDbModel, {'default': true}
       );
       return await hit.getColocalizationCoeff(
         colocalizedWith,

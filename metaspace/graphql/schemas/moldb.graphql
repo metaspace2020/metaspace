@@ -25,8 +25,8 @@ type MolecularDB {
 input CreateMolecularDBInput {
   name: String!
   version: String!
-  filePath: String!
-  isPublic: Boolean! = False
+  filePath: String!  # s3://[BUCKET]/path/to-file.tsv
+  isPublic: Boolean = False
   groupId: ID!
   fullName: String
   description: String
@@ -43,8 +43,15 @@ input UpdateMolecularDBInput {
   citation: String  # JSON-based rich text, in a format defined by tiptap (https://tiptap.scrumpy.io/)
 }
 
+input MolecularDBFilter {
+  usable: Boolean
+  global: Boolean  # Metaspace managed public databases
+}
+
 type Query {
-  molecularDatabases(onlyUsable: Boolean=false): [MolecularDB!]
+  molecularDatabases(onlyUsable: Boolean=False): [MolecularDB!] @deprecated(reason: "Use allMolecularDBs instead")
+  allMolecularDBs(filter: MolecularDBFilter): [MolecularDB!]
+  molecularDB(databaseId: Int!): MolecularDB
 }
 
 type Mutation {

@@ -22,6 +22,9 @@ const ALLOWED_MUTATIONS = new Set([
   'removeDatasetExternalLink',
   'addProjectExternalLink',
   'removeProjectExternalLink',
+  'createMolecularDB',
+  'updateMolecularDB',
+  'deleteMolecularDB',
 ]);
 
 const wrapMutation = <TSource, TContext extends Context, TArgs>(

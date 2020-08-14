@@ -32,6 +32,7 @@ CREATE TABLE "public"."molecular_db" (
   "archived" boolean NOT NULL DEFAULT false, 
   "targeted" boolean NOT NULL DEFAULT false, 
   "group_id" uuid, 
+  "default" boolean NOT NULL DEFAULT false, 
   CONSTRAINT "molecular_db_uindex" UNIQUE ("group_id", 
   "name", 
   "version"), 

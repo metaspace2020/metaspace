@@ -111,7 +111,8 @@ class TestSMDaemonDatasetManager:
         assert es_mock.index_ds.call_count == 1
         index_ds_kw_args = es_mock.index_ds.call_args[1]
         assert index_ds_kw_args.get('ds_id') == ds_id
-        assert index_ds_kw_args.get('moldb').name == 'HMDB-v4'
+        assert index_ds_kw_args.get('moldb').name == 'HMDB'
+        assert index_ds_kw_args.get('moldb').version == 'v4'
 
     def test_delete_ds(self, fill_db):
         db = DB()

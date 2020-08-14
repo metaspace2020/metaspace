@@ -64,6 +64,9 @@ export class MolecularDB {
   @ManyToOne(type => Group, group => group.molecularDBs, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'group_id' })
   group: Group;
+
+  @Column({ type: 'boolean', default: false })
+  default: boolean;
 }
 
 @Entity({ schema: 'public' })

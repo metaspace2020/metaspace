@@ -2,13 +2,14 @@ import json
 import os
 import pprint
 import re
+import urllib.parse
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
 from shutil import copyfileobj
-from typing import Optional, List, Iterable, Dict, Union
+from typing import Optional, List, Iterable, Dict, Union, Tuple
 
 import numpy as np
 import pandas as pd
@@ -28,7 +29,7 @@ except ImportError:
     from pandas.io.json import json_normalize  # Logs DeprecationWarning if used in Pandas 1.0.0+
 
 
-DEFAULT_DATABASE = 'HMDB-v4'
+DEFAULT_DATABASE = ('HMDB', 'v4')
 
 
 class DatasetDownloadLicense(TypedDict):
@@ -112,7 +113,7 @@ def get_config(
             config_file = default_config_path.read_text()
 
         config_parser = ConfigParser()
-        config_parser.read_string("[metaspace]\n" + config_file)
+        config_parser.read_string('[metaspace]\n' + config_file)
         config = config_parser['metaspace']
 
         if not host:
@@ -135,11 +136,73 @@ def get_config(
         'moldb_url': '{}/mol_db/v1'.format(host),
         'signin_url': '{}/api_auth/signin'.format(host),
         'gettoken_url': '{}/api_auth/gettoken'.format(host),
+        'companion_url': f'{host}/database_upload',
         'usr_email': email,
         'usr_pass': password,
         'usr_api_key': api_key,
         'verify_certificate': verify_certificate,
     }
+
+
+def multipart_upload(local_path, companion_url):
+    def send_request(url, method='GET', json=None, data=None, return_headers=False):
+        if method == 'POST':
+            resp = requests.post(url, data=data, json=json)
+        elif method == 'PUT':
+            resp = requests.put(url, data=data, json=json)
+        else:
+            resp = requests.get(url)
+        resp.raise_for_status()
+        return resp.json() if not return_headers else resp.headers
+
+    def init_multipart_upload(filename, file_type='text/csv'):
+        url = companion_url + '/s3/multipart'
+        data = {
+            'filename': filename,
+            'type': file_type,
+            'metadata': {'name': filename, 'type': file_type},
+        }
+        resp_data = send_request(url, 'POST', json=data)
+        return resp_data['key'], resp_data['uploadId']
+
+    def sign_part_upload(key, upload_id, part):
+        query = urllib.parse.urlencode({'key': key})
+        url = f'{companion_url}/s3/multipart/{upload_id}/{part}?{query}'
+        resp_data = send_request(url)
+        return resp_data['url']
+
+    def upload_part(presigned_url, data):
+        resp_data = send_request(presigned_url, 'PUT', data=data, return_headers=True)
+        return resp_data['ETag']
+
+    def complete_multipart_upload(key, upload_id, etags):
+        query = urllib.parse.urlencode({'key': key})
+        url = f'{companion_url}/s3/multipart/{upload_id}/complete?{query}'
+        data = {'parts': [{'PartNumber': part, 'ETag': etag} for part, etag in etags]}
+        resp_data = send_request(url, 'POST', json=data)
+        location = urllib.parse.unquote(resp_data['location'])
+        (bucket,) = re.findall(r'https://([^.]+)', location)
+        return f's3://{bucket}/{key}'
+
+    key, upload_id = init_multipart_upload(Path(local_path).name)
+
+    PART_SIZE = 5 * 1024 ** 2
+    etags = []
+    part = 0
+    with open(local_path, 'r') as f:
+        while True:
+            file_data = f.read(PART_SIZE)
+            if not file_data:
+                break
+
+            part += 1
+            print(f'Uploading {part} part of {local_path} file...')
+            presigned_url = sign_part_upload(key, upload_id, part)
+            etag = upload_part(presigned_url, file_data)
+            etags.append((part, etag))
+
+    s3_path = complete_multipart_upload(key, upload_id, etags)
+    return s3_path
 
 
 class GraphQLClient(object):
@@ -151,11 +214,11 @@ class GraphQLClient(object):
         self.logged_in = False
 
         if self._config.get('usr_api_key'):
-            self.logged_in = self.query("query { currentUser { id } }") is not None
+            self.logged_in = self.query('query { currentUser { id } }') is not None
         elif self._config['usr_email']:
             login_res = self.session.post(
                 self._config['signin_url'],
-                params={"email": self._config['usr_email'], "password": self._config['usr_pass']},
+                params={'email': self._config['usr_email'], 'password': self._config['usr_pass']},
             )
             if login_res.status_code == 401:
                 print('Login failed. Only public datasets will be accessible.')
@@ -195,6 +258,16 @@ class GraphQLClient(object):
         }
         """
         return self.query(query)['currentUser']['id']
+
+    def get_primary_group_id(self):
+        query = """
+            query {
+              currentUser {
+                primaryGroup { group { id } }
+              }
+            }
+        """
+        return self.query(query)['currentUser']['primaryGroup'].get('group', {}).get('id', None)
 
     def iterQuery(self, query, variables={}, batch_size=50000):
         """
@@ -286,17 +359,13 @@ class GraphQLClient(object):
     """
 
     def getDataset(self, datasetId):
-        query = (
-            """
-        query datasetInfo($id: String!) {
-          dataset(id: $id) {
+        query = f"""
+            query datasetInfo($id: String!) {{
+              dataset(id: $id) {{
+                {self.DATASET_FIELDS}
+              }}
+            }}
         """
-            + self.DATASET_FIELDS
-            + """
-          }
-        }
-        """
-        )
         match = self.query(query, {'id': datasetId})['dataset']
         if not match:
             if self.logged_in:
@@ -312,17 +381,13 @@ class GraphQLClient(object):
             return match
 
     def getDatasetByName(self, datasetName):
-        query = (
-            """
-        query datasetInfo($filter: DatasetFilter!) {
-          allDatasets(filter: $filter) {
+        query = f"""
+            query datasetInfo($filter: DatasetFilter!) {{
+              allDatasets(filter: $filter) {{
+                {self.DATASET_FIELDS}
+              }}
+            }}
         """
-            + self.DATASET_FIELDS
-            + """
-          }
-        }
-        """
-        )
         matches = self.query(query, {'filter': {'name': datasetName}})['allDatasets']
         if not matches:
             if self.logged_in:
@@ -357,26 +422,21 @@ class GraphQLClient(object):
             "$limit: Int",
             "$colocalizationCoeffFilter: ColocalizationCoeffFilter",
         ]
-
-        query = """
-            query getAnnotations(
-                %s
-            ) {
-                allAnnotations(
-                    filter: $filter,
-                    datasetFilter: $dFilter,
-                    orderBy: $orderBy,
-                    sortingOrder: $sortingOrder,
-                    offset: $offset,
-                    limit: $limit,
-                ) {
-                %s
+        query = f"""
+            query getAnnotations({','.join(query_arguments)}) {{
+              allAnnotations(
+                filter: $filter,
+                datasetFilter: $dFilter,
+                orderBy: $orderBy,
+                sortingOrder: $sortingOrder,
+                offset: $offset,
+                limit: $limit,
+              ) {{
+                {self.ANNOTATION_FIELDS}
                 colocalizationCoeff(colocalizationCoeffFilter: $colocalizationCoeffFilter)
-                }
-            }""" % (
-            ','.join(query_arguments),
-            self.ANNOTATION_FIELDS,
-        )
+              }}
+            }}
+        """
         annot_filter = annotationFilter
 
         if colocFilter:
@@ -409,27 +469,24 @@ class GraphQLClient(object):
         )
 
     def getDatasets(self, datasetFilter=None):
-        query = (
-            """
-        query getDatasets($filter: DatasetFilter,
-                          $offset: Int, $limit: Int) {
-          allDatasets(
-            filter: $filter,
-            offset: $offset,
-            limit: $limit
-          ) {
+        query = f"""
+            query getDatasets($filter: DatasetFilter,
+                              $offset: Int, $limit: Int) {{
+              allDatasets(
+                filter: $filter,
+                offset: $offset,
+                limit: $limit
+              ) {{
+                {self.DATASET_FIELDS}
+              }}
+            }}
         """
-            + self.DATASET_FIELDS
-            + """
-          }
-        }"""
-        )
         return self.listQuery('allDatasets', query, {'filter': datasetFilter})
 
     def getRawOpticalImage(self, dsid):
         query = """
-            query getRawOpticalImages($datasetId: String!){ 
-                rawOpticalImage(datasetId: $datasetId) 
+            query getRawOpticalImages($datasetId: String!){
+                rawOpticalImage(datasetId: $datasetId)
                 {
                     url, transform
                 }
@@ -440,39 +497,68 @@ class GraphQLClient(object):
 
     def getRegisteredImage(self, dsid, zoom_level=8):
         query = """
-            query getRawOpticalImages($datasetId: String!, $zoom: Int){ 
-                rawOpticalImage(datasetId: $datasetId) 
+            query getRawOpticalImages($datasetId: String!, $zoom: Int){
+                rawOpticalImage(datasetId: $datasetId)
             }
         """
         variables = {"datasetId": dsid}
         return self.query(query, variables)
 
-    def get_databases(self):
+    def get_visible_databases(self):
         query = """
             {
-              molecularDatabases {
-                id name version isPublic archived
+              visibleMolecularDBs {
+                id name version isPublic archived default
               }
             }
         """
         result = self.query(query)
-        return result['molecularDatabases']
+        return result['visibleMolecularDBs']
 
-    def map_database_to_id(self, database):
+    @staticmethod
+    def map_database_name_to_name_version(name: str) -> Tuple[str, str]:
+        # For backwards compatibility map old database names to (name, version) tuples
+        database_name_version_map = {
+            'ChEBI': ('ChEBI', '2016'),
+            'LIPID_MAPS': ('LIPID_MAPS', '2016'),
+            'SwissLipids': ('SwissLipids', '2016'),
+            'HMDB-v2.5': ('HMDB', 'v2.5'),
+            'HMDB-v2.5-cotton': ('HMDB-cotton', 'v2.5'),
+            'BraChemDB-2018-01': ('BraChemDB', '2018-01'),
+            'ChEBI-2018-01': ('ChEBI', '2018-01'),
+            'HMDB-v4': ('HMDB', 'v4'),
+            'HMDB-v4-endogenous': ('HMDB-endogenous', 'v4'),
+            'LipidMaps-2017-12-12': ('LipidMaps', '2017-12-12'),
+            'PAMDB-v1.0': ('PAMDB', 'v1.0'),
+            'SwissLipids-2018-02-02': ('SwissLipids', '2018-02-02'),
+            'HMDB-v4-cotton': ('HMDB-cotton', 'v4'),
+            'ECMDB-2018-12': ('ECMDB', '2018-12'),
+        }
+        return database_name_version_map.get(name, (None, None))
+
+    def map_database_to_id(self, database: Union[int, str, Tuple[str, str]]):
         # Forwards/backwards compatibility issue: the GraphQL Schema may soon change from Int ids
         # to ID (i.e. str-based) ids. For now, this supports both types, and passes the type on
         # without modification. When the API has settled, this should be updated to coerce to the
         # correct type, because we shouldn't burden users with having to figure out why calls are
         # failing when they pass IDs that look like integers as integers instead of strings.
-        if isinstance(database, int) or re.match('^\d+$', database):
+        if isinstance(database, int):
             return database
 
-        database_docs = self.get_databases()
+        if isinstance(database, str) and re.match(r'^\d+$', database):
+            return int(database)
+
+        database_docs = self.get_visible_databases()
         database_name_id_map = defaultdict(list)
         for db in database_docs:
-            database_name_id_map[db['name']].append(db['id'])
+            database_name_id_map[(db['name'], db['version'])].append(db['id'])
 
-        database_ids = database_name_id_map.get(database, [])
+        if isinstance(database, tuple):
+            db_name, db_version = database
+        else:
+            db_name, db_version = self.map_database_name_to_name_version(database)
+
+        database_ids = database_name_id_map.get((db_name, db_version), [])
         if len(database_ids) == 0:
             raise Exception(
                 f'Database not found or you do not have access to it. Available databases: '
@@ -543,7 +629,7 @@ class GraphQLClient(object):
         priority=1,
     ):
         query = """
-            mutation updateMetadataDatabases($id: String!, $reprocess: Boolean, 
+            mutation updateMetadataDatabases($id: String!, $reprocess: Boolean,
                 $input: DatasetUpdateInput!, $priority: Int, $force: Boolean) {
                     updateDataset(
                       id: $id,
@@ -574,6 +660,52 @@ class GraphQLClient(object):
         }
 
         return self.query(query, variables)
+
+    def create_database(
+        self, local_path: Union[str, Path], name: str, version: str, is_public: bool = False
+    ) -> dict:
+        s3_path = multipart_upload(local_path, self._config['companion_url'])
+
+        query = f"""
+            mutation ($input: CreateMolecularDBInput!) {{
+              createMolecularDB(databaseDetails: $input) {{
+                id
+              }}
+            }}
+        """
+        variables = {
+            "input": {
+                "name": name,
+                "version": version,
+                "isPublic": is_public,
+                "filePath": s3_path,
+                "groupId": self.get_primary_group_id(),
+            }
+        }
+        return self.query(query, variables)['createMolecularDB']
+
+    def update_database(self, id: int, is_public: bool = None, archived: bool = None) -> dict:
+        query = f"""
+            mutation ($databaseId: Int!, $input: UpdateMolecularDBInput!) {{
+              updateMolecularDB(databaseId: $databaseId, databaseDetails: $input) {{
+                id
+              }}
+            }}
+        """
+        variables = {
+            "databaseId": id,
+            "input": {"isPublic": is_public, "archived": archived},
+        }
+        return self.query(query, variables)['updateMolecularDB']
+
+    def delete_database(self, id: int) -> bool:
+        query = f"""
+            mutation ($databaseId: Int!) {{
+              deleteMolecularDB(databaseId: $databaseId)
+            }}
+        """
+        variables = {"databaseId": id}
+        return self.query(query, variables)['deleteMolecularDB']
 
 
 def ion(r):
@@ -708,7 +840,7 @@ class SMDataset(object):
     def annotations(
         self,
         fdr: float = 0.1,
-        database: Union[str, int] = DEFAULT_DATABASE,
+        database: Union[int, str, Tuple[str, str]] = DEFAULT_DATABASE,
         return_vals: Iterable = ('sumFormula', 'adduct'),
         **annotation_filter,
     ) -> List[list]:
@@ -732,7 +864,7 @@ class SMDataset(object):
 
     def results(
         self,
-        database: Union[str, int] = DEFAULT_DATABASE,
+        database: Union[int, str, Tuple[str, str]] = DEFAULT_DATABASE,
         fdr: float = None,
         coloc_with: str = None,
         include_chem_mods: bool = False,
@@ -883,7 +1015,7 @@ class SMDataset(object):
             {
                 'sumFormula': sf,
                 'adduct': adduct,
-                'database': None,
+                'databaseId': None,
                 'neutralLoss': neutral_loss,
                 'chemMod': chem_mod,
             },
@@ -941,7 +1073,7 @@ class SMDataset(object):
     def all_annotation_images(
         self,
         fdr: float = 0.1,
-        database: Union[str, int] = DEFAULT_DATABASE,
+        database: Union[int, str, Tuple[str, str]] = DEFAULT_DATABASE,
         only_first_isotope: bool = False,
         scale_intensity: bool = True,
         hotspot_clipping: bool = False,
@@ -1044,6 +1176,35 @@ class SMDataset(object):
                 ex.map(download_link, link['files'])
 
 
+class MolecularDB:
+    def __init__(self, info, gqclient):
+        self._info = info
+        self._gqclient = gqclient
+
+    @property
+    def id(self):
+        return self._info['id']
+
+    @property
+    def name(self):
+        return self._info['name']
+
+    @property
+    def version(self):
+        return self._info['version']
+
+    @property
+    def is_public(self):
+        return self._info['isPublic']
+
+    @property
+    def archived(self):
+        return self._info['archived']
+
+    def __repr__(self):
+        return f'<{self.id}:{self.name}:{self.version}>'
+
+
 class SMInstance(object):
     def __init__(
         self,
@@ -1120,15 +1281,6 @@ class SMInstance(object):
     def all_adducts(self):
         raise NYI
 
-    def database(self, name: str = None, version: str = None, id: int = None) -> Dict:
-        """Fetch molecular database by id."""
-        databases = self._gqclient.get_databases()
-        results = [db for db in databases if db['id'] == id or db['name'] == name]
-        return results[0] if len(results) > 0 else None
-
-    def databases(self):
-        return self._gqclient.get_databases()
-
     def metadata(self, datasets):
         """
         Pandas dataframe for a subset of datasets
@@ -1193,9 +1345,9 @@ class SMInstance(object):
         :param imzml_fn: file path to imzml
         :param ibd_fn: file path to ibd
         :param metadata: a properly formatted metadata json string
-        :param s3bucket: this should be a bucket that both the user has write permission to and METASPACE can access 
+        :param s3bucket: this should be a bucket that both the user has write permission to and METASPACE can access
         :param folder_uuid: a unique key for the dataset
-        :return: 
+        :return:
         """
         try:
             import boto3
@@ -1280,6 +1432,45 @@ class SMInstance(object):
     def delete_dataset(self, ds_id, **kwargs):
         return self._gqclient.delete_dataset(ds_id, **kwargs)
 
+    def database(
+        self, name: str = None, version: str = None, id: int = None
+    ) -> Optional[MolecularDB]:
+        """Fetch molecular database by id."""
+
+        databases = self._gqclient.get_visible_databases()
+        db_match = None
+        if id:
+            for db in databases:
+                if db['id'] == id:
+                    db_match = db
+
+        elif name and version:
+            for db in databases:
+                if db['name'] == name and db['version'] == version:
+                    db_match = db
+
+        else:
+            name, version = self._gqclient.map_database_name_to_name_version(name)
+            for db in databases:
+                if db['name'] == name and db['version'] == version:
+                    db_match = db
+
+        return db_match and MolecularDB(db_match, self._gqclient)
+
+    def databases(self) -> List[MolecularDB]:
+        return [MolecularDB(db, self._gqclient) for db in self._gqclient.get_visible_databases()]
+
+    def create_database(
+        self, local_path: Union[str, Path], name: str, version: str, is_public: bool = False
+    ) -> dict:
+        return self._gqclient.create_database(local_path, name, version, is_public)
+
+    def update_database(self, id: int, is_public: bool = None, archived: bool = None) -> dict:
+        return self._gqclient.update_database(id, is_public, archived)
+
+    def delete_database(self, id: int) -> bool:
+        return self._gqclient.delete_database(id)
+
     def current_user_id(self):
         result = self._gqclient.query("""query { currentUser { id } }""")
         return result['currentUser'] and result['currentUser']['id']
@@ -1299,12 +1490,12 @@ class SMInstance(object):
         """
 
         result = self._gqclient.query(
-            """mutation($datasetId: String!, $provider: String!, $link: String!, 
+            """mutation($datasetId: String!, $provider: String!, $link: String!,
                         $replaceExisting: Boolean!) {
-                addDatasetExternalLink(datasetId: $datasetId, provider: $provider, link: $link, 
+                addDatasetExternalLink(datasetId: $datasetId, provider: $provider, link: $link,
                                        replaceExisting: $replaceExisting) {
                     externalLinks { provider link }
-                } 
+                }
             }""",
             {
                 'datasetId': dataset_id,
@@ -1331,43 +1522,11 @@ class SMInstance(object):
             """mutation($datasetId: String!, $provider: String!, $link: String!) {
                 removeDatasetExternalLink(datasetId: $datasetId, provider: $provider, link: $link) {
                     externalLinks { provider link }
-                } 
+                }
             }""",
             {'datasetId': dataset_id, 'provider': provider, 'link': link},
         )
         return result['removeDatasetExternalLink']['externalLinks']
-
-
-class MolecularDatabase:
-    """DEPRECATED. Use 'SMInstance.databases' instead."""
-
-    def __init__(self, metadata, client):
-        self._metadata = metadata
-        self._id = self._metadata['id']
-        self._client = client
-
-    @property
-    def name(self):
-        return self._metadata['name']
-
-    @property
-    def version(self):
-        return self._metadata['version']
-
-    def __repr__(self):
-        return "MolDB({} [{}])".format(self.name, self.version)
-
-    def sum_formulas(self):
-        return self._client.getMolFormulaList(self._id)
-
-    def names(self, sum_formula):
-        return self._client.getMolFormulaNames(self._id, sum_formula)
-
-    def ids(self, sum_formula):
-        return self._client.getMolFormulaIds(self._id, sum_formula)
-
-    def molecules(self, limit=100):
-        return self._client.get_molecules(self._id, ['sf', 'mol_id', 'mol_name'], limit=limit)
 
 
 def plot_diff(ref_df, dist_df, t='', xlabel='', ylabel='', col='msm'):
