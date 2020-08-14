@@ -6,7 +6,8 @@ import { EditorContent, EditorMenuBubble } from 'tiptap'
 import MenuItems from './MenuItems'
 import useEditor from './useEditor'
 
-const MenuElement = defineComponent({
+const MenuWrapper = defineComponent({
+  name: 'MenuWrapper',
   setup(_, { slots, parent }: any) {
     return () =>
       parent && parent.menu ? (
@@ -32,6 +33,7 @@ interface Props {
 }
 
 const RichTextArea = defineComponent<Props>({
+  name: 'RichTextArea',
   props: {
     content: String,
     onUpdate: Function,
@@ -59,9 +61,9 @@ const RichTextArea = defineComponent<Props>({
           editor={editor}
         />
         <EditorMenuBubble editor={editor} >
-          <MenuElement>
+          <MenuWrapper>
             <MenuItems editor={editor} />
-          </MenuElement>
+          </MenuWrapper>
         </EditorMenuBubble>
       </div>
     )

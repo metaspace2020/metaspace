@@ -10,6 +10,7 @@ interface Props {
 }
 
 export default defineComponent<Props>({
+  name: 'IdleState',
   props: {
     accept: Array,
     upload: { type: Function, required: true },

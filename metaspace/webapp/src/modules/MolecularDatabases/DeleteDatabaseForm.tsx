@@ -15,6 +15,7 @@ interface Props {
 }
 
 const Delete = defineComponent<Props>({
+  name: 'DeleteDatabaseForm',
   props: {
     db: { type: Object, required: true },
   },

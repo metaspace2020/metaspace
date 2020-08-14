@@ -28,6 +28,7 @@ function getValue(date: Date) {
 }
 
 export default defineComponent({
+  name: 'ElapsedTime',
   props: {
     date: { type: String, required: true },
   },

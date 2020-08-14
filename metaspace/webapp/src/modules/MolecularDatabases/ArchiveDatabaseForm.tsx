@@ -8,6 +8,7 @@ interface Props {
 }
 
 const Archive = defineComponent<Props>({
+  name: 'ArchiveDatabaseForm',
   props: {
     archived: { type: Boolean, required: true },
     submit: { type: Function, required: true },

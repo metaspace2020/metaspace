@@ -13,6 +13,7 @@ import ElapsedTime from '../../components/ElapsedTime'
 import { getGroupDatabasesQuery } from '../../api/group'
 
 const CheckColumn = defineComponent({
+  name: 'CheckColumn',
   props: {
     prop: { type: String, required: true },
     label: String,
@@ -46,6 +47,7 @@ interface Props {
 }
 
 const DatabasesTable = defineComponent<Props>({
+  name: 'DatabasesTable',
   props: {
     handleRowClick: { type: Function, required: true },
     groupId: { type: String, required: true },

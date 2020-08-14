@@ -38,6 +38,7 @@ interface Props {
 }
 
 const UploadDialog = defineComponent<Props>({
+  name: 'UploadDialog',
   props: {
     name: String,
     details: Object,

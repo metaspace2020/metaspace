@@ -12,6 +12,7 @@ interface State {
 }
 
 export default defineComponent({
+  name: 'MolecularDatabases',
   props: {
     canDelete: { type: Boolean, default: false },
     groupId: { type: String, required: true },

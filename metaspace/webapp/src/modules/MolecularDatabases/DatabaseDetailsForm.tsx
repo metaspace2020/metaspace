@@ -18,6 +18,7 @@ interface Props {
 }
 
 const Details = defineComponent<Props>({
+  name: 'DatabaseDetailsForm',
   props: {
     db: { type: Object, required: true },
     submit: { type: Function, required: true },

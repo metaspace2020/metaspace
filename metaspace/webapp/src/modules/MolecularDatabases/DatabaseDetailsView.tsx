@@ -28,6 +28,7 @@ interface Props {
 }
 
 const Details = defineComponent<Props>({
+  name: 'DatabaseDetailsView',
   props: {
     id: { type: Number, required: true },
     canDelete: { type: Boolean, default: false },

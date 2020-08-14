@@ -13,6 +13,7 @@ interface Props {
 }
 
 export default defineComponent<Props>({
+  name: 'HasFileState',
   props: {
     status: String,
     fileName: String,

@@ -10,6 +10,7 @@ interface Props {
 
 // https://css-tricks.com/building-progress-ring-quickly/
 export default defineComponent<Props>({
+  name: 'ProgressRing',
   props: {
     radius: Number,
     progress: Number,

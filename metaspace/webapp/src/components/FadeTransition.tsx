@@ -3,6 +3,7 @@ import { defineComponent } from '@vue/composition-api'
 interface Props {}
 
 export default defineComponent<Props>({
+  name: 'FadeTransition',
   setup(_, { slots }) {
     return () => (
       <transition

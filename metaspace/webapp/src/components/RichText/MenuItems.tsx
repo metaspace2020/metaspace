@@ -3,6 +3,7 @@
 import { defineComponent } from '@vue/composition-api'
 
 const MenuButton = defineComponent({
+  name: 'MenuButton',
   props: {
     isActive: Boolean,
     title: String,
@@ -25,6 +26,7 @@ const MenuButton = defineComponent({
 })
 
 export default defineComponent({
+  name: 'MenuItems',
   props: {
     editor: { type: Object, required: true },
   },
