@@ -3,7 +3,6 @@ import Vue from 'vue'
 import ViewGroupPage from './ViewGroupPage.vue'
 import router from '../../router'
 import { initMockGraphqlClient, apolloProvider } from '../../../tests/utils/mockGraphqlClient'
-import { mockMolecularDatabases } from '../../../tests/utils/mockGraphqlData'
 
 describe('ViewGroupPage', () => {
   const mockMembersForAdmins = [

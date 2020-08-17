@@ -1,24 +1,29 @@
-import { mount, Stubs } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
 import Vue from 'vue'
 import MolecularDatabases from './MolecularDatabases'
 import router from '../../router'
 import { initMockGraphqlClient, apolloProvider } from '../../../tests/utils/mockGraphqlClient'
 import { mockMolecularDatabases } from '../../../tests/utils/mockGraphqlData'
 
-describe.skip('MolecularDatabases', () => {
+describe('MolecularDatabases', () => {
+  const mockDatabases = mockMolecularDatabases()
   const mockGroup = {
     id: '00000000-1111-2222-3333-444444444444',
-    name: 'group name',
-    shortName: 'groupShortName',
-    urlSlug: null,
-    currentUserRole: null,
-    numMembers: 2,
-    members: [],
     numDatabases: 2,
+    molecularDatabases: [
+      {
+        ...mockDatabases[0],
+        archived: true,
+      },
+      {
+        ...mockDatabases[1],
+        isPublic: true,
+      },
+    ],
   }
 
-  const database = {
-    ...mockMolecularDatabases()[0],
+  const mockDatabase = {
+    ...mockDatabases[0],
     archived: false,
     citation: null,
     description: null,
@@ -30,37 +35,31 @@ describe.skip('MolecularDatabases', () => {
     },
   }
 
-  const mockGroupFn = jest.fn((src: any, args: any, ctx: any, info: any): any => mockGroup)
+  const mockDatabaseFn = jest.fn((src: any, args: any, ctx: any, info: any): any => mockDatabase)
   const graphqlMocks = {
     Query: () => ({
       currentUser: () => ({ id: 'userid' }),
-      group: mockGroupFn,
-      groupByUrlSlug: mockGroupFn,
-      allDatasets: () => ([
-        { id: 'datasetId1', name: 'dataset name 1', status: 'FINISHED' },
-        { id: 'datasetId2', name: 'dataset name 2', status: 'QUEUED' },
-        { id: 'datasetId3', name: 'dataset name 3', status: 'ANNOTATING' },
-        { id: 'datasetId4', name: 'dataset name 4', status: 'FINISHED' },
-      ]),
-      countDatasets: () => 4,
+      group: () => mockGroup,
+      molecularDB: mockDatabaseFn,
     }),
   }
 
-  const stubs: Stubs = {
-    DatasetItem: true,
-    MolecularDatabases: true,
-  }
+  // needs to be a full component for `router.app` to work
+  const TestMolecularDatabases = Vue.component('test-molecular-databases', {
+    components: { MolecularDatabases },
+    props: ['groupId', 'canDelete'],
+    template: '<molecular-databases :groupId="groupId" :canDelete="canDelete" />',
+  })
+
+  const propsData = { groupId: mockGroup.id }
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    jest.resetAllMocks()
   })
 
   it('should match snapshot', async() => {
-    mockGroupFn.mockImplementation(() => ({
-      ...mockGroup, currentUserRole: 'MEMBER', molecularDatabases: mockMolecularDatabases,
-    }))
     initMockGraphqlClient(graphqlMocks)
-    const wrapper = mount(MolecularDatabases, { router, stubs, apolloProvider })
+    const wrapper = mount(TestMolecularDatabases, { router, apolloProvider, propsData })
     await Vue.nextTick()
 
     expect(wrapper).toMatchSnapshot()
@@ -68,28 +67,30 @@ describe.skip('MolecularDatabases', () => {
 
   describe('details view', () => {
     beforeEach(() => {
-      router.replace({ query: { tab: 'databases', db: database.id.toString() } })
+      router.replace({ query: { tab: 'databases', db: mockDatabase.id.toString() } })
     })
 
     it('should match snapshot', async() => {
-      mockGroupFn.mockImplementation(() => ({
-        ...mockGroup,
-        currentUserRole: 'MEMBER',
-      }))
       initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(MolecularDatabases, { router, stubs, apolloProvider })
+      const wrapper = mount(TestMolecularDatabases, { router, apolloProvider, propsData })
+      await Vue.nextTick()
+
+      expect(wrapper).toMatchSnapshot()
+    })
+
+    it('should match snapshot (archived)', async() => {
+      mockDatabaseFn.mockImplementation(() => ({ ...mockDatabase, archived: true }))
+      initMockGraphqlClient(graphqlMocks)
+      const wrapper = mount(TestMolecularDatabases, { router, apolloProvider, propsData })
       await Vue.nextTick()
 
       expect(wrapper).toMatchSnapshot()
     })
 
     it('should match snapshot (manager)', async() => {
-      mockGroupFn.mockImplementation(() => ({
-        ...mockGroup,
-        currentUserRole: 'GROUP_ADMIN',
-      }))
       initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(MolecularDatabases, { router, stubs, apolloProvider })
+      const _propsData = { ...propsData, canDelete: true }
+      const wrapper = mount(TestMolecularDatabases, { router, apolloProvider, propsData: _propsData })
       await Vue.nextTick()
 
       expect(wrapper).toMatchSnapshot()
