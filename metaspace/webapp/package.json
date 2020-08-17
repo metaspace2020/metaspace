@@ -10,7 +10,8 @@
     "Lachlan Stuart <lachlan.stuart@embl.de>",
     "Renat Nigmetzianov <renat.nigmetzianov@embl.de>",
     "Theodore Alexandrov <theodore.alexandrov@embl.de>",
-    "Vitaly Kovalev <vitaly.kovalev@embl.de>"
+    "Vitaly Kovalev <vitaly.kovalev@embl.de>",
+    "Richard Goater <richard.goater@embl.de>"
   ],
   "private": true,
   "scripts": {
