@@ -47,7 +47,7 @@
     "@types/passport-local": "^1.0.33",
     "@types/sprintf-js": "^1.1.1",
     "@types/uuid": "^3.4.3",
-    "@uppy/companion": "^1.9.5",
+    "@uppy/companion": "^1.13.2",
     "ajv": "4.10.0",
     "amqplib": "^0.5.1",
     "apollo-server-express": "^2.15.0",
