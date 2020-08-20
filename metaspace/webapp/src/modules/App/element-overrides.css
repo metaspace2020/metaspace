@@ -113,3 +113,22 @@
 .el-message__content {
   @apply leading-snug;
 }
+
+.el-tabs__content {
+  overflow: visible; /* prevents shadows getting clipped */
+}
+.el-tabs.with-badges {
+  margin-top: -10px;
+}
+.el-tabs.with-badges .el-tabs__item {
+  margin-top: 10px;
+}
+
+.el-switch:focus-within {
+  outline: 2px solid theme('colors.gray.600');
+  outline-offset: 4px;
+}
+
+.el-switch.is-checked {
+  outline-color: theme('colors.primary');
+}

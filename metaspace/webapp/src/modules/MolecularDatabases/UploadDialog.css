@@ -1,0 +1,25 @@
+.sm-database-upload-dialog .el-dialog {
+  @apply w-full max-w-xl rounded-lg text-body overflow-hidden;
+}
+
+.sm-database-upload-dialog .el-dialog__header {
+  @apply p-6 leading-6;
+}
+
+.sm-database-upload-dialog .el-dialog__title {
+  @apply text-base font-medium;
+  color: inherit;
+}
+
+.sm-database-upload-dialog .el-dialog__header {
+  @apply p-6 leading-6;
+}
+
+.sm-database-upload-dialog .el-dialog__body {
+  @apply py-0 px-6 leading-5;
+  color: inherit;
+}
+
+.sm-database-upload-dialog .el-dialog__footer {
+  @apply p-6;
+}

@@ -1,4 +1,4 @@
-import { createComponent } from '@vue/composition-api'
+import { defineComponent } from '@vue/composition-api'
 
 /* checked and purging looks ok */
 const classes = `
@@ -11,7 +11,7 @@ const classes = `
 
 export const activeClass = 'bg-blue-700'
 
-export const HeaderLink = createComponent({
+export const HeaderLink = defineComponent({
   props: {
     to: { type: [String, Object] },
     isActive: Boolean,
@@ -31,7 +31,7 @@ export const HeaderLink = createComponent({
 
 export default HeaderLink
 
-export const HeaderButton = createComponent({
+export const HeaderButton = defineComponent({
   setup(props, { slots, listeners }) {
     return () => (
       <button

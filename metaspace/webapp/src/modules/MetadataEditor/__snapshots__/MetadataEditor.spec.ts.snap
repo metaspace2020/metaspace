@@ -43,8 +43,7 @@ Object {
   "analysisVersion": 1,
   "chemMods": Array [],
   "databaseIds": Array [
-    23,
-    22,
+    1,
   ],
   "decoySampleSize": null,
   "groupId": "123",
@@ -746,8 +745,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                       <!----></span></label>
                     <div class="el-form-item__content">
                       <mock-el-select value="currentUser.primaryGroup.group.id" required="true">
-                        <mock-el-option value="currentUser.groups.0.group.id" label="currentUser.groups.0.group.name"></mock-el-option>
-                        <mock-el-option value="currentUser.groups.1.group.id" label="currentUser.groups.1.group.name"></mock-el-option>
+                        <mock-el-option value="123" label="currentUser.groups.0.group.name"></mock-el-option>
                         <mock-el-option value="FIND_GROUP" label="Find my group..."></mock-el-option>
                         <mock-el-option value="NO_GROUP" label="No group (Enter PI instead)"></mock-el-option>
                       </mock-el-select>
@@ -927,8 +925,23 @@ exports[`MetadataEditor should match snapshot 1`] = `
                       </mock-el-popover>
                       </span></label>
                     <div class="el-form-item__content">
-                      <mock-el-select value="9" required="true" multiple="" multiple-limit="3">
-                        <mock-el-option value="9" label="molecularDatabases.0.name"></mock-el-option>
+                      <mock-el-select value="1" required="true" multiple="" multiple-limit="3">
+                        <ul class="el-select-group__wrap">
+                          <li class="el-select-group__title">METASPACE</li>
+                          <li>
+                            <ul class="el-select-group">
+                              <mock-el-option value="1" label="foo - v1"></mock-el-option>
+                            </ul>
+                          </li>
+                        </ul>
+                        <ul class="el-select-group__wrap">
+                          <li class="el-select-group__title">test</li>
+                          <li>
+                            <ul class="el-select-group">
+                              <mock-el-option value="2" label="bar - v1"></mock-el-option>
+                            </ul>
+                          </li>
+                        </ul>
                       </mock-el-select>
                       <transition-stub name="el-zoom-in-top">
                         <!---->

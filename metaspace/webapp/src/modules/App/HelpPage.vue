@@ -52,7 +52,7 @@
       class="collaboration column-layout"
     >
       <div>
-        <user-icon class="sm-colour-icon" />
+        <user-icon class="sm-colour-icon mb-2" />
         <h3>User</h3>
         <ul>
           <li>owner of their data</li>
@@ -62,7 +62,7 @@
         </ul>
       </div>
       <div>
-        <group-icon class="sm-colour-icon" />
+        <group-icon class="sm-colour-icon mb-2" />
         <h3>Group</h3>
         <ul>
           <li>users from same lab</li>
@@ -72,7 +72,7 @@
         </ul>
       </div>
       <div>
-        <work-icon class="sm-colour-icon" />
+        <work-icon class="sm-colour-icon mb-2" />
         <h3>Project</h3>
         <ul>
           <li>organise and share data</li>

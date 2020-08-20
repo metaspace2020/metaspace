@@ -1,4 +1,4 @@
-import { createComponent, reactive } from '@vue/composition-api'
+import { defineComponent, reactive } from '@vue/composition-api'
 import { get, set } from 'js-cookie'
 
 import CloseIcon from '../../assets/inline/refactoring-ui/close-circle.svg'
@@ -6,7 +6,7 @@ import CloseIcon from '../../assets/inline/refactoring-ui/close-circle.svg'
 const cookieKey = 'cookiebanner-accepted'
 const cookieValue = '1'
 
-export default createComponent({
+export default defineComponent({
   setup() {
     const state = reactive({
       agreed: get(cookieKey) === cookieValue,

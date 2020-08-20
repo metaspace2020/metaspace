@@ -126,8 +126,8 @@ export async function createStorageServerAsync(config: Config) {
     app.use('/dataset_upload', fineUploaderLocalMiddleware());
   }
 
-  const options = {
-    providerOptions: {
+  const providerOptions =
+    config.aws ? {
       s3: {
         getKey: (req: express.Request, filename: string, metadata: object) => {
           return `${config.upload.moldbPrefix}/${genUuid()}/${filename}`
@@ -140,7 +140,10 @@ export async function createStorageServerAsync(config: Config) {
         expires: 300,  // default: 300 (5 minutes)
         acl: 'private',  // default: public-read
       }
-    },
+    } : {}
+
+  const options = {
+    providerOptions,
     server: {
       host: `localhost:${config.img_storage_port}`,
       protocol: 'http',

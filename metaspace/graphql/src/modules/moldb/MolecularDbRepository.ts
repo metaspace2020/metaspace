@@ -1,4 +1,4 @@
-import {Brackets, EntityManager, EntityRepository, In} from 'typeorm';
+import {Brackets, EntityManager, EntityRepository, SelectQueryBuilder} from 'typeorm';
 import {UserError} from 'graphql-errors';
 import * as DataLoader from 'dataloader';
 import * as _ from 'lodash';
@@ -41,6 +41,26 @@ export class MolecularDbRepository {
     return qb;
   }
 
+  private queryWhereFiltered(user: ContextUser, usable?: boolean, groupId?: string|null) {
+    const andWhereClauses: any = [];
+    if (usable === true) {
+      const groupIdClause = new Brackets(
+        qb => !qb.where('moldb.group_id is NULL').orWhere('moldb.group_id = ANY(:usableGroupIds)',
+        { usableGroupIds: user.groupIds ?? [] })
+      );
+      const usableClause = new Brackets(qb => qb.where('moldb.archived = false').andWhere(groupIdClause));
+      andWhereClauses.push(usableClause);
+    }
+    if (groupId !== undefined) {
+      const groupIdClause: Brackets =
+        (groupId === null)
+        ? new Brackets(qb => qb.where('moldb.group_id IS NULL'))
+        : new Brackets(qb => qb.where('moldb.group_id = :groupId', { groupId }));
+      andWhereClauses.push(groupIdClause);
+    }
+    return this.queryWhere(user, andWhereClauses)
+  }
+
   private getDataLoader(ctx: Context) {
     return ctx.contextCacheGet('MolecularDbRepository.getDataLoader', [], () => {
       return new DataLoader(async (databaseIds: number[]): Promise<any[]> => {
@@ -70,23 +90,11 @@ export class MolecularDbRepository {
     return databases.filter(db => db != null);
   }
 
-  async findDatabases(user: ContextUser, usable?: boolean, groupId?: string|null): Promise<MolecularDB[]> {
-    const andWhereClauses: any = [];
-    if (usable === true) {
-      const groupIdClause = new Brackets(
-        qb => !qb.where('moldb.group_id is NULL').orWhere('moldb.group_id = ANY(:usableGroupIds)',
-        { usableGroupIds: user.groupIds ?? [] })
-      );
-      const usableClause = new Brackets(qb => qb.where('moldb.archived = false').andWhere(groupIdClause));
-      andWhereClauses.push(usableClause);
-    }
-    if (groupId !== undefined) {
-      const groupIdClause: Brackets =
-        (groupId === null)
-        ? new Brackets(qb => qb.where('moldb.group_id IS NULL'))
-        : new Brackets(qb => qb.where('moldb.group_id = :groupId', { groupId }));
-      andWhereClauses.push(groupIdClause);
-    }
-    return await this.queryWhere(user, andWhereClauses).getMany();
+  findDatabases(user: ContextUser, usable?: boolean, groupId?: string|null): Promise<MolecularDB[]> {
+    return this.queryWhereFiltered(user, usable, groupId).getMany();
+  }
+
+  countDatabases(user: ContextUser, usable?: boolean, groupId?: string|null): Promise<number> {
+    return this.queryWhereFiltered(user, usable, groupId).getCount()
   }
 }

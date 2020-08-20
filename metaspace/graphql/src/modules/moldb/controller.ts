@@ -1,6 +1,5 @@
 import {IResolvers} from 'graphql-tools';
 import {UserError} from 'graphql-errors';
-import { validateTiptapJson } from '../../utils/tiptap';
 
 import logger from '../../utils/logger';
 import {Context} from '../../context';
@@ -11,6 +10,7 @@ import {smApiCreateDatabase, smApiUpdateDatabase, smApiDeleteDatabase} from '../
 import {assertImportFileIsValid} from './util/assertImportFileIsValid';
 import {MolecularDbRepository} from './MolecularDbRepository';
 import {assertUserBelongsToGroup} from './util/assertUserBelongsToGroup';
+import validateInput from './util/validateInput';
 
 const MolecularDbResolvers: FieldResolversFor<MolecularDB, MolecularDbModel> = {
   async createdDT(database, args, ctx: Context): Promise<string> {
@@ -66,10 +66,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     logger.info(`User ${ctx.user.id} is creating molecular database ${JSON.stringify(databaseDetails)}`);
     const groupId = databaseDetails.groupId as string;
     assertUserBelongsToGroup(ctx, groupId);
-    if (databaseDetails.citation != null) {
-      validateTiptapJson(databaseDetails.citation, 'citation')
-    }
-
+    validateInput(databaseDetails)
     await assertImportFileIsValid(databaseDetails.filePath);
 
     const { id } = await smApiCreateDatabase({ ...databaseDetails, groupId });
@@ -79,9 +76,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
   async updateMolecularDB(source, { databaseId, databaseDetails }, ctx): Promise<MolecularDbModel> {
     logger.info(`User ${ctx.user.id} is updating molecular database ${JSON.stringify(databaseDetails)}`);
     await assertUserCanEditMolecularDB(ctx, databaseId);
-    if (databaseDetails.citation != null) {
-      validateTiptapJson(databaseDetails.citation, 'citation')
-    }
+    validateInput(databaseDetails)
 
     const { id } = await smApiUpdateDatabase(databaseId, databaseDetails);
     return await ctx.entityManager.getCustomRepository(MolecularDbRepository).findDatabaseById(ctx, id);

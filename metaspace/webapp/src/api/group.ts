@@ -1,4 +1,5 @@
 import gql from 'graphql-tag'
+import { MolecularDB } from './moldb'
 
 export type UserGroupRole = 'INVITED' | 'PENDING' | 'MEMBER' | 'GROUP_ADMIN';
 export const UserGroupRoleOptions: {[R in UserGroupRole]: R} = {
@@ -62,7 +63,7 @@ export const removeUserFromGroupMutation =
   }`
 
 export const requestAccessToGroupMutation =
-  gql`mutation requestAccessToGroup($groupId: ID!) { 
+  gql`mutation requestAccessToGroup($groupId: ID!) {
     requestAccessToGroup(groupId: $groupId) {
       role # GraphQL demands a return value be specified
     }
@@ -83,14 +84,14 @@ export const inviteUserToGroupMutation =
   }`
 
 export const acceptGroupInvitationMutation =
-  gql`mutation acceptGroupInvitation($groupId: ID!) { 
+  gql`mutation acceptGroupInvitation($groupId: ID!) {
     acceptGroupInvitation(groupId: $groupId) {
       role
     }
   }`
 
 export const leaveGroupMutation =
-  gql`mutation leaveGroup($groupId: ID!) { 
+  gql`mutation leaveGroup($groupId: ID!) {
     leaveGroup(groupId: $groupId)
   }`
 
@@ -152,6 +153,7 @@ export interface ViewGroupResult {
   numMembers: number;
   groupDescriptionAsHtml: string;
   members: ViewGroupMember[] | null;
+  numDatabases: number;
 }
 
 interface ViewGroupMember {
@@ -177,4 +179,21 @@ export const ViewGroupFragment = gql`fragment ViewGroupFragment on Group {
     user { id name email }
   }
   groupDescriptionAsHtml
+  numDatabases
 }`
+
+export const getGroupDatabasesQuery =
+  gql`query GetGroupDatabasesQuery($groupId: ID!) {
+    group(groupId: $groupId) {
+      id
+      numDatabases # updates tab count when database is added
+      molecularDatabases {
+        archived
+        createdDT
+        id
+        isPublic
+        name
+        version
+      }
+    }
+  }`

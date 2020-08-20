@@ -9,6 +9,7 @@ type Group {
   members: [UserGroup!]    # null if current user is not allowed to see
   groupDescriptionAsHtml: String
   molecularDatabases: [MolecularDB!]
+  numDatabases: Int!
 }
 
 input CreateGroupInput {

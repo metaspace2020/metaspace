@@ -12,24 +12,36 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     <!---->
     <!---->
   </div>
-  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="database" options="">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="database" filter-key="database" name="Database" options="">
     <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Database:
       <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
-        <mock-el-select placeholder="Start typing name" remote="" filterable="" remote-method="function () { [native code] }" loading-text="Loading matching entries..." no-match-text="No matches" multiple-limit="10" value="1">
-          <mock-el-option value="1" label="foo"></mock-el-option>
-          <mock-el-option label="bar" value="2"></mock-el-option>
+        <mock-el-select placeholder="Start typing name" remote="" remote-method="function () { [native code] }" filterable="" loading-text="Loading matching entries..." no-data-text="No matches" no-match-text="No matches" reserve-keyword="" value="1">
+          <ul class="el-select-group__wrap">
+            <li class="el-select-group__title">METASPACE</li>
+            <li>
+              <ul class="el-select-group">
+                <mock-el-option value="1" label="foo - v1"></mock-el-option>
+              </ul>
+            </li>
+          </ul>
+          <ul class="el-select-group__wrap">
+            <li class="el-select-group__title">test</li>
+            <li>
+              <ul class="el-select-group">
+                <mock-el-option value="2" label="bar - v1"></mock-el-option>
+              </ul>
+            </li>
+          </ul>
         </mock-el-select>
       </div>
       <div slot-key="reference">
-        <div class="tf-value"><span class="tf-value-span"><span>
-      foo
-    </span>
-          <!---->
-          <!----></span>
+        <div class="tf-value"><span class="tf-value-span">
+    foo - v1
+  </span>
           <!---->
         </div>
       </div>
@@ -87,8 +99,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       <div slot-key="default">
         <mock-el-select placeholder="Start typing name" remote="" filterable="" clearable="true" remote-method="function () { [native code] }" loading-text="Loading matching entries..." no-match-text="No matches" multiple-limit="10" value="0123">
           <mock-el-option value="0123" label="group.label"></mock-el-option>
-          <mock-el-option label="currentUser.groups.0.group.label" value="currentUser.groups.0.group.value"></mock-el-option>
-          <mock-el-option label="currentUser.groups.1.group.label" value="currentUser.groups.1.group.value"></mock-el-option>
+          <mock-el-option label="currentUser.groups.0.group.label" value="123"></mock-el-option>
         </mock-el-select>
       </div>
       <div slot-key="reference">
