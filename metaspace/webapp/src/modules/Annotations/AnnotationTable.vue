@@ -191,7 +191,8 @@
         min-width="40"
       >
         <template slot-scope="props">
-          <span> {{ Math.round(props.row.fdrLevel * 100) }}% </span>
+          <span v-if="props.row.fdrLevel == null">&mdash;</span>
+          <span v-else>{{ Math.round(props.row.fdrLevel * 100) }}%</span>
         </template>
       </el-table-column>
 
@@ -500,10 +501,11 @@ export default Vue.extend({
     getRowClass({ row }) {
       const { fdrLevel, colocalizationCoeff } = row
       const fdrClass =
-         fdrLevel <= 0.051 ? 'fdr-5'
-           : fdrLevel <= 0.101 ? 'fdr-10'
-             : fdrLevel <= 0.201 ? 'fdr-20'
-               : 'fdr-50'
+          fdrLevel == null ? 'fdr-null'
+            : fdrLevel <= 0.051 ? 'fdr-5'
+              : fdrLevel <= 0.101 ? 'fdr-10'
+                : fdrLevel <= 0.201 ? 'fdr-20'
+                  : 'fdr-50'
       const colocClass =
          colocalizationCoeff == null ? ''
            : colocalizationCoeff >= 0.949 ? 'coloc-95'
@@ -749,6 +751,10 @@ export default Vue.extend({
    background-color: transparent;
  }
 
+  .el-table__body tr.fdr-null > td.fdr-cell, .fdr-legend.fdr-null {
+    @apply bg-blue-100;
+  }
+
  .el-table__body tr.fdr-5 > td.fdr-cell, .fdr-legend.fdr-5, .el-table__body tr.coloc-95 > td.coloc-cell {
    background-color: #c8ffc8;
  }
@@ -763,6 +769,10 @@ export default Vue.extend({
 
  .el-table__body tr.fdr-50 > td.fdr-cell, .fdr-legend.fdr-50, .el-table__body tr.coloc-50 > td.coloc-cell {
    background-color: #fff5e0;
+ }
+
+ .el-table__body tr.fdr-null.current-row > td {
+   background-color: theme('backgroundColor.blue.200') !important;
  }
 
  .el-table__body tr.fdr-5.current-row > td {

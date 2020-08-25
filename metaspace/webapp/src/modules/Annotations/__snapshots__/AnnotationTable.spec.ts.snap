@@ -133,7 +133,7 @@ exports[`AnnotationTable should match snapshot 1`] = `
               <div class="cell"><span>0.657</span></div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_6  fdr-cell">
-              <div class="cell"><span> 10% </span></div>
+              <div class="cell"><span>10%</span></div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_7  coloc-cell">
               <div class="cell"><span>
