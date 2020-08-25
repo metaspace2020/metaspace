@@ -13,9 +13,17 @@ interface ColorScale {
   range: d3.RGBColor[]
 }
 
+const channels: any = {
+  red: [[0, 'rgb(0,0,0)'], [1, 'rgb(255, 0, 0)']],
+  green: [[0, 'rgb(0,0,0)'], [1, 'rgb(0, 255, 0)']],
+  blue: [[0, 'rgb(0,0,0)'], [1, 'rgb(0, 0, 255)']],
+}
+
 export default function getColorScale(name: string): ColorScale {
   if (name[0] !== '-') {
-    return extractScale(scales[name], 0, 1) // normal
+    // console.log(scales[name])
+    return extractScale(channels[name] || scales[name], 0, 1) // normal
+    // return extractScale(, 0, 1) // normal
   } else {
     // inverted - reverse both arrays so that the domain is always in ascending order
     const { domain, range } = extractScale(scales[name.slice(1)], 1, 0)

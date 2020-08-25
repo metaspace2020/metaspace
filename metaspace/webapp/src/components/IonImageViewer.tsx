@@ -4,7 +4,7 @@ import { computed, defineComponent, reactive, Ref, ref, SetupContext, watch } fr
 import { getOS, scrollDistance, WheelEventCompat } from '../lib/util'
 import createColormap, { OpacityMode } from '../lib/createColormap'
 import config from '../lib/config'
-import { renderIonImage } from '../lib/ionImageRendering'
+import { renderIonImage, renderIonImages } from '../lib/ionImageRendering'
 import ScaleBar from './ScaleBar.vue'
 import { throttle } from 'lodash-es'
 import { ReferenceObject } from 'popper.js'
@@ -217,8 +217,8 @@ const usePanAndZoom = (
   const viewBoxStyle = computed(() => {
     const isLCMS = false
     if (!isLCMS) {
-      const ionImageWidth = (props.ionImage != null ? props.ionImage.width : props.width)
-      const ionImageHeight = (props.ionImage != null ? props.ionImage.height : props.height)
+      const ionImageWidth = (props.ionImage != null ? props.ionImage[0].width : props.width)
+      const ionImageHeight = (props.ionImage != null ? props.ionImage[0].height : props.height)
       const x = props.width / 2 + (props.xOffset - ionImageWidth / 2) * zoomX.value
       const y = props.height / 2 + (props.yOffset - ionImageHeight / 2) * zoomY.value
       return {
@@ -335,8 +335,15 @@ const useBufferedOpticalImage = (props: Props) => {
 }
 
 const useIonImageView = (props: Props) => {
-  const cmap = computed(() => createColormap(props.colormap, props.opacityMode, props.annotImageOpacity))
-  const ionImageDataUri = computed(() => props.ionImage && renderIonImage(props.ionImage, cmap.value))
+  const cmap = computed(() => [
+    createColormap('red', props.opacityMode, props.annotImageOpacity),
+    createColormap('green', props.opacityMode, props.annotImageOpacity),
+    createColormap('blue', props.opacityMode, props.annotImageOpacity),
+  ])
+  // const ionImageDataUri = computed(() => props.ionImage && renderIonImage(props.ionImage, cmap.value[0]))
+  const ionImageDataUri = computed(() =>
+    props.ionImage && renderIonImages(props.ionImage, cmap.value),
+  )
   const renderIonImageView = () => (props.ionImage
     && <img
       src={ionImageDataUri.value}
@@ -350,7 +357,7 @@ const useIonImageView = (props: Props) => {
 
 export default defineComponent<Props>({
   props: {
-    ionImage: Object,
+    ionImage: Array,
     isLoading: { type: Boolean, default: false },
     // width & height of HTML element
     width: { type: Number, required: true },

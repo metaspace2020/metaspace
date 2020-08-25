@@ -251,11 +251,11 @@ export const processIonImage = (png: Image, minIntensity: number = 0, maxIntensi
   }
 }
 
-export const renderIonImageToBuffer = (ionImage: IonImage, cmap?: readonly number[][]) => {
+export const renderIonImageToBuffer = (ionImage: IonImage, cmap?: readonly number[][], buffer?: ArrayBuffer) => {
   const { clippedValues, mask } = ionImage
   // Treat pixels as 32-bit values instead of four 8-bit values to avoid extra math.
   // Assume little-endian byte order, because big-endian is pretty much gone.
-  const outputBuffer = new ArrayBuffer(clippedValues.length * 4)
+  const outputBuffer = buffer || new ArrayBuffer(clippedValues.length * 4)
   const outputRGBA = new Uint32Array(outputBuffer)
   const cmapBuffer = new ArrayBuffer(256 * 4)
   const cmapComponents = new Uint8ClampedArray(cmapBuffer)
@@ -276,12 +276,25 @@ export const renderIonImageToBuffer = (ionImage: IonImage, cmap?: readonly numbe
 
   for (let i = 0; i < mask.length; i++) {
     if (mask[i]) {
-      outputRGBA[i] = cmapRGBA[clippedValues[i]]
+      outputRGBA[i] += cmapRGBA[clippedValues[i]]
     } else {
-      outputRGBA[i] = emptyRGBA
+      outputRGBA[i] += emptyRGBA
     }
   }
   return outputBuffer
+}
+
+type Cmap = number[][]
+
+export const renderIonImages = (ionImages: IonImage[], cmaps: readonly Cmap[]) => {
+  const { width, height } = ionImages[0]
+
+  let buffer: ArrayBuffer
+  ionImages.forEach((img, i) => {
+    buffer = renderIonImageToBuffer(img, cmaps[i], buffer)
+  })
+
+  return createDataUrl(new Uint8ClampedArray(buffer), width, height)
 }
 
 export const renderIonImage = (ionImage: IonImage, cmap?: readonly number[][]) => {

@@ -10,7 +10,7 @@
     >
       <ion-image-viewer
         ref="imageLoader"
-        :ion-image="ionImage"
+        :ion-image="ionImages"
         :is-loading="ionImageIsLoading"
         :colormap="colormap"
         :pixel-size-x="pixelSizeX"
@@ -152,7 +152,7 @@ export default class MainImage extends Vue {
     scaleType?: ScaleType
 
     ionImageUrl: string | null = null;
-    ionImagePng: Image | null = null;
+    ionImagePng: Image[] | null = null;
     ionImageIsLoading = false;
     imageViewerWidth: number = 500;
     imageViewerHeight: number = 500;
@@ -174,32 +174,56 @@ export default class MainImage extends Vue {
 
     @Watch('annotation')
     async updateIonImage() {
-      const isotopeImage = get(this.annotation, 'isotopeImages[0]')
-      const newUrl = isotopeImage != null ? isotopeImage.url : null
-      if (newUrl != null && newUrl !== this.ionImageUrl) {
-        this.ionImageUrl = newUrl
-        this.ionImageIsLoading = true
-        try {
-          const png = await loadPngFromUrl(newUrl)
-          if (newUrl === this.ionImageUrl) {
-            this.ionImagePng = png
-            this.ionImageIsLoading = false
-          }
-        } catch (err) {
-          reportError(err, null)
-          if (newUrl === this.ionImageUrl) {
-            this.ionImagePng = null
-            this.ionImageIsLoading = false
-          }
-        }
+      // const isotopeImage = get(this.annotation, 'isotopeImages[0]')
+      // const newUrl = isotopeImage != null ? isotopeImage.url : null
+      // if (newUrl != null && newUrl !== this.ionImageUrl) {
+      //   this.ionImageUrl = newUrl
+      //   this.ionImageIsLoading = true
+      //   try {
+      //     const png = await loadPngFromUrl(newUrl)
+      //     if (newUrl === this.ionImageUrl) {
+      //       this.ionImagePng = png
+      //       this.ionImageIsLoading = false
+      //     }
+      //   } catch (err) {
+      //     reportError(err, null)
+      //     if (newUrl === this.ionImageUrl) {
+      //       this.ionImagePng = null
+      //       this.ionImageIsLoading = false
+      //     }
+      //   }
+      // }
+      this.ionImageIsLoading = true
+      Promise.all([
+        loadPngFromUrl(''),
+        loadPngFromUrl(''),
+        loadPngFromUrl(''),
+      ])
+        .then(imgs => {
+          // this.__png1 = img
+          this.ionImagePng = imgs
+          this.ionImageIsLoading = false
+          // console.log(this.__png1)
+        })
+    }
+
+    get ionImages(): IonImage[] | null {
+      // console.log(this.__png1)
+      if (this.ionImagePng != null) {
+        const isotopeImage = get(this.annotation, 'isotopeImages[0]')
+        const { minIntensity = 0, maxIntensity = 5.57e+3 } = {}
+        return this.ionImagePng.map(img =>
+          processIonImage(img, minIntensity, maxIntensity, this.scaleType),
+        )
+      } else {
+        return null
       }
     }
 
     get ionImage(): IonImage | null {
-      if (this.ionImagePng != null) {
-        const isotopeImage = get(this.annotation, 'isotopeImages[0]')
-        const { minIntensity, maxIntensity } = isotopeImage
-        return processIonImage(this.ionImagePng, minIntensity, maxIntensity, this.scaleType)
+      // console.log(this.__png1)
+      if (this.ionImages != null) {
+        return this.ionImages[0]
       } else {
         return null
       }
