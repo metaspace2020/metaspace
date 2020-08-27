@@ -97,7 +97,7 @@ export class Job {
   @JoinColumn({ name: 'ds_id' })
   dataset: EngineDataset;
 
-  @ManyToOne(type => MolecularDB)
+  @ManyToOne(type => MolecularDB, {onDelete: 'CASCADE'})
   @JoinColumn({ name: 'moldb_id' })
   molecularDB: MolecularDB;
 

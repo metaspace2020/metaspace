@@ -306,7 +306,7 @@ ALTER TABLE "public"."job" ADD CONSTRAINT "FK_f6baae98b3a2436b6f98318d5d0" FOREI
 
 ALTER TABLE "public"."job" ADD CONSTRAINT "FK_07f17ed55cabe0ef556bc0e0c93" FOREIGN KEY (
   "moldb_id") REFERENCES "public"."molecular_db"("id"
-) ON DELETE NO ACTION ON UPDATE NO ACTION;
+) ON DELETE CASCADE ON UPDATE NO ACTION;
 
 ALTER TABLE "public"."annotation" ADD CONSTRAINT "FK_bfed30991918671d59fc1f5d5e4" FOREIGN KEY (
   "job_id") REFERENCES "public"."job"("id"
