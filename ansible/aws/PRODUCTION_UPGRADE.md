@@ -66,6 +66,15 @@ git tag 1.7.6
 git push origin 1.7.6
 ```
 
+#### If needed, update the Ansible config [repository](https://github.com/intsco/metaspace-ansible-config)
+
+The repository is located at `ansible/aws/env`.
+```
+cd ansible/aws/env
+git checkout master or git switch master
+git pull origin master
+```
+
 # Choose a deployment strategy
 
 Select one of the following based on whether the new code is compatible with the existing data. 
