@@ -64,7 +64,7 @@ SEL_ION_IMAGES = (
     'from dataset d '
     'join job j on j.ds_id = d.id '
     'join annotation m on m.job_id = j.id '
-    'where d.id = %s and (%s or m.off_sample is null)'
+    'where d.id = %s and (%s or m.off_sample is null) and iso_image_ids[1] is not NULL '
     'order by m.id '
 )
 UPD_OFF_SAMPLE = (
