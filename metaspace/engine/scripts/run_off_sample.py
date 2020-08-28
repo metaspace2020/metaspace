@@ -16,6 +16,8 @@ WHERE j.status = 'FINISHED'
 ORDER BY j.ds_id DESC;
 """
 
+logger = logging.getLogger('engine')
+
 
 def run_off_sample(sm_config, ds_ids_str, sql_where, fix_missing, overwrite_existing):
     db = DB()
@@ -81,9 +83,8 @@ def parse_args():
     return args
 
 
-if __name__ == '__main__':
+def main():
     args = parse_args()
-    logger = logging.getLogger('engine')
 
     with GlobalInit(args.config) as sm_config:
         run_off_sample(
@@ -93,3 +94,7 @@ if __name__ == '__main__':
             fix_missing=args.fix_missing,
             overwrite_existing=args.overwrite_existing,
         )
+
+
+if __name__ == '__main__':
+    main()
