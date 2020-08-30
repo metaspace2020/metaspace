@@ -128,7 +128,7 @@ export default class DatabaseFilter extends Vue {
 
         const groups = getDatabasesByGroup(
           data.allMolecularDBs,
-          data.currentUser.groups,
+          data.currentUser ? data.currentUser.groups : [],
         )
 
         const groupOptions: GroupOption[] = []
