@@ -38,12 +38,33 @@ export interface MolDBsByGroup {
 }
 
 interface UserGroup {
-  group: MolDBsByGroup
+  group: {
+    id: string
+    shortName: string
+  }
 }
 
-export function getDatabasesByGroup(metaspaceDBs: MolecularDB[], dbsByGroup: UserGroup[]) : MolDBsByGroup[] {
+export function getDatabasesByGroup(molDBs: MolecularDB[], groups: UserGroup[]) : MolDBsByGroup[] {
+  const metaspaceDBs = []
+  const groupedDBs: Record<string, MolecularDB[]> = {}
+
+  for (const db of molDBs) {
+    if (db.group === null) {
+      metaspaceDBs.push(db)
+    } else if (db.group.id in groupedDBs) {
+      groupedDBs[db.group.id].push(db)
+    } else {
+      groupedDBs[db.group.id] = [db]
+    }
+  }
+
   return [
     { shortName: 'METASPACE', molecularDatabases: metaspaceDBs },
-    ...sortBy(dbsByGroup.map(_ => _.group).filter(_ => _.molecularDatabases.length > 0), 'shortName'),
+    ...sortBy(
+      groups
+        .filter(({ group }) => group.id in groupedDBs)
+        .map(({ group }) => ({ ...group, molecularDatabases: groupedDBs[group.id] })),
+      'shortName',
+    ),
   ]
 }

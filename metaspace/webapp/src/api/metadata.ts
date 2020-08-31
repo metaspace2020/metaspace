@@ -128,22 +128,20 @@ export const neutralLossSuggestionQuery = gql`query neutralLossSuggestionQuery($
 }`
 
 export const metadataOptionsQuery = gql`query metadataOptionsQuery {
-  molecularDatabases: allMolecularDBs(filter: { global: true }) {
+  molecularDatabases: allMolecularDBs(filter: { usable: true }) {
     id,
     name,
     version,
     default,
+    group {
+      id
+    }
   }
-  molDBsByUserGroup: currentUser {
+  currentUser {
     groups {
       group {
         id
         shortName
-        molecularDatabases {
-          id,
-          name,
-          version,
-        }
       }
     }
   }

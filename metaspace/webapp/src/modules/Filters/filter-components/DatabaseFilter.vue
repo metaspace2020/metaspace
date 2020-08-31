@@ -10,17 +10,14 @@
       ref="select"
       placeholder="Start typing name"
       :clearable="false"
-      remote
-      :remote-method="fetchOptions"
       filterable
-      :loading="loading"
-      loading-text="Loading matching entries..."
+      :filter-method="filterOptions"
       no-data-text="No matches"
       no-match-text="No matches"
       reserve-keyword
       :value="valueIfKnown"
       @change="onInput"
-      @visible-change="fetchOptions('')"
+      @visible-change="filterOptions('')"
     >
       <el-option-group
         v-for="group in groups"
@@ -35,18 +32,18 @@
         />
       </el-option-group>
     </el-select>
-    <i
-      v-if="firstLoad"
-      slot="show"
-      class="el-icon-loading"
-    />
     <span
-      v-else
+      v-if="initialized"
       slot="show"
       class="tf-value-span"
     >
       {{ label }}
     </span>
+    <i
+      v-else
+      slot="show"
+      class="el-icon-loading"
+    />
   </tag-filter>
 </template>
 
@@ -61,6 +58,7 @@ import TagFilter from './TagFilter.vue'
 import { Option } from './searchableFilterQueries'
 import { MolecularDB } from '../../../api/moldb'
 import { formatDatabaseLabel, getDatabasesByGroup } from '../../MolecularDatabases/formatting'
+import { watch } from '@vue/composition-api'
 
 interface GroupOption {
   label: string
@@ -75,6 +73,33 @@ function mapDBtoOption(db: MolecularDB): Option {
 }
 
 @Component({
+  apollo: {
+    dbsByGroup: {
+      query: gql`query DatabaseOptions {
+        allMolecularDBs {
+          id
+          name
+          version
+          group {
+            id
+          }
+        }
+        currentUser {
+          groups {
+            group {
+              id
+              shortName
+            }
+          }
+        }
+      }`,
+      update: data =>
+        getDatabasesByGroup(
+          data.allMolecularDBs,
+          data.currentUser ? data.currentUser.groups : [],
+        ),
+    },
+  },
   components: {
     TagFilter,
   },
@@ -83,21 +108,12 @@ export default class DatabaseFilter extends Vue {
     @Prop()
     value!: string | undefined;
 
-    firstLoad = true
-    loading = false;
+    dbsByGroup: any = null
     options: Record<string, Option> = {};
     groups: GroupOption[] = []
     previousQuery: string | null = null
 
-    created() {
-      this.fetchOptions('')
-        .then(() => { this.firstLoad = false })
-    }
-
     get label() {
-      if (this.firstLoad) {
-        return ''
-      }
       if (this.value === undefined) {
         return '(any)'
       }
@@ -114,45 +130,27 @@ export default class DatabaseFilter extends Vue {
       return this.value
     }
 
-    async fetchOptions(query: string) {
-      if (query === this.previousQuery) return
+    get initialized() {
+      return this.dbsByGroup !== null && this.groups.length > 0
+    }
 
-      this.loading = true
+    @Watch('dbsByGroup')
+    initialiseOptions() {
+      this.previousQuery = null
+      this.options = {}
+      this.filterOptions('')
+    }
+
+    filterOptions(query: string) {
+      if (query === this.previousQuery || this.dbsByGroup === null) {
+        return
+      }
 
       try {
-        const { data } = await this.$apollo.query({
-          query: gql`query DatabaseOptions {
-            allMolecularDBs(filter: { global: true }) {
-              id
-              name
-              version
-            }
-            currentUser {
-              groups {
-                group {
-                  id
-                  shortName
-                  molecularDatabases {
-                    id
-                    name
-                    version
-                  }
-                }
-              }
-            }
-          }`,
-          fetchPolicy: 'cache-first',
-        })
-
-        const groups = getDatabasesByGroup(
-          data.allMolecularDBs,
-          data.currentUser ? data.currentUser.groups : [],
-        )
-
         const groupOptions: GroupOption[] = []
         const queryRegex = new RegExp(query, 'i')
 
-        for (const group of groups) {
+        for (const group of this.dbsByGroup) {
           const options: Option[] = []
           for (const db of group.molecularDatabases) {
             const id = db.id.toString()
@@ -178,8 +176,6 @@ export default class DatabaseFilter extends Vue {
         this.groups = []
         this.previousQuery = null
         throw err
-      } finally {
-        this.loading = false
       }
     }
 

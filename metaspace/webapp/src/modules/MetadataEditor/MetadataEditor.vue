@@ -266,10 +266,6 @@ export default {
         adducts: config.features.all_adducts
           ? data.adducts
           : data.adducts.filter(ad => !ad.hidden),
-        molecularDatabases:
-          config.features.all_dbs
-            ? data.molecularDatabases
-            : data.molecularDatabases.filter(db => !db.hidden),
       }
     },
 
@@ -301,12 +297,12 @@ export default {
       const metadata = this.importMetadata(loadedMetadata, mdType)
 
       // Load options
-      const { adducts, molecularDatabases, molDBsByUserGroup } = options
+      const { adducts, molecularDatabases, currentUser } = options
       this.possibleAdducts = {
         Positive: adducts.filter(a => a.charge > 0),
         Negative: adducts.filter(a => a.charge < 0),
       }
-      this.molDBsByGroup = getDatabasesByGroup(molecularDatabases, molDBsByUserGroup.groups)
+      this.molDBsByGroup = getDatabasesByGroup(molecularDatabases, currentUser.groups)
       this.schema = deriveFullSchema(metadataSchemas[mdType])
 
       if (this.isNew) {
@@ -320,9 +316,7 @@ export default {
           metaspaceOptions.databaseIds = molecularDatabases.filter(d => d.default).map(_ => _.id)
         } else {
           for (const db of selectedDbs) {
-            if (this.molDBsByGroup.every(group =>
-              group.molecularDatabases.find(_ => _.id === db.id) === null,
-            )) {
+            if (molecularDatabases.find(_ => _.id === db.id) === null) {
               metaspaceOptions.databaseIds = []
               break
             }
