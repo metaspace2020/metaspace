@@ -35,7 +35,13 @@
         />
       </el-option-group>
     </el-select>
+    <i
+      v-if="firstLoad"
+      slot="show"
+      class="el-icon-loading"
+    />
     <span
+      v-else
       slot="show"
       class="tf-value-span"
     >
@@ -77,6 +83,7 @@ export default class DatabaseFilter extends Vue {
     @Prop()
     value!: string | undefined;
 
+    firstLoad = true
     loading = false;
     options: Record<string, Option> = {};
     groups: GroupOption[] = []
@@ -84,16 +91,20 @@ export default class DatabaseFilter extends Vue {
 
     created() {
       this.fetchOptions('')
+        .then(() => { this.firstLoad = false })
     }
 
     get label() {
+      if (this.firstLoad) {
+        return ''
+      }
       if (this.value === undefined) {
         return '(any)'
       }
       if (this.options[this.value] !== undefined) {
         return this.options[this.value].label
       }
-      return ''
+      return '(unknown)'
     }
 
     async fetchOptions(query: string) {
