@@ -2,7 +2,8 @@ import { sortBy } from 'lodash-es'
 
 import { MolecularDB, MolecularDBDetails } from '../../api/moldb'
 
-export function formatDatabaseLabel(db: MolecularDB) {
+// loose input type for dataset fdrCounts
+export function formatDatabaseLabel(db: { name: string, version: string }) {
   let label = ''
   if (db.name) {
     label += db.name

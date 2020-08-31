@@ -189,6 +189,7 @@ export const metadataExportQuery = gql`
       uploadDateTime
       fdrCounts(inpFdrLvls: $inpFdrLvls, checkLvl: $checkLvl) {
         dbName
+        dbVersion
         levels
         counts
       }

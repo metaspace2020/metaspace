@@ -18,7 +18,7 @@
       no-data-text="No matches"
       no-match-text="No matches"
       reserve-keyword
-      :value="value"
+      :value="valueIfKnown"
       @change="onInput"
       @visible-change="fetchOptions('')"
     >
@@ -35,7 +35,13 @@
         />
       </el-option-group>
     </el-select>
+    <i
+      v-if="firstLoad"
+      slot="show"
+      class="el-icon-loading"
+    />
     <span
+      v-else
       slot="show"
       class="tf-value-span"
     >
@@ -77,6 +83,7 @@ export default class DatabaseFilter extends Vue {
     @Prop()
     value!: string | undefined;
 
+    firstLoad = true
     loading = false;
     options: Record<string, Option> = {};
     groups: GroupOption[] = []
@@ -84,16 +91,27 @@ export default class DatabaseFilter extends Vue {
 
     created() {
       this.fetchOptions('')
+        .then(() => { this.firstLoad = false })
     }
 
     get label() {
+      if (this.firstLoad) {
+        return ''
+      }
       if (this.value === undefined) {
         return '(any)'
       }
       if (this.options[this.value] !== undefined) {
         return this.options[this.value].label
       }
-      return ''
+      return '(unknown)'
+    }
+
+    get valueIfKnown() {
+      if (this.value === undefined || this.options[this.value] === undefined) {
+        return undefined
+      }
+      return this.value
     }
 
     async fetchOptions(query: string) {
@@ -128,7 +146,7 @@ export default class DatabaseFilter extends Vue {
 
         const groups = getDatabasesByGroup(
           data.allMolecularDBs,
-          data.currentUser.groups,
+          data.currentUser ? data.currentUser.groups : [],
         )
 
         const groupOptions: GroupOption[] = []
