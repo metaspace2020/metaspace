@@ -1,10 +1,11 @@
-import { defineComponent } from '@vue/composition-api'
+import { defineComponent, computed } from '@vue/composition-api'
 import VisibilityBadge from '../common/VisibilityBadge'
 import ElapsedTime from '../../../components/ElapsedTime'
 import { plural } from '../../../lib/vueFilters'
 import { DatasetDetailItem } from '../../../api/dataset'
 import { capitalize, get } from 'lodash-es'
 import FilterLink from './FilterLink'
+import { formatDatabaseLabel } from '../../MolecularDatabases/formatting'
 
 type FilterField = keyof DatasetDetailItem | 'analyzerType';
 
@@ -17,6 +18,11 @@ const DatasetItemMetadata = defineComponent({
   },
   setup(props, ctx) {
     const { $router, $store } = ctx.root
+
+    const databaseLabel = computed(() => formatDatabaseLabel({
+      name: props.dataset.fdrCounts.dbName,
+      version: props.dataset.fdrCounts.dbVersion,
+    }))
 
     const addFilter = (field: FilterField) => {
       const filter = Object.assign({}, $store.getters.filter)
@@ -124,7 +130,7 @@ const DatasetItemMetadata = defineComponent({
               </FilterLink>
               {' @ FDR '}
               {dataset.fdrCounts.levels.join(', ')}
-              % ({dataset.fdrCounts.dbName})
+              % ({databaseLabel.value})
             </span>
           </div>}
         </div>
