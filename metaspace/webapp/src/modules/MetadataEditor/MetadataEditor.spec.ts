@@ -6,8 +6,7 @@ import store from '../../store/index'
 import {
   mockAdductSuggestions,
   mockMolecularDatabases,
-  mockGlobalMolecularDBs,
-  mockMolDBsByGroup,
+  mockCurrentUserGroups,
 } from '../../../tests/utils/mockGraphqlData'
 
 describe('MetadataEditor', () => {
@@ -48,8 +47,8 @@ describe('MetadataEditor', () => {
       Query: () => ({
         currentUserLastSubmittedDataset: () => null, // Prevent automatic mocking
         adductSuggestions: mockAdductSuggestions,
-        allMolecularDBs: mockGlobalMolecularDBs,
-        currentUser: mockMolDBsByGroup,
+        allMolecularDBs: mockMolecularDatabases,
+        currentUser: mockCurrentUserGroups,
       }),
     })
     const wrapper = mount(MetadataEditor, { store, router, apolloProvider })

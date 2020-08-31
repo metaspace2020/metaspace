@@ -19,7 +19,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
-        <mock-el-select placeholder="Start typing name" remote="" remote-method="function () { [native code] }" filterable="" loading-text="Loading matching entries..." no-data-text="No matches" no-match-text="No matches" reserve-keyword="" value="1">
+        <mock-el-select placeholder="Start typing name" filterable="" filter-method="function () { [native code] }" no-data-text="No matches" no-match-text="No matches" reserve-keyword="" value="1">
           <ul class="el-select-group__wrap">
             <li class="el-select-group__title">METASPACE</li>
             <li>

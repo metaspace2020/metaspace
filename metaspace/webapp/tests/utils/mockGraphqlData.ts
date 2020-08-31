@@ -19,19 +19,12 @@ export const mockMolecularDatabases = () => [
   groupDatabase,
 ]
 
-export const mockGlobalMolecularDBs = () => [
-  globalDatabase,
-]
-
-export const mockMolDBsByGroup = () => ({
+export const mockCurrentUserGroups = () => ({
   groups: [
     {
       group: {
         id: '123',
         shortName: 'test',
-        molecularDatabases: [
-          groupDatabase,
-        ],
       },
     },
   ],
