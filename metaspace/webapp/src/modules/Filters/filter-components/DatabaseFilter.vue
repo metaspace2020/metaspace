@@ -18,7 +18,7 @@
       no-data-text="No matches"
       no-match-text="No matches"
       reserve-keyword
-      :value="value"
+      :value="valueIfKnown"
       @change="onInput"
       @visible-change="fetchOptions('')"
     >
@@ -105,6 +105,13 @@ export default class DatabaseFilter extends Vue {
         return this.options[this.value].label
       }
       return '(unknown)'
+    }
+
+    get valueIfKnown() {
+      if (this.value === undefined || this.options[this.value] === undefined) {
+        return undefined
+      }
+      return this.value
     }
 
     async fetchOptions(query: string) {
