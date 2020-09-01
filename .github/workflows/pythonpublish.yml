@@ -1,11 +1,11 @@
 name: Publish python-client
 
-on: push
-#  push:
-#    paths:
-#      - 'metaspace/python-client/metaspace/__init__.py'
-#    branches:
-#      - release
+on:
+  push:
+    paths:
+      - 'metaspace/python-client/metaspace/__init__.py'
+    branches:
+      - release
 
 jobs:
   deploy:
