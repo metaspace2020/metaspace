@@ -132,7 +132,7 @@ const DatabasesTable = defineComponent<Props>({
           />
           <CheckColumn
             prop="isPublic"
-            label="Results public"
+            label="Public annotations"
           />
           <CheckColumn
             prop="archived"
