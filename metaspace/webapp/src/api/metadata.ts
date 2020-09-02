@@ -135,14 +135,7 @@ export const metadataOptionsQuery = gql`query metadataOptionsQuery {
     default,
     group {
       id
-    }
-  }
-  currentUser {
-    groups {
-      group {
-        id
-        shortName
-      }
+      shortName
     }
   }
   adducts: adductSuggestions{adduct, name, charge, default, hidden}

@@ -37,34 +37,25 @@ export interface MolDBsByGroup {
   molecularDatabases: MolecularDB[]
 }
 
-interface UserGroup {
-  group: {
-    id: string
-    shortName: string
-  }
-}
-
-export function getDatabasesByGroup(molDBs: MolecularDB[], groups: UserGroup[]) : MolDBsByGroup[] {
+export function getDatabasesByGroup(molDBs: MolecularDB[]) : MolDBsByGroup[] {
   const metaspaceDBs = []
-  const groupedDBs: Record<string, MolecularDB[]> = {}
+  const groups: Record<string, MolDBsByGroup> = {}
 
   for (const db of molDBs) {
     if (db.group === null) {
       metaspaceDBs.push(db)
-    } else if (db.group.id in groupedDBs) {
-      groupedDBs[db.group.id].push(db)
+    } else if (db.group.id in groups) {
+      groups[db.group.id].molecularDatabases.push(db)
     } else {
-      groupedDBs[db.group.id] = [db]
+      groups[db.group.id] = {
+        shortName: db.group.shortName,
+        molecularDatabases: [db],
+      }
     }
   }
 
   return [
     { shortName: 'METASPACE', molecularDatabases: metaspaceDBs },
-    ...sortBy(
-      groups
-        .filter(({ group }) => group.id in groupedDBs)
-        .map(({ group }) => ({ ...group, molecularDatabases: groupedDBs[group.id] })),
-      'shortName',
-    ),
+    ...sortBy(Object.values(groups), 'shortName'),
   ]
 }

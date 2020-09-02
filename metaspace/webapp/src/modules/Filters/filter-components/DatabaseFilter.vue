@@ -112,22 +112,11 @@ function mapDBtoOption(db: MolecularDB): Option {
           archived
           group {
             id
-          }
-        }
-        currentUser {
-          groups {
-            group {
-              id
-              shortName
-            }
+            shortName
           }
         }
       }`,
-      update: data =>
-        getDatabasesByGroup(
-          data.allMolecularDBs,
-          data.currentUser ? data.currentUser.groups : [],
-        ),
+      update: data => getDatabasesByGroup(data.allMolecularDBs),
     },
   },
   components: {

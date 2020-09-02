@@ -10,7 +10,6 @@ import { encodeParams } from './url'
 import {
   mockAdductSuggestions,
   mockMolecularDatabases,
-  mockCurrentUserGroups,
 } from '../../../tests/utils/mockGraphqlData'
 
 Vue.use(Vuex)
@@ -44,7 +43,6 @@ describe('FilterPanel', () => {
     initMockGraphqlClient({
       Query: () => ({
         adductSuggestions: mockAdductSuggestions,
-        currentUser: mockCurrentUserGroups,
         allMolecularDBs: mockMolecularDatabases,
       }),
     })
