@@ -5,33 +5,54 @@
     :width="300"
     @destroy="destroy"
   >
-    <el-select
+    <div
       slot="edit"
-      ref="select"
-      placeholder="Start typing name"
-      :clearable="false"
-      filterable
-      :filter-method="filterOptions"
-      no-data-text="No matches"
-      no-match-text="No matches"
-      reserve-keyword
-      :value="valueIfKnown"
-      @change="onInput"
-      @visible-change="filterOptions('')"
     >
-      <el-option-group
-        v-for="group in groups"
-        :key="group.label"
-        :label="group.label"
+      <el-select
+        ref="select"
+        class="w-full"
+        placeholder="Start typing name"
+        :clearable="false"
+        filterable
+        :filter-method="filterOptions"
+        no-data-text="No matches"
+        no-match-text="No matches"
+        reserve-keyword
+        :value="valueIfKnown"
+        @change="onInput"
+        @visible-change="filterOptions('')"
       >
-        <el-option
-          v-for="option in group.options"
-          :key="option.value"
-          :value="option.value"
-          :label="option.label"
-        />
-      </el-option-group>
-    </el-select>
+        <el-option-group
+          v-for="group in groups"
+          :key="group.label"
+          :label="group.label"
+        >
+          <el-option
+            v-for="option in group.options"
+            :key="option.value"
+            class="flex"
+            :value="option.value"
+            :label="option.label"
+          >
+            <span
+              class="truncate"
+              :title="option.label"
+            >
+              {{ option.label }}
+            </span>
+            <span
+              v-if="option.archived"
+              class="text-gray-600 text-xs font-normal uppercase tracking-wide ml-auto"
+            >
+              Archived
+            </span>
+          </el-option>
+        </el-option-group>
+      </el-select>
+      <FilterHelpText>
+        Search to see archived versions
+      </FilterHelpText>
+    </div>
     <span
       v-if="initialized"
       slot="show"
@@ -53,12 +74,19 @@ import gql from 'graphql-tag'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { sortBy } from 'lodash-es'
+import { watch } from '@vue/composition-api'
 
 import TagFilter from './TagFilter.vue'
-import { Option } from './searchableFilterQueries'
+import { FilterHelpText } from './TagFilterComponents'
+
 import { MolecularDB } from '../../../api/moldb'
 import { formatDatabaseLabel, getDatabasesByGroup } from '../../MolecularDatabases/formatting'
-import { watch } from '@vue/composition-api'
+
+interface Option {
+  value: string
+  label: string
+  archived: Boolean
+}
 
 interface GroupOption {
   label: string
@@ -69,6 +97,7 @@ function mapDBtoOption(db: MolecularDB): Option {
   return {
     value: db.id ? (db.id).toString() : '',
     label: formatDatabaseLabel(db),
+    archived: db.archived,
   }
 }
 
@@ -80,6 +109,7 @@ function mapDBtoOption(db: MolecularDB): Option {
           id
           name
           version
+          archived
           group {
             id
           }
@@ -102,6 +132,7 @@ function mapDBtoOption(db: MolecularDB): Option {
   },
   components: {
     TagFilter,
+    FilterHelpText,
   },
 })
 export default class DatabaseFilter extends Vue {
@@ -110,7 +141,7 @@ export default class DatabaseFilter extends Vue {
 
     dbsByGroup: any = null
     options: Record<string, Option> = {};
-    groups: GroupOption[] = []
+    groups: GroupOption[] | null = []
     previousQuery: string | null = null
 
     get label() {
@@ -131,7 +162,7 @@ export default class DatabaseFilter extends Vue {
     }
 
     get initialized() {
-      return this.dbsByGroup !== null && this.groups.length > 0
+      return this.dbsByGroup !== null && this.groups !== null
     }
 
     @Watch('dbsByGroup')
@@ -146,6 +177,8 @@ export default class DatabaseFilter extends Vue {
         return
       }
 
+      const hideArchived = query.length === 0
+
       try {
         const groupOptions: GroupOption[] = []
         const queryRegex = new RegExp(query, 'i')
@@ -158,6 +191,9 @@ export default class DatabaseFilter extends Vue {
               this.$set(this.options, id, mapDBtoOption(db))
             }
             const option = this.options[id]
+            if (hideArchived && db.archived && this.value !== option.value) {
+              continue
+            }
             if (queryRegex.test(option.label)) {
               options.push(option)
             }

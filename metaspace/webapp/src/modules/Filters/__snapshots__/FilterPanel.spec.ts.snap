@@ -19,24 +19,25 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
-        <mock-el-select placeholder="Start typing name" filterable="" filter-method="function () { [native code] }" no-data-text="No matches" no-match-text="No matches" reserve-keyword="" value="1">
-          <ul class="el-select-group__wrap">
-            <li class="el-select-group__title">METASPACE</li>
-            <li>
-              <ul class="el-select-group">
-                <mock-el-option value="1" label="foo - v1"></mock-el-option>
-              </ul>
-            </li>
-          </ul>
-          <ul class="el-select-group__wrap">
-            <li class="el-select-group__title">test</li>
-            <li>
-              <ul class="el-select-group">
-                <mock-el-option value="2" label="bar - v1"></mock-el-option>
-              </ul>
-            </li>
-          </ul>
-        </mock-el-select>
+        <div>
+          <mock-el-select placeholder="Start typing name" filterable="" filter-method="function () { [native code] }" no-data-text="No matches" no-match-text="No matches" reserve-keyword="" class="w-full" value="1">
+            <ul class="el-select-group__wrap">
+              <li class="el-select-group__title">METASPACE</li>
+              <li>
+                <ul class="el-select-group">
+                  <mock-el-option value="1" label="foo - v1" class="flex"><span title="foo - v1" class="truncate">
+            foo - v1
+          </span>
+                    <!---->
+                  </mock-el-option>
+                </ul>
+              </li>
+            </ul>
+          </mock-el-select>
+          <p class="leading-5 text-sm m-0 mt-2 text-gray-700"><i class="el-icon-info text-gray-600 mr-1"></i>
+            Search to see archived versions
+          </p>
+        </div>
       </div>
       <div slot-key="reference">
         <div class="tf-value"><span class="tf-value-span">
@@ -265,7 +266,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       m/z:
       <!---->
     </div>
-    <mock-el-popover trigger="click" placement="bottom" width="240" class="tf-value-container pl-3">
+    <mock-el-popover trigger="click" placement="bottom" width="256" class="tf-value-container pl-3">
       <div slot-key="default">
         <div>
           <div class="w-full el-input-number is-controls-right" maxlength="10"><span role="button" class="el-input-number__decrease"><i class="el-icon-arrow-down"></i></span><span role="button" class="el-input-number__increase"><i class="el-icon-arrow-up"></i></span>
@@ -277,8 +278,8 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
               <!---->
             </div>
           </div>
-          <p class="m-0 mt-2 leading-none text-xs tracking-wide">
-            For manual input, press <span class="font-medium">Enter</span> to confirm
+          <p class="leading-5 text-sm m-0 mt-2 text-gray-700"><i class="el-icon-info text-gray-600 mr-1"></i>
+            Press <span class="font-medium">Enter</span> to confirm manual input
           </p>
         </div>
       </div>

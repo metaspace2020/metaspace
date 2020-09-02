@@ -2,7 +2,7 @@
   <tag-filter
     :name="name"
     :removable="removable"
-    :width="240"
+    :width="256"
     @show="show"
     @destroy="destroy"
   >
@@ -16,9 +16,9 @@
         controls-position="right"
         @change="onChange"
       />
-      <p class="m-0 mt-2 leading-none text-xs tracking-wide">
-        For manual input, press <span class="font-medium">Enter</span> to confirm
-      </p>
+      <FilterHelpText>
+        Press <span class="font-medium">Enter</span> to confirm manual input
+      </FilterHelpText>
     </div>
     <span slot="show">
       <span
@@ -42,11 +42,13 @@
 import Vue, { ComponentOptions } from 'vue'
 import { mzFilterPrecision } from '../../../lib/util'
 import TagFilter from './TagFilter.vue'
+import { FilterHelpText } from './TagFilterComponents'
 
 export default Vue.extend({
   name: 'MzFilter',
   components: {
     TagFilter,
+    FilterHelpText,
   },
   props: {
     name: String,
