@@ -17,6 +17,11 @@ const channels: any = {
   red: [[0, 'rgb(0,0,0)'], [1, 'rgb(255, 0, 0)']],
   green: [[0, 'rgb(0,0,0)'], [1, 'rgb(0, 255, 0)']],
   blue: [[0, 'rgb(0,0,0)'], [1, 'rgb(0, 0, 255)']],
+  cyan: [[0, 'rgb(0,0,0)'], [1, 'rgb(0, 255, 255)']],
+  magenta: [[0, 'rgb(0,0,0)'], [1, 'rgb(255, 0, 255)']],
+  yellow: [[0, 'rgb(0,0,0)'], [1, 'rgb(255, 255, 0)']],
+  orange: [[0, 'rgb(0,0,0)'], [1, 'rgb(255, 128, 0)']],
+  white: [[0, 'rgb(0,0,0)'], [1, 'rgb(255, 255, 255)']],
 }
 
 export default function getColorScale(name: string): ColorScale {

@@ -195,9 +195,9 @@ export default class MainImage extends Vue {
       // }
       this.ionImageIsLoading = true
       Promise.all([
-        loadPngFromUrl(''),
-        loadPngFromUrl(''),
-        loadPngFromUrl(''),
+        loadPngFromUrl('https://metaspace2020.eu/fs/iso_images/b45bf8c407260d214eb32ed95528ae6c'),
+        loadPngFromUrl('https://metaspace2020.eu/fs/iso_images/771f8c1d7304cf1fd8363708e87d849f'),
+        loadPngFromUrl('https://metaspace2020.eu/fs/iso_images/d7ccc65a6f740817c17e9acf4c4286d7'),
       ])
         .then(imgs => {
           // this.__png1 = img

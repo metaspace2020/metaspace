@@ -51,6 +51,7 @@
     >
       <img src="../../../../assets/microscope-icon.png">
     </button>
+    <MenuButtons />
   </span>
 </template>
 
@@ -58,6 +59,7 @@
 import Vue from 'vue'
 import { Component, Prop } from 'vue-property-decorator'
 import IonImageSettings from './IonImageSettings.vue'
+import MenuButtons from '../MenuButtons'
 
 interface colorObjType {
   code: string,
@@ -66,7 +68,7 @@ interface colorObjType {
 
 @Component({
   name: 'main-image-header',
-  components: { IonImageSettings },
+  components: { IonImageSettings, MenuButtons },
 })
 export default class MainImageHeader extends Vue {
     @Prop({ required: true, type: Boolean })
