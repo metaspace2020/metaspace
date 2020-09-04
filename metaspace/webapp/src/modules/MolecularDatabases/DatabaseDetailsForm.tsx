@@ -1,7 +1,6 @@
 import { defineComponent, reactive } from '@vue/composition-api'
 
-import { PrimaryLabelText, SecondaryLabelText } from '../../components/Form'
-import FadeTransition from '../../components/FadeTransition'
+import { PrimaryLabelText, SecondaryLabelText, RadioButton } from '../../components/Form'
 import { RichTextArea } from '../../components/RichText'
 
 import { MolecularDB, MolecularDBDetails, UpdateDatabaseDetailsMutation } from '../../api/moldb'
@@ -63,23 +62,28 @@ const Details = defineComponent<Props>({
         >
           <PrimaryLabelText slot="label">Description</PrimaryLabelText>
         </RichTextArea>
-        <div class="flex items-center">
-          <el-switch
-            id="database-public"
-            v-model={state.model.isPublic}
-            class="mr-6"
-          />
-          <FadeTransition class="duration-200 cursor-pointer">
-            {state.model.isPublic
-              ? <label key="public" for="database-public">
-                <PrimaryLabelText>Annotations are public</PrimaryLabelText>
-                <SecondaryLabelText>Results will be visible to everyone</SecondaryLabelText>
-              </label>
-              : <label key="private" for="database-public">
-                <PrimaryLabelText>Annotations are private</PrimaryLabelText>
-                <SecondaryLabelText>Results will be visible to group members only</SecondaryLabelText>
-              </label> }
-          </FadeTransition>
+        <div>
+          <p class="m-0 mb-3">
+            <PrimaryLabelText>Annotation access</PrimaryLabelText>
+          </p>
+          <RadioButton
+            id="database-annotations-private"
+            name="isPublic"
+            checked={!state.model.isPublic}
+            onChange={() => { state.model.isPublic = false }}
+          >
+            <PrimaryLabelText>Annotations are private</PrimaryLabelText>
+            <SecondaryLabelText>Results will be visible to group members only</SecondaryLabelText>
+          </RadioButton>
+          <RadioButton
+            id="database-annotations-public"
+            name="isPublic"
+            checked={state.model.isPublic}
+            onChange={() => { state.model.isPublic = true }}
+          >
+            <PrimaryLabelText>Annotations are public</PrimaryLabelText>
+            <SecondaryLabelText>Results will be visible to everyone</SecondaryLabelText>
+          </RadioButton>
         </div>
         <div>
           <label for="database-link">
