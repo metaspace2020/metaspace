@@ -1,4 +1,5 @@
 import { reverse } from 'lodash-es'
+import reportError from './reportError'
 
 interface ColorScale {
   domain: number[]
@@ -165,6 +166,10 @@ const scales: Record<string, ColorScale> = {
 }
 
 export default function getColorScale(name: string): ColorScale {
+  if (!(name in scales) && !(name.slice(1) in scales)) {
+    reportError(new Error(`Unrecognized color scale: ${name}`), null)
+    name = 'Greys'
+  }
   if (name[0] !== '-') {
     return scales[name]
   } else {
