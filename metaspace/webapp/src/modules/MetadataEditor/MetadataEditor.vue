@@ -316,7 +316,7 @@ export default {
           metaspaceOptions.databaseIds = molecularDatabases.filter(d => d.default).map(_ => _.id)
         } else {
           for (const db of selectedDbs) {
-            if (molecularDatabases.find(_ => _.id === db.id) === null) {
+            if (molecularDatabases.find(_ => _.id === db.id) === undefined) {
               metaspaceOptions.databaseIds = []
               break
             }
