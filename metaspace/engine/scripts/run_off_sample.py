@@ -1,12 +1,11 @@
 import argparse
 import logging
-from functools import partial
 
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.off_sample_wrapper import classify_dataset_ion_images
-from sm.engine.util import bootstrap_and_run
+from sm.engine.util import GlobalInit
 
 MISSING_OFF_SAMPLE_SEL = """
 SELECT DISTINCT j.ds_id
@@ -17,23 +16,20 @@ WHERE j.status = 'FINISHED'
 ORDER BY j.ds_id DESC;
 """
 
+logger = logging.getLogger('engine')
 
-def run_off_sample(sm_config, ds_id_str, sql_where, fix_missing, overwrite_existing):
-    assert (
-        len([data_source for data_source in [ds_id_str, sql_where, fix_missing] if data_source])
-        == 1
-    ), "Exactly one data source (ds_id, sql_where, fix_missing) must be specified"
-    assert not (ds_id_str and sql_where)
 
+def run_off_sample(sm_config, ds_ids_str, sql_where, fix_missing, overwrite_existing):
     db = DB()
 
-    if ds_id_str:
-        ds_ids = ds_id_str.split(',')
+    ds_ids = None
+    if ds_ids_str:
+        ds_ids = ds_ids_str.split(',')
     elif sql_where:
         ds_ids = [
             id for (id,) in db.select(f'SELECT DISTINCT dataset.id FROM dataset WHERE {sql_where}')
         ]
-    else:
+    elif fix_missing:
         logger.info('Checking for missing off-sample jobs...')
         results = db.select(MISSING_OFF_SAMPLE_SEL)
         ds_ids = [ds_id for ds_id, in results]
@@ -55,11 +51,11 @@ def run_off_sample(sm_config, ds_id_str, sql_where, fix_missing, overwrite_exist
             logger.error(f'Failed to run off-sample on {ds_id}', exc_info=True)
 
 
-if __name__ == '__main__':
+def parse_args():
     parser = argparse.ArgumentParser(description='Run off-sample classification')
     parser.add_argument('--config', default='conf/config.json', help='SM config path')
     parser.add_argument(
-        '--ds-id', dest='ds_id', default=None, help='DS id (or comma-separated list of ids)'
+        '--ds-ids', dest='ds_ids', default=None, help='DS id (or comma-separated list of ids)'
     )
     parser.add_argument(
         '--sql-where',
@@ -79,15 +75,26 @@ if __name__ == '__main__':
         help='Run classification for annotations even if they have already been classified',
     )
     args = parser.parse_args()
-    logger = logging.getLogger('engine')
 
-    bootstrap_and_run(
-        args.config,
-        partial(
-            run_off_sample,
-            ds_id=args.ds_id,
+    assert (
+        sum(map(bool, [args.ds_ids, args.sql_where, args.fix_missing])) == 1
+    ), "Exactly one data source (ds_id, sql_where, fix_missing) must be specified"
+
+    return args
+
+
+def main():
+    args = parse_args()
+
+    with GlobalInit(args.config) as sm_config:
+        run_off_sample(
+            sm_config,
+            ds_ids_str=args.ds_ids,
             sql_where=args.sql_where,
             fix_missing=args.fix_missing,
             overwrite_existing=args.overwrite_existing,
-        ),
-    )
+        )
+
+
+if __name__ == '__main__':
+    main()

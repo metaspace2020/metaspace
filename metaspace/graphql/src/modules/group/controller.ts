@@ -139,13 +139,13 @@ export const Resolvers = {
         .where(filter)
         .leftJoinAndSelect('user_group.user', 'user')
         .leftJoinAndSelect('user_group.group', 'group')
-        .orderBy(`CASE user_group.role 
-                         WHEN '${UserGroupRoleOptions.PENDING}' THEN 1 
-                         WHEN '${UserGroupRoleOptions.INVITED}' THEN 2 
-                         WHEN '${UserGroupRoleOptions.GROUP_ADMIN}' THEN 3 
-                         WHEN '${UserGroupRoleOptions.MEMBER}' THEN 4 
-                         ELSE 5 
-                     END`)
+        .orderBy(`CASE user_group.role
+                      WHEN '${UserGroupRoleOptions.PENDING}' THEN 1
+                      WHEN '${UserGroupRoleOptions.INVITED}' THEN 2
+                      WHEN '${UserGroupRoleOptions.GROUP_ADMIN}' THEN 3
+                      WHEN '${UserGroupRoleOptions.MEMBER}' THEN 4
+                      ELSE 5
+                  END`)
         .addOrderBy('user.name')
         .getMany();
       return userGroupModels.map(ug => ({
@@ -157,6 +157,11 @@ export const Resolvers = {
     async molecularDatabases(group: GroupModel, args: any, ctx: Context): Promise<MolecularDbModel[]> {
       return await ctx.entityManager.getCustomRepository(MolecularDbRepository)
         .findDatabases(ctx.user, undefined, group.id);
+    },
+
+    async numDatabases(group: GroupModel & Scope, args: any, ctx: Context): Promise<number> {
+      return await ctx.entityManager.getCustomRepository(MolecularDbRepository)
+        .countDatabases(ctx.user, undefined, group.id);
     },
   },
 

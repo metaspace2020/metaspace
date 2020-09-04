@@ -7,7 +7,11 @@ import Vuex from 'vuex'
 import store from '../../store/index'
 import { sync } from 'vuex-router-sync'
 import { encodeParams } from './url'
-import { mockAdductSuggestions, mockMolecularDatabases } from '../../../tests/utils/mockGraphqlData'
+import {
+  mockAdductSuggestions,
+  mockGlobalMolecularDBs,
+  mockMolDBsByGroup,
+} from '../../../tests/utils/mockGraphqlData'
 
 Vue.use(Vuex)
 sync(store, router)
@@ -40,7 +44,8 @@ describe('FilterPanel', () => {
     initMockGraphqlClient({
       Query: () => ({
         adductSuggestions: mockAdductSuggestions,
-        molecularDatabases: mockMolecularDatabases,
+        currentUser: mockMolDBsByGroup,
+        allMolecularDBs: mockGlobalMolecularDBs,
       }),
     })
     store.commit('setFilterLists', null)

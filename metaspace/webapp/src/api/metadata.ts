@@ -21,7 +21,6 @@ export const editDatasetFragment =
     }
     databases {
       id
-      name
     }
     adducts
     name
@@ -100,7 +99,7 @@ export const fetchOptionListsQuery = gql`query fetchOptionListsQuery {
   maldiMatrices: metadataSuggestions(field: "Sample_Preparation.MALDI_Matrix", query: "", limit: 1000)
   analyzerTypes: metadataSuggestions(field: "MS_Analysis.Analyzer", query: "", limit: 1000)
   colocalizationAlgos {id, name}
-  molecularDatabases: molecularDatabases{id, name, default, hidden}
+  molecularDatabases: allMolecularDBs{id, name, default}
   adducts: adductSuggestions{adduct, name, charge, default, hidden}
 }`
 
@@ -129,7 +128,25 @@ export const neutralLossSuggestionQuery = gql`query neutralLossSuggestionQuery($
 }`
 
 export const metadataOptionsQuery = gql`query metadataOptionsQuery {
-  molecularDatabases: molecularDatabases(onlyUsable: true){id, name, default, hidden}
+  molecularDatabases: allMolecularDBs(filter: { global: true }) {
+    id,
+    name,
+    version,
+    default,
+  }
+  molDBsByUserGroup: currentUser {
+    groups {
+      group {
+        id
+        shortName
+        molecularDatabases {
+          id,
+          name,
+          version,
+        }
+      }
+    }
+  }
   adducts: adductSuggestions{adduct, name, charge, default, hidden}
 }`
 
@@ -172,6 +189,7 @@ export const metadataExportQuery = gql`
       uploadDateTime
       fdrCounts(inpFdrLvls: $inpFdrLvls, checkLvl: $checkLvl) {
         dbName
+        dbVersion
         levels
         counts
       }

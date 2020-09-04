@@ -287,6 +287,15 @@ export default {
     height: 4px;
   }
 
+  .qq-upload-drop-area {
+    background: none;
+    border: none;
+    height: auto;
+    width: auto;
+    right: 0;
+    bottom: 0;
+  }
+
   .fu-dropzone-content {
     @apply text-2xl text-gray-400 font-medium;
     width: 100%;

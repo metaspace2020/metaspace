@@ -13,7 +13,7 @@ type Annotation {
   mz: Float!
   countPossibleCompounds(includeIsomers: Boolean = False): Int!
   possibleCompounds: [Compound!]!
-  fdrLevel: Float!
+  fdrLevel: Float
   msmScore: Float!
   rhoSpatial: Float
   rhoSpectral: Float
@@ -125,7 +125,7 @@ input ColocalizationCoeffFilter {
   colocalizationAlgo: String
   databaseId: Int
   database: String  # @deprecated(reason: "This field will be removed. Use \"databaseId\" instead.")
-  fdrLevel: Float!
+  fdrLevel: Float
 }
 
 type Query {

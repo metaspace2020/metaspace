@@ -1,4 +1,4 @@
-import { createComponent, reactive, onMounted, onBeforeUnmount } from '@vue/composition-api'
+import { defineComponent, reactive, onMounted, onBeforeUnmount } from '@vue/composition-api'
 import { EditorContent, EditorMenuBar } from 'tiptap'
 import { Placeholder } from 'tiptap-extensions'
 
@@ -33,7 +33,7 @@ const getSaveState = (saveState: string) => {
   }
 }
 
-const RichText = createComponent<Props>({
+const RichText = defineComponent<Props>({
   props: {
     content: String,
     placeholder: String,

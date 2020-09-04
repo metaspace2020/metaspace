@@ -507,13 +507,13 @@ class GraphQLClient(object):
     def get_visible_databases(self):
         query = """
             {
-              visibleMolecularDBs {
+              allMolecularDBs {
                 id name version isPublic archived default
               }
             }
         """
         result = self.query(query)
-        return result['visibleMolecularDBs']
+        return result['allMolecularDBs']
 
     @staticmethod
     def map_database_name_to_name_version(name: str) -> Tuple[str, str]:

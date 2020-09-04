@@ -38,7 +38,9 @@ describe('ViewGroupPage', () => {
     currentUserRole: null,
     numMembers: 2,
     members: mockMembersForPublic,
+    numDatabases: 2,
   }
+
   const mockGroupFn = jest.fn((src: any, args: any, ctx: any, info: any): any => mockGroup)
   const graphqlMocks = {
     Query: () => ({
@@ -57,6 +59,7 @@ describe('ViewGroupPage', () => {
 
   const stubs: Stubs = {
     DatasetItem: true,
+    MolecularDatabases: true,
   }
   const stubsWithMembersList: Stubs = {
     ...stubs,
