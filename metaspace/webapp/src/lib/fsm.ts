@@ -14,9 +14,12 @@ export interface Action {
 export type Reducer = (state: State, action: Action) => State
 export type Dispatch = (action: Action) => void
 
+type Selector<T> = (state: State) => T
+
 type Machine = {
   state: Ref<State>
   dispatch: Dispatch
+  select: (selector: Selector<any>) => Ref<any>
 }
 
 const machines: Record<string, Machine> = {}
@@ -24,7 +27,6 @@ const machines: Record<string, Machine> = {}
 const remotedev = connectViaExtension()
 
 remotedev.subscribe((message: any) => {
-  console.log(message)
   if (message.type === 'ACTION') {
     for (const { dispatch } of Object.values(machines)) {
       try {
@@ -62,6 +64,10 @@ export function createReducer(states: FiniteStates) {
   }
 }
 
+function createSelectFn(state: Ref<State>) {
+  return (selector: Selector<any>) => computed(() => selector(state.value))
+}
+
 export const register = (key: string, states: FiniteStates, initialState: State): void => {
   if (key in machines) {
     throw new Error(`[fsm] Already registered: ${key}`)
@@ -74,21 +80,14 @@ export const register = (key: string, states: FiniteStates, initialState: State)
     updateRemoteDev(action)
   }
 
-  machines[key] = { state, dispatch }
+  machines[key] = { state, dispatch, select: createSelectFn(state) }
 
   updateRemoteDev({ type: `[${key}]` })
 }
 
-type Selector<T> = (state: State) => T
-
-function createSelectFn(state: Ref<State>) {
-  return (selector: Selector<any>) => computed(() => selector(state.value))
-}
-
-export function useMachine(key: string): [ (selector: Selector<any>) => Ref<any>, Dispatch ] {
+export function useMachine(key: string): Machine {
   if (key in machines) {
-    const { state, dispatch } = machines[key]
-    return [createSelectFn(state), dispatch]
+    return machines[key]
   }
   throw new Error(`[fsm] Not registered: ${key}`)
 }

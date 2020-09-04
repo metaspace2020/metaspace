@@ -2,6 +2,10 @@ import { defineComponent } from '@vue/composition-api'
 
 import { register, useMachine, Reducer } from '../../../lib/fsm'
 
+import '../../../components/StatefulIcon.css'
+import MonitorIcon from '../../../assets/inline/refactoring-ui/monitor.svg'
+import CameraIcon from '../../../assets/inline/refactoring-ui/camera.svg'
+
 const reducer: Reducer = (state, action) => {
   return {
     name: action.type,
@@ -17,19 +21,28 @@ const states = {
 register('menu', states, { name: 'NONE' })
 
 const MenuButtons = defineComponent({
+  name: 'MenuButtons',
   setup() {
-    const [select, dispatch] = useMachine('menu')
+    const { select, dispatch } = useMachine('menu')
     const name = select(state => state.name)
     return () => (
       <div class="flex flex-row-reverse" onClick={(e: MouseEvent) => e.stopPropagation()}>
         <button
-          class={{ 'text-primary': name.value === 'ION' }}
+          class="button-reset flex h-6 mr-3"
           onClick={() => dispatch({ type: 'ION' })}
-        >Ion images</button>
+        >
+          <MonitorIcon
+            class={['sm-stateful-icon', { 'sm-stateful-icon--active': name.value === 'ION' }]}
+          />
+        </button>
         <button
-          class={{ 'text-primary': name.value === 'OPTICAL' }}
+          class="button-reset flex h-6 mr-3"
           onClick={() => dispatch({ type: 'OPTICAL' })}
-        >Optical images</button>
+        >
+          <CameraIcon
+            class={['sm-stateful-icon', { 'sm-stateful-icon--active': name.value === 'OPTICAL' }]}
+          />
+        </button>
       </div>
     )
   },

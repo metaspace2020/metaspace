@@ -78,12 +78,7 @@
           <component
             :is="metadataDependentComponent('main-image-header')"
             slot="title"
-            :annotation="annotation"
-            :has-optical-image="bestOpticalImage != null"
-            :show-optical-image="showOpticalImage"
-            :reset-viewport="resetViewport"
-            :toggle-optical-image="toggleOpticalImage"
-            @scaleBarColorChange="setScaleBarColor"
+            :is-active="activeSections.includes('images')"
           />
           <component
             :is="metadataDependentComponent('main-image')"
@@ -265,6 +260,7 @@
 
  #annot-img-collapse .el-collapse-item__header>span {
    display: inline-flex;
+   align-items: center;
  }
 </style>
 <style>
