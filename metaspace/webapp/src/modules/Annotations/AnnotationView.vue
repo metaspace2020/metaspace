@@ -87,7 +87,7 @@
             :opacity="opacity"
             :image-position="imagePosition"
             :image-loader-settings="imageLoaderSettings"
-            :on-image-move="onImageMove"
+            :apply-image-move="onImageMove"
             :acquisition-geometry="msAcqGeometry"
             :pixel-size-x="pixelSizeX"
             :pixel-size-y="pixelSizeY"

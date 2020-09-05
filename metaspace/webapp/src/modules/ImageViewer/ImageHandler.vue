@@ -1,99 +1,29 @@
 <template>
   <div
-    ref="container"
-    class="main-ion-image-container"
+    ref="imageViewerContainer"
+    v-resize="onResize"
   >
-    <div
-      ref="imageViewerContainer"
-      v-resize="onResize"
-      class="image-viewer-container"
-    >
-      <ion-image-viewer
-        ref="imageLoader"
-        :ion-image="ionImages"
-        :is-loading="ionImageIsLoading"
-        :colormap="colormap"
-        :pixel-size-x="pixelSizeX"
-        :pixel-size-y="pixelSizeY"
-        :pixel-aspect-ratio="imageLoaderSettings.pixelAspectRatio"
-        :scale-bar-color="scaleBarColor"
-        :width="imageViewerWidth"
-        :height="imageViewerHeight"
-        :zoom="imageLoaderSettings.imagePosition.zoom * imageFit.imageZoom"
-        :min-zoom="imageFit.imageZoom / 4"
-        :max-zoom="imageFit.imageZoom * 20"
-        :x-offset="imageLoaderSettings.imagePosition.xOffset"
-        :y-offset="imageLoaderSettings.imagePosition.yOffset"
-        scroll-block
-        show-pixel-intensity
-        v-bind="imageLoaderSettings"
-        @move="handleImageMove"
-      />
-    </div>
-
-    <div class="colorbar-container">
-      <div
-        v-if="imageLoaderSettings.opticalSrc"
-        class="opacity-slider dom-to-image-hidden"
-      >
-        Opacity:
-        <el-slider
-          vertical
-          height="150px"
-          :value="opacity"
-          :min="0"
-          :max="1"
-          :step="0.01"
-          style="margin: 10px 0px 30px 0px;"
-          @input="onOpacityInput"
-        />
-      </div>
-
-      <el-tooltip
-        v-if="ionImage && ionImage.maxIntensity !== ionImage.clippedMaxIntensity"
-        placement="left"
-      >
-        <div>
-          <div style="color: red">
-            {{ ionImage.clippedMaxIntensity.toExponential(2) }}
-          </div>
-        </div>
-        <div slot="content">
-          Hot-spot removal has been applied to this image. <br>
-          Pixel intensities above the {{ ionImage.maxQuantile*100 }}th percentile, {{ ionImage.clippedMaxIntensity.toExponential(2) }},
-          have been reduced to {{ ionImage.clippedMaxIntensity.toExponential(2) }}. <br>
-          The highest intensity before hot-spot removal was {{ ionImage.maxIntensity.toExponential(2) }}.
-        </div>
-      </el-tooltip>
-      <div v-else>
-        {{ ionImage && ionImage.maxIntensity.toExponential(2) }}
-      </div>
-      <colorbar
-        style="width: 20px; height: 160px; align-self: center;"
-        :map="colormap"
-        :ion-image="ionImage"
-      />
-      {{ ionImage && ionImage.clippedMinIntensity.toExponential(2) }}
-
-      <div class="annot-view__image-download dom-to-image-hidden">
-        <!-- see https://github.com/tsayen/dom-to-image/issues/155 -->
-        <img
-          v-if="browserSupportsDomToImage"
-          src="../../../../assets/download-icon.png"
-          width="32px"
-          title="Save visible region in PNG format"
-          @click="saveImage"
-        >
-        <img
-          v-else
-          src="../../../../assets/download-icon.png"
-          width="32px"
-          style="opacity: 0.3"
-          title="Your browser is not supported"
-          @click="showBrowserWarning"
-        >
-      </div>
-    </div>
+    <ion-image-viewer
+      ref="imageLoader"
+      :ion-image="ionImages"
+      :is-loading="ionImageIsLoading"
+      :colormap="colormap"
+      :pixel-size-x="pixelSizeX"
+      :pixel-size-y="pixelSizeY"
+      :pixel-aspect-ratio="imageLoaderSettings.pixelAspectRatio"
+      :scale-bar-color="scaleBarColor"
+      :width="imageViewerWidth"
+      :height="imageViewerHeight"
+      :zoom="imageLoaderSettings.imagePosition.zoom * imageFit.imageZoom"
+      :min-zoom="imageFit.imageZoom / 4"
+      :max-zoom="imageFit.imageZoom * 20"
+      :x-offset="imageLoaderSettings.imagePosition.xOffset"
+      :y-offset="imageLoaderSettings.imagePosition.yOffset"
+      scroll-block
+      show-pixel-intensity
+      v-bind="imageLoaderSettings"
+      @move="handleImageMove"
+    />
   </div>
 </template>
 
@@ -102,13 +32,12 @@ import Vue from 'vue'
 import resize from 'vue-resize-directive'
 import { Component, Prop, Watch } from 'vue-property-decorator'
 import { saveAs } from 'file-saver'
-import Colorbar from './Colorbar.vue'
-import IonImageViewer from '../../../../components/IonImageViewer'
+import IonImageViewer from '../../components/IonImageViewer'
 import domtoimage from 'dom-to-image-google-font-issue'
-import { IonImage, loadPngFromUrl, processIonImage, ScaleType } from '../../../../lib/ionImageRendering'
+import { IonImage, loadPngFromUrl, processIonImage, ScaleType } from '../../lib/ionImageRendering'
 import { get } from 'lodash-es'
-import fitImageToArea, { FitImageToAreaResult } from '../../../../lib/fitImageToArea'
-import reportError from '../../../../lib/reportError'
+import fitImageToArea, { FitImageToAreaResult } from '../../lib/fitImageToArea'
+import reportError from '../../lib/reportError'
 import { Image } from 'upng-js'
 
 @Component({
@@ -118,7 +47,6 @@ import { Image } from 'upng-js'
   },
   components: {
     IonImageViewer,
-    Colorbar,
   },
 })
 export default class MainImage extends Vue {
@@ -137,7 +65,7 @@ export default class MainImage extends Vue {
     imageLoaderSettings!: any
 
     @Prop({ required: true, type: Function })
-    onImageMove!: Function
+    applyimageMove!: Function
 
     @Prop({ type: Number })
     pixelSizeX!: number
@@ -195,9 +123,9 @@ export default class MainImage extends Vue {
       // }
       this.ionImageIsLoading = true
       Promise.all([
-        loadPngFromUrl('https://metaspace2020.eu/fs/iso_images/b45bf8c407260d214eb32ed95528ae6c'),
-        loadPngFromUrl('https://metaspace2020.eu/fs/iso_images/771f8c1d7304cf1fd8363708e87d849f'),
-        loadPngFromUrl('https://metaspace2020.eu/fs/iso_images/d7ccc65a6f740817c17e9acf4c4286d7'),
+        loadPngFromUrl('https://metaspace2020.eu/fs/iso_images/a9b14785639482df213409a1f40f543b'),
+        loadPngFromUrl('https://metaspace2020.eu/fs/iso_images/f35789945c47c956ebb97086ac7c4126'),
+        loadPngFromUrl('https://metaspace2020.eu/fs/iso_images/dc1448c23fbf53224091aa70ff4a7b71'),
       ])
         .then(imgs => {
           // this.__png1 = img
@@ -267,7 +195,7 @@ export default class MainImage extends Vue {
     }
 
     handleImageMove({ zoom, xOffset, yOffset }: any) {
-      this.onImageMove({
+      this.applyimageMove({
         zoom: zoom / this.imageFit.imageZoom,
         xOffset,
         yOffset,
@@ -275,36 +203,3 @@ export default class MainImage extends Vue {
     }
 }
 </script>
-
-<style>
-.main-ion-image-container {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-}
-
-.image-viewer-container {
-    flex: 1 1 auto;
-    max-width: 100%;
-    overflow: hidden;
-}
-
-.colorbar-container {
-    display: flex;
-    flex:none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
-    padding: 6px 5px 0 5px;
-}
-.opacity-slider {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.annot-view__image-download {
-    margin-top: 20px;
-    cursor: pointer;
-}
-</style>

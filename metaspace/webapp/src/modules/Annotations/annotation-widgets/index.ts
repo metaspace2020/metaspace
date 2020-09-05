@@ -7,9 +7,11 @@ import MainImageHeaderLc from './lcms/MainImageHeader.vue'
 import Diagnostics from './default/Diagnostics.vue'
 import DiagnosticsLc from './lcms/Diagnostics.vue'
 
+import ImageViewer from '../../ImageViewer'
+
 export default {
   'main-image': {
-    default: MainImage,
+    default: ImageViewer,
     'LC-MS': MainImageLc,
   },
   'main-image-header': {
