@@ -175,6 +175,6 @@ export default function getColorScale(name: string): ColorScale {
   } else {
     // inverted - reverse both arrays so that the domain is always in ascending order
     const { domain, range } = scales[name.slice(1)]
-    return { domain: reverse(domain.map(v => 1 - v)), range: reverse(range) }
+    return { domain: reverse(domain.map(v => 1 - v)), range: reverse([...range]) }
   }
 }
