@@ -235,6 +235,8 @@ export const processIonImage = (png: Image, minIntensity: number = 0, maxIntensi
     scaleMode)
   const scaleBarValues = quantizeScaleBar(clippedMinIntensity, clippedMaxIntensity, rankValues, scaleMode)
 
+  console.log({ intensityValues, mask, clippedValues })
+
   return {
     intensityValues,
     clippedValues,

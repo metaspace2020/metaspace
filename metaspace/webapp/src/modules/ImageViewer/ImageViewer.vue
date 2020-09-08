@@ -6,11 +6,13 @@
       <ion-image-menu
         v-if="openMenu === 'ION'"
         key="ION"
+        :layers="ionImageLayers"
+        @change="updateIntensity"
       />
-      <optical-image-menu
+      <!-- <optical-image-menu
         v-if="openMenu === 'OPTICAL'"
         key="OPTICAL"
-      />
+      /> -->
     </fade-transition>
     <image-handler
       :annotation="annotation"
@@ -22,11 +24,13 @@
       :pixel-size-y="pixelSizeY"
       :scale-bar-color="scaleBarColor"
       :scale-type="scaleType"
+
+      :ion-images="ionImages"
     />
   </div>
 </template>
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api'
+import { defineComponent, ref, computed, onMounted } from '@vue/composition-api'
 import { Image } from 'upng-js'
 
 import ImageHandler from './ImageHandler.vue'
@@ -34,14 +38,17 @@ import FadeTransition from '../../components/FadeTransition'
 import IonImageMenu from './IonImageMenu.vue'
 
 import openMenu from './menuState'
-import { ScaleType } from '../../lib/ionImageRendering'
+import { IonImage, loadPngFromUrl, processIonImage, ScaleType } from '../../lib/ionImageRendering'
+
+interface IonImageLayer {
+  id: string
+  minIntensity: number
+  maxIntensity: number
+  intensityRange: number[]
+}
 
 interface State {
-  ionImageUrl: string | null
-  ionImagePng: Image[] | null
-  ionImageIsLoading: boolean
-  imageViewerWidth: number
-  imageViewerHeight: number
+  ionImageLayers: IonImageLayer[]
 }
 
 interface Props {
@@ -74,9 +81,55 @@ const ImageViewer = defineComponent<Props>({
     scaleBarColor: { type: String },
     scaleType: { type: String },
   },
-  setup() {
+  setup(props) {
+    const ionImageLayers = ref<IonImageLayer[]>([])
+    const imgCache: Record<string, Image> = {}
+
+    const ionImages = computed(() => {
+      if (ionImageLayers.value.length > 0) {
+        console.log(ionImageLayers)
+        return ionImageLayers.value.map(({ id, intensityRange }) =>
+          processIonImage(imgCache[id], intensityRange[0], intensityRange[1], props.scaleType),
+        )
+      } else {
+        return null
+      }
+    })
+
+    const testImages = [
+      'a9b14785639482df213409a1f40f543b',
+      'f35789945c47c956ebb97086ac7c4126',
+      'dc1448c23fbf53224091aa70ff4a7b71',
+    ]
+
+    onMounted(() => {
+      Promise.all(
+        testImages.map(id => loadPngFromUrl(`https://metaspace2020.eu/fs/iso_images/${id}`)),
+      )
+        .then(imgs => {
+          ionImageLayers.value = imgs.map((png, i) => {
+            const id = testImages[i]
+            imgCache[id] = png
+            return {
+              id: testImages[i],
+              minIntensity: 0,
+              maxIntensity: 2.5e+4,
+              intensityRange: [0, 2.5e+4],
+            }
+          })
+        })
+    })
+
     return {
       openMenu,
+      ionImages,
+      ionImageLayers,
+      updateIntensity(id: string, range: number[]) {
+        const layer = ionImageLayers.value.find(_ => _.id === id)
+        if (layer) {
+          layer.intensityRange = range
+        }
+      },
     }
   },
 })

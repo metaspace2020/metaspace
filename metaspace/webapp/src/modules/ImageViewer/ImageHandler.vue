@@ -61,6 +61,9 @@ export default class MainImage extends Vue {
     @Prop({ required: true, type: Number })
     opacity!: number
 
+    @Prop()
+    ionImages: IonImage[] | null = null
+
     @Prop({ required: true })
     imageLoaderSettings!: any
 
@@ -85,10 +88,6 @@ export default class MainImage extends Vue {
     imageViewerWidth: number = 500;
     imageViewerHeight: number = 500;
 
-    created() {
-      const ignoredPromise = this.updateIonImage()
-    }
-
     mounted() {
       this.onResize()
     }
@@ -100,56 +99,7 @@ export default class MainImage extends Vue {
       }
     }
 
-    @Watch('annotation')
-    async updateIonImage() {
-      // const isotopeImage = get(this.annotation, 'isotopeImages[0]')
-      // const newUrl = isotopeImage != null ? isotopeImage.url : null
-      // if (newUrl != null && newUrl !== this.ionImageUrl) {
-      //   this.ionImageUrl = newUrl
-      //   this.ionImageIsLoading = true
-      //   try {
-      //     const png = await loadPngFromUrl(newUrl)
-      //     if (newUrl === this.ionImageUrl) {
-      //       this.ionImagePng = png
-      //       this.ionImageIsLoading = false
-      //     }
-      //   } catch (err) {
-      //     reportError(err, null)
-      //     if (newUrl === this.ionImageUrl) {
-      //       this.ionImagePng = null
-      //       this.ionImageIsLoading = false
-      //     }
-      //   }
-      // }
-      this.ionImageIsLoading = true
-      Promise.all([
-        loadPngFromUrl('https://metaspace2020.eu/fs/iso_images/a9b14785639482df213409a1f40f543b'),
-        loadPngFromUrl('https://metaspace2020.eu/fs/iso_images/f35789945c47c956ebb97086ac7c4126'),
-        loadPngFromUrl('https://metaspace2020.eu/fs/iso_images/dc1448c23fbf53224091aa70ff4a7b71'),
-      ])
-        .then(imgs => {
-          // this.__png1 = img
-          this.ionImagePng = imgs
-          this.ionImageIsLoading = false
-          // console.log(this.__png1)
-        })
-    }
-
-    get ionImages(): IonImage[] | null {
-      // console.log(this.__png1)
-      if (this.ionImagePng != null) {
-        const isotopeImage = get(this.annotation, 'isotopeImages[0]')
-        const { minIntensity = 0, maxIntensity = 5.57e+3 } = {}
-        return this.ionImagePng.map(img =>
-          processIonImage(img, minIntensity, maxIntensity, this.scaleType),
-        )
-      } else {
-        return null
-      }
-    }
-
     get ionImage(): IonImage | null {
-      // console.log(this.__png1)
       if (this.ionImages != null) {
         return this.ionImages[0]
       } else {
