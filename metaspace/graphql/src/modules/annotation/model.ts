@@ -40,7 +40,7 @@ export class ColocJob {
   @OneToMany(type => ColocAnnotation, colocAnnotation => colocAnnotation.colocJob)
   colocAnnotations: ColocAnnotation[];
 
-  @ManyToOne(type => MolecularDB)
+  @ManyToOne(type => MolecularDB, {onDelete: "CASCADE"})
   @JoinColumn({ name: 'moldb_id' })
   molecularDB: MolecularDB;
 }

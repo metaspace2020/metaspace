@@ -381,8 +381,11 @@ class ESExporter:
             doc['centroid_mzs'] = list(mzs) if mzs is not None else []
             doc['mz'] = mzs[0] if mzs is not None else 0
 
-            fdr = round(FDR.nearest_fdr_level(doc['fdr']) * 100, 2)
-            annotation_counts[fdr] += 1
+            if moldb.targeted:
+                fdr_level = doc['fdr'] = -1
+            else:
+                fdr_level = FDR.nearest_fdr_level(doc['fdr'])
+            annotation_counts[round(fdr_level * 100, 2)] += 1
 
         self._add_isomer_fields_to_anns(annotation_docs)
         ESExporterIsobars.add_isobar_fields_to_anns(annotation_docs, isocalc)

@@ -31,3 +31,14 @@ export const TagFilterRemove = defineComponent({
     )
   },
 })
+
+export const FilterHelpText = defineComponent({
+  setup(_, { slots }) {
+    return () => (
+      <p class="leading-5 text-sm m-0 mt-2 text-gray-700">
+        <i class="el-icon-info text-gray-600 mr-1" />
+        {slots.default()}
+      </p>
+    )
+  },
+})

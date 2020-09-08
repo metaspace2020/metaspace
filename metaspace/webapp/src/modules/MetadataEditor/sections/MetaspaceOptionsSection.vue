@@ -19,7 +19,7 @@
                 :help="dbHelp"
                 :value="value.databaseIds"
                 :error="error && error.databaseIds"
-                :multiple-limit="MAX_MOL_DBS"
+                :multiple-limit="maxMolDBs"
                 required
                 @input="val => onInput('databaseIds', val)"
               >
@@ -253,8 +253,8 @@ import FormField from '../inputs/FormField.vue'
 import DatabaseDescriptions from '../inputs/DatabaseDescriptions.vue'
 import AnalysisVersionHelp from '../inputs/AnalysisVersionHelp.vue'
 import { MetaspaceOptions } from '../formStructure'
-import { MAX_MOL_DBS, MAX_NEUTRAL_LOSSES, MAX_CHEM_MODS } from '../../../lib/constants'
-import config from '../../../lib/config'
+import { MAX_NEUTRAL_LOSSES, MAX_CHEM_MODS } from '../../../lib/constants'
+import config, { limits } from '../../../lib/config'
 import { formatDatabaseLabel, MolDBsByGroup } from '../../MolecularDatabases/formatting'
 import { MolecularDB } from '../../../api/moldb'
 import { sortBy } from 'lodash-es'
@@ -303,7 +303,7 @@ export default class MetaspaceOptionsSection extends Vue {
     features = config.features;
     dbHelp = DatabaseDescriptions;
     AnalysisVersionHelp = AnalysisVersionHelp;
-    MAX_MOL_DBS = MAX_MOL_DBS;
+    maxMolDBs = limits.maxMolDBs;
     MAX_NEUTRAL_LOSSES = MAX_NEUTRAL_LOSSES;
     MAX_CHEM_MODS = MAX_CHEM_MODS;
     ANALYSIS_VERSION_OPTIONS = [

@@ -128,23 +128,14 @@ export const neutralLossSuggestionQuery = gql`query neutralLossSuggestionQuery($
 }`
 
 export const metadataOptionsQuery = gql`query metadataOptionsQuery {
-  molecularDatabases: allMolecularDBs(filter: { global: true }) {
+  molecularDatabases: allMolecularDBs(filter: { usable: true }) {
     id,
     name,
     version,
     default,
-  }
-  molDBsByUserGroup: currentUser {
-    groups {
-      group {
-        id
-        shortName
-        molecularDatabases {
-          id,
-          name,
-          version,
-        }
-      }
+    group {
+      id
+      shortName
     }
   }
   adducts: adductSuggestions{adduct, name, charge, default, hidden}
@@ -189,6 +180,7 @@ export const metadataExportQuery = gql`
       uploadDateTime
       fdrCounts(inpFdrLvls: $inpFdrLvls, checkLvl: $checkLvl) {
         dbName
+        dbVersion
         levels
         counts
       }

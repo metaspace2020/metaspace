@@ -1,6 +1,7 @@
 /* eslint-disable camelcase */
 import { defaultsDeep } from 'lodash-es'
 import { getLocalStorage, removeLocalStorage, setLocalStorage } from './localStorage'
+import { MAX_MOL_DBS_EXT, MAX_MOL_DBS } from './constants'
 const fileConfig = require('../clientConfig.json')
 
 interface AWSConfig {
@@ -40,6 +41,7 @@ interface Features {
   isomers: boolean;
   isobars: boolean;
   moldb_mgmt: boolean;
+  moldb_limit_ext: boolean;
 }
 
 interface ClientConfig {
@@ -87,6 +89,7 @@ const defaultConfig: ClientConfig = {
     isomers: true,
     isobars: true,
     moldb_mgmt: false,
+    moldb_limit_ext: false,
   },
 }
 
@@ -133,3 +136,13 @@ export const replaceConfigWithDefaultForTests = () => {
 }
 
 export default config
+
+interface Limits {
+  maxMolDBs: number
+}
+
+export const limits : Limits = {
+  get maxMolDBs() {
+    return config.features.moldb_limit_ext ? MAX_MOL_DBS_EXT : MAX_MOL_DBS
+  },
+}

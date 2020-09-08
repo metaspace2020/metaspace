@@ -45,8 +45,9 @@ export interface DatasetDetailItem {
   status: GqlJobStatus | null;
   metadataType: string;
   fdrCounts: {
-    databaseId: number,
+    databaseId: number;
     dbName: string;
+    dbVersion: string;
     levels: number[];
     counts: number[];
   };
@@ -83,6 +84,7 @@ export const datasetDetailItemFragment =
     databases {
       id
       name
+      version
     }
     status
     statusUpdateDT
@@ -90,6 +92,7 @@ export const datasetDetailItemFragment =
     fdrCounts(inpFdrLvls: $inpFdrLvls, checkLvl: $checkLvl) {
       databaseId
       dbName
+      dbVersion
       levels
       counts
     }
