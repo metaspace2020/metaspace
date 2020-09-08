@@ -55,6 +55,7 @@ module.exports = {
       backgroundColor: {
         'primary-alpha': 'hsla(208, 87%, 50%, 87%)',
         'blue-700-alpha': 'hsla(208, 76%, 39%, 75%)',
+        'gray-100-alpha': 'hsla(208, 36%, 96%, 50%)'
       },
       inset: {
         '1/2': '50%',
@@ -66,6 +67,7 @@ module.exports = {
         auto: 'auto',
         '9': '2.25rem', // 1.5 * 24px/1.5rem
         '18': '4.5rem', // 3 * 24px/1.5rem
+        '60': '15rem', // 10 * 24px/1.5rem
         '66': '16.5rem', // 11 * 24px/1.5rem
       },
       maxWidth: {

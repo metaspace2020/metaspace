@@ -1,9 +1,7 @@
 import { defineComponent, watch } from '@vue/composition-api'
 
 import FadeTransition from '../../../../components/FadeTransition'
-import MenuButtons from '../MenuButtons'
-
-import { useMachine } from '../../../../lib/fsm'
+import { MenuButtons, menuState } from '../../../ImageViewer'
 
 const MainImageHeader = defineComponent({
   name: 'MainImageHeader',
@@ -11,11 +9,9 @@ const MainImageHeader = defineComponent({
     isActive: Boolean,
   },
   setup(props) {
-    const { dispatch } = useMachine('menu')
-
     watch(() => props.isActive, () => {
       if (props.isActive === false) {
-        dispatch({ type: 'NONE' })
+        menuState.value = 'NONE'
       }
     })
 

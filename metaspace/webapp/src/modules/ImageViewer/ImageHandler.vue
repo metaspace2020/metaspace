@@ -65,7 +65,7 @@ export default class MainImage extends Vue {
     imageLoaderSettings!: any
 
     @Prop({ required: true, type: Function })
-    applyimageMove!: Function
+    applyImageMove!: Function
 
     @Prop({ type: Number })
     pixelSizeX!: number
@@ -195,7 +195,7 @@ export default class MainImage extends Vue {
     }
 
     handleImageMove({ zoom, xOffset, yOffset }: any) {
-      this.applyimageMove({
+      this.applyImageMove({
         zoom: zoom / this.imageFit.imageZoom,
         xOffset,
         yOffset,

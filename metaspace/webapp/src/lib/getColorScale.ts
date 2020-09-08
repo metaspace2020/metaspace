@@ -190,7 +190,7 @@ function getChannelScale(channel: string) : ColorScale {
 }
 
 function parseName(name: string): { name: string, inverted: boolean } {
-  if (name.startsWith('-')) {
+  if (name[0] === '-') {
     return { name: name.slice(1), inverted: true }
   }
   return { name, inverted: false }

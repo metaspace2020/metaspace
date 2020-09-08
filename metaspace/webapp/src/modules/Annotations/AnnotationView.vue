@@ -73,7 +73,7 @@
         <el-collapse-item
           id="annot-img-collapse"
           name="images"
-          class="av-centered"
+          class="el-collapse-item--no-padding"
         >
           <component
             :is="metadataDependentComponent('main-image-header')"

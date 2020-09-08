@@ -1,9 +1,39 @@
+<template>
+  <div
+    class="relative"
+  >
+    <fade-transition>
+      <ion-image-menu
+        v-if="openMenu === 'ION'"
+        key="ION"
+      />
+      <optical-image-menu
+        v-if="openMenu === 'OPTICAL'"
+        key="OPTICAL"
+      />
+    </fade-transition>
+    <image-handler
+      :annotation="annotation"
+      :colormap="colormap"
+      :opacity="opacity"
+      :image-loader-settings="imageLoaderSettings"
+      :apply-image-move="applyImageMove"
+      :pixel-size-x="pixelSizeX"
+      :pixel-size-y="pixelSizeY"
+      :scale-bar-color="scaleBarColor"
+      :scale-type="scaleType"
+    />
+  </div>
+</template>
+<script lang="ts">
 import { defineComponent } from '@vue/composition-api'
 import { Image } from 'upng-js'
 
 import ImageHandler from './ImageHandler.vue'
 import FadeTransition from '../../components/FadeTransition'
+import IonImageMenu from './IonImageMenu.vue'
 
+import openMenu from './menuState'
 import { ScaleType } from '../../lib/ionImageRendering'
 
 interface State {
@@ -28,6 +58,11 @@ interface Props {
 
 const ImageViewer = defineComponent<Props>({
   name: 'ImageVewer',
+  components: {
+    ImageHandler,
+    FadeTransition,
+    IonImageMenu,
+  },
   props: {
     annotation: { required: true, type: Object },
     colormap: { required: true, type: String },
@@ -39,24 +74,12 @@ const ImageViewer = defineComponent<Props>({
     scaleBarColor: { type: String },
     scaleType: { type: String },
   },
-  setup(props) {
-    return () => (
-      <div>
-        {props.imageLoaderSettings
-        && <ImageHandler
-          annotation={props.annotation}
-          colormap={props.colormap}
-          opacity={props.opacity}
-          imageLoaderSettings={props.imageLoaderSettings}
-          applyimageMove={props.applyImageMove}
-          pixelSizeX={props.pixelSizeX}
-          pixelSizeY={props.pixelSizeY}
-          scaleBarColor={props.scaleBarColor}
-          scaleType={props.scaleType}
-        />}
-      </div>
-    )
+  setup() {
+    return {
+      openMenu,
+    }
   },
 })
 
 export default ImageViewer
+</script>

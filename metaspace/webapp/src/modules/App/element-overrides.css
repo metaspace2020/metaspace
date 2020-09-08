@@ -132,3 +132,7 @@
 .el-switch.is-checked {
   outline-color: theme('colors.primary');
 }
+
+.el-collapse-item--no-padding .el-collapse-item__content {
+  padding: 0
+}

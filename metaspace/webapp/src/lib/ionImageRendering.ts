@@ -287,12 +287,12 @@ export const renderIonImageToBuffer = (ionImage: IonImage, cmap?: readonly numbe
 type Cmap = number[][]
 
 export const renderIonImages = (ionImages: IonImage[], cmaps: readonly Cmap[]) => {
-  const { width, height } = ionImages[0]
+  const { width, height, clippedValues } = ionImages[0]
 
-  let buffer: ArrayBuffer
-  ionImages.forEach((img, i) => {
-    buffer = renderIonImageToBuffer(img, cmaps[i], buffer)
-  })
+  let buffer = new ArrayBuffer(clippedValues.length * 4)
+  for (let i = 0; i < ionImages.length; i++) {
+    buffer = renderIonImageToBuffer(ionImages[i], cmaps[i], buffer)
+  }
 
   return createDataUrl(new Uint8ClampedArray(buffer), width, height)
 }
