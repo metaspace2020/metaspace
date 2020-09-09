@@ -12,10 +12,8 @@ import logger from '../logger'
  */
 export const smApiSemaphore = new Semaphore(8)
 
-
 export const smApiJsonPost = async (path: string, requestDoc: any) => {
   return smApiSemaphore.use(async () => {
-    console.log(`starting request to ${path}`)
     const response = await fetch(`http://${config.services.sm_engine_api_host}${path}`, {
       method: 'POST',
       body: JSON.stringify(requestDoc),
