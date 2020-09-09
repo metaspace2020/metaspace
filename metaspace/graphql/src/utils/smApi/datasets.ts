@@ -57,10 +57,18 @@ interface UpdateDatasetArgs {
   projectIds?: string[];
 }
 
-export const smApiUpdateDataset = async (id: string, updates: UpdateDatasetArgs) => {
+interface UpdateDatasetMetaArgs {
+  asyncEsUpdate?: boolean;
+  priority?: number;
+  force?: boolean;
+}
+
+export const smApiUpdateDataset = async (id: string, updates: UpdateDatasetArgs, args: UpdateDatasetMetaArgs = {}) => {
   try {
+    const camelCaseArgs = _.mapKeys(args, (v, k) => snakeCase(k));
     await smApiDatasetRequest(`/v1/datasets/${id}/update`, {
-      doc: updates
+      doc: updates,
+      ...camelCaseArgs,
     });
   } catch (err) {
     logger.error('Failed to update dataset', err);

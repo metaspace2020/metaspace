@@ -103,7 +103,7 @@ class SMapiDatasetManager:
         self._set_ds_busy(ds, kwargs.get('force', False))
         self._post_sm_msg(ds=ds, queue=self._update_queue, action=DaemonAction.DELETE, **kwargs)
 
-    def update(self, ds_id, doc, **kwargs):
+    def update(self, ds_id, doc, async_es_update, **kwargs):
         """ Save dataset and send update message to the queue """
         ds = Dataset.load(self._db, ds_id)
         ds.name = doc.get('name', ds.name)
@@ -112,7 +112,7 @@ class SMapiDatasetManager:
             ds.metadata = doc['metadata']
         ds.upload_dt = doc.get('upload_dt', ds.upload_dt)
         ds.is_public = doc.get('is_public', ds.is_public)
-        ds.save(self._db, self._es)
+        ds.save(self._db, None if async_es_update else self._es)
 
         self._post_sm_msg(
             ds=ds,

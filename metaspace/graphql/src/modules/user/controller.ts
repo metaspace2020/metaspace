@@ -195,7 +195,7 @@ export const Resolvers = {
         if (userDSs) {
           logger.info(`Updating user '${userId}' datasets...`);
           await Promise.all(userDSs.map(async ds => {
-            await smApiUpdateDataset(ds.id, { submitterId: userId });
+            await smApiUpdateDataset(ds.id, { submitterId: userId }, { asyncEsUpdate: true });
           }));
         }
       }
