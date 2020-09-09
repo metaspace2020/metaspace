@@ -136,7 +136,6 @@ class ImageStoreServiceWrapper:
             h, w = mask.shape
             value = np.empty((len(img_ids), h * w), dtype=np.float32)
 
-        @retry_on_exception()
         def process_img(img_id, idx, do_setup=False):
             img = self.get_image_by_id(storage_type, 'iso_image', img_id)
             if do_setup:
