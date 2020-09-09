@@ -28,6 +28,7 @@ There are several playbooks available to retrieve dataset information as well as
 | **top_hits**| Retrieves ions with the highest average MSM score across all datasets |
 | **update_DBs_dataset_api**| Reprocesses a dataset with a different set of databases |
 | **upload_dataset_api**| Uploads a new dataset with the provided metadata |
+| **create-custom-molecular-database**| Creates and manages a new custom database from a local text file |
 
 ## Acknowledgements and license
 
