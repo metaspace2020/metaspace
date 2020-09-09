@@ -14,30 +14,34 @@
           <i class="el-icon-visible" />
         </button>
       </p>
-      <el-slider
-        class="h-3 -mt-3 mb-3"
+      <slider
+        :style="{ backgroundImage: layer.background }"
         :min="layer.minIntensity"
         :max="layer.maxIntensity"
         :value="layer.intensityRange"
-        :format-tooltip="v => v.toExponential(1)"
-        range
-        @input="range => onInput(layer.id, range)"
+        @change="range => onInput(layer.id, range)"
       />
       <div class="flex justify-between leading-6 text-xs tracking-wider">
         <span>{{ layer.minIntensity.toExponential(1) }}</span>
         <span>{{ layer.maxIntensity.toExponential(1) }}</span>
       </div>
     </div>
+    <!-- <slider
+      :value="[0, 100]"
+      @change="change"
+    /> -->
   </menu-container>
 </template>
 <script lang="ts">
 import { defineComponent } from '@vue/composition-api'
 
 import MenuContainer from './MenuContainer.vue'
+import Slider from '../../components/Slider.vue'
 
 export default defineComponent({
   components: {
     MenuContainer,
+    Slider,
   },
   props: {
     layers: Array,
@@ -45,6 +49,8 @@ export default defineComponent({
   setup(props, { emit }) {
     return {
       onInput: (...args: any) => emit('input', ...args),
+      selectedLayer: '1',
+      change: (v: any) => console.log(v),
     }
   },
 })

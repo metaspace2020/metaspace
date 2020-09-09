@@ -55,8 +55,8 @@ export default class MainImage extends Vue {
     @Prop({ required: true })
     annotation!: any
 
-    @Prop({ required: true, type: String })
-    colormap!: string
+    @Prop({ required: true, type: Array })
+    colormap!: number[][][]
 
     @Prop({ required: true, type: Number })
     opacity!: number

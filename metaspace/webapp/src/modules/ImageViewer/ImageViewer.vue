@@ -6,7 +6,7 @@
       <ion-image-menu
         v-if="openMenu === 'ION'"
         key="ION"
-        :layers="ionImageLayers"
+        :layers="menuItems"
         @input="updateIntensity"
       />
       <!-- <optical-image-menu
@@ -16,7 +16,6 @@
     </fade-transition>
     <image-handler
       :annotation="annotation"
-      :colormap="colormap"
       :opacity="opacity"
       :image-loader-settings="imageLoaderSettings"
       :apply-image-move="applyImageMove"
@@ -26,6 +25,7 @@
       :scale-type="scaleType"
 
       :ion-images="ionImages"
+      :colormap="cmaps"
     />
   </div>
 </template>
@@ -39,12 +39,15 @@ import IonImageMenu from './IonImageMenu.vue'
 
 import openMenu from './menuState'
 import { IonImage, loadPngFromUrl, processIonImage, ScaleType } from '../../lib/ionImageRendering'
+import createColorMap from '../../lib/createColormap'
+import getColorScale from '../../lib/getColorScale'
 
 interface IonImageLayer {
   id: string
   minIntensity: number
   maxIntensity: number
   intensityRange: [number, number]
+  channel: string
 }
 
 interface State {
@@ -95,11 +98,36 @@ const ImageViewer = defineComponent<Props>({
       }
     })
 
+    const cmaps = computed(() => {
+      const { opacityMode, annotImageOpacity } = props.imageLoaderSettings
+      return ionImageLayers.value.map(_ => createColorMap(_.channel, opacityMode, annotImageOpacity))
+    })
+
+    const getBackground = (channel: string) => {
+      const { domain, range } = getColorScale(channel)
+
+      const colors = []
+      for (let i = 0; i < domain.length; i++) {
+        colors.push(range[i] + ' ' + (domain[i] * 100 + '%'))
+      }
+
+      return `linear-gradient(to right, ${colors.join(', ')})`
+    }
+
+    const menuItems = computed(() => {
+      return ionImageLayers.value.map((layer, i) => ({
+        ...layer,
+        background: getBackground(layer.channel),
+      }))
+    })
+
     const testImages = [
       'a9b14785639482df213409a1f40f543b',
       'f35789945c47c956ebb97086ac7c4126',
       'dc1448c23fbf53224091aa70ff4a7b71',
     ]
+
+    const channels = ['red', 'green', 'blue']
 
     Promise.all(
       testImages.map(id => loadPngFromUrl(`https://metaspace2020.eu/fs/iso_images/${id}`)),
@@ -113,6 +141,7 @@ const ImageViewer = defineComponent<Props>({
             minIntensity: 0,
             maxIntensity: 2.5e+4,
             intensityRange: [0, 2.5e+4],
+            channel: channels[i],
           }
         })
         console.log('test', ionImageLayers)
@@ -121,7 +150,8 @@ const ImageViewer = defineComponent<Props>({
     return {
       openMenu,
       ionImages,
-      ionImageLayers,
+      cmaps,
+      menuItems,
       updateIntensity(id: string, range: [number, number]) {
         const layer = ionImageLayers.value.find(_ => _.id === id)
         if (layer) {

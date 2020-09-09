@@ -31,7 +31,7 @@ interface Props {
   // xOffset=0, yOffset=0 will center the ion image.
   xOffset: number
   yOffset: number
-  colormap: string
+  colormap: number[][][]
   opticalSrc: string | null
   annotImageOpacity: number
   opacityMode: OpacityMode
@@ -335,14 +335,9 @@ const useBufferedOpticalImage = (props: Props) => {
 }
 
 const useIonImageView = (props: Props) => {
-  const cmap = computed(() => [
-    createColormap('red', props.opacityMode, props.annotImageOpacity),
-    createColormap('green', props.opacityMode, props.annotImageOpacity),
-    createColormap('blue', props.opacityMode, props.annotImageOpacity),
-  ])
   // const ionImageDataUri = computed(() => props.ionImage && renderIonImage(props.ionImage, cmap.value[0]))
   const ionImageDataUri = computed(() =>
-    props.ionImage && renderIonImages(props.ionImage, cmap.value),
+    props.ionImage && renderIonImages(props.ionImage, props.colormap),
   )
   const renderIonImageView = () => (props.ionImage
     && <img
