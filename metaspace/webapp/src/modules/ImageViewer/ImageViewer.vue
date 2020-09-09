@@ -7,7 +7,7 @@
         v-if="openMenu === 'ION'"
         key="ION"
         :layers="ionImageLayers"
-        @change="updateIntensity"
+        @input="updateIntensity"
       />
       <!-- <optical-image-menu
         v-if="openMenu === 'OPTICAL'"
@@ -44,7 +44,7 @@ interface IonImageLayer {
   id: string
   minIntensity: number
   maxIntensity: number
-  intensityRange: number[]
+  intensityRange: [number, number]
 }
 
 interface State {
@@ -87,9 +87,8 @@ const ImageViewer = defineComponent<Props>({
 
     const ionImages = computed(() => {
       if (ionImageLayers.value.length > 0) {
-        console.log(ionImageLayers)
-        return ionImageLayers.value.map(({ id, intensityRange }) =>
-          processIonImage(imgCache[id], intensityRange[0], intensityRange[1], props.scaleType),
+        return ionImageLayers.value.map(({ id, minIntensity, maxIntensity, intensityRange }) =>
+          processIonImage(imgCache[id], minIntensity, maxIntensity, props.scaleType, intensityRange),
         )
       } else {
         return null
@@ -102,29 +101,28 @@ const ImageViewer = defineComponent<Props>({
       'dc1448c23fbf53224091aa70ff4a7b71',
     ]
 
-    onMounted(() => {
-      Promise.all(
-        testImages.map(id => loadPngFromUrl(`https://metaspace2020.eu/fs/iso_images/${id}`)),
-      )
-        .then(imgs => {
-          ionImageLayers.value = imgs.map((png, i) => {
-            const id = testImages[i]
-            imgCache[id] = png
-            return {
-              id: testImages[i],
-              minIntensity: 0,
-              maxIntensity: 2.5e+4,
-              intensityRange: [0, 2.5e+4],
-            }
-          })
+    Promise.all(
+      testImages.map(id => loadPngFromUrl(`https://metaspace2020.eu/fs/iso_images/${id}`)),
+    )
+      .then(imgs => {
+        ionImageLayers.value = imgs.map((png, i) => {
+          const id = testImages[i]
+          imgCache[id] = png
+          return {
+            id: testImages[i],
+            minIntensity: 0,
+            maxIntensity: 2.5e+4,
+            intensityRange: [0, 2.5e+4],
+          }
         })
-    })
+        console.log('test', ionImageLayers)
+      })
 
     return {
       openMenu,
       ionImages,
       ionImageLayers,
-      updateIntensity(id: string, range: number[]) {
+      updateIntensity(id: string, range: [number, number]) {
         const layer = ionImageLayers.value.find(_ => _.id === id)
         if (layer) {
           layer.intensityRange = range

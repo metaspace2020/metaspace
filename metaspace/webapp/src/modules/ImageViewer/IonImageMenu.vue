@@ -18,9 +18,10 @@
         class="h-3 -mt-3 mb-3"
         :min="layer.minIntensity"
         :max="layer.maxIntensity"
-        :v-model="layer.intensityRange"
+        :value="layer.intensityRange"
+        :format-tooltip="v => v.toExponential(1)"
         range
-        @change="range => onChange(layer.id, range)"
+        @input="range => onInput(layer.id, range)"
       />
       <div class="flex justify-between leading-6 text-xs tracking-wider">
         <span>{{ layer.minIntensity.toExponential(1) }}</span>
@@ -30,7 +31,7 @@
   </menu-container>
 </template>
 <script lang="ts">
-import { defineComponent, onUpdated } from '@vue/composition-api'
+import { defineComponent } from '@vue/composition-api'
 
 import MenuContainer from './MenuContainer.vue'
 
@@ -42,11 +43,8 @@ export default defineComponent({
     layers: Array,
   },
   setup(props, { emit }) {
-    onUpdated(() => {
-      console.log(props)
-    })
     return {
-      onChange: (...args: any) => emit('change', ...args),
+      onInput: (...args: any) => emit('input', ...args),
     }
   },
 })
