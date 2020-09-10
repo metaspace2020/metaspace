@@ -7,7 +7,6 @@
       ref="imageLoader"
       :ion-image="ionImages"
       :is-loading="ionImageIsLoading"
-      :colormap="colormap"
       :pixel-size-x="pixelSizeX"
       :pixel-size-y="pixelSizeY"
       :pixel-aspect-ratio="imageLoaderSettings.pixelAspectRatio"
@@ -34,7 +33,7 @@ import { Component, Prop, Watch } from 'vue-property-decorator'
 import { saveAs } from 'file-saver'
 import IonImageViewer from '../../components/IonImageViewer'
 import domtoimage from 'dom-to-image-google-font-issue'
-import { IonImage, loadPngFromUrl, processIonImage, ScaleType } from '../../lib/ionImageRendering'
+import { IonImage, ColorMap, loadPngFromUrl, processIonImage, ScaleType } from '../../lib/ionImageRendering'
 import { get } from 'lodash-es'
 import fitImageToArea, { FitImageToAreaResult } from '../../lib/fitImageToArea'
 import reportError from '../../lib/reportError'
@@ -55,14 +54,11 @@ export default class MainImage extends Vue {
     @Prop({ required: true })
     annotation!: any
 
-    @Prop({ required: true, type: Array })
-    colormap!: number[][][]
-
     @Prop({ required: true, type: Number })
     opacity!: number
 
-    @Prop()
-    ionImages: IonImage[] | null = null
+    @Prop({ required: true, type: Array })
+    ionImages: [IonImage, ColorMap][]
 
     @Prop({ required: true })
     imageLoaderSettings!: any
@@ -82,8 +78,6 @@ export default class MainImage extends Vue {
     @Prop({ type: String })
     scaleType?: ScaleType
 
-    ionImageUrl: string | null = null;
-    ionImagePng: Image[] | null = null;
     ionImageIsLoading = false;
     imageViewerWidth: number = 500;
     imageViewerHeight: number = 500;
@@ -100,8 +94,8 @@ export default class MainImage extends Vue {
     }
 
     get ionImage(): IonImage | null {
-      if (this.ionImages != null) {
-        return this.ionImages[0]
+      if (this.ionImages.length) {
+        return this.ionImages[0][0]
       } else {
         return null
       }

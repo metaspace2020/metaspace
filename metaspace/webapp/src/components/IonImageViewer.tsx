@@ -2,7 +2,7 @@ import Vue from 'vue'
 import { computed, defineComponent, reactive, Ref, ref, SetupContext, watch } from '@vue/composition-api'
 
 import { getOS, scrollDistance, WheelEventCompat } from '../lib/util'
-import createColormap, { OpacityMode } from '../lib/createColormap'
+import { OpacityMode } from '../lib/createColormap'
 import config from '../lib/config'
 import { renderIonImage, renderIonImages } from '../lib/ionImageRendering'
 import ScaleBar from './ScaleBar.vue'
@@ -31,7 +31,6 @@ interface Props {
   // xOffset=0, yOffset=0 will center the ion image.
   xOffset: number
   yOffset: number
-  colormap: number[][][]
   opticalSrc: string | null
   annotImageOpacity: number
   opacityMode: OpacityMode
@@ -217,8 +216,9 @@ const usePanAndZoom = (
   const viewBoxStyle = computed(() => {
     const isLCMS = false
     if (!isLCMS) {
-      const ionImageWidth = (props.ionImage != null ? props.ionImage[0].width : props.width)
-      const ionImageHeight = (props.ionImage != null ? props.ionImage[0].height : props.height)
+      const ionImage = props.ionImage != null ? props.ionImage[0][0] : null
+      const ionImageWidth = (ionImage != null ? ionImage.width : props.width)
+      const ionImageHeight = (ionImage != null ? ionImage.height : props.height)
       const x = props.width / 2 + (props.xOffset - ionImageWidth / 2) * zoomX.value
       const y = props.height / 2 + (props.yOffset - ionImageHeight / 2) * zoomY.value
       return {
@@ -337,7 +337,7 @@ const useBufferedOpticalImage = (props: Props) => {
 const useIonImageView = (props: Props) => {
   // const ionImageDataUri = computed(() => props.ionImage && renderIonImage(props.ionImage, cmap.value[0]))
   const ionImageDataUri = computed(() =>
-    props.ionImage && renderIonImages(props.ionImage, props.colormap),
+    props.ionImage && renderIonImages(props.ionImage),
   )
   const renderIonImageView = () => (props.ionImage
     && <img
@@ -366,7 +366,6 @@ export default defineComponent<Props>({
     // xOffset=0, yOffset=0 will center the ion image.
     xOffset: { type: Number, required: true },
     yOffset: { type: Number, required: true },
-    colormap: { type: String, default: 'Viridis' },
     opticalSrc: { type: String, default: null },
     annotImageOpacity: { type: Number, default: 0.5 },
     opacityMode: { type: String, default: 'constant' },

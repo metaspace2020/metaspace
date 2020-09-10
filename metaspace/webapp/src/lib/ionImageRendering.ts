@@ -20,6 +20,8 @@ export interface IonImage {
   maxQuantile: number | null;
 }
 
+export type ColorMap = number[][]
+
 export type ScaleType = 'linear' | 'linear-full' | 'log' | 'log-full' | 'hist' | 'test';
 export type ScaleMode = 'linear' | 'log' | 'hist';
 
@@ -285,14 +287,12 @@ export const renderIonImageToBuffer = (ionImage: IonImage, cmap?: readonly numbe
   return outputBuffer
 }
 
-type Cmap = number[][]
-
-export const renderIonImages = (ionImages: IonImage[], cmaps: readonly Cmap[]) => {
-  const { width, height, clippedValues } = ionImages[0]
+export const renderIonImages = (layers: [IonImage, ColorMap][]) => {
+  const { width, height, clippedValues } = layers[0][0]
 
   let buffer = new ArrayBuffer(clippedValues.length * 4)
-  for (let i = 0; i < ionImages.length; i++) {
-    buffer = renderIonImageToBuffer(ionImages[i], cmaps[i], buffer)
+  for (const [image, cmap] of layers) {
+    buffer = renderIonImageToBuffer(image, cmap, buffer)
   }
 
   return createDataUrl(new Uint8ClampedArray(buffer), width, height)

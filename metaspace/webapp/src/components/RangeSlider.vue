@@ -16,6 +16,7 @@
   </div>
 </template>
 <script lang="ts">
+/* Adapted from this example: https://codepen.io/zebresel/pen/xGLYOM?editors=0010 */
 import { defineComponent, ref, Ref, reactive, onMounted, computed } from '@vue/composition-api'
 
 interface Props {
