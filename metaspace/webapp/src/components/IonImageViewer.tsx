@@ -4,7 +4,7 @@ import { computed, defineComponent, reactive, Ref, ref, SetupContext, watch } fr
 import { getOS, scrollDistance, WheelEventCompat } from '../lib/util'
 import { OpacityMode } from '../lib/createColormap'
 import config from '../lib/config'
-import { renderIonImage, renderIonImages } from '../lib/ionImageRendering'
+import { renderIonImages, IonImageLayer } from '../lib/ionImageRendering'
 import ScaleBar from './ScaleBar.vue'
 import { throttle } from 'lodash-es'
 import { ReferenceObject } from 'popper.js'
@@ -17,7 +17,7 @@ const formatMatrix3d = (t: readonly number[][]) =>
              ${t[0][2]}, ${t[1][2]}, 0, ${t[2][2]})`
 
 interface Props {
-  ionImage: any | null
+  ionImageLayers: IonImageLayer[]
   isLoading: boolean
   // width & height of HTML element
   width: number
@@ -90,14 +90,14 @@ const useScrollBlock = () => {
 
 const useScaleBar = (props: Props) => {
   const xScale = computed(() => {
-    if (props.ionImage != null && props.pixelSizeX != null && props.pixelSizeX !== 0) {
+    if (props.pixelSizeX != null && props.pixelSizeX !== 0) {
       return props.pixelSizeX / props.zoom
     } else {
       return 1
     }
   })
   const yScale = computed(() => {
-    if (props.ionImage != null && props.pixelSizeY != null && props.pixelSizeY !== 0) {
+    if (props.pixelSizeY != null && props.pixelSizeY !== 0) {
       return props.pixelSizeY / props.zoom * props.pixelAspectRatio
     } else {
       return 1
@@ -120,9 +120,9 @@ const usePixelIntensityDisplay = (props: Props, imageLoaderRef: Ref<ReferenceObj
   const zoomX = computed(() => props.zoom)
   const zoomY = computed(() => props.zoom / props.pixelAspectRatio)
   const cursorOverPixelIntensity = computed(() => {
-    if (props.ionImage != null && cursorPixelPos.value != null) {
+    if (props.ionImageLayers.length && cursorPixelPos.value != null) {
       const [x, y] = cursorPixelPos.value
-      const { width, height, mask, intensityValues } = props.ionImage
+      const { width, height, mask, intensityValues } = props.ionImageLayers[0].ionImage
       if (x >= 0 && x < width
         && y >= 0 && y < height
         && mask[y * width + x] !== 0) {
@@ -133,11 +133,12 @@ const usePixelIntensityDisplay = (props: Props, imageLoaderRef: Ref<ReferenceObj
   })
   const pixelIntensityStyle = computed(() => {
     if (props.showPixelIntensity
-      && props.ionImage != null
+      && props.ionImageLayers.length
       && cursorPixelPos.value != null
       && cursorOverPixelIntensity.value != null) {
-      const baseX = props.width / 2 + (props.xOffset - props.ionImage.width / 2) * zoomX.value
-      const baseY = props.height / 2 + (props.yOffset - props.ionImage.height / 2) * zoomY.value
+      const { width, height } = props.ionImageLayers[0].ionImage
+      const baseX = props.width / 2 + (props.xOffset - width / 2) * zoomX.value
+      const baseY = props.height / 2 + (props.yOffset - height / 2) * zoomY.value
       const [cursorX, cursorY] = cursorPixelPos.value
       return {
         left: (baseX + cursorX * zoomX.value - 0.5) + 'px',
@@ -162,9 +163,9 @@ const usePixelIntensityDisplay = (props: Props, imageLoaderRef: Ref<ReferenceObj
   })
 
   const movePixelIntensity = (clientX: number | null, clientY: number | null) => {
-    if (imageLoaderRef.value != null && props.ionImage != null && clientX != null && clientY != null) {
+    if (imageLoaderRef.value != null && props.ionImageLayers.length && clientX != null && clientY != null) {
       const rect = imageLoaderRef.value.getBoundingClientRect()
-      const { width = 0, height = 0 } = props.ionImage
+      const { width = 0, height = 0 } = props.ionImageLayers[0].ionImage
       // Includes a 2px offset up and left so that the selected pixel is less obscured by the mouse cursor
       const x = Math.floor((clientX - (rect.left + rect.right) / 2 - 2)
         / zoomX.value - props.xOffset + width / 2)
@@ -216,9 +217,9 @@ const usePanAndZoom = (
   const viewBoxStyle = computed(() => {
     const isLCMS = false
     if (!isLCMS) {
-      const ionImage = props.ionImage != null ? props.ionImage[0][0] : null
-      const ionImageWidth = (ionImage != null ? ionImage.width : props.width)
-      const ionImageHeight = (ionImage != null ? ionImage.height : props.height)
+      const { ionImage } = props.ionImageLayers[0] || {}
+      const ionImageWidth = (ionImage ? ionImage.width : props.width)
+      const ionImageHeight = (ionImage ? ionImage.height : props.height)
       const x = props.width / 2 + (props.xOffset - ionImageWidth / 2) * zoomX.value
       const y = props.height / 2 + (props.yOffset - ionImageHeight / 2) * zoomY.value
       return {
@@ -311,8 +312,7 @@ const useBufferedOpticalImage = (props: Props) => {
   // Always test against IE11 when touching this code - IE11's @load event doesn't always fire on img elements.
   const renderOpticalImage = () => (
     <div>
-      {props.ionImage
-      && opticalImageUrl.value
+      {opticalImageUrl.value
       && <img
         key={state.loadedOpticalImageUrl}
         src={state.loadedOpticalImageUrl}
@@ -320,8 +320,7 @@ const useBufferedOpticalImage = (props: Props) => {
         style={state.loadedOpticalImageStyle}
       />}
 
-      {props.ionImage
-      && opticalImageUrl.value
+      {opticalImageUrl.value
       && state.loadedOpticalImageUrl !== opticalImageUrl.value
       && <img
         key={opticalImageUrl.value}
@@ -335,11 +334,10 @@ const useBufferedOpticalImage = (props: Props) => {
 }
 
 const useIonImageView = (props: Props) => {
-  // const ionImageDataUri = computed(() => props.ionImage && renderIonImage(props.ionImage, cmap.value[0]))
   const ionImageDataUri = computed(() =>
-    props.ionImage && renderIonImages(props.ionImage),
+    props.ionImageLayers && renderIonImages(props.ionImageLayers),
   )
-  const renderIonImageView = () => (props.ionImage
+  const renderIonImageView = () => (props.ionImageLayers
     && <img
       src={ionImageDataUri.value}
       class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
@@ -352,7 +350,7 @@ const useIonImageView = (props: Props) => {
 
 export default defineComponent<Props>({
   props: {
-    ionImage: Array,
+    ionImageLayers: Array,
     isLoading: { type: Boolean, default: false },
     // width & height of HTML element
     width: { type: Number, required: true },

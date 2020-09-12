@@ -6,7 +6,7 @@
       <ion-image-menu
         v-if="openMenu === 'ION'"
         key="ION"
-        :layers="ionImageLayers"
+        :layers="ionImageLayerState"
         @input="updateIntensity"
       />
       <!-- <optical-image-menu
@@ -14,31 +14,52 @@
         key="OPTICAL"
       /> -->
     </fade-transition>
-    <image-handler
-      :annotation="annotation"
-      :opacity="opacity"
-      :image-loader-settings="imageLoaderSettings"
-      :apply-image-move="applyImageMove"
-      :pixel-size-x="pixelSizeX"
-      :pixel-size-y="pixelSizeY"
-      :scale-bar-color="scaleBarColor"
-      :scale-type="scaleType"
-
-      :ion-images="ionImages"
-    />
+    <div
+      ref="imageArea"
+      v-resize="onResize"
+      class="ready"
+    >
+      <ion-image-viewer
+        :annotation="annotation"
+        :height="dimensions.height"
+        :ion-image-layers="ionImageLayers"
+        :max-zoom="imageFit.imageZoom * 20"
+        :min-zoom="imageFit.imageZoom / 4"
+        :opacity="opacity"
+        :pixel-size-x="pixelSizeX"
+        :pixel-size-y="pixelSizeY"
+        :scale-bar-color="scaleBarColor"
+        :scale-type="scaleType"
+        :width="dimensions.width"
+        :x-offset="imageLoaderSettings.imagePosition.xOffset"
+        :y-offset="imageLoaderSettings.imagePosition.yOffset"
+        :zoom="imageLoaderSettings.imagePosition.zoom * imageFit.imageZoom"
+        scroll-block
+        show-pixel-intensity
+        v-bind="imageLoaderSettings"
+        @move="applyImageMove"
+      />
+      <image-saver
+        class="absolute top-0 left-0 mt-3 ml-3"
+        :dom-node="imageArea"
+      />
+    </div>
   </div>
 </template>
 <script lang="ts">
 import { defineComponent, ref, Ref, computed, onMounted, reactive, watch } from '@vue/composition-api'
 import { Image } from 'upng-js'
+import resize from 'vue-resize-directive'
 
-import ImageHandler from './ImageHandler.vue'
+import IonImageViewer from '../../components/IonImageViewer'
+import ImageSaver from './ImageSaver.vue'
 import FadeTransition from '../../components/FadeTransition'
 import IonImageMenu from './IonImageMenu.vue'
 
 import openMenu from './menuState'
 import { IonImage, ColorMap, loadPngFromUrl, processIonImage, ScaleType } from '../../lib/ionImageRendering'
 import createColorMap from '../../lib/createColormap'
+import fitImageToArea, { FitImageToAreaResult } from '../../lib/fitImageToArea'
 
 interface IonImageLayer {
   id: string
@@ -70,9 +91,13 @@ interface Props {
 const ImageViewer = defineComponent<Props>({
   name: 'ImageVewer',
   components: {
-    ImageHandler,
+    IonImageViewer,
+    ImageSaver,
     FadeTransition,
     IonImageMenu,
+  },
+  directives: {
+    resize,
   },
   props: {
     annotation: { required: true, type: Object },
@@ -95,13 +120,16 @@ const ImageViewer = defineComponent<Props>({
     const processedCache: Record<string, Ref<IonImage>> = {}
     const colorMapCache: Record<string, Ref<ColorMap>> = {}
 
-    const ionImageLayers = computed(() => ionImages.order.map(id => ionImages.layers[id]))
+    const ionImageLayerState = computed(() => ionImages.order.map(id => ionImages.layers[id]))
 
-    const ionImagesToRender = computed(() => {
+    const ionImageLayers = computed(() => {
       const toRender = []
-      for (const layer of ionImageLayers.value) {
+      for (const layer of ionImageLayerState.value) {
         if (layer.visible) {
-          toRender.push([processedCache[layer.id], colorMapCache[layer.id]])
+          toRender.push({
+            ionImage: processedCache[layer.id].value,
+            colorMap: colorMapCache[layer.id].value,
+          })
         }
       }
       return toRender
@@ -110,7 +138,7 @@ const ImageViewer = defineComponent<Props>({
     const cmaps = computed(() => {
       const { opacityMode, annotImageOpacity } = props.imageLoaderSettings
       const maps: Record<string, number[][]> = {}
-      for (const layer of ionImageLayers.value) {
+      for (const layer of ionImageLayerState.value) {
         maps[layer.id] = createColorMap(layer.channel, opacityMode, annotImageOpacity)
       }
       return maps
@@ -140,10 +168,39 @@ const ImageViewer = defineComponent<Props>({
     //     console.log('test', ionImageLayers)
     //   })
 
+    const imageArea = ref<HTMLElement | null>(null)
+
+    const dimensions = reactive({
+      width: 500,
+      height: 500,
+    })
+
+    function onResize() {
+      if (imageArea.value != null) {
+        dimensions.width = imageArea.value.clientWidth
+        dimensions.height = Math.min(Math.max(window.innerHeight - 520, 500), 1000)
+      }
+    }
+
+    const imageFit = computed(() => {
+      const [ionImageLayer] = ionImageLayers.value
+      const { width = 500, height = 500 } = ionImageLayer ? ionImageLayer.ionImage : {}
+      return fitImageToArea({
+        imageWidth: width,
+        imageHeight: height / props.imageLoaderSettings.pixelAspectRatio,
+        areaWidth: dimensions.width,
+        areaHeight: dimensions.height,
+      })
+    })
+
     return {
-      openMenu,
-      ionImages: ionImagesToRender,
+      dimensions,
+      imageArea,
+      imageFit,
       ionImageLayers,
+      ionImageLayerState,
+      onResize,
+      openMenu,
       updateIntensity(id: string, range: [number, number]) {
         const layer = ionImages.layers[id]
         if (layer) {

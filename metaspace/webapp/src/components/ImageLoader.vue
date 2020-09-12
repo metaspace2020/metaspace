@@ -5,7 +5,7 @@
   >
     <ion-image-viewer
       ref="imageLoader"
-      :ion-image="ionImage"
+      :ion-image-layers="ionImageLayers"
       :is-loading="ionImageIsLoading"
       :width="imageFit.areaWidth"
       :height="imageFit.areaHeight"
@@ -14,6 +14,7 @@
       :x-offset="xOffset"
       :y-offset="yOffset"
       :style="imageStyle"
+      :image-loader-settings="imageLoaderSettings"
       v-bind="$attrs"
       v-on="$listeners"
     />
@@ -26,9 +27,10 @@ import resize from 'vue-resize-directive'
 import config from '../lib/config'
 import { Component, Prop, Watch } from 'vue-property-decorator'
 import IonImageViewer from './IonImageViewer'
-import { IonImage, loadPngFromUrl, processIonImage, ScaleType } from '../lib/ionImageRendering'
+import { IonImage, loadPngFromUrl, processIonImage, ScaleType, IonImageLayer } from '../lib/ionImageRendering'
 import fitImageToArea, { FitImageToAreaResult } from '../lib/fitImageToArea'
 import reportError from '../lib/reportError'
+import createColormap from '../lib/createColormap'
 
   @Component({
     inheritAttrs: false,
@@ -62,6 +64,12 @@ export default class ImageLoader extends Vue {
 
     @Prop({ type: String })
     scaleType?: ScaleType;
+
+    @Prop()
+    colormap: string = 'Viridis';
+
+    @Prop({ type: Object })
+    imageLoaderSettings: any
 
     containerWidth = 500;
     containerHeight = 500;
@@ -126,6 +134,17 @@ export default class ImageLoader extends Vue {
         areaWidth: this.containerWidth,
         areaHeight: this.containerHeight,
       })
+    }
+
+    get ionImageLayers(): IonImageLayer[] {
+      if (this.ionImage) {
+        const { opacityMode, annotImageOpacity } = this.imageLoaderSettings
+        return [{
+          ionImage: this.ionImage,
+          colorMap: createColormap(this.colormap, opacityMode, annotImageOpacity),
+        }]
+      }
+      return []
     }
 
     @Watch('imageFit')
