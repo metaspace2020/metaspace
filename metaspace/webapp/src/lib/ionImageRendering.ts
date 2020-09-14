@@ -233,8 +233,17 @@ export const processIonImage = (
 
   const { width, height } = png
   const { intensityValues, mask } = extractIntensityAndMask(png, minIntensity, maxIntensity)
+  const [minRange, maxRange] = intensityRange
   const { clippedMinIntensity, clippedMaxIntensity, rankValues } =
-    getScaleParams(intensityValues, mask, intensityRange[0], intensityRange[1], minQuantile, maxQuantile, scaleMode)
+    getScaleParams(
+      intensityValues,
+      mask,
+      minRange,
+      maxRange,
+      minRange === minIntensity ? minQuantile : null,
+      maxRange === maxIntensity ? maxQuantile : null,
+      scaleMode,
+    )
 
   const clippedValues = quantizeIonImage(intensityValues, clippedMinIntensity, clippedMaxIntensity, rankValues,
     scaleMode)

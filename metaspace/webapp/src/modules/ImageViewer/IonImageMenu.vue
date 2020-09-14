@@ -4,12 +4,13 @@
       v-for="(layer, i) in layers"
       :key="layer.id"
       class="px-3 flex flex-col justify-center h-18"
-      :class="{ 'bg-blue-100': selectedLayer === layer.id }"
+      :class="{ 'bg-blue-100': activeLayer === layer.id }"
     >
       <p class="flex justify-between text-sm m-0">
-        <span class="truncate font-medium h-6">
-          Layer {{ i + 1 }}
-        </span>
+        <molecular-formula
+          class="truncate font-medium h-6"
+          :ion="layer.annotation.ion"
+        />
         <button class="button-reset">
           <i class="el-icon-visible" />
         </button>
@@ -33,6 +34,7 @@ import { defineComponent, computed } from '@vue/composition-api'
 
 import MenuContainer from './MenuContainer.vue'
 import RangeSlider from '../../components/RangeSlider.vue'
+import MolecularFormula from '../../components/MolecularFormula'
 
 import getColorScale from '../../lib/getColorScale'
 
@@ -44,9 +46,11 @@ export default defineComponent<Props>({
   components: {
     MenuContainer,
     RangeSlider,
+    MolecularFormula,
   },
   props: {
     layers: Array,
+    activeLayer: String,
   },
   setup(props, { emit }) {
     const backgrounds = computed(() => {

@@ -7,6 +7,7 @@
         v-if="openMenu === 'ION'"
         key="ION"
         :layers="ionImageLayerState"
+        :active-layer="activeLayer"
         @input="updateIntensity"
       />
       <!-- <optical-image-menu
@@ -17,7 +18,7 @@
     <div
       ref="imageArea"
       v-resize="onResize"
-      class="ready"
+      class="relative"
     >
       <ion-image-viewer
         :annotation="annotation"
@@ -37,7 +38,7 @@
         scroll-block
         show-pixel-intensity
         v-bind="imageLoaderSettings"
-        @move="applyImageMove"
+        @move="handleImageMove"
       />
       <image-saver
         class="absolute top-0 left-0 mt-3 ml-3"
@@ -52,8 +53,8 @@ import { Image } from 'upng-js'
 import resize from 'vue-resize-directive'
 
 import IonImageViewer from '../../components/IonImageViewer'
-import ImageSaver from './ImageSaver.vue'
 import FadeTransition from '../../components/FadeTransition'
+import ImageSaver from './ImageSaver.vue'
 import IonImageMenu from './IonImageMenu.vue'
 
 import openMenu from './menuState'
@@ -61,23 +62,31 @@ import { IonImage, ColorMap, loadPngFromUrl, processIonImage, ScaleType } from '
 import createColorMap from '../../lib/createColormap'
 import fitImageToArea, { FitImageToAreaResult } from '../../lib/fitImageToArea'
 
-interface IonImageLayer {
+interface Annotation {
   id: string
+  ion: string
+  mz: number
+  isotopeImages: { minIntensity: number, maxIntensity: number, url: string }[]
+}
+
+interface IonImageLayer {
+  annotation: Annotation
+  channel: string
+  id: string
+  intensityRange: [number, number] | undefined
+  label: string | undefined
   minIntensity: number
   maxIntensity: number
-  intensityRange: [number, number]
-  channel: string
   visible: boolean
 }
 
 interface IonImageState {
-  layers: Record<string, IonImageLayer>
   order: string[]
   activeLayer: string | null
 }
 
 interface Props {
-  annotation: any
+  annotation: Annotation
   colormap: string
   opacity: number
   imageLoaderSettings: any
@@ -91,10 +100,10 @@ interface Props {
 const ImageViewer = defineComponent<Props>({
   name: 'ImageVewer',
   components: {
-    IonImageViewer,
-    ImageSaver,
     FadeTransition,
+    ImageSaver,
     IonImageMenu,
+    IonImageViewer,
   },
   directives: {
     resize,
@@ -111,62 +120,91 @@ const ImageViewer = defineComponent<Props>({
     scaleType: { type: String },
   },
   setup(props) {
-    const ionImages = reactive<IonImageState>({
-      layers: {},
+    const ionImageState = reactive<IonImageState>({
       order: [],
       activeLayer: null,
     })
-    const imgCache: Record<string, Image> = {}
-    const processedCache: Record<string, Ref<IonImage>> = {}
-    const colorMapCache: Record<string, Ref<ColorMap>> = {}
+    const imgCache = ref<Record<string, Image>>({})
+    const processedCache: Record<string, Ref<IonImage | null>> = {}
+    const layerCache: Record<string, Ref<IonImageLayer>> = {}
 
-    const ionImageLayerState = computed(() => ionImages.order.map(id => ionImages.layers[id]))
+    const ionImageLayerState = computed(() => ionImageState.order.map(id => layerCache[id].value))
+
+    // const colorMapCache: Record<string, Ref<ColorMap>> = {}
+    const colorMaps = computed(() => {
+      const { opacityMode, annotImageOpacity } = props.imageLoaderSettings
+      const colorMapCache: Record<string, ColorMap> = {}
+      for (const layer of ionImageLayerState.value) {
+        if (!(layer.channel in colorMapCache)) {
+          colorMapCache[layer.channel] = createColorMap(layer.channel, opacityMode, annotImageOpacity)
+        }
+      }
+      return colorMapCache
+    })
 
     const ionImageLayers = computed(() => {
       const toRender = []
       for (const layer of ionImageLayerState.value) {
-        if (layer.visible) {
-          toRender.push({
-            ionImage: processedCache[layer.id].value,
-            colorMap: colorMapCache[layer.id].value,
-          })
+        const processedImage = processedCache[layer.id]?.value
+        if (processedImage == null || !layer.visible) {
+          continue
         }
+        toRender.push({
+          ionImage: processedImage,
+          colorMap: colorMaps.value[layer.channel],
+        })
       }
       return toRender
     })
 
-    const cmaps = computed(() => {
-      const { opacityMode, annotImageOpacity } = props.imageLoaderSettings
-      const maps: Record<string, number[][]> = {}
-      for (const layer of ionImageLayerState.value) {
-        maps[layer.id] = createColorMap(layer.channel, opacityMode, annotImageOpacity)
-      }
-      return maps
-    })
-
     const channels = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow']
-    const nextChannel = 0
+    let nextChannel = 0
 
     watch(() => props.annotation, () => {
-      console.log(props.annotation)
+      if (ionImageState.activeLayer === null) {
+        const { id } = props.annotation
+        const channel = channels[nextChannel % channels.length]
+        nextChannel++
+        const [isotopeImage] = props.annotation.isotopeImages
+        const { minIntensity = 0, maxIntensity = 1 } = isotopeImage || {}
+        const layer = ref({
+          id,
+          channel,
+          minIntensity,
+          maxIntensity,
+          intensityRange: [minIntensity, maxIntensity] as [number, number],
+          annotation: props.annotation,
+          visible: true,
+          label: undefined,
+        })
+        layerCache[id] = layer
+        ionImageState.order.push(id)
+        ionImageState.activeLayer = id
+
+        processedCache[id] = computed(() => {
+          const { intensityRange, minIntensity, maxIntensity } = layer.value
+          if ((id in imgCache.value)) {
+            return processIonImage(
+              imgCache.value[id],
+              minIntensity,
+              maxIntensity,
+              props.scaleType,
+              intensityRange,
+            )
+          }
+          return null
+        })
+        if (isotopeImage) {
+          loadPngFromUrl(isotopeImage.url)
+            .then(img => {
+              imgCache.value = {
+                ...imgCache.value,
+                [id]: img,
+              }
+            })
+        }
+      }
     })
-    // Promise.all(
-    //   testImages.map(id => loadPngFromUrl(`https://staging.metaspace2020.eu/fs/iso_images/${id}`)),
-    // )
-    //   .then(imgs => {
-    //     ionImageLayers.value = imgs.map((png, i) => {
-    //       const id = testImages[i]
-    //       imgCache[id] = png
-    //       return {
-    //         id: testImages[i],
-    //         minIntensity: 0,
-    //         maxIntensity: 2.5,
-    //         intensityRange: [0, 2.5],
-    //         channel: channels[i],
-    //       }
-    //     })
-    //     console.log('test', ionImageLayers)
-    //   })
 
     const imageArea = ref<HTMLElement | null>(null)
 
@@ -184,7 +222,12 @@ const ImageViewer = defineComponent<Props>({
 
     const imageFit = computed(() => {
       const [ionImageLayer] = ionImageLayers.value
-      const { width = 500, height = 500 } = ionImageLayer ? ionImageLayer.ionImage : {}
+      let width = 500
+      let height = 500
+      if (ionImageLayer && ionImageLayer.ionImage) {
+        width = ionImageLayer.ionImage.width
+        height = ionImageLayer.ionImage.height
+      }
       return fitImageToArea({
         imageWidth: width,
         imageHeight: height / props.imageLoaderSettings.pixelAspectRatio,
@@ -194,6 +237,7 @@ const ImageViewer = defineComponent<Props>({
     })
 
     return {
+      activeLayer: ionImageState.activeLayer,
       dimensions,
       imageArea,
       imageFit,
@@ -202,10 +246,17 @@ const ImageViewer = defineComponent<Props>({
       onResize,
       openMenu,
       updateIntensity(id: string, range: [number, number]) {
-        const layer = ionImages.layers[id]
+        const layer = layerCache[id]
         if (layer) {
-          layer.intensityRange = range
+          layer.value.intensityRange = range
         }
+      },
+      handleImageMove({ zoom, xOffset, yOffset }: any) {
+        props.applyImageMove({
+          zoom: zoom / imageFit.value.imageZoom,
+          xOffset,
+          yOffset,
+        })
       },
     }
   },
