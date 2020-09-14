@@ -39,7 +39,7 @@ export default async function (ctx: Context, projectId: string, datasetIds: stri
       _.pull(projectIds, projectId);
     }
 
-    await smApiUpdateDataset(datasetId, {projectIds});
+    await smApiUpdateDataset(datasetId, {projectIds}, {asyncEsUpdate: true});
   });
 
   await Promise.all(promises);

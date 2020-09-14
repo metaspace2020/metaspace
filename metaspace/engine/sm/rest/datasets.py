@@ -127,16 +127,20 @@ def update(ds_man, ds_id, params):
             group_id
             project_ids
         }
+        async_es_update
     }
     :return:
     """
     doc = params.get('doc', None)
     force = params.get('force', False)
+    async_es_update = params.get('async_es_update', False)
     if not doc and not force:
         logger.info(f'Nothing to update for "{ds_id}"')
     else:
         priority = params.get('priority', DatasetActionPriority.STANDARD)
-        ds_man.update(ds_id=ds_id, doc=doc, force=force, priority=priority)
+        ds_man.update(
+            ds_id=ds_id, doc=doc, force=force, priority=priority, async_es_update=async_es_update
+        )
 
 
 @app.post('/<ds_id>/delete')

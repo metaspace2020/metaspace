@@ -1,9 +1,8 @@
 import * as _ from 'lodash';
-import fetch from 'node-fetch';
-import config from '../config';
 import { UserError } from 'graphql-errors';
 import logger from '../logger';
 import { snakeCase } from 'typeorm/util/StringUtils';
+import { smApiJsonPost } from './smApiCall'
 
 
 const valid_error_statuses = ['wrong_parameters', 'already_exists', 'malformed_csv'];
@@ -13,18 +12,13 @@ export const smApiDatabaseRequest = async (uri: string, args?: any) => {
   // @ts-ignore
   reqDoc = _.mapKeys(reqDoc, (v, k) => snakeCase(k));
 
-  let resp = await fetch(`http://${config.services.sm_engine_api_host}${uri}`, {
-    method: 'POST',
-    body: JSON.stringify(reqDoc),
-    headers: { 'Content-Type': 'application/json' }
-  });
+  const {response, content} = await smApiJsonPost(uri, reqDoc)
 
-  const respDoc = await resp.json();
-  if (!resp.ok) {
-    if (valid_error_statuses.includes(respDoc.status)) {
+  if (!response.ok) {
+    if (valid_error_statuses.includes(content.status)) {
       throw new UserError(JSON.stringify({
-        type: respDoc.status,
-        hint: respDoc.errors,
+        type: content.status,
+        hint: content.errors,
       }));
     }
     else {
@@ -34,7 +28,7 @@ export const smApiDatabaseRequest = async (uri: string, args?: any) => {
   else {
     logger.info(`Successful ${uri}`);
     logger.debug(`Body: ${JSON.stringify(reqDoc)}`);
-    return respDoc.data;
+    return content.data;
   }
 };
 

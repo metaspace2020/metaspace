@@ -74,7 +74,13 @@ class ImageStoreServiceWrapper:
         Image.Image
         """
         url = self._format_url(storage_type=storage_type, img_type=img_type, img_id=img_id)
-        return Image.open(self._session.get(url, stream=True).raw)
+        try:
+            response = self._session.get(url)
+            response.raise_for_status()
+            return Image.open(BytesIO(response.content))
+        except Exception:
+            logger.error(f'get_image_by_id: Error getting url {url}')
+            raise
 
     def get_ion_images_for_analysis(
         self, storage_type, img_ids, hotspot_percentile=99, max_size=None, max_mem_mb=2048
@@ -130,7 +136,6 @@ class ImageStoreServiceWrapper:
             h, w = mask.shape
             value = np.empty((len(img_ids), h * w), dtype=np.float32)
 
-        @retry_on_exception()
         def process_img(img_id, idx, do_setup=False):
             img = self.get_image_by_id(storage_type, 'iso_image', img_id)
             if do_setup:

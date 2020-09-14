@@ -29,6 +29,7 @@ import { esDatasetByID } from '../../../../esConnector';
 import { mapDatabaseToDatabaseId } from '../../moldb/util/mapDatabaseToDatabaseId';
 import { MolecularDbRepository } from '../../moldb/MolecularDbRepository';
 import { assertUserBelongsToGroup } from '../../moldb/util/assertUserBelongsToGroup';
+import { smApiUpdateDataset } from '../../../utils/smApi/datasets'
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -334,10 +335,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       principalInvestigator: update.principalInvestigator
     };
 
-    let smAPIResp;
     if (reprocess) {
       await saveDataset(ctx.entityManager, saveDatasetArgs);
-      smAPIResp = await smApiDatasetRequest(`/v1/datasets/${datasetId}/add`, {
+      await smApiDatasetRequest(`/v1/datasets/${datasetId}/add`, {
         doc: { ...engineDataset, ...update, ...(metadata ? { metadata } : {}) },
         del_first: procSettingsUpd || delFirst,  // delete old results if processing settings changed
         priority: priority,
@@ -352,11 +352,11 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         }));
       } else {
         await saveDataset(ctx.entityManager, saveDatasetArgs);
-        smAPIResp = await smApiDatasetRequest(`/v1/datasets/${datasetId}/update`, {
-          doc: {
-            ..._.omit(update, 'metadataJson'),
-            ...(metadata ? { metadata } : {})
-          },
+        await smApiUpdateDataset(datasetId, {
+          // Unfortunately `update` has bad generated types, so `as any` is needed here
+          ..._.omit(update, 'metadataJson') as any,
+          ...(metadata ? { metadata } : {})
+        }, {
           priority: priority,
           force: force,
         });

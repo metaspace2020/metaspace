@@ -70,7 +70,7 @@ const updateUserGroupDatasets = async (entityManager: EntityManager, userId: str
   });
   await Promise.all(datasetsToUpdate.map(async ds => {
     await datasetRepo.update({id: ds.id}, {groupApproved});
-    await smApiUpdateDataset(ds.id, {groupId});
+    await smApiUpdateDataset(ds.id, {groupId}, {asyncEsUpdate: true});
   }));
 };
 
@@ -243,7 +243,7 @@ export const Resolvers = {
         logger.info(`Updating '${groupId}' group datasets...`);
         const groupDSs = await entityManager.getRepository(DatasetModel).find({ groupId });
         await Promise.all(groupDSs.map(async ds => {
-          await smApiUpdateDataset(ds.id, {groupId});
+          await smApiUpdateDataset(ds.id, {groupId}, {asyncEsUpdate: true});
         }));
       }
       logger.info(`'${groupId}' group updated`);
@@ -465,7 +465,7 @@ export const Resolvers = {
       const dsRepo = entityManager.getRepository(DatasetModel);
       await Promise.all(datasetIds.map(async (dsId: string) => {
         await dsRepo.update(dsId, { groupId, groupApproved: true });
-        await smApiUpdateDataset(dsId, {groupId});
+        await smApiUpdateDataset(dsId, {groupId}, {asyncEsUpdate: true});
       }));
       logger.info(`User '${user!.id}' imported datasets to '${groupId}' group`);
       return true;

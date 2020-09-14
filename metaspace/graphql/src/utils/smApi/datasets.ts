@@ -1,10 +1,9 @@
 import {UserError} from 'graphql-errors';
-import fetch from 'node-fetch';
 import * as _ from 'lodash';
 import {snakeCase} from "typeorm/util/StringUtils";
 
-import config from '../config';
 import logger from '../logger';
+import { smApiJsonPost } from './smApiCall'
 
 interface DatasetRequestBody {
   doc?: Object;
@@ -26,30 +25,23 @@ export const smApiDatasetRequest = async (uri: string, args: any={}) => {
   // @ts-ignore
   reqDoc.doc = _.mapKeys(reqDoc.doc, (v, k) => datasetDocFieldMapping[k] || snakeCase(k));
 
-  let resp = await fetch(`http://${config.services.sm_engine_api_host}${uri}`, {
-    method: 'POST',
-    body: JSON.stringify(reqDoc),
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  });
+  const {response, content} = await smApiJsonPost(uri, reqDoc);
 
-  const respDoc = await resp.json();
-  if (!resp.ok) {
-    if (respDoc.status === 'dataset_busy') {
+  if (!response.ok) {
+    if (content.status === 'dataset_busy') {
       throw new UserError(JSON.stringify({
         'type': 'dataset_busy',
         'hint': `Dataset is busy. Try again later.`
       }));
     }
     else {
-      throw new UserError(`Request to sm-api failed: ${JSON.stringify(respDoc)}`);
+      throw new UserError(`Request to sm-api failed: ${JSON.stringify(content)}`);
     }
   }
   else {
     logger.info(`Successful ${uri}`);
     logger.debug(`Body: ${JSON.stringify(reqDoc)}`);
-    return respDoc;
+    return content;
   }
 };
 
@@ -65,10 +57,18 @@ interface UpdateDatasetArgs {
   projectIds?: string[];
 }
 
-export const smApiUpdateDataset = async (id: string, updates: UpdateDatasetArgs) => {
+interface UpdateDatasetMetaArgs {
+  asyncEsUpdate?: boolean;
+  priority?: number;
+  force?: boolean;
+}
+
+export const smApiUpdateDataset = async (id: string, updates: UpdateDatasetArgs, args: UpdateDatasetMetaArgs = {}) => {
   try {
+    const camelCaseArgs = _.mapKeys(args, (v, k) => snakeCase(k));
     await smApiDatasetRequest(`/v1/datasets/${id}/update`, {
-      doc: updates
+      doc: updates,
+      ...camelCaseArgs,
     });
   } catch (err) {
     logger.error('Failed to update dataset', err);
