@@ -7,8 +7,11 @@
         v-if="openMenu === 'ION'"
         key="ION"
         :layers="ionImageLayerState"
-        :active-layer="activeLayer"
-        @input="updateIntensity"
+        :active-layer="ionImageState.activeLayer"
+        @range="updateIntensity"
+        @visible="toggleVisibility"
+        @active="id => ionImageState.activeLayer = id"
+        @delete="deleteLayer"
       />
       <!-- <optical-image-menu
         v-if="openMenu === 'OPTICAL'"
@@ -73,7 +76,7 @@ interface IonImageLayer {
   annotation: Annotation
   channel: string
   id: string
-  intensityRange: [number, number] | undefined
+  quantileRange: [number, number] | undefined
   label: string | undefined
   minIntensity: number
   maxIntensity: number
@@ -157,52 +160,70 @@ const ImageViewer = defineComponent<Props>({
       return toRender
     })
 
-    const channels = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow']
-    let nextChannel = 0
+    const channels = ['red', 'green', 'blue', 'magenta', 'yellow', 'cyan', 'orange']
+    let nextChannel = -1
+
+    function deleteLayer(id: string) : number {
+      delete layerCache[id]
+      delete processedCache[id]
+      delete imgCache.value[id]
+      const idx = ionImageState.order.indexOf(id)
+      ionImageState.order.splice(idx, 1)
+      if (idx in ionImageState.order) {
+        ionImageState.activeLayer = ionImageState.order[idx]
+      } else {
+        ionImageState.activeLayer = null
+      }
+      return idx
+    }
 
     watch(() => props.annotation, () => {
-      if (ionImageState.activeLayer === null) {
-        const { id } = props.annotation
-        const channel = channels[nextChannel % channels.length]
-        nextChannel++
-        const [isotopeImage] = props.annotation.isotopeImages
-        const { minIntensity = 0, maxIntensity = 1 } = isotopeImage || {}
-        const layer = ref({
-          id,
-          channel,
-          minIntensity,
-          maxIntensity,
-          intensityRange: [minIntensity, maxIntensity] as [number, number],
-          annotation: props.annotation,
-          visible: true,
-          label: undefined,
-        })
-        layerCache[id] = layer
-        ionImageState.order.push(id)
-        ionImageState.activeLayer = id
+      const { id } = props.annotation
+      const [isotopeImage] = props.annotation.isotopeImages
+      const { minIntensity = 0, maxIntensity = 1 } = isotopeImage || {}
+      const layer = ref({
+        annotation: props.annotation,
+        channel: '',
+        id,
+        label: undefined,
+        maxIntensity,
+        minIntensity,
+        quantileRange: [0, 1] as [number, number],
+        visible: true,
+      })
 
-        processedCache[id] = computed(() => {
-          const { intensityRange, minIntensity, maxIntensity } = layer.value
-          if ((id in imgCache.value)) {
-            return processIonImage(
-              imgCache.value[id],
-              minIntensity,
-              maxIntensity,
-              props.scaleType,
-              intensityRange,
-            )
-          }
-          return null
-        })
-        if (isotopeImage) {
-          loadPngFromUrl(isotopeImage.url)
-            .then(img => {
-              imgCache.value = {
-                ...imgCache.value,
-                [id]: img,
-              }
-            })
+      if (ionImageState.activeLayer !== null) {
+        const idx = deleteLayer(ionImageState.activeLayer)
+        ionImageState.order.splice(idx, 0, id)
+      } else {
+        ionImageState.order.push(id)
+        nextChannel++ // only iterate channel for new layers
+      }
+      layer.value.channel = channels[nextChannel % channels.length]
+      layerCache[id] = layer
+      ionImageState.activeLayer = id
+
+      processedCache[id] = computed(() => {
+        const { quantileRange, minIntensity, maxIntensity } = layer.value
+        if ((id in imgCache.value)) {
+          return processIonImage(
+            imgCache.value[id],
+            minIntensity,
+            maxIntensity,
+            props.scaleType,
+            quantileRange,
+          )
         }
+        return null
+      })
+      if (isotopeImage) {
+        loadPngFromUrl(isotopeImage.url)
+          .then(img => {
+            imgCache.value = {
+              ...imgCache.value,
+              [id]: img,
+            }
+          })
       }
     })
 
@@ -237,18 +258,24 @@ const ImageViewer = defineComponent<Props>({
     })
 
     return {
-      activeLayer: ionImageState.activeLayer,
       dimensions,
       imageArea,
       imageFit,
       ionImageLayers,
       ionImageLayerState,
+      ionImageState,
       onResize,
       openMenu,
       updateIntensity(id: string, range: [number, number]) {
         const layer = layerCache[id]
         if (layer) {
-          layer.value.intensityRange = range
+          layer.value.quantileRange = range
+        }
+      },
+      toggleVisibility(id: string) {
+        const layer = layerCache[id]
+        if (layer) {
+          layer.value.visible = !layer.value.visible
         }
       },
       handleImageMove({ zoom, xOffset, yOffset }: any) {
@@ -257,6 +284,11 @@ const ImageViewer = defineComponent<Props>({
           xOffset,
           yOffset,
         })
+      },
+      deleteLayer(id: string) {
+        if (ionImageState.order.length > 1) {
+          deleteLayer(id)
+        }
       },
     }
   },

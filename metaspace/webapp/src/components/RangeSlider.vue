@@ -1,7 +1,10 @@
 <template>
   <div
     ref="container"
-    class="h-3 relative rounded-full bg-gray-100"
+    class="box-border h-3 relative rounded-full bg-gray-100"
+    :disabled="disabled"
+    data-slider
+    @click.stop
   >
     <div
       ref="leftThumb"
@@ -24,6 +27,7 @@ interface Props {
   max: number
   value: [ number, number ]
   step: number
+  disabled: boolean
 }
 
 interface ThumbState {
@@ -37,8 +41,9 @@ const Slider = defineComponent<Props>({
     max: Number,
     value: Array,
     step: Number,
+    disabled: Boolean,
   },
-  setup(props, { emit }) {
+  setup(props, { emit, attrs }) {
     const container = ref<HTMLElement>(null)
     const leftThumb = ref<HTMLElement>(null)
     const rightThumb = ref<HTMLElement>(null)
@@ -201,3 +206,15 @@ const Slider = defineComponent<Props>({
 export default Slider
 
 </script>
+<style scoped>
+  [data-slider]::before {
+    @apply absolute w-full h-full box-border border-2 border-solid border-transparent rounded-full;
+    content: '';
+  }
+  [data-slider][disabled] {
+    @apply pointer-events-none;
+  }
+  [data-slider][disabled]::before {
+    @apply border-gray-300;
+  }
+</style>

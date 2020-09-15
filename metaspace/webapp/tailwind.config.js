@@ -67,6 +67,7 @@ module.exports = {
         auto: 'auto',
         '9': '2.25rem', // 1.5 * 24px/1.5rem
         '18': '4.5rem', // 3 * 24px/1.5rem
+        '21': '5.25rem', // 3.5 * 24px/1.5rem
         '60': '15rem', // 10 * 24px/1.5rem
         '66': '16.5rem', // 11 * 24px/1.5rem
       },

@@ -228,20 +228,20 @@ export const loadPngFromUrl = async(url: string) => {
 
 export const processIonImage = (
   png: Image, minIntensity: number = 0, maxIntensity: number = 1, scaleType: ScaleType = DEFAULT_SCALE_TYPE,
-  intensityRange: [ number, number ] = [minIntensity, maxIntensity]): IonImage => {
+  quantileRange: [ number, number ] = [0, 1]): IonImage => {
   const [scaleMode, minQuantile, maxQuantile] = SCALES[scaleType]
 
   const { width, height } = png
   const { intensityValues, mask } = extractIntensityAndMask(png, minIntensity, maxIntensity)
-  const [minRange, maxRange] = intensityRange
+  const [minRange, maxRange] = quantileRange
   const { clippedMinIntensity, clippedMaxIntensity, rankValues } =
     getScaleParams(
       intensityValues,
       mask,
-      minRange,
-      maxRange,
-      minRange === minIntensity ? minQuantile : null,
-      maxRange === maxIntensity ? maxQuantile : null,
+      minIntensity,
+      maxIntensity,
+      minRange === 0 ? minQuantile : minRange,
+      maxRange === 1 ? maxQuantile : maxRange,
       scaleMode,
     )
 
