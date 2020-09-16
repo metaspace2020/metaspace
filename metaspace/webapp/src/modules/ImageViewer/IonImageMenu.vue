@@ -1,7 +1,7 @@
 <template>
   <menu-container>
     <menu-item
-      v-for="(layer, i) in layers"
+      v-for="{ layer, colorbar } in items"
       :key="layer.id"
       class="flex flex-col justify-center"
       :layer-id="layer.id"
@@ -31,7 +31,7 @@
       </p>
       <div class="h-9">
         <range-slider
-          :style="{ backgroundImage: backgrounds[i] }"
+          :style="colorbar"
           :min="0"
           :max="1"
           :step="0.01"
@@ -65,24 +65,12 @@ import MenuItem from './MenuItem.vue'
 import RangeSlider from '../../components/RangeSlider.vue'
 import MolecularFormula from '../../components/MolecularFormula'
 
-import getColorScale from '../../lib/getColorScale'
-
 import '../../components/MonoIcon.css'
 import VisibleIcon from '../../assets/inline/refactoring-ui/visible.svg'
 import HiddenIcon from '../../assets/inline/refactoring-ui/hidden.svg'
 import AddIcon from '../../assets/inline/refactoring-ui/add.svg'
 
-interface Layer {
-  channel: string,
-  quantileRange: [number, number],
-}
-
-interface Props {
-  layers: Layer[]
-  activeLayer: string
-}
-
-export default defineComponent<Props>({
+export default defineComponent({
   components: {
     MenuContainer,
     MenuItem,
@@ -93,32 +81,12 @@ export default defineComponent<Props>({
     AddIcon,
   },
   props: {
-    layers: Array,
+    items: Array,
     activeLayer: String,
   },
   setup(props, { emit }) {
-    const backgrounds = computed(() => {
-      if (!props.layers) return []
-
-      return props.layers.map(({ channel, quantileRange }) => {
-        const { domain, range } = getColorScale(channel)
-        const [minQuantile, maxQuantile] = quantileRange
-        const colors = []
-        if (minQuantile > 0) {
-          colors.push(`${range[0]} 0%`)
-        }
-        for (let i = 0; i < domain.length; i++) {
-          const pct = (minQuantile + (domain[i] * (maxQuantile - minQuantile))) * 100
-          colors.push(range[i] + ' ' + (pct + '%'))
-        }
-        return `linear-gradient(to right, ${colors.join(', ')})`
-      })
-    })
-
     return {
-      backgrounds,
       onInput: (layerId: string, range: [number, number]) => emit('range', layerId, range),
-      selectedLayer: '1',
       toggleVisibility: (layerId: string) => emit('visible', layerId),
       setActiveLayer: (layerId: string | null) => emit('active', layerId),
       deleteLayer: (layerId: string | null) => emit('delete', layerId),

@@ -6,7 +6,7 @@
       <ion-image-menu
         v-if="openMenu === 'ION'"
         key="ION"
-        :layers="ionImageLayerState"
+        :items="ionImageMenuItems"
         :active-layer="ionImageState.activeLayer"
         @range="updateIntensity"
         @visible="toggleVisibility"
@@ -59,10 +59,10 @@ import IonImageViewer from '../../components/IonImageViewer'
 import FadeTransition from '../../components/FadeTransition'
 import ImageSaver from './ImageSaver.vue'
 import IonImageMenu from './IonImageMenu.vue'
-
 import openMenu from './menuState'
 import { IonImage, ColorMap, loadPngFromUrl, processIonImage, ScaleType } from '../../lib/ionImageRendering'
 import createColorMap from '../../lib/createColormap'
+import getColorScale from '../../lib/getColorScale'
 import fitImageToArea, { FitImageToAreaResult } from '../../lib/fitImageToArea'
 
 interface Annotation {
@@ -72,15 +72,21 @@ interface Annotation {
   isotopeImages: { minIntensity: number, maxIntensity: number, url: string }[]
 }
 
-interface IonImageLayer {
+interface IonImageLayerState {
   annotation: Annotation
   channel: string
   id: string
-  quantileRange: [number, number] | undefined
+  quantileRange: [number, number]
   label: string | undefined
   minIntensity: number
   maxIntensity: number
   visible: boolean
+}
+
+interface IonImageLayer {
+  colorbar: Ref<string>
+  image: Ref<IonImage | null>
+  state: IonImageLayerState
 }
 
 interface IonImageState {
@@ -127,19 +133,17 @@ const ImageViewer = defineComponent<Props>({
       order: [],
       activeLayer: null,
     })
-    const imgCache = ref<Record<string, Image>>({})
-    const processedCache: Record<string, Ref<IonImage | null>> = {}
-    const layerCache: Record<string, Ref<IonImageLayer>> = {}
+    const ionImageLayerCache : Record<string, IonImageLayer> = {}
 
-    const ionImageLayerState = computed(() => ionImageState.order.map(id => layerCache[id].value))
+    const orderedIonImageLayers = computed(() => ionImageState.order.map(id => ionImageLayerCache[id]))
 
     // const colorMapCache: Record<string, Ref<ColorMap>> = {}
     const colorMaps = computed(() => {
       const { opacityMode, annotImageOpacity } = props.imageLoaderSettings
       const colorMapCache: Record<string, ColorMap> = {}
-      for (const layer of ionImageLayerState.value) {
-        if (!(layer.channel in colorMapCache)) {
-          colorMapCache[layer.channel] = createColorMap(layer.channel, opacityMode, annotImageOpacity)
+      for (const { state } of orderedIonImageLayers.value) {
+        if (!(state.channel in colorMapCache)) {
+          colorMapCache[state.channel] = createColorMap(state.channel, opacityMode, annotImageOpacity)
         }
       }
       return colorMapCache
@@ -147,26 +151,31 @@ const ImageViewer = defineComponent<Props>({
 
     const ionImageLayers = computed(() => {
       const toRender = []
-      for (const layer of ionImageLayerState.value) {
-        const processedImage = processedCache[layer.id]?.value
-        if (processedImage == null || !layer.visible) {
+      for (const { state, image } of orderedIonImageLayers.value) {
+        if (image.value == null || !state.visible) {
           continue
         }
         toRender.push({
-          ionImage: processedImage,
-          colorMap: colorMaps.value[layer.channel],
+          ionImage: image.value,
+          colorMap: colorMaps.value[state.channel],
         })
       }
       return toRender
+    })
+
+    const ionImageMenuItems = computed(() => {
+      return orderedIonImageLayers.value.map(({ state, colorbar }) => ({
+        colorbar: colorbar.value,
+        layer: state,
+      }))
     })
 
     const channels = ['red', 'green', 'blue', 'magenta', 'yellow', 'cyan', 'orange']
     let nextChannel = -1
 
     function deleteLayer(id: string) : number {
-      delete layerCache[id]
-      delete processedCache[id]
-      delete imgCache.value[id]
+      delete ionImageLayerCache[id]
+
       const idx = ionImageState.order.indexOf(id)
       ionImageState.order.splice(idx, 1)
       if (idx in ionImageState.order) {
@@ -181,14 +190,14 @@ const ImageViewer = defineComponent<Props>({
       const { id } = props.annotation
       const [isotopeImage] = props.annotation.isotopeImages
       const { minIntensity = 0, maxIntensity = 1 } = isotopeImage || {}
-      const layer = ref({
+      const state = reactive<IonImageLayerState>({
         annotation: props.annotation,
         channel: '',
         id,
         label: undefined,
         maxIntensity,
         minIntensity,
-        quantileRange: [0, 1] as [number, number],
+        quantileRange: [0, 1],
         visible: true,
       })
 
@@ -199,30 +208,47 @@ const ImageViewer = defineComponent<Props>({
         ionImageState.order.push(id)
         nextChannel++ // only iterate channel for new layers
       }
-      layer.value.channel = channels[nextChannel % channels.length]
-      layerCache[id] = layer
+      state.channel = channels[nextChannel % channels.length]
+
+      const raw = ref<Image | null>(null)
+      const layer = {
+        state,
+        image: computed(() => {
+          const { quantileRange, minIntensity, maxIntensity } = state
+          if (raw.value !== null) {
+            return processIonImage(
+              raw.value,
+              minIntensity,
+              maxIntensity,
+              props.scaleType,
+              quantileRange,
+            )
+          }
+          return null
+        }),
+        colorbar: computed(() => {
+          const { channel, quantileRange } = state
+          const { domain, range } = getColorScale(channel)
+          const [minQuantile, maxQuantile] = quantileRange
+          const colors = []
+          if (minQuantile > 0) {
+            colors.push(`${range[0]} 0%`)
+          }
+          for (let i = 0; i < domain.length; i++) {
+            const pct = (minQuantile + (domain[i] * (maxQuantile - minQuantile))) * 100
+            colors.push(range[i] + ' ' + (pct + '%'))
+          }
+          return `background-image: linear-gradient(to right, ${colors.join(', ')})`
+        }),
+      }
+
+      ionImageLayerCache[id] = layer
       ionImageState.activeLayer = id
 
-      processedCache[id] = computed(() => {
-        const { quantileRange, minIntensity, maxIntensity } = layer.value
-        if ((id in imgCache.value)) {
-          return processIonImage(
-            imgCache.value[id],
-            minIntensity,
-            maxIntensity,
-            props.scaleType,
-            quantileRange,
-          )
-        }
-        return null
-      })
       if (isotopeImage) {
         loadPngFromUrl(isotopeImage.url)
           .then(img => {
-            imgCache.value = {
-              ...imgCache.value,
-              [id]: img,
-            }
+            raw.value = img
           })
       }
     })
@@ -262,20 +288,20 @@ const ImageViewer = defineComponent<Props>({
       imageArea,
       imageFit,
       ionImageLayers,
-      ionImageLayerState,
+      ionImageMenuItems,
       ionImageState,
       onResize,
       openMenu,
       updateIntensity(id: string, range: [number, number]) {
-        const layer = layerCache[id]
-        if (layer) {
-          layer.value.quantileRange = range
+        if (id in ionImageLayerCache) {
+          const { state } = ionImageLayerCache[id]
+          state.quantileRange = range
         }
       },
       toggleVisibility(id: string) {
-        const layer = layerCache[id]
-        if (layer) {
-          layer.value.visible = !layer.value.visible
+        if (id in ionImageLayerCache) {
+          const { state } = ionImageLayerCache[id]
+          state.visible = !state.visible
         }
       },
       handleImageMove({ zoom, xOffset, yOffset }: any) {
