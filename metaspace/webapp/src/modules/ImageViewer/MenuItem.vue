@@ -11,7 +11,7 @@
     @keypress.enter="emitActive"
     @keypress.space="emitActive"
     @mousedown.stop="emitActive"
-    @keypress.delete="emtiDelete"
+    @keypress.delete="emitDelete"
   >
     <slot />
   </div>
