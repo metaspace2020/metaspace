@@ -12,12 +12,12 @@
     >
       <p class="flex justify-between m-0 h-9 items-center">
         <molecular-formula
-          class="truncate font-medium h-6 text-base"
+          class="truncate font-medium h-6 text-base proportional-nums"
           :ion="layer.annotation.ion"
         />
         <button
           class="button-reset h-5"
-          @click.stop="toggleVisibility(layer.id)"
+          @mousedown.stop="toggleVisibility(layer.id)"
         >
           <visible-icon
             v-if="layer.visible"
@@ -39,24 +39,22 @@
           :disabled="!layer.visible"
           @change="range => onInput(layer.id, range)"
         />
-        <div class="flex justify-between leading-6 text-sm">
+        <div class="flex justify-between leading-6 tracking-wide">
           <span>{{ layer.minIntensity.toExponential(1) }}</span>
           <span>{{ layer.maxIntensity.toExponential(1) }}</span>
         </div>
       </div>
     </menu-item>
-    <menu-item
-      class="flex items-center justify-end"
-      tabindex="0"
-      :layer-id="null"
-      :active-layer="activeLayer"
-      @active="setActiveLayer"
+    <button
+      class="button-reset py-6 px-3 w-full"
+      :class="{ 'text-primary': activeLayer === null }"
+      @click="() => setActiveLayer(null)"
     >
-      <p class="uppercase text-xs tracking-wider m-0 text-gray-800">
-        Add ion image
+      <p class="uppercase text-xs tracking-wider m-0 text-inherit flex items-center justify-end">
+        <span class="leading-5">Add ion image</span>
+        <add-icon class="sm-mono-icon mx-1" />
       </p>
-      <add-icon class="sm-mono-icon text-gray-700 mx-1" />
-    </menu-item>
+    </button>
   </menu-container>
 </template>
 <script lang="ts">

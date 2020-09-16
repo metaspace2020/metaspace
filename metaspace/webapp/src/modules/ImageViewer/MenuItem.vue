@@ -1,16 +1,17 @@
 <template>
   <div
     :class="[
-      'px-3 h-21 box-border outline-none cursor-pointer',
-      'border-2 border-solid border-transparent focus:border-primary', {
-        'bg-blue-100': activeLayer === layerId,
+      'px-3 h-21 outline-none cursor-pointer',
+      {
+        'bg-blue-100-alpha': activeLayer === layerId,
         'text-gray-700': !visible
       }
     ]"
     tabindex="0"
-    @keypress.enter="emit('active', layerId)"
-    @click.stop="emit('active', layerId)"
-    @keypress.delete="emit('delete', layerId)"
+    @keypress.enter="emitActive"
+    @keypress.space="emitActive"
+    @mousedown.stop="emitActive"
+    @keypress.delete="emtiDelete"
   >
     <slot />
   </div>
@@ -25,7 +26,8 @@ export default Vue.extend({
   },
   setup(props, { emit }) {
     return {
-      emit,
+      emitActive: () => emit('active', props.layerId),
+      emitDelete: () => emit('delete', props.layerId),
     }
   },
 })
