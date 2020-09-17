@@ -8,24 +8,29 @@
   >
     <div
       ref="minThumb"
-      tabindex="0"
       :style="minStyle"
+      :tabindex="disabled ? false : 0"
       class="box-border h-3 w-3 absolute bg-gray-100 border border-solid border-gray-300 rounded-full cursor-pointer focus-ring-primary"
+    />
+    <span
+      :style="minStyle"
+      class="-ml-1"
     >
-      <span class="left-0 -ml-1">
-        {{ minTooltip }}
-      </span>
-    </div>
+      {{ minTooltip }}
+    </span>
     <div
       ref="maxThumb"
-      tabindex="0"
       :style="maxStyle"
+      :tabindex="disabled ? false : 0"
       class="box-border h-3 w-3 absolute bg-gray-100 border border-solid border-gray-300 rounded-full cursor-pointer focus-ring-primary"
     >
-      <span class="right-0 -mr-1">
-        {{ maxTooltip }}
-      </span>
     </div>
+    <span
+      :style="maxStyle"
+      class="-mr-1"
+    >
+      {{ maxTooltip }}
+    </span>
   </div>
 </template>
 <script lang="ts">
@@ -251,7 +256,7 @@ const Slider = defineComponent<Props>({
       minThumb,
       maxThumb,
       minStyle: computed(() => `left: ${minState.x}px`),
-      maxStyle: computed(() => `left: ${maxState.x}px`),
+      maxStyle: computed(() => `right: ${getWidth() - maxState.x - thumbWidth}px`),
     }
   },
 })
@@ -271,20 +276,24 @@ export default Slider
     @apply border-gray-300;
   }
 
-  span,
-  div:hover > span:hover {
-    @apply absolute p-1 mb-1 text-xs tracking-wide shadow-sm rounded-sm leading-none bg-white;
-    @apply transition-all duration-300 ease-in-out pointer-events-none;
+  div:focus {
+    z-index: 1;
+  }
+
+  span {
+    @apply absolute p-1 mb-2 text-xs tracking-wide shadow-sm rounded-sm leading-none bg-white;
+    @apply transition-opacity duration-300 ease-in-out pointer-events-none;
     bottom: 100%;
     visiblity: hidden;
     opacity: 0;
   }
-  div:hover > span,
-  div:focus > span {
+  div:hover + span,
+  div:focus + span,
+  span:focus-within {
     visibility: visible;
     opacity: 1;
   }
-  div:hover > span {
+  div:hover + span {
     z-index: 1;
   }
 </style>
