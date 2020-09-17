@@ -193,13 +193,14 @@ const Slider = defineComponent<Props>({
 
     function onMinKeyUp(event: KeyboardEvent) {
       event.stopPropagation()
-      event.preventDefault()
       const { max, step } = props
       const multiply = event.shiftKey ? 10 : 1
       const pixelStep = ((step * multiply) / max) * maxX
       if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
+        event.preventDefault()
         setMinX(minState.x - pixelStep)
       } else if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
+        event.preventDefault()
         setMinX(minState.x + pixelStep)
       }
       emitValue()
@@ -207,13 +208,14 @@ const Slider = defineComponent<Props>({
 
     function onMaxKeyUp(event: KeyboardEvent) {
       event.stopPropagation()
-      event.preventDefault()
       const { max, step } = props
       const multiply = event.shiftKey ? 10 : 1
       const pixelStep = ((step * multiply) / max) * maxX
       if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
+        event.preventDefault()
         setMaxX(maxState.x - pixelStep)
       } else if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
+        event.preventDefault()
         setMaxX(maxState.x + pixelStep)
       }
       emitValue()
