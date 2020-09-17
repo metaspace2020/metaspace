@@ -62,7 +62,7 @@ export default defineComponent({
     border-color: transparent;
   }
   button.active::after {
-    border-bottom-size: 3px;
+    border-bottom-width: 3px;
     border-bottom-color: theme('colors.blue.700');
   }
 </style>
