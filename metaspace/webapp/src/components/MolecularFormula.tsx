@@ -32,7 +32,7 @@ const MolecularFormula = defineComponent({
       <span>
         [{parts.value.map((p, i) => {
           if (i % 2 !== 0) {
-            return <sub>{p}</sub>
+            return <sub class="leading-none">{p}</sub>
           }
           return p
         })}]{fmtCharge.value}

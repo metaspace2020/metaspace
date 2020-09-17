@@ -69,6 +69,10 @@ ol.old-style-nums > li::before {
   left: calc(-1 * theme('spacing.6'))
 }
 
+.focus-ring-primary:focus {
+  outline: 2px solid theme('colors.primary');
+  outline-offset: 2px;
+}
 
 /* Debug */
 

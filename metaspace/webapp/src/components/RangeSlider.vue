@@ -7,20 +7,31 @@
     @click.stop
   >
     <div
-      ref="leftThumb"
-      :style="leftStyle"
-      class="box-border h-3 w-3 absolute bg-gray-100 border border-solid border-gray-300 rounded-full cursor-pointer"
-    />
+      ref="minThumb"
+      tabindex="0"
+      :style="minStyle"
+      class="box-border h-3 w-3 absolute bg-gray-100 border border-solid border-gray-300 rounded-full cursor-pointer focus-ring-primary"
+    >
+      <span class="left-0 -ml-1">
+        {{ minTooltip }}
+      </span>
+    </div>
     <div
-      ref="rightThumb"
-      :style="rightStyle"
-      class="box-border h-3 w-3 absolute bg-gray-100 border border-solid border-gray-300 rounded-full cursor-pointer"
-    />
+      ref="maxThumb"
+      tabindex="0"
+      :style="maxStyle"
+      class="box-border h-3 w-3 absolute bg-gray-100 border border-solid border-gray-300 rounded-full cursor-pointer focus-ring-primary"
+    >
+      <span class="right-0 -mr-1">
+        {{ maxTooltip }}
+      </span>
+    </div>
   </div>
 </template>
 <script lang="ts">
 /* Adapted from this example: https://codepen.io/zebresel/pen/xGLYOM?editors=0010 */
 import { defineComponent, ref, Ref, reactive, onMounted, computed } from '@vue/composition-api'
+import { throttle } from 'lodash-es'
 
 interface Props {
   min: number
@@ -28,6 +39,8 @@ interface Props {
   value: [ number, number ]
   step: number
   disabled: boolean
+  minTooltip: string
+  maxTooltip: string
 }
 
 interface ThumbState {
@@ -42,20 +55,22 @@ const Slider = defineComponent<Props>({
     value: Array,
     step: Number,
     disabled: Boolean,
+    minTooltip: String,
+    maxTooltip: String,
   },
   setup(props, { emit, attrs }) {
     const container = ref<HTMLElement>(null)
-    const leftThumb = ref<HTMLElement>(null)
-    const rightThumb = ref<HTMLElement>(null)
+    const minThumb = ref<HTMLElement>(null)
+    const maxThumb = ref<HTMLElement>(null)
     // const line = ref<HTMLElement>(null)
 
     const { min = 0, max = 100, step = 1, value = [min, max] } = props
 
-    const leftState = reactive<ThumbState>({
+    const minState = reactive<ThumbState>({
       startX: 0,
       x: 0,
     })
-    const rightState = reactive<ThumbState>({
+    const maxState = reactive<ThumbState>({
       startX: 0,
       x: 0,
     })
@@ -67,11 +82,11 @@ const Slider = defineComponent<Props>({
     const getWidth = () => container.value?.offsetWidth || 0
 
     function reset() {
-      leftState.startX = 0
-      leftState.x = 0
+      minState.startX = 0
+      minState.x = 0
 
-      rightState.startX = 0
-      rightState.x = 0
+      maxState.startX = 0
+      maxState.x = 0
 
       if (container.value) {
         maxX = container.value.offsetWidth - thumbWidth
@@ -80,12 +95,12 @@ const Slider = defineComponent<Props>({
 
     function setMinValue(minValue: number) {
       const ratio = ((minValue - min) / (max - min))
-      leftState.x = Math.ceil(ratio * (getWidth() - (thumbWidth + normalizeFact)))
+      minState.x = Math.ceil(ratio * (getWidth() - (thumbWidth + normalizeFact)))
     }
 
     function setMaxValue(maxValue: number) {
       const ratio = ((maxValue - min) / (max - min))
-      rightState.x = Math.ceil(ratio * (getWidth() - (thumbWidth + normalizeFact)) + normalizeFact)
+      maxState.x = Math.ceil(ratio * (getWidth() - (thumbWidth + normalizeFact)) + normalizeFact)
     }
 
     function getEventTouch(event: MouseEvent | TouchEvent): MouseEvent | Touch {
@@ -95,18 +110,18 @@ const Slider = defineComponent<Props>({
       return event
     }
 
-    function onLeftMove(event: MouseEvent | TouchEvent) {
-      const eventTouch = getEventTouch(event)
-
-      let x = eventTouch.pageX - leftState.startX
-
-      if (x > (rightState.x - thumbWidth)) {
-        x = (rightState.x - thumbWidth)
+    function setLeftX(x: number) {
+      if (x > (maxState.x - thumbWidth)) {
+        x = (maxState.x - thumbWidth)
       } else if (x < 0) {
         x = 0
       }
+      minState.x = x
+    }
 
-      leftState.x = x
+    function onLeftMove(event: MouseEvent | TouchEvent) {
+      const eventTouch = getEventTouch(event)
+      setLeftX(eventTouch.pageX - minState.startX)
       emitValue()
     }
 
@@ -115,13 +130,17 @@ const Slider = defineComponent<Props>({
       document.removeEventListener('mouseup', onLeftStop)
       document.removeEventListener('touchmove', onLeftMove)
       document.removeEventListener('touchend', onLeftStop)
+
+      if (minThumb.value) {
+        minThumb.value.focus()
+      }
     }
 
     function onLeftStart(event: MouseEvent | TouchEvent) {
       event.preventDefault()
       const eventTouch = getEventTouch(event)
-      leftState.x = leftThumb?.value?.offsetLeft || 0
-      leftState.startX = eventTouch.pageX - leftState.x
+      minState.x = minThumb?.value?.offsetLeft || 0
+      minState.startX = eventTouch.pageX - minState.x
 
       document.addEventListener('mousemove', onLeftMove)
       document.addEventListener('mouseup', onLeftStop)
@@ -129,17 +148,18 @@ const Slider = defineComponent<Props>({
       document.addEventListener('touchend', onLeftStop)
     }
 
-    function onRightMove(event: MouseEvent | TouchEvent) {
-      const eventTouch = getEventTouch(event)
-
-      let x = eventTouch.pageX - rightState.startX
-      if (x < (leftState.x + thumbWidth)) {
-        x = (leftState.x + thumbWidth)
+    function setRightX(x: number) {
+      if (x < (minState.x + thumbWidth)) {
+        x = (minState.x + thumbWidth)
       } else if (x > maxX) {
         x = maxX
       }
+      maxState.x = x
+    }
 
-      rightState.x = x
+    function onRightMove(event: MouseEvent | TouchEvent) {
+      const eventTouch = getEventTouch(event)
+      setRightX(eventTouch.pageX - maxState.startX)
       emitValue()
     }
 
@@ -148,13 +168,17 @@ const Slider = defineComponent<Props>({
       document.removeEventListener('mouseup', onRightStop)
       document.removeEventListener('touchmove', onRightMove)
       document.removeEventListener('touchend', onRightStop)
+
+      if (maxThumb.value) {
+        maxThumb.value.focus()
+      }
     }
 
     function onRightStart(event: MouseEvent | TouchEvent) {
       event.preventDefault()
       const eventTouch = getEventTouch(event)
-      rightState.x = rightThumb?.value?.offsetLeft || 0
-      rightState.startX = eventTouch.pageX - rightState.x
+      maxState.x = maxThumb?.value?.offsetLeft || 0
+      maxState.startX = eventTouch.pageX - maxState.x
 
       document.addEventListener('mousemove', onRightMove)
       document.addEventListener('mouseup', onRightStop)
@@ -162,22 +186,51 @@ const Slider = defineComponent<Props>({
       document.addEventListener('touchend', onRightStop)
     }
 
+    function onKeyUpLeft(event: KeyboardEvent) {
+      event.stopPropagation()
+      const { max, step } = props
+      const multiply = event.shiftKey ? 10 : 1
+      const pixelStep = ((step * multiply) / max) * maxX
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
+        setLeftX(minState.x - pixelStep)
+      } else if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
+        setLeftX(minState.x + pixelStep)
+      }
+      emitValue()
+    }
+
+    function onKeyUpRight(event: KeyboardEvent) {
+      event.stopPropagation()
+      const { max, step } = props
+      const multiply = event.shiftKey ? 10 : 1
+      const pixelStep = ((step * multiply) / max) * maxX
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
+        setRightX(maxState.x - pixelStep)
+      } else if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
+        setRightX(maxState.x + pixelStep)
+      }
+      emitValue()
+    }
+
     onMounted(() => {
       reset()
       setMinValue(Math.max(value[0], min))
       setMaxValue(Math.min(value[1], max))
 
-      if (leftThumb.value && rightThumb.value) {
-        leftThumb.value.addEventListener('mousedown', onLeftStart)
-        rightThumb.value.addEventListener('mousedown', onRightStart)
-        leftThumb.value.addEventListener('touchstart', onLeftStart)
-        rightThumb.value.addEventListener('touchstart', onRightStart)
+      if (minThumb.value && maxThumb.value) {
+        minThumb.value.addEventListener('mousedown', onLeftStart)
+        maxThumb.value.addEventListener('mousedown', onRightStart)
+        minThumb.value.addEventListener('touchstart', onLeftStart)
+        maxThumb.value.addEventListener('touchstart', onRightStart)
+
+        minThumb.value.addEventListener('keydown', throttle(onKeyUpLeft, 50))
+        maxThumb.value.addEventListener('keydown', throttle(onKeyUpRight, 50))
       }
     })
 
     function emitValue() {
-      let minValue = leftState.x / (maxX - thumbWidth)
-      let maxValue = (rightState.x - thumbWidth) / (maxX - thumbWidth)
+      let minValue = minState.x / (maxX - thumbWidth)
+      let maxValue = (maxState.x - thumbWidth) / (maxX - thumbWidth)
 
       minValue = minValue * (max - min) + min
       maxValue = maxValue * (max - min) + min
@@ -195,10 +248,10 @@ const Slider = defineComponent<Props>({
 
     return {
       container,
-      leftThumb,
-      rightThumb,
-      leftStyle: computed(() => `left: ${leftState.x}px`),
-      rightStyle: computed(() => `left: ${rightState.x}px`),
+      minThumb,
+      maxThumb,
+      minStyle: computed(() => `left: ${minState.x}px`),
+      maxStyle: computed(() => `left: ${maxState.x}px`),
     }
   },
 })
@@ -216,5 +269,18 @@ export default Slider
   }
   [data-slider][disabled]::before {
     @apply border-gray-300;
+  }
+
+  span {
+    @apply absolute p-1 text-xs tracking-wide shadow-sm rounded-sm leading-none bg-white invisible;
+    @apply transition-all duration-300 ease-in-out;
+    top: calc(100% + 6px);
+    opacity: 0;
+  }
+  div:hover > span,
+  div:active > span,
+  div:focus > span {
+    visibility: visible;
+    opacity: 1;
   }
 </style>

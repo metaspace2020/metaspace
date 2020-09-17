@@ -16,8 +16,8 @@
           :ion="layer.annotation.ion"
         />
         <button
-          class="button-reset h-5"
-          @mousedown.stop="toggleVisibility(layer.id)"
+          class="button-reset h-5 focus-ring-primary"
+          @click.stop.left="toggleVisibility(layer.id)"
         >
           <visible-icon
             v-if="layer.visible"
@@ -37,6 +37,8 @@
           :step="0.01"
           :value="layer.quantileRange"
           :disabled="!layer.visible"
+          :min-tooltip="tooltip(layer, 0)"
+          :max-tooltip="tooltip(layer, 1)"
           @change="range => onInput(layer.id, range)"
         />
         <div class="flex justify-between leading-6 tracking-wide">
@@ -85,7 +87,14 @@ export default defineComponent({
     activeLayer: String,
   },
   setup(props, { emit }) {
+    const tooltip = (layer: any, quantileIndex: number) => {
+      const { minIntensity, maxIntensity, quantileRange } = layer
+      return (
+        minIntensity + ((maxIntensity - minIntensity) * quantileRange[quantileIndex])
+      ).toExponential(1)
+    }
     return {
+      tooltip,
       onInput: (layerId: string, range: [number, number]) => emit('range', layerId, range),
       toggleVisibility: (layerId: string) => emit('visible', layerId),
       setActiveLayer: (layerId: string | null) => emit('active', layerId),
@@ -94,8 +103,3 @@ export default defineComponent({
   },
 })
 </script>
-<style scoped>
-sub {
-  line-height: 1
-}
-</style>
