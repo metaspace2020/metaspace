@@ -110,7 +110,7 @@ const Slider = defineComponent<Props>({
       return event
     }
 
-    function setLeftX(x: number) {
+    function setMinX(x: number) {
       if (x > (maxState.x - thumbWidth)) {
         x = (maxState.x - thumbWidth)
       } else if (x < 0) {
@@ -119,36 +119,36 @@ const Slider = defineComponent<Props>({
       minState.x = x
     }
 
-    function onLeftMove(event: MouseEvent | TouchEvent) {
+    function onMinMove(event: MouseEvent | TouchEvent) {
       const eventTouch = getEventTouch(event)
-      setLeftX(eventTouch.pageX - minState.startX)
+      setMinX(eventTouch.pageX - minState.startX)
       emitValue()
     }
 
-    function onLeftStop() {
-      document.removeEventListener('mousemove', onLeftMove)
-      document.removeEventListener('mouseup', onLeftStop)
-      document.removeEventListener('touchmove', onLeftMove)
-      document.removeEventListener('touchend', onLeftStop)
+    function onMinStop() {
+      document.removeEventListener('mousemove', onMinMove)
+      document.removeEventListener('mouseup', onMinStop)
+      document.removeEventListener('touchmove', onMinMove)
+      document.removeEventListener('touchend', onMinStop)
+    }
+
+    function onMinStart(event: MouseEvent | TouchEvent) {
+      event.preventDefault()
+      const eventTouch = getEventTouch(event)
+      minState.x = minThumb?.value?.offsetLeft || 0
+      minState.startX = eventTouch.pageX - minState.x
+
+      document.addEventListener('mousemove', onMinMove)
+      document.addEventListener('mouseup', onMinStop)
+      document.addEventListener('touchmove', onMinMove)
+      document.addEventListener('touchend', onMinStop)
 
       if (minThumb.value) {
         minThumb.value.focus()
       }
     }
 
-    function onLeftStart(event: MouseEvent | TouchEvent) {
-      event.preventDefault()
-      const eventTouch = getEventTouch(event)
-      minState.x = minThumb?.value?.offsetLeft || 0
-      minState.startX = eventTouch.pageX - minState.x
-
-      document.addEventListener('mousemove', onLeftMove)
-      document.addEventListener('mouseup', onLeftStop)
-      document.addEventListener('touchmove', onLeftMove)
-      document.addEventListener('touchend', onLeftStop)
-    }
-
-    function setRightX(x: number) {
+    function setMaxX(x: number) {
       if (x < (minState.x + thumbWidth)) {
         x = (minState.x + thumbWidth)
       } else if (x > maxX) {
@@ -157,57 +157,57 @@ const Slider = defineComponent<Props>({
       maxState.x = x
     }
 
-    function onRightMove(event: MouseEvent | TouchEvent) {
+    function onMaxMove(event: MouseEvent | TouchEvent) {
       const eventTouch = getEventTouch(event)
-      setRightX(eventTouch.pageX - maxState.startX)
+      setMaxX(eventTouch.pageX - maxState.startX)
       emitValue()
     }
 
-    function onRightStop() {
-      document.removeEventListener('mousemove', onRightMove)
-      document.removeEventListener('mouseup', onRightStop)
-      document.removeEventListener('touchmove', onRightMove)
-      document.removeEventListener('touchend', onRightStop)
+    function onMaxStop() {
+      document.removeEventListener('mousemove', onMaxMove)
+      document.removeEventListener('mouseup', onMaxStop)
+      document.removeEventListener('touchmove', onMaxMove)
+      document.removeEventListener('touchend', onMaxStop)
+    }
+
+    function onMaxStart(event: MouseEvent | TouchEvent) {
+      event.preventDefault()
+      const eventTouch = getEventTouch(event)
+      maxState.x = maxThumb?.value?.offsetLeft || 0
+      maxState.startX = eventTouch.pageX - maxState.x
+
+      document.addEventListener('mousemove', onMaxMove)
+      document.addEventListener('mouseup', onMaxStop)
+      document.addEventListener('touchmove', onMaxMove)
+      document.addEventListener('touchend', onMaxStop)
 
       if (maxThumb.value) {
         maxThumb.value.focus()
       }
     }
 
-    function onRightStart(event: MouseEvent | TouchEvent) {
-      event.preventDefault()
-      const eventTouch = getEventTouch(event)
-      maxState.x = maxThumb?.value?.offsetLeft || 0
-      maxState.startX = eventTouch.pageX - maxState.x
-
-      document.addEventListener('mousemove', onRightMove)
-      document.addEventListener('mouseup', onRightStop)
-      document.addEventListener('touchmove', onRightMove)
-      document.addEventListener('touchend', onRightStop)
-    }
-
-    function onKeyUpLeft(event: KeyboardEvent) {
+    function onMinKeyUp(event: KeyboardEvent) {
       event.stopPropagation()
       const { max, step } = props
       const multiply = event.shiftKey ? 10 : 1
       const pixelStep = ((step * multiply) / max) * maxX
       if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
-        setLeftX(minState.x - pixelStep)
+        setMinX(minState.x - pixelStep)
       } else if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
-        setLeftX(minState.x + pixelStep)
+        setMinX(minState.x + pixelStep)
       }
       emitValue()
     }
 
-    function onKeyUpRight(event: KeyboardEvent) {
+    function onMaxKeyUp(event: KeyboardEvent) {
       event.stopPropagation()
       const { max, step } = props
       const multiply = event.shiftKey ? 10 : 1
       const pixelStep = ((step * multiply) / max) * maxX
       if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
-        setRightX(maxState.x - pixelStep)
+        setMaxX(maxState.x - pixelStep)
       } else if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
-        setRightX(maxState.x + pixelStep)
+        setMaxX(maxState.x + pixelStep)
       }
       emitValue()
     }
@@ -218,13 +218,13 @@ const Slider = defineComponent<Props>({
       setMaxValue(Math.min(value[1], max))
 
       if (minThumb.value && maxThumb.value) {
-        minThumb.value.addEventListener('mousedown', onLeftStart)
-        maxThumb.value.addEventListener('mousedown', onRightStart)
-        minThumb.value.addEventListener('touchstart', onLeftStart)
-        maxThumb.value.addEventListener('touchstart', onRightStart)
+        minThumb.value.addEventListener('mousedown', onMinStart)
+        maxThumb.value.addEventListener('mousedown', onMaxStart)
+        minThumb.value.addEventListener('touchstart', onMinStart)
+        maxThumb.value.addEventListener('touchstart', onMaxStart)
 
-        minThumb.value.addEventListener('keydown', throttle(onKeyUpLeft, 50))
-        maxThumb.value.addEventListener('keydown', throttle(onKeyUpRight, 50))
+        minThumb.value.addEventListener('keydown', throttle(onMinKeyUp, 50))
+        maxThumb.value.addEventListener('keydown', throttle(onMaxKeyUp, 50))
       }
     })
 
@@ -271,16 +271,20 @@ export default Slider
     @apply border-gray-300;
   }
 
-  span {
-    @apply absolute p-1 text-xs tracking-wide shadow-sm rounded-sm leading-none bg-white invisible;
-    @apply transition-all duration-300 ease-in-out;
-    top: calc(100% + 6px);
+  span,
+  div:hover > span:hover {
+    @apply absolute p-1 mb-1 text-xs tracking-wide shadow-sm rounded-sm leading-none bg-white;
+    @apply transition-all duration-300 ease-in-out pointer-events-none;
+    bottom: 100%;
+    visiblity: hidden;
     opacity: 0;
   }
   div:hover > span,
-  div:active > span,
   div:focus > span {
     visibility: visible;
     opacity: 1;
+  }
+  div:hover > span {
+    z-index: 1;
   }
 </style>
