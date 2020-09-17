@@ -8,10 +8,10 @@
       }
     ]"
     tabindex="0"
-    @keypress.enter="emitActive"
-    @keypress.space="emitActive"
-    @mousedown.stop="emitActive"
-    @keypress.delete="emitDelete"
+    @keypress.enter.self="emitActive"
+    @keypress.space.self.prevent="emitActive"
+    @click.stop="emitActive"
+    @keypress.self.delete="emitDelete"
   >
     <slot />
   </div>

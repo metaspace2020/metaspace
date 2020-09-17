@@ -265,6 +265,31 @@ export const processIonImage = (
   }
 }
 
+export const getCombinedImage = (images: IonImage[]): IonImage => {
+  if (images.length === 1) {
+    return images[0]
+  }
+
+  const avg = {
+    ...images[0],
+  }
+  const numImages = images.length
+  const numPixels = avg.width * avg.height
+  avg.clippedValues = new Uint8ClampedArray(numPixels)
+  avg.mask = new Uint8ClampedArray(numPixels)
+  for (let i = 0; i < numPixels; i++) {
+    avg.clippedValues[i] = 0
+    avg.mask[i] = 0
+    for (let j = 0; j < numImages; j++) {
+      avg.clippedValues[i] += images[j].clippedValues[i]
+      avg.mask[i] += images[j].mask[i]
+    }
+    // avg.clippedValues[i] = avg.clippedValues[i] / numImages
+    // avg.mask[i] = avg.mask[i] / numImages
+  }
+  return avg
+}
+
 export const renderIonImageToBuffer = (ionImage: IonImage, cmap?: readonly number[][], buffer?: ArrayBuffer) => {
   const { clippedValues, mask } = ionImage
   // Treat pixels as 32-bit values instead of four 8-bit values to avoid extra math.

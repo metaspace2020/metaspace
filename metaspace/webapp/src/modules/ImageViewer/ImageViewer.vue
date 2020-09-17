@@ -59,7 +59,8 @@ import FadeTransition from '../../components/FadeTransition'
 import ImageSaver from './ImageSaver.vue'
 import IonImageMenu from './IonImageMenu.vue'
 import openMenu from './menuState'
-import { IonImage, ColorMap, loadPngFromUrl, processIonImage, ScaleType } from '../../lib/ionImageRendering'
+import { loadPngFromUrl, processIonImage, getCombinedImage } from '../../lib/ionImageRendering'
+import { IonImage, ColorMap, ScaleType } from '../../lib/ionImageRendering'
 import createColorMap from '../../lib/createColormap'
 import getColorScale from '../../lib/getColorScale'
 import fitImageToArea, { FitImageToAreaResult } from '../../lib/fitImageToArea'
@@ -91,6 +92,7 @@ interface IonImageLayer {
 interface IonImageState {
   order: string[]
   activeLayer: string | null
+  mode: 'colormap' | 'channel'
 }
 
 interface Props {
@@ -131,6 +133,7 @@ const ImageViewer = defineComponent<Props>({
     const ionImageState = reactive<IonImageState>({
       order: [],
       activeLayer: null,
+      mode: 'colormap',
     })
     const ionImageLayerCache : Record<string, IonImageLayer> = {}
 
@@ -139,6 +142,13 @@ const ImageViewer = defineComponent<Props>({
     // const colorMapCache: Record<string, Ref<ColorMap>> = {}
     const colorMaps = computed(() => {
       const { opacityMode, annotImageOpacity } = props.imageLoaderSettings
+
+      if (ionImageState.mode === 'colormap') {
+        return {
+          [props.colormap]: createColorMap(props.colormap, opacityMode, annotImageOpacity),
+        }
+      }
+
       const colorMapCache: Record<string, ColorMap> = {}
       for (const { state } of orderedIonImageLayers.value) {
         if (!(state.channel in colorMapCache)) {
@@ -148,18 +158,30 @@ const ImageViewer = defineComponent<Props>({
       return colorMapCache
     })
 
-    const ionImageLayers = computed(() => {
-      const toRender = []
-      for (const { state, image } of orderedIonImageLayers.value) {
-        if (image.value == null || !state.visible) {
+    const visibleIonImageLayers = computed(() => {
+      const images = []
+      for (const layer of orderedIonImageLayers.value) {
+        if (layer.image.value == null || !layer.state.visible) {
           continue
         }
-        toRender.push({
-          ionImage: image.value,
-          colorMap: colorMaps.value[state.channel],
-        })
+        images.push(layer)
       }
-      return toRender
+      return images
+    })
+
+    const ionImageLayers = computed(() => {
+      const layers = visibleIonImageLayers.value
+      if (ionImageState.mode === 'colormap') {
+        if (layers.length === 0) return []
+        return [{
+          ionImage: getCombinedImage(layers.map(_ => _.image.value) as IonImage[]),
+          colorMap: colorMaps.value[props.colormap],
+        }]
+      }
+      return layers.map(({ image, state }) => ({
+        ionImage: image.value,
+        colorMap: colorMaps.value[state.channel],
+      }))
     })
 
     const ionImageMenuItems = computed(() => {
@@ -227,7 +249,8 @@ const ImageViewer = defineComponent<Props>({
         }),
         colorbar: computed(() => {
           const { channel, quantileRange } = state
-          const { domain, range } = getColorScale(channel)
+          const mapOrChannel = ionImageState.mode === 'colormap' ? props.colormap : channel
+          const { domain, range } = getColorScale(mapOrChannel)
           const [minQuantile, maxQuantile] = quantileRange
           const colors = []
           if (minQuantile > 0) {

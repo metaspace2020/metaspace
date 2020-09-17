@@ -4,7 +4,7 @@
     class="box-border h-3 relative rounded-full bg-gray-100"
     :disabled="disabled"
     data-slider
-    @click.stop
+    @click.capture.stop
   >
     <div
       ref="minThumb"
@@ -193,6 +193,7 @@ const Slider = defineComponent<Props>({
 
     function onMinKeyUp(event: KeyboardEvent) {
       event.stopPropagation()
+      event.preventDefault()
       const { max, step } = props
       const multiply = event.shiftKey ? 10 : 1
       const pixelStep = ((step * multiply) / max) * maxX
@@ -206,6 +207,7 @@ const Slider = defineComponent<Props>({
 
     function onMaxKeyUp(event: KeyboardEvent) {
       event.stopPropagation()
+      event.preventDefault()
       const { max, step } = props
       const multiply = event.shiftKey ? 10 : 1
       const pixelStep = ((step * multiply) / max) * maxX
