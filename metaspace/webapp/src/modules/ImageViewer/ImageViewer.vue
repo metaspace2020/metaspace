@@ -2,26 +2,9 @@
   <div
     class="relative"
   >
-    <fade-transition>
-      <ion-image-menu
-        v-if="openMenu === 'ION'"
-        key="ION"
-        :items="ionImageMenuItems"
-        :active-layer="ionImageState.activeLayer"
-        @range="updateIntensity"
-        @visible="toggleVisibility"
-        @active="id => ionImageState.activeLayer = id"
-        @delete="deleteLayer"
-      />
-      <!-- <optical-image-menu
-        v-if="openMenu === 'OPTICAL'"
-        key="OPTICAL"
-      /> -->
-    </fade-transition>
     <div
       ref="imageArea"
       v-resize="onResize"
-      class="relative"
     >
       <ion-image-viewer
         :annotation="annotation"
@@ -43,11 +26,27 @@
         v-bind="imageLoaderSettings"
         @move="handleImageMove"
       />
-      <image-saver
-        class="absolute top-0 left-0 mt-3 ml-3"
-        :dom-node="imageArea"
-      />
     </div>
+    <fade-transition>
+      <ion-image-menu
+        v-if="openMenu === 'ION'"
+        key="ION"
+        :items="ionImageMenuItems"
+        :active-layer="ionImageState.activeLayer"
+        @range="updateIntensity"
+        @visible="toggleVisibility"
+        @active="id => ionImageState.activeLayer = id"
+        @delete="deleteLayer"
+      />
+      <!-- <optical-image-menu
+        v-if="openMenu === 'OPTICAL'"
+        key="OPTICAL"
+      /> -->
+    </fade-transition>
+    <image-saver
+      class="absolute top-0 left-0 mt-3 ml-3"
+      :dom-node="imageArea"
+    />
   </div>
 </template>
 <script lang="ts">
