@@ -16,6 +16,7 @@
           :ion="layer.annotation.ion"
         />
         <button
+          :title="layer.visible ? 'Hide layer' : 'Show layer'"
           class="button-reset h-5 focus-ring-primary"
           @click.stop.left="toggleVisibility(layer.id)"
         >
@@ -31,7 +32,9 @@
       </p>
       <div class="h-9">
         <range-slider
-          :style="colorbar"
+          :style="colorbar.background"
+          :min-color="colorbar.minColor"
+          :max-color="colorbar.maxColor"
           :min="0"
           :max="1"
           :step="0.01"

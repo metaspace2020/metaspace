@@ -1,9 +1,8 @@
 <template>
   <div
     ref="container"
-    class="box-border h-3 relative rounded-full bg-gray-100"
+    class="box-border h-3 relative rounded-full bg-gray-100 sm-range-slider"
     :disabled="disabled"
-    data-slider
     @click.capture.stop
   >
     <div
@@ -13,7 +12,7 @@
       class="box-border h-3 w-3 absolute bg-gray-100 border border-solid border-gray-300 rounded-full cursor-pointer focus-ring-primary"
     />
     <span
-      :style="minStyle"
+      :style="minPosition"
       class="-ml-1"
     >
       {{ minTooltip }}
@@ -26,7 +25,7 @@
     >
     </div>
     <span
-      :style="maxStyle"
+      :style="maxPosition"
       class="-mr-1"
     >
       {{ maxTooltip }}
@@ -46,6 +45,8 @@ interface Props {
   disabled: boolean
   minTooltip: string
   maxTooltip: string
+  minColor: string
+  maxColor: string
 }
 
 interface ThumbState {
@@ -55,19 +56,20 @@ interface ThumbState {
 
 const Slider = defineComponent<Props>({
   props: {
-    min: Number,
-    max: Number,
+    min: { type: Number, default: 0 },
+    max: { type: Number, default: 0 },
     value: Array,
     step: Number,
     disabled: Boolean,
     minTooltip: String,
     maxTooltip: String,
+    minColor: String,
+    maxColor: String,
   },
   setup(props, { emit, attrs }) {
     const container = ref<HTMLElement>(null)
     const minThumb = ref<HTMLElement>(null)
     const maxThumb = ref<HTMLElement>(null)
-    // const line = ref<HTMLElement>(null)
 
     const { min = 0, max = 100, step = 1, value = [min, max] } = props
 
@@ -255,12 +257,25 @@ const Slider = defineComponent<Props>({
       emit('change', [minValue, maxValue])
     }
 
+    const minPosition = computed(() => ({ left: `${minState.x}px` }))
+    const maxPosition = computed(() => ({ right: `${getWidth() - maxState.x - thumbWidth}px` }))
+
     return {
       container,
       minThumb,
       maxThumb,
-      minStyle: computed(() => `left: ${minState.x}px`),
-      maxStyle: computed(() => `right: ${getWidth() - maxState.x - thumbWidth}px`),
+      minPosition,
+      maxPosition,
+      minStyle: computed(() => ({
+        ...minPosition.value,
+        backgroundColor: props.minColor,
+        borderColor: props.disabled ? undefined : props.maxColor,
+      })),
+      maxStyle: computed(() => ({
+        ...maxPosition.value,
+        backgroundColor: props.maxColor,
+        borderColor: props.disabled ? undefined : props.minColor,
+      })),
     }
   },
 })
@@ -269,18 +284,18 @@ export default Slider
 
 </script>
 <style scoped>
-  [data-slider]::before {
+  .sm-range-slider::before {
     @apply absolute w-full h-full box-border border-2 border-solid border-transparent rounded-full;
     content: '';
   }
-  [data-slider][disabled] {
+  .sm-range-slider[disabled] {
     @apply pointer-events-none;
   }
-  [data-slider][disabled]::before {
+  .sm-range-slider[disabled]::before {
     @apply border-gray-300;
   }
 
-  div:focus {
+  .sm-range-slider > div:focus {
     z-index: 1;
   }
 

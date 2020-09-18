@@ -9,7 +9,7 @@
       <ion-image-viewer
         :annotation="annotation"
         :height="dimensions.height"
-        :ion-image-layers="ionImageLayers"
+        :ion-image-layers="ionImagesToRender"
         :max-zoom="imageFit.imageZoom * 20"
         :min-zoom="imageFit.imageZoom / 4"
         :opacity="opacity"
@@ -83,8 +83,14 @@ interface IonImageLayerState {
   visible: boolean
 }
 
+interface Colorbar {
+  background: string
+  minColor: string
+  maxColor: string
+}
+
 interface IonImageLayer {
-  colorbar: Ref<string>
+  colorbar: Ref<Colorbar>
   image: Ref<IonImage | null>
   state: IonImageLayerState
 }
@@ -169,18 +175,17 @@ const ImageViewer = defineComponent<Props>({
       return images
     })
 
-    const ionImageLayers = computed(() => {
-      const layers = visibleIonImageLayers.value
-      if (ionImageState.mode === 'colormap') {
-        if (layers.length === 0) return []
-        return [{
-          ionImage: getCombinedImage(layers.map(_ => _.image.value) as IonImage[]),
-          colorMap: colorMaps.value[props.colormap],
-        }]
+    const ionImagesToRender = computed(() => {
+      const layers = []
+      for (const layer of orderedIonImageLayers.value) {
+        if (layer.image.value == null || !layer.state.visible) {
+          continue
+        }
+        layers.push(layer)
       }
       return layers.map(({ image, state }) => ({
         ionImage: image.value,
-        colorMap: colorMaps.value[state.channel],
+        colorMap: colorMaps.value[ionImageState.mode === 'colormap' ? props.colormap : state.channel],
       }))
     })
 
@@ -260,7 +265,11 @@ const ImageViewer = defineComponent<Props>({
             const pct = (minQuantile + (domain[i] * (maxQuantile - minQuantile))) * 100
             colors.push(range[i] + ' ' + (pct + '%'))
           }
-          return `background-image: linear-gradient(to right, ${colors.join(', ')})`
+          return {
+            background: `background-image: linear-gradient(to right, ${colors.join(', ')})`,
+            minColor: range[0],
+            maxColor: range[range.length - 1],
+          }
         }),
       }
 
@@ -290,7 +299,7 @@ const ImageViewer = defineComponent<Props>({
     }
 
     const imageFit = computed(() => {
-      const [ionImageLayer] = ionImageLayers.value
+      const [ionImageLayer] = ionImagesToRender.value
       let width = 500
       let height = 500
       if (ionImageLayer && ionImageLayer.ionImage) {
@@ -309,7 +318,7 @@ const ImageViewer = defineComponent<Props>({
       dimensions,
       imageArea,
       imageFit,
-      ionImageLayers,
+      ionImagesToRender,
       ionImageMenuItems,
       ionImageState,
       onResize,
