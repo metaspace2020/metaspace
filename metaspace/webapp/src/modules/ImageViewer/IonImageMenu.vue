@@ -1,7 +1,7 @@
 <template>
   <menu-container>
     <menu-item
-      v-for="{ layer, colorbar } in items"
+      v-for="{ layer, colorBar } in menuItems"
       :key="layer.id"
       class="flex flex-col justify-center"
       :layer-id="layer.id"
@@ -32,9 +32,9 @@
       </p>
       <div class="h-9">
         <range-slider
-          :style="colorbar.background"
-          :min-color="colorbar.minColor"
-          :max-color="colorbar.maxColor"
+          :style="colorBar.background"
+          :min-color="colorBar.minColor"
+          :max-color="colorBar.maxColor"
           :min="0"
           :max="1"
           :step="0.01"
@@ -42,7 +42,7 @@
           :disabled="!layer.visible"
           :min-tooltip="tooltip(layer, 0)"
           :max-tooltip="tooltip(layer, 1)"
-          @change="range => onInput(layer.id, range)"
+          @change="range => updateIntensity(layer.id, range)"
         />
         <div class="flex justify-between leading-6 tracking-wide">
           <span>{{ layer.minIntensity.toExponential(1) }}</span>
@@ -75,6 +75,15 @@ import VisibleIcon from '../../assets/inline/refactoring-ui/visible.svg'
 import HiddenIcon from '../../assets/inline/refactoring-ui/hidden.svg'
 import AddIcon from '../../assets/inline/refactoring-ui/add.svg'
 
+import { useIonImageMenu } from './ionImageState'
+
+const tooltip = (layer: any, quantileIndex: number) => {
+  const { minIntensity, maxIntensity, quantileRange } = layer
+  return (
+    minIntensity + ((maxIntensity - minIntensity) * quantileRange[quantileIndex])
+  ).toExponential(1)
+}
+
 export default defineComponent({
   components: {
     MenuContainer,
@@ -85,23 +94,24 @@ export default defineComponent({
     HiddenIcon,
     AddIcon,
   },
-  props: {
-    items: Array,
-    activeLayer: String,
-  },
   setup(props, { emit }) {
-    const tooltip = (layer: any, quantileIndex: number) => {
-      const { minIntensity, maxIntensity, quantileRange } = layer
-      return (
-        minIntensity + ((maxIntensity - minIntensity) * quantileRange[quantileIndex])
-      ).toExponential(1)
-    }
+    const {
+      menuItems,
+      activeLayer,
+      setActiveLayer,
+      updateIntensity,
+      toggleVisibility,
+      deleteLayer,
+    } = useIonImageMenu()
+
     return {
       tooltip,
-      onInput: (layerId: string, range: [number, number]) => emit('range', layerId, range),
-      toggleVisibility: (layerId: string) => emit('visible', layerId),
-      setActiveLayer: (layerId: string | null) => emit('active', layerId),
-      deleteLayer: (layerId: string | null) => emit('delete', layerId),
+      menuItems,
+      activeLayer,
+      setActiveLayer,
+      updateIntensity,
+      toggleVisibility,
+      deleteLayer,
     }
   },
 })

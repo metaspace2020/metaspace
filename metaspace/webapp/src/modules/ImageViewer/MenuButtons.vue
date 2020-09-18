@@ -5,6 +5,7 @@
     @keyup.stop
   >
     <button
+      title="Optical images"
       class="button-reset flex h-6 mr-3 focus-ring-primary"
       :class="{ active: menu === 'OPTICAL' }"
       @click="setMenu('OPTICAL')"
@@ -14,6 +15,7 @@
       />
     </button>
     <button
+      title="Ion images"
       class="button-reset flex h-6 mr-3 focus-ring-primary"
       :class="{ active: menu === 'ION' }"
       @click="setMenu('ION')"
@@ -25,7 +27,7 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api'
+import { defineComponent, onBeforeUnmount } from '@vue/composition-api'
 
 import '../../components/StatefulIcon.css'
 import MonitorIcon from '../../assets/inline/refactoring-ui/monitor.svg'
@@ -39,6 +41,10 @@ export default defineComponent({
     CameraIcon,
   },
   setup() {
+    // onBeforeUnmount(() => {
+    //   setMenu('NONE')
+    // })
+
     return {
       menu: state,
       setMenu,

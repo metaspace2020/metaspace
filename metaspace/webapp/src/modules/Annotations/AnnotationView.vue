@@ -78,7 +78,13 @@
           <component
             :is="metadataDependentComponent('main-image-header')"
             slot="title"
+            :annotation="annotation"
+            :has-optical-image="bestOpticalImage != null"
+            :show-optical-image="showOpticalImage"
+            :reset-viewport="resetViewport"
+            :toggle-optical-image="toggleOpticalImage"
             :is-active="activeSections.includes('images')"
+            @scaleBarColorChange="setScaleBarColor"
           />
           <component
             :is="metadataDependentComponent('main-image')"
