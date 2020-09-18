@@ -93,9 +93,7 @@ const ImageViewer = defineComponent<Props>({
     scaleType: { type: String },
   },
   setup(props) {
-    const {
-      ionImageLayers,
-    } = useIonImages(props)
+    const { ionImageLayers } = useIonImages(props)
 
     const imageArea = ref<HTMLElement | null>(null)
 

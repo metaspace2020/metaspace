@@ -1,7 +1,7 @@
 <template>
   <div class="absolute top-0 right-0 h-full py-3 pr-2 box-border">
     <div
-      class="py-3 bg-gray-100-alpha w-60 rounded-lg h-full box-border"
+      class="py-3 bg-gray-100-alpha w-60 rounded-lg h-full box-border overflow-y-auto"
       data-menu-items
     >
       <slot />
@@ -14,6 +14,6 @@
   }
   [data-menu-items] > *:focus {
     outline: 1px solid theme('colors.primary');
-    outline-offset: none;
+    outline-offset: -1px;
   }
 </style>

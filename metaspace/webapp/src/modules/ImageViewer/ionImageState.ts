@@ -40,7 +40,7 @@ interface State {
   order: string[]
   activeLayer: string | null
   // mode: 'colormap' | 'channel'
-  nextChannel: number
+  nextChannel: string
 }
 
 interface Props {
@@ -50,11 +50,13 @@ interface Props {
   scaleType?: ScaleType
 }
 
+const channels = ['red', 'green', 'blue', 'magenta', 'yellow', 'cyan', 'orange']
+
 const initialState = {
   order: [],
   activeLayer: null,
   // mode: 'colormap',
-  nextChannel: -1,
+  nextChannel: channels[0],
 }
 
 const ionImageState = reactive<State>(initialState)
@@ -70,8 +72,6 @@ const ionImageMenuItems = computed(() => {
 })
 
 const mode = computed(() => ionImageState.order.length > 1 ? 'channel' : 'colormap')
-
-const channels = ['red', 'green', 'blue', 'magenta', 'yellow', 'cyan', 'orange']
 
 function deleteLayer(id: string) : number {
   delete ionImageLayerCache[id]
@@ -118,17 +118,20 @@ export const useIonImages = (props: Props) => {
     const [isotopeImage] = props.annotation.isotopeImages
     const { minIntensity = 0, maxIntensity = 1 } = isotopeImage || {}
 
+    let channel
     if (ionImageState.activeLayer !== null) {
+      channel = ionImageLayerCache[ionImageState.activeLayer].state.channel
       const idx = deleteLayer(ionImageState.activeLayer)
       ionImageState.order.splice(idx, 0, id)
     } else {
       ionImageState.order.push(id)
-      ionImageState.nextChannel++ // only iterate channel for new layers
+      channel = ionImageState.nextChannel
+      ionImageState.nextChannel = channels[channels.indexOf(channel) + 1] || channels[0]
     }
 
     const state = reactive<IonImageLayerState>({
       annotation: props.annotation,
-      channel: channels[ionImageState.nextChannel % channels.length],
+      channel,
       id,
       label: undefined,
       maxIntensity,
