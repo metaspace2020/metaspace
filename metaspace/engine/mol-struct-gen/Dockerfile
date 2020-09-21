@@ -50,13 +50,13 @@ EXPOSE 8888
 
 RUN useradd -u 1000 -g 0 -m obabel
 USER 1000
-WORKDIR /home/obabel
+WORKDIR /home/obabel/mol-struct-gen
 
-COPY main.py .
+COPY main.py /home/obabel
 
 #CMD jupyter notebook \
 #    --ip 0.0.0.0 \
 #    --config=/home/obabel/.jupyter/jupyter_notebook_config.json
 
-ENTRYPOINT ["python", "main.py"]
+ENTRYPOINT ["python", "/home/obabel/main.py"]
 CMD ["-h"]
