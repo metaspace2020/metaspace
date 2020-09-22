@@ -29,24 +29,18 @@ class ImageStoreServiceWrapper:
         return path.join(self._img_service_url, storage_type, img_type + 's', method, img_id)
 
     @retry_on_exception()
-    def post_image(self, storage_type, img_type, fp):
+    def post_image(self, storage_type: str, img_type: str, img_bytes: bytes) -> str:
         """
-        Args
-        ---
-        storage_type: str
-            db | fs
-        img_type: str
-            iso_image | optical_image | raw_optical_image | ion_thumbnail
-        fp:
-            file object
+        Args:
+            storage_type: db | fs
+            img_type: iso_image | optical_image | raw_optical_image | ion_thumbnail
+            img_bytes: bytes of image saved as PNG
 
-        Returns
-        ---
-        str
+        Returns:
             new image id
         """
         url = self._format_url(storage_type=storage_type, img_type=img_type, method='upload')
-        resp = self._session.post(url, files={img_type: fp})
+        resp = self._session.post(url, files={img_type: img_bytes})
         resp.raise_for_status()
         return resp.json()['image_id']
 
@@ -471,7 +465,7 @@ class PngGenerator:
             image = rgba
         return image
 
-    def generate_png(self, array):
+    def generate_png(self, array: np.array) -> bytes:
         img = self._to_image(array)
         fp = BytesIO()
         png_writer = png.Writer(
@@ -483,4 +477,4 @@ class PngGenerator:
         )
         png_writer.write(fp, img.reshape(img.shape[0], img.shape[1] * img.shape[2]).tolist())
         fp.seek(0)
-        return fp
+        return fp.read()
