@@ -24,8 +24,8 @@ def post_images_to_image_store(
         iso_image_ids = [None] * n_peaks
         for k, img in enumerate(imgs):
             if img is not None:
-                fp = png_generator.generate_png(img.toarray())
-                iso_image_ids[k] = img_store.post_image(img_store_type, 'iso_image', fp)
+                img_bytes = png_generator.generate_png(img.toarray())
+                iso_image_ids[k] = img_store.post_image(img_store_type, 'iso_image', img_bytes)
         return {'iso_image_ids': iso_image_ids}
 
     return dict(formula_images_rdd.mapValues(generate_png_and_post).collect())

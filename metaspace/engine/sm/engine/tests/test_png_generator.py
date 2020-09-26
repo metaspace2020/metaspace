@@ -11,9 +11,9 @@ def test_png_gen_greyscale_works():
 
     img_data = np.array([[0.0, 5.0, 10.0]])
     norm_img_data = (img_data - img_data.min()) / (img_data.max() - img_data.min())
-    fp = gen.generate_png(img_data)
+    img_bytes = gen.generate_png(img_data)
 
-    reader = Reader(file=fp)
+    reader = Reader(bytes=img_bytes)
     width, height, pixels, _ = reader.asFloat()
     assert_equal(width, 3)
     assert_equal(height, 1)
