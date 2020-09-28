@@ -3,6 +3,7 @@ import os
 import boto3
 
 
+# pylint: disable=invalid-name
 if __name__ == '__main__':
     print(
         'Credentials of the root account should be used to enable MFA-delete on versioned buckets'
