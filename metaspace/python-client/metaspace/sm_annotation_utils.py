@@ -1051,14 +1051,15 @@ class SMDataset(object):
 
         if scale_intensity:
             non_empty_images = [i for i in images if i is not None]
-            shape = non_empty_images[0].shape
-            for i in range(len(images)):
-                if images[i] is None:
-                    images[i] = np.zeros(shape, dtype=non_empty_images[0].dtype)
-                else:
-                    lo = float(image_metadata[i]['minIntensity'])
-                    hi = float(image_metadata[i]['maxIntensity'])
-                    images[i] = lo + images[i] * (hi - lo)
+            if non_empty_images:
+                shape = non_empty_images[0].shape
+                for i in range(len(images)):
+                    if images[i] is None:
+                        images[i] = np.zeros(shape, dtype=non_empty_images[0].dtype)
+                    else:
+                        lo = float(image_metadata[i]['minIntensity'])
+                        hi = float(image_metadata[i]['maxIntensity'])
+                        images[i] = lo + images[i] * (hi - lo)
 
         if hotspot_clipping:
             for i in range(len(images)):
