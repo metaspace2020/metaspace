@@ -1,6 +1,7 @@
 name: Publish python-client
 
 on:
+  workflow_dispatch:  # Allow manual trigger
   push:
     paths:
       - 'metaspace/python-client/metaspace/__init__.py'
