@@ -83,7 +83,7 @@ export default class CreateProjectDialog extends Vue {
     isSubmitting: Boolean = false;
     project = {
       name: '',
-      isPublic: true,
+      isPublic: false,
       urlSlug: '',
     };
 
