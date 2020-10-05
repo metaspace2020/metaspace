@@ -15,7 +15,7 @@ exports[`ProjectsListPage should change actions for projects under review 1`] = 
             </div></label></div>
       </form>
       <div class="flex my-3 items-center justify-center">
-        <mock-lock-icon class="sm-colour-icon mx-3"></mock-lock-icon>
+        <svg-lock-icon class="sm-colour-icon mx-3"></svg-lock-icon>
         <p class="ml-3 leading-5"><strong class="block">Projects are now private by default.</strong> <span>
           Visibility can be changed in project settings,
           <br>
@@ -161,7 +161,7 @@ exports[`ProjectsListPage should change actions for published projects 1`] = `
             </div></label></div>
       </form>
       <div class="flex my-3 items-center justify-center">
-        <mock-lock-icon class="sm-colour-icon mx-3"></mock-lock-icon>
+        <svg-lock-icon class="sm-colour-icon mx-3"></svg-lock-icon>
         <p class="ml-3 leading-5"><strong class="block">Projects are now private by default.</strong> <span>
           Visibility can be changed in project settings,
           <br>
@@ -306,7 +306,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
             </div></label></div>
       </form>
       <div class="flex my-3 items-center justify-center">
-        <mock-lock-icon class="sm-colour-icon mx-3"></mock-lock-icon>
+        <svg-lock-icon class="sm-colour-icon mx-3"></svg-lock-icon>
         <p class="ml-3 leading-5"><strong class="block">Projects are now private by default.</strong> <span>
           Visibility can be changed in project settings,
           <br>

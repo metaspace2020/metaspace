@@ -45,8 +45,7 @@ jest.mock('../../src/lib/delay', () => jest.fn(() => Promise.resolve()))
 registerMockComponent('elapsed-time', { path: '../../src/components/ElapsedTime' })
 
 // Mock svg icons
-// registerSVGIcons() <-- doesn't work
-registerMockComponent('lock-icon')
+registerSVGIcons()
 
 // Automatically clean up components after each test to prevent stale components from updating due to e.g. route changes
 // @ts-ignore
