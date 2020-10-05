@@ -99,166 +99,7 @@ N_FORMULAS_SEGMENTS = 256
 N_HASH_CHUNKS = 32  # should be less than N_FORMULAS_SEGMENTS
 
 
-def build_database(pw, db_config, mols_dbs_cobjects):
-
-    adducts = [*db_config['adducts'], *DECOY_ADDUCTS]
-    modifiers = db_config['modifiers']
-
-    def hash_formula_to_chunk(formula):
-        m = hashlib.md5()
-        m.update(formula.encode('utf-8'))
-        return int(m.hexdigest(), 16) % N_HASH_CHUNKS
-
-    def generate_formulas(adduct, storage):
-        print(f'Generating formulas for adduct {adduct}')
-
-        def _get_mols(mols_cobj):
-            return read_cloud_object_with_retry(storage, mols_cobj, deserialise)
-
-        with ThreadPoolExecutor(max_workers=128) as pool:
-            mols_list = list(pool.map(_get_mols, mols_dbs_cobjects))
-
-        formulas = set()
-
-        for mols in mols_list:
-            for modifier in modifiers:
-                formulas.update(
-                    map(safe_generate_ion_formula, mols, repeat(modifier), repeat(adduct))
-                )
-
-        if None in formulas:
-            formulas.remove(None)
-
-        formulas_chunks = {}
-        for formula in formulas:
-            chunk_i = hash_formula_to_chunk(formula)
-            if chunk_i in formulas_chunks:
-                formulas_chunks[chunk_i].append(formula)
-            else:
-                formulas_chunks[chunk_i] = [formula]
-
-        def _store(chunk_i):
-            return chunk_i, storage.put_cobject(serialise(formulas_chunks[chunk_i]))
-
-        with ThreadPoolExecutor(max_workers=128) as pool:
-            cobjects = dict(pool.map(_store, formulas_chunks.keys()))
-
-        return cobjects
-
-    memory_capacity_mb = 512
-    futures = pw.map(generate_formulas, adducts, runtime_memory=memory_capacity_mb)
-    results = pw.get_result(futures)
-    chunk_cobjects = [[] for i in range(N_HASH_CHUNKS)]
-    for cobjects_dict in results:
-        for chunk_i, cobject in cobjects_dict.items():
-            chunk_cobjects[chunk_i].append(cobject)
-    PipelineStats.append_pywren(
-        futures, memory_mb=memory_capacity_mb, cloud_objects_n=sum(map(len, chunk_cobjects))
-    )
-
-    def deduplicate_formulas_chunk(chunk_i, chunk_cobjects, storage):
-        print(f'Deduplicating formulas chunk {chunk_i}')
-        chunk = set()
-        for cobject in chunk_cobjects:
-            formulas_chunk_part = read_cloud_object_with_retry(storage, cobject, deserialise)
-            chunk.update(formulas_chunk_part)
-
-        return chunk
-
-    def get_formulas_number_per_chunk(chunk_i, chunk_cobjects, storage):
-        chunk = deduplicate_formulas_chunk(chunk_i, chunk_cobjects, storage)
-        return len(chunk)
-
-    memory_capacity_mb = 512
-    futures = pw.map(
-        get_formulas_number_per_chunk,
-        list(enumerate(chunk_cobjects)),
-        runtime_memory=memory_capacity_mb,
-    )
-    formulas_nums = pw.get_result(futures)
-    PipelineStats.append_pywren(futures, memory_mb=memory_capacity_mb)
-
-    def store_formulas_segments(chunk_i, chunk_cobjects, storage):
-        chunk = deduplicate_formulas_chunk(chunk_i, chunk_cobjects, storage)
-        formula_i_start = sum(formulas_nums[:chunk_i])
-        formula_i_end = formula_i_start + len(chunk)
-        chunk = pd.Series(
-            sorted(chunk),
-            name='ion_formula',
-            index=pd.RangeIndex(formula_i_start, formula_i_end, name='formula_i'),
-        )
-
-        n_threads = N_FORMULAS_SEGMENTS // N_HASH_CHUNKS
-        segm_size = math.ceil(len(chunk) / n_threads)
-        segm_list = [chunk[i : i + segm_size] for i in range(0, chunk.shape[0], segm_size)]
-
-        def _store(segm_i):
-            id = chunk_i * n_threads + segm_i
-            print(f'Storing formulas segment {id}')
-            return storage.put_cobject(serialise(segm_list[segm_i]))
-
-        with ThreadPoolExecutor(max_workers=128) as pool:
-            segm_cobjects = list(pool.map(_store, range(n_threads)))
-
-        return segm_cobjects
-
-    memory_capacity_mb = 512
-    futures = pw.map(
-        store_formulas_segments, list(enumerate(chunk_cobjects)), runtime_memory=memory_capacity_mb
-    )
-    results = pw.get_result(futures)
-    formula_cobjects = [segm for segms in results for segm in segms]
-    PipelineStats.append_pywren(
-        futures, memory_mb=memory_capacity_mb, cloud_objects_n=len(formula_cobjects)
-    )
-
-    num_formulas = sum(formulas_nums)
-    n_formulas_chunks = sum([len(result) for result in results])
-    logger.info(f'Generated {num_formulas} formulas in {n_formulas_chunks} chunks')
-
-    formulas_bytes = 200 * num_formulas
-    formula_to_id_chunk_mb = 512
-    n_formula_to_id = int(math.ceil(formulas_bytes / (formula_to_id_chunk_mb * 1024 ** 2)))
-    formula_to_id_bounds = [
-        N_FORMULAS_SEGMENTS * ch_i // n_formula_to_id for ch_i in range(n_formula_to_id + 1)
-    ]
-    formula_to_id_ranges = list(zip(formula_to_id_bounds[:-1], formula_to_id_bounds[1:]))
-    formula_to_id_inputs = [
-        formula_cobjects[start:end] for start, end in formula_to_id_ranges if start != end
-    ]
-
-    def store_formula_to_id_chunk(ch_i, input_cobjects, storage):
-        print(f'Storing formula_to_id dictionary chunk {ch_i}')
-
-        def _get(cobj):
-            formula_chunk = read_cloud_object_with_retry(storage, cobj, deserialise)
-            formula_to_id_chunk = dict(zip(formula_chunk.values, formula_chunk.index))
-            return formula_to_id_chunk
-
-        formula_to_id = {}
-        with ThreadPoolExecutor(max_workers=128) as pool:
-            for chunk_dict in pool.map(_get, input_cobjects):
-                formula_to_id.update(chunk_dict)
-
-        return storage.put_cobject(serialise(formula_to_id))
-
-    safe_mb = 512
-    memory_capacity_mb = formula_to_id_chunk_mb * 2 + safe_mb
-    futures = pw.map(
-        store_formula_to_id_chunk,
-        list(enumerate(formula_to_id_inputs)),
-        runtime_memory=memory_capacity_mb,
-    )
-    formula_to_id_cobjects = pw.get_result(futures)
-    PipelineStats.append_pywren(
-        futures, memory_mb=memory_capacity_mb, cloud_objects_n=n_formula_to_id
-    )
-    logger.info(f'Built {n_formula_to_id} formula_to_id dictionaries chunks')
-
-    return formula_cobjects, formula_to_id_cobjects
-
-
-def calculate_centroids(pw, formula_cobjects, ds_config):
+def calculate_centroids(fexec, formula_cobjects, ds_config):
     polarity = ds_config['polarity']
     isocalc_sigma = ds_config['isocalc_sigma']
 
@@ -301,10 +142,10 @@ def calculate_centroids(pw, formula_cobjects, ds_config):
     )
 
     memory_capacity_mb = 2048
-    futures = pw.map(
+    futures = fexec.map(
         calculate_peaks_chunk, list(enumerate(formula_cobjects)), runtime_memory=memory_capacity_mb
     )
-    results = pw.get_result(futures)
+    results = fexec.get_result(futures)
     PipelineStats.append_pywren(futures, memory_mb=memory_capacity_mb, cloud_objects_n=len(futures))
 
     num_centroids = sum(count for cobj, count in results)
@@ -365,7 +206,7 @@ def validate_formula_cobjects(storage, formula_cobjects):
     # __import__('__main__').db_segms = db_segms
 
 
-def validate_peaks_cobjects(pw, peaks_cobjects):
+def validate_peaks_cobjects(fexec, peaks_cobjects):
     def get_segm_stats(storage, segm_cobject):
         segm = deserialise(storage.get_cobject(segm_cobject, stream=True))
         n_peaks = segm.groupby(level='formula_i').peak_i.count()
@@ -392,8 +233,8 @@ def validate_peaks_cobjects(pw, peaks_cobjects):
         )
         return formula_is, stats
 
-    futures = pw.map(get_segm_stats, peaks_cobjects, runtime_memory=1024)
-    results = pw.get_result(futures)
+    futures = fexec.map(get_segm_stats, peaks_cobjects, runtime_memory=1024)
+    results = fexec.get_result(futures)
     segm_formula_is = [formula_is for formula_is, stats in results]
     stats_df = pd.DataFrame([stats for formula_is, stats in results])
 

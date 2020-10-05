@@ -10,9 +10,9 @@ from sm.engine.serverless.utils import (
 
 
 class PipelineCacher:
-    def __init__(self, pw, namespace, ds_name, db_name):
-        self.pywren_executor = pw
-        self.config = self.pywren_executor.config
+    def __init__(self, fexec, namespace, ds_name, db_name):
+        self.fexec = fexec
+        self.config = self.fexec.config
 
         self.storage_handler = get_ibm_cos_client(self.config)
         self.bucket = self.config['pywren']['storage_bucket']
@@ -85,6 +85,6 @@ class PipelineCacher:
             elif isinstance(cache_data, CloudObject):
                 cobjects_to_clean.append(cache_data)
 
-        self.pywren_executor.clean(cs=cobjects_to_clean)
+        self.fexec.clean(cs=cobjects_to_clean)
         for prefix in unique_prefixes:
             clean_from_cos(self.config, self.bucket, prefix, self.storage_handler)
