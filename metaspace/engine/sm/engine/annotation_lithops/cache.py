@@ -1,20 +1,15 @@
-from lithops.storage.utils import CloudObject
+from lithops import FunctionExecutor
+from lithops.storage.utils import CloudObject, StorageNoSuchKeyError
 
-from sm.engine.serverless.utils import (
-    get_ibm_cos_client,
-    list_keys,
-    clean_from_cos,
-    serialise,
-    deserialise,
-)
+from sm.engine.annotation_lithops.io import serialise, deserialise, delete_objects_by_prefix
 
 
 class PipelineCacher:
-    def __init__(self, fexec, namespace, ds_name, db_name):
+    def __init__(self, fexec: FunctionExecutor, namespace: str, ds_name: str, db_name: str):
         self.fexec = fexec
         self.config = self.fexec.config
+        self.storage = self.fexec.storage
 
-        self.storage_handler = get_ibm_cos_client(self.config)
         self.bucket = self.config['pywren']['storage_bucket']
         self.prefixes = {
             '': f'metabolomics/cache/{namespace}',
@@ -32,21 +27,17 @@ class PipelineCacher:
             return self.prefixes[prefix] + suffix
 
     def load(self, key):
-        data_stream = self.storage_handler.get_object(
-            Bucket=self.bucket, Key=self.resolve_key(key)
-        )['Body']
+        data_stream = self.storage.get_object(bucket=self.bucket, key=self.resolve_key(key))
         return deserialise(data_stream)
 
     def save(self, data, key):
-        self.storage_handler.put_object(
-            Bucket=self.bucket, Key=self.resolve_key(key), Body=serialise(data)
-        )
+        self.storage.put_object(self.bucket, self.resolve_key(key), serialise(data))
 
     def exists(self, key):
         try:
-            self.storage_handler.head_object(Bucket=self.bucket, Key=self.resolve_key(key))
+            self.storage.head_object(self.bucket, self.resolve_key(key))
             return True
-        except Exception:
+        except StorageNoSuchKeyError:
             return False
 
     def clean(self, database=True, dataset=True, hard=False):
@@ -62,15 +53,12 @@ class PipelineCacher:
             unique_prefixes.append(self.prefixes[''])
 
         keys = [
-            key
-            for prefix in unique_prefixes
-            for key in list_keys(self.bucket, prefix, self.storage_handler)
+            key for prefix in unique_prefixes for key in self.storage.list_keys(self.bucket, prefix)
         ]
 
         cobjects_to_clean = []
         for cache_key in keys:
-            data_stream = self.storage_handler.get_object(Bucket=self.bucket, Key=cache_key)['Body']
-            cache_data = deserialise(data_stream)
+            cache_data = deserialise(self.storage.get_object(self.bucket, cache_key))
 
             if isinstance(cache_data, tuple):
                 for obj in cache_data:
@@ -87,4 +75,4 @@ class PipelineCacher:
 
         self.fexec.clean(cs=cobjects_to_clean)
         for prefix in unique_prefixes:
-            clean_from_cos(self.config, self.bucket, prefix, self.storage_handler)
+            delete_objects_by_prefix(self.storage, self.bucket, prefix)

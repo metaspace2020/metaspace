@@ -1,108 +1,24 @@
-from itertools import repeat
-from concurrent.futures import ThreadPoolExecutor
-import pandas as pd
-import hashlib
-import math
+from lithops.storage.utils import CloudObject
+from typing import List
 
-from sm.engine.serverless.formula_parser import safe_generate_ion_formula
-from sm.engine.serverless.utils import (
+from itertools import repeat
+import pandas as pd
+from lithops import FunctionExecutor
+
+from sm.engine.dataset import DSConfig
+from sm.engine.annotation_lithops.utils import (
     logger,
     PipelineStats,
-    serialise,
-    deserialise,
-    read_cloud_object_with_retry,
 )
+from sm.engine.annotation_lithops.io import save_cobj, load_cobj, CObj
 
-DECOY_ADDUCTS = [
-    '+He',
-    '+Li',
-    '+Be',
-    '+B',
-    '+C',
-    '+N',
-    '+O',
-    '+F',
-    '+Ne',
-    '+Mg',
-    '+Al',
-    '+Si',
-    '+P',
-    '+S',
-    '+Cl',
-    '+Ar',
-    '+Ca',
-    '+Sc',
-    '+Ti',
-    '+V',
-    '+Cr',
-    '+Mn',
-    '+Fe',
-    '+Co',
-    '+Ni',
-    '+Cu',
-    '+Zn',
-    '+Ga',
-    '+Ge',
-    '+As',
-    '+Se',
-    '+Br',
-    '+Kr',
-    '+Rb',
-    '+Sr',
-    '+Y',
-    '+Zr',
-    '+Nb',
-    '+Mo',
-    '+Ru',
-    '+Rh',
-    '+Pd',
-    '+Ag',
-    '+Cd',
-    '+In',
-    '+Sn',
-    '+Sb',
-    '+Te',
-    '+I',
-    '+Xe',
-    '+Cs',
-    '+Ba',
-    '+La',
-    '+Ce',
-    '+Pr',
-    '+Nd',
-    '+Sm',
-    '+Eu',
-    '+Gd',
-    '+Tb',
-    '+Dy',
-    '+Ho',
-    '+Ir',
-    '+Th',
-    '+Pt',
-    '+Os',
-    '+Yb',
-    '+Lu',
-    '+Bi',
-    '+Pb',
-    '+Re',
-    '+Tl',
-    '+Tm',
-    '+U',
-    '+W',
-    '+Au',
-    '+Er',
-    '+Hf',
-    '+Hg',
-    '+Ta',
-]
 N_FORMULAS_SEGMENTS = 256
 N_HASH_CHUNKS = 32  # should be less than N_FORMULAS_SEGMENTS
 
 
-def calculate_centroids(fexec, formula_cobjects, ds_config):
-    polarity = ds_config['polarity']
-    isocalc_sigma = ds_config['isocalc_sigma']
-
+def calculate_centroids(
+    fexec: FunctionExecutor, formula_cobjects: List[CloudObject], ds_config: DSConfig
+) -> List[CObj[pd.DataFrame]]:
     def calculate_peaks_for_formula(formula_i, formula):
         mzs, ints = isocalc_wrapper.centroids(formula)
         if mzs is not None:
@@ -112,7 +28,7 @@ def calculate_centroids(fexec, formula_cobjects, ds_config):
 
     def calculate_peaks_chunk(segm_i, segm_cobject, storage):
         print(f'Calculating peaks from formulas chunk {segm_i}')
-        chunk_df = deserialise(storage.get_cobject(segm_cobject, stream=True))
+        chunk_df = load_cobj(storage, segm_cobject)
         peaks = [
             peak
             for formula_i, formula in chunk_df.items()
@@ -122,24 +38,15 @@ def calculate_centroids(fexec, formula_cobjects, ds_config):
         peaks_df.set_index('formula_i', inplace=True)
 
         print(f'Storing centroids chunk {id}')
-        peaks_cobject = storage.put_cobject(serialise(peaks_df))
+        peaks_cobject = save_cobj(storage, peaks_df)
 
         return peaks_cobject, peaks_df.shape[0]
 
-    from sm.engine.serverless.isocalc_wrapper import (
+    from sm.engine.isocalc_wrapper import (
         IsocalcWrapper,
     )  # Import lazily so that the rest of the pipeline still works if the dependency is missing
 
-    isocalc_wrapper = IsocalcWrapper(
-        {
-            # These instrument settings are usually customized on a per-dataset basis out of a set of
-            # 18 possible combinations, but most of EMBL's datasets are compatible with the following settings:
-            'charge': {'polarity': polarity, 'n_charges': 1,},
-            'isocalc_sigma': float(
-                f"{isocalc_sigma:f}"
-            ),  # Rounding to match production implementation
-        }
-    )
+    isocalc_wrapper = IsocalcWrapper(ds_config)
 
     memory_capacity_mb = 2048
     futures = fexec.map(
@@ -155,60 +62,9 @@ def calculate_centroids(fexec, formula_cobjects, ds_config):
     return peaks_cobjects
 
 
-def upload_mol_dbs_from_dir(storage, databases_paths):
-    def _upload(path):
-        mol_sfs = sorted(set(pd.read_csv(path).sf))
-        return storage.put_cobject(serialise(mol_sfs))
-
-    with ThreadPoolExecutor() as pool:
-        mol_dbs_cobjects = list(pool.map(_upload, databases_paths))
-
-    return mol_dbs_cobjects
-
-
-def validate_formula_cobjects(storage, formula_cobjects):
-    segms = [deserialise(storage.get_cobject(co, stream=True)) for co in formula_cobjects]
-
-    formula_sets = []
-    index_sets = []
-    # Check format
-    for segm_i, segm in enumerate(segms):
-        if not isinstance(segm, pd.Series):
-            print(f'formula_cobjects[{segm_i}] is not a pd.Series')
-        else:
-            if segm.empty:
-                print(f'formula_cobjects[{segm_i}] is empty')
-            if segm.name != "ion_formula":
-                print(f'formula_cobjects[{segm_i}].name != "ion_formula"')
-            if not isinstance(segm.index, pd.RangeIndex):
-                print(f'formula_cobjects[{segm_i}] is not a pd.RangeIndex')
-            if segm.index.name != "formula_i":
-                print(f'formula_cobjects[{segm_i}].index.name != "formula_i"')
-            if (segm == '').any():
-                print(f'formula_cobjects[{segm_i}] contains an empty string')
-            if any(not isinstance(s, str) for s in segm):
-                print(f'formula_cobjects[{segm_i}] contains non-string values')
-            duplicates = segm[segm.duplicated()]
-            if not duplicates.empty:
-                print(f'formula_cobjects[{segm_i}] contains {len(duplicates)} duplicate values')
-
-            formula_sets.append(set(segm))
-            index_sets.append(set(segm.index))
-
-    if sum(len(fs) for fs in formula_sets) != len(set().union(*formula_sets)):
-        print(f'formula_cobjects contains values that are included in multiple segments')
-    if sum(len(idxs) for idxs in index_sets) != len(set().union(*index_sets)):
-        print(f'formula_cobjects contains formula_i values that are included in multiple segments')
-
-    n_formulas = sum(len(fs) for fs in formula_sets)
-    print(f'Found {n_formulas} formulas across {len(segms)} segms')
-
-    # __import__('__main__').db_segms = db_segms
-
-
-def validate_peaks_cobjects(fexec, peaks_cobjects):
+def validate_centroids(fexec: FunctionExecutor, peaks_cobjects: List[CloudObject]):
     def get_segm_stats(storage, segm_cobject):
-        segm = deserialise(storage.get_cobject(segm_cobject, stream=True))
+        segm = load_cobj(storage, segm_cobject)
         n_peaks = segm.groupby(level='formula_i').peak_i.count()
         formula_is = segm.index.unique()
         stats = pd.Series(
@@ -241,7 +97,7 @@ def validate_peaks_cobjects(fexec, peaks_cobjects):
     try:
         __import__('__main__').peaks_cobjects = stats_df
         logger.info('validate_peaks_cobjects debug info written to "peaks_cobjects" variable')
-    except:
+    except Exception:
         pass
 
     with pd.option_context(

@@ -155,8 +155,7 @@ class MSMSearch:
         self._ds_data_path = ds_data_path
 
     def _fetch_formula_centroids(self, ion_formula_map_df):
-        """ Generate/load centroids for all ions formulas
-        """
+        """Generate/load centroids for all ions formulas"""
         logger.info('Fetching formula centroids')
         isocalc = IsocalcWrapper(self._ds_config)
         centroids_gen = CentroidsGenerator(sc=self._spark_context, isocalc=isocalc)

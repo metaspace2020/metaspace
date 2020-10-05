@@ -3,17 +3,18 @@ from collections import OrderedDict
 
 from pyImagingMSpec.image_measures import isotope_image_correlation, isotope_pattern_match
 from cpyImagingMSpec import measure_of_chaos
-from pyImagingMSpec import smoothing
+
+from sm.engine.dataset import DSConfigImageGeneration
 
 METRICS = OrderedDict(
     [
-        ('chaos', 0),
-        ('spatial', 0),
-        ('spectral', 0),
-        ('msm', 0),
-        ('total_iso_ints', [0, 0, 0, 0]),
-        ('min_iso_ints', [0, 0, 0, 0]),
-        ('max_iso_ints', [0, 0, 0, 0]),
+        ('chaos', 0.0),
+        ('spatial', 0.0),
+        ('spectral', 0.0),
+        ('msm', 0.0),
+        ('total_iso_ints', [0.0, 0.0, 0.0, 0.0]),
+        ('min_iso_ints', [0.0, 0.0, 0.0, 0.0]),
+        ('max_iso_ints', [0.0, 0.0, 0.0, 0.0]),
     ]
 )
 
@@ -31,8 +32,10 @@ def replace_nan(v, default=0):
         return replace(v)
 
 
-def make_compute_image_metrics(sample_area_mask, nrows, ncols, img_gen_config):
-    """ Returns a function for computing formula images metrics
+def make_compute_image_metrics(
+    sample_area_mask: np.ndarray, nrows: int, ncols: int, img_gen_config: DSConfigImageGeneration
+):
+    """Returns a function for computing formula images metrics
 
     Args
     -----
@@ -60,17 +63,13 @@ def make_compute_image_metrics(sample_area_mask, nrows, ncols, img_gen_config):
             iso_imgs_flat = [img.flatten()[sample_area_mask_flat] for img in iso_imgs]
             iso_imgs_flat = iso_imgs_flat[: len(formula_ints)]
 
-            if img_gen_config.get('do_preprocessing', False):
-                for img in iso_imgs_flat:
-                    smoothing.hot_spot_removal(img)
-
             m['spectral'] = isotope_pattern_match(iso_imgs_flat, formula_ints)
             if m['spectral'] > 0:
 
                 m['spatial'] = isotope_image_correlation(iso_imgs_flat, weights=formula_ints[1:])
                 if m['spatial'] > 0:
 
-                    moc = measure_of_chaos(iso_imgs[0], img_gen_config.get('nlevels', 30))
+                    moc = measure_of_chaos(iso_imgs[0], img_gen_config.get('n_levels', 30))
                     m['chaos'] = 0 if np.isclose(moc, 1.0) else moc
                     if m['chaos'] > 0:
 
@@ -90,7 +89,7 @@ def complete_image_list(images):
 
 
 def formula_image_metrics(formula_images_it, compute_metrics, images_manager):
-    """ Compute isotope image metrics for each formula
+    """Compute isotope image metrics for each formula
 
     Args
     ---

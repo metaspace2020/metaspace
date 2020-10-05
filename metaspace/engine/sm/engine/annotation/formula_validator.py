@@ -37,7 +37,7 @@ def replace_nan(val, default=0):
 
 
 def make_compute_image_metrics(sample_area_mask, nrows, ncols, img_gen_config):
-    """ Returns a function for computing formula images metrics
+    """Returns a function for computing formula images metrics
 
     Args
     -----

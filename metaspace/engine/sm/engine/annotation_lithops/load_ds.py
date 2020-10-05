@@ -1,7 +1,11 @@
+from typing import Tuple, List
+
+import logging
+
 import os
+from lithops.storage import Storage
 from tempfile import TemporaryDirectory
-import requests
-from pyimzml.ImzMLParser import ImzMLParser
+from pyimzml.ImzMLParser import ImzMLParser, PortableSpectrumReader
 from concurrent.futures.process import ProcessPoolExecutor
 from concurrent.futures.thread import ThreadPoolExecutor
 from pathlib import Path
@@ -9,36 +13,45 @@ import numpy as np
 from time import time
 import pandas as pd
 
-from sm.engine.serverless.utils import logger, serialise_to_file, deserialise_from_file, serialise
+from sm.engine.annotation_lithops.annotate import read_ds_segment
+from sm.engine.annotation_lithops.utils import logger
+from sm.engine.annotation_lithops.io import (
+    serialise_to_file,
+    deserialise_from_file,
+    save_cobj,
+    CObj,
+)
 
 
-def download_dataset(imzml_url, ibd_url, local_path, storage):
-    def _download(url, path):
-        if url.startswith('cos://'):
-            bucket, key = url[len('cos://') :].split('/', maxsplit=1)
-            storage.get_client().download_file(bucket, key, str(path))
-        else:
-            with requests.get(url, stream=True) as r:
-                r.raise_for_status()
-                with path.open('wb') as f:
-                    for chunk in r.iter_content():
-                        f.write(chunk)
+def download_dataset(input_path, local_path, storage):
+    # Find imzml/ibd object in storage
+    bucket, input_prefix = input_path[len('cos://') :].split('/', maxsplit=1)
+    keys = storage.list_keys(bucket, input_prefix)
+    imzml_keys = [key for key in keys if key.lower().endswith('.imzml')]
+    ibd_keys = [key for key in keys if key.lower().endswith('.ibd')]
+    assert len(imzml_keys) == 1, imzml_keys
+    assert len(ibd_keys) == 1, ibd_keys
 
+    # Decide destination paths
     Path(local_path).mkdir(exist_ok=True)
     imzml_path = local_path / 'ds.imzML'
     ibd_path = local_path / 'ds.ibd'
 
-    # with ThreadPoolExecutor() as ex:
-    #     ex.map(_download, [imzml_url, ibd_url], [imzml_path, ibd_path])
-    logger.info("Download dataset {} - {} ".format(imzml_url, imzml_path))
-    _download(imzml_url, imzml_path)
-    logger.info("Download dataset {} - {} ".format(ibd_url, ibd_path))
-    _download(ibd_url, ibd_path)
+    # Download both files
+    def _download(key, path):
+        storage.get_client().download_file(bucket, key, str(path))
 
+    logger.info("Download dataset {} - {} ".format(imzml_keys[0], imzml_path))
+    _download(imzml_keys[0], imzml_path)
+    logger.info("Download dataset {} - {} ".format(ibd_keys[0], ibd_path))
+    _download(ibd_keys[0], ibd_path)
+
+    # Log stats
     imzml_size = imzml_path.stat().st_size / (1024 ** 2)
     ibd_size = ibd_path.stat().st_size / (1024 ** 2)
     logger.debug(f'imzML size: {imzml_size:.2f} mb')
     logger.debug(f'ibd size: {ibd_size:.2f} mb')
+
     return imzml_path, ibd_path
 
 
@@ -151,9 +164,13 @@ def upload_segments(storage, ds_segments_path, chunks_n, segments_n):
         )
         segm.sort_values('mz', inplace=True)
         segm.reset_index(drop=True, inplace=True)
-        segm = serialise(segm)
-        logger.debug(f'Uploading segment {segm_i}: {segm.getbuffer().nbytes} bytes')
-        return storage.put_cobject(segm)
+        cobj = save_cobj(storage, segm)
+
+        if logger.isEnabledFor(logging.DEBUG):
+            nbytes = storage.head_object(cobj.bucket, cobj.key)['Content-Length']
+            logger.debug(f'Uploaded segment {segm_i}: {nbytes} bytes')
+
+        return cobj
 
     with ThreadPoolExecutor(os.cpu_count()) as pool:
         ds_segms_cobjects = list(pool.map(_upload, range(segments_n)))
@@ -196,7 +213,15 @@ def make_segments(imzml_reader, ibd_path, ds_segments_bounds, segments_dir, sort
     return chunks_n, ds_segms_len
 
 
-def load_and_split_ds_vm(storage, ds_config, ds_segm_size_mb, sort_memory):
+def load_ds(
+    storage: Storage, input_path: str, ds_segm_size_mb: int, sort_memory: int
+) -> Tuple[
+    PortableSpectrumReader,
+    np.ndarray,
+    List[CObj[pd.DataFrame]],
+    np.ndarray,
+    List[Tuple[str, float]],
+]:
     stats = []
 
     with TemporaryDirectory() as tmp_dir:
@@ -210,9 +235,7 @@ def load_and_split_ds_vm(storage, ds_config, ds_segm_size_mb, sort_memory):
 
         logger.info('Downloading dataset...')
         t = time()
-        imzml_path, ibd_path = download_dataset(
-            ds_config['imzml_path'], ds_config['ibd_path'], imzml_dir, storage
-        )
+        imzml_path, ibd_path = download_dataset(input_path, imzml_dir, storage)
         stats.append(('download_dataset', time() - t))
 
         logger.info('Loading parser...')
@@ -240,3 +263,61 @@ def load_and_split_ds_vm(storage, ds_config, ds_segm_size_mb, sort_memory):
         stats.append(('upload_segments', time() - t))
 
         return imzml_reader, ds_segments_bounds, ds_segms_cobjects, ds_segms_len, stats
+
+
+def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobjects, ds_segms_len):
+    def get_segm_stats(cobject, storage):
+        segm = read_ds_segment(cobject, storage)
+        assert (
+            segm.columns == ['mz', 'int', 'sp_i']
+        ).all(), f'Wrong ds_segm columns: {segm.columns}'
+        assert isinstance(
+            segm.index, pd.RangeIndex
+        ), f'ds_segm does not have a RangeIndex {segm.index}'
+
+        assert segm.dtypes[1] == np.float32, 'ds_segm.int should be float32'
+        assert segm.dtypes[2] == np.uint32, 'ds_segm.sp_i should be uint32'
+
+        return pd.Series(
+            {
+                'n_rows': len(segm),
+                'min_mz': segm.mz.min(),
+                'max_mz': segm.mz.max(),
+                'is_sorted': segm.mz.is_monotonic,
+            }
+        )
+
+    futures = fexec.map(get_segm_stats, ds_segms_cobjects)
+    results = fexec.get_result(futures)
+
+    segms_df = pd.DataFrame(results)
+    segms_df['min_bound'] = np.concatenate([[0], ds_segments_bounds[1:, 0]])
+    segms_df['max_bound'] = np.concatenate([ds_segments_bounds[:-1, 1], [100000]])
+    segms_df['expected_len'] = ds_segms_len
+
+    with pd.option_context(
+        'display.max_rows', None, 'display.max_columns', None, 'display.width', 1000
+    ):
+        out_of_bounds = segms_df[
+            (segms_df.min_mz < segms_df.min_bound) | (segms_df.max_mz > segms_df.max_bound)
+        ]
+        if not out_of_bounds.empty:
+            logger.warning('segment_spectra mz values are outside ds_segments_bounds:')
+            logger.warning(out_of_bounds)
+
+        bad_len = segms_df[segms_df.n_rows != segms_df.expected_len]
+        if not bad_len.empty:
+            logger.warning('segment_spectra lengths don\'t match ds_segms_len:')
+            logger.warning(bad_len)
+
+        unsorted = segms_df[~segms_df.is_sorted]
+        if not unsorted.empty:
+            logger.warning('segment_spectra produced unsorted segments:')
+            logger.warning(unsorted)
+
+        total_len = segms_df.n_rows.sum()
+        expected_total_len = np.sum(imzml_reader.mzLengths)
+        if total_len != expected_total_len:
+            logger.warning(
+                f'segment_spectra output {total_len} peaks, but the imzml file contained {expected_total_len}'
+            )

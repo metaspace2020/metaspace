@@ -1,3 +1,5 @@
+from typing import TypedDict, List
+
 import json
 import logging
 from datetime import datetime
@@ -233,6 +235,34 @@ def _get_isotope_generation_from_metadata(metadata, analysis_version):
     return default_adducts, charge, isocalc_sigma, instrument
 
 
+class DSConfigIsotopeGeneration(TypedDict):
+    adducts: List[str]
+    charge: int
+    isocalc_sigma: float
+    instrument: str
+    n_peaks: int
+    neutral_losses: List[str]
+    chem_mods: List[str]
+
+
+class DSConfigFDR(TypedDict):
+    decoy_sample_size: int
+
+
+class DSConfigImageGeneration(TypedDict):
+    ppm: int
+    n_levels: int
+    min_px: int
+
+
+class DSConfig(TypedDict):
+    database_ids: List[int]
+    analysis_version: int
+    isotope_generation: DSConfigIsotopeGeneration
+    fdr: DSConfigFDR
+    image_generation: DSConfigImageGeneration
+
+
 def generate_ds_config(
     metadata,
     analysis_version=None,
@@ -244,7 +274,7 @@ def generate_ds_config(
     decoy_sample_size=None,
     neutral_losses=None,
     chem_mods=None,
-):
+) -> DSConfig:
     # The kwarg names should match FLAT_DS_CONFIG_KEYS
 
     analysis_version = analysis_version or 1

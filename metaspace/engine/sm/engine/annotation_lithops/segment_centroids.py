@@ -1,21 +1,23 @@
 from collections import defaultdict
+
+from lithops.storage.utils import CloudObject
+from typing import List, Tuple
+
 import numpy as np
 import pandas as pd
-import sys
 import math
+from lithops import FunctionExecutor
 
-import requests
-from pyimzml.ImzMLParser import ImzMLParser
-
-from sm.engine.serverless.image import choose_ds_segments, read_ds_segment
-from sm.engine.serverless.utils import (
+from sm.engine.annotation_lithops.annotate import choose_ds_segments
+from sm.engine.annotation_lithops.utils import (
     logger,
-    get_pixel_indices,
     PipelineStats,
-    serialise,
-    deserialise,
-    read_cloud_object_with_retry,
+)
+from sm.engine.annotation_lithops.io import (
     read_ranges_from_url,
+    save_cobj,
+    load_cobj,
+    CObj,
 )
 from concurrent.futures import ThreadPoolExecutor
 
@@ -49,12 +51,12 @@ def get_spectra(storage, ibd_url, imzml_reader, sp_inds):
         yield sp_idx, mzs, ints
 
 
-def clip_centr_df(fexec, peaks_cobjects, mz_min, mz_max):
+def clip_centr_df(
+    fexec: FunctionExecutor, peaks_cobjects: List[CloudObject], mz_min: float, mz_max: float
+) -> Tuple[List[CObj[pd.DataFrame]], int]:
     def clip_centr_df_chunk(peaks_i, peaks_cobject, storage):
         print(f'Clipping centroids dataframe chunk {peaks_i}')
-        centroids_df_chunk = deserialise(
-            storage.get_cobject(peaks_cobject, stream=True)
-        ).sort_values('mz')
+        centroids_df_chunk = load_cobj(storage, peaks_cobject).sort_values('mz')
         centroids_df_chunk = centroids_df_chunk[centroids_df_chunk.mz > 0]
 
         ds_mz_range_unique_formulas = centroids_df_chunk[
@@ -63,7 +65,7 @@ def clip_centr_df(fexec, peaks_cobjects, mz_min, mz_max):
         centr_df_chunk = centroids_df_chunk[
             centroids_df_chunk.index.isin(ds_mz_range_unique_formulas)
         ].reset_index()
-        clip_centr_chunk_cobject = storage.put_cobject(serialise(centr_df_chunk))
+        clip_centr_chunk_cobject = save_cobj(storage, centr_df_chunk)
 
         return clip_centr_chunk_cobject, centr_df_chunk.shape[0]
 
@@ -71,7 +73,7 @@ def clip_centr_df(fexec, peaks_cobjects, mz_min, mz_max):
     futures = fexec.map(
         clip_centr_df_chunk, list(enumerate(peaks_cobjects)), runtime_memory=memory_capacity_mb
     )
-    clip_centr_chunks_cobjects, centr_n = list(zip(*fexec.get_result(futures)))
+    clip_centr_chunks_cobjects, centr_n = zip(*fexec.get_result(futures))
     PipelineStats.append_pywren(futures, memory_mb=memory_capacity_mb, cloud_objects_n=len(futures))
 
     clip_centr_chunks_cobjects = list(clip_centr_chunks_cobjects)
@@ -80,12 +82,17 @@ def clip_centr_df(fexec, peaks_cobjects, mz_min, mz_max):
     return clip_centr_chunks_cobjects, centr_n
 
 
-def define_centr_segments(fexec, clip_centr_chunks_cobjects, centr_n, ds_segm_n, ds_segm_size_mb):
+def define_centr_segments(
+    fexec: FunctionExecutor,
+    clip_centr_chunks_cobjects: List[CloudObject],
+    centr_n: int,
+    ds_size_mb: int,
+):
     logger.info('Defining centroids segments bounds')
 
     def get_first_peak_mz(cobject, id, storage):
         print(f'Extracting first peak mz values from clipped centroids dataframe {id}')
-        centr_df = read_cloud_object_with_retry(storage, cobject, deserialise)
+        centr_df = load_cobj(storage, cobject)
         first_peak_df = centr_df[centr_df.peak_i == 0]
         return first_peak_df.mz.values
 
@@ -96,9 +103,8 @@ def define_centr_segments(fexec, clip_centr_chunks_cobjects, centr_n, ds_segm_n,
     first_peak_df_mz = np.concatenate(fexec.get_result(futures))
     PipelineStats.append_pywren(futures, memory_mb=memory_capacity_mb)
 
-    ds_size_mb = ds_segm_n * ds_segm_size_mb
     data_per_centr_segm_mb = 50
-    peaks_per_centr_segm = 1e4
+    peaks_per_centr_segm = 10000
     centr_segm_n = int(
         max(ds_size_mb // data_per_centr_segm_mb, centr_n // peaks_per_centr_segm, 32)
     )
@@ -113,14 +119,14 @@ def define_centr_segments(fexec, clip_centr_chunks_cobjects, centr_n, ds_segm_n,
 
 
 def segment_centroids(
-    fexec,
-    clip_centr_chunks_cobjects,
-    centr_segm_lower_bounds,
-    ds_segms_bounds,
-    ds_segm_size_mb,
-    max_ds_segms_size_per_db_segm_mb,
-    ppm,
-):
+    fexec: FunctionExecutor,
+    clip_centr_chunks_cobjects: List[CObj[pd.DataFrame]],
+    centr_segm_lower_bounds: np.ndarray,
+    ds_segms_bounds: np.ndarray,
+    ds_segm_size_mb: float,
+    max_ds_segms_size_per_db_segm_mb: float,
+    ppm: float,
+) -> List[CObj[pd.DataFrame]]:
     centr_segm_n = len(centr_segm_lower_bounds)
 
     # define first level segmentation and then segment each one into desired number
@@ -141,13 +147,13 @@ def segment_centroids(
 
     def segment_centr_chunk(cobject, id, storage):
         print(f'Segmenting clipped centroids dataframe chunk {id}')
-        centr_df = read_cloud_object_with_retry(storage, cobject, deserialise)
+        centr_df = load_cobj(storage, cobject)
         centr_segm_df = segment_centr_df(centr_df, first_level_centr_segm_bounds)
 
         def _first_level_upload(args):
             segm_i, df = args
             del df['segm_i']
-            return segm_i, storage.put_cobject(serialise(df))
+            return segm_i, save_cobj(storage, df)
 
         with ThreadPoolExecutor(max_workers=128) as pool:
             sub_segms = [(segm_i, df) for segm_i, df in centr_segm_df.groupby('segm_i')]
@@ -169,12 +175,11 @@ def segment_centroids(
     def merge_centr_df_segments(segm_cobjects, id, storage):
         print(f'Merging segment {id} clipped centroids chunks')
 
-        def _merge(cobject):
-            segm_centr_df_chunk = read_cloud_object_with_retry(storage, cobject, deserialise)
-            return segm_centr_df_chunk
+        def _load(cobject):
+            return load_cobj(storage, cobject)
 
         with ThreadPoolExecutor(max_workers=128) as pool:
-            segm = pd.concat(list(pool.map(_merge, segm_cobjects)))
+            segm = pd.concat(list(pool.map(_load, segm_cobjects)))
 
         def _second_level_segment(segm, sub_segms_n):
             segm_bounds_q = [i * 1 / sub_segms_n for i in range(0, sub_segms_n)]
@@ -219,7 +224,7 @@ def segment_centroids(
             max_ds_segms_to_download_n, max_segm = segms[0]
 
         def _second_level_upload(df):
-            return storage.put_cobject(serialise(df))
+            return save_cobj(storage, df)
 
         print(f'Storing {len(segms)} centroids segments')
         with ThreadPoolExecutor(max_workers=128) as pool:
@@ -246,7 +251,7 @@ def segment_centroids(
     second_futures = fexec.map(
         merge_centr_df_segments, second_level_segms_cobjects, runtime_memory=memory_capacity_mb
     )
-    db_segms_cobjects = list(np.concatenate(fexec.get_result(second_futures)))
+    db_segms_cobjects = [cobj for cobjs in fexec.get_result(second_futures) for cobj in cobjs]
     PipelineStats.append_pywren(
         second_futures, memory_mb=memory_capacity_mb, cloud_objects_n=centr_segm_n
     )
@@ -261,7 +266,7 @@ def segment_centroids(
 
 def validate_centroid_segments(fexec, db_segms_cobjects, ds_segms_bounds, ppm):
     def get_segm_stats(storage, segm_cobject):
-        segm = deserialise(storage.get_cobject(segm_cobject, stream=True))
+        segm = load_cobj(storage, segm_cobject)
         mzs = np.sort(segm.mz.values)
         ds_segm_lo, ds_segm_hi = choose_ds_segments(ds_segms_bounds, segm, ppm)
         n_peaks = segm.groupby('formula_i').peak_i.count()
@@ -296,7 +301,7 @@ def validate_centroid_segments(fexec, db_segms_cobjects, ds_segms_bounds, ppm):
     try:
         __import__('__main__').debug_segms_df = stats_df
         logger.info('segment_centroids debug info written to "debug_segms_df" variable')
-    except:
+    except Exception:
         pass
 
     with pd.option_context(
@@ -350,61 +355,3 @@ def validate_centroid_segments(fexec, db_segms_cobjects, ds_segms_bounds, ppm):
     if not formulas_in_multiple_segms_df.empty:
         logger.warning('segment_centroids produced put the same formula in multiple segments:')
         logger.warning(formulas_in_multiple_segms_df)
-
-
-def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobjects, ds_segms_len):
-    def get_segm_stats(cobject, storage):
-        segm = read_ds_segment(cobject, storage)
-        assert (
-            segm.columns == ['mz', 'int', 'sp_i']
-        ).all(), f'Wrong ds_segm columns: {segm.columns}'
-        assert isinstance(
-            segm.index, pd.RangeIndex
-        ), f'ds_segm does not have a RangeIndex {segm.index}'
-
-        assert segm.dtypes[1] == np.float32, 'ds_segm.int should be float32'
-        assert segm.dtypes[2] == np.uint32, 'ds_segm.sp_i should be uint32'
-
-        return pd.Series(
-            {
-                'n_rows': len(segm),
-                'min_mz': segm.mz.min(),
-                'max_mz': segm.mz.max(),
-                'is_sorted': segm.mz.is_monotonic,
-            }
-        )
-
-    futures = fexec.map(get_segm_stats, ds_segms_cobjects)
-    results = fexec.get_result(futures)
-
-    segms_df = pd.DataFrame(results)
-    segms_df['min_bound'] = np.concatenate([[0], ds_segments_bounds[1:, 0]])
-    segms_df['max_bound'] = np.concatenate([ds_segments_bounds[:-1, 1], [100000]])
-    segms_df['expected_len'] = ds_segms_len
-
-    with pd.option_context(
-        'display.max_rows', None, 'display.max_columns', None, 'display.width', 1000
-    ):
-        out_of_bounds = segms_df[
-            (segms_df.min_mz < segms_df.min_bound) | (segms_df.max_mz > segms_df.max_bound)
-        ]
-        if not out_of_bounds.empty:
-            logger.warning('segment_spectra mz values are outside ds_segments_bounds:')
-            logger.warning(out_of_bounds)
-
-        bad_len = segms_df[segms_df.n_rows != segms_df.expected_len]
-        if not bad_len.empty:
-            logger.warning('segment_spectra lengths don\'t match ds_segms_len:')
-            logger.warning(bad_len)
-
-        unsorted = segms_df[~segms_df.is_sorted]
-        if not unsorted.empty:
-            logger.warning('segment_spectra produced unsorted segments:')
-            logger.warning(unsorted)
-
-        total_len = segms_df.n_rows.sum()
-        expected_total_len = np.sum(imzml_reader.mzLengths)
-        if total_len != expected_total_len:
-            logger.warning(
-                f'segment_spectra output {total_len} peaks, but the imzml file contained {expected_total_len}'
-            )

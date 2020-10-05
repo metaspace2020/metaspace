@@ -108,7 +108,7 @@ class AnnotationJob:
                     )
                     img_store_type = self._ds.get_ion_img_storage_type(self._db)
                     sample_area_mask = make_sample_area_mask(imzml_parser.coordinates)
-                    search_results.store(
+                    search_results.store_spark(
                         moldb_ion_metrics_df,
                         moldb_ion_images_rdd,
                         sample_area_mask,

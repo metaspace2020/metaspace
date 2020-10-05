@@ -1,14 +1,15 @@
+from lithops.storage import Storage
+from typing import List, Tuple
+
 import os
 import numpy as np
 import pandas as pd
 from time import time
 from concurrent.futures.thread import ThreadPoolExecutor
 
-from sm.engine.serverless.utils import (
-    logger,
-    deserialise,
-    read_cloud_object_with_retry,
-)
+from sm.engine.annotation_lithops.build_moldb import DbDataTuple
+from sm.engine.annotation_lithops.utils import logger
+from sm.engine.annotation_lithops.io import load_cobj, CObj
 
 
 def _get_random_adduct_set(size, adducts, offset):
@@ -17,15 +18,15 @@ def _get_random_adduct_set(size, adducts, offset):
     return np.array(adducts)[idxs]
 
 
-def calculate_fdrs_vm(storage, formula_scores_df, db_data_cobjects):
+def run_fdr(
+    storage: Storage, formula_scores_df: pd.DataFrame, db_data_cobjects: List[CObj[DbDataTuple]]
+) -> Tuple[pd.DataFrame, float]:
     t = time()
 
     msms_df = formula_scores_df[['msm']]
 
-    def run_fdr(db_data_cobject):
-        db, fdr, formula_map_df = read_cloud_object_with_retry(
-            storage, db_data_cobject, deserialise
-        )
+    def _run_fdr_for_db(db_data_cobject: CObj[DbDataTuple]):
+        db, fdr, formula_map_df = load_cobj(storage, db_data_cobject)
 
         formula_msm = formula_map_df.merge(
             msms_df, how='inner', left_on='formula_i', right_index=True
@@ -45,7 +46,7 @@ def calculate_fdrs_vm(storage, formula_scores_df, db_data_cobjects):
 
     logger.info('Estimating FDRs...')
     with ThreadPoolExecutor(os.cpu_count()) as pool:
-        results_dfs = list(pool.map(run_fdr, db_data_cobjects))
+        results_dfs = list(pool.map(_run_fdr_for_db, db_data_cobjects))
 
     exec_time = time() - t
     return pd.concat(results_dfs), exec_time

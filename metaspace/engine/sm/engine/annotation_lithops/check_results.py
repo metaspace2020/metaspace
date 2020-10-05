@@ -1,18 +1,12 @@
 import numpy as np
 
-from sm.engine.serverless.utils import logger
+from sm.engine.annotation_lithops.utils import logger
 
 
-def get_reference_results(metaspace_options, ds_id):
+def get_reference_results(ds_id):
     from metaspace.sm_annotation_utils import SMInstance
 
-    if metaspace_options.get('host'):
-        sm = SMInstance(host=metaspace_options['host'])
-    else:
-        sm = SMInstance()
-    if metaspace_options.get('password'):
-        sm.login(metaspace_options['email'], metaspace_options['password'])
-
+    sm = SMInstance()
     ds = sm.dataset(id=ds_id)
     reference_results = (
         ds.results('HMDB-v4')

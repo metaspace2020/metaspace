@@ -1,41 +1,49 @@
+from lithops import FunctionExecutor
+from lithops.storage import Storage
+from pyimzml.ImzMLParser import PortableSpectrumReader
+from typing import List, Dict, Tuple
+
 import numpy as np
 import pandas as pd
 from scipy.sparse import coo_matrix
 from concurrent.futures import ThreadPoolExecutor
 
-from sm.engine.serverless.utils import (
+from sm.engine.dataset import DSConfigImageGeneration
+from sm.engine.annotation_lithops.utils import (
     ds_dims,
     get_pixel_indices,
-    serialise,
-    deserialise,
-    read_cloud_object_with_retry,
+    PipelineStats,
+    logger,
 )
-from sm.engine.serverless.validate import make_compute_image_metrics, formula_image_metrics
+from sm.engine.annotation_lithops.io import save_cobj, load_cobj, CObj
+from sm.engine.annotation_lithops.validate import make_compute_image_metrics, formula_image_metrics
 
 ISOTOPIC_PEAK_N = 4
+
+ImageDict = Dict[int, List[coo_matrix]]
 
 
 class ImagesManager:
     min_memory_allowed = 64 * 1024 ** 2  # 64MB
 
-    def __init__(self, storage, max_formula_images_size):
+    def __init__(self, storage: Storage, max_formula_images_size: int):
         if max_formula_images_size < self.__class__.min_memory_allowed:
             raise Exception(
                 f'There isn\'t enough memory to generate images, consider increasing Lithops\'s memory.'
             )
 
-        self.formula_metrics = {}
-        self.formula_images = {}
-        self.cloud_objs = []
+        self._formula_metrics: Dict[int, Dict] = {}
+        self._formula_images: ImageDict = {}
+        self._cloud_objs = []
 
         self._formula_images_size = 0
         self._max_formula_images_size = max_formula_images_size
         self._storage = storage
         self._partition = 0
 
-    def __call__(self, f_i, f_metrics, f_images):
-        self.add_f_metrics(f_i, f_metrics)
-        self.add_f_images(f_i, f_images)
+    def __call__(self, f_i: int, f_metrics: Dict, f_images: List[coo_matrix]):
+        self._add_f_metrics(f_i, f_metrics)
+        self._add_f_images(f_i, f_images)
 
     @staticmethod
     def images_size(f_images):
@@ -43,31 +51,33 @@ class ImagesManager:
             img.data.nbytes + img.row.nbytes + img.col.nbytes for img in f_images if img is not None
         )
 
-    def add_f_images(self, f_i, f_images):
-        self.formula_images[f_i] = f_images
+    def _add_f_images(self, f_i: int, f_images: List[coo_matrix]):
+        self._formula_images[f_i] = f_images
         self._formula_images_size += ImagesManager.images_size(f_images)
         if self._formula_images_size > self._max_formula_images_size:
-            self.save_images()
-            self.formula_images.clear()
+            self._save_images()
+            self._formula_images.clear()
             self._formula_images_size = 0
 
-    def add_f_metrics(self, f_i, f_metrics):
-        self.formula_metrics[f_i] = f_metrics
+    def _add_f_metrics(self, f_i: int, f_metrics: Dict):
+        self._formula_metrics[f_i] = f_metrics
 
-    def save_images(self):
-        if self.formula_images:
-            print(f'Saving {len(self.formula_images)} images')
-            cloud_obj = self._storage.put_cobject(serialise(self.formula_images))
-            self.cloud_objs.append(cloud_obj)
+    def _save_images(self):
+        if self._formula_images:
+            print(f'Saving {len(self._formula_images)} images')
+            cloud_obj = save_cobj(self._storage, self._formula_images)
+            self._cloud_objs.append(cloud_obj)
             self._partition += 1
         else:
             print(f'No images to save')
 
-    def finish(self):
-        self.save_images()
-        self.formula_images.clear()
+    def finish(self) -> Tuple[pd.DataFrame, List[CObj[ImageDict]]]:
+        self._save_images()
+        self._formula_images.clear()
         self._formula_images_size = 0
-        return self.cloud_objs
+        formula_metrics_df = pd.DataFrame.from_dict(self._formula_metrics, orient='index')
+        formula_metrics_df.index.name = 'formula_i'
+        return formula_metrics_df, self._cloud_objs
 
 
 def gen_iso_images(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, ppm=3, min_px=1):
@@ -118,7 +128,7 @@ def gen_iso_images(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, ppm=3, min_
 
 
 def read_ds_segment(cobject, storage):
-    data = read_cloud_object_with_retry(storage, cobject, deserialise)
+    data = load_cobj(storage, cobject)
 
     if isinstance(data, list):
         if isinstance(data[0], np.ndarray):
@@ -194,25 +204,30 @@ def choose_ds_segments(ds_segments_bounds, centr_df, ppm):
     return first_ds_segm_i, last_ds_segm_i
 
 
-def create_process_segment(
-    ds_segms_cobjects,
+def process_centr_segments(
+    fexec: FunctionExecutor,
+    ds_segms_cobjects: List[CObj[pd.DataFrame]],
     ds_segments_bounds,
-    ds_segms_len,
-    imzml_reader,
-    image_gen_config,
-    pw_mem_mb,
-    ds_segm_size_mb,
+    ds_segms_len: np.ndarray,
+    db_segms_cobjects: List[CObj[pd.DataFrame]],
+    imzml_reader: PortableSpectrumReader,
+    image_gen_config: DSConfigImageGeneration,
+    ds_segm_size_mb: float,
+    is_intensive_dataset: bool,
 ):
     ds_segm_dtype = imzml_reader.mzPrecision
     sample_area_mask = make_sample_area_mask(imzml_reader.coordinates)
     nrows, ncols = ds_dims(imzml_reader.coordinates)
     compute_metrics = make_compute_image_metrics(sample_area_mask, nrows, ncols, image_gen_config)
     ppm = image_gen_config['ppm']
+    pw_mem_mb = 2048 if is_intensive_dataset else 1024
 
-    def process_centr_segment(db_segm_cobject, id, storage):
-        print(f'Reading centroids segment {id}')
+    def process_centr_segment(
+        db_segm_cobject: CObj[pd.DataFrame], segm_id: int, storage: Storage
+    ) -> Tuple[pd.DataFrame, List[CObj[ImageDict]]]:
+        print(f'Reading centroids segment {segm_id}')
         # read database relevant part
-        centr_df = read_cloud_object_with_retry(storage, db_segm_cobject, deserialise)
+        centr_df = load_cobj(storage, db_segm_cobject)
 
         # find range of datasets
         first_ds_segm_i, last_ds_segm_i = choose_ds_segments(ds_segments_bounds, centr_df, ppm)
@@ -244,11 +259,18 @@ def create_process_segment(
         print(f'Max formula_images size: {max_formula_images_mb} mb')
         images_manager = ImagesManager(storage, max_formula_images_mb * 1024 ** 2)
         formula_image_metrics(formula_images_it, compute_metrics, images_manager)
-        images_cloud_objs = images_manager.finish()
+        formula_metrics_df, images_cloud_objs = images_manager.finish()
 
-        print(f'Centroids segment {id} finished')
-        formula_metrics_df = pd.DataFrame.from_dict(images_manager.formula_metrics, orient='index')
-        formula_metrics_df.index.name = 'formula_i'
+        print(f'Centroids segment {segm_id} finished')
         return formula_metrics_df, images_cloud_objs
 
-    return process_centr_segment
+    logger.info('Annotating...')
+    futures = fexec.map(process_centr_segment, db_segms_cobjects, runtime_memory=pw_mem_mb)
+    formula_metrics_list, images_cloud_objs = zip(*fexec.get_result(futures))
+    formula_metrics_df = pd.concat(formula_metrics_list)
+    images_cloud_objs = [cobj for cobjs in images_cloud_objs for cobj in cobjs]
+    PipelineStats.append_pywren(
+        futures, memory_mb=pw_mem_mb, cloud_objects_n=len(images_cloud_objs)
+    )
+
+    return formula_metrics_df, images_cloud_objs
