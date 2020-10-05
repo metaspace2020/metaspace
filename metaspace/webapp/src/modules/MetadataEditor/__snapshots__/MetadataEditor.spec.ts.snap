@@ -674,17 +674,15 @@ exports[`MetadataEditor should match snapshot 1`] = `
                     <!---->
                     <!---->
                   </div></label></div>
-              <div class="el-form-item my-3">
-                <!---->
-                <div class="el-form-item__content"><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-      Allow other users to see this project
-    <!----></span></label>
-                  <transition-stub name="el-zoom-in-top">
-                    <!---->
-                  </transition-stub>
-                </div>
-              </div>
             </form>
+            <div class="flex my-3 items-center justify-center">
+              <mock-lock-icon class="sm-colour-icon mx-3"></mock-lock-icon>
+              <p class="ml-3 leading-5"><strong class="block">Projects are now private by default.</strong> <span>
+          Visibility can be changed in project settings,
+          <br>
+          or by using the <em>Publishing</em> workflow.
+        </span></p>
+            </div>
             <div>
               <h4 class="m-0">
                 Would you like to include previously submitted datasets?

@@ -788,7 +788,7 @@ exports[`ViewProjectPage settings tab should disable actions when published 1`] 
             <div class="mt-6 mb-12">
               <form action="#" class="sm-form">
                 <h2>Project Details</h2>
-                <form class="el-form mt-3 el-form--label-top">
+                <form class="el-form mt-3 el-form--label-top" is-published="true">
                   <div><label class="leading-6"><span class="font-medium">Title</span>
                       <div class="py-1 el-input">
                         <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
@@ -797,17 +797,10 @@ exports[`ViewProjectPage settings tab should disable actions when published 1`] 
                         <!---->
                         <!---->
                       </div></label></div>
-                  <div class="el-form-item my-3">
-                    <!---->
-                    <div class="el-form-item__content"><label class="el-checkbox is-disabled"><span class="el-checkbox__input is-disabled"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" disabled="disabled" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-      Published projects must be visible
-    <!----></span></label>
-                      <transition-stub name="el-zoom-in-top">
-                        <!---->
-                      </transition-stub>
-                    </div>
-                  </div>
                 </form>
+                <div class="my-3"><label class="el-checkbox is-disabled"><span class="el-checkbox__input is-disabled"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" disabled="disabled" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
+          Published projects must be visible
+        <!----></span></label></div>
                 <div><label for="project-settings-short-link"><span class="text-base font-medium">Short link</span><span class="block text-sm text-gray-800">Must be unique, min. 4 characters, using a–z, 0–9, hyphen or underscore</span></label>
                   <div class="el-input is-disabled el-input-group el-input-group--prepend">
                     <div class="el-input-group__prepend"><span>http://localhost/project/</span></div><input type="text" disabled="disabled" autocomplete="off" id="project-settings-short-link" maxlength="50" minlength="4" pattern="[a-zA-Z0-9_-]+" title="min. 4 characters, a–z, 0–9, hyphen or underscore" class="el-input__inner">
@@ -898,17 +891,10 @@ exports[`ViewProjectPage settings tab should disable actions when under review 1
                         <!---->
                         <!---->
                       </div></label></div>
-                  <div class="el-form-item my-3">
-                    <!---->
-                    <div class="el-form-item__content"><label class="el-checkbox"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-      Allow other users to see this project
-    <!----></span></label>
-                      <transition-stub name="el-zoom-in-top">
-                        <!---->
-                      </transition-stub>
-                    </div>
-                  </div>
                 </form>
+                <div class="my-3"><label class="el-checkbox"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
+          Allow other users to see this project
+        <!----></span></label></div>
                 <div><label for="project-settings-short-link"><span class="text-base font-medium">Short link</span><span class="block text-sm text-gray-800">Must be unique, min. 4 characters, using a–z, 0–9, hyphen or underscore</span></label>
                   <div class="el-input el-input-group el-input-group--prepend">
                     <div class="el-input-group__prepend"><span>http://localhost/project/</span></div><input type="text" autocomplete="off" id="project-settings-short-link" maxlength="50" minlength="4" pattern="[a-zA-Z0-9_-]+" title="min. 4 characters, a–z, 0–9, hyphen or underscore" class="el-input__inner">
@@ -994,17 +980,10 @@ exports[`ViewProjectPage settings tab should match snapshot 1`] = `
                         <!---->
                         <!---->
                       </div></label></div>
-                  <div class="el-form-item my-3">
-                    <!---->
-                    <div class="el-form-item__content"><label class="el-checkbox"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-      Allow other users to see this project
-    <!----></span></label>
-                      <transition-stub name="el-zoom-in-top">
-                        <!---->
-                      </transition-stub>
-                    </div>
-                  </div>
                 </form>
+                <div class="my-3"><label class="el-checkbox"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
+          Allow other users to see this project
+        <!----></span></label></div>
                 <div><label for="project-settings-short-link"><span class="text-base font-medium">Short link</span><span class="block text-sm text-gray-800">Must be unique, min. 4 characters, using a–z, 0–9, hyphen or underscore</span></label>
                   <div class="el-input el-input-group el-input-group--prepend">
                     <div class="el-input-group__prepend"><span>http://localhost/project/</span></div><input type="text" autocomplete="off" id="project-settings-short-link" maxlength="50" minlength="4" pattern="[a-zA-Z0-9_-]+" title="min. 4 characters, a–z, 0–9, hyphen or underscore" class="el-input__inner">
