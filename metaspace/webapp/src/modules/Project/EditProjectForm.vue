@@ -17,19 +17,6 @@
         />
       </label>
     </div>
-    <el-form-item
-      prop="isPublic"
-      class="my-3"
-    >
-      <el-checkbox
-        v-model="value.isPublic"
-        :disabled="isPublished"
-      >
-        {{ isPublished ?
-          'Published projects must be visible' :
-          'Allow other users to see this project' }}
-      </el-checkbox>
-    </el-form-item>
   </el-form>
 </template>
 <script lang="ts">
@@ -39,7 +26,6 @@ import { ElForm } from 'element-ui/types/form'
 
   interface Model {
     name: string;
-    isPublic: boolean;
   }
 
   @Component
@@ -49,9 +35,6 @@ export default class EditProjectForm extends Vue {
 
     @Prop({ type: Boolean, default: false })
     disabled!: Boolean;
-
-    @Prop({ type: Boolean, default: false })
-    isPublished!: Boolean;
 
     rules = {
       name: [{ type: 'string', required: true, min: 2, message: 'Name is required', trigger: 'manual' }],

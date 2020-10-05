@@ -16,6 +16,16 @@
           :is-published="isPublished"
           :disabled="isSaving"
         />
+        <div class="my-3">
+          <el-checkbox
+            v-model="model.isPublic"
+            :disabled="isPublished"
+          >
+            {{ isPublished ?
+              'Published projects must be visible' :
+              'Allow other users to see this project' }}
+          </el-checkbox>
+        </div>
         <short-link-field
           id="project-settings-short-link"
           v-model="model.urlSlug"

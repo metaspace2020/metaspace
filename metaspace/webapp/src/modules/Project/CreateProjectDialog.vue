@@ -13,6 +13,17 @@
         v-model="project"
         size="mini"
       />
+      <div class="flex my-3 items-center justify-center">
+        <lock-icon class="sm-colour-icon mx-3" />
+        <p class="ml-3 leading-5">
+          <strong class="block">Projects are now private by default.</strong>
+          <span>
+            Visibility can be changed in project settings,
+            <br />
+            or by using the <em>Publishing</em> workflow.
+          </span>
+        </p>
+      </div>
       <div v-if="allDatasets.length > 0">
         <h4 class="m-0">
           Would you like to include previously submitted datasets?
@@ -49,10 +60,14 @@ import DatasetCheckboxList from '../../components/DatasetCheckboxList.vue'
 import { createProjectMutation, importDatasetsIntoProjectMutation } from '../../api/project'
 import reportError from '../../lib/reportError'
 
+import '../../components/ColourIcon.css'
+import LockIcon from '../../assets/inline/refactoring-ui/lock.svg'
+
   @Component<CreateProjectDialog>({
     components: {
       EditProjectForm,
       DatasetCheckboxList,
+      LockIcon,
     },
     apollo: {
       allDatasets: {
