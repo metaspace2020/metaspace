@@ -171,15 +171,17 @@ exports[`EditUserPage should match snapshot 1`] = `
                     <!---->
                     <!---->
                   </div></label></div>
+              <div class="el-form-item my-3">
+                <!---->
+                <div class="el-form-item__content">
+                  <div role="switch" class="el-switch"><input type="checkbox" name="" true-value="true" class="el-switch__input"><span class="el-switch__label el-switch__label--left is-active"><!----><span>Private</span></span><span class="el-switch__core" style="width: 40px;"></span><span class="el-switch__label el-switch__label--right"><!----><span aria-hidden="true">Public</span></span></div>
+                  <!---->
+                  <transition-stub name="el-zoom-in-top">
+                    <!---->
+                  </transition-stub>
+                </div>
+              </div>
             </form>
-            <div class="flex my-3 items-center justify-center">
-              <svg-lock-icon class="sm-colour-icon mx-3"></svg-lock-icon>
-              <p class="ml-3 leading-5"><strong class="block">Projects are now private by default.</strong> <span>
-          Visibility can be changed in project settings,
-          <br>
-          or by using the <em>Publishing</em> workflow.
-        </span></p>
-            </div>
             <div>
               <h4 class="m-0">
                 Would you like to include previously submitted datasets?
