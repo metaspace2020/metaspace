@@ -21,14 +21,18 @@
       prop="isPublic"
       class="my-3"
     >
-      <el-checkbox
+      <el-switch
         v-model="value.isPublic"
         :disabled="isPublished"
+        active-text="Public"
+        inactive-text="Private"
+      />
+      <span
+        v-if="isPublished"
+        class="text-gray-700 float-right"
       >
-        {{ isPublished ?
-          'Published projects must be visible' :
-          'Allow other users to see this project' }}
-      </el-checkbox>
+        Published projects are always visible.
+      </span>
     </el-form-item>
   </el-form>
 </template>
