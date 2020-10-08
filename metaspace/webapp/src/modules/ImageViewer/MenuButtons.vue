@@ -5,7 +5,8 @@
     @keyup.stop
   >
     <button
-      title="Optical images"
+      v-if="hasOpticalImages"
+      title="Optical image controls"
       class="button-reset flex h-6 mr-3 focus-ring-primary"
       :class="{ active: menu === 'OPTICAL' }"
       @click="setMenu('OPTICAL')"
@@ -15,7 +16,7 @@
       />
     </button>
     <button
-      title="Ion images"
+      title="Ion image controls"
       class="button-reset flex h-6 mr-3 focus-ring-primary"
       :class="{ active: menu === 'ION' }"
       @click="setMenu('ION')"
@@ -33,9 +34,12 @@ import '../../components/StatefulIcon.css'
 import MonitorIcon from '../../assets/inline/refactoring-ui/monitor.svg'
 import CameraIcon from '../../assets/inline/refactoring-ui/camera.svg'
 
-import state, { setMenu } from './menuState'
+import viewerState, { setMenu } from './state'
 
 export default defineComponent({
+  props: {
+    hasOpticalImages: Boolean,
+  },
   components: {
     MonitorIcon,
     CameraIcon,
@@ -46,7 +50,7 @@ export default defineComponent({
     // })
 
     return {
-      menu: state,
+      menu: viewerState.menu,
       setMenu,
     }
   },

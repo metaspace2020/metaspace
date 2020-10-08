@@ -25,6 +25,7 @@ import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPo
 import RelatedMolecules from './annotation-widgets/RelatedMolecules.vue'
 import CompoundsList from './annotation-widgets/CompoundsList.vue'
 import AmbiguityAlert from './annotation-widgets/AmbiguityAlert.vue'
+import MultiImageButton from '../ImageViewer/MultiImageButton.vue'
 
  type ImagePosition = {
    zoom: number
@@ -53,6 +54,7 @@ const componentsToRegister: any = {
   RelatedMolecules,
   CompoundsList,
   AmbiguityAlert,
+  MultiImageButton,
 }
 for (const category of Object.keys(annotationWidgets)) {
   metadataDependentComponents[category] = {}
@@ -335,6 +337,17 @@ export default class AnnotationView extends Vue {
      this.$store.commit('setSortOrder', {
        by: 'colocalization',
        dir: 'descending',
+     })
+   }
+
+   filterByDataset() {
+     const { datasetIds } = this.$store.getters.filter
+     if (datasetIds && datasetIds.length === 1) {
+       return
+     }
+     this.$store.commit('updateFilter', {
+       ...omit(this.$store.getters.filter, ANNOTATION_SPECIFIC_FILTERS),
+       datasetIds: [this.annotation.dataset.id],
      })
    }
 }

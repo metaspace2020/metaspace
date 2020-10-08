@@ -5,7 +5,8 @@
     title="Export image"
     @click="onClick"
   >
-    <photo-icon class="sm-mini-icon" />
+    <i class="el-icon-download text-xl" />
+    <!-- <photo-icon class="sm-mini-icon" /> -->
   </button>
 </template>
 <script lang="ts">

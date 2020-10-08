@@ -53,7 +53,7 @@ import FadeTransition from '../../components/FadeTransition'
 import ImageSaver from './ImageSaver.vue'
 import IonImageMenu from './IonImageMenu.vue'
 
-import openMenu from './menuState'
+import viewerState from './state'
 import { useIonImages } from './ionImageState'
 import fitImageToArea, { FitImageToAreaResult } from '../../lib/fitImageToArea'
 import { ScaleType } from '../../lib/ionImageRendering'
@@ -130,7 +130,7 @@ const ImageViewer = defineComponent<Props>({
       imageArea,
       imageFit,
       onResize,
-      openMenu,
+      openMenu: viewerState.menu,
       ionImageLayers,
       handleImageMove({ zoom, xOffset, yOffset }: any) {
         props.applyImageMove({

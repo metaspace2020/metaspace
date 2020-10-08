@@ -8,65 +8,71 @@
         @change="onSectionsChange"
       >
         <div class="el-collapse-item">
-          <div class="el-collapse-item__header av-header">
-            <candidate-molecules-popover
-              placement="bottom"
-              :possible-compounds="annotation.possibleCompounds"
-              :isomers="annotation.isomers"
-              :isobars="annotation.isobars"
-            >
-              <span
-                class="sf-big text-2xl"
-                v-html="formattedMolFormula"
-              />
-            </candidate-molecules-popover>
-            <span class="text-2xl">{{ annotation.mz.toFixed(4) }}</span>
-            <el-popover
-              trigger="hover"
-              placement="bottom"
-            >
-              <router-link
-                slot="reference"
-                target="_blank"
-                :to="permalinkHref"
+          <div class="el-collapse-item__header flex items-start justify-center relative">
+            <div class="av-header-items">
+              <candidate-molecules-popover
+                placement="bottom"
+                :possible-compounds="annotation.possibleCompounds"
+                :isomers="annotation.isomers"
+                :isobars="annotation.isobars"
+              >
+                <span
+                  class="sf-big text-2xl"
+                  v-html="formattedMolFormula"
+                />
+              </candidate-molecules-popover>
+              <span class="text-2xl">{{ annotation.mz.toFixed(4) }}</span>
+              <el-popover
+                trigger="hover"
+                placement="bottom"
+              >
+                <router-link
+                  slot="reference"
+                  target="_blank"
+                  :to="permalinkHref"
+                >
+                  <img
+                    src="../../assets/share-icon.png"
+                    class="av-icon"
+                  >
+                </router-link>
+                <div>Link to this annotation (opens in a new tab)</div>
+              </el-popover>
+
+              <el-popover
+                v-if="!annotation.dataset.isPublic"
+                trigger="hover"
+                placement="bottom"
+                @show="loadVisibility"
               >
                 <img
-                  src="../../assets/share-icon.png"
+                  slot="reference"
+                  src="../../assets/padlock-icon.svg"
                   class="av-icon"
                 >
-              </router-link>
-              <div>Link to this annotation (opens in a new tab)</div>
-            </el-popover>
+                <div v-loading="visibilityText == null">
+                  {{ visibilityText }}
+                </div>
+              </el-popover>
 
-            <el-popover
-              v-if="!annotation.dataset.isPublic"
-              trigger="hover"
-              placement="bottom"
-              @show="loadVisibility"
-            >
-              <img
-                slot="reference"
-                src="../../assets/padlock-icon.svg"
-                class="av-icon"
+              <el-popover
+                v-if="showColoc"
+                trigger="hover"
+                placement="bottom"
               >
-              <div v-loading="visibilityText == null">
-                {{ visibilityText }}
-              </div>
-            </el-popover>
-
-            <el-popover
-              v-if="showColoc"
-              trigger="hover"
-              placement="bottom"
-            >
-              <img
-                slot="reference"
-                src="../../assets/map-icon.svg"
-                class="av-icon av-icon-link"
-                @click.stop="filterColocSamples"
-              >
-              <div>Show representative spatial patterns for dataset</div>
-            </el-popover>
+                <img
+                  slot="reference"
+                  src="../../assets/map-icon.svg"
+                  class="av-icon av-icon-link"
+                  @click.stop="filterColocSamples"
+                >
+                <div>Show representative spatial patterns for dataset</div>
+              </el-popover>
+            </div>
+            <multi-image-button
+              class="absolute right-0 bottom-0 mr-2 mb-2"
+              @multi="filterByDataset"
+            />
           </div>
         </div>
 
@@ -221,7 +227,7 @@
 <script lang="ts" src="./AnnotationView.ts" />
 
 <style scoped lang="scss">
-  /deep/ .av-header {
+  /deep/ .av-header-items {
     justify-content: center;
     text-align: center !important;
     cursor: default !important;

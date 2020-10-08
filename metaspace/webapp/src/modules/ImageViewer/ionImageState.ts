@@ -1,10 +1,12 @@
-import { ref, Ref, computed, reactive, watch, onBeforeUnmount, toRefs } from '@vue/composition-api'
+import { ref, Ref, computed, reactive, watch, toRefs } from '@vue/composition-api'
 import { Image } from 'upng-js'
 
 import { loadPngFromUrl, processIonImage } from '../../lib/ionImageRendering'
 import { IonImage, ColorMap, ScaleType } from '../../lib/ionImageRendering'
 import createColorMap from '../../lib/createColormap'
 import getColorScale from '../../lib/getColorScale'
+
+import viewerState from './state'
 
 interface Annotation {
   id: string
@@ -39,7 +41,6 @@ interface IonImageLayer {
 interface State {
   order: string[]
   activeLayer: string | null
-  // mode: 'colormap' | 'channel'
   nextChannel: string
 }
 
@@ -55,7 +56,6 @@ const channels = ['red', 'green', 'blue', 'magenta', 'yellow', 'cyan', 'orange']
 const initialState = {
   order: [],
   activeLayer: null,
-  // mode: 'colormap',
   nextChannel: channels[0],
 }
 
@@ -70,8 +70,6 @@ const ionImageMenuItems = computed(() => {
     layer: state,
   }))
 })
-
-const mode = computed(() => ionImageState.order.length > 1 ? 'channel' : 'colormap')
 
 function deleteLayer(id: string) : number {
   delete ionImageLayerCache[id]
@@ -88,20 +86,25 @@ function deleteLayer(id: string) : number {
 
 export const useIonImages = (props: Props) => {
   const ionImageLayers = computed(() => {
+    const { opacityMode, annotImageOpacity } = props.imageLoaderSettings
+    if (viewerState.mode.value === 'SINGLE') {
+      const layer = ionImageLayerCache[props.annotation.id]
+      const colorMap = createColorMap(props.colormap, opacityMode, annotImageOpacity)
+      return [{ ionImage: layer.image.value, colorMap }]
+    }
     const layers = []
     const colormaps: Record<string, ColorMap> = {}
     for (const { image, state } of orderedIonImageLayers.value) {
       if (image.value == null || !state.visible) {
         continue
       }
-      const key = mode.value === 'colormap' ? props.colormap : state.channel
-      if (!(key in colormaps)) {
+      if (!(state.channel in colormaps)) {
         const { opacityMode, annotImageOpacity } = props.imageLoaderSettings
-        colormaps[key] = createColorMap(key, opacityMode, annotImageOpacity)
+        colormaps[state.channel] = createColorMap(state.channel, opacityMode, annotImageOpacity)
       }
       layers.push({
         ionImage: image.value,
-        colorMap: colormaps[key],
+        colorMap: colormaps[state.channel],
       })
     }
     return layers
@@ -158,7 +161,7 @@ export const useIonImages = (props: Props) => {
       }),
       colorBar: computed(() => {
         const { channel, quantileRange } = state
-        const mapOrChannel = mode.value === 'colormap' ? props.colormap : channel
+        const mapOrChannel = viewerState.mode.value === 'SINGLE' ? props.colormap : channel
         const { domain, range } = getColorScale(mapOrChannel)
         const [minQuantile, maxQuantile] = quantileRange
         const colors = []
@@ -204,7 +207,7 @@ export const useIonImageMenu = () => {
   return {
     menuItems: ionImageMenuItems,
     activeLayer,
-    setActiveLayer(id: string) {
+    setActiveLayer(id: string | null) {
       ionImageState.activeLayer = id
     },
     updateIntensity(id: string, range: [number, number]) {
