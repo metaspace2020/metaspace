@@ -1,7 +1,6 @@
 import time
 from pathlib import Path
 from pprint import pformat
-from datetime import datetime
 from shutil import copytree, rmtree
 import logging
 
@@ -10,6 +9,7 @@ from pyspark import SparkContext, SparkConf
 
 from sm.engine.acq_geometry import make_acq_geometry
 from sm.engine.imzml_parser import ImzMLParserWrapper
+from sm.engine.job import del_jobs, insert_running_job, update_finished_job, get_ds_moldb_ids
 from sm.engine.msm_basic.formula_imager import make_sample_area_mask, get_ds_dims
 from sm.engine.msm_basic.formula_validator import METRICS
 from sm.engine.msm_basic.msm_basic_search import MSMSearch
@@ -23,9 +23,6 @@ from sm.engine.queue import QueuePublisher, SM_DS_STATUS
 logger = logging.getLogger('engine')
 
 JOB_ID_MOLDB_ID_SEL = "SELECT id, moldb_id FROM job WHERE ds_id = %s AND status='FINISHED'"
-JOB_INS = "INSERT INTO job (moldb_id, ds_id, status, start) VALUES (%s, %s, %s, %s) RETURNING id"
-JOB_UPD_STATUS_FINISH = "UPDATE job set status=%s, finish=%s where id=%s"
-JOB_UPD_FINISH = "UPDATE job set finish=%s where id=%s"
 TARGET_DECOY_ADD_DEL = (
     'DELETE FROM target_decoy_add tda WHERE tda.job_id IN (SELECT id FROM job WHERE ds_id = %s)'
 )
@@ -74,20 +71,6 @@ class AnnotationJob:
             master=self._sm_config['spark']['master'], conf=sconf, appName='SM engine'
         )
 
-    def _store_job_meta(self, moldb_id: int):
-        """Store search job metadata in the database."""
-
-        logger.info('Storing job metadata')
-        rows = [
-            (
-                moldb_id,
-                self._ds.id,
-                JobStatus.RUNNING,
-                datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            )
-        ]
-        return self._db.insert_return(JOB_INS, rows=rows)[0]
-
     def create_imzml_parser(self):
         logger.info('Parsing imzml')
         return ImzMLParserWrapper(self._ds_data_path)
@@ -99,7 +82,7 @@ class AnnotationJob:
             )
 
             # FIXME: Total runtime of the dataset should be measured, not separate jobs
-            job_ids = [self._store_job_meta(moldb.id) for moldb in moldbs]
+            job_ids = [insert_running_job(self._ds.id, moldb.id) for moldb in moldbs]
 
             search_alg = MSMSearch(
                 spark_context=self._sc,
@@ -134,28 +117,7 @@ class AnnotationJob:
                     )
                     job_status = JobStatus.FINISHED
                 finally:
-                    self._db.alter(
-                        JOB_UPD_STATUS_FINISH,
-                        params=(job_status, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), job_id),
-                    )
-
-    def _remove_annotation_jobs(self, moldbs):
-        for moldb in moldbs:
-            logger.info(
-                f"Removing job results ds_id: {self._ds.id}, ds_name: {self._ds.name}, "
-                f"db_name: {moldb.name}, db_version: {moldb.version}"
-            )
-            self._db.alter(
-                'DELETE FROM job WHERE ds_id = %s and moldb_id = %s', params=(self._ds.id, moldb.id)
-            )
-            self._es.delete_ds(self._ds.id, moldb)
-
-    def _moldb_ids(self):
-        completed_moldb_ids = {
-            db_id for (_, db_id) in self._db.select(JOB_ID_MOLDB_ID_SEL, params=(self._ds.id,))
-        }
-        new_moldb_ids = set(self._ds.config['database_ids'])
-        return completed_moldb_ids, new_moldb_ids
+                    update_finished_job(job_id, job_status)
 
     def _save_data_from_raw_ms_file(self, imzml_parser):
         ms_file_path = imzml_parser.filename
@@ -230,13 +192,14 @@ class AnnotationJob:
 
             logger.info(f'Dataset config:\n{pformat(self._ds.config)}')
 
-            completed_moldb_ids, new_moldb_ids = self._moldb_ids()
-            self._remove_annotation_jobs(
-                molecular_db.find_by_ids(completed_moldb_ids - new_moldb_ids)
-            )
-            self._run_annotation_jobs(
-                imzml_parser, molecular_db.find_by_ids(new_moldb_ids - completed_moldb_ids)
-            )
+            completed_moldb_ids = set(get_ds_moldb_ids(ds.id, JobStatus.FINISHED))
+            new_moldb_ids = set(self._ds.config['database_ids'])
+            added_moldb_ids = new_moldb_ids - completed_moldb_ids
+            removed_moldb_ids = completed_moldb_ids - new_moldb_ids
+
+            if removed_moldb_ids:
+                del_jobs(self._ds.id, removed_moldb_ids)
+            self._run_annotation_jobs(imzml_parser, molecular_db.find_by_ids(added_moldb_ids))
 
             logger.info("All done!")
             minutes, seconds = divmod(int(round(time.time() - start)), 60)

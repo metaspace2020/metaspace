@@ -10,13 +10,15 @@ from requests.adapters import HTTPAdapter
 from PIL import Image
 from scipy.ndimage import zoom
 
-from sm.engine.util import retry_on_exception
+from sm.engine.util import retry_on_exception, SMConfig
 
 logger = logging.getLogger('engine')
 
 
 class ImageStoreServiceWrapper:
-    def __init__(self, img_service_url):
+    def __init__(self, img_service_url=None):
+        if img_service_url is None:
+            img_service_url = SMConfig.get_conf()['services']['img_service_url']
         self._img_service_url = img_service_url
         self._session = requests.Session()
         self._session.mount(
