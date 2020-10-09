@@ -19,7 +19,7 @@ from sm.engine.daemon_action import DaemonAction
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.dataset import Dataset, DatasetStatus
-from sm.engine.annotation_job import JobStatus
+from sm.engine.job import JobStatus
 from sm.engine.queue import QueueConsumer
 from .utils import create_test_molecular_db
 
@@ -132,7 +132,7 @@ def run_daemons(db, es, sm_config):
     'sm.engine.off_sample_wrapper.call_api',
     return_value={'predictions': {'label': 'off', 'prob': 0.99}},
 )
-@patch('sm.engine.annotation_job.MSMSearch')
+@patch('sm.engine.annotation_spark.annotation_job.MSMSearch')
 def test_sm_daemons(
     MSMSearchMock,
     call_off_sample_api_mock,
@@ -272,7 +272,7 @@ def test_sm_daemons(
 
 
 @patch('sm.engine.search_results.post_images_to_image_store')
-@patch('sm.engine.annotation_job.MSMSearch')
+@patch('sm.engine.annotation_spark.annotation_job.MSMSearch')
 def test_sm_daemons_annot_fails(
     MSMSearchMock,
     post_images_to_annot_service_mock,
@@ -329,7 +329,7 @@ def test_sm_daemons_annot_fails(
 
 
 @patch('sm.engine.search_results.post_images_to_image_store')
-@patch('sm.engine.annotation_job.MSMSearch')
+@patch('sm.engine.annotation_spark.annotation_job.MSMSearch')
 def test_sm_daemon_es_export_fails(
     MSMSearchMock,
     post_images_to_annot_service_mock,

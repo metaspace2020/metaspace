@@ -10,7 +10,7 @@ from sm.engine.es_export import ESExporter
 from sm.engine.sm_daemons import DatasetManager
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import create_ds_from_files, bootstrap_and_run
-from sm.engine.annotation_job import AnnotationJob
+from sm.engine.annotation_spark.annotation_job import AnnotationJob
 
 
 def run_search(sm_config):

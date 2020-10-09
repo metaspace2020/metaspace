@@ -1,14 +1,13 @@
 import logging
 from concurrent.futures.thread import ThreadPoolExecutor
 from datetime import datetime
-from typing import Union, Literal, Iterable, Optional
+from typing import Iterable, Optional
 
 from sm.engine import molecular_db
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.errors import UnknownDSID
 from sm.engine.es_export import ESExporter
-from sm.engine.msm_basic.annotation_job import JobStatus
 from sm.engine.png_generator import ImageStoreServiceWrapper
 
 logger = logging.getLogger('engine')
@@ -43,7 +42,7 @@ def del_jobs(ds: Dataset, moldb_ids: Optional[Iterable[int]] = None):
 
     with ThreadPoolExecutor() as ex:
         for moldb in moldbs:
-            logger.info(f'Deleting isotopic images: {ds.id=}, {ds.name=}, {moldb=}')
+            logger.info(f'Deleting isotopic images: ds_id={ds.id} ds_name={ds.name} moldb={moldb}')
             img_id_rows = db.select_onecol(
                 'SELECT iso_image_ids '
                 'FROM annotation m '
@@ -58,7 +57,7 @@ def del_jobs(ds: Dataset, moldb_ids: Optional[Iterable[int]] = None):
             ):
                 pass
 
-            logger.info(f"Deleting job results: {ds.id=} {ds.name=} {moldb=}")
+            logger.info(f"Deleting job results: ds_id={ds.id} ds_name={ds.name} moldb={moldb}")
             db.alter('DELETE FROM job WHERE ds_id = %s and moldb_id = %s', (ds.id, moldb.id))
             es.delete_ds(ds.id, moldb)
 
@@ -74,12 +73,15 @@ def insert_running_job(ds_id: str, moldb_id: int) -> int:
     )[0]
 
 
-def update_finished_job(
-    job_id: int, job_status: str, finish: Union[datetime, None, Literal['now']] = 'now'
-):
-    if finish == 'now':
-        finish = datetime.now()
+def update_finished_job(job_id: int, job_status: str):
+    finish = datetime.now()
+
     DB().alter(
-        'UPDATE job set status=%s, finish=%s where id=%s',
-        params=(job_status, finish, job_id),
+        'UPDATE job set status=%s, finish=%s where id=%s', params=(job_status, finish, job_id),
     )
+
+
+class JobStatus:
+    RUNNING = 'RUNNING'
+    FINISHED = 'FINISHED'
+    FAILED = 'FAILED'

@@ -23,7 +23,7 @@ from sm.engine.optical_image import IMG_URLS_BY_ID_SEL, del_optical_image
 from sm.engine.queue import QueueConsumer, QueuePublisher
 from sm.engine.util import SMConfig
 from sm.rest.dataset_manager import DatasetActionPriority
-from sm.engine.annotation_job import AnnotationJob
+from sm.engine.annotation_spark.annotation_job import AnnotationJob
 
 
 class DatasetManager:

@@ -8,9 +8,9 @@ import numpy as np
 import pandas as pd
 
 from sm.engine.fdr import FDR
-from sm.engine.formula_centroids import FormulaCentroids
+from sm.engine.annotation.formula_centroids import FormulaCentroids
 from sm.engine.molecular_db import MolecularDB
-from sm.engine.msm_basic.msm_basic_search import (
+from sm.engine.annotation_spark.msm_basic_search import (
     MSMSearch,
     init_fdr,
     collect_ion_formulas,
@@ -120,7 +120,7 @@ def test_compute_fdr_and_filter_results(targeted, exp_annot_n, spark_context):
     assert moldb_ion_images_rdd.count() == exp_annot_n
 
 
-@patch('sm.engine.msm_basic.formula_imager.formula_image_metrics')
+@patch('sm.engine.annotation_spark.formula_imager.formula_image_metrics')
 @patch('sm.engine.molecular_db.fetch_formulas', lambda moldb_id: ['H2O', 'C5H3O'])
 def test_search(formula_image_metrics_mock, spark_context, ds_config):
     with TemporaryDirectory() as tmpdir:
@@ -157,7 +157,7 @@ def test_search(formula_image_metrics_mock, spark_context, ds_config):
         assert moldb_ion_images_rdd.count() == 3
 
 
-@patch('sm.engine.msm_basic.formula_imager.formula_image_metrics')
+@patch('sm.engine.annotation_spark.formula_imager.formula_image_metrics')
 @patch('sm.engine.molecular_db.fetch_formulas')
 def test_ambiguous_modifiers(
     fetch_formulas_mock, formula_image_metrics_mock, spark_context, ds_config

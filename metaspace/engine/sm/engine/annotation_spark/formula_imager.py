@@ -9,7 +9,10 @@ from pyspark.files import SparkFiles
 from scipy.sparse import coo_matrix
 
 from sm.engine.isocalc_wrapper import IsocalcWrapper
-from sm.engine.msm_basic.formula_validator import make_compute_image_metrics, formula_image_metrics
+from sm.engine.annotation.formula_validator import (
+    make_compute_image_metrics,
+    formula_image_metrics,
+)
 
 logger = logging.getLogger('engine')
 

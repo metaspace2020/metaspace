@@ -10,14 +10,14 @@ from pyspark.files import SparkFiles
 from pyspark.storagelevel import StorageLevel
 
 from sm.engine.fdr import FDR
-from sm.engine.formula_centroids import CentroidsGenerator
+from sm.engine.annotation.formula_centroids import CentroidsGenerator
 from sm.engine.formula_parser import safe_generate_ion_formula
-from sm.engine.imzml_parser import ImzMLParserWrapper
+from sm.engine.annotation.imzml_parser import ImzMLParserWrapper
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine import molecular_db
 from sm.engine.molecular_db import MolecularDB
-from sm.engine.msm_basic.formula_imager import create_process_segment, get_ds_dims
-from sm.engine.msm_basic.segmenter import (
+from sm.engine.annotation_spark.formula_imager import create_process_segment, get_ds_dims
+from sm.engine.annotation_spark.segmenter import (
     calculate_centroids_segments_n,
     calculate_chunk_sp_n,
     check_spectra_quality,

@@ -1,7 +1,6 @@
-import pytest
 from os.path import join
 
-from sm.engine.acq_geometry import make_acq_geometry
+from sm.engine.annotation.acq_geometry import make_acq_geometry
 from sm.engine.util import proj_root
 
 

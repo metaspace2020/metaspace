@@ -7,12 +7,18 @@ import logging
 import boto3
 from pyspark import SparkContext, SparkConf
 
-from sm.engine.acq_geometry import make_acq_geometry
-from sm.engine.imzml_parser import ImzMLParserWrapper
-from sm.engine.job import del_jobs, insert_running_job, update_finished_job, get_ds_moldb_ids
-from sm.engine.msm_basic.formula_imager import make_sample_area_mask, get_ds_dims
-from sm.engine.msm_basic.formula_validator import METRICS
-from sm.engine.msm_basic.msm_basic_search import MSMSearch
+from sm.engine.annotation.acq_geometry import make_acq_geometry
+from sm.engine.annotation.imzml_parser import ImzMLParserWrapper
+from sm.engine.job import (
+    del_jobs,
+    insert_running_job,
+    update_finished_job,
+    get_ds_moldb_ids,
+    JobStatus,
+)
+from sm.engine.annotation_spark.formula_imager import make_sample_area_mask, get_ds_dims
+from sm.engine.annotation.formula_validator import METRICS
+from sm.engine.annotation_spark.msm_basic_search import MSMSearch
 from sm.engine.db import DB
 from sm.engine.search_results import SearchResults
 from sm.engine.util import SMConfig, split_s3_path
@@ -26,12 +32,6 @@ JOB_ID_MOLDB_ID_SEL = "SELECT id, moldb_id FROM job WHERE ds_id = %s AND status=
 TARGET_DECOY_ADD_DEL = (
     'DELETE FROM target_decoy_add tda WHERE tda.job_id IN (SELECT id FROM job WHERE ds_id = %s)'
 )
-
-
-class JobStatus:
-    RUNNING = 'RUNNING'
-    FINISHED = 'FINISHED'
-    FAILED = 'FAILED'
 
 
 class AnnotationJob:
