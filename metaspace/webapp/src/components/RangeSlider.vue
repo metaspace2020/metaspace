@@ -269,12 +269,12 @@ const Slider = defineComponent<Props>({
       minStyle: computed(() => ({
         ...minPosition.value,
         backgroundColor: props.minColor,
-        borderColor: props.disabled ? undefined : props.maxColor,
+        // borderColor: props.disabled ? undefined : props.maxColor,
       })),
       maxStyle: computed(() => ({
         ...maxPosition.value,
         backgroundColor: props.maxColor,
-        borderColor: props.disabled ? undefined : props.minColor,
+        // borderColor: props.disabled ? undefined : props.minColor,
       })),
     }
   },

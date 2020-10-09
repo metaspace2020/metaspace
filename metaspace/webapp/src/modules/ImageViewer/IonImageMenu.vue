@@ -8,32 +8,32 @@
         class="mt-3"
         :model="singleModeMenuItem.state"
         :color-bar="singleModeMenuItem.colorBar"
-        @change="updateSingleModeIntensity"
+        @change="singleModeMenuItem.updateIntensity"
       />
     </div>
     <menu-container v-else>
       <menu-item
-        v-for="{ state, settings, colorBar } in multiModeMenuItems"
-        :key="state.id"
+        v-for="item in multiModeMenuItems"
+        :key="item.id"
         class="flex flex-col justify-center"
-        :layer-id="state.id"
+        :layer-id="item.id"
         :active-layer="activeLayer"
-        :visible="settings.visible"
+        :visible="item.settings.visible"
         @active="setActiveLayer"
         @delete="deleteLayer"
       >
         <p class="flex justify-between m-0 h-9 items-center">
           <molecular-formula
             class="truncate font-medium h-6 text-base proportional-nums"
-            :ion="state.annotation.ion"
+            :ion="item.annotation.ion"
           />
           <button
-            :title="settings.visible ? 'Hide layer' : 'Show layer'"
+            :title="item.settings.visible ? 'Hide layer' : 'Show layer'"
             class="button-reset h-5 focus-ring-primary"
-            @click.stop.left="toggleVisibility(state.id)"
+            @click.stop.left="item.toggleVisibility"
           >
             <visible-icon
-              v-if="settings.visible"
+              v-if="item.settings.visible"
               class="sm-mono-icon text-gray-800"
             />
             <hidden-icon
@@ -44,10 +44,10 @@
         </p>
         <div class="h-9">
           <ion-intensity-slider
-            :model="state"
-            :color-bar="colorBar"
-            :is-disabled="!settings.visible"
-            @change="updateLayerIntensity"
+            :model="item.state"
+            :color-bar="item.colorBar"
+            :is-disabled="!item.settings.visible"
+            @change="item.updateIntensity"
           />
         </div>
       </menu-item>
@@ -82,6 +82,9 @@ import { useIonImageMenu } from './ionImageState'
 import viewerState from './state'
 
 export default defineComponent({
+  props: {
+    annotationId: { type: String, required: true },
+  },
   components: {
     MenuContainer,
     MenuItem,
@@ -99,10 +102,7 @@ export default defineComponent({
       multiModeMenuItems,
       setActiveLayer,
       singleModeMenuItem,
-      toggleVisibility,
-      updateLayerIntensity,
-      updateSingleModeIntensity,
-    } = useIonImageMenu()
+    } = useIonImageMenu(props)
 
     return {
       activeLayer,
@@ -111,9 +111,6 @@ export default defineComponent({
       mode: viewerState.mode,
       setActiveLayer,
       singleModeMenuItem,
-      toggleVisibility,
-      updateLayerIntensity,
-      updateSingleModeIntensity,
     }
   },
 })

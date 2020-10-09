@@ -14,7 +14,7 @@
       :disabled="isDisabled"
       :min-tooltip="tooltip(0)"
       :max-tooltip="tooltip(1)"
-      @change="range => emit('change', range, model.id)"
+      @change="range => emit('change', range)"
     />
     <div class="flex justify-between leading-6 tracking-wide">
       <span>{{ model.minIntensity.toExponential(1) }}</span>

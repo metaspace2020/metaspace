@@ -31,6 +31,7 @@
       <ion-image-menu
         v-if="openMenu === 'ION'"
         key="ION"
+        :annotation-id="annotation.id"
       />
       <!-- <optical-image-menu
         v-if="openMenu === 'OPTICAL'"

@@ -1,7 +1,7 @@
 <template>
-  <div class="absolute top-0 right-0 py-3 pr-2 box-border">
+  <div class="absolute top-0 right-0 py-3 pr-2 max-h-full box-border">
     <div
-      class="py-3 bg-gray-100-alpha w-60 rounded-lg h-full box-border overflow-x-hidden overflow-y-auto"
+      class="py-3 bg-gray-100-alpha w-60 rounded-lg box-border overflow-x-hidden overflow-y-auto"
       data-menu-items
     >
       <slot />
