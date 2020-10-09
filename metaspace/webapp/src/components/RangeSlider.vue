@@ -9,7 +9,7 @@
       ref="minThumb"
       :style="minStyle"
       :tabindex="disabled ? false : 0"
-      class="box-border h-3 w-3 absolute bg-gray-100 border border-solid border-gray-300 rounded-full cursor-pointer focus-ring-primary"
+      class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer focus-ring-primary"
     />
     <span
       :style="minPosition"
@@ -21,7 +21,7 @@
       ref="maxThumb"
       :style="maxStyle"
       :tabindex="disabled ? false : 0"
-      class="box-border h-3 w-3 absolute bg-gray-100 border border-solid border-gray-300 rounded-full cursor-pointer focus-ring-primary"
+      class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer focus-ring-primary"
     >
     </div>
     <span

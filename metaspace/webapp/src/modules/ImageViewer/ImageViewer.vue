@@ -94,7 +94,6 @@ const ImageViewer = defineComponent<Props>({
   },
   setup(props) {
     const { ionImageLayers } = useIonImages(props)
-
     const imageArea = ref<HTMLElement | null>(null)
 
     const dimensions = reactive({

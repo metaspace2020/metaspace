@@ -15,14 +15,17 @@ interface Annotation {
   isotopeImages: { minIntensity: number, maxIntensity: number, url: string }[]
 }
 
-interface IonImageLayerState {
-  annotation: Annotation
-  channel: string
+export interface IonImageState {
   id: string
-  quantileRange: [number, number]
-  label: string | undefined
-  minIntensity: number
+  annotation: Annotation
   maxIntensity: number
+  minIntensity: number
+  quantileRange: [number, number]
+}
+
+interface IonImageLayerSettings {
+  channel: string
+  label: string | undefined
   visible: boolean
 }
 
@@ -35,7 +38,11 @@ interface ColorBar {
 interface IonImageLayer {
   colorBar: Ref<ColorBar>
   image: Ref<IonImage | null>
-  state: IonImageLayerState
+  state: IonImageState
+}
+
+interface MultiIonImageLayer extends IonImageLayer {
+  settings: IonImageLayerSettings
 }
 
 interface State {
@@ -60,19 +67,13 @@ const initialState = {
 }
 
 const ionImageState = reactive<State>(initialState)
-const ionImageLayerCache : Record<string, IonImageLayer> = {}
+const multiModeLayers : Record<string, MultiIonImageLayer> = {}
+let singleModeLayer : IonImageLayer
 
-const orderedIonImageLayers = computed(() => ionImageState.order.map(id => ionImageLayerCache[id]))
-
-const ionImageMenuItems = computed(() => {
-  return orderedIonImageLayers.value.map(({ state, colorBar }) => ({
-    colorBar: colorBar.value,
-    layer: state,
-  }))
-})
+const orderedIonImageLayers = computed(() => ionImageState.order.map(id => multiModeLayers[id]))
 
 function deleteLayer(id: string) : number {
-  delete ionImageLayerCache[id]
+  delete multiModeLayers[id]
 
   const idx = ionImageState.order.indexOf(id)
   ionImageState.order.splice(idx, 1)
@@ -84,46 +85,108 @@ function deleteLayer(id: string) : number {
   return idx
 }
 
+function createState(annotation: Annotation) {
+  const [isotopeImage] = annotation.isotopeImages
+  const { minIntensity = 0, maxIntensity = 1 } = isotopeImage || {}
+
+  return reactive<IonImageState>({
+    id: annotation.id,
+    annotation,
+    maxIntensity,
+    minIntensity,
+    quantileRange: [0, 1],
+  })
+}
+
+function createComputedImage(state: IonImageState, raw: Ref<Image | null>, props: Props) {
+  return computed(() => {
+    const { quantileRange, minIntensity, maxIntensity } = state
+    if (raw.value !== null) {
+      return processIonImage(
+        raw.value,
+        minIntensity,
+        maxIntensity,
+        props.scaleType,
+        quantileRange,
+      )
+    }
+    return null
+  })
+}
+
+function createColorBar(state: IonImageState, getMapOrChannel: () => string) {
+  return computed(() => {
+    const { quantileRange } = state
+    const { domain, range } = getColorScale(getMapOrChannel())
+    const [minQuantile, maxQuantile] = quantileRange
+    const colors = []
+    if (minQuantile > 0) {
+      colors.push(`${range[0]} 0%`)
+    }
+    for (let i = 0; i < domain.length; i++) {
+      const pct = (minQuantile + (domain[i] * (maxQuantile - minQuantile))) * 100
+      colors.push(range[i] + ' ' + (pct + '%'))
+    }
+    return {
+      background: `background-image: linear-gradient(to right, ${colors.join(', ')})`,
+      minColor: range[0],
+      maxColor: range[range.length - 1],
+    }
+  })
+}
+
 export const useIonImages = (props: Props) => {
   const ionImageLayers = computed(() => {
     const { opacityMode, annotImageOpacity } = props.imageLoaderSettings
+
     if (viewerState.mode.value === 'SINGLE') {
-      const layer = ionImageLayerCache[props.annotation.id]
+      if (singleModeLayer.image.value === null) return []
+
+      const { image } = singleModeLayer
       const colorMap = createColorMap(props.colormap, opacityMode, annotImageOpacity)
-      return [{ ionImage: layer.image.value, colorMap }]
+      return [{ ionImage: image.value, colorMap }]
     }
+
     const layers = []
     const colormaps: Record<string, ColorMap> = {}
-    for (const { image, state } of orderedIonImageLayers.value) {
-      if (image.value == null || !state.visible) {
+    for (const { image, settings } of orderedIonImageLayers.value) {
+      if (image.value == null || !settings?.visible) {
         continue
       }
-      if (!(state.channel in colormaps)) {
+      if (!(settings.channel in colormaps)) {
         const { opacityMode, annotImageOpacity } = props.imageLoaderSettings
-        colormaps[state.channel] = createColorMap(state.channel, opacityMode, annotImageOpacity)
+        colormaps[settings.channel] = createColorMap(settings.channel, opacityMode, annotImageOpacity)
       }
       layers.push({
         ionImage: image.value,
-        colorMap: colormaps[state.channel],
+        colorMap: colormaps[settings.channel],
       })
     }
     return layers
   })
 
   watch(() => props.annotation, () => {
+    const raw = ref<Image | null>(null)
+
+    const singleModeState = createState(props.annotation)
+    singleModeLayer = {
+      state: singleModeState,
+      image: createComputedImage(singleModeState, raw, props),
+      colorBar: createColorBar(singleModeState, () => props.colormap),
+    }
+
     const { id } = props.annotation
 
-    if (id in ionImageLayerCache) {
+    if (id in multiModeLayers) {
       ionImageState.activeLayer = id
       return
     }
 
-    const [isotopeImage] = props.annotation.isotopeImages
-    const { minIntensity = 0, maxIntensity = 1 } = isotopeImage || {}
+    const state = createState(props.annotation)
 
-    let channel
+    let channel = channels[0]
     if (ionImageState.activeLayer !== null) {
-      channel = ionImageLayerCache[ionImageState.activeLayer].state.channel
+      channel = multiModeLayers[ionImageState.activeLayer].settings?.channel
       const idx = deleteLayer(ionImageState.activeLayer)
       ionImageState.order.splice(idx, 0, id)
     } else {
@@ -132,57 +195,25 @@ export const useIonImages = (props: Props) => {
       ionImageState.nextChannel = channels[channels.indexOf(channel) + 1] || channels[0]
     }
 
-    const state = reactive<IonImageLayerState>({
-      annotation: props.annotation,
+    const settings = reactive({
       channel,
-      id,
       label: undefined,
-      maxIntensity,
-      minIntensity,
-      quantileRange: [0, 1],
       visible: true,
     })
 
-    const raw = ref<Image | null>(null)
     const layer = {
+      annotation: props.annotation,
+      id: props.annotation.id,
+      image: createComputedImage(state, raw, props),
       state,
-      image: computed(() => {
-        const { quantileRange, minIntensity, maxIntensity } = state
-        if (raw.value !== null) {
-          return processIonImage(
-            raw.value,
-            minIntensity,
-            maxIntensity,
-            props.scaleType,
-            quantileRange,
-          )
-        }
-        return null
-      }),
-      colorBar: computed(() => {
-        const { channel, quantileRange } = state
-        const mapOrChannel = viewerState.mode.value === 'SINGLE' ? props.colormap : channel
-        const { domain, range } = getColorScale(mapOrChannel)
-        const [minQuantile, maxQuantile] = quantileRange
-        const colors = []
-        if (minQuantile > 0) {
-          colors.push(`${range[0]} 0%`)
-        }
-        for (let i = 0; i < domain.length; i++) {
-          const pct = (minQuantile + (domain[i] * (maxQuantile - minQuantile))) * 100
-          colors.push(range[i] + ' ' + (pct + '%'))
-        }
-        return {
-          background: `background-image: linear-gradient(to right, ${colors.join(', ')})`,
-          minColor: range[0],
-          maxColor: range[range.length - 1],
-        }
-      }),
+      settings,
+      colorBar: createColorBar(state, () => settings.channel),
     }
 
-    ionImageLayerCache[id] = layer
+    multiModeLayers[id] = layer
     ionImageState.activeLayer = id
 
+    const [isotopeImage] = props.annotation.isotopeImages
     if (isotopeImage) {
       loadPngFromUrl(isotopeImage.url)
         .then(img => {
@@ -204,22 +235,44 @@ export const useIonImages = (props: Props) => {
 
 export const useIonImageMenu = () => {
   const { activeLayer } = toRefs(ionImageState)
+
+  const singleModeMenuItem = computed(() => {
+    return {
+      state: singleModeLayer.state,
+      colorBar: singleModeLayer.colorBar.value,
+    }
+  })
+
+  const multiModeMenuItems = computed(() =>
+    orderedIonImageLayers.value.map(layer => ({
+      state: layer.state,
+      settings: layer.settings,
+      colorBar: layer.colorBar.value,
+    })),
+  )
+
   return {
-    menuItems: ionImageMenuItems,
+    multiModeMenuItems,
+    singleModeMenuItem,
     activeLayer,
     setActiveLayer(id: string | null) {
       ionImageState.activeLayer = id
     },
-    updateIntensity(id: string, range: [number, number]) {
-      if (id in ionImageLayerCache) {
-        const { state } = ionImageLayerCache[id]
+    updateSingleModeIntensity(range: [number, number]) {
+      if (singleModeLayer) {
+        singleModeLayer.state.quantileRange = range
+      }
+    },
+    updateLayerIntensity(range: [number, number], id: string) {
+      if (id in multiModeLayers) {
+        const { state } = multiModeLayers[id]
         state.quantileRange = range
       }
     },
     toggleVisibility(id: string) {
-      if (id in ionImageLayerCache) {
-        const { state } = ionImageLayerCache[id]
-        state.visible = !state.visible
+      if (id in multiModeLayers) {
+        const { settings } = multiModeLayers[id]
+        settings.visible = !settings.visible
       }
     },
     deleteLayer(id: string) {
