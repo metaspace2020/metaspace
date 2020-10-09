@@ -9,7 +9,7 @@ from pyspark import SparkContext, SparkConf
 
 from sm.engine.annotation.acq_geometry import make_acq_geometry
 from sm.engine.annotation.imzml_parser import ImzMLParserWrapper
-from sm.engine.job import (
+from sm.engine.annotation.job import (
     del_jobs,
     insert_running_job,
     update_finished_job,

@@ -19,7 +19,7 @@ from sm.engine.daemon_action import DaemonAction
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.dataset import Dataset, DatasetStatus
-from sm.engine.job import JobStatus
+from sm.engine.annotation.job import JobStatus
 from sm.engine.queue import QueueConsumer
 from .utils import create_test_molecular_db
 
