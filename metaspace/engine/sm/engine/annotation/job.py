@@ -21,8 +21,7 @@ def get_ds_moldb_ids(ds_id: str, status: Optional[str] = None):
         return DB().select_onecol(
             'SELECT j.moldb_id FROM job j WHERE ds_id = %s AND status = %s', (ds_id, status)
         )
-    else:
-        return DB().select_onecol('SELECT j.moldb_id FROM job j WHERE ds_id = %s', (ds_id,))
+    return DB().select_onecol('SELECT j.moldb_id FROM job j WHERE ds_id = %s', (ds_id,))
 
 
 def del_jobs(ds: Dataset, moldb_ids: Optional[Iterable[int]] = None):
@@ -44,7 +43,7 @@ def del_jobs(ds: Dataset, moldb_ids: Optional[Iterable[int]] = None):
         moldb_ids = get_ds_moldb_ids(ds.id)
     moldbs = molecular_db.find_by_ids(moldb_ids)
 
-    with ThreadPoolExecutor() as ex:
+    with ThreadPoolExecutor() as executor:
         for moldb in moldbs:
             logger.info(f'Deleting isotopic images: ds_id={ds.id} ds_name={ds.name} moldb={moldb}')
             img_id_rows = db.select_onecol(
@@ -55,7 +54,7 @@ def del_jobs(ds: Dataset, moldb_ids: Optional[Iterable[int]] = None):
                 'WHERE ds_id = %s AND j.moldb_id = %s',
                 (ds.id, moldb.id),
             )
-            for _ in ex.map(
+            for _ in executor.map(
                 lambda img_id: img_store.delete_image_by_id(storage_type, 'iso_image', img_id),
                 (img_id for img_ids in img_id_rows for img_id in img_ids if img_id is not None),
             ):
