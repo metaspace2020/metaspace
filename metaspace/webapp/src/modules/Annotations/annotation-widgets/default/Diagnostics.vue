@@ -156,7 +156,7 @@ interface AnnotationGroup {
         return {
           datasetId: this.annotation.dataset.id,
           ionFormula: this.annotation.ionFormula,
-          database: this.annotation.database,
+          database: this.annotation.databaseDetails.id,
         }
       },
       update(data) {
