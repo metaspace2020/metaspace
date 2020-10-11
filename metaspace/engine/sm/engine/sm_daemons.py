@@ -83,7 +83,7 @@ class DatasetManager:
     def classify_dataset_images(self, ds):
         classify_dataset_ion_images(self._db, ds, self._sm_config['services'])
 
-    def annotate(self, ds, annotation_job_factory=None, del_first=False, **kwargs):
+    def annotate(self, ds, del_first=False):
         """ Run an annotation job for the dataset. If del_first provided, delete first
         """
         if del_first:
@@ -91,9 +91,7 @@ class DatasetManager:
             self._del_iso_images(ds)
             self._db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
         ds.save(self._db, self._es)
-        annotation_job_factory(img_store=self._img_store, sm_config=self._sm_config, **kwargs).run(
-            ds
-        )
+        AnnotationJob(img_store=self._img_store, ds=ds, sm_config=self._sm_config).run()
         Colocalization(self._db, self._img_store).run_coloc_job(ds.id, reprocess=del_first)
         generate_ion_thumbnail(
             db=self._db, img_store=self._img_store, ds_id=ds.id, only_if_needed=not del_first
@@ -262,9 +260,7 @@ class SMAnnotateDaemon:
                 'new', " [v] New annotation message: {}".format(json.dumps(msg))
             )
 
-            self._manager.annotate(
-                ds=ds, annotation_job_factory=AnnotationJob, del_first=msg.get('del_first', False)
-            )
+            self._manager.annotate(ds=ds, del_first=msg.get('del_first', False))
 
             update_msg = {
                 'ds_id': msg['ds_id'],

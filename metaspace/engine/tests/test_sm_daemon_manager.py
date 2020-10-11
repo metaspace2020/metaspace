@@ -65,14 +65,8 @@ def create_daemon_man(db=None, es=None, img_store=None, status_queue=None):
 
 
 class TestSMDaemonDatasetManager:
-    class SearchJob:
-        def __init__(self, *args, **kwargs):
-            pass
-
-        def run(self, *args, **kwargs):
-            pass
-
-    def test_annotate_ds(self, fill_db, metadata, ds_config):
+    @patch('sm.engine.sm_daemons.AnnotationJob')
+    def test_annotate_ds(self, AnnotationJobMock, fill_db, metadata, ds_config):
         es_mock = MagicMock(spec=ESExporter)
         db = DB()
         manager = create_daemon_man(db=db, es=es_mock)
@@ -89,7 +83,7 @@ class TestSMDaemonDatasetManager:
             metadata=metadata,
         )
 
-        manager.annotate(ds, annotation_job_factory=self.SearchJob)
+        manager.annotate(ds)
 
         DS_SEL = 'select name, input_path, upload_dt, metadata, config from dataset where id=%s'
         results = db.select_one(DS_SEL, params=(ds_id,))

@@ -141,7 +141,7 @@ class SciTester:
         ds = create_ds_from_files(self.ds_id, self.ds_name, self.input_path)
         self.db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
         ds.save(self.db)
-        AnnotationJob(img_store).run(ds)
+        AnnotationJob(img_store, ds).run()
 
     def clear_data_dirs(self):
         path = Path(self.ds_data_path)

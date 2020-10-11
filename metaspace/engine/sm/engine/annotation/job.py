@@ -16,7 +16,7 @@ logger = logging.getLogger('engine')
 IMG_URLS_BY_ID_SEL = ()
 
 
-def get_ds_moldb_ids(ds_id: int, status: Optional[str] = None):
+def get_ds_moldb_ids(ds_id: str, status: Optional[str] = None):
     if status is not None:
         return DB().select_onecol(
             'SELECT j.moldb_id FROM job j WHERE ds_id = %s AND status = %s', (ds_id, status)
@@ -26,6 +26,10 @@ def get_ds_moldb_ids(ds_id: int, status: Optional[str] = None):
 
 
 def del_jobs(ds: Dataset, moldb_ids: Optional[Iterable[int]] = None):
+    """
+    Delete a dataset's jobs for the specified moldbs, or all jobs if moldb_ids is None.
+    Also cleans up the annotations from ElasticSearch and deletes their ion images.
+    """
     db = DB()
     es = ESExporter(db)
     img_store = ImageStoreServiceWrapper()
@@ -48,8 +52,8 @@ def del_jobs(ds: Dataset, moldb_ids: Optional[Iterable[int]] = None):
                 'FROM annotation m '
                 'JOIN job j ON j.id = m.job_id '
                 'JOIN dataset d ON d.id = j.ds_id '
-                'WHERE ds_id = %s AND j.moldb_id = ANY(%s)',
-                (ds.id, moldb_ids),
+                'WHERE ds_id = %s AND j.moldb_id = %s',
+                (ds.id, moldb.id),
             )
             for _ in ex.map(
                 lambda img_id: img_store.delete_image_by_id(storage_type, 'iso_image', img_id),
@@ -74,6 +78,7 @@ def insert_running_job(ds_id: str, moldb_id: int) -> int:
 
 
 def update_finished_job(job_id: int, job_status: str):
+    """Update a job's status and set the finish time to now"""
     finish = datetime.now()
 
     DB().alter(

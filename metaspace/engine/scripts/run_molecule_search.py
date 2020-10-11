@@ -22,7 +22,7 @@ def run_search(sm_config):
     meta_path = args.meta_path or Path(args.input_path) / 'meta.json'
 
     ds = create_ds_from_files(args.ds_id, args.ds_name, args.input_path, config_path, meta_path)
-    manager.annotate(ds, AnnotationJob, del_first=True)
+    manager.annotate(ds, del_first=True)
 
 
 if __name__ == "__main__":

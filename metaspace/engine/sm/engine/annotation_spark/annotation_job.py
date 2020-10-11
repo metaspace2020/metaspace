@@ -3,6 +3,7 @@ from pathlib import Path
 from pprint import pformat
 from shutil import copytree, rmtree
 import logging
+from typing import Optional, Dict
 
 import boto3
 from pyspark import SparkContext, SparkConf
@@ -19,7 +20,9 @@ from sm.engine.annotation.job import (
 from sm.engine.annotation_spark.formula_imager import make_sample_area_mask, get_ds_dims
 from sm.engine.annotation.formula_validator import METRICS
 from sm.engine.annotation_spark.msm_basic_search import MSMSearch
+from sm.engine.dataset import Dataset
 from sm.engine.db import DB
+from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.search_results import SearchResults
 from sm.engine.util import SMConfig, split_s3_path
 from sm.engine.es_export import ESExporter
@@ -37,16 +40,15 @@ TARGET_DECOY_ADD_DEL = (
 class AnnotationJob:
     """Class responsible for dataset annotation."""
 
-    def __init__(self, img_store=None, sm_config=None):
+    def __init__(
+        self, img_store: ImageStoreServiceWrapper, ds: Dataset, sm_config: Optional[Dict] = None
+    ):
+        self._sm_config = sm_config or SMConfig.get_conf()
         self._img_store = img_store
-
         self._sc = None
         self._db = DB()
-        self._ds = None
-        self._status_queue = None
-        self._es = None
-
-        self._sm_config = sm_config or SMConfig.get_conf()
+        self._ds = ds
+        self._es = ESExporter(self._db, self._sm_config)
         self._ds_data_path = None
 
     def _configure_spark(self):
@@ -155,7 +157,7 @@ class AnnotationJob:
         logger.debug(f'Cleaning dataset temp dir {self._ds_data_path}')
         rmtree(self._ds_data_path, ignore_errors=True)
 
-    def run(self, ds):
+    def run(self):
         """Starts dataset annotation job.
 
         Annotation job consists of several steps:
@@ -174,31 +176,21 @@ class AnnotationJob:
             logger.info('*' * 150)
             start = time.time()
 
-            self._es = ESExporter(self._db, self._sm_config)
-            self._ds = ds
-
-            if self._sm_config['rabbitmq']:
-                self._status_queue = QueuePublisher(
-                    config=self._sm_config['rabbitmq'], qdesc=SM_DS_STATUS, logger=logger
-                )
-            else:
-                self._status_queue = None
-
             self._configure_spark()
-            self._copy_input_data(ds)
+            self._copy_input_data(self._ds)
             imzml_parser = self.create_imzml_parser()
             self._save_data_from_raw_ms_file(imzml_parser)
             self._img_store.storage_type = 'fs'
 
             logger.info(f'Dataset config:\n{pformat(self._ds.config)}')
 
-            completed_moldb_ids = set(get_ds_moldb_ids(ds.id, JobStatus.FINISHED))
+            finished_moldb_ids = set(get_ds_moldb_ids(self._ds.id, JobStatus.FINISHED))
             new_moldb_ids = set(self._ds.config['database_ids'])
-            added_moldb_ids = new_moldb_ids - completed_moldb_ids
-            removed_moldb_ids = completed_moldb_ids - new_moldb_ids
+            added_moldb_ids = new_moldb_ids - finished_moldb_ids
+            removed_moldb_ids = finished_moldb_ids - new_moldb_ids
 
             if removed_moldb_ids:
-                del_jobs(self._ds.id, removed_moldb_ids)
+                del_jobs(self._ds, removed_moldb_ids)
             self._run_annotation_jobs(imzml_parser, molecular_db.find_by_ids(added_moldb_ids))
 
             logger.info("All done!")
