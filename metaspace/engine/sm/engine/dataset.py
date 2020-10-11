@@ -81,16 +81,16 @@ class Dataset:
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        id: str = None,  # pylint: disable=redefined-builtin
+        id: str,  # pylint: disable=redefined-builtin
         name: str = None,
         input_path: str = None,
-        upload_dt=None,
+        upload_dt: datetime = None,
         metadata: Dict = None,
         config: Dict = None,
         status: str = DatasetStatus.QUEUED,
-        status_update_dt=None,
-        is_public=True,
-        img_storage_type='fs',
+        status_update_dt: datetime = None,
+        is_public: bool = True,
+        img_storage_type: str = 'fs',
     ):
         self.id = id
         self.name = name

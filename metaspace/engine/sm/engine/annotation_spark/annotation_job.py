@@ -167,9 +167,6 @@ class AnnotationJob:
               that uses most the cluster resources
             * Computing FDR per molecular database and filtering the results
             * Saving the results: metrics saved in the database, images in the Image service
-
-        Args:
-            ds (sm.engine.dataset.Dataset): dataset to annotate
         """
         try:
             logger.info('*' * 150)
