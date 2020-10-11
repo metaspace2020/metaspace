@@ -188,10 +188,10 @@ export const relatedMoleculesQuery =
   }`
 
 export const isobarsQuery =
-  gql`query IsobarsQuery($datasetId: String!, $ionFormula: String!, $databaseId: String!) {
+  gql`query IsobarsQuery($datasetId: String!, $filter: AnnotationFilter!) {
     allAnnotations(
       datasetFilter: { ids: $datasetId },
-      filter: { isobaricWith: $ionFormula, databaseId: $databaseId },
+      filter: $filter,
       orderBy: ORDER_BY_FDR_MSM,
       sortingOrder: ASCENDING
     ) {

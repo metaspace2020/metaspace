@@ -155,8 +155,10 @@ interface AnnotationGroup {
         this.isobarAnnotationsIonFormula = this.annotation.ionFormula
         return {
           datasetId: this.annotation.dataset.id,
-          ionFormula: this.annotation.ionFormula,
-          database: this.annotation.databaseDetails.id,
+          filter: {
+            isobaricWith: this.annotation.ionFormula,
+            databaseId: this.annotation.databaseDetails.id,
+          },
         }
       },
       update(data) {
@@ -212,8 +214,8 @@ export default class Diagnostics extends Vue {
           {
             annotationId: this.annotation.id,
             ion: this.annotation.ion,
-            isobarsFromAnnotation: Object.keys(isobarsByIonFormula).join(','),
-            isobarsFromQuery: Object.keys(annotationsByIonFormula).join(','),
+            isobarsFromPropsAnnotation: isobarsKeys.join(','),
+            isobarsFromQuery: annotationsKeys.join(','),
           })
       }
 
