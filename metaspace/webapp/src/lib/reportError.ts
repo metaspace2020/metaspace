@@ -26,7 +26,7 @@ export default function reportError(
 ) {
   try {
     if (!isHandled(err)) {
-      Sentry.captureException(err, { contexts: extraData })
+      Sentry.captureException(err, { contexts: { 'Extra Data': extraData } })
       console.error(err, extraData)
       if ($notify != null && message) {
         $notify.error(message)
