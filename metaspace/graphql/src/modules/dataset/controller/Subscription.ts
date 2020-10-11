@@ -41,7 +41,7 @@ async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
   const {ds_id, action: rawAction, stage, ...rest} = payload;
   const action = (rawAction || '').toUpperCase() as EngineDatasetAction;
   // wait until updates are reflected in ES so that clients can refresh their data
-  const maxAttempts = 8;
+  const maxAttempts = 12;
 
   if (!KNOWN_ACTIONS.includes(action)) {
     return;
@@ -73,7 +73,7 @@ async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
         return;
       }
 
-      await wait(200 * attempt * attempt);
+      await wait(50 * attempt * attempt);
     }
   } catch (err) {
     logger.error(err);
