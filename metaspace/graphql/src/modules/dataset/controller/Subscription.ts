@@ -49,7 +49,7 @@ async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
 
   try {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      logger.debug(JSON.stringify({attempt, ...payload}));
+      logger.debug('Pushing status update to subscribers: ' + JSON.stringify({ attempt, ...payload }));
       const ds = await esDatasetByID(ds_id, dummyContextUser, true);
 
       if (action === 'DELETE' && stage === 'FINISHED') {
