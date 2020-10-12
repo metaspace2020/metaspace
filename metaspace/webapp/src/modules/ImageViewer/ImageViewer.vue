@@ -28,14 +28,15 @@
       />
     </div>
     <div
-      class="absolute top-0 right-0 py-3 mr-2 h-full box-border flex flex-col justify-start items-end w-0"
+      class="absolute top-0 right-0 py-3 mr-2 h-full box-border flex flex-col justify-start items-end w-0 v-rhythm-3"
       data-side-bar
     >
       <fade-transition>
         <ion-image-menu
           v-if="openMenu === 'ION'"
-          key="ion-controls"
+          key="ion-layers"
           :annotation-id="annotation.id"
+          class="mb-auto"
         />
         <!-- <optical-image-menu
           v-if="openMenu === 'OPTICAL'"
@@ -43,13 +44,10 @@
         /> -->
       </fade-transition>
       <fade-transition>
-        <overlay
+        <ion-image-settings
           v-if="openMenu === 'ION'"
           key="ion-settings"
-          class="mt-auto w-60"
-        >
-          <p>This is a test</p>
-        </overlay>
+        />
       </fade-transition>
     </div>
     <image-saver
@@ -67,6 +65,7 @@ import IonImageViewer from '../../components/IonImageViewer'
 import FadeTransition from '../../components/FadeTransition'
 import ImageSaver from './ImageSaver.vue'
 import IonImageMenu from './IonImageMenu.vue'
+import IonImageSettings from './IonImageSettings.vue'
 
 import viewerState from './state'
 import { useIonImages } from './ionImageState'
@@ -92,6 +91,7 @@ const ImageViewer = defineComponent<Props>({
     ImageSaver,
     IonImageMenu,
     IonImageViewer,
+    IonImageSettings,
   },
   directives: {
     resize,

@@ -25,7 +25,7 @@
 <script lang="ts">
 import { defineComponent } from '@vue/composition-api'
 
-import RangeSlider from '../../components/RangeSlider.vue'
+import { RangeSlider } from '../../components/Slider'
 import { IonImageState } from './ionImageState'
 
 interface Props {
