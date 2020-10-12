@@ -13,7 +13,10 @@ from sm.engine.png_generator import ImageStoreServiceWrapper
 logger = logging.getLogger('engine')
 
 
-IMG_URLS_BY_ID_SEL = ()
+class JobStatus:
+    RUNNING = 'RUNNING'
+    FINISHED = 'FINISHED'
+    FAILED = 'FAILED'
 
 
 def get_ds_moldb_ids(ds_id: str, status: Optional[str] = None):
@@ -83,9 +86,3 @@ def update_finished_job(job_id: int, job_status: str):
     DB().alter(
         'UPDATE job set status=%s, finish=%s where id=%s', params=(job_status, finish, job_id),
     )
-
-
-class JobStatus:
-    RUNNING = 'RUNNING'
-    FINISHED = 'FINISHED'
-    FAILED = 'FAILED'
