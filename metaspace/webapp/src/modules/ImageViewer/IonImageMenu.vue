@@ -1,16 +1,15 @@
 <template>
   <fade-transition>
-    <div
+    <overlay
       v-if="mode === 'SINGLE'"
-      class="absolute top-0 right-0 mt-3 mr-2 w-60 px-3 box-border bg-gray-100-alpha rounded-lg h-12"
+      class="h-12 px-3"
     >
       <ion-intensity-slider
-        class="mt-3"
         :model="singleModeMenuItem.state"
         :color-bar="singleModeMenuItem.colorBar"
         @change="singleModeMenuItem.updateIntensity"
       />
-    </div>
+    </overlay>
     <menu-container v-else>
       <menu-item
         v-for="item in multiModeMenuItems"
@@ -72,6 +71,7 @@ import MenuItem from './MenuItem.vue'
 import IonIntensitySlider from './IonIntensitySlider.vue'
 import MolecularFormula from '../../components/MolecularFormula'
 import FadeTransition from '../../components/FadeTransition'
+import Overlay from './Overlay.vue'
 
 import '../../components/MonoIcon.css'
 import VisibleIcon from '../../assets/inline/refactoring-ui/visible.svg'
@@ -94,6 +94,7 @@ export default defineComponent({
     HiddenIcon,
     AddIcon,
     FadeTransition,
+    Overlay,
   },
   setup(props, { emit }) {
     const {

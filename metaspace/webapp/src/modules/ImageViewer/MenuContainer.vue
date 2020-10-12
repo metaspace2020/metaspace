@@ -1,21 +1,30 @@
 <template>
-  <div class="absolute top-0 right-0 py-3 pr-2 max-h-full box-border">
-    <div
-      class="py-3 bg-gray-100-alpha w-60 rounded-lg box-border overflow-x-hidden overflow-y-auto"
-      data-menu-items
-    >
-      <slot />
-    </div>
-  </div>
+  <overlay
+    class="overflow-x-hidden overflow-y-auto"
+    data-menu-items
+  >
+    <slot />
+  </overlay>
 </template>
+<script lang="ts">
+import Vue from 'vue'
+
+import Overlay from './Overlay.vue'
+
+export default Vue.extend({
+  components: {
+    Overlay,
+  },
+})
+</script>
 <style scoped>
-  [data-menu-items] > * {
+  [data-menu-items] >>> > * {
     @apply box-border border-0 border-t border-solid border-gray-200-alpha;
   }
-  [data-menu-items] > *:last-child {
+  [data-menu-items] >>> > *:last-child {
     @apply border-b;
   }
-  [data-menu-items] > *:focus {
+  [data-menu-items] >>> > *:focus {
     outline: 1px solid theme('colors.primary');
     outline-offset: -1px;
   }

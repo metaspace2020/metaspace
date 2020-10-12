@@ -27,17 +27,31 @@
         @move="handleImageMove"
       />
     </div>
-    <fade-transition>
-      <ion-image-menu
-        v-if="openMenu === 'ION'"
-        key="ION"
-        :annotation-id="annotation.id"
-      />
-      <!-- <optical-image-menu
-        v-if="openMenu === 'OPTICAL'"
-        key="OPTICAL"
-      /> -->
-    </fade-transition>
+    <div
+      class="absolute top-0 right-0 py-3 mr-2 h-full box-border flex flex-col justify-start items-end w-0"
+      data-side-bar
+    >
+      <fade-transition>
+        <ion-image-menu
+          v-if="openMenu === 'ION'"
+          key="ion-controls"
+          :annotation-id="annotation.id"
+        />
+        <!-- <optical-image-menu
+          v-if="openMenu === 'OPTICAL'"
+          key="OPTICAL"
+        /> -->
+      </fade-transition>
+      <fade-transition>
+        <overlay
+          v-if="openMenu === 'ION'"
+          key="ion-settings"
+          class="mt-auto w-60"
+        >
+          <p>This is a test</p>
+        </overlay>
+      </fade-transition>
+    </div>
     <image-saver
       class="absolute top-0 left-0 mt-3 ml-3"
       :dom-node="imageArea"
