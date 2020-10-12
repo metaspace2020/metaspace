@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from pandas.util.testing import assert_frame_equal
-from scipy.sparse import csr_matrix
+from scipy.sparse import coo_matrix
 
 from sm.engine.annotation.formula_validator import (
     formula_image_metrics,
@@ -22,8 +22,8 @@ def test_get_compute_img_measures_pass(chaos_mock, image_corr_mock, pattern_matc
     compute_metrics = make_compute_image_metrics(sample_area_mask, 2, 3, img_gen_config)
 
     formula_images = [
-        csr_matrix([[0.0, 100.0, 100.0], [10.0, 0.0, 3.0]]),
-        csr_matrix([[0.0, 50.0, 50.0], [0.0, 20.0, 0.0]]),
+        coo_matrix([[0.0, 100.0, 100.0], [10.0, 0.0, 3.0]]),
+        coo_matrix([[0.0, 50.0, 50.0], [0.0, 20.0, 0.0]]),
     ]
     formula_ints = [100.0, 10.0, 1.0]
 
@@ -57,10 +57,10 @@ def test_formula_image_metrics():
     )
 
     ref_images = [
-        (0, 0, 100, csr_matrix([[0, 100, 100], [10, 0, 3]])),
-        (0, 1, 10, csr_matrix([[0, 50, 50], [0, 20, 0]])),
-        (1, 0, 100, csr_matrix([[0, 100, 100], [10, 0, 3]])),
-        (1, 1, 10, csr_matrix([[0, 50, 50], [0, 20, 0]])),
+        (0, 0, 100, coo_matrix([[0, 100, 100], [10, 0, 3]])),
+        (0, 1, 10, coo_matrix([[0, 50, 50], [0, 20, 0]])),
+        (1, 0, 100, coo_matrix([[0, 100, 100], [10, 0, 3]])),
+        (1, 1, 10, coo_matrix([[0, 50, 50], [0, 20, 0]])),
     ]
 
     metrics_df, _ = formula_image_metrics(
@@ -69,6 +69,7 @@ def test_formula_image_metrics():
         target_formula_inds={0, 1},
         targeted_database_formula_inds=set(),
         n_peaks=4,
+        min_px=1,
     )
 
     exp_metrics_df = pd.DataFrame(
@@ -91,9 +92,9 @@ def test_targeted_database_metrics():
     )
 
     ref_images = [
-        (0, 0, 100, csr_matrix([[0, 100, 100], [10, 0, 3]])),  # first formula first peak only
-        (1, 1, 10, csr_matrix([[0, 50, 50], [0, 20, 0]])),  # second formula second peak only
-        (2, 0, 0, csr_matrix([[0, 0, 0], [0, 0, 0]])),  # third formula first peak empty image
+        (0, 0, 100, coo_matrix([[0, 100, 100], [10, 0, 3]])),  # first formula first peak only
+        (1, 1, 10, coo_matrix([[0, 50, 50], [0, 20, 0]])),  # second formula second peak only
+        (2, 0, 0, coo_matrix([[0, 0, 0], [0, 0, 0]])),  # third formula first peak empty image
     ]
 
     metrics_df, _ = formula_image_metrics(
@@ -102,6 +103,7 @@ def test_targeted_database_metrics():
         target_formula_inds={0, 1, 2},
         targeted_database_formula_inds={0, 1, 2},
         n_peaks=4,
+        min_px=1,
     )
 
     exp_metrics_df = pd.DataFrame(data=[exp_metrics] * 2, index=pd.Index([0, 1], name='formula_i'))

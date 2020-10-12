@@ -8,6 +8,10 @@ import pandas as pd
 from scipy.sparse import coo_matrix
 from concurrent.futures import ThreadPoolExecutor
 
+from sm.engine.annotation.formula_validator import (
+    compute_and_filter_metrics,
+    make_compute_image_metrics,
+)
 from sm.engine.dataset import DSConfigImageGeneration
 from sm.engine.annotation_lithops.utils import (
     ds_dims,
@@ -16,7 +20,6 @@ from sm.engine.annotation_lithops.utils import (
     logger,
 )
 from sm.engine.annotation_lithops.io import save_cobj, load_cobj, CObj
-from sm.engine.annotation_lithops.validate import make_compute_image_metrics, formula_image_metrics
 
 ISOTOPIC_PEAK_N = 4
 
@@ -80,7 +83,7 @@ class ImagesManager:
         return formula_metrics_df, self._cloud_objs
 
 
-def gen_iso_images(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, ppm=3, min_px=1):
+def gen_iso_image_sets(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, ppm=3, min_px=1):
     # assume sp data is sorted by mz order ascending
     # assume centr data is sorted by mz order ascending
 
@@ -220,6 +223,7 @@ def process_centr_segments(
     nrows, ncols = ds_dims(imzml_reader.coordinates)
     compute_metrics = make_compute_image_metrics(sample_area_mask, nrows, ncols, image_gen_config)
     ppm = image_gen_config['ppm']
+    min_px = image_gen_config['min_px']
     pw_mem_mb = 2048 if is_intensive_dataset else 1024
 
     def process_centr_segment(
@@ -242,7 +246,7 @@ def process_centr_segments(
             storage,
         )
 
-        formula_images_it = gen_iso_images(
+        formula_image_set_it = gen_iso_image_sets(
             sp_inds=sp_arr.sp_i.values,
             sp_mzs=sp_arr.mz.values,
             sp_ints=sp_arr.int.values,
@@ -258,7 +262,14 @@ def process_centr_segments(
         ) // 3
         print(f'Max formula_images size: {max_formula_images_mb} mb')
         images_manager = ImagesManager(storage, max_formula_images_mb * 1024 ** 2)
-        formula_image_metrics(formula_images_it, compute_metrics, images_manager)
+        for f_i, f_metrics, f_images in compute_and_filter_metrics(
+            formula_image_set_it,
+            compute_metrics,
+            target_formula_inds=set(),  # TODO
+            targeted_database_formula_inds=set(),  # TODO
+            min_px=min_px,
+        ):
+            images_manager(f_i, f_metrics, f_images)
         formula_metrics_df, images_cloud_objs = images_manager.finish()
 
         print(f'Centroids segment {segm_id} finished')

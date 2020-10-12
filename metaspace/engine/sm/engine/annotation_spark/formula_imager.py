@@ -153,10 +153,10 @@ def create_process_segment(
             formula_metrics_df, formula_images = formula_image_metrics(
                 formula_images_it,
                 compute_metrics,
-                target_formula_inds,
-                targeted_database_formula_inds,
-                n_peaks,
-                min_px,
+                target_formula_inds=target_formula_inds,
+                targeted_database_formula_inds=targeted_database_formula_inds,
+                n_peaks=n_peaks,
+                min_px=min_px,
             )
             logger.info(f'Segment {segm_i} finished')
         else:
