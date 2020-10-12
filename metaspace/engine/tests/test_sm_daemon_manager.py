@@ -108,11 +108,11 @@ class TestSMDaemonDatasetManager:
         assert index_ds_kw_args.get('moldb').name == 'HMDB'
         assert index_ds_kw_args.get('moldb').version == 'v4'
 
-    def test_delete_ds(self, fill_db):
+    @patch('sm.engine.annotation.job.ImageStoreServiceWrapper', spec=ImageStoreServiceWrapper)
+    @patch('sm.engine.annotation.job.ESExporter', spec=ESExporter)
+    def test_delete_ds(self, EsMock, ImgStoreMock, fill_db):
         db = DB()
-        es_mock = MagicMock(spec=ESExporter)
-        img_store_service_mock = MagicMock(spec=ImageStoreServiceWrapper)
-        manager = create_daemon_man(db=db, es=es_mock, img_store=img_store_service_mock)
+        manager = create_daemon_man(db=db, es=EsMock(), img_store=ImgStoreMock())
 
         ds_id = '2000-01-01'
         ds = create_ds(ds_id=ds_id)
@@ -120,8 +120,8 @@ class TestSMDaemonDatasetManager:
         manager.delete(ds)
 
         ids = [f'iso_image_{i}{j}' for i, j in product([1, 2], [1, 2])]
-        img_store_service_mock.delete_image_by_id.assert_has_calls(
+        ImgStoreMock.return_value.delete_image_by_id.assert_has_calls(
             [call('fs', 'iso_image', ids[0]), call('fs', 'iso_image', ids[1])]
         )
-        es_mock.delete_ds.assert_called_with(ds_id)
+        EsMock.return_value.delete_ds.assert_has_calls([call(ds_id)])
         assert db.select_one('SELECT * FROM dataset WHERE id = %s', params=(ds_id,)) == []
