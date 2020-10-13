@@ -39,7 +39,7 @@ export default (getProps: () => SliderProps, range: Ref<Range>) : SliderThumbIns
     }),
     pixelStep: computed(() => {
       const { max, min, step } = getProps()
-      return step * ((range.value.maxX - range.value.minX) / (max - min))
+      return Math.round(step * ((range.value.maxX - range.value.minX) / (max - min)))
     }),
   }
 }
