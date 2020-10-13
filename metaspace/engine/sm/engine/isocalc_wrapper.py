@@ -1,10 +1,13 @@
 import logging
 from collections import defaultdict
+from typing import Dict, Optional
 
 import numpy as np
 import cpyMSpec as cpyMSpec_0_4_2
 import cpyMSpec_0_3_5
 from pyMSpec.pyisocalc import pyisocalc
+
+from sm.engine.dataset import DSConfig
 
 assert cpyMSpec_0_4_2.utils.VERSION == '0.4.2'
 assert cpyMSpec_0_3_5.utils.VERSION == '0.3.5'
@@ -19,14 +22,9 @@ BASE_MZ = 200.0
 class IsocalcWrapper:
     """ Wrapper around pyMSpec.pyisocalc.pyisocalc used for getting theoretical isotope peaks'
     centroids and profiles for a sum formula.
-
-    Args
-    ----------
-    isocalc_config : dict
-        Dictionary representing isotope_generation section of a dataset config file
     """
 
-    _all_centroids_caches = None
+    _all_centroids_caches: Optional[Dict]
 
     @classmethod
     def set_centroids_cache_enabled(cls, enabled):
@@ -37,7 +35,7 @@ class IsocalcWrapper:
         else:
             cls._all_centroids_caches = None
 
-    def __init__(self, ds_config):
+    def __init__(self, ds_config: DSConfig):
         self.analysis_version = ds_config.get('analysis_version', 1)
 
         isocalc_config = ds_config['isotope_generation']

@@ -396,7 +396,7 @@ class Colocalization:
             reprocess: Whether to re-run colocalization jobs against databases
                 that have already successfully run
         """
-        image_storage_type = Dataset(ds_id).get_ion_img_storage_type(self._db)
+        image_storage_type = Dataset.load(self._db, ds_id).get_ion_img_storage_type(self._db)
         moldb_ids, charge = self._db.select_one(DATASET_CONFIG_SEL, [ds_id])
         existing_moldb_ids = set(db for db, in self._db.select(SUCCESSFUL_COLOC_JOB_SEL, [ds_id]))
 

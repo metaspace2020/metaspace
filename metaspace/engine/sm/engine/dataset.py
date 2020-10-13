@@ -54,13 +54,41 @@ FLAT_DS_CONFIG_KEYS = frozenset(
 )
 
 
+class DSConfigIsotopeGeneration(TypedDict):
+    adducts: List[str]
+    charge: int
+    isocalc_sigma: float
+    instrument: str
+    n_peaks: int
+    neutral_losses: List[str]
+    chem_mods: List[str]
+
+
+class DSConfigFDR(TypedDict):
+    decoy_sample_size: int
+
+
+class DSConfigImageGeneration(TypedDict):
+    ppm: int
+    n_levels: int
+    min_px: int
+
+
+class DSConfig(TypedDict):
+    database_ids: List[int]
+    analysis_version: int
+    isotope_generation: DSConfigIsotopeGeneration
+    fdr: DSConfigFDR
+    image_generation: DSConfigImageGeneration
+
+
 class Dataset:
     """ Class for representing an IMS dataset
     """
 
     DS_SEL = (
         'SELECT id, name, input_path, upload_dt, metadata, config, status, '
-        '   status_update_dt, is_public '
+        '   status_update_dt, is_public, ion_img_storage_type '
         'FROM dataset WHERE id = %s'
     )
     DS_UPD = (
@@ -83,16 +111,17 @@ class Dataset:
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
+        *,
         id: str,  # pylint: disable=redefined-builtin
-        name: str = None,
-        input_path: str = None,
-        upload_dt: datetime = None,
-        metadata: Dict = None,
-        config: Dict = None,
+        name: str,
+        input_path: str,
+        upload_dt: datetime,
+        metadata: Dict,
+        config: DSConfig,
         status: str = DatasetStatus.QUEUED,
         status_update_dt: datetime = None,
         is_public: bool = True,
-        img_storage_type: str = 'fs',
+        ion_img_storage_type: str = 'fs',
     ):
         self.id = id
         self.name = name
@@ -101,7 +130,7 @@ class Dataset:
         self.status = status
         self.status_update_dt = status_update_dt or datetime.now()
         self.is_public = is_public
-        self.ion_img_storage_type = img_storage_type
+        self.ion_img_storage_type = ion_img_storage_type
 
         self.metadata = metadata
         self.config = config
@@ -233,34 +262,6 @@ def _get_isotope_generation_from_metadata(metadata, analysis_version):
     isocalc_sigma = float(f"{params['sigma']:f}")
 
     return default_adducts, charge, isocalc_sigma, instrument
-
-
-class DSConfigIsotopeGeneration(TypedDict):
-    adducts: List[str]
-    charge: int
-    isocalc_sigma: float
-    instrument: str
-    n_peaks: int
-    neutral_losses: List[str]
-    chem_mods: List[str]
-
-
-class DSConfigFDR(TypedDict):
-    decoy_sample_size: int
-
-
-class DSConfigImageGeneration(TypedDict):
-    ppm: int
-    n_levels: int
-    min_px: int
-
-
-class DSConfig(TypedDict):
-    database_ids: List[int]
-    analysis_version: int
-    isotope_generation: DSConfigIsotopeGeneration
-    fdr: DSConfigFDR
-    image_generation: DSConfigImageGeneration
 
 
 def generate_ds_config(

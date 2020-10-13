@@ -8,6 +8,7 @@ import pandas as pd
 from pyspark.files import SparkFiles
 from scipy.sparse import coo_matrix
 
+from sm.engine.dataset import DSConfig
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.annotation.formula_validator import (
     make_compute_image_metrics,
@@ -120,7 +121,7 @@ def get_file_path(name):
 def create_process_segment(
     ds_segments: List,
     coordinates: np.ndarray,
-    ds_config: Dict,
+    ds_config: DSConfig,
     target_formula_inds: Set[int],
     targeted_database_formula_inds: Set[int],
 ):

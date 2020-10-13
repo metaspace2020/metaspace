@@ -1,6 +1,3 @@
-from functools import partial
-
-import requests
 from concurrent.futures.thread import ThreadPoolExecutor
 
 import numpy as np
@@ -107,13 +104,10 @@ def read_ranges_from_url(storage, url, ranges):
 
         def get_range(lo_hi):
             lo, hi = lo_hi
-            if url.startswith('cos://'):
-                bucket, key = url[len('cos://') :].split('/', maxsplit=1)
-                return storage.get_object(Bucket=bucket, Key=key, Range=f'bytes={lo}-{hi}')[
-                    'Body'
-                ].read()
-            else:
-                return requests.get(url, headers={'Range': f'bytes={lo}-{hi}'}).content
+            bucket, key = url[len('cos://') :].split('/', maxsplit=1)
+            return storage.get_object(Bucket=bucket, Key=key, Range=f'bytes={lo}-{hi}')[
+                'Body'
+            ].read()
 
         request_results = list(ex.map(get_range, request_ranges))
 

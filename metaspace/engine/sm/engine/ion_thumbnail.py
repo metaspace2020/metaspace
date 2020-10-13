@@ -22,19 +22,19 @@ THUMB_SEL = "SELECT ion_thumbnail FROM dataset WHERE id = %s"
 THUMB_UPD = "UPDATE dataset SET ion_thumbnail = %s WHERE id = %s"
 
 ALGORITHMS = {
-    'smart-image-medoid': lambda *args: _make_thumbnail_from_minimally_overlapping_image_clusters(
-        *args, use_centroids=False
+    'smart-image-medoid': lambda i, m, h, w: _thumb_from_minimally_overlapping_image_clusters(
+        i, m, h, w, use_centroids=False
     ),
-    'smart-image-centroid': lambda *args: _make_thumbnail_from_minimally_overlapping_image_clusters(
-        *args, use_centroids=True
+    'smart-image-centroid': lambda i, m, h, w: _thumb_from_minimally_overlapping_image_clusters(
+        i, m, h, w, use_centroids=True
     ),
-    'image-medoid': lambda *args: _make_thumbnail_from_image_clusters(*args, use_centroids=False),
-    'image-centroid': lambda *args: _make_thumbnail_from_image_clusters(*args, use_centroids=True),
-    'pixel-mean-intensity': lambda *args: _make_thumbnail_from_pixel_clusters(
-        *args, use_distance_from_centroid=False
+    'image-medoid': lambda i, m, h, w: _thumb_from_image_clusters(i, m, h, w, use_centroids=False),
+    'image-centroid': lambda i, m, h, w: _thumb_from_image_clusters(i, m, h, w, use_centroids=True),
+    'pixel-mean-intensity': lambda i, m, h, w: _thumb_from_pixel_clusters(
+        i, m, h, w, use_distance_from_centroid=False
     ),
-    'pixel-distance': lambda *args: _make_thumbnail_from_pixel_clusters(
-        *args, use_distance_from_centroid=True
+    'pixel-distance': lambda i, m, h, w: _thumb_from_pixel_clusters(
+        i, m, h, w, use_distance_from_centroid=True
     ),
 }
 DEFAULT_ALGORITHM = 'image-centroid'
@@ -79,7 +79,7 @@ def _sort_by_centralness(images, h, w):
     return images[np.argsort(centralness)]
 
 
-def _make_thumbnail_from_minimally_overlapping_image_clusters(images, mask, h, w, use_centroids):
+def _thumb_from_minimally_overlapping_image_clusters(images, mask, h, w, use_centroids):
     if len(images) > 3:
         good_images = _get_good_images(images, mask)
         kmeans = KMeans(min(10, len(images)))
@@ -104,7 +104,7 @@ def _make_thumbnail_from_minimally_overlapping_image_clusters(images, mask, h, w
     return np.dstack([*(sample.reshape(h, w) for sample in samples), mask])
 
 
-def _make_thumbnail_from_image_clusters(images, mask, h, w, use_centroids):
+def _thumb_from_image_clusters(images, mask, h, w, use_centroids):
     if len(images) > 3:
         good_images = _get_good_images(images, mask)
         kmeans = KMeans(3)
@@ -126,7 +126,7 @@ def _make_thumbnail_from_image_clusters(images, mask, h, w, use_centroids):
     return np.dstack([*(sample.reshape(h, w) for sample in samples), mask])
 
 
-def _make_thumbnail_from_pixel_clusters(images, mask, h, w, use_distance_from_centroid=False):
+def _thumb_from_pixel_clusters(images, mask, h, w, use_distance_from_centroid=False):
     """ Alternate implementation. Results are sharper, but noisier """
     # 6-color
     # colors = np.array([[1, 0, 1, 0], [1, 0, 0, 0], [1, 1, 0, 0],

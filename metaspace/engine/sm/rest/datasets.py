@@ -1,4 +1,5 @@
 import logging
+from typing import Dict
 
 import bottle
 
@@ -13,7 +14,7 @@ from sm.rest.utils import NOT_EXIST, INTERNAL_ERROR, body_to_json, OK
 
 BUSY = {'status_code': 409, 'status': 'dataset_busy'}
 
-sm_config = None
+sm_config: Dict
 logger = logging.getLogger('api')
 app = bottle.Bottle()
 

@@ -9,6 +9,7 @@ from datetime import datetime
 from pathlib import Path
 import random
 from time import sleep
+from typing import Dict
 
 from sm.engine.db import ConnectionPool
 from sm.engine import molecular_db
@@ -55,7 +56,7 @@ class SMConfig:
     """ Engine configuration manager """
 
     _path = 'conf/config.json'
-    _config_dict = {}
+    _config_dict: Dict = {}
 
     @classmethod
     def set_path(cls, path):

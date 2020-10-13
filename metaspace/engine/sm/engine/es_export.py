@@ -1,5 +1,6 @@
 import logging
 from collections import MutableMapping, defaultdict
+from typing import List, Any
 
 import numpy as np
 import pandas as pd
@@ -536,7 +537,7 @@ class ESExporter:
 
             logger.info(f'Deleting annotation documents from ES: {ds_id}, {moldb}')
 
-            must = [{'term': {'ds_id': ds_id}}]
+            must: List[Any] = [{'term': {'ds_id': ds_id}}]
             if moldb:
                 must.append({'term': {'db_id': moldb.id}})
 

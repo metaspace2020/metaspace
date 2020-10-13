@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from shutil import rmtree
-from typing import Tuple, List, Dict, Set
+from typing import Tuple, List, Dict, Set, Iterable
 
 import numpy as np
 import pandas as pd
@@ -9,6 +9,7 @@ import pyspark
 from pyspark.files import SparkFiles
 from pyspark.storagelevel import StorageLevel
 
+from sm.engine.dataset import DSConfig
 from sm.engine.fdr import FDR
 from sm.engine.annotation.formula_centroids import CentroidsGenerator
 from sm.engine.formula_parser import safe_generate_ion_formula
@@ -32,7 +33,7 @@ from sm.engine.util import SMConfig
 logger = logging.getLogger('engine')
 
 
-def init_fdr(ds_config: Dict, moldbs: List[MolecularDB]) -> List[Tuple[MolecularDB, FDR]]:
+def init_fdr(ds_config: DSConfig, moldbs: List[MolecularDB]) -> List[Tuple[MolecularDB, FDR]]:
     """Randomly select decoy adducts for each moldb and target adduct."""
 
     isotope_gen_config = ds_config['isotope_generation']
@@ -144,7 +145,7 @@ class MSMSearch:
         spark_context: pyspark.SparkContext,
         imzml_parser: ImzMLParserWrapper,
         moldbs: List[MolecularDB],
-        ds_config: dict,
+        ds_config: DSConfig,
         ds_data_path: Path,
     ):
         self._spark_context = spark_context
@@ -256,7 +257,7 @@ class MSMSearch:
 
         return target_formula_inds, targeted_database_formula_inds
 
-    def search(self) -> Tuple[pd.DataFrame, pyspark.RDD]:
+    def search(self) -> Iterable[Tuple[pd.DataFrame, pyspark.RDD]]:
         """Search, score, and compute FDR for all MolecularDB formulas.
 
         Yields:

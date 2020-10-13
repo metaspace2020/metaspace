@@ -23,12 +23,7 @@ class MolecularDB:
 
     # pylint: disable=redefined-builtin
     def __init__(
-        self,
-        id: int = None,
-        name: str = None,
-        version: str = None,
-        targeted: bool = None,
-        group_id: str = None,
+        self, id: int, name: str, version: str, targeted: bool = None, group_id: str = None,
     ):
         self.id = id
         self.name = name

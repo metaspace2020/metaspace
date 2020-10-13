@@ -31,7 +31,7 @@ from sm.engine.annotation_lithops.segment_centroids import (
     define_centr_segments,
     validate_centroid_segments,
 )
-from sm.engine.annotation_lithops.annotate import process_centr_segments
+from sm.engine.annotation_lithops.annotate import process_centr_segments, ImageLookup
 from sm.engine.annotation_lithops.run_fdr import run_fdr
 from sm.engine.annotation_lithops.cache import PipelineCacher
 from sm.engine.annotation_lithops.utils import PipelineStats, logger, jsonhash
@@ -52,7 +52,7 @@ class Pipeline:
     clip_centr_chunks_cobjects: List[CObj[pd.DataFrame]]
     db_segms_cobjects: List[CObj[pd.DataFrame]]
     formula_metrics_df: pd.DataFrame
-    images_cloud_objs: List[CObj[Dict[int, List[coo_matrix]]]]
+    image_lookups: List[int]
     fdrs: pd.DataFrame
     results_df: pd.DataFrame
 
@@ -264,10 +264,10 @@ class Pipeline:
         cache_key = ':ds/:db/annotate.cache'
 
         if use_cache and self.cacher.exists(cache_key):
-            self.formula_metrics_df, self.images_cloud_objs = self.cacher.load(cache_key)
+            self.formula_metrics_df, self.image_lookups = self.cacher.load(cache_key)
             logger.info(f'Loaded {self.formula_metrics_df.shape[0]} metrics from cache')
         else:
-            self.formula_metrics_df, self.images_cloud_objs = process_centr_segments(
+            self.formula_metrics_df, self.image_lookups = process_centr_segments(
                 self.fexec,
                 self.ds_segms_cobjects,
                 self.ds_segments_bounds,
@@ -280,7 +280,7 @@ class Pipeline:
             )
             logger.info(f'Metrics calculated: {self.formula_metrics_df.shape[0]}')
 
-            self.cacher.save((self.formula_metrics_df, self.images_cloud_objs), cache_key)
+            self.cacher.save((self.formula_metrics_df, self.image_lookups), cache_key)
 
     def run_fdr(self, use_cache=True):
         cache_key = ':ds/:db/run_fdr.cache'
@@ -311,6 +311,7 @@ class Pipeline:
         formula_is = set(results_df.index)
 
         # TODO: Convert images to PNGs
+        png_jobs = []
 
     def save_results_to_server(self):
         sr = SearchResults()
@@ -334,7 +335,7 @@ class Pipeline:
                     images[k] = v
             return images
 
-        futures = self.fexec.map(get_target_images, self.images_cloud_objs, runtime_memory=1024)
+        futures = self.fexec.map(get_target_images, self.image_lookups, runtime_memory=1024)
         all_images = {}
         for image_set in self.fexec.get_result(futures):
             all_images.update(image_set)

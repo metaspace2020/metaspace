@@ -233,14 +233,16 @@ def segment_centroids(
 
         return segms_cobjects
 
-    second_level_segms_cobjects = defaultdict(list)
+    second_level_segms_dict = defaultdict(list)
     for sub_segms_cobjects in first_level_segms_cobjects:
         for first_level_segm_i in sub_segms_cobjects:
-            second_level_segms_cobjects[first_level_segm_i].append(
+            second_level_segms_dict[first_level_segm_i].append(
                 sub_segms_cobjects[first_level_segm_i]
             )
-    second_level_segms_cobjects = sorted(second_level_segms_cobjects.items(), key=lambda x: x[0])
-    second_level_segms_cobjects = [[cobjects] for segm_i, cobjects in second_level_segms_cobjects]
+    second_level_segms_cobjects = [
+        [cobjects]
+        for segm_i, cobjects in sorted(second_level_segms_dict.items(), key=lambda x: x[0])
+    ]
 
     first_level_cobjs = [co for cos in first_level_segms_cobjects for co in cos.values()]
     assert len(first_level_cobjs) == len(

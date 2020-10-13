@@ -227,11 +227,11 @@ def load_ds(
     with TemporaryDirectory() as tmp_dir:
         logger.info("Temp dir is {}".format(tmp_dir))
         imzml_dir = Path(tmp_dir) / 'imzml'
-        res = imzml_dir.mkdir()
-        logger.info("Create {} result {}".format(imzml_dir, res))
+        imzml_dir.mkdir()
+        logger.info(f"Create {imzml_dir}")
         segments_dir = Path(tmp_dir) / 'segments'
-        res = segments_dir.mkdir()
-        logger.info("Create {} result {}".format(segments_dir, res))
+        segments_dir.mkdir()
+        logger.info(f"Create {segments_dir}")
 
         logger.info('Downloading dataset...')
         t = time()

@@ -1,10 +1,12 @@
 from unittest.mock import patch
 
+from sm.engine.dataset import DSConfigIsotopeGeneration
 from sm.engine.molecular_db import MolecularDB
 from sm.engine.annotation_spark.msm_basic_search import init_fdr, collect_ion_formulas
 from tests.conftest import spark_context
 
-BASIC_ISOTOPE_GENERATION_CONFIG = {
+BASIC_ISOTOPE_GENERATION_CONFIG: DSConfigIsotopeGeneration = {
+    "instrument": "Orbitrap",
     "adducts": ["+H"],
     "charge": 1,
     "isocalc_sigma": 0.000619,
@@ -13,8 +15,8 @@ BASIC_ISOTOPE_GENERATION_CONFIG = {
     "chem_mods": [],
 }
 
-FULL_ISOTOPE_GENERATION_CONFIG = {
-    **BASIC_ISOTOPE_GENERATION_CONFIG,
+FULL_ISOTOPE_GENERATION_CONFIG: DSConfigIsotopeGeneration = {
+    **BASIC_ISOTOPE_GENERATION_CONFIG,  # type: ignore # https://github.com/python/mypy/issues/9408
     "adducts": ["", "+H", "+Na", "+K"],
     # Neutral losses / chem mods chosen so that
     "neutral_losses": ["-H", "-O"],

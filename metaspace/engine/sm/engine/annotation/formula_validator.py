@@ -145,12 +145,12 @@ def iter_images_in_sets(
         if p_i == n_peaks - 1:  # last formula image index
             f_images = f_images_buffer.pop(f_i)
             f_ints = f_ints_buffer.pop(f_i)
-            yield f_i, f_images, f_ints
+            yield f_i, f_ints, f_images
 
     # process formulas with len(peaks) < max_peaks and those that were cut to dataset max mz
     for f_i, f_images in f_images_buffer.items():
         f_ints = f_ints_buffer[f_i]
-        yield f_i, f_images, f_ints
+        yield f_i, f_ints, f_images
 
 
 def complete_image_list(images, require_first=True):
@@ -186,7 +186,7 @@ def compute_and_filter_metrics(
             that correspond to targeted databases.
         min_px: Minimum number of pixels each image should have.
     """
-    for f_i, f_images, f_ints in formula_image_set_it:
+    for f_i, f_ints, f_images in formula_image_set_it:
         f_images = nullify_images_with_too_few_pixels(f_images, min_px)
         is_targeted = f_i in targeted_database_formula_inds
         if complete_image_list(f_images, require_first=not is_targeted):

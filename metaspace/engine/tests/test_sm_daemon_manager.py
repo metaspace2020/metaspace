@@ -44,7 +44,7 @@ def create_ds(
         metadata=metadata or {},
         config=config,
         status=status,
-        img_storage_type='fs',
+        ion_img_storage_type='fs',
     )
 
 

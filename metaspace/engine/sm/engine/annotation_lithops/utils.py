@@ -18,7 +18,7 @@ logger = logging.getLogger('annotation-pipeline')
 
 
 class PipelineStats:
-    path = None
+    path: str
 
     @classmethod
     def init(cls):
