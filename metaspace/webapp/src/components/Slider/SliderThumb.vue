@@ -18,6 +18,7 @@ interface Props {
   disabled?: boolean
   x: number
   pixelStep: number
+  bounds: { minX: number, maxX: number }
 }
 
 export const THUMB_WIDTH = 12
@@ -27,6 +28,7 @@ export default defineComponent<Props>({
     disabled: { type: Boolean, default: false },
     x: Number,
     pixelStep: Number,
+    bounds: Object,
   },
   setup(props, { emit }) {
     const thumb = ref<HTMLElement>(null)
@@ -41,13 +43,13 @@ export default defineComponent<Props>({
       return event
     }
 
-    function setX(x: number) {
-      emit('change', x)
+    function emitX(x: number) {
+      emit('change', Math.min(Math.max(x, props.bounds.minX), props.bounds.maxX))
     }
 
     function onMove(event: MouseEvent | TouchEvent) {
       const eventTouch = getEventTouch(event)
-      setX(eventTouch.pageX - state.startX)
+      emitX(eventTouch.pageX - state.startX)
     }
 
     function onStop() {
@@ -77,10 +79,10 @@ export default defineComponent<Props>({
       const multiply = event.shiftKey ? 10 : 1
       if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
         event.preventDefault()
-        setX(props.x - props.pixelStep * multiply)
+        emitX(props.x - props.pixelStep * multiply)
       } else if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
         event.preventDefault()
-        setX(props.x + props.pixelStep * multiply)
+        emitX(props.x + props.pixelStep * multiply)
       }
     }
 

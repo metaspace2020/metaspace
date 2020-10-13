@@ -8,6 +8,7 @@
       :disabled="disabled"
       :x="thumbX"
       :pixel-step="pixelStep"
+      :bounds="thumbBounds"
       @change="onThumbChange"
     />
   </slider-track>
@@ -63,6 +64,7 @@ const Slider = defineComponent<Props>({
     return {
       track,
       onThumbChange,
+      thumbBounds: range,
       thumbX: thumb.x,
       pixelStep: thumb.pixelStep,
     }

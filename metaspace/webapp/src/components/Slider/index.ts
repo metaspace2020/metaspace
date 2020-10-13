@@ -1,5 +1,5 @@
 import Slider from './Slider.vue'
-import RangeSlider from './RangeSlider2.vue'
+import RangeSlider from './RangeSlider.vue'
 
 export {
   Slider,
