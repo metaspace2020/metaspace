@@ -12,8 +12,8 @@
       :step="0.01"
       :value="model.quantileRange"
       :disabled="isDisabled"
-      :min-tooltip="tooltip(0)"
-      :max-tooltip="tooltip(1)"
+      :min-tooltip="minTooltip"
+      :max-tooltip="maxTooltip"
       @change="range => emit('change', range)"
     />
     <div class="flex justify-between leading-6 tracking-wide">
@@ -23,7 +23,7 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api'
+import { defineComponent, computed } from '@vue/composition-api'
 
 import { RangeSlider } from '../../components/Slider'
 import { IonImageState } from './ionImageState'
@@ -32,6 +32,10 @@ interface Props {
   model: IonImageState,
   colorBar: any,
   isDisabled: boolean
+}
+
+const getTooltip = (quantile: number, min: number, max: number) => {
+  return (min + ((max - min) * quantile)).toExponential(1)
 }
 
 export default defineComponent<Props>({
@@ -45,12 +49,14 @@ export default defineComponent<Props>({
   },
   setup(props, { emit }) {
     return {
-      tooltip: (quantileIndex: number) => {
+      minTooltip: computed(() => {
         const { minIntensity, maxIntensity, quantileRange } = props.model
-        return (
-          minIntensity + ((maxIntensity - minIntensity) * quantileRange[quantileIndex])
-        ).toExponential(1)
-      },
+        return getTooltip(quantileRange[0], minIntensity, maxIntensity)
+      }),
+      maxTooltip: computed(() => {
+        const { minIntensity, maxIntensity, quantileRange } = props.model
+        return getTooltip(quantileRange[1], minIntensity, maxIntensity)
+      }),
       emit,
     }
   },

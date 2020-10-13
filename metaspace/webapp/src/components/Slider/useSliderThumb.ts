@@ -1,4 +1,4 @@
-import { reactive, Ref, onMounted, toRefs, computed } from '@vue/composition-api'
+import { Ref, computed } from '@vue/composition-api'
 
 interface SliderProps {
   value: number
@@ -7,40 +7,24 @@ interface SliderProps {
   step: number
 }
 
-interface State {
-  x: number
-}
-
 interface Range {
-  min: number
-  max: number
+  minX: number
+  maxX: number
 }
 
-type Return = {
+export type SliderThumbInstance = {
   x: Ref<number>,
   pixelStep: Ref<number>,
-  setX: (x: number) => number,
+  getValue: (x: number) => number,
 }
 
-export default (props: SliderProps, range: Ref<Range>, bounds: Ref<Range> = range) : Return => {
-  const state = reactive<State>({
-    x: 0,
-  })
+export default (getProps: () => SliderProps, range: Ref<Range>, bounds: Ref<Range> = range) : SliderThumbInstance => {
+  function getValue(x: number) {
+    const boundedX = Math.min(Math.max(x, bounds.value.minX), bounds.value.maxX)
 
-  onMounted(() => {
-    const { value, min, max } = props
-    const initialValue = Math.min(Math.max(value, min), max)
-    const ratio = ((initialValue - min) / (max - min))
-    state.x = Math.ceil(ratio * (range.value.max - range.value.min))
-  })
+    const { max, min, step } = getProps()
 
-  function setX(x: number) {
-    const boundedX = Math.min(Math.max(x, bounds.value.min), bounds.value.max)
-    state.x = boundedX
-
-    const { max, min, step } = props
-
-    const ratio = boundedX / (range.value.max - range.value.min)
+    const ratio = (boundedX - range.value.minX) / (range.value.maxX - range.value.minX)
     let value = ratio * (max - min) + min
 
     if (step !== 0.0) {
@@ -50,13 +34,16 @@ export default (props: SliderProps, range: Ref<Range>, bounds: Ref<Range> = rang
     return value
   }
 
-  const { x } = toRefs(state)
-
   return {
-    x,
-    setX,
-    pixelStep: computed(() =>
-      props.step * ((range.value.max - range.value.min) / (props.max - props.min)),
-    ),
+    getValue,
+    x: computed(() => {
+      const { value, min, max } = getProps()
+      const ratio = ((value - min) / (max - min))
+      return Math.ceil(ratio * (range.value.maxX - range.value.minX) + range.value.minX)
+    }),
+    pixelStep: computed(() => {
+      const { max, min, step } = getProps()
+      return step * ((range.value.maxX - range.value.minX) / (max - min))
+    }),
   }
 }

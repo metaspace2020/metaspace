@@ -1,6 +1,6 @@
 <template>
   <slider-track
-    ref="container"
+    ref="track"
     :disabled="disabled"
   >
     <slider-thumb
@@ -8,7 +8,7 @@
       :disabled="disabled"
       :x="thumbX"
       :pixel-step="pixelStep"
-      @change="emitValue"
+      @change="onThumbChange"
     />
   </slider-track>
 </template>
@@ -27,11 +27,6 @@ interface Props {
   value: number
   step: number
   disabled: boolean
-  color: string
-}
-
-interface ThumbState {
-  thumbX: number
 }
 
 const Slider = defineComponent<Props>({
@@ -43,35 +38,32 @@ const Slider = defineComponent<Props>({
     min: { type: Number, default: 0 },
     max: { type: Number, default: 100 },
     value: Number,
-    step: { type: Number, default: 2 },
+    step: { type: Number, default: 1 },
     disabled: Boolean,
   },
   setup(props, { emit, attrs }) {
-    const container = ref<Vue>(null)
+    const track = ref<Vue>(null)
 
     const width = computed(() => {
-      return container.value?.$el.clientWidth || 0
+      return track.value?.$el.clientWidth || 0
     })
 
     const range = computed(() => ({
-      min: 0,
-      max: width.value ? width.value - THUMB_WIDTH : 0,
+      minX: 0,
+      maxX: width.value ? width.value - THUMB_WIDTH : 0,
     }))
 
-    const thumb = useSliderThumb(props, range)
+    const thumb = useSliderThumb(() => props, range)
 
-    function emitValue(x: number) {
-      const value = thumb.setX(x)
+    function onThumbChange(x: number) {
+      const value = thumb.getValue(x)
       emit('change', value)
     }
 
     return {
-      container,
-      emitValue,
+      track,
+      onThumbChange,
       thumbX: thumb.x,
-      thumbStyle: {
-        backgroundColor: 'transparent',
-      },
       pixelStep: thumb.pixelStep,
     }
   },
