@@ -105,7 +105,7 @@
             :pixel-size-y="pixelSizeY"
             :scale-bar-color="scaleBarColor"
             :scale-type="scaleType"
-            @opacityInput="newVal => opacity = newVal"
+            @opacity="newVal => opacity = newVal"
           />
         </el-collapse-item>
 

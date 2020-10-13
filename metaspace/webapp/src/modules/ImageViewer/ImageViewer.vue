@@ -45,8 +45,10 @@
       </fade-transition>
       <fade-transition>
         <ion-image-settings
-          v-if="openMenu === 'ION'"
+          v-if="openMenu === 'ION' && hasOpticalImage"
           key="ion-settings"
+          :opacity="opacity"
+          @opacity="emitOpacity"
         />
       </fade-transition>
     </div>
@@ -107,7 +109,7 @@ const ImageViewer = defineComponent<Props>({
     scaleBarColor: { type: String },
     scaleType: { type: String },
   },
-  setup(props) {
+  setup(props, { emit }) {
     const { ionImageLayers } = useIonImages(props)
     const imageArea = ref<HTMLElement | null>(null)
 
@@ -153,6 +155,10 @@ const ImageViewer = defineComponent<Props>({
           yOffset,
         })
       },
+      emitOpacity(value: number) {
+        emit('opacity', value)
+      },
+      hasOpticalImage: computed(() => !!props.imageLoaderSettings.opticalSrc),
     }
   },
 })

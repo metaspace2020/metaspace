@@ -5,18 +5,21 @@
         OPACITY
       </span>
       <span>
-        {{ state.value }}%
+        {{ percentage }}%
       </span>
     </p>
     <slider
       class="opacity-gradient"
-      :value="state.value"
-      @change="v => state.value = v"
+      :value="percentage"
+      :min="0"
+      :max="100"
+      :step="1"
+      @change="emitOpacity"
     />
   </overlay>
 </template>
 <script lang="ts">
-import { defineComponent, reactive } from '@vue/composition-api'
+import { defineComponent, computed } from '@vue/composition-api'
 
 import Overlay from './Overlay.vue'
 import { Slider } from '../../components/Slider'
@@ -26,12 +29,15 @@ export default defineComponent({
     Overlay,
     Slider,
   },
-  setup() {
-    const state = reactive({
-      value: 100,
-    })
+  props: {
+    opacity: { type: Number, required: true },
+  },
+  setup(props, { emit }) {
     return {
-      state,
+      percentage: computed(() => Math.round(props.opacity * 100)),
+      emitOpacity(value: number) {
+        emit('opacity', value / 100)
+      },
     }
   },
 })
@@ -45,6 +51,6 @@ export default defineComponent({
   background-size: 100%, 12px 12px;
 }
 p {
-  margin-top: -6px; /* hacking */
+  margin-top: calc(-1 * theme('spacing.3') / 2); /* hacking */
 }
 </style>
