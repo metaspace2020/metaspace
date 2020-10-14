@@ -16,25 +16,50 @@ const convertToS3 = (url: string) => {
   return `s3://${bucket}/${decodeURIComponent(parsedUrl.pathname.slice(1))}`
 }
 
-const formatErrorMsg = (e: ApolloError) => {
+const formatErrorMsg = (e: ApolloError) : ErrorMessage => {
   if (e.graphQLErrors && e.graphQLErrors.length) {
     const [error] = e.graphQLErrors
     const message = safeJsonParse(error.message)
     if (message?.type === 'already_exists') {
-      return 'This database already exists, please use a different name or version.'
+      return {
+        message: 'This database already exists, please use a different name or version.',
+      }
     }
     if (message?.type === 'malformed_csv') {
-      return 'The file format does not look correct. Please check that the file is tab-separated'
-        + ' and contains three columns: id, name, and formula.'
+      return {
+        message: 'The file format does not look correct. Please check that the file is tab-separated'
+        + ' and contains three columns: id, name, and formula.',
+      }
+    }
+    if (message?.type === 'bad_formulae') {
+      return {
+        message: 'These formulae do not look correct, please check them and re-upload the file.',
+        details: message.details.map((d: any) => `“${d.formula}” on line ${d.line}`),
+      }
     }
   }
-  return 'Something went wrong, please try again later.'
+  return { message: 'Something went wrong, please try again later.' }
 }
 
 interface Props {
   name: string,
   details?: MolecularDBDetails,
   groupId: string,
+}
+
+type ErrorMessage = {
+  message: string
+  details?: string[]
+}
+
+interface State {
+  model: {
+    name: string,
+    version: string,
+    filePath: string,
+  },
+  loading: boolean,
+  error: ErrorMessage | null,
 }
 
 const UploadDialog = defineComponent<Props>({
@@ -45,14 +70,14 @@ const UploadDialog = defineComponent<Props>({
     groupId: String,
   },
   setup(props, { emit, root }) {
-    const state = reactive({
+    const state = reactive<State>({
       model: {
         name: props.name,
         version: '',
         filePath: '',
       },
       loading: false,
-      error: '',
+      error: null,
     })
 
     const isNewVersion = !!props.name
@@ -75,7 +100,7 @@ const UploadDialog = defineComponent<Props>({
     }
 
     const createDatabase = async() => {
-      state.error = ''
+      state.error = null
       state.loading = true
       try {
         await root.$apollo.mutate({
@@ -119,13 +144,19 @@ const UploadDialog = defineComponent<Props>({
         onOpened={focusHandler}
       >
         <FadeTransition>
-          {state.error
-            && <p class="m-0 mb-3 flex items-start text-danger">
+          { state.error
+            && <div class="flex items-start mb-3 text-danger text-sm leading-5">
               <i class="el-icon-warning-outline mr-2 text-lg" />
-              <span class="text-sm leading-5 font-medium">
-                {state.error}
-              </span>
-            </p>}
+              <div>
+                <p class="m-0 flex items-start font-medium">
+                  {state.error.message}
+                </p>
+                { state.error.details
+                  && <ul class="overflow-y-auto m-0 mt-3 pl-6 max-h-25">
+                    { state.error.details.map(d => <li>{d}</li>) }
+                  </ul> }
+              </div>
+            </div> }
         </FadeTransition>
         <form class="sm-form flex leading-6">
           <div class="flex-grow">
