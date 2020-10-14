@@ -69,9 +69,7 @@ const ionImageLayerCache : Record<string, IonImageLayer> = {}
 
 const orderedIonImageLayers = computed(() => state.order.map(id => ionImageLayerCache[id]))
 
-function deleteLayer(id: string) : number {
-  delete ionImageLayerCache[id]
-
+function removeLayer(id: string) : number {
   const idx = state.order.indexOf(id)
   state.order.splice(idx, 1)
   if (idx in state.order) {
@@ -123,11 +121,13 @@ export const useIonImages = (props: Props) => {
   })
 
   watch(() => props.annotation, () => {
-    const raw = ref<Image | null>(null)
-
     const { id } = props.annotation
 
-    if (id in ionImageLayerCache) {
+    if (viewerState.mode.value === 'SINGLE' && id in ionImageLayerCache) {
+      return
+    }
+
+    if (state.order.includes(id)) {
       state.activeLayer = id
       return
     }
@@ -135,13 +135,14 @@ export const useIonImages = (props: Props) => {
     let channel = channels[0]
     if (state.activeLayer !== null) {
       channel = ionImageLayerCache[state.activeLayer].settings?.channel
-      const idx = deleteLayer(state.activeLayer)
+      const idx = removeLayer(state.activeLayer)
       state.order.splice(idx, 0, id)
     } else {
       state.order.push(id)
       channel = state.nextChannel
       state.nextChannel = channels[channels.indexOf(channel) + 1] || channels[0]
     }
+    state.activeLayer = id
 
     const singleModeState = createState(props.annotation)
     const multiModeState = createState(props.annotation)
@@ -156,10 +157,11 @@ export const useIonImages = (props: Props) => {
       visible: true,
     })
 
-    const layer = {
+    const raw = ref<Image | null>(null)
+
+    ionImageLayerCache[id] = {
       annotation: props.annotation,
       id: props.annotation.id,
-      state,
       settings,
       singleModeState,
       multiModeState,
@@ -199,9 +201,6 @@ export const useIonImages = (props: Props) => {
       }),
     }
 
-    ionImageLayerCache[id] = layer
-    state.activeLayer = id
-
     const [isotopeImage] = props.annotation.isotopeImages
     if (isotopeImage) {
       loadPngFromUrl(isotopeImage.url)
@@ -211,11 +210,26 @@ export const useIonImages = (props: Props) => {
     }
   })
 
-  // onBeforeUnmount(() => {
-  //   state.order = []
-  //   state.activeLayer = null
-  //   ionImageLayerCache = {}
-  // })
+  watch(viewerState.mode, (mode) => {
+    if (mode === 'SINGLE') {
+      const { id } = props.annotation
+
+      // TODO: make this cleaner
+
+      for (const layer of Object.values(ionImageLayerCache)) {
+        layer.multiModeState = createState(layer.annotation)
+        if (layer.id === id) {
+          layer.settings.channel = channels[0]
+          layer.settings.label = undefined
+          layer.settings.visible = true
+        }
+      }
+
+      state.order = [id]
+      state.activeLayer = id
+      state.nextChannel = channels[1]
+    }
+  })
 
   return {
     ionImageLayers,
@@ -260,9 +274,9 @@ export const useIonImageMenu = (props: { annotationId: string }) => {
     setActiveLayer(id: string | null) {
       state.activeLayer = id
     },
-    deleteLayer(id: string) {
+    removeLayer(id: string) {
       if (state.order.length > 1) {
-        deleteLayer(id)
+        removeLayer(id)
       }
     },
   }

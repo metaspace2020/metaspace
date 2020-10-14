@@ -19,7 +19,7 @@
         :active-layer="activeLayer"
         :visible="item.settings.visible"
         @active="setActiveLayer"
-        @delete="deleteLayer"
+        @delete="removeLayer"
       >
         <p class="flex justify-between m-0 h-9 items-center">
           <molecular-formula
@@ -99,7 +99,7 @@ export default defineComponent({
   setup(props, { emit }) {
     const {
       activeLayer,
-      deleteLayer,
+      removeLayer,
       multiModeMenuItems,
       setActiveLayer,
       singleModeMenuItem,
@@ -107,7 +107,7 @@ export default defineComponent({
 
     return {
       activeLayer,
-      deleteLayer,
+      removeLayer,
       multiModeMenuItems,
       mode: viewerState.mode,
       setActiveLayer,

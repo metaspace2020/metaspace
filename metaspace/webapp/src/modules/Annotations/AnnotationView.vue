@@ -8,7 +8,7 @@
         @change="onSectionsChange"
       >
         <div class="el-collapse-item">
-          <div class="el-collapse-item__header flex items-start justify-center relative">
+          <div class="el-collapse-item__header flex items-start justify-center relative cursor-auto">
             <div class="av-header-items">
               <candidate-molecules-popover
                 placement="bottom"
