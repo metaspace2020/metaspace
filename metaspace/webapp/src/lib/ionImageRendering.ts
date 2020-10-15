@@ -265,31 +265,6 @@ export const processIonImage = (
   }
 }
 
-export const getCombinedImage = (images: IonImage[]): IonImage => {
-  if (images.length === 1) {
-    return images[0]
-  }
-
-  const avg = {
-    ...images[0],
-  }
-  const numImages = images.length
-  const numPixels = avg.width * avg.height
-  avg.clippedValues = new Uint8ClampedArray(numPixels)
-  avg.mask = new Uint8ClampedArray(numPixels)
-  for (let i = 0; i < numPixels; i++) {
-    avg.clippedValues[i] = 0
-    avg.mask[i] = 0
-    for (let j = 0; j < numImages; j++) {
-      avg.clippedValues[i] += images[j].clippedValues[i]
-      avg.mask[i] += images[j].mask[i]
-    }
-    // avg.clippedValues[i] = avg.clippedValues[i] / numImages
-    // avg.mask[i] = avg.mask[i] / numImages
-  }
-  return avg
-}
-
 export const renderIonImageToBuffer = (ionImage: IonImage, cmap?: readonly number[][], buffer?: ArrayBuffer) => {
   const { clippedValues, mask } = ionImage
   // Treat pixels as 32-bit values instead of four 8-bit values to avoid extra math.
@@ -312,7 +287,6 @@ export const renderIonImageToBuffer = (ionImage: IonImage, cmap?: readonly numbe
       }
     }
   }
-
   for (let i = 0; i < mask.length; i++) {
     if (mask[i]) {
       outputRGBA[i] += cmapRGBA[clippedValues[i]]
@@ -323,17 +297,58 @@ export const renderIonImageToBuffer = (ionImage: IonImage, cmap?: readonly numbe
   return outputBuffer
 }
 
+function getCmapComponents(cmap: readonly number[][]) {
+  const cmapBuffer = new ArrayBuffer(256 * 4)
+  const cmapComponents = new Uint8ClampedArray(cmapBuffer)
+  for (let i = 0; i < 256; i++) {
+    if (cmap != null) {
+      for (let c = 0; c < 4; c++) {
+        cmapComponents[i * 4 + c] = cmap[i][c]
+      }
+    } else {
+      for (let c = 0; c < 4; c++) {
+        cmapComponents[i * 4 + c] = i
+      }
+    }
+  }
+  return cmapComponents
+}
+
 export const renderIonImages = (layers: IonImageLayer[]) => {
   if (layers.length === 0) return null
 
-  const { width, height, clippedValues } = layers[0].ionImage
+  const [base] = layers
+  const { width, height, clippedValues } = base.ionImage
 
-  let buffer = new ArrayBuffer(clippedValues.length * 4)
+  const buffer = new ArrayBuffer(clippedValues.length * 4)
+  const pixels = new Uint8ClampedArray(buffer)
+
   for (const { ionImage, colorMap } of layers) {
-    buffer = renderIonImageToBuffer(ionImage, colorMap, buffer)
+    const cmapComponents = getCmapComponents(colorMap)
+    const { clippedValues, mask } = ionImage
+
+    for (let i = 0; i < mask.length; i++) {
+      if (!mask[i]) {
+        pixels[i * 4] = 0
+        pixels[i * 4 + 1] = 0
+        pixels[i * 4 + 2] = 0
+        pixels[i * 4 + 3] = 0
+      } else {
+        const v = clippedValues[i]
+
+        for (let j = 0; j < 3; j++) {
+          pixels[i * 4 + j] += cmapComponents[v * 4 + j]
+        }
+
+        // inspired by https://github.com/colorjs/color-composite/blob/master/index.js#L30
+        const a1 = cmapComponents[v * 4 + 3] / 255
+        const a2 = pixels[i * 4 + 3] / 255
+        pixels[i * 4 + 3] = (a1 + a2 * (1 - a1)) * 255
+      }
+    }
   }
 
-  return createDataUrl(new Uint8ClampedArray(buffer), width, height)
+  return createDataUrl(pixels, width, height)
 }
 
 export const renderIonImage = (ionImage: IonImage, cmap?: readonly number[][]) => {
