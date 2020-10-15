@@ -52,13 +52,26 @@
       </menu-item>
       <button
         class="button-reset py-6 px-3 w-full"
-        :class="{ 'text-primary': activeLayer === null }"
+        :class="{ 'bg-blue-100 text-primary': activeLayer === null }"
         @click="() => setActiveLayer(null)"
       >
-        <p class="uppercase text-xs tracking-wider m-0 text-inherit flex items-center justify-end">
-          <span class="leading-5">Add ion image</span>
-          <add-icon class="sm-mono-icon mx-1" />
-        </p>
+        <span class="uppercase text-xs tracking-wider m-0 text-inherit flex items-center justify-end">
+          <fade-transition class="leading-5">
+            <span
+              v-if="activeLayer === null"
+              key="active"
+            >
+              Select row in table
+            </span>
+            <span
+              v-else
+              key="inactive"
+            >
+              Add ion image
+            </span>
+          </fade-transition>
+          <add-icon class="sm-mono-icon ml-1" />
+        </span>
       </button>
     </menu-container>
   </fade-transition>
