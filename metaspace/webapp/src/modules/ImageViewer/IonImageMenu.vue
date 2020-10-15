@@ -1,7 +1,7 @@
 <template>
   <fade-transition>
     <overlay
-      v-if="mode === 'SINGLE'"
+      v-if="mode === 'SINGLE' && singleModeMenuItem"
       class="h-12 px-3"
     >
       <ion-intensity-slider
@@ -10,7 +10,7 @@
         @change="singleModeMenuItem.updateIntensity"
       />
     </overlay>
-    <menu-container v-else>
+    <menu-container v-if="mode === 'MULTI'">
       <menu-item
         v-for="item in multiModeMenuItems"
         :key="item.id"

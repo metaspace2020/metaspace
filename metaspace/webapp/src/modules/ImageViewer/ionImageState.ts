@@ -58,16 +58,21 @@ interface Props {
 
 const channels = ['red', 'green', 'blue', 'magenta', 'yellow', 'cyan', 'orange']
 
-const initialState = {
+const activeAnnotation = ref<string>() // local copy of prop value to allow watcher to run
+const state = reactive<State>({
   order: [],
   activeLayer: null,
   nextChannel: channels[0],
-}
-
-const state = reactive<State>(initialState)
+})
 const ionImageLayerCache : Record<string, IonImageLayer> = {}
 
-const orderedIonImageLayers = computed(() => state.order.map(id => ionImageLayerCache[id]))
+const activeSingleLayer = computed(() =>
+  activeAnnotation.value ? ionImageLayerCache[activeAnnotation.value] : undefined,
+)
+const orderedLayers = computed(() => state.order.map(id => ionImageLayerCache[id]))
+const visibleLayers = computed(() => orderedLayers.value.filter(layer =>
+  layer.image.value !== null && layer.settings.visible,
+))
 
 function removeLayer(id: string) : number {
   const idx = state.order.indexOf(id)
@@ -96,21 +101,22 @@ export const useIonImages = (props: Props) => {
     const { opacityMode, annotImageOpacity } = props.imageLoaderSettings
 
     if (viewerState.mode.value === 'SINGLE') {
-      const layer = ionImageLayerCache[props.annotation.id]
-      if (layer.image.value === null) return []
+      const layer = activeSingleLayer.value
+      if (layer === undefined || layer.image.value === null) return []
       const colorMap = createColorMap(props.colormap, opacityMode, annotImageOpacity)
       return [{ ionImage: layer.image.value, colorMap }]
     }
 
     const layers = []
     const colormaps: Record<string, ColorMap> = {}
-    for (const { image, settings } of orderedIonImageLayers.value) {
-      if (image.value == null || !settings?.visible) {
-        continue
-      }
+    for (const { image, settings } of visibleLayers.value) {
       if (!(settings.channel in colormaps)) {
         const { opacityMode, annotImageOpacity } = props.imageLoaderSettings
-        colormaps[settings.channel] = createColorMap(settings.channel, opacityMode, annotImageOpacity)
+        colormaps[settings.channel] = createColorMap(
+          settings.channel,
+          opacityMode,
+          annotImageOpacity,
+        )
       }
       layers.push({
         ionImage: image.value,
@@ -120,15 +126,11 @@ export const useIonImages = (props: Props) => {
     return layers
   })
 
-  watch(() => props.annotation, () => {
-    const { id } = props.annotation
+  watch(() => props.annotation, (annotation) => {
+    activeAnnotation.value = annotation.id
 
-    if (viewerState.mode.value === 'SINGLE' && id in ionImageLayerCache) {
-      return
-    }
-
-    if (state.order.includes(id)) {
-      state.activeLayer = id
+    if (state.order.includes(annotation.id)) {
+      state.activeLayer = annotation.id
       return
     }
 
@@ -136,13 +138,13 @@ export const useIonImages = (props: Props) => {
     if (state.activeLayer !== null) {
       channel = ionImageLayerCache[state.activeLayer].settings?.channel
       const idx = removeLayer(state.activeLayer)
-      state.order.splice(idx, 0, id)
+      state.order.splice(idx, 0, annotation.id)
     } else {
-      state.order.push(id)
+      state.order.push(annotation.id)
       channel = state.nextChannel
       state.nextChannel = channels[channels.indexOf(channel) + 1] || channels[0]
     }
-    state.activeLayer = id
+    state.activeLayer = annotation.id
 
     const singleModeState = createState(props.annotation)
     const multiModeState = createState(props.annotation)
@@ -159,7 +161,7 @@ export const useIonImages = (props: Props) => {
 
     const raw = ref<Image | null>(null)
 
-    ionImageLayerCache[id] = {
+    ionImageLayerCache[annotation.id] = {
       annotation: props.annotation,
       id: props.annotation.id,
       settings,
@@ -240,18 +242,21 @@ export const useIonImageMenu = (props: { annotationId: string }) => {
   const { activeLayer } = toRefs(state)
 
   const singleModeMenuItem = computed(() => {
-    const layer = ionImageLayerCache[props.annotationId]
-    return {
-      state: layer.singleModeState,
-      colorBar: layer.colorBar.value,
-      updateIntensity(range: [number, number]) {
-        layer.singleModeState.quantileRange = range
-      },
+    const layer = activeSingleLayer.value
+    if (layer) {
+      return {
+        state: layer.singleModeState,
+        colorBar: layer.colorBar.value,
+        updateIntensity(range: [number, number]) {
+          layer.singleModeState.quantileRange = range
+        },
+      }
     }
+    return null
   })
 
   const multiModeMenuItems = computed(() =>
-    orderedIonImageLayers.value.map(layer => ({
+    orderedLayers.value.map(layer => ({
       id: layer.id,
       annotation: layer.annotation,
       state: layer.multiModeState,
