@@ -129,6 +129,10 @@ export const useIonImages = (props: Props) => {
   watch(() => props.annotation, (annotation) => {
     activeAnnotation.value = annotation.id
 
+    if (viewerState.mode.value === 'SINGLE' && annotation.id in ionImageLayerCache) {
+      return
+    }
+
     if (state.order.includes(annotation.id)) {
       state.activeLayer = annotation.id
       return
