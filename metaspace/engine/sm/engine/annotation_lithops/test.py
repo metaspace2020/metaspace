@@ -25,15 +25,13 @@ ds_config: DSConfig = {
 }
 
 
+SMConfig.get_conf(True)
 job = LocalAnnotationJob(
     '/home/lachlan/Documents/datasets/Untreated_3_434.imzML',
     '/home/lachlan/Documents/datasets/Untreated_3_434.ibd',
     [22],
     ds_config,
 )
-#%%
-
-SMConfig.get_conf(True)
 job.run()
 
 

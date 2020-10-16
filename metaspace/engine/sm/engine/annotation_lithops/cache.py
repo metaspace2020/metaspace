@@ -1,31 +1,25 @@
 from __future__ import annotations
+
+from functools import wraps
+from typing import Optional
+
 from lithops import FunctionExecutor
 from lithops.storage.utils import CloudObject, StorageNoSuchKeyError
 
 from sm.engine.annotation_lithops.io import serialise, deserialise, delete_objects_by_prefix
+from sm.engine.annotation_lithops.utils import logger
 
 
 class PipelineCacher:
-    def __init__(self, fexec: FunctionExecutor, namespace: str, ds_name: str, db_name: str):
+    def __init__(self, fexec: FunctionExecutor, namespace: str, lithops_config):
         self.fexec = fexec
-        self.config = self.fexec.config
         self.storage = self.fexec.storage
 
-        self.bucket = self.config['lithops']['storage_bucket']
-        self.prefixes = {
-            '': f'metabolomics/cache/{namespace}',
-            ':ds': f'metabolomics/cache/{namespace}/{ds_name}/',
-            ':db': f'metabolomics/cache/{namespace}/{db_name}/',
-            ':ds/:db': f'metabolomics/cache/{namespace}/{ds_name}/{db_name}/',
-        }
+        self.bucket, self.root_prefix = lithops_config['sm_storage']['pipeline_cache']
+        self.prefix = f'{self.root_prefix}/{namespace}'
 
     def resolve_key(self, key):
-        parts = key.rsplit('/', maxsplit=1)
-        if len(parts) == 1:
-            return self.prefixes[''] + parts[0]
-        else:
-            prefix, suffix = parts
-            return self.prefixes[prefix] + suffix
+        return f'{self.prefix}/{key}.cache'
 
     def load(self, key):
         data_stream = self.storage.get_object(self.bucket, self.resolve_key(key))
@@ -41,21 +35,9 @@ class PipelineCacher:
         except StorageNoSuchKeyError:
             return False
 
-    def clean(self, database=True, dataset=True, hard=False):
-        unique_prefixes = []
-        if not hard:
-            if database:
-                unique_prefixes.append(self.prefixes[':db'])
-            if dataset:
-                unique_prefixes.append(self.prefixes[':ds'])
-            if database or dataset:
-                unique_prefixes.append(self.prefixes[':ds/:db'])
-        else:
-            unique_prefixes.append(self.prefixes[''])
-
-        keys = [
-            key for prefix in unique_prefixes for key in self.storage.list_keys(self.bucket, prefix)
-        ]
+    def clean(self, all_namespaces=False):
+        prefix = self.root_prefix if all_namespaces else self.prefix
+        keys = self.storage.list_keys(self.bucket, prefix)
 
         cobjects_to_clean = []
         for cache_key in keys:
@@ -75,5 +57,44 @@ class PipelineCacher:
                 cobjects_to_clean.append(cache_data)
 
         self.fexec.clean(cs=cobjects_to_clean)
-        for prefix in unique_prefixes:
-            delete_objects_by_prefix(self.storage, self.bucket, prefix)
+        delete_objects_by_prefix(self.storage, self.bucket, prefix)
+
+
+def use_pipeline_cache(f):
+    """Decorator to cache individual pipeline stages in the Pipeline class. It works by tracking
+    which class properties change during the first call to the wrapped method, and re-applying those
+    property changes instead of calling the wrapped function on subsequent calls.
+
+    Pass the "use_cache=False" kwarg to force the function to be re-run.
+    """
+    f_name = f.__name__
+
+    @wraps(f)
+    def wrapper(self, *args, **kwargs):
+        use_cache = kwargs.pop('use_cache', True)
+        cacher: Optional[PipelineCacher] = getattr(self, 'cacher')
+        if args or kwargs:
+            logger.info(f'Unable to cache {f_name} as it has args')
+            cacher = None
+        if cacher:
+            if use_cache and cacher.exists(f_name):
+                updates, ret = cacher.load(f_name)
+                self.__dict__.update(updates)
+                logger.debug(f'Loaded {f_name} from cache. Keys: {list(updates.keys())}')
+                return ret
+            else:
+                dict_before = self.__dict__.copy()
+                ret = f(self, *args, **kwargs)
+                updates = dict(
+                    (k, v)
+                    for k, v in self.__dict__.items()
+                    if k not in dict_before or dict_before[k] is not v
+                )
+                cacher.save((updates, ret), f_name)
+                logger.debug(f'Saved {f_name} to cache. Keys: {list(updates.keys())}')
+                return ret
+
+        else:
+            return f(self, *args, **kwargs)
+
+    return wrapper

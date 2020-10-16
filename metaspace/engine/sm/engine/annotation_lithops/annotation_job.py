@@ -13,6 +13,7 @@ from sm.engine.annotation.formula_validator import METRICS
 from sm.engine.annotation.job import del_jobs, insert_running_job, update_finished_job, JobStatus
 from sm.engine.annotation_lithops.io import save_cobj, iter_cobjs_with_prefetch
 from sm.engine.annotation_lithops.pipeline import Pipeline
+from sm.engine.annotation_lithops.utils import jsonhash
 from sm.engine.dataset import Dataset
 from sm.engine.ds_config import DSConfig
 from sm.engine.db import DB
@@ -25,10 +26,10 @@ from sm.engine.util import SMConfig
 logger = logging.getLogger('engine')
 
 
-def _upload_if_not_exists(local_path, storage, sm_storage_config, storage_type):
+def _upload_if_not_exists(local_path, storage, sm_storage, storage_type):
     local_path = Path(local_path)
 
-    bucket, prefix = sm_storage_config[storage_type]
+    bucket, prefix = sm_storage[storage_type]
     key = f'{prefix}/{local_path.name}'
     try:
         storage.head_object(bucket, key)
@@ -41,9 +42,9 @@ def _upload_if_not_exists(local_path, storage, sm_storage_config, storage_type):
         return cobject
 
 
-def _upload_moldb_cobjects(moldb_ids, storage, sm_storage_config):
+def _upload_moldb_cobjects(moldb_ids, storage, sm_storage):
     cobjs = []
-    bucket, prefix = sm_storage_config['moldb']
+    bucket, prefix = sm_storage['moldb']
     for moldb_id in moldb_ids:
         key = f'{prefix}/{moldb_id}'
         try:
@@ -73,23 +74,30 @@ class LocalAnnotationJob:
         moldb_ids: List[int],
         ds_config: DSConfig,
         sm_config: Optional[Dict] = None,
+        use_cache=True,
     ):
         sm_config = sm_config or SMConfig.get_conf()
         self.storage = Storage(
             lithops_config=sm_config['lithops'],
             storage_backend=sm_config['lithops']['lithops']['storage_backend'],
         )
-        self.sm_storage_config = sm_config['lithops']['sm_storage']
+        sm_storage = sm_config['lithops']['sm_storage']
 
-        self.imzml_cobj = _upload_if_not_exists(
-            imzml_file, self.storage, self.sm_storage_config, 'imzml'
-        )
-        self.ibd_cobj = _upload_if_not_exists(
-            ibd_file, self.storage, self.sm_storage_config, 'imzml'
-        )
-        self.moldb_cobjs = _upload_moldb_cobjects(moldb_ids, self.storage, self.sm_storage_config)
+        self.imzml_cobj = _upload_if_not_exists(imzml_file, self.storage, sm_storage, 'imzml')
+        self.ibd_cobj = _upload_if_not_exists(ibd_file, self.storage, sm_storage, 'imzml')
+        self.moldb_cobjs = _upload_moldb_cobjects(moldb_ids, self.storage, sm_storage)
         self.ds_config = ds_config
-        self.pipe = Pipeline(self.imzml_cobj, self.ibd_cobj, self.moldb_cobjs, self.ds_config)
+
+        if use_cache:
+            cache_key = jsonhash(
+                {'imzml': imzml_file, 'ibd': ibd_file, 'dbs': moldb_ids, 'ds': ds_config}
+            )
+        else:
+            cache_key = None
+
+        self.pipe = Pipeline(
+            self.imzml_cobj, self.ibd_cobj, self.moldb_cobjs, self.ds_config, cache_key=cache_key
+        )
 
     def run(self):
         results_df, png_cobjs = self.pipe()
@@ -106,21 +114,33 @@ class LocalAnnotationJob:
 
 class ServerAnnotationJob:
     def __init__(
-        self, img_store: ImageStoreServiceWrapper, ds: Dataset, sm_config: Optional[Dict] = None
+        self,
+        img_store: ImageStoreServiceWrapper,
+        ds: Dataset,
+        sm_config: Optional[Dict] = None,
+        use_cache=True,
     ):
         sm_config = sm_config or SMConfig.get_conf()
         self.storage = Storage(
             lithops_config=sm_config['lithops'],
             storage_backend=sm_config['lithops']['lithops']['storage_backend'],
         )
-        self.sm_storage_config = sm_config['lithops']['sm_storage']
+        self.sm_storage = sm_config['lithops']['sm_storage']
         self.ds = ds
         self.img_store = img_store
         self.db = DB()
         self.es = ESExporter(self.db, sm_config)
         self.imzml_cobj, self.ibd_cobj = self._get_input_cobjects()
         self.moldb_cobjects = self._get_moldb_cobjects()
-        self.pipe = Pipeline(self.imzml_cobj, self.ibd_cobj, self.moldb_cobjects, self.ds.config)
+
+        if use_cache:
+            cache_key = jsonhash({'input_path': ds.input_path, 'ds': ds.config})
+        else:
+            cache_key = None
+
+        self.pipe = Pipeline(
+            self.imzml_cobj, self.ibd_cobj, self.moldb_cobjects, self.ds.config, cache_key=cache_key
+        )
 
     def _get_input_cobjects(self):
 
@@ -131,11 +151,9 @@ class ServerAnnotationJob:
             assert len(imzml_files) == 1, imzml_files
             assert len(ibd_files) == 1, ibd_files
             imzml_cobj = _upload_if_not_exists(
-                imzml_files[0], self.storage, self.sm_storage_config, 'imzml'
+                imzml_files[0], self.storage, self.sm_storage, 'imzml'
             )
-            ibd_cobj = _upload_if_not_exists(
-                ibd_files[0], self.storage, self.sm_storage_config, 'imzml'
-            )
+            ibd_cobj = _upload_if_not_exists(ibd_files[0], self.storage, self.sm_storage, 'imzml')
         else:
             assert self.ds.input_path.startswith('cos://')
             bucket, prefix = self.ds.input_path.removeprefix('cos://').split('/', maxsplit=1)
@@ -152,7 +170,7 @@ class ServerAnnotationJob:
     def _get_moldb_cobjects(self):
         cobjs = []
         for moldb_id in self.ds.config['database_ids']:
-            bucket, prefix = self.sm_storage_config['moldb']
+            bucket, prefix = self.sm_storage['moldb']
             key = f'{prefix}/{moldb_id}'
             try:
                 self.storage.head_object(bucket, key)
