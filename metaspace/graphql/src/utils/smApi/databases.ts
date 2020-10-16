@@ -5,7 +5,7 @@ import { snakeCase } from 'typeorm/util/StringUtils';
 import { smApiJsonPost } from './smApiCall'
 
 
-const valid_error_statuses = ['wrong_parameters', 'already_exists', 'malformed_csv'];
+const valid_error_statuses = ['wrong_parameters', 'already_exists', 'malformed_csv', 'bad_data'];
 
 export const smApiDatabaseRequest = async (uri: string, args?: any) => {
   let reqDoc = args || {};
@@ -18,7 +18,8 @@ export const smApiDatabaseRequest = async (uri: string, args?: any) => {
     if (valid_error_statuses.includes(content.status)) {
       throw new UserError(JSON.stringify({
         type: content.status,
-        hint: content.errors,
+        error: content.error,
+        details: content.details,
       }));
     }
     else {

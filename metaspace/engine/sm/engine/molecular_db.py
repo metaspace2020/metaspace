@@ -13,9 +13,16 @@ logger = logging.getLogger('engine')
 
 
 class MalformedCSV(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__()
+
+
+class BadData(Exception):
     def __init__(self, message, *errors):
-        full_message = '\n'.join([str(m) for m in (message,) + errors])
-        super().__init__(full_message)
+        super().__init__()
+        self.message = message
+        self.errors = errors
 
 
 class MolecularDB:
@@ -50,19 +57,28 @@ class MolecularDB:
 
 def _validate_moldb_df(df):
     errors = []
-    for row in df.itertuples():
+    for idx, row in df.iterrows():
+        line_n = idx + 2
+        for col in df.columns:
+            if not row[col] or row[col].isspace():
+                errors.append({'line': line_n, 'row': row.values.tolist(), 'error': 'Empty value'})
+
         try:
             if '.' in row.formula:
                 raise InvalidFormulaError('"." symbol not supported')
             parseSumFormula(row.formula)
         except Exception as e:
-            csv_file_line_n = row.Index + 2
-            errors.append({'line': csv_file_line_n, 'formula': row.formula, 'error': repr(e)})
+            errors.append({'line': line_n, 'row': row.values.tolist(), 'error': repr(e)})
+
+    errors.sort(key=lambda d: d['line'])
     return errors
 
 
 def _import_molecules_from_file(moldb, file_path, targeted_threshold):
-    moldb_df = pd.read_csv(file_path, sep='\t')
+    try:
+        moldb_df = pd.read_csv(file_path, sep='\t', dtype=object, na_filter=False)
+    except ValueError as e:
+        raise MalformedCSV(f'Malformed CSV: {e}')
 
     if moldb_df.empty:
         raise MalformedCSV('No data rows found')
@@ -76,7 +92,7 @@ def _import_molecules_from_file(moldb, file_path, targeted_threshold):
     logger.info(f'{moldb}: importing {len(moldb_df)} molecules')
     parsing_errors = _validate_moldb_df(moldb_df)
     if parsing_errors:
-        raise MalformedCSV('Failed to parse some formulas', *parsing_errors)
+        raise BadData('Failed to parse some rows', *parsing_errors)
 
     moldb_df.rename({'id': 'mol_id', 'name': 'mol_name'}, axis='columns', inplace=True)
     moldb_df['moldb_id'] = int(moldb.id)
