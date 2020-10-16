@@ -8,7 +8,7 @@ from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.errors import UnknownDSID
 from sm.engine.es_export import ESExporter
-from sm.engine.png_generator import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStoreServiceWrapper
 
 logger = logging.getLogger('engine')
 

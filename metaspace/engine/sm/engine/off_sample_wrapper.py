@@ -11,8 +11,7 @@ from requests import post, get
 import numpy as np
 
 from sm.engine.errors import SMError
-from sm.engine.png_generator import ImageStoreServiceWrapper
-
+from sm.engine.image_store import ImageStoreServiceWrapper
 
 logger = logging.getLogger('update-daemon')
 

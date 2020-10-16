@@ -1,14 +1,19 @@
-from lithops.storage.utils import StorageNoSuchKeyError, CloudObject
+from __future__ import annotations
+
+from collections import defaultdict
+
+from lithops.storage import Storage
+from lithops.storage.utils import CloudObject
 from pyimzml.ImzMLParser import PortableSpectrumReader
-from scipy.sparse import coo_matrix
-from typing import List, cast, Dict
+from typing import List
 
 import lithops
 import numpy as np
 import pandas as pd
 
-from sm.engine.dataset import DSConfig
+from sm.engine.ds_config import DSConfig
 from sm.engine.db import DB
+from sm.engine.png_generator import PngGenerator
 from sm.engine.search_results import SearchResults
 from sm.engine.annotation_lithops.check_results import (
     get_reference_results,
@@ -31,11 +36,11 @@ from sm.engine.annotation_lithops.segment_centroids import (
     define_centr_segments,
     validate_centroid_segments,
 )
-from sm.engine.annotation_lithops.annotate import process_centr_segments, ImageLookup
+from sm.engine.annotation_lithops.annotate import process_centr_segments, make_sample_area_mask
 from sm.engine.annotation_lithops.run_fdr import run_fdr
 from sm.engine.annotation_lithops.cache import PipelineCacher
-from sm.engine.annotation_lithops.utils import PipelineStats, logger, jsonhash
-from sm.engine.annotation_lithops.io import CObj, save_cobj, load_cobj
+from sm.engine.annotation_lithops.utils import PipelineStats, logger, jsonhash, ds_dims
+from sm.engine.annotation_lithops.io import CObj, load_cobj, iter_cobjs_with_prefetch, save_cobj
 from sm.engine.util import SMConfig
 
 
@@ -52,30 +57,43 @@ class Pipeline:
     clip_centr_chunks_cobjects: List[CObj[pd.DataFrame]]
     db_segms_cobjects: List[CObj[pd.DataFrame]]
     formula_metrics_df: pd.DataFrame
-    image_lookups: List[int]
+    images_df: pd.DataFrame
     fdrs: pd.DataFrame
     results_df: pd.DataFrame
 
     def __init__(
-        self, ds_id: str, input_path: str, ds_config: DSConfig, use_db_cache=True, use_ds_cache=True
+        self,
+        imzml_cobject: CloudObject,
+        ibd_cobject: CloudObject,
+        moldb_cobjects: List[CloudObject],
+        ds_config: DSConfig,
+        lithops_config=None,
+        use_db_cache=True,
+        use_ds_cache=True,
     ):
-        sm_config = SMConfig.get_conf()
+        lithops_config = lithops_config or SMConfig.get_conf()['lithops']
         self._db = DB()
-        self.ds_id = ds_id
-        self.input_path = input_path
+        self.imzml_cobject = imzml_cobject
+        self.ibd_cobject = ibd_cobject
+        self.moldb_cobjects = moldb_cobjects
         self.ds_config = ds_config
         self.use_db_cache = use_db_cache
         self.use_ds_cache = use_ds_cache
 
-        self.config = sm_config['lithops']
-        self.fexec = lithops.function_executor(config=self.config, runtime_memory=2048)
-        self.vmexec = lithops.docker_executor(
-            config=self.config, storage_backend=self.config['pywren']['storage_backend']
-        )
+        self.config = lithops_config
+        if self.config['lithops']['storage_backend'] == 'localhost':
+            self.fexec = lithops.local_executor(
+                config=self.config, storage_backend=self.config['lithops']['storage_backend']
+            )
+        else:
+            self.fexec = lithops.function_executor(config=self.config, runtime_memory=2048)
+        # TODO: vmexec should be a ibm_vpc executor in non-local mode
+        self.vmexec = self.fexec
+
         self.storage = self.fexec.storage
 
         db_cache_key = jsonhash(ds_config)
-        self.cacher = PipelineCacher(self.fexec, 'vm', ds_id, db_cache_key)
+        self.cacher = PipelineCacher(self.fexec, 'vm', 'TODO', db_cache_key)
         if not self.use_db_cache or not self.use_ds_cache:
             self.cacher.clean(database=not self.use_db_cache, dataset=not self.use_ds_cache)
 
@@ -95,7 +113,6 @@ class Pipeline:
     def __call__(self, task='all', debug_validate=False):
 
         if task == 'all' or task == 'db':
-            self.upload_moldb()
             self.build_moldb(debug_validate=debug_validate)
             self.calculate_centroids(debug_validate=debug_validate)
 
@@ -104,40 +121,12 @@ class Pipeline:
             self.segment_centroids(debug_validate=debug_validate)
             self.annotate()
             self.run_fdr()
+            self.prepare_results()
+
+            return self.results_df, self.png_cobjs
 
             # if debug_validate and self.ds_config['metaspace_id']:
             #     self.check_results()
-
-    def upload_moldb(self, use_cache=True):
-        cache_key = ':db/upload_molecular_databases.cache'
-
-        if use_cache and self.cacher.exists(cache_key):
-            self.mols_dbs_cobjects = self.cacher.load(cache_key)
-            logger.info(f'Loaded {len(self.mols_dbs_cobjects)} molecular databases from cache')
-        else:
-            bucket = self.config['storage']['moldb_bucket']
-            self.mols_dbs_cobjects = []
-            for moldb_id in self.ds_config['database_ids']:
-                key = f'moldb_mols/{moldb_id}'
-                try:
-                    logger.debug(f'Found mol db at {key}')
-                    self.storage.head_object(bucket, key)
-                    # This cast doesn't include the generic argument due to
-                    # https://youtrack.jetbrains.com/issue/PY-43838 (Fix coming in PyCharm 2020.2.3)
-                    cobject: CObj[List[str]] = cast(
-                        CObj, CloudObject(self.storage.backend, bucket, key)
-                    )
-                except StorageNoSuchKeyError:
-                    logger.info(f'Uploading mol db to {key}')
-                    mols_query = DB().select(
-                        'SELECT DISTINCT formula FROM molecule WHERE moldb_id = %s', (moldb_id,)
-                    )
-                    mols = [mol for mol, in mols_query]
-                    cobject = save_cobj(self.storage, mols, bucket=bucket, key=key)
-                self.mols_dbs_cobjects.append(cobject)
-
-            logger.info(f'Uploaded {len(self.mols_dbs_cobjects)} molecular databases')
-            self.cacher.save(self.mols_dbs_cobjects, cache_key)
 
     def build_moldb(self, use_cache=True, debug_validate=False):
         cache_key = ':ds/:db/build_database.cache'
@@ -148,12 +137,13 @@ class Pipeline:
                 f' {len(self.db_data_cobjects)} db_data objects from cache'
             )
         else:
-            self.vmexec.call_async(build_moldb, self.ds_config, self.mols_dbs_cobjects)
+            futures = self.vmexec.map(build_moldb, [(self.ds_config, self.moldb_cobjects)])
+            __import__('__main__').futures = futures
             (
                 self.formula_cobjects,
                 self.db_data_cobjects,
                 build_db_exec_time,
-            ) = self.vmexec.get_result()
+            ) = self.vmexec.get_result(futures)[0]
             PipelineStats.append_vm(
                 'build_database', build_db_exec_time, cloud_objects_n=len(self.formula_cobjects)
             )
@@ -190,8 +180,10 @@ class Pipeline:
             logger.info(f'Loaded {len(result[2])} dataset segments from cache')
         else:
             sort_memory = 2 ** 32
-            self.vmexec.call_async(load_ds, (self.ds_config, self.ds_segm_size_mb, sort_memory))
-            result = self.vmexec.get_result()
+            future = self.vmexec.call_async(
+                load_ds, (self.imzml_cobject, self.ibd_cobject, self.ds_segm_size_mb, sort_memory)
+            )
+            result = self.vmexec.get_result(future)
 
             logger.info(f'Segmented dataset chunks into {len(result[2])} segments')
             self.cacher.save(result, cache_key)
@@ -264,10 +256,10 @@ class Pipeline:
         cache_key = ':ds/:db/annotate.cache'
 
         if use_cache and self.cacher.exists(cache_key):
-            self.formula_metrics_df, self.image_lookups = self.cacher.load(cache_key)
+            self.formula_metrics_df, self.images_df = self.cacher.load(cache_key)
             logger.info(f'Loaded {self.formula_metrics_df.shape[0]} metrics from cache')
         else:
-            self.formula_metrics_df, self.image_lookups = process_centr_segments(
+            self.formula_metrics_df, self.images_df = process_centr_segments(
                 self.fexec,
                 self.ds_segms_cobjects,
                 self.ds_segments_bounds,
@@ -280,7 +272,7 @@ class Pipeline:
             )
             logger.info(f'Metrics calculated: {self.formula_metrics_df.shape[0]}')
 
-            self.cacher.save((self.formula_metrics_df, self.image_lookups), cache_key)
+            self.cacher.save((self.formula_metrics_df, self.images_df), cache_key)
 
     def run_fdr(self, use_cache=True):
         cache_key = ':ds/:db/run_fdr.cache'
@@ -289,8 +281,8 @@ class Pipeline:
             self.fdrs = self.cacher.load(cache_key)
             logger.info('Loaded fdrs from cache')
         else:
-            self.vmexec.call_async(run_fdr, (self.formula_metrics_df, self.db_data_cobjects))
-            self.fdrs, fdr_exec_time = self.vmexec.get_result()
+            futures = self.vmexec.map(run_fdr, [(self.formula_metrics_df, self.db_data_cobjects)])
+            ((self.fdrs, fdr_exec_time),) = self.vmexec.get_result(futures)
 
             PipelineStats.append_vm('calculate_fdrs', fdr_exec_time)
             self.cacher.save(self.fdrs, cache_key)
@@ -299,22 +291,82 @@ class Pipeline:
         for fdr_step in [0.05, 0.1, 0.2, 0.5]:
             logger.info(f'{fdr_step*100:2.0f}%: {(self.fdrs.fdr < fdr_step).sum()}')
 
-    def prepare_results(self):
-        results_df = self.formula_metrics_df.join(self.fdrs)
-        results_df = results_df[~results_df.adduct.isna()]
-        # TODO: Get real list of targeted DBs, only filter by FDR if not targeted
-        results_df = results_df[results_df.fdr <= 0.5]
-        results_df = results_df.sort_values('fdr')
-        # TODO: Find what this needs to be merged with to include moldb_id, formula, adduct, etc.
-        self.results_df = results_df
+    def prepare_results(self, use_cache=True):
+        cache_key = ':ds/:db/prepare_results.cache'
 
-        formula_is = set(results_df.index)
+        if use_cache and self.cacher.exists(cache_key):
+            self.results_df, self.png_cobjs = self.cacher.load(cache_key)
+            logger.info('Loaded fdrs from cache')
+        else:
+            # formula_metrics_df Dataframe:
+            # index: formula_i
+            # columns: chaos, spatial, spectral, msm, total_iso_ints, min_iso_ints, max_iso_ints
+            # fdrs Dataframe:
+            # index: formula_i
+            # columns: formula, fdr, moldb_id, modifier, adduct
+            results_df = self.formula_metrics_df.join(self.fdrs)
+            results_df = results_df[~results_df.adduct.isna()]
+            # TODO: Get real list of targeted DBs, only filter by FDR if not targeted
+            results_df = results_df[results_df.fdr <= 0.5]
+            results_df = results_df.sort_values('fdr')
+            self.results_df = results_df
 
-        # TODO: Convert images to PNGs
-        png_jobs = []
+            formula_is = set(results_df.index)
+            image_tasks_df = self.images_df[self.images_df.index.isin(formula_is)].copy()
+            w, h = ds_dims(self.imzml_reader.coordinates)
+            # Guess the cost per imageset, and split into relatively even chunks.
+            # This is a quick attempt and needs review
+            # This assumes they're already sorted by cobj, and factors in:
+            # * Number of populated pixels (because very sparse images should be much faster to encode)
+            # * Total image size (because even empty pixels have some cost)
+            # * Cost of loading a new cobj
+            # * Constant overhead per image
+            cobj_keys = [cobj.key for cobj in image_tasks_df.cobj]
+            cobj_changed = np.array(
+                [(i == 0 or key == cobj_keys[i - 1]) for i, key in enumerate(cobj_keys)]
+            )
+            image_tasks_df['cost'] = (
+                image_tasks_df.n_pixels + (w * h) / 5 + cobj_changed * 100000 + 1000
+            )
+            total_cost = image_tasks_df.cost.sum()
+            n_jobs = int(np.ceil(np.clip(total_cost / 1e8, 1, 100)))
+            job_bound_vals = np.linspace(0, total_cost + 1, n_jobs + 1)
+            job_bound_idxs = np.searchsorted(np.cumsum(image_tasks_df.cost), job_bound_vals)
+            print(job_bound_idxs, len(image_tasks_df))
+            jobs = [
+                [image_tasks_df.iloc[start:end]]
+                for start, end in zip(job_bound_idxs[:-1], job_bound_idxs[1:])
+                if start != end
+            ]
+            job_costs = [df.cost.sum() for df, in jobs]
+            print(
+                f'Generated {len(jobs)} PNG jobs, min cost: {np.min(job_costs)}, '
+                f'max cost: {np.max(job_costs)}, total cost: {total_cost}'
+            )
+            png_generator = PngGenerator(make_sample_area_mask(self.imzml_reader.coordinates))
 
-    def save_results_to_server(self):
-        sr = SearchResults()
+            def save_png_chunk(df: pd.DataFrame, *, storage: Storage):
+                pngs = []
+                groups = defaultdict(lambda: [])
+                for formula_i, cobj in df.cobj.items():
+                    groups[cobj].append(formula_i)
+
+                image_dict_iter = iter_cobjs_with_prefetch(storage, list(groups.keys()))
+                for image_dict, formula_is in zip(image_dict_iter, groups.values()):
+                    for formula_i in formula_is:
+                        formula_pngs = [
+                            png_generator.generate_png(img.toarray()) if img is not None else None
+                            for img in image_dict[formula_i]
+                        ]
+                        pngs.append((formula_i, formula_pngs))
+                return save_cobj(storage, pngs)
+
+            futures = self.fexec.map(
+                save_png_chunk, jobs, include_modules=['sm', 'sm.engine', 'png']
+            )
+            self.png_cobjs = self.fexec.get_result(futures)
+
+            self.cacher.save((self.results_df, self.png_cobjs), cache_key)
 
     def get_results(self):
         results_df = self.formula_metrics_df.merge(self.fdrs, left_index=True, right_index=True)
@@ -343,8 +395,9 @@ class Pipeline:
         return all_images
 
     def check_results(self):
+        ds_id = 'TODO'
         results_df = self.get_results()
-        reference_results = get_reference_results(self.ds_id)
+        reference_results = get_reference_results(ds_id)
 
         checked_results = check_results(results_df, reference_results)
 

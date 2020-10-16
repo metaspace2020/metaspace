@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import List, Tuple
 
 from itertools import repeat
@@ -6,17 +7,14 @@ from lithops.storage import Storage
 from time import time
 
 from concurrent.futures import ProcessPoolExecutor
+import numpy as np
 import pandas as pd
 
-from sm.engine.dataset import DSConfig
+from sm.engine.ds_config import DSConfig
 from sm.engine.formula_parser import safe_generate_ion_formula
 from sm.engine.fdr import FDR
 from sm.engine.annotation_lithops.utils import logger
 from sm.engine.annotation_lithops.io import CObj, save_cobjs, load_cobjs
-
-N_FORMULAS_SEGMENTS = 256
-FORMULA_TO_ID_CHUNK_MB = 512
-
 
 DbDataTuple = Tuple[int, FDR, pd.DataFrame]
 
@@ -75,8 +73,9 @@ def get_formulas_df(
 
 
 def store_formula_segments(storage: Storage, formulas_df: pd.DataFrame):
+    n_formulas_segments = int(np.ceil(len(formulas_df) / 10000))
     segm_bounds = [
-        len(formulas_df) * i // N_FORMULAS_SEGMENTS for i in range(N_FORMULAS_SEGMENTS + 1)
+        len(formulas_df) * i // n_formulas_segments for i in range(n_formulas_segments + 1)
     ]
     segm_ranges = list(zip(segm_bounds[:-1], segm_bounds[1:]))
     segm_list = [formulas_df.ion_formula.iloc[start:end] for start, end in segm_ranges]
@@ -91,7 +90,7 @@ def store_formula_segments(storage: Storage, formulas_df: pd.DataFrame):
 
 
 def build_moldb(
-    storage: Storage, ds_config: DSConfig, mols_dbs_cobjects: List[CObj[List[str]]]
+    ds_config: DSConfig, mols_dbs_cobjects: List[CObj[List[str]]], *, storage: Storage
 ) -> Tuple[List[CObj[pd.DataFrame]], List[CObj[DbDataTuple]], float]:
     t = time()
 

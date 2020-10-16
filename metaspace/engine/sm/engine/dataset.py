@@ -1,10 +1,9 @@
-from typing import TypedDict, List
-
 import json
 import logging
 from datetime import datetime
 from typing import Dict
 
+from sm.engine.ds_config import DSConfig
 from sm.engine.errors import UnknownDSID
 from sm.engine.util import SMConfig
 
@@ -52,34 +51,6 @@ FLAT_DS_CONFIG_KEYS = frozenset(
         'chem_mods',
     }
 )
-
-
-class DSConfigIsotopeGeneration(TypedDict):
-    adducts: List[str]
-    charge: int
-    isocalc_sigma: float
-    instrument: str
-    n_peaks: int
-    neutral_losses: List[str]
-    chem_mods: List[str]
-
-
-class DSConfigFDR(TypedDict):
-    decoy_sample_size: int
-
-
-class DSConfigImageGeneration(TypedDict):
-    ppm: int
-    n_levels: int
-    min_px: int
-
-
-class DSConfig(TypedDict):
-    database_ids: List[int]
-    analysis_version: int
-    isotope_generation: DSConfigIsotopeGeneration
-    fdr: DSConfigFDR
-    image_generation: DSConfigImageGeneration
 
 
 class Dataset:

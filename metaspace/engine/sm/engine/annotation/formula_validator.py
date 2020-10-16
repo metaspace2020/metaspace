@@ -20,7 +20,7 @@ from pyImagingMSpec.image_measures import isotope_image_correlation, isotope_pat
 from cpyImagingMSpec import measure_of_chaos
 from scipy.sparse import coo_matrix
 
-from sm.engine.dataset import DSConfigImageGeneration
+from sm.engine.ds_config import DSConfigImageGeneration
 
 METRICS = OrderedDict(
     [

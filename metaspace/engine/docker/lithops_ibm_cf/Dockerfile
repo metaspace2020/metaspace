@@ -1,28 +1,27 @@
 # Minimal Docker image for PyWren
 
 # Python 3.7.5
-FROM python:3.7.5-slim-buster
+FROM python:3.8.5-slim-buster
 
 ENV FLASK_PROXY_PORT 8080
 
 RUN pip install --no-cache-dir --upgrade pip setuptools six \
     && pip install --no-cache-dir \
-        simplejson==3.16.0 \
-        httplib2==0.13.0 \
+        simplejson==3.17.2 \
+        httplib2==0.18.1 \
         kafka_python==1.4.6 \
-        lxml==4.3.1 \
+        lxml==4.5.2 \
         python-dateutil==2.8.0 \
         pika==0.13.1 \
         flask==1.1.1 \
-        gevent==1.4.0 \
+        gevent==20.9.0 \
         ibm-cos-sdk==2.6.0 \
         redis==3.3.8 \
         requests==2.22.0
 
-# If the next line fails, ensure the docker build context is ../../ from this file
-COPY requirements.txt .
-RUN grep -E "$(c?pyMSpec|c?pyImagingMSpec|numpy|scipy|pandas|msgpack|pyimzML|pyarrow)" requirements.txt > requirements-lithops.txt
-RUN pip install --no-cache-dir -r requirements-lithops.txt
+COPY requirements.txt /tmp/requirements.txt
+RUN grep -E "^(c?pyMSpec|c?pyImagingMSpec|numpy|scipy|pandas|msgpack|pyimzML|pyarrow)" /tmp/requirements.txt > /tmp/requirements-lithops.txt
+RUN pip install --no-cache-dir -r /tmp/requirements-lithops.txt
 
 # create action working directory
 RUN mkdir -p /action \

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from concurrent.futures.thread import ThreadPoolExecutor
 
 import numpy as np
@@ -8,7 +9,7 @@ from io import BytesIO
 import pyarrow as pa
 from lithops.storage import Storage
 from lithops.storage.utils import CloudObject
-from typing import TypeVar, Generic, List
+from typing import TypeVar, Generic, List, Union, Iterable
 
 from sm.engine.annotation_lithops.utils import logger
 
@@ -40,13 +41,12 @@ def deserialise_from_file(path):
 
 def serialise(obj):
     try:
-        return BytesIO(pa.serialize(obj).to_buffer())
+        return pa.serialize(obj).to_buffer().to_pybytes()
     except pa.lib.SerializationCallbackError:
-        return BytesIO(pickle.dumps(obj))
+        return pickle.dumps(obj)
 
 
-def deserialise(serialised_obj):
-    data = serialised_obj.read()
+def deserialise(data):
     try:
         return pa.deserialize(data)
     except pa.lib.ArrowInvalid:
@@ -57,7 +57,7 @@ def save_cobj(storage: Storage, obj: T, bucket: str = None, key: str = None) -> 
     return storage.put_cobject(serialise(obj), bucket, key)
 
 
-def load_cobj(storage, cobj: CObj[T]) -> T:
+def load_cobj(storage: Storage, cobj: CObj[T]) -> T:
     return deserialise(storage.get_cobject(cobj))
 
 
@@ -121,3 +121,15 @@ def delete_objects_by_prefix(storage: Storage, bucket: str, prefix: str):
     keys = storage.list_keys(bucket, prefix)
     storage.delete_objects(bucket, keys)
     logger.info(f'Removed {len(keys)} objects from {storage.backend}://{bucket}/{prefix}')
+
+
+def iter_cobjs_with_prefetch(storage: Storage, cobjs: List[CObj[T]], prefetch=1) -> Iterable[T]:
+    cobjs = list(cobjs)
+    futures = []
+    if len(cobjs) == 0:
+        return
+    with ThreadPoolExecutor(1) as executor:
+        while len(futures) or len(cobjs):
+            while len(cobjs) and len(futures) < prefetch + 1:
+                futures.append(executor.submit(load_cobj, storage, cobjs.pop(0)))
+            yield futures.pop(0).result()

@@ -22,7 +22,7 @@ from sm.engine.annotation.formula_validator import METRICS
 from sm.engine.annotation_spark.msm_basic_search import MSMSearch
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
-from sm.engine.png_generator import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.search_results import SearchResults
 from sm.engine.util import SMConfig, split_s3_path
 from sm.engine.es_export import ESExporter

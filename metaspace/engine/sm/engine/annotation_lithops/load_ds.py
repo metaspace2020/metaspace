@@ -1,3 +1,5 @@
+from __future__ import annotations
+import shutil
 from typing import Tuple, List
 
 import logging
@@ -5,6 +7,8 @@ import logging
 import os
 from lithops.storage import Storage
 from tempfile import TemporaryDirectory
+
+from lithops.storage.utils import CloudObject
 from pyimzml.ImzMLParser import ImzMLParser, PortableSpectrumReader
 from concurrent.futures.process import ProcessPoolExecutor
 from concurrent.futures.thread import ThreadPoolExecutor
@@ -23,28 +27,21 @@ from sm.engine.annotation_lithops.io import (
 )
 
 
-def download_dataset(input_path, local_path, storage):
-    # Find imzml/ibd object in storage
-    bucket, input_prefix = input_path[len('cos://') :].split('/', maxsplit=1)
-    keys = storage.list_keys(bucket, input_prefix)
-    imzml_keys = [key for key in keys if key.lower().endswith('.imzml')]
-    ibd_keys = [key for key in keys if key.lower().endswith('.ibd')]
-    assert len(imzml_keys) == 1, imzml_keys
-    assert len(ibd_keys) == 1, ibd_keys
-
+def download_dataset(imzml_cobject, ibd_cobject, local_path, storage):
     # Decide destination paths
     Path(local_path).mkdir(exist_ok=True)
     imzml_path = local_path / 'ds.imzML'
     ibd_path = local_path / 'ds.ibd'
 
     # Download both files
-    def _download(key, path):
-        storage.get_client().download_file(bucket, key, str(path))
+    def _download(cobj, path):
+        with path.open('wb') as f:
+            shutil.copyfileobj(storage.get_cobject(cobj, stream=True), f)
 
-    logger.info("Download dataset {} - {} ".format(imzml_keys[0], imzml_path))
-    _download(imzml_keys[0], imzml_path)
-    logger.info("Download dataset {} - {} ".format(ibd_keys[0], ibd_path))
-    _download(ibd_keys[0], ibd_path)
+    logger.info("Download dataset {} - {} ".format(imzml_cobject.key, imzml_path))
+    _download(imzml_cobject, imzml_path)
+    logger.info("Download dataset {} - {} ".format(ibd_cobject.key, ibd_path))
+    _download(ibd_cobject, ibd_path)
 
     # Log stats
     imzml_size = imzml_path.stat().st_size / (1024 ** 2)
@@ -167,7 +164,9 @@ def upload_segments(storage, ds_segments_path, chunks_n, segments_n):
         cobj = save_cobj(storage, segm)
 
         if logger.isEnabledFor(logging.DEBUG):
-            nbytes = storage.head_object(cobj.bucket, cobj.key)['Content-Length']
+            head = storage.head_object(cobj.bucket, cobj.key)
+            print(head)
+            nbytes = storage.head_object(cobj.bucket, cobj.key)['content-length']
             logger.debug(f'Uploaded segment {segm_i}: {nbytes} bytes')
 
         return cobj
@@ -214,7 +213,11 @@ def make_segments(imzml_reader, ibd_path, ds_segments_bounds, segments_dir, sort
 
 
 def load_ds(
-    storage: Storage, input_path: str, ds_segm_size_mb: int, sort_memory: int
+    storage: Storage,
+    imzml_cobject: CloudObject,
+    ibd_cobject: CloudObject,
+    ds_segm_size_mb: int,
+    sort_memory: int,
 ) -> Tuple[
     PortableSpectrumReader,
     np.ndarray,
@@ -235,7 +238,7 @@ def load_ds(
 
         logger.info('Downloading dataset...')
         t = time()
-        imzml_path, ibd_path = download_dataset(input_path, imzml_dir, storage)
+        imzml_path, ibd_path = download_dataset(imzml_cobject, ibd_cobject, imzml_dir, storage)
         stats.append(('download_dataset', time() - t))
 
         logger.info('Loading parser...')

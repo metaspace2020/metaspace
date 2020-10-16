@@ -92,7 +92,7 @@ def queue_pub(local_sm_config):
 
 def run_daemons(db, es, sm_config):
     from sm.engine.queue import QueuePublisher, SM_DS_STATUS, SM_ANNOTATE, SM_UPDATE
-    from sm.engine.png_generator import ImageStoreServiceWrapper
+    from sm.engine.image_store import ImageStoreServiceWrapper
     from sm.engine.sm_daemons import DatasetManager, SMAnnotateDaemon, SMIndexUpdateDaemon
 
     status_queue_pub = QueuePublisher(

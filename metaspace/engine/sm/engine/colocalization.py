@@ -10,7 +10,7 @@ from scipy.ndimage import zoom, median_filter
 from sm.engine.dataset import Dataset
 from sm.engine.ion_mapping import get_ion_id_mapping
 from sm.engine.util import SMConfig
-from sm.engine.png_generator import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStoreServiceWrapper
 
 COLOC_JOB_DEL = 'DELETE FROM graphql.coloc_job WHERE ds_id = %s AND moldb_id = %s'
 

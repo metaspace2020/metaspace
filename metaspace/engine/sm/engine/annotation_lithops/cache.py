@@ -1,3 +1,4 @@
+from __future__ import annotations
 from lithops import FunctionExecutor
 from lithops.storage.utils import CloudObject, StorageNoSuchKeyError
 
@@ -10,7 +11,7 @@ class PipelineCacher:
         self.config = self.fexec.config
         self.storage = self.fexec.storage
 
-        self.bucket = self.config['pywren']['storage_bucket']
+        self.bucket = self.config['lithops']['storage_bucket']
         self.prefixes = {
             '': f'metabolomics/cache/{namespace}',
             ':ds': f'metabolomics/cache/{namespace}/{ds_name}/',
@@ -27,7 +28,7 @@ class PipelineCacher:
             return self.prefixes[prefix] + suffix
 
     def load(self, key):
-        data_stream = self.storage.get_object(bucket=self.bucket, key=self.resolve_key(key))
+        data_stream = self.storage.get_object(self.bucket, self.resolve_key(key))
         return deserialise(data_stream)
 
     def save(self, data, key):
@@ -62,7 +63,7 @@ class PipelineCacher:
 
             if isinstance(cache_data, tuple):
                 for obj in cache_data:
-                    if isinstance(obj, list):
+                    if isinstance(obj, list) and len(obj) > 0:
                         if isinstance(obj[0], CloudObject):
                             cobjects_to_clean.extend(obj)
                     elif isinstance(obj, CloudObject):

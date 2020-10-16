@@ -5,7 +5,7 @@ import bottle
 
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
-from sm.engine.png_generator import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_DS_STATUS, SM_UPDATE
 from sm.engine.errors import UnknownDSID, DSIsBusy
 from sm.engine.util import SMConfig

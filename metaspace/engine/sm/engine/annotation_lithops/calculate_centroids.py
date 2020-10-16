@@ -1,3 +1,4 @@
+from __future__ import annotations
 from lithops.storage.utils import CloudObject
 from typing import List
 
@@ -5,15 +6,12 @@ from itertools import repeat
 import pandas as pd
 from lithops import FunctionExecutor
 
-from sm.engine.dataset import DSConfig
+from sm.engine.ds_config import DSConfig
 from sm.engine.annotation_lithops.utils import (
     logger,
     PipelineStats,
 )
 from sm.engine.annotation_lithops.io import save_cobj, load_cobj, CObj
-
-N_FORMULAS_SEGMENTS = 256
-N_HASH_CHUNKS = 32  # should be less than N_FORMULAS_SEGMENTS
 
 
 def calculate_centroids(

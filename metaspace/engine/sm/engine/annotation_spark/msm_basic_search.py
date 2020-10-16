@@ -9,7 +9,7 @@ import pyspark
 from pyspark.files import SparkFiles
 from pyspark.storagelevel import StorageLevel
 
-from sm.engine.dataset import DSConfig
+from sm.engine.ds_config import DSConfig
 from sm.engine.fdr import FDR
 from sm.engine.annotation.formula_centroids import CentroidsGenerator
 from sm.engine.formula_parser import safe_generate_ion_formula

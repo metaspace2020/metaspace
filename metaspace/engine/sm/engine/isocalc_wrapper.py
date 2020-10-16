@@ -7,7 +7,7 @@ import cpyMSpec as cpyMSpec_0_4_2
 import cpyMSpec_0_3_5
 from pyMSpec.pyisocalc import pyisocalc
 
-from sm.engine.dataset import DSConfig
+from sm.engine.ds_config import DSConfig
 
 assert cpyMSpec_0_4_2.utils.VERSION == '0.4.2'
 assert cpyMSpec_0_3_5.utils.VERSION == '0.3.5'
@@ -24,7 +24,7 @@ class IsocalcWrapper:
     centroids and profiles for a sum formula.
     """
 
-    _all_centroids_caches: Optional[Dict]
+    _all_centroids_caches: Optional[Dict] = None
 
     @classmethod
     def set_centroids_cache_enabled(cls, enabled):

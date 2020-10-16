@@ -1,3 +1,4 @@
+from __future__ import annotations
 from itertools import chain
 
 from lithops import FunctionExecutor
@@ -14,8 +15,9 @@ from sm.engine.annotation.formula_validator import (
     compute_and_filter_metrics,
     make_compute_image_metrics,
     MetricsDict,
+    METRICS,
 )
-from sm.engine.dataset import DSConfigImageGeneration
+from sm.engine.ds_config import DSConfigImageGeneration
 from sm.engine.annotation_lithops.utils import (
     ds_dims,
     get_pixel_indices,
@@ -26,8 +28,7 @@ from sm.engine.annotation_lithops.io import save_cobj, load_cobj, CObj
 
 ISOTOPIC_PEAK_N = 4
 
-ImageDict = Dict[int, List[coo_matrix]]
-ImageLookup = Tuple[List[int], CObj[ImageDict]]
+ImagesRow = Tuple[int, int, List[coo_matrix]]
 
 
 class ImagesManager:
@@ -40,8 +41,8 @@ class ImagesManager:
             )
 
         self._formula_metrics: Dict[int, MetricsDict] = {}
-        self._formula_images: ImageDict = {}
-        self._image_lookups: List[ImageLookup] = []
+        self._images_buffer: List[ImagesRow] = []
+        self._images_dfs: List[pd.DataFrame] = []
 
         self._formula_images_size = 0
         self._max_formula_images_size = max_formula_images_size
@@ -51,10 +52,12 @@ class ImagesManager:
         self._formula_metrics[f_i] = f_metrics
 
         if f_images:
-            self._formula_images[f_i] = f_images
-            self._formula_images_size += ImagesManager.images_size(f_images)
-            if self._formula_images_size > self._max_formula_images_size:
+            size = ImagesManager.images_size(f_images)
+            n_pixels = ImagesManager.n_pixels(f_images)
+            if self._formula_images_size + size > self._max_formula_images_size:
                 self._flush_images()
+            self._images_buffer.append((f_i, n_pixels, f_images))
+            self._formula_images_size += size
 
     @staticmethod
     def images_size(f_images):
@@ -62,22 +65,45 @@ class ImagesManager:
             img.data.nbytes + img.row.nbytes + img.col.nbytes for img in f_images if img is not None
         )
 
+    @staticmethod
+    def n_pixels(f_images):
+        return sum(img.nnz for img in f_images if img is not None)
+
     def _flush_images(self):
-        if self._formula_images:
-            print(f'Saving {len(self._formula_images)} images')
-            cloud_obj = save_cobj(self._storage, self._formula_images)
-            self._image_lookups.append((list(self._formula_images), cloud_obj))
+        if self._images_buffer:
+            print(f'Saving {len(self._images_buffer)} images')
+            cobj_data = dict((f_i, f_images) for f_i, size, f_images in self._images_buffer)
+            cloud_obj = save_cobj(self._storage, cobj_data)
+            images_df = pd.DataFrame(
+                {
+                    'formula_i': [f_i for f_i, n_pixels, f_images in self._images_buffer],
+                    'n_pixels': [n_pixels for f_i, n_pixels, f_images in self._images_buffer],
+                    'cobj': cloud_obj,
+                }
+            ).set_index('formula_i')
+            self._images_dfs.append(images_df)
         else:
             print(f'No images to save')
 
-        self._formula_images.clear()
+        self._images_buffer.clear()
         self._formula_images_size = 0
 
-    def finish(self) -> Tuple[pd.DataFrame, List[ImageLookup]]:
+    def finish(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
         self._flush_images()
-        formula_metrics_df = pd.DataFrame.from_dict(self._formula_metrics, orient='index')
+        if len(self._formula_metrics) > 0:
+            formula_metrics_df = pd.DataFrame.from_dict(self._formula_metrics, orient='index')
+        else:
+            formula_metrics_df = pd.DataFrame([METRICS]).iloc[:0]
         formula_metrics_df.index.name = 'formula_i'
-        return formula_metrics_df, self._image_lookups
+
+        if len(self._images_dfs) > 0:
+            images_df = pd.concat(self._images_dfs)
+        else:
+            images_df = pd.DataFrame(
+                {'n_pixels': pd.Series(dtype='l'), 'cobj': pd.Series(dtype='O')},
+                index=pd.Series(name='formula_i', dtype='l'),
+            )
+        return formula_metrics_df, images_df
 
 
 def gen_iso_image_sets(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, ppm=3, min_px=1):
@@ -118,8 +144,9 @@ def gen_iso_image_sets(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, ppm=3, 
             if u - l >= min_px:
                 data = sp_ints[l:u]
                 inds = sp_inds[l:u]
-                row_inds = inds / ncols
-                col_inds = inds % ncols
+                row_inds, col_inds = np.divmod(inds, ncols)
+                row_inds = row_inds.astype(np.uint16)
+                col_inds = col_inds.astype(np.uint16)
                 m = coo_matrix((data, (row_inds, col_inds)), shape=(nrows, ncols), copy=True)
             buffer.append((centr_f_inds[df_index], centr_p_inds[df_index], centr_ints[df_index], m))
 
@@ -214,7 +241,7 @@ def process_centr_segments(
     image_gen_config: DSConfigImageGeneration,
     ds_segm_size_mb: float,
     is_intensive_dataset: bool,
-) -> Tuple[pd.DataFrame, List[ImageLookup]]:
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     ds_segm_dtype = imzml_reader.mzPrecision
     sample_area_mask = make_sample_area_mask(imzml_reader.coordinates)
     nrows, ncols = ds_dims(imzml_reader.coordinates)
@@ -224,9 +251,9 @@ def process_centr_segments(
     pw_mem_mb = 2048 if is_intensive_dataset else 1024
 
     def process_centr_segment(
-        db_segm_cobject: CObj[pd.DataFrame], segm_id: int, storage: Storage
-    ) -> Tuple[pd.DataFrame, List[ImageLookup]]:
-        print(f'Reading centroids segment {segm_id}')
+        db_segm_cobject: CObj[pd.DataFrame], storage: Storage
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        print(f'Reading centroids segment {db_segm_cobject.key}')
         # read database relevant part
         centr_df = load_cobj(storage, db_segm_cobject)
 
@@ -262,23 +289,21 @@ def process_centr_segments(
         for f_i, f_metrics, f_images in compute_and_filter_metrics(
             formula_image_set_it,
             compute_metrics,
-            target_formula_inds=set(),  # TODO
+            target_formula_inds=set(centr_df.formula_i),  # TODO
             targeted_database_formula_inds=set(),  # TODO
             min_px=min_px,
         ):
             images_manager.append(f_i, f_metrics, f_images)
         formula_metrics_df, image_lookups = images_manager.finish()
 
-        print(f'Centroids segment {segm_id} finished')
+        print(f'Centroids segment {db_segm_cobject.key} finished')
         return formula_metrics_df, image_lookups
 
     logger.info('Annotating...')
     futures = fexec.map(process_centr_segment, db_segms_cobjects, runtime_memory=pw_mem_mb)
     formula_metrics_list, images_cloud_objs_list = zip(*fexec.get_result(futures))
     formula_metrics_df = pd.concat(formula_metrics_list)
-    images_cloud_objs = list(chain(*images_cloud_objs_list))
-    PipelineStats.append_pywren(
-        futures, memory_mb=pw_mem_mb, cloud_objects_n=len(images_cloud_objs)
-    )
+    images_df = pd.concat(images_cloud_objs_list)
+    PipelineStats.append_pywren(futures, memory_mb=pw_mem_mb)
 
-    return formula_metrics_df, images_cloud_objs
+    return formula_metrics_df, images_df

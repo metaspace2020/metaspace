@@ -9,7 +9,7 @@ from sm.engine.es_export import ESExporter
 from sm.engine.queue import QueuePublisher
 from sm.rest.dataset_manager import SMapiDatasetManager
 from sm.rest.dataset_manager import Dataset, DatasetActionPriority, DatasetStatus
-from sm.engine.png_generator import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.optical_image import OpticalImageType
 
 

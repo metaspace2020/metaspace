@@ -10,7 +10,7 @@ from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.queue import QueuePublisher
 from sm.engine.dataset import DatasetStatus, Dataset, generate_ds_config
-from sm.engine.png_generator import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStoreServiceWrapper
 
 
 def create_ds(

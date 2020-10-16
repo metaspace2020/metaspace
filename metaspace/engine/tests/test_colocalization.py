@@ -7,7 +7,7 @@ import pandas as pd
 from sm.engine.colocalization import analyze_colocalization, Colocalization, FreeableRef
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
-from sm.engine.png_generator import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStoreServiceWrapper
 from .utils import create_test_molecular_db
 
 

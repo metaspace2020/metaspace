@@ -4,7 +4,7 @@ import sys
 from functools import partial
 
 from sm.engine.ion_thumbnail import DEFAULT_ALGORITHM, ALGORITHMS, generate_ion_thumbnail
-from sm.engine.png_generator import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.util import bootstrap_and_run
 from sm.engine.db import DB
 

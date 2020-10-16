@@ -54,6 +54,9 @@ class SearchResults:
         for _, row in metr_df.iterrows():
             m = OrderedDict((name, row[name]) for name in self.metric_names)
             metr_json = json.dumps(m)
+            if row.formula_i not in formula_img_ids:
+                print(row)
+                print(formula_img_ids)
             image_ids = formula_img_ids[row.formula_i]['iso_image_ids']
             yield (
                 job_id,
@@ -96,7 +99,7 @@ class SearchResults:
             Image alpha channel (2D, 0..1)
         db : sm.engine.DB
             database connection
-        img_store : sm.engine.png_generator.ImageStoreServiceWrapper
+        img_store : sm.engine.image_store.ImageStoreServiceWrapper
             m/z image store
         img_store_type: str
         """
@@ -106,18 +109,18 @@ class SearchResults:
         )
         self.store_ion_metrics(metrics_df, formula_image_ids, db)
 
-    def store_lithops(self, metrics_df, formula_image_iter, db, img_store, img_store_type):
+    def store_lithops(self, metrics_df, formula_png_iter, db, img_store, img_store_type):
         """Save formula metrics and images
 
         Args
         ---------
         metrics_df : pandas.Dataframe
             formula, adduct, msm, fdr, individual metrics
-        formula_image_iter : Iterable[Tuple[int, List[Optional[coo_matrix]]]]
+        formula_png_iter : Iterable[Tuple[int, List[Optional[coo_matrix]]]]
             values must be lists of 2d intensity arrays (in coo_matrix format)
         db : sm.engine.DB
             database connection
-        img_store : sm.engine.png_generator.ImageStoreServiceWrapper
+        img_store : sm.engine.image_store.ImageStoreServiceWrapper
             m/z image store
         img_store_type: str
         """
@@ -131,6 +134,7 @@ class SearchResults:
             ]
             return formula_id, {'iso_image_ids': image_ids}
 
-        with ThreadPoolExecutor(16) as ex:
-            formula_image_ids = dict(ex.map(_upload_images, formula_image_iter))
+        with ThreadPoolExecutor(2) as ex:
+            for formula_png_chunk in formula_png_iter:
+                formula_image_ids.update(ex.map(_upload_images, formula_png_chunk))
         self.store_ion_metrics(metrics_df, formula_image_ids, db)

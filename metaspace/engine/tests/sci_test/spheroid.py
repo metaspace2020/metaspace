@@ -10,7 +10,7 @@ import numpy as np
 
 from sm.engine.annotation_spark.annotation_job import AnnotationJob
 from sm.engine.db import DB
-from sm.engine.png_generator import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.util import proj_root, create_ds_from_files, bootstrap_and_run
 
 SEARCH_RES_SELECT = (

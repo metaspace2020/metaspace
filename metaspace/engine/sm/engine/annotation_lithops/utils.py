@@ -1,3 +1,4 @@
+from __future__ import annotations
 import json
 
 from hashlib import blake2b
@@ -9,10 +10,9 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-logging.getLogger('ibm_boto3').setLevel(logging.CRITICAL)
-logging.getLogger('ibm_botocore').setLevel(logging.CRITICAL)
-logging.getLogger('urllib3').setLevel(logging.CRITICAL)
-logging.getLogger('engine').setLevel(logging.CRITICAL)
+# logging.getLogger('ibm_boto3').setLevel(logging.WARNING)
+# logging.getLogger('ibm_botocore').setLevel(logging.WARNING)
+# logging.getLogger('urllib3').setLevel(logging.WARNING)
 
 logger = logging.getLogger('annotation-pipeline')
 
@@ -29,24 +29,33 @@ class PipelineStats:
 
     @classmethod
     def _append(cls, content):
-        pd.DataFrame(content).to_csv(cls.path, mode='a', header=False, index=False)
+        try:
+            pd.DataFrame(content).to_csv(cls.path, mode='a', header=False, index=False)
+        except Exception as ex:
+            logger.exception(ex)
 
     @classmethod
     def append_pywren(cls, futures, memory_mb, cloud_objects_n=0):
-        if type(futures) != list:
-            futures = [futures]
+        try:
+            if type(futures) != list:
+                futures = [futures]
 
-        def calc_cost(runtimes, memory_gb):
-            pywren_unit_price_in_dollars = 0.000017
-            return sum([pywren_unit_price_in_dollars * memory_gb * runtime for runtime in runtimes])
+            def calc_cost(runtimes, memory_gb):
+                pywren_unit_price_in_dollars = 0.000017
+                return sum(
+                    [pywren_unit_price_in_dollars * memory_gb * runtime for runtime in runtimes]
+                )
 
-        actions_num = len(futures)
-        func_name = futures[0].function_name
-        runtimes = [future.stats['exec_time'] for future in futures]
-        cost = calc_cost(runtimes, memory_mb / 1024)
-        cls._append(
-            [[func_name, actions_num, memory_mb, np.average(runtimes), cost, cloud_objects_n]]
-        )
+            actions_num = len(futures)
+            func_name = futures[0].function_name
+            print(futures[0].stats)
+            runtimes = [future.stats.get('worker_func_exec_time', 0) for future in futures]
+            cost = calc_cost(runtimes, memory_mb / 1024)
+            cls._append(
+                [[func_name, actions_num, memory_mb, np.average(runtimes), cost, cloud_objects_n]]
+            )
+        except Exception as ex:
+            logger.exception(ex)
 
     @classmethod
     def append_vm(cls, func_name, exec_time, cloud_objects_n=0):
@@ -54,13 +63,12 @@ class PipelineStats:
 
     @classmethod
     def get(cls):
-        stats = pd.read_csv(cls.path)
-        print('Total PyWren cost: {:.3f} $'.format(stats['Cost'].sum()))
-        return stats
-
-
-def ds_imzml_path(ds_data_path):
-    return next(str(p) for p in Path(ds_data_path).iterdir() if str(p).lower().endswith('.imzml'))
+        try:
+            stats = pd.read_csv(cls.path)
+            print('Total PyWren cost: {:.3f} $'.format(stats['Cost'].sum()))
+            return stats
+        except Exception as ex:
+            logger.exception(ex)
 
 
 def ds_dims(coordinates):

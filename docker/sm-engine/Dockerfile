@@ -33,15 +33,15 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     add-apt-repository ppa:deadsnakes/ppa && \
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
-        python3.6 \
-        python3.6-dev \
+        python3.8 \
+        python3.8-dev \
         python3-distutils \
         libsm6 libxrender1 libxext6 \
         && \
     wget -O /tmp/get-pip.py https://bootstrap.pypa.io/get-pip.py && \
-    python3.6 /tmp/get-pip.py && \
-    ln -s /usr/bin/python3.6 /usr/local/bin/python3 && \
-    ln -s /usr/bin/python3.6 /usr/local/bin/python && \
+    python3.8 /tmp/get-pip.py && \
+    ln -s /usr/bin/python3.8 /usr/local/bin/python3 && \
+    ln -s /usr/bin/python3.8 /usr/local/bin/python && \
     $PIP_INSTALL \
         setuptools && \
     apt-get clean -y && \
@@ -49,7 +49,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     rm -rf /var/lib/apt/lists/* /tmp/* ~/.cache/*
 
 # --- Engine dependencies ---
-COPY requirements.txt /requirements.txt
+COPY metaspace/engine/requirements.txt /requirements.txt
 RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     PIP_INSTALL="python -m pip install --upgrade" && \
     apt-get update && \
@@ -64,7 +64,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
 
 RUN mkdir -p /opt/data /root/metaspace
 #WORKDIR /root/metaspace/metaspace/engine
-COPY *.sh /
+COPY docker/sm-engine/*.sh /
 
 ENTRYPOINT [ ]
 CMD [ "/start-api.sh" ]

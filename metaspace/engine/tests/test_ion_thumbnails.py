@@ -7,7 +7,7 @@ import pytest
 from sm.engine.ion_thumbnail import generate_ion_thumbnail, ALGORITHMS
 from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.db import DB
-from sm.engine.png_generator import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStoreServiceWrapper
 from .utils import create_test_molecular_db
 
 OLD_IMG_ID = 'old-ion-thumb-id'

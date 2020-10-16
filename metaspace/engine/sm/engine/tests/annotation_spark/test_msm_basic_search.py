@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from sm.engine.dataset import DSConfigIsotopeGeneration
+from sm.engine.ds_config import DSConfigIsotopeGeneration
 from sm.engine.molecular_db import MolecularDB
 from sm.engine.annotation_spark.msm_basic_search import init_fdr, collect_ion_formulas
 from tests.conftest import spark_context
