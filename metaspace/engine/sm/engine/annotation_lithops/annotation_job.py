@@ -102,7 +102,9 @@ class LocalAnnotationJob:
     def run(self):
         results_df, png_cobjs = self.pipe()
         results_df.to_csv('./results.csv')
-        image_names = results_df.formula + results_df.modifier + results_df.adduct
+        image_names = (
+            results_df.formula + results_df.chem_mod + results_df.neutral_loss + results_df.adduct
+        )
         out_dir = Path('./result_pngs')
         out_dir.mkdir(exist_ok=True)
         for imageset in iter_cobjs_with_prefetch(self.storage, png_cobjs):
@@ -239,11 +241,7 @@ class ServerAnnotationJob:
                     n_peaks=self.ds.config['isotope_generation']['n_peaks'],
                     charge=self.ds.config['isotope_generation']['charge'],
                 )
-                metrics_df = (
-                    results_df[results_df.moldb_id == moldb_id]
-                    .rename(columns={'modifier': 'neutral_loss'})
-                    .assign(chem_mod='')
-                )
+                metrics_df = results_df[results_df.moldb_id == moldb_id]
                 search_results.store_ion_metrics(metrics_df, formula_image_ids, self.db)
 
                 update_finished_job(job_id, JobStatus.FINISHED)

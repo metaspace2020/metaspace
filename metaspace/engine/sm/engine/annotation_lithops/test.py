@@ -17,8 +17,8 @@ ds_config: DSConfig = {
         "isocalc_sigma": 0.001238,
         "instrument": "Orbitrap",
         "n_peaks": 4,
-        "neutral_losses": [],
-        "chem_mods": [],
+        "neutral_losses": ["-H2O"],
+        "chem_mods": ["-CO2+CO"],
     },
     "fdr": {"decoy_sample_size": 20},
     "image_generation": {"ppm": 3, "n_levels": 30, "min_px": 1},
@@ -33,6 +33,8 @@ job = LocalAnnotationJob(
     ds_config,
 )
 job.run()
+
+#%%
 
 
 #%%

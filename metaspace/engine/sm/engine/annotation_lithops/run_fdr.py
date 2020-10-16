@@ -32,17 +32,13 @@ def run_fdr(
         formula_msm = formula_map_df.merge(
             msms_df, how='inner', left_on='formula_i', right_index=True
         )
-        # TODO: Undo chem_mod/neutral_loss merge
-        modifiers = fdr.target_modifiers_df[['neutral_loss', 'adduct']].rename(
-            columns={'neutral_loss': 'modifier'}
-        )
+        modifiers = fdr.target_modifiers_df[['chem_mod', 'neutral_loss', 'adduct']]
         results_df = (
             fdr.estimate_fdr(formula_msm)
             .assign(moldb_id=db)
             .set_index('formula_i')
-            .rename(columns={'modifier': 'combined_modifier'})
-            .merge(modifiers, left_on='combined_modifier', right_index=True)
-            .drop(columns=['combined_modifier'])
+            .merge(modifiers, left_on='modifier', right_index=True)
+            .drop(columns=['modifier'])
         )
         return results_df
 
