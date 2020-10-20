@@ -1,6 +1,7 @@
 import { ElNotification } from 'element-ui/types/notification'
 import * as Sentry from '@sentry/browser'
 import { every } from 'lodash-es'
+import { Primitive } from 'ts-essentials'
 
 let $notify: ElNotification
 
@@ -18,11 +19,15 @@ function isHandled(err: any) {
 
 const DEFAULT_MESSAGE = 'Oops! Something went wrong. Please refresh the page and try again.'
 
-export default function reportError(err: Error, message: string | null = DEFAULT_MESSAGE) {
+export default function reportError(
+  err: Error,
+  message: string | null = DEFAULT_MESSAGE,
+  extraData?: Record<string, Primitive>,
+) {
   try {
     if (!isHandled(err)) {
-      Sentry.captureException(err)
-      console.error(err)
+      Sentry.captureException(err, { contexts: { 'Extra Data': extraData } })
+      console.error(err, extraData)
       if ($notify != null && message) {
         $notify.error(message)
       }

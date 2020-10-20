@@ -6,6 +6,7 @@ import store from '../../../../store/index'
 import Vue from 'vue'
 import Vuex from 'vuex'
 import { sync } from 'vuex-router-sync'
+import * as reportErrorModule from '../../../../lib/reportError'
 
 Vue.use(Vuex)
 sync(store, router)
@@ -40,6 +41,9 @@ describe('Diagnostics', () => {
     dataset: {
       id: '2019-02-12_15h55m06s',
       name: 'Untreated_3_434',
+    },
+    databaseDetails: {
+      id: 24,
     },
     offSample: false,
     offSampleProb: 0.03,
@@ -130,13 +134,14 @@ describe('Diagnostics', () => {
         allAnnotations: () => ([isobarAnnotation]),
       }),
     })
-    console.error = (...args: any[]) => { throw new Error(...args) }
+    const reportErrorFunc = jest.spyOn(reportErrorModule, 'default')
 
     const wrapper = mount(Diagnostics, { store, router, apolloProvider, stubs, propsData: props })
     await Vue.nextTick()
     wrapper.setData({ comparisonIonFormula: isobarAnnotation.ionFormula })
     await Vue.nextTick()
 
+    expect(reportErrorFunc).not.toBeCalled() // "Inconsistent annotations" warning should fail the test
     expect(wrapper).toMatchSnapshot()
   })
 })
