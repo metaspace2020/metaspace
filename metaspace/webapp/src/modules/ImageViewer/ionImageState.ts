@@ -85,15 +85,15 @@ function removeLayer(id: string) : number {
   return idx
 }
 
-function createState(annotation: Annotation) {
+function getInitialLayerState(annotation: Annotation): IonImageState {
   const [isotopeImage] = annotation.isotopeImages
   const { minIntensity = 0, maxIntensity = 1 } = isotopeImage || {}
 
-  return reactive<IonImageState>({
+  return {
     maxIntensity,
     minIntensity,
     quantileRange: [0, 1],
-  })
+  }
 }
 
 export const useIonImages = (props: Props) => {
@@ -146,8 +146,8 @@ export const useIonImages = (props: Props) => {
     }
     state.activeLayer = annotation.id
 
-    const singleModeState = createState(props.annotation)
-    const multiModeState = createState(props.annotation)
+    const singleModeState = reactive(getInitialLayerState(props.annotation))
+    const multiModeState = reactive(getInitialLayerState(props.annotation))
 
     const activeState = computed(() =>
       viewerState.mode.value === 'SINGLE' ? singleModeState : multiModeState,
@@ -219,7 +219,10 @@ export const useIonImages = (props: Props) => {
       // TODO: make this cleaner
 
       for (const layer of Object.values(ionImageLayerCache)) {
-        layer.multiModeState = createState(layer.annotation)
+        const initialState = getInitialLayerState(layer.annotation)
+        layer.multiModeState.minIntensity = initialState.minIntensity
+        layer.multiModeState.maxIntensity = initialState.maxIntensity
+        layer.multiModeState.quantileRange = initialState.quantileRange
         if (layer.id === id) {
           layer.settings.channel = channels[0]
           layer.settings.label = undefined
