@@ -57,6 +57,8 @@ export default defineComponent<Props>({
       document.removeEventListener('mouseup', onStop)
       document.removeEventListener('touchmove', onMove)
       document.removeEventListener('touchend', onStop)
+
+      emit('thumb-stop')
     }
 
     function onStart(event: MouseEvent | TouchEvent) {
@@ -72,6 +74,7 @@ export default defineComponent<Props>({
       if (thumb.value) {
         thumb.value.focus()
       }
+      emit('thumb-start')
     }
 
     function onKeyUp(event: KeyboardEvent) {

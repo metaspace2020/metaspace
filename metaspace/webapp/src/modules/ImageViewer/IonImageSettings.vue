@@ -1,5 +1,5 @@
 <template>
-  <overlay class="px-3">
+  <overlay class="w-60">
     <p class="uppercase text-xs tracking-wider leading-6 m-0 flex justify-between">
       <span class="text-gray-700">
         OPACITY

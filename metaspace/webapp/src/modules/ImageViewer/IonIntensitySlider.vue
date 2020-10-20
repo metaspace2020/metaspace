@@ -15,6 +15,8 @@
       :min-tooltip="minTooltip"
       :max-tooltip="maxTooltip"
       @change="range => emit('change', range)"
+      @thumb-start="emit('thumb-start')"
+      @thumb-stop="emit('thumb-stop')"
     />
     <div class="flex justify-between leading-6 tracking-wide">
       <span>{{ model.minIntensity.toExponential(1) }}</span>

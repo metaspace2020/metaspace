@@ -10,6 +10,8 @@
       :pixel-step="minThumb.pixelStep.value"
       :bounds="minBounds"
       @change="onMinChange"
+      @thumb-start="emit('thumb-start')"
+      @thumb-stop="emit('thumb-stop')"
     />
     <span
       class="-ml-1"
@@ -24,6 +26,8 @@
       :pixel-step="maxThumb.pixelStep.value"
       :bounds="maxBounds"
       @change="onMaxChange"
+      @thumb-start="emit('thumb-start')"
+      @thumb-stop="emit('thumb-stop')"
     />
     <span
       class="-mr-1"
@@ -112,6 +116,7 @@ const Slider = defineComponent<Props>({
     })
 
     return {
+      emit,
       track,
       minThumb,
       maxThumb,

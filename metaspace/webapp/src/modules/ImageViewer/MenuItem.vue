@@ -12,6 +12,8 @@
     @keypress.space.self.prevent="emitActive"
     @click.stop="emitActive"
     @keypress.self.delete="emitDelete"
+    @mousedown.capture="emit('mousedown')"
+    @keydown.capture="emit('keydown')"
   >
     <slot />
   </div>
@@ -26,6 +28,7 @@ export default Vue.extend({
   },
   setup(props, { emit }) {
     return {
+      emit,
       emitActive: () => emit('active', props.layerId),
       emitDelete: () => emit('delete', props.layerId),
     }

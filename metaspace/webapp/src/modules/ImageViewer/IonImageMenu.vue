@@ -2,7 +2,7 @@
   <fade-transition>
     <overlay
       v-if="mode === 'SINGLE' && singleModeMenuItem"
-      class="h-12 px-3"
+      class="h-12 w-60"
     >
       <ion-intensity-slider
         :model="singleModeMenuItem.state"
@@ -20,6 +20,8 @@
         :visible="item.settings.visible"
         @active="setActiveLayer"
         @delete="removeLayer"
+        @mousedown.capture="setLastSlider(null)"
+        @keydown.capture="setLastSlider(null)"
       >
         <p class="flex justify-between m-0 h-9 items-center">
           <molecular-formula
@@ -47,6 +49,7 @@
             :color-bar="item.colorBar"
             :is-disabled="!item.settings.visible"
             @change="item.updateIntensity"
+            @thumb-start="setLastSlider(item.id)"
           />
         </div>
       </menu-item>
@@ -56,20 +59,18 @@
         @click="() => setActiveLayer(null)"
       >
         <span class="uppercase text-xs tracking-wider m-0 text-inherit flex items-center justify-end">
-          <fade-transition class="leading-5">
-            <span
-              v-if="activeLayer === null"
-              key="active"
-            >
-              Select row in table
-            </span>
-            <span
-              v-else
-              key="inactive"
-            >
-              Add ion image
-            </span>
-          </fade-transition>
+          <span
+            v-if="activeLayer === null"
+            key="active"
+          >
+            Select row in table
+          </span>
+          <span
+            v-else
+            key="inactive"
+          >
+            Add ion image
+          </span>
           <add-icon class="sm-mono-icon ml-1" />
         </span>
       </button>
@@ -77,7 +78,7 @@
   </fade-transition>
 </template>
 <script lang="ts">
-import { defineComponent, computed } from '@vue/composition-api'
+import { defineComponent, ref } from '@vue/composition-api'
 
 import MenuContainer from './MenuContainer.vue'
 import MenuItem from './MenuItem.vue'
@@ -118,12 +119,22 @@ export default defineComponent({
       singleModeMenuItem,
     } = useIonImageMenu(props)
 
+    const lastSlider = ref<string | null>(null)
     return {
+      setLastSlider(id: string) {
+        lastSlider.value = id
+      },
       activeLayer,
       removeLayer,
       multiModeMenuItems,
       mode: viewerState.mode,
-      setActiveLayer,
+      setActiveLayer(id: string) {
+        // do not change the active layer if the slider was used
+        if (id !== null && id === lastSlider.value) {
+          return
+        }
+        setActiveLayer(id)
+      },
       singleModeMenuItem,
     }
   },
