@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from sm.engine.errors import SMError
-from sm.engine.msm_basic.formula_imager import get_pixel_indices
+from sm.engine.annotation_spark.formula_imager import get_pixel_indices
 
 MAX_MZ_VALUE = 10 ** 5
 MAX_INTENS_VALUE = 10 ** 12

@@ -1,6 +1,7 @@
 import json
 import logging
 from datetime import datetime
+from typing import Dict
 
 from sm.engine.errors import UnknownDSID
 from sm.engine.util import SMConfig
@@ -80,16 +81,16 @@ class Dataset:
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        id=None,  # pylint: disable=redefined-builtin
-        name=None,
-        input_path=None,
-        upload_dt=None,
-        metadata=None,
-        config=None,
-        status=DatasetStatus.QUEUED,
-        status_update_dt=None,
-        is_public=True,
-        img_storage_type='fs',
+        id: str,  # pylint: disable=redefined-builtin
+        name: str = None,
+        input_path: str = None,
+        upload_dt: datetime = None,
+        metadata: Dict = None,
+        config: Dict = None,
+        status: str = DatasetStatus.QUEUED,
+        status_update_dt: datetime = None,
+        is_public: bool = True,
+        img_storage_type: str = 'fs',
     ):
         self.id = id
         self.name = name

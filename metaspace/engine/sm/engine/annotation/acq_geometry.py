@@ -1,4 +1,4 @@
-from sm.engine.mzml_parser import MzMLParser
+from sm.engine.annotation.mzml_parser import MzMLParser
 
 
 def make_ims_acq_geometry(metadata, dims):

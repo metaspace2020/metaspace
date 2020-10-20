@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 from sm.engine.molecular_db import MolecularDB
-from sm.engine.msm_basic.msm_basic_search import init_fdr, collect_ion_formulas
+from sm.engine.annotation_spark.msm_basic_search import init_fdr, collect_ion_formulas
 from tests.conftest import spark_context
 
 BASIC_ISOTOPE_GENERATION_CONFIG = {
@@ -23,10 +23,10 @@ FULL_ISOTOPE_GENERATION_CONFIG = {
 
 
 @patch(
-    'sm.engine.msm_basic.msm_basic_search.molecular_db.fetch_formulas',
+    'sm.engine.annotation_spark.msm_basic_search.molecular_db.fetch_formulas',
     return_value=['H2O', 'C5H3O'],
 )
-class TestMmsBasicSearch:
+class TestMsmBasicSearch:
     def test_init_fdr(self, fetch_formulas_mock):
         ds_config = {
             'analysis_version': 1,

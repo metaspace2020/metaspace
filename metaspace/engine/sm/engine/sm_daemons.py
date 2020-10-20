@@ -9,21 +9,22 @@ from botocore.exceptions import ClientError
 import redis
 from requests import post
 
+from sm.engine.annotation.job import del_jobs
 from sm.engine.colocalization import Colocalization
 from sm.engine.daemon_action import DaemonAction, DaemonActionStage
 from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.db import DB
-from sm.engine.errors import AnnotationError, ImzMLError, IndexUpdateError, SMError, UnknownDSID
+from sm.engine.errors import AnnotationError, ImzMLError, IndexUpdateError, SMError
 from sm.engine.es_export import ESExporter
 from sm.engine.ion_thumbnail import generate_ion_thumbnail
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine import molecular_db
 from sm.engine.off_sample_wrapper import classify_dataset_ion_images
-from sm.engine.optical_image import IMG_URLS_BY_ID_SEL, del_optical_image
+from sm.engine.optical_image import del_optical_image
 from sm.engine.queue import QueueConsumer, QueuePublisher
 from sm.engine.util import SMConfig
 from sm.rest.dataset_manager import DatasetActionPriority
-from sm.engine.annotation_job import AnnotationJob
+from sm.engine.annotation_spark.annotation_job import AnnotationJob
 
 
 class DatasetManager:
@@ -83,17 +84,14 @@ class DatasetManager:
     def classify_dataset_images(self, ds):
         classify_dataset_ion_images(self._db, ds, self._sm_config['services'])
 
-    def annotate(self, ds, annotation_job_factory=None, del_first=False, **kwargs):
+    def annotate(self, ds, del_first=False):
         """ Run an annotation job for the dataset. If del_first provided, delete first
         """
         if del_first:
             self.logger.warning(f'Deleting all results for dataset: {ds.id}')
-            self._del_iso_images(ds)
-            self._db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
+            del_jobs(ds)
         ds.save(self._db, self._es)
-        annotation_job_factory(img_store=self._img_store, sm_config=self._sm_config, **kwargs).run(
-            ds
-        )
+        AnnotationJob(img_store=self._img_store, ds=ds, sm_config=self._sm_config).run()
         Colocalization(self._db, self._img_store).run_coloc_job(ds.id, reprocess=del_first)
         generate_ion_thumbnail(
             db=self._db, img_store=self._img_store, ds_id=ds.id, only_if_needed=not del_first
@@ -124,25 +122,10 @@ class DatasetManager:
     def update(self, ds, fields):
         self._es.update_ds(ds.id, fields)
 
-    def _del_iso_images(self, ds):
-        self.logger.info(f'Deleting isotopic images: ({ds.id}, {ds.name})')
-
-        try:
-            storage_type = ds.get_ion_img_storage_type(self._db)
-            for row in self._db.select(IMG_URLS_BY_ID_SEL, params=(ds.id,)):
-                iso_image_ids = row[0]
-                for img_id in iso_image_ids:
-                    if img_id:
-                        self._img_store.delete_image_by_id(storage_type, 'iso_image', img_id)
-        except UnknownDSID:
-            self.logger.warning(
-                'Attempt to delete isotopic images of non-existing dataset. Skipping'
-            )
-
     def delete(self, ds):
         """ Delete all dataset related data from the DB """
         self.logger.info(f'Deleting dataset: {ds.id}')
-        self._del_iso_images(ds)
+        del_jobs(ds)
         del_optical_image(self._db, self._img_store, ds.id)
         self._es.delete_ds(ds.id)
         self._db.alter('DELETE FROM dataset WHERE id=%s', params=(ds.id,))
@@ -262,9 +245,7 @@ class SMAnnotateDaemon:
                 'new', " [v] New annotation message: {}".format(json.dumps(msg))
             )
 
-            self._manager.annotate(
-                ds=ds, annotation_job_factory=AnnotationJob, del_first=msg.get('del_first', False)
-            )
+            self._manager.annotate(ds=ds, del_first=msg.get('del_first', False))
 
             update_msg = {
                 'ds_id': msg['ds_id'],

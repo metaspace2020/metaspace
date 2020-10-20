@@ -1,8 +1,7 @@
-import numpy as np
 import pandas as pd
 from pytest import raises
 
-from sm.engine.formula_centroids import FormulaCentroids
+from sm.engine.annotation.formula_centroids import FormulaCentroids
 
 
 def create_formula_centroids(rows1, rows2):

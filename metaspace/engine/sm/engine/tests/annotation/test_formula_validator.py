@@ -6,16 +6,16 @@ import pytest
 from pandas.util.testing import assert_frame_equal
 from scipy.sparse import csr_matrix
 
-from sm.engine.msm_basic.formula_validator import (
+from sm.engine.annotation.formula_validator import (
     formula_image_metrics,
     make_compute_image_metrics,
     replace_nan,
 )
 
 
-@patch('sm.engine.msm_basic.formula_validator.isotope_pattern_match', return_value=0.9)
-@patch('sm.engine.msm_basic.formula_validator.isotope_image_correlation', return_value=0.9)
-@patch('sm.engine.msm_basic.formula_validator.measure_of_chaos', return_value=0.9)
+@patch('sm.engine.annotation.formula_validator.isotope_pattern_match', return_value=0.9)
+@patch('sm.engine.annotation.formula_validator.isotope_image_correlation', return_value=0.9)
+@patch('sm.engine.annotation.formula_validator.measure_of_chaos', return_value=0.9)
 def test_get_compute_img_measures_pass(chaos_mock, image_corr_mock, pattern_match_mock):
     img_gen_config = {'n_levels': 30}
     sample_area_mask = np.ones((2, 3), dtype=int)

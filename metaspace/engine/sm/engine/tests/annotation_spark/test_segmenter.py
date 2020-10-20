@@ -5,7 +5,7 @@ import pandas as pd
 from itertools import product
 from numpy.testing import assert_array_almost_equal
 
-from sm.engine.msm_basic.segmenter import (
+from sm.engine.annotation_spark.segmenter import (
     segment_centroids,
     define_ds_segments,
     segment_ds,
@@ -63,7 +63,7 @@ def test_define_ds_segments():
     assert np.allclose(ds_segments, exp_ds_segments)
 
 
-@patch('sm.engine.msm_basic.segmenter.pickle.dump')
+@patch('sm.engine.annotation_spark.segmenter.pickle.dump')
 def test_segment_ds(dump_mock):
     imzml_parser_mock = Mock()
     imzml_parser_mock.get_spectrum.return_value = (np.linspace(0, 90, num=10), np.ones(10))
@@ -82,7 +82,7 @@ def test_segment_ds(dump_mock):
         assert np.all(sp_chunk_df.mz <= max_mz)
 
 
-@patch('sm.engine.msm_basic.segmenter.pickle.dump')
+@patch('sm.engine.annotation_spark.segmenter.pickle.dump')
 def test_segment_centroids(dump_mock):
     centr_df = pd.DataFrame(
         [

@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sm.engine.formula_centroids import CentroidsGenerator, FormulaCentroids
+from sm.engine.annotation.formula_centroids import CentroidsGenerator, FormulaCentroids
 from sm.engine.formula_parser import generate_ion_formula
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 

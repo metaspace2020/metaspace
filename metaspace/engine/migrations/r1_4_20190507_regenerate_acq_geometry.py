@@ -1,7 +1,7 @@
 import argparse
 import logging
 
-from sm.engine.acq_geometry import make_acq_geometry
+from sm.engine.annotation.acq_geometry import make_acq_geometry
 from sm.engine.dataset import Dataset
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import init_loggers, SMConfig
