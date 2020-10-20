@@ -25,7 +25,7 @@
           Visibility of the project only, does not apply to included datasets
         </secondary-label-text>
       </label>
-      <div class="h-6 flex items-center">
+      <div class="h-10 flex items-center">
         <el-switch
           v-model="value.isPublic"
           :disabled="isPublished"
