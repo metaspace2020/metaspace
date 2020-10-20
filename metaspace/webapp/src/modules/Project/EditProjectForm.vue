@@ -5,11 +5,12 @@
     :disabled="disabled"
     :rules="rules"
     label-position="top"
+    class="leading-6"
     @submit="handleSubmit"
   >
     <div>
-      <label class="leading-6">
-        <span class="font-medium">Title</span>
+      <label>
+        <primary-label-text>Title</primary-label-text>
         <el-input
           v-model="value.name"
           class="py-1"
@@ -17,23 +18,28 @@
         />
       </label>
     </div>
-    <el-form-item
-      prop="isPublic"
-      class="my-3"
-    >
-      <el-switch
-        v-model="value.isPublic"
-        :disabled="isPublished"
-        active-text="Public"
-        inactive-text="Private"
-      />
-      <span
+    <div>
+      <label>
+        <primary-label-text>Privacy</primary-label-text>
+        <secondary-label-text>
+          Visibility of the project only, does not apply to included datasets
+        </secondary-label-text>
+      </label>
+      <div class="h-6 flex items-center">
+        <el-switch
+          v-model="value.isPublic"
+          :disabled="isPublished"
+          active-text="Public"
+          inactive-text="Private"
+        />
+      </div>
+      <p
         v-if="isPublished"
-        class="text-gray-700 float-right"
+        class="m-0 italic text-sm text-gray-700"
       >
-        Published projects are always visible.
-      </span>
-    </el-form-item>
+        published projects are always visible
+      </p>
+    </div>
   </el-form>
 </template>
 <script lang="ts">
@@ -41,12 +47,19 @@ import Vue from 'vue'
 import { Component, Model, Prop } from 'vue-property-decorator'
 import { ElForm } from 'element-ui/types/form'
 
+import { PrimaryLabelText, SecondaryLabelText } from '../../components/Form'
+
   interface Model {
     name: string;
     isPublic: boolean;
   }
 
-  @Component
+  @Component({
+    components: {
+      PrimaryLabelText,
+      SecondaryLabelText,
+    },
+  })
 export default class EditProjectForm extends Vue {
     @Model('input', { type: Object, required: true })
     value!: Model;

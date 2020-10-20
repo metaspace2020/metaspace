@@ -12,7 +12,7 @@
         <h2>Project Details</h2>
         <edit-project-form
           v-model="model"
-          class="mt-3"
+          class="mt-3 mb-6 v-rhythm-6"
           :is-published="isPublished"
           :disabled="isSaving"
         />

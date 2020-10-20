@@ -665,8 +665,8 @@ exports[`MetadataEditor should match snapshot 1`] = `
         </mock-el-dialog>
         <mock-el-dialog append-to-body="" title="Create project" class="dialog">
           <div mock-v-loading="1">
-            <form class="el-form el-form--label-top" size="mini">
-              <div><label class="leading-6"><span class="font-medium">Title</span>
+            <form class="el-form leading-6 v-rhythm-3 el-form--label-top" size="mini">
+              <div><label><span class="text-base font-medium">Title</span>
                   <div class="py-1 el-input">
                     <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
                     <!---->
@@ -674,18 +674,16 @@ exports[`MetadataEditor should match snapshot 1`] = `
                     <!---->
                     <!---->
                   </div></label></div>
-              <div class="el-form-item my-3">
-                <!---->
-                <div class="el-form-item__content">
+              <div><label><span class="text-base font-medium">Privacy</span> <span class="block text-sm text-gray-800">
+        Visibility of the project only, does not apply to included datasets
+      </span></label>
+                <div class="h-6 flex items-center">
                   <div role="switch" class="el-switch"><input type="checkbox" name="" true-value="true" class="el-switch__input"><span class="el-switch__label el-switch__label--left is-active"><!----><span>Private</span></span><span class="el-switch__core" style="width: 40px;"></span><span class="el-switch__label el-switch__label--right"><!----><span aria-hidden="true">Public</span></span></div>
-                  <!---->
-                  <transition-stub name="el-zoom-in-top">
-                    <!---->
-                  </transition-stub>
                 </div>
+                <!---->
               </div>
             </form>
-            <div>
+            <div class="mt-6">
               <h4 class="m-0">
                 Would you like to include previously submitted datasets?
               </h4>

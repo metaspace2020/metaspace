@@ -12,8 +12,12 @@
         ref="form"
         v-model="project"
         size="mini"
+        class="v-rhythm-3"
       />
-      <div v-if="allDatasets.length > 0">
+      <div
+        v-if="allDatasets.length > 0"
+        class="mt-6"
+      >
         <h4 class="m-0">
           Would you like to include previously submitted datasets?
         </h4>
