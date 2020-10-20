@@ -31,10 +31,10 @@ const formatErrorMsg = (e: ApolloError) : ErrorMessage => {
         + ' and contains three columns: id, name, and formula.',
       }
     }
-    if (message?.type === 'bad_formulae') {
+    if (message?.type === 'bad_data') {
       return {
-        message: 'These formulae do not look correct, please check them and re-upload the file.',
-        details: message.details.map((d: any) => `“${d.formula}” on line ${d.line}`),
+        message: 'Some rows contain bad data, please check these rows and re-upload the file.',
+        details: message.details.map((d: any) => `Line ${d.line}: ${d.row.join(', ')}`),
       }
     }
   }
