@@ -84,9 +84,7 @@ class SearchResults:
         )
         db.insert(METRICS_INS, list(rows))
 
-    def store_spark(
-        self, metrics_df, formula_images_rdd, alpha_channel, db, img_store, img_store_type
-    ):
+    def store(self, metrics_df, formula_images_rdd, alpha_channel, db, img_store, img_store_type):
         """Save formula metrics and images
 
         Args
@@ -107,34 +105,4 @@ class SearchResults:
         formula_image_ids = post_images_to_image_store(
             formula_images_rdd, alpha_channel, img_store, img_store_type, self.n_peaks
         )
-        self.store_ion_metrics(metrics_df, formula_image_ids, db)
-
-    def store_lithops(self, metrics_df, formula_png_iter, db, img_store, img_store_type):
-        """Save formula metrics and images
-
-        Args
-        ---------
-        metrics_df : pandas.Dataframe
-            formula, adduct, msm, fdr, individual metrics
-        formula_png_iter : Iterable[Tuple[int, List[Optional[coo_matrix]]]]
-            values must be lists of 2d intensity arrays (in coo_matrix format)
-        db : sm.engine.DB
-            database connection
-        img_store : sm.engine.image_store.ImageStoreServiceWrapper
-            m/z image store
-        img_store_type: str
-        """
-        logger.info('Storing search results to the DB')
-        formula_image_ids = {}
-
-        def _upload_images(formula_id, pngs_bytes):
-            image_ids = [
-                img_store.post_image(img_store_type, 'iso_image', png) if png is not None else None
-                for png in pngs_bytes
-            ]
-            return formula_id, {'iso_image_ids': image_ids}
-
-        with ThreadPoolExecutor(2) as ex:
-            for formula_png_chunk in formula_png_iter:
-                formula_image_ids.update(ex.map(_upload_images, formula_png_chunk))
         self.store_ion_metrics(metrics_df, formula_image_ids, db)

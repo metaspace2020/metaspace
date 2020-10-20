@@ -23,7 +23,7 @@ from sm.engine.annotation_spark.msm_basic_search import MSMSearch
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.image_store import ImageStoreServiceWrapper
-from sm.engine.search_results import SearchResults
+from sm.engine.annotation_spark.search_results import SearchResults
 from sm.engine.util import SMConfig, split_s3_path
 from sm.engine.es_export import ESExporter
 from sm.engine import molecular_db
@@ -108,7 +108,7 @@ class AnnotationJob:
                     )
                     img_store_type = self._ds.get_ion_img_storage_type(self._db)
                     sample_area_mask = make_sample_area_mask(imzml_parser.coordinates)
-                    search_results.store_spark(
+                    search_results.store(
                         moldb_ion_metrics_df,
                         moldb_ion_images_rdd,
                         sample_area_mask,

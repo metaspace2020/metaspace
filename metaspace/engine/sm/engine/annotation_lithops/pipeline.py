@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-from collections import defaultdict
-
-from lithops.storage import Storage
 from lithops.storage.utils import CloudObject
 from pyimzml.ImzMLParser import PortableSpectrumReader
 from typing import List, Tuple
@@ -11,9 +8,9 @@ import lithops
 import numpy as np
 import pandas as pd
 
+from sm.engine.annotation_lithops.prepare_results import filter_results_and_make_pngs
 from sm.engine.ds_config import DSConfig
 from sm.engine.db import DB
-from sm.engine.png_generator import PngGenerator
 from sm.engine.annotation_lithops.check_results import (
     get_reference_results,
     check_results,
@@ -35,11 +32,11 @@ from sm.engine.annotation_lithops.segment_centroids import (
     define_centr_segments,
     validate_centroid_segments,
 )
-from sm.engine.annotation_lithops.annotate import process_centr_segments, make_sample_area_mask
+from sm.engine.annotation_lithops.annotate import process_centr_segments
 from sm.engine.annotation_lithops.run_fdr import run_fdr
 from sm.engine.annotation_lithops.cache import PipelineCacher, use_pipeline_cache
-from sm.engine.annotation_lithops.utils import PipelineStats, logger, ds_dims
-from sm.engine.annotation_lithops.io import CObj, iter_cobjs_with_prefetch, save_cobj
+from sm.engine.annotation_lithops.utils import PipelineStats, logger
+from sm.engine.annotation_lithops.io import CObj
 from sm.engine.util import SMConfig
 
 
@@ -237,7 +234,7 @@ class Pipeline:
             self.ds_segms_len,
             self.db_segms_cobjects,
             self.imzml_reader,
-            self.ds_config['image_generation'],
+            self.ds_config,
             self.ds_segm_size_mb,
             self.is_intensive_dataset,
         )
@@ -256,71 +253,9 @@ class Pipeline:
 
     @use_pipeline_cache
     def prepare_results(self):
-        # formula_metrics_df Dataframe:
-        # index: formula_i
-        # columns: chaos, spatial, spectral, msm, total_iso_ints, min_iso_ints, max_iso_ints
-        # fdrs Dataframe:
-        # index: formula_i
-        # columns: formula, fdr, moldb_id, modifier, adduct
-        results_df = self.formula_metrics_df.join(self.fdrs)
-        results_df = results_df[~results_df.adduct.isna()]
-        # TODO: Get real list of targeted DBs, only filter by FDR if not targeted
-        results_df = results_df[results_df.fdr <= 0.5]
-        results_df = results_df.sort_values('fdr')
-        self.results_df = results_df
-
-        formula_is = set(results_df.index)
-        image_tasks_df = self.images_df[self.images_df.index.isin(formula_is)].copy()
-        w, h = ds_dims(self.imzml_reader.coordinates)
-        # Guess the cost per imageset, and split into relatively even chunks.
-        # This is a quick attempt and needs review
-        # This assumes they're already sorted by cobj, and factors in:
-        # * Number of populated pixels (because very sparse images should be much faster to encode)
-        # * Total image size (because even empty pixels have some cost)
-        # * Cost of loading a new cobj
-        # * Constant overhead per image
-        cobj_keys = [cobj.key for cobj in image_tasks_df.cobj]
-        cobj_changed = np.array(
-            [(i == 0 or key == cobj_keys[i - 1]) for i, key in enumerate(cobj_keys)]
+        self.results_df, self.png_cobjs = filter_results_and_make_pngs(
+            self.fexec, self.formula_metrics_df, self.fdrs, self.images_df, self.imzml_reader,
         )
-        image_tasks_df['cost'] = (
-            image_tasks_df.n_pixels + (w * h) / 5 + cobj_changed * 100000 + 1000
-        )
-        total_cost = image_tasks_df.cost.sum()
-        n_jobs = int(np.ceil(np.clip(total_cost / 1e8, 1, 100)))
-        job_bound_vals = np.linspace(0, total_cost + 1, n_jobs + 1)
-        job_bound_idxs = np.searchsorted(np.cumsum(image_tasks_df.cost), job_bound_vals)
-        print(job_bound_idxs, len(image_tasks_df))
-        jobs = [
-            [image_tasks_df.iloc[start:end]]
-            for start, end in zip(job_bound_idxs[:-1], job_bound_idxs[1:])
-            if start != end
-        ]
-        job_costs = [df.cost.sum() for df, in jobs]
-        print(
-            f'Generated {len(jobs)} PNG jobs, min cost: {np.min(job_costs)}, '
-            f'max cost: {np.max(job_costs)}, total cost: {total_cost}'
-        )
-        png_generator = PngGenerator(make_sample_area_mask(self.imzml_reader.coordinates))
-
-        def save_png_chunk(df: pd.DataFrame, *, storage: Storage):
-            pngs = []
-            groups = defaultdict(lambda: [])
-            for formula_i, cobj in df.cobj.items():
-                groups[cobj].append(formula_i)
-
-            image_dict_iter = iter_cobjs_with_prefetch(storage, list(groups.keys()))
-            for image_dict, formula_is in zip(image_dict_iter, groups.values()):
-                for formula_i in formula_is:
-                    formula_pngs = [
-                        png_generator.generate_png(img.toarray()) if img is not None else None
-                        for img in image_dict[formula_i]
-                    ]
-                    pngs.append((formula_i, formula_pngs))
-            return save_cobj(storage, pngs)
-
-        futures = self.fexec.map(save_png_chunk, jobs, include_modules=['sm', 'sm.engine', 'png'])
-        self.png_cobjs = self.fexec.get_result(futures)
 
     def check_results(self):
         ds_id = 'TODO'

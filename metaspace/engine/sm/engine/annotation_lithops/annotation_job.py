@@ -20,7 +20,7 @@ from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.isocalc_wrapper import IsocalcWrapper
-from sm.engine.search_results import SearchResults
+from sm.engine.annotation_spark.search_results import SearchResults
 from sm.engine.util import SMConfig
 
 logger = logging.getLogger('engine')

@@ -1,5 +1,4 @@
 from __future__ import annotations
-from itertools import chain
 
 from lithops import FunctionExecutor
 from lithops.storage import Storage
@@ -17,7 +16,7 @@ from sm.engine.annotation.formula_validator import (
     MetricsDict,
     METRICS,
 )
-from sm.engine.ds_config import DSConfigImageGeneration
+from sm.engine.ds_config import DSConfigImageGeneration, DSConfig
 from sm.engine.annotation_lithops.utils import (
     ds_dims,
     get_pixel_indices,
@@ -25,6 +24,7 @@ from sm.engine.annotation_lithops.utils import (
     logger,
 )
 from sm.engine.annotation_lithops.io import save_cobj, load_cobj, CObj
+from sm.engine.isocalc_wrapper import IsocalcWrapper
 
 ISOTOPIC_PEAK_N = 4
 
@@ -106,7 +106,7 @@ class ImagesManager:
         return formula_metrics_df, images_df
 
 
-def gen_iso_image_sets(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, ppm=3, min_px=1):
+def gen_iso_image_sets(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, isocalc_wrapper):
     # assume sp data is sorted by mz order ascending
     # assume centr data is sorted by mz order ascending
 
@@ -125,8 +125,7 @@ def gen_iso_image_sets(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, ppm=3, 
         return buffer.formula_i[0], buffer.centr_ints, buffer.image
 
     if len(sp_inds) > 0:
-        lower = centr_mzs - centr_mzs * ppm * 1e-6
-        upper = centr_mzs + centr_mzs * ppm * 1e-6
+        lower, upper = isocalc_wrapper.mass_accuracy_bounds(centr_mzs)
         lower_idx = np.searchsorted(sp_mzs, lower, 'l')
         upper_idx = np.searchsorted(sp_mzs, upper, 'r')
         ranges_df = pd.DataFrame(
@@ -141,7 +140,7 @@ def gen_iso_image_sets(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, ppm=3, 
 
             l, u = df_row['lower_idx'], df_row['upper_idx']
             m = None
-            if u - l >= min_px:
+            if u > l:
                 data = sp_ints[l:u]
                 inds = sp_inds[l:u]
                 row_inds, col_inds = np.divmod(inds, ncols)
@@ -216,10 +215,10 @@ def make_sample_area_mask(coordinates):
     return sample_area_mask.reshape(nrows, ncols)
 
 
-def choose_ds_segments(ds_segments_bounds, centr_df, ppm):
+def choose_ds_segments(ds_segments_bounds, centr_df, isocalc_wrapper):
     centr_segm_min_mz, centr_segm_max_mz = centr_df.mz.agg([np.min, np.max])
-    centr_segm_min_mz -= centr_segm_min_mz * ppm * 1e-6
-    centr_segm_max_mz += centr_segm_max_mz * ppm * 1e-6
+    centr_segm_min_mz, _ = isocalc_wrapper.mass_accuracy_bounds(centr_segm_min_mz)
+    _, centr_segm_max_mz = isocalc_wrapper.mass_accuracy_bounds(centr_segm_max_mz)
 
     ds_segm_n = len(ds_segments_bounds)
     first_ds_segm_i = np.searchsorted(ds_segments_bounds[:, 0], centr_segm_min_mz, side='right') - 1
@@ -238,15 +237,16 @@ def process_centr_segments(
     ds_segms_len: np.ndarray,
     db_segms_cobjects: List[CObj[pd.DataFrame]],
     imzml_reader: PortableSpectrumReader,
-    image_gen_config: DSConfigImageGeneration,
+    ds_config: DSConfig,
     ds_segm_size_mb: float,
     is_intensive_dataset: bool,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     ds_segm_dtype = imzml_reader.mzPrecision
     sample_area_mask = make_sample_area_mask(imzml_reader.coordinates)
     nrows, ncols = ds_dims(imzml_reader.coordinates)
+    isocalc_wrapper = IsocalcWrapper(ds_config)
+    image_gen_config = ds_config['image_generation']
     compute_metrics = make_compute_image_metrics(sample_area_mask, nrows, ncols, image_gen_config)
-    ppm = image_gen_config['ppm']
     min_px = image_gen_config['min_px']
     pw_mem_mb = 2048 if is_intensive_dataset else 1024
 
@@ -258,7 +258,9 @@ def process_centr_segments(
         centr_df = load_cobj(storage, db_segm_cobject)
 
         # find range of datasets
-        first_ds_segm_i, last_ds_segm_i = choose_ds_segments(ds_segments_bounds, centr_df, ppm)
+        first_ds_segm_i, last_ds_segm_i = choose_ds_segments(
+            ds_segments_bounds, centr_df, isocalc_wrapper
+        )
         print(f'Reading dataset segments {first_ds_segm_i}-{last_ds_segm_i}')
         # read all segments in loop from COS
         sp_arr = read_ds_segments(
@@ -277,8 +279,7 @@ def process_centr_segments(
             centr_df=centr_df,
             nrows=nrows,
             ncols=ncols,
-            ppm=ppm,
-            min_px=1,
+            isocalc_wrapper=isocalc_wrapper,
         )
         safe_mb = pw_mem_mb // 2
         max_formula_images_mb = (
