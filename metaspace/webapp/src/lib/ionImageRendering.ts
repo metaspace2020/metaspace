@@ -20,7 +20,7 @@ export interface IonImage {
   maxQuantile: number | null;
 }
 
-export type ColorMap = number[][]
+export type ColorMap = readonly number[][]
 
 export type IonImageLayer = { ionImage: IonImage, colorMap: ColorMap }
 
@@ -297,7 +297,7 @@ export const renderIonImageToBuffer = (ionImage: IonImage, cmap?: readonly numbe
   return outputBuffer
 }
 
-function getCmapComponents(cmap: readonly number[][]) {
+function getCmapComponents(cmap: ColorMap) {
   const cmapBuffer = new ArrayBuffer(256 * 4)
   const cmapComponents = new Uint8ClampedArray(cmapBuffer)
   for (let i = 0; i < 256; i++) {
@@ -359,12 +359,12 @@ export const renderIonImage = (ionImage: IonImage, cmap?: readonly number[][]) =
   return createDataUrl(new Uint8ClampedArray(outputBuffer), width, height)
 }
 
-export const renderScaleBar = (ionImage: IonImage, cmap: number[][], horizontal: boolean) => {
+export const renderScaleBar = (ionImage: IonImage, cmap: ColorMap, horizontal: boolean) => {
   const outputBytes = new Uint8ClampedArray(256 * 4)
   for (let i = 0; i < ionImage.scaleBarValues.length; i++) {
     const val = ionImage.scaleBarValues[i]
     for (let j = 0; j < 4; j++) {
-      outputBytes[(255 - i) * 4 + j] = cmap[val][j]
+      outputBytes[(horizontal ? i : 255 - i) * 4 + j] = cmap[val][j]
     }
   }
 

@@ -96,9 +96,6 @@ import { useIonImageMenu } from './ionImageState'
 import viewerState from './state'
 
 export default defineComponent({
-  props: {
-    annotationId: { type: String, required: true },
-  },
   components: {
     MenuContainer,
     MenuItem,
@@ -117,7 +114,7 @@ export default defineComponent({
       multiModeMenuItems,
       setActiveLayer,
       singleModeMenuItem,
-    } = useIonImageMenu(props)
+    } = useIonImageMenu()
 
     const lastSlider = ref<string | null>(null)
     return {

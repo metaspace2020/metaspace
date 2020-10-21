@@ -1,7 +1,9 @@
 <template>
   <slider-track
     ref="track"
+    class="cursor-pointer"
     :disabled="disabled"
+    @click="onThumbChange"
   >
     <slider-thumb
       class="bg-gray-100"
@@ -19,8 +21,10 @@ import { defineComponent, ref, Ref, reactive, onMounted, computed } from '@vue/c
 import { throttle } from 'lodash-es'
 
 import SliderTrack from './SliderTrack.vue'
-import SliderThumb, { THUMB_WIDTH } from './SliderThumb.vue'
+import SliderThumb from './SliderThumb.vue'
 import useSliderThumb from './useSliderThumb'
+
+import { THUMB_WIDTH } from './constants'
 
 interface Props {
   min: number

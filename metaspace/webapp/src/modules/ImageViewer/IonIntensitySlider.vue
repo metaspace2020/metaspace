@@ -1,12 +1,11 @@
 <template>
   <div
     v-if="model && colorBar"
+    ref="container"
     class="relative"
   >
     <range-slider
-      :style="colorBar.background"
-      :min-color="colorBar.minColor"
-      :max-color="colorBar.maxColor"
+      :style="style"
       :min="0"
       :max="1"
       :step="0.01"
@@ -25,14 +24,18 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, computed } from '@vue/composition-api'
+import { defineComponent, computed, ref } from '@vue/composition-api'
 
-import { RangeSlider } from '../../components/Slider'
+import { RangeSlider, THUMB_WIDTH } from '../../components/Slider'
 import { IonImageState } from './ionImageState'
 
 interface Props {
   model: IonImageState,
-  colorBar: any,
+  colorBar: {
+    img: string,
+    minColor: string,
+    maxColor: string,
+  },
   isDisabled: boolean
 }
 
@@ -50,7 +53,28 @@ export default defineComponent<Props>({
     RangeSlider,
   },
   setup(props, { emit }) {
+    const container = ref<HTMLElement>()
+
     return {
+      container,
+      emit,
+      style: computed(() => {
+        if (container.value) {
+          const width = container.value.offsetWidth
+          const { quantileRange } = props.model
+          const { minColor, maxColor, img } = props.colorBar
+          const nudge = THUMB_WIDTH / 2
+          const minStop = Math.ceil(width * quantileRange[0]) + nudge
+          const maxStop = Math.floor(width * quantileRange[1]) - nudge
+          return {
+            background: [
+              `0px / ${minStop}px linear-gradient(${minColor},${minColor}) no-repeat`,
+              `${minStop}px / ${maxStop - minStop}px url(${img}) repeat-y`,
+              `#fff ${maxStop}px / ${width - maxStop}px linear-gradient(${maxColor},${maxColor}) no-repeat`,
+            ].join(','),
+          }
+        }
+      }),
       minTooltip: computed(() => {
         const { minIntensity, maxIntensity, quantileRange } = props.model
         return getTooltip(quantileRange[0], minIntensity, maxIntensity)
@@ -59,7 +83,6 @@ export default defineComponent<Props>({
         const { minIntensity, maxIntensity, quantileRange } = props.model
         return getTooltip(quantileRange[1], minIntensity, maxIntensity)
       }),
-      emit,
     }
   },
 })

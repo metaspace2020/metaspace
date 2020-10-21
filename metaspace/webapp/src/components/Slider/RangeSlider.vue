@@ -43,8 +43,9 @@ import { defineComponent, ref, Ref, reactive, computed } from '@vue/composition-
 import { throttle } from 'lodash-es'
 
 import SliderTrack from './SliderTrack.vue'
-import SliderThumb, { THUMB_WIDTH } from './SliderThumb.vue'
+import SliderThumb from './SliderThumb.vue'
 import useSliderThumb, { SliderThumbInstance } from './useSliderThumb'
+import { THUMB_WIDTH } from './constants'
 
 interface Props {
   min: number

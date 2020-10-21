@@ -35,7 +35,6 @@
         <ion-image-menu
           v-if="openMenu === 'ION'"
           key="ion-layers"
-          :annotation-id="annotation.id"
           class="mb-auto"
         />
         <!-- <optical-image-menu
@@ -59,7 +58,7 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, computed, reactive, ref } from '@vue/composition-api'
+import { defineComponent, computed, reactive, ref, toRefs } from '@vue/composition-api'
 import { Image } from 'upng-js'
 import resize from 'vue-resize-directive'
 

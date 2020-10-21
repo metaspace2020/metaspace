@@ -4,11 +4,14 @@
     :tabindex="disabled ? false : 0"
     :style="position"
     class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer focus-ring-primary"
+    @click.stop
   />
 </template>
 <script lang="ts">
 import { defineComponent, reactive, ref, computed, onMounted } from '@vue/composition-api'
 import { throttle } from 'lodash-es'
+
+import { THUMB_WIDTH } from './constants'
 
 interface State {
   startX: number
@@ -20,8 +23,6 @@ interface Props {
   pixelStep: number
   bounds: { minX: number, maxX: number }
 }
-
-export const THUMB_WIDTH = 12
 
 export default defineComponent<Props>({
   props: {
