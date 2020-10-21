@@ -108,8 +108,8 @@ const ImageViewer = defineComponent<Props>({
     scaleBarColor: { type: String },
     scaleType: { type: String },
   },
-  setup(props, { emit }) {
-    const { ionImageLayers } = useIonImages(props)
+  setup(props, { root, emit }) {
+    const { ionImageLayers } = useIonImages(root.$store)
     const imageArea = ref<HTMLElement | null>(null)
 
     const dimensions = reactive({

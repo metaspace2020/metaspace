@@ -101,7 +101,7 @@ function toRGBA(pixel: number[]) {
   return `rgba(${r},${g},${b},${(a / 255).toFixed(2)})`
 }
 
-export const useIonImages = (props: Props) => {
+export const useIonImages = (store: any) => {
   const ionImageLayers = computed(() => {
     if (viewerState.mode.value === 'SINGLE') {
       const layer = activeSingleLayer.value
@@ -121,7 +121,7 @@ export const useIonImages = (props: Props) => {
     return layers
   })
 
-  watch(() => props.annotation, (annotation) => {
+  watch(() => store.state.annotation, (annotation) => {
     activeAnnotation.value = annotation.id
 
     if (viewerState.mode.value === 'SINGLE') {
@@ -132,11 +132,9 @@ export const useIonImages = (props: Props) => {
         layer.multiModeState.minIntensity = initialState.minIntensity
         layer.multiModeState.maxIntensity = initialState.maxIntensity
         layer.multiModeState.quantileRange = initialState.quantileRange
-        if (layer.id === id) {
-          layer.settings.channel = channels[0]
-          layer.settings.label = undefined
-          layer.settings.visible = true
-        }
+        layer.settings.channel = channels[0]
+        layer.settings.label = undefined
+        layer.settings.visible = true
       }
 
       state.nextChannel = channels[1]
@@ -188,25 +186,29 @@ export const useIonImages = (props: Props) => {
           raw.value,
           minIntensity,
           maxIntensity,
-          props.scaleType,
+          store.getters.settings.annotationView.scaleType,
           quantileRange,
         )
       }
       return null
     })
 
-    const activeColorMap = computed(() => viewerState.mode.value === 'SINGLE' ? props.colormap : settings.channel)
+    const activeColorMap = computed(() => viewerState.mode.value === 'SINGLE'
+      ? store.getters.settings.annotationView.colormap as string
+      : settings.channel,
+    )
 
     ionImageLayerCache[annotation.id] = {
-      annotation: props.annotation,
-      id: props.annotation.id,
+      annotation: annotation,
+      id: annotation.id,
       settings,
       singleModeState,
       multiModeState,
       image,
       colorMap: computed(() => {
-        const { opacityMode, annotImageOpacity } = props.imageLoaderSettings
-        return createColorMap(activeColorMap.value, opacityMode, annotImageOpacity)
+        // const { opacityMode, annotImageOpacity } = props.imageLoaderSettings
+        // return createColorMap(activeColorMap.value, opacityMode, annotImageOpacity)
+        return createColorMap(activeColorMap.value)
       }),
       colorBar: computed(() => {
         const colorMap = createColorMap(activeColorMap.value)
@@ -218,7 +220,7 @@ export const useIonImages = (props: Props) => {
       }),
     }
 
-    const [isotopeImage] = props.annotation.isotopeImages
+    const [isotopeImage] = annotation.isotopeImages
     if (isotopeImage) {
       loadPngFromUrl(isotopeImage.url)
         .then(img => {
