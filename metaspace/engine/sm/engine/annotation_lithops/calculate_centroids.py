@@ -1,21 +1,21 @@
 from __future__ import annotations
-from lithops.storage.utils import CloudObject
+
+import logging
+from itertools import repeat
 from typing import List
 
-from itertools import repeat
 import pandas as pd
-from lithops import FunctionExecutor
+from lithops.storage.utils import CloudObject
 
-from sm.engine.ds_config import DSConfig
-from sm.engine.annotation_lithops.utils import (
-    logger,
-    PipelineStats,
-)
+from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, load_cobj, CObj
+from sm.engine.ds_config import DSConfig
+
+logger = logging.getLogger('annotation-pipeline')
 
 
 def calculate_centroids(
-    fexec: FunctionExecutor, formula_cobjects: List[CloudObject], ds_config: DSConfig
+    fexec: Executor, formula_cobjects: List[CloudObject], ds_config: DSConfig
 ) -> List[CObj[pd.DataFrame]]:
     def calculate_peaks_for_formula(formula_i, formula):
         mzs, ints = isocalc_wrapper.centroids(formula)
@@ -47,11 +47,9 @@ def calculate_centroids(
     isocalc_wrapper = IsocalcWrapper(ds_config)
 
     memory_capacity_mb = 2048
-    futures = fexec.map(
+    results = fexec.map(
         calculate_peaks_chunk, list(enumerate(formula_cobjects)), runtime_memory=memory_capacity_mb
     )
-    results = fexec.get_result(futures)
-    PipelineStats.append_pywren(futures, memory_mb=memory_capacity_mb, cloud_objects_n=len(futures))
 
     num_centroids = sum(count for cobj, count in results)
     n_centroids_chunks = len(results)
@@ -60,7 +58,7 @@ def calculate_centroids(
     return peaks_cobjects
 
 
-def validate_centroids(fexec: FunctionExecutor, peaks_cobjects: List[CloudObject]):
+def validate_centroids(fexec: Executor, peaks_cobjects: List[CloudObject]):
     def get_segm_stats(storage, segm_cobject):
         segm = load_cobj(storage, segm_cobject)
         n_peaks = segm.groupby(level='formula_i').peak_i.count()
@@ -87,8 +85,7 @@ def validate_centroids(fexec: FunctionExecutor, peaks_cobjects: List[CloudObject
         )
         return formula_is, stats
 
-    futures = fexec.map(get_segm_stats, peaks_cobjects, runtime_memory=1024)
-    results = fexec.get_result(futures)
+    results = fexec.map(get_segm_stats, peaks_cobjects, runtime_memory=1024)
     segm_formula_is = [formula_is for formula_is, stats in results]
     stats_df = pd.DataFrame([stats for formula_is, stats in results])
 

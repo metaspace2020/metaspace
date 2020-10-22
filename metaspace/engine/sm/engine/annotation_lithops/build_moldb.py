@@ -1,22 +1,22 @@
 from __future__ import annotations
+
+import logging
+from concurrent.futures import ProcessPoolExecutor
+from itertools import repeat
 from typing import List, Tuple
 
-from itertools import repeat
-from lithops.storage import Storage
-
-from time import time
-
-from concurrent.futures import ProcessPoolExecutor
 import numpy as np
 import pandas as pd
+from lithops.storage import Storage
 
-from sm.engine.ds_config import DSConfig
-from sm.engine.formula_parser import safe_generate_ion_formula
-from sm.engine.fdr import FDR
-from sm.engine.annotation_lithops.utils import logger
 from sm.engine.annotation_lithops.io import CObj, save_cobjs, load_cobjs
+from sm.engine.ds_config import DSConfig
+from sm.engine.fdr import FDR
+from sm.engine.formula_parser import safe_generate_ion_formula
 
 DbDataTuple = Tuple[int, FDR, pd.DataFrame]
+
+logger = logging.getLogger('annotation-pipeline')
 
 
 def _get_db_fdr_and_formulas(ds_config: DSConfig, mols: List[str]):
@@ -91,9 +91,7 @@ def store_formula_segments(storage: Storage, formulas_df: pd.DataFrame):
 
 def build_moldb(
     ds_config: DSConfig, mols_dbs_cobjects: List[CObj[List[str]]], *, storage: Storage
-) -> Tuple[List[CObj[pd.DataFrame]], List[CObj[DbDataTuple]], float]:
-    t = time()
-
+) -> Tuple[List[CObj[pd.DataFrame]], List[CObj[DbDataTuple]]]:
     logger.info('Generating formulas...')
     db_data_cobjects, formulas_df = get_formulas_df(storage, ds_config, mols_dbs_cobjects)
     num_formulas = len(formulas_df)
@@ -103,8 +101,7 @@ def build_moldb(
     formula_cobjects = store_formula_segments(storage, formulas_df)
     logger.info(f'Stored {num_formulas} formulas in {len(formula_cobjects)} chunks')
 
-    exec_time = time() - t
-    return formula_cobjects, db_data_cobjects, exec_time
+    return formula_cobjects, db_data_cobjects
 
 
 def validate_formula_cobjects(storage: Storage, formula_cobjects: List[CObj[pd.DataFrame]]):

@@ -2,18 +2,18 @@ from collections import defaultdict
 
 import numpy as np
 import pandas as pd
-from lithops import FunctionExecutor
 from lithops.storage import Storage
 from pyimzml.ImzMLParser import PortableSpectrumReader
 
 from sm.engine.annotation_lithops.annotate import make_sample_area_mask
+from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, iter_cobjs_with_prefetch
 from sm.engine.annotation_lithops.utils import ds_dims
 from sm.engine.png_generator import PngGenerator
 
 
 def filter_results_and_make_pngs(
-    fexec: FunctionExecutor,
+    fexec: Executor,
     formula_metrics_df: pd.DataFrame,
     fdrs: pd.DataFrame,
     images_df: pd.DataFrame,
@@ -73,7 +73,6 @@ def filter_results_and_make_pngs(
                 pngs.append((formula_i, formula_pngs))
         return save_cobj(storage, pngs)
 
-    futures = fexec.map(save_png_chunk, jobs, include_modules=['sm', 'sm.engine', 'png'])
-    png_cobjs = fexec.get_result(futures)
+    png_cobjs = fexec.map(save_png_chunk, jobs, include_modules=['sm', 'sm.engine', 'png'])
 
     return results_df, png_cobjs

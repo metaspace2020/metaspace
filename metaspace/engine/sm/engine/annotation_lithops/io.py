@@ -1,20 +1,16 @@
 from __future__ import annotations
 
-from concurrent.futures._base import Future
-from concurrent.futures.thread import ThreadPoolExecutor
+import logging
+import pickle
+from concurrent.futures import Future, ThreadPoolExecutor
+from typing import TypeVar, Generic, List, Iterable
 
 import numpy as np
-import pickle
-
-from io import BytesIO
-
 import pyarrow as pa
 from lithops.storage import Storage
 from lithops.storage.utils import CloudObject
-from typing import TypeVar, Generic, List, Union, Iterable
 
-from sm.engine.annotation_lithops.utils import logger
-
+logger = logging.getLogger('annotation-pipeline')
 T = TypeVar('T')
 
 

@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-from lithops import FunctionExecutor
-from lithops.storage import Storage
-from pyimzml.ImzMLParser import PortableSpectrumReader
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Tuple, Optional
 
 import numpy as np
 import pandas as pd
+from lithops.storage import Storage
+from pyimzml.ImzMLParser import PortableSpectrumReader
 from scipy.sparse import coo_matrix
-from concurrent.futures import ThreadPoolExecutor
 
 from sm.engine.annotation.formula_validator import (
     compute_and_filter_metrics,
@@ -16,14 +15,14 @@ from sm.engine.annotation.formula_validator import (
     MetricsDict,
     METRICS,
 )
-from sm.engine.ds_config import DSConfigImageGeneration, DSConfig
+from sm.engine.annotation_lithops.executor import Executor
+from sm.engine.annotation_lithops.io import save_cobj, load_cobj, CObj
 from sm.engine.annotation_lithops.utils import (
     ds_dims,
     get_pixel_indices,
-    PipelineStats,
     logger,
 )
-from sm.engine.annotation_lithops.io import save_cobj, load_cobj, CObj
+from sm.engine.ds_config import DSConfig
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 
 ISOTOPIC_PEAK_N = 4
@@ -231,7 +230,7 @@ def choose_ds_segments(ds_segments_bounds, centr_df, isocalc_wrapper):
 
 
 def process_centr_segments(
-    fexec: FunctionExecutor,
+    fexec: Executor,
     ds_segms_cobjects: List[CObj[pd.DataFrame]],
     ds_segments_bounds,
     ds_segms_len: np.ndarray,
@@ -301,10 +300,10 @@ def process_centr_segments(
         return formula_metrics_df, image_lookups
 
     logger.info('Annotating...')
-    futures = fexec.map(process_centr_segment, db_segms_cobjects, runtime_memory=pw_mem_mb)
-    formula_metrics_list, images_cloud_objs_list = zip(*fexec.get_result(futures))
+    formula_metrics_list, images_cloud_objs_list = fexec.map(
+        process_centr_segment, db_segms_cobjects, runtime_memory=pw_mem_mb, unpack=True
+    )
     formula_metrics_df = pd.concat(formula_metrics_list)
     images_df = pd.concat(images_cloud_objs_list)
-    PipelineStats.append_pywren(futures, memory_mb=pw_mem_mb)
 
     return formula_metrics_df, images_df

@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import wraps
 from typing import Optional
 
-from lithops import FunctionExecutor
+from lithops.storage import Storage
 from lithops.storage.utils import CloudObject, StorageNoSuchKeyError
 
 from sm.engine.annotation_lithops.io import serialise, deserialise, delete_objects_by_prefix
@@ -11,9 +11,8 @@ from sm.engine.annotation_lithops.utils import logger
 
 
 class PipelineCacher:
-    def __init__(self, fexec: FunctionExecutor, namespace: str, lithops_config):
-        self.fexec = fexec
-        self.storage = self.fexec.storage
+    def __init__(self, storage: Storage, namespace: str, lithops_config):
+        self.storage = storage
 
         self.bucket, self.root_prefix = lithops_config['sm_storage']['pipeline_cache']
         self.prefix = f'{self.root_prefix}/{namespace}'
@@ -56,7 +55,7 @@ class PipelineCacher:
             elif isinstance(cache_data, CloudObject):
                 cobjects_to_clean.append(cache_data)
 
-        self.fexec.clean(cs=cobjects_to_clean)
+        self.storage.delete_cobjects(cobjects_to_clean)
         delete_objects_by_prefix(self.storage, self.bucket, prefix)
 
 

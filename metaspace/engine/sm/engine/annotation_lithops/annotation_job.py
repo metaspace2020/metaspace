@@ -1,12 +1,14 @@
 from __future__ import annotations
+
 import logging
 from collections import defaultdict
 from concurrent.futures.thread import ThreadPoolExecutor
 from pathlib import Path
 from typing import Optional, Dict, List
+
+import pandas as pd
 from lithops.storage import Storage
 from lithops.storage.utils import StorageNoSuchKeyError, CloudObject
-import pandas as pd
 
 from sm.engine import molecular_db
 from sm.engine.annotation.formula_validator import METRICS
@@ -14,13 +16,13 @@ from sm.engine.annotation.job import del_jobs, insert_running_job, update_finish
 from sm.engine.annotation_lithops.io import save_cobj, iter_cobjs_with_prefetch
 from sm.engine.annotation_lithops.pipeline import Pipeline
 from sm.engine.annotation_lithops.utils import jsonhash
+from sm.engine.annotation_spark.search_results import SearchResults
 from sm.engine.dataset import Dataset
-from sm.engine.ds_config import DSConfig
 from sm.engine.db import DB
+from sm.engine.ds_config import DSConfig
 from sm.engine.es_export import ESExporter
 from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.isocalc_wrapper import IsocalcWrapper
-from sm.engine.annotation_spark.search_results import SearchResults
 from sm.engine.util import SMConfig
 
 logger = logging.getLogger('engine')

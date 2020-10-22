@@ -1,30 +1,28 @@
 from __future__ import annotations
-import shutil
-from typing import Tuple, List
 
 import logging
-
 import os
-from lithops.storage import Storage
+import shutil
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+from pathlib import Path
 from tempfile import TemporaryDirectory
+from time import time
+from typing import Tuple, List
 
+import numpy as np
+import pandas as pd
+from lithops.storage import Storage
 from lithops.storage.utils import CloudObject
 from pyimzml.ImzMLParser import ImzMLParser, PortableSpectrumReader
-from concurrent.futures.process import ProcessPoolExecutor
-from concurrent.futures.thread import ThreadPoolExecutor
-from pathlib import Path
-import numpy as np
-from time import time
-import pandas as pd
 
 from sm.engine.annotation_lithops.annotate import read_ds_segment
-from sm.engine.annotation_lithops.utils import logger
 from sm.engine.annotation_lithops.io import (
     serialise_to_file,
     deserialise_from_file,
     save_cobj,
     CObj,
 )
+from sm.engine.annotation_lithops.utils import logger
 
 
 def download_dataset(imzml_cobject, ibd_cobject, local_path, storage):
@@ -219,11 +217,7 @@ def load_ds(
     ds_segm_size_mb: int,
     sort_memory: int,
 ) -> Tuple[
-    PortableSpectrumReader,
-    np.ndarray,
-    List[CObj[pd.DataFrame]],
-    np.ndarray,
-    List[Tuple[str, float]],
+    PortableSpectrumReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray,
 ]:
     stats = []
 
@@ -265,7 +259,9 @@ def load_ds(
         ds_segms_cobjects = upload_segments(storage, segments_dir, chunks_n, segments_n)
         stats.append(('upload_segments', time() - t))
 
-        return imzml_reader, ds_segments_bounds, ds_segms_cobjects, ds_segms_len, stats
+        # TODO: Log stats
+
+        return imzml_reader, ds_segments_bounds, ds_segms_cobjects, ds_segms_len
 
 
 def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobjects, ds_segms_len):
@@ -290,8 +286,7 @@ def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobje
             }
         )
 
-    futures = fexec.map(get_segm_stats, ds_segms_cobjects)
-    results = fexec.get_result(futures)
+    results = fexec.map(get_segm_stats, ds_segms_cobjects)
 
     segms_df = pd.DataFrame(results)
     segms_df['min_bound'] = np.concatenate([[0], ds_segments_bounds[1:, 0]])

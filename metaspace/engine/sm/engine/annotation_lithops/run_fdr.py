@@ -1,16 +1,18 @@
 from __future__ import annotations
-from lithops.storage import Storage
-from typing import List, Tuple
 
+import logging
 import os
+from concurrent.futures.thread import ThreadPoolExecutor
+from typing import List
+
 import numpy as np
 import pandas as pd
-from time import time
-from concurrent.futures.thread import ThreadPoolExecutor
+from lithops.storage import Storage
 
 from sm.engine.annotation_lithops.build_moldb import DbDataTuple
-from sm.engine.annotation_lithops.utils import logger
 from sm.engine.annotation_lithops.io import load_cobj, CObj
+
+logger = logging.getLogger('annotation-pipeline')
 
 
 def _get_random_adduct_set(size, adducts, offset):
@@ -20,10 +22,8 @@ def _get_random_adduct_set(size, adducts, offset):
 
 
 def run_fdr(
-    storage: Storage, formula_scores_df: pd.DataFrame, db_data_cobjects: List[CObj[DbDataTuple]]
-) -> Tuple[pd.DataFrame, float]:
-    t = time()
-
+    formula_scores_df: pd.DataFrame, db_data_cobjects: List[CObj[DbDataTuple]], *, storage: Storage
+) -> pd.DataFrame:
     msms_df = formula_scores_df[['msm']]
 
     def _run_fdr_for_db(db_data_cobject: CObj[DbDataTuple]):
@@ -46,5 +46,4 @@ def run_fdr(
     with ThreadPoolExecutor(os.cpu_count()) as pool:
         results_dfs = list(pool.map(_run_fdr_for_db, db_data_cobjects))
 
-    exec_time = time() - t
-    return pd.concat(results_dfs), exec_time
+    return pd.concat(results_dfs)

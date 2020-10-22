@@ -32,7 +32,9 @@ job = LocalAnnotationJob(
     [22],
     ds_config,
 )
+# job.pipe.clean(True)
 job.run()
+
 
 #%%
 

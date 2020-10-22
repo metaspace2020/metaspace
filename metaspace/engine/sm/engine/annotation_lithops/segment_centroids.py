@@ -1,29 +1,26 @@
 from __future__ import annotations
-from collections import defaultdict
 
-from lithops.storage.utils import CloudObject
+import logging
+import math
+from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
-import math
-from lithops import FunctionExecutor
+from lithops.storage.utils import CloudObject
 
 from sm.engine.annotation_lithops.annotate import choose_ds_segments
-from sm.engine.annotation_lithops.utils import (
-    logger,
-    PipelineStats,
-)
+from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import (
     read_ranges_from_url,
     save_cobj,
     load_cobj,
     CObj,
 )
-from concurrent.futures import ThreadPoolExecutor
-
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 
+logger = logging.getLogger('annotation-pipeline')
 MAX_MZ_VALUE = 10 ** 5
 
 
@@ -55,7 +52,7 @@ def get_spectra(storage, ibd_url, imzml_reader, sp_inds):
 
 
 def clip_centr_df(
-    fexec: FunctionExecutor, peaks_cobjects: List[CloudObject], mz_min: float, mz_max: float
+    fexec: Executor, peaks_cobjects: List[CloudObject], mz_min: float, mz_max: float
 ) -> Tuple[List[CObj[pd.DataFrame]], int]:
     def clip_centr_df_chunk(peaks_i, peaks_cobject, storage):
         print(f'Clipping centroids dataframe chunk {peaks_i}')
@@ -73,11 +70,12 @@ def clip_centr_df(
         return clip_centr_chunk_cobject, centr_df_chunk.shape[0]
 
     memory_capacity_mb = 512
-    futures = fexec.map(
-        clip_centr_df_chunk, list(enumerate(peaks_cobjects)), runtime_memory=memory_capacity_mb
+    clip_centr_chunks_cobjects, centr_n = fexec.map(
+        clip_centr_df_chunk,
+        list(enumerate(peaks_cobjects)),
+        runtime_memory=memory_capacity_mb,
+        unpack=True,
     )
-    clip_centr_chunks_cobjects, centr_n = zip(*fexec.get_result(futures))
-    PipelineStats.append_pywren(futures, memory_mb=memory_capacity_mb, cloud_objects_n=len(futures))
 
     clip_centr_chunks_cobjects = list(clip_centr_chunks_cobjects)
     centr_n = sum(centr_n)
@@ -86,10 +84,7 @@ def clip_centr_df(
 
 
 def define_centr_segments(
-    fexec: FunctionExecutor,
-    clip_centr_chunks_cobjects: List[CloudObject],
-    centr_n: int,
-    ds_size_mb: int,
+    fexec: Executor, clip_centr_chunks_cobjects: List[CloudObject], centr_n: int, ds_size_mb: int,
 ):
     logger.info('Defining centroids segments bounds')
 
@@ -100,11 +95,9 @@ def define_centr_segments(
         return first_peak_df.mz.values
 
     memory_capacity_mb = 512
-    futures = fexec.map(
-        get_first_peak_mz, clip_centr_chunks_cobjects, runtime_memory=memory_capacity_mb
+    first_peak_df_mz = np.concatenate(
+        fexec.map(get_first_peak_mz, clip_centr_chunks_cobjects, runtime_memory=memory_capacity_mb)
     )
-    first_peak_df_mz = np.concatenate(fexec.get_result(futures))
-    PipelineStats.append_pywren(futures, memory_mb=memory_capacity_mb)
 
     data_per_centr_segm_mb = 50
     peaks_per_centr_segm = 10000
@@ -122,7 +115,7 @@ def define_centr_segments(
 
 
 def segment_centroids(
-    fexec: FunctionExecutor,
+    fexec: Executor,
     clip_centr_chunks_cobjects: List[CObj[pd.DataFrame]],
     centr_segm_lower_bounds: np.ndarray,
     ds_segms_bounds: np.ndarray,
@@ -165,14 +158,8 @@ def segment_centroids(
         return dict(sub_segms_cobjects)
 
     memory_capacity_mb = 512
-    first_futures = fexec.map(
+    first_level_segms_cobjects = fexec.map(
         segment_centr_chunk, clip_centr_chunks_cobjects, runtime_memory=memory_capacity_mb
-    )
-    first_level_segms_cobjects = fexec.get_result(first_futures)
-    PipelineStats.append_pywren(
-        first_futures,
-        memory_mb=memory_capacity_mb,
-        cloud_objects_n=len(first_futures) * len(centr_segm_lower_bounds),
     )
 
     def merge_centr_df_segments(segm_cobjects, id, storage):
@@ -257,19 +244,13 @@ def segment_centroids(
     ), 'Duplicate CloudObject key in first_level_segms_cobjects'
 
     memory_capacity_mb = 2048
-    second_futures = fexec.map(
+    second_segms = fexec.map(
         merge_centr_df_segments, second_level_segms_cobjects, runtime_memory=memory_capacity_mb
     )
-    db_segms_cobjects = [cobj for cobjs in fexec.get_result(second_futures) for cobj in cobjs]
-    PipelineStats.append_pywren(
-        second_futures, memory_mb=memory_capacity_mb, cloud_objects_n=centr_segm_n
-    )
+    db_segms_cobjects = [cobj for cobjs in second_segms for cobj in cobjs]
 
-    assert len(db_segms_cobjects) == len(
-        set(co.key for co in db_segms_cobjects)
-    ), 'Duplicate CloudObject key in db_segms_cobjects'
+    fexec.storage.delete_cobjects(first_level_cobjs)
 
-    fexec.clean(cs=first_level_cobjs)
     return db_segms_cobjects
 
 
@@ -302,10 +283,10 @@ def validate_centroid_segments(fexec, db_segms_cobjects, ds_segms_bounds, isocal
         )
         return formula_is, stats
 
-    futures = fexec.map(get_segm_stats, db_segms_cobjects, runtime_memory=1024)
-    results = fexec.get_result(futures)
-    segm_formula_is = [formula_is for formula_is, stats in results]
-    stats_df = pd.DataFrame([stats for formula_is, stats in results])
+    segm_formula_is, stats = fexec.map(
+        get_segm_stats, db_segms_cobjects, runtime_memory=1024, unpack=True
+    )
+    stats_df = pd.DataFrame(stats)
 
     try:
         __import__('__main__').debug_segms_df = stats_df
