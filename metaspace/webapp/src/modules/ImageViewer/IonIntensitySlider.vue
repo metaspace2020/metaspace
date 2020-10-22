@@ -63,6 +63,9 @@ export default defineComponent<Props>({
           const width = container.value.offsetWidth
           const { quantileRange } = props.model
           const { minColor, maxColor, img } = props.colorBar
+          if (!img) {
+            return null
+          }
           const nudge = THUMB_WIDTH
           const minStop = Math.ceil(width * quantileRange[0]) + nudge
           const maxStop = Math.floor(width * quantileRange[1]) - nudge

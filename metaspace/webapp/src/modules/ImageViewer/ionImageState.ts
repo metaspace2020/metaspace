@@ -178,6 +178,13 @@ export const useIonImages = (props: Props) => {
     return data
   })
 
+  const ionImagesLoading = computed(() => {
+    for (const { data } of ionImagesWithData.value) {
+      if (data.image.value === null) return true
+    }
+    return false
+  })
+
   const ionImageLayers = computed(() => {
     if (viewerState.mode.value === 'SINGLE') {
       if (ionImagesWithData.value.length) {
@@ -195,11 +202,12 @@ export const useIonImages = (props: Props) => {
     const layers = []
     for (const { layer, data } of ionImagesWithData.value) {
       const { image, colorMap } = data
-      if (image.value === null || !layer.settings.visible) continue
-      layers.push({
-        ionImage: image.value,
-        colorMap: colorMap.value,
-      })
+      if (image.value !== null && layer.settings.visible) {
+        layers.push({
+          ionImage: image.value,
+          colorMap: colorMap.value,
+        })
+      }
     }
     return layers
   })
@@ -218,24 +226,28 @@ export const useIonImages = (props: Props) => {
     return null
   })
 
-  const ionImageMenuItems = computed(() =>
-    ionImagesWithData.value.map(({ layer, data }) => {
-      return {
-        colorBar: data.colorBar.value,
-        id: layer.id,
-        annotation: layer.annotation,
-        state: layer.multiModeState,
-        settings: layer.settings,
-        updateIntensity(range: [number, number]) {
-          layer.multiModeState.quantileRange = range
-        },
-        toggleVisibility() {
-          const { settings } = layer
-          settings.visible = !settings.visible
-        },
+  const ionImageMenuItems = computed(() => {
+    const items = []
+    for (const { layer, data } of ionImagesWithData.value) {
+      if (data.image.value !== null) {
+        items.push({
+          colorBar: data.colorBar.value,
+          id: layer.id,
+          annotation: layer.annotation,
+          state: layer.multiModeState,
+          settings: layer.settings,
+          updateIntensity(range: [number, number]) {
+            layer.multiModeState.quantileRange = range
+          },
+          toggleVisibility() {
+            const { settings } = layer
+            settings.visible = !settings.visible
+          },
+        })
       }
-    }),
-  )
+    }
+    return items
+  })
 
   watch(() => props.annotation, (annotation) => {
     activeAnnotation.value = annotation.id
@@ -297,6 +309,7 @@ export const useIonImages = (props: Props) => {
     ionImageLayers,
     ionImageMenuItems,
     singleIonImageControls,
+    ionImagesLoading,
   }
 }
 

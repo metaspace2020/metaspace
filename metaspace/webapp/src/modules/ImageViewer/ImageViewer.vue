@@ -5,6 +5,7 @@
     <div
       ref="imageArea"
       v-resize="onResize"
+      v-loading="isLoading"
     >
       <ion-image-viewer
         :annotation="annotation"
@@ -28,21 +29,18 @@
       />
     </div>
     <div
-      class="absolute top-0 right-0 py-3 mr-2 h-full box-border flex flex-col justify-start items-end w-0 v-rhythm-3"
+      class="absolute top-0 right-0 py-3 mr-2 h-full box-border flex flex-col justify-between items-end w-0 v-rhythm-3"
       data-side-bar
     >
       <fade-transition>
-        <fade-transition
-          v-if="openMenu === 'ION'"
-          class="mb-auto"
-        >
+        <fade-transition v-if="openMenu === 'ION'">
           <ion-image-menu
             v-if="mode === 'MULTI'"
             key="multi"
             :menu-items="ionImageMenuItems"
           />
           <single-ion-image-controls
-            v-else
+            v-else-if="!isLoading"
             key="single"
             :state="singleIonImageControls.state"
             :color-bar="singleIonImageControls.colorBar"
@@ -123,7 +121,12 @@ const ImageViewer = defineComponent<Props>({
     scaleType: { type: String },
   },
   setup(props, { root, emit }) {
-    const { ionImageLayers, ionImageMenuItems, singleIonImageControls } = useIonImages(props)
+    const {
+      ionImageLayers,
+      ionImageMenuItems,
+      singleIonImageControls,
+      ionImagesLoading,
+    } = useIonImages(props)
     const imageArea = ref<HTMLElement | null>(null)
 
     const dimensions = reactive({
@@ -162,6 +165,7 @@ const ImageViewer = defineComponent<Props>({
       ionImageLayers,
       ionImageMenuItems,
       singleIonImageControls,
+      isLoading: ionImagesLoading,
       openMenu: viewerState.menu,
       mode: viewerState.mode,
       handleImageMove({ zoom, xOffset, yOffset }: any) {

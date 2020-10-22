@@ -1,7 +1,6 @@
 <template>
   <overlay class="h-12 w-60">
     <ion-intensity-slider
-      v-if="colorBar"
       :model="state"
       :color-bar="colorBar"
       @change="updateIntensity"
