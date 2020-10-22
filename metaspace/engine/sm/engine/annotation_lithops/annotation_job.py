@@ -89,7 +89,7 @@ class LocalAnnotationJob:
         self.ds_config = ds_config
 
         if use_cache:
-            cache_key = jsonhash(
+            cache_key: Optional[str] = jsonhash(
                 {'imzml': imzml_file, 'ibd': ibd_file, 'dbs': moldb_ids, 'ds': ds_config}
             )
         else:
@@ -136,7 +136,7 @@ class ServerAnnotationJob:
         self.moldb_cobjects = self._get_moldb_cobjects()
 
         if use_cache:
-            cache_key = jsonhash({'input_path': ds.input_path, 'ds': ds.config})
+            cache_key: Optional[str] = jsonhash({'input_path': ds.input_path, 'ds': ds.config})
         else:
             cache_key = None
 

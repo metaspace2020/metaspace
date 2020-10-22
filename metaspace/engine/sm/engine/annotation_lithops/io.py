@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from concurrent.futures._base import Future
 from concurrent.futures.thread import ThreadPoolExecutor
 
 import numpy as np
@@ -125,7 +127,7 @@ def delete_objects_by_prefix(storage: Storage, bucket: str, prefix: str):
 
 def iter_cobjs_with_prefetch(storage: Storage, cobjs: List[CObj[T]], prefetch=1) -> Iterable[T]:
     cobjs = list(cobjs)
-    futures = []
+    futures: List[Future] = []
     if len(cobjs) == 0:
         return
     with ThreadPoolExecutor(1) as executor:

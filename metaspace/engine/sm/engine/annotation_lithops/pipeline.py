@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from lithops.storage.utils import CloudObject
 from pyimzml.ImzMLParser import PortableSpectrumReader
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 import lithops
 import numpy as np
@@ -37,6 +37,7 @@ from sm.engine.annotation_lithops.run_fdr import run_fdr
 from sm.engine.annotation_lithops.cache import PipelineCacher, use_pipeline_cache
 from sm.engine.annotation_lithops.utils import PipelineStats, logger
 from sm.engine.annotation_lithops.io import CObj
+from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.util import SMConfig
 
 
@@ -73,21 +74,25 @@ class Pipeline:
         self.ibd_cobject = ibd_cobject
         self.moldb_cobjects = moldb_cobjects
         self.ds_config = ds_config
+        self.isocalc_wrapper = IsocalcWrapper(ds_config)
 
         self.config = lithops_config
-        if self.config['lithops']['storage_backend'] == 'localhost':
-            self.fexec = lithops.local_executor(
-                config=self.config, storage_backend=self.config['lithops']['storage_backend']
+        if self.config['lithops']['executor'] == 'localhost':
+            self.vmexec = self.fexec = lithops.local_executor(
+                config=self.config, storage_backend='localhost'
             )
         else:
             self.fexec = lithops.function_executor(config=self.config, runtime_memory=2048)
-        # TODO: vmexec should be a ibm_vpc executor in non-local mode
-        self.vmexec = self.fexec
+            self.vmexec = lithops.function_executor(
+                config=self.config, type='standalone', backend='ibm_vpc'
+            )
 
         self.storage = self.fexec.storage
 
         if cache_key is not None:
-            self.cacher = PipelineCacher(self.fexec, cache_key, lithops_config)
+            self.cacher: Optional[PipelineCacher] = PipelineCacher(
+                self.fexec, cache_key, lithops_config
+            )
         else:
             self.cacher = None
 
@@ -99,7 +104,8 @@ class Pipeline:
         else:
             PipelineStats.init()
             self.stats_path = PipelineStats.path
-            self.cacher.save(self.stats_path, stats_path_cache_key)
+            if self.cacher:
+                self.cacher.save(self.stats_path, stats_path_cache_key)
             logger.info(f'Initialised {self.stats_path} for statistics')
 
         self.ds_segm_size_mb = 128
@@ -213,16 +219,13 @@ class Pipeline:
             self.ds_segments_bounds,
             self.ds_segm_size_mb,
             max_ds_segms_size_per_db_segm_mb,
-            self.ds_config['image_generation']['ppm'],
+            self.isocalc_wrapper,
         )
         logger.info(f'Segmented centroids chunks into {len(self.db_segms_cobjects)} segments')
 
     def validate_segment_centroids(self):
         validate_centroid_segments(
-            self.fexec,
-            self.db_segms_cobjects,
-            self.ds_segments_bounds,
-            self.ds_config['image_generation']['ppm'],
+            self.fexec, self.db_segms_cobjects, self.ds_segments_bounds, self.isocalc_wrapper,
         )
 
     @use_pipeline_cache

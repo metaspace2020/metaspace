@@ -24,7 +24,7 @@ ds_config: DSConfig = {
     "image_generation": {"ppm": 3, "n_levels": 30, "min_px": 1},
 }
 
-
+#%%
 SMConfig.get_conf(True)
 job = LocalAnnotationJob(
     '/home/lachlan/Documents/datasets/Untreated_3_434.imzML',

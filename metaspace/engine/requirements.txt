@@ -27,4 +27,4 @@ pyspark[sql]==3.0.1
 pyarrow==1.0.1
 pysparkling==0.6.0
 s3fs
-lithops==2.1.0
+lithops==2.2.0

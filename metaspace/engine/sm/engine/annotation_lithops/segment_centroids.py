@@ -22,6 +22,8 @@ from sm.engine.annotation_lithops.io import (
 )
 from concurrent.futures import ThreadPoolExecutor
 
+from sm.engine.isocalc_wrapper import IsocalcWrapper
+
 MAX_MZ_VALUE = 10 ** 5
 
 
@@ -126,7 +128,7 @@ def segment_centroids(
     ds_segms_bounds: np.ndarray,
     ds_segm_size_mb: float,
     max_ds_segms_size_per_db_segm_mb: float,
-    ppm: float,
+    isocalc_wrapper: IsocalcWrapper,
 ) -> List[CObj[pd.DataFrame]]:
     centr_segm_n = len(centr_segm_lower_bounds)
 
@@ -197,7 +199,9 @@ def segment_centroids(
 
         segms = []
         for init_segm in init_segms:
-            first_ds_segm_i, last_ds_segm_i = choose_ds_segments(ds_segms_bounds, init_segm, ppm)
+            first_ds_segm_i, last_ds_segm_i = choose_ds_segments(
+                ds_segms_bounds, init_segm, isocalc_wrapper
+            )
             ds_segms_to_download_n = last_ds_segm_i - first_ds_segm_i + 1
             segms.append((ds_segms_to_download_n, init_segm))
         segms = sorted(segms, key=lambda x: x[0], reverse=True)
@@ -215,7 +219,9 @@ def segment_centroids(
                 max_ds_segms_to_download_n * ds_segm_size_mb / max_ds_segms_size_per_db_segm_mb
             )
             for sub_segm in _second_level_segment(max_segm, sub_segms_n):
-                first_ds_segm_i, last_ds_segm_i = choose_ds_segments(ds_segms_bounds, sub_segm, ppm)
+                first_ds_segm_i, last_ds_segm_i = choose_ds_segments(
+                    ds_segms_bounds, sub_segm, isocalc_wrapper
+                )
                 ds_segms_to_download_n = last_ds_segm_i - first_ds_segm_i + 1
                 sub_segms.append((ds_segms_to_download_n, sub_segm))
 
@@ -267,11 +273,11 @@ def segment_centroids(
     return db_segms_cobjects
 
 
-def validate_centroid_segments(fexec, db_segms_cobjects, ds_segms_bounds, ppm):
+def validate_centroid_segments(fexec, db_segms_cobjects, ds_segms_bounds, isocalc_wrapper):
     def get_segm_stats(storage, segm_cobject):
         segm = load_cobj(storage, segm_cobject)
         mzs = np.sort(segm.mz.values)
-        ds_segm_lo, ds_segm_hi = choose_ds_segments(ds_segms_bounds, segm, ppm)
+        ds_segm_lo, ds_segm_hi = choose_ds_segments(ds_segms_bounds, segm, isocalc_wrapper)
         n_peaks = segm.groupby('formula_i').peak_i.count()
         formula_is = segm.formula_i.unique()
         stats = pd.Series(
