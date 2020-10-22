@@ -70,9 +70,6 @@ const state = reactive<State>({
 const ionImageLayerCache : Record<string, IonImageLayer> = {}
 const rawImageCache : Record<string, Ref<Image | null>> = {}
 
-const activeSingleLayer = computed(() =>
-  activeAnnotation.value ? ionImageLayerCache[activeAnnotation.value] : undefined,
-)
 const orderedLayers = computed(() => state.order.map(id => ionImageLayerCache[id]))
 
 function removeLayer(id: string) : number {
@@ -160,28 +157,44 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
 }
 
 export const useIonImages = (props: Props) => {
-  const ionImageData = computed(() => {
-    const lookup: Record<string, IonImageData> = {}
-    for (const layer of orderedLayers.value) {
-      lookup[layer.id] = createComputedImageData(props, layer)
+  const ionImagesWithData = computed(() => {
+    const data = []
+    if (viewerState.mode.value === 'SINGLE') {
+      const layer = activeAnnotation.value ? ionImageLayerCache[activeAnnotation.value] : null
+      if (layer) {
+        data.push({
+          layer,
+          data: createComputedImageData(props, layer),
+        })
+      }
+    } else {
+      for (const layer of orderedLayers.value) {
+        data.push({
+          layer,
+          data: createComputedImageData(props, layer),
+        })
+      }
     }
-    return lookup
+    return data
   })
 
   const ionImageLayers = computed(() => {
     if (viewerState.mode.value === 'SINGLE') {
-      const layer = activeSingleLayer.value
-      if (layer === undefined || !(layer.id in ionImageData.value)) return []
-      const { image, colorMap } = ionImageData.value[layer.id]
-      if (image.value === null) return []
-      return [{
-        ionImage: image.value,
-        colorMap: colorMap.value,
-      }]
+      if (ionImagesWithData.value.length) {
+        const { image, colorMap } = ionImagesWithData.value[0].data
+        if (image.value !== null) {
+          return [{
+            ionImage: image.value,
+            colorMap: colorMap.value,
+          }]
+        }
+      }
+      return []
     }
+
     const layers = []
-    for (const layer of orderedLayers.value) {
-      const { image, colorMap } = ionImageData.value[layer.id]
+    for (const { layer, data } of ionImagesWithData.value) {
+      const { image, colorMap } = data
       if (image.value === null || !layer.settings.visible) continue
       layers.push({
         ionImage: image.value,
@@ -192,11 +205,10 @@ export const useIonImages = (props: Props) => {
   })
 
   const singleIonImageControls = computed(() => {
-    const layer = activeSingleLayer.value
-    if (layer) {
-      const { colorBar } = ionImageData.value[layer.id]
+    if (ionImagesWithData.value.length) {
+      const { layer, data } = ionImagesWithData.value[0]
       return {
-        colorBar: colorBar.value,
+        colorBar: data.colorBar.value,
         state: layer.singleModeState,
         updateIntensity(range: [number, number]) {
           layer.singleModeState.quantileRange = range
@@ -207,10 +219,9 @@ export const useIonImages = (props: Props) => {
   })
 
   const ionImageMenuItems = computed(() =>
-    orderedLayers.value.map(layer => {
-      const { colorBar } = ionImageData.value[layer.id]
+    ionImagesWithData.value.map(({ layer, data }) => {
       return {
-        colorBar: colorBar.value,
+        colorBar: data.colorBar.value,
         id: layer.id,
         annotation: layer.annotation,
         state: layer.multiModeState,
