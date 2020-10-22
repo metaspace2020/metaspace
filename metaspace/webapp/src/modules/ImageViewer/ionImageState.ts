@@ -2,7 +2,7 @@ import { ref, Ref, computed, reactive, watch, toRefs } from '@vue/composition-ap
 import { Image } from 'upng-js'
 
 import { loadPngFromUrl, processIonImage, renderScaleBar } from '../../lib/ionImageRendering'
-import { IonImage, ColorMap, ScaleType } from '../../lib/ionImageRendering'
+import { ScaleType } from '../../lib/ionImageRendering'
 import createColorMap from '../../lib/createColormap'
 
 import viewerState from './state'
@@ -20,22 +20,21 @@ export interface IonImageState {
   quantileRange: [number, number]
 }
 
-interface IonImageData {
-  image: Ref<IonImage | null>
-  colorMap: Ref<ColorMap>
-  colorBar: Ref<ColorBar>
+export interface IonImageIntensity {
+  min: number
+  max: number
+}
+
+export interface ColorBar {
+  img: string
+  minColor: string
+  maxColor: string
 }
 
 interface IonImageLayerSettings {
   channel: string
   label: string | undefined
   visible: boolean
-}
-
-interface ColorBar {
-  img: string
-  minColor: string
-  maxColor: string
 }
 
 interface IonImageLayer {
@@ -149,10 +148,28 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
     }
   })
 
+  const intensity = computed(() => {
+    if (image.value !== null) {
+      const { quantileRange, minIntensity, maxIntensity } = activeState.value
+      const { maxIntensity: imageMax } = getInitialLayerState(layer.annotation)
+      const { clippedMinIntensity, clippedMaxIntensity, maxQuantile } = image.value || {}
+      const maxClipped = quantileRange[1] === 1 && clippedMaxIntensity !== imageMax
+      return {
+        maxClipped,
+        imageMax,
+        min: quantileRange[0] === 0 ? clippedMinIntensity : minIntensity,
+        max: maxClipped ? clippedMaxIntensity : maxIntensity,
+        maxPercentile: (maxQuantile || 1) * 100,
+      }
+    }
+    return null
+  })
+
   return {
-    image,
-    colorMap,
     colorBar,
+    colorMap,
+    image,
+    intensity,
   }
 }
 
@@ -216,7 +233,8 @@ export const useIonImages = (props: Props) => {
     if (ionImagesWithData.value.length) {
       const { layer, data } = ionImagesWithData.value[0]
       return {
-        colorBar: data.colorBar.value,
+        colorBar: data.colorBar,
+        intensity: data.intensity,
         state: layer.singleModeState,
         updateIntensity(range: [number, number]) {
           layer.singleModeState.quantileRange = range
@@ -231,11 +249,12 @@ export const useIonImages = (props: Props) => {
     for (const { layer, data } of ionImagesWithData.value) {
       if (data.image.value !== null) {
         items.push({
-          colorBar: data.colorBar.value,
-          id: layer.id,
           annotation: layer.annotation,
-          state: layer.multiModeState,
+          colorBar: data.colorBar,
+          id: layer.id,
+          intensity: data.intensity,
           settings: layer.settings,
+          state: layer.multiModeState,
           updateIntensity(range: [number, number]) {
             layer.multiModeState.quantileRange = range
           },
@@ -275,7 +294,6 @@ export const useIonImages = (props: Props) => {
       }
     } else {
       if (state.order.includes(annotation.id)) {
-        // state.activeLayer = annotation.id
         return
       }
     }

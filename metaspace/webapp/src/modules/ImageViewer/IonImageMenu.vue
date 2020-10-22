@@ -36,7 +36,8 @@
         <ion-intensity-slider
           v-if="item.colorBar"
           :model="item.state"
-          :color-bar="item.colorBar"
+          :color-bar="item.colorBar.value"
+          :intensity="item.intensity.value"
           :is-disabled="!item.settings.visible"
           @change="item.updateIntensity"
           @thumb-start="setLastSlider(item.id)"

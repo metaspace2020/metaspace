@@ -3,6 +3,7 @@
     <ion-intensity-slider
       :model="state"
       :color-bar="colorBar"
+      :intensity="intensity"
       @change="updateIntensity"
     />
   </overlay>
@@ -16,6 +17,7 @@ import IonIntensitySlider from './IonIntensitySlider.vue'
 export default defineComponent({
   props: {
     state: Object,
+    intensity: Object,
     colorBar: Object,
     updateIntensity: Function,
   },

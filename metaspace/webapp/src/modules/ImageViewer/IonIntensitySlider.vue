@@ -1,6 +1,5 @@
 <template>
   <div
-    v-if="model && colorBar"
     ref="container"
     class="relative"
   >
@@ -17,25 +16,46 @@
       @thumb-start="emit('thumb-start')"
       @thumb-stop="emit('thumb-stop')"
     />
-    <div class="flex justify-between leading-6 tracking-wide">
-      <span>{{ model.minIntensity.toExponential(1) }}</span>
-      <span>{{ model.maxIntensity.toExponential(1) }}</span>
+    <div
+      v-if="intensity"
+      class="flex justify-between leading-6 tracking-wide"
+    >
+      <span>
+        {{ intensity.min.toExponential(1) }}
+      </span>
+      <el-tooltip
+        v-if="intensity.maxClipped"
+        placement="bottom-end"
+      >
+        <span class="font-medium text-red-700">
+          {{ intensity.max.toExponential(1) }}
+        </span>
+        <div
+          slot="content"
+          class="text-sm leading-5 max-w-measure-3"
+        >
+          <b>Hot-spot removal has been applied to this image.</b> <br>
+          Pixel intensities above the {{ intensity.maxPercentile }}th percentile, {{ intensity.max.toExponential(1) }},
+          have been reduced to {{ intensity.max.toExponential(1) }}.
+          The highest intensity before hot-spot removal was {{ intensity.imageMax.toExponential(1) }}.
+        </div>
+      </el-tooltip>
+      <span v-else>
+        {{ intensity.max.toExponential(1) }}
+      </span>
     </div>
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, computed, ref } from '@vue/composition-api'
+import { defineComponent, computed, ref, Ref } from '@vue/composition-api'
 
 import { RangeSlider, THUMB_WIDTH } from '../../components/Slider'
-import { IonImageState } from './ionImageState'
+import { IonImageState, IonImageIntensity, ColorBar } from './ionImageState'
 
 interface Props {
   model: IonImageState,
-  colorBar: {
-    img: string,
-    minColor: string,
-    maxColor: string,
-  },
+  intensity: IonImageIntensity,
+  colorBar: ColorBar,
   isDisabled: boolean
 }
 
@@ -45,16 +65,16 @@ const getTooltip = (quantile: number, min: number, max: number) => {
 
 export default defineComponent<Props>({
   props: {
-    model: Object,
     colorBar: Object,
+    intensity: Object,
     isDisabled: Boolean,
+    model: Object,
   },
   components: {
     RangeSlider,
   },
   setup(props, { emit }) {
     const container = ref<HTMLElement>()
-
     return {
       container,
       emit,
@@ -79,12 +99,16 @@ export default defineComponent<Props>({
         }
       }),
       minTooltip: computed(() => {
-        const { minIntensity, maxIntensity, quantileRange } = props.model
-        return getTooltip(quantileRange[0], minIntensity, maxIntensity)
+        const { quantileRange } = props.model
+        if (props.intensity) {
+          return getTooltip(quantileRange[0], props.intensity.min, props.intensity.max)
+        }
       }),
       maxTooltip: computed(() => {
-        const { minIntensity, maxIntensity, quantileRange } = props.model
-        return getTooltip(quantileRange[1], minIntensity, maxIntensity)
+        const { quantileRange } = props.model
+        if (props.intensity) {
+          return getTooltip(quantileRange[1], props.intensity.min, props.intensity.max)
+        }
       }),
     }
   },

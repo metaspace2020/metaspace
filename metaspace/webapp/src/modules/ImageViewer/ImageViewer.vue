@@ -43,7 +43,8 @@
             v-else-if="!isLoading"
             key="single"
             :state="singleIonImageControls.state"
-            :color-bar="singleIonImageControls.colorBar"
+            :intensity="singleIonImageControls.intensity.value"
+            :color-bar="singleIonImageControls.colorBar.value"
             :update-intensity="singleIonImageControls.updateIntensity"
           />
         </fade-transition>
@@ -56,6 +57,7 @@
         <ion-image-settings
           v-if="openMenu === 'ION' && hasOpticalImage"
           key="ion-settings"
+          class="mt-auto"
           :opacity="opacity"
           @opacity="emitOpacity"
         />
