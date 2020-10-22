@@ -12,6 +12,7 @@
     @keypress.space.self.prevent="emitActive"
     @click.stop="emitActive"
     @keypress.self.delete="emitDelete"
+    @click.middle="emitDelete"
     @mousedown.capture="emit('mousedown')"
     @keydown.capture="emit('keydown')"
   >
