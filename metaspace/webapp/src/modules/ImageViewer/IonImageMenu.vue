@@ -1,81 +1,70 @@
 <template>
-  <fade-transition>
-    <overlay
-      v-if="mode === 'SINGLE' && singleModeMenuItem"
-      class="h-12 w-60"
+  <menu-container>
+    <menu-item
+      v-for="item in menuItems"
+      :key="item.id"
+      class="flex flex-col justify-center"
+      :layer-id="item.id"
+      :active-layer="activeLayer"
+      :visible="item.settings.visible"
+      @active="setActiveLayer"
+      @delete="removeLayer"
+      @mousedown.capture="setLastSlider(null)"
+      @keydown.capture="setLastSlider(null)"
     >
-      <ion-intensity-slider
-        :model="singleModeMenuItem.state"
-        :color-bar="singleModeMenuItem.colorBar"
-        @change="singleModeMenuItem.updateIntensity"
-      />
-    </overlay>
-    <menu-container v-if="mode === 'MULTI'">
-      <menu-item
-        v-for="item in multiModeMenuItems"
-        :key="item.id"
-        class="flex flex-col justify-center"
-        :layer-id="item.id"
-        :active-layer="activeLayer"
-        :visible="item.settings.visible"
-        @active="setActiveLayer"
-        @delete="removeLayer"
-        @mousedown.capture="setLastSlider(null)"
-        @keydown.capture="setLastSlider(null)"
-      >
-        <p class="flex justify-between m-0 h-9 items-center">
-          <molecular-formula
-            class="truncate font-medium h-6 text-base proportional-nums"
-            :ion="item.annotation.ion"
+      <p class="flex justify-between m-0 h-9 items-center">
+        <molecular-formula
+          class="truncate font-medium h-6 text-base proportional-nums"
+          :ion="item.annotation.ion"
+        />
+        <button
+          :title="item.settings.visible ? 'Hide layer' : 'Show layer'"
+          class="button-reset h-5 focus-ring-primary"
+          @click.stop.left="item.toggleVisibility"
+        >
+          <visible-icon
+            v-if="item.settings.visible"
+            class="sm-mono-icon text-gray-800"
           />
-          <button
-            :title="item.settings.visible ? 'Hide layer' : 'Show layer'"
-            class="button-reset h-5 focus-ring-primary"
-            @click.stop.left="item.toggleVisibility"
-          >
-            <visible-icon
-              v-if="item.settings.visible"
-              class="sm-mono-icon text-gray-800"
-            />
-            <hidden-icon
-              v-else
-              class="sm-mono-icon text-gray-600"
-            />
-          </button>
-        </p>
-        <div class="h-9">
-          <ion-intensity-slider
-            :model="item.state"
-            :color-bar="item.colorBar"
-            :is-disabled="!item.settings.visible"
-            @change="item.updateIntensity"
-            @thumb-start="setLastSlider(item.id)"
-          />
-        </div>
-      </menu-item>
-      <button
-        class="button-reset py-6 px-3 w-full"
-        :class="{ 'bg-blue-100 text-primary': activeLayer === null }"
-        @click="() => setActiveLayer(null)"
-      >
-        <span class="uppercase text-xs tracking-wider m-0 text-inherit flex items-center justify-end">
-          <span
-            v-if="activeLayer === null"
-            key="active"
-          >
-            Select row in table
-          </span>
-          <span
+          <hidden-icon
             v-else
-            key="inactive"
-          >
-            Add ion image
-          </span>
-          <add-icon class="sm-mono-icon ml-1" />
+            class="sm-mono-icon text-gray-600"
+          />
+        </button>
+      </p>
+      <div class="h-9">
+        <ion-intensity-slider
+          v-if="item.colorBar"
+          :model="item.state"
+          :color-bar="item.colorBar"
+          :is-disabled="!item.settings.visible"
+          @change="item.updateIntensity"
+          @thumb-start="setLastSlider(item.id)"
+        />
+      </div>
+    </menu-item>
+    <button
+      class="button-reset py-6 px-3 w-full"
+      :class="{ 'bg-blue-100 text-primary': activeLayer === null }"
+      @click="() => setActiveLayer(null)"
+    >
+      <span class="uppercase text-xs tracking-wider m-0 text-inherit flex items-center justify-end">
+        <span
+          v-if="activeLayer === null"
+          key="active"
+        >
+          Select row in table
         </span>
-      </button>
-    </menu-container>
-  </fade-transition>
+        <span
+          v-else
+          key="inactive"
+        >
+          Add ion image
+        </span>
+        <add-icon class="sm-mono-icon ml-1" />
+      </span>
+    </button>
+  </menu-container>
 </template>
 <script lang="ts">
 import { defineComponent, ref } from '@vue/composition-api'
@@ -84,7 +73,6 @@ import MenuContainer from './MenuContainer.vue'
 import MenuItem from './MenuItem.vue'
 import IonIntensitySlider from './IonIntensitySlider.vue'
 import MolecularFormula from '../../components/MolecularFormula'
-import FadeTransition from '../../components/FadeTransition'
 import Overlay from './Overlay.vue'
 
 import '../../components/MonoIcon.css'
@@ -93,9 +81,11 @@ import HiddenIcon from '../../assets/inline/refactoring-ui/hidden.svg'
 import AddIcon from '../../assets/inline/refactoring-ui/add.svg'
 
 import { useIonImageMenu } from './ionImageState'
-import viewerState from './state'
 
 export default defineComponent({
+  props: {
+    menuItems: Array,
+  },
   components: {
     MenuContainer,
     MenuItem,
@@ -104,17 +94,10 @@ export default defineComponent({
     VisibleIcon,
     HiddenIcon,
     AddIcon,
-    FadeTransition,
     Overlay,
   },
   setup(props, { emit }) {
-    const {
-      activeLayer,
-      removeLayer,
-      multiModeMenuItems,
-      setActiveLayer,
-      singleModeMenuItem,
-    } = useIonImageMenu()
+    const { activeLayer, removeLayer, setActiveLayer } = useIonImageMenu()
 
     const lastSlider = ref<string | null>(null)
     return {
@@ -123,8 +106,6 @@ export default defineComponent({
       },
       activeLayer,
       removeLayer,
-      multiModeMenuItems,
-      mode: viewerState.mode,
       setActiveLayer(id: string) {
         // do not change the active layer if the slider was used
         if (id !== null && id === lastSlider.value) {
@@ -132,7 +113,6 @@ export default defineComponent({
         }
         setActiveLayer(id)
       },
-      singleModeMenuItem,
     }
   },
 })

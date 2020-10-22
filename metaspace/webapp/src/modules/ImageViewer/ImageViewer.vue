@@ -32,11 +32,23 @@
       data-side-bar
     >
       <fade-transition>
-        <ion-image-menu
+        <fade-transition
           v-if="openMenu === 'ION'"
-          key="ion-layers"
           class="mb-auto"
-        />
+        >
+          <ion-image-menu
+            v-if="mode === 'MULTI'"
+            key="multi"
+            :menu-items="ionImageMenuItems"
+          />
+          <single-ion-image-controls
+            v-else
+            key="single"
+            :state="singleIonImageControls.state"
+            :color-bar="singleIonImageControls.colorBar"
+            :update-intensity="singleIonImageControls.updateIntensity"
+          />
+        </fade-transition>
         <!-- <optical-image-menu
           v-if="openMenu === 'OPTICAL'"
           key="OPTICAL"
@@ -66,6 +78,7 @@ import IonImageViewer from '../../components/IonImageViewer'
 import FadeTransition from '../../components/FadeTransition'
 import ImageSaver from './ImageSaver.vue'
 import IonImageMenu from './IonImageMenu.vue'
+import SingleIonImageControls from './SingleIonImageControls.vue'
 import IonImageSettings from './IonImageSettings.vue'
 
 import viewerState from './state'
@@ -86,12 +99,13 @@ interface Props {
 }
 
 const ImageViewer = defineComponent<Props>({
-  name: 'ImageVewer',
+  name: 'ImageViewer',
   components: {
     FadeTransition,
     ImageSaver,
     IonImageMenu,
     IonImageViewer,
+    SingleIonImageControls,
     IonImageSettings,
   },
   directives: {
@@ -109,7 +123,7 @@ const ImageViewer = defineComponent<Props>({
     scaleType: { type: String },
   },
   setup(props, { root, emit }) {
-    const { ionImageLayers } = useIonImages(root.$store)
+    const { ionImageLayers, ionImageMenuItems, singleIonImageControls } = useIonImages(props)
     const imageArea = ref<HTMLElement | null>(null)
 
     const dimensions = reactive({
@@ -145,8 +159,11 @@ const ImageViewer = defineComponent<Props>({
       imageArea,
       imageFit,
       onResize,
-      openMenu: viewerState.menu,
       ionImageLayers,
+      ionImageMenuItems,
+      singleIonImageControls,
+      openMenu: viewerState.menu,
+      mode: viewerState.mode,
       handleImageMove({ zoom, xOffset, yOffset }: any) {
         props.applyImageMove({
           zoom: zoom / imageFit.value.imageZoom,
