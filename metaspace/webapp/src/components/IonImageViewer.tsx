@@ -9,6 +9,7 @@ import ScaleBar from './ScaleBar.vue'
 import { throttle } from 'lodash-es'
 import { ReferenceObject } from 'popper.js'
 import { templateRef } from '../lib/templateRef'
+import { color } from 'd3'
 
 const formatMatrix3d = (t: readonly number[][]) =>
   `matrix3d(${t[0][0]}, ${t[1][0]}, 0, ${t[2][0]},
@@ -119,23 +120,31 @@ const usePixelIntensityDisplay = (props: Props, imageLoaderRef: Ref<ReferenceObj
   const cursorPixelPos = ref<[number, number] | null>(null)
   const zoomX = computed(() => props.zoom)
   const zoomY = computed(() => props.zoom / props.pixelAspectRatio)
-  const cursorOverPixelIntensity = computed(() => {
+  const cursorOverPixels = computed(() => {
+    const pixels = []
     if (props.ionImageLayers.length && cursorPixelPos.value != null) {
       const [x, y] = cursorPixelPos.value
-      const { width, height, mask, intensityValues } = props.ionImageLayers[0].ionImage
-      if (x >= 0 && x < width
-        && y >= 0 && y < height
-        && mask[y * width + x] !== 0) {
-        return intensityValues[y * width + x]
+      for (const { ionImage, colorMap } of props.ionImageLayers) {
+        const { width, height, mask, clippedValues, intensityValues } = ionImage
+        if (x >= 0 && x < width
+          && y >= 0 && y < height
+          && mask[y * width + x] !== 0) {
+          const idx = y * width + x
+          const [r, g, b] = colorMap[clippedValues[idx]]
+          pixels.push({
+            intensity: intensityValues[idx].toExponential(1),
+            color: `rgb(${r},${g},${b})`,
+          })
+        }
       }
     }
-    return null
+    return pixels
   })
   const pixelIntensityStyle = computed(() => {
     if (props.showPixelIntensity
       && props.ionImageLayers.length
       && cursorPixelPos.value != null
-      && cursorOverPixelIntensity.value != null) {
+      && cursorOverPixels.value.length) {
       const { width, height } = props.ionImageLayers[0].ionImage
       const baseX = props.width / 2 + (props.xOffset - width / 2) * zoomX.value
       const baseY = props.height / 2 + (props.yOffset - height / 2) * zoomY.value
@@ -184,13 +193,23 @@ const usePixelIntensityDisplay = (props: Props, imageLoaderRef: Ref<ReferenceObj
         ref="pixelIntensityTooltip"
         manual={true}
         value={true}
-        content={(cursorOverPixelIntensity.value || 0).toExponential(2)}
         popper-class="pointer-events-none"
         placement="top"
       >
+        <ul slot="content" class="list-none p-0 m-0">
+          {cursorOverPixels.value?.map(({ intensity, color }) =>
+            <li class="flex leading-5 items-center">
+              <span
+                class="w-3 h-3 border border-solid border-gray-500 box-border mr-1"
+                style={{ background: color }}
+              />
+              {intensity}
+            </li>
+          )}
+        </ul>
         <div
           style={pixelIntensityStyle.value}
-          class="absolute block border-solid border-red z-30 pointer-events-none"
+          class="absolute block border-solid z-30 pointer-events-none box-border"
         />
       </el-tooltip>
     </div>
