@@ -1,7 +1,7 @@
 <template>
   <div
     :class="[
-      'px-3 h-21 outline-none cursor-pointer',
+      'px-3 h-21 outline-none',
       {
         'bg-blue-100-alpha': activeLayer === layerId,
         'text-gray-700': !visible

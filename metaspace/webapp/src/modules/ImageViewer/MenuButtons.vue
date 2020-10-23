@@ -7,7 +7,7 @@
     <button
       v-if="hasOpticalImages"
       title="Optical image controls"
-      class="button-reset flex h-6 mr-3 focus-ring-primary"
+      class="button-reset flex h-6 mr-3"
       :class="{ active: menu === 'OPTICAL' }"
       @click="setMenu('OPTICAL')"
     >
@@ -17,7 +17,7 @@
     </button>
     <button
       title="Ion image controls"
-      class="button-reset flex h-6 mr-3 focus-ring-primary"
+      class="button-reset flex h-6 mr-3"
       :class="{ active: menu === 'ION' }"
       @click="setMenu('ION')"
     >

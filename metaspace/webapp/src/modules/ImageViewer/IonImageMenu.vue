@@ -19,7 +19,7 @@
         />
         <button
           :title="item.settings.visible ? 'Hide layer' : 'Show layer'"
-          class="button-reset h-5 focus-ring-primary"
+          class="button-reset h-5"
           @click.stop.left="item.toggleVisibility"
         >
           <visible-icon
@@ -56,7 +56,7 @@
       </div>
     </menu-item>
     <button
-      class="button-reset py-6 px-3 w-full"
+      class="button-reset py-6 px-3 w-full cursor-default"
       :class="{ 'bg-blue-100 text-primary': activeLayer === null }"
       @click="() => setActiveLayer(null)"
     >

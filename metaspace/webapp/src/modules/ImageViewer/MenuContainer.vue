@@ -24,7 +24,11 @@ export default Vue.extend({
   [data-menu-items] >>> > *:last-child {
     @apply border-b;
   }
-  [data-menu-items] >>> > *:focus {
+  [data-menu-items] >>> > .focus-visible {
+    outline: 2px solid theme('colors.primary');
+    outline-offset: -2px;
+  }
+  [data-menu-items] >>> > *:hover {
     outline: 1px solid theme('colors.primary');
     outline-offset: -1px;
   }

@@ -1,7 +1,7 @@
 <template>
   <div
     ref="container"
-    class="inline-flex w-full justify-around items-center py-1 rounded-full focus-ring-primary"
+    class="inline-flex w-full justify-around items-center py-1 rounded-full"
     tabindex="0"
     @click.stop
     @keypress.enter.self="emit('close')"
@@ -12,7 +12,7 @@
       :key="channel.name"
       :data-active="active === channel.name"
       :title="channel.name"
-      class="button-reset rounded-full border border-solid border-gray-400 focus-ring-primary"
+      class="button-reset rounded-full border border-solid border-gray-400"
       :style="{ background: channel.color }"
       @click="emit('change', channel.name)"
     />

@@ -123,6 +123,16 @@ export default {
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* https://nelo.is/writing/styling-better-focus-states */
+  *:focus {
+    outline: none;
+  }
+  .focus-visible {
+    outline: 2px solid theme('colors.primary');
+    outline-offset: 2px;
+    /* box-shadow: 0 0 0 2px theme('colors.primary'); - too intrusive without redesigning everything */
+  }
+
   h1, h2 {
     @apply font-medium;
   }

@@ -32,9 +32,6 @@ export default defineComponent({
   [data-slider-track][disabled]::before {
     @apply border-gray-300;
   }
-  [data-slider-track]:focus::before {
-    @apply border-primary;
-  }
 
   [data-slider-track] > div:focus {
     z-index: 1;

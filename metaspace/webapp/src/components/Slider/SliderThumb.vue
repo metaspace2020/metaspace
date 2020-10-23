@@ -3,7 +3,7 @@
     ref="thumb"
     :tabindex="disabled ? false : 0"
     :style="position"
-    class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer focus-ring-primary"
+    class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
     @click.stop
   />
 </template>
