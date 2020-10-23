@@ -95,9 +95,9 @@ export default defineComponent<Props>({
           const maxStop = Math.floor(width * quantileRange[1]) - nudge
           return {
             background: [
-              `0px / ${minStop}px linear-gradient(${minColor},${minColor}) no-repeat`,
-              `${minStop}px / ${maxStop - minStop}px url(${img}) repeat-y`,
-              `#fff ${maxStop}px / ${width - maxStop}px linear-gradient(${maxColor},${maxColor}) no-repeat`,
+              `0px / ${minStop}px 100% linear-gradient(${minColor},${minColor}) no-repeat`,
+              `${minStop}px / ${maxStop - minStop}px 100% url(${img}) repeat-y`,
+              `#fff ${maxStop}px / ${width - maxStop}px 100% linear-gradient(${maxColor},${maxColor}) no-repeat`,
             ].join(','),
           }
         }
