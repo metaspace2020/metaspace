@@ -4,6 +4,7 @@ import { Image } from 'upng-js'
 import { loadPngFromUrl, processIonImage, renderScaleBar } from '../../lib/ionImageRendering'
 import { ScaleType } from '../../lib/ionImageRendering'
 import createColorMap from '../../lib/createColormap'
+import { channels as channelToRGB } from '../../lib/getColorScale'
 
 import viewerState from './state'
 
@@ -346,3 +347,13 @@ export const useIonImageMenu = () => {
     },
   }
 }
+
+export const useChannelSwatches = () => computed(() => {
+  const swatches : Record<string, string> = {}
+  if (viewerState.mode.value === 'MULTI') {
+    for (const layer of orderedLayers.value) {
+      swatches[layer.id] = channelToRGB[layer.settings.channel]
+    }
+  }
+  return swatches
+})

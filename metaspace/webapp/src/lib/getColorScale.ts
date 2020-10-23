@@ -165,7 +165,7 @@ const scales: Record<string, ColorScale> = {
   },
 }
 
-const channels: any = {
+export const channels: any = {
   red: 'rgb(255, 0, 0)',
   green: 'rgb(0, 255, 0)',
   blue: 'rgb(0, 0, 255)',

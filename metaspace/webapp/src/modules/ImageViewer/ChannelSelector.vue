@@ -20,6 +20,7 @@
 </template>
 <script lang="ts">
 import { defineComponent, ref, onMounted } from '@vue/composition-api'
+import { channels } from '../../lib/getColorScale'
 
 export default defineComponent({
   props: {
@@ -38,16 +39,7 @@ export default defineComponent({
       container,
       emit,
       test: () => console.log('test'),
-      channels: [
-        { name: 'red', color: 'rgb(255, 0, 0)' },
-        { name: 'green', color: 'rgb(0, 255, 0)' },
-        { name: 'blue', color: 'rgb(0, 0, 255)' },
-        { name: 'cyan', color: 'rgb(0, 255, 255)' },
-        { name: 'magenta', color: 'rgb(255, 0, 255)' },
-        { name: 'yellow', color: 'rgb(255, 255, 0)' },
-        { name: 'orange', color: 'rgb(255, 128, 0)' },
-        { name: 'white', color: 'rgb(255, 255, 255)' },
-      ],
+      channels: Object.entries(channels).map(([name, color]) => ({ name, color })),
     }
   },
 })
