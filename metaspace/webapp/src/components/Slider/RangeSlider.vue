@@ -2,6 +2,7 @@
   <slider-track
     ref="track"
     :disabled="disabled"
+    @click="emit('track-click')"
   >
     <slider-thumb
       :style="minStyle"

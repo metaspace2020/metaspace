@@ -5,6 +5,8 @@
   >
     <range-slider
       :style="style"
+      :class="{ 'cursor-pointer': canFocus }"
+      :tabindex="canFocus ? 0 : null"
       :min="0"
       :max="1"
       :step="0.01"
@@ -15,6 +17,7 @@
       @change="range => emit('change', range)"
       @thumb-start="emit('thumb-start')"
       @thumb-stop="emit('thumb-stop')"
+      @track-click="emit('track-click')"
     />
     <div
       v-if="intensity"
@@ -69,6 +72,7 @@ export default defineComponent<Props>({
     intensity: Object,
     isDisabled: Boolean,
     model: Object,
+    canFocus: Boolean,
   },
   components: {
     RangeSlider,

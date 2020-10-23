@@ -1,8 +1,10 @@
 <template>
   <div
-    class="box-border h-3 relative rounded-full bg-gray-100"
+    class="box-border h-3 relative rounded-full bg-gray-100 outline-none"
     data-slider-track
     @click.stop="onClick"
+    @keypress.enter.self="onClick"
+    @keypress.space.self.prevent="onClick"
   >
     <slot />
   </div>
@@ -29,6 +31,9 @@ export default defineComponent({
   }
   [data-slider-track][disabled]::before {
     @apply border-gray-300;
+  }
+  [data-slider-track]:focus::before {
+    @apply border-primary;
   }
 
   [data-slider-track] > div:focus {

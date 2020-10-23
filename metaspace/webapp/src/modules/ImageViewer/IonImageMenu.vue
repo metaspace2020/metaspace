@@ -33,15 +33,26 @@
         </button>
       </p>
       <div class="h-9">
-        <ion-intensity-slider
-          v-if="item.colorBar"
-          :model="item.state"
-          :color-bar="item.colorBar.value"
-          :intensity="item.intensity.value"
-          :is-disabled="!item.settings.visible"
-          @change="item.updateIntensity"
-          @thumb-start="setLastSlider(item.id)"
-        />
+        <fade-transition>
+          <channel-selector
+            v-if="channelSelect === item.id"
+            :class="['my-auto', activeLayer === item.id ? 'bg-blue-200-alpha' : 'bg-gray-200-alpha']"
+            :active="item.settings.channel"
+            @change="channel => item.settings.channel = channel"
+            @close="channelSelect = null"
+          />
+          <ion-intensity-slider
+            v-else-if="item.colorBar"
+            can-focus
+            :model="item.state"
+            :color-bar="item.colorBar.value"
+            :intensity="item.intensity.value"
+            :is-disabled="!item.settings.visible"
+            @change="item.updateIntensity"
+            @thumb-start="setLastSlider(item.id)"
+            @track-click="channelSelect = item.id"
+          />
+        </fade-transition>
       </div>
     </menu-item>
     <button
@@ -75,6 +86,8 @@ import MenuItem from './MenuItem.vue'
 import IonIntensitySlider from './IonIntensitySlider.vue'
 import MolecularFormula from '../../components/MolecularFormula'
 import Overlay from './Overlay.vue'
+import FadeTransition from '../../components/FadeTransition'
+import ChannelSelector from './ChannelSelector.vue'
 
 import '../../components/MonoIcon.css'
 import VisibleIcon from '../../assets/inline/refactoring-ui/visible.svg'
@@ -96,23 +109,29 @@ export default defineComponent({
     HiddenIcon,
     AddIcon,
     Overlay,
+    FadeTransition,
+    ChannelSelector,
   },
   setup(props, { emit }) {
     const { activeLayer, removeLayer, setActiveLayer } = useIonImageMenu()
 
     const lastSlider = ref<string | null>(null)
+    const channelSelect = ref<string | null>(null)
+
     return {
+      channelSelect,
+      activeLayer,
+      removeLayer,
       setLastSlider(id: string) {
         lastSlider.value = id
       },
-      activeLayer,
-      removeLayer,
       setActiveLayer(id: string) {
         // do not change the active layer if the slider was used
         if (id !== null && id === lastSlider.value) {
           return
         }
         setActiveLayer(id)
+        channelSelect.value = null
       },
     }
   },
