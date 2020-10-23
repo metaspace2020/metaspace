@@ -16,11 +16,11 @@
 }
 
 .sm-stateful-icon--active .primary,
-.sm-stateful-icon:hover .primary {
+.sm-stateful-icon--hover:hover .primary {
   @apply text-blue-800;
 }
 
 .sm-stateful-icon--active .secondary,
-.sm-stateful-icon:hover .secondary {
+.sm-stateful-icon--hover:hover .secondary {
   @apply text-blue-400;
 }

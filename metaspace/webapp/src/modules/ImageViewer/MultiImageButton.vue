@@ -1,29 +1,28 @@
 <template>
   <button
-    title="Multi-image mode"
-    class="button-reset h-9 w-9 rounded-full flex items-center justify-center focus-ring-primary"
-    :class="{
-      'bg-blue-100': isActive,
-      'hover:bg-gray-100': !isActive,
-    }"
+    :title="`${isActive ? 'Disable' : 'Enable'} ion image channels`"
+    class="button-reset h-9 rounded-lg flex items-center justify-center px-2 hover:bg-gray-100"
+    :class="{ 'text-blue-700': isActive }"
     @click="onClick"
   >
-    <layers-icon
+    <tune-icon
       class="sm-stateful-icon"
       :class="{ 'sm-stateful-icon--active': isActive }"
     />
+    <span class="leading-none ml-1">Channels</span>
   </button>
 </template>
 <script lang="ts">
 import { defineComponent, computed } from '@vue/composition-api'
 
-import LayersIcon from '../../assets/inline/refactoring-ui/layers.svg'
+import '../../components/StatefulIcon.css'
+import TuneIcon from '../../assets/inline/refactoring-ui/tune.svg'
 
 import viewerState, { toggleMode } from './state'
 
 export default defineComponent({
   components: {
-    LayersIcon,
+    TuneIcon,
   },
   setup(_, { emit }) {
     const isActive = computed(() => viewerState.mode.value === 'MULTI')

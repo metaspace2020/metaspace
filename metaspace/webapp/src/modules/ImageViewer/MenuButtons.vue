@@ -12,7 +12,7 @@
       @click="setMenu('OPTICAL')"
     >
       <camera-icon
-        :class="['sm-stateful-icon', { 'sm-stateful-icon--active': menu === 'OPTICAL' }]"
+        :class="['sm-stateful-icon sm-stateful-icon--hover', { 'sm-stateful-icon--active': menu === 'OPTICAL' }]"
       />
     </button>
     <button
@@ -22,7 +22,7 @@
       @click="setMenu('ION')"
     >
       <monitor-icon
-        :class="['sm-stateful-icon', { 'sm-stateful-icon--active': menu === 'ION' }]"
+        :class="['sm-stateful-icon sm-stateful-icon--hover', { 'sm-stateful-icon--active': menu === 'ION' }]"
       />
     </button>
   </div>
