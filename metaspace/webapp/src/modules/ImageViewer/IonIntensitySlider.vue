@@ -86,17 +86,17 @@ export default defineComponent<Props>({
         if (container.value) {
           const width = container.value.offsetWidth
           const { quantileRange } = props.model
-          const { minColor, maxColor, img } = props.colorBar
-          if (!img) {
+          const { minColor, maxColor, gradient } = props.colorBar
+          if (!gradient) {
             return null
           }
           const nudge = THUMB_WIDTH
-          const minStop = Math.ceil(width * quantileRange[0]) + nudge
-          const maxStop = Math.floor(width * quantileRange[1]) - nudge
+          const minStop = Math.ceil(THUMB_WIDTH + ((width - THUMB_WIDTH * 2) * quantileRange[0]))
+          const maxStop = Math.ceil(THUMB_WIDTH + ((width - THUMB_WIDTH * 2) * quantileRange[1]))
           return {
             background: [
               `0px / ${minStop}px 100% linear-gradient(${minColor},${minColor}) no-repeat`,
-              `${minStop}px / ${maxStop - minStop}px 100% url(${img}) repeat-y`,
+              `${minStop}px / ${maxStop - minStop}px 100% ${gradient} repeat-y`,
               `#fff ${maxStop}px / ${width - maxStop}px 100% linear-gradient(${maxColor},${maxColor}) no-repeat`,
             ].join(','),
           }

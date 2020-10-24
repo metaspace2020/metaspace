@@ -4,7 +4,7 @@ import { Image } from 'upng-js'
 import { loadPngFromUrl, processIonImage, renderScaleBar } from '../../lib/ionImageRendering'
 import { ScaleType } from '../../lib/ionImageRendering'
 import createColorMap from '../../lib/createColormap'
-import { channels as channelToRGB } from '../../lib/getColorScale'
+import getColorScale, { channels as channelToRGB } from '../../lib/getColorScale'
 
 import viewerState from './state'
 
@@ -27,7 +27,7 @@ export interface IonImageIntensity {
 }
 
 export interface ColorBar {
-  img: string
+  gradient: string
   minColor: string
   maxColor: string
 }
@@ -94,11 +94,6 @@ function getInitialLayerState(annotation: Annotation): IonImageState {
   }
 }
 
-function toRGBA(pixel: number[]) {
-  const [r, g, b, a] = pixel
-  return `rgba(${r},${g},${b},${(a / 255).toFixed(2)})`
-}
-
 function createComputedImageData(props: Props, layer: IonImageLayer) {
   if (!(layer.id in rawImageCache)) {
     const raw = rawImageCache[layer.id] = ref<Image | null>(null)
@@ -142,10 +137,14 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
 
   const colorBar = computed(() => {
     const colorMap = createColorMap(activeColorMap.value)
+    const { range } = getColorScale(activeColorMap.value)
+    const { clippedMinIntensity, clippedMaxIntensity } = image.value || {}
     return {
-      img: image.value ? renderScaleBar(image.value, colorMap, true) : '',
-      minColor: toRGBA(colorMap[0]),
-      maxColor: toRGBA(colorMap[255]),
+      minColor: range[0],
+      maxColor: range[range.length - 1],
+      gradient: clippedMinIntensity === clippedMaxIntensity
+        ? `linear-gradient(to right, ${range.join(',')})`
+        : image.value ? `url(${renderScaleBar(image.value, colorMap, true)})` : '',
     }
   })
 
