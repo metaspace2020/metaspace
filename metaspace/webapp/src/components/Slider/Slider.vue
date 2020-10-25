@@ -3,7 +3,7 @@
     ref="track"
     class="cursor-pointer"
     :disabled="disabled"
-    @click="onThumbChange"
+    @click="onTrackClick"
   >
     <slider-thumb
       class="bg-gray-100"
@@ -65,9 +65,15 @@ const Slider = defineComponent<Props>({
       emit('change', value)
     }
 
+    function onTrackClick(x: number) {
+      const { minX, maxX } = range.value
+      onThumbChange(Math.max(Math.min(x - THUMB_WIDTH / 2, maxX), minX))
+    }
+
     return {
       track,
       onThumbChange,
+      onTrackClick,
       thumbBounds: range,
       thumbX: thumb.x,
       pixelStep: thumb.pixelStep,
