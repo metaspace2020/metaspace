@@ -2,14 +2,12 @@ import Vue from 'vue'
 import { computed, defineComponent, reactive, Ref, ref, SetupContext, watch } from '@vue/composition-api'
 
 import { getOS, scrollDistance, WheelEventCompat } from '../lib/util'
-import { OpacityMode } from '../lib/createColormap'
 import config from '../lib/config'
 import { renderIonImages, IonImageLayer } from '../lib/ionImageRendering'
 import ScaleBar from './ScaleBar.vue'
 import { throttle } from 'lodash-es'
 import { ReferenceObject } from 'popper.js'
 import { templateRef } from '../lib/templateRef'
-import { color } from 'd3'
 
 const formatMatrix3d = (t: readonly number[][]) =>
   `matrix3d(${t[0][0]}, ${t[1][0]}, 0, ${t[2][0]},
@@ -33,8 +31,6 @@ interface Props {
   xOffset: number
   yOffset: number
   opticalSrc: string | null
-  annotImageOpacity: number
-  opacityMode: OpacityMode
   ionImageTransform: number[][]
   opticalTransform: number[][]
   scrollBlock: boolean
@@ -384,8 +380,6 @@ export default defineComponent<Props>({
     xOffset: { type: Number, required: true },
     yOffset: { type: Number, required: true },
     opticalSrc: { type: String, default: null },
-    annotImageOpacity: { type: Number, default: 0.5 },
-    opacityMode: { type: String, default: 'constant' },
 
     // 3x3 matrix mapping ion-image pixel coordinates into new ion-image pixel coordinates independent from
     // zoom/offset props, e.g. This ionImageTransform:

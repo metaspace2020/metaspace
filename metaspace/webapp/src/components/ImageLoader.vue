@@ -14,7 +14,6 @@
       :x-offset="xOffset"
       :y-offset="yOffset"
       :style="imageStyle"
-      :image-loader-settings="imageLoaderSettings"
       v-bind="$attrs"
       v-on="$listeners"
     />
@@ -30,7 +29,7 @@ import IonImageViewer from './IonImageViewer'
 import { IonImage, loadPngFromUrl, processIonImage, ScaleType, IonImageLayer } from '../lib/ionImageRendering'
 import fitImageToArea, { FitImageToAreaResult } from '../lib/fitImageToArea'
 import reportError from '../lib/reportError'
-import createColormap from '../lib/createColormap'
+import createColormap, { OpacityMode } from '../lib/createColormap'
 
   @Component({
     inheritAttrs: false,
@@ -68,8 +67,11 @@ export default class ImageLoader extends Vue {
     @Prop()
     colormap: string = 'Viridis';
 
-    @Prop({ type: Object })
-    imageLoaderSettings: any
+    @Prop()
+    opacityMode?: OpacityMode;
+
+    @Prop()
+    annotImageOpacity?: number;
 
     containerWidth = 500;
     containerHeight = 500;
@@ -138,10 +140,9 @@ export default class ImageLoader extends Vue {
 
     get ionImageLayers(): IonImageLayer[] {
       if (this.ionImage) {
-        const { opacityMode, annotImageOpacity } = this.imageLoaderSettings
         return [{
           ionImage: this.ionImage,
-          colorMap: createColormap(this.colormap, opacityMode, annotImageOpacity),
+          colorMap: createColormap(this.colormap, this.opacityMode, this.annotImageOpacity),
         }]
       }
       return []

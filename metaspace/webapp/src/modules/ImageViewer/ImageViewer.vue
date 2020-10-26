@@ -13,7 +13,6 @@
         :ion-image-layers="ionImageLayers"
         :max-zoom="imageFit.imageZoom * 20"
         :min-zoom="imageFit.imageZoom / 4"
-        :opacity="opacity"
         :pixel-size-x="pixelSizeX"
         :pixel-size-y="pixelSizeY"
         :scale-bar-color="scaleBarColor"
