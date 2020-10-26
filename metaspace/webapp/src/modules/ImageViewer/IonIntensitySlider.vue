@@ -7,10 +7,10 @@
       :style="style"
       :class="{ 'cursor-pointer': canFocus }"
       :tabindex="canFocus ? 0 : null"
-      :min="0"
-      :max="1"
+      :min="intensity.minQuantile"
+      :max="intensity.maxQuantile"
       :step="0.01"
-      :value="model.quantileRange"
+      :value="quantileRange"
       :disabled="isDisabled"
       :min-tooltip="minTooltip"
       :max-tooltip="maxTooltip"
@@ -38,7 +38,7 @@
           class="text-sm leading-5 max-w-measure-3"
         >
           <b>Hot-spot removal has been applied to this image.</b> <br>
-          Pixel intensities above the {{ intensity.maxPercentile }}th percentile, {{ intensity.max.toExponential(1) }},
+          Pixel intensities above the {{ intensity.maxQuantile * 100 }}th percentile, {{ intensity.max.toExponential(1) }},
           have been reduced to {{ intensity.max.toExponential(1) }}.
           The highest intensity before hot-spot removal was {{ intensity.imageMax.toExponential(1) }}.
         </div>
@@ -79,20 +79,31 @@ export default defineComponent<Props>({
   },
   setup(props, { emit }) {
     const container = ref<HTMLElement>()
+
+    const quantileRange = computed(() => {
+      const { minQuantile = 0, maxQuantile = 1 } = props.intensity || {}
+      const { quantileRange } = props.model
+      return [
+        Math.max(quantileRange[0], minQuantile),
+        Math.min(quantileRange[1], maxQuantile),
+      ]
+    })
+
     return {
       container,
       emit,
+      quantileRange,
       style: computed(() => {
         if (container.value) {
           const width = container.value.offsetWidth
-          const { quantileRange } = props.model
+          const [minQuantile, maxQuantile] = quantileRange.value
           const { minColor, maxColor, gradient } = props.colorBar
           if (!gradient) {
             return null
           }
           const nudge = THUMB_WIDTH
-          const minStop = Math.ceil(THUMB_WIDTH + ((width - THUMB_WIDTH * 2) * quantileRange[0]))
-          const maxStop = Math.ceil(THUMB_WIDTH + ((width - THUMB_WIDTH * 2) * quantileRange[1]))
+          const minStop = Math.ceil(THUMB_WIDTH + ((width - THUMB_WIDTH * 2) * minQuantile))
+          const maxStop = Math.ceil(THUMB_WIDTH + ((width - THUMB_WIDTH * 2) * maxQuantile))
           return {
             background: [
               `0px / ${minStop}px 100% linear-gradient(${minColor},${minColor}) no-repeat`,
@@ -103,15 +114,13 @@ export default defineComponent<Props>({
         }
       }),
       minTooltip: computed(() => {
-        const { quantileRange } = props.model
         if (props.intensity) {
-          return getTooltip(quantileRange[0], props.intensity.min, props.intensity.max)
+          return getTooltip(quantileRange.value[0], props.intensity.min, props.intensity.max)
         }
       }),
       maxTooltip: computed(() => {
-        const { quantileRange } = props.model
         if (props.intensity) {
-          return getTooltip(quantileRange[1], props.intensity.min, props.intensity.max)
+          return getTooltip(quantileRange.value[1], props.intensity.min, props.intensity.max)
         }
       }),
     }
