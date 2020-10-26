@@ -2,7 +2,8 @@
   <slider-track
     ref="track"
     :disabled="disabled"
-    @click="emit('track-click')"
+    @click="onTrackClick"
+    @mousedown="lockTrackClick = false"
   >
     <slider-thumb
       :style="minStyle"
@@ -11,8 +12,8 @@
       :pixel-step="minThumb.pixelStep.value"
       :bounds="minBounds"
       @change="onMinChange"
-      @thumb-start="emit('thumb-start')"
-      @thumb-stop="emit('thumb-stop')"
+      @thumb-start="onThumbStart"
+      @thumb-stop="onThumbStop"
     />
     <span
       class="-ml-1"
@@ -27,8 +28,8 @@
       :pixel-step="maxThumb.pixelStep.value"
       :bounds="maxBounds"
       @change="onMaxChange"
-      @thumb-start="emit('thumb-start')"
-      @thumb-stop="emit('thumb-stop')"
+      @thumb-start="onThumbStart"
+      @thumb-stop="onThumbStop"
     />
     <span
       class="-mr-1"
@@ -117,8 +118,10 @@ const Slider = defineComponent<Props>({
       return { right: `${width.value - maxThumb.x.value - THUMB_WIDTH}px` }
     })
 
+    const lockTrackClick = ref(false)
+
     return {
-      emit,
+      lockTrackClick,
       track,
       minThumb,
       maxThumb,
@@ -143,6 +146,18 @@ const Slider = defineComponent<Props>({
       width,
       minStyle: computed(() => ({ backgroundColor: props.minColor })),
       maxStyle: computed(() => ({ backgroundColor: props.maxColor })),
+      onThumbStart() {
+        lockTrackClick.value = true
+        emit('thumb-start')
+      },
+      onThumbStop() {
+        emit('thumb-stop')
+      },
+      onTrackClick() {
+        if (!lockTrackClick.value) {
+          emit('track-click')
+        }
+      },
     }
   },
 })

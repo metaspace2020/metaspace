@@ -5,6 +5,7 @@
     @click.stop="onClick"
     @keypress.enter.self="onClick"
     @keypress.space.self.prevent="onClick"
+    @mousedown.capture="emit('mousedown')"
   >
     <slot />
   </div>
@@ -14,6 +15,7 @@ import { defineComponent } from '@vue/composition-api'
 export default defineComponent({
   setup(_, { emit }) {
     return {
+      emit,
       onClick(e: MouseEvent) {
         emit('click', e.offsetX)
       },
