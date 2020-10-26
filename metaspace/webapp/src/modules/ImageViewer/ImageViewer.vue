@@ -81,7 +81,7 @@ import SingleIonImageControls from './SingleIonImageControls.vue'
 import IonImageSettings from './IonImageSettings.vue'
 
 import viewerState from './state'
-import { useIonImages } from './ionImageState'
+import { useIonImages, resetIonImageState } from './ionImageState'
 import fitImageToArea, { FitImageToAreaResult } from '../../lib/fitImageToArea'
 import { ScaleType } from '../../lib/ionImageRendering'
 
@@ -128,6 +128,15 @@ const ImageViewer = defineComponent<Props>({
       singleIonImageControls,
       ionImagesLoading,
     } = useIonImages(props)
+
+    // don't think this is the best way to do it
+    root.$store.watch((_, getters) => getters.filter.datasetIds, (datasetIds = [], previous) => {
+      if (datasetIds.length !== 1 || (previous && previous[0] !== datasetIds[0])) {
+        resetIonImageState()
+        viewerState.mode.value = 'SINGLE'
+      }
+    })
+
     const imageArea = ref<HTMLElement | null>(null)
 
     const dimensions = reactive({

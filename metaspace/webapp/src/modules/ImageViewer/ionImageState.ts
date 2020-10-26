@@ -173,6 +173,23 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
   }
 }
 
+export function resetIonImageState() {
+  // TODO: how to make this cleaner?
+  for (const id of state.order) {
+    const layer = ionImageLayerCache[id]
+    const initialState = getInitialLayerState(layer.annotation)
+    layer.multiModeState.minIntensity = initialState.minIntensity
+    layer.multiModeState.maxIntensity = initialState.maxIntensity
+    layer.multiModeState.quantileRange = initialState.quantileRange
+    layer.settings.channel = channels[0]
+    layer.settings.label = undefined
+    layer.settings.visible = true
+  }
+  state.nextChannel = channels[0]
+  state.activeLayer = null
+  state.order = []
+}
+
 export const useIonImages = (props: Props) => {
   const ionImagesWithData = computed(() => {
     const data = []
@@ -272,25 +289,12 @@ export const useIonImages = (props: Props) => {
     activeAnnotation.value = annotation.id
 
     if (viewerState.mode.value === 'SINGLE') {
-      // TODO: make this cleaner
-      for (const id of state.order) {
-        const layer = ionImageLayerCache[id]
-        const initialState = getInitialLayerState(layer.annotation)
-        layer.multiModeState.minIntensity = initialState.minIntensity
-        layer.multiModeState.maxIntensity = initialState.maxIntensity
-        layer.multiModeState.quantileRange = initialState.quantileRange
-        layer.settings.channel = channels[0]
-        layer.settings.label = undefined
-        layer.settings.visible = true
-      }
-
-      state.nextChannel = channels[1]
+      resetIonImageState()
       if (annotation.id in ionImageLayerCache) {
         state.order = [annotation.id]
         state.activeLayer = annotation.id
+        state.nextChannel = channels[1]
         return
-      } else {
-        state.order = []
       }
     } else {
       if (state.order.includes(annotation.id)) {
