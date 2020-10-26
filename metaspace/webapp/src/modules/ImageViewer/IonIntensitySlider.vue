@@ -27,7 +27,7 @@
         {{ intensity.min.toExponential(1) }}
       </span>
       <el-tooltip
-        v-if="intensity.maxClipped"
+        v-if="intensity.hotspotRemoval"
         placement="bottom-end"
       >
         <span class="font-medium text-red-700">
@@ -38,7 +38,7 @@
           class="text-sm leading-5 max-w-measure-3"
         >
           <b>Hot-spot removal has been applied to this image.</b> <br>
-          Pixel intensities above the {{ intensity.maxQuantile * 100 }}th percentile, {{ intensity.max.toExponential(1) }},
+          Intensities above the {{ intensity.maxQuantile * 100 }}th percentile, {{ intensity.max.toExponential(1) }},
           have been reduced to {{ intensity.max.toExponential(1) }}.
           The highest intensity before hot-spot removal was {{ intensity.imageMax.toExponential(1) }}.
         </div>
@@ -115,12 +115,12 @@ export default defineComponent<Props>({
       }),
       minTooltip: computed(() => {
         if (props.intensity) {
-          return getTooltip(quantileRange.value[0], props.intensity.min, props.intensity.max)
+          return props.intensity.clippedMin.toExponential(1)
         }
       }),
       maxTooltip: computed(() => {
         if (props.intensity) {
-          return getTooltip(quantileRange.value[1], props.intensity.min, props.intensity.max)
+          return props.intensity.clippedMax.toExponential(1)
         }
       }),
     }

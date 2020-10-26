@@ -24,6 +24,8 @@ export interface IonImageState {
 export interface IonImageIntensity {
   min: number
   max: number
+  clippedMin: number
+  clippedMax: number
   minQuantile: number
   maxQuantile: number
 }
@@ -152,17 +154,26 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
 
   const intensity = computed(() => {
     if (image.value !== null) {
-      const { quantileRange, minIntensity, maxIntensity } = activeState.value
+      const { quantileRange } = activeState.value
       const { maxIntensity: imageMax } = getInitialLayerState(layer.annotation)
-      const { clippedMinIntensity, clippedMaxIntensity, maxQuantile = 1, minQuantile = 0 } = image.value || {}
-      const maxClipped = quantileRange[1] === 1 && clippedMaxIntensity !== imageMax
+      const {
+        minIntensity,
+        maxIntensity,
+        clippedMinIntensity,
+        clippedMaxIntensity,
+        maxQuantile = 1,
+        minQuantile = 0,
+      } = image.value || {}
+      console.log({ quantileRange, maxQuantile })
       return {
-        maxClipped,
+        hotspotRemoval: maxQuantile < 1,
         imageMax,
         minQuantile,
         maxQuantile,
-        min: quantileRange[0] === 0 ? clippedMinIntensity : minIntensity,
-        max: maxClipped ? clippedMaxIntensity : maxIntensity,
+        min: minIntensity,
+        max: maxIntensity,
+        clippedMin: clippedMinIntensity,
+        clippedMax: clippedMaxIntensity,
       }
     }
     return null

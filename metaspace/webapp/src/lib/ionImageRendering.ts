@@ -16,8 +16,8 @@ export interface IonImage {
   // scaleBarValues - Quantization of linear intensity values, used for showing the distribution of colors on the scale bar
   // Always length 256
   scaleBarValues: Uint8ClampedArray;
-  minQuantile: number | null;
-  maxQuantile: number | null;
+  minQuantile: number;
+  maxQuantile: number;
 }
 
 export type ColorMap = readonly number[][]
@@ -27,13 +27,13 @@ export type IonImageLayer = { ionImage: IonImage, colorMap: ColorMap }
 export type ScaleType = 'linear' | 'linear-full' | 'log' | 'log-full' | 'hist' | 'test';
 export type ScaleMode = 'linear' | 'log' | 'hist';
 
-const SCALES: Record<ScaleType, [ScaleMode, number | null, number | null]> = {
-  linear: ['linear', null, 0.99],
-  'linear-full': ['linear', null, null],
+const SCALES: Record<ScaleType, [ScaleMode, number, number]> = {
+  linear: ['linear', 0, 0.99],
+  'linear-full': ['linear', 0, 1],
   log: ['log', 0.01, 0.99],
   'log-full': ['log', 0, 1],
-  hist: ['hist', null, null],
-  test: ['linear', null, 0.5], // For unit tests, because it's easier to make test data for 50% threshold than 99%
+  hist: ['hist', 0, 1],
+  test: ['linear', 0, 0.5], // For unit tests, because it's easier to make test data for 50% threshold than 99%
 }
 
 const createDataUrl = (imageBytes: Uint8ClampedArray, width: number, height: number) => {
@@ -120,7 +120,7 @@ function safeQuantile(values: number[], q: number | number[]): any {
 
 const getScaleParams = (intensityValues: Float32Array, mask: Uint8ClampedArray,
   minIntensity: number, maxIntensity: number,
-  lowQuantile: number | null, highQuantile: number | null, scaleMode: ScaleMode) => {
+  lowQuantile: number, highQuantile: number, scaleMode: ScaleMode) => {
   const values = []
 
   // Only non-zero values should be considered for hotspot removal, otherwise sparse images have most of their set pixels treated as hotspots.
@@ -134,8 +134,8 @@ const getScaleParams = (intensityValues: Float32Array, mask: Uint8ClampedArray,
     }
   }
 
-  const clippedMinIntensity = lowQuantile == null ? minIntensity : safeQuantile(values, lowQuantile)
-  const clippedMaxIntensity = highQuantile == null ? maxIntensity : safeQuantile(values, highQuantile)
+  const clippedMinIntensity = lowQuantile === 0 ? minIntensity : safeQuantile(values, lowQuantile)
+  const clippedMaxIntensity = highQuantile === 1 ? maxIntensity : safeQuantile(values, highQuantile)
 
   let rankValues: Float32Array | null = null
   if (scaleMode === 'hist') {
