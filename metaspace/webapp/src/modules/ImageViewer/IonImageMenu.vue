@@ -7,6 +7,7 @@
       :layer-id="item.id"
       :active-layer="activeLayer"
       :visible="item.settings.visible"
+      :loading="item.loading"
       @active="setActiveLayer"
       @delete="removeLayer"
       @mousedown.capture="setLastSlider(null)"

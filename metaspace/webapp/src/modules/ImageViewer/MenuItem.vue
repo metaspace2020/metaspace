@@ -16,16 +16,34 @@
     @mousedown.capture="emit('mousedown')"
     @keydown.capture="emit('keydown')"
   >
-    <slot />
+    <fade-transition>
+      <p
+        v-if="loading"
+        key="loading"
+        class="m-0 text-sm leading-5 font-medium italic"
+      >
+        loading image ...
+      </p>
+      <div v-else>
+        <slot />
+      </div>
+    </fade-transition>
   </div>
 </template>
 <script lang="ts">
-import Vue from 'vue'
-export default Vue.extend({
+import { defineComponent } from '@vue/composition-api'
+
+import FadeTransition from '../../components/FadeTransition'
+
+export default defineComponent({
+  components: {
+    FadeTransition,
+  },
   props: {
     activeLayer: String,
     layerId: String,
     visible: { type: Boolean, default: true },
+    loading: { type: Boolean, default: true },
   },
   setup(props, { emit }) {
     return {

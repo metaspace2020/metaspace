@@ -267,23 +267,22 @@ export const useIonImages = (props: Props) => {
   const ionImageMenuItems = computed(() => {
     const items = []
     for (const { layer, data } of ionImagesWithData.value) {
-      if (data.image.value !== null) {
-        items.push({
-          annotation: layer.annotation,
-          colorBar: data.colorBar,
-          id: layer.id,
-          intensity: data.intensity,
-          settings: layer.settings,
-          state: layer.multiModeState,
-          updateIntensity(range: [number, number]) {
-            layer.multiModeState.quantileRange = range
-          },
-          toggleVisibility() {
-            const { settings } = layer
-            settings.visible = !settings.visible
-          },
-        })
-      }
+      items.push({
+        loading: data.image.value === null,
+        annotation: layer.annotation,
+        colorBar: data.colorBar,
+        id: layer.id,
+        intensity: data.intensity,
+        settings: layer.settings,
+        state: layer.multiModeState,
+        updateIntensity(range: [number, number]) {
+          layer.multiModeState.quantileRange = range
+        },
+        toggleVisibility() {
+          const { settings } = layer
+          settings.visible = !settings.visible
+        },
+      })
     }
     return items
   })
