@@ -75,7 +75,7 @@ CREATE TABLE "graphql"."project" (
   "id" uuid NOT NULL DEFAULT uuid_generate_v1mc(), 
   "name" text NOT NULL, 
   "url_slug" text, 
-  "is_public" boolean NOT NULL DEFAULT true, 
+  "is_public" boolean NOT NULL DEFAULT false, 
   "created_dt" TIMESTAMP NOT NULL, 
   "project_description" text, 
   "review_token" text, 
