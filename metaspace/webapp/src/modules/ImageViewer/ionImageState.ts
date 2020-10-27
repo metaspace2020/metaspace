@@ -144,11 +144,11 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
   const colorBar = computed(() => {
     const colorMap = createColorMap(activeColorMap.value)
     const { range } = getColorScale(activeColorMap.value)
-    const { clippedMinIntensity, clippedMaxIntensity } = image.value || {}
+    const { userMinIntensity, userMaxIntensity } = image.value || {}
     return {
       minColor: range[0],
       maxColor: range[range.length - 1],
-      gradient: clippedMinIntensity === clippedMaxIntensity
+      gradient: userMinIntensity === userMaxIntensity
         ? `linear-gradient(to right, ${range.join(',')})`
         : image.value ? `url(${renderScaleBar(image.value, colorMap, true)})` : '',
     }
@@ -161,7 +161,7 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
         clippedMinIntensity, clippedMaxIntensity,
         minQuantile = 0,
         maxQuantile = 1,
-        rangeMinIntensity, rangeMaxIntensity,
+        userMinIntensity, userMaxIntensity,
       } = image.value || {}
       return {
         minQuantile,
@@ -170,10 +170,10 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
         isMaxClipped: maxQuantile < 1,
         imageMin: minIntensity,
         imageMax: maxIntensity,
-        min: clippedMinIntensity,
-        max: clippedMaxIntensity,
-        rangeMin: rangeMinIntensity,
-        rangeMax: rangeMaxIntensity,
+        clippedMin: clippedMinIntensity,
+        clippedMax: clippedMaxIntensity,
+        userMin: userMinIntensity,
+        userMax: userMaxIntensity,
       }
     }
     return null

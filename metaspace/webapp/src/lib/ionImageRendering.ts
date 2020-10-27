@@ -13,8 +13,8 @@ export interface IonImage {
   maxIntensity: number;
   clippedMinIntensity: number;
   clippedMaxIntensity: number;
-  rangeMinIntensity: number;
-  rangeMaxIntensity: number;
+  userMinIntensity: number;
+  userMaxIntensity: number;
   // scaleBarValues - Quantization of linear intensity values, used for showing the distribution of colors on the scale bar
   // Always length 256
   scaleBarValues: Uint8ClampedArray;
@@ -230,30 +230,30 @@ export const loadPngFromUrl = async(url: string) => {
 
 export const processIonImage = (
   png: Image, minIntensity: number = 0, maxIntensity: number = 1, scaleType: ScaleType = DEFAULT_SCALE_TYPE,
-  quantileRange: [ number, number ] = [0, 1]): IonImage => {
+  userQuantiles: [ number, number ] = [0, 1]): IonImage => {
   const [scaleMode, minQuantile, maxQuantile] = SCALES[scaleType]
 
   const { width, height } = png
   const { intensityValues, mask } = extractIntensityAndMask(png, minIntensity, maxIntensity)
-  const [minRange, maxRange] = quantileRange
+  const [userMin, userMax] = userQuantiles
 
   const { clippedMinIntensity, clippedMaxIntensity } =
     getScaleParams(intensityValues, mask, minIntensity, maxIntensity, minQuantile, maxQuantile, scaleMode)
 
-  const { clippedMinIntensity: rangeMinIntensity, clippedMaxIntensity: rangeMaxIntensity, rankValues } =
+  const { clippedMinIntensity: userMinIntensity, clippedMaxIntensity: userMaxIntensity, rankValues } =
     getScaleParams(
       intensityValues,
       mask,
       minIntensity,
       maxIntensity,
-      Math.max(minQuantile, minRange),
-      Math.min(maxQuantile, maxRange),
+      Math.max(minQuantile, Math.min(maxQuantile, userMin)),
+      Math.min(maxQuantile, Math.max(minQuantile, userMax)),
       scaleMode,
     )
 
-  const clippedValues = quantizeIonImage(intensityValues, rangeMinIntensity, rangeMaxIntensity, rankValues,
+  const clippedValues = quantizeIonImage(intensityValues, userMinIntensity, userMaxIntensity, rankValues,
     scaleMode)
-  const scaleBarValues = quantizeScaleBar(rangeMinIntensity, rangeMaxIntensity, rankValues, scaleMode)
+  const scaleBarValues = quantizeScaleBar(userMinIntensity, userMaxIntensity, rankValues, scaleMode)
 
   return {
     intensityValues,
@@ -265,8 +265,8 @@ export const processIonImage = (
     maxIntensity,
     clippedMinIntensity,
     clippedMaxIntensity,
-    rangeMinIntensity,
-    rangeMaxIntensity,
+    userMinIntensity,
+    userMaxIntensity,
     scaleBarValues,
     minQuantile,
     maxQuantile,

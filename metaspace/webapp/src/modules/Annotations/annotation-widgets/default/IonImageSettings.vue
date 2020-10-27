@@ -16,7 +16,7 @@
           />
           <el-option
             value="linear-full"
-            label="Linear (without hotspot clipping)"
+            label="Linear (without hot-spot removal)"
           />
           <el-option
             value="log"

@@ -12,8 +12,8 @@
       :step="0.01"
       :value="model.quantileRange"
       :disabled="isDisabled"
-      :min-tooltip="intensity.rangeMin.toExponential(1)"
-      :max-tooltip="intensity.rangeMax.toExponential(1)"
+      :min-tooltip="intensity.userMin.toExponential(1)"
+      :max-tooltip="intensity.userMax.toExponential(1)"
       @change="range => emit('change', range)"
       @thumb-start="emit('thumb-start')"
       @thumb-stop="emit('thumb-stop')"
@@ -23,37 +23,27 @@
       v-if="intensity"
       class="flex justify-between leading-6 tracking-wide"
     >
-      <span>
-        {{ intensity.min.toExponential(1) }}
-      </span>
-      <el-tooltip
-        v-if="intensity.isMaxClipped"
-        v-model="hotspotTooltip"
-        placement="bottom-end"
-        manual
-      >
-        <span
-          class="font-medium text-red-700 cursor-help"
-          @mousedown.stop="hotspotTooltip = !hotspotTooltip"
-          @keypress.enter="hotspotTooltip = !hotspotTooltip"
-          @keypress.space.prevent="hotspotTooltip = !hotspotTooltip"
-          @keypress.esc="hotspotTooltip = false"
-        >
-          {{ intensity.max.toExponential(1) }}
-        </span>
-        <div
-          slot="content"
-          class="text-sm leading-5 max-w-measure-3"
-          @mousedown.stop
-        >
-          <b>Hot-spot removal has been applied to this image.</b> <br>
-          Intensities above the {{ intensity.maxQuantile * 100 }}th percentile, {{ intensity.max.toExponential(1) }},
-          have been reduced to {{ intensity.max.toExponential(1) }}.
-          The highest intensity before hot-spot removal was {{ intensity.imageMax.toExponential(1) }}.
-        </div>
-      </el-tooltip>
+      <clipping-tooltip
+        v-if="intensity.isMinClipped"
+        id="min"
+        clipping-type="outlier-min"
+        placement="bottom-start"
+        :clipped-intensity="intensity.clippedMin.toExponential(1)"
+        :original-intensity="intensity.imageMin.toExponential(1)"
+      />
       <span v-else>
-        {{ intensity.max.toExponential(1) }}
+        {{ intensity.clippedMin.toExponential(1) }}
+      </span>
+      <clipping-tooltip
+        v-if="intensity.isMaxClipped"
+        id="max"
+        placement="bottom-end"
+        :clipping-type="intensity.isMinClipped ? 'outlier-max' : 'hotspot-removal'"
+        :clipped-intensity="intensity.clippedMax.toExponential(1)"
+        :original-intensity="intensity.imageMax.toExponential(1)"
+      />
+      <span v-else>
+        {{ intensity.clippedMax.toExponential(1) }}
       </span>
     </div>
   </div>
@@ -61,6 +51,7 @@
 <script lang="ts">
 import { defineComponent, computed, ref, watch } from '@vue/composition-api'
 
+import ClippingTooltip from './ClippingTooltip.vue'
 import { RangeSlider, THUMB_WIDTH } from '../../components/Slider'
 import { IonImageState, IonImageIntensity, ColorBar } from './ionImageState'
 
@@ -81,25 +72,14 @@ export default defineComponent<Props>({
   },
   components: {
     RangeSlider,
+    ClippingTooltip,
   },
   setup(props, { emit }) {
     const container = ref<HTMLElement>()
 
-    const hotspotTooltip = ref(false)
-
-    const onOutClick = () => { hotspotTooltip.value = false }
-    watch(hotspotTooltip, (isShowing) => {
-      if (isShowing) {
-        document.addEventListener('mousedown', onOutClick)
-      } else {
-        document.removeEventListener('mousedown', onOutClick)
-      }
-    })
-
     return {
       container,
       emit,
-      hotspotTooltip,
       style: computed(() => {
         if (container.value) {
           const width = container.value.offsetWidth
