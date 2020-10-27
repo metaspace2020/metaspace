@@ -127,7 +127,8 @@ export default {
   *:focus {
     outline: none;
   }
-  .focus-visible {
+  .focus-visible,
+  .focus-ring:focus:not(:active) {
     outline: 2px solid theme('colors.primary');
     outline-offset: 2px;
     /* box-shadow: 0 0 0 2px theme('colors.primary'); - too intrusive without redesigning everything */

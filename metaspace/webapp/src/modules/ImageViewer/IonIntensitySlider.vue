@@ -6,7 +6,7 @@
     <range-slider
       :style="style"
       :class="{ 'cursor-pointer': canFocus }"
-      :tabindex="canFocus ? 0 : null"
+      :tabindex="canFocus && !isDisabled ? 0 : null"
       :min="0"
       :max="1"
       :step="0.01"
