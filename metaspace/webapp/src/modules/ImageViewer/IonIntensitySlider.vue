@@ -25,7 +25,7 @@
     >
       <clipping-tooltip
         v-if="intensity.isMinClipped"
-        id="min"
+        :id="id + '-min'"
         clipping-type="outlier-min"
         placement="bottom-start"
         :clipped-intensity="intensity.clippedMin.toExponential(1)"
@@ -36,7 +36,7 @@
       </span>
       <clipping-tooltip
         v-if="intensity.isMaxClipped"
-        id="max"
+        :id="id + '-max'"
         placement="bottom-end"
         :clipping-type="intensity.isMinClipped ? 'outlier-max' : 'hotspot-removal'"
         :clipped-intensity="intensity.clippedMax.toExponential(1)"
@@ -64,6 +64,7 @@ interface Props {
 
 export default defineComponent<Props>({
   props: {
+    id: String,
     colorBar: Object,
     intensity: Object,
     isDisabled: Boolean,

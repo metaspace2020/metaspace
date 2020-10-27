@@ -6,6 +6,7 @@
   >
     <span
       class="font-medium text-red-700 cursor-help"
+      @click.stop
       @mousedown.stop="toggleTooltip"
       @keypress.enter="toggleTooltip"
       @keypress.space.prevent="toggleTooltip"

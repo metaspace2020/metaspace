@@ -44,6 +44,7 @@
           />
           <ion-intensity-slider
             v-else
+            :id="item.id"
             can-focus
             :model="item.state"
             :color-bar="item.colorBar.value"
