@@ -12,8 +12,8 @@
       :step="0.01"
       :value="model.quantileRange"
       :disabled="isDisabled"
-      :min-tooltip="intensity.clippedMin.toExponential(1)"
-      :max-tooltip="intensity.clippedMax.toExponential(1)"
+      :min-tooltip="intensity.rangeMin.toExponential(1)"
+      :max-tooltip="intensity.rangeMax.toExponential(1)"
       @change="range => emit('change', range)"
       @thumb-start="emit('thumb-start')"
       @thumb-stop="emit('thumb-stop')"
@@ -34,13 +34,17 @@
       >
         <span
           class="font-medium text-red-700 cursor-help"
-          @click.stop="hotspotTooltip = !hotspotTooltip"
+          @mousedown.stop="hotspotTooltip = !hotspotTooltip"
+          @keypress.enter="hotspotTooltip = !hotspotTooltip"
+          @keypress.space.prevent="hotspotTooltip = !hotspotTooltip"
+          @keypress.esc="hotspotTooltip = false"
         >
           {{ intensity.max.toExponential(1) }}
         </span>
         <div
           slot="content"
           class="text-sm leading-5 max-w-measure-3"
+          @mousedown.stop
         >
           <b>Hot-spot removal has been applied to this image.</b> <br>
           Intensities above the {{ intensity.maxQuantile * 100 }}th percentile, {{ intensity.max.toExponential(1) }},
@@ -55,7 +59,7 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, computed, ref } from '@vue/composition-api'
+import { defineComponent, computed, ref, watch } from '@vue/composition-api'
 
 import { RangeSlider, THUMB_WIDTH } from '../../components/Slider'
 import { IonImageState, IonImageIntensity, ColorBar } from './ionImageState'
@@ -81,10 +85,21 @@ export default defineComponent<Props>({
   setup(props, { emit }) {
     const container = ref<HTMLElement>()
 
+    const hotspotTooltip = ref(false)
+
+    const onOutClick = () => { hotspotTooltip.value = false }
+    watch(hotspotTooltip, (isShowing) => {
+      if (isShowing) {
+        document.addEventListener('mousedown', onOutClick)
+      } else {
+        document.removeEventListener('mousedown', onOutClick)
+      }
+    })
+
     return {
       container,
       emit,
-      hotspotTooltip: ref(false),
+      hotspotTooltip,
       style: computed(() => {
         if (container.value) {
           const width = container.value.offsetWidth

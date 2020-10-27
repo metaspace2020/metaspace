@@ -13,6 +13,8 @@ export interface IonImage {
   maxIntensity: number;
   clippedMinIntensity: number;
   clippedMaxIntensity: number;
+  rangeMinIntensity: number;
+  rangeMaxIntensity: number;
   // scaleBarValues - Quantization of linear intensity values, used for showing the distribution of colors on the scale bar
   // Always length 256
   scaleBarValues: Uint8ClampedArray;
@@ -234,7 +236,11 @@ export const processIonImage = (
   const { width, height } = png
   const { intensityValues, mask } = extractIntensityAndMask(png, minIntensity, maxIntensity)
   const [minRange, maxRange] = quantileRange
-  const { clippedMinIntensity, clippedMaxIntensity, rankValues } =
+
+  const { clippedMinIntensity, clippedMaxIntensity } =
+    getScaleParams(intensityValues, mask, minIntensity, maxIntensity, minQuantile, maxQuantile, scaleMode)
+
+  const { clippedMinIntensity: rangeMinIntensity, clippedMaxIntensity: rangeMaxIntensity, rankValues } =
     getScaleParams(
       intensityValues,
       mask,
@@ -245,9 +251,9 @@ export const processIonImage = (
       scaleMode,
     )
 
-  const clippedValues = quantizeIonImage(intensityValues, clippedMinIntensity, clippedMaxIntensity, rankValues,
+  const clippedValues = quantizeIonImage(intensityValues, rangeMinIntensity, rangeMaxIntensity, rankValues,
     scaleMode)
-  const scaleBarValues = quantizeScaleBar(clippedMinIntensity, clippedMaxIntensity, rankValues, scaleMode)
+  const scaleBarValues = quantizeScaleBar(rangeMinIntensity, rangeMaxIntensity, rankValues, scaleMode)
 
   return {
     intensityValues,
@@ -259,6 +265,8 @@ export const processIonImage = (
     maxIntensity,
     clippedMinIntensity,
     clippedMaxIntensity,
+    rangeMinIntensity,
+    rangeMaxIntensity,
     scaleBarValues,
     minQuantile,
     maxQuantile,

@@ -156,25 +156,24 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
 
   const intensity = computed(() => {
     if (image.value !== null) {
-      const { maxIntensity: imageMax } = getInitialLayerState(layer.annotation)
       const {
-        minIntensity,
-        maxIntensity,
-        clippedMinIntensity,
-        clippedMaxIntensity,
-        maxQuantile = 1,
+        minIntensity, maxIntensity,
+        clippedMinIntensity, clippedMaxIntensity,
         minQuantile = 0,
+        maxQuantile = 1,
+        rangeMinIntensity, rangeMaxIntensity,
       } = image.value || {}
       return {
-        imageMax,
         minQuantile,
         maxQuantile,
         isMinClipped: minQuantile > 0,
         isMaxClipped: maxQuantile < 1,
-        min: minIntensity,
-        max: maxIntensity,
-        clippedMin: clippedMinIntensity,
-        clippedMax: clippedMaxIntensity,
+        imageMin: minIntensity,
+        imageMax: maxIntensity,
+        min: clippedMinIntensity,
+        max: clippedMaxIntensity,
+        rangeMin: rangeMinIntensity,
+        rangeMax: rangeMaxIntensity,
       }
     }
     return null
