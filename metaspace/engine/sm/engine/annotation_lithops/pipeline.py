@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict
 
 import numpy as np
 import pandas as pd
@@ -12,7 +12,8 @@ from sm.engine.annotation_lithops.annotate import process_centr_segments
 from sm.engine.annotation_lithops.build_moldb import (
     build_moldb,
     validate_formula_cobjects,
-    DbDataTuple,
+    InputMolDb,
+    DbFDRData,
 )
 from sm.engine.annotation_lithops.cache import PipelineCacher, use_pipeline_cache
 from sm.engine.annotation_lithops.calculate_centroids import (
@@ -47,7 +48,7 @@ logger = logging.getLogger('annotation-pipeline')
 class Pipeline:
     mols_dbs_cobjects: List[CObj[List[str]]]
     formula_cobjects: List[CObj[pd.DataFrame]]
-    db_data_cobjects: List[CObj[DbDataTuple]]
+    db_data_cobjects: List[CObj[DbFDRData]]
     peaks_cobjects: List[CObj[pd.DataFrame]]
     imzml_reader: PortableSpectrumReader
     ds_segments_bounds: np.ndarray
@@ -58,15 +59,15 @@ class Pipeline:
     db_segms_cobjects: List[CObj[pd.DataFrame]]
     formula_metrics_df: pd.DataFrame
     images_df: pd.DataFrame
-    fdrs: pd.DataFrame
-    results_df: pd.DataFrame
+    fdrs: Dict[int, pd.DataFrame]
+    results_dfs: Dict[int, pd.DataFrame]
     png_cobjs: List[CObj[List[Tuple[int, bytes]]]]
 
     def __init__(
         self,
         imzml_cobject: CloudObject,
         ibd_cobject: CloudObject,
-        moldb_cobjects: List[CloudObject],
+        moldbs: List[InputMolDb],
         ds_config: DSConfig,
         lithops_config=None,
         cache_key=None,
@@ -75,7 +76,7 @@ class Pipeline:
         self._db = DB()
         self.imzml_cobject = imzml_cobject
         self.ibd_cobject = ibd_cobject
-        self.moldb_cobjects = moldb_cobjects
+        self.moldbs = moldbs
         self.ds_config = ds_config
         self.isocalc_wrapper = IsocalcWrapper(ds_config)
 
@@ -103,7 +104,9 @@ class Pipeline:
 
         self.ds_segm_size_mb = 128
 
-    def __call__(self, debug_validate=False, use_cache=True, shutdown=True):
+    def __call__(
+        self, debug_validate=False, use_cache=True, shutdown=True
+    ) -> Tuple[Dict[int, pd.DataFrame], List[CObj[List[Tuple[int, bytes]]]]]:
         self.build_moldb(use_cache=use_cache)
         if debug_validate:
             self.validate_build_moldb()
@@ -130,12 +133,12 @@ class Pipeline:
         if shutdown:
             self.executor.shutdown()
 
-        return self.results_df, self.png_cobjs
+        return self.results_dfs, self.png_cobjs
 
     @use_pipeline_cache
     def build_moldb(self):
         self.formula_cobjects, self.db_data_cobjects = self.executor.call(
-            build_moldb, (self.ds_config, self.moldb_cobjects), runtime_memory=8192
+            build_moldb, (self.ds_config, self.moldbs), runtime_memory=2048
         )
         logger.info(
             f'Built {len(self.formula_cobjects)} formula segments and'
@@ -148,7 +151,7 @@ class Pipeline:
     @use_pipeline_cache
     def calculate_centroids(self):
         self.peaks_cobjects = calculate_centroids(
-            self.executor, self.formula_cobjects, self.ds_config
+            self.executor, self.formula_cobjects, self.isocalc_wrapper
         )
         logger.info(f'Calculated {len(self.peaks_cobjects)} centroid chunks')
 
@@ -164,9 +167,7 @@ class Pipeline:
             self.ds_segms_cobjects,
             self.ds_segms_len,
         ) = self.executor.call(
-            load_ds,
-            (self.imzml_cobject, self.ibd_cobject, self.ds_segm_size_mb, sort_memory),
-            runtime_memory=8192,
+            load_ds, (self.imzml_cobject, self.ibd_cobject, self.ds_segm_size_mb, sort_memory),
         )
 
         logger.info(f'Segmented dataset chunks into {len(self.ds_segms_cobjects)} segments')
@@ -232,13 +233,14 @@ class Pipeline:
     def run_fdr(self):
         self.fdrs = self.executor.call(run_fdr, (self.formula_metrics_df, self.db_data_cobjects))
 
-        logger.info('Number of annotations with FDR less than:')
-        for fdr_step in [0.05, 0.1, 0.2, 0.5]:
-            logger.info(f'{fdr_step*100:2.0f}%: {(self.fdrs.fdr < fdr_step).sum()}')
+        for moldb_id, moldb_fdrs in self.fdrs.items():
+            logger.info(f'DB {moldb_id} number of annotations with FDR less than:')
+            for fdr_step in [0.05, 0.1, 0.2, 0.5]:
+                logger.info(f'{fdr_step*100:2.0f}%: {(moldb_fdrs.fdr < fdr_step).sum()}')
 
     @use_pipeline_cache
     def prepare_results(self):
-        self.results_df, self.png_cobjs = filter_results_and_make_pngs(
+        self.results_dfs, self.png_cobjs = filter_results_and_make_pngs(
             self.executor, self.formula_metrics_df, self.fdrs, self.images_df, self.imzml_reader,
         )
 

@@ -1,38 +1,52 @@
 from __future__ import annotations
 
 import logging
-from itertools import repeat
+from itertools import chain
 from typing import List
 
 import pandas as pd
-from lithops.storage.utils import CloudObject
+from lithops.storage import Storage
 
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, load_cobj, CObj
-from sm.engine.ds_config import DSConfig
+from sm.engine.isocalc_wrapper import IsocalcWrapper
 
 logger = logging.getLogger('annotation-pipeline')
 
 
 def calculate_centroids(
-    fexec: Executor, formula_cobjects: List[CloudObject], ds_config: DSConfig
+    fexec: Executor, formula_cobjects: List[CObj[pd.DataFrame]], isocalc_wrapper: IsocalcWrapper
 ) -> List[CObj[pd.DataFrame]]:
-    def calculate_peaks_for_formula(formula_i, formula):
+    def calculate_peaks_for_formula(args):
+        formula_i, formula, target, targeted = args
         mzs, ints = isocalc_wrapper.centroids(formula)
         if mzs is not None:
-            return list(zip(repeat(formula_i), range(len(mzs)), mzs, ints))
+            return [
+                (formula_i, peak_i, mzs[peak_i], ints[peak_i], target, targeted)
+                for peak_i in range(len(mzs))
+            ]
         else:
             return []
 
-    def calculate_peaks_chunk(segm_i, segm_cobject, storage):
+    def calculate_peaks_chunk(segm_i: int, segm_cobject: CObj[pd.DataFrame], *, storage: Storage):
         print(f'Calculating peaks from formulas chunk {segm_i}')
         chunk_df = load_cobj(storage, segm_cobject)
-        peaks = [
-            peak
-            for formula_i, formula in chunk_df.items()
-            for peak in calculate_peaks_for_formula(formula_i, formula)
-        ]
-        peaks_df = pd.DataFrame(peaks, columns=['formula_i', 'peak_i', 'mz', 'int'])
+        chunk_iter = chunk_df[['ion_formula', 'target', 'targeted']].itertuples(True, None)
+        peaks = list(chain(*map(calculate_peaks_for_formula, chunk_iter)))
+        peaks_df = pd.DataFrame(
+            peaks, columns=['formula_i', 'peak_i', 'mz', 'int', 'target', 'targeted']
+        )
+        peaks_df = peaks_df.astype(
+            {
+                'formula_i': 'u4',
+                'peak_i': 'u1',
+                'mz': 'f8',
+                'int': 'f4',
+                'target': '?',
+                'targeted': '?',
+            }
+        )
+
         peaks_df.set_index('formula_i', inplace=True)
 
         print(f'Storing centroids chunk {id}')
@@ -40,26 +54,18 @@ def calculate_centroids(
 
         return peaks_cobject, peaks_df.shape[0]
 
-    from sm.engine.isocalc_wrapper import (
-        IsocalcWrapper,
-    )  # Import lazily so that the rest of the pipeline still works if the dependency is missing
-
-    isocalc_wrapper = IsocalcWrapper(ds_config)
-
-    memory_capacity_mb = 2048
-    results = fexec.map(
-        calculate_peaks_chunk, list(enumerate(formula_cobjects)), runtime_memory=memory_capacity_mb
+    peaks_cobjects, peaks_cobject_lens = fexec.map(
+        calculate_peaks_chunk, list(enumerate(formula_cobjects)), runtime_memory=2048, unpack=True,
     )
 
-    num_centroids = sum(count for cobj, count in results)
-    n_centroids_chunks = len(results)
-    peaks_cobjects = [cobj for cobj, count in results]
+    num_centroids = sum(peaks_cobject_lens)
+    n_centroids_chunks = len(peaks_cobjects)
     logger.info(f'Calculated {num_centroids} centroids in {n_centroids_chunks} chunks')
     return peaks_cobjects
 
 
-def validate_centroids(fexec: Executor, peaks_cobjects: List[CloudObject]):
-    def get_segm_stats(storage, segm_cobject):
+def validate_centroids(fexec: Executor, peaks_cobjects: List[CObj[pd.DataFrame]]):
+    def get_segm_stats(segm_cobject: CObj[pd.DataFrame], *, storage: Storage):
         segm = load_cobj(storage, segm_cobject)
         n_peaks = segm.groupby(level='formula_i').peak_i.count()
         formula_is = segm.index.unique()
@@ -85,7 +91,7 @@ def validate_centroids(fexec: Executor, peaks_cobjects: List[CloudObject]):
         )
         return formula_is, stats
 
-    results = fexec.map(get_segm_stats, peaks_cobjects, runtime_memory=1024)
+    results = fexec.map(get_segm_stats, [(co,) for co in peaks_cobjects], runtime_memory=1024)
     segm_formula_is = [formula_is for formula_is, stats in results]
     stats_df = pd.DataFrame([stats for formula_is, stats in results])
 

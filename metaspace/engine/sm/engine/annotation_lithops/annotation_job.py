@@ -44,8 +44,8 @@ def _upload_if_not_exists(local_path, storage, sm_storage, storage_type):
         return cobject
 
 
-def _upload_moldb_cobjects(moldb_ids, storage, sm_storage):
-    cobjs = []
+def _upload_moldbs_from_db(moldb_ids, storage, sm_storage):
+    moldb_defs = []
     bucket, prefix = sm_storage['moldb']
     for moldb_id in moldb_ids:
         key = f'{prefix}/{moldb_id}'
@@ -63,9 +63,10 @@ def _upload_moldb_cobjects(moldb_ids, storage, sm_storage):
             mols = [mol for mol, in mols_query]
             cobject = save_cobj(storage, mols, bucket=bucket, key=key)
             logger.info(f'Uploading {key}...Done')
-        cobjs.append(cobject)
+        targeted = DB().select_one('SELECT targeted FROM molecular_db WHERE id = %s', (moldb_id,))
+        moldb_defs.append({'id': moldb_id, 'cobj': cobject, 'targeted': targeted})
 
-    return cobjs
+    return moldb_defs
 
 
 class LocalAnnotationJob:
@@ -87,7 +88,7 @@ class LocalAnnotationJob:
 
         self.imzml_cobj = _upload_if_not_exists(imzml_file, self.storage, sm_storage, 'imzml')
         self.ibd_cobj = _upload_if_not_exists(ibd_file, self.storage, sm_storage, 'imzml')
-        self.moldb_cobjs = _upload_moldb_cobjects(moldb_ids, self.storage, sm_storage)
+        self.moldb_defs = _upload_moldbs_from_db(moldb_ids, self.storage, sm_storage)
         self.ds_config = ds_config
 
         if use_cache:
@@ -98,22 +99,29 @@ class LocalAnnotationJob:
             cache_key = None
 
         self.pipe = Pipeline(
-            self.imzml_cobj, self.ibd_cobj, self.moldb_cobjs, self.ds_config, cache_key=cache_key
+            self.imzml_cobj, self.ibd_cobj, self.moldb_defs, self.ds_config, cache_key=cache_key
         )
 
-    def run(self):
-        results_df, png_cobjs = self.pipe()
-        results_df.to_csv('./results.csv')
-        image_names = (
-            results_df.formula + results_df.chem_mod + results_df.neutral_loss + results_df.adduct
-        )
-        out_dir = Path('./result_pngs')
-        out_dir.mkdir(exist_ok=True)
-        for imageset in iter_cobjs_with_prefetch(self.storage, png_cobjs):
-            for formula_i, imgs in imageset:
-                for i, img in enumerate(imgs, 1):
-                    if img:
-                        (out_dir / f'{image_names[formula_i]}_{i}.png').open('wb').write(img)
+    def run(self, save=True, **kwargs):
+        results_dfs, png_cobjs = self.pipe(**kwargs)
+        if save:
+            for moldb_id, results_df in results_dfs.items():
+                results_df.to_csv(f'./results_{moldb_id}.csv')
+            all_results = pd.concat(list(results_dfs.values()))
+            all_results = all_results[~all_results.index.duplicated()]
+            image_names = (
+                all_results.formula
+                + all_results.chem_mod.fillna('')
+                + all_results.neutral_loss.fillna('')
+                + all_results.adduct
+            )
+            out_dir = Path('./result_pngs')
+            out_dir.mkdir(exist_ok=True)
+            for imageset in iter_cobjs_with_prefetch(self.storage, png_cobjs):
+                for formula_i, imgs in imageset:
+                    for i, img in enumerate(imgs, 1):
+                        if img:
+                            (out_dir / f'{image_names[formula_i]}_{i}.png').open('wb').write(img)
 
 
 class ServerAnnotationJob:
@@ -135,7 +143,9 @@ class ServerAnnotationJob:
         self.db = DB()
         self.es = ESExporter(self.db, sm_config)
         self.imzml_cobj, self.ibd_cobj = self._get_input_cobjects()
-        self.moldb_cobjects = self._get_moldb_cobjects()
+        self.moldb_defs = _upload_moldbs_from_db(
+            self.ds.config['database_ids'], self.storage, self.sm_storage
+        )
 
         if use_cache:
             cache_key: Optional[str] = jsonhash({'input_path': ds.input_path, 'ds': ds.config})
@@ -143,7 +153,7 @@ class ServerAnnotationJob:
             cache_key = None
 
         self.pipe = Pipeline(
-            self.imzml_cobj, self.ibd_cobj, self.moldb_cobjects, self.ds.config, cache_key=cache_key
+            self.imzml_cobj, self.ibd_cobj, self.moldb_defs, self.ds.config, cache_key=cache_key
         )
 
     def _get_input_cobjects(self):
@@ -171,29 +181,7 @@ class ServerAnnotationJob:
 
         return imzml_cobj, ibd_cobj
 
-    def _get_moldb_cobjects(self):
-        cobjs = []
-        for moldb_id in self.ds.config['database_ids']:
-            bucket, prefix = self.sm_storage['moldb']
-            key = f'{prefix}/{moldb_id}'
-            try:
-                self.storage.head_object(bucket, key)
-                logger.debug(f'Found mol db at {key}')
-                # This cast doesn't include the generic argument due to
-                # https://youtrack.jetbrains.com/issue/PY-43838 (Fix coming in PyCharm 2020.2.3)
-                cobject = CloudObject(self.storage.backend, bucket, key)
-            except StorageNoSuchKeyError:
-                logger.info(f'Uploading mol db to {key}')
-                mols_query = DB().select(
-                    'SELECT DISTINCT formula FROM molecule WHERE moldb_id = %s', (moldb_id,)
-                )
-                mols = [mol for mol, in mols_query]
-                cobject = save_cobj(self.storage, mols, bucket=bucket, key=key)
-            cobjs.append(cobject)
-
-        return cobjs
-
-    def store_images(self, results_df, formula_png_iter):
+    def store_images(self, all_results_dfs, formula_png_iter):
         db_formula_image_ids = defaultdict(dict)
         img_store_type = self.ds.get_ion_img_storage_type(self.db)
 
@@ -213,29 +201,29 @@ class ServerAnnotationJob:
                 tasks = (
                     pd.DataFrame(formula_png_chunk, columns=['formula_i', 'pngs'])
                     .set_index('formula_i')
-                    .join(results_df)[['moldb_id', 'pngs']]
+                    .join(all_results_dfs)[['moldb_id', 'pngs']]
                     .itertuples(True, None)
                 )
                 list(ex.map(_upload_images, *zip(*tasks)))
 
         return db_formula_image_ids
 
-    def run(self):
+    def run(self, **kwargs):
         isocalc = IsocalcWrapper(self.ds.config)
         del_jobs(self.ds)
         moldb_to_job_map = {}
         for moldb_id in self.ds.config['database_ids']:
             moldb_to_job_map[moldb_id] = insert_running_job(self.ds.id, moldb_id)
         try:
-            results_df, png_cobjs = self.pipe()
-            self.results_df, self.png_cobjs = results_df, png_cobjs
-            db_formula_image_ids = self.store_images(
-                results_df, iter_cobjs_with_prefetch(self.storage, png_cobjs)
+            self.results_dfs, self.png_cobjs = self.pipe(**kwargs)
+            self.db_formula_image_ids = self.store_images(
+                pd.concat(list(self.results_dfs.values())),
+                iter_cobjs_with_prefetch(self.storage, self.png_cobjs),
             )
-            self.db_formula_image_ids = db_formula_image_ids
 
             for moldb_id, job_id in moldb_to_job_map.items():
-                formula_image_ids = db_formula_image_ids.get(moldb_id, {})
+                results_df = self.results_dfs[moldb_id]
+                formula_image_ids = self.db_formula_image_ids.get(moldb_id, {})
 
                 search_results = SearchResults(
                     job_id=job_id,
@@ -243,8 +231,7 @@ class ServerAnnotationJob:
                     n_peaks=self.ds.config['isotope_generation']['n_peaks'],
                     charge=self.ds.config['isotope_generation']['charge'],
                 )
-                metrics_df = results_df[results_df.moldb_id == moldb_id]
-                search_results.store_ion_metrics(metrics_df, formula_image_ids, self.db)
+                search_results.store_ion_metrics(results_df, formula_image_ids, self.db)
 
                 update_finished_job(job_id, JobStatus.FINISHED)
                 self.es.index_ds(self.ds.id, molecular_db.find_by_id(moldb_id), isocalc)

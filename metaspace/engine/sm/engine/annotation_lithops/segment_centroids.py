@@ -24,33 +24,6 @@ logger = logging.getLogger('annotation-pipeline')
 MAX_MZ_VALUE = 10 ** 5
 
 
-def get_spectra(storage, ibd_url, imzml_reader, sp_inds):
-    mz_starts = np.array(imzml_reader.mzOffsets)[sp_inds]
-    mz_ends = (
-        mz_starts
-        + np.array(imzml_reader.mzLengths)[sp_inds] * np.dtype(imzml_reader.mzPrecision).itemsize
-    )
-    mz_ranges = np.stack([mz_starts, mz_ends], axis=1)
-    int_starts = np.array(imzml_reader.intensityOffsets)[sp_inds]
-    int_ends = (
-        int_starts
-        + np.array(imzml_reader.intensityLengths)[sp_inds]
-        * np.dtype(imzml_reader.intensityPrecision).itemsize
-    )
-    int_ranges = np.stack([int_starts, int_ends], axis=1)
-    ranges_to_read = np.vstack([mz_ranges, int_ranges])
-    data_ranges = read_ranges_from_url(storage.get_client(), ibd_url, ranges_to_read)
-    mz_data = data_ranges[: len(sp_inds)]
-    int_data = data_ranges[len(sp_inds) :]
-    del data_ranges
-
-    for i, sp_idx in enumerate(sp_inds):
-        mzs = np.frombuffer(mz_data[i], dtype=imzml_reader.mzPrecision)
-        ints = np.frombuffer(int_data[i], dtype=imzml_reader.intensityPrecision)
-        mz_data[i] = int_data[i] = None  # Avoid holding memory longer than necessary
-        yield sp_idx, mzs, ints
-
-
 def clip_centr_df(
     fexec: Executor, peaks_cobjects: List[CloudObject], mz_min: float, mz_max: float
 ) -> Tuple[List[CObj[pd.DataFrame]], int]:
@@ -69,12 +42,9 @@ def clip_centr_df(
 
         return clip_centr_chunk_cobject, centr_df_chunk.shape[0]
 
-    memory_capacity_mb = 512
+    assert len(peaks_cobjects) > 0
     clip_centr_chunks_cobjects, centr_n = fexec.map(
-        clip_centr_df_chunk,
-        list(enumerate(peaks_cobjects)),
-        runtime_memory=memory_capacity_mb,
-        unpack=True,
+        clip_centr_df_chunk, list(enumerate(peaks_cobjects)), runtime_memory=512, unpack=True,
     )
 
     clip_centr_chunks_cobjects = list(clip_centr_chunks_cobjects)
@@ -94,9 +64,8 @@ def define_centr_segments(
         first_peak_df = centr_df[centr_df.peak_i == 0]
         return first_peak_df.mz.values
 
-    memory_capacity_mb = 512
     first_peak_df_mz = np.concatenate(
-        fexec.map(get_first_peak_mz, clip_centr_chunks_cobjects, runtime_memory=memory_capacity_mb)
+        fexec.map(get_first_peak_mz, clip_centr_chunks_cobjects, runtime_memory=512)
     )
 
     data_per_centr_segm_mb = 50
@@ -109,7 +78,8 @@ def define_centr_segments(
     centr_segm_lower_bounds = np.quantile(first_peak_df_mz, segm_bounds_q)
 
     logger.info(
-        f'Generated {len(centr_segm_lower_bounds)} centroids bounds: {centr_segm_lower_bounds[0]}...{centr_segm_lower_bounds[-1]}'
+        f'Generated {len(centr_segm_lower_bounds)} centroids bounds: '
+        f'{centr_segm_lower_bounds[0]}...{centr_segm_lower_bounds[-1]}'
     )
     return centr_segm_lower_bounds
 
@@ -157,9 +127,8 @@ def segment_centroids(
 
         return dict(sub_segms_cobjects)
 
-    memory_capacity_mb = 512
     first_level_segms_cobjects = fexec.map(
-        segment_centr_chunk, clip_centr_chunks_cobjects, runtime_memory=memory_capacity_mb
+        segment_centr_chunk, clip_centr_chunks_cobjects, runtime_memory=512
     )
 
     def merge_centr_df_segments(segm_cobjects, id, storage):
@@ -239,13 +208,9 @@ def segment_centroids(
     ]
 
     first_level_cobjs = [co for cos in first_level_segms_cobjects for co in cos.values()]
-    assert len(first_level_cobjs) == len(
-        set(co.key for co in first_level_cobjs)
-    ), 'Duplicate CloudObject key in first_level_segms_cobjects'
 
-    memory_capacity_mb = 2048
     second_segms = fexec.map(
-        merge_centr_df_segments, second_level_segms_cobjects, runtime_memory=memory_capacity_mb
+        merge_centr_df_segments, second_level_segms_cobjects, runtime_memory=2048
     )
     db_segms_cobjects = [cobj for cobjs in second_segms for cobj in cobjs]
 

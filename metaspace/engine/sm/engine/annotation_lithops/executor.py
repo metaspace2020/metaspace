@@ -1,4 +1,5 @@
 import inspect
+import logging
 import resource
 from time import time
 from typing import List
@@ -8,11 +9,14 @@ from lithops.future import ResponseFuture
 
 from sm.engine.annotation_lithops.utils import PipelineStats
 
+logger = logging.getLogger('custom-executor')
+
 
 class Executor:
     def __init__(self, lithops_config):
+        self.is_local = lithops_config['lithops']['executor'] == 'localhost'
 
-        if lithops_config['lithops']['executor'] == 'localhost':
+        if self.is_local:
             self.large_executor = self.small_executor = lithops.local_executor(
                 config=lithops_config, storage_backend='localhost'
             )
@@ -42,35 +46,54 @@ class Executor:
                 raise
 
         wrapper_func.__signature__ = inspect.signature(func)
+        wrapper_func.__name__ = func.__name__
 
         if runtime_memory is None:
-            runtime_memory = 2048
+            runtime_memory = 512
 
-        use_small = runtime_memory <= 4096
-        executor = self.small_executor if use_small else self.large_executor
-        futures: List[ResponseFuture] = executor.map(
-            wrapper_func, args, runtime_memory=runtime_memory, **kwargs
-        )
+        while True:
+            try:
+                use_small = runtime_memory <= 4096
+                executor = self.small_executor if use_small else self.large_executor
 
-        # TODO: debug logic:
-        # * retry with more memory if there is an OOM
-        # * try to record stats, even if a task fails
+                logger.info(f'executor.map({func.__name__}, {len(args)} items, {runtime_memory}MB)')
+                if executor.config['lithops']['executor'] == 'standalone':
+                    futures: List[ResponseFuture] = executor.map(wrapper_func, args, **kwargs)
+                else:
+                    futures: List[ResponseFuture] = executor.map(
+                        wrapper_func, args, runtime_memory=runtime_memory, **kwargs
+                    )
 
-        return_vals = executor.get_result(futures)
+                # TODO: debug logic:
+                # * retry with more memory if there is an OOM
+                # * try to record stats, even if a task fails
 
-        results = [result for result, meta in return_vals]
-        metas = [meta for result, meta in return_vals]
+                return_vals = executor.get_result(futures)
 
-        if not use_small:
-            total_time = sum(meta['inner_time'] for meta in metas if meta)
-            PipelineStats.append_vm(func.__name__, total_time)
-        else:
-            PipelineStats.append_pywren(futures, runtime_memory)
+                results = [result for result, meta in return_vals]
+                metas = [meta for result, meta in return_vals]
 
-        if unpack:
-            return zip(*results)
-        else:
-            return results
+                if not use_small:
+                    total_time = sum(meta['inner_time'] for meta in metas if meta)
+                    PipelineStats.append_vm(func.__name__, total_time)
+                else:
+                    PipelineStats.append_pywren(futures, runtime_memory)
+
+                if unpack:
+                    return zip(*results)
+                else:
+                    return results
+
+            except MemoryError:
+                old_memory = runtime_memory
+                runtime_memory *= 2
+                if runtime_memory > 8192:
+                    logger.error(f'{func.__name__} used too much memory')
+                    raise
+                else:
+                    logger.warning(
+                        f'{func.__name__} ran out of memory with {old_memory}MB, retrying with {runtime_memory}MB'
+                    )
 
     def call(self, func, args, *, runtime_memory=None):
         return self.map(func, [args], runtime_memory=runtime_memory)[0]
@@ -82,4 +105,7 @@ class Executor:
     def shutdown(self):
         for executor in {self.small_executor, self.large_executor}:
             executor.invoker.stop()
-            executor.dismantle()
+            try:
+                executor.dismantle()
+            except AttributeError:
+                pass  # `dismantle` only exists on standalone compute handler class

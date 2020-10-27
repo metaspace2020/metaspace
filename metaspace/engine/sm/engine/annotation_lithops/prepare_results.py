@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import Dict
 
 import numpy as np
 import pandas as pd
@@ -15,18 +16,17 @@ from sm.engine.png_generator import PngGenerator
 def filter_results_and_make_pngs(
     fexec: Executor,
     formula_metrics_df: pd.DataFrame,
-    fdrs: pd.DataFrame,
+    fdrs: Dict[int, pd.DataFrame],
     images_df: pd.DataFrame,
     imzml_reader: PortableSpectrumReader,
 ):
-    results_df = formula_metrics_df.join(fdrs)
-    results_df = results_df[~results_df.adduct.isna()]
-    # TODO: Get real list of targeted DBs, only filter by FDR if not targeted
-    results_df = results_df[results_df.fdr <= 0.5]
-    results_df = results_df.sort_values('fdr')
+    results_dfs = {}
+    all_formula_is = set()
+    for moldb_id, fdr in fdrs.items():
+        results_dfs[moldb_id] = formula_metrics_df.join(fdr, how='inner').sort_values('fdr')
+        all_formula_is.update(results_dfs[moldb_id].index)
 
-    formula_is = set(results_df.index)
-    image_tasks_df = images_df[images_df.index.isin(formula_is)].copy()
+    image_tasks_df = images_df[images_df.index.isin(all_formula_is)].copy()
     w, h = ds_dims(imzml_reader.coordinates)
     # Guess the cost per imageset, and split into relatively even chunks.
     # This is a quick attempt and needs review
@@ -75,4 +75,4 @@ def filter_results_and_make_pngs(
 
     png_cobjs = fexec.map(save_png_chunk, jobs, include_modules=['sm', 'sm.engine', 'png'])
 
-    return results_df, png_cobjs
+    return results_dfs, png_cobjs

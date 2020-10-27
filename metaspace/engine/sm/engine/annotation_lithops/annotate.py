@@ -132,12 +132,11 @@ def gen_iso_image_sets(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, isocalc
         ).sort_values('formula_i')
 
         buffer = []
-        for df_index, df_row in ranges_df.iterrows():
+        for df_index, formula_i, l, u in ranges_df.itertuples(True, None):
             if len(buffer) != 0 and buffer[0][0] != centr_f_inds[df_index]:
                 yield yield_buffer(buffer)
                 buffer = []
 
-            l, u = df_row['lower_idx'], df_row['upper_idx']
             m = None
             if u > l:
                 data = sp_ints[l:u]
@@ -289,8 +288,8 @@ def process_centr_segments(
         for f_i, f_metrics, f_images in compute_and_filter_metrics(
             formula_image_set_it,
             compute_metrics,
-            target_formula_inds=set(centr_df.formula_i),  # TODO
-            targeted_database_formula_inds=set(),  # TODO
+            target_formula_inds=set(centr_df.formula_i[centr_df.target]),
+            targeted_database_formula_inds=set(centr_df.formula_i[centr_df.targeted]),
             min_px=min_px,
         ):
             images_manager.append(f_i, f_metrics, f_images)
@@ -300,10 +299,20 @@ def process_centr_segments(
         return formula_metrics_df, image_lookups
 
     logger.info('Annotating...')
-    formula_metrics_list, images_cloud_objs_list = fexec.map(
-        process_centr_segment, db_segms_cobjects, runtime_memory=pw_mem_mb, unpack=True
+    formula_metrics_list, image_lookups_list = fexec.map(
+        process_centr_segment,
+        [co for co in db_segms_cobjects],
+        runtime_memory=pw_mem_mb,
+        unpack=True,
     )
     formula_metrics_df = pd.concat(formula_metrics_list)
-    images_df = pd.concat(images_cloud_objs_list)
+    images_df = pd.concat(image_lookups_list)
+    print(
+        'lens',
+        len(formula_metrics_list),
+        len(image_lookups_list),
+        len(formula_metrics_df),
+        len(images_df),
+    )
 
     return formula_metrics_df, images_df

@@ -3,23 +3,41 @@ from __future__ import annotations
 import logging
 from concurrent.futures import ProcessPoolExecutor
 from itertools import repeat
-from typing import List, Tuple
+from typing import List, Tuple, TypedDict, Optional, Set, cast
 
 import numpy as np
 import pandas as pd
 from lithops.storage import Storage
+from lithops.storage.utils import CloudObject
 
-from sm.engine.annotation_lithops.io import CObj, save_cobjs, load_cobjs
+from sm.engine.annotation_lithops.io import (
+    CObj,
+    save_cobjs,
+    load_cobjs,
+    iter_cobjs_with_prefetch,
+)
 from sm.engine.ds_config import DSConfig
 from sm.engine.fdr import FDR
 from sm.engine.formula_parser import safe_generate_ion_formula
 
-DbDataTuple = Tuple[int, FDR, pd.DataFrame]
+
+class InputMolDb(TypedDict):
+    id: int
+    cobj: CloudObject
+    targeted: Optional[bool]
+
+
+class DbFDRData(InputMolDb):
+    fdr: FDR
+    formula_map_df: pd.DataFrame
+    """columns: formula_i, modifier, ion_formula, target"""
+
 
 logger = logging.getLogger('annotation-pipeline')
 
 
 def _get_db_fdr_and_formulas(ds_config: DSConfig, mols: List[str]):
+    # TODO: Decompose the FDR class so that this isn't so awkward
     fdr = FDR(
         fdr_config=ds_config['fdr'],
         chem_mods=ds_config['isotope_generation']['chem_mods'],
@@ -28,44 +46,50 @@ def _get_db_fdr_and_formulas(ds_config: DSConfig, mols: List[str]):
         analysis_version=ds_config.get('analysis_version', 1),
     )
     fdr.decoy_adducts_selection(mols)
+    target_mods = fdr.target_modifiers()
     formulas = [
-        (formula, modifier, safe_generate_ion_formula(formula, modifier))
+        (formula, modifier, safe_generate_ion_formula(formula, modifier), modifier in target_mods)
         for formula, modifier in fdr.ion_tuples()
     ]
-    formula_map_df = pd.DataFrame(formulas, columns=['formula', 'modifier', 'ion_formula'])
+    formula_map_df = pd.DataFrame(
+        formulas, columns=['formula', 'modifier', 'ion_formula', 'target']
+    )
 
-    # TODO: check why there are NaN values in 'formula_map_df.ion_formula' on an execution of ds2-db3
     formula_map_df = formula_map_df[~formula_map_df.ion_formula.isna()]
 
     return fdr, formula_map_df
 
 
 def get_formulas_df(
-    storage: Storage, ds_config: DSConfig, mols_dbs_cobjects: List[CObj[List[str]]]
-) -> Tuple[List[CObj[DbDataTuple]], pd.DataFrame]:
-    databases = ds_config['database_ids']
-
+    storage: Storage, ds_config: DSConfig, moldbs: List[InputMolDb]
+) -> Tuple[List[CObj[DbFDRData]], pd.DataFrame]:
     # Load databases
-    dbs = load_cobjs(storage, mols_dbs_cobjects)
+    moldb_cobjects = [cast(CObj, moldb['cobj']) for moldb in moldbs]
+    dbs_iter = iter_cobjs_with_prefetch(storage, moldb_cobjects)
 
     # Calculate formulas
-    db_datas: List[DbDataTuple] = []
+    db_datas: List[DbFDRData] = []
     ion_formula = set()
+    target_ion_formulas = set()
+    targeted_ion_formulas = set()
     with ProcessPoolExecutor() as ex:
-        for db, (fdr, formula_map_df) in zip(
-            databases, ex.map(_get_db_fdr_and_formulas, repeat(ds_config), dbs)
+        for moldb, (fdr, formula_map_df) in zip(
+            moldbs, ex.map(_get_db_fdr_and_formulas, repeat(ds_config), dbs_iter)
         ):
-            db_datas.append((db, fdr, formula_map_df))
+            db_datas.append({**moldb, 'fdr': fdr, 'formula_map_df': formula_map_df})
             ion_formula.update(formula_map_df.ion_formula)
-
-    if None in ion_formula:
-        ion_formula.remove(None)
+            target_ion_formulas.update(formula_map_df.ion_formula[formula_map_df.target])
+            if moldb.get('targeted'):
+                targeted_ion_formulas.update(formula_map_df.ion_formula)
 
     formulas_df = pd.DataFrame({'ion_formula': sorted(ion_formula)}).rename_axis(index='formula_i')
+    formulas_df['target'] = formulas_df.ion_formula.isin(target_ion_formulas)
+    formulas_df['targeted'] = formulas_df.ion_formula.isin(targeted_ion_formulas)
+    # Replace ion_formula column with formula_i
     formula_to_id = pd.Series(formulas_df.index, formulas_df.ion_formula)
-    for db, fdr, formula_map_df in db_datas:
-        formula_map_df['formula_i'] = formula_to_id[formula_map_df.ion_formula].values
-        del formula_map_df['ion_formula']
+    for db_data in db_datas:
+        db_data['formula_map_df']['formula_i'] = formula_to_id[formula_map_df.ion_formula].values
+        del db_data['formula_map_df']['ion_formula']
 
     db_data_cobjects = save_cobjs(storage, db_datas)
 
@@ -78,7 +102,7 @@ def store_formula_segments(storage: Storage, formulas_df: pd.DataFrame):
         len(formulas_df) * i // n_formulas_segments for i in range(n_formulas_segments + 1)
     ]
     segm_ranges = list(zip(segm_bounds[:-1], segm_bounds[1:]))
-    segm_list = [formulas_df.ion_formula.iloc[start:end] for start, end in segm_ranges]
+    segm_list = [formulas_df.iloc[start:end] for start, end in segm_ranges]
 
     formula_cobjects = save_cobjs(storage, segm_list)
 
@@ -90,10 +114,10 @@ def store_formula_segments(storage: Storage, formulas_df: pd.DataFrame):
 
 
 def build_moldb(
-    ds_config: DSConfig, mols_dbs_cobjects: List[CObj[List[str]]], *, storage: Storage
-) -> Tuple[List[CObj[pd.DataFrame]], List[CObj[DbDataTuple]]]:
+    ds_config: DSConfig, mol_dbs: List[InputMolDb], *, storage: Storage
+) -> Tuple[List[CObj[pd.DataFrame]], List[CObj[DbFDRData]]]:
     logger.info('Generating formulas...')
-    db_data_cobjects, formulas_df = get_formulas_df(storage, ds_config, mols_dbs_cobjects)
+    db_data_cobjects, formulas_df = get_formulas_df(storage, ds_config, mol_dbs)
     num_formulas = len(formulas_df)
     logger.info(f'Generated {num_formulas} formulas')
 
@@ -111,26 +135,26 @@ def validate_formula_cobjects(storage: Storage, formula_cobjects: List[CObj[pd.D
     index_sets = []
     # Check format
     for segm_i, segm in enumerate(segms):
-        if not isinstance(segm, pd.Series):
-            print(f'formula_cobjects[{segm_i}] is not a pd.Series')
+        if not isinstance(segm, pd.DataFrame):
+            print(f'formula_cobjects[{segm_i}] is not a pd.DataFrame')
         else:
             if segm.empty:
                 print(f'formula_cobjects[{segm_i}] is empty')
-            if segm.name != "ion_formula":
-                print(f'formula_cobjects[{segm_i}].name != "ion_formula"')
             if not isinstance(segm.index, pd.RangeIndex):
                 print(f'formula_cobjects[{segm_i}] is not a pd.RangeIndex')
             if segm.index.name != "formula_i":
                 print(f'formula_cobjects[{segm_i}].index.name != "formula_i"')
-            if (segm == '').any():
+            if list(segm.columns) != ['ion_formula', 'target', 'targeted']:
+                print(f'formulas_cobjects[{segm_i}] has wrong columns: {segm.columns}')
+            if (segm.ion_formula == '').any():
                 print(f'formula_cobjects[{segm_i}] contains an empty string')
-            if any(not isinstance(s, str) for s in segm):
+            if any(not isinstance(s, str) for s in segm.ion_formula):
                 print(f'formula_cobjects[{segm_i}] contains non-string values')
-            duplicates = segm[segm.duplicated()]
+            duplicates = segm[segm.duplicated('ion_formula')]
             if not duplicates.empty:
                 print(f'formula_cobjects[{segm_i}] contains {len(duplicates)} duplicate values')
 
-            formula_sets.append(set(segm))
+            formula_sets.append(set(segm.ion_formula))
             index_sets.append(set(segm.index))
 
     if sum(len(fs) for fs in formula_sets) != len(set().union(*formula_sets)):
