@@ -7,13 +7,13 @@
       :style="style"
       :class="{ 'cursor-pointer': canFocus }"
       :tabindex="canFocus ? 0 : null"
-      :min="intensity.minQuantile"
-      :max="intensity.maxQuantile"
+      :min="0"
+      :max="1"
       :step="0.01"
-      :value="quantileRange"
+      :value="model.quantileRange"
       :disabled="isDisabled"
-      :min-tooltip="minTooltip"
-      :max-tooltip="maxTooltip"
+      :min-tooltip="intensity.clippedMin.toExponential(1)"
+      :max-tooltip="intensity.clippedMax.toExponential(1)"
       @change="range => emit('change', range)"
       @thumb-start="emit('thumb-start')"
       @thumb-stop="emit('thumb-stop')"
@@ -27,10 +27,15 @@
         {{ intensity.min.toExponential(1) }}
       </span>
       <el-tooltip
-        v-if="intensity.hotspotRemoval"
+        v-if="intensity.isMaxClipped"
+        v-model="hotspotTooltip"
         placement="bottom-end"
+        manual
       >
-        <span class="font-medium text-red-700">
+        <span
+          class="font-medium text-red-700 cursor-help"
+          @click.stop="hotspotTooltip = !hotspotTooltip"
+        >
           {{ intensity.max.toExponential(1) }}
         </span>
         <div
@@ -50,7 +55,7 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, computed, ref, Ref } from '@vue/composition-api'
+import { defineComponent, computed, ref } from '@vue/composition-api'
 
 import { RangeSlider, THUMB_WIDTH } from '../../components/Slider'
 import { IonImageState, IonImageIntensity, ColorBar } from './ionImageState'
@@ -60,10 +65,6 @@ interface Props {
   intensity: IonImageIntensity,
   colorBar: ColorBar,
   isDisabled: boolean
-}
-
-const getTooltip = (quantile: number, min: number, max: number) => {
-  return (min + ((max - min) * quantile)).toExponential(1)
 }
 
 export default defineComponent<Props>({
@@ -80,23 +81,14 @@ export default defineComponent<Props>({
   setup(props, { emit }) {
     const container = ref<HTMLElement>()
 
-    const quantileRange = computed(() => {
-      const { minQuantile = 0, maxQuantile = 1 } = props.intensity || {}
-      const { quantileRange } = props.model
-      return [
-        Math.max(quantileRange[0], minQuantile),
-        Math.min(quantileRange[1], maxQuantile),
-      ]
-    })
-
     return {
       container,
       emit,
-      quantileRange,
+      hotspotTooltip: ref(false),
       style: computed(() => {
         if (container.value) {
           const width = container.value.offsetWidth
-          const [minQuantile, maxQuantile] = quantileRange.value
+          const [minQuantile, maxQuantile] = props.model.quantileRange
           const { minColor, maxColor, gradient } = props.colorBar
           if (!gradient) {
             return null
@@ -111,16 +103,6 @@ export default defineComponent<Props>({
               `#fff ${maxStop}px / ${width - maxStop}px 100% linear-gradient(${maxColor},${maxColor}) no-repeat`,
             ].join(','),
           }
-        }
-      }),
-      minTooltip: computed(() => {
-        if (props.intensity) {
-          return props.intensity.clippedMin.toExponential(1)
-        }
-      }),
-      maxTooltip: computed(() => {
-        if (props.intensity) {
-          return props.intensity.clippedMax.toExponential(1)
         }
       }),
     }

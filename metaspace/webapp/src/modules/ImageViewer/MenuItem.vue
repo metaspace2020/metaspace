@@ -20,7 +20,7 @@
       <p
         v-if="loading"
         key="loading"
-        class="m-0 text-sm leading-5 font-medium italic"
+        class="m-0 text-sm leading-5 uppercase"
       >
         loading image ...
       </p>

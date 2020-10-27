@@ -240,8 +240,8 @@ export const processIonImage = (
       mask,
       minIntensity,
       maxIntensity,
-      minRange === 0 ? minQuantile : minRange,
-      maxRange === 1 ? maxQuantile : maxRange,
+      Math.max(minQuantile, minRange),
+      Math.min(maxQuantile, maxRange),
       scaleMode,
     )
 

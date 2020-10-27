@@ -43,7 +43,7 @@
             @close="channelSelect = null"
           />
           <ion-intensity-slider
-            v-else-if="item.colorBar"
+            v-else
             can-focus
             :model="item.state"
             :color-bar="item.colorBar.value"

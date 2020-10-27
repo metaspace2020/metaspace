@@ -28,6 +28,8 @@ export interface IonImageIntensity {
   clippedMax: number
   minQuantile: number
   maxQuantile: number
+  isMinClipped: boolean
+  isMaxClipped: boolean
 }
 
 export interface ColorBar {
@@ -154,7 +156,6 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
 
   const intensity = computed(() => {
     if (image.value !== null) {
-      const { quantileRange } = activeState.value
       const { maxIntensity: imageMax } = getInitialLayerState(layer.annotation)
       const {
         minIntensity,
@@ -164,12 +165,12 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
         maxQuantile = 1,
         minQuantile = 0,
       } = image.value || {}
-      console.log({ quantileRange, maxQuantile })
       return {
-        hotspotRemoval: maxQuantile < 1,
         imageMax,
         minQuantile,
         maxQuantile,
+        isMinClipped: minQuantile > 0,
+        isMaxClipped: maxQuantile < 1,
         min: minIntensity,
         max: maxIntensity,
         clippedMin: clippedMinIntensity,
