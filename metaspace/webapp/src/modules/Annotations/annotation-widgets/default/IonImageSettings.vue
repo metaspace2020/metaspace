@@ -42,11 +42,12 @@
             <el-option
               v-for="scale in availableScales"
               :key="scale"
+              class="flex items-center pr-5 py-2"
               :value="scale"
               :label="scale"
             >
               <color-bar
-                style="width: 100px; height: 20px;"
+                class="h-full w-full"
                 :map="scale"
                 horizontal
               />
@@ -56,11 +57,12 @@
             <el-option
               v-for="scale in availableScales"
               :key="'-' + scale"
+              class="flex items-center pr-5 py-2"
               :value="'-' + scale"
               :label="scale"
             >
               <color-bar
-                style="width: 100px; height: 20px;"
+                class="h-full w-full"
                 :map="'-' + scale"
                 horizontal
               />
