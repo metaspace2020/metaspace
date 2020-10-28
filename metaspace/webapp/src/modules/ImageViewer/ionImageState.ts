@@ -65,6 +65,12 @@ interface Props {
   scaleType?: ScaleType
 }
 
+interface Settings {
+  lockMin: string
+  lockMax: string
+  syncSliders: boolean
+}
+
 const channels = ['red', 'green', 'blue', 'magenta', 'yellow', 'cyan', 'orange']
 
 const activeAnnotation = ref<string>() // local copy of prop value to allow watcher to run
@@ -72,6 +78,11 @@ const state = reactive<State>({
   order: [],
   activeLayer: null,
   nextChannel: channels[0],
+})
+const settings = reactive<Settings>({
+  lockMin: '',
+  lockMax: '',
+  syncSliders: false,
 })
 const ionImageLayerCache : Record<string, IonImageLayer> = {}
 const rawImageCache : Record<string, Ref<Image | null>> = {}
@@ -116,16 +127,22 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
     viewerState.mode.value === 'SINGLE' ? layer.singleModeState : layer.multiModeState,
   )
 
+  const activeIntensity = computed(() => {
+    return {
+      min: settings.lockMin.length && parseFloat(settings.lockMin) || activeState.value.minIntensity,
+      max: settings.lockMax.length && parseFloat(settings.lockMax) || activeState.value.maxIntensity,
+    }
+  })
+
   const image = computed(() => {
-    const { quantileRange, minIntensity, maxIntensity } = activeState.value
     const raw = rawImageCache[layer.id]
     if (raw.value !== null) {
       return processIonImage(
         raw.value,
-        minIntensity,
-        maxIntensity,
+        activeIntensity.value.min,
+        activeIntensity.value.max,
         props.scaleType,
-        quantileRange,
+        activeState.value.quantileRange,
       )
     }
     return null
@@ -199,9 +216,14 @@ export function resetIonImageState() {
     layer.settings.label = undefined
     layer.settings.visible = true
   }
+
   state.nextChannel = channels[0]
   state.activeLayer = null
   state.order = []
+
+  settings.lockMin = ''
+  settings.lockMax = ''
+  settings.syncSliders = false
 }
 
 export const useIonImages = (props: Props) => {
@@ -373,3 +395,5 @@ export const useChannelSwatches = () => computed(() => {
   }
   return swatches
 })
+
+export const useIonImageSettings = () => settings

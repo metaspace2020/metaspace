@@ -31,32 +31,27 @@
       class="absolute top-0 right-0 py-3 mr-2 h-full box-border flex flex-col justify-between items-end w-0 v-rhythm-3"
       data-side-bar
     >
-      <fade-transition>
-        <fade-transition v-if="openMenu === 'ION'">
-          <ion-image-menu
-            v-if="mode === 'MULTI'"
-            key="multi"
-            :menu-items="ionImageMenuItems"
-          />
-          <single-ion-image-controls
-            v-else-if="!isLoading"
-            key="single"
-            :state="singleIonImageControls.state"
-            :intensity="singleIonImageControls.intensity.value"
-            :color-bar="singleIonImageControls.colorBar.value"
-            :update-intensity="singleIonImageControls.updateIntensity"
-          />
-        </fade-transition>
-        <!-- <optical-image-menu
-          v-if="openMenu === 'OPTICAL'"
-          key="OPTICAL"
-        /> -->
+      <fade-transition v-if="openMenu === 'ION'">
+        <ion-image-menu
+          v-if="mode === 'MULTI'"
+          key="multi"
+          :menu-items="ionImageMenuItems"
+        />
+        <single-ion-image-controls
+          v-else-if="!isLoading"
+          key="single"
+          :state="singleIonImageControls.state"
+          :intensity="singleIonImageControls.intensity.value"
+          :color-bar="singleIonImageControls.colorBar.value"
+          :update-intensity="singleIonImageControls.updateIntensity"
+        />
       </fade-transition>
       <fade-transition>
         <ion-image-settings
-          v-if="openMenu === 'ION' && hasOpticalImage"
+          v-if="openMenu === 'ION'"
           key="ion-settings"
           class="mt-auto"
+          :has-optical-image="hasOpticalImage"
           :opacity="opacity"
           @opacity="emitOpacity"
         />
