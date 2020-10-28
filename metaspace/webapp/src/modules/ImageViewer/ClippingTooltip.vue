@@ -1,8 +1,8 @@
 <template>
   <el-tooltip
-    v-model="isOpen"
-    :placement="placement"
     manual
+    :value="isOpen"
+    :placement="placement"
   >
     <span
       title="Clipped intensity - click for details"
