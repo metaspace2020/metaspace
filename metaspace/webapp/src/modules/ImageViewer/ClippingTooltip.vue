@@ -5,6 +5,7 @@
     manual
   >
     <span
+      title="Clipped intensity - click for details"
       class="font-medium text-red-700 cursor-help"
       @click.stop
       @mousedown.stop="toggleTooltip"

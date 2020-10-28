@@ -136,8 +136,15 @@ const getScaleParams = (intensityValues: Float32Array, mask: Uint8ClampedArray,
     }
   }
 
-  const clippedMinIntensity = lowQuantile === 0 ? minIntensity : safeQuantile(values, lowQuantile)
-  const clippedMaxIntensity = highQuantile === 1 ? maxIntensity : safeQuantile(values, highQuantile)
+  let clippedMinIntensity = minIntensity
+  if (lowQuantile > 0 || scaleMode === 'log') { // log must start from lowest intensity above 0
+    clippedMinIntensity = safeQuantile(values, lowQuantile)
+  }
+
+  let clippedMaxIntensity = maxIntensity
+  if (highQuantile < 1) {
+    clippedMaxIntensity = safeQuantile(values, highQuantile)
+  }
 
   let rankValues: Float32Array | null = null
   if (scaleMode === 'hist') {
