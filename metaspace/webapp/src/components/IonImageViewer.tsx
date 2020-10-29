@@ -116,31 +116,31 @@ const usePixelIntensityDisplay = (props: Props, imageLoaderRef: Ref<ReferenceObj
   const cursorPixelPos = ref<[number, number] | null>(null)
   const zoomX = computed(() => props.zoom)
   const zoomY = computed(() => props.zoom / props.pixelAspectRatio)
-  const cursorOverPixels = computed(() => {
-    const pixels = []
+  const cursorOverLayers = computed(() => {
+    const layers = []
     if (props.ionImageLayers.length && cursorPixelPos.value != null) {
       const [x, y] = cursorPixelPos.value
       for (const { ionImage, colorMap } of props.ionImageLayers) {
-        const { width, height, mask, clippedValues, intensityValues } = ionImage
+        const { width, height, mask, intensityValues } = ionImage
         if (x >= 0 && x < width
           && y >= 0 && y < height
           && mask[y * width + x] !== 0) {
           const idx = y * width + x
-          const [r, g, b] = colorMap[clippedValues[idx]]
-          pixels.push({
+          const [r, g, b] = colorMap[colorMap.length - 1]
+          layers.push({
             intensity: intensityValues[idx].toExponential(1),
-            color: `rgb(${r},${g},${b})`,
+            color: props.ionImageLayers.length > 1 ? `rgb(${r},${g},${b})` : null,
           })
         }
       }
     }
-    return pixels
+    return layers
   })
   const pixelIntensityStyle = computed(() => {
     if (props.showPixelIntensity
       && props.ionImageLayers.length
       && cursorPixelPos.value != null
-      && cursorOverPixels.value.length) {
+      && cursorOverLayers.value.length) {
       const { width, height } = props.ionImageLayers[0].ionImage
       const baseX = props.width / 2 + (props.xOffset - width / 2) * zoomX.value
       const baseY = props.height / 2 + (props.yOffset - height / 2) * zoomY.value
@@ -193,12 +193,12 @@ const usePixelIntensityDisplay = (props: Props, imageLoaderRef: Ref<ReferenceObj
         placement="top"
       >
         <ul slot="content" class="list-none p-0 m-0">
-          {cursorOverPixels.value?.map(({ intensity, color }) =>
+          {cursorOverLayers.value?.map(({ intensity, color }) =>
             <li class="flex leading-5 items-center">
-              <span
-                class="w-3 h-3 border border-solid border-gray-500 box-border mr-1"
+              { color && <i
+                class="w-3 h-3 border border-solid border-gray-400 box-border mr-1 rounded-full"
                 style={{ background: color }}
-              />
+              /> }
               {intensity}
             </li>
           )}

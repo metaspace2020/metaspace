@@ -26,10 +26,7 @@
         />
       </div>
     </fade-transition>
-    <p
-      class="leading-6 m-0 flex justify-between sm-leading-trim"
-      @click="show = !show"
-    >
+    <p class="leading-6 m-0 flex justify-between sm-leading-trim">
       <span class="text-gray-700 uppercase">
         Lock intensity
       </span>
@@ -106,7 +103,6 @@ export default defineComponent({
   },
   setup(props, { emit }) {
     const settings = useIonImageSettings()
-    console.log(settings)
     return {
       settings,
       lockMin: ref(settings.lockMin),

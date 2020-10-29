@@ -69,6 +69,7 @@ interface Settings {
   lockMin: string
   lockMax: string
   syncSliders: boolean
+  syncedQuantileRange: [number, number] | null
 }
 
 const channels = ['red', 'green', 'blue', 'magenta', 'yellow', 'cyan', 'orange']
@@ -79,10 +80,11 @@ const state = reactive<State>({
   activeLayer: null,
   nextChannel: channels[0],
 })
-const settings = reactive<Settings>({
+export const settings = reactive<Settings>({
   lockMin: '',
   lockMax: '',
   syncSliders: false,
+  syncedQuantileRange: null,
 })
 const ionImageLayerCache : Record<string, IonImageLayer> = {}
 const rawImageCache : Record<string, Ref<Image | null>> = {}
@@ -127,10 +129,14 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
     viewerState.mode.value === 'SINGLE' ? layer.singleModeState : layer.multiModeState,
   )
 
-  const activeIntensity = computed(() => {
-    return {
-      min: settings.lockMin.length && parseFloat(settings.lockMin) || activeState.value.minIntensity,
-      max: settings.lockMax.length && parseFloat(settings.lockMax) || activeState.value.maxIntensity,
+  const lockedIntensity = computed(() => {
+    if (settings.lockMin || settings.lockMax) {
+      const minF = parseFloat(settings.lockMin)
+      const maxF = parseFloat(settings.lockMax)
+      return [
+        isNaN(minF) ? activeState.value.minIntensity : Math.min(Number.MAX_VALUE, minF),
+        isNaN(maxF) ? activeState.value.maxIntensity : Math.min(Number.MAX_VALUE, maxF),
+      ] as [number, number]
     }
   })
 
@@ -139,10 +145,11 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
     if (raw.value !== null) {
       return processIonImage(
         raw.value,
-        activeIntensity.value.min,
-        activeIntensity.value.max,
+        activeState.value.minIntensity,
+        activeState.value.maxIntensity,
         props.scaleType,
         activeState.value.quantileRange,
+        lockedIntensity.value,
       )
     }
     return null
@@ -176,8 +183,7 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
       const {
         minIntensity, maxIntensity,
         clippedMinIntensity, clippedMaxIntensity,
-        minQuantile = 0,
-        maxQuantile = 1,
+        minQuantile, maxQuantile,
         userMinIntensity, userMaxIntensity,
       } = image.value || {}
       return {
@@ -204,7 +210,7 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
   }
 }
 
-export function resetIonImageState() {
+function resetChannelsState() {
   // TODO: how to make this cleaner?
   for (const id of state.order) {
     const layer = ionImageLayerCache[id]
@@ -216,14 +222,18 @@ export function resetIonImageState() {
     layer.settings.label = undefined
     layer.settings.visible = true
   }
-
   state.nextChannel = channels[0]
   state.activeLayer = null
   state.order = []
+}
+
+export function resetIonImageState() {
+  resetChannelsState()
 
   settings.lockMin = ''
   settings.lockMax = ''
   settings.syncSliders = false
+  settings.syncedQuantileRange = null
 }
 
 export const useIonImages = (props: Props) => {
@@ -324,7 +334,7 @@ export const useIonImages = (props: Props) => {
     activeAnnotation.value = annotation.id
 
     if (viewerState.mode.value === 'SINGLE') {
-      resetIonImageState()
+      resetChannelsState()
       if (annotation.id in ionImageLayerCache) {
         state.order = [annotation.id]
         state.activeLayer = annotation.id
