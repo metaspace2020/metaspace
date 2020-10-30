@@ -32,6 +32,12 @@ if (config.sentry != null && config.sentry.dsn !== '') {
   Sentry.init({
     ...config.sentry,
     integrations: [new SentryVue({ Vue, logErrors: true })],
+    ignoreErrors: [
+      // Ignore ResizeObserver errors - this seems to be a benign issue, but there's not enough detail to track down
+      // the root cause, and the error reports are so spammy they can easily blow our monthly quota.
+      'ResizeObserver loop completed with undelivered notifications.',
+      'ResizeObserver loop limit exceeded',
+    ],
   })
 }
 Vue.use(VueApollo)
