@@ -102,13 +102,13 @@ export default defineComponent({
     opacity: { type: Number, required: true },
   },
   setup(props, { emit }) {
-    const settings = useIonImageSettings()
+    const { settings, lockedIntensities } = useIonImageSettings()
     return {
       settings,
       lockMin: ref(settings.lockMin),
       lockMax: ref(settings.lockMax),
-      lockMinError: computed(() => settings.lockMin.length > 0 && isNaN(parseFloat(settings.lockMin))),
-      lockMaxError: computed(() => settings.lockMax.length > 0 && isNaN(parseFloat(settings.lockMax))),
+      lockMinError: computed(() => settings.lockMin.length > 0 && lockedIntensities.value[0] === undefined),
+      lockMaxError: computed(() => settings.lockMax.length > 0 && lockedIntensities.value[1] === undefined),
       percentage: computed(() => Math.round(props.opacity * 100)),
       emitOpacity(value: number) {
         emit('opacity', value / 100)

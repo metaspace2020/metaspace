@@ -91,6 +91,20 @@ const rawImageCache : Record<string, Ref<Image | null>> = {}
 
 const orderedLayers = computed(() => state.order.map(id => ionImageLayerCache[id]))
 
+const lockedIntensities = computed(() => {
+  const minF = parseFloat(settings.lockMin)
+  const maxF = parseFloat(settings.lockMax)
+  return [
+    isNaN(minF) ? undefined : minF,
+    isNaN(maxF) ? undefined : maxF,
+  ]
+})
+
+const hasLockedIntensities = computed(() => {
+  const [lockedMin, lockedMax] = lockedIntensities.value
+  return lockedMin !== undefined || lockedMax !== undefined
+})
+
 function removeLayer(id: string) : number {
   const idx = state.order.indexOf(id)
   state.order.splice(idx, 1)
@@ -130,13 +144,12 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
   )
 
   const userIntensities = computed(() => {
-    if (settings.lockMin || settings.lockMax) {
-      const minF = parseFloat(settings.lockMin)
-      const maxF = parseFloat(settings.lockMax)
+    const [lockedMin, lockedMax] = lockedIntensities.value
+    if (lockedMin !== undefined || lockedMax !== undefined) {
       const { minIntensity, maxIntensity } = activeState.value
       return [
-        isNaN(minF) ? minIntensity : minF,
-        isNaN(maxF) ? maxIntensity : maxF,
+        lockedMin ?? minIntensity,
+        lockedMax ?? maxIntensity,
       ] as [number, number]
     }
   })
@@ -187,12 +200,14 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
         lowQuantile, highQuantile,
         scaledMinIntensity, scaledMaxIntensity,
       } = image.value || {}
-      const hasUserIntensities = settings.lockMin || settings.lockMax
+      const [lockedMin, lockedMax] = lockedIntensities.value
       return {
         lowQuantile,
         highQuantile,
-        isMinClipped: !hasUserIntensities && lowQuantile > 0,
-        isMaxClipped: !hasUserIntensities && highQuantile < 1,
+        isMinClipped: !hasLockedIntensities.value && lowQuantile > 0,
+        isMaxClipped: !hasLockedIntensities.value && highQuantile < 1,
+        isMinLocked: lockedMin !== undefined,
+        isMaxLocked: lockedMax !== undefined,
         imageMin: minIntensity,
         imageMax: maxIntensity,
         clippedMin: clippedMinIntensity,
@@ -408,4 +423,7 @@ export const useChannelSwatches = () => computed(() => {
   return swatches
 })
 
-export const useIonImageSettings = () => settings
+export const useIonImageSettings = () => ({
+  lockedIntensities,
+  settings,
+})

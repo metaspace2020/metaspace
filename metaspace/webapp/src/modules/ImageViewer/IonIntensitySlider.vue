@@ -31,6 +31,13 @@
         :clipped-intensity="intensity.clippedMin.toExponential(1)"
         :original-intensity="intensity.imageMin.toExponential(1)"
       />
+      <span
+        v-else-if="intensity.isMinLocked"
+        class="cursor-help font-medium text-primary"
+        title="Locked intensity"
+      >
+        {{ intensity.clippedMin.toExponential(1) }}
+      </span>
       <span v-else>
         {{ intensity.clippedMin.toExponential(1) }}
       </span>
@@ -42,6 +49,13 @@
         :clipped-intensity="intensity.clippedMax.toExponential(1)"
         :original-intensity="intensity.imageMax.toExponential(1)"
       />
+      <span
+        v-else-if="intensity.isMaxLocked"
+        class="cursor-help font-medium text-primary"
+        title="Locked intensity"
+      >
+        {{ intensity.clippedMax.toExponential(1) }}
+      </span>
       <span v-else>
         {{ intensity.clippedMax.toExponential(1) }}
       </span>
