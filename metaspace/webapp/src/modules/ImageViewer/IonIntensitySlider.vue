@@ -12,8 +12,8 @@
       :step="0.01"
       :value="model.scaleRange"
       :disabled="isDisabled"
-      :min-tooltip="intensity.scaledMin.toExponential(1)"
-      :max-tooltip="intensity.scaledMax.toExponential(1)"
+      :min-tooltip="values.tooltipMin"
+      :max-tooltip="values.tooltipMax"
       @change="range => emit('change', range)"
       @thumb-start="emit('thumb-start')"
       @thumb-stop="emit('thumb-stop')"
@@ -28,36 +28,36 @@
         :id="id + '-min'"
         clipping-type="outlier-min"
         placement="bottom-start"
-        :clipped-intensity="intensity.clippedMin.toExponential(1)"
-        :original-intensity="intensity.imageMin.toExponential(1)"
+        :clipped-intensity="values.rangeMin"
+        :original-intensity="values.imageMin"
       />
       <span
         v-else-if="intensity.isMinLocked"
-        class="cursor-help font-medium text-primary"
+        class="cursor-help font-medium text-blue-700"
         title="Locked intensity"
       >
-        {{ intensity.clippedMin.toExponential(1) }}
+        {{ values.rangeMin }}
       </span>
       <span v-else>
-        {{ intensity.clippedMin.toExponential(1) }}
+        {{ values.rangeMin }}
       </span>
       <clipping-tooltip
         v-if="intensity.isMaxClipped"
         :id="id + '-max'"
         placement="bottom-end"
         :clipping-type="intensity.isMinClipped ? 'outlier-max' : 'hotspot-removal'"
-        :clipped-intensity="intensity.clippedMax.toExponential(1)"
-        :original-intensity="intensity.imageMax.toExponential(1)"
+        :clipped-intensity="values.rangeMax"
+        :original-intensity="values.imageMax"
       />
       <span
         v-else-if="intensity.isMaxLocked"
-        class="cursor-help font-medium text-primary"
+        class="cursor-help font-medium text-blue-700"
         title="Locked intensity"
       >
-        {{ intensity.clippedMax.toExponential(1) }}
+        {{ values.rangeMax }}
       </span>
       <span v-else>
-        {{ intensity.clippedMax.toExponential(1) }}
+        {{ values.rangeMax }}
       </span>
     </div>
   </div>
@@ -67,7 +67,11 @@ import { defineComponent, computed, ref, watch } from '@vue/composition-api'
 
 import ClippingTooltip from './ClippingTooltip.vue'
 import { RangeSlider, THUMB_WIDTH } from '../../components/Slider'
-import { IonImageState, IonImageIntensity, ColorBar } from './ionImageState'
+
+import '../../components/MonoIcon.css'
+import LockIcon from '../../assets/inline/refactoring-ui/lock.svg'
+
+import { IonImageState, IonImageIntensity, ColorBar, useIonImageSettings } from './ionImageState'
 
 interface Props {
   model: IonImageState,
@@ -88,13 +92,25 @@ export default defineComponent<Props>({
   components: {
     RangeSlider,
     ClippingTooltip,
+    LockIcon,
   },
   setup(props, { emit }) {
+    const { settings } = useIonImageSettings()
+
     const container = ref<HTMLElement>()
 
     return {
       container,
       emit,
+      settings,
+      values: computed(() => ({
+        rangeMin: props.intensity.clippedMin.toExponential(1),
+        rangeMax: props.intensity.clippedMax.toExponential(1),
+        tooltipMin: props.intensity.scaledMin.toExponential(1),
+        tooltipMax: props.intensity.scaledMax.toExponential(1),
+        imageMin: props.intensity.imageMin.toExponential(1),
+        imageMax: props.intensity.imageMax.toExponential(1),
+      })),
       style: computed(() => {
         if (container.value) {
           const width = container.value.offsetWidth

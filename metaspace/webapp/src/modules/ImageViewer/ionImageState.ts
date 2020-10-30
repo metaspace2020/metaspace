@@ -22,10 +22,12 @@ export interface IonImageState {
 }
 
 export interface IonImageIntensity {
-  min: number
-  max: number
   clippedMin: number
   clippedMax: number
+  imageMin: number
+  imageMax: number
+  scaledMin: number
+  scaledMax: number
   lowQuantile: number
   highQuantile: number
   isMinClipped: boolean
@@ -68,8 +70,7 @@ interface Props {
 interface Settings {
   lockMin: string
   lockMax: string
-  syncSliders: boolean
-  syncedScaleRange: [number, number] | null
+  isLockActive: boolean
 }
 
 const channels = ['red', 'green', 'blue', 'magenta', 'yellow', 'cyan', 'orange']
@@ -83,8 +84,7 @@ const state = reactive<State>({
 export const settings = reactive<Settings>({
   lockMin: '',
   lockMax: '',
-  syncSliders: false,
-  syncedScaleRange: null,
+  isLockActive: false,
 })
 const ionImageLayerCache : Record<string, IonImageLayer> = {}
 const rawImageCache : Record<string, Ref<Image | null>> = {}
@@ -92,12 +92,15 @@ const rawImageCache : Record<string, Ref<Image | null>> = {}
 const orderedLayers = computed(() => state.order.map(id => ionImageLayerCache[id]))
 
 const lockedIntensities = computed(() => {
-  const minF = parseFloat(settings.lockMin)
-  const maxF = parseFloat(settings.lockMax)
-  return [
-    isNaN(minF) ? undefined : minF,
-    isNaN(maxF) ? undefined : maxF,
-  ]
+  if (settings.isLockActive) {
+    const minF = parseFloat(settings.lockMin)
+    const maxF = parseFloat(settings.lockMax)
+    return [
+      isNaN(minF) ? undefined : minF,
+      isNaN(maxF) ? undefined : maxF,
+    ]
+  }
+  return []
 })
 
 const hasLockedIntensities = computed(() => {
@@ -249,8 +252,7 @@ export function resetIonImageState() {
 
   settings.lockMin = ''
   settings.lockMax = ''
-  settings.syncSliders = false
-  settings.syncedScaleRange = null
+  settings.isLockActive = false
 }
 
 export const useIonImages = (props: Props) => {

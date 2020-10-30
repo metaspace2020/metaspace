@@ -2,6 +2,10 @@
   @apply w-5 h-5;
 }
 
+.sm-mono-icon--mini {
+  @apply w-4 h-4;
+}
+
 .sm-mono-icon .secondary,
 .sm-mono-icon .primary {
   @apply fill-current;
