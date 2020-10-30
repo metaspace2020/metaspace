@@ -10,10 +10,10 @@
       :min="0"
       :max="1"
       :step="0.01"
-      :value="model.quantileRange"
+      :value="model.scaleRange"
       :disabled="isDisabled"
-      :min-tooltip="intensity.userMin.toExponential(1)"
-      :max-tooltip="intensity.userMax.toExponential(1)"
+      :min-tooltip="intensity.scaledMin.toExponential(1)"
+      :max-tooltip="intensity.scaledMax.toExponential(1)"
       @change="range => emit('change', range)"
       @thumb-start="emit('thumb-start')"
       @thumb-stop="emit('thumb-stop')"
@@ -84,14 +84,13 @@ export default defineComponent<Props>({
       style: computed(() => {
         if (container.value) {
           const width = container.value.offsetWidth
-          const [minQuantile, maxQuantile] = props.model.quantileRange
+          const [minScale, maxScale] = props.model.scaleRange
           const { minColor, maxColor, gradient } = props.colorBar
           if (!gradient) {
             return null
           }
-          const nudge = THUMB_WIDTH
-          const minStop = Math.ceil(THUMB_WIDTH + ((width - THUMB_WIDTH * 2) * minQuantile))
-          const maxStop = Math.ceil(THUMB_WIDTH + ((width - THUMB_WIDTH * 2) * maxQuantile))
+          const minStop = Math.ceil(THUMB_WIDTH + ((width - THUMB_WIDTH * 2) * minScale))
+          const maxStop = Math.ceil(THUMB_WIDTH + ((width - THUMB_WIDTH * 2) * maxScale))
           return {
             background: [
               `0px / ${minStop}px 100% linear-gradient(${minColor},${minColor}) no-repeat`,

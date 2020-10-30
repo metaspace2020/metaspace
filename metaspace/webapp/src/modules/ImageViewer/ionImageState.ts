@@ -18,7 +18,7 @@ interface Annotation {
 export interface IonImageState {
   maxIntensity: number
   minIntensity: number
-  quantileRange: [number, number]
+  scaleRange: [number, number]
 }
 
 export interface IonImageIntensity {
@@ -26,8 +26,8 @@ export interface IonImageIntensity {
   max: number
   clippedMin: number
   clippedMax: number
-  minQuantile: number
-  maxQuantile: number
+  lowQuantile: number
+  highQuantile: number
   isMinClipped: boolean
   isMaxClipped: boolean
 }
@@ -69,7 +69,7 @@ interface Settings {
   lockMin: string
   lockMax: string
   syncSliders: boolean
-  syncedQuantileRange: [number, number] | null
+  syncedScaleRange: [number, number] | null
 }
 
 const channels = ['red', 'green', 'blue', 'magenta', 'yellow', 'cyan', 'orange']
@@ -84,7 +84,7 @@ export const settings = reactive<Settings>({
   lockMin: '',
   lockMax: '',
   syncSliders: false,
-  syncedQuantileRange: null,
+  syncedScaleRange: null,
 })
 const ionImageLayerCache : Record<string, IonImageLayer> = {}
 const rawImageCache : Record<string, Ref<Image | null>> = {}
@@ -109,7 +109,7 @@ function getInitialLayerState(annotation: Annotation): IonImageState {
   return {
     maxIntensity,
     minIntensity,
-    quantileRange: [0, 1],
+    scaleRange: [0, 1],
   }
 }
 
@@ -149,7 +149,7 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
         activeState.value.minIntensity,
         activeState.value.maxIntensity,
         props.scaleType,
-        activeState.value.quantileRange,
+        activeState.value.scaleRange,
         userIntensities.value,
       )
     }
@@ -169,11 +169,11 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
   const colorBar = computed(() => {
     const colorMap = createColorMap(activeColorMap.value)
     const { range } = getColorScale(activeColorMap.value)
-    const { userMinIntensity, userMaxIntensity } = image.value || {}
+    const { scaledMinIntensity, scaledMaxIntensity } = image.value || {}
     return {
       minColor: range[0],
       maxColor: range[range.length - 1],
-      gradient: userMinIntensity === userMaxIntensity
+      gradient: scaledMinIntensity === scaledMaxIntensity
         ? `linear-gradient(to right, ${range.join(',')})`
         : image.value ? `url(${renderScaleBar(image.value, colorMap, true)})` : '',
     }
@@ -184,21 +184,21 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
       const {
         minIntensity, maxIntensity,
         clippedMinIntensity, clippedMaxIntensity,
-        minQuantile, maxQuantile,
-        userMinIntensity, userMaxIntensity,
+        lowQuantile, highQuantile,
+        scaledMinIntensity, scaledMaxIntensity,
       } = image.value || {}
       const hasUserIntensities = settings.lockMin || settings.lockMax
       return {
-        minQuantile,
-        maxQuantile,
-        isMinClipped: !hasUserIntensities && minQuantile > 0,
-        isMaxClipped: !hasUserIntensities && maxQuantile < 1,
+        lowQuantile,
+        highQuantile,
+        isMinClipped: !hasUserIntensities && lowQuantile > 0,
+        isMaxClipped: !hasUserIntensities && highQuantile < 1,
         imageMin: minIntensity,
         imageMax: maxIntensity,
         clippedMin: clippedMinIntensity,
         clippedMax: clippedMaxIntensity,
-        userMin: userMinIntensity,
-        userMax: userMaxIntensity,
+        scaledMin: scaledMinIntensity,
+        scaledMax: scaledMaxIntensity,
       }
     }
     return null
@@ -219,7 +219,7 @@ function resetChannelsState() {
     const initialState = getInitialLayerState(layer.annotation)
     layer.multiModeState.minIntensity = initialState.minIntensity
     layer.multiModeState.maxIntensity = initialState.maxIntensity
-    layer.multiModeState.quantileRange = initialState.quantileRange
+    layer.multiModeState.scaleRange = initialState.scaleRange
     layer.settings.channel = channels[0]
     layer.settings.label = undefined
     layer.settings.visible = true
@@ -235,7 +235,7 @@ export function resetIonImageState() {
   settings.lockMin = ''
   settings.lockMax = ''
   settings.syncSliders = false
-  settings.syncedQuantileRange = null
+  settings.syncedScaleRange = null
 }
 
 export const useIonImages = (props: Props) => {
@@ -302,7 +302,7 @@ export const useIonImages = (props: Props) => {
         intensity: data.intensity,
         state: layer.singleModeState,
         updateIntensity(range: [number, number]) {
-          layer.singleModeState.quantileRange = range
+          layer.singleModeState.scaleRange = range
         },
       }
     }
@@ -321,7 +321,7 @@ export const useIonImages = (props: Props) => {
         settings: layer.settings,
         state: layer.multiModeState,
         updateIntensity(range: [number, number]) {
-          layer.multiModeState.quantileRange = range
+          layer.multiModeState.scaleRange = range
         },
         toggleVisibility() {
           const { settings } = layer

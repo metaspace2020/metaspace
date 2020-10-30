@@ -13,13 +13,13 @@ export interface IonImage {
   maxIntensity: number;
   clippedMinIntensity: number;
   clippedMaxIntensity: number;
-  userMinIntensity: number;
-  userMaxIntensity: number;
+  scaledMinIntensity: number;
+  scaledMaxIntensity: number;
   // scaleBarValues - Quantization of linear intensity values, used for showing the distribution of colors on the scale bar
   // Always length 256
   scaleBarValues: Uint8ClampedArray;
-  minQuantile: number;
-  maxQuantile: number;
+  lowQuantile: number;
+  highQuantile: number;
 }
 
 export type ColorMap = readonly number[][]
@@ -120,40 +120,20 @@ function safeQuantile(values: number[], q: number | number[]): any {
   }
 }
 
-const getScaleParams = (intensityValues: Float32Array, mask: Uint8ClampedArray,
-  minIntensity: number, maxIntensity: number,
-  lowQuantile: number, highQuantile: number, scaleMode: ScaleMode) => {
+const getQuantileValues = (intensityValues: Float32Array, mask: Uint8ClampedArray, minValueConsidered: number = 0) => {
   const values = []
-
-  // Only non-zero values should be considered for hotspot removal, otherwise sparse images have most of their set pixels treated as hotspots.
-  // For compatibility with the previous version where images were loaded as 8-bit, linear scale's thresholds exclude pixels
-  // whose values would round down to zero. This can make a big difference - some ion images have as high as 40% of
-  // their pixels set to values that are zero when loaded as 8-bit but non-zero when loaded as 16-bit.
-  const minValueConsidered = scaleMode === 'linear' ? maxIntensity / 256 : 0
   for (let i = 0; i < mask.length; i++) {
     if (intensityValues[i] > minValueConsidered && mask[i] !== 0) {
       values.push(intensityValues[i])
     }
   }
+  return values
+}
 
-  let min = minIntensity
-  if (lowQuantile > 0 || scaleMode === 'log') { // log must start from lowest intensity above 0
-    min = safeQuantile(values, lowQuantile)
-  }
-
-  let max = maxIntensity
-  if (highQuantile < 1) {
-    max = safeQuantile(values, highQuantile)
-  }
-
-  let rankValues: Float32Array | null = null
-  if (scaleMode === 'hist') {
-    const lo = lowQuantile || 0; const hi = highQuantile || 1
-    const quantiles = range(256).map(i => lo + (hi - lo) * i / 255)
-    rankValues = new Float32Array(safeQuantile(values, quantiles))
-  }
-
-  return { min, max, rankValues }
+const getRankValues = (values: number[], lowQuantile: number, highQuantile: number) => {
+  const lo = lowQuantile || 0; const hi = highQuantile || 1
+  const quantiles = range(256).map(i => lo + (hi - lo) * i / 255)
+  return new Float32Array(safeQuantile(values, quantiles))
 }
 
 const quantizeIonImageLinear = (intensityValues: Float32Array, minIntensity: number, maxIntensity: number) => {
@@ -238,32 +218,41 @@ export const processIonImage = (
   png: Image, minIntensity: number = 0, maxIntensity: number = 1, scaleType: ScaleType = DEFAULT_SCALE_TYPE,
   userScaling: readonly [number, number] = [0, 1],
   userIntensities?: readonly [number, number]): IonImage => {
-  const [scaleMode, minQuantile, maxQuantile] = SCALES[scaleType]
+  const [scaleMode, lowQuantile, highQuantile] = SCALES[scaleType]
   const { width, height } = png
 
   const { intensityValues, mask } = extractIntensityAndMask(png, minIntensity, maxIntensity)
 
-  let min : number, max: number
-  if (userIntensities) {
-    min = userIntensities[0]
-    max = userIntensities[1]
-  } else {
-    const sp = getScaleParams(intensityValues, mask, minIntensity, maxIntensity, minQuantile, maxQuantile, scaleMode)
-    min = sp.min
-    max = sp.max
+  let min = minIntensity
+  let max = maxIntensity
+  if (userIntensities) { // do not clip user intensities
+    [min, max] = userIntensities
+  } else if (lowQuantile > 0 || highQuantile < 1) {
+    // Only non-zero values should be considered for hotspot removal, otherwise sparse images have most of their set pixels treated as hotspots.
+    // For compatibility with the previous version where images were loaded as 8-bit, linear scale's thresholds exclude pixels
+    // whose values would round down to zero. This can make a big difference - some ion images have as high as 40% of
+    // their pixels set to values that are zero when loaded as 8-bit but non-zero when loaded as 16-bit.
+    const minValueConsidered = (scaleMode === 'linear' ? maxIntensity / 256 : 0)
+    const values = getQuantileValues(intensityValues, mask, minValueConsidered)
+
+    // log must use lowest value to avoid 0
+    min = lowQuantile > 0 || scaleMode === 'log' ? safeQuantile(values, lowQuantile) : minIntensity
+    max = highQuantile < 1 ? safeQuantile(values, highQuantile) : maxIntensity
   }
 
   const [minScale, maxScale] = userScaling
-  const userMin = min + ((max - min) * minScale)
-  const userMax = min + ((max - min) * maxScale)
-  let userRank = null
+  const scaledMin = min + ((max - min) * minScale)
+  const scaledMax = min + ((max - min) * maxScale)
+
+  let rankValues = null
   if (scaleType === 'hist') {
-    const { intensityValues } = extractIntensityAndMask(png, userMin, userMax)
-    userRank = getScaleParams(intensityValues, mask, userMin, userMax, minScale, maxScale, scaleMode).rankValues
+    const { intensityValues } = extractIntensityAndMask(png, scaledMin, scaledMax)
+    const values = getQuantileValues(intensityValues, mask)
+    rankValues = getRankValues(values, lowQuantile, highQuantile)
   }
 
-  const clippedValues = quantizeIonImage(intensityValues, userMin, userMax, userRank, scaleMode)
-  const scaleBarValues = quantizeScaleBar(userMin, userMax, userRank, scaleMode)
+  const clippedValues = quantizeIonImage(intensityValues, scaledMin, scaledMax, rankValues, scaleMode)
+  const scaleBarValues = quantizeScaleBar(scaledMin, scaledMax, rankValues, scaleMode)
 
   return {
     intensityValues,
@@ -275,11 +264,11 @@ export const processIonImage = (
     maxIntensity,
     clippedMinIntensity: min,
     clippedMaxIntensity: max,
-    userMinIntensity: userMin,
-    userMaxIntensity: userMax,
+    scaledMinIntensity: scaledMin,
+    scaledMaxIntensity: scaledMax,
     scaleBarValues,
-    minQuantile,
-    maxQuantile,
+    lowQuantile,
+    highQuantile,
   }
 }
 
