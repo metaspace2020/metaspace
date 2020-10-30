@@ -68,9 +68,6 @@ import { defineComponent, computed, ref, watch } from '@vue/composition-api'
 import ClippingTooltip from './ClippingTooltip.vue'
 import { RangeSlider, THUMB_WIDTH } from '../../components/Slider'
 
-import '../../components/MonoIcon.css'
-import LockIcon from '../../assets/inline/refactoring-ui/lock.svg'
-
 import { IonImageState, IonImageIntensity, ColorBar, useIonImageSettings } from './ionImageState'
 
 interface Props {
@@ -92,7 +89,6 @@ export default defineComponent<Props>({
   components: {
     RangeSlider,
     ClippingTooltip,
-    LockIcon,
   },
   setup(props, { emit }) {
     const { settings } = useIonImageSettings()
