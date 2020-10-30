@@ -236,42 +236,34 @@ export const loadPngFromUrl = async(url: string) => {
 
 export const processIonImage = (
   png: Image, minIntensity: number = 0, maxIntensity: number = 1, scaleType: ScaleType = DEFAULT_SCALE_TYPE,
-  userQuantiles: readonly [number, number] = [0, 1],
-  lockedIntensity?: readonly [number, number]): IonImage => {
+  userScaling: readonly [number, number] = [0, 1],
+  userIntensities?: readonly [number, number]): IonImage => {
   const [scaleMode, minQuantile, maxQuantile] = SCALES[scaleType]
   const { width, height } = png
-  const [userMinQ, userMaxQ] = userQuantiles
 
   const { intensityValues, mask } = extractIntensityAndMask(png, minIntensity, maxIntensity)
 
-  let clippedParams, scaleParams
-
-  if (lockedIntensity) {
-    const [min, max] = lockedIntensity
-    const { intensityValues: lockedIntensityValues } = extractIntensityAndMask(png, min, max)
-    scaleParams = clippedParams = getScaleParams(
-      lockedIntensityValues, mask, min, max, userMinQ, userMaxQ, scaleMode,
-    )
+  let min : number, max: number
+  if (userIntensities) {
+    min = userIntensities[0]
+    max = userIntensities[1]
   } else {
-    clippedParams = getScaleParams(
-      intensityValues, mask, minIntensity, maxIntensity, minQuantile, maxQuantile, scaleMode,
-    )
-    scaleParams = getScaleParams(
-      intensityValues,
-      mask,
-      minIntensity,
-      maxIntensity,
-      Math.max(minQuantile, Math.min(maxQuantile, userMinQ)),
-      Math.min(maxQuantile, Math.max(minQuantile, userMaxQ)),
-      scaleMode,
-    )
+    const sp = getScaleParams(intensityValues, mask, minIntensity, maxIntensity, minQuantile, maxQuantile, scaleMode)
+    min = sp.min
+    max = sp.max
   }
 
-  const { min: userMinIntensity, max: userMaxIntensity, rankValues } = scaleParams
+  const [minScale, maxScale] = userScaling
+  const userMin = min + ((max - min) * minScale)
+  const userMax = min + ((max - min) * maxScale)
+  let userRank = null
+  if (scaleType === 'hist') {
+    const { intensityValues } = extractIntensityAndMask(png, userMin, userMax)
+    userRank = getScaleParams(intensityValues, mask, userMin, userMax, minScale, maxScale, scaleMode).rankValues
+  }
 
-  const clippedValues = quantizeIonImage(intensityValues, userMinIntensity, userMaxIntensity, rankValues,
-    scaleMode)
-  const scaleBarValues = quantizeScaleBar(userMinIntensity, userMaxIntensity, rankValues, scaleMode)
+  const clippedValues = quantizeIonImage(intensityValues, userMin, userMax, userRank, scaleMode)
+  const scaleBarValues = quantizeScaleBar(userMin, userMax, userRank, scaleMode)
 
   return {
     intensityValues,
@@ -281,10 +273,10 @@ export const processIonImage = (
     height,
     minIntensity,
     maxIntensity,
-    clippedMinIntensity: clippedParams.min,
-    clippedMaxIntensity: clippedParams.max,
-    userMinIntensity,
-    userMaxIntensity,
+    clippedMinIntensity: min,
+    clippedMaxIntensity: max,
+    userMinIntensity: userMin,
+    userMaxIntensity: userMax,
     scaleBarValues,
     minQuantile,
     maxQuantile,

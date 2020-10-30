@@ -129,13 +129,14 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
     viewerState.mode.value === 'SINGLE' ? layer.singleModeState : layer.multiModeState,
   )
 
-  const lockedIntensity = computed(() => {
+  const userIntensities = computed(() => {
     if (settings.lockMin || settings.lockMax) {
       const minF = parseFloat(settings.lockMin)
       const maxF = parseFloat(settings.lockMax)
+      const { minIntensity, maxIntensity } = activeState.value
       return [
-        isNaN(minF) ? activeState.value.minIntensity : Math.min(Number.MAX_VALUE, minF),
-        isNaN(maxF) ? activeState.value.maxIntensity : Math.min(Number.MAX_VALUE, maxF),
+        isNaN(minF) ? minIntensity : minF,
+        isNaN(maxF) ? maxIntensity : maxF,
       ] as [number, number]
     }
   })
@@ -149,7 +150,7 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
         activeState.value.maxIntensity,
         props.scaleType,
         activeState.value.quantileRange,
-        lockedIntensity.value,
+        userIntensities.value,
       )
     }
     return null
@@ -186,11 +187,12 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
         minQuantile, maxQuantile,
         userMinIntensity, userMaxIntensity,
       } = image.value || {}
+      const hasUserIntensities = settings.lockMin || settings.lockMax
       return {
         minQuantile,
         maxQuantile,
-        isMinClipped: minQuantile > 0,
-        isMaxClipped: maxQuantile < 1,
+        isMinClipped: !hasUserIntensities && minQuantile > 0,
+        isMaxClipped: !hasUserIntensities && maxQuantile < 1,
         imageMin: minIntensity,
         imageMax: maxIntensity,
         clippedMin: clippedMinIntensity,
