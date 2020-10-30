@@ -3,8 +3,8 @@
     class="box-border h-3 relative rounded-full bg-gray-100 outline-none"
     data-slider-track
     @click.stop="onClick"
-    @keypress.enter.self="onClick"
-    @keypress.space.self.prevent="onClick"
+    @keypress.enter.self="emit('keypress')"
+    @keypress.space.self.prevent="emit('keypress')"
     @mousedown.capture="emit('mousedown')"
   >
     <slot />

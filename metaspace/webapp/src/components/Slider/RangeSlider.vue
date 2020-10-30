@@ -4,6 +4,7 @@
     :disabled="disabled"
     @click="onTrackClick"
     @mousedown="lockTrackClick = false"
+    @keypress="lockTrackClick = false; onTrackClick()"
   >
     <slider-thumb
       :style="minStyle"
