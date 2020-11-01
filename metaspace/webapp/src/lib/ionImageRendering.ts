@@ -227,7 +227,7 @@ export const processIonImage = (
   let max = maxIntensity
   if (userIntensities) { // do not clip user intensities
     [min, max] = userIntensities
-  } else if (lowQuantile > 0 || highQuantile < 1) {
+  } else if (scaleMode === 'log' || lowQuantile > 0 || highQuantile < 1) {
     // Only non-zero values should be considered for hotspot removal, otherwise sparse images have most of their set pixels treated as hotspots.
     // For compatibility with the previous version where images were loaded as 8-bit, linear scale's thresholds exclude pixels
     // whose values would round down to zero. This can make a big difference - some ion images have as high as 40% of
