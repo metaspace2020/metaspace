@@ -69,7 +69,7 @@
                 <div>Show representative spatial patterns for dataset</div>
               </el-popover>
             </div>
-            <multi-image-button
+            <mode-button
               class="absolute right-0 bottom-0 mr-2 mb-2"
               @multi="filterByDataset"
             />

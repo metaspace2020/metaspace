@@ -55,7 +55,7 @@
           @opacity="emitOpacity"
         />
       </fade-transition>
-      <fade-transition>
+      <fade-transition v-if="lockIntensityEnabled">
         <intensity-settings
           v-if="openMenu === 'ION'"
           key="ion-settings"
@@ -89,6 +89,7 @@ import viewerState from './state'
 import { useIonImages, resetIonImageState } from './ionImageState'
 import fitImageToArea, { FitImageToAreaResult } from '../../lib/fitImageToArea'
 import { ScaleType } from '../../lib/ionImageRendering'
+import config from '../../lib/config'
 
 interface Props {
   annotation: any
@@ -195,6 +196,7 @@ const ImageViewer = defineComponent<Props>({
         emit('opacity', value)
       },
       hasOpticalImage: computed(() => !!props.imageLoaderSettings.opticalSrc),
+      lockIntensityEnabled: config.features.lock_intensity,
     }
   },
 })

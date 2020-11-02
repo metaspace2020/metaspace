@@ -45,7 +45,7 @@
         <img src="../../../../assets/microscope-icon.png">
       </button>
     </div>
-    <fade-transition>
+    <fade-transition v-if="multiImageFlag">
       <MenuButtons
         v-if="isActive"
         class="ml-auto"
@@ -61,6 +61,8 @@ import IonImageSettings from './IonImageSettings.vue'
 import MenuButtons from '../../../ImageViewer/MenuButtons.vue'
 import FadeTransition from '../../../../components/FadeTransition'
 import AspectRatioIcon from '../../../../assets/inline/material/aspect-ratio.svg'
+
+import config from '../../../../lib/config'
 
 interface colorObjType {
   code: string,
@@ -91,6 +93,10 @@ export default class MainImageHeader extends Vue {
 
     @Prop({ required: true, type: Boolean })
     isActive!: boolean
+
+    get multiImageFlag() {
+      return config.features.multiple_ion_images
+    }
 
     onScaleBarColorChange(color: string | null) {
       this.$emit('scaleBarColorChange', color)

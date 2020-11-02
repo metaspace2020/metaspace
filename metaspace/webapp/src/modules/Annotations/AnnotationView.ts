@@ -25,7 +25,7 @@ import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPo
 import RelatedMolecules from './annotation-widgets/RelatedMolecules.vue'
 import CompoundsList from './annotation-widgets/CompoundsList.vue'
 import AmbiguityAlert from './annotation-widgets/AmbiguityAlert.vue'
-import MultiImageButton from '../ImageViewer/MultiImageButton.vue'
+import ModeButton from '../ImageViewer/ModeButton.vue'
 
  type ImagePosition = {
    zoom: number
@@ -54,7 +54,7 @@ const componentsToRegister: any = {
   RelatedMolecules,
   CompoundsList,
   AmbiguityAlert,
-  MultiImageButton,
+  ModeButton,
 }
 for (const category of Object.keys(annotationWidgets)) {
   metadataDependentComponents[category] = {}

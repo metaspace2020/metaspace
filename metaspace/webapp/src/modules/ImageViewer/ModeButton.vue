@@ -1,5 +1,6 @@
 <template>
   <button
+    v-if="multiImagesEnabled"
     :title="`${isActive ? 'Disable' : 'Enable'} ion image channels`"
     class="button-reset h-9 rounded-lg flex items-center justify-center px-2 hover:bg-gray-100"
     :class="{ 'text-blue-700': isActive }"
@@ -19,6 +20,7 @@ import '../../components/StatefulIcon.css'
 import TuneIcon from '../../assets/inline/refactoring-ui/tune.svg'
 
 import viewerState, { toggleMode } from './state'
+import config from '../../lib/config'
 
 export default defineComponent({
   components: {
@@ -34,6 +36,7 @@ export default defineComponent({
           emit('multi')
         }
       },
+      multiImagesEnabled: config.features.multiple_ion_images,
     }
   },
 })
