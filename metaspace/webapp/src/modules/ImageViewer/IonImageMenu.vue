@@ -14,10 +14,18 @@
       @keydown.capture="setLastSlider(null)"
     >
       <p class="flex justify-between m-0 h-9 items-center">
-        <molecular-formula
-          class="truncate font-medium h-6 text-base proportional-nums"
-          :ion="item.annotation.ion"
-        />
+        <candidate-molecules-popover
+          placement="right"
+          :limit="10"
+          :possible-compounds="item.annotation.possibleCompounds"
+          :isomers="item.annotation.isomers"
+          :isobars="item.annotation.isobars"
+        >
+          <molecular-formula
+            class="truncate font-medium h-6 text-base proportional-nums"
+            :ion="item.annotation.ion"
+          />
+        </candidate-molecules-popover>
         <button
           :title="item.settings.visible ? 'Hide layer' : 'Show layer'"
           class="button-reset h-5"
@@ -95,6 +103,7 @@ import MolecularFormula from '../../components/MolecularFormula'
 import Overlay from './Overlay.vue'
 import FadeTransition from '../../components/FadeTransition'
 import ChannelSelector from './ChannelSelector.vue'
+import CandidateMoleculesPopover from '../Annotations/annotation-widgets/CandidateMoleculesPopover.vue'
 
 import '../../components/MonoIcon.css'
 import VisibleIcon from '../../assets/inline/refactoring-ui/visible.svg'
@@ -118,6 +127,7 @@ export default defineComponent({
     Overlay,
     FadeTransition,
     ChannelSelector,
+    CandidateMoleculesPopover,
   },
   setup(props, { emit }) {
     const { activeLayer, removeLayer, setActiveLayer } = useIonImageMenu()
@@ -144,3 +154,6 @@ export default defineComponent({
   },
 })
 </script>
+<style scoped>
+
+</style>
