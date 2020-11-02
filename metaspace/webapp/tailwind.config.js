@@ -11,6 +11,11 @@ module.exports = {
     placeholderColor: {
       default: theme => theme('colors.gray.500')
     },
+    maxHeight: {
+      full: '100%',
+      screen: '100vh',
+      '25': '6.25rem',
+    },
     extend: {
       colors: {
         // brand

@@ -6,7 +6,7 @@ import pytest
 
 from sm.engine.db import DB
 from sm.rest import api
-from sm.rest.databases import MALFORMED_CSV
+from sm.rest.databases import MALFORMED_CSV, BAD_DATA
 from sm.rest.utils import ALREADY_EXISTS
 from .utils import create_test_molecular_db
 
@@ -95,7 +95,23 @@ def test_create_moldb_malformed_csv(file_path, fill_db):
         resp = api.databases.create()
 
         assert resp['status'] == MALFORMED_CSV['status']
-        assert resp['errors']
+        assert resp['error']
+
+        db = DB()
+        (db_count,) = db.select_one(MOLDB_COUNT_SEL)
+        assert db_count == 0
+
+
+@pytest.mark.parametrize(
+    'file_path', ['s3://sm-engine/tests/test-db-empty-values.csv'],
+)
+def test_create_moldb_empty_values(file_path, fill_db):
+    with patch_bottle_request(req_doc=moldb_input_doc(file_path=file_path)):
+
+        resp = api.databases.create()
+
+        assert resp['status'] == BAD_DATA['status']
+        assert resp['error'] and resp['details']
 
         db = DB()
         (db_count,) = db.select_one(MOLDB_COUNT_SEL)
@@ -109,11 +125,10 @@ def test_create_moldb_wrong_formulas(fill_db):
 
         resp = api.databases.create()
 
-        assert resp['status'] == MALFORMED_CSV['status']
-        assert resp['errors']
-        for err_line in resp['errors'].split('\n')[1:]:
-            for err_field in ['line', 'formula', 'error']:
-                assert err_field in err_line
+        assert resp['status'] == BAD_DATA['status']
+        assert resp['error'], resp['details']
+        for err_row in resp['details']:
+            assert all([err_row.get(err_field, None) for err_field in ['line', 'row', 'error']])
 
         db = DB()
         (db_count,) = db.select_one(MOLDB_COUNT_SEL)
