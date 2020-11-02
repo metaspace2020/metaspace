@@ -1,6 +1,6 @@
 <template>
   <overlay
-    class="w-60 overflow-x-hidden overflow-y-auto px-0"
+    class="overflow-x-hidden overflow-y-auto px-0"
     data-menu-items
   >
     <slot />

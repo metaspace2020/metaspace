@@ -47,10 +47,19 @@
         />
       </fade-transition>
       <fade-transition>
-        <ion-image-settings
+        <opacity-settings
+          v-if="openMenu === 'ION' && hasOpticalImage"
+          key="opacity"
+          class="sm-leading-trim"
+          :opacity="opacity"
+          @opacity="emitOpacity"
+        />
+      </fade-transition>
+      <fade-transition>
+        <intensity-settings
           v-if="openMenu === 'ION'"
           key="ion-settings"
-          class="mt-auto"
+          class="sm-leading-trim"
           :has-optical-image="hasOpticalImage"
           :opacity="opacity"
           @opacity="emitOpacity"
@@ -73,7 +82,8 @@ import FadeTransition from '../../components/FadeTransition'
 import ImageSaver from './ImageSaver.vue'
 import IonImageMenu from './IonImageMenu.vue'
 import SingleIonImageControls from './SingleIonImageControls.vue'
-import IonImageSettings from './IonImageSettings.vue'
+import IntensitySettings from './IntensitySettings.vue'
+import OpacitySettings from './OpacitySettings.vue'
 
 import viewerState from './state'
 import { useIonImages, resetIonImageState } from './ionImageState'
@@ -100,7 +110,8 @@ const ImageViewer = defineComponent<Props>({
     IonImageMenu,
     IonImageViewer,
     SingleIonImageControls,
-    IonImageSettings,
+    IntensitySettings,
+    OpacitySettings,
   },
   directives: {
     resize,
@@ -190,3 +201,16 @@ const ImageViewer = defineComponent<Props>({
 
 export default ImageViewer
 </script>
+<style scoped>
+[data-side-bar] > * {
+  @apply w-60;
+}
+
+[data-side-bar] > :nth-child(2) {
+  margin-top: auto;
+}
+
+.sm-leading-trim > :first-child {
+  margin-top: calc(-1 * theme('spacing.3') / 2); /* hacking */
+}
+</style>

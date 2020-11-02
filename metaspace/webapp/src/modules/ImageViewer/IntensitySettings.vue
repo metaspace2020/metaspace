@@ -1,33 +1,7 @@
 <template>
-  <overlay
-    class="w-60 text-xs tracking-wider"
-  >
-    <fade-transition>
-      <div
-        v-if="hasOpticalImage"
-        key="opacity"
-        class="mb-3"
-      >
-        <p class="leading-6 m-0 flex justify-between">
-          <span class="text-gray-700 uppercase">
-            Opacity
-          </span>
-          <span>
-            {{ percentage }}%
-          </span>
-        </p>
-        <slider
-          class="opacity-gradient"
-          :value="percentage"
-          :min="0"
-          :max="100"
-          :step="1"
-          @change="emitOpacity"
-        />
-      </div>
-    </fade-transition>
-    <p class="leading-6 m-0 flex justify-between items-center sm-leading-trim">
-      <span class="text-gray-700 uppercase">
+  <overlay class="text-xs tracking-wider">
+    <p class="leading-6 m-0 flex justify-between items-center">
+      <span class="text-gray-700 font-medium">
         Lock intensity
       </span>
       <mini-switch
@@ -63,7 +37,7 @@ import MiniSwitch from '../../components/MiniSwitch.vue'
 
 import { useIonImageSettings } from './ionImageState'
 
-const isInvalidLockedIntensity = (value: string) => value.length > 0 && isNaN(parseFloat(value))
+const isInvalidIntensity = (value: string) => value.length > 0 && isNaN(parseFloat(value))
 
 export default defineComponent({
   components: {
@@ -80,8 +54,8 @@ export default defineComponent({
   setup(props, { emit }) {
     const { settings } = useIonImageSettings()
 
-    const lockMinError = computed(() => isInvalidLockedIntensity(settings.lockMin))
-    const lockMaxError = computed(() => isInvalidLockedIntensity(settings.lockMax))
+    const lockMinError = computed(() => isInvalidIntensity(settings.lockMin))
+    const lockMaxError = computed(() => isInvalidIntensity(settings.lockMax))
 
     const hasLockErrors = computed(() => lockMinError.value || lockMaxError.value)
 
@@ -105,9 +79,5 @@ export default defineComponent({
     url('../../assets/checkerboard.png');
   background-repeat: none, repeat-x;
   background-size: 100%, 12px 12px;
-}
-
-.sm-leading-trim:first-child {
-  margin-top: calc(-1 * theme('spacing.3') / 2); /* hacking */
 }
 </style>
