@@ -1,6 +1,8 @@
 <template>
   <form
     class="relative"
+    spellcheck="false"
+    autocomplete="off"
     @submit.prevent="onSubmit"
   >
     <label>
@@ -40,7 +42,9 @@ export default defineComponent({
     return {
       inputText,
       onSubmit() {
-        emit('submit', inputText.value)
+        if (inputText.value?.length) {
+          emit('submit', inputText.value)
+        }
       },
     }
   },
@@ -99,7 +103,6 @@ button {
 button:hover,
 button:focus {
   @apply bg-blue-300;
-  outline: none;
 }
 
 button:hover .sm-icon,
