@@ -206,8 +206,8 @@ export default ImageViewer
   @apply w-60;
 }
 
-[data-side-bar] > :nth-child(2) {
-  margin-top: auto;
+[data-side-bar] > :first-child {
+  margin-bottom: auto;
 }
 
 .sm-leading-trim > :first-child {

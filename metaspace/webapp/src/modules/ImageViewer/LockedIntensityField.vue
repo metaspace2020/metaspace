@@ -17,7 +17,7 @@
         :error="hasError"
       />
     </label>
-    <button class="button-reset absolute right-0 w-5 h-5 rounded-sm">
+    <button class="button-reset absolute top-0 right-0 w-5 h-5 rounded-sm">
       <ArrowIcon class="sm-icon" />
     </button>
   </form>

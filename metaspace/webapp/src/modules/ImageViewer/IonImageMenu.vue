@@ -57,8 +57,9 @@
         </fade-transition>
       </div>
     </menu-item>
+    <!-- margin removed below for Safari -->
     <button
-      class="button-reset py-6 px-3 w-full cursor-default text-gray-700 text-center"
+      class="button-reset py-6 px-3 w-full cursor-default text-gray-700 text-center m-0"
       :class="{ 'bg-blue-100 text-primary': activeLayer === null }"
       @click="() => setActiveLayer(null)"
     >
