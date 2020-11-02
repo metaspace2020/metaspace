@@ -4,9 +4,11 @@
       <span class="text-gray-700 font-medium">
         Lock intensity
       </span>
+      <!-- z-index added for focus outline below -->
       <mini-switch
-        :disabled="hasLockErrors || !(settings.lockMin.length || settings.lockMax.length)"
-        :value="settings.isLockActive && !hasLockErrors"
+        class="relative z-10"
+        :disabled="isSwitchDisabled"
+        :value="settings.isLockActive && !isSwitchDisabled"
         @change="settings.isLockActive = !settings.isLockActive"
       />
     </p>
@@ -31,7 +33,6 @@ import { defineComponent, computed, ref } from '@vue/composition-api'
 
 import Overlay from './Overlay.vue'
 import LockedIntensityField from './LockedIntensityField.vue'
-import { Slider } from '../../components/Slider'
 import FadeTransition from '../../components/FadeTransition'
 import MiniSwitch from '../../components/MiniSwitch.vue'
 
@@ -42,7 +43,6 @@ const isInvalidIntensity = (value: string) => value.length > 0 && isNaN(parseFlo
 export default defineComponent({
   components: {
     Overlay,
-    Slider,
     FadeTransition,
     MiniSwitch,
     LockedIntensityField,
@@ -58,26 +58,17 @@ export default defineComponent({
     const lockMaxError = computed(() => isInvalidIntensity(settings.lockMax))
 
     const hasLockErrors = computed(() => lockMinError.value || lockMaxError.value)
+    const isSwitchDisabled = computed(() =>
+      hasLockErrors.value || !(settings.lockMin.length || settings.lockMax.length),
+    )
 
     return {
       settings,
       lockMinError,
       lockMaxError,
       hasLockErrors,
-      percentage: computed(() => Math.round(props.opacity * 100)),
-      emitOpacity(value: number) {
-        emit('opacity', value / 100)
-      },
+      isSwitchDisabled,
     }
   },
 })
 </script>
-<style scoped>
-.opacity-gradient {
-  background-image:
-    linear-gradient(to right, transparent 0%, theme('colors.primary') 66%),
-    url('../../assets/checkerboard.png');
-  background-repeat: none, repeat-x;
-  background-size: 100%, 12px 12px;
-}
-</style>

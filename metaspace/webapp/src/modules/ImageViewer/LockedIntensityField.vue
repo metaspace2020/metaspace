@@ -42,9 +42,7 @@ export default defineComponent({
     return {
       inputText,
       onSubmit() {
-        if (inputText.value?.length) {
-          emit('submit', inputText.value)
-        }
+        emit('submit', inputText.value)
       },
     }
   },
