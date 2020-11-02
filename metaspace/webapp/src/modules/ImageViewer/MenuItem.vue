@@ -8,10 +8,10 @@
       }
     ]"
     tabindex="0"
-    @keypress.enter.self="emitActive"
-    @keypress.space.self.prevent="emitActive"
+    @keyup.enter.self="emitActive"
+    @keyup.space.self.prevent="emitActive"
     @click.stop="emitActive"
-    @keypress.self.delete="emitDelete"
+    @keyup.self.delete="emitDelete"
     @click.middle="emitDelete"
     @mousedown.capture="emit('mousedown')"
     @keydown.capture="emit('keydown')"
