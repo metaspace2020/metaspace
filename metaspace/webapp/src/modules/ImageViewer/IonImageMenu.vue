@@ -58,25 +58,29 @@
       </div>
     </menu-item>
     <button
-      class="button-reset py-6 px-3 w-full cursor-default"
+      class="button-reset py-6 px-3 w-full cursor-default text-gray-700 text-center"
       :class="{ 'bg-blue-100 text-primary': activeLayer === null }"
       @click="() => setActiveLayer(null)"
     >
-      <span class="uppercase text-xs tracking-wider m-0 text-inherit flex items-center justify-end">
+      <fade-transition class="text-sm text-inherit">
         <span
           v-if="activeLayer === null"
           key="active"
         >
-          Select row in table
+          Select annotation
         </span>
         <span
           v-else
           key="inactive"
+          class="flex items-center justify-end"
         >
           Add ion image
+          <add-icon
+            v-if="activeLayer !== null"
+            class="sm-mono-icon ml-1 text-gray-600"
+          />
         </span>
-        <add-icon class="sm-mono-icon ml-1" />
-      </span>
+      </fade-transition>
     </button>
   </menu-container>
 </template>
