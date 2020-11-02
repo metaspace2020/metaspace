@@ -6,40 +6,45 @@
     <span>
       Image viewer
     </span>
-    <el-popover
-      placement="bottom"
-      trigger="click"
+    <div
+      class="flex items-center pr-4 cursor-default"
+      @click.stop
     >
-      <ion-image-settings @scaleBarColorChange="onScaleBarColorChange" />
-      <button
-        slot="reference"
-        class="button-reset av-icon-button"
-        @click="$event.stopPropagation()"
+      <el-popover
+        placement="bottom"
+        trigger="click"
       >
-        <i
-          class="el-icon-setting"
-          style="font-size: 20px; vertical-align: middle;"
-          data-feature-anchor="ion-image-settings"
-        />
-      </button>
-    </el-popover>
+        <ion-image-settings @scaleBarColorChange="onScaleBarColorChange" />
+        <button
+          slot="reference"
+          class="button-reset av-icon-button"
+          @click="$event.stopPropagation()"
+        >
+          <i
+            class="el-icon-setting"
+            style="font-size: 20px; vertical-align: middle;"
+            data-feature-anchor="ion-image-settings"
+          />
+        </button>
+      </el-popover>
 
-    <button
-      class="button-reset av-icon-button"
-      title="Reset image zoom and offsets"
-      @click="resetViewport"
-    >
-      <AspectRatioIcon class="w-6 h-6 fill-current text-gray-900" />
-    </button>
-    <button
-      v-if="hasOpticalImage"
-      class="button-reset av-icon-button"
-      :class="showOpticalImage ? '' : 'inactive'"
-      title="Show/hide optical image"
-      @click="toggleOpticalImage"
-    >
-      <img src="../../../../assets/microscope-icon.png">
-    </button>
+      <button
+        class="button-reset av-icon-button"
+        title="Reset image zoom and offsets"
+        @click="resetViewport"
+      >
+        <AspectRatioIcon class="w-6 h-6 fill-current text-gray-900" />
+      </button>
+      <button
+        v-if="hasOpticalImage"
+        class="button-reset av-icon-button"
+        :class="showOpticalImage ? '' : 'inactive'"
+        title="Show/hide optical image"
+        @click="toggleOpticalImage"
+      >
+        <img src="../../../../assets/microscope-icon.png">
+      </button>
+    </div>
     <fade-transition>
       <MenuButtons
         v-if="isActive"

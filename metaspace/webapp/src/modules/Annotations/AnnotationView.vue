@@ -281,6 +281,7 @@
     box-sizing: border-box;
     margin-left: 16px;
     width: 24px;
+    height: 24px;
     line-height: 1;
     cursor: pointer;
   }
