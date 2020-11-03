@@ -30,7 +30,7 @@ const mockIonImageRendering = _ionImageRendering as jest.Mocked<typeof _ionImage
 //   width: 2,
 // }
 
-describe.only('ImageViewer', () => {
+describe('ImageViewer', () => {
   mockIonImageRendering.loadPngFromUrl.mockImplementation(() => Promise.resolve({} as any))
   mockIonImageRendering.processIonImage.mockImplementation(() => ({
     intensityValues: new Float32Array(),
