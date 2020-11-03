@@ -5,6 +5,7 @@ import { loadPngFromUrl, processIonImage, renderScaleBar } from '../../lib/ionIm
 import { ScaleType } from '../../lib/ionImageRendering'
 import createColorMap from '../../lib/createColormap'
 import getColorScale, { channels as channelToRGB } from '../../lib/getColorScale'
+import reportError from '../../lib/reportError'
 
 import viewerState from './state'
 
@@ -81,7 +82,7 @@ const state = reactive<State>({
   activeLayer: null,
   nextChannel: channels[0],
 })
-export const settings = reactive<Settings>({
+const settings = reactive<Settings>({
   lockMin: '',
   lockMax: '',
   isLockActive: false,
@@ -132,12 +133,18 @@ function getInitialLayerState(annotation: Annotation): IonImageState {
 
 function createComputedImageData(props: Props, layer: IonImageLayer) {
   if (!(layer.id in rawImageCache)) {
-    const raw = rawImageCache[layer.id] = ref<Image | null>(null)
+    rawImageCache[layer.id] = ref<Image | null>(null)
+  }
+
+  if (rawImageCache[layer.id].value === null) {
     const [isotopeImage] = layer.annotation.isotopeImages
     if (isotopeImage) {
       loadPngFromUrl(isotopeImage.url)
         .then(img => {
-          raw.value = img
+          rawImageCache[layer.id].value = img
+        })
+        .catch(err => {
+          reportError(err, null)
         })
     }
   }

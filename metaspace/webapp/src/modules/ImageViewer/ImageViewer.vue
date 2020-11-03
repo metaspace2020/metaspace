@@ -8,7 +8,6 @@
       v-loading="isLoading"
     >
       <ion-image-viewer
-        :annotation="annotation"
         :height="dimensions.height"
         :ion-image-layers="ionImageLayers"
         :max-zoom="imageFit.imageZoom * 20"

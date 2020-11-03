@@ -95,7 +95,7 @@
     "@vue/cli-service": "^4.1.2",
     "@vue/eslint-config-standard": "^5.1.0",
     "@vue/eslint-config-typescript": "^5.0.1",
-    "@vue/test-utils": "^1.0.2",
+    "@vue/test-utils": "^1.1.1",
     "apollo-link-schema": "^1.2.3",
     "babel-jest": "24.9.0",
     "babel-loader": "^8.0.6",
