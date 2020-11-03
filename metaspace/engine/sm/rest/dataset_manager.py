@@ -89,7 +89,7 @@ class SMapiDatasetManager:
             is_public=doc.get('is_public'),
             status=DatasetStatus.QUEUED,
         )
-        ds.save(self._db, self._es, allow_insert=True)
+        ds.save(self._db, self._es)
         self._status_queue.publish(
             {'ds_id': ds.id, 'action': DaemonAction.ANNOTATE, 'stage': DaemonActionStage.QUEUED}
         )
