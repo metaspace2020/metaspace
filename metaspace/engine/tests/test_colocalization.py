@@ -1,14 +1,12 @@
-from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
 import pandas as pd
 
 from sm.engine.colocalization import analyze_colocalization, Colocalization, FreeableRef
-from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.png_generator import ImageStoreServiceWrapper
-from .utils import create_test_molecular_db
+from .utils import create_test_molecular_db, create_test_ds
 
 
 def test_valid_colocalization_jobs_generated():
@@ -44,15 +42,7 @@ def test_new_ds_saves_to_db(test_db, metadata, ds_config):
     db = DB()
     moldb = create_test_molecular_db()
     ds_config['database_ids'] = [moldb.id]
-    ds = Dataset(
-        id='ds_id',
-        name='ds_name',
-        input_path='input_path',
-        upload_dt=datetime.now(),
-        metadata=metadata,
-        config=ds_config,
-    )
-    ds.save(db)
+    ds = create_test_ds(config={**ds_config, 'database_ids': [moldb.id]})
 
     ion_metrics_df = pd.DataFrame(
         {
