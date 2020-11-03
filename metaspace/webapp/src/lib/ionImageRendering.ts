@@ -272,41 +272,8 @@ export const processIonImage = (
   }
 }
 
-export const renderIonImageToBuffer = (ionImage: IonImage, cmap?: readonly number[][], buffer?: ArrayBuffer) => {
-  const { clippedValues, mask } = ionImage
-  // Treat pixels as 32-bit values instead of four 8-bit values to avoid extra math.
-  // Assume little-endian byte order, because big-endian is pretty much gone.
-  const outputBuffer = buffer || new ArrayBuffer(clippedValues.length * 4)
-  const outputRGBA = new Uint32Array(outputBuffer)
-  const cmapBuffer = new ArrayBuffer(256 * 4)
-  const cmapComponents = new Uint8ClampedArray(cmapBuffer)
-  const cmapRGBA = new Uint32Array(cmapBuffer)
-  const emptyRGBA = 0x00000000
-
-  for (let i = 0; i < 256; i++) {
-    if (cmap != null) {
-      for (let c = 0; c < 4; c++) {
-        cmapComponents[i * 4 + c] = cmap[i][c]
-      }
-    } else {
-      for (let c = 0; c < 4; c++) {
-        cmapComponents[i * 4 + c] = i
-      }
-    }
-  }
-  for (let i = 0; i < mask.length; i++) {
-    if (mask[i]) {
-      outputRGBA[i] += cmapRGBA[clippedValues[i]]
-    } else {
-      outputRGBA[i] += emptyRGBA
-    }
-  }
-  return outputBuffer
-}
-
-function getCmapComponents(cmap: ColorMap) {
-  const cmapBuffer = new ArrayBuffer(256 * 4)
-  const cmapComponents = new Uint8ClampedArray(cmapBuffer)
+function getCmapComponents(cmap: ColorMap, buffer : ArrayBuffer = new ArrayBuffer(256 * 4)) {
+  const cmapComponents = new Uint8ClampedArray(buffer)
   for (let i = 0; i < 256; i++) {
     if (cmap != null) {
       for (let c = 0; c < 4; c++) {
@@ -319,6 +286,28 @@ function getCmapComponents(cmap: ColorMap) {
     }
   }
   return cmapComponents
+}
+
+export const renderIonImageToBuffer = (ionImage: IonImage, cmap: readonly number[][], buffer?: ArrayBuffer) => {
+  const { clippedValues, mask } = ionImage
+  // Treat pixels as 32-bit values instead of four 8-bit values to avoid extra math.
+  // Assume little-endian byte order, because big-endian is pretty much gone.
+  const outputBuffer = buffer || new ArrayBuffer(clippedValues.length * 4)
+  const outputRGBA = new Uint32Array(outputBuffer)
+  const cmapBuffer = new ArrayBuffer(256 * 4)
+  const cmapRGBA = new Uint32Array(cmapBuffer)
+  const emptyRGBA = 0x00000000
+
+  getCmapComponents(cmap, cmapBuffer)
+
+  for (let i = 0; i < mask.length; i++) {
+    if (mask[i]) {
+      outputRGBA[i] += cmapRGBA[clippedValues[i]]
+    } else {
+      outputRGBA[i] += emptyRGBA
+    }
+  }
+  return outputBuffer
 }
 
 export const renderIonImages = (layers: IonImageLayer[]) => {
@@ -358,7 +347,7 @@ export const renderIonImages = (layers: IonImageLayer[]) => {
   return createDataUrl(pixels, width, height)
 }
 
-export const renderIonImage = (ionImage: IonImage, cmap?: readonly number[][]) => {
+export const renderIonImage = (ionImage: IonImage, cmap: readonly number[][]) => {
   const { width, height } = ionImage
 
   const outputBuffer = renderIonImageToBuffer(ionImage, cmap)

@@ -64,8 +64,8 @@ export default class ImageLoader extends Vue {
     @Prop({ type: String })
     scaleType?: ScaleType;
 
-    @Prop()
-    colormap: string = 'Viridis';
+    @Prop({ default: 'Viridis' })
+    colormap!: string;
 
     @Prop()
     opacityMode?: OpacityMode;

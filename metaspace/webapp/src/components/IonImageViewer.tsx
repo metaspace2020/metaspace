@@ -192,17 +192,19 @@ const usePixelIntensityDisplay = (props: Props, imageLoaderRef: Ref<ReferenceObj
         popper-class="pointer-events-none"
         placement="top"
       >
-        <ul slot="content" class="list-none p-0 m-0">
-          {cursorOverLayers.value?.map(({ intensity, color }) =>
-            <li class="flex leading-5 items-center">
-              { color && <i
-                class="w-3 h-3 border border-solid border-gray-400 box-border mr-1 rounded-full"
-                style={{ background: color }}
-              /> }
-              {intensity}
-            </li>
-          )}
-        </ul>
+        {cursorOverLayers.value?.length > 1
+          ? <ul slot="content" class="list-none p-0 m-0">
+            {cursorOverLayers.value?.map(({ intensity, color }) =>
+              <li class="flex leading-5 items-center">
+                { color && <i
+                  class="w-3 h-3 border border-solid border-gray-400 box-border mr-1 rounded-full"
+                  style={{ background: color }}
+                /> }
+                {intensity}
+              </li>
+            )}
+          </ul>
+          : <span slot="content">{cursorOverLayers.value?.[0].intensity}</span>}
         <div
           style={pixelIntensityStyle.value}
           class="absolute block border-solid z-30 pointer-events-none box-border"
@@ -349,9 +351,7 @@ const useBufferedOpticalImage = (props: Props) => {
 }
 
 const useIonImageView = (props: Props) => {
-  const ionImageDataUri = computed(() =>
-    props.ionImageLayers && renderIonImages(props.ionImageLayers),
-  )
+  const ionImageDataUri = computed(() => props.ionImageLayers && renderIonImages(props.ionImageLayers))
   const renderIonImageView = () => (props.ionImageLayers
     && <img
       src={ionImageDataUri.value}
