@@ -114,7 +114,6 @@
     "json-schema-deref-sync": "^0.10.1",
     "lint-staged": "^9.5.0",
     "node-sass": "^4.14.1",
-    "remotedev": "^0.2.9",
     "sass-loader": "^8.0.0",
     "stats-webpack-plugin": "^0.7.0",
     "ts-jest": "^24.3.0",
