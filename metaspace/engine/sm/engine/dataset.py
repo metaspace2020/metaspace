@@ -128,7 +128,7 @@ class Dataset:
         res = db.select_one(self.DS_SEL, params=(self.id,))
         return bool(res)
 
-    def save(self, db, es=None):
+    def save(self, db, es=None, allow_insert=False):
         doc = {
             'id': self.id,
             'name': self.name,
@@ -141,7 +141,10 @@ class Dataset:
             'is_public': self.is_public,
         }
         if not self.is_stored(db):
-            db.insert(self.DS_INSERT, rows=[doc])
+            if allow_insert:
+                db.insert(self.DS_INSERT, rows=[doc])
+            else:
+                raise UnknownDSID(f'Dataset does not exist: {self.id}')
         else:
             db.alter(self.DS_UPD, params=doc)
         logger.info(f'Inserted into dataset table: {self.id}, {self.name}')
