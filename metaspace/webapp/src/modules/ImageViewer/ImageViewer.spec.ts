@@ -113,6 +113,23 @@ describe('ImageViewer', () => {
     expect(wrapper.vm.$data.ionImageLayers.length).toBe(2)
   })
 
+  it('should hide layers', async() => {
+    const wrapper = mount(ImageViewer, { store, router, propsData })
+    await Vue.nextTick()
+
+    toggleMode()
+    const { setActiveLayer } = useIonImageMenu()
+    setActiveLayer(null)
+
+    wrapper.setProps({ annotation: annotation2 })
+    await Vue.nextTick()
+
+    expect(wrapper.vm.$data.ionImageLayers.length).toBe(2)
+
+    wrapper.vm.$data.ionImageMenuItems[0].settings.visible = false
+    expect(wrapper.vm.$data.ionImageLayers.length).toBe(1)
+  })
+
   it('should retain channels when toggling mode', async() => {
     const wrapper = mount(ImageViewer, { store, router, propsData })
     await Vue.nextTick()
@@ -153,10 +170,9 @@ describe('ImageViewer', () => {
   })
 
   it('should reset channels if dataset filter is removed', async() => {
-    store.commit('updateFilter', {
-      datasetIds: ['1'],
-    })
+    router.replace({ path: '/annotations?ds=1' })
     await Vue.nextTick()
+    expect(store.getters.filter.datasetIds).toEqual(['1'])
 
     const wrapper = mount(ImageViewer, { store, router, propsData })
     await Vue.nextTick()
