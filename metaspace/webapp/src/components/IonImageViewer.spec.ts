@@ -52,7 +52,7 @@ describe('IonImageViewer', () => {
   }
 
   mockIonImageRendering.renderIonImages.mockImplementation(
-    (layers: any) => JSON.stringify(layers.map((_: any) => _.ionImage.png)),
+    (layers: any) => layers.map((_: any) => _.ionImage.png.url).join(', '),
   )
 
   beforeEach(() => {
