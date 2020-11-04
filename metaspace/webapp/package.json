@@ -151,6 +151,7 @@
     "globalSetup": "<rootDir>/tests/utils/globalSetup.ts",
     "transform": {
       "^.+\\.vue$": "vue-jest",
+      "^.+/assets/inline/.+\\.svg$": "<rootDir>/tests/utils/svgTransform.ts",
       ".+\\.(css|styl|less|sass|scss|svg|png|jpg|ttf|woff|woff2)$": "jest-transform-stub",
       "^.+\\.[jt]sx?$": "ts-jest"
     },
