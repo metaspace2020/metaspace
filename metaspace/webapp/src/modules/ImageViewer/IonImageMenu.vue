@@ -66,11 +66,11 @@
     </menu-item>
     <!-- margin removed below for Safari -->
     <button
-      class="button-reset py-6 px-3 w-full cursor-default text-gray-700 text-center m-0"
+      class="button-reset p-3 h-12 w-full cursor-default text-gray-700 text-center m-0"
       :class="{ 'bg-blue-100 text-primary': activeLayer === null }"
       @click="() => setActiveLayer(null)"
     >
-      <fade-transition class="text-sm text-inherit">
+      <fade-transition class="text-xs tracking-wide font-medium text-inherit">
         <span
           v-if="activeLayer === null"
           key="active"
@@ -80,10 +80,9 @@
         <span
           v-else
           key="inactive"
-          class="flex items-center justify-end"
+          class="flex items-center justify-center"
         >
           Add ion image
-          <add-icon class="sm-mono-icon ml-1 text-gray-600" />
         </span>
       </fade-transition>
     </button>
@@ -103,7 +102,6 @@ import CandidateMoleculesPopover from '../Annotations/annotation-widgets/Candida
 import '../../components/MonoIcon.css'
 import VisibleIcon from '../../assets/inline/refactoring-ui/visible.svg'
 import HiddenIcon from '../../assets/inline/refactoring-ui/hidden.svg'
-import AddIcon from '../../assets/inline/refactoring-ui/add.svg'
 
 import { useIonImageMenu } from './ionImageState'
 
@@ -117,7 +115,6 @@ export default defineComponent({
     MolecularFormula,
     VisibleIcon,
     HiddenIcon,
-    AddIcon,
     Overlay,
     FadeTransition,
     ChannelSelector,
