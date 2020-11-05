@@ -14,10 +14,10 @@
       :disabled="isDisabled"
       :min-tooltip="values.tooltipMin"
       :max-tooltip="values.tooltipMax"
-      @change="range => emit('change', range)"
-      @thumb-start="emit('thumb-start')"
-      @thumb-stop="emit('thumb-stop')"
-      @track-click="emit('track-click')"
+      @change="range => $emit('change', range)"
+      @thumb-start="$emit('thumb-start')"
+      @thumb-stop="$emit('thumb-stop')"
+      @track-click="$emit('track-click')"
     />
     <div
       v-if="intensity"
@@ -90,14 +90,13 @@ export default defineComponent<Props>({
     RangeSlider,
     ClippingTooltip,
   },
-  setup(props, { emit }) {
+  setup(props) {
     const { settings } = useIonImageSettings()
 
     const container = ref<HTMLElement>()
 
     return {
       container,
-      emit,
       settings,
       values: computed(() => ({
         rangeMin: props.intensity.clippedMin.toExponential(1),

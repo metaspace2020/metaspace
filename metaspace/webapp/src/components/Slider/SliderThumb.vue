@@ -3,7 +3,7 @@
     ref="thumb"
     :tabindex="disabled ? false : 0"
     :style="position"
-    class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer focus-ring"
+    class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
     @click.stop
   />
 </template>
@@ -20,7 +20,6 @@ interface State {
 interface Props {
   disabled?: boolean
   x: number
-  pixelStep: number
   bounds: { minX: number, maxX: number }
 }
 
@@ -28,7 +27,6 @@ export default defineComponent<Props>({
   props: {
     disabled: { type: Boolean, default: false },
     x: Number,
-    pixelStep: Number,
     bounds: Object,
   },
   setup(props, { emit }) {
@@ -80,13 +78,14 @@ export default defineComponent<Props>({
 
     function onKeyUp(event: KeyboardEvent) {
       event.stopPropagation()
-      const multiply = event.shiftKey ? 10 : 1
+      const factor = event.shiftKey ? 10 : 1
+
       if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
         event.preventDefault()
-        emitX(props.x - props.pixelStep * multiply)
+        emit('decrement', factor)
       } else if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
         event.preventDefault()
-        emitX(props.x + props.pixelStep * multiply)
+        emit('increment', factor)
       }
     }
 

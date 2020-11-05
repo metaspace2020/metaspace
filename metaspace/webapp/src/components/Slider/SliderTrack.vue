@@ -1,11 +1,10 @@
 <template>
   <div
-    class="box-border h-3 relative rounded-full bg-gray-100 outline-none"
-    data-slider-track
+    class="box-border h-3 relative rounded-full bg-gray-100 outline-none sm-slider-track"
     @click.stop="onClick"
-    @keypress.enter.self="emit('keypress')"
-    @keypress.space.self.prevent="emit('keypress')"
-    @mousedown.capture="emit('mousedown')"
+    @keypress.enter.self="$emit('keypress')"
+    @keypress.space.self.prevent="$emit('keypress')"
+    @mousedown.capture="$emit('mousedown')"
   >
     <slot />
   </div>
@@ -15,7 +14,6 @@ import { defineComponent } from '@vue/composition-api'
 export default defineComponent({
   setup(_, { emit }) {
     return {
-      emit,
       onClick(e: MouseEvent) {
         emit('click', e.offsetX)
       },
@@ -24,18 +22,18 @@ export default defineComponent({
 })
 </script>
 <style scoped>
-  [data-slider-track]::before {
+  .sm-slider-track::before {
     @apply absolute w-full h-full box-border border-2 border-solid border-transparent rounded-full;
     content: '';
   }
-  [data-slider-track][disabled] {
+  .sm-slider-track[disabled] {
     @apply pointer-events-none;
   }
-  [data-slider-track][disabled]::before {
+  .sm-slider-track[disabled]::before {
     @apply border-gray-300;
   }
 
-  [data-slider-track] > div:focus {
+  .sm-slider-track > div:focus {
     z-index: 1;
   }
 </style>

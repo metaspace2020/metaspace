@@ -45,9 +45,8 @@
         <fade-transition>
           <channel-selector
             v-if="channelSelect === item.id"
+            v-model="item.settings.channel"
             :class="['my-auto', activeLayer === item.id ? 'bg-blue-200-alpha' : 'bg-gray-200-alpha']"
-            :active="item.settings.channel"
-            @change="channel => item.settings.channel = channel"
             @close="channelSelect = null"
           />
           <ion-intensity-slider
@@ -84,10 +83,7 @@
           class="flex items-center justify-end"
         >
           Add ion image
-          <add-icon
-            v-if="activeLayer !== null"
-            class="sm-mono-icon ml-1 text-gray-600"
-          />
+          <add-icon class="sm-mono-icon ml-1 text-gray-600" />
         </span>
       </fade-transition>
     </button>

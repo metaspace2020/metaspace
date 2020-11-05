@@ -36,7 +36,7 @@ export default defineComponent({
   },
   setup(props, { emit }) {
     return {
-      percentage: computed(() => Math.ceil(props.opacity * 100)),
+      percentage: computed(() => Math.round(props.opacity * 100)),
       emitOpacity(value: number) {
         emit('opacity', value / 100)
       },

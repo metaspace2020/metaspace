@@ -13,8 +13,8 @@
     @click.stop="emitActive"
     @keyup.self.delete="emitDelete"
     @click.middle="emitDelete"
-    @mousedown.capture="emit('mousedown')"
-    @keydown.capture="emit('keydown')"
+    @mousedown.capture="$emit('mousedown')"
+    @keydown.capture="$emit('keydown')"
   >
     <fade-transition>
       <p
@@ -47,7 +47,6 @@ export default defineComponent({
   },
   setup(props, { emit }) {
     return {
-      emit,
       emitActive: () => emit('active', props.layerId),
       emitDelete: () => emit('delete', props.layerId),
     }

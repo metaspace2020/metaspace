@@ -10,9 +10,10 @@
       :style="minStyle"
       :disabled="disabled"
       :x="minThumb.x.value"
-      :pixel-step="minThumb.pixelStep.value"
       :bounds="minBounds"
       @change="onMinChange"
+      @increment="onMinIncrement"
+      @decrement="onMinDecrement"
       @thumb-start="onThumbStart"
       @thumb-stop="onThumbStop"
     />
@@ -26,9 +27,10 @@
       :style="maxStyle"
       :disabled="disabled"
       :x="maxThumb.x.value"
-      :pixel-step="maxThumb.pixelStep.value"
       :bounds="maxBounds"
       @change="onMaxChange"
+      @increment="onMaxIncrement"
+      @decrement="onMaxDecrement"
       @thumb-start="onThumbStart"
       @thumb-stop="onThumbStop"
     />
@@ -115,9 +117,12 @@ const Slider = defineComponent<Props>({
 
     const minPosition = computed(() => ({ left: `${minThumb.x.value}px` }))
     const maxPosition = computed(() => {
-      if (!width.value) return '0px'
+      if (!width.value) return { right: '0px' }
       return { right: `${width.value - maxThumb.x.value - THUMB_WIDTH}px` }
     })
+
+    const emitMinChange = (value: number) => emit('change', [value, props.value[1]])
+    const emitMaxChange = (value: number) => emit('change', [props.value[0], value])
 
     const lockTrackClick = ref(false)
 
@@ -134,14 +139,12 @@ const Slider = defineComponent<Props>({
         minX: minThumb.x.value + THUMB_WIDTH,
         maxX: width.value ? width.value - THUMB_WIDTH : 0,
       })),
-      onMinChange(x: number) {
-        const value = minThumb?.getValue(x)
-        emit('change', [value, props.value[1]])
-      },
-      onMaxChange(x: number) {
-        const value = maxThumb?.getValue(x)
-        emit('change', [props.value[0], value])
-      },
+      onMinChange: (x: number) => emitMinChange(minThumb.getValue(x)),
+      onMinIncrement: (factor: number) => emitMinChange(minThumb.increment(factor)),
+      onMinDecrement: (factor: number) => emitMinChange(minThumb.decrement(factor)),
+      onMaxChange: (x: number) => emitMaxChange(maxThumb.getValue(x)),
+      onMaxIncrement: (factor: number) => emitMaxChange(maxThumb.increment(factor)),
+      onMaxDecrement: (factor: number) => emitMaxChange(maxThumb.decrement(factor)),
       minPosition,
       maxPosition,
       width,

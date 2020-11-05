@@ -27,8 +27,7 @@
       />
     </div>
     <div
-      class="absolute top-0 right-0 py-3 mr-2 h-full box-border flex flex-col justify-between items-end w-0 v-rhythm-3"
-      data-side-bar
+      class="absolute top-0 right-0 py-3 mr-2 h-full box-border flex flex-col justify-between items-end w-0 v-rhythm-3 sm-side-bar"
     >
       <fade-transition v-if="openMenu === 'ION'">
         <ion-image-menu
@@ -203,11 +202,11 @@ const ImageViewer = defineComponent<Props>({
 export default ImageViewer
 </script>
 <style scoped>
-[data-side-bar] > * {
+.sm-side-bar > * {
   @apply w-60;
 }
 
-[data-side-bar] > :first-child {
+.sm-side-bar > :first-child {
   margin-bottom: auto;
 }
 

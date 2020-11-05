@@ -9,9 +9,10 @@
       class="bg-gray-100"
       :disabled="disabled"
       :x="thumbX"
-      :pixel-step="pixelStep"
       :bounds="thumbBounds"
       @change="onThumbChange"
+      @increment="increment"
+      @decrement="decrement"
     />
   </slider-track>
 </template>
@@ -76,7 +77,12 @@ const Slider = defineComponent<Props>({
       onTrackClick,
       thumbBounds: range,
       thumbX: thumb.x,
-      pixelStep: thumb.pixelStep,
+      increment(factor: number) {
+        emit('change', thumb.increment(factor))
+      },
+      decrement(factor: number) {
+        emit('change', thumb.decrement(factor))
+      },
     }
   },
 })

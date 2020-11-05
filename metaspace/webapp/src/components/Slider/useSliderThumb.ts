@@ -14,8 +14,9 @@ interface Range {
 
 export type SliderThumbInstance = {
   x: Ref<number>,
-  pixelStep: Ref<number>,
   getValue: (x: number) => number,
+  increment: (factor: number) => number,
+  decrement: (factor: number) => number,
 }
 
 export default (getProps: () => SliderProps, range: Ref<Range>) : SliderThumbInstance => {
@@ -37,9 +38,13 @@ export default (getProps: () => SliderProps, range: Ref<Range>) : SliderThumbIns
       const ratio = ((value - min) / (max - min))
       return Math.ceil(ratio * (range.value.maxX - range.value.minX) + range.value.minX)
     }),
-    pixelStep: computed(() => {
-      const { max, min, step } = getProps()
-      return Math.round(step * ((range.value.maxX - range.value.minX) / (max - min)))
-    }),
+    increment(factor) {
+      const { value, step, min, max } = getProps()
+      return Math.min(Math.max(value + (step * factor), min), max)
+    },
+    decrement(factor) {
+      const { value, step, min, max } = getProps()
+      return Math.min(Math.max(value - (step * factor), min), max)
+    },
   }
 }

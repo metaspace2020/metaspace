@@ -4,17 +4,17 @@
     class="inline-flex w-full justify-around items-center py-1 rounded-full"
     tabindex="0"
     @click.stop
-    @keypress.enter.self="emit('close')"
-    @keypress.esc.self="emit('close')"
+    @keypress.enter.self="$emit('close')"
+    @keypress.esc.self="$emit('close')"
   >
     <button
       v-for="channel in channels"
       :key="channel.name"
-      :data-active="active === channel.name"
       :title="channel.name"
-      class="button-reset rounded-full border border-solid border-gray-400"
+      class="button-reset rounded-full border border-solid"
+      :class="value === channel.name ? 'border-primary' : 'border-gray-400'"
       :style="{ background: channel.color }"
-      @click="emit('change', channel.name)"
+      @click="$emit('input', channel.name)"
     />
   </div>
 </template>
@@ -24,9 +24,9 @@ import { channels } from '../../lib/getColorScale'
 
 export default defineComponent({
   props: {
-    active: String,
+    value: String,
   },
-  setup(_, { emit }) {
+  setup() {
     const container = ref<HTMLElement>()
 
     onMounted(() => {
@@ -37,8 +37,6 @@ export default defineComponent({
 
     return {
       container,
-      emit,
-      test: () => console.log('test'),
       channels: Object.entries(channels).map(([name, color]) => ({ name, color })),
     }
   },
@@ -50,9 +48,6 @@ export default defineComponent({
     width: 14px;
     height: 14px;
   }
-  button[data-active] {
-    @apply border-primary;
-  }
   button::after {
     content: '';
     @apply h-3 w-3 border-solid border-transparent absolute rounded-full;
@@ -60,7 +55,7 @@ export default defineComponent({
     left: -3px;
     top: -3px;
   }
-  button[data-active]::after {
+  button.border-primary::after {
     @apply border-primary;
   }
 </style>

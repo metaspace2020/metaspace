@@ -2,7 +2,7 @@
   <el-switch
     v-bind="$props"
     :width="28"
-    @change="emit('change')"
+    @change="$emit('change')"
   />
 </template>
 <script lang="ts">
@@ -12,11 +12,6 @@ export default Vue.extend({
   props: {
     disabled: Boolean,
     value: Boolean,
-  },
-  setup(_, { emit }) {
-    return {
-      emit,
-    }
   },
 })
 </script>

@@ -1,8 +1,5 @@
 <template>
-  <overlay
-    class="overflow-x-hidden overflow-y-auto px-0"
-    data-menu-items
-  >
+  <overlay class="overflow-x-hidden overflow-y-auto px-0 sm-menu-items">
     <slot />
   </overlay>
 </template>
@@ -18,17 +15,17 @@ export default Vue.extend({
 })
 </script>
 <style scoped>
-  [data-menu-items] >>> > * {
+  .sm-menu-items >>> > * {
     @apply box-border border-0 border-t border-solid border-gray-200-alpha;
   }
-  [data-menu-items] >>> > *:last-child {
+  .sm-menu-items >>> > *:last-child {
     @apply border-b;
   }
-  [data-menu-items] >>> > .focus-visible {
+  .sm-menu-items >>> > .focus-visible {
     outline: 2px solid theme('colors.primary');
     outline-offset: -2px;
   }
-  [data-menu-items] >>> > *:hover {
+  .sm-menu-items >>> > *:hover {
     outline: 1px solid theme('colors.primary');
     outline-offset: -1px;
   }
