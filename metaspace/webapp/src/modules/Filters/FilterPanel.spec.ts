@@ -10,6 +10,7 @@ import { encodeParams } from './url'
 import {
   mockAdductSuggestions,
   mockMolecularDatabases,
+  mockDatasetDatabases,
 } from '../../../tests/utils/mockGraphqlData'
 
 Vue.use(Vuex)
@@ -44,6 +45,7 @@ describe('FilterPanel', () => {
       Query: () => ({
         adductSuggestions: mockAdductSuggestions,
         allMolecularDBs: mockMolecularDatabases,
+        allDatasets: mockDatasetDatabases,
       }),
     })
     store.commit('setFilterLists', null)
@@ -59,6 +61,15 @@ describe('FilterPanel', () => {
 
   it('should match snapshot (no filters)', async() => {
     await updateFilter({})
+    const propsData = { level: 'annotation' }
+    const wrapper = mount(FilterPanel, { router, apolloProvider, store, propsData })
+    await Vue.nextTick()
+
+    expect(wrapper).toMatchSnapshot()
+  })
+
+  it('should match snapshot (database without dataset)', async() => {
+    await updateFilter({ database: allFilters.database })
     const propsData = { level: 'annotation' }
     const wrapper = mount(FilterPanel, { router, apolloProvider, store, propsData })
     await Vue.nextTick()

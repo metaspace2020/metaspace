@@ -18,3 +18,13 @@ export const mockMolecularDatabases = () => [
   globalDatabase,
   groupDatabase,
 ]
+
+export const mockDatasetDatabases = () => [
+  {
+    id: 'CDEF',
+    name: 'CDEF',
+    databases: [
+      globalDatabase,
+    ],
+  },
+]
