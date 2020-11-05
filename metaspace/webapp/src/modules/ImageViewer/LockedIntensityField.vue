@@ -7,42 +7,64 @@
   >
     <label>
       <span class="sr-only">
-        {{ srLabel }}
+        {{ label }}
       </span>
       <input
+        ref="inputRef"
         v-model="inputText"
         type="text"
+        :title="label"
         :placeholder="placeholder"
-        title="Lock maximum intensity"
         :error="hasError"
       />
     </label>
-    <button class="button-reset absolute top-0 right-0 w-5 h-5 rounded-sm">
-      <ArrowIcon class="sm-icon" />
-    </button>
+    <fade-transition class="button-reset absolute top-0 right-0 w-5 h-5 rounded-sm">
+      <button
+        v-if="inputText !== storedValue"
+        key="submit"
+        type="submit"
+      >
+        <ArrowIcon />
+      </button>
+      <button
+        v-else-if="inputText.length"
+        key="clear"
+        type="text"
+        @click="inputText = '';"
+      >
+        <CloseIcon />
+      </button>
+    </fade-transition>
   </form>
 </template>
 <script lang="ts">
 import { defineComponent, ref } from '@vue/composition-api'
 
+import FadeTransition from '../../components/FadeTransition'
 import ArrowIcon from '../../assets/inline/refactoring-ui/arrow-thin-right-circle.svg'
+import CloseIcon from '../../assets/inline/refactoring-ui/close.svg'
 
 export default defineComponent({
   components: {
     ArrowIcon,
+    CloseIcon,
+    FadeTransition,
   },
   props: {
     hasError: Boolean,
-    srLabel: String,
+    label: String,
     placeholder: String,
-    initialValue: String,
+    storedValue: String,
   },
   setup(props, { emit }) {
-    const inputText = ref(props.initialValue)
+    const inputText = ref(props.storedValue)
+    const inputRef = ref<HTMLInputElement>(null)
     return {
       inputText,
+      inputRef,
       onSubmit() {
         emit('submit', inputText.value)
+        if (inputRef.value) inputRef.value.focus()
       },
     }
   },
@@ -54,22 +76,8 @@ form {
 }
 
 input {
-  @apply
-    w-full
-    h-6
-    border
-    border-solid
-    text-body
-    border-gray-300
-    bg-white
-    pl-2
-    pr-6
-    box-border
-    rounded-sm
-    tracking-wider
-    transition-colors
-    duration-150
-    ease-in-out;
+  @apply w-full h-6 pl-2 pr-6 box-border border border-solid text-body border-gray-300 bg-white rounded-sm
+    tracking-wider transition-colors duration-150 ease-in-out;
   outline: none;
 }
 input::placeholder {
@@ -85,15 +93,6 @@ input[error] {
   @apply border-danger;
 }
 
-.sm-icon {
-  @apply w-6 h-6 absolute fill-current text-gray-600;
-  top: -2px;
-  left: -2px;
-}
-.sm-icon .secondary {
-  display: none;
-}
-
 button {
   margin: 2px;
 }
@@ -103,8 +102,17 @@ button:focus {
   @apply bg-blue-300;
 }
 
-button:hover .sm-icon,
-button:focus .sm-icon {
+button:hover > svg,
+button:focus > svg {
   @apply text-blue-800;
+}
+
+button > svg {
+  @apply w-6 h-6 absolute fill-current text-gray-600;
+  top: -2px;
+  left: -2px;
+}
+button > svg .secondary {
+  display: none;
 }
 </style>

@@ -14,14 +14,16 @@
     </p>
     <div class="flex justify-between">
       <locked-intensity-field
-        sr-label="Min intensity"
-        :initial-value="settings.lockMin"
+        label="Minimum intensity"
+        placeholder="min."
+        :stored-value="settings.lockMin"
         :has-error="lockMinError"
         @submit="value => { settings.lockMin = value; settings.isLockActive = true; }"
       />
       <locked-intensity-field
-        sr-label="Max intensity"
-        :initial-value="settings.lockMax"
+        label="Maximum intensity"
+        placeholder="max."
+        :stored-value="settings.lockMax"
         :has-error="lockMaxError"
         @submit="value => { settings.lockMax = value; settings.isLockActive = true; }"
       />
