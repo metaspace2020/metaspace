@@ -20,9 +20,9 @@
       <p
         v-if="loading"
         key="loading"
-        class="m-0 text-xs tracking-wider uppercase"
+        class="m-0 ml-3 text-gray-700 text-sm font-medium"
       >
-        loading image ...
+        Loading image ...
       </p>
       <div v-else>
         <slot />
