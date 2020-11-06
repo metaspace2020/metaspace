@@ -1,5 +1,5 @@
 <template>
-  <menu-container>
+  <overlay class="overflow-x-hidden overflow-y-auto px-0 sm-menu-items">
     <menu-item
       v-for="item in menuItems"
       :key="item.id"
@@ -87,12 +87,11 @@
         </span>
       </fade-transition>
     </button>
-  </menu-container>
+  </overlay>
 </template>
 <script lang="ts">
 import { defineComponent, ref } from '@vue/composition-api'
 
-import MenuContainer from './MenuContainer.vue'
 import MenuItem from './MenuItem.vue'
 import IonIntensitySlider from './IonIntensitySlider.vue'
 import MolecularFormula from '../../components/MolecularFormula'
@@ -113,7 +112,6 @@ export default defineComponent({
     menuItems: Array,
   },
   components: {
-    MenuContainer,
     MenuItem,
     IonIntensitySlider,
     MolecularFormula,
@@ -150,3 +148,19 @@ export default defineComponent({
   },
 })
 </script>
+<style scoped>
+.sm-menu-items >>> > * {
+  @apply box-border border-0 border-t border-solid border-gray-200-alpha;
+}
+.sm-menu-items >>> > *:last-child {
+  @apply border-b;
+}
+.sm-menu-items >>> > .focus-visible {
+  outline: 2px solid theme('colors.primary');
+  outline-offset: -2px;
+}
+.sm-menu-items >>> > *:hover {
+  outline: 1px solid theme('colors.primary');
+  outline-offset: -1px;
+}
+</style>
