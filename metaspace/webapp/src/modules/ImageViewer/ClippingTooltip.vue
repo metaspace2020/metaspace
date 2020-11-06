@@ -1,17 +1,11 @@
 <template>
   <el-tooltip
-    manual
-    :value="isOpen"
+    :disabled="disabled"
     :placement="placement"
   >
     <span
-      title="Clipped intensity - click for details"
-      class="font-medium text-red-700 cursor-help"
-      @click.stop
-      @mousedown.stop="toggleTooltip"
-      @keypress.enter="toggleTooltip"
-      @keypress.space.prevent="toggleTooltip"
-      @keypress.esc="closeTooltip"
+      class="font-medium text-red-700"
+      :class="{ 'cursor-pointer': !disabled }"
     >
       {{ clippedIntensity }}
     </span>
@@ -44,37 +38,13 @@
 <script lang="ts">
 import { defineComponent, ref, watch, computed } from '@vue/composition-api'
 
-const openTooltip = ref<string | null>(null)
-
-const closeTooltip = () => { openTooltip.value = null }
-
 export default defineComponent({
   props: {
-    id: { type: String, required: true },
     clippingType: String,
     clippedIntensity: String,
     originalIntensity: String,
     placement: String,
-  },
-  setup(props) {
-    const isOpen = computed(() => props.id === openTooltip.value)
-
-    watch(isOpen, (open) => {
-      if (open) {
-        document.addEventListener('mousedown', closeTooltip)
-      } else {
-        document.removeEventListener('mousedown', closeTooltip)
-      }
-    })
-
-    return {
-      isOpen,
-      closeTooltip,
-      toggleTooltip() {
-        openTooltip.value =
-          openTooltip.value === props.id ? null : props.id
-      },
-    }
+    disabled: Boolean,
   },
 })
 </script>

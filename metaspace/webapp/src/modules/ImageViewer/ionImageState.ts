@@ -120,9 +120,17 @@ function removeLayer(id: string) : number {
   return idx
 }
 
-function getInitialLayerState(annotation: Annotation): IonImageState {
+function getImageIntensities(annotation: Annotation) {
   const [isotopeImage] = annotation.isotopeImages
   const { minIntensity = 0, maxIntensity = 1 } = isotopeImage || {}
+  return {
+    minIntensity,
+    maxIntensity,
+  }
+}
+
+function getInitialLayerState(annotation: Annotation): IonImageState {
+  const { minIntensity, maxIntensity } = getImageIntensities(annotation)
 
   return {
     maxIntensity,
@@ -155,22 +163,21 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
 
   const userIntensities = computed(() => {
     const [lockedMin, lockedMax] = lockedIntensities.value
-    if (lockedMin !== undefined || lockedMax !== undefined) {
-      const { minIntensity, maxIntensity } = activeState.value
-      return [
-        lockedMin ?? minIntensity,
-        lockedMax ?? maxIntensity,
-      ] as [number, number]
-    }
+    const { minIntensity, maxIntensity } = activeState.value
+    return [
+      lockedMin ?? minIntensity,
+      lockedMax ?? maxIntensity,
+    ] as [number, number]
   })
 
   const image = computed(() => {
     const raw = rawImageCache[layer.id]
     if (raw.value !== null) {
+      const { minIntensity, maxIntensity } = getImageIntensities(layer.annotation)
       return processIonImage(
         raw.value,
-        activeState.value.minIntensity,
-        activeState.value.maxIntensity,
+        minIntensity,
+        maxIntensity,
         props.scaleType,
         activeState.value.scaleRange,
         userIntensities.value,
