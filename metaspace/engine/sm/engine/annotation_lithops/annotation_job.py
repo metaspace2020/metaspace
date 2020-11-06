@@ -28,19 +28,26 @@ from sm.engine.util import SMConfig
 logger = logging.getLogger('engine')
 
 
-def _upload_if_not_exists(local_path, storage, sm_storage, storage_type):
-    local_path = Path(local_path)
-
+def _upload_if_not_exists(src_path, storage, sm_storage, storage_type):
     bucket, prefix = sm_storage[storage_type]
-    key = f'{prefix}/{local_path.name}'
+    if src_path.startswith('cos://'):
+        src_bucket, src_key = src_path.removeprefix('cos://').split('/', maxsplit=1)
+        storage.head_object(src_bucket, src_key)
+        logger.debug(f'{src_path} already uploaded')
+        return CloudObject(storage.backend, src_bucket, src_key)
+    elif src_path.startswith('s3a://'):
+    else:
+        suffix = Path(src_path).name
+
+    key = f'{prefix}/{suffix}'.removeprefix('/')
     try:
         storage.head_object(bucket, key)
-        logger.debug(f'{local_path.name} already uploaded')
+        logger.debug(f'{suffix} already uploaded')
         return CloudObject(storage.backend, bucket, key)
     except StorageNoSuchKeyError:
-        logger.info(f'Uploading {local_path.name}...')
-        cobject = storage.put_cobject(open(local_path, 'rb'), bucket, key)
-        logger.info(f'Uploading {local_path.name}...Done')
+        logger.info(f'Uploading {suffix}...')
+        cobject = storage.put_cobject(open(src_path, 'rb'), bucket, key)
+        logger.info(f'Uploading {suffix}...Done')
         return cobject
 
 
@@ -181,7 +188,7 @@ class ServerAnnotationJob:
 
         return imzml_cobj, ibd_cobj
 
-    def store_images(self, all_results_dfs, formula_png_iter):
+    def _store_images(self, all_results_dfs, formula_png_iter):
         db_formula_image_ids = defaultdict(dict)
         img_store_type = self.ds.get_ion_img_storage_type(self.db)
 
@@ -216,7 +223,7 @@ class ServerAnnotationJob:
             moldb_to_job_map[moldb_id] = insert_running_job(self.ds.id, moldb_id)
         try:
             self.results_dfs, self.png_cobjs = self.pipe(**kwargs)
-            self.db_formula_image_ids = self.store_images(
+            self.db_formula_image_ids = self._store_images(
                 pd.concat(list(self.results_dfs.values())),
                 iter_cobjs_with_prefetch(self.storage, self.png_cobjs),
             )

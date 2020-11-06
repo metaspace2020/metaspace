@@ -205,9 +205,6 @@ class SMAnnotateDaemon:
             logger=self.logger,
             poll_interval=poll_interval,
         )
-        self._upd_queue_pub = QueuePublisher(
-            config=self._sm_config['rabbitmq'], qdesc=upd_qdesc, logger=self.logger
-        )
         self._update_queue_pub = QueuePublisher(
             config=self._sm_config['rabbitmq'], qdesc=upd_qdesc, logger=self.logger
         )

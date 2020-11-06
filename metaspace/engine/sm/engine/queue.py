@@ -535,4 +535,5 @@ class QueuePublisher:
 
 SM_ANNOTATE = {'name': 'sm_annotate', 'durable': True, 'arguments': {'x-max-priority': 3}}
 SM_UPDATE = {'name': 'sm_update', 'durable': True, 'arguments': {'x-max-priority': 3}}
+SM_LITHOPS = {'name': 'sm_lithops', 'durable': True, 'arguments': {'x-max-priority': 3}}
 SM_DS_STATUS = {'name': 'sm_dataset_status', 'durable': True, 'arguments': None}
