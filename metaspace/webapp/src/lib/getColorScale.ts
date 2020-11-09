@@ -165,16 +165,54 @@ const scales: Record<string, ColorScale> = {
   },
 }
 
-export default function getColorScale(name: string): ColorScale {
-  if (!(name in scales) && !(name.slice(1) in scales)) {
-    reportError(new Error(`Unrecognized color scale: ${name}`), null)
-    name = 'Greys'
+export const channels: any = {
+  red: 'rgb(255, 0, 0)',
+  green: 'rgb(0, 255, 0)',
+  blue: 'rgb(0, 0, 255)',
+  cyan: 'rgb(0, 255, 255)',
+  magenta: 'rgb(255, 0, 255)',
+  yellow: 'rgb(255, 255, 0)',
+  orange: 'rgb(255, 128, 0)',
+  white: 'rgb(255, 255, 255)',
+}
+
+function getChannelScale(channel: string) : ColorScale {
+  return {
+    domain: [
+      0,
+      1,
+    ],
+    range: [
+      'rgb(0,0,0)',
+      channels[channel],
+    ],
   }
-  if (name[0] !== '-') {
-    return scales[name]
+}
+
+function parseName(name: string): { name: string, inverted: boolean } {
+  if (name[0] === '-') {
+    return { name: name.slice(1), inverted: true }
+  }
+  return { name, inverted: false }
+}
+
+export default function getColorScale(directedName: string): ColorScale {
+  const { name, inverted } = parseName(directedName)
+
+  let colorScale
+
+  if (name in channels) {
+    colorScale = getChannelScale(name)
+  } else if (name in scales) {
+    colorScale = scales[name]
   } else {
-    // inverted - reverse both arrays so that the domain is always in ascending order
-    const { domain, range } = scales[name.slice(1)]
+    reportError(new Error(`Unrecognized color scale: ${name}`), null)
+    colorScale = scales.Greys
+  }
+
+  if (inverted) {
+    const { domain, range } = colorScale
     return { domain: reverse(domain.map(v => 1 - v)), range: reverse([...range]) }
   }
+  return colorScale
 }

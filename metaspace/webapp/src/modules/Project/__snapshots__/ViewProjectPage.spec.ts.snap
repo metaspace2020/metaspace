@@ -525,8 +525,7 @@ exports[`ViewProjectPage publishing tab should match snapshot (published) 1`] = 
         <!---->
         <div role="tabpanel" id="pane-publishing" aria-labelledby="tab-publishing" class="el-tab-pane tab-with-badge sm-publishing-tab">
           <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
-            <div class="leading-6 text-center mt-12">
-              <!---->
+            <div class="leading-6 text-center mt-12"><svg data-icon="globe" class="sm-colour-icon sm-colour-icon--large mx-auto"></svg>
               <h2 class="leading-12 m-0">Project is published</h2>
               <p class="m-0">The project and its datasets are now public.<br>Thank you for your contribution.</p>
             </div>

@@ -117,7 +117,8 @@ exports[`AnnotationTable should match snapshot 1`] = `
                     </div>
                   </div>
                   <div slot-key="reference">
-                    <div class="cell-wrapper"><span class="sf cell-span">[C<sub>19</sub>H<sub>18</sub>N<sub>2</sub>O<sub>7</sub>S<sub>2</sub> - H]⁺</span> <img src="../../assets/filter-icon.png" title="Limit results to this molecular formula"></div>
+                    <div class="cell-wrapper"><span class="sf cell-span">[C<sub>19</sub>H<sub>18</sub>N<sub>2</sub>O<sub>7</sub>S<sub>2</sub> - H]⁺</span>
+                      <!----> <img src="../../assets/filter-icon.png" title="Limit results to this molecular formula"></div>
                   </div>
                 </mock-el-popover>
               </div>

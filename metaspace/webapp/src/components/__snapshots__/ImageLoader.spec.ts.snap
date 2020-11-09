@@ -13,7 +13,7 @@ exports[`ImageLoader should match snapshot (minimal) 1`] = `
     >
       <img
         class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
-        src="{\\"url\\":\\"http://placebacon.com/200/300\\"}"
+        src="[{\\"url\\":\\"http://placebacon.com/200/300\\"}]"
       />
       <div />
     </div>
@@ -34,7 +34,7 @@ exports[`ImageLoader should match snapshot (with everything turned on) 1`] = `
     >
       <img
         class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
-        src="{\\"url\\":\\"http://placebacon.com/200/300\\"}"
+        src="[{\\"url\\":\\"http://placebacon.com/200/300\\"}]"
       />
       <div>
         <img
@@ -49,16 +49,26 @@ exports[`ImageLoader should match snapshot (with everything turned on) 1`] = `
     </div>
     <div>
       <mock-el-tooltip
-        content="9.65e+3"
         manual="true"
         placement="top"
         popper-class="pointer-events-none"
         value="true"
       >
         <div
-          class="absolute block border-solid border-red z-30 pointer-events-none"
-          style="left: 47.5px; top: 47.5px; width: 0.5px; height: 0.5px;"
-        />
+          slot-key="content"
+        >
+          <span>
+            9.6e+3
+          </span>
+        </div>
+        <div
+          slot-key="default"
+        >
+          <div
+            class="absolute block border-solid z-30 pointer-events-none box-border"
+            style="left: 47.5px; top: 47.5px; width: 0.5px; height: 0.5px;"
+          />
+        </div>
       </mock-el-tooltip>
     </div>
     <div

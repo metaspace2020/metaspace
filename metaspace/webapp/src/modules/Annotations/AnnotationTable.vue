@@ -125,6 +125,15 @@
                 class="sf cell-span"
                 v-html="renderMolFormulaHtml(props.row.ion)"
               />
+              <span
+                v-if="props.row.id in channelSwatches"
+                class="flex"
+              >
+                <i
+                  class="block mt-1 w-3 h-3 mx-1 box-content border border-solid border-gray-400 rounded-full"
+                  :style="{ background: channelSwatches[props.row.id] }"
+                />
+              </span>
               <img
                 v-if="!filter.compoundName"
                 src="../../assets/filter-icon.png"
@@ -289,6 +298,9 @@ import FileSaver from 'file-saver'
 import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../lib/formatCsvRow'
 import { invert } from 'lodash-es'
 import config from '../../lib/config'
+import { useChannelSwatches } from '../ImageViewer/ionImageState'
+
+const channelSwatches = useChannelSwatches()
 
 // 38 = up, 40 = down, 74 = j, 75 = k
 const KEY_TO_ACTION = {
@@ -337,6 +349,10 @@ export default Vue.extend({
     }
   },
   computed: {
+    channelSwatches() {
+      return channelSwatches.value
+    },
+
     isLoading() {
       return this.$store.state.tableIsLoading
     },
