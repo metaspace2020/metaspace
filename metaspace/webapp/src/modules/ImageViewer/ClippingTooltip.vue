@@ -6,6 +6,7 @@
     <span
       class="font-medium text-red-700"
       :class="{ 'cursor-pointer': !disabled }"
+      @click="$emit('click')"
     >
       {{ clippedIntensity }}
     </span>

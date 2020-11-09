@@ -33,6 +33,8 @@ export interface IonImageIntensity {
   highQuantile: number
   isMinClipped: boolean
   isMaxClipped: boolean
+  isMinLocked: boolean
+  isMaxLocked: boolean
 }
 
 export interface ColorBar {
@@ -162,12 +164,9 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
   )
 
   const userIntensities = computed(() => {
-    const [lockedMin, lockedMax] = lockedIntensities.value
     const { minIntensity, maxIntensity } = activeState.value
-    return [
-      lockedMin ?? minIntensity,
-      lockedMax ?? maxIntensity,
-    ] as [number, number]
+    const [min = minIntensity, max = maxIntensity] = lockedIntensities.value
+    return [min, max] as [number, number]
   })
 
   const image = computed(() => {
