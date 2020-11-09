@@ -58,15 +58,18 @@ from lithops import function_executor
 lithops_config = SMConfig.get_conf()['lithops']
 
 
-def allocate_500mb():
-    b = bytearray(500 * 1024 * 1024)
-    for i in range(len(b)):
-        b[i] = 1  # Touch the memory to ensure it's actually allocated
+def allocate_gbs(n):
+    bs = []
+    for i in range(n):
+        b = bytearray(1024 * 1024 * 1024)
+        for i in range(0, len(b), 4096):
+            b[i] = 1  # Touch the memory to ensure it's actually allocated
+        bs.append(b)
 
 
-executor = function_executor(config=lithops_config, runtime_memory=128)
+# executor = function_executor(config=lithops_config, runtime_memory=128)
 
-fs = executor.call_async(allocate_500mb, (), runtime_memory=1024)
+fs = executor.map(allocate_gbs, [(10,) for i in range(3)], runtime_memory=32768)
 executor.get_result(fs)
 
 #%%

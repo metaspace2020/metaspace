@@ -4,8 +4,9 @@ import logging
 from collections import defaultdict
 from concurrent.futures.thread import ThreadPoolExecutor
 from pathlib import Path
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Union
 
+import boto3
 import pandas as pd
 from lithops.storage import Storage
 from lithops.storage.utils import StorageNoSuchKeyError, CloudObject
@@ -13,6 +14,7 @@ from lithops.storage.utils import StorageNoSuchKeyError, CloudObject
 from sm.engine import molecular_db
 from sm.engine.annotation.formula_validator import METRICS
 from sm.engine.annotation.job import del_jobs, insert_running_job, update_finished_job, JobStatus
+from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, iter_cobjs_with_prefetch
 from sm.engine.annotation_lithops.pipeline import Pipeline
 from sm.engine.annotation_lithops.utils import jsonhash
@@ -23,32 +25,83 @@ from sm.engine.ds_config import DSConfig
 from sm.engine.es_export import ESExporter
 from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.isocalc_wrapper import IsocalcWrapper
-from sm.engine.util import SMConfig
+from sm.engine.molecular_db import read_moldb_file
+from sm.engine.util import SMConfig, split_s3_path, split_cos_path
 
 logger = logging.getLogger('engine')
 
 
-def _upload_if_not_exists(src_path, storage, sm_storage, storage_type):
+def _choose_cos_location(src_path, sm_storage, storage_type):
+    """Maps the provided COS/S3/local filesystem path to an appropriate bucket & key in COS"""
     bucket, prefix = sm_storage[storage_type]
+    src_path = str(src_path)
     if src_path.startswith('cos://'):
-        src_bucket, src_key = src_path.removeprefix('cos://').split('/', maxsplit=1)
-        storage.head_object(src_bucket, src_key)
-        logger.debug(f'{src_path} already uploaded')
-        return CloudObject(storage.backend, src_bucket, src_key)
+        # Already in COS - no need to translate path
+        return split_cos_path(src_path)
     elif src_path.startswith('s3a://'):
+        # Ignore the bucket and take the key
+        _, suffix = split_s3_path(src_path)
     else:
+        # Ignore the directory and take the filename
         suffix = Path(src_path).name
 
-    key = f'{prefix}/{suffix}'.removeprefix('/')
+    key = f'{prefix}/{suffix}' if prefix else suffix
+    return bucket, key
+
+
+def _upload_if_needed(src_path, storage, sm_storage, storage_type, s3_client=None):
+    """
+    Uploads the object from `src_path` if it doesn't already exist in its translated COS path.
+    Returns a CloudObject for the COS object
+    """
+    bucket, key = _choose_cos_location(src_path, sm_storage, storage_type)
+
     try:
         storage.head_object(bucket, key)
-        logger.debug(f'{suffix} already uploaded')
+        logger.debug(f'{src_path} already uploaded')
         return CloudObject(storage.backend, bucket, key)
     except StorageNoSuchKeyError:
-        logger.info(f'Uploading {suffix}...')
-        cobject = storage.put_cobject(open(src_path, 'rb'), bucket, key)
-        logger.info(f'Uploading {suffix}...Done')
+        logger.info(f'Uploading {src_path}...')
+        if src_path.startswith('s3a://'):
+            assert s3_client, 'S3 client must be supplied to support s3a:// paths'
+            src_bucket, src_key = split_s3_path(src_path)
+
+            obj = s3_client.get_object(Bucket=src_bucket, Key=src_key)
+            if hasattr(storage.get_client(), 'upload_fileobj'):
+                # Try streaming upload to IBM COS
+                storage.get_client().upload_fileobj(Fileobj=obj['Body'], Bucket=bucket, Key=key)
+                cobject = CloudObject(storage.backend, bucket, key)
+            else:
+                # Fall back to buffering the entire object in memory for other backends
+                cobject = storage.put_cobject(obj['Body'].read(), bucket, key)
+        else:
+            cobject = storage.put_cobject(open(src_path, 'rb'), bucket, key)
+        logger.info(f'Uploading {src_path}...Done')
         return cobject
+
+
+def _upload_imzmls_from_prefix_if_needed(src_path, storage, sm_storage, s3_client=None):
+    if src_path.startswith('cos://'):
+        bucket, prefix = src_path[len('cos://') :].split('/', maxsplit=1)
+        keys = storage.list_keys(bucket, prefix)
+    elif src_path.startswith('s3a://'):
+        bucket, prefix = split_s3_path(src_path)
+        response = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
+        if 'Contents' in response:
+            keys = [item['Key'] for item in response['Contents']]
+        else:
+            keys = []
+    else:
+        keys = [str(p) for p in Path(src_path).iterdir()]
+
+    imzml_keys = [key for key in keys if key.lower().endswith('.imzml')]
+    ibd_keys = [key for key in keys if key.lower().endswith('.ibd')]
+    assert len(imzml_keys) == 1, imzml_keys
+    assert len(ibd_keys) == 1, ibd_keys
+    imzml_cobj = _upload_if_needed(imzml_keys[0], storage, sm_storage, 'imzml', s3_client)
+    ibd_cobj = _upload_if_needed(ibd_keys[0], storage, sm_storage, 'imzml', s3_client)
+
+    return imzml_cobj, ibd_cobj
 
 
 def _upload_moldbs_from_db(moldb_ids, storage, sm_storage):
@@ -76,12 +129,40 @@ def _upload_moldbs_from_db(moldb_ids, storage, sm_storage):
     return moldb_defs
 
 
+def _upload_moldbs_from_files(file_paths, storage, sm_storage):
+    moldb_defs = []
+    for i, file_path in enumerate(file_paths):
+        bucket, raw_key = _choose_cos_location(file_path, sm_storage, 'moldb')
+        key = raw_key + '_formulas'
+        try:
+            storage.head_object(bucket, key)
+            logger.debug(f'Found mol db at {key}')
+            cobject = CloudObject(storage.backend, bucket, key)
+        except StorageNoSuchKeyError:
+            logger.info(f'Uploading {key}...')
+            mols = read_moldb_file(file_path).formula
+            cobject = save_cobj(storage, mols, bucket=bucket, key=key)
+            logger.info(f'Uploading {key}...Done')
+        moldb_defs.append({'id': Path(file_path).stem, 'cobj': cobject, 'targeted': False})
+
+    return moldb_defs
+
+
 class LocalAnnotationJob:
+    """
+    Runs an annotation job from local files and saves the results to the filesystem.
+
+    As a developer convienence, if a list of integers is given for `moldb_files`,
+    then it will try to connect to the configured postgres database and dump the formulas
+    for the specified databases.
+    Otherwise, this can be used to run the pipeline without any external dependencies.
+    """
+
     def __init__(
         self,
         imzml_file: str,
         ibd_file: str,
-        moldb_ids: List[int],
+        moldb_files: Union[List[int], List[str]],
         ds_config: DSConfig,
         sm_config: Optional[Dict] = None,
         use_cache=True,
@@ -93,14 +174,17 @@ class LocalAnnotationJob:
         )
         sm_storage = sm_config['lithops']['sm_storage']
 
-        self.imzml_cobj = _upload_if_not_exists(imzml_file, self.storage, sm_storage, 'imzml')
-        self.ibd_cobj = _upload_if_not_exists(ibd_file, self.storage, sm_storage, 'imzml')
-        self.moldb_defs = _upload_moldbs_from_db(moldb_ids, self.storage, sm_storage)
+        self.imzml_cobj = _upload_if_needed(imzml_file, self.storage, sm_storage, 'imzml')
+        self.ibd_cobj = _upload_if_needed(ibd_file, self.storage, sm_storage, 'imzml')
+        if isinstance(moldb_files[0], int):
+            self.moldb_defs = _upload_moldbs_from_db(moldb_files, self.storage, sm_storage)
+        else:
+            self.moldb_defs = _upload_moldbs_from_db(moldb_files, self.storage, sm_storage)
         self.ds_config = ds_config
 
         if use_cache:
             cache_key: Optional[str] = jsonhash(
-                {'imzml': imzml_file, 'ibd': ibd_file, 'dbs': moldb_ids, 'ds': ds_config}
+                {'imzml': imzml_file, 'ibd': ibd_file, 'dbs': moldb_files, 'ds': ds_config}
             )
         else:
             cache_key = None
@@ -132,24 +216,37 @@ class LocalAnnotationJob:
 
 
 class ServerAnnotationJob:
+    """
+    Runs an annotation job for a dataset in the database, saving the results back to the database
+    and image store.
+    """
+
     def __init__(
         self,
+        executor: Executor,
         img_store: ImageStoreServiceWrapper,
         ds: Dataset,
         sm_config: Optional[Dict] = None,
         use_cache=True,
     ):
         sm_config = sm_config or SMConfig.get_conf()
+        self.sm_storage = sm_config['lithops']['sm_storage']
         self.storage = Storage(
             lithops_config=sm_config['lithops'],
             storage_backend=sm_config['lithops']['lithops']['storage_backend'],
         )
-        self.sm_storage = sm_config['lithops']['sm_storage']
+        self.s3_client = boto3.client(
+            's3',
+            aws_access_key_id=sm_config['aws']['aws_access_key_id'],
+            aws_secret_access_key=sm_config['aws']['aws_secret_access_key'],
+        )
         self.ds = ds
         self.img_store = img_store
         self.db = DB()
         self.es = ESExporter(self.db, sm_config)
-        self.imzml_cobj, self.ibd_cobj = self._get_input_cobjects()
+        self.imzml_cobj, self.ibd_cobj = _upload_imzmls_from_prefix_if_needed(
+            self.ds.input_path, self.storage, self.sm_storage, self.s3_client
+        )
         self.moldb_defs = _upload_moldbs_from_db(
             self.ds.config['database_ids'], self.storage, self.sm_storage
         )
@@ -160,33 +257,13 @@ class ServerAnnotationJob:
             cache_key = None
 
         self.pipe = Pipeline(
-            self.imzml_cobj, self.ibd_cobj, self.moldb_defs, self.ds.config, cache_key=cache_key
+            self.imzml_cobj,
+            self.ibd_cobj,
+            self.moldb_defs,
+            self.ds.config,
+            cache_key=cache_key,
+            executor=executor,
         )
-
-    def _get_input_cobjects(self):
-
-        if self.ds.input_path.startswith('/'):
-            files = list(Path(self.ds.input_path).iterdir())
-            imzml_files = [path for path in files if path.name.lower().endswith('.imzml')]
-            ibd_files = [path for path in files if path.name.lower().endswith('.ibd')]
-            assert len(imzml_files) == 1, imzml_files
-            assert len(ibd_files) == 1, ibd_files
-            imzml_cobj = _upload_if_not_exists(
-                imzml_files[0], self.storage, self.sm_storage, 'imzml'
-            )
-            ibd_cobj = _upload_if_not_exists(ibd_files[0], self.storage, self.sm_storage, 'imzml')
-        else:
-            assert self.ds.input_path.startswith('cos://')
-            bucket, prefix = self.ds.input_path.removeprefix('cos://').split('/', maxsplit=1)
-            keys = self.storage.list_keys(bucket, prefix)
-            imzml_keys = [key for key in keys if key.lower().endswith('.imzml')]
-            ibd_keys = [key for key in keys if key.lower().endswith('.ibd')]
-            assert len(imzml_keys) == 1, imzml_keys
-            assert len(ibd_keys) == 1, ibd_keys
-            imzml_cobj = CloudObject(self.storage.backend, bucket, imzml_keys[0])
-            ibd_cobj = CloudObject(self.storage.backend, bucket, ibd_keys[0])
-
-        return imzml_cobj, ibd_cobj
 
     def _store_images(self, all_results_dfs, formula_png_iter):
         db_formula_image_ids = defaultdict(dict)

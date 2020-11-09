@@ -10,6 +10,8 @@ import redis
 from requests import post
 
 from sm.engine.annotation.job import del_jobs
+from sm.engine.annotation_lithops.annotation_job import ServerAnnotationJob
+from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.colocalization import Colocalization
 from sm.engine.daemon_action import DaemonAction, DaemonActionStage
 from sm.engine.dataset import Dataset, DatasetStatus
@@ -95,6 +97,17 @@ class DatasetManager:
         Colocalization(self._db, self._img_store).run_coloc_job(ds.id, reprocess=del_first)
         generate_ion_thumbnail(
             db=self._db, img_store=self._img_store, ds_id=ds.id, only_if_needed=not del_first
+        )
+
+    def annotate_lithops(self, ds, del_first=False):
+        if del_first:
+            self.logger.warning(f'Deleting all results for dataset: {ds.id}')
+            del_jobs(ds)
+        ds.save(self._db, self._es)
+        executor = Executor(self._sm_config['lithops'])
+        ServerAnnotationJob(executor, self._img_store, ds).run()
+        Colocalization(self._db, self._img_store).run_coloc_job_lithops(
+            executor, ds.id, reprocess=del_first
         )
 
     def index(self, ds: Dataset):

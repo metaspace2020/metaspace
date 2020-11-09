@@ -4,7 +4,7 @@ import logging
 import signal
 from functools import partial
 
-from sm.engine.daemons.lithops_annotate import LithopsDaemon
+from sm.engine.daemons.lithops import LithopsDaemon
 from sm.engine.db import DB, ConnectionPool
 from sm.engine.es_export import ESExporter
 from sm.engine.image_store import ImageStoreServiceWrapper

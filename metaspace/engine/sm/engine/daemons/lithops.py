@@ -34,7 +34,6 @@ class LithopsDaemon:
 
     def _on_success(self, msg):
         self.logger.info(f" SM lithops daemon: success")
-
         self._manager.post_to_slack('dart', ' [v] Annotation succeeded: {}'.format(json.dumps(msg)))
 
     def _on_failure(self, msg, e):
@@ -55,9 +54,7 @@ class LithopsDaemon:
             self._manager.set_ds_status(ds, DatasetStatus.ANNOTATING)
             self._manager.notify_update(ds.id, msg['action'], DaemonActionStage.STARTED)
 
-            img_store = ImageStoreServiceWrapper(self._sm_config['services']['img_service_url'])
-            job = ServerAnnotationJob(img_store, ds)
-            self._manager.annotate(ds=ds, del_first=msg.get('del_first', False))
+            self._manager.annotate_lithops(ds=ds, del_first=msg.get('del_first', False))
 
             update_msg = {
                 'ds_id': msg['ds_id'],

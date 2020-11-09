@@ -2,6 +2,7 @@ import argparse
 import logging
 from functools import partial
 
+from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.colocalization import Colocalization
 from sm.engine.db import DB
 from sm.engine.util import bootstrap_and_run
@@ -69,8 +70,9 @@ ORDER BY j.ds_id DESC;
 """
 
 
-# pylint: disable=unused-argument
-def run_coloc_jobs(sm_config, ds_id_str, sql_where, fix_missing, fix_corrupt, skip_existing):
+def run_coloc_jobs(
+    sm_config, ds_id_str, sql_where, fix_missing, fix_corrupt, skip_existing, lithops
+):
     assert (
         len(
             [
@@ -122,11 +124,18 @@ def run_coloc_jobs(sm_config, ds_id_str, sql_where, fix_missing, fix_corrupt, sk
         logger.warning('No datasets match filter')
         return
 
+    if lithops:
+        executor = Executor(sm_config['lithops'])
+
     for i, ds_id in enumerate(ds_ids):
         try:
             logger.info(f'Running colocalization on {i+1} out of {len(ds_ids)}')
             coloc = Colocalization(db)
-            coloc.run_coloc_job(ds_id, reprocess=not skip_existing)
+            if lithops:
+                # noinspection PyUnboundLocalVariable
+                coloc.run_coloc_job_lithops(executor, ds_id, reprocess=not skip_existing)
+            else:
+                coloc.run_coloc_job(ds_id, reprocess=not skip_existing)
         except Exception:
             logger.error(f'Failed to run colocalization on {ds_id}', exc_info=True)
 
@@ -159,6 +168,9 @@ if __name__ == '__main__':
         action='store_true',
         help='Re-run colocalization jobs even if they have already successfully run',
     )
+    parser.add_argument(
+        '--lithops', action='store_true', help='Use Lithops implementation',
+    )
     args = parser.parse_args()
     logger = logging.getLogger('engine')
 
@@ -171,5 +183,6 @@ if __name__ == '__main__':
             fix_missing=args.fix_missing,
             fix_corrupt=args.fix_corrupt,
             skip_existing=args.skip_existing,
+            lithops=args.lithops,
         ),
     )

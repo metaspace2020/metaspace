@@ -69,6 +69,7 @@ class Pipeline:
         ibd_cobject: CloudObject,
         moldbs: List[InputMolDb],
         ds_config: DSConfig,
+        executor: Executor = None,
         lithops_config=None,
         cache_key=None,
     ):
@@ -80,7 +81,7 @@ class Pipeline:
         self.ds_config = ds_config
         self.isocalc_wrapper = IsocalcWrapper(ds_config)
 
-        self.executor = Executor(lithops_config)
+        self.executor = executor or Executor(lithops_config)
         self.storage = self.executor.storage
 
         if cache_key is not None:
