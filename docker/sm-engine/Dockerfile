@@ -22,6 +22,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         git \
         nano \
         netcat \
+        sudo \
         && \
 # ----- Spark -----
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
