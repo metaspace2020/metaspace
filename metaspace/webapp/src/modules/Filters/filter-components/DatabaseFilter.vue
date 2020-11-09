@@ -42,16 +42,23 @@
             </span>
             <span
               v-if="option.archived"
-              class="text-gray-600 text-xs font-normal uppercase tracking-wide ml-auto"
+              data-archived-badge
+              class="bg-gray-100 text-gray-700 text-xs tracking-wide font-normal my-auto ml-auto leading-6 h-6  px-3 rounded-full"
             >
               Archived
             </span>
           </el-option>
         </el-option-group>
       </el-select>
-      <FilterHelpText>
+      <filter-help-text
+        v-if="hasDatasetFilter"
+        icon="time"
+      >
+        Showing results from selected dataset{{ datasetFilter.length > 1 ? 's' : '' }}
+      </filter-help-text>
+      <filter-help-text v-else>
         Search to see archived versions
-      </FilterHelpText>
+      </filter-help-text>
     </div>
     <span
       v-if="initialized"
@@ -103,7 +110,7 @@ function mapDBtoOption(db: MolecularDB): Option {
 
 @Component({
   apollo: {
-    dbsByGroup: {
+    allDBsByGroup: {
       query: gql`query DatabaseOptions {
         allMolecularDBs {
           id
@@ -117,6 +124,43 @@ function mapDBtoOption(db: MolecularDB): Option {
         }
       }`,
       update: data => getDatabasesByGroup(data.allMolecularDBs),
+      skip() {
+        return this.hasDatasetFilter
+      },
+    },
+    datasetDBsByGroup: {
+      query: gql`query DatabaseOptionsFromDatasets($filter: DatasetFilter) {
+        allDatasets(filter: $filter) {
+          id
+          databases {
+            id
+            name
+            version
+            archived
+            group {
+              id
+              shortName
+            }
+          }
+        }
+      }`,
+      variables() {
+        return {
+          filter: { ids: this.datasetFilter?.join('|') },
+        }
+      },
+      update: data => {
+        const dbs : Record<string, MolecularDB> = {}
+        for (const { databases } of data.allDatasets) {
+          for (const db of databases) {
+            dbs[db.id] = db
+          }
+        }
+        return getDatabasesByGroup(Object.values(dbs))
+      },
+      skip() {
+        return !(this.hasDatasetFilter)
+      },
     },
   },
   components: {
@@ -128,7 +172,9 @@ export default class DatabaseFilter extends Vue {
     @Prop()
     value!: string | undefined;
 
-    dbsByGroup: any = null
+    allDBsByGroup: any = null
+    datasetDBsByGroup: any = null
+
     options: Record<string, Option> = {};
     groups: GroupOption[] | null = []
     previousQuery: string | null = null
@@ -150,8 +196,20 @@ export default class DatabaseFilter extends Vue {
       return this.value
     }
 
+    get dbsByGroup() {
+      return this.hasDatasetFilter ? this.datasetDBsByGroup : this.allDBsByGroup
+    }
+
     get initialized() {
       return this.dbsByGroup !== null && this.groups !== null
+    }
+
+    get datasetFilter() {
+      return this.$store.getters.filter.datasetIds
+    }
+
+    get hasDatasetFilter() {
+      return this.datasetFilter?.length > 0
     }
 
     @Watch('dbsByGroup')
@@ -166,7 +224,7 @@ export default class DatabaseFilter extends Vue {
         return
       }
 
-      const hideArchived = query.length === 0
+      const hideArchived = !this.hasDatasetFilter && query.length === 0
 
       try {
         const groupOptions: GroupOption[] = []
@@ -218,5 +276,9 @@ export default class DatabaseFilter extends Vue {
 <style>
   .el-select-dropdown.is-multiple .el-select-dropdown__wrap {
     max-height: 600px;
+  }
+  .el-select-dropdown__item.hover > [data-archived-badge],
+  .el-select-dropdown__item:hover > [data-archived-badge] {
+    @apply bg-gray-200
   }
 </style>

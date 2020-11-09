@@ -1,3 +1,5 @@
+import 'focus-visible'
+
 import Vue from 'vue'
 
 import config, { updateConfigFromQueryString } from './lib/config'

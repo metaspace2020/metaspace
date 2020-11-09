@@ -16,7 +16,7 @@ from sm.engine.colocalization import Colocalization
 from sm.engine.daemon_action import DaemonAction, DaemonActionStage
 from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.db import DB
-from sm.engine.errors import AnnotationError, ImzMLError, IndexUpdateError, SMError
+from sm.engine.errors import AnnotationError, ImzMLError, IndexUpdateError, SMError, UnknownDSID
 from sm.engine.es_export import ESExporter
 from sm.engine.ion_thumbnail import generate_ion_thumbnail
 from sm.engine.isocalc_wrapper import IsocalcWrapper
@@ -351,7 +351,11 @@ class SMIndexUpdateDaemon:
                 except Exception as e:  # don't fail dataset when off-sample pred fails
                     self.logger.warning(f'Failed to classify off-sample: {e}')
 
-                self._manager.index(ds=ds)
+                try:
+                    self._manager.index(ds=ds)
+                except UnknownDSID:
+                    # Sometimes the DS will have been deleted before this point
+                    self.logger.warning(f'DS missing after off-sample classification: {ds.id}')
 
             elif msg['action'] == DaemonAction.UPDATE:
                 self._manager.update(ds, msg['fields'])

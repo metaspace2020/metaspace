@@ -2,9 +2,8 @@ import Vue from 'vue'
 import { computed, defineComponent, reactive, Ref, ref, SetupContext, watch } from '@vue/composition-api'
 
 import { getOS, scrollDistance, WheelEventCompat } from '../lib/util'
-import createColormap, { OpacityMode } from '../lib/createColormap'
 import config from '../lib/config'
-import { renderIonImage } from '../lib/ionImageRendering'
+import { renderIonImages, IonImageLayer } from '../lib/ionImageRendering'
 import ScaleBar from './ScaleBar.vue'
 import { throttle } from 'lodash-es'
 import { ReferenceObject } from 'popper.js'
@@ -17,7 +16,7 @@ const formatMatrix3d = (t: readonly number[][]) =>
              ${t[0][2]}, ${t[1][2]}, 0, ${t[2][2]})`
 
 interface Props {
-  ionImage: any | null
+  ionImageLayers: IonImageLayer[]
   isLoading: boolean
   // width & height of HTML element
   width: number
@@ -31,10 +30,7 @@ interface Props {
   // xOffset=0, yOffset=0 will center the ion image.
   xOffset: number
   yOffset: number
-  colormap: string
   opticalSrc: string | null
-  annotImageOpacity: number
-  opacityMode: OpacityMode
   ionImageTransform: number[][]
   opticalTransform: number[][]
   scrollBlock: boolean
@@ -91,14 +87,14 @@ const useScrollBlock = () => {
 
 const useScaleBar = (props: Props) => {
   const xScale = computed(() => {
-    if (props.ionImage != null && props.pixelSizeX != null && props.pixelSizeX !== 0) {
+    if (props.pixelSizeX != null && props.pixelSizeX !== 0) {
       return props.pixelSizeX / props.zoom
     } else {
       return 1
     }
   })
   const yScale = computed(() => {
-    if (props.ionImage != null && props.pixelSizeY != null && props.pixelSizeY !== 0) {
+    if (props.pixelSizeY != null && props.pixelSizeY !== 0) {
       return props.pixelSizeY / props.zoom * props.pixelAspectRatio
     } else {
       return 1
@@ -120,25 +116,34 @@ const usePixelIntensityDisplay = (props: Props, imageLoaderRef: Ref<ReferenceObj
   const cursorPixelPos = ref<[number, number] | null>(null)
   const zoomX = computed(() => props.zoom)
   const zoomY = computed(() => props.zoom / props.pixelAspectRatio)
-  const cursorOverPixelIntensity = computed(() => {
-    if (props.ionImage != null && cursorPixelPos.value != null) {
+  const cursorOverLayers = computed(() => {
+    const layers = []
+    if (props.ionImageLayers.length && cursorPixelPos.value != null) {
       const [x, y] = cursorPixelPos.value
-      const { width, height, mask, intensityValues } = props.ionImage
-      if (x >= 0 && x < width
-        && y >= 0 && y < height
-        && mask[y * width + x] !== 0) {
-        return intensityValues[y * width + x]
+      for (const { ionImage, colorMap } of props.ionImageLayers) {
+        const { width, height, mask, intensityValues } = ionImage
+        if (x >= 0 && x < width
+          && y >= 0 && y < height
+          && mask[y * width + x] !== 0) {
+          const idx = y * width + x
+          const [r, g, b] = colorMap[colorMap.length - 1]
+          layers.push({
+            intensity: intensityValues[idx].toExponential(1),
+            color: props.ionImageLayers.length > 1 ? `rgb(${r},${g},${b})` : null,
+          })
+        }
       }
     }
-    return null
+    return layers
   })
   const pixelIntensityStyle = computed(() => {
     if (props.showPixelIntensity
-      && props.ionImage != null
+      && props.ionImageLayers.length
       && cursorPixelPos.value != null
-      && cursorOverPixelIntensity.value != null) {
-      const baseX = props.width / 2 + (props.xOffset - props.ionImage.width / 2) * zoomX.value
-      const baseY = props.height / 2 + (props.yOffset - props.ionImage.height / 2) * zoomY.value
+      && cursorOverLayers.value.length) {
+      const { width, height } = props.ionImageLayers[0].ionImage
+      const baseX = props.width / 2 + (props.xOffset - width / 2) * zoomX.value
+      const baseY = props.height / 2 + (props.yOffset - height / 2) * zoomY.value
       const [cursorX, cursorY] = cursorPixelPos.value
       return {
         left: (baseX + cursorX * zoomX.value - 0.5) + 'px',
@@ -163,9 +168,9 @@ const usePixelIntensityDisplay = (props: Props, imageLoaderRef: Ref<ReferenceObj
   })
 
   const movePixelIntensity = (clientX: number | null, clientY: number | null) => {
-    if (imageLoaderRef.value != null && props.ionImage != null && clientX != null && clientY != null) {
+    if (imageLoaderRef.value != null && props.ionImageLayers.length && clientX != null && clientY != null) {
       const rect = imageLoaderRef.value.getBoundingClientRect()
-      const { width = 0, height = 0 } = props.ionImage
+      const { width = 0, height = 0 } = props.ionImageLayers[0].ionImage
       // Includes a 2px offset up and left so that the selected pixel is less obscured by the mouse cursor
       const x = Math.floor((clientX - (rect.left + rect.right) / 2 - 2)
         / zoomX.value - props.xOffset + width / 2)
@@ -184,13 +189,25 @@ const usePixelIntensityDisplay = (props: Props, imageLoaderRef: Ref<ReferenceObj
         ref="pixelIntensityTooltip"
         manual={true}
         value={true}
-        content={(cursorOverPixelIntensity.value || 0).toExponential(2)}
         popper-class="pointer-events-none"
         placement="top"
       >
+        {cursorOverLayers.value?.length > 1
+          ? <ul slot="content" class="list-none p-0 m-0">
+            {cursorOverLayers.value?.map(({ intensity, color }) =>
+              <li class="flex leading-5 items-center">
+                { color && <i
+                  class="w-3 h-3 border border-solid border-gray-400 box-border mr-1 rounded-full"
+                  style={{ background: color }}
+                /> }
+                {intensity}
+              </li>
+            )}
+          </ul>
+          : <span slot="content">{cursorOverLayers.value?.[0].intensity}</span>}
         <div
           style={pixelIntensityStyle.value}
-          class="absolute block border-solid border-red z-30 pointer-events-none"
+          class="absolute block border-solid z-30 pointer-events-none box-border"
         />
       </el-tooltip>
     </div>
@@ -217,8 +234,9 @@ const usePanAndZoom = (
   const viewBoxStyle = computed(() => {
     const isLCMS = false
     if (!isLCMS) {
-      const ionImageWidth = (props.ionImage != null ? props.ionImage.width : props.width)
-      const ionImageHeight = (props.ionImage != null ? props.ionImage.height : props.height)
+      const { ionImage } = props.ionImageLayers[0] || {}
+      const ionImageWidth = (ionImage ? ionImage.width : props.width)
+      const ionImageHeight = (ionImage ? ionImage.height : props.height)
       const x = props.width / 2 + (props.xOffset - ionImageWidth / 2) * zoomX.value
       const y = props.height / 2 + (props.yOffset - ionImageHeight / 2) * zoomY.value
       return {
@@ -311,8 +329,7 @@ const useBufferedOpticalImage = (props: Props) => {
   // Always test against IE11 when touching this code - IE11's @load event doesn't always fire on img elements.
   const renderOpticalImage = () => (
     <div>
-      {props.ionImage
-      && opticalImageUrl.value
+      {opticalImageUrl.value
       && <img
         key={state.loadedOpticalImageUrl}
         src={state.loadedOpticalImageUrl}
@@ -320,8 +337,7 @@ const useBufferedOpticalImage = (props: Props) => {
         style={state.loadedOpticalImageStyle}
       />}
 
-      {props.ionImage
-      && opticalImageUrl.value
+      {opticalImageUrl.value
       && state.loadedOpticalImageUrl !== opticalImageUrl.value
       && <img
         key={opticalImageUrl.value}
@@ -335,9 +351,8 @@ const useBufferedOpticalImage = (props: Props) => {
 }
 
 const useIonImageView = (props: Props) => {
-  const cmap = computed(() => createColormap(props.colormap, props.opacityMode, props.annotImageOpacity))
-  const ionImageDataUri = computed(() => props.ionImage && renderIonImage(props.ionImage, cmap.value))
-  const renderIonImageView = () => (props.ionImage
+  const ionImageDataUri = computed(() => props.ionImageLayers && renderIonImages(props.ionImageLayers))
+  const renderIonImageView = () => (props.ionImageLayers
     && <img
       src={ionImageDataUri.value}
       class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
@@ -350,7 +365,7 @@ const useIonImageView = (props: Props) => {
 
 export default defineComponent<Props>({
   props: {
-    ionImage: Object,
+    ionImageLayers: Array,
     isLoading: { type: Boolean, default: false },
     // width & height of HTML element
     width: { type: Number, required: true },
@@ -364,10 +379,7 @@ export default defineComponent<Props>({
     // xOffset=0, yOffset=0 will center the ion image.
     xOffset: { type: Number, required: true },
     yOffset: { type: Number, required: true },
-    colormap: { type: String, default: 'Viridis' },
     opticalSrc: { type: String, default: null },
-    annotImageOpacity: { type: Number, default: 0.5 },
-    opacityMode: { type: String, default: 'constant' },
 
     // 3x3 matrix mapping ion-image pixel coordinates into new ion-image pixel coordinates independent from
     // zoom/offset props, e.g. This ionImageTransform:

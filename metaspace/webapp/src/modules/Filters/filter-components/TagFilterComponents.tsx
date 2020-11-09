@@ -33,10 +33,13 @@ export const TagFilterRemove = defineComponent({
 })
 
 export const FilterHelpText = defineComponent({
-  setup(_, { slots }) {
+  props: {
+    icon: { type: String, default: 'info' },
+  },
+  setup(props, { slots }) {
     return () => (
-      <p class="leading-5 text-sm m-0 mt-2 text-gray-700">
-        <i class="el-icon-info text-gray-600 mr-1" />
+      <p class="leading-5 text-sm m-0 mt-3 text-gray-700">
+        <i class={['text-gray-600 mr-1', `el-icon-${props.icon}`]} />
         {slots.default()}
       </p>
     )

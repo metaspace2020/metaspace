@@ -1,0 +1,188 @@
+<template>
+  <slider-track
+    ref="track"
+    :disabled="disabled"
+    @click="onTrackClick"
+    @mousedown="lockTrackClick = false"
+    @keypress="lockTrackClick = false; onTrackClick()"
+  >
+    <slider-thumb
+      :style="minStyle"
+      :disabled="disabled"
+      :x="minThumb.x.value"
+      :bounds="minBounds"
+      @change="onMinChange"
+      @increment="onMinIncrement"
+      @decrement="onMinDecrement"
+      @thumb-start="onThumbStart"
+      @thumb-stop="onThumbStop"
+    />
+    <span
+      class="-ml-1"
+      :style="minPosition"
+    >
+      {{ minTooltip }}
+    </span>
+    <slider-thumb
+      :style="maxStyle"
+      :disabled="disabled"
+      :x="maxThumb.x.value"
+      :bounds="maxBounds"
+      @change="onMaxChange"
+      @increment="onMaxIncrement"
+      @decrement="onMaxDecrement"
+      @thumb-start="onThumbStart"
+      @thumb-stop="onThumbStop"
+    />
+    <span
+      class="-mr-1"
+      :style="maxPosition"
+    >
+      {{ maxTooltip }}
+    </span>
+  </slider-track>
+</template>
+<script lang="ts">
+import Vue from 'vue'
+import { defineComponent, ref, Ref, reactive, computed } from '@vue/composition-api'
+import { throttle } from 'lodash-es'
+
+import SliderTrack from './SliderTrack.vue'
+import SliderThumb from './SliderThumb.vue'
+import useSliderThumb, { SliderThumbInstance } from './useSliderThumb'
+import { THUMB_WIDTH } from './constants'
+
+interface Props {
+  min: number
+  max: number
+  value: [ number, number ]
+  step: number
+  disabled: boolean
+  minTooltip: string
+  maxTooltip: string
+  minColor: string
+  maxColor: string
+}
+
+const Slider = defineComponent<Props>({
+  components: {
+    SliderThumb,
+    SliderTrack,
+  },
+  props: {
+    min: { type: Number, default: 0 },
+    max: { type: Number, default: 100 },
+    value: Array,
+    step: { type: Number, default: 1 },
+    disabled: Boolean,
+    minTooltip: String,
+    maxTooltip: String,
+    minColor: String,
+    maxColor: String,
+  },
+  setup(props, { emit, attrs }) {
+    const track = ref<Vue>(null)
+
+    const width = computed(() => {
+      return track.value?.$el.clientWidth || 0
+    })
+
+    const getMinProps = () => ({
+      value: props.value[0],
+      min: props.min,
+      max: props.max,
+      step: props.step,
+    })
+
+    const minRange = computed(() => ({
+      minX: 0,
+      maxX: width.value ? width.value - (THUMB_WIDTH * 2) : 0,
+    }))
+
+    const minThumb = useSliderThumb(getMinProps, minRange)
+
+    const getMaxProps = () => ({
+      value: props.value[1],
+      min: props.min,
+      max: props.max,
+      step: props.step,
+    })
+
+    const maxRange = computed(() => ({
+      minX: THUMB_WIDTH,
+      maxX: width.value ? width.value - THUMB_WIDTH : 0,
+    }))
+
+    const maxThumb = useSliderThumb(getMaxProps, maxRange)
+
+    const minPosition = computed(() => ({ left: `${minThumb.x.value}px` }))
+    const maxPosition = computed(() => {
+      if (!width.value) return { right: '0px' }
+      return { right: `${width.value - maxThumb.x.value - THUMB_WIDTH}px` }
+    })
+
+    const emitMinChange = (value: number) => emit('change', [value, props.value[1]])
+    const emitMaxChange = (value: number) => emit('change', [props.value[0], value])
+
+    const lockTrackClick = ref(false)
+
+    return {
+      lockTrackClick,
+      track,
+      minThumb,
+      maxThumb,
+      minBounds: computed(() => ({
+        minX: 0,
+        maxX: maxThumb.x.value - THUMB_WIDTH,
+      })),
+      maxBounds: computed(() => ({
+        minX: minThumb.x.value + THUMB_WIDTH,
+        maxX: width.value ? width.value - THUMB_WIDTH : 0,
+      })),
+      onMinChange: (x: number) => emitMinChange(minThumb.getValue(x)),
+      onMinIncrement: (factor: number) => emitMinChange(minThumb.increment(factor)),
+      onMinDecrement: (factor: number) => emitMinChange(minThumb.decrement(factor)),
+      onMaxChange: (x: number) => emitMaxChange(maxThumb.getValue(x)),
+      onMaxIncrement: (factor: number) => emitMaxChange(maxThumb.increment(factor)),
+      onMaxDecrement: (factor: number) => emitMaxChange(maxThumb.decrement(factor)),
+      minPosition,
+      maxPosition,
+      width,
+      minStyle: computed(() => ({ backgroundColor: props.minColor })),
+      maxStyle: computed(() => ({ backgroundColor: props.maxColor })),
+      onThumbStart() {
+        lockTrackClick.value = true
+        emit('thumb-start')
+      },
+      onThumbStop() {
+        emit('thumb-stop')
+      },
+      onTrackClick() {
+        if (!lockTrackClick.value) {
+          emit('track-click')
+        }
+      },
+    }
+  },
+})
+
+export default Slider
+</script>
+<style scoped>
+  span {
+    @apply absolute p-1 mb-1 text-xs tracking-wide shadow-sm rounded-sm leading-none bg-white;
+    @apply transition-opacity duration-300 ease-in-out pointer-events-none;
+    bottom: 100%;
+    visiblity: hidden;
+    opacity: 0;
+  }
+  div:hover + span,
+  div:focus + span,
+  span:focus-within {
+    visibility: visible;
+    opacity: 1;
+  }
+  div:hover + span {
+    z-index: 1;
+  }
+</style>

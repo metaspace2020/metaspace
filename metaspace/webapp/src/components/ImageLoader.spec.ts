@@ -44,7 +44,9 @@ describe('ImageLoader', () => {
     mask: new Uint8ClampedArray(new Array(W * H).fill(255)),
     intensityValues: new Float32Array(range(W * H)),
   } as any))
-  mockIonImageRendering.renderIonImage.mockImplementation((ionImage: any) => JSON.stringify(ionImage.png))
+  mockIonImageRendering.renderIonImages.mockImplementation(
+    (layers: any) => JSON.stringify(layers.map((_: any) => _.ionImage.png)),
+  )
 
   beforeEach(() => {
     // Set HTMLElements to have non-zero dimensions
