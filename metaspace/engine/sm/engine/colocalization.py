@@ -443,7 +443,7 @@ class Colocalization:
             self._db.alter(COLOC_JOB_DEL, [ds_id, moldb_id])
 
             if len(ion_ids) > 2:
-                tasks.append((moldb_id, ion_ids, fdrs, image_ids))
+                tasks.append((moldb_id, ion_ids, fdrs, image_ids, image_storage_type))
             else:
                 logger.debug('Not enough annotations to perform colocalization')
 

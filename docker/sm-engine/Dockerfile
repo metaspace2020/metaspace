@@ -3,7 +3,8 @@ FROM ubuntu:18.04
 MAINTAINER Vitaly Kovalev <kovalev@embl.de>
 WORKDIR /
 
-ENV SPARK_DIR spark-2.3.3-bin-hadoop2.7
+ENV SPARK_VER 3.0.1
+ENV SPARK_DIR spark-$SPARK_VER-bin-hadoop2.7
 ENV SPARK_HOME /$SPARK_DIR
 ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
 
@@ -27,7 +28,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
 # ----- Spark -----
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
         openjdk-8-jre-headless ca-certificates-java wget && \
-    wget -qO - http://s3-eu-west-1.amazonaws.com/sm-engine/dev/$SPARK_DIR.tar.gz | tar xz && \
+    wget -qO - https://archive.apache.org/dist/spark/spark-$SPARK_VER/$SPARK_DIR.tgz | tar xz && \
 # ----- Python and Pip -----
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
         software-properties-common && \
