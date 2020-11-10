@@ -87,7 +87,7 @@ const state = reactive<State>({
 const settings = reactive<Settings>({
   lockMin: '',
   lockMax: '',
-  isLockActive: false,
+  isLockActive: true,
 })
 const ionImageLayerCache : Record<string, IonImageLayer> = {}
 const rawImageCache : Record<string, Ref<Image | null>> = {}
@@ -265,7 +265,7 @@ export function resetIonImageState() {
 
   settings.lockMin = ''
   settings.lockMax = ''
-  settings.isLockActive = false
+  settings.isLockActive = true
 }
 
 export const useIonImages = (props: Props) => {

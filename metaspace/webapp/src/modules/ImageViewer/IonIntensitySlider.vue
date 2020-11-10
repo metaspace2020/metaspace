@@ -31,6 +31,7 @@
         clipping-type="outlier-min"
         label="Minimum intensity"
         placeholder="min."
+        @lock="intesity => { settings.lockMin = intensity }"
       />
       <ion-intensity
         v-model="model.maxIntensity"
@@ -40,6 +41,7 @@
         :clipping-type="minStatus === 'CLIPPED' ? 'outlier-max' : 'hotspot-removal'"
         label="Maximum intensity"
         placeholder="max."
+        @lock="intensity => { settings.lockMax = intensity }"
       />
     </div>
   </div>
