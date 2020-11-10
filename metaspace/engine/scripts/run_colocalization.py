@@ -4,6 +4,7 @@ from functools import partial
 
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.colocalization import Colocalization
+from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.util import bootstrap_and_run
 
@@ -130,12 +131,13 @@ def run_coloc_jobs(
     for i, ds_id in enumerate(ds_ids):
         try:
             logger.info(f'Running colocalization on {i+1} out of {len(ds_ids)}')
+            ds = Dataset.load(db, ds_id)
             coloc = Colocalization(db)
             if lithops:
                 # noinspection PyUnboundLocalVariable
-                coloc.run_coloc_job_lithops(executor, ds_id, reprocess=not skip_existing)
+                coloc.run_coloc_job_lithops(executor, ds, reprocess=not skip_existing)
             else:
-                coloc.run_coloc_job(ds_id, reprocess=not skip_existing)
+                coloc.run_coloc_job(ds, reprocess=not skip_existing)
         except Exception:
             logger.error(f'Failed to run colocalization on {ds_id}', exc_info=True)
 

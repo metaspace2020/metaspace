@@ -43,8 +43,8 @@ def clip_centr_df(
         return clip_centr_chunk_cobject, centr_df_chunk.shape[0]
 
     assert len(peaks_cobjects) > 0
-    clip_centr_chunks_cobjects, centr_n = fexec.map(
-        clip_centr_df_chunk, list(enumerate(peaks_cobjects)), runtime_memory=512, unpack=True,
+    clip_centr_chunks_cobjects, centr_n = fexec.map_unpack(
+        clip_centr_df_chunk, list(enumerate(peaks_cobjects)), runtime_memory=512,
     )
 
     clip_centr_chunks_cobjects = list(clip_centr_chunks_cobjects)
@@ -248,8 +248,8 @@ def validate_centroid_segments(fexec, db_segms_cobjects, ds_segms_bounds, isocal
         )
         return formula_is, stats
 
-    segm_formula_is, stats = fexec.map(
-        get_segm_stats, db_segms_cobjects, runtime_memory=1024, unpack=True
+    segm_formula_is, stats = fexec.map_unpack(
+        get_segm_stats, db_segms_cobjects, runtime_memory=1024
     )
     stats_df = pd.DataFrame(stats)
 

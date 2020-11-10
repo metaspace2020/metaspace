@@ -36,6 +36,8 @@ class PipelineStats:
 
     @classmethod
     def append_pywren(cls, futures, memory_mb, cloud_objects_n=0):
+        if not hasattr(cls, 'path'):
+            cls.init()
         try:
             if type(futures) != list:
                 futures = [futures]

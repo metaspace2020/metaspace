@@ -1,18 +1,16 @@
 import json
 import logging
 import re
+from datetime import datetime
 from functools import wraps
 from logging.config import dictConfig
 import os
 from copy import deepcopy
-from datetime import datetime
 from pathlib import Path
 import random
 from time import sleep
 from typing import Dict
 
-from sm.engine.db import ConnectionPool
-from sm.engine import molecular_db
 
 logger = logging.getLogger('engine')
 
@@ -105,6 +103,10 @@ class SMConfig:
 
 
 def create_ds_from_files(ds_id, ds_name, ds_input_path, config_path=None, meta_path=None):
+    # Avoid importing these globally so that Lithops can run without psycopg2, etc.
+    from sm.engine import molecular_db  # pylint: disable=import-outside-toplevel
+    from sm.engine.dataset import Dataset  # pylint: disable=import-outside-toplevel
+
     config_path = config_path or Path(ds_input_path) / 'config.json'
     ds_config = json.load(open(config_path))
     if 'database_ids' not in ds_config:
@@ -116,8 +118,6 @@ def create_ds_from_files(ds_id, ds_name, ds_input_path, config_path=None, meta_p
     if not Path(meta_path).exists():
         raise Exception('meta.json not found')
     metadata = json.load(open(str(meta_path)))
-
-    from sm.engine.dataset import Dataset  # pylint: disable=import-outside-toplevel
 
     return Dataset(
         id=ds_id,
@@ -155,6 +155,8 @@ def find_file_by_ext(path, ext):
 
 
 def bootstrap_and_run(config_path, func):
+    from sm.engine.db import ConnectionPool  # pylint: disable=import-outside-toplevel
+
     SMConfig.set_path(config_path)
     sm_config = SMConfig.get_conf()
     init_loggers(sm_config['logs'])
@@ -170,6 +172,8 @@ def populate_aws_env_vars(aws_config):
 
 class GlobalInit:
     def __init__(self, config_path='conf/config.json'):
+        from sm.engine.db import ConnectionPool  # pylint: disable=import-outside-toplevel
+
         SMConfig.set_path(config_path)
         self.sm_config = SMConfig.get_conf()
 

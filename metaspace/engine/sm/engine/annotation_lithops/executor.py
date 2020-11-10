@@ -1,8 +1,9 @@
 import inspect
 import logging
 import resource
+from itertools import chain
 from time import time
-from typing import List
+from typing import List, Callable, TypeVar, Iterable, Union, Tuple, Sequence
 
 import lithops
 from lithops.future import ResponseFuture
@@ -10,6 +11,7 @@ from lithops.future import ResponseFuture
 from sm.engine.annotation_lithops.utils import PipelineStats
 
 logger = logging.getLogger('custom-executor')
+TRet = TypeVar('TRet')
 
 
 class Executor:
@@ -26,8 +28,17 @@ class Executor:
                 config=lithops_config, type='standalone', backend='ibm_vpc'
             )
         self.storage = self.small_executor.storage
+        self._include_modules = lithops_config['lithops'] or []
 
-    def map(self, func, args, *, runtime_memory=None, unpack=False, **kwargs):
+    def map(
+        self,
+        func: Callable[..., TRet],
+        args: Sequence,
+        *,
+        runtime_memory: int = None,
+        include_modules=None,
+        **kwargs,
+    ) -> List[TRet]:
         def wrapper_func(*args, **kwargs):
             def get_meta():
                 return {
@@ -45,11 +56,13 @@ class Executor:
                 ex.executor_meta = get_meta()
                 raise
 
-        wrapper_func.__signature__ = inspect.signature(func)
+        wrapper_func.__signature__ = inspect.signature(func)  # type: ignore # https://github.com/python/mypy/issues/5958
         wrapper_func.__name__ = func.__name__
 
         if runtime_memory is None:
             runtime_memory = 512
+        if include_modules is not None:
+            kwargs['include_modules'] = [*self._include_modules, *include_modules]
 
         while True:
             try:
@@ -57,12 +70,9 @@ class Executor:
                 executor = self.small_executor if use_small else self.large_executor
 
                 logger.info(f'executor.map({func.__name__}, {len(args)} items, {runtime_memory}MB)')
-                if executor.config['lithops']['executor'] == 'standalone':
-                    futures: List[ResponseFuture] = executor.map(wrapper_func, args, **kwargs)
-                else:
-                    futures: List[ResponseFuture] = executor.map(
-                        wrapper_func, args, runtime_memory=runtime_memory, **kwargs
-                    )
+                futures: List[ResponseFuture] = executor.map(
+                    wrapper_func, args, runtime_memory=runtime_memory, **kwargs,
+                )
 
                 # TODO: debug logic:
                 # * retry with more memory if there is an OOM
@@ -73,16 +83,13 @@ class Executor:
                 results = [result for result, meta in return_vals]
                 metas = [meta for result, meta in return_vals]
 
-                if not use_small:
-                    total_time = sum(meta['inner_time'] for meta in metas if meta)
-                    PipelineStats.append_vm(func.__name__, total_time)
-                else:
-                    PipelineStats.append_pywren(futures, runtime_memory)
+                # if not use_small:
+                #     total_time = sum(meta['inner_time'] for meta in metas if meta)
+                #     PipelineStats.append_vm(func.__name__, total_time)
+                # else:
+                PipelineStats.append_pywren(futures, runtime_memory)
 
-                if unpack:
-                    return zip(*results)
-                else:
-                    return results
+                return results
 
             except MemoryError:
                 old_memory = runtime_memory
@@ -95,8 +102,23 @@ class Executor:
                         f'{func.__name__} ran out of memory with {old_memory}MB, retrying with {runtime_memory}MB'
                     )
 
-    def call(self, func, args, *, runtime_memory=None):
-        return self.map(func, [args], runtime_memory=runtime_memory)[0]
+    def map_unpack(self, func, args: Sequence, *, runtime_memory=None, **kwargs):
+        results = self.map(func, args, runtime_memory=runtime_memory, **kwargs)
+        return zip(*results)
+
+    def map_concat(
+        self,
+        func: Callable[..., Iterable[TRet]],
+        args: Sequence,
+        *,
+        runtime_memory: int = None,
+        **kwargs,
+    ) -> List[TRet]:
+        results = self.map(func, args, runtime_memory=runtime_memory, **kwargs)
+        return list(chain(*results))
+
+    def call(self, func, args, *, runtime_memory=None, **kwargs):
+        return self.map(func, [args], runtime_memory=runtime_memory, **kwargs)[0]
 
     def clean(self):
         for executor in {self.small_executor, self.large_executor}:

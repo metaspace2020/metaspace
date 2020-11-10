@@ -15,11 +15,12 @@ from tests.utils import create_test_ds
 
 
 def create_api_ds_man(
-    es=None, img_store=None, annot_queue=None, update_queue=None, status_queue=None
+    es=None, img_store=None, annot_queue=None, update_queue=None, lit_queue=None, status_queue=None
 ):
     es_mock = es or MagicMock(spec=ESExporter)
     annot_queue_mock = annot_queue or MagicMock(QueuePublisher)
     update_queue_mock = update_queue or MagicMock(QueuePublisher)
+    lit_queue_mock = lit_queue or MagicMock(QueuePublisher)
     status_queue_mock = status_queue or MagicMock(QueuePublisher)
     img_store_mock = img_store or MagicMock(spec=ImageStoreServiceWrapper)
 
@@ -29,6 +30,7 @@ def create_api_ds_man(
         image_store=img_store_mock,
         annot_queue=annot_queue_mock,
         update_queue=update_queue_mock,
+        lit_queue=lit_queue_mock,
         status_queue=status_queue_mock,
     )
 

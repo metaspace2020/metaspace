@@ -2,11 +2,9 @@ import json
 import logging
 from traceback import format_exc
 
-from sm.engine.annotation_lithops.annotation_job import ServerAnnotationJob
 from sm.engine.daemon_action import DaemonActionStage, DaemonAction
 from sm.engine.dataset import DatasetStatus
 from sm.engine.errors import ImzMLError, AnnotationError
-from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.queue import QueueConsumer, QueuePublisher
 from sm.engine.util import SMConfig
 from sm.rest.dataset_manager import DatasetActionPriority

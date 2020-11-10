@@ -73,6 +73,6 @@ def filter_results_and_make_pngs(
                 pngs.append((formula_i, formula_pngs))
         return save_cobj(storage, pngs)
 
-    png_cobjs = fexec.map(save_png_chunk, jobs, include_modules=['sm', 'sm.engine', 'png'])
+    png_cobjs = fexec.map(save_png_chunk, jobs, include_modules=['png'])
 
     return results_dfs, png_cobjs

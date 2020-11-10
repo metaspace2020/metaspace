@@ -106,7 +106,7 @@ class Pipeline:
         self.ds_segm_size_mb = 128
 
     def __call__(
-        self, debug_validate=False, use_cache=True, shutdown=True
+        self, debug_validate=False, use_cache=True
     ) -> Tuple[Dict[int, pd.DataFrame], List[CObj[List[Tuple[int, bytes]]]]]:
         self.build_moldb(use_cache=use_cache)
         if debug_validate:
@@ -130,9 +130,6 @@ class Pipeline:
 
         # if debug_validate and self.ds_config['metaspace_id']:
         #     self.check_results()
-
-        if shutdown:
-            self.executor.shutdown()
 
         return self.results_dfs, self.png_cobjs
 

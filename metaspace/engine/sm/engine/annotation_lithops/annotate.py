@@ -299,11 +299,8 @@ def process_centr_segments(
         return formula_metrics_df, image_lookups
 
     logger.info('Annotating...')
-    formula_metrics_list, image_lookups_list = fexec.map(
-        process_centr_segment,
-        [co for co in db_segms_cobjects],
-        runtime_memory=pw_mem_mb,
-        unpack=True,
+    formula_metrics_list, image_lookups_list = fexec.map_unpack(
+        process_centr_segment, [co for co in db_segms_cobjects], runtime_memory=pw_mem_mb,
     )
     formula_metrics_df = pd.concat(formula_metrics_list)
     images_df = pd.concat(image_lookups_list)

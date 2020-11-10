@@ -76,7 +76,13 @@ def get_formulas_df(
         for moldb, (fdr, formula_map_df) in zip(
             moldbs, ex.map(_get_db_fdr_and_formulas, repeat(ds_config), dbs_iter)
         ):
-            db_datas.append({**moldb, 'fdr': fdr, 'formula_map_df': formula_map_df})
+            db_datas.append(
+                {
+                    **moldb,  # type: ignore # https://github.com/python/mypy/issues/4122
+                    'fdr': fdr,
+                    'formula_map_df': formula_map_df,
+                }
+            )
             ion_formula.update(formula_map_df.ion_formula)
             target_ion_formulas.update(formula_map_df.ion_formula[formula_map_df.target])
             if moldb.get('targeted'):

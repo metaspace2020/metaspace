@@ -1,3 +1,4 @@
+from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.image_store import ImageStoreServiceWrapper
@@ -43,8 +44,11 @@ job.run(save=True, debug_validate=True)
 
 
 #%%
-SMConfig.get_conf(True)
-job = ServerAnnotationJob(ImageStoreServiceWrapper(), Dataset.load(DB(), '2020-08-04_12h38m00s'))
+config = SMConfig.get_conf(True)
+executor = Executor(config['lithops'])
+job = ServerAnnotationJob(
+    executor, ImageStoreServiceWrapper(), Dataset.load(DB(), '2020-08-04_12h38m00s')
+)
 
 #%%
 job.run()

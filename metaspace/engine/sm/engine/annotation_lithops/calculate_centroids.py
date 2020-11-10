@@ -54,8 +54,8 @@ def calculate_centroids(
 
         return peaks_cobject, peaks_df.shape[0]
 
-    peaks_cobjects, peaks_cobject_lens = fexec.map(
-        calculate_peaks_chunk, list(enumerate(formula_cobjects)), runtime_memory=2048, unpack=True,
+    peaks_cobjects, peaks_cobject_lens = fexec.map_unpack(
+        calculate_peaks_chunk, list(enumerate(formula_cobjects)), runtime_memory=2048,
     )
 
     num_centroids = sum(peaks_cobject_lens)
