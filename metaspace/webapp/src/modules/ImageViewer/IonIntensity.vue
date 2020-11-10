@@ -21,12 +21,11 @@
     <el-tooltip
       v-else
       :disabled="tooltipDisabled || status !== 'CLIPPED'"
-      :placement="placement"
     >
       <button
         title="Click to edit"
         class="button-reset leading-3"
-        :class="{ 'font-medium text-red-700': status === 'CLIPPED' }"
+        :class="{ 'font-medium text-red-700': status === 'CLIPPED', 'cursor-default': tooltipDisabled }"
         @click="editing = true"
       >
         {{ intensity }}

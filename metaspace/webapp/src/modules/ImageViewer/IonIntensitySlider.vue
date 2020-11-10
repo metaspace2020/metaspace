@@ -25,19 +25,21 @@
     >
       <ion-intensity
         v-model="model.minIntensity"
-        :status="minStatus"
         :original-value="intensity.imageMin"
-        placeholder="min."
-        label="Minimum intensity"
+        :status="minStatus"
+        :tooltip-disabled="disableTooltips"
         clipping-type="outlier-min"
+        label="Minimum intensity"
+        placeholder="min."
       />
       <ion-intensity
         v-model="model.maxIntensity"
-        :status="maxStatus"
         :original-value="intensity.imageMax"
-        placeholder="max."
-        label="Maximum intensity"
+        :status="maxStatus"
+        :tooltip-disabled="disableTooltips"
         :clipping-type="minStatus === 'CLIPPED' ? 'outlier-max' : 'hotspot-removal'"
+        label="Maximum intensity"
+        placeholder="max."
       />
     </div>
   </div>
