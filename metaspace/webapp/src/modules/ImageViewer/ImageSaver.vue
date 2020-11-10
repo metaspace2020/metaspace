@@ -1,6 +1,6 @@
 <template>
   <button
-    class="button-reset rounded-full bg-gray-100-alpha h-8 w-8 flex items-center justify-center"
+    class="button-reset rounded-full bg-gray-50 shadow-xs h-8 w-8 flex items-center justify-center"
     :class="{ 'cursor-not-allowed': !isSupported }"
     title="Export image"
     @click="onClick"
