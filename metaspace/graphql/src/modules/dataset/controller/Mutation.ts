@@ -197,6 +197,7 @@ type CreateDatasetArgs = {
   datasetId?: string,
   input: DatasetCreateInput,
   priority?: Int,
+  useLithops?: boolean,
   force?: boolean,           // Only used by reprocess
   delFirst?: boolean,        // Only used by reprocess
   skipValidation?: boolean,  // Only used by reprocess
@@ -228,7 +229,7 @@ const setDatabaseIdsInInput = async (
 };
 
 const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
-  const { input, priority, force, delFirst, skipValidation } = args,
+  const { input, priority, force, delFirst, skipValidation, useLithops } = args,
     datasetId = args.datasetId || newDatasetId(),
     datasetIdWasSpecified = args.datasetId != null;
 
@@ -263,6 +264,7 @@ const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
   await smApiDatasetRequest(url, {
     doc: { ...input, metadata },
     priority: priority,
+    use_lithops: useLithops,
     force: force,
     del_first: delFirst,
     email: ctx.user.email,
