@@ -18,31 +18,50 @@
     >
       {{ intensity }}
     </span>
-    <clipping-tooltip
-      v-else-if="status === 'CLIPPED'"
-      key="clipped"
-      :clipping-type="clippingType"
-      placement="bottom-start"
-      :clipped-intensity="intensity"
-      :original-intensity="originalIntensity"
-      :disabled="tooltipDisabled"
-      @click="editing = true"
-    />
-    <button
+    <el-tooltip
       v-else
-      key=""
-      class="button-reset"
-      @click="editing = true"
+      :disabled="tooltipDisabled || status !== 'CLIPPED'"
+      :placement="placement"
     >
-      {{ intensity }}
-    </button>
+      <button
+        title="Click to edit"
+        class="button-reset leading-3"
+        :class="{ 'font-medium text-red-700': status === 'CLIPPED' }"
+        @click="editing = true"
+      >
+        {{ intensity }}
+      </button>
+      <p
+        slot="content"
+        class="m-0 text-sm leading-5 max-w-measure-3"
+        @mousedown.stop
+      >
+        <span v-if="clippingType == 'hotspot-removal'">
+          <b>Hot-spot removal has been applied to this image.</b> <br>
+          Intensities above the 99th percentile, {{ intensity }},
+          have been reduced to {{ intensity }}.
+          The highest intensity before hot-spot removal was {{ originalIntensity }}.
+        </span>
+        <span v-if="clippingType == 'outlier-max'">
+          <b>Outlier clipping has been applied to this image.</b> <br>
+          Intensities above the 99th percentile, {{ intensity }},
+          have been reduced to {{ intensity }}.
+          The highest intensity before outlier clipping was {{ originalIntensity }}.
+        </span>
+        <span v-if="clippingType == 'outlier-min'">
+          <b>Outlier clipping has been applied to this image.</b> <br>
+          Intensities below the 1st percentile, {{ intensity }},
+          have been increased to {{ intensity }}.
+          The lowest intensity before outlier clipping was {{ originalIntensity }}.
+        </span>
+      </p>
+    </el-tooltip>
   </fade-transition>
 </template>
 <script lang="ts">
 import { defineComponent, computed, ref, watch } from '@vue/composition-api'
 
 import EditIntensity from './EditIntensity.vue'
-import ClippingTooltip from './ClippingTooltip.vue'
 import FadeTransition from '../../components/FadeTransition'
 
 interface Props {
@@ -66,7 +85,6 @@ export default defineComponent<Props>({
     value: Number,
   },
   components: {
-    ClippingTooltip,
     FadeTransition,
     EditIntensity,
   },

@@ -47,7 +47,6 @@ import { defineComponent, computed, ref, watch } from '@vue/composition-api'
 
 import IonIntensity from './IonIntensity.vue'
 
-import ClippingTooltip from './ClippingTooltip.vue'
 import { RangeSlider, THUMB_WIDTH } from '../../components/Slider'
 import FadeTransition from '../../components/FadeTransition'
 
@@ -71,7 +70,6 @@ export default defineComponent<Props>({
   },
   components: {
     RangeSlider,
-    ClippingTooltip,
     FadeTransition,
     IonIntensity,
   },

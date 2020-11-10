@@ -36,8 +36,8 @@
       <button
         v-else-if="inputText.length"
         key="clear"
-        type="text"
-        @click.self.prevent="$emit('reset')"
+        type="button"
+        @click="$emit('reset')"
       >
         <CloseIcon />
       </button>
@@ -86,11 +86,16 @@ export default defineComponent({
       inputRef,
       error,
       submit() {
-        if (inputText.value.length === 0) {
+        const text = inputText.value
+        if (text === props.initialValue) {
+          emit('close')
+          return
+        }
+        if (text.length === 0) {
           emit('reset')
           return
         }
-        const floatValue = parseFloat(inputText.value)
+        const floatValue = parseFloat(text)
         if (isNaN(floatValue)) {
           error.value = true
         } else {

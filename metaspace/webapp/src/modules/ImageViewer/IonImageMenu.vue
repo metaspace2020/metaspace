@@ -150,7 +150,7 @@ export default defineComponent({
 </script>
 <style scoped>
 .sm-menu-items >>> > * {
-  @apply box-border border-0 border-t border-solid border-gray-200-alpha;
+  @apply box-border border-0 border-t border-solid border-gray-200;
 }
 .sm-menu-items >>> > *:last-child {
   @apply border-b;
