@@ -27,6 +27,7 @@ from sm.engine.annotation_spark.search_results import SearchResults
 from sm.engine.util import SMConfig, split_s3_path
 from sm.engine.es_export import ESExporter
 from sm.engine import molecular_db
+from sm.engine.utils.perf_profile import PerfProfileCollector
 
 logger = logging.getLogger('engine')
 
@@ -40,13 +41,18 @@ class AnnotationJob:
     """Class responsible for dataset annotation."""
 
     def __init__(
-        self, img_store: ImageStoreServiceWrapper, ds: Dataset, sm_config: Optional[Dict] = None
+        self,
+        img_store: ImageStoreServiceWrapper,
+        ds: Dataset,
+        perf: PerfProfileCollector,
+        sm_config: Optional[Dict] = None,
     ):
         self._sm_config = sm_config or SMConfig.get_conf()
         self._img_store = img_store
         self._sc = None
         self._db = DB()
         self._ds = ds
+        self._perf = perf
         self._es = ESExporter(self._db, self._sm_config)
         self._ds_data_path = None
 
@@ -91,6 +97,7 @@ class AnnotationJob:
                 moldbs=moldbs,
                 ds_config=self._ds.config,
                 ds_data_path=self._ds_data_path,
+                perf=self._perf,
             )
             search_results_it = search_alg.search()
 
@@ -173,8 +180,11 @@ class AnnotationJob:
             start = time.time()
 
             self._configure_spark()
+            self._perf.record_entry('configured spark')
             self._copy_input_data(self._ds)
+            self._perf.record_entry('copied input data')
             imzml_parser = self.create_imzml_parser()
+            self._perf.record_entry('parsed imzml file')
             self._save_data_from_raw_ms_file(imzml_parser)
             self._img_store.storage_type = 'fs'
 
@@ -184,10 +194,12 @@ class AnnotationJob:
             new_moldb_ids = set(self._ds.config['database_ids'])
             added_moldb_ids = new_moldb_ids - finished_moldb_ids
             removed_moldb_ids = finished_moldb_ids - new_moldb_ids
+            self._perf.add_extra_data(moldb_ids=list(added_moldb_ids))
 
             if removed_moldb_ids:
                 del_jobs(self._ds, removed_moldb_ids)
             self._run_annotation_jobs(imzml_parser, molecular_db.find_by_ids(added_moldb_ids))
+            self._perf.record_entry('annotated')
 
             logger.info("All done!")
             minutes, seconds = divmod(int(round(time.time() - start)), 60)

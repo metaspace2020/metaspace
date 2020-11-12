@@ -27,6 +27,7 @@ from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.molecular_db import read_moldb_file
 from sm.engine.util import SMConfig, split_s3_path, split_cos_path
+from sm.engine.utils.perf_profile import PerfProfileCollector
 
 logger = logging.getLogger('engine')
 
@@ -226,6 +227,7 @@ class ServerAnnotationJob:
         executor: Executor,
         img_store: ImageStoreServiceWrapper,
         ds: Dataset,
+        perf: PerfProfileCollector,
         sm_config: Optional[Dict] = None,
         use_cache=True,
     ):
@@ -241,6 +243,7 @@ class ServerAnnotationJob:
             aws_secret_access_key=sm_config['aws']['aws_secret_access_key'],
         )
         self.ds = ds
+        self.perf = perf
         self.img_store = img_store
         self.db = DB()
         self.es = ESExporter(self.db, sm_config)
@@ -294,10 +297,13 @@ class ServerAnnotationJob:
 
     def run(self, **kwargs):
         isocalc = IsocalcWrapper(self.ds.config)
+        # TODO: Only run missing moldbs
         del_jobs(self.ds)
         moldb_to_job_map = {}
         for moldb_id in self.ds.config['database_ids']:
             moldb_to_job_map[moldb_id] = insert_running_job(self.ds.id, moldb_id)
+        self.perf.add_extra_data(moldb_ids=list(moldb_to_job_map.keys()))
+
         try:
             self.results_dfs, self.png_cobjs = self.pipe(**kwargs)
             self.db_formula_image_ids = self._store_images(

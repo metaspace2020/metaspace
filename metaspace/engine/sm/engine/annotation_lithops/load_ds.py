@@ -6,7 +6,6 @@ import shutil
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from time import time
 from typing import Tuple, List
 
 import numpy as np
@@ -23,6 +22,7 @@ from sm.engine.annotation_lithops.io import (
     CObj,
 )
 from sm.engine.annotation_lithops.utils import logger
+from sm.engine.utils.perf_profile import SubtaskPerf
 
 
 def download_dataset(imzml_cobject, ibd_cobject, local_path, storage):
@@ -216,11 +216,11 @@ def load_ds(
     ibd_cobject: CloudObject,
     ds_segm_size_mb: int,
     sort_memory: int,
+    *,
+    perf: SubtaskPerf,
 ) -> Tuple[
     PortableSpectrumReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray,
 ]:
-    stats = []
-
     with TemporaryDirectory() as tmp_dir:
         logger.info("Temp dir is {}".format(tmp_dir))
         imzml_dir = Path(tmp_dir) / 'imzml'
@@ -231,35 +231,28 @@ def load_ds(
         logger.info(f"Create {segments_dir}")
 
         logger.info('Downloading dataset...')
-        t = time()
         imzml_path, ibd_path = download_dataset(imzml_cobject, ibd_cobject, imzml_dir, storage)
-        stats.append(('download_dataset', time() - t))
+        perf.mark('downloaded dataset')
 
         logger.info('Loading parser...')
-        t = time()
         imzml_parser = ImzMLParser(str(imzml_path))
         imzml_reader = imzml_parser.portable_spectrum_reader()
-        stats.append(('load_parser', time() - t))
+        perf.mark('loaded parser')
 
         logger.info('Defining segments bounds...')
-        t = time()
         ds_segments_bounds = define_ds_segments(imzml_parser, ds_segm_size_mb=ds_segm_size_mb)
         segments_n = len(ds_segments_bounds)
-        stats.append(('define_segments', time() - t))
+        perf.mark('defined segments', segments_n=segments_n)
 
         logger.info('Segmenting...')
-        t = time()
         chunks_n, ds_segms_len = make_segments(
             imzml_reader, ibd_path, ds_segments_bounds, segments_dir, sort_memory
         )
-        stats.append(('dataset_segmentation', time() - t))
+        perf.mark('made segments')
 
         logger.info('Uploading segments...')
-        t = time()
         ds_segms_cobjects = upload_segments(storage, segments_dir, chunks_n, segments_n)
-        stats.append(('upload_segments', time() - t))
-
-        # TODO: Log stats
+        perf.mark('uploaded segments')
 
         return imzml_reader, ds_segments_bounds, ds_segms_cobjects, ds_segms_len
 

@@ -1,21 +1,80 @@
+from __future__ import annotations
+
 import inspect
 import logging
 import resource
+from datetime import datetime
 from itertools import chain
-from time import time
-from typing import List, Callable, TypeVar, Iterable, Union, Tuple, Sequence
+from typing import List, Callable, TypeVar, Iterable, Sequence, Dict
 
 import lithops
 from lithops.future import ResponseFuture
+import numpy as np
+import pandas as pd
 
-from sm.engine.annotation_lithops.utils import PipelineStats
+from sm.engine.utils.perf_profile import SubtaskPerf, PerfProfileCollector
 
 logger = logging.getLogger('custom-executor')
 TRet = TypeVar('TRet')
 
 
+def _build_wrapper_func(func: Callable[..., TRet]) -> Callable[..., TRet]:
+    def wrapper_func(*args, **kwargs):
+        def finalize_perf():
+            subtask_perf.add_extra_data(
+                **{
+                    'inner time': (datetime.now() - start_time).total_seconds(),
+                    'mem before': mem_before,
+                    'mem after': resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
+                }
+            )
+            return subtask_perf
+
+        start_time = datetime.now()
+        with SubtaskPerf() as subtask_perf:
+            if has_perf_arg:
+                kwargs['perf'] = subtask_perf
+
+            mem_before = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+            try:
+                result = func(*args, **kwargs)
+                return result, finalize_perf()
+            except Exception as ex:
+                ex.executor_meta = finalize_perf()
+                raise
+
+    sig = inspect.signature(func)
+    has_perf_arg = 'perf' in sig.parameters
+    newsig = sig.replace(parameters=[p for p in sig.parameters.values() if p.name != 'perf'])
+    wrapper_func.__signature__ = newsig  # type: ignore # https://github.com/python/mypy/issues/5958
+    wrapper_func.__name__ = func.__name__
+
+    return wrapper_func
+
+
 class Executor:
-    def __init__(self, lithops_config):
+    """
+    This class wraps Lithops' FunctionExecutor to provide a platform where we can experiment with
+    new framework-level features without first needing them to be implemented in Lithops.
+    If a feature is successful, it should be upstreamed to Lithops as an RFC or PR.
+
+    Current features:
+      * Switch to the Standalone executor if >4GB of memory is required
+      * Retry with 2x more memory if an execution fails due to an OOM
+      * Collect & record per-invocation performance statistics & custom data
+        * A named kwarg `perf` of type `SubtaskPerf` will be injected if in the parameter list,
+          allowing a function to supply more granular timing data and add custom data.
+        * Memory & time usage is recorded for each invocation.
+        * A `cost_factors` DataFrame may be supplied - currently just saved to DB, but planned
+          to be used as a data source for predicting memory & time usage automatically based on
+          previous executions.
+          This DF should have one row per job (in the same order), and each column should be a float
+          that represents some factor that could contribute to memory/time usage.
+      * Utility functions e.g. `map_unpack` and `map_concat` for applying common transformations
+        to the result data.
+    """
+
+    def __init__(self, lithops_config: Dict, perf: PerfProfileCollector = None):
         self.is_local = lithops_config['lithops']['executor'] == 'localhost'
 
         if self.is_local:
@@ -28,43 +87,33 @@ class Executor:
                 config=lithops_config, type='standalone', backend='ibm_vpc'
             )
         self.storage = self.small_executor.storage
-        self._include_modules = lithops_config['lithops'] or []
+        self._include_modules = lithops_config['lithops'].get('include_modules', [])
+        self._perf = perf
 
     def map(
         self,
         func: Callable[..., TRet],
         args: Sequence,
         *,
+        cost_factors: pd.DataFrame = None,
         runtime_memory: int = None,
         include_modules=None,
         **kwargs,
     ) -> List[TRet]:
-        def wrapper_func(*args, **kwargs):
-            def get_meta():
-                return {
-                    'inner_time': time() - t,
-                    'mem_before': mem_before,
-                    'mem_after': resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
-                }
-
-            mem_before = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-            t = time()
-            try:
-                result = func(*args, **kwargs)
-                return result, get_meta()
-            except Exception as ex:
-                ex.executor_meta = get_meta()
-                raise
-
-        wrapper_func.__signature__ = inspect.signature(func)  # type: ignore # https://github.com/python/mypy/issues/5958
-        wrapper_func.__name__ = func.__name__
-
+        if len(args) == 0:
+            return []
+        if cost_factors is not None:
+            assert len(cost_factors) == len(args)
         if runtime_memory is None:
             runtime_memory = 512
         if include_modules is not None:
             kwargs['include_modules'] = [*self._include_modules, *include_modules]
 
+        wrapper_func = _build_wrapper_func(func)
+        attempt = 1
+
         while True:
+            start_time = datetime.now()
             try:
                 use_small = runtime_memory <= 4096
                 executor = self.small_executor if use_small else self.large_executor
@@ -74,26 +123,50 @@ class Executor:
                     wrapper_func, args, runtime_memory=runtime_memory, **kwargs,
                 )
 
-                # TODO: debug logic:
-                # * retry with more memory if there is an OOM
-                # * try to record stats, even if a task fails
-
                 return_vals = executor.get_result(futures)
+                results = [result for result, subtask_perf in return_vals]
+                subtask_perfs = [subtask_perf for result, subtask_perf in return_vals]
 
-                results = [result for result, meta in return_vals]
-                metas = [meta for result, meta in return_vals]
-
-                # if not use_small:
-                #     total_time = sum(meta['inner_time'] for meta in metas if meta)
-                #     PipelineStats.append_vm(func.__name__, total_time)
-                # else:
-                PipelineStats.append_pywren(futures, runtime_memory)
+                if self._perf:
+                    subtask_perf_data = SubtaskPerf.merge(subtask_perfs)
+                    if len(subtask_perf_data['subtask_timings'].keys()) == 1:
+                        # Don't bother storing just the "ended" times, as they're not interesting by themselves
+                        subtask_perf_data['subtask_timings'] = {}
+                    cost_factors_plain = (
+                        cost_factors.to_dict('list') if cost_factors is not None else None
+                    )
+                    exec_times = [f.stats.get('worker_func_exec_time', -1) for f in futures]
+                    inner_times = subtask_perf_data['subtask_data'].pop('inner time')
+                    mem_befores = subtask_perf_data['subtask_data'].pop('mem before')
+                    mem_afters = subtask_perf_data['subtask_data'].pop('mem after')
+                    perf_data = {
+                        'num_actions': len(futures),
+                        'attempts': attempt,
+                        'runtime_memory': runtime_memory,
+                        'max_memory': np.max(mem_afters).item(),
+                        'max_time': np.max(exec_times).item(),
+                        'overhead_memory': np.max(mem_befores).item(),
+                        'overhead_time': (np.mean(exec_times) - np.mean(inner_times)).item(),
+                        'cost_factors': cost_factors_plain,
+                        'exec_times': exec_times,
+                        'mem_usages': mem_afters,
+                        **subtask_perf_data,
+                    }
+                    self._perf.record_entry(func.__name__, start_time, datetime.now(), perf_data)
 
                 return results
 
             except MemoryError:
+                self._perf.record_entry(
+                    f'{func.__name__}_OOM_{attempt}',
+                    start_time,
+                    datetime.now(),
+                    extra_data={'runtime_memory': runtime_memory},
+                )
                 old_memory = runtime_memory
                 runtime_memory *= 2
+                attempt += 1
+
                 if runtime_memory > 8192:
                     logger.error(f'{func.__name__} used too much memory')
                     raise

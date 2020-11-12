@@ -1,8 +1,11 @@
+from lithops.storage import Storage
+
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.util import SMConfig, init_loggers
+from sm.engine.utils.perf_profile import perf_profile
 
 init_loggers(SMConfig.get_conf(True)['logs'])
 
@@ -45,10 +48,13 @@ job.run(save=True, debug_validate=True)
 
 #%%
 config = SMConfig.get_conf(True)
-executor = Executor(config['lithops'])
-job = ServerAnnotationJob(
-    executor, ImageStoreServiceWrapper(), Dataset.load(DB(), '2020-08-04_12h38m00s')
-)
+ds_id = '2020-08-04_12h38m00s'
+with perf_profile(DB(), 'annotation_lithops', ds_id) as perf:
+    executor = Executor(config['lithops'], perf)
+    job = ServerAnnotationJob(
+        executor, ImageStoreServiceWrapper(), Dataset.load(DB(), '2020-08-04_12h38m00s'), perf
+    )
+    job.run()
 
 #%%
 job.run()
@@ -93,5 +99,22 @@ executor.get_result(fs)
 
 fs = executor.map(myfunc, range(10))
 executor.get_result(fs)  # This never returns because invocations 2 & 3 are never started
+
+#%%
+
+from lithops import function_executor
+
+lithops_config = SMConfig.get_conf(True)['lithops']
+# lithops_config['ibm_cos']['password'] = "foo'"
+executor = function_executor(config=lithops_config, type='standalone')
+
+
+def return_storage_config(storage):
+    return storage.storage_config
+
+
+fs = executor.call_async(return_storage_config, ())
+executor.get_result([fs])
+
 
 #%%

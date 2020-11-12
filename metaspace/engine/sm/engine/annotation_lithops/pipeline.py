@@ -36,7 +36,6 @@ from sm.engine.annotation_lithops.segment_centroids import (
     define_centr_segments,
     validate_centroid_segments,
 )
-from sm.engine.annotation_lithops.utils import PipelineStats
 from sm.engine.db import DB
 from sm.engine.ds_config import DSConfig
 from sm.engine.isocalc_wrapper import IsocalcWrapper
@@ -90,18 +89,6 @@ class Pipeline:
             )
         else:
             self.cacher = None
-
-        stats_path_cache_key = 'stats_path'
-        if self.cacher and self.cacher.exists(stats_path_cache_key):
-            self.stats_path = self.cacher.load(stats_path_cache_key)
-            PipelineStats.path = self.stats_path
-            logger.info(f'Using cached {self.stats_path} for statistics')
-        else:
-            PipelineStats.init()
-            self.stats_path = PipelineStats.path
-            if self.cacher:
-                self.cacher.save(self.stats_path, stats_path_cache_key)
-            logger.info(f'Initialised {self.stats_path} for statistics')
 
         self.ds_segm_size_mb = 128
 
@@ -165,7 +152,9 @@ class Pipeline:
             self.ds_segms_cobjects,
             self.ds_segms_len,
         ) = self.executor.call(
-            load_ds, (self.imzml_cobject, self.ibd_cobject, self.ds_segm_size_mb, sort_memory),
+            load_ds,
+            (self.imzml_cobject, self.ibd_cobject, self.ds_segm_size_mb, sort_memory),
+            runtime_memory=4096,
         )
 
         logger.info(f'Segmented dataset chunks into {len(self.ds_segms_cobjects)} segments')

@@ -25,6 +25,7 @@ from sm.engine.off_sample_wrapper import classify_dataset_ion_images
 from sm.engine.optical_image import del_optical_image
 from sm.engine.queue import QueueConsumer, QueuePublisher
 from sm.engine.util import SMConfig
+from sm.engine.utils.perf_profile import perf_profile
 from sm.rest.dataset_manager import DatasetActionPriority
 from sm.engine.annotation_spark.annotation_job import AnnotationJob
 
@@ -93,35 +94,44 @@ class DatasetManager:
             self.logger.warning(f'Deleting all results for dataset: {ds.id}')
             del_jobs(ds)
         ds.save(self._db, self._es)
-        AnnotationJob(img_store=self._img_store, ds=ds, sm_config=self._sm_config).run()
+        with perf_profile(self._db, 'annotate_spark', ds.id) as perf:
+            AnnotationJob(
+                img_store=self._img_store, ds=ds, sm_config=self._sm_config, perf=perf
+            ).run()
 
-        if self._sm_config['services'].get('colocalization', True):
-            Colocalization(self._db, self._img_store).run_coloc_job(ds, reprocess=del_first)
+            if self._sm_config['services'].get('colocalization', True):
+                Colocalization(self._db, self._img_store).run_coloc_job(ds, reprocess=del_first)
+                perf.record_entry('ran colocalization')
 
-        if self._sm_config['services'].get('ion_thumbnail', True):
-            generate_ion_thumbnail(
-                db=self._db, img_store=self._img_store, ds=ds, only_if_needed=not del_first
-            )
+            if self._sm_config['services'].get('ion_thumbnail', True):
+                generate_ion_thumbnail(
+                    db=self._db, img_store=self._img_store, ds=ds, only_if_needed=not del_first
+                )
+                perf.record_entry('generated ion thumbnail')
 
     def annotate_lithops(self, ds: Dataset, del_first=False):
         if del_first:
             self.logger.warning(f'Deleting all results for dataset: {ds.id}')
             del_jobs(ds)
         ds.save(self._db, self._es)
-        executor = Executor(self._sm_config['lithops'])
-        ServerAnnotationJob(executor, self._img_store, ds).run()
-        if self._sm_config['services'].get('colocalization', True):
-            Colocalization(self._db, self._img_store).run_coloc_job_lithops(
-                executor, ds, reprocess=del_first
-            )
-        if self._sm_config['services'].get('ion_thumbnail', True):
-            generate_ion_thumbnail_lithops(
-                executor=executor,
-                db=self._db,
-                sm_config=self._sm_config,
-                ds=ds,
-                only_if_needed=not del_first,
-            )
+        with perf_profile(self._db, 'annotate_lithops', ds.id) as perf:
+            executor = Executor(self._sm_config['lithops'], perf=perf)
+
+            ServerAnnotationJob(executor, self._img_store, ds).run()
+
+            if self._sm_config['services'].get('colocalization', True):
+                Colocalization(self._db, self._img_store).run_coloc_job_lithops(
+                    executor, ds, reprocess=del_first
+                )
+
+            if self._sm_config['services'].get('ion_thumbnail', True):
+                generate_ion_thumbnail_lithops(
+                    executor=executor,
+                    db=self._db,
+                    sm_config=self._sm_config,
+                    ds=ds,
+                    only_if_needed=not del_first,
+                )
 
     def index(self, ds: Dataset):
         """Re-index all search results for the dataset.

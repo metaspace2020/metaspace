@@ -29,6 +29,7 @@ from sm.engine.annotation_spark.segmenter import (
     spectra_sample_gen,
 )
 from sm.engine.util import SMConfig
+from sm.engine.utils.perf_profile import PerfProfileCollector
 
 logger = logging.getLogger('engine')
 
@@ -147,6 +148,7 @@ class MSMSearch:
         moldbs: List[MolecularDB],
         ds_config: DSConfig,
         ds_data_path: Path,
+        perf: PerfProfileCollector,
     ):
         self._spark_context = spark_context
         self._ds_config = ds_config
@@ -154,6 +156,7 @@ class MSMSearch:
         self._moldbs = moldbs
         self._sm_config = SMConfig.get_conf()
         self._ds_data_path = ds_data_path
+        self._perf = perf
 
     def _fetch_formula_centroids(self, ion_formula_map_df):
         """Generate/load centroids for all ions formulas"""
@@ -266,21 +269,31 @@ class MSMSearch:
         logger.info('Running molecule search')
 
         ds_segments = self.define_segments_and_segment_ds(ds_segm_size_mb=20)
+        self._perf.record_entry('segmented ds')
 
         moldb_fdr_list = init_fdr(self._ds_config, self._moldbs)
         ion_formula_map_df = collect_ion_formulas(self._spark_context, moldb_fdr_list)
+        self._perf.record_entry('collected ion formulas')
 
         formula_centroids = self._fetch_formula_centroids(ion_formula_map_df)
+        self._perf.record_entry('loaded centroids')
         centr_segm_n = self.clip_and_segment_centroids(
             centroids_df=formula_centroids.centroids_df(),
             ds_segments=ds_segments,
             ds_dims=get_ds_dims(self._imzml_parser.coordinates),
         )
+        self._perf.record_entry('segmented centroids')
 
         target_formula_inds, targeted_database_formula_inds = self.select_target_formula_inds(
             ion_formula_map_df,
             formula_centroids.formulas_df,
             target_modifiers=union_target_modifiers(moldb_fdr_list),
+        )
+        self._perf.add_extra_data(
+            ds_segments=len(ds_segments),
+            centr_segments=centr_segm_n,
+            ion_formulas=len(ion_formula_map_df),
+            target_formulas=len(target_formula_inds),
         )
 
         process_centr_segment = create_process_segment(
