@@ -40,11 +40,10 @@ const SCALES: Record<ScaleType, [ScaleMode, number, number]> = {
   test: ['linear', 0, 0.5], // For unit tests, because it's easier to make test data for 50% threshold than 99%
 }
 
-const createDataUrl = (imageBytes: Uint8ClampedArray, width: number, height: number) => {
+const applyImageData = (canvas: HTMLCanvasElement, imageBytes: Uint8ClampedArray, width: number, height: number) => {
   if (imageBytes.length !== width * height * 4) {
     throw new Error('imageBytes must be in RGBA format')
   }
-  const canvas = document.createElement('canvas')
   canvas.width = width
   canvas.height = height
   const ctx = canvas.getContext('2d')!
@@ -57,6 +56,11 @@ const createDataUrl = (imageBytes: Uint8ClampedArray, width: number, height: num
     imageData.data.set(imageBytes)
   }
   ctx.putImageData(imageData, 0, 0)
+}
+
+const createDataUrl = (imageBytes: Uint8ClampedArray, width: number, height: number) => {
+  const canvas = document.createElement('canvas')
+  applyImageData(canvas, imageBytes, width, height)
   return canvas.toDataURL()
 }
 
@@ -319,7 +323,7 @@ export const renderIonImageToBuffer = (ionImage: IonImage, cmap: readonly number
   return outputBuffer
 }
 
-export const renderIonImages = (layers: IonImageLayer[]) => {
+export const renderIonImages = (layers: IonImageLayer[], canvas?: HTMLCanvasElement) => {
   if (layers.length === 0) return null
 
   const [base] = layers
@@ -351,6 +355,11 @@ export const renderIonImages = (layers: IonImageLayer[]) => {
         pixels[i * 4 + 3] = (a1 + a2 * (1 - a1)) * 255
       }
     }
+  }
+
+  if (canvas) {
+    applyImageData(canvas, pixels, width, height)
+    return
   }
 
   return createDataUrl(pixels, width, height)

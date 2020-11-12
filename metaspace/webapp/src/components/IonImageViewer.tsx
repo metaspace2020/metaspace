@@ -351,15 +351,21 @@ const useBufferedOpticalImage = (props: Props) => {
 }
 
 const useIonImageView = (props: Props) => {
-  const ionImageDataUri = computed(() => props.ionImageLayers && renderIonImages(props.ionImageLayers))
-  const renderIonImageView = () => (props.ionImageLayers
-    && <img
-      src={ionImageDataUri.value}
-      class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
-      style={{
-        transform: (props.ionImageTransform ? formatMatrix3d(props.ionImageTransform) : ''),
-      }}
-    />)
+  const canvasRef = templateRef<HTMLCanvasElement>('ionImageCanvas')
+  const renderIonImageView = () => {
+    if (props.ionImageLayers && canvasRef.value) {
+      renderIonImages(props.ionImageLayers, canvasRef.value)
+    }
+    return (
+      <canvas
+        ref="ionImageCanvas"
+        class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
+        style={{
+          transform: (props.ionImageTransform ? formatMatrix3d(props.ionImageTransform) : ''),
+        }}
+      />
+    )
+  }
   return { renderIonImageView }
 }
 
