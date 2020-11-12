@@ -14,22 +14,15 @@
       v-else
       class="flex items-center sm-flex-direction"
     >
-      <span
-        v-if="status === 'LOCKED'"
-        key="locked"
-        class="cursor-help h-4 leading-5 font-medium text-blue-700"
-        title="Locked intensity"
-      >
-        {{ intensity }}
-      </span>
-      <el-tooltip
-        v-else
-        :disabled="tooltipDisabled || status !== 'CLIPPED'"
-      >
+      <el-tooltip :disabled="tooltipDisabled || status !== 'CLIPPED'">
         <button
           title="Click to edit"
           class="button-reset h-4 leading-5"
-          :class="{ 'font-medium text-red-700': status === 'CLIPPED', 'cursor-default': tooltipDisabled }"
+          :class="{
+            'font-medium text-red-700': status === 'CLIPPED',
+            'font-medium text-blue-700': status === 'LOCKED',
+            'cursor-default': tooltipDisabled
+          }"
           @click="editing = true"
         >
           {{ intensity }}
@@ -130,7 +123,11 @@ export default defineComponent<Props>({
       originalIntensity,
       status,
       submit(floatValue: number) {
-        emit('input', floatValue)
+        if (status.value === 'LOCKED') {
+          emit('lock', floatValue)
+        } else {
+          emit('input', floatValue)
+        }
         editing.value = false
       },
       reset() {

@@ -14,18 +14,14 @@
     </p>
     <div class="flex justify-between">
       <locked-intensity-field
+        v-model="settings.lockMin"
         label="Minimum intensity"
         placeholder="min."
-        :stored-value="settings.lockMin"
-        :has-error="lockMinError"
-        @submit="value => { settings.lockMin = value; settings.isLockActive = true; }"
       />
       <locked-intensity-field
+        v-model="settings.lockMax"
         label="Maximum intensity"
         placeholder="max."
-        :stored-value="settings.lockMax"
-        :has-error="lockMaxError"
-        @submit="value => { settings.lockMax = value; settings.isLockActive = true; }"
       />
     </div>
   </overlay>
@@ -56,20 +52,8 @@ export default defineComponent({
   setup(props, { emit }) {
     const { settings } = useIonImageSettings()
 
-    const lockMinError = computed(() => isInvalidIntensity(settings.lockMin))
-    const lockMaxError = computed(() => isInvalidIntensity(settings.lockMax))
-
-    const hasLockErrors = computed(() => lockMinError.value || lockMaxError.value)
-    const isSwitchDisabled = computed(() =>
-      hasLockErrors.value || !(settings.lockMin.length || settings.lockMax.length),
-    )
-
     return {
       settings,
-      lockMinError,
-      lockMaxError,
-      hasLockErrors,
-      isSwitchDisabled,
     }
   },
 })

@@ -38,7 +38,7 @@
   </form>
 </template>
 <script lang="ts">
-import { defineComponent, ref } from '@vue/composition-api'
+import { defineComponent, ref, watch } from '@vue/composition-api'
 
 import FadeTransition from '../../components/FadeTransition'
 import ArrowIcon from '../../assets/inline/refactoring-ui/arrow-thin-right-circle.svg'
@@ -51,19 +51,35 @@ export default defineComponent({
     FadeTransition,
   },
   props: {
-    hasError: Boolean,
     label: String,
     placeholder: String,
-    storedValue: String,
+    value: Number,
   },
   setup(props, { emit }) {
-    const inputText = ref(props.storedValue)
     const inputRef = ref<HTMLInputElement>(null)
+    const inputText = ref('')
+
+    watch(() => props.value, () => {
+      inputText.value = props.value?.toExponential(1) || ''
+    })
+
+    const hasError = ref(false)
     return {
       inputText,
       inputRef,
+      hasError,
       onSubmit() {
-        emit('submit', inputText.value)
+        if (inputText.value.length === 0) {
+          emit('input', undefined)
+        } else {
+          const float = parseFloat(inputText.value)
+          if (isNaN(float)) {
+            hasError.value = true
+          } else {
+            emit('input', float)
+            hasError.value = false
+          }
+        }
         if (inputRef.value) inputRef.value.focus()
       },
     }
