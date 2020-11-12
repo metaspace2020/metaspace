@@ -12,12 +12,12 @@
     />
     <div
       v-else
-      class="flex sm-direction"
+      class="flex items-center sm-flex-direction"
     >
       <span
         v-if="status === 'LOCKED'"
         key="locked"
-        class="cursor-not-allowed font-medium text-blue-700"
+        class="cursor-help h-4 leading-5 font-medium text-blue-700"
         title="Locked intensity"
       >
         {{ intensity }}
@@ -28,7 +28,7 @@
       >
         <button
           title="Click to edit"
-          class="button-reset leading-3"
+          class="button-reset h-4 leading-5"
           :class="{ 'font-medium text-red-700': status === 'CLIPPED', 'cursor-default': tooltipDisabled }"
           @click="editing = true"
         >
@@ -60,15 +60,16 @@
         </p>
       </el-tooltip>
       <button
-        class="button-reset leading-3 mx-1"
-        title="Lock intensity"
-        @click.stop="$emit('lock', status === 'LOCKED' ? '' : intensity)"
+        class="button-reset h-4 mx-1"
+        :title="`${status === 'LOCKED' ? 'Unlock' : 'Lock'} intensity`"
+        @click.stop="lock"
       >
-        <lock-icon
-          class="sm-stateful-icon"
-          :class="{ 'sm-stateful-icon--active': status === 'LOCKED' }"
-        />
+        <lock-icon class="fill-current text-gray-600" />
       </button>
+      <check-icon
+        v-if="status === 'LOCKED'"
+        class="h-6 w-6 -mx-2 sm-fill-primary text-blue-500"
+      />
     </div>
   </fade-transition>
 </template>
@@ -78,15 +79,17 @@ import { defineComponent, computed, ref, watch } from '@vue/composition-api'
 import EditIntensity from './EditIntensity.vue'
 import FadeTransition from '../../components/FadeTransition'
 
-import '../../components/StatefulIcon.css'
+import '../../components/MonoIcon.css'
 import LockIcon from '../../assets/inline/refactoring-ui/lock.svg'
+import CheckIcon from '../../assets/inline/refactoring-ui/check.svg'
+
+import { IonImageIntensity } from './ionImageState'
 
 interface Props {
   clippingType: string
+  intensities: IonImageIntensity
   label: string
-  originalValue: number
   placeholder: string
-  status: 'LOCKED' | 'CLIPPED' | undefined
   tooltipDisabled: boolean
   value: number
 }
@@ -94,10 +97,9 @@ interface Props {
 export default defineComponent<Props>({
   props: {
     clippingType: String,
+    intensities: Object,
     label: String,
-    originalValue: Number,
     placeholder: String,
-    status: String,
     tooltipDisabled: Boolean,
     value: Number,
   },
@@ -105,34 +107,56 @@ export default defineComponent<Props>({
     FadeTransition,
     EditIntensity,
     LockIcon,
+    CheckIcon,
   },
   setup(props, { emit }) {
     const editing = ref(false)
 
-    const intensity = computed(() => props.value.toExponential(1))
-    const originalIntensity = computed(() => props.originalValue.toExponential(1))
+    const status = computed(() => props.intensities.status)
+    const display = computed(() => {
+      if (status.value === 'LOCKED') {
+        return props.intensities.user
+      } else if (status.value === 'CLIPPED') {
+        return props.intensities.clipped
+      }
+      return props.value
+    })
+    const intensity = computed(() => display.value.toExponential(1))
+    const originalIntensity = computed(() => props.intensities.image.toExponential(1))
 
     return {
+      editing,
       intensity,
       originalIntensity,
-      editing,
+      status,
       submit(floatValue: number) {
         emit('input', floatValue)
         editing.value = false
       },
       reset() {
-        emit('input', props.originalValue)
+        emit('input', props.intensities.image)
         editing.value = false
+      },
+      lock() {
+        emit('lock', status.value === 'LOCKED' ? undefined : display.value)
       },
     }
   },
 })
 </script>
 <style scoped>
-  .sm-stateful-icon {
-    @apply h-4 w-4;
+  button svg {
+    height: 14px;
+    width: 14px;
   }
-  .sm-direction:last-child {
+  .sm-flex-direction:last-child {
     flex-direction: row-reverse;
+  }
+
+  .sm-fill-primary {
+    fill: none;
+  }
+  .sm-fill-primary .primary {
+    fill: currentColor;
   }
 </style>

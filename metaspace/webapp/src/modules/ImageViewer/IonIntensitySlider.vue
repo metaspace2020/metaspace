@@ -1,5 +1,6 @@
 <template>
   <div
+    v-if="intensity"
     ref="container"
     class="relative"
   >
@@ -12,36 +13,31 @@
       :step="0.01"
       :value="model.scaleRange"
       :disabled="isDisabled"
-      :min-tooltip="intensity.scaledMin.toExponential(1)"
-      :max-tooltip="intensity.scaledMax.toExponential(1)"
+      :min-tooltip="intensity.min.scaled.toExponential(1)"
+      :max-tooltip="intensity.max.scaled.toExponential(1)"
       @change="range => $emit('change', range)"
       @thumb-start="disableTooltips = true; $emit('thumb-start')"
       @thumb-stop="disableTooltips = false; $emit('thumb-stop')"
       @track-click="$emit('track-click')"
     />
-    <div
-      v-if="intensity"
-      class="flex justify-between items-center h-6 leading-6 tracking-wide relative z-10"
-    >
+    <div class="flex justify-between items-center h-6 leading-6 tracking-wide relative z-10">
       <ion-intensity
         v-model="model.minIntensity"
-        :original-value="intensity.imageMin"
-        :status="minStatus"
+        :intensities="intensity.min"
         :tooltip-disabled="disableTooltips"
         clipping-type="outlier-min"
         label="Minimum intensity"
         placeholder="min."
-        @lock="intesity => { settings.lockMin = intensity }"
+        @lock="value => { settings.lockMin = value }"
       />
       <ion-intensity
         v-model="model.maxIntensity"
-        :original-value="intensity.imageMax"
-        :status="maxStatus"
+        :intensities="intensity.max"
         :tooltip-disabled="disableTooltips"
-        :clipping-type="minStatus === 'CLIPPED' ? 'outlier-max' : 'hotspot-removal'"
+        :clipping-type="intensity.min.status === 'CLIPPED' ? 'outlier-max' : 'hotspot-removal'"
         label="Maximum intensity"
         placeholder="max."
-        @lock="intensity => { settings.lockMax = intensity }"
+        @lock="value => { settings.lockMax = value }"
       />
     </div>
   </div>
@@ -58,7 +54,10 @@ import { IonImageState, IonImageIntensity, ColorBar, useIonImageSettings } from 
 
 interface Props {
   model: IonImageState,
-  intensity: IonImageIntensity,
+  intensity: {
+    min: IonImageIntensity,
+    max: IonImageIntensity,
+  },
   colorBar: ColorBar,
   isDisabled: boolean
 }
@@ -85,20 +84,6 @@ export default defineComponent<Props>({
     return {
       container,
       settings,
-      minStatus: computed(() => {
-        if (props.intensity.isMinLocked) {
-          return 'LOCKED'
-        } else if (props.intensity.isMinClipped) {
-          return 'CLIPPED'
-        }
-      }),
-      maxStatus: computed(() => {
-        if (props.intensity.isMaxLocked) {
-          return 'LOCKED'
-        } else if (props.intensity.isMaxClipped) {
-          return 'CLIPPED'
-        }
-      }),
       disableTooltips: ref(false),
       style: computed(() => {
         if (container.value) {

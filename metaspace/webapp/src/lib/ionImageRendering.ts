@@ -15,6 +15,8 @@ export interface IonImage {
   clippedMaxIntensity: number;
   scaledMinIntensity: number;
   scaledMaxIntensity: number;
+  userMinIntensity: number;
+  userMaxIntensity: number;
   // scaleBarValues - Quantization of linear intensity values, used for showing the distribution of colors on the scale bar
   // Always length 256
   scaleBarValues: Uint8ClampedArray;
@@ -217,27 +219,32 @@ export const loadPngFromUrl = async(url: string) => {
 export const processIonImage = (
   png: Image, minIntensity: number = 0, maxIntensity: number = 1, scaleType: ScaleType = DEFAULT_SCALE_TYPE,
   userScaling: readonly [number, number] = [0, 1],
-  userIntensities?: readonly [number, number]): IonImage => {
+  userIntensities: readonly [number?, number?] = []): IonImage => {
   const [scaleMode, lowQuantile, highQuantile] = SCALES[scaleType]
   const { width, height } = png
+  const [userMin = minIntensity, userMax = maxIntensity] = userIntensities
 
   const { intensityValues, mask } = extractIntensityAndMask(png, minIntensity, maxIntensity)
 
-  let min = minIntensity
-  let max = maxIntensity
-  if (userIntensities) { // do not clip user intensities
-    [min, max] = userIntensities
-  } else if (scaleMode === 'log' || lowQuantile > 0 || highQuantile < 1) {
-    // Only non-zero values should be considered for hotspot removal, otherwise sparse images have most of their set pixels treated as hotspots.
-    // For compatibility with the previous version where images were loaded as 8-bit, linear scale's thresholds exclude pixels
-    // whose values would round down to zero. This can make a big difference - some ion images have as high as 40% of
-    // their pixels set to values that are zero when loaded as 8-bit but non-zero when loaded as 16-bit.
-    const minValueConsidered = (scaleMode === 'linear' ? maxIntensity / 256 : 0)
-    const values = getQuantileValues(intensityValues, mask, minValueConsidered)
+  // Only non-zero values should be considered for hotspot removal, otherwise sparse images have most of their set pixels treated as hotspots.
+  // For compatibility with the previous version where images were loaded as 8-bit, linear scale's thresholds exclude pixels
+  // whose values would round down to zero. This can make a big difference - some ion images have as high as 40% of
+  // their pixels set to values that are zero when loaded as 8-bit but non-zero when loaded as 16-bit.
+  const minValueConsidered = (scaleMode === 'linear' ? maxIntensity / 256 : 0)
+  const quantileValues = getQuantileValues(intensityValues, mask, minValueConsidered)
 
-    // log must use lowest value to avoid 0
-    min = lowQuantile > 0 || scaleMode === 'log' ? safeQuantile(values, lowQuantile) : minIntensity
-    max = highQuantile < 1 ? safeQuantile(values, highQuantile) : maxIntensity
+  let min = minIntensity
+  if (userMin !== minIntensity) {
+    min = userMin
+  } else if (scaleMode === 'log' || lowQuantile > 0) {
+    min = safeQuantile(quantileValues, lowQuantile)
+  }
+
+  let max = maxIntensity
+  if (userMax !== maxIntensity) {
+    max = userMax
+  } else if (highQuantile < 1) {
+    max = safeQuantile(quantileValues, highQuantile)
   }
 
   const [minScale, maxScale] = userScaling
@@ -266,6 +273,8 @@ export const processIonImage = (
     clippedMaxIntensity: max,
     scaledMinIntensity: scaledMin,
     scaledMaxIntensity: scaledMax,
+    userMinIntensity: userMin,
+    userMaxIntensity: userMax,
     scaleBarValues,
     lowQuantile,
     highQuantile,

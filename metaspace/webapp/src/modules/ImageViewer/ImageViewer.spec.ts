@@ -44,6 +44,8 @@ describe('ImageViewer', () => {
     clippedMaxIntensity: 1,
     scaledMinIntensity: 0,
     scaledMaxIntensity: 1,
+    userMinIntensity: 0,
+    userMaxIntensity: 1,
     scaleBarValues: new Uint8ClampedArray(),
     lowQuantile: 0,
     highQuantile: 1,
