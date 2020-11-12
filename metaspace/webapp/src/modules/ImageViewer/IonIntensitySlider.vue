@@ -20,7 +20,7 @@
       @thumb-stop="disableTooltips = false; $emit('thumb-stop')"
       @track-click="$emit('track-click')"
     />
-    <div class="flex justify-between items-center h-6 leading-6 tracking-wide relative z-10">
+    <div class="flex justify-between items-start h-6 leading-6 tracking-wide relative z-10">
       <ion-intensity
         v-model="model.minIntensity"
         :intensities="intensity.min"

@@ -12,7 +12,7 @@
     />
     <div
       v-else
-      class="flex items-center sm-flex-direction"
+      class="h-5 flex items-center sm-flex-direction"
     >
       <el-tooltip :disabled="tooltipDisabled || status !== 'CLIPPED'">
         <button
