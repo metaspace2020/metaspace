@@ -324,7 +324,7 @@ export const renderIonImageToBuffer = (ionImage: IonImage, cmap: readonly number
 }
 
 export const renderIonImages = (layers: IonImageLayer[], canvas?: HTMLCanvasElement) => {
-  if (layers.length === 0) return null
+  if (layers.length === 0) return
 
   const [base] = layers
   const { width, height, clippedValues } = base.ionImage

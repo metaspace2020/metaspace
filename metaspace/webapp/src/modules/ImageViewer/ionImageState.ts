@@ -365,6 +365,17 @@ export const useIonImages = (props: Props) => {
     return items
   })
 
+  const ionImageDimensions = computed(() => {
+    if (ionImagesWithData.value.length) {
+      const [{ data }] = ionImagesWithData.value
+      return {
+        width: data.image.value?.width,
+        height: data.image.value?.height,
+      }
+    }
+    return {}
+  })
+
   watch(() => props.annotation, (annotation) => {
     activeAnnotation.value = annotation.id
 
@@ -412,6 +423,7 @@ export const useIonImages = (props: Props) => {
     ionImageMenuItems,
     singleIonImageControls,
     ionImagesLoading,
+    ionImageDimensions,
   }
 }
 

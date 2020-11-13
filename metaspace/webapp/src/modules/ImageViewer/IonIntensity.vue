@@ -3,7 +3,7 @@
     <edit-intensity
       v-if="editing"
       key="edit"
-      class="w-20 mt-1"
+      class="w-20 sm-top-margin"
       :placeholder="placeholder"
       :initial-value="intensity"
       @submit="submit"
@@ -142,6 +142,10 @@ export default defineComponent<Props>({
 })
 </script>
 <style scoped>
+  .sm-top-margin {
+    margin-top: 2px;
+  }
+
   button svg {
     height: 14px;
     width: 14px;
