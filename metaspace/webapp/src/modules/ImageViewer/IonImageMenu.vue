@@ -1,9 +1,12 @@
 <template>
-  <overlay class="overflow-x-hidden overflow-y-auto px-0 sm-menu-items">
+  <overlay
+    class="px-0 sm-menu-items"
+    :class="{ 'overflow-x-hidden overflow-y-auto': channelSelect === null }"
+  >
     <menu-item
       v-for="item in menuItems"
       :key="item.id"
-      class="flex flex-col justify-center"
+      class="flex flex-col justify-center relative"
       :layer-id="item.id"
       :active-layer="activeLayer"
       :visible="item.settings.visible"
@@ -20,6 +23,7 @@
           :possible-compounds="item.annotation.possibleCompounds"
           :isomers="item.annotation.isomers"
           :isobars="item.annotation.isobars"
+          :disabled="channelSelect === item.id"
         >
           <molecular-formula
             class="truncate font-medium h-6 text-base proportional-nums"
@@ -42,25 +46,28 @@
         </button>
       </p>
       <div class="h-9">
+        <ion-intensity-slider
+          :id="item.id"
+          can-focus
+          :model="item.state"
+          :color-bar="item.colorBar.value"
+          :intensity="item.intensity.value"
+          :is-disabled="!item.settings.visible"
+          @change="item.updateIntensity"
+          @thumb-start="setLastSlider(item.id)"
+        />
+      </div>
+      <div class="w-0 h-full mr-3 absolute top-0 flex items-center justify-end sm-right-full">
         <fade-transition>
-          <channel-selector
+          <overlay
             v-if="channelSelect === item.id"
-            v-model="item.settings.channel"
-            :class="['my-auto', activeLayer === item.id ? 'bg-blue-200-alpha' : 'bg-gray-200-alpha']"
-            @close="channelSelect = null"
-          />
-          <ion-intensity-slider
-            v-else
-            :id="item.id"
-            can-focus
-            :model="item.state"
-            :color-bar="item.colorBar.value"
-            :intensity="item.intensity.value"
-            :is-disabled="!item.settings.visible"
-            @change="item.updateIntensity"
-            @thumb-start="setLastSlider(item.id)"
-            @track-click="channelSelect = item.id"
-          />
+            key="channel-select"
+          >
+            <channel-selector
+              v-model="item.settings.channel"
+              @close="clearChannelSelect"
+            />
+          </overlay>
         </fade-transition>
       </div>
     </menu-item>
@@ -126,8 +133,14 @@ export default defineComponent({
     const lastSlider = ref<string | null>(null)
     const channelSelect = ref<string | null>(null)
 
+    const clearChannelSelect = () => {
+      channelSelect.value = null
+      document.removeEventListener('click', clearChannelSelect)
+    }
+
     return {
       channelSelect,
+      clearChannelSelect,
       activeLayer,
       removeLayer,
       setLastSlider(id: string) {
@@ -139,7 +152,12 @@ export default defineComponent({
           return
         }
         setActiveLayer(id)
-        channelSelect.value = null
+        if (channelSelect.value === id) {
+          clearChannelSelect()
+        } else {
+          channelSelect.value = id
+          document.addEventListener('click', clearChannelSelect)
+        }
       },
     }
   },
@@ -159,5 +177,9 @@ export default defineComponent({
 .sm-menu-items >>> > *:hover {
   outline: 1px solid theme('colors.primary');
   outline-offset: -1px;
+}
+
+.sm-right-full {
+  right: 100%;
 }
 </style>
