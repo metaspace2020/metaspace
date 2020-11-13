@@ -23,7 +23,7 @@
             'font-medium text-blue-700': status === 'LOCKED',
             'cursor-default': tooltipDisabled
           }"
-          @click="editing = true"
+          @click.stop="editing = true"
         >
           {{ intensity }}
         </button>

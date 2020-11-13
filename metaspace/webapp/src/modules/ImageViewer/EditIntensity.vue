@@ -4,6 +4,7 @@
     spellcheck="false"
     autocomplete="off"
     @submit.prevent="submit"
+    @click.stop
     @mousedown.stop
   >
     <label>
