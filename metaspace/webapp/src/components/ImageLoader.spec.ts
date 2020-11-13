@@ -45,7 +45,12 @@ describe('ImageLoader', () => {
     intensityValues: new Float32Array(range(W * H)),
   } as any))
   mockIonImageRendering.renderIonImages.mockImplementation(
-    (layers: any) => JSON.stringify(layers.map((_: any) => _.ionImage.png)),
+    (layers: any, canvas: any) => {
+      if (canvas) {
+        canvas.setAttribute('data-images', layers.map((_: any) => _.ionImage.png.url).join(', '))
+      }
+      return undefined
+    },
   )
 
   beforeEach(() => {

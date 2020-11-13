@@ -68,6 +68,10 @@ interface Settings {
   lockMin: number | undefined
   lockMax: number | undefined
   isLockActive: boolean
+  imageSize: {
+    width: number
+    height: number
+  } | null
 }
 
 const channels = ['red', 'green', 'blue', 'magenta', 'yellow', 'cyan', 'orange']
@@ -82,6 +86,7 @@ const settings = reactive<Settings>({
   lockMin: undefined,
   lockMax: undefined,
   isLockActive: true,
+  imageSize: null,
 })
 const ionImageLayerCache : Record<string, IonImageLayer> = {}
 const rawImageCache : Record<string, Ref<Image | null>> = {}
@@ -150,6 +155,13 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
       loadPngFromUrl(isotopeImage.url)
         .then(img => {
           rawImageCache[layer.id].value = img
+
+          if (settings.imageSize === null) {
+            settings.imageSize = {
+              width: img.width,
+              height: img.height,
+            }
+          }
         })
         .catch(err => {
           reportError(err, null)
@@ -269,6 +281,7 @@ export function resetIonImageState() {
   settings.lockMin = undefined
   settings.lockMax = undefined
   settings.isLockActive = true
+  settings.imageSize = null
 }
 
 export const useIonImages = (props: Props) => {
@@ -366,14 +379,10 @@ export const useIonImages = (props: Props) => {
   })
 
   const ionImageDimensions = computed(() => {
-    if (ionImagesWithData.value.length) {
-      const [{ data }] = ionImagesWithData.value
-      return {
-        width: data.image.value?.width,
-        height: data.image.value?.height,
-      }
+    if (settings.imageSize !== null) {
+      return settings.imageSize
     }
-    return {}
+    return { width: undefined, height: undefined }
   })
 
   watch(() => props.annotation, (annotation) => {

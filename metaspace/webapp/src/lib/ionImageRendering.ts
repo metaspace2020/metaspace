@@ -323,11 +323,14 @@ export const renderIonImageToBuffer = (ionImage: IonImage, cmap: readonly number
   return outputBuffer
 }
 
-export const renderIonImages = (layers: IonImageLayer[], canvas?: HTMLCanvasElement) => {
+export const renderIonImages = (layers: IonImageLayer[], canvas: HTMLCanvasElement, width: number, height: number) => {
+  const ctx = canvas.getContext('2d')!
+  ctx.clearRect(0, 0, width, height)
+
   if (layers.length === 0) return
 
   const [base] = layers
-  const { width, height, clippedValues } = base.ionImage
+  const { clippedValues } = base.ionImage
 
   const buffer = new ArrayBuffer(clippedValues.length * 4)
   const pixels = new Uint8ClampedArray(buffer)
@@ -355,14 +358,8 @@ export const renderIonImages = (layers: IonImageLayer[], canvas?: HTMLCanvasElem
         pixels[i * 4 + 3] = (a1 + a2 * (1 - a1)) * 255
       }
     }
-  }
-
-  if (canvas) {
     applyImageData(canvas, pixels, width, height)
-    return
   }
-
-  return createDataUrl(pixels, width, height)
 }
 
 export const renderIonImage = (ionImage: IonImage, cmap: readonly number[][]) => {

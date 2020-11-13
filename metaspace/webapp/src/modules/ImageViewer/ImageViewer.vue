@@ -50,7 +50,7 @@
         <opacity-settings
           v-if="openMenu === 'ION' && hasOpticalImage"
           key="opacity"
-          class="sm-leading-trim"
+          class="sm-leading-trim mt-auto"
           :opacity="opacity"
           @opacity="emitOpacity"
         />
@@ -204,10 +204,6 @@ export default ImageViewer
 <style scoped>
 .sm-side-bar > * {
   @apply w-60;
-}
-
-.sm-side-bar > :first-child {
-  margin-bottom: auto;
 }
 
 .sm-leading-trim > :first-child {
