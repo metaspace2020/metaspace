@@ -13,10 +13,10 @@ from lithops.storage.utils import CloudObject
 from sm.engine.annotation_lithops.annotate import choose_ds_segments
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import (
-    read_ranges_from_url,
+    CObj,
     save_cobj,
     load_cobj,
-    CObj,
+    load_cobjs,
 )
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 
@@ -86,16 +86,23 @@ def define_centr_segments(
 
 def segment_centroids(
     fexec: Executor,
-    clip_centr_chunks_cobjects: List[CObj[pd.DataFrame]],
-    centr_segm_lower_bounds: np.ndarray,
+    peaks_cobjects: List[CObj[pd.DataFrame]],
+    ds_segms_cobjects: List[CObj[pd.DataFrame]],
     ds_segms_bounds: np.ndarray,
-    ds_segm_size_mb: float,
-    max_ds_segms_size_per_db_segm_mb: float,
+    ds_segm_size_mb: int,
+    is_intensive_dataset: bool,
     isocalc_wrapper: IsocalcWrapper,
 ) -> List[CObj[pd.DataFrame]]:
-    centr_segm_n = len(centr_segm_lower_bounds)
+    max_ds_segms_size_per_db_segm_mb = 2560 if is_intensive_dataset else 1536
+    mz_min, mz_max = ds_segms_bounds[0, 0], ds_segms_bounds[-1, 1]
+
+    clip_centr_chunks_cobjects, centr_n = clip_centr_df(fexec, peaks_cobjects, mz_min, mz_max)
 
     # define first level segmentation and then segment each one into desired number
+
+    centr_segm_lower_bounds = define_centr_segments(
+        fexec, clip_centr_chunks_cobjects, centr_n, len(ds_segms_cobjects) * ds_segm_size_mb,
+    )
     first_level_centr_segm_n = min(32, len(centr_segm_lower_bounds))
     centr_segm_lower_bounds = np.array_split(centr_segm_lower_bounds, first_level_centr_segm_n)
     first_level_centr_segm_bounds = np.array([bounds[0] for bounds in centr_segm_lower_bounds])
@@ -132,14 +139,6 @@ def segment_centroids(
     )
 
     def merge_centr_df_segments(segm_cobjects, id, storage):
-        print(f'Merging segment {id} clipped centroids chunks')
-
-        def _load(cobject):
-            return load_cobj(storage, cobject)
-
-        with ThreadPoolExecutor(max_workers=128) as pool:
-            segm = pd.concat(list(pool.map(_load, segm_cobjects)))
-
         def _second_level_segment(segm, sub_segms_n):
             segm_bounds_q = [i * 1 / sub_segms_n for i in range(0, sub_segms_n)]
             sub_segms_lower_bounds = np.quantile(segm[segm.peak_i == 0].mz.values, segm_bounds_q)
@@ -151,6 +150,8 @@ def segment_centroids(
                 sub_segms.append(df)
             return sub_segms
 
+        print(f'Merging segment {id} clipped centroids chunks')
+        segm = pd.concat(load_cobjs(storage, segm_cobjects))
         init_segms = _second_level_segment(segm, len(centr_segm_lower_bounds[id]))
 
         segms = []
@@ -203,16 +204,15 @@ def segment_centroids(
                 sub_segms_cobjects[first_level_segm_i]
             )
     second_level_segms_cobjects = [
-        [cobjects]
+        (cobjects,)
         for segm_i, cobjects in sorted(second_level_segms_dict.items(), key=lambda x: x[0])
     ]
 
     first_level_cobjs = [co for cos in first_level_segms_cobjects for co in cos.values()]
 
-    second_segms = fexec.map(
+    db_segms_cobjects = fexec.map_concat(
         merge_centr_df_segments, second_level_segms_cobjects, runtime_memory=2048
     )
-    db_segms_cobjects = [cobj for cobjs in second_segms for cobj in cobjs]
 
     fexec.storage.delete_cobjects(first_level_cobjs)
 
@@ -272,7 +272,7 @@ def validate_centroid_segments(fexec, db_segms_cobjects, ds_segms_bounds, isocal
 
         # Report cases with fewer peaks than expected (indication that formulas are being split between multiple segments)
         wrong_n_peaks = stats_df[
-            (stats_df.avg_n_peaks < 3.8) | (stats_df.min_n_peaks < 2) | (stats_df.max_n_peaks > 4)
+            (stats_df.avg_n_peaks < 3.5) | (stats_df.min_n_peaks < 2) | (stats_df.max_n_peaks > 4)
         ]
         if not wrong_n_peaks.empty:
             logger.warning(

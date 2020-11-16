@@ -49,7 +49,6 @@ class Pipeline:
     ds_segms_cobjects: List[CObj[pd.DataFrame]]
     ds_segms_len: np.ndarray
     is_intensive_dataset: bool
-    clip_centr_chunks_cobjects: List[CObj[pd.DataFrame]]
     db_segms_cobjects: List[CObj[pd.DataFrame]]
     formula_metrics_df: pd.DataFrame
     images_df: pd.DataFrame
@@ -130,7 +129,6 @@ class Pipeline:
         self.peaks_cobjects = calculate_centroids(
             self.executor, self.formula_cobjects, self.isocalc_wrapper
         )
-        logger.info(f'Calculated {len(self.peaks_cobjects)} centroid chunks')
 
     def validate_calculate_centroids(self):
         validate_centroids(self.executor, self.peaks_cobjects)
@@ -164,26 +162,13 @@ class Pipeline:
 
     @use_pipeline_cache
     def segment_centroids(self):
-        mz_min, mz_max = self.ds_segments_bounds[0, 0], self.ds_segments_bounds[-1, 1]
-
-        self.clip_centr_chunks_cobjects, centr_n = clip_centr_df(
-            self.executor, self.peaks_cobjects, mz_min, mz_max
-        )
-        centr_segm_lower_bounds = define_centr_segments(
-            self.executor,
-            self.clip_centr_chunks_cobjects,
-            centr_n,
-            len(self.ds_segms_cobjects) * self.ds_segm_size_mb,
-        )
-
-        max_ds_segms_size_per_db_segm_mb = 2560 if self.is_intensive_dataset else 1536
         self.db_segms_cobjects = segment_centroids(
             self.executor,
-            self.clip_centr_chunks_cobjects,
-            centr_segm_lower_bounds,
+            self.peaks_cobjects,
+            self.ds_segms_cobjects,
             self.ds_segments_bounds,
             self.ds_segm_size_mb,
-            max_ds_segms_size_per_db_segm_mb,
+            self.is_intensive_dataset,
             self.isocalc_wrapper,
         )
         logger.info(f'Segmented centroids chunks into {len(self.db_segms_cobjects)} segments')

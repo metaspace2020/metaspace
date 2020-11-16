@@ -42,6 +42,9 @@ job = LocalAnnotationJob(
     ds_config,
 )
 pipe = job.pipe
+pipe.load_ds(use_cache=False)
+pipe.segment_centroids(use_cache=False)
+pipe.validate_segment_centroids()
 # job.pipe.clean(True)
 job.run(save=False, debug_validate=False)
 
@@ -116,6 +119,11 @@ def return_storage_config(storage):
 
 fs = executor.call_async(return_storage_config, ())
 executor.get_result([fs])
+
+
+#%%
+dfb = choose_ds_segments_per_formula(pipe.ds_segments_bounds, df, pipe.isocalc_wrapper)
+dfb
 
 
 #%%

@@ -106,6 +106,9 @@ class Executor:
             assert len(cost_factors) == len(args)
         if runtime_memory is None:
             runtime_memory = 512
+        # Make sure runtime_memory is a power of 2 to avoid making too many runtime variants
+        runtime_memory = int(2 ** np.ceil(np.log2(runtime_memory)))
+
         if include_modules is not None:
             kwargs['include_modules'] = [*self._include_modules, *include_modules]
 

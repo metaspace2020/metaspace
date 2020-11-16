@@ -3,16 +3,9 @@ from __future__ import annotations
 import json
 import logging
 from base64 import urlsafe_b64encode
-from datetime import datetime
 from hashlib import blake2b
-from pathlib import Path
 
 import numpy as np
-import pandas as pd
-
-# logging.getLogger('ibm_boto3').setLevel(logging.WARNING)
-# logging.getLogger('ibm_botocore').setLevel(logging.WARNING)
-# logging.getLogger('urllib3').setLevel(logging.WARNING)
 
 logger = logging.getLogger('annotation-pipeline')
 

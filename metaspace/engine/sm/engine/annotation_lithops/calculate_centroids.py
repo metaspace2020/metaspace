@@ -4,11 +4,12 @@ import logging
 from itertools import chain
 from typing import List
 
+import numpy as np
 import pandas as pd
 from lithops.storage import Storage
 
 from sm.engine.annotation_lithops.executor import Executor
-from sm.engine.annotation_lithops.io import save_cobj, load_cobj, CObj
+from sm.engine.annotation_lithops.io import save_cobj, load_cobj, CObj, load_cobjs, save_cobjs
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 
 logger = logging.getLogger('annotation-pipeline')
@@ -59,9 +60,27 @@ def calculate_centroids(
     )
 
     num_centroids = sum(peaks_cobject_lens)
-    n_centroids_chunks = len(peaks_cobjects)
-    logger.info(f'Calculated {num_centroids} centroids in {n_centroids_chunks} chunks')
-    return peaks_cobjects
+    logger.info(f'Calculated {num_centroids} centroids in {len(peaks_cobjects)} chunks')
+
+    def _sort_peaks_cobjects(*, storage):
+        df = pd.concat(load_cobjs(storage, peaks_cobjects))
+        first_peak_mz = df.mz[df.peak_i == 0].sort_values()
+
+        peaks_chunk_size = 64 * 2 ** 20
+        n_chunks = int(np.ceil(df.memory_usage().sum() / peaks_chunk_size))
+        cnt = len(first_peak_mz)
+        chunks = (
+            df.loc[first_peak_mz.index[cnt * i // n_chunks : cnt * (i + 1) // n_chunks]]
+            for i in range(n_chunks)
+        )
+
+        return save_cobjs(storage, chunks)
+
+    mem_needed_to_sort = 256 + 50 * num_centroids / 2 ** 20
+    sorted_peaks_cobjects = fexec.call(_sort_peaks_cobjects, (), runtime_memory=mem_needed_to_sort)
+
+    logger.info(f'Sorted centroids chunks into {len(sorted_peaks_cobjects)} chunks')
+    return sorted_peaks_cobjects
 
 
 def validate_centroids(fexec: Executor, peaks_cobjects: List[CObj[pd.DataFrame]]):
