@@ -1,26 +1,21 @@
 <template>
   <div
     ref="container"
-    class="-m-1"
+    class="inline-flex w-full justify-around items-center py-1 rounded-full"
+    tabindex="0"
     @click.stop
+    @keypress.enter.self="$emit('close')"
+    @keypress.esc.self="$emit('close')"
   >
-    <div
-      v-for="(channels, i) in rows"
-      :key="i"
-      class="flex"
-    >
-      <button
-        v-for="channel in channels"
-        :key="channel.name"
-        :title="channel.name"
-        class="button-reset rounded-full border border-solid m-1 relative"
-        :class="value === channel.name ? 'border-primary' : 'border-gray-400'"
-        :style="{ background: channel.color }"
-        @click="$emit('input', channel.name)"
-        @keyup.enter.self="$emit('close')"
-        @keyup.esc.self="$emit('close')"
-      />
-    </div>
+    <button
+      v-for="channel in channels"
+      :key="channel.name"
+      :title="channel.name"
+      class="button-reset rounded-full border border-solid"
+      :class="value === channel.name ? 'border-primary' : 'border-gray-400'"
+      :style="{ background: channel.color }"
+      @click="$emit('input', channel.name)"
+    />
   </div>
 </template>
 <script lang="ts">
@@ -40,29 +35,25 @@ export default defineComponent({
       }
     })
 
-    const mapToNameAndColor = (name: string) => ({ name, color: channels[name] })
-
     return {
       container,
-      rows: [
-        ['red', 'green', 'blue', 'orange'].map(mapToNameAndColor),
-        ['cyan', 'magenta', 'yellow', 'white'].map(mapToNameAndColor),
-      ],
+      channels: Object.entries(channels).map(([name, color]) => ({ name, color })),
     }
   },
 })
 </script>
 <style scoped>
   button {
+    position: relative;
     width: 14px;
     height: 14px;
   }
   button::after {
     content: '';
-    @apply h-full w-full p-1 border-solid border-transparent absolute rounded-full;
+    @apply h-3 w-3 border-solid border-transparent absolute rounded-full;
     border-width: 3px;
-    left: -7px;
-    top: -7px;
+    left: -3px;
+    top: -3px;
   }
   button.border-primary::after {
     @apply border-primary;
