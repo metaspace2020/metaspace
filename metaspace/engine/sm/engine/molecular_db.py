@@ -197,13 +197,19 @@ def find_by_ids(ids: Iterable[int]) -> List[MolecularDB]:
     return [MolecularDB(**row) for row in data]
 
 
-def find_by_name(name: str) -> MolecularDB:
+def find_by_name(name: str, allow_legacy_names=False) -> MolecularDB:
     """Find database by name."""
 
     data = DB().select_one_with_fields(
         'SELECT id, name, version, targeted, group_id FROM molecular_db WHERE name = %s',
         params=(name,),
     )
+    if not data and allow_legacy_names:
+        data = DB().select_one_with_fields(
+            "SELECT id, name, version, targeted, group_id FROM molecular_db "
+            "WHERE name || '-' || version = %s",
+            params=(name,),
+        )
     if not data:
         raise SMError(f'MolecularDB not found: {name}')
     return MolecularDB(**data)

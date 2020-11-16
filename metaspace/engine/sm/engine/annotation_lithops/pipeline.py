@@ -20,11 +20,6 @@ from sm.engine.annotation_lithops.calculate_centroids import (
     calculate_centroids,
     validate_centroids,
 )
-from sm.engine.annotation_lithops.check_results import (
-    get_reference_results,
-    check_results,
-    log_bad_results,
-)
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import CObj
 from sm.engine.annotation_lithops.load_ds import load_ds, validate_ds_segments
@@ -114,9 +109,6 @@ class Pipeline:
         self.annotate(use_cache=use_cache)
         self.run_fdr(use_cache=use_cache)
         self.prepare_results(use_cache=use_cache)
-
-        # if debug_validate and self.ds_config['metaspace_id']:
-        #     self.check_results()
 
         return self.results_dfs, self.png_cobjs
 
@@ -218,27 +210,18 @@ class Pipeline:
 
     @use_pipeline_cache
     def run_fdr(self):
-        self.fdrs = self.executor.call(run_fdr, (self.formula_metrics_df, self.db_data_cobjects))
-
-        for moldb_id, moldb_fdrs in self.fdrs.items():
-            logger.info(f'DB {moldb_id} number of annotations with FDR less than:')
-            for fdr_step in [0.05, 0.1, 0.2, 0.5]:
-                logger.info(f'{fdr_step*100:2.0f}%: {(moldb_fdrs.fdr < fdr_step).sum()}')
+        self.fdrs = run_fdr(self.executor, self.formula_metrics_df, self.db_data_cobjects)
 
     @use_pipeline_cache
     def prepare_results(self):
         self.results_dfs, self.png_cobjs = filter_results_and_make_pngs(
-            self.executor, self.formula_metrics_df, self.fdrs, self.images_df, self.imzml_reader,
+            self.executor,
+            self.formula_metrics_df,
+            self.moldbs,
+            self.fdrs,
+            self.images_df,
+            self.imzml_reader,
         )
-
-    def check_results(self):
-        ds_id = 'TODO'
-        reference_results = get_reference_results(ds_id)
-
-        checked_results = check_results(self.results_df, reference_results)
-
-        log_bad_results(**checked_results)
-        return checked_results
 
     def clean(self, all_caches=False):
         if self.cacher:

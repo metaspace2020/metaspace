@@ -29,7 +29,7 @@ from sm.engine.annotation_spark.segmenter import (
     spectra_sample_gen,
 )
 from sm.engine.util import SMConfig
-from sm.engine.utils.perf_profile import PerfProfileCollector
+from sm.engine.utils.perf_profile import Profiler
 
 logger = logging.getLogger('engine')
 
@@ -148,7 +148,7 @@ class MSMSearch:
         moldbs: List[MolecularDB],
         ds_config: DSConfig,
         ds_data_path: Path,
-        perf: PerfProfileCollector,
+        perf: Profiler,
     ):
         self._spark_context = spark_context
         self._ds_config = ds_config

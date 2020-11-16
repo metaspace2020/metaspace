@@ -27,7 +27,7 @@ from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.molecular_db import read_moldb_file
 from sm.engine.util import SMConfig, split_s3_path, split_cos_path
-from sm.engine.utils.perf_profile import PerfProfileCollector
+from sm.engine.utils.perf_profile import Profiler
 
 logger = logging.getLogger('engine')
 
@@ -124,7 +124,9 @@ def _upload_moldbs_from_db(moldb_ids, storage, sm_storage):
             mols = [mol for mol, in mols_query]
             cobject = save_cobj(storage, mols, bucket=bucket, key=key)
             logger.info(f'Uploading {key}...Done')
-        targeted = DB().select_one('SELECT targeted FROM molecular_db WHERE id = %s', (moldb_id,))
+        (targeted,) = DB().select_one(
+            'SELECT targeted FROM molecular_db WHERE id = %s', (moldb_id,)
+        )
         moldb_defs.append({'id': moldb_id, 'cobj': cobject, 'targeted': targeted})
 
     return moldb_defs
@@ -227,7 +229,7 @@ class ServerAnnotationJob:
         executor: Executor,
         img_store: ImageStoreServiceWrapper,
         ds: Dataset,
-        perf: PerfProfileCollector,
+        perf: Profiler,
         sm_config: Optional[Dict] = None,
         use_cache=True,
     ):

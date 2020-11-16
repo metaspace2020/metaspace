@@ -14,7 +14,21 @@ from sm.engine.utils.log_capture import capture_logs
 logger = logging.getLogger('perf-profile')
 
 
-class PerfProfileCollector:
+class Profiler:
+    def record_entry(
+        self,
+        name: str,
+        start: Optional[datetime] = None,
+        finish: Optional[datetime] = None,
+        **extra_data: Any,
+    ):
+        raise NotImplementedError()
+
+    def add_extra_data(self, **extra_data):
+        raise NotImplementedError()
+
+
+class DBProfiler(Profiler):
     def __init__(self, db, profile_id: int, start_time: datetime):
         self._db = db
         self._profile_id = profile_id
@@ -26,7 +40,7 @@ class PerfProfileCollector:
         name: str,
         start: Optional[datetime] = None,
         finish: Optional[datetime] = None,
-        extra_data: Any = None,
+        **extra_data,
     ):
         """
         Records a performance profile entry directly to the database. Start/finish time can be optionally specified.
@@ -60,10 +74,16 @@ class PerfProfileCollector:
         )
 
 
+class NullProfiler(Profiler):
+    def record_entry(self, name, start=None, finish=None, **extra_data):
+        pass
+
+    def add_extra_data(self, **extra_data):
+        pass
+
+
 @contextmanager
-def perf_profile(
-    db, task_type: str, ds_id: Optional[str] = None, include_logs=True,
-):
+def perf_profile(db, task_type: str, ds_id: Optional[str] = None, include_logs=True):
     """
     ContextManager for recording performance profiles to the database. Although initially
     implemented for dataset annotation, this is intended to be reusable for other operations.
@@ -91,7 +111,7 @@ def perf_profile(
             logs = []
 
         try:
-            yield PerfProfileCollector(db, profile_id, start_time)
+            yield DBProfiler(db, profile_id, start_time)
         except Exception:
             db.alter(
                 "UPDATE perf_profile SET finish = %s, logs = %s, error = %s WHERE id = %s",
@@ -105,7 +125,7 @@ def perf_profile(
             )
 
 
-class SubtaskPerf:
+class SubtaskProfiler(Profiler):
     """
     Specialized container for collecting & aggregating performance stats in remote or highly
     parallelized tasks, such as Lithops tasks. This doesn't save anything to the database - it just
@@ -117,53 +137,50 @@ class SubtaskPerf:
 
     Example usage:
         def subtask(...):
-            with SubtaskPerf() as subtask_perf:
-                ...
-                subtask_perf.mark('loaded data')
-                ...
-                subtask_perf.mark('processed data')
-                subtask_perf.add_extra_data(count=len(data))
-                ...
-                return subtask_perf
+            subtask_perf = SubtaskProfiler():
+            ...
+            subtask_perf.record_entry('loaded data')
+            ...
+            subtask_perf.record_entry('processed data')
+            subtask_perf.add_extra_data(count=len(data))
+            ...
+            return subtask_perf
 
-        with PerfProfileCollector(...) as perf:
+        with DbProfiler(...) as perf:
             subtask_perfs = list(map(subtask, jobs))
-            perf.record_entry('ran subtasks', extra_data=SubtaskPerf.merge(subtask_perfs))
+            perf.record_entry('ran subtasks', extra_data=SubtaskProfiler.make_report(subtask_perfs))
 
     """
 
     def __init__(self):
-        self.last_mark_time = time()
-        self.marks = {}
+        self._last_entry_time = datetime.now()
+        self.entries = {}
         self.extra_data = {}
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.mark('ended')
-        return False
-
-    def mark(self, name, **extra_data):
-        assert name not in self.marks
-        ms_elapsed = int(round((time() - self.last_mark_time) * 1000))
-        self.marks[name] = ms_elapsed
+    def record_entry(self, name, start=None, finish=None, **extra_data):
+        assert name not in self.entries
+        now = datetime.now()
+        start = start or self._last_entry_time
+        finish = finish or now
+        ms_elapsed = int(round((finish - start).total_seconds() * 1000))
+        self.entries[name] = ms_elapsed
         # Increment time by the rounded amount so that the sum of rounded times is always
         # within 1ms of the total unrounded time
-        self.last_mark_time += ms_elapsed / 1000.0
-        logger.info(f'Subtask mark %s %sms %s', name, ms_elapsed, extra_data)
+        self._last_entry_time += timedelta(milliseconds=ms_elapsed)
+
+        logger.info(f'Subtask mark {name} {ms_elapsed:.0f}ms {extra_data}')
 
     def add_extra_data(self, **kwargs):
         self.extra_data.update(kwargs)
 
     @staticmethod
-    def merge(results: List[SubtaskPerf]):
+    def make_report(results: List[SubtaskProfiler]):
         timings = defaultdict(lambda: [None] * len(results))
         data = defaultdict(lambda: [None] * len(results))
 
         for i, result in enumerate(results):
-            for k, v in result.marks.items():
-                timings[k][i] = v
+            for k, elapsed_ms in result.entries.items():
+                timings[k][i] = elapsed_ms
             for k, v in result.extra_data.items():
                 data[k][i] = v
 

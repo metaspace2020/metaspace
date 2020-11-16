@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict
+from typing import Dict, List
 
 import numpy as np
 import pandas as pd
@@ -7,6 +7,7 @@ from lithops.storage import Storage
 from pyimzml.ImzMLParser import PortableSpectrumReader
 
 from sm.engine.annotation_lithops.annotate import make_sample_area_mask
+from sm.engine.annotation_lithops.build_moldb import InputMolDb
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, iter_cobjs_with_prefetch
 from sm.engine.annotation_lithops.utils import ds_dims
@@ -16,6 +17,7 @@ from sm.engine.png_generator import PngGenerator
 def filter_results_and_make_pngs(
     fexec: Executor,
     formula_metrics_df: pd.DataFrame,
+    moldbs: List[InputMolDb],
     fdrs: Dict[int, pd.DataFrame],
     images_df: pd.DataFrame,
     imzml_reader: PortableSpectrumReader,
@@ -23,7 +25,14 @@ def filter_results_and_make_pngs(
     results_dfs = {}
     all_formula_is = set()
     for moldb_id, fdr in fdrs.items():
-        results_dfs[moldb_id] = formula_metrics_df.join(fdr, how='inner').sort_values('fdr')
+        result_df = formula_metrics_df.join(fdr, how='inner').sort_values('fdr')
+        # Filter out zero-MSM annotations again to ensure that untargeted databases don't get
+        # zero-MSM annotations, even if they have some overlap with targeted databases.
+        is_targeted = any(db['targeted'] for db in moldbs if db['id'] == moldb_id)
+        if not is_targeted:
+            print(result_df.columns)
+            result_df = result_df[(result_df.msm > 0) & (result_df.fdr < 1)]
+        results_dfs[moldb_id] = result_df
         all_formula_is.update(results_dfs[moldb_id].index)
 
     image_tasks_df = images_df[images_df.index.isin(all_formula_is)].copy()

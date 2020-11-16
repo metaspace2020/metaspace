@@ -111,7 +111,7 @@ def create_ds_from_files(ds_id, ds_name, ds_input_path, config_path=None, meta_p
     ds_config = json.load(open(config_path))
     if 'database_ids' not in ds_config:
         ds_config['database_ids'] = [
-            molecular_db.find_by_name(db).id for db in ds_config['databases']
+            molecular_db.find_by_name(db, True).id for db in ds_config['databases']
         ]
 
     meta_path = meta_path or Path(ds_input_path) / 'meta.json'

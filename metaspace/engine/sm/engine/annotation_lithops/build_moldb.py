@@ -19,7 +19,7 @@ from sm.engine.annotation_lithops.io import (
 from sm.engine.ds_config import DSConfig
 from sm.engine.fdr import FDR
 from sm.engine.formula_parser import safe_generate_ion_formula
-from sm.engine.utils.perf_profile import SubtaskPerf
+from sm.engine.utils.perf_profile import Profiler
 
 
 class InputMolDb(TypedDict):
@@ -121,16 +121,16 @@ def store_formula_segments(storage: Storage, formulas_df: pd.DataFrame):
 
 
 def build_moldb(
-    ds_config: DSConfig, mol_dbs: List[InputMolDb], *, storage: Storage, perf: SubtaskPerf
+    ds_config: DSConfig, mol_dbs: List[InputMolDb], *, storage: Storage, perf: Profiler
 ) -> Tuple[List[CObj[pd.DataFrame]], List[CObj[DbFDRData]]]:
     logger.info('Generating formulas...')
     db_data_cobjects, formulas_df = get_formulas_df(storage, ds_config, mol_dbs)
     num_formulas = len(formulas_df)
-    perf.mark('generated formulas', num_formulas=num_formulas)
+    perf.record_entry('generated formulas', num_formulas=num_formulas)
 
     logger.info('Storing formulas...')
     formula_cobjects = store_formula_segments(storage, formulas_df)
-    perf.mark('stored formulas', num_chunks=len(formula_cobjects))
+    perf.record_entry('stored formulas', num_chunks=len(formula_cobjects))
 
     return formula_cobjects, db_data_cobjects
 

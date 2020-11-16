@@ -22,7 +22,7 @@ from sm.engine.annotation_lithops.io import (
     CObj,
 )
 from sm.engine.annotation_lithops.utils import logger
-from sm.engine.utils.perf_profile import SubtaskPerf
+from sm.engine.utils.perf_profile import SubtaskProfiler
 
 
 def download_dataset(imzml_cobject, ibd_cobject, local_path, storage):
@@ -217,7 +217,7 @@ def load_ds(
     ds_segm_size_mb: int,
     sort_memory: int,
     *,
-    perf: SubtaskPerf,
+    perf: SubtaskProfiler,
 ) -> Tuple[
     PortableSpectrumReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray,
 ]:
@@ -232,27 +232,27 @@ def load_ds(
 
         logger.info('Downloading dataset...')
         imzml_path, ibd_path = download_dataset(imzml_cobject, ibd_cobject, imzml_dir, storage)
-        perf.mark('downloaded dataset')
+        perf.record_entry('downloaded dataset')
 
         logger.info('Loading parser...')
         imzml_parser = ImzMLParser(str(imzml_path))
         imzml_reader = imzml_parser.portable_spectrum_reader()
-        perf.mark('loaded parser')
+        perf.record_entry('loaded parser')
 
         logger.info('Defining segments bounds...')
         ds_segments_bounds = define_ds_segments(imzml_parser, ds_segm_size_mb=ds_segm_size_mb)
         segments_n = len(ds_segments_bounds)
-        perf.mark('defined segments', segments_n=segments_n)
+        perf.record_entry('defined segments', segments_n=segments_n)
 
         logger.info('Segmenting...')
         chunks_n, ds_segms_len = make_segments(
             imzml_reader, ibd_path, ds_segments_bounds, segments_dir, sort_memory
         )
-        perf.mark('made segments')
+        perf.record_entry('made segments')
 
         logger.info('Uploading segments...')
         ds_segms_cobjects = upload_segments(storage, segments_dir, chunks_n, segments_n)
-        perf.mark('uploaded segments')
+        perf.record_entry('uploaded segments')
 
         return imzml_reader, ds_segments_bounds, ds_segms_cobjects, ds_segms_len
 

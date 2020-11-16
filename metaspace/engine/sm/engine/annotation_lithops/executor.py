@@ -12,7 +12,7 @@ from lithops.future import ResponseFuture
 import numpy as np
 import pandas as pd
 
-from sm.engine.utils.perf_profile import SubtaskPerf, PerfProfileCollector
+from sm.engine.utils.perf_profile import SubtaskProfiler, Profiler, NullProfiler
 
 logger = logging.getLogger('custom-executor')
 TRet = TypeVar('TRet')
@@ -31,17 +31,17 @@ def _build_wrapper_func(func: Callable[..., TRet]) -> Callable[..., TRet]:
             return subtask_perf
 
         start_time = datetime.now()
-        with SubtaskPerf() as subtask_perf:
-            if has_perf_arg:
-                kwargs['perf'] = subtask_perf
+        subtask_perf = SubtaskProfiler()
+        if has_perf_arg:
+            kwargs['perf'] = subtask_perf
 
-            mem_before = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-            try:
-                result = func(*args, **kwargs)
-                return result, finalize_perf()
-            except Exception as ex:
-                ex.executor_meta = finalize_perf()
-                raise
+        mem_before = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        try:
+            result = func(*args, **kwargs)
+            return result, finalize_perf()
+        except Exception as ex:
+            ex.executor_meta = finalize_perf()
+            raise
 
     sig = inspect.signature(func)
     has_perf_arg = 'perf' in sig.parameters
@@ -74,21 +74,21 @@ class Executor:
         to the result data.
     """
 
-    def __init__(self, lithops_config: Dict, perf: PerfProfileCollector = None):
-        self.is_local = lithops_config['lithops']['executor'] == 'localhost'
+    def __init__(self, lithops_config: Dict, perf: Profiler = None):
+        self.is_local = lithops_config['lithops']['mode'] == 'localhost'
 
         if self.is_local:
-            self.large_executor = self.small_executor = lithops.local_executor(
-                config=lithops_config, storage_backend='localhost'
+            self.large_executor = self.small_executor = lithops.function_executor(
+                config=lithops_config, storage='localhost'
             )
         else:
             self.small_executor = lithops.function_executor(config=lithops_config)
             self.large_executor = lithops.function_executor(
-                config=lithops_config, type='standalone', backend='ibm_vpc'
+                config=lithops_config, mode='standalone', backend='ibm_vpc'
             )
         self.storage = self.small_executor.storage
         self._include_modules = lithops_config['lithops'].get('include_modules', [])
-        self._perf = perf
+        self._perf = perf or NullProfiler()
 
     def map(
         self,
@@ -128,7 +128,7 @@ class Executor:
                 subtask_perfs = [subtask_perf for result, subtask_perf in return_vals]
 
                 if self._perf:
-                    subtask_perf_data = SubtaskPerf.merge(subtask_perfs)
+                    subtask_perf_data = SubtaskProfiler.make_report(subtask_perfs)
                     if len(subtask_perf_data['subtask_timings'].keys()) == 1:
                         # Don't bother storing just the "ended" times, as they're not interesting by themselves
                         subtask_perf_data['subtask_timings'] = {}
@@ -152,7 +152,7 @@ class Executor:
                         'mem_usages': mem_afters,
                         **subtask_perf_data,
                     }
-                    self._perf.record_entry(func.__name__, start_time, datetime.now(), perf_data)
+                    self._perf.record_entry(func.__name__, start_time, datetime.now(), **perf_data)
 
                 return results
 

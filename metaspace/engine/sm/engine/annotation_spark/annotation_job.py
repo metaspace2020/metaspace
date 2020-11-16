@@ -27,7 +27,7 @@ from sm.engine.annotation_spark.search_results import SearchResults
 from sm.engine.util import SMConfig, split_s3_path
 from sm.engine.es_export import ESExporter
 from sm.engine import molecular_db
-from sm.engine.utils.perf_profile import PerfProfileCollector
+from sm.engine.utils.perf_profile import Profiler
 
 logger = logging.getLogger('engine')
 
@@ -44,7 +44,7 @@ class AnnotationJob:
         self,
         img_store: ImageStoreServiceWrapper,
         ds: Dataset,
-        perf: PerfProfileCollector,
+        perf: Profiler,
         sm_config: Optional[Dict] = None,
     ):
         self._sm_config = sm_config or SMConfig.get_conf()

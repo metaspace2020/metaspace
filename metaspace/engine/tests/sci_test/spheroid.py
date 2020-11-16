@@ -8,10 +8,13 @@ from pprint import pprint
 
 import numpy as np
 
+from sm.engine.annotation_lithops.annotation_job import ServerAnnotationJob
+from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_spark.annotation_job import AnnotationJob
 from sm.engine.db import DB
 from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.util import proj_root, create_ds_from_files, bootstrap_and_run
+from sm.engine.utils.perf_profile import NullProfiler
 
 SEARCH_RES_SELECT = (
     "SELECT m.formula, m.adduct, m.stats "
@@ -27,7 +30,7 @@ class SciTester:
         self.sm_config = sm_config
         self.db = DB()
 
-        self.ds_id = '2000-01-01_00h00m00s'
+        self.ds_id = '2000-01-01_00h00m01s'
         self.base_search_res_path = join(
             proj_root(), 'tests/reports', 'spheroid_untreated_search_res.csv'
         )
@@ -130,7 +133,7 @@ class SciTester:
 
         return ImageStoreMock()
 
-    def run_search(self, mock_img_store=False):
+    def run_search(self, mock_img_store=False, lithops=False):
         if mock_img_store:
             img_store = self._create_img_store_mock()
         else:
@@ -141,7 +144,14 @@ class SciTester:
         ds = create_ds_from_files(self.ds_id, self.ds_name, self.input_path)
         self.db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
         ds.save(self.db, allow_insert=True)
-        AnnotationJob(img_store, ds).run()
+        perf = NullProfiler()
+        if lithops:
+            executor = Executor(self.sm_config['lithops'], perf)
+            ServerAnnotationJob(executor, img_store, ds, perf, self.sm_config, use_cache=False).run(
+                debug_validate=True
+            )
+        else:
+            AnnotationJob(img_store, ds, perf).run()
 
     def clear_data_dirs(self):
         path = Path(self.ds_data_path)
@@ -149,12 +159,12 @@ class SciTester:
             path.rmdir()
 
 
-def run(mock_img_store, sm_config, *args):
+def run(sm_config, *, mock_img_store, lithops):
     sci_tester = SciTester(sm_config)
     run_search_successful = False
     search_results_different = False
     try:
-        sci_tester.run_search(mock_img_store)
+        sci_tester.run_search(mock_img_store, lithops)
         run_search_successful = True
         search_results_different = sci_tester.search_results_are_different()
     except Exception as e:
@@ -186,10 +196,16 @@ if __name__ == '__main__':
     parser.add_argument(
         '--mock-img-store', action='store_true', help='whether to mock the Image Store Service'
     )
+    parser.add_argument(
+        '--lithops', action='store_true', help='whether to use the Lithops executor'
+    )
     args = parser.parse_args()
 
     if args.run:
-        bootstrap_and_run(args.sm_config_path, partial(run, args.mock_img_store))
+        bootstrap_and_run(
+            args.sm_config_path,
+            partial(run, mock_img_store=args.mock_img_store, lithops=args.lithops),
+        )
     elif args.save:
         bootstrap_and_run(args.sm_config_path, save)
     else:

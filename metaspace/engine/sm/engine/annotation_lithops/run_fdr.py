@@ -9,17 +9,18 @@ import pandas as pd
 from lithops.storage import Storage
 
 from sm.engine.annotation_lithops.build_moldb import DbFDRData
+from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import load_cobj, CObj
 
 logger = logging.getLogger('annotation-pipeline')
 
 
 def run_fdr(
-    formula_scores_df: pd.DataFrame, db_data_cobjects: List[CObj[DbFDRData]], *, storage: Storage
+    executor: Executor, formula_scores_df: pd.DataFrame, db_data_cobjects: List[CObj[DbFDRData]]
 ) -> Dict[int, pd.DataFrame]:
     msms_df = formula_scores_df[['msm']]
 
-    def _run_fdr_for_db(db_data_cobject: CObj[DbFDRData]):
+    def _run_fdr_for_db(db_data_cobject: CObj[DbFDRData], *, storage: Storage):
         db_data = load_cobj(storage, db_data_cobject)
         moldb_id = db_data['id']
         fdr = db_data['fdr']
@@ -38,12 +39,16 @@ def run_fdr(
         )
 
         if not db_data['targeted']:
-            results_df = results_df[(results_df.msm > 0) & (results_df.fdr <= 0.5)]
+            results_df = results_df[results_df.fdr <= 1]
 
         return db_data['id'], results_df
 
     logger.info('Estimating FDRs...')
-    with ThreadPoolExecutor(os.cpu_count()) as pool:
-        results_dfs = dict(pool.map(_run_fdr_for_db, db_data_cobjects))
+    results = executor.map(_run_fdr_for_db, db_data_cobjects, runtime_memory=1024)
 
-    return results_dfs
+    for moldb_id, moldb_fdrs in results:
+        logger.info(f'DB {moldb_id} number of annotations with FDR less than:')
+        for fdr_step in [0.05, 0.1, 0.2, 0.5]:
+            logger.info(f'{fdr_step * 100:2.0f}%: {(moldb_fdrs.fdr < fdr_step).sum()}')
+
+    return dict(results)

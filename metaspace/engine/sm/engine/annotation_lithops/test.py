@@ -5,7 +5,7 @@ from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.util import SMConfig, init_loggers
-from sm.engine.utils.perf_profile import perf_profile
+from sm.engine.utils.perf_profile import perf_profile, NullProfiler
 
 init_loggers(SMConfig.get_conf(True)['logs'])
 
@@ -29,18 +29,21 @@ ds_config: DSConfig = {
     "image_generation": {"ppm": 3, "n_levels": 30, "min_px": 1},
 }
 
+config = SMConfig.get_conf(True)
+executor = Executor(config['lithops'], NullProfiler())
+storage = executor.storage
+
 #%%
 SMConfig.get_conf(True)
 job = LocalAnnotationJob(
     '/home/lachlan/Documents/datasets/Untreated_3_434.imzML',
     '/home/lachlan/Documents/datasets/Untreated_3_434.ibd',
-    [6],
+    [22],
     ds_config,
 )
-storage = job.storage
 pipe = job.pipe
 # job.pipe.clean(True)
-job.run(save=True, debug_validate=True)
+job.run(save=False, debug_validate=False)
 
 
 #%%
@@ -49,15 +52,13 @@ job.run(save=True, debug_validate=True)
 #%%
 config = SMConfig.get_conf(True)
 ds_id = '2020-08-04_12h38m00s'
-with perf_profile(DB(), 'annotation_lithops', ds_id) as perf:
+with perf_profile(DB(), 'annotate_lithops', ds_id) as perf:
     executor = Executor(config['lithops'], perf)
     job = ServerAnnotationJob(
         executor, ImageStoreServiceWrapper(), Dataset.load(DB(), '2020-08-04_12h38m00s'), perf
     )
     job.run()
 
-#%%
-job.run()
 
 #%%
 

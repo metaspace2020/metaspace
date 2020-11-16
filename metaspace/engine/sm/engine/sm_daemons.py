@@ -117,7 +117,7 @@ class DatasetManager:
         with perf_profile(self._db, 'annotate_lithops', ds.id) as perf:
             executor = Executor(self._sm_config['lithops'], perf=perf)
 
-            ServerAnnotationJob(executor, self._img_store, ds).run()
+            ServerAnnotationJob(executor, self._img_store, ds, perf).run()
 
             if self._sm_config['services'].get('colocalization', True):
                 Colocalization(self._db, self._img_store).run_coloc_job_lithops(

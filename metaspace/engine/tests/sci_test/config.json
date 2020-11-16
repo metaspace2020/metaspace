@@ -12,8 +12,8 @@
     }
   },
   "db": {
-    "host": "localhost",
-    "database": "sm_test",
+    "host": "postgres",
+    "database": "sm",
     "user": "sm",
     "password": "password"
   },
@@ -46,6 +46,25 @@
     "spark.rdd.compress": true,
     "spark.ui.showConsoleProgress": false,
     "spark.sql.execution.arrow.enabled": true
+  },
+  "lithops": {
+    "lithops": {
+      "storage_bucket": "metaspace-sci-test",
+      "storage_backend": "localhost",
+      "mode": "localhost",
+      "include_modules": ["engine/sm"],
+      "data_cleaner": true,
+      "data_limit": false,
+      "workers": 4
+    },
+    "localhost": {
+    },
+    "sm_storage": {
+      "imzml": ["metaspace-sci-test", "imzml"],
+      "moldb": ["metaspace-sci-test", "moldb"],
+      "centroids": ["metaspace-sci-test", "centroids"],
+      "pipeline_cache": ["metaspace-sci-test", "pipeline_cache"]
+    }
   },
   "aws": {
     "aws_access_key_id": "",

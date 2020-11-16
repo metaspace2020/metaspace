@@ -31,6 +31,11 @@ ImagesRow = Tuple[int, int, List[coo_matrix]]
 
 
 class ImagesManager:
+    """
+    Collects ion images (in sparse coo_matrix format) and formula metrics.
+    Images are progressively saved to COS in chunks of 64MB to keep memory usage low.
+    """
+
     min_memory_allowed = 64 * 1024 ** 2  # 64MB
 
     def __init__(self, storage: Storage, max_formula_images_size: int):
@@ -304,12 +309,5 @@ def process_centr_segments(
     )
     formula_metrics_df = pd.concat(formula_metrics_list)
     images_df = pd.concat(image_lookups_list)
-    print(
-        'lens',
-        len(formula_metrics_list),
-        len(image_lookups_list),
-        len(formula_metrics_df),
-        len(images_df),
-    )
 
     return formula_metrics_df, images_df
