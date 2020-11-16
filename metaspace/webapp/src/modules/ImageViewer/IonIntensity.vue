@@ -61,7 +61,7 @@
       </button>
       <check-icon
         v-if="status === 'LOCKED'"
-        class="h-6 w-6 -mx-2 sm-fill-primary text-blue-500"
+        class="h-6 w-6 -mx-2 sm-fill-primary text-blue-500 relative -z-10"
       />
     </div>
   </fade-transition>

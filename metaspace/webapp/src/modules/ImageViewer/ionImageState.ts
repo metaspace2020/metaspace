@@ -54,7 +54,6 @@ interface IonImageLayer {
 interface State {
   order: string[]
   activeLayer: string | null
-  nextChannel: string
 }
 
 interface Props {
@@ -80,7 +79,6 @@ const activeAnnotation = ref<string>() // local copy of prop value to allow watc
 const state = reactive<State>({
   order: [],
   activeLayer: null,
-  nextChannel: channels[0],
 })
 const settings = reactive<Settings>({
   lockMin: undefined,
@@ -88,10 +86,11 @@ const settings = reactive<Settings>({
   isLockActive: true,
   imageSize: null,
 })
-const ionImageLayerCache : Record<string, IonImageLayer> = {}
+
+const layerCache : Record<string, IonImageLayer> = {}
 const rawImageCache : Record<string, Ref<Image | null>> = {}
 
-const orderedLayers = computed(() => state.order.map(id => ionImageLayerCache[id]))
+const orderedLayers = computed(() => state.order.map(id => layerCache[id]))
 
 const lockedIntensities = computed(() => {
   if (settings.isLockActive) {
@@ -261,7 +260,7 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
 function resetChannelsState() {
   // TODO: how to make this cleaner?
   for (const id of state.order) {
-    const layer = ionImageLayerCache[id]
+    const layer = layerCache[id]
     const initialState = getInitialLayerState(layer.annotation)
     layer.multiModeState.minIntensity = initialState.minIntensity
     layer.multiModeState.maxIntensity = initialState.maxIntensity
@@ -270,7 +269,6 @@ function resetChannelsState() {
     layer.settings.label = undefined
     layer.settings.visible = true
   }
-  state.nextChannel = channels[0]
   state.activeLayer = null
   state.order = []
 }
@@ -288,7 +286,7 @@ export const useIonImages = (props: Props) => {
   const ionImagesWithData = computed(() => {
     const memo = []
     if (viewerState.mode.value === 'SINGLE') {
-      const layer = activeAnnotation.value ? ionImageLayerCache[activeAnnotation.value] : null
+      const layer = activeAnnotation.value ? layerCache[activeAnnotation.value] : null
       if (layer) {
         memo.push({
           layer,
@@ -390,10 +388,9 @@ export const useIonImages = (props: Props) => {
 
     if (viewerState.mode.value === 'SINGLE') {
       resetChannelsState()
-      if (annotation.id in ionImageLayerCache) {
+      if (annotation.id in layerCache) {
         state.order = [annotation.id]
         state.activeLayer = annotation.id
-        state.nextChannel = channels[1]
         return
       }
     } else {
@@ -404,17 +401,21 @@ export const useIonImages = (props: Props) => {
 
     let channel = channels[0]
     if (state.activeLayer !== null) {
-      channel = ionImageLayerCache[state.activeLayer].settings?.channel
+      channel = layerCache[state.activeLayer].settings.channel
       const idx = removeLayer(state.activeLayer)
       state.order.splice(idx, 0, annotation.id)
     } else {
+      const usedChannels = orderedLayers.value.map(layer => layer.settings.channel)
+      const unusedChannels = channels.filter(c => !(usedChannels.includes(c)))
+      if (unusedChannels.length) {
+        channel = unusedChannels[0]
+        // channel = unusedChannels[Math.floor(Math.random() * (unusedChannels.length - 1))]
+      }
       state.order.push(annotation.id)
-      channel = state.nextChannel
-      state.nextChannel = channels[channels.indexOf(channel) + 1] || channels[0]
     }
     state.activeLayer = annotation.id
 
-    ionImageLayerCache[annotation.id] = {
+    layerCache[annotation.id] = {
       annotation: annotation,
       id: annotation.id,
       settings: reactive({
@@ -466,3 +467,39 @@ export const useIonImageSettings = () => ({
   lockedIntensities,
   settings,
 })
+
+type Export = {
+  __v: number
+  state: State,
+  settings: Settings
+  layers: readonly IonImageLayer[]
+}
+
+export const exportIonImageState = () : Export => {
+  return {
+    __v: 1,
+    state,
+    settings,
+    layers: orderedLayers.value,
+  }
+}
+
+export const importIonImageState = (imported: Export) => {
+  resetIonImageState()
+  Object.assign(state, imported.state)
+  Object.assign(settings, imported.settings)
+  for (const layer of imported.layers) {
+    layerCache[layer.id] = {
+      id: layer.id,
+      annotation: layer.annotation,
+      singleModeState: reactive(layer.singleModeState),
+      multiModeState: reactive(layer.multiModeState),
+      settings: reactive(layer.settings),
+    }
+  }
+}
+
+// @ts-ignore
+// window.__export = exportIonImageState
+// @ts-ignore
+// window.__import = importIonImageState
