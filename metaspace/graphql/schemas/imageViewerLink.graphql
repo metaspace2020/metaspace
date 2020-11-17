@@ -1,0 +1,20 @@
+type ImageViewerLink {
+  id: String!
+  datasetId: String!
+  state: Object!
+  annotations: [Annotation!]!
+}
+
+input IVLCreateInput {
+  datasetId: String!
+  state: Object!
+  annotationIds: [String!]!
+}
+
+type Query {
+  imageViewerLink(id: String!. datasetId: String!): ImageViewerLink
+}
+
+type Mutation {
+  createImageViewerLink(input: IVLCreateInput!): String!
+}
