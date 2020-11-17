@@ -1,3 +1,4 @@
+import logging
 from collections import defaultdict
 from typing import Dict, List
 
@@ -12,6 +13,8 @@ from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, iter_cobjs_with_prefetch
 from sm.engine.annotation_lithops.utils import ds_dims
 from sm.engine.png_generator import PngGenerator
+
+logger = logging.getLogger('annotation-pipeline')
 
 
 def filter_results_and_make_pngs(
@@ -30,7 +33,6 @@ def filter_results_and_make_pngs(
         # zero-MSM annotations, even if they have some overlap with targeted databases.
         is_targeted = any(db['targeted'] for db in moldbs if db['id'] == moldb_id)
         if not is_targeted:
-            print(result_df.columns)
             result_df = result_df[(result_df.msm > 0) & (result_df.fdr < 1)]
         results_dfs[moldb_id] = result_df
         all_formula_is.update(results_dfs[moldb_id].index)
@@ -53,14 +55,14 @@ def filter_results_and_make_pngs(
     n_jobs = int(np.ceil(np.clip(total_cost / 1e8, 1, 100)))
     job_bound_vals = np.linspace(0, total_cost + 1, n_jobs + 1)
     job_bound_idxs = np.searchsorted(np.cumsum(image_tasks_df.cost), job_bound_vals)
-    print(job_bound_idxs, len(image_tasks_df))
+
     jobs = [
         [image_tasks_df.iloc[start:end]]
         for start, end in zip(job_bound_idxs[:-1], job_bound_idxs[1:])
         if start != end
     ]
     job_costs = [df.cost.sum() for df, in jobs]
-    print(
+    logger.debug(
         f'Generated {len(jobs)} PNG jobs, min cost: {np.min(job_costs)}, '
         f'max cost: {np.max(job_costs)}, total cost: {total_cost}'
     )

@@ -148,7 +148,8 @@ class SubtaskProfiler(Profiler):
 
         with DbProfiler(...) as perf:
             subtask_perfs = list(map(subtask, jobs))
-            perf.record_entry('ran subtasks', extra_data=SubtaskProfiler.make_report(subtask_perfs))
+            timings, extra_data = SubtaskProfiler.make_report(subtask_perfs)
+            perf.record_entry('ran subtasks', timings=timings, extra_data=extra_data)
 
     """
 
@@ -167,6 +168,7 @@ class SubtaskProfiler(Profiler):
         # Increment time by the rounded amount so that the sum of rounded times is always
         # within 1ms of the total unrounded time
         self._last_entry_time += timedelta(milliseconds=ms_elapsed)
+        self.extra_data.update(extra_data)
 
         logger.info(f'Subtask mark {name} {ms_elapsed:.0f}ms {extra_data}')
 
@@ -174,7 +176,7 @@ class SubtaskProfiler(Profiler):
         self.extra_data.update(kwargs)
 
     @staticmethod
-    def make_report(results: List[SubtaskProfiler]):
+    def make_report(results: List['SubtaskProfiler']):
         timings = defaultdict(lambda: [None] * len(results))
         data = defaultdict(lambda: [None] * len(results))
 
@@ -184,4 +186,4 @@ class SubtaskProfiler(Profiler):
             for k, v in result.extra_data.items():
                 data[k][i] = v
 
-        return {'subtask_timings': timings, 'subtask_data': data}
+        return timings, data

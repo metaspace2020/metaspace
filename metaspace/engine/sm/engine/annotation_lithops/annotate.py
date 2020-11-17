@@ -24,6 +24,7 @@ from sm.engine.annotation_lithops.utils import (
 )
 from sm.engine.ds_config import DSConfig
 from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine.utils.perf_profile import Profiler
 
 ISOTOPIC_PEAK_N = 4
 
@@ -33,7 +34,8 @@ ImagesRow = Tuple[int, int, List[coo_matrix]]
 class ImagesManager:
     """
     Collects ion images (in sparse coo_matrix format) and formula metrics.
-    Images are progressively saved to COS in chunks of 64MB to keep memory usage low.
+    Images are progressively saved to COS in chunks specified by `max_formula_images_size` to
+    prevent using too much memory.
     """
 
     min_memory_allowed = 64 * 1024 ** 2  # 64MB
@@ -254,11 +256,12 @@ def process_centr_segments(
     pw_mem_mb = 2048 if is_intensive_dataset else 1024
 
     def process_centr_segment(
-        db_segm_cobject: CObj[pd.DataFrame], storage: Storage
+        db_segm_cobject: CObj[pd.DataFrame], *, storage: Storage, perf: Profiler
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         print(f'Reading centroids segment {db_segm_cobject.key}')
         # read database relevant part
         centr_df = load_cobj(storage, db_segm_cobject)
+        perf.record_entry('loaded db segm', db_segm_len=len(centr_df))
 
         # find range of datasets
         first_ds_segm_i, last_ds_segm_i = choose_ds_segments(
@@ -274,6 +277,7 @@ def process_centr_segments(
             ds_segm_dtype,
             storage,
         )
+        perf.record_entry('loaded ds segms', ds_segm_len=len(sp_arr))
 
         formula_image_set_it = gen_iso_image_sets(
             sp_inds=sp_arr.sp_i.values,
@@ -299,6 +303,8 @@ def process_centr_segments(
         ):
             images_manager.append(f_i, f_metrics, f_images)
         formula_metrics_df, image_lookups = images_manager.finish()
+
+        perf.add_extra_data(metrics_n=len(formula_metrics_df), images_n=len(image_lookups))
 
         print(f'Centroids segment {db_segm_cobject.key} finished')
         return formula_metrics_df, image_lookups

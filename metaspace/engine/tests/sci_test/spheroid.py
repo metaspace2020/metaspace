@@ -147,7 +147,7 @@ class SciTester:
         perf = NullProfiler()
         if lithops:
             executor = Executor(self.sm_config['lithops'], perf)
-            ServerAnnotationJob(executor, img_store, ds, perf, self.sm_config, use_cache=False).run(
+            ServerAnnotationJob(executor, img_store, ds, perf, self.sm_config).run(
                 debug_validate=True
             )
         else:

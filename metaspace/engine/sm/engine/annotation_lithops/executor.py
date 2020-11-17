@@ -21,6 +21,8 @@ TRet = TypeVar('TRet')
 def _build_wrapper_func(func: Callable[..., TRet]) -> Callable[..., TRet]:
     def wrapper_func(*args, **kwargs):
         def finalize_perf():
+            if len(subtask_perf.entries) and 'finished' not in subtask_perf.entries:
+                subtask_perf.record_entry('finished')
             subtask_perf.add_extra_data(
                 **{
                     'inner time': (datetime.now() - start_time).total_seconds(),
@@ -131,17 +133,14 @@ class Executor:
                 subtask_perfs = [subtask_perf for result, subtask_perf in return_vals]
 
                 if self._perf:
-                    subtask_perf_data = SubtaskProfiler.make_report(subtask_perfs)
-                    if len(subtask_perf_data['subtask_timings'].keys()) == 1:
-                        # Don't bother storing just the "ended" times, as they're not interesting by themselves
-                        subtask_perf_data['subtask_timings'] = {}
+                    subtask_timings, subtask_data = SubtaskProfiler.make_report(subtask_perfs)
                     cost_factors_plain = (
                         cost_factors.to_dict('list') if cost_factors is not None else None
                     )
                     exec_times = [f.stats.get('worker_func_exec_time', -1) for f in futures]
-                    inner_times = subtask_perf_data['subtask_data'].pop('inner time')
-                    mem_befores = subtask_perf_data['subtask_data'].pop('mem before')
-                    mem_afters = subtask_perf_data['subtask_data'].pop('mem after')
+                    inner_times = subtask_data.pop('inner time')
+                    mem_befores = subtask_data.pop('mem before')
+                    mem_afters = subtask_data.pop('mem after')
                     perf_data = {
                         'num_actions': len(futures),
                         'attempts': attempt,
@@ -153,9 +152,24 @@ class Executor:
                         'cost_factors': cost_factors_plain,
                         'exec_times': exec_times,
                         'mem_usages': mem_afters,
-                        **subtask_perf_data,
+                        'subtask_timings': subtask_timings,
+                        'subtask_data': subtask_data,
                     }
                     self._perf.record_entry(func.__name__, start_time, datetime.now(), **perf_data)
+
+                    if any(subtask_timings) or any(subtask_data):
+                        subtask_df = pd.concat(
+                            [pd.DataFrame(subtask_timings), pd.DataFrame(subtask_data)], axis=1,
+                        )
+                        if len(futures) > 1:
+                            subtask_summary = subtask_df.describe().transpose().to_string()
+                        else:
+                            subtask_summary = subtask_df.iloc[0].to_string()
+                        print(f'Subtasks:\n{subtask_summary}')
+
+                print(
+                    f'executor.map({func.__name__}, {len(args)} items, {runtime_memory}MB) - {(datetime.now() - start_time).total_seconds():.3f}s'
+                )
 
                 return results
 
