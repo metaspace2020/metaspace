@@ -12,11 +12,13 @@ export class ImageViewerLink {
   datasetId: string;
 
   @Column({ type: 'text' })
-  state: string;
+  snapshot: string;
 
   @Column({ type: 'json' })
   annotationIds: string[];
 
+  @Column({ type: 'int' })
+  version: number;
 
   /* for future management UI */
 

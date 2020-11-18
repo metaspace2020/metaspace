@@ -45,7 +45,6 @@ interface IonImageLayerSettings {
 
 interface IonImageLayer {
   id: string
-  annotation: Annotation
   settings: IonImageLayerSettings
   multiModeState: IonImageState
   singleModeState: IonImageState
@@ -87,6 +86,7 @@ const settings = reactive<Settings>({
   imageSize: null,
 })
 
+const annotationCache : Record<string, Annotation> = {}
 const layerCache : Record<string, IonImageLayer> = {}
 const rawImageCache : Record<string, Ref<Image | null>> = {}
 
@@ -149,7 +149,8 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
   }
 
   if (rawImageCache[layer.id].value === null) {
-    const [isotopeImage] = layer.annotation.isotopeImages
+    const annotation = annotationCache[layer.id]
+    const [isotopeImage] = annotation.isotopeImages
     if (isotopeImage) {
       loadPngFromUrl(isotopeImage.url)
         .then(img => {
@@ -181,7 +182,8 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
   const image = computed(() => {
     const raw = rawImageCache[layer.id]
     if (raw.value !== null) {
-      const { minIntensity, maxIntensity } = getImageIntensities(layer.annotation)
+      const annotation = annotationCache[layer.id]
+      const { minIntensity, maxIntensity } = getImageIntensities(annotation)
       return processIonImage(
         raw.value,
         minIntensity,
@@ -260,8 +262,9 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
 function resetChannelsState() {
   // TODO: how to make this cleaner?
   for (const id of state.order) {
+    const annotation = annotationCache[id]
     const layer = layerCache[id]
-    const initialState = getInitialLayerState(layer.annotation)
+    const initialState = getInitialLayerState(annotation)
     layer.multiModeState.minIntensity = initialState.minIntensity
     layer.multiModeState.maxIntensity = initialState.maxIntensity
     layer.multiModeState.scaleRange = initialState.scaleRange
@@ -358,7 +361,7 @@ export const useIonImages = (props: Props) => {
     for (const { layer, data } of ionImagesWithData.value) {
       items.push({
         loading: data.image.value === null,
-        annotation: layer.annotation,
+        annotation: annotationCache[layer.id],
         colorBar: data.colorBar,
         id: layer.id,
         intensity: data.intensity,
@@ -415,8 +418,9 @@ export const useIonImages = (props: Props) => {
     }
     state.activeLayer = annotation.id
 
+    annotationCache[annotation.id] = annotation
+
     layerCache[annotation.id] = {
-      annotation: annotation,
       id: annotation.id,
       settings: reactive({
         channel,
@@ -468,30 +472,49 @@ export const useIonImageSettings = () => ({
   settings,
 })
 
-type Export = {
-  __v: number
-  state: State,
+type Snapshot = {
+  state: State
   settings: Settings
   layers: readonly IonImageLayer[]
 }
 
+type Export = {
+  version: number
+  snapshot: Snapshot
+  annotationIds: string[]
+}
+
 export const exportIonImageState = () : Export => {
   return {
-    __v: 1,
-    state,
-    settings,
-    layers: orderedLayers.value,
+    version: 1,
+    snapshot: {
+      state,
+      settings,
+      layers: orderedLayers.value,
+    },
+    annotationIds: state.order,
   }
 }
 
-export const importIonImageState = (imported: Export) => {
+type Import = {
+  version: number
+  snapshot: Snapshot,
+  annotations: Annotation[]
+}
+
+export const importIonImageState = (imported: Import) => {
   resetIonImageState()
-  Object.assign(state, imported.state)
-  Object.assign(settings, imported.settings)
-  for (const layer of imported.layers) {
+
+  Object.assign(state, imported.snapshot.state)
+  Object.assign(settings, imported.snapshot.settings)
+
+  for (const annotation of imported.annotations) {
+    annotationCache[annotation.id] = annotation
+  }
+
+  for (const layer of imported.snapshot.layers) {
     layerCache[layer.id] = {
       id: layer.id,
-      annotation: layer.annotation,
       singleModeState: reactive(layer.singleModeState),
       multiModeState: reactive(layer.multiModeState),
       settings: reactive(layer.settings),

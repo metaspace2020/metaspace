@@ -14,14 +14,14 @@ export const Resolvers = {
         const annotations = await Promise.all(ivl.annotationIds.map(id => esAnnotationByID(id, ctx.user)))
         return {
           ...ivl,
-          state: JSON.parse(ivl.state),
+          snapshot: JSON.parse(ivl.snapshot),
           annotations: annotations.filter(a => a !== null) as unknown as Annotation[],
         }
       }
     },
   },
   Mutation: {
-    async createImageViewerLink(_: any, {datasetId, state, annotationIds}: any, {user, entityManager}: Context): Promise<string> {
+    async createImageViewerLink(_: any, {datasetId, ...input}: any, {user, entityManager}: Context): Promise<string> {
 
       logger.info(`Creating image viewer link for ${datasetId} dataset by '${user!.id}' user...`);
 
@@ -30,8 +30,7 @@ export const Resolvers = {
       const entity = {
         id,
         datasetId,
-        state,
-        annotationIds,
+        ...input,
         userId: user.id
       }
 

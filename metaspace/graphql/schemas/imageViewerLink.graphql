@@ -1,14 +1,16 @@
 type ImageViewerLink {
-  id: String!
-  datasetId: String!
-  state: String! # JSON
   annotations: [Annotation!]!
+  datasetId: String!
+  id: String!
+  snapshot: String! # JSON
+  version: Int!
 }
 
 input IVLCreateInput {
-  datasetId: String!
-  state: String! # JSON
   annotationIds: [String!]!
+  datasetId: String!
+  snapshot: String! # JSON
+  version: Int!
 }
 
 type Query {
