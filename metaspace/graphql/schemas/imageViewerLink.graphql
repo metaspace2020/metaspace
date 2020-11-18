@@ -1,18 +1,18 @@
 type ImageViewerLink {
   id: String!
   datasetId: String!
-  state: Object!
+  state: String! # JSON
   annotations: [Annotation!]!
 }
 
 input IVLCreateInput {
   datasetId: String!
-  state: Object!
+  state: String! # JSON
   annotationIds: [String!]!
 }
 
 type Query {
-  imageViewerLink(id: String!. datasetId: String!): ImageViewerLink
+  imageViewerLink(id: String!, datasetId: String!): ImageViewerLink
 }
 
 type Mutation {

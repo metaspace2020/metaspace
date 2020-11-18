@@ -1,13 +1,23 @@
 const cryptoRandomString = require('crypto-random-string')
 
 import {Context} from '../../context';
-import {ImageViewerLink} from './model'
 import logger from '../../utils/logger';
+import {esAnnotationByID} from '../../../esConnector';
+import {ImageViewerLink, Annotation} from '../../binding';
+import {ImageViewerLink as ImageViewerLinkModel} from './model'
 
 export const Resolvers = {
   Query: {
     async imageViewerLink(_: any, {id, datasetId}: any, ctx: Context): Promise<ImageViewerLink | undefined> {
-      return await ctx.entityManager.getRepository(ImageViewerLink).findOne(id, datasetId);
+      const ivl = await ctx.entityManager.getRepository(ImageViewerLinkModel).findOne(id, datasetId);
+      if (ivl) {
+        const annotations = await Promise.all(ivl.annotationIds.map(id => esAnnotationByID(id, ctx.user)))
+        return {
+          ...ivl,
+          state: JSON.parse(ivl.state),
+          annotations: annotations.filter(a => a !== null) as unknown as Annotation[],
+        }
+      }
     },
   },
   Mutation: {
@@ -25,7 +35,7 @@ export const Resolvers = {
         userId: user.id
       }
 
-      await entityManager.getRepository(ImageViewerLink).save(entity);
+      await entityManager.getRepository(ImageViewerLinkModel).save(entity);
 
       logger.info(`Image viewer link created with id ${id}`);
       return id;

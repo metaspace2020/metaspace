@@ -11,11 +11,11 @@ export class ImageViewerLink {
   @PrimaryColumn({ type: 'text' })
   datasetId: string;
 
-  @Column({ type: 'json' })
-  state: Object;
+  @Column({ type: 'text' })
+  state: string;
 
   @Column({ type: 'json' })
-  annotations: string[];
+  annotationIds: string[];
 
 
   /* for future management UI */
@@ -28,3 +28,7 @@ export class ImageViewerLink {
   })
   createdDT: Moment;
 }
+
+export const IMAGE_VIEWER_LINK_ENTITIES = [
+  ImageViewerLink
+]
