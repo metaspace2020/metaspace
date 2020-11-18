@@ -21,6 +21,9 @@ interface Props {
   // width & height of HTML element
   width: number
   height: number
+  // width & height of image, useful when layers are hidden
+  imageWidth?: number
+  imageHeight?: number
   // zoom factor where 1.0 means 1 ion image pixel per browser pixel
   zoom: number
   minZoom: number
@@ -222,6 +225,7 @@ const usePanAndZoom = (
   props: Props,
   imageLoaderRef: Ref<ReferenceObject | null>,
   emit: (event: string, ...args: any[]) => void,
+  imageSize: Ref<{ width: number, height: number }>,
 ) => {
   const state = reactive({
     dragStartX: 0,
@@ -234,11 +238,12 @@ const usePanAndZoom = (
   const viewBoxStyle = computed(() => {
     const isLCMS = false
     if (!isLCMS) {
-      const { ionImage } = props.ionImageLayers[0] || {}
-      const ionImageWidth = (ionImage ? ionImage.width : props.width)
-      const ionImageHeight = (ionImage ? ionImage.height : props.height)
-      const x = props.width / 2 + (props.xOffset - ionImageWidth / 2) * zoomX.value
-      const y = props.height / 2 + (props.yOffset - ionImageHeight / 2) * zoomY.value
+      const { width, height } = imageSize.value
+      if (width === undefined || height === undefined) {
+        return null // should always be scaled to size of image
+      }
+      const x = props.width / 2 + (props.xOffset - width / 2) * zoomX.value
+      const y = props.height / 2 + (props.yOffset - height / 2) * zoomY.value
       return {
         left: 0,
         top: 0,
@@ -350,17 +355,41 @@ const useBufferedOpticalImage = (props: Props) => {
   return { renderOpticalImage }
 }
 
-const useIonImageView = (props: Props) => {
-  const ionImageDataUri = computed(() => props.ionImageLayers && renderIonImages(props.ionImageLayers))
-  const renderIonImageView = () => (props.ionImageLayers
-    && <img
-      src={ionImageDataUri.value}
-      class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
-      style={{
-        transform: (props.ionImageTransform ? formatMatrix3d(props.ionImageTransform) : ''),
-      }}
-    />)
+const useIonImageView = (props: Props, imageSize: Ref<{ width: number, height: number }>) => {
+  const canvasRef = templateRef<HTMLCanvasElement>('ionImageCanvas')
+  const renderIonImageView = () => {
+    const { width, height } = imageSize.value
+    const canvas = canvasRef.value
+    if (canvas) {
+      renderIonImages(props.ionImageLayers, canvas, width, height)
+    }
+    return (
+      <canvas
+        ref="ionImageCanvas"
+        width={width}
+        height={height}
+        class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
+        style={{
+          transform: (props.ionImageTransform ? formatMatrix3d(props.ionImageTransform) : ''),
+        }}
+      />
+    )
+  }
   return { renderIonImageView }
+}
+
+const useImageSize = (props: Props) => {
+  const imageSize = computed(() => {
+    const [layer] = props.ionImageLayers || []
+    const { imageWidth = layer?.ionImage.width, imageHeight = layer?.ionImage.height } = props
+    return {
+      width: imageWidth,
+      height: imageHeight,
+    }
+  })
+  return {
+    imageSize,
+  }
 }
 
 export default defineComponent<Props>({
@@ -370,6 +399,9 @@ export default defineComponent<Props>({
     // width & height of HTML element
     width: { type: Number, required: true },
     height: { type: Number, required: true },
+    // width & height of image, useful when layers are hidden
+    imageWidth: { type: Number },
+    imageHeight: { type: Number },
     // zoom factor where 1.0 means 1 ion image pixel per browser pixel
     zoom: { type: Number, required: true },
     minZoom: { type: Number, default: 0.1 },
@@ -402,9 +434,10 @@ export default defineComponent<Props>({
     const { showScrollBlock, renderScrollBlock } = useScrollBlock()
     const { renderScaleBar } = useScaleBar(props)
 
+    const { imageSize } = useImageSize(props)
     const { renderPixelIntensity, movePixelIntensity } = usePixelIntensityDisplay(props, imageLoaderRef)
-    const { viewBoxStyle, handleZoom, handlePanStart } = usePanAndZoom(props, imageLoaderRef, emit)
-    const { renderIonImageView } = useIonImageView(props)
+    const { viewBoxStyle, handleZoom, handlePanStart } = usePanAndZoom(props, imageLoaderRef, emit, imageSize)
+    const { renderIonImageView } = useIonImageView(props, imageSize)
     const { renderOpticalImage } = useBufferedOpticalImage(props)
 
     const onWheel = (event: WheelEventCompat) => {
@@ -432,11 +465,11 @@ export default defineComponent<Props>({
         onmousemove={({ clientX, clientY }: MouseEvent) => movePixelIntensity(clientX, clientY)}
         onmouseleave={() => movePixelIntensity(null, null)}
       >
-        <div style={viewBoxStyle.value}>
-
-          {renderIonImageView()}
-          {renderOpticalImage()}
-        </div>
+        {viewBoxStyle.value
+          && <div style={viewBoxStyle.value}>
+            {renderIonImageView()}
+            {renderOpticalImage()}
+          </div>}
 
         {renderPixelIntensity()}
 

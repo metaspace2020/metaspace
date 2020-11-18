@@ -1,5 +1,5 @@
 <template>
-  <menu-container>
+  <overlay class="overflow-x-hidden overflow-y-auto px-0 sm-menu-items">
     <menu-item
       v-for="item in menuItems"
       :key="item.id"
@@ -66,11 +66,11 @@
     </menu-item>
     <!-- margin removed below for Safari -->
     <button
-      class="button-reset py-6 px-3 w-full cursor-default text-gray-700 text-center m-0"
+      class="button-reset p-3 h-12 w-full cursor-default text-gray-700 text-center m-0"
       :class="{ 'bg-blue-100 text-primary': activeLayer === null }"
       @click="() => setActiveLayer(null)"
     >
-      <fade-transition class="text-sm text-inherit">
+      <fade-transition class="text-xs tracking-wide font-medium text-inherit">
         <span
           v-if="activeLayer === null"
           key="active"
@@ -80,19 +80,17 @@
         <span
           v-else
           key="inactive"
-          class="flex items-center justify-end"
+          class="flex items-center justify-center"
         >
           Add ion image
-          <add-icon class="sm-mono-icon ml-1 text-gray-600" />
         </span>
       </fade-transition>
     </button>
-  </menu-container>
+  </overlay>
 </template>
 <script lang="ts">
 import { defineComponent, ref } from '@vue/composition-api'
 
-import MenuContainer from './MenuContainer.vue'
 import MenuItem from './MenuItem.vue'
 import IonIntensitySlider from './IonIntensitySlider.vue'
 import MolecularFormula from '../../components/MolecularFormula'
@@ -104,7 +102,6 @@ import CandidateMoleculesPopover from '../Annotations/annotation-widgets/Candida
 import '../../components/MonoIcon.css'
 import VisibleIcon from '../../assets/inline/refactoring-ui/visible.svg'
 import HiddenIcon from '../../assets/inline/refactoring-ui/hidden.svg'
-import AddIcon from '../../assets/inline/refactoring-ui/add.svg'
 
 import { useIonImageMenu } from './ionImageState'
 
@@ -113,13 +110,11 @@ export default defineComponent({
     menuItems: Array,
   },
   components: {
-    MenuContainer,
     MenuItem,
     IonIntensitySlider,
     MolecularFormula,
     VisibleIcon,
     HiddenIcon,
-    AddIcon,
     Overlay,
     FadeTransition,
     ChannelSelector,
@@ -150,3 +145,19 @@ export default defineComponent({
   },
 })
 </script>
+<style scoped>
+.sm-menu-items >>> > * {
+  @apply box-border border-0 border-t border-solid border-gray-200;
+}
+.sm-menu-items >>> > *:last-child {
+  @apply border-b;
+}
+.sm-menu-items >>> > .focus-visible {
+  outline: 2px solid theme('colors.primary');
+  outline-offset: -2px;
+}
+.sm-menu-items >>> > *:hover {
+  outline: 1px solid theme('colors.primary');
+  outline-offset: -1px;
+}
+</style>

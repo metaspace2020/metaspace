@@ -52,7 +52,12 @@ describe('IonImageViewer', () => {
   }
 
   mockIonImageRendering.renderIonImages.mockImplementation(
-    (layers: any) => layers.map((_: any) => _.ionImage.png.url).join(', '),
+    (layers: any, canvas: any) => {
+      if (canvas) {
+        canvas.setAttribute('data-images', layers.map((_: any) => _.ionImage.png.url).join(', '))
+      }
+      return undefined
+    },
   )
 
   beforeEach(() => {

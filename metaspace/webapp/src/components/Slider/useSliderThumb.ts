@@ -5,6 +5,8 @@ interface SliderProps {
   min: number
   max: number
   step: number
+  minBound?: number
+  maxBound?: number
 }
 
 interface Range {
@@ -19,10 +21,17 @@ export type SliderThumbInstance = {
   decrement: (factor: number) => number,
 }
 
+function applyBounds(value: number, { min, minBound = min, max, maxBound = max } : SliderProps) {
+  if (value < minBound) return minBound
+  if (value > maxBound) return maxBound
+  return value
+}
+
 export default (getProps: () => SliderProps, range: Ref<Range>) : SliderThumbInstance => {
   return {
     getValue(x: number) {
-      const { max, min, step } = getProps()
+      const props = getProps()
+      const { max, min, step } = props
 
       const ratio = (x - range.value.minX) / (range.value.maxX - range.value.minX)
       let value = ratio * (max - min) + min
@@ -31,7 +40,7 @@ export default (getProps: () => SliderProps, range: Ref<Range>) : SliderThumbIns
         value = step * Math.floor((value / step))
       }
 
-      return value
+      return applyBounds(value, props)
     },
     x: computed(() => {
       const { value, min, max } = getProps()
@@ -39,12 +48,12 @@ export default (getProps: () => SliderProps, range: Ref<Range>) : SliderThumbIns
       return Math.ceil(ratio * (range.value.maxX - range.value.minX) + range.value.minX)
     }),
     increment(factor) {
-      const { value, step, min, max } = getProps()
-      return Math.min(Math.max(value + (step * factor), min), max)
+      const props = getProps()
+      return applyBounds(props.value + (props.step * factor), props)
     },
     decrement(factor) {
-      const { value, step, min, max } = getProps()
-      return Math.min(Math.max(value - (step * factor), min), max)
+      const props = getProps()
+      return applyBounds(props.value - (props.step * factor), props)
     },
   }
 }

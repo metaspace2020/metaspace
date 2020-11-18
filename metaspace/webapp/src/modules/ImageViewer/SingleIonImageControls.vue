@@ -1,5 +1,5 @@
 <template>
-  <overlay class="h-12">
+  <overlay class="pb-0">
     <ion-intensity-slider
       :model="state"
       :color-bar="colorBar"

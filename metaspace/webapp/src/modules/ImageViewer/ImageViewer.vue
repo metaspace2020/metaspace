@@ -5,11 +5,13 @@
     <div
       ref="imageArea"
       v-resize="onResize"
-      v-loading="isLoading"
     >
       <ion-image-viewer
         :height="dimensions.height"
+        :image-height="ionImageDimensions.height"
+        :image-width="ionImageDimensions.width"
         :ion-image-layers="ionImageLayers"
+        :is-loading="isLoading"
         :max-zoom="imageFit.imageZoom * 20"
         :min-zoom="imageFit.imageZoom / 4"
         :pixel-size-x="pixelSizeX"
@@ -48,7 +50,7 @@
         <opacity-settings
           v-if="openMenu === 'ION' && hasOpticalImage"
           key="opacity"
-          class="sm-leading-trim"
+          class="sm-leading-trim mt-auto"
           :opacity="opacity"
           @opacity="emitOpacity"
         />
@@ -71,7 +73,7 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, computed, reactive, ref, toRefs } from '@vue/composition-api'
+import { defineComponent, computed, reactive, ref, toRefs, onMounted } from '@vue/composition-api'
 import { Image } from 'upng-js'
 import resize from 'vue-resize-directive'
 
@@ -132,6 +134,7 @@ const ImageViewer = defineComponent<Props>({
       ionImageMenuItems,
       singleIonImageControls,
       ionImagesLoading,
+      ionImageDimensions,
     } = useIonImages(props)
 
     // don't think this is the best way to do it
@@ -156,14 +159,10 @@ const ImageViewer = defineComponent<Props>({
       }
     }
 
+    onMounted(onResize)
+
     const imageFit = computed(() => {
-      const [ionImageLayer] = ionImageLayers.value
-      let width = 500
-      let height = 500
-      if (ionImageLayer && ionImageLayer.ionImage) {
-        width = ionImageLayer.ionImage.width
-        height = ionImageLayer.ionImage.height
-      }
+      const { width = 500, height = 500 } = ionImageDimensions.value
       return fitImageToArea({
         imageWidth: width,
         imageHeight: height / props.imageLoaderSettings.pixelAspectRatio,
@@ -173,8 +172,9 @@ const ImageViewer = defineComponent<Props>({
     })
 
     return {
-      dimensions,
       imageArea,
+      dimensions,
+      ionImageDimensions,
       imageFit,
       onResize,
       ionImageLayers,
@@ -204,10 +204,6 @@ export default ImageViewer
 <style scoped>
 .sm-side-bar > * {
   @apply w-60;
-}
-
-.sm-side-bar > :first-child {
-  margin-bottom: auto;
 }
 
 .sm-leading-trim > :first-child {

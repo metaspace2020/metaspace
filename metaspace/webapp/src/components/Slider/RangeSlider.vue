@@ -10,7 +10,6 @@
       :style="minStyle"
       :disabled="disabled"
       :x="minThumb.x.value"
-      :bounds="minBounds"
       @change="onMinChange"
       @increment="onMinIncrement"
       @decrement="onMinDecrement"
@@ -27,7 +26,6 @@
       :style="maxStyle"
       :disabled="disabled"
       :x="maxThumb.x.value"
-      :bounds="maxBounds"
       @change="onMaxChange"
       @increment="onMaxIncrement"
       @decrement="onMaxDecrement"
@@ -83,8 +81,11 @@ const Slider = defineComponent<Props>({
   setup(props, { emit, attrs }) {
     const track = ref<Vue>(null)
 
-    const width = computed(() => {
-      return track.value?.$el.clientWidth || 0
+    // hides aliasing around thumbs
+    const padding = 1
+
+    const maxX = computed(() => {
+      return track.value ? track.value.$el.clientWidth + padding - THUMB_WIDTH : 0
     })
 
     const getMinProps = () => ({
@@ -92,11 +93,12 @@ const Slider = defineComponent<Props>({
       min: props.min,
       max: props.max,
       step: props.step,
+      maxBound: props.value[1],
     })
 
     const minRange = computed(() => ({
-      minX: 0,
-      maxX: width.value ? width.value - (THUMB_WIDTH * 2) : 0,
+      minX: 0 - padding,
+      maxX: maxX.value - THUMB_WIDTH,
     }))
 
     const minThumb = useSliderThumb(getMinProps, minRange)
@@ -106,19 +108,20 @@ const Slider = defineComponent<Props>({
       min: props.min,
       max: props.max,
       step: props.step,
+      minBound: props.value[0],
     })
 
     const maxRange = computed(() => ({
-      minX: THUMB_WIDTH,
-      maxX: width.value ? width.value - THUMB_WIDTH : 0,
+      minX: minRange.value.minX + THUMB_WIDTH,
+      maxX: maxX.value,
     }))
 
     const maxThumb = useSliderThumb(getMaxProps, maxRange)
 
     const minPosition = computed(() => ({ left: `${minThumb.x.value}px` }))
     const maxPosition = computed(() => {
-      if (!width.value) return { right: '0px' }
-      return { right: `${width.value - maxThumb.x.value - THUMB_WIDTH}px` }
+      if (maxX.value === 0) return { right: '0px' }
+      return { right: `${maxX.value - maxThumb.x.value}px` }
     })
 
     const emitMinChange = (value: number) => emit('change', [value, props.value[1]])
@@ -131,14 +134,6 @@ const Slider = defineComponent<Props>({
       track,
       minThumb,
       maxThumb,
-      minBounds: computed(() => ({
-        minX: 0,
-        maxX: maxThumb.x.value - THUMB_WIDTH,
-      })),
-      maxBounds: computed(() => ({
-        minX: minThumb.x.value + THUMB_WIDTH,
-        maxX: width.value ? width.value - THUMB_WIDTH : 0,
-      })),
       onMinChange: (x: number) => emitMinChange(minThumb.getValue(x)),
       onMinIncrement: (factor: number) => emitMinChange(minThumb.increment(factor)),
       onMinDecrement: (factor: number) => emitMinChange(minThumb.decrement(factor)),
@@ -147,7 +142,6 @@ const Slider = defineComponent<Props>({
       onMaxDecrement: (factor: number) => emitMaxChange(maxThumb.decrement(factor)),
       minPosition,
       maxPosition,
-      width,
       minStyle: computed(() => ({ backgroundColor: props.minColor })),
       maxStyle: computed(() => ({ backgroundColor: props.maxColor })),
       onThumbStart() {
