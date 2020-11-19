@@ -26,6 +26,11 @@ import RelatedMolecules from './annotation-widgets/RelatedMolecules.vue'
 import CompoundsList from './annotation-widgets/CompoundsList.vue'
 import AmbiguityAlert from './annotation-widgets/AmbiguityAlert.vue'
 import ModeButton from '../ImageViewer/ModeButton.vue'
+import ShareLink from '../ImageViewer/ShareLink.vue'
+
+import '../../components/StatefulIcon.css'
+import LockIcon from '../../assets/inline/refactoring-ui/lock.svg'
+import LocationPinIcon from '../../assets/inline/refactoring-ui/location-pin.svg'
 
  type ImagePosition = {
    zoom: number
@@ -55,6 +60,9 @@ const componentsToRegister: any = {
   CompoundsList,
   AmbiguityAlert,
   ModeButton,
+  ShareLink,
+  LockIcon,
+  LocationPinIcon,
 }
 for (const category of Object.keys(annotationWidgets)) {
   metadataDependentComponents[category] = {}
@@ -263,6 +271,10 @@ export default class AnnotationView extends Vue {
 
    get showColoc() {
      return config.features.coloc
+   }
+
+   get multiImagesEnabled() {
+     return config.features.multiple_ion_images
    }
 
    opacity: number = 1.0;

@@ -1,6 +1,5 @@
 <template>
   <button
-    v-if="multiImagesEnabled"
     :title="`${isActive ? 'Disable' : 'Enable'} ion image channels`"
     class="button-reset h-9 rounded-lg flex items-center justify-center px-2 hover:bg-gray-100"
     :class="{ 'text-blue-700': isActive }"
@@ -36,7 +35,6 @@ export default defineComponent({
           emit('multi')
         }
       },
-      multiImagesEnabled: config.features.multiple_ion_images,
     }
   },
 })

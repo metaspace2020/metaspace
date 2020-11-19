@@ -1,4 +1,5 @@
 const cryptoRandomString = require('crypto-random-string')
+import { utc } from 'moment';
 
 import {Context} from '../../context';
 import logger from '../../utils/logger';
@@ -21,17 +22,16 @@ export const Resolvers = {
     },
   },
   Mutation: {
-    async createImageViewerLink(_: any, {datasetId, ...input}: any, {user, entityManager}: Context): Promise<string> {
-
-      logger.info(`Creating image viewer link for ${datasetId} dataset by '${user!.id}' user...`);
+    async createImageViewerLink(_: any, { input }: any, {user, entityManager}: Context): Promise<string> {
+      logger.info(`Creating image viewer link for ${input.datasetId} dataset by '${user!.id}' user...`);
 
       const id = cryptoRandomString({ length: 8, type: 'url-safe' })
 
       const entity = {
         id,
-        datasetId,
         ...input,
-        userId: user.id
+        userId: user.id,
+        createdDT: utc(),
       }
 
       await entityManager.getRepository(ImageViewerLinkModel).save(entity);
