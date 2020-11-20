@@ -7,7 +7,7 @@
       :data="annotations"
       size="mini"
       border
-      element-loading-text="Loading results from the server..."
+      element-loading-text="Loading results …"
       highlight-current-row
       width="100%"
       stripe

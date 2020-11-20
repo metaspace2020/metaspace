@@ -22,7 +22,7 @@
         key="loading"
         class="m-0 ml-3 text-gray-700 text-sm font-medium"
       >
-        Loading image ...
+        Loading image &hellip;
       </p>
       <div v-else>
         <slot />
