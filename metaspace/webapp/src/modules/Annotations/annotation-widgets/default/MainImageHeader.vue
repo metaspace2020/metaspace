@@ -58,7 +58,7 @@
 import Vue from 'vue'
 import { Component, Prop } from 'vue-property-decorator'
 import IonImageSettings from './IonImageSettings.vue'
-import MenuButtons from '../../../ImageViewer/MenuButtons.vue'
+import { MenuButtons } from '../../../ImageViewer'
 import FadeTransition from '../../../../components/FadeTransition'
 import AspectRatioIcon from '../../../../assets/inline/material/aspect-ratio.svg'
 

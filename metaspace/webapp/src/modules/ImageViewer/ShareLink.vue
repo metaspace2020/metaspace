@@ -79,6 +79,7 @@ import ExternalWindowIcon from '../../assets/inline/refactoring-ui/external-wind
 import CloseIcon from '../../assets/inline/refactoring-ui/close.svg'
 
 import { exportIonImageState } from './ionImageState'
+import { exportImageViewerState } from './state'
 import reportError from '../../lib/reportError'
 import config from '../../lib/config'
 
@@ -120,7 +121,8 @@ export default defineComponent<Props>({
         return
       }
 
-      const exported = exportIonImageState()
+      const imageViewer = exportImageViewerState()
+      const ionImage = exportIonImageState()
 
       status.value = 'SAVING'
       try {
@@ -130,8 +132,12 @@ export default defineComponent<Props>({
           }`,
           variables: {
             input: {
-              ...exported,
-              snapshot: JSON.stringify(exported.snapshot),
+              version: 1,
+              annotationIds: ionImage.annotationIds,
+              snapshot: JSON.stringify({
+                imageViewer,
+                ionImage: ionImage.snapshot,
+              }),
               datasetId: props.annotation.dataset.id,
             },
           },

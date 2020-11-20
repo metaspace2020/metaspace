@@ -10,12 +10,11 @@ import {ImageViewerLink as ImageViewerLinkModel} from './model'
 export const Resolvers = {
   Query: {
     async imageViewerLink(_: any, {id, datasetId}: any, ctx: Context): Promise<ImageViewerLink | undefined> {
-      const ivl = await ctx.entityManager.getRepository(ImageViewerLinkModel).findOne(id, datasetId);
+      const ivl = await ctx.entityManager.getRepository(ImageViewerLinkModel).findOne({ id, datasetId });
       if (ivl) {
         const annotations = await Promise.all(ivl.annotationIds.map(id => esAnnotationByID(id, ctx.user)))
         return {
           ...ivl,
-          snapshot: JSON.parse(ivl.snapshot),
           annotations: annotations.filter(a => a !== null) as unknown as Annotation[],
         }
       }

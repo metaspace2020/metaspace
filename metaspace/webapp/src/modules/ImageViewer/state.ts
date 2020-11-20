@@ -20,4 +20,12 @@ export function toggleMode() {
   state.mode = (state.mode === 'SINGLE' ? 'MULTI' : 'SINGLE')
 }
 
+export function exportImageViewerState() {
+  return state
+}
+
+export function restoreImageViewerState(imported: any) {
+  Object.assign(state, imported.snapshot)
+}
+
 export default toRefs(state)
