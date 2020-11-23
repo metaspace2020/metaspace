@@ -16,7 +16,14 @@ Applications:
     * Quick access to things hidden from web interface (such as location of files on S3 and other metadata)
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
+   :caption: Examples
+
+   content/examples/fetch-dataset-annotations
+   content/examples/fetch-isotopic-images
+
+.. toctree::
+   :maxdepth: 1
    :caption: API reference:
 
    content/apireference/sm_annotation_utils
