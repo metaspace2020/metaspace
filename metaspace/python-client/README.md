@@ -1,6 +1,6 @@
 # METASPACE Python client
 
-Python module that provides programmatic access to the [METASPACE](https://metaspace2020.eu) platform.
+Python package that provides programmatic access to [METASPACE](https://metaspace2020.eu).
 
 ## Applications
 
@@ -12,7 +12,13 @@ Python module that provides programmatic access to the [METASPACE](https://metas
 
 You need to have **Python 3.6 or higher** to use this library.
 
-`pip install metaspace2020`
+```
+pip install metaspace2020
+```
+
+## Documentation
+
+The package documentation is available at [metaspace2020.readthedocs.io](https://metaspace2020.readthedocs.io)
 
 ## Jupyter Notebooks
 

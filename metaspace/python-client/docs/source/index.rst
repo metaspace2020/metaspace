@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 metaspace2020: Python client for connecting to METASPACE
-===============================================================
+========================================================
 
 Welcome to the metaspace2020 documentation!
 
