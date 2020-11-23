@@ -6,7 +6,7 @@ version: 2
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
-  configuration: docs/source/conf.py
+  configuration: metaspace/python-client/docs/source/conf.py
 
 # Build documentation with MkDocs
 #mkdocs:
@@ -19,4 +19,4 @@ formats:
 python:
   version: 3.6
   install:
-    - requirements: docs/requirements.txt
+    - requirements: metaspace/python-client/docs/requirements.txt

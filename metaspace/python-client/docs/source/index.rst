@@ -8,7 +8,7 @@ metaspace2020: Python client for connecting to METASPACE
 
 Welcome to the metaspace2020 documentation!
 
-This Python package provides programmatic access to the `METASPACE <https://metaspace2020.eu>` platform.
+This Python package provides programmatic access to the `METASPACE <https://metaspace2020.eu>`_ platform.
 
 Applications:
     * Running batch jobs
@@ -17,12 +17,14 @@ Applications:
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: API reference:
 
    content/apireference/sm_annotation_utils
+   content/apireference/image_processing
+   content/apireference/projects_client
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
