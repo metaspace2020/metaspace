@@ -21,6 +21,12 @@ Applications:
 
    content/examples/fetch-dataset-annotations
    content/examples/fetch-isotopic-images
+   content/examples/colocalized-annotations
+   content/examples/explore-off-sample-results
+   content/examples/manage-custom-molecular-databases
+   content/examples/update-dataset-databases
+   content/examples/fetch-dataset-metadata
+   content/examples/submit-dataset
 
 .. toctree::
    :maxdepth: 1

@@ -1324,7 +1324,8 @@ class SMInstance(object):
             [
                 pd.DataFrame(json_normalize(json.loads(dataset['metadataJson'])))
                 for dataset in datasets
-            ]
+            ],
+            sort=False,
         )
         df.index = [dataset['id'] for dataset in datasets]
         return df
