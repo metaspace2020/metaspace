@@ -1,5 +1,3 @@
-from lithops.storage import Storage
-
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
@@ -11,7 +9,6 @@ init_loggers(SMConfig.get_conf(True)['logs'])
 
 from sm.engine.ds_config import DSConfig
 from sm.engine.annotation_lithops.annotation_job import LocalAnnotationJob, ServerAnnotationJob
-from sm.engine.annotation_lithops.io import load_cobj, load_cobjs
 
 ds_config: DSConfig = {
     "database_ids": [22],

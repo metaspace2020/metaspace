@@ -9,26 +9,17 @@ from lithops.storage.utils import CloudObject
 from pyimzml.ImzMLParser import PortableSpectrumReader
 
 from sm.engine.annotation_lithops.annotate import process_centr_segments
-from sm.engine.annotation_lithops.build_moldb import (
-    build_moldb,
-    validate_formula_cobjects,
-    InputMolDb,
-    DbFDRData,
-)
+from sm.engine.annotation_lithops.build_moldb import InputMolDb, DbFDRData
 from sm.engine.annotation_lithops.cache import PipelineCacher, use_pipeline_cache
-from sm.engine.annotation_lithops.calculate_centroids import (
-    calculate_centroids,
-    validate_centroids,
-)
+from sm.engine.annotation_lithops.calculate_centroids import calculate_centroids, validate_centroids
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import CObj
 from sm.engine.annotation_lithops.load_ds import load_ds, validate_ds_segments
+from sm.engine.annotation_lithops.moldb_pipeline import get_moldb_centroids
 from sm.engine.annotation_lithops.prepare_results import filter_results_and_make_pngs
 from sm.engine.annotation_lithops.run_fdr import run_fdr
 from sm.engine.annotation_lithops.segment_centroids import (
     segment_centroids,
-    clip_centr_df,
-    define_centr_segments,
     validate_centroid_segments,
 )
 from sm.engine.db import DB
@@ -47,7 +38,8 @@ class Pipeline:
     imzml_reader: PortableSpectrumReader
     ds_segments_bounds: np.ndarray
     ds_segms_cobjects: List[CObj[pd.DataFrame]]
-    ds_segms_len: np.ndarray
+    ds_segm_lens: np.ndarray
+
     is_intensive_dataset: bool
     db_segms_cobjects: List[CObj[pd.DataFrame]]
     formula_metrics_df: pd.DataFrame
@@ -65,8 +57,10 @@ class Pipeline:
         executor: Executor = None,
         lithops_config=None,
         cache_key=None,
+        use_db_cache=True,
     ):
         lithops_config = lithops_config or SMConfig.get_conf()['lithops']
+        self.lithops_config = lithops_config
         self._db = DB()
         self.imzml_cobject = imzml_cobject
         self.ibd_cobject = ibd_cobject
@@ -84,18 +78,14 @@ class Pipeline:
         else:
             self.cacher = None
 
+        self.use_db_cache = use_db_cache
         self.ds_segm_size_mb = 128
 
     def __call__(
         self, debug_validate=False, use_cache=True
     ) -> Tuple[Dict[int, pd.DataFrame], List[CObj[List[Tuple[int, bytes]]]]]:
-        self.build_moldb(use_cache=use_cache)
-        if debug_validate:
-            self.validate_build_moldb()
 
-        self.calculate_centroids(use_cache=use_cache)
-        if debug_validate:
-            self.validate_calculate_centroids()
+        self.prepare_moldb(debug_validate=debug_validate)
 
         self.load_ds(use_cache=use_cache)
         if debug_validate:
@@ -111,18 +101,15 @@ class Pipeline:
 
         return self.results_dfs, self.png_cobjs
 
-    @use_pipeline_cache
-    def build_moldb(self):
-        self.formula_cobjects, self.db_data_cobjects = self.executor.call(
-            build_moldb, (self.ds_config, self.moldbs), runtime_memory=2048
+    def prepare_moldb(self, debug_validate=False):
+        self.db_data_cobjects, self.peaks_cobjects = get_moldb_centroids(
+            executor=self.executor,
+            sm_storage=self.lithops_config['sm_storage'],
+            ds_config=self.ds_config,
+            moldbs=self.moldbs,
+            debug_validate=debug_validate,
+            use_cache=self.use_db_cache,
         )
-        logger.info(
-            f'Built {len(self.formula_cobjects)} formula segments and'
-            f' {len(self.db_data_cobjects)} db_data objects'
-        )
-
-    def validate_build_moldb(self):
-        validate_formula_cobjects(self.storage, self.formula_cobjects)
 
     @use_pipeline_cache
     def calculate_centroids(self):
@@ -140,7 +127,7 @@ class Pipeline:
             self.imzml_reader,
             self.ds_segments_bounds,
             self.ds_segms_cobjects,
-            self.ds_segms_len,
+            self.ds_segm_lens,
         ) = self.executor.call(
             load_ds,
             (self.imzml_cobject, self.ibd_cobject, self.ds_segm_size_mb, sort_memory),
@@ -157,7 +144,7 @@ class Pipeline:
             self.imzml_reader,
             self.ds_segments_bounds,
             self.ds_segms_cobjects,
-            self.ds_segms_len,
+            self.ds_segm_lens,
         )
 
     @use_pipeline_cache
@@ -184,7 +171,7 @@ class Pipeline:
             self.executor,
             self.ds_segms_cobjects,
             self.ds_segments_bounds,
-            self.ds_segms_len,
+            self.ds_segm_lens,
             self.db_segms_cobjects,
             self.imzml_reader,
             self.ds_config,

@@ -5,12 +5,12 @@ import logging
 import resource
 from datetime import datetime
 from itertools import chain
-from typing import List, Callable, TypeVar, Iterable, Sequence, Dict
+from typing import List, Callable, TypeVar, Iterable, Sequence, Dict, Optional
 
 import lithops
-from lithops.future import ResponseFuture
 import numpy as np
 import pandas as pd
+from lithops.future import ResponseFuture
 
 from sm.engine.utils.perf_profile import SubtaskProfiler, Profiler, NullProfiler
 
@@ -54,6 +54,58 @@ def _build_wrapper_func(func: Callable[..., TRet]) -> Callable[..., TRet]:
     return wrapper_func
 
 
+def _save_subtask_perf(
+    perf: Profiler,
+    func_name: str,
+    futures: Optional[List[ResponseFuture]],
+    subtask_perfs: List[SubtaskProfiler],
+    cost_factors: Optional[pd.DataFrame],
+    attempt: int,
+    runtime_memory: int,
+    start_time: datetime,
+):
+    subtask_timings, subtask_data = SubtaskProfiler.make_report(subtask_perfs)
+    cost_factors_plain = cost_factors.to_dict('list') if cost_factors is not None else None
+    if futures:
+        exec_times = [f.stats.get('worker_func_exec_time', -1) for f in futures]
+    else:
+        exec_times = [-1]
+    inner_times = subtask_data.pop('inner time', [-1])
+    mem_befores = subtask_data.pop('mem before', [-1])
+    mem_afters = subtask_data.pop('mem after', [-1])
+    perf_data = {
+        'num_actions': len(futures) if futures else -1,
+        'attempts': attempt,
+        'runtime_memory': runtime_memory,
+        'max_memory': np.max(mem_afters).item(),
+        'max_time': np.max(exec_times).item(),
+        'overhead_memory': np.max(mem_befores).item(),
+        'overhead_time': (np.mean(exec_times) - np.mean(inner_times)).item(),
+        'cost_factors': cost_factors_plain,
+        'exec_times': exec_times,
+        'mem_usages': mem_afters,
+        'subtask_timings': subtask_timings,
+        'subtask_data': subtask_data,
+    }
+    perf.record_entry(func_name, start_time, datetime.now(), **perf_data)
+
+    # Print a summary
+    if any(subtask_timings) or any(subtask_data):
+        subtask_df = pd.concat([pd.DataFrame(subtask_timings), pd.DataFrame(subtask_data)], axis=1)
+        if futures and len(futures) > 1:
+            subtask_summary = subtask_df.describe().transpose().to_string()
+        else:
+            subtask_summary = subtask_df.iloc[0].to_string()
+        logger.debug(f'Subtasks:\n{subtask_summary}')
+
+
+def _run_local(func, funcargs, storage):
+    kwargs = {}
+    if 'storage' in inspect.signature(func).parameters:
+        kwargs['storage'] = storage
+    return func(*funcargs, **kwargs)
+
+
 class Executor:
     """
     This class wraps Lithops' FunctionExecutor to provide a platform where we can experiment with
@@ -74,6 +126,7 @@ class Executor:
           that represents some factor that could contribute to memory/time usage.
       * Utility functions e.g. `map_unpack` and `map_concat` for applying common transformations
         to the result data.
+      * `debug_run_locally` parameter to
     """
 
     def __init__(self, lithops_config: Dict, perf: Profiler = None):
@@ -100,6 +153,7 @@ class Executor:
         cost_factors: pd.DataFrame = None,
         runtime_memory: int = None,
         include_modules=None,
+        debug_run_locally=False,
         **kwargs,
     ) -> List[TRet]:
         if len(args) == 0:
@@ -124,51 +178,35 @@ class Executor:
                 executor = self.small_executor if use_small else self.large_executor
 
                 logger.info(f'executor.map({func.__name__}, {len(args)} items, {runtime_memory}MB)')
-                futures: List[ResponseFuture] = executor.map(
-                    wrapper_func, args, runtime_memory=runtime_memory, **kwargs,
-                )
+                if debug_run_locally:
+                    futures = None
+                    return_vals = [
+                        _run_local(wrapper_func, funcargs, executor.storage) for funcargs in args
+                    ]
+                else:
+                    futures: Optional[List[ResponseFuture]] = executor.map(
+                        wrapper_func, args, runtime_memory=runtime_memory, **kwargs,
+                    )
 
-                return_vals = executor.get_result(futures)
+                    return_vals = executor.get_result(futures)
                 results = [result for result, subtask_perf in return_vals]
                 subtask_perfs = [subtask_perf for result, subtask_perf in return_vals]
 
                 if self._perf:
-                    subtask_timings, subtask_data = SubtaskProfiler.make_report(subtask_perfs)
-                    cost_factors_plain = (
-                        cost_factors.to_dict('list') if cost_factors is not None else None
+                    _save_subtask_perf(
+                        self._perf,
+                        func_name=func.__name__,
+                        futures=futures,
+                        subtask_perfs=subtask_perfs,
+                        cost_factors=cost_factors,
+                        attempt=attempt,
+                        runtime_memory=runtime_memory,
+                        start_time=start_time,
                     )
-                    exec_times = [f.stats.get('worker_func_exec_time', -1) for f in futures]
-                    inner_times = subtask_data.pop('inner time')
-                    mem_befores = subtask_data.pop('mem before')
-                    mem_afters = subtask_data.pop('mem after')
-                    perf_data = {
-                        'num_actions': len(futures),
-                        'attempts': attempt,
-                        'runtime_memory': runtime_memory,
-                        'max_memory': np.max(mem_afters).item(),
-                        'max_time': np.max(exec_times).item(),
-                        'overhead_memory': np.max(mem_befores).item(),
-                        'overhead_time': (np.mean(exec_times) - np.mean(inner_times)).item(),
-                        'cost_factors': cost_factors_plain,
-                        'exec_times': exec_times,
-                        'mem_usages': mem_afters,
-                        'subtask_timings': subtask_timings,
-                        'subtask_data': subtask_data,
-                    }
-                    self._perf.record_entry(func.__name__, start_time, datetime.now(), **perf_data)
 
-                    if any(subtask_timings) or any(subtask_data):
-                        subtask_df = pd.concat(
-                            [pd.DataFrame(subtask_timings), pd.DataFrame(subtask_data)], axis=1,
-                        )
-                        if len(futures) > 1:
-                            subtask_summary = subtask_df.describe().transpose().to_string()
-                        else:
-                            subtask_summary = subtask_df.iloc[0].to_string()
-                        print(f'Subtasks:\n{subtask_summary}')
-
-                print(
-                    f'executor.map({func.__name__}, {len(args)} items, {runtime_memory}MB) - {(datetime.now() - start_time).total_seconds():.3f}s'
+                logger.info(
+                    f'executor.map({func.__name__}, {len(args)} items, {runtime_memory}MB)'
+                    f' - {(datetime.now() - start_time).total_seconds():.3f}s'
                 )
 
                 return results

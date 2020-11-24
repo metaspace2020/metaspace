@@ -10,10 +10,10 @@ import pandas as pd
 from lithops.storage import Storage
 from lithops.storage.utils import CloudObject
 
+from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import (
     CObj,
     save_cobjs,
-    load_cobjs,
     iter_cobjs_with_prefetch,
 )
 from sm.engine.ds_config import DSConfig
@@ -121,55 +121,20 @@ def store_formula_segments(storage: Storage, formulas_df: pd.DataFrame):
 
 
 def build_moldb(
-    ds_config: DSConfig, mol_dbs: List[InputMolDb], *, storage: Storage, perf: Profiler
+    executor: Executor, ds_config: DSConfig, moldbs: List[InputMolDb],
 ) -> Tuple[List[CObj[pd.DataFrame]], List[CObj[DbFDRData]]]:
-    logger.info('Generating formulas...')
-    db_data_cobjects, formulas_df = get_formulas_df(storage, ds_config, mol_dbs)
-    num_formulas = len(formulas_df)
-    perf.record_entry('generated formulas', num_formulas=num_formulas)
+    def _build_moldb(
+        *, storage: Storage, perf: Profiler
+    ) -> Tuple[List[CObj[pd.DataFrame]], List[CObj[DbFDRData]]]:
+        logger.info('Generating formulas...')
+        db_data_cobjects, formulas_df = get_formulas_df(storage, ds_config, moldbs)
+        num_formulas = len(formulas_df)
+        perf.record_entry('generated formulas', num_formulas=num_formulas)
 
-    logger.info('Storing formulas...')
-    formula_cobjects = store_formula_segments(storage, formulas_df)
-    perf.record_entry('stored formulas', num_chunks=len(formula_cobjects))
+        logger.info('Storing formulas...')
+        formula_cobjects = store_formula_segments(storage, formulas_df)
+        perf.record_entry('stored formulas', num_chunks=len(formula_cobjects))
 
-    return formula_cobjects, db_data_cobjects
+        return formula_cobjects, db_data_cobjects
 
-
-def validate_formula_cobjects(storage: Storage, formula_cobjects: List[CObj[pd.DataFrame]]):
-    segms = load_cobjs(storage, formula_cobjects)
-
-    formula_sets = []
-    index_sets = []
-    # Check format
-    for segm_i, segm in enumerate(segms):
-        if not isinstance(segm, pd.DataFrame):
-            print(f'formula_cobjects[{segm_i}] is not a pd.DataFrame')
-        else:
-            if segm.empty:
-                print(f'formula_cobjects[{segm_i}] is empty')
-            if not isinstance(segm.index, pd.RangeIndex):
-                print(f'formula_cobjects[{segm_i}] is not a pd.RangeIndex')
-            if segm.index.name != "formula_i":
-                print(f'formula_cobjects[{segm_i}].index.name != "formula_i"')
-            if list(segm.columns) != ['ion_formula', 'target', 'targeted']:
-                print(f'formulas_cobjects[{segm_i}] has wrong columns: {segm.columns}')
-            if (segm.ion_formula == '').any():
-                print(f'formula_cobjects[{segm_i}] contains an empty string')
-            if any(not isinstance(s, str) for s in segm.ion_formula):
-                print(f'formula_cobjects[{segm_i}] contains non-string values')
-            duplicates = segm[segm.duplicated('ion_formula')]
-            if not duplicates.empty:
-                print(f'formula_cobjects[{segm_i}] contains {len(duplicates)} duplicate values')
-
-            formula_sets.append(set(segm.ion_formula))
-            index_sets.append(set(segm.index))
-
-    if sum(len(fs) for fs in formula_sets) != len(set().union(*formula_sets)):
-        print(f'formula_cobjects contains values that are included in multiple segments')
-    if sum(len(idxs) for idxs in index_sets) != len(set().union(*index_sets)):
-        print(f'formula_cobjects contains formula_i values that are included in multiple segments')
-
-    n_formulas = sum(len(fs) for fs in formula_sets)
-    print(f'Found {n_formulas} formulas across {len(segms)} segms')
-
-    # __import__('__main__').db_segms = db_segms
+    return executor.call(_build_moldb, (), runtime_memory=2048)

@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import logging
-import os
-from concurrent.futures.thread import ThreadPoolExecutor
 from typing import List, Dict
 
 import pandas as pd

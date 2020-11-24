@@ -108,7 +108,8 @@ def _upload_imzmls_from_prefix_if_needed(src_path, storage, sm_storage, s3_clien
 def _upload_moldbs_from_db(moldb_ids, storage, sm_storage):
     moldb_defs = []
     bucket, prefix = sm_storage['moldb']
-    for moldb_id in moldb_ids:
+    # Sort the moldbs because the centroids cache key is affected by their order
+    for moldb_id in sorted(moldb_ids):
         key = f'{prefix}/{moldb_id}'
         try:
             storage.head_object(bucket, key)
@@ -231,8 +232,15 @@ class ServerAnnotationJob:
         ds: Dataset,
         perf: Profiler,
         sm_config: Optional[Dict] = None,
-        use_cache=True,
+        use_cache=False,
     ):
+        """
+        Args
+        ========
+
+        use_cache: For development - cache the results after each pipeline step so that it's easier
+                   to quickly re-run specific steps.
+        """
         sm_config = sm_config or SMConfig.get_conf()
         self.sm_storage = sm_config['lithops']['sm_storage']
         self.storage = Storage(

@@ -16,8 +16,8 @@ from pyimzml.ImzMLParser import ImzMLParser, PortableSpectrumReader
 
 from sm.engine.annotation_lithops.annotate import read_ds_segment
 from sm.engine.annotation_lithops.io import (
-    serialise_to_file,
-    deserialise_from_file,
+    serialize_to_file,
+    deserialize_from_file,
     save_cobj,
     CObj,
 )
@@ -133,7 +133,7 @@ def segment_spectra_chunk(chunk_i, sp_mz_int_buf, ds_segments_bounds, ds_segment
         segm_i, (l, r) = args
         segm_start, segm_end = np.searchsorted(sp_mz_int_buf.mz.values, (l, r))
         segm = sp_mz_int_buf.iloc[segm_start:segm_end]
-        serialise_to_file(segm, ds_segments_path / f'ds_segm_{segm_i:04}_{chunk_i:04}')
+        serialize_to_file(segm, ds_segments_path / f'ds_segm_{segm_i:04}_{chunk_i:04}')
         return segm_i, len(segm)
 
     with ThreadPoolExecutor(4) as pool:
@@ -151,7 +151,7 @@ def upload_segments(storage, ds_segments_path, chunks_n, segments_n):
     def _upload(segm_i):
         segm = pd.concat(
             [
-                deserialise_from_file(ds_segments_path / f'ds_segm_{segm_i:04}_{chunk_i:04}')
+                deserialize_from_file(ds_segments_path / f'ds_segm_{segm_i:04}_{chunk_i:04}')
                 for chunk_i in range(chunks_n)
             ],
             ignore_index=True,
@@ -199,7 +199,7 @@ def make_segments(imzml_reader, ibd_path, ds_segments_bounds, segments_dir, sort
         for chunk_segm_sizes in ex.map(parse_and_segment_chunk, chunk_tasks):
             segm_sizes.extend(chunk_segm_sizes)
 
-    ds_segms_len = (
+    ds_segm_lens = (
         pd.DataFrame(segm_sizes, columns=['segm_i', 'segm_size'])
         .groupby('segm_i')
         .segm_size.sum()
@@ -207,7 +207,7 @@ def make_segments(imzml_reader, ibd_path, ds_segments_bounds, segments_dir, sort
         .values
     )
 
-    return chunks_n, ds_segms_len
+    return chunks_n, ds_segm_lens
 
 
 def load_ds(
@@ -245,7 +245,7 @@ def load_ds(
         perf.record_entry('defined segments', segments_n=segments_n)
 
         logger.info('Segmenting...')
-        chunks_n, ds_segms_len = make_segments(
+        chunks_n, ds_segm_lens = make_segments(
             imzml_reader, ibd_path, ds_segments_bounds, segments_dir, sort_memory
         )
         perf.record_entry('made segments')
@@ -254,10 +254,10 @@ def load_ds(
         ds_segms_cobjects = upload_segments(storage, segments_dir, chunks_n, segments_n)
         perf.record_entry('uploaded segments')
 
-        return imzml_reader, ds_segments_bounds, ds_segms_cobjects, ds_segms_len
+        return imzml_reader, ds_segments_bounds, ds_segms_cobjects, ds_segm_lens
 
 
-def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobjects, ds_segms_len):
+def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobjects, ds_segm_lens):
     def get_segm_stats(cobject, storage):
         segm = read_ds_segment(cobject, storage)
         assert (
@@ -284,7 +284,7 @@ def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobje
     segms_df = pd.DataFrame(results)
     segms_df['min_bound'] = np.concatenate([[0], ds_segments_bounds[1:, 0]])
     segms_df['max_bound'] = np.concatenate([ds_segments_bounds[:-1, 1], [100000]])
-    segms_df['expected_len'] = ds_segms_len
+    segms_df['expected_len'] = ds_segm_lens
 
     with pd.option_context(
         'display.max_rows', None, 'display.max_columns', None, 'display.width', 1000
@@ -298,7 +298,7 @@ def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobje
 
         bad_len = segms_df[segms_df.n_rows != segms_df.expected_len]
         if not bad_len.empty:
-            logger.warning('segment_spectra lengths don\'t match ds_segms_len:')
+            logger.warning('segment_spectra lengths don\'t match ds_segm_lens:')
             logger.warning(bad_len)
 
         unsorted = segms_df[~segms_df.is_sorted]

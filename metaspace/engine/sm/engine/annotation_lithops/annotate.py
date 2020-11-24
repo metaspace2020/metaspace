@@ -174,7 +174,7 @@ def read_ds_segment(cobject, storage):
 
 
 def read_ds_segments(
-    ds_segms_cobjects, ds_segms_len, pw_mem_mb, ds_segm_size_mb, ds_segm_dtype, storage,
+    ds_segms_cobjects, ds_segm_lens, pw_mem_mb, ds_segm_size_mb, ds_segm_dtype, storage,
 ):
 
     ds_segms_mb = len(ds_segms_cobjects) * ds_segm_size_mb
@@ -189,7 +189,7 @@ def read_ds_segments(
     concat_memory_mb = ds_segms_mb * 2 + safe_mb
     if concat_memory_mb > pw_mem_mb:
         print('Using pre-allocated concatenation')
-        segm_len = sum(ds_segms_len)
+        segm_len = sum(ds_segm_lens)
         sp_df = pd.DataFrame(
             {
                 'mz': np.zeros(segm_len, dtype=ds_segm_dtype),
@@ -239,7 +239,7 @@ def process_centr_segments(
     fexec: Executor,
     ds_segms_cobjects: List[CObj[pd.DataFrame]],
     ds_segments_bounds,
-    ds_segms_len: np.ndarray,
+    ds_segm_lens: np.ndarray,
     db_segms_cobjects: List[CObj[pd.DataFrame]],
     imzml_reader: PortableSpectrumReader,
     ds_config: DSConfig,
@@ -271,7 +271,7 @@ def process_centr_segments(
         # read all segments in loop from COS
         sp_arr = read_ds_segments(
             ds_segms_cobjects[first_ds_segm_i : last_ds_segm_i + 1],
-            ds_segms_len[first_ds_segm_i : last_ds_segm_i + 1],
+            ds_segm_lens[first_ds_segm_i : last_ds_segm_i + 1],
             pw_mem_mb,
             ds_segm_size_mb,
             ds_segm_dtype,

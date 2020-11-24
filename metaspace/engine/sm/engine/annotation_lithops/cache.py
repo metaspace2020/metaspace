@@ -6,7 +6,7 @@ from typing import Optional
 from lithops.storage import Storage
 from lithops.storage.utils import CloudObject, StorageNoSuchKeyError
 
-from sm.engine.annotation_lithops.io import serialise, deserialise, delete_objects_by_prefix
+from sm.engine.annotation_lithops.io import serialize, deserialize, delete_objects_by_prefix
 from sm.engine.annotation_lithops.utils import logger
 
 
@@ -22,10 +22,10 @@ class PipelineCacher:
 
     def load(self, key):
         data_stream = self.storage.get_object(self.bucket, self.resolve_key(key))
-        return deserialise(data_stream)
+        return deserialize(data_stream)
 
     def save(self, data, key):
-        self.storage.put_object(self.bucket, self.resolve_key(key), serialise(data))
+        self.storage.put_object(self.bucket, self.resolve_key(key), serialize(data))
 
     def exists(self, key):
         try:
@@ -40,7 +40,7 @@ class PipelineCacher:
 
         cobjects_to_clean = []
         for cache_key in keys:
-            cache_data = deserialise(self.storage.get_object(self.bucket, cache_key))
+            cache_data = deserialize(self.storage.get_object(self.bucket, cache_key))
 
             if isinstance(cache_data, tuple):
                 for obj in cache_data:

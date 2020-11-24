@@ -13,7 +13,7 @@ from elasticsearch import (
 from elasticsearch.client import IndicesClient, IngestClient
 from elasticsearch.helpers import parallel_bulk
 
-from sm.engine.dataset_locker import DatasetLocker
+from sm.engine.db_mutex import DBMutex
 from sm.engine.db import DB
 from sm.engine.fdr import FDR
 from sm.engine.formula_parser import format_ion_formula
@@ -271,7 +271,7 @@ class ESExporter:
         self._es: Elasticsearch = init_es_conn(self.sm_config['elasticsearch'])
         self._ingest: IngestClient = IngestClient(self._es)
         self._db = db
-        self._ds_locker = DatasetLocker(self.sm_config['db'])
+        self._ds_locker = DBMutex(self.sm_config['db'])
         self.index = self.sm_config['elasticsearch']['index']
         self._get_mol_by_formula_dict_cache = dict()
 
