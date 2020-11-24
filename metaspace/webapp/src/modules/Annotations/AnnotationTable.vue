@@ -14,7 +14,6 @@
       tabindex="1"
       :default-sort="tableSort"
       :row-class-name="getRowClass"
-      @
       @keyup.native="onKeyUp"
       @keydown.native="onKeyDown"
       @current-change="onCurrentRowChange"
@@ -462,13 +461,14 @@ export default Vue.extend({
       result({ data }) {
         // timing hack to allow table state to update
         Vue.nextTick(() => {
-          if (this.nextCurrentRowIndex) {
+          if (this.nextCurrentRowIndex !== null) {
             this.setCurrentRow(this.nextCurrentRowIndex)
             this.nextCurrentRowIndex = null
           } else {
             const curRow = this.getCurrentRow()
             if (!curRow) {
-              this.setCurrentRow(0)
+              const rowNumber = this.$route.query.row || 1
+              this.setCurrentRow(rowNumber - 1)
               this.$refs.table.$el.focus()
             }
           }
@@ -547,6 +547,15 @@ export default Vue.extend({
 
     onCurrentRowChange(row) {
       this.$store.commit('setAnnotation', row)
+
+      if (row !== null) {
+        this.$router.replace({
+          query: {
+            ...this.$route.query,
+            row: this.annotations.indexOf(row) + 1,
+          },
+        })
+      }
     },
 
     onKeyDown(event) {

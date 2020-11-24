@@ -178,21 +178,9 @@ export default class AnnotationView extends Vue {
    }
 
    get permalinkHref(): Location {
-     const filter: any = {
-       datasetIds: [this.annotation.dataset.id],
-       compoundName: this.annotation.sumFormula,
-       adduct: this.annotation.adduct,
-       fdrLevel: this.annotation.fdrLevel,
-       database: this.$store.getters.filter.database,
-       simpleQuery: '',
-     }
-     const path = '/annotations'
      return {
-       path,
-       query: {
-         ...encodeParams(filter, path, this.$store.state.filterLists),
-         ...pick(this.$route.query, 'sections', 'sort', 'hideopt', 'cmap', 'scale'),
-       },
+       path: '/annotations',
+       query: this.$route.query,
      }
    }
 
