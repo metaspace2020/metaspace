@@ -96,10 +96,10 @@ export default {
     this.$store.commit('updateFilter', this.filter)
 
     if (config.features.multiple_ion_images) {
-      const { linkId } = this.$route.query
+      const { viewId } = this.$route.query
       const { datasetIds } = this.filter
-      if (linkId && datasetIds.length === 1) {
-        useRestoredState(this.$apollo, linkId, datasetIds[0])
+      if (viewId && datasetIds.length === 1) {
+        useRestoredState(this.$apollo, viewId, datasetIds[0])
       }
     }
   },

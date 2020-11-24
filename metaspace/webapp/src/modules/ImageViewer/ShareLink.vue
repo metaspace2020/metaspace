@@ -43,7 +43,7 @@
         </button>
         <router-link
           target="_blank"
-          :to="routeWithLinkId"
+          :to="routeWithViewId"
         >
           Share this link<!-- -->
         </router-link>
@@ -105,14 +105,14 @@ export default defineComponent<Props>({
     route: Object,
   },
   setup(props, { root }) {
-    const linkId = ref<string>()
+    const viewId = ref<string>()
     const status = ref('CLOSED')
 
-    const routeWithLinkId = computed(() => ({
+    const routeWithViewId = computed(() => ({
       ...props.route,
       query: {
         ...props.route.query,
-        linkId: linkId.value,
+        viewId: viewId.value,
       },
     }))
 
@@ -142,7 +142,7 @@ export default defineComponent<Props>({
             },
           },
         })
-        linkId.value = result.data.createImageViewerLink
+        viewId.value = result.data.createImageViewerLink
         status.value = 'HAS_LINK'
       } catch (e) {
         reportError(e)
@@ -153,7 +153,7 @@ export default defineComponent<Props>({
     return {
       status,
       handleClick,
-      routeWithLinkId,
+      routeWithViewId,
       multiImagesEnabled: config.features.multiple_ion_images,
       setStatus(newStatus: string) {
         switch (newStatus) {
