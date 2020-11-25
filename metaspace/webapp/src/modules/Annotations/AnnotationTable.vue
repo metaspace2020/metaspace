@@ -419,6 +419,10 @@ export default Vue.extend({
         return this.$store.getters.settings.table.currentPage
       },
       set(page) {
+        // ignore the initial "sync"
+        if (page === this.currentPage) {
+          return
+        }
         if (this.nextCurrentRowIndex === null) {
           this.nextCurrentRowIndex = 0
         }
