@@ -27,7 +27,7 @@
         v-if="status === 'SAVING'"
         key="saving"
       >
-        Saving state &hellip;
+        Saving &hellip;
       </p>
       <div
         v-if="status === 'HAS_LINK'"

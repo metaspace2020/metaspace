@@ -184,13 +184,6 @@ export default class AnnotationView extends Vue {
 
    get permalinkHref(): Location {
      const path = '/annotations'
-     const { datasetIds = [] } = this.$store.getters.filter
-     if (datasetIds.length === 1) {
-       return {
-         path,
-         query: this.$route.query,
-       }
-     }
      const filter: any = {
        datasetIds: [this.annotation.dataset.id],
        compoundName: this.annotation.sumFormula,
