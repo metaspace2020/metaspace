@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`AnnotationTable should be able to export a CSV 1`] = `
-"# URL: http://localhost/
+"# URL: http://localhost/?row=1
 \\"group\\",\\"datasetName\\",\\"datasetId\\",\\"formula\\",\\"adduct\\",\\"mz\\",\\"msm\\",\\"fdr\\",\\"rhoSpatial\\",\\"rhoSpectral\\",\\"rhoChaos\\",\\"moleculeNames\\",\\"moleculeIds\\",\\"minIntensity\\",\\"maxIntensity\\",\\"totalIntensity\\",\\"colocalizationCoeff\\",\\"offSample\\",\\"rawOffSampleProb\\",\\"isomerIons\\",\\"isobarIons\\"
 \\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"1\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"10\\",\\"0\\",\\"7.333333333333333\\",\\"0.840809\\",\\"false\\",\\"0.03\\",\\"annotations.0.isomers.0.ion, annotations.0.isomers.1.ion\\",\\"annotations.0.isobars.0.ion, annotations.0.isobars.1.ion\\"
 \\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"2\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"10.333333333333334\\",\\"0.3333333333333333\\",\\"7.666666666666667\\",\\"0.840809\\",\\"false\\",\\"0.03\\",\\"annotations.1.isomers.0.ion, annotations.1.isomers.1.ion\\",\\"annotations.1.isobars.0.ion, annotations.1.isobars.1.ion\\"
@@ -12,7 +12,7 @@ exports[`AnnotationTable should be able to export a CSV 1`] = `
 
 exports[`AnnotationTable should match snapshot 1`] = `
 <div class="el-row">
-  <div class="el-table el-table--fit el-table--striped el-table--border el-table--scrollable-x el-table--enable-row-hover el-table--enable-row-transition el-table--mini" id="annot-table" element-loading-text="Loading results from the server..." tabindex="1" mock-v-loading="false">
+  <div class="el-table el-table--fit el-table--striped el-table--border el-table--scrollable-x el-table--enable-row-hover el-table--enable-row-transition el-table--mini" id="annot-table" element-loading-text="Loading results …" tabindex="1" mock-v-loading="false">
     <div class="hidden-columns">
       <div></div>
       <div></div>

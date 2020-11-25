@@ -474,7 +474,9 @@ export default Vue.extend({
               this.setCurrentRow(rowNumber - 1)
             }
           }
-          this.$refs.table.$el.focus()
+          if (this.$refs.table) {
+            this.$refs.table.$el.focus()
+          }
         })
 
         this.totalCount = data.countAnnotations
