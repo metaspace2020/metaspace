@@ -170,6 +170,7 @@ class Executor:
 
         wrapper_func = _build_wrapper_func(func)
         attempt = 1
+        futures = None
 
         while True:
             start_time = datetime.now()
@@ -179,7 +180,6 @@ class Executor:
 
                 logger.info(f'executor.map({func.__name__}, {len(args)} items, {runtime_memory}MB)')
                 if debug_run_locally:
-                    futures = None
                     return_vals = [
                         _run_local(wrapper_func, funcargs, executor.storage) for funcargs in args
                     ]
@@ -212,22 +212,30 @@ class Executor:
                 return results
 
             except MemoryError:
+                failed_activation_ids = [f['id'] for f in (futures or []) if f.error]
+                failed_activation_id = next(iter(failed_activation_ids), None)
                 self._perf.record_entry(
                     f'{func.__name__}_OOM_{attempt}',
                     start_time,
                     datetime.now(),
-                    extra_data={'runtime_memory': runtime_memory},
+                    extra_data={
+                        'runtime_memory': runtime_memory,
+                        'failed_activation_id': failed_activation_id,
+                    },
                 )
                 old_memory = runtime_memory
                 runtime_memory *= 2
                 attempt += 1
 
                 if runtime_memory > 8192:
-                    logger.error(f'{func.__name__} used too much memory')
+                    logger.error(
+                        f'{func.__name__} used too much memory in activation {failed_activation_id}'
+                    )
                     raise
                 else:
                     logger.warning(
-                        f'{func.__name__} ran out of memory with {old_memory}MB, retrying with {runtime_memory}MB'
+                        f'{func.__name__} ran out of memory with {old_memory}MB in activation '
+                        f'{failed_activation_id}, retrying with {runtime_memory}MB'
                     )
 
     def map_unpack(self, func, args: Sequence, *, runtime_memory=None, **kwargs):

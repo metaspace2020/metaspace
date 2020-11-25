@@ -56,6 +56,52 @@
     "spark.network.timeout": "360s",
     "spark.executor.heartbeatInterval": "60s"
   },
+  "lithops": {
+    "lithops": {
+      "storage_bucket": "{{ sm_lithops_cos_bucket_temp }}",
+      "storage_backend": "ibm_cos",
+      "mode": "serverless",
+      "include_modules": ["engine/sm"],
+      "data_cleaner": true,
+      "data_limit": false,
+      "workers": 1000
+    },
+    "serverless": {
+      "backend": "ibm_cf",
+      "runtime": "metaspace2020/metaspace-lithops:1.8.1",
+      "runtime_timeout": 600,
+      "runtime_memory": 2048
+    },
+    "standalone": {
+      "runtime": "metaspace2020/metaspace-lithops:1.8.1"
+    },
+    "ibm": {
+      "iam_api_key": "{{ sm_lithops_api_key }}"
+    },
+    "ibm_cf": {
+      "endpoint": "https://eu-de.functions.cloud.ibm.com",
+      "namespace": "{{ sm_lithops_cf_ns_name }}",
+      "namespace_id": "{{ sm_lithops_cf_ns_id }}"
+    },
+    "ibm_vpc": {
+      "endpoint": "https://eu-de.iaas.cloud.ibm.com",
+      "instance_id": "{{ sm_lithops_vpc_instance_id }}",
+      "ip_address": "{{ sm_lithops_vpc_instance_ip }}"
+    },
+    "ibm_cos": {
+      "private_endpoint": "https://s3.private.eu-de.cloud-object-storage.appdomain.cloud",
+      "endpoint": "https://s3.eu-de.cloud-object-storage.appdomain.cloud",
+      "access_key": "{{ sm_lithops_cos_access_key }}",
+      "secret_key": "{{ sm_lithops_cos_secret_key }}"
+    },
+    "sm_storage": {
+      "__comment__": ["bucket name", "prefix with no leading/trailing slashes"],
+      "imzml": ["{{ sm_lithops_cos_bucket_imzml }}", "imzml"],
+      "moldb": ["{{ sm_lithops_cos_bucket_data }}", "moldb"],
+      "centroids": ["{{ sm_lithops_cos_bucket_data }}", "centroids"],
+      "pipeline_cache": ["{{ sm_lithops_cos_bucket_temp }}", "pipeline_cache"]
+    }
+  },
   "aws": {
     "aws_access_key_id": "{{ aws_access_key_id }}",
     "aws_secret_access_key": "{{ aws_secret_access_key }}",

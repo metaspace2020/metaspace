@@ -45,7 +45,6 @@ class CentroidsCacheEntry:
             'databases': [(moldb['id'], moldb['targeted']) for moldb in moldbs],
         }
         # Remove database_ids as it may be in a different order to moldbs
-        # TODO: Ensure `moldbs` param is sorted before it enters the pipeline
         del self.ds_config['database_ids']
 
         self.ds_hash = jsonhash(self.ds_config)
