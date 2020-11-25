@@ -430,6 +430,15 @@ export default Vue.extend({
       },
     },
 
+    currentRowIndex: {
+      get() {
+        return this.$store.getters.settings.table.row - 1
+      },
+      set(index) {
+        this.$store.commit('setRow', index + 1)
+      },
+    },
+
     paginationLayout() {
       const { datasetIds } = this.filter
       const limitedSpace = datasetIds && datasetIds.length === 1
@@ -474,8 +483,7 @@ export default Vue.extend({
           } else {
             const curRow = this.getCurrentRow()
             if (!curRow) {
-              const rowNumber = this.$route.query.row || 1
-              this.setCurrentRow(rowNumber - 1)
+              this.setCurrentRow(this.currentRowIndex)
             }
           }
           if (this.$refs.table) {
@@ -558,12 +566,7 @@ export default Vue.extend({
       this.$store.commit('setAnnotation', row)
 
       if (row !== null) {
-        this.$router.replace({
-          query: {
-            ...this.$route.query,
-            row: this.annotations.indexOf(row) + 1,
-          },
-        })
+        this.currentRowIndex = this.annotations.indexOf(row)
       }
     },
 

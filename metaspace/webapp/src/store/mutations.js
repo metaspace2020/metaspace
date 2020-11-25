@@ -1,4 +1,4 @@
-import {isEqual, omit, pull, without} from 'lodash-es';
+import { isEqual, omit, without } from 'lodash-es';
 import router from '../router';
 import compare from '../lib/compare';
 
@@ -11,8 +11,8 @@ import {
   getFilterInitialValue,
   stripFilteringParams,
 } from '../modules/Filters';
-import {DEFAULT_ANNOTATION_VIEW_SECTIONS, DEFAULT_COLORMAP, DEFAULT_TABLE_ORDER} from '../modules/Filters/url';
-import {DEFAULT_SCALE_TYPE} from '../lib/constants';
+import { DEFAULT_ANNOTATION_VIEW_SECTIONS, DEFAULT_COLORMAP, DEFAULT_TABLE_ORDER } from '../modules/Filters/url';
+import { DEFAULT_SCALE_TYPE } from '../lib/constants';
 
 
 function updatedLocation(state, filter) {
@@ -70,17 +70,17 @@ function updateFilter(state, filter, routerAction = null) {
 }
 
 export default {
-  updateFilter (state, filter) {
+  updateFilter(state, filter) {
     // TODO: Stop using updateFilter for adding/removing filters, as it makes reacting to added/removed filters
     // much more difficult
     updateFilter(state, filter);
   },
 
-  replaceFilter (state, filter) {
+  replaceFilter(state, filter) {
     updateFilter(state, filter, 'replace');
   },
 
-  addFilter (state, name) {
+  addFilter(state, name) {
     const oldFilter = decodeParams(state.route, state.filterLists);
     const filtersToAdd = [name];
     const filtersToRemove = [];
@@ -97,7 +97,7 @@ export default {
       }
     });
 
-    const newFilter = {...oldFilter};
+    const newFilter = { ...oldFilter };
     filtersToAdd.forEach(key => {
       newFilter[key] = getFilterInitialValue(key, state.filterLists);
     });
@@ -111,13 +111,13 @@ export default {
     pushURL(state, newFilter);
   },
 
-  removeFilter (state, name) {
+  removeFilter(state, name) {
     const oldFilter = decodeParams(state.route, state.filterLists);
     const filtersToRemove = [name];
 
     // Check for dependent filters that should also be removed
     Object.keys(oldFilter).forEach(key => {
-      const {dependsOnFilters} = FILTER_SPECIFICATIONS[key];
+      const { dependsOnFilters } = FILTER_SPECIFICATIONS[key];
       if (dependsOnFilters != null && dependsOnFilters.includes(name)) {
         filtersToRemove.push(key);
       }
@@ -177,7 +177,7 @@ export default {
   setColormap(state, cmap) {
     router.replace({
       query: cmap !== DEFAULT_COLORMAP
-        ? {...state.route.query, cmap}
+        ? { ...state.route.query, cmap }
         : omit(state.route.query, 'cmap'),
     });
   },
@@ -195,6 +195,14 @@ export default {
       query: page !== 1
         ? { ...state.route.query, page: String(page) }
         : omit(state.route.query, 'page'),
+    });
+  },
+
+  setRow(state, row) {
+    router.replace({
+      query: row !== 1
+        ? { ...state.route.query, row: String(row) }
+        : omit(state.route.query, 'row'),
     });
   },
 
