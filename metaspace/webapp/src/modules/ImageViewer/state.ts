@@ -33,4 +33,13 @@ export function restoreImageViewerState(imported: any) {
   Object.assign(state, imported.snapshot)
 }
 
+export function resetImageViewerState() {
+  state.mode = 'SINGLE'
+  state.imagePosition = {
+    zoom: 1,
+    xOffset: 0,
+    yOffset: 0,
+  }
+}
+
 export default toRefs(state)

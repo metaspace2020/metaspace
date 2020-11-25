@@ -419,6 +419,9 @@ export default Vue.extend({
         return this.$store.getters.settings.table.currentPage
       },
       set(page) {
+        if (this.nextCurrentRowIndex === null) {
+          this.nextCurrentRowIndex = 0
+        }
         this.$store.commit('setCurrentPage', page)
       },
     },
@@ -469,9 +472,9 @@ export default Vue.extend({
             if (!curRow) {
               const rowNumber = this.$route.query.row || 1
               this.setCurrentRow(rowNumber - 1)
-              this.$refs.table.$el.focus()
             }
           }
+          this.$refs.table.$el.focus()
         })
 
         this.totalCount = data.countAnnotations
