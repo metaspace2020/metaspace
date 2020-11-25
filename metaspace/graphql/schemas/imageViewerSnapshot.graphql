@@ -1,4 +1,4 @@
-type ImageViewerLink {
+type ImageViewerSnapshot {
   annotations: [Annotation!]!
   datasetId: String!
   id: String!
@@ -6,7 +6,7 @@ type ImageViewerLink {
   version: Int!
 }
 
-input IVLCreateInput {
+input ImageViewerSnapshotInput {
   annotationIds: [String!]!
   datasetId: String!
   snapshot: String! # JSON
@@ -14,9 +14,9 @@ input IVLCreateInput {
 }
 
 type Query {
-  imageViewerLink(id: String!, datasetId: String!): ImageViewerLink
+  imageViewerSnapshot(id: String!, datasetId: String!): ImageViewerSnapshot
 }
 
 type Mutation {
-  createImageViewerLink(input: IVLCreateInput!): String!
+  saveImageViewerSnapshot(input: ImageViewerSnapshotInput!): String!
 }

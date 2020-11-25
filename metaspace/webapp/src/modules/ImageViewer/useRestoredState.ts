@@ -8,8 +8,8 @@ import { restoreIonImageState } from './ionImageState'
 export default async($apollo: any, id: string, datasetId: string) => {
   try {
     const result: any = await $apollo.query({
-      query: gql`query fetchImageViewerLink($id: String!, $datasetId: String!) {
-        imageViewerLink(id: $id, datasetId: $datasetId) {
+      query: gql`query fetchImageViewerSnapshot($id: String!, $datasetId: String!) {
+        imageViewerSnapshot(id: $id, datasetId: $datasetId) {
           version
           snapshot
           annotations {
@@ -33,7 +33,7 @@ export default async($apollo: any, id: string, datasetId: string) => {
       },
     })
 
-    const { version, snapshot, annotations } = result.data.imageViewerLink
+    const { version, snapshot, annotations } = result.data.imageViewerSnapshot
     const parsed = JSON.parse(snapshot)
 
     restoreImageViewerState({

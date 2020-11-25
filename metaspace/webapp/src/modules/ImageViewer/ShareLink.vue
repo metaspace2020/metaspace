@@ -127,8 +127,8 @@ export default defineComponent<Props>({
       status.value = 'SAVING'
       try {
         const result = await root.$apollo.mutate({
-          mutation: gql`mutation createImageViewerLinkMutation($input: IVLCreateInput!) {
-            createImageViewerLink(input: $input)
+          mutation: gql`mutation saveImageViewerSnapshotMutation($input: ImageViewerSnapshotInput!) {
+            saveImageViewerSnapshot(input: $input)
           }`,
           variables: {
             input: {
@@ -142,7 +142,7 @@ export default defineComponent<Props>({
             },
           },
         })
-        viewId.value = result.data.createImageViewerLink
+        viewId.value = result.data.saveImageViewerSnapshot
         status.value = 'HAS_LINK'
       } catch (e) {
         reportError(e)

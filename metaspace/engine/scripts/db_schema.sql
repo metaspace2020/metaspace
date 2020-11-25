@@ -244,7 +244,7 @@ CREATE INDEX "annotation_job_id_index" ON "public"."annotation" (
   "job_id"
 ) ;
 
-CREATE TABLE "graphql"."image_viewer_link" (
+CREATE TABLE "graphql"."image_viewer_snapshot" (
   "id" text NOT NULL, 
   "dataset_id" text NOT NULL, 
   "snapshot" text NOT NULL, 
@@ -252,7 +252,7 @@ CREATE TABLE "graphql"."image_viewer_link" (
   "version" integer NOT NULL, 
   "user_id" uuid, 
   "created_dt" TIMESTAMP NOT NULL, 
-  CONSTRAINT "PK_82b03df11df2671c2018755220a" PRIMARY KEY ("id", 
+  CONSTRAINT "PK_afd32494a70db23e295d94436d7" PRIMARY KEY ("id", 
   "dataset_id")
 );
 

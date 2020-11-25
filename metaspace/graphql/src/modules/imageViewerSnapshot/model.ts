@@ -3,7 +3,7 @@ import { Moment } from 'moment';
 import { MomentValueTransformer } from '../../utils/MomentValueTransformer';
 
 @Entity()
-export class ImageViewerLink {
+export class ImageViewerSnapshot {
 
   @PrimaryColumn({ type: 'text' })
   id: string;
@@ -31,6 +31,6 @@ export class ImageViewerLink {
   createdDT: Moment;
 }
 
-export const IMAGE_VIEWER_LINK_ENTITIES = [
-  ImageViewerLink
+export const IMAGE_VIEWER_SNAPSHOT_ENTITIES = [
+  ImageViewerSnapshot
 ]

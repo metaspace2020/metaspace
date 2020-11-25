@@ -8,7 +8,7 @@ import { PROJECT_ENTITIES } from '../modules/project/model';
 import { ANNOTATION_ENTITIES } from '../modules/annotation/model';
 import { ENGINE_ENTITIES } from '../modules/engine/model';
 import { MOLECULAR_DB_ENTITIES } from '../modules/moldb/model';
-import { IMAGE_VIEWER_LINK_ENTITIES } from '../modules/imageViewerLink/model'
+import { IMAGE_VIEWER_SNAPSHOT_ENTITIES } from '../modules/imageViewerSnapshot/model'
 import { SnakeCaseNamingStrategy } from './SnakeCaseNamingStrategy';
 
 export const DbSchemaName = 'graphql';
@@ -29,7 +29,7 @@ const typeOrmConfig: ConnectionOptions = {
     ...ANNOTATION_ENTITIES,
     ...ENGINE_ENTITIES,
     ...MOLECULAR_DB_ENTITIES,
-    ...IMAGE_VIEWER_LINK_ENTITIES,
+    ...IMAGE_VIEWER_SNAPSHOT_ENTITIES,
   ],
   namingStrategy: new SnakeCaseNamingStrategy(),
   synchronize: false,

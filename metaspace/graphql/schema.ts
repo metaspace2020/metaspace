@@ -12,7 +12,7 @@ export const mergedSchemas = mergeTypes([
   fs.readFileSync('schemas/project.graphql', 'utf8'),
   fs.readFileSync('schemas/system.graphql', 'utf8'),
   fs.readFileSync('schemas/moldb.graphql', 'utf8'),
-  fs.readFileSync('schemas/imageViewerLink.graphql', 'utf8'),
+  fs.readFileSync('schemas/imageViewerSnapshot.graphql', 'utf8'),
 ]);
 
 export default mergeSchemas({
