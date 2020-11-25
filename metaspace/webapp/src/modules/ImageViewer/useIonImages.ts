@@ -49,13 +49,6 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
       loadPngFromUrl(isotopeImage.url)
         .then(img => {
           rawImageCache[layer.id].value = img
-
-          if (settings.imageSize === null) {
-            settings.imageSize = {
-              width: img.width,
-              height: img.height,
-            }
-          }
         })
         .catch(err => {
           reportError(err, null)
@@ -248,8 +241,16 @@ const useIonImages = (props: Props) => {
   })
 
   const ionImageDimensions = computed(() => {
-    if (settings.imageSize !== null) {
-      return settings.imageSize
+    const images = ionImagesWithData.value
+    if (images.length) {
+      const firstImage = images[0]
+      const computedImage = firstImage.data.image.value
+      if (computedImage) {
+        return {
+          width: computedImage.width,
+          height: computedImage.height,
+        }
+      }
     }
     return { width: undefined, height: undefined }
   })

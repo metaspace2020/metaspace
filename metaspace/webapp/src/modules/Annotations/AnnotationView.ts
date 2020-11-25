@@ -9,7 +9,6 @@ import {
   OpticalImage,
   opticalImagesQuery,
 } from '../../api/dataset'
-import { encodeParams } from '../Filters/index'
 import annotationWidgets from './annotation-widgets/index'
 
 import Vue from 'vue'
@@ -17,7 +16,7 @@ import { Component, Prop } from 'vue-property-decorator'
 import { Location } from 'vue-router'
 import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
 import safeJsonParse from '../../lib/safeJsonParse'
-import { omit, pick, sortBy, throttle } from 'lodash-es'
+import { omit, sortBy, throttle } from 'lodash-es'
 import { ANNOTATION_SPECIFIC_FILTERS } from '../Filters/filterSpecs'
 import config from '../../lib/config'
 import { OpacityMode } from '../../lib/createColormap'
@@ -31,6 +30,11 @@ import ShareLink from '../ImageViewer/ShareLink.vue'
 import '../../components/StatefulIcon.css'
 import LockIcon from '../../assets/inline/refactoring-ui/lock.svg'
 import LocationPinIcon from '../../assets/inline/refactoring-ui/location-pin.svg'
+
+import { useIonImageSettings } from '../ImageViewer/ionImageState'
+import viewerState from '../ImageViewer/state'
+
+const { settings: ionImageSettings } = useIonImageSettings()
 
  type ImagePosition = {
    zoom: number
@@ -265,13 +269,17 @@ export default class AnnotationView extends Vue {
      return config.features.multiple_ion_images
    }
 
-   opacity: number = 1.0;
+   get opacity() {
+     return ionImageSettings.opacity
+   }
 
-   imagePosition: ImagePosition = {
-     zoom: 1,
-     xOffset: 0,
-     yOffset: 0,
-   };
+   set opacity(value: number) {
+     ionImageSettings.opacity = value
+   }
+
+   get imagePosition() {
+     return viewerState.imagePosition.value
+   }
 
    onSectionsChange(activeSections: string[]): void {
      // FIXME: this is a hack to make isotope images redraw

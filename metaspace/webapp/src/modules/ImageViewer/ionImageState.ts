@@ -54,13 +54,10 @@ interface Settings {
   lockMin: number | undefined
   lockMax: number | undefined
   isLockActive: boolean
-  imageSize: {
-    width: number
-    height: number
-  } | null
+  opacity: number
 }
 
-const channels = ['red', 'green', 'blue', 'magenta', 'yellow', 'cyan', 'orange']
+const channels = ['magenta', 'green', 'blue', 'red', 'yellow', 'cyan', 'orange']
 
 const state = reactive<State>({
   order: [],
@@ -70,7 +67,7 @@ const settings = reactive<Settings>({
   lockMin: undefined,
   lockMax: undefined,
   isLockActive: true,
-  imageSize: null,
+  opacity: 1,
 })
 const activeAnnotation = ref<string>() // local copy of prop value to allow watcher to run
 
@@ -144,7 +141,7 @@ export function resetIonImageState() {
   settings.lockMin = undefined
   settings.lockMax = undefined
   settings.isLockActive = true
-  settings.imageSize = null
+  settings.opacity = 1
 }
 
 export const useIonImageMenu = () => {

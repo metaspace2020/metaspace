@@ -6,6 +6,11 @@ export type ViewerModes = 'SINGLE' | 'MULTI'
 const state = reactive({
   menu: 'ION',
   mode: 'SINGLE',
+  imagePosition: {
+    zoom: 1,
+    xOffset: 0,
+    yOffset: 0,
+  },
 })
 
 export function setMenu(name: MenuStates) {
