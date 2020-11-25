@@ -16,8 +16,9 @@ import { Component, Prop } from 'vue-property-decorator'
 import { Location } from 'vue-router'
 import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
 import safeJsonParse from '../../lib/safeJsonParse'
-import { omit, sortBy, throttle } from 'lodash-es'
+import { omit, pick, sortBy, throttle } from 'lodash-es'
 import { ANNOTATION_SPECIFIC_FILTERS } from '../Filters/filterSpecs'
+import { encodeParams } from '../Filters'
 import config from '../../lib/config'
 import { OpacityMode } from '../../lib/createColormap'
 import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue'
@@ -182,9 +183,28 @@ export default class AnnotationView extends Vue {
    }
 
    get permalinkHref(): Location {
+     const path = '/annotations'
+     const { datasetIds = [] } = this.$store.getters.filter
+     if (datasetIds.length === 1) {
+       return {
+         path,
+         query: this.$route.query,
+       }
+     }
+     const filter: any = {
+       datasetIds: [this.annotation.dataset.id],
+       compoundName: this.annotation.sumFormula,
+       adduct: this.annotation.adduct,
+       fdrLevel: this.annotation.fdrLevel,
+       database: this.$store.getters.filter.database,
+       simpleQuery: '',
+     }
      return {
-       path: '/annotations',
-       query: this.$route.query,
+       path,
+       query: {
+         ...encodeParams(filter, path, this.$store.state.filterLists),
+         ...pick(this.$route.query, 'sections', 'sort', 'hideopt', 'cmap', 'scale'),
+       },
      }
    }
 
