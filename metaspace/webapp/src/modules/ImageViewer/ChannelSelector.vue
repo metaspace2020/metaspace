@@ -1,7 +1,7 @@
 <template>
   <div
     ref="container"
-    class="inline-flex w-full justify-around items-center py-1 rounded-full"
+    class="flex w-full justify-around items-center"
     tabindex="0"
     @click.stop
     @keypress.enter.self="$emit('close')"
@@ -50,10 +50,10 @@ export default defineComponent({
   }
   button::after {
     content: '';
-    @apply h-3 w-3 border-solid border-transparent absolute rounded-full;
+    @apply h-5 w-5 border-solid border-transparent absolute rounded-full;
     border-width: 3px;
-    left: -3px;
-    top: -3px;
+    left: -7px;
+    top: -7px;
   }
   button.border-primary::after {
     @apply border-primary;

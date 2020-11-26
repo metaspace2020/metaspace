@@ -41,12 +41,11 @@
           />
         </button>
       </p>
-      <div class="h-9">
+      <div class="h-9 relative">
         <fade-transition>
           <channel-selector
             v-if="channelSelect === item.id"
             v-model="item.settings.channel"
-            :class="['my-auto', activeLayer === item.id ? 'bg-blue-200-alpha' : 'bg-gray-200-alpha']"
             @close="channelSelect = null"
           />
           <ion-intensity-slider
@@ -59,9 +58,18 @@
             :is-disabled="!item.settings.visible"
             @change="item.updateIntensity"
             @thumb-start="setLastSlider(item.id)"
-            @track-click="channelSelect = item.id"
           />
         </fade-transition>
+        <div class="h-0 absolute bottom-0 left-0 right-0 flex justify-center items-end z-10">
+          <button
+            title="More controls"
+            class="button-reset h-3 w-6 rounded-full flex items-center justify-center mb-1"
+            :class="channelSelect === item.id ? 'text-blue-400' : 'text-gray-700'"
+            @click.stop="channelSelect = (channelSelect === item.id ? null : item.id)"
+          >
+            <dots-icon class="fill-current w-6 h-6" />
+          </button>
+        </div>
       </div>
     </menu-item>
     <!-- margin removed below for Safari -->
@@ -102,6 +110,7 @@ import CandidateMoleculesPopover from '../Annotations/annotation-widgets/Candida
 import '../../components/MonoIcon.css'
 import VisibleIcon from '../../assets/inline/refactoring-ui/visible.svg'
 import HiddenIcon from '../../assets/inline/refactoring-ui/hidden.svg'
+import DotsIcon from '../../assets/inline/refactoring-ui/dots-horizontal.svg'
 
 import { useIonImageMenu } from './ionImageState'
 
@@ -119,6 +128,7 @@ export default defineComponent({
     FadeTransition,
     ChannelSelector,
     CandidateMoleculesPopover,
+    DotsIcon,
   },
   setup(props, { emit }) {
     const { activeLayer, removeLayer, setActiveLayer } = useIonImageMenu()
@@ -139,7 +149,6 @@ export default defineComponent({
           return
         }
         setActiveLayer(id)
-        channelSelect.value = null
       },
     }
   },
