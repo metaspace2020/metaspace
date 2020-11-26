@@ -32,15 +32,7 @@
       <div
         v-if="status === 'HAS_LINK'"
         key="link"
-        class="relative pt-2"
       >
-        <button
-          class="button-reset absolute top-0 right-0 -mt-2 -mr-2"
-          title="Close tooltip"
-          @click="status = 'CLOSED'"
-        >
-          <close-icon class="block h-6 w-6 fill-current text-gray-700" />
-        </button>
         <router-link
           target="_blank"
           :to="routeWithViewId"
@@ -85,6 +77,7 @@ import config from '../../lib/config'
 
 interface Route {
   query: Record<string, string>
+  path: string
 }
 
 interface Props {
@@ -116,6 +109,11 @@ export default defineComponent<Props>({
       },
     }))
 
+    const onOutclick = () => {
+      status.value = 'CLOSED'
+      document.removeEventListener('click', onOutclick, true)
+    }
+
     const handleClick = async() => {
       if (status.value !== 'OPEN') {
         return
@@ -144,6 +142,7 @@ export default defineComponent<Props>({
         })
         viewId.value = result.data.saveImageViewerSnapshot
         status.value = 'HAS_LINK'
+        document.addEventListener('click', onOutclick, true)
       } catch (e) {
         reportError(e)
         status.value = 'CLOSED'
