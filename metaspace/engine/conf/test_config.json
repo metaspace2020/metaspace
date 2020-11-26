@@ -48,13 +48,13 @@
       "data_limit": false,
       "workers": 2
     },
+    "localhost": {
+    },
     "sm_storage": {
       "imzml": ["lithops_test", "imzml"],
       "moldb": ["lithops_test", "moldb"],
       "centroids": ["lithops_test", "centroids"],
       "pipeline_cache": ["lithops_test", "pipeline_cache"]
-    },
-    "localhost": {
     }
   },
   "aws": {

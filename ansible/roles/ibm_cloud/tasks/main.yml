@@ -1,0 +1,7 @@
+---
+
+- name: Ensure IBM VPC SSH private key exists
+  copy:
+    content="{{ sm_lithops_vpc_ssh_private_key }}" dest="/home/ubuntu/.ssh/ibm_cloud_vpc"
+    owner=ubuntu group=ubuntu mode="u=rw,g=,o="
+  when: sm_lithops_vpc_ssh_private_key

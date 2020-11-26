@@ -69,5 +69,8 @@
     - name: filebeat
       tags: [filebeat]
 
+    - name: ibm_cloud
+      tags: [ibm_cloud]
+
     - role: sm_cluster_autostart
       tags: [sm-cluster-autostart]

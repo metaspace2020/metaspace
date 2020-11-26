@@ -28,6 +28,7 @@
     "web_app_url": "{{ web_public_url }}",
     "send_email": {{ sm_send_email | to_json }},
     "update_daemon_threads": 4,
+    "lithops_daemon_threads": {{ sm_lithops_daemon_threads }},
     "colocalization": true,
     "ion_thumbnails": true,
     "email": true
@@ -76,7 +77,7 @@
       "runtime": "metaspace2020/metaspace-lithops:1.8.1"
     },
     "ibm": {
-      "iam_api_key": "{{ sm_lithops_api_key }}"
+      "iam_api_key": "{{ sm_lithops_iam_api_key }}"
     },
     "ibm_cf": {
       "endpoint": "https://eu-de.functions.cloud.ibm.com",
@@ -95,7 +96,9 @@
       "secret_key": "{{ sm_lithops_cos_secret_key }}"
     },
     "sm_storage": {
-      "__comment__": ["bucket name", "prefix with no leading/trailing slashes"],
+## Each entry in this block is an array of [Bucket name, Prefix]
+## e.g. "imzml": ["my-bucket","files/go/here"] means ImzML files will be stored under cos://my-bucket/store/things/in/here/
+## The Prefix is necessary and should not have a leading or trailing slash
       "imzml": ["{{ sm_lithops_cos_bucket_imzml }}", "imzml"],
       "moldb": ["{{ sm_lithops_cos_bucket_data }}", "moldb"],
       "centroids": ["{{ sm_lithops_cos_bucket_data }}", "centroids"],

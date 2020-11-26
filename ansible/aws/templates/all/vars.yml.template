@@ -81,6 +81,20 @@ sm_cluster_autostart_redis:
   host: "{{ web_redis.host }}"
   port: "{{ web_redis.port }}"
 
+# Configuration for IBM Cloud / Lithops. See metaspace/engine/docs/Lithops.md for instructions on setting up an
+# IBM Cloud environment. Set `sm_lithops_daemon_threads` to `0` to disable Lithops.
+sm_lithops_daemon_threads: 0
+sm_lithops_iam_api_key: {{ vault_lithops_iam_api_key }}
+sm_lithops_cos_access_key: {{ vault_lithops_cos_access_key }}
+sm_lithops_cos_secret_key: {{ vault_lithops_cos_secret_key }}
+sm_lithops_cos_bucket_temp:
+sm_lithops_cos_bucket_data:
+sm_lithops_cos_bucket_imzml:
+sm_lithops_cf_ns_name:
+sm_lithops_cf_ns_id:
+sm_lithops_vpc_instance_id:
+sm_lithops_vpc_instance_ip:
+
 mol_db_home: "{{ metaspace_home }}/metaspace/mol-db"
 mol_db_url: "http://{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}:5001/v1"
 mol_db_postgres_pass: "{{ vault_mol_db_postgres_password }}"

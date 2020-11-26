@@ -16,6 +16,10 @@ from sm.engine.utils.perf_profile import SubtaskProfiler, Profiler, NullProfiler
 
 logger = logging.getLogger('custom-executor')
 TRet = TypeVar('TRet')
+#: RUNTIME_DOCKER_IMAGE is defined in code instead of config so that devs don't have to coordinate
+#: manually updating their config files every time it changes. The image must be public on
+#: Docker Hub, and can be rebuilt using the scripts/Dockerfile in `engine/docker/lithops_ibm_cf`.
+RUNTIME_DOCKER_IMAGE = 'metaspace2020/metaspace-lithops:1.8.1'
 
 
 def _build_wrapper_func(func: Callable[..., TRet]) -> Callable[..., TRet]:
@@ -134,12 +138,17 @@ class Executor:
 
         if self.is_local:
             self.large_executor = self.small_executor = lithops.function_executor(
-                config=lithops_config, storage='localhost'
+                config=lithops_config, storage='localhost', runtime=RUNTIME_DOCKER_IMAGE,
             )
         else:
-            self.small_executor = lithops.function_executor(config=lithops_config)
+            self.small_executor = lithops.function_executor(
+                config=lithops_config, runtime=RUNTIME_DOCKER_IMAGE
+            )
             self.large_executor = lithops.function_executor(
-                config=lithops_config, mode='standalone', backend='ibm_vpc'
+                config=lithops_config,
+                mode='standalone',
+                backend='ibm_vpc',
+                runtime=RUNTIME_DOCKER_IMAGE,
             )
         self.storage = self.small_executor.storage
         self._include_modules = lithops_config['lithops'].get('include_modules', [])
