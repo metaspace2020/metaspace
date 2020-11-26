@@ -17,6 +17,7 @@
       @thumb-stop="onThumbStop"
     />
     <span
+      v-if="minTooltip"
       class="-ml-1"
       :style="minPosition"
     >
@@ -33,6 +34,7 @@
       @thumb-stop="onThumbStop"
     />
     <span
+      v-if="maxTooltip"
       class="-mr-1"
       :style="maxPosition"
     >
@@ -124,8 +126,8 @@ const Slider = defineComponent<Props>({
       return { right: `${maxX.value - maxThumb.x.value}px` }
     })
 
-    const emitMinChange = (value: number) => emit('change', [value, props.value[1]])
-    const emitMaxChange = (value: number) => emit('change', [props.value[0], value])
+    const emitMinChange = (value: number) => emit('input', [value, props.value[1]])
+    const emitMaxChange = (value: number) => emit('input', [props.value[0], value])
 
     const lockTrackClick = ref(false)
 

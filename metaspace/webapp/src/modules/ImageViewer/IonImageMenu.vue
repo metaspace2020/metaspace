@@ -5,7 +5,7 @@
       :key="item.id"
       class="flex flex-col justify-center"
       :layer-id="item.id"
-      :active-layer="activeLayer"
+      :is-active="activeLayer === item.id"
       :visible="item.settings.visible"
       :loading="item.loading"
       @active="setActiveLayer"
@@ -42,33 +42,41 @@
         </button>
       </p>
       <div class="h-9 relative">
-        <fade-transition>
-          <channel-selector
-            v-if="channelSelect === item.id"
-            v-model="item.settings.channel"
-            @close="channelSelect = null"
-          />
-          <ion-intensity-slider
-            v-else
-            :id="item.id"
-            can-focus
-            :model="item.state"
-            :color-bar="item.colorBar.value"
-            :intensity="item.intensity.value"
-            :is-disabled="!item.settings.visible"
-            @change="item.updateIntensity"
-            @thumb-start="setLastSlider(item.id)"
-          />
-        </fade-transition>
+        <ion-intensity-slider
+          :id="item.id"
+          :model="item.state"
+          :color-bar="item.colorBar.value"
+          :intensity="item.intensity.value"
+          :scale-range="item.scaleRange.value"
+          :is-disabled="!item.settings.visible"
+          @thumb-start="setLastSlider(item.id)"
+        />
         <div class="h-0 absolute bottom-0 left-0 right-0 flex justify-center items-end z-10">
           <button
-            title="More controls"
-            class="button-reset h-3 w-6 rounded-full flex items-center justify-center mb-1"
-            :class="channelSelect === item.id ? 'text-blue-400' : 'text-gray-700'"
+            title="More options"
+            class="button-reset h-3 w-6 rounded-full flex items-center justify-center box-content sm-more-button"
+            :class="channelSelect === item.id ? 'text-blue-700 bg-blue-200' : 'text-gray-800 hover:bg-gray-200'"
             @click.stop="channelSelect = (channelSelect === item.id ? null : item.id)"
           >
             <dots-icon class="fill-current w-6 h-6" />
           </button>
+          <fade-transition>
+            <div
+              v-if="channelSelect === item.id"
+              class="absolute top-0 w-full p-1 shadow rounded-md text-center bg-gray-50 mt-1"
+            >
+              <channel-selector
+                v-model="item.settings.channel"
+                class="my-1"
+              />
+              <button
+                class="button-reset text-danger h-3 leading-none text-xs tracking-wide font-medium"
+                @click.stop="removeLayer(item.id)"
+              >
+                remove
+              </button>
+            </div>
+          </fade-transition>
         </div>
       </div>
     </menu-item>
@@ -168,5 +176,10 @@ export default defineComponent({
 .sm-menu-items >>> > *:hover {
   outline: 1px solid theme('colors.primary');
   outline-offset: -1px;
+}
+
+.sm-more-button {
+  margin-bottom: 2px;
+  padding: 0 1px;
 }
 </style>

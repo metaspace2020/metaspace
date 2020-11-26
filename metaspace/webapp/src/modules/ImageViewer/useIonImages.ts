@@ -18,7 +18,7 @@ interface Props {
 }
 
 const { annotationCache, onAnnotationChange, activeAnnotation, getImageIntensities } = useAnnotations()
-const { settings, lockedIntensities } = useIonImageSettings()
+const { lockedIntensities, lockedScaleRange } = useIonImageSettings()
 const { layerCache, orderedLayers } = useIonImageLayers()
 
 const rawImageCache : Record<string, Ref<Image | null>> = {}
@@ -66,6 +66,15 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
     return [min, max] as [number, number]
   })
 
+  const scaleRange = computed(() => {
+    const [userMin, userMax] = activeState.value.scaleRange
+    const [lockedMin, lockedMax] = lockedScaleRange.value
+    return [
+      lockedMin === undefined ? userMin : Math.min(lockedMin, userMax),
+      lockedMax === undefined ? userMax : Math.max(lockedMax, userMin),
+    ] as [number, number]
+  })
+
   const image = computed(() => {
     const raw = rawImageCache[layer.id]
     if (raw.value !== null) {
@@ -76,7 +85,7 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
         minIntensity,
         maxIntensity,
         props.scaleType,
-        activeState.value.scaleRange,
+        scaleRange.value,
         userIntensities.value,
       )
     }
@@ -143,6 +152,7 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
     colorMap,
     image,
     intensity,
+    scaleRange,
   }
 }
 
@@ -208,10 +218,8 @@ const useIonImages = (props: Props) => {
       return {
         colorBar: data.colorBar,
         intensity: data.intensity,
+        scaleRange: data.scaleRange,
         state: layer.singleModeState,
-        updateIntensity(range: [number, number]) {
-          layer.singleModeState.scaleRange = range
-        },
       }
     }
     return null
@@ -226,11 +234,9 @@ const useIonImages = (props: Props) => {
         colorBar: data.colorBar,
         id: layer.id,
         intensity: data.intensity,
+        scaleRange: data.scaleRange,
         settings: layer.settings,
         state: layer.multiModeState,
-        updateIntensity(range: [number, number]) {
-          layer.multiModeState.scaleRange = range
-        },
         toggleVisibility() {
           const { settings } = layer
           settings.visible = !settings.visible

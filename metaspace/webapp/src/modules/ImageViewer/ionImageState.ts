@@ -52,12 +52,14 @@ interface State {
 
 interface Settings {
   lockMin: number | undefined
+  lockMinScale: number
   lockMax: number | undefined
+  lockMaxScale: number
   isLockActive: boolean
   opacity: number
 }
 
-const channels = ['magenta', 'green', 'blue', 'red', 'yellow', 'cyan', 'orange']
+const channels = ['magenta', 'green', 'blue', 'red', 'yellow', 'cyan', 'orange', 'violet']
 
 const state = reactive<State>({
   order: [],
@@ -65,7 +67,9 @@ const state = reactive<State>({
 })
 const settings = reactive<Settings>({
   lockMin: undefined,
+  lockMinScale: 0,
   lockMax: undefined,
+  lockMaxScale: 1,
   isLockActive: true,
   opacity: 1,
 })
@@ -86,6 +90,20 @@ const lockedIntensities = computed(() => {
     return [settings.lockMin, settings.lockMax]
   }
   return []
+})
+
+const lockedScaleRange = computed(() => {
+  const [min, max] = lockedIntensities.value
+  return [
+    min === undefined ? undefined : settings.lockMinScale,
+    max === undefined ? undefined : settings.lockMaxScale,
+  ]
+})
+
+export const useIonImageSettings = () => ({
+  lockedIntensities,
+  lockedScaleRange,
+  settings,
 })
 
 function removeLayer(id: string) : number {
@@ -138,10 +156,14 @@ function resetChannelsState() {
 export function resetIonImageState() {
   resetChannelsState()
 
-  settings.lockMin = undefined
-  settings.lockMax = undefined
-  settings.isLockActive = true
-  settings.opacity = 1
+  Object.assign(settings, {
+    lockMin: undefined,
+    lockMinScale: 0,
+    lockMax: undefined,
+    lockMaxScale: 1,
+    isLockActive: true,
+    opacity: 1,
+  })
 }
 
 export const useIonImageMenu = () => {
@@ -221,11 +243,6 @@ export const useChannelSwatches = () => computed(() => {
     }
   }
   return swatches
-})
-
-export const useIonImageSettings = () => ({
-  lockedIntensities,
-  settings,
 })
 
 type Snapshot = {

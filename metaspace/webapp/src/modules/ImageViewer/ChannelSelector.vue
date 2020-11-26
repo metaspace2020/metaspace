@@ -2,7 +2,6 @@
   <div
     ref="container"
     class="flex w-full justify-around items-center"
-    tabindex="0"
     @click.stop
     @keypress.enter.self="$emit('close')"
     @keypress.esc.self="$emit('close')"
@@ -27,16 +26,7 @@ export default defineComponent({
     value: String,
   },
   setup() {
-    const container = ref<HTMLElement>()
-
-    onMounted(() => {
-      if (container.value) {
-        container.value.focus()
-      }
-    })
-
     return {
-      container,
       channels: Object.entries(channels).map(([name, color]) => ({ name, color })),
     }
   },
@@ -50,10 +40,10 @@ export default defineComponent({
   }
   button::after {
     content: '';
-    @apply h-5 w-5 border-solid border-transparent absolute rounded-full;
+    @apply h-3 w-3 border-solid border-transparent absolute rounded-full;
     border-width: 3px;
-    left: -7px;
-    top: -7px;
+    left: -3px;
+    top: -3px;
   }
   button.border-primary::after {
     @apply border-primary;

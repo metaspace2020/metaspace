@@ -3,7 +3,7 @@
     :class="[
       'px-3 h-21 outline-none',
       {
-        'bg-blue-100-alpha': activeLayer === layerId,
+        'bg-blue-100-alpha': isActive,
         'text-gray-700': !visible
       }
     ]"
@@ -40,7 +40,7 @@ export default defineComponent({
     FadeTransition,
   },
   props: {
-    activeLayer: String,
+    isActive: Boolean,
     layerId: String,
     visible: { type: Boolean, default: true },
     loading: { type: Boolean, default: true },

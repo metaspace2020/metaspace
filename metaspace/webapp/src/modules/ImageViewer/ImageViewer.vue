@@ -40,10 +40,7 @@
         <single-ion-image-controls
           v-else-if="!isLoading"
           key="single"
-          :state="singleIonImageControls.state"
-          :intensity="singleIonImageControls.intensity.value"
-          :color-bar="singleIonImageControls.colorBar.value"
-          :update-intensity="singleIonImageControls.updateIntensity"
+          v-bind="singleIonImageControls"
         />
       </fade-transition>
       <fade-transition>
