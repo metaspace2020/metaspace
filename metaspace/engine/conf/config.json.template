@@ -24,6 +24,7 @@
   },
   "services": {
     "img_service_url": "{{ sm_img_service_url }}",
+    "img_service_public_url": "{{ web_public_url }}",
     "off_sample": "{{ off_sample_api_endpoint }}",
     "web_app_url": "{{ web_public_url }}",
     "send_email": {{ sm_send_email | to_json }},
