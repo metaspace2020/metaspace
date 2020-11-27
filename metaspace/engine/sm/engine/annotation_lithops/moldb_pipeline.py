@@ -54,7 +54,7 @@ class CentroidsCacheEntry:
         self.bucket, raw_prefix = sm_storage['centroids']
         self.prefix = f"{raw_prefix}/{self.ds_hash}"
         self.config_key = f'{self.prefix}/ds_config.json'
-        self.meta_key = f'{self.prefix}/meta.json'
+        self.meta_key = f'{self.prefix}/meta'
 
     @contextmanager
     def lock(self):
