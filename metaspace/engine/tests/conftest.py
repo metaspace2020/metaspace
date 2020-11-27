@@ -196,15 +196,15 @@ def sm_index(sm_config, request):
 
 
 @pytest.fixture()
-def lithops(sm_config):
-    from lithops import function_executor
+def executor(sm_config):
+    from sm.engine.annotation_lithops.executor import Executor
 
-    fexec = function_executor(sm_config['lithops'])
+    executor = Executor(sm_config['lithops'])
 
-    yield fexec
+    yield executor
 
-    fexec.clean()
+    executor.clean()
     for bucket, prefix in sm_config['lithops']['sm_storage'].values():
-        keys = fexec.storage.list_keys(bucket, prefix)
+        keys = executor.storage.list_keys(bucket, prefix)
         if keys:
-            fexec.storage.delete_objects(bucket, keys)
+            executor.storage.delete_objects(bucket, keys)

@@ -84,6 +84,12 @@ def calculate_centroids(
 
 
 def validate_centroids(fexec: Executor, peaks_cobjects: List[CObj[pd.DataFrame]]):
+    def warn(message, df=None):
+        warnings.append(message)
+        logger.warning(message)
+        if df:
+            logger.warning(df)
+
     def get_segm_stats(segm_cobject: CObj[pd.DataFrame], *, storage: Storage):
         segm = load_cobj(storage, segm_cobject)
         n_peaks = segm.groupby(level='formula_i').peak_i.count()
@@ -110,15 +116,10 @@ def validate_centroids(fexec: Executor, peaks_cobjects: List[CObj[pd.DataFrame]]
         )
         return formula_is, stats
 
+    warnings = []
     results = fexec.map(get_segm_stats, [(co,) for co in peaks_cobjects], runtime_memory=1024)
     segm_formula_is = [formula_is for formula_is, stats in results]
     stats_df = pd.DataFrame([stats for formula_is, stats in results])
-
-    try:
-        __import__('__main__').peaks_cobjects = stats_df
-        logger.info('validate_peaks_cobjects debug info written to "peaks_cobjects" variable')
-    except Exception:
-        pass
 
     with pd.option_context(
         'display.max_rows', None, 'display.max_columns', None, 'display.width', 1000
@@ -128,38 +129,51 @@ def validate_centroids(fexec: Executor, peaks_cobjects: List[CObj[pd.DataFrame]]
             (stats_df.avg_n_peaks < 3.9) | (stats_df.min_n_peaks < 2) | (stats_df.max_n_peaks > 4)
         ]
         if not wrong_n_peaks.empty:
-            logger.warning(
-                'segment_centroids produced segments with unexpected peaks-per-formula (should be almost always 4, occasionally 2 or 3):'
+            warn(
+                'segment_centroids produced segments with unexpected peaks-per-formula '
+                '(should be almost always 4, occasionally 2 or 3):',
+                wrong_n_peaks,
             )
-            logger.warning(wrong_n_peaks)
 
         # Report missing peaks
         missing_peaks = stats_df[stats_df.missing_peaks > 0]
         if not missing_peaks.empty:
-            logger.warning('segment_centroids produced segments with missing peaks:')
-            logger.warning(missing_peaks)
 
-    formula_in_segms_df = pd.DataFrame(
-        [
-            (formula_i, segm_i)
-            for segm_i, formula_is in enumerate(segm_formula_is)
-            for formula_i in formula_is
-        ],
-        columns=['formula_i', 'segm_i'],
-    )
-    formulas_in_multiple_segms = (formula_in_segms_df.groupby('formula_i').segm_i.count() > 1)[
-        lambda s: s
-    ].index
-    formulas_in_multiple_segms_df = formula_in_segms_df[
-        lambda df: df.formula_i.isin(formulas_in_multiple_segms)
-    ].sort_values('formula_i')
+            warn('segment_centroids produced segments with missing peaks:', missing_peaks)
 
-    n_per_segm = formula_in_segms_df.groupby('segm_i').formula_i.count()
-    if not formulas_in_multiple_segms_df.empty:
-        logger.warning('segment_centroids produced put the same formula in multiple segments:')
-        logger.warning(formulas_in_multiple_segms_df)
+        formula_in_segms_df = pd.DataFrame(
+            [
+                (formula_i, segm_i)
+                for segm_i, formula_is in enumerate(segm_formula_is)
+                for formula_i in formula_is
+            ],
+            columns=['formula_i', 'segm_i'],
+        )
+        formulas_in_multiple_segms = (formula_in_segms_df.groupby('formula_i').segm_i.count() > 1)[
+            lambda s: s
+        ].index
+        formulas_in_multiple_segms_df = formula_in_segms_df[
+            lambda df: df.formula_i.isin(formulas_in_multiple_segms)
+        ].sort_values('formula_i')
 
-    print(
-        f'Found {stats_df.n_peaks.sum()} peaks for {stats_df.n_formulas.sum()} formulas across {len(peaks_cobjects)} segms'
-    )
-    print(f'Segm sizes range from {n_per_segm.min()} to {n_per_segm.max()}')
+        n_per_segm = formula_in_segms_df.groupby('segm_i').formula_i.count()
+        if not formulas_in_multiple_segms_df.empty:
+            warn(
+                'segment_centroids produced put the same formula in multiple segments:',
+                formulas_in_multiple_segms_df,
+            )
+
+        logger.debug(
+            f'Found {stats_df.n_peaks.sum()} peaks for {stats_df.n_formulas.sum()} formulas '
+            f'across {len(peaks_cobjects)} segms'
+        )
+        logger.debug(f'Segm sizes range from {n_per_segm.min()} to {n_per_segm.max()}')
+
+        if warnings:
+            try:
+                __import__('__main__').peaks_cobjects = stats_df
+                print('validate_peaks_cobjects debug info written to "peaks_cobjects" variable')
+            except Exception:
+                pass
+
+            raise AssertionError('Some checks failed in validate_centroids')

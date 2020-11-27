@@ -207,7 +207,7 @@ jobs:
 
   test-pycode-format:
     docker:
-      - image: metaspace2020/sm-engine:1.6.0
+      - image: metaspace2020/sm-engine:1.8.0
     working_directory: ~/metaspace
     steps:
       - checkout:
@@ -219,7 +219,7 @@ jobs:
 
   test-engine:
     docker:
-      - image: metaspace2020/sm-engine:1.6.0
+      - image: metaspace2020/sm-engine:1.8.0
 
       - image: redis:5.0.3
 
@@ -268,7 +268,7 @@ jobs:
 
   test-engine-sci:
     docker:
-      - image: metaspace2020/sm-engine:1.6.0
+      - image: metaspace2020/sm-engine:1.8.0
 
       - image: redis:5.0.3
 

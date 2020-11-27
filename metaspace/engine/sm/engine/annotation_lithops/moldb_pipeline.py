@@ -118,6 +118,7 @@ def get_moldb_centroids(
         if use_cache:
             cached_val = moldb_cache.load()
         else:
+            cached_val = None
             moldb_cache.clear()
 
         if cached_val:
