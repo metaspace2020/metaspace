@@ -276,7 +276,7 @@ const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
 
 const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
-  reprocessDataset: async (source, { id, priority }, ctx: Context) => {
+  reprocessDataset: async (source, { id, priority, useLithops }, ctx: Context) => {
     const engineDataset = await ctx.entityManager.findOne(EngineDataset, id);
     if (engineDataset === undefined)
       throw new UserError('Dataset does not exist');
@@ -288,6 +288,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         metadataJson: JSON.stringify(engineDataset.metadata)
       } as any, // TODO: map this properly
       priority: priority,
+      useLithops,
       force: true,
       skipValidation: true,
       delFirst: true,
