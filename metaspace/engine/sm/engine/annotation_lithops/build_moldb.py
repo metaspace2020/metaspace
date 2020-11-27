@@ -95,7 +95,9 @@ def get_formulas_df(
     # Replace ion_formula column with formula_i
     formula_to_id = pd.Series(formulas_df.index, formulas_df.ion_formula)
     for db_data in db_datas:
-        db_data['formula_map_df']['formula_i'] = formula_to_id[formula_map_df.ion_formula].values
+        db_data['formula_map_df']['formula_i'] = formula_to_id[
+            db_data['formula_map_df'].ion_formula
+        ].values
         del db_data['formula_map_df']['ion_formula']
 
     db_data_cobjects = save_cobjs(storage, db_datas)

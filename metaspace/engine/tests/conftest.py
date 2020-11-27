@@ -199,7 +199,7 @@ def sm_index(sm_config, request):
 def executor(sm_config):
     from sm.engine.annotation_lithops.executor import Executor
 
-    executor = Executor(sm_config['lithops'])
+    executor = Executor(sm_config['lithops'], debug_run_locally=True)
 
     yield executor
 

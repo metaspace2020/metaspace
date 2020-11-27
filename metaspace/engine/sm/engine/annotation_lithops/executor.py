@@ -5,12 +5,13 @@ import logging
 import resource
 from datetime import datetime
 from itertools import chain
-from typing import List, Callable, TypeVar, Iterable, Sequence, Dict, Optional
+from typing import List, Callable, TypeVar, Iterable, Sequence, Dict, Optional, Tuple
 
 import lithops
 import numpy as np
 import pandas as pd
 from lithops.future import ResponseFuture
+from lithops.storage import Storage
 
 from sm.engine.utils.perf_profile import SubtaskProfiler, Profiler, NullProfiler
 
@@ -20,6 +21,10 @@ TRet = TypeVar('TRet')
 #: manually updating their config files every time it changes. The image must be public on
 #: Docker Hub, and can be rebuilt using the scripts/Dockerfile in `engine/docker/lithops_ibm_cf`.
 RUNTIME_DOCKER_IMAGE = 'metaspace2020/metaspace-lithops:1.8.1'
+MEM_LIMITS = {
+    'ibm_cf': 4096,
+    'ibm_vpc': 32768,
+}
 
 
 def _build_wrapper_func(func: Callable[..., TRet]) -> Callable[..., TRet]:
@@ -103,13 +108,6 @@ def _save_subtask_perf(
         logger.debug(f'Subtasks:\n{subtask_summary}')
 
 
-def _run_local(func, funcargs, storage):
-    kwargs = {}
-    if 'storage' in inspect.signature(func).parameters:
-        kwargs['storage'] = storage
-    return func(*funcargs, **kwargs)
-
-
 class Executor:
     """
     This class wraps Lithops' FunctionExecutor to provide a platform where we can experiment with
@@ -130,29 +128,61 @@ class Executor:
           that represents some factor that could contribute to memory/time usage.
       * Utility functions e.g. `map_unpack` and `map_concat` for applying common transformations
         to the result data.
-      * `debug_run_locally` parameter to
     """
 
-    def __init__(self, lithops_config: Dict, perf: Profiler = None):
-        self.is_local = lithops_config['lithops']['mode'] == 'localhost'
-
-        if self.is_local:
-            self.large_executor = self.small_executor = lithops.function_executor(
-                config=lithops_config, storage='localhost', runtime=RUNTIME_DOCKER_IMAGE,
-            )
+    def __init__(self, lithops_config: Dict, perf: Profiler = None, debug_run_locally=False):
+        mode = lithops_config['lithops']['mode']
+        self.debug_run_locally = debug_run_locally
+        if debug_run_locally:
+            self.executors = {}
+        elif mode == 'localhost':
+            self.executors = {
+                'localhost': lithops.function_executor(
+                    config=lithops_config, storage='localhost', runtime=RUNTIME_DOCKER_IMAGE,
+                )
+            }
         else:
-            self.small_executor = lithops.function_executor(
-                config=lithops_config, runtime=RUNTIME_DOCKER_IMAGE
-            )
-            self.large_executor = lithops.function_executor(
-                config=lithops_config,
-                mode='standalone',
-                backend='ibm_vpc',
-                runtime=RUNTIME_DOCKER_IMAGE,
-            )
-        self.storage = self.small_executor.storage
+            self.executors = {
+                'ibm_cf': lithops.function_executor(
+                    config=lithops_config, runtime=RUNTIME_DOCKER_IMAGE
+                ),
+                'ibm_vpc': lithops.function_executor(
+                    config=lithops_config,
+                    mode='standalone',
+                    backend='ibm_vpc',
+                    runtime=RUNTIME_DOCKER_IMAGE,
+                ),
+            }
+
+        self.storage = Storage(
+            lithops_config=lithops_config,
+            storage_backend=lithops_config['lithops']['storage_backend'],
+        )
         self._include_modules = lithops_config['lithops'].get('include_modules', [])
         self._perf = perf or NullProfiler()
+
+    def _execute_map(
+        self, func, args, runtime_memory, debug_run_locally, **kwargs
+    ) -> Tuple[Optional[ResponseFuture], List]:
+        if self.debug_run_locally or debug_run_locally:
+            func_kwargs = {}
+            if 'storage' in inspect.signature(func).parameters:
+                func_kwargs['storage'] = self.storage
+            futures = None
+            return_vals = [func(*funcargs, **func_kwargs) for funcargs in args]
+        else:
+            valid_executors = [
+                (executor_type, executor)
+                for executor_type, executor in self.executors.items()
+                if runtime_memory <= MEM_LIMITS.get(executor_type, runtime_memory)
+            ]
+
+            assert valid_executors, f'Could not find an executor supporting {runtime_memory}MB'
+            executor_type, executor = valid_executors[0][1]
+            logger.debug(f'Selected executor {executor_type}')
+            futures = executor.map(func, args, runtime_memory=runtime_memory, **kwargs)
+            return_vals = executor.get_result(futures)
+        return futures, return_vals
 
     def map(
         self,
@@ -184,20 +214,15 @@ class Executor:
         while True:
             start_time = datetime.now()
             try:
-                use_small = runtime_memory <= 4096
-                executor = self.small_executor if use_small else self.large_executor
-
                 logger.info(f'executor.map({func.__name__}, {len(args)} items, {runtime_memory}MB)')
-                if debug_run_locally:
-                    return_vals = [
-                        _run_local(wrapper_func, funcargs, executor.storage) for funcargs in args
-                    ]
-                else:
-                    futures: Optional[List[ResponseFuture]] = executor.map(
-                        wrapper_func, args, runtime_memory=runtime_memory, **kwargs,
-                    )
+                futures, return_vals = self._execute_map(
+                    wrapper_func,
+                    args,
+                    runtime_memory=runtime_memory,
+                    debug_run_locally=debug_run_locally,
+                    **kwargs,
+                )
 
-                    return_vals = executor.get_result(futures)
                 results = [result for result, subtask_perf in return_vals]
                 subtask_perfs = [subtask_perf for result, subtask_perf in return_vals]
 
@@ -266,11 +291,11 @@ class Executor:
         return self.map(func, [args], runtime_memory=runtime_memory, **kwargs)[0]
 
     def clean(self):
-        for executor in {self.small_executor, self.large_executor}:
+        for executor in self.executors.values():
             executor.clean()
 
     def shutdown(self):
-        for executor in {self.small_executor, self.large_executor}:
+        for executor in self.executors.values():
             executor.invoker.stop()
             try:
                 executor.dismantle()
