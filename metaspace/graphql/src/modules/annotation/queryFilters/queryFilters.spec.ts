@@ -15,6 +15,7 @@ import {ESAnnotationWithColoc} from './index';
 import {QueryFilterArgs} from './types';
 import * as moment from 'moment';
 import {MolecularDB} from "../../moldb/model";
+import { createTestMolecularDB } from '../../../tests/testDataCreation';
 
 describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
   beforeAll(onBeforeAll);
@@ -39,8 +40,7 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
     })));
     await testEntityManager.insert(Ion, ions);
 
-    database = testEntityManager.create(MolecularDB, {id: 0, name: 'HMDB-v4', version: 'version'});
-    await testEntityManager.insert(MolecularDB, database);
+    database = await createTestMolecularDB({name: 'HMDB-v4', version: 'version'});
 
     job = testEntityManager.create(ColocJob, {
       datasetId: 'datasetId',
