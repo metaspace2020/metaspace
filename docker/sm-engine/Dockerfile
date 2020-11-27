@@ -52,6 +52,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
 
 # --- Engine dependencies ---
 COPY metaspace/engine/requirements.txt /requirements.txt
+COPY docker/sm-engine/ci-requirements.txt /ci-requirements.txt
 RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     PIP_INSTALL="python -m pip install --upgrade" && \
     apt-get update && \
@@ -60,6 +61,8 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     $PIP_INSTALL pip && \
     $PIP_INSTALL \
         -r requirements.txt && \
+    $PIP_INSTALL \
+        -r ci-requirements.txt && \
     apt-get clean -y && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* /tmp/* ~/.cache/*
