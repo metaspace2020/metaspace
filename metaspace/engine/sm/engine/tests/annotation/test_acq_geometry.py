@@ -1,5 +1,7 @@
 from os.path import join
 
+import pytest
+
 from sm.engine.annotation.acq_geometry import make_acq_geometry
 from sm.engine.util import proj_root
 
@@ -26,6 +28,7 @@ def test_ims_geometry_factory_empty():
     }
 
 
+@pytest.mark.skip(reason="pyopenms doesn't support Python 3.8")
 def test_lcms_geometry_factory():
     lcms_file_path = join(
         proj_root(), 'tests/data/lcms_acq_geometry_example/apple_surface_swab.mzML'

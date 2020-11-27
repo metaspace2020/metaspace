@@ -66,7 +66,7 @@ def test_new_ds_saves_to_db(test_db, metadata, ds_config):
     img_svc_mock = MagicMock(spec=ImageStoreServiceWrapper)
     img_svc_mock.get_ion_images_for_analysis.side_effect = mock_get_ion_images_for_analysis
 
-    Colocalization(db, img_store=img_svc_mock).run_coloc_job(ds.id)
+    Colocalization(db, img_store=img_svc_mock).run_coloc_job(ds)
 
     jobs = db.select('SELECT id, error, sample_ion_ids FROM graphql.coloc_job')
     annotations = db.select('SELECT coloc_ion_ids, coloc_coeffs FROM graphql.coloc_annotation')

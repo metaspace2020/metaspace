@@ -4,15 +4,14 @@ from sm.engine.db import DB
 from sm.engine import molecular_db
 
 
-def crete_test_database(name, version):
-    with patch(
-        'sm.engine.molecular_db._import_molecules_from_file'
-    ) as import_molecules_from_file_mock:
-        return molecular_db.create(name=name, version=version)
+def create_test_database(name, version):
+    with patch('sm.engine.molecular_db.read_moldb_file'):
+        with patch('sm.engine.molecular_db._import_molecules'):
+            return molecular_db.create(name=name, version=version)
 
 
 def test_create_find_by_id_name(test_db):
-    moldb_resp = crete_test_database('test_db', 'version')
+    moldb_resp = create_test_database('test_db', 'version')
 
     moldb_by_id = molecular_db.find_by_id(moldb_resp.id)
 
@@ -22,7 +21,7 @@ def test_create_find_by_id_name(test_db):
 
 
 def test_update(test_db):
-    create_resp = crete_test_database('test_db', 'version')
+    create_resp = create_test_database('test_db', 'version')
     fields_to_update = dict(
         archived=True,
         description='desc',
@@ -52,7 +51,7 @@ def test_find_by_ids(test_db):
         ('test_db_2', 'version2'),
     ]
     moldb_resp_list = [
-        crete_test_database(name, version) for name, version in moldb_name_version_list
+        create_test_database(name, version) for name, version in moldb_name_version_list
     ]
 
     moldbs_by_ids = molecular_db.find_by_ids([moldb.id for moldb in moldb_resp_list])

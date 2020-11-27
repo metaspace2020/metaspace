@@ -80,7 +80,7 @@ class TestSMapiDatasetManager:
         ds_id = '2000-01-01'
         ds_doc = create_ds_doc(ds_id=ds_id)
 
-        ds_man.add(ds_doc, priority=DatasetActionPriority.HIGH)
+        ds_man.add(ds_doc, use_lithops=False, priority=DatasetActionPriority.HIGH)
 
         msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'action': DaemonAction.ANNOTATE}
         action_queue_mock.publish.assert_has_calls([call(msg, DatasetActionPriority.HIGH)])
