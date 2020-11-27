@@ -10,12 +10,12 @@ from lithops.storage import Storage
 from lithops.storage.utils import CloudObject
 
 logger = logging.getLogger('annotation-pipeline')
-T = TypeVar('T')
+TItem = TypeVar('TItem')
 TArg = TypeVar('TArg')
 TRet = TypeVar('TRet')
 
 
-class CObj(Generic[T], CloudObject):
+class CObj(Generic[TItem], CloudObject):
     """
     Wrapper type to allow CloudObjects to keep track of the type of their serialized contents.
     Ideally this, along with some serialization/deserialization logic, should be upstreamed into
@@ -52,12 +52,12 @@ def deserialize(data):
         return pickle.loads(data)
 
 
-def save_cobj(storage: Storage, obj: T, bucket: str = None, key: str = None) -> CObj[T]:
+def save_cobj(storage: Storage, obj: TItem, bucket: str = None, key: str = None) -> CObj[TItem]:
     return storage.put_cobject(serialize(obj), bucket, key)
 
 
 @overload
-def load_cobj(storage: Storage, cobj: CObj[T]) -> T:
+def load_cobj(storage: Storage, cobj: CObj[TItem]) -> TItem:
     ...
 
 
@@ -70,13 +70,13 @@ def load_cobj(storage: Storage, cobj):
     return deserialize(storage.get_cobject(cobj))
 
 
-def save_cobjs(storage: Storage, objs: Iterable[T]) -> List[CObj[T]]:
+def save_cobjs(storage: Storage, objs: Iterable[TItem]) -> List[CObj[TItem]]:
     with ThreadPoolExecutor() as pool:
         return list(pool.map(lambda obj: save_cobj(storage, obj), objs))
 
 
 @overload
-def load_cobjs(storage: Storage, cobjs: Iterable[CObj[T]]) -> List[T]:
+def load_cobjs(storage: Storage, cobjs: Iterable[CObj[TItem]]) -> List[TItem]:
     ...
 
 
@@ -109,7 +109,7 @@ def _iter_with_prefetch(callback, items, prefetch):
                     futures.append(executor.submit(callback, next(items_iter)))
                 yield futures.pop(0).result()
         except StopIteration:
-            while len(futures):
+            while len(futures) > 0:
                 yield futures.pop(0).result()
 
 
@@ -121,7 +121,9 @@ def iter_cobjects_with_prefetch(
     return _iter_with_prefetch(storage.get_cobject, cobjects, prefetch)
 
 
-def iter_cobjs_with_prefetch(storage: Storage, cobjs: List[CObj[T]], prefetch=1) -> Iterable[T]:
+def iter_cobjs_with_prefetch(
+    storage: Storage, cobjs: List[CObj[TItem]], prefetch=1
+) -> Iterable[TItem]:
     """Lazily loads and deserializes each item in a list of CObjs, prefetching up to
     `prefetch` items ahead."""
 

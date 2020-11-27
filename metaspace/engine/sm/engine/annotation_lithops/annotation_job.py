@@ -39,7 +39,8 @@ def _choose_cos_location(src_path, sm_storage, storage_type):
     if src_path.startswith('cos://'):
         # Already in COS - no need to translate path
         return split_cos_path(src_path)
-    elif src_path.startswith('s3a://'):
+
+    if src_path.startswith('s3a://'):
         # Ignore the bucket and take the key
         _, suffix = split_s3_path(src_path)
     else:
@@ -135,7 +136,7 @@ def _upload_moldbs_from_db(moldb_ids, storage, sm_storage):
 
 def _upload_moldbs_from_files(file_paths, storage, sm_storage):
     moldb_defs = []
-    for i, file_path in enumerate(file_paths):
+    for file_path in file_paths:
         bucket, raw_key = _choose_cos_location(file_path, sm_storage, 'moldb')
         key = raw_key + '_formulas'
         try:
@@ -278,6 +279,10 @@ class ServerAnnotationJob:
             executor=executor,
         )
 
+        self.results_dfs = None
+        self.png_cobjs = None
+        self.db_formula_image_ids = None
+
     def _store_images(self, all_results_dfs, formula_png_iter):
         db_formula_image_ids = defaultdict(dict)
         img_store_type = self.ds.get_ion_img_storage_type(self.db)
@@ -291,7 +296,7 @@ class ServerAnnotationJob:
             ]
             db_formula_image_ids[db_id][formula_id] = {'iso_image_ids': image_ids}
 
-        with ThreadPoolExecutor(2) as ex:
+        with ThreadPoolExecutor(2) as executor:
             for formula_png_chunk in formula_png_iter:
                 # Join results_df so that each formula_i is associated with one or more
                 # moldb_ids
@@ -301,7 +306,7 @@ class ServerAnnotationJob:
                     .join(all_results_dfs)[['moldb_id', 'pngs']]
                     .itertuples(True, None)
                 )
-                list(ex.map(_upload_images, *zip(*tasks)))
+                list(executor.map(_upload_images, *zip(*tasks)))
 
         return db_formula_image_ids
 

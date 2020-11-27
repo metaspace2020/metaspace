@@ -73,9 +73,9 @@ def get_formulas_df(
     ion_formula = set()
     target_ion_formulas = set()
     targeted_ion_formulas = set()
-    with ProcessPoolExecutor() as ex:
+    with ProcessPoolExecutor() as executor:
         for moldb, (fdr, formula_map_df) in zip(
-            moldbs, ex.map(_get_db_fdr_and_formulas, repeat(ds_config), dbs_iter)
+            moldbs, executor.map(_get_db_fdr_and_formulas, repeat(ds_config), dbs_iter)
         ):
             db_datas.append(
                 {

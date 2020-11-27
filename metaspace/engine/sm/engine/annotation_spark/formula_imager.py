@@ -1,19 +1,19 @@
 import logging
 import pickle
 from pathlib import Path
-from typing import List, Dict, Set
+from typing import List, Set
 
 import numpy as np
 import pandas as pd
 from pyspark.files import SparkFiles
 from scipy.sparse import coo_matrix
 
-from sm.engine.ds_config import DSConfig
-from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.annotation.formula_validator import (
     make_compute_image_metrics,
     formula_image_metrics,
 )
+from sm.engine.ds_config import DSConfig
+from sm.engine.isocalc_wrapper import IsocalcWrapper
 
 logger = logging.getLogger('engine')
 

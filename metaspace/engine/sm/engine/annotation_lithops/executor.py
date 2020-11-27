@@ -30,7 +30,7 @@ MEM_LIMITS = {
 def _build_wrapper_func(func: Callable[..., TRet]) -> Callable[..., TRet]:
     def wrapper_func(*args, **kwargs):
         def finalize_perf():
-            if len(subtask_perf.entries) and 'finished' not in subtask_perf.entries:
+            if len(subtask_perf.entries) > 0 and 'finished' not in subtask_perf.entries:
                 subtask_perf.record_entry('finished')
             subtask_perf.add_extra_data(
                 **{
@@ -50,8 +50,8 @@ def _build_wrapper_func(func: Callable[..., TRet]) -> Callable[..., TRet]:
         try:
             result = func(*args, **kwargs)
             return result, finalize_perf()
-        except Exception as ex:
-            ex.executor_meta = finalize_perf()
+        except Exception as e:
+            e.executor_meta = finalize_perf()
             raise
 
     sig = inspect.signature(func)
@@ -266,11 +266,10 @@ class Executor:
                         f'{func.__name__} used too much memory in activation {failed_activation_id}'
                     )
                     raise
-                else:
-                    logger.warning(
-                        f'{func.__name__} ran out of memory with {old_memory}MB in activation '
-                        f'{failed_activation_id}, retrying with {runtime_memory}MB'
-                    )
+                logger.warning(
+                    f'{func.__name__} ran out of memory with {old_memory}MB in activation '
+                    f'{failed_activation_id}, retrying with {runtime_memory}MB'
+                )
 
     def map_unpack(self, func, args: Sequence, *, runtime_memory=None, **kwargs):
         results = self.map(func, args, runtime_memory=runtime_memory, **kwargs)

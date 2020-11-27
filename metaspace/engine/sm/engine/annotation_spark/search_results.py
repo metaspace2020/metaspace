@@ -1,8 +1,6 @@
-from concurrent.futures.thread import ThreadPoolExecutor
-
 import json
-from collections import OrderedDict
 import logging
+from collections import OrderedDict
 
 from sm.engine.ion_mapping import get_ion_id_mapping
 from sm.engine.png_generator import PngGenerator

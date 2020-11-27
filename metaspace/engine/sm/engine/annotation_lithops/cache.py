@@ -75,25 +75,24 @@ def use_pipeline_cache(f):
         if args or kwargs:
             logger.info(f'Unable to cache {f_name} as it has args')
             cacher = None
-        if cacher:
-            if use_cache and cacher.exists(f_name):
-                updates, ret = cacher.load(f_name)
-                self.__dict__.update(updates)
-                logger.debug(f'Loaded {f_name} from cache. Keys: {list(updates.keys())}')
-                return ret
-            else:
-                dict_before = self.__dict__.copy()
-                ret = f(self, *args, **kwargs)
-                updates = dict(
-                    (k, v)
-                    for k, v in self.__dict__.items()
-                    if k not in dict_before or dict_before[k] is not v
-                )
-                cacher.save((updates, ret), f_name)
-                logger.debug(f'Saved {f_name} to cache. Keys: {list(updates.keys())}')
-                return ret
-
-        else:
+        if not cacher:
             return f(self, *args, **kwargs)
+
+        if use_cache and cacher.exists(f_name):
+            updates, ret = cacher.load(f_name)
+            self.__dict__.update(updates)
+            logger.debug(f'Loaded {f_name} from cache. Keys: {list(updates.keys())}')
+            return ret
+
+        dict_before = self.__dict__.copy()
+        ret = f(self, *args, **kwargs)
+        updates = dict(
+            (k, v)
+            for k, v in self.__dict__.items()
+            if k not in dict_before or dict_before[k] is not v
+        )
+        cacher.save((updates, ret), f_name)
+        logger.debug(f'Saved {f_name} to cache. Keys: {list(updates.keys())}')
+        return ret
 
     return wrapper

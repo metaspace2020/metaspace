@@ -58,14 +58,16 @@ def define_centr_segments(
 ):
     logger.info('Defining centroids segments bounds')
 
-    def get_first_peak_mz(cobject, id, storage):
-        print(f'Extracting first peak mz values from clipped centroids dataframe {id}')
+    def get_first_peak_mz(idx, cobject, *, storage):
+        print(f'Extracting first peak mz values from clipped centroids dataframe {idx}')
         centr_df = load_cobj(storage, cobject)
         first_peak_df = centr_df[centr_df.peak_i == 0]
         return first_peak_df.mz.values
 
     first_peak_df_mz = np.concatenate(
-        fexec.map(get_first_peak_mz, clip_centr_chunks_cobjects, runtime_memory=512)
+        fexec.map(
+            get_first_peak_mz, list(enumerate(clip_centr_chunks_cobjects)), runtime_memory=512
+        )
     )
 
     data_per_centr_segm_mb = 50
@@ -93,6 +95,7 @@ def segment_centroids(
     is_intensive_dataset: bool,
     isocalc_wrapper: IsocalcWrapper,
 ) -> List[CObj[pd.DataFrame]]:
+    # pylint: disable=too-many-locals,too-many-statements
     max_ds_segms_size_per_db_segm_mb = 2560 if is_intensive_dataset else 1536
     mz_min, mz_max = ds_segms_bounds[0, 0], ds_segms_bounds[-1, 1]
 
@@ -118,8 +121,8 @@ def segment_centroids(
         ).sort_values('mz')
         return centr_segm_df
 
-    def segment_centr_chunk(cobject, id, storage):
-        print(f'Segmenting clipped centroids dataframe chunk {id}')
+    def segment_centr_chunk(idx, cobject, *, storage):
+        print(f'Segmenting clipped centroids dataframe chunk {idx}')
         centr_df = load_cobj(storage, cobject)
         centr_segm_df = segment_centr_df(centr_df, first_level_centr_segm_bounds)
 
@@ -129,30 +132,30 @@ def segment_centroids(
             return segm_i, save_cobj(storage, df)
 
         with ThreadPoolExecutor(max_workers=128) as pool:
-            sub_segms = [(segm_i, df) for segm_i, df in centr_segm_df.groupby('segm_i')]
+            sub_segms = list(centr_segm_df.groupby('segm_i'))
             sub_segms_cobjects = list(pool.map(_first_level_upload, sub_segms))
 
         return dict(sub_segms_cobjects)
 
     first_level_segms_cobjects = fexec.map(
-        segment_centr_chunk, clip_centr_chunks_cobjects, runtime_memory=512
+        segment_centr_chunk, list(enumerate(clip_centr_chunks_cobjects)), runtime_memory=512
     )
 
-    def merge_centr_df_segments(segm_cobjects, id, storage):
+    def merge_centr_df_segments(idx, segm_cobjects, *, storage):
         def _second_level_segment(segm, sub_segms_n):
             segm_bounds_q = [i * 1 / sub_segms_n for i in range(0, sub_segms_n)]
             sub_segms_lower_bounds = np.quantile(segm[segm.peak_i == 0].mz.values, segm_bounds_q)
             centr_segm_df = segment_centr_df(segm, sub_segms_lower_bounds)
 
             sub_segms = []
-            for segm_i, df in centr_segm_df.groupby('segm_i'):
+            for _, df in centr_segm_df.groupby('segm_i'):
                 del df['segm_i']
                 sub_segms.append(df)
             return sub_segms
 
-        print(f'Merging segment {id} clipped centroids chunks')
+        print(f'Merging segment {idx} clipped centroids chunks')
         segm = pd.concat(load_cobjs(storage, segm_cobjects))
-        init_segms = _second_level_segment(segm, len(centr_segm_lower_bounds[id]))
+        init_segms = _second_level_segment(segm, len(centr_segm_lower_bounds[idx]))
 
         segms = []
         for init_segm in init_segms:
@@ -203,10 +206,7 @@ def segment_centroids(
             second_level_segms_dict[first_level_segm_i].append(
                 sub_segms_cobjects[first_level_segm_i]
             )
-    second_level_segms_cobjects = [
-        (cobjects,)
-        for segm_i, cobjects in sorted(second_level_segms_dict.items(), key=lambda x: x[0])
-    ]
+    second_level_segms_cobjects = sorted(second_level_segms_dict.items(), key=lambda x: x[0])
 
     first_level_cobjs = [co for cos in first_level_segms_cobjects for co in cos.values()]
 
@@ -262,7 +262,8 @@ def validate_centroid_segments(fexec, db_segms_cobjects, ds_segms_bounds, isocal
     with pd.option_context(
         'display.max_rows', None, 'display.max_columns', None, 'display.width', 1000
     ):
-        # Report large/sparse segments (indication that formulas have not been but in the right segment)
+        # Report large/sparse segments (indication that formulas have not been but in the
+        # right segment)
         large_or_sparse = stats_df[
             ((stats_df.mz_span > 15) | (stats_df.biggest_gap > 2)) & (stats_df.n_ds_segms > 2)
         ]
@@ -270,13 +271,15 @@ def validate_centroid_segments(fexec, db_segms_cobjects, ds_segms_bounds, isocal
             logger.warning('segment_centroids produced unexpectedly large/sparse segments:')
             logger.warning(large_or_sparse)
 
-        # Report cases with fewer peaks than expected (indication that formulas are being split between multiple segments)
+        # Report cases with fewer peaks than expected (indication that formulas are being split
+        # between multiple segments)
         wrong_n_peaks = stats_df[
             (stats_df.avg_n_peaks < 3.5) | (stats_df.min_n_peaks < 2) | (stats_df.max_n_peaks > 4)
         ]
         if not wrong_n_peaks.empty:
             logger.warning(
-                'segment_centroids produced segments with unexpected peaks-per-formula (should be almost always 4, occasionally 2 or 3):'
+                'segment_centroids produced segments with unexpected peaks-per-formula '
+                '(should be almost always 4, occasionally 2 or 3):'
             )
             logger.warning(wrong_n_peaks)
 

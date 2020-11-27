@@ -43,7 +43,8 @@ class ImagesManager:
     def __init__(self, storage: Storage, max_formula_images_size: int):
         if max_formula_images_size < self.__class__.min_memory_allowed:
             raise Exception(
-                f'There isn\'t enough memory to generate images, consider increasing Lithops\'s memory.'
+                "There isn't enough memory to generate images, "
+                "consider increasing Lithops's memory."
             )
 
         self._formula_metrics: Dict[int, MetricsDict] = {}
@@ -113,6 +114,7 @@ class ImagesManager:
 
 
 def gen_iso_image_sets(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, isocalc_wrapper):
+    # pylint: disable=too-many-locals
     # assume sp data is sorted by mz order ascending
     # assume centr data is sorted by mz order ascending
 
@@ -131,28 +133,30 @@ def gen_iso_image_sets(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, isocalc
         return buffer.formula_i[0], buffer.centr_ints, buffer.image
 
     if len(sp_inds) > 0:
-        lower, upper = isocalc_wrapper.mass_accuracy_bounds(centr_mzs)
-        lower_idx = np.searchsorted(sp_mzs, lower, 'l')
-        upper_idx = np.searchsorted(sp_mzs, upper, 'r')
+        lower_mz, upper_mz = isocalc_wrapper.mass_accuracy_bounds(centr_mzs)
         ranges_df = pd.DataFrame(
-            {'formula_i': centr_f_inds, 'lower_idx': lower_idx, 'upper_idx': upper_idx}
+            {
+                'formula_i': centr_f_inds,
+                'lower_idx': np.searchsorted(sp_mzs, lower_mz, 'l'),
+                'upper_idx': np.searchsorted(sp_mzs, upper_mz, 'r'),
+            }
         ).sort_values('formula_i')
 
         buffer = []
-        for df_index, formula_i, l, u in ranges_df.itertuples(True, None):
-            if len(buffer) != 0 and buffer[0][0] != centr_f_inds[df_index]:
+        for df_index, formula_i, lower_i, upper_i in ranges_df.itertuples(True, None):
+            if len(buffer) != 0 and buffer[0][0] != formula_i:
                 yield yield_buffer(buffer)
                 buffer = []
 
             m = None
-            if u > l:
-                data = sp_ints[l:u]
-                inds = sp_inds[l:u]
+            if upper_i > lower_i:
+                data = sp_ints[lower_i:upper_i]
+                inds = sp_inds[lower_i:upper_i]
                 row_inds, col_inds = np.divmod(inds, ncols)
                 row_inds = row_inds.astype(np.uint16)
                 col_inds = col_inds.astype(np.uint16)
                 m = coo_matrix((data, (row_inds, col_inds)), shape=(nrows, ncols), copy=True)
-            buffer.append((centr_f_inds[df_index], centr_p_inds[df_index], centr_ints[df_index], m))
+            buffer.append((formula_i, centr_p_inds[df_index], centr_ints[df_index], m))
 
         if len(buffer) != 0:
             yield yield_buffer(buffer)
@@ -182,7 +186,8 @@ def read_ds_segments(
     read_memory_mb = ds_segms_mb + safe_mb
     if read_memory_mb > pw_mem_mb:
         raise Exception(
-            f'There isn\'t enough memory to read dataset segments, consider increasing Lithops\'s memory for at least {read_memory_mb} mb.'
+            f"There isn't enough memory to read dataset segments, consider increasing "
+            f"Lithops's memory to at least {read_memory_mb} mb."
         )
 
     safe_mb = 1024
@@ -246,6 +251,7 @@ def process_centr_segments(
     ds_segm_size_mb: float,
     is_intensive_dataset: bool,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    # pylint: disable=too-many-locals
     ds_segm_dtype = imzml_reader.mzPrecision
     sample_area_mask = make_sample_area_mask(imzml_reader.coordinates)
     nrows, ncols = ds_dims(imzml_reader.coordinates)
@@ -311,7 +317,7 @@ def process_centr_segments(
 
     logger.info('Annotating...')
     formula_metrics_list, image_lookups_list = fexec.map_unpack(
-        process_centr_segment, [co for co in db_segms_cobjects], runtime_memory=pw_mem_mb,
+        process_centr_segment, [(co,) for co in db_segms_cobjects], runtime_memory=pw_mem_mb,
     )
     formula_metrics_df = pd.concat(formula_metrics_list)
     images_df = pd.concat(image_lookups_list)

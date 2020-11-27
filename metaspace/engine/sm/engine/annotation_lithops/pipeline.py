@@ -30,7 +30,7 @@ from sm.engine.util import SMConfig
 logger = logging.getLogger('annotation-pipeline')
 
 
-class Pipeline:
+class Pipeline:  # pylint: disable=too-many-instance-attributes
     mols_dbs_cobjects: List[CObj[List[str]]]
     formula_cobjects: List[CObj[pd.DataFrame]]
     db_data_cobjects: List[CObj[DbFDRData]]
@@ -84,7 +84,7 @@ class Pipeline:
     def __call__(
         self, debug_validate=False, use_cache=True
     ) -> Tuple[Dict[int, pd.DataFrame], List[CObj[List[Tuple[int, bytes]]]]]:
-
+        # pylint: disable=unexpected-keyword-arg
         self.prepare_moldb(debug_validate=debug_validate)
 
         self.load_ds(use_cache=use_cache)

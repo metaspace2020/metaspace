@@ -26,8 +26,7 @@ def calculate_centroids(
                 (formula_i, peak_i, mzs[peak_i], ints[peak_i], target, targeted)
                 for peak_i in range(len(mzs))
             ]
-        else:
-            return []
+        return []
 
     def calculate_peaks_chunk(segm_i: int, segm_cobject: CObj[pd.DataFrame], *, storage: Storage):
         print(f'Calculating peaks from formulas chunk {segm_i}')
@@ -124,7 +123,8 @@ def validate_centroids(fexec: Executor, peaks_cobjects: List[CObj[pd.DataFrame]]
     with pd.option_context(
         'display.max_rows', None, 'display.max_columns', None, 'display.width', 1000
     ):
-        # Report cases with fewer peaks than expected (indication that formulas are being split between multiple segments)
+        # Report cases with fewer peaks than expected (indication that formulas are being
+        # split between multiple segments)
         wrong_n_peaks = stats_df[
             (stats_df.avg_n_peaks < 3.9) | (stats_df.min_n_peaks < 2) | (stats_df.max_n_peaks > 4)
         ]

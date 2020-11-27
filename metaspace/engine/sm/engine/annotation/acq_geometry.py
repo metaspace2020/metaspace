@@ -14,6 +14,7 @@ def make_ims_acq_geometry(metadata, dims):
 
 
 def make_lcms_acq_geometry(ms_file_path):
+    # pylint: disable=import-outside-toplevel
     from sm.engine.annotation.mzml_parser import MzMLParser
 
     ms_experiment = MzMLParser.read_ms1_experiment(ms_file_path)

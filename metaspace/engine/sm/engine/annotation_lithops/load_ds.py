@@ -111,7 +111,7 @@ def define_ds_segments(imzml_parser, ds_segm_size_mb=5, sample_sp_n=1000):
     spectra_sample = list(spectra_sample_gen(imzml_parser, sample_ratio=sample_ratio))
 
     spectra_mzs = np.array([mz for sp_id, mzs, ints in spectra_sample for mz in mzs])
-    total_n_mz = spectra_mzs.shape[0] / sample_ratio
+    total_n_mz = spectra_mzs.shape[0] / sample_ratio  # pylint: disable=unsubscriptable-object
 
     row_size = (4 if imzml_parser.mzPrecision == 'f' else 8) + 4 + 4
     segm_n = int(np.ceil(total_n_mz * row_size / (ds_segm_size_mb * 2 ** 20)))
@@ -130,8 +130,8 @@ def define_ds_segments(imzml_parser, ds_segm_size_mb=5, sample_sp_n=1000):
 
 def segment_spectra_chunk(chunk_i, sp_mz_int_buf, ds_segments_bounds, ds_segments_path):
     def _segment(args):
-        segm_i, (l, r) = args
-        segm_start, segm_end = np.searchsorted(sp_mz_int_buf.mz.values, (l, r))
+        segm_i, (lo_idx, hi_idx) = args
+        segm_start, segm_end = np.searchsorted(sp_mz_int_buf.mz.values, (lo_idx, hi_idx))
         segm = sp_mz_int_buf.iloc[segm_start:segm_end]
         serialize_to_file(segm, ds_segments_path / f'ds_segm_{segm_i:04}_{chunk_i:04}')
         return segm_i, len(segm)
@@ -191,12 +191,12 @@ def make_segments(imzml_reader, ibd_path, ds_segments_bounds, segments_dir, sort
     logger.debug(f'Reading dataset in {chunks_n} chunks: {chunk_ranges}')
 
     segm_sizes = []
-    with ProcessPoolExecutor(n_cpus) as ex:
+    with ProcessPoolExecutor(n_cpus) as executor:
         chunk_tasks = [
             (imzml_reader, ibd_path, chunk_i, start, end, ds_segments_bounds, segments_dir)
             for chunk_i, (start, end) in enumerate(chunk_ranges)
         ]
-        for chunk_segm_sizes in ex.map(parse_and_segment_chunk, chunk_tasks):
+        for chunk_segm_sizes in executor.map(parse_and_segment_chunk, chunk_tasks):
             segm_sizes.extend(chunk_segm_sizes)
 
     ds_segm_lens = (
@@ -310,5 +310,6 @@ def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobje
         expected_total_len = np.sum(imzml_reader.mzLengths)
         if total_len != expected_total_len:
             logger.warning(
-                f'segment_spectra output {total_len} peaks, but the imzml file contained {expected_total_len}'
+                f'segment_spectra output {total_len} peaks, '
+                f'but the imzml file contained {expected_total_len}'
             )

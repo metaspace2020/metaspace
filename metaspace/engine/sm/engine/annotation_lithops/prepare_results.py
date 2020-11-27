@@ -17,6 +17,36 @@ from sm.engine.png_generator import PngGenerator
 logger = logging.getLogger('annotation-pipeline')
 
 
+def _split_png_jobs(image_tasks_df, w, h):
+    # Guess the cost per imageset, and split into relatively even chunks.
+    # This is a quick attempt and needs review
+    # This assumes they're already sorted by cobj, and factors in:
+    # * Number of populated pixels (because very sparse images should be much faster to encode)
+    # * Total image size (because even empty pixels have some cost)
+    # * Cost of loading a new cobj
+    # * Constant overhead per image
+    cobj_keys = [cobj.key for cobj in image_tasks_df.cobj]
+    cobj_changed = np.array(
+        [(i == 0 or key == cobj_keys[i - 1]) for i, key in enumerate(cobj_keys)]
+    )
+    image_tasks_df['cost'] = image_tasks_df.n_pixels + (w * h) / 5 + cobj_changed * 100000 + 1000
+    total_cost = image_tasks_df.cost.sum()
+    n_jobs = int(np.ceil(np.clip(total_cost / 1e8, 1, 100)))
+    job_bound_vals = np.linspace(0, total_cost + 1, n_jobs + 1)
+    job_bound_idxs = np.searchsorted(np.cumsum(image_tasks_df.cost), job_bound_vals)
+    jobs = [
+        [image_tasks_df.iloc[start:end]]
+        for start, end in zip(job_bound_idxs[:-1], job_bound_idxs[1:])
+        if start != end
+    ]
+    job_costs = [df.cost.sum() for df, in jobs]
+    logger.debug(
+        f'Generated {len(jobs)} PNG jobs, min cost: {np.min(job_costs)}, '
+        f'max cost: {np.max(job_costs)}, total cost: {total_cost}'
+    )
+    return jobs
+
+
 def filter_results_and_make_pngs(
     fexec: Executor,
     formula_metrics_df: pd.DataFrame,
@@ -39,33 +69,7 @@ def filter_results_and_make_pngs(
 
     image_tasks_df = images_df[images_df.index.isin(all_formula_is)].copy()
     w, h = ds_dims(imzml_reader.coordinates)
-    # Guess the cost per imageset, and split into relatively even chunks.
-    # This is a quick attempt and needs review
-    # This assumes they're already sorted by cobj, and factors in:
-    # * Number of populated pixels (because very sparse images should be much faster to encode)
-    # * Total image size (because even empty pixels have some cost)
-    # * Cost of loading a new cobj
-    # * Constant overhead per image
-    cobj_keys = [cobj.key for cobj in image_tasks_df.cobj]
-    cobj_changed = np.array(
-        [(i == 0 or key == cobj_keys[i - 1]) for i, key in enumerate(cobj_keys)]
-    )
-    image_tasks_df['cost'] = image_tasks_df.n_pixels + (w * h) / 5 + cobj_changed * 100000 + 1000
-    total_cost = image_tasks_df.cost.sum()
-    n_jobs = int(np.ceil(np.clip(total_cost / 1e8, 1, 100)))
-    job_bound_vals = np.linspace(0, total_cost + 1, n_jobs + 1)
-    job_bound_idxs = np.searchsorted(np.cumsum(image_tasks_df.cost), job_bound_vals)
-
-    jobs = [
-        [image_tasks_df.iloc[start:end]]
-        for start, end in zip(job_bound_idxs[:-1], job_bound_idxs[1:])
-        if start != end
-    ]
-    job_costs = [df.cost.sum() for df, in jobs]
-    logger.debug(
-        f'Generated {len(jobs)} PNG jobs, min cost: {np.min(job_costs)}, '
-        f'max cost: {np.max(job_costs)}, total cost: {total_cost}'
-    )
+    jobs = _split_png_jobs(image_tasks_df, w, h)
     png_generator = PngGenerator(make_sample_area_mask(imzml_reader.coordinates))
 
     def save_png_chunk(df: pd.DataFrame, *, storage: Storage):
