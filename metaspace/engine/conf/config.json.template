@@ -96,9 +96,11 @@
       "secret_key": "{{ sm_lithops_cos_secret_key }}"
     },
     "sm_storage": {
-## Each entry in this block is an array of [Bucket name, Prefix]
-## e.g. "imzml": ["my-bucket","files/go/here"] means ImzML files will be stored under cos://my-bucket/store/things/in/here/
-## The Prefix is necessary and should not have a leading or trailing slash
+{#
+Each entry in this block is an array of [Bucket name, Prefix]
+e.g. "imzml": ["my-bucket","files/go/here"] means ImzML files will be stored under cos://my-bucket/store/things/in/here/
+The Prefix is necessary and should not have a leading or trailing slash
+#}
       "imzml": ["{{ sm_lithops_cos_bucket_imzml }}", "imzml"],
       "moldb": ["{{ sm_lithops_cos_bucket_data }}", "moldb"],
       "centroids": ["{{ sm_lithops_cos_bucket_data }}", "centroids"],
