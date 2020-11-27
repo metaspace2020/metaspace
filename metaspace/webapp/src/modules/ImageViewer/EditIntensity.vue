@@ -3,7 +3,9 @@
     class="relative"
     spellcheck="false"
     autocomplete="off"
-    @submit.prevent="onSubmit"
+    @submit.prevent="submit"
+    @click.stop
+    @mousedown.stop
   >
     <label>
       <span class="sr-only">
@@ -12,15 +14,21 @@
       <input
         ref="inputRef"
         v-model="inputText"
+        :class="[
+          'w-full h-6 pl-2 pr-6 box-border border border-solid text-body border-gray-300 bg-white rounded-sm',
+          'text-xs tracking-wider transition-colors duration-150 ease-in-out outline-none shadow',
+          error ? 'border-danger' : 'focus:border-primary hover:border-gray-500'
+        ]"
         type="text"
         :title="label"
         :placeholder="placeholder"
         :error="hasError"
+        @keyup.esc="$emit('close')"
       />
     </label>
     <fade-transition class="button-reset absolute top-0 right-0 w-5 h-5 rounded-sm">
       <button
-        v-if="inputText !== storedValue"
+        v-if="inputText !== initialValue"
         key="submit"
         type="submit"
       >
@@ -29,8 +37,8 @@
       <button
         v-else-if="inputText.length"
         key="clear"
-        type="text"
-        @click="inputText = '';"
+        type="button"
+        @click="$emit('reset')"
       >
         <CloseIcon />
       </button>
@@ -38,7 +46,7 @@
   </form>
 </template>
 <script lang="ts">
-import { defineComponent, ref, watch } from '@vue/composition-api'
+import { defineComponent, ref, onMounted, onBeforeUnmount } from '@vue/composition-api'
 
 import FadeTransition from '../../components/FadeTransition'
 import ArrowIcon from '../../assets/inline/refactoring-ui/arrow-thin-right-circle.svg'
@@ -51,62 +59,57 @@ export default defineComponent({
     FadeTransition,
   },
   props: {
+    hasError: Boolean,
     label: String,
     placeholder: String,
-    value: Number,
+    initialValue: String,
   },
   setup(props, { emit }) {
+    const inputText = ref(props.initialValue || '')
     const inputRef = ref<HTMLInputElement>(null)
-    const inputText = ref('')
+    const error = ref(false)
 
-    watch(() => props.value, () => {
-      inputText.value = props.value?.toExponential(1) || ''
+    const onOutClick = () => emit('close')
+
+    onMounted(() => {
+      if (inputRef.value) {
+        inputRef.value.focus()
+      }
+      document.addEventListener('mousedown', onOutClick)
     })
 
-    const hasError = ref(false)
+    onBeforeUnmount(() => {
+      document.removeEventListener('mousedown', onOutClick)
+    })
+
     return {
       inputText,
       inputRef,
-      hasError,
-      onSubmit() {
-        if (inputText.value.length === 0) {
-          emit('input', undefined)
-        } else {
-          const float = parseFloat(inputText.value)
-          if (isNaN(float)) {
-            hasError.value = true
-          } else {
-            emit('input', float)
-            hasError.value = false
-          }
+      error,
+      submit() {
+        const text = inputText.value
+        if (text === props.initialValue) {
+          emit('close')
+          return
         }
-        if (inputRef.value) inputRef.value.focus()
+        if (text.length === 0) {
+          emit('reset')
+          return
+        }
+        const floatValue = parseFloat(text)
+        if (isNaN(floatValue)) {
+          error.value = true
+        } else {
+          emit('submit', floatValue)
+        }
       },
     }
   },
 })
 </script>
 <style scoped>
-form {
-  width: calc(50% - 6px);
-}
-
-input {
-  @apply w-full h-6 pl-2 pr-6 box-border border border-solid text-body border-gray-300 bg-white rounded-sm
-    tracking-wider transition-colors duration-150 ease-in-out;
-  outline: none;
-}
 input::placeholder {
   @apply text-gray-600;
-}
-input:hover {
-  @apply border-gray-500;
-}
-input:focus {
-  @apply border-primary;
-}
-input[error] {
-  @apply border-danger;
 }
 
 button {

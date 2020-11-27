@@ -20,14 +20,12 @@ interface State {
 interface Props {
   disabled?: boolean
   x: number
-  bounds: { minX: number, maxX: number }
 }
 
 export default defineComponent<Props>({
   props: {
     disabled: { type: Boolean, default: false },
     x: Number,
-    bounds: Object,
   },
   setup(props, { emit }) {
     const thumb = ref<HTMLElement>(null)
@@ -42,13 +40,9 @@ export default defineComponent<Props>({
       return event
     }
 
-    function emitX(x: number) {
-      emit('change', Math.min(Math.max(x, props.bounds.minX), props.bounds.maxX))
-    }
-
     function onMove(event: MouseEvent | TouchEvent) {
       const eventTouch = getEventTouch(event)
-      emitX(eventTouch.pageX - state.startX)
+      emit('change', eventTouch.pageX - state.startX)
     }
 
     function onStop() {

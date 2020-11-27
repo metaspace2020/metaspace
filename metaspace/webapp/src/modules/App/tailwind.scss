@@ -9,11 +9,24 @@
 }
 
 .button-reset {
-  @apply bg-none text-inherit border-none outline-none cursor-pointer p-0;
+  @apply bg-none text-inherit border-none cursor-pointer p-0;
+  letter-spacing: inherit;
+  line-height: inherit;
 }
 
 .margin-reset > * {
   margin: 0;
+}
+
+/* https://nelo.is/writing/styling-better-focus-states */
+*:focus {
+  outline: none;
+}
+.focus-visible,
+.focus-ring:focus:not(:active) {
+  outline: 2px solid theme('colors.primary');
+  outline-offset: 2px;
+  /* box-shadow: 0 0 0 2px theme('colors.primary'); - too intrusive without redesigning everything */
 }
 
 @tailwind base;

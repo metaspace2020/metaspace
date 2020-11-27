@@ -23,16 +23,12 @@ export interface IonImageState {
 }
 
 export interface IonImageIntensity {
-  clippedMin: number
-  clippedMax: number
-  imageMin: number
-  imageMax: number
-  scaledMin: number
-  scaledMax: number
-  lowQuantile: number
-  highQuantile: number
-  isMinClipped: boolean
-  isMaxClipped: boolean
+  clipped: number
+  image: number
+  scaled: number
+  quantile: number
+  user: number
+  status: 'LOCKED' | 'CLIPPED' | undefined
 }
 
 export interface ColorBar {
@@ -69,9 +65,13 @@ interface Props {
 }
 
 interface Settings {
-  lockMin: string
-  lockMax: string
+  lockMin: number | undefined
+  lockMax: number | undefined
   isLockActive: boolean
+  imageSize: {
+    width: number
+    height: number
+  } | null
 }
 
 const channels = ['red', 'green', 'blue', 'magenta', 'yellow', 'cyan', 'orange']
@@ -83,9 +83,10 @@ const state = reactive<State>({
   nextChannel: channels[0],
 })
 const settings = reactive<Settings>({
-  lockMin: '',
-  lockMax: '',
-  isLockActive: false,
+  lockMin: undefined,
+  lockMax: undefined,
+  isLockActive: true,
+  imageSize: null,
 })
 const ionImageLayerCache : Record<string, IonImageLayer> = {}
 const rawImageCache : Record<string, Ref<Image | null>> = {}
@@ -94,19 +95,9 @@ const orderedLayers = computed(() => state.order.map(id => ionImageLayerCache[id
 
 const lockedIntensities = computed(() => {
   if (settings.isLockActive) {
-    const minF = parseFloat(settings.lockMin)
-    const maxF = parseFloat(settings.lockMax)
-    return [
-      isNaN(minF) ? undefined : minF,
-      isNaN(maxF) ? undefined : maxF,
-    ]
+    return [settings.lockMin, settings.lockMax]
   }
   return []
-})
-
-const hasLockedIntensities = computed(() => {
-  const [lockedMin, lockedMax] = lockedIntensities.value
-  return lockedMin !== undefined || lockedMax !== undefined
 })
 
 function removeLayer(id: string) : number {
@@ -120,14 +111,36 @@ function removeLayer(id: string) : number {
   return idx
 }
 
-function getInitialLayerState(annotation: Annotation): IonImageState {
+function getImageIntensities(annotation: Annotation) {
   const [isotopeImage] = annotation.isotopeImages
   const { minIntensity = 0, maxIntensity = 1 } = isotopeImage || {}
+  return {
+    minIntensity,
+    maxIntensity,
+  }
+}
+
+function getInitialLayerState(annotation: Annotation): IonImageState {
+  const { minIntensity, maxIntensity } = getImageIntensities(annotation)
 
   return {
     maxIntensity,
     minIntensity,
     scaleRange: [0, 1],
+  }
+}
+
+function getIntensityData(
+  image: number, clipped: number, scaled: number, user: number, quantile: number, isLocked?: boolean,
+) {
+  const isClipped = quantile > 0 && quantile < 1 && user === image
+  return {
+    image,
+    clipped,
+    scaled,
+    user,
+    quantile,
+    status: isLocked ? 'LOCKED' : isClipped ? 'CLIPPED' : undefined,
   }
 }
 
@@ -142,6 +155,13 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
       loadPngFromUrl(isotopeImage.url)
         .then(img => {
           rawImageCache[layer.id].value = img
+
+          if (settings.imageSize === null) {
+            settings.imageSize = {
+              width: img.width,
+              height: img.height,
+            }
+          }
         })
         .catch(err => {
           reportError(err, null)
@@ -154,23 +174,19 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
   )
 
   const userIntensities = computed(() => {
-    const [lockedMin, lockedMax] = lockedIntensities.value
-    if (lockedMin !== undefined || lockedMax !== undefined) {
-      const { minIntensity, maxIntensity } = activeState.value
-      return [
-        lockedMin ?? minIntensity,
-        lockedMax ?? maxIntensity,
-      ] as [number, number]
-    }
+    const { minIntensity, maxIntensity } = activeState.value
+    const [min = minIntensity, max = maxIntensity] = lockedIntensities.value
+    return [min, max] as [number, number]
   })
 
   const image = computed(() => {
     const raw = rawImageCache[layer.id]
     if (raw.value !== null) {
+      const { minIntensity, maxIntensity } = getImageIntensities(layer.annotation)
       return processIonImage(
         raw.value,
-        activeState.value.minIntensity,
-        activeState.value.maxIntensity,
+        minIntensity,
+        maxIntensity,
         props.scaleType,
         activeState.value.scaleRange,
         userIntensities.value,
@@ -207,23 +223,28 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
       const {
         minIntensity, maxIntensity,
         clippedMinIntensity, clippedMaxIntensity,
-        lowQuantile, highQuantile,
         scaledMinIntensity, scaledMaxIntensity,
+        userMinIntensity, userMaxIntensity,
+        lowQuantile, highQuantile,
       } = image.value || {}
       const [lockedMin, lockedMax] = lockedIntensities.value
       return {
-        lowQuantile,
-        highQuantile,
-        isMinClipped: !hasLockedIntensities.value && lowQuantile > 0,
-        isMaxClipped: !hasLockedIntensities.value && highQuantile < 1,
-        isMinLocked: lockedMin !== undefined,
-        isMaxLocked: lockedMax !== undefined,
-        imageMin: minIntensity,
-        imageMax: maxIntensity,
-        clippedMin: clippedMinIntensity,
-        clippedMax: clippedMaxIntensity,
-        scaledMin: scaledMinIntensity,
-        scaledMax: scaledMaxIntensity,
+        min: getIntensityData(
+          minIntensity,
+          clippedMinIntensity,
+          scaledMinIntensity,
+          userMinIntensity,
+          lowQuantile,
+          lockedMin !== undefined,
+        ),
+        max: getIntensityData(
+          maxIntensity,
+          clippedMaxIntensity,
+          scaledMaxIntensity,
+          userMaxIntensity,
+          highQuantile,
+          lockedMax !== undefined,
+        ),
       }
     }
     return null
@@ -257,31 +278,32 @@ function resetChannelsState() {
 export function resetIonImageState() {
   resetChannelsState()
 
-  settings.lockMin = ''
-  settings.lockMax = ''
-  settings.isLockActive = false
+  settings.lockMin = undefined
+  settings.lockMax = undefined
+  settings.isLockActive = true
+  settings.imageSize = null
 }
 
 export const useIonImages = (props: Props) => {
   const ionImagesWithData = computed(() => {
-    const data = []
+    const memo = []
     if (viewerState.mode.value === 'SINGLE') {
       const layer = activeAnnotation.value ? ionImageLayerCache[activeAnnotation.value] : null
       if (layer) {
-        data.push({
+        memo.push({
           layer,
           data: createComputedImageData(props, layer),
         })
       }
     } else {
       for (const layer of orderedLayers.value) {
-        data.push({
+        memo.push({
           layer,
           data: createComputedImageData(props, layer),
         })
       }
     }
-    return data
+    return memo
   })
 
   const ionImagesLoading = computed(() => {
@@ -356,6 +378,13 @@ export const useIonImages = (props: Props) => {
     return items
   })
 
+  const ionImageDimensions = computed(() => {
+    if (settings.imageSize !== null) {
+      return settings.imageSize
+    }
+    return { width: undefined, height: undefined }
+  })
+
   watch(() => props.annotation, (annotation) => {
     activeAnnotation.value = annotation.id
 
@@ -403,6 +432,7 @@ export const useIonImages = (props: Props) => {
     ionImageMenuItems,
     singleIonImageControls,
     ionImagesLoading,
+    ionImageDimensions,
   }
 }
 

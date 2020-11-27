@@ -1,6 +1,6 @@
 <template>
   <div
-    class="box-border h-3 relative rounded-full bg-gray-100 outline-none sm-slider-track"
+    class="box-border h-3 relative rounded-full bg-gray-100 sm-slider-track"
     @click.stop="onClick"
     @keypress.enter.self="$emit('keypress')"
     @keypress.space.self.prevent="$emit('keypress')"

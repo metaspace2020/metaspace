@@ -1,5 +1,6 @@
 <template>
   <div
+    v-if="intensity"
     ref="container"
     class="relative"
   >
@@ -12,67 +13,51 @@
       :step="0.01"
       :value="model.scaleRange"
       :disabled="isDisabled"
-      :min-tooltip="values.tooltipMin"
-      :max-tooltip="values.tooltipMax"
+      :min-tooltip="intensity.min.scaled.toExponential(1)"
+      :max-tooltip="intensity.max.scaled.toExponential(1)"
       @change="range => $emit('change', range)"
-      @thumb-start="$emit('thumb-start')"
-      @thumb-stop="$emit('thumb-stop')"
+      @thumb-start="disableTooltips = true; $emit('thumb-start')"
+      @thumb-stop="disableTooltips = false; $emit('thumb-stop')"
       @track-click="$emit('track-click')"
     />
-    <div
-      v-if="intensity"
-      class="flex justify-between leading-6 tracking-wide"
-    >
-      <clipping-tooltip
-        v-if="intensity.isMinClipped"
-        :id="id + '-min'"
+    <div class="flex justify-between items-start h-6 leading-6 tracking-wide relative z-10">
+      <ion-intensity
+        v-model="model.minIntensity"
+        :intensities="intensity.min"
+        :tooltip-disabled="disableTooltips"
         clipping-type="outlier-min"
-        placement="bottom-start"
-        :clipped-intensity="values.rangeMin"
-        :original-intensity="values.imageMin"
+        label="Minimum intensity"
+        placeholder="min."
+        @lock="value => { settings.lockMin = value }"
       />
-      <span
-        v-else-if="intensity.isMinLocked"
-        class="cursor-help font-medium text-blue-700"
-        title="Locked intensity"
-      >
-        {{ values.rangeMin }}
-      </span>
-      <span v-else>
-        {{ values.rangeMin }}
-      </span>
-      <clipping-tooltip
-        v-if="intensity.isMaxClipped"
-        :id="id + '-max'"
-        placement="bottom-end"
-        :clipping-type="intensity.isMinClipped ? 'outlier-max' : 'hotspot-removal'"
-        :clipped-intensity="values.rangeMax"
-        :original-intensity="values.imageMax"
+      <ion-intensity
+        v-model="model.maxIntensity"
+        :intensities="intensity.max"
+        :tooltip-disabled="disableTooltips"
+        :clipping-type="intensity.min.status === 'CLIPPED' ? 'outlier-max' : 'hotspot-removal'"
+        label="Maximum intensity"
+        placeholder="max."
+        @lock="value => { settings.lockMax = value }"
       />
-      <span
-        v-else-if="intensity.isMaxLocked"
-        class="cursor-help font-medium text-blue-700"
-        title="Locked intensity"
-      >
-        {{ values.rangeMax }}
-      </span>
-      <span v-else>
-        {{ values.rangeMax }}
-      </span>
     </div>
   </div>
 </template>
 <script lang="ts">
 import { defineComponent, computed, ref, watch } from '@vue/composition-api'
 
-import ClippingTooltip from './ClippingTooltip.vue'
+import IonIntensity from './IonIntensity.vue'
+
 import { RangeSlider, THUMB_WIDTH } from '../../components/Slider'
+import FadeTransition from '../../components/FadeTransition'
 
 import { IonImageState, IonImageIntensity, ColorBar, useIonImageSettings } from './ionImageState'
 
 interface Props {
   model: IonImageState,
-  intensity: IonImageIntensity,
+  intensity: {
+    min: IonImageIntensity,
+    max: IonImageIntensity,
+  },
   colorBar: ColorBar,
   isDisabled: boolean
 }
@@ -88,7 +73,8 @@ export default defineComponent<Props>({
   },
   components: {
     RangeSlider,
-    ClippingTooltip,
+    FadeTransition,
+    IonIntensity,
   },
   setup(props) {
     const { settings } = useIonImageSettings()
@@ -98,14 +84,7 @@ export default defineComponent<Props>({
     return {
       container,
       settings,
-      values: computed(() => ({
-        rangeMin: props.intensity.clippedMin.toExponential(1),
-        rangeMax: props.intensity.clippedMax.toExponential(1),
-        tooltipMin: props.intensity.scaledMin.toExponential(1),
-        tooltipMax: props.intensity.scaledMax.toExponential(1),
-        imageMin: props.intensity.imageMin.toExponential(1),
-        imageMax: props.intensity.imageMax.toExponential(1),
-      })),
+      disableTooltips: ref(false),
       style: computed(() => {
         if (container.value) {
           const width = container.value.offsetWidth

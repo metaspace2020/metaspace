@@ -6,21 +6,22 @@ from datetime import datetime
 import pandas as pd
 from pyMSpec.pyisocalc.canopy.sum_formula_actions import InvalidFormulaError
 from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
+
 from sm.engine.db import DB, transaction_context
 from sm.engine.errors import SMError
 
 logger = logging.getLogger('engine')
 
 
-class MalformedCSV(Exception):
+class MalformedCSV(SMError):
     def __init__(self, message):
+        super().__init__(message)
         self.message = message
-        super().__init__()
 
 
-class BadData(Exception):
+class BadData(SMError):
     def __init__(self, message, *errors):
-        super().__init__()
+        super().__init__(message)
         self.message = message
         self.errors = errors
 
