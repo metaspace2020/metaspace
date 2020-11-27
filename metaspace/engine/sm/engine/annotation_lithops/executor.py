@@ -178,7 +178,7 @@ class Executor:
             ]
 
             assert valid_executors, f'Could not find an executor supporting {runtime_memory}MB'
-            executor_type, executor = valid_executors[0][1]
+            executor_type, executor = valid_executors[0]
             logger.debug(f'Selected executor {executor_type}')
             futures = executor.map(func, args, runtime_memory=runtime_memory, **kwargs)
             return_vals = executor.get_result(futures)
