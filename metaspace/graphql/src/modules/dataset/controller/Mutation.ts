@@ -229,14 +229,18 @@ const setDatabaseIdsInInput = async (
 };
 
 const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
-  const { input, priority, force, delFirst, skipValidation, useLithops } = args,
-    datasetId = args.id || newDatasetId(),
-    datasetIdWasSpecified = args.id != null;
+  const { input, priority, force, delFirst, skipValidation, useLithops } = args;
+  const datasetId = args.id || newDatasetId();
+  const datasetIdWasSpecified = args.id != null;
 
   logger.info(`Creating dataset '${datasetId}' by '${ctx.user.id}' user ...`);
   let dataset;
   if (datasetIdWasSpecified) {
-    dataset = await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId);
+    // Use getDatasetForEditing to validate users' ability to edit, but skip it if they're an admin trying to create a
+    // new dataset with a specified ID.
+    if (!ctx.isAdmin || await ctx.entityManager.findOne(DatasetModel, datasetId) != null) {
+      dataset = await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId);
+    }
   } else {
     assertCanCreateDataset(ctx.user);
   }
