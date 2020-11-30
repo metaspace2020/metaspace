@@ -5,7 +5,7 @@ class MzMLParser:
 
     @staticmethod
     def read_ms1_experiment(filepath):
-        # pylint: disable=import-outside-toplevel,no-name-in-module
+        # pylint: disable=import-outside-toplevel,no-name-in-module,import-error
         from pyopenms import FileHandler, MSExperiment
 
         source_experiment = MSExperiment()
