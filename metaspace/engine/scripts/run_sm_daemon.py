@@ -55,9 +55,10 @@ def main(daemon_name):
         for _ in range(sm_config['services']['update_daemon_threads']):
             daemon = SMIndexUpdateDaemon(get_manager(), make_update_queue_cons)
             daemons.append(daemon)
-
+    elif daemon_name == 'lithops':
         for _ in range(sm_config['services']['lithops_daemon_threads']):
-            daemons.append(LithopsDaemon(get_manager(), lit_qdesc=SM_LITHOPS, upd_qdesc=SM_UPDATE))
+            daemon = LithopsDaemon(get_manager(), lit_qdesc=SM_LITHOPS, upd_qdesc=SM_UPDATE)
+            daemons.append(daemon)
     else:
         raise Exception(f'Wrong SM daemon name: {daemon_name}')
 
@@ -79,7 +80,7 @@ if __name__ == "__main__":
         description='A daemon process for consuming messages from a '
         'queue and performing dataset manipulations'
     )
-    parser.add_argument('--name', type=str, help='SM daemon name (annotate/update)')
+    parser.add_argument('--name', type=str, help='SM daemon name (annotate/update/lithops)')
     parser.add_argument(
         '--config', dest='config_path', default='conf/config.json', type=str, help='SM config path'
     )
