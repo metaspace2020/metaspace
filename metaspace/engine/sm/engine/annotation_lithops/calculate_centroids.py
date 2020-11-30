@@ -132,6 +132,7 @@ def validate_centroids(fexec: Executor, peaks_cobjects: List[CObj[pd.DataFrame]]
         wrong_n_peaks = stats_df[
             (stats_df.avg_n_peaks < 3.9) | (stats_df.min_n_peaks < 2) | (stats_df.max_n_peaks > 4)
         ]
+        # pylint: disable=duplicate-code
         if not wrong_n_peaks.empty:
             warn(
                 'segment_centroids produced segments with unexpected peaks-per-formula '
