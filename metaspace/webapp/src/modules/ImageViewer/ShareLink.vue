@@ -74,6 +74,7 @@ import { exportIonImageState } from './ionImageState'
 import { exportImageViewerState } from './state'
 import reportError from '../../lib/reportError'
 import config from '../../lib/config'
+import useOutClick from '../../lib/useOutClick'
 
 interface Route {
   query: Record<string, string>
@@ -109,11 +110,6 @@ export default defineComponent<Props>({
       },
     }))
 
-    const onOutclick = () => {
-      status.value = 'CLOSED'
-      document.removeEventListener('click', onOutclick, true)
-    }
-
     const handleClick = async() => {
       if (status.value !== 'OPEN') {
         return
@@ -142,7 +138,7 @@ export default defineComponent<Props>({
         })
         viewId.value = result.data.saveImageViewerSnapshot
         status.value = 'HAS_LINK'
-        document.addEventListener('click', onOutclick, true)
+        useOutClick(() => { status.value = 'CLOSED' })
       } catch (e) {
         reportError(e)
         status.value = 'CLOSED'
