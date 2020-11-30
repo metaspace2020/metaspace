@@ -220,6 +220,12 @@ def segment_centroids(
 
 
 def validate_centroid_segments(fexec, db_segms_cobjects, ds_segms_bounds, isocalc_wrapper):
+    def warn(message, df=None):
+        warnings.append(message)
+        logger.warning(message)
+        if df:
+            logger.warning(df)
+
     def get_segm_stats(storage, segm_cobject):
         segm = load_cobj(storage, segm_cobject)
         mzs = np.sort(segm.mz.values)
@@ -248,16 +254,12 @@ def validate_centroid_segments(fexec, db_segms_cobjects, ds_segms_bounds, isocal
         )
         return formula_is, stats
 
+    warnings = []
+
     segm_formula_is, stats = fexec.map_unpack(
         get_segm_stats, db_segms_cobjects, runtime_memory=1024
     )
     stats_df = pd.DataFrame(stats)
-
-    try:
-        __import__('__main__').debug_segms_df = stats_df
-        logger.info('segment_centroids debug info written to "debug_segms_df" variable')
-    except Exception:
-        pass
 
     with pd.option_context(
         'display.max_rows', None, 'display.max_columns', None, 'display.width', 1000
@@ -268,8 +270,7 @@ def validate_centroid_segments(fexec, db_segms_cobjects, ds_segms_bounds, isocal
             ((stats_df.mz_span > 15) | (stats_df.biggest_gap > 2)) & (stats_df.n_ds_segms > 2)
         ]
         if not large_or_sparse.empty:
-            logger.warning('segment_centroids produced unexpectedly large/sparse segments:')
-            logger.warning(large_or_sparse)
+            warn('segment_centroids produced unexpectedly large/sparse segments', large_or_sparse)
 
         # Report cases with fewer peaks than expected (indication that formulas are being split
         # between multiple segments)
@@ -277,39 +278,29 @@ def validate_centroid_segments(fexec, db_segms_cobjects, ds_segms_bounds, isocal
             (stats_df.avg_n_peaks < 3.5) | (stats_df.min_n_peaks < 2) | (stats_df.max_n_peaks > 4)
         ]
         if not wrong_n_peaks.empty:
-            logger.warning(
+            warn(
                 'segment_centroids produced segments with unexpected peaks-per-formula '
-                '(should be almost always 4, occasionally 2 or 3):'
+                '(should be almost always 4, occasionally 2 or 3):',
+                wrong_n_peaks,
             )
-            logger.warning(wrong_n_peaks)
 
         # Report missing peaks
         missing_peaks = stats_df[stats_df.missing_peaks > 0]
         if not missing_peaks.empty:
-            logger.warning('segment_centroids produced segments with missing peaks:')
-            logger.warning(missing_peaks)
+            warn('segment_centroids produced segments with missing peaks:', missing_peaks)
 
         # Report unsorted segments
         unsorted = stats_df[~stats_df.is_sorted]
         if not unsorted.empty:
-            logger.warning('segment_centroids produced unsorted segments:')
-            logger.warning(unsorted)
+            warn('segment_centroids produced unsorted segments:', unsorted)
 
-    formula_in_segms_df = pd.DataFrame(
-        [
-            (formula_i, segm_i)
-            for segm_i, formula_is in enumerate(segm_formula_is)
-            for formula_i in formula_is
-        ],
-        columns=['formula_i', 'segm_i'],
-    )
-    formulas_in_multiple_segms = (formula_in_segms_df.groupby('formula_i').segm_i.count() > 1)[
-        lambda s: s
-    ].index
-    formulas_in_multiple_segms_df = formula_in_segms_df[
-        lambda df: df.formula_i.isin(formulas_in_multiple_segms)
-    ].sort_values('formula_i')
+    validate_formulas_not_in_multiple_segms(segm_formula_is, warn)
 
-    if not formulas_in_multiple_segms_df.empty:
-        logger.warning('segment_centroids produced put the same formula in multiple segments:')
-        logger.warning(formulas_in_multiple_segms_df)
+    if warnings:
+        try:
+            __import__('__main__').stats_df = stats_df
+            print('validate_segment_centroids debug info written to "stats_df" variable')
+        except Exception:
+            pass
+
+        raise AssertionError('Some checks failed in validate_centroids')

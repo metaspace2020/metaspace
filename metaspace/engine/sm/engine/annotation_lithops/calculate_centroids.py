@@ -141,39 +141,42 @@ def validate_centroids(fexec: Executor, peaks_cobjects: List[CObj[pd.DataFrame]]
 
             warn('segment_centroids produced segments with missing peaks:', missing_peaks)
 
-        formula_in_segms_df = pd.DataFrame(
-            [
-                (formula_i, segm_i)
-                for segm_i, formula_is in enumerate(segm_formula_is)
-                for formula_i in formula_is
-            ],
-            columns=['formula_i', 'segm_i'],
-        )
-        formulas_in_multiple_segms = (formula_in_segms_df.groupby('formula_i').segm_i.count() > 1)[
-            lambda s: s
-        ].index
-        formulas_in_multiple_segms_df = formula_in_segms_df[
-            lambda df: df.formula_i.isin(formulas_in_multiple_segms)
-        ].sort_values('formula_i')
-
-        n_per_segm = formula_in_segms_df.groupby('segm_i').formula_i.count()
-        if not formulas_in_multiple_segms_df.empty:
-            warn(
-                'segment_centroids produced put the same formula in multiple segments:',
-                formulas_in_multiple_segms_df,
-            )
+        formula_in_segms_df = validate_formulas_not_in_multiple_segms(segm_formula_is, warn)
 
         logger.debug(
             f'Found {stats_df.n_peaks.sum()} peaks for {stats_df.n_formulas.sum()} formulas '
             f'across {len(peaks_cobjects)} segms'
         )
+        n_per_segm = formula_in_segms_df.groupby('segm_i').formula_i.count()
         logger.debug(f'Segm sizes range from {n_per_segm.min()} to {n_per_segm.max()}')
 
         if warnings:
             try:
-                __import__('__main__').peaks_cobjects = stats_df
-                print('validate_peaks_cobjects debug info written to "peaks_cobjects" variable')
+                __import__('__main__').stats_df = stats_df
+                print('validate_centroids debug info written to "stats_df" variable')
             except Exception:
                 pass
 
             raise AssertionError('Some checks failed in validate_centroids')
+
+
+def validate_formulas_not_in_multiple_segms(segm_formula_is, warn):
+    formula_in_segms_df = pd.DataFrame(
+        [
+            (formula_i, segm_i)
+            for segm_i, formula_is in enumerate(segm_formula_is)
+            for formula_i in formula_is
+        ],
+        columns=['formula_i', 'segm_i'],
+    )
+    formulas_in_multiple_segms = (formula_in_segms_df.groupby('formula_i').segm_i.count() > 1)[
+        lambda s: s
+    ].index
+    formulas_in_multiple_segms_df = formula_in_segms_df[
+        lambda df: df.formula_i.isin(formulas_in_multiple_segms)
+    ].sort_values('formula_i')
+    if not formulas_in_multiple_segms_df.empty:
+        warn(
+            'found the same formula in multiple segments:', formulas_in_multiple_segms_df,
+        )
+    return formula_in_segms_df

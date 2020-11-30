@@ -9,7 +9,8 @@ from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.sm_daemons import DatasetManager
 from sm.engine.image_store import ImageStoreServiceWrapper
-from sm.engine.util import create_ds_from_files, bootstrap_and_run
+from sm.engine.util import bootstrap_and_run
+from sm.engine.utils.create_ds_from_files import create_ds_from_files
 
 
 def run_search(sm_config):

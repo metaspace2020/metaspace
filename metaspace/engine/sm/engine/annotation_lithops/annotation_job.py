@@ -85,12 +85,12 @@ def _upload_if_needed(src_path, storage, sm_storage, storage_type, s3_client=Non
 def _upload_imzmls_from_prefix_if_needed(src_path, storage, sm_storage, s3_client=None):
     if src_path.startswith('cos://'):
         bucket, prefix = src_path[len('cos://') :].split('/', maxsplit=1)
-        keys = storage.list_keys(bucket, prefix)
+        keys = [f'cos://{bucket}/{key}' for key in storage.list_keys(bucket, prefix)]
     elif src_path.startswith('s3a://'):
         bucket, prefix = split_s3_path(src_path)
         response = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
         if 'Contents' in response:
-            keys = [item['Key'] for item in response['Contents']]
+            keys = [f"s3a://{bucket}/{item['Key']}" for item in response['Contents']]
         else:
             keys = []
     else:
