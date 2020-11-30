@@ -1,5 +1,6 @@
 <template>
   <form
+    ref="container"
     class="relative"
     spellcheck="false"
     autocomplete="off"
@@ -23,7 +24,6 @@
         :title="label"
         :placeholder="placeholder"
         :error="hasError"
-        @keyup.esc="$emit('close')"
       />
     </label>
     <fade-transition class="button-reset absolute top-0 right-0 w-5 h-5 rounded-sm">
@@ -52,6 +52,8 @@ import FadeTransition from '../../components/FadeTransition'
 import ArrowIcon from '../../assets/inline/refactoring-ui/arrow-thin-right-circle.svg'
 import CloseIcon from '../../assets/inline/refactoring-ui/close.svg'
 
+import useOutClick from '../../lib/useOutClick'
+
 export default defineComponent({
   components: {
     ArrowIcon,
@@ -66,26 +68,24 @@ export default defineComponent({
   },
   setup(props, { emit }) {
     const inputText = ref(props.initialValue || '')
-    const inputRef = ref<HTMLInputElement>(null)
+    const inputRef = ref<HTMLInputElement>()
     const error = ref(false)
-
-    const onOutClick = () => emit('close')
+    const containerRef = ref<HTMLElement>()
 
     onMounted(() => {
       if (inputRef.value) {
         inputRef.value.focus()
       }
-      document.addEventListener('mousedown', onOutClick)
     })
 
-    onBeforeUnmount(() => {
-      document.removeEventListener('mousedown', onOutClick)
-    })
+    const removeListeners = useOutClick(() => emit('close'), containerRef)
+    onBeforeUnmount(removeListeners)
 
     return {
       inputText,
       inputRef,
       error,
+      containerRef,
       submit() {
         const text = inputText.value
         if (text === props.initialValue) {

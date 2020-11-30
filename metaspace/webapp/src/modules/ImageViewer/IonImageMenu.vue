@@ -51,33 +51,11 @@
           :is-disabled="!item.settings.visible"
           @thumb-start="setLastSlider(item.id)"
         />
-        <div class="h-0 absolute bottom-0 left-0 right-0 flex justify-center items-end z-10">
-          <button
-            title="More options"
-            class="button-reset h-3 w-6 rounded-full flex items-center justify-center box-content sm-more-button"
-            :class="channelSelect === item.id ? 'text-blue-700 bg-blue-200' : 'text-gray-800 hover:bg-gray-200'"
-            @click.stop="channelSelect = (channelSelect === item.id ? null : item.id)"
-          >
-            <dots-icon class="fill-current w-6 h-6" />
-          </button>
-          <fade-transition>
-            <div
-              v-if="channelSelect === item.id"
-              class="absolute top-0 w-full p-1 shadow rounded-md text-center bg-gray-50 mt-1"
-            >
-              <channel-selector
-                v-model="item.settings.channel"
-                class="my-1"
-              />
-              <button
-                class="button-reset text-danger h-3 leading-none text-xs tracking-wide font-medium"
-                @click.stop="removeLayer(item.id)"
-              >
-                remove
-              </button>
-            </div>
-          </fade-transition>
-        </div>
+        <channel-selector
+          v-model="item.settings.channel"
+          class="h-0 absolute bottom-0 left-0 right-0 flex justify-center items-end z-10"
+          @remove="removeLayer(item.id)"
+        />
       </div>
     </menu-item>
     <!-- margin removed below for Safari -->
@@ -118,7 +96,6 @@ import CandidateMoleculesPopover from '../Annotations/annotation-widgets/Candida
 import '../../components/MonoIcon.css'
 import VisibleIcon from '../../assets/inline/refactoring-ui/visible.svg'
 import HiddenIcon from '../../assets/inline/refactoring-ui/hidden.svg'
-import DotsIcon from '../../assets/inline/refactoring-ui/dots-horizontal.svg'
 
 import { useIonImageMenu } from './ionImageState'
 
@@ -136,16 +113,13 @@ export default defineComponent({
     FadeTransition,
     ChannelSelector,
     CandidateMoleculesPopover,
-    DotsIcon,
   },
   setup(props, { emit }) {
     const { activeLayer, removeLayer, setActiveLayer } = useIonImageMenu()
 
     const lastSlider = ref<string | null>(null)
-    const channelSelect = ref<string | null>(null)
 
     return {
-      channelSelect,
       activeLayer,
       removeLayer,
       setLastSlider(id: string) {
@@ -176,10 +150,5 @@ export default defineComponent({
 .sm-menu-items >>> > *:hover {
   outline: 1px solid theme('colors.primary');
   outline-offset: -1px;
-}
-
-.sm-more-button {
-  margin-bottom: 2px;
-  padding: 0 1px;
 }
 </style>
