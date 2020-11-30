@@ -16,9 +16,9 @@ class ContextLogHandler(Handler):
         listeners = log_listeners.get()
         if listeners:
             try:
-                s = self.format(record)
-                for l in listeners:
-                    l(s)
+                message = self.format(record)
+                for listener in listeners:
+                    listener(message)
             except Exception:
                 self.handleError(record)
 

@@ -5,7 +5,6 @@ import logging
 from collections import defaultdict
 from contextlib import contextmanager, ExitStack
 from datetime import datetime, timedelta
-from time import time
 from traceback import format_exc
 from typing import List, Optional, Any
 
@@ -43,11 +42,13 @@ class DBProfiler(Profiler):
         **extra_data,
     ):
         """
-        Records a performance profile entry directly to the database. Start/finish time can be optionally specified.
+        Records a performance profile entry directly to the database.
+        Start/finish time can be optionally specified.
 
         Args:
             name: Name of the operation/step. Should be past-tense, e.g. "dataset uploaded"
-            start: Defaults to last time `record_entry` was called, or when PerfProfileCollector was created
+            start: Defaults to last time `record_entry` was called,
+                   or when PerfProfileCollector was created
             finish: Defaults to now
             extra_data: Must be JSON-serializable
         """
@@ -55,8 +56,8 @@ class DBProfiler(Profiler):
         start = start or self._last_record_time
         finish = finish or now
         self._db.insert(
-            "INSERT INTO perf_profile_entry (profile_id, sequence, name, start, finish, extra_data) "
-            "VALUES (%s, %s, %s, %s, %s, %s)",
+            "INSERT INTO perf_profile_entry (profile_id, sequence, name, start, finish, extra_data)"
+            " VALUES (%s, %s, %s, %s, %s, %s)",
             [(self._profile_id, self._next_seq, name, start, finish, json.dumps(extra_data))],
         )
         self._last_record_time = now
@@ -90,7 +91,7 @@ def perf_profile(db, task_type: str, ds_id: Optional[str] = None, include_logs=T
     Additional parameters for identifying jobs should be added if needed, similar to `ds_id`.
 
     This also collects all logs emitted during the operation unless `include_logs=False` is set.
-    
+
     Example:
         with perf_profile(db, 'index_dataset', ds_id) as perf:
             dataset = query_dataset()

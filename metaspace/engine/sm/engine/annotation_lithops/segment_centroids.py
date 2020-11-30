@@ -11,6 +11,7 @@ import pandas as pd
 from lithops.storage.utils import CloudObject
 
 from sm.engine.annotation_lithops.annotate import choose_ds_segments
+from sm.engine.annotation_lithops.calculate_centroids import validate_formulas_not_in_multiple_segms
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import (
     CObj,
