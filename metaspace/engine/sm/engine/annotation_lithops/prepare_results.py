@@ -39,11 +39,14 @@ def _split_png_jobs(image_tasks_df, w, h):
         for start, end in zip(job_bound_idxs[:-1], job_bound_idxs[1:])
         if start != end
     ]
-    job_costs = [df.cost.sum() for df, in jobs]
-    logger.debug(
-        f'Generated {len(jobs)} PNG jobs, min cost: {np.min(job_costs)}, '
-        f'max cost: {np.max(job_costs)}, total cost: {total_cost}'
-    )
+    if jobs:
+        job_costs = [df.cost.sum() for df, in jobs]
+        logger.debug(
+            f'Generated {len(jobs)} PNG jobs, min cost: {np.min(job_costs)}, '
+            f'max cost: {np.max(job_costs)}, total cost: {total_cost}'
+        )
+    else:
+        logger.debug('No PNG jobs generated - probably no annotations')
     return jobs
 
 
