@@ -16,7 +16,7 @@ from sm.engine.util import bootstrap_and_run
 from sm.engine.db import DB
 
 
-def run(sm_config, ds_id_str, sql_where, algorithm, lithops):
+def run(sm_config, ds_id_str, sql_where, algorithm, use_lithops):
     db = DB()
     img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
 
@@ -31,14 +31,14 @@ def run(sm_config, ds_id_str, sql_where, algorithm, lithops):
         logger.warning('No datasets match filter')
         return
 
-    if lithops:
+    if use_lithops:
         executor = Executor(sm_config['lithops'])
 
     for i, ds_id in enumerate(ds_ids):
         try:
             logger.info(f'[{i+1} / {len(ds_ids)}] Generating ion thumbnail for {ds_id}')
             ds = Dataset.load(db, ds_id)
-            if lithops:
+            if use_lithops:
                 # noinspection PyUnboundLocalVariable
                 generate_ion_thumbnail_lithops(executor, db, sm_config, ds, algorithm=algorithm)
             else:
@@ -66,9 +66,7 @@ if __name__ == '__main__':
         default=DEFAULT_ALGORITHM,
         help='Algorithm for thumbnail generation. Options: ' + str(list(ALGORITHMS.keys())),
     )
-    parser.add_argument(
-        '--lithops', action='store_true', help='Use Lithops implementation',
-    )
+    parser.add_argument('--lithops', action='store_true', help='Use Lithops implementation')
     args = parser.parse_args()
     logger = logging.getLogger('engine')
 

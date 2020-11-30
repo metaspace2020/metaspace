@@ -72,7 +72,7 @@ ORDER BY j.ds_id DESC;
 
 
 def run_coloc_jobs(
-    sm_config, ds_id_str, sql_where, fix_missing, fix_corrupt, skip_existing, lithops
+    sm_config, ds_id_str, sql_where, fix_missing, fix_corrupt, skip_existing, use_lithops
 ):
     assert (
         len(
@@ -125,7 +125,7 @@ def run_coloc_jobs(
         logger.warning('No datasets match filter')
         return
 
-    if lithops:
+    if use_lithops:
         executor = Executor(sm_config['lithops'])
 
     for i, ds_id in enumerate(ds_ids):
@@ -133,7 +133,7 @@ def run_coloc_jobs(
             logger.info(f'Running colocalization on {i+1} out of {len(ds_ids)}')
             ds = Dataset.load(db, ds_id)
             coloc = Colocalization(db)
-            if lithops:
+            if use_lithops:
                 # noinspection PyUnboundLocalVariable
                 coloc.run_coloc_job_lithops(executor, ds, reprocess=not skip_existing)
             else:
