@@ -996,8 +996,8 @@ class SMDataset(object):
         neutral_loss='',
         chem_mod='',
     ):
-        """
-        Retrieve ion images for a specific sf and adduct
+        """Retrieve ion images for a specific sf and adduct.
+
         :param str   sf:
         :param str   adduct:
         :param bool  only_first_isotope: Only retrieve the first (most abundant) isotopic ion image.
@@ -1145,8 +1145,8 @@ class SMDataset(object):
             return json.loads(download_link_json)
 
     def download_to_dir(self, path, base_name=None):
-        """
-        Downloads the dataset's input files to the specified directory
+        """Downloads the dataset's input files to the specified directory.
+
         :param path: Destination directory
         :param base_name: If specified, overrides the base name (excluding extension) of each file.
                           e.g. `base_name='foo'` will name the files as 'foo.imzML' and 'foo.ibd'
@@ -1207,6 +1207,8 @@ class MolecularDB:
 
 
 class SMInstance(object):
+    """Client class for communication with the Metaspace API."""
+
     def __init__(
         self,
         host: str = None,
@@ -1216,8 +1218,7 @@ class SMInstance(object):
         api_key: str = None,
         config_path: str = None,
     ):
-        """Client class for communication with the Metaspace API.
-
+        """
         Args:
             host: Full host name, e.g. 'https://metaspace2020.eu'
             verify_certificate: Ignore certificate validation.
@@ -1323,7 +1324,8 @@ class SMInstance(object):
             [
                 pd.DataFrame(json_normalize(json.loads(dataset['metadataJson'])))
                 for dataset in datasets
-            ]
+            ],
+            sort=False,
         )
         df.index = [dataset['id'] for dataset in datasets]
         return df
