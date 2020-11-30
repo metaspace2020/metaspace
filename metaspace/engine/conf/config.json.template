@@ -31,8 +31,7 @@
     "update_daemon_threads": 4,
     "lithops_daemon_threads": {{ sm_lithops_daemon_threads }},
     "colocalization": true,
-    "ion_thumbnails": true,
-    "email": true
+    "ion_thumbnail": true
   },
   "rabbitmq": {
     "host": "{{ rabbitmq_host }}",

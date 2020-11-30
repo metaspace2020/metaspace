@@ -167,7 +167,7 @@ class DatasetManager:
         self._db.alter('DELETE FROM dataset WHERE id=%s', params=(ds.id,))
 
     def _send_email(self, email, subj, body):
-        if not self._sm_config['services'].get('email', True):
+        if not self._sm_config['services'].get('send_email', True):
             return
 
         try:
