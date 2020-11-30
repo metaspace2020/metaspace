@@ -16,13 +16,6 @@
       @thumb-start="onThumbStart"
       @thumb-stop="onThumbStop"
     />
-    <span
-      v-if="minTooltip"
-      class="-ml-1"
-      :style="minPosition"
-    >
-      {{ minTooltip }}
-    </span>
     <slider-thumb
       :style="maxStyle"
       :disabled="disabled"
@@ -33,13 +26,6 @@
       @thumb-start="onThumbStart"
       @thumb-stop="onThumbStop"
     />
-    <span
-      v-if="maxTooltip"
-      class="-mr-1"
-      :style="maxPosition"
-    >
-      {{ maxTooltip }}
-    </span>
   </slider-track>
 </template>
 <script lang="ts">
@@ -120,12 +106,6 @@ const Slider = defineComponent<Props>({
 
     const maxThumb = useSliderThumb(getMaxProps, maxRange)
 
-    const minPosition = computed(() => ({ left: `${minThumb.x.value}px` }))
-    const maxPosition = computed(() => {
-      if (maxX.value === 0) return { right: '0px' }
-      return { right: `${maxX.value - maxThumb.x.value}px` }
-    })
-
     const emitMinChange = (value: number) => emit('input', [value, props.value[1]])
     const emitMaxChange = (value: number) => emit('input', [props.value[0], value])
 
@@ -142,8 +122,6 @@ const Slider = defineComponent<Props>({
       onMaxChange: (x: number) => emitMaxChange(maxThumb.getValue(x)),
       onMaxIncrement: (factor: number) => emitMaxChange(maxThumb.increment(factor)),
       onMaxDecrement: (factor: number) => emitMaxChange(maxThumb.decrement(factor)),
-      minPosition,
-      maxPosition,
       minStyle: computed(() => ({ backgroundColor: props.minColor })),
       maxStyle: computed(() => ({ backgroundColor: props.maxColor })),
       onThumbStart() {

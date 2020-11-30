@@ -9,7 +9,7 @@ import {ImageViewerSnapshot as ImageViewerSnapshotModel} from './model'
 
 export const Resolvers = {
   Query: {
-    async imageViewerSnapshot(_: any, {id, datasetId}: any, ctx: Context): Promise<ImageViewerSnapshot | undefined> {
+    async imageViewerSnapshot(_: any, {id, datasetId}: any, ctx: Context): Promise<ImageViewerSnapshot | null> {
       const ivs = await ctx.entityManager.getRepository(ImageViewerSnapshotModel).findOne({ id, datasetId });
       if (ivs) {
         const annotations = await Promise.all(ivs.annotationIds.map(id => esAnnotationByID(id, ctx.user)))
@@ -18,6 +18,7 @@ export const Resolvers = {
           annotations: annotations.filter(a => a !== null) as unknown as Annotation[],
         }
       }
+      return null
     },
   },
   Mutation: {
