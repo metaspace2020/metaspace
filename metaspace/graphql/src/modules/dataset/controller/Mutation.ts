@@ -282,12 +282,12 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       throw new UserError('Dataset does not exist');
 
     return await createDataset({
-      datasetId: id,
+      id,
       input: {
         ...engineDataset,
         metadataJson: JSON.stringify(engineDataset.metadata)
       } as any, // TODO: map this properly
-      priority: priority,
+      priority,
       useLithops,
       force: true,
       skipValidation: true,
