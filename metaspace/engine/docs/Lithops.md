@@ -89,6 +89,15 @@ Activation IDs can be found in the Lithops debug logs.
 * `ibmcloud fn activation logs <activation ID>` views the stdout logs of a specific function call
 * `ibmcloud fn activation poll` monitors running jobs and prints each job's output when the job finishes
 
+### Viewing VM logs
+
+* Check if the VM is running with `ibmcloud is ins`. If not, run `ibmcloud is in-start <Instance ID>`
+* SSH to the instance with `ssh ubuntu@<Instance Floating IP>`. If this doesn't succeed and the instance has had 
+more than 60s to start, check that your SSH keys are accessible, i.e. `ssh-add -a` if you password-protected them. 
+Also try `ssh -v ubuntu@<Instance Floating IP>` for verbose SSH logs.
+* `cat /tmp/lithops/proxy.log` to see the logs for the "Proxy" (Lithops web server that handles incoming jobs)
+* `ls /tmp/lithops/logs` to see individual log files for executed jobs
+
 ### Running pipeline stages locally
 
 Adding `debug_run_locally=True` to an `executor.map`/`executor.call` will cause it to run the functions in the
