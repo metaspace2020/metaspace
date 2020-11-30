@@ -1,7 +1,7 @@
 # pylint: disable=duplicate-code
-# Ignore duplicate code for the whole file because there's some duplicate code duplicated between validate_centroids
-# and validate_centroid_segments that's difficult to disentangle, and disabling the for specific lines doesn't seem
-# to work
+# Ignore duplicate code for the whole file because there's some duplicate code duplicated
+# between validate_centroids and validate_centroid_segments that's difficult to disentangle,
+# and disabling the for specific lines doesn't seem to work
 from __future__ import annotations
 
 import logging
@@ -122,7 +122,7 @@ def validate_centroids(fexec: Executor, peaks_cobjects: List[CObj[pd.DataFrame]]
         )
         return formula_is, stats
 
-    warnings = []
+    warnings: List[str] = []
     results = fexec.map(get_segm_stats, [(co,) for co in peaks_cobjects], runtime_memory=1024)
     segm_formula_is = [formula_is for formula_is, stats in results]
     stats_df = pd.DataFrame([stats for formula_is, stats in results])

@@ -1,6 +1,8 @@
+from typing import List
 from unittest.mock import patch
 import pandas as pd
 
+from sm.engine.annotation_lithops.build_moldb import InputMolDb
 from tests.conftest import executor, sm_config, ds_config
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, load_cobjs
@@ -12,7 +14,7 @@ def test_get_moldb_centroids(LockMock, executor: Executor, sm_config, ds_config)
     formulas0 = ['H2O', 'CO2']
     formulas1 = ['H2SO4', 'CO2']
     formulas2 = ['H2SO4', 'NH4']
-    moldbs = [
+    moldbs: List[InputMolDb] = [
         {'id': 0, 'targeted': False, 'cobj': save_cobj(executor.storage, formulas0)},
         {'id': 1, 'targeted': True, 'cobj': save_cobj(executor.storage, formulas1)},
         {'id': 2, 'targeted': False, 'cobj': save_cobj(executor.storage, formulas2)},

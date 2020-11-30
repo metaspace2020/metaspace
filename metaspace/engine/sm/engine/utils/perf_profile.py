@@ -6,7 +6,7 @@ from collections import defaultdict
 from contextlib import contextmanager, ExitStack
 from datetime import datetime, timedelta
 from traceback import format_exc
-from typing import List, Optional, Any
+from typing import List, Optional, Any, Dict
 
 from sm.engine.utils.log_capture import capture_logs
 
@@ -178,8 +178,8 @@ class SubtaskProfiler(Profiler):
 
     @staticmethod
     def make_report(results: List['SubtaskProfiler']):
-        timings = defaultdict(lambda: [None] * len(results))
-        data = defaultdict(lambda: [None] * len(results))
+        timings: Dict[str, List[Optional[int]]] = defaultdict(lambda: [None] * len(results))
+        data: Dict[str, List[Any]] = defaultdict(lambda: [None] * len(results))
 
         for i, result in enumerate(results):
             for k, elapsed_ms in result.entries.items():

@@ -55,7 +55,7 @@ class PipelineCacher:
             elif isinstance(cache_data, CloudObject):
                 cobjects_to_clean.append(cache_data)
 
-        self.storage.delete_cobjects(cobjects_to_clean)
+        self.storage.delete_cloudobjects(cobjects_to_clean)
         delete_objects_by_prefix(self.storage, self.bucket, prefix)
 
 

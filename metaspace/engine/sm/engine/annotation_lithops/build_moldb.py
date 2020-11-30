@@ -139,4 +139,4 @@ def build_moldb(
 
         return formula_cobjects, db_data_cobjects
 
-    return executor.call(_build_moldb, (), runtime_memory=2048)
+    return executor.call(_build_moldb, (), runtime_memory=2048, debug_run_locally=True)

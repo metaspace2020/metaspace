@@ -77,7 +77,7 @@ class CentroidsCacheEntry:
             result_cobjs = []
             for i, data in enumerate(iter_cobjects_with_prefetch(storage, src_cobjs)):
                 dest_key = f'{dest_prefix}/{i:06}'
-                result_cobjs.append(storage.put_cobject(data, dest_bucket, dest_key))
+                result_cobjs.append(storage.put_cloudobject(data, dest_bucket, dest_key))
             return result_cobjs
 
         dest_bucket = self.bucket
@@ -89,7 +89,9 @@ class CentroidsCacheEntry:
         )
 
         # Save config in case it's needed for debugging
-        self.storage.put_cobject(json.dumps(self.ds_config, indent=4), self.bucket, self.config_key)
+        self.storage.put_cloudobject(
+            json.dumps(self.ds_config, indent=4), self.bucket, self.config_key
+        )
         # Save list of cobjects. This list would be easy to reconstruct by listing keys, but
         # saving a separate object as the last step of the process is helpful to confirm that
         # the cache item is complete, and didn't partially fail to copy.

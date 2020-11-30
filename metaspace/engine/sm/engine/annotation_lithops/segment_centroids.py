@@ -1,7 +1,7 @@
 # pylint: disable=duplicate-code
-# Ignore duplicate code for the whole file because there's some duplicate code duplicated between validate_centroids
-# and validate_centroid_segments that's difficult to disentangle, and disabling the for specific lines doesn't seem
-# to work
+# Ignore duplicate code for the whole file because there's some duplicate code duplicated
+# between validate_centroids and validate_centroid_segments that's difficult to disentangle,
+# and disabling the for specific lines doesn't seem to work
 from __future__ import annotations
 
 import logging
@@ -219,7 +219,7 @@ def segment_centroids(
         merge_centr_df_segments, second_level_segms_cobjects, runtime_memory=2048
     )
 
-    fexec.storage.delete_cobjects(first_level_cobjs)
+    fexec.storage.delete_cloudobjects(first_level_cobjs)
 
     return db_segms_cobjects
 

@@ -60,7 +60,7 @@
   "lithops": {
     "lithops": {
       "storage_bucket": "{{ sm_lithops_cos_bucket_temp }}",
-      "storage_backend": "ibm_cos",
+      "storage": "ibm_cos",
       "mode": "serverless",
       "include_modules": ["engine/sm"],
       "data_cleaner": true,
@@ -69,12 +69,13 @@
     },
     "serverless": {
       "backend": "ibm_cf",
-      "runtime": "metaspace2020/metaspace-lithops:1.8.1",
       "runtime_timeout": 600,
       "runtime_memory": 2048
     },
     "standalone": {
-      "runtime": "metaspace2020/metaspace-lithops:1.8.1"
+      "backend": "ibm_vpc"
+    },
+    "localhost": {
     },
     "ibm": {
       "iam_api_key": "{{ sm_lithops_iam_api_key }}"

@@ -34,7 +34,7 @@ def download_dataset(imzml_cobject, ibd_cobject, local_path, storage):
     # Download both files
     def _download(cobj, path):
         with path.open('wb') as f:
-            shutil.copyfileobj(storage.get_cobject(cobj, stream=True), f)
+            shutil.copyfileobj(storage.get_cloudobject(cobj, stream=True), f)
 
     logger.info("Download dataset {} - {} ".format(imzml_cobject.key, imzml_path))
     _download(imzml_cobject, imzml_path)

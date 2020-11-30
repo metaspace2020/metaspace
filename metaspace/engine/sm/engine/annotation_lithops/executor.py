@@ -131,33 +131,26 @@ class Executor:
     """
 
     def __init__(self, lithops_config: Dict, perf: Profiler = None, debug_run_locally=False):
-        mode = lithops_config['lithops']['mode']
         self.debug_run_locally = debug_run_locally
         if debug_run_locally:
             self.executors = {}
-        elif mode == 'localhost':
+        elif lithops_config['lithops']['mode'] == 'localhost':
             self.executors = {
-                'localhost': lithops.function_executor(
+                'localhost': lithops.LocalhostExecutor(
                     config=lithops_config, storage='localhost', runtime=RUNTIME_DOCKER_IMAGE,
                 )
             }
         else:
             self.executors = {
-                'ibm_cf': lithops.function_executor(
+                'ibm_cf': lithops.ServerlessExecutor(
                     config=lithops_config, runtime=RUNTIME_DOCKER_IMAGE
                 ),
-                'ibm_vpc': lithops.function_executor(
-                    config=lithops_config,
-                    mode='standalone',
-                    backend='ibm_vpc',
-                    runtime=RUNTIME_DOCKER_IMAGE,
+                'ibm_vpc': lithops.StandaloneExecutor(
+                    config=lithops_config, runtime=RUNTIME_DOCKER_IMAGE,
                 ),
             }
 
-        self.storage = Storage(
-            lithops_config=lithops_config,
-            storage_backend=lithops_config['lithops']['storage_backend'],
-        )
+        self.storage = Storage(lithops_config)
         self._include_modules = lithops_config['lithops'].get('include_modules', [])
         self._perf = perf or NullProfiler()
 

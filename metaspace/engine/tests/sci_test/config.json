@@ -50,7 +50,7 @@
   "lithops": {
     "lithops": {
       "storage_bucket": "metaspace-sci-test",
-      "storage_backend": "localhost",
+      "storage": "localhost",
       "mode": "localhost",
       "include_modules": ["engine/sm"],
       "data_cleaner": true,

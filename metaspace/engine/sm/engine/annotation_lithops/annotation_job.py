@@ -75,9 +75,9 @@ def _upload_if_needed(src_path, storage, sm_storage, storage_type, s3_client=Non
                 cobject = CloudObject(storage.backend, bucket, key)
             else:
                 # Fall back to buffering the entire object in memory for other backends
-                cobject = storage.put_cobject(obj['Body'].read(), bucket, key)
+                cobject = storage.put_cloudobject(obj['Body'].read(), bucket, key)
         else:
-            cobject = storage.put_cobject(open(src_path, 'rb'), bucket, key)
+            cobject = storage.put_cloudobject(open(src_path, 'rb'), bucket, key)
         logger.info(f'Uploading {src_path}...Done')
         return cobject
 
@@ -173,10 +173,7 @@ class LocalAnnotationJob:
         use_cache=True,
     ):
         sm_config = sm_config or SMConfig.get_conf()
-        self.storage = Storage(
-            lithops_config=sm_config['lithops'],
-            storage_backend=sm_config['lithops']['lithops']['storage_backend'],
-        )
+        self.storage = Storage(config=sm_config['lithops'])
         sm_storage = sm_config['lithops']['sm_storage']
 
         self.imzml_cobj = _upload_if_needed(imzml_file, self.storage, sm_storage, 'imzml')
@@ -244,10 +241,7 @@ class ServerAnnotationJob:
         """
         sm_config = sm_config or SMConfig.get_conf()
         self.sm_storage = sm_config['lithops']['sm_storage']
-        self.storage = Storage(
-            lithops_config=sm_config['lithops'],
-            storage_backend=sm_config['lithops']['lithops']['storage_backend'],
-        )
+        self.storage = Storage(sm_config['lithops'])
         self.s3_client = boto3.client(
             's3',
             aws_access_key_id=sm_config['aws']['aws_access_key_id'],

@@ -20,7 +20,7 @@ class CObj(Generic[TItem], CloudObject):
     Wrapper type to allow CloudObjects to keep track of the type of their serialized contents.
     Ideally this, along with some serialization/deserialization logic, should be upstreamed into
     Lithops. e.g. add alternatives Storage.save_cobject/Storage.load_object that handle instances,
-    in contrast to Storage.get_cobject/Storage.put_cobject to handle bytes/streams.
+    in contrast to Storage.get_cloudobject/Storage.put_cloudobject to handle bytes/streams.
     """
 
     def __init__(self, backend, bucket, key):
@@ -53,7 +53,7 @@ def deserialize(data):
 
 
 def save_cobj(storage: Storage, obj: TItem, bucket: str = None, key: str = None) -> CObj[TItem]:
-    return storage.put_cobject(serialize(obj), bucket, key)
+    return storage.put_cloudobject(serialize(obj), bucket, key)
 
 
 @overload
@@ -67,7 +67,7 @@ def load_cobj(storage: Storage, cobj: CloudObject):
 
 
 def load_cobj(storage: Storage, cobj):
-    return deserialize(storage.get_cobject(cobj))
+    return deserialize(storage.get_cloudobject(cobj))
 
 
 def save_cobjs(storage: Storage, objs: Iterable[TItem]) -> List[CObj[TItem]]:
@@ -118,7 +118,7 @@ def iter_cobjects_with_prefetch(
 ) -> Iterable[bytes]:
     """Lazily loads the raw content of each item in a list of CloudObjects, prefetching up to
     `prefetch` items ahead."""
-    return _iter_with_prefetch(storage.get_cobject, cobjects, prefetch)
+    return _iter_with_prefetch(storage.get_cloudobject, cobjects, prefetch)
 
 
 def iter_cobjs_with_prefetch(
