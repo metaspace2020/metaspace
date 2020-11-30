@@ -41,6 +41,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--ds-id', dest='ds_id', default='', help='DS id (or comma-separated list of ids)'
     )
+    # pylint: disable=duplicate-code # because it's best to keep scripts separate from each other
     parser.add_argument(
         '--sql-where',
         dest='sql_where',

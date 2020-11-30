@@ -83,6 +83,10 @@ def calculate_centroids(
 
 
 def validate_centroids(fexec: Executor, peaks_cobjects: List[CObj[pd.DataFrame]]):
+    # pylint: disable=duplicate-code
+    # Ignore code duplicated with validate_centroid_segments as the duplicated parts of the code
+    # are too entangled with non-duplicated parts of the code
+
     def warn(message, df=None):
         warnings.append(message)
         logger.warning(message)
@@ -138,7 +142,6 @@ def validate_centroids(fexec: Executor, peaks_cobjects: List[CObj[pd.DataFrame]]
         # Report missing peaks
         missing_peaks = stats_df[stats_df.missing_peaks > 0]
         if not missing_peaks.empty:
-
             warn('segment_centroids produced segments with missing peaks:', missing_peaks)
 
         formula_in_segms_df = validate_formulas_not_in_multiple_segms(segm_formula_is, warn)
