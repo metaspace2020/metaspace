@@ -1,3 +1,7 @@
+# pylint: disable=duplicate-code
+# Ignore duplicate code for the whole file because there's some duplicate code duplicated between validate_centroids
+# and validate_centroid_segments that's difficult to disentangle, and disabling the for specific lines doesn't seem
+# to work
 from __future__ import annotations
 
 import logging
@@ -278,7 +282,7 @@ def validate_centroid_segments(fexec, db_segms_cobjects, ds_segms_bounds, isocal
         wrong_n_peaks = stats_df[
             (stats_df.avg_n_peaks < 3.5) | (stats_df.min_n_peaks < 2) | (stats_df.max_n_peaks > 4)
         ]
-        # pylint: disable=duplicate-code
+
         if not wrong_n_peaks.empty:
             warn(
                 'segment_centroids produced segments with unexpected peaks-per-formula '

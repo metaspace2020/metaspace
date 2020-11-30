@@ -1,4 +1,4 @@
-# pylint: disable=duplicate-code # because it's best to keep scripts separate from each other
+# pylint: disable=duplicate-code
 import argparse
 import logging
 from functools import partial
