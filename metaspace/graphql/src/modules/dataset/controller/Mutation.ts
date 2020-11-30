@@ -194,7 +194,7 @@ const newDatasetId = () => {
 };
 
 type CreateDatasetArgs = {
-  datasetId?: string,
+  id?: string,
   input: DatasetCreateInput,
   priority?: Int,
   useLithops?: boolean,
@@ -230,8 +230,8 @@ const setDatabaseIdsInInput = async (
 
 const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
   const { input, priority, force, delFirst, skipValidation, useLithops } = args,
-    datasetId = args.datasetId || newDatasetId(),
-    datasetIdWasSpecified = args.datasetId != null;
+    datasetId = args.id || newDatasetId(),
+    datasetIdWasSpecified = args.id != null;
 
   logger.info(`Creating dataset '${datasetId}' by '${ctx.user.id}' user ...`);
   let dataset;
