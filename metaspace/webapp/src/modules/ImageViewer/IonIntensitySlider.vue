@@ -16,7 +16,6 @@
       @input="setScaleRange"
       @thumb-start="disableTooltips = true; $emit('thumb-start')"
       @thumb-stop="disableTooltips = false; $emit('thumb-stop')"
-      @track-click="$emit('track-click')"
     />
     <div class="flex justify-between items-start h-6 leading-6 tracking-wide relative z-10">
       <ion-intensity

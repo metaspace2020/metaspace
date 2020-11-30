@@ -4,7 +4,6 @@
     :disabled="disabled"
     @click="onTrackClick"
     @mousedown="lockTrackClick = false"
-    @keypress="lockTrackClick = false; onTrackClick()"
   >
     <slider-thumb
       :style="minStyle"
@@ -111,15 +110,18 @@ const Slider = defineComponent<Props>({
 
     const lockTrackClick = ref(false)
 
+    const onMinChange = (x: number) => emitMinChange(minThumb.getValue(x))
+    const onMaxChange = (x: number) => emitMaxChange(maxThumb.getValue(x))
+
     return {
       lockTrackClick,
       track,
       minThumb,
       maxThumb,
-      onMinChange: (x: number) => emitMinChange(minThumb.getValue(x)),
+      onMinChange,
+      onMaxChange,
       onMinIncrement: (factor: number) => emitMinChange(minThumb.increment(factor)),
       onMinDecrement: (factor: number) => emitMinChange(minThumb.decrement(factor)),
-      onMaxChange: (x: number) => emitMaxChange(maxThumb.getValue(x)),
       onMaxIncrement: (factor: number) => emitMaxChange(maxThumb.increment(factor)),
       onMaxDecrement: (factor: number) => emitMaxChange(maxThumb.decrement(factor)),
       minStyle: computed(() => ({ backgroundColor: props.minColor })),
@@ -131,10 +133,14 @@ const Slider = defineComponent<Props>({
       onThumbStop() {
         emit('thumb-stop')
       },
-      onTrackClick() {
-        if (!lockTrackClick.value) {
-          emit('track-click')
+      onTrackClick(x: number) {
+        if (lockTrackClick.value) {
+          return
         }
+        const diffMin = Math.abs(x - minThumb.x.value)
+        const diffMax = Math.abs(x - maxThumb.x.value)
+        const onChange = diffMin < diffMax ? onMinChange : onMaxChange
+        onChange(x - THUMB_WIDTH / 2)
       },
     }
   },
