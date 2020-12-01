@@ -132,6 +132,7 @@ class Executor:
 
     def __init__(self, lithops_config: Dict, perf: Profiler = None, debug_run_locally=False):
         self.debug_run_locally = debug_run_locally
+        self.is_hybrid = False
         if debug_run_locally:
             self.executors = {}
         elif lithops_config['lithops']['mode'] == 'localhost':
@@ -141,6 +142,7 @@ class Executor:
                 )
             }
         else:
+            self.is_hybrid = True
             self.executors = {
                 'ibm_cf': lithops.ServerlessExecutor(
                     config=lithops_config, runtime=RUNTIME_DOCKER_IMAGE
@@ -178,19 +180,22 @@ class Executor:
             kwargs['include_modules'] = [*self._include_modules, *include_modules]
 
         wrapper_func = _build_wrapper_func(func)
+        func_name = func.__name__
         attempt = 1
         futures = None
 
         while True:
             start_time = datetime.now()
             try:
-                logger.info(f'executor.map({func.__name__}, {len(args)} items, {runtime_memory}MB)')
+                logger.info(f'executor.map({func_name}, {len(args)} items, {runtime_memory}MB)')
                 if self.debug_run_locally or debug_run_locally:
                     futures = None
-                    return_vals = self._map_local(func, args)
+                    return_vals = self._map_local(wrapper_func, args)
                 else:
                     executor = self._select_executor(runtime_memory)
-                    futures = executor.map(func, args, runtime_memory=runtime_memory, **kwargs)
+                    futures = executor.map(
+                        wrapper_func, args, runtime_memory=runtime_memory, **kwargs
+                    )
                     return_vals = executor.get_result(futures)
 
                 results = [result for result, subtask_perf in return_vals]
@@ -199,7 +204,7 @@ class Executor:
                 if self._perf:
                     _save_subtask_perf(
                         self._perf,
-                        func_name=func.__name__,
+                        func_name=func_name,
                         futures=futures,
                         subtask_perfs=subtask_perfs,
                         cost_factors=cost_factors,
@@ -209,7 +214,7 @@ class Executor:
                     )
 
                 logger.info(
-                    f'executor.map({func.__name__}, {len(args)} items, {runtime_memory}MB)'
+                    f'executor.map({func_name}, {len(args)} items, {runtime_memory}MB)'
                     f' - {(datetime.now() - start_time).total_seconds():.3f}s'
                 )
 
@@ -219,7 +224,7 @@ class Executor:
                 failed_activation_ids = [f.activation_id for f in (futures or []) if f.error]
 
                 self._perf.record_entry(
-                    func.__name__,
+                    func_name,
                     start_time,
                     datetime.now(),
                     error=repr(ex),
@@ -228,18 +233,30 @@ class Executor:
                     failed_activation_ids=failed_activation_ids,
                 )
 
-                if isinstance(ex, MemoryError) and runtime_memory <= 4096:
+                if isinstance(ex, MemoryError) and runtime_memory <= 4096 and self.is_hybrid:
                     old_memory = runtime_memory
                     runtime_memory *= 2
                     attempt += 1
 
                     logger.warning(
-                        f'{func.__name__} ran out of memory with {old_memory}MB, retrying with '
+                        f'{func_name} ran out of memory with {old_memory}MB, retrying with '
+                        f'{runtime_memory}MB. Failed activation(s): {failed_activation_ids}'
+                    )
+                elif isinstance(ex, TimeoutError) and runtime_memory <= 4096 and self.is_hybrid:
+                    # Bypass the memory doubling and jump straight to using the VM, otherwise
+                    # it could get stuck in a loop of hitting many 10-minute timeouts before
+                    # eventually getting to the VM.
+                    old_memory = runtime_memory
+                    runtime_memory = 8192
+                    attempt += 1
+
+                    logger.warning(
+                        f'{func_name} timed out with {old_memory}MB, retrying with '
                         f'{runtime_memory}MB. Failed activation(s): {failed_activation_ids}'
                     )
                 else:
                     logger.error(
-                        f'{func.__name__} raised an exception '
+                        f'{func_name} raised an exception '
                         f'in activation(s): {", ".join(failed_activation_ids)}'
                     )
                     raise

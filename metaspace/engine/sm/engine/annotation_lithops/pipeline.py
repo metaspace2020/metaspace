@@ -122,19 +122,12 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
 
     @use_pipeline_cache
     def load_ds(self):
-        sort_memory = 2 ** 32
         (
             self.imzml_reader,
             self.ds_segments_bounds,
             self.ds_segms_cobjects,
             self.ds_segm_lens,
-        ) = self.executor.call(
-            load_ds,
-            (self.imzml_cobject, self.ibd_cobject, self.ds_segm_size_mb, sort_memory),
-            runtime_memory=4096,
-        )
-
-        logger.info(f'Segmented dataset chunks into {len(self.ds_segms_cobjects)} segments')
+        ) = load_ds(self.executor, self.imzml_cobject, self.ibd_cobject, self.ds_segm_size_mb)
 
         self.is_intensive_dataset = len(self.ds_segms_cobjects) * self.ds_segm_size_mb > 5000
 

@@ -15,6 +15,7 @@ from lithops.storage.utils import CloudObject
 from pyimzml.ImzMLParser import ImzMLParser, PortableSpectrumReader
 
 from sm.engine.annotation_lithops.annotate import read_ds_segment
+from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import (
     serialize_to_file,
     deserialize_from_file,
@@ -210,13 +211,13 @@ def make_segments(imzml_reader, ibd_path, ds_segments_bounds, segments_dir, sort
     return chunks_n, ds_segm_lens
 
 
-def load_ds(
-    storage: Storage,
+def _load_ds(
     imzml_cobject: CloudObject,
     ibd_cobject: CloudObject,
     ds_segm_size_mb: int,
     sort_memory: int,
     *,
+    storage: Storage,
     perf: SubtaskProfiler,
 ) -> Tuple[
     PortableSpectrumReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray,
@@ -255,6 +256,36 @@ def load_ds(
         perf.record_entry('uploaded segments')
 
         return imzml_reader, ds_segments_bounds, ds_segms_cobjects, ds_segm_lens
+
+
+def load_ds(
+    executor: Executor, imzml_cobject: CloudObject, ibd_cobject: CloudObject, ds_segm_size_mb: int
+):
+    try:
+        ibd_head = executor.storage.head_object(ibd_cobject.bucket, ibd_cobject.key)
+        ibd_size_mb = int(ibd_head['content-length']) / 1024 // 1024
+    except Exception:
+        logger.warning("Couldn't read ibd size", exc_info=True)
+        ibd_size_mb = 1024
+
+    if ibd_size_mb < 1536:
+        logger.debug(f'Found {ibd_size_mb}MB .ibd file. Trying serverless load_ds')
+        runtime_memory = 4096
+        sort_memory = 4 * (2 ** 30)
+    else:
+        logger.debug(f'Found {ibd_size_mb}MB .ibd file. Using VM-based load_ds')
+        runtime_memory = 32768
+        sort_memory = 32 * (2 ** 30)
+
+    imzml_reader, ds_segments_bounds, ds_segms_cobjects, ds_segm_lens = executor.call(
+        _load_ds,
+        (imzml_cobject, ibd_cobject, ds_segm_size_mb, sort_memory),
+        runtime_memory=runtime_memory,
+    )
+
+    logger.info(f'Segmented dataset chunks into {len(ds_segms_cobjects)} segments')
+
+    return imzml_reader, ds_segments_bounds, ds_segms_cobjects, ds_segm_lens
 
 
 def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobjects, ds_segm_lens):
