@@ -256,8 +256,9 @@ class Executor:
                     )
                 else:
                     logger.error(
-                        f'{func_name} raised an exception '
-                        f'in activation(s): {", ".join(failed_activation_ids)}'
+                        f'{func_name} raised an exception. '
+                        f'Failed activation(s): {failed_activation_ids}',
+                        exc_info=True,
                     )
                     raise
 

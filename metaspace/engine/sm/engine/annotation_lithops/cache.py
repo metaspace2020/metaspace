@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from functools import wraps
 from typing import Optional
 
@@ -7,7 +8,8 @@ from lithops.storage import Storage
 from lithops.storage.utils import CloudObject, StorageNoSuchKeyError
 
 from sm.engine.annotation_lithops.io import serialize, deserialize, delete_objects_by_prefix
-from sm.engine.annotation_lithops.utils import logger
+
+logger = logging.getLogger('annotation-pipeline')
 
 
 class PipelineCacher:

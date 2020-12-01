@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Tuple, Optional
 
@@ -17,11 +18,7 @@ from sm.engine.annotation.formula_validator import (
 )
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, load_cobj, CObj
-from sm.engine.annotation_lithops.utils import (
-    ds_dims,
-    get_pixel_indices,
-    logger,
-)
+from sm.engine.annotation_lithops.utils import ds_dims, get_pixel_indices
 from sm.engine.ds_config import DSConfig
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.utils.perf_profile import Profiler
@@ -29,6 +26,7 @@ from sm.engine.utils.perf_profile import Profiler
 ISOTOPIC_PEAK_N = 4
 
 ImagesRow = Tuple[int, int, List[coo_matrix]]
+logger = logging.getLogger('annotation-pipeline')
 
 
 class ImagesManager:

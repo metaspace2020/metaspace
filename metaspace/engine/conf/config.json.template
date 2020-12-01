@@ -171,6 +171,10 @@ The Prefix is necessary and should not have a leading or trailing slash
             "handlers": ["console_debug"],
             "level": "DEBUG"
         },
+        "lithops": {
+            "handlers": ["console_debug"],
+            "level": "DEBUG"
+        },
         "api": {
             "handlers": ["console_debug"],
             "level": "INFO"
