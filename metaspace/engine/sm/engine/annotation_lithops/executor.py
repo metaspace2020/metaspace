@@ -154,29 +154,6 @@ class Executor:
         self._include_modules = lithops_config['lithops'].get('include_modules', [])
         self._perf = perf or NullProfiler()
 
-    def _execute_map(
-        self, func, args, runtime_memory, debug_run_locally, **kwargs
-    ) -> Tuple[Optional[ResponseFuture], List]:
-        if self.debug_run_locally or debug_run_locally:
-            func_kwargs = {}
-            if 'storage' in inspect.signature(func).parameters:
-                func_kwargs['storage'] = self.storage
-            futures = None
-            return_vals = [func(*funcargs, **func_kwargs) for funcargs in args]
-        else:
-            valid_executors = [
-                (executor_type, executor)
-                for executor_type, executor in self.executors.items()
-                if runtime_memory <= MEM_LIMITS.get(executor_type, runtime_memory)
-            ]
-
-            assert valid_executors, f'Could not find an executor supporting {runtime_memory}MB'
-            executor_type, executor = valid_executors[0]
-            logger.debug(f'Selected executor {executor_type}')
-            futures = executor.map(func, args, runtime_memory=runtime_memory, **kwargs)
-            return_vals = executor.get_result(futures)
-        return futures, return_vals
-
     def map(
         self,
         func: Callable[..., TRet],
@@ -208,13 +185,13 @@ class Executor:
             start_time = datetime.now()
             try:
                 logger.info(f'executor.map({func.__name__}, {len(args)} items, {runtime_memory}MB)')
-                futures, return_vals = self._execute_map(
-                    wrapper_func,
-                    args,
-                    runtime_memory=runtime_memory,
-                    debug_run_locally=debug_run_locally,
-                    **kwargs,
-                )
+                if self.debug_run_locally or debug_run_locally:
+                    futures = None
+                    return_vals = self._map_local(func, args)
+                else:
+                    executor = self._select_executor(runtime_memory)
+                    futures = executor.map(func, args, runtime_memory=runtime_memory, **kwargs)
+                    return_vals = executor.get_result(futures)
 
                 results = [result for result, subtask_perf in return_vals]
                 subtask_perfs = [subtask_perf for result, subtask_perf in return_vals]
@@ -239,9 +216,7 @@ class Executor:
                 return results
 
             except Exception as ex:
-                failed_activation_ids = ','.join(
-                    f.activation_id for f in (futures or []) if f.error
-                )
+                failed_activation_ids = [f.activation_id for f in (futures or []) if f.error]
 
                 self._perf.record_entry(
                     func.__name__,
@@ -268,6 +243,23 @@ class Executor:
                         f'in activation(s): {", ".join(failed_activation_ids)}'
                     )
                     raise
+
+    def _map_local(self, func, args):
+        func_kwargs = {}
+        if 'storage' in inspect.signature(func).parameters:
+            func_kwargs['storage'] = self.storage
+        return [func(*funcargs, **func_kwargs) for funcargs in args]
+
+    def _select_executor(self, runtime_memory):
+        valid_executors = [
+            (executor_type, executor)
+            for executor_type, executor in self.executors.items()
+            if runtime_memory <= MEM_LIMITS.get(executor_type, runtime_memory)
+        ]
+        assert valid_executors, f'Could not find an executor supporting {runtime_memory}MB'
+        executor_type, executor = valid_executors[0]
+        logger.debug(f'Selected executor {executor_type}')
+        return executor
 
     def map_unpack(self, func, args: Sequence, *, runtime_memory=None, **kwargs):
         results = self.map(func, args, runtime_memory=runtime_memory, **kwargs)
