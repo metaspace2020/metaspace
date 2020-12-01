@@ -1,4 +1,4 @@
-const cryptoRandomString = require('crypto-random-string')
+import * as cryptoRandomString from 'crypto-random-string'
 import { utc } from 'moment';
 
 import {Context} from '../../context';
