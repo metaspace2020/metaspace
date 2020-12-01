@@ -15,7 +15,7 @@ from lithops.storage import Storage
 
 from sm.engine.utils.perf_profile import SubtaskProfiler, Profiler, NullProfiler
 
-logger = logging.getLogger('custom-executor')
+logger = logging.getLogger('engine.lithops-wrapper')
 TRet = TypeVar('TRet')
 #: RUNTIME_DOCKER_IMAGE is defined in code instead of config so that devs don't have to coordinate
 #: manually updating their config files every time it changes. The image must be public on
@@ -238,31 +238,36 @@ class Executor:
 
                 return results
 
-            except MemoryError:
-                failed_activation_ids = [f['id'] for f in (futures or []) if f.error]
-                failed_activation_id = next(iter(failed_activation_ids), None)
+            except Exception as ex:
+                failed_activation_ids = ','.join(
+                    f.activation_id for f in (futures or []) if f.error
+                )
+
                 self._perf.record_entry(
-                    f'{func.__name__}_OOM_{attempt}',
+                    func.__name__,
                     start_time,
                     datetime.now(),
-                    extra_data={
-                        'runtime_memory': runtime_memory,
-                        'failed_activation_id': failed_activation_id,
-                    },
+                    error=repr(ex),
+                    attempt=attempt,
+                    runtime_memory=runtime_memory,
+                    failed_activation_ids=failed_activation_ids,
                 )
-                old_memory = runtime_memory
-                runtime_memory *= 2
-                attempt += 1
 
-                if runtime_memory > 8192:
+                if isinstance(ex, MemoryError) and runtime_memory <= 4096:
+                    old_memory = runtime_memory
+                    runtime_memory *= 2
+                    attempt += 1
+
+                    logger.warning(
+                        f'{func.__name__} ran out of memory with {old_memory}MB, retrying with '
+                        f'{runtime_memory}MB. Failed activation(s): {failed_activation_ids}'
+                    )
+                else:
                     logger.error(
-                        f'{func.__name__} used too much memory in activation {failed_activation_id}'
+                        f'{func.__name__} raised an exception '
+                        f'in activation(s): {", ".join(failed_activation_ids)}'
                     )
                     raise
-                logger.warning(
-                    f'{func.__name__} ran out of memory with {old_memory}MB in activation '
-                    f'{failed_activation_id}, retrying with {runtime_memory}MB'
-                )
 
     def map_unpack(self, func, args: Sequence, *, runtime_memory=None, **kwargs):
         results = self.map(func, args, runtime_memory=runtime_memory, **kwargs)
