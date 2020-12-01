@@ -220,7 +220,7 @@ export class PerfProfileEntry {
   extraData: object | null;
 
   @ManyToOne(type => PerfProfile, profile => profile.entries, {onDelete: 'CASCADE'})
-  @JoinColumn({ name: 'stats_id' })
+  @JoinColumn({ name: 'profile_id' })
   profile: PerfProfile;
 }
 
