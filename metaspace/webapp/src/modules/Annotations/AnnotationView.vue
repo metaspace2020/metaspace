@@ -21,55 +21,59 @@
                   v-html="formattedMolFormula"
                 />
               </candidate-molecules-popover>
-              <span class="text-2xl">{{ annotation.mz.toFixed(4) }}</span>
-              <el-popover
-                trigger="hover"
-                placement="bottom"
-              >
-                <router-link
-                  slot="reference"
-                  target="_blank"
-                  :to="permalinkHref"
-                >
-                  <img
-                    src="../../assets/share-icon.png"
-                    class="av-icon"
-                  >
-                </router-link>
-                <div>Link to this annotation (opens in a new tab)</div>
-              </el-popover>
-
+              <!-- <span class="text-gray-400 text-4xl self-center mb-2">/</span> -->
+              <span class="text-2xl">
+                {{ annotation.mz.toFixed(4) }}
+                <span class="text-gray-700 text-sm">m/z</span>
+              </span>
+              <share-link
+                class="av-icon"
+                :route="permalinkHref"
+                :annotation="annotation"
+              />
               <el-popover
                 v-if="!annotation.dataset.isPublic"
+                class="av-icon cursor-help"
                 trigger="hover"
                 placement="bottom"
                 @show="loadVisibility"
               >
-                <img
+                <lock-icon
                   slot="reference"
-                  src="../../assets/padlock-icon.svg"
-                  class="av-icon"
+                  class="sm-stateful-icon h-6 w-6"
+                />
+                <p
+                  v-loading="visibilityText == null"
+                  class="m-0 max-w-measure-2 leading-5 text-left"
                 >
-                <div v-loading="visibilityText == null">
                   {{ visibilityText }}
-                </div>
+                </p>
               </el-popover>
 
               <el-popover
                 v-if="showColoc"
+                class="av-icon"
                 trigger="hover"
                 placement="bottom"
               >
-                <img
+                <button
+                  slot="reference"
+                  class="button-reset block"
+                  @click.stop="filterColocSamples"
+                >
+                  <location-pin-icon class="sm-stateful-icon h-6 w-6" />
+                </button>
+                <!-- <img
                   slot="reference"
                   src="../../assets/map-icon.svg"
                   class="av-icon av-icon-link"
                   @click.stop="filterColocSamples"
-                >
+                > -->
                 <div>Show representative spatial patterns for dataset</div>
               </el-popover>
             </div>
             <mode-button
+              v-if="multiImagesEnabled"
               class="absolute right-0 bottom-0 mr-2 mb-2"
               @multi="filterByDataset"
             />
@@ -228,6 +232,7 @@
 
 <style scoped lang="scss">
   /deep/ .av-header-items {
+    display: flex;
     justify-content: center;
     text-align: center !important;
     cursor: default !important;
@@ -240,8 +245,11 @@
     }
 
     .av-icon {
-      width: 20px;
-      height: 20px;
+      @apply self-center mb-2 h-6;
+
+      svg {
+        display: block;
+      }
     }
 
     .sf-big sub {

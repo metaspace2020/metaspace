@@ -55,7 +55,7 @@ describe('ImageViewer', () => {
     ion: 'H2O',
     isotopeImages: [{}],
     possibleCompounds: [
-      'water',
+      { name: 'water' },
     ],
   }
   const annotation1 = { ...mockAnnotationData, id: '1' }

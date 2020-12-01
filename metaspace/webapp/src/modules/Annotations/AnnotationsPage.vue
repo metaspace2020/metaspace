@@ -46,6 +46,7 @@ import AnnotationTable from './AnnotationTable.vue'
 import AnnotationView from './AnnotationView.vue'
 import { FilterPanel } from '../Filters/index'
 import config from '../../lib/config'
+import { useRestoredState } from '../ImageViewer'
 
 export default {
   name: 'AnnotationsPage',
@@ -93,6 +94,14 @@ export default {
   },
   created() {
     this.$store.commit('updateFilter', this.filter)
+
+    if (config.features.multiple_ion_images) {
+      const { viewId } = this.$route.query
+      const { datasetIds } = this.filter
+      if (viewId && datasetIds.length === 1) {
+        useRestoredState(this.$apollo, viewId, datasetIds[0])
+      }
+    }
   },
   destroyed() {
     this.$store.commit('setAnnotation', undefined)

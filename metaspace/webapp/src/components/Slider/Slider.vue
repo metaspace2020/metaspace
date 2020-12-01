@@ -67,8 +67,7 @@ const Slider = defineComponent<Props>({
     }
 
     function onTrackClick(x: number) {
-      const { minX, maxX } = range.value
-      onThumbChange(Math.max(Math.min(x - THUMB_WIDTH / 2, maxX), minX))
+      onThumbChange(x - THUMB_WIDTH / 2)
     }
 
     return {

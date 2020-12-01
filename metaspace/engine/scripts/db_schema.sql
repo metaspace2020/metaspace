@@ -244,6 +244,18 @@ CREATE INDEX "annotation_job_id_index" ON "public"."annotation" (
   "job_id"
 ) ;
 
+CREATE TABLE "graphql"."image_viewer_snapshot" (
+  "id" text NOT NULL, 
+  "dataset_id" text NOT NULL, 
+  "snapshot" text NOT NULL, 
+  "annotation_ids" json NOT NULL, 
+  "version" integer NOT NULL, 
+  "user_id" uuid, 
+  "created_dt" TIMESTAMP NOT NULL, 
+  CONSTRAINT "PK_afd32494a70db23e295d94436d7" PRIMARY KEY ("id", 
+  "dataset_id")
+);
+
 ALTER TABLE "public"."molecular_db" ADD CONSTRAINT "FK_a18f5f7d6cc662006d9c849ea1f" FOREIGN KEY (
   "group_id") REFERENCES "graphql"."group"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;

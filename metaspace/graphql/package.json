@@ -60,6 +60,7 @@
     "connect-redis": "^3.3.3",
     "cors": "^2.8.1",
     "cron": "^1.7.2",
+    "crypto-random-string": "^3.3.0",
     "dataloader": "^1.4.0",
     "elasticsearch": "^12.1.0",
     "express": "^4.14.0",

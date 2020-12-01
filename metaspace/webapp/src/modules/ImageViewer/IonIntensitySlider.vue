@@ -5,39 +5,38 @@
     class="relative"
   >
     <range-slider
+      :value="scaleRange"
       :style="style"
       :class="{ 'cursor-pointer': canFocus }"
       :tabindex="canFocus && !isDisabled ? 0 : null"
       :min="0"
       :max="1"
       :step="0.01"
-      :value="model.scaleRange"
       :disabled="isDisabled"
-      :min-tooltip="intensity.min.scaled.toExponential(1)"
-      :max-tooltip="intensity.max.scaled.toExponential(1)"
-      @change="range => $emit('change', range)"
+      @input="setScaleRange"
       @thumb-start="disableTooltips = true; $emit('thumb-start')"
       @thumb-stop="disableTooltips = false; $emit('thumb-stop')"
-      @track-click="$emit('track-click')"
     />
     <div class="flex justify-between items-start h-6 leading-6 tracking-wide relative z-10">
       <ion-intensity
-        v-model="model.minIntensity"
+        :value="model.minIntensity"
         :intensities="intensity.min"
         :tooltip-disabled="disableTooltips"
         clipping-type="outlier-min"
         label="Minimum intensity"
         placeholder="min."
-        @lock="value => { settings.lockMin = value }"
+        @input="value => { model.minIntensity = value; setScaleRange([0, scaleRange[1]]) }"
+        @lock="lockMin"
       />
       <ion-intensity
-        v-model="model.maxIntensity"
+        :value="model.maxIntensity"
         :intensities="intensity.max"
         :tooltip-disabled="disableTooltips"
         :clipping-type="intensity.min.status === 'CLIPPED' ? 'outlier-max' : 'hotspot-removal'"
         label="Maximum intensity"
         placeholder="max."
-        @lock="value => { settings.lockMax = value }"
+        @input="value => { model.maxIntensity = value; setScaleRange([scaleRange[0], 1]) }"
+        @lock="lockMax"
       />
     </div>
   </div>
@@ -50,7 +49,8 @@ import IonIntensity from './IonIntensity.vue'
 import { RangeSlider, THUMB_WIDTH } from '../../components/Slider'
 import FadeTransition from '../../components/FadeTransition'
 
-import { IonImageState, IonImageIntensity, ColorBar, useIonImageSettings } from './ionImageState'
+import { useIonImageSettings, useIonImageLayers } from './ionImageState'
+import { IonImageState, IonImageIntensity, ColorBar } from './ionImageState'
 
 interface Props {
   model: IonImageState,
@@ -60,6 +60,7 @@ interface Props {
   },
   colorBar: ColorBar,
   isDisabled: boolean
+  scaleRange: [number, number]
 }
 
 export default defineComponent<Props>({
@@ -70,6 +71,7 @@ export default defineComponent<Props>({
     isDisabled: Boolean,
     model: Object,
     canFocus: Boolean,
+    scaleRange: Array,
   },
   components: {
     RangeSlider,
@@ -83,12 +85,31 @@ export default defineComponent<Props>({
 
     return {
       container,
-      settings,
+      setScaleRange(nextRange: [number, number]) {
+        const { min, max } = props.intensity
+        if (min.status === 'LOCKED') {
+          settings.lockMinScale = nextRange[0]
+        }
+        if (max.status === 'LOCKED') {
+          settings.lockMaxScale = nextRange[1]
+        }
+        props.model.scaleRange = nextRange
+      },
+      lockMin(value: number) {
+        settings.lockMin = value
+        settings.lockMinScale = 0
+        props.model.scaleRange[0] = 0
+      },
+      lockMax(value: number) {
+        settings.lockMax = value
+        settings.lockMaxScale = 1
+        props.model.scaleRange[1] = 1
+      },
       disableTooltips: ref(false),
       style: computed(() => {
         if (container.value) {
           const width = container.value.offsetWidth
-          const [minScale, maxScale] = props.model.scaleRange
+          const [minScale, maxScale] = props.scaleRange
           const { minColor, maxColor, gradient } = props.colorBar
           if (!gradient) {
             return null
@@ -99,7 +120,7 @@ export default defineComponent<Props>({
             background: [
               `0px / ${minStop}px 100% linear-gradient(${minColor},${minColor}) no-repeat`,
               `${minStop}px / ${maxStop - minStop}px 100% ${gradient} repeat-y`,
-              `#fff ${maxStop}px / ${width - maxStop}px 100% linear-gradient(${maxColor},${maxColor}) no-repeat`,
+              `${minColor} ${maxStop}px / ${width - maxStop}px 100% linear-gradient(${maxColor},${maxColor}) no-repeat`,
             ].join(','),
           }
         }

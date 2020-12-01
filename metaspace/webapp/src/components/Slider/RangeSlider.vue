@@ -4,7 +4,6 @@
     :disabled="disabled"
     @click="onTrackClick"
     @mousedown="lockTrackClick = false"
-    @keypress="lockTrackClick = false; onTrackClick()"
   >
     <slider-thumb
       :style="minStyle"
@@ -16,12 +15,6 @@
       @thumb-start="onThumbStart"
       @thumb-stop="onThumbStop"
     />
-    <span
-      class="-ml-1"
-      :style="minPosition"
-    >
-      {{ minTooltip }}
-    </span>
     <slider-thumb
       :style="maxStyle"
       :disabled="disabled"
@@ -32,12 +25,6 @@
       @thumb-start="onThumbStart"
       @thumb-stop="onThumbStop"
     />
-    <span
-      class="-mr-1"
-      :style="maxPosition"
-    >
-      {{ maxTooltip }}
-    </span>
   </slider-track>
 </template>
 <script lang="ts">
@@ -118,30 +105,25 @@ const Slider = defineComponent<Props>({
 
     const maxThumb = useSliderThumb(getMaxProps, maxRange)
 
-    const minPosition = computed(() => ({ left: `${minThumb.x.value}px` }))
-    const maxPosition = computed(() => {
-      if (maxX.value === 0) return { right: '0px' }
-      return { right: `${maxX.value - maxThumb.x.value}px` }
-    })
-
-    const emitMinChange = (value: number) => emit('change', [value, props.value[1]])
-    const emitMaxChange = (value: number) => emit('change', [props.value[0], value])
+    const emitMinChange = (value: number) => emit('input', [value, props.value[1]])
+    const emitMaxChange = (value: number) => emit('input', [props.value[0], value])
 
     const lockTrackClick = ref(false)
+
+    const onMinChange = (x: number) => emitMinChange(minThumb.getValue(x))
+    const onMaxChange = (x: number) => emitMaxChange(maxThumb.getValue(x))
 
     return {
       lockTrackClick,
       track,
       minThumb,
       maxThumb,
-      onMinChange: (x: number) => emitMinChange(minThumb.getValue(x)),
+      onMinChange,
+      onMaxChange,
       onMinIncrement: (factor: number) => emitMinChange(minThumb.increment(factor)),
       onMinDecrement: (factor: number) => emitMinChange(minThumb.decrement(factor)),
-      onMaxChange: (x: number) => emitMaxChange(maxThumb.getValue(x)),
       onMaxIncrement: (factor: number) => emitMaxChange(maxThumb.increment(factor)),
       onMaxDecrement: (factor: number) => emitMaxChange(maxThumb.decrement(factor)),
-      minPosition,
-      maxPosition,
       minStyle: computed(() => ({ backgroundColor: props.minColor })),
       maxStyle: computed(() => ({ backgroundColor: props.maxColor })),
       onThumbStart() {
@@ -151,10 +133,14 @@ const Slider = defineComponent<Props>({
       onThumbStop() {
         emit('thumb-stop')
       },
-      onTrackClick() {
-        if (!lockTrackClick.value) {
-          emit('track-click')
+      onTrackClick(x: number) {
+        if (lockTrackClick.value) {
+          return
         }
+        const diffMin = Math.abs(x - minThumb.x.value)
+        const diffMax = Math.abs(x - maxThumb.x.value)
+        const onChange = diffMin < diffMax ? onMinChange : onMaxChange
+        onChange(x - THUMB_WIDTH / 2)
       },
     }
   },
