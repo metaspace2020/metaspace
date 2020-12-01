@@ -5,11 +5,14 @@
   >
     <button
       title="More options"
-      class="button-reset h-3 w-6 rounded-full flex items-center justify-center box-content sm-more-button"
+      class="button-reset h-3 w-6 rounded-full box-content sm-more-button"
       :class="isOpen ? 'text-blue-700 bg-blue-200' : 'text-gray-800 hover:bg-gray-200'"
       @click="isOpen = !isOpen"
     >
-      <dots-icon class="fill-current w-6 h-6" />
+      <!-- Safari does not support flex on buttons -->
+      <span class="flex items-center justify-center h-full">
+        <dots-icon class="fill-current w-6 h-6" />
+      </span>
     </button>
     <fade-transition>
       <div
