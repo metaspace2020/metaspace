@@ -13,30 +13,45 @@
         <el-col :span="18">
           <el-row :gutter="8">
             <el-col :span="8">
-              <form-field
-                type="selectMulti"
-                name="Metabolite database"
-                :help="dbHelp"
-                :value="value.databaseIds"
-                :error="error && error.databaseIds"
-                :multiple-limit="maxMolDBs"
-                required
-                @input="val => onInput('databaseIds', val)"
+              <new-feature-popup
+                name="customDatabases"
+                placement="right"
+                title="Custom metabolite databases"
+                :show-until="new Date('2021-02-28')"
               >
-                <el-option-group
-                  v-for="group in databaseOptions"
-                  slot="options"
-                  :key="group.label"
-                  :label="group.label"
+                <p>
+                  Well, the way they make shows is, they make one show. That show's called a pilot.
+                  Then they show that show to the people who make shows, and on the strength of that one show they decide if they're going to make more shows.
+                </p>
+                <p>
+                  Some pilots get picked and become television programs. Some don't, become nothing. She starred in one of the ones that became nothing.
+                </p>
+                <form-field
+                  slot="reference"
+                  type="selectMulti"
+                  name="Metabolite database"
+                  :help="dbHelp"
+                  :value="value.databaseIds"
+                  :error="error && error.databaseIds"
+                  :multiple-limit="maxMolDBs"
+                  required
+                  @input="val => onInput('databaseIds', val)"
                 >
-                  <el-option
-                    v-for="option in group.options"
-                    :key="option.value"
-                    :value="option.value"
-                    :label="option.label"
-                  />
-                </el-option-group>
-              </form-field>
+                  <el-option-group
+                    v-for="group in databaseOptions"
+                    slot="options"
+                    :key="group.label"
+                    :label="group.label"
+                  >
+                    <el-option
+                      v-for="option in group.options"
+                      :key="option.value"
+                      :value="option.value"
+                      :label="option.label"
+                    />
+                  </el-option-group>
+                </form-field>
+              </new-feature-popup>
             </el-col>
             <el-col :span="8">
               <form-field
@@ -258,6 +273,7 @@ import config, { limits } from '../../../lib/config'
 import { formatDatabaseLabel, MolDBsByGroup } from '../../MolecularDatabases/formatting'
 import { MolecularDB } from '../../../api/moldb'
 import { sortBy } from 'lodash-es'
+import NewFeaturePopup from '../../../components/NewFeaturePopup.vue'
 
 import './FormSection.scss'
 
@@ -282,6 +298,7 @@ const normalizeFormulaModifier = (formula: string, defaultSign: '+'|'-') => {
   @Component({
     components: {
       FormField,
+      NewFeaturePopup,
     },
   })
 export default class MetaspaceOptionsSection extends Vue {
