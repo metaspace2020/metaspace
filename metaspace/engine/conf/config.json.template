@@ -156,35 +156,37 @@ The Prefix is necessary and should not have a leading or trailing slash
             "class": "logging.StreamHandler",
             "formatter": "sm",
             "level": "DEBUG"
+        },
+        "context_logger": {
+            "class": "sm.engine.utils.log_capture.ContextLogHandler",
+            "formatter": "sm",
+            "level": "INFO"
         }
+    },
+    "root": {
+      "handlers": ["console_debug", "context_logger"],
+      "level": "WARNING"
     },
     "loggers": {
         "engine": {
-            "handlers": ["console_debug"],
             "level": "INFO"
         },
         "engine.db": {
-            "handlers": ["console_debug"],
             "level": "INFO"
         },
         "engine.lithops-wrapper": {
-            "handlers": ["console_debug"],
             "level": "DEBUG"
         },
         "lithops": {
-            "handlers": ["console_debug"],
             "level": "DEBUG"
         },
         "api": {
-            "handlers": ["console_debug"],
             "level": "INFO"
         },
         "update-daemon": {
-            "handlers": ["console_debug"],
             "level": "INFO"
         },
         "annotate-daemon": {
-            "handlers": ["console_debug"],
             "level": "INFO"
         }
     }

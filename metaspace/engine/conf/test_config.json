@@ -100,23 +100,28 @@
             "class": "logging.StreamHandler",
             "formatter": "sm",
             "level": "DEBUG"
+        },
+        "context_logger": {
+            "class": "sm.engine.utils.log_capture.ContextLogHandler",
+            "formatter": "sm",
+            "level": "INFO"
         }
+    },
+    "root": {
+      "handlers": ["console_debug", "context_logger"],
+      "level": "WARNING"
     },
     "loggers": {
         "engine": {
-            "handlers": ["console_debug"],
             "level": "INFO"
         },
         "api": {
-            "handlers": ["console_debug"],
             "level": "INFO"
         },
         "update-daemon": {
-            "handlers": ["console_debug"],
             "level": "INFO"
         },
         "annotate-daemon": {
-            "handlers": ["console_debug"],
             "level": "INFO"
         }
     }
@@ -125,9 +130,7 @@
     "adducts": {
       "+": ["+H", "+Na", "+K"],
       "-": ["-H", "+Cl" ]
-    }
-  },
-  "colocalization": {
-    "enabled": true
+    },
+    "moldb_names": ["HMDB-v2.5"]
   }
 }

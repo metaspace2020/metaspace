@@ -56,7 +56,7 @@ def main(daemon_name):
             daemon = SMIndexUpdateDaemon(get_manager(), make_update_queue_cons)
             daemons.append(daemon)
     elif daemon_name == 'lithops':
-        for _ in range(sm_config['services']['lithops_daemon_threads']):
+        for _ in range(sm_config['services'].get('lithops_daemon_threads', 0)):
             daemon = LithopsDaemon(get_manager(), lit_qdesc=SM_LITHOPS, upd_qdesc=SM_UPDATE)
             daemons.append(daemon)
     else:
