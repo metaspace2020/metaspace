@@ -3,6 +3,7 @@ import warnings
 from datetime import datetime
 from traceback import format_exc
 import numpy as np
+import pandas as pd
 from sklearn.metrics.pairwise import pairwise_kernels
 from sklearn.cluster import spectral_clustering
 from scipy.ndimage import zoom, median_filter
@@ -436,7 +437,8 @@ class Colocalization:
             return cobjs
 
         tasks = list(self._iter_pending_coloc_tasks(ds.id, reprocess))
-        job_cobjs = fexec.map_concat(run_job, tasks, runtime_memory=4096)
+        cost_factors = pd.DataFrame({'n_images': [len(task[1]) for task in tasks]})
+        job_cobjs = fexec.map_concat(run_job, tasks, cost_factors=cost_factors, runtime_memory=4096)
 
         for job in iter_cobjs_with_prefetch(fexec.storage, job_cobjs):
             self._save_job_to_db(job)

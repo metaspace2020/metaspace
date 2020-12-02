@@ -85,7 +85,7 @@ class CentroidsCacheEntry:
         new_db_data_cobjs, new_peaks_cobjs = self.executor.map(
             batch_copy,
             [(db_data_cobjs, f'{self.prefix}/db_data'), (peaks_cobjs, f'{self.prefix}/peaks')],
-            runtime_memory=2048,
+            runtime_memory=1024,
         )
 
         # Save config in case it's needed for debugging

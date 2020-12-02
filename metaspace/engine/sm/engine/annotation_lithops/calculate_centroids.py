@@ -79,8 +79,12 @@ def calculate_centroids(
 
         return save_cobjs(storage, chunks)
 
-    mem_needed_to_sort = 256 + 50 * num_centroids / 2 ** 20
-    sorted_peaks_cobjects = fexec.call(_sort_peaks_cobjects, (), runtime_memory=mem_needed_to_sort)
+    sorted_peaks_cobjects = fexec.call(
+        _sort_peaks_cobjects,
+        (),
+        cost_factors={'num_centroids': num_centroids, 'num_peak_cobjects': len(peaks_cobjects)},
+        runtime_memory=256 + 100 * num_centroids / 2 ** 20,
+    )
 
     logger.info(f'Sorted centroids chunks into {len(sorted_peaks_cobjects)} chunks')
     return sorted_peaks_cobjects

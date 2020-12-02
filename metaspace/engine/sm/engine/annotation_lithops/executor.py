@@ -187,7 +187,10 @@ class Executor:
         while True:
             start_time = datetime.now()
             try:
-                logger.info(f'executor.map({func_name}, {len(args)} items, {runtime_memory}MB)')
+                logger.info(
+                    f'executor.map({func_name}, {len(args)} items, {runtime_memory}MB, '
+                    f'attempt {attempt})'
+                )
                 if self.debug_run_locally or debug_run_locally:
                     futures = None
                     return_vals = self._map_local(wrapper_func, args)
@@ -214,8 +217,8 @@ class Executor:
                     )
 
                 logger.info(
-                    f'executor.map({func_name}, {len(args)} items, {runtime_memory}MB)'
-                    f' - {(datetime.now() - start_time).total_seconds():.3f}s'
+                    f'executor.map({func_name}, {len(args)} items, {runtime_memory}MB, '
+                    f'attempt {attempt}) - {(datetime.now() - start_time).total_seconds():.3f}s'
                 )
 
                 return results
@@ -294,8 +297,17 @@ class Executor:
         results = self.map(func, args, runtime_memory=runtime_memory, **kwargs)
         return list(chain(*results))
 
-    def call(self, func, args, *, runtime_memory=None, **kwargs):
-        return self.map(func, [args], runtime_memory=runtime_memory, **kwargs)[0]
+    def call(self, func, args, *, runtime_memory=None, cost_factors=None, **kwargs):
+        if isinstance(cost_factors, (pd.Series, dict)):
+            cost_factors = pd.DataFrame(pd.Series(cost_factors)).transpose()
+        else:
+            assert cost_factors is None or isinstance(
+                cost_factors, pd.DataFrame
+            ), "Invalid cost_factors"
+
+        return self.map(
+            func, [args], runtime_memory=runtime_memory, cost_factors=cost_factors, **kwargs
+        )[0]
 
     def clean(self):
         for executor in self.executors.values():

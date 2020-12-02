@@ -143,7 +143,7 @@ def segment_centroids(
         return dict(sub_segms_cobjects)
 
     first_level_segms_cobjects = fexec.map(
-        segment_centr_chunk, list(enumerate(clip_centr_chunks_cobjects)), runtime_memory=512
+        segment_centr_chunk, list(enumerate(clip_centr_chunks_cobjects)), runtime_memory=1024
     )
 
     def merge_centr_df_segments(idx, segm_cobjects, *, storage):
@@ -216,7 +216,7 @@ def segment_centroids(
     first_level_cobjs = [co for cos in first_level_segms_cobjects for co in cos.values()]
 
     db_segms_cobjects = fexec.map_concat(
-        merge_centr_df_segments, second_level_segms_cobjects, runtime_memory=2048
+        merge_centr_df_segments, second_level_segms_cobjects, runtime_memory=512
     )
 
     fexec.storage.delete_cloudobjects(first_level_cobjs)
