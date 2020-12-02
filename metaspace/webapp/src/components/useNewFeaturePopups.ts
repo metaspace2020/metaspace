@@ -43,11 +43,20 @@ function closeActivePopup() {
 export default () => {
   return {
     activePopup,
+    isDismissed(name: string) {
+      return state.dismissed.includes(name)
+    },
     queuePopup(name: string) {
       if (state.dismissed.includes(name) || state.queued.includes(name)) {
         return
       }
       state.queued.push(name)
+    },
+    unqueuePopup(name: string) {
+      const index = state.queued.indexOf(name)
+      if (index !== -1) {
+        state.queued.splice(index, 1)
+      }
     },
     remindLater() {
       closeActivePopup()

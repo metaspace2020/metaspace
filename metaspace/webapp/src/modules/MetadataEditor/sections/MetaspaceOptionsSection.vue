@@ -15,9 +15,10 @@
             <el-col :span="8">
               <new-feature-popup
                 name="customDatabases"
-                placement="right"
+                placement="top"
                 title="Custom metabolite databases"
                 :show-until="new Date('2021-02-28')"
+                reference-class="block"
               >
                 <p>
                   Well, the way they make shows is, they make one show. That show's called a pilot.

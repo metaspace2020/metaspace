@@ -51,6 +51,7 @@ import Popper, { Placement } from 'popper.js'
 
 import useNewFeaturePopups from './useNewFeaturePopups'
 import config from '../lib/config'
+import { useIntersectionObserver } from '../lib/useIntersectionObserver'
 
 interface Props {
   name: string
@@ -69,16 +70,35 @@ export default defineComponent<Props>({
     referenceClass: String,
   },
   setup(props, { root }) {
-    const { activePopup, queuePopup, remindLater, dismissPopup } = useNewFeaturePopups()
+    const {
+      activePopup,
+      isDismissed,
+      queuePopup,
+      unqueuePopup,
+      remindLater,
+      dismissPopup,
+    } = useNewFeaturePopups()
 
     const popover = ref<HTMLElement>()
     const reference = ref<HTMLElement>()
 
     const isRelevant = (props.showUntil || Number.MAX_VALUE) > new Date()
 
-    if (isRelevant) {
-      queuePopup(props.name)
+    if (!isRelevant || isDismissed(props.name)) {
+      return {
+        isRelevant: false,
+      }
     }
+
+    const { isFullyInView, intersectionRatio } = useIntersectionObserver(reference, { threshold: [0, 1] })
+
+    watch(isFullyInView, value => {
+      if (value) {
+        queuePopup(props.name)
+      } else if (activePopup.value !== props.name) { // do not unqueue if popup is visible
+        unqueuePopup(props.name)
+      }
+    })
 
     const isActive = computed(() =>
       popover.value
@@ -103,6 +123,8 @@ export default defineComponent<Props>({
       if (popper) {
         popper.destroy()
       }
+      // in case popup was not dismissed
+      unqueuePopup(props.name)
     })
 
     return {
