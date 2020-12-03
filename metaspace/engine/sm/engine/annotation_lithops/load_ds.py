@@ -191,7 +191,7 @@ def make_segments(imzml_reader, ibd_path, ds_segments_bounds, segments_dir, sort
     n_cpus = os.cpu_count()
     ds_size = sum(imzml_reader.mzLengths) * (np.dtype(imzml_reader.mzPrecision).itemsize + 4 + 4)
     # TODO: Tune chunk_size to ensure no OOMs are caused
-    chunk_size_to_fit_in_memory = sort_memory // 2 // n_cpus
+    chunk_size_to_fit_in_memory = sort_memory // 4 // n_cpus
     chunk_size_to_use_all_cpus = ds_size * 1.1 // n_cpus
     chunk_size = min(chunk_size_to_fit_in_memory, chunk_size_to_use_all_cpus)
     chunk_ranges = plan_dataset_chunks(imzml_reader, max_size=chunk_size)
@@ -278,11 +278,11 @@ def load_ds(
     if ibd_size_mb < 1536:
         logger.debug(f'Found {ibd_size_mb}MB .ibd file. Trying serverless load_ds')
         runtime_memory = 4096
-        sort_memory = 4 * (2 ** 30)
+        sort_memory = 3.5 * (2 ** 30)
     else:
         logger.debug(f'Found {ibd_size_mb}MB .ibd file. Using VM-based load_ds')
         runtime_memory = 32768
-        sort_memory = 15 * (2 ** 30)
+        sort_memory = 30 * (2 ** 30)
 
     imzml_reader, ds_segments_bounds, ds_segms_cobjects, ds_segm_lens = executor.call(
         _load_ds,
