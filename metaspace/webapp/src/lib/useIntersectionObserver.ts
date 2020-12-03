@@ -2,7 +2,7 @@
 
 import { onMounted, Ref, ref, onUnmounted } from '@vue/composition-api'
 
-export function useIntersectionObserver(
+export default function(
   target: Ref<HTMLElement | undefined>,
   options: IntersectionObserverInit = { root: null, rootMargin: '0px' },
 ) {

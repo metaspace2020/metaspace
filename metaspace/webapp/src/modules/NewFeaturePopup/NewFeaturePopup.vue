@@ -7,10 +7,7 @@
       class="el-popover el-popper leading-5 p-5 text-left"
     >
       <h3 class="leading-10 m-0 mt-2">
-        <el-badge
-          value="New"
-          class="test"
-        >
+        <el-badge value="New">
           {{ title }}
         </el-badge>
       </h3>
@@ -50,8 +47,8 @@ import { defineComponent, computed, ref, onMounted, onBeforeUnmount, watch, onUn
 import Popper, { Placement } from 'popper.js'
 
 import useNewFeaturePopups from './useNewFeaturePopups'
-import config from '../lib/config'
-import { useIntersectionObserver } from '../lib/useIntersectionObserver'
+import config from '../../lib/config'
+import useIntersectionObserver from '../../lib/useIntersectionObserver'
 
 interface Props {
   name: string

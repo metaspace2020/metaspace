@@ -274,7 +274,7 @@ import config, { limits } from '../../../lib/config'
 import { formatDatabaseLabel, MolDBsByGroup } from '../../MolecularDatabases/formatting'
 import { MolecularDB } from '../../../api/moldb'
 import { sortBy } from 'lodash-es'
-import NewFeaturePopup from '../../../components/NewFeaturePopup.vue'
+import NewFeaturePopup from '../../../modules/NewFeaturePopup/NewFeaturePopup.vue'
 
 import './FormSection.scss'
 

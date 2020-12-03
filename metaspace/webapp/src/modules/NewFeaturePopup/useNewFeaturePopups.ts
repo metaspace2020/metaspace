@@ -1,7 +1,7 @@
 import { reactive, computed } from '@vue/composition-api'
 import { isArray } from 'lodash-es'
 
-import { getLocalStorage, setLocalStorage } from '../lib/localStorage'
+import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'
 
 const STORAGE_KEY = 'dismissedFeaturePopups'
 

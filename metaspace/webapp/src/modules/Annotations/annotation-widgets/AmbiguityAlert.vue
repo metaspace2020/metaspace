@@ -65,7 +65,7 @@
 </template>
 <script>
 import MolecularFormula from '../../../components/MolecularFormula'
-import NewFeaturePopup from '../../../components/NewFeaturePopup.vue'
+import NewFeaturePopup from '../../../modules/NewFeaturePopup/NewFeaturePopup.vue'
 
 import config from '../../../lib/config'
 
