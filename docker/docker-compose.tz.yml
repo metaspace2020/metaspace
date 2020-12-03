@@ -42,6 +42,11 @@ services:
       - "/etc/timezone:/etc/timezone:ro"
       - "/etc/localtime:/etc/localtime:ro"
 
+  sm-lithops-daemon:
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+
   sm-annotate-daemon:
     volumes:
       - "/etc/timezone:/etc/timezone:ro"

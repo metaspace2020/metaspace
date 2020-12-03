@@ -67,9 +67,9 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* /tmp/* ~/.cache/*
 
-RUN mkdir -p /opt/data /root/metaspace
-#WORKDIR /root/metaspace/metaspace/engine
-COPY docker/sm-engine/*.sh /
+RUN mkdir -p /opt/data
+
+COPY docker/sm-engine/*.sh /sm-engine/
 
 ENTRYPOINT [ ]
-CMD [ "/start-api.sh" ]
+CMD [ "/sm-engine/start-api.sh" ]

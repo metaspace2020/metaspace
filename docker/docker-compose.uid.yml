@@ -16,6 +16,9 @@ services:
   sm-update-daemon:
     user: "$SM_USER"
 
+  sm-lithops-daemon:
+    user: "$SM_USER"
+
   sm-annotate-daemon:
     user: "$SM_USER"
 

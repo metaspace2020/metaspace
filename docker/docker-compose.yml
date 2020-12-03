@@ -46,10 +46,12 @@ services:
 
   sm-api:
     build:
-      context: ./sm-engine
+      context: ..
+      dockerfile: docker/sm-engine/Dockerfile
       args:
         METASPACE_REPO: "$METASPACE_REPO"
         METASPACE_BRANCH: "$METASPACE_BRANCH"
+    command: /sm-engine/start-api.sh
     volumes:
       - "${DATA_ROOT}:/opt/data/metaspace:z"
     networks:
@@ -61,27 +63,46 @@ services:
 
   sm-update-daemon:
     build:
-      context: ./sm-engine
+      context: ..
+      dockerfile: docker/sm-engine/Dockerfile
       args:
         METASPACE_REPO: "$METASPACE_REPO"
         METASPACE_BRANCH: "$METASPACE_BRANCH"
-    command: /start-update-daemon.sh
+    command: /sm-engine/start-update-daemon.sh
     volumes:
       - "${DATA_ROOT}:/opt/data:z"
     networks:
       - sm
     depends_on:
+      - rabbitmq
       - postgres
       - elasticsearch
-      - sm-api
 
-  sm-annotate-daemon:
+  sm-lithops-daemon:
     build:
-      context: ./sm-engine
+      context: ..
+      dockerfile: docker/sm-engine/Dockerfile
       args:
         METASPACE_REPO: "$METASPACE_REPO"
         METASPACE_BRANCH: "$METASPACE_BRANCH"
-    command: /start-annotate-daemon.sh
+    command: /sm-engine/start-lithops-daemon.sh
+    volumes:
+      - "${DATA_ROOT}:/opt/data:z"
+    networks:
+      - sm
+    depends_on:
+      - rabbitmq
+      - postgres
+      - elasticsearch
+
+  sm-annotate-daemon:
+    build:
+      context: ..
+      dockerfile: docker/sm-engine/Dockerfile
+      args:
+        METASPACE_REPO: "$METASPACE_REPO"
+        METASPACE_BRANCH: "$METASPACE_BRANCH"
+    command: /sm-engine/start-annotate-daemon.sh
     mem_limit: 8g
     cpu_shares: 512
     volumes:
@@ -91,9 +112,9 @@ services:
     networks:
       - sm
     depends_on:
+      - rabbitmq
       - postgres
       - elasticsearch
-      - sm-api
 
   sm-graphql:
     build:

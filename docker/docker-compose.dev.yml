@@ -42,10 +42,7 @@ services:
   sm-api:
     volumes:
       - "${DEV_ROOT}/:/opt/dev/metaspace:z"
-      - ./sm-engine/rebuild-es-index.sh:/rebuild-es-index.sh:ro
-      - ./sm-engine/start-api.sh:/start-api.sh:ro
-      - ./sm-engine/start-common.sh:/start-common.sh:ro
-      - ./sm-engine/install-dbs.sh:/install-dbs.sh:ro
+      - ./sm-engine:/sm-engine:ro
     environment:
       - SM_DOCKER_ENV=development
     ports:
@@ -54,16 +51,21 @@ services:
   sm-update-daemon:
     volumes:
       - "${DEV_ROOT}/:/opt/dev/metaspace:z"
-      - ./sm-engine/start-update-daemon.sh:/start-update-daemon.sh:ro
-      - ./sm-engine/start-common.sh:/start-common.sh:ro
+      - ./sm-engine:/sm-engine:ro
+    environment:
+      - SM_DOCKER_ENV=development
+
+  sm-lithops-daemon:
+    volumes:
+      - "${DEV_ROOT}/:/opt/dev/metaspace:z"
+      - ./sm-engine:/sm-engine:ro
     environment:
       - SM_DOCKER_ENV=development
 
   sm-annotate-daemon:
     volumes:
       - "${DEV_ROOT}/:/opt/dev/metaspace:z"
-      - ./sm-engine/start-annotate-daemon.sh:/start-annotate-daemon.sh:ro
-      - ./sm-engine/start-common.sh:/start-common.sh:ro
+      - ./sm-engine:/sm-engine:ro
     ports:
       - "4040:4040"
     environment:
