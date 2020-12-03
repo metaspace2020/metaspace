@@ -282,7 +282,7 @@ def load_ds(
     else:
         logger.debug(f'Found {ibd_size_mb}MB .ibd file. Using VM-based load_ds')
         runtime_memory = 32768
-        sort_memory = 24 * (2 ** 30)
+        sort_memory = 15 * (2 ** 30)
 
     imzml_reader, ds_segments_bounds, ds_segms_cobjects, ds_segm_lens = executor.call(
         _load_ds,
