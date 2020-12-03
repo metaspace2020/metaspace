@@ -199,10 +199,7 @@ class Executor:
                     futures = executor.map(
                         wrapper_func, args, runtime_memory=runtime_memory, **kwargs
                     )
-                    # The `timeout=3600` is a last resort timeout. If it's hit, it means that
-                    # `get_result` probably stalled on something because a status file wasn't
-                    # written to COS or one of the checker threads broke.
-                    return_vals = executor.get_result(futures, timeout=3600)
+                    return_vals = executor.get_result(futures)
 
                 results = [result for result, subtask_perf in return_vals]
                 subtask_perfs = [subtask_perf for result, subtask_perf in return_vals]
@@ -238,16 +235,6 @@ class Executor:
                     runtime_memory=runtime_memory,
                     failed_activation_ids=failed_activation_ids,
                 )
-
-                if isinstance(ex, TimeoutError) and 'for function activations to finish' in str(ex):
-                    # The log message being checked here is in Lithops' executors.py, where
-                    # the SIGALRM handler is installed.
-                    logger.critical(
-                        "Lithops get_result hit a hard timeout and might not have correctly "
-                        "cleaned up its status-checker threads. Exiting the process to avoid "
-                        "racking up a huge bill."
-                    )
-                    exit(1)
 
                 if isinstance(ex, MemoryError) and runtime_memory <= 4096 and self.is_hybrid:
                     old_memory = runtime_memory
