@@ -35,8 +35,14 @@ def download_dataset(imzml_cobject, ibd_cobject, local_path, storage):
 
     # Download both files
     def _download(cobj, path):
-        with path.open('wb') as f:
-            shutil.copyfileobj(storage.get_cloudobject(cobj, stream=True), f)
+        cos_client = storage.get_client()
+        if hasattr(cos_client, 'download_file'):
+            # Boto's download_file is much faster, so use it if available
+            cos_client.download_file(Bucket=cobj.bucket, Key=cobj.key, Filename=str(path))
+        else:
+            logger.debug('Falling back to slower download codepath')
+            with path.open('wb') as f:
+                shutil.copyfileobj(storage.get_cloudobject(cobj, stream=True), f, length=2 ** 28)
 
     logger.info("Download dataset {} - {} ".format(imzml_cobject.key, imzml_path))
     _download(imzml_cobject, imzml_path)
