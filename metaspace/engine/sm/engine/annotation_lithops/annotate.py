@@ -40,7 +40,7 @@ class ImagesManager:
 
     def __init__(self, storage: Storage, max_formula_images_size: int):
         if max_formula_images_size < self.__class__.min_memory_allowed:
-            raise Exception(
+            raise MemoryError(
                 "There isn't enough memory to generate images, "
                 "consider increasing Lithops's memory."
             )

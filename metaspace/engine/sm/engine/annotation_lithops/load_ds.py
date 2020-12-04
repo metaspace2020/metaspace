@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import os
-import shutil
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -21,41 +20,51 @@ from sm.engine.annotation_lithops.io import (
     deserialize_from_file,
     save_cobj,
     CObj,
+    get_ranges_from_cobject,
 )
 from sm.engine.utils.perf_profile import SubtaskProfiler
 
 logger = logging.getLogger('annotation-pipeline')
 
 
-def download_dataset(imzml_cobject, ibd_cobject, local_path, storage):
-    # Decide destination paths
-    Path(local_path).mkdir(exist_ok=True)
-    imzml_path = local_path / 'ds.imzML'
-    ibd_path = local_path / 'ds.ibd'
+def load_portable_spectrum_reader(storage: Storage, imzml_cobject: CloudObject):
+    stream = storage.get_cloudobject(imzml_cobject, stream=True)
 
-    # Download both files
-    def _download(cobj, path):
-        cos_client = storage.get_client()
-        if hasattr(cos_client, 'download_file'):
-            # Boto's download_file is much faster, so use it if available
-            cos_client.download_file(Bucket=cobj.bucket, Key=cobj.key, Filename=str(path))
-        else:
-            logger.debug('Falling back to slower download codepath')
-            with path.open('wb') as f:
-                shutil.copyfileobj(storage.get_cloudobject(cobj, stream=True), f, length=2 ** 28)
+    imzml_parser = ImzMLParser(stream, parse_lib='ElementTree', ibd_file=None)
+    return imzml_parser.portable_spectrum_reader()
 
-    logger.info("Download dataset {} - {} ".format(imzml_cobject.key, imzml_path))
-    _download(imzml_cobject, imzml_path)
-    logger.info("Download dataset {} - {} ".format(ibd_cobject.key, ibd_path))
-    _download(ibd_cobject, ibd_path)
 
-    # Log stats
-    imzml_size = imzml_path.stat().st_size / (1024 ** 2)
-    ibd_size = ibd_path.stat().st_size / (1024 ** 2)
-    logger.debug(f'imzML size: {imzml_size:.2f} mb')
-    logger.debug(f'ibd size: {ibd_size:.2f} mb')
+def get_spectra(
+    storage: Storage,
+    imzml_reader: PortableSpectrumReader,
+    ibd_cobj: CloudObject,
+    sp_inds: List[int],
+):
+    mz_starts = np.array(imzml_reader.mzOffsets)[sp_inds]
+    mz_ends = (
+        mz_starts
+        + np.array(imzml_reader.mzLengths)[sp_inds] * np.dtype(imzml_reader.mzPrecision).itemsize
+    )
+    mz_ranges = np.stack([mz_starts, mz_ends], axis=1)
+    int_starts = np.array(imzml_reader.intensityOffsets)[sp_inds]
+    int_ends = (
+        int_starts
+        + np.array(imzml_reader.intensityLengths)[sp_inds]
+        * np.dtype(imzml_reader.intensityPrecision).itemsize
+    )
+    int_ranges = np.stack([int_starts, int_ends], axis=1)
+    ranges_to_read = np.vstack([mz_ranges, int_ranges])
+    data_ranges = get_ranges_from_cobject(storage, ibd_cobj, ranges_to_read)
+    mz_data = data_ranges[: len(sp_inds)]
+    int_data = data_ranges[len(sp_inds) :]
+    del data_ranges
 
-    return imzml_path, ibd_path
+    for i, sp_idx in enumerate(sp_inds):
+        mzs = np.frombuffer(mz_data[i], dtype=imzml_reader.mzPrecision)
+        ints = np.frombuffer(int_data[i], dtype=imzml_reader.intensityPrecision)
+        mz_data[i] = None  # type: ignore # Avoid holding memory longer than necessary
+        int_data[i] = None  # type: ignore
+        yield sp_idx, mzs, ints
 
 
 def plan_dataset_chunks(imzml_reader, max_size=512 * 1024 ** 2):
@@ -75,7 +84,7 @@ def plan_dataset_chunks(imzml_reader, max_size=512 * 1024 ** 2):
     return chunk_ranges
 
 
-def parse_dataset_chunk(imzml_reader, ibd_path, start, end):
+def parse_dataset_chunk(storage, imzml_reader, ibd_cobject, start, end):
     def get_pixel_indices(coordinates):
         _coord = np.array(coordinates, dtype=np.uint32)
         _coord -= np.min(_coord, axis=0)
@@ -85,14 +94,13 @@ def parse_dataset_chunk(imzml_reader, ibd_path, start, end):
     sp_id_to_idx = get_pixel_indices(imzml_reader.coordinates)
     sp_inds_list, mzs_list, ints_list = [], [], []
 
-    with open(ibd_path, 'rb') as ibd_file:
-        for curr_sp_i in range(start, end):
-            mzs_, ints_ = imzml_reader.read_spectrum_from_file(ibd_file, curr_sp_i)
-            ints_ = ints_.astype(np.float32)
-            sp_idx = np.ones_like(mzs_, dtype=np.uint32) * sp_id_to_idx[curr_sp_i]
-            mzs_list.append(mzs_)
-            ints_list.append(ints_)
-            sp_inds_list.append(sp_idx)
+    spectra = get_spectra(storage, imzml_reader, ibd_cobject, list(range(start, end)))
+    for curr_sp_i, mzs_, ints_ in spectra:
+        ints_ = ints_.astype(np.float32)
+        sp_idx = np.ones_like(mzs_, dtype=np.uint32) * sp_id_to_idx[curr_sp_i]
+        mzs_list.append(mzs_)
+        ints_list.append(ints_)
+        sp_inds_list.append(sp_idx)
 
     mzs = np.concatenate(mzs_list)
     by_mz = np.argsort(mzs)
@@ -105,27 +113,26 @@ def parse_dataset_chunk(imzml_reader, ibd_path, start, end):
     )
 
 
-def define_ds_segments(imzml_parser, ds_segm_size_mb=5, sample_sp_n=1000):
-    sp_n = len(imzml_parser.coordinates)
-    sample_ratio = sample_sp_n / sp_n
+def define_ds_segments(
+    storage: Storage,
+    imzml_reader: PortableSpectrumReader,
+    ibd_cobject: CloudObject,
+    ds_segm_size_mb=5,
+    sample_sp_n=100,
+):
+    sample_size = min(sample_sp_n, len(imzml_reader.coordinates))
+    sample_sp_inds = np.random.choice(np.arange(len(imzml_reader.coordinates)), sample_size)
+    sample_mzs = np.concatenate(
+        [mz for sp_idx, mz, ints in get_spectra(storage, imzml_reader, ibd_cobject, sample_sp_inds)]
+    )
 
-    def spectra_sample_gen(imzml_parser, sample_ratio):
-        sample_size = int(sp_n * sample_ratio)
-        sample_sp_inds = np.random.choice(np.arange(sp_n), sample_size)
-        for sp_idx in sample_sp_inds:
-            mzs, ints = imzml_parser.getspectrum(sp_idx)
-            yield sp_idx, mzs, ints
+    total_n_mz = np.sum(imzml_reader.mzLengths)
 
-    spectra_sample = list(spectra_sample_gen(imzml_parser, sample_ratio=sample_ratio))
-
-    spectra_mzs = np.array([mz for sp_id, mzs, ints in spectra_sample for mz in mzs])
-    total_n_mz = spectra_mzs.shape[0] / sample_ratio  # pylint: disable=unsubscriptable-object
-
-    row_size = (4 if imzml_parser.mzPrecision == 'f' else 8) + 4 + 4
+    row_size = (4 if imzml_reader.mzPrecision == 'f' else 8) + 4 + 4
     segm_n = int(np.ceil(total_n_mz * row_size / (ds_segm_size_mb * 2 ** 20)))
 
     segm_bounds_q = [i * 1 / segm_n for i in range(0, segm_n + 1)]
-    segm_lower_bounds = [np.quantile(spectra_mzs, q) for q in segm_bounds_q]
+    segm_lower_bounds = [np.quantile(sample_mzs, q) for q in segm_bounds_q]
     ds_segments_bounds = np.array(list(zip(segm_lower_bounds[:-1], segm_lower_bounds[1:])))
 
     max_mz_value = 10 ** 5
@@ -149,8 +156,18 @@ def segment_spectra_chunk(chunk_i, sp_mz_int_buf, ds_segments_bounds, ds_segment
 
 
 def parse_and_segment_chunk(args):
-    imzml_reader, ibd_path, chunk_i, start, end, ds_segments_bounds, ds_segments_path = args
-    sp_mz_int_buf = parse_dataset_chunk(imzml_reader, ibd_path, start, end)
+    (
+        storage_config,
+        imzml_reader,
+        ibd_cobject,
+        chunk_i,
+        start,
+        end,
+        ds_segments_bounds,
+        ds_segments_path,
+    ) = args
+    storage = Storage(storage_config=storage_config)
+    sp_mz_int_buf = parse_dataset_chunk(storage, imzml_reader, ibd_cobject, start, end)
     segm_sizes = segment_spectra_chunk(chunk_i, sp_mz_int_buf, ds_segments_bounds, ds_segments_path)
     return segm_sizes
 
@@ -187,8 +204,15 @@ def upload_segments(storage, ds_segments_path, chunks_n, segments_n):
     return ds_segms_cobjects
 
 
-def make_segments(imzml_reader, ibd_path, ds_segments_bounds, segments_dir, sort_memory):
-    n_cpus = os.cpu_count()
+def make_segments(
+    storage: Storage,
+    imzml_reader: PortableSpectrumReader,
+    ibd_cobject: CloudObject,
+    ds_segments_bounds: np.ndarray,
+    segments_dir: Path,
+    sort_memory: int,
+):
+    n_cpus = os.cpu_count() or 1
     ds_size = sum(imzml_reader.mzLengths) * (np.dtype(imzml_reader.mzPrecision).itemsize + 4 + 4)
     # TODO: Tune chunk_size to ensure no OOMs are caused
     chunk_size_to_fit_in_memory = sort_memory // 4 // n_cpus
@@ -201,7 +225,16 @@ def make_segments(imzml_reader, ibd_path, ds_segments_bounds, segments_dir, sort
     segm_sizes = []
     with ProcessPoolExecutor(n_cpus) as executor:
         chunk_tasks = [
-            (imzml_reader, ibd_path, chunk_i, start, end, ds_segments_bounds, segments_dir)
+            (
+                storage.storage_config,
+                imzml_reader,
+                ibd_cobject,
+                chunk_i,
+                start,
+                end,
+                ds_segments_bounds,
+                segments_dir,
+            )
             for chunk_i, (start, end) in enumerate(chunk_ranges)
         ]
         for chunk_segm_sizes in executor.map(parse_and_segment_chunk, chunk_tasks):
@@ -237,24 +270,20 @@ def _load_ds(
         segments_dir = Path(tmp_dir) / 'segments'
         segments_dir.mkdir()
         logger.info(f"Create {segments_dir}")
-
-        logger.info('Downloading dataset...')
-        imzml_path, ibd_path = download_dataset(imzml_cobject, ibd_cobject, imzml_dir, storage)
-        perf.record_entry('downloaded dataset')
-
-        logger.info('Loading parser...')
-        imzml_parser = ImzMLParser(str(imzml_path))
-        imzml_reader = imzml_parser.portable_spectrum_reader()
-        perf.record_entry('loaded parser')
+        logger.info('Loading .imzML file...')
+        imzml_reader = load_portable_spectrum_reader(storage, imzml_cobject)
+        perf.record_entry('loaded imzml')
 
         logger.info('Defining segments bounds...')
-        ds_segments_bounds = define_ds_segments(imzml_parser, ds_segm_size_mb=ds_segm_size_mb)
+        ds_segments_bounds = define_ds_segments(
+            storage, imzml_reader, ibd_cobject, ds_segm_size_mb=ds_segm_size_mb
+        )
         segments_n = len(ds_segments_bounds)
         perf.record_entry('defined segments', segments_n=segments_n)
 
         logger.info('Segmenting...')
         chunks_n, ds_segm_lens = make_segments(
-            imzml_reader, ibd_path, ds_segments_bounds, segments_dir, sort_memory
+            storage, imzml_reader, ibd_cobject, ds_segments_bounds, segments_dir, sort_memory
         )
         perf.record_entry('made segments')
 

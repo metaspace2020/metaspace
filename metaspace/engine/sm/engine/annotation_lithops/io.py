@@ -3,8 +3,9 @@ from __future__ import annotations
 import logging
 import pickle
 from concurrent.futures import Future, ThreadPoolExecutor
-from typing import TypeVar, Generic, List, Iterable, overload, Any
+from typing import TypeVar, Generic, List, Iterable, overload, Any, Tuple, Union
 
+import numpy as np
 import pyarrow as pa
 from lithops.storage import Storage
 from lithops.storage.utils import CloudObject
@@ -128,3 +129,47 @@ def iter_cobjs_with_prefetch(
     `prefetch` items ahead."""
 
     return _iter_with_prefetch(lambda cobj: load_cobj(storage, cobj), cobjs, prefetch)
+
+
+def get_ranges_from_cobject(
+    storage: Storage, cobj: CloudObject, ranges: Union[List[Tuple[int, int]], np.ndarray]
+) -> List[bytes]:
+    """Download partial ranges from a CloudObject. This combines adjacent/overlapping ranges
+    to minimize the number of requests without wasting any bandwidth if there are large gaps
+    between requested ranges."""
+    max_jump = 2 ** 16  # Largest gap between ranges before a new request should be made
+
+    request_ranges: List[Tuple[int, int]] = []
+    tasks = []
+    range_start = None
+    range_end = None
+    for input_i in np.argsort(np.array(ranges)[:, 0]):
+        lo_idx, hi_idx = ranges[input_i]
+        if range_start is None:
+            range_start, range_end = lo_idx, hi_idx
+        elif lo_idx - range_end <= max_jump:
+            range_end = max(range_end, hi_idx)
+        else:
+            request_ranges.append((range_start, range_end))
+            range_start, range_end = lo_idx, hi_idx
+
+        tasks.append((input_i, len(request_ranges), lo_idx - range_start, hi_idx - range_start))
+
+    if range_start is not None and range_end is not None:
+        request_ranges.append((range_start, range_end))  # type: ignore
+
+    print(f'Reading {len(request_ranges)} ranges: {request_ranges}')
+
+    with ThreadPoolExecutor() as executor:
+
+        def get_range(lo_hi):
+            lo_idx, hi_idx = lo_hi
+            args = {'Range': f'bytes={lo_idx}-{hi_idx-1}'}
+            return storage.get_object(cobj.bucket, cobj.key, extra_get_args=args)
+
+        request_results = list(executor.map(get_range, request_ranges))
+
+    return [
+        request_results[request_i][request_lo:request_hi]
+        for input_i, request_i, request_lo, request_hi in sorted(tasks)
+    ]

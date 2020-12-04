@@ -264,7 +264,6 @@ CREATE TABLE "public"."perf_profile_entry" (
   "finish" TIMESTAMP NOT NULL, 
   "name" text NOT NULL, 
   "extra_data" json, 
-  "stats_id" integer, 
   CONSTRAINT "PK_729ef8c877e7facd61d75e754e9" PRIMARY KEY ("id")
 );
 
@@ -344,8 +343,8 @@ ALTER TABLE "public"."perf_profile" ADD CONSTRAINT "FK_cea05d4819bacc949a4236b4a
   "ds_id") REFERENCES "public"."dataset"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
 
-ALTER TABLE "public"."perf_profile_entry" ADD CONSTRAINT "FK_1163dde88aabf47524bcfff502d" FOREIGN KEY (
-  "stats_id") REFERENCES "public"."perf_profile"("id"
+ALTER TABLE "public"."perf_profile_entry" ADD CONSTRAINT "FK_67cf1a415a181173f111690c70a" FOREIGN KEY (
+  "profile_id") REFERENCES "public"."perf_profile"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
 
 

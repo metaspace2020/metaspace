@@ -3,9 +3,10 @@ from __future__ import annotations
 import inspect
 import logging
 import resource
+import traceback
 from datetime import datetime
 from itertools import chain
-from typing import List, Callable, TypeVar, Iterable, Sequence, Dict, Optional, Tuple
+from typing import List, Callable, TypeVar, Iterable, Sequence, Dict, Optional
 
 import lithops
 import numpy as np
@@ -20,7 +21,7 @@ TRet = TypeVar('TRet')
 #: RUNTIME_DOCKER_IMAGE is defined in code instead of config so that devs don't have to coordinate
 #: manually updating their config files every time it changes. The image must be public on
 #: Docker Hub, and can be rebuilt using the scripts/Dockerfile in `engine/docker/lithops_ibm_cf`.
-RUNTIME_DOCKER_IMAGE = 'metaspace2020/metaspace-lithops:1.8.1'
+RUNTIME_DOCKER_IMAGE = 'metaspace2020/metaspace-lithops:1.8.2'
 MEM_LIMITS = {
     'ibm_cf': 4096,
     'ibm_vpc': 32768,
@@ -223,20 +224,20 @@ class Executor:
 
                 return results
 
-            except Exception as ex:
+            except Exception as exc:
                 failed_activation_ids = [f.activation_id for f in (futures or []) if f.error]
 
                 self._perf.record_entry(
                     func_name,
                     start_time,
                     datetime.now(),
-                    error=repr(ex),
+                    error=traceback.format_exc(),
                     attempt=attempt,
                     runtime_memory=runtime_memory,
                     failed_activation_ids=failed_activation_ids,
                 )
 
-                if isinstance(ex, MemoryError) and runtime_memory <= 4096 and self.is_hybrid:
+                if isinstance(exc, MemoryError) and runtime_memory <= 4096 and self.is_hybrid:
                     old_memory = runtime_memory
                     runtime_memory *= 2
                     attempt += 1
@@ -245,7 +246,7 @@ class Executor:
                         f'{func_name} ran out of memory with {old_memory}MB, retrying with '
                         f'{runtime_memory}MB. Failed activation(s): {failed_activation_ids}'
                     )
-                elif isinstance(ex, TimeoutError) and runtime_memory <= 4096 and self.is_hybrid:
+                elif isinstance(exc, TimeoutError) and runtime_memory <= 4096 and self.is_hybrid:
                     # Bypass the memory doubling and jump straight to using the VM, otherwise
                     # it could get stuck in a loop of hitting many 10-minute timeouts before
                     # eventually getting to the VM.
