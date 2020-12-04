@@ -426,7 +426,7 @@ class Colocalization:
         ds_id = ds.id
         ion_img_storage_type = ds.ion_img_storage_type
 
-        def run_job(moldb_id, image_ids, ion_ids, fdrs, *, storage):
+        def run_coloc_job(moldb_id, image_ids, ion_ids, fdrs, *, storage):
             # Use web_app_url to get the publicly-exposed storage server address, because
             # Functions can't use the private address
             public_img_store = ImageStoreServiceWrapper(img_service_public_url)
@@ -438,7 +438,9 @@ class Colocalization:
 
         tasks = list(self._iter_pending_coloc_tasks(ds.id, reprocess))
         cost_factors = pd.DataFrame({'n_images': [len(task[1]) for task in tasks]})
-        job_cobjs = fexec.map_concat(run_job, tasks, cost_factors=cost_factors, runtime_memory=4096)
+        job_cobjs = fexec.map_concat(
+            run_coloc_job, tasks, cost_factors=cost_factors, runtime_memory=4096
+        )
 
         for job in iter_cobjs_with_prefetch(fexec.storage, job_cobjs):
             self._save_job_to_db(job)

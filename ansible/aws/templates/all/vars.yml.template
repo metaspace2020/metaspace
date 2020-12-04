@@ -215,8 +215,8 @@ sm_activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.na
 sm_activate_nvm: source {{ ansible_env.HOME }}/.nvm/nvm.sh && nvm use
 
 spark_key_file: ~/.ssh/ubuntu_spark
-spark_version: 2.3.3-bin-hadoop2.7
-spark_mirror: "{{ vault_spark_mirror }}"
+spark_version: "3.0.1-bin-hadoop2.7"
+spark_mirror: https://archive.apache.org/dist/spark/spark-3.0.1/
 spark_home: /usr/lib/spark
 spark_user: ubuntu
 
