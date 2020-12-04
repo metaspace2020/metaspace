@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import { computed, defineComponent, onUpdated, reactive, Ref, ref, SetupContext, watch } from '@vue/composition-api'
+import { computed, defineComponent, onMounted, onUpdated, reactive, Ref, ref, SetupContext, watch } from '@vue/composition-api'
 
 import { getOS, scrollDistance, WheelEventCompat } from '../lib/util'
 import config from '../lib/config'
@@ -357,14 +357,16 @@ const useBufferedOpticalImage = (props: Props) => {
 
 const useIonImageView = (props: Props, imageSize: Ref<{ width: number, height: number }>) => {
   const canvasRef = templateRef<HTMLCanvasElement>('ionImageCanvas')
-
-  onUpdated(() => {
+  const renderToCanvas = () => {
     const { width, height } = imageSize.value
     const canvas = canvasRef.value
     if (canvas) {
       renderIonImages(props.ionImageLayers, canvas, width, height)
     }
-  })
+  }
+
+  onMounted(renderToCanvas)
+  onUpdated(renderToCanvas)
 
   const renderIonImageView = () => {
     const { width, height } = imageSize.value
