@@ -1,5 +1,6 @@
 import Vue from 'vue'
-import { computed, defineComponent, onMounted, onUpdated, reactive, Ref, ref, SetupContext, watch } from '@vue/composition-api'
+import { computed, defineComponent, onMounted, onUpdated, reactive, ref, watch } from '@vue/composition-api'
+import { Ref, SetupContext } from '@vue/composition-api'
 
 import { getOS, scrollDistance, WheelEventCompat } from '../lib/util'
 import config from '../lib/config'
