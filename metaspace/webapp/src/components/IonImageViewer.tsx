@@ -360,7 +360,7 @@ const useIonImageView = (props: Props, imageSize: Ref<{ width: number, height: n
   const renderToCanvas = () => {
     const { width, height } = imageSize.value
     const canvas = canvasRef.value
-    if (canvas) {
+    if (canvas && width && height) {
       renderIonImages(props.ionImageLayers, canvas, width, height)
     }
   }
