@@ -14,7 +14,7 @@ logger = logging.getLogger('annotation-pipeline')
 
 
 def run_fdr(
-    executor: Executor, formula_scores_df: pd.DataFrame, db_data_cobjects: List[CObj[DbFDRData]]
+    executor: Executor, formula_scores_df: pd.DataFrame, db_data_cobjs: List[CObj[DbFDRData]]
 ) -> Dict[int, pd.DataFrame]:
     msms_df = formula_scores_df[['msm']]
 
@@ -42,7 +42,7 @@ def run_fdr(
         return db_data['id'], results_df
 
     logger.info('Estimating FDRs...')
-    results = executor.map(_run_fdr_for_db, db_data_cobjects, runtime_memory=1024)
+    results = executor.map(_run_fdr_for_db, db_data_cobjs, runtime_memory=1024)
 
     for moldb_id, moldb_fdrs in results:
         logger.info(f'DB {moldb_id} number of annotations with FDR less than:')

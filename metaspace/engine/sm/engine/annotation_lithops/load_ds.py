@@ -13,7 +13,6 @@ from lithops.storage import Storage
 from lithops.storage.utils import CloudObject
 from pyimzml.ImzMLParser import ImzMLParser, PortableSpectrumReader
 
-from sm.engine.annotation_lithops.annotate import read_ds_segment
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import (
     serialize_to_file,
@@ -21,6 +20,7 @@ from sm.engine.annotation_lithops.io import (
     save_cobj,
     CObj,
     get_ranges_from_cobject,
+    load_cobj,
 )
 from sm.engine.utils.perf_profile import SubtaskProfiler
 
@@ -195,13 +195,13 @@ def upload_segments(storage, ds_segments_path, chunks_n, segments_n):
         return cobj
 
     with ThreadPoolExecutor(os.cpu_count()) as pool:
-        ds_segms_cobjects = list(pool.map(_upload, range(segments_n)))
+        ds_segms_cobjs = list(pool.map(_upload, range(segments_n)))
 
-    assert len(ds_segms_cobjects) == len(
-        set(co.key for co in ds_segms_cobjects)
-    ), 'Duplicate CloudObjects in ds_segms_cobjects'
+    assert len(ds_segms_cobjs) == len(
+        set(co.key for co in ds_segms_cobjs)
+    ), 'Duplicate CloudObjects in ds_segms_cobjs'
 
-    return ds_segms_cobjects
+    return ds_segms_cobjs
 
 
 def make_segments(
@@ -288,10 +288,10 @@ def _load_ds(
         perf.record_entry('made segments')
 
         logger.info('Uploading segments...')
-        ds_segms_cobjects = upload_segments(storage, segments_dir, chunks_n, segments_n)
+        ds_segms_cobjs = upload_segments(storage, segments_dir, chunks_n, segments_n)
         perf.record_entry('uploaded segments')
 
-        return imzml_reader, ds_segments_bounds, ds_segms_cobjects, ds_segm_lens
+        return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens
 
 
 def load_ds(
@@ -313,20 +313,20 @@ def load_ds(
         runtime_memory = 32768
         sort_memory = 30 * (2 ** 30)
 
-    imzml_reader, ds_segments_bounds, ds_segms_cobjects, ds_segm_lens = executor.call(
+    imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens = executor.call(
         _load_ds,
         (imzml_cobject, ibd_cobject, ds_segm_size_mb, sort_memory),
         runtime_memory=runtime_memory,
     )
 
-    logger.info(f'Segmented dataset chunks into {len(ds_segms_cobjects)} segments')
+    logger.info(f'Segmented dataset chunks into {len(ds_segms_cobjs)} segments')
 
-    return imzml_reader, ds_segments_bounds, ds_segms_cobjects, ds_segm_lens
+    return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens
 
 
-def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobjects, ds_segm_lens):
-    def get_segm_stats(cobject, storage):
-        segm = read_ds_segment(cobject, storage)
+def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens):
+    def get_segm_stats(cobj, storage):
+        segm = load_cobj(storage, cobj)
         assert (
             segm.columns == ['mz', 'int', 'sp_i']
         ).all(), f'Wrong ds_segm columns: {segm.columns}'
@@ -346,7 +346,7 @@ def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobje
             }
         )
 
-    results = fexec.map(get_segm_stats, ds_segms_cobjects)
+    results = fexec.map(get_segm_stats, ds_segms_cobjs)
 
     segms_df = pd.DataFrame(results)
     segms_df['min_bound'] = np.concatenate([[0], ds_segments_bounds[1:, 0]])

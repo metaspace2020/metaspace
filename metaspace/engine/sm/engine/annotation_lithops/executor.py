@@ -264,6 +264,7 @@ class Executor:
                         f'Failed activation(s): {failed_activation_ids}',
                         exc_info=True,
                     )
+                    # __import__('__main__').futures = futures
                     raise
 
     def _map_local(self, func, args):

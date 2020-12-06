@@ -30,7 +30,7 @@ MAX_MZ_VALUE = 10 ** 5
 
 
 def clip_centr_df(
-    fexec: Executor, peaks_cobjects: List[CloudObject], mz_min: float, mz_max: float
+    fexec: Executor, peaks_cobjs: List[CloudObject], mz_min: float, mz_max: float
 ) -> Tuple[List[CObj[pd.DataFrame]], int]:
     def clip_centr_df_chunk(peaks_i, peaks_cobject, storage):
         print(f'Clipping centroids dataframe chunk {peaks_i}')
@@ -47,19 +47,19 @@ def clip_centr_df(
 
         return clip_centr_chunk_cobject, centr_df_chunk.shape[0]
 
-    assert len(peaks_cobjects) > 0
-    clip_centr_chunks_cobjects, centr_n = fexec.map_unpack(
-        clip_centr_df_chunk, list(enumerate(peaks_cobjects)), runtime_memory=512,
+    assert len(peaks_cobjs) > 0
+    clip_centr_chunks_cobjs, centr_n = fexec.map_unpack(
+        clip_centr_df_chunk, list(enumerate(peaks_cobjs)), runtime_memory=512,
     )
 
-    clip_centr_chunks_cobjects = list(clip_centr_chunks_cobjects)
+    clip_centr_chunks_cobjs = list(clip_centr_chunks_cobjs)
     centr_n = sum(centr_n)
     logger.info(f'Prepared {centr_n} centroids')
-    return clip_centr_chunks_cobjects, centr_n
+    return clip_centr_chunks_cobjs, centr_n
 
 
 def define_centr_segments(
-    fexec: Executor, clip_centr_chunks_cobjects: List[CloudObject], centr_n: int, ds_size_mb: int,
+    fexec: Executor, clip_centr_chunks_cobjs: List[CloudObject], centr_n: int, ds_size_mb: int,
 ):
     logger.info('Defining centroids segments bounds')
 
@@ -70,9 +70,7 @@ def define_centr_segments(
         return first_peak_df.mz.values
 
     first_peak_df_mz = np.concatenate(
-        fexec.map(
-            get_first_peak_mz, list(enumerate(clip_centr_chunks_cobjects)), runtime_memory=512
-        )
+        fexec.map(get_first_peak_mz, list(enumerate(clip_centr_chunks_cobjs)), runtime_memory=512)
     )
 
     data_per_centr_segm_mb = 50
@@ -93,8 +91,8 @@ def define_centr_segments(
 
 def segment_centroids(
     fexec: Executor,
-    peaks_cobjects: List[CObj[pd.DataFrame]],
-    ds_segms_cobjects: List[CObj[pd.DataFrame]],
+    peaks_cobjs: List[CObj[pd.DataFrame]],
+    ds_segms_cobjs: List[CObj[pd.DataFrame]],
     ds_segms_bounds: np.ndarray,
     ds_segm_size_mb: int,
     is_intensive_dataset: bool,
@@ -104,12 +102,12 @@ def segment_centroids(
     max_ds_segms_size_per_db_segm_mb = 2560 if is_intensive_dataset else 1536
     mz_min, mz_max = ds_segms_bounds[0, 0], ds_segms_bounds[-1, 1]
 
-    clip_centr_chunks_cobjects, centr_n = clip_centr_df(fexec, peaks_cobjects, mz_min, mz_max)
+    clip_centr_chunks_cobjs, centr_n = clip_centr_df(fexec, peaks_cobjs, mz_min, mz_max)
 
     # define first level segmentation and then segment each one into desired number
 
     centr_segm_lower_bounds = define_centr_segments(
-        fexec, clip_centr_chunks_cobjects, centr_n, len(ds_segms_cobjects) * ds_segm_size_mb,
+        fexec, clip_centr_chunks_cobjs, centr_n, len(ds_segms_cobjs) * ds_segm_size_mb,
     )
     first_level_centr_segm_n = min(32, len(centr_segm_lower_bounds))
     centr_segm_lower_bounds = np.array_split(centr_segm_lower_bounds, first_level_centr_segm_n)
@@ -138,15 +136,15 @@ def segment_centroids(
 
         with ThreadPoolExecutor(max_workers=128) as pool:
             sub_segms = list(centr_segm_df.groupby('segm_i'))
-            sub_segms_cobjects = list(pool.map(_first_level_upload, sub_segms))
+            sub_segms_cobjs = list(pool.map(_first_level_upload, sub_segms))
 
-        return dict(sub_segms_cobjects)
+        return dict(sub_segms_cobjs)
 
-    first_level_segms_cobjects = fexec.map(
-        segment_centr_chunk, list(enumerate(clip_centr_chunks_cobjects)), runtime_memory=1024
+    first_level_segms_cobjs = fexec.map(
+        segment_centr_chunk, list(enumerate(clip_centr_chunks_cobjs)), runtime_memory=1024
     )
 
-    def merge_centr_df_segments(idx, segm_cobjects, *, storage):
+    def merge_centr_df_segments(idx, segm_cobjs, *, storage):
         def _second_level_segment(segm, sub_segms_n):
             segm_bounds_q = [i * 1 / sub_segms_n for i in range(0, sub_segms_n)]
             sub_segms_lower_bounds = np.quantile(segm[segm.peak_i == 0].mz.values, segm_bounds_q)
@@ -159,7 +157,7 @@ def segment_centroids(
             return sub_segms
 
         print(f'Merging segment {idx} clipped centroids chunks')
-        segm = pd.concat(load_cobjs(storage, segm_cobjects))
+        segm = pd.concat(load_cobjs(storage, segm_cobjs))
         init_segms = _second_level_segment(segm, len(centr_segm_lower_bounds[idx]))
 
         segms = []
@@ -201,30 +199,28 @@ def segment_centroids(
         print(f'Storing {len(segms)} centroids segments')
         with ThreadPoolExecutor(max_workers=128) as pool:
             segms = [df for _, df in segms]
-            segms_cobjects = list(pool.map(_second_level_upload, segms))
+            segms_cobjs = list(pool.map(_second_level_upload, segms))
 
-        return segms_cobjects
+        return segms_cobjs
 
     second_level_segms_dict = defaultdict(list)
-    for sub_segms_cobjects in first_level_segms_cobjects:
-        for first_level_segm_i in sub_segms_cobjects:
-            second_level_segms_dict[first_level_segm_i].append(
-                sub_segms_cobjects[first_level_segm_i]
-            )
-    second_level_segms_cobjects = sorted(second_level_segms_dict.items(), key=lambda x: x[0])
+    for sub_segms_cobjs in first_level_segms_cobjs:
+        for first_level_segm_i in sub_segms_cobjs:
+            second_level_segms_dict[first_level_segm_i].append(sub_segms_cobjs[first_level_segm_i])
+    second_level_segms_cobjs = sorted(second_level_segms_dict.items(), key=lambda x: x[0])
 
-    first_level_cobjs = [co for cos in first_level_segms_cobjects for co in cos.values()]
+    first_level_cobjs = [co for cos in first_level_segms_cobjs for co in cos.values()]
 
-    db_segms_cobjects = fexec.map_concat(
-        merge_centr_df_segments, second_level_segms_cobjects, runtime_memory=512
+    db_segms_cobjs = fexec.map_concat(
+        merge_centr_df_segments, second_level_segms_cobjs, runtime_memory=512
     )
 
     fexec.storage.delete_cloudobjects(first_level_cobjs)
 
-    return db_segms_cobjects
+    return db_segms_cobjs
 
 
-def validate_centroid_segments(fexec, db_segms_cobjects, ds_segms_bounds, isocalc_wrapper):
+def validate_centroid_segments(fexec, db_segms_cobjs, ds_segms_bounds, isocalc_wrapper):
     def warn(message, df=None):
         warnings.append(message)
         logger.warning(message)
@@ -261,9 +257,7 @@ def validate_centroid_segments(fexec, db_segms_cobjects, ds_segms_bounds, isocal
 
     warnings = []
 
-    segm_formula_is, stats = fexec.map_unpack(
-        get_segm_stats, db_segms_cobjects, runtime_memory=1024
-    )
+    segm_formula_is, stats = fexec.map_unpack(get_segm_stats, db_segms_cobjs, runtime_memory=1024)
     stats_df = pd.DataFrame(stats)
 
     with pd.option_context(

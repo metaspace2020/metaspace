@@ -17,7 +17,7 @@ from sm.engine.annotation.formula_validator import (
     METRICS,
 )
 from sm.engine.annotation_lithops.executor import Executor
-from sm.engine.annotation_lithops.io import save_cobj, load_cobj, CObj
+from sm.engine.annotation_lithops.io import save_cobj, load_cobj, CObj, load_cobjs
 from sm.engine.annotation_lithops.utils import ds_dims, get_pixel_indices
 from sm.engine.ds_config import DSConfig
 from sm.engine.isocalc_wrapper import IsocalcWrapper
@@ -114,12 +114,6 @@ class ImagesManager:
 def gen_iso_image_sets(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, isocalc_wrapper):
     # pylint: disable=too-many-locals
     # assume sp data is sorted by mz order ascending
-    # assume centr data is sorted by mz order ascending
-
-    centr_f_inds = centr_df.formula_i.values
-    centr_p_inds = centr_df.peak_i.values
-    centr_mzs = centr_df.mz.values
-    centr_ints = centr_df.int.values
 
     def yield_buffer(buffer):
         while len(buffer) < ISOTOPIC_PEAK_N:
@@ -131,17 +125,15 @@ def gen_iso_image_sets(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, isocalc
         return buffer.formula_i[0], buffer.centr_ints, buffer.image
 
     if len(sp_inds) > 0:
-        lower_mz, upper_mz = isocalc_wrapper.mass_accuracy_bounds(centr_mzs)
-        ranges_df = pd.DataFrame(
-            {
-                'formula_i': centr_f_inds,
-                'lower_idx': np.searchsorted(sp_mzs, lower_mz, 'l'),
-                'upper_idx': np.searchsorted(sp_mzs, upper_mz, 'r'),
-            }
-        ).sort_values('formula_i')
+        centr_df = centr_df.sort_values(['formula_i', 'peak_i'])
+        lower_mz, upper_mz = isocalc_wrapper.mass_accuracy_bounds(centr_df.mz.values)
+        centr_df = centr_df.assign(
+            lower_idx=np.searchsorted(sp_mzs, lower_mz, 'l'),
+            upper_idx=np.searchsorted(sp_mzs, upper_mz, 'r'),
+        )[['formula_i', 'peak_i', 'int', 'lower_idx', 'upper_idx']]
 
         buffer = []
-        for df_index, formula_i, lower_i, upper_i in ranges_df.itertuples(True, None):
+        for formula_i, peak_i, ints, lower_i, upper_i in centr_df.itertuples(False, None):
             if len(buffer) != 0 and buffer[0][0] != formula_i:
                 yield yield_buffer(buffer)
                 buffer = []
@@ -154,32 +146,17 @@ def gen_iso_image_sets(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, isocalc
                 row_inds = row_inds.astype(np.uint16)
                 col_inds = col_inds.astype(np.uint16)
                 m = coo_matrix((data, (row_inds, col_inds)), shape=(nrows, ncols), copy=True)
-            buffer.append((formula_i, centr_p_inds[df_index], centr_ints[df_index], m))
+            buffer.append((formula_i, peak_i, ints, m))
 
         if len(buffer) != 0:
             yield yield_buffer(buffer)
 
 
-def read_ds_segment(cobject, storage):
-    data = load_cobj(storage, cobject)
-
-    if isinstance(data, list):
-        if isinstance(data[0], np.ndarray):
-            data = np.concatenate(data)
-        else:
-            data = pd.concat(data, ignore_index=True, sort=False)
-
-    if isinstance(data, np.ndarray):
-        data = pd.DataFrame({'mz': data[:, 1], 'int': data[:, 2], 'sp_i': data[:, 0],})
-
-    return data
-
-
 def read_ds_segments(
-    ds_segms_cobjects, ds_segm_lens, pw_mem_mb, ds_segm_size_mb, ds_segm_dtype, storage,
+    ds_segms_cobjs, ds_segm_lens, pw_mem_mb, ds_segm_size_mb, ds_segm_dtype, storage,
 ):
 
-    ds_segms_mb = len(ds_segms_cobjects) * ds_segm_size_mb
+    ds_segms_mb = len(ds_segms_cobjs) * ds_segm_size_mb
     safe_mb = 512
     read_memory_mb = ds_segms_mb + safe_mb
     if read_memory_mb > pw_mem_mb:
@@ -188,11 +165,10 @@ def read_ds_segments(
             f"Lithops's memory to at least {read_memory_mb} mb."
         )
 
-    safe_mb = 1024
-    concat_memory_mb = ds_segms_mb * 2 + safe_mb
+    concat_memory_mb = ds_segms_mb * 3 + safe_mb
     if concat_memory_mb > pw_mem_mb:
-        print('Using pre-allocated concatenation')
         segm_len = sum(ds_segm_lens)
+        print(f'Using pre-allocated concatenation (len {segm_len})')
         sp_df = pd.DataFrame(
             {
                 'mz': np.zeros(segm_len, dtype=ds_segm_dtype),
@@ -200,17 +176,25 @@ def read_ds_segments(
                 'sp_i': np.zeros(segm_len, dtype=np.uint32),
             }
         )
-        row_start = 0
-        for cobject in ds_segms_cobjects:
-            sub_sp_df = read_ds_segment(cobject, storage)
+        row_start, row_end = 0, 0
+        for cobj in ds_segms_cobjs:
+            sub_sp_df = load_cobj(storage, cobj)
+            assert sub_sp_df.mz.is_monotonic
             row_end = row_start + len(sub_sp_df)
-            sp_df.iloc[row_start:row_end] = sub_sp_df
-            row_start += len(sub_sp_df)
-
+            print(
+                f'populating sp_df range {row_start}:{row_end} '
+                f'(m/z {sub_sp_df.mz.min():.6f}-{sub_sp_df.mz.max():.6f} from {cobj.key})'
+            )
+            # PANDASS! Why do you make it so hard to emplace values into a dataframe?
+            sp_df.iloc[row_start:row_end, sp_df.columns.get_loc('mz')] = sub_sp_df.mz.values
+            sp_df.iloc[row_start:row_end, sp_df.columns.get_loc('int')] = sub_sp_df.int.values
+            sp_df.iloc[row_start:row_end, sp_df.columns.get_loc('sp_i')] = sub_sp_df.sp_i.values
+            row_start = row_end
+        assert row_end == len(sp_df) + 1
     else:
-        with ThreadPoolExecutor(max_workers=128) as pool:
-            sp_df = list(pool.map(lambda co: read_ds_segment(co, storage), ds_segms_cobjects))
-        sp_df = pd.concat(sp_df, ignore_index=True, sort=False)
+        sp_df = pd.concat(load_cobjs(storage, ds_segms_cobjs), ignore_index=True, sort=False)
+
+    assert sp_df.mz.is_monotonic
 
     return sp_df
 
@@ -240,10 +224,10 @@ def choose_ds_segments(ds_segments_bounds, centr_df, isocalc_wrapper):
 
 def process_centr_segments(
     fexec: Executor,
-    ds_segms_cobjects: List[CObj[pd.DataFrame]],
+    ds_segms_cobjs: List[CObj[pd.DataFrame]],
     ds_segments_bounds,
     ds_segm_lens: np.ndarray,
-    db_segms_cobjects: List[CObj[pd.DataFrame]],
+    db_segms_cobjs: List[CObj[pd.DataFrame]],
     imzml_reader: PortableSpectrumReader,
     ds_config: DSConfig,
     ds_segm_size_mb: float,
@@ -274,7 +258,7 @@ def process_centr_segments(
         print(f'Reading dataset segments {first_ds_segm_i}-{last_ds_segm_i}')
         # read all segments in loop from COS
         sp_arr = read_ds_segments(
-            ds_segms_cobjects[first_ds_segm_i : last_ds_segm_i + 1],
+            ds_segms_cobjs[first_ds_segm_i : last_ds_segm_i + 1],
             ds_segm_lens[first_ds_segm_i : last_ds_segm_i + 1],
             pw_mem_mb,
             ds_segm_size_mb,
@@ -315,7 +299,7 @@ def process_centr_segments(
 
     logger.info('Annotating...')
     formula_metrics_list, image_lookups_list = fexec.map_unpack(
-        process_centr_segment, [(co,) for co in db_segms_cobjects], runtime_memory=pw_mem_mb,
+        process_centr_segment, [(co,) for co in db_segms_cobjs[18:19]], runtime_memory=pw_mem_mb
     )
     formula_metrics_df = pd.concat(formula_metrics_list)
     images_df = pd.concat(image_lookups_list)

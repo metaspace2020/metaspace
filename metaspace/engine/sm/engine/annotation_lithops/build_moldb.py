@@ -100,9 +100,9 @@ def get_formulas_df(
         ].values
         del db_data['formula_map_df']['ion_formula']
 
-    db_data_cobjects = save_cobjs(storage, db_datas)
+    db_data_cobjs = save_cobjs(storage, db_datas)
 
-    return db_data_cobjects, formulas_df
+    return db_data_cobjs, formulas_df
 
 
 def store_formula_segments(storage: Storage, formulas_df: pd.DataFrame):
@@ -113,13 +113,13 @@ def store_formula_segments(storage: Storage, formulas_df: pd.DataFrame):
     segm_ranges = list(zip(segm_bounds[:-1], segm_bounds[1:]))
     segm_list = [formulas_df.iloc[start:end] for start, end in segm_ranges]
 
-    formula_cobjects = save_cobjs(storage, segm_list)
+    formula_cobjs = save_cobjs(storage, segm_list)
 
-    assert len(formula_cobjects) == len(
-        set(co.key for co in formula_cobjects)
-    ), 'Duplicate CloudObjects in formula_cobjects'
+    assert len(formula_cobjs) == len(
+        set(co.key for co in formula_cobjs)
+    ), 'Duplicate CloudObjects in formula_cobjs'
 
-    return formula_cobjects
+    return formula_cobjs
 
 
 def build_moldb(
@@ -129,14 +129,14 @@ def build_moldb(
         *, storage: Storage, perf: Profiler
     ) -> Tuple[List[CObj[pd.DataFrame]], List[CObj[DbFDRData]]]:
         logger.info('Generating formulas...')
-        db_data_cobjects, formulas_df = get_formulas_df(storage, ds_config, moldbs)
+        db_data_cobjs, formulas_df = get_formulas_df(storage, ds_config, moldbs)
         num_formulas = len(formulas_df)
         perf.record_entry('generated formulas', num_formulas=num_formulas)
 
         logger.info('Storing formulas...')
-        formula_cobjects = store_formula_segments(storage, formulas_df)
-        perf.record_entry('stored formulas', num_chunks=len(formula_cobjects))
+        formula_cobjs = store_formula_segments(storage, formulas_df)
+        perf.record_entry('stored formulas', num_chunks=len(formula_cobjs))
 
-        return formula_cobjects, db_data_cobjects
+        return formula_cobjs, db_data_cobjs
 
     return executor.call(_build_moldb, (), runtime_memory=2048, debug_run_locally=True)

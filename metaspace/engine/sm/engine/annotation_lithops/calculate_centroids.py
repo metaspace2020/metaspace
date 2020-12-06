@@ -20,7 +20,7 @@ logger = logging.getLogger('annotation-pipeline')
 
 
 def calculate_centroids(
-    fexec: Executor, formula_cobjects: List[CObj[pd.DataFrame]], isocalc_wrapper: IsocalcWrapper
+    fexec: Executor, formula_cobjs: List[CObj[pd.DataFrame]], isocalc_wrapper: IsocalcWrapper
 ) -> List[CObj[pd.DataFrame]]:
     def calculate_peaks_for_formula(args):
         formula_i, formula, target, targeted = args
@@ -58,15 +58,15 @@ def calculate_centroids(
 
         return peaks_cobject, peaks_df.shape[0]
 
-    peaks_cobjects, peaks_cobject_lens = fexec.map_unpack(
-        calculate_peaks_chunk, list(enumerate(formula_cobjects)), runtime_memory=2048,
+    peaks_cobjs, peaks_cobject_lens = fexec.map_unpack(
+        calculate_peaks_chunk, list(enumerate(formula_cobjs)), runtime_memory=2048,
     )
 
     num_centroids = sum(peaks_cobject_lens)
-    logger.info(f'Calculated {num_centroids} centroids in {len(peaks_cobjects)} chunks')
+    logger.info(f'Calculated {num_centroids} centroids in {len(peaks_cobjs)} chunks')
 
-    def _sort_peaks_cobjects(*, storage):
-        df = pd.concat(load_cobjs(storage, peaks_cobjects))
+    def _sort_peaks_cobjs(*, storage):
+        df = pd.concat(load_cobjs(storage, peaks_cobjs))
         first_peak_mz = df.mz[df.peak_i == 0].sort_values()
 
         peaks_chunk_size = 64 * 2 ** 20
@@ -79,18 +79,18 @@ def calculate_centroids(
 
         return save_cobjs(storage, chunks)
 
-    sorted_peaks_cobjects = fexec.call(
-        _sort_peaks_cobjects,
+    sorted_peaks_cobjs = fexec.call(
+        _sort_peaks_cobjs,
         (),
-        cost_factors={'num_centroids': num_centroids, 'num_peak_cobjects': len(peaks_cobjects)},
+        cost_factors={'num_centroids': num_centroids, 'num_peak_cobjects': len(peaks_cobjs)},
         runtime_memory=256 + 100 * num_centroids / 2 ** 20,
     )
 
-    logger.info(f'Sorted centroids chunks into {len(sorted_peaks_cobjects)} chunks')
-    return sorted_peaks_cobjects
+    logger.info(f'Sorted centroids chunks into {len(sorted_peaks_cobjs)} chunks')
+    return sorted_peaks_cobjs
 
 
-def validate_centroids(fexec: Executor, peaks_cobjects: List[CObj[pd.DataFrame]]):
+def validate_centroids(fexec: Executor, peaks_cobjs: List[CObj[pd.DataFrame]]):
     # Ignore code duplicated with validate_centroid_segments as the duplicated parts of the code
     # are too entangled with non-duplicated parts of the code
 
@@ -127,7 +127,7 @@ def validate_centroids(fexec: Executor, peaks_cobjects: List[CObj[pd.DataFrame]]
         return formula_is, stats
 
     warnings: List[str] = []
-    results = fexec.map(get_segm_stats, [(co,) for co in peaks_cobjects], runtime_memory=1024)
+    results = fexec.map(get_segm_stats, [(co,) for co in peaks_cobjs], runtime_memory=1024)
     segm_formula_is = [formula_is for formula_is, stats in results]
     stats_df = pd.DataFrame([stats for formula_is, stats in results])
 
@@ -155,7 +155,7 @@ def validate_centroids(fexec: Executor, peaks_cobjects: List[CObj[pd.DataFrame]]
 
         logger.debug(
             f'Found {stats_df.n_peaks.sum()} peaks for {stats_df.n_formulas.sum()} formulas '
-            f'across {len(peaks_cobjects)} segms'
+            f'across {len(peaks_cobjs)} segms'
         )
         n_per_segm = formula_in_segms_df.groupby('segm_i').formula_i.count()
         logger.debug(f'Segm sizes range from {n_per_segm.min()} to {n_per_segm.max()}')

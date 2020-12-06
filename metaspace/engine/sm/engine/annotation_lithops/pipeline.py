@@ -31,17 +31,15 @@ logger = logging.getLogger('annotation-pipeline')
 
 
 class Pipeline:  # pylint: disable=too-many-instance-attributes
-    mols_dbs_cobjects: List[CObj[List[str]]]
-    formula_cobjects: List[CObj[pd.DataFrame]]
-    db_data_cobjects: List[CObj[DbFDRData]]
-    peaks_cobjects: List[CObj[pd.DataFrame]]
+    formula_cobjs: List[CObj[pd.DataFrame]]
+    db_data_cobjs: List[CObj[DbFDRData]]
+    peaks_cobjs: List[CObj[pd.DataFrame]]
     imzml_reader: PortableSpectrumReader
     ds_segments_bounds: np.ndarray
-    ds_segms_cobjects: List[CObj[pd.DataFrame]]
+    ds_segms_cobjs: List[CObj[pd.DataFrame]]
     ds_segm_lens: np.ndarray
-
     is_intensive_dataset: bool
-    db_segms_cobjects: List[CObj[pd.DataFrame]]
+    db_segms_cobjs: List[CObj[pd.DataFrame]]
     formula_metrics_df: pd.DataFrame
     images_df: pd.DataFrame
     fdrs: Dict[int, pd.DataFrame]
@@ -102,7 +100,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         return self.results_dfs, self.png_cobjs
 
     def prepare_moldb(self, debug_validate=False):
-        self.db_data_cobjects, self.peaks_cobjects = get_moldb_centroids(
+        self.db_data_cobjs, self.peaks_cobjs = get_moldb_centroids(
             executor=self.executor,
             sm_storage=self.lithops_config['sm_storage'],
             ds_config=self.ds_config,
@@ -113,59 +111,59 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
 
     @use_pipeline_cache
     def calculate_centroids(self):
-        self.peaks_cobjects = calculate_centroids(
-            self.executor, self.formula_cobjects, self.isocalc_wrapper
+        self.peaks_cobjs = calculate_centroids(
+            self.executor, self.formula_cobjs, self.isocalc_wrapper
         )
 
     def validate_calculate_centroids(self):
-        validate_centroids(self.executor, self.peaks_cobjects)
+        validate_centroids(self.executor, self.peaks_cobjs)
 
     @use_pipeline_cache
     def load_ds(self):
         (
             self.imzml_reader,
             self.ds_segments_bounds,
-            self.ds_segms_cobjects,
+            self.ds_segms_cobjs,
             self.ds_segm_lens,
         ) = load_ds(self.executor, self.imzml_cobject, self.ibd_cobject, self.ds_segm_size_mb)
 
-        self.is_intensive_dataset = len(self.ds_segms_cobjects) * self.ds_segm_size_mb > 5000
+        self.is_intensive_dataset = len(self.ds_segms_cobjs) * self.ds_segm_size_mb > 5000
 
     def validate_load_ds(self):
         validate_ds_segments(
             self.executor,
             self.imzml_reader,
             self.ds_segments_bounds,
-            self.ds_segms_cobjects,
+            self.ds_segms_cobjs,
             self.ds_segm_lens,
         )
 
     @use_pipeline_cache
     def segment_centroids(self):
-        self.db_segms_cobjects = segment_centroids(
+        self.db_segms_cobjs = segment_centroids(
             self.executor,
-            self.peaks_cobjects,
-            self.ds_segms_cobjects,
+            self.peaks_cobjs,
+            self.ds_segms_cobjs,
             self.ds_segments_bounds,
             self.ds_segm_size_mb,
             self.is_intensive_dataset,
             self.isocalc_wrapper,
         )
-        logger.info(f'Segmented centroids chunks into {len(self.db_segms_cobjects)} segments')
+        logger.info(f'Segmented centroids chunks into {len(self.db_segms_cobjs)} segments')
 
     def validate_segment_centroids(self):
         validate_centroid_segments(
-            self.executor, self.db_segms_cobjects, self.ds_segments_bounds, self.isocalc_wrapper,
+            self.executor, self.db_segms_cobjs, self.ds_segments_bounds, self.isocalc_wrapper,
         )
 
     @use_pipeline_cache
     def annotate(self):
         self.formula_metrics_df, self.images_df = process_centr_segments(
             self.executor,
-            self.ds_segms_cobjects,
+            self.ds_segms_cobjs,
             self.ds_segments_bounds,
             self.ds_segm_lens,
-            self.db_segms_cobjects,
+            self.db_segms_cobjs,
             self.imzml_reader,
             self.ds_config,
             self.ds_segm_size_mb,
@@ -175,7 +173,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
 
     @use_pipeline_cache
     def run_fdr(self):
-        self.fdrs = run_fdr(self.executor, self.formula_metrics_df, self.db_data_cobjects)
+        self.fdrs = run_fdr(self.executor, self.formula_metrics_df, self.db_data_cobjs)
 
     @use_pipeline_cache
     def prepare_results(self):

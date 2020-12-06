@@ -330,10 +330,10 @@ class ServerAnnotationJob:
                     n_peaks=self.ds.config['isotope_generation']['n_peaks'],
                     charge=self.ds.config['isotope_generation']['charge'],
                 )
-                search_results.store_ion_metrics(results_df, formula_image_ids, self.db)
+                # search_results.store_ion_metrics(results_df, formula_image_ids, self.db)
 
-                update_finished_job(job_id, JobStatus.FINISHED)
-                self.es.index_ds(self.ds.id, molecular_db.find_by_id(moldb_id), isocalc)
+                # update_finished_job(job_id, JobStatus.FINISHED)
+                # self.es.index_ds(self.ds.id, molecular_db.find_by_id(moldb_id), isocalc)
         except Exception:
             for moldb_id, job_id in moldb_to_job_map.items():
                 update_finished_job(job_id, JobStatus.FAILED)
