@@ -33,7 +33,7 @@ input_dir_path = str(Path(__file__).parent.parent / 'tests/data/imzml_example_ds
 @pytest.fixture(scope='module')
 def local_sm_config(sm_config):
     local_sm_config = sm_config
-    local_sm_config['colocalization']['enabled'] = False
+    local_sm_config['services']['colocalization'] = False
     return local_sm_config
 
 

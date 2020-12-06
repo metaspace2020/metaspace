@@ -12,6 +12,11 @@ High throughput molecular annotation for imaging mass spectrometry datasets
 ## Installation
 Please check the [sm-engine-ansible](https://github.com/metaspace2020/sm-engine-ansible) project
 
+## Lithops setup
+
+The main implementation of the METASPACE engine uses Lithops to run code in Serverless Cloud Functions. 
+See [Lithops.md](./docs/Lithops.md) for setup instructions.
+
 ## Uploading Dataset and Browsing Results
 Please visit the help page of our web application running on AWS:
 
