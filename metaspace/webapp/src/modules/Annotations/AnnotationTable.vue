@@ -7,7 +7,7 @@
       :data="annotations"
       size="mini"
       border
-      element-loading-text="Loading results from the server..."
+      element-loading-text="Loading results …"
       highlight-current-row
       width="100%"
       stripe
@@ -346,6 +346,7 @@ export default Vue.extend({
       totalCount: 0,
       initialLoading: true,
       csvChunkSize: 1000,
+      nextCurrentRowIndex: null,
     }
   },
   computed: {
@@ -418,7 +419,23 @@ export default Vue.extend({
         return this.$store.getters.settings.table.currentPage
       },
       set(page) {
+        // ignore the initial "sync"
+        if (page === this.currentPage) {
+          return
+        }
+        if (this.nextCurrentRowIndex === null) {
+          this.nextCurrentRowIndex = 0
+        }
         this.$store.commit('setCurrentPage', page)
+      },
+    },
+
+    currentRowIndex: {
+      get() {
+        return this.$store.getters.settings.table.row - 1
+      },
+      set(index) {
+        this.$store.commit('setRow', index + 1)
       },
     },
 
@@ -458,26 +475,21 @@ export default Vue.extend({
       update: data => data.allAnnotations,
       throttle: 200,
       result({ data }) {
-        // For whatever reason (could be a bug), vue-apollo seems to first refetch
-        // data for the current page and only then fetch the updated data.
-        // Checking if the data has been actually changed is easiest by comparing
-        // string representations of old and newly arrived data.
-        const changed = JSON.stringify(data) !== this._prevData
-        this._prevData = JSON.stringify(data)
-
-        // Handle page changes (due to pagination or keyboard events).
-        // On data arrival we need to highlight the current row if the change
-        // was because of an up/down key press, and disable all highlighting
-        // if it was due to a click on a pagination button.
-        if (this._onDataArrival && changed) {
-          this._onDataArrival(data.allAnnotations)
-          this._onDataArrival = (data) => {
-            this.clearCurrentRow()
-            if (data) {
-              Vue.nextTick(() => this.setRow(data, 0))
+        // timing hack to allow table state to update
+        Vue.nextTick(() => {
+          if (this.nextCurrentRowIndex !== null) {
+            this.setCurrentRow(this.nextCurrentRowIndex)
+            this.nextCurrentRowIndex = null
+          } else {
+            const curRow = this.getCurrentRow()
+            if (!curRow) {
+              this.setCurrentRow(this.currentRowIndex)
             }
           }
-        }
+          if (this.$refs.table) {
+            this.$refs.table.$el.focus()
+          }
+        })
 
         this.totalCount = data.countAnnotations
         this.initialLoading = false
@@ -487,25 +499,24 @@ export default Vue.extend({
       },
     },
   },
-  created() {
-    this._onDataArrival = (data) => {
-      if (!data) return
-      Vue.nextTick(() => this.setRow(data, 0))
-      const annotTable = document.getElementById('annot-table')
-      if (annotTable != null) {
-        annotTable.focus()
-      }
-    }
-  },
   methods: {
     onPageSizeChange(newSize) {
       this.recordsPerPage = newSize
     },
-    setRow(data, rowIndex) {
-      // Ignore if called after unmount
-      if (this.$refs.table != null) {
+
+    getCurrentRow() {
+      if (this.$refs.table) {
+        const tblStore = this.$refs.table.store
+        return tblStore.states.currentRow
+      }
+      return null
+    },
+
+    setCurrentRow(rowIndex, rows = this.annotations) {
+      if (this.$refs.table) {
         this.$refs.table.setCurrentRow(null)
-        this.$refs.table.setCurrentRow(data[rowIndex])
+        const nextIndex = rowIndex < 0 ? 0 : Math.min(rowIndex, rows.length - 1)
+        this.$refs.table.setCurrentRow(rows[nextIndex])
       }
     },
 
@@ -553,6 +564,10 @@ export default Vue.extend({
 
     onCurrentRowChange(row) {
       this.$store.commit('setAnnotation', row)
+
+      if (row !== null) {
+        this.currentRowIndex = this.annotations.indexOf(row)
+      }
     },
 
     onKeyDown(event) {
@@ -573,14 +588,14 @@ export default Vue.extend({
       // WARNING the code below relies on internals of el-table:
       // store.{states.currentRow, mutations.{setData, setCurrentRow}}
       const tblStore = this.$refs.table.store
-      const curRow = tblStore.states.currentRow
+      const curRow = this.getCurrentRow()
       const curIdx = this.annotations.indexOf(curRow)
 
       if (action === 'up' && curIdx === 0) {
         if (this.currentPage === 1) {
           return
         }
-        this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, data.length - 1)) }
+        this.nextCurrentRowIndex = this.recordsPerPage - 1
         this.currentPage -= 1
         return
       }
@@ -589,26 +604,25 @@ export default Vue.extend({
         if (this.currentPage === this.numberOfPages) {
           return
         }
-        this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, 0)) }
+        this.nextCurrentRowIndex = 0
         this.currentPage += 1
         return
       }
 
       if (action === 'left') {
+        this.nextCurrentRowIndex = curIdx
         this.currentPage = Math.max(1, this.currentPage - 1)
-        this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, Math.min(curIdx, data.length - 1))) }
         return
       }
 
       if (action === 'right') {
+        this.nextCurrentRowIndex = curIdx
         this.currentPage = Math.min(this.numberOfPages, this.currentPage + 1)
-        this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, Math.min(curIdx, data.length - 1))) }
         return
       }
 
       const delta = action === 'up' ? -1 : +1
-      tblStore.commit('setCurrentRow',
-        this.annotations[curIdx + delta])
+      this.setCurrentRow(curIdx + delta)
     },
 
     clearCurrentRow() {

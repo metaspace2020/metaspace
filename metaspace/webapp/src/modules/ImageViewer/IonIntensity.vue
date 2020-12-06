@@ -34,20 +34,20 @@
         >
           <span v-if="clippingType == 'hotspot-removal'">
             <b>Hot-spot removal has been applied to this image.</b> <br>
-            Intensities above the 99th percentile, {{ intensity }},
-            have been reduced to {{ intensity }}.
+            Intensities above the 99th percentile, {{ clippedIntensity }},
+            have been reduced to {{ clippedIntensity }}.
             The highest intensity before hot-spot removal was {{ originalIntensity }}.
           </span>
           <span v-if="clippingType == 'outlier-max'">
             <b>Outlier clipping has been applied to this image.</b> <br>
-            Intensities above the 99th percentile, {{ intensity }},
-            have been reduced to {{ intensity }}.
+            Intensities above the 99th percentile, {{ clippedIntensity }},
+            have been reduced to {{ clippedIntensity }}.
             The highest intensity before outlier clipping was {{ originalIntensity }}.
           </span>
           <span v-if="clippingType == 'outlier-min'">
             <b>Outlier clipping has been applied to this image.</b> <br>
-            Intensities below the 1st percentile, {{ intensity }},
-            have been increased to {{ intensity }}.
+            Intensities below the 1st percentile, {{ clippedIntensity }},
+            have been increased to {{ clippedIntensity }}.
             The lowest intensity before outlier clipping was {{ originalIntensity }}.
           </span>
         </p>
@@ -61,7 +61,7 @@
       </button>
       <check-icon
         v-if="status === 'LOCKED'"
-        class="h-6 w-6 -mx-2 sm-fill-primary text-blue-500"
+        class="h-6 w-6 -mx-2 sm-fill-primary text-blue-500 relative -z-10"
       />
     </div>
   </fade-transition>
@@ -114,12 +114,14 @@ export default defineComponent<Props>({
       }
       return props.value
     })
-    const intensity = computed(() => display.value.toExponential(1))
+    const intensity = computed(() => props.intensities.scaled.toExponential(1))
+    const clippedIntensity = computed(() => props.intensities.clipped.toExponential(1))
     const originalIntensity = computed(() => props.intensities.image.toExponential(1))
 
     return {
       editing,
       intensity,
+      clippedIntensity,
       originalIntensity,
       status,
       submit(floatValue: number) {
@@ -135,7 +137,7 @@ export default defineComponent<Props>({
         editing.value = false
       },
       lock() {
-        emit('lock', status.value === 'LOCKED' ? undefined : display.value)
+        emit('lock', status.value === 'LOCKED' ? undefined : props.intensities.scaled)
       },
     }
   },

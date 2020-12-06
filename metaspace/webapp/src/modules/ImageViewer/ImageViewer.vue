@@ -40,10 +40,7 @@
         <single-ion-image-controls
           v-else-if="!isLoading"
           key="single"
-          :state="singleIonImageControls.state"
-          :intensity="singleIonImageControls.intensity.value"
-          :color-bar="singleIonImageControls.colorBar.value"
-          :update-intensity="singleIonImageControls.updateIntensity"
+          v-bind="singleIonImageControls"
         />
       </fade-transition>
       <fade-transition>
@@ -85,8 +82,9 @@ import SingleIonImageControls from './SingleIonImageControls.vue'
 import IntensitySettings from './IntensitySettings.vue'
 import OpacitySettings from './OpacitySettings.vue'
 
-import viewerState from './state'
-import { useIonImages, resetIonImageState } from './ionImageState'
+import viewerState, { resetImageViewerState } from './state'
+import { resetIonImageState } from './ionImageState'
+import useIonImages from './useIonImages'
 import fitImageToArea, { FitImageToAreaResult } from '../../lib/fitImageToArea'
 import { ScaleType } from '../../lib/ionImageRendering'
 import config from '../../lib/config'
@@ -141,7 +139,7 @@ const ImageViewer = defineComponent<Props>({
     root.$store.watch((_, getters) => getters.filter.datasetIds, (datasetIds = [], previous) => {
       if (datasetIds.length !== 1 || (previous && previous[0] !== datasetIds[0])) {
         resetIonImageState()
-        viewerState.mode.value = 'SINGLE'
+        resetImageViewerState()
       }
     })
 

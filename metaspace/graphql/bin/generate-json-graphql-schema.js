@@ -1,8 +1,8 @@
-const {makeExecutableSchema} = require('graphql-tools');
-const {mergeTypes} = require('merge-graphql-schemas');
-const {graphql, introspectionQuery, printSchema} = require('graphql');
-const {promisify} = require('util');
-const {resolve} = require('path');
+const { makeExecutableSchema } = require('graphql-tools');
+const { mergeTypes } = require('merge-graphql-schemas');
+const { graphql, introspectionQuery, printSchema } = require('graphql');
+const { promisify } = require('util');
+const { resolve } = require('path');
 const readFile = promisify(require("fs").readFile);
 const writeFile = promisify(require("fs").writeFile);
 
@@ -18,12 +18,13 @@ const schemaFiles = [
   '../schemas/project.graphql',
   '../schemas/system.graphql',
   '../schemas/moldb.graphql',
+  '../schemas/imageViewerSnapshot.graphql',
 ];
 
 const run = async (outputFile) => {
   const filePromises = schemaFiles.map(file => readFile(resolve(__dirname, file), 'utf8'));
   const typeDefs = mergeTypes(await Promise.all(filePromises));
-  const schema = makeExecutableSchema({typeDefs});
+  const schema = makeExecutableSchema({ typeDefs });
   const introspectedSchema = await graphql(schema, introspectionQuery);
   await writeFile(outputFile, JSON.stringify(introspectedSchema));
   // For .graphql schema:

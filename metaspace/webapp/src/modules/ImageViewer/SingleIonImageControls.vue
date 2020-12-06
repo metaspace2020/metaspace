@@ -2,9 +2,9 @@
   <overlay class="pb-0">
     <ion-intensity-slider
       :model="state"
-      :color-bar="colorBar"
-      :intensity="intensity"
-      @change="updateIntensity"
+      :color-bar="colorBar.value"
+      :intensity="intensity.value"
+      :scale-range="scaleRange.value"
     />
   </overlay>
 </template>
@@ -19,7 +19,7 @@ export default defineComponent({
     state: Object,
     intensity: Object,
     colorBar: Object,
-    updateIntensity: Function,
+    scaleRange: Object,
   },
   components: {
     Overlay,

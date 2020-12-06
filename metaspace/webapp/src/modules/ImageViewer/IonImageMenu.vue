@@ -5,7 +5,7 @@
       :key="item.id"
       class="flex flex-col justify-center"
       :layer-id="item.id"
-      :active-layer="activeLayer"
+      :is-active="activeLayer === item.id"
       :visible="item.settings.visible"
       :loading="item.loading"
       @active="setActiveLayer"
@@ -41,27 +41,21 @@
           />
         </button>
       </p>
-      <div class="h-9">
-        <fade-transition>
-          <channel-selector
-            v-if="channelSelect === item.id"
-            v-model="item.settings.channel"
-            :class="['my-auto', activeLayer === item.id ? 'bg-blue-200-alpha' : 'bg-gray-200-alpha']"
-            @close="channelSelect = null"
-          />
-          <ion-intensity-slider
-            v-else
-            :id="item.id"
-            can-focus
-            :model="item.state"
-            :color-bar="item.colorBar.value"
-            :intensity="item.intensity.value"
-            :is-disabled="!item.settings.visible"
-            @change="item.updateIntensity"
-            @thumb-start="setLastSlider(item.id)"
-            @track-click="channelSelect = item.id"
-          />
-        </fade-transition>
+      <div class="h-9 relative">
+        <ion-intensity-slider
+          :id="item.id"
+          :model="item.state"
+          :color-bar="item.colorBar.value"
+          :intensity="item.intensity.value"
+          :scale-range="item.scaleRange.value"
+          :is-disabled="!item.settings.visible"
+          @thumb-start="setLastSlider(item.id)"
+        />
+        <channel-selector
+          v-model="item.settings.channel"
+          class="h-0 absolute bottom-0 left-0 right-0 flex justify-center items-end z-10"
+          @remove="removeLayer(item.id)"
+        />
       </div>
     </menu-item>
     <!-- margin removed below for Safari -->
@@ -124,10 +118,8 @@ export default defineComponent({
     const { activeLayer, removeLayer, setActiveLayer } = useIonImageMenu()
 
     const lastSlider = ref<string | null>(null)
-    const channelSelect = ref<string | null>(null)
 
     return {
-      channelSelect,
       activeLayer,
       removeLayer,
       setLastSlider(id: string) {
@@ -139,7 +131,6 @@ export default defineComponent({
           return
         }
         setActiveLayer(id)
-        channelSelect.value = null
       },
     }
   },

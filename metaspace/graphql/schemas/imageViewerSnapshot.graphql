@@ -1,0 +1,22 @@
+type ImageViewerSnapshot {
+  annotations: [Annotation!]!
+  datasetId: String!
+  id: String!
+  snapshot: String! # JSON
+  version: Int!
+}
+
+input ImageViewerSnapshotInput {
+  annotationIds: [String!]!
+  datasetId: String!
+  snapshot: String! # JSON
+  version: Int!
+}
+
+type Query {
+  imageViewerSnapshot(id: String!, datasetId: String!): ImageViewerSnapshot
+}
+
+type Mutation {
+  saveImageViewerSnapshot(input: ImageViewerSnapshotInput!): String!
+}
