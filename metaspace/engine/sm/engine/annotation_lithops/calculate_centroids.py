@@ -1,7 +1,3 @@
-# pylint: disable=duplicate-code
-# Ignore duplicate code for the whole file because there's some duplicate code duplicated
-# between validate_centroids and validate_centroid_segments that's difficult to disentangle,
-# and disabling the for specific lines doesn't seem to work
 from __future__ import annotations
 
 import logging

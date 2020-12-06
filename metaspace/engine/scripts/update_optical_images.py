@@ -1,4 +1,3 @@
-# pylint: disable=duplicate-code
 import argparse
 import logging
 from functools import partial
