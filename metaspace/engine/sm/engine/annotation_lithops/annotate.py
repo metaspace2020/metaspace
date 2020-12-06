@@ -167,6 +167,9 @@ def read_ds_segments(
 
     concat_memory_mb = ds_segms_mb * 3 + safe_mb
     if concat_memory_mb > pw_mem_mb:
+        # Memory-conservative method for loading many segments. Instead of loading them all at once,
+        # pre-allocate a destination DataFrame and load them into that dataframe one-at-a-time
+        # to minimize the amount of temp data needed at any point in time.
         segm_len = sum(ds_segm_lens)
         print(f'Using pre-allocated concatenation (len {segm_len})')
         sp_df = pd.DataFrame(
@@ -177,20 +180,21 @@ def read_ds_segments(
             }
         )
         row_start, row_end = 0, 0
-        for cobj in ds_segms_cobjs:
+        for segm_i, cobj in enumerate(ds_segms_cobjs):
             sub_sp_df = load_cobj(storage, cobj)
             assert sub_sp_df.mz.is_monotonic
+            assert len(sub_sp_df) == ds_segm_lens[segm_i], 'unexpected ds_segm length'
             row_end = row_start + len(sub_sp_df)
             print(
                 f'populating sp_df range {row_start}:{row_end} '
                 f'(m/z {sub_sp_df.mz.min():.6f}-{sub_sp_df.mz.max():.6f} from {cobj.key})'
             )
-            # PANDASS! Why do you make it so hard to emplace values into a dataframe?
+            # PANDAS! Why do you make it so hard to emplace values into a dataframe?
             sp_df.iloc[row_start:row_end, sp_df.columns.get_loc('mz')] = sub_sp_df.mz.values
             sp_df.iloc[row_start:row_end, sp_df.columns.get_loc('int')] = sub_sp_df.int.values
             sp_df.iloc[row_start:row_end, sp_df.columns.get_loc('sp_i')] = sub_sp_df.sp_i.values
             row_start = row_end
-        assert row_end == len(sp_df) + 1
+        assert row_end == len(sp_df)
     else:
         sp_df = pd.concat(load_cobjs(storage, ds_segms_cobjs), ignore_index=True, sort=False)
 
@@ -299,7 +303,7 @@ def process_centr_segments(
 
     logger.info('Annotating...')
     formula_metrics_list, image_lookups_list = fexec.map_unpack(
-        process_centr_segment, [(co,) for co in db_segms_cobjs[18:19]], runtime_memory=pw_mem_mb
+        process_centr_segment, [(co,) for co in db_segms_cobjs], runtime_memory=pw_mem_mb
     )
     formula_metrics_df = pd.concat(formula_metrics_list)
     images_df = pd.concat(image_lookups_list)

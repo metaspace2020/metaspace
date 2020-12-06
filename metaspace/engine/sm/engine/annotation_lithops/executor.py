@@ -282,6 +282,15 @@ class Executor:
         assert valid_executors, f'Could not find an executor supporting {runtime_memory}MB'
         executor_type, executor = valid_executors[0]
         logger.debug(f'Selected executor {executor_type}')
+
+        backend = executor.compute_handler.backend
+        if hasattr(backend, 'ibm_iam_api_key_manager'):
+            logger.debug('Applying token expiry fix')
+            # WORKAROUND due to https://github.com/lithops-cloud/lithops/issues/485
+            token, token_expiry_time = backend.ibm_iam_api_key_manager.get_token()
+            backend.config['token'], backend.config['token_expiry_time'] = token, token_expiry_time
+            backend.cf_client.headers['Authorization'] = f'Bearer {token}'
+
         return executor
 
     def map_unpack(self, func, args: Sequence, *, runtime_memory=None, **kwargs):
