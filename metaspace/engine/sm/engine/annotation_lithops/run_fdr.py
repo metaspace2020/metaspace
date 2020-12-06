@@ -47,6 +47,6 @@ def run_fdr(
     for moldb_id, moldb_fdrs in results:
         logger.info(f'DB {moldb_id} number of annotations with FDR less than:')
         for fdr_step in [0.05, 0.1, 0.2, 0.5]:
-            logger.info(f'{fdr_step * 100:2.0f}%: {(moldb_fdrs.fdr < fdr_step).sum()}')
+            logger.info(f'{fdr_step * 100:2.0f}%: {(moldb_fdrs.fdr <= fdr_step).sum()}')
 
     return dict(results)

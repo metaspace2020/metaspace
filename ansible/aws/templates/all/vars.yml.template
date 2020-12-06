@@ -75,7 +75,7 @@ sm_redis:
 off_sample_api_endpoint: OFF_SAMPLE_API_ENDPOINT
 
 sm_ansible_home: "{{ metaspace_home }}/ansible"
-sm_cluster_autostart_ansible_version: 2.6.2
+sm_cluster_autostart_ansible_version: 2.8.6
 sm_cluster_autostart_python: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
 sm_cluster_autostart_redis:
   host: "{{ web_redis.host }}"
