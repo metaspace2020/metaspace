@@ -486,7 +486,9 @@ export default Vue.extend({
               this.setCurrentRow(this.currentRowIndex)
             }
           }
-          if (this.$refs.table) {
+          // Move focus to the table so that keyboard navigation works, except when focus is on an input element
+          const shouldMoveFocus = document.activeElement?.closest('input,select,textarea') == null
+          if (this.$refs.table && shouldMoveFocus) {
             this.$refs.table.$el.focus()
           }
         })
