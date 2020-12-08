@@ -3,6 +3,7 @@ import struct
 from typing import io
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 MB = 1024 ** 2
 ELEMENT_SIZE = 4
@@ -19,9 +20,9 @@ def seek_read_mz(stream, offset):
     return mz
 
 
-def build_mz_index(file_path: pathlib.Path) -> np.ndarray:
-    bin_file_size_mb = file_path.stat().st_size
-    with file_path.open("rb") as stream:
+def build_mz_index(sorted_peaks_path: pathlib.Path) -> np.ndarray:
+    bin_file_size_mb = sorted_peaks_path.stat().st_size
+    with sorted_peaks_path.open("rb") as stream:
         mzs = []
         for offset in range(0, bin_file_size_mb, CHUNK_SIZE):
             mz = seek_read_mz(stream, offset)
@@ -72,6 +73,9 @@ def search_and_fetch_mz_peaks(
     stream: BinaryFile, mz_index: np.ndarray, mz_lo: float, mz_hi: float
 ) -> np.ndarray:
     mz_lo_chunk_idx, mz_hi_chunk_idx = np.searchsorted(mz_index, [mz_lo, mz_hi])
+    if mz_hi_chunk_idx == 0:
+        return np.zeros((0, 3), dtype="f")
+
     mz_lo_chunk_idx -= 1  # previous chunk actually includes value
 
     offset = mz_lo_chunk_idx * CHUNK_SIZE
@@ -91,9 +95,21 @@ def create_mz_image(mz_peaks: np.ndarray, coordinates: np.ndarray) -> np.ndarray
     nrows, ncols = max_y - min_y + 1, max_x - min_x + 1
     mz_image = np.zeros(shape=(nrows, ncols))
 
-    image_coords = coordinates[mz_peaks[:, 2].astype(int)]
-    xs = image_coords[:, 0] - min_x
-    ys = image_coords[:, 1] - min_y
-    mz_image[ys, xs] += mz_peaks[:, 1]
+    alpha = np.zeros(shape=(nrows, ncols))
+    all_xs, all_ys = zip(*coordinates)
+    all_xs -= min_x
+    all_ys -= min_y
+    alpha[all_ys, all_xs] = 1
 
-    return mz_image
+    # image_coords = coordinates[mz_peaks[:, 2].astype(int)]
+    image_coord_idxs = mz_peaks[:, 2].astype("i")
+    xs = all_xs[image_coord_idxs]
+    ys = all_ys[image_coord_idxs]
+    mz_image[ys, xs] += mz_peaks[:, 1]
+    if mz_image.sum() > 0:
+        mz_image /= mz_image.max()
+
+    cmap = plt.get_cmap("viridis")
+    rgba_image = cmap(mz_image)
+    rgba_image[:, :, 3] = alpha
+    return rgba_image

@@ -4,35 +4,13 @@ from traceback import format_exc
 from typing import Optional, io, List
 
 import numpy as np
-import pyimzml
-from pyimzml.ImzMLParser import ImzMLParser, PortableSpectrumReader
+from pyimzml.ImzMLParser import ImzMLParser
 
 from sm.engine.errors import ImzMLError
 from sm.engine.msm_basic import segmenter
-from sm.engine.util import find_file_by_ext
 from . import utils
 
 MAX_MZ_VALUE = 10 ** 5
-
-
-# class ImzMLParserWrapper:
-#     def __init__(self, path):
-#         self.imzml_path = pathlib.Path(find_file_by_ext(path, 'imzml'))
-#         self.ibd_path = pathlib.Path(find_file_by_ext(path, 'ibd'))
-#         try:
-#             self._imzml_parser = ImzMLParser(self.imzml_path, parse_lib='ElementTree')
-#         except Exception as e:
-#             raise ImzMLError(format_exc()) from e
-# self.coordinates = np.array([coord[:2] for coord in self._portable_reader.coordinates])
-# self.mz_precision = self._portable_reader.mzPrecision
-
-# def get_spectrum(self, file, idx):
-#     mzs, ints = self._portable_reader.read_spectrum_from_file(idx)
-#     nonzero_ints_mask = ints > 0
-#     return mzs[nonzero_ints_mask], ints[nonzero_ints_mask]
-
-# imzml_path = pathlib.Path(find_file_by_ext(path, "imzml"))
-# ibd_path = pathlib.Path(find_file_by_ext(path, "ibd"))
 
 
 class ImzMLReader:
@@ -151,12 +129,17 @@ def sort_segments(segments_path):
         segment.tofile(segment_path.open("wb"))
 
 
-def merge_segments(segments_path, dataset_bin_path):
+def sort_merge_segments(segments_path, dataset_bin_path):
     if dataset_bin_path.exists():
         dataset_bin_path.unlink()
+
     segment_n = sum(1 for _ in segments_path.iterdir())
     for segm_i in range(segment_n):
         print(f"Writing segment {segm_i}")
         segment_path = segments_path / f"segment_{segm_i:04}.bin"
         segment = np.fromfile(segment_path.open("rb"), dtype="f").reshape(-1, 3)
+
+        by_mz = segment[:, 0].argsort(kind="mergesort")
+        segment = segment[by_mz]
+
         segment.tofile(dataset_bin_path.open("ab"))

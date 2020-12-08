@@ -100,7 +100,7 @@ split_sort.segment_dataset(imzml_parser, ibd_path, segments_path)
 # np.all(a[:-1, 0] <= a[1:, 0])
 
 dataset_bin_path = ds_path / "sorted.bin"
-split_sort.merge_segments(dataset_bin_path)
+split_sort.sort_merge_segments(dataset_bin_path)
 # %time merge_segments(dataset_bin_path)
 
 #
@@ -204,7 +204,6 @@ dataset_browser.build_index()
 del dataset_browser
 
 dataset_browser = DatasetBrowser(dataset_s3_path)
-dataset_browser.download_index()
 # dataset_browser.imzml_reader.get_spectrum(0)
 # dataset_browser.sorted_peaks_s3_file
 
