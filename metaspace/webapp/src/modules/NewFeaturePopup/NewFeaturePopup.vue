@@ -1,133 +1,65 @@
 <template>
-  <span>
-    <div
-      v-if="isRelevant"
-      v-show="isActive"
-      ref="popover"
-      class="el-popover el-popper leading-5 p-5 text-left"
-    >
-      <h3 class="leading-10 m-0 mt-2">
-        <el-badge value="New">
-          {{ title }}
-        </el-badge>
-      </h3>
-      <div class="sm-content font-normal">
-        <slot name="default" />
-      </div>
-      <div class="flex justify-end items-center h-10 mt-5">
-        <el-button
-          size="small"
-          @click.stop="remindLater"
-        >
-          Remind me later
-        </el-button>
-        <el-button
-          size="small"
-          type="primary"
-          @click.stop="dismissPopup"
-        >
-          Got it!
-        </el-button>
-      </div>
-      <div
-        class="popper__arrow"
-        x-arrow=""
-      />
+  <div
+    v-if="isActive"
+    ref="popover"
+    class="el-popover el-popper leading-5 p-5 text-left"
+  >
+    <h3 class="leading-10 m-0 mt-2">
+      <el-badge value="New">
+        {{ title }}
+      </el-badge>
+    </h3>
+    <div class="sm-content font-normal">
+      <slot name="default" />
     </div>
-    <span
-      ref="reference"
-      :class="referenceClass"
-    >
-      <slot name="reference" />
-    </span>
-  </span>
+    <div class="flex justify-end items-center h-10 mt-5">
+      <el-button
+        size="small"
+        @click.stop="remindLater"
+      >
+        Remind me later
+      </el-button>
+      <el-button
+        size="small"
+        type="primary"
+        @click.stop="dismissPopup"
+      >
+        Got it!
+      </el-button>
+    </div>
+    <div
+      class="popper__arrow"
+      x-arrow=""
+    />
+  </div>
 </template>
 <script lang="ts">
 import { defineComponent, computed, ref, onMounted, onBeforeUnmount, watch, onUnmounted } from '@vue/composition-api'
-import Popper, { Placement } from 'popper.js'
 
-import useNewFeaturePopups from './useNewFeaturePopups'
-import config from '../../lib/config'
-import useIntersectionObserver from '../../lib/useIntersectionObserver'
+import useNewFeaturePopups, { NEW_FEATURES } from './useNewFeaturePopups'
 
 interface Props {
-  name: string
+  featureKey: string
   title: string
-  placement: Placement
-  showUntil: Date
-  referenceClass: string
 }
 
 export default defineComponent<Props>({
   props: {
-    name: String,
+    featureKey: { type: String },
     title: String,
-    placement: String,
-    showUntil: Date,
-    referenceClass: String,
   },
   setup(props, { root }) {
     const {
       activePopup,
-      isDismissed,
-      queuePopup,
-      unqueuePopup,
-      remindLater,
+      popoverRef,
       dismissPopup,
+      remindLater,
     } = useNewFeaturePopups()
 
-    const popover = ref<HTMLElement>()
-    const reference = ref<HTMLElement>()
-
-    const isRelevant = (props.showUntil || Number.MAX_VALUE) > new Date()
-
-    if (!isRelevant || isDismissed(props.name)) {
-      return {
-        isRelevant: false,
-      }
-    }
-
-    const { isFullyInView, intersectionRatio } = useIntersectionObserver(reference, { threshold: [0, 1] })
-
-    watch(isFullyInView, value => {
-      if (value) {
-        queuePopup(props.name)
-      } else if (activePopup.value !== props.name) { // do not unqueue if popup is visible
-        unqueuePopup(props.name)
-      }
-    })
-
-    const isActive = computed(() =>
-      popover.value
-      && reference.value
-      && config.features.new_feature_popups
-      && root.$store.state.currentTour === null
-      && activePopup.value === props.name,
-    )
-
-    let popper : Popper | null
-
-    watch(isActive, value => {
-      if (value === true) {
-        popper = new Popper(reference.value!, popover.value!, { placement: props.placement })
-      } else if (popper) {
-        popper.destroy()
-        popper = null
-      }
-    })
-
-    onBeforeUnmount(() => {
-      if (popper) {
-        popper.destroy()
-      }
-      // in case popup was not dismissed
-      unqueuePopup(props.name)
-    })
+    const isActive = computed(() => activePopup.value === props.featureKey)
 
     return {
-      popover,
-      reference,
-      isRelevant,
+      popover: popoverRef,
       isActive,
       remindLater,
       dismissPopup,

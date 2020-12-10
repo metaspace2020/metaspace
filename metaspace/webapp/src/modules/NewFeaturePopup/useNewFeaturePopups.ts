@@ -1,14 +1,14 @@
-import { reactive, computed } from '@vue/composition-api'
+import { reactive, computed, ref } from '@vue/composition-api'
 import { isArray } from 'lodash-es'
 
 import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'
 
 const STORAGE_KEY = 'dismissedFeaturePopups'
 
-const NEW_FEATURES = [
-  'isomersIsobars',
-  'medianCosineColoc',
-  'customDatabases',
+export const FEATURE_KEYS = [
+  'uploadCustomDatabases',
+  'groupDatabasesTab',
+  'multipleIonImages',
 ]
 
 function getDismissedPopups() {
@@ -16,7 +16,7 @@ function getDismissedPopups() {
     const list = getLocalStorage(STORAGE_KEY)
     if (isArray(list)) {
       // Filter out invalid/old entries
-      return list.filter(item => NEW_FEATURES.some(f => f === item))
+      return list.filter(item => FEATURE_KEYS.includes(item))
     } else {
       return []
     }
@@ -40,20 +40,23 @@ function closeActivePopup() {
   return popup
 }
 
+const popoverRef = ref<HTMLElement>()
+
 export default () => {
   return {
     activePopup,
-    isDismissed(name: string) {
-      return state.dismissed.includes(name)
+    popoverRef,
+    isDismissed(featureKey: string) {
+      return state.dismissed.includes(featureKey)
     },
-    queuePopup(name: string) {
-      if (state.dismissed.includes(name) || state.queued.includes(name)) {
+    queuePopup(featureKey: string) {
+      if (state.dismissed.includes(featureKey) || state.queued.includes(featureKey)) {
         return
       }
-      state.queued.push(name)
+      state.queued.push(featureKey)
     },
-    unqueuePopup(name: string) {
-      const index = state.queued.indexOf(name)
+    unqueuePopup(featureKey: string) {
+      const index = state.queued.indexOf(featureKey)
       if (index !== -1) {
         state.queued.splice(index, 1)
       }

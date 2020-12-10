@@ -13,22 +13,12 @@
         <el-col :span="18">
           <el-row :gutter="8">
             <el-col :span="8">
-              <new-feature-popup
-                name="customDatabases"
+              <popup-anchor
+                feature-key="uploadCustomDatabases"
                 placement="top"
-                title="Custom metabolite databases"
-                :show-until="new Date('2021-02-28')"
-                reference-class="block"
+                class="block"
               >
-                <p>
-                  Well, the way they make shows is, they make one show. That show's called a pilot.
-                  Then they show that show to the people who make shows, and on the strength of that one show they decide if they're going to make more shows.
-                </p>
-                <p>
-                  Some pilots get picked and become television programs. Some don't, become nothing. She starred in one of the ones that became nothing.
-                </p>
                 <form-field
-                  slot="reference"
                   type="selectMulti"
                   name="Metabolite database"
                   :help="dbHelp"
@@ -52,7 +42,7 @@
                     />
                   </el-option-group>
                 </form-field>
-              </new-feature-popup>
+              </popup-anchor>
             </el-col>
             <el-col :span="8">
               <form-field
@@ -274,7 +264,7 @@ import config, { limits } from '../../../lib/config'
 import { formatDatabaseLabel, MolDBsByGroup } from '../../MolecularDatabases/formatting'
 import { MolecularDB } from '../../../api/moldb'
 import { sortBy } from 'lodash-es'
-import NewFeaturePopup from '../../../modules/NewFeaturePopup/NewFeaturePopup.vue'
+import PopupAnchor from '../../../modules/NewFeaturePopup/PopupAnchor.vue'
 
 import './FormSection.scss'
 
@@ -299,7 +289,7 @@ const normalizeFormulaModifier = (formula: string, defaultSign: '+'|'-') => {
   @Component({
     components: {
       FormField,
-      NewFeaturePopup,
+      PopupAnchor,
     },
   })
 export default class MetaspaceOptionsSection extends Vue {

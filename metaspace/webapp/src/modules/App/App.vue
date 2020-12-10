@@ -22,6 +22,8 @@
     <dialog-controller />
     <!--<release-notes-dialog />-->
 
+    <new-feature-popups />
+
     <tour-step
       ref="tour"
       :tour="$store.state.currentTour"
@@ -41,6 +43,7 @@ import config from '../../lib/config'
 import Vue, { ComponentOptions } from 'vue'
 import 'element-ui' // Needed for Vue.$alert augmentation
 import CookieBanner from './CookieBanner'
+import NewFeaturePopups from './NewFeaturePopups'
 
 /** @type {ComponentOptions<Vue> & Vue} */
 export default {
@@ -52,6 +55,7 @@ export default {
     TourStep,
     DialogController,
     CookieBanner,
+    NewFeaturePopups,
   },
   data() {
     return {
