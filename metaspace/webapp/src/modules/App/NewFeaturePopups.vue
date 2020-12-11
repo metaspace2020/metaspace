@@ -20,10 +20,13 @@
     </new-feature-popup>
     <new-feature-popup
       feature-key="multipleIonImages"
-      title="Multiple Ion Images"
+      title="Ion Image Channels"
     >
       <p>
-        The best thing since sliced bread.
+        Overlay multiple ion images from the same dataset. Scale and color each image, or lock the scale across all images.
+      </p>
+      <p>
+        &ldquo;Link to this annotation&rdquo; will preserve the layers and settings for collaborators.
       </p>
     </new-feature-popup>
   </div>
