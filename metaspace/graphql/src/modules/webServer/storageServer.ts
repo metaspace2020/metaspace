@@ -8,13 +8,13 @@ import * as path from 'path';
 import * as cors from 'cors';
 import * as crypto from 'crypto';
 import * as fs from 'fs-extra';
-import * as companion from '@uppy/companion';
 import * as bodyParser from "body-parser";
-import * as genUuid from "uuid";
 import logger from '../../utils/logger';
 import {Config, ImageCategory} from '../../utils/config';
 import fineUploaderS3Middleware from './fineUploaderS3Middleware';
 import fineUploaderLocalMiddleware from './fineUploaderLocalMiddleware';
+import datasetUploadMiddleware from './datasetUploadMiddleware'
+import databaseUploadMiddleware from './databaseUploadMiddleware'
 
 
 function imageProviderFSBackend(storageRootDir: string) {
@@ -120,40 +120,9 @@ export async function createStorageServerAsync(config: Config) {
     httpServer.listen(config.img_storage_port).on('listening', resolve).on('error', reject);
   });
 
-  if (config.upload.destination === 's3') {
-    app.use('/dataset_upload', fineUploaderS3Middleware());
-  } else {
-    app.use('/dataset_upload', fineUploaderLocalMiddleware());
-  }
+  app.use('/dataset_upload', bodyParser.json(), datasetUploadMiddleware(httpServer));
 
-  const providerOptions =
-    config.aws ? {
-      s3: {
-        getKey: (req: express.Request, filename: string, metadata: object) => {
-          return `${config.upload.moldbPrefix}/${genUuid()}/${filename}`
-        },
-        key: config.aws.aws_access_key_id,
-        secret: config.aws.aws_secret_access_key,
-        bucket: config.upload.bucket,
-        region: config.aws.aws_region,
-        useAccelerateEndpoint: false,  // default: false,
-        expires: 300,  // default: 300 (5 minutes)
-        acl: 'private',  // default: public-read
-      }
-    } : {}
-
-  const options = {
-    providerOptions,
-    server: {
-      host: `localhost:${config.img_storage_port}`,
-      protocol: 'http',
-      path: '/database_upload',
-    },
-    filePath: '/tmp',
-    debug: true,
-  };
-  app.use('/database_upload', bodyParser.json(), companion.app(options));
-  companion.socket(httpServer, options);
+  app.use('/database_upload', bodyParser.json(), databaseUploadMiddleware(httpServer));
 
   logger.info(`Storage server is listening on ${config.img_storage_port} port...`);
   return httpServer;
