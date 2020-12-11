@@ -1,14 +1,8 @@
-import Vue, { CreateElement, VNode } from 'vue'
+import Vue from 'vue'
 
-const name = 'new-feature-popup'
-
-Vue.component(name, {
-  name,
-  inheritAttrs: false,
-  render(h: CreateElement): VNode {
-    if (this.$slots && this.$slots.reference) {
-      return this.$slots.reference[0]
-    }
-    return h()
+Vue.component('popup-anchor', {
+  functional: true, // stops all attribute inheritance including classes
+  render: function(h, context) {
+    return context.children?.[0]
   },
 })

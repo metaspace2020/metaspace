@@ -1,5 +1,8 @@
 <template>
-  <span ref="reference">
+  <span
+    ref="reference"
+    v-bind="$attrs"
+  >
     <slot />
   </span>
 </template>

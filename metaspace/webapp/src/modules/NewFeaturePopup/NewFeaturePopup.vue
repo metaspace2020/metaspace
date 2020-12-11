@@ -36,7 +36,7 @@
 <script lang="ts">
 import { defineComponent, computed, ref, onMounted, onBeforeUnmount, watch, onUnmounted } from '@vue/composition-api'
 
-import useNewFeaturePopups, { NEW_FEATURES } from './useNewFeaturePopups'
+import useNewFeaturePopups from './useNewFeaturePopups'
 
 interface Props {
   featureKey: string
