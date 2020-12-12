@@ -3,6 +3,7 @@ import * as crypto from 'crypto';
 import {Router, Request, Response, NextFunction} from 'express';
 import * as companion from '@uppy/companion';
 import * as genUuid from "uuid";
+import * as bodyParser from "body-parser";
 
 import config from '../../utils/config';
 
@@ -25,7 +26,7 @@ function generateUuidForUpload(req: Request, res: Response, next: NextFunction) 
   res.json({uuid, uuidSignature});
 }
 
-export default function (httpServer: http.Server) {
+export default function (httpServer?: http.Server) {
   const providerOptions =
       config.aws ? {
         s3: {
@@ -59,9 +60,11 @@ export default function (httpServer: http.Server) {
   };
 
   const router = Router()
-
+  router.use(bodyParser.json())
   router.get('/s3/uuid', generateUuidForUpload)
   router.use(companion.app(options))
-  companion.socket(httpServer, options);
+  if (httpServer) {
+    companion.socket(httpServer, options);
+  }
   return router
 }

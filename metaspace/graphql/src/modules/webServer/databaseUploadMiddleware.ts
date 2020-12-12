@@ -3,6 +3,7 @@ import * as express from 'express';
 import * as companion from '@uppy/companion';
 import * as genUuid from "uuid";
 import config from '../../utils/config';
+import * as bodyParser from "body-parser";
 
 export default function (httpServer: http.Server) {
   const providerOptions =
@@ -32,7 +33,9 @@ export default function (httpServer: http.Server) {
     debug: true,
   };
 
+  const router = express.Router()
+  router.use(bodyParser.json())
+  router.use(companion.app(options))
   companion.socket(httpServer, options);
-
-  return companion.app(options)
+  return router
 }

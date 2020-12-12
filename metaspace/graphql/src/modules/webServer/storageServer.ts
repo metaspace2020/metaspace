@@ -8,11 +8,8 @@ import * as path from 'path';
 import * as cors from 'cors';
 import * as crypto from 'crypto';
 import * as fs from 'fs-extra';
-import * as bodyParser from "body-parser";
 import logger from '../../utils/logger';
 import {Config, ImageCategory} from '../../utils/config';
-import fineUploaderS3Middleware from './fineUploaderS3Middleware';
-import fineUploaderLocalMiddleware from './fineUploaderLocalMiddleware';
 import datasetUploadMiddleware from './datasetUploadMiddleware'
 import databaseUploadMiddleware from './databaseUploadMiddleware'
 
@@ -120,9 +117,9 @@ export async function createStorageServerAsync(config: Config) {
     httpServer.listen(config.img_storage_port).on('listening', resolve).on('error', reject);
   });
 
-  app.use('/dataset_upload', bodyParser.json(), datasetUploadMiddleware(httpServer));
+  app.use('/dataset_upload', datasetUploadMiddleware(httpServer));
 
-  app.use('/database_upload', bodyParser.json(), databaseUploadMiddleware(httpServer));
+  app.use('/database_upload', databaseUploadMiddleware(httpServer));
 
   logger.info(`Storage server is listening on ${config.img_storage_port} port...`);
   return httpServer;
