@@ -2,15 +2,13 @@ import argparse
 import shutil
 from pathlib import Path
 import time
-from typing import Optional
 
 import numpy as np
 from matplotlib import pyplot as plt
 
-from sm.browser.mz_search import S3File
 from sm.browser import utils, mz_search, split_sort
 
-TMP_LOCAL_PATH = Path("/tmp/dataset-browser")
+TMP_LOCAL_PATH = Path("/tmp/imzml-browser")
 TMP_LOCAL_PATH.mkdir(parents=True, exist_ok=True)
 
 
@@ -57,25 +55,15 @@ def preprocess_dataset_peaks(full_dataset_s3_path: str):
 
 
 class DatasetBrowser:
-    def __init__(self, full_dataset_s3_path: str):
-        self.ds = utils.DatasetFiles(full_dataset_s3_path, TMP_LOCAL_PATH)
-        self.coordinates: np.ndarray = None
-        self.mz_index: np.ndarray = None
-        self.sorted_peaks_s3_file: S3File = None
-
-        self._download_index()
-
-    def _download_index(self):
+    def __init__(
+        self, full_dataset_s3_path: str,
+    ):
         start = time.time()
-        log(
-            start,
-            f"downloading and initializing mz index files from "
-            f"{self.ds.full_ds_s3_path} to {self.ds.ds_path}",
-        )
-        self.ds.download_mz_index()
-        self.coordinates = np.fromfile(self.ds.ds_coordinates_path, dtype="i").reshape(-1, 2)
-        self.mz_index = np.fromfile(self.ds.mz_index_path, dtype="f")
-        self.sorted_peaks_s3_file = self.ds.make_sorted_peaks_s3_file()
+        log(start, f"fetching and initializing mz index files from {full_dataset_s3_path}")
+        ds = utils.DatasetFiles(full_dataset_s3_path, TMP_LOCAL_PATH)
+        self.coordinates = np.frombuffer(ds.read_coordinates(), dtype="i").reshape(-1, 2)
+        self.mz_index = np.frombuffer(ds.read_mz_index(), dtype="f")
+        self.sorted_peaks_s3_file = ds.make_sorted_peaks_s3_file()
         log(start, f"done")
 
     def search(self, mz_lo: int, mz_hi: int) -> np.ndarray:
@@ -103,5 +91,6 @@ if __name__ == "__main__":
         dataset_browser = DatasetBrowser(args.s3_path)
         mz_lo, mz_hi = utils.mz_ppm_bin(mz=args.mz, ppm=args.ppm)
         mz_image = dataset_browser.search(mz_lo, mz_hi)
+
         plt.imshow(mz_image)
         plt.show()

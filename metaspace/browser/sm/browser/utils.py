@@ -2,6 +2,8 @@ import re
 import shutil
 from pathlib import Path
 from typing import Optional
+from functools import wraps
+from time import time
 
 import boto3
 
@@ -37,6 +39,19 @@ def clean_dir(path):
 
 def mz_ppm_bin(mz, ppm):
     return mz - mz * ppm * 1e-6, mz + mz * ppm * 1e-6
+
+
+def timing(f):
+    @wraps(f)
+    def wrap(*args, **kw):
+        start = time()
+        result = f(*args, **kw)
+        elapsed = time() - start
+        mins, secs = divmod(elapsed, 60)
+        print(f"func:{f.__name__} args:[{args}, {kw}] took:{mins:.0f} min {secs:.3f} sec")
+        return result
+
+    return wrap
 
 
 class DatasetFiles:
@@ -89,14 +104,13 @@ class DatasetFiles:
             Filename=str(self.mz_index_path), Key=f"{self.ds_s3_path}/{self.mz_index_path.name}",
         )
 
-    def download_mz_index(self):
-        self._bucket.download_file(
-            Key=f"{self.ds_s3_path}/{self.ds_coordinates_path.name}",
-            Filename=str(self.ds_coordinates_path),
-        )
-        self._bucket.download_file(
-            Key=f"{self.ds_s3_path}/{self.mz_index_path.name}", Filename=str(self.mz_index_path)
-        )
+    def read_coordinates(self) -> bytes:
+        s3_object = self._bucket.Object(key=f"{self.ds_s3_path}/{self.ds_coordinates_path.name}")
+        return s3_object.get()["Body"].read()
 
-    def make_sorted_peaks_s3_file(self):
+    def read_mz_index(self) -> bytes:
+        s3_object = self._bucket.Object(key=f"{self.ds_s3_path}/{self.mz_index_path.name}")
+        return s3_object.get()["Body"].read()
+
+    def make_sorted_peaks_s3_file(self) -> S3File:
         return S3File(self._bucket.Object(key=f"{self.ds_s3_path}/{self.sorted_peaks_path.name}"))

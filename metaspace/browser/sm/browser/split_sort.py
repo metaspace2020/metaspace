@@ -6,11 +6,15 @@ from typing import Optional, io, List
 import numpy as np
 from pyimzml.ImzMLParser import ImzMLParser
 
-from sm.engine.errors import ImzMLError
-from sm.engine.msm_basic import segmenter
-from . import utils
+from sm.browser import utils
 
 MAX_MZ_VALUE = 10 ** 5
+
+
+class ImzMLError(Exception):
+    def __init__(self, traceback):
+        super().__init__('Error parsing imzML file')
+        self.traceback = traceback
 
 
 class ImzMLReader:
@@ -76,6 +80,14 @@ def segment_spectra_chunk(
         spectra_chunk_segment.tofile(segment_path.open("ab"))
 
 
+def _spectra_sample_gen(imzml_parser, sample_size):
+    sp_n = len(imzml_parser.coordinates)
+    sample_sp_inds = np.random.choice(np.arange(sp_n), sample_size, replace=False)
+    for sp_idx in sample_sp_inds:
+        mzs, ints = imzml_parser.get_spectrum(sp_idx)
+        yield sp_idx, mzs, ints
+
+
 def define_segment_bounds(imzml_reader: ImzMLReader, ibd_size_mb: int):
     MB = 1024 ** 2
     BYTES_PER_VALUE = 4
@@ -86,7 +98,7 @@ def define_segment_bounds(imzml_reader: ImzMLReader, ibd_size_mb: int):
 
     sample_size = min(10000, imzml_reader.spectra_n)
     sample_mzs = np.concatenate(
-        [mzs for _, mzs, _ in segmenter.spectra_sample_gen(imzml_reader, sample_size)]
+        [mzs for _, mzs, _ in _spectra_sample_gen(imzml_reader, sample_size)]
     )
     peaks_per_spectrum_avg = sample_mzs.shape[0] / sample_size
     spectrum_size_avg_mb = peaks_per_spectrum_avg * 2 * BYTES_PER_VALUE / MB
@@ -103,14 +115,18 @@ def define_segment_bounds(imzml_reader: ImzMLReader, ibd_size_mb: int):
     return segment_bounds, spectra_per_chunk
 
 
+def _chunk_list(xs, size):
+    n = (len(xs) - 1) // size + 1
+    for i in range(n):
+        yield xs[size * i : size * (i + 1)]
+
+
 def segment_dataset(imzml_reader: ImzMLReader, ibd_size_mb: int, segments_path: pathlib.Path):
     utils.clean_dir(segments_path)
 
     segment_bounds, spectra_per_chunk = define_segment_bounds(imzml_reader, ibd_size_mb)
 
-    spectrum_idx_chunks = segmenter.chunk_list(
-        xs=range(imzml_reader.spectra_n), size=spectra_per_chunk
-    )
+    spectrum_idx_chunks = _chunk_list(xs=range(imzml_reader.spectra_n), size=spectra_per_chunk)
     for chunk_i, spectrum_idxs in enumerate(spectrum_idx_chunks):
         print(f"Chunk: {chunk_i}, spectra: {len(spectrum_idxs)}")
         spectra_chunk = read_spectra_chunk(imzml_reader, spectrum_idxs)
