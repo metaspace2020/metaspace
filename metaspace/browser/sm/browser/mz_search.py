@@ -1,6 +1,6 @@
 import pathlib
 import struct
-from typing import io
+from typing import io, Tuple
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -89,11 +89,10 @@ def search_and_fetch_mz_peaks(
     return mz_peaks
 
 
-def create_mz_image(mz_peaks: np.ndarray, coordinates: np.ndarray) -> np.ndarray:
+def create_mz_image(mz_peaks: np.ndarray, coordinates: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     min_x, min_y = np.amin(coordinates, axis=0)
     max_x, max_y = np.amax(coordinates, axis=0)
     nrows, ncols = max_y - min_y + 1, max_x - min_x + 1
-    mz_image = np.zeros(shape=(nrows, ncols))
 
     alpha = np.zeros(shape=(nrows, ncols))
     all_xs, all_ys = zip(*coordinates)
@@ -101,15 +100,12 @@ def create_mz_image(mz_peaks: np.ndarray, coordinates: np.ndarray) -> np.ndarray
     all_ys -= min_y
     alpha[all_ys, all_xs] = 1
 
-    # image_coords = coordinates[mz_peaks[:, 2].astype(int)]
     image_coord_idxs = mz_peaks[:, 2].astype("i")
     xs = all_xs[image_coord_idxs]
     ys = all_ys[image_coord_idxs]
-    mz_image[ys, xs] += mz_peaks[:, 1]
-    if mz_image.sum() > 0:
+    mz_image = np.zeros(shape=(nrows, ncols))
+    np.add.at(mz_image, [ys, xs], mz_peaks[:, 1])
+    if mz_image.max() > 0:
         mz_image /= mz_image.max()
 
-    cmap = plt.get_cmap("viridis")
-    rgba_image = cmap(mz_image)
-    rgba_image[:, :, 3] = alpha
-    return rgba_image
+    return mz_image, alpha

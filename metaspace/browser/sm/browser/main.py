@@ -72,8 +72,11 @@ class DatasetBrowser:
         mz_peaks = mz_search.search_and_fetch_mz_peaks(
             self.sorted_peaks_s3_file, self.mz_index, mz_lo, mz_hi
         )
+        mz_image, alpha = mz_search.create_mz_image(mz_peaks, self.coordinates)
+        rgba_image = plt.get_cmap("viridis")(mz_image)
+        rgba_image[:, :, 3] = alpha
         log(start, "done")
-        return mz_search.create_mz_image(mz_peaks, self.coordinates)
+        return rgba_image
 
 
 if __name__ == "__main__":
