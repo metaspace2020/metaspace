@@ -515,7 +515,7 @@ export default Vue.extend({
     },
 
     setCurrentRow(rowIndex, rows = this.annotations) {
-      if (this.$refs.table) {
+      if (this.$refs.table && rows.length) {
         this.$refs.table.setCurrentRow(null)
         const nextIndex = rowIndex < 0 ? 0 : Math.min(rowIndex, rows.length - 1)
         this.$refs.table.setCurrentRow(rows[nextIndex])

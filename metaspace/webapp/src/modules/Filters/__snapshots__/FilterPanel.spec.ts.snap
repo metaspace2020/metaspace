@@ -186,25 +186,32 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       </div>
     </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"></button>
   </div>
-  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="minMSM" filter-key="minMSM" options="">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="minMSM" filter-key="minMSM" options="" name="Min. MSM" value="0.5">
     <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       Min. MSM:
       <!---->
     </div>
-    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
+    <mock-el-popover trigger="click" placement="bottom" width="256" class="tf-value-container pl-3">
       <div slot-key="default">
-        <div class="el-input">
-          <!----><input type="text" autocomplete="off" class="el-input__inner">
-          <!---->
-          <!---->
-          <!---->
-          <!---->
+        <div>
+          <div class="w-full el-input-number is-controls-right"><span role="button" class="el-input-number__decrease"><i class="el-icon-arrow-down"></i></span><span role="button" class="el-input-number__increase"><i class="el-icon-arrow-up"></i></span>
+            <div class="el-input">
+              <!----><input type="text" autocomplete="off" max="1" min="0" class="el-input__inner" role="spinbutton" aria-valuemax="1" aria-valuemin="0" aria-valuenow="0.5" aria-disabled="false">
+              <!---->
+              <!---->
+              <!---->
+              <!---->
+            </div>
+          </div>
+          <p class="leading-5 text-sm m-0 mt-3 text-gray-700"><i class="text-gray-600 mr-1 el-icon-info"></i>
+            Press <span class="font-medium">Enter</span> to confirm manual input
+          </p>
         </div>
       </div>
       <div slot-key="reference">
-        <div class="tf-value"><span class="tf-value-span"><span>
+        <div class="tf-value"><span><span class="tf-value-span">
       0.5
-    </span></span>
+    </span> </span>
           <!---->
         </div>
       </div>
@@ -260,7 +267,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       </div>
     </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"></button>
   </div>
-  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="mz" filter-key="mz" options="">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="mz" filter-key="mz" options="" name="m/z" value="296.0659">
     <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
       m/z:
       <!---->
@@ -268,7 +275,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     <mock-el-popover trigger="click" placement="bottom" width="256" class="tf-value-container pl-3">
       <div slot-key="default">
         <div>
-          <div class="w-full el-input-number is-controls-right" maxlength="10"><span role="button" class="el-input-number__decrease"><i class="el-icon-arrow-down"></i></span><span role="button" class="el-input-number__increase"><i class="el-icon-arrow-up"></i></span>
+          <div class="w-full el-input-number is-controls-right"><span role="button" class="el-input-number__decrease"><i class="el-icon-arrow-down"></i></span><span role="button" class="el-input-number__increase"><i class="el-icon-arrow-up"></i></span>
             <div class="el-input">
               <!----><input type="text" autocomplete="off" max="Infinity" min="-Infinity" class="el-input__inner" role="spinbutton" aria-valuemax="Infinity" aria-valuemin="-Infinity" aria-valuenow="296.0659" aria-disabled="false">
               <!---->
@@ -286,8 +293,8 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
         <div class="tf-value"><span><span class="tf-value-span">
       296.0659
     </span> <span class="ml-1">
-      ± 0.0001
-    </span></span>
+    ± 0.0001
+  </span></span>
           <!---->
         </div>
       </div>
