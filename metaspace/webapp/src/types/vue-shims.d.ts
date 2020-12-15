@@ -4,15 +4,12 @@ declare module '*.vue' {
 }
 
 declare module '*.svg' {
-  const path: string
-  export default path
+  import Vue, { VueConstructor } from 'vue'
+  const content: VueConstructor<Vue>
+  export default content
 }
 
 declare module 'vue-analytics'
-declare module 'raven-js/plugins/vue'
-
-declare module 'plotly.js/src/components/colorscale/scales.js'
-declare module 'plotly.js/src/components/colorscale/extract_scale.js'
 
 declare module 'vue-slide-up-down'
 

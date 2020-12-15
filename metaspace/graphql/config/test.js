@@ -11,17 +11,16 @@ config.defaults = {
   adducts: {
     "+": ["+H", "+Na", "+K"],
     "-": ["-H", "+Cl"]
-  },
-  moldb_names: ['HMDB-v4']
+  }
 };
 
 config.img_upload = {
-  iso_img_fs_path: '/opt/data/sm_data/public/',
+  iso_img_fs_path: '/opt/data/metaspace/public/',
   categories: {
     iso_image: {
       type: 'image/png',  // applies only to post requests
       path: '/iso_images/',
-      storage_types: ['fs', 'db']
+      storage_types: ['fs']
     },
     optical_image: {
       type: 'image/jpeg',
@@ -39,6 +38,10 @@ config.img_upload = {
 config.services = {};
 /* Internal ad-hoc service with /v1/datasets and /v1/isotopic_patterns endpoints */
 config.services.sm_engine_api_host = "localhost";
+
+config.upload = {};
+config.upload.destination = "s3";
+config.upload.bucket = "sm-bucket";
 
 config.db = {};
 config.db.host = "localhost";

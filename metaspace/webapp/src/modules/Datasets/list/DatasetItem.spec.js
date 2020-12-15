@@ -5,9 +5,11 @@ import router from '../../../router'
 import store from '../../../store'
 import { sync } from 'vuex-router-sync'
 import DatasetItem from './DatasetItem.vue'
+import { mockGenerateId, resetGenerateId } from '../../../../tests/utils/mockGenerateId'
 
 Vue.use(Vuex)
 sync(store, router)
+
 
 describe('DatasetItem', () => {
   const user = { id: 'user' }
@@ -22,9 +24,14 @@ describe('DatasetItem', () => {
         Detector_Resolving_Power: { mz: 1234, Resolving_Power: 123456 },
       },
     }),
-    molDBs: ['HMDB-v2.5', 'HMDB-v4', 'CHEBI'],
+    databases: [
+      { name: 'CHEBI', id: 2 },
+      { name: 'HMDB-v2.5', id: 6 },
+      { name: 'HMDB-v4', id: 22 },
+    ],
     polarity: 'POSITIVE',
     fdrCounts: {
+      databaseId: 6,
       dbName: 'HMDB-v2.5',
       levels: [10],
       counts: [20],
@@ -44,13 +51,18 @@ describe('DatasetItem', () => {
   const underReview = { name: 'project', publicationStatus: 'UNDER_REVIEW' }
   const published = { name: 'project', publicationStatus: 'PUBLISHED' }
 
+  beforeEach(() => {
+    resetGenerateId()
+  })
+
   it('should match snapshot', () => {
+    mockGenerateId(123)
     const propsData = {
       currentUser: submitter,
       dataset,
     }
-    const wrapper = mount(DatasetItem, { router, store, propsData })
-    expect(wrapper).toMatchSnapshot()
+    const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
+    expect(wrapper.element).toMatchSnapshot()
   })
 
   it('should be able to delete if unpublished', () => {
@@ -61,7 +73,7 @@ describe('DatasetItem', () => {
         projects: [unpublished]
       },
     }
-    const wrapper = mount(DatasetItem, { router, store, propsData })
+    const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
     expect(wrapper.find('.ds-delete').exists()).toBe(true)
   })
 
@@ -73,7 +85,7 @@ describe('DatasetItem', () => {
         projects: [published]
       },
     }
-    const wrapper = mount(DatasetItem, { router, store, propsData })
+    const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
     expect(wrapper.find('.test-publication-status').exists()).toBe(false)
   })
 
@@ -86,7 +98,7 @@ describe('DatasetItem', () => {
         status: 'ANNOTATING'
       }
     }
-    const wrapper = mount(DatasetItem, { router, store, propsData })
+    const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
     expect(wrapper.find('.test-publication-status').exists()).toBe(false)
   })
 
@@ -98,7 +110,7 @@ describe('DatasetItem', () => {
         projects: [underReview]
       }
     }
-    const wrapper = mount(DatasetItem, { router, store, propsData })
+    const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
     expect(wrapper.find('.test-publication-status').text()).toBe('Under review')
   })
 
@@ -110,7 +122,7 @@ describe('DatasetItem', () => {
         projects: [published]
       }
     }
-    const wrapper = mount(DatasetItem, { router, store, propsData })
+    const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
     expect(wrapper.find('.test-publication-status').text()).toBe('Published')
   })
 
@@ -122,7 +134,7 @@ describe('DatasetItem', () => {
         projects: [published, underReview]
       }
     }
-    const wrapper = mount(DatasetItem, { router, store, propsData })
+    const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
     expect(wrapper.find('.test-publication-status').text()).toBe('Published')
   })
 
@@ -134,7 +146,7 @@ describe('DatasetItem', () => {
         projects: [published]
       }
     }
-    const wrapper = mount(DatasetItem, { router, store, propsData })
+    const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
     expect(wrapper.find('.ds-delete').exists()).toBe(true)
     expect(wrapper.find('.ds-reprocess').exists()).toBe(true)
   })

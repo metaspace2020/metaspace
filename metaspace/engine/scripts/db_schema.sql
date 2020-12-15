@@ -2,7 +2,6 @@
 -- To regenerate this file, run 'yarn run gen-sql-schema' in the graphql project
 
 CREATE EXTENSION "uuid-ossp";
-
 CREATE SCHEMA IF NOT EXISTS graphql;
 
 CREATE TABLE "graphql"."credentials" (
@@ -18,6 +17,41 @@ CREATE TABLE "graphql"."credentials" (
   "reset_password_token_expires" TIMESTAMP, 
   CONSTRAINT "PK_756d8ef9c32d9efde516fb3fcfd" PRIMARY KEY ("id")
 );
+
+CREATE TABLE "public"."molecular_db" (
+  "id" SERIAL NOT NULL, 
+  "name" text NOT NULL, 
+  "version" text NOT NULL, 
+  "created_dt" TIMESTAMP NOT NULL, 
+  "molecule_link_template" text, 
+  "description" text, 
+  "full_name" text, 
+  "link" text, 
+  "citation" text, 
+  "is_public" boolean NOT NULL DEFAULT false, 
+  "archived" boolean NOT NULL DEFAULT false, 
+  "targeted" boolean NOT NULL DEFAULT false, 
+  "group_id" uuid, 
+  "default" boolean NOT NULL DEFAULT false, 
+  CONSTRAINT "molecular_db_uindex" UNIQUE ("group_id", 
+  "name", 
+  "version"), 
+  CONSTRAINT "PK_1841660e7287891634f1e73d7f2" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "public"."molecule" (
+  "id" SERIAL NOT NULL, 
+  "mol_id" text NOT NULL, 
+  "mol_name" text NOT NULL, 
+  "formula" text NOT NULL, 
+  "inchi" text, 
+  "moldb_id" integer NOT NULL, 
+  CONSTRAINT "PK_d9e3f72bdba412e5cbeea2a1915" PRIMARY KEY ("id")
+);
+
+CREATE INDEX "IDX_01280507c3bd02500e2861fb27" ON "public"."molecule" (
+  "moldb_id"
+) ;
 
 CREATE TABLE "graphql"."group" (
   "id" uuid NOT NULL DEFAULT uuid_generate_v1mc(), 
@@ -41,7 +75,7 @@ CREATE TABLE "graphql"."project" (
   "id" uuid NOT NULL DEFAULT uuid_generate_v1mc(), 
   "name" text NOT NULL, 
   "url_slug" text, 
-  "is_public" boolean NOT NULL DEFAULT true, 
+  "is_public" boolean NOT NULL DEFAULT false, 
   "created_dt" TIMESTAMP NOT NULL, 
   "project_description" text, 
   "review_token" text, 
@@ -98,7 +132,7 @@ CREATE TABLE "graphql"."user" (
 CREATE TABLE "graphql"."coloc_job" (
   "id" uuid NOT NULL DEFAULT uuid_generate_v1mc(), 
   "ds_id" text NOT NULL, 
-  "mol_db" text, 
+  "moldb_id" integer NOT NULL, 
   "fdr" numeric(2,2) NOT NULL, 
   "algorithm" text NOT NULL, 
   "start" TIMESTAMP NOT NULL, 
@@ -141,30 +175,6 @@ CREATE UNIQUE INDEX "IDX_f538e62b7f815edf1a79aa1ee5" ON "graphql"."ion" (
   "charge"
 ) ;
 
-CREATE TABLE "public"."molecular_db" (
-  "id" SERIAL NOT NULL, 
-  "name" text NOT NULL, 
-  "version" text NOT NULL, 
-  "public" boolean NOT NULL DEFAULT false, 
-  "archived" boolean NOT NULL DEFAULT false, 
-  "targeted" boolean NOT NULL DEFAULT false, 
-  CONSTRAINT "PK_1841660e7287891634f1e73d7f2" PRIMARY KEY ("id")
-);
-
-CREATE TABLE "public"."molecule" (
-  "id" SERIAL NOT NULL, 
-  "mol_id" text NOT NULL, 
-  "mol_name" text NOT NULL, 
-  "formula" text NOT NULL, 
-  "inchi" text, 
-  "moldb_id" integer NOT NULL, 
-  CONSTRAINT "PK_d9e3f72bdba412e5cbeea2a1915" PRIMARY KEY ("id")
-);
-
-CREATE INDEX "IDX_01280507c3bd02500e2861fb27" ON "public"."molecule" (
-  "moldb_id"
-) ;
-
 CREATE TABLE "public"."dataset" (
   "id" text NOT NULL, 
   "name" text, 
@@ -201,7 +211,7 @@ CREATE TABLE "public"."optical_image" (
 
 CREATE TABLE "public"."job" (
   "id" SERIAL NOT NULL, 
-  "moldb_id" integer, 
+  "moldb_id" integer NOT NULL, 
   "ds_id" text, 
   "status" text, 
   "start" TIMESTAMP, 
@@ -233,6 +243,26 @@ CREATE TABLE "public"."annotation" (
 CREATE INDEX "annotation_job_id_index" ON "public"."annotation" (
   "job_id"
 ) ;
+
+CREATE TABLE "graphql"."image_viewer_snapshot" (
+  "id" text NOT NULL, 
+  "dataset_id" text NOT NULL, 
+  "snapshot" text NOT NULL, 
+  "annotation_ids" json NOT NULL, 
+  "version" integer NOT NULL, 
+  "user_id" uuid, 
+  "created_dt" TIMESTAMP NOT NULL, 
+  CONSTRAINT "PK_afd32494a70db23e295d94436d7" PRIMARY KEY ("id", 
+  "dataset_id")
+);
+
+ALTER TABLE "public"."molecular_db" ADD CONSTRAINT "FK_a18f5f7d6cc662006d9c849ea1f" FOREIGN KEY (
+  "group_id") REFERENCES "graphql"."group"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."molecule" ADD CONSTRAINT "FK_01280507c3bd02500e2861fb279" FOREIGN KEY (
+  "moldb_id") REFERENCES "public"."molecular_db"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
 
 ALTER TABLE "graphql"."user_group" ADD CONSTRAINT "FK_24850e25a096ba62e57cf5caf45" FOREIGN KEY (
   "user_id") REFERENCES "graphql"."user"("id"
@@ -270,13 +300,13 @@ ALTER TABLE "graphql"."user" ADD CONSTRAINT "FK_1b5eb1327a74d679537bdc1fa5b" FOR
   "credentials_id") REFERENCES "graphql"."credentials"("id"
 ) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
+ALTER TABLE "graphql"."coloc_job" ADD CONSTRAINT "FK_b0adf5ffef6529f187f48231e38" FOREIGN KEY (
+  "moldb_id") REFERENCES "public"."molecular_db"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
 ALTER TABLE "graphql"."coloc_annotation" ADD CONSTRAINT "FK_09673424d3aceab89f931b9f20d" FOREIGN KEY (
   "coloc_job_id") REFERENCES "graphql"."coloc_job"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
-
-ALTER TABLE "public"."molecule" ADD CONSTRAINT "FK_01280507c3bd02500e2861fb279" FOREIGN KEY (
-  "moldb_id") REFERENCES "public"."molecular_db"("id"
-) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 ALTER TABLE "public"."optical_image" ADD CONSTRAINT "FK_124906daa616c8e1b88645baef0" FOREIGN KEY (
   "ds_id") REFERENCES "public"."dataset"("id"
@@ -288,7 +318,7 @@ ALTER TABLE "public"."job" ADD CONSTRAINT "FK_f6baae98b3a2436b6f98318d5d0" FOREI
 
 ALTER TABLE "public"."job" ADD CONSTRAINT "FK_07f17ed55cabe0ef556bc0e0c93" FOREIGN KEY (
   "moldb_id") REFERENCES "public"."molecular_db"("id"
-) ON DELETE NO ACTION ON UPDATE NO ACTION;
+) ON DELETE CASCADE ON UPDATE NO ACTION;
 
 ALTER TABLE "public"."annotation" ADD CONSTRAINT "FK_bfed30991918671d59fc1f5d5e4" FOREIGN KEY (
   "job_id") REFERENCES "public"."job"("id"

@@ -1,12 +1,13 @@
-import * as _ from 'lodash';
 import fetch from 'node-fetch';
-import logger from '../../../utils/logger';
 import {FieldResolversFor} from '../../../bindingTypes';
 import {Annotation, ColocalizationCoeffFilter} from '../../../binding';
 import {ESAnnotation} from '../../../../esConnector';
 import config from '../../../utils/config';
 import {ESAnnotationWithColoc} from '../queryFilters';
 import {AllHtmlEntities} from 'html-entities';
+import {MolecularDB as MolecularDbModel} from '../../moldb/model';
+import {MolecularDbRepository} from '../../moldb/MolecularDbRepository';
+import {Context} from '../../../context';
 
 const cleanMoleculeName = (name: string) =>
   // Decode &alpha; &beta; &gamma; etc.
@@ -33,38 +34,25 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
     }
   },
 
-  possibleCompounds(hit) {
+  async possibleCompounds(hit, _, ctx: Context) {
+    const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
+      .findDatabaseById(ctx, hit._source.db_id);
+
     const ids = hit._source.comp_ids;
     const names = hit._source.comp_names;
     let compounds = [];
     for (let i = 0; i < names.length; i++) {
       let id = ids[i];
-      let dbName = hit._source.db_name,
-        dbBaseName = dbName.split('-')[0];
 
-      let infoURL: string | null = null;
-      if (dbBaseName === 'HMDB') {
-        infoURL = `http://www.hmdb.ca/metabolites/${id}`;
-      } else if (dbBaseName === 'ChEBI') {
-        infoURL = `http://www.ebi.ac.uk/chebi/searchId.do?chebiId=${id}`;
-      } else if (dbBaseName === 'SwissLipids') {
-        infoURL = `http://swisslipids.org/#/entity/${id}`;
-      } else if (dbBaseName === 'LipidMaps' || dbBaseName === 'LIPID_MAPS') {
-        infoURL = `http://www.lipidmaps.org/data/LMSDRecord.php?LMID=${id}`;
-      } else if (dbBaseName === 'PAMDB') {
-        infoURL = `http://pseudomonas.umaryland.edu/PAMDB?MetID=${id}`;
-      } else if (dbBaseName === 'ECMDB') {
-        infoURL = `http://ecmdb.ca/compounds/${id}`;
-      } else if (dbBaseName === 'GNPS') {
-        infoURL = `https://gnps.ucsd.edu/ProteoSAFe/gnpslibraryspectrum.jsp?SpectrumID=${id}`;
-      } else if (dbBaseName === 'NPA') {
-        infoURL = `https://www.npatlas.org/joomla/index.php/explore/compounds#npaid=${id}`;
-      }
+      const infoURL: string | null = `${database.moleculeLinkTemplate}${id}`;
+      const dbBaseName = database.name.startsWith('core_metabolome')
+        ? 'core_metabolome'
+        : database.name.split('-')[0];
 
       compounds.push({
         name: cleanMoleculeName(names[i]),
         imageURL: `/mol-images/${dbBaseName}/${id}.svg`,
-        information: [{database: dbName, url: infoURL, databaseId: id}],
+        information: [{database: database.name, url: infoURL, databaseId: id}],
       });
     }
     return compounds;
@@ -78,13 +66,22 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
 
   ion: (hit) => hit._source.ion,
 
-  ionFormula: (hit) => hit._source.ion_formula || '', // TODO: Remove " || ''" after prod has been migrated
+  ionFormula: (hit) => hit._source.ion_formula || '', // TODO: Remove ' || ''' after prod has been migrated
 
-  database: (hit) => hit._source.db_name,
+  databaseDetails: async (hit, _, ctx) => {
+    return await ctx.entityManager.getCustomRepository(MolecularDbRepository)
+      .findDatabaseById(ctx, hit._source.db_id);
+  },
+
+  database: async (hit, _, ctx) => {
+    const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
+      .findDatabaseById(ctx, hit._source.db_id);
+    return database.name;
+  },
 
   mz: (hit) => parseFloat(hit._source.centroid_mzs[0] as any),
 
-  fdrLevel: (hit) => hit._source.fdr,
+  fdrLevel: (hit) => hit._source.fdr > 0 ? hit._source.fdr : null,
 
   msmScore: (hit) => hit._source.msm,
 
@@ -160,12 +157,19 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
       }));
   },
 
-  async colocalizationCoeff(hit, args: {colocalizationCoeffFilter: ColocalizationCoeffFilter | null}, context) {
+  async colocalizationCoeff(hit, args: {colocalizationCoeffFilter: ColocalizationCoeffFilter | null}, ctx) {
     // Actual implementation is in src/modules/annotation/queryFilters.ts
     if ('getColocalizationCoeff' in hit && args.colocalizationCoeffFilter != null) {
-      const {colocalizedWith, colocalizationAlgo, database, fdrLevel} = args.colocalizationCoeffFilter;
-      return await hit.getColocalizationCoeff(colocalizedWith, colocalizationAlgo || config.metadataLookups.defaultColocalizationAlgo,
-        database || config.defaults.moldb_names[0], fdrLevel);
+      const {colocalizedWith, colocalizationAlgo, databaseId, fdrLevel} = args.colocalizationCoeffFilter;
+      const defaultDatabase = await ctx.entityManager.findOneOrFail(
+        MolecularDbModel, {'default': true}
+      );
+      return await hit.getColocalizationCoeff(
+        colocalizedWith,
+        colocalizationAlgo || config.metadataLookups.defaultColocalizationAlgo,
+        databaseId || defaultDatabase.id,
+        fdrLevel || null
+      );
     } else {
       return null;
     }

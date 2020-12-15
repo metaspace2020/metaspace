@@ -1,5 +1,5 @@
 from typing import Optional, List
-from metaspace.sm_annotation_utils import SMInstance, GraphQLClient
+from metaspace.sm_annotation_utils import GraphQLClient
 
 try:
     from typing import TypedDict  # Requires Python 3.8
@@ -91,7 +91,7 @@ class ProjectsClient:
         """
 
         result = self._gql.query(
-            """mutation($projectId: String!, $provider: String!, $link: String!, 
+            """mutation($projectId: ID!, $provider: String!, $link: String!, 
                         $replaceExisting: Boolean!) {
                 addProjectExternalLink(projectId: $projectId, provider: $provider, link: $link, 
                                        replaceExisting: $replaceExisting) {
@@ -120,7 +120,7 @@ class ProjectsClient:
         """
 
         result = self._gql.query(
-            """mutation($projectId: String!, $provider: String!, $link: String!) {
+            """mutation($projectId: ID!, $provider: String!, $link: String!) {
                 removeProjectExternalLink(projectId: $projectId, provider: $provider, link: $link) {
                     externalLinks { provider link }
                 } 

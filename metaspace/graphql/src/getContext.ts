@@ -1,4 +1,4 @@
-import {EntityManager, In, ObjectType} from 'typeorm';
+import {EntityManager, FindConditions, FindManyOptions, In, ObjectType} from 'typeorm';
 import {Context, ContextCacheKeyArg, ContextUser, BaseContext, ContextUserRole, AuthMethodOptions} from './context';
 import {User as UserModel} from './modules/user/model';
 import {Project as ProjectModel, UserProjectRoleOptions as UPRO} from './modules/project/model';
@@ -8,6 +8,7 @@ import {getUserProjectRoles} from './utils/db';
 import {Request, Response} from 'express';
 import * as _ from 'lodash';
 import * as DataLoader from 'dataloader';
+import {MolecularDbRepository} from './modules/moldb/MolecularDbRepository';
 
 const getBaseContext = (userFromRequest: JwtUser | UserModel | null, entityManager: EntityManager,
                         req?: Request, res?: Response) => {
@@ -50,6 +51,11 @@ const getBaseContext = (userFromRequest: JwtUser | UserModel | null, entityManag
       .map(([id, role]) => id);
   };
 
+  const getVisibleDatabaseIds = async (): Promise<number[]> => {
+    const databases = await entityManager.getCustomRepository(MolecularDbRepository).findDatabases(contextUser);
+    return databases.map(db => db.id);
+  };
+
   const cachedGetEntityById = async <T>(Model: ObjectType<T> & {}, entityId: any): Promise<T | null> => {
     const modelMetadata = entityManager.connection.getMetadata(Model);
     const modelName = modelMetadata.name;
@@ -90,6 +96,7 @@ const getBaseContext = (userFromRequest: JwtUser | UserModel | null, entityManag
     authMethod: req && req.authInfo || AuthMethodOptions.UNKNOWN,
     getProjectRoles,
     getMemberOfProjectIds,
+    getVisibleDatabaseIds,
   };
   if (user) {
     contextUser.id = user.id;

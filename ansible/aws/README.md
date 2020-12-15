@@ -14,15 +14,19 @@ Software requirements for the developer machine:
 #### Clone repository and copy config file
 
 ```
-git clone -b rel-v0.8 https://github.com/metaspace2020/metaspace.git
-cd metaspace/ansible/aws
-mkdir env/dev/group_vars
-cp templates/all/vars.yml.template env/dev/group_vars/group_vars/all/vars.yml
-cp templates/all/vault.yml.template env/dev/group_vars/group_vars/all/vault.yml
-cp templates/web.yml.template env/dev/group_vars/group_vars/web.yml.template
-cp templates/master.yml.template env/dev/group_vars/group_vars/master.yml.template
-cp templates/elk.yml.template env/dev/group_vars/group_vars/elk.yml.template
+git clone -b release https://github.com/metaspace2020/metaspace.git
 ```
+
+#### Clone and setup Ansible config repository
+
+```
+cd metaspace/ansible/aws
+git clone https://github.com/intsco/metaspace-ansible-config.git
+mv metaspace-ansible-config env
+```
+
+Put the master password into `<METASPACE_HOME>/ansible/aws/vault_pass.txt`.
+
 
 #### Go through manual steps in AWS console
 
@@ -35,41 +39,25 @@ It will be used to ssh to instances.
 * Create [AWS configuration and credential files](https://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html)
 for the admin IAM user on the developer manchine.
 
-#### Update config file
-
-Specify
-
-* SM platform component versions
-* SM engine AWS user credentials, region, and bucket names/paths
-* SM web application AWS user credentials
-* SSH key name
-* Admin emails
-* Passwords
-* `hostgroup` values for all types of instances
-
-in dev/group_vars/all/vars.yml and dev/group_vars/all/vault.yml
-
-Values to be updated are capitalized.
-
 #### Spin up all needed instances
 
 You will need at least three: main instance for the web app, database, RabbitMQ, and Elasticsearch;
 Spark master and Spark slave instances.
 
-`ansible-playbook -i dev aws_start.yml -e "components=all"`
+`ansible-playbook -i env/dev aws_start.yml -e "components=all"`
 
 #### Provision instances
 
 Provision the web services and Spark cluster instances
 
 ```
-ansible-playbook -i dev provision/web_server.yml
-ansible-playbook -i dev provision/spark_cluster.yml
+ansible-playbook -i env/dev provision/web.yml
+ansible-playbook -i env/dev provision/spark.yml
 ```
 
 #### Create custom AMIs for Spark master and slave instances
 
-`ansible-playbook -i dev create_ami.yml`
+`ansible-playbook -i env/dev create_ami.yml`
 
 This step will take a while.
 Once the playbook is finished replace AMI ids for master ans slave instances with new ones in the dev/group_vars/all/vars.yml.
@@ -80,25 +68,25 @@ New AMI ids can be found in the AWS Console.
 After AMIs were successfully created stop Spark instances.
 They will be started automatically from new AMIs after a dataset is uploaded.
 
-`ansible-playbook -i dev aws_stop.yml -e "components=master,slave"`
+`ansible-playbook -i env/dev aws_stop.yml -e "components=master,slave"`
 
 #### Deploy and start the web app and other services
 
-`ansible-playbook -i dev deploy/web_server.yml`
+`ansible-playbook -i env/dev deploy/web.yml`
 
 ## Start/Stop instances manually
 
 Start all instances
 
 ```
-ansible-playbook -i dev aws_start.yml -e "components=all"
-ansible-playbook -i dev aws_cluster_setup.yml
+ansible-playbook -i env/dev aws_start.yml -e "components=all"
+ansible-playbook -i env/dev aws_cluster_setup.yml
 ```
 
 Deploy and start the web application and other services
 
-`ansible-playbook -i dev deploy/web_server.yml`
+`ansible-playbook -i env/dev deploy/web.yml`
 
 To Stop all SM platform instances execute
 
-`ansible-playbook -i dev aws_stop.yml -e "components=all"`
+`ansible-playbook -i env/dev aws_stop.yml -e "components=all"`

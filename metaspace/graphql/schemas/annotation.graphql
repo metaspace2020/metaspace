@@ -8,11 +8,12 @@ type Annotation {
   adduct: String!
   ion: String!          # Formula+adducts+polarity
   ionFormula: String!   # "Compiled" formula, such that there are no +/-s, each element is only included once, in CHNOPS order
-  database: String!
+  databaseDetails: MolecularDB!
+  database: String!  # @deprecated(reason: "This field is deprecated and will be removed. Use databaseDetails instead.")
   mz: Float!
   countPossibleCompounds(includeIsomers: Boolean = False): Int!
   possibleCompounds: [Compound!]!
-  fdrLevel: Float!
+  fdrLevel: Float
   msmScore: Float!
   rhoSpatial: Float
   rhoSpectral: Float
@@ -96,7 +97,8 @@ input NumericRange {
 }
 
 input AnnotationFilter {
-  database: String
+  databaseId: Int
+  database: String  # @deprecated(reason: "This field will be removed. Use \"databaseId\" instead.")
   datasetName: String
   mzFilter: NumericRange
   msmScoreFilter: NumericRange
@@ -112,17 +114,18 @@ input AnnotationFilter {
   colocalizationSamples: Boolean  # Requires DatasetFilter.datasetIds to be set to a specific dataset
   colocalizationAlgo: String
   offSample: Boolean
-  hasNeutralLoss: Boolean @deprecated(reason: "Do not depend on this filter - it is intended to only be a temporary measure until a more flexible filter API that supports is-null/non-null queries is built")
-  hasChemMod: Boolean @deprecated(reason: "Do not depend on this filter - it is intended to only be a temporary measure until a more flexible filter API that supports is-null/non-null queries is built")
-  hasHiddenAdduct: Boolean @deprecated(reason: "Do not depend on this filter - it is intended to only be a temporary measure until a more flexible filter API that supports multi-value queries is built")
+  hasNeutralLoss: Boolean # @deprecated(reason: "Do not depend on this filter - it is intended to only be a temporary measure until a more flexible filter API that supports is-null/non-null queries is built")
+  hasChemMod: Boolean # @deprecated(reason: "Do not depend on this filter - it is intended to only be a temporary measure until a more flexible filter API that supports is-null/non-null queries is built")
+  hasHiddenAdduct: Boolean # @deprecated(reason: "Do not depend on this filter - it is intended to only be a temporary measure until a more flexible filter API that supports multi-value queries is built")
   isobaricWith: String            # Should be an ionFormula
 }
 
 input ColocalizationCoeffFilter {
   colocalizedWith: String!
   colocalizationAlgo: String
-  database: String
-  fdrLevel: Float!
+  databaseId: Int
+  database: String  # @deprecated(reason: "This field will be removed. Use \"databaseId\" instead.")
+  fdrLevel: Float
 }
 
 type Query {

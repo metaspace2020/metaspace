@@ -13,17 +13,17 @@ interface AnnotationAndIons {
   lookupIon: (formula: string, chemMod: string, neutralLoss: string, adduct: string) => Ion | undefined;
 }
 
-const getColocAnnotation = async (context: Context, datasetId: string, fdrLevel: number, database: string | null,
+const getColocAnnotation = async (context: Context, datasetId: string, fdrLevel: number, databaseId: number | null,
                                   colocalizedWith: string, colocalizationAlgo: string): Promise<AnnotationAndIons | null> => {
-  const args = [datasetId, fdrLevel, database, colocalizedWith, colocalizationAlgo] as const;
+  const args = [datasetId, fdrLevel, databaseId, colocalizedWith, colocalizationAlgo] as const;
   return await context.contextCacheGet('getColocAnnotation', args,
-    async (datasetId, fdrLevel, database, colocalizedWith, colocalizationAlgo) => {
+    async (datasetId, fdrLevel, databaseId, colocalizedWith, colocalizationAlgo) => {
       const annotation = await context.entityManager.createQueryBuilder(ColocAnnotation, 'colocAnnotation')
         .innerJoinAndSelect('colocAnnotation.colocJob', 'colocJob')
         .innerJoin(Ion, 'ion', 'colocAnnotation.ionId = ion.id')
-        .where('colocJob.datasetId = :datasetId AND colocJob.fdr = :fdrLevel AND colocJob.molDb = :database ' +
+        .where('colocJob.datasetId = :datasetId AND colocJob.fdr = :fdrLevel AND colocJob.moldbId = :databaseId ' +
           'AND colocJob.algorithm = :colocalizationAlgo AND ion.ion = :colocalizedWith',
-          { datasetId, fdrLevel, database, colocalizationAlgo, colocalizedWith })
+          { datasetId, fdrLevel, databaseId, colocalizationAlgo, colocalizedWith })
         .getOne();
       if (annotation != null) {
         const ions = await context.entityManager.findByIds(Ion, [annotation.ionId, ...annotation.colocIonIds]);
@@ -58,8 +58,8 @@ const getColocCoeffInner = (baseAnnotation: ColocAnnotation, otherIonId: number)
 };
 
 const createPostprocess = ({annotation, lookupIon}: AnnotationAndIons, args: QueryFilterArgs,
-                          colocalizedWith: string, colocalizationAlgo: string, database: string | null,
-                          fdrLevel: number) => {
+                          colocalizedWith: string, colocalizationAlgo: string, databaseId: number | null,
+                          fdrLevel: number | null) => {
   return (annotations: ESAnnotation[]): ESAnnotationWithColoc[] => {
     let newAnnotations: ESAnnotationWithColoc[] = annotations.map(ann => {
       const ion = lookupIon(ann._source.formula, ann._source.chem_mod, ann._source.neutral_loss, ann._source.adduct);
@@ -67,10 +67,10 @@ const createPostprocess = ({annotation, lookupIon}: AnnotationAndIons, args: Que
         ...ann,
         _cachedColocCoeff: ion != null ? getColocCoeffInner(annotation, ion.id) : null,
         _isColocReference: ion != null && ion.id === annotation.ionId,
-        async getColocalizationCoeff(_colocalizedWith: string, _colocalizationAlgo: string, _database: string, _fdrLevel: number) {
+        async getColocalizationCoeff(_colocalizedWith: string, _colocalizationAlgo: string, _databaseId: number, _fdrLevel: number | null) {
           if (_colocalizedWith === colocalizedWith
             && _colocalizationAlgo === colocalizationAlgo
-            && _database === database
+            && _databaseId === databaseId
             && _fdrLevel === fdrLevel) {
             return this._cachedColocCoeff;
           } else {
@@ -110,7 +110,7 @@ export const applyColocalizedWithFilter =
     const datasetId = args.datasetFilter && args.datasetFilter.ids;
     const {
       fdrLevel = 0.1,
-      database = null,
+      databaseId = null,
       colocalizedWith = null,
     } = args.filter || {};
     const colocalizationAlgo =
@@ -119,7 +119,7 @@ export const applyColocalizedWithFilter =
     let newArgs = args;
 
     if (datasetId != null && colocalizationAlgo != null && colocalizedWith != null) {
-      const annotationAndIons = await getColocAnnotation(context, datasetId, fdrLevel, database, colocalizedWith, colocalizationAlgo);
+      const annotationAndIons = await getColocAnnotation(context, datasetId, fdrLevel, databaseId, colocalizedWith, colocalizationAlgo);
       if (annotationAndIons != null) {
         const { annotation, ionsById, lookupIon } = annotationAndIons;
         const colocIons = _.uniq([annotation.ionId, ...annotation.colocIonIds])
@@ -136,7 +136,7 @@ export const applyColocalizedWithFilter =
 
         return {
           args: newArgs,
-          postprocess: createPostprocess(annotationAndIons, args, colocalizedWith, colocalizationAlgo, database, fdrLevel),
+          postprocess: createPostprocess(annotationAndIons, args, colocalizedWith, colocalizationAlgo, databaseId, fdrLevel),
         };
       } else {
         return {args: setOrMerge(newArgs, 'filter.ion', [])};

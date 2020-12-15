@@ -8,6 +8,10 @@ config.services = {};
 /* Internal ad-hoc service with /v1/datasets and /v1/isotopic_patterns endpoints */
 config.services.sm_engine_api_host = "localhost:5123";
 
+config.upload = {};
+config.upload.destination = '{{ sm_graphql_upload_destination }}';
+config.upload.bucket = '{{ sm_graphql_s3_upload_bucket }}';
+
 config.db = {};
 config.db.host = "{{ sm_graphql_database_host | default('localhost') }}";
 config.db.database = "sm";
@@ -48,6 +52,8 @@ config.jwt.algorithm = "HS256";
 
 config.sentry = {
   dsn: "{{ sentry_dsn }}",
+  environment: "{{ stage | replace('/', '_') }}",
+  release: "{{ metaspace_repo_revision }}",
 };
 
 config.aws = {
@@ -55,11 +61,6 @@ config.aws = {
   aws_secret_access_key: "{{ sm_graphql_aws_secret_access_key }}",
   aws_region: "{{ sm_graphql_aws_region }}"
 };
-
-config.dataset_upload = {
-  destination: '{{ sm_graphql_upload_destination }}',
-  bucket: '{{ sm_graphql_s3_upload_bucket }}',
-}
 
 config.features = {{ sm_graphql_features | to_json }};
 

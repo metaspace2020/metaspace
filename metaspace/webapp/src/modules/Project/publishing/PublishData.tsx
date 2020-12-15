@@ -1,4 +1,4 @@
-import { createComponent, reactive } from '@vue/composition-api'
+import { defineComponent, reactive } from '@vue/composition-api'
 import { Button, Input } from 'element-ui'
 
 import { WorkflowStep } from '../../../components/Workflow'
@@ -6,7 +6,13 @@ import DoiField from '../DoiField'
 
 import confirmPrompt from '../../../components/confirmPrompt'
 
-const PublishData = createComponent({
+interface Props {
+  active: boolean
+  done: boolean
+  publishProject: (doi: string) => void
+}
+
+const PublishData = defineComponent<Props>({
   props: {
     active: Boolean,
     done: Boolean,
@@ -61,7 +67,6 @@ const PublishData = createComponent({
             </Button>
           </form>
         }
-        {props.done && <p>The project and its datasets are now public, thank you for your contribution.</p>}
       </WorkflowStep>
     )
   },

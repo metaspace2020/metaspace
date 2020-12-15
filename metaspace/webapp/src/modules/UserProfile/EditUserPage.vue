@@ -521,7 +521,7 @@ export default class EditUserPage extends Vue {
 
 <style scoped>
   .main-content {
-    padding: 0 20px 20px 20px;
+    @apply px-6 py-3;
     display: flex;
     justify-content: center;
   }
@@ -570,6 +570,6 @@ export default class EditUserPage extends Vue {
   }
 
   section + section {
-    margin: 40px 0;
+    @apply my-12;
   }
 </style>

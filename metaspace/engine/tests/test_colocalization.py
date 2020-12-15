@@ -1,16 +1,12 @@
-from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
 import pandas as pd
 
 from sm.engine.colocalization import analyze_colocalization, Colocalization, FreeableRef
-from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.tests.util import sm_config, test_db, metadata, ds_config
-
-mol_db_mock = {'id': 1, 'name': 'HMDB-v4', 'version': '2001-01-01'}
+from .utils import create_test_molecular_db, create_test_ds
 
 
 def test_valid_colocalization_jobs_generated():
@@ -44,15 +40,9 @@ def mock_get_ion_images_for_analysis(storage_type, img_ids, **kwargs):
 
 def test_new_ds_saves_to_db(test_db, metadata, ds_config):
     db = DB()
-    ds = Dataset(
-        id='ds_id',
-        name='ds_name',
-        input_path='input_path',
-        upload_dt=datetime.now(),
-        metadata=metadata,
-        config=ds_config,
-    )
-    ds.save(db)
+    moldb = create_test_molecular_db()
+    ds_config['database_ids'] = [moldb.id]
+    ds = create_test_ds(config={**ds_config, 'database_ids': [moldb.id]})
 
     ion_metrics_df = pd.DataFrame(
         {
@@ -62,16 +52,14 @@ def test_new_ds_saves_to_db(test_db, metadata, ds_config):
             'image_id': list(map(str, range(6))),
         }
     )
-    db.insert(
-        'INSERT INTO molecular_db (id, name, version) VALUES (%s, %s, %s)',
-        rows=[(1, 'HMDB-v4', '2018-04-03')],
-    )
     (job_id,) = db.insert_return(
-        "INSERT INTO job (moldb_id, ds_id, status) " "VALUES (1, %s, 'FINISHED') " "RETURNING id",
-        [[ds.id]],
+        "INSERT INTO job (moldb_id, ds_id, status) VALUES (%s, %s, 'FINISHED') RETURNING id",
+        rows=[(moldb.id, ds.id)],
     )
     db.insert(
-        'INSERT INTO annotation(job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids) '
+        'INSERT INTO annotation('
+        '   job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids'
+        ') '
         "VALUES (%s, %s, '', '', %s, 1, %s, '{}', %s)",
         [(job_id, r.formula, r.adduct, r.fdr, [r.image_id]) for i, r in ion_metrics_df.iterrows()],
     )

@@ -10,9 +10,8 @@
     >
       <ion-image-viewer
         ref="imageLoader"
-        :ion-image="ionImage"
+        :ion-image-layers="ionImageLayers"
         :is-loading="ionImageIsLoading"
-        :colormap="colormap"
         :pixel-size-x="pixelSizeX"
         :pixel-size-y="pixelSizeY"
         :pixel-aspect-ratio="imageLoaderSettings.pixelAspectRatio"
@@ -105,11 +104,12 @@ import { saveAs } from 'file-saver'
 import Colorbar from './Colorbar.vue'
 import IonImageViewer from '../../../../components/IonImageViewer'
 import domtoimage from 'dom-to-image-google-font-issue'
-import { IonImage, loadPngFromUrl, processIonImage, ScaleType } from '../../../../lib/ionImageRendering'
+import { IonImage, loadPngFromUrl, processIonImage, ScaleType, IonImageLayer } from '../../../../lib/ionImageRendering'
 import { get } from 'lodash-es'
 import fitImageToArea, { FitImageToAreaResult } from '../../../../lib/fitImageToArea'
 import reportError from '../../../../lib/reportError'
 import { Image } from 'upng-js'
+import createColormap from '../../../../lib/createColormap'
 
 @Component({
   name: 'main-image',
@@ -137,7 +137,7 @@ export default class MainImage extends Vue {
     imageLoaderSettings!: any
 
     @Prop({ required: true, type: Function })
-    onImageMove!: Function
+    applyImageMove!: Function
 
     @Prop({ type: Number })
     pixelSizeX!: number
@@ -205,6 +205,17 @@ export default class MainImage extends Vue {
       }
     }
 
+    get ionImageLayers(): IonImageLayer[] {
+      if (this.ionImage) {
+        const { opacityMode, annotImageOpacity } = this.imageLoaderSettings
+        return [{
+          ionImage: this.ionImage,
+          colorMap: createColormap(this.colormap, opacityMode, annotImageOpacity),
+        }]
+      }
+      return []
+    }
+
     get imageFit(): FitImageToAreaResult {
       const { width = 500, height = 500 } = this.ionImage || {}
       return fitImageToArea({
@@ -239,11 +250,11 @@ export default class MainImage extends Vue {
     }
 
     onOpacityInput(val: number): void {
-      this.$emit('opacityInput', val)
+      this.$emit('opacity', val)
     }
 
     handleImageMove({ zoom, xOffset, yOffset }: any) {
-      this.onImageMove({
+      this.applyImageMove({
         zoom: zoom / this.imageFit.imageZoom,
         xOffset,
         yOffset,

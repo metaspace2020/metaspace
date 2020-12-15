@@ -1,10 +1,11 @@
+import functools
 import logging
-from functools import wraps
+import threading
+from contextlib import contextmanager
 
 from psycopg2.extras import execute_values
 import psycopg2.extensions
 from psycopg2.pool import ThreadedConnectionPool
-from psycopg2 import ProgrammingError, IntegrityError, DataError
 
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
@@ -15,17 +16,17 @@ logger = logging.getLogger('engine.db')
 class ConnectionPool:
     pool = None
 
-    def __init__(self, config, min_conn=4, max_conn=12):
+    def __init__(self, config, min_conn=5, max_conn=12):
         logger.info('Initialising database connection pool')
         if not ConnectionPool.pool:
             ConnectionPool.pool = ThreadedConnectionPool(min_conn, max_conn, **config)
 
-    @staticmethod
-    def close():
+    @classmethod
+    def close(cls):
         logger.info('Closing database connection pool')
-        if ConnectionPool.pool:
-            ConnectionPool.pool.closeall()
-        ConnectionPool.pool = None
+        if cls.pool:
+            cls.pool.closeall()
+        cls.pool = None
 
     def __enter__(self):
         pass
@@ -33,32 +34,59 @@ class ConnectionPool:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
+    @classmethod
+    def is_active(cls):
+        return cls.pool is not None
 
-def db_decor(func):
-    @wraps(func)
-    def wrapper(self, sql, *args, **kwargs):
-        assert ConnectionPool.pool, "'with ConnectionPool(config):' should be used"
+    @classmethod
+    def get_conn(cls):
+        return cls.pool.getconn()
 
-        conn = None
-        res = []
+    @classmethod
+    def return_conn(cls, conn):
+        return cls.pool.putconn(conn)
+
+
+thread_local = threading.local()  # pylint: disable=invalid-name
+
+
+@contextmanager
+def transaction_context():
+    assert ConnectionPool.is_active(), "'with ConnectionPool(config):' should be used"
+
+    if hasattr(thread_local, 'conn'):
+        yield thread_local.conn
+    else:
+        logger.debug('Starting transaction')
+        thread_local.conn = ConnectionPool.get_conn()
+
         try:
-            # for cases when SQL queries are written to StringIO
-            value_getter = getattr(sql, 'getvalue', None)
-            debug_output = sql if not value_getter else value_getter()
-            logger.debug(debug_output[:1000])
+            yield thread_local.conn
 
-            # psycopg commits/rollbacks transaction instead
-            # of closing connection on exit from with block
-            # http://initd.org/psycopg/docs/usage.html#with-statement
-            with ConnectionPool.pool.getconn() as conn:
-                with conn.cursor() as curs:
-                    self._curs = curs  # pylint: disable=protected-access
-                    res = func(self, sql, *args, **kwargs)
-        except (ProgrammingError, IntegrityError, DataError) as e:
-            raise Exception(f'SQL: {sql},\nArgs: {str(args)[:1000]}\n') from e
+        except Exception as e:
+            logger.debug('Rolling back transaction')
+            thread_local.conn.rollback()
+            raise
+        else:
+            logger.debug('Committing transaction')
+            thread_local.conn.commit()
         finally:
-            ConnectionPool.pool.putconn(conn)
-        return res
+            ConnectionPool.return_conn(thread_local.conn)
+            delattr(thread_local, 'conn')
+
+
+def db_call(func):
+    @functools.wraps(func)
+    def wrapper(self, sql, *args, **kwargs):
+        # For cases when SQL queries are written to StringIO
+        value_getter = getattr(sql, 'getvalue', None)
+        debug_output = sql if not value_getter else value_getter()
+        logger.debug(debug_output[:1000])
+
+        with transaction_context() as conn:
+            with conn.cursor() as curs:
+                self._curs = curs  # pylint: disable=protected-access
+                return func(self, sql, *args, **kwargs)
 
     return wrapper
 
@@ -86,7 +114,7 @@ class DB:
             return rows[0] if rows else []
         return rows
 
-    @db_decor
+    @db_call
     def select(self, sql, params=None):
         """ Execute select query
 
@@ -103,11 +131,11 @@ class DB:
         """
         return self._select(sql, params)
 
-    @db_decor
+    @db_call
     def select_with_fields(self, sql, params=None):
         return self._select(sql, params, fields=True)
 
-    @db_decor
+    @db_call
     def select_one(self, sql, params=None):
         """ Execute select query and take the first row
 
@@ -124,11 +152,16 @@ class DB:
         """
         return self._select(sql, params, one=True)
 
-    @db_decor
+    @db_call
+    def select_onecol(self, sql: str, params=None):
+        """ Execute select query and return a list containing values from the first column"""
+        return [row[0] for row in self._select(sql, params)]
+
+    @db_call
     def select_one_with_fields(self, sql, params=None):
         return self._select(sql, params, one=True, fields=True)
 
-    @db_decor
+    @db_call
     def insert(self, sql, rows=None):
         """ Execute insert query
 
@@ -141,7 +174,7 @@ class DB:
         """
         self._curs.executemany(sql, rows)
 
-    @db_decor
+    @db_call
     def insert_return(self, sql, rows=None):
         """ Execute insert query
 
@@ -162,7 +195,7 @@ class DB:
             ids.append(self._curs.fetchone()[0])
         return ids
 
-    @db_decor
+    @db_call
     def alter(self, sql, params=None):
         """ Execute alter query
 
@@ -175,7 +208,7 @@ class DB:
         """
         self._curs.execute(sql, params)
 
-    @db_decor
+    @db_call
     def alter_many(self, sql, rows=None):
         """ Execute alter query
 
@@ -188,7 +221,7 @@ class DB:
         """
         execute_values(self._curs, sql, rows)
 
-    @db_decor
+    @db_call
     def copy(self, inp_file, table, sep='\t', columns=None):
         """ Copy data from a file to a table
 
@@ -203,4 +236,7 @@ class DB:
         columns : list
             column names to insert into
         """
-        self._curs.copy_from(inp_file, table=table, sep=sep, columns=columns)
+        self._curs.copy_expert(
+            f"COPY {table} ({', '.join(columns)}) FROM STDIN WITH (FORMAT CSV, DELIMITER '{sep}')",
+            inp_file,
+        )

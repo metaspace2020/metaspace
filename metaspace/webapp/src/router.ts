@@ -5,6 +5,8 @@ import AboutPage from './modules/App/AboutPage.vue'
 import DatasetsPage from './modules/Datasets/DatasetsPage.vue'
 import { DialogPage, ResetPasswordPage } from './modules/Account'
 import { redirectAfterSignIn } from './modules/Account/signInReturnUrl'
+import { updateDBParam } from './modules/Filters/url'
+import NotFoundPage from './modules/App/NotFoundPage.vue'
 
 Vue.use(VueRouter)
 
@@ -23,6 +25,9 @@ const asyncPagesFreelyTyped = {
   ProjectsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Project/ProjectsListPage.vue'),
   SystemHealthPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Admin/SystemHealthPage.vue'),
   GroupsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Admin/GroupsListPage.vue'),
+  PrivacyPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/App/PrivacyPage.vue'),
+  TermsPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/App/TermsPage.vue'),
+  PublicationsPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/App/PublicationsPage.vue'),
 
   // These pages use sanitizeHtml, which is big
   ViewGroupPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle2" */ './modules/GroupProfile/ViewGroupPage.vue'),
@@ -30,19 +35,24 @@ const asyncPagesFreelyTyped = {
 }
 const asyncPages = asyncPagesFreelyTyped as Record<keyof typeof asyncPagesFreelyTyped, AsyncComponent>
 
-const convertLegacyHashUrls = () => {
-  const { pathname, hash } = window.location
+const convertLegacyUrls = () => {
+  const { pathname, hash, search } = window.location
   if (pathname === '/' && hash && hash.startsWith('#/')) {
     history.replaceState(undefined, undefined as any, hash.slice(1))
   }
+  if (pathname === '/annotations') {
+    const updatedQueryString = updateDBParam(search.slice(1))
+    if (updatedQueryString !== null) {
+      history.replaceState(undefined, undefined as any, `${pathname}?${updatedQueryString}`)
+    }
+  }
 }
-convertLegacyHashUrls()
+convertLegacyUrls()
 
 const router = new VueRouter({
   mode: 'history',
   routes: [
-    { path: '/', component: AboutPage },
-    { path: '/about', component: AboutPage },
+    { path: '/(about)?', component: AboutPage, meta: { footer: true, headerClass: 'bg-primary' } },
     { path: '/annotations', component: asyncPages.AnnotationsPage },
     {
       path: '/datasets',
@@ -55,7 +65,7 @@ const router = new VueRouter({
     { path: '/datasets/edit/:dataset_id', name: 'edit-metadata', component: asyncPages.MetadataEditPage },
     { path: '/datasets/:dataset_id/add-optical-image', name: 'add-optical-image', component: asyncPages.ImageAlignmentPage },
     { path: '/upload', component: asyncPages.UploadPage },
-    { path: '/help', component: asyncPages.HelpPage },
+    { path: '/help', component: asyncPages.HelpPage, meta: { footer: true } },
     { path: '/user/me', component: asyncPages.EditUserPage },
 
     { path: '/admin/health', component: asyncPages.SystemHealthPage },
@@ -76,7 +86,24 @@ const router = new VueRouter({
       redirect: { path: '/project/:projectIdOrSlug', query: { tab: 'members' } } as RawLocation,
     },
     { path: '/projects', component: asyncPages.ProjectsListPage },
+
+    { path: '/terms', component: asyncPages.TermsPage, meta: { footer: true } },
+    { path: '/privacy', component: asyncPages.PrivacyPage, meta: { footer: true } },
+    { path: '/publications', component: asyncPages.PublicationsPage, meta: { footer: true } },
+
+    { path: '*', component: NotFoundPage, meta: { footer: true, flex: true } },
   ],
+  scrollBehavior(to, from, savedPosition) {
+    if (to.hash) {
+      return { selector: to.hash, offset: { x: 0, y: 64 } } // offset header height
+    }
+    if (savedPosition) {
+      return savedPosition
+    }
+    if (to.path !== from.path) {
+      return { x: 0, y: 0 }
+    }
+  },
 })
 
 const { href } = router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined, true)

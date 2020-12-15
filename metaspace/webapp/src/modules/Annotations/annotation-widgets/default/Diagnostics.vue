@@ -155,8 +155,10 @@ interface AnnotationGroup {
         this.isobarAnnotationsIonFormula = this.annotation.ionFormula
         return {
           datasetId: this.annotation.dataset.id,
-          ionFormula: this.annotation.ionFormula,
-          database: this.annotation.database,
+          filter: {
+            isobaricWith: this.annotation.ionFormula,
+            databaseId: this.annotation.databaseDetails.id,
+          },
         }
       },
       update(data) {
@@ -206,11 +208,15 @@ export default class Diagnostics extends Vue {
       if (!this.loading
           && this.isobarAnnotationsIonFormula === this.annotation.ionFormula
           && missingIonFormulas.length > 0) {
-        reportError(new Error(
-          'Inconsistent annotations between Annotation.isobars and isobaricWith query results. '
-              + `Annotation ${this.annotation.id} ${this.annotation.ion}: `
-              + `${Object.keys(isobarsByIonFormula).join(',')} != ${Object.keys(annotationsByIonFormula).join(',')}`,
-        ), null)
+        reportError(
+          new Error('Inconsistent annotations between Annotation.isobars and isobaricWith query results.'),
+          null,
+          {
+            annotationId: this.annotation.id,
+            ion: this.annotation.ion,
+            isobarsFromPropsAnnotation: isobarsKeys.join(','),
+            isobarsFromQuery: annotationsKeys.join(','),
+          })
       }
 
       const groups = ionFormulas.map(ionFormula => {

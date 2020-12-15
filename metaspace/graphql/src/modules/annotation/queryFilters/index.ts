@@ -4,6 +4,9 @@ import {applyColocalizationSamplesFilter} from './colocalizationSamples';
 import {applyColocalizedWithFilter} from './colocalizedWith';
 import * as _ from 'lodash';
 import {applyHasAnnotationMatchingFilter} from './hasAnnotationMatching';
+import {mapDatabaseToDatabaseId} from '../../moldb/util/mapDatabaseToDatabaseId';
+import {AnnotationFilter} from "../../../binding";
+import {EntityManager} from "typeorm";
 
 export {ESAnnotationWithColoc} from './types';
 
@@ -12,6 +15,14 @@ const queryFilters = [
   applyColocalizedWithFilter,
   applyHasAnnotationMatchingFilter,
 ];
+
+const setDatabaseIdInAnnotationFilter = async (entityManager: EntityManager, filter: AnnotationFilter | undefined) => {
+  if (filter != null) {
+    if (filter.databaseId == null && filter.database != null) {
+      filter.databaseId = await mapDatabaseToDatabaseId(entityManager, filter.database);
+    }
+  }
+};
 
 /**
  * Augment filters based on data that's not easily queryable in ElasticSearch, e.g. data that is only available in
@@ -25,6 +36,11 @@ const queryFilters = [
 export const applyQueryFilters = async (context: Context, args: QueryFilterArgs): Promise<QueryFilterResult> => {
   let newArgs = args;
   let postprocessFuncs: PostProcessFunc[] = [];
+
+  await setDatabaseIdInAnnotationFilter(context.entityManager, newArgs.filter);
+  if (newArgs.datasetFilter) {
+    await setDatabaseIdInAnnotationFilter(context.entityManager, newArgs.datasetFilter.hasAnnotationMatching);
+  }
 
   for (const filter of queryFilters) {
     const result = await filter(context, newArgs);

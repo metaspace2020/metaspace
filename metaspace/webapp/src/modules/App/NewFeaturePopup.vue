@@ -3,38 +3,37 @@
     <div
       v-show="activeFeature != null"
       ref="container"
-      class="nf-container"
+      class="el-popover el-popper el-popover--plain max-w-sm leading-5 p-5 text-left"
     >
       <div v-if="activeFeature != null">
-        <div class="nf-container-corner-tag">
-          NEW FEATURE!
+        <h3 class="leading-10 m-0 mt-2">
+          <el-badge
+            value="New"
+            class="test"
+          >
+            {{ activeFeature.title }}
+          </el-badge>
+        </h3>
+        <div
+          class="content"
+          v-html="activeFeature.contentHtml"
+        />
+        <div class="flex justify-end items-center h-10 mt-5">
+          <el-button
+            size="small"
+            @click="remindMeLater"
+          >
+            Remind me later
+          </el-button>
+
+          <el-button
+            size="small"
+            type="primary"
+            @click.native="dismissCurrentFeature"
+          >
+            Got it!
+          </el-button>
         </div>
-        <div class="bubble-container">
-          <div class="bubble-content">
-            <h3 v-if="activeFeature.title !== ''">
-              {{ activeFeature.title }}
-            </h3>
-            <div v-html="activeFeature.contentHtml" />
-          </div>
-
-          <div class="nf-actions">
-            <el-button
-              size="small"
-              @click="remindMeLater"
-            >
-              Remind me later
-            </el-button>
-
-            <el-button
-              size="small"
-              type="primary"
-              @click.native="dismissCurrentFeature"
-            >
-              Got it!
-            </el-button>
-          </div>
-        </div>
-
         <div
           class="popper__arrow"
           x-arrow=""
@@ -87,9 +86,8 @@ The ion formulas of isomers and isobars are also available in the regular CSV ex
   },
   {
     name: 'medianCosineColoc',
-    title: 'New Colocalization Algorithm',
+    title: 'Improved Colocalization Algorithm',
     contentHtml: `
-<p>METASPACE has an improved colocalization algorithm for ion images!</p>
 <p>The <b>median-thresholded cosine distance</b> gives better results than the plain cosine distance when compared to
 expert judgements.
 See <a href="https://doi.org/10.1093/bioinformatics/btaa085" target="blank">Ovchinnikova et al. (2020) ColocML</a>
@@ -108,7 +106,7 @@ If you wish to go back to the old behavior, <b>cosine distance</b> can be select
   },
 ]
 
-  @Component({})
+@Component({})
 export default class NewFeaturePopup extends Vue {
     activeFeature: FeatureSpec | null = null;
     lastPopperAnchor: HTMLElement | null = null;
@@ -202,95 +200,11 @@ export default class NewFeaturePopup extends Vue {
 }
 </script>
 
-<style lang="scss">
-
-  .nf-actions {
-    display: flex;
-    justify-content: flex-end;
+<style scoped>
+  /deep/ .content > * {
+    margin: 0;
   }
-
-  $popper-background-color: rgba(250, 250, 250, 0.98);
-  $popper-border-color: #ddddce;
-  $popper-arrow-color: black;
-
-  .nf-container {
-    background: $popper-background-color;
-    color: black;
-    width: 450px;
-    padding: 10px;
-    border-radius: 3px;
-    margin: 5px;
-    z-index: 10100;
-    box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.1);
-    border: 2px solid $popper-border-color;
-    font-size: 14px;
-
-    .popper__arrow {
-      width: 0;
-      height: 0;
-      border-style: solid;
-      position: absolute;
-      margin: 5px;
-    }
-
-    &[x-placement^="top"] {
-      .popper__arrow {
-        border-width: 5px 5px 0 5px;
-        border-color: $popper-arrow-color transparent transparent transparent;
-        bottom: -5px;
-        left: calc(50% - 5px);
-        margin-top: 0;
-        margin-bottom: 0;
-      }
-    }
-
-    &[x-placement^="bottom"] {
-      .popper__arrow {
-        border-width: 0 5px 5px 5px;
-        border-color: transparent transparent $popper-arrow-color transparent;
-        top: -5px;
-        left: calc(50% - 5px);
-        margin-top: 0;
-        margin-bottom: 0;
-      }
-    }
-
-    &[x-placement^="right"] {
-      .popper__arrow {
-        border-width: 5px 5px 5px 0;
-        border-color: transparent $popper-arrow-color transparent transparent;
-        left: -5px;
-        top: calc(50% - 5px);
-        margin-left: 0;
-        margin-right: 0;
-      }
-    }
-
-    &[x-placement^="left"] {
-      .popper__arrow {
-        border-width: 5px 0 5px 5px;
-        border-color: transparent transparent transparent $popper-arrow-color;
-        right: -5px;
-        top: calc(50% - 5px);
-        margin-left: 0;
-        margin-right: 0;
-      }
-    }
-  }
-
-  .nf-container-corner-tag {
-    position: absolute;
-    top: 0;
-    right: 0;
-    padding: 5px;
-    font-weight: bold;
-    background-color: orangered;
-    color: white;
-  }
-  .danger-icon {
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    background-image: url('../../assets/danger.svg');
+  /deep/ .content > * + * {
+    @apply mt-5;
   }
 </style>

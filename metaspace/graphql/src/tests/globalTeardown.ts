@@ -6,8 +6,8 @@ export = async () => {
     client: 'postgres',
     connection: {
       host     : config.db.host,
-      user     : 'postgres',
-      password : 'postgres',
+      user     : 'sm',
+      password : 'password',
       database : 'postgres'
     },
     debug: false

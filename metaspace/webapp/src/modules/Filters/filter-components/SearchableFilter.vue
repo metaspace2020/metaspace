@@ -1,6 +1,7 @@
 <template>
   <tag-filter
     :name="name"
+    :removable="removable && !loading"
     :width="multiple ? 900 : 300"
     @destroy="destroy"
   >
@@ -10,7 +11,7 @@
       placeholder="Start typing name"
       remote
       filterable
-      clearable
+      :clearable="clearable"
       :remote-method="fetchOptions"
       :loading="loading"
       loading-text="Loading matching entries..."
@@ -64,11 +65,17 @@ export default class SearchableFilter extends Vue {
     @Prop({ type: Boolean, default: false })
     multiple!: boolean;
 
+    @Prop({ type: Boolean, default: true })
+    clearable!: boolean;
+
     @Prop()
     value!: string[] | string | undefined;
 
     @Prop({ type: String, required: true })
     filterKey!: SearchableFilterKey;
+
+    @Prop({ type: Boolean, default: true })
+    removable!: boolean;
 
     loading = false;
     options: Option[] = [];

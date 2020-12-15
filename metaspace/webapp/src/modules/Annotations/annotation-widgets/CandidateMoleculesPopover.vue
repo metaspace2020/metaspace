@@ -4,9 +4,20 @@
     trigger="hover"
     v-bind="$attrs"
   >
-    <div>
-      <span>Candidate molecules ({{ possibleCompounds.length }}):</span>
-      <ul>
+    <div class="leading-5 py-2 px-3 font-normal content text-sm text-left">
+      <p
+        v-if="possibleCompounds.length > 1"
+        class="title proportional-nums"
+      >
+        {{ possibleCompounds.length }} candidate molecules
+      </p>
+      <p
+        v-if="possibleCompounds.length === 1"
+        class="title"
+      >
+        Candidate molecule
+      </p>
+      <ul class="p-0 list-none leading-7">
         <li
           v-for="(comp, i) in filteredCompounds"
           :key="i"
@@ -15,39 +26,35 @@
         </li>
         <li
           v-if="moreCount"
-          class="more-count"
+          class="proportional-nums text-xs tracking-wide font-medium"
         >
-          (+ {{ moreCount }} more)
+          + {{ moreCount }} more
         </li>
       </ul>
       <div
         v-if="showIsomers"
-        class="warning-section"
       >
-        <div class="warning-icon" />
+        <p class="title">
+          <span v-if="isomers.length == 1">An isomeric ion was annotated</span>
+          <span v-else>{{ isomers.length }} isomeric ions were annotated</span>
+        </p>
         <p>
-          <span v-if="isomers.length == 1">An isomeric ion was annotated.</span>
-          <span v-else>{{ isomers.length }} isomeric ions were annotated.</span>
-          <br>
           Check the <b>Molecules</b> panel for more candidates.
         </p>
       </div>
       <div
         v-if="showIsobars"
-        class="warning-section"
       >
-        <div class="warning-icon" />
-        <p>
-          <span v-if="isobars.length == 1">An isobaric ion was annotated.</span>
-          <span v-else>{{ isobars.length }} isobaric ions were annotated.</span>
-          <br>
+        <p class="title">
+          <span v-if="isobars.length == 1">An isobaric ion was annotated</span>
+          <span v-else>{{ isobars.length }} isobaric ions were annotated</span>
+        </p>
+        <p class="max-w-measure-1">
           Check the <b>Molecules</b> panel to see candidate molecules from the isobaric {{ isobars.length == 1 ? 'ion' : 'ions' }},
-          <br>
           and the <b>Diagnostics</b> panel to compare the isotopic images and spectra.
         </p>
       </div>
     </div>
-
     <slot slot="reference" />
   </el-popover>
 </template>
@@ -103,19 +110,19 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  .more-count {
-    list-style: none;
-    font-style: italic;
+  .content * {
+    margin: 0;
   }
-  .warning-section {
-    display: flex;
+  .content > * + * {
+    @apply mt-4;
   }
-  .warning-icon {
-    align-self: center;
-    width: 16px;
-    height: 16px;
-    margin-right: 16px;
-
-    background-image: url('../../../assets/danger.svg')
+  .content > .title + * {
+    @apply mt-2;
+  }
+  .title + * {
+    @apply mt-1;
+  }
+  .title {
+    @apply font-bold;
   }
 </style>

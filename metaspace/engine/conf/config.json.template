@@ -35,14 +35,14 @@
     "password": "{{ rabbitmq_password }}"
   },
   "fs": {
-    "data_path": "/opt/data/sm_data",
+    "data_path": "/opt/data/metaspace",
     "spark_data_path": "/tmp/metaspace",
     "s3_base_path": "{{ sm_s3_path }}"
   },
   "spark": {
     "master": "{{ spark_master_host | default('local[*]') }}",
-    "spark.executor.memory": "10g",
-    "spark.driver.memory": "4g",
+    "spark.executor.memory": "16g",
+    "spark.driver.memory": "8g",
     "spark.driver.maxResultSize": "3g",
     "spark.serializer": "org.apache.spark.serializer.KryoSerializer",
     "spark.kryoserializer.buffer.max": "512m",
@@ -56,7 +56,7 @@
   "aws": {
     "aws_access_key_id": "{{ aws_access_key_id }}",
     "aws_secret_access_key": "{{ aws_secret_access_key }}",
-    "aws_region": "{{ sm_webapp_aws_region }}"
+    "aws_default_region": "{{ aws_region }}"
   },
   "slack": {
     "channel": "{{ slack_channel }}",
@@ -125,8 +125,7 @@
     }
   },
   "ds_config_defaults": {
-    "adducts": {{ sm_default_adducts | to_json }},
-    "moldb_names": ["HMDB-v4"]
+    "adducts": {{ sm_default_adducts | to_json }}
   },
   "colocalization": {
     "enabled": true

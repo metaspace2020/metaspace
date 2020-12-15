@@ -17,13 +17,26 @@
                 type="selectMulti"
                 name="Metabolite database"
                 :help="dbHelp"
-                :value="value.molDBs"
-                :error="error && error.molDBs"
-                :options="molDBOptions"
-                :multiple-limit="MAX_MOL_DBS"
+                :value="value.databaseIds"
+                :error="error && error.databaseIds"
+                :multiple-limit="maxMolDBs"
                 required
-                @input="val => onInput('molDBs', val)"
-              />
+                @input="val => onInput('databaseIds', val)"
+              >
+                <el-option-group
+                  v-for="group in databaseOptions"
+                  slot="options"
+                  :key="group.label"
+                  :label="group.label"
+                >
+                  <el-option
+                    v-for="option in group.options"
+                    :key="option.value"
+                    :value="option.value"
+                    :label="option.label"
+                  />
+                </el-option-group>
+              </form-field>
             </el-col>
             <el-col :span="8">
               <form-field
@@ -240,9 +253,18 @@ import FormField from '../inputs/FormField.vue'
 import DatabaseDescriptions from '../inputs/DatabaseDescriptions.vue'
 import AnalysisVersionHelp from '../inputs/AnalysisVersionHelp.vue'
 import { MetaspaceOptions } from '../formStructure'
-import { MAX_MOL_DBS, MAX_NEUTRAL_LOSSES, MAX_CHEM_MODS } from '../../../lib/constants'
-import config from '../../../lib/config'
+import { MAX_NEUTRAL_LOSSES, MAX_CHEM_MODS } from '../../../lib/constants'
+import config, { limits } from '../../../lib/config'
+import { formatDatabaseLabel, MolDBsByGroup } from '../../MolecularDatabases/formatting'
+import { MolecularDB } from '../../../api/moldb'
+import { sortBy } from 'lodash-es'
+
 import './FormSection.scss'
+
+interface Option {
+  value: number
+  label: string
+}
 
 const normalizeFormulaModifier = (formula: string, defaultSign: '+'|'-') => {
   if (!formula) return null
@@ -270,7 +292,7 @@ export default class MetaspaceOptionsSection extends Vue {
     error?: Record<string, any>;
 
     @Prop({ type: Array, required: true })
-    molDBOptions!: string[];
+    databasesByGroup!: MolDBsByGroup[];
 
     @Prop({ type: Array, required: true })
     adductOptions!: {value: string, label: string}[];
@@ -281,7 +303,7 @@ export default class MetaspaceOptionsSection extends Vue {
     features = config.features;
     dbHelp = DatabaseDescriptions;
     AnalysisVersionHelp = AnalysisVersionHelp;
-    MAX_MOL_DBS = MAX_MOL_DBS;
+    maxMolDBs = limits.maxMolDBs;
     MAX_NEUTRAL_LOSSES = MAX_NEUTRAL_LOSSES;
     MAX_CHEM_MODS = MAX_CHEM_MODS;
     ANALYSIS_VERSION_OPTIONS = [
@@ -291,6 +313,19 @@ export default class MetaspaceOptionsSection extends Vue {
 
     neutralLossOptions: string[] = [];
     chemModOptions: string[] = [];
+
+    get databaseOptions() {
+      return this.databasesByGroup.map(({ shortName, molecularDatabases }) => ({
+        label: shortName,
+        options: sortBy(
+          molecularDatabases.map(db => ({
+            value: db.id,
+            label: formatDatabaseLabel(db),
+          })),
+          'label',
+        ),
+      }))
+    }
 
     onInput<TKey extends keyof MetaspaceOptions>(field: TKey, val: MetaspaceOptions[TKey]) {
       this.$emit('input', { ...this.value, [field]: val })

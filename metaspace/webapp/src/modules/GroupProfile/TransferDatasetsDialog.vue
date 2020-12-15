@@ -14,6 +14,7 @@
         <dataset-checkbox-list
           v-model="selectedDatasets"
           :datasets="allDatasets"
+          :init-select-all="true"
         />
         <p v-if="!isInvited">
           An email will be sent to the group's principal investigator to confirm your access.
@@ -141,7 +142,7 @@ export default class TransferDatasetsDialog extends Vue {
 </script>
 <style scoped lang="scss">
   .dialog /deep/ .el-dialog {
-    max-width: 600px;
+    @apply max-w-lg;
   }
   .button-bar {
     display: flex;

@@ -13,30 +13,37 @@ export interface IonImage {
   maxIntensity: number;
   clippedMinIntensity: number;
   clippedMaxIntensity: number;
+  scaledMinIntensity: number;
+  scaledMaxIntensity: number;
+  userMinIntensity: number;
+  userMaxIntensity: number;
   // scaleBarValues - Quantization of linear intensity values, used for showing the distribution of colors on the scale bar
   // Always length 256
   scaleBarValues: Uint8ClampedArray;
-  minQuantile: number | null;
-  maxQuantile: number | null;
+  lowQuantile: number;
+  highQuantile: number;
 }
+
+export type ColorMap = readonly number[][]
+
+export type IonImageLayer = { ionImage: IonImage, colorMap: ColorMap }
 
 export type ScaleType = 'linear' | 'linear-full' | 'log' | 'log-full' | 'hist' | 'test';
 export type ScaleMode = 'linear' | 'log' | 'hist';
 
-const SCALES: Record<ScaleType, [ScaleMode, number | null, number | null]> = {
-  linear: ['linear', null, 0.99],
-  'linear-full': ['linear', null, null],
+const SCALES: Record<ScaleType, [ScaleMode, number, number]> = {
+  linear: ['linear', 0, 0.99],
+  'linear-full': ['linear', 0, 1],
   log: ['log', 0.01, 0.99],
   'log-full': ['log', 0, 1],
-  hist: ['hist', null, null],
-  test: ['linear', null, 0.5], // For unit tests, because it's easier to make test data for 50% threshold than 99%
+  hist: ['hist', 0, 1],
+  test: ['linear', 0, 0.5], // For unit tests, because it's easier to make test data for 50% threshold than 99%
 }
 
-const createDataUrl = (imageBytes: Uint8ClampedArray, width: number, height: number) => {
+const applyImageData = (canvas: HTMLCanvasElement, imageBytes: Uint8ClampedArray, width: number, height: number) => {
   if (imageBytes.length !== width * height * 4) {
     throw new Error('imageBytes must be in RGBA format')
   }
-  const canvas = document.createElement('canvas')
   canvas.width = width
   canvas.height = height
   const ctx = canvas.getContext('2d')!
@@ -49,6 +56,11 @@ const createDataUrl = (imageBytes: Uint8ClampedArray, width: number, height: num
     imageData.data.set(imageBytes)
   }
   ctx.putImageData(imageData, 0, 0)
+}
+
+const createDataUrl = (imageBytes: Uint8ClampedArray, width: number, height: number) => {
+  const canvas = document.createElement('canvas')
+  applyImageData(canvas, imageBytes, width, height)
   return canvas.toDataURL()
 }
 
@@ -114,39 +126,25 @@ function safeQuantile(values: number[], q: number | number[]): any {
   }
 }
 
-const getScaleParams = (intensityValues: Float32Array, mask: Uint8ClampedArray,
-  minIntensity: number, maxIntensity: number,
-  lowQuantile: number | null, highQuantile: number | null, scaleMode: ScaleMode) => {
+const getQuantileValues = (intensityValues: Float32Array, mask: Uint8ClampedArray, minValueConsidered: number = 0) => {
   const values = []
-
-  // Only non-zero values should be considered for hotspot removal, otherwise sparse images have most of their set pixels treated as hotspots.
-  // For compatibility with the previous version where images were loaded as 8-bit, linear scale's thresholds exclude pixels
-  // whose values would round down to zero. This can make a big difference - some ion images have as high as 40% of
-  // their pixels set to values that are zero when loaded as 8-bit but non-zero when loaded as 16-bit.
-  const minValueConsidered = scaleMode === 'linear' ? maxIntensity / 256 : 0
   for (let i = 0; i < mask.length; i++) {
     if (intensityValues[i] > minValueConsidered && mask[i] !== 0) {
       values.push(intensityValues[i])
     }
   }
+  return values
+}
 
-  const clippedMinIntensity = lowQuantile == null ? minIntensity : safeQuantile(values, lowQuantile)
-  const clippedMaxIntensity = highQuantile == null ? maxIntensity : safeQuantile(values, highQuantile)
-
-  let rankValues: Float32Array | null = null
-  if (scaleMode === 'hist') {
-    const lo = lowQuantile || 0; const hi = highQuantile || 1
-    const quantiles = range(256).map(i => lo + (hi - lo) * i / 255)
-    rankValues = new Float32Array(safeQuantile(values, quantiles))
-  }
-
-  return { clippedMinIntensity, clippedMaxIntensity, rankValues }
+const getRankValues = (values: number[], lowQuantile: number, highQuantile: number) => {
+  const lo = lowQuantile || 0; const hi = highQuantile || 1
+  const quantiles = range(256).map(i => lo + (hi - lo) * i / 255)
+  return new Float32Array(safeQuantile(values, quantiles))
 }
 
 const quantizeIonImageLinear = (intensityValues: Float32Array, minIntensity: number, maxIntensity: number) => {
   const clippedValues = new Uint8ClampedArray(intensityValues.length)
   const intensityScale = 255 / (maxIntensity - minIntensity)
-
   for (let i = 0; i < intensityValues.length; i++) {
     clippedValues[i] = (intensityValues[i] - minIntensity) * intensityScale
   }
@@ -222,18 +220,50 @@ export const loadPngFromUrl = async(url: string) => {
   return decode(buffer)
 }
 
-export const processIonImage = (png: Image, minIntensity: number = 0, maxIntensity: number = 1,
-  scaleType: ScaleType = DEFAULT_SCALE_TYPE): IonImage => {
-  const [scaleMode, minQuantile, maxQuantile] = SCALES[scaleType]
-
+export const processIonImage = (
+  png: Image, minIntensity: number = 0, maxIntensity: number = 1, scaleType: ScaleType = DEFAULT_SCALE_TYPE,
+  userScaling: readonly [number, number] = [0, 1],
+  userIntensities: readonly [number?, number?] = []): IonImage => {
+  const [scaleMode, lowQuantile, highQuantile] = SCALES[scaleType]
   const { width, height } = png
-  const { intensityValues, mask } = extractIntensityAndMask(png, minIntensity, maxIntensity)
-  const { clippedMinIntensity, clippedMaxIntensity, rankValues } =
-    getScaleParams(intensityValues, mask, minIntensity, maxIntensity, minQuantile, maxQuantile, scaleMode)
+  const [userMin = minIntensity, userMax = maxIntensity] = userIntensities
 
-  const clippedValues = quantizeIonImage(intensityValues, clippedMinIntensity, clippedMaxIntensity, rankValues,
-    scaleMode)
-  const scaleBarValues = quantizeScaleBar(clippedMinIntensity, clippedMaxIntensity, rankValues, scaleMode)
+  const { intensityValues, mask } = extractIntensityAndMask(png, minIntensity, maxIntensity)
+
+  // Only non-zero values should be considered for hotspot removal, otherwise sparse images have most of their set pixels treated as hotspots.
+  // For compatibility with the previous version where images were loaded as 8-bit, linear scale's thresholds exclude pixels
+  // whose values would round down to zero. This can make a big difference - some ion images have as high as 40% of
+  // their pixels set to values that are zero when loaded as 8-bit but non-zero when loaded as 16-bit.
+  const minValueConsidered = (scaleMode === 'linear' ? maxIntensity / 256 : 0)
+  const quantileValues = getQuantileValues(intensityValues, mask, minValueConsidered)
+
+  let min = minIntensity
+  if (userMin !== minIntensity) {
+    min = userMin
+  } else if (scaleMode === 'log' || lowQuantile > 0) {
+    min = safeQuantile(quantileValues, lowQuantile)
+  }
+
+  let max = maxIntensity
+  if (userMax !== maxIntensity) {
+    max = userMax
+  } else if (highQuantile < 1) {
+    max = safeQuantile(quantileValues, highQuantile)
+  }
+
+  const [minScale, maxScale] = userScaling
+  const scaledMin = min + ((max - min) * minScale)
+  const scaledMax = min + ((max - min) * maxScale)
+
+  let rankValues = null
+  if (scaleType === 'hist') {
+    const { intensityValues } = extractIntensityAndMask(png, scaledMin, scaledMax)
+    const values = getQuantileValues(intensityValues, mask)
+    rankValues = getRankValues(values, lowQuantile, highQuantile)
+  }
+
+  const clippedValues = quantizeIonImage(intensityValues, scaledMin, scaledMax, rankValues, scaleMode)
+  const scaleBarValues = quantizeScaleBar(scaledMin, scaledMax, rankValues, scaleMode)
 
   return {
     intensityValues,
@@ -243,25 +273,20 @@ export const processIonImage = (png: Image, minIntensity: number = 0, maxIntensi
     height,
     minIntensity,
     maxIntensity,
-    clippedMinIntensity,
-    clippedMaxIntensity,
+    clippedMinIntensity: min,
+    clippedMaxIntensity: max,
+    scaledMinIntensity: scaledMin,
+    scaledMaxIntensity: scaledMax,
+    userMinIntensity: userMin,
+    userMaxIntensity: userMax,
     scaleBarValues,
-    minQuantile,
-    maxQuantile,
+    lowQuantile,
+    highQuantile,
   }
 }
 
-export const renderIonImageToBuffer = (ionImage: IonImage, cmap?: readonly number[][]) => {
-  const { clippedValues, mask } = ionImage
-  // Treat pixels as 32-bit values instead of four 8-bit values to avoid extra math.
-  // Assume little-endian byte order, because big-endian is pretty much gone.
-  const outputBuffer = new ArrayBuffer(clippedValues.length * 4)
-  const outputRGBA = new Uint32Array(outputBuffer)
-  const cmapBuffer = new ArrayBuffer(256 * 4)
-  const cmapComponents = new Uint8ClampedArray(cmapBuffer)
-  const cmapRGBA = new Uint32Array(cmapBuffer)
-  const emptyRGBA = 0x00000000
-
+function getCmapComponents(cmap: ColorMap, buffer : ArrayBuffer = new ArrayBuffer(256 * 4)) {
+  const cmapComponents = new Uint8ClampedArray(buffer)
   for (let i = 0; i < 256; i++) {
     if (cmap != null) {
       for (let c = 0; c < 4; c++) {
@@ -273,18 +298,71 @@ export const renderIonImageToBuffer = (ionImage: IonImage, cmap?: readonly numbe
       }
     }
   }
+  return cmapComponents
+}
+
+export const renderIonImageToBuffer = (ionImage: IonImage, cmap: readonly number[][], buffer?: ArrayBuffer) => {
+  const { clippedValues, mask } = ionImage
+  // Treat pixels as 32-bit values instead of four 8-bit values to avoid extra math.
+  // Assume little-endian byte order, because big-endian is pretty much gone.
+  const outputBuffer = buffer || new ArrayBuffer(clippedValues.length * 4)
+  const outputRGBA = new Uint32Array(outputBuffer)
+  const cmapBuffer = new ArrayBuffer(256 * 4)
+  const cmapRGBA = new Uint32Array(cmapBuffer)
+  const emptyRGBA = 0x00000000
+
+  getCmapComponents(cmap, cmapBuffer)
 
   for (let i = 0; i < mask.length; i++) {
     if (mask[i]) {
-      outputRGBA[i] = cmapRGBA[clippedValues[i]]
+      outputRGBA[i] += cmapRGBA[clippedValues[i]]
     } else {
-      outputRGBA[i] = emptyRGBA
+      outputRGBA[i] += emptyRGBA
     }
   }
   return outputBuffer
 }
 
-export const renderIonImage = (ionImage: IonImage, cmap?: readonly number[][]) => {
+export const renderIonImages = (layers: IonImageLayer[], canvas: HTMLCanvasElement, width: number, height: number) => {
+  const ctx = canvas.getContext('2d')!
+  ctx.clearRect(0, 0, width, height)
+
+  if (layers.length === 0) return
+
+  const [base] = layers
+  const { clippedValues } = base.ionImage
+
+  const buffer = new ArrayBuffer(clippedValues.length * 4)
+  const pixels = new Uint8ClampedArray(buffer)
+
+  for (const { ionImage, colorMap } of layers) {
+    const cmapComponents = getCmapComponents(colorMap)
+    const { clippedValues, mask } = ionImage
+
+    for (let i = 0; i < mask.length; i++) {
+      if (!mask[i]) {
+        pixels[i * 4] = 0
+        pixels[i * 4 + 1] = 0
+        pixels[i * 4 + 2] = 0
+        pixels[i * 4 + 3] = 0
+      } else {
+        const v = clippedValues[i]
+
+        for (let j = 0; j < 3; j++) {
+          pixels[i * 4 + j] += cmapComponents[v * 4 + j]
+        }
+
+        // inspired by https://github.com/colorjs/color-composite/blob/master/index.js#L30
+        const a1 = cmapComponents[v * 4 + 3] / 255
+        const a2 = pixels[i * 4 + 3] / 255
+        pixels[i * 4 + 3] = (a1 + a2 * (1 - a1)) * 255
+      }
+    }
+    applyImageData(canvas, pixels, width, height)
+  }
+}
+
+export const renderIonImage = (ionImage: IonImage, cmap: readonly number[][]) => {
   const { width, height } = ionImage
 
   const outputBuffer = renderIonImageToBuffer(ionImage, cmap)
@@ -292,12 +370,12 @@ export const renderIonImage = (ionImage: IonImage, cmap?: readonly number[][]) =
   return createDataUrl(new Uint8ClampedArray(outputBuffer), width, height)
 }
 
-export const renderScaleBar = (ionImage: IonImage, cmap: number[][], horizontal: boolean) => {
+export const renderScaleBar = (ionImage: IonImage, cmap: ColorMap, horizontal: boolean) => {
   const outputBytes = new Uint8ClampedArray(256 * 4)
   for (let i = 0; i < ionImage.scaleBarValues.length; i++) {
     const val = ionImage.scaleBarValues[i]
     for (let j = 0; j < 4; j++) {
-      outputBytes[(255 - i) * 4 + j] = cmap[val][j]
+      outputBytes[(horizontal ? i : 255 - i) * 4 + j] = cmap[val][j]
     }
   }
 

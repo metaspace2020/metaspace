@@ -73,10 +73,20 @@ export default DatasetList
 </script>
 
 <style scoped lang="scss">
-  @import "~element-ui/packages/theme-chalk/src/common/var";
+  .dataset-list {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    margin: -3px;
+  }
 
-  .allow-double-column {
-    >.dataset-item {
+  .double-column {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .double-column {
+    > .dataset-item {
       width: calc(50% - 8px);
       flex-basis: calc(50% - 8px);
       // NOTE: In IE11, box-sizing:border-box is ignored in flex-basis calculations, so it's reverted to the
@@ -84,20 +94,12 @@ export default DatasetList
     }
   }
 
-  .dataset-list {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: stretch;
-    margin: -3px;
-  }
-
   .datasets-list-empty {
+    @apply text-gray-600;
     display: flex;
     height: 200px;
     width: 100%;
     align-items: center;
     justify-content: center;
-    color: $--color-text-secondary;
   }
 </style>

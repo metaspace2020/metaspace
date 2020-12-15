@@ -1,6 +1,7 @@
 import json
 import logging
 from datetime import datetime
+from typing import Dict
 
 from sm.engine.errors import UnknownDSID
 from sm.engine.util import SMConfig
@@ -39,7 +40,7 @@ RESOL_POWER_PARAMS = {
 FLAT_DS_CONFIG_KEYS = frozenset(
     {
         'analysis_version',
-        'mol_dbs',
+        'moldb_ids',
         'adducts',
         'ppm',
         'min_px',
@@ -80,16 +81,16 @@ class Dataset:
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        id=None,  # pylint: disable=redefined-builtin
-        name=None,
-        input_path=None,
-        upload_dt=None,
-        metadata=None,
-        config=None,
-        status=DatasetStatus.QUEUED,
-        status_update_dt=None,
-        is_public=True,
-        img_storage_type='fs',
+        id: str,  # pylint: disable=redefined-builtin
+        name: str = None,
+        input_path: str = None,
+        upload_dt: datetime = None,
+        metadata: Dict = None,
+        config: Dict = None,
+        status: str = DatasetStatus.QUEUED,
+        status_update_dt: datetime = None,
+        is_public: bool = True,
+        img_storage_type: str = 'fs',
     ):
         self.id = id
         self.name = name
@@ -127,7 +128,7 @@ class Dataset:
         res = db.select_one(self.DS_SEL, params=(self.id,))
         return bool(res)
 
-    def save(self, db, es=None):
+    def save(self, db, es=None, allow_insert=False):
         doc = {
             'id': self.id,
             'name': self.name,
@@ -140,7 +141,10 @@ class Dataset:
             'is_public': self.is_public,
         }
         if not self.is_stored(db):
-            db.insert(self.DS_INSERT, rows=[doc])
+            if allow_insert:
+                db.insert(self.DS_INSERT, rows=[doc])
+            else:
+                raise UnknownDSID(f'Dataset does not exist: {self.id}')
         else:
             db.alter(self.DS_UPD, params=doc)
         logger.info(f'Inserted into dataset table: {self.id}, {self.name}')
@@ -235,7 +239,7 @@ def _get_isotope_generation_from_metadata(metadata, analysis_version):
 def generate_ds_config(
     metadata,
     analysis_version=None,
-    mol_dbs=None,
+    moldb_ids=None,
     adducts=None,
     ppm=None,
     min_px=None,
@@ -246,17 +250,12 @@ def generate_ds_config(
 ):
     # The kwarg names should match FLAT_DS_CONFIG_KEYS
 
-    sm_config = SMConfig.get_conf()
-    default_moldbs = sm_config['ds_config_defaults']['moldb_names']
-
     analysis_version = analysis_version or 1
-    mol_dbs = mol_dbs or []
-    mol_dbs = [*mol_dbs, *(mol_db for mol_db in default_moldbs if mol_db not in mol_dbs)]
     iso_params = _get_isotope_generation_from_metadata(metadata, analysis_version)
     default_adducts, charge, isocalc_sigma, instrument = iso_params
 
-    config = {
-        'databases': mol_dbs,
+    return {
+        'database_ids': moldb_ids,
         'analysis_version': analysis_version,
         'isotope_generation': {
             'adducts': adducts or default_adducts,
@@ -270,7 +269,6 @@ def generate_ds_config(
         'fdr': {'decoy_sample_size': decoy_sample_size or 20},
         'image_generation': {'ppm': ppm or 3, 'n_levels': 30, 'min_px': min_px or 1},
     }
-    return config
 
 
 def update_ds_config(old_config, metadata, **kwargs):
@@ -287,7 +285,7 @@ def update_ds_config(old_config, metadata, **kwargs):
     image_generation = old_config.get('image_generation', {})
     old_vals = {
         'analysis_version': old_config.get('analysis_version'),
-        'mol_dbs': old_config.get('databases'),
+        'moldb_ids': old_config.get('database_ids'),
         'adducts': isotope_generation.get('adducts'),
         'n_peaks': isotope_generation.get('n_peaks'),
         'neutral_losses': isotope_generation.get('neutral_losses'),

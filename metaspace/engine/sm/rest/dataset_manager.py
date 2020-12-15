@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 
+from sm.engine import molecular_db
 from sm.engine.dataset import (
     DatasetStatus,
     Dataset,
@@ -56,12 +57,19 @@ class SMapiDatasetManager:
         queue.publish(msg, priority)
         self.logger.info(f'New message posted to {queue}: {msg}')
 
+    @staticmethod
+    def _add_default_moldbs(moldb_ids):
+        default_moldb_ids = [moldb.id for moldb in molecular_db.find_default()]
+        return list(set(moldb_ids) | set(default_moldb_ids))
+
     def add(self, doc, **kwargs):
-        """ Save dataset and send add message to the queue """
+        """Save dataset and send ANNOTATE message to the queue."""
         now = datetime.now()
         if 'id' not in doc:
             doc['id'] = now.strftime('%Y-%m-%d_%Hh%Mm%Ss')
 
+        if 'moldb_ids' in doc:
+            doc['moldb_ids'] = self._add_default_moldbs(doc['moldb_ids'])
         ds_config_kwargs = dict((k, v) for k, v in doc.items() if k in FLAT_DS_CONFIG_KEYS)
 
         try:
@@ -81,7 +89,7 @@ class SMapiDatasetManager:
             is_public=doc.get('is_public'),
             status=DatasetStatus.QUEUED,
         )
-        ds.save(self._db, self._es)
+        ds.save(self._db, self._es, allow_insert=True)
         self._status_queue.publish(
             {'ds_id': ds.id, 'action': DaemonAction.ANNOTATE, 'stage': DaemonActionStage.QUEUED}
         )
@@ -95,7 +103,7 @@ class SMapiDatasetManager:
         self._set_ds_busy(ds, kwargs.get('force', False))
         self._post_sm_msg(ds=ds, queue=self._update_queue, action=DaemonAction.DELETE, **kwargs)
 
-    def update(self, ds_id, doc, **kwargs):
+    def update(self, ds_id, doc, async_es_update, **kwargs):
         """ Save dataset and send update message to the queue """
         ds = Dataset.load(self._db, ds_id)
         ds.name = doc.get('name', ds.name)
@@ -104,7 +112,7 @@ class SMapiDatasetManager:
             ds.metadata = doc['metadata']
         ds.upload_dt = doc.get('upload_dt', ds.upload_dt)
         ds.is_public = doc.get('is_public', ds.is_public)
-        ds.save(self._db, self._es)
+        ds.save(self._db, None if async_es_update else self._es)
 
         self._post_sm_msg(
             ds=ds,

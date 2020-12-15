@@ -1,5 +1,7 @@
 import gql from 'graphql-tag'
 
+import { MolecularDB } from './moldb'
+
 // Prefixing these with `Gql` because differently-cased variants are used elsewhere
 export type GqlPolarity = 'POSITIVE' | 'NEGATIVE';
 export type GqlJobStatus = 'QUEUED' | 'ANNOTATING' | 'FINISHED' | 'FAILED';
@@ -20,6 +22,11 @@ export interface DatasetDetailItem {
     name: string;
     shortName: string;
   };
+  projects: {
+    id: string;
+    name: string;
+    publicationStatus: String;
+  }[],
   groupApproved: boolean;
   polarity: GqlPolarity;
   ionisationSource: string;
@@ -34,14 +41,19 @@ export interface DatasetDetailItem {
   metadataJson: string;
   isPublic: boolean;
   molDBs: string[];
+  databases: MolecularDB[];
   status: GqlJobStatus | null;
   metadataType: string;
   fdrCounts: {
+    databaseId: number;
     dbName: string;
+    dbVersion: string;
     levels: number[];
     counts: number[];
   };
   rawOpticalImageUrl: string;
+  canDownload: boolean;
+  uploadDT: string;
 }
 
 export const datasetDetailItemFragment =
@@ -69,12 +81,18 @@ export const datasetDetailItemFragment =
     growthConditions
     metadataJson
     isPublic
-    molDBs
+    databases {
+      id
+      name
+      version
+    }
     status
     statusUpdateDT
     metadataType
     fdrCounts(inpFdrLvls: $inpFdrLvls, checkLvl: $checkLvl) {
+      databaseId
       dbName
+      dbVersion
       levels
       counts
     }
@@ -85,8 +103,10 @@ export const datasetDetailItemFragment =
   }`
 
 export const datasetDetailItemsQuery =
-  gql`query GetDatasets($dFilter: DatasetFilter, $query: String, $inpFdrLvls: [Int!]!, $checkLvl: Int!) {
-    allDatasets(offset: 0, limit: 100, filter: $dFilter, simpleQuery: $query) {
+  gql`query GetDatasets(
+    $dFilter: DatasetFilter, $query: String, $inpFdrLvls: [Int!]!, $checkLvl: Int!, $offset: Int = 0
+  ) {
+    allDatasets(offset: $offset, limit: 100, filter: $dFilter, simpleQuery: $query) {
       ...DatasetDetailItem
     }
   }
@@ -116,7 +136,7 @@ export interface DatasetListItem {
 
 export const datasetListItemsQuery =
   gql`query GetDatasets($dFilter: DatasetFilter, $query: String) {
-    allDatasets(offset: 0, limit: 100, filter: $dFilter, simpleQuery: $query) {
+    allDatasets(offset: 0, limit: 10000, filter: $dFilter, simpleQuery: $query) {
       id
       name
       uploadDT
@@ -196,8 +216,12 @@ export const datasetVisibilityQuery =
        group { id name }
        projects { id name }
      }
+     currentUser { id }
    }`
-
+export interface DatasetVisibilityQuery {
+  datasetVisibility: DatasetVisibilityResult | null
+  currentUser: { id: string } | null
+}
 export interface DatasetVisibilityResult {
   id: string;
   submitter: { id: string, name: string };

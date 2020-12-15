@@ -1,8 +1,10 @@
+import 'focus-visible'
+
 import Vue from 'vue'
 
 import config, { updateConfigFromQueryString } from './lib/config'
-import * as Raven from 'raven-js'
-import * as RavenVue from 'raven-js/plugins/vue'
+import * as Sentry from '@sentry/browser'
+import { Vue as SentryVue } from '@sentry/integrations/dist/vue'
 
 import VueApollo from 'vue-apollo'
 import { DefaultApolloClient } from '@vue/apollo-composable'
@@ -28,10 +30,17 @@ import VueCompositionApi from '@vue/composition-api'
 
 Vue.use(VueCompositionApi)
 
-if (config.ravenDsn != null && config.ravenDsn !== '') {
-  Raven.config(config.ravenDsn)
-    .addPlugin(RavenVue, Vue)
-    .install()
+if (config.sentry != null && config.sentry.dsn !== '') {
+  Sentry.init({
+    ...config.sentry,
+    integrations: [new SentryVue({ Vue, logErrors: true })],
+    ignoreErrors: [
+      // Ignore ResizeObserver errors - this seems to be a benign issue, but there's not enough detail to track down
+      // the root cause, and the error reports are so spammy they can easily blow our monthly quota.
+      'ResizeObserver loop completed with undelivered notifications.',
+      'ResizeObserver loop limit exceeded',
+    ],
+  })
 }
 Vue.use(VueApollo)
 

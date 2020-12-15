@@ -1,46 +1,35 @@
-from datetime import datetime
 from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
 
 from sm.engine.ion_thumbnail import generate_ion_thumbnail, ALGORITHMS
-from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.db import DB
 from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.tests.util import sm_config, test_db, metadata, ds_config
+from .utils import create_test_molecular_db, create_test_ds
 
 OLD_IMG_ID = 'old-ion-thumb-id'
 IMG_ID = 'new-ion-thumb-id'
-DS_ID = '2000-01-01_00h00m'
 
 
-def _make_fake_ds(db, ds_id, metadata, ds_config):
-    ds = Dataset(
-        id=ds_id,
-        name='name',
-        input_path='path',
-        upload_dt=datetime.now(),
-        metadata=metadata,
-        config=ds_config,
-        status=DatasetStatus.FINISHED,
-    )
-    ds.save(db)
+def _make_fake_ds(db, metadata, ds_config):
+    ds = create_test_ds(metadata=metadata, config=ds_config)
 
-    db.insert(
-        "INSERT INTO molecular_db (id, name, version) VALUES (%s, %s, %s)",
-        rows=[(0, 'HMDB-v4', '2018-04-03')],
-    )
+    moldb = create_test_molecular_db()
     (job_id,) = db.insert_return(
-        "INSERT INTO job (moldb_id, ds_id) VALUES (%s, %s) RETURNING id", [(0, ds_id)]
+        "INSERT INTO job (moldb_id, ds_id) VALUES (%s, %s) RETURNING id", rows=[(moldb.id, ds.id)]
     )
     db.insert(
         (
-            "INSERT INTO annotation (job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids) "
+            "INSERT INTO annotation ("
+            "   job_id, formula, chem_mod, neutral_loss, adduct, msm, fdr, stats, iso_image_ids"
+            ") "
             "VALUES (%s, %s, '', '', %s, 1, 0, '{}', %s)"
         ),
         rows=[(job_id, f'H{i+1}O', '+H', [str(i), str(1000 + i)]) for i in range(200)],
     )
+
+    return ds
 
 
 def _mock_get_ion_images_for_analysis(storage_type, img_ids, **kwargs):
@@ -55,10 +44,10 @@ def test_creates_ion_thumbnail(test_db, algorithm, metadata, ds_config):
     img_store_mock = MagicMock(spec=ImageStoreServiceWrapper)
     img_store_mock.post_image.return_value = IMG_ID
     img_store_mock.get_ion_images_for_analysis.side_effect = _mock_get_ion_images_for_analysis
-    _make_fake_ds(db, DS_ID, metadata, ds_config)
+    ds = _make_fake_ds(db, metadata, ds_config)
 
-    generate_ion_thumbnail(db, img_store_mock, DS_ID, algorithm=algorithm)
+    generate_ion_thumbnail(db, img_store_mock, ds.id, algorithm=algorithm)
 
-    (new_ion_thumbnail,) = db.select_one("SELECT ion_thumbnail FROM dataset WHERE id = %s", [DS_ID])
+    (new_ion_thumbnail,) = db.select_one("SELECT ion_thumbnail FROM dataset WHERE id = %s", [ds.id])
     assert new_ion_thumbnail == IMG_ID
     assert img_store_mock.post_image.called

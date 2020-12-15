@@ -1,12 +1,17 @@
 import json
 import logging
+import re
+from functools import wraps
 from logging.config import dictConfig
 import os
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
+import random
+from time import sleep
 
 from sm.engine.db import ConnectionPool
+from sm.engine import molecular_db
 
 logger = logging.getLogger('engine')
 
@@ -99,16 +104,17 @@ class SMConfig:
 
 
 def create_ds_from_files(ds_id, ds_name, ds_input_path, config_path=None, meta_path=None):
-    if not config_path:
-        config_path = Path(ds_input_path) / 'config.json'
-    if not meta_path:
-        meta_path = Path(ds_input_path) / 'meta.json'
+    config_path = config_path or Path(ds_input_path) / 'config.json'
+    ds_config = json.load(open(config_path))
+    if 'database_ids' not in ds_config:
+        ds_config['database_ids'] = [
+            molecular_db.find_by_name(db).id for db in ds_config['databases']
+        ]
 
-    ds_config = json.load(open(str(config_path)))
-    if Path(meta_path).exists():
-        metadata = json.load(open(str(meta_path)))
-    else:
+    meta_path = meta_path or Path(ds_input_path) / 'meta.json'
+    if not Path(meta_path).exists():
         raise Exception('meta.json not found')
+    metadata = json.load(open(str(meta_path)))
 
     from sm.engine.dataset import Dataset  # pylint: disable=import-outside-toplevel
 
@@ -130,7 +136,7 @@ def split_s3_path(path):
         tuple[string, string]
     Returns a pair of (bucket, key)
     """
-    return path.split('s3a://')[-1].split('/', 1)
+    return re.sub(r's3a?://', '', path).split(sep='/', maxsplit=1)
 
 
 def find_file_by_ext(path, ext):
@@ -146,11 +152,18 @@ def bootstrap_and_run(config_path, func):
         func(sm_config)
 
 
+def populate_aws_env_vars(aws_config):
+    for env_var, val in aws_config.items():
+        os.environ.setdefault(env_var.upper(), val)
+
+
 class GlobalInit:
     def __init__(self, config_path='conf/config.json'):
         SMConfig.set_path(config_path)
         self.sm_config = SMConfig.get_conf()
+
         init_loggers(self.sm_config['logs'])
+        populate_aws_env_vars(self.sm_config['aws'])
         self.pool = ConnectionPool(self.sm_config['db'])
 
     def __enter__(self):
@@ -158,3 +171,27 @@ class GlobalInit:
 
     def __exit__(self, ext_type, ext_value, traceback):
         self.pool.close()
+
+
+def retry_on_exception(exception_type=Exception, num_retries=3):
+    def decorator(func):
+        func_name = getattr(func, '__name__', 'Function')
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for i in range(num_retries):
+                try:
+                    return func(*args, **kwargs)
+                except exception_type as e:
+                    delay = random.uniform(2, 5 + i * 3)
+                    logger.warning(
+                        f'{func_name} raised {type(e)} on attempt {i+1}. '
+                        f'Retrying after {delay:.1f} seconds...'
+                    )
+                    sleep(delay)
+            # Last attempt, don't catch the exception
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator

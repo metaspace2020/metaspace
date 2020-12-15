@@ -48,13 +48,15 @@
         >
           <div slot="reference">
             <span>{{ other.msmScore.toFixed(3) }},</span>
-            <span>{{ other.fdrLevel * 100 }}%,</span>
+            <span v-if="other.fdrLevel !== null">{{ other.fdrLevel * 100 }}%,</span>
             <span>{{ other.isotopeImages[0].maxIntensity.toExponential(2) }}</span>
             <span v-if="other.colocalizationCoeff != null"> | {{ (other.colocalizationCoeff).toFixed(2) }}</span>
           </div>
           <div>
             <div>MSM: {{ other.msmScore.toFixed(3) }}</div>
-            <div>FDR: {{ other.fdrLevel * 100 }}%</div>
+            <div v-if="other.fdrLevel !== null">
+              FDR: {{ other.fdrLevel * 100 }}%
+            </div>
             <div>Max. intensity: {{ other.isotopeImages[0].maxIntensity.toExponential(2) }}</div>
             <div v-if="other.colocalizationCoeff != null">
               Colocalization: {{ (other.colocalizationCoeff).toFixed(2) }}
@@ -97,7 +99,7 @@ import CandidateMoleculesPopover from '../CandidateMoleculesPopover'
 
 export default {
   components: { ImageLoader, CandidateMoleculesPopover },
-  props: ['query', 'annotation', 'database', 'imageLoaderSettings'],
+  props: ['query', 'annotation', 'databaseId', 'imageLoaderSettings'],
   data() {
     return {
       loading: 0,
@@ -122,14 +124,14 @@ export default {
         const vars = { datasetId: this.annotation.dataset.id }
 
         if (this.query === 'allAdducts') {
-          vars.filter = { database: this.database, sumFormula: this.annotation.sumFormula }
+          vars.filter = { databaseId: this.databaseId, sumFormula: this.annotation.sumFormula }
           vars.orderBy = 'ORDER_BY_MZ'
           vars.sortingOrder = 'ASCENDING'
         } else if (this.query === 'colocalized') {
           const mol = this.annotation.ion
           const colocalizationAlgo = this.$store.getters.settings.annotationView.colocalizationAlgo
           const fdrLevel = this.$store.getters.filter.fdrLevel || this.annotation.fdrLevel
-          vars.filter = { database: this.database, colocalizedWith: mol, fdrLevel, colocalizationAlgo }
+          vars.filter = { databaseId: this.databaseId, colocalizedWith: mol, fdrLevel, colocalizationAlgo }
           vars.colocalizationCoeffFilter = vars.filter
           vars.orderBy = 'ORDER_BY_COLOCALIZATION'
           vars.sortingOrder = 'DESCENDING'
@@ -217,11 +219,11 @@ export default {
   }
 
   .ion-link, a.ion-link:link {
-    color: $--color-text-primary;
+    color: inherit;
     text-decoration: none;
   }
   .empty-message {
-    color: #909399;
+    @apply text-gray-600;
     text-align: center;
   }
 </style>

@@ -6,13 +6,13 @@ import router from '../../../router'
 
 describe('searchableFilterQueries', () => {
   beforeAll(() => {
-    initMockGraphqlClient()
+    initMockGraphqlClient({})
     sync(store, router)
   })
 
   const validOption = expect.objectContaining({
     label: expect.any(String),
-    value: expect.any(String),
+    value: expect.anything(),
   })
 
   const filterKeys = Object.keys(searchableFilterQueries) as SearchableFilterKey[]

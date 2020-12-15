@@ -1,3 +1,4 @@
+import logging
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
 from os import path
@@ -9,39 +10,43 @@ from requests.adapters import HTTPAdapter
 from PIL import Image
 from scipy.ndimage import zoom
 
+from sm.engine.util import retry_on_exception, SMConfig
+
+logger = logging.getLogger('engine')
+
 
 class ImageStoreServiceWrapper:
-    def __init__(self, img_service_url):
+    def __init__(self, img_service_url=None):
+        if img_service_url is None:
+            img_service_url = SMConfig.get_conf()['services']['img_service_url']
         self._img_service_url = img_service_url
         self._session = requests.Session()
-        self._session.mount(self._img_service_url, HTTPAdapter(max_retries=5, pool_maxsize=100))
+        self._session.mount(
+            self._img_service_url, HTTPAdapter(max_retries=5, pool_maxsize=50, pool_block=True)
+        )
 
     def _format_url(self, storage_type, img_type, method='', img_id=''):
         assert storage_type, 'Wrong storage_type: %s' % storage_type
         assert img_type, 'Wrong img_type: %s' % img_type
         return path.join(self._img_service_url, storage_type, img_type + 's', method, img_id)
 
-    def post_image(self, storage_type, img_type, fp):
+    @retry_on_exception()
+    def post_image(self, storage_type: str, img_type: str, img_bytes: bytes) -> str:
         """
-        Args
-        ---
-        storage_type: str
-            db | fs
-        img_type: str
-            iso_image | optical_image | raw_optical_image | ion_thumbnail
-        fp:
-            file object
+        Args:
+            storage_type: db | fs
+            img_type: iso_image | optical_image | raw_optical_image | ion_thumbnail
+            img_bytes: bytes of image saved as PNG
 
-        Returns
-        ---
-        str
+        Returns:
             new image id
         """
         url = self._format_url(storage_type=storage_type, img_type=img_type, method='upload')
-        resp = self._session.post(url, files={img_type: fp})
+        resp = self._session.post(url, files={img_type: img_bytes})
         resp.raise_for_status()
         return resp.json()['image_id']
 
+    @retry_on_exception()
     def delete_image(self, url):
         resp = self._session.delete(url)
         if resp.status_code != 202:
@@ -49,6 +54,7 @@ class ImageStoreServiceWrapper:
                 'Failed to delete: {}'.format(url)
             )  # logger has issues with pickle when sent to spark
 
+    @retry_on_exception()
     def get_image_by_id(self, storage_type, img_type, img_id):
         """
         Args
@@ -64,7 +70,13 @@ class ImageStoreServiceWrapper:
         Image.Image
         """
         url = self._format_url(storage_type=storage_type, img_type=img_type, img_id=img_id)
-        return Image.open(self._session.get(url, stream=True).raw)
+        try:
+            response = self._session.get(url)
+            response.raise_for_status()
+            return Image.open(BytesIO(response.content))
+        except Exception:
+            logger.error(f'get_image_by_id: Error getting url {url}')
+            raise
 
     def get_ion_images_for_analysis(
         self, storage_type, img_ids, hotspot_percentile=99, max_size=None, max_mem_mb=2048
@@ -152,6 +164,7 @@ class ImageStoreServiceWrapper:
 
         return value, mask, (h, w)
 
+    @retry_on_exception()
     def delete_image_by_id(self, storage_type, img_type, img_id):
         url = self._format_url(
             storage_type=storage_type, img_type=img_type, method='delete', img_id=img_id
@@ -454,7 +467,7 @@ class PngGenerator:
             image = rgba
         return image
 
-    def generate_png(self, array):
+    def generate_png(self, array: np.array) -> bytes:
         img = self._to_image(array)
         fp = BytesIO()
         png_writer = png.Writer(
@@ -466,4 +479,4 @@ class PngGenerator:
         )
         png_writer.write(fp, img.reshape(img.shape[0], img.shape[1] * img.shape[2]).tolist())
         fp.seek(0)
-        return fp
+        return fp.read()

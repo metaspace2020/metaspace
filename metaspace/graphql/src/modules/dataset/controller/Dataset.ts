@@ -14,7 +14,9 @@ import * as DataLoader from 'dataloader';
 import { esDatasetByID } from '../../../../esConnector';
 import { ExternalLink } from '../../project/ExternalLink';
 import { S3 } from 'aws-sdk';
-import canViewEsDataset from '../operation/canViewEsDataset'
+import canViewEsDataset from '../operation/canViewEsDataset';
+import {MolecularDB} from '../../moldb/model';
+import {MolecularDbRepository} from '../../moldb/MolecularDbRepository';
 
 interface DbDataset {
   id: string;
@@ -114,8 +116,20 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     return ds._source.ds_is_public;
   },
 
-  molDBs(ds) {
-    return ds._source.ds_mol_dbs;
+  async databases(ds, _, ctx): Promise<MolecularDB[]> {
+    return await ctx.entityManager.getCustomRepository(MolecularDbRepository)
+      .findDatabasesByIds(ctx, ds._source.ds_moldb_ids ?? []);
+  },
+
+  async molDBs(ds, _, ctx) {
+    if (ds._source.ds_moldb_ids == null) {
+      // To handle datasets that failed to migrate for some reason
+      logger.error(`Empty "ds_moldb_ids" field for "${ds._source.ds_id}" dataset`);
+      return [];
+    }
+    const databases = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
+      .findDatabasesByIds(ctx, ds._source.ds_moldb_ids);
+    return databases.map(db => db.name);
   },
 
   adducts(ds) {
@@ -234,38 +248,44 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     return ds._source.ds_upload_dt;
   },
 
-  fdrCounts(ds, { inpFdrLvls, checkLvl }: { inpFdrLvls: number[], checkLvl: number }) {
-    let outFdrLvls: number[] = [], outFdrCounts: number[] = [], maxCounts = 0, dbName = '';
+  async fdrCounts(ds, { inpFdrLvls, checkLvl }: { inpFdrLvls: number[], checkLvl: number }, ctx) {
+    let outFdrLvls: number[] = [], outFdrCounts: number[] = [], maxCounts = 0, databaseId = null;
     if (ds._source.annotation_counts && ds._source.ds_status === 'FINISHED') {
-      const annotCounts = ds._source.annotation_counts;
-      const molDBs = ds._source.ds_mol_dbs;
-      const filteredMolDBs: any[] = annotCounts.filter(el => {
-        return molDBs.includes(el.db.name);
-      });
-      for (let db of filteredMolDBs) {
-        let maxCountsCand = db.counts.find((lvlObj: any) => {
+      const visibleDatabaseIds = await ctx.user.getVisibleDatabaseIds()
+      const annotCounts: any[] = ds._source.annotation_counts.filter(
+        el => ds._source.ds_moldb_ids?.includes(el.db.id)
+          && visibleDatabaseIds.includes(el.db.id)
+      );
+      for (let el of annotCounts) {
+        let maxCountsCand = el.counts.find((lvlObj: any) => {
           return lvlObj.level === checkLvl
         });
         if (maxCountsCand.n >= maxCounts) {
           maxCounts = maxCountsCand.n;
           outFdrLvls = [];
           outFdrCounts = [];
-          inpFdrLvls.forEach(inpLvl => {
-            let findRes = db.counts.find((lvlObj: any) => {
+          for (const inpLvl of inpFdrLvls) {
+            let findRes = el.counts.find((lvlObj: any) => {
               return lvlObj.level === inpLvl
             });
             if (findRes) {
-              dbName = db.db.name;
+              databaseId = el.db.id;
               outFdrLvls.push(findRes.level);
               outFdrCounts.push(findRes.n);
             }
-          })
+          }
         }
       }
-      return {
-        'dbName': dbName,
-        'levels': outFdrLvls,
-        'counts': outFdrCounts
+      if (databaseId != null) {
+        const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
+          .findDatabaseById(ctx, databaseId);
+        return {
+          'databaseId': databaseId,
+          'dbName': database.name,
+          'dbVersion': database.version,
+          'levels': outFdrLvls,
+          'counts': outFdrCounts
+        };
       }
     }
     return null;

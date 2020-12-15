@@ -26,7 +26,7 @@
         <metaspace-options-section
           v-model="metaspaceOptions"
           :error="errors['metaspaceOptions']"
-          :mol-d-b-options="molDBOptions"
+          :databases-by-group="molDBsByGroup"
           :adduct-options="adductOptions"
           :is-new-dataset="isNew"
         />
@@ -72,6 +72,7 @@ import {
   get, set, cloneDeep, defaults,
   isEmpty, isEqual, isPlainObject,
   mapValues, forEach, without, omit,
+  sortBy,
 } from 'lodash-es'
 import {
   newDatasetQuery,
@@ -88,6 +89,7 @@ import DataManagementSection from './sections/DataManagementSection.vue'
 import emailRegex from '../../lib/emailRegex'
 import safeJsonParse from '../../lib/safeJsonParse'
 import config from '../../lib/config'
+import { getDatabasesByGroup } from '../MolecularDatabases/formatting'
 
 const factories = {
   string: schema => schema.default || '',
@@ -99,7 +101,7 @@ const factories = {
 
 const defaultMetaspaceOptions = {
   isPublic: true,
-  molDBs: [],
+  databaseIds: [],
   adducts: [],
   name: '',
   submitterId: null,
@@ -126,7 +128,7 @@ export default {
       schema: null,
       loadingPromise: null,
       localErrors: {},
-      molDBOptions: [],
+      molDBsByGroup: [],
       possibleAdducts: {},
       metaspaceOptions: cloneDeep(defaultMetaspaceOptions),
       submitter: null,
@@ -189,7 +191,7 @@ export default {
     async loadDataset() {
       const metaspaceOptionsFromDataset = (dataset, isNew) => {
         const {
-          isPublic, configJson, molDBs, adducts,
+          isPublic, configJson, databases, adducts,
           name, group, projects, submitter, principalInvestigator,
         } = dataset
         const config = safeJsonParse(configJson)
@@ -199,7 +201,7 @@ export default {
           projectIds: projects ? projects.map(p => p.id) : [],
           principalInvestigator: principalInvestigator == null ? null : omit(principalInvestigator, '__typename'),
           isPublic,
-          molDBs,
+          databaseIds: databases.map(_ => _.id),
           adducts,
           name,
           neutralLosses: isNew ? [] : get(config, 'isotope_generation.neutral_losses') || [],
@@ -226,6 +228,7 @@ export default {
               : data.currentUser.primaryGroup && data.currentUser.primaryGroup.group.id,
           },
           submitter: data.currentUser,
+          databases: dataset ? dataset.databases : [],
         }
       } else {
         const { data } = await this.$apollo.query({
@@ -248,6 +251,7 @@ export default {
           metadata: JSON.parse(data.dataset.metadataJson),
           metaspaceOptions: metaspaceOptionsFromDataset(data.dataset, false),
           submitter,
+          databases: data.dataset.databases,
         }
       }
     },
@@ -255,16 +259,13 @@ export default {
     async loadOptions() {
       const { data } = await this.$apollo.query({
         query: metadataOptionsQuery,
-        fetchPolicy: 'cache-first',
+        fetchPolicy: 'network-only',
       })
       return {
         ...data,
         adducts: config.features.all_adducts
           ? data.adducts
           : data.adducts.filter(ad => !ad.hidden),
-        molecularDatabases: config.features.all_dbs
-          ? data.molecularDatabases
-          : data.molecularDatabases.filter(db => !db.hidden),
       }
     },
 
@@ -289,7 +290,6 @@ export default {
     async loadForm(dataset, options, mdType) {
       const loadedMetadata = dataset.metadata
       const metaspaceOptions = defaults({}, dataset.metaspaceOptions, defaultMetaspaceOptions)
-      const { adducts, molecularDatabases } = options
 
       // in case user just opened a link to metadata editing page w/o navigation in web-app,
       // filters are not set up
@@ -297,11 +297,12 @@ export default {
       const metadata = this.importMetadata(loadedMetadata, mdType)
 
       // Load options
+      const { adducts, molecularDatabases } = options
       this.possibleAdducts = {
         Positive: adducts.filter(a => a.charge > 0),
         Negative: adducts.filter(a => a.charge < 0),
       }
-      this.molDBOptions = molecularDatabases.map(d => d.name)
+      this.molDBsByGroup = getDatabasesByGroup(molecularDatabases)
       this.schema = deriveFullSchema(metadataSchemas[mdType])
 
       if (this.isNew) {
@@ -310,12 +311,16 @@ export default {
         // This is because it's expensive to change database later. We want a smart default for new users,
         // but if the user has previously selected a value that is now invalid, they should be made aware so that they
         // can choose an appropriate substitute.
-        const selectedDbs = metaspaceOptions.molDBs || []
-        if (selectedDbs.some(db => !this.molDBOptions.includes(db))) {
-          metaspaceOptions.molDBs = []
-        } else if (selectedDbs.length === 0) {
-          const defaultDbs = molecularDatabases.filter(d => d.default).map(d => d.name)
-          metaspaceOptions.molDBs = defaultDbs
+        const selectedDbs = dataset.databases || []
+        if (selectedDbs.length === 0) {
+          metaspaceOptions.databaseIds = molecularDatabases.filter(d => d.default).map(_ => _.id)
+        } else {
+          for (const db of selectedDbs) {
+            if (molecularDatabases.find(_ => _.id === db.id) === undefined) {
+              metaspaceOptions.databaseIds = []
+              break
+            }
+          }
         }
         // Name should be different for each dataset
         metaspaceOptions.name = ''
@@ -358,10 +363,10 @@ export default {
     validate() {
       const errors = {}
 
-      const { molDBs, adducts, name, groupId, principalInvestigator } = this.metaspaceOptions
+      const { databaseIds, adducts, name, groupId, principalInvestigator } = this.metaspaceOptions
 
-      if (isEmpty(molDBs)) {
-        set(errors, ['metaspaceOptions', 'molDBs'], 'should have at least 1 selection')
+      if (isEmpty(databaseIds)) {
+        set(errors, ['metaspaceOptions', 'databaseIds'], 'should have at least 1 selection')
       }
       if (isEmpty(adducts)) {
         set(errors, ['metaspaceOptions', 'adducts'], 'should have at least 1 selection')
@@ -437,7 +442,7 @@ export default {
     },
 
     resetMetaboliteDatabase() {
-      this.metaspaceOptions.molDBs = []
+      this.metaspaceOptions.databaseIds = []
     },
 
     getFormValueForSubmit() {

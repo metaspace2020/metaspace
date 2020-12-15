@@ -2,7 +2,7 @@
 
 - name: Ensure python-software-properties is installed
   become: yes
-  apt: pkg=python-software-properties state=present
+  apt: pkg=python3-software-properties state=present
 
 - name: Add rabbitmq official apt repository
   become: yes

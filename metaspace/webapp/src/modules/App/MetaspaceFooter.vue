@@ -1,18 +1,25 @@
 <template>
-  <div id="metaspace-footer">
-    <div id="footer-contents">
-      <img
-        class="footer-logo"
-        src="../../assets/eu_flag.jpg"
-      >
-      <div id="footer-text">
-        We acknowledge funding from the
-        European Union’s Horizon 2020 programme under the grant agreement 634402
-        as well as from the National Institutes of Health NIDDK Kidney Precision Medicine Project.
-      </div>
-      <!--img class="footer-logo" src="../assets/aws_logo.png" style="padding-left: 52px;"></img-->
+  <footer class="bg-gray-100">
+    <div class="leading-6 max-w-4xl mx-auto px-18 py-16 box-border text-gray-700 text-sm text-center">
+      <p class="flex justify-center m-0 font-medium">
+        <router-link to="/privacy">
+          Privacy
+        </router-link>
+        <router-link to="/terms">
+          Terms
+        </router-link>
+        <router-link to="/publications">
+          Publications
+        </router-link>
+        <a href="https://github.com/metaspace2020/metaspace">GitHub</a>
+        <a href="https://twitter.com/metaspace2020">Twitter</a>
+        <a href="mailto:contact@metaspace2020.eu">Contact</a>
+      </p>
+      <p class="m-0 mt-8">
+        &copy; 2014&ndash;2020 <a href="https://www.embl.de/research/units/scb/alexandrov/">Alexandrov Team</a>
+      </p>
     </div>
-  </div>
+  </footer>
 </template>
 
 <script>
@@ -21,35 +28,11 @@ export default {
 }
 </script>
 
-<style>
- #metaspace-footer {
-   background: #eee;
-   margin-top: 100px;
-   position: absolute;
-   height: 30px;
-   bottom: 0;
-   width: 100%;
- }
-
- #footer-contents {
-   display: flex;
-   flex-direction: row;
-   border-top: solid #bbb 1px;
-   justify-content: center;
- }
-
- #footer-text {
-   padding: 0px 10px;
-   font-size: 12px;
-   color: #777;
-   display: flex;
-   flex-direction: column;
-   justify-content: center;
- }
-
- .footer-logo {
-   height: 29px;
-   width: auto;
-   margin: 0px;
- }
+<style scoped>
+  a {
+    color: inherit;
+  }
+  .flex > a {
+    @apply mx-6
+  }
 </style>

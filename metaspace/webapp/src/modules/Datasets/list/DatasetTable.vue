@@ -83,6 +83,7 @@ import formatCsvRow, { csvExportHeader } from '../../../lib/formatCsvRow'
 import { currentUserRoleQuery } from '../../../api/user'
 import updateApolloCache, { removeDatasetFromAllDatasetsQuery } from '../../../lib/updateApolloCache'
 import { merge, orderBy, pick } from 'lodash-es'
+import { formatDatabaseLabel } from '../../MolecularDatabases//formatting'
 
 const extractGroupedStatusCounts = (data) => {
   const counts = {
@@ -130,6 +131,7 @@ export default Vue.extend({
         query: this.$store.getters.ftsQuery,
         inpFdrLvls: [10],
         checkLvl: 10,
+        offset: Math.max(0, (this.$store.getters.settings.datasets.page - 1) * 100),
       }
     },
     nonEmpty() {
@@ -272,7 +274,7 @@ export default Vue.extend({
           row.polarity.toLowerCase(),
           row.uploadDateTime,
           row.fdrCounts ? row.fdrCounts.counts : '',
-          row.fdrCounts ? row.fdrCounts.dbName : '',
+          row.fdrCounts ? formatDatabaseLabel({ name: row.fdrCounts.dbName, version: row.fdrCounts.dbVersion }) : '',
           (row.rawOpticalImageUrl) ? window.location.origin + row.rawOpticalImageUrl : 'No optical image',
         ])
       }

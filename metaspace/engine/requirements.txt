@@ -14,7 +14,7 @@ pyyaml>=5.1
 elasticsearch-dsl>=5.0.0,<6.0.0
 pika==0.11.0b1
 bottle
-Pillow==6.2.0
+Pillow==7.2.0
 pyopenms==2.2.0
 numpy>=1.11.2
 scipy>=0.18.1
@@ -28,3 +28,4 @@ scikit-learn==0.20.2
 pyspark[sql]==2.3.3
 pyarrow>=0.8,<0.15  # 0.15 breaks writing to parquet files from spark
 pysparkling>=0.5.0
+s3fs

@@ -4,6 +4,7 @@ import {EntityManager, In} from 'typeorm';
 import {Group as GroupModel, UserGroup as UserGroupModel, UserGroupRoleOptions} from './model';
 import {User as UserModel} from '../user/model';
 import {Dataset as DatasetModel} from '../dataset/model';
+import {MolecularDB as MolecularDbModel} from '../moldb/model';
 import {Group, UserGroup, UserGroupRole} from '../../binding';
 import {Context, ContextUser} from '../../context';
 import {Scope, ScopeRoleOptions, UserGroupSource} from '../../bindingTypes';
@@ -13,10 +14,11 @@ import {sendAcceptanceEmail, sentGroupOrProjectInvitationEmail, sendRequestAcces
 import config from '../../utils/config';
 import logger from '../../utils/logger';
 import {createInactiveUser} from '../auth/operation';
-import {smAPIUpdateDataset} from '../../utils/smAPI';
+import {smApiUpdateDataset} from '../../utils/smApi/datasets';
 import {getDatasetForEditing} from '../dataset/operation/getDatasetForEditing';
 import {resolveGroupScopeRole} from './util/resolveGroupScopeRole';
-import {urlSlugMatchesClause, validateUrlSlugChange} from "../groupOrProject/urlSlug";
+import {urlSlugMatchesClause, validateUrlSlugChange} from '../groupOrProject/urlSlug';
+import {MolecularDbRepository} from "../moldb/MolecularDbRepository";
 
 const assertCanCreateGroup = (user: ContextUser) => {
   if (!user.id || user.role !== 'admin')
@@ -68,7 +70,7 @@ const updateUserGroupDatasets = async (entityManager: EntityManager, userId: str
   });
   await Promise.all(datasetsToUpdate.map(async ds => {
     await datasetRepo.update({id: ds.id}, {groupApproved});
-    await smAPIUpdateDataset(ds.id, {groupId});
+    await smApiUpdateDataset(ds.id, {groupId}, {asyncEsUpdate: true});
   }));
 };
 
@@ -137,19 +139,29 @@ export const Resolvers = {
         .where(filter)
         .leftJoinAndSelect('user_group.user', 'user')
         .leftJoinAndSelect('user_group.group', 'group')
-        .orderBy(`CASE user_group.role 
-                         WHEN '${UserGroupRoleOptions.PENDING}' THEN 1 
-                         WHEN '${UserGroupRoleOptions.INVITED}' THEN 2 
-                         WHEN '${UserGroupRoleOptions.GROUP_ADMIN}' THEN 3 
-                         WHEN '${UserGroupRoleOptions.MEMBER}' THEN 4 
-                         ELSE 5 
-                     END`)
+        .orderBy(`CASE user_group.role
+                      WHEN '${UserGroupRoleOptions.PENDING}' THEN 1
+                      WHEN '${UserGroupRoleOptions.INVITED}' THEN 2
+                      WHEN '${UserGroupRoleOptions.GROUP_ADMIN}' THEN 3
+                      WHEN '${UserGroupRoleOptions.MEMBER}' THEN 4
+                      ELSE 5
+                  END`)
         .addOrderBy('user.name')
         .getMany();
       return userGroupModels.map(ug => ({
         ...ug,
         user: {...ug.user, scopeRole},
       }));
+    },
+
+    async molecularDatabases(group: GroupModel, args: any, ctx: Context): Promise<MolecularDbModel[]> {
+      return await ctx.entityManager.getCustomRepository(MolecularDbRepository)
+        .findDatabases(ctx.user, undefined, group.id);
+    },
+
+    async numDatabases(group: GroupModel & Scope, args: any, ctx: Context): Promise<number> {
+      return await ctx.entityManager.getCustomRepository(MolecularDbRepository)
+        .countDatabases(ctx.user, undefined, group.id);
     },
   },
 
@@ -231,7 +243,7 @@ export const Resolvers = {
         logger.info(`Updating '${groupId}' group datasets...`);
         const groupDSs = await entityManager.getRepository(DatasetModel).find({ groupId });
         await Promise.all(groupDSs.map(async ds => {
-          await smAPIUpdateDataset(ds.id, {groupId});
+          await smApiUpdateDataset(ds.id, {groupId}, {asyncEsUpdate: true});
         }));
       }
       logger.info(`'${groupId}' group updated`);
@@ -453,7 +465,7 @@ export const Resolvers = {
       const dsRepo = entityManager.getRepository(DatasetModel);
       await Promise.all(datasetIds.map(async (dsId: string) => {
         await dsRepo.update(dsId, { groupId, groupApproved: true });
-        await smAPIUpdateDataset(dsId, {groupId});
+        await smApiUpdateDataset(dsId, {groupId}, {asyncEsUpdate: true});
       }));
       logger.info(`User '${user!.id}' imported datasets to '${groupId}' group`);
       return true;

@@ -41,6 +41,8 @@ exports[`Datasets/DownloadDialog should match snapshot 1`] = `
             This dataset is distributed under the 
             <a
               href="https://creativecommons.org/licenses/by/4.0/"
+              rel="noopener noreferrer nofollow"
+              target="_blank"
             >
               CC BY 4.0
             </a>

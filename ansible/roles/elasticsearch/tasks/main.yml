@@ -9,12 +9,12 @@
 - name: Download ElasticSearch version={{ elasticsearch_version }}
   get_url: url=https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/{{ elasticsearch_version }}/elasticsearch-{{ elasticsearch_version }}.deb
            dest=/tmp/elasticsearch-{{ elasticsearch_version }}.deb
-  when: not "'{{ elasticsearch_version }}'.startswith('5.')"
+  when: not elasticsearch_version.startswith('5.')
 
 - name: Download ElasticSearch version={{ elasticsearch_version }}
   get_url: url=https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-{{ elasticsearch_version }}.deb
            dest=/tmp/elasticsearch-{{ elasticsearch_version }}.deb
-  when: "'{{ elasticsearch_version }}'.startswith('5.')"
+  when: elasticsearch_version.startswith('5.')
 
 - name: Install ElasticSearch
   become: yes

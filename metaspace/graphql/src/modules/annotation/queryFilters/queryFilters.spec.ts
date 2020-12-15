@@ -14,6 +14,7 @@ import {DeepPartial} from 'typeorm';
 import {ESAnnotationWithColoc} from './index';
 import {QueryFilterArgs} from './types';
 import * as moment from 'moment';
+import {MolecularDB} from "../../moldb/model";
 
 describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
   beforeAll(onBeforeAll);
@@ -23,6 +24,7 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
 
   let ions: Ion[];
   let job: ColocJob;
+  let database: MolecularDB;
 
   beforeEach(async () => {
     await onBeforeEach();
@@ -37,16 +39,19 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
     })));
     await testEntityManager.insert(Ion, ions);
 
+    database = testEntityManager.create(MolecularDB, {id: 0, name: 'HMDB-v4', version: 'version'});
+    await testEntityManager.insert(MolecularDB, database);
+
     job = testEntityManager.create(ColocJob, {
       datasetId: 'datasetId',
-      molDb: 'HMDB-v4',
+      moldbId: database.id,
       fdr: 0.1,
       algorithm: 'cosine',
       sampleIonIds: [ions[1].id, ions[2].id],
       start: moment(),
       finish: moment(),
     });
-    const res = await testEntityManager.insert(ColocJob, job);
+    await testEntityManager.insert(ColocJob, job);
 
     const annotations = testEntityManager.create(ColocAnnotation, _.range(ions.length).map(i => ({
       colocJobId: job.id,
@@ -61,7 +66,7 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
     const argsWithColocWith: QueryFilterArgs = {
       datasetFilter: { ids: job.datasetId },
       filter: {
-        database: job.molDb!,
+        databaseId: job.moldbId,
         fdrLevel: job.fdr,
         colocalizedWith: ions[1].ion,
         colocalizationAlgo: job.algorithm,
@@ -70,21 +75,23 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
 
     const {args, postprocess} = await applyQueryFilters(anonContext, argsWithColocWith);
 
-    expect(args).toMatchSnapshot();
     expect(args).toMatchObject({
       offset: 0,
       limit: 1000,
       filter: {
+        databaseId: database.id,
         ion: ions.slice(1,4).map(ion => ion.ion),
       } as any
     });
+    args.filter!.databaseId = 1;
+    expect(args).toMatchSnapshot();
   });
 
   it('should transform the args of a request with a colocalizationSamples filter', async () => {
     const argsWithColocWith: QueryFilterArgs = {
       datasetFilter: { ids: job.datasetId },
       filter: {
-        database: job.molDb!,
+        databaseId: job.moldbId,
         fdrLevel: job.fdr,
         colocalizationSamples: true,
         colocalizationAlgo: job.algorithm,
@@ -93,19 +100,21 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
 
     const {args, postprocess} = await applyQueryFilters(anonContext, argsWithColocWith);
 
-    expect(args).toMatchSnapshot();
     expect(args).toMatchObject({
       filter: {
+        databaseId: database.id,
         ion: ions.slice(1,3).map(ion => ion.ion)
       } as any
     });
+    args.filter!.databaseId = 1;
+    expect(args).toMatchSnapshot();
   });
 
   it('should add colocalizationCoeffs to annotations', async () => {
     const argsWithColocWith: QueryFilterArgs = {
       datasetFilter: { ids: job.datasetId },
       filter: {
-        database: job.molDb!,
+        databaseId: job.moldbId,
         fdrLevel: job.fdr,
         colocalizedWith: ions[1].ion,
         colocalizationAlgo: job.algorithm,
@@ -127,8 +136,8 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
       {_source: ionAnnotations[2], _isColocReference: false},
       {_source: ionAnnotations[3], _isColocReference: false},
     ]);
-    expect(await result[0].getColocalizationCoeff(ions[1].ion, job.algorithm, job.molDb!, job.fdr)).toEqual(1);
-    expect(await result[1].getColocalizationCoeff(ions[1].ion, job.algorithm, job.molDb!, job.fdr)).toEqual(0.9);
-    expect(await result[2].getColocalizationCoeff(ions[1].ion, job.algorithm, job.molDb!, job.fdr)).toEqual(0.7);
+    expect(await result[0].getColocalizationCoeff(ions[1].ion, job.algorithm, job.moldbId, job.fdr)).toEqual(1);
+    expect(await result[1].getColocalizationCoeff(ions[1].ion, job.algorithm, job.moldbId, job.fdr)).toEqual(0.9);
+    expect(await result[2].getColocalizationCoeff(ions[1].ion, job.algorithm, job.moldbId, job.fdr)).toEqual(0.7);
   });
 });

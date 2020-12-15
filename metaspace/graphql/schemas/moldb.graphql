@@ -1,24 +1,61 @@
 
-type MolecularDatabase {
+type GroupShortInfo {
+  id: ID!
+  shortName: String!
+}
+
+type MolecularDB {
   id: Int!
   name: String!
   version: String!
+  createdDT: String!
   default: Boolean!
   # True if database is deprecated/superseded and would not be useful for most users
   hidden: Boolean! @deprecated(reason: "Use archived field instead")
-  public: Boolean!
+  isPublic: Boolean!
   archived: Boolean!  # Cannot be used for dataset processing
   targeted: Boolean!  # If true keep all annotations regardless of their FDR
+  fullName: String
+  description: String
+  link: String
+  citation: String
+  group: GroupShortInfo
+}
+
+input CreateMolecularDBInput {
+  name: String!
+  version: String!
+  filePath: String!  # s3://[BUCKET]/path/to-file.tsv
+  isPublic: Boolean = False
+  groupId: ID!
+  fullName: String
+  description: String # JSON-based rich text, in a format defined by tiptap (https://tiptap.scrumpy.io/)
+  link: String
+  citation: String  # JSON-based rich text, in a format defined by tiptap (https://tiptap.scrumpy.io/)
+}
+
+input UpdateMolecularDBInput {
+  archived: Boolean
+  isPublic: Boolean
+  fullName: String
+  description: String # JSON-based rich text, in a format defined by tiptap (https://tiptap.scrumpy.io/)
+  link: String
+  citation: String  # JSON-based rich text, in a format defined by tiptap (https://tiptap.scrumpy.io/)
+}
+
+input MolecularDBFilter {
+  usable: Boolean
+  global: Boolean  # Metaspace managed public databases
 }
 
 type Query {
-  molecularDatabases(hideArchived: Boolean=false,
-    hideDeprecated: Boolean=false @deprecated(reason: "Only hideArchived should be used"),
-    onlyLastVersion: Boolean=false @deprecated(reason: "Only hideArchived should be used")): [MolecularDatabase!]
+  molecularDatabases(onlyUsable: Boolean=False): [MolecularDB!] @deprecated(reason: "Use allMolecularDBs instead")
+  allMolecularDBs(filter: MolecularDBFilter): [MolecularDB!]
+  molecularDB(databaseId: Int!): MolecularDB
 }
 
-schema {
-  query: Query
-  mutation: Mutation
-  subscription: Subscription
+type Mutation {
+  createMolecularDB(databaseDetails: CreateMolecularDBInput!): MolecularDB!
+  updateMolecularDB(databaseId: Int!, databaseDetails: UpdateMolecularDBInput!): MolecularDB!
+  deleteMolecularDB(databaseId: Int!): Boolean!
 }

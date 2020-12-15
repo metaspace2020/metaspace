@@ -14,7 +14,7 @@ import {findUserById, resetUserApiKey, sendEmailVerificationToken, signout} from
 import {LooselyCompatible} from '../../utils';
 import logger from '../../utils/logger';
 import {convertUserToUserSource} from './util/convertUserToUserSource';
-import {smAPIUpdateDataset} from '../../utils/smAPI';
+import {smApiUpdateDataset} from '../../utils/smApi/datasets';
 import {deleteDataset} from '../dataset/operation/deleteDataset';
 import {resolveGroupScopeRole} from '../group/util/resolveGroupScopeRole';
 import canSeeUserEmail from './util/canSeeUserEmail';
@@ -195,7 +195,7 @@ export const Resolvers = {
         if (userDSs) {
           logger.info(`Updating user '${userId}' datasets...`);
           await Promise.all(userDSs.map(async ds => {
-            await smAPIUpdateDataset(ds.id, { submitterId: userId });
+            await smApiUpdateDataset(ds.id, { submitterId: userId }, { asyncEsUpdate: true });
           }));
         }
       }

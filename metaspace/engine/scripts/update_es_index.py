@@ -21,9 +21,8 @@ def get_inactive_index_es_config(es_config):
     return tmp_es_config
 
 
-def _reindex_all(conf):
-    es_config = conf['elasticsearch']
-    inactive_es_config = get_inactive_index_es_config(es_config)
+def _reindex_all(sm_config):
+    es_config = sm_config['elasticsearch']
     alias = es_config['index']
     es_man = ESIndexManager(es_config)
     old_index = es_man.internal_index_name(alias)
@@ -31,8 +30,9 @@ def _reindex_all(conf):
     es_man.create_index(new_index)
 
     try:
+        inactive_es_config = get_inactive_index_es_config(es_config)
         db = DB()
-        es_exp = ESExporter(db, inactive_es_config)
+        es_exp = ESExporter(db, {**sm_config, 'elasticsearch': inactive_es_config})
         ds_ids = [r[0] for r in db.select('select id from dataset')]
         _reindex_datasets(ds_ids, es_exp)
 
@@ -71,7 +71,7 @@ def reindex_results(sm_config, ds_id, ds_mask, use_inactive_index, offline_reind
             es_config = get_inactive_index_es_config(es_config)
 
         db = DB()
-        es_exp = ESExporter(db, es_config=es_config)
+        es_exp = ESExporter(db, sm_config={**sm_config, 'elasticsearch': es_config})
 
         if ds_id:
             ds_ids = ds_id.split(',')

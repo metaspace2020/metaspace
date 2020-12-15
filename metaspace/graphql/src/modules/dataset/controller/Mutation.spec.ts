@@ -1,54 +1,76 @@
-import config from '../../../utils/config';
 import * as _ from 'lodash';
 
-import {processingSettingsChanged} from './Mutation';
-import {EngineDataset, EngineDataset as EngineDatasetModel} from '../../engine/model';
+import { processingSettingsChanged } from './Mutation';
+import { EngineDataset } from '../../engine/model';
+import {
+  createTestDataset,
+  createTestGroup,
+  createTestMolecularDB,
+  createTestUserGroup
+} from '../../../tests/testDataCreation';
+import {
+  adminContext,
+  doQuery, onAfterAll, onAfterEach, onBeforeAll, onBeforeEach,
+  setupTestUsers, testEntityManager,
+  testUser,
+  userContext
+} from '../../../tests/graphqlTestEnvironment';
+import { Group, UserGroupRoleOptions as UGRO } from '../../group/model';
+import { Dataset } from '../model';
+import { getContextForTest } from '../../../getContext';
 
+import * as _smApiDatasets from '../../../utils/smApi/datasets';
+jest.mock('../../../utils/smApi/datasets');
+const mockSmApiDatasets = _smApiDatasets as jest.Mocked<typeof _smApiDatasets>;
+mockSmApiDatasets.smApiDatasetRequest.mockReturnValue('{"status": "ok"}');
 
-describe('processingSettingsChanged', () => {
-  const metadata = {
-      "MS_Analysis": {
-        "Analyzer": "FTICR",
-        "Polarity": "Positive",
-        "Ionisation_Source": "MALDI",
-        "Detector_Resolving_Power": {
-          "mz": 400,
-          "Resolving_Power": 140000
-        }
-      },
-      "Submitted_By": {
-        "Submitter": {
-          "Email": "user@example.com",
-          "Surname": "Surname",
-          "First_Name": "Name"
-        },
-        "Institution": "Genentech",
-        "Principal_Investigator": {
-          "Email": "pi@example.com",
-          "Surname": "Surname",
-          "First_Name": "Name"
-        }
-      },
-      "Sample_Information": {
-        "Organism": "Mus musculus (mouse)",
-        "Condition": "Dosed vs. vehicle",
-        "Organism_Part": "EMT6 Tumors",
-        "Sample_Growth_Conditions": "NA"
-      },
-      "Sample_Preparation": {
-        "MALDI_Matrix": "2,5-dihydroxybenzoic acid (DHB)",
-        "Tissue_Modification": "N/A",
-        "Sample_Stabilisation": "Fresh frozen",
-        "MALDI_Matrix_Application": "TM sprayer"
-      },
-      "Additional_Information": {
-        "Publication_DOI": "NA",
-        "Expected_Molecules_Freetext": "tryptophan pathway",
-        "Sample_Preparation_Freetext": "NA",
-        "Additional_Information_Freetext": "NA"
-      }
+const sampleMetadata = {
+  "Data_Type": "Imaging MS",
+  "MS_Analysis": {
+    "Analyzer": "FTICR",
+    "Polarity": "Positive",
+    "Ionisation_Source": "MALDI",
+    "Detector_Resolving_Power": {
+      "mz": 400,
+      "Resolving_Power": 140000
     },
-    dsConfig = {
+    "Pixel_Size": { "Xaxis": 50, "Yaxis": 50 }
+  },
+  "Submitted_By": {
+    "Submitter": {
+      "Email": "user@example.com",
+      "Surname": "Surname",
+      "First_Name": "Name"
+    },
+    "Institution": "Genentech",
+    "Principal_Investigator": {
+      "Email": "pi@example.com",
+      "Surname": "Surname",
+      "First_Name": "Name"
+    }
+  },
+  "Sample_Information": {
+    "Organism": "Mus musculus (mouse)",
+    "Condition": "Dosed vs. vehicle",
+    "Organism_Part": "EMT6 Tumors",
+    "Sample_Growth_Conditions": "NA"
+  },
+  "Sample_Preparation": {
+    "MALDI_Matrix": "2,5-dihydroxybenzoic acid (DHB)",
+    "Tissue_Modification": "N/A",
+    "Sample_Stabilisation": "Fresh frozen",
+    "MALDI_Matrix_Application": "TM sprayer"
+  },
+  "Additional_Information": {
+    "Publication_DOI": "NA",
+    "Expected_Molecules_Freetext": "tryptophan pathway",
+    "Sample_Preparation_Freetext": "NA",
+    "Additional_Information_Freetext": "NA"
+  }
+};
+
+describe('Dataset mutations: processingSettingsChanged', () => {
+    const dsConfig = {
       "image_generation": {
         "q": 99,
         "do_preprocessing": false,
@@ -64,37 +86,37 @@ describe('processingSettingsChanged', () => {
         "isocalc_sigma": 0.000619,
         "isocalc_pts_per_mz": 8078
       },
-      "databases": config.defaults.moldb_names
+      "databases": [0]
     },
     ds = {
       config: dsConfig,
-      metadata: metadata,
+      metadata: sampleMetadata,
     } as EngineDataset;
 
   it('Reprocessing needed when database list changed', () => {
-    const updDS = {
-      molDBs: [...(ds.config as any).databases, 'ChEBI'],
+    const update = {
+      databaseIds: [...(ds.config as any).databases, 1],
       metadata: ds.metadata,
     };
 
-    const {newDB} = processingSettingsChanged(ds, updDS);
+    const { newDB } = processingSettingsChanged(ds, update);
 
     expect(newDB).toBe(true);
   });
 
-  it('Drop reprocessing needed when instrument settings changed', () => {
-    const updDS = {
+  it('Drop reprocessing needed when instrument settings changed', async () => {
+    const update = {
       molDBs: (ds.config as any).databases,
       metadata: _.defaultsDeep({ MS_Analysis: { Detector_Resolving_Power: { mz: 100 }}}, ds.metadata),
     };
 
-    const { procSettingsUpd } = processingSettingsChanged(ds, updDS);
+    const { procSettingsUpd } = processingSettingsChanged(ds, update);
 
     expect(procSettingsUpd).toBe(true);
   });
 
   it('Reprocessing not needed when just metadata changed', () => {
-    const updDS = {
+    const update = {
       metadata: _.defaultsDeep({
         Sample_Preparation: { MALDI_Matrix: 'New matrix' },
         MS_Analysis: { ionisationSource: 'DESI' },
@@ -103,9 +125,80 @@ describe('processingSettingsChanged', () => {
       name: 'New DS name'
     };
 
-    const {newDB, procSettingsUpd} = processingSettingsChanged(ds, updDS);
+    const { newDB, procSettingsUpd } = processingSettingsChanged(ds, update);
 
     expect(newDB).toBe(false);
     expect(procSettingsUpd).toBe(false);
+  });
+});
+
+describe('Dataset mutations: molecular databases permissions', () => {
+  let dataset: Dataset,
+    group: Group,
+    databaseIds: number[] = [];
+
+  beforeAll(onBeforeAll);
+  afterAll(onAfterAll);
+  beforeEach(async () => {
+    await onBeforeEach();
+
+    await setupTestUsers();
+    dataset = await createTestDataset();
+    group = await createTestGroup();
+    const databaseDocs = [
+      { name: 'HMDB-v4', isPublic: true, groupId: null },
+      { name: 'custom-db-pub', isPublic: true, groupId: group.id },
+      { name: 'custom-db', isPublic: false, groupId: group.id },
+    ];
+    for (const dbDoc of databaseDocs) {
+      databaseIds.push((await createTestMolecularDB(dbDoc)).id);
+    }
+  });
+  afterEach(onAfterEach);
+
+  const createDatasetQuery = `mutation createDataset($databaseIds: [Int!]) {
+      createDataset(
+        input: {
+          name: "ds-name"
+          inputPath: "input-path"
+          databaseIds: $databaseIds
+          metadataJson: ${JSON.stringify(JSON.stringify(sampleMetadata))}
+          adducts: ["+H"]
+          isPublic: true
+          submitterId: ""
+        }
+      )
+    }`,
+    updateDatasetQuery = `mutation updateDataset($datasetId: String!, $databaseIds: [Int!]) {
+      updateDataset(
+        id: $datasetId,
+        input: {
+          databaseIds: $databaseIds
+        },
+        reprocess: true
+      )
+    }`;
+
+  test('User allowed to use Metaspace public and group databases', async () => {
+    await createTestUserGroup(testUser.id!, group.id, UGRO.MEMBER, true);
+
+    const context = getContextForTest({...testUser, groupIds: [group.id]} as any, testEntityManager);
+    await doQuery(createDatasetQuery, { databaseIds }, { context });
+    await doQuery(updateDatasetQuery, { datasetId: dataset.id, databaseIds }, { context });
+  });
+
+  test('Non-group user not allowed to use group databases', async () => {
+    const createPromise = doQuery(createDatasetQuery, { databaseIds }, { context: userContext });
+    const updatePromise = doQuery(
+      updateDatasetQuery, { datasetId: dataset.id, databaseIds }, { context: userContext }
+    );
+
+    await expect(createPromise).rejects.toThrowError(/Unauthorized/);
+    await expect(updatePromise).rejects.toThrowError(/Unauthorized/);
+  });
+
+  test('Admin allowed to use Metaspace public and group databases', async () => {
+    await doQuery(createDatasetQuery, { databaseIds }, { context: adminContext });
+    await doQuery(updateDatasetQuery, { datasetId: dataset.id, databaseIds }, { context: adminContext });
   });
 });

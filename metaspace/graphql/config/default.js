@@ -9,32 +9,28 @@ module.exports = {
     level: 'debug',
   },
 
-  defaults: {
-    moldb_names: ['HMDB-v4']
-  },
-
   adducts: [
     // Positive mode
-    {adduct: "+H", name: "[M + H]⁺", charge: 1, hidden: false, default: true},
-    {adduct: "+Na", name: "[M + Na]⁺", charge: 1, hidden: false, default: true},
-    {adduct: "+K", name: "[M + K]⁺", charge: 1, hidden: false, default: true},
-    {adduct: "[M]+", name: "[M]⁺", charge: 1, hidden: true, default: false},
-    {adduct: "+NH4", name: "[M + NH₄]⁺", charge: 1, hidden: true, default: false},
+    { adduct: "+H", name: "[M + H]⁺", charge: 1, hidden: false, default: true },
+    { adduct: "+Na", name: "[M + Na]⁺", charge: 1, hidden: false, default: true },
+    { adduct: "+K", name: "[M + K]⁺", charge: 1, hidden: false, default: true },
+    { adduct: "[M]+", name: "[M]⁺", charge: 1, hidden: true, default: false },
+    { adduct: "+NH4", name: "[M + NH₄]⁺", charge: 1, hidden: true, default: false },
     // Negative mode
-    {adduct: "-H", name: "[M - H]⁻", charge: -1, hidden: false, default: true},
-    {adduct: "+Cl", name: "[M + Cl]⁻", charge: -1, hidden: false, default: true},
-    {adduct: "[M]-", name: "[M]⁻", charge: -1, hidden: true, default: false},
+    { adduct: "-H", name: "[M - H]⁻", charge: -1, hidden: false, default: true },
+    { adduct: "+Cl", name: "[M + Cl]⁻", charge: -1, hidden: false, default: true },
+    { adduct: "[M]-", name: "[M]⁻", charge: -1, hidden: true, default: false },
   ],
 
   /* Settings for image storage.
      It's currently co-hosted with the GraphQL server. */
   img_upload: {
-    iso_img_fs_path: "/opt/data/sm_data/public/",
+    iso_img_fs_path: "/opt/data/metaspace/public/",
     categories: {
       iso_image: {
         type: 'image/png',
         path: '/iso_images/',
-        storage_types: ['fs', 'db']
+        storage_types: ['fs']
       },
       optical_image: {
         type: 'image/jpeg',
@@ -54,8 +50,10 @@ module.exports = {
     }
   },
 
-  dataset_upload: {
-    destination: '/opt/data/uploads',
+  upload: {
+    destination: '/opt/data/metaspace/uploads',
+    bucket: '',
+    moldbPrefix: 'databases'
   },
 
   services: {
@@ -98,6 +96,7 @@ module.exports = {
 
   sentry: {
     dsn: null,
+    environment: "default",
   },
 
   google: {

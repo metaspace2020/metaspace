@@ -1,10 +1,13 @@
-import { createComponent, computed } from '@vue/composition-api'
+import { defineComponent, computed } from '@vue/composition-api'
 
 import { Workflow } from '../../../components/Workflow'
 import UpdateProjectDetails from './UpdateProjectDetails'
 import CreateReviewLink from './CreateReviewLink'
 import PublishData from './PublishData'
 import FadeTransition from '../../../components/FadeTransition'
+
+import '../../../components/ColourIcon.css'
+import GlobeIcon from '../../../assets/inline/refactoring-ui/globe.svg'
 
 import {
   updateProjectMutation, UpdateProjectMutation,
@@ -27,7 +30,7 @@ interface Props {
   refetchProject: Function,
 }
 
-const ReviewWorkflow = createComponent<Props>({
+const ReviewWorkflow = defineComponent<Props>({
   props: {
     currentUserName: String,
     project: Object,
@@ -91,18 +94,8 @@ const ReviewWorkflow = createComponent<Props>({
       <FadeTransition>
         {props.project.publicationStatus === statuses.PUBLISHED
           ? <div class="leading-6 text-center mt-12">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              class="h-6 w-6 block w-8 h-8 p-2 rounded-full bg-blue-100 mx-auto"
-            >
-              {/* fill-current does not cascade in IE11 */}
-              <circle cx="12" cy="12" r="10" class="fill-current text-blue-800"></circle>
-              { /* eslint-disable */ }
-              <path class="fill-current text-blue-300" d="M2.05 11A10 10 0 0 1 15 2.46V6a2 2 0 0 1-2 2h-1v1a2 2 0 0 1-1 1.73V12h2a2 2 0 0 1 2 2v1h2a2 2 0 0 1 2 2v2.14A9.97 9.97 0 0 1 12 22v-4h-1a2 2 0 0 1-2-2v-2a2 2 0 0 1-2-2v-1H2.05z"></path>
-              { /* eslint-enable */}
-            </svg>
-            <h2 class="leading-10 py-1 m-0">Project is published</h2>
+            <GlobeIcon class="sm-colour-icon sm-colour-icon--large mx-auto" />
+            <h2 class="leading-12 m-0">Project is published</h2>
             <p class="m-0">
               The project and its datasets are now public.
               <br />

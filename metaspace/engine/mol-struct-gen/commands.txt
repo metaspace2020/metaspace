@@ -1,0 +1,6 @@
+# Execute in mol-struct-gen directory
+docker build -t metaspace2020/mol-struct-gen -f Dockerfile .
+
+# <LOCAL_DIR> specifies local dir to mount inside container, can be $PWD
+# <MOLDB_FILE>, <MOL_STRUCT_DIR> are specified relative to <LOCAL_DIR>
+docker run -v <LOCAL_DIR>:/home/obabel/mol-struct-gen --rm metaspace2020/mol-struct-gen <MOLDB_FILE> <MOL_STRUCT_DIR>

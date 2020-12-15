@@ -549,23 +549,11 @@ export default class ViewProjectPage extends Vue {
   }
 
   .hidden-members-text {
+    @apply text-gray-600;
     text-align: center;
-    color: $--color-text-secondary;
   }
 </style>
 <style>
-  .el-tabs__content {
-    overflow: visible; /* prevents shadows getting clipped */
-  }
-
-  .el-tabs.with-badges {
-    margin-top: -10px;
-  }
-
-  .el-tabs.with-badges .el-tabs__item {
-    margin-top: 10px;
-  }
-
   .el-tab-pane.sm-publishing-tab {
     margin-top: 24px;
   }

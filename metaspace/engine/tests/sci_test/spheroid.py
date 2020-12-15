@@ -8,18 +8,16 @@ from pprint import pprint
 
 import numpy as np
 
-from sm.engine.annotation_job import AnnotationJob
+from sm.engine.annotation_spark.annotation_job import AnnotationJob
 from sm.engine.db import DB
-from sm.engine.molecular_db import MolecularDB
 from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.util import proj_root, SMConfig, create_ds_from_files, bootstrap_and_run
+from sm.engine.util import proj_root, create_ds_from_files, bootstrap_and_run
 
 SEARCH_RES_SELECT = (
-    "select m.formula, m.adduct, m.stats "
-    "from annotation m "
-    "join job j on j.id = m.job_id "
-    "join dataset ds on ds.id = j.ds_id "
-    "where j.moldb_id = %s AND ds.name = %s "
+    "SELECT m.formula, m.adduct, m.stats "
+    "FROM annotation m "
+    "JOIN job j ON j.id = m.job_id "
+    "WHERE j.ds_id = %s "
     "ORDER BY formula, adduct "
 )
 
@@ -52,8 +50,7 @@ class SciTester:
             return {(r[0], r[1]): prep_metric_arrays(r[2:]) for r in rows}
 
     def fetch_search_res(self):
-        moldb = MolecularDB(name='HMDB-v2.5')
-        rows = self.db.select(SEARCH_RES_SELECT, params=(moldb.id, self.ds_name))
+        rows = self.db.select(SEARCH_RES_SELECT, params=(self.ds_id,))
         return {(r[0], r[1]): self.metr_dict_to_array(r[2]) for r in rows}
 
     def save_sci_test_report(self):
@@ -143,8 +140,8 @@ class SciTester:
 
         ds = create_ds_from_files(self.ds_id, self.ds_name, self.input_path)
         self.db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
-        ds.save(self.db)
-        AnnotationJob(img_store).run(ds)
+        ds.save(self.db, allow_insert=True)
+        AnnotationJob(img_store, ds).run()
 
     def clear_data_dirs(self):
         path = Path(self.ds_data_path)

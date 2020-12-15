@@ -78,7 +78,7 @@ const validateStringToSign = (stringToSign: string, expectedUuidSignature: strin
     const pathParts = pathname.split('/');
     if (pathParts.length === 4 && pathParts[0] === '') {
       validations.resourcePathStructure = true;
-      validations.resourceBucket = pathParts[1] === config.dataset_upload.bucket;
+      validations.resourceBucket = pathParts[1] === config.upload.bucket;
       actualUuidSignature = crypto.createHmac('sha1', config.aws.aws_secret_access_key)
                                   .update(pathParts[2])
                                   .digest('base64');

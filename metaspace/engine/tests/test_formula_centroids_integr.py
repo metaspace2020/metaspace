@@ -1,21 +1,21 @@
 import os
 import sys
 from itertools import product
+import shutil
+
 import numpy as np
 import pandas as pd
 import pytest
-import shutil
 
-from sm.engine.formula_centroids import CentroidsGenerator, FormulaCentroids
+from sm.engine.annotation.formula_centroids import CentroidsGenerator, FormulaCentroids
 from sm.engine.formula_parser import generate_ion_formula
 from sm.engine.isocalc_wrapper import IsocalcWrapper
-from sm.engine.tests.util import test_db, sm_config, ds_config, spark_context
 
 os.environ.setdefault('PYSPARK_PYTHON', sys.executable)
 
 
 @pytest.fixture()
-def clean_isotope_storage_path():
+def clean_isotope_storage_path(sm_config):
     shutil.rmtree(sm_config['isotope_storage']['path'], ignore_errors=True)
 
 

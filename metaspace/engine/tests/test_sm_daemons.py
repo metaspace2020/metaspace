@@ -1,13 +1,13 @@
-import json
 import os
+from os.path import join, dirname
 import sys
 import logging
 from collections import OrderedDict
 from functools import partial
-from os.path import join, dirname
+from pathlib import Path
 from unittest.mock import patch
 import time
-from datetime import datetime
+
 import pytest
 from PIL import Image
 from fabric.api import local
@@ -18,63 +18,49 @@ import pandas as pd
 from sm.engine.daemon_action import DaemonAction
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
-from sm.engine.dataset import Dataset, DatasetStatus
-from sm.engine.msm_basic.msm_basic_search import compute_fdr
-from sm.engine.annotation_job import JobStatus
+from sm.engine.dataset import DatasetStatus
+from sm.engine.annotation.job import JobStatus
 from sm.engine.queue import QueueConsumer
-from sm.engine.tests.util import (
-    test_db,
-    init_loggers,
-    sm_index,
-    es_dsl_search,
-    metadata,
-    ds_config,
-    make_moldb_mock,
-)
-from sm.engine.util import SMConfig
+from .utils import create_test_molecular_db, create_test_ds
 
 os.environ.setdefault('PYSPARK_PYTHON', sys.executable)
-sm_config = SMConfig.get_conf()
-sm_config['colocalization']['enabled'] = False
-
-init_loggers(sm_config['logs'])
 logger = logging.getLogger('annotate-daemon')
-
 test_ds_name = 'imzml_example_ds'
 
-proj_dir_path = dirname(dirname(__file__))
-data_dir_path = join(sm_config['fs']['spark_data_path'], test_ds_name)
-input_dir_path = join(proj_dir_path, 'tests/data/imzml_example_ds')
-ds_config_path = join(input_dir_path, 'config.json')
+input_dir_path = str(Path(__file__).parent.parent / 'tests/data/imzml_example_ds')
+
+
+@pytest.fixture(scope='module')
+def local_sm_config(sm_config):
+    local_sm_config = sm_config
+    local_sm_config['colocalization']['enabled'] = False
+    return local_sm_config
 
 
 @pytest.fixture()
-def clean_isotope_storage():
+def clean_isotope_storage(local_sm_config):
     with warn_only():
-        local('rm -rf {}'.format(sm_config['isotope_storage']['path']))
+        local('rm -rf {}'.format(local_sm_config['isotope_storage']['path']))
 
 
 @pytest.fixture()
-def reset_queues():
+def reset_queues(local_sm_config):
     from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_UPDATE
 
     # Delete queues to clean up remaining messages so that they don't interfere with other tests
     for qdesc in [SM_ANNOTATE, SM_UPDATE]:
-        queue_pub = QueuePublisher(config=sm_config['rabbitmq'], qdesc=qdesc, logger=logger)
+        queue_pub = QueuePublisher(config=local_sm_config['rabbitmq'], qdesc=qdesc, logger=logger)
         queue_pub.delete_queue()
 
 
 def init_moldb():
     db = DB()
-    moldb_id = 0
-    db.insert(
-        "INSERT INTO molecular_db (id, name, version) VALUES (%s, %s, %s)",
-        rows=[(moldb_id, 'HMDB-v4', '2018-04-03')],
-    )
+    moldb = create_test_molecular_db()
     db.insert(
         "INSERT INTO molecule (mol_id, mol_name, formula, moldb_id) VALUES (%s, %s, %s, %s)",
-        rows=[('HMDB0001', 'molecule name', 'C12H24O', moldb_id)],
+        rows=[('HMDB0001', 'molecule name', 'C12H24O', moldb.id)],
     )
+    return moldb
 
 
 get_ion_images_for_analysis_mock_return = (
@@ -84,8 +70,11 @@ get_ion_images_for_analysis_mock_return = (
 )
 
 
-def init_queue_pub(qname='annotate'):
+@pytest.fixture()
+def queue_pub(local_sm_config):
     from sm.engine import queue
+
+    qname = 'annotate'
 
     queue.SM_ANNOTATE['name'] = queue.SM_ANNOTATE['name'] + '_test'
     queue.SM_UPDATE['name'] = queue.SM_UPDATE['name'] + '_test'
@@ -95,14 +84,10 @@ def init_queue_pub(qname='annotate'):
         qdesc = queue.SM_UPDATE
     else:
         raise Exception(f'Wrong qname={qname}')
-    queue_pub = queue.QueuePublisher(config=sm_config['rabbitmq'], qdesc=qdesc, logger=logger)
-    return queue_pub
+    return queue.QueuePublisher(config=local_sm_config['rabbitmq'], qdesc=qdesc, logger=logger)
 
 
-queue_pub = init_queue_pub()
-
-
-def run_daemons(db, es):
+def run_daemons(db, es, sm_config):
     from sm.engine.queue import QueuePublisher, SM_DS_STATUS, SM_ANNOTATE, SM_UPDATE
     from sm.engine.png_generator import ImageStoreServiceWrapper
     from sm.engine.sm_daemons import DatasetManager, SMAnnotateDaemon, SMIndexUpdateDaemon
@@ -144,7 +129,7 @@ def run_daemons(db, es):
     'sm.engine.off_sample_wrapper.call_api',
     return_value={'predictions': {'label': 'off', 'prob': 0.99}},
 )
-@patch('sm.engine.annotation_job.MSMSearch')
+@patch('sm.engine.annotation_spark.annotation_job.MSMSearch')
 def test_sm_daemons(
     MSMSearchMock,
     call_off_sample_api_mock,
@@ -158,8 +143,10 @@ def test_sm_daemons(
     reset_queues,
     metadata,
     ds_config,
+    queue_pub,
+    local_sm_config,
 ):
-    init_moldb()
+    moldb = init_moldb()
 
     formula_metrics_df = pd.DataFrame(
         {
@@ -198,90 +185,76 @@ def test_sm_daemons(
     post_images_to_annot_service_mock.return_value = {0: url_dict, 1: url_dict, 2: url_dict}
 
     db = DB()
-    es = ESExporter(db)
+    es = ESExporter(db, local_sm_config)
 
-    try:
-        ds_id = '2000-01-01_00h00m'
-        upload_dt = datetime.now()
-        ds = Dataset(
-            id=ds_id,
-            name=test_ds_name,
-            input_path=input_dir_path,
-            upload_dt=upload_dt,
-            metadata=metadata,
-            config=ds_config,
-            status=DatasetStatus.QUEUED,
-        )
-        ds.save(db, es)
+    ds = create_test_ds(
+        name=test_ds_name,
+        input_path=input_dir_path,
+        config={**ds_config, 'database_ids': [moldb.id]},
+        status=DatasetStatus.QUEUED,
+        es=es,
+    )
 
-        queue_pub.publish(
-            {'ds_id': ds_id, 'ds_name': test_ds_name, 'action': DaemonAction.ANNOTATE}
-        )
+    queue_pub.publish({'ds_id': ds.id, 'ds_name': test_ds_name, 'action': DaemonAction.ANNOTATE})
 
-        run_daemons(db, es)
+    run_daemons(db, es, local_sm_config)
 
-        # dataset table asserts
-        rows = db.select('SELECT id, name, input_path, upload_dt, status from dataset')
-        input_path = join(dirname(__file__), 'data', test_ds_name)
-        assert len(rows) == 1
-        assert rows[0] == (ds_id, test_ds_name, input_path, upload_dt, DatasetStatus.FINISHED)
+    # dataset table asserts
+    rows = db.select('SELECT id, name, input_path, upload_dt, status from dataset')
+    input_path = join(dirname(__file__), 'data', test_ds_name)
+    assert len(rows) == 1
+    assert rows[0] == (ds.id, test_ds_name, input_path, ds.upload_dt, DatasetStatus.FINISHED)
 
-        # ms acquisition geometry asserts
-        rows = db.select('SELECT acq_geometry from dataset')
-        assert len(rows) == 1
-        assert rows[0][0] == ds.get_acq_geometry(db)
-        assert rows[0][0] == {
-            'length_unit': 'nm',
-            'acquisition_grid': {'regular_grid': True, 'count_x': 3, 'count_y': 3},
-            'pixel_size': {'regular_size': True, 'size_x': 100, 'size_y': 100},
+    # ms acquisition geometry asserts
+    rows = db.select('SELECT acq_geometry from dataset')
+    assert len(rows) == 1
+    assert rows[0][0] == ds.get_acq_geometry(db)
+    assert rows[0][0] == {
+        'length_unit': 'nm',
+        'acquisition_grid': {'regular_grid': True, 'count_x': 3, 'count_y': 3},
+        'pixel_size': {'regular_size': True, 'size_x': 100, 'size_y': 100},
+    }
+
+    # job table asserts
+    rows = db.select('SELECT moldb_id, ds_id, status, start, finish from job')
+    assert len(rows) == 1
+    moldb_id, ds_id, status, start, finish = rows[0]
+    assert (moldb_id, ds_id, status) == (moldb.id, ds.id, JobStatus.FINISHED)
+    assert start <= finish
+
+    # image metrics asserts
+    rows = db.select('SELECT formula, adduct, stats, iso_image_ids FROM annotation')
+    rows = sorted(
+        rows, key=lambda row: row[1]
+    )  # Sort in Python because postgres sorts symbols inconsistently between locales
+    assert len(rows) == 3
+    for row, expected_adduct in zip(rows, ['+H', '+Na', '[M]+']):
+        formula, adduct, stats, iso_image_ids = row
+        assert formula == 'C12H24O'
+        assert adduct == expected_adduct
+        assert stats == {
+            'chaos': 0.9,
+            'spatial': 0.9,
+            'spectral': 0.9,
+            'msm': 0.9 ** 3,
+            'total_iso_ints': [100.0],
+            'min_iso_ints': [0],
+            'max_iso_ints': [10.0],
         }
+        assert iso_image_ids == ['iso_image_1', None, None, None]
 
-        # job table asserts
-        rows = db.select('SELECT moldb_id, ds_id, status, start, finish from job')
-        assert len(rows) == 1
-        db_id, ds_id, status, start, finish = rows[0]
-        assert (db_id, ds_id, status) == (0, '2000-01-01_00h00m', JobStatus.FINISHED)
-        assert start <= finish
-
-        # image metrics asserts
-        rows = db.select(('SELECT formula, adduct, stats, iso_image_ids ' 'FROM annotation'))
-        rows = sorted(
-            rows, key=lambda row: row[1]
-        )  # Sort in Python because postgres sorts symbols inconsistently between locales
-        assert len(rows) == 3
-        for row, expected_adduct in zip(rows, ['+H', '+Na', '[M]+']):
-            formula, adduct, stats, iso_image_ids = row
-            assert formula == 'C12H24O'
-            assert adduct == expected_adduct
-            assert stats == {
-                'chaos': 0.9,
-                'spatial': 0.9,
-                'spectral': 0.9,
-                'msm': 0.9 ** 3,
-                'total_iso_ints': [100.0],
-                'min_iso_ints': [0],
-                'max_iso_ints': [10.0],
-            }
-            assert iso_image_ids == ['iso_image_1', None, None, None]
-
-        time.sleep(1)  # Waiting for ES
-        # ES asserts
-        ds_docs = es_dsl_search.query('term', _type='dataset').execute().to_dict()['hits']['hits']
-        assert 1 == len(ds_docs)
-        ann_docs = (
-            es_dsl_search.query('term', _type='annotation').execute().to_dict()['hits']['hits']
-        )
-        assert len(ann_docs) == len(rows)
-        for doc in ann_docs:
-            assert doc['_id'].startswith(ds_id)
-
-    finally:
-        with warn_only():
-            local('rm -rf {}'.format(data_dir_path))
+    time.sleep(1)  # Waiting for ES
+    # ES asserts
+    ds_docs = es_dsl_search.query('term', _type='dataset').execute().to_dict()['hits']['hits']
+    assert 1 == len(ds_docs)
+    ann_docs = es_dsl_search.query('term', _type='annotation').execute().to_dict()['hits']['hits']
+    assert len(ann_docs) == len(rows)
+    for doc in ann_docs:
+        assert doc['_id'].startswith(ds_id)
 
 
 @patch('sm.engine.search_results.post_images_to_image_store')
-@patch('sm.engine.annotation_job.MSMSearch')
+@patch('sm.engine.annotation_spark.annotation_job.MSMSearch')
 def test_sm_daemons_annot_fails(
     MSMSearchMock,
     post_images_to_annot_service_mock,
@@ -291,8 +264,10 @@ def test_sm_daemons_annot_fails(
     reset_queues,
     metadata,
     ds_config,
+    queue_pub,
+    local_sm_config,
 ):
-    init_moldb()
+    moldb = init_moldb()
 
     def throw_exception_function(*args, **kwargs):
         raise Exception('Test exception')
@@ -304,38 +279,27 @@ def test_sm_daemons_annot_fails(
     post_images_to_annot_service_mock.return_value = {0: url_dict, 1: url_dict, 2: url_dict}
 
     db = DB()
-    es = ESExporter(db)
+    es = ESExporter(db, local_sm_config)
+    ds = create_test_ds(
+        name=test_ds_name,
+        input_path=input_dir_path,
+        config={**ds_config, 'database_ids': [moldb.id]},
+        status=DatasetStatus.QUEUED,
+        es=es,
+    )
 
-    try:
-        ds_id = '2000-01-01_00h00m'
-        ds = Dataset(
-            id=ds_id,
-            name=test_ds_name,
-            input_path=input_dir_path,
-            upload_dt=datetime.now(),
-            metadata=metadata,
-            config=ds_config,
-            status=DatasetStatus.QUEUED,
-        )
-        ds.save(db, es)
+    queue_pub.publish({'ds_id': ds.id, 'ds_name': test_ds_name, 'action': DaemonAction.ANNOTATE})
 
-        queue_pub.publish(
-            {'ds_id': ds_id, 'ds_name': test_ds_name, 'action': DaemonAction.ANNOTATE}
-        )
+    run_daemons(db, es, local_sm_config)
 
-        run_daemons(db, es)
-
-        # dataset and job tables asserts
-        row = db.select_one('SELECT status from dataset')
-        assert len(row) == 1
-        assert row[0] == 'FAILED'
-    finally:
-        with warn_only():
-            local('rm -rf {}'.format(data_dir_path))
+    # dataset and job tables asserts
+    row = db.select_one('SELECT status from dataset')
+    assert len(row) == 1
+    assert row[0] == 'FAILED'
 
 
 @patch('sm.engine.search_results.post_images_to_image_store')
-@patch('sm.engine.annotation_job.MSMSearch')
+@patch('sm.engine.annotation_spark.annotation_job.MSMSearch')
 def test_sm_daemon_es_export_fails(
     MSMSearchMock,
     post_images_to_annot_service_mock,
@@ -345,8 +309,10 @@ def test_sm_daemon_es_export_fails(
     reset_queues,
     metadata,
     ds_config,
+    queue_pub,
+    local_sm_config,
 ):
-    init_moldb()
+    moldb = init_moldb()
 
     formula_metrics_df = pd.DataFrame(
         {
@@ -384,43 +350,27 @@ def test_sm_daemon_es_export_fails(
     post_images_to_annot_service_mock.return_value = {0: url_dict, 1: url_dict, 2: url_dict}
 
     db = DB()
-    annotate_daemon = None
-    update_daemon = None
 
     def throw_exception_function(*args, **kwargs):
         raise Exception('Test')
 
-    es = ESExporter(db)
+    es = ESExporter(db, local_sm_config)
     es.index_ds = throw_exception_function
 
-    try:
-        ds_id = '2000-01-01_00h00m'
-        ds = Dataset(
-            id=ds_id,
-            name=test_ds_name,
-            input_path=input_dir_path,
-            upload_dt=datetime.now(),
-            metadata=metadata,
-            config=ds_config,
-            status=DatasetStatus.QUEUED,
-        )
-        ds.save(db, es)
+    ds = create_test_ds(
+        name=test_ds_name,
+        input_path=input_dir_path,
+        config={**ds_config, 'database_ids': [moldb.id]},
+        status=DatasetStatus.QUEUED,
+        es=es,
+    )
 
-        queue_pub.publish(
-            {'ds_id': ds_id, 'ds_name': test_ds_name, 'action': DaemonAction.ANNOTATE}
-        )
+    queue_pub.publish({'ds_id': ds.id, 'ds_name': test_ds_name, 'action': DaemonAction.ANNOTATE})
 
-        run_daemons(db, es)
+    run_daemons(db, es, local_sm_config)
 
-        # dataset and job tables asserts
-        row = db.select_one('SELECT status from job')
-        assert row[0] == 'FINISHED'
-        row = db.select_one('SELECT status from dataset')
-        assert row[0] == 'FAILED'
-    finally:
-        if annotate_daemon:
-            annotate_daemon.stop()
-        if update_daemon:
-            update_daemon.stop()
-        with warn_only():
-            local('rm -rf {}'.format(data_dir_path))
+    # dataset and job tables asserts
+    row = db.select_one('SELECT status from job')
+    assert row[0] == 'FINISHED'
+    row = db.select_one('SELECT status from dataset')
+    assert row[0] == 'FAILED'

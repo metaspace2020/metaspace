@@ -1,4 +1,4 @@
-import { createComponent, reactive, ref } from '@vue/composition-api'
+import { defineComponent, reactive, ref } from '@vue/composition-api'
 
 import { Input } from 'element-ui'
 
@@ -27,7 +27,7 @@ interface Props {
   type: string
 }
 
-export default createComponent<Props>({
+export default defineComponent<Props>({
   props: {
     value: { type: String },
     type: { type: String, default: 'text' },
@@ -38,7 +38,7 @@ export default createComponent<Props>({
       focussed: false,
     })
 
-    const input = ref<Input>(null)
+    const input = ref<Input | null>(null)
 
     function handleCopy() {
       copyText(props.value)

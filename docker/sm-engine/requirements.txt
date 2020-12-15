@@ -14,7 +14,7 @@ pyyaml
 elasticsearch-dsl>=5.0.0,<6.0.0
 pika==0.11.0b1
 bottle
-Pillow==6.2.0
+Pillow==7.2.0
 pyopenms==2.2.0
 numpy>=1.11.2
 scipy>=0.18.1
@@ -32,3 +32,4 @@ pysparkling
 docutils<0.15  # botocore requirement
 pylint==2.4.3  # to prevent new pylint rules failing CI job
 black==19.10b0  # to prevent new black rules failing CI job
+s3fs

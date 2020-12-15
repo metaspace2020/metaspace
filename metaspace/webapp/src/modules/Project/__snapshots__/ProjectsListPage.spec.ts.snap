@@ -4,8 +4,8 @@ exports[`ProjectsListPage should change actions for projects under review 1`] = 
 <div class="page">
   <mock-el-dialog append-to-body="" title="Create project" class="dialog">
     <div mock-v-loading="0">
-      <form class="el-form el-form--label-top" size="mini">
-        <div><label class="leading-6"><span class="font-medium">Title</span>
+      <form class="el-form leading-6 v-rhythm-3 el-form--label-top" size="mini">
+        <div><label><span class="text-base font-medium">Title</span>
             <div class="py-1 el-input">
               <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
               <!---->
@@ -13,35 +13,29 @@ exports[`ProjectsListPage should change actions for projects under review 1`] = 
               <!---->
               <!---->
             </div></label></div>
-        <div class="el-form-item my-3">
-          <!---->
-          <div class="el-form-item__content"><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-      Allow other users to see this project
-    <!----></span></label>
-            <transition-stub name="el-zoom-in-top">
-              <!---->
-            </transition-stub>
+        <div><label><span class="text-base font-medium">Privacy</span> <span class="block text-sm text-gray-800">
+        Visibility of the project only, does not apply to included datasets
+      </span></label>
+          <div class="h-10 flex items-center">
+            <div role="switch" class="el-switch"><input type="checkbox" name="" true-value="true" class="el-switch__input"><span class="el-switch__label el-switch__label--left is-active"><!----><span>Private</span></span><span class="el-switch__core" style="width: 40px;"></span><span class="el-switch__label el-switch__label--right"><!----><span aria-hidden="true">Public</span></span></div>
           </div>
+          <!---->
         </div>
       </form>
-      <div>
+      <div class="mt-6">
         <h4 class="m-0">
           Would you like to include previously submitted datasets?
         </h4>
         <div>
           <div class="select-buttons"><a href="#">Select none</a> <span> | </span> <a href="#">Select all</a></div>
           <div class="dataset-checkbox-list leading-6 proportional-nums">
-            <div><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-        allDatasets.0.name
-        <span class="text-gray-700">
-          (submitted <mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time>)
-        </span>
+            <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.0.name" class="truncate">
+          allDatasets.0.name
+        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time></span>
                 <!----></span></label></div>
-            <div><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-        allDatasets.1.name
-        <span class="text-gray-700">
-          (submitted <mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time>)
-        </span>
+            <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.1.name" class="truncate">
+          allDatasets.1.name
+        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time></span>
                 <!----></span></label></div>
           </div>
         </div>
@@ -53,7 +47,7 @@ exports[`ProjectsListPage should change actions for projects under review 1`] = 
       </span></button> <button type="button" class="el-button el-button--primary">
           <!---->
           <!----><span>
-        Create project and include 2 datasets
+        Create project
       </span></button></div>
     </div>
   </mock-el-dialog>
@@ -84,7 +78,7 @@ exports[`ProjectsListPage should change actions for projects under review 1`] = 
       <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/proj-one" class="underlay"></a>
         <div class="item-body">
           <div class="info">
-            <div class="info-line project-name pr-5 flex items-baseline"><a href="/project/proj-one" class="text-2xl font-medium text-inherit no-underline truncate leading-none pb-2">
+            <div class="info-line project-name pr-5 flex items-baseline"><a href="/project/proj-one" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
                 project one
               </a> <i title="This project is only visible to its members and METASPACE administrators" class="el-icon-lock ml-2 text-xl"></i></div>
             <div>
@@ -115,7 +109,7 @@ exports[`ProjectsListPage should change actions for projects under review 1`] = 
       <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/project%202" class="underlay"></a>
         <div class="item-body">
           <div class="info">
-            <div class="info-line project-name pr-5 flex items-baseline"><a href="/project/project%202" class="text-2xl font-medium text-inherit no-underline truncate leading-none pb-2">
+            <div class="info-line project-name pr-5 flex items-baseline"><a href="/project/project%202" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
                 project two
               </a>
               <!---->
@@ -136,7 +130,7 @@ exports[`ProjectsListPage should change actions for projects under review 1`] = 
             </div>
           </div>
           <div class="actions">
-            <div><i class="el-icon-picture"></i> <a href="/annotations?db=&amp;prj=project%202" class="">
+            <div><i class="el-icon-picture"></i> <a href="/annotations?db_id=&amp;prj=project%202" class="">
                 Browse annotations
               </a></div>
             <!---->
@@ -156,8 +150,8 @@ exports[`ProjectsListPage should change actions for published projects 1`] = `
 <div class="page">
   <mock-el-dialog append-to-body="" title="Create project" class="dialog">
     <div mock-v-loading="0">
-      <form class="el-form el-form--label-top" size="mini">
-        <div><label class="leading-6"><span class="font-medium">Title</span>
+      <form class="el-form leading-6 v-rhythm-3 el-form--label-top" size="mini">
+        <div><label><span class="text-base font-medium">Title</span>
             <div class="py-1 el-input">
               <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
               <!---->
@@ -165,35 +159,29 @@ exports[`ProjectsListPage should change actions for published projects 1`] = `
               <!---->
               <!---->
             </div></label></div>
-        <div class="el-form-item my-3">
-          <!---->
-          <div class="el-form-item__content"><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-      Allow other users to see this project
-    <!----></span></label>
-            <transition-stub name="el-zoom-in-top">
-              <!---->
-            </transition-stub>
+        <div><label><span class="text-base font-medium">Privacy</span> <span class="block text-sm text-gray-800">
+        Visibility of the project only, does not apply to included datasets
+      </span></label>
+          <div class="h-10 flex items-center">
+            <div role="switch" class="el-switch"><input type="checkbox" name="" true-value="true" class="el-switch__input"><span class="el-switch__label el-switch__label--left is-active"><!----><span>Private</span></span><span class="el-switch__core" style="width: 40px;"></span><span class="el-switch__label el-switch__label--right"><!----><span aria-hidden="true">Public</span></span></div>
           </div>
+          <!---->
         </div>
       </form>
-      <div>
+      <div class="mt-6">
         <h4 class="m-0">
           Would you like to include previously submitted datasets?
         </h4>
         <div>
           <div class="select-buttons"><a href="#">Select none</a> <span> | </span> <a href="#">Select all</a></div>
           <div class="dataset-checkbox-list leading-6 proportional-nums">
-            <div><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-        allDatasets.0.name
-        <span class="text-gray-700">
-          (submitted <mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time>)
-        </span>
+            <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.0.name" class="truncate">
+          allDatasets.0.name
+        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time></span>
                 <!----></span></label></div>
-            <div><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-        allDatasets.1.name
-        <span class="text-gray-700">
-          (submitted <mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time>)
-        </span>
+            <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.1.name" class="truncate">
+          allDatasets.1.name
+        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time></span>
                 <!----></span></label></div>
           </div>
         </div>
@@ -205,7 +193,7 @@ exports[`ProjectsListPage should change actions for published projects 1`] = `
       </span></button> <button type="button" class="el-button el-button--primary">
           <!---->
           <!----><span>
-        Create project and include 2 datasets
+        Create project
       </span></button></div>
     </div>
   </mock-el-dialog>
@@ -236,7 +224,7 @@ exports[`ProjectsListPage should change actions for published projects 1`] = `
       <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/proj-one" class="underlay"></a>
         <div class="item-body">
           <div class="info">
-            <div class="info-line project-name pr-5 flex items-baseline"><a href="/project/proj-one" class="text-2xl font-medium text-inherit no-underline truncate leading-none pb-2">
+            <div class="info-line project-name pr-5 flex items-baseline"><a href="/project/proj-one" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
                 project one
               </a> <i title="This project is only visible to its members and METASPACE administrators" class="el-icon-lock ml-2 text-xl"></i></div>
             <div>
@@ -266,7 +254,7 @@ exports[`ProjectsListPage should change actions for published projects 1`] = `
       <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/project%202" class="underlay"></a>
         <div class="item-body">
           <div class="info">
-            <div class="info-line project-name pr-5 flex items-baseline"><a href="/project/project%202" class="text-2xl font-medium text-inherit no-underline truncate leading-none pb-2">
+            <div class="info-line project-name pr-5 flex items-baseline"><a href="/project/project%202" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
                 project two
               </a>
               <!---->
@@ -287,7 +275,7 @@ exports[`ProjectsListPage should change actions for published projects 1`] = `
             </div>
           </div>
           <div class="actions">
-            <div><i class="el-icon-picture"></i> <a href="/annotations?db=&amp;prj=project%202" class="">
+            <div><i class="el-icon-picture"></i> <a href="/annotations?db_id=&amp;prj=project%202" class="">
                 Browse annotations
               </a></div>
             <!---->
@@ -307,8 +295,8 @@ exports[`ProjectsListPage should match snapshot 1`] = `
 <div class="page">
   <mock-el-dialog append-to-body="" title="Create project" class="dialog">
     <div mock-v-loading="0">
-      <form class="el-form el-form--label-top" size="mini">
-        <div><label class="leading-6"><span class="font-medium">Title</span>
+      <form class="el-form leading-6 v-rhythm-3 el-form--label-top" size="mini">
+        <div><label><span class="text-base font-medium">Title</span>
             <div class="py-1 el-input">
               <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
               <!---->
@@ -316,35 +304,29 @@ exports[`ProjectsListPage should match snapshot 1`] = `
               <!---->
               <!---->
             </div></label></div>
-        <div class="el-form-item my-3">
-          <!---->
-          <div class="el-form-item__content"><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-      Allow other users to see this project
-    <!----></span></label>
-            <transition-stub name="el-zoom-in-top">
-              <!---->
-            </transition-stub>
+        <div><label><span class="text-base font-medium">Privacy</span> <span class="block text-sm text-gray-800">
+        Visibility of the project only, does not apply to included datasets
+      </span></label>
+          <div class="h-10 flex items-center">
+            <div role="switch" class="el-switch"><input type="checkbox" name="" true-value="true" class="el-switch__input"><span class="el-switch__label el-switch__label--left is-active"><!----><span>Private</span></span><span class="el-switch__core" style="width: 40px;"></span><span class="el-switch__label el-switch__label--right"><!----><span aria-hidden="true">Public</span></span></div>
           </div>
+          <!---->
         </div>
       </form>
-      <div>
+      <div class="mt-6">
         <h4 class="m-0">
           Would you like to include previously submitted datasets?
         </h4>
         <div>
           <div class="select-buttons"><a href="#">Select none</a> <span> | </span> <a href="#">Select all</a></div>
           <div class="dataset-checkbox-list leading-6 proportional-nums">
-            <div><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-        allDatasets.0.name
-        <span class="text-gray-700">
-          (submitted <mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time>)
-        </span>
+            <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.0.name" class="truncate">
+          allDatasets.0.name
+        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time></span>
                 <!----></span></label></div>
-            <div><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-        allDatasets.1.name
-        <span class="text-gray-700">
-          (submitted <mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time>)
-        </span>
+            <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.1.name" class="truncate">
+          allDatasets.1.name
+        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time></span>
                 <!----></span></label></div>
           </div>
         </div>
@@ -356,7 +338,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
       </span></button> <button type="button" class="el-button el-button--primary">
           <!---->
           <!----><span>
-        Create project and include 2 datasets
+        Create project
       </span></button></div>
     </div>
   </mock-el-dialog>
@@ -387,7 +369,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
       <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/proj-one" class="underlay"></a>
         <div class="item-body">
           <div class="info">
-            <div class="info-line project-name pr-5 flex items-baseline"><a href="/project/proj-one" class="text-2xl font-medium text-inherit no-underline truncate leading-none pb-2">
+            <div class="info-line project-name pr-5 flex items-baseline"><a href="/project/proj-one" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
                 project one
               </a> <i title="This project is only visible to its members and METASPACE administrators" class="el-icon-lock ml-2 text-xl"></i></div>
             <div>
@@ -417,7 +399,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
       <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/project%202" class="underlay"></a>
         <div class="item-body">
           <div class="info">
-            <div class="info-line project-name pr-5 flex items-baseline"><a href="/project/project%202" class="text-2xl font-medium text-inherit no-underline truncate leading-none pb-2">
+            <div class="info-line project-name pr-5 flex items-baseline"><a href="/project/project%202" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
                 project two
               </a>
               <!---->
@@ -438,7 +420,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
             </div>
           </div>
           <div class="actions">
-            <div><i class="el-icon-picture"></i> <a href="/annotations?db=&amp;prj=project%202" class="">
+            <div><i class="el-icon-picture"></i> <a href="/annotations?db_id=&amp;prj=project%202" class="">
                 Browse annotations
               </a></div>
             <!---->

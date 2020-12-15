@@ -9,9 +9,16 @@ import {
 } from './tests/graphqlTestEnvironment';
 import {Dataset, DatasetProject} from './modules/dataset/model';
 import {Project, UserProject, UserProjectRoleOptions as UPRO} from './modules/project/model';
-import {createTestProject, createTestProjectMember, createTestUser} from './tests/testDataCreation';
+import {
+  createTestGroup,
+  createTestMolecularDB,
+  createTestProject,
+  createTestProjectMember,
+  createTestUser
+} from './tests/testDataCreation';
 import getContext, {getContextForTest} from './getContext';
 import {MersenneTwister19937, pick} from 'random-js';
+import {MolecularDB} from './modules/moldb/model';
 
 
 describe('getContext', () => {
@@ -24,6 +31,7 @@ describe('getContext', () => {
     userId = testUser.id;
   });
   afterEach(onAfterEach);
+
   describe('cachedGetEntityById', () => {
     const testIds = [1,2,3].map(n => `00000000-1234-0000-0000-00000000000${n}`);
     const [id1, id2, id3] = testIds;
@@ -126,6 +134,7 @@ describe('getContext', () => {
       });
     });
   });
+
   describe('ContextUser.getProjectRoles', () => {
     const testIds = [1, 2].map(n => `00000000-1234-0000-0000-00000000000${n}`);
 
@@ -156,5 +165,56 @@ describe('getContext', () => {
 
         expect(projectRoles).toMatchObject({[proj1]: UPRO.MANAGER, [proj2]: UPRO.REVIEWER });
       });
+  });
+
+  describe('ContextUser.getVisibleDatabaseIds', () => {
+    const groupId = `00000000-1234-0000-0000-000000000000`;
+    let metaspacePubDatabase: MolecularDB,
+      groupPrvDatabase: MolecularDB,
+      groupPubDatabase: MolecularDB;
+
+    const anotherGroupId = `00000000-1234-0000-0000-000000000001`;
+    let anotherPrvDatabase: MolecularDB;
+
+    beforeEach(async () => {
+      await createTestGroup({ id: groupId });
+      metaspacePubDatabase = await createTestMolecularDB({ name: 'HMDB-v4', isPublic: true });
+      groupPrvDatabase = await createTestMolecularDB({ name: 'custom-db', isPublic: false, groupId });
+      groupPubDatabase = await createTestMolecularDB({ name: 'custom-db-pub', isPublic: true, groupId });
+
+      await createTestGroup({ id: anotherGroupId });
+      anotherPrvDatabase = await createTestMolecularDB(
+        { name: 'another-custom-db', isPublic: false, groupId: anotherGroupId }
+      );
+    });
+
+    test('Should return only public databases for anonymous user', async () => {
+      const context = getContext({ role: 'anonymous' }, testEntityManager, null as any, null as any);
+      const databaseIds = await context.user.getVisibleDatabaseIds();
+
+      expect(databaseIds.sort()).toEqual([metaspacePubDatabase.id, groupPubDatabase.id].sort());
+    });
+
+    test('Should return all databases for admin', async () => {
+      const context = getContext(
+        { id: 'abc', groupIds: [], role: 'admin' }, testEntityManager, null as any, null as any
+      );
+      const databaseIds = await context.user.getVisibleDatabaseIds();
+
+      expect(databaseIds.sort()).toEqual(
+        [metaspacePubDatabase.id, groupPrvDatabase.id, groupPubDatabase.id, anotherPrvDatabase.id].sort()
+      );
+    });
+
+    test('Should return all public and databases that belong to user group', async () => {
+      const context = getContext(
+        { id: 'abc', groupIds: [groupId], role: 'user' }, testEntityManager, null as any, null as any
+      );
+      const databaseIds = await context.user.getVisibleDatabaseIds();
+
+      expect(databaseIds.sort()).toEqual(
+        [metaspacePubDatabase.id, groupPrvDatabase.id, groupPubDatabase.id].sort()
+      );
+    });
   });
 });

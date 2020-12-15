@@ -31,6 +31,15 @@ module.exports = {
   },
 
   configureWebpack: (config) => {
+    const svgRules = config.module.rules.find(_ => _.test.toString().includes('svg'))
+    svgRules.oneOf.unshift({
+      use: [
+        { loader: 'babel-loader' },
+        { loader: 'vue-svg-loader' }
+      ],
+      include: /(assets\/inline)/
+    })
+
     config.module.rules.push({
       test: /\.md$/,
       use: ['frontmatter-markdown-loader'],

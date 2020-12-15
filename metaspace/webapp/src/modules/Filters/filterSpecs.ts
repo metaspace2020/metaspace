@@ -1,9 +1,9 @@
-import { renderMolFormula } from '../../lib/util'
 import InputFilter from './filter-components/InputFilter.vue'
 import SingleSelectFilter from './filter-components/SingleSelectFilter.vue'
 import SearchableFilter from './filter-components/SearchableFilter.vue'
 import OffSampleHelp from './filter-components/OffSampleHelp.vue'
 import MzFilter from './filter-components/MzFilter.vue'
+import MSMFilter from './filter-components/MSMFilter.vue'
 import SearchBox from './filter-components/SearchBox.vue'
 import { metadataTypes, defaultMetadataType } from '../../lib/metadataRegistry'
 import { Component } from 'vue'
@@ -11,6 +11,7 @@ import SimpleFilterBox from './filter-components/SimpleFilterBox.vue'
 import BooleanFilter from './filter-components/BooleanFilter.vue'
 import config from '../../lib/config'
 import AdductFilter from './filter-components/AdductFilter.vue'
+import DatabaseFilter from './filter-components/DatabaseFilter.vue'
 
 function formatFDR(fdr: number) {
   return fdr ? Math.round(fdr * 100) + '%' : ''
@@ -66,6 +67,7 @@ export interface FilterSpecification {
   removable?: boolean;
   filterable?: boolean;
   multiple?: boolean;
+  clearable?: boolean;
   hidden?: boolean | (() => boolean);
   debounce?: boolean;
   /** How to encode/decode this filter from the URL */
@@ -82,30 +84,29 @@ export interface FilterSpecification {
   dependsOnFilters?: FilterKey[];
   /** List of other filters whose addition should cause this filter to be removed */
   conflictsWithFilters?: FilterKey[];
+  convertValueForComponent?: (value: any) => any
 }
 
 /** Attrs to pass to the component that will render the filter */
 export const FILTER_COMPONENT_PROPS: (keyof FilterSpecification)[] = [
   'name', 'helpComponent',
-  'removable', 'filterable', 'multiple',
+  'removable', 'filterable', 'multiple', 'clearable',
   'optionFormatter', 'valueGetter',
   'debounce',
 ]
 
 export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
   database: {
-    type: SingleSelectFilter,
+    type: DatabaseFilter,
     name: 'Database',
     description: 'Select database',
     levels: ['annotation'],
     defaultInLevels: ['annotation'],
-    initialValue: lists => lists.molecularDatabases
-      .filter(d => d.default)
-      .map(d => d.name)[0],
-    options: lists => lists.molecularDatabases
-      .filter(d => config.features.all_dbs || !d.hidden)
-      .map(d => d.name),
-    removable: false,
+    initialValue: lists =>
+      lists.molecularDatabases
+        .filter(d => d.default)[0]?.id,
+    encoding: 'number',
+    convertValueForComponent: (v) => v?.toString(),
   },
 
   datasetIds: {
@@ -119,11 +120,12 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
   },
 
   minMSM: {
-    type: InputFilter,
+    type: MSMFilter,
     name: 'Min. MSM',
     description: 'Set minimum MSM score',
     levels: ['annotation'],
     initialValue: 0.0,
+    encoding: 'number',
   },
 
   compoundName: {
@@ -167,6 +169,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     description: 'Search by m/z',
     levels: ['annotation'],
     initialValue: 0,
+    encoding: 'number',
   },
 
   fdrLevel: {

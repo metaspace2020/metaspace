@@ -1,106 +1,235 @@
 import logging
 from io import StringIO
+from typing import List, Iterable
+from datetime import datetime
 
 import pandas as pd
+from pyMSpec.pyisocalc.canopy.sum_formula_actions import InvalidFormulaError
 from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
-from sm.engine.db import DB
+
+from sm.engine.db import DB, transaction_context
 from sm.engine.errors import SMError
 
 logger = logging.getLogger('engine')
 
 
-def filter_formulas(mol_db_df):
-    def is_valid(formula):
-        try:
-            if '.' in formula:
-                logger.warning('"." in formula {}, skipping'.format(formula))
-                return False
-            parseSumFormula(formula)
-        except Exception as e:
-            logger.warning(e)
-            return False
-        else:
-            return True
-
-    formulas = pd.Series(mol_db_df['formula'].unique())
-    valid_formulas = set(formulas[formulas.map(is_valid)])
-    return mol_db_df[mol_db_df.formula.isin(valid_formulas)].copy()
+class MalformedCSV(SMError):
+    def __init__(self, message):
+        super().__init__(message)
+        self.message = message
 
 
-def import_molecules_from_df(moldb, moldb_df):
-    if moldb_df.empty:
-        raise Exception(f'Empty dataframe: {moldb_df}')
-
-    logger.info(f'{moldb}: trying to import {len(moldb_df)} molecules')
-    required_columns = {'id', 'name', 'formula'}
-    if not required_columns.issubset(set(moldb_df.columns)):
-        raise Exception(
-            f'Not all required columns provided: {moldb_df.columns} <= {required_columns}'
-        )
-
-    new_moldb_df = filter_formulas(moldb_df)[['id', 'name', 'formula']]
-    new_moldb_df.rename({'id': 'mol_id', 'name': 'mol_name'}, axis='columns', inplace=True)
-    new_moldb_df['moldb_id'] = int(moldb.id)
-
-    columns = ['moldb_id', 'mol_id', 'mol_name', 'formula']
-    buffer = StringIO()
-    new_moldb_df[columns].to_csv(buffer, sep='\t', index=False, header=False)
-    buffer.seek(0)
-    DB().copy(buffer, sep='\t', table='molecule', columns=columns)
-    logger.info(f'{moldb}: inserted {len(new_moldb_df)} molecules')
-
-
-def create(name, version):
-    # pylint: disable=unbalanced-tuple-unpacking
-    (moldb_id,) = DB().insert_return(
-        "INSERT INTO molecular_db (name, version, public) values (%s, %s, true) RETURNING id",
-        rows=[(name, version)],
-    )
-    return MolecularDB(id=moldb_id)
+class BadData(SMError):
+    def __init__(self, message, *errors):
+        super().__init__(message)
+        self.message = message
+        self.errors = errors
 
 
 class MolecularDB:
     """Represents a molecular database to search against."""
 
-    MOLDB_SEL_BY_ID = 'SELECT id, name, version FROM molecular_db WHERE id = %s'
-    MOLDB_SEL_BY_NAME = 'SELECT id, name, version FROM molecular_db WHERE name = %s'
-    MOLECULES_SEL_BY_DB = 'SELECT mol_id, mol_name, formula FROM molecule m WHERE m.moldb_id = %s'
-    FORMULAS_SEL_BY_DB = 'SELECT DISTINCT formula FROM molecule m WHERE m.moldb_id = %s'
-
     # pylint: disable=redefined-builtin
-    def __init__(self, id=None, name=None):
-        """
-        Args:
-            id (int): Database id
-            name (str): Database name
-        """
-        assert id is not None or name is not None, 'Either id or name should be provided'
-
-        self._db = DB()
-        if id is not None:
-            data = self._db.select_one_with_fields(self.MOLDB_SEL_BY_ID, params=(id,))
-        else:
-            data = self._db.select_one_with_fields(self.MOLDB_SEL_BY_NAME, params=(name,))
-
-        if data:
-            self.id, self.name, self.version = data['id'], data['name'], data['version']
-        else:
-            raise SMError(f'MolecularDB not found: {id}, {name}')
+    def __init__(
+        self,
+        id: int = None,
+        name: str = None,
+        version: str = None,
+        targeted: bool = None,
+        group_id: str = None,
+    ):
+        self.id = id
+        self.name = name
+        self.version = version
+        self.targeted = targeted
+        self.group_id = group_id
 
     def __repr__(self):
         return '<{}:{}>'.format(self.name, self.version)
 
-    def get_molecules(self):
-        """Fetches all molecular database molecules as a DataFrame.
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'version': self.version,
+            'group_id': self.group_id,
+        }
 
-        Returns:
-            pd.DataFrame
-        """
-        res = self._db.select_with_fields(self.MOLECULES_SEL_BY_DB, (self.id,))
-        return pd.DataFrame(res)
 
-    @property
-    def formulas(self):
-        """List[str]: List of molecular database formulas fetched from the database."""
-        res = self._db.select(self.FORMULAS_SEL_BY_DB, (self.id,))
-        return [row[0] for row in res]
+def _validate_moldb_df(df):
+    errors = []
+    for idx, row in df.iterrows():
+        line_n = idx + 2
+        for col in df.columns:
+            if not row[col] or row[col].isspace():
+                errors.append({'line': line_n, 'row': row.values.tolist(), 'error': 'Empty value'})
+
+        try:
+            if '.' in row.formula:
+                raise InvalidFormulaError('"." symbol not supported')
+            parseSumFormula(row.formula)
+        except Exception as e:
+            errors.append({'line': line_n, 'row': row.values.tolist(), 'error': repr(e)})
+
+    errors.sort(key=lambda d: d['line'])
+    return errors
+
+
+def _import_molecules_from_file(moldb, file_path, targeted_threshold):
+    try:
+        moldb_df = pd.read_csv(file_path, sep='\t', dtype=object, na_filter=False)
+    except ValueError as e:
+        raise MalformedCSV(f'Malformed CSV: {e}')
+
+    if moldb_df.empty:
+        raise MalformedCSV('No data rows found')
+
+    required_columns = {'id', 'name', 'formula'}
+    if not required_columns.issubset(set(moldb_df.columns)):
+        raise MalformedCSV(
+            f'Missing columns. Provided: {moldb_df.columns.to_list()} Required: {required_columns}'
+        )
+
+    logger.info(f'{moldb}: importing {len(moldb_df)} molecules')
+    parsing_errors = _validate_moldb_df(moldb_df)
+    if parsing_errors:
+        raise BadData('Failed to parse some rows', *parsing_errors)
+
+    moldb_df.rename({'id': 'mol_id', 'name': 'mol_name'}, axis='columns', inplace=True)
+    moldb_df['moldb_id'] = int(moldb.id)
+
+    columns = ['moldb_id', 'mol_id', 'mol_name', 'formula']
+    buffer = StringIO()
+    moldb_df[columns].to_csv(buffer, sep='\t', index=False, header=False)
+    buffer.seek(0)
+    DB().copy(buffer, sep='\t', table='molecule', columns=columns)
+    logger.info(f'{moldb}: inserted {len(moldb_df)} molecules')
+
+    targeted = moldb_df.formula.unique().shape[0] <= targeted_threshold
+    DB().alter('UPDATE molecular_db SET targeted = %s WHERE id = %s', params=(targeted, moldb.id))
+
+
+def create(
+    name: str = None,
+    version: str = None,
+    file_path: str = None,
+    group_id: str = None,
+    is_public: bool = True,
+    description: str = None,
+    full_name: str = None,
+    link: str = None,
+    citation: str = None,
+) -> MolecularDB:
+    with transaction_context():
+        moldb_insert = (
+            'INSERT INTO molecular_db '
+            '   (name, version, created_dt, group_id, is_public, '
+            '   description, full_name, link, citation) '
+            'values (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id'
+        )
+        # pylint: disable=unbalanced-tuple-unpacking
+        (moldb_id,) = DB().insert_return(
+            moldb_insert,
+            rows=[
+                (
+                    name,
+                    version,
+                    datetime.now(),
+                    group_id,
+                    is_public,
+                    description,
+                    full_name,
+                    link,
+                    citation,
+                )
+            ],
+        )
+        moldb = find_by_id(moldb_id)
+        _import_molecules_from_file(moldb, file_path, targeted_threshold=1000)
+        return moldb
+
+
+def delete(moldb_id: int):
+    DB().alter('DELETE FROM molecular_db WHERE id = %s', params=(moldb_id,))
+
+
+# pylint: disable=unused-argument
+def update(
+    moldb_id: int,
+    archived: bool = None,
+    is_public: bool = None,
+    description: str = None,
+    full_name: str = None,
+    link: str = None,
+    citation: str = None,
+) -> MolecularDB:
+    kwargs = {k: v for k, v in locals().items() if v is not None}
+    kwargs.pop('moldb_id')
+
+    if kwargs:
+        update_fields = [f'{field} = %s' for field in kwargs.keys()]
+        update_values = list(kwargs.values())
+
+        moldb_update = 'UPDATE molecular_db SET {} WHERE id = %s'.format(', '.join(update_fields))
+        DB().alter(moldb_update, params=[*update_values, moldb_id])
+
+    return find_by_id(moldb_id)
+
+
+# pylint: disable=redefined-builtin
+def find_by_id(id: int) -> MolecularDB:
+    """Find database by id."""
+
+    data = DB().select_one_with_fields(
+        'SELECT id, name, version, targeted, group_id FROM molecular_db WHERE id = %s', params=(id,)
+    )
+    if not data:
+        raise SMError(f'MolecularDB not found: {id}')
+    return MolecularDB(**data)
+
+
+def find_by_ids(ids: Iterable[int]) -> List[MolecularDB]:
+    """Find multiple databases by ids."""
+
+    data = DB().select_with_fields(
+        'SELECT id, name, version, targeted, group_id FROM molecular_db WHERE id = ANY (%s)',
+        params=(list(ids),),
+    )
+    return [MolecularDB(**row) for row in data]
+
+
+def find_by_name(name: str) -> MolecularDB:
+    """Find database by name."""
+
+    data = DB().select_one_with_fields(
+        'SELECT id, name, version, targeted, group_id FROM molecular_db WHERE name = %s',
+        params=(name,),
+    )
+    if not data:
+        raise SMError(f'MolecularDB not found: {name}')
+    return MolecularDB(**data)
+
+
+def find_default() -> List[MolecularDB]:
+    data = DB().select_with_fields(
+        'SELECT id, name, version, targeted, group_id FROM molecular_db WHERE "default" = TRUE',
+    )
+    return [MolecularDB(**row) for row in data]
+
+
+def fetch_molecules(moldb_id: int) -> pd.DataFrame:
+    """Fetch all database molecules as a DataFrame."""
+
+    data = DB().select_with_fields(
+        'SELECT mol_id, mol_name, formula FROM molecule m WHERE m.moldb_id = %s', params=(moldb_id,)
+    )
+    return pd.DataFrame(data)
+
+
+def fetch_formulas(moldb_id: int) -> List[str]:
+    """Fetch all unique database formulas."""
+
+    data = DB().select(
+        'SELECT DISTINCT formula FROM molecule m WHERE m.moldb_id = %s', params=(moldb_id,)
+    )
+    return [row[0] for row in data]

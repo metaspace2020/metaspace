@@ -1,208 +1,32 @@
 import argparse
-import json
 import logging
 
-from bottle import post, run, get
-from bottle import request as req
-from bottle import response as resp
+import bottle
 
-from sm.engine.db import DB
-from sm.engine.es_export import ESExporter
-from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_DS_STATUS, SM_UPDATE
-from sm.engine.util import SMConfig, bootstrap_and_run
-from sm.engine.errors import UnknownDSID, DSIsBusy
-from sm.rest.dataset_manager import SMapiDatasetManager, DatasetActionPriority
-from sm.rest import isotopic_pattern
+from sm.engine.util import GlobalInit
+from sm.rest import isotopic_pattern, datasets, databases
+from sm.rest.utils import make_response, OK, INTERNAL_ERROR
 
-OK = {'status_code': 200, 'status': 'success'}
+logger = logging.getLogger('api')
 
-ERR_DS_NOT_EXIST = {'status_code': 404, 'status': 'not_exist'}
-
-ERR_OBJECT_EXISTS = {'status_code': 400, 'status': 'already_exists'}
-
-ERR_DS_BUSY = {'status_code': 409, 'status': 'dataset_busy'}
-
-ERROR = {'status_code': 500, 'status': 'server_error'}
+app = bottle.Bottle()
+app.mount('/v1/datasets/', datasets.app)
+app.mount('/v1/databases/', databases.app)
 
 
-def _json_params(request):
-    body = request.body.getvalue()
-    return json.loads(body.decode('utf-8'))
+@app.get('/')
+def root():
+    return make_response(OK)
 
 
-def _create_queue_publisher(qdesc):
-    config = SMConfig.get_conf()
-    return QueuePublisher(config['rabbitmq'], qdesc, logger)
-
-
-def _create_dataset_manager(db):
-    config = SMConfig.get_conf()
-    img_store = ImageStoreServiceWrapper(config['services']['img_service_url'])
-    img_store.storage_type = 'fs'
-    return SMapiDatasetManager(
-        db=db,
-        es=ESExporter(db),
-        image_store=img_store,
-        annot_queue=_create_queue_publisher(SM_ANNOTATE),
-        update_queue=_create_queue_publisher(SM_UPDATE),
-        status_queue=_create_queue_publisher(SM_DS_STATUS),
-        logger=logger,
-    )
-
-
-def sm_modify_dataset(request_name):
-    def _modify(handler):
-        def _func(ds_id=None):
-            try:
-                params = _json_params(req)
-                logger.info(f'Received {request_name} request: {params}')
-                ds_man = _create_dataset_manager(DB())
-                res = handler(ds_man, ds_id, params)
-
-                return {'status': OK['status'], 'ds_id': ds_id or res.get('ds_id', None)}
-            except UnknownDSID as e:
-                logger.warning(e)
-                resp.status = ERR_DS_NOT_EXIST['status_code']
-                return {'status': ERR_DS_NOT_EXIST['status'], 'ds_id': ds_id}
-            except DSIsBusy as e:
-                logger.warning(e)
-                resp.status = ERR_DS_BUSY['status_code']
-                return {'status': ERR_DS_BUSY['status'], 'ds_id': ds_id}
-            except Exception as e:
-                logger.error(e, exc_info=True)
-                resp.status = ERROR['status_code']
-                return {'status': ERROR['status'], 'ds_id': ds_id}
-
-        return _func
-
-    return _modify
-
-
-@post('/v1/datasets/<ds_id>/add')
-@post('/v1/datasets/add')
-@sm_modify_dataset('ADD')
-def add_ds(ds_man, ds_id=None, params=None):
-    """
-    :param ds_man: rest.SMapiDatasetManager
-    :param ds_id: string
-    :param params: {
-        doc {
-            name
-            input_path
-            upload_dt
-            metadata
-            is_public
-            (ds_config keys from sm.engine.dataset.FLAT_DS_CONFIG_KEYS)
-        }
-        priority
-        force
-        del_first
-        email
-    }
-    """
-    logger.info(f'Received ADD request: {params}')
-    doc = params.get('doc', None)
-    if not doc:
-        msg = 'No input to create a dataset'
-        logger.info(msg)
-        raise Exception(msg)
-
-    if ds_id:
-        doc['id'] = ds_id
-    ds_id = ds_man.add(
-        doc=doc,
-        del_first=params.get('del_first', False),
-        force=params.get('force', False),
-        email=params.get('email', None),
-        priority=params.get('priority', DatasetActionPriority.DEFAULT),
-    )
-    return {'ds_id': ds_id}
-
-
-@post('/v1/datasets/<ds_id>/update')
-@sm_modify_dataset('UPDATE')
-def update_ds(ds_man, ds_id, params):
-    """
-    :param ds_man: rest.SMapiDatasetManager
-    :param ds_id: string
-    :param params: {
-        doc {
-            name
-            input_path
-            upload_dt
-            metadata
-            config
-            is_public
-            submitter_id
-            group_id
-            project_ids
-        }
-    }
-    :return:
-    """
-    doc = params.get('doc', None)
-    force = params.get('force', False)
-    if not doc and not force:
-        logger.info(f'Nothing to update for "{ds_id}"')
-    else:
-        priority = params.get('priority', DatasetActionPriority.STANDARD)
-        ds_man.update(ds_id=ds_id, doc=doc, force=force, priority=priority)
-
-
-@post('/v1/datasets/<ds_id>/delete')
-@sm_modify_dataset('DELETE')
-def delete_ds(ds_man, ds_id, params):
-    """
-    :param ds_man: rest.SMapiDatasetManager
-    :param ds_id: string
-    :param params: {
-        del_raw
-        force
-    }
-    :return:
-    """
-    del_raw = params.get('del_raw', False)
-    force = params.get('force', False)
-    ds_man.delete(ds_id=ds_id, del_raw_data=del_raw, force=force)
-
-
-@post('/v1/datasets/<ds_id>/add-optical-image')
-@sm_modify_dataset('ADD_OPTICAL_IMAGE')
-def add_optical_image(ds_man, ds_id, params):
-    """
-    :param ds_man: rest.SMapiDatasetManager
-    :param ds_id: string
-    :param params: {
-        url
-        transform
-    }
-    :return:
-    """
-    img_id = params['url'].split('/')[-1]
-    ds_man.add_optical_image(ds_id, img_id, params['transform'])
-
-
-@post('/v1/datasets/<ds_id>/del-optical-image')
-@sm_modify_dataset('DEL_OPTICAL_IMAGE')
-def del_optical_image(ds_man, ds_id, params):  # pylint: disable=unused-argument
-    """
-    :param ds_man: rest.SMapiDatasetManager
-    :param ds_id: string
-    :param params: {}
-    :return:
-    """
-    ds_man.del_optical_image(ds_id)
-
-
-@get('/v1/isotopic_patterns/<ion>/<instr>/<res_power>/<at_mz>/<charge>')
+@app.get('/v1/isotopic_patterns/<ion>/<instr>/<res_power>/<at_mz>/<charge>')
 def generate(ion, instr, res_power, at_mz, charge):
     try:
         pattern = isotopic_pattern.generate(ion, instr, res_power, at_mz, charge)
-        return {'status': OK['status'], 'data': pattern}
+        return make_response(OK, data=pattern)
     except Exception as e:
         logger.warning(f'({ion}, {instr}, {res_power}, {at_mz}, {charge}) - {e}')
-        return {'status': ERROR['status']}
+        return make_response(INTERNAL_ERROR)
 
 
 if __name__ == '__main__':
@@ -211,10 +35,8 @@ if __name__ == '__main__':
         '--config', dest='config_path', default='conf/config.json', type=str, help='SM config path'
     )
     args = parser.parse_args()
-    logger = logging.getLogger('api')
 
-    def run_bottle(sm_config):
+    with GlobalInit(args.config_path) as sm_config:
+        datasets.init(sm_config)
         logger.info('Starting SM api')
-        run(**sm_config['bottle'])
-
-    bootstrap_and_run(args.config_path, run_bottle)
+        app.run(**sm_config['bottle'])

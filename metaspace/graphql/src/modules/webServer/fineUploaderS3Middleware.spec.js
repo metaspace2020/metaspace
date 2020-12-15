@@ -4,7 +4,7 @@ jest.mock('../../utils/config', () => {
       aws: {
         aws_secret_access_key: 'aws-secret-access-key',
       },
-      dataset_upload: {
+      upload: {
         bucket: 's3-upload-bucket',
       },
     },

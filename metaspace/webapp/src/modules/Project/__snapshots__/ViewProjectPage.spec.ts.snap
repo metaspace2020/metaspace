@@ -525,11 +525,8 @@ exports[`ViewProjectPage publishing tab should match snapshot (published) 1`] = 
         <!---->
         <div role="tabpanel" id="pane-publishing" aria-labelledby="tab-publishing" class="el-tab-pane tab-with-badge sm-publishing-tab">
           <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
-            <div class="leading-6 text-center mt-12"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-6 w-6 block w-8 h-8 p-2 rounded-full bg-blue-100 mx-auto">
-                <circle cx="12" cy="12" r="10" class="fill-current text-blue-800"></circle>
-                <path d="M2.05 11A10 10 0 0 1 15 2.46V6a2 2 0 0 1-2 2h-1v1a2 2 0 0 1-1 1.73V12h2a2 2 0 0 1 2 2v1h2a2 2 0 0 1 2 2v2.14A9.97 9.97 0 0 1 12 22v-4h-1a2 2 0 0 1-2-2v-2a2 2 0 0 1-2-2v-1H2.05z" class="fill-current text-blue-300"></path>
-              </svg>
-              <h2 class="leading-10 py-1 m-0">Project is published</h2>
+            <div class="leading-6 text-center mt-12"><svg data-icon="globe" class="sm-colour-icon sm-colour-icon--large mx-auto"></svg>
+              <h2 class="leading-12 m-0">Project is published</h2>
               <p class="m-0">The project and its datasets are now public.<br>Thank you for your contribution.</p>
             </div>
           </transition-stub>
@@ -790,8 +787,8 @@ exports[`ViewProjectPage settings tab should disable actions when published 1`] 
             <div class="mt-6 mb-12">
               <form action="#" class="sm-form">
                 <h2>Project Details</h2>
-                <form class="el-form mt-3 el-form--label-top">
-                  <div><label class="leading-6"><span class="font-medium">Title</span>
+                <form class="el-form leading-6 mt-3 mb-6 v-rhythm-6 el-form--label-top">
+                  <div><label><span class="text-base font-medium">Title</span>
                       <div class="py-1 el-input">
                         <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
                         <!---->
@@ -799,15 +796,15 @@ exports[`ViewProjectPage settings tab should disable actions when published 1`] 
                         <!---->
                         <!---->
                       </div></label></div>
-                  <div class="el-form-item my-3">
-                    <!---->
-                    <div class="el-form-item__content"><label class="el-checkbox is-disabled"><span class="el-checkbox__input is-disabled"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" disabled="disabled" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-      Published projects must be visible
-    <!----></span></label>
-                      <transition-stub name="el-zoom-in-top">
-                        <!---->
-                      </transition-stub>
+                  <div><label><span class="text-base font-medium">Privacy</span> <span class="block text-sm text-gray-800">
+        Visibility of the project only, does not apply to included datasets
+      </span></label>
+                    <div class="h-10 flex items-center">
+                      <div role="switch" aria-disabled="true" class="el-switch is-disabled"><input type="checkbox" name="" true-value="true" disabled="disabled" class="el-switch__input"><span class="el-switch__label el-switch__label--left is-active"><!----><span>Private</span></span><span class="el-switch__core" style="width: 40px;"></span><span class="el-switch__label el-switch__label--right"><!----><span aria-hidden="true">Public</span></span></div>
                     </div>
+                    <p class="m-0 italic text-sm text-gray-700">
+                      published projects are always visible
+                    </p>
                   </div>
                 </form>
                 <div><label for="project-settings-short-link"><span class="text-base font-medium">Short link</span><span class="block text-sm text-gray-800">Must be unique, min. 4 characters, using a–z, 0–9, hyphen or underscore</span></label>
@@ -891,8 +888,8 @@ exports[`ViewProjectPage settings tab should disable actions when under review 1
             <div class="mt-6 mb-12">
               <form action="#" class="sm-form">
                 <h2>Project Details</h2>
-                <form class="el-form mt-3 el-form--label-top">
-                  <div><label class="leading-6"><span class="font-medium">Title</span>
+                <form class="el-form leading-6 mt-3 mb-6 v-rhythm-6 el-form--label-top">
+                  <div><label><span class="text-base font-medium">Title</span>
                       <div class="py-1 el-input">
                         <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
                         <!---->
@@ -900,15 +897,13 @@ exports[`ViewProjectPage settings tab should disable actions when under review 1
                         <!---->
                         <!---->
                       </div></label></div>
-                  <div class="el-form-item my-3">
-                    <!---->
-                    <div class="el-form-item__content"><label class="el-checkbox"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-      Allow other users to see this project
-    <!----></span></label>
-                      <transition-stub name="el-zoom-in-top">
-                        <!---->
-                      </transition-stub>
+                  <div><label><span class="text-base font-medium">Privacy</span> <span class="block text-sm text-gray-800">
+        Visibility of the project only, does not apply to included datasets
+      </span></label>
+                    <div class="h-10 flex items-center">
+                      <div role="switch" class="el-switch"><input type="checkbox" name="" true-value="true" class="el-switch__input"><span class="el-switch__label el-switch__label--left is-active"><!----><span>Private</span></span><span class="el-switch__core" style="width: 40px;"></span><span class="el-switch__label el-switch__label--right"><!----><span aria-hidden="true">Public</span></span></div>
                     </div>
+                    <!---->
                   </div>
                 </form>
                 <div><label for="project-settings-short-link"><span class="text-base font-medium">Short link</span><span class="block text-sm text-gray-800">Must be unique, min. 4 characters, using a–z, 0–9, hyphen or underscore</span></label>
@@ -987,8 +982,8 @@ exports[`ViewProjectPage settings tab should match snapshot 1`] = `
             <div class="mt-6 mb-12">
               <form action="#" class="sm-form">
                 <h2>Project Details</h2>
-                <form class="el-form mt-3 el-form--label-top">
-                  <div><label class="leading-6"><span class="font-medium">Title</span>
+                <form class="el-form leading-6 mt-3 mb-6 v-rhythm-6 el-form--label-top">
+                  <div><label><span class="text-base font-medium">Title</span>
                       <div class="py-1 el-input">
                         <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
                         <!---->
@@ -996,15 +991,13 @@ exports[`ViewProjectPage settings tab should match snapshot 1`] = `
                         <!---->
                         <!---->
                       </div></label></div>
-                  <div class="el-form-item my-3">
-                    <!---->
-                    <div class="el-form-item__content"><label class="el-checkbox"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-      Allow other users to see this project
-    <!----></span></label>
-                      <transition-stub name="el-zoom-in-top">
-                        <!---->
-                      </transition-stub>
+                  <div><label><span class="text-base font-medium">Privacy</span> <span class="block text-sm text-gray-800">
+        Visibility of the project only, does not apply to included datasets
+      </span></label>
+                    <div class="h-10 flex items-center">
+                      <div role="switch" class="el-switch"><input type="checkbox" name="" true-value="true" class="el-switch__input"><span class="el-switch__label el-switch__label--left is-active"><!----><span>Private</span></span><span class="el-switch__core" style="width: 40px;"></span><span class="el-switch__label el-switch__label--right"><!----><span aria-hidden="true">Public</span></span></div>
                     </div>
+                    <!---->
                   </div>
                 </form>
                 <div><label for="project-settings-short-link"><span class="text-base font-medium">Short link</span><span class="block text-sm text-gray-800">Must be unique, min. 4 characters, using a–z, 0–9, hyphen or underscore</span></label>

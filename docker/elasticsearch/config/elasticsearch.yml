@@ -21,3 +21,6 @@ http.cors.allow-origin: "*"
 http.cors.enabled: true
 http.cors.allow-headers : X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization
 http.cors.allow-credentials: true
+
+path.home: "/usr/share/elasticsearch/data"
+path.repo: "/usr/share/elasticsearch/data/snapshots"

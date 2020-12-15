@@ -24,7 +24,8 @@ type Dataset {
   # https://github.com/metaspace2020/metaspace/tree/master/metaspace/metadata
   metadataJson: String!
   isPublic: Boolean!
-  molDBs: [String!]!
+  databases: [MolecularDB!]!
+  molDBs: [String!]!  # @deprecated(reason: "Use \"databases\" instead")
   adducts: [String!]!
   neutralLosses: [String!]!
   chemMods: [String!]!
@@ -37,8 +38,8 @@ type Dataset {
   uploadDateTime: String
   fdrCounts(inpFdrLvls: [Int!]! = [10], checkLvl: Int! = 10): FdrCounts
 
-  opticalImage: String @deprecated(reason: "Use Dataset.opticalImages instead")
-  rawOpticalImageUrl: String @deprecated(reason: "Use Dataset.opticalImages instead")
+  opticalImage: String  # @deprecated(reason: "Use Dataset.opticalImages instead")
+  rawOpticalImageUrl: String  # @deprecated(reason: "Use Dataset.opticalImages instead")
 
   opticalImages(type: OpticalImageType): [OpticalImage!]!
   opticalImageTransform: [[Float!]!]
@@ -56,7 +57,9 @@ type Dataset {
 }
 
 type FdrCounts {
+  databaseId: Int!
   dbName: String!
+  dbVersion: String!
   levels: [Float!]!
   counts: [Float!]!
 }
@@ -78,16 +81,16 @@ type DatasetGroup {
   id: ID!
   name: String!
   shortName: String!
-  urlSlug: String @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
-  members: [UserGroup!] @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
+  urlSlug: String  # @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
+  members: [UserGroup!]  # @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
   adminNames: [String!]
 }
 type DatasetProject {
   id: ID!
   name: String!
   publicationStatus: String!
-  isPublic: Boolean @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
-  urlSlug: String @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
+  isPublic: Boolean  # @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
+  urlSlug: String  # @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
 }
 
 enum DatasetOrderBy {
@@ -163,7 +166,8 @@ input DatasetCreateInput {
   inputPath: String!
   uploadDT: String
   metadataJson: String!
-  molDBs: [String!]!
+  databaseIds: [Int!]
+  molDBs: [String!]  # @deprecated(reason: "This field will be removed. Use \"databaseIds\" instead.")
   adducts: [String!]!
   neutralLosses: [String!]
   chemMods: [String!]
@@ -172,7 +176,7 @@ input DatasetCreateInput {
   decoySampleSize: Int
   analysisVersion: Int
 
-  submitterId: ID!
+  submitterId: ID!  # Only for admins
   groupId: ID
   projectIds: [ID!] = []
   principalInvestigator: PersonInput
@@ -184,7 +188,8 @@ input DatasetUpdateInput {
   name: String
   uploadDT: String
   metadataJson: String
-  molDBs: [String!]
+  databaseIds: [Int!]
+  molDBs: [String!]  # @deprecated(reason: "This field will be removed. Use \"databaseIds\" instead.")
   adducts: [String!]
   neutralLosses: [String!]
   chemMods: [String!]
@@ -282,24 +287,23 @@ type Query {
 
   opticalImageUrl(datasetId: String!, zoom: Float = 1): String
 
-  rawOpticalImage(datasetId: String!): RawOpticalImage @deprecated(reason: "Use Dataset.opticalImages instead")
+  rawOpticalImage(datasetId: String!): RawOpticalImage  # @deprecated(reason: "Use Dataset.opticalImages instead")
 
-  thumbnailImage(datasetId: String!): String @deprecated(reason: "Use Dataset.thumbnailOpticalImageUrl instead")
+  thumbnailImage(datasetId: String!): String  # @deprecated(reason: "Use Dataset.thumbnailOpticalImageUrl instead")
 
-  thumbnailOpticalImageUrl(datasetId: String!): String @deprecated(reason: "Use Dataset.thumbnailOpticalImageUrl instead")
+  thumbnailOpticalImageUrl(datasetId: String!): String  # @deprecated(reason: "Use Dataset.thumbnailOpticalImageUrl instead")
 
   currentUserLastSubmittedDataset: Dataset
 }
 
 type Mutation {
-  createDataset(id: String, input: DatasetCreateInput!,
-        priority: Int=0): String!
+  createDataset(id: String, input: DatasetCreateInput!, priority: Int=0): String!
 
   # Throws errors of types: "under_review_or_published", "reprocessing_needed", "failed_validation"
   updateDataset(id: String!, input: DatasetUpdateInput!,
-        reprocess: Boolean=false, delFirst: Boolean=false,
-        skipValidation: Boolean=false, # ignored for non-admins
-        force: Boolean=false, priority: Int=0): String!
+    reprocess: Boolean=false, delFirst: Boolean=false,
+    skipValidation: Boolean=false, # ignored for non-admins
+    force: Boolean=false, priority: Int=0): String!
 
   # Throws errors of types: "under_review_or_published"
   deleteDataset(id: String!, force: Boolean=false, priority: Int=0): String!

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 wait_for() {
   if ! $1; then
@@ -18,7 +18,9 @@ if [ "$SM_DOCKER_ENV" = "development" ]; then
   export NODE_ENV=development
   cd /opt/dev/metaspace/metaspace/graphql
   yarn install
+  npm rebuild bcrypt # Ensure the musl version is installed
   yarn run deref-schema
+  yarn run gen-binding
   nodemon -e graphql -q --exec "yarn run gen-binding" &
   # exec nodemon -e js,json,ts --require ts-node/register server.js
   exec yarn exec ts-node-dev -- --respawn server.js

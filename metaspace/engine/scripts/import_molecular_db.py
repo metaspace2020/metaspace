@@ -1,10 +1,8 @@
 import argparse
 import logging
 
-import pandas as pd
-
-from sm.engine.molecular_db import create, import_molecules_from_df
-from sm.engine.util import bootstrap_and_run
+from sm.engine import molecular_db
+from sm.engine.util import GlobalInit
 
 logger = logging.getLogger('engine')
 
@@ -21,17 +19,14 @@ def main():
         help=f'Path to a database csv file. Required columns: {required_columns}. ',
     )
     parser.add_argument('--sep', dest='sep', type=str, help='CSV file fields delimiter')
-    parser.add_argument('--config', default='conf/config.json', help='SM config path')
+    parser.add_argument(
+        '--config', dest='config_path', default='conf/config.json', help='SM config path'
+    )
     parser.set_defaults(sep='\t', confirmed=False)
     args = parser.parse_args()
 
-    # pylint: disable=unused-argument
-    def import_new_database(sm_config):
-        moldb = create(args.name, args.version)
-        moldb_df = pd.read_csv(open(args.csv_file, encoding='utf8'), sep=args.sep).fillna('')
-        import_molecules_from_df(moldb, moldb_df)
-
-    bootstrap_and_run(args.config, import_new_database)
+    with GlobalInit(args.config_path):
+        molecular_db.create(args.name, args.version, args.csv_file)
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@
     "host": "localhost",
     "database": "sm_test",
     "user": "sm",
-    "password": "securepassword"
+    "password": "password"
   },
   "elasticsearch": {
     "index": "sm_test",
@@ -41,7 +41,7 @@
   "aws": {
     "aws_access_key_id": "",
     "aws_secret_access_key": "",
-    "aws_region": "eu-west-1"
+    "aws_default_region": "eu-west-1"
   },
   "slack": {},
   "ms_file_handlers": [{
@@ -106,8 +106,7 @@
     "adducts": {
       "+": ["+H", "+Na", "+K"],
       "-": ["-H", "+Cl" ]
-    },
-    "moldb_names": ["HMDB-v4"]
+    }
   },
   "colocalization": {
     "enabled": true

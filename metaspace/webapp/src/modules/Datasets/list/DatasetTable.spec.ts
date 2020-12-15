@@ -1,4 +1,4 @@
-import { mount, config as testConfig } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
 import DatasetTable from './DatasetTable.vue'
 import router from '../../../router'
 import { initMockGraphqlClient, apolloProvider } from '../../../../tests/utils/mockGraphqlClient'
@@ -8,6 +8,7 @@ import Vuex from 'vuex'
 import { sync } from 'vuex-router-sync'
 import * as FileSaver from 'file-saver'
 import { merge } from 'lodash-es'
+import { mockGenerateId, resetGenerateId } from '../../../../tests/utils/mockGenerateId'
 jest.mock('file-saver')
 const mockFileSaver = FileSaver as jest.Mocked<typeof FileSaver>
 
@@ -29,7 +30,9 @@ describe('DatasetTable', () => {
     },
   })
   const mockFdrCounts = {
-    dbName: 'HMDB-v2.5',
+    databaseId: 6,
+    dbName: 'HMDB',
+    dbVersion: 'v2.5',
     levels: [10],
     counts: [20],
   }
@@ -37,7 +40,11 @@ describe('DatasetTable', () => {
     id: 'REPLACEME',
     status: 'FINISHED',
     metadataJson: mockMetadataJson,
-    molDBs: ['HMDB-v2.5', 'HMDB-v4', 'CHEBI'],
+    databases: [
+      { name: 'CHEBI', version: '', id: 2 },
+      { name: 'HMDB', version: 'v2.5', id: 6 },
+      { name: 'HMDB', version: 'v4', id: 22 },
+    ],
     polarity: 'POSITIVE',
     fdrCounts: mockFdrCounts,
     groupApproved: true,
@@ -45,9 +52,11 @@ describe('DatasetTable', () => {
 
   afterEach(() => {
     jest.useRealTimers()
+    resetGenerateId()
   })
 
   it('should match snapshot', async() => {
+    mockGenerateId(123)
     initMockGraphqlClient({
       Query: () => ({
         allDatasets: () => {
@@ -66,10 +75,10 @@ describe('DatasetTable', () => {
         }),
       }),
     })
-    const wrapper = mount(DatasetTable, { store, router, apolloProvider })
+    const wrapper = mount(DatasetTable, { parentComponent: { store, router }, apolloProvider })
     await Vue.nextTick()
 
-    expect(wrapper).toMatchSnapshot()
+    expect(wrapper.element).toMatchSnapshot()
   })
 
   it('should be able to export a CSV', async() => {
@@ -95,7 +104,7 @@ describe('DatasetTable', () => {
         countDatasets: () => 4,
       }),
     })
-    const wrapper = mount(DatasetTable, { store, router, apolloProvider })
+    const wrapper = mount(DatasetTable, { parentComponent: { store, router }, apolloProvider })
     wrapper.setData({ csvChunkSize: 2 })
     await Vue.nextTick()
 

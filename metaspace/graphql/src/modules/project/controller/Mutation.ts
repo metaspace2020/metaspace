@@ -23,13 +23,14 @@ import {
   sendRequestAccessEmail,
   sentGroupOrProjectInvitationEmail,
 } from '../../groupOrProject/email';
-import { smAPIUpdateDataset } from '../../../utils/smAPI';
+import { smApiUpdateDataset } from '../../../utils/smApi/datasets';
 import { getDatasetForEditing } from '../../dataset/operation/getDatasetForEditing';
 import { utc } from 'moment';
 import generateRandomToken from '../../../utils/generateRandomToken';
 import { addExternalLink, removeExternalLink, ExternalLinkProviderOptions as ELPO } from '../ExternalLink';
 import { validateUrlSlugChange } from "../../groupOrProject/urlSlug";
 import moment = require('moment')
+import { validateTiptapJson } from '../../../utils/tiptap'
 
 const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
   const userProject = await ctx.entityManager.findOne(UserProjectModel, {
@@ -80,6 +81,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     if (projectDetails.urlSlug != null) {
       await validateUrlSlugChange(ctx.entityManager, ProjectModel, projectId, projectDetails.urlSlug)
     }
+    if (projectDetails.projectDescription != null) {
+      validateTiptapJson(projectDetails.projectDescription, 'projectDescription')
+    }
 
     await ctx.entityManager.update(ProjectModel, projectId, projectDetails);
 
@@ -87,9 +91,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       const affectedDatasets = await ctx.entityManager.find(DatasetProjectModel,
         { where: { projectId }, relations: ['dataset', 'dataset.datasetProjects'] });
       await Promise.all(affectedDatasets.map(async dp => {
-        await smAPIUpdateDataset(dp.datasetId, {
+        await smApiUpdateDataset(dp.datasetId, {
           projectIds: dp.dataset.datasetProjects.map(p => p.projectId)
-        })
+        }, {asyncEsUpdate: true})
       }));
     }
 
@@ -114,11 +118,11 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
           { where: { projectId }, relations: ['dataset', 'dataset.datasetProjects'] });
         await ctx.entityManager.delete(DatasetProjectModel, { projectId });
         await Promise.all(affectedDatasets.map(async dp => {
-          await smAPIUpdateDataset(dp.datasetId, {
+          await smApiUpdateDataset(dp.datasetId, {
             projectIds: dp.dataset.datasetProjects
               .filter(p => p.projectId !== projectId)
               .map(p => p.projectId)
-          })
+          }, {asyncEsUpdate: true})
         }));
 
         await ctx.entityManager.delete(UserProjectModel, { projectId });
@@ -263,7 +267,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
     const affectedDatasets = await ctx.entityManager.find(DatasetProjectModel, { where: { projectId } });
     await Promise.all(affectedDatasets.map(async dp => {
-      await smAPIUpdateDataset(dp.datasetId, { isPublic: true });
+      await smApiUpdateDataset(dp.datasetId, { isPublic: true }, { asyncEsUpdate: true });
     }));
 
     return await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
@@ -284,7 +288,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     if (isPublic != null) {
       const affectedDatasets = await ctx.entityManager.find(DatasetProjectModel, { where: { projectId } });
       await Promise.all(affectedDatasets.map(async dp => {
-        await smAPIUpdateDataset(dp.datasetId, { isPublic });
+        await smApiUpdateDataset(dp.datasetId, { isPublic }, { asyncEsUpdate: true });
       }));
     }
 

@@ -42,12 +42,12 @@ Object {
   ],
   "analysisVersion": 1,
   "chemMods": Array [],
+  "databaseIds": Array [
+    1,
+  ],
   "decoySampleSize": null,
   "groupId": "123",
   "isPublic": true,
-  "molDBs": Array [
-    "molecularDatabases.1.name",
-  ],
   "name": "dataset.name",
   "neutralLosses": Array [],
   "numPeaks": null,
@@ -665,8 +665,8 @@ exports[`MetadataEditor should match snapshot 1`] = `
         </mock-el-dialog>
         <mock-el-dialog append-to-body="" title="Create project" class="dialog">
           <div mock-v-loading="1">
-            <form class="el-form el-form--label-top" size="mini">
-              <div><label class="leading-6"><span class="font-medium">Title</span>
+            <form class="el-form leading-6 v-rhythm-3 el-form--label-top" size="mini">
+              <div><label><span class="text-base font-medium">Title</span>
                   <div class="py-1 el-input">
                     <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
                     <!---->
@@ -674,35 +674,29 @@ exports[`MetadataEditor should match snapshot 1`] = `
                     <!---->
                     <!---->
                   </div></label></div>
-              <div class="el-form-item my-3">
-                <!---->
-                <div class="el-form-item__content"><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-      Allow other users to see this project
-    <!----></span></label>
-                  <transition-stub name="el-zoom-in-top">
-                    <!---->
-                  </transition-stub>
+              <div><label><span class="text-base font-medium">Privacy</span> <span class="block text-sm text-gray-800">
+        Visibility of the project only, does not apply to included datasets
+      </span></label>
+                <div class="h-10 flex items-center">
+                  <div role="switch" class="el-switch"><input type="checkbox" name="" true-value="true" class="el-switch__input"><span class="el-switch__label el-switch__label--left is-active"><!----><span>Private</span></span><span class="el-switch__core" style="width: 40px;"></span><span class="el-switch__label el-switch__label--right"><!----><span aria-hidden="true">Public</span></span></div>
                 </div>
+                <!---->
               </div>
             </form>
-            <div>
+            <div class="mt-6">
               <h4 class="m-0">
                 Would you like to include previously submitted datasets?
               </h4>
               <div>
                 <div class="select-buttons"><a href="#">Select none</a> <span> | </span> <a href="#">Select all</a></div>
                 <div class="dataset-checkbox-list leading-6 proportional-nums">
-                  <div><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-        allDatasets.0.name
-        <span class="text-gray-700">
-          (submitted <mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time>)
-        </span>
+                  <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.0.name" class="truncate">
+          allDatasets.0.name
+        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time></span>
                       <!----></span></label></div>
-                  <div><label class="el-checkbox is-checked"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">
-        allDatasets.1.name
-        <span class="text-gray-700">
-          (submitted <mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time>)
-        </span>
+                  <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.1.name" class="truncate">
+          allDatasets.1.name
+        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time></span>
                       <!----></span></label></div>
                 </div>
               </div>
@@ -714,7 +708,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
       </span></button> <button type="button" class="el-button el-button--primary">
                 <!---->
                 <!----><span>
-        Create project and include 2 datasets
+        Create project
       </span></button></div>
           </div>
         </mock-el-dialog>
@@ -791,13 +785,14 @@ exports[`MetadataEditor should match snapshot 1`] = `
               Visibility
               <mock-el-popover trigger="hover" placement="top">
                 <div slot-key="default">
-                  <div>
+                  <div class="max-w-sm">
                     <p><b>Public:</b> Annotations will be available in the METASPACE public knowledge base,
-                      sharable and searchable by the community. The uploaded imzML files are not made public.
+                      sharable and searchable by the community. The imzML files will be made available to download under the
+                      <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer nofollow" target="_blank">Creative Commons Attribution 4.0 License</a>.
                     </p>
-                    <p><b>Private:</b> Annotations will be visible to the submitter and logged-in members
-                      of the selected group and projects. METASPACE admins can also view these annotations.
-                      The uploaded imzML files are also private.
+                    <p><b>Private:</b> The dataset and its annotation results will only be visible to you,
+                      logged-in members of the selected group and projects, and METASPACE administrators.
+                      These people will also be able to download the imzML files, but no automatic license for usage will be granted.
                     </p>
                   </div>
                 </div>
@@ -929,8 +924,23 @@ exports[`MetadataEditor should match snapshot 1`] = `
                       </mock-el-popover>
                       </span></label>
                     <div class="el-form-item__content">
-                      <mock-el-select value="molecularDatabases.0.name" required="true" multiple="" multiple-limit="3">
-                        <mock-el-option value="molecularDatabases.0.name" label="molecularDatabases.0.name"></mock-el-option>
+                      <mock-el-select value="1" required="true" multiple="" multiple-limit="3">
+                        <ul class="el-select-group__wrap">
+                          <li class="el-select-group__title">METASPACE</li>
+                          <li>
+                            <ul class="el-select-group">
+                              <mock-el-option value="1" label="foo - v1"></mock-el-option>
+                            </ul>
+                          </li>
+                        </ul>
+                        <ul class="el-select-group__wrap">
+                          <li class="el-select-group__title">test</li>
+                          <li>
+                            <ul class="el-select-group">
+                              <mock-el-option value="2" label="bar - v1"></mock-el-option>
+                            </ul>
+                          </li>
+                        </ul>
                       </mock-el-select>
                       <transition-stub name="el-zoom-in-top">
                         <!---->

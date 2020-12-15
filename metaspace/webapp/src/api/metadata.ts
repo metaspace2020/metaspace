@@ -19,7 +19,9 @@ export const editDatasetFragment =
       name
       email
     }
-    molDBs
+    databases {
+      id
+    }
     adducts
     name
   }`
@@ -97,15 +99,9 @@ export const fetchOptionListsQuery = gql`query fetchOptionListsQuery {
   maldiMatrices: metadataSuggestions(field: "Sample_Preparation.MALDI_Matrix", query: "", limit: 1000)
   analyzerTypes: metadataSuggestions(field: "MS_Analysis.Analyzer", query: "", limit: 1000)
   colocalizationAlgos {id, name}
-  molecularDatabases: molecularDatabases(hideDeprecated: false, onlyLastVersion: false){name, default, hidden}
+  molecularDatabases: allMolecularDBs{id, name, default}
   adducts: adductSuggestions{adduct, name, charge, default, hidden}
 }`
-
-export interface MolecularDatabase {
-  name: string;
-  default: boolean;
-  hidden: boolean;
-}
 
 export interface ChemModSuggestion {
   chemMod: string;
@@ -132,7 +128,16 @@ export const neutralLossSuggestionQuery = gql`query neutralLossSuggestionQuery($
 }`
 
 export const metadataOptionsQuery = gql`query metadataOptionsQuery {
-  molecularDatabases: molecularDatabases(hideDeprecated: false, onlyLastVersion: false){name, default, hidden}
+  molecularDatabases: allMolecularDBs(filter: { usable: true }) {
+    id,
+    name,
+    version,
+    default,
+    group {
+      id
+      shortName
+    }
+  }
   adducts: adductSuggestions{adduct, name, charge, default, hidden}
 }`
 
@@ -175,6 +180,7 @@ export const metadataExportQuery = gql`
       uploadDateTime
       fdrCounts(inpFdrLvls: $inpFdrLvls, checkLvl: $checkLvl) {
         dbName
+        dbVersion
         levels
         counts
       }

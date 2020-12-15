@@ -34,13 +34,14 @@ const dummyContextUser: ContextUser = {
   authMethod: AuthMethodOptions.UNKNOWN,
   getProjectRoles: async () => { return {}; },
   getMemberOfProjectIds: async () => { return []; },
+  getVisibleDatabaseIds: async () => { return []; },
 };
 
 async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
   const {ds_id, action: rawAction, stage, ...rest} = payload;
   const action = (rawAction || '').toUpperCase() as EngineDatasetAction;
   // wait until updates are reflected in ES so that clients can refresh their data
-  const maxAttempts = 8;
+  const maxAttempts = 12;
 
   if (!KNOWN_ACTIONS.includes(action)) {
     return;
@@ -48,7 +49,7 @@ async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
 
   try {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      logger.debug(JSON.stringify({attempt, action}));
+      logger.debug('Pushing status update to subscribers: ' + JSON.stringify({ attempt, ...payload }));
       const ds = await esDatasetByID(ds_id, dummyContextUser, true);
 
       if (action === 'DELETE' && stage === 'FINISHED') {

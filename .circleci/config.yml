@@ -5,7 +5,7 @@ jobs:
 
   test-graphql:
     docker:
-      - image: metaspace2020/sm-webapp:0.10
+      - image: metaspace2020/sm-webapp:0.11
 
       - image: postgres:9.5-alpine
         environment:
@@ -31,24 +31,24 @@ jobs:
       - run:
           name: Run tests
           command: |
-            mkdir -p /opt/data/sm_data/public/
+            mkdir -p /opt/data/metaspace/public/
             psql -h localhost -U sm -c "CREATE ROLE postgres WITH LOGIN SUPERUSER PASSWORD 'postgres'"
             psql -h localhost -U sm -c "CREATE DATABASE sm_test owner sm"
             psql -h localhost -U sm -d sm_test -c "CREATE EXTENSION \"uuid-ossp\";"
             psql -h localhost -U sm -d sm_test -c "CREATE SCHEMA graphql;"
             yarn run gen-binding
             yarn run deref-schema
-            NODE_ENV=test yarn run test --verbose --detectOpenHandles --forceExit
+            NODE_ENV=test yarn run test-ci --verbose --detectOpenHandles --forceExit
       - run:
           name: Upload coverage
           command: |
-            yarn run test --coverage --maxWorkers=1
+            yarn run test-ci --coverage
             npx codecov -p ../.. -F graphql
 
 
   generate-graphql-schema:
     docker:
-      - image: metaspace2020/sm-webapp:0.10
+      - image: metaspace2020/sm-webapp:0.11
 
       - image: postgres:9.5-alpine
         environment:
@@ -93,7 +93,7 @@ jobs:
 
   test-webapp:
     docker:
-      - image: metaspace2020/sm-webapp:0.10
+      - image: metaspace2020/sm-webapp:0.11
 
     working_directory: ~/metaspace/metaspace/webapp
     steps:
@@ -139,7 +139,7 @@ jobs:
 
   test-webapp-e2e:
     docker:
-      - image: metaspace2020/sm-webapp:0.10
+      - image: metaspace2020/sm-webapp:0.11
 
       - image: postgres:9.5-alpine
         environment:
@@ -306,9 +306,9 @@ jobs:
       - run:
           name: Import test molecular database
           command: |
-            wget -qN https://sm-engine.s3-eu-west-1.amazonaws.com/tests/hmdb_2-5.tsv -O /tmp/hmdb_2-5.tsv
+            wget -qN https://sm-engine.s3-eu-west-1.amazonaws.com/tests/hmdb_4.tsv -O /tmp/hmdb_4.tsv
             python scripts/import_molecular_db.py --config=tests/sci_test/config.json \
-              HMDB-v2.5 2020-01-01 /tmp/hmdb_2-5.tsv
+              HMDB-v4 2020-01-01 /tmp/hmdb_4.tsv
       - run:
           name: Run scientific test
           command: |

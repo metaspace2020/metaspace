@@ -184,7 +184,7 @@ const FilterPanel = {
           },
           attrs: {
             ...pick(attrs, FILTER_COMPONENT_PROPS),
-            value: this.filter[filterKey],
+            value: this.getFilterValue(filterSpec, filterKey),
             options: this.getFilterOptions(filterSpec, filterKey),
           },
         }
@@ -217,6 +217,14 @@ const FilterPanel = {
         return filter.options(filterLists)
       }
       return []
+    },
+
+    getFilterValue(filter, filterKey) {
+      const value = this.filter[filterKey]
+      if (filter.convertValueForComponent) {
+        return filter.convertValueForComponent(value)
+      }
+      return value
     },
   },
 }

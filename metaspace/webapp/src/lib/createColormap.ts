@@ -12,7 +12,7 @@ const OPACITY_MAPPINGS: Record<OpacityMode, (x:number) => number> = {
 export default function createColormap(name: string, opacityMode: OpacityMode = 'constant',
   opacityScale: number = 1): number[][] {
   const { domain, range } = getColorScale(name)
-  const sclFun = d3.scaleLinear<d3.RGBColor>().domain(domain).range(range).clamp(true)
+  const sclFun = d3.scaleLinear<string>().domain(domain).range(range).clamp(true)
   const alphaFunc = OPACITY_MAPPINGS[opacityMode]
 
   const colors = []

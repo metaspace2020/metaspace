@@ -4,6 +4,7 @@ import { invert, isArray, mapValues } from 'lodash-es'
 import { Location } from 'vue-router'
 import { ScaleType } from '../../lib/ionImageRendering'
 import { DEFAULT_SCALE_TYPE } from '../../lib/constants'
+import qs from 'querystring'
 
 interface Dictionary<T> {
   [key: string]: T;
@@ -15,7 +16,7 @@ interface SortSettings {
 }
 
 const FILTER_TO_URL: Record<FilterKey, string> = {
-  database: 'db',
+  database: 'db_id',
   group: 'grp',
   project: 'prj',
   submitter: 'subm',
@@ -86,7 +87,7 @@ export function encodeParams(filter: any, path?: string, filterLists?: MetadataL
       } else if (encoding === 'bool') {
         q[FILTER_TO_URL[key]] = filter[key] ? '1' : '0'
       } else if (encoding === 'number') {
-        q[FILTER_TO_URL[key]] = String(filter[key])
+        q[FILTER_TO_URL[key]] = String(filter[key] ?? '')
       } else {
         q[FILTER_TO_URL[key]] = filter[key]
       }
@@ -143,7 +144,8 @@ export function decodeParams(location: Location, filterLists: any): Object {
     } else if (encoding === 'bool') {
       filter[fKey] = value === '1'
     } else if (encoding === 'number') {
-      filter[fKey] = parseFloat(value)
+      const number = parseFloat(value)
+      filter[fKey] = isNaN(number) ? undefined : number
     } else {
       filter[fKey] = value
     }
@@ -193,25 +195,27 @@ export function encodeSortOrder(settings: SortSettings): string | null {
 }
 
 export interface UrlTableSettings {
-  currentPage: number;
+  currentPage: number
   order: SortSettings
+  row: number
 }
 
 export interface UrlAnnotationViewSettings {
-  activeSections: string[];
-  colormap: string;
-  colocalizationAlgo: string | null;
-  scaleType: ScaleType;
+  activeSections: string[]
+  colormap: string
+  colocalizationAlgo: string | null
+  scaleType: ScaleType
 }
 
 export interface UrlDatasetsSettings {
-  tab: string;
+  tab: string
+  page: number
 }
 
 export interface UrlSettings {
-  table: UrlTableSettings;
-  annotationView: UrlAnnotationViewSettings;
-  datasets: UrlDatasetsSettings;
+  table: UrlTableSettings
+  annotationView: UrlAnnotationViewSettings
+  datasets: UrlDatasetsSettings
 }
 
 export function decodeSettings(location: Location): UrlSettings | undefined {
@@ -229,6 +233,7 @@ export function decodeSettings(location: Location): UrlSettings | undefined {
     table: {
       currentPage: 1,
       order: DEFAULT_TABLE_ORDER,
+      row: 1,
     },
 
     annotationView: {
@@ -240,11 +245,16 @@ export function decodeSettings(location: Location): UrlSettings | undefined {
 
     datasets: {
       tab: 'List',
+      page: 1,
     },
   }
 
   if (query.page) {
     settings.table.currentPage = parseInt(query.page)
+    settings.datasets.page = parseInt(query.page)
+  }
+  if (query.row) {
+    settings.table.row = parseInt(query.row)
   }
   if (query.sort) {
     settings.table.order = decodeSortOrder(query.sort)
@@ -265,4 +275,42 @@ export function decodeSettings(location: Location): UrlSettings | undefined {
     settings.datasets.tab = query.tab
   }
   return settings
+}
+
+const dbIds: Record<string, number> = {
+  'BraChemDB-2018-01': 18,
+  'ChEBI-2018-01': 19,
+  'ECMDB-2018-12': 33,
+  'EMBL-dev1': 30,
+  'EMBL-dev2': 32,
+  'GNPS-pseudomonas-2019-09': 35,
+  'HMDB-v2.5-cotton': 8,
+  'HMDB-v2.5': 6,
+  'HMDB-v4-cotton': 27,
+  'HMDB-v4-endogenous': 23,
+  'HMDB-v4': 22,
+  'LipidMaps-2017-12-12': 24,
+  'M4I_1-2019-06': 34,
+  'NPA-2019-08': 36,
+  'PAMDB-v1.0': 25,
+  'SwissLipids-2018-02-02': 26,
+  ChEBI: 2,
+  core_metabolome_v2: 37,
+  core_metabolome_v3: 38,
+  LIPID_MAPS: 3,
+  SwissLipids: 4,
+  whole_body_MSMS_test_v2: 41,
+  whole_body_MSMS_test_v3: 42,
+  whole_body_MSMS_test: 40,
+}
+
+export function updateDBParam(queryString: string): string | null {
+  const { db, ...params } = qs.parse(queryString)
+  if (typeof db === 'string') {
+    if (db in dbIds) {
+      return qs.stringify({ ...params, [FILTER_TO_URL.database]: dbIds[db] })
+    }
+    // return not found?
+  }
+  return null
 }

@@ -19,7 +19,7 @@ def get_manager():
     )
     return DatasetManager(
         db=db,
-        es=ESExporter(db),
+        es=ESExporter(db, sm_config),
         img_store=ImageStoreServiceWrapper(sm_config['services']['img_service_url']),
         status_queue=status_queue_pub,
         logger=logger,

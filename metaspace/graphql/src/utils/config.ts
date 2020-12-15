@@ -2,7 +2,7 @@ import * as config from 'config';
 import { IConfig } from 'config';
 import {Algorithm} from 'jsonwebtoken';
 
-export type ImageStorageType = 'db' | 'fs';
+export type ImageStorageType = 'fs';
 export interface ImageCategoryConfig {
   type: string,
   path: string,
@@ -26,17 +26,15 @@ export interface Config {
   log: {
     level: string;
   };
-  defaults: {
-    moldb_names: string[];
-  };
   adducts: Adduct[];
   img_upload: {
     iso_img_fs_path: string;
     categories: Record<ImageCategory, ImageCategoryConfig>;
   };
-  dataset_upload: {
+  upload: {
     destination: string; // 's3' for S3 storage
     bucket?: string;
+    moldbPrefix: string;
   };
   services: {
     sm_engine_api_host: string;
@@ -80,6 +78,8 @@ export interface Config {
   };
   sentry: {
     dsn: string | null;
+    environment?: string;
+    release?: string;
   };
   features: {
     graphqlMocks: boolean;

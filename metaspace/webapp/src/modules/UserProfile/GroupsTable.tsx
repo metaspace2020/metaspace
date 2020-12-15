@@ -2,7 +2,7 @@ import './Table.css'
 
 import Vue from 'vue'
 import { Button, Message } from 'element-ui'
-import { createComponent, reactive, computed } from '@vue/composition-api'
+import { defineComponent, reactive, computed } from '@vue/composition-api'
 
 import confirmPrompt from '../../components/confirmPrompt'
 import NotificationIcon from '../../components/NotificationIcon.vue'
@@ -68,7 +68,7 @@ function getRows(currentUser: User) {
   return []
 }
 
-const GroupsTable = createComponent<Props>({
+const GroupsTable = defineComponent<Props>({
   props: {
     currentUser: Object,
     refetchData: Function,

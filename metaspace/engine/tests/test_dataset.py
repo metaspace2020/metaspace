@@ -6,9 +6,7 @@ from pytest import fixture
 from sm.engine.dataset import DatasetStatus, Dataset, generate_ds_config
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
-from sm.engine.queue import QueuePublisher
-from sm.engine.daemon_action import DaemonAction, DaemonActionStage
-from sm.engine.tests.util import sm_config, test_db, metadata, ds_config
+from .utils import create_test_molecular_db, create_test_ds
 
 
 @fixture
@@ -36,11 +34,12 @@ def fill_db(test_db, metadata, ds_config):
             )
         ],
     )
+    create_test_molecular_db()
 
 
-def test_generate_ds_config(metadata, ds_config):
+def test_generate_ds_config(fill_db, metadata, ds_config):
     generated_config = generate_ds_config(
-        metadata, mol_dbs=['HMDB-v4'], adducts=["+H", "+Na", "+K", "[M]+"]
+        metadata, moldb_ids=[0], adducts=["+H", "+Na", "+K", "[M]+"]
     )
 
     assert generated_config == ds_config
@@ -72,43 +71,23 @@ def test_dataset_load_existing_ds_works(fill_db, metadata, ds_config):
 def test_dataset_save_overwrite_ds_works(fill_db, metadata, ds_config):
     db = DB()
     es_mock = MagicMock(spec=ESExporter)
-
-    upload_dt = datetime.now()
-    ds_id = '2000-01-01'
-    ds = Dataset(
-        id=ds_id,
-        name='ds_name',
-        input_path='input_path',
-        upload_dt=upload_dt,
-        metadata=metadata,
-        config=ds_config,
-    )
+    ds = create_test_ds()
 
     ds.save(db, es_mock)
 
-    assert ds == Dataset.load(db, ds_id)
-    es_mock.sync_dataset.assert_called_once_with(ds_id)
+    assert ds == Dataset.load(db, ds.id)
+    es_mock.sync_dataset.assert_called_once_with(ds.id)
 
 
 def test_dataset_update_status_works(fill_db, metadata, ds_config):
     db = DB()
     es_mock = MagicMock(spec=ESExporter)
 
-    upload_dt = datetime.now()
-    ds_id = '2000-01-01'
-    ds = Dataset(
-        id=ds_id,
-        name='ds_name',
-        input_path='input_path',
-        upload_dt=upload_dt,
-        metadata=metadata,
-        config=ds_config,
-        status=DatasetStatus.ANNOTATING,
-    )
+    ds = create_test_ds(status=DatasetStatus.ANNOTATING)
 
     ds.set_status(db, es_mock, DatasetStatus.FINISHED)
 
-    assert DatasetStatus.FINISHED == Dataset.load(db, ds_id).status
+    assert DatasetStatus.FINISHED == Dataset.load(db, ds.id).status
 
 
 def test_dataset_to_queue_message_works(metadata, ds_config):

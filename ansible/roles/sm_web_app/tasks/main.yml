@@ -16,14 +16,21 @@
   file: path={{ sm_webapp_upload_destination }} state=directory mode=0755 owner=ubuntu group=ubuntu
   when: sm_webapp_upload_destination != 's3'
 
+- name: Install sm-webapp's version of Node.js (if needed)
+  # This only installs a new version if there isn't a matching existing version
+  shell: "{{ sm_activate_nvm }} || nvm install"
+  args:
+    chdir: "{{ sm_webapp_home }}"
+    executable: /bin/bash
+
 - name: Install sm-web-app dependencies
-  shell: yarn install
+  shell: "{{ sm_activate_nvm }} && yarn install"
   args:
     chdir: "{{ sm_webapp_home }}"
     executable: /bin/bash
 
 - name: Run build app
-  shell: nice yarn run build
+  shell: "{{ sm_activate_nvm }} && nice yarn run build"
   args:
     chdir: "{{ sm_webapp_home }}"
     executable: /bin/bash

@@ -12,6 +12,7 @@ import { PublicationStatus, UserGroupRole, UserProjectRole } from '../binding';
 import { Dataset, DatasetProject } from '../modules/dataset/model';
 import { EngineDataset } from '../modules/engine/model';
 import { Group, UserGroup as UserGroupModel } from '../modules/group/model';
+import {MolecularDB} from "../modules/moldb/model";
 
 export const createTestUser = async (user?: Partial<User>): Promise<User> => {
   return (await createTestUserWithCredentials(user))[0]
@@ -89,7 +90,9 @@ const genDatasetId = () => {
     .replace(/([\d\-]+)T(\d+):(\d+):(\d+).*/, '$1_$2h$3m$4s');
 };
 
-export const createTestDataset = async (dataset: Partial<Dataset> = {}, engineDataset: Partial<EngineDataset> = {}): Promise<Dataset> => {
+export const createTestDataset = async (
+  dataset: Partial<Dataset> = {}, engineDataset: Partial<EngineDataset> = {}
+): Promise<Dataset> => {
   const datasetId = engineDataset.id || genDatasetId();
   const datasetPromise = testEntityManager.save(Dataset, {
     id: datasetId,
@@ -120,4 +123,18 @@ export const createTestDatasetProject = async (publicationStatus: PublicationSta
     approved: true
   } as Partial<DatasetProject>);
   return (await datasetProjectPromise) as DatasetProject;
+};
+
+export const createTestMolecularDB = async (molecularDb: Partial<MolecularDB> = {}): Promise<MolecularDB> => {
+  return await testEntityManager.save(MolecularDB, {
+    name: 'test-db',
+    version: 'db-version',
+    isPublic: false,
+    archived: false,
+    fullName: 'Full database name',
+    description: 'Database description',
+    link: 'http://example.org',
+    citation: 'citation string',
+    ...molecularDb
+  }) as MolecularDB;
 };

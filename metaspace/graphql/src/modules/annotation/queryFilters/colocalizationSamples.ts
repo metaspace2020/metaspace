@@ -5,11 +5,12 @@ import config from '../../../utils/config';
 import * as _ from 'lodash';
 import {setOrMerge} from '../../../utils/setOrMerge';
 
-const getColocSampleIons = async (context: Context, datasetId: string, fdrLevel: number, database: string | null,
+const getColocSampleIons = async (context: Context, datasetId: string, fdrLevel: number, databaseId: number,
                                   colocalizationAlgo: string) => {
   const result = await context.entityManager.findOne(ColocJob,
-    { datasetId, fdr: fdrLevel, molDb: database, algorithm: colocalizationAlgo },
-    { select: ['sampleIonIds'] });
+    { datasetId, fdr: fdrLevel, moldbId: databaseId, algorithm: colocalizationAlgo },
+    { select: ['sampleIonIds'] }
+  );
   if (result == null) {
     return null;
   } else {
@@ -21,13 +22,13 @@ const getColocSampleIons = async (context: Context, datasetId: string, fdrLevel:
 export const applyColocalizationSamplesFilter =
   async (context: Context, args: QueryFilterArgs): Promise<QueryFilterResult> => {
     const datasetId = args.datasetFilter && args.datasetFilter.ids;
-    const { fdrLevel = 0.1, database = null, colocalizationSamples = false } = args.filter || {};
+    const { fdrLevel = 0.1, databaseId, colocalizationSamples = false } = args.filter || {};
     const colocalizationAlgo =
       args.filter && args.filter.colocalizationAlgo
       || config.metadataLookups.defaultColocalizationAlgo;
 
     if (datasetId != null && colocalizationAlgo != null && colocalizationSamples) {
-      const samples = await getColocSampleIons(context, datasetId, fdrLevel, database, colocalizationAlgo);
+      const samples = await getColocSampleIons(context, datasetId, fdrLevel, databaseId!, colocalizationAlgo);
       if (samples != null) {
         return { args: setOrMerge(args, 'filter.ion', samples, _.intersection) };
       } else {

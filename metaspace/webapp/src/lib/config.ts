@@ -1,6 +1,7 @@
 /* eslint-disable camelcase */
 import { defaultsDeep } from 'lodash-es'
 import { getLocalStorage, removeLocalStorage, setLocalStorage } from './localStorage'
+import { MAX_MOL_DBS_EXT, MAX_MOL_DBS } from './constants'
 const fileConfig = require('../clientConfig.json')
 
 interface AWSConfig {
@@ -39,17 +40,26 @@ interface Features {
   advanced_ds_config: boolean;
   isomers: boolean;
   isobars: boolean;
+  moldb_mgmt: boolean;
+  moldb_limit_ext: boolean;
+  multiple_ion_images: boolean;
+  lock_intensity: boolean;
 }
 
 interface ClientConfig {
   graphqlUrl: string | null;
   wsGraphqlUrl: string | null;
+  companionUrl: string | null;
   imageStorage?: string | null;
 
   google_client_id: string;
 
   fineUploader: FineUploaderConfig;
-  ravenDsn: string | null;
+  sentry: null | {
+    dsn: string;
+    environment?: string;
+    release?: string;
+  };
   metadataTypes: string[];
   features: Features;
 }
@@ -57,11 +67,12 @@ interface ClientConfig {
 const defaultConfig: ClientConfig = {
   graphqlUrl: null,
   wsGraphqlUrl: null,
+  companionUrl: null,
   google_client_id: '',
   fineUploader: {
     storage: 'local',
   },
-  ravenDsn: null,
+  sentry: null,
   metadataTypes: ['ims'],
   features: {
     coloc: true,
@@ -79,6 +90,10 @@ const defaultConfig: ClientConfig = {
     advanced_ds_config: false,
     isomers: true,
     isobars: true,
+    moldb_mgmt: false,
+    moldb_limit_ext: false,
+    multiple_ion_images: false,
+    lock_intensity: false,
   },
 }
 
@@ -125,3 +140,13 @@ export const replaceConfigWithDefaultForTests = () => {
 }
 
 export default config
+
+interface Limits {
+  maxMolDBs: number
+}
+
+export const limits : Limits = {
+  get maxMolDBs() {
+    return config.features.moldb_limit_ext ? MAX_MOL_DBS_EXT : MAX_MOL_DBS
+  },
+}

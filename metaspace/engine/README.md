@@ -21,13 +21,7 @@ Please visit the help page of our web application running on AWS:
 
 Install [CircleCI CLI tool](https://circleci.com/docs/2.0/local-jobs/) and run `circleci build` from the project root.
 
-## Funding
+## Acknowledgements and license
 
-This project is funded from the [European Horizon2020](https://ec.europa.eu/programmes/horizon2020/)
-project [METASPACE](http://project.metaspace2020.eu/) (no. 634402),
-[NIH NIDDK project KPMP](http://kpmp.org/)
-and internal funds of the [European Molecular Biology Laboratory](https://www.embl.org/).
+[See the top-level README](../../README.md#acknowledgements)
 
-## License
-
-This project is licensed under the [Apache 2.0 license](LICENSE).

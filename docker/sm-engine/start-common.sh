@@ -18,7 +18,9 @@ else
   cd /opt/metaspace/metaspace/engine
 fi
 
-pip install -qr requirements.txt
+# sudo is needed because the Python environment is set up in the Dockerfile (running as root),
+# but the container may be running as a user due the docker-compose 'user' option
+sudo pip install -qr requirements.txt
 
 wait_for "nc -z postgres 5432" "Postgres"
 wait_for "nc -z rabbitmq 5672" "RabbitMQ"

@@ -13,12 +13,7 @@ export = async () => {
 
   const knexAdmin = Knex({
     client: 'postgres',
-    connection: {
-      host     : config.db.host,
-      user     : 'postgres',
-      password : 'postgres',
-      database : 'postgres'
-    },
+    connection: { ...config.db, database : 'postgres' },
     debug: false
   });
   await knexAdmin.raw(`DROP DATABASE IF EXISTS ${config.db.database};`);
@@ -27,12 +22,7 @@ export = async () => {
 
   const knex = Knex({
     client: 'postgres',
-    connection: {
-      host: config.db.host,
-      database: config.db.database,
-      user: 'postgres',
-      password : 'postgres'
-    },
+    connection: config.db,
     searchPath: ['public', DbSchemaName],
     debug: false
   });

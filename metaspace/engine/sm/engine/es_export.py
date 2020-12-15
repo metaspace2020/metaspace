@@ -1,12 +1,14 @@
 import logging
-import random
 from collections import MutableMapping, defaultdict
-from functools import wraps
-from time import sleep
 
 import numpy as np
 import pandas as pd
-from elasticsearch import ConflictError, Elasticsearch, ElasticsearchException, NotFoundError
+from elasticsearch import (
+    TransportError,
+    Elasticsearch,
+    ElasticsearchException,
+    NotFoundError,
+)
 from elasticsearch.client import IndicesClient, IngestClient
 from elasticsearch.helpers import parallel_bulk
 
@@ -15,8 +17,9 @@ from sm.engine.db import DB
 from sm.engine.fdr import FDR
 from sm.engine.formula_parser import format_ion_formula
 from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine import molecular_db
 from sm.engine.molecular_db import MolecularDB
-from sm.engine.util import SMConfig
+from sm.engine.util import SMConfig, retry_on_exception
 
 logger = logging.getLogger('engine')
 
@@ -70,7 +73,7 @@ FROM (
     d.status_update_dt as ds_status_update_dt,
     to_char(max(job.finish), 'YYYY-MM-DD HH24:MI:SS') AS ds_last_finished,
     d.is_public AS ds_is_public,
-    d.config #> '{databases}' AS ds_mol_dbs,
+    d.config #> '{database_ids}' AS ds_moldb_ids,
     d.config #> '{isotope_generation,adducts}' AS ds_adducts,
     d.config #> '{isotope_generation,neutral_losses}' AS ds_neutral_losses,
     d.config #> '{isotope_generation,chem_mods}' AS ds_chem_mods,
@@ -261,46 +264,20 @@ def flatten_doc(doc, parent_key='', sep='.'):
     return dict(items)
 
 
-def retry_on_conflict(num_retries=3):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            for i in range(num_retries):
-                try:
-                    return func(*args, **kwargs)
-                except ConflictError:
-                    delay = random.uniform(2, 5 + i * 3)
-                    logger.warning(
-                        f'ElasticSearch update conflict on attempt {i+1}. '
-                        f'Retrying after {delay:.1f} seconds...'
-                    )
-                    sleep(delay)
-            # Last attempt, don't catch the exception
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
-
-
 class ESExporter:
-    def __init__(self, db, es_config=None):
-        self.sm_config = SMConfig.get_conf()
-        if not es_config:
-            es_config = self.sm_config['elasticsearch']
-        self._es = init_es_conn(es_config)
-        self._ingest = IngestClient(self._es)
+    def __init__(self, db, sm_config=None):
+        self.sm_config = sm_config or SMConfig.get_conf()
+        self._es: Elasticsearch = init_es_conn(self.sm_config['elasticsearch'])
+        self._ingest: IngestClient = IngestClient(self._es)
         self._db = db
         self._ds_locker = DatasetLocker(self.sm_config['db'])
-        self.index = es_config['index']
+        self.index = self.sm_config['elasticsearch']['index']
         self._get_mol_by_formula_dict_cache = dict()
 
-    def _remove_mol_db_from_dataset(self, ds_id, mol_db):
+    def _remove_mol_db_from_dataset(self, ds_id, moldb):
         ds_doc = self._es.get_source(self.index, id=ds_id, doc_type='dataset')
         ds_doc['annotation_counts'] = [
-            entry
-            for entry in ds_doc.get('annotation_counts', [])
-            if not (entry['db']['name'] == mol_db.name and entry['db']['version'] == mol_db.version)
+            entry for entry in ds_doc.get('annotation_counts', []) if entry['db']['id'] != moldb.id
         ]
         self._es.update(self.index, id=ds_id, body={'doc': ds_doc}, doc_type='dataset')
         return ds_doc
@@ -308,7 +285,7 @@ class ESExporter:
     def _select_ds_by_id(self, ds_id):
         return self._db.select_with_fields(DATASET_SEL, params=(ds_id,))[0]
 
-    @retry_on_conflict()
+    @retry_on_exception(TransportError)
     def sync_dataset(self, ds_id):
         """ Warning: This will wait till ES index/update is completed
         """
@@ -331,11 +308,11 @@ class ESExporter:
                     params={'refresh': 'wait_for'},
                 )
 
-    def _get_mol_by_formula_dict(self, mol_db):
+    def _get_mol_by_formula_dict(self, moldb):
         try:
-            return self._get_mol_by_formula_dict_cache[mol_db.id]
+            return self._get_mol_by_formula_dict_cache[moldb.id]
         except KeyError:
-            mols = mol_db.get_molecules()
+            mols = molecular_db.fetch_molecules(moldb.id)
             by_formula = mols.groupby('formula')
             # limit IDs and names to 50 each to prevent ES 413 Request Entity Too Large error
             mol_by_formula_df = pd.concat(
@@ -350,7 +327,7 @@ class ESExporter:
                 lambda row: (row.mol_ids, row.mol_names), axis=1
             ).to_dict()
 
-            self._get_mol_by_formula_dict_cache[mol_db.id] = mol_by_formula_dict
+            self._get_mol_by_formula_dict_cache[moldb.id] = mol_by_formula_dict
             return mol_by_formula_dict
 
     @staticmethod
@@ -383,16 +360,17 @@ class ESExporter:
                 f'Missing ion formulas {len(missing_ion_formulas)}: {missing_ion_formulas[:20]}'
             )
 
-    def _index_ds_annotations(self, ds_id, mol_db, ds_doc, isocalc):
-        annotation_docs = self._db.select_with_fields(ANNOTATIONS_SEL, params=(ds_id, mol_db.id))
-        logger.info(f'Indexing {len(annotation_docs)} documents: {ds_id}, {mol_db}')
+    def _index_ds_annotations(self, ds_id, moldb, ds_doc, isocalc):
+        annotation_docs = self._db.select_with_fields(ANNOTATIONS_SEL, params=(ds_id, moldb.id))
+        logger.info(f'Indexing {len(annotation_docs)} documents: {ds_id}, {moldb}')
 
         annotation_counts = defaultdict(int)
-        mol_by_formula = self._get_mol_by_formula_dict(mol_db)
+        mol_by_formula = self._get_mol_by_formula_dict(moldb)
         for doc in annotation_docs:
             self._add_ds_fields_to_ann(doc, ds_doc)
-            doc['db_name'] = mol_db.name
-            doc['db_version'] = mol_db.version
+            doc['db_id'] = moldb.id
+            doc['db_name'] = moldb.name
+            doc['db_version'] = moldb.version
             formula = doc['formula']
             ion_without_pol = format_ion_formula(
                 formula, doc['chem_mod'], doc['neutral_loss'], doc['adduct']
@@ -403,8 +381,11 @@ class ESExporter:
             doc['centroid_mzs'] = list(mzs) if mzs is not None else []
             doc['mz'] = mzs[0] if mzs is not None else 0
 
-            fdr = round(FDR.nearest_fdr_level(doc['fdr']) * 100, 2)
-            annotation_counts[fdr] += 1
+            if moldb.targeted:
+                fdr_level = doc['fdr'] = -1
+            else:
+                fdr_level = FDR.nearest_fdr_level(doc['fdr'])
+            annotation_counts[round(fdr_level * 100, 2)] += 1
 
         self._add_isomer_fields_to_anns(annotation_docs)
         ESExporterIsobars.add_isobar_fields_to_anns(annotation_docs, isocalc)
@@ -425,16 +406,16 @@ class ESExporter:
 
         return annotation_counts
 
-    @retry_on_conflict()
-    def index_ds(self, ds_id, mol_db, isocalc):
+    @retry_on_exception(TransportError)
+    def index_ds(self, ds_id: str, moldb: MolecularDB, isocalc: IsocalcWrapper):
         with self._ds_locker.lock(ds_id):
             try:
-                ds_doc = self._remove_mol_db_from_dataset(ds_id, mol_db)
+                ds_doc = self._remove_mol_db_from_dataset(ds_id, moldb)
             except NotFoundError:
                 ds_doc = self._select_ds_by_id(ds_id)
                 ds_doc['annotation_counts'] = []
 
-            annotation_counts = self._index_ds_annotations(ds_id, mol_db, ds_doc, isocalc)
+            annotation_counts = self._index_ds_annotations(ds_id, moldb, ds_doc, isocalc)
 
             fdr_levels = [5, 10, 20, 50]
             # put cumulative annotation counts to ds_doc
@@ -442,7 +423,7 @@ class ESExporter:
                 annotation_counts[level] += annotation_counts[fdr_levels[i]]
             ds_doc['annotation_counts'].append(
                 {
-                    'db': {'name': mol_db.name, 'version': mol_db.version},
+                    'db': {'id': moldb.id, 'name': moldb.name},
                     'counts': [
                         {'level': level, 'n': annotation_counts[level]} for level in fdr_levels
                     ],
@@ -450,21 +431,27 @@ class ESExporter:
             )
             self._es.index(self.index, doc_type='dataset', body=ds_doc, id=ds_id)
 
-    def reindex_ds(self, ds_id):
-        """Delete and index dataset documents for all moldbs defined in the dataset config."""
+    def reindex_ds(self, ds_id: str):
+        """Delete and index dataset documents for all moldbs defined in the dataset config.
+
+        Args:
+            ds_id: dataset id
+        """
         self.delete_ds(ds_id)
 
-        res = DB().select_one("select name, config from dataset where id = %s", params=(ds_id,))
-        if res:
-            ds_name, ds_config = res
-            isocalc = IsocalcWrapper(ds_config)
-            for moldb_name in ds_config['databases']:
+        ds_doc = DB().select_one_with_fields(
+            "SELECT name, config FROM dataset WHERE id = %s", params=(ds_id,)
+        )
+        if ds_doc:
+            isocalc = IsocalcWrapper(ds_doc['config'])
+            for moldb_id in ds_doc['config']['database_ids']:
+                moldb = molecular_db.find_by_id(moldb_id)
                 try:
-                    self.index_ds(ds_id, mol_db=MolecularDB(name=moldb_name), isocalc=isocalc)
+                    self.index_ds(ds_id, moldb=moldb, isocalc=isocalc)
                 except Exception as e:
                     new_msg = (
-                        f'Failed to reindex(ds_id={ds_id}, ds_name={ds_name}, '
-                        f'mol_db={moldb_name}): {e}'
+                        f'Failed to reindex(ds_id={ds_id}, ds_name={ds_doc["name"]}, '
+                        f'moldb: {moldb}): {e}'
                     )
                     logger.error(new_msg, exc_info=True)
         else:
@@ -495,7 +482,7 @@ class ESExporter:
                 logger.warning(f'Field ds_{field} not found in ds_doc')
         return ds_doc_upd
 
-    @retry_on_conflict()
+    @retry_on_exception(TransportError)
     def update_ds(self, ds_id, fields):
         with self._ds_locker.lock(ds_id):
             pipeline_id = f'update-ds-fields-{ds_id}'
@@ -524,22 +511,22 @@ class ESExporter:
                 finally:
                     self._ingest.delete_pipeline(pipeline_id)
 
-    @retry_on_conflict()
-    def delete_ds(self, ds_id, mol_db=None, delete_dataset=True):
-        """
-        If mol_db passed, only annotation statistics are updated in the dataset document.
-        DS document won't be deleted
+    @retry_on_exception(TransportError)
+    def delete_ds(self, ds_id: str, moldb: MolecularDB = None, delete_dataset: bool = True):
+        """Completely or partially delete dataset.
 
-        :param ds_id: str
-        :param mol_db: sm.engine.MolecularDB
-        :return:
+        Args:
+            ds_id: dataset id
+            moldb: if passed, only annotation statistics are updated in the dataset document
+                ds document won't be deleted.
+            delete_dataset: if True, delete dataset document as well
         """
         with self._ds_locker.lock(ds_id):
-            logger.info(f'Deleting or updating dataset document in ES: {ds_id}, {mol_db}')
+            logger.info(f'Deleting or updating dataset document in ES: {ds_id}, {moldb}')
 
             try:
-                if mol_db:
-                    self._remove_mol_db_from_dataset(ds_id, mol_db)
+                if moldb:
+                    self._remove_mol_db_from_dataset(ds_id, moldb)
                 elif delete_dataset:
                     self._es.delete(id=ds_id, index=self.index, doc_type='dataset')
             except NotFoundError:
@@ -547,12 +534,11 @@ class ESExporter:
             except ElasticsearchException as e:
                 logger.warning(f'Dataset deletion failed: {e}')
 
-            logger.info(f'Deleting annotation documents from ES: {ds_id}, {mol_db}')
+            logger.info(f'Deleting annotation documents from ES: {ds_id}, {moldb}')
 
             must = [{'term': {'ds_id': ds_id}}]
-            if mol_db:
-                must.append({'term': {'db_name': mol_db.name}})
-                must.append({'term': {'db_version': mol_db.version}})
+            if moldb:
+                must.append({'term': {'db_id': moldb.id}})
 
             try:
                 body = {'query': {'constant_score': {'filter': {'bool': {'must': must}}}}}
