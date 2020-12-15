@@ -1,7 +1,3 @@
-.sm-stateful-icon {
-  @apply w-6 h-6
-}
-
 .sm-stateful-icon .primary,
 .sm-stateful-icon .secondary {
   @apply fill-current;

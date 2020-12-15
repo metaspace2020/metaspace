@@ -3,24 +3,27 @@
     <el-dialog
       :visible.sync="helpDialog"
       :lock-scroll="false"
+      title="Upload Help"
       append-to-body
     >
       <p>Thank you for considering submitting your data to METASPACE! Here are the key points you need to know:</p>
-      <p style="padding-left: 15px">
-        <b>Type of MS:</b> We can annotate only FTICR- or Orbitrap- imaging MS data.
-      </p>
-      <p style="padding-left: 15px">
-        <b>Format:</b> We can receive only data in the imzML centroided format.
-        Please check out
-        <a
-          :href="helpLink"
-          target="_blank"
-          class="external"
-          title="The page will open in a new window"
-        >our instructions</a>
-        for converting datasets into this format. If you are experiencing difficulties,
-        please contact your instrument vendor.
-      </p>
+      <ul class="v-rhythm-5 p-0">
+        <li>
+          <b>Type of MS:</b> we can annotate only FTICR- or Orbitrap- imaging MS data.
+        </li>
+        <li>
+          <b>Format:</b> we can receive only data in the imzML centroided format.
+          Please check out
+          <a
+            :href="helpLink"
+            target="_blank"
+            class="external"
+            title="The page will open in a new window"
+          >our instructions</a>
+          for converting datasets into this format. If you are experiencing difficulties,
+          please contact your instrument vendor.
+        </li>
+      </ul>
       <p>
         If you have any further questions, please check out our main
         <a
@@ -29,7 +32,7 @@
           class="external"
           title="The page will open in a new window"
         >help</a>
-        page or email us at <a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a>
+        page or email us at <a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a>.
       </p>
       <p>Have fun using METASPACE!</p>
     </el-dialog>
@@ -49,8 +52,66 @@
         <!--<filter-panel level="upload"></filter-panel>-->
         <!--</div>-->
 
-        <div class="fine-uploader-wrapper">
-          <fine-uploader
+        <div class="metadata-section">
+          <div class="el-row">
+            <div class="el-col el-col-6">
+              &nbsp;
+            </div>
+            <div class="el-col el-col-18">
+              <div class="flex justify-between form-margin">
+                <el-button
+                  class="text-gray-600"
+                  @click="helpDialog=true"
+                >
+                  Need help?
+                </el-button>
+                <el-button
+                  v-if="enableSubmit && !isTourRunning"
+                  type="primary"
+                  @click="onSubmit"
+                >
+                  Submit
+                </el-button>
+                <el-button
+                  v-else
+                  type="primary"
+                  disabled
+                  :title="disabledSubmitMessage"
+                >
+                  Submit
+                </el-button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="metadata-section">
+          <form class="el-form el-form--label-top el-row">
+            <div class="el-col el-col-6">
+              <div class="metadata-section__title">
+                Imaging MS data
+              </div>
+            </div>
+            <div class="el-col el-col-18">
+              <div
+                :class="[
+                  'flex justify-around items-center border-2 border-dashed border-gray-300',
+                  'text-gray-700 px-12 h-18 form-margin'
+                ]"
+              >
+                <div class="text-center w-24">
+                  <add-icon class="sm-mono-icon mx-2 rounded-full border border-solid border-gray-500 text-gray-500" />
+                  <span class="text-sm font-medium block leading-none">.imzML file</span>
+                </div>
+                <div class="text-center w-24">
+                  <add-icon class="sm-mono-icon mx-2 rounded-full border border-solid border-gray-500 text-gray-500" />
+                  <span class="text-sm font-medium block leading-none">.ibd file</span>
+                </div>
+              </div>
+            </div>
+          </form>
+
+        <!-- <fine-uploader
             ref="uploader"
             :config="fineUploaderConfig"
             :data-type-config="fineUploaderDataTypeConfig"
@@ -58,8 +119,8 @@
             @upload="onUpload"
             @success="onUploadSuccess"
             @failure="onUploadFailure"
-          />
-          <div class="md-editor-submit">
+          /> -->
+        <!-- <div class="md-editor-submit">
             <el-button
               class="el-button__help_metadata text-gray-600"
               icon="el-icon-question"
@@ -82,7 +143,7 @@
             >
               Submit
             </el-button>
-          </div>
+          </div> -->
         </div>
         <metadata-editor
           ref="editor"
@@ -106,6 +167,9 @@ import { createDatasetQuery } from '../../api/dataset'
 import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system'
 import get from 'lodash-es/get'
 import { currentUserIdQuery } from '../../api/user'
+
+import '../../components/MonoIcon.css'
+import AddIcon from '../../assets/inline/refactoring-ui/add.svg'
 
 const DataTypeConfig = {
   'LC-MS': {
@@ -167,8 +231,9 @@ export default {
     },
   },
   components: {
-    FineUploader,
+    // FineUploader,
     MetadataEditor,
+    AddIcon,
   },
 
   data() {
@@ -359,19 +424,38 @@ export default {
     margin: 25px 5px;
   }
 
-  .el-button__help_metadata {
-    padding: 20px;
-    font-size: 150%;
-  }
-
-  .fine-uploader-wrapper {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-evenly;
-  }
-
   a[target="_blank"]:after {
     content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==);
-    margin: 0 2px;
+    margin-left: 4px;
+  }
+
+  .el-dialog__wrapper >>> .el-dialog {
+    @apply p-10 leading-5 max-w-measure-2;
+  }
+
+  .el-dialog__wrapper >>> .el-dialog__header,
+  .el-dialog__wrapper >>> .el-dialog__body {
+    padding: 0;
+  }
+
+  .el-dialog__wrapper >>> .el-dialog__header {
+    @apply pb-5;
+  }
+
+  .el-dialog__wrapper >>> .el-dialog__title {
+    @apply font-medium text-base;
+    line-height: inherit;
+  }
+
+  .el-dialog__wrapper >>> .el-dialog__body > * {
+    margin: 0;
+  }
+
+  .el-dialog__wrapper >>> .el-dialog__body > * + * {
+    @apply mt-5;
+  }
+
+  .form-margin {
+    margin: 0 5px;
   }
 </style>

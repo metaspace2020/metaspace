@@ -6,7 +6,7 @@
     @click="onClick"
   >
     <tune-icon
-      class="sm-stateful-icon"
+      class="h-6 w-6 sm-stateful-icon"
       :class="{ 'sm-stateful-icon--active': isActive }"
     />
     <span class="leading-none ml-1">Channels</span>

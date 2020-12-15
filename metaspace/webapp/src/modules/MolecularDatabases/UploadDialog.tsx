@@ -4,16 +4,28 @@ import { defineComponent, reactive, onMounted, ref } from '@vue/composition-api'
 import { ApolloError } from 'apollo-client-preset'
 
 import { PrimaryLabelText } from '../../components/Form'
-import UppyUploader from '../../components/UppyUploader'
+import UppyUploader from '../../components/UppyUploader/UppyUploader.vue'
 import FadeTransition from '../../components/FadeTransition'
 
 import { createDatabaseQuery, MolecularDBDetails } from '../../api/moldb'
 import safeJsonParse from '../../lib/safeJsonParse'
+import reportError from '../../lib/reportError'
 
 const convertToS3 = (url: string) => {
   const parsedUrl = new URL(url)
   const bucket = parsedUrl.host.split('.')[0]
   return `s3://${bucket}/${decodeURIComponent(parsedUrl.pathname.slice(1))}`
+}
+
+const uppyOptions = {
+  debug: true,
+  autoProceed: true,
+  restrictions: {
+    maxFileSize: 150 * 2 ** 20, // 150MB
+    maxNumberOfFiles: 1,
+    allowedFileTypes: ['.tsv', '.csv'],
+  },
+  meta: {},
 }
 
 const formatErrorMsg = (e: ApolloError) : ErrorMessage => {
@@ -116,6 +128,7 @@ const UploadDialog = defineComponent<Props>({
         })
         emit('done')
       } catch (e) {
+        reportError(e, null)
         state.error = formatErrorMsg(e)
         state.loading = false
       }
@@ -200,6 +213,8 @@ const UploadDialog = defineComponent<Props>({
           uploadSuccessful={handleUploadSuccess}
           removeFile={handleRemoveFile}
           disabled={state.loading}
+          uppyOptions={uppyOptions}
+          requiredFiles={['.tsv']}
         />
         <span slot="footer">
           <el-button

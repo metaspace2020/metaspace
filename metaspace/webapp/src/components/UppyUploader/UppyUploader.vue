@@ -1,24 +1,43 @@
-import { defineComponent, reactive, onUnmounted } from '@vue/composition-api'
-import Uppy from '@uppy/core'
+<template>
+  <fade-transition class="flex items-center justify-center">
+    <dropzone
+      v-if="state.status === 'IDLE'"
+      :id="$attrs.id"
+      key="idle"
+      :accept="accept"
+      @upload="addFile"
+    >
+      <file-status
+        v-for="ext of requiredFiles"
+        :key="ext"
+        status="EMPTY"
+        :file-name="`${ext} file`"
+      />
+    </dropzone>
+    <div
+      v-if="state.status === 'UPLOADING'"
+      key="uploading"
+    >
+      <file-status
+        :status="status"
+        :button-click-handler="buttonClickHandler"
+        :file-name="state.fileName"
+        :progress="state.progress"
+      />
+    </div>
+  </fade-transition>
+</template>
+<script lang="ts">
+import { defineComponent, reactive, onUnmounted, computed } from '@vue/composition-api'
+import Uppy, { UppyOptions } from '@uppy/core'
 import AwsS3Multipart from '@uppy/aws-s3-multipart'
 
 import FadeTransition from '../../components/FadeTransition'
 
-import IdleState from './IdleState'
-import HasFileState from './HasFileState'
+import Dropzone from './Dropzone.vue'
+import FileStatus from './FileStatus.vue'
 
 import config from '../../lib/config'
-
-const uppyOptions = {
-  debug: true,
-  autoProceed: true,
-  restrictions: {
-    maxFileSize: 150 * 2 ** 20, // 150MB
-    maxNumberOfFiles: 1,
-    allowedFileTypes: ['.tsv', '.csv'],
-  },
-  meta: {},
-}
 
 function preventDropEvents() {
   const preventDefault = (e: Event) => {
@@ -37,23 +56,32 @@ interface State {
   error: boolean
   fileName: string | null
   progress: number
-  status: 'IDLE' | 'HAS_FILE' | 'ERROR'
+  status: 'IDLE' | 'UPLOADING' | 'ERROR'
 }
 
 interface Props {
   disabled: boolean
   removeFile: () => void
   uploadSuccessful: (filename: string, filePath: string) => void
+  uppyOptions: UppyOptions,
+  requiredFiles: string[]
 }
 
 const UppyUploader = defineComponent<Props>({
   name: 'UppyUploader',
   inheritAttrs: false, // class is passed down to child components
+  components: {
+    Dropzone,
+    FileStatus,
+    FadeTransition,
+  },
   props: {
     disabled: Boolean,
     formatError: Function,
     removeFile: Function,
     uploadSuccessful: { type: Function, required: true },
+    uppyOptions: Object,
+    requiredFiles: Array,
   },
   setup(props, { attrs }) {
     const state = reactive<State>({
@@ -65,14 +93,14 @@ const UppyUploader = defineComponent<Props>({
 
     preventDropEvents()
 
-    const uppy = Uppy(uppyOptions)
+    const uppy = Uppy(props.uppyOptions)
       .use(AwsS3Multipart, {
         limit: 2,
         companionUrl: config.companionUrl || `${window.location.origin}/database_upload`,
       })
       .on('file-added', file => {
         state.fileName = file.name
-        state.status = 'HAS_FILE'
+        state.status = 'UPLOADING'
       })
       .on('upload', () => {
         state.error = false
@@ -98,7 +126,6 @@ const UppyUploader = defineComponent<Props>({
         type: file.type,
         data: file,
       }
-
       try {
         uppy.addFile(descriptor)
       } catch (err) {
@@ -106,7 +133,7 @@ const UppyUploader = defineComponent<Props>({
       }
     }
 
-    const removeFile = () => {
+    const handleRemoveFile = () => {
       uppy.reset()
       if (props.removeFile) {
         props.removeFile()
@@ -117,53 +144,31 @@ const UppyUploader = defineComponent<Props>({
       state.status = 'IDLE'
     }
 
-    return () => {
-      const classes = `flex flex-col items-center justify-center ${attrs.class || ''}`
-      let content
-
-      if (state.status === 'HAS_FILE') {
-        let status
-        let buttonClickHandler
-
+    return {
+      addFile,
+      state,
+      accept: computed(() => props.uppyOptions?.restrictions?.allowedFileTypes),
+      status: computed(() => {
         if (props.disabled) {
-          status = 'DISABLED'
+          return 'DISABLED'
         } else if (state.error) {
-          status = 'ERROR'
-          buttonClickHandler = () => uppy.retryAll()
+          return 'ERROR'
         } else if (state.progress === 100) {
-          status = 'COMPLETE'
-          buttonClickHandler = removeFile
+          return 'COMPLETE'
         } else {
-          status = 'UPLOADING'
+          return 'UPLOADING'
         }
-
-        content = (
-          <HasFileState
-            class={classes}
-            status={status}
-            buttonClickHandler={buttonClickHandler}
-            fileName={state.fileName}
-            progress={state.progress}
-          />
-        )
-      } else {
-        content = (
-          <IdleState
-            accept={uppyOptions.restrictions.allowedFileTypes}
-            class={classes}
-            id={attrs.id}
-            upload={addFile}
-          />
-        )
-      }
-
-      return (
-        <FadeTransition>
-          {content}
-        </FadeTransition>
-      )
+      }),
+      buttonClickHandler() {
+        if (status === 'ERROR') {
+          uppy.retryAll()
+        } else {
+          handleRemoveFile()
+        }
+      },
     }
   },
 })
 
 export default UppyUploader
+</script>
