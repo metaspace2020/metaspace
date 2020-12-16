@@ -23,10 +23,10 @@
       title="Ion Image Channels"
     >
       <p>
-        Overlay multiple ion images from the same dataset. Scale and color each image, or lock the scale across all images.
+        Overlay multiple ion images from the same dataset. Color and scale each image, or lock the scale across all images.
       </p>
       <p>
-        &ldquo;Link to this annotation&rdquo; will preserve the layers and settings for collaborators.
+        Use &ldquo;Link to this annotation&rdquo; to preserve the layers and settings for collaborators.
       </p>
     </new-feature-popup>
   </div>
