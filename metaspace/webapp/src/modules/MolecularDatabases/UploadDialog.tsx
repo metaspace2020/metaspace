@@ -209,7 +209,8 @@ const UploadDialog = defineComponent<Props>({
           5{'\t'}2-Ketobutyric acid{'\t'}C4H6O3{'\n'}
         </pre>
         <UppyUploader
-          class="mt-6 h-32"
+          class="mt-6"
+          companionURL={`${window.location.origin}/database_upload`}
           uploadSuccessful={handleUploadSuccess}
           removeFile={handleRemoveFile}
           disabled={state.loading}

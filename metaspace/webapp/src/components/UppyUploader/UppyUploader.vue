@@ -1,5 +1,5 @@
 <template>
-  <fade-transition class="flex items-center justify-center">
+  <fade-transition class="flex items-center justify-around px-24 h-32">
     <dropzone
       v-if="state.status === 'IDLE'"
       :id="$attrs.id"
@@ -63,8 +63,9 @@ interface Props {
   disabled: boolean
   removeFile: () => void
   uploadSuccessful: (filename: string, filePath: string) => void
-  uppyOptions: UppyOptions,
+  uppyOptions: UppyOptions
   requiredFiles: string[]
+  companionURL: string
 }
 
 const UppyUploader = defineComponent<Props>({
@@ -76,6 +77,7 @@ const UppyUploader = defineComponent<Props>({
     FadeTransition,
   },
   props: {
+    companionURL: { type: String, required: true },
     disabled: Boolean,
     formatError: Function,
     removeFile: Function,
@@ -96,7 +98,7 @@ const UppyUploader = defineComponent<Props>({
     const uppy = Uppy(props.uppyOptions)
       .use(AwsS3Multipart, {
         limit: 2,
-        companionUrl: config.companionUrl || `${window.location.origin}/database_upload`,
+        companionUrl: props.companionURL,
       })
       .on('file-added', file => {
         state.fileName = file.name

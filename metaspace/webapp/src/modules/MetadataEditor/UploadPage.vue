@@ -93,57 +93,19 @@
               </div>
             </div>
             <div class="el-col el-col-18">
-              <div
-                :class="[
-                  'flex justify-around items-center border-2 border-dashed border-gray-300',
-                  'text-gray-700 px-12 h-18 form-margin'
-                ]"
-              >
-                <div class="text-center w-24">
-                  <add-icon class="sm-mono-icon mx-2 rounded-full border border-solid border-gray-500 text-gray-500" />
-                  <span class="text-sm font-medium block leading-none">.imzML file</span>
-                </div>
-                <div class="text-center w-24">
-                  <add-icon class="sm-mono-icon mx-2 rounded-full border border-solid border-gray-500 text-gray-500" />
-                  <span class="text-sm font-medium block leading-none">.ibd file</span>
-                </div>
-              </div>
+              <uppy-uploader
+                :companion-u-r-l="companionURL"
+                :upload-successful="handleUploadSuccess"
+                :remove-file="handleRemoveFile"
+                :disabled="loading"
+                :uppy-options="uppyOptions"
+                :required-files="['.imzML', '.ibd']"
+                @upload="onUpload"
+                @success="onUploadSuccess"
+                @failure="onUploadFailure"
+              />
             </div>
           </form>
-
-        <!-- <fine-uploader
-            ref="uploader"
-            :config="fineUploaderConfig"
-            :data-type-config="fineUploaderDataTypeConfig"
-            style="flex-basis: 80%"
-            @upload="onUpload"
-            @success="onUploadSuccess"
-            @failure="onUploadFailure"
-          /> -->
-        <!-- <div class="md-editor-submit">
-            <el-button
-              class="el-button__help_metadata text-gray-600"
-              icon="el-icon-question"
-              @click="helpDialog=true"
-            />
-            <el-button
-              v-if="enableSubmit && !isTourRunning"
-              type="primary"
-              class="text-xl"
-              @click="onSubmit"
-            >
-              Submit
-            </el-button>
-            <el-button
-              v-else
-              type="primary"
-              disabled
-              :title="disabledSubmitMessage"
-              class="text-xl"
-            >
-              Submit
-            </el-button>
-          </div> -->
         </div>
         <metadata-editor
           ref="editor"
@@ -155,11 +117,10 @@
 </template>
 
 <script>
-// TODO: try https://github.com/FineUploader/vue-fineuploader once it's ready for production
-
-import FineUploader from './inputs/FineUploader.vue'
+import UppyUploader from '../../components/UppyUploader/UppyUploader.vue'
 import MetadataEditor from './MetadataEditor.vue'
 import Vue from 'vue'
+import { UppyOptions } from '@uppy/core'
 
 import config from '../../lib/config'
 import { pathFromUUID } from '../../lib/util'
@@ -208,6 +169,18 @@ const DataTypeConfig = {
   },
 }
 
+const uppyOptions = {
+  debug: true,
+  autoProceed: false,
+  restrictions: {
+    // maxFileSize: 150 * 2 ** 20, // 150MB
+    maxNumberOfFiles: 2,
+    minNumberOfFiles: 2,
+    allowedFileTypes: ['.imzML', '.ibd'],
+  },
+  meta: {},
+}
+
 export default {
   name: 'UploadPage',
   apollo: {
@@ -231,19 +204,17 @@ export default {
     },
   },
   components: {
-    // FineUploader,
+    UppyUploader,
     MetadataEditor,
-    AddIcon,
   },
 
   data() {
     return {
       loading: 0,
-      fineUploaderConfig: config.fineUploader,
+      uppyOptions,
       validationErrors: [],
       isSubmitting: false,
       uploadedUuid: null,
-      features: config.features,
       helpDialog: false,
       // eslint-disable-next-line vue/max-len
       helpLink: 'https://docs.google.com/document/d/e/2PACX-1vTT4QrMQ2RJMjziscaU8S3gbznlv6Rm5ojwrsdAXPbR5bt7Ivp-ThkC0hefrk3ZdVqiyCX7VU_ddA62/pub',
@@ -271,8 +242,13 @@ export default {
     isSignedIn() {
       return this.currentUser != null && this.currentUser.id != null
     },
+
     enableUploads() {
       return !this.systemHealth || (this.systemHealth.canMutate && this.systemHealth.canProcessDatasets)
+    },
+
+    companionURL() {
+      return `${window.location.origin}/dataset_upload`
     },
   },
   created() {

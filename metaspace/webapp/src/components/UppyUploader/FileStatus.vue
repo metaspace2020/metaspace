@@ -3,9 +3,9 @@
     class="flex flex-col items-center justify-center text-sm leading-5 transition-opacity duration-300"
     :class="{ 'opacity-50': status === 'DISABLED' }"
   >
-    <div class="relative sm-custom-margin">
+    <div class="relative mt-2">
       <file-icon
-        class="sm-stateful-icon h-8 w-8 block p-2 bg-gray-100 rounded-full"
+        class="sm-stateful-icon h-6 w-6 block p-2 bg-gray-100 rounded-full"
         :class="{ 'sm-stateful-icon--active bg-blue-100': status !== 'EMPTY' }"
       />
       <progress-ring
@@ -16,7 +16,7 @@
           'text-primary': status === 'UPLOADING',
           'text-danger': status === 'ERROR',
         }"
-        :radius="24"
+        :radius="20"
         :stroke="4"
         :progress="progress"
       />
@@ -35,7 +35,7 @@
         </button>
       </fade-transition>
     </div>
-    <p class="m-0 font-medium sm-custom-margin">
+    <p class="m-0 font-medium mt-2">
       {{ fileName }}
     </p>
     <fade-transition class="m-0">
