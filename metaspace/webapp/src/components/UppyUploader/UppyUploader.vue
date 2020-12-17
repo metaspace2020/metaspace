@@ -1,9 +1,9 @@
 <template>
-  <fade-transition class="flex items-center justify-around px-6 h-32">
+  <fade-transition class="flex items-center px-6 h-32">
     <dropzone
       v-if="state.status === 'DROP-ACTIVE'"
       :id="$attrs.id"
-      key="idle"
+      key="drop"
       :accept="accept"
       @upload="addFile"
     >
@@ -12,7 +12,6 @@
         :key="f.id || f.fileName"
         :status="f.status"
         :file-name="f.fileName"
-        :style="`width: ${100 / files.length}%`"
       />
     </dropzone>
     <div
@@ -25,7 +24,6 @@
         :status="f.status"
         :file-name="f.fileName"
         :progress="f.progress"
-        :style="`width: ${100 / files.length}%`"
         @action-button="buttonClickHandler"
       />
     </div>

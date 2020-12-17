@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex flex-col items-center justify-center text-sm leading-5 transition-opacity duration-300"
+    class="w-full flex flex-col items-center justify-center text-sm leading-5 transition-opacity duration-300"
     :class="{ 'opacity-50': status === 'DISABLED' }"
   >
     <div class="relative mt-2">
