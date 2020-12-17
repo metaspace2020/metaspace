@@ -26,7 +26,7 @@
           :key="status"
           class="button-reset text-gray-600 hover:text-primary focus:text-primary"
           :title="status === 'ERROR' ? 'Retry file' : 'Remove file'"
-          @click="buttonClickHandler"
+          @click.stop="$emit('action-button')"
         >
           <i
             class="text-inherit text-lg"
@@ -35,8 +35,10 @@
         </button>
       </fade-transition>
     </div>
-    <p class="m-0 font-medium mt-2">
-      {{ fileName }}
+    <p class="m-0 font-medium mt-2 truncate">
+      <span class="">{{ fileName }}</span>
+      <span v-if="extension">{{ }}
+      </span>
     </p>
     <fade-transition class="m-0">
       <p
@@ -63,11 +65,12 @@ import FileIcon from '../../assets/inline/refactoring-ui/document.svg'
 import FadeTransition from '../../components/FadeTransition'
 import ProgressRing from '../../components/ProgressRing'
 
+export type FileStatusName = 'EMPTY' | 'PENDING' | 'UPLOADING' | 'COMPLETE' | 'ERROR' | 'DISABLED'
+
 interface Props {
-  buttonClickHandler?: () => void
   fileName: string
   progress?: number
-  status: 'EMPTY' | 'PENDING' | 'UPLOADING' | 'COMPLETE' | 'ERROR' | 'DISABLED'
+  status: FileStatusName
 }
 
 export default defineComponent<Props>({
@@ -78,7 +81,6 @@ export default defineComponent<Props>({
     ProgressRing,
   },
   props: {
-    buttonClickHandler: Function,
     fileName: String,
     progress: Number,
     status: String,
@@ -100,8 +102,3 @@ export default defineComponent<Props>({
   },
 })
 </script>
-<style scoped>
-.sm-custom-margin {
-  margin-top: calc(theme('spacing.3') / 2);
-}
-</style>

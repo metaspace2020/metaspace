@@ -95,14 +95,9 @@
             <div class="el-col el-col-18">
               <uppy-uploader
                 :companion-u-r-l="companionURL"
-                :upload-successful="handleUploadSuccess"
-                :remove-file="handleRemoveFile"
                 :disabled="loading"
                 :uppy-options="uppyOptions"
-                :required-files="['.imzML', '.ibd']"
-                @upload="onUpload"
-                @success="onUploadSuccess"
-                @failure="onUploadFailure"
+                :required-file-types="['imzML', 'ibd']"
               />
             </div>
           </form>
@@ -117,6 +112,13 @@
 </template>
 
 <script>
+
+// :upload-successful="handleUploadSuccess"
+// :remove-file="handleRemoveFile"
+// @upload="onUpload"
+// @success="onUploadSuccess"
+// @failure="onUploadFailure"
+
 import UppyUploader from '../../components/UppyUploader/UppyUploader.vue'
 import MetadataEditor from './MetadataEditor.vue'
 import Vue from 'vue'
