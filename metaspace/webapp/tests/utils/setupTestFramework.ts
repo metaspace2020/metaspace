@@ -8,6 +8,7 @@ import { replaceConfigWithDefaultForTests } from '../../src/lib/config'
 import VueCompositionApi from '@vue/composition-api'
 import './mockGenerateId'
 import registerSVGIcons from './registerSVGIcons'
+import './skipNewFeaturePopups'
 
 window.fetch = jest.fn()
 window.scrollTo = jest.fn()

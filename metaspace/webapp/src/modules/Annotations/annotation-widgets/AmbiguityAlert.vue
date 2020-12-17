@@ -1,6 +1,5 @@
 <template>
   <el-popover
-    v-if="showIsomers || showIsobars"
     trigger="hover"
     class="popover"
   >
@@ -15,8 +14,9 @@
         <li
           v-for="(isomer, i) in isomers"
           :key="i"
-          v-html="renderMolFormulaHtml(isomer.ion)"
-        />
+        >
+          <molecular-formula :ion="isomer.ion" />
+        </li>
       </ul>
     </div>
     <div v-if="showIsobars">
@@ -30,8 +30,9 @@
         <li
           v-for="(isobar, i) in isobars"
           :key="i"
-          v-html="renderMolFormulaHtml(isobar.ion)"
-        />
+        >
+          <molecular-formula :ion="isomer.ion" />
+        </li>
       </ul>
     </div>
     <div
@@ -41,10 +42,14 @@
   </el-popover>
 </template>
 <script>
-import { renderMolFormulaHtml } from '../../../lib/util'
+import MolecularFormula from '../../../components/MolecularFormula'
+
 import config from '../../../lib/config'
 
 export default {
+  components: {
+    MolecularFormula,
+  },
   props: {
     isomers: Array,
     isobars: Array,
@@ -56,9 +61,6 @@ export default {
     showIsobars() {
       return config.features.isobars && this.isobars && this.isobars.some(isobar => isobar.shouldWarn)
     },
-  },
-  methods: {
-    renderMolFormulaHtml,
   },
 }
 </script>

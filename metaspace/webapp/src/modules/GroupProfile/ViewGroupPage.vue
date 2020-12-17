@@ -131,9 +131,13 @@
           lazy
         >
           <span slot="label">
-            <new-feature-badge feature-key="custom_databases">
+            <popup-anchor
+              feature-key="groupDatabasesTab"
+              :show-until="new Date('2021-03-01')"
+              placement="bottom"
+            >
               {{ 'Databases' | optionalSuffixInParens(countDatabases) }}
-            </new-feature-badge>
+            </popup-anchor>
           </span>
           <div>
             <molecular-databases
@@ -184,10 +188,10 @@ import isUuid from '../../lib/isUuid'
 import { optionalSuffixInParens, plural } from '../../lib/vueFilters'
 import { removeDatasetFromAllDatasetsQuery } from '../../lib/updateApolloCache'
 import GroupDescription from './GroupDescription.vue'
-import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
 import MolecularDatabases from '../MolecularDatabases'
 import { MolecularDB } from '../../api/moldb'
 import config from '../../lib/config'
+import PopupAnchor from '../NewFeaturePopup/PopupAnchor.vue'
 
   interface ViewGroupProfileData {
     allDatasets: DatasetDetailItem[];
@@ -202,8 +206,8 @@ import config from '../../lib/config'
       TransferDatasetsDialog,
       NotificationIcon,
       GroupDescription,
-      NewFeatureBadge,
       MolecularDatabases,
+      PopupAnchor,
     },
     filters: {
       optionalSuffixInParens,
@@ -328,13 +332,6 @@ export default class ViewGroupPage extends Vue {
 
     set tab(tab: string) {
       this.$router.replace({ query: { tab } })
-    }
-
-    @Watch('tab')
-    checkFeatureBadges() {
-      if (this.tab === 'databases') {
-        hideFeatureBadge('custom_databases')
-      }
     }
 
     get isInvited(): boolean {
