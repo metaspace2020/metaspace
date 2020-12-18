@@ -1,34 +1,22 @@
 <template>
-  <fade-transition class="flex items-center px-6 h-32">
-    <dropzone
-      v-if="state.status === 'DROPPING'"
-      :id="$attrs.id"
-      key="drop"
-      :accept="accept"
-      :multiple="multiple"
-      @upload="addFiles"
-    >
-      <file-status
-        v-for="f of files"
-        :key="f.id || f.fileName"
-        :status="f.status"
-        :file-name="f.fileName"
-      />
-    </dropzone>
-    <div
-      v-if="state.status === 'UPLOADING'"
-      key="uploading"
-    >
-      <file-status
-        v-for="f of files"
-        :key="f.id"
-        :status="f.status"
-        :file-name="f.fileName"
-        :progress="f.progress"
-        @action-button="buttonClickHandler"
-      />
-    </div>
-  </fade-transition>
+  <dropzone
+    :id="$attrs.id"
+    class="flex items-center px-6 h-32"
+    :accept="accept"
+    :multiple="multiple"
+    :disabled="state.status === 'UPLOADING'"
+    @upload="addFiles"
+  >
+    <file-status
+      v-for="f of files"
+      :key="f.id || f.fileName"
+      :status="f.status"
+      :file-name="f.fileName"
+      :progress="f.progress"
+      @remove="removeFile(f.id)"
+      @retry="retryFile(f.id)"
+    />
+  </dropzone>
 </template>
 <script lang="ts">
 import { defineComponent, reactive, onUnmounted, computed, watch } from '@vue/composition-api'
@@ -62,7 +50,6 @@ interface State {
 
 interface Props {
   disabled: boolean
-  removeFile: () => void
   requiredFileTypes: string[]
   s3Options: AwsS3MultipartOptions,
   uploadSuccessful: (filename: string, filePath: string) => void
@@ -79,8 +66,6 @@ const UppyUploader = defineComponent<Props>({
   },
   props: {
     disabled: Boolean,
-    formatError: Function,
-    removeFile: Function,
     uploadSuccessful: { type: Function, required: true },
     options: Object,
     s3Options: Object,
@@ -100,6 +85,9 @@ const UppyUploader = defineComponent<Props>({
         // state.fileName = file.name
         // TODO: reconcile required files before uploading
         // state.status = 'UPLOADING'
+      })
+      .on('upload', () => {
+        state.status = 'UPLOADING'
       })
       .on('upload-success', async(file, result) => {
         console.log(file, result)
@@ -128,14 +116,16 @@ const UppyUploader = defineComponent<Props>({
       if (file === undefined) {
         return 'EMPTY'
       }
-      if (file.response && file.response.status !== 200) {
+      // @ts-ignore - undocumented property
+      if (file.error) {
+        console.log(file.response)
         return 'ERROR'
-      }
-      if (file.progress?.uploadStarted) {
-        return 'UPLOADING'
       }
       if (file.progress?.uploadComplete) {
         return 'COMPLETE'
+      }
+      if (file.progress?.uploadStarted) {
+        return 'UPLOADING'
       }
       return 'PENDING'
     }
@@ -175,14 +165,6 @@ const UppyUploader = defineComponent<Props>({
       }
     }
 
-    const handleRemoveFile = () => {
-      uppy.reset()
-      if (props.removeFile) {
-        props.removeFile()
-      }
-      state.status = 'DROPPING'
-    }
-
     return {
       addFiles,
       state,
@@ -202,13 +184,11 @@ const UppyUploader = defineComponent<Props>({
         }
         return true
       }),
-      buttonClickHandler() {
-        if (status === 'ERROR') {
-          uppy.retryAll()
-        } else {
-          handleRemoveFile()
-        }
+      removeFile(id: string) {
+        uppy.removeFile(id)
+        state.status = 'DROPPING'
       },
+      retryFile: uppy.retryUpload,
     }
   },
 })

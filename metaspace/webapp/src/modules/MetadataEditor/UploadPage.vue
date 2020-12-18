@@ -86,7 +86,10 @@
         </div>
 
         <div class="metadata-section">
-          <form class="el-form el-form--label-top el-row">
+          <form
+            class="el-form el-form--label-top el-row"
+            @submit.prevent
+          >
             <div class="el-col el-col-6">
               <div class="metadata-section__title">
                 Imaging MS data
@@ -96,12 +99,16 @@
               v-loading="loading"
               class="el-col el-col-18"
             >
-              <uppy-uploader
-                :disabled="isSubmitting"
-                :required-file-types="['imzML', 'ibd']"
-                :s3-options="s3Options"
-                :options="uppyOptions"
-              />
+              <div class="el-row">
+                <div class="el-col">
+                  <uppy-uploader
+                    :disabled="isSubmitting"
+                    :required-file-types="['imzML', 'ibd']"
+                    :s3-options="s3Options"
+                    :options="uppyOptions"
+                  />
+                </div>
+              </div>
             </div>
           </form>
         </div>
@@ -202,6 +209,7 @@ const uppyOptions = {
         message: 'Please make sure the files have the same name before the extension',
         type: 'error',
       })
+      return false
     }
   },
 }
@@ -285,8 +293,6 @@ export default {
     },
 
     s3Options() {
-      // const uuid = encodeURIComponent(this.storageKey.uuid)
-      // const uuidSignature = encodeURIComponent(this.storageKey.uuidSignature)
       return {
         companionUrl: this.uploadEndpoint,
         companionHeaders: this.storageKey,

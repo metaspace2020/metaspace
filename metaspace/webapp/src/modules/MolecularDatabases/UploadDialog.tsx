@@ -219,7 +219,7 @@ const UploadDialog = defineComponent<Props>({
           disabled={state.loading}
           options={uppyOptions}
           s3Options={s3Options}
-          requiredFileTypes={['.tsv']}
+          requiredFileTypes={['tsv']}
         />
         <span slot="footer">
           <el-button

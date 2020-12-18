@@ -12,6 +12,7 @@ import logger from '../../utils/logger';
 import {Config, ImageCategory} from '../../utils/config';
 import datasetUploadMiddleware from './datasetUploadMiddleware'
 import databaseUploadMiddleware from './databaseUploadMiddleware'
+import bodyParser = require('body-parser');
 
 
 function imageProviderFSBackend(storageRootDir: string) {
@@ -85,7 +86,7 @@ export async function createStorageServerApp(config: Config) {
   try {
     const app = express();
     app.use(cors({
-      // allowedHeaders: 'uuid, uuidSignature',
+      allowedHeaders: 'Content-Type, uuid, uuidSignature',
     }));
 
     const backendFactories = {

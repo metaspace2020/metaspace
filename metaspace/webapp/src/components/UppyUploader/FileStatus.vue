@@ -3,7 +3,7 @@
     class="w-full flex flex-col items-center justify-center text-sm leading-5 transition-opacity duration-300"
     :class="{ 'opacity-50': status === 'DISABLED' }"
   >
-    <div class="relative mt-2">
+    <div class="relative mt-3">
       <file-icon
         class="sm-stateful-icon h-6 w-6 block p-2 bg-gray-100 rounded-full"
         :class="{ 'sm-stateful-icon--active bg-blue-100': status !== 'EMPTY' }"
@@ -20,18 +20,22 @@
         :stroke="4"
         :progress="progress"
       />
-      <fade-transition class="absolute top-0 right-0 -mt-3 -mr-6">
+      <fade-transition class="absolute top-0 right-0 -mt-3 -mr-6 button-reset text-gray-600 hover:text-primary focus:text-primary leading-none">
         <button
-          v-if="['PENDING', 'COMPLETE', 'ERROR'].includes(status)"
-          :key="status"
-          class="button-reset text-gray-600 hover:text-primary focus:text-primary"
-          :title="status === 'ERROR' ? 'Retry file' : 'Remove file'"
-          @click.stop="$emit('action-button')"
+          v-if="['PENDING', 'UPLOADING', 'COMPLETE'].includes(status)"
+          key="remove"
+          title="Remove file"
+          @click.stop="$emit('remove')"
         >
-          <i
-            class="text-inherit text-lg"
-            :class="status === 'ERROR' ? 'el-icon-refresh' : 'el-icon-error'"
-          />
+          <i class="text-inherit text-lg el-icon-error" />
+        </button>
+        <button
+          v-else-if="status === 'ERROR'"
+          key="retry"
+          title="Retry file"
+          @click.stop="$emit('retry')"
+        >
+          <i class="text-inherit text-lg el-icon-refresh" />
         </button>
       </fade-transition>
     </div>
@@ -45,6 +49,13 @@
         class="font-medium text-danger"
       >
         Upload failed
+      </p>
+      <p
+        v-else-if="status === 'COMPLETE'"
+        key="complete"
+        class="font-medium text-primary"
+      >
+        Upload complete
       </p>
       <p
         v-else

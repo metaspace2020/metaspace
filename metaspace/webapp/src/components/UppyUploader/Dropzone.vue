@@ -1,12 +1,12 @@
 <template>
   <div
     :class="[
-      'text-base leading-6 text-gray-700 cursor-pointer',
-      'transition-colors ease-in-out duration-150',
-      'box-border outline-none border-2 border-dashed border-gray-400 hover:border-gray-600 focus:border-primary',
-      { 'border-primary': state.dragover },
+      'text-base leading-6 text-gray-700 box-border outline-none',
+      'transition-all ease-in-out duration-150',
+      'border-2 border-dashed border-gray-400 focus:border-primary',
+      { 'border-primary': state.dragover, 'cursor-pointer hover:border-gray-600': !disabled },
     ]"
-    tabindex="0"
+    :tabindex="disabled ? undefined : '0'"
     title="Drag and drop, or click to browse"
     @click="openFilePicker"
     @drop="handleDrop"
@@ -38,6 +38,7 @@ interface State {
 
 interface Props {
   accept: string[]
+  disabled: boolean
   multiple: boolean
 }
 
@@ -45,6 +46,7 @@ export default defineComponent<Props>({
   name: 'Dropzone',
   props: {
     accept: Array,
+    disabled: Boolean,
     multiple: Boolean,
   },
   setup(props, { emit }) {
@@ -54,6 +56,9 @@ export default defineComponent<Props>({
 
     const input = ref<HTMLInputElement | null>(null)
     const openFilePicker = () => {
+      if (props.disabled) {
+        return
+      }
       if (input.value !== null) {
         input.value.click()
       }
@@ -71,6 +76,10 @@ export default defineComponent<Props>({
       e.preventDefault()
       e.stopPropagation()
 
+      if (props.disabled) {
+        return
+      }
+
       if (e.dataTransfer?.files.length) {
         emit('upload', Array.from(e.dataTransfer.files))
       }
@@ -79,6 +88,11 @@ export default defineComponent<Props>({
     const handleDragOver = (e: DragEvent) => {
       e.preventDefault()
       e.stopPropagation()
+
+      if (props.disabled) {
+        return
+      }
+
       if (e.dataTransfer) {
         e.dataTransfer.dropEffect = 'copy'
       }

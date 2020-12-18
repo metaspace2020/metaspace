@@ -17,6 +17,8 @@ export default () => {
 
       state.value = nextState
 
+      // console.log(patch)
+
       listeners.forEach(listener => {
         listener(prevState, nextState, patch)
       })
