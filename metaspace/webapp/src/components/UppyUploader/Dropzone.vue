@@ -14,8 +14,8 @@
     @dragleave="handleDragLeave"
     @keyup="handleKeyup"
   >
-    <slot name="default">
-      <p class="m-0 font-medium pointer-events-none text-left p-6">
+    <slot>
+      <p class="m-0 font-medium pointer-events-none text-left p-3 mx-auto">
         Drag and drop, or click to browse
       </p>
     </slot>
@@ -24,6 +24,7 @@
       type="file"
       hidden
       :accept="accept"
+      :multiple="multiple"
       @change="onInputChange"
     />
   </div>
@@ -37,12 +38,14 @@ interface State {
 
 interface Props {
   accept: string[]
+  multiple: boolean
 }
 
 export default defineComponent<Props>({
   name: 'Dropzone',
   props: {
     accept: Array,
+    multiple: Boolean,
   },
   setup(props, { emit }) {
     const state = reactive<State>({
@@ -59,7 +62,7 @@ export default defineComponent<Props>({
     const onInputChange = (e: Event) => {
       const target = e.target as HTMLInputElement
       if (target.files !== null && target.files.length) {
-        emit('upload', target.files[0])
+        emit('upload', Array.from(target.files))
         target.value = ''
       }
     }
@@ -69,7 +72,7 @@ export default defineComponent<Props>({
       e.stopPropagation()
 
       if (e.dataTransfer?.files.length) {
-        emit('upload', e.dataTransfer.files[0])
+        emit('upload', Array.from(e.dataTransfer.files))
       }
     }
 

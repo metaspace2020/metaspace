@@ -28,6 +28,10 @@ const uppyOptions = {
   meta: {},
 }
 
+const s3Options = {
+  companionUrl: `${window.location.origin}/database_upload`,
+}
+
 const formatErrorMsg = (e: ApolloError) : ErrorMessage => {
   if (e.graphQLErrors && e.graphQLErrors.length) {
     const [error] = e.graphQLErrors
@@ -210,12 +214,12 @@ const UploadDialog = defineComponent<Props>({
         </pre>
         <UppyUploader
           class="mt-6"
-          companionURL={`${window.location.origin}/database_upload`}
           uploadSuccessful={handleUploadSuccess}
           removeFile={handleRemoveFile}
           disabled={state.loading}
-          uppyOptions={uppyOptions}
-          requiredFiles={['.tsv']}
+          options={uppyOptions}
+          s3Options={s3Options}
+          requiredFileTypes={['.tsv']}
         />
         <span slot="footer">
           <el-button

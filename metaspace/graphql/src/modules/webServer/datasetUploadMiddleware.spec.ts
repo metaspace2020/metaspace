@@ -41,7 +41,8 @@ describe.only('datasetUploadMiddleware', () => {
 
   it('should return a key', async () => {
     const response = await supertest(app)
-      .post(`/s3/multipart?uuid=${uuid}&uuidSignature=${encodeURIComponent(uuidSignature)}`)
+      .post(`/s3/multipart`)
+      .set({ uuid, uuidSignature })
       .send({ filename: 'test.ibd', type: 'text/csv' })
       .expect('Content-Type', /json/)
       .expect(200);
@@ -51,7 +52,8 @@ describe.only('datasetUploadMiddleware', () => {
 
   it('should error on invalid signature', async () => {
     await supertest(app)
-      .post(`/s3/multipart?uuid=${uuid}&uuidSignature=123`)
+      .post(`/s3/multipart`)
+      .set({ uuid, uuidSignature: '123' })
       .send({ filename: 'test.ibd', type: 'text/csv' })
       .expect(500);
   })

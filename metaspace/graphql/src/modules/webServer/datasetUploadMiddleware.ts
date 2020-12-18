@@ -31,7 +31,11 @@ export default function (httpServer?: http.Server) {
       config.aws ? {
         s3: {
           getKey: (req: Request, filename: string, metadata: object) => {
-            const { uuid, uuidSignature } = req.query
+            const uuid = req.header('uuid')
+            if (uuid === undefined) {
+              throw new Error('uuid is not valid')
+            }
+            const uuidSignature = req.header('uuidSignature')
             const signedUuid = signUuid(uuid)
             if (signedUuid !== uuidSignature) {
               throw new Error('uuid is not valid')

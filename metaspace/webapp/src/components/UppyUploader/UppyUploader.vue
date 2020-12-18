@@ -1,11 +1,12 @@
 <template>
   <fade-transition class="flex items-center px-6 h-32">
     <dropzone
-      v-if="state.status === 'DROP-ACTIVE'"
+      v-if="state.status === 'DROPPING'"
       :id="$attrs.id"
       key="drop"
       :accept="accept"
-      @upload="addFile"
+      :multiple="multiple"
+      @upload="addFiles"
     >
       <file-status
         v-for="f of files"
@@ -30,9 +31,9 @@
   </fade-transition>
 </template>
 <script lang="ts">
-import { defineComponent, reactive, onUnmounted, computed } from '@vue/composition-api'
+import { defineComponent, reactive, onUnmounted, computed, watch } from '@vue/composition-api'
 import Uppy, { UppyOptions, UppyFile } from '@uppy/core'
-import AwsS3Multipart from '@uppy/aws-s3-multipart'
+import AwsS3Multipart, { AwsS3MultipartOptions } from '@uppy/aws-s3-multipart'
 
 import FadeTransition from '../../components/FadeTransition'
 
@@ -56,16 +57,16 @@ function preventDropEvents() {
 }
 
 interface State {
-  status: 'DROP-ACTIVE' | 'UPLOADING' | 'ERROR'
+  status: 'DROPPING' | 'UPLOADING' | 'ERROR'
 }
 
 interface Props {
   disabled: boolean
   removeFile: () => void
-  uploadSuccessful: (filename: string, filePath: string) => void
-  uppyOptions: UppyOptions
   requiredFileTypes: string[]
-  companionURL: string
+  s3Options: AwsS3MultipartOptions,
+  uploadSuccessful: (filename: string, filePath: string) => void
+  options: UppyOptions
 }
 
 const UppyUploader = defineComponent<Props>({
@@ -77,31 +78,25 @@ const UppyUploader = defineComponent<Props>({
     FadeTransition,
   },
   props: {
-    companionURL: { type: String, required: true },
     disabled: Boolean,
     formatError: Function,
     removeFile: Function,
     uploadSuccessful: { type: Function, required: true },
-    uppyOptions: Object,
+    options: Object,
+    s3Options: Object,
     requiredFileTypes: Array,
   },
   setup(props, { attrs }) {
     // TODO: build multiple file state
     const state = reactive<State>({
-      status: 'DROP-ACTIVE',
+      status: 'DROPPING',
     })
 
     preventDropEvents()
 
-    console.log(props.uppyOptions)
-
-    const uppy = Uppy({ ...props.uppyOptions, store: createStore() })
-      .use(AwsS3Multipart, {
-        limit: 2,
-        companionUrl: props.companionURL,
-      })
+    const uppy = Uppy({ ...props.options, store: createStore() })
       .on('file-added', file => {
-        console.log(file)
+
         // state.fileName = file.name
         // TODO: reconcile required files before uploading
         // state.status = 'UPLOADING'
@@ -114,6 +109,17 @@ const UppyUploader = defineComponent<Props>({
       // .on('upload-error', () => {
       //   state.error = true
       // })
+
+    if (props.s3Options) {
+      uppy.use(AwsS3Multipart, {
+        limit: 2,
+        ...props.s3Options,
+      })
+
+      watch(() => props.s3Options, (newOpts) => {
+        uppy.getPlugin('AwsS3Multipart').setOptions(newOpts)
+      })
+    }
 
     function getFileStatus(file?: UppyFile) : FileStatusName {
       if (props.disabled) {
@@ -155,14 +161,15 @@ const UppyUploader = defineComponent<Props>({
       }))
     })
 
-    const addFile = (file: File) => {
-      const descriptor = {
-        name: file.name,
-        type: file.type,
-        data: file,
-      }
+    const addFiles = (files: File[]) => {
       try {
-        uppy.addFile(descriptor)
+        for (const file of files) {
+          uppy.addFile({
+            name: file.name,
+            type: file.type,
+            data: file,
+          })
+        }
       } catch (err) {
         uppy.log(err)
       }
@@ -173,14 +180,28 @@ const UppyUploader = defineComponent<Props>({
       if (props.removeFile) {
         props.removeFile()
       }
-      state.status = 'DROP-ACTIVE'
+      state.status = 'DROPPING'
     }
 
     return {
-      addFile,
+      addFiles,
       state,
       files,
-      accept: computed(() => props.uppyOptions?.restrictions?.allowedFileTypes),
+      accept: computed(() => props.options?.restrictions?.allowedFileTypes),
+      multiple: computed(() => {
+        if (props.requiredFileTypes) {
+          return props.requiredFileTypes.length > 1
+        }
+        if (props.options?.restrictions) {
+          const { maxNumberOfFiles } = props.options.restrictions
+          return (
+            maxNumberOfFiles === undefined
+            || maxNumberOfFiles === null
+            || maxNumberOfFiles > 1
+          )
+        }
+        return true
+      }),
       buttonClickHandler() {
         if (status === 'ERROR') {
           uppy.retryAll()

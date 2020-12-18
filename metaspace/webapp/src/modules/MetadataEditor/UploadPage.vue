@@ -92,12 +92,15 @@
                 Imaging MS data
               </div>
             </div>
-            <div class="el-col el-col-18">
+            <div
+              v-loading="loading"
+              class="el-col el-col-18"
+            >
               <uppy-uploader
-                :companion-u-r-l="companionURL"
-                :disabled="loading"
-                :uppy-options="uppyOptions"
+                :disabled="isSubmitting"
                 :required-file-types="['imzML', 'ibd']"
+                :s3-options="s3Options"
+                :options="uppyOptions"
               />
             </div>
           </form>
@@ -112,17 +115,16 @@
 </template>
 
 <script>
-
 // :upload-successful="handleUploadSuccess"
 // :remove-file="handleRemoveFile"
 // @upload="onUpload"
 // @success="onUploadSuccess"
 // @failure="onUploadFailure"
+import Vue from 'vue'
+import { Message } from 'element-ui/'
 
 import UppyUploader from '../../components/UppyUploader/UppyUploader.vue'
 import MetadataEditor from './MetadataEditor.vue'
-import Vue from 'vue'
-import { UppyOptions } from '@uppy/core'
 
 import config from '../../lib/config'
 import { pathFromUUID } from '../../lib/util'
@@ -133,6 +135,7 @@ import { currentUserIdQuery } from '../../api/user'
 
 import '../../components/MonoIcon.css'
 import AddIcon from '../../assets/inline/refactoring-ui/add.svg'
+import reportError from '../../lib/reportError'
 
 const DataTypeConfig = {
   'LC-MS': {
@@ -171,16 +174,36 @@ const DataTypeConfig = {
   },
 }
 
+const basename = fname => fname.split('.').slice(0, -1).join('.')
 const uppyOptions = {
   debug: true,
-  autoProceed: false,
+  autoProceed: true,
   restrictions: {
     // maxFileSize: 150 * 2 ** 20, // 150MB
     maxNumberOfFiles: 2,
-    minNumberOfFiles: 2,
+    minNumberOfFiles: 2, // add both files before uploading
     allowedFileTypes: ['.imzML', '.ibd'],
   },
   meta: {},
+  onBeforeFileAdded: (newFile, fileLookup = {}) => {
+    const currentFiles = Object.values(fileLookup)
+    if (currentFiles.length === 0) return true
+    if (currentFiles.length === 2) return false
+
+    const [existingFile] = currentFiles
+
+    if (newFile.extension === existingFile.extension) return false
+
+    const existingName = basename(existingFile.name)
+    const newName = basename(newFile.name)
+
+    if (existingName !== newName) {
+      Message({
+        message: 'Please make sure the files have the same name before the extension',
+        type: 'error',
+      })
+    }
+  },
 }
 
 export default {
@@ -212,11 +235,14 @@ export default {
 
   data() {
     return {
-      loading: 0,
+      loading: false,
       uppyOptions,
       validationErrors: [],
       isSubmitting: false,
-      uploadedUuid: null,
+      storageKey: {
+        uuid: null,
+        uuidSignature: null,
+      },
       helpDialog: false,
       // eslint-disable-next-line vue/max-len
       helpLink: 'https://docs.google.com/document/d/e/2PACX-1vTT4QrMQ2RJMjziscaU8S3gbznlv6Rm5ojwrsdAXPbR5bt7Ivp-ThkC0hefrk3ZdVqiyCX7VU_ddA62/pub',
@@ -229,14 +255,19 @@ export default {
       return 'Your files must be uploaded first'
     },
 
+    uuid() {
+      return this.storageKey.uuid
+    },
+
     enableSubmit() {
-      return this.uploadedUuid != null && !this.isSubmitting
+      return this.uuid != null && !this.isSubmitting
     },
 
     fineUploaderDataTypeConfig() {
       const activeDataType = this.$store.getters.filter.metadataType
       return (activeDataType in DataTypeConfig) ? DataTypeConfig[activeDataType] : DataTypeConfig.default
     },
+
     isTourRunning() {
       return this.$store.state.currentTour != null
     },
@@ -249,15 +280,42 @@ export default {
       return !this.systemHealth || (this.systemHealth.canMutate && this.systemHealth.canProcessDatasets)
     },
 
-    companionURL() {
+    uploadEndpoint() {
       return `${window.location.origin}/dataset_upload`
+    },
+
+    s3Options() {
+      // const uuid = encodeURIComponent(this.storageKey.uuid)
+      // const uuidSignature = encodeURIComponent(this.storageKey.uuidSignature)
+      return {
+        companionUrl: this.uploadEndpoint,
+        companionHeaders: this.storageKey,
+      }
     },
   },
   created() {
     this.$store.commit('updateFilter', this.$store.getters.filter)
+    this.fetchStorageKey()
   },
 
   methods: {
+    async fetchStorageKey() {
+      this.loading = true
+      try {
+        const response = await fetch(`${this.uploadEndpoint}/s3/uuid`)
+        if (response.status < 200 || response.status >= 300) {
+          reportError()
+        } else {
+          // uuid and uuidSignature
+          this.storageKey = await response.json()
+        }
+      } catch (e) {
+        reportError(e)
+      } finally {
+        this.loading = false
+      }
+    },
+
     onSubmit() {
       const formValue = this.$refs.editor.getFormValueForSubmit()
       if (formValue != null) {
@@ -288,14 +346,6 @@ export default {
       })
     },
 
-    onUploadSuccess(uuid) {
-      this.uploadedUuid = uuid
-    },
-
-    onUploadFailure() {
-      this.uploadedUuid = null
-    },
-
     async onFormSubmit(_, metadataJson, metaspaceOptions) {
       // Prevent duplicate submissions if user double-clicks
       if (this.isSubmitting) return
@@ -306,7 +356,7 @@ export default {
           mutation: createDatasetQuery,
           variables: {
             input: {
-              inputPath: pathFromUUID(this.uploadedUuid),
+              inputPath: pathFromUUID(this.uuid),
               metadataJson,
               ...metaspaceOptions,
             },

@@ -37,8 +37,6 @@
     </div>
     <p class="m-0 font-medium mt-2 truncate">
       <span class="">{{ fileName }}</span>
-      <span v-if="extension">{{ }}
-      </span>
     </p>
     <fade-transition class="m-0">
       <p
@@ -95,7 +93,7 @@ export default defineComponent<Props>({
           case 'PENDING':
             return 'pending'
           default:
-            return `${props.progress}%`
+            return `${props.progress ?? 0}%`
         }
       }),
     }

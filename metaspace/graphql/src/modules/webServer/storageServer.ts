@@ -84,7 +84,9 @@ function imageProviderFSBackend(storageRootDir: string) {
 export async function createStorageServerApp(config: Config) {
   try {
     const app = express();
-    app.use(cors());
+    app.use(cors({
+      // allowedHeaders: 'uuid, uuidSignature',
+    }));
 
     const backendFactories = {
       'fs': imageProviderFSBackend(config.img_upload.iso_img_fs_path),
