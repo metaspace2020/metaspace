@@ -75,6 +75,7 @@ export default defineComponent<Props>({
     const handleDrop = (e: DragEvent) => {
       e.preventDefault()
       e.stopPropagation()
+      state.dragover = false
 
       if (props.disabled) {
         return

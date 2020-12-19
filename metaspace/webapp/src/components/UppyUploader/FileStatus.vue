@@ -1,6 +1,6 @@
 <template>
   <div
-    class="w-full flex flex-col items-center justify-center text-sm leading-5 transition-opacity duration-300"
+    class="w-full flex flex-col items-center justify-center text-sm leading-5 transition-opacity duration-300 overflow-hidden px-3"
     :class="{ 'opacity-50': status === 'DISABLED' }"
   >
     <div class="relative mt-3">
@@ -39,8 +39,15 @@
         </button>
       </fade-transition>
     </div>
-    <p class="m-0 font-medium mt-2 truncate">
-      <span class="">{{ fileName }}</span>
+    <p class="m-0 mt-2 font-medium w-full overflow-hidden flex justify-center">
+      <span
+        v-if="status !== 'EMPTY'"
+        class="flex-shrink truncate"
+      >
+        {{ trimmedName }}
+      </span>
+      .{{ extension }}
+      <span v-if="status === 'EMPTY'">&nbsp;file</span>
     </p>
     <fade-transition class="m-0">
       <p
@@ -76,13 +83,14 @@ import ProgressRing from '../../components/ProgressRing'
 
 export type FileStatusName = 'EMPTY' | 'PENDING' | 'UPLOADING' | 'COMPLETE' | 'ERROR' | 'DISABLED'
 
-interface Props {
-  fileName: string
+export interface FileStatusProps {
+  extension: string
+  name?: string
   progress?: number
   status: FileStatusName
 }
 
-export default defineComponent<Props>({
+export default defineComponent<FileStatusProps>({
   name: 'FileStatus',
   components: {
     FadeTransition,
@@ -90,19 +98,21 @@ export default defineComponent<Props>({
     ProgressRing,
   },
   props: {
-    fileName: String,
+    name: String,
+    extension: String,
     progress: Number,
     status: String,
   },
   setup(props) {
     return {
+      trimmedName: computed(() => props.name?.split('.').slice(0, -1).join('.')),
       showProgress: computed(() => props.progress ?? false),
       statusText: computed(() => {
         switch (props.status) {
           case 'EMPTY':
-            return 'required'
+            return 'Required'
           case 'PENDING':
-            return 'pending'
+            return 'Pending'
           default:
             return `${props.progress ?? 0}%`
         }

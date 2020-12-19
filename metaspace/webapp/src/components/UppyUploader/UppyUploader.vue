@@ -1,7 +1,7 @@
 <template>
   <dropzone
     :id="$attrs.id"
-    class="flex items-center px-6 h-32"
+    class="flex items-center justify-evenly px-6 h-32"
     :accept="accept"
     :multiple="multiple"
     :disabled="state.status === 'UPLOADING'"
@@ -10,9 +10,7 @@
     <file-status
       v-for="f of files"
       :key="f.id || f.fileName"
-      :status="f.status"
-      :file-name="f.fileName"
-      :progress="f.progress"
+      v-bind="f"
       @remove="removeFile(f.id)"
       @retry="retryFile(f.id)"
     />
@@ -26,7 +24,7 @@ import AwsS3Multipart, { AwsS3MultipartOptions } from '@uppy/aws-s3-multipart'
 import FadeTransition from '../../components/FadeTransition'
 
 import Dropzone from './Dropzone.vue'
-import FileStatus, { FileStatusName } from './FileStatus.vue'
+import FileStatus, { FileStatusName, FileStatusProps } from './FileStatus.vue'
 
 import createStore from './store'
 import config from '../../lib/config'
@@ -80,23 +78,14 @@ const UppyUploader = defineComponent<Props>({
     preventDropEvents()
 
     const uppy = Uppy({ ...props.options, store: createStore() })
-      .on('file-added', file => {
-
-        // state.fileName = file.name
-        // TODO: reconcile required files before uploading
-        // state.status = 'UPLOADING'
-      })
       .on('upload', () => {
         state.status = 'UPLOADING'
       })
       .on('upload-success', async(file, result) => {
+        // TODO finish this
         console.log(file, result)
         // props.uploadSuccessful(file.name, result.uploadURL)
-        // state.progress = 100
       })
-      // .on('upload-error', () => {
-      //   state.error = true
-      // })
 
     if (props.s3Options) {
       uppy.use(AwsS3Multipart, {
@@ -118,7 +107,6 @@ const UppyUploader = defineComponent<Props>({
       }
       // @ts-ignore - undocumented property
       if (file.error) {
-        console.log(file.response)
         return 'ERROR'
       }
       if (file.progress?.uploadComplete) {
@@ -137,7 +125,8 @@ const UppyUploader = defineComponent<Props>({
           const matchingFile = files.find(f => f.extension === ext)
           return {
             id: matchingFile?.id,
-            fileName: matchingFile?.name || `.${ext} file`,
+            name: matchingFile?.name,
+            extension: ext,
             progress: matchingFile?.progress?.percentage,
             status: getFileStatus(matchingFile),
           }
