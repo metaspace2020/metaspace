@@ -12,15 +12,9 @@ wait_for() {
   echo "$2 is up"
 }
 
-if [ "$SM_DOCKER_ENV" = "development" ]; then
-  cd /opt/dev/metaspace/metaspace/engine
-else
-  cd /opt/metaspace/metaspace/engine
-fi
+cd /opt/dev/metaspace/metaspace/engine
 
-# sudo is needed because the Python environment is set up in the Dockerfile (running as root),
-# but the container may be running as a user due the docker-compose 'user' option
-sudo pip install -qr requirements.txt
+pip install -qr requirements.txt
 
 wait_for "nc -z postgres 5432" "Postgres"
 wait_for "nc -z rabbitmq 5672" "RabbitMQ"

@@ -1,4 +1,5 @@
 {
+  "__comment__": "Copy this file to 'config.json' to use inside a docker environment",
   "bottle": {
     "host": "0.0.0.0",
     "port": 5123,
@@ -30,10 +31,16 @@
     "password": "password"
   },
   "services": {
-    "img_service_url": "http://sm-graphql:4201",
+    "img_service_url": "http://graphql:4201",
+    "off_sample": false,
     "web_app_url": "http://nginx:8999",
     "send_email": false,
-    "update_daemon_threads": 4
+    "update_daemon_threads": 4,
+    "colocalization": false,
+    "ion_thumbnail": true
+  },
+  "redis": {
+    "host": "redis"
   },
   "fs": {
     "data_path": "/opt/data/metaspace",
@@ -83,10 +90,10 @@
         "name": "LcmsGeometryFactory",
         "path": "sm.engine.lcms_geometry_factory"
       },
-      "img_storage_type": "db"
+      "img_storage_type": "fs"
   }],
   "isotope_storage": {
-    "path": "/tmp/isotope_storage"
+    "path": "/opt/data/metaspace/isotope_storage"
   },
   "logs": {
     "version": 1,
@@ -96,28 +103,29 @@
       }
     },
     "handlers": {
-        "console_warn": {
-            "class": "logging.StreamHandler",
-            "formatter": "sm",
-            "level": "WARNING"
-        },
         "console_debug": {
             "class": "logging.StreamHandler",
-            "formatter": "sm",
-            "level": "DEBUG"
+            "formatter": "sm"
         }
+    },
+    "root": {
+        "handlers": ["console_debug"],
+        "level": "INFO"
     },
     "loggers": {
         "engine": {
-            "handlers": ["console_debug"],
+            "level": "DEBUG"
+        },
+        "engine.db": {
             "level": "INFO"
         },
         "api": {
-            "handlers": ["console_debug"],
             "level": "INFO"
         },
-        "daemon": {
-            "handlers": ["console_debug"],
+        "annotate-daemon": {
+            "level": "INFO"
+        },
+        "update-daemon": {
             "level": "INFO"
         }
     }
@@ -127,5 +135,8 @@
       "+": ["+H", "+Na", "+K"],
       "-": ["-H", "+Cl" ]
     }
+  },
+  "colocalization": {
+    "enabled": true
   }
 }

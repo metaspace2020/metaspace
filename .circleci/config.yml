@@ -180,7 +180,6 @@ jobs:
       - run:
           name: Build webapp
           command: |
-            cp ci/conf.js conf.js
             cp ci/clientConfig.json src/
             yarn run build-ci
       - run:
@@ -189,7 +188,6 @@ jobs:
             export NPM_CONFIG_LOGLEVEL=warn
             cd ../graphql
             yarn run deref-schema
-            cp tests/mock_config.js config/default.js
             forever start -e api_mocks.err.log tests/api_mocks.js
             forever start -o sm-graphql.out.log -e sm-graphql.err.log server.js
       - run:
@@ -307,13 +305,13 @@ jobs:
           name: Import test molecular database
           command: |
             wget -qN https://sm-engine.s3-eu-west-1.amazonaws.com/tests/hmdb_4.tsv -O /tmp/hmdb_4.tsv
-            python scripts/import_molecular_db.py --config=tests/sci_test/config.json \
+            python scripts/import_molecular_db.py --config=conf/scitest_config.json \
               HMDB-v4 2020-01-01 /tmp/hmdb_4.tsv
       - run:
           name: Run scientific test
           command: |
             #while true; do echo '---'; sleep 5; done  # uncomment this line for debugging
-            python tests/sci_test/spheroid.py -r --mock-img-store --config=tests/sci_test/config.json
+            python tests/sci_test/spheroid.py -r --mock-img-store --config=conf/scitest_config.json
 
 workflows:
   version: 2

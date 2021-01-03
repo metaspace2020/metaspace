@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
 
-if [ "$SM_DOCKER_ENV" = "development" ]; then
-  cd /opt/dev/metaspace/metaspace/engine
-  conda env update
-else
-  cd /opt/metaspace/metaspace/engine
-fi
+cd /opt/dev/metaspace/metaspace/engine
+conda env update
 
 source activate sm
 
