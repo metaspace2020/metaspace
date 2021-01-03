@@ -5,8 +5,8 @@ services:
   elasticsearch:
     build: ./elasticsearch
     volumes:
-      - "${DATA_ROOT}/elasticsearch:/usr/share/elasticsearch/data:z"
-      - "./elasticsearch:/sm-elasticsearch:ro"
+      - "${ESDATA}/:/usr/share/elasticsearch/data:z"
+      - "./elasticsearch/:/sm-elasticsearch:ro"
     environment:
       ES_JAVA_OPTS: "-Xmx256m -Xms256m"
     ports:
