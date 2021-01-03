@@ -79,7 +79,7 @@
         "name": "LcmsGeometryFactory",
         "path": "sm.engine.lcms_geometry_factory"
       },
-      "img_storage_type": "db"
+      "img_storage_type": "fs"
   }],
   "isotope_storage": {
     "path": "/tmp/isotope_storage"
@@ -92,28 +92,30 @@
       }
     },
     "handlers": {
-        "console_warn": {
-            "class": "logging.StreamHandler",
-            "formatter": "sm",
-            "level": "WARNING"
-        },
         "console_debug": {
             "class": "logging.StreamHandler",
             "formatter": "sm",
             "level": "DEBUG"
         }
     },
+    "root": {
+        "handlers": ["console_debug"],
+        "level": "INFO"
+    },
     "loggers": {
         "engine": {
-            "handlers": ["console_debug"],
+            "level": "DEBUG"
+        },
+        "engine.db": {
             "level": "INFO"
         },
         "api": {
-            "handlers": ["console_debug"],
             "level": "INFO"
         },
-        "daemon": {
-            "handlers": ["console_debug"],
+        "annotate-daemon": {
+            "level": "INFO"
+        },
+        "update-daemon": {
             "level": "INFO"
         }
     }
@@ -122,7 +124,6 @@
     "adducts": {
       "+": ["+H", "+Na", "+K"],
       "-": ["-H", "+Cl" ]
-    },
-    "moldb_names": ["HMDB-v2.5"]
+    }
   }
 }
