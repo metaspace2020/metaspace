@@ -117,7 +117,6 @@ jobs:
       - run:
           name: Copy configs
           command: |
-            cp ci/conf.js .
             cp ci/clientConfig.json src/
       - run:
           name: Compile
@@ -336,7 +335,7 @@ workflows:
           filters:
             branches:
               # Replace this with the branch to run sci-test against
-              only: feat/update-docker-configs
+              only: master
 
 ## Disabled until we have time to redo these tests
 #  daily:
