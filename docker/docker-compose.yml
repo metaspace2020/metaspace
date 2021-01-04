@@ -5,7 +5,7 @@ services:
   elasticsearch:
     build: ./elasticsearch
     volumes:
-      - "${ESDATA}/:/usr/share/elasticsearch/data:z"
+      - "${ESDATA}:/usr/share/elasticsearch/data:z"
       - "./elasticsearch/:/sm-elasticsearch:ro"
     environment:
       ES_JAVA_OPTS: "-Xmx256m -Xms256m"
@@ -39,7 +39,7 @@ services:
       - "/etc/timezone:/etc/timezone:ro" # Timezones are optional, may not work on non-Linux platforms
       - "/etc/localtime:/etc/localtime:ro"
       - "./postgres/initdb.d/:/docker-entrypoint-initdb.d:ro"
-      - "${PGDATA}/:/pgdata:rw"
+      - "${PGDATA}:/pgdata:rw"
     # user: "$SM_USER" # The postgres image still has issues running as non-root users, so this is disabled for now
     environment:
       POSTGRES_USER: sm
@@ -66,8 +66,8 @@ services:
     volumes:
       - "/etc/timezone:/etc/timezone:ro"
       - "/etc/localtime:/etc/localtime:ro"
-      - "${DEV_ROOT}/:/opt/dev/metaspace:z"
-      - "${DATA_ROOT}/:/opt/data/metaspace:z"
+      - "${DEV_ROOT}:/opt/dev/metaspace:z"
+      - "${DATA_ROOT}:/opt/data/metaspace:z"
       - "./sm-engine:/sm-engine:ro"
     user: "$SM_USER"
     ports:
@@ -89,8 +89,8 @@ services:
     volumes:
       - "/etc/timezone:/etc/timezone:ro"
       - "/etc/localtime:/etc/localtime:ro"
-      - "${DEV_ROOT}/:/opt/dev/metaspace:z"
-      - "${DATA_ROOT}/:/opt/data/metaspace:z"
+      - "${DEV_ROOT}:/opt/dev/metaspace:z"
+      - "${DATA_ROOT}:/opt/data/metaspace:z"
       - "./sm-engine:/sm-engine:ro"
     user: "$SM_USER"
     networks:
@@ -110,8 +110,8 @@ services:
     volumes:
       - "/etc/timezone:/etc/timezone:ro"
       - "/etc/localtime:/etc/localtime:ro"
-      - "${DEV_ROOT}/:/opt/dev/metaspace:z"
-      - "${DATA_ROOT}/:/opt/data/metaspace:z"
+      - "${DEV_ROOT}:/opt/dev/metaspace:z"
+      - "${DATA_ROOT}:/opt/data/metaspace:z"
       - "./sm-engine:/sm-engine:ro"
     user: "$SM_USER"
     environment:
@@ -137,8 +137,8 @@ services:
     volumes:
       - "/etc/timezone:/etc/timezone:ro"
       - "/etc/localtime:/etc/localtime:ro"
-      - "${DEV_ROOT}/:/opt/dev/metaspace:z"
-      - "${DATA_ROOT}/:/opt/data/metaspace:z"
+      - "${DEV_ROOT}:/opt/dev/metaspace:z"
+      - "${DATA_ROOT}:/opt/data/metaspace:z"
       - "./sm-graphql:/sm-graphql:ro"
     user: "$SM_USER"
     ports:
@@ -156,8 +156,8 @@ services:
   webapp:
     build: ./sm-webapp
     volumes:
-      - "${DEV_ROOT}/:/opt/dev/metaspace:z"
-      - "${DATA_ROOT}/:/opt/data/metaspace:z"
+      - "${DEV_ROOT}:/opt/dev/metaspace:z"
+      - "${DATA_ROOT}:/opt/data/metaspace:z"
       - "./sm-webapp:/sm-webapp:ro"
     user: "$SM_USER"
     networks:
