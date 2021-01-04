@@ -1,0 +1,11 @@
+# Some docker images use the repository root for the build context so that they can access
+# source files. To minimize slowdown from having a large build context, this file
+# ignores everything that isn't needed
+
+# Whitelist requirements.txt & related files, as they're needed to build the engine images
+!metaspace/engine/requirements*
+# Whitelist the build context for engine
+!docker/sm-engine/**/*
+
+# Ignore everything else
+**/*
