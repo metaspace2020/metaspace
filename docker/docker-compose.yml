@@ -166,7 +166,9 @@ services:
   nginx:
     build: ./nginx
     volumes:
-      - "${DEV_ROOT}/webapp/dist/:/var/www/webapp:ro"
+      # To run nginx aganst a prod build of webapp, first build webapp, then uncomment this and 
+      # the related section in docker/nginx/config/sites-enabled/default
+      # - "${DEV_ROOT}/metaspace/webapp/dist/:/var/www/webapp:ro"
       - "${DATA_ROOT}/mol-images/:/var/www/mol-images:z"
       - "./nginx/:/nginx:ro"
     ports:
