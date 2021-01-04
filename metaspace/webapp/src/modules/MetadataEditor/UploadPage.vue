@@ -99,15 +99,13 @@
               v-loading="loading"
               class="el-col el-col-18"
             >
-              <div class="el-row">
-                <div class="el-col">
-                  <uppy-uploader
-                    :disabled="isSubmitting"
-                    :required-file-types="['imzML', 'ibd']"
-                    :s3-options="s3Options"
-                    :options="uppyOptions"
-                  />
-                </div>
+              <div class="md-form-field">
+                <uppy-uploader
+                  :disabled="isSubmitting"
+                  :required-file-types="['imzML', 'ibd']"
+                  :s3-options="s3Options"
+                  :options="uppyOptions"
+                />
               </div>
             </div>
           </form>

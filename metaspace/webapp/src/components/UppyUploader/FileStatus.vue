@@ -110,11 +110,11 @@ export default defineComponent<FileStatusProps>({
       statusText: computed(() => {
         switch (props.status) {
           case 'EMPTY':
-            return 'Required'
+            return 'required'
           case 'PENDING':
-            return 'Pending'
+            return 'pending'
           default:
-            return `${props.progress ?? 0}%`
+            return `uploading: ${props.progress ?? 0}%`
         }
       }),
     }
