@@ -3,6 +3,7 @@
     <menu-item
       v-for="item in menuItems"
       :key="item.id"
+      v-popover="`popover-${item.id}`"
       class="flex flex-col justify-center"
       :layer-id="item.id"
       :is-active="activeLayer === item.id"
@@ -16,13 +17,14 @@
       <p class="flex justify-between m-0 h-9 items-center">
         <candidate-molecules-popover
           placement="right"
+          :visible-arrow="false"
           :limit="10"
           :possible-compounds="item.annotation.possibleCompounds"
           :isomers="item.annotation.isomers"
           :isobars="item.annotation.isobars"
         >
           <molecular-formula
-            class="truncate font-medium h-6 text-base proportional-nums"
+            class="truncate font-medium h-6 text-base proportional-nums pl-3 -ml-3"
             :ion="item.annotation.ion"
           />
         </candidate-molecules-popover>
@@ -50,6 +52,7 @@
           :scale-range="item.scaleRange.value"
           :is-disabled="!item.settings.visible"
           @thumb-start="setLastSlider(item.id)"
+          @popover="popover => item.state.popover = popover"
         />
         <channel-selector
           v-model="item.settings.channel"
@@ -57,6 +60,18 @@
           @remove="removeLayer(item.id)"
         />
       </div>
+      <el-popover
+        :ref="`popover-${item.id}`"
+        :value="!!item.state.popover"
+        trigger="manual"
+        placement="left"
+        popper-class="max-w-measure-2 text-left proportional-nums text-sm leading-5"
+        :visible-arrow="false"
+      >
+        <b>Hot-spot removal has been applied to this image</b>.
+        Intensities above the 99ᵗʰ percentile, 3.5e+3, have been reduced to 3.5e+3.
+        The highest intensity before hot-spot removal was 3.5e+3.
+      </el-popover>
     </menu-item>
     <!-- margin removed below for Safari -->
     <button

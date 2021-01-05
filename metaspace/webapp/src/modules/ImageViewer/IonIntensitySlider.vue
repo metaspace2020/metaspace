@@ -37,6 +37,8 @@
         placeholder="max."
         @input="value => { model.maxIntensity = value; setScaleRange([scaleRange[0], 1]) }"
         @lock="lockMax"
+        @mouseover="$emit('popover', 'test')"
+        @mouseleave="$emit('popover', null)"
       />
     </div>
   </div>
