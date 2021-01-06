@@ -10,18 +10,25 @@
         <div class="el-collapse-item">
           <div class="el-collapse-item__header flex items-start justify-center relative cursor-auto">
             <div class="av-header-items">
-              <candidate-molecules-popover
-                placement="bottom"
-                :possible-compounds="annotation.possibleCompounds"
-                :isomers="annotation.isomers"
-                :isobars="annotation.isobars"
-              >
-                <span
-                  class="sf-big text-2xl"
-                  v-html="formattedMolFormula"
-                />
-              </candidate-molecules-popover>
-              <!-- <span class="text-gray-400 text-4xl self-center mb-2">/</span> -->
+              <div class="flex items-center">
+                <candidate-molecules-popover
+                  placement="bottom"
+                  :possible-compounds="annotation.possibleCompounds"
+                  :isomers="annotation.isomers"
+                  :isobars="annotation.isobars"
+                >
+                  <molecular-formula
+                    class="sf-big text-2xl"
+                    :ion="annotation.ion"
+                  />
+                </candidate-molecules-popover>
+                <copy-button
+                  class="ml-1"
+                  :text="annotation.ion"
+                >
+                  Copy formula to clipboard
+                </copy-button>
+              </div>
               <span class="text-2xl">
                 {{ annotation.mz.toFixed(4) }}
                 <span class="text-gray-700 text-sm">m/z</span>
