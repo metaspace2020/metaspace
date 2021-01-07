@@ -1,14 +1,9 @@
 #!/usr/bin/env bash
 
-if [ "$SM_DOCKER_ENV" = "development" ]; then
-  cd /opt/dev/metaspace/metaspace/engine
-  conda env update
-else
-  cd /opt/metaspace/metaspace/engine
-fi
+. /sm-engine/start-common.sh
 
-source activate sm
-
-python -m scripts.create_es_index --drop
+python -m scripts.manage_es_index --inactive create
+python -m scripts.manage_es_index swap
+python -m scripts.manage_es_index --inactive drop
 
 python -m scripts.update_es_index --ds-name %
