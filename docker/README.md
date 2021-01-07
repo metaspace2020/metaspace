@@ -41,8 +41,8 @@ file that is excluded from git:
 * Update `.env` with `COMPOSE_FILE=docker-compose.custom.yml`
 
 Webapp and graphql are set to auto-reload if code changes, but they'll need to be restarted
-if dependencies change. Api, update-daemon and annotate-daemon will need to be manually 
-restarted for code changes to take effect. 
+if dependencies change. Api, update-daemon and annotate-daemon will need to be manually
+restarted for code changes to take effect.
 
 ### Recommended bash aliases
 
@@ -81,18 +81,26 @@ credentials and incorrect service names.
 
 Development tools:
 
-* http://localhost:5601/ - Kibana
-* http://localhost:9000/ - Adminer database management tool. Use "postgres" for System, Server,
-    Username, Password and "sm" for Database
+* `localhost:9200` - Elasticsearch REST endpoint. Can be accessed with GUIs such as Elasticvue and dejavu
+* `localhost:5432` - Postgres server. Can be used with e.g. DataGrip.
+    Username: `postgres`, Password: `postgres`, Database: `sm`
 * http://localhost:15672/ - RabbitMQ management interface
 
 Watching application logs:
 
-* `docker-compose logs --tail 5 -f sm-api sm-update-daemon sm-annotate-daemon sm-graphql sm-webapp`
+* `docker-compose logs --tail 5 -f api update-daemon annotate-daemon graphql webapp`
 
 Rebuilding the Elasticsearch index:
 
-* `docker-compose run --rm sm-api /rebuild-es-index.sh`
+* `docker-compose run --rm api /sm-engine/rebuild-es-index.sh`
+
+### Creating an admin user
+
+1. Register through the METASPACE web UI
+2. Use the email verification link to verify your account (can be found in the graphql logs, or your inbox if the AWS credentials are set up)
+3. Update your user type to `admin` in the `graphql.user` table in the database.
+    If you don't have a DB UI set up yet, you can do this instead:
+    `docker-compose exec postgres psql sm postgres -c "UPDATE graphql.user SET role = 'admin' WHERE email = '<your email address>';"`
 
 ### Non-Linux host support
 
