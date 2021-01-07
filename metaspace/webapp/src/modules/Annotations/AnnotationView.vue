@@ -26,7 +26,7 @@
                   class="ml-1"
                   :text="annotation.ion"
                 >
-                  Copy formula to clipboard
+                  Copy ion to clipboard
                 </copy-button>
               </div>
               <span class="text-2xl flex items-baseline">
