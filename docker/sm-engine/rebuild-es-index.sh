@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 
-cd /opt/dev/metaspace/metaspace/engine
-conda env update
+. /sm-engine/start-common.sh
 
-source activate sm
-
-python -m scripts.create_es_index --drop
+python -m scripts.manage_es_index --inactive create
+python -m scripts.manage_es_index swap
+python -m scripts.manage_es_index --inactive drop
 
 python -m scripts.update_es_index --ds-name %
