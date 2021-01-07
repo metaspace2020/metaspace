@@ -1,7 +1,6 @@
 <template>
   <el-popover
     :key="copied"
-    class="cursor-help"
     trigger="hover"
     placement="top"
     popper-class="min-w-0"
