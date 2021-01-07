@@ -10,7 +10,7 @@
         <div class="el-collapse-item">
           <div class="el-collapse-item__header flex items-start justify-center relative cursor-auto">
             <div class="av-header-items">
-              <div class="flex items-center">
+              <div class="flex">
                 <candidate-molecules-popover
                   placement="bottom"
                   :possible-compounds="annotation.possibleCompounds"
@@ -29,9 +29,15 @@
                   Copy formula to clipboard
                 </copy-button>
               </div>
-              <span class="text-2xl">
+              <span class="text-2xl flex items-baseline">
                 {{ annotation.mz.toFixed(4) }}
-                <span class="text-gray-700 text-sm">m/z</span>
+                <span class="ml-1 text-gray-700 text-sm">m/z</span>
+                <copy-button
+                  class="self-start"
+                  :text="annotation.mz.toFixed(4)"
+                >
+                  Copy m/z to clipboard
+                </copy-button>
               </span>
               <share-link
                 class="av-icon"

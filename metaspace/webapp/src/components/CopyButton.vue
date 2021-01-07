@@ -3,28 +3,28 @@
     :key="copied"
     class="cursor-help"
     trigger="hover"
-    placement="bottom"
+    placement="top"
     popper-class="min-w-0"
     @after-leave="copied = false"
   >
     <button
       slot="reference"
-      class="button-reset w-6 h-6 flex"
+      class="button-reset w-4 h-4 flex"
       @click="handleCopy"
     >
-      <duplicate-icon class="h-full w-full text-gray-400 sm-copy-icon" />
+      <duplicate-icon class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon" />
     </button>
-    <fade-transition class="leading-5 m-0">
-      <p
+    <p class="leading-none m-0">
+      <span
         v-if="copied"
         key="copied"
       >
         Copied!
-      </p>
-      <p v-else>
-        <slot>Copy to clipboard</slot>
-      </p>
-    </fade-transition>
+      </span>
+      <slot v-else>
+        Copy to clipboard
+      </slot>
+    </p>
   </el-popover>
 </template>
 <script lang="ts">
@@ -59,6 +59,10 @@ export default defineComponent<Props>({
 })
 </script>
 <style scoped>
+  p {
+    font-size: 13px; /* borrowed from Element Tooltip */
+  }
+
   .sm-copy-icon .primary,
   .sm-copy-icon .secondary {
     stroke-width: 2px;
