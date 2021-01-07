@@ -2,12 +2,18 @@
 cp -n .env.example .env
 
 # copy docker configs into projects if needed
-cp -nr sm-engine/conf/* ../metaspace/engine/conf/
-cp -nr sm-graphql/config/* ../metaspace/graphql/config/
-cp -n sm-webapp/config/clientConfig.json ../metaspace/webapp/src/
+cp -n ../metaspace/engine/conf/config.docker.json ../metaspace/engine/conf/config.json
+cp -n ../metaspace/graphql/config/development.docker.js ../metaspace/graphql/config/development.js
+cp -n ../metaspace/webapp/src/clientConfig.docker.json ../metaspace/webapp/src/clientConfig.json
+
+# Start everything
+docker-compose up -d
+
 
 # set up molecular DB
-docker-compose run --rm sm-api /install-dbs.sh
-./fetch-mol-images.sh
 
-docker-compose up -d
+# This is currently broken as the databases no longer pass validation
+# docker-compose run --rm api /sm-engine/install-dbs.sh
+
+# Mol images
+# ./fetch-mol-images.sh

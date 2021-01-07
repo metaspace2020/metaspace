@@ -8,13 +8,16 @@ config.log = {};
 config.log.level = 'debug';
 
 config.defaults = {
-  adducts: {"+": ["+H", "+Na", "+K"], "-": ["-H", "+Cl"]},
-  moldb_names: ['HMDB-v4']
+  adducts: {"+": ["+H", "+Na", "+K"], "-": ["-H", "+Cl"]}
 };
+
+config.upload = {
+  destination: '/opt/data/metaspace/uploads',
+}
 
 config.services = {};
 /* Internal ad-hoc service with /v1/datasets and /v1/isotopic_patterns endpoints */
-config.services.sm_engine_api_host = "sm-api:5123";
+config.services.sm_engine_api_host = "api:5123";
 
 config.db = {};
 config.db.host = "postgres";
@@ -60,10 +63,12 @@ config.aws = {
   aws_secret_access_key: "",
   aws_region: "eu-west-1"
 };
+config.sentry = null;
 
 config.features = {
   graphqlMocks: false,
   impersonation: true,
+  imzmlDownload: true,
 };
 
 module.exports = config;
