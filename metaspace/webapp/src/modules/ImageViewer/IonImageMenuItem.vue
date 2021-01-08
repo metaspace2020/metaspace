@@ -17,7 +17,7 @@
       :visible="item.settings.visible"
       :loading="item.loading"
       @active="setActiveLayer"
-      @delete="$emit('delete')"
+      @remove="removeLayer"
       @mousedown.capture="usedSlider = false"
       @keydown.capture="usedSlider = false"
     >
@@ -65,7 +65,7 @@
         <channel-selector
           v-model="item.settings.channel"
           class="h-0 absolute bottom-0 left-0 right-0 flex justify-center items-end z-10"
-          @remove="removeLayer(item.id)"
+          @remove="removeLayer"
         />
       </div>
     </menu-item>
@@ -129,6 +129,9 @@ export default defineComponent<Props>({
         if (!usedSlider.value) {
           emit('active', props.item.id)
         }
+      },
+      removeLayer() {
+        emit('active', props.item.id)
       },
     }
   },

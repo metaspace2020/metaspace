@@ -11,8 +11,8 @@
     @keyup.enter.self="emitActive"
     @keyup.space.self.prevent="emitActive"
     @click.stop="emitActive"
-    @keyup.self.delete="emitDelete"
-    @click.middle="emitDelete"
+    @keyup.self.delete="emitRemove"
+    @click.middle="emitRemove"
     @mousedown.capture="$emit('mousedown')"
     @keydown.capture="$emit('keydown')"
   >
@@ -48,7 +48,7 @@ export default defineComponent({
   setup(props, { emit }) {
     return {
       emitActive: () => emit('active', props.layerId),
-      emitDelete: () => emit('delete', props.layerId),
+      emitRemove: () => emit('remove', props.layerId),
     }
   },
 })
