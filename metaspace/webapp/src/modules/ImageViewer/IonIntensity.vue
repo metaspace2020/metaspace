@@ -22,7 +22,10 @@
           'font-medium text-blue-700': status === 'LOCKED',
           'cursor-default': tooltipDisabled
         }"
-        v-on="$listeners"
+        @mouseover="showPopover"
+        @mouseleave="hidePopover"
+        @focus="showPopover"
+        @blur="hidePopover"
         @click.stop="editing = true"
       >
         {{ intensity }}
@@ -90,14 +93,18 @@ export default defineComponent<Props>({
       return props.value
     })
     const intensity = computed(() => props.intensities.scaled.toExponential(1))
-    const clippedIntensity = computed(() => props.intensities.clipped.toExponential(1))
-    const originalIntensity = computed(() => props.intensities.image.toExponential(1))
 
     return {
       editing,
       intensity,
-      clippedIntensity,
-      originalIntensity,
+      showPopover() {
+        if (status.value === 'CLIPPED') {
+          emit('show-popover')
+        }
+      },
+      hidePopover() {
+        emit('hide-popover')
+      },
       status,
       submit(floatValue: number) {
         if (status.value === 'LOCKED') {

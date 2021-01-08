@@ -22,23 +22,23 @@
         :value="model.minIntensity"
         :intensities="intensity.min"
         :tooltip-disabled="disableTooltips"
-        clipping-type="outlier-min"
         label="Minimum intensity"
         placeholder="min."
         @input="value => { model.minIntensity = value; setScaleRange([0, scaleRange[1]]) }"
         @lock="lockMin"
+        @show-popover="$emit('popover', 'outlier-min')"
+        @hide-popover="$emit('popover', null)"
       />
       <ion-intensity
         :value="model.maxIntensity"
         :intensities="intensity.max"
         :tooltip-disabled="disableTooltips"
-        :clipping-type="intensity.min.status === 'CLIPPED' ? 'outlier-max' : 'hotspot-removal'"
         label="Maximum intensity"
         placeholder="max."
         @input="value => { model.maxIntensity = value; setScaleRange([scaleRange[0], 1]) }"
         @lock="lockMax"
-        @mouseover="$emit('popover', 'test')"
-        @mouseleave="$emit('popover', null)"
+        @show-popover="$emit('popover', intensity.min.status === 'CLIPPED' ? 'outlier-max' : 'hotspot-removal')"
+        @hide-popover="$emit('popover', null)"
       />
     </div>
   </div>
