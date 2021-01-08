@@ -7,7 +7,7 @@
       :is-active="activeLayer === item.id"
       :popups-disabled="popupsDisabled"
       @active="setActiveLayer"
-      @delete="removeLayer"
+      @remove="removeLayer"
       @slider-start="popupsDisabled = true"
       @slider-stop="popupsDisabled = false"
     />

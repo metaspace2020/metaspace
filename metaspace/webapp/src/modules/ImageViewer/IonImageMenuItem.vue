@@ -131,7 +131,7 @@ export default defineComponent<Props>({
         }
       },
       removeLayer() {
-        emit('active', props.item.id)
+        emit('remove', props.item.id)
       },
     }
   },
