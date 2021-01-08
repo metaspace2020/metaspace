@@ -1,10 +1,10 @@
 <template>
   <el-popover
-    :value="popoverState.visible"
     class="block"
-    trigger="manual"
     placement="left"
     popper-class="max-w-measure-1 text-left proportional-nums text-sm leading-5"
+    trigger="manual"
+    :value="popoverState.visible"
     :visible-arrow="false"
     :disabled="popupsDisabled"
     @after-leave="popoverState.name = null"

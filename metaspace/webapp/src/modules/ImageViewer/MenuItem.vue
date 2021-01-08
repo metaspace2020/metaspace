@@ -53,3 +53,12 @@ export default defineComponent({
   },
 })
 </script>
+<style scoped>
+[tabindex].focus-visible {
+  outline: 2px solid theme('colors.primary');
+  outline-offset: -2px;
+}
+[tabindex]:hover {
+  outline: none;
+}
+</style>
