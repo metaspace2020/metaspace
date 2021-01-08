@@ -4,10 +4,10 @@
     placement="left"
     popper-class="max-w-measure-1 text-left proportional-nums text-sm leading-5"
     trigger="manual"
-    :value="popoverState.visible"
+    :value="clippingNotice.visible"
     :visible-arrow="false"
     :disabled="popupsDisabled"
-    @after-leave="popoverState.name = null"
+    @after-leave="clippingNotice.type = null"
   >
     <menu-item
       slot="reference"
@@ -60,7 +60,7 @@
           :is-disabled="!item.settings.visible"
           @thumb-start="usedSlider = true; $emit('slider-start')"
           @thumb-stop="$emit('slider-stop')"
-          @popover="togglePopover"
+          @popover="toggleClippingNotice"
         />
         <channel-selector
           v-model="item.settings.channel"
@@ -69,33 +69,10 @@
         />
       </div>
     </menu-item>
-    <p
-      v-if="popoverState.name === 'hotspot-removal'"
-      class="m-0"
-    >
-      <b>Hot-spot removal has been applied to this image</b>.
-      Intensities above the 99ᵗʰ percentile, {{ maxIntensities.clipped }},
-      have been reduced to {{ maxIntensities.clipped }}.
-      The highest intensity before hot-spot removal was {{ maxIntensities.original }}.
-    </p>
-    <p
-      v-if="popoverState.name === 'outlier-max'"
-      class="m-0"
-    >
-      <b>Outlier clipping has been applied to this image</b>.
-      Intensities above the 99ᵗʰ percentile, {{ maxIntensities.clipped }},
-      have been reduced to {{ maxIntensities.clipped }}.
-      The highest intensity before outlier clipping was {{ maxIntensities.original }}.
-    </p>
-    <p
-      v-if="popoverState.name === 'outlier-min'"
-      class="m-0"
-    >
-      <b>Outlier clipping has been applied to this image</b>.
-      Intensities below the 1ˢᵗ percentile, {{ minIntensities.clipped }},
-      have been reduced to {{ minIntensities.clipped }}.
-      The lowest intensity before outlier clipping was {{ minIntensities.original }}.
-    </p>
+    <clipping-notice
+      :type="clippingNotice.type"
+      :intensity="item.intensity.value"
+    />
   </el-popover>
 </template>
 <script lang="ts">
@@ -107,20 +84,17 @@ import MolecularFormula from '../../components/MolecularFormula'
 import FadeTransition from '../../components/FadeTransition'
 import ChannelSelector from './ChannelSelector.vue'
 import CandidateMoleculesPopover from '../Annotations/annotation-widgets/CandidateMoleculesPopover.vue'
+import ClippingNotice from './ClippingNotice.vue'
 
 import '../../components/MonoIcon.css'
 import VisibleIcon from '../../assets/inline/refactoring-ui/visible.svg'
 import HiddenIcon from '../../assets/inline/refactoring-ui/hidden.svg'
 
-import { IonImageIntensity } from './ionImageState'
+import useClippingNotice from './useClippingNotice'
 
 interface Props {
   item: {
     id: string
-    intensity: Ref<{
-      min: IonImageIntensity
-      max: IonImageIntensity
-    }>
   },
   isActive: boolean
   popupsDisabled: boolean
@@ -136,6 +110,7 @@ export default defineComponent<Props>({
     FadeTransition,
     ChannelSelector,
     CandidateMoleculesPopover,
+    ClippingNotice,
   },
   props: {
     item: Object,
@@ -144,33 +119,12 @@ export default defineComponent<Props>({
   },
   setup(props, { emit }) {
     const usedSlider = ref(false) // to prevent active state changing when using the slider
-    const popoverState = reactive({
-      name: null as String | null,
-      visible: false,
-    })
-    const intensity = computed(() => props.item.intensity.value)
-
-    const formatIntensities = (intensities: IonImageIntensity) => {
-      return {
-        clipped: intensities.clipped.toExponential(1),
-        original: intensities.image.toExponential(1),
-      }
-    }
+    const { clippingNotice, toggleClippingNotice } = useClippingNotice()
 
     return {
       usedSlider,
-      popoverState,
-      minIntensities: computed(() => formatIntensities(intensity.value.min)),
-      maxIntensities: computed(() => formatIntensities(intensity.value.max)),
-      togglePopover(name: string | null) {
-        if (name === null) {
-          // don't remove the name until the popover has faded out
-          popoverState.visible = false
-        } else {
-          popoverState.name = name
-          popoverState.visible = true
-        }
-      },
+      clippingNotice,
+      toggleClippingNotice,
       setActiveLayer() {
         if (!usedSlider.value) {
           emit('active', props.item.id)
