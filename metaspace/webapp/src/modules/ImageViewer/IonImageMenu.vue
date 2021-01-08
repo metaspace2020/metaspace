@@ -5,8 +5,11 @@
       :key="item.id"
       :item="item"
       :is-active="activeLayer === item.id"
+      :popups-disabled="popupsDisabled"
       @active="setActiveLayer"
       @delete="removeLayer"
+      @slider-start="popupsDisabled = true"
+      @slider-stop="popupsDisabled = false"
     />
     <!-- margin removed below for Safari -->
     <button
@@ -53,7 +56,10 @@ export default defineComponent({
   setup(props, { emit }) {
     const { activeLayer, removeLayer, setActiveLayer } = useIonImageMenu()
 
+    const popupsDisabled = ref(false)
+
     return {
+      popupsDisabled,
       activeLayer,
       removeLayer,
       setActiveLayer,
