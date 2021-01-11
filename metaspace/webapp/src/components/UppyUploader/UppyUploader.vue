@@ -48,10 +48,9 @@ interface State {
 
 interface Props {
   disabled: boolean
+  options: UppyOptions
   requiredFileTypes: string[]
   s3Options: AwsS3MultipartOptions,
-  uploadSuccessful: (filename: string, filePath: string) => void
-  options: UppyOptions
 }
 
 const UppyUploader = defineComponent<Props>({
@@ -64,12 +63,11 @@ const UppyUploader = defineComponent<Props>({
   },
   props: {
     disabled: Boolean,
-    uploadSuccessful: { type: Function, required: true },
     options: Object,
-    s3Options: Object,
     requiredFileTypes: Array,
+    s3Options: Object,
   },
-  setup(props, { attrs }) {
+  setup(props, { emit }) {
     // TODO: build multiple file state
     const state = reactive<State>({
       status: 'DROPPING',
@@ -81,10 +79,14 @@ const UppyUploader = defineComponent<Props>({
       .on('upload', () => {
         state.status = 'UPLOADING'
       })
-      .on('upload-success', async(file, result) => {
-        // TODO finish this
-        console.log(file, result)
-        // props.uploadSuccessful(file.name, result.uploadURL)
+      .on('upload-error', (...args) => {
+        console.log(args)
+      })
+      .on('error', (...args) => {
+        console.log(args)
+      })
+      .on('complete', result => {
+        emit('complete', result)
       })
 
     if (props.s3Options) {
@@ -134,7 +136,8 @@ const UppyUploader = defineComponent<Props>({
       }
       return files.map(f => ({
         id: f.id,
-        fileName: f.name,
+        name: f.name,
+        extension: f.extension,
         progress: f.progress?.percentage,
         status: getFileStatus(f),
       }))

@@ -2,6 +2,7 @@ import './UploadDialog.css'
 
 import { defineComponent, reactive, onMounted, ref } from '@vue/composition-api'
 import { ApolloError } from 'apollo-client-preset'
+import { UppyOptions, UploadResult } from '@uppy/core'
 
 import { PrimaryLabelText } from '../../components/Form'
 import UppyUploader from '../../components/UppyUploader/UppyUploader.vue'
@@ -17,7 +18,7 @@ const convertToS3 = (url: string) => {
   return `s3://${bucket}/${decodeURIComponent(parsedUrl.pathname.slice(1))}`
 }
 
-const uppyOptions = {
+const uppyOptions : UppyOptions = {
   debug: true,
   autoProceed: true,
   restrictions: {
@@ -104,10 +105,13 @@ const UploadDialog = defineComponent<Props>({
       }
     }
 
-    const handleUploadSuccess = (fileName: string, filePath: string) => {
-      state.model.filePath = convertToS3(filePath)
-      if (!state.model.name) {
-        state.model.name = fileName.substr(0, fileName.lastIndexOf('.')) || fileName
+    const handleUploadComplete = (result: UploadResult) => {
+      if (result.successful.length) {
+        const [file] = result.successful
+        state.model.filePath = convertToS3(file.uploadURL)
+        if (!state.model.name) {
+          state.model.name = file.name.substr(0, file.name.lastIndexOf('.')) || file.name
+        }
       }
     }
 
@@ -214,12 +218,11 @@ const UploadDialog = defineComponent<Props>({
         </pre>
         <UppyUploader
           class="mt-6"
-          uploadSuccessful={handleUploadSuccess}
           removeFile={handleRemoveFile}
           disabled={state.loading}
           options={uppyOptions}
           s3Options={s3Options}
-          requiredFileTypes={['tsv']}
+          onComplete={handleUploadComplete}
         />
         <span slot="footer">
           <el-button

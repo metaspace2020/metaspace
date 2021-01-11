@@ -55,14 +55,14 @@
         key="error"
         class="font-medium text-danger"
       >
-        Upload failed
+        upload failed
       </p>
       <p
         v-else-if="status === 'COMPLETE'"
         key="complete"
         class="font-medium text-primary"
       >
-        Upload complete
+        upload complete
       </p>
       <p
         v-else
@@ -114,7 +114,7 @@ export default defineComponent<FileStatusProps>({
           case 'PENDING':
             return 'pending'
           default:
-            return `uploading: ${props.progress ?? 0}%`
+            return `${props.progress ?? 0}% uploaded`
         }
       }),
     }

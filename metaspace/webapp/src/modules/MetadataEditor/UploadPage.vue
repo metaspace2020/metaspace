@@ -105,6 +105,7 @@
                   :required-file-types="['imzML', 'ibd']"
                   :s3-options="s3Options"
                   :options="uppyOptions"
+                  @complete="onUpload"
                 />
               </div>
             </div>
@@ -269,11 +270,6 @@ export default {
       return this.uuid != null && !this.isSubmitting
     },
 
-    fineUploaderDataTypeConfig() {
-      const activeDataType = this.$store.getters.filter.metadataType
-      return (activeDataType in DataTypeConfig) ? DataTypeConfig[activeDataType] : DataTypeConfig.default
-    },
-
     isTourRunning() {
       return this.$store.state.currentTour != null
     },
@@ -328,23 +324,13 @@ export default {
       }
     },
 
-    onUpload(filenames) {
-      const allowedExts = this.fineUploaderDataTypeConfig.fileExtensions.map(ext => `.${ext.toLowerCase()}`)
-      let fileName = ''
-      let fileExt = ''
-      for (const ext of allowedExts) {
-        for (const f of filenames) {
-          if (f.toLowerCase().endsWith(ext)) {
-            fileName = f
-            fileExt = ext
-            break
-          }
-        }
+    onUpload(result) {
+      if (result.failed.length) {
+        throw new Error('Failed upload')
       }
-      if (!fileName || !fileExt) {
-        throw new Error('Missing fileName/fileExt')
-      }
-      const dsName = fileName.slice(0, fileName.length - fileExt.length)
+      const [file] = result.successful
+      const { name, extension } = file
+      const dsName = name.slice(0, name.lastIndexOf('.'))
       Vue.nextTick(() => {
         this.$refs.editor.fillDatasetName(dsName)
       })
