@@ -3,6 +3,7 @@ import SingleSelectFilter from './filter-components/SingleSelectFilter.vue'
 import SearchableFilter from './filter-components/SearchableFilter.vue'
 import OffSampleHelp from './filter-components/OffSampleHelp.vue'
 import MzFilter from './filter-components/MzFilter.vue'
+import MSMFilter from './filter-components/MSMFilter.vue'
 import SearchBox from './filter-components/SearchBox.vue'
 import { metadataTypes, defaultMetadataType } from '../../lib/metadataRegistry'
 import { Component } from 'vue'
@@ -119,11 +120,12 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
   },
 
   minMSM: {
-    type: InputFilter,
+    type: MSMFilter,
     name: 'Min. MSM',
     description: 'Set minimum MSM score',
     levels: ['annotation'],
     initialValue: 0.0,
+    encoding: 'number',
   },
 
   compoundName: {

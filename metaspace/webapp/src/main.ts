@@ -9,6 +9,7 @@ import { Vue as SentryVue } from '@sentry/integrations/dist/vue'
 import VueApollo from 'vue-apollo'
 import { DefaultApolloClient } from '@vue/apollo-composable'
 import apolloClient, { setMaintenanceMessageHandler } from './api/graphqlClient'
+import './useCompositionApi' // https://stackoverflow.com/a/61907559
 
 import ElementUI from 'element-ui'
 import './modules/App/element-overrides.css'
@@ -25,10 +26,6 @@ import App from './modules/App/App.vue'
 import VueAnalytics from 'vue-analytics'
 import { setErrorNotifier } from './lib/reportError'
 import { migrateLocalStorage } from './lib/localStorage'
-
-import VueCompositionApi from '@vue/composition-api'
-
-Vue.use(VueCompositionApi)
 
 if (config.sentry != null && config.sentry.dsn !== '') {
   Sentry.init({

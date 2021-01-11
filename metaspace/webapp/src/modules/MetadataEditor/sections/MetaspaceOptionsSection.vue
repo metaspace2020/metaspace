@@ -13,30 +13,36 @@
         <el-col :span="18">
           <el-row :gutter="8">
             <el-col :span="8">
-              <form-field
-                type="selectMulti"
-                name="Metabolite database"
-                :help="dbHelp"
-                :value="value.databaseIds"
-                :error="error && error.databaseIds"
-                :multiple-limit="maxMolDBs"
-                required
-                @input="val => onInput('databaseIds', val)"
+              <popup-anchor
+                feature-key="uploadCustomDatabases"
+                placement="top"
+                class="block"
               >
-                <el-option-group
-                  v-for="group in databaseOptions"
-                  slot="options"
-                  :key="group.label"
-                  :label="group.label"
+                <form-field
+                  type="selectMulti"
+                  name="Metabolite database"
+                  :help="dbHelp"
+                  :value="value.databaseIds"
+                  :error="error && error.databaseIds"
+                  :multiple-limit="maxMolDBs"
+                  required
+                  @input="val => onInput('databaseIds', val)"
                 >
-                  <el-option
-                    v-for="option in group.options"
-                    :key="option.value"
-                    :value="option.value"
-                    :label="option.label"
-                  />
-                </el-option-group>
-              </form-field>
+                  <el-option-group
+                    v-for="group in databaseOptions"
+                    slot="options"
+                    :key="group.label"
+                    :label="group.label"
+                  >
+                    <el-option
+                      v-for="option in group.options"
+                      :key="option.value"
+                      :value="option.value"
+                      :label="option.label"
+                    />
+                  </el-option-group>
+                </form-field>
+              </popup-anchor>
             </el-col>
             <el-col :span="8">
               <form-field
@@ -258,6 +264,7 @@ import config, { limits } from '../../../lib/config'
 import { formatDatabaseLabel, MolDBsByGroup } from '../../MolecularDatabases/formatting'
 import { MolecularDB } from '../../../api/moldb'
 import { sortBy } from 'lodash-es'
+import PopupAnchor from '../../../modules/NewFeaturePopup/PopupAnchor.vue'
 
 import './FormSection.scss'
 
@@ -282,6 +289,7 @@ const normalizeFormulaModifier = (formula: string, defaultSign: '+'|'-') => {
   @Component({
     components: {
       FormField,
+      PopupAnchor,
     },
   })
 export default class MetaspaceOptionsSection extends Vue {

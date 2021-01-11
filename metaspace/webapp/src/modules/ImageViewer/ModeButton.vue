@@ -5,15 +5,24 @@
     :class="{ 'text-blue-700': isActive }"
     @click="onClick"
   >
-    <tune-icon
-      class="h-6 w-6 sm-stateful-icon"
-      :class="{ 'sm-stateful-icon--active': isActive }"
-    />
-    <span class="leading-none ml-1">Channels</span>
+    <popup-anchor
+      feature-key="multipleIonImages"
+      placement="bottom"
+      :show-until="new Date('2021-03-01')"
+      class="flex items-center"
+    >
+      <tune-icon
+        class="sm-stateful-icon"
+        :class="{ 'sm-stateful-icon--active': isActive }"
+      />
+      <span class="leading-none ml-1">Channels</span>
+    </popup-anchor>
   </button>
 </template>
 <script lang="ts">
 import { defineComponent, computed } from '@vue/composition-api'
+
+import PopupAnchor from '../NewFeaturePopup/PopupAnchor.vue'
 
 import '../../components/StatefulIcon.css'
 import TuneIcon from '../../assets/inline/refactoring-ui/tune.svg'
@@ -24,6 +33,7 @@ import config from '../../lib/config'
 export default defineComponent({
   components: {
     TuneIcon,
+    PopupAnchor,
   },
   setup(_, { emit }) {
     const isActive = computed(() => viewerState.mode.value === 'MULTI')
