@@ -101,6 +101,7 @@
             >
               <div class="md-form-field">
                 <uppy-uploader
+                  :key="storageKey.uuid"
                   :disabled="isSubmitting"
                   :required-file-types="['imzML', 'ibd']"
                   :s3-options="s3Options"
@@ -121,11 +122,6 @@
 </template>
 
 <script>
-// :upload-successful="handleUploadSuccess"
-// :remove-file="handleRemoveFile"
-// @upload="onUpload"
-// @success="onUploadSuccess"
-// @failure="onUploadFailure"
 import Vue from 'vue'
 import { Message } from 'element-ui/'
 
@@ -355,7 +351,7 @@ export default {
 
         this.uploadedUuid = null
         this.validationErrors = []
-        this.$refs.uploader.reset()
+        this.fetchStorageKey()
         this.$refs.editor.resetAfterSubmit()
         this.$message({
           message: 'Your dataset was successfully submitted!',
