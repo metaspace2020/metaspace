@@ -27,6 +27,8 @@ import CompoundsList from './annotation-widgets/CompoundsList.vue'
 import AmbiguityAlert from './annotation-widgets/AmbiguityAlert.vue'
 import ModeButton from '../ImageViewer/ModeButton.vue'
 import ShareLink from '../ImageViewer/ShareLink.vue'
+import CopyButton from '../../components/CopyButton.vue'
+import MolecularFormula from '../../components/MolecularFormula'
 
 import '../../components/StatefulIcon.css'
 import LockIcon from '../../assets/inline/refactoring-ui/lock.svg'
@@ -68,6 +70,8 @@ const componentsToRegister: any = {
   ShareLink,
   LockIcon,
   LocationPinIcon,
+  CopyButton,
+  MolecularFormula,
 }
 for (const category of Object.keys(annotationWidgets)) {
   metadataDependentComponents[category] = {}
@@ -171,11 +175,6 @@ export default class AnnotationView extends Vue {
 
    get scaleType(): string {
      return this.$store.getters.settings.annotationView.scaleType
-   }
-
-   get formattedMolFormula(): string {
-     if (!this.annotation) return ''
-     return renderMolFormulaHtml(this.annotation.ion)
    }
 
    get imageOpacityMode(): OpacityMode {
