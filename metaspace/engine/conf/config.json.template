@@ -65,7 +65,8 @@
       "include_modules": ["engine/sm"],
       "data_cleaner": true,
       "data_limit": false,
-      "workers": 1000
+      "workers": 1000,
+      "execution_timeout": 2400
     },
     "serverless": {
       "backend": "ibm_cf",
