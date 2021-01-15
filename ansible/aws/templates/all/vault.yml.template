@@ -33,7 +33,5 @@ vault_sm_web_aws_secret_access_key:
 vault_sm_web_s3_upload_bucket:
 vault_sm_web_cookie_secret:
 
-vault_spark_mirror:
-
 vault_slack_channel:
 vault_slack_webhook_url:

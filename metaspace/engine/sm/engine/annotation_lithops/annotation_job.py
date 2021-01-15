@@ -179,7 +179,7 @@ class LocalAnnotationJob:
         if isinstance(moldb_files[0], int):
             self.moldb_defs = _upload_moldbs_from_db(moldb_files, self.storage, sm_storage)
         else:
-            self.moldb_defs = _upload_moldbs_from_db(moldb_files, self.storage, sm_storage)
+            self.moldb_defs = _upload_moldbs_from_files(moldb_files, self.storage, sm_storage)
         self.ds_config = ds_config
 
         if use_cache:

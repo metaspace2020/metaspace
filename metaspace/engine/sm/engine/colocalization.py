@@ -404,7 +404,7 @@ class Colocalization:
         Querying the dataset's annotations from the db, and downloading the exported ion images.
 
         Args:
-            ds_id: dataset id
+            ds: dataset instance
             reprocess: Whether to re-run colocalization jobs against databases
                 that have already successfully run
         """
