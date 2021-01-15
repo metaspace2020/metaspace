@@ -24,6 +24,7 @@ def test_get_compute_img_measures_pass(chaos_mock, image_corr_mock, pattern_matc
     formula_images = [
         coo_matrix([[0.0, 100.0, 100.0], [10.0, 0.0, 3.0]]),
         coo_matrix([[0.0, 50.0, 50.0], [0.0, 20.0, 0.0]]),
+        None,
     ]
     formula_ints = [100.0, 10.0, 1.0]
 
@@ -35,9 +36,9 @@ def test_get_compute_img_measures_pass(chaos_mock, image_corr_mock, pattern_matc
             ('spatial', 0.9),
             ('spectral', 0.9),
             ('msm', 0.9 ** 3),
-            ('total_iso_ints', [213.0, 120.0]),
-            ('min_iso_ints', [0, 0]),
-            ('max_iso_ints', [100.0, 50.0]),
+            ('total_iso_ints', [213.0, 120.0, 0.0]),
+            ('min_iso_ints', [0.0, 0.0, 0.0]),
+            ('max_iso_ints', [100.0, 50.0, 0.0]),
         ]
     )
     assert metrics == exp_metrics

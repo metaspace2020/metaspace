@@ -10,6 +10,7 @@ import numpy as np
 
 from sm.engine.annotation_lithops.annotation_job import ServerAnnotationJob
 from sm.engine.annotation_lithops.executor import Executor
+import sm.engine.annotation_lithops.executor as lithops_executor
 from sm.engine.annotation_spark.annotation_job import AnnotationJob
 from sm.engine.db import DB
 from sm.engine.image_store import ImageStoreServiceWrapper
@@ -147,6 +148,9 @@ class SciTester:
         ds.save(self.db, allow_insert=True)
         perf = NullProfiler()
         if lithops:
+            # Override the runtime to force it to run without docker.
+            lithops_executor.RUNTIME_DOCKER_IMAGE = 'python'
+
             executor = Executor(self.sm_config['lithops'], perf)
             ServerAnnotationJob(executor, img_store, ds, perf, self.sm_config).run(
                 debug_validate=True
