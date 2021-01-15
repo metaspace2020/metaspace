@@ -32,12 +32,14 @@
   },
   "services": {
     "img_service_url": "http://graphql:4201",
+    "img_service_public_url": " needed for lithops colocalization/ion thumbnails - use ngrok.io to make a public URL",
     "off_sample": false,
-    "web_app_url": "http://nginx:8999",
+    "web_app_url": "http://localhost:8999",
     "send_email": false,
     "update_daemon_threads": 4,
+    "lithops_daemon_threads": 2,
     "colocalization": false,
-    "ion_thumbnail": true
+    "ion_thumbnail": false
   },
   "redis": {
     "host": "redis"
@@ -106,10 +108,15 @@
         "console_debug": {
             "class": "logging.StreamHandler",
             "formatter": "sm"
+        },
+        "context_logger": {
+          "class": "sm.engine.utils.log_capture.ContextLogHandler",
+          "formatter": "sm",
+          "level": "INFO"
         }
     },
     "root": {
-        "handlers": ["console_debug"],
+        "handlers": ["console_debug", "context_logger"],
         "level": "INFO"
     },
     "loggers": {
@@ -119,13 +126,22 @@
         "engine.db": {
             "level": "INFO"
         },
+        "engine.lithops-wrapper": {
+            "level": "INFO"
+        },
         "api": {
             "level": "INFO"
         },
         "annotate-daemon": {
             "level": "INFO"
         },
+        "lithops-daemon": {
+            "level": "INFO"
+        },
         "update-daemon": {
+            "level": "INFO"
+        },
+        "lithops": {
             "level": "INFO"
         }
     }
@@ -135,8 +151,5 @@
       "+": ["+H", "+Na", "+K"],
       "-": ["-H", "+Cl" ]
     }
-  },
-  "colocalization": {
-    "enabled": true
   }
 }
