@@ -15,6 +15,7 @@ export interface IonImageState {
   maxIntensity: number
   minIntensity: number
   scaleRange: [number, number]
+  popover: string | null
 }
 
 export interface IonImageIntensity {
@@ -133,6 +134,7 @@ function getInitialLayerState(annotation: Annotation): IonImageState {
     maxIntensity,
     minIntensity,
     scaleRange: [0, 1],
+    popover: null,
   }
 }
 
