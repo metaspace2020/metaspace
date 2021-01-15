@@ -26,7 +26,7 @@
         @mouseleave="hidePopover"
         @focus="showPopover"
         @blur="hidePopover"
-        @click.stop="editing = true"
+        @click.stop="editing = true; hidePopover()"
       >
         {{ intensity }}
       </button>
