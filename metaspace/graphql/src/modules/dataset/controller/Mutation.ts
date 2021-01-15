@@ -304,7 +304,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
   },
 
   updateDataset: async (source, args, ctx: Context) => {
-    const { id: datasetId, input: update, reprocess, skipValidation, delFirst, force, priority } = args;
+    const { id: datasetId, input: update, reprocess, skipValidation, delFirst, force, priority, useLithops } = args;
 
     logger.info(`User '${ctx.user.id}' updating '${datasetId}' dataset...`);
     const dataset = await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId);
@@ -348,6 +348,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         doc: { ...engineDataset, ...update, ...(metadata ? { metadata } : {}) },
         del_first: procSettingsUpd || delFirst,  // delete old results if processing settings changed
         priority: priority,
+        use_lithops: useLithops,
         force: force,
         email: ctx.user!.email,
       });
@@ -364,8 +365,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
           ..._.omit(update, 'metadataJson') as any,
           ...(metadata ? { metadata } : {})
         }, {
-          priority: priority,
-          force: force,
+          priority,
+          useLithops,
+          force,
         });
       }
     }

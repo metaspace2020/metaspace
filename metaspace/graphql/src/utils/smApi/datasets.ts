@@ -61,6 +61,7 @@ interface UpdateDatasetMetaArgs {
   asyncEsUpdate?: boolean;
   priority?: number;
   force?: boolean;
+  useLithops?: boolean;
 }
 
 export const smApiUpdateDataset = async (id: string, updates: UpdateDatasetArgs, args: UpdateDatasetMetaArgs = {}) => {
