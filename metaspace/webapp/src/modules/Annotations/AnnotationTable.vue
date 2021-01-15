@@ -486,7 +486,9 @@ export default Vue.extend({
               this.setCurrentRow(this.currentRowIndex)
             }
           }
-          if (this.$refs.table) {
+          // Move focus to the table so that keyboard navigation works, except when focus is on an input element
+          const shouldMoveFocus = document.activeElement?.closest('input,select,textarea') == null
+          if (this.$refs.table && shouldMoveFocus) {
             this.$refs.table.$el.focus()
           }
         })
@@ -513,7 +515,7 @@ export default Vue.extend({
     },
 
     setCurrentRow(rowIndex, rows = this.annotations) {
-      if (this.$refs.table) {
+      if (this.$refs.table && rows.length) {
         this.$refs.table.setCurrentRow(null)
         const nextIndex = rowIndex < 0 ? 0 : Math.min(rowIndex, rows.length - 1)
         this.$refs.table.setCurrentRow(rows[nextIndex])

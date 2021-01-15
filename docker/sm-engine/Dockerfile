@@ -52,24 +52,28 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
 
 # --- Engine dependencies ---
 COPY metaspace/engine/requirements.txt /requirements.txt
-COPY docker/sm-engine/ci-requirements.txt /ci-requirements.txt
+COPY metaspace/engine/requirements-dev.txt /requirements-dev.txt
 RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     PIP_INSTALL="python -m pip install --upgrade" && \
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
         git curl postgresql-client libpq-dev && \
     $PIP_INSTALL pip && \
-    $PIP_INSTALL \
-        -r requirements.txt && \
+    $PIP_INSTALL -r requirements.txt && \
+    $PIP_INSTALL -r requirements-dev.txt && \
     $PIP_INSTALL \
         -r ci-requirements.txt && \
     apt-get clean -y && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* /tmp/* ~/.cache/*
 
-RUN mkdir -p /opt/data
+# Create a user (this may need to be fixed if someone has a non-1000 UID)
+RUN adduser --disabled-password --uid 1000 --gecos "" sm-engine \
+    && echo "sm-engine ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/sm-engine \
+    && chmod 0440 /etc/sudoers.d/sm-engine
 
-COPY docker/sm-engine/*.sh /sm-engine/
+# # Silence MPL warnings about home directory not being writable
+# ENV MPLCONFIGDIR=/tmp/matplotlib
 
 ENTRYPOINT [ ]
 CMD [ "/sm-engine/start-api.sh" ]

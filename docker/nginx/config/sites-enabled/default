@@ -17,7 +17,7 @@ server {
     location / {
         # Using variables for proxy_pass instead of upstream server definitions means that nginx
         # won't die if the DNS entry doesn't exist, e.g. because docker hasn't started the container yet
-        set $web_server sm-webapp:8082;
+        set $web_server webapp:8082;
         # Need to support web sockets for webpack dev server
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
@@ -45,54 +45,54 @@ server {
 #    }
 
     location /fs/iso_images/ {
-        set $graphql_storage sm-graphql:4201;
+        set $graphql_storage graphql:4201;
         proxy_pass http://$graphql_storage$request_uri;
         limit_except GET {deny all;}
     }
     location /db/iso_images/ {
-        set $graphql_storage sm-graphql:4201;
+        set $graphql_storage graphql:4201;
         proxy_pass http://$graphql_storage$request_uri;
         limit_except GET {deny all;}
     }
     location /fs/optical_images/ {
-        set $graphql_storage sm-graphql:4201;
+        set $graphql_storage graphql:4201;
         proxy_pass http://$graphql_storage$request_uri;
         limit_except GET {deny all;}
     }
     location /fs/raw_optical_images/ {
-        set $graphql_storage sm-graphql:4201;
+        set $graphql_storage graphql:4201;
         proxy_pass http://$graphql_storage$request_uri;
         client_max_body_size 50M;
     }
     location /fs/ion_thumbnails/ {
-        set $graphql_storage sm-graphql:4201;
+        set $graphql_storage graphql:4201;
         proxy_pass http://$graphql_storage$request_uri;
         client_max_body_size 50M;
     }
     location /dataset_upload {
-        set $graphql_storage sm-graphql:4201;
+        set $graphql_storage graphql:4201;
         proxy_pass http://$graphql_storage$request_uri;
         # include proxy-params.conf;
         client_max_body_size 5M;
     }
     location /database_upload {
-        set $graphql_storage sm-graphql:4201;
+        set $graphql_storage graphql:4201;
         proxy_pass http://$graphql_storage$request_uri;
         # include proxy-params.conf;
         client_max_body_size 5M;
     }
     location /graphql {
-        set $graphql sm-graphql:3010;
+        set $graphql graphql:3010;
         proxy_pass http://$graphql$request_uri;
         include proxy-params.conf;
     }
     location /api_auth {
-        set $graphql sm-graphql:3010;
+        set $graphql graphql:3010;
         proxy_pass http://$graphql$request_uri;
         include proxy-params.conf;
     }
     location /ws {
-        set $graphql_ws_server sm-graphql:5666;
+        set $graphql_ws_server graphql:5666;
         proxy_pass http://$graphql_ws_server/graphql;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
