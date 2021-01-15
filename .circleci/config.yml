@@ -340,7 +340,7 @@ workflows:
           filters:
             branches:
               # Replace this with the branch to run sci-test against
-              only: feat/ibm-cloud
+              only: feat/ibm-cloud-dev-redo
 
 ## Disabled until we have time to redo these tests
 #  daily:
