@@ -13,7 +13,7 @@ from sm.engine.annotation_lithops.build_moldb import InputMolDb, DbFDRData
 from sm.engine.annotation_lithops.cache import PipelineCacher, use_pipeline_cache
 from sm.engine.annotation_lithops.calculate_centroids import calculate_centroids, validate_centroids
 from sm.engine.annotation_lithops.executor import Executor
-from sm.engine.annotation_lithops.io import CObj
+from sm.engine.annotation_lithops.io import CObj, iter_cobjs_with_prefetch
 from sm.engine.annotation_lithops.load_ds import load_ds, validate_ds_segments
 from sm.engine.annotation_lithops.moldb_pipeline import get_moldb_centroids
 from sm.engine.annotation_lithops.prepare_results import filter_results_and_make_pngs
@@ -190,3 +190,38 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         if self.cacher:
             self.cacher.clean(all_namespaces=all_caches)
         self.executor.clean()
+
+    def debug_get_annotation_data(self, formula, modifier):
+        """Debugging tool for finding relevant data about a particular annotation, e.g. for
+        investigating MSM or image generation issues"""
+        # pylint: disable=possibly-unused-variable
+        # Find formula_i(s)
+        db_data_idxs = []
+        db_datas = []
+        formula_is = []
+        for idx, db_data in enumerate(iter_cobjs_with_prefetch(self.storage, self.db_data_cobjs)):
+            df = db_data['formula_map_df']
+            df = df[(df.formula == formula) & (df.modifier == modifier)]
+            if not df.empty:
+                db_data_idxs.append(idx)
+                db_datas.append(db_data)
+                formula_is.extend(df.formula_i.tolist())
+
+        # Find centroids
+        peaks_df_idxs = []
+        peaks_dfs = []
+        peaks = []
+        for idx, peaks_df in enumerate(iter_cobjs_with_prefetch(self.storage, self.peaks_cobjs)):
+            df = peaks_df[peaks_df.index.isin(formula_is)]
+            if not df.empty:
+                peaks_df_idxs.append(idx)
+                peaks_dfs.append(peaks_df)
+                peaks.append(df)
+        peaks = pd.concat(peaks) if len(peaks) > 0 else None
+
+        # Find MSM
+        metrics = self.formula_metrics_df[self.formula_metrics_df.index.isin(formula_is)]
+
+        del idx, df
+
+        return locals()
