@@ -62,6 +62,12 @@ def get_spectra(
     for i, sp_idx in enumerate(sp_inds):
         mzs = np.frombuffer(mz_data[i], dtype=imzml_reader.mzPrecision)
         ints = np.frombuffer(int_data[i], dtype=imzml_reader.intensityPrecision)
+        if (ints == 0).any():
+            # One imzml exporter includes all m/z values for all spectra, even if intensities are
+            # zero. Zero-intensity peaks are useless, so exclude them.
+            mzs = mzs[ints != 0]
+            ints = ints[ints != 0]
+
         mz_data[i] = None  # type: ignore # Avoid holding memory longer than necessary
         int_data[i] = None  # type: ignore
         yield sp_idx, mzs, ints
@@ -132,7 +138,7 @@ def define_ds_segments(
     segm_n = int(np.ceil(total_n_mz * row_size / (ds_segm_size_mb * 2 ** 20)))
 
     segm_bounds_q = [i * 1 / segm_n for i in range(0, segm_n + 1)]
-    segm_lower_bounds = [np.quantile(sample_mzs, q) for q in segm_bounds_q]
+    segm_lower_bounds = np.quantile(sample_mzs, segm_bounds_q)
     ds_segments_bounds = np.array(list(zip(segm_lower_bounds[:-1], segm_lower_bounds[1:])))
 
     max_mz_value = 10 ** 5
