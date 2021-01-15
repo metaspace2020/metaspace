@@ -115,8 +115,6 @@ def _upload_moldbs_from_db(moldb_ids, storage, sm_storage):
         try:
             storage.head_object(bucket, key)
             logger.debug(f'Found mol db at {key}')
-            # This cast doesn't include the generic argument due to
-            # https://youtrack.jetbrains.com/issue/PY-43838 (Fix coming in PyCharm 2020.2.3)
             cobject = CloudObject(storage.backend, bucket, key)
         except StorageNoSuchKeyError:
             logger.info(f'Uploading {key}...')

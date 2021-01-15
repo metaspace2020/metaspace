@@ -176,7 +176,7 @@ The Prefix is necessary and should not have a leading or trailing slash
             "level": "DEBUG"
         },
         "lithops": {
-            "level": "DEBUG"
+            "level": "INFO"
         },
         "api": {
             "level": "INFO"
@@ -186,6 +186,9 @@ The Prefix is necessary and should not have a leading or trailing slash
         },
         "annotate-daemon": {
             "level": "INFO"
+        },
+        "lithops-daemon": {
+            "level": "DEBUG"
         }
     }
   },

@@ -18,13 +18,13 @@ METASPACE team members can use `eu-de`/Frankfurt for all services.
     * **Resource group:** `dev-<your initials>`
 6. Create buckets in the service you just created. Use "Customize your bucket", not one of the predefined buckets:
     * A persistent storage bucket for data like imzml files and the centroids cache
-        * **Name:** `metaspace-dev-<your initials>-data`:
+        * **Name:** `metaspace-<your initials>-data`:
         * This will be used for normal persistent data such as imzml files, moldb files and the centroids cache
         * **Resiliency:** Regional
         * **Storage class:** Smart Tier
     * A temp bucket for Lithops and other temp data  
         * It's easy to accidentally generate huge amounts of data with Lithops, so this includes a rule to automatically delete objects after 1 day:
-        * **Name:** `metaspace-dev-<your initials>-temp`:
+        * **Name:** `metaspace-<your initials>-temp`:
         * **Resiliency:** Regional
         * **Storage class:** Standard
         * Create an **Expiration** rule:
@@ -80,7 +80,7 @@ METASPACE team members can use `eu-de`/Frankfurt for all services.
 
 ### Viewing Cloud Function logs via CLI
 
-Note: Function logs are only retained by IBM for 14 days, and logs are only made available once the Function has finished running.
+Note: Function logs are only retained by IBM for 24 hours, and logs are only made available once the Function has finished running.
 
 Activation IDs can be found in the Lithops debug logs. 
 
@@ -107,11 +107,46 @@ Alternatively, the entire pipeline can be run locally by changing the `lithops.l
 `lithops.lithops.storage_backend` to `localhost`, however this causes Lithops to use `multiprocessing` to run tasks
 in parallel in separate processes, which is less useful for debugging.
 
+It's easiest to debug a dataset if you first create it via the web UI. You can then reprocess it in the Python console
+of your choice with the `ServerAnnotationJob` class, e.g.
+
+```python
+from sm.engine.annotation_lithops.executor import Executor
+from sm.engine.annotation_lithops.io import load_cobj, load_cobjs
+from sm.engine.dataset import Dataset
+from sm.engine.db import DB
+from sm.engine.image_store import ImageStoreServiceWrapper
+from sm.engine.util import SMConfig
+from sm.engine.utils.perf_profile import NullProfiler
+from sm.engine.annotation_lithops.annotation_job import ServerAnnotationJob
+
+config = SMConfig.get_conf(True)
+ds_id = '2020-12-14_20h39m30s'
+perf = NullProfiler()
+executor = Executor(config['lithops'], perf)
+# Note the use of "use_cache=True", which saves pipeline state to a persistent cache. This saves a lot of time if
+# you ever need to restart the Python process, by allowing the pipeline to skip steps that have previously been run.
+job = ServerAnnotationJob(executor, ImageStoreServiceWrapper(), Dataset.load(DB(), ds_id), perf, use_cache=True)
+job.run()
+```
+
+You can then view the internal state or rerun sections of the job with `job.pipe`, e.g.
+
+```python
+db_datas = load_cobjs(job.storage, job.pipe.db_data_cobjs)
+# Note the use of `use_cache=False` to force the step to be re-run even if it was cached.
+job.pipe.prepare_moldb(use_cache=False)
+```
+
+
 ### Viewing Object Storage data locally
 
 For temporary CloudObjects, the hard part is usually finding where the object is stored - you may have to log its 
 location and manually retrieve it from the logs. It may also be necessary to disable `data_cleaner` in the 
 Lithops config, so that temporary CloudObjects aren't deleted when the FunctionExecutor is GC'd.
+
+If this becomes a frequent enough problem, it may be worth spending some time to save pickled copies of the `Pipeline`
+object after each annotation.
 
 Once you have the bucket & key for the object:
 

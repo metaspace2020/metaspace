@@ -158,7 +158,7 @@ def get_ranges_from_cobject(
     if range_start is not None and range_end is not None:
         request_ranges.append((range_start, range_end))  # type: ignore
 
-    print(f'Reading {len(request_ranges)} ranges: {request_ranges}')
+    logger.debug(f'Reading {len(request_ranges)} ranges: {request_ranges}')
 
     with ThreadPoolExecutor() as executor:
 

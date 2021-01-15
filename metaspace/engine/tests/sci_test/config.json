@@ -135,6 +135,9 @@
         "engine": {
             "level": "INFO"
         },
+        "engine.lithops-wrapper": {
+            "level": "DEBUG"
+        },
         "api": {
             "level": "INFO"
         },
@@ -142,6 +145,9 @@
             "level": "INFO"
         },
         "annotate-daemon": {
+            "level": "INFO"
+        },
+        "lithops": {
             "level": "INFO"
         }
     }

@@ -202,15 +202,12 @@ class Executor:
                     )
                     return_vals = executor.get_result(futures)
 
-                results = [result for result, subtask_perf in return_vals]
-                subtask_perfs = [subtask_perf for result, subtask_perf in return_vals]
-
                 if self._perf:
                     _save_subtask_perf(
                         self._perf,
                         func_name=func_name,
                         futures=futures,
-                        subtask_perfs=subtask_perfs,
+                        subtask_perfs=[subtask_perf for result, subtask_perf in return_vals],
                         cost_factors=cost_factors,
                         attempt=attempt,
                         runtime_memory=runtime_memory,
@@ -222,10 +219,12 @@ class Executor:
                     f'attempt {attempt}) - {(datetime.now() - start_time).total_seconds():.3f}s'
                 )
 
-                return results
+                return [result for result, subtask_perf in return_vals]
 
             except Exception as exc:
-                failed_activation_ids = [f.activation_id for f in (futures or []) if f.error]
+                failed_idxs = [i for i, f in enumerate(futures or []) if f.error]
+                # pylint: disable=unsubscriptable-object # (because futures is Optional)
+                failed_activation_ids = [futures[i].activation_id for i in failed_idxs]
 
                 self._perf.record_entry(
                     func_name,
@@ -256,15 +255,16 @@ class Executor:
 
                     logger.warning(
                         f'{func_name} timed out with {old_memory}MB, retrying with '
-                        f'{runtime_memory}MB. Failed activation(s): {failed_activation_ids}'
+                        f'{runtime_memory}MB. Failed activation(s): {failed_idxs} '
+                        f'ID(s): {failed_activation_ids}'
                     )
                 else:
                     logger.error(
                         f'{func_name} raised an exception. '
-                        f'Failed activation(s): {failed_activation_ids}',
+                        f'Failed activation(s): {failed_idxs} '
+                        f'ID(s): {failed_activation_ids}',
                         exc_info=True,
                     )
-                    # __import__('__main__').futures = futures
                     raise
 
     def _map_local(self, func, args):
@@ -283,7 +283,7 @@ class Executor:
         executor_type, executor = valid_executors[0]
         logger.debug(f'Selected executor {executor_type}')
 
-        backend = executor.compute_handler.backend
+        backend = getattr(executor.compute_handler, 'backend', None)
         if hasattr(backend, 'ibm_iam_api_key_manager'):
             logger.debug('Applying token expiry fix')
             # WORKAROUND due to https://github.com/lithops-cloud/lithops/issues/485

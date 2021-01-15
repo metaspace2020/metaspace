@@ -31,7 +31,7 @@ class InputMolDb(TypedDict):
 class DbFDRData(InputMolDb):
     fdr: FDR
     formula_map_df: pd.DataFrame
-    """columns: formula_i, modifier, ion_formula, target"""
+    """columns: formula, modifier, target, formula_i"""
 
 
 logger = logging.getLogger('annotation-pipeline')
@@ -139,4 +139,4 @@ def build_moldb(
 
         return formula_cobjs, db_data_cobjs
 
-    return executor.call(_build_moldb, (), runtime_memory=2048, debug_run_locally=True)
+    return executor.call(_build_moldb, (), runtime_memory=2048)
