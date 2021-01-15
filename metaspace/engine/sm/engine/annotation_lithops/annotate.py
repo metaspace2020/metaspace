@@ -35,21 +35,15 @@ class ImagesManager:
     prevent using too much memory.
     """
 
-    min_memory_allowed = 64 * 1024 ** 2  # 64MB
+    chunk_size = 100 * 1024 ** 2  # 100MB
 
-    def __init__(self, storage: Storage, max_formula_images_size: int):
-        if max_formula_images_size < self.__class__.min_memory_allowed:
-            raise MemoryError(
-                "There isn't enough memory to generate images, "
-                "consider increasing Lithops's memory."
-            )
+    def __init__(self, storage: Storage):
 
         self._formula_metrics: Dict[int, MetricsDict] = {}
         self._images_buffer: List[ImagesRow] = []
         self._images_dfs: List[pd.DataFrame] = []
 
         self._formula_images_size = 0
-        self._max_formula_images_size = max_formula_images_size
         self._storage = storage
 
     def append(self, f_i: int, f_metrics: MetricsDict, f_images: Optional[List[coo_matrix]]):
@@ -58,7 +52,7 @@ class ImagesManager:
         if f_images:
             size = ImagesManager.images_size(f_images)
             n_pixels = ImagesManager.n_pixels(f_images)
-            if self._formula_images_size + size > self._max_formula_images_size:
+            if self._formula_images_size + size > self.chunk_size:
                 self._flush_images()
             self._images_buffer.append((f_i, n_pixels, f_images))
             self._formula_images_size += size
@@ -159,7 +153,7 @@ def read_ds_segments(
     safe_mb = 512
     read_memory_mb = ds_segms_mb + safe_mb
     if read_memory_mb > pw_mem_mb:
-        raise Exception(
+        raise MemoryError(
             f"There isn't enough memory to read dataset segments, consider increasing "
             f"Lithops's memory to at least {read_memory_mb} mb."
         )
@@ -279,12 +273,8 @@ def process_centr_segments(
             ncols=ncols,
             isocalc_wrapper=isocalc_wrapper,
         )
-        safe_mb = pw_mem_mb // 2
-        max_formula_images_mb = (
-            pw_mem_mb - safe_mb - (last_ds_segm_i - first_ds_segm_i + 1) * ds_segm_size_mb
-        ) // 3
-        print(f'Max formula_images size: {max_formula_images_mb} mb')
-        images_manager = ImagesManager(storage, max_formula_images_mb * 1024 ** 2)
+
+        images_manager = ImagesManager(storage)
         for f_i, f_metrics, f_images in compute_and_filter_metrics(
             formula_image_set_it,
             compute_metrics,
