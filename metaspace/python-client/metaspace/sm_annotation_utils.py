@@ -189,7 +189,7 @@ def multipart_upload(local_path, companion_url):
     PART_SIZE = 5 * 1024 ** 2
     etags = []
     part = 0
-    with open(local_path, 'r') as f:
+    with open(local_path, 'rb') as f:
         while True:
             file_data = f.read(PART_SIZE)
             if not file_data:
