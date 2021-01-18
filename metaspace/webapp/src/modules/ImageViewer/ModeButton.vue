@@ -12,7 +12,7 @@
       class="flex items-center"
     >
       <tune-icon
-        class="sm-stateful-icon"
+        class="sm-stateful-icon h-6 w-6"
         :class="{ 'sm-stateful-icon--active': isActive }"
       />
       <span class="leading-none ml-1">Channels</span>
