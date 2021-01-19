@@ -60,6 +60,53 @@
     "spark.ui.showConsoleProgress": false,
     "spark.sql.execution.arrow.enabled": true
   },
+  "lithops": {
+    "lithops": {
+      "storage_bucket": "TEMP_BUCKET",
+      "storage": "localhost",
+      "mode": "localhost",
+      "include_modules": ["engine/sm"],
+      "data_cleaner": true,
+      "data_limit": false,
+      "workers": 4,
+      "execution_timeout": 2400
+    },
+    "serverless": {
+      "backend": "ibm_cf",
+      "runtime_timeout": 1200,
+      "runtime_memory": 2048
+    },
+    "standalone": {
+      "backend": "ibm_vpc"
+    },
+    "localhost": {
+    },
+    "ibm": {
+      "iam_api_key": ""
+    },
+    "ibm_cf": {
+      "endpoint": "https://eu-de.functions.cloud.ibm.com",
+      "namespace": "",
+      "namespace_id": ""
+    },
+    "ibm_vpc": {
+      "endpoint": "https://eu-de.iaas.cloud.ibm.com",
+      "instance_id": "",
+      "ip_address": "",
+      "ssh_key_filename": "/home/ubuntu/.ssh/ibm_cloud_vpc"
+    },
+    "ibm_cos": {
+      "region": "eu-de",
+      "access_key": "",
+      "secret_key": ""
+    },
+    "sm_storage": {
+      "imzml": ["DATA_BUCKET", "imzml"],
+      "moldb": ["DATA_BUCKET", "moldb"],
+      "centroids": ["DATA_BUCKET", "centroids"],
+      "pipeline_cache": ["TEMP_BUCKET", "pipeline_cache"]
+    }
+  },
   "aws": {
     "aws_access_key_id": "",
     "aws_secret_access_key": "",

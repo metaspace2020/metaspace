@@ -140,7 +140,9 @@ class Executor:
         elif lithops_config['lithops']['mode'] == 'localhost':
             self.executors = {
                 'localhost': lithops.LocalhostExecutor(
-                    config=lithops_config, storage='localhost', runtime=RUNTIME_DOCKER_IMAGE,
+                    config=lithops_config,
+                    storage='localhost',
+                    runtime='python',  # Change to RUNTIME_DOCKER_IMAGE to run in a Docker container
                 )
             }
         else:

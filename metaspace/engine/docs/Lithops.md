@@ -55,12 +55,17 @@ METASPACE team members can use `eu-de`/Frankfurt for all services.
     * **SSH Key:** Upload your own SSH public key
     * After creation, go into the instance details and add a Floating IP address
 10. Configure your connection to the VPC
-    * (If step 8 was skipped) Ask someone to upload your SSH key
+    * (If step 8 was skipped) Ask someone to append your SSH public key to:
+        * `/root/.ssh/authorized_keys`
+        * `/home/ubuntu/.ssh/authorized_keys`
     * Start the instance manually through the web UI
     * SSH into the instance to confirm it's set up correctly: `ssh ubuntu@<public IP address>`
     * Stop the instance through the web UI
     * Open the instance details and copy the ID and Floating IP into `lithops.ibm_vpc` in the sm-engine `config.json`
-     
+11. Update the Lithops to from localhost to IBM Cloud
+    * Change `lithops.storage` from `localhost` to `ibm_cloud` in the sm-engine `config.json`
+    * Change `lithops.mode` from `localhost` to `serverless`
+    * Change `lithops.workers` from `4` to `1000`
 
 ## Setting up IBM Cloud CLI
 
