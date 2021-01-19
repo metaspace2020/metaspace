@@ -70,7 +70,7 @@
     },
     "serverless": {
       "backend": "ibm_cf",
-      "runtime_timeout": 600,
+      "runtime_timeout": 1200,
       "runtime_memory": 2048
     },
     "standalone": {

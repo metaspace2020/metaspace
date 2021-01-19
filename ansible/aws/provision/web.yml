@@ -70,7 +70,7 @@
       tags: [filebeat]
 
     - name: ibm_cloud
-      tags: [ibm_cloud]
+      tags: [ibm-cloud]
 
     - role: sm_cluster_autostart
       tags: [sm-cluster-autostart]

@@ -181,10 +181,12 @@ sm_graphql_cookie_secret: "{{ vault_sm_web_cookie_secret }}"
 sm_graphql_features:
   graphqlMocks: false
   impersonation: true
+  imzmlDownload: true
 sm_graphql_metadata_lookups:
   colocalizationAlgos:
+    - ['median_thresholded_cosine', 'Median-thresholded cosine distance']
     - ['cosine', 'Cosine distance']
-  defaultColocalizationAlgo: 'cosine'
+  defaultColocalizationAlgo: 'median_thresholded_cosine'
 
 sm_webapp_hostname: "{{ web_host }}"  # specify manually in production
 sm_webapp_home: "{{ metaspace_home }}/metaspace/webapp"
@@ -210,6 +212,8 @@ sm_webapp_features:
   neutral_losses_new_ds: true
   chem_mods: false
   advanced_ds_config: false
+  isomers: true
+  isobars: true
 
 sm_activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
 sm_activate_nvm: source {{ ansible_env.HOME }}/.nvm/nvm.sh && nvm use
