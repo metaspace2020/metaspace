@@ -98,7 +98,7 @@
         "name": "LcmsGeometryFactory",
         "path": "sm.engine.lcms_geometry_factory"
       },
-      "img_storage_type": "fs"
+      "img_storage_type": "db"
   }],
   "isotope_storage": {
     "path": "/tmp/isotope_storage"
@@ -125,10 +125,6 @@
     "root": {
       "handlers": ["console_debug", "context_logger"],
       "level": "WARNING"
-    },
-    "root": {
-        "handlers": ["console_debug"],
-        "level": "INFO"
     },
     "loggers": {
         "engine": {
@@ -161,6 +157,7 @@
     "adducts": {
       "+": ["+H", "+Na", "+K"],
       "-": ["-H", "+Cl" ]
-    }
+    },
+    "moldb_names": ["HMDB-v2.5"]
   }
 }
