@@ -6,7 +6,7 @@ Software requirements for the developer machine:
 * boto3>=1.5
 * boto>=2.48
 * pyyaml
-* [Ansible>=2.4](http://docs.ansible.com/ansible/intro_installation.html#latest-releases-via-pip)
+* [Ansible==2.8.6](http://docs.ansible.com/ansible/intro_installation.html#latest-releases-via-pip)
 
 
 ## First time setup

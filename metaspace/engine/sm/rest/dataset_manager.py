@@ -33,15 +33,17 @@ class SMapiDatasetManager:
         logger=None,
         annot_queue=None,
         update_queue=None,
+        lit_queue=None,
         status_queue=None,
     ):
         self._sm_config = SMConfig.get_conf()
         self._db = db
         self._es = es
         self._img_store = image_store
-        self._status_queue = status_queue
         self._annot_queue = annot_queue
         self._update_queue = update_queue
+        self._lit_queue = lit_queue
+        self._status_queue = status_queue
         self.logger = logger or logging.getLogger()
 
     def _set_ds_busy(self, ds, ignore_status=False):
@@ -62,7 +64,7 @@ class SMapiDatasetManager:
         default_moldb_ids = [moldb.id for moldb in molecular_db.find_default()]
         return list(set(moldb_ids) | set(default_moldb_ids))
 
-    def add(self, doc, **kwargs):
+    def add(self, doc, use_lithops, **kwargs):
         """Save dataset and send ANNOTATE message to the queue."""
         now = datetime.now()
         if 'id' not in doc:
@@ -94,7 +96,8 @@ class SMapiDatasetManager:
             {'ds_id': ds.id, 'action': DaemonAction.ANNOTATE, 'stage': DaemonActionStage.QUEUED}
         )
 
-        self._post_sm_msg(ds=ds, queue=self._annot_queue, action=DaemonAction.ANNOTATE, **kwargs)
+        queue = self._lit_queue if use_lithops else self._annot_queue
+        self._post_sm_msg(ds=ds, queue=queue, action=DaemonAction.ANNOTATE, **kwargs)
         return doc['id']
 
     def delete(self, ds_id, **kwargs):

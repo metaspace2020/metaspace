@@ -25,7 +25,12 @@ TEST_CONFIG_PATH = 'conf/test_config.json'
 def sm_config():
     SMConfig.set_path(Path(proj_root()) / TEST_CONFIG_PATH)
     sm_config = SMConfig.get_conf()
-    sm_config['db']['database'] = f'sm_test_{hex(randint(0, 0xFFFFFFFF))[2:]}'
+    test_id = f'sm_test_{hex(randint(0, 0xFFFFFFFF))[2:]}'
+    sm_config['db']['database'] = test_id
+    for path in sm_config['lithops']['sm_storage'].values():
+        # prefix keys with test ID so they can be cleaned up later
+        path[1] = f'{test_id}/{path[1]}'
+
     return sm_config
 
 
@@ -188,3 +193,18 @@ def sm_index(sm_config, request):
         es_man.delete_index(sm_config['elasticsearch']['index'])
 
     request.addfinalizer(fin)
+
+
+@pytest.fixture()
+def executor(sm_config):
+    from sm.engine.annotation_lithops.executor import Executor
+
+    executor = Executor(sm_config['lithops'], debug_run_locally=True)
+
+    yield executor
+
+    executor.clean()
+    for bucket, prefix in sm_config['lithops']['sm_storage'].values():
+        keys = executor.storage.list_keys(bucket, prefix)
+        if keys:
+            executor.storage.delete_objects(bucket, keys)

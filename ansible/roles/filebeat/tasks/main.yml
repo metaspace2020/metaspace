@@ -1,6 +1,6 @@
 ---
 
-- name: Download Filebeat version={{ filebeat.version }}
+- name: "Download Filebeat version={{ filebeat.version }}"
   get_url: url=https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-{{ filebeat.version }}-amd64.deb
            dest=/tmp/filebeat-{{ filebeat.version }}.deb
 

@@ -88,7 +88,7 @@ Development tools:
 
 Watching application logs:
 
-* `docker-compose logs --tail 5 -f api update-daemon annotate-daemon graphql webapp`
+* `docker-compose logs --tail 5 -f api update-daemon annotate-daemon lithops-daemon graphql webapp`
 
 Rebuilding the Elasticsearch index:
 

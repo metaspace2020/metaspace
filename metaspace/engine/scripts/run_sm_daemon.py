@@ -4,11 +4,19 @@ import logging
 import signal
 from functools import partial
 
+from sm.engine.daemons.lithops_daemon import LithopsDaemon
 from sm.engine.db import DB, ConnectionPool
 from sm.engine.es_export import ESExporter
-from sm.engine.png_generator import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.sm_daemons import SMAnnotateDaemon, DatasetManager, SMIndexUpdateDaemon
-from sm.engine.queue import SM_ANNOTATE, SM_UPDATE, SM_DS_STATUS, QueuePublisher, QueueConsumer
+from sm.engine.queue import (
+    SM_ANNOTATE,
+    SM_UPDATE,
+    SM_LITHOPS,
+    SM_DS_STATUS,
+    QueuePublisher,
+    QueueConsumer,
+)
 from sm.engine.util import SMConfig, init_loggers
 
 
@@ -47,6 +55,10 @@ def main(daemon_name):
         for _ in range(sm_config['services']['update_daemon_threads']):
             daemon = SMIndexUpdateDaemon(get_manager(), make_update_queue_cons)
             daemons.append(daemon)
+    elif daemon_name == 'lithops':
+        for _ in range(sm_config['services'].get('lithops_daemon_threads', 0)):
+            daemon = LithopsDaemon(get_manager(), lit_qdesc=SM_LITHOPS, upd_qdesc=SM_UPDATE)
+            daemons.append(daemon)
     else:
         raise Exception(f'Wrong SM daemon name: {daemon_name}')
 
@@ -68,7 +80,7 @@ if __name__ == "__main__":
         description='A daemon process for consuming messages from a '
         'queue and performing dataset manipulations'
     )
-    parser.add_argument('--name', type=str, help='SM daemon name (annotate/update)')
+    parser.add_argument('--name', type=str, help='SM daemon name (annotate/update/lithops)')
     parser.add_argument(
         '--config', dest='config_path', default='conf/config.json', type=str, help='SM config path'
     )

@@ -17,6 +17,7 @@ from sm.engine.annotation_spark.msm_basic_search import (
     compute_fdr,
     compute_fdr_and_filter_results,
 )
+from sm.engine.utils.perf_profile import NullProfiler
 
 
 def make_imzml_parser_mock(sp_n=100):
@@ -132,6 +133,7 @@ def test_search(formula_image_metrics_mock, spark_context, ds_config):
             [MolecularDB(0, 'tests_db', 'version')],
             ds_config,
             ds_data_path,
+            NullProfiler(),
         )
         msm_search._fetch_formula_centroids = make_fetch_formula_centroids_mock()
 
@@ -190,6 +192,7 @@ def test_ambiguous_modifiers(
             [MolecularDB(0, 'test_db', 'version')],
             ds_config,
             ds_data_path,
+            NullProfiler(),
         )
         msm_search._fetch_formula_centroids = make_fetch_formula_centroids_mock()
         msm_search.process_segments = lambda centr_segm_n, func: spark_context.parallelize(

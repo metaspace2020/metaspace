@@ -10,19 +10,22 @@ import redis
 from requests import post
 
 from sm.engine.annotation.job import del_jobs
+from sm.engine.annotation_lithops.annotation_job import ServerAnnotationJob
+from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.colocalization import Colocalization
 from sm.engine.daemon_action import DaemonAction, DaemonActionStage
 from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.db import DB
 from sm.engine.errors import AnnotationError, ImzMLError, IndexUpdateError, SMError, UnknownDSID
 from sm.engine.es_export import ESExporter
-from sm.engine.ion_thumbnail import generate_ion_thumbnail
+from sm.engine.ion_thumbnail import generate_ion_thumbnail, generate_ion_thumbnail_lithops
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine import molecular_db
 from sm.engine.off_sample_wrapper import classify_dataset_ion_images
 from sm.engine.optical_image import del_optical_image
 from sm.engine.queue import QueueConsumer, QueuePublisher
 from sm.engine.util import SMConfig
+from sm.engine.utils.perf_profile import perf_profile
 from sm.rest.dataset_manager import DatasetActionPriority
 from sm.engine.annotation_spark.annotation_job import AnnotationJob
 
@@ -91,11 +94,44 @@ class DatasetManager:
             self.logger.warning(f'Deleting all results for dataset: {ds.id}')
             del_jobs(ds)
         ds.save(self._db, self._es)
-        AnnotationJob(img_store=self._img_store, ds=ds, sm_config=self._sm_config).run()
-        Colocalization(self._db, self._img_store).run_coloc_job(ds.id, reprocess=del_first)
-        generate_ion_thumbnail(
-            db=self._db, img_store=self._img_store, ds_id=ds.id, only_if_needed=not del_first
-        )
+        with perf_profile(self._db, 'annotate_spark', ds.id) as perf:
+            AnnotationJob(
+                img_store=self._img_store, ds=ds, sm_config=self._sm_config, perf=perf
+            ).run()
+
+            if self._sm_config['services'].get('colocalization', True):
+                Colocalization(self._db, self._img_store).run_coloc_job(ds, reprocess=del_first)
+                perf.record_entry('ran colocalization')
+
+            if self._sm_config['services'].get('ion_thumbnail', True):
+                generate_ion_thumbnail(
+                    db=self._db, img_store=self._img_store, ds=ds, only_if_needed=not del_first
+                )
+                perf.record_entry('generated ion thumbnail')
+
+    def annotate_lithops(self, ds: Dataset, del_first=False):
+        if del_first:
+            self.logger.warning(f'Deleting all results for dataset: {ds.id}')
+            del_jobs(ds)
+        ds.save(self._db, self._es)
+        with perf_profile(self._db, 'annotate_lithops', ds.id) as perf:
+            executor = Executor(self._sm_config['lithops'], perf=perf)
+
+            ServerAnnotationJob(executor, self._img_store, ds, perf).run()
+
+            if self._sm_config['services'].get('colocalization', True):
+                Colocalization(self._db, self._img_store).run_coloc_job_lithops(
+                    executor, ds, reprocess=del_first
+                )
+
+            if self._sm_config['services'].get('ion_thumbnail', True):
+                generate_ion_thumbnail_lithops(
+                    executor=executor,
+                    db=self._db,
+                    sm_config=self._sm_config,
+                    ds=ds,
+                    only_if_needed=not del_first,
+                )
 
     def index(self, ds: Dataset):
         """Re-index all search results for the dataset.
@@ -131,6 +167,9 @@ class DatasetManager:
         self._db.alter('DELETE FROM dataset WHERE id=%s', params=(ds.id,))
 
     def _send_email(self, email, subj, body):
+        if not self._sm_config['services'].get('send_email', True):
+            return
+
         try:
             resp = self.ses.send_email(
                 Source='contact@metaspace2020.eu',
@@ -204,9 +243,6 @@ class SMAnnotateDaemon:
             on_failure=self._on_failure,
             logger=self.logger,
             poll_interval=poll_interval,
-        )
-        self._upd_queue_pub = QueuePublisher(
-            config=self._sm_config['rabbitmq'], qdesc=upd_qdesc, logger=self.logger
         )
         self._update_queue_pub = QueuePublisher(
             config=self._sm_config['rabbitmq'], qdesc=upd_qdesc, logger=self.logger

@@ -5,7 +5,7 @@ from functools import partial
 from sm.engine.db import DB
 from sm.engine.optical_image import add_optical_image
 from sm.engine.util import bootstrap_and_run
-from sm.engine.png_generator import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStoreServiceWrapper
 
 
 def update_optical_images(sm_config, ds_id_str, sql_where):

@@ -3,7 +3,7 @@
 # A comma-separated list of package or module names from where C extensions may
 # be loaded. Extensions are loading into the active Python interpreter and may
 # run arbitrary code.
-extension-pkg-whitelist=
+extension-pkg-whitelist=pyarrow.lib
 
 # Add files or directories to the blacklist. They should be base names, not
 # paths.
@@ -145,7 +145,15 @@ disable=print-statement,
         too-few-public-methods,
         broad-except,
         bad-continuation,
-        fixme
+        fixme,
+        # no-member is a nightmare with Pandas due to this bug that prevents the generated-members setting from
+        # allowing you to exclude Pandas classes: https://github.com/PyCQA/pylint/issues/2498
+        no-member,
+        # duplicate-code is a nightmare to disable when there are legit usages for it (e.g. in scripts).
+        # Disabling it per-line is extremely finnicky, and disabling it per-file is impossible due to
+        # https://github.com/PyCQA/pylint/issues/2368
+        duplicate-code
+
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -276,7 +284,7 @@ function-naming-style=snake_case
 #function-rgx=
 
 # Good variable names which should always be accepted, separated by a comma.
-good-names=_,i,j,f,k,n,a,e,m,v,h,w,x,db,df,ds,db,id,es,fn,fp,on,xs,mz,Run,app,logger,parser,args,sm_config
+good-names=_,i,j,f,k,n,a,e,m,v,h,w,x,db,df,ds,db,id,es,fn,fp,on,xs,ys,mz,Run,app,logger,parser,args,sm_config
 
 # Include a hint for the correct naming format with invalid-name.
 include-naming-hint=no
@@ -344,7 +352,7 @@ contextmanager-decorators=contextlib.contextmanager
 # List of members which are set dynamically and missed by pylint inference
 # system, and so shouldn't trigger E1101 when accessed. Python regular
 # expressions are accepted.
-generated-members=
+generated-members=pandas.*|DataFrame.*
 
 # Tells whether missing members accessed in mixin class should be ignored. A
 # mixin class is detected if its name ends with "mixin" (case insensitive).

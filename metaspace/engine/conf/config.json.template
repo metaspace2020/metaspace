@@ -24,10 +24,14 @@
   },
   "services": {
     "img_service_url": "{{ sm_img_service_url }}",
+    "img_service_public_url": "{{ web_public_url }}",
     "off_sample": "{{ off_sample_api_endpoint }}",
     "web_app_url": "{{ web_public_url }}",
     "send_email": {{ sm_send_email | to_json }},
-    "update_daemon_threads": 4
+    "update_daemon_threads": 4,
+    "lithops_daemon_threads": {{ sm_lithops_daemon_threads }},
+    "colocalization": true,
+    "ion_thumbnail": true
   },
   "rabbitmq": {
     "host": "{{ rabbitmq_host }}",
@@ -52,6 +56,58 @@
     "spark.sql.execution.arrow.enabled": true,
     "spark.network.timeout": "360s",
     "spark.executor.heartbeatInterval": "60s"
+  },
+  "lithops": {
+    "lithops": {
+      "storage_bucket": "{{ sm_lithops_cos_bucket_temp }}",
+      "storage": "ibm_cos",
+      "mode": "serverless",
+      "include_modules": ["engine/sm"],
+      "data_cleaner": true,
+      "data_limit": false,
+      "workers": 1000,
+      "execution_timeout": 2400
+    },
+    "serverless": {
+      "backend": "ibm_cf",
+      "runtime_timeout": 1200,
+      "runtime_memory": 2048
+    },
+    "standalone": {
+      "backend": "ibm_vpc"
+    },
+    "localhost": {
+    },
+    "ibm": {
+      "iam_api_key": "{{ sm_lithops_iam_api_key }}"
+    },
+    "ibm_cf": {
+      "endpoint": "https://eu-de.functions.cloud.ibm.com",
+      "namespace": "{{ sm_lithops_cf_ns_name }}",
+      "namespace_id": "{{ sm_lithops_cf_ns_id }}"
+    },
+    "ibm_vpc": {
+      "endpoint": "https://eu-de.iaas.cloud.ibm.com",
+      "instance_id": "{{ sm_lithops_vpc_instance_id }}",
+      "ip_address": "{{ sm_lithops_vpc_instance_ip }}",
+      "ssh_key_filename": "/home/ubuntu/.ssh/ibm_cloud_vpc"
+    },
+    "ibm_cos": {
+      "region": "eu-de",
+      "access_key": "{{ sm_lithops_cos_access_key }}",
+      "secret_key": "{{ sm_lithops_cos_secret_key }}"
+    },
+    "sm_storage": {
+{#
+Each entry in this block is an array of [Bucket name, Prefix]
+e.g. "imzml": ["my-bucket","files/go/here"] means ImzML files will be stored under cos://my-bucket/store/things/in/here/
+The Prefix is necessary and should not have a leading or trailing slash
+#}
+      "imzml": ["{{ sm_lithops_cos_bucket_imzml }}", "imzml"],
+      "moldb": ["{{ sm_lithops_cos_bucket_data }}", "moldb"],
+      "centroids": ["{{ sm_lithops_cos_bucket_data }}", "centroids"],
+      "pipeline_cache": ["{{ sm_lithops_cos_bucket_temp }}", "pipeline_cache"]
+    }
   },
   "aws": {
     "aws_access_key_id": "{{ aws_access_key_id }}",
@@ -99,35 +155,45 @@
             "class": "logging.StreamHandler",
             "formatter": "sm",
             "level": "DEBUG"
+        },
+        "context_logger": {
+            "class": "sm.engine.utils.log_capture.ContextLogHandler",
+            "formatter": "sm",
+            "level": "INFO"
         }
+    },
+    "root": {
+      "handlers": ["console_debug", "context_logger"],
+      "level": "WARNING"
     },
     "loggers": {
         "engine": {
-            "handlers": ["console_debug"],
             "level": "INFO"
         },
         "engine.db": {
-            "handlers": ["console_debug"],
+            "level": "INFO"
+        },
+        "engine.lithops-wrapper": {
+            "level": "DEBUG"
+        },
+        "lithops": {
             "level": "INFO"
         },
         "api": {
-            "handlers": ["console_debug"],
             "level": "INFO"
         },
         "update-daemon": {
-            "handlers": ["console_debug"],
             "level": "INFO"
         },
         "annotate-daemon": {
-            "handlers": ["console_debug"],
             "level": "INFO"
+        },
+        "lithops-daemon": {
+            "level": "DEBUG"
         }
     }
   },
   "ds_config_defaults": {
     "adducts": {{ sm_default_adducts | to_json }}
-  },
-  "colocalization": {
-    "enabled": true
   }
 }

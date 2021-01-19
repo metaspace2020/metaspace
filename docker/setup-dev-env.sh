@@ -1,5 +1,6 @@
 # set up .env file
 cp -n .env.example .env
+cp -n docker-compose.yml docker-compose.custom.yml
 
 # copy docker configs into projects if needed
 cp -n ../metaspace/engine/conf/config.docker.json ../metaspace/engine/conf/config.json

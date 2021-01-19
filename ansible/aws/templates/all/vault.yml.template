@@ -2,6 +2,12 @@ vault_aws_access_key_id:
 vault_aws_secret_access_key:
 vault_aws_key_name:
 
+vault_lithops_iam_api_key:
+vault_lithops_cos_access_key:
+vault_lithops_cos_secret_key:
+vault_lithops_vpc_ssh_public_key: # Note, this is just here for reference. It must be manually appended to the instance's /home/ubuntu/.ssh/authorized_keys file
+vault_lithops_vpc_ssh_private_key:
+
 vault_sentry_dsn:
 
 vault_kibana_user:
@@ -26,8 +32,6 @@ vault_sm_web_aws_access_key_id:
 vault_sm_web_aws_secret_access_key:
 vault_sm_web_s3_upload_bucket:
 vault_sm_web_cookie_secret:
-
-vault_spark_mirror:
 
 vault_slack_channel:
 vault_slack_webhook_url:

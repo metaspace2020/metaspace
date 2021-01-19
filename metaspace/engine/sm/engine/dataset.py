@@ -3,6 +3,7 @@ import logging
 from datetime import datetime
 from typing import Dict
 
+from sm.engine.ds_config import DSConfig
 from sm.engine.errors import UnknownDSID
 from sm.engine.util import SMConfig
 
@@ -58,7 +59,7 @@ class Dataset:
 
     DS_SEL = (
         'SELECT id, name, input_path, upload_dt, metadata, config, status, '
-        '   status_update_dt, is_public '
+        '   status_update_dt, is_public, ion_img_storage_type '
         'FROM dataset WHERE id = %s'
     )
     DS_UPD = (
@@ -81,16 +82,17 @@ class Dataset:
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
+        *,
         id: str,  # pylint: disable=redefined-builtin
-        name: str = None,
-        input_path: str = None,
-        upload_dt: datetime = None,
-        metadata: Dict = None,
-        config: Dict = None,
+        name: str,
+        input_path: str,
+        upload_dt: datetime,
+        metadata: Dict,
+        config: DSConfig,
         status: str = DatasetStatus.QUEUED,
         status_update_dt: datetime = None,
         is_public: bool = True,
-        img_storage_type: str = 'fs',
+        ion_img_storage_type: str = 'fs',
     ):
         self.id = id
         self.name = name
@@ -99,7 +101,7 @@ class Dataset:
         self.status = status
         self.status_update_dt = status_update_dt or datetime.now()
         self.is_public = is_public
-        self.ion_img_storage_type = img_storage_type
+        self.ion_img_storage_type = ion_img_storage_type
 
         self.metadata = metadata
         self.config = config
@@ -247,7 +249,7 @@ def generate_ds_config(
     decoy_sample_size=None,
     neutral_losses=None,
     chem_mods=None,
-):
+) -> DSConfig:
     # The kwarg names should match FLAT_DS_CONFIG_KEYS
 
     analysis_version = analysis_version or 1
