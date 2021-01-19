@@ -61,8 +61,6 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     $PIP_INSTALL pip && \
     $PIP_INSTALL -r requirements.txt && \
     $PIP_INSTALL -r requirements-dev.txt && \
-    $PIP_INSTALL \
-        -r ci-requirements.txt && \
     apt-get clean -y && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* /tmp/* ~/.cache/*
