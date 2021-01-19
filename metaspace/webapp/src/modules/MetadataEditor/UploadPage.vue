@@ -102,14 +102,15 @@ import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/
 import get from 'lodash-es/get'
 import { currentUserIdQuery } from '../../api/user'
 import reportError from '../../lib/reportError'
+import { getS3Bucket } from '../../lib/util'
 
 import '../../components/MonoIcon.css'
 import AddIcon from '../../assets/inline/refactoring-ui/add.svg'
 
 const createInputPath = (url, uuid) => {
   const parsedUrl = new URL(url)
-  const bucket = parsedUrl.host.split('.')[0]
-  return 's3a://' + bucket + '/' + uuid
+  const bucket = getS3Bucket(parsedUrl)
+  return `s3a://${bucket}/${uuid}`
 }
 
 const DataTypeConfig = {

@@ -11,11 +11,13 @@ import FadeTransition from '../../components/FadeTransition'
 import { createDatabaseQuery, MolecularDBDetails } from '../../api/moldb'
 import safeJsonParse from '../../lib/safeJsonParse'
 import reportError from '../../lib/reportError'
+import { getS3Bucket } from '../../lib/util'
 
 const convertToS3 = (url: string) => {
   const parsedUrl = new URL(url)
-  const bucket = parsedUrl.host.split('.')[0]
-  return `s3://${bucket}/${decodeURIComponent(parsedUrl.pathname.slice(1))}`
+  const bucket = getS3Bucket(parsedUrl)
+  const path = decodeURIComponent(parsedUrl.pathname.slice(1))
+  return `s3://${bucket}/${path}`
 }
 
 const uppyOptions : UppyOptions = {

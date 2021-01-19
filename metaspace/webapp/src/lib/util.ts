@@ -111,3 +111,7 @@ export function getOS() {
 
   return os
 }
+
+export const getS3Bucket = (parsedUrl: URL) => {
+  return parsedUrl.host.split('.')[0]
+}
