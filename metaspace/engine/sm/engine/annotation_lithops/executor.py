@@ -22,7 +22,7 @@ TRet = TypeVar('TRet')
 #: manually updating their config files every time it changes. The image must be public on
 #: Docker Hub, and can be rebuilt using the scripts/Dockerfile in `engine/docker/lithops_ibm_cf`.
 #: Note: sci-test changes this constant to force local execution without docker
-RUNTIME_DOCKER_IMAGE = 'metaspace2020/metaspace-lithops:1.8.2'
+RUNTIME_DOCKER_IMAGE = 'metaspace2020/metaspace-lithops:1.8.3'
 MEM_LIMITS = {
     'ibm_cf': 4096,
     'ibm_vpc': 32768,

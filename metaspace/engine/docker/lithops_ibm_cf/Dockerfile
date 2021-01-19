@@ -17,7 +17,11 @@ RUN pip install --no-cache-dir --upgrade pip setuptools six \
         gevent==20.9.0 \
         ibm-cos-sdk==2.6.0 \
         redis==3.3.8 \
-        requests==2.22.0
+        requests==2.22.0 \
+        cloudpickle==1.6.0 \
+        ps-mem==3.12 \
+        tblib==1.7.0 \
+        namegenerator==1.0.6
 
 COPY requirements.txt /tmp/requirements.txt
 RUN grep -E "^(c?pyMSpec|c?pyImagingMSpec|numpy|scipy|pandas|msgpack|pyimzML|pyarrow|scikit-learn|Pillow)" /tmp/requirements.txt > /tmp/requirements-lithops.txt
