@@ -1,7 +1,4 @@
-import config from './config'
 import { zipObject } from 'lodash-es'
-
-const fuConfig = config.fineUploader
 
 type JWT = string;
 
@@ -65,14 +62,6 @@ export async function getJWT(): Promise<JWT> {
 
 export function decodePayload(jwt: JWT) {
   return JSON.parse(Buffer.from(jwt.split('.')[1], 'base64').toString())
-}
-
-export function pathFromUUID(uuid: string): string {
-  if (fuConfig.storage === 's3') {
-    return 's3a://' + fuConfig.aws.s3_bucket + '/' + uuid
-  } else {
-    return fuConfig.storage + '/' + uuid + '/'
-  }
 }
 
 export function mzFilterPrecision(value: number | string): string {

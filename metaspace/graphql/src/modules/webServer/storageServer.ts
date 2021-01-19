@@ -12,7 +12,6 @@ import logger from '../../utils/logger';
 import {Config, ImageCategory} from '../../utils/config';
 import datasetUploadMiddleware from './datasetUploadMiddleware'
 import databaseUploadMiddleware from './databaseUploadMiddleware'
-import bodyParser = require('body-parser');
 
 
 function imageProviderFSBackend(storageRootDir: string) {

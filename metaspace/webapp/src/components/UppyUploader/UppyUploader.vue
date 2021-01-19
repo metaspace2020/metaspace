@@ -68,7 +68,6 @@ const UppyUploader = defineComponent<Props>({
     s3Options: Object,
   },
   setup(props, { emit }) {
-    // TODO: build multiple file state
     const state = reactive<State>({
       status: 'DROPPING',
     })

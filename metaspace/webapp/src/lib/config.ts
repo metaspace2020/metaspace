@@ -4,26 +4,6 @@ import { getLocalStorage, removeLocalStorage, setLocalStorage } from './localSto
 import { MAX_MOL_DBS_EXT, MAX_MOL_DBS } from './constants'
 const fileConfig = require('../clientConfig.json')
 
-interface AWSConfig {
-  access_key_id: string;
-  region: string;
-  s3_bucket: string;
-  s3_uuid_endpoint: string;
-  s3_signature_endpoint: string;
-  s3_signature_version: number;
-}
-
-interface FineUploaderConfigS3 {
-  storage: 's3';
-  aws: AWSConfig;
-}
-
-interface FineUploaderConfigLocal {
-  storage: 'local';
-}
-
-type FineUploaderConfig = FineUploaderConfigS3 | FineUploaderConfigLocal;
-
 interface Features {
   coloc: boolean;
   ion_thumbs: boolean;
@@ -54,7 +34,6 @@ interface ClientConfig {
 
   google_client_id: string;
 
-  fineUploader: FineUploaderConfig;
   sentry: null | {
     dsn: string;
     environment?: string;
@@ -69,9 +48,6 @@ const defaultConfig: ClientConfig = {
   wsGraphqlUrl: null,
   companionUrl: null,
   google_client_id: '',
-  fineUploader: {
-    storage: 'local',
-  },
   sentry: null,
   metadataTypes: ['ims'],
   features: {

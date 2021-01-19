@@ -1,41 +1,9 @@
 <template>
   <div class="md-editor">
-    <el-dialog
-      :visible.sync="helpDialog"
-      :lock-scroll="false"
-      title="Upload Help"
-      append-to-body
-    >
-      <p>Thank you for considering submitting your data to METASPACE! Here are the key points you need to know:</p>
-      <ul class="v-rhythm-5 p-0">
-        <li>
-          <b>Type of MS:</b> we can annotate only FTICR- or Orbitrap- imaging MS data.
-        </li>
-        <li>
-          <b>Format:</b> we can receive only data in the imzML centroided format.
-          Please check out
-          <a
-            :href="helpLink"
-            target="_blank"
-            class="external"
-            title="The page will open in a new window"
-          >our instructions</a>
-          for converting datasets into this format. If you are experiencing difficulties,
-          please contact your instrument vendor.
-        </li>
-      </ul>
-      <p>
-        If you have any further questions, please check out our main
-        <a
-          href="/help"
-          target="_blank"
-          class="external"
-          title="The page will open in a new window"
-        >help</a>
-        page or email us at <a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a>.
-      </p>
-      <p>Have fun using METASPACE!</p>
-    </el-dialog>
+    <help-dialog
+      :visible="helpDialog"
+      @close="helpDialog = false"
+    />
     <div class="upload-page-wrapper">
       <div
         v-if="!enableUploads"
@@ -61,7 +29,7 @@
               <div class="flex justify-between form-margin">
                 <el-button
                   class="text-gray-600"
-                  @click="helpDialog=true"
+                  @click="helpDialog = true"
                 >
                   Need help?
                 </el-button>
@@ -127,17 +95,22 @@ import { Message } from 'element-ui/'
 
 import UppyUploader from '../../components/UppyUploader/UppyUploader.vue'
 import MetadataEditor from './MetadataEditor.vue'
+import HelpDialog from './HelpDialog.vue'
 
-import config from '../../lib/config'
-import { pathFromUUID } from '../../lib/util'
 import { createDatasetQuery } from '../../api/dataset'
 import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system'
 import get from 'lodash-es/get'
 import { currentUserIdQuery } from '../../api/user'
+import reportError from '../../lib/reportError'
 
 import '../../components/MonoIcon.css'
 import AddIcon from '../../assets/inline/refactoring-ui/add.svg'
-import reportError from '../../lib/reportError'
+
+const createInputPath = (url, uuid) => {
+  const parsedUrl = new URL(url)
+  const bucket = parsedUrl.host.split('.')[0]
+  return 's3a://' + bucket + '/' + uuid
+}
 
 const DataTypeConfig = {
   'LC-MS': {
@@ -181,7 +154,6 @@ const uppyOptions = {
   debug: true,
   autoProceed: true,
   restrictions: {
-    // maxFileSize: 150 * 2 ** 20, // 150MB
     maxNumberOfFiles: 2,
     minNumberOfFiles: 2, // add both files before uploading
     allowedFileTypes: ['.imzML', '.ibd'],
@@ -234,12 +206,11 @@ export default {
   components: {
     UppyUploader,
     MetadataEditor,
+    HelpDialog,
   },
-
   data() {
     return {
       loading: false,
-      uppyOptions,
       validationErrors: [],
       isSubmitting: false,
       storageKey: {
@@ -247,10 +218,9 @@ export default {
         uuidSignature: null,
       },
       helpDialog: false,
-      // eslint-disable-next-line vue/max-len
-      helpLink: 'https://docs.google.com/document/d/e/2PACX-1vTT4QrMQ2RJMjziscaU8S3gbznlv6Rm5ojwrsdAXPbR5bt7Ivp-ThkC0hefrk3ZdVqiyCX7VU_ddA62/pub',
       systemHealth: null,
       currentUser: null,
+      inputPath: null,
     }
   },
   computed: {
@@ -288,6 +258,10 @@ export default {
         companionHeaders: this.storageKey,
       }
     },
+
+    uppyOptions() {
+      return uppyOptions
+    },
   },
   created() {
     this.$store.commit('updateFilter', this.$store.getters.filter)
@@ -322,10 +296,15 @@ export default {
 
     onUpload(result) {
       if (result.failed.length) {
-        throw new Error('Failed upload')
+        reportError()
+        return
       }
+
       const [file] = result.successful
-      const { name, extension } = file
+      const { name, extension, uploadURL } = file
+
+      this.inputPath = createInputPath(uploadURL, this.uuid)
+
       const dsName = name.slice(0, name.lastIndexOf('.'))
       Vue.nextTick(() => {
         this.$refs.editor.fillDatasetName(dsName)
@@ -342,14 +321,14 @@ export default {
           mutation: createDatasetQuery,
           variables: {
             input: {
-              inputPath: pathFromUUID(this.uuid),
+              inputPath: this.inputPath,
               metadataJson,
               ...metaspaceOptions,
             },
           },
         })
 
-        this.uploadedUuid = null
+        this.inputPath = null
         this.validationErrors = []
         this.fetchStorageKey()
         this.$refs.editor.resetAfterSubmit()
@@ -436,37 +415,6 @@ export default {
   .md-editor-submit > button {
     flex: 1 auto;
     margin: 25px 5px;
-  }
-
-  a[target="_blank"]:after {
-    content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==);
-    margin-left: 4px;
-  }
-
-  .el-dialog__wrapper >>> .el-dialog {
-    @apply p-10 leading-5 max-w-measure-2;
-  }
-
-  .el-dialog__wrapper >>> .el-dialog__header,
-  .el-dialog__wrapper >>> .el-dialog__body {
-    padding: 0;
-  }
-
-  .el-dialog__wrapper >>> .el-dialog__header {
-    @apply pb-5;
-  }
-
-  .el-dialog__wrapper >>> .el-dialog__title {
-    @apply font-medium text-base;
-    line-height: inherit;
-  }
-
-  .el-dialog__wrapper >>> .el-dialog__body > * {
-    margin: 0;
-  }
-
-  .el-dialog__wrapper >>> .el-dialog__body > * + * {
-    @apply mt-5;
   }
 
   .form-margin {

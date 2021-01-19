@@ -7243,10 +7243,6 @@ findup-sync@3.0.0:
     micromatch "^3.0.4"
     resolve-dir "^1.0.1"
 
-fine-uploader@^5.13.0:
-  version "5.14.5"
-  resolved "https://registry.yarnpkg.com/fine-uploader/-/fine-uploader-5.14.5.tgz#967aafdc12ec87604b186f9ba061bdab96b137c1"
-
 fkill@^6.1.0:
   version "6.2.0"
   resolved "https://registry.yarnpkg.com/fkill/-/fkill-6.2.0.tgz#a5c0ab65e0469578d0b648a86ac8526fc5ab5fa2"
