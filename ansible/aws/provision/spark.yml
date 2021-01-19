@@ -62,7 +62,7 @@
       tags: [always]
 
     - name: Create a list of private ip addresses for the slave instances
-      set_fact: spark_slave_ips="{{ spark_slave_ips  + [ hostvars[item].ansible_ssh_host ] }}"
+      set_fact: spark_slave_ips="{{ spark_slave_ips  + [ hostvars[item].ansible_ec2_local_ipv4 ] }}"
       with_items: "{{ groups['slave'] }}"
 
     - debug: var=spark_slave_ips
