@@ -32,7 +32,8 @@
   },
   "services": {
     "img_service_url": "http://graphql:4201",
-    "img_service_public_url": " needed for lithops colocalization/ion thumbnails - use ngrok.io to make a public URL",
+    "img_service_public_url:comment": "This is needed for lithops colocalization/ion thumbnails when running in IBM Cloud. You can use use ngrok.io to make a publicly-accessible URL to your local graphql server",
+    "img_service_public_url": "http://graphql:4201",
     "off_sample": false,
     "web_app_url": "http://localhost:8999",
     "send_email": false,
