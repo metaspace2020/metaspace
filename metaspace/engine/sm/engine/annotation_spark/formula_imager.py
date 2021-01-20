@@ -1,18 +1,19 @@
 import logging
 import pickle
 from pathlib import Path
-from typing import List, Dict, Set
+from typing import List, Set
 
 import numpy as np
 import pandas as pd
 from pyspark.files import SparkFiles
 from scipy.sparse import coo_matrix
 
-from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.annotation.formula_validator import (
     make_compute_image_metrics,
     formula_image_metrics,
 )
+from sm.engine.ds_config import DSConfig
+from sm.engine.isocalc_wrapper import IsocalcWrapper
 
 logger = logging.getLogger('engine')
 
@@ -120,7 +121,7 @@ def get_file_path(name):
 def create_process_segment(
     ds_segments: List,
     coordinates: np.ndarray,
-    ds_config: Dict,
+    ds_config: DSConfig,
     target_formula_inds: Set[int],
     targeted_database_formula_inds: Set[int],
 ):
@@ -153,10 +154,10 @@ def create_process_segment(
             formula_metrics_df, formula_images = formula_image_metrics(
                 formula_images_it,
                 compute_metrics,
-                target_formula_inds,
-                targeted_database_formula_inds,
-                n_peaks,
-                min_px,
+                target_formula_inds=target_formula_inds,
+                targeted_database_formula_inds=targeted_database_formula_inds,
+                n_peaks=n_peaks,
+                min_px=min_px,
             )
             logger.info(f'Segment {segm_i} finished')
         else:

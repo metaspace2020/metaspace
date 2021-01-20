@@ -85,8 +85,10 @@ export const fetchAutocompleteSuggestionsQuery =
   }`
 
 export const updateDatasetQuery =
-  gql`mutation ($id: String!, $reprocess: Boolean, $skipValidation: Boolean, $input: DatasetUpdateInput!) {
-    updateDataset(id: $id, input: $input, reprocess: $reprocess, skipValidation: $skipValidation, priority: 1)
+  gql`mutation ($id: String!, $reprocess: Boolean, $skipValidation: Boolean, $input: DatasetUpdateInput!,
+                $useLithops: Boolean) {
+    updateDataset(id: $id, input: $input, reprocess: $reprocess, skipValidation: $skipValidation, priority: 1,
+                  useLithops: $useLithops)
   }`
 
 // TODO: use autocompletion for filter values, same as on the upload page

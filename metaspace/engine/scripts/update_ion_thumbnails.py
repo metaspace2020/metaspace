@@ -3,13 +3,20 @@ import logging
 import sys
 from functools import partial
 
-from sm.engine.ion_thumbnail import DEFAULT_ALGORITHM, ALGORITHMS, generate_ion_thumbnail
-from sm.engine.png_generator import ImageStoreServiceWrapper
+from sm.engine.annotation_lithops.executor import Executor
+from sm.engine.dataset import Dataset
+from sm.engine.ion_thumbnail import (
+    DEFAULT_ALGORITHM,
+    ALGORITHMS,
+    generate_ion_thumbnail,
+    generate_ion_thumbnail_lithops,
+)
+from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.util import bootstrap_and_run
 from sm.engine.db import DB
 
 
-def run(sm_config, ds_id_str, sql_where, algorithm):
+def run(sm_config, ds_id_str, sql_where, algorithm, use_lithops):
     db = DB()
     img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
 
@@ -24,10 +31,18 @@ def run(sm_config, ds_id_str, sql_where, algorithm):
         logger.warning('No datasets match filter')
         return
 
+    if use_lithops:
+        executor = Executor(sm_config['lithops'])
+
     for i, ds_id in enumerate(ds_ids):
         try:
             logger.info(f'[{i+1} / {len(ds_ids)}] Generating ion thumbnail for {ds_id}')
-            generate_ion_thumbnail(db, img_store, ds_id, algorithm=algorithm)
+            ds = Dataset.load(db, ds_id)
+            if use_lithops:
+                # noinspection PyUnboundLocalVariable
+                generate_ion_thumbnail_lithops(executor, db, sm_config, ds, algorithm=algorithm)
+            else:
+                generate_ion_thumbnail(db, img_store, ds, algorithm=algorithm)
         except Exception:
             logger.error(f'Failed on {ds_id}', exc_info=True)
 
@@ -51,6 +66,7 @@ if __name__ == '__main__':
         default=DEFAULT_ALGORITHM,
         help='Algorithm for thumbnail generation. Options: ' + str(list(ALGORITHMS.keys())),
     )
+    parser.add_argument('--lithops', action='store_true', help='Use Lithops implementation')
     args = parser.parse_args()
     logger = logging.getLogger('engine')
 
@@ -61,5 +77,11 @@ if __name__ == '__main__':
 
     bootstrap_and_run(
         args.config,
-        partial(run, ds_id=args.ds_id, sql_where=args.sql_where, algorithm=args.algorithm),
+        partial(
+            run,
+            ds_id_str=args.ds_id,
+            sql_where=args.sql_where,
+            algorithm=args.algorithm,
+            lithops=args.lithops,
+        ),
     )

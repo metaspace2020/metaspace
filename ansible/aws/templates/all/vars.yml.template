@@ -44,7 +44,7 @@ miniconda_env:
   channels:
     - conda-forge
   dependencies:
-    - python=3.6
+    - python=3.8
     - nomkl
     - libgcc
 
@@ -75,11 +75,26 @@ sm_redis:
 off_sample_api_endpoint: OFF_SAMPLE_API_ENDPOINT
 
 sm_ansible_home: "{{ metaspace_home }}/ansible"
-sm_cluster_autostart_ansible_version: 2.6.2
+sm_cluster_autostart_ansible_version: 2.8.6
 sm_cluster_autostart_python: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
 sm_cluster_autostart_redis:
   host: "{{ web_redis.host }}"
   port: "{{ web_redis.port }}"
+
+# Configuration for IBM Cloud / Lithops. See metaspace/engine/docs/Lithops.md for instructions on setting up an
+# IBM Cloud environment. Set `sm_lithops_daemon_threads` to `0` to disable Lithops.
+sm_lithops_daemon_threads: 0
+sm_lithops_iam_api_key: "{{ vault_lithops_iam_api_key }}"
+sm_lithops_cos_access_key: "{{ vault_lithops_cos_access_key }}"
+sm_lithops_cos_secret_key: "{{ vault_lithops_cos_secret_key }}"
+sm_lithops_cos_bucket_temp:
+sm_lithops_cos_bucket_data:
+sm_lithops_cos_bucket_imzml:
+sm_lithops_cf_ns_name:
+sm_lithops_cf_ns_id:
+sm_lithops_vpc_instance_id:
+sm_lithops_vpc_instance_ip:
+sm_lithops_vpc_ssh_private_key: "{{ vault_lithops_vpc_ssh_private_key }}"
 
 mol_db_home: "{{ metaspace_home }}/metaspace/mol-db"
 mol_db_url: "http://{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}:5001/v1"
@@ -166,10 +181,12 @@ sm_graphql_cookie_secret: "{{ vault_sm_web_cookie_secret }}"
 sm_graphql_features:
   graphqlMocks: false
   impersonation: true
+  imzmlDownload: true
 sm_graphql_metadata_lookups:
   colocalizationAlgos:
+    - ['median_thresholded_cosine', 'Median-thresholded cosine distance']
     - ['cosine', 'Cosine distance']
-  defaultColocalizationAlgo: 'cosine'
+  defaultColocalizationAlgo: 'median_thresholded_cosine'
 
 sm_webapp_hostname: "{{ web_host }}"  # specify manually in production
 sm_webapp_home: "{{ metaspace_home }}/metaspace/webapp"
@@ -195,13 +212,15 @@ sm_webapp_features:
   neutral_losses_new_ds: true
   chem_mods: false
   advanced_ds_config: false
+  isomers: true
+  isobars: true
 
 sm_activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
 sm_activate_nvm: source {{ ansible_env.HOME }}/.nvm/nvm.sh && nvm use
 
 spark_key_file: ~/.ssh/ubuntu_spark
-spark_version: 2.3.3-bin-hadoop2.7
-spark_mirror: "{{ vault_spark_mirror }}"
+spark_version: "3.0.1-bin-hadoop2.7"
+spark_mirror: https://archive.apache.org/dist/spark/spark-3.0.1/
 spark_home: /usr/lib/spark
 spark_user: ubuntu
 

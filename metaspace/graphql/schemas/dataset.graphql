@@ -297,19 +297,35 @@ type Query {
 }
 
 type Mutation {
-  createDataset(id: String, input: DatasetCreateInput!, priority: Int=0): String!
+  createDataset(
+    id: String,
+    input: DatasetCreateInput!,
+    priority: Int=0,
+    useLithops: Boolean=false
+  ): String!
 
   # Throws errors of types: "under_review_or_published", "reprocessing_needed", "failed_validation"
-  updateDataset(id: String!, input: DatasetUpdateInput!,
-    reprocess: Boolean=false, delFirst: Boolean=false,
+  updateDataset(
+    id: String!,
+    input: DatasetUpdateInput!,
+    reprocess: Boolean=false,
+    delFirst: Boolean=false,
     skipValidation: Boolean=false, # ignored for non-admins
-    force: Boolean=false, priority: Int=0): String!
+    force: Boolean=false,
+    priority: Int=0,
+    useLithops: Boolean=false
+  ): String!
 
   # Throws errors of types: "under_review_or_published"
   deleteDataset(id: String!, force: Boolean=false, priority: Int=0): String!
 
   # for dev purposes only
-  reprocessDataset(id: String, priority: Int=0, delFirst: Boolean=false): String!
+  reprocessDataset(
+    id: String,
+    priority: Int=0,
+    delFirst: Boolean=false,
+    useLithops: Boolean=false
+  ): String!
 
   addOpticalImage(input: AddOpticalImageInput!): String!
 

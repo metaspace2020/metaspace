@@ -6,4 +6,6 @@ data/*/*
 docs/_build
 docs/_static
 docs/_templates
-local/
+/tmp/
+/local/
+.dmypy.json

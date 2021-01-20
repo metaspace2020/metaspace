@@ -16,6 +16,13 @@ jobs:
     steps:
       - checkout:
           path: ~/metaspace
+      - run:
+          name: Clean git repository
+          command: |
+            # This is a workaround for the old git version in this image not correctly resetting ignored-but-committed
+            # files (mainly files in the config directories) when switching branches.
+            git clean -fdX
+            git checkout -- ~/metaspace
       - restore_cache:
           keys:
             - graphql-yarn-cache-{{checksum "yarn.lock"}}
@@ -59,6 +66,13 @@ jobs:
     steps:
       - checkout:
           path: ~/metaspace
+      - run:
+          name: Clean git repository
+          command: |
+            # This is a workaround for the old git version in this image not correctly resetting ignored-but-committed
+            # files (mainly files in the config directories) when switching branches.
+            git clean -fdX
+            git checkout -- ~/metaspace
       - restore_cache:
           keys:
             - graphql-yarn-cache-{{checksum "yarn.lock"}}
@@ -99,6 +113,13 @@ jobs:
     steps:
       - checkout:
           path: ~/metaspace
+      - run:
+          name: Clean git repository
+          command: |
+            # This is a workaround for the old git version in this image not correctly resetting ignored-but-committed
+            # files (mainly files in the config directories) when switching branches.
+            git clean -fdX
+            git checkout -- ~/metaspace
       - restore_cache:
           keys:
             - webapp-yarn-cache-{{checksum "yarn.lock"}}
@@ -117,7 +138,6 @@ jobs:
       - run:
           name: Copy configs
           command: |
-            cp ci/conf.js .
             cp ci/clientConfig.json src/
       - run:
           name: Compile
@@ -180,7 +200,6 @@ jobs:
       - run:
           name: Build webapp
           command: |
-            cp ci/conf.js conf.js
             cp ci/clientConfig.json src/
             yarn run build-ci
       - run:
@@ -189,7 +208,6 @@ jobs:
             export NPM_CONFIG_LOGLEVEL=warn
             cd ../graphql
             yarn run deref-schema
-            cp tests/mock_config.js config/default.js
             forever start -e api_mocks.err.log tests/api_mocks.js
             forever start -o sm-graphql.out.log -e sm-graphql.err.log server.js
       - run:
@@ -207,11 +225,18 @@ jobs:
 
   test-pycode-format:
     docker:
-      - image: metaspace2020/sm-engine:1.6.0
+      - image: metaspace2020/sm-engine:1.8.1
     working_directory: ~/metaspace
     steps:
       - checkout:
           path: ~/metaspace
+      - run:
+          name: Clean git repository
+          command: |
+            # This is a workaround for the old git version in this image not correctly resetting ignored-but-committed
+            # files (mainly files in the config directories) when switching branches.
+            git clean -fdX
+            git checkout -- ~/metaspace
       - run:
           name: Code format check for .py files in ansible and metaspace directories
           command: |
@@ -219,7 +244,7 @@ jobs:
 
   test-engine:
     docker:
-      - image: metaspace2020/sm-engine:1.6.0
+      - image: metaspace2020/sm-engine:1.8.1
 
       - image: redis:5.0.3
 
@@ -242,6 +267,13 @@ jobs:
     steps:
       - checkout:
           path: ~/metaspace
+      - run:
+          name: Clean git repository
+          command: |
+            # This is a workaround for the old git version in this image not correctly resetting ignored-but-committed
+            # files (mainly files in the config directories) when switching branches.
+            git clean -fdX
+            git checkout -- ~/metaspace
       - run:
           name: Test engine dependencies
           command: |
@@ -261,14 +293,16 @@ jobs:
             codecov --root ../.. -F engine
       - run:
           name: Run linter
-          command: pylint sm scripts
+          # Limit number of CPUs to prevent silent OOMs in background processes
+          # https://github.com/PyCQA/pylint/issues/3899
+          command: pylint -j1 sm scripts
       - run:
          name: Run code formatter
          command: black --check .
 
   test-engine-sci:
     docker:
-      - image: metaspace2020/sm-engine:1.6.0
+      - image: metaspace2020/sm-engine:1.8.1
 
       - image: redis:5.0.3
 
@@ -291,6 +325,13 @@ jobs:
     steps:
       - checkout:
           path: ~/metaspace
+      - run:
+          name: Clean git repository
+          command: |
+            # This is a workaround for the old git version in this image not correctly resetting ignored-but-committed
+            # files (mainly files in the config directories) when switching branches.
+            git clean -fdX
+            git checkout -- ~/metaspace
       - attach_workspace:
           at: ~/workspace
       - run:
@@ -307,13 +348,13 @@ jobs:
           name: Import test molecular database
           command: |
             wget -qN https://sm-engine.s3-eu-west-1.amazonaws.com/tests/hmdb_4.tsv -O /tmp/hmdb_4.tsv
-            python scripts/import_molecular_db.py --config=tests/sci_test/config.json \
+            python scripts/import_molecular_db.py --config=conf/scitest_config.json \
               HMDB-v4 2020-01-01 /tmp/hmdb_4.tsv
       - run:
           name: Run scientific test
           command: |
             #while true; do echo '---'; sleep 5; done  # uncomment this line for debugging
-            python tests/sci_test/spheroid.py -r --mock-img-store --config=tests/sci_test/config.json
+            python tests/sci_test/spheroid.py -r --mock-img-store --lithops --config=conf/scitest_config.json
 
 workflows:
   version: 2
@@ -338,7 +379,7 @@ workflows:
           filters:
             branches:
               # Replace this with the branch to run sci-test against
-              only: master
+              only: feat/ibm-cloud
 
 ## Disabled until we have time to redo these tests
 #  daily:

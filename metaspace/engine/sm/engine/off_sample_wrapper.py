@@ -2,17 +2,15 @@ import base64
 import json
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from functools import partial, wraps
+from functools import partial
 from io import BytesIO
-import random
-from time import sleep
 from PIL import Image
 from requests import post, get
 import numpy as np
 
 from sm.engine.errors import SMError
-from sm.engine.png_generator import ImageStoreServiceWrapper
-
+from sm.engine.image_store import ImageStoreServiceWrapper
+from sm.engine.util import retry_on_exception
 
 logger = logging.getLogger('update-daemon')
 
@@ -34,29 +32,6 @@ def encode_image_as_base64(img):
 def base64_images_to_doc(images):
     images_doc = {'images': [{'content': content} for content in images]}
     return images_doc
-
-
-def retry_on_error(num_retries=3):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            for i in range(1, num_retries + 1):
-                try:
-                    return func(*args, **kwargs)
-                except SMError:
-                    min_wait_time = 10 * i
-                    delay = random.uniform(min_wait_time, min_wait_time + 5)
-                    logger.warning(
-                        f'Off-sample API error on attempt {i}. '
-                        f'Retrying after {delay:.1f} seconds...'
-                    )
-                    sleep(delay)
-            # Last attempt, don't catch the exception
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
 
 
 SEL_ION_IMAGES = (
@@ -87,7 +62,7 @@ def numpy_to_pil(a):
     return Image.fromarray(a)
 
 
-@retry_on_error(6)
+@retry_on_exception(SMError, num_retries=6, retry_wait_params=(10, 10, 5))
 def call_api(url='', doc=None):
     if doc:
         resp = post(url=url, json=doc, timeout=120)

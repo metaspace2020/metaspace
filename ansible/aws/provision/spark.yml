@@ -1,7 +1,7 @@
 ---
 
 - name: Gather Ansible facts about elk and web hosts
-  hosts: [elk, web]
+  hosts: [elk, web, master, slave]
   user: ubuntu
   gather_facts: yes
   tasks:
@@ -62,8 +62,10 @@
       tags: [always]
 
     - name: Create a list of private ip addresses for the slave instances
-      set_fact: spark_slave_ips="{{ spark_slave_ips  + [ hostvars[item].ansible_ssh_host ] }}"
+      set_fact: spark_slave_ips="{{ spark_slave_ips  + [ hostvars[item].ansible_ec2_local_ipv4 ] }}"
       with_items: "{{ groups['slave'] }}"
+
+    - debug: var=spark_slave_ips
 
   roles:
     - role: base

@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from shutil import rmtree
-from typing import Tuple, List, Dict, Set
+from typing import Tuple, List, Set, Iterable
 
 import numpy as np
 import pandas as pd
@@ -9,13 +9,9 @@ import pyspark
 from pyspark.files import SparkFiles
 from pyspark.storagelevel import StorageLevel
 
-from sm.engine.fdr import FDR
-from sm.engine.annotation.formula_centroids import CentroidsGenerator
-from sm.engine.formula_parser import safe_generate_ion_formula
-from sm.engine.annotation.imzml_parser import ImzMLParserWrapper
-from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine import molecular_db
-from sm.engine.molecular_db import MolecularDB
+from sm.engine.annotation.formula_centroids import CentroidsGenerator
+from sm.engine.annotation.imzml_parser import ImzMLParserWrapper
 from sm.engine.annotation_spark.formula_imager import create_process_segment, get_ds_dims
 from sm.engine.annotation_spark.segmenter import (
     calculate_centroids_segments_n,
@@ -27,12 +23,18 @@ from sm.engine.annotation_spark.segmenter import (
     segment_ds,
     spectra_sample_gen,
 )
+from sm.engine.ds_config import DSConfig
+from sm.engine.fdr import FDR
+from sm.engine.formula_parser import safe_generate_ion_formula
+from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine.molecular_db import MolecularDB
 from sm.engine.util import SMConfig
+from sm.engine.utils.perf_profile import Profiler
 
 logger = logging.getLogger('engine')
 
 
-def init_fdr(ds_config: Dict, moldbs: List[MolecularDB]) -> List[Tuple[MolecularDB, FDR]]:
+def init_fdr(ds_config: DSConfig, moldbs: List[MolecularDB]) -> List[Tuple[MolecularDB, FDR]]:
     """Randomly select decoy adducts for each moldb and target adduct."""
 
     isotope_gen_config = ds_config['isotope_generation']
@@ -144,8 +146,9 @@ class MSMSearch:
         spark_context: pyspark.SparkContext,
         imzml_parser: ImzMLParserWrapper,
         moldbs: List[MolecularDB],
-        ds_config: dict,
+        ds_config: DSConfig,
         ds_data_path: Path,
+        perf: Profiler,
     ):
         self._spark_context = spark_context
         self._ds_config = ds_config
@@ -153,10 +156,10 @@ class MSMSearch:
         self._moldbs = moldbs
         self._sm_config = SMConfig.get_conf()
         self._ds_data_path = ds_data_path
+        self._perf = perf
 
     def _fetch_formula_centroids(self, ion_formula_map_df):
-        """ Generate/load centroids for all ions formulas
-        """
+        """Generate/load centroids for all ions formulas"""
         logger.info('Fetching formula centroids')
         isocalc = IsocalcWrapper(self._ds_config)
         centroids_gen = CentroidsGenerator(sc=self._spark_context, isocalc=isocalc)
@@ -257,7 +260,7 @@ class MSMSearch:
 
         return target_formula_inds, targeted_database_formula_inds
 
-    def search(self) -> Tuple[pd.DataFrame, pyspark.RDD]:
+    def search(self) -> Iterable[Tuple[pd.DataFrame, pyspark.RDD]]:
         """Search, score, and compute FDR for all MolecularDB formulas.
 
         Yields:
@@ -266,21 +269,31 @@ class MSMSearch:
         logger.info('Running molecule search')
 
         ds_segments = self.define_segments_and_segment_ds(ds_segm_size_mb=20)
+        self._perf.record_entry('segmented ds')
 
         moldb_fdr_list = init_fdr(self._ds_config, self._moldbs)
         ion_formula_map_df = collect_ion_formulas(self._spark_context, moldb_fdr_list)
+        self._perf.record_entry('collected ion formulas')
 
         formula_centroids = self._fetch_formula_centroids(ion_formula_map_df)
+        self._perf.record_entry('loaded centroids')
         centr_segm_n = self.clip_and_segment_centroids(
             centroids_df=formula_centroids.centroids_df(),
             ds_segments=ds_segments,
             ds_dims=get_ds_dims(self._imzml_parser.coordinates),
         )
+        self._perf.record_entry('segmented centroids')
 
         target_formula_inds, targeted_database_formula_inds = self.select_target_formula_inds(
             ion_formula_map_df,
             formula_centroids.formulas_df,
             target_modifiers=union_target_modifiers(moldb_fdr_list),
+        )
+        self._perf.add_extra_data(
+            ds_segments=len(ds_segments),
+            centr_segments=centr_segm_n,
+            ion_formulas=len(ion_formula_map_df),
+            target_formulas=len(target_formula_inds),
         )
 
         process_centr_segment = create_process_segment(
