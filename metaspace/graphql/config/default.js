@@ -51,7 +51,7 @@ module.exports = {
   },
 
   upload: {
-    destination: '/opt/data/metaspace/uploads',
+    endpoint: 'http://localhost:9000',
     bucket: '',
     moldbPrefix: 'databases'
   },

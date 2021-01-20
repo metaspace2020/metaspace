@@ -8,11 +8,11 @@ config.log = {};
 config.log.level = 'debug';
 
 config.defaults = {
-  adducts: {"+": ["+H", "+Na", "+K"], "-": ["-H", "+Cl"]}
+  adducts: { "+": ["+H", "+Na", "+K"], "-": ["-H", "+Cl"] }
 };
 
 config.upload = {
-  destination: '/opt/data/metaspace/uploads',
+  endpoint: 'http://localhost:9000',
 }
 
 config.services = {};

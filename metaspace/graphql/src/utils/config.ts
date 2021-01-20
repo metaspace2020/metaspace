@@ -32,9 +32,11 @@ export interface Config {
     categories: Record<ImageCategory, ImageCategoryConfig>;
   };
   upload: {
-    destination: string; // 's3' for S3 storage
+    endpoint: string;
     bucket?: string;
     moldbPrefix: string;
+    access_key_id: string;
+    secret_access_key: string;
   };
   services: {
     sm_engine_api_host: string;
