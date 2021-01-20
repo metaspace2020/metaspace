@@ -11,6 +11,11 @@ module.exports = {
     placeholderColor: {
       default: theme => theme('colors.gray.500')
     },
+    maxHeight: {
+      full: '100%',
+      screen: '100vh',
+      '25': '6.25rem',
+    },
     extend: {
       colors: {
         // brand
@@ -22,6 +27,7 @@ module.exports = {
         // UI
         body: 'hsl(208, 61%, 16%)',
         gray: { // greys based on brand colour
+          '50': 'hsl(208, 33%, 96%)', // similar to 100 with 50% alpha
           '100': 'hsl(208, 36%, 96%)',
           '200': 'hsl(208, 33%, 89%)',
           '300': 'hsl(208, 31%, 80%)',
@@ -51,10 +57,15 @@ module.exports = {
       },
       borderColor: {
         danger: defaults.theme.colors.red[700],
+        'gray-200-alpha': 'hsla(208, 33%, 89%, 87%)'
       },
       backgroundColor: {
         'primary-alpha': 'hsla(208, 87%, 50%, 87%)',
+        'blue-100-alpha': 'hsla(208, 79%, 92%, 87%)',
+        'blue-200-alpha': 'hsla(208, 97%, 85%, 87%)',
         'blue-700-alpha': 'hsla(208, 76%, 39%, 75%)',
+        'gray-100-alpha': 'hsla(208, 36%, 96%, 87%)',
+        'gray-200-alpha': 'hsla(208, 33%, 89%, 87%)'
       },
       inset: {
         '1/2': '50%',
@@ -66,6 +77,8 @@ module.exports = {
         auto: 'auto',
         '9': '2.25rem', // 1.5 * 24px/1.5rem
         '18': '4.5rem', // 3 * 24px/1.5rem
+        '21': '5.25rem', // 3.5 * 24px/1.5rem
+        '60': '15rem', // 10 * 24px/1.5rem
         '66': '16.5rem', // 11 * 24px/1.5rem
       },
       maxWidth: {

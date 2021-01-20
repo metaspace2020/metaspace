@@ -1,12 +1,13 @@
 import './RichTextArea.css'
 
-import { createComponent, reactive } from '@vue/composition-api'
+import { defineComponent, reactive } from '@vue/composition-api'
 import { EditorContent, EditorMenuBubble } from 'tiptap'
 
 import MenuItems from './MenuItems'
 import useEditor from './useEditor'
 
-const MenuElement = createComponent({
+const MenuWrapper = defineComponent({
+  name: 'MenuWrapper',
   setup(_, { slots, parent }: any) {
     return () =>
       parent && parent.menu ? (
@@ -31,7 +32,8 @@ interface Props {
   onUpdate: (content: string) => any
 }
 
-const RichTextArea = createComponent<Props>({
+const RichTextArea = defineComponent<Props>({
+  name: 'RichTextArea',
   props: {
     content: String,
     onUpdate: Function,
@@ -59,9 +61,9 @@ const RichTextArea = createComponent<Props>({
           editor={editor}
         />
         <EditorMenuBubble editor={editor} >
-          <MenuElement>
+          <MenuWrapper>
             <MenuItems editor={editor} />
-          </MenuElement>
+          </MenuWrapper>
         </EditorMenuBubble>
       </div>
     )

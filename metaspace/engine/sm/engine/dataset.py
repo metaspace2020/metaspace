@@ -1,7 +1,9 @@
 import json
 import logging
 from datetime import datetime
+from typing import Dict
 
+from sm.engine.ds_config import DSConfig
 from sm.engine.errors import UnknownDSID
 from sm.engine.util import SMConfig
 
@@ -57,7 +59,7 @@ class Dataset:
 
     DS_SEL = (
         'SELECT id, name, input_path, upload_dt, metadata, config, status, '
-        '   status_update_dt, is_public '
+        '   status_update_dt, is_public, ion_img_storage_type '
         'FROM dataset WHERE id = %s'
     )
     DS_UPD = (
@@ -80,16 +82,17 @@ class Dataset:
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        id=None,  # pylint: disable=redefined-builtin
-        name=None,
-        input_path=None,
-        upload_dt=None,
-        metadata=None,
-        config=None,
-        status=DatasetStatus.QUEUED,
-        status_update_dt=None,
-        is_public=True,
-        img_storage_type='fs',
+        *,
+        id: str,  # pylint: disable=redefined-builtin
+        name: str,
+        input_path: str,
+        upload_dt: datetime,
+        metadata: Dict,
+        config: DSConfig,
+        status: str = DatasetStatus.QUEUED,
+        status_update_dt: datetime = None,
+        is_public: bool = True,
+        ion_img_storage_type: str = 'fs',
     ):
         self.id = id
         self.name = name
@@ -98,7 +101,7 @@ class Dataset:
         self.status = status
         self.status_update_dt = status_update_dt or datetime.now()
         self.is_public = is_public
-        self.ion_img_storage_type = img_storage_type
+        self.ion_img_storage_type = ion_img_storage_type
 
         self.metadata = metadata
         self.config = config
@@ -127,7 +130,7 @@ class Dataset:
         res = db.select_one(self.DS_SEL, params=(self.id,))
         return bool(res)
 
-    def save(self, db, es=None):
+    def save(self, db, es=None, allow_insert=False):
         doc = {
             'id': self.id,
             'name': self.name,
@@ -140,7 +143,10 @@ class Dataset:
             'is_public': self.is_public,
         }
         if not self.is_stored(db):
-            db.insert(self.DS_INSERT, rows=[doc])
+            if allow_insert:
+                db.insert(self.DS_INSERT, rows=[doc])
+            else:
+                raise UnknownDSID(f'Dataset does not exist: {self.id}')
         else:
             db.alter(self.DS_UPD, params=doc)
         logger.info(f'Inserted into dataset table: {self.id}, {self.name}')
@@ -243,7 +249,7 @@ def generate_ds_config(
     decoy_sample_size=None,
     neutral_losses=None,
     chem_mods=None,
-):
+) -> DSConfig:
     # The kwarg names should match FLAT_DS_CONFIG_KEYS
 
     analysis_version = analysis_version or 1

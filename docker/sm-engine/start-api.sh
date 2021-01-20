@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-. /start-common.sh
+. /sm-engine/start-common.sh
 
 # TODO: wrap this in a python script so that these credentials can be read from a config file.
 if [ "$( PGPASSWORD=password psql -U sm -d postgres -h postgres -tAc "SELECT 1 FROM pg_database WHERE datname='sm'" )" != '1' ]; then

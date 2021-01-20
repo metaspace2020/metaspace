@@ -267,6 +267,7 @@ export default {
               metadataJson,
               ...metaspaceOptions,
             },
+            useLithops: config.features.lithops,
           },
         })
 

@@ -36,6 +36,9 @@ gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrde
           metadataJson
           isPublic
         }
+        databaseDetails {
+          id
+        }
         isotopeImages {
           mz
           url
@@ -185,9 +188,13 @@ export const relatedMoleculesQuery =
   }`
 
 export const isobarsQuery =
-  gql`query IsobarsQuery($datasetId: String!, $ionFormula: String!) {
-    allAnnotations(datasetFilter: { ids: $datasetId }, filter: { isobaricWith: $ionFormula },
-                   orderBy: ORDER_BY_FDR_MSM, sortingOrder: ASCENDING) {
+  gql`query IsobarsQuery($datasetId: String!, $filter: AnnotationFilter!) {
+    allAnnotations(
+      datasetFilter: { ids: $datasetId },
+      filter: $filter,
+      orderBy: ORDER_BY_FDR_MSM,
+      sortingOrder: ASCENDING
+    ) {
       id
       ion
       ionFormula

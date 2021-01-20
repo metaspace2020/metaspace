@@ -195,26 +195,27 @@ export function encodeSortOrder(settings: SortSettings): string | null {
 }
 
 export interface UrlTableSettings {
-  currentPage: number;
+  currentPage: number
   order: SortSettings
+  row: number
 }
 
 export interface UrlAnnotationViewSettings {
-  activeSections: string[];
-  colormap: string;
-  colocalizationAlgo: string | null;
-  scaleType: ScaleType;
+  activeSections: string[]
+  colormap: string
+  colocalizationAlgo: string | null
+  scaleType: ScaleType
 }
 
 export interface UrlDatasetsSettings {
-  tab: string;
-  page: number;
+  tab: string
+  page: number
 }
 
 export interface UrlSettings {
-  table: UrlTableSettings;
-  annotationView: UrlAnnotationViewSettings;
-  datasets: UrlDatasetsSettings;
+  table: UrlTableSettings
+  annotationView: UrlAnnotationViewSettings
+  datasets: UrlDatasetsSettings
 }
 
 export function decodeSettings(location: Location): UrlSettings | undefined {
@@ -232,6 +233,7 @@ export function decodeSettings(location: Location): UrlSettings | undefined {
     table: {
       currentPage: 1,
       order: DEFAULT_TABLE_ORDER,
+      row: 1,
     },
 
     annotationView: {
@@ -250,6 +252,9 @@ export function decodeSettings(location: Location): UrlSettings | undefined {
   if (query.page) {
     settings.table.currentPage = parseInt(query.page)
     settings.datasets.page = parseInt(query.page)
+  }
+  if (query.row) {
+    settings.table.row = parseInt(query.row)
   }
   if (query.sort) {
     settings.table.order = decodeSortOrder(query.sort)

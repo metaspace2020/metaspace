@@ -4,6 +4,8 @@ Simple API for classifying Imaging Mass Spectrometry Ion images as on/off sample
 # Setup
 Inside root directory
 
+By default, Dockerfile expects a Fastai model file at `./models/model.fai.pth` path.
+
 ```
 docker build -t metaspace2020/off-sample -f docker/Dockerfile .
 docker run -d -p 9876:8000 --name off-sample metaspace2020/off-sample

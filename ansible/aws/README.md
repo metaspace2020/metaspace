@@ -6,7 +6,7 @@ Software requirements for the developer machine:
 * boto3>=1.5
 * boto>=2.48
 * pyyaml
-* [Ansible>=2.4](http://docs.ansible.com/ansible/intro_installation.html#latest-releases-via-pip)
+* [Ansible==2.8.6](http://docs.ansible.com/ansible/intro_installation.html#latest-releases-via-pip)
 
 
 ## First time setup
@@ -14,15 +14,19 @@ Software requirements for the developer machine:
 #### Clone repository and copy config file
 
 ```
-git clone -b rel-v0.8 https://github.com/metaspace2020/metaspace.git
-cd metaspace/ansible/aws
-mkdir env/dev/group_vars
-cp templates/all/vars.yml.template env/dev/group_vars/group_vars/all/vars.yml
-cp templates/all/vault.yml.template env/dev/group_vars/group_vars/all/vault.yml
-cp templates/web.yml.template env/dev/group_vars/group_vars/web.yml.template
-cp templates/master.yml.template env/dev/group_vars/group_vars/master.yml.template
-cp templates/elk.yml.template env/dev/group_vars/group_vars/elk.yml.template
+git clone -b release https://github.com/metaspace2020/metaspace.git
 ```
+
+#### Clone and setup Ansible config repository
+
+```
+cd metaspace/ansible/aws
+git clone https://github.com/intsco/metaspace-ansible-config.git
+mv metaspace-ansible-config env
+```
+
+Put the master password into `<METASPACE_HOME>/ansible/aws/vault_pass.txt`.
+
 
 #### Go through manual steps in AWS console
 
@@ -34,22 +38,6 @@ For the web application bucket make sure to allow PUT, POST, and DELETE requests
 It will be used to ssh to instances.
 * Create [AWS configuration and credential files](https://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html)
 for the admin IAM user on the developer manchine.
-
-#### Update config file
-
-Specify
-
-* SM platform component versions
-* SM engine AWS user credentials, region, and bucket names/paths
-* SM web application AWS user credentials
-* SSH key name
-* Admin emails
-* Passwords
-* `hostgroup` values for all types of instances
-
-in env/dev/group_vars/all/vars.yml and env/dev/group_vars/all/vault.yml
-
-Values to be updated are capitalized.
 
 #### Spin up all needed instances
 

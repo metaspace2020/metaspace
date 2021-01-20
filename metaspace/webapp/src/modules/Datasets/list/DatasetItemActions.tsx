@@ -1,11 +1,13 @@
 import FilterLink from './FilterLink'
-import { computed, createComponent, reactive } from '@vue/composition-api'
+import { computed, defineComponent, reactive } from '@vue/composition-api'
 import { DatasetDetailItem, deleteDatasetQuery, reprocessDatasetQuery } from '../../../api/dataset'
 import DatasetInfo from '../../../components/DatasetInfo.vue'
 import DownloadDialog from './DownloadDialog'
 import reportError from '../../../lib/reportError'
+import { formatDatabaseLabel } from '../../MolecularDatabases/formatting'
+import config from '../../../lib/config'
 
-const DatasetItemActions = createComponent({
+const DatasetItemActions = defineComponent({
   name: 'DatasetItemActions',
   props: {
     dataset: { type: Object as () => DatasetDetailItem, required: true },
@@ -58,7 +60,7 @@ const DatasetItemActions = createComponent({
           mutation: reprocessDatasetQuery,
           variables: {
             id: props.dataset.id,
-            force: true,
+            useLithops: config.features.lithops,
           },
         })
         $notify.success('Dataset sent for reprocessing')
@@ -153,7 +155,7 @@ const DatasetItemActions = createComponent({
                 {dataset.databases.map(db => (
                   <div key={db.id}>
                     <FilterLink filter={{ database: db.id, datasetIds: [dataset.id] }}>
-                      {db.name}
+                      {formatDatabaseLabel(db)}
                     </FilterLink>
                   </div>
                 ))}

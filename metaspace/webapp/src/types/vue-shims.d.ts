@@ -10,10 +10,6 @@ declare module '*.svg' {
 }
 
 declare module 'vue-analytics'
-declare module 'raven-js/plugins/vue'
-
-declare module 'plotly.js/src/components/colorscale/scales.js'
-declare module 'plotly.js/src/components/colorscale/extract_scale.js'
 
 declare module 'vue-slide-up-down'
 

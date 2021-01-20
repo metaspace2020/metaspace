@@ -1,4 +1,4 @@
-import { computed, createComponent, toRefs } from '@vue/composition-api'
+import { computed, defineComponent, toRefs } from '@vue/composition-api'
 import { useQuery } from '@vue/apollo-composable'
 import { DownloadLinkJson, GetDatasetDownloadLink, getDatasetDownloadLink } from '../../../api/dataset'
 import safeJsonParse from '../../../lib/safeJsonParse'
@@ -18,7 +18,7 @@ const getFilenameAndExt = (filename: string) => {
   return [filename, '']
 }
 
-const FileIcon = createComponent({
+const FileIcon = defineComponent({
   props: { ext: { type: String, required: true } },
   setup(props) {
     return () => (
@@ -56,7 +56,7 @@ const FileIcon = createComponent({
   },
 })
 
-const FileItem = createComponent({
+const FileItem = defineComponent({
   props: {
     filename: { type: String, required: true },
     link: { type: String, required: true },
@@ -81,11 +81,10 @@ const FileItem = createComponent({
   },
 })
 
-export default createComponent({
+export default defineComponent({
   props: {
     datasetName: { type: String, required: true },
     datasetId: { type: String, required: true },
-    onClose: Function,
   },
   setup(props, { emit }) {
     const { datasetId } = toRefs(props)

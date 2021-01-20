@@ -1,4 +1,4 @@
-import { createComponent, computed } from '@vue/composition-api'
+import { defineComponent, computed } from '@vue/composition-api'
 import { Input } from '../../lib/element-ui'
 
 import * as Form from '../../components/Form'
@@ -9,7 +9,7 @@ interface Props {
   value: string
 }
 
-const DoiField = createComponent<Props>({
+const DoiField = defineComponent<Props>({
   inheritAttrs: false,
   props: {
     value: String,

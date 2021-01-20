@@ -33,15 +33,17 @@ class SMapiDatasetManager:
         logger=None,
         annot_queue=None,
         update_queue=None,
+        lit_queue=None,
         status_queue=None,
     ):
         self._sm_config = SMConfig.get_conf()
         self._db = db
         self._es = es
         self._img_store = image_store
-        self._status_queue = status_queue
         self._annot_queue = annot_queue
         self._update_queue = update_queue
+        self._lit_queue = lit_queue
+        self._status_queue = status_queue
         self.logger = logger or logging.getLogger()
 
     def _set_ds_busy(self, ds, ignore_status=False):
@@ -57,14 +59,12 @@ class SMapiDatasetManager:
         queue.publish(msg, priority)
         self.logger.info(f'New message posted to {queue}: {msg}')
 
-    def _add_default_moldbs(self, moldb_ids):
-        default_moldb_ids = [
-            molecular_db.find_by_name(name).id
-            for name in self._sm_config['ds_config_defaults']['moldb_names']
-        ]
+    @staticmethod
+    def _add_default_moldbs(moldb_ids):
+        default_moldb_ids = [moldb.id for moldb in molecular_db.find_default()]
         return list(set(moldb_ids) | set(default_moldb_ids))
 
-    def add(self, doc, **kwargs):
+    def add(self, doc, use_lithops, **kwargs):
         """Save dataset and send ANNOTATE message to the queue."""
         now = datetime.now()
         if 'id' not in doc:
@@ -91,12 +91,13 @@ class SMapiDatasetManager:
             is_public=doc.get('is_public'),
             status=DatasetStatus.QUEUED,
         )
-        ds.save(self._db, self._es)
+        ds.save(self._db, self._es, allow_insert=True)
         self._status_queue.publish(
             {'ds_id': ds.id, 'action': DaemonAction.ANNOTATE, 'stage': DaemonActionStage.QUEUED}
         )
 
-        self._post_sm_msg(ds=ds, queue=self._annot_queue, action=DaemonAction.ANNOTATE, **kwargs)
+        queue = self._lit_queue if use_lithops else self._annot_queue
+        self._post_sm_msg(ds=ds, queue=queue, action=DaemonAction.ANNOTATE, **kwargs)
         return doc['id']
 
     def delete(self, ds_id, **kwargs):
@@ -105,7 +106,7 @@ class SMapiDatasetManager:
         self._set_ds_busy(ds, kwargs.get('force', False))
         self._post_sm_msg(ds=ds, queue=self._update_queue, action=DaemonAction.DELETE, **kwargs)
 
-    def update(self, ds_id, doc, **kwargs):
+    def update(self, ds_id, doc, async_es_update, **kwargs):
         """ Save dataset and send update message to the queue """
         ds = Dataset.load(self._db, ds_id)
         ds.name = doc.get('name', ds.name)
@@ -114,7 +115,7 @@ class SMapiDatasetManager:
             ds.metadata = doc['metadata']
         ds.upload_dt = doc.get('upload_dt', ds.upload_dt)
         ds.is_public = doc.get('is_public', ds.is_public)
-        ds.save(self._db, self._es)
+        ds.save(self._db, None if async_es_update else self._es)
 
         self._post_sm_msg(
             ds=ds,

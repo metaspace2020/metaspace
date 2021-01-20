@@ -7,7 +7,7 @@
       :data="annotations"
       size="mini"
       border
-      element-loading-text="Loading results from the server..."
+      element-loading-text="Loading results …"
       highlight-current-row
       width="100%"
       stripe
@@ -125,6 +125,15 @@
                 class="sf cell-span"
                 v-html="renderMolFormulaHtml(props.row.ion)"
               />
+              <span
+                v-if="props.row.id in channelSwatches"
+                class="flex"
+              >
+                <i
+                  class="block mt-1 w-3 h-3 mx-1 box-content border border-solid border-gray-400 rounded-full"
+                  :style="{ background: channelSwatches[props.row.id] }"
+                />
+              </span>
               <img
                 v-if="!filter.compoundName"
                 src="../../assets/filter-icon.png"
@@ -191,7 +200,8 @@
         min-width="40"
       >
         <template slot-scope="props">
-          <span> {{ Math.round(props.row.fdrLevel * 100) }}% </span>
+          <span v-if="props.row.fdrLevel == null">&mdash;</span>
+          <span v-else>{{ Math.round(props.row.fdrLevel * 100) }}%</span>
         </template>
       </el-table-column>
 
@@ -288,6 +298,9 @@ import FileSaver from 'file-saver'
 import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../lib/formatCsvRow'
 import { invert } from 'lodash-es'
 import config from '../../lib/config'
+import { useChannelSwatches } from '../ImageViewer/ionImageState'
+
+const channelSwatches = useChannelSwatches()
 
 // 38 = up, 40 = down, 74 = j, 75 = k
 const KEY_TO_ACTION = {
@@ -333,9 +346,14 @@ export default Vue.extend({
       totalCount: 0,
       initialLoading: true,
       csvChunkSize: 1000,
+      nextCurrentRowIndex: null,
     }
   },
   computed: {
+    channelSwatches() {
+      return channelSwatches.value
+    },
+
     isLoading() {
       return this.$store.state.tableIsLoading
     },
@@ -401,7 +419,23 @@ export default Vue.extend({
         return this.$store.getters.settings.table.currentPage
       },
       set(page) {
+        // ignore the initial "sync"
+        if (page === this.currentPage) {
+          return
+        }
+        if (this.nextCurrentRowIndex === null) {
+          this.nextCurrentRowIndex = 0
+        }
         this.$store.commit('setCurrentPage', page)
+      },
+    },
+
+    currentRowIndex: {
+      get() {
+        return this.$store.getters.settings.table.row - 1
+      },
+      set(index) {
+        this.$store.commit('setRow', index + 1)
       },
     },
 
@@ -441,26 +475,23 @@ export default Vue.extend({
       update: data => data.allAnnotations,
       throttle: 200,
       result({ data }) {
-        // For whatever reason (could be a bug), vue-apollo seems to first refetch
-        // data for the current page and only then fetch the updated data.
-        // Checking if the data has been actually changed is easiest by comparing
-        // string representations of old and newly arrived data.
-        const changed = JSON.stringify(data) !== this._prevData
-        this._prevData = JSON.stringify(data)
-
-        // Handle page changes (due to pagination or keyboard events).
-        // On data arrival we need to highlight the current row if the change
-        // was because of an up/down key press, and disable all highlighting
-        // if it was due to a click on a pagination button.
-        if (this._onDataArrival && changed) {
-          this._onDataArrival(data.allAnnotations)
-          this._onDataArrival = (data) => {
-            this.clearCurrentRow()
-            if (data) {
-              Vue.nextTick(() => this.setRow(data, 0))
+        // timing hack to allow table state to update
+        Vue.nextTick(() => {
+          if (this.nextCurrentRowIndex !== null) {
+            this.setCurrentRow(this.nextCurrentRowIndex)
+            this.nextCurrentRowIndex = null
+          } else {
+            const curRow = this.getCurrentRow()
+            if (!curRow) {
+              this.setCurrentRow(this.currentRowIndex)
             }
           }
-        }
+          // Move focus to the table so that keyboard navigation works, except when focus is on an input element
+          const shouldMoveFocus = document.activeElement?.closest('input,select,textarea') == null
+          if (this.$refs.table && shouldMoveFocus) {
+            this.$refs.table.$el.focus()
+          }
+        })
 
         this.totalCount = data.countAnnotations
         this.initialLoading = false
@@ -470,25 +501,24 @@ export default Vue.extend({
       },
     },
   },
-  created() {
-    this._onDataArrival = (data) => {
-      if (!data) return
-      Vue.nextTick(() => this.setRow(data, 0))
-      const annotTable = document.getElementById('annot-table')
-      if (annotTable != null) {
-        annotTable.focus()
-      }
-    }
-  },
   methods: {
     onPageSizeChange(newSize) {
       this.recordsPerPage = newSize
     },
-    setRow(data, rowIndex) {
-      // Ignore if called after unmount
-      if (this.$refs.table != null) {
+
+    getCurrentRow() {
+      if (this.$refs.table) {
+        const tblStore = this.$refs.table.store
+        return tblStore.states.currentRow
+      }
+      return null
+    },
+
+    setCurrentRow(rowIndex, rows = this.annotations) {
+      if (this.$refs.table && rows.length) {
         this.$refs.table.setCurrentRow(null)
-        this.$refs.table.setCurrentRow(data[rowIndex])
+        const nextIndex = rowIndex < 0 ? 0 : Math.min(rowIndex, rows.length - 1)
+        this.$refs.table.setCurrentRow(rows[nextIndex])
       }
     },
 
@@ -500,10 +530,11 @@ export default Vue.extend({
     getRowClass({ row }) {
       const { fdrLevel, colocalizationCoeff } = row
       const fdrClass =
-         fdrLevel <= 0.051 ? 'fdr-5'
-           : fdrLevel <= 0.101 ? 'fdr-10'
-             : fdrLevel <= 0.201 ? 'fdr-20'
-               : 'fdr-50'
+          fdrLevel == null ? 'fdr-null'
+            : fdrLevel <= 0.051 ? 'fdr-5'
+              : fdrLevel <= 0.101 ? 'fdr-10'
+                : fdrLevel <= 0.201 ? 'fdr-20'
+                  : 'fdr-50'
       const colocClass =
          colocalizationCoeff == null ? ''
            : colocalizationCoeff >= 0.949 ? 'coloc-95'
@@ -535,6 +566,10 @@ export default Vue.extend({
 
     onCurrentRowChange(row) {
       this.$store.commit('setAnnotation', row)
+
+      if (row !== null) {
+        this.currentRowIndex = this.annotations.indexOf(row)
+      }
     },
 
     onKeyDown(event) {
@@ -555,14 +590,14 @@ export default Vue.extend({
       // WARNING the code below relies on internals of el-table:
       // store.{states.currentRow, mutations.{setData, setCurrentRow}}
       const tblStore = this.$refs.table.store
-      const curRow = tblStore.states.currentRow
+      const curRow = this.getCurrentRow()
       const curIdx = this.annotations.indexOf(curRow)
 
       if (action === 'up' && curIdx === 0) {
         if (this.currentPage === 1) {
           return
         }
-        this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, data.length - 1)) }
+        this.nextCurrentRowIndex = this.recordsPerPage - 1
         this.currentPage -= 1
         return
       }
@@ -571,26 +606,25 @@ export default Vue.extend({
         if (this.currentPage === this.numberOfPages) {
           return
         }
-        this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, 0)) }
+        this.nextCurrentRowIndex = 0
         this.currentPage += 1
         return
       }
 
       if (action === 'left') {
+        this.nextCurrentRowIndex = curIdx
         this.currentPage = Math.max(1, this.currentPage - 1)
-        this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, Math.min(curIdx, data.length - 1))) }
         return
       }
 
       if (action === 'right') {
+        this.nextCurrentRowIndex = curIdx
         this.currentPage = Math.min(this.numberOfPages, this.currentPage + 1)
-        this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, Math.min(curIdx, data.length - 1))) }
         return
       }
 
       const delta = action === 'up' ? -1 : +1
-      tblStore.commit('setCurrentRow',
-        this.annotations[curIdx + delta])
+      this.setCurrentRow(curIdx + delta)
     },
 
     clearCurrentRow() {
@@ -749,6 +783,10 @@ export default Vue.extend({
    background-color: transparent;
  }
 
+  .el-table__body tr.fdr-null > td.fdr-cell, .fdr-legend.fdr-null {
+    @apply bg-blue-100;
+  }
+
  .el-table__body tr.fdr-5 > td.fdr-cell, .fdr-legend.fdr-5, .el-table__body tr.coloc-95 > td.coloc-cell {
    background-color: #c8ffc8;
  }
@@ -763,6 +801,10 @@ export default Vue.extend({
 
  .el-table__body tr.fdr-50 > td.fdr-cell, .fdr-legend.fdr-50, .el-table__body tr.coloc-50 > td.coloc-cell {
    background-color: #fff5e0;
+ }
+
+ .el-table__body tr.fdr-null.current-row > td {
+   background-color: theme('backgroundColor.blue.200') !important;
  }
 
  .el-table__body tr.fdr-5.current-row > td {

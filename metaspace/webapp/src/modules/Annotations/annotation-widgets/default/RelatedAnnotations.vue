@@ -48,13 +48,15 @@
         >
           <div slot="reference">
             <span>{{ other.msmScore.toFixed(3) }},</span>
-            <span>{{ other.fdrLevel * 100 }}%,</span>
+            <span v-if="other.fdrLevel !== null">{{ other.fdrLevel * 100 }}%,</span>
             <span>{{ other.isotopeImages[0].maxIntensity.toExponential(2) }}</span>
             <span v-if="other.colocalizationCoeff != null"> | {{ (other.colocalizationCoeff).toFixed(2) }}</span>
           </div>
           <div>
             <div>MSM: {{ other.msmScore.toFixed(3) }}</div>
-            <div>FDR: {{ other.fdrLevel * 100 }}%</div>
+            <div v-if="other.fdrLevel !== null">
+              FDR: {{ other.fdrLevel * 100 }}%
+            </div>
             <div>Max. intensity: {{ other.isotopeImages[0].maxIntensity.toExponential(2) }}</div>
             <div v-if="other.colocalizationCoeff != null">
               Colocalization: {{ (other.colocalizationCoeff).toFixed(2) }}

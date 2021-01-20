@@ -9,7 +9,6 @@ import {
   OpticalImage,
   opticalImagesQuery,
 } from '../../api/dataset'
-import { encodeParams } from '../Filters/index'
 import annotationWidgets from './annotation-widgets/index'
 
 import Vue from 'vue'
@@ -19,12 +18,26 @@ import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
 import safeJsonParse from '../../lib/safeJsonParse'
 import { omit, pick, sortBy, throttle } from 'lodash-es'
 import { ANNOTATION_SPECIFIC_FILTERS } from '../Filters/filterSpecs'
+import { encodeParams } from '../Filters'
 import config from '../../lib/config'
 import { OpacityMode } from '../../lib/createColormap'
 import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue'
 import RelatedMolecules from './annotation-widgets/RelatedMolecules.vue'
 import CompoundsList from './annotation-widgets/CompoundsList.vue'
 import AmbiguityAlert from './annotation-widgets/AmbiguityAlert.vue'
+import ModeButton from '../ImageViewer/ModeButton.vue'
+import ShareLink from '../ImageViewer/ShareLink.vue'
+import CopyButton from '../../components/CopyButton.vue'
+import MolecularFormula from '../../components/MolecularFormula'
+
+import '../../components/StatefulIcon.css'
+import LockIcon from '../../assets/inline/refactoring-ui/lock.svg'
+import LocationPinIcon from '../../assets/inline/refactoring-ui/location-pin.svg'
+
+import { useIonImageSettings } from '../ImageViewer/ionImageState'
+import viewerState from '../ImageViewer/state'
+
+const { settings: ionImageSettings } = useIonImageSettings()
 
  type ImagePosition = {
    zoom: number
@@ -53,6 +66,12 @@ const componentsToRegister: any = {
   RelatedMolecules,
   CompoundsList,
   AmbiguityAlert,
+  ModeButton,
+  ShareLink,
+  LockIcon,
+  LocationPinIcon,
+  CopyButton,
+  MolecularFormula,
 }
 for (const category of Object.keys(annotationWidgets)) {
   metadataDependentComponents[category] = {}
@@ -158,16 +177,12 @@ export default class AnnotationView extends Vue {
      return this.$store.getters.settings.annotationView.scaleType
    }
 
-   get formattedMolFormula(): string {
-     if (!this.annotation) return ''
-     return renderMolFormulaHtml(this.annotation.ion)
-   }
-
    get imageOpacityMode(): OpacityMode {
      return (this.showOpticalImage && this.bestOpticalImage != null) ? 'linear' : 'constant'
    }
 
    get permalinkHref(): Location {
+     const path = '/annotations'
      const filter: any = {
        datasetIds: [this.annotation.dataset.id],
        compoundName: this.annotation.sumFormula,
@@ -176,7 +191,6 @@ export default class AnnotationView extends Vue {
        database: this.$store.getters.filter.database,
        simpleQuery: '',
      }
-     const path = '/annotations'
      return {
        path,
        query: {
@@ -263,13 +277,21 @@ export default class AnnotationView extends Vue {
      return config.features.coloc
    }
 
-   opacity: number = 1.0;
+   get multiImagesEnabled() {
+     return config.features.multiple_ion_images
+   }
 
-   imagePosition: ImagePosition = {
-     zoom: 1,
-     xOffset: 0,
-     yOffset: 0,
-   };
+   get opacity() {
+     return ionImageSettings.opacity
+   }
+
+   set opacity(value: number) {
+     ionImageSettings.opacity = value
+   }
+
+   get imagePosition() {
+     return viewerState.imagePosition.value
+   }
 
    onSectionsChange(activeSections: string[]): void {
      // FIXME: this is a hack to make isotope images redraw
@@ -335,6 +357,17 @@ export default class AnnotationView extends Vue {
      this.$store.commit('setSortOrder', {
        by: 'colocalization',
        dir: 'descending',
+     })
+   }
+
+   filterByDataset() {
+     const { datasetIds } = this.$store.getters.filter
+     if (datasetIds && datasetIds.length === 1) {
+       return
+     }
+     this.$store.commit('updateFilter', {
+       ...omit(this.$store.getters.filter, ANNOTATION_SPECIFIC_FILTERS),
+       datasetIds: [this.annotation.dataset.id],
      })
    }
 }

@@ -90,12 +90,14 @@
       v-bind="$attrs"
       @input="onInput"
     >
-      <el-option
-        v-for="opt in options"
-        :key="optionsAreStrings ? opt : opt.value"
-        :value="optionsAreStrings ? opt : opt.value"
-        :label="optionsAreStrings ? opt : opt.label"
-      />
+      <slot name="options">
+        <el-option
+          v-for="opt in options"
+          :key="optionsAreStrings ? opt : opt.value"
+          :value="optionsAreStrings ? opt : opt.value"
+          :label="optionsAreStrings ? opt : opt.label"
+        />
+      </slot>
     </el-select>
 
     <table-input

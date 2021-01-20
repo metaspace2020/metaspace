@@ -7,9 +7,12 @@ import MainImageHeaderLc from './lcms/MainImageHeader.vue'
 import Diagnostics from './default/Diagnostics.vue'
 import DiagnosticsLc from './lcms/Diagnostics.vue'
 
+import ImageViewer from '../../ImageViewer'
+import config from '../../../lib/config'
+
 export default {
   'main-image': {
-    default: MainImage,
+    default: config.features.multiple_ion_images ? ImageViewer : MainImage,
     'LC-MS': MainImageLc,
   },
   'main-image-header': {

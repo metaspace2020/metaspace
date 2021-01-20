@@ -5,13 +5,11 @@ from functools import wraps
 from logging.config import dictConfig
 import os
 from copy import deepcopy
-from datetime import datetime
 from pathlib import Path
 import random
 from time import sleep
+from typing import Dict
 
-from sm.engine.db import ConnectionPool
-from sm.engine import molecular_db
 
 logger = logging.getLogger('engine')
 
@@ -55,7 +53,7 @@ class SMConfig:
     """ Engine configuration manager """
 
     _path = 'conf/config.json'
-    _config_dict = {}
+    _config_dict: Dict = {}
 
     @classmethod
     def set_path(cls, path):
@@ -103,32 +101,6 @@ class SMConfig:
         )
 
 
-def create_ds_from_files(ds_id, ds_name, ds_input_path, config_path=None, meta_path=None):
-    config_path = config_path or Path(ds_input_path) / 'config.json'
-    ds_config = json.load(open(config_path))
-    if 'database_ids' not in ds_config:
-        ds_config['database_ids'] = [
-            molecular_db.find_by_name(db).id for db in ds_config['databases']
-        ]
-
-    meta_path = meta_path or Path(ds_input_path) / 'meta.json'
-    if not Path(meta_path).exists():
-        raise Exception('meta.json not found')
-    metadata = json.load(open(str(meta_path)))
-
-    from sm.engine.dataset import Dataset  # pylint: disable=import-outside-toplevel
-
-    return Dataset(
-        id=ds_id,
-        name=ds_name,
-        input_path=str(ds_input_path),
-        upload_dt=datetime.now(),
-        metadata=metadata,
-        is_public=True,
-        config=ds_config,
-    )
-
-
 def split_s3_path(path):
     """
     Returns
@@ -136,7 +108,17 @@ def split_s3_path(path):
         tuple[string, string]
     Returns a pair of (bucket, key)
     """
-    return re.sub(r's3a?://', '', path).split(sep='/', maxsplit=1)
+    return re.sub(r'^s3a?://', '', path).split(sep='/', maxsplit=1)
+
+
+def split_cos_path(path):
+    """
+    Returns
+    ---
+        tuple[string, string]
+    Returns a pair of (bucket, key)
+    """
+    return re.sub(r'^cos?://', '', path).split(sep='/', maxsplit=1)
 
 
 def find_file_by_ext(path, ext):
@@ -144,6 +126,8 @@ def find_file_by_ext(path, ext):
 
 
 def bootstrap_and_run(config_path, func):
+    from sm.engine.db import ConnectionPool  # pylint: disable=import-outside-toplevel
+
     SMConfig.set_path(config_path)
     sm_config = SMConfig.get_conf()
     init_loggers(sm_config['logs'])
@@ -159,6 +143,8 @@ def populate_aws_env_vars(aws_config):
 
 class GlobalInit:
     def __init__(self, config_path='conf/config.json'):
+        from sm.engine.db import ConnectionPool  # pylint: disable=import-outside-toplevel
+
         SMConfig.set_path(config_path)
         self.sm_config = SMConfig.get_conf()
 
@@ -173,7 +159,7 @@ class GlobalInit:
         self.pool.close()
 
 
-def retry_on_exception(exception_type=Exception, num_retries=3):
+def retry_on_exception(exception_type=Exception, num_retries=3, retry_wait_params=(2, 3, 5)):
     def decorator(func):
         func_name = getattr(func, '__name__', 'Function')
 
@@ -183,7 +169,9 @@ def retry_on_exception(exception_type=Exception, num_retries=3):
                 try:
                     return func(*args, **kwargs)
                 except exception_type as e:
-                    delay = random.uniform(2, 5 + i * 3)
+                    wait_initial, wait_increase, jitter = retry_wait_params
+                    min_wait = wait_initial + i * wait_increase
+                    delay = random.uniform(min_wait, min_wait + jitter)
                     logger.warning(
                         f'{func_name} raised {type(e)} on attempt {i+1}. '
                         f'Retrying after {delay:.1f} seconds...'

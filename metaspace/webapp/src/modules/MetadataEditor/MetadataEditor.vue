@@ -26,7 +26,7 @@
         <metaspace-options-section
           v-model="metaspaceOptions"
           :error="errors['metaspaceOptions']"
-          :mol-d-b-options="molDBOptions"
+          :databases-by-group="molDBsByGroup"
           :adduct-options="adductOptions"
           :is-new-dataset="isNew"
         />
@@ -72,6 +72,7 @@ import {
   get, set, cloneDeep, defaults,
   isEmpty, isEqual, isPlainObject,
   mapValues, forEach, without, omit,
+  sortBy,
 } from 'lodash-es'
 import {
   newDatasetQuery,
@@ -88,6 +89,7 @@ import DataManagementSection from './sections/DataManagementSection.vue'
 import emailRegex from '../../lib/emailRegex'
 import safeJsonParse from '../../lib/safeJsonParse'
 import config from '../../lib/config'
+import { getDatabasesByGroup } from '../MolecularDatabases/formatting'
 
 const factories = {
   string: schema => schema.default || '',
@@ -126,7 +128,7 @@ export default {
       schema: null,
       loadingPromise: null,
       localErrors: {},
-      molDBOptions: [],
+      molDBsByGroup: [],
       possibleAdducts: {},
       metaspaceOptions: cloneDeep(defaultMetaspaceOptions),
       submitter: null,
@@ -257,18 +259,13 @@ export default {
     async loadOptions() {
       const { data } = await this.$apollo.query({
         query: metadataOptionsQuery,
-        fetchPolicy: 'cache-first',
+        fetchPolicy: 'network-only',
       })
       return {
         ...data,
         adducts: config.features.all_adducts
           ? data.adducts
           : data.adducts.filter(ad => !ad.hidden),
-        molecularDatabases:
-          config.features.all_dbs
-            ? data.molecularDatabases
-            : data.molecularDatabases.filter(db => !db.hidden)
-        ,
       }
     },
 
@@ -305,7 +302,7 @@ export default {
         Positive: adducts.filter(a => a.charge > 0),
         Negative: adducts.filter(a => a.charge < 0),
       }
-      this.molDBOptions = molecularDatabases
+      this.molDBsByGroup = getDatabasesByGroup(molecularDatabases)
       this.schema = deriveFullSchema(metadataSchemas[mdType])
 
       if (this.isNew) {
@@ -315,11 +312,15 @@ export default {
         // but if the user has previously selected a value that is now invalid, they should be made aware so that they
         // can choose an appropriate substitute.
         const selectedDbs = dataset.databases || []
-        const optionIds = this.molDBOptions.map(_ => _.id)
-        if (selectedDbs.some(db => !optionIds.includes(db.id))) {
-          metaspaceOptions.databaseIds = []
-        } else if (selectedDbs.length === 0) {
+        if (selectedDbs.length === 0) {
           metaspaceOptions.databaseIds = molecularDatabases.filter(d => d.default).map(_ => _.id)
+        } else {
+          for (const db of selectedDbs) {
+            if (molecularDatabases.find(_ => _.id === db.id) === undefined) {
+              metaspaceOptions.databaseIds = []
+              break
+            }
+          }
         }
         // Name should be different for each dataset
         metaspaceOptions.name = ''

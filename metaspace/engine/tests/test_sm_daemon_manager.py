@@ -10,7 +10,7 @@ from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.queue import QueuePublisher
 from sm.engine.dataset import DatasetStatus, Dataset, generate_ds_config
-from sm.engine.png_generator import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStoreServiceWrapper
 
 
 def create_ds(
@@ -44,7 +44,7 @@ def create_ds(
         metadata=metadata or {},
         config=config,
         status=status,
-        img_storage_type='fs',
+        ion_img_storage_type='fs',
     )
 
 
@@ -65,14 +65,8 @@ def create_daemon_man(db=None, es=None, img_store=None, status_queue=None):
 
 
 class TestSMDaemonDatasetManager:
-    class SearchJob:
-        def __init__(self, *args, **kwargs):
-            pass
-
-        def run(self, *args, **kwargs):
-            pass
-
-    def test_annotate_ds(self, fill_db, metadata, ds_config):
+    @patch('sm.engine.sm_daemons.AnnotationJob')
+    def test_annotate_ds(self, AnnotationJobMock, fill_db, metadata, ds_config):
         es_mock = MagicMock(spec=ESExporter)
         db = DB()
         manager = create_daemon_man(db=db, es=es_mock)
@@ -89,7 +83,7 @@ class TestSMDaemonDatasetManager:
             metadata=metadata,
         )
 
-        manager.annotate(ds, annotation_job_factory=self.SearchJob)
+        manager.annotate(ds)
 
         DS_SEL = 'select name, input_path, upload_dt, metadata, config from dataset where id=%s'
         results = db.select_one(DS_SEL, params=(ds_id,))
@@ -111,13 +105,14 @@ class TestSMDaemonDatasetManager:
         assert es_mock.index_ds.call_count == 1
         index_ds_kw_args = es_mock.index_ds.call_args[1]
         assert index_ds_kw_args.get('ds_id') == ds_id
-        assert index_ds_kw_args.get('moldb').name == 'HMDB-v4'
+        assert index_ds_kw_args.get('moldb').name == 'HMDB'
+        assert index_ds_kw_args.get('moldb').version == 'v4'
 
-    def test_delete_ds(self, fill_db):
+    @patch('sm.engine.annotation.job.ImageStoreServiceWrapper', spec=ImageStoreServiceWrapper)
+    @patch('sm.engine.annotation.job.ESExporter', spec=ESExporter)
+    def test_delete_ds(self, EsMock, ImgStoreMock, fill_db):
         db = DB()
-        es_mock = MagicMock(spec=ESExporter)
-        img_store_service_mock = MagicMock(spec=ImageStoreServiceWrapper)
-        manager = create_daemon_man(db=db, es=es_mock, img_store=img_store_service_mock)
+        manager = create_daemon_man(db=db, es=EsMock(), img_store=ImgStoreMock())
 
         ds_id = '2000-01-01'
         ds = create_ds(ds_id=ds_id)
@@ -125,8 +120,8 @@ class TestSMDaemonDatasetManager:
         manager.delete(ds)
 
         ids = [f'iso_image_{i}{j}' for i, j in product([1, 2], [1, 2])]
-        img_store_service_mock.delete_image_by_id.assert_has_calls(
+        ImgStoreMock.return_value.delete_image_by_id.assert_has_calls(
             [call('fs', 'iso_image', ids[0]), call('fs', 'iso_image', ids[1])]
         )
-        es_mock.delete_ds.assert_called_with(ds_id)
+        EsMock.return_value.delete_ds.assert_has_calls([call(ds_id)])
         assert db.select_one('SELECT * FROM dataset WHERE id = %s', params=(ds_id,)) == []

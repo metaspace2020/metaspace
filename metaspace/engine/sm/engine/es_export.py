@@ -1,5 +1,7 @@
 import logging
-from collections import MutableMapping, defaultdict
+from collections import defaultdict
+from collections.abc import MutableMapping
+from typing import List, Any
 
 import numpy as np
 import pandas as pd
@@ -12,7 +14,7 @@ from elasticsearch import (
 from elasticsearch.client import IndicesClient, IngestClient
 from elasticsearch.helpers import parallel_bulk
 
-from sm.engine.dataset_locker import DatasetLocker
+from sm.engine.db_mutex import DBMutex
 from sm.engine.db import DB
 from sm.engine.fdr import FDR
 from sm.engine.formula_parser import format_ion_formula
@@ -270,7 +272,7 @@ class ESExporter:
         self._es: Elasticsearch = init_es_conn(self.sm_config['elasticsearch'])
         self._ingest: IngestClient = IngestClient(self._es)
         self._db = db
-        self._ds_locker = DatasetLocker(self.sm_config['db'])
+        self._ds_locker = DBMutex(self.sm_config['db'])
         self.index = self.sm_config['elasticsearch']['index']
         self._get_mol_by_formula_dict_cache = dict()
 
@@ -381,8 +383,11 @@ class ESExporter:
             doc['centroid_mzs'] = list(mzs) if mzs is not None else []
             doc['mz'] = mzs[0] if mzs is not None else 0
 
-            fdr = round(FDR.nearest_fdr_level(doc['fdr']) * 100, 2)
-            annotation_counts[fdr] += 1
+            if moldb.targeted:
+                fdr_level = doc['fdr'] = -1
+            else:
+                fdr_level = FDR.nearest_fdr_level(doc['fdr'])
+            annotation_counts[round(fdr_level * 100, 2)] += 1
 
         self._add_isomer_fields_to_anns(annotation_docs)
         ESExporterIsobars.add_isobar_fields_to_anns(annotation_docs, isocalc)
@@ -533,7 +538,7 @@ class ESExporter:
 
             logger.info(f'Deleting annotation documents from ES: {ds_id}, {moldb}')
 
-            must = [{'term': {'ds_id': ds_id}}]
+            must: List[Any] = [{'term': {'ds_id': ds_id}}]
             if moldb:
                 must.append({'term': {'db_id': moldb.id}})
 

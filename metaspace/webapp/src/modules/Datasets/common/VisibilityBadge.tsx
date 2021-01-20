@@ -1,9 +1,9 @@
-import { computed, createComponent, reactive } from '@vue/composition-api'
+import { computed, defineComponent, reactive } from '@vue/composition-api'
 import { useQuery } from '@vue/apollo-composable'
 import { datasetVisibilityQuery, DatasetVisibilityQuery } from '../../../api/dataset'
 import { Popover } from '../../../lib/element-ui'
 
-const VisibilityBadge = createComponent({
+const VisibilityBadge = defineComponent({
   props: {
     datasetId: { type: String, required: true },
   },

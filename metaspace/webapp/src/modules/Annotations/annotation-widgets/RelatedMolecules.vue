@@ -23,7 +23,10 @@
               />
             </div>
 
-            <fdr-badge :fdr-level="other.fdrLevel" />
+            <fdr-badge
+              v-if="other.fdrLevel !== null"
+              :fdr-level="other.fdrLevel"
+            />
             <msm-badge
               v-if="other.isIsobar"
               :msm-score="other.msmScore"

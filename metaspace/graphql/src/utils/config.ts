@@ -2,7 +2,7 @@ import * as config from 'config';
 import { IConfig } from 'config';
 import {Algorithm} from 'jsonwebtoken';
 
-export type ImageStorageType = 'db' | 'fs';
+export type ImageStorageType = 'fs';
 export interface ImageCategoryConfig {
   type: string,
   path: string,
@@ -25,9 +25,6 @@ export interface Config {
   img_storage_port: number;
   log: {
     level: string;
-  };
-  defaults: {
-    moldb_names: string[];
   };
   adducts: Adduct[];
   img_upload: {
@@ -81,6 +78,8 @@ export interface Config {
   };
   sentry: {
     dsn: string | null;
+    environment?: string;
+    release?: string;
   };
   features: {
     graphqlMocks: boolean;

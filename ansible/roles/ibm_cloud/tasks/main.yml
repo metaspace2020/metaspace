@@ -1,0 +1,16 @@
+---
+
+- name: Ensure IBM VPC SSH private key exists
+  copy:
+    content="{{ sm_lithops_vpc_ssh_private_key }}" dest="/home/ubuntu/.ssh/ibm_cloud_vpc"
+    owner=ubuntu group=ubuntu mode="u=rw,g=,o="
+  when: sm_lithops_vpc_ssh_private_key != ''
+
+- name: Set SSH to use the correct key for the IBM VPC
+  blockinfile:
+    path: /home/ubuntu/.ssh/config
+    create: yes
+    backup: yes
+    mode: '600'
+    # Turning off StrictHostKeyChecking isn't ideal, but saves a lot of setup
+    block: "Host {{ sm_lithops_vpc_instance_ip }}\n  IdentityFile ~/.ssh/ibm_cloud_vpc\n  StrictHostKeyChecking no"

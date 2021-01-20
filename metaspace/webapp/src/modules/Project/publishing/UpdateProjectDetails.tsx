@@ -1,4 +1,4 @@
-import { createComponent, reactive } from '@vue/composition-api'
+import { defineComponent, reactive } from '@vue/composition-api'
 import { Button, Input } from '../../../lib/element-ui'
 
 import { WorkflowStep } from '../../../components/Workflow'
@@ -44,7 +44,7 @@ interface State {
   }
 }
 
-const PrepareProject = createComponent<Props>({
+const PrepareProject = defineComponent<Props>({
   props: {
     active: Boolean,
     currentUserName: String,

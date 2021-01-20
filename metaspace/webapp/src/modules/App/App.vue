@@ -22,11 +22,12 @@
     <dialog-controller />
     <!--<release-notes-dialog />-->
 
+    <new-feature-popups />
+
     <tour-step
       ref="tour"
       :tour="$store.state.currentTour"
     />
-    <new-feature-popup v-if="features.new_feature_popups && $store.state.currentTour == null" />
     <cookie-banner />
   </div>
 </template>
@@ -36,12 +37,12 @@ import * as cookie from 'js-cookie'
 import MetaspaceHeader from './MetaspaceHeader.vue'
 import MetaspaceFooter from './MetaspaceFooter.vue'
 // import ReleaseNotesDialog from './ReleaseNotesDialog.vue';
-import NewFeaturePopup from './NewFeaturePopup.vue'
 import TourStep from './TourStep.vue'
 import { DialogController } from '../Account'
 import config from '../../lib/config'
 import Vue, { ComponentOptions } from 'vue'
 import CookieBanner from './CookieBanner'
+import NewFeaturePopups from './NewFeaturePopups'
 
 /** @type {ComponentOptions<Vue> & Vue} */
 export default {
@@ -50,10 +51,10 @@ export default {
     MetaspaceHeader,
     MetaspaceFooter,
     // ReleaseNotesDialog,
-    NewFeaturePopup,
     TourStep,
     DialogController,
     CookieBanner,
+    NewFeaturePopups,
   },
   data() {
     return {

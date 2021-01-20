@@ -7,7 +7,11 @@ import Vuex from 'vuex'
 import store from '../../store/index'
 import { sync } from 'vuex-router-sync'
 import { encodeParams } from './url'
-import { mockAdductSuggestions, mockMolecularDatabases } from '../../../tests/utils/mockGraphqlData'
+import {
+  mockAdductSuggestions,
+  mockMolecularDatabases,
+  mockDatasetDatabases,
+} from '../../../tests/utils/mockGraphqlData'
 
 Vue.use(Vuex)
 sync(store, router)
@@ -19,7 +23,7 @@ describe('FilterPanel', () => {
     project: '4567',
     submitter: '89AB',
     datasetIds: ['CDEF', 'GHIJ'],
-    minMSM: '0.5',
+    minMSM: 0.5,
     compoundName: 'C8H20NO6P',
     adduct: '+K',
     mz: 296.0659,
@@ -40,7 +44,8 @@ describe('FilterPanel', () => {
     initMockGraphqlClient({
       Query: () => ({
         adductSuggestions: mockAdductSuggestions,
-        molecularDatabases: mockMolecularDatabases,
+        allMolecularDBs: mockMolecularDatabases,
+        allDatasets: mockDatasetDatabases,
       }),
     })
     store.commit('setFilterLists', null)
@@ -56,6 +61,15 @@ describe('FilterPanel', () => {
 
   it('should match snapshot (no filters)', async() => {
     await updateFilter({})
+    const propsData = { level: 'annotation' }
+    const wrapper = mount(FilterPanel, { router, apolloProvider, store, propsData })
+    await Vue.nextTick()
+
+    expect(wrapper).toMatchSnapshot()
+  })
+
+  it('should match snapshot (database without dataset)', async() => {
+    await updateFilter({ database: allFilters.database })
     const propsData = { level: 'annotation' }
     const wrapper = mount(FilterPanel, { router, apolloProvider, store, propsData })
     await Vue.nextTick()
@@ -81,7 +95,7 @@ describe('FilterPanel', () => {
       database: 2,
       project: 'abc',
       datasetIds: ['aaa', 'bbb'],
-      minMSM: '0.1',
+      // compoundName: 'C10H15N3O5',
       mz: 296.1,
     }
     await Vue.nextTick()
@@ -94,11 +108,12 @@ describe('FilterPanel', () => {
     wrapper.find('[data-test-key="project"] mock-el-select').vm.$emit('change', newFilters.project)
     // datasetIds - SearchableFilter [multiple=true]
     wrapper.find('[data-test-key="datasetIds"] mock-el-select').vm.$emit('change', newFilters.datasetIds)
-    // minMSM - InputFilter
-    wrapper.find('[data-test-key="minMSM"] .tf-value-span').trigger('click')
-    await Vue.nextTick()
-    wrapper.find('[data-test-key="minMSM"] input').setValue(newFilters.minMSM)
-    // mz - MzFilter
+    // compoundName - InputFilter [commented out as does not work with debounce]
+    // wrapper.find('[data-test-key="compoundName"] .tf-value-span').trigger('click')
+    // await Vue.nextTick()
+    // wrapper.find('[data-test-key="compoundName"] input').setValue(newFilters.compoundName)
+    // await Vue.nextTick()
+    // mz - NumberFilter
     wrapper.find('[data-test-key="mz"] .tf-value-span').trigger('click')
     await Vue.nextTick()
     wrapper.find('[data-test-key="mz"] input').setValue(newFilters.mz)

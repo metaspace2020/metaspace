@@ -8,17 +8,19 @@ from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.queue import QueuePublisher
 from sm.rest.dataset_manager import SMapiDatasetManager
-from sm.rest.dataset_manager import Dataset, DatasetActionPriority, DatasetStatus
-from sm.engine.png_generator import ImageStoreServiceWrapper
+from sm.rest.dataset_manager import DatasetActionPriority, DatasetStatus
+from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.optical_image import OpticalImageType
+from tests.utils import create_test_ds
 
 
 def create_api_ds_man(
-    es=None, img_store=None, annot_queue=None, update_queue=None, status_queue=None
+    es=None, img_store=None, annot_queue=None, update_queue=None, lit_queue=None, status_queue=None
 ):
     es_mock = es or MagicMock(spec=ESExporter)
     annot_queue_mock = annot_queue or MagicMock(QueuePublisher)
     update_queue_mock = update_queue or MagicMock(QueuePublisher)
+    lit_queue_mock = lit_queue or MagicMock(QueuePublisher)
     status_queue_mock = status_queue or MagicMock(QueuePublisher)
     img_store_mock = img_store or MagicMock(spec=ImageStoreServiceWrapper)
 
@@ -28,6 +30,7 @@ def create_api_ds_man(
         image_store=img_store_mock,
         annot_queue=annot_queue_mock,
         update_queue=update_queue_mock,
+        lit_queue=lit_queue_mock,
         status_queue=status_queue_mock,
     )
 
@@ -64,7 +67,7 @@ def create_ds_doc(
         status=status,
         moldb_ids=moldb_ids,
         adducts=adducts,
-        img_storage_type='fs',
+        ion_img_storage_type='fs',
         is_public=True,
     )
 
@@ -77,7 +80,7 @@ class TestSMapiDatasetManager:
         ds_id = '2000-01-01'
         ds_doc = create_ds_doc(ds_id=ds_id)
 
-        ds_man.add(ds_doc, priority=DatasetActionPriority.HIGH)
+        ds_man.add(ds_doc, use_lithops=False, priority=DatasetActionPriority.HIGH)
 
         msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'action': DaemonAction.ANNOTATE}
         action_queue_mock.publish.assert_has_calls([call(msg, DatasetActionPriority.HIGH)])
@@ -85,21 +88,11 @@ class TestSMapiDatasetManager:
     def test_delete_ds(self, fill_db, metadata, ds_config):
         update_queue = MagicMock(spec=QueuePublisher)
         ds_man = create_api_ds_man(update_queue=update_queue)
-        ds_id = '2000-01-01'
-        ds = Dataset(
-            id=ds_id,
-            name='ds_name',
-            input_path='input_path',
-            upload_dt=datetime.now(),
-            metadata=metadata,
-            config=ds_config,
-            status=DatasetStatus.FINISHED,
-        )
-        ds.save(DB())
+        ds = create_test_ds()
 
-        ds_man.delete(ds_id)
+        ds_man.delete(ds.id)
 
-        msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'action': DaemonAction.DELETE}
+        msg = {'ds_id': ds.id, 'ds_name': 'ds_name', 'action': DaemonAction.DELETE}
         update_queue.publish.assert_has_calls([call(msg, DatasetActionPriority.STANDARD)])
 
     def test_add_optical_image(self, fill_db, metadata, ds_config):
@@ -123,32 +116,22 @@ class TestSMapiDatasetManager:
         )
         ds_man._annotation_image_shape = MagicMock(return_value=(100, 100))
 
-        ds_id = '2000-01-01'
-        ds = Dataset(
-            id=ds_id,
-            name='ds_name',
-            input_path='input_path',
-            upload_dt=datetime.now(),
-            metadata=metadata,
-            config=ds_config,
-            status=DatasetStatus.QUEUED,
-        )
-        ds.save(db)
+        ds = create_test_ds()
 
         zoom_levels = [1, 2, 3]
         raw_img_id = 'raw_opt_img_id'
         ds_man.add_optical_image(
-            ds_id, raw_img_id, [[1, 0, 0], [0, 1, 0], [0, 0, 1]], zoom_levels=zoom_levels
+            ds.id, raw_img_id, [[1, 0, 0], [0, 1, 0], [0, 0, 1]], zoom_levels=zoom_levels
         )
         optical_images = db.select(f"SELECT ds_id, type, zoom FROM optical_image")
         for type, zoom in product(
             [OpticalImageType.SCALED, OpticalImageType.CLIPPED_TO_ION_IMAGE], zoom_levels
         ):
-            assert (ds_id, type, zoom) in optical_images
+            assert (ds.id, type, zoom) in optical_images
 
-        assert db.select('SELECT optical_image FROM dataset where id = %s', params=(ds_id,)) == [
+        assert db.select('SELECT optical_image FROM dataset where id = %s', params=(ds.id,)) == [
             (raw_img_id,)
         ]
-        assert db.select('SELECT thumbnail FROM dataset where id = %s', params=(ds_id,)) == [
+        assert db.select('SELECT thumbnail FROM dataset where id = %s', params=(ds.id,)) == [
             ('thumbnail_id',)
         ]

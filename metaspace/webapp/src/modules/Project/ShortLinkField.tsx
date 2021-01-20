@@ -1,4 +1,4 @@
-import { createComponent } from '@vue/composition-api'
+import { defineComponent } from '@vue/composition-api'
 import { Input } from '../../lib/element-ui'
 
 import * as Form from '../../components/Form'
@@ -10,7 +10,7 @@ interface Props {
   value: string
 }
 
-const ShortLinkField = createComponent<Props>({
+const ShortLinkField = defineComponent<Props>({
   inheritAttrs: false,
   props: {
     error: String,

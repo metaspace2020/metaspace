@@ -54,6 +54,9 @@ export class EngineDataset {
 
   @OneToMany(type => Job, job => job.dataset)
   jobs: Job[];
+
+  @OneToMany(type => PerfProfile, pipelineStats => pipelineStats.dataset)
+  pipelineStats: PerfProfile[];
 }
 
 @Entity({schema: 'public'})
@@ -97,7 +100,7 @@ export class Job {
   @JoinColumn({ name: 'ds_id' })
   dataset: EngineDataset;
 
-  @ManyToOne(type => MolecularDB)
+  @ManyToOne(type => MolecularDB, {onDelete: 'CASCADE'})
   @JoinColumn({ name: 'moldb_id' })
   molecularDB: MolecularDB;
 
@@ -159,9 +162,74 @@ export class Annotation {
   ion: Ion | null;
 }
 
+@Entity({schema: 'public'})
+export class PerfProfile {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column({ type: 'text' })
+  taskType: string;
+
+  @Column({ name: 'ds_id', nullable: true })
+  datasetId: string | null;
+
+  @Column({ type: 'timestamp' })
+  start: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  finish: Date | null;
+
+  @Column({ type: 'json', nullable: true })
+  extraData: object | null;
+
+  @Column({ type: 'text', nullable: true })
+  logs: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  error: string | null;
+
+  @ManyToOne(type => EngineDataset, dataset => dataset.pipelineStats, {onDelete: 'CASCADE'})
+  @JoinColumn({ name: 'ds_id' })
+  dataset: EngineDataset;
+
+  @OneToMany(type => PerfProfileEntry, entry => entry.profile)
+  entries: PerfProfileEntry[];
+}
+
+@Entity({schema: 'public'})
+export class PerfProfileEntry {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column({ type: 'int' })
+  profileId: number;
+
+  @Column({ type: 'int' })
+  sequence: number;
+
+  @Column({ type: 'timestamp' })
+  start: Date;
+
+  @Column({ type: 'timestamp' })
+  finish: Date;
+
+  @Column({ type: 'text' })
+  name: string;
+
+  @Column({ type: 'json', nullable: true })
+  extraData: object | null;
+
+  @ManyToOne(type => PerfProfile, profile => profile.entries, {onDelete: 'CASCADE'})
+  @JoinColumn({ name: 'profile_id' })
+  profile: PerfProfile;
+}
+
+
 export const ENGINE_ENTITIES = [
   EngineDataset,
   OpticalImage,
   Job,
   Annotation,
+  PerfProfile,
+  PerfProfileEntry,
 ];

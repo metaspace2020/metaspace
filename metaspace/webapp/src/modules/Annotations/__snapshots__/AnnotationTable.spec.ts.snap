@@ -12,7 +12,7 @@ exports[`AnnotationTable should be able to export a CSV 1`] = `
 
 exports[`AnnotationTable should match snapshot 1`] = `
 <div class="el-row">
-  <div class="el-table el-table--fit el-table--striped el-table--border el-table--scrollable-x el-table--enable-row-hover el-table--enable-row-transition el-table--mini" id="annot-table" element-loading-text="Loading results from the server..." tabindex="1" mock-v-loading="false">
+  <div class="el-table el-table--fit el-table--striped el-table--border el-table--scrollable-x el-table--enable-row-hover el-table--enable-row-transition el-table--mini" id="annot-table" element-loading-text="Loading results …" tabindex="1" mock-v-loading="false">
     <div class="hidden-columns">
       <div></div>
       <div></div>
@@ -117,7 +117,8 @@ exports[`AnnotationTable should match snapshot 1`] = `
                     </div>
                   </div>
                   <div slot-key="reference">
-                    <div class="cell-wrapper"><span class="sf cell-span">[C<sub>19</sub>H<sub>18</sub>N<sub>2</sub>O<sub>7</sub>S<sub>2</sub> - H]⁺</span> <img src="../../assets/filter-icon.png" title="Limit results to this molecular formula"></div>
+                    <div class="cell-wrapper"><span class="sf cell-span">[C<sub>19</sub>H<sub>18</sub>N<sub>2</sub>O<sub>7</sub>S<sub>2</sub> - H]⁺</span>
+                      <!----> <img src="../../assets/filter-icon.png" title="Limit results to this molecular formula"></div>
                   </div>
                 </mock-el-popover>
               </div>
@@ -133,7 +134,7 @@ exports[`AnnotationTable should match snapshot 1`] = `
               <div class="cell"><span>0.657</span></div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_6  fdr-cell">
-              <div class="cell"><span> 10% </span></div>
+              <div class="cell"><span>10%</span></div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_7  coloc-cell">
               <div class="cell"><span>

@@ -91,6 +91,25 @@ describe('ionImageRendering.ts', () => {
     })
   })
 
+  test('processIonImage should scale intensity range', () => {
+    const png = getGradientPng()
+    const image = processIonImage(png, 0, 1, 'linear-full', [0.25, 0.75])
+    expect(image.scaledMinIntensity).toBe(0.25)
+    expect(image.scaledMaxIntensity).toBe(0.75)
+  })
+
+  test('processIonImage should not clip if user intensities provided', () => {
+    const png = getGradientPng()
+
+    const image1 = processIonImage(png, 0, 1, 'log', undefined, [undefined, 0.75])
+    expect(image1.clippedMinIntensity).not.toBe(image1.userMinIntensity)
+    expect(image1.clippedMaxIntensity).toBe(image1.userMaxIntensity)
+
+    const image2 = processIonImage(png, 0, 1, 'log', undefined, [0.25, undefined])
+    expect(image2.clippedMinIntensity).toBe(image2.userMinIntensity)
+    expect(image2.clippedMaxIntensity).not.toBe(image2.userMaxIntensity)
+  })
+
   test('renderIonImage result is similar to reference result produced with METASPACE v1.3', async() => {
     const ionImageFile = await readFileAsync(path.resolve(__dirname, './testdata/ion_image.png'))
     const referencePngFile = await readFileAsync(path.resolve(__dirname, './testdata/reference_colorized.png'))

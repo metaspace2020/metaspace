@@ -68,7 +68,10 @@
           </div>
         </el-alert>
       </div>
-      <el-tabs v-model="tab">
+      <el-tabs
+        v-model="tab"
+        class="with-badges"
+      >
         <el-tab-pane
           v-if="canEdit || group.groupDescriptionAsHtml !== ''"
           name="description"
@@ -108,20 +111,39 @@
             {{ 'Members' | optionalSuffixInParens(countMembers) }}
             <notification-icon v-if="hasMembershipRequest" />
           </span>
-          <div style="max-width: 950px">
-            <group-members-list
-              :loading="groupLoading !== 0"
-              :current-user="currentUser"
-              :group="group"
-              :members="members"
-              :refresh-data="refetchGroup"
-            />
-            <p
-              v-if="countHiddenMembers > 0"
-              class="hidden-members-text"
+          <group-members-list
+            :loading="groupLoading !== 0"
+            :current-user="currentUser"
+            :group="group"
+            :members="members"
+            :refresh-data="refetchGroup"
+          />
+          <p
+            v-if="countHiddenMembers > 0"
+            class="hidden-members-text"
+          >
+            + {{ countHiddenMembers | plural('hidden member', 'hidden members') }}.
+          </p>
+        </el-tab-pane>
+        <el-tab-pane
+          v-if="showDatabasesTab"
+          name="databases"
+          lazy
+        >
+          <span slot="label">
+            <popup-anchor
+              feature-key="groupDatabasesTab"
+              :show-until="new Date('2021-03-01')"
+              placement="bottom"
             >
-              + {{ countHiddenMembers | plural('hidden member', 'hidden members') }}.
-            </p>
+              {{ 'Databases' | optionalSuffixInParens(countDatabases) }}
+            </popup-anchor>
+          </span>
+          <div>
+            <molecular-databases
+              :group-id="groupId"
+              :can-delete="canEdit"
+            />
           </div>
         </el-tab-pane>
         <el-tab-pane
@@ -166,6 +188,10 @@ import isUuid from '../../lib/isUuid'
 import { optionalSuffixInParens, plural } from '../../lib/vueFilters'
 import { removeDatasetFromAllDatasetsQuery } from '../../lib/updateApolloCache'
 import GroupDescription from './GroupDescription.vue'
+import MolecularDatabases from '../MolecularDatabases'
+import { MolecularDB } from '../../api/moldb'
+import config from '../../lib/config'
+import PopupAnchor from '../NewFeaturePopup/PopupAnchor.vue'
 
   interface ViewGroupProfileData {
     allDatasets: DatasetDetailItem[];
@@ -180,6 +206,8 @@ import GroupDescription from './GroupDescription.vue'
       TransferDatasetsDialog,
       NotificationIcon,
       GroupDescription,
+      MolecularDatabases,
+      PopupAnchor,
     },
     filters: {
       optionalSuffixInParens,
@@ -256,6 +284,7 @@ export default class ViewGroupPage extends Vue {
     groupLoading = 0;
     loaded = false;
     showTransferDatasetsDialog: boolean = false;
+    showUploadDatabaseDialog: boolean = false;
     currentUser: CurrentUserRoleResult | null = null;
     group: ViewGroupResult | null = null;
     data: ViewGroupProfileData | null = null;
@@ -270,6 +299,12 @@ export default class ViewGroupPage extends Vue {
     get members() { return this.group && this.group.members || [] }
     get countMembers() { return this.group && this.group.numMembers }
     maxVisibleDatasets = 8;
+
+    get countDatabases() { return this.group?.numDatabases || 0 }
+
+    get isGroupMember() {
+      return this.roleInGroup === 'MEMBER' || this.roleInGroup === 'GROUP_ADMIN'
+    }
 
     // get canEditGroupDescr() {
     //   if (!this.canEdit() && this.group.groupDescriptionAsHtml === '') {
@@ -288,7 +323,7 @@ export default class ViewGroupPage extends Vue {
     }
 
     get tab() {
-      if (['description', 'datasets', 'members', 'settings'].includes(this.$route.query.tab)) {
+      if (['description', 'datasets', 'members', 'databases', 'settings'].includes(this.$route.query.tab)) {
         return this.$route.query.tab
       } else {
         return 'datasets'
@@ -327,6 +362,10 @@ export default class ViewGroupPage extends Vue {
 
     get hasMembershipRequest() {
       return this.members.some(m => m.role === UserGroupRoleOptions.PENDING)
+    }
+
+    get showDatabasesTab() {
+      return config.features.moldb_mgmt && (this.isGroupMember || this.canEdit)
     }
 
     @Watch('$route.params.groupIdOrSlug')

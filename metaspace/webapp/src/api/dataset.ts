@@ -45,8 +45,9 @@ export interface DatasetDetailItem {
   status: GqlJobStatus | null;
   metadataType: string;
   fdrCounts: {
-    databaseId: number,
+    databaseId: number;
     dbName: string;
+    dbVersion: string;
     levels: number[];
     counts: number[];
   };
@@ -83,6 +84,7 @@ export const datasetDetailItemFragment =
     databases {
       id
       name
+      version
     }
     status
     statusUpdateDT
@@ -90,6 +92,7 @@ export const datasetDetailItemFragment =
     fdrCounts(inpFdrLvls: $inpFdrLvls, checkLvl: $checkLvl) {
       databaseId
       dbName
+      dbVersion
       levels
       counts
     }
@@ -171,8 +174,8 @@ export const rawOpticalImageQuery =
   }`
 
 export const createDatasetQuery =
-  gql`mutation ($input: DatasetCreateInput!) {
-      createDataset(input: $input, priority: 1)
+  gql`mutation ($input: DatasetCreateInput!, $useLithops: Boolean) {
+      createDataset(input: $input, priority: 1, useLithops: $useLithops)
   }`
 
 export const deleteDatasetQuery =
@@ -181,8 +184,8 @@ export const deleteDatasetQuery =
   }`
 
 export const reprocessDatasetQuery =
-  gql`mutation ($id: String!) {
-    reprocessDataset(id: $id)
+  gql`mutation ($id: String!, $useLithops: Boolean) {
+    reprocessDataset(id: $id, useLithops: $useLithops)
   }`
 
 export const addOpticalImageQuery =

@@ -3,14 +3,17 @@ import warnings
 from datetime import datetime
 from traceback import format_exc
 import numpy as np
+import pandas as pd
 from sklearn.metrics.pairwise import pairwise_kernels
 from sklearn.cluster import spectral_clustering
 from scipy.ndimage import zoom, median_filter
 
+from sm.engine.annotation_lithops.executor import Executor
+from sm.engine.annotation_lithops.io import save_cobj, iter_cobjs_with_prefetch
 from sm.engine.dataset import Dataset
 from sm.engine.ion_mapping import get_ion_id_mapping
 from sm.engine.util import SMConfig
-from sm.engine.png_generator import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStoreServiceWrapper
 
 COLOC_JOB_DEL = 'DELETE FROM graphql.coloc_job WHERE ds_id = %s AND moldb_id = %s'
 
@@ -143,15 +146,21 @@ def _label_clusters(scores):
 
     results = []
     last_error = None
-    for n_clusters in range(min_clusters, max_clusters + 1):
-        try:
-            labels = spectral_clustering(
-                affinity=scores, n_clusters=n_clusters, random_state=1, n_init=100
-            )
-            cluster_score = np.mean([scores[a, b] for a, b in enumerate(labels)])
-            results.append((n_clusters, cluster_score, labels))
-        except Exception as e:
-            last_error = e
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            'ignore',
+            '.*Graph is not fully connected, spectral embedding may not work as expected.*',
+        )
+        for n_clusters in range(min_clusters, max_clusters + 1):
+            try:
+                labels = spectral_clustering(
+                    affinity=scores, n_clusters=n_clusters, random_state=1, n_init=100
+                )
+                cluster_score = np.mean([scores[a, b] for a, b in enumerate(labels)])
+                results.append((n_clusters, cluster_score, labels))
+            except Exception as e:
+                last_error = e
 
     if not results:
         raise last_error
@@ -308,6 +317,18 @@ def analyze_colocalization(ds_id, moldb_id, images, ion_ids, fdrs, h, w, cluster
             )
 
 
+def _get_images(img_store, image_storage_type, image_ids):
+    if image_ids:
+        logger.debug(f'Getting {len(image_ids)} images')
+        images, _, (h, w) = img_store.get_ion_images_for_analysis(image_storage_type, image_ids)
+        logger.debug(f'Finished getting images. Image size: {h}x{w}')
+    else:
+        images = np.zeros((0, 0), dtype=np.float32)
+        h, w = 1, 1
+
+    return FreeableRef(images), h, w
+
+
 class Colocalization:
     def __init__(self, db, img_store=None):
         self._db = db
@@ -336,25 +357,7 @@ class Colocalization:
         annotations = [(job_id, *ann) for ann in job.coloc_annotations]
         self._db.insert(COLOC_ANN_INS, annotations)
 
-    def _analyze_and_save(self, ds_id, moldb_id, images, ion_ids, fdrs, h, w):
-        try:
-            # Clear old jobs from DB
-            self._db.alter(COLOC_JOB_DEL, [ds_id, moldb_id])
-
-            if len(ion_ids) > 2:
-                for job in analyze_colocalization(ds_id, moldb_id, images, ion_ids, fdrs, h, w):
-                    self._save_job_to_db(job)
-            else:
-                # Technically `len(ion_ids) == 2` is enough,
-                # but spearmanr returns a scalar instead of a matrix
-                # when there are only 2 items, and it's not worth handling this edge case
-                logger.info('Not enough annotations to perform colocalization')
-        except Exception:
-            logger.warning('Colocalization job failed', exc_info=True)
-            self._save_job_to_db(ColocalizationJob(ds_id, moldb_id, 0, error=format_exc()))
-            raise
-
-    def _get_existing_ds_annotations(self, ds_id, moldb_id, image_storage_type, charge):
+    def _get_ion_annotations(self, ds_id, moldb_id, charge):
         annotation_rows = self._db.select(ANNOTATIONS_SEL, [ds_id, moldb_id])
         num_annotations = len(annotation_rows)
         if num_annotations != 0:
@@ -366,40 +369,78 @@ class Colocalization:
             ion_ids = np.array([ion_id_mapping[ion_tuple] for ion_tuple in ion_tuples])
             fdrs = np.array([row[5] for row in annotation_rows])
 
-            logger.debug(f'Getting {num_annotations} images for "{ds_id}" {moldb_id}')
             image_ids = [row[0] for row in annotation_rows]
-            images, _, (h, w) = self._img_store.get_ion_images_for_analysis(
-                image_storage_type, image_ids
-            )
-            logger.debug(f'Finished getting images for "{ds_id}" {moldb_id}. Image size: {h}x{w}')
+
         else:
-            images = np.zeros((0, 0), dtype=np.float32)
-            h, w = 1, 1
+            image_ids = []
             ion_ids = np.zeros((0,), dtype=np.int64)
             fdrs = np.zeros((0,), dtype=np.float32)
 
-        return FreeableRef(images), ion_ids, fdrs, h, w
+        return image_ids, ion_ids, fdrs
 
-    def run_coloc_job(self, ds_id: str, reprocess: bool = False):
+    def _iter_pending_coloc_tasks(self, ds_id: str, reprocess: bool = False):
+        moldb_ids, charge = self._db.select_one(DATASET_CONFIG_SEL, [ds_id])
+        existing_moldb_ids = set(self._db.select_onecol(SUCCESSFUL_COLOC_JOB_SEL, [ds_id]))
+
+        for moldb_id in moldb_ids:
+            if reprocess or moldb_id not in existing_moldb_ids:
+                # Clear old jobs from DB
+                self._db.alter(COLOC_JOB_DEL, [ds_id, moldb_id])
+
+                image_ids, ion_ids, fdrs = self._get_ion_annotations(ds_id, moldb_id, charge)
+                if len(ion_ids) > 2:
+                    # Technically `len(ion_ids) == 2` is enough,
+                    # but spearmanr returns a scalar instead of a matrix
+                    # when there are only 2 items, and it's not worth handling this edge case
+                    yield moldb_id, image_ids, ion_ids, fdrs
+                else:
+                    logger.debug(f'Not enough annotations in {ds_id} on {moldb_id}')
+            else:
+                logger.info(f'Skipping colocalization job for {ds_id} on {moldb_id}')
+
+    def run_coloc_job(self, ds: Dataset, reprocess: bool = False):
         """Analyze colocalization for a previously annotated dataset.
 
         Querying the dataset's annotations from the db, and downloading the exported ion images.
 
         Args:
-            ds_id: dataset id
+            ds: dataset instance
             reprocess: Whether to re-run colocalization jobs against databases
                 that have already successfully run
         """
-        image_storage_type = Dataset(ds_id).get_ion_img_storage_type(self._db)
-        moldb_ids, charge = self._db.select_one(DATASET_CONFIG_SEL, [ds_id])
-        existing_moldb_ids = set(db for db, in self._db.select(SUCCESSFUL_COLOC_JOB_SEL, [ds_id]))
+        for moldb_id, image_ids, ion_ids, fdrs in self._iter_pending_coloc_tasks(ds.id, reprocess):
+            logger.info(f'Running colocalization job for {ds.id} on {moldb_id}')
+            images, h, w = _get_images(self._img_store, ds.ion_img_storage_type, image_ids)
+            try:
+                for job in analyze_colocalization(ds.id, moldb_id, images, ion_ids, fdrs, h, w):
+                    self._save_job_to_db(job)
+            except Exception:
+                logger.warning('Colocalization job failed', exc_info=True)
+                self._save_job_to_db(ColocalizationJob(ds.id, moldb_id, 0, error=format_exc()))
+                raise
 
-        for moldb_id in moldb_ids:
-            if reprocess or moldb_id not in existing_moldb_ids:
-                logger.info(f'Running colocalization job for {ds_id} on {moldb_id}')
-                images, ion_ids, fdrs, h, w = self._get_existing_ds_annotations(
-                    ds_id, moldb_id, image_storage_type, charge
-                )
-                self._analyze_and_save(ds_id, moldb_id, images, ion_ids, fdrs, h, w)
-            else:
-                logger.info(f'Skipping colocalization job for {ds_id} on {moldb_id}')
+    def run_coloc_job_lithops(self, fexec: Executor, ds: Dataset, reprocess: bool = False):
+        img_service_public_url = self._sm_config['services']['img_service_public_url']
+        # Extract required fields to avoid pickling Dataset, because unpickling Dataset tries to
+        # import psycopg2 and fails inside Functions
+        ds_id = ds.id
+        ion_img_storage_type = ds.ion_img_storage_type
+
+        def run_coloc_job(moldb_id, image_ids, ion_ids, fdrs, *, storage):
+            # Use web_app_url to get the publicly-exposed storage server address, because
+            # Functions can't use the private address
+            public_img_store = ImageStoreServiceWrapper(img_service_public_url)
+            images, h, w = _get_images(public_img_store, ion_img_storage_type, image_ids)
+            cobjs = []
+            for job in analyze_colocalization(ds_id, moldb_id, images, ion_ids, fdrs, h, w):
+                cobjs.append(save_cobj(storage, job))
+            return cobjs
+
+        tasks = list(self._iter_pending_coloc_tasks(ds.id, reprocess))
+        cost_factors = pd.DataFrame({'n_images': [len(task[1]) for task in tasks]})
+        job_cobjs = fexec.map_concat(
+            run_coloc_job, tasks, cost_factors=cost_factors, runtime_memory=4096
+        )
+
+        for job in iter_cobjs_with_prefetch(fexec.storage, job_cobjs):
+            self._save_job_to_db(job)

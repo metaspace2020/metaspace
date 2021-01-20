@@ -42,12 +42,12 @@
     - "{{ spark_log_dir }}"
 
 - name: Download Spark distribution
-  get_url: url="{{ spark_mirror }}/spark-{{ spark_version }}.tar.gz"
-           dest="{{ spark_src_dir }}/spark-{{ spark_version }}.tar.gz"
+  get_url: url="{{ spark_mirror }}/spark-{{ spark_version }}.tgz"
+           dest="{{ spark_src_dir }}/spark-{{ spark_version }}.tgz"
            timeout=1200
 
 - name: Extract Spark distribution
-  unarchive: src="{{ spark_src_dir }}/spark-{{ spark_version }}.tar.gz"
+  unarchive: src="{{ spark_src_dir }}/spark-{{ spark_version }}.tgz"
              dest="{{ spark_usr_parent_dir }}"
              remote_src=yes
 

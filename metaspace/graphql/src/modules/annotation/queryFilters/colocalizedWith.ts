@@ -59,7 +59,7 @@ const getColocCoeffInner = (baseAnnotation: ColocAnnotation, otherIonId: number)
 
 const createPostprocess = ({annotation, lookupIon}: AnnotationAndIons, args: QueryFilterArgs,
                           colocalizedWith: string, colocalizationAlgo: string, databaseId: number | null,
-                          fdrLevel: number) => {
+                          fdrLevel: number | null) => {
   return (annotations: ESAnnotation[]): ESAnnotationWithColoc[] => {
     let newAnnotations: ESAnnotationWithColoc[] = annotations.map(ann => {
       const ion = lookupIon(ann._source.formula, ann._source.chem_mod, ann._source.neutral_loss, ann._source.adduct);
@@ -67,7 +67,7 @@ const createPostprocess = ({annotation, lookupIon}: AnnotationAndIons, args: Que
         ...ann,
         _cachedColocCoeff: ion != null ? getColocCoeffInner(annotation, ion.id) : null,
         _isColocReference: ion != null && ion.id === annotation.ionId,
-        async getColocalizationCoeff(_colocalizedWith: string, _colocalizationAlgo: string, _databaseId: number, _fdrLevel: number) {
+        async getColocalizationCoeff(_colocalizedWith: string, _colocalizationAlgo: string, _databaseId: number, _fdrLevel: number | null) {
           if (_colocalizedWith === colocalizedWith
             && _colocalizationAlgo === colocalizationAlgo
             && _databaseId === databaseId

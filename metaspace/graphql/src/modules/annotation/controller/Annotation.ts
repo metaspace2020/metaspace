@@ -81,7 +81,7 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
 
   mz: (hit) => parseFloat(hit._source.centroid_mzs[0] as any),
 
-  fdrLevel: (hit) => hit._source.fdr,
+  fdrLevel: (hit) => hit._source.fdr > 0 ? hit._source.fdr : null,
 
   msmScore: (hit) => hit._source.msm,
 
@@ -162,13 +162,13 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
     if ('getColocalizationCoeff' in hit && args.colocalizationCoeffFilter != null) {
       const {colocalizedWith, colocalizationAlgo, databaseId, fdrLevel} = args.colocalizationCoeffFilter;
       const defaultDatabase = await ctx.entityManager.findOneOrFail(
-        MolecularDbModel, {'name': config.defaults.moldb_names[0]}
+        MolecularDbModel, {'default': true}
       );
       return await hit.getColocalizationCoeff(
         colocalizedWith,
         colocalizationAlgo || config.metadataLookups.defaultColocalizationAlgo,
         databaseId || defaultDatabase.id,
-        fdrLevel
+        fdrLevel || null
       );
     } else {
       return null;

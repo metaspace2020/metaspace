@@ -66,6 +66,15 @@ git tag 1.7.6
 git push origin 1.7.6
 ```
 
+#### If needed, update the Ansible config [repository](https://github.com/intsco/metaspace-ansible-config)
+
+The repository is located at `ansible/aws/env`.
+```
+cd ansible/aws/env
+git checkout master or git switch master
+git pull origin master
+```
+
 # Choose a deployment strategy
 
 Select one of the following based on whether the new code is compatible with the existing data. 
@@ -307,3 +316,11 @@ sudo tail /var/log/nginx/error.log
 sudo tail /var/log/elasticsearch/elasticsearch.log
 sudo tail /var/log/postgresql/postgresql-9.5-main.log
 ```
+
+## Deployment history
+
+[The Git tags](https://github.com/metaspace2020/metaspace/tags) can be useful for seeing what has been deployed. 
+
+The Git reflog on the server can also be used to check when specific commits were deployed: `git reflog --date=iso`
+
+Note that the cluster will always be deployed with the latest code from its configured branch.

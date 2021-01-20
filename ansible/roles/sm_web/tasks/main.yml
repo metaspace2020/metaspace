@@ -41,6 +41,19 @@
   become_user: postgres
   postgresql_db: name=sm owner=sm encoding=UTF8 template=template0
 
+- name: Create a database schema
+  become: yes
+  become_user: postgres
+  postgresql_schema:
+    database: sm
+    owner: sm
+    name: graphql
+
+- name: Import uuid-ossp extension into sm postgres database
+  become: yes
+  become_user: postgres
+  postgresql_ext: db=sm name=uuid-ossp
+
 - name: Create /opt/data/metaspace directory
   file: dest=/opt/data/metaspace state=directory owner=ubuntu group=ubuntu mode=0700
   become: yes
@@ -52,6 +65,12 @@
     executable: /bin/bash
   when: sm_create_es_index
 
+
+# TODO: The DB schema for this doesn't exist yet, so this will fail.
+# WORKAROUND: Skip these steps now, run the sm-graphql TypeORM migrations, then re-provision this step
+# Suggested permanent fix: Run `engine/scripts/db_schema.sql` here. However, this will also require updating the
+# `graphql/bin/dump_db_schema.js` script to create & populate the TypeORM migrations table, so that TypeORM
+# doesn't try to run the migrations later, and conflict with `db_schema.sql`-created tables.
 - import_tasks: import_molecular_databases.yml
 
 - import_tasks: import_molecule_images.yml

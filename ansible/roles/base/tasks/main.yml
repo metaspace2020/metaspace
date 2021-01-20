@@ -1,12 +1,23 @@
 ---
+# NOTE: Intially the provisioned server doesn't have Python, causing Ansible to fail with an "SSH Error" for most tasks.
+# Only use "raw" tasks before the "Symlink python to python3" step
 
 - name: Run apt-get update
   become: yes
   raw: apt-get update
 
+# Include Python 2 here, even though it's not used, to prevent its later installation from overwriting the Python 3 symlink
 - name: Install python-simplejson
   become: yes
-  raw: apt-get install -y python3-simplejson
+  raw: apt-get install -y python-simplejson python3-simplejson
+
+- name: Symlink python to python3
+  become: yes
+  raw: "rm -f /usr/bin/python && ln -s /usr/bin/python3 /usr/bin/python"
+
+- name: Symlink pip to pip3
+  become: yes
+  raw: "rm -f /usr/bin/pip && ln -s /usr/bin/pip3 /usr/bin/pip"
 
 - name: Reconfigure buggy ubuntu locales
   become: yes

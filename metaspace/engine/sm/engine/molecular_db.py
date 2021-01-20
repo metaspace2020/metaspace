@@ -6,16 +6,24 @@ from datetime import datetime
 import pandas as pd
 from pyMSpec.pyisocalc.canopy.sum_formula_actions import InvalidFormulaError
 from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
+
 from sm.engine.db import DB, transaction_context
 from sm.engine.errors import SMError
 
 logger = logging.getLogger('engine')
 
 
-class MalformedCSV(Exception):
+class MalformedCSV(SMError):
+    def __init__(self, message):
+        super().__init__(message)
+        self.message = message
+
+
+class BadData(SMError):
     def __init__(self, message, *errors):
-        full_message = '\n'.join([str(m) for m in (message,) + errors])
-        super().__init__(full_message)
+        super().__init__(message)
+        self.message = message
+        self.errors = errors
 
 
 class MolecularDB:
@@ -23,12 +31,7 @@ class MolecularDB:
 
     # pylint: disable=redefined-builtin
     def __init__(
-        self,
-        id: int = None,
-        name: str = None,
-        version: str = None,
-        targeted: bool = None,
-        group_id: str = None,
+        self, id: int, name: str, version: str, targeted: bool = None, group_id: str = None,
     ):
         self.id = id
         self.name = name
@@ -50,19 +53,28 @@ class MolecularDB:
 
 def _validate_moldb_df(df):
     errors = []
-    for row in df.itertuples():
+    for idx, row in df.iterrows():
+        line_n = idx + 2
+        for col in df.columns:
+            if not row[col] or row[col].isspace():
+                errors.append({'line': line_n, 'row': row.values.tolist(), 'error': 'Empty value'})
+
         try:
             if '.' in row.formula:
                 raise InvalidFormulaError('"." symbol not supported')
             parseSumFormula(row.formula)
         except Exception as e:
-            csv_file_line_n = row.Index + 2
-            errors.append({'line': csv_file_line_n, 'formula': row.formula, 'error': repr(e)})
+            errors.append({'line': line_n, 'row': row.values.tolist(), 'error': repr(e)})
+
+    errors.sort(key=lambda d: d['line'])
     return errors
 
 
-def _import_molecules_from_file(moldb, file_path, targeted_threshold):
-    moldb_df = pd.read_csv(file_path, sep='\t')
+def read_moldb_file(file_path):
+    try:
+        moldb_df = pd.read_csv(file_path, sep='\t', dtype=object, na_filter=False)
+    except ValueError as e:
+        raise MalformedCSV(f'Malformed CSV: {e}')
 
     if moldb_df.empty:
         raise MalformedCSV('No data rows found')
@@ -73,16 +85,20 @@ def _import_molecules_from_file(moldb, file_path, targeted_threshold):
             f'Missing columns. Provided: {moldb_df.columns.to_list()} Required: {required_columns}'
         )
 
-    logger.info(f'{moldb}: importing {len(moldb_df)} molecules')
     parsing_errors = _validate_moldb_df(moldb_df)
     if parsing_errors:
-        raise MalformedCSV('Failed to parse some formulas', *parsing_errors)
+        raise BadData('Failed to parse some rows', *parsing_errors)
 
     moldb_df.rename({'id': 'mol_id', 'name': 'mol_name'}, axis='columns', inplace=True)
-    moldb_df['moldb_id'] = int(moldb.id)
+    return moldb_df
+
+
+def _import_molecules(moldb, moldb_df, targeted_threshold):
+    logger.info(f'{moldb}: importing {len(moldb_df)} molecules')
 
     columns = ['moldb_id', 'mol_id', 'mol_name', 'formula']
     buffer = StringIO()
+    moldb_df = moldb_df.assign(moldb_id=int(moldb.id))
     moldb_df[columns].to_csv(buffer, sep='\t', index=False, header=False)
     buffer.seek(0)
     DB().copy(buffer, sep='\t', table='molecule', columns=columns)
@@ -128,7 +144,8 @@ def create(
             ],
         )
         moldb = find_by_id(moldb_id)
-        _import_molecules_from_file(moldb, file_path, targeted_threshold=1000)
+        moldb_df = read_moldb_file(file_path)
+        _import_molecules(moldb, moldb_df, targeted_threshold=1000)
         return moldb
 
 
@@ -181,16 +198,29 @@ def find_by_ids(ids: Iterable[int]) -> List[MolecularDB]:
     return [MolecularDB(**row) for row in data]
 
 
-def find_by_name(name: str) -> MolecularDB:
+def find_by_name(name: str, allow_legacy_names=False) -> MolecularDB:
     """Find database by name."""
 
     data = DB().select_one_with_fields(
         'SELECT id, name, version, targeted, group_id FROM molecular_db WHERE name = %s',
         params=(name,),
     )
+    if not data and allow_legacy_names:
+        data = DB().select_one_with_fields(
+            "SELECT id, name, version, targeted, group_id FROM molecular_db "
+            "WHERE name || '-' || version = %s",
+            params=(name,),
+        )
     if not data:
         raise SMError(f'MolecularDB not found: {name}')
     return MolecularDB(**data)
+
+
+def find_default() -> List[MolecularDB]:
+    data = DB().select_with_fields(
+        'SELECT id, name, version, targeted, group_id FROM molecular_db WHERE "default" = TRUE',
+    )
+    return [MolecularDB(**row) for row in data]
 
 
 def fetch_molecules(moldb_id: int) -> pd.DataFrame:

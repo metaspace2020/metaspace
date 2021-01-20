@@ -1,9 +1,9 @@
 .sm-colour-icon {
-  @apply block w-6 h-6 p-2 mb-2 rounded-full bg-blue-100
+  @apply block w-6 h-6 p-2 rounded-full bg-blue-100
 }
 
 .sm-colour-icon--large {
-  @apply w-8 h-8 mb-0;
+  @apply w-8 h-8;
 }
 
 .sm-colour-icon .primary {

@@ -27,3 +27,6 @@
 
     - role: sm_update_daemon
       tags: [sm-update-daemon]
+
+    - role: sm_lithops_daemon
+      tags: [sm-lithops-daemon]

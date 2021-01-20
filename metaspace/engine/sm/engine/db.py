@@ -2,6 +2,7 @@ import functools
 import logging
 import threading
 from contextlib import contextmanager
+from typing import Optional
 
 from psycopg2.extras import execute_values
 import psycopg2.extensions
@@ -14,7 +15,7 @@ logger = logging.getLogger('engine.db')
 
 
 class ConnectionPool:
-    pool = None
+    pool: Optional[ThreadedConnectionPool] = None
 
     def __init__(self, config, min_conn=5, max_conn=12):
         logger.info('Initialising database connection pool')
@@ -151,6 +152,11 @@ class DB:
             single row
         """
         return self._select(sql, params, one=True)
+
+    @db_call
+    def select_onecol(self, sql: str, params=None):
+        """ Execute select query and return a list containing values from the first column"""
+        return [row[0] for row in self._select(sql, params)]
 
     @db_call
     def select_one_with_fields(self, sql, params=None):

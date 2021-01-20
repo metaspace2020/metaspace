@@ -14,6 +14,7 @@ from sm.rest.utils import (
 )
 
 MALFORMED_CSV = {'status_code': 400, 'status': 'malformed_csv'}
+BAD_DATA = {'status_code': 400, 'status': 'bad_data'}
 
 logger = logging.getLogger('api')
 app = bottle.Bottle()
@@ -62,7 +63,10 @@ def create():
         return make_response(ALREADY_EXISTS)
     except molecular_db.MalformedCSV as e:
         logger.exception(f'Malformed CSV file. Params: {params}')
-        return make_response(MALFORMED_CSV, errors=e.args[0])
+        return make_response(MALFORMED_CSV, error=e.message)
+    except molecular_db.BadData as e:
+        logger.exception(f'Bad data in CSV file: {e.message}, {e.errors} Params: {params}')
+        return make_response(BAD_DATA, error='Bad data in CSV file', details=e.errors)
     except Exception:
         logger.exception(f'Server error. Params: {params}')
         return make_response(INTERNAL_ERROR)

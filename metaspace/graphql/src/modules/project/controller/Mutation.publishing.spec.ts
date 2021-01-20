@@ -127,8 +127,8 @@ describe('Project publication status manipulations', () => {
     const updatedProject = await testEntityManager.findOne(ProjectModel, { id: project.id });
     expect(updatedProject).toEqual(expect.objectContaining({ publicationStatus: PSO.PUBLISHED, isPublic: true }));
 
-    expect(mockSmApiDatasets.smApiUpdateDataset).toHaveBeenCalledWith(datasetBelongsToProject.id, { isPublic: true });
-    expect(mockSmApiDatasets.smApiUpdateDataset).not.toHaveBeenCalledWith(randomDataset.id, expect.anything());
+    expect(mockSmApiDatasets.smApiUpdateDataset).toHaveBeenCalledWith(datasetBelongsToProject.id, { isPublic: true }, {asyncEsUpdate: true});
+    expect(mockSmApiDatasets.smApiUpdateDataset).not.toHaveBeenCalledWith(randomDataset.id, expect.anything(), expect.anything());
   });
 
   test('Project member cannot publish project', async () => {
@@ -169,8 +169,8 @@ describe('Project publication status manipulations', () => {
     let updatedProject = await testEntityManager.findOne(ProjectModel, { id: project.id });
     expect(updatedProject).toEqual(expect.objectContaining({ isPublic: false, publicationStatus: PSO.UNDER_REVIEW }));
 
-    expect(mockSmApiDatasets.smApiUpdateDataset).toHaveBeenCalledWith(datasetBelongsToProject.id, { isPublic: false });
-    expect(mockSmApiDatasets.smApiUpdateDataset).not.toHaveBeenCalledWith(randomDataset.id, expect.anything());
+    expect(mockSmApiDatasets.smApiUpdateDataset).toHaveBeenCalledWith(datasetBelongsToProject.id, { isPublic: false }, {asyncEsUpdate: true});
+    expect(mockSmApiDatasets.smApiUpdateDataset).not.toHaveBeenCalledWith(randomDataset.id, expect.anything(), expect.anything());
   });
 
   test.each([PSO.UNDER_REVIEW, PSO.PUBLISHED])(

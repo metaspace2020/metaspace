@@ -32,6 +32,7 @@ CREATE TABLE "public"."molecular_db" (
   "archived" boolean NOT NULL DEFAULT false, 
   "targeted" boolean NOT NULL DEFAULT false, 
   "group_id" uuid, 
+  "default" boolean NOT NULL DEFAULT false, 
   CONSTRAINT "molecular_db_uindex" UNIQUE ("group_id", 
   "name", 
   "version"), 
@@ -74,7 +75,7 @@ CREATE TABLE "graphql"."project" (
   "id" uuid NOT NULL DEFAULT uuid_generate_v1mc(), 
   "name" text NOT NULL, 
   "url_slug" text, 
-  "is_public" boolean NOT NULL DEFAULT true, 
+  "is_public" boolean NOT NULL DEFAULT false, 
   "created_dt" TIMESTAMP NOT NULL, 
   "project_description" text, 
   "review_token" text, 
@@ -243,6 +244,41 @@ CREATE INDEX "annotation_job_id_index" ON "public"."annotation" (
   "job_id"
 ) ;
 
+CREATE TABLE "public"."perf_profile" (
+  "id" SERIAL NOT NULL, 
+  "task_type" text NOT NULL, 
+  "ds_id" text, 
+  "start" TIMESTAMP NOT NULL, 
+  "finish" TIMESTAMP, 
+  "extra_data" json, 
+  "logs" text, 
+  "error" text, 
+  CONSTRAINT "PK_a180e81bc8817e395daf8a5f8ef" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "public"."perf_profile_entry" (
+  "id" SERIAL NOT NULL, 
+  "profile_id" integer NOT NULL, 
+  "sequence" integer NOT NULL, 
+  "start" TIMESTAMP NOT NULL, 
+  "finish" TIMESTAMP NOT NULL, 
+  "name" text NOT NULL, 
+  "extra_data" json, 
+  CONSTRAINT "PK_729ef8c877e7facd61d75e754e9" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "graphql"."image_viewer_snapshot" (
+  "id" text NOT NULL, 
+  "dataset_id" text NOT NULL, 
+  "snapshot" text NOT NULL, 
+  "annotation_ids" json NOT NULL, 
+  "version" integer NOT NULL, 
+  "user_id" uuid, 
+  "created_dt" TIMESTAMP NOT NULL, 
+  CONSTRAINT "PK_afd32494a70db23e295d94436d7" PRIMARY KEY ("id", 
+  "dataset_id")
+);
+
 ALTER TABLE "public"."molecular_db" ADD CONSTRAINT "FK_a18f5f7d6cc662006d9c849ea1f" FOREIGN KEY (
   "group_id") REFERENCES "graphql"."group"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
@@ -289,7 +325,7 @@ ALTER TABLE "graphql"."user" ADD CONSTRAINT "FK_1b5eb1327a74d679537bdc1fa5b" FOR
 
 ALTER TABLE "graphql"."coloc_job" ADD CONSTRAINT "FK_b0adf5ffef6529f187f48231e38" FOREIGN KEY (
   "moldb_id") REFERENCES "public"."molecular_db"("id"
-) ON DELETE NO ACTION ON UPDATE NO ACTION;
+) ON DELETE CASCADE ON UPDATE NO ACTION;
 
 ALTER TABLE "graphql"."coloc_annotation" ADD CONSTRAINT "FK_09673424d3aceab89f931b9f20d" FOREIGN KEY (
   "coloc_job_id") REFERENCES "graphql"."coloc_job"("id"
@@ -305,7 +341,7 @@ ALTER TABLE "public"."job" ADD CONSTRAINT "FK_f6baae98b3a2436b6f98318d5d0" FOREI
 
 ALTER TABLE "public"."job" ADD CONSTRAINT "FK_07f17ed55cabe0ef556bc0e0c93" FOREIGN KEY (
   "moldb_id") REFERENCES "public"."molecular_db"("id"
-) ON DELETE NO ACTION ON UPDATE NO ACTION;
+) ON DELETE CASCADE ON UPDATE NO ACTION;
 
 ALTER TABLE "public"."annotation" ADD CONSTRAINT "FK_bfed30991918671d59fc1f5d5e4" FOREIGN KEY (
   "job_id") REFERENCES "public"."job"("id"
@@ -314,5 +350,13 @@ ALTER TABLE "public"."annotation" ADD CONSTRAINT "FK_bfed30991918671d59fc1f5d5e4
 ALTER TABLE "public"."annotation" ADD CONSTRAINT "FK_665acc421d80b12a4738e4a175d" FOREIGN KEY (
   "ion_id") REFERENCES "graphql"."ion"("id"
 ) ON DELETE SET NULL ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."perf_profile" ADD CONSTRAINT "FK_cea05d4819bacc949a4236b4a8d" FOREIGN KEY (
+  "ds_id") REFERENCES "public"."dataset"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."perf_profile_entry" ADD CONSTRAINT "FK_67cf1a415a181173f111690c70a" FOREIGN KEY (
+  "profile_id") REFERENCES "public"."perf_profile"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
 
 

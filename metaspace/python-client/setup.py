@@ -1,10 +1,17 @@
 from setuptools import setup, find_packages
 
-from metaspace import __version__
+
+def read_version():
+    with open('metaspace/__init__.py') as f:
+        version = f.readline().split('=')[1]
+        for s in ['\'', '"', '\n', ' ']:
+            version = version.replace(s, '')
+        return version
+
 
 setup(
     name='metaspace2020',
-    version=__version__,
+    version=read_version(),
     description='Python library for connecting to the METASPACE platform',
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",

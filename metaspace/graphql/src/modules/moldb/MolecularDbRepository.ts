@@ -1,4 +1,4 @@
-import {Brackets, EntityManager, EntityRepository, In} from 'typeorm';
+import {Brackets, EntityManager, EntityRepository, SelectQueryBuilder} from 'typeorm';
 import {UserError} from 'graphql-errors';
 import * as DataLoader from 'dataloader';
 import * as _ from 'lodash';
@@ -12,7 +12,7 @@ export class MolecularDbRepository {
   constructor(private manager: EntityManager) {
   }
 
-  private queryWhere(user: ContextUser, andWhereClause?: string | Brackets, parameters?: object) {
+  private queryWhere(user: ContextUser, andWhereClauses: Brackets[]) {
     let qb = this.manager.createQueryBuilder(MolecularDB, 'moldb')
       .leftJoinAndSelect('moldb.group', 'moldb_group')
       .orderBy('moldb.name');
@@ -30,40 +30,49 @@ export class MolecularDbRepository {
       );
     }
 
-    // Add caller-supplied filter
-    if (andWhereClause != null) {
-      qb = qb.andWhere(andWhereClause, parameters);
+    // Add caller-supplied filters
+    if (andWhereClauses.length > 0) {
+      for (const clause of andWhereClauses) {
+        qb = qb.andWhere(clause);
+      }
     }
 
     // Avoid adding .where clauses to the returned queryBuilder, as it will overwrite the security filters
     return qb;
   }
 
+  private queryWhereFiltered(user: ContextUser, usable?: boolean, groupId?: string|null) {
+    const andWhereClauses: any = [];
+    if (usable === true) {
+      const groupIdClause = new Brackets(
+        qb => !qb.where('moldb.group_id is NULL').orWhere('moldb.group_id = ANY(:usableGroupIds)',
+        { usableGroupIds: user.groupIds ?? [] })
+      );
+      const usableClause = new Brackets(qb => qb.where('moldb.archived = false').andWhere(groupIdClause));
+      andWhereClauses.push(usableClause);
+    }
+    if (groupId !== undefined) {
+      const groupIdClause: Brackets =
+        (groupId === null)
+        ? new Brackets(qb => qb.where('moldb.group_id IS NULL'))
+        : new Brackets(qb => qb.where('moldb.group_id = :groupId', { groupId }));
+      andWhereClauses.push(groupIdClause);
+    }
+    return this.queryWhere(user, andWhereClauses)
+  }
+
   private getDataLoader(ctx: Context) {
     return ctx.contextCacheGet('MolecularDbRepository.getDataLoader', [], () => {
       return new DataLoader(async (databaseIds: number[]): Promise<any[]> => {
-        const query = this.queryWhere(ctx.user, 'moldb.id = ANY(:databaseIds)', { databaseIds });
+        const databaseIdsClause = new Brackets(
+          qb => qb.where('moldb.id = ANY(:databaseIds)', { databaseIds })
+        );
+        const query = this.queryWhere(ctx.user, [databaseIdsClause]);
         const results = await query.getMany();
         const keyedResults = _.keyBy(results, 'id');
         return databaseIds.map(id => keyedResults[id]);
       });
     });
-  }
-
-  async findVisibleDatabases(user: ContextUser, groupId?: string): Promise<MolecularDB[]> {
-    const query = (groupId != null)
-      ? this.queryWhere(user, 'moldb.group_id = :groupId', { groupId })
-      : this.queryWhere(user);
-    return await query.getMany();
-  }
-
-  async findUsableDatabases(user: ContextUser): Promise<MolecularDB[]> {
-    const groupWhereStmt = new Brackets(qb => qb.where('moldb.group_id is NULL')
-      .orWhere('moldb.group_id = ANY(:usableGroupIds)', { usableGroupIds: user.groupIds ?? [] }));
-    const query = this.queryWhere(user,
-      new Brackets(qb => qb.where('moldb.archived = false').andWhere(groupWhereStmt))
-    );
-    return await query.getMany();
   }
 
   async findDatabaseById(ctx: Context, databaseId: number): Promise<MolecularDB> {
@@ -79,5 +88,13 @@ export class MolecularDbRepository {
     const dataLoader = this.getDataLoader(ctx);
     const databases = await dataLoader.loadMany(databaseIds);
     return databases.filter(db => db != null);
+  }
+
+  findDatabases(user: ContextUser, usable?: boolean, groupId?: string|null): Promise<MolecularDB[]> {
+    return this.queryWhereFiltered(user, usable, groupId).getMany();
+  }
+
+  countDatabases(user: ContextUser, usable?: boolean, groupId?: string|null): Promise<number> {
+    return this.queryWhereFiltered(user, usable, groupId).getCount()
   }
 }

@@ -59,6 +59,7 @@ import { updateDatasetQuery } from '../../api/metadata'
 import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system'
 import { isArray, isEqual, get } from 'lodash-es'
 import { currentUserRoleQuery } from '../../api/user'
+import config from '../../lib/config'
 
 export default {
   name: 'MetadataEditPage',
@@ -246,6 +247,7 @@ export default {
         variables: {
           id: datasetId,
           input: payload,
+          useLithops: config.features.lithops,
           ...options,
         },
       })

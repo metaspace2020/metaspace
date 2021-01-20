@@ -29,6 +29,7 @@ import { esDatasetByID } from '../../../../esConnector';
 import { mapDatabaseToDatabaseId } from '../../moldb/util/mapDatabaseToDatabaseId';
 import { MolecularDbRepository } from '../../moldb/MolecularDbRepository';
 import { assertUserBelongsToGroup } from '../../moldb/util/assertUserBelongsToGroup';
+import { smApiUpdateDataset } from '../../../utils/smApi/datasets'
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -193,9 +194,10 @@ const newDatasetId = () => {
 };
 
 type CreateDatasetArgs = {
-  datasetId?: string,
+  id?: string,
   input: DatasetCreateInput,
   priority?: Int,
+  useLithops?: boolean,
   force?: boolean,           // Only used by reprocess
   delFirst?: boolean,        // Only used by reprocess
   skipValidation?: boolean,  // Only used by reprocess
@@ -227,14 +229,18 @@ const setDatabaseIdsInInput = async (
 };
 
 const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
-  const { input, priority, force, delFirst, skipValidation } = args,
-    datasetId = args.datasetId || newDatasetId(),
-    datasetIdWasSpecified = args.datasetId != null;
+  const { input, priority, force, delFirst, skipValidation, useLithops } = args;
+  const datasetId = args.id || newDatasetId();
+  const datasetIdWasSpecified = args.id != null;
 
   logger.info(`Creating dataset '${datasetId}' by '${ctx.user.id}' user ...`);
   let dataset;
   if (datasetIdWasSpecified) {
-    dataset = await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId);
+    // Use getDatasetForEditing to validate users' ability to edit, but skip it if they're an admin trying to create a
+    // new dataset with a specified ID.
+    if (!ctx.isAdmin || await ctx.entityManager.findOne(DatasetModel, datasetId) != null) {
+      dataset = await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId);
+    }
   } else {
     assertCanCreateDataset(ctx.user);
   }
@@ -262,6 +268,7 @@ const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
   await smApiDatasetRequest(url, {
     doc: { ...input, metadata },
     priority: priority,
+    use_lithops: useLithops,
     force: force,
     del_first: delFirst,
     email: ctx.user.email,
@@ -273,18 +280,19 @@ const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
 
 const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
-  reprocessDataset: async (source, { id, priority }, ctx: Context) => {
+  reprocessDataset: async (source, { id, priority, useLithops }, ctx: Context) => {
     const engineDataset = await ctx.entityManager.findOne(EngineDataset, id);
     if (engineDataset === undefined)
       throw new UserError('Dataset does not exist');
 
     return await createDataset({
-      datasetId: id,
+      id,
       input: {
         ...engineDataset,
         metadataJson: JSON.stringify(engineDataset.metadata)
       } as any, // TODO: map this properly
-      priority: priority,
+      priority,
+      useLithops,
       force: true,
       skipValidation: true,
       delFirst: true,
@@ -296,7 +304,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
   },
 
   updateDataset: async (source, args, ctx: Context) => {
-    const { id: datasetId, input: update, reprocess, skipValidation, delFirst, force, priority } = args;
+    const { id: datasetId, input: update, reprocess, skipValidation, delFirst, force, priority, useLithops } = args;
 
     logger.info(`User '${ctx.user.id}' updating '${datasetId}' dataset...`);
     const dataset = await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId);
@@ -334,13 +342,13 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       principalInvestigator: update.principalInvestigator
     };
 
-    let smAPIResp;
     if (reprocess) {
       await saveDataset(ctx.entityManager, saveDatasetArgs);
-      smAPIResp = await smApiDatasetRequest(`/v1/datasets/${datasetId}/add`, {
+      await smApiDatasetRequest(`/v1/datasets/${datasetId}/add`, {
         doc: { ...engineDataset, ...update, ...(metadata ? { metadata } : {}) },
         del_first: procSettingsUpd || delFirst,  // delete old results if processing settings changed
         priority: priority,
+        use_lithops: useLithops,
         force: force,
         email: ctx.user!.email,
       });
@@ -352,13 +360,14 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         }));
       } else {
         await saveDataset(ctx.entityManager, saveDatasetArgs);
-        smAPIResp = await smApiDatasetRequest(`/v1/datasets/${datasetId}/update`, {
-          doc: {
-            ..._.omit(update, 'metadataJson'),
-            ...(metadata ? { metadata } : {})
-          },
-          priority: priority,
-          force: force,
+        await smApiUpdateDataset(datasetId, {
+          // Unfortunately `update` has bad generated types, so `as any` is needed here
+          ..._.omit(update, 'metadataJson') as any,
+          ...(metadata ? { metadata } : {})
+        }, {
+          priority,
+          useLithops,
+          force,
         });
       }
     }

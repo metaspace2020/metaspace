@@ -1,33 +1,14 @@
-import { createComponent, reactive, ref } from '@vue/composition-api'
-
+import { defineComponent, reactive, ref } from '@vue/composition-api'
 import { Input } from '../lib/element-ui'
 
-function copyText(text: string | undefined) {
-  if (text) {
-    if ('clipboard' in navigator) {
-      navigator.clipboard.writeText(text)
-    } else {
-      const el = document.createElement('textarea')
-      el.value = text
-      el.style.position = 'absolute'
-      el.style.left = '-9999px'
-      document.body.appendChild(el)
-      try {
-        el.select()
-        document.execCommand('copy')
-      } finally {
-        document.body.removeChild(el)
-      }
-    }
-  }
-}
+import copyToClipboard from '../lib/copyToClipboard'
 
 interface Props {
   value: string
   type: string
 }
 
-export default createComponent<Props>({
+export default defineComponent<Props>({
   props: {
     value: { type: String },
     type: { type: String, default: 'text' },
@@ -38,10 +19,10 @@ export default createComponent<Props>({
       focussed: false,
     })
 
-    const input = ref<Input>(null)
+    const input = ref<Input | null>(null)
 
     function handleCopy() {
-      copyText(props.value)
+      copyToClipboard(props.value)
       state.copied = true
     }
 

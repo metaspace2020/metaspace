@@ -10,7 +10,7 @@ export interface FilterQueries {
   getById($apollo: any, ids: string[]): Promise<Option[]>;
 }
 
-export type SearchableFilterKey = 'database' | 'datasetIds' | 'group' | 'project' | 'submitter';
+export type SearchableFilterKey = 'datasetIds' | 'group' | 'project' | 'submitter';
 
 const datasetQueries: FilterQueries = {
   async search($apollo, $store, query) {
@@ -232,46 +232,7 @@ const submitterQueries: FilterQueries = {
   },
 }
 
-const databaseQueries: FilterQueries = {
-  async search($apollo, $store, query) {
-    const { data } = await $apollo.query({
-      query: gql`query DatabaseOptions {
-        options: molecularDatabases {
-          id
-          value: id
-          label: name
-        }
-      }`,
-      fetchPolicy: 'cache-first',
-    })
-    const queryRegex = new RegExp(query, 'i')
-    return data.options.filter((_: any) => queryRegex.test(_.label)) as Option[]
-  },
-  async getById($apollo, ids) {
-    const { data } = await $apollo.query({
-      query: gql`query DatabaseNames {
-        options: molecularDatabases {
-          id
-          value: id
-          label: name
-        }
-      }`,
-      fetchPolicy: 'cache-first',
-    })
-
-    const parsedIds = ids.map(id => parseInt(id, 10))
-    const results: Option[] = []
-    for (const option of data.options) {
-      if (parsedIds.includes(option.id)) {
-        results.push(option)
-      }
-    }
-    return results
-  },
-}
-
 const searchableFilterQueries: Record<SearchableFilterKey, FilterQueries> = {
-  database: databaseQueries,
   datasetIds: datasetQueries,
   group: groupQueries,
   project: projectQueries,

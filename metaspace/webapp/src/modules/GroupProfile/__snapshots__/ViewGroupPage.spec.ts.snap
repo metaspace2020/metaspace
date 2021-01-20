@@ -20,7 +20,7 @@ exports[`ViewGroupPage datasets tab should match snapshot (non-member) 1`] = `
       </div>
       <!---->
     </div>
-    <div class="el-tabs el-tabs--top">
+    <div class="with-badges el-tabs el-tabs--top">
       <div class="el-tabs__header is-top">
         <div class="el-tabs__nav-wrap is-top">
           <div class="el-tabs__nav-scroll">
@@ -48,6 +48,7 @@ exports[`ViewGroupPage datasets tab should match snapshot (non-member) 1`] = `
               See all datasets
             </a></div>
         </div>
+        <!---->
         <!---->
         <!---->
       </div>
@@ -96,7 +97,7 @@ exports[`ViewGroupPage members tab should match snapshot (invited) 1`] = `
         </div>
       </transition-stub>
     </div>
-    <div class="el-tabs el-tabs--top">
+    <div class="with-badges el-tabs el-tabs--top">
       <div class="el-tabs__header is-top">
         <div class="el-tabs__nav-wrap is-top">
           <div class="el-tabs__nav-scroll">
@@ -115,13 +116,12 @@ exports[`ViewGroupPage members tab should match snapshot (invited) 1`] = `
         <!---->
         <!---->
         <div role="tabpanel" id="pane-members" aria-labelledby="tab-members" class="el-tab-pane">
-          <div style="max-width: 950px;">
-            <groupmemberslist-stub currentuser="[object Object]" group="[object Object]" members="[object Object]" refreshdata="function () { [native code] }"></groupmemberslist-stub>
-            <p class="hidden-members-text">
-              + 1 hidden member.
-            </p>
-          </div>
+          <groupmemberslist-stub currentuser="[object Object]" group="[object Object]" members="[object Object]" refreshdata="function () { [native code] }"></groupmemberslist-stub>
+          <p class="hidden-members-text">
+            + 1 hidden member.
+          </p>
         </div>
+        <!---->
         <!---->
       </div>
     </div>
@@ -146,7 +146,7 @@ exports[`ViewGroupPage members tab should match snapshot (manager, including tab
       </div>
       <!---->
     </div>
-    <div class="el-tabs el-tabs--top">
+    <div class="with-badges el-tabs el-tabs--top">
       <div class="el-tabs__header is-top">
         <div class="el-tabs__nav-wrap is-top">
           <div class="el-tabs__nav-scroll">
@@ -166,212 +166,211 @@ exports[`ViewGroupPage members tab should match snapshot (manager, including tab
         <!---->
         <!---->
         <div role="tabpanel" id="pane-members" aria-labelledby="tab-members" class="el-tab-pane">
-          <div style="max-width: 950px;">
-            <div>
-              <!---->
-              <div class="el-table el-table--fit el-table--scrollable-x el-table--enable-row-hover el-table--enable-row-transition" element-loading-text="Loading results from the server..." mock-v-loading="false">
-                <div class="hidden-columns">
-                  <div></div>
-                  <div></div>
-                  <div></div>
-                  <div></div>
-                  <div></div>
-                </div>
-                <div class="el-table__header-wrapper">
-                  <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 850px;">
-                    <colgroup>
-                      <col name="el-table_1_column_1" width="200">
-                      <col name="el-table_1_column_2" width="200">
-                      <col name="el-table_1_column_3" width="160">
-                      <col name="el-table_1_column_4" width="90">
-                      <col name="el-table_1_column_5" width="200">
-                    </colgroup>
-                    <thead class="">
-                      <tr class="">
-                        <th colspan="1" rowspan="1" class="el-table_1_column_1     is-leaf">
-                          <div class="cell">Name</div>
-                        </th>
-                        <th colspan="1" rowspan="1" class="el-table_1_column_2     is-leaf">
-                          <div class="cell">Email</div>
-                        </th>
-                        <th colspan="1" rowspan="1" class="el-table_1_column_3     is-leaf">
-                          <div class="cell">Role</div>
-                        </th>
-                        <th colspan="1" rowspan="1" class="el-table_1_column_4  is-center   is-leaf">
-                          <div class="cell">Datasets</div>
-                        </th>
-                        <th colspan="1" rowspan="1" class="el-table_1_column_5     is-leaf">
-                          <div class="cell"></div>
-                        </th>
-                      </tr>
-                    </thead>
-                  </table>
-                </div>
-                <div class="el-table__body-wrapper is-scrolling-left">
-                  <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 850px;">
-                    <colgroup>
-                      <col name="el-table_1_column_1" width="200">
-                      <col name="el-table_1_column_2" width="200">
-                      <col name="el-table_1_column_3" width="160">
-                      <col name="el-table_1_column_4" width="90">
-                      <col name="el-table_1_column_5" width="200">
-                    </colgroup>
-                    <tbody>
-                      <tr class="el-table__row">
-                        <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
-                          <div class="cell">
-                            me
-                          </div>
-                        </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
-                          <div class="cell">
-                            my-email@example.com
-                          </div>
-                        </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
-                          <div class="cell"><a href="#" title="Change role">
-                              Group admin
-                            </a></div>
-                        </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
-                          <div class="cell"><a href="/datasets?grp=00000000-1111-2222-3333-444444444444&amp;subm=3" class="">
-                              123
-                            </a></div>
-                        </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
-                          <div class="cell">
-                            <!---->
-                            <!---->
-                            <!---->
-                            <!---->
-                          </div>
-                        </td>
-                      </tr>
-                      <tr class="el-table__row">
-                        <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
-                          <div class="cell">
-                            Person who asked to join
-                          </div>
-                        </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
-                          <div class="cell">
-                            access@requestor.com
-                          </div>
-                        </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
-                          <div class="cell"><span>
+          <div>
+            <!---->
+            <div class="el-table el-table--fit el-table--scrollable-x el-table--enable-row-hover el-table--enable-row-transition" element-loading-text="Loading results from the server..." mock-v-loading="false">
+              <div class="hidden-columns">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+              </div>
+              <div class="el-table__header-wrapper">
+                <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 850px;">
+                  <colgroup>
+                    <col name="el-table_1_column_1" width="200">
+                    <col name="el-table_1_column_2" width="200">
+                    <col name="el-table_1_column_3" width="160">
+                    <col name="el-table_1_column_4" width="90">
+                    <col name="el-table_1_column_5" width="200">
+                  </colgroup>
+                  <thead class="">
+                    <tr class="">
+                      <th colspan="1" rowspan="1" class="el-table_1_column_1     is-leaf">
+                        <div class="cell">Name</div>
+                      </th>
+                      <th colspan="1" rowspan="1" class="el-table_1_column_2     is-leaf">
+                        <div class="cell">Email</div>
+                      </th>
+                      <th colspan="1" rowspan="1" class="el-table_1_column_3     is-leaf">
+                        <div class="cell">Role</div>
+                      </th>
+                      <th colspan="1" rowspan="1" class="el-table_1_column_4  is-center   is-leaf">
+                        <div class="cell">Datasets</div>
+                      </th>
+                      <th colspan="1" rowspan="1" class="el-table_1_column_5     is-leaf">
+                        <div class="cell"></div>
+                      </th>
+                    </tr>
+                  </thead>
+                </table>
+              </div>
+              <div class="el-table__body-wrapper is-scrolling-left">
+                <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 850px;">
+                  <colgroup>
+                    <col name="el-table_1_column_1" width="200">
+                    <col name="el-table_1_column_2" width="200">
+                    <col name="el-table_1_column_3" width="160">
+                    <col name="el-table_1_column_4" width="90">
+                    <col name="el-table_1_column_5" width="200">
+                  </colgroup>
+                  <tbody>
+                    <tr class="el-table__row">
+                      <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
+                        <div class="cell">
+                          me
+                        </div>
+                      </td>
+                      <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+                        <div class="cell">
+                          my-email@example.com
+                        </div>
+                      </td>
+                      <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+                        <div class="cell"><a href="#" title="Change role">
+                            Group admin
+                          </a></div>
+                      </td>
+                      <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
+                        <div class="cell"><a href="/datasets?grp=00000000-1111-2222-3333-444444444444&amp;subm=3" class="">
+                            123
+                          </a></div>
+                      </td>
+                      <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
+                        <div class="cell">
+                          <!---->
+                          <!---->
+                          <!---->
+                          <!---->
+                        </div>
+                      </td>
+                    </tr>
+                    <tr class="el-table__row">
+                      <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
+                        <div class="cell">
+                          Person who asked to join
+                        </div>
+                      </td>
+                      <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+                        <div class="cell">
+                          access@requestor.com
+                        </div>
+                      </td>
+                      <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+                        <div class="cell"><span>
           Requesting access
         </span></div>
-                        </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
-                          <div class="cell"><a href="/datasets?grp=00000000-1111-2222-3333-444444444444&amp;subm=4" class="">
-                              0
-                            </a></div>
-                        </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
-                          <div class="cell">
+                      </td>
+                      <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
+                        <div class="cell"><a href="/datasets?grp=00000000-1111-2222-3333-444444444444&amp;subm=4" class="">
+                            0
+                          </a></div>
+                      </td>
+                      <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
+                        <div class="cell">
+                          <!---->
+                          <!----> <button type="button" class="el-button grid-button el-button--success el-button--mini">
                             <!---->
-                            <!----> <button type="button" class="el-button grid-button el-button--success el-button--mini">
-                              <!---->
-                              <!----><span>
+                            <!----><span>
           Accept
         </span></button> <button type="button" class="el-button grid-button el-button--default el-button--mini">
-                              <!---->
-                              <!----><span>
+                            <!---->
+                            <!----><span>
           Decline
         </span></button></div>
-                        </td>
-                      </tr>
-                      <tr class="el-table__row">
-                        <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
-                          <div class="cell">
-                            Invitee
-                          </div>
-                        </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
-                          <div class="cell">
-                            awaiting@response.com
-                          </div>
-                        </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
-                          <div class="cell"><span>
+                      </td>
+                    </tr>
+                    <tr class="el-table__row">
+                      <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
+                        <div class="cell">
+                          Invitee
+                        </div>
+                      </td>
+                      <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+                        <div class="cell">
+                          awaiting@response.com
+                        </div>
+                      </td>
+                      <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+                        <div class="cell"><span>
           Invited
         </span></div>
-                        </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
-                          <div class="cell"><a href="/datasets?grp=00000000-1111-2222-3333-444444444444&amp;subm=5" class="">
-                              0
-                            </a></div>
-                        </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
-                          <div class="cell">
-                            <!----> <button type="button" class="el-button grid-button el-button--default el-button--mini">
-                              <!---->
-                              <!----><span>
+                      </td>
+                      <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
+                        <div class="cell"><a href="/datasets?grp=00000000-1111-2222-3333-444444444444&amp;subm=5" class="">
+                            0
+                          </a></div>
+                      </td>
+                      <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
+                        <div class="cell">
+                          <!----> <button type="button" class="el-button grid-button el-button--default el-button--mini">
+                            <!---->
+                            <!----><span>
           Cancel
         </span></button>
+                          <!---->
+                          <!---->
+                        </div>
+                      </td>
+                    </tr>
+                    <tr class="el-table__row">
+                      <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
+                        <div class="cell">
+                          Project member
+                        </div>
+                      </td>
+                      <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+                        <div class="cell">
+                          person@embl.de
+                        </div>
+                      </td>
+                      <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+                        <div class="cell"><a href="#" title="Change role">
+                            Member
+                          </a></div>
+                      </td>
+                      <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
+                        <div class="cell"><a href="/datasets?grp=00000000-1111-2222-3333-444444444444&amp;subm=6" class="">
+                            1
+                          </a></div>
+                      </td>
+                      <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
+                        <div class="cell"><button type="button" class="el-button grid-button el-button--default el-button--mini">
                             <!---->
-                            <!---->
-                          </div>
-                        </td>
-                      </tr>
-                      <tr class="el-table__row">
-                        <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
-                          <div class="cell">
-                            Project member
-                          </div>
-                        </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
-                          <div class="cell">
-                            person@embl.de
-                          </div>
-                        </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
-                          <div class="cell"><a href="#" title="Change role">
-                              Member
-                            </a></div>
-                        </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
-                          <div class="cell"><a href="/datasets?grp=00000000-1111-2222-3333-444444444444&amp;subm=6" class="">
-                              1
-                            </a></div>
-                        </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
-                          <div class="cell"><button type="button" class="el-button grid-button el-button--default el-button--mini">
-                              <!---->
-                              <!----><span>
+                            <!----><span>
           Remove
         </span></button>
-                            <!---->
-                            <!---->
-                            <!---->
-                          </div>
-                        </td>
-                      </tr>
-                      <!---->
-                    </tbody>
-                  </table>
-                  <!---->
-                  <!---->
-                </div>
+                          <!---->
+                          <!---->
+                          <!---->
+                        </div>
+                      </td>
+                    </tr>
+                    <!---->
+                  </tbody>
+                </table>
                 <!---->
                 <!---->
-                <!---->
-                <!---->
-                <div class="el-table__column-resize-proxy" style="display: none;"></div>
               </div>
-              <div class="pagination-row">
+              <!---->
+              <!---->
+              <!---->
+              <!---->
+              <div class="el-table__column-resize-proxy" style="display: none;"></div>
+            </div>
+            <div class="pagination-row">
+              <!---->
+              <div class="flex-spacer"></div> <button type="button" class="el-button el-button--default">
                 <!---->
-                <div class="flex-spacer"></div> <button type="button" class="el-button el-button--default">
-                  <!---->
-                  <!----><span>
+                <!----><span>
       Add member
     </span></button>
-              </div>
             </div>
-            <!---->
           </div>
+          <!---->
         </div>
+        <!---->
         <!---->
       </div>
     </div>
@@ -396,7 +395,7 @@ exports[`ViewGroupPage members tab should match snapshot (member) 1`] = `
       </div>
       <!---->
     </div>
-    <div class="el-tabs el-tabs--top">
+    <div class="with-badges el-tabs el-tabs--top">
       <div class="el-tabs__header is-top">
         <div class="el-tabs__nav-wrap is-top">
           <div class="el-tabs__nav-scroll">
@@ -415,11 +414,10 @@ exports[`ViewGroupPage members tab should match snapshot (member) 1`] = `
         <!---->
         <!---->
         <div role="tabpanel" id="pane-members" aria-labelledby="tab-members" class="el-tab-pane">
-          <div style="max-width: 950px;">
-            <groupmemberslist-stub currentuser="[object Object]" group="[object Object]" members="[object Object],[object Object],[object Object],[object Object]" refreshdata="function () { [native code] }"></groupmemberslist-stub>
-            <!---->
-          </div>
+          <groupmemberslist-stub currentuser="[object Object]" group="[object Object]" members="[object Object],[object Object],[object Object],[object Object]" refreshdata="function () { [native code] }"></groupmemberslist-stub>
+          <!---->
         </div>
+        <!---->
         <!---->
       </div>
     </div>
@@ -447,7 +445,7 @@ exports[`ViewGroupPage members tab should match snapshot (non-member) 1`] = `
       </div>
       <!---->
     </div>
-    <div class="el-tabs el-tabs--top">
+    <div class="with-badges el-tabs el-tabs--top">
       <div class="el-tabs__header is-top">
         <div class="el-tabs__nav-wrap is-top">
           <div class="el-tabs__nav-scroll">
@@ -466,13 +464,12 @@ exports[`ViewGroupPage members tab should match snapshot (non-member) 1`] = `
         <!---->
         <!---->
         <div role="tabpanel" id="pane-members" aria-labelledby="tab-members" class="el-tab-pane">
-          <div style="max-width: 950px;">
-            <groupmemberslist-stub currentuser="[object Object]" group="[object Object]" members="[object Object]" refreshdata="function () { [native code] }"></groupmemberslist-stub>
-            <p class="hidden-members-text">
-              + 1 hidden member.
-            </p>
-          </div>
+          <groupmemberslist-stub currentuser="[object Object]" group="[object Object]" members="[object Object]" refreshdata="function () { [native code] }"></groupmemberslist-stub>
+          <p class="hidden-members-text">
+            + 1 hidden member.
+          </p>
         </div>
+        <!---->
         <!---->
       </div>
     </div>
@@ -497,7 +494,7 @@ exports[`ViewGroupPage settings tab should match snapshot 1`] = `
       </div>
       <!---->
     </div>
-    <div class="el-tabs el-tabs--top">
+    <div class="with-badges el-tabs el-tabs--top">
       <div class="el-tabs__header is-top">
         <div class="el-tabs__nav-wrap is-top">
           <div class="el-tabs__nav-scroll">
@@ -514,6 +511,7 @@ exports[`ViewGroupPage settings tab should match snapshot 1`] = `
         </div>
       </div>
       <div class="el-tabs__content">
+        <!---->
         <!---->
         <!---->
         <!---->

@@ -12,13 +12,9 @@ wait_for() {
   echo "$2 is up"
 }
 
-if [ "$SM_DOCKER_ENV" = "development" ]; then
-  cd /opt/dev/metaspace/metaspace/engine
-else
-  cd /opt/metaspace/metaspace/engine
-fi
+cd /opt/dev/metaspace/metaspace/engine
 
-#pip install -qr requirements.txt  # doesn't work with docker-compose service 'user' option
+pip install -qr requirements.txt
 
 wait_for "nc -z postgres 5432" "Postgres"
 wait_for "nc -z rabbitmq 5672" "RabbitMQ"

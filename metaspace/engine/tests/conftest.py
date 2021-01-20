@@ -1,5 +1,6 @@
 import json
 import logging
+from copy import deepcopy
 from random import randint
 from pathlib import Path
 import uuid
@@ -15,7 +16,7 @@ from sm.engine.db import DB, ConnectionPool
 from sm.engine.tests.db_sql_schema import DB_SQL_SCHEMA
 from sm.engine.util import proj_root, SMConfig, init_loggers, populate_aws_env_vars
 from sm.engine.es_export import ESIndexManager
-from .utils import create_test_molecular_db
+from .utils import TEST_METADATA, TEST_DS_CONFIG, create_test_molecular_db
 
 TEST_CONFIG_PATH = 'conf/test_config.json'
 
@@ -24,7 +25,12 @@ TEST_CONFIG_PATH = 'conf/test_config.json'
 def sm_config():
     SMConfig.set_path(Path(proj_root()) / TEST_CONFIG_PATH)
     sm_config = SMConfig.get_conf()
-    sm_config['db']['database'] = f'sm_test_{hex(randint(0, 0xFFFFFFFF))[2:]}'
+    test_id = f'sm_test_{hex(randint(0, 0xFFFFFFFF))[2:]}'
+    sm_config['db']['database'] = test_id
+    for path in sm_config['lithops']['sm_storage'].values():
+        # prefix keys with test ID so they can be cleaned up later
+        path[1] = f'{test_id}/{path[1]}'
+
     return sm_config
 
 
@@ -36,35 +42,12 @@ def global_setup(sm_config):
 
 @pytest.fixture()
 def metadata():
-    return {
-        "Data_Type": "Imaging MS",
-        "MS_Analysis": {
-            "Polarity": "Positive",
-            "Ionisation_Source": "MALDI",
-            "Detector_Resolving_Power": {"Resolving_Power": 80000, "mz": 700},
-            "Analyzer": "FTICR",
-            "Pixel_Size": {"Xaxis": 100, "Yaxis": 100},
-        },
-    }
+    return deepcopy(TEST_METADATA)
 
 
 @pytest.fixture()
 def ds_config():
-    return {
-        "image_generation": {"n_levels": 30, "ppm": 3, "min_px": 1},
-        "analysis_version": 1,
-        "isotope_generation": {
-            "adducts": ["+H", "+Na", "+K", "[M]+"],
-            "charge": 1,
-            "isocalc_sigma": 0.000619,
-            "instrument": "FTICR",
-            "n_peaks": 4,
-            "neutral_losses": [],
-            "chem_mods": [],
-        },
-        "fdr": {"decoy_sample_size": 20},
-        "database_ids": [0],
-    }
+    return deepcopy(TEST_DS_CONFIG)
 
 
 @pytest.fixture(scope='module')
@@ -210,3 +193,18 @@ def sm_index(sm_config, request):
         es_man.delete_index(sm_config['elasticsearch']['index'])
 
     request.addfinalizer(fin)
+
+
+@pytest.fixture()
+def executor(sm_config):
+    from sm.engine.annotation_lithops.executor import Executor
+
+    executor = Executor(sm_config['lithops'], debug_run_locally=True)
+
+    yield executor
+
+    executor.clean()
+    for bucket, prefix in sm_config['lithops']['sm_storage'].values():
+        keys = executor.storage.list_keys(bucket, prefix)
+        if keys:
+            executor.storage.delete_objects(bucket, keys)

@@ -1,9 +1,9 @@
-import { renderMolFormula } from '../../lib/util'
 import InputFilter from './filter-components/InputFilter.vue'
 import SingleSelectFilter from './filter-components/SingleSelectFilter.vue'
 import SearchableFilter from './filter-components/SearchableFilter.vue'
 import OffSampleHelp from './filter-components/OffSampleHelp.vue'
 import MzFilter from './filter-components/MzFilter.vue'
+import MSMFilter from './filter-components/MSMFilter.vue'
 import SearchBox from './filter-components/SearchBox.vue'
 import { metadataTypes, defaultMetadataType } from '../../lib/metadataRegistry'
 import { Component } from 'vue'
@@ -11,6 +11,7 @@ import SimpleFilterBox from './filter-components/SimpleFilterBox.vue'
 import BooleanFilter from './filter-components/BooleanFilter.vue'
 import config from '../../lib/config'
 import AdductFilter from './filter-components/AdductFilter.vue'
+import DatabaseFilter from './filter-components/DatabaseFilter.vue'
 
 function formatFDR(fdr: number) {
   return fdr ? Math.round(fdr * 100) + '%' : ''
@@ -83,6 +84,7 @@ export interface FilterSpecification {
   dependsOnFilters?: FilterKey[];
   /** List of other filters whose addition should cause this filter to be removed */
   conflictsWithFilters?: FilterKey[];
+  convertValueForComponent?: (value: any) => any
 }
 
 /** Attrs to pass to the component that will render the filter */
@@ -95,7 +97,7 @@ export const FILTER_COMPONENT_PROPS: (keyof FilterSpecification)[] = [
 
 export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
   database: {
-    type: SearchableFilter,
+    type: DatabaseFilter,
     name: 'Database',
     description: 'Select database',
     levels: ['annotation'],
@@ -103,9 +105,8 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     initialValue: lists =>
       lists.molecularDatabases
         .filter(d => d.default)[0]?.id,
-    removable: false,
-    clearable: false,
     encoding: 'number',
+    convertValueForComponent: (v) => v?.toString(),
   },
 
   datasetIds: {
@@ -119,11 +120,12 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
   },
 
   minMSM: {
-    type: InputFilter,
+    type: MSMFilter,
     name: 'Min. MSM',
     description: 'Set minimum MSM score',
     levels: ['annotation'],
     initialValue: 0.0,
+    encoding: 'number',
   },
 
   compoundName: {
@@ -167,6 +169,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     description: 'Search by m/z',
     levels: ['annotation'],
     initialValue: 0,
+    encoding: 'number',
   },
 
   fdrLevel: {

@@ -1,4 +1,4 @@
-import { createComponent, reactive, computed } from '@vue/composition-api'
+import { defineComponent, reactive, computed } from '@vue/composition-api'
 import { Button } from '../../../lib/element-ui'
 
 import { WorkflowStep } from '../../../components/Workflow'
@@ -18,7 +18,7 @@ interface State {
   loading: boolean
 }
 
-const CreateReviewLink = createComponent<Props>({
+const CreateReviewLink = defineComponent<Props>({
   props: {
     active: Boolean,
     createLink: Function,

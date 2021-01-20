@@ -1,4 +1,4 @@
-import { createComponent, computed } from '@vue/composition-api'
+import { defineComponent, computed } from '@vue/composition-api'
 
 import { Workflow } from '../../../components/Workflow'
 import UpdateProjectDetails from './UpdateProjectDetails'
@@ -30,7 +30,7 @@ interface Props {
   refetchProject: Function,
 }
 
-const ReviewWorkflow = createComponent<Props>({
+const ReviewWorkflow = defineComponent<Props>({
   props: {
     currentUserName: String,
     project: Object,

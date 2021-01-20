@@ -21,7 +21,6 @@ export const editDatasetFragment =
     }
     databases {
       id
-      name
     }
     adducts
     name
@@ -86,8 +85,10 @@ export const fetchAutocompleteSuggestionsQuery =
   }`
 
 export const updateDatasetQuery =
-  gql`mutation ($id: String!, $reprocess: Boolean, $skipValidation: Boolean, $input: DatasetUpdateInput!) {
-    updateDataset(id: $id, input: $input, reprocess: $reprocess, skipValidation: $skipValidation, priority: 1)
+  gql`mutation ($id: String!, $reprocess: Boolean, $skipValidation: Boolean, $input: DatasetUpdateInput!,
+                $useLithops: Boolean) {
+    updateDataset(id: $id, input: $input, reprocess: $reprocess, skipValidation: $skipValidation, priority: 1,
+                  useLithops: $useLithops)
   }`
 
 // TODO: use autocompletion for filter values, same as on the upload page
@@ -100,7 +101,7 @@ export const fetchOptionListsQuery = gql`query fetchOptionListsQuery {
   maldiMatrices: metadataSuggestions(field: "Sample_Preparation.MALDI_Matrix", query: "", limit: 1000)
   analyzerTypes: metadataSuggestions(field: "MS_Analysis.Analyzer", query: "", limit: 1000)
   colocalizationAlgos {id, name}
-  molecularDatabases: molecularDatabases{id, name, default, hidden}
+  molecularDatabases: allMolecularDBs{id, name, default}
   adducts: adductSuggestions{adduct, name, charge, default, hidden}
 }`
 
@@ -129,7 +130,16 @@ export const neutralLossSuggestionQuery = gql`query neutralLossSuggestionQuery($
 }`
 
 export const metadataOptionsQuery = gql`query metadataOptionsQuery {
-  molecularDatabases: molecularDatabases(onlyUsable: true){id, name, default, hidden}
+  molecularDatabases: allMolecularDBs(filter: { usable: true }) {
+    id,
+    name,
+    version,
+    default,
+    group {
+      id
+      shortName
+    }
+  }
   adducts: adductSuggestions{adduct, name, charge, default, hidden}
 }`
 
@@ -172,6 +182,7 @@ export const metadataExportQuery = gql`
       uploadDateTime
       fdrCounts(inpFdrLvls: $inpFdrLvls, checkLvl: $checkLvl) {
         dbName
+        dbVersion
         levels
         counts
       }

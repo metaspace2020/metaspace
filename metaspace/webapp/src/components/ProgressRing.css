@@ -1,0 +1,3 @@
+.sm-progress-ring circle {
+  transition-property: stroke-dashoffset, color;
+}

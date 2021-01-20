@@ -8,72 +8,95 @@
         @change="onSectionsChange"
       >
         <div class="el-collapse-item">
-          <div class="el-collapse-item__header av-header">
-            <candidate-molecules-popover
-              placement="bottom"
-              :possible-compounds="annotation.possibleCompounds"
-              :isomers="annotation.isomers"
-              :isobars="annotation.isobars"
-            >
-              <span
-                class="sf-big text-2xl"
-                v-html="formattedMolFormula"
-              />
-            </candidate-molecules-popover>
-            <span class="text-2xl">{{ annotation.mz.toFixed(4) }}</span>
-            <el-popover
-              trigger="hover"
-              placement="bottom"
-            >
-              <router-link
-                slot="reference"
-                target="_blank"
-                :to="permalinkHref"
-              >
-                <img
-                  src="../../assets/share-icon.png"
-                  class="av-icon"
+          <div class="el-collapse-item__header flex items-start justify-center relative cursor-auto">
+            <div class="av-header-items">
+              <div class="flex">
+                <candidate-molecules-popover
+                  placement="bottom"
+                  :possible-compounds="annotation.possibleCompounds"
+                  :isomers="annotation.isomers"
+                  :isobars="annotation.isobars"
                 >
-              </router-link>
-              <div>Link to this annotation (opens in a new tab)</div>
-            </el-popover>
-
-            <el-popover
-              v-if="!annotation.dataset.isPublic"
-              trigger="hover"
-              placement="bottom"
-              @show="loadVisibility"
-            >
-              <img
-                slot="reference"
-                src="../../assets/padlock-icon.svg"
-                class="av-icon"
-              >
-              <div v-loading="visibilityText == null">
-                {{ visibilityText }}
+                  <molecular-formula
+                    class="sf-big text-2xl"
+                    :ion="annotation.ion"
+                  />
+                </candidate-molecules-popover>
+                <copy-button
+                  class="ml-1"
+                  :text="annotation.ion"
+                >
+                  Copy ion to clipboard
+                </copy-button>
               </div>
-            </el-popover>
-
-            <el-popover
-              v-if="showColoc"
-              trigger="hover"
-              placement="bottom"
-            >
-              <img
-                slot="reference"
-                src="../../assets/map-icon.svg"
-                class="av-icon av-icon-link"
-                @click.stop="filterColocSamples"
+              <span class="text-2xl flex items-baseline">
+                {{ annotation.mz.toFixed(4) }}
+                <span class="ml-1 text-gray-700 text-sm">m/z</span>
+                <copy-button
+                  class="self-start"
+                  :text="annotation.mz.toFixed(4)"
+                >
+                  Copy m/z to clipboard
+                </copy-button>
+              </span>
+              <share-link
+                class="av-icon"
+                :route="permalinkHref"
+                :annotation="annotation"
+              />
+              <el-popover
+                v-if="!annotation.dataset.isPublic"
+                class="av-icon cursor-help"
+                trigger="hover"
+                placement="bottom"
+                @show="loadVisibility"
               >
-              <div>Show representative spatial patterns for dataset</div>
-            </el-popover>
+                <lock-icon
+                  slot="reference"
+                  class="sm-stateful-icon h-6 w-6"
+                />
+                <p
+                  v-loading="visibilityText == null"
+                  class="m-0 max-w-measure-2 leading-5 text-left"
+                >
+                  {{ visibilityText }}
+                </p>
+              </el-popover>
+
+              <el-popover
+                v-if="showColoc"
+                class="av-icon"
+                trigger="hover"
+                placement="bottom"
+              >
+                <button
+                  slot="reference"
+                  class="button-reset block"
+                  @click.stop="filterColocSamples"
+                >
+                  <location-pin-icon class="sm-stateful-icon h-6 w-6" />
+                </button>
+                <!-- <img
+                  slot="reference"
+                  src="../../assets/map-icon.svg"
+                  class="av-icon av-icon-link"
+                  @click.stop="filterColocSamples"
+                > -->
+                <div>Show representative spatial patterns for dataset</div>
+              </el-popover>
+            </div>
+            <mode-button
+              v-if="multiImagesEnabled"
+              class="absolute right-0 bottom-0 mr-2 mb-2"
+              @multi="filterByDataset"
+            />
           </div>
         </div>
 
         <el-collapse-item
           id="annot-img-collapse"
           name="images"
-          class="av-centered"
+          class="el-collapse-item--no-padding"
         >
           <component
             :is="metadataDependentComponent('main-image-header')"
@@ -83,6 +106,7 @@
             :show-optical-image="showOpticalImage"
             :reset-viewport="resetViewport"
             :toggle-optical-image="toggleOpticalImage"
+            :is-active="activeSections.includes('images')"
             @scaleBarColorChange="setScaleBarColor"
           />
           <component
@@ -92,13 +116,13 @@
             :opacity="opacity"
             :image-position="imagePosition"
             :image-loader-settings="imageLoaderSettings"
-            :on-image-move="onImageMove"
+            :apply-image-move="onImageMove"
             :acquisition-geometry="msAcqGeometry"
             :pixel-size-x="pixelSizeX"
             :pixel-size-y="pixelSizeY"
             :scale-bar-color="scaleBarColor"
             :scale-type="scaleType"
-            @opacityInput="newVal => opacity = newVal"
+            @opacity="newVal => opacity = newVal"
           />
         </el-collapse-item>
 
@@ -220,7 +244,8 @@
 <script lang="ts" src="./AnnotationView.ts" />
 
 <style scoped lang="scss">
-  /deep/ .av-header {
+  /deep/ .av-header-items {
+    display: flex;
     justify-content: center;
     text-align: center !important;
     cursor: default !important;
@@ -233,8 +258,11 @@
     }
 
     .av-icon {
-      width: 20px;
-      height: 20px;
+      @apply self-center mb-2 h-6;
+
+      svg {
+        display: block;
+      }
     }
 
     .sf-big sub {
@@ -265,6 +293,7 @@
 
  #annot-img-collapse .el-collapse-item__header>span {
    display: inline-flex;
+   align-items: center;
  }
 </style>
 <style>
@@ -273,6 +302,7 @@
     box-sizing: border-box;
     margin-left: 16px;
     width: 24px;
+    height: 24px;
     line-height: 1;
     cursor: pointer;
   }
