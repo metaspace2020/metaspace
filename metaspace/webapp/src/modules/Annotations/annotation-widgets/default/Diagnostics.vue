@@ -119,7 +119,7 @@ import { Component, Prop, Watch } from 'vue-property-decorator'
 
 import DiagnosticsMetrics from './DiagnosticsMetrics.vue'
 import DiagnosticsImages from './DiagnosticsImages.vue'
-import DiagnosticsPlot from './DiagnosticsPlot.vue'
+import DiagnosticsPlot from '../DiagnosticsPlot.vue'
 import CandidateMoleculesPopover from '../CandidateMoleculesPopover.vue'
 import { groupBy, intersection, sortBy, xor } from 'lodash-es'
 import { peakChartDataQuery, isobarsQuery } from '../../../../api/annotation'
