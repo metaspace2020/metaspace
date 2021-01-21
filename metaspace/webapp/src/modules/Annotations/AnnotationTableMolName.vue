@@ -1,12 +1,12 @@
 <template>
-  <candidate-molecules-popover
-    placement="right"
-    :possible-compounds="annotation.possibleCompounds"
-    :limit="10"
-    :isomers="annotation.isomers"
-    :isobars="annotation.isobars"
-  >
-    <div class="cell-wrapper">
+  <div class="cell-wrapper">
+    <candidate-molecules-popover
+      placement="right"
+      :possible-compounds="annotation.possibleCompounds"
+      :limit="10"
+      :isomers="annotation.isomers"
+      :isobars="annotation.isobars"
+    >
       <span
         class="cell-span"
         v-html="molFormulaHtml"
@@ -20,14 +20,14 @@
           :style="{ background: channelSwatches[annotation.id] }"
         />
       </span>
-      <img
-        v-if="!hasCompoundNameFilter"
-        src="../../assets/filter-icon.png"
-        title="Limit results to this molecular formula"
-        @click="handleFilter"
-      >
-    </div>
-  </candidate-molecules-popover>
+    </candidate-molecules-popover>
+    <img
+      v-if="!hasCompoundNameFilter"
+      src="../../assets/filter-icon.png"
+      title="Limit results to this molecular formula"
+      @click="handleFilter"
+    >
+  </div>
 </template>
 
 <script>
@@ -54,11 +54,11 @@ export default defineComponent({
     CandidateMoleculesPopover,
   },
   props: ['annotation'],
-  setup({ annotation }, { root }) {
+  setup(props, { root }) {
     const compoundNameFilter = useFilter(root.$store, 'compoundName')
     const hasCompoundNameFilter = computed(() => compoundNameFilter.value != null)
-    const molFormulaHtml = computed(() => renderMolFormulaHtml(annotation.ion))
-    const handleFilter = () => { compoundNameFilter.value = annotation.sumFormula }
+    const molFormulaHtml = computed(() => renderMolFormulaHtml(props.annotation.ion))
+    const handleFilter = () => { compoundNameFilter.value = props.annotation.sumFormula }
 
     return {
       hasCompoundNameFilter,

@@ -20,7 +20,6 @@ export default ($store: any, filterName: FilterKey) => {
   return computed({
     get: () => filter.value,
     set: (value: any) => {
-      console.log('setter', value)
       $store.commit('updateFilter', {
         ...$store.getters.filter,
         [filterName]: value,
