@@ -1,6 +1,8 @@
+// eslint-disable-next-line no-restricted-imports
 import ElementUI from 'element-ui'
 export default ElementUI
 
+// eslint-disable-next-line no-restricted-imports
 export {
   Pagination,
   Dialog,
