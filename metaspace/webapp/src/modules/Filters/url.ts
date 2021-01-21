@@ -46,16 +46,24 @@ const FILTER_TO_URL: Record<FilterKey, string> = {
 
 const URL_TO_FILTER = invert(FILTER_TO_URL) as Record<string, FilterKey>
 
-const PATH_TO_LEVEL: Record<string, Level> = {
-  '/annotations': 'annotation',
-  '/datasets': 'dataset',
-  '/datasets/summary': 'dataset',
-  '/upload': 'upload',
-  '/projects': 'projects',
-}
+const PATH_TO_LEVEL: [RegExp, Level][] = [
+  [/^\/annotations/i, 'annotation'],
+  [/^\/datasets/i, 'dataset'],
+  [/^\/datasets\/summary/i, 'dataset'],
+  [/^\/upload/i, 'upload'],
+  [/^\/datasets\/edit\/.*/i, 'upload'],
+  [/^\/projects/i, 'projects'],
+]
 
 export const getLevel = (path?: string): Level | null => {
-  return path != null && PATH_TO_LEVEL[path.toLowerCase()] || null
+  if (path) {
+    for (const [regex, level] of PATH_TO_LEVEL) {
+      if (regex.test(path)) {
+        return level
+      }
+    }
+  }
+  return null
 }
 
 export const DEFAULT_TABLE_ORDER: SortSettings = {
