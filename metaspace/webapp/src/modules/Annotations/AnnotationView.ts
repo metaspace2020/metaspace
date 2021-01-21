@@ -31,6 +31,7 @@ import MolecularFormula from '../../components/MolecularFormula'
 import '../../components/StatefulIcon.css'
 import LockIcon from '../../assets/inline/refactoring-ui/lock.svg'
 import LocationPinIcon from '../../assets/inline/refactoring-ui/location-pin.svg'
+import FilterIcon from '../../assets/inline/refactoring-ui/filter.svg'
 
 import { useIonImageSettings } from '../ImageViewer/ionImageState'
 import viewerState from '../ImageViewer/state'
@@ -68,6 +69,7 @@ const componentsToRegister: any = {
   ShareLink,
   LockIcon,
   LocationPinIcon,
+  FilterIcon,
   CopyButton,
   MolecularFormula,
 }

@@ -1,6 +1,7 @@
 <template>
   <div class="cell-wrapper">
     <candidate-molecules-popover
+      class="cell-span"
       placement="right"
       :possible-compounds="annotation.possibleCompounds"
       :limit="10"
@@ -8,7 +9,6 @@
       :isobars="annotation.isobars"
     >
       <span
-        class="cell-span"
         v-html="molFormulaHtml"
       />
       <span
@@ -21,12 +21,13 @@
         />
       </span>
     </candidate-molecules-popover>
-    <img
+    <filter-icon
       v-if="!hasCompoundNameFilter"
-      src="../../assets/filter-icon.png"
-      title="Limit results to this molecular formula"
+      class="cell-filter-button"
       @click="handleFilter"
     >
+      <title>Limit results to this molecular formula</title>
+    </filter-icon>
   </div>
 </template>
 
@@ -34,6 +35,7 @@
 import Vue from 'vue'
 import { defineComponent, computed } from '@vue/composition-api'
 
+import FilterIcon from '../../assets/inline/refactoring-ui/filter.svg'
 import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue'
 import { useChannelSwatches } from '../ImageViewer/ionImageState'
 import { renderMolFormulaHtml } from '../../lib/util'
@@ -52,6 +54,7 @@ export default defineComponent({
   name: 'AnnotationTableMolName',
   components: {
     CandidateMoleculesPopover,
+    FilterIcon,
   },
   props: ['annotation'],
   setup(props, { root }) {

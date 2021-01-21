@@ -74,12 +74,13 @@
               <span v-if="props.row.dataset.group">{{ props.row.dataset.group.name }}</span>
               <i v-else>No Group</i>
             </span>
-            <img
+            <filter-icon
               v-if="props.row.dataset.group"
-              src="../../assets/filter-icon.png"
-              title="Limit results to this group"
+              class="cell-filter-button"
               @click="filterGroup(props.row)"
             >
+              <title>Limit results to this group</title>
+            </filter-icon>
           </div>
         </template>
       </el-table-column>
@@ -96,11 +97,12 @@
             <span class="cell-span">
               {{ formatDatasetName(props.row) }}
             </span>
-            <img
-              src="../../assets/filter-icon.png"
-              title="Limit results to this dataset"
+            <filter-icon
+              class="cell-filter-button"
               @click="filterDataset(props.row)"
             >
+              <title>Limit results to this dataset</title>
+            </filter-icon>
           </div>
         </template>
       </el-table-column>
@@ -129,11 +131,12 @@
             <span class="cell-span">
               {{ formatMZ(props.row) }}
             </span>
-            <img
-              src="../../assets/filter-icon.png"
-              title="Limit results to this m/z (with 5 ppm tolerance)"
+            <filter-icon
+              class="cell-filter-button"
               @click="filterMZ(props.row)"
             >
+              <title>Limit results to this m/z</title>
+            </filter-icon>
           </div>
         </template>
       </el-table-column>
@@ -259,6 +262,7 @@
 <script>
 import ProgressButton from './ProgressButton.vue'
 import AnnotationTableMolName from './AnnotationTableMolName.vue'
+import FilterIcon from '../../assets/inline/refactoring-ui/filter.svg'
 import {
   annotationListQuery,
   tableExportQuery,
@@ -301,6 +305,7 @@ export default Vue.extend({
   components: {
     ProgressButton,
     AnnotationTableMolName,
+    FilterIcon,
   },
   props: ['hideColumns'],
   data() {
@@ -790,24 +795,18 @@ export default Vue.extend({
  }
 
  .cell-span {
-   @apply tracking-wide;
-   width: 80%;
+   @apply tracking-wide flex;
  }
 
- .cell-wrapper img {
-   /*
-      don't use display:none because of a TestCafe bug:
-      https://github.com/DevExpress/testcafe/issues/1426
-   */
-   opacity: 0;
-   max-height: 20px;
-   max-width: 20%;
+ .cell-wrapper .cell-filter-button {
+   @apply absolute right-0 self-center fill-current text-blue-500 opacity-0 cursor-pointer;
+   width: 16px;
+   height: 16px;
+   padding: 2px 4px;
  }
 
- .cell-wrapper:hover img {
-   display: inherit;
-   cursor: pointer;
-   opacity: 1;
+ .cell-wrapper:hover .cell-filter-button {
+   @apply opacity-100;
  }
 
  .fdr-legend, .fdr-legend-header {

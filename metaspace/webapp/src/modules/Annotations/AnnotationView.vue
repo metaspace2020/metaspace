@@ -179,7 +179,7 @@
               title="Show in list"
               @click.stop="filterColocalized"
             >
-              <img src="../../assets/filter-icon.svg">
+              <filter-icon class="w-5 h-5" />
             </button>
           </div>
           <component

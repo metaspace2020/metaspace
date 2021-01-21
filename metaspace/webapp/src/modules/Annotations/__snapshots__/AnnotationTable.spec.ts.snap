@@ -76,20 +76,24 @@ exports[`AnnotationTable should match snapshot 1`] = `
           <tr class="el-table__row fdr-10 coloc-80">
             <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
               <div class="cell">
-                <div class="cell-wrapper"><span class="cell-span"><span>Laboratory of European Molecular Biology</span></span> <img src="../../assets/filter-icon.png" title="Limit results to this group"></div>
+                <div class="cell-wrapper"><span class="cell-span"><span>Laboratory of European Molecular Biology</span></span>
+                  <svg-filter-icon class="cell-filter-button"></svg-filter-icon>
+                </div>
               </div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
               <div class="cell">
                 <div class="cell-wrapper"><span class="cell-span">
             Untreated_3_434
-          </span> <img src="../../assets/filter-icon.png" title="Limit results to this dataset"></div>
+          </span>
+                  <svg-filter-icon class="cell-filter-button"></svg-filter-icon>
+                </div>
               </div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
               <div class="cell">
                 <div class="cell-wrapper">
-                  <mock-el-popover trigger="hover" placement="right">
+                  <mock-el-popover trigger="hover" placement="right" class="cell-span">
                     <div slot-key="default">
                       <div class="leading-5 py-2 px-3 font-normal content text-sm text-left">
                         <!---->
@@ -117,10 +121,10 @@ exports[`AnnotationTable should match snapshot 1`] = `
                         </div>
                       </div>
                     </div>
-                    <div slot-key="reference"><span class="cell-span">[C<sub>19</sub>H<sub>18</sub>N<sub>2</sub>O<sub>7</sub>S<sub>2</sub> - H]⁺</span>
+                    <div slot-key="reference"><span>[C<sub>19</sub>H<sub>18</sub>N<sub>2</sub>O<sub>7</sub>S<sub>2</sub> - H]⁺</span>
                       <!---->
                     </div>
-                  </mock-el-popover> <img src="../../assets/filter-icon.png" title="Limit results to this molecular formula">
+                  </mock-el-popover> <svg data-icon="filter" class="cell-filter-button"></svg>
                 </div>
               </div>
             </td>
@@ -128,7 +132,9 @@ exports[`AnnotationTable should match snapshot 1`] = `
               <div class="cell">
                 <div class="cell-wrapper"><span class="cell-span">
             449.0482
-          </span> <img src="../../assets/filter-icon.png" title="Limit results to this m/z (with 5 ppm tolerance)"></div>
+          </span>
+                  <svg-filter-icon class="cell-filter-button"></svg-filter-icon>
+                </div>
               </div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
