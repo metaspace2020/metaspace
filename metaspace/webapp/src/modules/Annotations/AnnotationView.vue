@@ -231,6 +231,7 @@
           name="metadata"
         >
           <dataset-info
+            v-if="activeSections.includes('metadata')"
             :metadata="metadata"
             :current-user="currentUser"
           />
