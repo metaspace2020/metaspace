@@ -222,7 +222,6 @@
             :colormap="colormap"
             :image-loader-settings="imageLoaderSettings"
             :scale-type="scaleType"
-            :peak-chart-data="peakChartData"
             :acquisition-geometry="msAcqGeometry"
           />
         </el-collapse-item>

@@ -1,7 +1,5 @@
-import { renderMolFormulaHtml } from '../../lib/util'
 import DatasetInfo from '../../components/DatasetInfo.vue'
 import ColocalizationSettings from './annotation-widgets/ColocalizationSettings.vue'
-import { annotationQuery } from '../../api/annotation'
 import {
   datasetVisibilityQuery,
   DatasetVisibilityResult,
@@ -86,23 +84,6 @@ for (const category of Object.keys(annotationWidgets)) {
    name: 'annotation-view',
    components: componentsToRegister,
    apollo: {
-     peakChartData: {
-       query: annotationQuery,
-       update: (data: any) => {
-         const { annotation } = data
-         if (annotation != null) {
-           return safeJsonParse(annotation.peakChartData)
-         } else {
-           return null
-         }
-       },
-       variables(): any {
-         return {
-           id: this.annotation.id,
-         }
-       },
-     },
-
      opticalImages: {
        query: opticalImagesQuery,
        variables() {
@@ -145,7 +126,6 @@ export default class AnnotationView extends Vue {
    annotation: any
 
    msAcqGeometry: any
-   peakChartData: any
    opticalImages!: OpticalImage[] | null
    datasetVisibility: DatasetVisibilityResult | null = null
    currentUser: CurrentUserRoleResult | null = null
