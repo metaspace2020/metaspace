@@ -1,5 +1,5 @@
 <template>
-  <el-row class="isotope-images-container">
+  <el-row class="isotope-images-container tour-isotope-images">
     <el-col
       v-for="(img, idx) in isotopeImages"
       :key="annotation.id + idx"
@@ -86,10 +86,8 @@ export default class DiagnosticsImages extends Vue {
 
 <style lang="scss" scoped>
 
-#isotope-images-container {
+.isotope-images-container {
     margin: 10px auto;
-    text-align: center;
-    font-size: 13px;
 }
 
 .small-peak-image {

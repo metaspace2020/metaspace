@@ -28,7 +28,7 @@ exports[`Diagnostics should match snapshot (no isobars) 1`] = `
         </mock-el-popover>
       </div>
     </div>
-    <div class="isotope-images-container el-row">
+    <div class="isotope-images-container tour-isotope-images el-row">
       <div class="el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6">
         <div class="small-peak-image">
           100.0000
@@ -226,7 +226,7 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
         </mock-el-popover>
       </div>
     </div>
-    <div class="isotope-images-container el-row">
+    <div class="isotope-images-container tour-isotope-images el-row">
       <div class="el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6">
         <div class="small-peak-image">
           100.0000
@@ -280,7 +280,7 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
       </mock-el-popover>
     </div>
   </div>
-  <div class="isotope-images-container el-row">
+  <div class="isotope-images-container tour-isotope-images el-row">
     <div class="el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6">
       <div class="small-peak-image">
         100.0000
