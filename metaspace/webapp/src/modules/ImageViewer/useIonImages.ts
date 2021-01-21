@@ -144,7 +144,7 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
         ),
       }
     }
-    return null
+    return { min: 0, max: 0 }
   })
 
   return {
