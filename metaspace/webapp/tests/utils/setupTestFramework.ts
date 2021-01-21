@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import ElementUI from 'element-ui'
+import ElementUI from '../../src/lib/element-ui'
 import registerMockComponent from './registerMockComponent'
 import VueRouter from 'vue-router'
 import registerMockDirective from './registerMockDirective'

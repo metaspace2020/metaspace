@@ -1,5 +1,5 @@
 import { defineComponent, computed } from '@vue/composition-api'
-import { Input } from 'element-ui'
+import { Input } from '../../lib/element-ui'
 
 import * as Form from '../../components/Form'
 

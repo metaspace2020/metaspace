@@ -1,5 +1,5 @@
 import { mount, Stubs, Wrapper } from '@vue/test-utils'
-import ElementUI from 'element-ui'
+import { Button, Checkbox } from '../../lib/element-ui'
 import Vue from 'vue'
 import TransferDatasetsDialog from './TransferDatasetsDialog.vue'
 import router from '../../router'
@@ -38,9 +38,9 @@ describe('TransferDatasetsDialog', () => {
     wrapper.setData({ allDatasets: mockDatasets })
     await Vue.nextTick()
 
-    wrapper.findComponent(ElementUI.Checkbox).trigger('click')
-    wrapper.findAllComponents<ElementUI.Button>(ElementUI.Button)
-      .filter((b: Wrapper<ElementUI.Button>) => b.props().type === 'primary')
+    wrapper.findComponent(Checkbox).trigger('click')
+    wrapper.findAllComponents<Button>(Button)
+      .filter((b: Wrapper<Button>) => b.props().type === 'primary')
       .at(0)
       .trigger('click')
     await Vue.nextTick()

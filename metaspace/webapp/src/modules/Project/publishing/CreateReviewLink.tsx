@@ -1,5 +1,5 @@
 import { defineComponent, reactive, computed } from '@vue/composition-api'
-import { Button } from 'element-ui'
+import { Button } from '../../../lib/element-ui'
 
 import { WorkflowStep } from '../../../components/Workflow'
 import confirmPrompt from '../../../components/confirmPrompt'

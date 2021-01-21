@@ -1,7 +1,7 @@
 import { computed, defineComponent, reactive } from '@vue/composition-api'
 import { useQuery } from '@vue/apollo-composable'
 import { datasetVisibilityQuery, DatasetVisibilityQuery } from '../../../api/dataset'
-import { Popover } from 'element-ui'
+import { Popover } from '../../../lib/element-ui'
 
 const VisibilityBadge = defineComponent({
   props: {

@@ -11,7 +11,7 @@ import { DefaultApolloClient } from '@vue/apollo-composable'
 import apolloClient, { setMaintenanceMessageHandler } from './api/graphqlClient'
 import './useCompositionApi' // https://stackoverflow.com/a/61907559
 
-import ElementUI from 'element-ui'
+import ElementUI from './lib/element-ui'
 import './modules/App/element-overrides.css'
 import locale from 'element-ui/lib/locale/lang/en'
 import './modules/App/tailwind.scss'

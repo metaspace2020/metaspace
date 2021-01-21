@@ -32,6 +32,7 @@ module.exports = {
       'template': 200,
       'ignoreComments': true,
     }],
+    'no-restricted-imports': ['error', {paths: [{name: 'element-ui', message: 'Use src/lib/element-ui instead'}]}],
   },
   'parserOptions': {
     'parser': '@typescript-eslint/parser',

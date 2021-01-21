@@ -1,5 +1,5 @@
 import { defineComponent, reactive } from '@vue/composition-api'
-import { Button, Input } from 'element-ui'
+import { Button, Input } from '../../../lib/element-ui'
 
 import { WorkflowStep } from '../../../components/Workflow'
 import DoiField from '../DoiField'

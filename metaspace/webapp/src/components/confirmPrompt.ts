@@ -3,7 +3,7 @@ import {
   ElMessageBoxOptions,
   MessageBoxCloseAction,
 } from 'element-ui/types/message-box'
-import { MessageBox } from 'element-ui'
+import { MessageBox } from '../lib/element-ui'
 import reportError from '../lib/reportError'
 import './ConfirmAsync.scss'
 

@@ -101,7 +101,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import { Component } from 'vue-property-decorator'
-import { Form } from 'element-ui'
+import { Form } from '../../../lib/element-ui'
 import GoogleButton from './GoogleButton.vue'
 import InterDialogLink from './InterDialogLink'
 import { createAccountByEmail } from '../../../api/auth'
