@@ -113,35 +113,7 @@
         min-width="120"
       >
         <template slot-scope="props">
-          <candidate-molecules-popover
-            placement="right"
-            :possible-compounds="props.row.possibleCompounds"
-            :limit="10"
-            :isomers="props.row.isomers"
-            :isobars="props.row.isobars"
-          >
-            <div class="cell-wrapper">
-              <span
-                class="sf cell-span"
-                v-html="renderMolFormulaHtml(props.row.ion)"
-              />
-              <span
-                v-if="props.row.id in channelSwatches"
-                class="flex"
-              >
-                <i
-                  class="block mt-1 w-3 h-3 mx-1 box-content border border-solid border-gray-400 rounded-full"
-                  :style="{ background: channelSwatches[props.row.id] }"
-                />
-              </span>
-              <img
-                v-if="!filter.compoundName"
-                src="../../assets/filter-icon.png"
-                title="Limit results to this molecular formula"
-                @click="filterMolFormula(props.row)"
-              >
-            </div>
-          </candidate-molecules-popover>
+          <annotation-table-mol-name :annotation="props.row" />
         </template>
       </el-table-column>
 
@@ -285,9 +257,8 @@
 </template>
 
 <script>
-import { renderMolFormulaHtml } from '../../lib/util'
 import ProgressButton from './ProgressButton.vue'
-import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue'
+import AnnotationTableMolName from './AnnotationTableMolName.vue'
 import {
   annotationListQuery,
   tableExportQuery,
@@ -298,9 +269,6 @@ import FileSaver from 'file-saver'
 import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../lib/formatCsvRow'
 import { invert } from 'lodash-es'
 import config from '../../lib/config'
-import { useChannelSwatches } from '../ImageViewer/ionImageState'
-
-const channelSwatches = useChannelSwatches()
 
 // 38 = up, 40 = down, 74 = j, 75 = k
 const KEY_TO_ACTION = {
@@ -332,7 +300,7 @@ export default Vue.extend({
   name: 'AnnotationTable',
   components: {
     ProgressButton,
-    CandidateMoleculesPopover,
+    AnnotationTableMolName,
   },
   props: ['hideColumns'],
   data() {
@@ -350,9 +318,6 @@ export default Vue.extend({
     }
   },
   computed: {
-    channelSwatches() {
-      return channelSwatches.value
-    },
 
     isLoading() {
       return this.$store.state.tableIsLoading
@@ -526,7 +491,6 @@ export default Vue.extend({
       return this.hideColumns.indexOf(columnLabel) >= 0
     },
 
-    renderMolFormulaHtml,
     getRowClass({ row }) {
       const { fdrLevel, colocalizationCoeff } = row
       const fdrClass =
@@ -649,10 +613,6 @@ export default Vue.extend({
 
     filterDataset(row) {
       this.updateFilter({ datasetIds: [row.dataset.id] })
-    },
-
-    filterMolFormula(row) {
-      this.updateFilter({ compoundName: row.sumFormula })
     },
 
     filterMZ(row) {
