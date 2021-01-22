@@ -262,7 +262,7 @@
 <script>
 import ProgressButton from './ProgressButton.vue'
 import AnnotationTableMolName from './AnnotationTableMolName.vue'
-import FilterIcon from '../../assets/inline/refactoring-ui/filter.svg'
+import FilterIcon from '../../assets/inline/filter.svg'
 import {
   annotationListQuery,
   tableExportQuery,

@@ -35,7 +35,7 @@
 import Vue from 'vue'
 import { defineComponent, computed } from '@vue/composition-api'
 
-import FilterIcon from '../../assets/inline/refactoring-ui/filter.svg'
+import FilterIcon from '../../assets/inline/filter.svg'
 import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue'
 import { useChannelSwatches } from '../ImageViewer/ionImageState'
 import { renderMolFormulaHtml } from '../../lib/util'

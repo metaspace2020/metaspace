@@ -179,7 +179,7 @@
               title="Show in list"
               @click.stop="filterColocalized"
             >
-              <filter-icon class="w-5 h-5" />
+              <filter-icon class="w-5 h-5 fill-current" />
             </button>
           </div>
           <component
