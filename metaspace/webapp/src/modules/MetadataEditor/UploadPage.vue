@@ -97,15 +97,16 @@ import UppyUploader from '../../components/UppyUploader/UppyUploader.vue'
 import MetadataEditor from './MetadataEditor.vue'
 import HelpDialog from './HelpDialog.vue'
 
+import '../../components/MonoIcon.css'
+import AddIcon from '../../assets/inline/refactoring-ui/add.svg'
+
 import { createDatasetQuery } from '../../api/dataset'
 import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system'
 import get from 'lodash-es/get'
 import { currentUserIdQuery } from '../../api/user'
 import reportError from '../../lib/reportError'
 import { getS3Bucket } from '../../lib/util'
-
-import '../../components/MonoIcon.css'
-import AddIcon from '../../assets/inline/refactoring-ui/add.svg'
+import config from '../../lib/config'
 
 const createInputPath = (url, uuid) => {
   const parsedUrl = new URL(url)
