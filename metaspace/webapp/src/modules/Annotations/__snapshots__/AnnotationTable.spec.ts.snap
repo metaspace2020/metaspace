@@ -76,18 +76,14 @@ exports[`AnnotationTable should match snapshot 1`] = `
           <tr class="el-table__row fdr-10 coloc-80">
             <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
               <div class="cell">
-                <div class="cell-wrapper"><span class="cell-span"><span>Laboratory of European Molecular Biology</span></span>
-                  <svg-filter-icon class="cell-filter-button"></svg-filter-icon>
-                </div>
+                <div class="cell-wrapper"><span class="cell-span"><span>Laboratory of European Molecular Biology</span></span> <svg data-icon="filter" class="cell-filter-button"></svg></div>
               </div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
               <div class="cell">
                 <div class="cell-wrapper"><span class="cell-span">
             Untreated_3_434
-          </span>
-                  <svg-filter-icon class="cell-filter-button"></svg-filter-icon>
-                </div>
+          </span> <svg data-icon="filter" class="cell-filter-button"></svg></div>
               </div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
@@ -132,9 +128,7 @@ exports[`AnnotationTable should match snapshot 1`] = `
               <div class="cell">
                 <div class="cell-wrapper"><span class="cell-span">
             449.0482
-          </span>
-                  <svg-filter-icon class="cell-filter-button"></svg-filter-icon>
-                </div>
+          </span> <svg data-icon="filter" class="cell-filter-button"></svg></div>
               </div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
