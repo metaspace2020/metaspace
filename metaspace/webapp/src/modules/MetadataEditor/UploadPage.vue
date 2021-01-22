@@ -64,17 +64,20 @@
               </div>
             </div>
             <div
-              v-loading="loading"
+              v-loading="status === 'LOADING'"
               class="el-col el-col-18"
             >
               <div class="md-form-field">
                 <uppy-uploader
                   :key="storageKey.uuid"
-                  :disabled="isSubmitting"
+                  :disabled="status === 'SUBMITTING'"
                   :required-file-types="['imzML', 'ibd']"
                   :s3-options="s3Options"
                   :options="uppyOptions"
-                  @complete="onUpload"
+                  @file-added="onFileAdded"
+                  @file-removed="onFileRemoved"
+                  @upload="onUploadStart"
+                  @complete="onUploadComplete"
                 />
               </div>
             </div>
@@ -212,9 +215,8 @@ export default {
   },
   data() {
     return {
-      loading: false,
+      status: 'INIT',
       validationErrors: [],
-      isSubmitting: false,
       storageKey: {
         uuid: null,
         uuidSignature: null,
@@ -235,7 +237,7 @@ export default {
     },
 
     enableSubmit() {
-      return this.uuid != null && !this.isSubmitting
+      return this.status === 'UPLOADED'
     },
 
     isTourRunning() {
@@ -272,7 +274,7 @@ export default {
 
   methods: {
     async fetchStorageKey() {
-      this.loading = true
+      this.status = 'LOADING'
       try {
         const response = await fetch(`${this.uploadEndpoint}/s3/uuid`)
         if (response.status < 200 || response.status >= 300) {
@@ -284,8 +286,38 @@ export default {
       } catch (e) {
         reportError(e)
       } finally {
-        this.loading = false
+        this.status = 'READY'
       }
+    },
+
+    onFileAdded(file) {
+      const { name } = file
+      const dsName = name.slice(0, name.lastIndexOf('.'))
+      Vue.nextTick(() => {
+        this.$refs.editor.fillDatasetName(dsName)
+      })
+    },
+
+    onFileRemoved() {
+      this.status = 'READY'
+    },
+
+    onUploadStart() {
+      this.status = 'UPLOADING'
+    },
+
+    onUploadComplete(result) {
+      if (result.failed.length) {
+        reportError()
+        this.status = 'READY'
+        return
+      }
+
+      const [file] = result.successful
+      const { extension, uploadURL } = file
+
+      this.inputPath = createInputPath(uploadURL, this.uuid)
+      this.status = 'UPLOADED'
     },
 
     onSubmit() {
@@ -296,27 +328,10 @@ export default {
       }
     },
 
-    onUpload(result) {
-      if (result.failed.length) {
-        reportError()
-        return
-      }
-
-      const [file] = result.successful
-      const { name, extension, uploadURL } = file
-
-      this.inputPath = createInputPath(uploadURL, this.uuid)
-
-      const dsName = name.slice(0, name.lastIndexOf('.'))
-      Vue.nextTick(() => {
-        this.$refs.editor.fillDatasetName(dsName)
-      })
-    },
-
     async onFormSubmit(_, metadataJson, metaspaceOptions) {
       // Prevent duplicate submissions if user double-clicks
-      if (this.isSubmitting) return
-      this.isSubmitting = true
+      if (this.status === 'SUBMITTING') return
+      this.status = 'SUBMITTING'
 
       try {
         await this.$apollo.mutate({
@@ -373,7 +388,9 @@ export default {
           throw err
         }
       } finally {
-        this.isSubmitting = false
+        if (this.status === 'SUBMITTING') { // i.e. if unsuccessful
+          this.status = 'UPLOADED'
+        }
       }
     },
 

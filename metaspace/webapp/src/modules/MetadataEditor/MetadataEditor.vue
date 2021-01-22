@@ -134,6 +134,7 @@ export default {
       submitter: null,
       initialValue: null,
       initialMetaspaceOptions: null,
+      autoDatasetName: null,
     }
   },
 
@@ -474,7 +475,9 @@ export default {
 
     /* for outside access from the upload page, to autofill it with the filename */
     fillDatasetName(name) {
-      this.metaspaceOptions.name = name
+      if (!this.metaspaceOptions.name || this.metaspaceOptions.name === this.autoDatasetName) {
+        this.metaspaceOptions.name = this.autoDatasetName = name
+      }
     },
   },
 }

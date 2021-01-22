@@ -75,8 +75,15 @@ const UppyUploader = defineComponent<Props>({
     preventDropEvents()
 
     const uppy = Uppy({ ...props.options, store: createStore() })
+      .on('file-added', (file) => {
+        emit('file-added', file)
+      })
+      .on('file-removed', (file) => {
+        emit('file-removed', file)
+      })
       .on('upload', () => {
         state.status = 'UPLOADING'
+        emit('upload')
       })
       .on('upload-error', (...args) => {
         console.log(args)
