@@ -8,9 +8,8 @@
       :isomers="annotation.isomers"
       :isobars="annotation.isobars"
     >
-      <span
-        v-html="molFormulaHtml"
-      />
+      <molecular-formula :ion="annotation.ion" />
+
       <span
         v-if="annotation.id in channelSwatches"
         class="flex"
@@ -38,8 +37,8 @@ import { defineComponent, computed } from '@vue/composition-api'
 import FilterIcon from '../../assets/inline/filter.svg'
 import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue'
 import { useChannelSwatches } from '../ImageViewer/ionImageState'
-import { renderMolFormulaHtml } from '../../lib/util'
 import useFilter from '../../lib/useFilter'
+import MolecularFormula from '../../components/MolecularFormula'
 
 const channelSwatches = useChannelSwatches()
 
@@ -54,18 +53,17 @@ export default defineComponent({
   name: 'AnnotationTableMolName',
   components: {
     CandidateMoleculesPopover,
+    MolecularFormula,
     FilterIcon,
   },
   props: ['annotation'],
   setup(props, { root }) {
     const compoundNameFilter = useFilter(root.$store, 'compoundName')
     const hasCompoundNameFilter = computed(() => compoundNameFilter.value != null)
-    const molFormulaHtml = computed(() => renderMolFormulaHtml(props.annotation.ion))
     const handleFilter = () => { compoundNameFilter.value = props.annotation.sumFormula }
 
     return {
       hasCompoundNameFilter,
-      molFormulaHtml,
       channelSwatches,
       handleFilter,
     }
