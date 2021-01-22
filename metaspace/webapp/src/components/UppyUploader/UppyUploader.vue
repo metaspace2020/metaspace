@@ -122,16 +122,17 @@ const UppyUploader = defineComponent<Props>({
     const files = computed(() => {
       const files = uppy.getFiles()
       if (props.requiredFileTypes) {
-        return props.requiredFileTypes.map(ext => {
-          const matchingFile = files.find(f => f.extension === ext)
-          return {
-            id: matchingFile?.id,
-            name: matchingFile?.name,
-            extension: ext,
-            progress: matchingFile?.progress?.percentage,
-            status: getFileStatus(matchingFile),
-          }
-        })
+        return props.requiredFileTypes
+          .map(ext => {
+            const matchingFile = files.find(f => f.extension.toLowerCase() === ext.toLowerCase())
+            return {
+              id: matchingFile?.id,
+              name: matchingFile?.name,
+              extension: matchingFile?.extension || ext,
+              progress: matchingFile?.progress?.percentage,
+              status: getFileStatus(matchingFile),
+            }
+          })
       }
       return files.map(f => ({
         id: f.id,
