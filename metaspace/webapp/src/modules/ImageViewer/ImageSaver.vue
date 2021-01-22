@@ -13,7 +13,7 @@
 import { defineComponent } from '@vue/composition-api'
 import domtoimage from 'dom-to-image-google-font-issue'
 import { saveAs } from 'file-saver'
-import { MessageBox } from 'element-ui'
+import { MessageBox } from '../../lib/element-ui'
 
 import '../../components/MiniIcon.css'
 import PhotoIcon from '../../assets/inline/refactoring-ui/photo.svg'

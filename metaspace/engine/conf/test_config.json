@@ -26,7 +26,9 @@
     "img_service_url": "http://localhost:4201",
     "off_sample": "http://localhost:9876/off-sample",
     "send_email": false,
-    "update_daemon_threads": 1
+    "update_daemon_threads": 1,
+    "colocalization": true,
+    "ion_thumbnail": true
   },
   "fs": {
     "data_path": "/tmp/abc",
@@ -37,6 +39,25 @@
     "master": "local[4]",
     "executor.memory": "2g",
     "spark.sql.execution.arrow.enabled": true
+  },
+  "lithops": {
+    "lithops": {
+      "storage_bucket": "lithops_temp",
+      "storage": "localhost",
+      "mode": "serverless",
+      "include_modules": ["engine/sm"],
+      "data_cleaner": true,
+      "data_limit": false,
+      "workers": 2
+    },
+    "localhost": {
+    },
+    "sm_storage": {
+      "imzml": ["lithops_test", "imzml"],
+      "moldb": ["lithops_test", "moldb"],
+      "centroids": ["lithops_test", "centroids"],
+      "pipeline_cache": ["lithops_test", "pipeline_cache"]
+    }
   },
   "aws": {
     "aws_access_key_id": "",
@@ -81,23 +102,28 @@
             "class": "logging.StreamHandler",
             "formatter": "sm",
             "level": "DEBUG"
+        },
+        "context_logger": {
+            "class": "sm.engine.utils.log_capture.ContextLogHandler",
+            "formatter": "sm",
+            "level": "INFO"
         }
+    },
+    "root": {
+      "handlers": ["console_debug", "context_logger"],
+      "level": "WARNING"
     },
     "loggers": {
         "engine": {
-            "handlers": ["console_debug"],
             "level": "INFO"
         },
         "api": {
-            "handlers": ["console_debug"],
             "level": "INFO"
         },
         "update-daemon": {
-            "handlers": ["console_debug"],
             "level": "INFO"
         },
         "annotate-daemon": {
-            "handlers": ["console_debug"],
             "level": "INFO"
         }
     }
@@ -106,9 +132,7 @@
     "adducts": {
       "+": ["+H", "+Na", "+K"],
       "-": ["-H", "+Cl" ]
-    }
-  },
-  "colocalization": {
-    "enabled": true
+    },
+    "moldb_names": ["HMDB-v2.5"]
   }
 }

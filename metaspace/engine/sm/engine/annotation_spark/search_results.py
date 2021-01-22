@@ -1,6 +1,6 @@
 import json
-from collections import OrderedDict
 import logging
+from collections import OrderedDict
 
 from sm.engine.ion_mapping import get_ion_id_mapping
 from sm.engine.png_generator import PngGenerator
@@ -52,6 +52,9 @@ class SearchResults:
         for _, row in metr_df.iterrows():
             m = OrderedDict((name, row[name]) for name in self.metric_names)
             metr_json = json.dumps(m)
+            if row.formula_i not in formula_img_ids:
+                print(row)
+                print(formula_img_ids)
             image_ids = formula_img_ids[row.formula_i]['iso_image_ids']
             yield (
                 job_id,
@@ -80,7 +83,7 @@ class SearchResults:
         db.insert(METRICS_INS, list(rows))
 
     def store(self, metrics_df, formula_images_rdd, alpha_channel, db, img_store, img_store_type):
-        """ Save formula metrics and images
+        """Save formula metrics and images
 
         Args
         ---------
@@ -92,7 +95,7 @@ class SearchResults:
             Image alpha channel (2D, 0..1)
         db : sm.engine.DB
             database connection
-        img_store : sm.engine.png_generator.ImageStoreServiceWrapper
+        img_store : sm.engine.image_store.ImageStoreServiceWrapper
             m/z image store
         img_store_type: str
         """

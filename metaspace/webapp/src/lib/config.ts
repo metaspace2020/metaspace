@@ -24,6 +24,7 @@ interface Features {
   moldb_limit_ext: boolean;
   multiple_ion_images: boolean;
   lock_intensity: boolean;
+  lithops: boolean;
 }
 
 interface ClientConfig {
@@ -70,6 +71,7 @@ const defaultConfig: ClientConfig = {
     moldb_limit_ext: false,
     multiple_ion_images: false,
     lock_intensity: false,
+    lithops: false,
   },
 }
 

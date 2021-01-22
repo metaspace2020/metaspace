@@ -47,6 +47,25 @@
     "spark.ui.showConsoleProgress": false,
     "spark.sql.execution.arrow.enabled": true
   },
+  "lithops": {
+    "lithops": {
+      "storage_bucket": "metaspace-sci-test",
+      "storage": "localhost",
+      "mode": "localhost",
+      "include_modules": ["engine/sm"],
+      "data_cleaner": true,
+      "data_limit": false,
+      "workers": 2
+    },
+    "localhost": {
+    },
+    "sm_storage": {
+      "imzml": ["metaspace-sci-test", "imzml"],
+      "moldb": ["metaspace-sci-test", "moldb"],
+      "centroids": ["metaspace-sci-test", "centroids"],
+      "pipeline_cache": ["metaspace-sci-test", "pipeline_cache"]
+    }
+  },
   "aws": {
     "aws_access_key_id": "",
     "aws_secret_access_key": "",
@@ -79,7 +98,7 @@
         "name": "LcmsGeometryFactory",
         "path": "sm.engine.lcms_geometry_factory"
       },
-      "img_storage_type": "fs"
+      "img_storage_type": "db"
   }],
   "isotope_storage": {
     "path": "/tmp/isotope_storage"
@@ -96,11 +115,16 @@
             "class": "logging.StreamHandler",
             "formatter": "sm",
             "level": "DEBUG"
+        },
+        "context_logger": {
+            "class": "sm.engine.utils.log_capture.ContextLogHandler",
+            "formatter": "sm",
+            "level": "INFO"
         }
     },
     "root": {
-        "handlers": ["console_debug"],
-        "level": "INFO"
+      "handlers": ["console_debug", "context_logger"],
+      "level": "WARNING"
     },
     "loggers": {
         "engine": {
@@ -108,6 +132,9 @@
         },
         "engine.db": {
             "level": "INFO"
+        },
+        "engine.lithops-wrapper": {
+            "level": "DEBUG"
         },
         "api": {
             "level": "INFO"
@@ -117,6 +144,12 @@
         },
         "update-daemon": {
             "level": "INFO"
+        },
+        "lithops-daemon": {
+            "level": "INFO"
+        },
+        "lithops": {
+            "level": "INFO"
         }
     }
   },
@@ -124,6 +157,7 @@
     "adducts": {
       "+": ["+H", "+Na", "+K"],
       "-": ["-H", "+Cl" ]
-    }
+    },
+    "moldb_names": ["HMDB-v2.5"]
   }
 }

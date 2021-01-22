@@ -2,11 +2,15 @@
 import logging
 from io import BytesIO
 from itertools import combinations
+from typing import Dict
 
 import numpy as np
 import png
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
+from sm.engine.image_store import ImageStoreServiceWrapper
+from sm.engine.annotation_lithops.executor import Executor
+from sm.engine.dataset import Dataset
 
 ISO_IMAGE_SEL = (
     "SELECT iso_image_ids[1] "
@@ -22,19 +26,19 @@ THUMB_SEL = "SELECT ion_thumbnail FROM dataset WHERE id = %s"
 THUMB_UPD = "UPDATE dataset SET ion_thumbnail = %s WHERE id = %s"
 
 ALGORITHMS = {
-    'smart-image-medoid': lambda *args: _make_thumbnail_from_minimally_overlapping_image_clusters(
-        *args, use_centroids=False
+    'smart-image-medoid': lambda i, m, h, w: _thumb_from_minimally_overlapping_image_clusters(
+        i, m, h, w, use_centroids=False
     ),
-    'smart-image-centroid': lambda *args: _make_thumbnail_from_minimally_overlapping_image_clusters(
-        *args, use_centroids=True
+    'smart-image-centroid': lambda i, m, h, w: _thumb_from_minimally_overlapping_image_clusters(
+        i, m, h, w, use_centroids=True
     ),
-    'image-medoid': lambda *args: _make_thumbnail_from_image_clusters(*args, use_centroids=False),
-    'image-centroid': lambda *args: _make_thumbnail_from_image_clusters(*args, use_centroids=True),
-    'pixel-mean-intensity': lambda *args: _make_thumbnail_from_pixel_clusters(
-        *args, use_distance_from_centroid=False
+    'image-medoid': lambda i, m, h, w: _thumb_from_image_clusters(i, m, h, w, use_centroids=False),
+    'image-centroid': lambda i, m, h, w: _thumb_from_image_clusters(i, m, h, w, use_centroids=True),
+    'pixel-mean-intensity': lambda i, m, h, w: _thumb_from_pixel_clusters(
+        i, m, h, w, use_distance_from_centroid=False
     ),
-    'pixel-distance': lambda *args: _make_thumbnail_from_pixel_clusters(
-        *args, use_distance_from_centroid=True
+    'pixel-distance': lambda i, m, h, w: _thumb_from_pixel_clusters(
+        i, m, h, w, use_distance_from_centroid=True
     ),
 }
 DEFAULT_ALGORITHM = 'image-centroid'
@@ -79,7 +83,7 @@ def _sort_by_centralness(images, h, w):
     return images[np.argsort(centralness)]
 
 
-def _make_thumbnail_from_minimally_overlapping_image_clusters(images, mask, h, w, use_centroids):
+def _thumb_from_minimally_overlapping_image_clusters(images, mask, h, w, use_centroids):
     if len(images) > 3:
         good_images = _get_good_images(images, mask)
         kmeans = KMeans(min(10, len(images)))
@@ -104,7 +108,7 @@ def _make_thumbnail_from_minimally_overlapping_image_clusters(images, mask, h, w
     return np.dstack([*(sample.reshape(h, w) for sample in samples), mask])
 
 
-def _make_thumbnail_from_image_clusters(images, mask, h, w, use_centroids):
+def _thumb_from_image_clusters(images, mask, h, w, use_centroids):
     if len(images) > 3:
         good_images = _get_good_images(images, mask)
         kmeans = KMeans(3)
@@ -126,7 +130,7 @@ def _make_thumbnail_from_image_clusters(images, mask, h, w, use_centroids):
     return np.dstack([*(sample.reshape(h, w) for sample in samples), mask])
 
 
-def _make_thumbnail_from_pixel_clusters(images, mask, h, w, use_distance_from_centroid=False):
+def _thumb_from_pixel_clusters(images, mask, h, w, use_distance_from_centroid=False):
     """ Alternate implementation. Results are sharper, but noisier """
     # 6-color
     # colors = np.array([[1, 0, 1, 0], [1, 0, 0, 0], [1, 1, 0, 0],
@@ -167,17 +171,12 @@ def _make_thumbnail_from_pixel_clusters(images, mask, h, w, use_distance_from_ce
     return unmasked_pixel_vals.reshape((h, w, 4))
 
 
-def _generate_ion_thumbnail_image(db, img_store, ds_id, algorithm):
-    annotation_rows = db.select(ISO_IMAGE_SEL, [ds_id])
-    if not annotation_rows:
-        logger.warning('Could not create ion thumbnail - no annotations found')
-        return None
-
+def _generate_ion_thumbnail_image(annotation_rows, img_store, ion_img_storage_type, algorithm):
     image_ids = [image_id for image_id, in annotation_rows]
 
     # Hotspot percentile is lowered as a lazy way to brighten images
     images, mask, (h, w) = img_store.get_ion_images_for_analysis(
-        'fs', image_ids, max_size=(200, 200), hotspot_percentile=90
+        ion_img_storage_type, image_ids, max_size=(200, 200), hotspot_percentile=90
     )
 
     logger.debug(f'Generating ion thumbnail: {algorithm}({len(images)} x {h} x {w}) ')
@@ -195,20 +194,72 @@ def _save_ion_thumbnail_image(img_store, thumbnail):
     return img_store.post_image('fs', 'ion_thumbnail', fp)
 
 
-def generate_ion_thumbnail(db, img_store, ds_id, only_if_needed=False, algorithm=DEFAULT_ALGORITHM):
+def generate_ion_thumbnail(db, img_store, ds, only_if_needed=False, algorithm=DEFAULT_ALGORITHM):
     try:
-        (existing_thumb_id,) = db.select_one(THUMB_SEL, [ds_id])
+        (existing_thumb_id,) = db.select_one(THUMB_SEL, [ds.id])
 
         if existing_thumb_id and only_if_needed:
             return
 
-        thumbnail = _generate_ion_thumbnail_image(db, img_store, ds_id, algorithm)
+        annotation_rows = db.select(ISO_IMAGE_SEL, [ds.id])
 
-        if thumbnail is None:
+        if not annotation_rows:
+            logger.warning('Could not create ion thumbnail - no annotations found')
             return
 
+        thumbnail = _generate_ion_thumbnail_image(
+            annotation_rows, img_store, ds.ion_img_storage_type, algorithm
+        )
+
         image_id = _save_ion_thumbnail_image(img_store, thumbnail)
-        db.alter(THUMB_UPD, [image_id, ds_id])
+        db.alter(THUMB_UPD, [image_id, ds.id])
+
+        if existing_thumb_id:
+            img_store.delete_image_by_id('fs', 'ion_thumbnail', existing_thumb_id)
+
+    except Exception:
+        logger.error('Error generating ion thumbnail image', exc_info=True)
+
+
+def generate_ion_thumbnail_lithops(
+    executor: Executor,
+    db,
+    sm_config: Dict,
+    ds: Dataset,
+    only_if_needed=False,
+    algorithm=DEFAULT_ALGORITHM,
+):
+    img_service_private_url = sm_config['services']['img_service_url']
+    img_service_public_url = sm_config['services']['img_service_public_url']
+    ion_img_storage_type = ds.ion_img_storage_type
+
+    def generate(annotation_rows):
+        # Use web_app_url to get the publicly-exposed storage server address, because
+        # Functions can't use the private address
+        public_img_store = ImageStoreServiceWrapper(img_service_public_url)
+        return _generate_ion_thumbnail_image(
+            annotation_rows, public_img_store, ion_img_storage_type, algorithm
+        )
+
+    try:
+        (existing_thumb_id,) = db.select_one(THUMB_SEL, [ds.id])
+
+        if existing_thumb_id and only_if_needed:
+            return
+
+        annotation_rows = db.select(ISO_IMAGE_SEL, [ds.id])
+
+        if not annotation_rows:
+            logger.warning('Could not create ion thumbnail - no annotations found')
+            return
+
+        thumbnail = executor.call(
+            generate, (annotation_rows,), runtime_memory=2048, include_modules=['png']
+        )
+
+        img_store = ImageStoreServiceWrapper(img_service_private_url)
+        image_id = _save_ion_thumbnail_image(img_store, thumbnail)
+        db.alter(THUMB_UPD, [image_id, ds.id])
 
         if existing_thumb_id:
             img_store.delete_image_by_id('fs', 'ion_thumbnail', existing_thumb_id)

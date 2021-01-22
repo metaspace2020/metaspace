@@ -244,6 +244,29 @@ CREATE INDEX "annotation_job_id_index" ON "public"."annotation" (
   "job_id"
 ) ;
 
+CREATE TABLE "public"."perf_profile" (
+  "id" SERIAL NOT NULL, 
+  "task_type" text NOT NULL, 
+  "ds_id" text, 
+  "start" TIMESTAMP NOT NULL, 
+  "finish" TIMESTAMP, 
+  "extra_data" json, 
+  "logs" text, 
+  "error" text, 
+  CONSTRAINT "PK_a180e81bc8817e395daf8a5f8ef" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "public"."perf_profile_entry" (
+  "id" SERIAL NOT NULL, 
+  "profile_id" integer NOT NULL, 
+  "sequence" integer NOT NULL, 
+  "start" TIMESTAMP NOT NULL, 
+  "finish" TIMESTAMP NOT NULL, 
+  "name" text NOT NULL, 
+  "extra_data" json, 
+  CONSTRAINT "PK_729ef8c877e7facd61d75e754e9" PRIMARY KEY ("id")
+);
+
 CREATE TABLE "graphql"."image_viewer_snapshot" (
   "id" text NOT NULL, 
   "dataset_id" text NOT NULL, 
@@ -327,5 +350,13 @@ ALTER TABLE "public"."annotation" ADD CONSTRAINT "FK_bfed30991918671d59fc1f5d5e4
 ALTER TABLE "public"."annotation" ADD CONSTRAINT "FK_665acc421d80b12a4738e4a175d" FOREIGN KEY (
   "ion_id") REFERENCES "graphql"."ion"("id"
 ) ON DELETE SET NULL ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."perf_profile" ADD CONSTRAINT "FK_cea05d4819bacc949a4236b4a8d" FOREIGN KEY (
+  "ds_id") REFERENCES "public"."dataset"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."perf_profile_entry" ADD CONSTRAINT "FK_67cf1a415a181173f111690c70a" FOREIGN KEY (
+  "profile_id") REFERENCES "public"."perf_profile"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
 
 

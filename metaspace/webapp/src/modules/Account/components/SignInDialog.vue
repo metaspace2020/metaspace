@@ -97,7 +97,7 @@
 import Vue from 'vue'
 import { Component, Watch } from 'vue-property-decorator'
 import VueSlideUpDown from 'vue-slide-up-down'
-import { Form } from 'element-ui'
+import { Form } from '../../../lib/element-ui'
 import GoogleButton from './GoogleButton.vue'
 import InterDialogLink from './InterDialogLink'
 import { signInByEmail } from '../../../api/auth'

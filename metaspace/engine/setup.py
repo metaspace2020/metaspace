@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-from sm import __version__
+from sm.engine import __version__
 
 setup(
     name='sm',

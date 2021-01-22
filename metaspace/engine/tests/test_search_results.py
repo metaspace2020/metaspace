@@ -9,8 +9,12 @@ from scipy.sparse import coo_matrix
 
 from sm.engine.db import DB
 from sm.engine.ion_mapping import ION_SEL
-from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.search_results import SearchResults, METRICS_INS, post_images_to_image_store
+from sm.engine.image_store import ImageStoreServiceWrapper
+from sm.engine.annotation_spark.search_results import (
+    SearchResults,
+    METRICS_INS,
+    post_images_to_image_store,
+)
 
 db_mock = MagicMock(spec=DB)
 

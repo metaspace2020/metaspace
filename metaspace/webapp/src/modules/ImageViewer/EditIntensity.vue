@@ -1,6 +1,6 @@
 <template>
   <form
-    ref="container"
+    ref="containerRef"
     class="relative"
     spellcheck="false"
     autocomplete="off"

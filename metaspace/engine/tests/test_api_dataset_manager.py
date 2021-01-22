@@ -9,17 +9,18 @@ from sm.engine.es_export import ESExporter
 from sm.engine.queue import QueuePublisher
 from sm.rest.dataset_manager import SMapiDatasetManager
 from sm.rest.dataset_manager import DatasetActionPriority, DatasetStatus
-from sm.engine.png_generator import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.optical_image import OpticalImageType
 from tests.utils import create_test_ds
 
 
 def create_api_ds_man(
-    es=None, img_store=None, annot_queue=None, update_queue=None, status_queue=None
+    es=None, img_store=None, annot_queue=None, update_queue=None, lit_queue=None, status_queue=None
 ):
     es_mock = es or MagicMock(spec=ESExporter)
     annot_queue_mock = annot_queue or MagicMock(QueuePublisher)
     update_queue_mock = update_queue or MagicMock(QueuePublisher)
+    lit_queue_mock = lit_queue or MagicMock(QueuePublisher)
     status_queue_mock = status_queue or MagicMock(QueuePublisher)
     img_store_mock = img_store or MagicMock(spec=ImageStoreServiceWrapper)
 
@@ -29,6 +30,7 @@ def create_api_ds_man(
         image_store=img_store_mock,
         annot_queue=annot_queue_mock,
         update_queue=update_queue_mock,
+        lit_queue=lit_queue_mock,
         status_queue=status_queue_mock,
     )
 
@@ -65,7 +67,7 @@ def create_ds_doc(
         status=status,
         moldb_ids=moldb_ids,
         adducts=adducts,
-        img_storage_type='fs',
+        ion_img_storage_type='fs',
         is_public=True,
     )
 
@@ -78,7 +80,7 @@ class TestSMapiDatasetManager:
         ds_id = '2000-01-01'
         ds_doc = create_ds_doc(ds_id=ds_id)
 
-        ds_man.add(ds_doc, priority=DatasetActionPriority.HIGH)
+        ds_man.add(ds_doc, use_lithops=False, priority=DatasetActionPriority.HIGH)
 
         msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'action': DaemonAction.ANNOTATE}
         action_queue_mock.publish.assert_has_calls([call(msg, DatasetActionPriority.HIGH)])

@@ -135,6 +135,7 @@ export const createTestMolecularDB = async (molecularDb: Partial<MolecularDB> = 
     description: 'Database description',
     link: 'http://example.org',
     citation: 'citation string',
+    createdDT: moment.utc(),
     ...molecularDb
   }) as MolecularDB;
 };

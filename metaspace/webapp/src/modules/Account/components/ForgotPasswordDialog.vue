@@ -41,7 +41,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import { Component } from 'vue-property-decorator'
-import { Form } from 'element-ui'
+import { Form } from '../../../lib/element-ui'
 import InterDialogLink from './InterDialogLink'
 import { sendPasswordResetToken } from '../../../api/auth'
 import reportError from '../../../lib/reportError'

@@ -5,6 +5,7 @@ import DatasetInfo from '../../../components/DatasetInfo.vue'
 import DownloadDialog from './DownloadDialog'
 import reportError from '../../../lib/reportError'
 import { formatDatabaseLabel } from '../../MolecularDatabases/formatting'
+import config from '../../../lib/config'
 
 const DatasetItemActions = defineComponent({
   name: 'DatasetItemActions',
@@ -59,7 +60,7 @@ const DatasetItemActions = defineComponent({
           mutation: reprocessDatasetQuery,
           variables: {
             id: props.dataset.id,
-            force: true,
+            useLithops: config.features.lithops,
           },
         })
         $notify.success('Dataset sent for reprocessing')

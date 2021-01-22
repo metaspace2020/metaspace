@@ -1,6 +1,3 @@
-from pyopenms import FileHandler, MSExperiment  # pylint: disable=no-name-in-module
-
-
 class MzMLParser:
     def __init__(self, filename):
         self.experiment = self.read_ms1_experiment(filename)
@@ -8,6 +5,9 @@ class MzMLParser:
 
     @staticmethod
     def read_ms1_experiment(filepath):
+        # pylint: disable=import-outside-toplevel,no-name-in-module,import-error
+        from pyopenms import FileHandler, MSExperiment
+
         source_experiment = MSExperiment()
         file_handler = FileHandler()
         # bytes is required by `loadExperiment()` called below

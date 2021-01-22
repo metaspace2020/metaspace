@@ -33,7 +33,7 @@ input_dir_path = str(Path(__file__).parent.parent / 'tests/data/imzml_example_ds
 @pytest.fixture(scope='module')
 def local_sm_config(sm_config):
     local_sm_config = sm_config
-    local_sm_config['colocalization']['enabled'] = False
+    local_sm_config['services']['colocalization'] = False
     return local_sm_config
 
 
@@ -89,7 +89,7 @@ def queue_pub(local_sm_config):
 
 def run_daemons(db, es, sm_config):
     from sm.engine.queue import QueuePublisher, SM_DS_STATUS, SM_ANNOTATE, SM_UPDATE
-    from sm.engine.png_generator import ImageStoreServiceWrapper
+    from sm.engine.image_store import ImageStoreServiceWrapper
     from sm.engine.sm_daemons import DatasetManager, SMAnnotateDaemon, SMIndexUpdateDaemon
 
     status_queue_pub = QueuePublisher(
@@ -116,7 +116,7 @@ def run_daemons(db, es, sm_config):
     update_daemon.stop()
 
 
-@patch('sm.engine.search_results.post_images_to_image_store')
+@patch('sm.engine.annotation_spark.search_results.post_images_to_image_store')
 @patch(
     'sm.engine.colocalization.ImageStoreServiceWrapper.get_ion_images_for_analysis',
     return_value=get_ion_images_for_analysis_mock_return,
@@ -253,7 +253,7 @@ def test_sm_daemons(
         assert doc['_id'].startswith(ds_id)
 
 
-@patch('sm.engine.search_results.post_images_to_image_store')
+@patch('sm.engine.annotation_spark.search_results.post_images_to_image_store')
 @patch('sm.engine.annotation_spark.annotation_job.MSMSearch')
 def test_sm_daemons_annot_fails(
     MSMSearchMock,
@@ -298,7 +298,7 @@ def test_sm_daemons_annot_fails(
     assert row[0] == 'FAILED'
 
 
-@patch('sm.engine.search_results.post_images_to_image_store')
+@patch('sm.engine.annotation_spark.search_results.post_images_to_image_store')
 @patch('sm.engine.annotation_spark.annotation_job.MSMSearch')
 def test_sm_daemon_es_export_fails(
     MSMSearchMock,

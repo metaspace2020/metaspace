@@ -1,0 +1,6 @@
+numpy
+matplotlib
+boto3
+fastapi
+uvicorn
+pyimzml

@@ -32,12 +32,15 @@
   },
   "services": {
     "img_service_url": "http://graphql:4201",
+    "img_service_public_url:comment": "This is needed for lithops colocalization/ion thumbnails when running in IBM Cloud. You can use use ngrok.io to make a publicly-accessible URL to your local graphql server",
+    "img_service_public_url": "http://graphql:4201",
     "off_sample": false,
-    "web_app_url": "http://nginx:8999",
+    "web_app_url": "http://localhost:8999",
     "send_email": false,
     "update_daemon_threads": 4,
+    "lithops_daemon_threads": 2,
     "colocalization": false,
-    "ion_thumbnail": true
+    "ion_thumbnail": false
   },
   "redis": {
     "host": "redis"
@@ -57,6 +60,53 @@
     "spark.rdd.compress": true,
     "spark.ui.showConsoleProgress": false,
     "spark.sql.execution.arrow.enabled": true
+  },
+  "lithops": {
+    "lithops": {
+      "storage_bucket": "TEMP_BUCKET",
+      "storage": "localhost",
+      "mode": "localhost",
+      "include_modules": ["engine/sm"],
+      "data_cleaner": true,
+      "data_limit": false,
+      "workers": 4,
+      "execution_timeout": 2400
+    },
+    "serverless": {
+      "backend": "ibm_cf",
+      "runtime_timeout": 1200,
+      "runtime_memory": 2048
+    },
+    "standalone": {
+      "backend": "ibm_vpc"
+    },
+    "localhost": {
+    },
+    "ibm": {
+      "iam_api_key": ""
+    },
+    "ibm_cf": {
+      "endpoint": "https://eu-de.functions.cloud.ibm.com",
+      "namespace": "",
+      "namespace_id": ""
+    },
+    "ibm_vpc": {
+      "endpoint": "https://eu-de.iaas.cloud.ibm.com",
+      "instance_id": "",
+      "ip_address": "",
+      "ssh_key_filename": "/home/ubuntu/.ssh/ibm_cloud_vpc"
+    },
+    "ibm_cos": {
+      "region": "eu-de",
+      "access_key": "",
+      "secret_key": ""
+    },
+    "sm_storage": {
+      "imzml": ["DATA_BUCKET", "imzml"],
+      "moldb": ["DATA_BUCKET", "moldb"],
+      "centroids": ["DATA_BUCKET", "centroids"],
+      "pipeline_cache": ["TEMP_BUCKET", "pipeline_cache"]
+    }
   },
   "aws": {
     "aws_access_key_id": "",
@@ -106,10 +156,15 @@
         "console_debug": {
             "class": "logging.StreamHandler",
             "formatter": "sm"
+        },
+        "context_logger": {
+          "class": "sm.engine.utils.log_capture.ContextLogHandler",
+          "formatter": "sm",
+          "level": "INFO"
         }
     },
     "root": {
-        "handlers": ["console_debug"],
+        "handlers": ["console_debug", "context_logger"],
         "level": "INFO"
     },
     "loggers": {
@@ -119,13 +174,22 @@
         "engine.db": {
             "level": "INFO"
         },
+        "engine.lithops-wrapper": {
+            "level": "INFO"
+        },
         "api": {
             "level": "INFO"
         },
         "annotate-daemon": {
             "level": "INFO"
         },
+        "lithops-daemon": {
+            "level": "INFO"
+        },
         "update-daemon": {
+            "level": "INFO"
+        },
+        "lithops": {
             "level": "INFO"
         }
     }
@@ -135,8 +199,5 @@
       "+": ["+H", "+Na", "+K"],
       "-": ["-H", "+Cl" ]
     }
-  },
-  "colocalization": {
-    "enabled": true
   }
 }

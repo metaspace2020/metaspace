@@ -102,6 +102,25 @@ services:
     # extra_hosts: # Uncomment if graphql is run outside of Docker
     #  - "graphql:172.17.0.1"
 
+  sm-lithops-daemon:
+    build:
+      context: ..
+      dockerfile: docker/sm-engine/Dockerfile
+    command: /sm-engine/start-lithops-daemon.sh
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+      - "${DEV_ROOT}:/opt/dev/metaspace:z"
+      - "${DATA_ROOT}:/opt/data/metaspace:z"
+      - "./sm-engine:/sm-engine:ro"
+    user: "$SM_USER"
+    networks:
+      - sm
+    depends_on:
+      - rabbitmq
+      - postgres
+      - elasticsearch
+
   annotate-daemon:
     build:
       context: ..
@@ -166,7 +185,7 @@ services:
   nginx:
     build: ./nginx
     volumes:
-      # To run nginx aganst a prod build of webapp, first build webapp, then uncomment this and 
+      # To run nginx aganst a prod build of webapp, first build webapp, then uncomment this and
       # the related section in docker/nginx/config/sites-enabled/default
       # - "${DEV_ROOT}/metaspace/webapp/dist/:/var/www/webapp:ro"
       - "${DATA_ROOT}/mol-images/:/var/www/mol-images:z"
