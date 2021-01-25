@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-loading="loading">
     <svg ref="mass_spec_setup_plot" />
   </div>
 </template>
@@ -128,12 +128,14 @@ export default {
   data() {
     return {
       counts: [],
+      loading: 0,
     }
   },
 
   apollo: {
     counts: {
       query: query,
+      loadingKey: 'loading',
       variables() {
         return {
           filter: Object.assign({ status: 'FINISHED' }, this.$store.getters.gqlDatasetFilter),

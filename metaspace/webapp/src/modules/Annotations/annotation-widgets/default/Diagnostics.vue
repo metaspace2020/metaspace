@@ -119,10 +119,10 @@ import { Component, Prop, Watch } from 'vue-property-decorator'
 
 import DiagnosticsMetrics from './DiagnosticsMetrics.vue'
 import DiagnosticsImages from './DiagnosticsImages.vue'
-import DiagnosticsPlot from './DiagnosticsPlot.vue'
+import DiagnosticsPlot from '../DiagnosticsPlot.vue'
 import CandidateMoleculesPopover from '../CandidateMoleculesPopover.vue'
 import { groupBy, intersection, sortBy, xor } from 'lodash-es'
-import { isobarsQuery } from '../../../../api/annotation'
+import { peakChartDataQuery, isobarsQuery } from '../../../../api/annotation'
 import { renderMassShift, renderMolFormula, renderMolFormulaHtml } from '../../../../lib/util'
 import safeJsonParse from '../../../../lib/safeJsonParse'
 import reportError from '../../../../lib/reportError'
@@ -145,9 +145,28 @@ interface AnnotationGroup {
     CandidateMoleculesPopover,
   },
   apollo: {
+    peakChartData: {
+      query: peakChartDataQuery,
+      loadingKey: 'loading',
+      fetchPolicy: 'cache-first',
+      update: (data: any) => {
+        const { annotation } = data
+        if (annotation != null) {
+          return safeJsonParse(annotation.peakChartData)
+        } else {
+          return null
+        }
+      },
+      variables(): any {
+        return {
+          id: this.annotation.id,
+        }
+      },
+    },
     isobarAnnotations: {
       query: isobarsQuery,
       loadingKey: 'loading',
+      fetchPolicy: 'cache-first',
       skip() {
         return !this.hasIsobars
       },
@@ -172,15 +191,13 @@ export default class Diagnostics extends Vue {
     annotation: any;
 
     @Prop()
-    peakChartData: any;
-
-    @Prop()
     colormap: any;
 
     @Prop()
     imageLoaderSettings: any;
 
     loading = 0;
+    peakChartData: any;
     isobarAnnotations: any[] = [];
     // Keep track of the last ionFormula used for fetching isobars, so that discrepancies can be reported
     isobarAnnotationsIonFormula: string | null = null;

@@ -179,7 +179,7 @@
               title="Show in list"
               @click.stop="filterColocalized"
             >
-              <img src="../../assets/filter-icon.svg">
+              <filter-icon class="w-5 h-5 fill-current" />
             </button>
           </div>
           <component
@@ -222,7 +222,6 @@
             :colormap="colormap"
             :image-loader-settings="imageLoaderSettings"
             :scale-type="scaleType"
-            :peak-chart-data="peakChartData"
             :acquisition-geometry="msAcqGeometry"
           />
         </el-collapse-item>
@@ -232,6 +231,7 @@
           name="metadata"
         >
           <dataset-info
+            v-if="activeSections.includes('metadata')"
             :metadata="metadata"
             :current-user="currentUser"
           />

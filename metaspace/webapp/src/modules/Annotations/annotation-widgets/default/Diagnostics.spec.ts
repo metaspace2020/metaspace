@@ -12,6 +12,19 @@ Vue.use(Vuex)
 sync(store, router)
 
 describe('Diagnostics', () => {
+  const peakChartData = JSON.stringify({
+    mz_grid: { min_mz: 99.9, max_mz: 101.1 },
+    theor: {
+      centroid_mzs: [100, 101],
+      mzs: [99.9, 100, 100.1, 100.9, 101, 101.1],
+      ints: [0, 1, 0, 0, 0.5, 0],
+    },
+    ppm: 3,
+    sampleData: {
+      mzs: [100, 101],
+      ints: [1, 0.6],
+    },
+  })
   const baseAnnotation = {
     id: '2019-10-15_17h02m31s_7277991',
     ion: 'C19H18N2O7S2-H+',
@@ -22,19 +35,7 @@ describe('Diagnostics', () => {
     rhoSpatial: 0.686362,
     rhoSpectral: 0.959122,
     rhoChaos: 0.998756,
-    peakChartData: JSON.stringify({
-      mz_grid: { min_mz: 99.9, max_mz: 101.1 },
-      theor: {
-        centroid_mzs: [100, 101],
-        mzs: [99.9, 100, 100.1, 100.9, 101, 101.1],
-        ints: [0, 1, 0, 0, 0.5, 0],
-      },
-      ppm: 3,
-      sampleData: {
-        mzs: [100, 101],
-        ints: [1, 0.6],
-      },
-    }),
+    peakChartData,
     possibleCompounds: [
       { name: 'C.I. Food Red 6', information: [{ databaseId: 'HMDB0032738' }] },
     ],
@@ -83,7 +84,6 @@ describe('Diagnostics', () => {
 
   const props = {
     annotation: baseAnnotation,
-    peakChartData: JSON.parse(baseAnnotation.peakChartData),
     colormap: 'Viridis',
     imageLoaderSettings: {
       annotImageOpacity: 1,
@@ -113,6 +113,7 @@ describe('Diagnostics', () => {
     initMockGraphqlClient({
       Query: () => ({
         allAnnotations: () => ([]),
+        annotation: ({ id }: {id: string}) => ({ id, peakChartData }),
       }),
     })
     const propsData = {
@@ -132,6 +133,7 @@ describe('Diagnostics', () => {
     initMockGraphqlClient({
       Query: () => ({
         allAnnotations: () => ([isobarAnnotation]),
+        annotation: ({ id }: {id: string}) => ({ id, peakChartData }),
       }),
     })
     const reportErrorFunc = jest.spyOn(reportErrorModule, 'default')

@@ -74,12 +74,13 @@
               <span v-if="props.row.dataset.group">{{ props.row.dataset.group.name }}</span>
               <i v-else>No Group</i>
             </span>
-            <img
+            <filter-icon
               v-if="props.row.dataset.group"
-              src="../../assets/filter-icon.png"
-              title="Limit results to this group"
+              class="cell-filter-button"
               @click="filterGroup(props.row)"
             >
+              <title>Limit results to this group</title>
+            </filter-icon>
           </div>
         </template>
       </el-table-column>
@@ -96,11 +97,12 @@
             <span class="cell-span">
               {{ formatDatasetName(props.row) }}
             </span>
-            <img
-              src="../../assets/filter-icon.png"
-              title="Limit results to this dataset"
+            <filter-icon
+              class="cell-filter-button"
               @click="filterDataset(props.row)"
             >
+              <title>Limit results to this dataset</title>
+            </filter-icon>
           </div>
         </template>
       </el-table-column>
@@ -113,35 +115,7 @@
         min-width="120"
       >
         <template slot-scope="props">
-          <candidate-molecules-popover
-            placement="right"
-            :possible-compounds="props.row.possibleCompounds"
-            :limit="10"
-            :isomers="props.row.isomers"
-            :isobars="props.row.isobars"
-          >
-            <div class="cell-wrapper">
-              <span
-                class="sf cell-span"
-                v-html="renderMolFormulaHtml(props.row.ion)"
-              />
-              <span
-                v-if="props.row.id in channelSwatches"
-                class="flex"
-              >
-                <i
-                  class="block mt-1 w-3 h-3 mx-1 box-content border border-solid border-gray-400 rounded-full"
-                  :style="{ background: channelSwatches[props.row.id] }"
-                />
-              </span>
-              <img
-                v-if="!filter.compoundName"
-                src="../../assets/filter-icon.png"
-                title="Limit results to this molecular formula"
-                @click="filterMolFormula(props.row)"
-              >
-            </div>
-          </candidate-molecules-popover>
+          <annotation-table-mol-name :annotation="props.row" />
         </template>
       </el-table-column>
 
@@ -157,11 +131,12 @@
             <span class="cell-span">
               {{ formatMZ(props.row) }}
             </span>
-            <img
-              src="../../assets/filter-icon.png"
-              title="Limit results to this m/z (with 5 ppm tolerance)"
+            <filter-icon
+              class="cell-filter-button"
               @click="filterMZ(props.row)"
             >
+              <title>Limit results to this m/z</title>
+            </filter-icon>
           </div>
         </template>
       </el-table-column>
@@ -285,9 +260,9 @@
 </template>
 
 <script>
-import { renderMolFormulaHtml } from '../../lib/util'
 import ProgressButton from './ProgressButton.vue'
-import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue'
+import AnnotationTableMolName from './AnnotationTableMolName.vue'
+import FilterIcon from '../../assets/inline/filter.svg'
 import {
   annotationListQuery,
   tableExportQuery,
@@ -298,9 +273,6 @@ import FileSaver from 'file-saver'
 import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../lib/formatCsvRow'
 import { invert } from 'lodash-es'
 import config from '../../lib/config'
-import { useChannelSwatches } from '../ImageViewer/ionImageState'
-
-const channelSwatches = useChannelSwatches()
 
 // 38 = up, 40 = down, 74 = j, 75 = k
 const KEY_TO_ACTION = {
@@ -332,7 +304,8 @@ export default Vue.extend({
   name: 'AnnotationTable',
   components: {
     ProgressButton,
-    CandidateMoleculesPopover,
+    AnnotationTableMolName,
+    FilterIcon,
   },
   props: ['hideColumns'],
   data() {
@@ -350,9 +323,6 @@ export default Vue.extend({
     }
   },
   computed: {
-    channelSwatches() {
-      return channelSwatches.value
-    },
 
     isLoading() {
       return this.$store.state.tableIsLoading
@@ -526,7 +496,6 @@ export default Vue.extend({
       return this.hideColumns.indexOf(columnLabel) >= 0
     },
 
-    renderMolFormulaHtml,
     getRowClass({ row }) {
       const { fdrLevel, colocalizationCoeff } = row
       const fdrClass =
@@ -649,10 +618,6 @@ export default Vue.extend({
 
     filterDataset(row) {
       this.updateFilter({ datasetIds: [row.dataset.id] })
-    },
-
-    filterMolFormula(row) {
-      this.updateFilter({ compoundName: row.sumFormula })
     },
 
     filterMZ(row) {
@@ -830,24 +795,18 @@ export default Vue.extend({
  }
 
  .cell-span {
-   @apply tracking-wide;
-   width: 80%;
+   @apply tracking-wide flex;
  }
 
- .cell-wrapper img {
-   /*
-      don't use display:none because of a TestCafe bug:
-      https://github.com/DevExpress/testcafe/issues/1426
-   */
-   opacity: 0;
-   max-height: 20px;
-   max-width: 20%;
+ .cell-wrapper .cell-filter-button {
+   @apply absolute right-0 self-center fill-current text-blue-500 opacity-0 cursor-pointer;
+   width: 16px;
+   height: 16px;
+   padding: 2px 4px;
  }
 
- .cell-wrapper:hover img {
-   display: inherit;
-   cursor: pointer;
-   opacity: 1;
+ .cell-wrapper:hover .cell-filter-button {
+   @apply opacity-100;
  }
 
  .fdr-legend, .fdr-legend-header {

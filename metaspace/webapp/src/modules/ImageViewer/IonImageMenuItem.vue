@@ -70,6 +70,7 @@
       </div>
     </menu-item>
     <clipping-notice
+      v-if="!item.loading"
       :type="clippingNotice.type"
       :intensity="item.intensity.value"
     />

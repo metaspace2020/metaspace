@@ -1,7 +1,7 @@
 ---
 title: Ion images of each isotope peak
 query: {sections: 4}
-target: '#isotope-images-container'
+target: '.tour-isotope-images'
 placement: left
 ---
 

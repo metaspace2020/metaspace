@@ -51,6 +51,8 @@ function imageProviderFSBackend(storageRootDir: string) {
         next();
       });
     app.use(express.static(storageRootDir, {
+      immutable: true,
+      maxAge: '30 days',
       setHeaders: (res) => {
         res.type(mimeType);
       }

@@ -1,5 +1,6 @@
 <template>
   <el-popover
+    v-if="showIsomers || showIsobars"
     trigger="hover"
     class="popover"
   >
@@ -31,7 +32,7 @@
           v-for="(isobar, i) in isobars"
           :key="i"
         >
-          <molecular-formula :ion="isomer.ion" />
+          <molecular-formula :ion="isobar.ion" />
         </li>
       </ul>
     </div>

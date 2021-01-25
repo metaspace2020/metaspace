@@ -13,13 +13,11 @@
 import Vue from 'vue'
 import { Component, Prop } from 'vue-property-decorator'
 
-import PlotLegend from '../PlotLegend.vue'
-import IsotopePatternPlot from '../IsotopePatternPlot.vue'
-import { renderMolFormulaHtml } from '../../../../lib/util'
+import IsotopePatternPlot from './IsotopePatternPlot.vue'
+import { renderMolFormulaHtml } from '../../../lib/util'
 
 @Component({
   components: {
-    PlotLegend,
     IsotopePatternPlot,
   },
 })

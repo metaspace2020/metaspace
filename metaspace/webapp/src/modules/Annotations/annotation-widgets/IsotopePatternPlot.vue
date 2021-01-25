@@ -303,7 +303,9 @@ export default {
   },
   mounted() {
     this.redraw = throttle(this.redraw, 200)
-    this.redraw()
+    if (this.data) {
+      this.redraw()
+    }
 
     if (window) {
       window.addEventListener('resize', () => this.redraw())
