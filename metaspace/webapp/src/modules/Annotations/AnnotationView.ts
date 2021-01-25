@@ -1,7 +1,5 @@
-import { renderMolFormulaHtml } from '../../lib/util'
 import DatasetInfo from '../../components/DatasetInfo.vue'
 import ColocalizationSettings from './annotation-widgets/ColocalizationSettings.vue'
-import { annotationQuery } from '../../api/annotation'
 import {
   datasetVisibilityQuery,
   DatasetVisibilityResult,
@@ -33,6 +31,7 @@ import MolecularFormula from '../../components/MolecularFormula'
 import '../../components/StatefulIcon.css'
 import LockIcon from '../../assets/inline/refactoring-ui/lock.svg'
 import LocationPinIcon from '../../assets/inline/refactoring-ui/location-pin.svg'
+import FilterIcon from '../../assets/inline/filter.svg'
 
 import { useIonImageSettings } from '../ImageViewer/ionImageState'
 import viewerState from '../ImageViewer/state'
@@ -70,6 +69,7 @@ const componentsToRegister: any = {
   ShareLink,
   LockIcon,
   LocationPinIcon,
+  FilterIcon,
   CopyButton,
   MolecularFormula,
 }
@@ -86,23 +86,6 @@ for (const category of Object.keys(annotationWidgets)) {
    name: 'annotation-view',
    components: componentsToRegister,
    apollo: {
-     peakChartData: {
-       query: annotationQuery,
-       update: (data: any) => {
-         const { annotation } = data
-         if (annotation != null) {
-           return safeJsonParse(annotation.peakChartData)
-         } else {
-           return null
-         }
-       },
-       variables(): any {
-         return {
-           id: this.annotation.id,
-         }
-       },
-     },
-
      opticalImages: {
        query: opticalImagesQuery,
        variables() {
@@ -145,7 +128,6 @@ export default class AnnotationView extends Vue {
    annotation: any
 
    msAcqGeometry: any
-   peakChartData: any
    opticalImages!: OpticalImage[] | null
    datasetVisibility: DatasetVisibilityResult | null = null
    currentUser: CurrentUserRoleResult | null = null

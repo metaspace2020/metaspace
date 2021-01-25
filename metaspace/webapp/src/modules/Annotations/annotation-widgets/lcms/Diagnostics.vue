@@ -26,14 +26,10 @@
       <span>Isotope integral intensity</span>
     </el-row>
     <el-row id="isotope-plot-container">
-      <isotope-pattern-plot
-        :data="peakChartData"
-        :isotope-colors="isotopeLegendItems.map(i => i.color)"
-        :theor-color="theorIntensityLegendItem.color"
+      <diagnostics-plot
+        :peak-chart-data="peakChartData"
+        :ion="annotation.ion"
       />
-    </el-row>
-    <el-row>
-      <plot-legend :items="isotopeLegendItems.concat(theorIntensityLegendItem)" />
     </el-row>
   </div>
 </template>
@@ -43,16 +39,37 @@ import Vue from 'vue'
 import { Component, Prop } from 'vue-property-decorator'
 import { schemeCategory10 as LegendColors } from 'd3-scale-chromatic'
 
-import IsotopePatternPlot from '../IsotopePatternPlot.vue'
+import DiagnosticsPlot from '../DiagnosticsPlot.vue'
 import PlotLegend from '../PlotLegend.vue'
 import XicPlot from './XicPlot.vue'
+import { peakChartDataQuery } from '../../../../api/annotation'
+import safeJsonParse from '../../../../lib/safeJsonParse'
 
 @Component({
   name: 'diagnostics',
   components: {
-    IsotopePatternPlot,
+    DiagnosticsPlot,
     PlotLegend,
     XicPlot,
+  },
+  apollo: {
+    peakChartData: {
+      query: peakChartDataQuery,
+      fetchPolicy: 'cache-first',
+      update: (data: any) => {
+        const { annotation } = data
+        if (annotation != null) {
+          return safeJsonParse(annotation.peakChartData)
+        } else {
+          return null
+        }
+      },
+      variables(): any {
+        return {
+          id: this.annotation.id,
+        }
+      },
+    },
   },
 })
 export default class Diagnostics extends Vue {
@@ -62,7 +79,6 @@ export default class Diagnostics extends Vue {
     @Prop()
     acquisitionGeometry: any
 
-    @Prop()
     peakChartData: any
 
     get isotopeLegendItems(): any[] {

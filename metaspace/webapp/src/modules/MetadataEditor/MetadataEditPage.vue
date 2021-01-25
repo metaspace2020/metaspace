@@ -99,7 +99,7 @@ export default {
 
   methods: {
     handleCancel() {
-      this.$router.push('/datasets')
+      this.$router.back()
     },
     async handleSubmit() {
       const formValue = this.$refs.editor.getFormValueForSubmit()
@@ -135,7 +135,7 @@ export default {
               message: 'Metadata was successfully updated!',
               type: 'success',
             })
-            this.$router.push('/datasets')
+            this.$router.back()
           }
           // eslint-disable-next-line no-useless-catch
         } catch (e) {

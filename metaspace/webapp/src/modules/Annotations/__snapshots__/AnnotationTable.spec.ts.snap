@@ -76,58 +76,59 @@ exports[`AnnotationTable should match snapshot 1`] = `
           <tr class="el-table__row fdr-10 coloc-80">
             <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
               <div class="cell">
-                <div class="cell-wrapper"><span class="cell-span"><span>Laboratory of European Molecular Biology</span></span> <img src="../../assets/filter-icon.png" title="Limit results to this group"></div>
+                <div class="cell-wrapper"><span class="cell-span"><span>Laboratory of European Molecular Biology</span></span> <svg data-icon="filter" class="cell-filter-button"></svg></div>
               </div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
               <div class="cell">
                 <div class="cell-wrapper"><span class="cell-span">
             Untreated_3_434
-          </span> <img src="../../assets/filter-icon.png" title="Limit results to this dataset"></div>
+          </span> <svg data-icon="filter" class="cell-filter-button"></svg></div>
               </div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
               <div class="cell">
-                <mock-el-popover trigger="hover" placement="right">
-                  <div slot-key="default">
-                    <div class="leading-5 py-2 px-3 font-normal content text-sm text-left">
-                      <!---->
-                      <p class="title">
-                        Candidate molecule
-                      </p>
-                      <ul class="p-0 list-none leading-7">
-                        <li>
-                          C.I. Food Red 6
-                        </li>
+                <div class="cell-wrapper">
+                  <mock-el-popover trigger="hover" placement="right" class="cell-span">
+                    <div slot-key="default">
+                      <div class="leading-5 py-2 px-3 font-normal content text-sm text-left">
                         <!---->
-                      </ul>
-                      <div>
-                        <p class="title"><span>2 isomeric ions were annotated</span></p>
-                        <p>
-                          Check the <b>Molecules</b> panel for more candidates.
+                        <p class="title">
+                          Candidate molecule
                         </p>
-                      </div>
-                      <div>
-                        <p class="title"><span>2 isobaric ions were annotated</span></p>
-                        <p class="max-w-measure-1">
-                          Check the <b>Molecules</b> panel to see candidate molecules from the isobaric ions,
-                          and the <b>Diagnostics</b> panel to compare the isotopic images and spectra.
-                        </p>
+                        <ul class="p-0 list-none leading-7">
+                          <li>
+                            C.I. Food Red 6
+                          </li>
+                          <!---->
+                        </ul>
+                        <div>
+                          <p class="title"><span>2 isomeric ions were annotated</span></p>
+                          <p>
+                            Check the <b>Molecules</b> panel for more candidates.
+                          </p>
+                        </div>
+                        <div>
+                          <p class="title"><span>2 isobaric ions were annotated</span></p>
+                          <p class="max-w-measure-1">
+                            Check the <b>Molecules</b> panel to see candidate molecules from the isobaric ions,
+                            and the <b>Diagnostics</b> panel to compare the isotopic images and spectra.
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div slot-key="reference">
-                    <div class="cell-wrapper"><span class="sf cell-span">[C<sub>19</sub>H<sub>18</sub>N<sub>2</sub>O<sub>7</sub>S<sub>2</sub> - H]⁺</span>
-                      <!----> <img src="../../assets/filter-icon.png" title="Limit results to this molecular formula"></div>
-                  </div>
-                </mock-el-popover>
+                    <div slot-key="reference"><span>[C<sub class="leading-none">19</sub>H<sub class="leading-none">18</sub>N<sub class="leading-none">2</sub>O<sub class="leading-none">7</sub>S<sub class="leading-none">2</sub> - H]⁺</span>
+                      <!---->
+                    </div>
+                  </mock-el-popover> <svg data-icon="filter" class="cell-filter-button"></svg>
+                </div>
               </div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_4  ">
               <div class="cell">
                 <div class="cell-wrapper"><span class="cell-span">
             449.0482
-          </span> <img src="../../assets/filter-icon.png" title="Limit results to this m/z (with 5 ppm tolerance)"></div>
+          </span> <svg data-icon="filter" class="cell-filter-button"></svg></div>
               </div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
