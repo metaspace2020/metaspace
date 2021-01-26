@@ -8,10 +8,6 @@ pip install -e .
 # TODO: This doesn't include all databases, and the only way to exclude databases is to comment them out.
 # It would be much better as a Python script that interactively allowed databases to be selected.
 
-# curl https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files_2021/hmdb/hmdb_2-5.tsv -o /tmp/hmdb_2-5.tsv \
-#  && (python scripts/import_molecular_db.py HMDB-v2.5 2018-03-08 /tmp/hmdb_2-5.tsv \
-#  ; rm /tmp/hmdb_2-5.tsv)
-
 curl https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files_2021/hmdb/hmdb_4.tsv -o /tmp/hmdb_4.tsv \
  && python scripts/import_molecular_db.py HMDB v4 /tmp/hmdb_4.tsv \
  && rm /tmp/hmdb_4.tsv
