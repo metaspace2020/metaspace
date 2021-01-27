@@ -100,9 +100,6 @@ import UppyUploader from '../../components/UppyUploader/UppyUploader.vue'
 import MetadataEditor from './MetadataEditor.vue'
 import HelpDialog from './HelpDialog.vue'
 
-import '../../components/MonoIcon.css'
-import AddIcon from '../../assets/inline/refactoring-ui/add.svg'
-
 import { createDatasetQuery } from '../../api/dataset'
 import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system'
 import get from 'lodash-es/get'
@@ -115,43 +112,6 @@ const createInputPath = (url, uuid) => {
   const parsedUrl = new URL(url)
   const bucket = getS3Bucket(parsedUrl)
   return `s3a://${bucket}/${uuid}`
-}
-
-const DataTypeConfig = {
-  'LC-MS': {
-    fileExtensions: ['mzML'],
-    maxFiles: 1,
-    nameValidator(fileNames) {
-      return fileNames.length === 1
-    },
-  },
-  default: {
-    fileExtensions: ['imzML', 'ibd'],
-    maxFiles: 2,
-    nameValidator(fileNames) {
-      if (fileNames.length < 2) {
-        return false
-      }
-
-      const basename = fname => fname.split('.').slice(0, -1).join('.')
-      const extension = fname => fname.split('.').slice(-1)[0]
-
-      // consider only the last two selected files
-      const fileCount = fileNames.length
-      const [first, second] = [fileNames[fileCount - 2], fileNames[fileCount - 1]]
-      const [fext, sext] = [first, second].map(extension)
-      const [fbn, sbn] = [first, second].map(basename)
-      if (fext === sext || fbn !== sbn) {
-        this.$message({
-          message: 'Incompatible file names! Please select 2 files '
-                    + 'with the same name but different extension',
-          type: 'error',
-        })
-        return false
-      }
-      return true
-    },
-  },
 }
 
 const basename = fname => fname.split('.').slice(0, -1).join('.')
@@ -221,12 +181,17 @@ export default {
         uuid: null,
         uuidSignature: null,
       },
+      uploads: {
+        imzml: false,
+        ibd: false,
+      },
       helpDialog: false,
       systemHealth: null,
       currentUser: null,
       inputPath: null,
     }
   },
+
   computed: {
     disabledSubmitMessage() {
       return 'Your files must be uploaded first'
@@ -267,6 +232,7 @@ export default {
       return uppyOptions
     },
   },
+
   created() {
     this.$store.commit('updateFilter', this.$store.getters.filter)
     this.fetchStorageKey()
@@ -298,7 +264,8 @@ export default {
       })
     },
 
-    onFileRemoved() {
+    onFileRemoved(file) {
+      this.uploads[file.extension.toLowerCase()] = false
       this.status = 'READY'
     },
 
@@ -307,17 +274,25 @@ export default {
     },
 
     onUploadComplete(result) {
-      if (result.failed.length) {
-        reportError()
-        this.status = 'READY'
-        return
+      for (const file of result.failed) {
+        this.uploads[file.extension.toLowerCase()] = false
+      }
+      for (const file of result.successful) {
+        this.uploads[file.extension.toLowerCase()] = true
       }
 
-      const [file] = result.successful
-      const { extension, uploadURL } = file
+      if (this.uploads.imzml === true && this.uploads.ibd === true) {
+        const [file] = result.successful
+        const { extension, uploadURL } = file
 
-      this.inputPath = createInputPath(uploadURL, this.uuid)
-      this.status = 'UPLOADED'
+        this.inputPath = createInputPath(uploadURL, this.uuid)
+        this.status = 'UPLOADED'
+      } else {
+        if (result.failed.length) {
+          reportError()
+        }
+        this.status = 'READY'
+      }
     },
 
     onSubmit() {

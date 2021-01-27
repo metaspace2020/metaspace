@@ -50,7 +50,7 @@ interface Props {
   disabled: boolean
   options: UppyOptions
   requiredFileTypes: string[]
-  s3Options: AwsS3MultipartOptions,
+  s3Options: AwsS3MultipartOptions
 }
 
 const UppyUploader = defineComponent<Props>({
