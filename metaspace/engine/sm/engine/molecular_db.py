@@ -21,7 +21,7 @@ class MalformedCSV(SMError):
 
 class BadData(SMError):
     def __init__(self, message, *errors):
-        super().__init__(message)
+        super().__init__(message, *errors)
         self.message = message
         self.errors = errors
 
