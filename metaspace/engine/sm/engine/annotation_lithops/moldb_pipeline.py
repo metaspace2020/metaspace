@@ -28,7 +28,7 @@ from sm.engine.annotation_lithops.io import (
 from sm.engine.annotation_lithops.utils import jsonhash
 from sm.engine.utils.db_mutex import DBMutex
 from sm.engine.ds_config import DSConfig
-from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 
 logger = logging.getLogger('annotation-pipeline')
 

@@ -10,7 +10,7 @@ import pyarrow.parquet as pq
 from botocore.exceptions import ClientError
 from pyspark import SparkContext  # pylint: disable=unused-import
 
-from sm.engine.isocalc_wrapper import IsocalcWrapper  # pylint: disable=unused-import
+from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper  # pylint: disable=unused-import
 from sm.engine.util import split_s3_path
 from sm.engine.config import SMConfig
 
