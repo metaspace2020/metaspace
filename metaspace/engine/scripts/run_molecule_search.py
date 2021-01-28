@@ -7,7 +7,7 @@ from pathlib import Path
 
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
-from sm.engine.sm_daemons import DatasetManager
+from sm.engine.daemons.dataset_manager import DatasetManager
 from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.util import bootstrap_and_run
 from sm.engine.utils.create_ds_from_files import create_ds_from_files

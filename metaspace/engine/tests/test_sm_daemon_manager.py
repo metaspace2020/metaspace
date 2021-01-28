@@ -5,7 +5,7 @@ from datetime import datetime
 
 import numpy as np
 
-from sm.engine.sm_daemons import DatasetManager
+from sm.engine.daemons.dataset_manager import DatasetManager
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.queue import QueuePublisher
@@ -65,7 +65,7 @@ def create_daemon_man(db=None, es=None, img_store=None, status_queue=None):
 
 
 class TestSMDaemonDatasetManager:
-    @patch('sm.engine.sm_daemons.AnnotationJob')
+    @patch('sm.engine.daemons.dataset_manager.AnnotationJob')
     def test_annotate_ds(self, AnnotationJobMock, fill_db, metadata, ds_config):
         es_mock = MagicMock(spec=ESExporter)
         db = DB()
