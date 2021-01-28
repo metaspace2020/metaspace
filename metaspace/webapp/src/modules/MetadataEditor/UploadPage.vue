@@ -26,7 +26,7 @@
               &nbsp;
             </div>
             <div class="el-col el-col-18">
-              <div class="flex justify-between items-center form-margin">
+              <div class="flex justify-between items-center form-margin h-10">
                 <el-button
                   class="text-gray-600 mr-auto"
                   @click="helpDialog = true"
