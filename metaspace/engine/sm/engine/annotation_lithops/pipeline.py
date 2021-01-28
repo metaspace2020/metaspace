@@ -25,7 +25,7 @@ from sm.engine.annotation_lithops.segment_centroids import (
 from sm.engine.db import DB
 from sm.engine.ds_config import DSConfig
 from sm.engine.isocalc_wrapper import IsocalcWrapper
-from sm.engine.util import SMConfig
+from sm.engine.config import SMConfig
 
 logger = logging.getLogger('annotation-pipeline')
 

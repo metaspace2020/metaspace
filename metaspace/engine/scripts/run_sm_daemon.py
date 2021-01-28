@@ -19,7 +19,7 @@ from sm.engine.queue import (
     QueuePublisher,
     QueueConsumer,
 )
-from sm.engine.util import SMConfig, init_loggers
+from sm.engine.config import init_loggers, SMConfig
 
 
 def get_manager():

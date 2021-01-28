@@ -5,7 +5,7 @@ from ftplib import FTP
 import os.path
 
 from sm.engine.queue import QueuePublisher
-from sm.engine.util import SMConfig
+from sm.engine.config import SMConfig
 
 import isatools.io.isatab_parser as ip
 import boto3

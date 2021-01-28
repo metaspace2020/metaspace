@@ -12,7 +12,7 @@ from sm.engine.dataset import (
 from sm.engine.errors import DSIsBusy, UnknownDSID
 from sm.engine.daemons.daemon_action import DaemonAction, DaemonActionStage
 from sm.engine.optical_image import add_optical_image, del_optical_image
-from sm.engine.util import SMConfig
+from sm.engine.config import SMConfig
 
 
 class DatasetActionPriority:

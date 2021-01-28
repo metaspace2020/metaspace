@@ -6,7 +6,7 @@ from sm.engine.daemons.daemon_action import DaemonActionStage, DaemonAction
 from sm.engine.dataset import DatasetStatus
 from sm.engine.errors import ImzMLError, AnnotationError
 from sm.engine.queue import QueueConsumer, QueuePublisher
-from sm.engine.util import SMConfig
+from sm.engine.config import SMConfig
 from sm.rest.dataset_manager import DatasetActionPriority
 
 

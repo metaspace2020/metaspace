@@ -4,7 +4,7 @@ import logging
 import os
 
 from sm.engine.dataset import generate_ds_config, update_ds_config
-from sm.engine.util import init_loggers, SMConfig
+from sm.engine.config import init_loggers, SMConfig
 from sm.engine.db import DB
 
 

@@ -23,7 +23,7 @@ from sm.engine.postprocessing.ion_thumbnail import (
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.postprocessing.off_sample_wrapper import classify_dataset_ion_images
 from sm.engine.optical_image import del_optical_image
-from sm.engine.util import SMConfig
+from sm.engine.config import SMConfig
 from sm.engine.utils.perf_profile import perf_profile
 
 
