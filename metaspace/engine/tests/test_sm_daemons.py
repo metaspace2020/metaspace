@@ -120,15 +120,15 @@ def run_daemons(db, es, sm_config):
 
 @patch('sm.engine.annotation_spark.search_results.post_images_to_image_store')
 @patch(
-    'sm.engine.colocalization.ImageStoreServiceWrapper.get_ion_images_for_analysis',
+    'sm.engine.postprocessing.colocalization.ImageStoreServiceWrapper.get_ion_images_for_analysis',
     return_value=get_ion_images_for_analysis_mock_return,
 )
 @patch(
-    'sm.engine.off_sample_wrapper.ImageStoreServiceWrapper.get_image_by_id',
+    'sm.engine.postprocessing.off_sample_wrapper.ImageStoreServiceWrapper.get_image_by_id',
     return_value=Image.new('RGBA', (10, 10)),
 )
 @patch(
-    'sm.engine.off_sample_wrapper.call_api',
+    'sm.engine.postprocessing.off_sample_wrapper.call_api',
     return_value={'predictions': {'label': 'off', 'prob': 0.99}},
 )
 @patch('sm.engine.annotation_spark.annotation_job.MSMSearch')
