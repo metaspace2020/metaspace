@@ -12,7 +12,7 @@ from sm.engine.annotation_lithops.annotation_job import ServerAnnotationJob
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_spark.annotation_job import AnnotationJob
 from sm.engine.postprocessing.colocalization import Colocalization
-from sm.engine.daemons.daemon_action import DaemonActionStage
+from sm.engine.daemons.actions import DaemonActionStage
 from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter

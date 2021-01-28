@@ -5,7 +5,7 @@ from traceback import format_exc
 
 import redis
 
-from sm.engine.daemons.daemon_action import DaemonActionStage, DaemonAction
+from sm.engine.daemons.actions import DaemonActionStage, DaemonAction
 from sm.engine.dataset import DatasetStatus
 from sm.engine.errors import ImzMLError, AnnotationError
 from sm.engine.queue import QueueConsumer, QueuePublisher

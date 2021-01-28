@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, call
 from datetime import datetime
 from PIL import Image
 
-from sm.engine.daemons.daemon_action import DaemonAction
+from sm.engine.daemons.actions import DaemonAction
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.queue import QueuePublisher

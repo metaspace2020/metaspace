@@ -4,12 +4,12 @@ import logging
 import signal
 from functools import partial
 
-from sm.engine.daemons.lithops_daemon import LithopsDaemon
+from sm.engine.daemons.lithops import LithopsDaemon
 from sm.engine.db import DB, ConnectionPool
 from sm.engine.es_export import ESExporter
 from sm.engine.image_store import ImageStoreServiceWrapper
-from sm.engine.daemons.update_daemon import SMUpdateDaemon
-from sm.engine.daemons.annotate_daemon import SMAnnotateDaemon
+from sm.engine.daemons.update import SMUpdateDaemon
+from sm.engine.daemons.annotate import SMAnnotateDaemon
 from sm.engine.daemons.dataset_manager import DatasetManager
 from sm.engine.queue import (
     SM_ANNOTATE,

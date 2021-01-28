@@ -2,7 +2,7 @@ import json
 import logging
 from traceback import format_exc
 
-from sm.engine.daemons.daemon_action import DaemonAction, DaemonActionStage
+from sm.engine.daemons.actions import DaemonAction, DaemonActionStage
 from sm.engine.dataset import DatasetStatus
 from sm.engine.errors import UnknownDSID, SMError, IndexUpdateError
 
