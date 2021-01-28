@@ -14,7 +14,7 @@ from elasticsearch import (
 from elasticsearch.client import IndicesClient, IngestClient
 from elasticsearch.helpers import parallel_bulk
 
-from sm.engine.db_mutex import DBMutex
+from sm.engine.utils.db_mutex import DBMutex
 from sm.engine.db import DB
 from sm.engine.fdr import FDR
 from sm.engine.formula_parser import format_ion_formula
