@@ -7,7 +7,7 @@ from sm.engine.dataset import DatasetStatus
 from sm.engine.errors import UnknownDSID, SMError, IndexUpdateError
 
 
-class SMIndexUpdateDaemon:
+class SMUpdateDaemon:
     """ Reads messages from the update queue and does indexing/update/delete
     """
 

@@ -92,7 +92,7 @@ def run_daemons(db, es, sm_config):
     from sm.engine.image_store import ImageStoreServiceWrapper
     from sm.engine.daemons.dataset_manager import DatasetManager
     from sm.engine.daemons.annotate_daemon import SMAnnotateDaemon
-    from sm.engine.daemons.update_daemon import SMIndexUpdateDaemon
+    from sm.engine.daemons.update_daemon import SMUpdateDaemon
 
     status_queue_pub = QueuePublisher(
         config=sm_config['rabbitmq'], qdesc=SM_DS_STATUS, logger=logger
@@ -113,7 +113,7 @@ def run_daemons(db, es, sm_config):
     make_update_queue_cons = partial(
         QueueConsumer, config=sm_config['rabbitmq'], qdesc=SM_UPDATE, logger=logger, poll_interval=1
     )
-    update_daemon = SMIndexUpdateDaemon(manager, make_update_queue_cons)
+    update_daemon = SMUpdateDaemon(manager, make_update_queue_cons)
     update_daemon.start()
     update_daemon.stop()
 
