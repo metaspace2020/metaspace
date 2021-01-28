@@ -11,14 +11,17 @@ from sm.engine.annotation.job import del_jobs
 from sm.engine.annotation_lithops.annotation_job import ServerAnnotationJob
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_spark.annotation_job import AnnotationJob
-from sm.engine.colocalization import Colocalization
+from sm.engine.postprocessing.colocalization import Colocalization
 from sm.engine.daemons.daemon_action import DaemonActionStage
 from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
-from sm.engine.ion_thumbnail import generate_ion_thumbnail, generate_ion_thumbnail_lithops
+from sm.engine.postprocessing.ion_thumbnail import (
+    generate_ion_thumbnail,
+    generate_ion_thumbnail_lithops,
+)
 from sm.engine.isocalc_wrapper import IsocalcWrapper
-from sm.engine.off_sample_wrapper import classify_dataset_ion_images
+from sm.engine.postprocessing.off_sample_wrapper import classify_dataset_ion_images
 from sm.engine.optical_image import del_optical_image
 from sm.engine.util import SMConfig
 from sm.engine.utils.perf_profile import perf_profile

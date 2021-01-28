@@ -4,7 +4,7 @@ import logging
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
-from sm.engine.off_sample_wrapper import classify_dataset_ion_images
+from sm.engine.postprocessing.off_sample_wrapper import classify_dataset_ion_images
 from sm.engine.util import GlobalInit
 
 MISSING_OFF_SAMPLE_SEL = """

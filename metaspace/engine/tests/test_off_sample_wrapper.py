@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
-from sm.engine.off_sample_wrapper import classify_dataset_ion_images
+from sm.engine.postprocessing.off_sample_wrapper import classify_dataset_ion_images
 
 
 @patch('sm.engine.off_sample_wrapper.ImageStoreServiceWrapper')
