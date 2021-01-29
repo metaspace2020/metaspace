@@ -1,38 +1,9 @@
 <template>
   <div class="md-editor">
-    <el-dialog
-      :visible.sync="helpDialog"
-      :lock-scroll="false"
-      append-to-body
-    >
-      <p>Thank you for considering submitting your data to METASPACE! Here are the key points you need to know:</p>
-      <p style="padding-left: 15px">
-        <b>Type of MS:</b> We can annotate only FTICR- or Orbitrap- imaging MS data.
-      </p>
-      <p style="padding-left: 15px">
-        <b>Format:</b> We can receive only data in the imzML centroided format.
-        Please check out
-        <a
-          :href="helpLink"
-          target="_blank"
-          class="external"
-          title="The page will open in a new window"
-        >our instructions</a>
-        for converting datasets into this format. If you are experiencing difficulties,
-        please contact your instrument vendor.
-      </p>
-      <p>
-        If you have any further questions, please check out our main
-        <a
-          href="/help"
-          target="_blank"
-          class="external"
-          title="The page will open in a new window"
-        >help</a>
-        page or email us at <a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a>
-      </p>
-      <p>Have fun using METASPACE!</p>
-    </el-dialog>
+    <help-dialog
+      :visible="helpDialog"
+      @close="helpDialog = false"
+    />
     <div class="upload-page-wrapper">
       <div
         v-if="!enableUploads"
@@ -49,40 +20,68 @@
         <!--<filter-panel level="upload"></filter-panel>-->
         <!--</div>-->
 
-        <div class="fine-uploader-wrapper">
-          <fine-uploader
-            ref="uploader"
-            :config="fineUploaderConfig"
-            :data-type-config="fineUploaderDataTypeConfig"
-            style="flex-basis: 80%"
-            @upload="onUpload"
-            @success="onUploadSuccess"
-            @failure="onUploadFailure"
-          />
-          <div class="md-editor-submit">
-            <el-button
-              class="el-button__help_metadata text-gray-600"
-              icon="el-icon-question"
-              @click="helpDialog=true"
-            />
-            <el-button
-              v-if="enableSubmit && !isTourRunning"
-              type="primary"
-              class="text-xl"
-              @click="onSubmit"
-            >
-              Submit
-            </el-button>
-            <el-button
-              v-else
-              type="primary"
-              disabled
-              :title="disabledSubmitMessage"
-              class="text-xl"
-            >
-              Submit
-            </el-button>
+        <div class="metadata-section">
+          <div class="el-row">
+            <div class="el-col el-col-6">
+              &nbsp;
+            </div>
+            <div class="el-col el-col-18">
+              <div class="flex justify-between form-margin">
+                <el-button
+                  class="text-gray-600"
+                  @click="helpDialog = true"
+                >
+                  Need help?
+                </el-button>
+                <el-button
+                  v-if="enableSubmit && !isTourRunning"
+                  type="primary"
+                  @click="onSubmit"
+                >
+                  Submit
+                </el-button>
+                <el-button
+                  v-else
+                  type="primary"
+                  disabled
+                  :title="disabledSubmitMessage"
+                >
+                  Submit
+                </el-button>
+              </div>
+            </div>
           </div>
+        </div>
+
+        <div class="metadata-section">
+          <form
+            class="el-form el-form--label-top el-row"
+            @submit.prevent
+          >
+            <div class="el-col el-col-6">
+              <div class="metadata-section__title">
+                Imaging MS data
+              </div>
+            </div>
+            <div
+              v-loading="status === 'LOADING'"
+              class="el-col el-col-18"
+            >
+              <div class="md-form-field">
+                <uppy-uploader
+                  :key="storageKey.uuid"
+                  :disabled="status === 'SUBMITTING'"
+                  :required-file-types="['imzML', 'ibd']"
+                  :s3-options="s3Options"
+                  :options="uppyOptions"
+                  @file-added="onFileAdded"
+                  @file-removed="onFileRemoved"
+                  @upload="onUploadStart"
+                  @complete="onUploadComplete"
+                />
+              </div>
+            </div>
+          </form>
         </div>
         <metadata-editor
           ref="editor"
@@ -94,53 +93,56 @@
 </template>
 
 <script>
-// TODO: try https://github.com/FineUploader/vue-fineuploader once it's ready for production
-
-import FineUploader from './inputs/FineUploader.vue'
-import MetadataEditor from './MetadataEditor.vue'
 import Vue from 'vue'
+import { Message } from 'element-ui/'
 
-import config from '../../lib/config'
-import { pathFromUUID } from '../../lib/util'
+import UppyUploader from '../../components/UppyUploader/UppyUploader.vue'
+import MetadataEditor from './MetadataEditor.vue'
+import HelpDialog from './HelpDialog.vue'
+
 import { createDatasetQuery } from '../../api/dataset'
 import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system'
 import get from 'lodash-es/get'
 import { currentUserIdQuery } from '../../api/user'
+import reportError from '../../lib/reportError'
+import { getS3Bucket } from '../../lib/util'
+import config from '../../lib/config'
 
-const DataTypeConfig = {
-  'LC-MS': {
-    fileExtensions: ['mzML'],
-    maxFiles: 1,
-    nameValidator(fileNames) {
-      return fileNames.length === 1
-    },
+const createInputPath = (url, uuid) => {
+  const parsedUrl = new URL(url)
+  const bucket = getS3Bucket(parsedUrl)
+  return `s3a://${bucket}/${uuid}`
+}
+
+const basename = fname => fname.split('.').slice(0, -1).join('.')
+const uppyOptions = {
+  debug: true,
+  autoProceed: true,
+  restrictions: {
+    maxNumberOfFiles: 2,
+    minNumberOfFiles: 2, // add both files before uploading
+    allowedFileTypes: ['.imzML', '.ibd'],
   },
-  default: {
-    fileExtensions: ['imzML', 'ibd'],
-    maxFiles: 2,
-    nameValidator(fileNames) {
-      if (fileNames.length < 2) {
-        return false
-      }
+  meta: {},
+  onBeforeFileAdded: (newFile, fileLookup = {}) => {
+    const currentFiles = Object.values(fileLookup)
+    if (currentFiles.length === 0) return true
+    if (currentFiles.length === 2) return false
 
-      const basename = fname => fname.split('.').slice(0, -1).join('.')
-      const extension = fname => fname.split('.').slice(-1)[0]
+    const [existingFile] = currentFiles
 
-      // consider only the last two selected files
-      const fileCount = fileNames.length
-      const [first, second] = [fileNames[fileCount - 2], fileNames[fileCount - 1]]
-      const [fext, sext] = [first, second].map(extension)
-      const [fbn, sbn] = [first, second].map(basename)
-      if (fext === sext || fbn !== sbn) {
-        this.$message({
-          message: 'Incompatible file names! Please select 2 files '
-                    + 'with the same name but different extension',
-          type: 'error',
-        })
-        return false
-      }
-      return true
-    },
+    if (newFile.extension === existingFile.extension) return false
+
+    const existingName = basename(existingFile.name)
+    const newName = basename(newFile.name)
+
+    if (existingName !== newName) {
+      Message({
+        message: 'Please make sure the files have the same name before the extension',
+        type: 'error',
+      })
+      return false
+    }
   },
 }
 
@@ -167,38 +169,42 @@ export default {
     },
   },
   components: {
-    FineUploader,
+    UppyUploader,
     MetadataEditor,
+    HelpDialog,
   },
-
   data() {
     return {
-      loading: 0,
-      fineUploaderConfig: config.fineUploader,
+      status: 'INIT',
       validationErrors: [],
-      isSubmitting: false,
-      uploadedUuid: null,
-      features: config.features,
+      storageKey: {
+        uuid: null,
+        uuidSignature: null,
+      },
+      uploads: {
+        imzml: false,
+        ibd: false,
+      },
       helpDialog: false,
-      // eslint-disable-next-line vue/max-len
-      helpLink: 'https://docs.google.com/document/d/e/2PACX-1vTT4QrMQ2RJMjziscaU8S3gbznlv6Rm5ojwrsdAXPbR5bt7Ivp-ThkC0hefrk3ZdVqiyCX7VU_ddA62/pub',
       systemHealth: null,
       currentUser: null,
+      inputPath: null,
     }
   },
+
   computed: {
     disabledSubmitMessage() {
       return 'Your files must be uploaded first'
     },
 
-    enableSubmit() {
-      return this.uploadedUuid != null && !this.isSubmitting
+    uuid() {
+      return this.storageKey.uuid
     },
 
-    fineUploaderDataTypeConfig() {
-      const activeDataType = this.$store.getters.filter.metadataType
-      return (activeDataType in DataTypeConfig) ? DataTypeConfig[activeDataType] : DataTypeConfig.default
+    enableSubmit() {
+      return this.status === 'UPLOADED'
     },
+
     isTourRunning() {
       return this.$store.state.currentTour != null
     },
@@ -206,15 +212,89 @@ export default {
     isSignedIn() {
       return this.currentUser != null && this.currentUser.id != null
     },
+
     enableUploads() {
       return !this.systemHealth || (this.systemHealth.canMutate && this.systemHealth.canProcessDatasets)
     },
+
+    uploadEndpoint() {
+      return `${window.location.origin}/dataset_upload`
+    },
+
+    s3Options() {
+      return {
+        companionUrl: this.uploadEndpoint,
+        companionHeaders: this.storageKey,
+      }
+    },
+
+    uppyOptions() {
+      return uppyOptions
+    },
   },
+
   created() {
     this.$store.commit('updateFilter', this.$store.getters.filter)
+    this.fetchStorageKey()
   },
 
   methods: {
+    async fetchStorageKey() {
+      this.status = 'LOADING'
+      try {
+        const response = await fetch(`${this.uploadEndpoint}/s3/uuid`)
+        if (response.status < 200 || response.status >= 300) {
+          reportError()
+        } else {
+          // uuid and uuidSignature
+          this.storageKey = await response.json()
+        }
+      } catch (e) {
+        reportError(e)
+      } finally {
+        this.status = 'READY'
+      }
+    },
+
+    onFileAdded(file) {
+      const { name } = file
+      const dsName = name.slice(0, name.lastIndexOf('.'))
+      Vue.nextTick(() => {
+        this.$refs.editor.fillDatasetName(dsName)
+      })
+    },
+
+    onFileRemoved(file) {
+      this.uploads[file.extension.toLowerCase()] = false
+      this.status = 'READY'
+    },
+
+    onUploadStart() {
+      this.status = 'UPLOADING'
+    },
+
+    onUploadComplete(result) {
+      for (const file of result.failed) {
+        this.uploads[file.extension.toLowerCase()] = false
+      }
+      for (const file of result.successful) {
+        this.uploads[file.extension.toLowerCase()] = true
+      }
+
+      if (this.uploads.imzml === true && this.uploads.ibd === true) {
+        const [file] = result.successful
+        const { extension, uploadURL } = file
+
+        this.inputPath = createInputPath(uploadURL, this.uuid)
+        this.status = 'UPLOADED'
+      } else {
+        if (result.failed.length) {
+          reportError()
+        }
+        this.status = 'READY'
+      }
+    },
+
     onSubmit() {
       const formValue = this.$refs.editor.getFormValueForSubmit()
       if (formValue != null) {
@@ -223,47 +303,17 @@ export default {
       }
     },
 
-    onUpload(filenames) {
-      const allowedExts = this.fineUploaderDataTypeConfig.fileExtensions.map(ext => `.${ext.toLowerCase()}`)
-      let fileName = ''
-      let fileExt = ''
-      for (const ext of allowedExts) {
-        for (const f of filenames) {
-          if (f.toLowerCase().endsWith(ext)) {
-            fileName = f
-            fileExt = ext
-            break
-          }
-        }
-      }
-      if (!fileName || !fileExt) {
-        throw new Error('Missing fileName/fileExt')
-      }
-      const dsName = fileName.slice(0, fileName.length - fileExt.length)
-      Vue.nextTick(() => {
-        this.$refs.editor.fillDatasetName(dsName)
-      })
-    },
-
-    onUploadSuccess(uuid) {
-      this.uploadedUuid = uuid
-    },
-
-    onUploadFailure() {
-      this.uploadedUuid = null
-    },
-
     async onFormSubmit(_, metadataJson, metaspaceOptions) {
       // Prevent duplicate submissions if user double-clicks
-      if (this.isSubmitting) return
-      this.isSubmitting = true
+      if (this.status === 'SUBMITTING') return
+      this.status = 'SUBMITTING'
 
       try {
         await this.$apollo.mutate({
           mutation: createDatasetQuery,
           variables: {
             input: {
-              inputPath: pathFromUUID(this.uploadedUuid),
+              inputPath: this.inputPath,
               metadataJson,
               ...metaspaceOptions,
             },
@@ -271,9 +321,9 @@ export default {
           },
         })
 
-        this.uploadedUuid = null
+        this.inputPath = null
         this.validationErrors = []
-        this.$refs.uploader.reset()
+        this.fetchStorageKey()
         this.$refs.editor.resetAfterSubmit()
         this.$message({
           message: 'Your dataset was successfully submitted!',
@@ -313,7 +363,9 @@ export default {
           throw err
         }
       } finally {
-        this.isSubmitting = false
+        if (this.status === 'SUBMITTING') { // i.e. if unsuccessful
+          this.status = 'UPLOADED'
+        }
       }
     },
 
@@ -360,19 +412,7 @@ export default {
     margin: 25px 5px;
   }
 
-  .el-button__help_metadata {
-    padding: 20px;
-    font-size: 150%;
-  }
-
-  .fine-uploader-wrapper {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-evenly;
-  }
-
-  a[target="_blank"]:after {
-    content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==);
-    margin: 0 2px;
+  .form-margin {
+    margin: 0 5px;
   }
 </style>

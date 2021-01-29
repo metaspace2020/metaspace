@@ -2,18 +2,37 @@ import './UploadDialog.css'
 
 import { defineComponent, reactive, onMounted, ref } from '@vue/composition-api'
 import { ApolloError } from 'apollo-client-preset'
+import { UppyOptions, UploadResult } from '@uppy/core'
 
 import { PrimaryLabelText } from '../../components/Form'
-import UppyUploader from '../../components/UppyUploader'
+import UppyUploader from '../../components/UppyUploader/UppyUploader.vue'
 import FadeTransition from '../../components/FadeTransition'
 
 import { createDatabaseQuery, MolecularDBDetails } from '../../api/moldb'
 import safeJsonParse from '../../lib/safeJsonParse'
+import reportError from '../../lib/reportError'
+import { getS3Bucket } from '../../lib/util'
 
 const convertToS3 = (url: string) => {
   const parsedUrl = new URL(url)
-  const bucket = parsedUrl.host.split('.')[0]
-  return `s3://${bucket}/${decodeURIComponent(parsedUrl.pathname.slice(1))}`
+  const bucket = getS3Bucket(parsedUrl)
+  const path = decodeURIComponent(parsedUrl.pathname.slice(1))
+  return `s3://${bucket}/${path}`
+}
+
+const uppyOptions : UppyOptions = {
+  debug: true,
+  autoProceed: true,
+  restrictions: {
+    maxFileSize: 150 * 2 ** 20, // 150MB
+    maxNumberOfFiles: 1,
+    allowedFileTypes: ['.tsv', '.csv'],
+  },
+  meta: {},
+}
+
+const s3Options = {
+  companionUrl: `${window.location.origin}/database_upload`,
 }
 
 const formatErrorMsg = (e: ApolloError) : ErrorMessage => {
@@ -88,10 +107,13 @@ const UploadDialog = defineComponent<Props>({
       }
     }
 
-    const handleUploadSuccess = (fileName: string, filePath: string) => {
-      state.model.filePath = convertToS3(filePath)
-      if (!state.model.name) {
-        state.model.name = fileName.substr(0, fileName.lastIndexOf('.')) || fileName
+    const handleUploadComplete = (result: UploadResult) => {
+      if (result.successful.length) {
+        const [file] = result.successful
+        state.model.filePath = convertToS3(file.uploadURL)
+        if (!state.model.name) {
+          state.model.name = file.name.substr(0, file.name.lastIndexOf('.')) || file.name
+        }
       }
     }
 
@@ -116,6 +138,7 @@ const UploadDialog = defineComponent<Props>({
         })
         emit('done')
       } catch (e) {
+        reportError(e, null)
         state.error = formatErrorMsg(e)
         state.loading = false
       }
@@ -196,10 +219,12 @@ const UploadDialog = defineComponent<Props>({
           5{'\t'}2-Ketobutyric acid{'\t'}C4H6O3{'\n'}
         </pre>
         <UppyUploader
-          class="mt-6 h-32"
-          uploadSuccessful={handleUploadSuccess}
+          class="mt-6"
           removeFile={handleRemoveFile}
           disabled={state.loading}
+          options={uppyOptions}
+          s3Options={s3Options}
+          onComplete={handleUploadComplete}
         />
         <span slot="footer">
           <el-button

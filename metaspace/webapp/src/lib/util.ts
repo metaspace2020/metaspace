@@ -1,7 +1,4 @@
-import config from './config'
 import { zipObject } from 'lodash-es'
-
-const fuConfig = config.fineUploader
 
 type JWT = string;
 
@@ -67,14 +64,6 @@ export function decodePayload(jwt: JWT) {
   return JSON.parse(Buffer.from(jwt.split('.')[1], 'base64').toString())
 }
 
-export function pathFromUUID(uuid: string): string {
-  if (fuConfig.storage === 's3') {
-    return 's3a://' + fuConfig.aws.s3_bucket + '/' + uuid
-  } else {
-    return fuConfig.storage + '/' + uuid + '/'
-  }
-}
-
 export function mzFilterPrecision(value: number | string): string {
   // Using parseFloat to remove any extra decimal places that won't actually count toward the precision
   const splitVal = String(parseFloat(String(value))).split('.')
@@ -121,4 +110,8 @@ export function getOS() {
   }
 
   return os
+}
+
+export const getS3Bucket = (parsedUrl: URL) => {
+  return parsedUrl.host.split('.')[0]
 }
