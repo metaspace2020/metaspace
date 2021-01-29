@@ -191,9 +191,9 @@ const UploadDialog = defineComponent<Props>({
         </h4>
         <pre class="m-0 mt-3">
           id{'\t'}name{'\t'}formula{'\n'}
-          1{'\t'}1-Methylhistidine{'\t'}C7H11N3O2{'\n'}
-          2{'\t'}13-Diaminopropane{'\t'}C3H10N2{'\n'}
-          5{'\t'}2-Ketobutyric acid{'\t'}C4H6O3{'\n'}
+          HMDB0000122{'\t'}Glucose{'\t'}C6H12O6{'\n'}
+          HMDB0000169{'\t'}Mannose{'\t'}C6H12O6{'\n'}
+          HMDB0000094{'\t'}Citric acid{'\t'}C6H8O7{'\n'}
         </pre>
         <UppyUploader
           class="mt-6 h-32"
