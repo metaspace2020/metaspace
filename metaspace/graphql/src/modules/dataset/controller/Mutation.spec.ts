@@ -1,3 +1,4 @@
+/* eslint-disable quote-props */
 import * as _ from 'lodash';
 
 import { processingSettingsChanged } from './Mutation';

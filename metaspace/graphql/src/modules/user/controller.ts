@@ -129,7 +129,7 @@ export const Resolvers = {
       return await getUserSourceById(ctx, userId);
     },
 
-    async currentUser(_: any, {}: any, ctx: Context): Promise<UserSource|null> {
+    async currentUser(_: any, args: any, ctx: Context): Promise<UserSource|null> {
       if (ctx.user.id != null) {
         return await getUserSourceById(ctx, ctx.user.id);
       }

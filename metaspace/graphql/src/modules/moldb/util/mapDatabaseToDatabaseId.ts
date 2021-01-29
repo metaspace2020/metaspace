@@ -7,6 +7,7 @@ export const mapDatabaseToDatabaseId =
   async (entityManager: EntityManager, database: string): Promise<number> => {
     logger.warn('Addressing private databases by name was deprecated. Use database id instead.');
 
+    /* eslint-disable quote-props */
     const databaseNameVersionMapping = {
       'ChEBI': ['ChEBI', '2016'],
       'LIPID_MAPS': ['LIPID_MAPS', '2016'],

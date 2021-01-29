@@ -1,6 +1,4 @@
-/**
- * Created by intsco on 1/11/17.
- */
+/* eslint-disable camelcase */
 import {UserProjectRoleOptions as UPRO} from './src/modules/project/model';
 import * as elasticsearch from 'elasticsearch';
 import * as sprintf from 'sprintf-js';
