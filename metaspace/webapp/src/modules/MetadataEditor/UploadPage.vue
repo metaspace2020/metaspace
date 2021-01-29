@@ -313,6 +313,9 @@ export default {
     },
 
     onSubmit() {
+      // Prevent duplicate submissions if user double-clicks
+      if (this.status === 'SUBMITTING') return
+
       if (this.status !== 'UPLOADED') {
         this.autoSubmit = true
       } else {
@@ -321,9 +324,6 @@ export default {
     },
 
     async submitForm() {
-      // Prevent duplicate submissions if user double-clicks
-      if (this.status === 'SUBMITTING') return
-
       const formValue = this.$refs.editor.getFormValueForSubmit()
       if (formValue === null) return
 
