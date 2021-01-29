@@ -89,11 +89,11 @@ const Details = defineComponent<Props>({
           <div class="relative leading-6 h2-leading-12">
             <div class="absolute top-0 left-0 h-12 flex items-center">
               <a
-                class="font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline"
+                class="font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline h-6"
                 onClick={props.close}
                 href="#"
               >
-                <span class="flex items-center -mt-1">
+                <span class="flex items-center">
                   <ArrowIcon class="sm-mini-icon mr-1" />
                   <span class="leading-none mt-1">All databases</span>
                 </span>
