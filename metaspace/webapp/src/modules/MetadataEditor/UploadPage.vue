@@ -26,25 +26,33 @@
               &nbsp;
             </div>
             <div class="el-col el-col-18">
-              <div class="flex justify-between form-margin">
+              <div class="flex justify-between items-center form-margin h-10">
                 <el-button
-                  class="text-gray-600"
+                  class="text-gray-600 mr-auto"
                   @click="helpDialog = true"
                 >
                   Need help?
                 </el-button>
+                <fade-transition>
+                  <p
+                    v-if="autoSubmit"
+                    class="text-gray-700 m-0 mr-3 text-right text-sm leading-5"
+                  >
+                    submitting after upload &ndash;
+                    <button
+                      class="button-reset font-medium text-primary"
+                      title="Cancel automatic submit"
+                      @click="autoSubmit = false"
+                    >
+                      cancel
+                    </button>
+                  </p>
+                </fade-transition>
                 <el-button
-                  v-if="enableSubmit && !isTourRunning"
                   type="primary"
+                  :disabled="submitDisabled"
+                  :loading="autoSubmit"
                   @click="onSubmit"
-                >
-                  Submit
-                </el-button>
-                <el-button
-                  v-else
-                  type="primary"
-                  disabled
-                  :title="disabledSubmitMessage"
                 >
                   Submit
                 </el-button>
@@ -97,6 +105,7 @@ import Vue from 'vue'
 import { Message } from 'element-ui/'
 
 import UppyUploader from '../../components/UppyUploader/UppyUploader.vue'
+import FadeTransition from '../../components/FadeTransition'
 import MetadataEditor from './MetadataEditor.vue'
 import HelpDialog from './HelpDialog.vue'
 
@@ -172,6 +181,7 @@ export default {
     UppyUploader,
     MetadataEditor,
     HelpDialog,
+    FadeTransition,
   },
   data() {
     return {
@@ -185,6 +195,7 @@ export default {
         imzml: false,
         ibd: false,
       },
+      autoSubmit: false,
       helpDialog: false,
       systemHealth: null,
       currentUser: null,
@@ -193,16 +204,13 @@ export default {
   },
 
   computed: {
-    disabledSubmitMessage() {
-      return 'Your files must be uploaded first'
-    },
 
     uuid() {
       return this.storageKey.uuid
     },
 
-    enableSubmit() {
-      return this.status === 'UPLOADED'
+    submitDisabled() {
+      return this.isTourRunning || ['INIT', 'LOADING', 'SUBMITTING'].includes(this.status)
     },
 
     isTourRunning() {
@@ -230,6 +238,15 @@ export default {
 
     uppyOptions() {
       return uppyOptions
+    },
+  },
+
+  watch: {
+    status(status) {
+      if (status === 'UPLOADED' && this.autoSubmit) {
+        this.autoSubmit = false
+        this.submitForm()
+      }
     },
   },
 
@@ -283,7 +300,7 @@ export default {
 
       if (this.uploads.imzml === true && this.uploads.ibd === true) {
         const [file] = result.successful
-        const { extension, uploadURL } = file
+        const { uploadURL } = file
 
         this.inputPath = createInputPath(uploadURL, this.uuid)
         this.status = 'UPLOADED'
@@ -296,17 +313,22 @@ export default {
     },
 
     onSubmit() {
-      const formValue = this.$refs.editor.getFormValueForSubmit()
-      if (formValue != null) {
-        const { datasetId, metadataJson, metaspaceOptions } = formValue
-        this.onFormSubmit(datasetId, metadataJson, metaspaceOptions)
+      // Prevent duplicate submissions if user double-clicks
+      if (this.status === 'SUBMITTING') return
+
+      if (this.status !== 'UPLOADED') {
+        this.autoSubmit = true
+      } else {
+        this.submitForm()
       }
     },
 
-    async onFormSubmit(_, metadataJson, metaspaceOptions) {
-      // Prevent duplicate submissions if user double-clicks
-      if (this.status === 'SUBMITTING') return
+    async submitForm() {
+      const formValue = this.$refs.editor.getFormValueForSubmit()
+      if (formValue === null) return
+
       this.status = 'SUBMITTING'
+      const { metadataJson, metaspaceOptions } = formValue
 
       try {
         await this.$apollo.mutate({
