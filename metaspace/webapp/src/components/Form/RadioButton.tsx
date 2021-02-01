@@ -13,8 +13,8 @@ const RadioButton = defineComponent({
   },
   setup(props, { emit, slots, attrs }) {
     return () => (
-      <div class="flex">
-        <div class="w-18 flex items-center justify-center">
+      <div class="flex -ml-12">
+        <div class="w-9 flex items-center">
           <FadeTransition>
             {props.checked && <CheckIcon class="sm-mini-icon" />}
           </FadeTransition>
@@ -22,8 +22,8 @@ const RadioButton = defineComponent({
         <label
           class={[
             'cursor-pointer p-3 rounded transition-colors ease-in-out duration-300',
-            'box-border outline-none border border-solid border-transparent',
-            'hover:text-body focus-within:border-blue-500',
+            'box-border border border-solid border-transparent',
+            'hover:text-body focus-within:border-primary',
             { 'text-gray-700': !props.checked, 'bg-gray-100': props.checked },
           ]}
         >
