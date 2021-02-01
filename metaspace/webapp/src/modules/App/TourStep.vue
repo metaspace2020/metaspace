@@ -48,7 +48,7 @@
         title="Exit tour"
         @click="close"
       >
-        <close-icon class="h-6 w-6 leading-6 block" />
+        <close-icon class="fill-current h-6 w-6 leading-6 block" />
       </button>
       <div
         class="popper__arrow"
@@ -209,10 +209,14 @@ export default {
       outline: none;
     }
 
+    svg .secondary {
+      fill: none;
+    }
+
     &:hover,
     &:focus {
       @apply text-blue-800;
-      svg .primary {
+      svg .secondary {
         @apply fill-current text-blue-100;
       }
     }

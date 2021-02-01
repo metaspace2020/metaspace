@@ -64,7 +64,7 @@ export default function (httpServer?: http.Server) {
   };
 
   const router = Router()
-  router.use(bodyParser.json())
+  router.use(bodyParser.json({ limit: '1MB' }))
   router.get('/s3/uuid', generateUuidForUpload)
   router.use(companion.app(options))
   if (httpServer) {

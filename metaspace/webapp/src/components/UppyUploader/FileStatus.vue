@@ -5,8 +5,8 @@
   >
     <div class="relative mt-3">
       <file-icon
-        class="sm-stateful-icon h-6 w-6 block p-2 bg-gray-100 rounded-full"
-        :class="{ 'sm-stateful-icon--active bg-blue-100': status !== 'EMPTY' }"
+        class="sm-file-icon fill-current bg-gray-100 h-6 w-6 block p-2 rounded-full"
+        :class="{ 'bg-blue-100 sm-file-icon--active': status !== 'EMPTY' }"
       />
       <progress-ring
         v-if="showProgress"
@@ -20,23 +20,37 @@
         :stroke="4"
         :progress="progress"
       />
-      <fade-transition class="absolute top-0 right-0 -mt-3 -mr-6 button-reset text-gray-600 hover:text-primary focus:text-primary leading-none">
+      <fade-transition class="absolute top-0 left-0 -mt-3 -ml-6">
         <button
-          v-if="['PENDING', 'UPLOADING', 'COMPLETE'].includes(status)"
-          key="remove"
-          title="Remove file"
-          @click.stop="$emit('remove')"
-        >
-          <i class="text-inherit text-lg el-icon-error" />
-        </button>
-        <button
-          v-else-if="status === 'ERROR'"
+          v-if="status === 'ERROR'"
           key="retry"
           title="Retry file"
+          class="button-reset text-gray-600 hover:text-primary focus:text-primary leading-none"
           @click.stop="$emit('retry')"
         >
-          <i class="text-inherit text-lg el-icon-refresh" />
+          <i class="text-inherit text-lg el-icon-refresh-left" />
         </button>
+      </fade-transition>
+      <fade-transition class="absolute top-0 right-0 -mt-3 -mr-6">
+        <button
+          v-if="!(['EMPTY', 'DISABLED'].includes(status))"
+          key="remove"
+          title="Remove file"
+          class="button-reset text-gray-600 hover:text-primary focus:text-primary leading-none"
+          @click.stop="$emit('remove')"
+        >
+          <i class="text-inherit text-lg el-icon-remove-outline" />
+        </button>
+      </fade-transition>
+      <fade-transition class="absolute bottom-0 right-0 -mb-2 -mr-2">
+        <check-icon
+          v-if="status === 'COMPLETE'"
+          class="w-6 h-6 fill-current sm-status-icon text-success"
+        />
+        <close-circle-icon
+          v-if="status === 'ERROR'"
+          class="w-6 h-6 fill-current sm-status-icon text-danger"
+        />
       </fade-transition>
     </div>
     <p class="m-0 mt-2 font-medium w-full overflow-hidden flex justify-center">
@@ -78,6 +92,9 @@ import { defineComponent, computed } from '@vue/composition-api'
 
 import '../../components/StatefulIcon.css'
 import FileIcon from '../../assets/inline/refactoring-ui/document.svg'
+import CheckIcon from '../../assets/inline/refactoring-ui/check.svg'
+import CloseCircleIcon from '../../assets/inline/refactoring-ui/close-circle.svg'
+
 import FadeTransition from '../../components/FadeTransition'
 import ProgressRing from '../../components/ProgressRing'
 
@@ -96,6 +113,8 @@ export default defineComponent<FileStatusProps>({
     FadeTransition,
     FileIcon,
     ProgressRing,
+    CheckIcon,
+    CloseCircleIcon,
   },
   props: {
     name: String,
@@ -121,3 +140,20 @@ export default defineComponent<FileStatusProps>({
   },
 })
 </script>
+<style scoped>
+.sm-file-icon .primary {
+  @apply text-gray-500;
+}
+.sm-file-icon .secondary {
+  @apply text-gray-400;
+}
+.sm-file-icon--active .primary {
+  @apply text-blue-600;
+}
+.sm-file-icon--active .secondary {
+  @apply text-blue-500;
+}
+.sm-status-icon .primary {
+  @apply text-white;
+}
+</style>
