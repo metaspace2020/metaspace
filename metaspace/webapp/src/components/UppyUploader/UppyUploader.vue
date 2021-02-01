@@ -24,10 +24,9 @@ import AwsS3Multipart, { AwsS3MultipartOptions } from '@uppy/aws-s3-multipart'
 import FadeTransition from '../../components/FadeTransition'
 
 import Dropzone from './Dropzone.vue'
-import FileStatus, { FileStatusName, FileStatusProps } from './FileStatus.vue'
+import FileStatus, { FileStatusName } from './FileStatus.vue'
 
 import createStore from './store'
-import config from '../../lib/config'
 
 function preventDropEvents() {
   const preventDefault = (e: Event) => {
