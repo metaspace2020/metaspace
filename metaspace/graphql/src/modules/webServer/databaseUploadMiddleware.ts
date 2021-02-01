@@ -34,7 +34,7 @@ export default function (httpServer: http.Server) {
   };
 
   const router = express.Router()
-  router.use(bodyParser.json())
+  router.use(bodyParser.json({ limit: '1MB' }))
   router.use(companion.app(options))
   companion.socket(httpServer, options);
   return router
