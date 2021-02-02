@@ -1,14 +1,13 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryColumn } from 'typeorm';
-import { Group } from '../group/model';
-import { User } from '../user/model';
-import { Project } from '../project/model';
-import { PublicationStatus } from '../../binding';
-import { PublicationStatusOptions as PSO } from '../project/Publishing';
-import { ExternalLink } from '../project/ExternalLink';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryColumn } from 'typeorm'
+import { Group } from '../group/model'
+import { User } from '../user/model'
+import { Project } from '../project/model'
+import { PublicationStatus } from '../../binding'
+import { PublicationStatusOptions as PSO } from '../project/Publishing'
+import { ExternalLink } from '../project/ExternalLink'
 
 @Entity()
 export class Dataset {
-
   @PrimaryColumn({ type: 'text' })
   id: string;
 
@@ -45,7 +44,6 @@ export class Dataset {
 
 @Entity({ name: 'dataset_project' })
 export class DatasetProject {
-
   @PrimaryColumn({ type: 'text' })
   datasetId: string;
 
@@ -61,10 +59,10 @@ export class DatasetProject {
   project: Project;
 
   @Column({ type: 'boolean' })
-  approved: Boolean;
+  approved: boolean;
 }
 
 export const DATASET_ENTITIES = [
   Dataset,
   DatasetProject,
-];
+]

@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import * as _ from 'lodash'
 
 /**
  * A specialized version of `_.set` that checks to see if a value already exists at `path`, and if so,
@@ -9,10 +9,10 @@ import * as _ from 'lodash';
  * @param onConflict
  */
 export const setOrMerge = <T>(obj: any, path: string, value: T, onConflict = (val: T, oldVal: T) => val) => {
-  let newVal = value;
+  let newVal = value
   if (_.hasIn(obj, path)) {
-    const oldVal = _.get(obj, path);
-    newVal = onConflict(value, oldVal);
+    const oldVal = _.get(obj, path)
+    newVal = onConflict(value, oldVal)
   }
-  return _.merge({}, obj, _.set({}, path, newVal));
-};
+  return _.merge({}, obj, _.set({}, path, newVal))
+}

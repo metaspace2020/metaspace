@@ -1,11 +1,11 @@
-import * as http from 'http';
-import * as express from 'express';
-import * as companion from '@uppy/companion';
-import * as genUuid from "uuid";
-import config from '../../utils/config';
-import * as bodyParser from "body-parser";
+import * as http from 'http'
+import * as express from 'express'
+import * as companion from '@uppy/companion'
+import * as genUuid from 'uuid'
+import config from '../../utils/config'
+import * as bodyParser from 'body-parser'
 
-export default function (httpServer: http.Server) {
+export default function(httpServer: http.Server) {
   const providerOptions =
       config.aws ? {
         s3: {
@@ -16,10 +16,10 @@ export default function (httpServer: http.Server) {
           secret: config.aws.aws_secret_access_key,
           bucket: config.upload.bucket,
           region: config.aws.aws_region,
-          useAccelerateEndpoint: false,  // default: false,
-          expires: 300,  // default: 300 (5 minutes)
-          acl: 'private',  // default: public-read
-        }
+          useAccelerateEndpoint: false, // default: false,
+          expires: 300, // default: 300 (5 minutes)
+          acl: 'private', // default: public-read
+        },
       } : {}
 
   const options = {
@@ -31,11 +31,11 @@ export default function (httpServer: http.Server) {
     },
     filePath: '/tmp',
     debug: true,
-  };
+  }
 
   const router = express.Router()
   router.use(bodyParser.json({ limit: '1MB' }))
   router.use(companion.app(options))
-  companion.socket(httpServer, options);
+  companion.socket(httpServer, options)
   return router
 }

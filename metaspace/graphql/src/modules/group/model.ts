@@ -4,23 +4,22 @@ import {
   Column,
   JoinColumn,
   OneToMany,
-  ManyToOne
-} from 'typeorm';
+  ManyToOne,
+} from 'typeorm'
 
-import {User} from '../user/model';
-import {UserGroupRole} from '../../binding'
-import {MolecularDB} from "../moldb/model";
+import { User } from '../user/model'
+import { UserGroupRole } from '../../binding'
+import { MolecularDB } from '../moldb/model'
 
 export const UserGroupRoleOptions: Record<UserGroupRole, UserGroupRole> = {
   INVITED: 'INVITED',
   PENDING: 'PENDING',
   MEMBER: 'MEMBER',
-  GROUP_ADMIN: 'GROUP_ADMIN'
-};
+  GROUP_ADMIN: 'GROUP_ADMIN',
+}
 
 @Entity()
 export class Group {
-
   @PrimaryColumn({ type: 'uuid', default: () => 'uuid_generate_v1mc()' })
   id: string;
 
@@ -33,7 +32,7 @@ export class Group {
   @Column({ type: 'text', nullable: true })
   urlSlug: string | null;
 
-  @Column({ type: 'text', name: 'group_description', default: ''})
+  @Column({ type: 'text', name: 'group_description', default: '' })
   groupDescriptionAsHtml: string;
 
   @OneToMany(type => UserGroup, userGroup => userGroup.group)
@@ -45,7 +44,6 @@ export class Group {
 
 @Entity('user_group')
 export class UserGroup {
-
   @PrimaryColumn({ type: 'uuid' })
   userId: string;
 
@@ -70,8 +68,7 @@ export class UserGroup {
   primary: boolean;
 }
 
-
 export const GROUP_ENTITIES = [
   Group,
   UserGroup,
-];
+]

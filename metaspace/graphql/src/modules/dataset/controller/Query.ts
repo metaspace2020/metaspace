@@ -1,95 +1,94 @@
-import {DatasetSource, FieldResolversFor, ScopeRoleOptions as SRO} from '../../../bindingTypes';
-import {Mutation, Query} from '../../../binding';
-import {esCountGroupedResults, esCountResults, esDatasetByID, esSearchResults} from '../../../../esConnector';
-import {Dataset as DatasetModel} from '../model';
-import {UserGroup as UserGroupModel, UserGroupRoleOptions} from '../../group/model';
-import {Context} from '../../../context';
-import {thumbnailOpticalImageUrl} from './Dataset';
-import {applyQueryFilters} from '../../annotation/queryFilters';
-import {EngineDataset, OpticalImage} from '../../engine/model';
-import {rawOpticalImage} from './Dataset';
+import { DatasetSource, FieldResolversFor, ScopeRoleOptions as SRO } from '../../../bindingTypes'
+import { Mutation, Query } from '../../../binding'
+import { esCountGroupedResults, esCountResults, esDatasetByID, esSearchResults } from '../../../../esConnector'
+import { Dataset as DatasetModel } from '../model'
+import { UserGroup as UserGroupModel, UserGroupRoleOptions } from '../../group/model'
+import { Context } from '../../../context'
+import { thumbnailOpticalImageUrl, rawOpticalImage } from './Dataset'
+import { applyQueryFilters } from '../../annotation/queryFilters'
+import { EngineDataset, OpticalImage } from '../../engine/model'
 
-const resolveDatasetScopeRole = async (ctx: Context, dsId: string) => {
-  let scopeRole = SRO.OTHER;
+const resolveDatasetScopeRole = async(ctx: Context, dsId: string) => {
+  let scopeRole = SRO.OTHER
   if (ctx.user.id) {
     if (dsId) {
-      const ds = await ctx.cachedGetEntityById(DatasetModel, dsId);
+      const ds = await ctx.cachedGetEntityById(DatasetModel, dsId)
       if (ds && ds.groupId != null) {
-        const userGroup = await ctx.cachedGetEntityById(UserGroupModel, { userId: ctx.user.id, groupId: ds.groupId });
+        const userGroup = await ctx.cachedGetEntityById(UserGroupModel, { userId: ctx.user.id, groupId: ds.groupId })
         if (userGroup) {
           if (userGroup.role === UserGroupRoleOptions.GROUP_ADMIN)
-            scopeRole = SRO.GROUP_MANAGER;
+            scopeRole = SRO.GROUP_MANAGER
           else if (userGroup.role === UserGroupRoleOptions.MEMBER)
-            scopeRole = SRO.GROUP_MEMBER;
+            scopeRole = SRO.GROUP_MEMBER
         }
       }
     }
   }
-  return scopeRole;
-};
+  return scopeRole
+}
 
 const QueryResolvers: FieldResolversFor<Query, void> = {
   async dataset(source, { id: dsId }, ctx): Promise<DatasetSource | null> {
-    const ds = await esDatasetByID(dsId, ctx.user);
-    return ds || null;
+    const ds = await esDatasetByID(dsId, ctx.user)
+    return ds || null
   },
 
   async allDatasets(source, args, ctx): Promise<DatasetSource[]> {
-    const {args: filteredArgs} = await applyQueryFilters(ctx, {
+    const { args: filteredArgs } = await applyQueryFilters(ctx, {
       ...args,
       datasetFilter: args.filter,
-      filter: {}
-    });
-    return await esSearchResults(filteredArgs, 'dataset', ctx.user);
+      filter: {},
+    })
+    return await esSearchResults(filteredArgs, 'dataset', ctx.user)
   },
 
   async countDatasets(source, args, ctx): Promise<number> {
-    const {args: filteredArgs} = await applyQueryFilters(ctx, {
+    const { args: filteredArgs } = await applyQueryFilters(ctx, {
       ...args,
       datasetFilter: args.filter,
-      filter: {}
-    });
-    return await esCountResults(filteredArgs, 'dataset', ctx.user);
+      filter: {},
+    })
+    return await esCountResults(filteredArgs, 'dataset', ctx.user)
   },
 
-  async countDatasetsPerGroup(source, {query}, ctx) {
-    const {args} = await applyQueryFilters(ctx, {
+  async countDatasetsPerGroup(source, { query }, ctx) {
+    const { args } = await applyQueryFilters(ctx, {
       datasetFilter: query.filter,
       simpleQuery: query.simpleQuery,
       filter: {},
-    });
+    })
     const groupArgs = {
       ...args,
       groupingFields: query.fields,
-    };
-    return await esCountGroupedResults(groupArgs, 'dataset', ctx.user);
+    }
+    return await esCountGroupedResults(groupArgs, 'dataset', ctx.user)
   },
 
-  async opticalImageUrl(source, {datasetId, zoom = 1}, ctx) {
+  async opticalImageUrl(source, { datasetId, zoom = 1 }, ctx) {
     // TODO: consider moving to Dataset type
     if (await esDatasetByID(datasetId, ctx.user)) { // check if user has access
-      const intZoom = zoom <= 1.5 ? 1 : (zoom <= 3 ? 2 : (zoom <= 6 ? 4 : 8));
+      const intZoom = zoom <= 1.5 ? 1 : (zoom <= 3 ? 2 : (zoom <= 6 ? 4 : 8))
       // TODO: manage optical images on the graphql side
       const opticalImage = await ctx.entityManager.getRepository(OpticalImage)
-        .findOne({ datasetId, zoom: intZoom });
-      return (opticalImage) ? `/fs/optical_images/${opticalImage.id}` : null;
+        .findOne({ datasetId, zoom: intZoom })
+      return (opticalImage) ? `/fs/optical_images/${opticalImage.id}` : null
     }
-    return null;
+    return null
   },
 
   // TODO: deprecated, remove
   async rawOpticalImage(source, { datasetId }, ctx) {
-    return await rawOpticalImage(datasetId, ctx);
+    return await rawOpticalImage(datasetId, ctx)
   },
 
   // TODO: deprecated, remove
-  async thumbnailImage(source, {datasetId}, ctx) {
-    return await thumbnailOpticalImageUrl(ctx, datasetId);
+  async thumbnailImage(source, { datasetId }, ctx) {
+    return await thumbnailOpticalImageUrl(ctx, datasetId)
   },
 
   // TODO: deprecated, remove
-  async thumbnailOpticalImageUrl(source, {datasetId}, ctx) {
-    return await thumbnailOpticalImageUrl(ctx, datasetId);
+  async thumbnailOpticalImageUrl(source, { datasetId }, ctx) {
+    return await thumbnailOpticalImageUrl(ctx, datasetId)
   },
 
   async currentUserLastSubmittedDataset(source, args, ctx): Promise<DatasetSource | null> {
@@ -101,7 +100,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
           submitter: ctx.user.id,
         },
         limit: 1,
-      }, 'dataset', ctx.user);
+      }, 'dataset', ctx.user)
       if (results.length > 0) {
         return {
           ...results[0],
@@ -109,9 +108,9 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
         }
       }
     }
-    return null;
+    return null
   },
 
-};
+}
 
-export default QueryResolvers;
+export default QueryResolvers

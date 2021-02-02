@@ -6,17 +6,15 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
-  Unique
-} from 'typeorm';
-import { Group } from '../group/model';
-import { MomentValueTransformer } from '../../utils/MomentValueTransformer';
-import { Moment } from 'moment';
-
+  Unique,
+} from 'typeorm'
+import { Group } from '../group/model'
+import { MomentValueTransformer } from '../../utils/MomentValueTransformer'
+import { Moment } from 'moment'
 
 @Entity({ schema: 'public', name: 'molecular_db' })
 @Unique('molecular_db_uindex', ['groupId', 'name', 'version'])
 export class MolecularDB {
-
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -27,7 +25,7 @@ export class MolecularDB {
   version: string;
 
   @Column({
-    type: 'timestamp without time zone', transformer: new MomentValueTransformer()
+    type: 'timestamp without time zone', transformer: new MomentValueTransformer(),
   })
   createdDT: Moment;
 
@@ -56,7 +54,7 @@ export class MolecularDB {
   archived: boolean;
 
   @Column({ type: 'boolean', default: false })
-  targeted: boolean;  // All the Metaspace provided databases are untargeted
+  targeted: boolean; // All the Metaspace provided databases are untargeted
 
   @Column({ type: 'uuid', nullable: true })
   groupId: string | null;
@@ -71,7 +69,6 @@ export class MolecularDB {
 
 @Entity({ schema: 'public' })
 export class Molecule {
-
     @PrimaryGeneratedColumn()
     id: number;
 
@@ -99,4 +96,4 @@ export class Molecule {
 export const MOLECULAR_DB_ENTITIES = [
   MolecularDB,
   Molecule,
-];
+]

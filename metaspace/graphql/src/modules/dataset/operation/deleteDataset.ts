@@ -1,22 +1,22 @@
-import {EntityManager} from 'typeorm';
-import {ContextUser} from '../../../context';
-import logger from '../../../utils/logger';
-import {getDatasetForEditing} from './getDatasetForEditing';
-import {Dataset as DatasetModel, DatasetProject as DatasetProjectModel} from '../model';
-import {DeleteDatasetArgs, smApiDeleteDataset} from '../../../utils/smApi/datasets';
+import { EntityManager } from 'typeorm'
+import { ContextUser } from '../../../context'
+import logger from '../../../utils/logger'
+import { getDatasetForEditing } from './getDatasetForEditing'
+import { Dataset as DatasetModel, DatasetProject as DatasetProjectModel } from '../model'
+import { DeleteDatasetArgs, smApiDeleteDataset } from '../../../utils/smApi/datasets'
 
-export const deleteDataset = async (entityManager: EntityManager, user: ContextUser, datasetId: string,
-                                    args?: DeleteDatasetArgs) => {
-  logger.info(`User '${user.id}' deleting '${datasetId}' dataset...`);
+export const deleteDataset = async(entityManager: EntityManager, user: ContextUser, datasetId: string,
+  args?: DeleteDatasetArgs) => {
+  logger.info(`User '${user.id}' deleting '${datasetId}' dataset...`)
   if (user.role !== 'admin') {
     // Skip this for admins so that datasets that are missing their graphql.dataset record can still be deleted
-    await getDatasetForEditing(entityManager, user, datasetId);
+    await getDatasetForEditing(entityManager, user, datasetId)
   }
 
-  await entityManager.getRepository(DatasetProjectModel).delete({ datasetId: datasetId });
-  await entityManager.getRepository(DatasetModel).delete(datasetId);
-  const resp = await smApiDeleteDataset(datasetId, args);
+  await entityManager.getRepository(DatasetProjectModel).delete({ datasetId: datasetId })
+  await entityManager.getRepository(DatasetModel).delete(datasetId)
+  const resp = await smApiDeleteDataset(datasetId, args)
 
-  logger.info(`Dataset '${datasetId}' was deleted`);
-  return resp;
-};
+  logger.info(`Dataset '${datasetId}' was deleted`)
+  return resp
+}

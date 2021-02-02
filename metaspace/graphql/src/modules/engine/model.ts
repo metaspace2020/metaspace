@@ -8,14 +8,14 @@ import {
   PrimaryColumn,
   PrimaryGeneratedColumn,
   Unique,
-} from 'typeorm';
-import {MomentValueTransformer} from '../../utils/MomentValueTransformer';
-import {Ion} from '../annotation/model';
-import {MolecularDB} from "../moldb/model";
+} from 'typeorm'
+import { MomentValueTransformer } from '../../utils/MomentValueTransformer'
+import { Ion } from '../annotation/model'
+import { MolecularDB } from '../moldb/model'
 
 export type DatasetStatus = 'QUEUED' | 'ANNOTATING' | 'FINISHED' | 'FAILED';
 
-@Entity({schema: 'public', name: 'dataset'})
+@Entity({ schema: 'public', name: 'dataset' })
 export class EngineDataset {
   @PrimaryColumn({ type: 'text' })
   id: string;
@@ -59,7 +59,7 @@ export class EngineDataset {
   pipelineStats: PerfProfile[];
 }
 
-@Entity({schema: 'public'})
+@Entity({ schema: 'public' })
 export class OpticalImage {
   @PrimaryColumn({ type: 'text' })
   id: string;
@@ -76,12 +76,12 @@ export class OpticalImage {
   @Column({ type: 'real', array: true, nullable: true })
   transform: number[][];
 
-  @ManyToOne(type => EngineDataset, dataset => dataset.opticalImages, {onDelete: 'CASCADE'})
+  @ManyToOne(type => EngineDataset, dataset => dataset.opticalImages, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'ds_id' })
   dataset: EngineDataset;
 }
 
-@Entity({schema: 'public'})
+@Entity({ schema: 'public' })
 export class Job {
   @PrimaryGeneratedColumn()
   id: number;
@@ -96,11 +96,11 @@ export class Job {
   @Column({ type: 'timestamp', nullable: true })
   finish: Date | null;
 
-  @ManyToOne(type => EngineDataset, dataset => dataset.jobs, {onDelete: 'CASCADE'})
+  @ManyToOne(type => EngineDataset, dataset => dataset.jobs, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'ds_id' })
   dataset: EngineDataset;
 
-  @ManyToOne(type => MolecularDB, {onDelete: 'CASCADE'})
+  @ManyToOne(type => MolecularDB, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'moldb_id' })
   molecularDB: MolecularDB;
 
@@ -124,7 +124,7 @@ interface AnnotationOffSample {
   label: OffSampleLabel;
 }
 
-@Entity({schema: 'public'})
+@Entity({ schema: 'public' })
 @Unique('annotation_annotation_uindex', ['jobId', 'formula', 'chemMod', 'neutralLoss', 'adduct'])
 export class Annotation {
   @PrimaryGeneratedColumn()
@@ -153,16 +153,16 @@ export class Annotation {
   @Column({ type: 'int', nullable: true })
   ionId: number | null;
 
-  @ManyToOne(type => Job, job => job.annotations, {onDelete: 'CASCADE'})
-  @JoinColumn({name: 'job_id'})
+  @ManyToOne(type => Job, job => job.annotations, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'job_id' })
   job: Job;
 
-  @ManyToOne(type => Ion,  {onDelete: 'SET NULL'})
-  @JoinColumn({name: 'ion_id'})
+  @ManyToOne(type => Ion, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'ion_id' })
   ion: Ion | null;
 }
 
-@Entity({schema: 'public'})
+@Entity({ schema: 'public' })
 export class PerfProfile {
   @PrimaryGeneratedColumn()
   id: number;
@@ -188,7 +188,7 @@ export class PerfProfile {
   @Column({ type: 'text', nullable: true })
   error: string | null;
 
-  @ManyToOne(type => EngineDataset, dataset => dataset.pipelineStats, {onDelete: 'CASCADE'})
+  @ManyToOne(type => EngineDataset, dataset => dataset.pipelineStats, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'ds_id' })
   dataset: EngineDataset;
 
@@ -196,7 +196,7 @@ export class PerfProfile {
   entries: PerfProfileEntry[];
 }
 
-@Entity({schema: 'public'})
+@Entity({ schema: 'public' })
 export class PerfProfileEntry {
   @PrimaryGeneratedColumn()
   id: number;
@@ -219,11 +219,10 @@ export class PerfProfileEntry {
   @Column({ type: 'json', nullable: true })
   extraData: object | null;
 
-  @ManyToOne(type => PerfProfile, profile => profile.entries, {onDelete: 'CASCADE'})
+  @ManyToOne(type => PerfProfile, profile => profile.entries, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'profile_id' })
   profile: PerfProfile;
 }
-
 
 export const ENGINE_ENTITIES = [
   EngineDataset,
@@ -232,4 +231,4 @@ export const ENGINE_ENTITIES = [
   Annotation,
   PerfProfile,
   PerfProfileEntry,
-];
+]

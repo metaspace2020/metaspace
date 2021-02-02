@@ -1,15 +1,15 @@
-import { UserError } from 'graphql-errors';
+import { UserError } from 'graphql-errors'
 
-import { Context } from '../../../context';
+import { Context } from '../../../context'
 
 export const assertUserBelongsToGroup = (ctx: Context, groupId: string) => {
-  ctx.getUserIdOrFail(); // Exit early if not logged in
+  ctx.getUserIdOrFail() // Exit early if not logged in
 
   if (ctx.isAdmin) {
-    return;
+    return
   }
 
   if (!ctx.user.groupIds || !ctx.user.groupIds.includes(groupId)) {
-    throw new UserError(`Unauthorized`);
+    throw new UserError('Unauthorized')
   }
-};
+}

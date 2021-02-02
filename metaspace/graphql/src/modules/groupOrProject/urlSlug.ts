@@ -1,6 +1,5 @@
-import { Brackets, EntityManager, ObjectType } from "typeorm";
-import FormValidationErrors from "../../utils/FormValidationErrors";
-
+import { Brackets, EntityManager, ObjectType } from 'typeorm'
+import FormValidationErrors from '../../utils/FormValidationErrors'
 
 interface EntityWithUrlSlug {
   id: string;
@@ -8,8 +7,7 @@ interface EntityWithUrlSlug {
 }
 
 export const validateUrlSlugChange = async <EntityType extends ObjectType<EntityWithUrlSlug>>
-  (entityManager: EntityManager, model: EntityType, existingId: string | null, urlSlug: string) => {
-
+(entityManager: EntityManager, model: EntityType, existingId: string | null, urlSlug: string) => {
   if (/[^a-zA-Z0-9_-]/.test(urlSlug)) {
     throw new FormValidationErrors('urlSlug',
       'Invalid characters - use alphanumerics separated by minus or underscore')
@@ -20,7 +18,7 @@ export const validateUrlSlugChange = async <EntityType extends ObjectType<Entity
 
   const existing = await entityManager.createQueryBuilder(model, 'entity')
     .where(urlSlugMatchesClause('entity', urlSlug))
-    .getMany();
+    .getMany()
 
   if (existing.some(({ id }) => existingId != null && id != existingId)) {
     throw new FormValidationErrors('urlSlug', 'This project link has already been used, try something else')

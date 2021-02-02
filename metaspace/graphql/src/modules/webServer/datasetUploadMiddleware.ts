@@ -1,15 +1,15 @@
-import * as http from 'http';
-import * as crypto from 'crypto';
-import {Router, Request, Response, NextFunction} from 'express';
-import * as companion from '@uppy/companion';
-import * as genUuid from "uuid";
-import * as bodyParser from "body-parser";
+import * as http from 'http'
+import * as crypto from 'crypto'
+import { Router, Request, Response, NextFunction } from 'express'
+import * as companion from '@uppy/companion'
+import * as genUuid from 'uuid'
+import * as bodyParser from 'body-parser'
 
-import config from '../../utils/config';
+import config from '../../utils/config'
 
 function signUuid(uuid: string) {
-  const hmac = crypto.createHmac('sha1', config.aws.aws_secret_access_key);
-  return hmac.update(uuid).digest('base64');
+  const hmac = crypto.createHmac('sha1', config.aws.aws_secret_access_key)
+  return hmac.update(uuid).digest('base64')
 }
 
 /**
@@ -21,12 +21,12 @@ function signUuid(uuid: string) {
  * @param next
  */
 function generateUuidForUpload(req: Request, res: Response, next: NextFunction) {
-  const uuid = genUuid();
+  const uuid = genUuid()
   const uuidSignature = signUuid(uuid)
-  res.json({uuid, uuidSignature});
+  res.json({ uuid, uuidSignature })
 }
 
-export default function (httpServer?: http.Server) {
+export default function(httpServer?: http.Server) {
   const providerOptions =
       config.aws ? {
         s3: {
@@ -46,10 +46,10 @@ export default function (httpServer?: http.Server) {
           secret: config.aws.aws_secret_access_key,
           bucket: config.upload.bucket,
           region: config.aws.aws_region,
-          useAccelerateEndpoint: false,  // default: false,
-          expires: 300,  // default: 300 (5 minutes)
-          acl: 'private',  // default: public-read
-        }
+          useAccelerateEndpoint: false, // default: false,
+          expires: 300, // default: 300 (5 minutes)
+          acl: 'private', // default: public-read
+        },
       } : {}
 
   const options = {
@@ -61,14 +61,14 @@ export default function (httpServer?: http.Server) {
     },
     filePath: '/tmp',
     debug: true,
-  };
+  }
 
   const router = Router()
   router.use(bodyParser.json({ limit: '1MB' }))
   router.get('/s3/uuid', generateUuidForUpload)
   router.use(companion.app(options))
   if (httpServer) {
-    companion.socket(httpServer, options);
+    companion.socket(httpServer, options)
   }
   return router
 }

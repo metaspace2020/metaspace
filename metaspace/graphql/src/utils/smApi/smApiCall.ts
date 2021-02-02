@@ -1,4 +1,4 @@
-import {Semaphore} from 'await-semaphore';
+import { Semaphore } from 'await-semaphore'
 import fetch from 'node-fetch'
 import config from '../config'
 import logger from '../logger'
@@ -12,13 +12,13 @@ import logger from '../logger'
  */
 export const smApiSemaphore = new Semaphore(8)
 
-export const smApiJsonPost = async (path: string, requestDoc: any) => {
-  return smApiSemaphore.use(async () => {
+export const smApiJsonPost = async(path: string, requestDoc: any) => {
+  return smApiSemaphore.use(async() => {
     const response = await fetch(`http://${config.services.sm_engine_api_host}${path}`, {
       method: 'POST',
       body: JSON.stringify(requestDoc),
       headers: { 'Content-Type': 'application/json' },
-    });
+    })
 
     let content
     try {
@@ -28,6 +28,6 @@ export const smApiJsonPost = async (path: string, requestDoc: any) => {
       content = null
     }
 
-    return {response, content}
+    return { response, content }
   })
 }

@@ -1,30 +1,30 @@
-import {Context} from '../../../context';
-import {UserProjectRole} from '../../../binding';
-import {UserProject as UserProjectModel, UserProjectRoleOptions as UPRO} from '../model';
-import {User as UserModel} from '../../user/model';
-import {UserError} from "graphql-errors";
-import {DatasetProject as DatasetProjectModel} from '../../dataset/model';
-import updateProjectDatasets from './updateProjectDatasets';
-import {ProjectSourceRepository} from '../ProjectSourceRepository';
+import { Context } from '../../../context'
+import { UserProjectRole } from '../../../binding'
+import { UserProject as UserProjectModel, UserProjectRoleOptions as UPRO } from '../model'
+import { User as UserModel } from '../../user/model'
+import { UserError } from 'graphql-errors'
+import { DatasetProject as DatasetProjectModel } from '../../dataset/model'
+import updateProjectDatasets from './updateProjectDatasets'
+import { ProjectSourceRepository } from '../ProjectSourceRepository'
 
-export default async (ctx: Context, userId: string, projectId: string, newRole: UserProjectRole | null) => {
-  const currentUserId = ctx.getUserIdOrFail();
-  const userProjectRepository = ctx.entityManager.getRepository(UserProjectModel);
-  const datasetProjectRepository = ctx.entityManager.getRepository(DatasetProjectModel);
-  const user = await ctx.entityManager.getRepository(UserModel).findOne(userId);
-  if (user == null) throw new UserError('User not found');
+export default async(ctx: Context, userId: string, projectId: string, newRole: UserProjectRole | null) => {
+  const currentUserId = ctx.getUserIdOrFail()
+  const userProjectRepository = ctx.entityManager.getRepository(UserProjectModel)
+  const datasetProjectRepository = ctx.entityManager.getRepository(DatasetProjectModel)
+  const user = await ctx.entityManager.getRepository(UserModel).findOne(userId)
+  if (user == null) throw new UserError('User not found')
 
   const project = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
-    .findProjectById(ctx.user, projectId);
-  if (project == null) throw new UserError('Project not found');
-  const projectMembers = await userProjectRepository.find({ where: { projectId } });
+    .findProjectById(ctx.user, projectId)
+  if (project == null) throw new UserError('Project not found')
+  const projectMembers = await userProjectRepository.find({ where: { projectId } })
 
-  const existingUserProject = projectMembers.find(up => up.userId === userId);
-  const existingRole = existingUserProject != null ? existingUserProject.role : null;
-  const currentUserUserProject = projectMembers.find(up => up.userId === currentUserId);
-  const currentUserRole = currentUserUserProject != null ? currentUserUserProject.role : null;
+  const existingUserProject = projectMembers.find(up => up.userId === userId)
+  const existingRole = existingUserProject != null ? existingUserProject.role : null
+  const currentUserUserProject = projectMembers.find(up => up.userId === currentUserId)
+  const currentUserRole = currentUserUserProject != null ? currentUserUserProject.role : null
 
-  if (newRole === existingRole) return;
+  if (newRole === existingRole) return
 
   // Validate
   if (!ctx.isAdmin) {
@@ -44,35 +44,35 @@ export default async (ctx: Context, userId: string, projectId: string, newRole: 
       { from: UPRO.MEMBER, to: UPRO.MANAGER, allowedIf: () => currentUserId !== userId && currentUserRole === UPRO.MANAGER },
       { from: UPRO.MANAGER, to: UPRO.MEMBER, allowedIf: () => currentUserId !== userId && currentUserRole === UPRO.MANAGER },
       { from: UPRO.MANAGER, to: null, allowedIf: () => currentUserId !== userId && currentUserRole === UPRO.MANAGER },
-    ];
-    const transition = allowedTransitions.find(t => t.from === existingRole && t.to === newRole && t.allowedIf());
+    ]
+    const transition = allowedTransitions.find(t => t.from === existingRole && t.to === newRole && t.allowedIf())
     if (!transition) {
-      throw new UserError('Unauthorized');
+      throw new UserError('Unauthorized')
     }
   }
 
   // Update DB
   if (existingUserProject == null) {
-    await userProjectRepository.insert({userId, projectId, role: newRole!});
+    await userProjectRepository.insert({ userId, projectId, role: newRole! })
   } else if (newRole == null) {
-    await userProjectRepository.delete({userId, projectId});
+    await userProjectRepository.delete({ userId, projectId })
   } else {
-    await userProjectRepository.update({userId, projectId}, {role: newRole});
+    await userProjectRepository.update({ userId, projectId }, { role: newRole })
   }
 
   // Update ProjectDatasets' "approved" status
   const datasetsToUpdate: {id: string}[] = await datasetProjectRepository.createQueryBuilder('datasetProject')
     .innerJoin('datasetProject.dataset', 'dataset')
-    .where('dataset.userId = :userId', {userId})
-    .andWhere('datasetProject.projectId = :projectId', {projectId})
+    .where('dataset.userId = :userId', { userId })
+    .andWhere('datasetProject.projectId = :projectId', { projectId })
     .select('dataset.id', 'id')
-    .getRawMany();
+    .getRawMany()
 
   if (datasetsToUpdate.length > 0) {
-    const datasetIds = datasetsToUpdate.map(({id}) => id);
+    const datasetIds = datasetsToUpdate.map(({ id }) => id)
     const approved = newRole == null
       ? null
-      : [UPRO.MANAGER, UPRO.MEMBER].includes(newRole);
-    await updateProjectDatasets(ctx, projectId, datasetIds, approved);
+      : [UPRO.MANAGER, UPRO.MEMBER].includes(newRole)
+    await updateProjectDatasets(ctx, projectId, datasetIds, approved)
   }
-};
+}

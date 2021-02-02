@@ -1,6 +1,6 @@
 
-import {Strategy as JwtStrategy, StrategyOptions} from 'passport-jwt';
-import { Request } from 'express';
+import { Strategy as JwtStrategy, StrategyOptions } from 'passport-jwt'
+import { Request } from 'express'
 
 /**
  * Wrapper for JwtStrategy that changes JWT-related errors from authentication failures into authentication errors.
@@ -8,17 +8,17 @@ import { Request } from 'express';
  */
 export default class NoisyJwtStrategy extends JwtStrategy {
   authenticate(req: Request, options: StrategyOptions) {
-    const oldFail = this.fail;
-    this.fail = function (challenge: any, status?: number) {
-      const reason = challenge instanceof Error ? challenge.message : challenge;
+    const oldFail = this.fail
+    this.fail = function(challenge: any, status?: number) {
+      const reason = challenge instanceof Error ? challenge.message : challenge
 
       if (reason && typeof reason !== 'number' && reason !== 'No auth token') {
-        return this.error(challenge);
+        return this.error(challenge)
       } else {
-        return (oldFail as any).apply(this, arguments);
+        return (oldFail as any).apply(this, arguments)
       }
-    };
+    }
 
-    return super.authenticate(req, options);
+    return super.authenticate(req, options)
   }
 }

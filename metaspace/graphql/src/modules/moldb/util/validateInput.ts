@@ -1,7 +1,7 @@
-import { validateTiptapJson } from '../../../utils/tiptap';
+import { validateTiptapJson } from '../../../utils/tiptap'
 import { CreateMolecularDBInput, UpdateMolecularDBInput } from '../../../binding'
 
-export default function validateInput (databaseDetails : CreateMolecularDBInput | UpdateMolecularDBInput) {
+export default function validateInput(databaseDetails : CreateMolecularDBInput | UpdateMolecularDBInput) {
   if (databaseDetails.citation != null) {
     validateTiptapJson(databaseDetails.citation, 'citation')
   }

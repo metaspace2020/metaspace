@@ -1,55 +1,55 @@
-import * as moment from 'moment';
-import { User } from '../modules/user/model';
-import { Credentials } from '../modules/auth/model';
-import { testEntityManager, userContext } from './graphqlTestEnvironment';
+import * as moment from 'moment'
+import { User } from '../modules/user/model'
+import { Credentials } from '../modules/auth/model'
+import { testEntityManager, userContext } from './graphqlTestEnvironment'
 import {
   Project,
   UserProject as UserProjectModel,
   UserProjectRoleOptions as UPRO,
-} from '../modules/project/model';
-import { PublicationStatusOptions as PSO } from '../modules/project/Publishing';
-import { PublicationStatus, UserGroupRole, UserProjectRole } from '../binding';
-import { Dataset, DatasetProject } from '../modules/dataset/model';
-import { EngineDataset } from '../modules/engine/model';
-import { Group, UserGroup as UserGroupModel } from '../modules/group/model';
-import {MolecularDB} from "../modules/moldb/model";
+} from '../modules/project/model'
+import { PublicationStatusOptions as PSO } from '../modules/project/Publishing'
+import { PublicationStatus, UserGroupRole, UserProjectRole } from '../binding'
+import { Dataset, DatasetProject } from '../modules/dataset/model'
+import { EngineDataset } from '../modules/engine/model'
+import { Group, UserGroup as UserGroupModel } from '../modules/group/model'
+import { MolecularDB } from '../modules/moldb/model'
 
-export const createTestUser = async (user?: Partial<User>): Promise<User> => {
+export const createTestUser = async(user?: Partial<User>): Promise<User> => {
   return (await createTestUserWithCredentials(user))[0]
-};
+}
 
-export const createTestUserWithCredentials = async (user?: Partial<User>): Promise<[User, Credentials]> => {
-  const creds = (await testEntityManager.save(Credentials, {}, {})) as Credentials;
+export const createTestUserWithCredentials = async(user?: Partial<User>): Promise<[User, Credentials]> => {
+  const creds = (await testEntityManager.save(Credentials, {}, {})) as Credentials
   const userModel = await testEntityManager.save(User, {
     name: 'tester',
     role: 'user',
     credentialsId: creds.id,
     email: `${Math.random()}@example.com`,
     ...user,
-  }) as User;
-  return [userModel, creds];
-};
+  }) as User
+  return [userModel, creds]
+}
 
-export const createTestGroup = async (group?: Partial<Group>): Promise<Group> => {
+export const createTestGroup = async(group?: Partial<Group>): Promise<Group> => {
   const groupDefaultFields = {
     name: 'test group',
     shortName: 'tstgrp',
     isPublic: true,
-  };
-  return await testEntityManager.save(Group, { ...groupDefaultFields, ...group }) as Group;
-};
+  }
+  return await testEntityManager.save(Group, { ...groupDefaultFields, ...group }) as Group
+}
 
-export const createTestUserGroup = async (userId: string, groupId: string, role: UserGroupRole | null,
+export const createTestUserGroup = async(userId: string, groupId: string, role: UserGroupRole | null,
   primary: boolean): Promise<UserGroupModel | null> => {
   if (role != null) {
-    return await testEntityManager.save(UserGroupModel, { userId, groupId, role, primary }) as UserGroupModel;
+    return await testEntityManager.save(UserGroupModel, { userId, groupId, role, primary }) as UserGroupModel
   } else {
-    await testEntityManager.delete(UserGroupModel, { userId, groupId });
-    return null;
+    await testEntityManager.delete(UserGroupModel, { userId, groupId })
+    return null
   }
-};
+}
 
-export const createTestProject = async (project?: Partial<Project>): Promise<Project> => {
+export const createTestProject = async(project?: Partial<Project>): Promise<Project> => {
   const projectDefaultFields = {
     name: 'test project',
     isPublic: true,
@@ -59,46 +59,46 @@ export const createTestProject = async (project?: Partial<Project>): Promise<Pro
     // Create from a Date() instance here so that validateBackgroundData doesn't see an invisible difference between
     // the `createTestProject` return value and the retrieved results from the database.
     createdDT: moment.utc(moment.utc().toDate()),
-  };
-  return await testEntityManager.save(Project, { ...projectDefaultFields, ...project }) as Project;
-};
+  }
+  return await testEntityManager.save(Project, { ...projectDefaultFields, ...project }) as Project
+}
 
-export const createTestUserProject = async (userId: string, projectId: string,
+export const createTestUserProject = async(userId: string, projectId: string,
   role: UserProjectRole | null): Promise<UserProjectModel | null> => {
   if (role != null) {
-    return await testEntityManager.save(UserProjectModel, { userId, projectId, role }) as UserProjectModel;
+    return await testEntityManager.save(UserProjectModel, { userId, projectId, role }) as UserProjectModel
   } else {
-    await testEntityManager.delete(UserProjectModel, { userId, projectId });
-    return null;
+    await testEntityManager.delete(UserProjectModel, { userId, projectId })
+    return null
   }
-};
+}
 
-export const createTestProjectMember = async (projectOrId: string | { id: string },
+export const createTestProjectMember = async(projectOrId: string | { id: string },
   role: UserProjectRole = UPRO.MEMBER) => {
-  const user = await createTestUser({ name: 'project member' }) as User;
+  const user = await createTestUser({ name: 'project member' })
   await testEntityManager.save(UserProjectModel, {
     userId: user.id,
     projectId: typeof projectOrId === 'string' ? projectOrId : projectOrId.id,
     role,
-  });
-  return user;
-};
+  })
+  return user
+}
 
 const genDatasetId = () => {
-  const randomUnixTime = 150e10 + Math.floor(Math.random() * 10e10);
+  const randomUnixTime = 150e10 + Math.floor(Math.random() * 10e10)
   return moment(randomUnixTime).toISOString()
-    .replace(/([\d\-]+)T(\d+):(\d+):(\d+).*/, '$1_$2h$3m$4s');
-};
+    .replace(/([\d\-]+)T(\d+):(\d+):(\d+).*/, '$1_$2h$3m$4s')
+}
 
-export const createTestDataset = async (
+export const createTestDataset = async(
   dataset: Partial<Dataset> = {}, engineDataset: Partial<EngineDataset> = {}
 ): Promise<Dataset> => {
-  const datasetId = engineDataset.id || genDatasetId();
+  const datasetId = engineDataset.id || genDatasetId()
   const datasetPromise = testEntityManager.save(Dataset, {
     id: datasetId,
     userId: userContext.getUserIdOrFail(),
     ...dataset,
-  });
+  })
 
   await testEntityManager.save(EngineDataset, {
     id: datasetId,
@@ -109,23 +109,23 @@ export const createTestDataset = async (
     status: 'FINISHED',
     isPublic: true,
     ...engineDataset,
-  });
+  })
 
-  return (await datasetPromise) as Dataset;
-};
+  return (await datasetPromise) as Dataset
+}
 
-export const createTestDatasetProject = async (publicationStatus: PublicationStatus): Promise<DatasetProject> => {
-  const dataset = await createTestDataset(),
-    project = await createTestProject({ publicationStatus });
+export const createTestDatasetProject = async(publicationStatus: PublicationStatus): Promise<DatasetProject> => {
+  const dataset = await createTestDataset()
+  const project = await createTestProject({ publicationStatus })
   const datasetProjectPromise = testEntityManager.save(DatasetProject, {
     projectId: project.id,
     datasetId: dataset.id,
-    approved: true
-  } as Partial<DatasetProject>);
-  return (await datasetProjectPromise) as DatasetProject;
-};
+    approved: true,
+  } as Partial<DatasetProject>)
+  return (await datasetProjectPromise) as DatasetProject
+}
 
-export const createTestMolecularDB = async (molecularDb: Partial<MolecularDB> = {}): Promise<MolecularDB> => {
+export const createTestMolecularDB = async(molecularDb: Partial<MolecularDB> = {}): Promise<MolecularDB> => {
   return await testEntityManager.save(MolecularDB, {
     name: 'test-db',
     version: 'db-version',
@@ -136,6 +136,6 @@ export const createTestMolecularDB = async (molecularDb: Partial<MolecularDB> = 
     link: 'http://example.org',
     citation: 'citation string',
     createdDT: moment.utc(),
-    ...molecularDb
-  }) as MolecularDB;
-};
+    ...molecularDb,
+  }) as MolecularDB
+}

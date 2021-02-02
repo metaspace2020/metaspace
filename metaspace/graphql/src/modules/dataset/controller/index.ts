@@ -1,11 +1,11 @@
-import Mutation from './Mutation';
-import Query from './Query';
-import Analyzer from './Analyzer';
-import Dataset from './Dataset';
-import DatasetUser from './DatasetUser';
-import Subscription from './Subscription';
-import {IResolvers} from 'graphql-tools';
-import {Context} from '../../../context';
+import Mutation from './Mutation'
+import Query from './Query'
+import Analyzer from './Analyzer'
+import Dataset from './Dataset'
+import DatasetUser from './DatasetUser'
+import Subscription from './Subscription'
+import { IResolvers } from 'graphql-tools'
+import { Context } from '../../../context'
 
 export const Resolvers = {
   Mutation,
@@ -14,4 +14,4 @@ export const Resolvers = {
   Analyzer,
   Dataset,
   DatasetUser,
-} as IResolvers<any, Context>;
+} as IResolvers<any, Context>
