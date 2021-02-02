@@ -4,7 +4,7 @@ exports[`MolecularDatabases details view should match snapshot (archived) 1`] = 
 <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
   <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
     <div class="relative leading-6 h2-leading-12" mock-v-loading="true">
-      <div class="absolute top-0 left-0 h-12 flex items-center"><a href="#" class="font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline"><span class="flex items-center -mt-1"><svg data-icon="arrow-thin-left-circle" class="sm-mini-icon mr-1"></svg><span class="leading-none mt-1">All databases</span></span></a></div>
+      <div class="absolute top-0 left-0 h-12 flex items-center"><a href="#" class="font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline h-6"><span class="flex items-center"><svg data-icon="arrow-thin-left-circle" class="sm-mini-icon mr-1"></svg><span class="leading-none mt-1">All databases</span></span></a></div>
       <div class="max-w-measure-3 mx-auto mt-6 mb-18">
         <div class="flex justify-between items-center">
           <h2 title="foo - v1" class="truncate">foo <small class="text-gray-700 font-normal">v1</small></h2><button type="button" class="el-button el-button--default ml-3">
@@ -31,15 +31,15 @@ exports[`MolecularDatabases details view should match snapshot (archived) 1`] = 
           </div>
           <div>
             <p class="m-0 mb-3"><span class="text-base font-medium">Annotation access</span></p>
-            <div class="flex">
-              <div class="w-18 flex items-center justify-center">
+            <div class="flex -ml-12">
+              <div class="w-9 flex items-center">
                 <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out"><svg data-icon="check" class="sm-mini-icon"></svg></transition-stub>
-              </div><label class="cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border outline-none border border-solid border-transparent hover:text-body focus-within:border-blue-500 bg-gray-100"><input type="radio" id="database-annotations-private" name="isPublic" class="sr-only"><span class="text-base font-medium">Annotations are private</span><span class="block text-sm text-gray-800">Results will be visible to group members only</span></label>
+              </div><label class="cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary bg-gray-100"><input type="radio" id="database-annotations-private" name="isPublic" class="sr-only"><span class="text-base font-medium">Annotations are private</span><span class="block text-sm text-gray-800">Results will be visible to group members only</span></label>
             </div>
-            <div class="flex">
-              <div class="w-18 flex items-center justify-center">
+            <div class="flex -ml-12">
+              <div class="w-9 flex items-center">
                 <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out"></transition-stub>
-              </div><label class="cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border outline-none border border-solid border-transparent hover:text-body focus-within:border-blue-500 text-gray-700"><input type="radio" id="database-annotations-public" name="isPublic" class="sr-only"><span class="text-base font-medium">Annotations are public</span><span class="block text-sm text-gray-800">Results will be visible to everyone</span></label>
+              </div><label class="cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary text-gray-700"><input type="radio" id="database-annotations-public" name="isPublic" class="sr-only"><span class="text-base font-medium">Annotations are public</span><span class="block text-sm text-gray-800">Results will be visible to everyone</span></label>
             </div>
           </div>
           <div><label for="database-link"><span class="text-base font-medium">Link</span></label>
@@ -78,7 +78,7 @@ exports[`MolecularDatabases details view should match snapshot (manager) 1`] = `
 <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
   <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
     <div class="relative leading-6 h2-leading-12" mock-v-loading="true">
-      <div class="absolute top-0 left-0 h-12 flex items-center"><a href="#" class="font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline"><span class="flex items-center -mt-1"><svg data-icon="arrow-thin-left-circle" class="sm-mini-icon mr-1"></svg><span class="leading-none mt-1">All databases</span></span></a></div>
+      <div class="absolute top-0 left-0 h-12 flex items-center"><a href="#" class="font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline h-6"><span class="flex items-center"><svg data-icon="arrow-thin-left-circle" class="sm-mini-icon mr-1"></svg><span class="leading-none mt-1">All databases</span></span></a></div>
       <div class="max-w-measure-3 mx-auto mt-6 mb-18">
         <div class="flex justify-between items-center">
           <h2 title="undefined - undefined" class="truncate"> <small class="text-gray-700 font-normal"></small></h2><button type="button" class="el-button el-button--default ml-3">
@@ -105,15 +105,15 @@ exports[`MolecularDatabases details view should match snapshot (manager) 1`] = `
           </div>
           <div>
             <p class="m-0 mb-3"><span class="text-base font-medium">Annotation access</span></p>
-            <div class="flex">
-              <div class="w-18 flex items-center justify-center">
+            <div class="flex -ml-12">
+              <div class="w-9 flex items-center">
                 <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out"><svg data-icon="check" class="sm-mini-icon"></svg></transition-stub>
-              </div><label class="cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border outline-none border border-solid border-transparent hover:text-body focus-within:border-blue-500 bg-gray-100"><input type="radio" id="database-annotations-private" name="isPublic" class="sr-only"><span class="text-base font-medium">Annotations are private</span><span class="block text-sm text-gray-800">Results will be visible to group members only</span></label>
+              </div><label class="cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary bg-gray-100"><input type="radio" id="database-annotations-private" name="isPublic" class="sr-only"><span class="text-base font-medium">Annotations are private</span><span class="block text-sm text-gray-800">Results will be visible to group members only</span></label>
             </div>
-            <div class="flex">
-              <div class="w-18 flex items-center justify-center">
+            <div class="flex -ml-12">
+              <div class="w-9 flex items-center">
                 <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out"></transition-stub>
-              </div><label class="cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border outline-none border border-solid border-transparent hover:text-body focus-within:border-blue-500 text-gray-700"><input type="radio" id="database-annotations-public" name="isPublic" class="sr-only"><span class="text-base font-medium">Annotations are public</span><span class="block text-sm text-gray-800">Results will be visible to everyone</span></label>
+              </div><label class="cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary text-gray-700"><input type="radio" id="database-annotations-public" name="isPublic" class="sr-only"><span class="text-base font-medium">Annotations are public</span><span class="block text-sm text-gray-800">Results will be visible to everyone</span></label>
             </div>
           </div>
           <div><label for="database-link"><span class="text-base font-medium">Link</span></label>
@@ -158,7 +158,7 @@ exports[`MolecularDatabases details view should match snapshot 1`] = `
 <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
   <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
     <div class="relative leading-6 h2-leading-12" mock-v-loading="true">
-      <div class="absolute top-0 left-0 h-12 flex items-center"><a href="#" class="font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline"><span class="flex items-center -mt-1"><svg data-icon="arrow-thin-left-circle" class="sm-mini-icon mr-1"></svg><span class="leading-none mt-1">All databases</span></span></a></div>
+      <div class="absolute top-0 left-0 h-12 flex items-center"><a href="#" class="font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline h-6"><span class="flex items-center"><svg data-icon="arrow-thin-left-circle" class="sm-mini-icon mr-1"></svg><span class="leading-none mt-1">All databases</span></span></a></div>
       <div class="max-w-measure-3 mx-auto mt-6 mb-18">
         <div class="flex justify-between items-center">
           <h2 title="undefined - undefined" class="truncate"> <small class="text-gray-700 font-normal"></small></h2><button type="button" class="el-button el-button--default ml-3">
@@ -185,15 +185,15 @@ exports[`MolecularDatabases details view should match snapshot 1`] = `
           </div>
           <div>
             <p class="m-0 mb-3"><span class="text-base font-medium">Annotation access</span></p>
-            <div class="flex">
-              <div class="w-18 flex items-center justify-center">
+            <div class="flex -ml-12">
+              <div class="w-9 flex items-center">
                 <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out"><svg data-icon="check" class="sm-mini-icon"></svg></transition-stub>
-              </div><label class="cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border outline-none border border-solid border-transparent hover:text-body focus-within:border-blue-500 bg-gray-100"><input type="radio" id="database-annotations-private" name="isPublic" class="sr-only"><span class="text-base font-medium">Annotations are private</span><span class="block text-sm text-gray-800">Results will be visible to group members only</span></label>
+              </div><label class="cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary bg-gray-100"><input type="radio" id="database-annotations-private" name="isPublic" class="sr-only"><span class="text-base font-medium">Annotations are private</span><span class="block text-sm text-gray-800">Results will be visible to group members only</span></label>
             </div>
-            <div class="flex">
-              <div class="w-18 flex items-center justify-center">
+            <div class="flex -ml-12">
+              <div class="w-9 flex items-center">
                 <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out"></transition-stub>
-              </div><label class="cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border outline-none border border-solid border-transparent hover:text-body focus-within:border-blue-500 text-gray-700"><input type="radio" id="database-annotations-public" name="isPublic" class="sr-only"><span class="text-base font-medium">Annotations are public</span><span class="block text-sm text-gray-800">Results will be visible to everyone</span></label>
+              </div><label class="cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary text-gray-700"><input type="radio" id="database-annotations-public" name="isPublic" class="sr-only"><span class="text-base font-medium">Annotations are public</span><span class="block text-sm text-gray-800">Results will be visible to everyone</span></label>
             </div>
           </div>
           <div><label for="database-link"><span class="text-base font-medium">Link</span></label>

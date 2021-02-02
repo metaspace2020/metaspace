@@ -7,4 +7,4 @@ nextOnTargetClick: true
 ---
 
 Hover over a cell you will see the filter icon
-<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4QEaFAISyajkqgAAAQlJREFUeNrt2TsSgjAYReHAOqzdpuM2qd2HtlaQx/+4Cee2VucbCQyUwhhjjDF2021nPz5fn+8Kkcf7sTUDrBJ/hbDf/RLYOQM4A843O8JZfBXAzAhX8dUAMyLUxDcBzIRQG98MMANCS3wXgDJCa3w3gCJCT/wQgBJCb/wwgALCSLwJQCbCaLwZQAaCRbwpQCSCVbw5QASCZbwLgCeCdbwbgAeCR7wrgCWCV7w7gAWCZ3wIwAiCd3wpvBMEAAAAAAAAAAAAAAAAAAAAAAAAAADAZRGvtuT/AaoIoZeAIkL4GaCGkHIIKiGk3QVUEFJvgwoI6c8B2QgSD0KZCFIn8v83ROWHJ8bYOvsBMwFliTN0wCEAAAAASUVORK5CYII=" width="20px" alt="filter"></img>. Click on it to instantly add a filter based on the column and value selected.
+<svg width="16" height="16" viewBox="180 250 1430 1430" xmlns="http://www.w3.org/2000/svg" fill="rgb(66, 145, 215)" style="vertical-align: top;"><path d="M1595 295q17 41-14 70l-493 493v742q0 42-39 59-13 5-25 5-27 0-45-19l-256-256q-19-19-19-45V858L211 365q-31-29-14-70 17-39 59-39h1280q42 0 59 39z"></path></svg>. Click on it to instantly add a filter based on the column and value selected.
