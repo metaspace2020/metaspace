@@ -25,9 +25,7 @@
     "build": "yarn run deref-schema && cross-env NODE_ENV=production vue-cli-service build --modern",
     "build-ci": "yarn run deref-schema && cross-env NODE_ENV=production vue-cli-service build --no-progress --hide-modules",
     "lint": "vue-cli-service lint",
-    "analyze-size": "rm -rf dist ; NODE_ENV=production WEBPACK_STATS=true vue-cli-service build ; npx webpack-bundle-analyzer dist/stats.json dist/ -p 9900 -O",
-    "storybook": "start-storybook -p 6006",
-    "build-storybook": "build-storybook"
+    "analyze-size": "rm -rf dist ; NODE_ENV=production WEBPACK_STATS=true vue-cli-service build ; npx webpack-bundle-analyzer dist/stats.json dist/ -p 9900 -O"
   },
   "dependencies": {
     "@fullhuman/postcss-purgecss": "^2.1.0",
@@ -84,13 +82,6 @@
     "vuex-router-sync": "^5.0.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.10",
-    "@storybook/addon-actions": "^6.1.15",
-    "@storybook/addon-essentials": "^6.1.15",
-    "@storybook/addon-links": "^6.1.15",
-    "@storybook/addons": "^6.1.15",
-    "@storybook/theming": "^6.1.15",
-    "@storybook/vue": "^6.1.15",
     "@types/d3": "^5.7.2",
     "@types/file-saver": "0.0.1",
     "@types/jest": "^24.0.19",
