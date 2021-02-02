@@ -21,19 +21,22 @@ import { urlSlugMatchesClause, validateUrlSlugChange } from '../groupOrProject/u
 import { MolecularDbRepository } from '../moldb/MolecularDbRepository'
 
 const assertCanCreateGroup = (user: ContextUser) => {
-  if (!user.id || user.role !== 'admin')
+  if (!user.id || user.role !== 'admin') {
     throw new UserError('Only admins can create groups')
+  }
 }
 
 const assertUserAuthenticated = (user: ContextUser) => {
-  if (!user.id)
+  if (!user.id) {
     throw new UserError('Not authenticated')
+  }
 }
 
 const assertUserRoles = async(entityManager: EntityManager, user: ContextUser, groupId: string, roles: UserGroupRole[]) => {
   if (groupId) {
-    if (user.id && user.role === 'admin')
+    if (user.id && user.role === 'admin') {
       return
+    }
 
     const userGroup = user.id
       ? (await entityManager.getRepository(UserGroupModel).find({
@@ -267,8 +270,9 @@ export const Resolvers = {
       const userGroupRepo = entityManager.getRepository(UserGroupModel)
 
       const userGroup = await userGroupRepo.findOneOrFail({ userId, groupId })
-      if (userGroup.role === UserGroupRoleOptions.GROUP_ADMIN)
+      if (userGroup.role === UserGroupRoleOptions.GROUP_ADMIN) {
         throw new UserError('Group admin cannot leave group')
+      }
 
       await userGroupRepo.delete({ userId, groupId })
 
@@ -339,8 +343,9 @@ export const Resolvers = {
       const userGroupRepo = entityManager.getRepository(UserGroupModel)
 
       const reqUserGroup = await userGroupRepo.findOne({ userId, groupId })
-      if (!reqUserGroup)
+      if (!reqUserGroup) {
         throw new UserError(`User '${userId}' did not request to join '${groupId}' group`)
+      }
 
       if (reqUserGroup.role == UserGroupRoleOptions.PENDING) {
         await userGroupRepo.save({
@@ -384,8 +389,7 @@ export const Resolvers = {
       if (invUserGroup && [UserGroupRoleOptions.MEMBER,
         UserGroupRoleOptions.GROUP_ADMIN].includes(invUserGroup.role)) {
         logger.info(`User '${invUserGroup.userId}' is already member of '${groupId}'`)
-      }
-      else {
+      } else {
         invUserGroup = await userGroupRepo.save({
           userId: invUser.id,
           groupId,

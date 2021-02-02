@@ -40,10 +40,6 @@ module.exports = {
     '@typescript-eslint/no-unsafe-call': ['off'],
     '@typescript-eslint/ban-ts-comment': ['off'],
     '@typescript-eslint/no-non-null-assertion': ['off'],
-    // TODO: These need to be manually checked after autofix because the autofix sometimes causes bad formatting
-    curly: 0,
-    'array-bracket-spacing': 0,
-    'brace-style': 0,
   },
   parser: '@typescript-eslint/parser',
   parserOptions: {

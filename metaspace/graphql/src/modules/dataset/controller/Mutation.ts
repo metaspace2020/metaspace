@@ -36,10 +36,12 @@ type MetadataRoot = any;
 type MetadataNode = any;
 
 function isEmpty(obj: any) {
-  if (!obj)
+  if (!obj) {
     return true
-  if (!(obj instanceof Object))
+  }
+  if (!(obj instanceof Object)) {
     return false
+  }
   let empty = true
   for (const key in obj) {
     if (!isEmpty(obj[key])) {
@@ -51,17 +53,20 @@ function isEmpty(obj: any) {
 }
 
 function trimEmptyFields(schema: MetadataSchema, value: MetadataNode) {
-  if (!(value instanceof Object))
+  if (!(value instanceof Object)) {
     return value
-  if (Array.isArray(value))
+  }
+  if (Array.isArray(value)) {
     return value
+  }
   const obj = Object.assign({}, value)
   for (const name in schema.properties) {
     const prop = schema.properties[name]
-    if (isEmpty(obj[name]) && (!schema.required || schema.required.indexOf(name) == -1))
+    if (isEmpty(obj[name]) && (!schema.required || schema.required.indexOf(name) == -1)) {
       delete obj[name]
-    else
+    } else {
       obj[name] = trimEmptyFields(prop, obj[name])
+    }
   }
   return obj
 }
@@ -104,8 +109,9 @@ export function processingSettingsChanged(ds: EngineDataset, update: DatasetUpda
           '/MS_Analysis/Detector_Resolving_Power',
         ]
         for (const path of procSettingsPaths) {
-          if (diffObj.path.startsWith(path))
+          if (diffObj.path.startsWith(path)) {
             procSettingsUpd = true
+          }
         }
       }
     }
@@ -187,8 +193,9 @@ const saveDataset = async(entityManager: EntityManager, args: SaveDatasetArgs, r
 }
 
 const assertCanCreateDataset = (user: ContextUser) => {
-  if (user.id == null)
+  if (user.id == null) {
     throw new UserError('Not authenticated')
+  }
 }
 
 const newDatasetId = () => {
@@ -285,8 +292,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
   reprocessDataset: async(source, { id, priority, useLithops }, ctx: Context) => {
     const engineDataset = await ctx.entityManager.findOne(EngineDataset, id)
-    if (engineDataset === undefined)
+    if (engineDataset === undefined) {
       throw new UserError('Dataset does not exist')
+    }
 
     return await createDataset({
       id,

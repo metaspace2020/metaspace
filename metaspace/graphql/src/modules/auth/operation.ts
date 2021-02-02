@@ -39,10 +39,12 @@ export const findUserById = async(id: string|undefined, credentials = true,
   let user = null
   if (id) {
     const relations = []
-    if (credentials)
+    if (credentials) {
       relations.push('credentials')
-    if (groups)
+    }
+    if (groups) {
       relations.push('groups')
+    }
     user = await userRepo.findOne({
       relations: relations,
       where: { id: id },
@@ -112,8 +114,7 @@ const createCredentials = async(userCred: UserCredentialsInput): Promise<Credent
     await credRepo.insert(newCred)
     logger.info(`New google credentials added for ${userCred.email} user`)
     return newCred
-  }
-  else {
+  } else {
     const newCred = credRepo.create({
       hash: await hashPassword(userCred.password),
       emailVerificationToken: uuid.v4(),
@@ -132,8 +133,7 @@ export const createUserCredentials = async(userCred: UserCredentialsInput): Prom
     // existing verified user
     const link = `${config.web_public_url}/account/sign-in`
     emailService.sendLoginEmail(existingUser.email!, link)
-  }
-  else {
+  } else {
     const existingUserNotVerified = await findUserByEmail(userCred.email, 'not_verified_email')
     if (existingUserNotVerified) {
       // existing not verified user
@@ -149,8 +149,7 @@ export const createUserCredentials = async(userCred: UserCredentialsInput): Prom
           notVerifiedEmail: null,
           name: userCred.name,
         })
-      }
-      else {
+      } else {
         existingUserNotVerified.credentials.hash = await hashPassword(userCred.password) || null
         await credRepo.save(existingUserNotVerified.credentials)
         await userRepo.update(existingUserNotVerified.id, {
@@ -160,8 +159,7 @@ export const createUserCredentials = async(userCred: UserCredentialsInput): Prom
         await sendEmailVerificationToken(existingUserNotVerified.credentials,
           existingUserNotVerified.notVerifiedEmail!)
       }
-    }
-    else {
+    } else {
       // absolutely new user
       if (userCred.googleId) {
         const newCred = await createCredentials(userCred)
@@ -172,8 +170,7 @@ export const createUserCredentials = async(userCred: UserCredentialsInput): Prom
         })
         await userRepo.insert(newUser)
         logger.info(`New google user added: ${userCred.email}`)
-      }
-      else {
+      } else {
         const newCred = await createCredentials(userCred)
         const newUser = userRepo.create({
           notVerifiedEmail: userCred.email,
@@ -195,8 +192,7 @@ export const verifyEmail = async(email: string, token: string): Promise<User|nul
       || tokenExpired(user.credentials.emailVerificationTokenExpires)) {
       logger.debug(`Token '${token}' is wrong or expired for ${email}`)
       user = null
-    }
-    else {
+    } else {
       await credRepo.update(user.credentials.id, {
         emailVerified: true,
         emailVerificationToken: null,
@@ -213,13 +209,11 @@ export const verifyEmail = async(email: string, token: string): Promise<User|nul
         ...userUpdate,
       }
     }
-  }
-  else {
+  } else {
     user = await findUserByEmail(email, 'email')
     if (!user) {
       logger.warn(`User with ${email} email does not exist`)
-    }
-    else {
+    } else {
       logger.info(`Email ${email} email already verified`)
     }
   }
@@ -265,8 +259,7 @@ export const resetPassword = async(email: string, password: string, token: strin
   if (user) {
     if (user.credentials.resetPasswordToken !== token || tokenExpired(user.credentials.resetPasswordTokenExpires)) {
       logger.debug(`Token '${user.credentials.resetPasswordToken}' is wrong or expired for ${email}`)
-    }
-    else {
+    } else {
       if (user.email == null) {
         await credRepo.update(user.credentials.id, {
           emailVerified: true,

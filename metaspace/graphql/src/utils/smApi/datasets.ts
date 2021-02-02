@@ -33,12 +33,10 @@ export const smApiDatasetRequest = async(uri: string, args: any = {}) => {
         type: 'dataset_busy',
         hint: 'Dataset is busy. Try again later.',
       }))
-    }
-    else {
+    } else {
       throw new UserError(`Request to sm-api failed: ${JSON.stringify(content)}`)
     }
-  }
-  else {
+  } else {
     logger.info(`Successful ${uri}`)
     logger.debug(`Body: ${JSON.stringify(reqDoc)}`)
     return content

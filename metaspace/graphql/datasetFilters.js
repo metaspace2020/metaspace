@@ -15,8 +15,9 @@ class AbstractDatasetFilter {
   }
 
   preprocess(val) {
-    if (this.options.preprocess)
+    if (this.options.preprocess) {
       return this.options.preprocess(val)
+    }
     return val
   }
 
@@ -71,10 +72,11 @@ class DatasetIdFilter extends AbstractDatasetFilter {
     // FIXME: array filter doesn't work presumably because of bugs in apollo-server
     ids = ids.split('|')
 
-    if (ids.length > 0)
+    if (ids.length > 0) {
       return { terms: { ds_id: ids } }
-    else
+    } else {
       return {}
+    }
   }
 
   pgFilter(q, ids) {
@@ -146,8 +148,9 @@ export function dsField(hit, alias) {
   let info = hit._source.ds_meta
   for (const field of datasetFilters[alias].schemaPath.split('.')) {
     info = info[field]
-    if (!info)
+    if (!info) {
       return info
+    }
   }
   return info
 }

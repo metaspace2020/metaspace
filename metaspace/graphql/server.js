@@ -146,8 +146,7 @@ const configureCronSchedule = (entityManager) => {
             { publishNotificationsSent: project.publishNotificationsSent + 1 })
         })
       )
-    }
-    catch (error) {
+    } catch (error) {
       logger.error(error)
     }
   }

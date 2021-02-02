@@ -25,8 +25,7 @@ function imageProviderFSBackend(storageRootDir: string) {
           const dest = path.join(storageRootDir, categoryPath, subdir)
           await fs.ensureDir(dest)
           cb(null, dest)
-        }
-        catch (e) {
+        } catch (e) {
           logger.error(e)
           cb(e, '')
         }
@@ -72,8 +71,7 @@ function imageProviderFSBackend(storageRootDir: string) {
           const imgPath = path.join(storageRootDir, categoryPath, subdir, fname)
           await fs.unlink(imgPath)
           res.status(202).json()
-        }
-        catch (e) {
+        } catch (e) {
           logger.warn(`${e} (image id = ${req.params.image_id})`)
           res.status(404).json()
         }
@@ -105,8 +103,7 @@ export async function createStorageServerApp(config: Config) {
     }
 
     return app
-  }
-  catch (e) {
+  } catch (e) {
     logger.error(`${e.stack}`)
     throw e
   }

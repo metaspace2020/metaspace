@@ -20,12 +20,10 @@ export const smApiDatabaseRequest = async(uri: string, args?: any) => {
         error: content.error,
         details: content.details,
       }))
-    }
-    else {
+    } else {
       throw new UserError('Server error')
     }
-  }
-  else {
+  } else {
     logger.info(`Successful ${uri}`)
     logger.debug(`Body: ${JSON.stringify(reqDoc)}`)
     return content.data

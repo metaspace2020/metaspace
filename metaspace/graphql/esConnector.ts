@@ -113,13 +113,15 @@ const esFormatMz = (mz: number) => {
 const esSort = (orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: SortingOrder | null) => {
   // default order
   let order: 'asc' | 'desc' = 'asc'
-  if (orderBy === 'ORDER_BY_MSM' || orderBy === 'ORDER_BY_DATE')
+  if (orderBy === 'ORDER_BY_MSM' || orderBy === 'ORDER_BY_DATE') {
     order = 'desc'
+  }
 
-  if (sortingOrder === 'DESCENDING')
+  if (sortingOrder === 'DESCENDING') {
     order = 'desc'
-  else if (sortingOrder === 'ASCENDING')
+  } else if (sortingOrder === 'ASCENDING') {
     order = 'asc'
+  }
 
   const sortTerm = (field: string, order: 'asc' | 'desc') => {
     const obj: any = {}
@@ -129,27 +131,28 @@ const esSort = (orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: Sorti
   }
 
   // annotation orderings
-  if (orderBy === 'ORDER_BY_MZ')
-    return [sortTerm('mz', order)]
-    // return sortTerms([{ mz: order }]);
-  else if (orderBy === 'ORDER_BY_MSM')
+  if (orderBy === 'ORDER_BY_MZ') { return [sortTerm('mz', order)] }
+  // return sortTerms([{ mz: order }]);
+  else if (orderBy === 'ORDER_BY_MSM') {
     return [sortTerm('msm', order)]
-  else if (orderBy === 'ORDER_BY_FDR_MSM')
+  } else if (orderBy === 'ORDER_BY_FDR_MSM') {
     return [sortTerm('fdr', order), sortTerm('msm', order === 'asc' ? 'desc' : 'asc')]
-  else if (orderBy === 'ORDER_BY_DATASET')
+  } else if (orderBy === 'ORDER_BY_DATASET') {
     return [sortTerm('ds_name', order), sortTerm('mz', order)]
-  else if (orderBy === 'ORDER_BY_FORMULA')
+  } else if (orderBy === 'ORDER_BY_FORMULA') {
     return [sortTerm('formula', order), sortTerm('adduct', order), sortTerm('fdr', order)]
-  else if (orderBy === 'ORDER_BY_OFF_SAMPLE')
+  } else if (orderBy === 'ORDER_BY_OFF_SAMPLE') {
     return [sortTerm('off_sample_prob', order)]
+  }
   // dataset orderings
-  else if (orderBy === 'ORDER_BY_DATE')
+  else if (orderBy === 'ORDER_BY_DATE') {
     return [
       sortTerm('ds_status_update_dt', order),
       sortTerm('ds_last_finished', order),
     ]
-  else if (orderBy === 'ORDER_BY_NAME')
+  } else if (orderBy === 'ORDER_BY_NAME') {
     return [sortTerm('ds_name', order)]
+  }
 }
 
 const constructRangeFilter = (
@@ -242,35 +245,29 @@ const constructAnnotationFilters = (filter: AnnotationFilter & ExtraAnnotationFi
   } = filter
   const filters = []
 
-  if (mzFilter)
+  if (mzFilter) {
     filters.push(constructRangeFilter('mz', {
       min: esFormatMz(mzFilter.min),
       max: esFormatMz(mzFilter.max),
     }))
+  }
 
-  if (msmScoreFilter)
+  if (msmScoreFilter) {
     filters.push(constructRangeFilter('msm', msmScoreFilter))
+  }
 
   if (fdrLevel) {
     filters.push(constructRangeFilter('fdr', { min: null, max: fdrLevel + 1e-3 }))
   }
 
-  if (annId)
-    filters.push({ term: { _id: annId } })
-  if (databaseId)
-    filters.push({ term: { db_id: databaseId } })
-  if (sumFormula)
-    filters.push({ term: { formula: sumFormula } })
-  if (chemMod != null)
-    filters.push({ term: { chem_mod: chemMod } })
-  if (neutralLoss != null)
-    filters.push({ term: { neutral_loss: neutralLoss } })
-  if (adduct != null)
-    filters.push({ term: { adduct: adduct } })
-  if (datasetName)
-    filters.push({ term: { ds_name: datasetName } })
-  if (offSample != null)
-    filters.push({ term: { off_sample_label: offSample ? 'off' : 'on' } })
+  if (annId) { filters.push({ term: { _id: annId } }) }
+  if (databaseId) { filters.push({ term: { db_id: databaseId } }) }
+  if (sumFormula) { filters.push({ term: { formula: sumFormula } }) }
+  if (chemMod != null) { filters.push({ term: { chem_mod: chemMod } }) }
+  if (neutralLoss != null) { filters.push({ term: { neutral_loss: neutralLoss } }) }
+  if (adduct != null) { filters.push({ term: { adduct: adduct } }) }
+  if (datasetName) { filters.push({ term: { ds_name: datasetName } }) }
+  if (offSample != null) { filters.push({ term: { off_sample_label: offSample ? 'off' : 'on' } }) }
   if (hasNeutralLoss === false) {
     filters.push({ term: { neutral_loss: '' } })
   }
@@ -402,8 +399,9 @@ const flattenAggResponse = (fields: string[], aggs: any, idx: number): any => {
     const subAggs = { [nextField]: bucket[nextField] }
     const nextCounts = flattenAggResponse(fields, subAggs, idx + 1).counts
 
-    for (const { fieldValues, count } of nextCounts)
+    for (const { fieldValues, count } of nextCounts) {
       counts.push({ fieldValues: [key].concat(fieldValues), count })
+    }
   }
 
   return { counts }
@@ -486,14 +484,16 @@ const getFirst = async(args: any, docType: DocType, user: ContextUser, bypassAut
 }
 
 export const esAnnotationByID = async(id: string, user: ContextUser): Promise<ESAnnotationSource | null> => {
-  if (id)
+  if (id) {
     return getFirst({ filter: { annId: id } }, 'annotation', user)
+  }
   return null
 }
 
 export const esDatasetByID = async(id: string, user: ContextUser,
   bypassAuth?: boolean): Promise<ESDataset | null> => {
-  if (id)
+  if (id) {
     return getFirst({ datasetFilter: { ids: id } }, 'dataset', user, bypassAuth)
+  }
   return null
 }

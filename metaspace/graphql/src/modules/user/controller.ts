@@ -21,11 +21,13 @@ import canSeeUserEmail from './util/canSeeUserEmail'
 import { ProjectSourceRepository } from '../project/ProjectSourceRepository'
 
 const assertCanEditUser = (user: ContextUser, userId: string) => {
-  if (!user.id)
+  if (!user.id) {
     throw new UserError('Not authenticated')
+  }
 
-  if (user.role !== 'admin' && user.id !== userId)
+  if (user.role !== 'admin' && user.id !== userId) {
     throw new UserError('Access denied')
+  }
 }
 
 const resolveUserScopeRole = async(ctx: Context, userId?: string): Promise<ScopeRole> => {
