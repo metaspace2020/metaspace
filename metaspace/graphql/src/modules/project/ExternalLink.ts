@@ -1,6 +1,4 @@
 import { UserError } from 'graphql-errors'
-import { Project } from './model'
-import { PublicationStatusOptions as PSO } from './Publishing'
 
 export type ExternalLinkProvider =
   'MetaboLights'
@@ -33,7 +31,7 @@ export const addExternalLink = (
   if (link.length > 100) {
     throw new UserError('Link too long')
   }
-  if (provider == ELPO.DOI && !link.startsWith(DOI_ORG_DOMAIN)) {
+  if (provider === ELPO.DOI && !link.startsWith(DOI_ORG_DOMAIN)) {
     throw new UserError(`DOI link should start with "${DOI_ORG_DOMAIN}"`)
   }
 

@@ -1,6 +1,5 @@
 import { EntityManager } from 'typeorm'
 import { MolecularDB as MolecularDbModel } from '../../moldb/model'
-import { UserError } from 'graphql-errors'
 import logger from '../../../utils/logger'
 
 export const mapDatabaseToDatabaseId =

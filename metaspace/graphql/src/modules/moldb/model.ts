@@ -44,7 +44,7 @@ export class MolecularDB {
   @Column({ type: 'text', nullable: true })
   citation: string | null;
 
-  @OneToMany(type => Molecule, molecule => molecule.molecularDB)
+  @OneToMany(() => Molecule, molecule => molecule.molecularDB)
   molecules: Molecule[];
 
   @Column({ type: 'boolean', default: false })
@@ -59,7 +59,7 @@ export class MolecularDB {
   @Column({ type: 'uuid', nullable: true })
   groupId: string | null;
 
-  @ManyToOne(type => Group, group => group.molecularDBs, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Group, group => group.molecularDBs, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'group_id' })
   group: Group;
 
@@ -88,7 +88,7 @@ export class Molecule {
     @Column({ type: 'int' })
     moldbId: number;
 
-    @ManyToOne(type => MolecularDB, { onDelete: 'CASCADE' })
+    @ManyToOne(() => MolecularDB, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'moldb_id' })
     molecularDB: MolecularDB;
 }

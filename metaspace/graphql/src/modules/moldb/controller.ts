@@ -13,11 +13,11 @@ import { assertUserBelongsToGroup } from './util/assertUserBelongsToGroup'
 import validateInput from './util/validateInput'
 
 const MolecularDbResolvers: FieldResolversFor<MolecularDB, MolecularDbModel> = {
-  async createdDT(database, args, ctx: Context): Promise<string> {
+  createdDT(database): string {
     return database.createdDT.toISOString()
   },
 
-  async hidden(database, args, ctx: Context): Promise<boolean> {
+  hidden(database): boolean {
     return database.archived || !database.isPublic
   },
 }

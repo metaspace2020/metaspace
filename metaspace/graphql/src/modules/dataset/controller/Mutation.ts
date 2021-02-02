@@ -3,7 +3,7 @@ import config from '../../../utils/config'
 import logger from '../../../utils/logger'
 import * as Ajv from 'ajv'
 import { UserError } from 'graphql-errors'
-import { EntityManager, In, Not } from 'typeorm'
+import { EntityManager } from 'typeorm'
 import * as moment from 'moment'
 import * as _ from 'lodash'
 
@@ -62,7 +62,7 @@ function trimEmptyFields(schema: MetadataSchema, value: MetadataNode) {
   const obj = Object.assign({}, value)
   for (const name in schema.properties) {
     const prop = schema.properties[name]
-    if (isEmpty(obj[name]) && (!schema.required || schema.required.indexOf(name) == -1)) {
+    if (isEmpty(obj[name]) && (!schema.required || schema.required.indexOf(name) === -1)) {
       delete obj[name]
     } else {
       obj[name] = trimEmptyFields(prop, obj[name])
@@ -76,6 +76,7 @@ function validateMetadata(metadata: MetadataNode) {
   const mdSchema = metadataSchemas[metadata.Data_Type]
   const validator = ajv.compile(mdSchema)
   const cleanValue = trimEmptyFields(mdSchema, metadata)
+  /* eslint-disable-next-line @typescript-eslint/no-floating-promises */ // ajv is only async when the schema has $async nodes
   validator(cleanValue)
   const validationErrors = validator.errors || []
   if (validationErrors.length > 0) {
@@ -185,7 +186,7 @@ const saveDataset = async(entityManager: EntityManager, args: SaveDatasetArgs, r
         await datasetProjectRepo.save({ datasetId: datasetId, projectId, approved })
       })
     const deletePromises = existingDatasetProjects
-      .filter(({ projectId, project }) => !projectIds.includes(projectId))
+      .filter(({ projectId }) => !projectIds.includes(projectId))
       .map(async({ projectId }) => { await datasetProjectRepo.delete({ datasetId: datasetId, projectId }) })
 
     await Promise.all([...savePromises, ...deletePromises])
@@ -329,7 +330,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     }
 
     if (!ctx.isAdmin) {
-      if (update.isPublic == false) {
+      if (update.isPublic === false) {
         await checkProjectsPublicationStatus(ctx.entityManager, datasetId, [PSO.PUBLISHED])
       }
       if (update.projectIds != null) {
@@ -341,7 +342,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     await assertUserCanUseMolecularDBs(ctx, update.databaseIds as number[]|undefined)
 
     const engineDataset = await ctx.entityManager.findOneOrFail(EngineDataset, datasetId)
-    const { newDB, procSettingsUpd } = await processingSettingsChanged(engineDataset, { ...update, metadata })
+    const { newDB, procSettingsUpd } = processingSettingsChanged(engineDataset, { ...update, metadata })
     const reprocessingNeeded = newDB || procSettingsUpd
 
     const submitterId = (ctx.isAdmin && update.submitterId) || dataset.userId

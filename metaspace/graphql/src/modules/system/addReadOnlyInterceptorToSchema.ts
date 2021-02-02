@@ -1,6 +1,4 @@
-import { GraphQLFieldResolver, GraphQLSchema } from 'graphql'
-import { IResolverObject } from 'graphql-tools'
-import * as _ from 'lodash'
+import { GraphQLSchema } from 'graphql'
 import { UserError } from 'graphql-errors'
 import { getHealth } from './controller'
 
@@ -26,7 +24,7 @@ const addReadOnlyInterceptorToSchema = (schema: GraphQLSchema) => {
         if (!canMutate || (!canProcessDatasets && mutationRequiresDatasetProcessing(mutationName, args))) {
           throw new UserError(JSON.stringify({ type: 'read_only_mode', message }))
         } else {
-          return originalResolve.apply(this, arguments as any)
+          return originalResolve.call(this, source, args, context, info)
         }
       }
     })

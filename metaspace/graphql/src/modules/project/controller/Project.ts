@@ -101,20 +101,20 @@ const ProjectResolvers: FieldResolversFor<Project, ProjectSource> = {
     return upload_dt != null ? upload_dt.toISOString() : null
   },
 
-  async createdDT(project, args, ctx: Context): Promise<string> {
+  createdDT(project): string {
     return project.createdDT.toISOString()
   },
 
-  async publishedDT(project, args, ctx: Context): Promise<string | null> {
+  publishedDT(project): string | null {
     return project.publishedDT != null ? project.publishedDT.toISOString() : null
   },
 
-  async externalLinks(project, args, ctx) {
+  externalLinks(project) {
     return project.externalLinks || []
   },
 
-  async reviewToken(project, args, ctx) {
-    if (project.currentUserRole == UPRO.MANAGER || ctx.isAdmin) {
+  reviewToken(project, args, ctx) {
+    if (project.currentUserRole === UPRO.MANAGER || ctx.isAdmin) {
       return project.reviewToken
     } else {
       return null

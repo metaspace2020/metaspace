@@ -28,6 +28,7 @@ export default async(ctx: Context, userId: string, projectId: string, newRole: U
 
   // Validate
   if (!ctx.isAdmin) {
+    /* eslint-disable max-len */
     type Transition = { from: UserProjectRole | null, to: UserProjectRole | null, allowedIf: () => boolean };
     const allowedTransitions: Transition[] = [
       // Request access flow
@@ -45,6 +46,7 @@ export default async(ctx: Context, userId: string, projectId: string, newRole: U
       { from: UPRO.MANAGER, to: UPRO.MEMBER, allowedIf: () => currentUserId !== userId && currentUserRole === UPRO.MANAGER },
       { from: UPRO.MANAGER, to: null, allowedIf: () => currentUserId !== userId && currentUserRole === UPRO.MANAGER },
     ]
+    /* eslint-enable max-len */
     const transition = allowedTransitions.find(t => t.from === existingRole && t.to === newRole && t.allowedIf())
     if (!transition) {
       throw new UserError('Unauthorized')

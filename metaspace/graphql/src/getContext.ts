@@ -1,4 +1,4 @@
-import { EntityManager, FindConditions, FindManyOptions, In, ObjectType } from 'typeorm'
+import { EntityManager, In, ObjectType } from 'typeorm'
 import { Context, ContextCacheKeyArg, ContextUser, BaseContext, ContextUserRole, AuthMethodOptions } from './context'
 import { User as UserModel } from './modules/user/model'
 import { Project as ProjectModel, UserProjectRoleOptions as UPRO } from './modules/project/model'
@@ -9,6 +9,7 @@ import { Request, Response } from 'express'
 import * as _ from 'lodash'
 import * as DataLoader from 'dataloader'
 import { MolecularDbRepository } from './modules/moldb/MolecularDbRepository'
+import { UserProjectRole } from './binding'
 
 const getBaseContext = (userFromRequest: JwtUser | UserModel | null, entityManager: EntityManager,
   req?: Request, res?: Response) => {
@@ -16,12 +17,13 @@ const getBaseContext = (userFromRequest: JwtUser | UserModel | null, entityManag
   let contextCache: Record<string, any> = {}
 
   const contextCacheGet = <TArgs extends readonly ContextCacheKeyArg[], V>
-    (functionName: string, args: TArgs, func: (...args: TArgs) => V) => {
+    (functionName: string, args: TArgs, func: (...args: TArgs) => V): V => {
     const key = [functionName, ...args.map(v => JSON.stringify(v))].join(' ')
     if (key in contextCache) {
       return contextCache[key] as V
     } else {
-      return contextCache[key] = func(...args)
+      contextCache[key] = func(...args)
+      return contextCache[key]
     }
   }
 
@@ -29,26 +31,29 @@ const getBaseContext = (userFromRequest: JwtUser | UserModel | null, entityManag
     contextCache = {}
   }
 
-  const getProjectRoles = () => contextCacheGet('getProjectRoles', [], async() => {
-    let projectRoles = user != null && user.id != null
-      ? await getUserProjectRoles(entityManager, user.id)
-      : {}
-    if (req && req.session && req.session.reviewTokens) {
-      const projectRepository = entityManager.getRepository(ProjectModel)
-      const reviewProjects = await projectRepository.find({ where: { reviewToken: In(req.session.reviewTokens) } })
-      if (reviewProjects.length > 0) {
-        const reviewProjectRoles = _.fromPairs(reviewProjects.map((project) => [project.id, UPRO.REVIEWER]))
-        projectRoles = { ...reviewProjectRoles, ...projectRoles }
+  const getProjectRoles = () => contextCacheGet(
+    'getProjectRoles',
+    [],
+    async(): Promise<Record<string, UserProjectRole>> => {
+      let projectRoles = user != null && user.id != null
+        ? await getUserProjectRoles(entityManager, user.id)
+        : {}
+      if (req && req.session && req.session.reviewTokens) {
+        const projectRepository = entityManager.getRepository(ProjectModel)
+        const reviewProjects = await projectRepository.find({ where: { reviewToken: In(req.session.reviewTokens) } })
+        if (reviewProjects.length > 0) {
+          const reviewProjectRoles = _.fromPairs(reviewProjects.map((project) => [project.id, UPRO.REVIEWER]))
+          projectRoles = { ...reviewProjectRoles, ...projectRoles }
+        }
       }
-    }
-    return projectRoles
-  })
+      return projectRoles
+    })
 
   const getMemberOfProjectIds = async() => {
     const projectRoles = await getProjectRoles()
     return Object.entries(projectRoles)
-      .filter(([id, role]) => role != null && [UPRO.MEMBER, UPRO.MANAGER].includes(role))
-      .map(([id, role]) => id)
+      .filter(([, role]) => role != null && [UPRO.MEMBER, UPRO.MANAGER].includes(role))
+      .map(([id]) => id)
   }
 
   const getVisibleDatabaseIds = async(): Promise<number[]> => {
@@ -56,10 +61,11 @@ const getBaseContext = (userFromRequest: JwtUser | UserModel | null, entityManag
     return databases.map(db => db.id)
   }
 
-  const cachedGetEntityById = async <T>(Model: ObjectType<T> & {}, entityId: any): Promise<T | null> => {
+  const cachedGetEntityById = async <T>(Model: ObjectType<T>, entityId: any): Promise<T | null> => {
     const modelMetadata = entityManager.connection.getMetadata(Model)
     const modelName = modelMetadata.name
     const dataloader = contextCacheGet('cachedGetEntityByIdDataLoader', [modelName],
+      /* eslint-disable-next-line @typescript-eslint/no-unused-vars */ // Unused, but needed for memoization to make sense
       (modelName) => {
         const idFields = modelMetadata.primaryColumns.map(col => col.propertyName)
         let keyFunc: (objectKey: any) => any

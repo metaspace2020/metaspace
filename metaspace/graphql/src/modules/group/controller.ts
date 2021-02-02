@@ -32,7 +32,9 @@ const assertUserAuthenticated = (user: ContextUser) => {
   }
 }
 
-const assertUserRoles = async(entityManager: EntityManager, user: ContextUser, groupId: string, roles: UserGroupRole[]) => {
+const assertUserRoles = async(
+  entityManager: EntityManager, user: ContextUser, groupId: string, roles: UserGroupRole[]
+) => {
   if (groupId) {
     if (user.id && user.role === 'admin') {
       return
@@ -66,7 +68,9 @@ const assertCanAddDataset = async(entityManager: EntityManager, user: ContextUse
     [UserGroupRoleOptions.GROUP_ADMIN, UserGroupRoleOptions.MEMBER])
 }
 
-const updateUserGroupDatasets = async(entityManager: EntityManager, userId: string, groupId: string, groupApproved: boolean) => {
+const updateUserGroupDatasets = async(
+  entityManager: EntityManager, userId: string, groupId: string, groupApproved: boolean
+) => {
   const datasetRepo = entityManager.getRepository(DatasetModel)
   const datasetsToUpdate = await datasetRepo.find({
     where: { userId, groupId, groupApproved: !groupApproved },
@@ -81,11 +85,18 @@ export const Resolvers = {
   UserGroup: {
     async numDatasets(userGroup: UserGroupSource, _: any, { entityManager }: Context) {
       const { userId, groupId, user } = userGroup
-      const canSeePrivateDatasets = [ScopeRoleOptions.GROUP_MEMBER, ScopeRoleOptions.GROUP_MANAGER].includes(user.scopeRole)
+      const canSeePrivateDatasets = [
+        ScopeRoleOptions.GROUP_MEMBER,
+        ScopeRoleOptions.GROUP_MANAGER,
+      ].includes(user.scopeRole)
 
       return await entityManager.getRepository(DatasetModel)
         .createQueryBuilder('dataset')
-        .innerJoin('(SELECT id, status, is_public FROM "public"."dataset")', 'engine_dataset', 'dataset.id = engine_dataset.id')
+        .innerJoin(
+          '(SELECT id, status, is_public FROM "public"."dataset")',
+          'engine_dataset',
+          'dataset.id = engine_dataset.id'
+        )
         .where('dataset.userId = :userId', { userId })
         .andWhere('dataset.groupId = :groupId', { groupId })
         .andWhere('dataset.groupApproved = TRUE')
@@ -206,7 +217,9 @@ export const Resolvers = {
   },
 
   Mutation: {
-    async createGroup(_: any, { groupDetails }: any, { user, entityManager }: Context): Promise<LooselyCompatible<Group & Scope>> {
+    async createGroup(
+      _: any, { groupDetails }: any, { user, entityManager }: Context
+    ): Promise<LooselyCompatible<Group & Scope>> {
       const { groupAdminEmail, ...groupInput } = groupDetails
       assertCanCreateGroup(user)
       logger.info(`Creating ${groupInput.name} group by '${user.id}' user...`)
@@ -301,7 +314,9 @@ export const Resolvers = {
       return true
     },
 
-    async requestAccessToGroup(_: any, { groupId }: any, { getUserIdOrFail, entityManager }: Context): Promise<UserGroupModel> {
+    async requestAccessToGroup(
+      _: any, { groupId }: any, { getUserIdOrFail, entityManager }: Context
+    ): Promise<UserGroupModel> {
       const userId = getUserIdOrFail()
       logger.info(`User '${userId}' requesting access to '${groupId}' group...`)
       const user = await entityManager.getRepository(UserModel).findOneOrFail(userId)
@@ -333,7 +348,9 @@ export const Resolvers = {
       })
     },
 
-    async acceptRequestToJoinGroup(_: any, { groupId, userId }: any, { user, entityManager }: Context): Promise<UserGroupModel> {
+    async acceptRequestToJoinGroup(
+      _: any, { groupId, userId }: any, { user, entityManager }: Context
+    ): Promise<UserGroupModel> {
       await assertCanEditGroup(entityManager, user, groupId)
       logger.info(`User '${user.id}' accepting request from '${userId}' user to join '${groupId}' group...`)
 
@@ -347,7 +364,7 @@ export const Resolvers = {
         throw new UserError(`User '${userId}' did not request to join '${groupId}' group`)
       }
 
-      if (reqUserGroup.role == UserGroupRoleOptions.PENDING) {
+      if (reqUserGroup.role === UserGroupRoleOptions.PENDING) {
         await userGroupRepo.save({
           userId,
           groupId,
@@ -365,7 +382,9 @@ export const Resolvers = {
       })
     },
 
-    async inviteUserToGroup(_: any, { groupId, email }: any, { user, getUserIdOrFail, entityManager }: Context): Promise<UserGroupModel> {
+    async inviteUserToGroup(
+      _: any, { groupId, email }: any, { user, getUserIdOrFail, entityManager }: Context
+    ): Promise<UserGroupModel> {
       await assertCanEditGroup(entityManager, user, groupId)
       logger.info(`User '${user.id}' inviting ${email} to join '${groupId}' group...`)
 
@@ -408,7 +427,9 @@ export const Resolvers = {
       })
     },
 
-    async acceptGroupInvitation(_: any, { groupId }: any, { getUserIdOrFail, entityManager }: Context): Promise<UserGroupModel> {
+    async acceptGroupInvitation(
+      _: any, { groupId }: any, { getUserIdOrFail, entityManager }: Context
+    ): Promise<UserGroupModel> {
       const userId = getUserIdOrFail()
       logger.info(`User '${userId}' accepting invitation to join '${groupId}' group...`)
       await entityManager.getRepository(GroupModel).findOneOrFail(groupId)
@@ -435,7 +456,9 @@ export const Resolvers = {
       })
     },
 
-    async updateUserGroup(_: any, { groupId, userId, update }: any, { user, entityManager }: Context): Promise<boolean> {
+    async updateUserGroup(
+      _: any, { groupId, userId, update }: any, { user, entityManager }: Context
+    ): Promise<boolean> {
       await assertCanEditGroup(entityManager, user, groupId)
       logger.info(`Updating '${groupId}' '${userId}' membership by '${user.id}' user...`)
 
@@ -453,7 +476,9 @@ export const Resolvers = {
       return true
     },
 
-    async importDatasetsIntoGroup(_: any, { groupId, datasetIds }: any, { user, entityManager }: Context): Promise<boolean> {
+    async importDatasetsIntoGroup(
+      _: any, { groupId, datasetIds }: any, { user, entityManager }: Context
+    ): Promise<boolean> {
       await assertCanAddDataset(entityManager, user, groupId)
       logger.info(`User '${user.id}' importing datasets ${datasetIds} to '${groupId}' group...`)
 

@@ -73,7 +73,7 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
       },
     }
 
-    const { args, postprocess } = await applyQueryFilters(anonContext, argsWithColocWith)
+    const { args } = await applyQueryFilters(anonContext, argsWithColocWith)
 
     expect(args).toMatchObject({
       offset: 0,
@@ -98,7 +98,7 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
       },
     }
 
-    const { args, postprocess } = await applyQueryFilters(anonContext, argsWithColocWith)
+    const { args } = await applyQueryFilters(anonContext, argsWithColocWith)
 
     expect(args).toMatchObject({
       filter: {
@@ -122,7 +122,7 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
     }
     const ionAnnotations = ions.map(({ ion, formula, chemMod, neutralLoss, adduct }) =>
       ({ ion, formula, chem_mod: chemMod, neutral_loss: neutralLoss, adduct }))
-    const { args, postprocess } = await applyQueryFilters(anonContext, argsWithColocWith)
+    const { postprocess } = await applyQueryFilters(anonContext, argsWithColocWith)
     const annotations: DeepPartial<ESAnnotation>[] = [
       { _source: ionAnnotations[2] },
       { _source: ionAnnotations[3] },
@@ -136,8 +136,8 @@ describe('annotation/queryFilters applyQueryFilters (colocalization)', () => {
       { _source: ionAnnotations[2], _isColocReference: false },
       { _source: ionAnnotations[3], _isColocReference: false },
     ])
-    expect(await result[0].getColocalizationCoeff(ions[1].ion, job.algorithm, job.moldbId, job.fdr)).toEqual(1)
-    expect(await result[1].getColocalizationCoeff(ions[1].ion, job.algorithm, job.moldbId, job.fdr)).toEqual(0.9)
-    expect(await result[2].getColocalizationCoeff(ions[1].ion, job.algorithm, job.moldbId, job.fdr)).toEqual(0.7)
+    expect(result[0].getColocalizationCoeff(ions[1].ion, job.algorithm, job.moldbId, job.fdr)).toEqual(1)
+    expect(result[1].getColocalizationCoeff(ions[1].ion, job.algorithm, job.moldbId, job.fdr)).toEqual(0.9)
+    expect(result[2].getColocalizationCoeff(ions[1].ion, job.algorithm, job.moldbId, job.fdr)).toEqual(0.7)
   })
 })

@@ -248,7 +248,7 @@ describe('Molecular database mutation permissions', () => {
       await createTestUserGroup(testUser.id, group.id, UGRO.MEMBER, true)
       const { id } = await createTestMolecularDB({ groupId: group.id })
 
-      mockSmApiDatabases.smApiUpdateDatabase.mockImplementation(async() => {
+      mockSmApiDatabases.smApiUpdateDatabase.mockImplementation(() => {
         return { id }
       })
 
@@ -272,7 +272,7 @@ describe('Molecular database mutation permissions', () => {
       const randomGroup = await createTestGroup()
       const { id } = await createTestMolecularDB({ groupId: randomGroup.id })
 
-      mockSmApiDatabases.smApiUpdateDatabase.mockImplementation(async() => {
+      mockSmApiDatabases.smApiUpdateDatabase.mockImplementation(() => {
         return { id }
       })
 

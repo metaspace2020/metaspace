@@ -2,7 +2,7 @@ import {
   AnnotationFilter,
   AnnotationOrderBy,
   DatasetFilter,
-  DatasetOrderBy, Query,
+  DatasetOrderBy,
   SortingOrder,
 } from '../../../binding'
 import { ESAnnotation } from '../../../../esConnector'
@@ -30,5 +30,5 @@ export interface ESAnnotationWithColoc extends ESAnnotation {
   _isColocReference: boolean;
 
   getColocalizationCoeff(_colocalizedWith: string, _colocalizationAlgo: string,
-                         _databaseId: number, _fdrLevel: number | null): Promise<number | null>;
+                         _databaseId: number, _fdrLevel: number | null): number | null;
 }

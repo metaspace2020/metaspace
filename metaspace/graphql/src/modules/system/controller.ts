@@ -41,7 +41,7 @@ export const Resolvers: IResolvers<any, Context> = {
       if (user && user.role === 'admin') {
         const newHealth = { ...defaultHealth, ...health }
         currentHealth = Promise.resolve(newHealth)
-        publishSystemHealthUpdated(newHealth)
+        await publishSystemHealthUpdated(newHealth)
 
         // Don't persist to disk in development mode, as it triggers nodemon to restart the process
         if (process.env.NODE_ENV !== 'development') {

@@ -1,11 +1,10 @@
 import { createTestDataset, createTestProject, createTestProjectMember } from '../../../tests/testDataCreation'
-import { PublicationStatus, UserProjectRole } from '../../../binding'
+import { UserProjectRole } from '../../../binding'
 import {
   Project as ProjectModel,
   UserProject as UserProjectModel,
   UserProjectRoleOptions as UPRO,
 } from '../model'
-import { PublicationStatusOptions as PSO } from '../Publishing'
 import { User as UserModel } from '../../user/model'
 import {
   doQuery,
@@ -245,8 +244,7 @@ describe('modules/project/controller (membership-related mutations)', () => {
       [false, UPRO.REVIEWER],
       [true, UPRO.MEMBER],
       [true, UPRO.MANAGER],
-    ])
-    ('should set \'approved\' to \'%s\' if the user is a %s', async(approved: boolean, role: UserProjectRole) => {
+    ])('should set \'approved\' to \'%s\' if the user is a %s', async(approved: boolean, role: UserProjectRole) => {
       const project = await createTestProject()
       const projectId = project.id
       const datasets = await Promise.all([1, 2].map(() => createTestDataset()))

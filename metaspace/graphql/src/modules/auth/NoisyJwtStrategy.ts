@@ -15,7 +15,7 @@ export default class NoisyJwtStrategy extends JwtStrategy {
       if (reason && typeof reason !== 'number' && reason !== 'No auth token') {
         return this.error(challenge)
       } else {
-        return (oldFail as any).apply(this, arguments)
+        return (oldFail as any).call(this, challenge, status)
       }
     }
 

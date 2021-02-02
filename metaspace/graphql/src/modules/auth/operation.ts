@@ -91,7 +91,8 @@ export const sendEmailVerificationToken = async(cred: Credentials, email: string
     logger.debug(`Token is null or expired for ${cred.id}. New one generated: ${cred.emailVerificationToken}`)
     await credRepo.update({ id: cred.id }, cred)
   }
-  const link = `${config.web_public_url}/api_auth/verifyemail?email=${encodeURIComponent(email)}&token=${encodeURIComponent(cred.emailVerificationToken)}`
+  const link = `${config.web_public_url}/api_auth/verifyemail?email=${encodeURIComponent(email)}`
+    + `&token=${encodeURIComponent(cred.emailVerificationToken)}`
   emailService.sendVerificationEmail(email, link)
   logger.debug(`Sent email verification to ${email}: ${link}`)
 }
@@ -232,7 +233,9 @@ export const sendResetPasswordToken = async(email: string): Promise<void> => {
     let resetPasswordToken
     if (cred.resetPasswordToken == null || tokenExpired(cred.resetPasswordTokenExpires)) {
       resetPasswordToken = uuid.v4()
-      logger.debug(`Token '${cred.resetPasswordToken}' expired for ${email}. A new one generated: ${resetPasswordToken}`)
+      logger.debug(
+        `Token '${cred.resetPasswordToken}' expired for ${email}. A new one generated: ${resetPasswordToken}`
+      )
       const updCred = credRepo.create({
         ...cred,
         resetPasswordToken,
@@ -242,7 +245,8 @@ export const sendResetPasswordToken = async(email: string): Promise<void> => {
     } else {
       resetPasswordToken = cred.resetPasswordToken
     }
-    const link = `${config.web_public_url}/account/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(resetPasswordToken)}`
+    const link = `${config.web_public_url}/account/reset-password?email=${encodeURIComponent(email)}`
+      + `&token=${encodeURIComponent(resetPasswordToken)}`
     emailService.sendResetPasswordEmail(email, link)
   }
 }

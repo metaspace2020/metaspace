@@ -1,3 +1,4 @@
+/* eslint-disable */ // Old file, needs a big refactor
 import { capitalize } from 'lodash'
 
 function getPgField(schemaPath) {

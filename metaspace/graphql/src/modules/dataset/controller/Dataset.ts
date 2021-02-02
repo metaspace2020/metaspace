@@ -160,7 +160,12 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   async submitter(ds, args, ctx) {
     if (ds._source.ds_submitter_id == null) {
       // WORKAROUND: Somehow datasets become broken and are indexed without a submitter
-      logger.error('Submitter ID is null: ', _.pick(ds._source, ['ds_id', 'ds_name', 'ds_status', 'ds_submitter_id', 'ds_submitter_name', 'ds_submitter_email']))
+      logger.error(
+        'Submitter ID is null: ',
+        _.pick(ds._source, [
+          'ds_id', 'ds_name', 'ds_status', 'ds_submitter_id', 'ds_submitter_name', 'ds_submitter_email',
+        ])
+      )
     }
 
     return {

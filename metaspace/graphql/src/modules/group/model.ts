@@ -35,10 +35,10 @@ export class Group {
   @Column({ type: 'text', name: 'group_description', default: '' })
   groupDescriptionAsHtml: string;
 
-  @OneToMany(type => UserGroup, userGroup => userGroup.group)
+  @OneToMany(() => UserGroup, userGroup => userGroup.group)
   members: UserGroup[];
 
-  @OneToMany(type => MolecularDB, molecularDB => molecularDB.group)
+  @OneToMany(() => MolecularDB, molecularDB => molecularDB.group)
   molecularDBs: MolecularDB[];
 }
 
@@ -47,14 +47,14 @@ export class UserGroup {
   @PrimaryColumn({ type: 'uuid' })
   userId: string;
 
-  @ManyToOne(type => User)
+  @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
   @PrimaryColumn({ type: 'uuid' })
   groupId: string;
 
-  @ManyToOne(type => Group)
+  @ManyToOne(() => Group)
   @JoinColumn({ name: 'group_id' })
   group: Group;
 

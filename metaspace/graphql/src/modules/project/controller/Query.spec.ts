@@ -116,7 +116,7 @@ describe('modules/project/controller (queries)', () => {
         const result = await doQuery(query, { projectId }, { context })
 
         // Assert
-        if (userRole === 'admin' || (projectRole && projectRole != UPRO.PENDING)) {
+        if (userRole === 'admin' || (projectRole && projectRole !== UPRO.PENDING)) {
           expect(result).toEqual(expect.objectContaining({
             isPublic: false,
             currentUserRole: projectRole,
@@ -220,7 +220,7 @@ describe('modules/project/controller (queries)', () => {
         const count = await doQuery(countQuery, {}, { context })
 
         // Assert
-        if (userRole === 'admin' || (projectRole && projectRole != UPRO.PENDING)) {
+        if (userRole === 'admin' || (projectRole && projectRole !== UPRO.PENDING)) {
           expect(result).toEqual([
             expect.objectContaining({
               id: projectId,

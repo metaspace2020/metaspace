@@ -28,14 +28,7 @@ import { createBackgroundData, validateBackgroundData } from '../../tests/backgr
 import { getContextForTest } from '../../getContext'
 import { utc } from 'moment'
 
-// ROLE_COMBOS is a list of possible user & project role combinations, for tests that should exhaustively check every possibility
-// When running Jest against a single file, it shows a concise list of all sub-tests, which makes it easy to see patterns
-// of failures across the different combinations
-type UserRole = 'anon' | 'user' | 'admin';
-
 describe('modules/user/controller', () => {
-  let userId: string
-
   const setupProject = async(projectRole: UserProjectRole | null, isPublic: boolean) => {
     const project = await createTestProject({ isPublic, name: `${projectRole} project` })
     await createTestUserProject(userContext.user.id!, project.id, projectRole)
@@ -53,7 +46,6 @@ describe('modules/user/controller', () => {
   beforeEach(async() => {
     await onBeforeEach()
     await setupTestUsers()
-    userId = testUser.id
   })
   afterEach(onAfterEach)
 

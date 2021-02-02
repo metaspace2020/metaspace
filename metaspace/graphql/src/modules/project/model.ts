@@ -35,13 +35,13 @@ export class Project {
   @Column({ type: 'text', nullable: true })
   urlSlug: string | null;
 
-  @OneToMany(type => UserProject, userProject => userProject.project)
+  @OneToMany(() => UserProject, userProject => userProject.project)
   members: UserProject[];
 
   @Column({ name: 'is_public', type: 'boolean', default: false })
   isPublic: boolean;
 
-  @OneToMany(type => DatasetProject, datasetProject => datasetProject.project)
+  @OneToMany(() => DatasetProject, datasetProject => datasetProject.project)
   datasetProjects: DatasetProject[];
 
   @Column({
@@ -76,7 +76,7 @@ export class UserProject {
   @PrimaryColumn({ type: 'text' })
   userId: string;
 
-  @ManyToOne(type => User)
+  @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
@@ -84,7 +84,7 @@ export class UserProject {
   @PrimaryColumn({ type: 'text' })
   projectId: string;
 
-  @ManyToOne(type => Project)
+  @ManyToOne(() => Project)
   @JoinColumn({ name: 'project_id' })
   project: Project;
 

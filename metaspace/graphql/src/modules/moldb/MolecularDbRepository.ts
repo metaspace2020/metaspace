@@ -1,4 +1,4 @@
-import { Brackets, EntityManager, EntityRepository, SelectQueryBuilder } from 'typeorm'
+import { Brackets, EntityManager, EntityRepository } from 'typeorm'
 import { UserError } from 'graphql-errors'
 import * as DataLoader from 'dataloader'
 import * as _ from 'lodash'

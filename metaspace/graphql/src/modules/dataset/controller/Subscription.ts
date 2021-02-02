@@ -31,9 +31,9 @@ interface DatasetStatusPayload {
 const dummyContextUser: ContextUser = {
   role: 'guest',
   authMethod: AuthMethodOptions.UNKNOWN,
-  getProjectRoles: async() => { return {} },
-  getMemberOfProjectIds: async() => { return [] },
-  getVisibleDatabaseIds: async() => { return [] },
+  getProjectRoles: () => { return Promise.resolve({}) },
+  getMemberOfProjectIds: () => { return Promise.resolve([]) },
+  getVisibleDatabaseIds: () => { return Promise.resolve([]) },
 }
 
 async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
@@ -54,11 +54,11 @@ async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
       if (action === 'DELETE' && stage === 'FINISHED') {
         if (ds == null) {
           await wait(1000)
-          publishDatasetDeleted({ id: ds_id })
+          await publishDatasetDeleted({ id: ds_id })
           return
         }
       } else if (ds != null) {
-        publishDatasetStatusUpdated({
+        await publishDatasetStatusUpdated({
           dataset: {
             ...ds,
             _source: {
@@ -82,15 +82,19 @@ async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
   logger.warn(`Failed to propagate dataset update for ${ds_id}`)
 }
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async() => {
   try {
     const RABBITMQ_CHANNEL = 'sm_dataset_status'
-    const conn = await Amqplib.connect(`amqp://${config.rabbitmq.user}:${config.rabbitmq.password}@${config.rabbitmq.host}`)
+    const conn = await Amqplib.connect(
+      `amqp://${config.rabbitmq.user}:${config.rabbitmq.password}@${config.rabbitmq.host}`
+    )
     const ch = await conn.createChannel()
     await ch.assertQueue(RABBITMQ_CHANNEL)
     await ch.consume(RABBITMQ_CHANNEL, msg => {
       if (msg != null) {
         try {
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
           waitForChangeAndPublish(JSON.parse(msg.content.toString()))
             .then(/* Ignore promise - allow to run in background */)
         } finally {

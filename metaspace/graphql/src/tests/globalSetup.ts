@@ -5,9 +5,13 @@ import { DbSchemaName } from '../utils/typeOrmConfig'
 
 export = async() => {
   if (config.db.database === 'sm'
-    || config.util.getConfigSources().some(({ name }) => name.endsWith('development.js') || name.endsWith('production.js'))) {
+    || config.util.getConfigSources()
+      .some(({ name }) => name.endsWith('development.js') || name.endsWith('production.js'))
+  ) {
     // Prevent accidentally dropping peoples' development DBs
-    throw new Error('ERROR: Running with a development/production database config. Try running again with NODE_ENV=test')
+    throw new Error(
+      'ERROR: Running with a development/production database config. Try running again with NODE_ENV=test'
+    )
   }
 
   const knexAdmin = Knex({

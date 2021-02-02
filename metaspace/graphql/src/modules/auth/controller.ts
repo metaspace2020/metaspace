@@ -2,7 +2,7 @@ import { Express, IRouter, NextFunction, Request, Response, Router } from 'expre
 import { callbackify } from 'util'
 import * as Passport from 'passport'
 import { Strategy as LocalStrategy } from 'passport-local'
-import { ExtractJwt, Strategy as JwtStrategy } from 'passport-jwt'
+import { ExtractJwt } from 'passport-jwt'
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
 import { HeaderAPIKeyStrategy } from 'passport-headerapikey'
 
@@ -50,6 +50,7 @@ const configurePassport = (router: IRouter<any>, app: Express) => {
   // able to be used for resetting passwords, generating new JWTs, etc.
   router.use(Passport.session())
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   Passport.serializeUser<User, string>(callbackify(async(user: User) => user.id))
 
   Passport.deserializeUser<User | false, string>(callbackify(async(id: string) => {
@@ -128,6 +129,7 @@ const configureJwt = (router: IRouter<any>) => {
   // Gives a one-time token, which expires in 60 seconds.
   // (this allows small time discrepancy between different servers)
   // If we want to use longer lifetimes we need to setup HTTPS on all servers.
+  // eslint-disable-next-line @typescript-eslint/require-await
   router.get('/gettoken', preventCache, async(req, res, next) => {
     try {
       const user = getUserFromRequest(req)
@@ -142,12 +144,13 @@ const configureJwt = (router: IRouter<any>) => {
   })
 }
 
-const configureApiKey = (router: IRouter<any>, app: Express) => {
+const configureApiKey = () => {
   const prefix = /^Api-Key /i
   Passport.use(new HeaderAPIKeyStrategy(
     // Handling prefix manually because HeaderAPIKeyStrategy raises an error when a different prefix is used
     { header: 'Authorization', prefix: '' },
     false,
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     async(header, done) => {
       try {
         if (prefix.test(header)) {
@@ -179,6 +182,7 @@ const configureLocalAuth = (router: IRouter<any>) => {
       usernameField: 'email',
       passwordField: 'password',
     },
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     async(username: string, password: string, done: any) => {
       try {
         const user = await findUserByEmail(username)
@@ -194,7 +198,7 @@ const configureLocalAuth = (router: IRouter<any>) => {
   ))
 
   router.post('/signin', function(req, res, next) {
-    Passport.authenticate('local', function(err, user, info) {
+    Passport.authenticate('local', function(err, user) {
       if (err) {
         next(err)
       } else if (user) {
@@ -220,7 +224,7 @@ const configureReviewerAuth = (router: IRouter<any>, entityManager: EntityManage
       if (session && projectId && token) {
         const project = await entityManager.getRepository(Project).findOne({ id: projectId })
         if (project) {
-          if (project.reviewToken == null || project.reviewToken != token) {
+          if (project.reviewToken == null || project.reviewToken !== token) {
             res.status(401).send()
           } else {
             if (!session.reviewTokens) {
@@ -405,7 +409,7 @@ export const configureAuth = async(app: Express, entityManager: EntityManager) =
   await initOperation(entityManager)
   configurePassport(router, app)
   configureJwt(router)
-  configureApiKey(router, app)
+  configureApiKey()
   configureLocalAuth(router)
   configureGoogleAuth(router)
   configureImpersonation(router)

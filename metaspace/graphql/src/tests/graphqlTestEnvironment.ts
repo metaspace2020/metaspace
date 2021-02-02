@@ -26,9 +26,9 @@ type TransactionEntityManager = EntityManager & { rollbackTransaction: () => Pro
 const createTransactionEntityManager = async() => {
   let txn: Promise<any>
   let rejectTxn: () => void
-  const manager = await new Promise<TransactionEntityManager>((resolveManager) => {
+  const manager = await new Promise<TransactionEntityManager>((resolve) => {
     txn = outsideOfTransactionConn.transaction(txnManager => {
-      resolveManager(txnManager as TransactionEntityManager)
+      resolve(txnManager as TransactionEntityManager)
       // Return a pending promise to allow the transaction be held open until `afterEach` rejects it
       return new Promise((resolve, reject) => {
         rejectTxn = reject
@@ -41,7 +41,7 @@ const createTransactionEntityManager = async() => {
   }
   // Replace transaction implementation to prevent issues with nested transactions
   manager.transaction = async(...args: any[]) => {
-    if (args.length == 1) {
+    if (args.length === 1) {
       return await args[0](manager)
     } else {
       return await args[1](manager)
@@ -101,7 +101,7 @@ interface DoQueryOptions {
   context?: Context
 }
 
-export const doQuery = async <T = any>(query: string, variables?: object, options?: DoQueryOptions): Promise<T> => {
+export const doQuery = async <T = any>(query: string, variables?: any, options?: DoQueryOptions): Promise<T> => {
   const context = options?.context || userContext || anonContext
   const { data, errors } = await graphql({
     schema,

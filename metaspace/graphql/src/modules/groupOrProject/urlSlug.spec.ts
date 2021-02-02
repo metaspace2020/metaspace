@@ -30,7 +30,7 @@ describe('modules/groupOrProject/urlSlug validateUrlSlugChange', () => {
       .rejects.toThrow(expect.objectContaining({ type: FormValidationErrorsType }))
   })
   it('should prevent duplicate urlSlugs', async() => {
-    const testProject = await createTestProject({ urlSlug: EQUIVALENT_SLUG_1 })
+    await createTestProject({ urlSlug: EQUIVALENT_SLUG_1 })
     const testProject2 = await createTestProject({})
 
     await expect(validateUrlSlugChange(testEntityManager, ProjectModel, testProject2.id, EQUIVALENT_SLUG_2))

@@ -1,12 +1,12 @@
 import { DatasetSource, FieldResolversFor, ScopeRoleOptions as SRO } from '../../../bindingTypes'
-import { Mutation, Query } from '../../../binding'
+import { Query } from '../../../binding'
 import { esCountGroupedResults, esCountResults, esDatasetByID, esSearchResults } from '../../../../esConnector'
 import { Dataset as DatasetModel } from '../model'
 import { UserGroup as UserGroupModel, UserGroupRoleOptions } from '../../group/model'
 import { Context } from '../../../context'
 import { thumbnailOpticalImageUrl, rawOpticalImage } from './Dataset'
 import { applyQueryFilters } from '../../annotation/queryFilters'
-import { EngineDataset, OpticalImage } from '../../engine/model'
+import { OpticalImage } from '../../engine/model'
 
 const resolveDatasetScopeRole = async(ctx: Context, dsId: string) => {
   let scopeRole = SRO.OTHER

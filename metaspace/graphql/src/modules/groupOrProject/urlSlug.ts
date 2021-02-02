@@ -20,7 +20,7 @@ export const validateUrlSlugChange = async <EntityType extends ObjectType<Entity
     .where(urlSlugMatchesClause('entity', urlSlug))
     .getMany()
 
-  if (existing.some(({ id }) => existingId != null && id != existingId)) {
+  if (existing.some(({ id }) => existingId != null && id !== existingId)) {
     throw new FormValidationErrors('urlSlug', 'This project link has already been used, try something else')
   }
 }

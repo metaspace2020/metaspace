@@ -32,7 +32,7 @@ function mergeCustomizer(objValue, srcValue) {
 
 function derefSchema(outputDir) {
   if (!metadataTypes) {
-    throw 'Allowed metadata types not found in "clientConfig.json"'
+    throw new Error('Allowed metadata types not found in "clientConfig.json"')
   }
 
   if (!fs.existsSync(outputDir)) {
@@ -57,7 +57,7 @@ function derefSchema(outputDir) {
   }
 
   if (!metadataFiles) {
-    throw 'No metadata schemas were found'
+    throw new Error('No metadata schemas were found')
   }
 
   // create unified metadata registry
@@ -67,7 +67,7 @@ function derefSchema(outputDir) {
 
 if (require.main === module) {
   if (process.argv.length !== 3) {
-    throw 'The script expects a single argument: a path to directory where metadata should be stored'
+    throw new Error('The script expects a single argument: a path to directory where metadata should be stored')
   }
 
   derefSchema(process.argv[2])

@@ -8,7 +8,12 @@ import * as _ from 'lodash'
  * @param value
  * @param onConflict
  */
-export const setOrMerge = <T>(obj: any, path: string, value: T, onConflict = (val: T, oldVal: T) => val) => {
+export const setOrMerge = <T>(
+  obj: any,
+  path: string,
+  value: T,
+  onConflict: (val: T, oldVal: T) => T = (val) => val
+) => {
   let newVal = value
   if (_.hasIn(obj, path)) {
     const oldVal = _.get(obj, path)

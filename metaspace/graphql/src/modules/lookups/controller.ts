@@ -2,7 +2,6 @@ import { FieldResolversFor } from '../../bindingTypes'
 import { Query } from '../../binding'
 import { esFilterValueCountResults } from '../../../esConnector'
 import config from '../../utils/config'
-import logger from '../../utils/logger'
 import { Context, ContextUser } from '../../context'
 import { IResolvers } from 'graphql-tools'
 
@@ -79,7 +78,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     })
   },
 
-  async colocalizationAlgos() {
+  colocalizationAlgos() {
     return config.metadataLookups.colocalizationAlgos
       .map(([id, name]) => ({ id, name }))
   },

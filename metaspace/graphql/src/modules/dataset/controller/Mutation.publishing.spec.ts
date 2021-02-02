@@ -92,7 +92,7 @@ describe('Operations on datasets in publishing process', () => {
 
   it.each([PSO.UNDER_REVIEW, PSO.PUBLISHED])(
     'Admins allowed to remove datasets from project in %s status', async(status) => {
-      const datasetProject = await createTestDatasetProject(PSO.UNDER_REVIEW)
+      const datasetProject = await createTestDatasetProject(status)
 
       mockSmApiDatasets.smApiDatasetRequest.mockReturnValue('')
 

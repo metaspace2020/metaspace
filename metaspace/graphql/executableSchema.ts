@@ -1,9 +1,4 @@
-import {
-  addMockFunctionsToSchema, IResolvers,
-  makeExecutableSchema,
-} from 'graphql-tools'
-import { maskErrors } from 'graphql-errors'
-import { mergeTypes } from 'merge-graphql-schemas'
+import { addMockFunctionsToSchema, makeExecutableSchema } from 'graphql-tools'
 import config from './src/utils/config'
 import { Resolvers as UserResolvers } from './src/modules/user/controller'
 import { Resolvers as GroupResolvers } from './src/modules/group/controller'

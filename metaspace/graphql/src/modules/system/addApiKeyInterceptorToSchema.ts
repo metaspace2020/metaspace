@@ -29,7 +29,7 @@ const ALLOWED_MUTATIONS = new Set([
 
 const wrapMutation = <TSource, TContext extends Context, TArgs>(
   mutationName: string,
-  resolver: GraphQLFieldResolver<TSource, TContext, TArgs>
+  resolver: GraphQLFieldResolver<TSource, Context, TArgs>
 ): GraphQLFieldResolver<TSource, TContext, TArgs> => {
   return async function(this: any, source: TSource, args: TArgs, context: Context, info: any) {
     const { user, req } = context
@@ -38,7 +38,7 @@ const wrapMutation = <TSource, TContext extends Context, TArgs>(
 
       if (ALLOWED_MUTATIONS.has(mutationName)) {
         try {
-          const result = await resolver.apply(this, arguments as any)
+          const result = await resolver.call(this, source, args, context, info)
           logger.info(`API_KEY call from ${callerIp}: ${mutationName} success args: ${JSON.stringify(args)}`)
           return result
         } catch (ex) {
@@ -53,7 +53,7 @@ const wrapMutation = <TSource, TContext extends Context, TArgs>(
         }))
       }
     } else {
-      return resolver.apply(this, arguments as any)
+      return resolver.call(this, source, args, context, info)
     }
   }
 }

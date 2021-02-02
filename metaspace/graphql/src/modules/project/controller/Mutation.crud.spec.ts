@@ -2,7 +2,6 @@ import { createTestProject } from '../../../tests/testDataCreation'
 import { Project as ProjectType } from '../../../binding'
 import { Project as ProjectModel, UserProject as UserProjectModel, UserProjectRoleOptions as UPRO } from '../model'
 import {
-  adminContext,
   anonContext,
   doQuery,
   onAfterAll,
@@ -213,7 +212,7 @@ describe('modules/project/controller (CRUD mutations)', () => {
       // Assert
       await expect(promise).rejects.toThrow('Unauthorized')
       const project = await testEntityManager.findOne(ProjectModel, projectId)
-      await expect(project).toEqual(expect.anything())
+      expect(project).toEqual(expect.anything())
     })
   })
 })

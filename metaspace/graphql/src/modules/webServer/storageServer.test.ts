@@ -18,12 +18,12 @@ describe('imageUploadTest with fs backend', () => {
     describe(`${storageType} storage type`, () => {
       let server: supertest.SuperTest<supertest.Test>
 
-      beforeAll(async() => {
+      beforeAll(() => {
         logger.info('> Before all')
-        server = supertest(await createStorageServerApp(config))
+        server = supertest(createStorageServerApp(config))
       })
 
-      afterAll(async() => {
+      afterAll(() => {
         logger.info('> After all')
       })
 

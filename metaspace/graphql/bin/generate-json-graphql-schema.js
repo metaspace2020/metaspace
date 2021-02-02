@@ -1,6 +1,6 @@
 const { makeExecutableSchema } = require('graphql-tools')
 const { mergeTypes } = require('merge-graphql-schemas')
-const { graphql, introspectionQuery, printSchema } = require('graphql')
+const { graphql, introspectionQuery } = require('graphql')
 const { promisify } = require('util')
 const { resolve } = require('path')
 const readFile = promisify(require('fs').readFile)
@@ -32,7 +32,7 @@ const run = async(outputFile) => {
 }
 
 if (process.argv.length !== 3) {
-  throw 'Run this script with just 1 argument: the output file path'
+  throw new Error('Run this script with just 1 argument: the output file path')
 } else {
   run(process.argv[2]).catch(console.error)
 }

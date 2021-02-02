@@ -96,7 +96,7 @@ describe('Dataset mutations: processingSettingsChanged', () => {
 
   it('Reprocessing needed when database list changed', () => {
     const update = {
-      databaseIds: [...(ds.config as any).databases, 1],
+      databaseIds: [...ds.config.databases, 1],
       metadata: ds.metadata,
     }
 
@@ -105,9 +105,9 @@ describe('Dataset mutations: processingSettingsChanged', () => {
     expect(newDB).toBe(true)
   })
 
-  it('Drop reprocessing needed when instrument settings changed', async() => {
+  it('Drop reprocessing needed when instrument settings changed', () => {
     const update = {
-      molDBs: (ds.config as any).databases,
+      molDBs: ds.config.databases,
       metadata: _.defaultsDeep({ MS_Analysis: { Detector_Resolving_Power: { mz: 100 } } }, ds.metadata),
     }
 

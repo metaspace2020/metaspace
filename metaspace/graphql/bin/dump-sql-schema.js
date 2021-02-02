@@ -51,7 +51,7 @@ ${sql}
 }
 
 if (process.argv.length !== 3) {
-  throw 'Run this script with just 1 argument: the output file path'
+  throw new Error('Run this script with just 1 argument: the output file path')
 } else {
   run(process.argv[2]).catch(err => {
     console.error(err)

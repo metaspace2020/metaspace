@@ -7,20 +7,22 @@ import * as bodyParser from 'body-parser'
 
 export default function(httpServer: http.Server) {
   const providerOptions =
-      config.aws ? {
-        s3: {
-          getKey: (req: express.Request, filename: string, metadata: object) => {
-            return `${config.upload.moldbPrefix}/${genUuid()}/${filename}`
-          },
-          key: config.aws.aws_access_key_id,
-          secret: config.aws.aws_secret_access_key,
-          bucket: config.upload.bucket,
-          region: config.aws.aws_region,
-          useAccelerateEndpoint: false, // default: false,
-          expires: 300, // default: 300 (5 minutes)
-          acl: 'private', // default: public-read
-        },
-      } : {}
+      config.aws
+        ? {
+            s3: {
+              getKey: (req: express.Request, filename: string) => {
+                return `${config.upload.moldbPrefix}/${genUuid()}/${filename}`
+              },
+              key: config.aws.aws_access_key_id,
+              secret: config.aws.aws_secret_access_key,
+              bucket: config.upload.bucket,
+              region: config.aws.aws_region,
+              useAccelerateEndpoint: false, // default: false,
+              expires: 300, // default: 300 (5 minutes)
+              acl: 'private', // default: public-read
+            },
+          }
+        : {}
 
   const options = {
     providerOptions,

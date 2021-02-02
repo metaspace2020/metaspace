@@ -139,7 +139,7 @@ const configureCronSchedule = (entityManager) => {
 
       await Promise.all(
         projects.map(async project => {
-          project.members.map(member => {
+          project.members.forEach(member => {
             sendPublishProjectNotificationEmail(member.user.email, project)
           })
           await entityManager.update(ProjectModel, project.id,
@@ -151,6 +151,7 @@ const configureCronSchedule = (entityManager) => {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises,no-new
   new CronJob('00 00 14 * * 1-5', emailNotificationsHandler, null, true)
   logger.info('Cron job started')
 }
@@ -186,7 +187,7 @@ async function createHttpServerAsync(config, connection) {
 
   configureSentryErrorHandler(app)
 
-  app.use(function(err, req, res, next) {
+  app.use(function(err, req, res) {
     res.status(err.status || 500)
     logger.error(err.stack)
     res.json({
@@ -224,6 +225,7 @@ const main = async() => {
 }
 
 if (process.argv[1].endsWith('server.js')) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const ignoredPromise = main()
 }
 

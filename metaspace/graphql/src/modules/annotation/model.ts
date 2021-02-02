@@ -1,7 +1,7 @@
 import {
   Entity,
   PrimaryColumn,
-  Column, ManyToOne, JoinColumn, OneToMany, JoinTable, Index, PrimaryGeneratedColumn,
+  Column, ManyToOne, JoinColumn, OneToMany, Index, PrimaryGeneratedColumn,
 } from 'typeorm'
 import { MomentValueTransformer } from '../../utils/MomentValueTransformer'
 import { Moment } from 'moment'
@@ -36,10 +36,10 @@ export class ColocJob {
   @Column({ type: 'int', array: true })
   sampleIonIds: number[];
 
-  @OneToMany(type => ColocAnnotation, colocAnnotation => colocAnnotation.colocJob)
+  @OneToMany(() => ColocAnnotation, colocAnnotation => colocAnnotation.colocJob)
   colocAnnotations: ColocAnnotation[];
 
-  @ManyToOne(type => MolecularDB, { onDelete: 'CASCADE' })
+  @ManyToOne(() => MolecularDB, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'moldb_id' })
   molecularDB: MolecularDB;
 }
@@ -59,7 +59,7 @@ export class ColocAnnotation {
   @Column({ type: 'float4', array: true })
   colocCoeffs: number[];
 
-  @ManyToOne(type => ColocJob, { onDelete: 'CASCADE' })
+  @ManyToOne(() => ColocJob, { onDelete: 'CASCADE' })
   @JoinColumn()
   colocJob: ColocJob;
 }

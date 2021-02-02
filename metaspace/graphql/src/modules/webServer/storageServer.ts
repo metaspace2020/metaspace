@@ -17,7 +17,13 @@ function imageProviderFSBackend(storageRootDir: string) {
   /**
    @param {string} storageRootDir - path to a folder where images will be stored, e.g '/opt/data/'
    **/
-  return async(app: express.Application, category: ImageCategory, mimeType: string, basePath: string, categoryPath: string) => {
+  return (
+    app: express.Application,
+    category: ImageCategory,
+    mimeType: string,
+    basePath: string,
+    categoryPath: string
+  ) => {
     const storage = multer.diskStorage({
       destination: async(req, file, cb) => {
         try {
@@ -56,7 +62,7 @@ function imageProviderFSBackend(storageRootDir: string) {
 
     uri = path.join(basePath, categoryPath, 'upload')
     app.post(uri, upload.single(category),
-      function(req, res, next) {
+      function(req, res) {
         const imageID = path.basename(req.file.destination) + req.file.filename
         res.status(201).json({ image_id: imageID })
       })
@@ -64,7 +70,7 @@ function imageProviderFSBackend(storageRootDir: string) {
 
     uri = path.join(basePath, categoryPath, 'delete', ':image_id')
     app.delete(uri,
-      async(req, res, next) => {
+      async(req, res) => {
         try {
           const subdir = req.params.image_id.slice(0, 3)
           const fname = req.params.image_id.slice(3)
@@ -80,7 +86,7 @@ function imageProviderFSBackend(storageRootDir: string) {
   }
 }
 
-export async function createStorageServerApp(config: Config) {
+export function createStorageServerApp(config: Config) {
   try {
     const app = express()
     app.use(cors({
@@ -98,7 +104,7 @@ export async function createStorageServerApp(config: Config) {
         const { type: mimeType, path: categoryPath } = catSettings
         logger.debug(`Storage type: ${storageType}. MIME type: ${mimeType}. Path: ${categoryPath}`)
         const backend = backendFactories[storageType]
-        await backend(app, category, mimeType, `/${storageType}/`, categoryPath)
+        backend(app, category, mimeType, `/${storageType}/`, categoryPath)
       }
     }
 
@@ -110,7 +116,7 @@ export async function createStorageServerApp(config: Config) {
 }
 
 export async function createStorageServerAsync(config: Config) {
-  const app = await createStorageServerApp(config)
+  const app = createStorageServerApp(config)
 
   const httpServer = http.createServer(app)
   await new Promise((resolve, reject) => {

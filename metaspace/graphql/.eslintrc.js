@@ -29,9 +29,9 @@ module.exports = {
     }],
     'lines-between-class-members': ['off'], // Opinion
     camelcase: ['off'], // camelcase disabled due to https://github.com/eslint/eslint/issues/13021
-    'no-use-before-define': ['off'], // Buggy with types. TypeScript checks it anyway.
     '@typescript-eslint/explicit-module-boundary-types': ['off'], // Would be great, but it'll be a mission to implement
     '@typescript-eslint/restrict-template-expressions': ['off'], // Already extensively violated, questionable value
+    '@typescript-eslint/unbound-method': ['off'], // False positive with lodash https://github.com/typescript-eslint/typescript-eslint/issues/2951
     // Unban TypeScript's escape hatches, because they're already explicit enough
     '@typescript-eslint/no-explicit-any': ['off'],
     '@typescript-eslint/no-unsafe-member-access': ['off'],
@@ -40,6 +40,9 @@ module.exports = {
     '@typescript-eslint/no-unsafe-call': ['off'],
     '@typescript-eslint/ban-ts-comment': ['off'],
     '@typescript-eslint/no-non-null-assertion': ['off'],
+    // Typescript-incompatibile eslint rules
+    'no-use-before-define': ['off'], // Buggy with types. TypeScript checks it anyway.
+    'no-useless-constructor': ['off'], // False positives with "parameter properties" e.g. constructor(public i: number) {}
   },
   parser: '@typescript-eslint/parser',
   parserOptions: {
@@ -54,11 +57,12 @@ module.exports = {
   ignorePatterns: [
     'src/binding.ts', // auto-generated
     'src/migrations', // mostly auto-generated
+    'metadataSchemas/metadataMapping.js', // auto-generated
   ],
   overrides: [
     {
       files: [
-        '**/*.spec.{j,t}s?(x)',
+        '**/*.{spec,test}.{j,t}s?(x)',
         'tests/**/*',
       ],
       env: {
@@ -73,6 +77,7 @@ module.exports = {
       files: ['**/*.js'],
       rules: {
         '@typescript-eslint/no-var-requires': ['off'], // Many JS files need to interop with non-ESM code
+        '@typescript-eslint/restrict-plus-operands': ['off'], // Complains about implicitly any-typed vars
       },
     },
   ],

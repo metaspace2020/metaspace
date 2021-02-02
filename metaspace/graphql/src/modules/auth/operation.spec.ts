@@ -18,7 +18,7 @@ import {
 } from '../../tests/graphqlTestEnvironment'
 const mockEmail = _mockEmail as jest.Mocked<typeof _mockEmail>
 
-async function createUserCredentialsEntities(user?: Object, cred?: Object):
+async function createUserCredentialsEntities(user?: Partial<User>, cred?: Partial<Credentials>):
   Promise<{ user: User, cred: Credentials }> {
   const defaultCred = {
     hash: 'some hash',
@@ -80,7 +80,7 @@ describe('Database operations with user', () => {
     })
 
     test('create credentials when user already exists', async() => {
-      const { user, cred } = await createUserCredentialsEntities(
+      const { cred } = await createUserCredentialsEntities(
         { notVerifiedEmail: 'admin@localhost' })
 
       await createUserCredentials({
@@ -100,7 +100,7 @@ describe('Database operations with user', () => {
     })
 
     test('create credentials when user already exists but email verification token expired', async() => {
-      const { user: oldUser, cred: oldCred } = await createUserCredentialsEntities(
+      const { cred: oldCred } = await createUserCredentialsEntities(
         { notVerifiedEmail: 'admin@localhost' },
         { emailVerified: false, emailVerificationTokenExpires: createExpiry(-1) })
 
@@ -122,7 +122,7 @@ describe('Database operations with user', () => {
     })
 
     test('create user when it already exists, email verified', async() => {
-      const { user, cred } = await createUserCredentialsEntities({ email: 'admin@localhost' }, { emailVerified: true })
+      const { cred } = await createUserCredentialsEntities({ email: 'admin@localhost' }, { emailVerified: true })
 
       await createUserCredentials({
         name: 'Name',
@@ -143,7 +143,7 @@ describe('Database operations with user', () => {
 
   describe('verifyEmail', () => {
     test('verify email', async() => {
-      const { user, cred } = await createUserCredentialsEntities({ notVerifiedEmail: 'admin@localhost' })
+      await createUserCredentialsEntities({ notVerifiedEmail: 'admin@localhost' })
 
       const verifiedUser = await verifyEmail('admin@localhost', 'abc')
 
@@ -164,7 +164,7 @@ describe('Database operations with user', () => {
     })
 
     test('verify email fails, token expired', async() => {
-      const { user, cred } = await createUserCredentialsEntities(
+      await createUserCredentialsEntities(
         { notVerifiedEmail: 'admin@localhost' },
         { emailVerificationTokenExpires: createExpiry(-1) })
 
@@ -189,7 +189,7 @@ describe('Database operations with user', () => {
     })
 
     test('send reset password token, token refreshed', async() => {
-      const { user, cred } = await createUserCredentialsEntities(
+      const { cred } = await createUserCredentialsEntities(
         { email: 'admin@localhost' },
         { resetPasswordTokenExpires: createExpiry(-1) })
 
@@ -230,7 +230,7 @@ describe('Database operations with user', () => {
 
     testCases.forEach(({ testCase, tokenToTry, expiry, expected }) => {
       test(testCase, async() => {
-        const { user, cred } = await createUserCredentialsEntities(
+        await createUserCredentialsEntities(
           { email }, {
             resetPasswordToken: token,
             resetPasswordTokenExpires: createExpiry(expiry),
@@ -245,7 +245,7 @@ describe('Database operations with user', () => {
 
   describe('sendResetPasswordToken', () => {
     test('reset password', async() => {
-      const { user, cred } = await createUserCredentialsEntities(
+      const { cred } = await createUserCredentialsEntities(
         { email: 'admin@localhost' }, {
           resetPasswordToken: 'abc',
           resetPasswordTokenExpires: createExpiry(1),
@@ -258,7 +258,7 @@ describe('Database operations with user', () => {
     })
 
     test('reset password fails, token expired', async() => {
-      const { user, cred } = await createUserCredentialsEntities(
+      await createUserCredentialsEntities(
         {}, {
           resetPasswordToken: 'abc',
           resetPasswordTokenExpires: createExpiry(-1),
@@ -270,7 +270,7 @@ describe('Database operations with user', () => {
     })
 
     test('reset password, inactive user', async() => {
-      const { user, cred } = await createUserCredentialsEntities({
+      const { user } = await createUserCredentialsEntities({
         notVerifiedEmail: 'inactive@user',
         name: 'inactive user',
       }, {

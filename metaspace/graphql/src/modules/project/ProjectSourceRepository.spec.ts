@@ -1,19 +1,12 @@
-import * as _ from 'lodash'
-import { createTestDataset, createTestProject, createTestProjectMember } from '../../tests/testDataCreation'
-import { Context } from '../../context'
-import { Project as ProjectType, UserProjectRole } from '../../binding'
+import { createTestDataset, createTestProject } from '../../tests/testDataCreation'
 import { DatasetProject as DatasetProjectModel } from '../dataset/model'
 import { UserProject as UserProjectModel, UserProjectRoleOptions as UPRO } from './model'
 import {
-  adminContext,
-  anonContext,
-  doQuery,
   onAfterAll,
   onAfterEach,
   onBeforeAll,
   onBeforeEach,
   setupTestUsers,
-  shallowFieldsOfSchemaType,
   testEntityManager,
   testUser, userContext,
 } from '../../tests/graphqlTestEnvironment'

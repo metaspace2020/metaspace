@@ -21,7 +21,7 @@ export default (recipient: string, subject: string, text: string) => {
         Subject: { Data: subject },
         Body: { Text: { Data: text } },
       },
-    }, (err, data) => {
+    }, (err) => {
       if (err) logger.error(`Failed to sent email to ${recipient}: ${err}`)
       else logger.info(`Sent email to ${recipient}`)
     })

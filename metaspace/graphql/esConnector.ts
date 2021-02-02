@@ -131,9 +131,9 @@ const esSort = (orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: Sorti
   }
 
   // annotation orderings
-  if (orderBy === 'ORDER_BY_MZ') { return [sortTerm('mz', order)] }
-  // return sortTerms([{ mz: order }]);
-  else if (orderBy === 'ORDER_BY_MSM') {
+  if (orderBy === 'ORDER_BY_MZ') {
+    return [sortTerm('mz', order)]
+  } else if (orderBy === 'ORDER_BY_MSM') {
     return [sortTerm('msm', order)]
   } else if (orderBy === 'ORDER_BY_FDR_MSM') {
     return [sortTerm('fdr', order), sortTerm('msm', order === 'asc' ? 'desc' : 'asc')]
@@ -143,9 +143,8 @@ const esSort = (orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: Sorti
     return [sortTerm('formula', order), sortTerm('adduct', order), sortTerm('fdr', order)]
   } else if (orderBy === 'ORDER_BY_OFF_SAMPLE') {
     return [sortTerm('off_sample_prob', order)]
-  }
-  // dataset orderings
-  else if (orderBy === 'ORDER_BY_DATE') {
+  } else if (orderBy === 'ORDER_BY_DATE') {
+    // dataset orderings
     return [
       sortTerm('ds_status_update_dt', order),
       sortTerm('ds_last_finished', order),
@@ -204,8 +203,8 @@ const constructDatasetAuthFilters = async(user: ContextUser) => {
     }
     // Projects user has access to
     const visibleProjectIds = Object.entries(await user.getProjectRoles() || [])
-      .filter(([id, role]) => ([UPRO.MEMBER, UPRO.MANAGER, UPRO.REVIEWER] as any[]).includes(role))
-      .map(([id, role]) => id)
+      .filter(([, role]) => ([UPRO.MEMBER, UPRO.MANAGER, UPRO.REVIEWER] as any[]).includes(role))
+      .map(([id]) => id)
     if (visibleProjectIds.length > 0) {
       datasetOrConditions.push({ terms: { ds_project_ids: visibleProjectIds } })
     }
@@ -275,7 +274,9 @@ const constructAnnotationFilters = (filter: AnnotationFilter & ExtraAnnotationFi
     filters.push({ term: { chem_mod: '' } })
   }
   if (hasHiddenAdduct === false) {
-    filters.push({ bool: { must_not: [{ terms: { adduct: config.adducts.filter(a => a.hidden).map(a => a.adduct) } }] } })
+    filters.push({
+      bool: { must_not: [{ terms: { adduct: config.adducts.filter(a => a.hidden).map(a => a.adduct) } }] },
+    })
   }
   if (ion != null) {
     filters.push(constructTermOrTermsFilter('ion', ion))
@@ -321,7 +322,7 @@ const constructESQuery = async(
         filter: [
           { term: { _type: docType } },
           ...(bypassAuth ? [] : await constructDatasetAuthFilters(user)),
-          ...(bypassAuth || docType == 'dataset' ? [] : await constructDatabaseAuthFilters(user)),
+          ...(bypassAuth || docType === 'dataset' ? [] : await constructDatabaseAuthFilters(user)),
           ...constructDatasetFilters(datasetFilter || {}),
           ...constructAnnotationFilters(filter || {}),
           ...(simpleQuery ? [constructSimpleQueryFilter(simpleQuery)] : []),
@@ -390,7 +391,7 @@ const flattenAggResponse = (fields: string[], aggs: any, idx: number): any => {
     const { key, doc_count } = bucket
 
     // handle base case
-    if (idx + 1 == fields.length) {
+    if (idx + 1 === fields.length) {
       counts.push({ fieldValues: [key], count: doc_count })
       continue
     }
@@ -429,7 +430,9 @@ export const esCountGroupedResults = async(args: any, docType: DocType, user: Co
   return flattenAggResponse(args.groupingFields, resp.aggregations, 0)
 }
 
-export const esCountMatchingAnnotationsPerDataset = async(args: any, user: ContextUser): Promise<Record<string, number>> => {
+export const esCountMatchingAnnotationsPerDataset = async(
+  args: any, user: ContextUser
+): Promise<Record<string, number>> => {
   const body = await constructESQuery(args, 'annotation', user)
   const aggRequest = {
     body: {

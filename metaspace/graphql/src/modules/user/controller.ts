@@ -1,8 +1,8 @@
 import { UserError } from 'graphql-errors'
-import { In, Like } from 'typeorm'
+import { In } from 'typeorm'
 import * as uuid from 'uuid'
 
-import { User, UserGroup } from '../../binding'
+import { UserGroup } from '../../binding'
 import { User as UserModel } from './model'
 import { Dataset as DatasetModel } from '../dataset/model'
 import { Credentials as CredentialsModel } from '../auth/model'
@@ -30,7 +30,7 @@ const assertCanEditUser = (user: ContextUser, userId: string) => {
   }
 }
 
-const resolveUserScopeRole = async(ctx: Context, userId?: string): Promise<ScopeRole> => {
+const resolveUserScopeRole = (ctx: Context, userId?: string): ScopeRole => {
   let scopeRole = SRO.OTHER
   if (userId && userId === ctx.user.id) {
     scopeRole = SRO.PROFILE_OWNER
@@ -39,7 +39,7 @@ const resolveUserScopeRole = async(ctx: Context, userId?: string): Promise<Scope
 }
 
 const getUserSourceById = async function(ctx: Context, userId: string): Promise<UserSource | null> {
-  const scopeRole = await resolveUserScopeRole(ctx, userId)
+  const scopeRole = resolveUserScopeRole(ctx, userId)
   const user = await ctx.entityManager.getRepository(UserModel).findOne({
     where: { id: userId },
   })
@@ -66,7 +66,11 @@ export const Resolvers = {
       }) || null
     },
 
-    async groups({ scopeRole, ...user }: UserSource, _: any, ctx: Context): Promise<LooselyCompatible<UserGroup>[]|null> {
+    async groups(
+      { scopeRole, ...user }: UserSource,
+      _: any,
+      ctx: Context
+    ): Promise<LooselyCompatible<UserGroup>[]|null> {
       if (scopeRole === SRO.PROFILE_OWNER || ctx.isAdmin) {
         const userGroups = await ctx.entityManager.getRepository(UserGroupModel).find({
           where: { userId: user.id },
@@ -100,14 +104,14 @@ export const Resolvers = {
       return null
     },
 
-    async email({ scopeRole, ...user }: UserSource, args: any, ctx: Context): Promise<string|null> {
+    email({ scopeRole, ...user }: UserSource, args: any, ctx: Context): string|null {
       if (canSeeUserEmail(scopeRole) || ctx.isAdmin) {
         return user.email || user.notVerifiedEmail || null
       }
       return null
     },
 
-    async role({ scopeRole, ...user }: UserSource, args: any, ctx: Context): Promise<string|null> {
+    role({ scopeRole, ...user }: UserSource, args: any, ctx: Context): string|null {
       if (scopeRole === SRO.PROFILE_OWNER || ctx.isAdmin) {
         return user.role || null
       }
@@ -147,8 +151,8 @@ export const Resolvers = {
           .orWhere('user.notVerifiedEmail ILIKE :query || \'%\'', { query })
           .orderBy('user.name')
           .getMany()
-        const promises = users.map(async user =>
-          convertUserToUserSource(user, await resolveUserScopeRole(ctx, user.id)))
+        const promises = users.map(user =>
+          convertUserToUserSource(user, resolveUserScopeRole(ctx, user.id)))
         return Promise.all(promises)
       } else {
         return null
@@ -206,10 +210,14 @@ export const Resolvers = {
       return (await getUserSourceById(ctx, userObj.id))!
     },
 
-    async deleteUser(_: any, { userId, deleteDatasets }: any, { req, res, user: currentUser, entityManager }: Context): Promise<boolean> {
+    async deleteUser(
+      _: any,
+      { userId, deleteDatasets }: any,
+      { req, user: currentUser, entityManager }: Context
+    ): Promise<boolean> {
       assertCanEditUser(currentUser, userId)
       logger.info(`User '${userId}' being ${deleteDatasets ? 'hard-' : 'soft-'}deleted by '${currentUser.id}'...`)
-      const userRepo = await entityManager.getRepository(UserModel)
+      const userRepo = entityManager.getRepository(UserModel)
       const deletingUser = (await userRepo.findOneOrFail(userId))
 
       if (deleteDatasets) {

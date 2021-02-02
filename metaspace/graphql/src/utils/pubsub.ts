@@ -22,15 +22,12 @@ const SYSTEM_HEALTH_UPDATED_CHANNEL = 'systemHealthUpdated'
 // pubsub is intentionally not exported - these wrappers exist to help type safety
 const pubsub = new PubSub()
 
-export const publishDatasetDeleted = (payload: DatasetDeletedPayload) => {
+export const publishDatasetDeleted = (payload: DatasetDeletedPayload) =>
   pubsub.publish(DATASET_DELETED_CHANNEL, payload)
-}
-export const publishDatasetStatusUpdated = (payload: DatasetStatusUpdatedPayload) => {
+export const publishDatasetStatusUpdated = (payload: DatasetStatusUpdatedPayload) =>
   pubsub.publish(DATASET_STATUS_UPDATED_CHANNEL, payload)
-}
-export const publishSystemHealthUpdated = (payload: SystemHealthPayload) => {
+export const publishSystemHealthUpdated = (payload: SystemHealthPayload) =>
   pubsub.publish(SYSTEM_HEALTH_UPDATED_CHANNEL, payload)
-}
 
 // pubsub.asyncIterator's return type is AsyncIterator, but it actually implements the [Symbol.asyncIterator] property,
 // which makes it usable as an AsyncIterable after casting. The AsyncIterable interface is needed for these to be used

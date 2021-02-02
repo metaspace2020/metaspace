@@ -2,8 +2,6 @@ import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryColumn } from 
 import { Group } from '../group/model'
 import { User } from '../user/model'
 import { Project } from '../project/model'
-import { PublicationStatus } from '../../binding'
-import { PublicationStatusOptions as PSO } from '../project/Publishing'
 import { ExternalLink } from '../project/ExternalLink'
 
 @Entity()
@@ -14,14 +12,14 @@ export class Dataset {
   @Column({ type: 'uuid' })
   userId: string; // dataset submitter and owner -> edit rights
 
-  @ManyToOne(type => User, user => user.datasets)
+  @ManyToOne(() => User, user => user.datasets)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
   @Column({ type: 'uuid', nullable: true })
   groupId: string | null; // dataset belongs to group -> all members have view rights
 
-  @ManyToOne(type => Group)
+  @ManyToOne(() => Group)
   @JoinColumn({ name: 'group_id' })
   group: Group;
 
@@ -35,7 +33,7 @@ export class Dataset {
   @Column({ type: 'text', nullable: true })
   piEmail: string | null;
 
-  @OneToMany(type => DatasetProject, datasetProject => datasetProject.dataset)
+  @OneToMany(() => DatasetProject, datasetProject => datasetProject.dataset)
   datasetProjects: DatasetProject[];
 
   @Column({ type: 'json', nullable: true })
@@ -47,14 +45,14 @@ export class DatasetProject {
   @PrimaryColumn({ type: 'text' })
   datasetId: string;
 
-  @ManyToOne(type => Dataset)
+  @ManyToOne(() => Dataset)
   @JoinColumn({ name: 'dataset_id' })
   dataset: Dataset;
 
   @PrimaryColumn({ type: 'uuid' })
   projectId: string;
 
-  @ManyToOne(type => Project)
+  @ManyToOne(() => Project)
   @JoinColumn({ name: 'project_id' })
   project: Project;
 

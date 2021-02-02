@@ -1,3 +1,4 @@
+/* eslint-disable max-len */ // String templates are newline-sensitive, enforcing max-len would make the code messier
 import sendEmail from '../../utils/sendEmail'
 import config from '../../utils/config'
 

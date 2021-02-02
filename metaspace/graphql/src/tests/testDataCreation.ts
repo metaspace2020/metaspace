@@ -87,7 +87,7 @@ export const createTestProjectMember = async(projectOrId: string | { id: string 
 const genDatasetId = () => {
   const randomUnixTime = 150e10 + Math.floor(Math.random() * 10e10)
   return moment(randomUnixTime).toISOString()
-    .replace(/([\d\-]+)T(\d+):(\d+):(\d+).*/, '$1_$2h$3m$4s')
+    .replace(/([\d-]+)T(\d+):(\d+):(\d+).*/, '$1_$2h$3m$4s')
 }
 
 export const createTestDataset = async(

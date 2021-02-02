@@ -67,7 +67,12 @@ const createPostprocess = ({ annotation, lookupIon }: AnnotationAndIons, args: Q
         ...ann,
         _cachedColocCoeff: ion != null ? getColocCoeffInner(annotation, ion.id) : null,
         _isColocReference: ion != null && ion.id === annotation.ionId,
-        async getColocalizationCoeff(_colocalizedWith: string, _colocalizationAlgo: string, _databaseId: number, _fdrLevel: number | null) {
+        getColocalizationCoeff(
+          _colocalizedWith: string,
+          _colocalizationAlgo: string,
+          _databaseId: number,
+          _fdrLevel: number | null
+        ) {
           if (_colocalizedWith === colocalizedWith
             && _colocalizationAlgo === colocalizationAlgo
             && _databaseId === databaseId
@@ -119,9 +124,11 @@ export const applyColocalizedWithFilter =
     let newArgs = args
 
     if (datasetId != null && colocalizationAlgo != null && colocalizedWith != null) {
-      const annotationAndIons = await getColocAnnotation(context, datasetId, fdrLevel, databaseId, colocalizedWith, colocalizationAlgo)
+      const annotationAndIons = await getColocAnnotation(
+        context, datasetId, fdrLevel, databaseId, colocalizedWith, colocalizationAlgo
+      )
       if (annotationAndIons != null) {
-        const { annotation, ionsById, lookupIon } = annotationAndIons
+        const { annotation, ionsById } = annotationAndIons
         const colocIons = _.uniq([annotation.ionId, ...annotation.colocIonIds])
           .map(ionId => {
             const ion = ionsById.get(ionId)
@@ -136,7 +143,9 @@ export const applyColocalizedWithFilter =
 
         return {
           args: newArgs,
-          postprocess: createPostprocess(annotationAndIons, args, colocalizedWith, colocalizationAlgo, databaseId, fdrLevel),
+          postprocess: createPostprocess(
+            annotationAndIons, args, colocalizedWith, colocalizationAlgo, databaseId, fdrLevel
+          ),
         }
       } else {
         return { args: setOrMerge(newArgs, 'filter.ion', []) }

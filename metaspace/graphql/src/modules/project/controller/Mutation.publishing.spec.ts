@@ -213,7 +213,7 @@ describe('Project publication status manipulations', () => {
 
       const result = await doQuery<ProjectType>(updateProject, { projectId: project.id, projectDetails })
 
-      await expect(result).toEqual(expect.objectContaining(projectDetails))
+      expect(result).toEqual(expect.objectContaining(projectDetails))
       const updatedProject = await testEntityManager.findOneOrFail(ProjectModel, project.id)
       expect(updatedProject).toEqual(expect.objectContaining(projectDetails))
     }
@@ -226,7 +226,7 @@ describe('Project publication status manipulations', () => {
 
     const result = await doQuery<ProjectType>(addExternalLink, { projectId: project.id })
 
-    await expect(result).toEqual(expect.objectContaining({ id: project.id }))
+    expect(result).toEqual(expect.objectContaining({ id: project.id }))
   })
 
   test('Allowed to remove external link from published project', async() => {
@@ -237,7 +237,7 @@ describe('Project publication status manipulations', () => {
 
     const result = await doQuery<ProjectType>(removeExternalLink, { projectId: project.id })
 
-    await expect(result).toEqual(expect.objectContaining({ id: project.id }))
+    expect(result).toEqual(expect.objectContaining({ id: project.id }))
   })
 
   test('Allowed to add DOI to published project', async() => {
@@ -247,7 +247,7 @@ describe('Project publication status manipulations', () => {
 
     const result = await doQuery<ProjectType>(addDOI, { projectId: project.id })
 
-    await expect(result).toEqual(expect.objectContaining({ id: project.id }))
+    expect(result).toEqual(expect.objectContaining({ id: project.id }))
   })
 
   test('Not allowed to add DOI to unpublished project', async() => {

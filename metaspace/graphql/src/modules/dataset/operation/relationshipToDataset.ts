@@ -13,7 +13,9 @@ interface DatasetRelationship {
  * @param dataset
  * @param ctx
  */
-export const relationshipToDataset = async(dataset: DatasetSource, ctx: BaseContext): Promise<DatasetRelationship[]> => {
+export const relationshipToDataset = async(
+  dataset: DatasetSource, ctx: BaseContext
+): Promise<DatasetRelationship[]> => {
   const ds = dataset._source
   const user = ctx.user
   const relationships: DatasetRelationship[] = []

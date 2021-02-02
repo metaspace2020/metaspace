@@ -9,9 +9,9 @@ export const resolveGroupScopeRole = async(ctx: Context, groupId?: string): Prom
       where: { userId: ctx.user.id, groupId },
     })
     if (userGroup) {
-      if (userGroup.role == UserGroupRoleOptions.MEMBER) {
+      if (userGroup.role === UserGroupRoleOptions.MEMBER) {
         scopeRole = ScopeRoleOptions.GROUP_MEMBER
-      } else if (userGroup.role == UserGroupRoleOptions.GROUP_ADMIN) {
+      } else if (userGroup.role === UserGroupRoleOptions.GROUP_ADMIN) {
         scopeRole = ScopeRoleOptions.GROUP_MANAGER
       }
     }

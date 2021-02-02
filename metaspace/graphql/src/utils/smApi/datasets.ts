@@ -6,13 +6,13 @@ import logger from '../logger'
 import { smApiJsonPost } from './smApiCall'
 
 interface DatasetRequestBody {
-  doc?: Object;
+  doc?: unknown;
   email?: string;
   priority?: boolean;
   force?: boolean;
   del_first?: boolean;
   url?: string;
-  transform?: Object;
+  transform?: unknown;
 }
 
 const datasetDocFieldMapping = {
@@ -47,8 +47,8 @@ interface UpdateDatasetArgs {
   name?: string;
   inputPath?: string;
   uploadDT?: string;
-  metadata?: object;
-  config?: object;
+  metadata?: unknown;
+  config?: unknown;
   isPublic?: boolean;
   submitterId?: string;
   groupId?: string | null;

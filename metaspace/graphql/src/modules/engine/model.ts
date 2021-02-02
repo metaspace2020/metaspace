@@ -25,9 +25,9 @@ export class EngineDataset {
   @Column({ type: 'text', nullable: true })
   inputPath: string | null;
   @Column({ type: 'json', nullable: true })
-  metadata: object | null;
+  metadata: any;
   @Column({ type: 'json', nullable: true })
-  config: object | null;
+  config: any;
   @Column({ type: 'timestamp without time zone', nullable: true, transformer: new MomentValueTransformer() })
   uploadDt: Date | null;
   @Column({ type: 'text', nullable: true })
@@ -41,7 +41,7 @@ export class EngineDataset {
   @Column({ type: 'boolean', default: true })
   isPublic: boolean;
   @Column({ type: 'json', nullable: true })
-  acqGeometry: object | null;
+  acqGeometry: any;
   @Column({ type: 'text', default: 'fs' })
   ionImgStorageType: string;
   @Column({ type: 'text', nullable: true })
@@ -49,13 +49,13 @@ export class EngineDataset {
   @Column({ type: 'text', nullable: true })
   ionThumbnail: string | null;
 
-  @OneToMany(type => OpticalImage, opticalImage => opticalImage.dataset)
+  @OneToMany(() => OpticalImage, opticalImage => opticalImage.dataset)
   opticalImages: OpticalImage[];
 
-  @OneToMany(type => Job, job => job.dataset)
+  @OneToMany(() => Job, job => job.dataset)
   jobs: Job[];
 
-  @OneToMany(type => PerfProfile, pipelineStats => pipelineStats.dataset)
+  @OneToMany(() => PerfProfile, pipelineStats => pipelineStats.dataset)
   pipelineStats: PerfProfile[];
 }
 
@@ -76,7 +76,7 @@ export class OpticalImage {
   @Column({ type: 'real', array: true, nullable: true })
   transform: number[][];
 
-  @ManyToOne(type => EngineDataset, dataset => dataset.opticalImages, { onDelete: 'CASCADE' })
+  @ManyToOne(() => EngineDataset, dataset => dataset.opticalImages, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'ds_id' })
   dataset: EngineDataset;
 }
@@ -96,15 +96,15 @@ export class Job {
   @Column({ type: 'timestamp', nullable: true })
   finish: Date | null;
 
-  @ManyToOne(type => EngineDataset, dataset => dataset.jobs, { onDelete: 'CASCADE' })
+  @ManyToOne(() => EngineDataset, dataset => dataset.jobs, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'ds_id' })
   dataset: EngineDataset;
 
-  @ManyToOne(type => MolecularDB, { onDelete: 'CASCADE' })
+  @ManyToOne(() => MolecularDB, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'moldb_id' })
   molecularDB: MolecularDB;
 
-  @OneToMany(type => Annotation, annotation => annotation.job)
+  @OneToMany(() => Annotation, annotation => annotation.job)
   annotations: Annotation[];
 }
 
@@ -153,11 +153,11 @@ export class Annotation {
   @Column({ type: 'int', nullable: true })
   ionId: number | null;
 
-  @ManyToOne(type => Job, job => job.annotations, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Job, job => job.annotations, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'job_id' })
   job: Job;
 
-  @ManyToOne(type => Ion, { onDelete: 'SET NULL' })
+  @ManyToOne(() => Ion, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'ion_id' })
   ion: Ion | null;
 }
@@ -180,7 +180,7 @@ export class PerfProfile {
   finish: Date | null;
 
   @Column({ type: 'json', nullable: true })
-  extraData: object | null;
+  extraData: any;
 
   @Column({ type: 'text', nullable: true })
   logs: string | null;
@@ -188,11 +188,11 @@ export class PerfProfile {
   @Column({ type: 'text', nullable: true })
   error: string | null;
 
-  @ManyToOne(type => EngineDataset, dataset => dataset.pipelineStats, { onDelete: 'CASCADE' })
+  @ManyToOne(() => EngineDataset, dataset => dataset.pipelineStats, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'ds_id' })
   dataset: EngineDataset;
 
-  @OneToMany(type => PerfProfileEntry, entry => entry.profile)
+  @OneToMany(() => PerfProfileEntry, entry => entry.profile)
   entries: PerfProfileEntry[];
 }
 
@@ -217,9 +217,9 @@ export class PerfProfileEntry {
   name: string;
 
   @Column({ type: 'json', nullable: true })
-  extraData: object | null;
+  extraData: any;
 
-  @ManyToOne(type => PerfProfile, profile => profile.entries, { onDelete: 'CASCADE' })
+  @ManyToOne(() => PerfProfile, profile => profile.entries, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'profile_id' })
   profile: PerfProfile;
 }

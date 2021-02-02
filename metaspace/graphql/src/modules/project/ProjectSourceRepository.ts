@@ -1,6 +1,6 @@
 import { Brackets, EntityManager, EntityRepository } from 'typeorm'
 import { Context, ContextUser } from '../../context'
-import { Project as ProjectModel, UserProjectRoleOptions, UserProjectRoleOptions as UPRO } from './model'
+import { Project as ProjectModel, UserProjectRoleOptions as UPRO } from './model'
 import { ProjectSource } from '../../bindingTypes'
 import * as _ from 'lodash'
 import * as DataLoader from 'dataloader'
@@ -23,7 +23,7 @@ export class ProjectSourceRepository {
   }
 
   private async queryProjectsWhere(user: ContextUser, whereClause?: string | Brackets,
-    parameters?: object, sortBy: SortBy = 'name') {
+    parameters?: any, sortBy: SortBy = 'name') {
     const columnMap = this.manager.connection
       .getMetadata(ProjectModel)
       .columns
@@ -34,7 +34,8 @@ export class ProjectSourceRepository {
       .select(columnMap)
 
     const memberOfProjectIds = Object.entries(await user.getProjectRoles())
-      .filter(([id, role]) => role != UPRO.PENDING).map(([id, role]) => id)
+      .filter(([, role]) => role !== UPRO.PENDING)
+      .map(([id]) => id)
 
     if (sortBy === 'name') {
       qb = qb.orderBy('project.name')

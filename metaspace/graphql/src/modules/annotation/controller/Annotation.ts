@@ -106,7 +106,7 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
     const { ion, ds_meta, ds_config, mz, centroid_mzs, total_iso_ints } = hit._source
     const msInfo = ds_meta.MS_Analysis
     const host = config.services.sm_engine_api_host
-    const pol = msInfo.Polarity.toLowerCase() == 'positive' ? '+1' : '-1'
+    const pol = msInfo.Polarity.toLowerCase() === 'positive' ? '+1' : '-1'
 
     const rp = mz / (ds_config.isotope_generation.isocalc_sigma * 2.35482)
     const ppm = ds_config.image_generation.ppm
@@ -130,13 +130,18 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
       .map(function(mz, i) {
         return {
           mz: parseFloat(mz as any),
-          url: iso_image_ids[i] !== null ? `/${hit._source.ds_ion_img_storage}${config.img_upload.categories.iso_image.path}${iso_image_ids[i]}` : null,
+          url: iso_image_ids[i] !== null
+            ? `/${hit._source.ds_ion_img_storage}${config.img_upload.categories.iso_image.path}${iso_image_ids[i]}`
+            : null,
           totalIntensity: total_iso_ints[i],
           minIntensity: min_iso_ints[i],
           maxIntensity: max_iso_ints[i],
         }
       })
-      .filter(mzImage => mzImage.mz != null && mzImage.totalIntensity != null && mzImage.minIntensity != null && mzImage.maxIntensity != null)
+      .filter(mzImage => mzImage.mz != null
+        && mzImage.totalIntensity != null
+        && mzImage.minIntensity != null
+        && mzImage.maxIntensity != null)
   },
 
   isomers(hit) {
@@ -163,7 +168,7 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
       const defaultDatabase = await ctx.entityManager.findOneOrFail(
         MolecularDbModel, { default: true }
       )
-      return await hit.getColocalizationCoeff(
+      return hit.getColocalizationCoeff(
         colocalizedWith,
         colocalizationAlgo || config.metadataLookups.defaultColocalizationAlgo,
         databaseId || defaultDatabase.id,

@@ -113,7 +113,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     const project = await projectRepository.findOne({ id: projectId })
 
     if (project) {
-      if (project.publicationStatus == PSO.UNPUBLISHED || ctx.isAdmin) {
+      if (project.publicationStatus === PSO.UNPUBLISHED || ctx.isAdmin) {
         const affectedDatasets = await ctx.entityManager.find(DatasetProjectModel,
           { where: { projectId }, relations: ['dataset', 'dataset.datasetProjects'] })
         await ctx.entityManager.delete(DatasetProjectModel, { projectId })
@@ -237,7 +237,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     await ctx.entityManager.update(ProjectModel, projectId, {
       reviewToken: generateRandomToken(),
       reviewTokenCreatedDT: utc(),
-      publicationStatus: project.publicationStatus == PSO.PUBLISHED ? PSO.PUBLISHED : PSO.UNDER_REVIEW,
+      publicationStatus: project.publicationStatus === PSO.PUBLISHED ? PSO.PUBLISHED : PSO.UNDER_REVIEW,
     })
 
     return await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
@@ -251,7 +251,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     await ctx.entityManager.update(ProjectModel, projectId, {
       reviewToken: null,
       reviewTokenCreatedDT: null,
-      publicationStatus: project.publicationStatus == PSO.PUBLISHED ? PSO.PUBLISHED : PSO.UNPUBLISHED,
+      publicationStatus: project.publicationStatus === PSO.PUBLISHED ? PSO.PUBLISHED : PSO.UNPUBLISHED,
     })
     return true
   },
@@ -305,7 +305,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     await ctx.entityManager.transaction(async txn => {
       const project = await ctx.entityManager.findOneOrFail(ProjectModel, projectId)
 
-      if (provider == ELPO.DOI && project.publicationStatus !== PSO.PUBLISHED) {
+      if (provider === ELPO.DOI && project.publicationStatus !== PSO.PUBLISHED) {
         throw new UserError('Cannot add DOI, project is not published')
       }
 
