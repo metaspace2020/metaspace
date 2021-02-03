@@ -118,6 +118,8 @@ mol_db_image_archives:
 #    path: https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-pamdb.tar.xz
 #  - name: ECMDB
 #    path: https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-ecmdb.tar.xz
+#  - name: CoreMetabolome
+#    path: https://sm-mol-db.s3-eu-west-1.amazonaws.com/mol-images/mol-images-core-metabolome.tar.xz
 mol_db_imports:
   - url: "https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files_2021/hmdb/hmdb_4.tsv"
     name: "HMDB"
