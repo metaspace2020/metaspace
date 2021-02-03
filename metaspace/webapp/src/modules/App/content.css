@@ -21,7 +21,7 @@
 }
 
 .sm-content-page h3 {
-  @apply font-medium font-display;
+  @apply font-medium;
 }
 
 .sm-content-page ul {

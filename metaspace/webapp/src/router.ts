@@ -16,7 +16,7 @@ const asyncPagesFreelyTyped = {
   MetadataEditPage: () => import(/* webpackPrefetch: true, webpackChunkName: "MetadataEditPage" */ './modules/MetadataEditor/MetadataEditPage.vue'),
   ImageAlignmentPage: () => import(/* webpackPrefetch: true, webpackChunkName: "ImageAlignmentPage" */ './modules/ImageAlignment/ImageAlignmentPage.vue'),
   UploadPage: () => import(/* webpackPrefetch: true, webpackChunkName: "UploadPage" */ './modules/MetadataEditor/UploadPage.vue'),
-  DesignPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DesignPage" */ './modules/App/DesignPage.vue'),
+  DesignPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DesignPage" */ './design/DesignPage.vue'),
 
   // These pages are relatively small as they don't have any big 3rd party dependencies, so pack them together
   DatasetTable: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Datasets/list/DatasetTable.vue'),
