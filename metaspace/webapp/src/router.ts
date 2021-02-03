@@ -16,6 +16,7 @@ const asyncPagesFreelyTyped = {
   MetadataEditPage: () => import(/* webpackPrefetch: true, webpackChunkName: "MetadataEditPage" */ './modules/MetadataEditor/MetadataEditPage.vue'),
   ImageAlignmentPage: () => import(/* webpackPrefetch: true, webpackChunkName: "ImageAlignmentPage" */ './modules/ImageAlignment/ImageAlignmentPage.vue'),
   UploadPage: () => import(/* webpackPrefetch: true, webpackChunkName: "UploadPage" */ './modules/MetadataEditor/UploadPage.vue'),
+  DesignPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DesignPage" */ './modules/App/DesignPage.vue'),
 
   // These pages are relatively small as they don't have any big 3rd party dependencies, so pack them together
   DatasetTable: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Datasets/list/DatasetTable.vue'),
@@ -90,6 +91,8 @@ const router = new VueRouter({
     { path: '/terms', component: asyncPages.TermsPage, meta: { footer: true } },
     { path: '/privacy', component: asyncPages.PrivacyPage, meta: { footer: true } },
     { path: '/publications', component: asyncPages.PublicationsPage, meta: { footer: true } },
+
+    { path: '/design', component: asyncPages.DesignPage, meta: { footer: true, flex: true } },
 
     { path: '*', component: NotFoundPage, meta: { footer: true, flex: true } },
   ],

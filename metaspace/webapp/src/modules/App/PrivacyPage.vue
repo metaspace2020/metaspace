@@ -252,4 +252,8 @@ export default {
   td:first-child {
     @apply w-4/12;
   }
+
+  tr + tr > td {
+    @apply pt-6;
+  }
 </style>

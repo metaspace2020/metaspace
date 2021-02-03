@@ -17,6 +17,11 @@
 
 .sm-content-page h2 {
   @apply text-2xl leading-6 font-display pb-3 pt-9; /* top padding is for anchor links */
+  scroll-margin-top: theme('spacing.12');
+}
+
+.sm-content-page h3 {
+  @apply font-medium font-display;
 }
 
 .sm-content-page ul {
@@ -37,10 +42,6 @@
 
 .sm-content-page td {
   @apply p-0 align-top;
-}
-
-.sm-content-page tr + tr > td {
-  @apply pt-6;
 }
 
 .sm-content-page code {
