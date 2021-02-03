@@ -58,11 +58,11 @@
       Leading & tracking
     </h2>
     <p>
-      Could consider applying these as standard.
+      Could consider applying leading and tracking to the <code>text-*</code> classes.
     </p>
-    <table class="w-1/2">
+    <table class="w-full max-w-measure-4 text-xs leading-4 tracking-wide">
       <tbody>
-        <tr class="text-xs leading-4 tracking-wide">
+        <tr>
           <td>text-xs leading-4 tracking-wide</td>
           <td class="text-right">
             12px / 16px
@@ -74,9 +74,9 @@
       Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
       Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
     </p>
-    <table class="w-1/2">
+    <table class="w-full max-w-measure-4 text-sm leading-5">
       <tbody>
-        <tr class="text-sm leading-5">
+        <tr>
           <td>text-sm leading-5</td>
           <td class="text-right">
             14px / 20px
@@ -88,9 +88,9 @@
       Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
       Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
     </p>
-    <table class="w-1/2">
+    <table class="w-full max-w-measure-4 text-base leading-6">
       <tbody>
-        <tr class="text-base leading-6">
+        <tr>
           <td>text-base leading-6</td>
           <td class="text-right">
             16px / 24px
@@ -102,6 +102,29 @@
       Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
       Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
     </p>
+    <table class="w-full text-2xl font-medium leading-tight tracking-snug">
+      <tbody>
+        <tr>
+          <td>text-2xl font-medium leading-tight tracking-snug</td>
+          <td class="text-right">
+            24px / 30px
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="text-2xl font-medium leading-tight tracking-snug">
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+    </p>
+    <table class="w-full text-4xl font-medium leading-none tracking-tight">
+      <tbody>
+        <tr>
+          <td>text-4xl font-medium leading-none tracking-tight</td>
+          <td class="text-right">
+            36px / 36px
+          </td>
+        </tr>
+      </tbody>
+    </table>
     <h2 id="colours">
       Colours
     </h2>
