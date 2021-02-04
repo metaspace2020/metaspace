@@ -14,6 +14,12 @@
       <li>
         <a href="#colours">Colours</a>
       </li>
+      <li>
+        <a href="#spacing">Spacing</a>
+      </li>
+      <li>
+        <a href="#measure">Measure</a>
+      </li>
     </ul>
     <h2 id="fonts">
       Fonts
@@ -59,48 +65,58 @@
     <h2 id="leading-tracking">
       Leading & tracking
     </h2>
-    <table class="w-full max-w-measure-4 text-xs leading-4 tracking-wide">
-      <tbody>
-        <tr>
-          <td>text-xs leading-4 tracking-wide</td>
-          <td class="text-right">
-            12px / 16px
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <p class="text-xs leading-4 tracking-wide max-w-measure-1">
-      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-      Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+    <p class="italic">
+      Examples combinations for text styles. Line height scales with font size, but headings need to be tighter.
+      Smaller text needs wide letter-spacing for legibility, larger text looks better with tight spacing.
     </p>
-    <table class="w-full max-w-measure-4 text-sm leading-5">
-      <tbody>
-        <tr>
-          <td>text-sm leading-5</td>
-          <td class="text-right">
-            14px / 20px
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <p class="text-sm leading-5">
-      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-      Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-    </p>
-    <table class="w-full max-w-measure-4 text-base leading-6">
-      <tbody>
-        <tr>
-          <td>text-base leading-6</td>
-          <td class="text-right">
-            16px / 24px
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <p class="text-base leading-6">
-      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-      Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-    </p>
+    <div class="text-xs leading-4 tracking-wide">
+      <table class="w-full max-w-measure-4 mb-2">
+        <tbody>
+          <tr>
+            <td>text-xs leading-4 tracking-wide</td>
+            <td class="text-right">
+              12px / 16px
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+        Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+      </p>
+    </div>
+    <div class="text-sm leading-5">
+      <table class="w-full max-w-measure-4 mb-4">
+        <tbody>
+          <tr>
+            <td>text-sm leading-5</td>
+            <td class="text-right">
+              14px / 20px
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+        Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+      </p>
+    </div>
+    <div class="text-base leading-6">
+      <table class="w-full max-w-measure-4 mb-4">
+        <tbody>
+          <tr>
+            <td>text-base leading-6</td>
+            <td class="text-right">
+              16px / 24px
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+        Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+      </p>
+    </div>
     <table class="w-full text-2xl font-medium leading-tight tracking-snug">
       <tbody>
         <tr>
@@ -127,6 +143,9 @@
     <h2 id="colours">
       Colours
     </h2>
+    <p class="italic">
+      Modifications and additions to <a href="https://v1.tailwindcss.com/docs/customizing-colors">the Tailwind 1.x palette</a>.
+    </p>
     <div>
       <h3>Brand / states</h3>
       <div class="grid grid-cols-5 grid-rows-1 gap-3 text-sm leading-5">
@@ -346,6 +365,70 @@
         </tbody>
       </table>
     </div>
+    <h2 id="spacing">
+      Spacing
+    </h2>
+    <p class="italic">
+      Additions to the Tailwind scale based on multiples of size 6/1.5rem/24px, as this is the base line-height.
+    </p>
+    <div class="w-3/4">
+      <width-demo
+        width-class="w-9"
+        name="9"
+        definition="1.5 * 1.5rem = 2.25rem"
+      />
+      <width-demo
+        width-class="w-18"
+        name="18"
+        definition="3 * 1.5rem = 4.5rem"
+      />
+      <width-demo
+        width-class="w-21"
+        name="21"
+        definition="3.5 * 1.5rem = 5.25rem"
+      />
+      <width-demo
+        width-class="w-60"
+        name="60"
+        definition="10 * 1.5rem = 15rem"
+      />
+      <width-demo
+        width-class="w-66"
+        name="66"
+        definition="11 * 1.5rem = 16.5rem"
+      />
+    </div>
+    <h2 id="measure">
+      Measure
+    </h2>
+    <p class="italic">
+      The &ldquo;measure&rdquo; of a paragraph is the number of characters in a line of text
+      (<a href="https://www.smashingmagazine.com/2011/11/the-perfect-paragraph/#font-size-and-measure">
+        <!-- -->read more at Smashing Magazine<!-- -->
+      </a>). The numbers are spaced evenly around 60 as the &ldquo;optimum&rdquo;, based on advice in my wider reading.
+    </p>
+    <div>
+      <width-demo
+        width-class="w-full max-w-measure-1"
+        :name="maxWidth['measure-1']"
+      />
+      <width-demo
+        width-class="w-full max-w-measure-2"
+        :name="maxWidth['measure-2']"
+      />
+      <width-demo
+        width-class="w-full max-w-measure-3"
+        :name="maxWidth['measure-3']"
+      />
+      <width-demo
+        width-class="w-full max-w-measure-4"
+        :name="maxWidth['measure-4']"
+      />
+      <width-demo
+        width-class="w-full max-w-measure-5"
+        :name="maxWidth['measure-5']"
+      />
+    </div>
   </div>
 </template>
 <script lang="ts">
@@ -353,12 +436,14 @@ import '../modules/App/content.css'
 import { defineComponent } from '@vue/composition-api'
 
 import ColourSwatch from './ColourSwatch.vue'
+import WidthDemo from './WidthDemo.vue'
 
 import tailwindConfig from '../../tailwind.config'
 
 export default defineComponent({
   components: {
     ColourSwatch,
+    WidthDemo,
   },
   setup() {
     return {

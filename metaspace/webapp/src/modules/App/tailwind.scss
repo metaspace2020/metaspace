@@ -65,6 +65,10 @@
   @apply mt-5;
 }
 
+.v-rhythm-4 > * + * {
+  @apply mt-4;
+}
+
 .v-rhythm-3 > * + * {
   @apply mt-3;
 }
