@@ -157,6 +157,9 @@ exports[`ViewGroupPage members tab should match snapshot (manager, including tab
               <div id="tab-members" aria-controls="pane-members" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
           Members (2)
           <span class="notification"></span></span></div>
+              <div id="tab-databases" aria-controls="pane-databases" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
+            Databases (2)
+          </span></div>
               <div id="tab-settings" aria-controls="pane-settings" role="tab" tabindex="-1" class="el-tabs__item is-top">Settings</div>
             </div>
           </div>
@@ -406,6 +409,9 @@ exports[`ViewGroupPage members tab should match snapshot (member) 1`] = `
               <div id="tab-members" aria-controls="pane-members" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
           Members (2)
           <span class="notification"></span></span></div>
+              <div id="tab-databases" aria-controls="pane-databases" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
+            Databases (2)
+          </span></div>
             </div>
           </div>
         </div>
@@ -505,6 +511,9 @@ exports[`ViewGroupPage settings tab should match snapshot 1`] = `
               <div id="tab-members" aria-controls="pane-members" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
           Members (2)
           <!----></span></div>
+              <div id="tab-databases" aria-controls="pane-databases" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
+            Databases (2)
+          </span></div>
               <div id="tab-settings" aria-controls="pane-settings" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active">Settings</div>
             </div>
           </div>
