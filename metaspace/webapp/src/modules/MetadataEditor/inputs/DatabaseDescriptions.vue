@@ -141,6 +141,22 @@
         >Citation</span>
       </el-popover>
     </div>
+    <div>
+      <b>Core Metabolome Database (CoreMetabolome):</b>
+      METASPACE database of core mammalian metabolites and lipids.
+      <el-popover
+        trigger="hover"
+        placement="top"
+      >
+        <div class="desc-cite-popover">
+          In preparation
+        </div>
+        <span
+          slot="reference"
+          class="desc-cite"
+        >Citation</span>
+      </el-popover>
+    </div>
   </div>
 </template>
 <script>
