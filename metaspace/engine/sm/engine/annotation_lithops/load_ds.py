@@ -97,7 +97,8 @@ def _load_spectra(storage, imzml_reader, ibd_cobject):
 
 
 def _sort_spectra(imzml_reader, mzs, ints, sp_lens):
-    by_mz = np.argsort(mzs)
+    # Specify mergesort explicitly because numpy often chooses heapsort which is super slow
+    by_mz = np.argsort(mzs, kind='mergesort')
 
     # The existing `mzs` and `ints` arrays can't be garbage-collected because the calling function
     # holds references to them. Overwrite the original arrays with the temp sorted arrays so that
