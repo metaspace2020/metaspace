@@ -20,6 +20,8 @@
     "chem_mods": true,
     "advanced_ds_config": false,
     "isomers": true,
-    "isobars": true
+    "isobars": true,
+    "moldb_mgmt": true,
+    "multiple_ion_images": true
   }
 }
