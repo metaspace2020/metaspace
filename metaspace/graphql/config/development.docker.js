@@ -12,8 +12,11 @@ config.defaults = {
 };
 
 config.upload = {
-  endpoint: 'http://localhost:9000',
-}
+  endpoint: "http://localhost:9000",
+  access_key_id: "minioadmin",
+  secret_access_key: "minioadmin",
+  bucket: "sm-engine-upload",
+};
 
 config.services = {};
 /* Internal ad-hoc service with /v1/datasets and /v1/isotopic_patterns endpoints */

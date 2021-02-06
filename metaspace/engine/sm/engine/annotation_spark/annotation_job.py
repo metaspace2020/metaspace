@@ -5,7 +5,6 @@ from shutil import copytree, rmtree
 import logging
 from typing import Optional, Dict
 
-import boto3
 from pyspark import SparkContext, SparkConf
 
 from sm.engine.annotation.acq_geometry import make_acq_geometry
@@ -26,7 +25,7 @@ from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.annotation_spark.search_results import SearchResults
 from sm.engine.util import SMConfig, split_s3_path
 from sm.engine.es_export import ESExporter
-from sm.engine import molecular_db
+from sm.engine import molecular_db, storage
 from sm.engine.utils.perf_profile import Profiler
 
 logger = logging.getLogger('engine')
@@ -143,12 +142,8 @@ class AnnotationJob:
         if ds.input_path.startswith('s3a://'):
             self._ds_data_path.mkdir(parents=True, exist_ok=True)
 
-            session = boto3.session.Session(
-                aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
-                aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'],
-            )
             bucket_name, key = split_s3_path(ds.input_path)
-            bucket = session.resource('s3').Bucket(bucket_name)  # pylint: disable=no-member
+            bucket = storage.get_boto3_s3_bucket(bucket_name)
             for obj_sum in bucket.objects.filter(Prefix=key):
                 local_file = str(self._ds_data_path / Path(obj_sum.key).name)
                 logger.debug(f'Downloading s3a://{bucket_name}/{obj_sum.key} -> {local_file}')
