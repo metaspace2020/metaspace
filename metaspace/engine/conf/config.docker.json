@@ -201,6 +201,8 @@
     }
   },
   "storage": {
-    "endpoint_url": "http://storage:9000"
+    "endpoint_url": "http://storage:9000",
+    "access_key_id": "minioadmin",
+    "secret_access_key": "minioadmin"
   }
 }
