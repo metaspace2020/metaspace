@@ -63,7 +63,7 @@ import Vue from 'vue'
 import Popper from 'popper.js'
 
 import router from '../../router'
-import CloseIcon from '../../assets/inline/refactoring-ui/close-circle.svg'
+import CloseIcon from '../../assets/inline/refactoring-ui/icon-close-circle.svg'
 
 const startingRoute = 'help'
 
@@ -209,14 +209,14 @@ export default {
       outline: none;
     }
 
-    svg .secondary {
+    svg .primary {
       fill: none;
     }
 
     &:hover,
     &:focus {
-      @apply text-blue-800;
-      svg .secondary {
+      @apply text-blue-700;
+      svg .primary {
         @apply fill-current text-blue-100;
       }
     }

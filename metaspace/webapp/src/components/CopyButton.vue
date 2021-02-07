@@ -30,7 +30,7 @@
 import { defineComponent, ref } from '@vue/composition-api'
 
 import copyToClipboard from '../lib/copyToClipboard'
-import DuplicateIcon from '../assets/inline/refactoring-ui/duplicate.svg'
+import DuplicateIcon from '../assets/inline/refactoring-ui/icon-duplicate.svg'
 import FadeTransition from './FadeTransition'
 
 interface Props {
@@ -68,7 +68,7 @@ export default defineComponent<Props>({
     stroke: currentColor;
     fill: #fff;
   }
-  .sm-copy-icon .primary {
+  .sm-copy-icon .secondary {
     fill: theme('colors.gray.100')
   }
 </style>

@@ -41,8 +41,8 @@
 import { defineComponent, ref, watch } from '@vue/composition-api'
 
 import FadeTransition from '../../components/FadeTransition'
-import ArrowIcon from '../../assets/inline/refactoring-ui/arrow-thin-right-circle.svg'
-import CloseIcon from '../../assets/inline/refactoring-ui/close.svg'
+import ArrowIcon from '../../assets/inline/refactoring-ui/icon-arrow-thin-right-circle.svg'
+import CloseIcon from '../../assets/inline/refactoring-ui/icon-close.svg'
 
 export default defineComponent({
   components: {
