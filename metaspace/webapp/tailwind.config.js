@@ -27,7 +27,6 @@ module.exports = {
         // UI
         body: 'hsl(208, 61%, 16%)',
         gray: { // greys based on brand colour
-          '50': 'hsl(208, 33%, 96%)', // similar to 100 with 50% alpha
           '100': 'hsl(208, 36%, 96%)',
           '200': 'hsl(208, 33%, 89%)',
           '300': 'hsl(208, 31%, 80%)',

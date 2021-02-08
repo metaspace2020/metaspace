@@ -17,7 +17,7 @@
     <fade-transition>
       <div
         v-if="isOpen"
-        class="absolute top-0 w-full mt-1 shadow rounded-md bg-gray-50 p-1 text-center"
+        class="absolute top-0 w-full mt-1 shadow rounded-md bg-gray-100 p-1 text-center"
       >
         <div class="flex w-full justify-around items-center my-1">
           <button

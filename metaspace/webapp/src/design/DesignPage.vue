@@ -180,11 +180,6 @@
       </h3>
       <div class="grid grid-cols-5 grid-rows-2 gap-3 text-sm leading-5">
         <colour-swatch
-          colour-class="bg-gray-50"
-          name="50"
-          :definition="colors.gray['50']"
-        />
-        <colour-swatch
           colour-class="bg-gray-100"
           name="100"
           :definition="colors.gray['100']"
@@ -369,7 +364,7 @@
       Spacing
     </h2>
     <p class="italic">
-      Additions to the Tailwind scale based on multiples of size 6/1.5rem/24px, as this is the base line-height.
+      Additions to the Tailwind scale based on multiples of size 6/1.5rem/24px, as this is the base line height.
     </p>
     <div class="w-3/4">
       <width-demo
@@ -402,31 +397,37 @@
       Measure
     </h2>
     <p class="italic">
-      The &ldquo;measure&rdquo; of a paragraph is the number of characters in a line of text
-      (<a href="https://www.smashingmagazine.com/2011/11/the-perfect-paragraph/#font-size-and-measure">
-        <!-- -->read more at Smashing Magazine<!-- -->
-      </a>). The numbers are spaced evenly around 60 as the &ldquo;optimum&rdquo;, based on advice in my wider reading.
+      The &ldquo;measure&rdquo; of a paragraph is the number of characters on one line.
+      These numbers are spaced evenly around 60 as a good default, but in general
+      <a href="https://css-tricks.com/equilateral-triangle-perfect-paragraph/">
+        the line length should scale with the font-size<!-- -->
+      </a>.
     </p>
     <div>
       <width-demo
-        width-class="w-full max-w-measure-1"
-        :name="maxWidth['measure-1']"
+        width-class="w-full text-xs max-w-measure-1"
+        name="max-w-measure-1"
+        :definition="maxWidth['measure-1']"
       />
       <width-demo
-        width-class="w-full max-w-measure-2"
-        :name="maxWidth['measure-2']"
+        width-class="w-full text-xs max-w-measure-2"
+        name="max-w-measure-2"
+        :definition="maxWidth['measure-2']"
       />
       <width-demo
-        width-class="w-full max-w-measure-3"
-        :name="maxWidth['measure-3']"
+        width-class="w-full text-xs max-w-measure-3"
+        name="max-w-measure-3"
+        :definition="maxWidth['measure-3']"
       />
       <width-demo
-        width-class="w-full max-w-measure-4"
-        :name="maxWidth['measure-4']"
+        width-class="w-full text-xs max-w-measure-4"
+        name="max-w-measure-4"
+        :definition="maxWidth['measure-4']"
       />
       <width-demo
-        width-class="w-full max-w-measure-5"
-        :name="maxWidth['measure-5']"
+        width-class="w-full text-xs max-w-measure-5"
+        name="max-w-measure-5"
+        :definition="maxWidth['measure-5']"
       />
     </div>
   </div>
