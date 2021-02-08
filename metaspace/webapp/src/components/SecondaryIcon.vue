@@ -3,6 +3,12 @@
     <slot />
   </i>
 </template>
+<script lang="ts">
+import Vue from 'vue'
+export default Vue.extend({
+  // needed for use in tsx files
+})
+</script>
 <style scoped>
 i >>> .primary {
   @apply text-blue-100;
