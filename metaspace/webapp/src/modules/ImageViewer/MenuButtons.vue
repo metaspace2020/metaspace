@@ -11,9 +11,13 @@
       :class="{ active: menu === 'OPTICAL' }"
       @click="setMenu('OPTICAL')"
     >
-      <camera-icon
-        :class="['h-6 w-6 sm-stateful-icon sm-stateful-icon--hover', { 'sm-stateful-icon--active': menu === 'OPTICAL' }]"
-      />
+      <stateful-icon
+        class="h-6 w-6"
+        hover
+        :active="menu === 'OPTICAL'"
+      >
+        <camera-svg />
+      </stateful-icon>
     </button>
     <button
       title="Ion image controls"
@@ -21,18 +25,23 @@
       :class="{ active: menu === 'ION' }"
       @click="setMenu('ION')"
     >
-      <monitor-icon
-        :class="['h-6 w-6 sm-stateful-icon sm-stateful-icon--hover', { 'sm-stateful-icon--active': menu === 'ION' }]"
-      />
+      <stateful-icon
+        class="h-6 w-6"
+        hover
+        :active="menu === 'ION'"
+      >
+        <monitor-svg />
+      </stateful-icon>
     </button>
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, onBeforeUnmount } from '@vue/composition-api'
+import { defineComponent } from '@vue/composition-api'
 
-import '../../components/StatefulIcon.css'
-import MonitorIcon from '../../assets/inline/refactoring-ui/monitor.svg'
-import CameraIcon from '../../assets/inline/refactoring-ui/camera.svg'
+import StatefulIcon from '../../components/StatefulIcon.vue'
+
+import MonitorSvg from '../../assets/inline/refactoring-ui/icon-monitor.svg'
+import CameraSvg from '../../assets/inline/refactoring-ui/icon-camera.svg'
 
 import viewerState, { setMenu } from './state'
 
@@ -41,8 +50,9 @@ export default defineComponent({
     hasOpticalImages: Boolean,
   },
   components: {
-    MonitorIcon,
-    CameraIcon,
+    StatefulIcon,
+    MonitorSvg,
+    CameraSvg,
   },
   setup() {
     // onBeforeUnmount(() => {

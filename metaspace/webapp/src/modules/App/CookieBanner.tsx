@@ -1,7 +1,7 @@
 import { defineComponent, reactive } from '@vue/composition-api'
 import { get, set } from 'js-cookie'
 
-import CloseIcon from '../../assets/inline/refactoring-ui/close.svg'
+import CloseIcon from '../../assets/inline/refactoring-ui/icon-close.svg'
 
 const cookieKey = 'cookiebanner-accepted'
 const cookieValue = '1'
