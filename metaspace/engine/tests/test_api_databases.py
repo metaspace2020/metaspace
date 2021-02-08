@@ -1,15 +1,18 @@
 import contextlib
 import json
+from enum import Enum
 from unittest.mock import patch
 
 import pytest
 
 from sm.engine.db import DB
+from sm.engine.storage import get_s3_client
 from sm.rest import api
 from sm.rest.databases import MALFORMED_CSV, BAD_DATA
 from sm.rest.utils import ALREADY_EXISTS
 from .utils import create_test_molecular_db
 
+BUCKET_NAME = "sm-engine-tests"
 GROUP_ID = '123e4567-e89b-12d3-a456-426655440000'
 MOLDB_COUNT_SEL = 'SELECT COUNT(*) FROM molecular_db'
 
@@ -25,13 +28,38 @@ def fill_db(test_db):
     yield
 
 
+class MoldbFiles(Enum):
+    VALID = "moldb.csv"
+    WRONG_SEP = "db-wrong-sep.csv"
+    MISSING_COL = "db-missing-columns.csv"
+    EMPTY_VALUES = "db-empty-values.csv"
+    WRONG_FORMULAS = "db-wrong-formulas.csv"
+
+
+@pytest.fixture(autouse=True, scope="module")
+def fill_storage():
+    s3 = get_s3_client()
+    head_resp = s3.head_bucket(Bucket=BUCKET_NAME)
+    if head_resp['ResponseMetadata']['HTTPStatusCode'] != 200:
+        s3.create_bucket(Bucket=BUCKET_NAME)
+
+    for file in MoldbFiles:
+        s3.upload_file(
+            Filename=f"tests/data/moldbs/{file.value}", Bucket=BUCKET_NAME, Key=file.value
+        )
+
+    yield
+
+    for file in MoldbFiles:
+        s3.delete_object(Bucket=BUCKET_NAME, Key=file.value)
+
+
 def moldb_input_doc(**kwargs):
     return {
         'name': 'test-db',
         'version': '2000-01-01',
         'is_public': False,
         'group_id': GROUP_ID,
-        'file_path': 's3://sm-engine/tests/test-db-2.tsv',
         'description': 'Full database description',
         **kwargs,
     }
@@ -46,7 +74,10 @@ def patch_bottle_request(req_doc):
 
 @pytest.mark.parametrize('is_public', [True, False])
 def test_create_moldb(fill_db, is_public):
-    with patch_bottle_request(req_doc=moldb_input_doc(is_public=is_public)) as req_doc:
+    input_doc = moldb_input_doc(
+        file_path=f's3://{BUCKET_NAME}/{MoldbFiles.VALID.value}', is_public=is_public
+    )
+    with patch_bottle_request(input_doc) as input_doc:
 
         resp = api.databases.create()
 
@@ -59,7 +90,7 @@ def test_create_moldb(fill_db, is_public):
             params=(resp_doc['id'],),
         )
         for field in ['name', 'version', 'group_id', 'is_public']:
-            assert doc[field] == req_doc[field]
+            assert doc[field] == input_doc[field]
 
         docs = db.select_with_fields(
             'SELECT * FROM molecule WHERE moldb_id = %s', params=(resp_doc['id'],),
@@ -71,7 +102,8 @@ def test_create_moldb(fill_db, is_public):
 
 
 def test_create_moldb_duplicate(fill_db):
-    with patch_bottle_request(req_doc=moldb_input_doc()) as req_doc:
+    input_doc = moldb_input_doc(file_path=f's3://{BUCKET_NAME}/{MoldbFiles.VALID.value}')
+    with patch_bottle_request(input_doc) as req_doc:
         create_test_molecular_db(**req_doc)
 
         resp = api.databases.create()
@@ -82,15 +114,10 @@ def test_create_moldb_duplicate(fill_db):
         assert db_count == 1
 
 
-@pytest.mark.parametrize(
-    'file_path',
-    [
-        's3://sm-engine/tests/test-db-wrong-sep.csv',
-        's3://sm-engine/tests/test-db-missing-columns.csv',
-    ],
-)
-def test_create_moldb_malformed_csv(file_path, fill_db):
-    with patch_bottle_request(req_doc=moldb_input_doc(file_path=file_path)):
+@pytest.mark.parametrize('file', [MoldbFiles.WRONG_SEP, MoldbFiles.MISSING_COL])
+def test_create_moldb_malformed_csv(file, fill_db):
+    input_doc = moldb_input_doc(file_path=f's3://{BUCKET_NAME}/{file.value}')
+    with patch_bottle_request(input_doc):
 
         resp = api.databases.create()
 
@@ -102,11 +129,9 @@ def test_create_moldb_malformed_csv(file_path, fill_db):
         assert db_count == 0
 
 
-@pytest.mark.parametrize(
-    'file_path', ['s3://sm-engine/tests/test-db-empty-values.csv'],
-)
-def test_create_moldb_empty_values(file_path, fill_db):
-    with patch_bottle_request(req_doc=moldb_input_doc(file_path=file_path)):
+def test_create_moldb_empty_values(fill_db):
+    input_doc = moldb_input_doc(file_path=f's3://{BUCKET_NAME}/{MoldbFiles.EMPTY_VALUES.value}')
+    with patch_bottle_request(input_doc):
 
         resp = api.databases.create()
 
@@ -119,9 +144,8 @@ def test_create_moldb_empty_values(file_path, fill_db):
 
 
 def test_create_moldb_wrong_formulas(fill_db):
-    with patch_bottle_request(
-        req_doc=moldb_input_doc(file_path='s3://sm-engine/tests/test-db-wrong-formulas.csv')
-    ):
+    input_doc = moldb_input_doc(file_path=f's3://{BUCKET_NAME}/{MoldbFiles.WRONG_FORMULAS.value}')
+    with patch_bottle_request(input_doc):
 
         resp = api.databases.create()
 
@@ -136,7 +160,8 @@ def test_create_moldb_wrong_formulas(fill_db):
 
 
 def test_delete_moldb(fill_db):
-    moldb = create_test_molecular_db(**moldb_input_doc())
+    input_doc = moldb_input_doc(file_path=f's3://{BUCKET_NAME}/{MoldbFiles.VALID.value}')
+    moldb = create_test_molecular_db(**input_doc)
     with patch_bottle_request(req_doc={}):
 
         resp = api.databases.delete(moldb_id=moldb.id)
@@ -151,7 +176,10 @@ def test_delete_moldb(fill_db):
 @pytest.mark.parametrize('is_public', [True, False])
 @pytest.mark.parametrize('archived', [True, False])
 def test_update_moldb(archived, is_public, fill_db):
-    moldb = create_test_molecular_db(**moldb_input_doc(archived=False))
+    input_doc = moldb_input_doc(
+        file_path=f's3://{BUCKET_NAME}/{MoldbFiles.VALID.value}', archived=False
+    )
+    moldb = create_test_molecular_db(**input_doc)
     with patch_bottle_request(
         req_doc={
             'archived': archived,
