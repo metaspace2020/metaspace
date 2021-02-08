@@ -1,10 +1,9 @@
-import { Column, Entity, PrimaryColumn } from 'typeorm';
-import { Moment } from 'moment';
-import { MomentValueTransformer } from '../../utils/MomentValueTransformer';
+import { Column, Entity, PrimaryColumn } from 'typeorm'
+import { Moment } from 'moment'
+import { MomentValueTransformer } from '../../utils/MomentValueTransformer'
 
 @Entity()
 export class ImageViewerSnapshot {
-
   @PrimaryColumn({ type: 'text' })
   id: string;
 
@@ -26,11 +25,11 @@ export class ImageViewerSnapshot {
   userId: string;
 
   @Column({
-    name: 'created_dt', type: 'timestamp without time zone', transformer: new MomentValueTransformer()
+    name: 'created_dt', type: 'timestamp without time zone', transformer: new MomentValueTransformer(),
   })
   createdDT: Moment;
 }
 
 export const IMAGE_VIEWER_SNAPSHOT_ENTITIES = [
-  ImageViewerSnapshot
+  ImageViewerSnapshot,
 ]

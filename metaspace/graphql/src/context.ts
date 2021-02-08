@@ -1,6 +1,6 @@
-import {Request, Response} from 'express';
-import {EntityManager, ObjectType} from 'typeorm';
-import {UserProjectRole} from './binding';
+import { Request, Response } from 'express'
+import { EntityManager, ObjectType } from 'typeorm'
+import { UserProjectRole } from './binding'
 
 export type UserProjectRoles = {[projectId: string]: UserProjectRole}
 
@@ -14,7 +14,7 @@ export const AuthMethodOptions: {[K in AuthMethod]: K} = {
   API_KEY: 'API_KEY',
   SESSION: 'SESSION',
   UNKNOWN: 'UNKNOWN',
-};
+}
 
 export interface ContextUser {
   role: ContextUserRole;
@@ -23,8 +23,8 @@ export interface ContextUser {
   email?: string;
   groupIds?: string[]; // used in esConnector for ES visibility filters
   getProjectRoles: () => Promise<UserProjectRoles>;
-  getMemberOfProjectIds: () => Promise<string[]>;  // only projects where user has UPRO.MEMBER, UPRO.MANAGER role
-  getVisibleDatabaseIds: () => Promise<number[]>;  // only databases user has access to
+  getMemberOfProjectIds: () => Promise<string[]>; // only projects where user has UPRO.MEMBER, UPRO.MANAGER role
+  getVisibleDatabaseIds: () => Promise<number[]>; // only databases user has access to
 }
 
 export interface BaseContext {
@@ -50,7 +50,7 @@ export interface BaseContext {
    *                        this should be an object. For entities with single-field primary keys, this should be a
    *                        string or number.
    */
-  cachedGetEntityById: <T>(Model: ObjectType<T> & {}, id: string | number | Partial<T>) => Promise<T | null>
+  cachedGetEntityById: <T>(Model: ObjectType<T>, id: string | number | Partial<T>) => Promise<T | null>
 }
 
 export interface Context extends BaseContext {

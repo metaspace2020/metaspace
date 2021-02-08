@@ -1,12 +1,12 @@
-import {EntityManager} from 'typeorm';
-import {MolecularDB as MolecularDbModel} from '../../moldb/model';
-import {UserError} from 'graphql-errors';
-import logger from '../../../utils/logger';
+import { EntityManager } from 'typeorm'
+import { MolecularDB as MolecularDbModel } from '../../moldb/model'
+import logger from '../../../utils/logger'
 
 export const mapDatabaseToDatabaseId =
-  async (entityManager: EntityManager, database: string): Promise<number> => {
-    logger.warn('Addressing private databases by name was deprecated. Use database id instead.');
+  async(entityManager: EntityManager, database: string): Promise<number> => {
+    logger.warn('Addressing private databases by name was deprecated. Use database id instead.')
 
+    /* eslint-disable quote-props */
     const databaseNameVersionMapping = {
       'ChEBI': ['ChEBI', '2016'],
       'LIPID_MAPS': ['LIPID_MAPS', '2016'],
@@ -22,9 +22,9 @@ export const mapDatabaseToDatabaseId =
       'SwissLipids-2018-02-02': ['SwissLipids', '2018-02-02'],
       'HMDB-v4-cotton': ['HMDB-cotton', 'v4'],
       'ECMDB-2018-12': ['ECMDB', '2018-12'],
-    } as any;
+    } as any
 
-    const { name, version } = databaseNameVersionMapping[database];
-    const databaseModel = await entityManager.findOneOrFail(MolecularDbModel, { name, version });
-    return databaseModel.id;
-  };
+    const { name, version } = databaseNameVersionMapping[database]
+    const databaseModel = await entityManager.findOneOrFail(MolecularDbModel, { name, version })
+    return databaseModel.id
+  }

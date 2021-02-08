@@ -51,6 +51,10 @@ jobs:
           command: |
             yarn run test-ci --coverage
             npx codecov -p ../.. -F graphql
+      - run:
+          name: Lint code
+          when: always
+          command: yarn run lint --max-warnings 0
 
 
   generate-graphql-schema:
@@ -155,6 +159,7 @@ jobs:
             npx codecov -p ../.. -F webapp
       - run:
           name: Lint code
+          when: always
           command: yarn run lint --max-warnings 0 --no-fix
 
   test-webapp-e2e:

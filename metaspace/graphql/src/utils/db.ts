@@ -1,26 +1,26 @@
-import 'reflect-metadata';
-import * as _ from 'lodash';
-import {createConnection as createTypeORMConnection, EntityManager} from 'typeorm';
-import {User as UserModel} from '../modules/user/model';
-import {UserProject as UserProjectModel} from '../modules/project/model';
-import typeOrmConfig from './typeOrmConfig';
+import 'reflect-metadata'
+import * as _ from 'lodash'
+import { createConnection as createTypeORMConnection, EntityManager } from 'typeorm'
+import { User as UserModel } from '../modules/user/model'
+import { UserProject as UserProjectModel } from '../modules/project/model'
+import typeOrmConfig from './typeOrmConfig'
 
-export const createConnection = async () => {
+export const createConnection = async() => {
   return await createTypeORMConnection({
-    ...typeOrmConfig
-  });
-};
+    ...typeOrmConfig,
+  })
+}
 
-export const findUserByEmail = async (entityManager: EntityManager, value: string, field: string='email') => {
+export const findUserByEmail = async(entityManager: EntityManager, value: string, field = 'email') => {
   return await entityManager.getRepository(UserModel)
     .createQueryBuilder('user')
     .leftJoinAndSelect('user.credentials', 'credentials')
     .where(`LOWER(${field}) = :email`, { email: value.toLowerCase() })
-    .getOne() || null;
-};
+    .getOne() || null
+}
 
-export const getUserProjectRoles = async (entityManager: EntityManager, userId: string) => {
+export const getUserProjectRoles = async(entityManager: EntityManager, userId: string) => {
   const userProjects = await entityManager.getRepository(UserProjectModel)
-    .find({ where: { userId } });
-  return _.fromPairs(userProjects.map(up => [up.projectId, up.role]));
-};
+    .find({ where: { userId } })
+  return _.fromPairs(userProjects.map(up => [up.projectId, up.role]))
+}
