@@ -1,2 +1,2 @@
-export {configureAuth} from './controller';
-export {sendInvitationEmail} from './email';
+export { configureAuth } from './controller'
+export { sendInvitationEmail } from './email'

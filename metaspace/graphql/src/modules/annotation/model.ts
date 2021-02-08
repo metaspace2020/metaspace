@@ -1,15 +1,14 @@
 import {
   Entity,
   PrimaryColumn,
-  Column, ManyToOne, JoinColumn, OneToMany, JoinTable, Index, PrimaryGeneratedColumn,
-} from 'typeorm';
-import {MomentValueTransformer} from '../../utils/MomentValueTransformer';
-import {Moment} from 'moment';
-import {MolecularDB} from '../moldb/model';
+  Column, ManyToOne, JoinColumn, OneToMany, Index, PrimaryGeneratedColumn,
+} from 'typeorm'
+import { MomentValueTransformer } from '../../utils/MomentValueTransformer'
+import { Moment } from 'moment'
+import { MolecularDB } from '../moldb/model'
 
 @Entity('coloc_job')
 export class ColocJob {
-
   @PrimaryColumn({ type: 'uuid', default: () => 'uuid_generate_v1mc()' })
   id: string;
 
@@ -37,17 +36,16 @@ export class ColocJob {
   @Column({ type: 'int', array: true })
   sampleIonIds: number[];
 
-  @OneToMany(type => ColocAnnotation, colocAnnotation => colocAnnotation.colocJob)
+  @OneToMany(() => ColocAnnotation, colocAnnotation => colocAnnotation.colocJob)
   colocAnnotations: ColocAnnotation[];
 
-  @ManyToOne(type => MolecularDB, {onDelete: "CASCADE"})
+  @ManyToOne(() => MolecularDB, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'moldb_id' })
   molecularDB: MolecularDB;
 }
 
 @Entity('coloc_annotation')
 export class ColocAnnotation {
-
   @PrimaryColumn({ type: 'uuid' })
   colocJobId: string;
 
@@ -61,13 +59,13 @@ export class ColocAnnotation {
   @Column({ type: 'float4', array: true })
   colocCoeffs: number[];
 
-  @ManyToOne(type => ColocJob, {onDelete: 'CASCADE'})
+  @ManyToOne(() => ColocJob, { onDelete: 'CASCADE' })
   @JoinColumn()
   colocJob: ColocJob;
 }
 
 @Entity('ion')
-@Index(['formula', 'chemMod', 'neutralLoss', 'adduct', 'charge'], {unique: true})
+@Index(['formula', 'chemMod', 'neutralLoss', 'adduct', 'charge'], { unique: true })
 export class Ion {
   @PrimaryGeneratedColumn({ type: 'int' })
   id: number;
@@ -108,4 +106,4 @@ export const ANNOTATION_ENTITIES = [
   ColocJob,
   ColocAnnotation,
   Ion,
-];
+]

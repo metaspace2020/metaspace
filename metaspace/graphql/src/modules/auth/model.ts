@@ -1,11 +1,10 @@
-import 'reflect-metadata';
-import {Column, Entity, PrimaryColumn} from 'typeorm';
-import {Moment} from 'moment';
-import {MomentValueTransformer} from '../../utils/MomentValueTransformer';
+import 'reflect-metadata'
+import { Column, Entity, PrimaryColumn } from 'typeorm'
+import { Moment } from 'moment'
+import { MomentValueTransformer } from '../../utils/MomentValueTransformer'
 
 @Entity()
 export class Credentials {
-
   @PrimaryColumn({ type: 'uuid', default: () => 'uuid_generate_v1mc()' })
   id: string;
 
@@ -24,8 +23,11 @@ export class Credentials {
   @Column({ type: 'text', nullable: true })
   emailVerificationToken: string | null;
 
-  @Column({ type: 'timestamp without time zone',
-    nullable: true, transformer: new MomentValueTransformer() })
+  @Column({
+    type: 'timestamp without time zone',
+    nullable: true,
+    transformer: new MomentValueTransformer(),
+  })
   emailVerificationTokenExpires?: Moment | null;
 
   @Column({ type: 'boolean', default: false })
@@ -34,11 +36,14 @@ export class Credentials {
   @Column({ type: 'text', nullable: true })
   resetPasswordToken: string | null;
 
-  @Column({ type: 'timestamp without time zone',
-    nullable: true, transformer: new MomentValueTransformer() })
+  @Column({
+    type: 'timestamp without time zone',
+    nullable: true,
+    transformer: new MomentValueTransformer(),
+  })
   resetPasswordTokenExpires: Moment | null;
 }
 
 export const AUTH_ENTITIES = [
   Credentials,
-];
+]

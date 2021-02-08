@@ -1,5 +1,5 @@
-import * as winston from 'winston';
-import * as moment from 'moment';
+import * as winston from 'winston'
+import * as moment from 'moment'
 import config from './config'
 
 const logger = new winston.Logger({
@@ -7,7 +7,7 @@ const logger = new winston.Logger({
     new winston.transports.Console({
       level: config.log.level,
       timestamp: function() {
-        return moment().format('YYYY-MM-DD HH:mm:ss,SSS');
+        return moment().format('YYYY-MM-DD HH:mm:ss,SSS')
       },
       // formatter: function(options) {
       //   // TODO Lachlan: This custom formatter logs an empty string when given an error
@@ -16,8 +16,8 @@ const logger = new winston.Logger({
       //   return options.timestamp() +' - '+ options.level.toUpperCase() +' - '+ (options.message ? options.message : '') +
       //     (options.meta && Object.keys(options.meta).length ? '\n\t'+ JSON.stringify(options.meta) : '' );
       // }
-    })
-  ]
-});
+    }),
+  ],
+})
 
-export default logger;
+export default logger

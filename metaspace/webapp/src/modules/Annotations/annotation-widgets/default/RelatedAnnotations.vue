@@ -21,10 +21,9 @@
           :isobars="other.isobars"
           :open-delay="100"
         >
-          <span
+          <molecular-formula
             v-if="other.ion !== colocReferenceIon"
-            class="sf cell-span"
-            v-html="renderFormula(other)"
+            :ion="other.ion"
           />
           <span v-else>Reference annotation<sub><!-- Subscript to make height consistent with formulas --></sub></span>
         </candidate-molecules-popover>
@@ -89,16 +88,16 @@
 </template>
 
 <script>
-import { get, omit } from 'lodash-es'
-import { renderMolFormulaHtml } from '../../../../lib/util'
+import { omit } from 'lodash-es'
 import ImageLoader from '../../../../components/ImageLoader.vue'
 import { relatedAnnotationsQuery } from '../../../../api/annotation'
 import { encodeParams, stripFilteringParams } from '../../../Filters'
 import { ANNOTATION_SPECIFIC_FILTERS } from '../../../Filters/filterSpecs'
 import CandidateMoleculesPopover from '../CandidateMoleculesPopover'
+import MolecularFormula from '../../../../components/MolecularFormula'
 
 export default {
-  components: { ImageLoader, CandidateMoleculesPopover },
+  components: { ImageLoader, CandidateMoleculesPopover, MolecularFormula },
   props: ['query', 'annotation', 'databaseId', 'imageLoaderSettings'],
   data() {
     return {
@@ -145,9 +144,6 @@ export default {
     },
   },
   methods: {
-    renderFormula(other) {
-      return renderMolFormulaHtml(other.ion)
-    },
     linkToAnnotation(other) {
       let filters = null
       if (this.query === 'allAdducts') {

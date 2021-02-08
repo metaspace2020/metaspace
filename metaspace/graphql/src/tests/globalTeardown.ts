@@ -1,18 +1,18 @@
-import * as Knex from 'knex';
-import config from '../utils/config';
+import * as Knex from 'knex'
+import config from '../utils/config'
 
-export = async () => {
+export = async() => {
   const knexAdmin = Knex({
     client: 'postgres',
     connection: {
-      host     : config.db.host,
-      user     : 'sm',
-      password : 'password',
-      database : 'postgres'
+      host: config.db.host,
+      user: 'sm',
+      password: 'password',
+      database: 'postgres',
     },
-    debug: false
-  });
+    debug: false,
+  })
 
-  await knexAdmin.raw(`DROP DATABASE ${config.db.database}`);
-  await knexAdmin.destroy();
+  await knexAdmin.raw(`DROP DATABASE ${config.db.database}`)
+  await knexAdmin.destroy()
 };

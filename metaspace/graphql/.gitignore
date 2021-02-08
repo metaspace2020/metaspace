@@ -8,3 +8,4 @@ src/binding.ts
 metadataSchemas/*.json
 metadataSchemas/metadataMapping.js
 health.json
+.eslintcache

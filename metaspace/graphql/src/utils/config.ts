@@ -1,6 +1,6 @@
-import * as config from 'config';
-import { IConfig } from 'config';
-import {Algorithm} from 'jsonwebtoken';
+import * as config from 'config'
+import { IConfig } from 'config'
+import { Algorithm } from 'jsonwebtoken'
 
 export type ImageStorageType = 'fs';
 export interface ImageCategoryConfig {
@@ -86,7 +86,7 @@ export interface Config {
     impersonation: boolean;
     imzmlDownload: boolean;
   };
-  aws:  {
+  aws: {
     aws_access_key_id: string;
     aws_secret_access_key: string;
     aws_region: string;
@@ -97,6 +97,6 @@ export interface Config {
   };
 }
 
-const _config = config as any as (Config & IConfig);
+const _config = config as any as (Config & IConfig)
 
-export default _config;
+export default _config

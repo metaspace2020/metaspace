@@ -1,17 +1,17 @@
-import { ConnectionOptions } from 'typeorm';
-import config from './config';
-import { AUTH_ENTITIES } from '../modules/auth/model';
-import { USER_ENTITIES } from '../modules/user/model';
-import { DATASET_ENTITIES } from '../modules/dataset/model';
-import { GROUP_ENTITIES } from '../modules/group/model';
-import { PROJECT_ENTITIES } from '../modules/project/model';
-import { ANNOTATION_ENTITIES } from '../modules/annotation/model';
-import { ENGINE_ENTITIES } from '../modules/engine/model';
-import { MOLECULAR_DB_ENTITIES } from '../modules/moldb/model';
+import { ConnectionOptions } from 'typeorm'
+import config from './config'
+import { AUTH_ENTITIES } from '../modules/auth/model'
+import { USER_ENTITIES } from '../modules/user/model'
+import { DATASET_ENTITIES } from '../modules/dataset/model'
+import { GROUP_ENTITIES } from '../modules/group/model'
+import { PROJECT_ENTITIES } from '../modules/project/model'
+import { ANNOTATION_ENTITIES } from '../modules/annotation/model'
+import { ENGINE_ENTITIES } from '../modules/engine/model'
+import { MOLECULAR_DB_ENTITIES } from '../modules/moldb/model'
 import { IMAGE_VIEWER_SNAPSHOT_ENTITIES } from '../modules/imageViewerSnapshot/model'
-import { SnakeCaseNamingStrategy } from './SnakeCaseNamingStrategy';
+import { SnakeCaseNamingStrategy } from './SnakeCaseNamingStrategy'
 
-export const DbSchemaName = 'graphql';
+export const DbSchemaName = 'graphql'
 
 const typeOrmConfig: ConnectionOptions = {
   type: 'postgres',
@@ -37,8 +37,8 @@ const typeOrmConfig: ConnectionOptions = {
   migrationsRun: true,
   logging: ['error', 'warn', 'info', 'log'],
   cli: {
-    migrationsDir: 'src/migrations'
-  }
-};
+    migrationsDir: 'src/migrations',
+  },
+}
 
-export default typeOrmConfig;
+export default typeOrmConfig
