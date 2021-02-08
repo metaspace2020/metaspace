@@ -6,7 +6,6 @@
     @click="onClick"
   >
     <i class="el-icon-download text-xl" />
-    <!-- <photo-icon class="sm-mini-icon" /> -->
   </button>
 </template>
 <script lang="ts">
@@ -14,9 +13,6 @@ import { defineComponent } from '@vue/composition-api'
 import domtoimage from 'dom-to-image-google-font-issue'
 import { saveAs } from 'file-saver'
 import { MessageBox } from '../../lib/element-ui'
-
-import '../../components/MiniIcon.css'
-import PhotoIcon from '../../assets/inline/refactoring-ui/photo.svg'
 
 function showBrowserWarning() {
   MessageBox.alert('Due to technical limitations we are only able to support downloading layered and/or zoomed images'
@@ -32,9 +28,6 @@ interface Props {
 }
 
 export default defineComponent<Props>({
-  components: {
-    PhotoIcon,
-  },
   props: {
     domNode: { required: true },
     fileName: String,

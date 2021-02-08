@@ -52,7 +52,9 @@
       class="collaboration column-layout"
     >
       <div>
-        <user-icon class="sm-colour-icon mb-2" />
+        <primary-icon class="mb-2">
+          <user-svg />
+        </primary-icon>
         <h3>User</h3>
         <ul>
           <li>owner of their data</li>
@@ -62,7 +64,9 @@
         </ul>
       </div>
       <div>
-        <group-icon class="sm-colour-icon mb-2" />
+        <primary-icon class="mb-2">
+          <group-svg />
+        </primary-icon>
         <h3>Group</h3>
         <ul>
           <li>users from same lab</li>
@@ -72,7 +76,12 @@
         </ul>
       </div>
       <div>
-        <work-icon class="sm-colour-icon mb-2" />
+        <primary-icon
+          class="mb-2"
+          inverse
+        >
+          <work-svg />
+        </primary-icon>
         <h3>Project</h3>
         <ul>
           <li>organise and share data</li>
@@ -113,14 +122,12 @@
 
 <script>
 import './content.css'
-import '../../components/ColourIcon.css'
-
-import Vue from 'vue'
 
 import TourButton from './TourButton'
-import UserIcon from '../../assets/inline/refactoring-ui/user.svg'
-import GroupIcon from '../../assets/inline/refactoring-ui/group.svg'
-import WorkIcon from '../../assets/inline/refactoring-ui/work.svg'
+import PrimaryIcon from '../../components/PrimaryIcon.vue'
+import UserSvg from '../../assets/inline/refactoring-ui/icon-user.svg'
+import GroupSvg from '../../assets/inline/refactoring-ui/icon-user-group.svg'
+import WorkSvg from '../../assets/inline/refactoring-ui/icon-work.svg'
 
 import introTour from '../../tours/intro.ts'
 import filteringTour from '../../tours/filtering.ts'
@@ -130,9 +137,10 @@ export default {
   name: 'HelpPage',
   components: {
     TourButton,
-    UserIcon,
-    GroupIcon,
-    WorkIcon,
+    PrimaryIcon,
+    UserSvg,
+    GroupSvg,
+    WorkSvg,
   },
   methods: {
     intro() {

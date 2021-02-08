@@ -27,7 +27,9 @@
           Features
         </h2>
         <div>
-          <edit-icon class="sm-colour-icon mb-2" />
+          <primary-icon class="mb-2">
+            <monitor-svg />
+          </primary-icon>
           <h3>Metabolite annotation</h3>
           <p>
             <router-link to="/upload">
@@ -38,7 +40,9 @@
           </p>
         </div>
         <div>
-          <book-icon class="sm-colour-icon mb-2" />
+          <primary-icon class="mb-2">
+            <book-svg />
+          </primary-icon>
           <h3>Explore the knowledgebase</h3>
           <p>
             <router-link to="/annotations">
@@ -49,7 +53,12 @@
           </p>
         </div>
         <div>
-          <bolt-icon class="sm-colour-icon mb-2" />
+          <primary-icon
+            class="mb-2"
+            inverse
+          >
+            <bolt-svg />
+          </primary-icon>
           <h3>Get going fast</h3>
           <p>
             Head to the <router-link to="/upload">
@@ -61,7 +70,9 @@
           </p>
         </div>
         <div>
-          <unlock-icon class="sm-colour-icon mb-2" />
+          <primary-icon class="mb-2">
+            <unlock-svg />
+          </primary-icon>
           <h3>Open access</h3>
           <p>
             The <a
@@ -194,22 +205,23 @@
 </template>
 
 <script lang="ts">
-import '../../components/ColourIcon.css'
+import PrimaryIcon from '../../components/PrimaryIcon.vue'
 
 import Metaspace from '../../assets/inline/METASPACE.svg'
-import EditIcon from '../../assets/inline/refactoring-ui/edit.svg'
-import BookIcon from '../../assets/inline/refactoring-ui/book.svg'
-import BoltIcon from '../../assets/inline/refactoring-ui/bolt.svg'
-import UnlockIcon from '../../assets/inline/refactoring-ui/unlock.svg'
+import MonitorSvg from '../../assets/inline/refactoring-ui/icon-monitor.svg'
+import BookSvg from '../../assets/inline/refactoring-ui/icon-book-open.svg'
+import BoltSvg from '../../assets/inline/refactoring-ui/icon-bolt.svg'
+import UnlockSvg from '../../assets/inline/refactoring-ui/icon-lock-open.svg'
 
 export default {
   name: 'AboutPage',
   components: {
     Metaspace,
-    EditIcon,
-    BookIcon,
-    BoltIcon,
-    UnlockIcon,
+    PrimaryIcon,
+    MonitorSvg,
+    BookSvg,
+    BoltSvg,
+    UnlockSvg,
   },
 }
 </script>
