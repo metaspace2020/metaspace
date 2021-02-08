@@ -12,7 +12,7 @@ config.defaults = {
 };
 
 config.upload = {
-  endpoint: "http://localhost:9000",
+  endpoint: "http://storage:9000",
   access_key_id: "minioadmin",
   secret_access_key: "minioadmin",
   bucket: "sm-engine-upload",

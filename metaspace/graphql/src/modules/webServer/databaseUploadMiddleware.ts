@@ -12,10 +12,17 @@ export default function (httpServer: http.Server) {
           getKey: (req: express.Request, filename: string, metadata: object) => {
             return `${config.upload.moldbPrefix}/${genUuid()}/${filename}`
           },
-          key: config.aws.aws_access_key_id,
-          secret: config.aws.aws_secret_access_key,
+          endpoint: config.upload.endpoint, // e.g. http://localhost:9000
+          key: config.upload.access_key_id,
+          secret: config.upload.secret_access_key,
           bucket: config.upload.bucket,
           region: config.aws.aws_region,
+          awsClientOptions: {
+            s3ForcePathStyle: true,
+            httpOptions: {
+              proxy: 'http://storage:9000'
+            },
+          },
           useAccelerateEndpoint: false,  // default: false,
           expires: 300,  // default: 300 (5 minutes)
           acl: 'private',  // default: public-read

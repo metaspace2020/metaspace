@@ -2,7 +2,7 @@ import boto3
 from sm.engine.util import SMConfig
 
 
-def get_boto3_s3_client():
+def get_s3_client():
     config = SMConfig.get_conf()
     return boto3.client(
         's3',
@@ -13,7 +13,7 @@ def get_boto3_s3_client():
     )
 
 
-def get_boto3_s3_bucket(bucket_name):
+def get_s3_bucket(bucket_name):
     config = SMConfig.get_conf()
     return boto3.resource(
         's3',
