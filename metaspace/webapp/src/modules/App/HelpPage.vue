@@ -1,5 +1,5 @@
 <template>
-  <div class="sm-content-page">
+  <content-page>
     <h1>Help</h1>
     <h2>Interactive tours</h2>
     <p>
@@ -117,14 +117,14 @@
     <p>
       Please send feedback to <a href="mailto:contact@metaspace2020.eu">our e-mail address</a>.
     </p>
-  </div>
+  </content-page>
 </template>
 
 <script>
-import './content.css'
-
 import TourButton from './TourButton'
 import PrimaryIcon from '../../components/PrimaryIcon.vue'
+import ContentPage from '../../components/ContentPage.vue'
+
 import UserSvg from '../../assets/inline/refactoring-ui/icon-user.svg'
 import GroupSvg from '../../assets/inline/refactoring-ui/icon-user-group.svg'
 import WorkSvg from '../../assets/inline/refactoring-ui/icon-work.svg'
@@ -138,6 +138,7 @@ export default {
   components: {
     TourButton,
     PrimaryIcon,
+    ContentPage,
     UserSvg,
     GroupSvg,
     WorkSvg,
@@ -158,33 +159,29 @@ export default {
 }
 </script>
 
-<style scoped>
-  h3 {
-    @apply text-lg leading-9 font-medium my-0;
-  }
+<style scoped lang="postcss">
+h3 {
+  @apply text-lg leading-9 font-medium my-0;
+}
 
-  .column-layout {
-    @apply flex flex-wrap justify-center -mx-3;
-  }
+.column-layout {
+  @apply flex flex-wrap justify-center -mx-3;
+}
 
-  .column-layout > * {
-    @apply mx-3;
-    width: calc(33.333% - theme('spacing.6'));
-  }
+.column-layout > * {
+  @apply mx-3;
+  width: calc(33.333% - theme('spacing.6'));
+}
 
-  .column-layout li + li {
-    margin-top: 0;
-  }
+.column-layout li + li {
+  margin-top: 0;
+}
 
-  .tours button {
-    @apply mt-3;
-  }
+.tours button {
+  @apply mt-3;
+}
 
-  .collaboration li:first-child {
-    @apply font-medium;
-  }
-
-  ol > li {
-    @apply mt-6 relative;
-  }
+.collaboration li:first-child {
+  @apply font-medium;
+}
 </style>

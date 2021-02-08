@@ -1,4 +1,10 @@
-.sm-main-content.sm-content-page {
+<template>
+  <div class="sm-content-page">
+    <slot />
+  </div>
+</template>
+<style lang="postcss">
+.sm-content-page.sm-main-content { /* .sm-main-content is added to page routes */
   @apply p-18 max-w-4xl box-border mx-auto leading-6 text-base;
 }
 
@@ -28,6 +34,24 @@
   @apply p-0 my-0;
 }
 
+.sm-content-page ol {
+  list-style: none;
+  counter-reset: primary-nums;
+}
+
+.sm-content-page ol > li {
+  @apply mt-6 relative;
+}
+
+.sm-content-page ol > li::before {
+  @apply absolute w-6 h-6 rounded-full bg-blue-100 text-blue-700
+    font-bold text-sm flex items-baseline justify-center;
+
+  counter-increment: primary-nums;
+  content: counter(primary-nums);
+  left: calc(-1 * theme('spacing.9'))
+}
+
 .sm-content-page p {
   @apply my-0 max-w-measure-4;
 }
@@ -49,3 +73,4 @@
   display: inline-block;
   font-family: monospace;
 }
+</style>

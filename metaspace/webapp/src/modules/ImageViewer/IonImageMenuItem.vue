@@ -2,7 +2,7 @@
   <el-popover
     class="block"
     placement="left"
-    popper-class="max-w-measure-1 text-left proportional-nums text-sm leading-5"
+    popper-class="max-w-measure-1 text-left text-sm leading-5"
     trigger="manual"
     :value="clippingNotice.visible"
     :visible-arrow="false"
@@ -31,7 +31,7 @@
           :isobars="item.annotation.isobars"
         >
           <molecular-formula
-            class="truncate font-medium h-6 text-base proportional-nums"
+            class="truncate font-medium h-6 text-base"
             :ion="item.annotation.ion"
           />
         </candidate-molecules-popover>

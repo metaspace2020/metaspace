@@ -1,5 +1,5 @@
 <template>
-  <div class="sm-content-page flex-grow">
+  <content-page class="flex-grow">
     <h1 class="pb-6">
       Design docs
     </h1>
@@ -430,12 +430,12 @@
         :definition="maxWidth['measure-5']"
       />
     </div>
-  </div>
+  </content-page>
 </template>
 <script lang="ts">
-import '../modules/App/content.css'
 import { defineComponent } from '@vue/composition-api'
 
+import ContentPage from '../components/ContentPage.vue'
 import ColourSwatch from './ColourSwatch.vue'
 import WidthDemo from './WidthDemo.vue'
 
@@ -443,6 +443,7 @@ import tailwindConfig from '../../tailwind.config'
 
 export default defineComponent({
   components: {
+    ContentPage,
     ColourSwatch,
     WidthDemo,
   },

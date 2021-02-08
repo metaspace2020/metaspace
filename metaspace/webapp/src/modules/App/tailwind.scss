@@ -49,10 +49,6 @@
   transition-property: opacity, visibility;
 }
 
-.proportional-nums {
-  font-variant-numeric: proportional-nums;
-}
-
 .h2-leading-12 h2 {
   @apply leading-8 py-2 m-0;
 }
