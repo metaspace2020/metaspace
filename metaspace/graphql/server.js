@@ -187,7 +187,8 @@ async function createHttpServerAsync(config, connection) {
 
   configureSentryErrorHandler(app)
 
-  app.use(function(err, req, res) {
+  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */ // Because express error handlers must take 4 args
+  app.use(function(err, req, res, next) {
     res.status(err.status || 500)
     logger.error(err.stack)
     res.json({
