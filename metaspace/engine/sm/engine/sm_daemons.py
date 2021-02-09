@@ -40,12 +40,13 @@ class DatasetManager:
         self._status_queue = status_queue
         self.logger = logger or logging.getLogger()
 
-        self.ses = boto3.client(
-            'ses',
-            'eu-west-1',
-            aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
-            aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'],
-        )
+        if 'aws' in self._sm_config:
+            self.ses = boto3.client(
+                'ses',
+                'eu-west-1',
+                aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
+                aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'],
+            )
 
     def post_to_slack(self, emoji, msg):
         if self._slack_conf.get('webhook_url', None):

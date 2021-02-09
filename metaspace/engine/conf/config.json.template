@@ -196,9 +196,4 @@ The Prefix is necessary and should not have a leading or trailing slash
   "ds_config_defaults": {
     "adducts": {{ sm_default_adducts | to_json }}
   },
-  "storage": {
-    "endpoint_url": "",
-    "access_key_id": "{{ aws_access_key_id }}",
-    "secret_access_key": "{{ aws_secret_access_key }}"
-  }
 }

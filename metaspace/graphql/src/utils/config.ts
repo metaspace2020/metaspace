@@ -89,7 +89,7 @@ export interface Config {
     impersonation: boolean;
     imzmlDownload: boolean;
   };
-  aws:  {
+  aws: {
     aws_region: string;
   };
   metadataLookups: {
