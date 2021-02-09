@@ -4,6 +4,7 @@ from enum import Enum
 from unittest.mock import patch
 
 import pytest
+from botocore.exceptions import ClientError
 
 from sm.engine.db import DB
 from sm.engine.storage import get_s3_client
@@ -39,9 +40,13 @@ class MoldbFiles(Enum):
 @pytest.fixture(autouse=True, scope="module")
 def fill_storage():
     s3 = get_s3_client()
-    head_resp = s3.head_bucket(Bucket=BUCKET_NAME)
-    if head_resp['ResponseMetadata']['HTTPStatusCode'] != 200:
-        s3.create_bucket(Bucket=BUCKET_NAME)
+    try:
+        s3.head_bucket(Bucket=BUCKET_NAME)
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "404":
+            s3.create_bucket(Bucket=BUCKET_NAME)
+        else:
+            raise
 
     for file in MoldbFiles:
         s3.upload_file(
