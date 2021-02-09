@@ -113,7 +113,7 @@ router.beforeEach((to, from, next) => {
   // Force the browser to reload the page, preferring to do so during page transitions to minimize impact.
   const daysSincePageLoad = (Date.now() - pageLoadedAt) / 1000 / 60 / 60 / 24
   if (to.path !== from.path && daysSincePageLoad > 1.75 || daysSincePageLoad > 7) {
-    window.location.replace(to.fullPath)
+    window.location.assign(to.fullPath)
     next(false)
   } else {
     next()
