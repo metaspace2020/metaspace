@@ -112,7 +112,7 @@ router.beforeEach((to, from, next) => {
   // such as incorrect API usage, or causing error reports for bugs that have already been fixed.
   // Force the browser to reload the page, preferring to do so during page transitions to minimize impact.
   const daysSincePageLoad = (Date.now() - pageLoadedAt) / 1000 / 60 / 60 / 24
-  if (to.path !== from.path && daysSincePageLoad > 1 || daysSincePageLoad > 7) {
+  if (to.path !== from.path && daysSincePageLoad > 1.75 || daysSincePageLoad > 7) {
     window.location.replace(to.fullPath)
     next(false)
   } else {
