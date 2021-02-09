@@ -10,7 +10,7 @@ export const assertImportFileIsValid = async (filePath: string) => {
     throw new UserError('Wrong file path');
   }
   const [, bucket, key] = parsedPath;
-  if (bucket != config.upload.bucket || !key.startsWith(config.upload.moldbPrefix)) {
+  if (bucket != config.upload.bucket || !key.startsWith(config.upload.moldb_prefix)) {
     throw new UserError('Wrong file path');
   }
 

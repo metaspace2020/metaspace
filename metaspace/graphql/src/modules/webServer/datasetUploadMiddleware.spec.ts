@@ -2,12 +2,12 @@ jest.mock('../../utils/config', () => {
   return {
     default: {
       aws: {
-        aws_secret_access_key: 'aws-secret-access-key',
-        aws_access_key_id: 'aws-access-key-id',
         aws_region: 'aws-region'
       },
       upload: {
         bucket: 's3-upload-bucket',
+        secret_access_key: 'secret-access-key',
+        access_key_id: 'access-key-id',
       },
     },
   };

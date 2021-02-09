@@ -32,11 +32,12 @@ export interface Config {
     categories: Record<ImageCategory, ImageCategoryConfig>;
   };
   upload: {
-    endpoint: string;
+    endpoint?: string;
     bucket?: string;
-    moldbPrefix: string;
+    moldb_prefix: string;
     access_key_id: string;
     secret_access_key: string;
+    local_server_proxy?: string;
   };
   services: {
     sm_engine_api_host: string;
@@ -89,8 +90,6 @@ export interface Config {
     imzmlDownload: boolean;
   };
   aws:  {
-    aws_access_key_id: string;
-    aws_secret_access_key: string;
     aws_region: string;
   };
   metadataLookups: {

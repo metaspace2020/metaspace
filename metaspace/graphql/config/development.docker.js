@@ -12,10 +12,12 @@ config.defaults = {
 };
 
 config.upload = {
-  endpoint: "http://storage:9000",
+  endpoint: "http://localhost:9000",
   access_key_id: "minioadmin",
   secret_access_key: "minioadmin",
   bucket: "sm-engine-upload",
+  moldb_prefix: 'databases',
+  local_server_proxy: "http://storage:9000"
 };
 
 config.services = {};
@@ -61,11 +63,6 @@ config.jwt = {};
 config.jwt.secret = "secret";
 config.jwt.algorithm = "HS256";
 
-config.aws = {
-  aws_access_key_id: "",
-  aws_secret_access_key: "",
-  aws_region: "eu-west-1"
-};
 config.sentry = null;
 
 config.features = {
