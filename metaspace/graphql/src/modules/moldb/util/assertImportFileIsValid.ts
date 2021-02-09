@@ -15,11 +15,12 @@ export const assertImportFileIsValid = async (filePath: string) => {
   }
 
   const s3 = new S3({
+    endpoint: config.upload.endpoint,
     region: config.aws.aws_region,
-    credentials: {
-      accessKeyId: config.aws.aws_access_key_id,
-      secretAccessKey: config.aws.aws_secret_access_key,
-    },
+    accessKeyId: config.upload.access_key_id,
+    secretAccessKey: config.upload.secret_access_key,
+    s3ForcePathStyle: true, // needed with minio?
+    signatureVersion: 'v4'
   });
   const object = await s3.headObject({ Bucket: bucket, Key: key }).promise();
   if (object == null || object.ContentLength == null) {

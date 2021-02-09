@@ -51,7 +51,9 @@ module.exports = {
   },
 
   upload: {
-    endpoint: 'http://localhost:9000',
+    endpoint: '',
+    access_key_id: '',
+    secret_access_key:'',
     bucket: '',
     moldbPrefix: 'databases'
   },

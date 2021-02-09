@@ -263,6 +263,10 @@ jobs:
           RABBITMQ_DEFAULT_USER: sm
           RABBITMQ_DEFAULT_PASS: password
 
+      - image: minio/minio:RELEASE.2021-01-16T02-19-44Z
+        entrypoint: sh
+        command: -c 'mkdir -p /data/sm-engine-upload && /usr/bin/minio server /data'
+
     working_directory: ~/metaspace/metaspace/engine
     steps:
       - checkout:
