@@ -7,8 +7,15 @@
   },
   "defaults": {
     "adducts": {
-      "+": ["+H", "+Na", "+K"],
-      "-": ["-H", "+Cl"]
+      "+": [
+        "+H",
+        "+Na",
+        "+K"
+      ],
+      "-": [
+        "-H",
+        "+Cl"
+      ]
     }
   },
   "db": {
@@ -50,18 +57,22 @@
     "spark.ui.showConsoleProgress": false,
     "spark.sql.execution.arrow.enabled": true
   },
-  "aws": {
-    "aws_access_key_id": "",
-    "aws_secret_access_key": "",
-    "aws_default_region": "eu-west-1"
+  "storage": {
+    "endpoint_url": "http://localhost:9000",
+    "access_key_id": "minioadmin",
+    "secret_access_key": "minioadmin"
   },
   "slack": {
     "channel": "",
     "webhook_url": ""
   },
-  "ms_file_handlers": [{
+  "ms_file_handlers": [
+    {
       "type": "ims",
-      "extensions": ["imzml", "ibd"],
+      "extensions": [
+        "imzml",
+        "ibd"
+      ],
       "parser_factory": {
         "name": "ImzMLParser",
         "path": "pyimzml.ImzMLParser"
@@ -71,9 +82,12 @@
         "path": "sm.engine.ims_geometry_factory"
       },
       "img_storage_type": "fs"
-    }, {
+    },
+    {
       "type": "lcms",
-      "extensions": ["mzml"],
+      "extensions": [
+        "mzml"
+      ],
       "parser_factory": {
         "name": "MzMLParser",
         "path": "sm.engine.mzml_parser"
@@ -83,7 +97,8 @@
         "path": "sm.engine.lcms_geometry_factory"
       },
       "img_storage_type": "db"
-  }],
+    }
+  ],
   "isotope_storage": {
     "path": "/tmp/isotope_storage"
   },
@@ -95,36 +110,49 @@
       }
     },
     "handlers": {
-        "console_warn": {
-            "class": "logging.StreamHandler",
-            "formatter": "sm",
-            "level": "WARNING"
-        },
-        "console_debug": {
-            "class": "logging.StreamHandler",
-            "formatter": "sm",
-            "level": "DEBUG"
-        }
+      "console_warn": {
+        "class": "logging.StreamHandler",
+        "formatter": "sm",
+        "level": "WARNING"
+      },
+      "console_debug": {
+        "class": "logging.StreamHandler",
+        "formatter": "sm",
+        "level": "DEBUG"
+      }
     },
     "loggers": {
-        "engine": {
-            "handlers": ["console_debug"],
-            "level": "INFO"
-        },
-        "api": {
-            "handlers": ["console_debug"],
-            "level": "INFO"
-        },
-        "daemon": {
-            "handlers": ["console_debug"],
-            "level": "INFO"
-        }
+      "engine": {
+        "handlers": [
+          "console_debug"
+        ],
+        "level": "INFO"
+      },
+      "api": {
+        "handlers": [
+          "console_debug"
+        ],
+        "level": "INFO"
+      },
+      "daemon": {
+        "handlers": [
+          "console_debug"
+        ],
+        "level": "INFO"
+      }
     }
   },
   "ds_config_defaults": {
     "adducts": {
-      "+": ["+H", "+Na", "+K"],
-      "-": ["-H", "+Cl" ]
+      "+": [
+        "+H",
+        "+Na",
+        "+K"
+      ],
+      "-": [
+        "-H",
+        "+Cl"
+      ]
     }
   }
 }
