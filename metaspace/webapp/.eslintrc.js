@@ -19,7 +19,7 @@ module.exports = {
     'vue/require-prop-types': ['off'], // Will props even be relevant if we shift to the Composition API?
     'vue/html-self-closing': ['off'], // Unnecessarily forces template style to differ from TSX
     'vue/no-v-html': ['off'],
-    'no-mixed-operators': ['off'], // TODO?
+    'no-mixed-operators': ['off'],
 
     'no-unused-vars': ['off'], // Does not work well with TypeScript
     'import/no-duplicates': ['off'], // This keeps breaking stuff: https://github.com/benmosher/eslint-plugin-import/issues/1504

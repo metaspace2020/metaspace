@@ -10,7 +10,7 @@ from lithops.storage import Storage
 
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, load_cobj, CObj, load_cobjs, save_cobjs
-from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 
 logger = logging.getLogger('annotation-pipeline')
 

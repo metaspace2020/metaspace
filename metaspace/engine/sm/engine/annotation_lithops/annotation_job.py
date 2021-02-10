@@ -23,10 +23,10 @@ from sm.engine.db import DB
 from sm.engine.ds_config import DSConfig
 from sm.engine.es_export import ESExporter
 from sm.engine.image_store import ImageStoreServiceWrapper
-from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.molecular_db import read_moldb_file
-from sm.engine.storage import get_s3_client
-from sm.engine.util import SMConfig, split_s3_path, split_cos_path
+from sm.engine.util import split_s3_path, split_cos_path
+from sm.engine.config import SMConfig
 from sm.engine.utils.perf_profile import Profiler
 
 logger = logging.getLogger('engine')

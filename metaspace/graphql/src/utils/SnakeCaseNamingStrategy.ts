@@ -15,17 +15,16 @@ export class SnakeCaseNamingStrategy extends DefaultNamingStrategy implements Na
   }
 
   joinColumnName(relationName: string, referencedColumnName: string): string {
-    return snakeCase(relationName + "_" + referencedColumnName)
+    return snakeCase(relationName + '_' + referencedColumnName)
   }
 
   joinTableName(firstTableName: string,
-                secondTableName: string,
-                firstPropertyName: string,
-                secondPropertyName: string): string {
-    return snakeCase(firstTableName + "_" + firstPropertyName.replace(/\./gi, "_") + "_" + secondTableName)
+    secondTableName: string,
+    firstPropertyName: string): string {
+    return snakeCase(firstTableName + '_' + firstPropertyName.replace(/\./gi, '_') + '_' + secondTableName)
   }
 
   joinTableColumnName(tableName: string, propertyName: string, columnName?: string): string {
-    return snakeCase(tableName + "_" + (columnName ? columnName : propertyName))
+    return snakeCase(tableName + '_' + (columnName ? columnName : propertyName))
   }
 }

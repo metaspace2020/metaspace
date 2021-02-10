@@ -1,10 +1,10 @@
-import {GraphQLFieldResolver} from 'graphql';
-import {Context} from './context';
-import {User as UserModel} from './modules/user/model';
-import {UserGroup as UserGroupModel} from './modules/group/model';
-import {Project as ProjectModel, UserProject as UserProjectModel} from './modules/project/model';
-import {UserProjectRole} from './binding';
-import {ESDataset} from '../esConnector';
+import { GraphQLFieldResolver } from 'graphql'
+import { Context } from './context'
+import { User as UserModel } from './modules/user/model'
+import { UserGroup as UserGroupModel } from './modules/group/model'
+import { Project as ProjectModel, UserProject as UserProjectModel } from './modules/project/model'
+import { UserProjectRole } from './binding'
+import { ESDataset } from '../esConnector'
 
 export type ScopeRole =
   'PROFILE_OWNER'
@@ -21,7 +21,7 @@ export const ScopeRoleOptions: Record<ScopeRole, ScopeRole> = {
   PROJECT_MEMBER: 'PROJECT_MEMBER',
   PROJECT_MANAGER: 'PROJECT_MANAGER',
   OTHER: 'OTHER',
-};
+}
 
 export interface Scope {
   scopeRole: ScopeRole

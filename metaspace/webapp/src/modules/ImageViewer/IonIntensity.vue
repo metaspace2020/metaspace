@@ -39,7 +39,7 @@
       </button>
       <check-icon
         v-if="status === 'LOCKED'"
-        class="h-6 w-6 -mx-2 sm-fill-primary text-blue-500 relative -z-10"
+        class="h-6 w-6 -mx-2 sm-fill-secondary text-blue-500 relative -z-10"
       />
     </div>
   </fade-transition>
@@ -50,9 +50,8 @@ import { defineComponent, computed, ref, watch } from '@vue/composition-api'
 import EditIntensity from './EditIntensity.vue'
 import FadeTransition from '../../components/FadeTransition'
 
-import '../../components/MonoIcon.css'
-import LockIcon from '../../assets/inline/refactoring-ui/lock.svg'
-import CheckIcon from '../../assets/inline/refactoring-ui/check.svg'
+import LockIcon from '../../assets/inline/refactoring-ui/icon-lock.svg'
+import CheckIcon from '../../assets/inline/refactoring-ui/icon-check.svg'
 
 import { IonImageIntensity } from './ionImageState'
 
@@ -138,10 +137,10 @@ export default defineComponent<Props>({
     flex-direction: row-reverse;
   }
 
-  .sm-fill-primary {
+  .sm-fill-secondary {
     fill: none;
   }
-  .sm-fill-primary .primary {
+  .sm-fill-secondary .secondary {
     fill: currentColor;
   }
 </style>

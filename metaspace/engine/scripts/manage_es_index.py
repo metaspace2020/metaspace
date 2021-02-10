@@ -1,7 +1,7 @@
 # pylint: disable=invalid-name, redefined-outer-name
 import argparse
 
-from sm.engine.util import SMConfig, init_loggers
+from sm.engine.config import init_loggers, SMConfig
 from sm.engine.es_export import ESIndexManager
 
 

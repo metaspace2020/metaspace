@@ -121,7 +121,7 @@ from sm.engine.annotation_lithops.io import load_cobj, load_cobjs
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.image_store import ImageStoreServiceWrapper
-from sm.engine.util import SMConfig
+from sm.engine.config import SMConfig
 from sm.engine.utils.perf_profile import NullProfiler
 from sm.engine.annotation_lithops.annotation_job import ServerAnnotationJob
 
@@ -158,7 +158,7 @@ Once you have the bucket & key for the object:
 ```python
 from lithops.storage import Storage
 from sm.engine.annotation_lithops.io import deserialize
-from sm.engine.util import SMConfig
+from sm.engine.config import SMConfig
 
 storage = Storage(lithops_config=SMConfig.get_conf()['lithops'])
 obj = deserialize(storage.get_object('bucket', 'key'))

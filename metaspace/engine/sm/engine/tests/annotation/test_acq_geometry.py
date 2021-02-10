@@ -3,7 +3,7 @@ from os.path import join
 import pytest
 
 from sm.engine.annotation.acq_geometry import make_acq_geometry
-from sm.engine.util import proj_root
+from sm.engine.config import proj_root
 
 
 def test_ims_geometry_factory_normal():

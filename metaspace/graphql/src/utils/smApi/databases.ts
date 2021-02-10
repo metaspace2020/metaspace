@@ -1,18 +1,17 @@
-import * as _ from 'lodash';
-import { UserError } from 'graphql-errors';
-import logger from '../logger';
-import { snakeCase } from 'typeorm/util/StringUtils';
+import * as _ from 'lodash'
+import { UserError } from 'graphql-errors'
+import logger from '../logger'
+import { snakeCase } from 'typeorm/util/StringUtils'
 import { smApiJsonPost } from './smApiCall'
 
+const valid_error_statuses = ['wrong_parameters', 'already_exists', 'malformed_csv', 'bad_data']
 
-const valid_error_statuses = ['wrong_parameters', 'already_exists', 'malformed_csv', 'bad_data'];
-
-export const smApiDatabaseRequest = async (uri: string, args?: any) => {
-  let reqDoc = args || {};
+export const smApiDatabaseRequest = async(uri: string, args?: any) => {
+  let reqDoc = args || {}
   // @ts-ignore
-  reqDoc = _.mapKeys(reqDoc, (v, k) => snakeCase(k));
+  reqDoc = _.mapKeys(reqDoc, (v, k) => snakeCase(k))
 
-  const {response, content} = await smApiJsonPost(uri, reqDoc)
+  const { response, content } = await smApiJsonPost(uri, reqDoc)
 
   if (!response.ok) {
     if (valid_error_statuses.includes(content.status)) {
@@ -20,18 +19,16 @@ export const smApiDatabaseRequest = async (uri: string, args?: any) => {
         type: content.status,
         error: content.error,
         details: content.details,
-      }));
+      }))
+    } else {
+      throw new UserError('Server error')
     }
-    else {
-      throw new UserError(`Server error`);
-    }
+  } else {
+    logger.info(`Successful ${uri}`)
+    logger.debug(`Body: ${JSON.stringify(reqDoc)}`)
+    return content.data
   }
-  else {
-    logger.info(`Successful ${uri}`);
-    logger.debug(`Body: ${JSON.stringify(reqDoc)}`);
-    return content.data;
-  }
-};
+}
 
 interface CreateDatabaseArgs {
     name: string;
@@ -45,9 +42,9 @@ interface CreateDatabaseArgs {
     citation?: string;
 }
 
-export const smApiCreateDatabase = async (args: CreateDatabaseArgs) => {
-  return await smApiDatabaseRequest(`/v1/databases/create`, args);
-};
+export const smApiCreateDatabase = async(args: CreateDatabaseArgs) => {
+  return await smApiDatabaseRequest('/v1/databases/create', args)
+}
 
 interface UpdateDatabaseArgs {
     archived?: boolean;
@@ -58,10 +55,10 @@ interface UpdateDatabaseArgs {
     citation?: string;
 }
 
-export const smApiUpdateDatabase = async (id: number, args: UpdateDatabaseArgs) => {
-  return await smApiDatabaseRequest(`/v1/databases/${id}/update`, args);
-};
+export const smApiUpdateDatabase = async(id: number, args: UpdateDatabaseArgs) => {
+  return await smApiDatabaseRequest(`/v1/databases/${id}/update`, args)
+}
 
-export const smApiDeleteDatabase = async (id: number) => {
-  return await smApiDatabaseRequest(`/v1/databases/${id}/delete`);
-};
+export const smApiDeleteDatabase = async(id: number) => {
+  return await smApiDatabaseRequest(`/v1/databases/${id}/delete`)
+}

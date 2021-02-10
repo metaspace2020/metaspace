@@ -19,7 +19,7 @@ from sm.engine.annotation_lithops.io import (
     load_cobj,
     load_cobjs,
 )
-from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 
 logger = logging.getLogger('annotation-pipeline')
 MAX_MZ_VALUE = 10 ** 5

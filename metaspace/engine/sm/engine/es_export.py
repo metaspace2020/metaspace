@@ -14,14 +14,15 @@ from elasticsearch import (
 from elasticsearch.client import IndicesClient, IngestClient
 from elasticsearch.helpers import parallel_bulk
 
-from sm.engine.db_mutex import DBMutex
+from sm.engine.utils.db_mutex import DBMutex
 from sm.engine.db import DB
-from sm.engine.fdr import FDR
+from sm.engine.annotation.fdr import FDR
 from sm.engine.formula_parser import format_ion_formula
-from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine import molecular_db
 from sm.engine.molecular_db import MolecularDB
-from sm.engine.util import SMConfig, retry_on_exception
+from sm.engine.utils.retry_on_exception import retry_on_exception
+from sm.engine.config import SMConfig
 
 logger = logging.getLogger('engine')
 

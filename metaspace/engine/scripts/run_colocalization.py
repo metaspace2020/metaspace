@@ -3,7 +3,7 @@ import logging
 from functools import partial
 
 from sm.engine.annotation_lithops.executor import Executor
-from sm.engine.colocalization import Colocalization
+from sm.engine.postprocessing.colocalization import Colocalization
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.util import bootstrap_and_run

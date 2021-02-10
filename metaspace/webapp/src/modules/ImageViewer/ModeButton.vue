@@ -11,10 +11,12 @@
       :show-until="new Date('2021-03-01')"
       class="flex items-center"
     >
-      <tune-icon
-        class="sm-stateful-icon h-6 w-6"
-        :class="{ 'sm-stateful-icon--active': isActive }"
-      />
+      <stateful-icon
+        class="h-6 w-6"
+        :active="isActive"
+      >
+        <tune-svg />
+      </stateful-icon>
       <span class="leading-none ml-1">Channels</span>
     </popup-anchor>
   </button>
@@ -23,16 +25,16 @@
 import { defineComponent, computed } from '@vue/composition-api'
 
 import PopupAnchor from '../NewFeaturePopup/PopupAnchor.vue'
+import StatefulIcon from '../../components/StatefulIcon.vue'
 
-import '../../components/StatefulIcon.css'
-import TuneIcon from '../../assets/inline/refactoring-ui/tune.svg'
+import TuneSvg from '../../assets/inline/refactoring-ui/icon-tune.svg'
 
 import viewerState, { toggleMode } from './state'
-import config from '../../lib/config'
 
 export default defineComponent({
   components: {
-    TuneIcon,
+    StatefulIcon,
+    TuneSvg,
     PopupAnchor,
   },
   setup(_, { emit }) {

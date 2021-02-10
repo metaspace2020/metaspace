@@ -6,15 +6,15 @@ import {
   OneToMany,
   ManyToOne,
   Index,
-} from 'typeorm';
+} from 'typeorm'
 
-import { User } from '../user/model';
+import { User } from '../user/model'
 import { UserProjectRole, PublicationStatus } from '../../binding'
-import { DatasetProject } from '../dataset/model';
-import { Moment } from 'moment';
-import { MomentValueTransformer } from '../../utils/MomentValueTransformer';
-import { PublicationStatusOptions as PSO } from './Publishing';
-import { ExternalLink } from './ExternalLink';
+import { DatasetProject } from '../dataset/model'
+import { Moment } from 'moment'
+import { MomentValueTransformer } from '../../utils/MomentValueTransformer'
+import { PublicationStatusOptions as PSO } from './Publishing'
+import { ExternalLink } from './ExternalLink'
 
 export const UserProjectRoleOptions: Record<UserProjectRole, UserProjectRole> = {
   INVITED: 'INVITED',
@@ -22,11 +22,10 @@ export const UserProjectRoleOptions: Record<UserProjectRole, UserProjectRole> = 
   MEMBER: 'MEMBER',
   MANAGER: 'MANAGER',
   REVIEWER: 'REVIEWER',
-};
+}
 
 @Entity()
 export class Project {
-
   @PrimaryColumn({ type: 'uuid', default: () => 'uuid_generate_v1mc()' })
   id: string;
 
@@ -36,17 +35,17 @@ export class Project {
   @Column({ type: 'text', nullable: true })
   urlSlug: string | null;
 
-  @OneToMany(type => UserProject, userProject => userProject.project)
+  @OneToMany(() => UserProject, userProject => userProject.project)
   members: UserProject[];
 
   @Column({ name: 'is_public', type: 'boolean', default: false })
   isPublic: boolean;
 
-  @OneToMany(type => DatasetProject, datasetProject => datasetProject.project)
+  @OneToMany(() => DatasetProject, datasetProject => datasetProject.project)
   datasetProjects: DatasetProject[];
 
   @Column({
-    name: 'created_dt', type: 'timestamp without time zone', transformer: new MomentValueTransformer()
+    name: 'created_dt', type: 'timestamp without time zone', transformer: new MomentValueTransformer(),
   })
   createdDT: Moment;
 
@@ -74,11 +73,10 @@ export class Project {
 
 @Entity('user_project')
 export class UserProject {
-
   @PrimaryColumn({ type: 'text' })
   userId: string;
 
-  @ManyToOne(type => User)
+  @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
@@ -86,7 +84,7 @@ export class UserProject {
   @PrimaryColumn({ type: 'text' })
   projectId: string;
 
-  @ManyToOne(type => Project)
+  @ManyToOne(() => Project)
   @JoinColumn({ name: 'project_id' })
   project: Project;
 
@@ -97,4 +95,4 @@ export class UserProject {
 export const PROJECT_ENTITIES = [
   Project,
   UserProject,
-];
+]

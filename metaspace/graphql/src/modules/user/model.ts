@@ -1,12 +1,11 @@
-import {Entity, PrimaryColumn, Column, OneToOne, JoinColumn, OneToMany, ManyToOne} from 'typeorm';
-import {Credentials} from '../auth/model';
-import {UserGroup, Group} from '../group/model';
-import {Dataset} from '../dataset/model';
-import {UserProject} from '../project/model';
+import { Entity, PrimaryColumn, Column, OneToOne, JoinColumn, OneToMany } from 'typeorm'
+import { Credentials } from '../auth/model'
+import { UserGroup } from '../group/model'
+import { Dataset } from '../dataset/model'
+import { UserProject } from '../project/model'
 
 @Entity()
 export class User {
-
   @PrimaryColumn({ type: 'uuid', default: () => 'uuid_generate_v1mc()' })
   id: string;
 
@@ -16,7 +15,7 @@ export class User {
   @Column({ type: 'text', nullable: true })
   email: string | null;
 
-  @Column({ type: 'text', nullable: true})
+  @Column({ type: 'text', nullable: true })
   notVerifiedEmail: string | null;
 
   @Column({ type: 'text', default: 'user' })
@@ -25,20 +24,20 @@ export class User {
   @Column({ type: 'text' })
   credentialsId: string;
 
-  @OneToOne(type => Credentials)
+  @OneToOne(() => Credentials)
   @JoinColumn({ name: 'credentials_id' })
   credentials: Credentials;
 
-  @OneToMany(type => Dataset, ds => ds.user)
+  @OneToMany(() => Dataset, ds => ds.user)
   datasets: Dataset[];
 
-  @OneToMany(type => UserGroup, userGroup => userGroup.user)
+  @OneToMany(() => UserGroup, userGroup => userGroup.user)
   groups?: UserGroup[];
 
-  @OneToMany(type => UserProject, userProject => userProject.user)
+  @OneToMany(() => UserProject, userProject => userProject.user)
   projects?: UserProject[];
 }
 
 export const USER_ENTITIES = [
-  User
-];
+  User,
+]

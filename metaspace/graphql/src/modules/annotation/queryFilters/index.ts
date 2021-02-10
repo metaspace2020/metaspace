@@ -1,28 +1,28 @@
-import {Context} from '../../../context';
-import {QueryFilterArgs, QueryFilterResult, PostProcessFunc} from './types';
-import {applyColocalizationSamplesFilter} from './colocalizationSamples';
-import {applyColocalizedWithFilter} from './colocalizedWith';
-import * as _ from 'lodash';
-import {applyHasAnnotationMatchingFilter} from './hasAnnotationMatching';
-import {mapDatabaseToDatabaseId} from '../../moldb/util/mapDatabaseToDatabaseId';
-import {AnnotationFilter} from "../../../binding";
-import {EntityManager} from "typeorm";
+import { Context } from '../../../context'
+import { QueryFilterArgs, QueryFilterResult, PostProcessFunc } from './types'
+import { applyColocalizationSamplesFilter } from './colocalizationSamples'
+import { applyColocalizedWithFilter } from './colocalizedWith'
+import * as _ from 'lodash'
+import { applyHasAnnotationMatchingFilter } from './hasAnnotationMatching'
+import { mapDatabaseToDatabaseId } from '../../moldb/util/mapDatabaseToDatabaseId'
+import { AnnotationFilter } from '../../../binding'
+import { EntityManager } from 'typeorm'
 
-export {ESAnnotationWithColoc} from './types';
+export { ESAnnotationWithColoc } from './types'
 
 const queryFilters = [
   applyColocalizationSamplesFilter,
   applyColocalizedWithFilter,
   applyHasAnnotationMatchingFilter,
-];
+]
 
-const setDatabaseIdInAnnotationFilter = async (entityManager: EntityManager, filter: AnnotationFilter | undefined) => {
+const setDatabaseIdInAnnotationFilter = async(entityManager: EntityManager, filter: AnnotationFilter | undefined) => {
   if (filter != null) {
     if (filter.databaseId == null && filter.database != null) {
-      filter.databaseId = await mapDatabaseToDatabaseId(entityManager, filter.database);
+      filter.databaseId = await mapDatabaseToDatabaseId(entityManager, filter.database)
     }
   }
-};
+}
 
 /**
  * Augment filters based on data that's not easily queryable in ElasticSearch, e.g. data that is only available in
@@ -33,24 +33,24 @@ const setDatabaseIdInAnnotationFilter = async (entityManager: EntityManager, fil
  * Querying with 28000 valid values of sfAdduct ran in 55ms. It would cost a significant amount of disk space to
  * index colocalized molecules, so filtering only in postgres seems to be the better option.
  * */
-export const applyQueryFilters = async (context: Context, args: QueryFilterArgs): Promise<QueryFilterResult> => {
-  let newArgs = args;
-  let postprocessFuncs: PostProcessFunc[] = [];
+export const applyQueryFilters = async(context: Context, args: QueryFilterArgs): Promise<QueryFilterResult> => {
+  let newArgs = args
+  const postprocessFuncs: PostProcessFunc[] = []
 
-  await setDatabaseIdInAnnotationFilter(context.entityManager, newArgs.filter);
+  await setDatabaseIdInAnnotationFilter(context.entityManager, newArgs.filter)
   if (newArgs.datasetFilter) {
-    await setDatabaseIdInAnnotationFilter(context.entityManager, newArgs.datasetFilter.hasAnnotationMatching);
+    await setDatabaseIdInAnnotationFilter(context.entityManager, newArgs.datasetFilter.hasAnnotationMatching)
   }
 
   for (const filter of queryFilters) {
-    const result = await filter(context, newArgs);
+    const result = await filter(context, newArgs)
     if (result.args != null) {
-      newArgs = result.args;
+      newArgs = result.args
     }
     if (result.postprocess != null) {
-      postprocessFuncs.push(result.postprocess);
+      postprocessFuncs.push(result.postprocess)
     }
   }
 
-  return { args: newArgs, postprocess: _.flow(postprocessFuncs) };
-};
+  return { args: newArgs, postprocess: _.flow(postprocessFuncs) }
+}

@@ -1,29 +1,29 @@
-import {Project, UserProjectRole} from '../../../binding';
-import {UserProject as UserProjectModel, UserProjectRoleOptions as UPRO} from '../model';
+import { Project, UserProjectRole } from '../../../binding'
+import { UserProject as UserProjectModel, UserProjectRoleOptions as UPRO } from '../model'
 import {
   FieldResolversFor,
   ProjectSource,
   ScopeRole,
   ScopeRoleOptions as SRO,
   UserProjectSource,
-} from '../../../bindingTypes';
-import {Context} from '../../../context';
-import {convertUserToUserSource} from '../../user/util/convertUserToUserSource';
-import {In} from 'typeorm';
-import {DatasetProject as DatasetProjectModel} from '../../dataset/model';
+} from '../../../bindingTypes'
+import { Context } from '../../../context'
+import { convertUserToUserSource } from '../../user/util/convertUserToUserSource'
+import { In } from 'typeorm'
+import { DatasetProject as DatasetProjectModel } from '../../dataset/model'
 
 const canViewProjectMembersAndDatasets = (currentUserRole: UserProjectRole | null, isAdmin: boolean) =>
-  isAdmin || ([UPRO.MANAGER, UPRO.MEMBER] as (UserProjectRole | null)[]).includes(currentUserRole);
+  isAdmin || ([UPRO.MANAGER, UPRO.MEMBER] as (UserProjectRole | null)[]).includes(currentUserRole)
 
 const getProjectScopeRole = (currentUserRole: UserProjectRole | null): ScopeRole => {
   if (currentUserRole === UPRO.MANAGER) {
-    return SRO.PROJECT_MANAGER;
+    return SRO.PROJECT_MANAGER
   } else if (currentUserRole === UPRO.MEMBER) {
-    return SRO.PROJECT_MEMBER;
+    return SRO.PROJECT_MEMBER
   } else {
-    return SRO.OTHER;
+    return SRO.OTHER
   }
-};
+}
 
 const ProjectResolvers: FieldResolversFor<Project, ProjectSource> = {
   async hasPendingRequest(project, args, ctx: Context): Promise<boolean | null> {
@@ -31,17 +31,17 @@ const ProjectResolvers: FieldResolversFor<Project, ProjectSource> = {
       const requests = await ctx.entityManager
         .getRepository(UserProjectModel)
         .count({
-          where: { projectId: project.id, role: UPRO.PENDING }
-        });
-      return requests > 0;
+          where: { projectId: project.id, role: UPRO.PENDING },
+        })
+      return requests > 0
     }
-    return null;
+    return null
   },
 
   async members(project, args, ctx: Context): Promise<UserProjectSource[] | null> {
     const filter = canViewProjectMembersAndDatasets(project.currentUserRole, ctx.isAdmin)
       ? { projectId: project.id }
-      : { projectId: project.id, role: UPRO.MANAGER };
+      : { projectId: project.id, role: UPRO.MANAGER }
 
     const userProjectModels = await ctx.entityManager
       .getRepository(UserProjectModel)
@@ -57,21 +57,21 @@ const ProjectResolvers: FieldResolversFor<Project, ProjectSource> = {
                          ELSE 5 
                      END`)
       .addOrderBy('user.name')
-      .getMany();
+      .getMany()
     return userProjectModels.map(up => ({
       ...up,
       user: convertUserToUserSource(up.user, getProjectScopeRole(project.currentUserRole)),
-    }));
+    }))
   },
 
   async numMembers(project, args, ctx: Context): Promise<number> {
     return await ctx.entityManager
       .getRepository(UserProjectModel)
-      .count({ where: { projectId: project.id, role: In([UPRO.MEMBER, UPRO.MANAGER]) } });
+      .count({ where: { projectId: project.id, role: In([UPRO.MEMBER, UPRO.MANAGER]) } })
   },
 
   async numDatasets(project, args, ctx: Context): Promise<number> {
-    const canSeePrivateDatasets = canViewProjectMembersAndDatasets(project.currentUserRole, ctx.isAdmin);
+    const canSeePrivateDatasets = canViewProjectMembersAndDatasets(project.currentUserRole, ctx.isAdmin)
 
     return await ctx.entityManager
       .getRepository(DatasetProjectModel)
@@ -81,8 +81,8 @@ const ProjectResolvers: FieldResolversFor<Project, ProjectSource> = {
       .where('dataset_project.project_id = :projectId', { projectId: project.id })
       .andWhere('dataset_project.approved = TRUE')
       .andWhere(canSeePrivateDatasets ? 'TRUE' : 'engine_dataset.is_public')
-      .andWhere(`engine_dataset.status != 'FAILED'`)
-      .getCount();
+      .andWhere('engine_dataset.status != \'FAILED\'')
+      .getCount()
   },
 
   async latestUploadDT(project, args, ctx: Context): Promise<Date> {
@@ -93,33 +93,33 @@ const ProjectResolvers: FieldResolversFor<Project, ProjectSource> = {
       .innerJoin('(SELECT * FROM "public"."dataset")', 'engine_dataset', 'dataset.id = engine_dataset.id')
       .select('MAX(engine_dataset.upload_dt)', 'upload_dt')
       .where('dataset_project.project_id = :projectId', { projectId: project.id })
-      .andWhere('dataset_project.approved = TRUE');
+      .andWhere('dataset_project.approved = TRUE')
     if (!canViewProjectMembersAndDatasets(project.currentUserRole, ctx.isAdmin)) {
-      query = query.andWhere('engine_dataset.is_public = TRUE');
+      query = query.andWhere('engine_dataset.is_public = TRUE')
     }
-    const { upload_dt } = await query.getRawOne();
-    return upload_dt != null ? upload_dt.toISOString() : null;
+    const { upload_dt } = await query.getRawOne()
+    return upload_dt != null ? upload_dt.toISOString() : null
   },
 
-  async createdDT(project, args, ctx: Context): Promise<string> {
-    return project.createdDT.toISOString();
+  createdDT(project): string {
+    return project.createdDT.toISOString()
   },
 
-  async publishedDT(project, args, ctx: Context): Promise<string | null> {
-    return project.publishedDT != null ? project.publishedDT.toISOString() : null;
+  publishedDT(project): string | null {
+    return project.publishedDT != null ? project.publishedDT.toISOString() : null
   },
 
-  async externalLinks(project, args, ctx) {
-    return project.externalLinks || [];
+  externalLinks(project) {
+    return project.externalLinks || []
   },
 
-  async reviewToken(project, args, ctx) {
-    if (project.currentUserRole == UPRO.MANAGER || ctx.isAdmin) {
-      return project.reviewToken;
+  reviewToken(project, args, ctx) {
+    if (project.currentUserRole === UPRO.MANAGER || ctx.isAdmin) {
+      return project.reviewToken
     } else {
-      return null;
+      return null
     }
-  }
-};
+  },
+}
 
-export default ProjectResolvers;
+export default ProjectResolvers
