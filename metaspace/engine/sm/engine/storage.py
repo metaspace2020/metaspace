@@ -1,6 +1,5 @@
 import boto3
-from sm.engine.util import SMConfig
-
+from sm.engine.config import SMConfig
 
 def _boto_client_kwargs():
     sm_config = SMConfig.get_conf()

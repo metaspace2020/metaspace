@@ -28,6 +28,7 @@ from sm.engine.molecular_db import read_moldb_file
 from sm.engine.util import split_s3_path, split_cos_path
 from sm.engine.config import SMConfig
 from sm.engine.utils.perf_profile import Profiler
+from sm.engine.storage import get_s3_client
 
 logger = logging.getLogger('engine')
 
