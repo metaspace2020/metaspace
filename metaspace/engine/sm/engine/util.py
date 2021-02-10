@@ -1,104 +1,11 @@
-import json
 import logging
 import re
-from functools import wraps
-from logging.config import dictConfig
 import os
-from copy import deepcopy
 from pathlib import Path
-import random
-from time import sleep
-from typing import Dict
 
+from sm.engine.config import init_loggers, SMConfig
 
 logger = logging.getLogger('engine')
-
-
-def proj_root():
-    return os.getcwd()
-
-
-def init_loggers(config=None):
-    """ Init logger using config file, 'logs' section of the sm config
-    """
-    if not config:
-        SMConfig.set_path('conf/config.json')
-        config = SMConfig.get_conf()['logs']
-
-    logs_dir = Path(proj_root()).joinpath('logs')
-    if not logs_dir.exists():
-        logs_dir.mkdir()
-
-    log_level_codes = {
-        'ERROR': logging.ERROR,
-        'WARNING': logging.WARNING,
-        'INFO': logging.INFO,
-        'DEBUG': logging.DEBUG,
-    }
-
-    def convert_levels(orig_dic):
-        dic = orig_dic.copy()
-        for k, v in dic.items():
-            if k == 'level':
-                dic[k] = log_level_codes[dic[k]]
-            elif isinstance(v, dict):
-                dic[k] = convert_levels(v)
-        return dic
-
-    log_config = convert_levels(config)
-    dictConfig(log_config)
-
-
-class SMConfig:
-    """ Engine configuration manager """
-
-    _path = 'conf/config.json'
-    _config_dict: Dict = {}
-
-    @classmethod
-    def set_path(cls, path):
-        """ Set path for a SM configuration file
-
-        Parameters
-        ----------
-        path : String
-        """
-        cls._path = os.path.realpath(str(path))
-
-    @classmethod
-    def get_conf(cls, update=False):
-        """
-        Returns
-        -------
-        : dict
-            SM engine configuration
-        """
-        assert cls._path
-        if update or not cls._config_dict:
-            try:
-                with open(cls._path) as file:
-                    cls._config_dict = json.load(file)
-            except IOError as e:
-                logger.warning(e)
-        return deepcopy(cls._config_dict)
-
-    @classmethod
-    def get_ms_file_handler(cls, ms_file_path):
-        """
-        Parameters
-        ----------
-        ms_file_path : String
-
-        Returns
-        -------
-        : dict
-            SM configuration for handling specific type of MS data
-        """
-        conf = cls.get_conf()
-        ms_file_extension = Path(ms_file_path).suffix[1:].lower()  # skip the leading "."
-        return next(
-            (h for h in conf['ms_file_handlers'] if ms_file_extension in h['extensions']), None
-        )
 
 
 def split_s3_path(path):
@@ -157,29 +64,3 @@ class GlobalInit:
 
     def __exit__(self, ext_type, ext_value, traceback):
         self.pool.close()
-
-
-def retry_on_exception(exception_type=Exception, num_retries=3, retry_wait_params=(2, 3, 5)):
-    def decorator(func):
-        func_name = getattr(func, '__name__', 'Function')
-
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            for i in range(num_retries):
-                try:
-                    return func(*args, **kwargs)
-                except exception_type as e:
-                    wait_initial, wait_increase, jitter = retry_wait_params
-                    min_wait = wait_initial + i * wait_increase
-                    delay = random.uniform(min_wait, min_wait + jitter)
-                    logger.warning(
-                        f'{func_name} raised {type(e)} on attempt {i+1}. '
-                        f'Retrying after {delay:.1f} seconds...'
-                    )
-                    sleep(delay)
-            # Last attempt, don't catch the exception
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator

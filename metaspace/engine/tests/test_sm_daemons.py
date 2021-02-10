@@ -15,7 +15,7 @@ from fabric.context_managers import warn_only
 import numpy as np
 import pandas as pd
 
-from sm.engine.daemon_action import DaemonAction
+from sm.engine.daemons.actions import DaemonAction
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.dataset import DatasetStatus
@@ -90,7 +90,9 @@ def queue_pub(local_sm_config):
 def run_daemons(db, es, sm_config):
     from sm.engine.queue import QueuePublisher, SM_DS_STATUS, SM_ANNOTATE, SM_UPDATE
     from sm.engine.image_store import ImageStoreServiceWrapper
-    from sm.engine.sm_daemons import DatasetManager, SMAnnotateDaemon, SMIndexUpdateDaemon
+    from sm.engine.daemons.dataset_manager import DatasetManager
+    from sm.engine.daemons.annotate import SMAnnotateDaemon
+    from sm.engine.daemons.update import SMUpdateDaemon
 
     status_queue_pub = QueuePublisher(
         config=sm_config['rabbitmq'], qdesc=SM_DS_STATUS, logger=logger
@@ -111,22 +113,22 @@ def run_daemons(db, es, sm_config):
     make_update_queue_cons = partial(
         QueueConsumer, config=sm_config['rabbitmq'], qdesc=SM_UPDATE, logger=logger, poll_interval=1
     )
-    update_daemon = SMIndexUpdateDaemon(manager, make_update_queue_cons)
+    update_daemon = SMUpdateDaemon(manager, make_update_queue_cons)
     update_daemon.start()
     update_daemon.stop()
 
 
 @patch('sm.engine.annotation_spark.search_results.post_images_to_image_store')
 @patch(
-    'sm.engine.colocalization.ImageStoreServiceWrapper.get_ion_images_for_analysis',
+    'sm.engine.postprocessing.colocalization.ImageStoreServiceWrapper.get_ion_images_for_analysis',
     return_value=get_ion_images_for_analysis_mock_return,
 )
 @patch(
-    'sm.engine.off_sample_wrapper.ImageStoreServiceWrapper.get_image_by_id',
+    'sm.engine.postprocessing.off_sample_wrapper.ImageStoreServiceWrapper.get_image_by_id',
     return_value=Image.new('RGBA', (10, 10)),
 )
 @patch(
-    'sm.engine.off_sample_wrapper.call_api',
+    'sm.engine.postprocessing.off_sample_wrapper.call_api',
     return_value={'predictions': {'label': 'off', 'prob': 0.99}},
 )
 @patch('sm.engine.annotation_spark.annotation_job.MSMSearch')

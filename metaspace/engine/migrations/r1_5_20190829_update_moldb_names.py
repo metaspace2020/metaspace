@@ -4,7 +4,7 @@ import logging
 import pandas as pd
 
 from sm.engine.db import DB, ConnectionPool
-from sm.engine.util import init_loggers
+from sm.engine.config import init_loggers
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Update molecular database molecule names')

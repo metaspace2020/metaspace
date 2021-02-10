@@ -24,7 +24,8 @@ from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.annotation_spark.search_results import SearchResults
-from sm.engine.util import SMConfig, split_s3_path
+from sm.engine.util import split_s3_path
+from sm.engine.config import SMConfig
 from sm.engine.es_export import ESExporter
 from sm.engine import molecular_db
 from sm.engine.utils.perf_profile import Profiler

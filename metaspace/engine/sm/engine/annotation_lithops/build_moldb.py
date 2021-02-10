@@ -17,7 +17,7 @@ from sm.engine.annotation_lithops.io import (
     iter_cobjs_with_prefetch,
 )
 from sm.engine.ds_config import DSConfig
-from sm.engine.fdr import FDR
+from sm.engine.annotation.fdr import FDR
 from sm.engine.formula_parser import safe_generate_ion_formula
 from sm.engine.utils.perf_profile import Profiler
 
