@@ -347,12 +347,11 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       let files: { filename: string, link: string }[]
       if (parsedPath != null) {
         const [, bucket, prefix] = parsedPath
+        const proxy = config.upload.local_server_proxy
         const s3 = new S3({
           endpoint: config.upload.endpoint,
           s3ForcePathStyle: proxy !== undefined,
-          httpOptions: proxy ? {
-            proxy,
-          } : undefined,
+          httpOptions: proxy ? { proxy } : undefined,
           region: config.aws.aws_region,
           credentials: {
             accessKeyId: config.upload.access_key_id,

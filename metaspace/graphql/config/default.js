@@ -53,7 +53,7 @@ module.exports = {
   upload: {
     endpoint: '',
     access_key_id: '',
-    secret_access_key:'',
+    secret_access_key: '',
     bucket: '',
     moldbPrefix: 'databases',
   },
