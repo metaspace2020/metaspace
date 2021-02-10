@@ -38,7 +38,8 @@ def sm_config():
 @pytest.fixture(scope='session', autouse=True)
 def global_setup(sm_config):
     init_loggers(sm_config['logs'])
-    populate_aws_env_vars(sm_config['aws'])
+    if 'aws' in sm_config:
+        populate_aws_env_vars(sm_config['aws'])
 
 
 @pytest.fixture()
@@ -167,7 +168,8 @@ def fill_db(test_db, metadata, ds_config):
 def es(sm_config):
     return Elasticsearch(
         hosts=[
-            "{}:{}".format(sm_config['elasticsearch']['host'], sm_config['elasticsearch']['port'])
+            "{}:{}".format(sm_config['elasticsearch']
+                           ['host'], sm_config['elasticsearch']['port'])
         ]
     )
 
@@ -176,7 +178,8 @@ def es(sm_config):
 def es_dsl_search(sm_config):
     es = Elasticsearch(
         hosts=[
-            "{}:{}".format(sm_config['elasticsearch']['host'], sm_config['elasticsearch']['port'])
+            "{}:{}".format(sm_config['elasticsearch']
+                           ['host'], sm_config['elasticsearch']['port'])
         ]
     )
     return Search(using=es, index=sm_config['elasticsearch']['index'])
