@@ -168,8 +168,7 @@ def fill_db(test_db, metadata, ds_config):
 def es(sm_config):
     return Elasticsearch(
         hosts=[
-            "{}:{}".format(sm_config['elasticsearch']
-                           ['host'], sm_config['elasticsearch']['port'])
+            "{}:{}".format(sm_config['elasticsearch']['host'], sm_config['elasticsearch']['port'])
         ]
     )
 
@@ -178,8 +177,7 @@ def es(sm_config):
 def es_dsl_search(sm_config):
     es = Elasticsearch(
         hosts=[
-            "{}:{}".format(sm_config['elasticsearch']
-                           ['host'], sm_config['elasticsearch']['port'])
+            "{}:{}".format(sm_config['elasticsearch']['host'], sm_config['elasticsearch']['port'])
         ]
     )
     return Search(using=es, index=sm_config['elasticsearch']['index'])
