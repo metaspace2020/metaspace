@@ -185,7 +185,10 @@ def load_ds(
         logger.warning("Couldn't read ibd size", exc_info=True)
         ibd_size_mb = 1024
 
-    if ibd_size_mb < 1280:
+    # Guess the amount of memory needed. For the majority of datasets (no zero-intensity peaks,
+    # separate m/z arrays per spectrum) approximately 3x the ibd file size is used during the
+    # most memory-intense part (sorting the m/z array).
+    if ibd_size_mb * 3 + 512 < 4096:
         logger.debug(f'Found {ibd_size_mb}MB .ibd file. Trying serverless load_ds')
         runtime_memory = 4096
     else:
