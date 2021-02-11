@@ -18,8 +18,8 @@ export const assertImportFileIsValid = async(filePath: string) => {
     endpoint: config.upload.endpoint,
     region: config.aws.aws_region,
     credentials: {
-      accessKeyId: config.aws.aws_access_key_id,
-      secretAccessKey: config.aws.aws_secret_access_key,
+      accessKeyId: config.upload.access_key_id,
+      secretAccessKey: config.upload.secret_access_key,
     },
   })
   const object = await s3.headObject({ Bucket: bucket, Key: key }).promise()

@@ -10,7 +10,7 @@ import getCompanionOptions from './getCompanionOptions'
 import config from '../../utils/config'
 
 function signUuid(uuid: string) {
-  const hmac = crypto.createHmac('sha1', config.aws.aws_secret_access_key)
+  const hmac = crypto.createHmac('sha1', config.upload.secret_access_key)
   return hmac.update(uuid).digest('base64')
 }
 

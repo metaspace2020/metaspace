@@ -2,16 +2,19 @@ import * as AWS from 'aws-sdk'
 import config from './config'
 import logger from './logger'
 
-AWS.config.update({
-  accessKeyId: config.aws.aws_access_key_id,
-  secretAccessKey: config.aws.aws_secret_access_key,
-  region: config.aws.aws_region,
-})
+let ses : AWS.SES
 
-const ses = new AWS.SES()
+if (process.env.NODE_ENV !== 'development') {
+  AWS.config.update({
+    accessKeyId: config.upload.access_key_id,
+    secretAccessKey: config.upload.secret_access_key,
+    region: config.aws.aws_region,
+  })
+  ses = new AWS.SES()
+}
 
 export default (recipient: string, subject: string, text: string) => {
-  if (process.env.NODE_ENV === 'development' && !config.aws.aws_access_key_id && !config.aws.aws_secret_access_key) {
+  if (ses === undefined) {
     console.log(`Email not set up. Logging to console.\nTo: ${recipient}\nSubject: ${subject}\n${text}`)
   } else {
     ses.sendEmail({
