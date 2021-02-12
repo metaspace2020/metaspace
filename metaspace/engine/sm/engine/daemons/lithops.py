@@ -84,3 +84,7 @@ class LithopsDaemon:
             self._lithops_queue_cons.stop()
             self._lithops_queue_cons.join()
             self._stopped = True
+
+    def join(self):
+        if not self._stopped:
+            self._lithops_queue_cons.join()

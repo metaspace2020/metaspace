@@ -2,7 +2,9 @@
 import argparse
 import logging
 import signal
+import sys
 from functools import partial
+from multiprocessing.process import parent_process
 
 from sm.engine.daemons.lithops import LithopsDaemon
 from sm.engine.db import DB, ConnectionPool
@@ -64,16 +66,24 @@ def main(daemon_name):
         raise Exception(f'Wrong SM daemon name: {daemon_name}')
 
     def cb_stop_daemons(*args):  # pylint: disable=redefined-outer-name
+        if parent_process() is not None:
+            # Multiprocessing worker processes (used by Lithops) inherit this signal handler.
+            # Avoid interacting with the queues from a worker process as they aren't functional
+            return
         logger.info(f'Stopping {daemon_name}-daemon')
         for d in daemons:  # pylint: disable=invalid-name
             d.stop()
         conn_pool.close()
+        sys.exit(1)
 
     signal.signal(signal.SIGINT, cb_stop_daemons)
     signal.signal(signal.SIGTERM, cb_stop_daemons)
 
     for daemon in daemons:
         daemon.start()
+
+    for daemon in daemons:
+        daemon.join()
 
 
 if __name__ == "__main__":

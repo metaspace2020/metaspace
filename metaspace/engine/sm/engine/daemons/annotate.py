@@ -100,3 +100,7 @@ class SMAnnotateDaemon:
             self._annot_queue_consumer.stop()
             self._annot_queue_consumer.join()
             self._stopped = True
+
+    def join(self):
+        if not self._stopped:
+            self._annot_queue_consumer.join()
