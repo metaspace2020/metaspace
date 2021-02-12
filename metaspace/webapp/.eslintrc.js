@@ -33,10 +33,6 @@ module.exports = {
       'ignoreComments': true,
     }],
     'no-restricted-imports': ['error', {paths: [{name: 'element-ui', message: 'Use src/lib/element-ui instead'}]}],
-
-    // very noisy error in VS Code
-    "indent": "off",
-    "@typescript-eslint/indent": ["error", 2]
   },
   'parserOptions': {
     'parser': '@typescript-eslint/parser',

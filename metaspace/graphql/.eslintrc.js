@@ -43,9 +43,6 @@ module.exports = {
     // Typescript-incompatibile eslint rules
     'no-use-before-define': ['off'], // Buggy with types. TypeScript checks it anyway.
     'no-useless-constructor': ['off'], // False positives with "parameter properties" e.g. constructor(public i: number) {}
-    // very noisy error in VS Code
-    indent: 'off',
-    '@typescript-eslint/indent': ['error', 2],
   },
   parser: '@typescript-eslint/parser',
   parserOptions: {
