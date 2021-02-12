@@ -373,16 +373,16 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
         ],
         license: ds._source.ds_is_public
           ? {
-            code: 'CC BY 4.0',
-            name: 'Creative Commons Attribution 4.0 International Public License',
-            link: 'https://creativecommons.org/licenses/by/4.0/',
-          }
+              code: 'CC BY 4.0',
+              name: 'Creative Commons Attribution 4.0 International Public License',
+              link: 'https://creativecommons.org/licenses/by/4.0/',
+            }
           : {
-            code: 'NO-LICENSE',
-            name: 'No license was specified. No permission to download or use these files has been given. '
+              code: 'NO-LICENSE',
+              name: 'No license was specified. No permission to download or use these files has been given. '
               + 'Seek permission from the author before downloading these files.',
-            link: 'https://choosealicense.com/no-permission/',
-          },
+              link: 'https://choosealicense.com/no-permission/',
+            },
         files,
       })
     } else {
