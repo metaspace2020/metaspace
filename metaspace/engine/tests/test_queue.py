@@ -64,7 +64,7 @@ def test_queue_msg_published_consumed_on_success_called(sm_config, delete_queue)
     assert output_q.get(block=False) == 'on_success'
     assert output_q.empty()
 
-    time.sleep(1)
+    time.sleep(5)
     assert queue_is_empty(config)
 
 
@@ -85,5 +85,5 @@ def test_queue_msg_published_consumed_on_failure_called(sm_config):
     assert output_q.get(block=False) == 'callback'
     assert output_q.get(block=False) == 'on_failure'
 
-    time.sleep(1)
+    time.sleep(5)
     assert queue_is_empty(config)
