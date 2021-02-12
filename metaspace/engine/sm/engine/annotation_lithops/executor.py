@@ -224,57 +224,56 @@ class Executor:
 
                 return [result for result, subtask_perf in return_vals]
 
-            else:
-                failed_idxs = [i for i, f in enumerate(futures or []) if f.error]
-                # pylint: disable=unsubscriptable-object # (because futures is Optional)
-                failed_activation_ids = [futures[i].activation_id for i in failed_idxs]
+            failed_idxs = [i for i, f in enumerate(futures or []) if f.error]
+            # pylint: disable=unsubscriptable-object # (because futures is Optional)
+            failed_activation_ids = [futures[i].activation_id for i in failed_idxs]
 
-                self._perf.record_entry(
-                    func_name,
-                    start_time,
-                    datetime.now(),
-                    error=traceback.format_exc(),
-                    attempt=attempt,
-                    runtime_memory=runtime_memory,
-                    failed_activation_ids=failed_activation_ids,
+            self._perf.record_entry(
+                func_name,
+                start_time,
+                datetime.now(),
+                error=traceback.format_exc(),
+                attempt=attempt,
+                runtime_memory=runtime_memory,
+                failed_activation_ids=failed_activation_ids,
+            )
+
+            if isinstance(exc, MemoryError) and runtime_memory <= 4096 and self.is_hybrid:
+                old_memory = runtime_memory
+                runtime_memory *= 2
+                attempt += 1
+
+                logger.warning(
+                    f'{func_name} ran out of memory with {old_memory}MB, retrying with '
+                    f'{runtime_memory}MB. Failed activation(s): {failed_activation_ids}'
                 )
+            elif isinstance(exc, TimeoutError) and runtime_memory <= 4096 and self.is_hybrid:
+                # Bypass the memory doubling and jump straight to using the VM, otherwise
+                # it could get stuck in a loop of hitting many 10-minute timeouts before
+                # eventually getting to the VM.
+                old_memory = runtime_memory
+                runtime_memory = 8192
+                attempt += 1
 
-                if isinstance(exc, MemoryError) and runtime_memory <= 4096 and self.is_hybrid:
-                    old_memory = runtime_memory
-                    runtime_memory *= 2
-                    attempt += 1
-
-                    logger.warning(
-                        f'{func_name} ran out of memory with {old_memory}MB, retrying with '
-                        f'{runtime_memory}MB. Failed activation(s): {failed_activation_ids}'
-                    )
-                elif isinstance(exc, TimeoutError) and runtime_memory <= 4096 and self.is_hybrid:
-                    # Bypass the memory doubling and jump straight to using the VM, otherwise
-                    # it could get stuck in a loop of hitting many 10-minute timeouts before
-                    # eventually getting to the VM.
-                    old_memory = runtime_memory
-                    runtime_memory = 8192
-                    attempt += 1
-
-                    logger.warning(
-                        f'{func_name} timed out with {old_memory}MB, retrying with '
-                        f'{runtime_memory}MB. Failed activation(s): {failed_idxs} '
-                        f'ID(s): {failed_activation_ids}'
-                    )
-                elif isinstance(exc, LithopsStalledException):
-                    logger.critical(
-                        f'Lithops stalled running {func_name} with {runtime_memory}MB, exiting '
-                        f'process to clean up. Failed activation(s): {failed_activation_ids}'
-                    )
-                    raise exc
-                else:
-                    logger.error(
-                        f'{func_name} raised an exception. '
-                        f'Failed activation(s): {failed_idxs} '
-                        f'ID(s): {failed_activation_ids}',
-                        exc_info=True,
-                    )
-                    raise exc
+                logger.warning(
+                    f'{func_name} timed out with {old_memory}MB, retrying with '
+                    f'{runtime_memory}MB. Failed activation(s): {failed_idxs} '
+                    f'ID(s): {failed_activation_ids}'
+                )
+            elif isinstance(exc, LithopsStalledException):
+                logger.critical(
+                    f'Lithops stalled running {func_name} with {runtime_memory}MB, exiting '
+                    f'process to clean up. Failed activation(s): {failed_activation_ids}'
+                )
+                raise exc
+            else:
+                logger.error(
+                    f'{func_name} raised an exception. '
+                    f'Failed activation(s): {failed_idxs} '
+                    f'ID(s): {failed_activation_ids}',
+                    exc_info=True,
+                )
+                raise exc
 
     def _dispatch_map(
         self, wrapper_func, func_args, runtime_memory, debug_run_locally, lithops_kwargs
@@ -288,16 +287,16 @@ class Executor:
                 if 'storage' in inspect.signature(wrapper_func).parameters:
                     func_kwargs['storage'] = self.storage
                 return_vals = [wrapper_func(*funcargs, **func_kwargs) for funcargs in func_args]
-            except Exception as ex:
-                exception = ex
+            except Exception as exc:
+                exception = exc
         else:
             # Run in another thread so that stalls can be detected & handled
             def run():
                 nonlocal return_vals, exception
                 try:
                     return_vals = executor.get_result(futures)
-                except Exception as ex:
-                    exception = ex
+                except Exception as exc:
+                    exception = exc
 
             executor = self._select_executor(runtime_memory)
             futures = executor.map(
