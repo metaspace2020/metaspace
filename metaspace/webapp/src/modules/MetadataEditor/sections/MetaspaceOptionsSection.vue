@@ -217,7 +217,7 @@
                 :value="value.ppm"
                 :error="error && error.ppm"
                 :min="0.01"
-                :max="10"
+                :max="50"
                 @input="val => onInput('ppm', val)"
               />
             </el-col>
