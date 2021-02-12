@@ -3,14 +3,8 @@ import config from './config'
 import logger from './logger'
 
 let ses : AWS.SES
-
-if (process.env.NODE_ENV !== 'development') {
-  AWS.config.update({
-    accessKeyId: config.upload.access_key_id,
-    secretAccessKey: config.upload.secret_access_key,
-    region: config.aws.aws_region,
-  })
-  ses = new AWS.SES()
+if (config.aws) {
+  ses = new AWS.SES(config.aws)
 }
 
 export default (recipient: string, subject: string, text: string) => {

@@ -10,8 +10,6 @@ config.services.sm_engine_api_host = "localhost:5123";
 
 config.upload = {};
 config.upload.bucket = '{{ sm_graphql_s3_upload_bucket }}';
-config.upload.access_key_id = "{{ sm_graphql_aws_access_key_id }}";
-config.upload.secret_access_key = "{{ sm_graphql_aws_secret_access_key }}";
 
 config.db = {};
 config.db.host = "{{ sm_graphql_database_host | default('localhost') }}";
@@ -58,7 +56,11 @@ config.sentry = {
 };
 
 config.aws = {
-  aws_region: "{{ sm_graphql_aws_region }}"
+  region: "{{ sm_graphql_aws_region }}",
+  credentials: {
+    accessKeyId: "{{ sm_graphql_aws_access_key_id }}",
+    secretAccessKey: "{{ sm_graphql_aws_secret_access_key }}",
+  }
 };
 
 config.features = {{ sm_graphql_features | to_json }};

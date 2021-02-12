@@ -1,6 +1,7 @@
 import * as config from 'config'
 import { IConfig } from 'config'
 import { Algorithm } from 'jsonwebtoken'
+import { Config as AWSConfig } from 'aws-sdk/index.d'
 
 export type ImageStorageType = 'fs';
 export interface ImageCategoryConfig {
@@ -32,12 +33,8 @@ export interface Config {
     categories: Record<ImageCategory, ImageCategoryConfig>;
   };
   upload: {
-    endpoint?: string;
     bucket?: string;
     moldb_prefix: string;
-    access_key_id: string;
-    secret_access_key: string;
-    local_server_proxy?: string;
   };
   services: {
     sm_engine_api_host: string;
@@ -89,11 +86,8 @@ export interface Config {
     impersonation: boolean;
     imzmlDownload: boolean;
   };
-  aws: {
-    aws_access_key_id: string;
-    aws_secret_access_key: string;
-    aws_region: string;
-  };
+  aws?: AWSConfig;
+  s3?: AWSConfig; // https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#constructor-property
   metadataLookups: {
     colocalizationAlgos: [string, string][]; // code, name
     defaultColocalizationAlgo: string;

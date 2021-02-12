@@ -50,12 +50,9 @@ module.exports = {
     },
   },
 
-  upload: {
-    endpoint: '',
-    access_key_id: '',
-    secret_access_key: '',
+  s3_storage: {
     bucket: '',
-    moldbPrefix: 'databases',
+    moldb_prefix: 'databases',
   },
 
   services: {

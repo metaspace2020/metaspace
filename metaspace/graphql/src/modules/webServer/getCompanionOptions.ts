@@ -1,5 +1,7 @@
-import config from '../../utils/config'
 import { Request } from 'express'
+
+import config from '../../utils/config'
+import { getS3Config } from '../../../s3Client'
 
 type GetKey = (req: Request, filename: string) => string
 
@@ -8,19 +10,8 @@ export default function getCompanionOptions(path: string, getKey: GetKey) {
     providerOptions: {
       s3: {
         getKey,
-        endpoint: config.upload.endpoint,
-        key: config.upload.access_key_id,
-        secret: config.upload.secret_access_key,
         bucket: config.upload.bucket,
-        region: config.aws.aws_region,
-        awsClientOptions: config.upload.local_server_proxy
-          ? {
-              s3ForcePathStyle: true,
-              httpOptions: {
-                proxy: config.upload.local_server_proxy,
-              },
-            }
-          : undefined,
+        awsClientOptions: getS3Config(),
         useAccelerateEndpoint: false,
         expires: 300,
         acl: 'private',

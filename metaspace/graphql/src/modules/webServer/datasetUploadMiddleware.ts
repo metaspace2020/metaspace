@@ -7,10 +7,11 @@ import * as bodyParser from 'body-parser'
 
 import getCompanionOptions from './getCompanionOptions'
 
-import config from '../../utils/config'
+import { getS3Credentials } from '../../../s3Client'
 
 function signUuid(uuid: string) {
-  const hmac = crypto.createHmac('sha1', config.upload.secret_access_key)
+  const credentials = getS3Credentials()
+  const hmac = crypto.createHmac('sha1', credentials?.secretAccessKey || '')
   return hmac.update(uuid).digest('base64')
 }
 
