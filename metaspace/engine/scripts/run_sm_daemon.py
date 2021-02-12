@@ -60,7 +60,9 @@ def main(daemon_name):
             daemon = SMUpdateDaemon(get_manager(), make_update_queue_cons)
             daemons.append(daemon)
     elif daemon_name == 'lithops':
-        daemon = LithopsDaemon(get_manager(), lit_qdesc=SM_LITHOPS, upd_qdesc=SM_UPDATE)
+        daemon = LithopsDaemon(
+            get_manager(), lit_qdesc=SM_LITHOPS, annot_qdesc=SM_ANNOTATE, upd_qdesc=SM_UPDATE
+        )
         daemons.append(daemon)
     else:
         raise Exception(f'Wrong SM daemon name: {daemon_name}')

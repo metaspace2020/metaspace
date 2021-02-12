@@ -6,6 +6,7 @@ import resource
 import traceback
 from datetime import datetime
 from itertools import chain
+from threading import Thread, current_thread
 from typing import List, Callable, TypeVar, Iterable, Sequence, Dict, Optional
 
 import lithops
@@ -25,8 +26,12 @@ TRet = TypeVar('TRet')
 RUNTIME_DOCKER_IMAGE = 'metaspace2020/metaspace-lithops:1.8.3'
 MEM_LIMITS = {
     'ibm_cf': 4096,
-    'ibm_vpc': 32768,
+    'ibm_vpc': 128 * 2 ** 30,
 }
+
+
+class LithopsStalledException(Exception):
+    pass
 
 
 def _build_wrapper_func(func: Callable[..., TRet]) -> Callable[..., TRet]:
@@ -158,53 +163,48 @@ class Executor:
 
         self.storage = Storage(lithops_config)
         self._include_modules = lithops_config['lithops'].get('include_modules', [])
+        self._execution_timeout = lithops_config['lithops'].get('execution_timeout', 3600) + 60
         self._perf = perf or NullProfiler()
 
     def map(
         self,
         func: Callable[..., TRet],
-        args: Sequence,
+        func_args: Sequence,
         *,
         cost_factors: pd.DataFrame = None,
         runtime_memory: int = None,
         include_modules=None,
         debug_run_locally=False,
-        **kwargs,
+        **lithops_kwargs,
     ) -> List[TRet]:
-        if len(args) == 0:
+        if len(func_args) == 0:
             return []
         if cost_factors is not None:
-            assert len(cost_factors) == len(args)
+            assert len(cost_factors) == len(func_args)
         if runtime_memory is None:
             runtime_memory = 512
         # Make sure runtime_memory is a power of 2 to avoid making too many runtime variants
         runtime_memory = int(2 ** np.ceil(np.log2(runtime_memory)))
 
         if include_modules is not None:
-            kwargs['include_modules'] = [*self._include_modules, *include_modules]
+            lithops_kwargs['include_modules'] = [*self._include_modules, *include_modules]
 
         wrapper_func = _build_wrapper_func(func)
         func_name = func.__name__
         attempt = 1
-        futures = None
 
         while True:
             start_time = datetime.now()
-            try:
-                logger.info(
-                    f'executor.map({func_name}, {len(args)} items, {runtime_memory}MB, '
-                    f'attempt {attempt})'
-                )
-                if self.debug_run_locally or debug_run_locally:
-                    futures = None
-                    return_vals = self._map_local(wrapper_func, args)
-                else:
-                    executor = self._select_executor(runtime_memory)
-                    futures = executor.map(
-                        wrapper_func, args, runtime_memory=runtime_memory, **kwargs
-                    )
-                    return_vals = executor.get_result(futures)
 
+            logger.info(
+                f'executor.map({func_name}, {len(func_args)} items, {runtime_memory}MB, '
+                f'attempt {attempt})'
+            )
+            futures, return_vals, exc = self._dispatch_map(
+                wrapper_func, func_args, runtime_memory, debug_run_locally, lithops_kwargs
+            )
+
+            if exc is None:
                 if self._perf:
                     _save_subtask_perf(
                         self._perf,
@@ -218,13 +218,13 @@ class Executor:
                     )
 
                 logger.info(
-                    f'executor.map({func_name}, {len(args)} items, {runtime_memory}MB, '
+                    f'executor.map({func_name}, {len(func_args)} items, {runtime_memory}MB, '
                     f'attempt {attempt}) - {(datetime.now() - start_time).total_seconds():.3f}s'
                 )
 
                 return [result for result, subtask_perf in return_vals]
 
-            except Exception as exc:
+            else:
                 failed_idxs = [i for i, f in enumerate(futures or []) if f.error]
                 # pylint: disable=unsubscriptable-object # (because futures is Optional)
                 failed_activation_ids = [futures[i].activation_id for i in failed_idxs]
@@ -261,6 +261,12 @@ class Executor:
                         f'{runtime_memory}MB. Failed activation(s): {failed_idxs} '
                         f'ID(s): {failed_activation_ids}'
                     )
+                elif isinstance(exc, LithopsStalledException):
+                    logger.critical(
+                        f'Lithops stalled running {func_name} with {runtime_memory}MB, exiting '
+                        f'process to clean up. Failed activation(s): {failed_activation_ids}'
+                    )
+                    raise exc
                 else:
                     logger.error(
                         f'{func_name} raised an exception. '
@@ -268,13 +274,42 @@ class Executor:
                         f'ID(s): {failed_activation_ids}',
                         exc_info=True,
                     )
-                    raise
+                    raise exc
 
-    def _map_local(self, func, args):
-        func_kwargs = {}
-        if 'storage' in inspect.signature(func).parameters:
-            func_kwargs['storage'] = self.storage
-        return [func(*funcargs, **func_kwargs) for funcargs in args]
+    def _dispatch_map(
+        self, wrapper_func, func_args, runtime_memory, debug_run_locally, lithops_kwargs
+    ):
+        futures = None
+        return_vals = None
+        exception = None
+        if self.debug_run_locally or debug_run_locally:
+            try:
+                func_kwargs = {}
+                if 'storage' in inspect.signature(wrapper_func).parameters:
+                    func_kwargs['storage'] = self.storage
+                return_vals = [wrapper_func(*funcargs, **func_kwargs) for funcargs in func_args]
+            except Exception as ex:
+                exception = ex
+        else:
+            # Run in another thread so that stalls can be detected & handled
+            def run():
+                nonlocal return_vals, exception
+                try:
+                    return_vals = executor.get_result(futures)
+                except Exception as ex:
+                    exception = ex
+
+            executor = self._select_executor(runtime_memory)
+            futures = executor.map(
+                wrapper_func, func_args, runtime_memory=runtime_memory, **lithops_kwargs
+            )
+            thread = Thread(target=run, name=f'{current_thread().name}-ex', daemon=True)
+            thread.start()
+            thread.join(self._execution_timeout)
+            if thread.is_alive():  # If timed out
+                exception = LithopsStalledException()
+
+        return futures, return_vals, exception
 
     def _select_executor(self, runtime_memory):
         valid_executors = [
@@ -285,14 +320,6 @@ class Executor:
         assert valid_executors, f'Could not find an executor supporting {runtime_memory}MB'
         executor_type, executor = valid_executors[0]
         logger.debug(f'Selected executor {executor_type}')
-
-        backend = getattr(executor.compute_handler, 'backend', None)
-        if hasattr(backend, 'ibm_iam_api_key_manager'):
-            logger.debug('Applying token expiry fix')
-            # WORKAROUND due to https://github.com/lithops-cloud/lithops/issues/485
-            token, token_expiry_time = backend.ibm_iam_api_key_manager.get_token()
-            backend.config['token'], backend.config['token_expiry_time'] = token, token_expiry_time
-            backend.cf_client.headers['Authorization'] = f'Bearer {token}'
 
         return executor
 
