@@ -109,10 +109,6 @@ module.exports = {
     channel: '',
   },
 
-  aws: {
-    aws_region: 'eu-west-1',
-  },
-
   features: {
     graphqlMocks: false,
     impersonation: false,

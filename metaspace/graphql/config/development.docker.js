@@ -28,7 +28,7 @@ config.s3 = {
   s3ForcePathStyle: true,
 }
 
-/* comment out above and use below for AWS */
+/* Comment out above and use below for AWS */
 // config.aws = {
 //   region: 'eu-west-1',
 //   credentials: {

@@ -1,7 +1,7 @@
 import * as config from 'config'
 import { IConfig } from 'config'
 import { Algorithm } from 'jsonwebtoken'
-import { Config as AWSConfig } from 'aws-sdk/index.d'
+import { Config as AWSConfig, S3 } from 'aws-sdk/index.d'
 
 export type ImageStorageType = 'fs';
 export interface ImageCategoryConfig {
@@ -87,7 +87,7 @@ export interface Config {
     imzmlDownload: boolean;
   };
   aws?: AWSConfig;
-  s3?: AWSConfig; // https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#constructor-property
+  s3?: S3.ClientConfiguration; // https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#constructor-property
   metadataLookups: {
     colocalizationAlgos: [string, string][]; // code, name
     defaultColocalizationAlgo: string;
