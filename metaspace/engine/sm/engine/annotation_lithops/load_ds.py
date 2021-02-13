@@ -109,9 +109,9 @@ def _sort_spectra(imzml_reader, mzs, ints, sp_lens):
     # sp_idxs in a compacted form with sp_lens until the last minute.
     sp_id_to_idx = get_pixel_indices(imzml_reader.coordinates)
     sp_idxs = np.empty(len(ints), np.uint32)
-    sp_lens = np.cumsum(sp_lens)
-    for sp_id, (start, end) in enumerate(zip(sp_lens[:-1], sp_lens[1:])):
-        sp_idxs[start:end] = sp_id_to_idx[sp_id]
+    sp_lens = np.insert(np.cumsum(sp_lens), 0, 0)
+    for sp_idx, start, end in zip(sp_id_to_idx, sp_lens[:-1], sp_lens[1:]):
+        sp_idxs[start:end] = sp_idx
     sp_idxs = sp_idxs[by_mz]
     return mzs, ints, sp_idxs
 
