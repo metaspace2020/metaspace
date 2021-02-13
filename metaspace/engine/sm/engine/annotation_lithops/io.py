@@ -68,7 +68,11 @@ def load_cobj(storage: Storage, cobj: CloudObject):
 
 
 def load_cobj(storage: Storage, cobj):
-    return deserialize(storage.get_cloudobject(cobj))
+    try:
+        return deserialize(storage.get_cloudobject(cobj))
+    except Exception:
+        logger.error(f'Failed to deserialize {cobj}')
+        raise
 
 
 def save_cobjs(storage: Storage, objs: Iterable[TItem]) -> List[CObj[TItem]]:
