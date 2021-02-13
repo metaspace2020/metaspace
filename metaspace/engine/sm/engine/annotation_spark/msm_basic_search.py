@@ -24,11 +24,11 @@ from sm.engine.annotation_spark.segmenter import (
     spectra_sample_gen,
 )
 from sm.engine.ds_config import DSConfig
-from sm.engine.fdr import FDR
+from sm.engine.annotation.fdr import FDR
 from sm.engine.formula_parser import safe_generate_ion_formula
-from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.molecular_db import MolecularDB
-from sm.engine.util import SMConfig
+from sm.engine.config import SMConfig
 from sm.engine.utils.perf_profile import Profiler
 
 logger = logging.getLogger('engine')

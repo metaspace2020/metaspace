@@ -4,7 +4,7 @@ import logging
 import json
 
 from sm.engine.db import DB
-from sm.engine.util import SMConfig, init_loggers
+from sm.engine.config import init_loggers, SMConfig
 
 ALL_DS_MASK = '_all_'
 '''

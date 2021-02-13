@@ -2,8 +2,8 @@ import pytest
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 
-from sm.engine.isocalc_wrapper import IsocalcWrapper
 from tests.conftest import ds_config
+from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 
 
 @pytest.mark.parametrize('formula, adduct', [('', '+H'), ('Np', '+H'), ('4Sn', '+K'), ('C4', '-H')])

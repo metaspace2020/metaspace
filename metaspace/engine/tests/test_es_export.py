@@ -11,7 +11,7 @@ from sm.engine.es_export import (
     ESExporterIsobars,
     ESIndexManager,
 )
-from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.molecular_db import MolecularDB
 from .utils import create_test_molecular_db
 

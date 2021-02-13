@@ -42,11 +42,11 @@
         >
           <visible-icon
             v-if="item.settings.visible"
-            class="sm-mono-icon text-gray-800"
+            class="fill-current w-5 h-5 text-gray-800"
           />
           <hidden-icon
             v-else
-            class="sm-mono-icon text-gray-600"
+            class="fill-current w-5 h-5 text-gray-600"
           />
         </button>
       </p>
@@ -77,7 +77,7 @@
   </el-popover>
 </template>
 <script lang="ts">
-import { defineComponent, ref, Ref, reactive, computed } from '@vue/composition-api'
+import { defineComponent, ref } from '@vue/composition-api'
 
 import MenuItem from './MenuItem.vue'
 import IonIntensitySlider from './IonIntensitySlider.vue'
@@ -87,9 +87,8 @@ import ChannelSelector from './ChannelSelector.vue'
 import CandidateMoleculesPopover from '../Annotations/annotation-widgets/CandidateMoleculesPopover.vue'
 import ClippingNotice from './ClippingNotice.vue'
 
-import '../../components/MonoIcon.css'
-import VisibleIcon from '../../assets/inline/refactoring-ui/visible.svg'
-import HiddenIcon from '../../assets/inline/refactoring-ui/hidden.svg'
+import VisibleIcon from '../../assets/inline/refactoring-ui/icon-view-visible.svg'
+import HiddenIcon from '../../assets/inline/refactoring-ui/icon-view-hidden.svg'
 
 import useClippingNotice from './useClippingNotice'
 

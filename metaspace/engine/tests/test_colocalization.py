@@ -3,7 +3,11 @@ from unittest.mock import MagicMock
 import numpy as np
 import pandas as pd
 
-from sm.engine.colocalization import analyze_colocalization, Colocalization, FreeableRef
+from sm.engine.postprocessing.colocalization import (
+    analyze_colocalization,
+    Colocalization,
+    FreeableRef,
+)
 from sm.engine.db import DB
 from sm.engine.image_store import ImageStoreServiceWrapper
 from .utils import create_test_molecular_db, create_test_ds

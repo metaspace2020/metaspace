@@ -3,7 +3,7 @@ import logging
 
 from sm.engine.formula_parser import safe_generate_ion_formula
 from sm.engine.ion_mapping import get_ion_id_mapping
-from sm.engine.util import init_loggers, SMConfig
+from sm.engine.config import init_loggers, SMConfig
 from sm.engine.db import DB, ConnectionPool
 
 BATCH_SIZE = 10000

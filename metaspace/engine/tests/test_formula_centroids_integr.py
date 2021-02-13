@@ -9,7 +9,7 @@ import pytest
 
 from sm.engine.annotation.formula_centroids import CentroidsGenerator, FormulaCentroids
 from sm.engine.formula_parser import generate_ion_formula
-from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 
 os.environ.setdefault('PYSPARK_PYTHON', sys.executable)
 

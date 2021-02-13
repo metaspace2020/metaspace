@@ -44,7 +44,7 @@
     "lithops": {
       "storage_bucket": "lithops_temp",
       "storage": "localhost",
-      "mode": "serverless",
+      "mode": "localhost",
       "include_modules": ["engine/sm"],
       "data_cleaner": true,
       "data_limit": false,

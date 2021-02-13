@@ -13,7 +13,7 @@ from sm.engine.annotation.formula_validator import (
     formula_image_metrics,
 )
 from sm.engine.ds_config import DSConfig
-from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 
 logger = logging.getLogger('engine')
 

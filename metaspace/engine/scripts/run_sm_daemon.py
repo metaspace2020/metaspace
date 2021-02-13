@@ -2,13 +2,17 @@
 import argparse
 import logging
 import signal
+import sys
 from functools import partial
+from multiprocessing.process import parent_process
 
-from sm.engine.daemons.lithops_daemon import LithopsDaemon
+from sm.engine.daemons.lithops import LithopsDaemon
 from sm.engine.db import DB, ConnectionPool
 from sm.engine.es_export import ESExporter
 from sm.engine.image_store import ImageStoreServiceWrapper
-from sm.engine.sm_daemons import SMAnnotateDaemon, DatasetManager, SMIndexUpdateDaemon
+from sm.engine.daemons.update import SMUpdateDaemon
+from sm.engine.daemons.annotate import SMAnnotateDaemon
+from sm.engine.daemons.dataset_manager import DatasetManager
 from sm.engine.queue import (
     SM_ANNOTATE,
     SM_UPDATE,
@@ -17,7 +21,7 @@ from sm.engine.queue import (
     QueuePublisher,
     QueueConsumer,
 )
-from sm.engine.util import SMConfig, init_loggers
+from sm.engine.config import init_loggers, SMConfig
 
 
 def get_manager():
@@ -53,26 +57,35 @@ def main(daemon_name):
             poll_interval=1,
         )
         for _ in range(sm_config['services']['update_daemon_threads']):
-            daemon = SMIndexUpdateDaemon(get_manager(), make_update_queue_cons)
+            daemon = SMUpdateDaemon(get_manager(), make_update_queue_cons)
             daemons.append(daemon)
     elif daemon_name == 'lithops':
-        for _ in range(sm_config['services'].get('lithops_daemon_threads', 0)):
-            daemon = LithopsDaemon(get_manager(), lit_qdesc=SM_LITHOPS, upd_qdesc=SM_UPDATE)
-            daemons.append(daemon)
+        daemon = LithopsDaemon(
+            get_manager(), lit_qdesc=SM_LITHOPS, annot_qdesc=SM_ANNOTATE, upd_qdesc=SM_UPDATE
+        )
+        daemons.append(daemon)
     else:
         raise Exception(f'Wrong SM daemon name: {daemon_name}')
 
     def cb_stop_daemons(*args):  # pylint: disable=redefined-outer-name
+        if parent_process() is not None:
+            # Multiprocessing worker processes (used by Lithops) inherit this signal handler.
+            # Avoid interacting with the queues from a worker process as they aren't functional
+            return
         logger.info(f'Stopping {daemon_name}-daemon')
         for d in daemons:  # pylint: disable=invalid-name
             d.stop()
         conn_pool.close()
+        sys.exit(1)
 
     signal.signal(signal.SIGINT, cb_stop_daemons)
     signal.signal(signal.SIGTERM, cb_stop_daemons)
 
     for daemon in daemons:
         daemon.start()
+
+    for daemon in daemons:
+        daemon.join()
 
 
 if __name__ == "__main__":

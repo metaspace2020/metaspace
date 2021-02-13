@@ -28,9 +28,9 @@ import ShareLink from '../ImageViewer/ShareLink.vue'
 import CopyButton from '../../components/CopyButton.vue'
 import MolecularFormula from '../../components/MolecularFormula'
 
-import '../../components/StatefulIcon.css'
-import LockIcon from '../../assets/inline/refactoring-ui/lock.svg'
-import LocationPinIcon from '../../assets/inline/refactoring-ui/location-pin.svg'
+import StatefulIcon from '../../components/StatefulIcon.vue'
+import LockSvg from '../../assets/inline/refactoring-ui/icon-lock.svg'
+import LocationPinSvg from '../../assets/inline/refactoring-ui/icon-location-pin.svg'
 import FilterIcon from '../../assets/inline/filter.svg'
 
 import { useIonImageSettings } from '../ImageViewer/ionImageState'
@@ -67,8 +67,9 @@ const componentsToRegister: any = {
   AmbiguityAlert,
   ModeButton,
   ShareLink,
-  LockIcon,
-  LocationPinIcon,
+  StatefulIcon,
+  LockSvg,
+  LocationPinSvg,
   FilterIcon,
   CopyButton,
   MolecularFormula,

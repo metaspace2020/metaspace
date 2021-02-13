@@ -14,7 +14,8 @@ import sm.engine.annotation_lithops.executor as lithops_executor
 from sm.engine.annotation_spark.annotation_job import AnnotationJob
 from sm.engine.db import DB
 from sm.engine.image_store import ImageStoreServiceWrapper
-from sm.engine.util import proj_root, bootstrap_and_run
+from sm.engine.util import bootstrap_and_run
+from sm.engine.config import proj_root
 from sm.engine.utils.create_ds_from_files import create_ds_from_files
 from sm.engine.utils.perf_profile import NullProfiler
 

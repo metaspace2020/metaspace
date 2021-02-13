@@ -8,8 +8,8 @@ import ArchiveForm from './ArchiveDatabaseForm'
 import DeleteForm from './DeleteDatabaseForm'
 import UploadDialog from './UploadDialog'
 
-import '../../components/MiniIcon.css'
-import ArrowIcon from '../../assets/inline/refactoring-ui/arrow-thin-left-circle.svg'
+import SecondaryIcon from '../../components/SecondaryIcon.vue'
+import ArrowSvg from '../../assets/inline/refactoring-ui/icon-arrow-thin-left-circle.svg'
 
 import {
   databaseDetailsQuery,
@@ -94,7 +94,9 @@ const Details = defineComponent<Props>({
                 href="#"
               >
                 <span class="flex items-center">
-                  <ArrowIcon class="sm-mini-icon mr-1" />
+                  <SecondaryIcon class="mr-1">
+                    <ArrowSvg />
+                  </SecondaryIcon>
                   <span class="leading-none mt-1">All databases</span>
                 </span>
               </a>

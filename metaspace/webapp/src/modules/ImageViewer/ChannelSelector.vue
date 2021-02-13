@@ -44,7 +44,7 @@
 import { defineComponent, ref, watch, onBeforeUnmount } from '@vue/composition-api'
 
 import FadeTransition from '../../components/FadeTransition'
-import DotsIcon from '../../assets/inline/refactoring-ui/dots-horizontal.svg'
+import DotsIcon from '../../assets/inline/refactoring-ui/icon-dots-horizontal.svg'
 
 import { channels } from '../../lib/getColorScale'
 import useOutClick from '../../lib/useOutClick'

@@ -51,10 +51,13 @@
                 placement="bottom"
                 @show="loadVisibility"
               >
-                <lock-icon
+                <stateful-icon
                   slot="reference"
-                  class="sm-stateful-icon h-6 w-6"
-                />
+                  class="h-6 w-6"
+                  inverse
+                >
+                  <lock-svg />
+                </stateful-icon>
                 <p
                   v-loading="visibilityText == null"
                   class="m-0 max-w-measure-2 leading-5 text-left"
@@ -74,7 +77,12 @@
                   class="button-reset block"
                   @click.stop="filterColocSamples"
                 >
-                  <location-pin-icon class="sm-stateful-icon h-6 w-6" />
+                  <stateful-icon
+                    class="h-6 w-6"
+                    inverse
+                  >
+                    <location-pin-svg />
+                  </stateful-icon>
                 </button>
                 <!-- <img
                   slot="reference"

@@ -14,7 +14,8 @@ from pysparkling import Context
 
 from sm.engine.db import DB, ConnectionPool
 from sm.engine.tests.db_sql_schema import DB_SQL_SCHEMA
-from sm.engine.util import proj_root, SMConfig, init_loggers, populate_aws_env_vars
+from sm.engine.util import populate_aws_env_vars
+from sm.engine.config import proj_root, init_loggers, SMConfig
 from sm.engine.es_export import ESIndexManager
 from .utils import TEST_METADATA, TEST_DS_CONFIG, create_test_molecular_db
 

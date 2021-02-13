@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
-from sm.engine.ion_thumbnail import generate_ion_thumbnail, ALGORITHMS
+from sm.engine.postprocessing.ion_thumbnail import generate_ion_thumbnail, ALGORITHMS
 from sm.engine.db import DB
 from sm.engine.image_store import ImageStoreServiceWrapper
 from .utils import create_test_molecular_db, create_test_ds

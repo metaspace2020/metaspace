@@ -5,9 +5,9 @@ import UpdateProjectDetails from './UpdateProjectDetails'
 import CreateReviewLink from './CreateReviewLink'
 import PublishData from './PublishData'
 import FadeTransition from '../../../components/FadeTransition'
+import PrimaryIcon from '../../../components/PrimaryIcon.vue'
 
-import '../../../components/ColourIcon.css'
-import GlobeIcon from '../../../assets/inline/refactoring-ui/globe.svg'
+import GlobeSvg from '../../../assets/inline/refactoring-ui/icon-globe.svg'
 
 import {
   updateProjectMutation, UpdateProjectMutation,
@@ -94,7 +94,9 @@ const ReviewWorkflow = defineComponent<Props>({
       <FadeTransition>
         {props.project.publicationStatus === statuses.PUBLISHED
           ? <div class="leading-6 text-center mt-12">
-            <GlobeIcon class="sm-colour-icon sm-colour-icon--large mx-auto" />
+            <PrimaryIcon class="mx-auto" large>
+              <GlobeSvg />
+            </PrimaryIcon>
             <h2 class="leading-12 m-0">Project is published</h2>
             <p class="m-0">
               The project and its datasets are now public.

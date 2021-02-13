@@ -1,14 +1,13 @@
 import { defineComponent, reactive, onBeforeMount } from '@vue/composition-api'
 import { useQuery } from '@vue/apollo-composable'
 
-import '../../components/ColourIcon.css'
-import GroupIcon from '../../assets/inline/refactoring-ui/group.svg'
-
-import '../../components/MiniIcon.css'
-import CheckIcon from '../../assets/inline/refactoring-ui/check.svg'
-
 import UploadDialog from './UploadDialog'
 import ElapsedTime from '../../components/ElapsedTime'
+import PrimaryIcon from '../../components/PrimaryIcon.vue'
+import SecondaryIcon from '../../components/SecondaryIcon.vue'
+
+import CheckSvg from '../../assets/inline/refactoring-ui/icon-check.svg'
+import GroupSvg from '../../assets/inline/refactoring-ui/icon-user-group.svg'
 
 import { getGroupDatabasesQuery } from '../../api/group'
 
@@ -30,7 +29,7 @@ const CheckColumn = defineComponent({
             default: (scope: { row: any }) => (
               <span class="flex justify-center items-center h-5">
                 { scope.row[props.prop]
-                  ? <CheckIcon class="sm-mini-icon" />
+                  ? <SecondaryIcon><CheckSvg /></SecondaryIcon>
                   : null }
               </span>
             ),
@@ -78,7 +77,9 @@ const DatabasesTable = defineComponent<Props>({
       <div>
         <header class="flex justify-between items-center py-3">
           <div class="flex items-center">
-            <GroupIcon class="sm-colour-icon mx-3 w-6 h-6" />
+            <PrimaryIcon class="mx-3">
+              <GroupSvg />
+            </PrimaryIcon>
             <p class="m-0 ml-1 text-sm leading-5 text-gray-700">
               Databases are only available to members of this group.
               <br />

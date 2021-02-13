@@ -9,7 +9,8 @@ from PIL import Image
 from requests.adapters import HTTPAdapter
 from scipy.ndimage import zoom
 
-from sm.engine.util import SMConfig, retry_on_exception
+from sm.engine.utils.retry_on_exception import retry_on_exception
+from sm.engine.config import SMConfig
 
 logger = logging.getLogger('engine')
 

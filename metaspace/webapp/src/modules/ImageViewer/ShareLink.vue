@@ -14,7 +14,9 @@
       @focus="setStatus('OPEN')"
       @blur="setStatus('CLOSED')"
     >
-      <external-window-icon class="sm-stateful-icon h-6 w-6 pointer-events-none" />
+      <stateful-icon class="h-6 w-6 pointer-events-none">
+        <external-window-svg />
+      </stateful-icon>
     </button>
     <fade-transition class="m-0 leading-5 text-center">
       <p
@@ -55,20 +57,21 @@
       target="_blank"
       :to="route"
     >
-      <external-window-icon class="sm-stateful-icon h-6 w-6" />
+      <stateful-icon class="h-6 w-6">
+        <external-window-svg />
+      </stateful-icon>
     </router-link>
     Link to this annotation (opens in a new tab)
   </el-popover>
 </template>
 <script lang="ts">
-import { defineComponent, ref, watch, computed } from '@vue/composition-api'
+import { defineComponent, ref, computed } from '@vue/composition-api'
 import gql from 'graphql-tag'
 
 import FadeTransition from '../../components/FadeTransition'
+import StatefulIcon from '../../components/StatefulIcon.vue'
 
-import '../../components/StatefulIcon.css'
-import ExternalWindowIcon from '../../assets/inline/refactoring-ui/external-window.svg'
-import CloseIcon from '../../assets/inline/refactoring-ui/close.svg'
+import ExternalWindowSvg from '../../assets/inline/refactoring-ui/icon-external-window.svg'
 
 import { exportIonImageState } from './ionImageState'
 import { exportImageViewerState } from './state'
@@ -90,9 +93,9 @@ interface Props {
 
 export default defineComponent<Props>({
   components: {
-    ExternalWindowIcon,
     FadeTransition,
-    CloseIcon,
+    StatefulIcon,
+    ExternalWindowSvg,
   },
   props: {
     annotation: Object,

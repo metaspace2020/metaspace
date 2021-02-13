@@ -10,9 +10,9 @@ from sm.engine.dataset import (
     FLAT_DS_CONFIG_KEYS,
 )
 from sm.engine.errors import DSIsBusy, UnknownDSID
-from sm.engine.daemon_action import DaemonAction, DaemonActionStage
+from sm.engine.daemons.actions import DaemonAction, DaemonActionStage
 from sm.engine.optical_image import add_optical_image, del_optical_image
-from sm.engine.util import SMConfig
+from sm.engine.config import SMConfig
 
 
 class DatasetActionPriority:

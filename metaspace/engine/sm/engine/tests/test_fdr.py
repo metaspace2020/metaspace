@@ -1,16 +1,16 @@
 from itertools import product
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pandas as pd
 from pandas.util.testing import assert_frame_equal
 
-from sm.engine.fdr import FDR
+from sm.engine.annotation.fdr import FDR
 from sm.engine.formula_parser import format_modifiers
 
 FDR_CONFIG = {'decoy_sample_size': 2}
 
 
-@patch('sm.engine.fdr.DECOY_ADDUCTS', ['+He', '+Li'])
+@patch('sm.engine.annotation.fdr.DECOY_ADDUCTS', ['+He', '+Li'])
 def test_fdr_decoy_adduct_selection_saves_corr():
     fdr = FDR(
         fdr_config=FDR_CONFIG,

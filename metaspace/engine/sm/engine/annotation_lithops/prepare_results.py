@@ -12,7 +12,7 @@ from sm.engine.annotation_lithops.build_moldb import InputMolDb
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, iter_cobjs_with_prefetch
 from sm.engine.annotation_lithops.utils import ds_dims
-from sm.engine.png_generator import PngGenerator
+from sm.engine.annotation.png_generator import PngGenerator
 
 logger = logging.getLogger('annotation-pipeline')
 

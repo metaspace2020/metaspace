@@ -90,10 +90,9 @@
 <script lang="ts">
 import { defineComponent, computed } from '@vue/composition-api'
 
-import '../../components/StatefulIcon.css'
-import FileIcon from '../../assets/inline/refactoring-ui/document.svg'
-import CheckIcon from '../../assets/inline/refactoring-ui/check.svg'
-import CloseCircleIcon from '../../assets/inline/refactoring-ui/close-circle.svg'
+import FileIcon from '../../assets/inline/refactoring-ui/icon-document.svg'
+import CheckIcon from '../../assets/inline/refactoring-ui/icon-check.svg'
+import CloseCircleIcon from '../../assets/inline/refactoring-ui/icon-close-circle.svg'
 
 import FadeTransition from '../../components/FadeTransition'
 import ProgressRing from '../../components/ProgressRing'
@@ -142,18 +141,18 @@ export default defineComponent<FileStatusProps>({
 </script>
 <style scoped>
 .sm-file-icon .primary {
-  @apply text-gray-500;
-}
-.sm-file-icon .secondary {
   @apply text-gray-400;
 }
-.sm-file-icon--active .primary {
-  @apply text-blue-600;
+.sm-file-icon .secondary {
+  @apply text-gray-500;
 }
-.sm-file-icon--active .secondary {
+.sm-file-icon--active .primary {
   @apply text-blue-500;
 }
-.sm-status-icon .primary {
+.sm-file-icon--active .secondary {
+  @apply text-blue-600;
+}
+.sm-status-icon .secondary {
   @apply text-white;
 }
 </style>

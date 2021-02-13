@@ -38,7 +38,6 @@
     "web_app_url": "http://localhost:8999",
     "send_email": false,
     "update_daemon_threads": 4,
-    "lithops_daemon_threads": 2,
     "colocalization": false,
     "ion_thumbnail": false
   },

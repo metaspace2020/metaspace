@@ -10,7 +10,7 @@ from lithops.storage import Storage
 
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, load_cobj, CObj, load_cobjs, save_cobjs
-from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 
 logger = logging.getLogger('annotation-pipeline')
 
@@ -49,7 +49,7 @@ def calculate_centroids(
 
         peaks_df.set_index('formula_i', inplace=True)
 
-        print(f'Storing centroids chunk {id}')
+        print(f'Storing centroids chunk {segm_i}')
         peaks_cobject = save_cobj(storage, peaks_df)
 
         return peaks_cobject, peaks_df.shape[0]

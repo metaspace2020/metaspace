@@ -1,8 +1,8 @@
 import { defineComponent } from '@vue/composition-api'
 import FadeTransition from '../FadeTransition'
 
-import '../MiniIcon.css'
-import CheckIcon from '../../assets/inline/refactoring-ui/check.svg'
+import SecondaryIcon from '../SecondaryIcon.vue'
+import CheckSvg from '../../assets/inline/refactoring-ui/icon-check.svg'
 
 const RadioButton = defineComponent({
   name: 'RadioButton',
@@ -16,7 +16,7 @@ const RadioButton = defineComponent({
       <div class="flex -ml-12">
         <div class="w-9 flex items-center">
           <FadeTransition>
-            {props.checked && <CheckIcon class="sm-mini-icon" />}
+            {props.checked && <SecondaryIcon><CheckSvg /></SecondaryIcon>}
           </FadeTransition>
         </div>
         <label

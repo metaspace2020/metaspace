@@ -3,7 +3,7 @@ import logging
 from collections import OrderedDict
 
 from sm.engine.ion_mapping import get_ion_id_mapping
-from sm.engine.png_generator import PngGenerator
+from sm.engine.annotation.png_generator import PngGenerator
 
 logger = logging.getLogger('engine')
 METRICS_INS = (
