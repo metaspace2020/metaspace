@@ -19,6 +19,7 @@ def run_fdr(
     msms_df = formula_scores_df[['msm']]
 
     def _run_fdr_for_db(db_data_cobject: CObj[DbFDRData], *, storage: Storage):
+        print(f'Loading FDR data from {db_data_cobject}')
         db_data = load_cobj(storage, db_data_cobject)
         moldb_id = db_data['id']
         fdr = db_data['fdr']
