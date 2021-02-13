@@ -1,7 +1,7 @@
 # -*- conf -*-
 
 [program:{{ sm_lithops_daemon_app_name }}]
-process_name = {{ sm_lithops_daemon_app_name }}
+process_name = {{ sm_lithops_daemon_app_name }}-%(process_num)s
 environment = PATH="{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin"
 directory = {{ sm_home }}
 command = {{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python scripts/run_sm_daemon.py --name=lithops
