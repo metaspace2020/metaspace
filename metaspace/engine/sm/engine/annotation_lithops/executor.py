@@ -4,6 +4,7 @@ import inspect
 import logging
 import resource
 import traceback
+from contextlib import ExitStack
 from datetime import datetime
 from itertools import chain
 from threading import Thread, current_thread
@@ -292,16 +293,31 @@ class Executor:
         else:
             # Run in another thread so that stalls can be detected & handled
             def run():
-                nonlocal return_vals, exception
+                nonlocal futures, return_vals, exception
                 try:
-                    return_vals = executor.get_result(futures)
+                    with ExitStack() as stack:
+                        is_standalone = executor.config['lithops']['mode'] == 'standalone'
+                        if is_standalone:
+                            # With the VM in "consume" mode, Lithops shares the VM between parallel
+                            # invocations, which can cause race conditions and OOMs.
+                            # To avoid instability, this prevents parallel invocations with a mutex.
+                            # Import locally to avoid psycopg2 dependency in Lithops-serialized functions
+                            from sm.engine.utils.db_mutex import DBMutex
+
+                            stack.enter_context(DBMutex().lock('vm', self._execution_timeout))
+                        futures = executor.map(
+                            wrapper_func, func_args, runtime_memory=runtime_memory, **lithops_kwargs
+                        )
+                        return_vals = executor.get_result(futures)
+                        if is_standalone:
+                            # Dismantle & wait for it to stop while the mutex is still active
+                            # to avoid a race condition, as there's still some instability if a
+                            # second request tries to start the VM while it is still stopping.
+                            executor.dismantle()
                 except Exception as exc:
                     exception = exc
 
             executor = self._select_executor(runtime_memory)
-            futures = executor.map(
-                wrapper_func, func_args, runtime_memory=runtime_memory, **lithops_kwargs
-            )
             thread = Thread(target=run, name=f'{current_thread().name}-ex', daemon=True)
             thread.start()
             thread.join(self._execution_timeout)
