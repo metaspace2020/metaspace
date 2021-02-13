@@ -336,6 +336,13 @@ class Executor:
         executor_type, executor = valid_executors[0]
         logger.debug(f'Selected executor {executor_type}')
 
+        if executor.config['lithops']['mode'] == 'standalone':
+            # Set number of parallel workers based on memory requirements
+            # With Lithops>=2.2.17 it would be configure this via `.map(..., worker_processes=workers)`
+            executor.config['lithops']['workers'] = min(
+                20, MEM_LIMITS.get(executor_type) // runtime_memory
+            )
+
         return executor
 
     def map_unpack(self, func, args: Sequence, *, runtime_memory=None, **kwargs):
