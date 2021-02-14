@@ -12,13 +12,16 @@
         <a href="#leading-tracking">Leading & tracking</a>
       </li>
       <li>
+        <a href="#measure">Measure</a>
+      </li>
+      <li>
         <a href="#colours">Colours</a>
       </li>
       <li>
         <a href="#spacing">Spacing</a>
       </li>
       <li>
-        <a href="#measure">Measure</a>
+        <a href="#icons">Icons</a>
       </li>
     </ul>
     <h2 id="fonts">
@@ -140,6 +143,23 @@
         </tr>
       </tbody>
     </table>
+    <h2 id="measure">
+      Measure
+    </h2>
+    <p class="italic">
+      The &ldquo;measure&rdquo; of a paragraph is the number of characters on one line.
+      These numbers are spaced evenly around 60 as a good default, but in general
+      <a href="https://css-tricks.com/equilateral-triangle-perfect-paragraph/">
+        the line length should scale with the font-size<!-- -->
+      </a>.
+    </p>
+    <div class="v-rhythm-3">
+      <measure-demo level="1" />
+      <measure-demo level="2" />
+      <measure-demo level="3" />
+      <measure-demo level="4" />
+      <measure-demo level="5" />
+    </div>
     <h2 id="colours">
       Colours
     </h2>
@@ -368,9 +388,19 @@
     </p>
     <div class="w-3/4">
       <width-demo
+        width-class="w-6"
+        name="6"
+        intermediate
+      />
+      <width-demo
         width-class="w-9"
         name="9"
         definition="1.5 * 1.5rem = 2.25rem"
+      />
+      <width-demo
+        width-class="w-12"
+        name="12"
+        intermediate
       />
       <width-demo
         width-class="w-18"
@@ -383,6 +413,14 @@
         definition="3.5 * 1.5rem = 5.25rem"
       />
       <width-demo
+        width-class="w-24"
+        name="24"
+        intermediate
+      />
+      <span class="mb-3 leading-3 text-gray-700 font-medium flex items-baseline text-4xl">
+        &hellip;
+      </span>
+      <width-demo
         width-class="w-60"
         name="60"
         definition="10 * 1.5rem = 15rem"
@@ -393,43 +431,11 @@
         definition="11 * 1.5rem = 16.5rem"
       />
     </div>
-    <h2 id="measure">
-      Measure
+    <h2 id="icons">
+      Icons
     </h2>
-    <p class="italic">
-      The &ldquo;measure&rdquo; of a paragraph is the number of characters on one line.
-      These numbers are spaced evenly around 60 as a good default, but in general
-      <a href="https://css-tricks.com/equilateral-triangle-perfect-paragraph/">
-        the line length should scale with the font-size<!-- -->
-      </a>.
-    </p>
-    <div>
-      <width-demo
-        width-class="w-full text-xs max-w-measure-1"
-        name="max-w-measure-1"
-        :definition="maxWidth['measure-1']"
-      />
-      <width-demo
-        width-class="w-full text-xs max-w-measure-2"
-        name="max-w-measure-2"
-        :definition="maxWidth['measure-2']"
-      />
-      <width-demo
-        width-class="w-full text-xs max-w-measure-3"
-        name="max-w-measure-3"
-        :definition="maxWidth['measure-3']"
-      />
-      <width-demo
-        width-class="w-full text-xs max-w-measure-4"
-        name="max-w-measure-4"
-        :definition="maxWidth['measure-4']"
-      />
-      <width-demo
-        width-class="w-full text-xs max-w-measure-5"
-        name="max-w-measure-5"
-        :definition="maxWidth['measure-5']"
-      />
-    </div>
+    <p></p>
+    <icons-section />
   </content-page>
 </template>
 <script lang="ts">
@@ -438,6 +444,8 @@ import { defineComponent } from '@vue/composition-api'
 import ContentPage from '../components/ContentPage.vue'
 import ColourSwatch from './ColourSwatch.vue'
 import WidthDemo from './WidthDemo.vue'
+import MeasureDemo from './MeasureDemo.vue'
+import IconsSection from './Icons.vue'
 
 import tailwindConfig from '../../tailwind.config'
 
@@ -446,6 +454,8 @@ export default defineComponent({
     ContentPage,
     ColourSwatch,
     WidthDemo,
+    MeasureDemo,
+    IconsSection,
   },
   setup() {
     return {

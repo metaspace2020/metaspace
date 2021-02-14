@@ -1,13 +1,16 @@
 <template>
-  <div class="flex items-baseline h-6">
+  <div class="h-6 flex items-baseline">
     <div
-      class="h-3 bg-primary rounded"
-      :class="widthClass"
+      class="h-3 rounded"
+      :class="[widthClass, intermediate ? 'bg-gray-400' : 'bg-primary']"
     />
-    <p class="font-medium px-3">
+    <p
+      class="mx-3"
+      :class="intermediate ? 'text-sm font-medium' : 'font-bold'"
+    >
       {{ name }}
     </p>
-    <p class="text-sm text-gray-700 ml-auto">
+    <p class="text-sm text-gray-700">
       {{ definition }}
     </p>
   </div>
@@ -19,6 +22,7 @@ export default defineComponent({
     widthClass: String,
     name: String,
     definition: String,
+    intermediate: Boolean,
   },
 })
 </script>
