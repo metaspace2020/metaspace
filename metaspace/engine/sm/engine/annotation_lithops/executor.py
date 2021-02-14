@@ -26,6 +26,7 @@ TRet = TypeVar('TRet')
 #: Note: sci-test changes this constant to force local execution without docker
 RUNTIME_DOCKER_IMAGE = 'metaspace2020/metaspace-lithops:1.8.3'
 MEM_LIMITS = {
+    'localhost': 32768,
     'ibm_cf': 4096,
     'ibm_vpc': 128 * 2 ** 30,
 }
@@ -239,27 +240,14 @@ class Executor:
                 failed_activation_ids=failed_activation_ids,
             )
 
-            if isinstance(exc, MemoryError) and runtime_memory <= 4096 and self.is_hybrid:
+            if isinstance(exc, (MemoryError, TimeoutError)) and runtime_memory <= 4096:
                 old_memory = runtime_memory
                 runtime_memory *= 2
                 attempt += 1
 
                 logger.warning(
-                    f'{func_name} ran out of memory with {old_memory}MB, retrying with '
+                    f'{func_name} raised {type(exc)} with {old_memory}MB, retrying with '
                     f'{runtime_memory}MB. Failed activation(s): {failed_activation_ids}'
-                )
-            elif isinstance(exc, TimeoutError) and runtime_memory <= 4096 and self.is_hybrid:
-                # Bypass the memory doubling and jump straight to using the VM, otherwise
-                # it could get stuck in a loop of hitting many 10-minute timeouts before
-                # eventually getting to the VM.
-                old_memory = runtime_memory
-                runtime_memory = 8192
-                attempt += 1
-
-                logger.warning(
-                    f'{func_name} timed out with {old_memory}MB, retrying with '
-                    f'{runtime_memory}MB. Failed activation(s): {failed_idxs} '
-                    f'ID(s): {failed_activation_ids}'
                 )
             elif isinstance(exc, LithopsStalledException):
                 logger.critical(
@@ -301,7 +289,9 @@ class Executor:
                             # With the VM in "consume" mode, Lithops shares the VM between parallel
                             # invocations, which can cause race conditions and OOMs.
                             # To avoid instability, this prevents parallel invocations with a mutex.
-                            # Import locally to avoid psycopg2 dependency in Lithops-serialized functions
+                            # Import locally to avoid psycopg2 dependency in Lithops-serialized
+                            # functions
+                            # pylint: disable=import-outside-toplevel
                             from sm.engine.utils.db_mutex import DBMutex
 
                             stack.enter_context(DBMutex().lock('vm', self._execution_timeout))
@@ -338,7 +328,7 @@ class Executor:
 
         if executor.config['lithops']['mode'] == 'standalone':
             # Set number of parallel workers based on memory requirements
-            # With Lithops>=2.2.17 it would be configure this via `.map(..., worker_processes=workers)`
+            # Lithops>=2.2.17 can configure this via `.map(worker_processes=workers)`
             executor.config['lithops']['workers'] = min(
                 20, MEM_LIMITS.get(executor_type) // runtime_memory
             )
