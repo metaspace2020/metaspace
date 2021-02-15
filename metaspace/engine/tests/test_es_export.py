@@ -102,7 +102,7 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
             ds_id=ds_id, moldb=moldb, isocalc=isocalc_mock,
         )
 
-    wait_for_es(sec=1)
+    wait_for_es(sec=1.5)
 
     ds_d = (
         es_dsl_search.filter('term', _type='dataset')

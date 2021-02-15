@@ -103,6 +103,8 @@ def _save_subtask_perf(
     # Print a summary
     if any(subtask_timings) or any(subtask_data):
         subtask_df = pd.concat([pd.DataFrame(subtask_timings), pd.DataFrame(subtask_data)], axis=1)
+        subtask_df['perf.mem_usage'] = mem_afters
+        subtask_df['perf.exec_time'] = exec_times
         if futures and len(futures) > 1:
             subtask_summary = subtask_df.describe().transpose().to_string()
         else:
