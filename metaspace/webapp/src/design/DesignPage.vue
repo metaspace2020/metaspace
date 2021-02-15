@@ -383,7 +383,9 @@
     <h2 id="icons">
       Icons
     </h2>
-    <p></p>
+    <p class="italic">
+      Courtesy of <a href="https://refactoringui.com/book/">Refactoring UI</a>.
+    </p>
     <icons-section />
   </content-page>
 </template>
