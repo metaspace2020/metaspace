@@ -200,7 +200,8 @@ services:
 
   storage:
     image: minio/minio:RELEASE.2021-01-16T02-19-44Z
-    command: server /data
+    entrypoint: sh
+    command: -c 'mkdir -p /data/sm-engine-dev && /usr/bin/minio server /data'
     volumes:
       - "${DATA_ROOT}/s3:/data"
     ports:
