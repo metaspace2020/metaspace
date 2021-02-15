@@ -333,7 +333,7 @@
       Spacing
     </h2>
     <p class="italic">
-      Additions to the Tailwind scale based on multiples of size 6/1.5rem/24px, as this is the base line height.
+      Additions to the Tailwind scale based on multiples of size <b class="not-italic">6</b> (1.5rem/24px), as this is the base line height.
     </p>
     <div class="w-3/4">
       <width-demo

@@ -27,7 +27,7 @@
             >
             </el-option>
           </el-select>
-          <fade-transition class="ml-6 text-sm leading-5 text-gray-700">
+          <fade-transition class="ml-6 text-sm leading-5 text-gray-700 w-3/5">
             <p
               v-if="iconComponent === 'stateful-icon'"
               key="stateful"
@@ -54,9 +54,21 @@
         <h3 class="mb-3">
           Icon Props
         </h3>
-        <el-checkbox v-model="iconProps.inverse">
-          Inverse
-        </el-checkbox>
+        <fade-transition>
+          <el-checkbox
+            v-if="iconComponent !== 'secondary-icon'"
+            key="not-secondary"
+            v-model="iconProps.inverse"
+          >
+            Inverse
+          </el-checkbox>
+          <p
+            v-else
+            class="text-sm"
+          >
+            No props.
+          </p>
+        </fade-transition>
         <fade-transition>
           <span
             v-if="iconComponent === 'stateful-icon'"
