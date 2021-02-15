@@ -72,77 +72,26 @@
       Examples combinations for text styles. Line height scales with font size, but headings need to be tighter.
       Smaller text needs wide letter-spacing for legibility, larger text looks better with tight spacing.
     </p>
-    <div class="text-xs leading-4 tracking-wide">
-      <table class="w-full max-w-measure-4 mb-2">
-        <tbody>
-          <tr>
-            <td>text-xs leading-4 tracking-wide</td>
-            <td class="text-right">
-              12px / 16px
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <p>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-        Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-      </p>
-    </div>
-    <div class="text-sm leading-5">
-      <table class="w-full max-w-measure-4 mb-4">
-        <tbody>
-          <tr>
-            <td>text-sm leading-5</td>
-            <td class="text-right">
-              14px / 20px
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <p>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-        Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-      </p>
-    </div>
-    <div class="text-base leading-6">
-      <table class="w-full max-w-measure-4 mb-4">
-        <tbody>
-          <tr>
-            <td>text-base leading-6</td>
-            <td class="text-right">
-              16px / 24px
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <p>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-        Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-      </p>
-    </div>
-    <table class="w-full text-2xl font-medium leading-tight tracking-snug">
-      <tbody>
-        <tr>
-          <td>text-2xl font-medium leading-tight tracking-snug</td>
-          <td class="text-right">
-            24px / 30px
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <p class="text-2xl font-medium leading-tight tracking-snug">
-      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-    </p>
-    <table class="w-full text-4xl font-medium leading-none tracking-tight">
-      <tbody>
-        <tr>
-          <td>text-4xl font-medium leading-none tracking-tight</td>
-          <td class="text-right">
-            36px / 36px
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <text-demo
+      text-classes="text-xs leading-4"
+      definition="12px / 16px"
+    />
+    <text-demo
+      text-classes="text-sm leading-5"
+      definition="14px / 20px"
+    />
+    <text-demo
+      text-classes="text-base leading-6"
+      definition="16px / 24px"
+    />
+    <text-demo
+      text-classes="text-2xl leading-tight tracking-snug font-medium"
+      definition="24px / 30px"
+    />
+    <text-demo
+      text-classes="text-4xl leading-none tracking-tight font-medium"
+      definition="36px / 36px"
+    />
     <h2 id="measure">
       Measure
     </h2>
@@ -446,6 +395,7 @@ import ColourSwatch from './ColourSwatch.vue'
 import WidthDemo from './WidthDemo.vue'
 import MeasureDemo from './MeasureDemo.vue'
 import IconsSection from './Icons.vue'
+import TextDemo from './TextDemo.vue'
 
 import tailwindConfig from '../../tailwind.config'
 
@@ -456,6 +406,7 @@ export default defineComponent({
     WidthDemo,
     MeasureDemo,
     IconsSection,
+    TextDemo,
   },
   setup() {
     return {
