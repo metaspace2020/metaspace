@@ -1,5 +1,7 @@
 import logging
+import re
 from io import StringIO
+from pathlib import Path
 from typing import List, Iterable
 from datetime import datetime
 
@@ -74,8 +76,11 @@ def _validate_moldb_df(df):
 
 def read_moldb_file(file_path):
     try:
-        bucket_name, key = split_s3_path(file_path)
-        buffer = get_s3_bucket(bucket_name).Object(key).get()['Body']
+        if re.findall(r'^s3a?://', file_path):
+            bucket_name, key = split_s3_path(file_path)
+            buffer = get_s3_bucket(bucket_name).Object(key).get()['Body']
+        else:
+            buffer = Path(file_path).open()
         moldb_df = pd.read_csv(buffer, sep='\t', dtype=object, na_filter=False)
     except ValueError as e:
         raise MalformedCSV(f'Malformed CSV: {e}')
