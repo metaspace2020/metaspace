@@ -46,6 +46,10 @@
       <a href="https://docs.google.com/document/d/e/2PACX-1vTT4QrMQ2RJMjziscaU8S3gbznlv6Rm5ojwrsdAXPbR5bt7Ivp-ThkC0hefrk3ZdVqiyCX7VU_ddA62/pub">our instructions</a>
       for converting datasets into imzML centroided format. If you experience difficulties, contact your instrument vendor.
     </p>
+    <h2 id="databases">
+      Metabolite Databases
+    </h2>
+    <database-help />
     <h2>Collaboration</h2>
     <p>Share your data with others in the following ways:</p>
     <div
@@ -133,6 +137,8 @@ import introTour from '../../tours/intro.ts'
 import filteringTour from '../../tours/filtering.ts'
 import diagnosticsTour from '../../tours/diagnostics.ts'
 
+import DatabaseHelp from './DatabaseHelp'
+
 export default {
   name: 'HelpPage',
   components: {
@@ -141,6 +147,7 @@ export default {
     UserSvg,
     GroupSvg,
     WorkSvg,
+    DatabaseHelp,
   },
   methods: {
     intro() {
