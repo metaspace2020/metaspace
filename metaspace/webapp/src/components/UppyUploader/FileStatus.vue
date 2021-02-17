@@ -5,7 +5,7 @@
   >
     <div class="relative mt-3">
       <file-icon
-        class="sm-file-icon fill-current bg-gray-100 h-6 w-6 block p-2 rounded-full"
+        class="sm-file-icon bg-gray-100 h-6 w-6 block p-2 rounded-full"
         :class="{ 'bg-blue-100 sm-file-icon--active': status !== 'EMPTY' }"
       />
       <progress-ring
@@ -45,11 +45,11 @@
       <fade-transition class="absolute bottom-0 right-0 -mb-2 -mr-2">
         <check-icon
           v-if="status === 'COMPLETE'"
-          class="w-6 h-6 fill-current sm-status-icon text-success"
+          class="w-6 h-6 sm-status-icon fill-current text-success"
         />
         <close-circle-icon
           v-if="status === 'ERROR'"
-          class="w-6 h-6 fill-current sm-status-icon text-danger"
+          class="w-6 h-6 sm-status-icon fill-current text-danger"
         />
       </fade-transition>
     </div>
@@ -139,12 +139,12 @@ export default defineComponent<FileStatusProps>({
   },
 })
 </script>
-<style scoped>
+<style scoped lang="postcss">
 .sm-file-icon .primary {
-  @apply text-gray-400;
+  @apply fill-current text-gray-400;
 }
 .sm-file-icon .secondary {
-  @apply text-gray-500;
+  @apply fill-current text-gray-500;
 }
 .sm-file-icon--active .primary {
   @apply text-blue-500;
@@ -153,6 +153,6 @@ export default defineComponent<FileStatusProps>({
   @apply text-blue-600;
 }
 .sm-status-icon .secondary {
-  @apply text-white;
+  @apply fill-current text-white;
 }
 </style>
