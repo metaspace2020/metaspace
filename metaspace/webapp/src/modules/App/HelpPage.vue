@@ -152,18 +152,17 @@ export default defineComponent({
     WorkSvg,
     DatabaseHelp,
   },
-  setup() {
+  setup(_, { root }) {
     useAnchorLinkHack()
-
     return {
       intro() {
-        this.$store.commit('startTour', introTour)
+        root.$store.commit('startTour', introTour)
       },
       filtering() {
-        this.$store.commit('startTour', filteringTour)
+        root.$store.commit('startTour', filteringTour)
       },
       diagnostics() {
-        this.$store.commit('startTour', diagnosticsTour)
+        root.$store.commit('startTour', diagnosticsTour)
       },
     }
   },
