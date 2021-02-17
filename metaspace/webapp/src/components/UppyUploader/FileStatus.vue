@@ -45,11 +45,11 @@
       <fade-transition class="absolute bottom-0 right-0 -mb-2 -mr-2">
         <check-icon
           v-if="status === 'COMPLETE'"
-          class="w-6 h-6 sm-status-icon fill-current text-success"
+          class="sm-status-icon w-6 h-6 fill-current text-success"
         />
         <close-circle-icon
           v-if="status === 'ERROR'"
-          class="w-6 h-6 sm-status-icon fill-current text-danger"
+          class="sm-status-icon w-6 h-6 fill-current text-danger"
         />
       </fade-transition>
     </div>
