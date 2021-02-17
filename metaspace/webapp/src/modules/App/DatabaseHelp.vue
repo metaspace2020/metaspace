@@ -4,10 +4,10 @@
       Database selection determines which metabolites can be annotated.
       Many databases are for specific types of sample, please see their respective webpages for details.
       We show either the version number or a time-stamped date of export.
-      Up to {{ maxMolDBs }} databases may be selected:
+      Up to {{ maxMolDBs }} databases may be selected.
+      <b>HMDB-v4</b> is our suggested choice for mammalian datasets.
     </p>
     <ul class="v-rhythm-3 max-w-measure-4">
-      <li><b>HMDB-v4</b> is our suggested choice for mammalian datasets.</li>
       <li>
         <b>Brassica Napus database (BraChemDB):</b>
         A curated rapeseed database from LC-MS/MS measurements.
