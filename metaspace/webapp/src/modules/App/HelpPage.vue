@@ -123,9 +123,10 @@
     </p>
   </div>
 </template>
-
 <script>
 import './content.css'
+
+import { defineComponent } from '@vue/composition-api'
 
 import TourButton from './TourButton'
 import PrimaryIcon from '../../components/PrimaryIcon.vue'
@@ -139,7 +140,9 @@ import diagnosticsTour from '../../tours/diagnostics.ts'
 
 import DatabaseHelp from './DatabaseHelp'
 
-export default {
+import useAnchorLinkHack from '../../lib/useAnchorLinkHack'
+
+export default defineComponent({
   name: 'HelpPage',
   components: {
     TourButton,
@@ -149,23 +152,24 @@ export default {
     WorkSvg,
     DatabaseHelp,
   },
-  methods: {
-    intro() {
-      this.$store.commit('startTour', introTour)
-    },
+  setup() {
+    useAnchorLinkHack()
 
-    filtering() {
-      this.$store.commit('startTour', filteringTour)
-    },
-
-    diagnostics() {
-      this.$store.commit('startTour', diagnosticsTour)
-    },
+    return {
+      intro() {
+        this.$store.commit('startTour', introTour)
+      },
+      filtering() {
+        this.$store.commit('startTour', filteringTour)
+      },
+      diagnostics() {
+        this.$store.commit('startTour', diagnosticsTour)
+      },
+    }
   },
-}
+})
 </script>
-
-<style scoped>
+<style scoped lang="postcss">
   h3 {
     @apply text-lg leading-9 font-medium my-0;
   }
