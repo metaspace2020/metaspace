@@ -3,7 +3,6 @@ from copy import deepcopy
 from itertools import repeat
 from pathlib import Path
 
-import boto3
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -13,6 +12,7 @@ from pyspark import SparkContext  # pylint: disable=unused-import
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper  # pylint: disable=unused-import
 from sm.engine.util import split_s3_path
 from sm.engine.config import SMConfig
+from sm.engine.storage import get_s3_client
 
 logger = logging.getLogger('engine')
 
@@ -55,12 +55,7 @@ class CentroidsGenerator:
             self._local_ion_centroids_path = Path(self._ion_centroids_path)
         Path(self._local_ion_centroids_path).mkdir(parents=True, exist_ok=True)
 
-        self._s3 = boto3.client(
-            's3',
-            self._sm_config['aws']['aws_default_region'],
-            aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
-            aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'],
-        )
+        self._s3 = get_s3_client()
 
     def _generate(self, formulas, index_start=0):
         """ Generate isotopic peaks

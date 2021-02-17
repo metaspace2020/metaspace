@@ -118,7 +118,8 @@ The Prefix is necessary and should not have a leading or trailing slash
     "channel": "{{ slack_channel }}",
     "webhook_url": "{{ slack_webhook_url }}"
   },
-  "ms_file_handlers": [{
+  "ms_file_handlers": [
+    {
       "type": "ims",
       "extensions": ["imzml", "ibd"],
       "parser_factory": {
@@ -126,7 +127,8 @@ The Prefix is necessary and should not have a leading or trailing slash
         "path": "pyimzml.ImzMLParser"
       },
       "img_storage_type": "fs"
-    }, {
+    },
+    {
       "type": "lcms",
       "extensions": ["mzml"],
       "parser_factory": {
@@ -134,7 +136,8 @@ The Prefix is necessary and should not have a leading or trailing slash
         "path": "sm.engine.mzml_parser"
       },
       "img_storage_type": "db"
-  }],
+    }
+  ],
   "isotope_storage": {
     "path": "{{ sm_isotope_storage_path }}"
   },

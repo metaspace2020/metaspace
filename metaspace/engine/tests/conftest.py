@@ -38,7 +38,8 @@ def sm_config():
 @pytest.fixture(scope='session', autouse=True)
 def global_setup(sm_config):
     init_loggers(sm_config['logs'])
-    populate_aws_env_vars(sm_config['aws'])
+    if 'aws' in sm_config:
+        populate_aws_env_vars(sm_config['aws'])
 
 
 @pytest.fixture()

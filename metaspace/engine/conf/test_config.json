@@ -1,8 +1,15 @@
 {
   "defaults": {
     "adducts": {
-      "+": ["+H", "+Na", "+K"],
-      "-": ["-H", "+Cl"]
+      "+": [
+        "+H",
+        "+Na",
+        "+K"
+      ],
+      "-": [
+        "-H",
+        "+Cl"
+      ]
     }
   },
   "db": {
@@ -45,43 +52,64 @@
       "storage_bucket": "lithops_temp",
       "storage": "localhost",
       "mode": "localhost",
-      "include_modules": ["engine/sm"],
+      "include_modules": [
+        "engine/sm"
+      ],
       "data_cleaner": true,
       "data_limit": false,
       "workers": 2
     },
-    "localhost": {
-    },
+    "localhost": {},
     "sm_storage": {
-      "imzml": ["lithops_test", "imzml"],
-      "moldb": ["lithops_test", "moldb"],
-      "centroids": ["lithops_test", "centroids"],
-      "pipeline_cache": ["lithops_test", "pipeline_cache"]
+      "imzml": [
+        "lithops_test",
+        "imzml"
+      ],
+      "moldb": [
+        "lithops_test",
+        "moldb"
+      ],
+      "centroids": [
+        "lithops_test",
+        "centroids"
+      ],
+      "pipeline_cache": [
+        "lithops_test",
+        "pipeline_cache"
+      ]
     }
   },
-  "aws": {
-    "aws_access_key_id": "",
-    "aws_secret_access_key": "",
-    "aws_default_region": "eu-west-1"
+  "storage": {
+    "endpoint_url": "http://localhost:9000",
+    "access_key_id": "minioadmin",
+    "secret_access_key": "minioadmin"
   },
   "slack": {},
-  "ms_file_handlers": [{
+  "ms_file_handlers": [
+    {
       "type": "ims",
-      "extensions": ["imzml", "ibd"],
+      "extensions": [
+        "imzml",
+        "ibd"
+      ],
       "parser_factory": {
         "name": "ImzMLParser",
         "path": "pyimzml.ImzMLParser"
       },
       "img_storage_type": "fs"
-    }, {
+    },
+    {
       "type": "lcms",
-      "extensions": ["mzml"],
+      "extensions": [
+        "mzml"
+      ],
       "parser_factory": {
         "name": "MzMLParser",
         "path": "sm.engine.mzml_parser"
       },
       "img_storage_type": "db"
-  }],
+    }
+  ],
   "isotope_storage": {
     "path": "/tmp/isotope_storage"
   },
@@ -93,46 +121,55 @@
       }
     },
     "handlers": {
-        "console_warn": {
-            "class": "logging.StreamHandler",
-            "formatter": "sm",
-            "level": "WARNING"
-        },
-        "console_debug": {
-            "class": "logging.StreamHandler",
-            "formatter": "sm",
-            "level": "DEBUG"
-        },
-        "context_logger": {
-            "class": "sm.engine.utils.log_capture.ContextLogHandler",
-            "formatter": "sm",
-            "level": "INFO"
-        }
+      "console_warn": {
+        "class": "logging.StreamHandler",
+        "formatter": "sm",
+        "level": "WARNING"
+      },
+      "console_debug": {
+        "class": "logging.StreamHandler",
+        "formatter": "sm",
+        "level": "DEBUG"
+      },
+      "context_logger": {
+        "class": "sm.engine.utils.log_capture.ContextLogHandler",
+        "formatter": "sm",
+        "level": "INFO"
+      }
     },
     "root": {
-      "handlers": ["console_debug", "context_logger"],
+      "handlers": [
+        "console_debug",
+        "context_logger"
+      ],
       "level": "WARNING"
     },
     "loggers": {
-        "engine": {
-            "level": "INFO"
-        },
-        "api": {
-            "level": "INFO"
-        },
-        "update-daemon": {
-            "level": "INFO"
-        },
-        "annotate-daemon": {
-            "level": "INFO"
-        }
+      "engine": {
+        "level": "INFO"
+      },
+      "api": {
+        "level": "INFO"
+      },
+      "update-daemon": {
+        "level": "INFO"
+      },
+      "annotate-daemon": {
+        "level": "INFO"
+      }
     }
   },
   "ds_config_defaults": {
     "adducts": {
-      "+": ["+H", "+Na", "+K"],
-      "-": ["-H", "+Cl" ]
-    },
-    "moldb_names": ["HMDB-v2.5"]
+      "+": [
+        "+H",
+        "+Na",
+        "+K"
+      ],
+      "-": [
+        "-H",
+        "+Cl"
+      ]
+    }
   }
 }

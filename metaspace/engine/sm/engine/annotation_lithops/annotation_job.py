@@ -6,7 +6,6 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from pathlib import Path
 from typing import Optional, Dict, List, Union
 
-import boto3
 import pandas as pd
 from lithops.storage import Storage
 from lithops.storage.utils import StorageNoSuchKeyError, CloudObject
@@ -29,6 +28,7 @@ from sm.engine.molecular_db import read_moldb_file
 from sm.engine.util import split_s3_path, split_cos_path
 from sm.engine.config import SMConfig
 from sm.engine.utils.perf_profile import Profiler
+from sm.engine.storage import get_s3_client
 
 logger = logging.getLogger('engine')
 
@@ -241,11 +241,7 @@ class ServerAnnotationJob:
         sm_config = sm_config or SMConfig.get_conf()
         self.sm_storage = sm_config['lithops']['sm_storage']
         self.storage = Storage(sm_config['lithops'])
-        self.s3_client = boto3.client(
-            's3',
-            aws_access_key_id=sm_config['aws']['aws_access_key_id'],
-            aws_secret_access_key=sm_config['aws']['aws_secret_access_key'],
-        )
+        self.s3_client = get_s3_client()
         self.ds = ds
         self.perf = perf
         self.img_store = img_store

@@ -13,10 +13,10 @@ import getGroupAdminNames from '../../group/util/getGroupAdminNames'
 import * as DataLoader from 'dataloader'
 import { esDatasetByID } from '../../../../esConnector'
 import { ExternalLink } from '../../project/ExternalLink'
-import { S3 } from 'aws-sdk'
 import canViewEsDataset from '../operation/canViewEsDataset'
 import { MolecularDB } from '../../moldb/model'
 import { MolecularDbRepository } from '../../moldb/MolecularDbRepository'
+import { getS3Client } from '../../../../s3Client'
 
 interface DbDataset {
   id: string;
@@ -347,13 +347,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       let files: { filename: string, link: string }[]
       if (parsedPath != null) {
         const [, bucket, prefix] = parsedPath
-        const s3 = new S3({
-          region: config.aws.aws_region,
-          credentials: {
-            accessKeyId: config.aws.aws_access_key_id,
-            secretAccessKey: config.aws.aws_secret_access_key,
-          },
-        })
+        const s3 = getS3Client()
         const objects = await s3.listObjectsV2({
           Bucket: bucket,
           Prefix: prefix,

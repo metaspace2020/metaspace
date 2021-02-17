@@ -56,7 +56,8 @@ class GlobalInit:
         self.sm_config = SMConfig.get_conf()
 
         init_loggers(self.sm_config['logs'])
-        populate_aws_env_vars(self.sm_config['aws'])
+        if 'aws' in self.sm_config:
+            populate_aws_env_vars(self.sm_config['aws'])
         self.pool = ConnectionPool(self.sm_config['db'])
 
     def __enter__(self):
