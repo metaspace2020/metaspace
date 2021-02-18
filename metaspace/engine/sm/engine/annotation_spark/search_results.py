@@ -14,9 +14,7 @@ METRICS_INS = (
 )
 
 
-def post_images_to_image_store(
-    formula_images_rdd, alpha_channel, img_store, img_store_type, n_peaks
-):
+def post_images_to_image_store(formula_images_rdd, alpha_channel, img_store, n_peaks):
     logger.info(f'Posting iso images to {img_store}')
     png_generator = PngGenerator(alpha_channel, greyscale=True)
 
@@ -25,7 +23,7 @@ def post_images_to_image_store(
         for k, img in enumerate(imgs):
             if img is not None:
                 img_bytes = png_generator.generate_png(img.toarray())
-                iso_image_ids[k] = img_store.post_image(img_store_type, 'iso_image', img_bytes)
+                iso_image_ids[k] = img_store.post_image('iso_image', img_bytes)
         return {'iso_image_ids': iso_image_ids}
 
     return dict(formula_images_rdd.mapValues(generate_png_and_post).collect())
@@ -82,7 +80,7 @@ class SearchResults:
         )
         db.insert(METRICS_INS, list(rows))
 
-    def store(self, metrics_df, formula_images_rdd, alpha_channel, db, img_store, img_store_type):
+    def store(self, metrics_df, formula_images_rdd, alpha_channel, db, img_store):
         """Save formula metrics and images
 
         Args
@@ -95,12 +93,11 @@ class SearchResults:
             Image alpha channel (2D, 0..1)
         db : sm.engine.DB
             database connection
-        img_store : sm.engine.image_store.ImageStoreServiceWrapper
+        img_store : sm.engine.image_store.ImageStore
             m/z image store
-        img_store_type: str
         """
         logger.info('Storing search results to the DB')
         formula_image_ids = post_images_to_image_store(
-            formula_images_rdd, alpha_channel, img_store, img_store_type, self.n_peaks
+            formula_images_rdd, alpha_channel, img_store, self.n_peaks
         )
         self.store_ion_metrics(metrics_df, formula_image_ids, db)

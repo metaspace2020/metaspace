@@ -22,7 +22,7 @@ from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.ds_config import DSConfig
 from sm.engine.es_export import ESExporter
-from sm.engine.image_store import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStore
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.molecular_db import read_moldb_file
 from sm.engine.util import split_s3_path, split_cos_path
@@ -225,7 +225,7 @@ class ServerAnnotationJob:
     def __init__(
         self,
         executor: Executor,
-        img_store: ImageStoreServiceWrapper,
+        img_store: ImageStore,
         ds: Dataset,
         perf: Profiler,
         sm_config: Optional[Dict] = None,
@@ -274,13 +274,10 @@ class ServerAnnotationJob:
 
     def _store_images(self, all_results_dfs, formula_png_iter):
         db_formula_image_ids = defaultdict(dict)
-        img_store_type = self.ds.get_ion_img_storage_type(self.db)
 
         def _upload_images(formula_id, db_id, pngs):
             image_ids = [
-                self.img_store.post_image(img_store_type, 'iso_image', png)
-                if png is not None
-                else None
+                self.img_store.post_image('iso_image', png) if png is not None else None
                 for png in pngs
             ]
             db_formula_image_ids[db_id][formula_id] = {'iso_image_ids': image_ids}

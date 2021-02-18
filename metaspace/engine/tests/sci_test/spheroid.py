@@ -13,7 +13,7 @@ from sm.engine.annotation_lithops.executor import Executor
 import sm.engine.annotation_lithops.executor as lithops_executor
 from sm.engine.annotation_spark.annotation_job import AnnotationJob
 from sm.engine.db import DB
-from sm.engine.image_store import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStore
 from sm.engine.util import bootstrap_and_run
 from sm.engine.config import proj_root
 from sm.engine.utils.create_ds_from_files import create_ds_from_files
@@ -140,7 +140,7 @@ class SciTester:
         if mock_img_store:
             img_store = self._create_img_store_mock()
         else:
-            img_store = ImageStoreServiceWrapper(self.sm_config['services']['img_service_url'])
+            img_store = ImageStore(self.sm_config['services']['img_service_url'])
 
         os.environ['PYSPARK_PYTHON'] = sys.executable
 

@@ -107,7 +107,6 @@ def run_daemons(db, es, sm_config):
     manager = DatasetManager(
         db=db,
         es=es,
-        img_store=img_store_mock,
         status_queue=status_queue_pub,
         logger=logger,
         sm_config=sm_config,

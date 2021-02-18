@@ -80,8 +80,7 @@ FROM (
     d.config #> '{isotope_generation,adducts}' AS ds_adducts,
     d.config #> '{isotope_generation,neutral_losses}' AS ds_neutral_losses,
     d.config #> '{isotope_generation,chem_mods}' AS ds_chem_mods,
-    d.acq_geometry AS ds_acq_geometry,
-    d.ion_img_storage_type AS ds_ion_img_storage
+    d.acq_geometry AS ds_acq_geometry
   FROM dataset as d
   LEFT JOIN job ON job.ds_id = d.id
   GROUP BY d.id) as d

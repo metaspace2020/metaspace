@@ -15,7 +15,7 @@ from sm.engine.config import SMConfig
 logger = logging.getLogger('engine')
 
 
-class ImageStoreServiceWrapper:
+class ImageStore:
     def __init__(self, img_service_url=None):
         if img_service_url is None:
             img_service_url = SMConfig.get_conf()['services']['img_service_url']
@@ -25,23 +25,20 @@ class ImageStoreServiceWrapper:
             self._img_service_url, HTTPAdapter(max_retries=5, pool_maxsize=50, pool_block=True)
         )
 
-    def _format_url(self, storage_type, img_type, method='', img_id=''):
-        assert storage_type, 'Wrong storage_type: %s' % storage_type
-        assert img_type, 'Wrong img_type: %s' % img_type
-        return path.join(self._img_service_url, storage_type, img_type + 's', method, img_id)
+    def _format_url(self, img_type, method='', img_id=''):
+        return path.join(self._img_service_url, img_type + 's', method, img_id)
 
     @retry_on_exception()
-    def post_image(self, storage_type: str, img_type: str, img_bytes: bytes) -> str:
+    def post_image(self, img_type: str, img_bytes: bytes) -> str:
         """
         Args:
-            storage_type: db | fs
             img_type: iso_image | optical_image | raw_optical_image | ion_thumbnail
             img_bytes: bytes of image saved as PNG
 
         Returns:
             new image id
         """
-        url = self._format_url(storage_type=storage_type, img_type=img_type, method='upload')
+        url = self._format_url(img_type=img_type, method='upload')
         resp = self._session.post(url, files={img_type: img_bytes})
         resp.raise_for_status()
         return resp.json()['image_id']
@@ -55,12 +52,10 @@ class ImageStoreServiceWrapper:
             )  # logger has issues with pickle when sent to spark
 
     @retry_on_exception()
-    def get_image_by_id(self, storage_type, img_type, img_id):
+    def get_image_by_id(self, img_type, img_id):
         """
         Args
         ---
-        storage_type: str
-            db | fs
         img_type: str
             iso_image | optical_image | raw_optical_image | ion_thumbnail
         img_id: str
@@ -69,7 +64,7 @@ class ImageStoreServiceWrapper:
         ---
         Image.Image
         """
-        url = self._format_url(storage_type=storage_type, img_type=img_type, img_id=img_id)
+        url = self._format_url(img_type=img_type, img_id=img_id)
         try:
             response = self._session.get(url)
             response.raise_for_status()
@@ -79,13 +74,12 @@ class ImageStoreServiceWrapper:
             raise
 
     def get_ion_images_for_analysis(
-        self, storage_type, img_ids, hotspot_percentile=99, max_size=None, max_mem_mb=2048
+        self, img_ids, hotspot_percentile=99, max_size=None, max_mem_mb=2048
     ):
         """Retrieves ion images, does hot-spot removal and resizing,
         and returns them as numpy array.
 
         Args:
-            storage_type (str):
             img_ids (list[str]):
             hotspot_percentile (float):
             max_size (Union[None, tuple[int, int]]):
@@ -133,7 +127,7 @@ class ImageStoreServiceWrapper:
             value = np.empty((len(img_ids), h * w), dtype=np.float32)
 
         def process_img(img_id, idx, do_setup=False):
-            img = self.get_image_by_id(storage_type, 'iso_image', img_id)
+            img = self.get_image_by_id('iso_image', img_id)
             if do_setup:
                 setup_shared_vals(img)
 
@@ -165,10 +159,8 @@ class ImageStoreServiceWrapper:
         return value, mask, (h, w)
 
     @retry_on_exception()
-    def delete_image_by_id(self, storage_type, img_type, img_id):
-        url = self._format_url(
-            storage_type=storage_type, img_type=img_type, method='delete', img_id=img_id
-        )
+    def delete_image_by_id(self, img_type, img_id):
+        url = self._format_url(img_type=img_type, method='delete', img_id=img_id)
         self.delete_image(url)
 
     def __str__(self):

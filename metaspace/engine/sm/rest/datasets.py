@@ -5,7 +5,7 @@ import bottle
 
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
-from sm.engine.image_store import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStore
 from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_DS_STATUS, SM_UPDATE, SM_LITHOPS
 from sm.engine.errors import UnknownDSID, DSIsBusy
 from sm.engine.config import SMConfig
@@ -30,8 +30,7 @@ def _create_queue_publisher(qdesc):
 
 
 def _create_dataset_manager(db):
-    img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
-    img_store.storage_type = 'fs'
+    img_store = ImageStore(sm_config['services']['img_service_url'])
     return SMapiDatasetManager(
         db=db,
         es=ESExporter(db, sm_config),

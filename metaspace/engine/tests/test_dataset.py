@@ -64,7 +64,6 @@ def test_dataset_load_existing_ds_works(fill_db, metadata, ds_config):
         status=DatasetStatus.FINISHED,
         status_update_dt=upload_dt,
         is_public=True,
-        ion_img_storage_type='fs',
     )
 
 

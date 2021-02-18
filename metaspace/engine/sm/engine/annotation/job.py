@@ -8,7 +8,7 @@ from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.errors import UnknownDSID
 from sm.engine.es_export import ESExporter
-from sm.engine.image_store import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStore
 
 logger = logging.getLogger('engine')
 
@@ -34,13 +34,7 @@ def del_jobs(ds: Dataset, moldb_ids: Optional[Iterable[int]] = None):
     """
     db = DB()
     es = ESExporter(db)
-    img_store = ImageStoreServiceWrapper()
-
-    try:
-        storage_type = ds.get_ion_img_storage_type(db)
-    except UnknownDSID:
-        logger.warning('Attempt to delete job of non-existing dataset. Skipping')
-        return
+    img_store = ImageStore()
 
     if moldb_ids is None:
         moldb_ids = get_ds_moldb_ids(ds.id)
@@ -58,7 +52,7 @@ def del_jobs(ds: Dataset, moldb_ids: Optional[Iterable[int]] = None):
                 (ds.id, moldb.id),
             )
             for _ in executor.map(
-                lambda img_id: img_store.delete_image_by_id(storage_type, 'iso_image', img_id),
+                lambda img_id: img_store.delete_image_by_id('iso_image', img_id),
                 (img_id for img_ids in img_id_rows for img_id in img_ids if img_id is not None),
             ):
                 pass

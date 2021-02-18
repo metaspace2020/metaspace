@@ -9,7 +9,7 @@ from sm.engine.es_export import ESExporter
 from sm.engine.queue import QueuePublisher
 from sm.rest.dataset_manager import SMapiDatasetManager
 from sm.rest.dataset_manager import DatasetActionPriority, DatasetStatus
-from sm.engine.image_store import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStore
 from sm.engine.optical_image import OpticalImageType
 from tests.utils import create_test_ds
 
@@ -22,7 +22,7 @@ def create_api_ds_man(
     update_queue_mock = update_queue or MagicMock(QueuePublisher)
     lit_queue_mock = lit_queue or MagicMock(QueuePublisher)
     status_queue_mock = status_queue or MagicMock(QueuePublisher)
-    img_store_mock = img_store or MagicMock(spec=ImageStoreServiceWrapper)
+    img_store_mock = img_store or MagicMock(spec=ImageStore)
 
     return SMapiDatasetManager(
         db=DB(),
@@ -67,7 +67,6 @@ def create_ds_doc(
         status=status,
         moldb_ids=moldb_ids,
         adducts=adducts,
-        ion_img_storage_type='fs',
         is_public=True,
     )
 
@@ -98,7 +97,7 @@ class TestSMapiDatasetManager:
     def test_add_optical_image(self, fill_db, metadata, ds_config):
         action_queue_mock = MagicMock(spec=QueuePublisher)
         es_mock = MagicMock(spec=ESExporter)
-        img_store_mock = MagicMock(ImageStoreServiceWrapper)
+        img_store_mock = MagicMock(ImageStore)
         img_store_mock.post_image.side_effect = [
             'opt_img_scaled_id1',
             'opt_img_id1',

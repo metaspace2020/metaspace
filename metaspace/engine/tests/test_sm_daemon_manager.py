@@ -10,7 +10,7 @@ from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.queue import QueuePublisher
 from sm.engine.dataset import DatasetStatus, Dataset, generate_ds_config
-from sm.engine.image_store import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStore
 
 
 def create_ds(
@@ -44,7 +44,6 @@ def create_ds(
         metadata=metadata or {},
         config=config,
         status=status,
-        ion_img_storage_type='fs',
     )
 
 
@@ -52,7 +51,7 @@ def create_daemon_man(db=None, es=None, img_store=None, status_queue=None):
     db = db or DB()
     es_mock = es or MagicMock(spec=ESExporter)
     status_queue_mock = status_queue or MagicMock(QueuePublisher)
-    img_store_mock = img_store or MagicMock(spec=ImageStoreServiceWrapper)
+    img_store_mock = img_store or MagicMock(spec=ImageStore)
     img_store_mock.get_ion_images_for_analysis.return_value = (
         [np.zeros((2, 2)), np.zeros((2, 2))],
         None,
@@ -108,7 +107,7 @@ class TestSMDaemonDatasetManager:
         assert index_ds_kw_args.get('moldb').name == 'HMDB'
         assert index_ds_kw_args.get('moldb').version == 'v4'
 
-    @patch('sm.engine.annotation.job.ImageStoreServiceWrapper', spec=ImageStoreServiceWrapper)
+    @patch('sm.engine.annotation.job.ImageStore', spec=ImageStore)
     @patch('sm.engine.annotation.job.ESExporter', spec=ESExporter)
     def test_delete_ds(self, EsMock, ImgStoreMock, fill_db):
         db = DB()
@@ -121,7 +120,7 @@ class TestSMDaemonDatasetManager:
 
         ids = [f'iso_image_{i}{j}' for i, j in product([1, 2], [1, 2])]
         ImgStoreMock.return_value.delete_image_by_id.assert_has_calls(
-            [call('fs', 'iso_image', ids[0]), call('fs', 'iso_image', ids[1])]
+            [call('iso_image', ids[0]), call('iso_image', ids[1])]
         )
         EsMock.return_value.delete_ds.assert_has_calls([call(ds_id)])
         assert db.select_one('SELECT * FROM dataset WHERE id = %s', params=(ds_id,)) == []

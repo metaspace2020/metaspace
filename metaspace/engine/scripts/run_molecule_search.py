@@ -8,14 +8,14 @@ from pathlib import Path
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.daemons.dataset_manager import DatasetManager
-from sm.engine.image_store import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStore
 from sm.engine.util import bootstrap_and_run
 from sm.engine.utils.create_ds_from_files import create_ds_from_files
 
 
 def run_search(sm_config):
     db = DB()
-    img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
+    img_store = ImageStore(sm_config['services']['img_service_url'])
     manager = DatasetManager(db, ESExporter(db, sm_config), img_store)
 
     config_path = args.config_path or Path(args.input_path) / 'config.json'

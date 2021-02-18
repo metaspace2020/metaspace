@@ -9,7 +9,7 @@ from multiprocessing.process import parent_process
 from sm.engine.daemons.lithops import LithopsDaemon
 from sm.engine.db import DB, ConnectionPool
 from sm.engine.es_export import ESExporter
-from sm.engine.image_store import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStore
 from sm.engine.daemons.update import SMUpdateDaemon
 from sm.engine.daemons.annotate import SMAnnotateDaemon
 from sm.engine.daemons.dataset_manager import DatasetManager
@@ -32,7 +32,7 @@ def get_manager():
     return DatasetManager(
         db=db,
         es=ESExporter(db, sm_config),
-        img_store=ImageStoreServiceWrapper(sm_config['services']['img_service_url']),
+        img_store=ImageStore(sm_config['services']['img_service_url']),
         status_queue=status_queue_pub,
         logger=logger,
     )

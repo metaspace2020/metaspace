@@ -9,7 +9,7 @@ from scipy.sparse import coo_matrix
 
 from sm.engine.db import DB
 from sm.engine.ion_mapping import ION_SEL
-from sm.engine.image_store import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStore
 from sm.engine.annotation_spark.search_results import (
     SearchResults,
     METRICS_INS,
@@ -123,7 +123,7 @@ def test_save_ion_img_metrics_correct_db_call(search_results):
 def test_isotope_images_are_stored(search_results, pysparkling_context):
     mask = np.array([[1, 1], [1, 0]])
     img_id = "iso_image_id"
-    img_store_mock = Mock(spec=ImageStoreServiceWrapper)
+    img_store_mock = Mock(spec=ImageStore)
     img_store_mock.post_image.return_value = img_id
 
     img_store_mock.reset_mock()
@@ -133,7 +133,7 @@ def test_isotope_images_are_stored(search_results, pysparkling_context):
             (1, [coo_matrix([[1, 1], [0, 1]]), None, None, None]),
         ]
     )
-    ids = post_images_to_image_store(formula_images_rdd, mask, img_store_mock, 'fs', 4)
+    ids = post_images_to_image_store(formula_images_rdd, mask, img_store_mock, 4)
     assert ids == {
         0: {'iso_image_ids': [img_id, None, img_id, None]},
         1: {'iso_image_ids': [img_id, None, None, None]},

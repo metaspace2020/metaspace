@@ -95,8 +95,7 @@
       "parser_factory": {
         "name": "ImzMLParser",
         "path": "pyimzml.ImzMLParser"
-      },
-      "img_storage_type": "fs"
+      }
     },
     {
       "type": "lcms",
@@ -106,8 +105,7 @@
       "parser_factory": {
         "name": "MzMLParser",
         "path": "sm.engine.mzml_parser"
-      },
-      "img_storage_type": "db"
+      }
     }
   ],
   "isotope_storage": {

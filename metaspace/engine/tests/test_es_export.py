@@ -39,9 +39,8 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
     db = DB()
     db.insert(
         "INSERT INTO dataset(id, name, input_path, config, metadata, upload_dt, status, "
-        "status_update_dt, is_public, ion_img_storage_type, acq_geometry) "
-        "VALUES (%s, 'ds_name', 'ds_input_path', %s, %s, %s, 'ds_status', %s, "
-        "true, 'fs', '{}')",
+        "status_update_dt, is_public, acq_geometry) "
+        "VALUES (%s, 'ds_name', 'ds_input_path', %s, %s, %s, 'ds_status', %s, true, '{}')",
         [[ds_id, json.dumps(ds_config), json.dumps(metadata), upload_dt, upload_dt]],
     )
     moldb = create_test_molecular_db()
@@ -126,7 +125,6 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         'ds_id': ds_id,
         'ds_upload_dt': upload_dt,
         'ds_is_public': True,
-        'ds_ion_img_storage': 'fs',
         'ds_submitter_email': 'email',
         'ds_submitter_id': user_id,
         'ds_submitter_name': 'user_name',

@@ -59,7 +59,7 @@ class Dataset:
 
     DS_SEL = (
         'SELECT id, name, input_path, upload_dt, metadata, config, status, '
-        '   status_update_dt, is_public, ion_img_storage_type '
+        '   status_update_dt, is_public '
         'FROM dataset WHERE id = %s'
     )
     DS_UPD = (
@@ -77,8 +77,6 @@ class Dataset:
 
     ACQ_GEOMETRY_SEL = 'SELECT acq_geometry FROM dataset WHERE id = %s'
     ACQ_GEOMETRY_UPD = 'UPDATE dataset SET acq_geometry = %s WHERE id = %s'
-    IMG_STORAGE_TYPE_SEL = 'SELECT ion_img_storage_type FROM dataset WHERE id = %s'
-    IMG_STORAGE_TYPE_UPD = 'UPDATE dataset SET ion_img_storage_type = %s WHERE id = %s'
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -92,7 +90,6 @@ class Dataset:
         status: str = DatasetStatus.QUEUED,
         status_update_dt: datetime = None,
         is_public: bool = True,
-        ion_img_storage_type: str = 'fs',
     ):
         self.id = id
         self.name = name
@@ -101,7 +98,6 @@ class Dataset:
         self.status = status
         self.status_update_dt = status_update_dt or datetime.now()
         self.is_public = is_public
-        self.ion_img_storage_type = ion_img_storage_type
 
         self.metadata = metadata
         self.config = config
@@ -162,18 +158,6 @@ class Dataset:
 
     def save_acq_geometry(self, db, acq_geometry):
         db.alter(self.ACQ_GEOMETRY_UPD, params=(json.dumps(acq_geometry), self.id))
-
-    def get_ion_img_storage_type(self, db):
-        if not self.ion_img_storage_type:
-            res = db.select_one(Dataset.IMG_STORAGE_TYPE_SEL, params=(self.id,))
-            if not res:
-                raise UnknownDSID('Dataset does not exist: {}'.format(self.id))
-            self.ion_img_storage_type = res[0]
-        return self.ion_img_storage_type
-
-    def save_ion_img_storage_type(self, db, storage_type):
-        db.alter(self.IMG_STORAGE_TYPE_UPD, params=(storage_type, self.id))
-        self.ion_img_storage_type = storage_type
 
     def to_queue_message(self):
         msg = {'ds_id': self.id, 'ds_name': self.name, 'input_path': self.input_path}

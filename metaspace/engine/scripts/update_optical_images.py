@@ -5,11 +5,11 @@ from functools import partial
 from sm.engine.db import DB
 from sm.engine.optical_image import add_optical_image
 from sm.engine.util import bootstrap_and_run
-from sm.engine.image_store import ImageStoreServiceWrapper
+from sm.engine.image_store import ImageStore
 
 
 def update_optical_images(sm_config, ds_id_str, sql_where):
-    img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
+    img_store = ImageStore(sm_config['services']['img_service_url'])
     db = DB()
 
     if ds_id_str:
