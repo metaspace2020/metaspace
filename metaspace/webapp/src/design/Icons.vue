@@ -55,31 +55,21 @@
           Icon Props
         </h3>
         <fade-transition>
-          <el-checkbox
-            v-if="iconComponent !== 'secondary-icon'"
-            key="not-secondary"
-            v-model="iconProps.inverse"
-          >
-            Inverse
-          </el-checkbox>
+          <div v-if="iconProps.length">
+            <el-checkbox
+              v-for="prop in iconProps"
+              :key="prop"
+              v-model="iconState[prop]"
+            >
+              {{ prop }}
+            </el-checkbox>
+          </div>
           <p
             v-else
             class="text-sm"
           >
-            No props.
+            (none)
           </p>
-        </fade-transition>
-        <fade-transition>
-          <span
-            v-if="iconComponent === 'stateful-icon'"
-            class="ml-8"
-          >
-            <el-checkbox v-model="iconProps.active">Active</el-checkbox>
-            <el-checkbox
-              v-model="iconProps.hover"
-              :disabled="iconProps.active"
-            >Hover</el-checkbox>
-          </span>
         </fade-transition>
       </div>
     </form>
@@ -92,9 +82,7 @@
         <component
           :is="iconComponent"
           class="mx-auto mb-1 h-6 w-6"
-          :active="iconProps.active"
-          :hover="iconProps.hover"
-          :inverse="iconProps.inverse"
+          v-bind="iconState"
         >
           <component :is="`${icon}-svg`" />
         </component>
@@ -106,7 +94,7 @@
   </section>
 </template>
 <script lang="ts">
-import { defineComponent, ref, computed, reactive } from '@vue/composition-api'
+import { defineComponent, ref, computed, watch } from '@vue/composition-api'
 
 import StatefulIcon from '../components/StatefulIcon.vue'
 import PrimaryIcon from '../components/PrimaryIcon.vue'
@@ -116,6 +104,14 @@ import * as Form from '../components/Form'
 import FadeTransition from '../components/FadeTransition'
 
 const { default: iconConfig, ...svgComponents } = RefactoringUIIcons
+
+type IconName = 'stateful-icon' | 'primary-icon' | 'secondary-icon'
+
+const propDefs = {
+  'stateful-icon': ['inverse', 'active', 'hover'],
+  'primary-icon': ['inverse', 'large'],
+  'secondary-icon': [],
+}
 
 export default defineComponent({
   components: {
@@ -127,21 +123,23 @@ export default defineComponent({
     ...Form,
   },
   setup() {
-    const iconComponent = ref('stateful-icon')
+    const iconComponent = ref<IconName>('stateful-icon')
     const icons = computed(() =>
       (iconComponent.value === 'secondary-icon'
         ? iconConfig.filter(_ => _.secondary)
         : iconConfig)
         .map(_ => _.name),
     )
+    const iconProps = computed(() => propDefs[iconComponent.value])
+    const iconState = ref({})
+    watch(iconComponent, () => {
+      iconState.value = {}
+    })
     return {
       icons,
       iconComponent,
-      iconProps: reactive({
-        active: false,
-        inverse: false,
-        hover: false,
-      }),
+      iconState,
+      iconProps,
     }
   },
 })
