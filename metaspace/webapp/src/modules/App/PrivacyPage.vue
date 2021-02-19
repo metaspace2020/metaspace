@@ -251,7 +251,7 @@ export default {
   },
 }
 </script>
-<style scoped lang="postcss">
+<style scoped>
   td:first-child {
     @apply w-4/12;
   }

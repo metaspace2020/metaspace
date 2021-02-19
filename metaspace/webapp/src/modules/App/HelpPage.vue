@@ -159,7 +159,7 @@ export default {
 }
 </script>
 
-<style scoped lang="postcss">
+<style scoped>
 h3 {
   @apply text-lg leading-9 font-medium my-0;
 }

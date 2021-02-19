@@ -3,7 +3,7 @@
     <slot />
   </div>
 </template>
-<style lang="postcss">
+<style>
 .sm-content-page.sm-main-content { /* .sm-main-content is added to page routes */
   @apply p-18 max-w-4xl box-border mx-auto leading-6 text-base;
 }
