@@ -139,7 +139,7 @@ export default defineComponent<FileStatusProps>({
   },
 })
 </script>
-<style scoped lang="postcss">
+<style scoped>
 .sm-file-icon .primary {
   @apply fill-current text-gray-400;
 }

@@ -9,7 +9,7 @@ export default Vue.extend({
   // needed for use in tsx files
 })
 </script>
-<style scoped lang="postcss">
+<style scoped>
 i >>> svg {
   width: 100%;
 }

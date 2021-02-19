@@ -16,7 +16,7 @@ export default defineComponent({
   },
 })
 </script>
-<style scoped lang="postcss">
+<style scoped>
 i >>> svg {
   width: 100%;
 }
