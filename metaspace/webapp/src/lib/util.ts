@@ -112,6 +112,10 @@ export function getOS() {
   return os
 }
 
+// not bulletproof but should do the job, local S3 uses path-style urls
 export const getS3Bucket = (parsedUrl: URL) => {
-  return parsedUrl.host.split('.')[0]
+  if (parsedUrl.host.includes('.')) {
+    return parsedUrl.host.split('.')[0]
+  }
+  return parsedUrl.pathname.split('/')[1]
 }

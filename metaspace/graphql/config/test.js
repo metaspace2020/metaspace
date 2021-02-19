@@ -40,7 +40,6 @@ config.services = {}
 config.services.sm_engine_api_host = 'localhost'
 
 config.upload = {}
-config.upload.destination = 's3'
 config.upload.bucket = 'sm-bucket'
 
 config.db = {}
@@ -66,12 +65,6 @@ config.slack.channel = ''
 config.jwt = {}
 config.jwt.secret = ''
 config.jwt.algorithm = 'HS256'
-
-config.aws = {
-  aws_access_key_id: '',
-  aws_secret_access_key: '',
-  aws_region: '',
-}
 
 config.features = {
   graphqlMocks: false,

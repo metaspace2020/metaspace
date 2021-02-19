@@ -18,14 +18,16 @@ def ds_dims(coordinates):
 
 
 def get_pixel_indices(coordinates):
-    _coord = np.array(coordinates)[:, :2]
-    _coord = np.around(_coord, 5)
+    """
+    Converts original spectrum indexes (which may be out of order, or sparse) to "sp_i" values,
+    which represent the pixel index of the output image, i.e. `y, x = divmod(sp_i, width)`.
+    """
+    _coord = np.array(coordinates, dtype=np.int64)[:, :2]
     _coord -= np.amin(_coord, axis=0)
 
-    _, ncols = ds_dims(coordinates)
+    ncols = np.max(_coord[:, 0]) + 1
     pixel_indices = _coord[:, 1] * ncols + _coord[:, 0]
-    pixel_indices = pixel_indices.astype(np.int32)
-    return pixel_indices
+    return pixel_indices.astype(np.uint32)
 
 
 def jsonhash(obj) -> str:

@@ -5,7 +5,7 @@ from functools import partial
 
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.dataset import Dataset
-from sm.engine.ion_thumbnail import (
+from sm.engine.postprocessing.ion_thumbnail import (
     DEFAULT_ALGORITHM,
     ALGORITHMS,
     generate_ion_thumbnail,

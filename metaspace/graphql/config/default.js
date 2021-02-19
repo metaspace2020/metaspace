@@ -50,10 +50,9 @@ module.exports = {
     },
   },
 
-  upload: {
-    destination: '/opt/data/metaspace/uploads',
+  s3_storage: {
     bucket: '',
-    moldbPrefix: 'databases',
+    moldb_prefix: 'databases',
   },
 
   services: {
@@ -108,12 +107,6 @@ module.exports = {
   slack: {
     webhook_url: '',
     channel: '',
-  },
-
-  aws: {
-    aws_access_key_id: '',
-    aws_secret_access_key: '',
-    aws_region: 'eu-west-1',
   },
 
   features: {

@@ -1,10 +1,7 @@
 from __future__ import annotations
 
 import logging
-import os
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
-from pathlib import Path
-from tempfile import TemporaryDirectory
+from concurrent.futures import ThreadPoolExecutor
 from typing import Tuple, List
 
 import numpy as np
@@ -15,13 +12,12 @@ from pyimzml.ImzMLParser import ImzMLParser, PortableSpectrumReader
 
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import (
-    serialize_to_file,
-    deserialize_from_file,
     save_cobj,
     CObj,
     get_ranges_from_cobject,
     load_cobj,
 )
+from sm.engine.annotation_lithops.utils import get_pixel_indices
 from sm.engine.utils.perf_profile import SubtaskProfiler
 
 logger = logging.getLogger('annotation-pipeline')
@@ -70,234 +66,113 @@ def get_spectra(
 
         mz_data[i] = None  # type: ignore # Avoid holding memory longer than necessary
         int_data[i] = None  # type: ignore
-        yield sp_idx, mzs, ints
+        yield sp_idx, mzs.copy(), ints.copy()
 
 
-def plan_dataset_chunks(imzml_reader, max_size=512 * 1024 ** 2):
-    item_size = np.dtype(imzml_reader.mzPrecision).itemsize + 4 + 4
-    coord_sizes = np.array(imzml_reader.mzLengths) * item_size
+def _load_spectra(storage, imzml_reader, ibd_cobject):
+    # Pre-allocate lists of mz & int arrays
+    n_spectra = len(imzml_reader.coordinates)
+    mz_arrays = [np.array([], dtype=imzml_reader.mzPrecision)] * n_spectra
+    int_arrays = [np.array([], dtype=np.float32)] * n_spectra
+    sp_lens = np.empty(n_spectra, np.int64)
 
-    chunk_ranges = []
-    chunk_start = 0
-    chunk_size = 0
-    for (i, size) in enumerate(coord_sizes):
-        if chunk_size + size > max_size:
-            chunk_ranges.append((chunk_start, i))
-            chunk_start = i
-            chunk_size = 0
-        chunk_size += size
-    chunk_ranges.append((chunk_start, len(coord_sizes)))
-    return chunk_ranges
+    def read_spectrum_chunk(start_end):
+        spectra = get_spectra(storage, imzml_reader, ibd_cobject, list(range(*start_end)))
+        for sp_i, mzs, ints in spectra:
+            mz_arrays[sp_i] = mzs
+            int_arrays[sp_i] = ints.astype(np.float32)
+            sp_lens[sp_i] = len(ints)
+
+    # Break into approx. 100MB chunks to read in parallel
+    n_peaks = np.sum(imzml_reader.mzLengths)
+    n_chunks = min(int(np.ceil(n_peaks / (10 * 2 ** 20))), n_spectra)
+    chunk_bounds = np.linspace(0, n_spectra, n_chunks + 1, dtype=np.int64)
+    spectrum_chunks = zip(chunk_bounds, chunk_bounds[1:])
+
+    with ThreadPoolExecutor(4) as executor:
+        for _ in executor.map(read_spectrum_chunk, spectrum_chunks):
+            pass
+
+    return np.concatenate(mz_arrays), np.concatenate(int_arrays), sp_lens
 
 
-def parse_dataset_chunk(storage, imzml_reader, ibd_cobject, start, end):
-    def get_pixel_indices(coordinates):
-        _coord = np.array(coordinates, dtype=np.uint32)
-        _coord -= np.min(_coord, axis=0)
-        xs, ys = _coord[:, 0], _coord[:, 1]
-        return ys * (np.max(xs) + 1) + xs
+def _sort_spectra(imzml_reader, mzs, ints, sp_lens):
+    # Specify mergesort explicitly because numpy often chooses heapsort which is super slow
+    by_mz = np.argsort(mzs, kind='mergesort')
 
+    # The existing `mzs` and `ints` arrays can't be garbage-collected because the calling function
+    # holds references to them. Overwrite the original arrays with the temp sorted arrays so that
+    # the temp arrays can be freed instead.
+    mzs[:] = mzs[by_mz]
+    ints[:] = ints[by_mz]
+    # Build sp_idxs after sorting mzs. Sorting mzs uses the most memory, so it's best to keep
+    # sp_idxs in a compacted form with sp_lens until the last minute.
     sp_id_to_idx = get_pixel_indices(imzml_reader.coordinates)
-    sp_inds_list, mzs_list, ints_list = [], [], []
-
-    spectra = get_spectra(storage, imzml_reader, ibd_cobject, list(range(start, end)))
-    for curr_sp_i, mzs_, ints_ in spectra:
-        ints_ = ints_.astype(np.float32)
-        sp_idx = np.ones_like(mzs_, dtype=np.uint32) * sp_id_to_idx[curr_sp_i]
-        mzs_list.append(mzs_)
-        ints_list.append(ints_)
-        sp_inds_list.append(sp_idx)
-
-    mzs = np.concatenate(mzs_list)
-    by_mz = np.argsort(mzs)
-    return pd.DataFrame(
-        {
-            'mz': mzs[by_mz],
-            'int': np.concatenate(ints_list)[by_mz].astype(np.float32),
-            'sp_i': np.concatenate(sp_inds_list)[by_mz],
-        }
-    )
+    sp_idxs = np.empty(len(ints), np.uint32)
+    sp_lens = np.insert(np.cumsum(sp_lens), 0, 0)
+    for sp_idx, start, end in zip(sp_id_to_idx, sp_lens[:-1], sp_lens[1:]):
+        sp_idxs[start:end] = sp_idx
+    sp_idxs = sp_idxs[by_mz]
+    return mzs, ints, sp_idxs
 
 
-def define_ds_segments(
-    storage: Storage,
-    imzml_reader: PortableSpectrumReader,
-    ibd_cobject: CloudObject,
-    ds_segm_size_mb=5,
-    sample_sp_n=100,
-):
-    sample_size = min(sample_sp_n, len(imzml_reader.coordinates))
-    sample_sp_inds = np.random.choice(np.arange(len(imzml_reader.coordinates)), sample_size)
-    sample_mzs = np.concatenate(
-        [mz for sp_idx, mz, ints in get_spectra(storage, imzml_reader, ibd_cobject, sample_sp_inds)]
-    )
-
-    total_n_mz = np.sum(imzml_reader.mzLengths)
-
+def _upload_segments(storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs):
+    # Split into segments no larger than ds_segm_size_mb
+    total_n_mz = len(sp_idxs)
     row_size = (4 if imzml_reader.mzPrecision == 'f' else 8) + 4 + 4
     segm_n = int(np.ceil(total_n_mz * row_size / (ds_segm_size_mb * 2 ** 20)))
+    segm_bounds = np.linspace(0, total_n_mz, segm_n + 1, dtype=np.int64)
+    segm_ranges = list(zip(segm_bounds[:-1], segm_bounds[1:]))
+    ds_segm_lens = np.diff(segm_bounds)
+    ds_segments_bounds = np.column_stack([mzs[segm_bounds[:-1]], mzs[segm_bounds[1:] - 1]])
 
-    segm_bounds_q = [i * 1 / segm_n for i in range(0, segm_n + 1)]
-    segm_lower_bounds = np.quantile(sample_mzs, segm_bounds_q)
-    ds_segments_bounds = np.array(list(zip(segm_lower_bounds[:-1], segm_lower_bounds[1:])))
-
-    max_mz_value = 10 ** 5
-    ds_segments_bounds[0, 0] = 0
-    ds_segments_bounds[-1, 1] = max_mz_value
-
-    logger.debug(f'Defined {len(ds_segments_bounds)} segments')
-    return ds_segments_bounds
-
-
-def segment_spectra_chunk(chunk_i, sp_mz_int_buf, ds_segments_bounds, ds_segments_path):
-    def _segment(args):
-        segm_i, (lo_idx, hi_idx) = args
-        segm_start, segm_end = np.searchsorted(sp_mz_int_buf.mz.values, (lo_idx, hi_idx))
-        segm = sp_mz_int_buf.iloc[segm_start:segm_end]
-        serialize_to_file(segm, ds_segments_path / f'ds_segm_{segm_i:04}_{chunk_i:04}')
-        return segm_i, len(segm)
-
-    with ThreadPoolExecutor(4) as pool:
-        return list(pool.map(_segment, enumerate(ds_segments_bounds)))
-
-
-def parse_and_segment_chunk(args):
-    (
-        storage_config,
-        imzml_reader,
-        ibd_cobject,
-        chunk_i,
-        start,
-        end,
-        ds_segments_bounds,
-        ds_segments_path,
-    ) = args
-    storage = Storage(storage_config=storage_config)
-    sp_mz_int_buf = parse_dataset_chunk(storage, imzml_reader, ibd_cobject, start, end)
-    segm_sizes = segment_spectra_chunk(chunk_i, sp_mz_int_buf, ds_segments_bounds, ds_segments_path)
-    return segm_sizes
-
-
-def upload_segments(storage, ds_segments_path, chunks_n, segments_n):
-    def _upload(segm_i):
-        segm = pd.concat(
-            [
-                deserialize_from_file(ds_segments_path / f'ds_segm_{segm_i:04}_{chunk_i:04}')
-                for chunk_i in range(chunks_n)
-            ],
-            ignore_index=True,
-            sort=False,
+    def upload_segm(start_end):
+        start, end = start_end
+        df = pd.DataFrame(
+            {'mz': mzs[start:end], 'int': ints[start:end], 'sp_i': sp_idxs[start:end]},
+            index=pd.RangeIndex(start, end),
         )
-        segm.sort_values('mz', inplace=True)
-        segm.reset_index(drop=True, inplace=True)
-        cobj = save_cobj(storage, segm)
+        return save_cobj(storage, df)
 
-        if logger.isEnabledFor(logging.DEBUG):
-            head = storage.head_object(cobj.bucket, cobj.key)
-            print(head)
-            nbytes = storage.head_object(cobj.bucket, cobj.key)['content-length']
-            logger.debug(f'Uploaded segment {segm_i}: {nbytes} bytes')
-
-        return cobj
-
-    with ThreadPoolExecutor(os.cpu_count()) as pool:
-        ds_segms_cobjs = list(pool.map(_upload, range(segments_n)))
-
-    assert len(ds_segms_cobjs) == len(
-        set(co.key for co in ds_segms_cobjs)
-    ), 'Duplicate CloudObjects in ds_segms_cobjs'
-
-    return ds_segms_cobjs
-
-
-def make_segments(
-    storage: Storage,
-    imzml_reader: PortableSpectrumReader,
-    ibd_cobject: CloudObject,
-    ds_segments_bounds: np.ndarray,
-    segments_dir: Path,
-    sort_memory: int,
-):
-    n_cpus = os.cpu_count() or 1
-    ds_size = sum(imzml_reader.mzLengths) * (np.dtype(imzml_reader.mzPrecision).itemsize + 4 + 4)
-    # TODO: Tune chunk_size to ensure no OOMs are caused
-    chunk_size_to_fit_in_memory = sort_memory // 4 // n_cpus
-    chunk_size_to_use_all_cpus = ds_size * 1.1 // n_cpus
-    chunk_size = min(chunk_size_to_fit_in_memory, chunk_size_to_use_all_cpus)
-    chunk_ranges = plan_dataset_chunks(imzml_reader, max_size=chunk_size)
-    chunks_n = len(chunk_ranges)
-    logger.debug(f'Reading dataset in {chunks_n} chunks: {chunk_ranges}')
-
-    segm_sizes = []
-    with ProcessPoolExecutor(n_cpus) as executor:
-        chunk_tasks = [
-            (
-                storage.storage_config,
-                imzml_reader,
-                ibd_cobject,
-                chunk_i,
-                start,
-                end,
-                ds_segments_bounds,
-                segments_dir,
-            )
-            for chunk_i, (start, end) in enumerate(chunk_ranges)
-        ]
-        for chunk_segm_sizes in executor.map(parse_and_segment_chunk, chunk_tasks):
-            segm_sizes.extend(chunk_segm_sizes)
-
-    ds_segm_lens = (
-        pd.DataFrame(segm_sizes, columns=['segm_i', 'segm_size'])
-        .groupby('segm_i')
-        .segm_size.sum()
-        .sort_index()
-        .values
-    )
-
-    return chunks_n, ds_segm_lens
+    with ThreadPoolExecutor(2) as executor:
+        ds_segms_cobjs = list(executor.map(upload_segm, segm_ranges))
+    return ds_segms_cobjs, ds_segments_bounds, ds_segm_lens
 
 
 def _load_ds(
     imzml_cobject: CloudObject,
     ibd_cobject: CloudObject,
     ds_segm_size_mb: int,
-    sort_memory: int,
     *,
     storage: Storage,
     perf: SubtaskProfiler,
 ) -> Tuple[
     PortableSpectrumReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray,
 ]:
-    with TemporaryDirectory() as tmp_dir:
-        logger.info("Temp dir is {}".format(tmp_dir))
-        imzml_dir = Path(tmp_dir) / 'imzml'
-        imzml_dir.mkdir()
-        logger.info(f"Create {imzml_dir}")
-        segments_dir = Path(tmp_dir) / 'segments'
-        segments_dir.mkdir()
-        logger.info(f"Create {segments_dir}")
-        logger.info('Loading .imzML file...')
-        imzml_reader = load_portable_spectrum_reader(storage, imzml_cobject)
-        perf.record_entry('loaded imzml')
+    logger.info('Loading .imzML file...')
+    imzml_reader = load_portable_spectrum_reader(storage, imzml_cobject)
+    perf.record_entry(
+        'loaded imzml',
+        n_peaks=np.sum(imzml_reader.intensityLengths),
+        mz_dtype=imzml_reader.mzPrecision,
+        int_dtype=imzml_reader.intensityPrecision,
+    )
 
-        logger.info('Defining segments bounds...')
-        ds_segments_bounds = define_ds_segments(
-            storage, imzml_reader, ibd_cobject, ds_segm_size_mb=ds_segm_size_mb
-        )
-        segments_n = len(ds_segments_bounds)
-        perf.record_entry('defined segments', segments_n=segments_n)
+    logger.info('Reading spectra')
+    mzs, ints, sp_lens = _load_spectra(storage, imzml_reader, ibd_cobject)
+    perf.record_entry('read spectra', n_peaks=len(mzs))
 
-        logger.info('Segmenting...')
-        chunks_n, ds_segm_lens = make_segments(
-            storage, imzml_reader, ibd_cobject, ds_segments_bounds, segments_dir, sort_memory
-        )
-        perf.record_entry('made segments')
+    logger.info('Sorting spectra')
+    mzs, ints, sp_idxs = _sort_spectra(imzml_reader, mzs, ints, sp_lens)
+    perf.record_entry('sorted spectra')
 
-        logger.info('Uploading segments...')
-        ds_segms_cobjs = upload_segments(storage, segments_dir, chunks_n, segments_n)
-        perf.record_entry('uploaded segments')
+    logger.info('Uploading segments')
+    ds_segms_cobjs, ds_segments_bounds, ds_segm_lens = _upload_segments(
+        storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs
+    )
+    perf.record_entry('uploaded segments', n_segms=len(ds_segms_cobjs))
 
-        return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens
+    return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens
 
 
 def load_ds(
@@ -310,19 +185,18 @@ def load_ds(
         logger.warning("Couldn't read ibd size", exc_info=True)
         ibd_size_mb = 1024
 
-    if ibd_size_mb < 1536:
+    # Guess the amount of memory needed. For the majority of datasets (no zero-intensity peaks,
+    # separate m/z arrays per spectrum) approximately 3x the ibd file size is used during the
+    # most memory-intense part (sorting the m/z array).
+    if ibd_size_mb * 3 + 512 < 4096:
         logger.debug(f'Found {ibd_size_mb}MB .ibd file. Trying serverless load_ds')
         runtime_memory = 4096
-        sort_memory = 3.5 * (2 ** 30)
     else:
         logger.debug(f'Found {ibd_size_mb}MB .ibd file. Using VM-based load_ds')
         runtime_memory = 32768
-        sort_memory = 30 * (2 ** 30)
 
     imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens = executor.call(
-        _load_ds,
-        (imzml_cobject, ibd_cobject, ds_segm_size_mb, sort_memory),
-        runtime_memory=runtime_memory,
+        _load_ds, (imzml_cobject, ibd_cobject, ds_segm_size_mb), runtime_memory=runtime_memory,
     )
 
     logger.info(f'Segmented dataset chunks into {len(ds_segms_cobjs)} segments')
@@ -351,6 +225,10 @@ def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobjs
                 'is_sorted': segm.mz.is_monotonic,
             }
         )
+
+    n_segms = len(ds_segms_cobjs)
+    assert n_segms == len(ds_segm_lens), (n_segms, len(ds_segm_lens))
+    assert ds_segments_bounds.shape == (n_segms, 2,), (ds_segments_bounds.shape, (n_segms, 2))
 
     results = fexec.map(get_segm_stats, ds_segms_cobjs)
 

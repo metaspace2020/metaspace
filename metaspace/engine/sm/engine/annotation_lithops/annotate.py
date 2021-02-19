@@ -19,7 +19,7 @@ from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, load_cobj, CObj, load_cobjs
 from sm.engine.annotation_lithops.utils import ds_dims, get_pixel_indices
 from sm.engine.ds_config import DSConfig
-from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.utils.perf_profile import Profiler
 
 ISOTOPIC_PEAK_N = 4

@@ -2,7 +2,7 @@ import numpy as np
 from numpy.testing import assert_almost_equal, assert_equal
 from png import Reader
 
-from sm.engine.png_generator import PngGenerator
+from sm.engine.annotation.png_generator import PngGenerator
 
 
 def test_png_gen_greyscale_works():

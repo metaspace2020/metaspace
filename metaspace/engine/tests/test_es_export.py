@@ -11,7 +11,7 @@ from sm.engine.es_export import (
     ESExporterIsobars,
     ESIndexManager,
 )
-from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.molecular_db import MolecularDB
 from .utils import create_test_molecular_db
 
@@ -102,7 +102,7 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
             ds_id=ds_id, moldb=moldb, isocalc=isocalc_mock,
         )
 
-    wait_for_es(sec=1)
+    wait_for_es(sec=1.5)
 
     ds_d = (
         es_dsl_search.filter('term', _type='dataset')

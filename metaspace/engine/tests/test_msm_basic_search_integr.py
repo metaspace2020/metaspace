@@ -7,7 +7,7 @@ from unittest.mock import patch, Mock, MagicMock
 import numpy as np
 import pandas as pd
 
-from sm.engine.fdr import FDR
+from sm.engine.annotation.fdr import FDR
 from sm.engine.annotation.formula_centroids import FormulaCentroids
 from sm.engine.molecular_db import MolecularDB
 from sm.engine.annotation_spark.msm_basic_search import (

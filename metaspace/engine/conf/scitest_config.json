@@ -55,7 +55,7 @@
       "include_modules": ["engine/sm"],
       "data_cleaner": true,
       "data_limit": false,
-      "workers": 2
+      "workers": 4
     },
     "localhost": {
     },

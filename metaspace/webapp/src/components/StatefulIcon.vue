@@ -1,6 +1,6 @@
 <template>
   <i
-    class="fill-current flex"
+    class="flex"
     :class="{ active, hover, inverse }"
   >
     <slot />
@@ -17,14 +17,18 @@ export default defineComponent({
 })
 </script>
 <style scoped>
+i >>> svg {
+  width: 100%;
+}
+
 i >>> .primary,
 i.inverse >>> .secondary {
-  @apply text-gray-400;
+  @apply fill-current text-gray-400;
 }
 
 i >>> .secondary,
 i.inverse >>> .primary {
-  @apply text-gray-800;
+  @apply fill-current text-gray-800;
 }
 
 i.active >>> .primary,

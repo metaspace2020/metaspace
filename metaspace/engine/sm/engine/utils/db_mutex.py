@@ -3,7 +3,7 @@ from zlib import adler32
 
 from psycopg2 import connect
 
-from sm.engine.util import SMConfig
+from sm.engine.config import SMConfig
 
 LOCK_KEY = 894951
 

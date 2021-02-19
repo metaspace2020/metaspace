@@ -4,11 +4,13 @@ import logging
 import signal
 from functools import partial
 
-from sm.engine.daemons.lithops_daemon import LithopsDaemon
+from sm.engine.daemons.lithops import LithopsDaemon
 from sm.engine.db import DB, ConnectionPool
 from sm.engine.es_export import ESExporter
 from sm.engine.image_store import ImageStoreServiceWrapper
-from sm.engine.sm_daemons import SMAnnotateDaemon, DatasetManager, SMIndexUpdateDaemon
+from sm.engine.daemons.update import SMUpdateDaemon
+from sm.engine.daemons.annotate import SMAnnotateDaemon
+from sm.engine.daemons.dataset_manager import DatasetManager
 from sm.engine.queue import (
     SM_ANNOTATE,
     SM_UPDATE,
@@ -17,7 +19,7 @@ from sm.engine.queue import (
     QueuePublisher,
     QueueConsumer,
 )
-from sm.engine.util import SMConfig, init_loggers
+from sm.engine.config import init_loggers, SMConfig
 
 
 def get_manager():
@@ -53,7 +55,7 @@ def main(daemon_name):
             poll_interval=1,
         )
         for _ in range(sm_config['services']['update_daemon_threads']):
-            daemon = SMIndexUpdateDaemon(get_manager(), make_update_queue_cons)
+            daemon = SMUpdateDaemon(get_manager(), make_update_queue_cons)
             daemons.append(daemon)
     elif daemon_name == 'lithops':
         for _ in range(sm_config['services'].get('lithops_daemon_threads', 0)):

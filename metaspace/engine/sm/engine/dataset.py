@@ -5,7 +5,7 @@ from typing import Dict
 
 from sm.engine.ds_config import DSConfig
 from sm.engine.errors import UnknownDSID
-from sm.engine.util import SMConfig
+from sm.engine.config import SMConfig
 
 logger = logging.getLogger('engine')
 

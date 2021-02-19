@@ -10,7 +10,7 @@ import numpy as np
 
 from sm.engine.errors import SMError
 from sm.engine.image_store import ImageStoreServiceWrapper
-from sm.engine.util import retry_on_exception
+from sm.engine.utils.retry_on_exception import retry_on_exception
 
 logger = logging.getLogger('update-daemon')
 
