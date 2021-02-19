@@ -1,7 +1,7 @@
 <template>
   <content-page class="flex-grow">
     <h1 class="pb-6">
-      Design docs
+      Style Guide
     </h1>
     <!-- <h2>Contents</h2> -->
     <ul class="list-none text-sm leading-5 sm-contents-list">
@@ -21,7 +21,10 @@
         <a href="#spacing">Spacing</a>
       </li>
       <li>
-        <a href="#icons">Icons</a>
+        <a href="#vertical-rhythm">Vertical Rhythm</a>
+      </li>
+      <li>
+        <a href="#debugging">Debugging</a>
       </li>
     </ul>
     <h2 id="fonts">
@@ -333,7 +336,8 @@
       Spacing
     </h2>
     <p class="italic">
-      Additions to the Tailwind scale based on multiples of size <b class="not-italic">6</b> (1.5rem/24px), as this is the base line height.
+      Additions to <a href="https://v1.tailwindcss.com/docs/customizing-spacing#default-spacing-scale">the Tailwind 1.x scale</a> based on multiples of size <b class="not-italic">6</b> (1.5rem/24px),
+      as this is the base line height.
     </p>
     <div class="w-3/4">
       <width-demo
@@ -380,13 +384,104 @@
         definition="11 * 1.5rem = 16.5rem"
       />
     </div>
-    <h2 id="icons">
-      Icons
+    <h2 id="vertical-rhythm">
+      Vertical Rhythm
     </h2>
     <p class="italic">
-      Courtesy of <a href="https://refactoringui.com/book/">Refactoring UI</a>.
+      Apply vertical margin between elements, based on <a href="https://alistapart.com/article/axiomatic-css-and-lobotomized-owls/">the owl selector</a>.
     </p>
-    <icons-section />
+    <div class="grid grid-cols-4 gap-6">
+      <article>
+        <div class="v-rhythm-3">
+          <div class="bg-primary h-3 w-full rounded" />
+          <div class="bg-primary h-3 w-full rounded" />
+          <div class="bg-primary h-3 w-full rounded" />
+          <div class="bg-primary h-3 w-full rounded" />
+        </div>
+        <code class="mt-3">v-rhythm-3</code>
+      </article>
+      <article>
+        <div class="v-rhythm-4">
+          <div class="bg-primary h-3 w-full rounded" />
+          <div class="bg-primary h-3 w-full rounded" />
+          <div class="bg-primary h-3 w-full rounded" />
+          <div class="bg-primary h-3 w-full rounded" />
+        </div>
+        <code class="mt-3">v-rhythm-4</code>
+      </article>
+      <article>
+        <div class="v-rhythm-5">
+          <div class="bg-primary h-3 w-full rounded" />
+          <div class="bg-primary h-3 w-full rounded" />
+          <div class="bg-primary h-3 w-full rounded" />
+          <div class="bg-primary h-3 w-full rounded" />
+        </div>
+        <code class="mt-3">v-rhythm-5</code>
+      </article>
+      <article>
+        <div class="v-rhythm-6">
+          <div class="bg-primary h-3 w-full rounded" />
+          <div class="bg-primary h-3 w-full rounded" />
+          <div class="bg-primary h-3 w-full rounded" />
+          <div class="bg-primary h-3 w-full rounded" />
+        </div>
+        <code class="mt-3">v-rhythm-6</code>
+      </article>
+    </div>
+    <h2 id="debugging">
+      Debugging
+    </h2>
+    <p class="italic">
+      Baseline grids for sizing and positioning elements.
+    </p>
+    <div>
+      <div class="baseline-grid-4 text-xs leading-4 flex justify-between items-start">
+        <p>
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+          Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+        </p>
+        <el-button
+          type="primary"
+          size="small"
+        >
+          Button
+        </el-button>
+      </div>
+      <code class="mt-3">baseline-grid-4</code>
+    </div>
+    <div>
+      <div class="baseline-grid-5 text-sm leading-5 flex justify-between items-start">
+        <p>
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+          Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+        </p>
+        <el-button type="primary">
+          Button
+        </el-button>
+      </div>
+      <code class="mt-3">baseline-grid-5</code>
+    </div>
+    <div>
+      <div class="baseline-grid-6 -mx-6">
+        <div class="box-border font-display py-12 mx-auto max-w-4xl flex items-center">
+          <img
+            src="../assets/METASPACE_logomark.png"
+            class="hidden md:block w-66 h-66 p-3 box-border bg-blue-100-alpha"
+          >
+          <div class="text-white box-border ml-4 h-66">
+            <h1 class="m-0 md:mt-24 flex flex-col items-start bg-gray-200-alpha">
+              <metaspace class="w-auto md:h-18 box-border py-1" />
+            </h1>
+            <p class="text-2xl leading-7 m-0 pt-3 h-18 box-border bg-blue-200-alpha">
+              The platform for metabolite annotation
+              <br>
+              of imaging mass spectrometry data
+            </p>
+          </div>
+        </div>
+      </div>
+      <code class="mt-3">baseline-grid-6</code>
+    </div>
   </content-page>
 </template>
 <script lang="ts">
@@ -396,8 +491,9 @@ import ContentPage from '../components/ContentPage.vue'
 import ColourSwatch from './ColourSwatch.vue'
 import WidthDemo from './WidthDemo.vue'
 import MeasureDemo from './MeasureDemo.vue'
-import IconsSection from './Icons.vue'
 import TextDemo from './TextDemo.vue'
+
+import Metaspace from '../assets/inline/METASPACE.svg'
 
 import tailwindConfig from '../../tailwind.config'
 
@@ -407,8 +503,8 @@ export default defineComponent({
     ColourSwatch,
     WidthDemo,
     MeasureDemo,
-    IconsSection,
     TextDemo,
+    Metaspace,
   },
   setup() {
     return {
@@ -420,5 +516,8 @@ export default defineComponent({
 <style scoped>
 .sm-contents-list li {
   margin-top: 0;
+}
+code {
+  @apply text-lg;
 }
 </style>

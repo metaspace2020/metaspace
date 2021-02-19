@@ -1,5 +1,11 @@
 <template>
-  <section>
+  <content-page>
+    <h1>
+      Icons
+    </h1>
+    <p class="italic">
+      Courtesy of <a href="https://refactoringui.com/book/">Refactoring UI</a>.
+    </p>
     <form class="v-rhythm-3">
       <div>
         <h3 class="mb-3">
@@ -91,17 +97,17 @@
         </p>
       </div>
     </div>
-  </section>
+  </content-page>
 </template>
 <script lang="ts">
 import { defineComponent, ref, computed, watch } from '@vue/composition-api'
 
+import ContentPage from '../components/ContentPage.vue'
 import StatefulIcon from '../components/StatefulIcon.vue'
 import PrimaryIcon from '../components/PrimaryIcon.vue'
 import SecondaryIcon from '../components/SecondaryIcon.vue'
 import * as RefactoringUIIcons from './refactoringUIIcons'
 import * as Form from '../components/Form'
-import FadeTransition from '../components/FadeTransition'
 
 const { default: iconConfig, ...svgComponents } = RefactoringUIIcons
 
@@ -115,10 +121,10 @@ const propDefs = {
 
 export default defineComponent({
   components: {
+    ContentPage,
     StatefulIcon,
     PrimaryIcon,
     SecondaryIcon,
-    FadeTransition,
     ...svgComponents,
     ...Form,
   },

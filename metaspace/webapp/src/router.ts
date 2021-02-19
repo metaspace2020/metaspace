@@ -16,7 +16,6 @@ const asyncPagesFreelyTyped = {
   MetadataEditPage: () => import(/* webpackPrefetch: true, webpackChunkName: "MetadataEditPage" */ './modules/MetadataEditor/MetadataEditPage.vue'),
   ImageAlignmentPage: () => import(/* webpackPrefetch: true, webpackChunkName: "ImageAlignmentPage" */ './modules/ImageAlignment/ImageAlignmentPage.vue'),
   UploadPage: () => import(/* webpackPrefetch: true, webpackChunkName: "UploadPage" */ './modules/MetadataEditor/UploadPage.vue'),
-  DesignPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DesignPage" */ './design/DesignPage.vue'),
 
   // These pages are relatively small as they don't have any big 3rd party dependencies, so pack them together
   DatasetTable: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Datasets/list/DatasetTable.vue'),
@@ -33,6 +32,12 @@ const asyncPagesFreelyTyped = {
   // These pages use sanitizeHtml, which is big
   ViewGroupPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle2" */ './modules/GroupProfile/ViewGroupPage.vue'),
   ViewProjectPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle2" */ './modules/Project/ViewProjectPage.vue'),
+
+  // Separate bundle for design docs
+  DesignTOC: () => import(/* webpackPrefetch: false, webpackChunkName: "DesignBundle" */ './design/TOCPage.vue'),
+  DesignStyleGuide: () => import(/* webpackPrefetch: false, webpackChunkName: "DesignBundle" */ './design/StyleGuidePage.vue'),
+  DesignIcons: () => import(/* webpackPrefetch: false, webpackChunkName: "DesignBundle" */ './design/IconsPage.vue'),
+  DesignComponents: () => import(/* webpackPrefetch: false, webpackChunkName: "DesignBundle" */ './design/ComponentsPage.vue'),
 }
 const asyncPages = asyncPagesFreelyTyped as Record<keyof typeof asyncPagesFreelyTyped, AsyncComponent>
 
@@ -92,7 +97,10 @@ const router = new VueRouter({
     { path: '/privacy', component: asyncPages.PrivacyPage, meta: { footer: true } },
     { path: '/publications', component: asyncPages.PublicationsPage, meta: { footer: true } },
 
-    { path: '/design', component: asyncPages.DesignPage, meta: { footer: true, flex: true } },
+    { path: '/design', component: asyncPages.DesignTOC, meta: { footer: true, flex: true } },
+    { path: '/design/styleguide', component: asyncPages.DesignStyleGuide, meta: { footer: true, flex: true } },
+    { path: '/design/icons', component: asyncPages.DesignIcons, meta: { footer: true, flex: true } },
+    { path: '/design/components', component: asyncPages.DesignComponents, meta: { footer: true, flex: true } },
 
     { path: '*', component: NotFoundPage, meta: { footer: true, flex: true } },
   ],
