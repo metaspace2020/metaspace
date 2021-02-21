@@ -77,7 +77,7 @@ class SMapiDatasetManager:
         try:
             ds = Dataset.load(self._db, doc['id'])
             self._set_ds_busy(ds, kwargs.get('force', False))
-            config = update_ds_config(ds.config, ds.metadata, **ds_config_kwargs)
+            config = update_ds_config(ds.config, doc['metadata'], **ds_config_kwargs)
         except UnknownDSID:
             config = generate_ds_config(doc.get('metadata'), **ds_config_kwargs)
 
