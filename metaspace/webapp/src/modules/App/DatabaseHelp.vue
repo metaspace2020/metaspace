@@ -187,7 +187,7 @@ export default {
   },
 }
 </script>
-<style scoped lang="postcss">
+<style scoped>
   ul {
     @apply mt-6;
   }
