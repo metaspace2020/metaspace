@@ -4,29 +4,31 @@
       Style Guide
     </h1>
     <!-- <h2>Contents</h2> -->
-    <ul class="list-none text-sm leading-5 sm-contents-list">
-      <li>
-        <a href="#fonts">Fonts</a>
-      </li>
-      <li>
-        <a href="#leading-tracking">Leading & tracking</a>
-      </li>
-      <li>
-        <a href="#measure">Measure</a>
-      </li>
-      <li>
-        <a href="#colours">Colours</a>
-      </li>
-      <li>
-        <a href="#spacing">Spacing</a>
-      </li>
-      <li>
-        <a href="#vertical-rhythm">Vertical Rhythm</a>
-      </li>
-      <li>
-        <a href="#debugging">Debugging</a>
-      </li>
-    </ul>
+    <nav class="text-sm leading-5">
+      <ul class="list-none">
+        <li>
+          <a href="#fonts">Fonts</a>
+        </li>
+        <li>
+          <a href="#leading-tracking">Leading & tracking</a>
+        </li>
+        <li>
+          <a href="#measure">Measure</a>
+        </li>
+        <li>
+          <a href="#colours">Colours</a>
+        </li>
+        <li>
+          <a href="#spacing">Spacing</a>
+        </li>
+        <li>
+          <a href="#vertical-rhythm">Vertical Rhythm</a>
+        </li>
+        <li>
+          <a href="#debugging">Debugging</a>
+        </li>
+      </ul>
+    </nav>
     <h2 id="fonts">
       Fonts
     </h2>
@@ -514,7 +516,7 @@ export default defineComponent({
 })
 </script>
 <style scoped>
-.sm-contents-list li {
+nav li {
   margin-top: 0;
 }
 code {
