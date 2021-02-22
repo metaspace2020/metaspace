@@ -1,11 +1,17 @@
 <template>
-  <table>
-    <tbody>
-      <slot />
-    </tbody>
-  </table>
+  <section>
+    <h3>Props</h3>
+    <table>
+      <tbody>
+        <slot />
+      </tbody>
+    </table>
+  </section>
 </template>
 <style scoped>
+h3 {
+  @apply text-base;
+}
 table >>> tr + tr > td {
   @apply pt-3;
 }

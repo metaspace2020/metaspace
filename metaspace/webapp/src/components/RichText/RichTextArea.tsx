@@ -65,6 +65,13 @@ const RichTextArea = defineComponent<Props>({
             <MenuItems editor={editor} />
           </MenuWrapper>
         </EditorMenuBubble>
+        <p
+          class="sm-RichTextArea-description cursor-help"
+          title="Select text for formatting options"
+          onClick={() => { editor.focus() }}
+        >
+          Rich Text
+        </p>
       </div>
     )
   },
