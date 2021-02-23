@@ -220,10 +220,10 @@ const UploadDialog = defineComponent<Props>({
         </pre>
         <UppyUploader
           class="mt-6"
-          removeFile={handleRemoveFile}
           disabled={state.loading}
           options={uppyOptions}
           s3Options={s3Options}
+          onFile-removed={handleRemoveFile} /* ugly alert */
           onComplete={handleUploadComplete}
         />
         <span slot="footer">
