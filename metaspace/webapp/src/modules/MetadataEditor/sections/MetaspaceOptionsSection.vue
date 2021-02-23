@@ -256,13 +256,12 @@
 import Vue from 'vue'
 import { Component, Prop } from 'vue-property-decorator'
 import FormField from '../inputs/FormField.vue'
-import DatabaseDescriptions from '../inputs/DatabaseDescriptions.vue'
+import DatabaseHelpLink from '../inputs/DatabaseHelpLink.vue'
 import AnalysisVersionHelp from '../inputs/AnalysisVersionHelp.vue'
 import { MetaspaceOptions } from '../formStructure'
 import { MAX_NEUTRAL_LOSSES, MAX_CHEM_MODS } from '../../../lib/constants'
 import config, { limits } from '../../../lib/config'
 import { formatDatabaseLabel, MolDBsByGroup } from '../../MolecularDatabases/formatting'
-import { MolecularDB } from '../../../api/moldb'
 import { sortBy } from 'lodash-es'
 import PopupAnchor from '../../../modules/NewFeaturePopup/PopupAnchor.vue'
 
@@ -309,7 +308,7 @@ export default class MetaspaceOptionsSection extends Vue {
     isNewDataset!: boolean;
 
     features = config.features;
-    dbHelp = DatabaseDescriptions;
+    dbHelp = DatabaseHelpLink;
     AnalysisVersionHelp = AnalysisVersionHelp;
     maxMolDBs = limits.maxMolDBs;
     MAX_NEUTRAL_LOSSES = MAX_NEUTRAL_LOSSES;

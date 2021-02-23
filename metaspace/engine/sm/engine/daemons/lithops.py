@@ -1,7 +1,10 @@
 import json
 import logging
+import os
+import signal
 from traceback import format_exc
 
+from sm.engine.annotation_lithops.executor import LithopsStalledException
 from sm.engine.daemons.actions import DaemonActionStage, DaemonAction
 from sm.engine.dataset import DatasetStatus
 from sm.engine.errors import ImzMLError, AnnotationError
@@ -13,7 +16,7 @@ from sm.rest.dataset_manager import DatasetActionPriority
 class LithopsDaemon:
     logger = logging.getLogger('lithops-daemon')
 
-    def __init__(self, manager, lit_qdesc, upd_qdesc):
+    def __init__(self, manager, lit_qdesc, annot_qdesc, upd_qdesc):
         self._sm_config = SMConfig.get_conf()
         self._stopped = False
         self._manager = manager
@@ -26,6 +29,12 @@ class LithopsDaemon:
             on_success=self._on_success,
             on_failure=self._on_failure,
         )
+        self._lithops_queue_pub = QueuePublisher(
+            config=self._sm_config['rabbitmq'], qdesc=lit_qdesc, logger=self.logger
+        )
+        self._annot_queue_pub = QueuePublisher(
+            config=self._sm_config['rabbitmq'], qdesc=annot_qdesc, logger=self.logger
+        )
         self._update_queue_pub = QueuePublisher(
             config=self._sm_config['rabbitmq'], qdesc=upd_qdesc, logger=self.logger
         )
@@ -35,11 +44,28 @@ class LithopsDaemon:
         self._manager.post_to_slack('dart', ' [v] Annotation succeeded: {}'.format(json.dumps(msg)))
 
     def _on_failure(self, msg, e):
-        self._manager.ds_failure_handler(msg, e)
+        if isinstance(e, LithopsStalledException):
+            # Requeue the message so it retries, then exit the process
+            if msg.get('retry_attempt', 0) < 1:
+                self.logger.info('Lithops stalled. Retrying')
+                self._lithops_queue_pub.publish(
+                    {**msg, 'retry_attempt': msg.get('retry_attempt', 0) + 1}
+                )
+            else:
+                self.logger.critical('Lithops stalled. Retrying on Spark')
+                self._annot_queue_pub.publish(msg)
 
-        if 'email' in msg:
-            traceback = e.__cause__.traceback if isinstance(e.__cause__, ImzMLError) else None
-            self._manager.send_failed_email(msg, traceback)
+            self._manager.post_to_slack(
+                'bomb', f" [x] Lithops stall: {json.dumps(msg)}\n```{format_exc(limit=10)}```"
+            )
+            os.kill(os.getpid(), signal.SIGINT)
+
+        else:
+            self._manager.ds_failure_handler(msg, e)
+
+            if 'email' in msg:
+                traceback = e.__cause__.traceback if isinstance(e.__cause__, ImzMLError) else None
+                self._manager.send_failed_email(msg, traceback)
 
     def _callback(self, msg):
         try:
@@ -72,6 +98,8 @@ class LithopsDaemon:
 
             self._manager.set_ds_status(ds, DatasetStatus.FINISHED)
             self._manager.notify_update(ds.id, msg['action'], DaemonActionStage.FINISHED)
+        except LithopsStalledException:
+            raise
         except Exception as e:
             raise AnnotationError(ds_id=msg['ds_id'], traceback=format_exc(chain=False)) from e
 
@@ -84,3 +112,7 @@ class LithopsDaemon:
             self._lithops_queue_cons.stop()
             self._lithops_queue_cons.join()
             self._stopped = True
+
+    def join(self):
+        if not self._stopped:
+            self._lithops_queue_cons.join()

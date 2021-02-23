@@ -46,6 +46,10 @@
       <a href="https://docs.google.com/document/d/e/2PACX-1vTT4QrMQ2RJMjziscaU8S3gbznlv6Rm5ojwrsdAXPbR5bt7Ivp-ThkC0hefrk3ZdVqiyCX7VU_ddA62/pub">our instructions</a>
       for converting datasets into imzML centroided format. If you experience difficulties, contact your instrument vendor.
     </p>
+    <h2 id="databases">
+      Metabolite Databases
+    </h2>
+    <database-help />
     <h2>Collaboration</h2>
     <p>Share your data with others in the following ways:</p>
     <div
@@ -119,8 +123,9 @@
     </p>
   </content-page>
 </template>
-
 <script>
+import { defineComponent } from '@vue/composition-api'
+
 import TourButton from './TourButton'
 import PrimaryIcon from '../../components/PrimaryIcon.vue'
 import ContentPage from '../../components/ContentPage.vue'
@@ -133,7 +138,11 @@ import introTour from '../../tours/intro.ts'
 import filteringTour from '../../tours/filtering.ts'
 import diagnosticsTour from '../../tours/diagnostics.ts'
 
-export default {
+import DatabaseHelp from './DatabaseHelp'
+
+import useAnchorLinkHack from '../../lib/useAnchorLinkHack'
+
+export default defineComponent({
   name: 'HelpPage',
   components: {
     TourButton,
@@ -142,23 +151,24 @@ export default {
     UserSvg,
     GroupSvg,
     WorkSvg,
+    DatabaseHelp,
   },
-  methods: {
-    intro() {
-      this.$store.commit('startTour', introTour)
-    },
-
-    filtering() {
-      this.$store.commit('startTour', filteringTour)
-    },
-
-    diagnostics() {
-      this.$store.commit('startTour', diagnosticsTour)
-    },
+  setup(_, { root }) {
+    useAnchorLinkHack()
+    return {
+      intro() {
+        root.$store.commit('startTour', introTour)
+      },
+      filtering() {
+        root.$store.commit('startTour', filteringTour)
+      },
+      diagnostics() {
+        root.$store.commit('startTour', diagnosticsTour)
+      },
+    }
   },
-}
+})
 </script>
-
 <style scoped>
 h3 {
   @apply text-lg leading-9 font-medium my-0;
