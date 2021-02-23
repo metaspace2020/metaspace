@@ -17,11 +17,11 @@
   @apply mt-6;
 }
 
-.sm-content-page h1 {
+.sm-content-page > h1 {
   @apply text-4xl leading-12 font-display;
 }
 
-.sm-content-page h2 {
+.sm-content-page > h2 {
   @apply text-2xl leading-6 font-display pb-3 pt-9; /* top padding is for anchor links */
   scroll-margin-top: theme('spacing.12');
 }

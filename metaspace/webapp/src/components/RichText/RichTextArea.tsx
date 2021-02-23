@@ -67,7 +67,7 @@ const RichTextArea = defineComponent<Props>({
         </EditorMenuBubble>
         <p
           class="sm-RichTextArea-description cursor-help"
-          title="Select text for formatting options"
+          title="Highlight a word or phrase for formatting options"
           onClick={() => { editor.focus() }}
         >
           Rich Text
