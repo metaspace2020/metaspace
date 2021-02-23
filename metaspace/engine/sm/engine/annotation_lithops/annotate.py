@@ -151,12 +151,6 @@ def read_ds_segments(
 
     ds_segms_mb = len(ds_segms_cobjs) * ds_segm_size_mb
     safe_mb = 512
-    read_memory_mb = ds_segms_mb + safe_mb
-    if read_memory_mb > pw_mem_mb:
-        raise MemoryError(
-            f"There isn't enough memory to read dataset segments, consider increasing "
-            f"Lithops's memory to at least {read_memory_mb} mb."
-        )
 
     concat_memory_mb = ds_segms_mb * 3 + safe_mb
     if concat_memory_mb > pw_mem_mb:
@@ -238,6 +232,7 @@ def process_centr_segments(
     image_gen_config = ds_config['image_generation']
     compute_metrics = make_compute_image_metrics(sample_area_mask, nrows, ncols, image_gen_config)
     min_px = image_gen_config['min_px']
+    # TODO: Get available memory from Lithops somehow so it updates if memory is increased on retry
     pw_mem_mb = 2048 if is_intensive_dataset else 1024
 
     def process_centr_segment(
