@@ -94,3 +94,7 @@ class SMUpdateDaemon:
             self._update_queue_cons.stop()
             self._update_queue_cons.join()
             self._stopped = True
+
+    def join(self):
+        if not self._stopped:
+            self._update_queue_cons.join()

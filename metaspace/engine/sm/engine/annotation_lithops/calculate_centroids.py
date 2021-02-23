@@ -49,7 +49,7 @@ def calculate_centroids(
 
         peaks_df.set_index('formula_i', inplace=True)
 
-        print(f'Storing centroids chunk {id}')
+        print(f'Storing centroids chunk {segm_i}')
         peaks_cobject = save_cobj(storage, peaks_df)
 
         return peaks_cobject, peaks_df.shape[0]

@@ -4,8 +4,10 @@ import inspect
 import logging
 import resource
 import traceback
+from contextlib import ExitStack
 from datetime import datetime
 from itertools import chain
+from threading import Thread, current_thread
 from typing import List, Callable, TypeVar, Iterable, Sequence, Dict, Optional
 
 import lithops
@@ -24,9 +26,14 @@ TRet = TypeVar('TRet')
 #: Note: sci-test changes this constant to force local execution without docker
 RUNTIME_DOCKER_IMAGE = 'metaspace2020/metaspace-lithops:1.8.3'
 MEM_LIMITS = {
+    'localhost': 32768,
     'ibm_cf': 4096,
-    'ibm_vpc': 32768,
+    'ibm_vpc': 128 * 2 ** 30,
 }
+
+
+class LithopsStalledException(Exception):
+    pass
 
 
 def _build_wrapper_func(func: Callable[..., TRet]) -> Callable[..., TRet]:
@@ -160,53 +167,48 @@ class Executor:
 
         self.storage = Storage(lithops_config)
         self._include_modules = lithops_config['lithops'].get('include_modules', [])
+        self._execution_timeout = lithops_config['lithops'].get('execution_timeout', 3600) + 60
         self._perf = perf or NullProfiler()
 
     def map(
         self,
         func: Callable[..., TRet],
-        args: Sequence,
+        func_args: Sequence,
         *,
         cost_factors: pd.DataFrame = None,
         runtime_memory: int = None,
         include_modules=None,
         debug_run_locally=False,
-        **kwargs,
+        **lithops_kwargs,
     ) -> List[TRet]:
-        if len(args) == 0:
+        if len(func_args) == 0:
             return []
         if cost_factors is not None:
-            assert len(cost_factors) == len(args)
+            assert len(cost_factors) == len(func_args)
         if runtime_memory is None:
             runtime_memory = 512
         # Make sure runtime_memory is a power of 2 to avoid making too many runtime variants
         runtime_memory = int(2 ** np.ceil(np.log2(runtime_memory)))
 
         if include_modules is not None:
-            kwargs['include_modules'] = [*self._include_modules, *include_modules]
+            lithops_kwargs['include_modules'] = [*self._include_modules, *include_modules]
 
         wrapper_func = _build_wrapper_func(func)
         func_name = func.__name__
         attempt = 1
-        futures = None
 
         while True:
             start_time = datetime.now()
-            try:
-                logger.info(
-                    f'executor.map({func_name}, {len(args)} items, {runtime_memory}MB, '
-                    f'attempt {attempt})'
-                )
-                if self.debug_run_locally or debug_run_locally:
-                    futures = None
-                    return_vals = self._map_local(wrapper_func, args)
-                else:
-                    executor = self._select_executor(runtime_memory)
-                    futures = executor.map(
-                        wrapper_func, args, runtime_memory=runtime_memory, **kwargs
-                    )
-                    return_vals = executor.get_result(futures)
 
+            logger.info(
+                f'executor.map({func_name}, {len(func_args)} items, {runtime_memory}MB, '
+                f'attempt {attempt})'
+            )
+            futures, return_vals, exc = self._dispatch_map(
+                wrapper_func, func_args, runtime_memory, debug_run_locally, lithops_kwargs
+            )
+
+            if exc is None:
                 if self._perf:
                     _save_subtask_perf(
                         self._perf,
@@ -220,63 +222,101 @@ class Executor:
                     )
 
                 logger.info(
-                    f'executor.map({func_name}, {len(args)} items, {runtime_memory}MB, '
+                    f'executor.map({func_name}, {len(func_args)} items, {runtime_memory}MB, '
                     f'attempt {attempt}) - {(datetime.now() - start_time).total_seconds():.3f}s'
                 )
 
                 return [result for result, subtask_perf in return_vals]
 
-            except Exception as exc:
-                failed_idxs = [i for i, f in enumerate(futures or []) if f.error]
-                # pylint: disable=unsubscriptable-object # (because futures is Optional)
-                failed_activation_ids = [futures[i].activation_id for i in failed_idxs]
+            failed_idxs = [i for i, f in enumerate(futures or []) if f.error]
+            # pylint: disable=unsubscriptable-object # (because futures is Optional)
+            failed_activation_ids = [futures[i].activation_id for i in failed_idxs]
 
-                self._perf.record_entry(
-                    func_name,
-                    start_time,
-                    datetime.now(),
-                    error=traceback.format_exc(),
-                    attempt=attempt,
-                    runtime_memory=runtime_memory,
-                    failed_activation_ids=failed_activation_ids,
+            self._perf.record_entry(
+                func_name,
+                start_time,
+                datetime.now(),
+                error=traceback.format_exc(),
+                attempt=attempt,
+                runtime_memory=runtime_memory,
+                failed_activation_ids=failed_activation_ids,
+            )
+
+            if isinstance(exc, (MemoryError, TimeoutError)) and runtime_memory <= 4096:
+                old_memory = runtime_memory
+                runtime_memory *= 2
+                attempt += 1
+
+                logger.warning(
+                    f'{func_name} raised {type(exc)} with {old_memory}MB, retrying with '
+                    f'{runtime_memory}MB. Failed activation(s): {failed_activation_ids}'
                 )
+            elif isinstance(exc, LithopsStalledException):
+                logger.critical(
+                    f'Lithops stalled running {func_name} with {runtime_memory}MB, exiting '
+                    f'process to clean up. Failed activation(s): {failed_activation_ids}'
+                )
+                raise exc
+            else:
+                logger.error(
+                    f'{func_name} raised an exception. '
+                    f'Failed activation(s): {failed_idxs} '
+                    f'ID(s): {failed_activation_ids}',
+                    exc_info=True,
+                )
+                raise exc
 
-                if isinstance(exc, MemoryError) and runtime_memory <= 4096 and self.is_hybrid:
-                    old_memory = runtime_memory
-                    runtime_memory *= 2
-                    attempt += 1
+    def _dispatch_map(
+        self, wrapper_func, func_args, runtime_memory, debug_run_locally, lithops_kwargs
+    ):
+        futures = None
+        return_vals = None
+        exception = None
+        if self.debug_run_locally or debug_run_locally:
+            try:
+                func_kwargs = {}
+                if 'storage' in inspect.signature(wrapper_func).parameters:
+                    func_kwargs['storage'] = self.storage
+                return_vals = [wrapper_func(*funcargs, **func_kwargs) for funcargs in func_args]
+            except Exception as exc:
+                exception = exc
+        else:
+            # Run in another thread so that stalls can be detected & handled
+            def run():
+                nonlocal futures, return_vals, exception
+                try:
+                    with ExitStack() as stack:
+                        is_standalone = executor.config['lithops']['mode'] == 'standalone'
+                        if is_standalone:
+                            # With the VM in "consume" mode, Lithops shares the VM between parallel
+                            # invocations, which can cause race conditions and OOMs.
+                            # To avoid instability, this prevents parallel invocations with a mutex.
+                            # Import locally to avoid psycopg2 dependency in Lithops-serialized
+                            # functions
+                            # pylint: disable=import-outside-toplevel
+                            from sm.engine.utils.db_mutex import DBMutex
 
-                    logger.warning(
-                        f'{func_name} ran out of memory with {old_memory}MB, retrying with '
-                        f'{runtime_memory}MB. Failed activation(s): {failed_activation_ids}'
-                    )
-                elif isinstance(exc, TimeoutError) and runtime_memory <= 4096 and self.is_hybrid:
-                    # Bypass the memory doubling and jump straight to using the VM, otherwise
-                    # it could get stuck in a loop of hitting many 10-minute timeouts before
-                    # eventually getting to the VM.
-                    old_memory = runtime_memory
-                    runtime_memory = 8192
-                    attempt += 1
+                            stack.enter_context(DBMutex().lock('vm', self._execution_timeout))
+                        futures = executor.map(
+                            wrapper_func, func_args, runtime_memory=runtime_memory, **lithops_kwargs
+                        )
+                        return_vals = executor.get_result(futures)
+                        if is_standalone:
+                            # Dismantle & wait for it to stop while the mutex is still active
+                            # to avoid a race condition, as there's still some instability if a
+                            # second request tries to start the VM while it is still stopping.
+                            executor.dismantle()
+                except Exception as exc:
+                    exception = exc
 
-                    logger.warning(
-                        f'{func_name} timed out with {old_memory}MB, retrying with '
-                        f'{runtime_memory}MB. Failed activation(s): {failed_idxs} '
-                        f'ID(s): {failed_activation_ids}'
-                    )
-                else:
-                    logger.error(
-                        f'{func_name} raised an exception. '
-                        f'Failed activation(s): {failed_idxs} '
-                        f'ID(s): {failed_activation_ids}',
-                        exc_info=True,
-                    )
-                    raise
+            executor = self._select_executor(runtime_memory)
+            thread = Thread(target=run, name=f'{current_thread().name}-ex', daemon=True)
+            thread.start()
+            thread.join(self._execution_timeout)
+            if thread.is_alive():  # If timed out
+                exception = LithopsStalledException()
 
-    def _map_local(self, func, args):
-        func_kwargs = {}
-        if 'storage' in inspect.signature(func).parameters:
-            func_kwargs['storage'] = self.storage
-        return [func(*funcargs, **func_kwargs) for funcargs in args]
+        return futures, return_vals, exception
 
     def _select_executor(self, runtime_memory):
         valid_executors = [
@@ -288,13 +328,12 @@ class Executor:
         executor_type, executor = valid_executors[0]
         logger.debug(f'Selected executor {executor_type}')
 
-        backend = getattr(executor.compute_handler, 'backend', None)
-        if hasattr(backend, 'ibm_iam_api_key_manager'):
-            logger.debug('Applying token expiry fix')
-            # WORKAROUND due to https://github.com/lithops-cloud/lithops/issues/485
-            token, token_expiry_time = backend.ibm_iam_api_key_manager.get_token()
-            backend.config['token'], backend.config['token_expiry_time'] = token, token_expiry_time
-            backend.cf_client.headers['Authorization'] = f'Bearer {token}'
+        if executor.config['lithops']['mode'] == 'standalone':
+            # Set number of parallel workers based on memory requirements
+            # Lithops>=2.2.17 can configure this via `.map(worker_processes=workers)`
+            executor.config['lithops']['workers'] = min(
+                20, MEM_LIMITS.get(executor_type) // runtime_memory
+            )
 
         return executor
 

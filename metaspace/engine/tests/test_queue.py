@@ -25,16 +25,17 @@ def delete_queue(sm_config):
     queue_pub.delete_queue()
 
 
-def run_queue_consumer_thread(config, callback, output_q, wait=1):
+def run_queue_consumer_thread(config, callback, output_q, wait=0.1):
     queue_consumer = QueueConsumer(
         config,
         QDESC,
         callback,
         lambda *args: output_q.put('on_success'),
         lambda *args: output_q.put('on_failure'),
-        poll_interval=0.1,
+        poll_interval=wait,
     )
     queue_consumer.start()
+    time.sleep(wait)
     queue_consumer.stop()
     queue_consumer.join()
 
@@ -56,11 +57,11 @@ def test_queue_msg_published_consumed_on_success_called(sm_config, delete_queue)
 
     output_q = Queue()
     run_queue_consumer_thread(
-        config, callback=lambda *args: output_q.put('callback'), output_q=output_q, wait=1
+        config, callback=lambda *args: output_q.put('callback'), output_q=output_q
     )
 
-    assert output_q.get() == 'callback'
-    assert output_q.get() == 'on_success'
+    assert output_q.get(block=False) == 'callback'
+    assert output_q.get(block=False) == 'on_success'
     assert output_q.empty()
 
     time.sleep(5)
@@ -79,10 +80,10 @@ def test_queue_msg_published_consumed_on_failure_called(sm_config):
         output_q.put('callback')
         raise Exception('Callback exception')
 
-    run_queue_consumer_thread(config, callback=raise_exception, output_q=output_q, wait=1)
+    run_queue_consumer_thread(config, callback=raise_exception, output_q=output_q)
 
-    assert output_q.get() == 'callback'
-    assert output_q.get() == 'on_failure'
+    assert output_q.get(block=False) == 'callback'
+    assert output_q.get(block=False) == 'on_failure'
 
     time.sleep(5)
     assert queue_is_empty(config)

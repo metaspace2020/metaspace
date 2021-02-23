@@ -5,7 +5,7 @@ import logging
 from collections import OrderedDict
 from functools import partial
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 import time
 
 import pytest
@@ -97,10 +97,17 @@ def run_daemons(db, es, sm_config):
     status_queue_pub = QueuePublisher(
         config=sm_config['rabbitmq'], qdesc=SM_DS_STATUS, logger=logger
     )
+    img_store_mock = MagicMock(ImageStoreServiceWrapper)
+    img_store_mock.get_ion_images_for_analysis.return_value = (
+        get_ion_images_for_analysis_mock_return
+    )
+    img_store_mock.get_image_by_id.return_value = Image.new('RGBA', (10, 10))
+    img_store_mock.post_image.side_effect = (f'img{i}' for i in range(100))
+
     manager = DatasetManager(
         db=db,
         es=es,
-        img_store=ImageStoreServiceWrapper(sm_config['services']['img_service_url']),
+        img_store=img_store_mock,
         status_queue=status_queue_pub,
         logger=logger,
         sm_config=sm_config,
@@ -109,24 +116,18 @@ def run_daemons(db, es, sm_config):
         manager=manager, annot_qdesc=SM_ANNOTATE, upd_qdesc=SM_UPDATE
     )
     annotate_daemon.start()
+    time.sleep(0.1)
     annotate_daemon.stop()
     make_update_queue_cons = partial(
         QueueConsumer, config=sm_config['rabbitmq'], qdesc=SM_UPDATE, logger=logger, poll_interval=1
     )
     update_daemon = SMUpdateDaemon(manager, make_update_queue_cons)
     update_daemon.start()
+    time.sleep(0.1)
     update_daemon.stop()
 
 
 @patch('sm.engine.annotation_spark.search_results.post_images_to_image_store')
-@patch(
-    'sm.engine.postprocessing.colocalization.ImageStoreServiceWrapper.get_ion_images_for_analysis',
-    return_value=get_ion_images_for_analysis_mock_return,
-)
-@patch(
-    'sm.engine.postprocessing.off_sample_wrapper.ImageStoreServiceWrapper.get_image_by_id',
-    return_value=Image.new('RGBA', (10, 10)),
-)
 @patch(
     'sm.engine.postprocessing.off_sample_wrapper.call_api',
     return_value={'predictions': {'label': 'off', 'prob': 0.99}},
@@ -135,8 +136,6 @@ def run_daemons(db, es, sm_config):
 def test_sm_daemons(
     MSMSearchMock,
     call_off_sample_api_mock,
-    get_image_by_id_mock,
-    get_ion_images_for_analysis_mock,
     post_images_to_annot_service_mock,
     # fixtures
     test_db,
