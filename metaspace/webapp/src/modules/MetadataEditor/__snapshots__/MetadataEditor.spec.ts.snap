@@ -820,7 +820,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                       <mock-el-popover trigger="hover" placement="right">
                         <div slot-key="default"><a href="/help#databases" target="_blank" rel="noopener" class="flex items-start">
                             See the Help page for details
-                            <i class="fill-current flex w-4 h-4 ml-1 active"><svg data-icon="icon-external-window"></svg></i></a> </div>
+                            <i class="flex w-4 h-4 ml-1 active"><svg data-icon="icon-external-window"></svg></i></a> </div>
                         <div slot-key="reference"><i class="el-icon-question metadata-help-icon"></i></div>
                       </mock-el-popover>
                       </span></label>
