@@ -50,7 +50,7 @@ module.exports = {
     },
   },
 
-  s3_storage: {
+  upload: {
     bucket: '',
     moldb_prefix: 'databases',
   },

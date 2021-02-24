@@ -13,7 +13,6 @@ config.defaults = {
 
 config.upload = {
   bucket: 'sm-engine-dev',
-  moldb_prefix: 'databases',
 }
 
 config.s3 = {
