@@ -1,32 +1,15 @@
 import { S3 } from 'aws-sdk'
 import config from './src/utils/config'
-
-// credentials needs to be a new object, don't know why!
-const getCredentials = ({ credentials }: S3.ClientConfiguration = {}) => {
-  const { accessKeyId = '', secretAccessKey = '' } = credentials || {}
-  return {
-    accessKeyId,
-    secretAccessKey,
-  }
-}
+import * as _ from 'lodash'
 
 export const getS3Config = () => {
-  if (config.aws) {
-    return {
-      credentials: getCredentials(config.aws),
-      region: config.aws.region,
-    }
-  }
-  const { endpoint, httpOptions, s3ForcePathStyle } = config.s3 || {}
-  return {
-    credentials: getCredentials(config.s3),
-    endpoint,
-    httpOptions,
-    s3ForcePathStyle,
-  }
+  // Deep clone the config object because the `config` package adds a bunch of non-enumerable properties to objects
+  // such as 'get', 'set', 'watch', etc., which aws-sdk treats as values, leading to errors.
+  // Deep cloning removes the non-enumerable properties.
+  return _.cloneDeep(config.aws ?? config.s3)
 }
 
-export const getS3Credentials = () => getS3Config().credentials
+export const getS3Credentials = () => getS3Config()?.credentials
 
 export const getS3Client = () => {
   const s3Config = getS3Config()
