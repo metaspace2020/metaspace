@@ -1,7 +1,7 @@
 import { Request } from 'express'
 
 import config from '../../utils/config'
-import { getS3Config } from '../../../s3Client'
+import { getS3Config } from '../../utils/awsClient'
 
 type GetKey = (req: Request, filename: string) => string
 

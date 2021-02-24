@@ -16,7 +16,7 @@ import { ExternalLink } from '../../project/ExternalLink'
 import canViewEsDataset from '../operation/canViewEsDataset'
 import { MolecularDB } from '../../moldb/model'
 import { MolecularDbRepository } from '../../moldb/MolecularDbRepository'
-import { getS3Client } from '../../../../s3Client'
+import { getS3Client } from '../../../utils/awsClient'
 
 interface DbDataset {
   id: string;
