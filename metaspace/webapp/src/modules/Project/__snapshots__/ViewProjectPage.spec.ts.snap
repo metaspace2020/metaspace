@@ -621,7 +621,7 @@ exports[`ViewProjectPage publishing tab should match snapshot (under review) 1`]
               </li>
               <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-300 transition-colors ease-in-out duration-300 active">
                 <h2 class="sm-workflow-header">Publish the data</h2>
-                <form class="sm-form">
+                <form action="#">
                   <p class="italic">Complete this step after the DOI for your paper has been issued.<br>You will receive a reminder by email.</p>
                   <div><label for="scientific-publishing-doi"><span class="text-base font-medium">Publication DOI</span><span class="block text-sm text-gray-800">Should link to the published paper</span></label>
                     <div class="el-input el-input-group el-input-group--append el-input-group--prepend">
@@ -692,7 +692,7 @@ exports[`ViewProjectPage publishing tab should match snapshot (unpublished) 1`] 
               <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-300 transition-colors ease-in-out duration-300 active">
                 <h2 class="sm-workflow-header">Update project details</h2>
                 <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
-                  <form action="#" class="sm-form">
+                  <form action="#">
                     <p>Create a short project link to use in the manuscript. We also suggest updating the project title and adding an abstract to the project description.</p>
                     <div><label for="publishing-project-link"><span class="text-base font-medium">Link to be used in the manuscript</span><span class="block text-sm text-gray-800">Must be unique, min. 4 characters, using a–z, 0–9, hyphen or underscore</span></label>
                       <div class="el-input el-input-group el-input-group--prepend">
@@ -786,7 +786,7 @@ exports[`ViewProjectPage settings tab should disable actions when published 1`] 
         <div role="tabpanel" id="pane-settings" aria-labelledby="tab-settings" class="el-tab-pane">
           <div class="project-settings max-w-measure-3 mx-auto leading-6">
             <div class="mt-6 mb-12">
-              <form action="#" class="sm-form">
+              <form action="#">
                 <h2>Project Details</h2>
                 <form class="el-form leading-6 mt-3 mb-6 v-rhythm-6 el-form--label-top">
                   <div><label><span class="text-base font-medium">Title</span>
@@ -887,7 +887,7 @@ exports[`ViewProjectPage settings tab should disable actions when under review 1
         <div role="tabpanel" id="pane-settings" aria-labelledby="tab-settings" class="el-tab-pane">
           <div class="project-settings max-w-measure-3 mx-auto leading-6">
             <div class="mt-6 mb-12">
-              <form action="#" class="sm-form">
+              <form action="#">
                 <h2>Project Details</h2>
                 <form class="el-form leading-6 mt-3 mb-6 v-rhythm-6 el-form--label-top">
                   <div><label><span class="text-base font-medium">Title</span>
@@ -981,7 +981,7 @@ exports[`ViewProjectPage settings tab should match snapshot 1`] = `
         <div role="tabpanel" id="pane-settings" aria-labelledby="tab-settings" class="el-tab-pane">
           <div class="project-settings max-w-measure-3 mx-auto leading-6">
             <div class="mt-6 mb-12">
-              <form action="#" class="sm-form">
+              <form action="#">
                 <h2>Project Details</h2>
                 <form class="el-form leading-6 mt-3 mb-6 v-rhythm-6 el-form--label-top">
                   <div><label><span class="text-base font-medium">Title</span>

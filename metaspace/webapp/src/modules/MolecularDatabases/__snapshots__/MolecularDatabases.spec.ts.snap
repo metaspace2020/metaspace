@@ -11,7 +11,7 @@ exports[`MolecularDatabases details view should match snapshot (archived) 1`] = 
             <!---->
             <!----><span>Upload new version</span></button>
         </div>
-        <form action="#" class="sm-form v-rhythm-6 mt-3">
+        <form action="#" class="v-rhythm-6 mt-3">
           <div><label for="database-full-name"><span class="text-base font-medium">Full name</span></label>
             <div class="el-input">
               <!----><input type="text" autocomplete="off" id="database-full-name" class="el-input__inner">
@@ -87,7 +87,7 @@ exports[`MolecularDatabases details view should match snapshot (manager) 1`] = `
             <!---->
             <!----><span>Upload new version</span></button>
         </div>
-        <form action="#" class="sm-form v-rhythm-6 mt-3">
+        <form action="#" class="v-rhythm-6 mt-3">
           <div><label for="database-full-name"><span class="text-base font-medium">Full name</span></label>
             <div class="el-input">
               <!----><input type="text" autocomplete="off" id="database-full-name" class="el-input__inner">
@@ -169,7 +169,7 @@ exports[`MolecularDatabases details view should match snapshot 1`] = `
             <!---->
             <!----><span>Upload new version</span></button>
         </div>
-        <form action="#" class="sm-form v-rhythm-6 mt-3">
+        <form action="#" class="v-rhythm-6 mt-3">
           <div><label for="database-full-name"><span class="text-base font-medium">Full name</span></label>
             <div class="el-input">
               <!----><input type="text" autocomplete="off" id="database-full-name" class="el-input__inner">

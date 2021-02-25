@@ -8,11 +8,11 @@
   </form>
 </template>
 <style scoped>
-form .el-input {
+form >>> .el-input {
   @apply py-1;
 }
-.sm-form-error .el-input__inner,
-form input:invalid {
+form >>> .sm-form-error .el-input__inner,
+form >>> input:invalid {
   @apply border-danger;
 }
 </style>
