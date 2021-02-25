@@ -11,7 +11,7 @@ export default function(httpServer: http.Server) {
   const options = getCompanionOptions(
     '/database_upload',
     (req: express.Request, filename: string) => {
-      return `${config.upload.moldb_prefix}/${genUuid()}/${filename}`
+      return `${config.upload.moldb_prefix}/${genUuid()}/${encodeURIComponent(filename)}`
     },
   )
 
