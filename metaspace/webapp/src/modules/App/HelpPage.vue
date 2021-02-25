@@ -104,7 +104,7 @@
         project<!-- -->
       </router-link>, follow the steps on the <em>Publishing</em> tab:
     </p>
-    <ol class="p-0 max-w-measure-4 old-style-nums">
+    <ol class="sm-ordered-list p-0 max-w-measure-4">
       <li>
         Create a <b>short link</b> to the project to be used in the manuscript, and add an abstract to the project
         description to provide context for the results.

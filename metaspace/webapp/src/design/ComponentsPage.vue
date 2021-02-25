@@ -1,17 +1,42 @@
 <template>
   <content-page>
     <h1>Components</h1>
-    <p>They're worth it, I promise.</p>
+    <p>Reusable bits and bobs</p>
     <nav class="text-sm leading-5">
       <ul class="list-none">
+        <li>
+          <a href="#confirm-prompt">
+            Confirm Prompt
+          </a>
+        </li>
+        <li>
+          <a href="#copy-button">
+            Copy Button
+          </a>
+        </li>
         <li>
           <a href="#elapsed-time">
             Elapsed Time
           </a>
         </li>
         <li>
+          <a href="#fade-transition">
+            Fade Transition
+          </a>
+        </li>
+        <li>
+          <a href="#molecular-formula">
+            Molecular Formula
+          </a>
+        </li>
+        <li>
           <a href="#new-feature-badge">
             New Feature Badge
+          </a>
+        </li>
+        <li>
+          <a href="#progress-ring">
+            Progress Ring
           </a>
         </li>
         <li>
@@ -39,12 +64,74 @@
             Uppy Uploader
           </a>
         </li>
+        <li>
+          <a href="#workflow">
+            Workflow
+          </a>
+        </li>
       </ul>
     </nav>
+    <h2 id="confirm-prompt">
+      Confirm Prompt
+    </h2>
+    <p>Function version of <code>ConfirmAsync</code>, for when directives cannot be used.</p>
+    <component-example>
+      <el-button @click="showPrompt">
+        Confirm
+      </el-button>
+    </component-example>
+    <h2 id="copy-button">
+      Copy Button
+    </h2>
+    <p>Copy pieces of text in one click, useful for formatted text like formulae.</p>
+    <props-table>
+      <tr>
+        <td>
+          text
+        </td>
+        <td>
+          <code>string</code>
+        </td>
+        <td>
+          The text to be copied.
+        </td>
+      </tr>
+    </props-table>
+    <component-example>
+      <div class="flex items-center justify-between">
+        <span class="inline-flex">
+          Lorem Ipsum
+          <copy-button
+            class="-mt-1 ml-1"
+            text="Lorem Ipsum"
+          >
+            Copy to clipboard
+          </copy-button>
+        </span>
+        <input
+          placeholder="paste it here"
+          class="w-1/3 text-sm el-input__inner"
+        />
+      </div>
+    </component-example>
+    <h2 id="fade-transition">
+      Fade Transition
+    </h2>
+    <p>Consistent fading in and out. Conditionally show 0 or 1 children inside.</p>
+    <component-example>
+      <el-checkbox v-model="fadeIn">
+        visible
+      </el-checkbox>
+      <fade-transition class="ml-6">
+        <span v-if="fadeIn">
+          I am visible
+        </span>
+      </fade-transition>
+    </component-example>
     <h2 id="elapsed-time">
       Elapsed Time
     </h2>
-    <p>Display dates in a friendly "don't make me think" format, relative to the current time. Hover to see the precise time.</p>
+    <p>Display durations in a friendly format. Hover to see the precise time.</p>
     <props-table>
       <tr>
         <td>
@@ -65,6 +152,58 @@
         <elapsed-time :date="new Date(dateDotNow - (1000 * 60 * 60)).toString()" />,
         <elapsed-time :date="new Date(dateDotNow - (1000 * 60 * 60 * 24)).toString()" />
       </p>
+    </component-example>
+    <h2 id="molecular-formula">
+      Molecular Formula
+    </h2>
+    <p>Proper formatting for formulae, probably the most relevant thing here!</p>
+    <props-table>
+      <tr>
+        <td>ion</td>
+        <td><code>string</code></td>
+        <td>text version to be formatted, e.g. C44H86NO8P+H+</td>
+      </tr>
+    </props-table>
+    <component-example>
+      <molecular-formula ion="C44H86NO8P+H+" />
+    </component-example>
+    <h2 id="progress-ring">
+      Progress Ring
+    </h2>
+    <p>Circular SVG progress bar.</p>
+    <props-table>
+      <tr>
+        <td>progress</td>
+        <td><code>number</code></td>
+        <td>Percentage of the bar to fill</td>
+      </tr>
+      <tr>
+        <td>radius</td>
+        <td><code>number</code></td>
+        <td>Size of ring</td>
+      </tr>
+      <tr>
+        <td>stroke</td>
+        <td><code>number</code></td>
+        <td>Width of the line</td>
+      </tr>
+    </props-table>
+    <component-example>
+      <div class="flex items-center justify-between">
+        <progress-ring
+          class="text-primary bg-gray-100 rounded-full"
+          :radius="20"
+          :stroke="4"
+          :progress="progress"
+        />
+        <el-input
+          v-model="progress"
+          class="w-1/3 inline-block"
+          type="number"
+          :min="0"
+          :max="100"
+        />
+      </div>
     </component-example>
     <h2 id="new-feature-badge">
       New Feature Badge
@@ -268,6 +407,59 @@
         N.B. this demo does not upload any files.
       </p>
     </component-example>
+    <h2 id="workflow">
+      Workflow
+    </h2>
+    <p>Break a task into a series of steps. Props below are for the <code>WorkflowStep</code> component.</p>
+    <props-table>
+      <tr>
+        <td>active</td>
+        <td><code>boolean</code></td>
+        <td>Highlights the step as active.</td>
+      </tr>
+      <tr>
+        <td>done</td>
+        <td><code>boolean</code></td>
+        <td>Shows a checkmark instead of the step number.</td>
+      </tr>
+    </props-table>
+    <component-example>
+      <workflow>
+        <workflow-step
+          :active="workflowStep === 1"
+          :done="workflowStep > 1"
+        >
+          <p class="sm-workflow-header">
+            This is the first step
+          </p>
+          <form v-if="workflowStep === 1">
+            <el-button @click="workflowStep = 2">
+              Next
+            </el-button>
+          </form>
+        </workflow-step>
+        <workflow-step
+          :active="workflowStep === 2"
+          :done="workflowStep > 2"
+        >
+          <p class="sm-workflow-header">
+            This is the second step
+          </p>
+          <form v-if="workflowStep === 2">
+            <el-button @click="workflowStep = 3">
+              Next
+            </el-button>
+          </form>
+        </workflow-step>
+        <workflow-step
+          :active="workflowStep === 3"
+        >
+          <p class="sm-workflow-header">
+            This is the final step
+          </p>
+        </workflow-step>
+      </workflow>
+    </component-example>
   </content-page>
 </template>
 <script lang="ts">
@@ -282,27 +474,50 @@ import NewFeatureBadge, { hideFeatureBadge } from '../components/NewFeatureBadge
 import RichText, { RichTextArea } from '../components/RichText'
 import { Slider, RangeSlider } from '../components/Slider'
 import UppyUploader from '../components/UppyUploader/UppyUploader.vue'
+import { Workflow, WorkflowStep } from '../components/Workflow'
+import confirmPrompt from '../components/confirmPrompt'
+import CopyButton from '../components/CopyButton.vue'
+import FadeTransition from '../components/FadeTransition'
+import MolecularFormula from '../components/MolecularFormula'
+import ProgressRing from '../components/ProgressRing'
 
 export default defineComponent({
   components: {
-    PropsTable,
     ComponentExample,
     ContentPage,
+    CopyButton,
     ElapsedTime,
+    FadeTransition,
+    MolecularFormula,
     NewFeatureBadge,
+    ProgressRing,
+    PropsTable,
+    RangeSlider,
     RichText,
     RichTextArea,
     Slider,
-    RangeSlider,
     UppyUploader,
+    Workflow,
+    WorkflowStep,
   },
   setup() {
     return {
-      hideFeatureBadge,
       dateDotNow: Date.now(),
-      richTextUpdate: () => Promise.resolve(),
-      sliderValue: ref(0),
+      fadeIn: ref(false),
+      hideFeatureBadge,
       rangeSliderValue: ref([0, 100]),
+      richTextUpdate: () => Promise.resolve(),
+      showPrompt: () => confirmPrompt({
+        title: '',
+        message: 'Are you sure?',
+        confirmButtonText: 'Yes',
+        confirmButtonLoadingText: 'Confirming...',
+      }, async() => new Promise(resolve => {
+        setTimeout(resolve, 1000)
+      })),
+      sliderValue: ref(0),
+      workflowStep: ref(1),
+      progress: ref(0),
     }
   },
 })

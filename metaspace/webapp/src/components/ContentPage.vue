@@ -34,16 +34,16 @@
   @apply p-0 my-0;
 }
 
-.sm-content-page ol {
+.sm-content-page  ol.sm-ordered-list {
   list-style: none;
   counter-reset: primary-nums;
 }
 
-.sm-content-page ol > li {
+.sm-content-page  ol.sm-ordered-list > li {
   @apply mt-6 relative;
 }
 
-.sm-content-page ol > li::before {
+.sm-content-page ol.sm-ordered-list > li::before {
   @apply absolute w-6 h-6 rounded-full bg-blue-100 text-blue-700
     font-bold text-sm flex items-baseline justify-center;
 
