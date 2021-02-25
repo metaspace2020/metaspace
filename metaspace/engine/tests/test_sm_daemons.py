@@ -126,7 +126,7 @@ def run_daemons(db, es, sm_config):
     update_daemon.stop()
 
 
-@patch('sm.engine.annotation_spark.search_results.post_images_to_image_store')
+@patch('sm.engine.annotation_spark.search_results.SearchResults._post_images_to_image_store')
 @patch(
     'sm.engine.postprocessing.off_sample_wrapper.call_api',
     return_value={'predictions': {'label': 'off', 'prob': 0.99}},
@@ -253,7 +253,7 @@ def test_sm_daemons(
         assert doc['_id'].startswith(ds_id)
 
 
-@patch('sm.engine.annotation_spark.search_results.post_images_to_image_store')
+@patch('sm.engine.annotation_spark.search_results.SearchResults._post_images_to_image_store')
 @patch('sm.engine.annotation_spark.annotation_job.MSMSearch')
 def test_sm_daemons_annot_fails(
     MSMSearchMock,
@@ -298,7 +298,7 @@ def test_sm_daemons_annot_fails(
     assert row[0] == 'FAILED'
 
 
-@patch('sm.engine.annotation_spark.search_results.post_images_to_image_store')
+@patch('sm.engine.annotation_spark.search_results.SearchResults._post_images_to_image_store')
 @patch('sm.engine.annotation_spark.annotation_job.MSMSearch')
 def test_sm_daemon_es_export_fails(
     MSMSearchMock,

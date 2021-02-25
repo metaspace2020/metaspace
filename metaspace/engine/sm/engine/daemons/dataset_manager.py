@@ -33,7 +33,6 @@ class DatasetManager:
         self._slack_conf = self._sm_config.get('slack', {})
         self._db: DB = db
         self._es: ESExporter = es
-        self._img_store = img_store
         self._status_queue = status_queue
         self.logger = logger or logging.getLogger()
 
@@ -93,18 +92,14 @@ class DatasetManager:
             del_jobs(ds)
         ds.save(self._db, self._es)
         with perf_profile(self._db, 'annotate_spark', ds.id) as perf:
-            AnnotationJob(
-                img_store=self._img_store, ds=ds, sm_config=self._sm_config, perf=perf
-            ).run()
+            AnnotationJob(ds=ds, sm_config=self._sm_config, perf=perf).run()
 
             if self._sm_config['services'].get('colocalization', True):
                 Colocalization(self._db, self._img_store).run_coloc_job(ds, reprocess=del_first)
                 perf.record_entry('ran colocalization')
 
             if self._sm_config['services'].get('ion_thumbnail', True):
-                generate_ion_thumbnail(
-                    db=self._db, img_store=self._img_store, ds=ds, only_if_needed=not del_first
-                )
+                generate_ion_thumbnail(db=self._db, ds=ds, only_if_needed=not del_first)
                 perf.record_entry('generated ion thumbnail')
 
     def annotate_lithops(self, ds: Dataset, del_first=False):

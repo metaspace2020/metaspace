@@ -24,5 +24,9 @@ def get_s3_client():
     return boto3.client('s3', **_boto_client_kwargs())
 
 
-def get_s3_bucket(bucket_name):
-    return boto3.resource('s3', **_boto_client_kwargs()).Bucket(bucket_name)
+def get_s3_resource():
+    return boto3.resource('s3', **_boto_client_kwargs())
+
+
+def get_s3_bucket(bucket_name: str):
+    return get_s3_resource().Bucket(bucket_name)

@@ -79,11 +79,6 @@
       ]
     }
   },
-  "storage": {
-    "endpoint_url": "http://localhost:9000",
-    "access_key_id": "minioadmin",
-    "secret_access_key": "minioadmin"
-  },
   "slack": {},
   "ms_file_handlers": [
     {
@@ -169,5 +164,13 @@
         "+Cl"
       ]
     }
+  },
+  "storage": {
+    "endpoint_url": "http://storage:9000",
+    "access_key_id": "minioadmin",
+    "secret_access_key": "minioadmin"
+  },
+  "image_storage": {
+    "bucket": "sm-image-storage"
   }
 }

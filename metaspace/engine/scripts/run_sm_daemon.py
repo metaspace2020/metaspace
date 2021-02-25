@@ -21,7 +21,7 @@ from sm.engine.queue import (
     QueuePublisher,
     QueueConsumer,
 )
-from sm.engine.config import init_loggers, SMConfig
+from sm.engine.util import on_startup
 
 
 def get_manager():
@@ -99,9 +99,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    SMConfig.set_path(args.config_path)
-    sm_config = SMConfig.get_conf()
-    init_loggers(sm_config['logs'])
+    sm_config = on_startup(args.config_path)
     logger = logging.getLogger(f'{args.name}-daemon')
 
     main(args.name)

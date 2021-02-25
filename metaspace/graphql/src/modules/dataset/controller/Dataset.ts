@@ -324,12 +324,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   },
 
   async ionThumbnailUrl(ds, args, ctx) {
-    const result = await getDbDatasetById(ctx, ds._source.ds_id)
-    if (result && result.ion_thumbnail != null) {
-      return `/fs/ion_thumbnails/${result.ion_thumbnail}`
-    } else {
-      return null
-    }
+    return ds._source.ds_ion_thumbnail_url || null
   },
 
   async externalLinks(ds, args, ctx) {

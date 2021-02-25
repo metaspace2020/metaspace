@@ -4,16 +4,15 @@ from enum import Enum
 from unittest.mock import patch
 
 import pytest
-from botocore.exceptions import ClientError
 
 from sm.engine.db import DB
 from sm.engine.storage import get_s3_client
 from sm.rest import api
 from sm.rest.databases import MALFORMED_CSV, BAD_DATA
 from sm.rest.utils import ALREADY_EXISTS
-from .utils import create_test_molecular_db
+from .utils import create_test_molecular_db, create_bucket
 
-BUCKET_NAME = "sm-engine-tests"
+BUCKET_NAME = 'sm-engine-tests'
 GROUP_ID = '123e4567-e89b-12d3-a456-426655440000'
 MOLDB_COUNT_SEL = 'SELECT COUNT(*) FROM molecular_db'
 
@@ -30,27 +29,21 @@ def fill_db(test_db):
 
 
 class MoldbFiles(Enum):
-    VALID = "moldb.csv"
-    WRONG_SEP = "db-wrong-sep.csv"
-    MISSING_COL = "db-missing-columns.csv"
-    EMPTY_VALUES = "db-empty-values.csv"
-    WRONG_FORMULAS = "db-wrong-formulas.csv"
+    VALID = 'moldb.csv'
+    WRONG_SEP = 'db-wrong-sep.csv'
+    MISSING_COL = 'db-missing-columns.csv'
+    EMPTY_VALUES = 'db-empty-values.csv'
+    WRONG_FORMULAS = 'db-wrong-formulas.csv'
 
 
-@pytest.fixture(autouse=True, scope="module")
+@pytest.fixture(autouse=True, scope='module')
 def fill_storage():
     s3 = get_s3_client()
-    try:
-        s3.head_bucket(Bucket=BUCKET_NAME)
-    except ClientError as e:
-        if e.response["Error"]["Code"] == "404":
-            s3.create_bucket(Bucket=BUCKET_NAME)
-        else:
-            raise
+    create_bucket(BUCKET_NAME)
 
     for file in MoldbFiles:
         s3.upload_file(
-            Filename=f"tests/data/moldbs/{file.value}", Bucket=BUCKET_NAME, Key=file.value
+            Filename=f'tests/data/moldbs/{file.value}', Bucket=BUCKET_NAME, Key=file.value
         )
 
     yield

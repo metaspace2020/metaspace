@@ -9,3 +9,4 @@ docs/_templates
 /tmp/
 /local/
 .dmypy.json
+/typings/
