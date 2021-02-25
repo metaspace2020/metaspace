@@ -1,6 +1,6 @@
 import config from '../../../utils/config'
 import { UserError } from 'graphql-errors'
-import { getS3Client } from '../../../../s3Client'
+import { getS3Client } from '../../../utils/awsClient'
 
 const FILE_SIZE_LIMIT_MB = 150
 

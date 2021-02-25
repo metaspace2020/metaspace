@@ -1,14 +1,10 @@
-import * as AWS from 'aws-sdk'
-import config from './config'
 import logger from './logger'
+import { getSESClient } from './awsClient'
 
-let ses : AWS.SES
-if (config.aws) {
-  ses = new AWS.SES(config.aws)
-}
+const ses = getSESClient()
 
 export default (recipient: string, subject: string, text: string) => {
-  if (ses === undefined) {
+  if (ses == null) {
     console.log(`Email not set up. Logging to console.\nTo: ${recipient}\nSubject: ${subject}\n${text}`)
   } else {
     ses.sendEmail({

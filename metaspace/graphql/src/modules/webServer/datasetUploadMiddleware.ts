@@ -7,7 +7,7 @@ import * as bodyParser from 'body-parser'
 
 import getCompanionOptions from './getCompanionOptions'
 
-import { getS3Credentials } from '../../../s3Client'
+import { getS3Credentials } from '../../utils/awsClient'
 
 function signUuid(uuid: string) {
   const credentials = getS3Credentials()
