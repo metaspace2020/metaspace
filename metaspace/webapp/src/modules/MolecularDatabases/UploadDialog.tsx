@@ -4,7 +4,7 @@ import { defineComponent, reactive, onMounted, ref } from '@vue/composition-api'
 import { ApolloError } from 'apollo-client-preset'
 import { UppyOptions, UploadResult } from '@uppy/core'
 
-import { PrimaryLabelText } from '../../components/Form'
+import { SmForm, PrimaryLabelText } from '../../components/Form'
 import UppyUploader from '../../components/UppyUploader/UppyUploader.vue'
 import FadeTransition from '../../components/FadeTransition'
 
@@ -181,7 +181,7 @@ const UploadDialog = defineComponent<Props>({
               </div>
             </div> }
         </FadeTransition>
-        <form class="sm-form flex leading-6">
+        <SmForm class="flex leading-6">
           <div class="flex-grow">
             <label for="database-name">
               <PrimaryLabelText>Name</PrimaryLabelText>
@@ -204,7 +204,7 @@ const UploadDialog = defineComponent<Props>({
               disabled={state.loading}
             />
           </div>
-        </form>
+        </SmForm>
         <p class="m-0 mt-3">
           Databases should be provided in{' '}
           <a href="https://en.wikipedia.org/wiki/Tab-separated_values">TSV format</a>.

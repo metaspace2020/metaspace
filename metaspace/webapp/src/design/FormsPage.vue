@@ -15,10 +15,7 @@
       Based on the size 6/24px baseline. Optionally use <code>v-rhythm-6</code> to space fields out vertically.
     </p>
     <component-example>
-      <form
-        class="sm-form"
-        :class="{ 'baseline-grid-6': formField.grid }"
-      >
+      <sm-form :class="{ 'baseline-grid-6': formField.grid }">
         <div>
           <label for="label-example">
             <primary-label-text>
@@ -38,7 +35,7 @@
             placeholder="placeholder"
           />
         </div>
-      </form>
+      </sm-form>
     </component-example>
     <div class="h-6">
       <el-checkbox v-model="formField.error">
@@ -95,7 +92,7 @@
       <tr>
         <td>checked</td>
         <td><code>boolean</code></td>
-        <td>if option is selected, should only be true for one option</td>
+        <td>should only be true for one option</td>
       </tr>
     </props-table>
     <component-example>
