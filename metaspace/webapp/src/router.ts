@@ -38,6 +38,7 @@ const asyncPagesFreelyTyped = {
   DesignStyleGuide: () => import(/* webpackPrefetch: false, webpackChunkName: "DesignBundle" */ './design/StyleGuidePage.vue'),
   DesignIcons: () => import(/* webpackPrefetch: false, webpackChunkName: "DesignBundle" */ './design/IconsPage.vue'),
   DesignComponents: () => import(/* webpackPrefetch: false, webpackChunkName: "DesignBundle" */ './design/ComponentsPage.vue'),
+  DesignForms: () => import(/* webpackPrefetch: false, webpackChunkName: "DesignBundle" */ './design/FormsPage.vue'),
 }
 const asyncPages = asyncPagesFreelyTyped as Record<keyof typeof asyncPagesFreelyTyped, AsyncComponent>
 
@@ -101,6 +102,7 @@ const router = new VueRouter({
     { path: '/design/styleguide', component: asyncPages.DesignStyleGuide, meta: { footer: true, flex: true } },
     { path: '/design/icons', component: asyncPages.DesignIcons, meta: { footer: true, flex: true } },
     { path: '/design/components', component: asyncPages.DesignComponents, meta: { footer: true, flex: true } },
+    { path: '/design/forms', component: asyncPages.DesignForms, meta: { footer: true, flex: true } },
 
     { path: '*', component: NotFoundPage, meta: { footer: true, flex: true } },
   ],

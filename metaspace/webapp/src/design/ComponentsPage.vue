@@ -25,6 +25,11 @@
           </a>
         </li>
         <li>
+          <a href="#mini-switch">
+            Mini-switch
+          </a>
+        </li>
+        <li>
           <a href="#molecular-formula">
             Molecular Formula
           </a>
@@ -153,6 +158,23 @@
         <elapsed-time :date="new Date(dateDotNow - (1000 * 60 * 60 * 24)).toString()" />
       </p>
     </component-example>
+    <h2 id="mini-switch">
+      Mini-switch
+    </h2>
+    <p>For tight spaces, setting the thumb to size 3/12px. Same props as <code>el-switch</code>.</p>
+    <component-example>
+      <el-switch
+        :value="miniSwitch.original"
+        inactive-text="original size"
+        @change="miniSwitch.original = !miniSwitch.original"
+      />
+      <span class="text-lg mx-3">--></span>
+      <mini-switch
+        :value="miniSwitch.mini"
+        active-text="mini size"
+        @change="miniSwitch.mini = !miniSwitch.mini"
+      />
+    </component-example>
     <h2 id="molecular-formula">
       Molecular Formula
     </h2>
@@ -166,6 +188,43 @@
     </props-table>
     <component-example>
       <molecular-formula ion="C44H86NO8P+H+" />
+    </component-example>
+    <h2 id="new-feature-badge">
+      New Feature Badge
+    </h2>
+    <p>Attention-grabbing badge to indicate a new feature without a description.</p>
+    <props-table>
+      <tr>
+        <td>
+          feature-key
+        </td>
+        <td>
+          <code>string</code>
+        </td>
+        <td>
+          Unique key to reference badge in local storage.
+        </td>
+      </tr>
+      <tr>
+        <td>
+          show-until
+        </td>
+        <td>
+          <code>Date</code>
+        </td>
+        <td>
+          Badge is not shown after this date.
+        </td>
+      </tr>
+    </props-table>
+    <component-example>
+      <new-feature-badge :feature-key="`nfb-example-${dateDotNow}`">
+        <el-button
+          @click="hideFeatureBadge(`nfb-example-${dateDotNow}`)"
+        >
+          Click to acknowledge
+        </el-button>
+      </new-feature-badge>
     </component-example>
     <h2 id="progress-ring">
       Progress Ring
@@ -204,43 +263,6 @@
           :max="100"
         />
       </div>
-    </component-example>
-    <h2 id="new-feature-badge">
-      New Feature Badge
-    </h2>
-    <p>Attention-grabbing badge to indicate a new feature without a description.</p>
-    <props-table>
-      <tr>
-        <td>
-          feature-key
-        </td>
-        <td>
-          <code>string</code>
-        </td>
-        <td>
-          Unique key to reference badge in local storage.
-        </td>
-      </tr>
-      <tr>
-        <td>
-          show-until
-        </td>
-        <td>
-          <code>Date</code>
-        </td>
-        <td>
-          Badge is not shown after this date.
-        </td>
-      </tr>
-    </props-table>
-    <component-example>
-      <new-feature-badge :feature-key="`nfb-example-${dateDotNow}`">
-        <el-button
-          @click="hideFeatureBadge(`nfb-example-${dateDotNow}`)"
-        >
-          Click to acknowledge
-        </el-button>
-      </new-feature-badge>
     </component-example>
     <h2 id="rich-text-editor">
       Rich Text Editor
@@ -463,7 +485,7 @@
   </content-page>
 </template>
 <script lang="ts">
-import { defineComponent, ref } from '@vue/composition-api'
+import { defineComponent, ref, reactive } from '@vue/composition-api'
 
 import PropsTable from './PropsTable.vue'
 import ComponentExample from './ComponentExample.vue'
@@ -480,6 +502,7 @@ import CopyButton from '../components/CopyButton.vue'
 import FadeTransition from '../components/FadeTransition'
 import MolecularFormula from '../components/MolecularFormula'
 import ProgressRing from '../components/ProgressRing'
+import MiniSwitch from '../components/MiniSwitch.vue'
 
 export default defineComponent({
   components: {
@@ -488,6 +511,7 @@ export default defineComponent({
     CopyButton,
     ElapsedTime,
     FadeTransition,
+    MiniSwitch,
     MolecularFormula,
     NewFeatureBadge,
     ProgressRing,
@@ -518,6 +542,10 @@ export default defineComponent({
       sliderValue: ref(0),
       workflowStep: ref(1),
       progress: ref(0),
+      miniSwitch: reactive({
+        original: false,
+        mini: false,
+      }),
     }
   },
 })
@@ -525,8 +553,5 @@ export default defineComponent({
 <style scoped>
 nav li {
   margin-top: 0;
-}
-dl {
-  @apply grid grid-cols-2 grid-flow-row gap-6;
 }
 </style>

@@ -3,7 +3,7 @@ import { Button, Input } from '../../../lib/element-ui'
 
 import { WorkflowStep } from '../../../components/Workflow'
 import { RichTextArea } from '../../../components/RichText'
-import CopyToClipboard from '../../../components/CopyToClipboard'
+import CopyToClipboard from '../../../components/Form/CopyToClipboard'
 import FadeTransition from '../../../components/FadeTransition'
 import ShortLinkField from '../ShortLinkField'
 

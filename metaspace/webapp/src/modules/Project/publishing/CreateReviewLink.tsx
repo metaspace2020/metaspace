@@ -3,7 +3,7 @@ import { Button } from '../../../lib/element-ui'
 
 import { WorkflowStep } from '../../../components/Workflow'
 import confirmPrompt from '../../../components/confirmPrompt'
-import CopyToClipboard from '../../../components/CopyToClipboard'
+import CopyToClipboard from '../../../components/Form/CopyToClipboard'
 
 interface Props {
   active: boolean

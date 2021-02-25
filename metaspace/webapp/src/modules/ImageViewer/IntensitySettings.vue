@@ -27,7 +27,7 @@
   </overlay>
 </template>
 <script lang="ts">
-import { defineComponent, computed, ref } from '@vue/composition-api'
+import { defineComponent } from '@vue/composition-api'
 
 import Overlay from './Overlay.vue'
 import LockedIntensityField from './LockedIntensityField.vue'
@@ -35,8 +35,6 @@ import FadeTransition from '../../components/FadeTransition'
 import MiniSwitch from '../../components/MiniSwitch.vue'
 
 import { useIonImageSettings } from './ionImageState'
-
-const isInvalidIntensity = (value: string) => value.length > 0 && isNaN(parseFloat(value))
 
 export default defineComponent({
   components: {
@@ -49,9 +47,8 @@ export default defineComponent({
     hasOpticalImage: Boolean,
     opacity: { type: Number, required: true },
   },
-  setup(props, { emit }) {
+  setup() {
     const { settings } = useIonImageSettings()
-
     return {
       settings,
     }
