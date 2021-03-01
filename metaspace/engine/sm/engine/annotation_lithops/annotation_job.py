@@ -22,7 +22,7 @@ from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.ds_config import DSConfig
 from sm.engine.es_export import ESExporter
-from sm.engine.image_store import ImageStore
+from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.molecular_db import read_moldb_file
 from sm.engine.util import split_s3_path, split_cos_path
@@ -225,7 +225,7 @@ class ServerAnnotationJob:
     def __init__(
         self,
         executor: Executor,
-        img_store: ImageStore,
+        img_store: ImageStoreServiceWrapper,
         ds: Dataset,
         perf: Profiler,
         sm_config: Optional[Dict] = None,

@@ -28,7 +28,7 @@ from sm.engine.utils.perf_profile import perf_profile
 
 
 class DatasetManager:
-    def __init__(self, db, es, img_store, status_queue=None, logger=None, sm_config=None):
+    def __init__(self, db, es, status_queue=None, logger=None, sm_config=None):
         self._sm_config = sm_config or SMConfig.get_conf()
         self._slack_conf = self._sm_config.get('slack', {})
         self._db: DB = db
@@ -95,7 +95,7 @@ class DatasetManager:
             AnnotationJob(ds=ds, sm_config=self._sm_config, perf=perf).run()
 
             if self._sm_config['services'].get('colocalization', True):
-                Colocalization(self._db, self._img_store).run_coloc_job(ds, reprocess=del_first)
+                Colocalization(self._db).run_coloc_job(ds, reprocess=del_first)
                 perf.record_entry('ran colocalization')
 
             if self._sm_config['services'].get('ion_thumbnail', True):
@@ -113,9 +113,7 @@ class DatasetManager:
             ServerAnnotationJob(executor, self._img_store, ds, perf).run()
 
             if self._sm_config['services'].get('colocalization', True):
-                Colocalization(self._db, self._img_store).run_coloc_job_lithops(
-                    executor, ds, reprocess=del_first
-                )
+                Colocalization(self._db).run_coloc_job_lithops(executor, ds, reprocess=del_first)
 
             if self._sm_config['services'].get('ion_thumbnail', True):
                 generate_ion_thumbnail_lithops(

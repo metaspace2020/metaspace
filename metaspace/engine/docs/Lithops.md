@@ -120,7 +120,7 @@ from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import load_cobj, load_cobjs
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
-from sm.engine.image_store import ImageStore
+from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.config import SMConfig
 from sm.engine.utils.perf_profile import NullProfiler
 from sm.engine.annotation_lithops.annotation_job import ServerAnnotationJob

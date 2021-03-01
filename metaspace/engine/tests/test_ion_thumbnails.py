@@ -5,7 +5,7 @@ import pytest
 
 from sm.engine.postprocessing.ion_thumbnail import generate_ion_thumbnail, ALGORITHMS
 from sm.engine.db import DB
-from sm.engine.image_store import ImageStore
+from sm.engine.image_store import ImageStoreServiceWrapper
 from .utils import create_test_molecular_db, create_test_ds
 
 OLD_IMG_ID = 'old-ion-thumb-id'
@@ -41,7 +41,7 @@ def _mock_get_ion_images_for_analysis(img_ids, **kwargs):
 @pytest.mark.parametrize('algorithm', [alg for alg in ALGORITHMS.keys()])
 def test_creates_ion_thumbnail(test_db, algorithm, metadata, ds_config):
     db = DB()
-    img_store_mock = MagicMock(spec=ImageStore)
+    img_store_mock = MagicMock(spec=ImageStoreServiceWrapper)
     img_store_mock.post_image.return_value = IMG_ID
     img_store_mock.get_ion_images_for_analysis.side_effect = _mock_get_ion_images_for_analysis
     ds = _make_fake_ds(db, metadata, ds_config)

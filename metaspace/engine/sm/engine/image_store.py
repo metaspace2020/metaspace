@@ -15,7 +15,7 @@ from sm.engine.config import SMConfig
 logger = logging.getLogger('engine')
 
 
-class ImageStore:
+class ImageStoreServiceWrapper:
     def __init__(self, img_service_url=None):
         if img_service_url is None:
             img_service_url = SMConfig.get_conf()['services']['img_service_url']
