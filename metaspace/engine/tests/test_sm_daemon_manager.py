@@ -3,14 +3,11 @@ from unittest.mock import call
 from unittest.mock import patch, MagicMock
 from datetime import datetime
 
-import numpy as np
-
 from sm.engine.daemons.dataset_manager import DatasetManager
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.queue import QueuePublisher
 from sm.engine.dataset import DatasetStatus, Dataset, generate_ds_config
-from sm.engine.image_store import ImageStoreServiceWrapper
 
 
 def create_ds(
@@ -47,20 +44,11 @@ def create_ds(
     )
 
 
-def create_daemon_man(db=None, es=None, img_store=None, status_queue=None):
+def create_daemon_man(db=None, es=None, status_queue=None):
     db = db or DB()
     es_mock = es or MagicMock(spec=ESExporter)
     status_queue_mock = status_queue or MagicMock(QueuePublisher)
-    img_store_mock = img_store or MagicMock(spec=ImageStoreServiceWrapper)
-    img_store_mock.get_ion_images_for_analysis.return_value = (
-        [np.zeros((2, 2)), np.zeros((2, 2))],
-        None,
-        (2, 2),
-    )
-
-    return DatasetManager(
-        db=db, es=es_mock, img_store=img_store_mock, status_queue=status_queue_mock
-    )
+    return DatasetManager(db=db, es=es_mock, status_queue=status_queue_mock)
 
 
 class TestSMDaemonDatasetManager:
@@ -107,20 +95,15 @@ class TestSMDaemonDatasetManager:
         assert index_ds_kw_args.get('moldb').name == 'HMDB'
         assert index_ds_kw_args.get('moldb').version == 'v4'
 
-    @patch('sm.engine.annotation.job.ImageStore', spec=ImageStoreServiceWrapper)
     @patch('sm.engine.annotation.job.ESExporter', spec=ESExporter)
-    def test_delete_ds(self, EsMock, ImgStoreMock, fill_db):
+    def test_delete_ds(self, EsMock, fill_db):
         db = DB()
-        manager = create_daemon_man(db=db, es=EsMock(), img_store=ImgStoreMock())
+        manager = create_daemon_man(db=db, es=EsMock())
 
         ds_id = '2000-01-01'
         ds = create_ds(ds_id=ds_id)
 
         manager.delete(ds)
 
-        ids = [f'iso_image_{i}{j}' for i, j in product([1, 2], [1, 2])]
-        ImgStoreMock.return_value.delete_image_by_id.assert_has_calls(
-            [call('iso_image', ids[0]), call('iso_image', ids[1])]
-        )
         EsMock.return_value.delete_ds.assert_has_calls([call(ds_id)])
         assert db.select_one('SELECT * FROM dataset WHERE id = %s', params=(ds_id,)) == []

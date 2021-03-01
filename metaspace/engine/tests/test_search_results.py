@@ -116,7 +116,7 @@ def test_save_ion_img_metrics_correct_db_call(search_results):
     db_mock.insert.assert_called_with(METRICS_INS, exp_rows)
 
 
-@unittest.mock.patch('sm.engine.image_storage_s3.ImageStorage.post_image')
+@unittest.mock.patch('sm.engine.image_storage.ImageStorage.post_image')
 def test_isotope_images_are_stored(post_image_mock, search_results, pysparkling_context):
     mask = np.array([[1, 1], [1, 0]])
     img_id = "iso_image_id"

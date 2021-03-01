@@ -89,7 +89,6 @@ def queue_pub(local_sm_config):
 
 def run_daemons(db, es, sm_config):
     from sm.engine.queue import QueuePublisher, SM_DS_STATUS, SM_ANNOTATE, SM_UPDATE
-    from sm.engine.image_store import ImageStoreServiceWrapper
     from sm.engine.daemons.dataset_manager import DatasetManager
     from sm.engine.daemons.annotate import SMAnnotateDaemon
     from sm.engine.daemons.update import SMUpdateDaemon
@@ -105,11 +104,7 @@ def run_daemons(db, es, sm_config):
     img_store_mock.post_image.side_effect = (f'img{i}' for i in range(100))
 
     manager = DatasetManager(
-        db=db,
-        es=es,
-        status_queue=status_queue_pub,
-        logger=logger,
-        sm_config=sm_config,
+        db=db, es=es, status_queue=status_queue_pub, logger=logger, sm_config=sm_config,
     )
     annotate_daemon = SMAnnotateDaemon(
         manager=manager, annot_qdesc=SM_ANNOTATE, upd_qdesc=SM_UPDATE
@@ -127,6 +122,14 @@ def run_daemons(db, es, sm_config):
 
 
 @patch('sm.engine.annotation_spark.search_results.SearchResults._post_images_to_image_store')
+@patch(
+    'sm.engine.postprocessing.colocalization.ImageStore.get_ion_images_for_analysis',
+    return_value=get_ion_images_for_analysis_mock_return,
+)
+@patch(
+    'sm.engine.postprocessing.off_sample_wrapper.ImageStore.get_image_by_id',
+    return_value=Image.new('RGBA', (10, 10)),
+)
 @patch(
     'sm.engine.postprocessing.off_sample_wrapper.call_api',
     return_value={'predictions': {'label': 'off', 'prob': 0.99}},

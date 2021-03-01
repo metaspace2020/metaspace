@@ -386,10 +386,6 @@ class ESExporter:
             doc['centroid_mzs'] = list(mzs) if mzs is not None else []
             doc['mz'] = mzs[0] if mzs is not None else 0
 
-            doc['ds_ion_thumbnail_url'] = image_storage.get_image_url(
-                image_storage.ImageType.ISO, ds_id, doc.pop('ds_ion_thumbnail')
-            )
-
             if moldb.targeted:
                 fdr_level = doc['fdr'] = -1
             else:
@@ -424,6 +420,9 @@ class ESExporter:
                 ds_doc = self._select_ds_by_id(ds_id)
                 ds_doc['annotation_counts'] = []
 
+            ds_doc['ds_ion_thumbnail_url'] = image_storage.get_image_url(
+                image_storage.ImageType.THUMB, ds_id, ds_doc.pop('ds_ion_thumbnail')
+            )
             annotation_counts = self._index_ds_annotations(ds_id, moldb, ds_doc, isocalc)
 
             fdr_levels = [5, 10, 20, 50]

@@ -9,7 +9,7 @@ from requests import post, get
 import numpy as np
 
 from sm.engine.errors import SMError
-from sm.engine.image_store import ImageStoreServiceWrapper
+from sm.engine import image_storage
 from sm.engine.utils.retry_on_exception import retry_on_exception
 
 logger = logging.getLogger('update-daemon')
@@ -107,10 +107,8 @@ def classify_dataset_ion_images(db, ds, services_config, overwrite_existing=Fals
         overwrite_existing (bool): whether to overwrite existing image classes
     """
     off_sample_api_endpoint = services_config['off_sample']
-    img_api_endpoint = services_config['img_service_url']
 
-    image_store_service = ImageStoreServiceWrapper(img_api_endpoint)
-    get_image_by_id = partial(image_store_service.get_image_by_id, 'iso_image')
+    get_image_by_id = partial(image_storage.get_image, image_storage.ImageType.ISO, ds.id)
 
     annotations = db.select_with_fields(SEL_ION_IMAGES, (ds.id, overwrite_existing))
     image_ids = [a['img_id'] for a in annotations]

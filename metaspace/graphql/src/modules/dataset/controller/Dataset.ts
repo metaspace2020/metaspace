@@ -323,7 +323,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     return datasetRow != null ? datasetRow.transform : null
   },
 
-  async ionThumbnailUrl(ds, args, ctx) {
+  ionThumbnailUrl(ds, args, ctx) {
     return ds._source.ds_ion_thumbnail_url || null
   },
 

@@ -16,7 +16,7 @@ from sm.engine.molecular_db import MolecularDB
 from .utils import create_test_molecular_db
 
 
-def wait_for_es(sec=1):
+def wait_for_es(sec: float = 1):
     time.sleep(sec)
 
 
@@ -39,9 +39,9 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
     db = DB()
     db.insert(
         "INSERT INTO dataset(id, name, input_path, config, metadata, upload_dt, status, "
-        "status_update_dt, is_public, acq_geometry) "
-        "VALUES (%s, 'ds_name', 'ds_input_path', %s, %s, %s, 'ds_status', %s, true, '{}')",
-        [[ds_id, json.dumps(ds_config), json.dumps(metadata), upload_dt, upload_dt]],
+        "status_update_dt, is_public, acq_geometry, ion_thumbnail) "
+        "VALUES (%s, 'ds_name', 'ds_input_path', %s, %s, %s, 'ds_status', %s, true, '{}', %s)",
+        [[ds_id, json.dumps(ds_config), json.dumps(metadata), upload_dt, upload_dt, 'thumb-id']],
     )
     moldb = create_test_molecular_db()
     (job_id,) = db.insert_return(
@@ -132,6 +132,7 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         'ds_group_id': group_id,
         'ds_group_name': 'group name',
         'ds_group_short_name': 'grp',
+        'ds_ion_thumbnail_url': 'http://storage:9000/thumb/2000-01-01_00h00m/thumb-id',
     }
     assert ds_d == {
         **expected_ds_fields,

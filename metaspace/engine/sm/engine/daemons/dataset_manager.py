@@ -153,7 +153,8 @@ class DatasetManager:
         """ Delete all dataset related data from the DB """
         self.logger.info(f'Deleting dataset: {ds.id}')
         del_jobs(ds)
-        del_optical_image(self._db, self._img_store, ds.id)
+        # TODO: enable after image storage supports optical images
+        # del_optical_image(self._db, self._img_store, ds.id)
         self._es.delete_ds(ds.id)
         self._db.alter('DELETE FROM dataset WHERE id=%s', params=(ds.id,))
 
