@@ -419,7 +419,6 @@ class Colocalization:
                 raise
 
     def run_coloc_job_lithops(self, fexec: Executor, ds: Dataset, reprocess: bool = False):
-        img_service_public_url = self._sm_config['services']['img_service_public_url']
         # Extract required fields to avoid pickling Dataset, because unpickling Dataset tries to
         # import psycopg2 and fails inside Functions
         ds_id = ds.id

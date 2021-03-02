@@ -317,6 +317,7 @@ class ServerAnnotationJob:
                 formula_image_ids = self.db_formula_image_ids.get(moldb_id, {})
 
                 search_results = SearchResults(
+                    ds_id=self.ds.id,
                     job_id=job_id,
                     metric_names=METRICS.keys(),
                     n_peaks=self.ds.config['isotope_generation']['n_peaks'],
