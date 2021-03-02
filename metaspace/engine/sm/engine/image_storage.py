@@ -9,7 +9,7 @@ import numpy as np
 from scipy.ndimage import zoom
 import PIL.Image
 
-from sm.engine.storage import get_s3_resource
+from sm.engine.storage import get_s3_resource, create_bucket
 
 logger = logging.getLogger('engine')
 
@@ -27,6 +27,7 @@ class ImageStorage:
         logger.info(f'Initializing image storage from config: {config}')
         s3 = get_s3_resource()
         self.s3_client = s3.meta.client
+        create_bucket(config['bucket'])
         self.bucket = s3.Bucket(config['bucket'])
 
     @staticmethod
