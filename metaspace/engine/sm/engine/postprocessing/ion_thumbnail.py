@@ -11,6 +11,7 @@ from sklearn.cluster import KMeans
 from sm.engine import image_storage
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.dataset import Dataset
+from sm.engine.image_store import ImageStoreServiceWrapper
 
 ISO_IMAGE_SEL = (
     "SELECT iso_image_ids[1] "
@@ -233,7 +234,7 @@ def generate_ion_thumbnail_lithops(
     def generate(annotation_rows):
         # Use web_app_url to get the publicly-exposed storage server address, because
         # Functions can't use the private address
-        public_img_store = ImageStore(img_service_public_url)
+        public_img_store = ImageStoreServiceWrapper(img_service_public_url)
         return _generate_ion_thumbnail_image(annotation_rows, public_img_store, algorithm)
 
     try:
@@ -252,7 +253,7 @@ def generate_ion_thumbnail_lithops(
             generate, (annotation_rows,), runtime_memory=2048, include_modules=['png']
         )
 
-        img_store = ImageStore(img_service_private_url)
+        img_store = ImageStoreServiceWrapper(img_service_private_url)
         image_id = _save_ion_thumbnail_image(img_store, thumbnail)
         db.alter(THUMB_UPD, [image_id, ds.id])
 
