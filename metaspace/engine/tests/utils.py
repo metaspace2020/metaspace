@@ -1,13 +1,10 @@
 from copy import deepcopy
 from datetime import datetime
 
-import botocore.exceptions
-
 from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.db import DB
 from sm.engine import molecular_db
 from sm.engine.molecular_db import MolecularDB
-from sm.engine.storage import get_s3_client, get_s3_bucket
 
 TEST_METADATA = {
     "Data_Type": "Imaging MS",

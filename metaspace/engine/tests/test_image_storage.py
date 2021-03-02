@@ -33,7 +33,7 @@ def test_post_get_image_success():
     assert fetched_image_bytes == test_image_bytes
 
 
-def test_post_get_image_wrong_key():
+def test_get_image_wrong_key():
     try:
         image_storage.get_image(image_storage.ImageType.ISO, "ds-id", 'wrong-id')
     except botocore.exceptions.ClientError as error:
