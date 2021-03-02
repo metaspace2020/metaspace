@@ -6,16 +6,13 @@ import botocore.exceptions
 import pytest
 
 from sm.engine import image_storage
-from .utils import create_bucket
-
-BUCKET_NAME = 'sm-image-storage-tests'
+from sm.engine.storage import get_s3_bucket
 
 
 @pytest.fixture(autouse=True, scope='module')
-def fill_storage():
-    bucket = create_bucket(BUCKET_NAME)
+def clean_storage(sm_config):
     yield
-    bucket.objects.all().delete()
+    get_s3_bucket(sm_config['image_storage']['bucket']).objects.all().delete()
 
 
 def make_test_image_bytes() -> bytes:

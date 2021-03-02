@@ -6,11 +6,11 @@ from unittest.mock import patch
 import pytest
 
 from sm.engine.db import DB
-from sm.engine.storage import get_s3_client
+from sm.engine.storage import get_s3_client, create_bucket
 from sm.rest import api
 from sm.rest.databases import MALFORMED_CSV, BAD_DATA
 from sm.rest.utils import ALREADY_EXISTS
-from .utils import create_test_molecular_db, create_bucket
+from .utils import create_test_molecular_db
 
 BUCKET_NAME = 'sm-engine-tests'
 GROUP_ID = '123e4567-e89b-12d3-a456-426655440000'

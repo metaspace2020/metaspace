@@ -74,15 +74,3 @@ def create_test_ds(
     )
     ds.save(DB(), es=es, allow_insert=True)
     return ds
-
-
-def create_bucket(bucket_name):
-    s3 = get_s3_client()
-    try:
-        s3.head_bucket(Bucket=bucket_name)
-    except botocore.exceptions.ClientError as e:
-        if e.response["Error"]["Code"] == "404":
-            s3.create_bucket(Bucket=bucket_name)
-        else:
-            raise
-    return get_s3_bucket(bucket_name)

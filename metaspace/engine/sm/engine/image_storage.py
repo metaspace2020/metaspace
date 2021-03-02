@@ -23,11 +23,11 @@ class ImageType(str, Enum):
 class ImageStorage:
     Type = ImageType
 
-    def __init__(self, config):
+    def __init__(self, config: Dict):
         logger.info(f'Initializing image storage from config: {config}')
-        self.s3 = get_s3_resource()
-        self.s3_client = self.s3.meta.client
-        self.bucket = self.s3.Bucket(config['bucket'])
+        s3 = get_s3_resource()
+        self.s3_client = s3.meta.client
+        self.bucket = s3.Bucket(config['bucket'])
 
     @staticmethod
     def _make_key(image_type, ds_id, img_id):
@@ -69,7 +69,7 @@ delete_image: Callable[[ImageType, str, str], None]
 get_image_url: Callable[[ImageType, str, str], str]
 
 
-def init(config):
+def init(config: Dict):
     global _instance, get_image, post_image, delete_image, get_image_url
     _instance = ImageStorage(config)
     get_image = _instance.get_image

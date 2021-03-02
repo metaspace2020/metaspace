@@ -132,7 +132,7 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         'ds_group_id': group_id,
         'ds_group_name': 'group name',
         'ds_group_short_name': 'grp',
-        'ds_ion_thumbnail_url': 'http://storage:9000/thumb/2000-01-01_00h00m/thumb-id',
+        'ds_ion_thumbnail_url': 'http://localhost:9000/thumb/2000-01-01_00h00m/thumb-id',
     }
     assert ds_d == {
         **expected_ds_fields,
