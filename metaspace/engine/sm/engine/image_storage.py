@@ -62,6 +62,7 @@ class ImageStorage:
         return f'{endpoint}/{key}'
 
 
+# pylint: disable=invalid-name
 _instance: ImageStorage
 
 get_image: Callable[[ImageType, str, str], bytes]
@@ -71,6 +72,7 @@ get_image_url: Callable[[ImageType, str, str], str]
 
 
 def init(config: Dict):
+    # pylint: disable=global-statement
     global _instance, get_image, post_image, delete_image, get_image_url
     _instance = ImageStorage(config)
     get_image = _instance.get_image
