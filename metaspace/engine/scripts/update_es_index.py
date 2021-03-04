@@ -1,12 +1,11 @@
 import argparse
 import logging
 from copy import deepcopy
-from functools import partial
 
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter, ESIndexManager
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
-from sm.engine.util import bootstrap_and_run
+from sm.engine.util import GlobalInit
 
 logger = logging.getLogger('engine')
 
@@ -105,14 +104,12 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    bootstrap_and_run(
-        args.config,
-        partial(
-            reindex_results,
+    with GlobalInit(config_path=args.config) as sm_config:
+        reindex_results(
+            sm_config=sm_config,
             ds_id=args.ds_id,
             ds_mask=args.ds_name,
             use_inactive_index=args.inactive,
             offline_reindex=args.offline_reindex,
             update_fields=args.update_fields,
-        ),
-    )
+        )

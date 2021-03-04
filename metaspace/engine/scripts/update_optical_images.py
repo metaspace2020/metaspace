@@ -1,10 +1,9 @@
 import argparse
 import logging
-from functools import partial
 
 from sm.engine.db import DB
 from sm.engine.optical_image import add_optical_image
-from sm.engine.util import bootstrap_and_run
+from sm.engine.util import GlobalInit
 from sm.engine.image_store import ImageStoreServiceWrapper
 
 
@@ -52,9 +51,9 @@ if __name__ == "__main__":
     logger = logging.getLogger('engine')
 
     if args.ds_id or args.sql_where:
-        bootstrap_and_run(
-            args.config,
-            partial(update_optical_images, ds_id_str=args.ds_id, sql_where=args.sql_where),
-        )
+        with GlobalInit(config_path=args.config) as sm_config:
+            update_optical_images(
+                sm_config=sm_config, ds_id_str=args.ds_id, sql_where=args.sql_where
+            )
     else:
         parser.print_help()

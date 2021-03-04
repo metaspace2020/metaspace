@@ -30,13 +30,12 @@ def get_s3_resource():
     return boto3.resource('s3', **_boto_client_kwargs())
 
 
-def create_bucket(bucket_name: str):
-    s3 = get_s3_client()
+def create_bucket(s3_client, bucket_name: str):
     try:
-        s3.head_bucket(Bucket=bucket_name)
+        s3_client.head_bucket(Bucket=bucket_name)
     except botocore.exceptions.ClientError as e:
-        if e.response["Error"]["Code"] == "404":
-            s3.create_bucket(Bucket=bucket_name)
+        if e.response['Error']['Code'] == '404':
+            s3_client.create_bucket(Bucket=bucket_name)
         else:
             raise
 

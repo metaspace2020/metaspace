@@ -1,13 +1,21 @@
 import io
+import json
 import logging
 import uuid
 from concurrent.futures.thread import ThreadPoolExecutor
 from enum import Enum
-from typing import List, Tuple, Dict, Callable
+from typing import List, Tuple, Dict, Callable, TYPE_CHECKING
 
 import numpy as np
 from scipy.ndimage import zoom
 import PIL.Image
+
+if TYPE_CHECKING:
+    from mypy_boto3_s3.service_resource import S3ServiceResource
+    from mypy_boto3_s3.client import S3Client
+else:
+    S3ServiceResource = object
+    S3Client = object
 
 from sm.engine.storage import get_s3_resource, create_bucket
 
@@ -25,10 +33,25 @@ class ImageStorage:
 
     def __init__(self, config: Dict):
         logger.info(f'Initializing image storage from config: {config}')
-        s3 = get_s3_resource()
-        self.s3_client = s3.meta.client
-        create_bucket(config['bucket'])
-        self.bucket = s3.Bucket(config['bucket'])
+        self.s3: S3ServiceResource = get_s3_resource()
+        self.s3_client: S3Client = self.s3.meta.client
+        self._configure_bucket(config)
+
+    def _configure_bucket(self, config: Dict):
+        create_bucket(self.s3_client, config['bucket'])
+        bucket_policy = {
+            'Version': '2012-10-17',
+            'Statement': [
+                {
+                    'Effect': 'Allow',
+                    'Principal': {'AWS': ['*']},
+                    'Action': ['s3:GetObject'],
+                    'Resource': [f'arn:aws:s3:::{config["bucket"]}/*'],
+                }
+            ],
+        }
+        self.s3_client.put_bucket_policy(Bucket=config['bucket'], Policy=json.dumps(bucket_policy))
+        self.bucket = self.s3.Bucket(config['bucket'])
 
     @staticmethod
     def _make_key(image_type, ds_id, img_id):
@@ -59,7 +82,7 @@ class ImageStorage:
     def get_image_url(self, image_type: ImageType, ds_id: str, image_id: str) -> str:
         endpoint = self.s3_client.meta.endpoint_url
         key = self._make_key(image_type, ds_id, image_id)
-        return f'{endpoint}/{key}'
+        return f'{endpoint}/{self.bucket.name}/{key}'
 
 
 # pylint: disable=invalid-name

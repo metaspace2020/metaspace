@@ -385,6 +385,12 @@ class ESExporter:
             mzs, _ = isocalc.centroids(ion_without_pol)
             doc['centroid_mzs'] = list(mzs) if mzs is not None else []
             doc['mz'] = mzs[0] if mzs is not None else 0
+            doc['iso_image_urls'] = [
+                image_storage.get_image_url(image_storage.ImageType.ISO, ds_id, image_id)
+                if image_id
+                else None
+                for image_id in doc.pop('iso_image_ids')
+            ]
 
             if moldb.targeted:
                 fdr_level = doc['fdr'] = -1
@@ -582,8 +588,8 @@ class ESExporterIsobars:
             for peak_i, mz in enumerate(doc['centroid_mzs']):
                 if (
                     mz != 0
-                    and peak_i < len(doc['iso_image_ids'])
-                    and doc['iso_image_ids'][peak_i] is not None
+                    and peak_i < len(doc['iso_image_urls'])
+                    and doc['iso_image_urls'][peak_i] is not None
                 ):
                     peaks.append(
                         (

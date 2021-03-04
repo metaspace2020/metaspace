@@ -75,7 +75,7 @@ export interface ESAnnotationSource extends ESDatasetSource {
 
   mz: number;
   centroid_mzs: number[];
-  iso_image_ids: (string|null)[];
+  iso_image_urls: (string|null)[];
   total_iso_ints: number[];
   min_iso_ints: number[];
   max_iso_ints: number[];

@@ -1,5 +1,4 @@
 import argparse
-from functools import partial
 from os.path import join
 import os
 import sys
@@ -8,13 +7,13 @@ from pprint import pprint
 
 import numpy as np
 
+from sm.engine import image_storage
 from sm.engine.annotation_lithops.annotation_job import ServerAnnotationJob
 from sm.engine.annotation_lithops.executor import Executor
 import sm.engine.annotation_lithops.executor as lithops_executor
 from sm.engine.annotation_spark.annotation_job import AnnotationJob
 from sm.engine.db import DB
-from sm.engine.image_store import ImageStoreServiceWrapper
-from sm.engine.util import bootstrap_and_run
+from sm.engine.util import GlobalInit
 from sm.engine.config import proj_root
 from sm.engine.utils.create_ds_from_files import create_ds_from_files
 from sm.engine.utils.perf_profile import NullProfiler
@@ -126,21 +125,24 @@ class SciTester:
             or self._metrics_diff(old_search_res, search_res)
         )
 
-    def _create_img_store_mock(self):
+    @classmethod
+    def _patch_image_storage(cls):
         class ImageStoreMock:
-            def post_image(self, *args):
-                return None
+            Type = image_storage.ImageType
 
-            def delete_image_by_id(self, *args):
-                return None
+            def __init__(self, *args, **kwargs):
+                pass
 
-        return ImageStoreMock()
+            def post_image(self, *args, **kwargs):
+                pass
 
-    def run_search(self, mock_img_store=False, lithops=False):
-        if mock_img_store:
-            img_store = self._create_img_store_mock()
-        else:
-            img_store = ImageStoreServiceWrapper(self.sm_config['services']['img_service_url'])
+        from sm.engine.annotation_spark import search_results
+
+        search_results.ImageStorage = ImageStoreMock
+
+    def run_search(self, mock_image_storage=False, use_lithops=False):
+        if mock_image_storage:
+            self._patch_image_storage()
 
         os.environ['PYSPARK_PYTHON'] = sys.executable
 
@@ -148,16 +150,14 @@ class SciTester:
         self.db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
         ds.save(self.db, allow_insert=True)
         perf = NullProfiler()
-        if lithops:
+        if use_lithops:
             # Override the runtime to force it to run without docker.
             lithops_executor.RUNTIME_DOCKER_IMAGE = 'python'
 
             executor = Executor(self.sm_config['lithops'], perf)
-            ServerAnnotationJob(executor, img_store, ds, perf, self.sm_config).run(
-                debug_validate=True
-            )
+            ServerAnnotationJob(executor, None, ds, perf, self.sm_config).run(debug_validate=True)
         else:
-            AnnotationJob(img_store, ds, perf).run()
+            AnnotationJob(ds, perf).run()
 
     def clear_data_dirs(self):
         path = Path(self.ds_data_path)
@@ -165,12 +165,12 @@ class SciTester:
             path.rmdir()
 
 
-def run(sm_config, *, mock_img_store, lithops):
+def run(sm_config, *, mock_image_storage, use_lithops):
     sci_tester = SciTester(sm_config)
     run_search_successful = False
     search_results_different = False
     try:
-        sci_tester.run_search(mock_img_store, lithops)
+        sci_tester.run_search(mock_image_storage, use_lithops)
         run_search_successful = True
         search_results_different = sci_tester.search_results_are_different()
     except Exception as e:
@@ -200,19 +200,21 @@ if __name__ == '__main__':
         help='path to sm config file',
     )
     parser.add_argument(
-        '--mock-img-store', action='store_true', help='whether to mock the Image Store Service'
+        '--mock-image-storage', action='store_true', help='whether to mock the Image Store Service'
     )
     parser.add_argument(
         '--lithops', action='store_true', help='whether to use the Lithops executor'
     )
     args = parser.parse_args()
 
-    if args.run:
-        bootstrap_and_run(
-            args.sm_config_path,
-            partial(run, mock_img_store=args.mock_img_store, lithops=args.lithops),
-        )
-    elif args.save:
-        bootstrap_and_run(args.sm_config_path, save)
-    else:
-        parser.print_help()
+    with GlobalInit(config_path=args.sm_config_path) as sm_config:
+        if args.run:
+            run(
+                sm_config=sm_config,
+                mock_image_storage=args.mock_image_storage,
+                use_lithops=args.lithops,
+            )
+        elif args.save:
+            save(sm_config=sm_config)
+        else:
+            parser.print_help()
