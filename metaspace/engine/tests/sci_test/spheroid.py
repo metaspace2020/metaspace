@@ -127,7 +127,7 @@ class SciTester:
 
     @classmethod
     def _patch_image_storage(cls):
-        class ImageStoreMock:
+        class ImageStorageMock:
             Type = image_storage.ImageType
 
             def __init__(self, *args, **kwargs):
@@ -138,7 +138,7 @@ class SciTester:
 
         from sm.engine.annotation_spark import search_results
 
-        search_results.ImageStorage = ImageStoreMock
+        search_results.ImageStorage = ImageStorageMock
 
     def run_search(self, mock_image_storage=False, use_lithops=False):
         if mock_image_storage:
