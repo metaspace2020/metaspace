@@ -8,9 +8,10 @@ import numpy as np
 import png
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
-from sm.engine.image_store import ImageStoreServiceWrapper
+from sm.engine import image_storage
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.dataset import Dataset
+from sm.engine.image_store import ImageStoreServiceWrapper
 
 ISO_IMAGE_SEL = (
     "SELECT iso_image_ids[1] "
@@ -171,12 +172,12 @@ def _thumb_from_pixel_clusters(images, mask, h, w, use_distance_from_centroid=Fa
     return unmasked_pixel_vals.reshape((h, w, 4))
 
 
-def _generate_ion_thumbnail_image(annotation_rows, img_store, ion_img_storage_type, algorithm):
+def _generate_ion_thumbnail_image(ds_id, annotation_rows, algorithm):
     image_ids = [image_id for image_id, in annotation_rows]
 
     # Hotspot percentile is lowered as a lazy way to brighten images
-    images, mask, (h, w) = img_store.get_ion_images_for_analysis(
-        ion_img_storage_type, image_ids, max_size=(200, 200), hotspot_percentile=90
+    images, mask, (h, w) = image_storage.get_ion_images_for_analysis(
+        ds_id, image_ids, max_size=(200, 200), hotspot_percentile=90
     )
 
     logger.debug(f'Generating ion thumbnail: {algorithm}({len(images)} x {h} x {w}) ')
@@ -185,16 +186,16 @@ def _generate_ion_thumbnail_image(annotation_rows, img_store, ion_img_storage_ty
     return np.uint8(np.clip(thumbnail * 255, 0, 255)).reshape((h, w, 4))
 
 
-def _save_ion_thumbnail_image(img_store, thumbnail):
+def _save_ion_thumbnail_image(ds_id, thumbnail):
     h, w, depth = thumbnail.shape
     fp = BytesIO()
     png_writer = png.Writer(width=w, height=h, alpha=True, compression=9)
     png_writer.write(fp, thumbnail.reshape(h, w * depth).tolist())
     fp.seek(0)
-    return img_store.post_image('fs', 'ion_thumbnail', fp)
+    return image_storage.post_image(image_storage.ImageType.THUMB, ds_id, fp.read())
 
 
-def generate_ion_thumbnail(db, img_store, ds, only_if_needed=False, algorithm=DEFAULT_ALGORITHM):
+def generate_ion_thumbnail(db, ds, only_if_needed=False, algorithm=DEFAULT_ALGORITHM):
     try:
         (existing_thumb_id,) = db.select_one(THUMB_SEL, [ds.id])
 
@@ -207,15 +208,13 @@ def generate_ion_thumbnail(db, img_store, ds, only_if_needed=False, algorithm=DE
             logger.warning('Could not create ion thumbnail - no annotations found')
             return
 
-        thumbnail = _generate_ion_thumbnail_image(
-            annotation_rows, img_store, ds.ion_img_storage_type, algorithm
-        )
+        thumbnail = _generate_ion_thumbnail_image(ds.id, annotation_rows, algorithm)
 
-        image_id = _save_ion_thumbnail_image(img_store, thumbnail)
+        image_id = _save_ion_thumbnail_image(ds.id, thumbnail)
         db.alter(THUMB_UPD, [image_id, ds.id])
 
         if existing_thumb_id:
-            img_store.delete_image_by_id('fs', 'ion_thumbnail', existing_thumb_id)
+            image_storage.delete_image(image_storage.ImageType.THUMB, ds.id, existing_thumb_id)
 
     except Exception:
         logger.error('Error generating ion thumbnail image', exc_info=True)
@@ -231,15 +230,12 @@ def generate_ion_thumbnail_lithops(
 ):
     img_service_private_url = sm_config['services']['img_service_url']
     img_service_public_url = sm_config['services']['img_service_public_url']
-    ion_img_storage_type = ds.ion_img_storage_type
 
     def generate(annotation_rows):
         # Use web_app_url to get the publicly-exposed storage server address, because
         # Functions can't use the private address
         public_img_store = ImageStoreServiceWrapper(img_service_public_url)
-        return _generate_ion_thumbnail_image(
-            annotation_rows, public_img_store, ion_img_storage_type, algorithm
-        )
+        return _generate_ion_thumbnail_image(annotation_rows, public_img_store, algorithm)
 
     try:
         (existing_thumb_id,) = db.select_one(THUMB_SEL, [ds.id])
@@ -262,7 +258,7 @@ def generate_ion_thumbnail_lithops(
         db.alter(THUMB_UPD, [image_id, ds.id])
 
         if existing_thumb_id:
-            img_store.delete_image_by_id('fs', 'ion_thumbnail', existing_thumb_id)
+            img_store.delete_image_by_id('ion_thumbnail', existing_thumb_id)
 
     except Exception:
         logger.error('Error generating ion thumbnail image', exc_info=True)

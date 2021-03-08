@@ -1,4 +1,5 @@
 import json
+import unittest
 from collections import OrderedDict
 from unittest.mock import MagicMock, Mock
 
@@ -9,12 +10,7 @@ from scipy.sparse import coo_matrix
 
 from sm.engine.db import DB
 from sm.engine.ion_mapping import ION_SEL
-from sm.engine.image_store import ImageStoreServiceWrapper
-from sm.engine.annotation_spark.search_results import (
-    SearchResults,
-    METRICS_INS,
-    post_images_to_image_store,
-)
+from sm.engine.annotation_spark.search_results import SearchResults, METRICS_INS
 
 db_mock = MagicMock(spec=DB)
 
@@ -37,7 +33,7 @@ def search_results():
         'min_iso_ints',
         'max_iso_ints',
     ]
-    res = SearchResults(0, metrics, 4, 1)
+    res = SearchResults('ds-id', 0, metrics, 4, 1)
     return res
 
 
@@ -120,25 +116,23 @@ def test_save_ion_img_metrics_correct_db_call(search_results):
     db_mock.insert.assert_called_with(METRICS_INS, exp_rows)
 
 
-def test_isotope_images_are_stored(search_results, pysparkling_context):
+@unittest.mock.patch('sm.engine.image_storage.ImageStorage.post_image')
+def test_isotope_images_are_stored(post_image_mock, search_results, pysparkling_context):
     mask = np.array([[1, 1], [1, 0]])
     img_id = "iso_image_id"
-    img_store_mock = Mock(spec=ImageStoreServiceWrapper)
-    img_store_mock.post_image.return_value = img_id
+    post_image_mock.return_value = img_id
 
-    img_store_mock.reset_mock()
     formula_images_rdd = pysparkling_context.parallelize(
         [
             (0, [coo_matrix([[0, 0], [0, 1]]), None, coo_matrix([[2, 3], [1, 0]]), None]),
             (1, [coo_matrix([[1, 1], [0, 1]]), None, None, None]),
         ]
     )
-    ids = post_images_to_image_store(formula_images_rdd, mask, img_store_mock, 'fs', 4)
+    ids = search_results._post_images_to_image_store(formula_images_rdd, mask, 4)
     assert ids == {
         0: {'iso_image_ids': [img_id, None, img_id, None]},
         1: {'iso_image_ids': [img_id, None, None, None]},
     }
-    assert img_store_mock.post_image.call_count == 3
 
 
 def test_non_native_python_number_types_handled(search_results):

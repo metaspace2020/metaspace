@@ -47,6 +47,7 @@ export interface ESDatasetSource {
   ds_group_short_name: string | null;
   ds_group_approved: boolean;
   ds_project_ids?: string[];
+  ds_ion_thumbnail_url: string;
   annotation_counts: any[];
 }
 

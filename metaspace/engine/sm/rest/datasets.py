@@ -31,7 +31,6 @@ def _create_queue_publisher(qdesc):
 
 def _create_dataset_manager(db):
     img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
-    img_store.storage_type = 'fs'
     return SMapiDatasetManager(
         db=db,
         es=ESExporter(db, sm_config),

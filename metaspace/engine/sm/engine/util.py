@@ -2,8 +2,10 @@ import logging
 import re
 import os
 from pathlib import Path
+from typing import Dict
 
 from sm.engine.config import init_loggers, SMConfig
+from sm.engine import image_storage
 
 logger = logging.getLogger('engine')
 
@@ -48,16 +50,25 @@ def populate_aws_env_vars(aws_config):
         os.environ.setdefault(env_var.upper(), val)
 
 
+def on_startup(config_path: str) -> Dict:
+    SMConfig.set_path(config_path)
+    sm_config = SMConfig.get_conf()
+
+    init_loggers(sm_config['logs'])
+    if 'aws' in sm_config:
+        populate_aws_env_vars(sm_config['aws'])
+
+    image_storage.init(sm_config['image_storage'])
+
+    return sm_config
+
+
 class GlobalInit:
     def __init__(self, config_path='conf/config.json'):
         from sm.engine.db import ConnectionPool  # pylint: disable=import-outside-toplevel
 
-        SMConfig.set_path(config_path)
-        self.sm_config = SMConfig.get_conf()
+        self.sm_config = on_startup(config_path)
 
-        init_loggers(self.sm_config['logs'])
-        if 'aws' in self.sm_config:
-            populate_aws_env_vars(self.sm_config['aws'])
         self.pool = ConnectionPool(self.sm_config['db'])
 
     def __enter__(self):

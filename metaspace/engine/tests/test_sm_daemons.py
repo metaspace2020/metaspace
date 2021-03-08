@@ -5,7 +5,7 @@ import logging
 from collections import OrderedDict
 from functools import partial
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import time
 
 import pytest
@@ -89,7 +89,6 @@ def queue_pub(local_sm_config):
 
 def run_daemons(db, es, sm_config):
     from sm.engine.queue import QueuePublisher, SM_DS_STATUS, SM_ANNOTATE, SM_UPDATE
-    from sm.engine.image_store import ImageStoreServiceWrapper
     from sm.engine.daemons.dataset_manager import DatasetManager
     from sm.engine.daemons.annotate import SMAnnotateDaemon
     from sm.engine.daemons.update import SMUpdateDaemon
@@ -97,20 +96,9 @@ def run_daemons(db, es, sm_config):
     status_queue_pub = QueuePublisher(
         config=sm_config['rabbitmq'], qdesc=SM_DS_STATUS, logger=logger
     )
-    img_store_mock = MagicMock(ImageStoreServiceWrapper)
-    img_store_mock.get_ion_images_for_analysis.return_value = (
-        get_ion_images_for_analysis_mock_return
-    )
-    img_store_mock.get_image_by_id.return_value = Image.new('RGBA', (10, 10))
-    img_store_mock.post_image.side_effect = (f'img{i}' for i in range(100))
 
     manager = DatasetManager(
-        db=db,
-        es=es,
-        img_store=img_store_mock,
-        status_queue=status_queue_pub,
-        logger=logger,
-        sm_config=sm_config,
+        db=db, es=es, status_queue=status_queue_pub, logger=logger, sm_config=sm_config,
     )
     annotate_daemon = SMAnnotateDaemon(
         manager=manager, annot_qdesc=SM_ANNOTATE, upd_qdesc=SM_UPDATE
@@ -127,7 +115,14 @@ def run_daemons(db, es, sm_config):
     update_daemon.stop()
 
 
-@patch('sm.engine.annotation_spark.search_results.post_images_to_image_store')
+@patch(
+    'sm.engine.image_storage.get_ion_images_for_analysis',
+    return_value=get_ion_images_for_analysis_mock_return,
+)
+@patch(
+    'sm.engine.image_storage.get_image', return_value=Image.new('RGBA', (10, 10)),
+)
+@patch('sm.engine.annotation_spark.search_results.SearchResults._post_images_to_image_store')
 @patch(
     'sm.engine.postprocessing.off_sample_wrapper.call_api',
     return_value={'predictions': {'label': 'off', 'prob': 0.99}},
@@ -136,7 +131,9 @@ def run_daemons(db, es, sm_config):
 def test_sm_daemons(
     MSMSearchMock,
     call_off_sample_api_mock,
-    post_images_to_annot_service_mock,
+    post_images_to_image_store_mock,
+    get_image_mock,
+    get_ion_images_for_analysis_mock,
     # fixtures
     test_db,
     es_dsl_search,
@@ -183,7 +180,7 @@ def test_sm_daemons(
     )
 
     url_dict = {'iso_image_ids': ['iso_image_1', None, None, None]}
-    post_images_to_annot_service_mock.return_value = {0: url_dict, 1: url_dict, 2: url_dict}
+    post_images_to_image_store_mock.return_value = {0: url_dict, 1: url_dict, 2: url_dict}
 
     db = DB()
     es = ESExporter(db, local_sm_config)
@@ -254,7 +251,7 @@ def test_sm_daemons(
         assert doc['_id'].startswith(ds_id)
 
 
-@patch('sm.engine.annotation_spark.search_results.post_images_to_image_store')
+@patch('sm.engine.annotation_spark.search_results.SearchResults._post_images_to_image_store')
 @patch('sm.engine.annotation_spark.annotation_job.MSMSearch')
 def test_sm_daemons_annot_fails(
     MSMSearchMock,
@@ -299,7 +296,7 @@ def test_sm_daemons_annot_fails(
     assert row[0] == 'FAILED'
 
 
-@patch('sm.engine.annotation_spark.search_results.post_images_to_image_store')
+@patch('sm.engine.annotation_spark.search_results.SearchResults._post_images_to_image_store')
 @patch('sm.engine.annotation_spark.annotation_job.MSMSearch')
 def test_sm_daemon_es_export_fails(
     MSMSearchMock,

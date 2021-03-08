@@ -23,6 +23,7 @@ from sm.engine import molecular_db
 from sm.engine.molecular_db import MolecularDB
 from sm.engine.utils.retry_on_exception import retry_on_exception
 from sm.engine.config import SMConfig
+from sm.engine import image_storage
 
 logger = logging.getLogger('engine')
 
@@ -81,10 +82,11 @@ FROM (
     d.config #> '{isotope_generation,neutral_losses}' AS ds_neutral_losses,
     d.config #> '{isotope_generation,chem_mods}' AS ds_chem_mods,
     d.acq_geometry AS ds_acq_geometry,
-    d.ion_img_storage_type AS ds_ion_img_storage
+    d.ion_thumbnail as ds_ion_thumbnail
   FROM dataset as d
   LEFT JOIN job ON job.ds_id = d.id
-  GROUP BY d.id) as d
+  GROUP BY d.id
+) as d
 LEFT JOIN graphql.dataset gd ON gd.id = d.ds_id
 LEFT JOIN graphql.user gu ON gu.id = gd.user_id
 LEFT JOIN graphql.group gg ON gg.id = gd.group_id
@@ -418,6 +420,9 @@ class ESExporter:
                 ds_doc = self._select_ds_by_id(ds_id)
                 ds_doc['annotation_counts'] = []
 
+            ds_doc['ds_ion_thumbnail_url'] = image_storage.get_image_url(
+                image_storage.ImageType.THUMB, ds_id, ds_doc.pop('ds_ion_thumbnail')
+            )
             annotation_counts = self._index_ds_annotations(ds_id, moldb, ds_doc, isocalc)
 
             fdr_levels = [5, 10, 20, 50]

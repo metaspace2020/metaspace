@@ -67,7 +67,6 @@ def create_ds_doc(
         status=status,
         moldb_ids=moldb_ids,
         adducts=adducts,
-        ion_img_storage_type='fs',
         is_public=True,
     )
 
