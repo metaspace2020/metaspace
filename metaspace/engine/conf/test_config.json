@@ -79,11 +79,6 @@
       ]
     }
   },
-  "storage": {
-    "endpoint_url": "http://localhost:9000",
-    "access_key_id": "minioadmin",
-    "secret_access_key": "minioadmin"
-  },
   "slack": {},
   "ms_file_handlers": [
     {
@@ -95,8 +90,7 @@
       "parser_factory": {
         "name": "ImzMLParser",
         "path": "pyimzml.ImzMLParser"
-      },
-      "img_storage_type": "fs"
+      }
     },
     {
       "type": "lcms",
@@ -106,8 +100,7 @@
       "parser_factory": {
         "name": "MzMLParser",
         "path": "sm.engine.mzml_parser"
-      },
-      "img_storage_type": "db"
+      }
     }
   ],
   "isotope_storage": {
@@ -171,5 +164,13 @@
         "+Cl"
       ]
     }
+  },
+  "storage": {
+    "endpoint_url": "http://localhost:9000",
+    "access_key_id": "minioadmin",
+    "secret_access_key": "minioadmin"
+  },
+  "image_storage": {
+    "bucket": "sm-image-storage-tests"
   }
 }

@@ -22,18 +22,17 @@ from sm.engine.postprocessing.ion_thumbnail import (
 )
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.postprocessing.off_sample_wrapper import classify_dataset_ion_images
-from sm.engine.optical_image import del_optical_image
+from sm.engine.optical_image import del_optical_image  # pylint: disable=unused-import
 from sm.engine.config import SMConfig
 from sm.engine.utils.perf_profile import perf_profile
 
 
 class DatasetManager:
-    def __init__(self, db, es, img_store, status_queue=None, logger=None, sm_config=None):
+    def __init__(self, db, es, status_queue=None, logger=None, sm_config=None):
         self._sm_config = sm_config or SMConfig.get_conf()
         self._slack_conf = self._sm_config.get('slack', {})
         self._db: DB = db
         self._es: ESExporter = es
-        self._img_store = img_store
         self._status_queue = status_queue
         self.logger = logger or logging.getLogger()
 
@@ -93,18 +92,14 @@ class DatasetManager:
             del_jobs(ds)
         ds.save(self._db, self._es)
         with perf_profile(self._db, 'annotate_spark', ds.id) as perf:
-            AnnotationJob(
-                img_store=self._img_store, ds=ds, sm_config=self._sm_config, perf=perf
-            ).run()
+            AnnotationJob(ds=ds, sm_config=self._sm_config, perf=perf).run()
 
             if self._sm_config['services'].get('colocalization', True):
-                Colocalization(self._db, self._img_store).run_coloc_job(ds, reprocess=del_first)
+                Colocalization(self._db).run_coloc_job(ds, reprocess=del_first)
                 perf.record_entry('ran colocalization')
 
             if self._sm_config['services'].get('ion_thumbnail', True):
-                generate_ion_thumbnail(
-                    db=self._db, img_store=self._img_store, ds=ds, only_if_needed=not del_first
-                )
+                generate_ion_thumbnail(db=self._db, ds=ds, only_if_needed=not del_first)
                 perf.record_entry('generated ion thumbnail')
 
     def annotate_lithops(self, ds: Dataset, del_first=False):
@@ -118,9 +113,7 @@ class DatasetManager:
             ServerAnnotationJob(executor, self._img_store, ds, perf).run()
 
             if self._sm_config['services'].get('colocalization', True):
-                Colocalization(self._db, self._img_store).run_coloc_job_lithops(
-                    executor, ds, reprocess=del_first
-                )
+                Colocalization(self._db).run_coloc_job_lithops(executor, ds, reprocess=del_first)
 
             if self._sm_config['services'].get('ion_thumbnail', True):
                 generate_ion_thumbnail_lithops(
@@ -160,7 +153,8 @@ class DatasetManager:
         """ Delete all dataset related data from the DB """
         self.logger.info(f'Deleting dataset: {ds.id}')
         del_jobs(ds)
-        del_optical_image(self._db, self._img_store, ds.id)
+        # TODO: enable after image storage supports optical images
+        # del_optical_image(self._db, self._img_store, ds.id)
         self._es.delete_ds(ds.id)
         self._db.alter('DELETE FROM dataset WHERE id=%s', params=(ds.id,))
 

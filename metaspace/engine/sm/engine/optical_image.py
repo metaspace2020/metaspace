@@ -46,8 +46,7 @@ class OpticalImageType:
 def _annotation_image_shape(db, img_store, ds):
     logger.info(f'Querying annotation image shape for "{ds.id}" dataset...')
     ion_img_id = db.select(IMG_URLS_BY_ID_SEL + ' LIMIT 1', params=(ds.id,))[0][0][0]
-    storage_type = ds.get_ion_img_storage_type(db)
-    result = img_store.get_image_by_id(storage_type, 'iso_image', ion_img_id).size
+    result = img_store.get_image_by_id('iso_image', ion_img_id).size
     logger.info(f'Annotation image shape for "{ds.id}" dataset is {result}')
     return result
 
@@ -107,7 +106,7 @@ def _add_raw_optical_image(db, img_store, ds, img_id, transform):
     if row:
         old_img_id = row[0]
         if old_img_id and old_img_id != img_id:
-            img_store.delete_image_by_id('fs', 'raw_optical_image', old_img_id)
+            img_store.delete_image_by_id('raw_optical_image', old_img_id)
     db.alter(UPD_DATASET_RAW_OPTICAL_IMAGE, params=(img_id, transform, ds.id))
 
 
@@ -117,7 +116,7 @@ def _add_zoom_optical_images(db, img_store, ds, dims, optical_img, transform, zo
     for zoom in zoom_levels:
         img, (width, height), transform_to_ion_space = _scale_image(optical_img, transform, zoom)
         buf = _save_jpeg(img)
-        scaled_img_id = img_store.post_image('fs', 'optical_image', buf)
+        scaled_img_id = img_store.post_image('optical_image', buf)
         rows.append(
             (
                 scaled_img_id,
@@ -134,7 +133,7 @@ def _add_zoom_optical_images(db, img_store, ds, dims, optical_img, transform, zo
             optical_img, transform, dims, zoom
         )
         buf = _save_jpeg(img)
-        scaled_img_id = img_store.post_image('fs', 'optical_image', buf)
+        scaled_img_id = img_store.post_image('optical_image', buf)
         rows.append(
             (
                 scaled_img_id,
@@ -148,7 +147,7 @@ def _add_zoom_optical_images(db, img_store, ds, dims, optical_img, transform, zo
         )
 
     for row in db.select(SEL_OPTICAL_IMAGE, params=(ds.id,)):
-        img_store.delete_image_by_id('fs', 'optical_image', row[0])
+        img_store.delete_image_by_id('optical_image', row[0])
 
     db.alter(DEL_OPTICAL_IMAGE, params=(ds.id,))
     db.insert(INS_OPTICAL_IMAGE, rows=rows)
@@ -160,7 +159,7 @@ def _add_thumbnail_optical_image(db, img_store, ds, dims, optical_img, transform
     img = _transform_image_to_ion_space(optical_img, transform, dims, zoom=1)[0]
     img.thumbnail(thumbnail_size, Image.ANTIALIAS)
     buf = _save_jpeg(img)
-    img_thumb_id = img_store.post_image('fs', 'optical_image', buf)
+    img_thumb_id = img_store.post_image('optical_image', buf)
     db.alter(UPD_DATASET_THUMB_OPTICAL_IMAGE, params=(img_thumb_id, ds.id))
 
 
@@ -173,8 +172,7 @@ def add_optical_image(db, img_store, ds_id, img_id, transform, zoom_levels=(1, 2
     logger.info(f'Adding optical image to "{ds.id}" dataset')
 
     dims = _annotation_image_shape(db, img_store, ds)
-    print(img_id)
-    optical_img = img_store.get_image_by_id('fs', 'raw_optical_image', img_id)
+    optical_img = img_store.get_image_by_id('raw_optical_image', img_id)
 
     _add_raw_optical_image(db, img_store, ds, img_id, transform)
     _add_zoom_optical_images(db, img_store, ds, dims, optical_img, transform, zoom_levels)
@@ -187,12 +185,12 @@ def del_optical_image(db, img_store, ds_id):
     logger.info(f'Deleting optical image to "{ds.id}" dataset')
     (raw_img_id,) = db.select_one(SEL_DATASET_RAW_OPTICAL_IMAGE, params=(ds.id,))
     if raw_img_id:
-        img_store.delete_image_by_id('fs', 'raw_optical_image', raw_img_id)
+        img_store.delete_image_by_id('raw_optical_image', raw_img_id)
     for row in db.select(SEL_OPTICAL_IMAGE, params=(ds.id,)):
-        img_store.delete_image_by_id('fs', 'optical_image', row[0])
+        img_store.delete_image_by_id('optical_image', row[0])
     (thumbnail_img_id,) = db.select_one(SEL_OPTICAL_IMAGE_THUMBNAIL, params=(ds.id,))
     if thumbnail_img_id:
-        img_store.delete_image_by_id('fs', 'optical_image', thumbnail_img_id)
+        img_store.delete_image_by_id('optical_image', thumbnail_img_id)
     db.alter(DEL_DATASET_RAW_OPTICAL_IMAGE, params=(ds.id,))
     db.alter(DEL_OPTICAL_IMAGE, params=(ds.id,))
     db.alter(UPD_DATASET_THUMB_OPTICAL_IMAGE, params=(None, ds.id))

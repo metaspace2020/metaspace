@@ -21,7 +21,6 @@ from sm.engine.annotation.formula_validator import METRICS
 from sm.engine.annotation_spark.msm_basic_search import MSMSearch
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
-from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.annotation_spark.search_results import SearchResults
 from sm.engine.util import split_s3_path
 from sm.engine.config import SMConfig
@@ -41,14 +40,9 @@ class AnnotationJob:
     """Class responsible for dataset annotation."""
 
     def __init__(
-        self,
-        img_store: ImageStoreServiceWrapper,
-        ds: Dataset,
-        perf: Profiler,
-        sm_config: Optional[Dict] = None,
+        self, ds: Dataset, perf: Profiler, sm_config: Optional[Dict] = None,
     ):
         self._sm_config = sm_config or SMConfig.get_conf()
-        self._img_store = img_store
         self._sc = None
         self._db = DB()
         self._ds = ds
@@ -108,20 +102,15 @@ class AnnotationJob:
                 job_status = JobStatus.FAILED
                 try:
                     search_results = SearchResults(
+                        ds_id=self._ds.id,
                         job_id=job_id,
                         metric_names=METRICS.keys(),
                         n_peaks=self._ds.config['isotope_generation']['n_peaks'],
                         charge=self._ds.config['isotope_generation']['charge'],
                     )
-                    img_store_type = self._ds.get_ion_img_storage_type(self._db)
                     sample_area_mask = make_sample_area_mask(imzml_parser.coordinates)
                     search_results.store(
-                        moldb_ion_metrics_df,
-                        moldb_ion_images_rdd,
-                        sample_area_mask,
-                        self._db,
-                        self._img_store,
-                        img_store_type,
+                        moldb_ion_metrics_df, moldb_ion_images_rdd, sample_area_mask, self._db
                     )
                     job_status = JobStatus.FINISHED
                 finally:
@@ -135,7 +124,6 @@ class AnnotationJob:
             ms_file_type_config['type'], ms_file_path, self._ds.metadata, dims
         )
         self._ds.save_acq_geometry(self._db, acq_geometry)
-        self._ds.save_ion_img_storage_type(self._db, ms_file_type_config['img_storage_type'])
 
     def _copy_input_data(self, ds):
         logger.info('Copying input data')
@@ -182,7 +170,6 @@ class AnnotationJob:
             imzml_parser = self.create_imzml_parser()
             self._perf.record_entry('parsed imzml file')
             self._save_data_from_raw_ms_file(imzml_parser)
-            self._img_store.storage_type = 'fs'
 
             logger.info(f'Dataset config:\n{pformat(self._ds.config)}')
 

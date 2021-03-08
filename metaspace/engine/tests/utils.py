@@ -6,7 +6,6 @@ from sm.engine.db import DB
 from sm.engine import molecular_db
 from sm.engine.molecular_db import MolecularDB
 
-
 TEST_METADATA = {
     "Data_Type": "Imaging MS",
     "MS_Analysis": {

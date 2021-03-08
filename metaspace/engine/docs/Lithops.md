@@ -131,7 +131,8 @@ perf = NullProfiler()
 executor = Executor(config['lithops'], perf)
 # Note the use of "use_cache=True", which saves pipeline state to a persistent cache. This saves a lot of time if
 # you ever need to restart the Python process, by allowing the pipeline to skip steps that have previously been run.
-job = ServerAnnotationJob(executor, ImageStoreServiceWrapper(), Dataset.load(DB(), ds_id), perf, use_cache=True)
+job = ServerAnnotationJob(executor, ImageStoreServiceWrapper(), Dataset.load(DB(), ds_id), perf,
+                          use_cache=True)
 job.run()
 ```
 

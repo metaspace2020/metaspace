@@ -11,14 +11,12 @@ from sm.engine.postprocessing.ion_thumbnail import (
     generate_ion_thumbnail,
     generate_ion_thumbnail_lithops,
 )
-from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.util import bootstrap_and_run
 from sm.engine.db import DB
 
 
 def run(sm_config, ds_id_str, sql_where, algorithm, use_lithops):
     db = DB()
-    img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
 
     if sql_where:
         ds_ids = [
@@ -42,7 +40,7 @@ def run(sm_config, ds_id_str, sql_where, algorithm, use_lithops):
                 # noinspection PyUnboundLocalVariable
                 generate_ion_thumbnail_lithops(executor, db, sm_config, ds, algorithm=algorithm)
             else:
-                generate_ion_thumbnail(db, img_store, ds, algorithm=algorithm)
+                generate_ion_thumbnail(db, ds, algorithm=algorithm)
         except Exception:
             logger.error(f'Failed on {ds_id}', exc_info=True)
 

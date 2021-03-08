@@ -145,8 +145,7 @@
       "acq_geometry_factory": {
         "name": "ImsGeometryFactory",
         "path": "sm.engine.ims_geometry_factory"
-      },
-      "img_storage_type": "fs"
+      }
     },
     {
       "type": "lcms",
@@ -160,8 +159,7 @@
       "acq_geometry_factory": {
         "name": "LcmsGeometryFactory",
         "path": "sm.engine.lcms_geometry_factory"
-      },
-      "img_storage_type": "fs"
+      }
     }
   ],
   "isotope_storage": {

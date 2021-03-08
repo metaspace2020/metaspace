@@ -274,13 +274,10 @@ class ServerAnnotationJob:
 
     def _store_images(self, all_results_dfs, formula_png_iter):
         db_formula_image_ids = defaultdict(dict)
-        img_store_type = self.ds.get_ion_img_storage_type(self.db)
 
         def _upload_images(formula_id, db_id, pngs):
             image_ids = [
-                self.img_store.post_image(img_store_type, 'iso_image', png)
-                if png is not None
-                else None
+                self.img_store.post_image('iso_image', png) if png is not None else None
                 for png in pngs
             ]
             db_formula_image_ids[db_id][formula_id] = {'iso_image_ids': image_ids}
@@ -320,6 +317,7 @@ class ServerAnnotationJob:
                 formula_image_ids = self.db_formula_image_ids.get(moldb_id, {})
 
                 search_results = SearchResults(
+                    ds_id=self.ds.id,
                     job_id=job_id,
                     metric_names=METRICS.keys(),
                     n_peaks=self.ds.config['isotope_generation']['n_peaks'],
