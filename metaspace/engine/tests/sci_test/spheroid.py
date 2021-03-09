@@ -128,7 +128,7 @@ class SciTester:
     @classmethod
     def _patch_image_storage(cls):
         class ImageStorageMock:
-            Type = image_storage.ImageType
+            ISO = image_storage.ISO
 
             def __init__(self, *args, **kwargs):
                 pass
