@@ -13,7 +13,7 @@ import PIL.Image
 try:
     from mypy_boto3_s3.service_resource import S3ServiceResource
     from mypy_boto3_s3.client import S3Client
-except:  # pylint: disable=bare-except
+except ImportError:
     S3ServiceResource = object
     S3Client = object
 
