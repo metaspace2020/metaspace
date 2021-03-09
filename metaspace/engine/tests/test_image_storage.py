@@ -27,14 +27,14 @@ def make_test_image_bytes() -> bytes:
 def test_post_get_image_success():
     test_image_bytes = make_test_image_bytes()
 
-    image_id = image_storage.post_image(image_storage.ImageType.ISO, "ds-id", test_image_bytes)
-    fetched_image_bytes = image_storage.get_image(image_storage.ImageType.ISO, "ds-id", image_id)
+    image_id = image_storage.post_image(image_storage.ISO, "ds-id", test_image_bytes)
+    fetched_image_bytes = image_storage.get_image(image_storage.ISO, "ds-id", image_id)
 
     assert fetched_image_bytes == test_image_bytes
 
 
 def test_get_image_wrong_key():
     try:
-        image_storage.get_image(image_storage.ImageType.ISO, "ds-id", 'wrong-id')
+        image_storage.get_image(image_storage.ISO, "ds-id", 'wrong-id')
     except botocore.exceptions.ClientError as error:
         assert error.response['Error']['Code'] == 'NoSuchKey'

@@ -386,7 +386,7 @@ class ESExporter:
             doc['centroid_mzs'] = list(mzs) if mzs is not None else []
             doc['mz'] = mzs[0] if mzs is not None else 0
             doc['iso_image_urls'] = [
-                image_storage.get_image_url(image_storage.ImageType.ISO, ds_id, image_id)
+                image_storage.get_image_url(image_storage.ISO, ds_id, image_id)
                 if image_id
                 else None
                 for image_id in doc.pop('iso_image_ids')
