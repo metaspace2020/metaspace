@@ -19,6 +19,7 @@ from sm.engine.es_export import ESExporter
 from sm.engine.postprocessing.ion_thumbnail import (
     generate_ion_thumbnail,
     generate_ion_thumbnail_lithops,
+    delete_ion_thumbnail,
 )
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.postprocessing.off_sample_wrapper import classify_dataset_ion_images
@@ -151,6 +152,7 @@ class DatasetManager:
         del_jobs(ds)
         # TODO: enable after image storage supports optical images
         # del_optical_image(self._db, self._img_store, ds.id)
+        delete_ion_thumbnail(self._db, ds)
         self._es.delete_ds(ds.id)
         self._db.alter('DELETE FROM dataset WHERE id=%s', params=(ds.id,))
 

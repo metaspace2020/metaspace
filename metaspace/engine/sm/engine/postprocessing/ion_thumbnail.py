@@ -10,6 +10,7 @@ from sklearn.cluster import KMeans
 from sm.engine import image_storage
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.dataset import Dataset
+from sm.engine.db import DB
 
 ISO_IMAGE_SEL = (
     "SELECT iso_image_ids[1] "
@@ -217,6 +218,12 @@ def generate_ion_thumbnail(db, ds, only_if_needed=False, algorithm=DEFAULT_ALGOR
 
     except Exception:
         logger.error('Error generating ion thumbnail image', exc_info=True)
+
+
+def delete_ion_thumbnail(db: DB, ds: Dataset):
+    (thumb_id,) = db.select_one(THUMB_SEL, [ds.id])
+    if thumb_id:
+        image_storage.delete_image(image_storage.THUMB, ds.id, thumb_id)
 
 
 def generate_ion_thumbnail_lithops(
