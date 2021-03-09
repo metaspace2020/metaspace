@@ -132,6 +132,7 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         'ds_group_id': group_id,
         'ds_group_name': 'group name',
         'ds_group_short_name': 'grp',
+        'ds_ion_thumbnail': 'thumb-id',
         'ds_ion_thumbnail_url': (
             f'http://localhost:9000/{sm_config["image_storage"]["bucket"]}/thumb/{ds_id}/thumb-id'
         ),
