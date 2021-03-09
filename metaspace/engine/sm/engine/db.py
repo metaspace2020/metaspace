@@ -64,7 +64,7 @@ def transaction_context():
         try:
             yield thread_local.conn
 
-        except Exception as e:
+        except Exception:
             logger.debug('Rolling back transaction')
             thread_local.conn.rollback()
             raise

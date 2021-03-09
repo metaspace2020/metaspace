@@ -37,7 +37,7 @@ def run(sm_config, ds_id_str, sql_where, algorithm, use_lithops):
             ds = Dataset.load(db, ds_id)
             if use_lithops:
                 # noinspection PyUnboundLocalVariable
-                generate_ion_thumbnail_lithops(executor, db, sm_config, ds, algorithm=algorithm)
+                generate_ion_thumbnail_lithops(executor, db, ds, algorithm=algorithm)
             else:
                 generate_ion_thumbnail(db, ds, algorithm=algorithm)
         except Exception:

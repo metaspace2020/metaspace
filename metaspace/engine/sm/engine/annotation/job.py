@@ -51,9 +51,7 @@ def del_jobs(ds: Dataset, moldb_ids: Optional[Iterable[int]] = None):
             )
 
             for _ in executor.map(
-                lambda img_id: image_storage.delete_image(
-                    image_storage.ImageStorage.Type.ISO, ds.id, img_id
-                ),
+                lambda img_id: image_storage.delete_image(image_storage.ISO, ds.id, img_id),
                 (img_id for img_ids in img_id_rows for img_id in img_ids if img_id is not None),
             ):
                 pass

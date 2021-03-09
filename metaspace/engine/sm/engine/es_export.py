@@ -82,7 +82,7 @@ FROM (
     d.config #> '{isotope_generation,neutral_losses}' AS ds_neutral_losses,
     d.config #> '{isotope_generation,chem_mods}' AS ds_chem_mods,
     d.acq_geometry AS ds_acq_geometry,
-    d.ion_thumbnail as ds_ion_thumbnail
+    d.ion_thumbnail AS ds_ion_thumbnail
   FROM dataset as d
   LEFT JOIN job ON job.ds_id = d.id
   GROUP BY d.id
@@ -427,7 +427,7 @@ class ESExporter:
                 ds_doc['annotation_counts'] = []
 
             ds_doc['ds_ion_thumbnail_url'] = image_storage.get_image_url(
-                image_storage.ImageType.THUMB, ds_id, ds_doc.pop('ds_ion_thumbnail')
+                image_storage.THUMB, ds_id, ds_doc['ds_ion_thumbnail']
             )
             annotation_counts = self._index_ds_annotations(ds_id, moldb, ds_doc, isocalc)
 

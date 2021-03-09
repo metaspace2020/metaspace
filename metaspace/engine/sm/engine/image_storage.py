@@ -4,16 +4,16 @@ import logging
 import uuid
 from concurrent.futures.thread import ThreadPoolExecutor
 from enum import Enum
-from typing import List, Tuple, Dict, Callable, TYPE_CHECKING
+from typing import List, Tuple, Dict, Callable
 
 import numpy as np
 from scipy.ndimage import zoom
 import PIL.Image
 
-if TYPE_CHECKING:
+try:
     from mypy_boto3_s3.service_resource import S3ServiceResource
     from mypy_boto3_s3.client import S3Client
-else:
+except:  # pylint: disable=bare-except
     S3ServiceResource = object
     S3Client = object
 
@@ -29,7 +29,9 @@ class ImageType(str, Enum):
 
 
 class ImageStorage:
-    Type = ImageType
+    ISO = ImageType.ISO
+    OPTICAL = ImageType.ISO
+    THUMB = ImageType.THUMB
 
     def __init__(self, config: Dict):
         logger.info(f'Initializing image storage from config: {config}')
@@ -87,6 +89,10 @@ class ImageStorage:
 
 # pylint: disable=invalid-name
 _instance: ImageStorage
+
+ISO = ImageType.ISO
+OPTICAL = ImageType.ISO
+THUMB = ImageType.THUMB
 
 get_image: Callable[[ImageType, str, str], bytes]
 post_image: Callable[[ImageType, str, bytes], str]
@@ -162,7 +168,7 @@ def get_ion_images_for_analysis(
         value = np.empty((len(image_ids), h * w), dtype=np.float32)
 
     def process_img(img_id: str, idx, do_setup=False):
-        img_bytes = get_image(ImageType.ISO, ds_id, img_id)
+        img_bytes = get_image(ISO, ds_id, img_id)
         img = PIL.Image.open(io.BytesIO(img_bytes))
         if do_setup:
             setup_shared_vals(img)

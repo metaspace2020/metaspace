@@ -40,8 +40,8 @@ class LithopsDaemon:
         )
 
     def _on_success(self, msg):
-        self.logger.info(f" SM lithops daemon: success")
-        self._manager.post_to_slack('dart', ' [v] Annotation succeeded: {}'.format(json.dumps(msg)))
+        self.logger.info(' SM lithops daemon: success')
+        self._manager.post_to_slack('dart', f' [v] Annotation succeeded: {json.dumps(msg)}')
 
     def _on_failure(self, msg, e):
         if isinstance(e, LithopsStalledException):
@@ -69,10 +69,8 @@ class LithopsDaemon:
 
     def _callback(self, msg):
         try:
-            self.logger.info(f" SM lithops daemon received a message: {msg}")
-            self._manager.post_to_slack(
-                'new', " [v] New annotation message: {}".format(json.dumps(msg))
-            )
+            self.logger.info(f' SM lithops daemon received a message: {msg}')
+            self._manager.post_to_slack('new', f' [v] New annotation message: {json.dumps(msg)}')
 
             ds = self._manager.load_ds(msg['ds_id'])
             self._manager.set_ds_status(ds, DatasetStatus.ANNOTATING)

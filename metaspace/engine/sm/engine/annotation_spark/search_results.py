@@ -89,7 +89,7 @@ class SearchResults:
                     if img is not None:
                         img_bytes = png_generator.generate_png(img.toarray())
                         iso_image_ids[k] = image_storage.post_image(
-                            ImageStorage.Type.ISO, ds_id, img_bytes
+                            image_storage.ISO, ds_id, img_bytes
                         )
 
                 yield formula_i, {'iso_image_ids': iso_image_ids}
