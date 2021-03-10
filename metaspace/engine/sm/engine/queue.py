@@ -1,5 +1,7 @@
 import logging
 import json
+import os
+import signal
 from threading import Event, Thread
 from time import sleep
 import pika
@@ -433,6 +435,9 @@ class QueueConsumer(Thread):
                     self._on_failure(msg or body, e)
                 except BaseException:
                     self.logger.error(' [x] Failed in _on_failure: {}'.format(body), exc_info=True)
+                    # Shut down the process, because this is likely an unrecoverable error
+                    # e.g. a broken postgres connection or Lithops invoker
+                    os.kill(os.getpid(), signal.SIGINT)
             else:
                 self.logger.info(' [v] Succeeded: {}'.format(body))
                 try:
