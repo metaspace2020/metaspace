@@ -67,10 +67,10 @@ def test_new_ds_saves_to_db(test_db, metadata, ds_config):
         [(job_id, r.formula, r.adduct, r.fdr, [r.image_id]) for i, r in ion_metrics_df.iterrows()],
     )
 
-    with patch('sm.engine.postprocessing.colocalization.image_storage') as image_storage_mock:
-        image_storage_mock.get_ion_images_for_analysis.side_effect = (
-            mock_get_ion_images_for_analysis
-        )
+    with patch(
+        'sm.engine.postprocessing.colocalization.ImageStorage.get_ion_images_for_analysis'
+    ) as get_ion_images_for_analysis_mock:
+        get_ion_images_for_analysis_mock.side_effect = mock_get_ion_images_for_analysis
 
         Colocalization(db).run_coloc_job(ds)
 
