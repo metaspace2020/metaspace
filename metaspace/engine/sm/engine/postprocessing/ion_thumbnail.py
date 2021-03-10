@@ -7,10 +7,10 @@ import numpy as np
 import png
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
-from sm.engine import image_storage
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
+from sm.engine import image_storage
 
 ISO_IMAGE_SEL = (
     "SELECT iso_image_ids[1] "
@@ -172,7 +172,7 @@ def _thumb_from_pixel_clusters(images, mask, h, w, use_distance_from_centroid=Fa
 
 
 # pylint: disable=too-many-function-args
-def _generate_ion_thumbnail_image(ds_id, annotation_rows, algorithm):
+def _generate_ion_thumbnail_image(image_storage, ds_id, annotation_rows, algorithm):
     image_ids = [image_id for image_id, in annotation_rows]
 
     # Hotspot percentile is lowered as a lazy way to brighten images
@@ -208,7 +208,7 @@ def generate_ion_thumbnail(db, ds, only_if_needed=False, algorithm=DEFAULT_ALGOR
             logger.warning('Could not create ion thumbnail - no annotations found')
             return
 
-        thumbnail = _generate_ion_thumbnail_image(ds.id, annotation_rows, algorithm)
+        thumbnail = _generate_ion_thumbnail_image(image_storage, ds.id, annotation_rows, algorithm)
 
         image_id = _save_ion_thumbnail_image(ds.id, thumbnail)
         db.alter(THUMB_UPD, [image_id, ds.id])
@@ -227,11 +227,8 @@ def delete_ion_thumbnail(db: DB, ds: Dataset):
 
 
 def generate_ion_thumbnail_lithops(
-    executor: Executor, db, ds: Dataset, only_if_needed=False, algorithm=DEFAULT_ALGORITHM,
+    executor: Executor, db: DB, ds: Dataset, only_if_needed=False, algorithm=DEFAULT_ALGORITHM,
 ):
-    def generate(annotation_rows):
-        return _generate_ion_thumbnail_image(ds.id, annotation_rows, algorithm)
-
     try:
         (existing_thumb_id,) = db.select_one(THUMB_SEL, [ds.id])
 
@@ -243,6 +240,13 @@ def generate_ion_thumbnail_lithops(
         if not annotation_rows:
             logger.warning('Could not create ion thumbnail - no annotations found')
             return
+
+        ds_id = ds.id
+
+        def generate(annotation_rows):
+            return _generate_ion_thumbnail_image(
+                image_storage.ImageStorage(), ds_id, annotation_rows, algorithm
+            )
 
         thumbnail = executor.call(
             generate, (annotation_rows,), runtime_memory=2048, include_modules=['png']

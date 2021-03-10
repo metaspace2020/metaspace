@@ -15,7 +15,7 @@ from sm.engine.annotation_lithops.io import save_cobj, iter_cobjs_with_prefetch
 from sm.engine.dataset import Dataset
 from sm.engine.ion_mapping import get_ion_id_mapping
 from sm.engine.config import SMConfig
-from sm.engine import image_storage
+from sm.engine.image_storage import ImageStorage
 
 COLOC_JOB_DEL = 'DELETE FROM graphql.coloc_job WHERE ds_id = %s AND moldb_id = %s'
 
@@ -319,7 +319,9 @@ def analyze_colocalization(ds_id, moldb_id, images, ion_ids, fdrs, h, w, cluster
             )
 
 
-def _get_images(ds_id: str, image_ids: List[str]) -> Tuple[FreeableRef, int, int]:
+def _get_images(
+    image_storage: ImageStorage, ds_id: str, image_ids: List[str]
+) -> Tuple[FreeableRef, int, int]:
     if image_ids:
         logger.debug(f'Getting {len(image_ids)} images')
         images, _, (h, w) = image_storage.get_ion_images_for_analysis(ds_id, image_ids)
@@ -409,7 +411,7 @@ class Colocalization:
         """
         for moldb_id, image_ids, ion_ids, fdrs in self._iter_pending_coloc_tasks(ds.id, reprocess):
             logger.info(f'Running colocalization job for {ds.id} on {moldb_id}')
-            images, h, w = _get_images(ds.id, image_ids)
+            images, h, w = _get_images(ImageStorage(), ds.id, image_ids)
             try:
                 for job in analyze_colocalization(ds.id, moldb_id, images, ion_ids, fdrs, h, w):
                     self._save_job_to_db(job)
@@ -426,7 +428,7 @@ class Colocalization:
         def run_coloc_job(moldb_id, image_ids, ion_ids, fdrs, *, storage):
             # Use web_app_url to get the publicly-exposed storage server address, because
             # Functions can't use the private address
-            images, h, w = _get_images(ds_id, image_ids)
+            images, h, w = _get_images(ImageStorage(), ds_id, image_ids)
             cobjs = []
             for job in analyze_colocalization(ds_id, moldb_id, images, ion_ids, fdrs, h, w):
                 cobjs.append(save_cobj(storage, job))
