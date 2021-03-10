@@ -198,6 +198,17 @@ services:
     #  - "api:172.17.0.1"
     #  - "graphql:172.17.0.1"
 
+  storage:
+    image: minio/minio:RELEASE.2021-01-16T02-19-44Z
+    entrypoint: sh
+    command: -c 'mkdir -p /data/sm-engine-dev && /usr/bin/minio server /data'
+    volumes:
+      - "${DATA_ROOT}/s3:/data"
+    ports:
+      - "${STORAGE_PORT}:9000"
+    networks:
+      - sm
+
 networks:
   sm:
     driver: bridge

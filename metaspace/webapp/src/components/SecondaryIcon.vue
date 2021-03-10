@@ -1,5 +1,5 @@
 <template>
-  <i class="fill-current flex w-6 h-6">
+  <i class="flex w-6 h-6">
     <slot />
   </i>
 </template>
@@ -10,10 +10,13 @@ export default Vue.extend({
 })
 </script>
 <style scoped>
+i >>> svg {
+  width: 100%;
+}
 i >>> .primary {
-  @apply text-blue-100;
+  @apply fill-current  text-blue-100;
 }
 i >>> .secondary {
-  @apply text-blue-800;
+  @apply fill-current text-blue-800;
 }
 </style>

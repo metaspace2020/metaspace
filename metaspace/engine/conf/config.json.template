@@ -29,7 +29,6 @@
     "web_app_url": "{{ web_public_url }}",
     "send_email": {{ sm_send_email | to_json }},
     "update_daemon_threads": 4,
-    "lithops_daemon_threads": {{ sm_lithops_daemon_threads }},
     "colocalization": true,
     "ion_thumbnail": true
   },
@@ -66,7 +65,7 @@
       "data_cleaner": true,
       "data_limit": false,
       "workers": 1000,
-      "execution_timeout": 2400
+      "execution_timeout": 3600
     },
     "serverless": {
       "backend": "ibm_cf",
@@ -74,7 +73,8 @@
       "runtime_memory": 2048
     },
     "standalone": {
-      "backend": "ibm_vpc"
+      "backend": "ibm_vpc",
+      "soft_dismantle_timeout": 30
     },
     "localhost": {
     },
@@ -118,7 +118,8 @@ The Prefix is necessary and should not have a leading or trailing slash
     "channel": "{{ slack_channel }}",
     "webhook_url": "{{ slack_webhook_url }}"
   },
-  "ms_file_handlers": [{
+  "ms_file_handlers": [
+    {
       "type": "ims",
       "extensions": ["imzml", "ibd"],
       "parser_factory": {
@@ -126,7 +127,8 @@ The Prefix is necessary and should not have a leading or trailing slash
         "path": "pyimzml.ImzMLParser"
       },
       "img_storage_type": "fs"
-    }, {
+    },
+    {
       "type": "lcms",
       "extensions": ["mzml"],
       "parser_factory": {
@@ -134,7 +136,8 @@ The Prefix is necessary and should not have a leading or trailing slash
         "path": "sm.engine.mzml_parser"
       },
       "img_storage_type": "db"
-  }],
+    }
+  ],
   "isotope_storage": {
     "path": "{{ sm_isotope_storage_path }}"
   },

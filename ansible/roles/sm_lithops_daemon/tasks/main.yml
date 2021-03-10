@@ -6,5 +6,5 @@
 
 - name: Update and restart supervisor app
   supervisorctl:
-    name: "{{ sm_lithops_daemon_app_name }}"
+    name: "{{ sm_lithops_daemon_app_name }}:"
     state: restarted

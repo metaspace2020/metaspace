@@ -12,8 +12,29 @@ config.defaults = {
 }
 
 config.upload = {
-  destination: '/opt/data/metaspace/uploads',
+  bucket: 'sm-engine-dev',
 }
+
+config.s3 = {
+  endpoint: 'http://localhost:9000',
+  credentials: {
+    accessKeyId: 'minioadmin',
+    secretAccessKey: 'minioadmin',
+  },
+  httpOptions: {
+    proxy: 'http://storage:9000',
+  },
+  s3ForcePathStyle: true,
+}
+
+/* Comment out above and use below for AWS */
+// config.aws = {
+//   region: 'eu-west-1',
+//   credentials: {
+//     accessKeyId: '',
+//     secretAccessKey: '',
+//   }
+// }
 
 config.services = {}
 /* Internal ad-hoc service with /v1/datasets and /v1/isotopic_patterns endpoints */
@@ -58,11 +79,6 @@ config.jwt = {}
 config.jwt.secret = 'secret'
 config.jwt.algorithm = 'HS256'
 
-config.aws = {
-  aws_access_key_id: '',
-  aws_secret_access_key: '',
-  aws_region: 'eu-west-1',
-}
 config.sentry = null
 
 config.features = {

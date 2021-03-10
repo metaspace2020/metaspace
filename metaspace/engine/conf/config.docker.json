@@ -8,8 +8,15 @@
   },
   "defaults": {
     "adducts": {
-      "+": ["+H", "+Na", "+K"],
-      "-": ["-H", "+Cl"]
+      "+": [
+        "+H",
+        "+Na",
+        "+K"
+      ],
+      "-": [
+        "-H",
+        "+Cl"
+      ]
     }
   },
   "db": {
@@ -38,7 +45,6 @@
     "web_app_url": "http://localhost:8999",
     "send_email": false,
     "update_daemon_threads": 4,
-    "lithops_daemon_threads": 2,
     "colocalization": false,
     "ion_thumbnail": false
   },
@@ -66,7 +72,9 @@
       "storage_bucket": "TEMP_BUCKET",
       "storage": "localhost",
       "mode": "localhost",
-      "include_modules": ["engine/sm"],
+      "include_modules": [
+        "engine/sm"
+      ],
       "data_cleaner": true,
       "data_limit": false,
       "workers": 4,
@@ -80,8 +88,7 @@
     "standalone": {
       "backend": "ibm_vpc"
     },
-    "localhost": {
-    },
+    "localhost": {},
     "ibm": {
       "iam_api_key": ""
     },
@@ -102,24 +109,35 @@
       "secret_key": ""
     },
     "sm_storage": {
-      "imzml": ["DATA_BUCKET", "imzml"],
-      "moldb": ["DATA_BUCKET", "moldb"],
-      "centroids": ["DATA_BUCKET", "centroids"],
-      "pipeline_cache": ["TEMP_BUCKET", "pipeline_cache"]
+      "imzml": [
+        "DATA_BUCKET",
+        "imzml"
+      ],
+      "moldb": [
+        "DATA_BUCKET",
+        "moldb"
+      ],
+      "centroids": [
+        "DATA_BUCKET",
+        "centroids"
+      ],
+      "pipeline_cache": [
+        "TEMP_BUCKET",
+        "pipeline_cache"
+      ]
     }
-  },
-  "aws": {
-    "aws_access_key_id": "",
-    "aws_secret_access_key": "",
-    "aws_default_region": "eu-west-1"
   },
   "slack": {
     "channel": "",
     "webhook_url": ""
   },
-  "ms_file_handlers": [{
+  "ms_file_handlers": [
+    {
       "type": "ims",
-      "extensions": ["imzml", "ibd"],
+      "extensions": [
+        "imzml",
+        "ibd"
+      ],
       "parser_factory": {
         "name": "ImzMLParser",
         "path": "pyimzml.ImzMLParser"
@@ -129,9 +147,12 @@
         "path": "sm.engine.ims_geometry_factory"
       },
       "img_storage_type": "fs"
-    }, {
+    },
+    {
       "type": "lcms",
-      "extensions": ["mzml"],
+      "extensions": [
+        "mzml"
+      ],
       "parser_factory": {
         "name": "MzMLParser",
         "path": "sm.engine.mzml_parser"
@@ -141,7 +162,8 @@
         "path": "sm.engine.lcms_geometry_factory"
       },
       "img_storage_type": "fs"
-  }],
+    }
+  ],
   "isotope_storage": {
     "path": "/opt/data/metaspace/isotope_storage"
   },
@@ -153,51 +175,66 @@
       }
     },
     "handlers": {
-        "console_debug": {
-            "class": "logging.StreamHandler",
-            "formatter": "sm"
-        },
-        "context_logger": {
-          "class": "sm.engine.utils.log_capture.ContextLogHandler",
-          "formatter": "sm",
-          "level": "INFO"
-        }
+      "console_debug": {
+        "class": "logging.StreamHandler",
+        "formatter": "sm"
+      },
+      "context_logger": {
+        "class": "sm.engine.utils.log_capture.ContextLogHandler",
+        "formatter": "sm",
+        "level": "INFO"
+      }
     },
     "root": {
-        "handlers": ["console_debug", "context_logger"],
-        "level": "INFO"
+      "handlers": [
+        "console_debug",
+        "context_logger"
+      ],
+      "level": "INFO"
     },
     "loggers": {
-        "engine": {
-            "level": "DEBUG"
-        },
-        "engine.db": {
-            "level": "INFO"
-        },
-        "engine.lithops-wrapper": {
-            "level": "INFO"
-        },
-        "api": {
-            "level": "INFO"
-        },
-        "annotate-daemon": {
-            "level": "INFO"
-        },
-        "lithops-daemon": {
-            "level": "INFO"
-        },
-        "update-daemon": {
-            "level": "INFO"
-        },
-        "lithops": {
-            "level": "INFO"
-        }
+      "engine": {
+        "level": "DEBUG"
+      },
+      "engine.db": {
+        "level": "INFO"
+      },
+      "engine.lithops-wrapper": {
+        "level": "INFO"
+      },
+      "api": {
+        "level": "INFO"
+      },
+      "annotate-daemon": {
+        "level": "INFO"
+      },
+      "lithops-daemon": {
+        "level": "INFO"
+      },
+      "update-daemon": {
+        "level": "INFO"
+      },
+      "lithops": {
+        "level": "INFO"
+      }
     }
   },
   "ds_config_defaults": {
     "adducts": {
-      "+": ["+H", "+Na", "+K"],
-      "-": ["-H", "+Cl" ]
+      "+": [
+        "+H",
+        "+Na",
+        "+K"
+      ],
+      "-": [
+        "-H",
+        "+Cl"
+      ]
     }
+  },
+  "storage": {
+    "endpoint_url": "http://storage:9000",
+    "access_key_id": "minioadmin",
+    "secret_access_key": "minioadmin"
   }
 }
