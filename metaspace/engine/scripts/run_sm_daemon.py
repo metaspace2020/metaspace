@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import logging
+import resource
 import signal
 import sys
 from functools import partial
@@ -61,6 +62,18 @@ def main(daemon_name, exit_after):
             daemon = SMUpdateDaemon(get_manager(), make_update_queue_cons)
             daemons.append(daemon)
     elif daemon_name == 'lithops':
+        try:
+            # Raise the soft limit of open files, as Lithops sometimes makes many network
+            # connections in parallel, exceeding the default limit of 1024.
+            # The hard limit cannot be changed by non-sudo users.
+            soft_rlimit, hard_rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
+            new_rlimit = 10000
+            if soft_rlimit < new_rlimit:
+                resource.setrlimit(resource.RLIMIT_NOFILE, (new_rlimit, hard_rlimit))
+                logger.debug(f'Raised open file limit from {soft_rlimit} to {new_rlimit}')
+        except Exception:
+            logger.warning('Failed to set the open file limit (non-critical)', exc_info=True)
+
         daemon = LithopsDaemon(
             get_manager(), lit_qdesc=SM_LITHOPS, annot_qdesc=SM_ANNOTATE, upd_qdesc=SM_UPDATE
         )
