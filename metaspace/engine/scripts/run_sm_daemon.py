@@ -5,6 +5,7 @@ import signal
 import sys
 from functools import partial
 from multiprocessing.process import parent_process
+from threading import Timer
 
 from sm.engine.daemons.lithops import LithopsDaemon
 from sm.engine.db import DB, ConnectionPool
@@ -38,7 +39,7 @@ def get_manager():
     )
 
 
-def main(daemon_name):
+def main(daemon_name, exit_after):
     logger.info(f'Starting {daemon_name}-daemon')
 
     conn_pool = ConnectionPool(sm_config['db'])
@@ -81,6 +82,11 @@ def main(daemon_name):
     signal.signal(signal.SIGINT, cb_stop_daemons)
     signal.signal(signal.SIGTERM, cb_stop_daemons)
 
+    if exit_after is not None:
+        exit_timer = Timer(exit_after, cb_stop_daemons)
+        exit_timer.setDaemon(True)  # Don't prevent shutdown if the timer is still running
+        exit_timer.start()
+
     for daemon in daemons:
         daemon.start()
 
@@ -97,6 +103,9 @@ if __name__ == "__main__":
     parser.add_argument(
         '--config', dest='config_path', default='conf/config.json', type=str, help='SM config path'
     )
+    parser.add_argument(
+        '--exit-after', type=float, help='Exits gracefully with an exitcode after N seconds',
+    )
     args = parser.parse_args()
 
     SMConfig.set_path(args.config_path)
@@ -104,4 +113,4 @@ if __name__ == "__main__":
     init_loggers(sm_config['logs'])
     logger = logging.getLogger(f'{args.name}-daemon')
 
-    main(args.name)
+    main(args.name, args.exit_after)
