@@ -1,7 +1,9 @@
 <template>
   <div>
-    <filter-panel level="dataset" />
-
+    <filter-panel
+      level="dataset"
+      :set-dataset-owner-options="setDatasetOwnerOptions"
+    />
     <div>
       <el-form
         id="dataset-list-header"
@@ -69,7 +71,8 @@
 <script>
 import Vue from 'vue'
 import {
-  countDatasetsByStatusQuery, countDatasetsQuery,
+  countDatasetsByStatusQuery,
+  countDatasetsQuery,
   datasetDeletedQuery,
   datasetDetailItemsQuery,
   datasetStatusUpdatedQuery,
@@ -80,10 +83,11 @@ import { FilterPanel } from '../../Filters/index'
 import FileSaver from 'file-saver'
 import delay from '../../../lib/delay'
 import formatCsvRow, { csvExportHeader } from '../../../lib/formatCsvRow'
-import { currentUserRoleQuery } from '../../../api/user'
+import { currentUserRoleWithGroupQuery } from '../../../api/user'
 import updateApolloCache, { removeDatasetFromAllDatasetsQuery } from '../../../lib/updateApolloCache'
 import { merge, orderBy, pick } from 'lodash-es'
 import { formatDatabaseLabel } from '../../MolecularDatabases//formatting'
+import { datasetOwnerOptions } from '@/lib/filterTypes'
 
 const extractGroupedStatusCounts = (data) => {
   const counts = {
@@ -124,6 +128,16 @@ export default Vue.extend({
         if (df[key]) return false
       }
       return true
+    },
+    setDatasetOwnerOptions() {
+      if (this.currentUser && Array.isArray(this.currentUser.groups)) {
+        const groups = this.currentUser.groups
+          .map((userGroup) => { return { isGroup: true, ...userGroup.group } })
+        return datasetOwnerOptions.concat(groups)
+      } else if (this.currentUser) {
+        return datasetOwnerOptions
+      }
+      return null
     },
     queryVariables() {
       return {
@@ -198,8 +212,12 @@ export default Vue.extend({
     },
     currentUser: {
       loadingKey: 'loading',
-      query: currentUserRoleQuery,
+      query: currentUserRoleWithGroupQuery,
       fetchPolicy: 'cache-first',
+      update(data) {
+        this.$store.commit('updateCurrentUser', data.currentUser)
+        return data.currentUser
+      },
     },
     allDatasets: {
       loadingKey: 'loading',

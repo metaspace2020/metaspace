@@ -76,6 +76,10 @@ export default {
     updateFilter(state, filter);
   },
 
+  updateCurrentUser(state, user) {
+    state.currentUser = user
+  },
+
   replaceFilter(state, filter) {
     updateFilter(state, filter, 'replace');
   },

@@ -12,6 +12,8 @@ import BooleanFilter from './filter-components/BooleanFilter.vue'
 import config from '../../lib/config'
 import AdductFilter from './filter-components/AdductFilter.vue'
 import DatabaseFilter from './filter-components/DatabaseFilter.vue'
+import { SingleSelectFilterType } from '../../lib/filterTypes'
+import store from '../../store'
 
 function formatFDR(fdr: number) {
   return fdr ? Math.round(fdr * 100) + '%' : ''
@@ -23,7 +25,7 @@ export type FilterKey = 'database' | 'datasetIds' | 'minMSM' | 'compoundName'
   | 'chemMod' | 'neutralLoss' | 'adduct' | 'mz' | 'fdrLevel'
   | 'group' | 'project' | 'submitter' | 'polarity' | 'organism' | 'organismPart' | 'condition' | 'growthConditions'
   | 'ionisationSource' | 'maldiMatrix' | 'analyzerType' | 'simpleFilter' | 'simpleQuery' | 'metadataType'
-  | 'colocalizedWith' | 'colocalizationSamples' | 'offSample';
+  | 'colocalizedWith' | 'colocalizationSamples' | 'offSample' | 'datasetOwner';
 
 export type MetadataLists = Record<string, any[]>;
 
@@ -63,7 +65,7 @@ export interface FilterSpecification {
   /** Initial value of the filter when it is added, or if it is visible by default. Can be a function that is called after MetadataLists is loaded. */
   initialValue: undefined | null | number | string | boolean | ((lists: MetadataLists) => any);
   /** List of options for SingleSelectFilter. Can be a function that is called after MetadataLists is loaded. */
-  options?: string | number[] | boolean[] | string[] | ((lists: MetadataLists) => any[]);
+  options?: string | number[] | boolean[] | string[] | ((lists: MetadataLists) => any[]) | SingleSelectFilterType[];
   removable?: boolean;
   filterable?: boolean;
   multiple?: boolean;
@@ -327,6 +329,17 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     hidden: () => metadataTypes.length <= 1,
   },
 
+  datasetOwner: {
+    type: SimpleFilterBox,
+    name: 'Data type',
+    description: 'Select data type',
+    levels: ['dataset'],
+    defaultInLevels: ['dataset'],
+    initialValue: null,
+    removable: false,
+    sortOrder: 1,
+  },
+
   colocalizedWith: {
     type: InputFilter,
     name: 'Colocalized with',
@@ -364,7 +377,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
 
 export const DATASET_FILTERS: FilterKey[] = [
   'datasetIds', 'group', 'project', 'submitter', 'polarity', 'organism', 'organismPart', 'condition',
-  'growthConditions', 'ionisationSource', 'maldiMatrix', 'analyzerType', 'metadataType',
+  'growthConditions', 'ionisationSource', 'maldiMatrix', 'analyzerType', 'metadataType', 'datasetOwner',
 ]
 /** = all annotation-affecting filters - dataset-affecting filters */
 export const ANNOTATION_FILTERS: FilterKey[] = [
