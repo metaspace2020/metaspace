@@ -65,6 +65,18 @@
       :datasets="datasets"
       allow-double-column
     />
+
+    <div class="mb-8 p-2 flex flex-row justify-end">
+      <el-pagination
+        v-if="totalCount > 0"
+        hide-on-single-page
+        :total="totalCount"
+        :current-page.sync="currentPage"
+        :pager-count="11"
+        layout="prev, pager, next"
+        :page-size="recordsPerPage"
+      />
+    </div>
   </div>
 </template>
 
@@ -112,8 +124,9 @@ export default Vue.extend({
   },
   data() {
     return {
-      recordsPerPage: 10,
+      recordsPerPage: 100,
       csvChunkSize: 1000,
+      totalCount: 0,
       categories: ['ANNOTATING', 'QUEUED', 'FINISHED'],
       isExporting: false,
       loading: 0,
@@ -122,6 +135,19 @@ export default Vue.extend({
   },
 
   computed: {
+    currentPage: {
+      get() {
+        return this.$store.getters.settings.table.currentPage
+      },
+      set(page) {
+        // ignore the initial "sync"
+        if (page === this.currentPage) {
+          return
+        }
+        this.$store.commit('setCurrentPage', page)
+      },
+    },
+
     noFilters() {
       const df = this.$store.getters.filter
       for (var key in df) {
@@ -145,7 +171,7 @@ export default Vue.extend({
         query: this.$store.getters.ftsQuery,
         inpFdrLvls: [10],
         checkLvl: 10,
-        offset: Math.max(0, (this.$store.getters.settings.datasets.page - 1) * 100),
+        offset: (this.currentPage - 1) * this.recordsPerPage, // Math.max(0, (this.$store.getters.settings.datasets.page - 1) * 100),
       }
     },
     nonEmpty() {
@@ -234,7 +260,9 @@ export default Vue.extend({
       query: countDatasetsByStatusQuery,
       throttle: 1000,
       update(data) {
-        return extractGroupedStatusCounts(data)
+        const counts = extractGroupedStatusCounts(data)
+        this.countSelected(counts)
+        return counts
       },
       variables() {
         return {
@@ -258,6 +286,11 @@ export default Vue.extend({
       } else {
         return ''
       }
+    },
+
+    countSelected(counts) {
+      this.totalCount = !counts ? 0 : Object.keys(counts)
+        .reduce((sum, key) => sum + parseInt(counts[key] || 0, 10), 0)
     },
 
     async startExport() {
