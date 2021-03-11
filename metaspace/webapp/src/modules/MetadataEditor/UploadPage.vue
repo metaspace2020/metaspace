@@ -261,7 +261,8 @@ export default {
       try {
         const response = await fetch(`${this.uploadEndpoint}/s3/uuid`)
         if (response.status < 200 || response.status >= 300) {
-          reportError()
+          const responseBody = await response.text()
+          reportError(new Error(`Unexpected server response getting upload UUID: ${response.status} ${responseBody}`))
         } else {
           // uuid and uuidSignature
           this.storageKey = await response.json()
@@ -281,9 +282,15 @@ export default {
       })
     },
 
-    onFileRemoved(file) {
+    async onFileRemoved(file) {
       this.uploads[file.extension.toLowerCase()] = false
-      this.status = 'READY'
+      if (Object.values(this.uploads).every(flag => !flag)) {
+        // Get a new storage key, because the old uploads may have different filenames which would cause later issues
+        // when trying to determine which file to use if they were uploaded to the same prefix.
+        await this.fetchStorageKey()
+      } else {
+        this.status = 'READY'
+      }
     },
 
     onUploadStart() {
