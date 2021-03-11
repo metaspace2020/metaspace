@@ -18,8 +18,7 @@
 </template>
 <script lang="ts">
 import Vue from 'vue'
-import { defineComponent, ref, Ref, reactive, onMounted, computed } from '@vue/composition-api'
-import { throttle } from 'lodash-es'
+import { defineComponent, ref, computed } from '@vue/composition-api'
 
 import SliderTrack from './SliderTrack.vue'
 import SliderThumb from './SliderThumb.vue'
@@ -47,7 +46,7 @@ const Slider = defineComponent<Props>({
     step: { type: Number, default: 1 },
     disabled: Boolean,
   },
-  setup(props, { emit, attrs }) {
+  setup(props, { emit }) {
     const track = ref<Vue>(null)
 
     const width = computed(() => {
@@ -63,7 +62,7 @@ const Slider = defineComponent<Props>({
 
     function onThumbChange(x: number) {
       const value = thumb.getValue(x)
-      emit('change', value)
+      emit('input', value)
     }
 
     function onTrackClick(x: number) {
@@ -77,10 +76,10 @@ const Slider = defineComponent<Props>({
       thumbBounds: range,
       thumbX: thumb.x,
       increment(factor: number) {
-        emit('change', thumb.increment(factor))
+        emit('input', thumb.increment(factor))
       },
       decrement(factor: number) {
-        emit('change', thumb.decrement(factor))
+        emit('input', thumb.decrement(factor))
       },
     }
   },

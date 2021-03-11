@@ -1,5 +1,5 @@
 <template>
-  <div class="sm-content-page proportional-nums">
+  <content-page>
     <h1>Relevant Publications</h1>
     <h2 id="ours">
       Our publications presenting METASPACE or its methods (5)
@@ -347,11 +347,10 @@
         link="https://doi.org/10.1007/s11306-016-1047-0"
       />
     </ul>
-  </div>
+  </content-page>
 </template>
 <script>
-import './content.css'
-
+import ContentPage from '../../components/ContentPage.vue'
 import PublicationItem from './PublicationItem'
 /*
 Script to parse Paperpile lists
@@ -380,15 +379,16 @@ Array.from(items)
 export default {
   name: 'PublicationsPage',
   components: {
+    ContentPage,
     PublicationItem,
   },
 }
 </script>
 <style scoped>
-  .sm-content-page ul {
+  ul {
     @apply mt-3;
   }
-  .sm-content-page >>> p {
+  ul >>> p {
     max-width: none;
   }
 </style>

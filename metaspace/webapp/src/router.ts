@@ -32,6 +32,13 @@ const asyncPagesFreelyTyped = {
   // These pages use sanitizeHtml, which is big
   ViewGroupPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle2" */ './modules/GroupProfile/ViewGroupPage.vue'),
   ViewProjectPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle2" */ './modules/Project/ViewProjectPage.vue'),
+
+  // Separate bundle for design docs
+  DesignTOC: () => import(/* webpackPrefetch: false, webpackChunkName: "DesignBundle" */ './design/TOCPage.vue'),
+  DesignStyleGuide: () => import(/* webpackPrefetch: false, webpackChunkName: "DesignBundle" */ './design/StyleGuidePage.vue'),
+  DesignIcons: () => import(/* webpackPrefetch: false, webpackChunkName: "DesignBundle" */ './design/IconsPage.vue'),
+  DesignComponents: () => import(/* webpackPrefetch: false, webpackChunkName: "DesignBundle" */ './design/ComponentsPage.vue'),
+  DesignForms: () => import(/* webpackPrefetch: false, webpackChunkName: "DesignBundle" */ './design/FormsPage.vue'),
 }
 const asyncPages = asyncPagesFreelyTyped as Record<keyof typeof asyncPagesFreelyTyped, AsyncComponent>
 
@@ -90,6 +97,12 @@ const router = new VueRouter({
     { path: '/terms', component: asyncPages.TermsPage, meta: { footer: true } },
     { path: '/privacy', component: asyncPages.PrivacyPage, meta: { footer: true } },
     { path: '/publications', component: asyncPages.PublicationsPage, meta: { footer: true } },
+
+    { path: '/design', component: asyncPages.DesignTOC, meta: { footer: true, flex: true } },
+    { path: '/design/styleguide', component: asyncPages.DesignStyleGuide, meta: { footer: true, flex: true } },
+    { path: '/design/icons', component: asyncPages.DesignIcons, meta: { footer: true, flex: true } },
+    { path: '/design/components', component: asyncPages.DesignComponents, meta: { footer: true, flex: true } },
+    { path: '/design/forms', component: asyncPages.DesignForms, meta: { footer: true, flex: true } },
 
     { path: '*', component: NotFoundPage, meta: { footer: true, flex: true } },
   ],

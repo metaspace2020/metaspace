@@ -1,6 +1,5 @@
 .sm-RichText .ProseMirror {
   @apply leading-normal min-h-full p-4 box-border;
-  font-variant-numeric: proportional-nums;
 }
 
 .sm-RichText .ProseMirror-focused {

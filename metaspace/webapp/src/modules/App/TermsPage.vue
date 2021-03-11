@@ -1,5 +1,5 @@
 <template>
-  <div class="sm-content-page">
+  <content-page>
     <h1>Terms of Service</h1>
     <h2>Service definition</h2>
     <ul>
@@ -112,12 +112,15 @@
         </p>
       </li>
     </ul>
-  </div>
+  </content-page>
 </template>
 <script>
-import './content.css'
+import ContentPage from '../../components/ContentPage.vue'
 
 export default {
   name: 'TermsPage',
+  components: {
+    ContentPage,
+  },
 }
 </script>

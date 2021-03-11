@@ -3,7 +3,7 @@
     <el-popover
       class="block"
       placement="bottom"
-      popper-class="w-full max-w-measure-1 text-left proportional-nums text-sm leading-5"
+      popper-class="w-full max-w-measure-1 text-left text-sm leading-5"
       trigger="manual"
       :value="clippingNotice.visible"
       :visible-arrow="false"

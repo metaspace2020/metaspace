@@ -260,7 +260,7 @@ import GroupsTable from './GroupsTable'
 import ProjectsTable from './ProjectsTable.vue'
 import ConfirmAsync from '../../components/ConfirmAsync'
 import { sendPasswordResetToken } from '../../api/auth'
-import CopyToClipboard from '../../components/CopyToClipboard'
+import CopyToClipboard from '../../components/Form/CopyToClipboard'
 
   interface Model {
     name: string;

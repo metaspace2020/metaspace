@@ -29,12 +29,11 @@
 </template>
 <script lang="ts">
 import Vue from 'vue'
-import { defineComponent, ref, Ref, reactive, computed } from '@vue/composition-api'
-import { throttle } from 'lodash-es'
+import { defineComponent, ref, computed } from '@vue/composition-api'
 
 import SliderTrack from './SliderTrack.vue'
 import SliderThumb from './SliderThumb.vue'
-import useSliderThumb, { SliderThumbInstance } from './useSliderThumb'
+import useSliderThumb from './useSliderThumb'
 import { THUMB_WIDTH } from './constants'
 
 interface Props {
@@ -43,8 +42,6 @@ interface Props {
   value: [ number, number ]
   step: number
   disabled: boolean
-  minTooltip: string
-  maxTooltip: string
   minColor: string
   maxColor: string
 }
@@ -60,12 +57,10 @@ const Slider = defineComponent<Props>({
     value: Array,
     step: { type: Number, default: 1 },
     disabled: Boolean,
-    minTooltip: String,
-    maxTooltip: String,
     minColor: String,
     maxColor: String,
   },
-  setup(props, { emit, attrs }) {
+  setup(props, { emit }) {
     const track = ref<Vue>(null)
 
     // hides aliasing around thumbs
