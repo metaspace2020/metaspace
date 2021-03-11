@@ -45,7 +45,7 @@ class LithopsDaemon:
 
     def _on_failure(self, msg, e):
         if isinstance(e, LithopsStalledException):
-            # Requeue the message so it retries, then exit the process
+            # Requeue the message so it retries, then exit the process and let supervisor restart it
             if msg.get('retry_attempt', 0) < 1:
                 self.logger.info('Lithops stalled. Retrying')
                 self._lithops_queue_pub.publish(
