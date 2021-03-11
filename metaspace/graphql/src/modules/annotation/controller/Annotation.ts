@@ -125,12 +125,13 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
   },
 
   isotopeImages(hit) {
-    const { iso_image_urls, centroid_mzs, total_iso_ints, min_iso_ints, max_iso_ints } = hit._source
+    const { iso_image_ids, iso_image_urls, centroid_mzs, total_iso_ints, min_iso_ints, max_iso_ints } = hit._source
     return centroid_mzs
       .map(function(mz, i) {
         return {
           mz: parseFloat(mz as any),
-          url: iso_image_urls[i],
+          // FIXME: remove after data migration
+          url: iso_image_urls[i] || `/${hit._source.ds_ion_img_storage}${config.img_upload.categories.iso_image.path}${iso_image_ids[i]}`,
           totalIntensity: total_iso_ints[i],
           minIntensity: min_iso_ints[i],
           maxIntensity: max_iso_ints[i],

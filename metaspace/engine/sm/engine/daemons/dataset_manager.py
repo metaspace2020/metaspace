@@ -23,7 +23,7 @@ from sm.engine.postprocessing.ion_thumbnail import (
 )
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.postprocessing.off_sample_wrapper import classify_dataset_ion_images
-from sm.engine.optical_image import del_optical_image  # pylint: disable=unused-import
+from sm.engine.optical_image import del_optical_image
 from sm.engine.config import SMConfig
 from sm.engine.utils.perf_profile import perf_profile
 
@@ -150,8 +150,7 @@ class DatasetManager:
         """ Delete all dataset related data from the DB """
         self.logger.info(f'Deleting dataset: {ds.id}')
         del_jobs(ds)
-        # TODO: enable after image storage supports optical images
-        # del_optical_image(self._db, self._img_store, ds.id)
+        del_optical_image(self._db, ds.id)
         delete_ion_thumbnail(self._db, ds)
         self._es.delete_ds(ds.id)
         self._db.alter('DELETE FROM dataset WHERE id=%s', params=(ds.id,))

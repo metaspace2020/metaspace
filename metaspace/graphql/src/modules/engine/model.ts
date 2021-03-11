@@ -47,7 +47,11 @@ export class EngineDataset {
   @Column({ type: 'text', nullable: true })
   thumbnail: string | null;
   @Column({ type: 'text', nullable: true })
+  thumbnailUrl: string | null;
+  @Column({ type: 'text', nullable: true })
   ionThumbnail: string | null;
+  @Column({ type: 'text', nullable: true })
+  ionThumbnailUrl: string | null;
 
   @OneToMany(() => OpticalImage, opticalImage => opticalImage.dataset)
   opticalImages: OpticalImage[];
@@ -75,6 +79,8 @@ export class OpticalImage {
   height: number;
   @Column({ type: 'real', array: true, nullable: true })
   transform: number[][];
+  @Column({ type: 'text', nullable: true })
+  url: string;
 
   @ManyToOne(() => EngineDataset, dataset => dataset.opticalImages, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'ds_id' })

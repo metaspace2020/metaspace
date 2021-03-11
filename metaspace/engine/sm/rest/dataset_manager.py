@@ -29,7 +29,6 @@ class SMapiDatasetManager:
         self,
         db,
         es,
-        image_store,
         logger=None,
         annot_queue=None,
         update_queue=None,
@@ -39,7 +38,6 @@ class SMapiDatasetManager:
         self._sm_config = SMConfig.get_conf()
         self._db = db
         self._es = es
-        self._img_store = image_store
         self._annot_queue = annot_queue
         self._update_queue = update_queue
         self._lit_queue = lit_queue
@@ -125,15 +123,15 @@ class SMapiDatasetManager:
             **kwargs,
         )
 
-    def add_optical_image(self, ds_id, img_id, transform, zoom_levels=(1, 2, 4, 8)):
+    def add_optical_image(self, ds_id, url, transform, zoom_levels=(1, 2, 4, 8)):
         """Add optical image to dataset.
 
         Generates scaled and transformed versions of the provided optical image
         + creates the thumbnail
         """
-
-        add_optical_image(self._db, self._img_store, ds_id, img_id, transform, zoom_levels)
+        add_optical_image(self._db, ds_id, url, transform, zoom_levels)
 
     def del_optical_image(self, ds_id):
-        """ Deletes raw and zoomed optical images from DB and FS"""
-        del_optical_image(self._db, self._img_store, ds_id)
+        """Delete raw and zoomed optical images from DB and FS."""
+
+        del_optical_image(self._db, ds_id)
