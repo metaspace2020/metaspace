@@ -8,7 +8,7 @@ from pathlib import Path
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.daemons.dataset_manager import DatasetManager
-from sm.engine.util import bootstrap_and_run
+from sm.engine.util import GlobalInit
 from sm.engine.utils.create_ds_from_files import create_ds_from_files
 
 
@@ -45,4 +45,5 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    bootstrap_and_run(args.sm_config_path, run_search)
+    with GlobalInit(config_path=args.sm_config_path) as sm_config:
+        run_search(sm_config)

@@ -108,7 +108,7 @@ def classify_dataset_ion_images(db, ds, services_config, overwrite_existing=Fals
     """
     off_sample_api_endpoint = services_config['off_sample']
 
-    get_image_by_id = partial(image_storage.get_image, image_storage.ImageType.ISO, ds.id)
+    get_image_by_id = partial(image_storage.get_image, image_storage.ISO, ds.id)
 
     annotations = db.select_with_fields(SEL_ION_IMAGES, (ds.id, overwrite_existing))
     image_ids = [a['img_id'] for a in annotations]

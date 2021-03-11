@@ -102,7 +102,7 @@ services:
     # extra_hosts: # Uncomment if graphql is run outside of Docker
     #  - "graphql:172.17.0.1"
 
-  sm-lithops-daemon:
+  lithops-daemon:
     build:
       context: ..
       dockerfile: docker/sm-engine/Dockerfile

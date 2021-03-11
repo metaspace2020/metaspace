@@ -152,7 +152,9 @@ disable=print-statement,
         # duplicate-code is a nightmare to disable when there are legit usages for it (e.g. in scripts).
         # Disabling it per-line is extremely finnicky, and disabling it per-file is impossible due to
         # https://github.com/PyCQA/pylint/issues/2368
-        duplicate-code
+        duplicate-code,
+        # Redefined outer variable name is a recurring problem in scripts
+        redefined-outer-name
 
 
 # Enable the message, report, category or checker with the given id(s). You can

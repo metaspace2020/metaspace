@@ -34,17 +34,6 @@ def find_file_by_ext(path, ext):
     return next(str(p) for p in Path(path).iterdir() if str(p).lower().endswith(ext))
 
 
-def bootstrap_and_run(config_path, func):
-    from sm.engine.db import ConnectionPool  # pylint: disable=import-outside-toplevel
-
-    SMConfig.set_path(config_path)
-    sm_config = SMConfig.get_conf()
-    init_loggers(sm_config['logs'])
-
-    with ConnectionPool(sm_config['db']):
-        func(sm_config)
-
-
 def populate_aws_env_vars(aws_config):
     for env_var, val in aws_config.items():
         os.environ.setdefault(env_var.upper(), val)
@@ -58,7 +47,7 @@ def on_startup(config_path: str) -> Dict:
     if 'aws' in sm_config:
         populate_aws_env_vars(sm_config['aws'])
 
-    image_storage.init(sm_config['image_storage'])
+    image_storage.init()
 
     return sm_config
 
@@ -68,7 +57,6 @@ class GlobalInit:
         from sm.engine.db import ConnectionPool  # pylint: disable=import-outside-toplevel
 
         self.sm_config = on_startup(config_path)
-
         self.pool = ConnectionPool(self.sm_config['db'])
 
     def __enter__(self):

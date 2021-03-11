@@ -81,7 +81,7 @@ class ImagesManager:
             ).set_index('formula_i')
             self._images_dfs.append(images_df)
         else:
-            print(f'No images to save')
+            print('No images to save')
 
         self._images_buffer.clear()
         self._formula_images_size = 0
