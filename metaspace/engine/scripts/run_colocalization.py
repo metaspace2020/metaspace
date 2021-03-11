@@ -1,12 +1,11 @@
 import argparse
 import logging
-from functools import partial
 
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.postprocessing.colocalization import Colocalization
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
-from sm.engine.util import bootstrap_and_run
+from sm.engine.util import GlobalInit
 
 CORRUPT_COLOC_JOBS_SEL = """
 WITH mol_db_lookup AS (SELECT unnest(%s::int[]) AS id, unnest(%s::text[]) AS name), 
@@ -176,15 +175,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
     logger = logging.getLogger('engine')
 
-    bootstrap_and_run(
-        args.config,
-        partial(
-            run_coloc_jobs,
+    with GlobalInit(config_path=args.config) as sm_config:
+        run_coloc_jobs(
+            sm_config=sm_config,
             ds_id_str=args.ds_id,
             sql_where=args.sql_where,
             fix_missing=args.fix_missing,
             fix_corrupt=args.fix_corrupt,
             skip_existing=args.skip_existing,
-            lithops=args.lithops,
-        ),
-    )
+            use_lithops=args.lithops,
+        )

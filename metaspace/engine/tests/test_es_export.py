@@ -132,7 +132,10 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         'ds_group_id': group_id,
         'ds_group_name': 'group name',
         'ds_group_short_name': 'grp',
-        'ds_ion_thumbnail_url': 'http://localhost:9000/thumb/2000-01-01_00h00m/thumb-id',
+        'ds_ion_thumbnail': 'thumb-id',
+        'ds_ion_thumbnail_url': (
+            f'http://localhost:9000/{sm_config["image_storage"]["bucket"]}/thumb/{ds_id}/thumb-id'
+        ),
     }
     assert ds_d == {
         **expected_ds_fields,
@@ -167,7 +170,10 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         'ion_formula': 'HO2',
         'total_iso_ints': 100,
         'centroid_mzs': [100.0, 200.0, 300.0],
-        'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
+        'iso_image_urls': [
+            f'http://localhost:9000/{sm_config["image_storage"]["bucket"]}/iso/{ds_id}/iso_img_id_1',
+            f'http://localhost:9000/{sm_config["image_storage"]["bucket"]}/iso/{ds_id}/iso_img_id_2',
+        ],
         'isobars': [],
         'isomer_ions': [],
         'polarity': '+',
@@ -204,7 +210,10 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         'ion_formula': 'HAu',
         'total_iso_ints': 100,
         'centroid_mzs': [10.0, 20.0],
-        'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
+        'iso_image_urls': [
+            f'http://localhost:9000/{sm_config["image_storage"]["bucket"]}/iso/{ds_id}/iso_img_id_1',
+            f'http://localhost:9000/{sm_config["image_storage"]["bucket"]}/iso/{ds_id}/iso_img_id_2',
+        ],
         'isobars': [],
         'isomer_ions': [],
         'polarity': '+',
@@ -254,7 +263,7 @@ def test_add_isobar_fields_to_anns(ds_config):
         {
             'annotation_id': 'Base annotation',
             'centroid_mzs': [100, 101, 102, 103],
-            'iso_image_ids': ['img1', 'img2', 'img3', 'img4'],
+            'iso_image_urls': ['img1', 'img2', 'img3', 'img4'],
             'msm': 0.5,
             'ion': 'H1+',
             'ion_formula': 'H1',
@@ -262,7 +271,7 @@ def test_add_isobar_fields_to_anns(ds_config):
         {
             'annotation_id': "Base's 1st centroid overlaps 1st",
             'centroid_mzs': [100.0002, 101.1, 102.1, 103.1],
-            'iso_image_ids': ['img1', 'img2', 'img3', 'img4'],
+            'iso_image_urls': ['img1', 'img2', 'img3', 'img4'],
             'msm': 0.6,
             'ion': 'H2+',
             'ion_formula': 'H2',
@@ -270,7 +279,7 @@ def test_add_isobar_fields_to_anns(ds_config):
         {
             'annotation_id': "Base's 1st centroid overlaps 2nd (shouldn't be reported)",
             'centroid_mzs': [98, 100.0002, 101.2, 102.2],
-            'iso_image_ids': ['img1', 'img2', 'img3', 'img4'],
+            'iso_image_urls': ['img1', 'img2', 'img3', 'img4'],
             'msm': 0.7,
             'ion': 'H3+',
             'ion_formula': 'H3',
@@ -278,7 +287,7 @@ def test_add_isobar_fields_to_anns(ds_config):
         {
             'annotation_id': "Base's 2nd and 3rd centroid overlap 3rd and 4th",
             'centroid_mzs': [96, 97, 101, 102],
-            'iso_image_ids': ['img1', 'img2', 'img3', 'img4'],
+            'iso_image_urls': ['img1', 'img2', 'img3', 'img4'],
             'msm': 0.8,
             'ion': 'H4+',
             'ion_formula': 'H4',

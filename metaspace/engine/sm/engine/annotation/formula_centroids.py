@@ -135,7 +135,7 @@ class CentroidsGenerator:
                 return True
         else:
             return all(
-                [(Path(self._ion_centroids_path) / fn).exists() for fn in self._parquet_file_names]
+                (Path(self._ion_centroids_path) / fn).exists() for fn in self._parquet_file_names
             )
 
     def _download_from_s3(self):

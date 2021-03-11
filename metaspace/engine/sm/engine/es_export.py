@@ -82,7 +82,7 @@ FROM (
     d.config #> '{isotope_generation,neutral_losses}' AS ds_neutral_losses,
     d.config #> '{isotope_generation,chem_mods}' AS ds_chem_mods,
     d.acq_geometry AS ds_acq_geometry,
-    d.ion_thumbnail as ds_ion_thumbnail
+    d.ion_thumbnail AS ds_ion_thumbnail
   FROM dataset as d
   LEFT JOIN job ON job.ds_id = d.id
   GROUP BY d.id
@@ -385,6 +385,12 @@ class ESExporter:
             mzs, _ = isocalc.centroids(ion_without_pol)
             doc['centroid_mzs'] = list(mzs) if mzs is not None else []
             doc['mz'] = mzs[0] if mzs is not None else 0
+            doc['iso_image_urls'] = [
+                image_storage.get_image_url(image_storage.ISO, ds_id, image_id)
+                if image_id
+                else None
+                for image_id in doc.pop('iso_image_ids')
+            ]
 
             if moldb.targeted:
                 fdr_level = doc['fdr'] = -1
@@ -421,7 +427,7 @@ class ESExporter:
                 ds_doc['annotation_counts'] = []
 
             ds_doc['ds_ion_thumbnail_url'] = image_storage.get_image_url(
-                image_storage.ImageType.THUMB, ds_id, ds_doc.pop('ds_ion_thumbnail')
+                image_storage.THUMB, ds_id, ds_doc['ds_ion_thumbnail']
             )
             annotation_counts = self._index_ds_annotations(ds_id, moldb, ds_doc, isocalc)
 
@@ -582,8 +588,8 @@ class ESExporterIsobars:
             for peak_i, mz in enumerate(doc['centroid_mzs']):
                 if (
                     mz != 0
-                    and peak_i < len(doc['iso_image_ids'])
-                    and doc['iso_image_ids'][peak_i] is not None
+                    and peak_i < len(doc['iso_image_urls'])
+                    and doc['iso_image_urls'][peak_i] is not None
                 ):
                     peaks.append(
                         (

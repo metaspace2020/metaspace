@@ -21,7 +21,7 @@ class SMUpdateDaemon:
         self._stopped = False
 
     def _on_success(self, msg):
-        self.logger.info(f" SM update daemon: success")
+        self.logger.info(' SM update daemon: success')
 
         if msg['action'] == DaemonAction.DELETE:
             self._manager.notify_update(
@@ -38,7 +38,7 @@ class SMUpdateDaemon:
 
         if msg['action'] != DaemonAction.UPDATE:
             self._manager.post_to_slack(
-                'dart', f" [v] Succeeded to {msg['action']}: {json.dumps(msg)}"
+                'dart', f' [v] Succeeded to {msg["action"]}: {json.dumps(msg)}'
             )
 
         if msg.get('email'):
@@ -54,7 +54,7 @@ class SMUpdateDaemon:
         try:
             self.logger.info(f' SM update daemon received a message: {msg}')
             self._manager.post_to_slack(
-                'new', f" [v] New {msg['action']} message: {json.dumps(msg)}"
+                'new', f' [v] New {msg["action"]} message: {json.dumps(msg)}'
             )
 
             ds = self._manager.load_ds(msg['ds_id'])
@@ -81,7 +81,7 @@ class SMUpdateDaemon:
             elif msg['action'] == DaemonAction.DELETE:
                 self._manager.delete(ds=ds)
             else:
-                raise SMError(f"Wrong action: {msg['action']}")
+                raise SMError(f'Wrong action: {msg["action"]}')
         except Exception as e:
             raise IndexUpdateError(msg['ds_id'], traceback=format_exc(chain=False)) from e
 

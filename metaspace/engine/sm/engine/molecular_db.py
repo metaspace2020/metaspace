@@ -83,7 +83,7 @@ def read_moldb_file(file_path):
             buffer = Path(file_path).open()
         moldb_df = pd.read_csv(buffer, sep='\t', dtype=object, na_filter=False)
     except ValueError as e:
-        raise MalformedCSV(f'Malformed CSV: {e}')
+        raise MalformedCSV(f'Malformed CSV: {e}') from e
 
     if moldb_df.empty:
         raise MalformedCSV('No data rows found')

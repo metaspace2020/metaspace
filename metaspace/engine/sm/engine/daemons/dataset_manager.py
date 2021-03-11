@@ -19,6 +19,7 @@ from sm.engine.es_export import ESExporter
 from sm.engine.postprocessing.ion_thumbnail import (
     generate_ion_thumbnail,
     generate_ion_thumbnail_lithops,
+    delete_ion_thumbnail,
 )
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.postprocessing.off_sample_wrapper import classify_dataset_ion_images
@@ -46,13 +47,13 @@ class DatasetManager:
 
     def post_to_slack(self, emoji, msg):
         if self._slack_conf.get('webhook_url', None):
-            m = {
-                "channel": self._slack_conf['channel'],
-                "username": "webhookbot",
-                "text": ":{}:{}".format(emoji, msg),
-                "icon_emoji": ":robot_face:",
+            doc = {
+                'channel': self._slack_conf['channel'],
+                'username': 'webhookbot',
+                'text': f":{emoji}:{msg}",
+                'icon_emoji': ':robot_face:',
             }
-            post(self._slack_conf['webhook_url'], json=m)
+            post(self._slack_conf['webhook_url'], json=doc)
 
     def fetch_ds_metadata(self, ds_id):
         res = self._db.select_one(
@@ -67,7 +68,7 @@ class DatasetManager:
             md_type_quoted = urllib.parse.quote(ds_meta['Data_Type'])
             base_url = self._sm_config['services']['web_app_url']
             ds_id_quoted = urllib.parse.quote(msg['ds_id'])
-            link = '{}/annotations?mdtype={}&ds={}'.format(base_url, md_type_quoted, ds_id_quoted)
+            link = f'{base_url}/annotations?mdtype={md_type_quoted}&ds={ds_id_quoted}'
         except Exception as e:
             self.logger.error(e)
         return link
@@ -110,18 +111,14 @@ class DatasetManager:
         with perf_profile(self._db, 'annotate_lithops', ds.id) as perf:
             executor = Executor(self._sm_config['lithops'], perf=perf)
 
-            ServerAnnotationJob(executor, self._img_store, ds, perf).run()
+            ServerAnnotationJob(executor, ds, perf).run()
 
             if self._sm_config['services'].get('colocalization', True):
                 Colocalization(self._db).run_coloc_job_lithops(executor, ds, reprocess=del_first)
 
             if self._sm_config['services'].get('ion_thumbnail', True):
                 generate_ion_thumbnail_lithops(
-                    executor=executor,
-                    db=self._db,
-                    sm_config=self._sm_config,
-                    ds=ds,
-                    only_if_needed=not del_first,
+                    executor=executor, db=self._db, ds=ds, only_if_needed=not del_first,
                 )
 
     def index(self, ds: Dataset):
@@ -155,6 +152,7 @@ class DatasetManager:
         del_jobs(ds)
         # TODO: enable after image storage supports optical images
         # del_optical_image(self._db, self._img_store, ds.id)
+        delete_ion_thumbnail(self._db, ds)
         self._es.delete_ds(ds.id)
         self._db.alter('DELETE FROM dataset WHERE id=%s', params=(ds.id,))
 
@@ -196,7 +194,7 @@ class DatasetManager:
         )
         if traceback:
             content += (
-                f"\n\nWe could not successfully read the dataset's imzML file. "
+                f'\n\nWe could not successfully read the dataset\'s imzML file. '
                 f'Please make sure you are using up-to-date software for '
                 f'exporting the dataset to imzML format.\nIf you are a developer, '
                 f'the following stack trace may be useful:\n\n{traceback}'
@@ -209,9 +207,9 @@ class DatasetManager:
         self._send_email(msg['email'], 'METASPACE service notification (FAILED)', email_body)
 
     def ds_failure_handler(self, msg, e):
-        self.logger.error(f" SM {msg['action']} daemon: failure", exc_info=True)
+        self.logger.error(f' SM {msg["action"]} daemon: failure', exc_info=True)
         ds = self.load_ds(msg['ds_id'])
         self.set_ds_status(ds, status=DatasetStatus.FAILED)
         self.notify_update(ds.id, msg['action'], stage=DaemonActionStage.FAILED)
         slack_msg = f'{json.dumps(msg)}\n```{e.traceback}```'
-        self.post_to_slack('hankey', f" [x] {msg['action']} failed: {slack_msg}")
+        self.post_to_slack('hankey', f' [x] {msg["action"]} failed: {slack_msg}')

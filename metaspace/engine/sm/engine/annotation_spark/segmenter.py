@@ -51,7 +51,7 @@ def spectra_sample_gen(imzml_parser, sample_size):
 
 
 def define_ds_segments(sample_mzs, sample_ratio, imzml_parser, ds_segm_size_mb=5):
-    logger.info(f'Defining dataset segment bounds')
+    logger.info('Defining dataset segment bounds')
     sp_arr_row_size_b = (
         np.dtype(SpIdxDType).itemsize
         + np.dtype(imzml_parser.mz_precision).itemsize

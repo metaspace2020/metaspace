@@ -1,7 +1,6 @@
 import argparse
 import logging
 import sys
-from functools import partial
 
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.dataset import Dataset
@@ -11,7 +10,7 @@ from sm.engine.postprocessing.ion_thumbnail import (
     generate_ion_thumbnail,
     generate_ion_thumbnail_lithops,
 )
-from sm.engine.util import bootstrap_and_run
+from sm.engine.util import GlobalInit
 from sm.engine.db import DB
 
 
@@ -38,7 +37,7 @@ def run(sm_config, ds_id_str, sql_where, algorithm, use_lithops):
             ds = Dataset.load(db, ds_id)
             if use_lithops:
                 # noinspection PyUnboundLocalVariable
-                generate_ion_thumbnail_lithops(executor, db, sm_config, ds, algorithm=algorithm)
+                generate_ion_thumbnail_lithops(executor, db, ds, algorithm=algorithm)
             else:
                 generate_ion_thumbnail(db, ds, algorithm=algorithm)
         except Exception:
@@ -73,13 +72,11 @@ if __name__ == '__main__':
         print('error: must specify either --ds-id or --sql-where')
         sys.exit(1)
 
-    bootstrap_and_run(
-        args.config,
-        partial(
-            run,
+    with GlobalInit(config_path=args.config) as sm_config:
+        run(
+            sm_config=sm_config,
             ds_id_str=args.ds_id,
             sql_where=args.sql_where,
             algorithm=args.algorithm,
-            lithops=args.lithops,
-        ),
-    )
+            use_lithops=args.lithops,
+        )

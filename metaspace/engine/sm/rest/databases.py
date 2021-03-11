@@ -52,7 +52,7 @@ def create():
         logger.info(f'Creating molecular database. Params: {params}')
 
         required_fields = ['name', 'version', 'group_id', 'file_path']
-        if not all([field in params for field in required_fields]):
+        if not all(field in params for field in required_fields):
             return make_response(WRONG_PARAMETERS, errors=[f'Required fields: {required_fields}'])
 
         moldb = molecular_db.create(**params)
