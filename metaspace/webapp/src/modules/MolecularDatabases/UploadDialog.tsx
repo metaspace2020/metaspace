@@ -11,14 +11,7 @@ import FadeTransition from '../../components/FadeTransition'
 import { createDatabaseQuery, MolecularDBDetails } from '../../api/moldb'
 import safeJsonParse from '../../lib/safeJsonParse'
 import reportError from '../../lib/reportError'
-import { getS3Bucket } from '../../lib/util'
-
-const convertToS3 = (url: string) => {
-  const parsedUrl = new URL(url)
-  const bucket = getS3Bucket(parsedUrl)
-  const path = decodeURIComponent(parsedUrl.pathname.slice(1))
-  return `s3://${bucket}/${path}`
-}
+import { convertUploadUrlToS3Path } from '../../lib/util'
 
 const uppyOptions : UppyOptions = {
   debug: true,
@@ -110,7 +103,7 @@ const UploadDialog = defineComponent<Props>({
     const handleUploadComplete = (result: UploadResult) => {
       if (result.successful.length) {
         const [file] = result.successful
-        state.model.filePath = convertToS3(file.uploadURL)
+        state.model.filePath = convertUploadUrlToS3Path(file.uploadURL)
         if (!state.model.name) {
           state.model.name = file.name.substr(0, file.name.lastIndexOf('.')) || file.name
         }
