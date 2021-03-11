@@ -4,7 +4,7 @@ import logging
 import uuid
 from concurrent.futures.thread import ThreadPoolExecutor
 from enum import Enum
-from typing import List, Tuple, Dict, Callable
+from typing import List, Tuple, Callable
 
 import numpy as np
 from scipy.ndimage import zoom
@@ -18,7 +18,7 @@ except ImportError:
     S3Client = object
 
 from sm.engine.config import SMConfig
-from sm.engine.storage import get_s3_resource, create_bucket
+from sm.engine.storage import get_s3_resource, create_bucket, get_s3_client
 
 logger = logging.getLogger('engine')
 
@@ -31,7 +31,7 @@ class ImageType(str, Enum):
 
 class ImageStorage:
     ISO = ImageType.ISO
-    OPTICAL = ImageType.ISO
+    OPTICAL = ImageType.OPTICAL
     THUMB = ImageType.THUMB
 
     def __init__(self):
@@ -39,23 +39,7 @@ class ImageStorage:
         logger.info(f'Initializing image storage from config: {sm_config["image_storage"]}')
         self.s3: S3ServiceResource = get_s3_resource()
         self.s3_client: S3Client = self.s3.meta.client
-        self._configure_bucket(sm_config["image_storage"])
-
-    def _configure_bucket(self, config: Dict):
-        create_bucket(self.s3_client, config['bucket'])
-        bucket_policy = {
-            'Version': '2012-10-17',
-            'Statement': [
-                {
-                    'Effect': 'Allow',
-                    'Principal': {'AWS': ['*']},
-                    'Action': ['s3:GetObject'],
-                    'Resource': [f'arn:aws:s3:::{config["bucket"]}/*'],
-                }
-            ],
-        }
-        self.s3_client.put_bucket_policy(Bucket=config['bucket'], Policy=json.dumps(bucket_policy))
-        self.bucket = self.s3.Bucket(config['bucket'])
+        self.bucket = self.s3.Bucket(sm_config['image_storage']['bucket'])
 
     @staticmethod
     def _make_key(image_type, ds_id, img_id):
@@ -185,7 +169,7 @@ class ImageStorage:
 _instance: ImageStorage
 
 ISO = ImageType.ISO
-OPTICAL = ImageType.ISO
+OPTICAL = ImageType.OPTICAL
 THUMB = ImageType.THUMB
 
 get_image: Callable[[ImageType, str, str], bytes]
@@ -195,7 +179,27 @@ get_image_url: Callable[[ImageType, str, str], str]
 get_ion_images_for_analysis = None
 
 
+def _configure_bucket():
+    bucket_name = SMConfig.get_conf()['image_storage']['bucket']
+    logger.info(f'Configuring image storage bucket: {bucket_name}')
+    create_bucket(bucket_name)
+    bucket_policy = {
+        'Version': '2012-10-17',
+        'Statement': [
+            {
+                'Effect': 'Allow',
+                'Principal': {'AWS': ['*']},
+                'Action': ['s3:GetObject'],
+                'Resource': [f'arn:aws:s3:::{bucket_name}/*'],
+            }
+        ],
+    }
+    get_s3_client().put_bucket_policy(Bucket=bucket_name, Policy=json.dumps(bucket_policy))
+
+
 def init():
+    _configure_bucket()
+
     # pylint: disable=global-statement
     global _instance, get_image, post_image, delete_image, get_image_url
     global get_ion_images_for_analysis

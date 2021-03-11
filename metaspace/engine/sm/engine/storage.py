@@ -30,7 +30,8 @@ def get_s3_resource():
     return boto3.resource('s3', **_boto_client_kwargs())
 
 
-def create_bucket(s3_client, bucket_name: str):
+def create_bucket(bucket_name: str):
+    s3_client = get_s3_client()
     try:
         s3_client.head_bucket(Bucket=bucket_name)
     except botocore.exceptions.ClientError as e:

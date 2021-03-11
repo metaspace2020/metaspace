@@ -39,7 +39,7 @@ class MoldbFiles(Enum):
 @pytest.fixture(autouse=True, scope='module')
 def fill_storage():
     s3 = get_s3_client()
-    create_bucket(s3, BUCKET_NAME)
+    create_bucket(BUCKET_NAME)
 
     for file in MoldbFiles:
         s3.upload_file(
