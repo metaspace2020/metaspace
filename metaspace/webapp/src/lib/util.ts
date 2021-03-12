@@ -112,10 +112,21 @@ export function getOS() {
   return os
 }
 
-// not bulletproof but should do the job, local S3 uses path-style urls
-export const getS3Bucket = (parsedUrl: URL) => {
+export const parseS3Url = (parsedUrl: URL) => {
   if (parsedUrl.host.includes('.')) {
-    return parsedUrl.host.split('.')[0]
+    // When using S3, the bucket appears in the subdomain e.g. https://sm-engine-upload.s3.eu-west-1.amazonaws.com/
+    const bucket = parsedUrl.host.split('.')[0]
+    const key = parsedUrl.pathname.slice(1)
+    return { bucket, key }
+  } else {
+    // When using Minio, the bucket is the first path item, e.g. http://localhost:9000/sm-engine-dev/
+    const bucket = parsedUrl.pathname.split('/')[1]
+    const key = parsedUrl.pathname.split('/').slice(2).join('/')
+    return { bucket, key }
   }
-  return parsedUrl.pathname.split('/')[1]
+}
+
+export const convertUploadUrlToS3Path = (url: string) => {
+  const { bucket, key } = parseS3Url(new URL(url))
+  return `s3://${bucket}/${key}`
 }

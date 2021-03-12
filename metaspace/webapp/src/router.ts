@@ -34,11 +34,11 @@ const asyncPagesFreelyTyped = {
   ViewProjectPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle2" */ './modules/Project/ViewProjectPage.vue'),
 
   // Separate bundle for design docs
-  DesignTOC: () => import(/* webpackPrefetch: false, webpackChunkName: "DesignBundle" */ './design/TOCPage.vue'),
-  DesignStyleGuide: () => import(/* webpackPrefetch: false, webpackChunkName: "DesignBundle" */ './design/StyleGuidePage.vue'),
-  DesignIcons: () => import(/* webpackPrefetch: false, webpackChunkName: "DesignBundle" */ './design/IconsPage.vue'),
-  DesignComponents: () => import(/* webpackPrefetch: false, webpackChunkName: "DesignBundle" */ './design/ComponentsPage.vue'),
-  DesignForms: () => import(/* webpackPrefetch: false, webpackChunkName: "DesignBundle" */ './design/FormsPage.vue'),
+  DesignTOC: () => import(/* webpackChunkName: "DesignBundle" */ './design/TOCPage.vue'),
+  DesignStyleGuide: () => import(/* webpackChunkName: "DesignBundle" */ './design/StyleGuidePage.vue'),
+  DesignIcons: () => import(/* webpackChunkName: "DesignBundle" */ './design/IconsPage.vue'),
+  DesignComponents: () => import(/* webpackChunkName: "DesignBundle" */ './design/ComponentsPage.vue'),
+  DesignForms: () => import(/* webpackChunkName: "DesignBundle" */ './design/FormsPage.vue'),
 }
 const asyncPages = asyncPagesFreelyTyped as Record<keyof typeof asyncPagesFreelyTyped, AsyncComponent>
 
