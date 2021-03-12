@@ -11,7 +11,7 @@
         @click.prevent="handleSelectAll"
       >Select all</a>
     </div>
-    <div class="dataset-checkbox-list leading-6 proportional-nums">
+    <div class="dataset-checkbox-list leading-6">
       <div
         v-for="dataset in datasets"
         :key="dataset.id"

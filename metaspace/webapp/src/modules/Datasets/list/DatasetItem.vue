@@ -106,7 +106,6 @@ export default {
    justify-content: space-between;
    transition: 0.2s cubic-bezier(.4, 0, .2, 1);
    transition-property: box-shadow;
-   font-variant-numeric: proportional-nums;
  }
 
  .dataset-item:hover {

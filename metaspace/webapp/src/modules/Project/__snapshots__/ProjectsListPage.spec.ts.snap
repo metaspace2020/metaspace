@@ -28,7 +28,7 @@ exports[`ProjectsListPage should change actions for projects under review 1`] = 
         </h4>
         <div>
           <div class="select-buttons"><a href="#">Select none</a> <span> | </span> <a href="#">Select all</a></div>
-          <div class="dataset-checkbox-list leading-6 proportional-nums">
+          <div class="dataset-checkbox-list leading-6">
             <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.0.name" class="truncate">
           allDatasets.0.name
         </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time></span>
@@ -174,7 +174,7 @@ exports[`ProjectsListPage should change actions for published projects 1`] = `
         </h4>
         <div>
           <div class="select-buttons"><a href="#">Select none</a> <span> | </span> <a href="#">Select all</a></div>
-          <div class="dataset-checkbox-list leading-6 proportional-nums">
+          <div class="dataset-checkbox-list leading-6">
             <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.0.name" class="truncate">
           allDatasets.0.name
         </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time></span>
@@ -319,7 +319,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
         </h4>
         <div>
           <div class="select-buttons"><a href="#">Select none</a> <span> | </span> <a href="#">Select all</a></div>
-          <div class="dataset-checkbox-list leading-6 proportional-nums">
+          <div class="dataset-checkbox-list leading-6">
             <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.0.name" class="truncate">
           allDatasets.0.name
         </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time></span>

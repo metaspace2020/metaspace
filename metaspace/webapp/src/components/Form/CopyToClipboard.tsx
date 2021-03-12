@@ -1,7 +1,7 @@
 import { defineComponent, reactive, ref } from '@vue/composition-api'
-import { Input } from '../lib/element-ui'
+import { Input } from '../../lib/element-ui'
 
-import copyToClipboard from '../lib/copyToClipboard'
+import copyToClipboard from '../../lib/copyToClipboard'
 
 interface Props {
   value: string

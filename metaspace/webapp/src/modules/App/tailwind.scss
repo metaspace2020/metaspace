@@ -49,41 +49,24 @@
   transition-property: opacity, visibility;
 }
 
-.proportional-nums {
-  font-variant-numeric: proportional-nums;
-}
-
 .h2-leading-12 h2 {
   @apply leading-8 py-2 m-0;
-}
-
-.v-rhythm-6 > * + * {
-  @apply mt-6;
-}
-
-.v-rhythm-5 > * + * {
-  @apply mt-5;
 }
 
 .v-rhythm-3 > * + * {
   @apply mt-3;
 }
 
-ol.old-style-nums {
-  list-style: none;
-  counter-reset: old-style-nums;
+.v-rhythm-4 > * + * {
+  @apply mt-4;
 }
 
-ol.old-style-nums > li {
-  @apply relative;
+.v-rhythm-5 > * + * {
+  @apply mt-5;
 }
 
-ol.old-style-nums > li::before {
-  @apply absolute font-medium text-primary;
-  counter-increment: old-style-nums;
-  content: counter(old-style-nums)".";
-  font-variant-numeric: oldstyle-nums;
-  left: calc(-1 * theme('spacing.6'))
+.v-rhythm-6 > * + * {
+  @apply mt-6;
 }
 
 .cursor-help {
@@ -93,17 +76,23 @@ ol.old-style-nums > li::before {
 /* Debug */
 
 .baseline-grid {
-  background-image: linear-gradient(180deg,red 1px,transparent 0);
+  background-image: linear-gradient(180deg,theme('colors.red.500') 1px,transparent 0);
   background-position: 0 0;
   background-repeat: repeat;
+  border-bottom: 1px solid theme('colors.red.500');
 }
 
-.baseline-grid-24 {
+.baseline-grid-4 {
   @apply baseline-grid;
-  background-size: 100% 1.5rem;
+  background-size: 100% theme('spacing.4');
 }
 
-.baseline-grid-20 {
+.baseline-grid-5 {
   @apply baseline-grid;
-  background-size: 100% 1.25rem;
+  background-size: 100% theme('spacing.5');
+}
+
+.baseline-grid-6 {
+  @apply baseline-grid;
+  background-size: 100% theme('spacing.6');
 }

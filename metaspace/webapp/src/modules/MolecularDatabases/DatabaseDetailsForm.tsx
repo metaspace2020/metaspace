@@ -1,6 +1,6 @@
 import { defineComponent, reactive } from '@vue/composition-api'
 
-import { PrimaryLabelText, SecondaryLabelText, RadioButton } from '../../components/Form'
+import { SmForm, PrimaryLabelText, SecondaryLabelText, RadioButton } from '../../components/Form'
 import { RichTextArea } from '../../components/RichText'
 
 import { MolecularDB, MolecularDBDetails, UpdateDatabaseDetailsMutation } from '../../api/moldb'
@@ -28,8 +28,7 @@ const Details = defineComponent<Props>({
       loading: false,
     })
 
-    const handleFormSubmit = async(e: Event) => {
-      e.preventDefault()
+    const handleFormSubmit = async() => {
       try {
         state.loading = true
         await props.submit({ id: props.db.id, details: state.model })
@@ -42,7 +41,7 @@ const Details = defineComponent<Props>({
     }
 
     return () => (
-      <form class="sm-form v-rhythm-6" action="#" onSubmit={handleFormSubmit}>
+      <SmForm class="v-rhythm-6" onSubmit={handleFormSubmit}>
         <div>
           <label for="database-full-name">
             <PrimaryLabelText>Full name</PrimaryLabelText>
@@ -104,7 +103,7 @@ const Details = defineComponent<Props>({
         <button class="el-button el-button--primary">
           Update details
         </button>
-      </form>
+      </SmForm>
     )
   },
 })

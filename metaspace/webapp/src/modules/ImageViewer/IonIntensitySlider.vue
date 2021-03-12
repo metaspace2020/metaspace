@@ -44,14 +44,14 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, computed, ref, watch } from '@vue/composition-api'
+import { defineComponent, computed, ref } from '@vue/composition-api'
 
 import IonIntensity from './IonIntensity.vue'
 
 import { RangeSlider, THUMB_WIDTH } from '../../components/Slider'
 import FadeTransition from '../../components/FadeTransition'
 
-import { useIonImageSettings, useIonImageLayers } from './ionImageState'
+import { useIonImageSettings } from './ionImageState'
 import { IonImageState, IonImageIntensity, ColorBar } from './ionImageState'
 
 interface Props {

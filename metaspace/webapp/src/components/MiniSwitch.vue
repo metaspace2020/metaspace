@@ -1,20 +1,10 @@
 <template>
   <el-switch
-    v-bind="$props"
+    v-bind="$attrs"
     :width="28"
     @change="$emit('change')"
   />
 </template>
-<script lang="ts">
-import Vue from 'vue'
-
-export default Vue.extend({
-  props: {
-    disabled: Boolean,
-    value: Boolean,
-  },
-})
-</script>
 <style scoped>
   .el-switch >>> .el-switch__core {
     height: 14px;
