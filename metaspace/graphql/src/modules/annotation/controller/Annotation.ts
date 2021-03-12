@@ -131,7 +131,8 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
         return {
           mz: parseFloat(mz as any),
           // FIXME: remove after data migration
-          url: iso_image_urls[i] || `/${hit._source.ds_ion_img_storage}${config.img_upload.categories.iso_image.path}${iso_image_ids[i]}`,
+          url: iso_image_urls[i]
+            || `/${hit._source.ds_ion_img_storage}${config.img_upload.categories.iso_image.path}${iso_image_ids[i]}`,
           totalIntensity: total_iso_ints[i],
           minIntensity: min_iso_ints[i],
           maxIntensity: max_iso_ints[i],

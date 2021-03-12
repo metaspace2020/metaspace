@@ -66,7 +66,7 @@ const getOpticalImagesByDsId = async(ctx: Context, id: string): Promise<OpticalI
       const results = rawResults.map(({ id, type, url, ...rest }) => ({
         ...rest,
         id,
-        url: url || `/fs/optical_images/${id}`,  // FIXME: remove after data migration
+        url: url || `/fs/optical_images/${id}`, // FIXME: remove after data migration
         type: type.toUpperCase() as OpticalImageType,
       }))
       const groupedResults = _.groupBy(results, 'ds_id')

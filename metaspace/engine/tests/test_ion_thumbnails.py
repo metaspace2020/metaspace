@@ -9,6 +9,7 @@ from .utils import create_test_molecular_db, create_test_ds
 
 OLD_IMG_ID = 'old-ion-thumb-id'
 IMG_ID = 'new-ion-thumb-id'
+IMG_URL = 'ion-thumb-url'
 
 
 def _make_fake_ds(db, metadata, ds_config):
@@ -44,14 +45,16 @@ def test_creates_ion_thumbnail(test_db, algorithm, metadata, ds_config):
 
     with patch('sm.engine.postprocessing.ion_thumbnail.image_storage') as image_storage_mock:
         image_storage_mock.post_image.return_value = IMG_ID
+        image_storage_mock.get_image_url.return_value = IMG_URL
         image_storage_mock.get_ion_images_for_analysis.side_effect = (
             _mock_get_ion_images_for_analysis
         )
 
         generate_ion_thumbnail(db, ds, algorithm=algorithm)
 
-        (new_ion_thumbnail,) = db.select_one(
-            "SELECT ion_thumbnail FROM dataset WHERE id = %s", [ds.id]
+        ion_thumbnail, ion_thumbnail_url = db.select_one(
+            "SELECT ion_thumbnail, ion_thumbnail_url FROM dataset WHERE id = %s", [ds.id]
         )
-        assert new_ion_thumbnail == IMG_ID
+        assert ion_thumbnail == IMG_ID
+        assert ion_thumbnail_url == IMG_URL
         assert image_storage_mock.post_image.called
