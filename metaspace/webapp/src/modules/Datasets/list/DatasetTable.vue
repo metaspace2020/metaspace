@@ -10,6 +10,7 @@
         :inline="true"
       >
         <el-radio-group
+          class="p-2 flex flex-row items-center"
           value="List"
           size="small"
           @input="onChangeTab"
@@ -22,7 +23,7 @@
           v-model="categories"
           v-loading="countLoading"
           :min="1"
-          class="dataset-status-checkboxes"
+          class="p-2 dataset-status-checkboxes"
         >
           <el-checkbox
             class="cb-annotating"
@@ -49,14 +50,21 @@
         </el-checkbox-group>
         <div style="flex-grow: 1;" />
 
-        <el-button
-          v-if="nonEmpty"
-          :disabled="isExporting"
-          size="small"
-          @click="startExport"
-        >
-          Export to CSV
-        </el-button>
+        <div class="flex flex-row items-center justify-between flex-1">
+          <sort-dropdown
+            class="p-2"
+            :on-sort-change="handleSortChange"
+          />
+
+          <el-button
+            v-if="nonEmpty"
+            :disabled="isExporting"
+            size="small"
+            @click="startExport"
+          >
+            Export to CSV
+          </el-button>
+        </div>
       </el-form>
     </div>
 
@@ -92,6 +100,7 @@ import {
 import { metadataExportQuery } from '../../../api/metadata'
 import DatasetList from './DatasetList.vue'
 import { FilterPanel } from '../../Filters/index'
+import { SortDropdown } from '../../../components/SortDropdown'
 import FileSaver from 'file-saver'
 import delay from '../../../lib/delay'
 import formatCsvRow, { csvExportHeader } from '../../../lib/formatCsvRow'
@@ -121,6 +130,7 @@ export default Vue.extend({
   components: {
     DatasetList,
     FilterPanel,
+    SortDropdown,
   },
   data() {
     return {
@@ -131,6 +141,8 @@ export default Vue.extend({
       isExporting: false,
       loading: 0,
       countLoading: 0,
+      orderBy: 'ORDER_BY_DATE',
+      sortingOrder: 'DESCENDING',
     }
   },
 
@@ -172,6 +184,8 @@ export default Vue.extend({
         inpFdrLvls: [10],
         checkLvl: 10,
         offset: (this.currentPage - 1) * this.recordsPerPage, // Math.max(0, (this.$store.getters.settings.datasets.page - 1) * 100),
+        orderBy: this.orderBy,
+        sortingOrder: this.sortingOrder,
       }
     },
     nonEmpty() {
@@ -279,7 +293,10 @@ export default Vue.extend({
       row.name.split('//', 2)[1],
     formatResolvingPower: (row, col) =>
       (row.analyzer.resolvingPower / 1000).toFixed(0) * 1000,
-
+    handleSortChange(value, sortingOrder) {
+      this.orderBy = !value ? 'ORDER_BY_DATE' : value
+      this.sortingOrder = !sortingOrder ? 'DESCENDING' : sortingOrder
+    },
     count(status) {
       if (this.datasetCounts != null) {
         return `(${this.datasetCounts[status] || 0})`

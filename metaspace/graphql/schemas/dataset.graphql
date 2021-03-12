@@ -96,6 +96,9 @@ type DatasetProject {
 enum DatasetOrderBy {
   ORDER_BY_DATE
   ORDER_BY_NAME
+  ORDER_BY_UP_DATE
+  ORDER_BY_DS_SUBMITTER_NAME
+  ORDER_BY_ANNOTATION_COUNTS
 }
 
 # fields of categorical type
