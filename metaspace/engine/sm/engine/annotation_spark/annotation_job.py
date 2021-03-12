@@ -1,4 +1,5 @@
 import time
+import warnings
 from pathlib import Path
 from pprint import pformat
 from shutil import copytree, rmtree
@@ -28,7 +29,7 @@ from sm.engine.config import SMConfig
 from sm.engine.es_export import ESExporter
 from sm.engine import molecular_db, storage
 from sm.engine.utils.perf_profile import Profiler
-from sm.engine.errors import PolarityError
+from sm.engine.errors import PolarityWarning
 
 logger = logging.getLogger('engine')
 
@@ -92,7 +93,7 @@ class AnnotationJob:
         """
         if imzml_parser.polarity in (-1, 1):
             if imzml_parser.polarity != config_polarity:
-                raise PolarityError('Wrong polarity between imzml file and metadata.')
+                warnings.warn('Wrong polarity between imzml file and metadata.', category=PolarityWarning)
 
     def _run_annotation_jobs(self, imzml_parser, moldbs):
         if moldbs:

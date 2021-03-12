@@ -1,5 +1,6 @@
 import json
 import logging
+import warnings
 from pathlib import Path
 from traceback import format_exc
 
@@ -7,7 +8,7 @@ import redis
 
 from sm.engine.daemons.actions import DaemonActionStage, DaemonAction
 from sm.engine.dataset import DatasetStatus
-from sm.engine.errors import ImzMLError, AnnotationError
+from sm.engine.errors import ImzMLError, AnnotationError, PolarityWarning
 from sm.engine.queue import QueueConsumer, QueuePublisher
 from sm.engine.config import SMConfig
 from sm.rest.dataset_manager import DatasetActionPriority
@@ -69,14 +70,20 @@ class SMAnnotateDaemon:
                 'new', " [v] New annotation message: {}".format(json.dumps(msg))
             )
 
-            self._manager.annotate(ds=ds, del_first=msg.get('del_first', False))
-
             update_msg = {
                 'ds_id': msg['ds_id'],
                 'ds_name': msg['ds_name'],
                 'email': msg.get('email', None),
                 'action': DaemonAction.INDEX,
             }
+
+            # check for warnings, and add information about it to the message
+            with warnings.catch_warnings(record=True) as warns:
+                self._manager.annotate(ds=ds, del_first=msg.get('del_first', False))
+
+            if [w.message for w in warns if w.category == PolarityWarning]:
+                update_msg['warning'] = 'polarity'
+
             self._update_queue_pub.publish(msg=update_msg, priority=DatasetActionPriority.HIGH)
 
             if self._sm_config['services'].get('off_sample', False):

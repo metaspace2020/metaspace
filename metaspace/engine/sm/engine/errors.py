@@ -22,12 +22,6 @@ class ImzMLError(SMError):
         self.traceback = traceback
 
 
-class PolarityError(SMError):
-    def __init__(self, traceback):
-        super().__init__('Wrong polarity between imzml and metadata')
-        self.traceback = traceback
-
-
 class DSError(SMError):
     def __init__(self, ds_id, message):
         super().__init__(message)
@@ -47,3 +41,7 @@ class DSIDExists(DSError):
 class DSIsBusy(DSError):
     def __init__(self, ds_id):
         super().__init__(ds_id, f'Dataset {ds_id} is busy')
+
+
+class PolarityWarning(UserWarning):
+    pass

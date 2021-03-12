@@ -38,7 +38,7 @@ class ImzMLParserWrapper:
                 parse_lib='ElementTree',
                 include_spectra_metadata='full'
             )
-            in_spectrum, polarity =  self._check_polarity_in_spectrum()
+            in_spectrum, polarity = self._check_polarity_in_body()
             if in_spectrum:
                 return polarity
 
@@ -64,7 +64,7 @@ class ImzMLParserWrapper:
         """
         spectrum_meta = self._imzml_parser.spectrum_full_metadata
         if spectrum_meta:
-            return self._check_and_convertpolarity(spectrum_meta[0])
+            return self._check_and_convert_polarity(spectrum_meta[0])
 
         return False, 0
 
