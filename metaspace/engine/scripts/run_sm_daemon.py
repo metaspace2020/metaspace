@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import logging
+import os
 import resource
 import signal
 import sys
@@ -92,11 +93,16 @@ def main(daemon_name, exit_after):
         conn_pool.close()
         sys.exit(1)
 
+    def timer_stop_daemons():
+        # Raise a signal to stop the daemons. Only the main thread is able to set an exit code,
+        # so a signal is raised instead of calling cb_stop_daemons directly from the timer thread.
+        os.kill(os.getpid(), signal.SIGINT)
+
     signal.signal(signal.SIGINT, cb_stop_daemons)
     signal.signal(signal.SIGTERM, cb_stop_daemons)
 
     if exit_after is not None:
-        exit_timer = Timer(exit_after, cb_stop_daemons)
+        exit_timer = Timer(exit_after, timer_stop_daemons)
         exit_timer.setDaemon(True)  # Don't prevent shutdown if the timer is still running
         exit_timer.start()
 
