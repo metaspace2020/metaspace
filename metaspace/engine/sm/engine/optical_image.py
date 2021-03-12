@@ -121,7 +121,7 @@ def _add_zoom_optical_images(db, ds, dims, optical_img, transform, zoom_levels):
     logger.debug(f'Saving zoom optical images: {optical_img}')
     rows = []
 
-    def save_append_image(img, optical_imag_type):
+    def save_append_image(img, optical_image_type):
         buf = _save_jpeg(img)
         scaled_img_id = image_storage.post_image(image_storage.OPTICAL, ds.id, buf.read())
         scaled_img_url = image_storage.get_image_url(image_storage.OPTICAL, ds.id, scaled_img_id)
@@ -130,7 +130,7 @@ def _add_zoom_optical_images(db, ds, dims, optical_img, transform, zoom_levels):
             (
                 scaled_img_id,
                 ds.id,
-                optical_imag_type,
+                optical_image_type,
                 zoom,
                 width,
                 height,
