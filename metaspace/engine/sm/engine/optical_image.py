@@ -119,18 +119,22 @@ def _add_raw_optical_image(db, ds, img_id, transform):
 
 def _add_zoom_optical_images(db, ds, dims, optical_img, transform, zoom_levels):
     logger.debug(f'Saving zoom optical images: {optical_img}')
-    rows = []
 
-    def save_append_image(img, optical_image_type):
+    def save_image(img):
         buf = _save_jpeg(img)
         scaled_img_id = image_storage.post_image(image_storage.OPTICAL, ds.id, buf.read())
         scaled_img_url = image_storage.get_image_url(image_storage.OPTICAL, ds.id, scaled_img_id)
+        return scaled_img_id, scaled_img_url
 
+    rows = []
+    for zoom in zoom_levels:
+        img, (width, height), transform_to_ion_space = _scale_image(optical_img, transform, zoom)
+        scaled_img_id, scaled_img_url = save_image(img)
         rows.append(
             (
                 scaled_img_id,
                 ds.id,
-                optical_image_type,
+                OpticalImageType.SCALED,
                 zoom,
                 width,
                 height,
@@ -139,14 +143,22 @@ def _add_zoom_optical_images(db, ds, dims, optical_img, transform, zoom_levels):
             )
         )
 
-    for zoom in zoom_levels:
-        img, (width, height), transform_to_ion_space = _scale_image(optical_img, transform, zoom)
-        save_append_image(img, OpticalImageType.SCALED)
-
         img, (width, height), transform_to_ion_space = _transform_image_to_ion_space(
             optical_img, transform, dims, zoom
         )
-        save_append_image(img, OpticalImageType.CLIPPED_TO_ION_IMAGE)
+        scaled_img_id, scaled_img_url = save_image(img)
+        rows.append(
+            (
+                scaled_img_id,
+                ds.id,
+                OpticalImageType.CLIPPED_TO_ION_IMAGE,
+                zoom,
+                width,
+                height,
+                transform_to_ion_space,
+                scaled_img_url,
+            )
+        )
 
     for img_id in db.select_onecol(SEL_OPTICAL_IMAGE, params=(ds.id,)):
         image_storage.delete_image(image_storage.OPTICAL, ds.id, img_id)
