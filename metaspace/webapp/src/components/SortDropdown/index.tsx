@@ -67,7 +67,8 @@ export const SortDropdown = defineComponent<Props>({
 
     const handleSelect = (value: string) => {
       state.value = value
-      state.orderBy = !value ? SortingOrder.Unsorted : (state.orderBy === SortingOrder.Unsorted ? SortingOrder.Desc : state.orderBy)
+      state.orderBy = !value ? SortingOrder.Unsorted : (state.orderBy === SortingOrder.Unsorted
+        ? SortingOrder.Desc : state.orderBy)
       props.onSortChange(state.value, state.orderBy)
     }
 

@@ -151,21 +151,21 @@ const esSort = (orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: Sorti
     ]
   } else if (orderBy === 'ORDER_BY_DS_SUBMITTER_NAME') {
     return [sortTerm('ds_submitter_name', order)]
-  }  else if (orderBy === 'ORDER_BY_ANNOTATION_COUNTS') {
+  } else if (orderBy === 'ORDER_BY_ANNOTATION_COUNTS') {
     return [
       {
-        "_script": {
-          "type": "number",
-          "script": {
-            "inline": "int maxCountFDR10 = 0; if(params._source.annotation_counts == null) { return -1 } for (dbs in params._source.annotation_counts) { for (counts in dbs.counts) { if (counts.level == 10 && counts.n > maxCountFDR10) { maxCountFDR10 = counts.n; } } } return maxCountFDR10;"
+        _script: {
+          type: 'number',
+          script: {
+            inline: 'int maxCountFDR10 = 0; if(params._source.annotation_counts == null) { return -1 } for (dbs in params._source.annotation_counts) { for (counts in dbs.counts) { if (counts.level == 10 && counts.n > maxCountFDR10) { maxCountFDR10 = counts.n; } } } return maxCountFDR10;',
           },
-          "order": order
-        }
-      }
+          order: order,
+        },
+      },
     ]
   } else if (orderBy === 'ORDER_BY_NAME') {
     return [sortTerm('ds_name', order)]
-  }else if (orderBy === 'ORDER_BY_UP_DATE') {
+  } else if (orderBy === 'ORDER_BY_UP_DATE') {
     return [
       sortTerm('ds_upload_dt', order),
       sortTerm('ds_last_finished', order),

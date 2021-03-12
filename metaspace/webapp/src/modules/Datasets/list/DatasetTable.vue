@@ -108,7 +108,7 @@ import { currentUserRoleWithGroupQuery } from '../../../api/user'
 import updateApolloCache, { removeDatasetFromAllDatasetsQuery } from '../../../lib/updateApolloCache'
 import { merge, orderBy, pick } from 'lodash-es'
 import { formatDatabaseLabel } from '../../MolecularDatabases//formatting'
-import { datasetOwnerOptions } from '@/lib/filterTypes'
+import { datasetOwnerOptions } from '../../../lib/filterTypes'
 
 const extractGroupedStatusCounts = (data) => {
   const counts = {
