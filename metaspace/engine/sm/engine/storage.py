@@ -31,16 +31,14 @@ def get_s3_resource(sm_config: Dict = None):
     return boto3.resource('s3', **_boto_client_kwargs(sm_config or SMConfig.get_conf()))
 
 
-def create_bucket(bucket_name: str, sm_config: Dict = None):
-    sm_config = sm_config or SMConfig.get_conf()
-    region_name = sm_config['aws']['aws_default_region'] if 'aws' in sm_config else ''
-    s3_client = get_s3_client(sm_config)
+def create_bucket(bucket_name: str, s3_client=None):
     try:
         s3_client.head_bucket(Bucket=bucket_name)
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == '404':
             s3_client.create_bucket(
-                Bucket=bucket_name, CreateBucketConfiguration={'LocationConstraint': region_name},
+                Bucket=bucket_name,
+                CreateBucketConfiguration={'LocationConstraint': s3_client.meta.region_name},
             )
         else:
             raise

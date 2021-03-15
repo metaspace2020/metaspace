@@ -184,7 +184,8 @@ def _configure_bucket():
     bucket_name = sm_config['image_storage']['bucket']
     logger.info(f'Configuring image storage bucket: {bucket_name}')
 
-    create_bucket(bucket_name, sm_config)
+    s3_client = get_s3_client(sm_config)
+    create_bucket(bucket_name, s3_client)
     bucket_policy = {
         'Version': '2012-10-17',
         'Statement': [
@@ -196,7 +197,6 @@ def _configure_bucket():
             }
         ],
     }
-    s3_client = get_s3_client()
     s3_client.put_bucket_policy(Bucket=bucket_name, Policy=json.dumps(bucket_policy))
     cors_configuration = {
         'CORSRules': [

@@ -38,18 +38,18 @@ class MoldbFiles(Enum):
 
 @pytest.fixture(autouse=True, scope='module')
 def fill_storage():
-    s3 = get_s3_client()
-    create_bucket(BUCKET_NAME)
+    s3_client = get_s3_client()
+    create_bucket(BUCKET_NAME, s3_client)
 
     for file in MoldbFiles:
-        s3.upload_file(
+        s3_client.upload_file(
             Filename=f'tests/data/moldbs/{file.value}', Bucket=BUCKET_NAME, Key=file.value
         )
 
     yield
 
     for file in MoldbFiles:
-        s3.delete_object(Bucket=BUCKET_NAME, Key=file.value)
+        s3_client.delete_object(Bucket=BUCKET_NAME, Key=file.value)
 
 
 def moldb_input_doc(**kwargs):
