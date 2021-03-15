@@ -32,16 +32,14 @@ def get_s3_resource():
 
 def create_bucket(bucket_name: str):
     sm_config = SMConfig.get_conf()
+    region_name = sm_config['aws']['aws_default_region'] if 'aws' in sm_config else ''
     s3_client = get_s3_client()
     try:
         s3_client.head_bucket(Bucket=bucket_name)
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == '404':
             s3_client.create_bucket(
-                Bucket=bucket_name,
-                CreateBucketConfiguration={
-                    'LocationConstraint': sm_config['aws']['aws_default_region']
-                },
+                Bucket=bucket_name, CreateBucketConfiguration={'LocationConstraint': region_name},
             )
         else:
             raise
