@@ -441,7 +441,7 @@ class Colocalization:
             tasks,
             cost_factors=cost_factors,
             runtime_memory=4096,
-            include_modules=['boto3'],
+            include_modules=['boto3', 'botocore'],
         )
 
         for job in iter_cobjs_with_prefetch(fexec.storage, job_cobjs):
