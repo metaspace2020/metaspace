@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pyspark
 
+from sm.engine.config import SMConfig
 from sm.engine.image_storage import ImageStorage
 from sm.engine.db import DB
 from sm.engine.ion_mapping import get_ion_id_mapping
@@ -77,9 +78,10 @@ class SearchResults:
         logger.info('Posting iso images to image store')
         png_generator = PngGenerator(alpha_channel, greyscale=True)
         ds_id = self.ds_id
+        sm_config = SMConfig.get_conf()
 
         def generate_png_and_post(partition):
-            image_storage = ImageStorage()
+            image_storage = ImageStorage(sm_config)
 
             for formula_i, imgs in partition:
                 iso_image_ids = [None] * n_peaks

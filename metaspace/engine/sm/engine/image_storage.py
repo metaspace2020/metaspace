@@ -4,7 +4,7 @@ import logging
 import uuid
 from concurrent.futures.thread import ThreadPoolExecutor
 from enum import Enum
-from typing import List, Tuple, Callable
+from typing import List, Tuple, Callable, Dict
 
 import numpy as np
 from scipy.ndimage import zoom
@@ -34,8 +34,8 @@ class ImageStorage:
     OPTICAL = ImageType.OPTICAL
     THUMB = ImageType.THUMB
 
-    def __init__(self):
-        sm_config = SMConfig.get_conf()
+    def __init__(self, sm_config: Dict = None):
+        sm_config = sm_config or SMConfig.get_conf()
         logger.info(f'Initializing image storage from config: {sm_config["image_storage"]}')
         self.s3: S3ServiceResource = get_s3_resource()
         self.s3_client: S3Client = self.s3.meta.client
