@@ -37,7 +37,7 @@ class ImageStorage:
     def __init__(self, sm_config: Dict = None):
         sm_config = sm_config or SMConfig.get_conf()
         logger.info(f'Initializing image storage from config: {sm_config["image_storage"]}')
-        self.s3: S3ServiceResource = get_s3_resource()
+        self.s3: S3ServiceResource = get_s3_resource(sm_config)
         self.s3_client: S3Client = self.s3.meta.client
         self.bucket = self.s3.Bucket(sm_config['image_storage']['bucket'])
 
@@ -180,9 +180,10 @@ get_ion_images_for_analysis = None
 
 
 def _configure_bucket():
-    bucket_name = SMConfig.get_conf()['image_storage']['bucket']
+    sm_config = SMConfig.get_conf()
+    bucket_name = sm_config['image_storage']['bucket']
     logger.info(f'Configuring image storage bucket: {bucket_name}')
-    create_bucket(bucket_name)
+    create_bucket(bucket_name, sm_config)
     bucket_policy = {
         'Version': '2012-10-17',
         'Statement': [
