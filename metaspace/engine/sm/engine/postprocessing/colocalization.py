@@ -424,11 +424,12 @@ class Colocalization:
         # Extract required fields to avoid pickling Dataset, because unpickling Dataset tries to
         # import psycopg2 and fails inside Functions
         ds_id = ds.id
+        sm_config = self._sm_config
 
         def run_coloc_job(moldb_id, image_ids, ion_ids, fdrs, *, storage):
             # Use web_app_url to get the publicly-exposed storage server address, because
             # Functions can't use the private address
-            images, h, w = _get_images(ImageStorage(), ds_id, image_ids)
+            images, h, w = _get_images(ImageStorage(sm_config), ds_id, image_ids)
             cobjs = []
             for job in analyze_colocalization(ds_id, moldb_id, images, ion_ids, fdrs, h, w):
                 cobjs.append(save_cobj(storage, job))
