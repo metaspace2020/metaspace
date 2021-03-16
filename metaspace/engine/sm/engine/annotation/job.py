@@ -50,16 +50,11 @@ def del_jobs(ds: Dataset, moldb_ids: Optional[Iterable[int]] = None):
                 (ds.id, moldb.id),
             )
 
-            # for _ in executor.map(
-            #     lambda img_id: image_storage.delete_image(image_storage.ISO, ds.id, img_id),
-            #     (img_id for img_ids in img_id_rows for img_id in img_ids if img_id is not None),
-            # ):
-            #     pass
-
-            for img_ids in img_id_rows:
-                for img_id in img_ids:
-                    if img_id is not None:
-                        image_storage.delete_image(image_storage.ISO, ds.id, img_id)
+            for _ in executor.map(
+                lambda img_id: image_storage.delete_image(image_storage.ISO, ds.id, img_id),
+                (img_id for img_ids in img_id_rows for img_id in img_ids if img_id is not None),
+            ):
+                pass
 
             logger.info(f"Deleting job results: ds_id={ds.id} ds_name={ds.name} moldb={moldb}")
             db.alter('DELETE FROM job WHERE ds_id = %s and moldb_id = %s', (ds.id, moldb.id))
