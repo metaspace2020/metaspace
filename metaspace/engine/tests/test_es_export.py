@@ -132,10 +132,6 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         'ds_group_id': group_id,
         'ds_group_name': 'group name',
         'ds_group_short_name': 'grp',
-        'ds_ion_thumbnail': 'thumb-id',
-        'ds_ion_thumbnail_url': (
-            f'http://localhost:9000/{sm_config["image_storage"]["bucket"]}/thumb/{ds_id}/thumb-id'
-        ),
     }
     assert ds_d == {
         **expected_ds_fields,
@@ -170,6 +166,7 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         'ion_formula': 'HO2',
         'total_iso_ints': 100,
         'centroid_mzs': [100.0, 200.0, 300.0],
+        'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
         'iso_image_urls': [
             f'http://localhost:9000/{sm_config["image_storage"]["bucket"]}/iso/{ds_id}/iso_img_id_1',
             f'http://localhost:9000/{sm_config["image_storage"]["bucket"]}/iso/{ds_id}/iso_img_id_2',
@@ -210,6 +207,7 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         'ion_formula': 'HAu',
         'total_iso_ints': 100,
         'centroid_mzs': [10.0, 20.0],
+        'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
         'iso_image_urls': [
             f'http://localhost:9000/{sm_config["image_storage"]["bucket"]}/iso/{ds_id}/iso_img_id_1',
             f'http://localhost:9000/{sm_config["image_storage"]["bucket"]}/iso/{ds_id}/iso_img_id_2',

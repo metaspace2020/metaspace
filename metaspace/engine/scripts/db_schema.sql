@@ -190,7 +190,9 @@ CREATE TABLE "public"."dataset" (
   "acq_geometry" json, 
   "ion_img_storage_type" text NOT NULL DEFAULT 'fs', 
   "thumbnail" text, 
+  "thumbnail_url" text, 
   "ion_thumbnail" text, 
+  "ion_thumbnail_url" text, 
   CONSTRAINT "PK_1368c0f3639e45c45be6288a232" PRIMARY KEY ("id")
 );
 
@@ -206,6 +208,7 @@ CREATE TABLE "public"."optical_image" (
   "width" integer NOT NULL, 
   "height" integer NOT NULL, 
   "transform" real array, 
+  "url" text, 
   CONSTRAINT "PK_4793baa152f99f1ad74856aa7b1" PRIMARY KEY ("id")
 );
 

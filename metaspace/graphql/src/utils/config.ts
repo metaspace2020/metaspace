@@ -23,6 +23,7 @@ export interface Adduct {
 export interface Config {
   port: number;
   ws_port: number;
+  img_storage_host: string;
   img_storage_port: number;
   log: {
     level: string;
@@ -35,6 +36,7 @@ export interface Config {
   upload: {
     bucket?: string;
     moldb_prefix: string;
+    optical_images_prefix: string;
   };
   services: {
     sm_engine_api_host: string;
