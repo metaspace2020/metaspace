@@ -47,7 +47,7 @@ def on_startup(config_path: str) -> Dict:
     if 'aws' in sm_config:
         populate_aws_env_vars(sm_config['aws'])
 
-    image_storage.init()
+    image_storage.init(sm_config)
 
     return sm_config
 

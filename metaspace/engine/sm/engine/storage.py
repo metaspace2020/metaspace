@@ -44,5 +44,5 @@ def create_bucket(bucket_name: str, s3_client=None):
             raise
 
 
-def get_s3_bucket(bucket_name: str):
-    return get_s3_resource().Bucket(bucket_name)
+def get_s3_bucket(bucket_name: str, sm_config: Dict):
+    return get_s3_resource(sm_config).Bucket(bucket_name)
