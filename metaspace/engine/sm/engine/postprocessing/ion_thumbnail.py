@@ -23,7 +23,7 @@ ISO_IMAGE_SEL = (
 
 THUMB_SEL = "SELECT ion_thumbnail FROM dataset WHERE id = %s"
 
-THUMB_UPD = "UPDATE dataset SET ion_thumbnail = %s WHERE id = %s"
+THUMB_UPD = "UPDATE dataset SET ion_thumbnail = %s, ion_thumbnail_url = %s WHERE id = %s"
 
 ALGORITHMS = {
     'smart-image-medoid': lambda i, m, h, w: _thumb_from_minimally_overlapping_image_clusters(
@@ -211,7 +211,8 @@ def generate_ion_thumbnail(db, ds, only_if_needed=False, algorithm=DEFAULT_ALGOR
         thumbnail = _generate_ion_thumbnail_image(image_storage, ds.id, annotation_rows, algorithm)
 
         image_id = _save_ion_thumbnail_image(ds.id, thumbnail)
-        db.alter(THUMB_UPD, [image_id, ds.id])
+        image_url = image_storage.get_image_url(image_storage.THUMB, ds.id, image_id)
+        db.alter(THUMB_UPD, [image_id, image_url, ds.id])
 
         if existing_thumb_id:
             image_storage.delete_image(image_storage.THUMB, ds.id, existing_thumb_id)
@@ -253,7 +254,8 @@ def generate_ion_thumbnail_lithops(
         )
 
         image_id = _save_ion_thumbnail_image(ds.id, thumbnail)
-        db.alter(THUMB_UPD, [image_id, ds.id])
+        image_url = image_storage.get_image_url(image_storage.THUMB, ds.id, image_id)
+        db.alter(THUMB_UPD, [image_id, image_url, ds.id])
 
         if existing_thumb_id:
             image_storage.delete_image(image_storage.THUMB, ds.id, existing_thumb_id)

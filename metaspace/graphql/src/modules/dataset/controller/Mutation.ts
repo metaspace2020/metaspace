@@ -406,7 +406,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     logger.info(`User '${ctx.getUserIdOrFail()}' adding optical image to '${datasetId}' dataset...`)
     await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId)
     // TODO support image storage running on a separate host
-    const url = `http://localhost:${config.img_storage_port}${imageUrl}`
+    const url = `http://${config.img_storage_host}:${config.img_storage_port}${imageUrl}`
     const resp = await smApiDatasetRequest(`/v1/datasets/${datasetId}/add-optical-image`, {
       url, transform,
     })

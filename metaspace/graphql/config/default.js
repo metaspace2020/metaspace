@@ -1,6 +1,7 @@
 module.exports = {
   port: 3010,
   ws_port: 5666,
+  img_storage_host: 'localhost',
   img_storage_port: 4201,
 
   web_public_url: 'http://localhost:8888',
@@ -53,6 +54,7 @@ module.exports = {
   upload: {
     bucket: '',
     moldb_prefix: 'databases',
+    optical_image_prefix: 'optical_images',
   },
 
   services: {

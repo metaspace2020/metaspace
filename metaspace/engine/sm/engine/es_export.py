@@ -81,8 +81,7 @@ FROM (
     d.config #> '{isotope_generation,adducts}' AS ds_adducts,
     d.config #> '{isotope_generation,neutral_losses}' AS ds_neutral_losses,
     d.config #> '{isotope_generation,chem_mods}' AS ds_chem_mods,
-    d.acq_geometry AS ds_acq_geometry,
-    d.ion_thumbnail AS ds_ion_thumbnail
+    d.acq_geometry AS ds_acq_geometry
   FROM dataset as d
   LEFT JOIN job ON job.ds_id = d.id
   GROUP BY d.id
@@ -389,7 +388,7 @@ class ESExporter:
                 image_storage.get_image_url(image_storage.ISO, ds_id, image_id)
                 if image_id
                 else None
-                for image_id in doc.pop('iso_image_ids')
+                for image_id in doc['iso_image_ids']
             ]
 
             if moldb.targeted:
@@ -426,9 +425,6 @@ class ESExporter:
                 ds_doc = self._select_ds_by_id(ds_id)
                 ds_doc['annotation_counts'] = []
 
-            ds_doc['ds_ion_thumbnail_url'] = image_storage.get_image_url(
-                image_storage.THUMB, ds_id, ds_doc['ds_ion_thumbnail']
-            )
             annotation_counts = self._index_ds_annotations(ds_id, moldb, ds_doc, isocalc)
 
             fdr_levels = [5, 10, 20, 50]

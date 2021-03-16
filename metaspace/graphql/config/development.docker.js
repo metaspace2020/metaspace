@@ -2,6 +2,8 @@ const config = {}
 
 config.port = 3010
 config.ws_port = 5666
+
+config.img_storage_host = 'graphql'
 config.img_storage_port = 4201
 
 config.log = {}
