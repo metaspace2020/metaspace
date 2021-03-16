@@ -1,3 +1,4 @@
+import io
 from collections import defaultdict
 
 from PIL import Image
@@ -14,7 +15,12 @@ def test_classify_ion_images_preds_saved(call_api_mock, image_storage_mock, fill
     call_api_mock.return_value = {
         'predictions': [{'prob': 0.1, 'label': 'on'}, {'prob': 0.9, 'label': 'off'}]
     }
-    image_storage_mock.get_image.return_value = Image.new('RGBA', (10, 10))
+
+    fp = io.BytesIO()
+    Image.new('RGBA', (10, 10)).save(fp, format='PNG')
+    fp.seek(0)
+    img_bytes = fp.read()
+    image_storage_mock.get_image.return_value = img_bytes
 
     db = DB()
     ds_id = '2000-01-01'
