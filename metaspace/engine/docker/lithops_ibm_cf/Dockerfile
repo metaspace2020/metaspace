@@ -24,7 +24,7 @@ RUN pip install --no-cache-dir --upgrade pip setuptools six \
         namegenerator==1.0.6
 
 COPY requirements.txt /tmp/requirements.txt
-RUN grep -E "^(c?pyMSpec|c?pyImagingMSpec|numpy|scipy|pandas|msgpack|pyimzML|pyarrow|scikit-learn|Pillow)" /tmp/requirements.txt > /tmp/requirements-lithops.txt
+RUN grep -E "^(c?pyMSpec|c?pyImagingMSpec|numpy|scipy|pandas|msgpack|pyimzML|pyarrow|scikit-learn|Pillow|boto3)" /tmp/requirements.txt > /tmp/requirements-lithops.txt
 RUN pip install --no-cache-dir -r /tmp/requirements-lithops.txt
 
 # create action working directory
