@@ -34,9 +34,7 @@ class ImzMLParserWrapper:
             return polarity
         else:
             self._imzml_parser = ImzMLParser(
-                self.filename,
-                parse_lib='ElementTree',
-                include_spectra_metadata='full'
+                self.filename, parse_lib='ElementTree', include_spectra_metadata='full'
             )
             in_spectrum, polarity = self._check_polarity_in_body()
             if in_spectrum:
@@ -76,7 +74,6 @@ class ImzMLParserWrapper:
             return True, -1
         else:
             return False, 0
-
 
     def get_spectrum(self, idx):
         mzs, ints = self._imzml_parser.getspectrum(idx)

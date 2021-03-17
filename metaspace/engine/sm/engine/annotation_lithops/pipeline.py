@@ -131,7 +131,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.ds_segments_bounds,
             self.ds_segms_cobjs,
             self.ds_segm_lens,
-            self.polarity
+            self.polarity,
         ) = load_ds(self.executor, self.imzml_cobject, self.ibd_cobject, self.ds_segm_size_mb)
 
         self.is_intensive_dataset = len(self.ds_segms_cobjs) * self.ds_segm_size_mb > 5000
@@ -155,8 +155,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         if self.polarity in (-1, 1):
             if self.polarity != self.ds_config['isotope_generation']['charge']:
                 warnings.warn(
-                    'Wrong polarity between imzml file and metadata.',
-                    category=PolarityWarning
+                    'Wrong polarity between imzml file and metadata.', category=PolarityWarning
                 )
 
     @use_pipeline_cache
@@ -174,7 +173,10 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
 
     def validate_segment_centroids(self):
         validate_centroid_segments(
-            self.executor, self.db_segms_cobjs, self.ds_segments_bounds, self.isocalc_wrapper,
+            self.executor,
+            self.db_segms_cobjs,
+            self.ds_segments_bounds,
+            self.isocalc_wrapper,
         )
 
     @use_pipeline_cache

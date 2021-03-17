@@ -94,8 +94,7 @@ class AnnotationJob:
         if imzml_parser.polarity in (-1, 1):
             if imzml_parser.polarity != self._ds.config['isotope_generation']['charge']:
                 warnings.warn(
-                    'Wrong polarity between imzml file and metadata.',
-                    category=PolarityWarning
+                    'Wrong polarity between imzml file and metadata.', category=PolarityWarning
                 )
 
     def _run_annotation_jobs(self, imzml_parser, moldbs):
