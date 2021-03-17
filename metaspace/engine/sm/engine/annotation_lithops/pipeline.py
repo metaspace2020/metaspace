@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import warnings
 from typing import List, Tuple, Optional, Dict
 
 import numpy as np
@@ -26,6 +27,7 @@ from sm.engine.db import DB
 from sm.engine.ds_config import DSConfig
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.config import SMConfig
+from sm.engine.errors import PolarityWarning
 
 logger = logging.getLogger('annotation-pipeline')
 
@@ -89,6 +91,8 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         if debug_validate:
             self.validate_load_ds()
 
+        self.check_polarity()
+
         self.segment_centroids(use_cache=use_cache)
         if debug_validate:
             self.validate_segment_centroids()
@@ -125,6 +129,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.ds_segments_bounds,
             self.ds_segms_cobjs,
             self.ds_segm_lens,
+            self.polarity
         ) = load_ds(self.executor, self.imzml_cobject, self.ibd_cobject, self.ds_segm_size_mb)
 
         self.is_intensive_dataset = len(self.ds_segms_cobjs) * self.ds_segm_size_mb > 5000
@@ -137,6 +142,17 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.ds_segms_cobjs,
             self.ds_segm_lens,
         )
+
+    def check_polarity(self):
+        """
+        Check polarity between was in imzml file and config
+
+        For different polarity - add an warning, in case the polarity
+        is specified in the imzml file (equal to +1 or -1).
+        """
+        if self.polarity in (-1, 1):
+            if self.polarity != self.ds_config['isotope_generation']['charge']:
+                warnings.warn('Wrong polarity between imzml file and metadata.', category=PolarityWarning)
 
     @use_pipeline_cache
     def segment_centroids(self):

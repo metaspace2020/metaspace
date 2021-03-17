@@ -88,7 +88,7 @@ class AnnotationJob:
         """
         Check polarity between imzml and config
 
-        For different polarity - throw an exception, in case the polarity
+        For different polarity - add an warning, in case the polarity
         is specified in the imzml file (equal to +1 or -1).
         """
         if imzml_parser.polarity in (-1, 1):

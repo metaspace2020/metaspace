@@ -198,17 +198,15 @@ class DatasetManager:
         ds_name, _ = self.fetch_ds_metadata(msg['ds_id'])
         email_body = (
             'Dear METASPACE user,\n\n'
-            'We are sorry to inform you that there was a problem '
-            f'during processing of the "{ds_name}" dataset. '
-            'We found a difference in the polarity you specified '
-            'in the metadata and recorded in the imzml file. '
-            'Please check this information, change polarity and reprocess dataset if necessary.\n'
-            'If this is unexpected, please do not hesitate to contact us for support '
-            'at contact@metaspace2020.eu\n\n'
-            'Best regards,\n'
+            f'We have identified a potential problem in the "{ds_name}" dataset on METASPACE. '
+            'The polarity as you specified it in the metadata '
+            'is different from the polarity as recorded in the imzML file.\n\n'
+            'Please review the correctness of the specified polarity and, if needed, please reprocess dataset.\n\n'
+            'If you have any questions, please email us at contact@metaspace2020.eu\n\n'
+            'Enjoy spatial metabolomics,\n'
             'METASPACE Team'
         )
-        self._send_email(msg['email'], 'METASPACE service notification (FAILED)', email_body)
+        self._send_email(msg['email'], 'METASPACE WARNING', email_body)
 
     def send_failed_email(self, msg, traceback=None):
         ds_name, _ = self.fetch_ds_metadata(msg['ds_id'])

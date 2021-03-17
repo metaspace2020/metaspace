@@ -80,7 +80,6 @@ class SMAnnotateDaemon:
             # check for warnings, and add information about it to the message
             with warnings.catch_warnings(record=True) as warns:
                 self._manager.annotate(ds=ds, del_first=msg.get('del_first', False))
-
             if [w.message for w in warns if w.category == PolarityWarning]:
                 update_msg['warning'] = 'polarity'
 
