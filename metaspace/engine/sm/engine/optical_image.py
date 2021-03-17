@@ -201,7 +201,7 @@ def del_optical_image(db, ds_id):
     """Delete raw and zoomed optical images from DB and FS."""
 
     ds = Dataset.load(db, ds_id)
-    logger.info(f'Deleting optical image to "{ds.id}" dataset')
+    logger.info(f'Deleting optical image of "{ds.id}" dataset')
     (raw_img_id,) = db.select_one(SEL_DATASET_RAW_OPTICAL_IMAGE, params=(ds.id,))
     if raw_img_id:
         image_storage.delete_image(image_storage.OPTICAL, ds_id, raw_img_id)
