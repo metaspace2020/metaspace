@@ -1,0 +1,36 @@
+$className: 'dataset-overview';
+$img-viewer-bg-color: #F6F6F6;
+$header-height: 64px;
+$opt-desc-color: #C4C4C4;
+
+
+.dataset-overview-container{
+  @apply flex flex-row flex-wrap p-0;
+  min-height: calc(100vh - #{$header-height});
+}
+
+.dataset-overview-img-wrapper{
+  background: $img-viewer-bg-color;
+}
+
+
+.dataset-overview-holder{
+  @apply flex flex-col justify-center p-6;
+}
+
+
+.dataset-overview-header{
+  @apply  flex flex-row items-center justify-between px-6 pt-6;
+}
+
+
+
+.dataset-opt-description{
+  @apply flex flex-row flex-wrap items-center border-solid justify-center border rounded p-2 my-4;
+  border-color: #{$opt-desc-color};
+  color: #{$opt-desc-color};
+}
+
+
+
+
