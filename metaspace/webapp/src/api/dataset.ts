@@ -6,6 +6,11 @@ import { MolecularDB } from './moldb'
 export type GqlPolarity = 'POSITIVE' | 'NEGATIVE';
 export type GqlJobStatus = 'QUEUED' | 'ANNOTATING' | 'FINISHED' | 'FAILED';
 
+export interface FdrSingleCount {
+  level: number
+  n: number
+}
+
 export interface DatasetDetailItem {
   id: string;
   name: string;
@@ -44,6 +49,12 @@ export interface DatasetDetailItem {
   databases: MolecularDB[];
   status: GqlJobStatus | null;
   metadataType: string;
+  annotationCounts: {
+    databaseId: number;
+    dbName: string;
+    dbVersion: string;
+    counts: FdrSingleCount[];
+  }[];
   fdrCounts: {
     databaseId: number;
     dbName: string;
@@ -95,6 +106,15 @@ export const datasetDetailItemFragment =
       dbVersion
       levels
       counts
+    }
+    annotationCounts(inpFdrLvls: $inpFdrLvls) {
+      databaseId
+      dbName
+      dbVersion
+      counts {
+        level
+        n
+      }
     }
     thumbnailOpticalImageUrl
     ionThumbnailUrl
@@ -268,3 +288,16 @@ export interface DownloadLinkJson {
   license: {code: string, name: string, link: string},
   files: {filename: string, link: string}[],
 }
+
+export interface GetDatasetByIdQuery {
+  dataset: DatasetDetailItem
+}
+export const getDatasetByIdQuery =
+  gql`query getDatasetByIdQuery($id: String!, $inpFdrLvls: [Int!] = [5, 10, 20, 50],
+  $checkLvl: Int = 10) {
+    dataset(id: $id) {
+      ...DatasetDetailItem
+    }
+  }
+  ${datasetDetailItemFragment}
+`

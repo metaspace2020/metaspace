@@ -253,6 +253,30 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     return ds._source.ds_upload_dt
   },
 
+  async annotationCounts(ds, { inpFdrLvls }: { inpFdrLvls: number[] }, ctx) {
+    const counts = []
+    if (ds._source.annotation_counts && ds._source.ds_status === 'FINISHED') {
+      const visibleDatabaseIds = await ctx.user.getVisibleDatabaseIds()
+      const annotCounts: any[] = ds._source.annotation_counts.filter(
+        el => ds._source.ds_moldb_ids?.includes(el.db.id)
+              && visibleDatabaseIds.includes(el.db.id)
+      )
+      for (const el of annotCounts) {
+        const filteredFdrLevels = el.counts.filter((lvlObj: any) => inpFdrLvls.includes(lvlObj.level))
+        const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
+          .findDatabaseById(ctx, el.db.id)
+        counts.push({
+          databaseId: el.db.id,
+          dbName: database.name,
+          dbVersion: database.version,
+          counts: filteredFdrLevels,
+        })
+      }
+    }
+
+    return counts
+  },
+
   async fdrCounts(ds, { inpFdrLvls, checkLvl }: { inpFdrLvls: number[], checkLvl: number }, ctx) {
     let outFdrLvls: number[] = []; let outFdrCounts: number[] = []; let maxCounts = 0; let databaseId = null
     if (ds._source.annotation_counts && ds._source.ds_status === 'FINISHED') {

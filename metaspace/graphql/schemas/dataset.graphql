@@ -37,7 +37,7 @@ type Dataset {
   inputPath: String
   uploadDateTime: String
   fdrCounts(inpFdrLvls: [Int!]! = [10], checkLvl: Int! = 10): FdrCounts
-
+  annotationCounts(inpFdrLvls: [Int!]! = [10]): [AnnotationCounts]
   opticalImage: String  # @deprecated(reason: "Use Dataset.opticalImages instead")
   rawOpticalImageUrl: String  # @deprecated(reason: "Use Dataset.opticalImages instead")
 
@@ -62,6 +62,17 @@ type FdrCounts {
   dbVersion: String!
   levels: [Float!]!
   counts: [Float!]!
+}
+
+type FdrSingleCount {
+  level: Int!
+  n: Int!
+}
+type AnnotationCounts {
+  databaseId: Int!
+  dbName: String!
+  dbVersion: String!
+  counts: [FdrSingleCount!]!
 }
 
 type Person {
