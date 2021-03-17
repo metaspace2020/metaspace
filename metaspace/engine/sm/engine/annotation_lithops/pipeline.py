@@ -58,6 +58,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         lithops_config=None,
         cache_key=None,
         use_db_cache=True,
+        polarity=0,
     ):
         lithops_config = lithops_config or SMConfig.get_conf()['lithops']
         self.lithops_config = lithops_config
@@ -152,7 +153,10 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         """
         if self.polarity in (-1, 1):
             if self.polarity != self.ds_config['isotope_generation']['charge']:
-                warnings.warn('Wrong polarity between imzml file and metadata.', category=PolarityWarning)
+                warnings.warn(
+                    'Wrong polarity between imzml file and metadata.',
+                    category=PolarityWarning
+                )
 
     @use_pipeline_cache
     def segment_centroids(self):

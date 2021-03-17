@@ -41,7 +41,7 @@ def _get_polarity(imzml_parser: ImzMLParser, storage: Storage, imzml_cobject: Cl
        0 - polarity not set in file
     """
     in_header, polarity = _check_polarity_in_header(imzml_parser)
-    if in_header:
+    if in_header:  # pylint: disable=no-else-return
         return polarity
     else:
         stream = storage.get_cloudobject(imzml_cobject, stream=True)
@@ -85,7 +85,7 @@ def _check_polarity_in_body(imzml_parser):
 
 
 def _check_and_convert_polarity(meta):
-    if meta.param_by_name.get('positive scan'):
+    if meta.param_by_name.get('positive scan'):  # pylint: disable=no-else-return
         return True, 1
     elif meta.param_by_name.get('negative scan'):
         return True, -1

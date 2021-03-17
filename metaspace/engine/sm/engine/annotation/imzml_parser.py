@@ -30,7 +30,7 @@ class ImzMLParserWrapper:
            0 - polarity not set in file
         """
         in_header, polarity = self._check_polarity_in_header()
-        if in_header:
+        if in_header:  # pylint: disable=no-else-return
             return polarity
         else:
             self._imzml_parser = ImzMLParser(
@@ -68,8 +68,9 @@ class ImzMLParserWrapper:
 
         return False, 0
 
-    def _check_and_convert_polarity(self, meta):
-        if meta.param_by_name.get('positive scan'):
+    @classmethod
+    def _check_and_convert_polarity(cls, meta):
+        if meta.param_by_name.get('positive scan'):  # pylint: disable=no-else-return
             return True, 1
         elif meta.param_by_name.get('negative scan'):
             return True, -1

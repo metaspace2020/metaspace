@@ -84,7 +84,7 @@ class AnnotationJob:
         logger.info('Parsing imzml')
         return ImzMLParserWrapper(self._ds_data_path)
 
-    def _check_polarity(self, imzml_parser, config_polarity):
+    def _check_polarity(self, imzml_parser):
         """
         Check polarity between imzml and config
 
@@ -92,8 +92,11 @@ class AnnotationJob:
         is specified in the imzml file (equal to +1 or -1).
         """
         if imzml_parser.polarity in (-1, 1):
-            if imzml_parser.polarity != config_polarity:
-                warnings.warn('Wrong polarity between imzml file and metadata.', category=PolarityWarning)
+            if imzml_parser.polarity != self._ds.config['isotope_generation']['charge']:
+                warnings.warn(
+                    'Wrong polarity between imzml file and metadata.',
+                    category=PolarityWarning
+                )
 
     def _run_annotation_jobs(self, imzml_parser, moldbs):
         if moldbs:
@@ -194,7 +197,7 @@ class AnnotationJob:
             self._perf.record_entry('copied input data')
             imzml_parser = self.create_imzml_parser()
             self._perf.record_entry('parsed imzml file')
-            self._check_polarity(imzml_parser, self._ds.config['isotope_generation']['charge'])
+            self._check_polarity(imzml_parser)
             self._save_data_from_raw_ms_file(imzml_parser)
             self._img_store.storage_type = 'fs'
 
