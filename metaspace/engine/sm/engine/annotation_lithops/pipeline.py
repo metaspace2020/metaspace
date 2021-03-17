@@ -71,6 +71,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
 
         self.executor = executor or Executor(lithops_config)
         self.storage = self.executor.storage
+        self.polarity = polarity
 
         if cache_key is not None:
             self.cacher: Optional[PipelineCacher] = PipelineCacher(
