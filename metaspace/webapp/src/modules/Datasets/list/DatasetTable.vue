@@ -100,7 +100,7 @@ import {
 import { metadataExportQuery } from '../../../api/metadata'
 import DatasetList from './DatasetList.vue'
 import { FilterPanel } from '../../Filters/index'
-import { SortDropdown } from '../../../components/SortDropdown'
+import { SortDropdown } from '../../../components/SortDropdown/SortDropdown'
 import FileSaver from 'file-saver'
 import delay from '../../../lib/delay'
 import formatCsvRow, { csvExportHeader } from '../../../lib/formatCsvRow'
@@ -195,10 +195,14 @@ export default Vue.extend({
       const statusOrder = ['QUEUED', 'ANNOTATING']
       let datasets = (this.allDatasets || [])
       datasets = datasets.filter(ds => this.categories.includes(ds.status))
-      datasets = orderBy(datasets, [
-        ds => statusOrder.includes(ds.status) ? statusOrder.indexOf(ds.status) : 999,
-        'ds_status_update_dt',
-      ], ['asc', 'desc'])
+
+      if (this.orderBy === 'ORDER_BY_DATE') {
+        datasets = orderBy(datasets, [
+          ds => statusOrder.includes(ds.status) ? statusOrder.indexOf(ds.status) : 999,
+          'ds_status_update_dt',
+        ], ['asc', 'desc'])
+      }
+
       return datasets
     },
     canSeeFailed() {

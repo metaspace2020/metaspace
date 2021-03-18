@@ -1,6 +1,6 @@
 import { defineComponent, reactive } from '@vue/composition-api'
 import { Option } from '../../lib/element-ui'
-import './style.css'
+import './SortDropdown.css'
 import { UnwrapRef } from '@vue/composition-api/dist/reactivity'
 
 const enum SortingOrder {
@@ -24,26 +24,25 @@ export const SortDropdown = defineComponent<Props>({
     options: {
       type: Array,
       default: () => [
-
         {
-          value: 'ORDER_BY_ANNOTATION_COUNTS',
-          label: 'Annotations',
+          value: 'ORDER_BY_DATE',
+          label: 'Last updated',
+        },
+        {
+          value: 'ORDER_BY_UP_DATE',
+          label: 'Upload date',
         },
         {
           value: 'ORDER_BY_NAME',
           label: 'Dataset name',
         },
         {
-          value: 'ORDER_BY_DATE',
-          label: 'Last Reprocessed Date',
-        },
-        {
-          value: 'ORDER_BY_UP_DATE',
-          label: 'Uploaded Date',
-        },
-        {
           value: 'ORDER_BY_DS_SUBMITTER_NAME',
-          label: 'User name',
+          label: 'Submitter name',
+        },
+        {
+          value: 'ORDER_BY_ANNOTATION_COUNTS',
+          label: 'Annotation count',
         },
       ],
     },
@@ -60,6 +59,8 @@ export const SortDropdown = defineComponent<Props>({
     })
 
     const handleSort = () => {
+      if (!state.value) { return null }
+
       state.orderBy = state.orderBy === SortingOrder.Unsorted ? SortingOrder.Desc : (state.orderBy === SortingOrder.Asc
         ? SortingOrder.Desc : SortingOrder.Asc)
       props.onSortChange(state.value, state.orderBy)
@@ -92,7 +93,7 @@ export const SortDropdown = defineComponent<Props>({
               class={`${!state.value ? 'cursor-not-allowed' : ''}`}
               icon={state.orderBy === SortingOrder.Unsorted ? 'el-icon-sort' : (state.orderBy === SortingOrder.Desc
                 ? 'el-icon-sort-down' : 'el-icon-sort-up')}
-              onClick={state.value ? handleSort : null}
+              onClick={handleSort}
             />
           </el-tooltip>
         </div>
