@@ -238,24 +238,24 @@ exports[`DatasetTable should match snapshot 1`] = `
             value=""
           >
             <mock-el-option
-              label="Annotations"
-              value="ORDER_BY_ANNOTATION_COUNTS"
+              label="Last updated"
+              value="ORDER_BY_DATE"
+            />
+            <mock-el-option
+              label="Upload date"
+              value="ORDER_BY_UP_DATE"
             />
             <mock-el-option
               label="Dataset name"
               value="ORDER_BY_NAME"
             />
             <mock-el-option
-              label="Last Reprocessed Date"
-              value="ORDER_BY_DATE"
-            />
-            <mock-el-option
-              label="Uploaded Date"
-              value="ORDER_BY_UP_DATE"
-            />
-            <mock-el-option
-              label="User name"
+              label="Submitter name"
               value="ORDER_BY_DS_SUBMITTER_NAME"
+            />
+            <mock-el-option
+              label="Annotation count"
+              value="ORDER_BY_ANNOTATION_COUNTS"
             />
           </mock-el-select>
           <div
