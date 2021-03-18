@@ -1,113 +1,12 @@
 import { computed, defineComponent } from '@vue/composition-api'
 import { useQuery } from '@vue/apollo-composable'
-import { DatasetAnnotationCount, GetDatasetByIdQuery, getDatasetByIdQuery } from '../../../api/dataset'
+import { GetDatasetByIdQuery, getDatasetByIdQuery } from '../../../api/dataset'
+import { AnnotationCountTable } from './AnnotationCountTable'
 import safeJsonParse from '../../../lib/safeJsonParse'
+import { DatasetMetadataViewer } from './DatasetMetadataViewer'
 import moment from 'moment'
 import { isEmpty } from 'lodash'
 import { encodeParams } from '../../Filters'
-
-interface AnnotationTableData{
-  name: string
-  [key: string]: any // dynamic keys according to fdrs
-}
-
-interface AnnotationProps {
-  id: string
-  sumRowLabel: string
-  btnLabel: string
-  data: DatasetAnnotationCount[]
-  header: string[]
-  headerTitleSuffix: string
-}
-
-const AnnotationCounts = defineComponent<AnnotationProps>({
-  name: 'AnnotationCounts',
-  props: {
-    id: { type: String, default: '' },
-    sumRowLabel: { type: String, default: 'Total Annotations' },
-    btnLabel: { type: String, default: 'Browse annotations' },
-    data: { type: Array, default: () => [] },
-    header: { type: Array, default: () => [5, 10, 20, 50] },
-    headerTitleSuffix: { type: String, default: '%' },
-  },
-  setup(props, ctx) {
-    const annotationsLink = (datasetId: string, database?: string, fdrLevel?: number) => ({
-      path: '/annotations',
-      query: encodeParams({
-        datasetIds: [datasetId],
-        database,
-        fdrLevel,
-      }),
-    })
-
-    const mountTableData = (data: DatasetAnnotationCount[], header: string[]) : AnnotationTableData[] => {
-      if (!data) { return [] }
-
-      return data.map((item: DatasetAnnotationCount) => {
-        const obj = {} as AnnotationTableData
-        obj.id = item?.databaseId
-        obj.name = `${item?.dbName}${item?.dbVersion ? `-${item?.dbVersion}` : ''}`
-        header.forEach((headerEl: string) => {
-          obj[headerEl] = Array.isArray(item?.counts)
-            ? (item.counts.find((count: any) => count.level === headerEl) || {}).n : '-'
-        })
-        return obj
-      })
-    }
-
-    const browseAnnotations = () => {
-      const { id } = props
-      ctx.root.$router.push(annotationsLink(id))
-    }
-
-    const formatTitle = (col: number|string) => {
-      const { headerTitleSuffix } = props
-      return `${col === 'name' ? 'Database' : col}${col !== 'name' ? headerTitleSuffix : ''}`
-    }
-
-    const formatCell = (row: any, column: any, cellValue: any, rowIndex: number, colIndex: number) => {
-      const { id } = props
-      if (colIndex === 0) { return cellValue }
-
-      return (
-        <router-link to={annotationsLink(id?.toString(), row?.id,
-          parseInt(column?.property, 10) / 100)}>
-          {cellValue}
-        </router-link>
-      )
-    }
-
-    return () => {
-      const { data, header, sumRowLabel, btnLabel } = props
-      const tableData = mountTableData(data, header)
-
-      return (
-        <div class="relative">
-          <el-table
-            data={tableData}
-            show-summary={true}
-            sum-text={sumRowLabel}
-            style="width: 100%; margin-top: 20px">
-            {
-              ['name'].concat(header).map((col, colIndex) => {
-                return <el-table-column
-                  sortable={true}
-                  key={colIndex}
-                  prop={col.toString()}
-                  formatter={(row: any, column: any, cellValue: any, index: number) =>
-                    formatCell(row, column, cellValue, index, colIndex)}
-                  label={formatTitle(col)} />
-              })
-            }
-          </el-table>
-          <div class="text-right mt-2">
-            <el-button onClick={browseAnnotations}>{btnLabel}</el-button>
-          </div>
-        </div>
-      )
-    }
-  },
-})
 
 interface Props {
   className: string
@@ -151,6 +50,17 @@ export default defineComponent<Props>({
     } = useQuery<GetDatasetByIdQuery>(getDatasetByIdQuery, { id: datasetId, inpFdrLvls: props.inpFdrLvls })
     const dataset = computed(() => datasetResult.value != null ? datasetResult.value.dataset : null)
 
+    const projectLink = (projectIdOrSlug: string) => {
+      console.log('SAD', ({
+        path: '/project',
+        params: { projectIdOrSlug },
+      }))
+      return ({
+        name: 'project',
+        params: { projectIdOrSlug },
+      })
+    }
+
     return () => {
       const { name, submitter, group, projects, annotationCounts, metadataJson, id } = dataset?.value || {}
       const { annotationLabel, detailLabel, projectLabel, inpFdrLvls } = props
@@ -182,18 +92,39 @@ export default defineComponent<Props>({
             </div>
             <div class='dataset-overview-holder'>
               <div class='text-4xl truncate'>{annotationLabel}</div>
-              <AnnotationCounts id={id} data={annotationCounts} header={inpFdrLvls}/>
+              <AnnotationCountTable id={id} data={annotationCounts} header={inpFdrLvls}/>
             </div>
             {
               !isEmpty(metadata)
               && <div class='dataset-overview-holder'>
                 <div class='text-4xl truncate'>{detailLabel}</div>
+                <DatasetMetadataViewer metadata={metadata}/>
               </div>
             }
             {
               Array.isArray(projects) && projects.length > 0
               && <div class='dataset-overview-holder'>
                 <div class='text-4xl truncate'>{projectLabel}</div>
+                {
+                  projects.map((project) => {
+                    return (
+                      <div key={project.id} class="flex-grow box-border min-w-64 p-0 break-words">
+                        <ul class="list-none p-0 py-3 m-0 max-h-40 overflow-y-auto">
+                          <li>
+                            <b>Name: </b>
+                            <router-link class="ml-1" to={projectLink(project.id)}>
+                              {project.name}
+                            </router-link>
+                          </li>
+                          <li>
+                            <b>Status: </b>
+                            {project.publicationStatus}
+                          </li>
+                        </ul>
+                      </div>
+                    )
+                  })
+                }
               </div>
             }
           </div>
