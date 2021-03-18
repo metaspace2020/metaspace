@@ -11,6 +11,13 @@ export interface FdrSingleCount {
   n: number
 }
 
+export interface DatasetAnnotationCount {
+  databaseId: number;
+  dbName: string;
+  dbVersion: string;
+  counts: FdrSingleCount[];
+}
+
 export interface DatasetDetailItem {
   id: string;
   name: string;
@@ -49,12 +56,7 @@ export interface DatasetDetailItem {
   databases: MolecularDB[];
   status: GqlJobStatus | null;
   metadataType: string;
-  annotationCounts: {
-    databaseId: number;
-    dbName: string;
-    dbVersion: string;
-    counts: FdrSingleCount[];
-  }[];
+  annotationCounts: DatasetAnnotationCount[];
   fdrCounts: {
     databaseId: number;
     dbName: string;
