@@ -104,9 +104,11 @@ export const datasetDetailItemFragment =
 
 export const datasetDetailItemsQuery =
   gql`query GetDatasets(
-    $dFilter: DatasetFilter, $query: String, $inpFdrLvls: [Int!]!, $checkLvl: Int!, $offset: Int = 0
+    $dFilter: DatasetFilter, $query: String, $inpFdrLvls: [Int!]!, $checkLvl: Int!, $offset: Int = 0,
+    $orderBy: DatasetOrderBy = ORDER_BY_DATE, $sortingOrder: SortingOrder = DESCENDING,
   ) {
-    allDatasets(offset: $offset, limit: 100, filter: $dFilter, simpleQuery: $query) {
+    allDatasets(orderBy: $orderBy, sortingOrder: $sortingOrder, offset: $offset, limit: 100, filter: $dFilter,
+    simpleQuery: $query) {
       ...DatasetDetailItem
     }
   }

@@ -77,6 +77,10 @@ exports[`DatasetTable should match snapshot 1`] = `
       />
       <mock-el-option
         label="Select data type"
+        value="datasetOwner"
+      />
+      <mock-el-option
+        label="Select data type"
         value="metadataType"
       />
     </mock-el-select>
@@ -89,7 +93,7 @@ exports[`DatasetTable should match snapshot 1`] = `
       id="dataset-list-header"
     >
       <div
-        class="el-radio-group"
+        class="el-radio-group p-2 flex flex-row items-center"
         role="radiogroup"
       >
         <label
@@ -132,7 +136,7 @@ exports[`DatasetTable should match snapshot 1`] = `
        
       <div
         aria-label="checkbox-group"
-        class="el-checkbox-group dataset-status-checkboxes"
+        class="el-checkbox-group p-2 dataset-status-checkboxes"
         mock-v-loading="0"
         role="group"
       >
@@ -221,18 +225,73 @@ exports[`DatasetTable should match snapshot 1`] = `
         style="flex-grow: 1;"
       />
        
-      <button
-        class="el-button el-button--default el-button--small"
-        type="button"
+      <div
+        class="flex flex-row items-center justify-between flex-1"
       >
-        <!---->
-        <!---->
-        <span>
-          
-        Export to CSV
-      
-        </span>
-      </button>
+        <div
+          class="p-2 flex flex-row sort-dp-container"
+        >
+          <mock-el-select
+            clearable="true"
+            placeholder="Sort by"
+            size="small"
+            value=""
+          >
+            <mock-el-option
+              label="Last updated"
+              value="ORDER_BY_DATE"
+            />
+            <mock-el-option
+              label="Upload date"
+              value="ORDER_BY_UP_DATE"
+            />
+            <mock-el-option
+              label="Dataset name"
+              value="ORDER_BY_NAME"
+            />
+            <mock-el-option
+              label="Submitter name"
+              value="ORDER_BY_DS_SUBMITTER_NAME"
+            />
+            <mock-el-option
+              label="Annotation count"
+              value="ORDER_BY_ANNOTATION_COUNTS"
+            />
+          </mock-el-select>
+          <div
+            class="el-input-group__append sort-dp-btn"
+          >
+            <mock-el-tooltip
+              content="Sorting order"
+              placement="right"
+            >
+              <button
+                class="el-button el-button--default cursor-not-allowed"
+                type="button"
+              >
+                <!---->
+                <i
+                  class="el-icon-sort"
+                />
+                <!---->
+              </button>
+            </mock-el-tooltip>
+          </div>
+        </div>
+         
+        <button
+          class="el-button el-button--default el-button--small"
+          type="button"
+        >
+          <!---->
+          <!---->
+          <span>
+            
+          Export to CSV
+        
+          </span>
+        </button>
+      </div>
     </form>
   </div>
    
@@ -863,6 +922,19 @@ exports[`DatasetTable should match snapshot 1`] = `
     </div>
      
     <!---->
+  </div>
+   
+  <div
+    class="mb-8 p-2 flex flex-row justify-end"
+  >
+    <mock-el-pagination
+      current-page="1"
+      hide-on-single-page=""
+      layout="prev, pager, next"
+      page-size="100"
+      pager-count="11"
+      total="23"
+    />
   </div>
 </div>
 `;

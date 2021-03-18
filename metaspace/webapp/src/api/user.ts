@@ -163,3 +163,19 @@ export const currentUserRoleQuery =
   currentUser { id name role }
 }
 `
+// Always use fetchPolicy: 'cache-first' for this
+export const currentUserRoleWithGroupQuery =
+  gql`query MyGroupOptions {
+          currentUser {
+            id,
+            name,
+            role
+            groups {
+              group {
+                id
+                value: id
+                label: name
+              }
+            }
+          }
+        }`
