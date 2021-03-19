@@ -11,6 +11,7 @@ interface AnnotationCountTableProps {
   id: string
   sumRowLabel: string
   btnLabel: string
+  title: string
   data: DatasetAnnotationCount[]
   header: string[]
   headerTitleSuffix: string
@@ -20,6 +21,7 @@ export const AnnotationCountTable = defineComponent<AnnotationCountTableProps>({
   name: 'AnnotationCountTable',
   props: {
     id: { type: String, default: '' },
+    title: { type: String, default: '# of annotations with FDR% <=' },
     sumRowLabel: { type: String, default: 'Total Annotations' },
     btnLabel: { type: String, default: 'Browse annotations' },
     data: { type: Array, default: () => [] },
@@ -74,11 +76,12 @@ export const AnnotationCountTable = defineComponent<AnnotationCountTableProps>({
     }
 
     return () => {
-      const { data, header, sumRowLabel, btnLabel } = props
+      const { data, header, sumRowLabel, btnLabel, title } = props
       const tableData = mountTableData(data, header)
 
       return (
-        <div class="relative">
+        <div class="relative text-center">
+          <h4>{title}</h4>
           <el-table
             data={tableData}
             show-summary={true}
