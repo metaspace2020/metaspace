@@ -6,7 +6,9 @@ import safeJsonParse from '../../../lib/safeJsonParse'
 import { DatasetMetadataViewer } from './DatasetMetadataViewer'
 import moment from 'moment'
 import { isEmpty } from 'lodash'
-import { encodeParams } from '../../Filters'
+import VisibilityBadge from '../common/VisibilityBadge'
+import { DatasetActionsDropdown } from './DatasetActionsDropdown'
+import { currentUserRoleQuery, CurrentUserRoleResult } from '../../../api/user'
 
 interface Props {
   className: string
@@ -49,12 +51,13 @@ export default defineComponent<Props>({
       loading: datasetLoading,
     } = useQuery<GetDatasetByIdQuery>(getDatasetByIdQuery, { id: datasetId, inpFdrLvls: props.inpFdrLvls })
     const dataset = computed(() => datasetResult.value != null ? datasetResult.value.dataset : null)
+    const {
+      result: currentUserResult,
+      loading: userLoading,
+    } = useQuery<CurrentUserRoleResult|any>(currentUserRoleQuery)
+    const currentUser = computed(() => currentUserResult.value != null ? currentUserResult.value.currentUser : null)
 
     const projectLink = (projectIdOrSlug: string) => {
-      console.log('SAD', ({
-        path: '/project',
-        params: { projectIdOrSlug },
-      }))
       return ({
         name: 'project',
         params: { projectIdOrSlug },
@@ -62,14 +65,14 @@ export default defineComponent<Props>({
     }
 
     return () => {
-      const { name, submitter, group, projects, annotationCounts, metadataJson, id } = dataset?.value || {}
+      const { name, submitter, group, projects, annotationCounts, metadataJson, id, isPublic } = dataset?.value || {}
       const { annotationLabel, detailLabel, projectLabel, inpFdrLvls } = props
       const metadata = safeJsonParse(metadataJson) || {}
       const groupLink = $router.resolve({ name: 'group', params: { groupIdOrSlug: group?.id || '' } }).href
       const upDate = moment(moment(dataset?.value?.uploadDT)).isValid()
         ? moment(dataset?.value?.uploadDT).format('D MMMM, YYYY') : ''
 
-      if (datasetLoading.value && dataset.value == null) {
+      if (datasetLoading.value && dataset.value == null || userLoading.value && userLoading.value == null) {
         return <div class="text-center">Loading...</div>
       } else if (dataset.value == null) {
         return <div class="text-center">This dataset doesn't exist, or you do not have access to it.</div>
@@ -79,8 +82,16 @@ export default defineComponent<Props>({
         <div class='dataset-overview-container'>
           <div class='dataset-overview-wrapper w-full lg:w-1/2'>
             <div class='dataset-overview-header'>
-              <div class='text-4xl truncate'>{name}</div>
-              <div>Actions</div>
+              <div class='text-4xl text-center truncate'>
+                {name}
+                <span class='text-base align-middle'>
+                  {
+                    !isPublic
+                    && <VisibilityBadge datasetId={id ? id.toString() : ''}/>
+                  }
+                </span>
+              </div>
+              <DatasetActionsDropdown dataset={dataset?.value} metadata={metadata} currentUser={currentUser?.value}/>
             </div>
             <div class='dataset-overview-holder'>
               <div class='truncate'>{submitter?.name}
