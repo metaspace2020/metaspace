@@ -3,6 +3,7 @@ import logging
 from traceback import format_exc
 
 from sm.engine.daemons.actions import DaemonAction, DaemonActionStage
+from sm.engine.daemons.dataset_manager import DatasetManager
 from sm.engine.dataset import DatasetStatus
 from sm.engine.errors import UnknownDSID, SMError, IndexUpdateError
 
@@ -13,7 +14,7 @@ class SMUpdateDaemon:
 
     logger = logging.getLogger('update-daemon')
 
-    def __init__(self, manager, make_update_queue_cons):
+    def __init__(self, manager: DatasetManager, make_update_queue_cons):
         self._manager = manager
         self._update_queue_cons = make_update_queue_cons(
             callback=self._callback, on_success=self._on_success, on_failure=self._on_failure

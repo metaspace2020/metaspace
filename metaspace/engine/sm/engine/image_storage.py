@@ -4,7 +4,7 @@ import logging
 import uuid
 from concurrent.futures.thread import ThreadPoolExecutor
 from enum import Enum
-from typing import List, Tuple, Callable
+from typing import List, Tuple, Callable, Dict
 
 import numpy as np
 from scipy.ndimage import zoom
@@ -34,10 +34,10 @@ class ImageStorage:
     OPTICAL = ImageType.OPTICAL
     THUMB = ImageType.THUMB
 
-    def __init__(self):
-        sm_config = SMConfig.get_conf()
+    def __init__(self, sm_config: Dict = None):
+        sm_config = sm_config or SMConfig.get_conf()
         logger.info(f'Initializing image storage from config: {sm_config["image_storage"]}')
-        self.s3: S3ServiceResource = get_s3_resource()
+        self.s3: S3ServiceResource = get_s3_resource(sm_config)
         self.s3_client: S3Client = self.s3.meta.client
         self.bucket = self.s3.Bucket(sm_config['image_storage']['bucket'])
 
@@ -179,10 +179,13 @@ get_image_url: Callable[[ImageType, str, str], str]
 get_ion_images_for_analysis = None
 
 
-def _configure_bucket():
-    bucket_name = SMConfig.get_conf()['image_storage']['bucket']
+def _configure_bucket(sm_config: Dict):
+    bucket_name = sm_config['image_storage']['bucket']
     logger.info(f'Configuring image storage bucket: {bucket_name}')
-    create_bucket(bucket_name)
+
+    s3_client = get_s3_client(sm_config)
+    create_bucket(bucket_name, s3_client)
+
     bucket_policy = {
         'Version': '2012-10-17',
         'Statement': [
@@ -194,16 +197,30 @@ def _configure_bucket():
             }
         ],
     }
-    get_s3_client().put_bucket_policy(Bucket=bucket_name, Policy=json.dumps(bucket_policy))
+    s3_client.put_bucket_policy(Bucket=bucket_name, Policy=json.dumps(bucket_policy))
+
+    is_s3_bucket = 'aws' in sm_config  # False when minio is used instead of AWS S3
+    if is_s3_bucket:
+        cors_configuration = {
+            'CORSRules': [
+                {
+                    'AllowedHeaders': ['*'],
+                    'AllowedMethods': ['GET'],
+                    'AllowedOrigins': ['*'],
+                    'MaxAgeSeconds': 3000,
+                }
+            ]
+        }
+        s3_client.put_bucket_cors(Bucket=bucket_name, CORSConfiguration=cors_configuration)
 
 
-def init():
-    _configure_bucket()
+def init(sm_config: Dict):
+    _configure_bucket(sm_config)
 
     # pylint: disable=global-statement
     global _instance, get_image, post_image, delete_image, get_image_url
     global get_ion_images_for_analysis
-    _instance = ImageStorage()
+    _instance = ImageStorage(sm_config)
     get_image = _instance.get_image
     post_image = _instance.post_image
     delete_image = _instance.delete_image

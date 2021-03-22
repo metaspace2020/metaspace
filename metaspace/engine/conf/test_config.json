@@ -171,6 +171,6 @@
     "secret_access_key": "minioadmin"
   },
   "image_storage": {
-    "bucket": "sm-image-storage-tests"
+    "bucket": "sm-image-storage-test"
   }
 }

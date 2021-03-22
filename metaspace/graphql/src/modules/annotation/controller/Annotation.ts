@@ -128,11 +128,15 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
     const { iso_image_ids, iso_image_urls, centroid_mzs, total_iso_ints, min_iso_ints, max_iso_ints } = hit._source
     return centroid_mzs
       .map(function(mz, i) {
+        let url
+        if (iso_image_urls != null) {
+          url = iso_image_urls[i]
+        } else { // FIXME: remove after data migration
+          url = `/${hit._source.ds_ion_img_storage}${config.img_upload.categories.iso_image.path}${iso_image_ids[i]}`
+        }
         return {
           mz: parseFloat(mz as any),
-          // FIXME: remove after data migration
-          url: iso_image_urls[i]
-            || `/${hit._source.ds_ion_img_storage}${config.img_upload.categories.iso_image.path}${iso_image_ids[i]}`,
+          url,
           totalIntensity: total_iso_ints[i],
           minIntensity: min_iso_ints[i],
           maxIntensity: max_iso_ints[i],

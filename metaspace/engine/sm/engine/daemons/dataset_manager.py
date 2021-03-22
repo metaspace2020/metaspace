@@ -147,7 +147,8 @@ class DatasetManager:
         self._es.update_ds(ds.id, fields)
 
     def delete(self, ds):
-        """ Delete all dataset related data from the DB """
+        """Delete all dataset related data."""
+
         self.logger.info(f'Deleting dataset: {ds.id}')
         del_jobs(ds)
         del_optical_image(self._db, ds.id)
