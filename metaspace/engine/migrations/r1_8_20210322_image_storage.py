@@ -3,7 +3,7 @@ import logging
 import time
 import contextlib
 from pathlib import Path
-from typing import List
+from typing import Set
 
 import boto3
 import botocore
@@ -25,7 +25,7 @@ def timeit(msg=None):
     print(f'elapsed: {time.time() - start:.2f}s')
 
 
-def create_s3t(max_conn=10):
+def create_s3_client(max_conn=10):
     boto_config = botocore.config.Config(signature_version='s3v4', max_pool_connections=max_conn)
     if 'aws' in sm_config:
         kwargs = dict(
@@ -39,23 +39,26 @@ def create_s3t(max_conn=10):
             aws_access_key_id=sm_config['storage']['access_key_id'],
             aws_secret_access_key=sm_config['storage']['secret_access_key'],
         )
-    s3client = boto3.client('s3', config=boto_config, **kwargs)
+    return boto3.client('s3', config=boto_config, **kwargs)
 
-    transfer_config = s3transfer.TransferConfig(use_threads=True, max_concurrency=max_conn)
-    return s3transfer.create_transfer_manager(s3client, config=transfer_config)
+
+def create_s3t(s3_client):
+    transfer_config = s3transfer.TransferConfig(
+        use_threads=True, max_concurrency=s3_client.meta.config.max_pool_connections
+    )
+    return s3transfer.create_transfer_manager(s3_client, config=transfer_config)
 
 
 def dataset_is_migrated(ds_id):
-    s3t = create_s3t()
     image_type = image_storage.ISO
-    resp = s3t.client.list_objects(Bucket=bucket_name, Prefix=f'{image_type}/{ds_id}', MaxKeys=1)
+    resp = s3t_client.list_objects(Bucket=bucket_name, Prefix=f'{image_type}/{ds_id}', MaxKeys=1)
     return 'Contents' in resp
 
 
 def transfer_images(
-    ds_id, old_image_type, image_type, image_ids, max_conn=10,
+    ds_id, old_image_type, image_type, image_ids,
 ):
-    s3t = create_s3t(max_conn=max_conn)
+    s3t = create_s3t(s3t_client)
     futures = []
     for image_id in image_ids:
         if image_id:
@@ -87,9 +90,7 @@ def migrate_isotopic_images(ds_id):
         print('Transferring images...')
         image_ids = db.select_onecol(SEL_DS_IMG_IDS, params=(ds_id,))
         print(len(image_ids))
-        transfer_images(
-            ds_id, 'iso_images', image_storage.ISO, image_ids, max_conn=20,
-        )
+        transfer_images(ds_id, 'iso_images', image_storage.ISO, image_ids)
 
     with timeit():
         print('Reindexing ES documents...')
@@ -190,15 +191,25 @@ SEL_SPEC_DSS = '''
 '''
 
 
-def migrate_datasets(ds_ids: List[str] = None):
+def read_ds_list(path):
+    result = set()
+    if Path(path).exists():
+        with open(path) as f:
+            result = {ds_id for ds_id in f.read().split(',') if ds_id}
+    return result
+
+
+def migrate_datasets(ds_ids: Set[str] = None):
     force = bool(ds_ids)
     if ds_ids:
         dss = db.select_with_fields(SEL_SPEC_DSS, params=(ds_ids,))
     else:
         dss = db.select_with_fields(SEL_ALL_DSS)
 
+    processed_ds_ids = read_ds_list('SUCCEEDED_DATASETS.txt') | read_ds_list('FAILED_DATASETS.txt')
+
     for ds in dss:
-        if force or not dataset_is_migrated(ds['id']):
+        if force or ds['id'] not in processed_ds_ids:
 
             try:
                 print(f'Migrating dataset {ds["id"]}')
@@ -209,9 +220,12 @@ def migrate_datasets(ds_ids: List[str] = None):
 
                     migrate_optical_images(ds['id'])
                 print()
-            except Exception as e:
+            except Exception:
                 logger.exception(f'Migration of {ds["id"]} failed')
                 with open('FAILED_DATASETS.txt', 'a') as f:
+                    f.write(',' + ds['id'])
+            else:
+                with open('SUCCEEDED_DATASETS.txt', 'a') as f:
                     f.write(',' + ds['id'])
 
 
@@ -230,9 +244,10 @@ if __name__ == '__main__':
     with GlobalInit(args.config) as sm_config:
         bucket_name = sm_config['image_storage']['bucket']
         db = DB()
+        s3t_client = create_s3_client()
 
         if args.ds_ids:
-            ds_ids = [ds_id for ds_id in set(args.ds_ids.split(',')) if ds_id]
-            migrate_datasets()
+            ds_ids = {ds_id for ds_id in args.ds_ids.split(',') if ds_id}
+            migrate_datasets(ds_ids)
         else:
             migrate_datasets()
