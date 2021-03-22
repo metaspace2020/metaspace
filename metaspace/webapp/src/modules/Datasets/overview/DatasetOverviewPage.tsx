@@ -1,4 +1,4 @@
-import { computed, defineComponent } from '@vue/composition-api'
+import { computed, defineComponent, reactive } from '@vue/composition-api'
 import { useQuery } from '@vue/apollo-composable'
 import { GetDatasetByIdQuery, getDatasetByIdQuery } from '../../../api/dataset'
 import { AnnotationCountTable } from './AnnotationCountTable'
@@ -67,6 +67,7 @@ export default defineComponent<Props>({
     return () => {
       const { name, submitter, group, projects, annotationCounts, metadataJson, id, isPublic } = dataset?.value || {}
       const { annotationLabel, detailLabel, projectLabel, inpFdrLvls } = props
+      const showImageViewer = false
       const metadata = safeJsonParse(metadataJson) || {}
       const groupLink = $router.resolve({ name: 'group', params: { groupIdOrSlug: group?.id || '' } }).href
       const upDate = moment(moment(dataset?.value?.uploadDT)).isValid()
@@ -79,8 +80,8 @@ export default defineComponent<Props>({
       }
 
       return (
-        <div class='dataset-overview-container'>
-          <div class='dataset-overview-wrapper w-full lg:w-1/2'>
+        <div class={`dataset-overview-container ${!showImageViewer ? 'justify-center' : ''}`}>
+          <div class={`dataset-overview-wrapper max-w-4xl w-full  ${showImageViewer ? 'lg:w-1/2' : ''}`}>
             <div class='dataset-overview-header'>
               <div class='text-4xl text-center truncate'>
                 {name}
@@ -139,7 +140,10 @@ export default defineComponent<Props>({
               </div>
             }
           </div>
-          <div class='dataset-overview-wrapper dataset-overview-img-wrapper w-full lg:w-1/2'/>
+          {
+            showImageViewer
+            && <div class='dataset-overview-wrapper dataset-overview-img-wrapper w-full lg:w-1/2'/>
+          }
         </div>
       )
     }
