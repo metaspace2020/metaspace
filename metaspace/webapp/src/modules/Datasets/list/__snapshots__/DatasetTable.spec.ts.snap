@@ -928,6 +928,7 @@ exports[`DatasetTable should match snapshot 1`] = `
     class="mb-8 p-2 flex flex-row justify-end"
   >
     <mock-el-pagination
+      class="flex"
       current-page="1"
       hide-on-single-page=""
       layout="prev, pager, next"
