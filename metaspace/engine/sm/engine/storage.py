@@ -1,11 +1,12 @@
+from typing import Dict
+
 import boto3
 import botocore.exceptions
 
 from sm.engine.config import SMConfig
 
 
-def _boto_client_kwargs():
-    sm_config = SMConfig.get_conf()
+def _boto_client_kwargs(sm_config: Dict):
     boto_config = boto3.session.Config(signature_version='s3v4')
     if 'aws' in sm_config:
         return dict(
@@ -22,24 +23,26 @@ def _boto_client_kwargs():
     )
 
 
-def get_s3_client():
-    return boto3.client('s3', **_boto_client_kwargs())
+def get_s3_client(sm_config: Dict = None):
+    return boto3.client('s3', **_boto_client_kwargs(sm_config or SMConfig.get_conf()))
 
 
-def get_s3_resource():
-    return boto3.resource('s3', **_boto_client_kwargs())
+def get_s3_resource(sm_config: Dict = None):
+    return boto3.resource('s3', **_boto_client_kwargs(sm_config or SMConfig.get_conf()))
 
 
-def create_bucket(bucket_name: str):
-    s3_client = get_s3_client()
+def create_bucket(bucket_name: str, s3_client=None):
     try:
         s3_client.head_bucket(Bucket=bucket_name)
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == '404':
-            s3_client.create_bucket(Bucket=bucket_name)
+            s3_client.create_bucket(
+                Bucket=bucket_name,
+                CreateBucketConfiguration={'LocationConstraint': s3_client.meta.region_name},
+            )
         else:
             raise
 
 
-def get_s3_bucket(bucket_name: str):
-    return get_s3_resource().Bucket(bucket_name)
+def get_s3_bucket(bucket_name: str, sm_config: Dict):
+    return get_s3_resource(sm_config).Bucket(bucket_name)

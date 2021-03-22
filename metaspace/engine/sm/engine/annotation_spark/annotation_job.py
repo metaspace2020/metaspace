@@ -132,7 +132,7 @@ class AnnotationJob:
             self._ds_data_path.mkdir(parents=True, exist_ok=True)
 
             bucket_name, key = split_s3_path(ds.input_path)
-            bucket = storage.get_s3_bucket(bucket_name)
+            bucket = storage.get_s3_bucket(bucket_name, self._sm_config)
             for obj_sum in bucket.objects.filter(Prefix=key):
                 local_file = str(self._ds_data_path / Path(obj_sum.key).name)
                 logger.debug(f'Downloading s3a://{bucket_name}/{obj_sum.key} -> {local_file}')

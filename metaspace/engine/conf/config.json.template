@@ -196,5 +196,8 @@ The Prefix is necessary and should not have a leading or trailing slash
   },
   "ds_config_defaults": {
     "adducts": {{ sm_default_adducts | to_json }}
+  },
+  "image_storage": {
+    "bucket": "{{ sm_image_storage_bucket }}"
   }
 }

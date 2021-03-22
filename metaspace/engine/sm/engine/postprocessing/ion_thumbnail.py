@@ -8,8 +8,8 @@ import png
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
 from sm.engine.annotation_lithops.executor import Executor
+from sm.engine.config import SMConfig
 from sm.engine.dataset import Dataset
-from sm.engine.db import DB
 from sm.engine import image_storage
 
 ISO_IMAGE_SEL = (
@@ -221,14 +221,14 @@ def generate_ion_thumbnail(db, ds, only_if_needed=False, algorithm=DEFAULT_ALGOR
         logger.error('Error generating ion thumbnail image', exc_info=True)
 
 
-def delete_ion_thumbnail(db: DB, ds: Dataset):
+def delete_ion_thumbnail(db, ds: Dataset):
     (thumb_id,) = db.select_one(THUMB_SEL, [ds.id])
     if thumb_id:
         image_storage.delete_image(image_storage.THUMB, ds.id, thumb_id)
 
 
 def generate_ion_thumbnail_lithops(
-    executor: Executor, db: DB, ds: Dataset, only_if_needed=False, algorithm=DEFAULT_ALGORITHM,
+    executor: Executor, db, ds: Dataset, only_if_needed=False, algorithm=DEFAULT_ALGORITHM,
 ):
     try:
         (existing_thumb_id,) = db.select_one(THUMB_SEL, [ds.id])
@@ -243,10 +243,11 @@ def generate_ion_thumbnail_lithops(
             return
 
         ds_id = ds.id
+        sm_config = SMConfig.get_conf()
 
         def generate(annotation_rows):
             return _generate_ion_thumbnail_image(
-                image_storage.ImageStorage(), ds_id, annotation_rows, algorithm
+                image_storage.ImageStorage(sm_config), ds_id, annotation_rows, algorithm
             )
 
         thumbnail = executor.call(
