@@ -186,20 +186,21 @@ def _configure_bucket(sm_config: Dict):
     s3_client = get_s3_client(sm_config)
     create_bucket(bucket_name, s3_client)
 
+    bucket_policy = {
+        'Version': '2012-10-17',
+        'Statement': [
+            {
+                'Effect': 'Allow',
+                'Principal': {'AWS': ['*']},
+                'Action': ['s3:GetObject'],
+                'Resource': [f'arn:aws:s3:::{bucket_name}/*'],
+            }
+        ],
+    }
+    s3_client.put_bucket_policy(Bucket=bucket_name, Policy=json.dumps(bucket_policy))
+
     is_s3_bucket = 'aws' in sm_config  # False when minio is used instead of AWS S3
     if is_s3_bucket:
-        bucket_policy = {
-            'Version': '2012-10-17',
-            'Statement': [
-                {
-                    'Effect': 'Allow',
-                    'Principal': {'AWS': ['*']},
-                    'Action': ['s3:GetObject'],
-                    'Resource': [f'arn:aws:s3:::{bucket_name}/*'],
-                }
-            ],
-        }
-        s3_client.put_bucket_policy(Bucket=bucket_name, Policy=json.dumps(bucket_policy))
         cors_configuration = {
             'CORSRules': [
                 {
