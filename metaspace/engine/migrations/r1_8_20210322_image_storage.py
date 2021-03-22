@@ -199,34 +199,39 @@ def read_ds_list(path):
     return result
 
 
-def migrate_datasets(ds_ids: Set[str] = None):
-    force = bool(ds_ids)
-    if ds_ids:
-        dss = db.select_with_fields(SEL_SPEC_DSS, params=(ds_ids,))
+# def force_migrate_datasets(ds_ids: Set[str] = None):
+#     force = bool(ds_ids)
+#     if ds_ids:
+#         dss = db.select_with_fields(SEL_SPEC_DSS, params=(ds_ids,))
+
+
+def migrate_dataset(ds):
+    try:
+        with timeit('Dataset'):
+            if ds['status'] == DatasetStatus.FINISHED:
+                migrate_isotopic_images(ds['id'])
+                migrate_ion_thumbnail(ds['id'])
+
+            migrate_optical_images(ds['id'])
+    except Exception:
+        logger.exception(f'Migration of {ds["id"]} failed')
+        with open('FAILED_DATASETS.txt', 'a') as f:
+            f.write(',' + ds['id'])
     else:
-        dss = db.select_with_fields(SEL_ALL_DSS)
+        with open('SUCCEEDED_DATASETS.txt', 'a') as f:
+            f.write(',' + ds['id'])
 
+
+def migrate_datasets():
+    dss = db.select_with_fields(SEL_ALL_DSS)
     processed_ds_ids = read_ds_list('SUCCEEDED_DATASETS.txt') | read_ds_list('FAILED_DATASETS.txt')
+    dss_to_process = [ds for ds in dss if ds['id'] not in processed_ds_ids]
 
-    for ds in dss:
-        if force or ds['id'] not in processed_ds_ids:
-
-            try:
-                print(f'Migrating dataset {ds["id"]}')
-                with timeit('Dataset'):
-                    if force or ds['status'] == DatasetStatus.FINISHED:
-                        migrate_isotopic_images(ds['id'])
-                        migrate_ion_thumbnail(ds['id'])
-
-                    migrate_optical_images(ds['id'])
-                print()
-            except Exception:
-                logger.exception(f'Migration of {ds["id"]} failed')
-                with open('FAILED_DATASETS.txt', 'a') as f:
-                    f.write(',' + ds['id'])
-            else:
-                with open('SUCCEEDED_DATASETS.txt', 'a') as f:
-                    f.write(',' + ds['id'])
+    n = len(dss_to_process)
+    for i, ds in enumerate(dss_to_process, 1):
+        print(f'Migrating dataset {ds["id"]} ({i}/{n})')
+        migrate_dataset(ds)
+        print()
 
 
 if __name__ == '__main__':
@@ -246,8 +251,8 @@ if __name__ == '__main__':
         db = DB()
         s3t_client = create_s3_client()
 
-        if args.ds_ids:
-            ds_ids = {ds_id for ds_id in args.ds_ids.split(',') if ds_id}
-            migrate_datasets(ds_ids)
-        else:
-            migrate_datasets()
+        # if args.ds_ids:
+        #     ds_ids = {ds_id for ds_id in args.ds_ids.split(',') if ds_id}
+        #     migrate_datasets(ds_ids)
+        # else:
+        migrate_datasets()
