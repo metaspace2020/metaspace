@@ -89,12 +89,12 @@ def _es_docs_migrated(es, ds_id):
 def migrate_isotopic_images(ds_id):
     print('Migrating isotopic images')
 
+    image_ids = db.select_onecol(SEL_DS_IMG_IDS, params=(ds_id,))
     es_exporter = ESExporter(db, sm_config)
-    if not _es_docs_migrated(es_exporter._es, ds_id):
+    if image_ids and not _es_docs_migrated(es_exporter._es, ds_id):
 
         with timeit():
             print('Transferring images...')
-            image_ids = db.select_onecol(SEL_DS_IMG_IDS, params=(ds_id,))
             print(len(image_ids))
             transfer_images(ds_id, 'iso_images', image_storage.ISO, image_ids)
 
