@@ -35,7 +35,6 @@ export const AnnotationCountTable = defineComponent<AnnotationCountTableProps>({
       query: encodeParams({
         database,
         fdrLevel,
-        hideFilter: true
       }),
     })
 

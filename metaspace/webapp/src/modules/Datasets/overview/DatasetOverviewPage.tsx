@@ -70,12 +70,28 @@ export default defineComponent<Props>({
         name, submitter, group, projects, annotationCounts, metadataJson, id,
         isPublic,
       } = dataset?.value || {} as any
+      const { role, id: currentUserId } = currentUser?.value || {} as CurrentUserRoleResult
       const { annotationLabel, detailLabel, projectLabel, inpFdrLvls } = props
       const showImageViewer = false
       const metadata = safeJsonParse(metadataJson) || {}
       const groupLink = $router.resolve({ name: 'group', params: { groupIdOrSlug: group?.id || '' } }).href
       const upDate = moment(moment(dataset?.value?.uploadDT)).isValid()
         ? moment(dataset?.value?.uploadDT).format('D MMMM, YYYY') : ''
+      const publicationStatus = computed(() => {
+        if (Array.isArray(projects)
+          && projects.some(({ publicationStatus }) => publicationStatus === 'PUBLISHED')) {
+          return 'Published'
+        }
+        if (Array.isArray(projects)
+          && projects.some(({ publicationStatus }) => publicationStatus === 'UNDER_REVIEW')) {
+          return 'Under review'
+        }
+        return null
+      })
+
+      const canEdit = (role === 'admin' || (currentUserId === submitter?.id
+        && (status !== 'QUEUED' && status !== 'ANNOTATING')))
+      const canViewPublicationStatus = (status === 'FINISHED' && canEdit && publicationStatus?.value != null)
       const diagnosticData = reactive([
         {
           id: 'ionPreview',
@@ -146,10 +162,13 @@ export default defineComponent<Props>({
                               {project.name}
                             </router-link>
                           </li>
-                          <li>
-                            <b>Status: </b>
-                            {project.publicationStatus}
-                          </li>
+                          {
+                            canViewPublicationStatus
+                            && <li>
+                              <b>Status: </b>
+                              {publicationStatus?.value}
+                            </li>
+                          }
                         </ul>
                       </div>
                     )
