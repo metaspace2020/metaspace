@@ -1,7 +1,8 @@
 <template>
   <div id="annot-page">
-    <filter-panel level="annotation" />
-
+    <filter-panel
+      :level="currentLevel"
+    />
     <el-row>
       <el-col
         id="annot-table-container"
@@ -84,12 +85,20 @@ export default {
          - (this.hiddenColumns.filter(c => ['ColocalizationCoeff', 'OffSampleProb'].includes(c)).length * 1))
     },
 
+    currentLevel() {
+      return this.$route.name === 'dataset-annotations' ? 'dataset-annotation' : 'annotation'
+    },
+
     selectedAnnotation() {
       return this.$store.state.annotation
     },
 
     filter() {
-      return this.$store.getters.filter
+      const filterAux = this.$store?.getters?.filter
+      if (this.$route?.name === 'dataset-annotations') { // apply dataset filter if a dataset annotation
+        filterAux.datasetIds = [this.$route.params.datasetId]
+      }
+      return filterAux
     },
   },
   created() {

@@ -48,6 +48,7 @@ const URL_TO_FILTER = invert(FILTER_TO_URL) as Record<string, FilterKey>
 
 const PATH_TO_LEVEL: [RegExp, Level][] = [
   [/^\/annotations/i, 'annotation'],
+  [/^\/dataset\/\S+\/annotations/i, 'dataset-annotation'],
   [/^\/datasets/i, 'dataset'],
   [/^\/datasets\/summary/i, 'dataset'],
   [/^\/upload/i, 'upload'],

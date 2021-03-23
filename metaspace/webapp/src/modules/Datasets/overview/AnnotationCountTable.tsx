@@ -30,11 +30,12 @@ export const AnnotationCountTable = defineComponent<AnnotationCountTableProps>({
   },
   setup(props, ctx) {
     const annotationsLink = (datasetId: string, database?: string, fdrLevel?: number) => ({
-      path: '/annotations',
+      name: 'dataset-annotations',
+      params: { datasetId },
       query: encodeParams({
-        datasetIds: [datasetId],
         database,
         fdrLevel,
+        hideFilter: true
       }),
     })
 
