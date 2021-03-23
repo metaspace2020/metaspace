@@ -159,12 +159,12 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
               && <DropdownItem command="download">{downloadActionLabel}</DropdownItem>
             }
             {
-              canReprocess
-              && <DropdownItem class='text-red-500' command="reprocess">{reprocessActionLabel}</DropdownItem>
-            }
-            {
               canDelete
               && <DropdownItem class='text-red-500' command="delete">{deleteActionLabel}</DropdownItem>
+            }
+            {
+              canReprocess
+              && <DropdownItem class='text-red-500' command="reprocess">{reprocessActionLabel}</DropdownItem>
             }
           </DropdownMenu>
           {
