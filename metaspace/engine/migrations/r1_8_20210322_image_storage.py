@@ -2,6 +2,9 @@ import argparse
 import logging
 import time
 import contextlib
+import traceback
+from concurrent.futures.process import ProcessPoolExecutor
+from multiprocessing import Lock
 from pathlib import Path
 from typing import Set
 
@@ -11,18 +14,29 @@ import boto3.s3.transfer as s3transfer
 
 from sm.engine import image_storage
 from sm.engine.dataset import DatasetStatus
-from sm.engine.db import DB
+from sm.engine.db import DB, ConnectionPool
 from sm.engine.es_export import ESExporter
-from sm.engine.util import GlobalInit
+from sm.engine.util import on_startup
+
+
+class Output:
+    def __init__(self):
+        self.lines = []
+
+    def print(self, line=''):
+        self.lines.append(str(line))
+
+    def flush(self):
+        result = '\n'.join(self.lines) + '\n'
+        self.lines = []
+        return result
 
 
 @contextlib.contextmanager
-def timeit(msg=None):
+def timeit(msg=''):
     start = time.time()
     yield
-    if msg:
-        print(f'{msg}, ', end='')
-    print(f'elapsed: {time.time() - start:.2f}s')
+    output.print(f'{msg} elapsed: {time.time() - start:.2f}s')
 
 
 def create_s3_client(max_conn=10):
@@ -43,6 +57,7 @@ def create_s3_client(max_conn=10):
 
 
 def create_s3t():
+    s3_client = create_s3_client(max_conn=20)
     transfer_config = s3transfer.TransferConfig(
         use_threads=True, max_concurrency=s3_client.meta.config.max_pool_connections
     )
@@ -87,19 +102,20 @@ def _es_docs_migrated(es, ds_id):
 
 
 def migrate_isotopic_images(ds_id):
-    print('Migrating isotopic images')
+    output.print('Migrating isotopic images')
 
+    db = DB()
     image_ids = db.select_onecol(SEL_DS_IMG_IDS, params=(ds_id,))
     es_exporter = ESExporter(db, sm_config)
     if image_ids and not _es_docs_migrated(es_exporter._es, ds_id):
 
         with timeit():
-            print('Transferring images...')
-            print(len(image_ids))
+            output.print('Transferring images...')
+            output.print(len(image_ids))
             transfer_images(ds_id, 'iso_images', image_storage.ISO, image_ids)
 
         with timeit():
-            print('Reindexing ES documents...')
+            output.print('Reindexing ES documents...')
             es_exporter.reindex_ds(ds_id)
 
 
@@ -116,10 +132,11 @@ UPD_ION_THUMB = '''
 
 
 def migrate_ion_thumbnail(ds_id):
-    print('Migrating ion thumbnail images')
+    output.print('Migrating ion thumbnail images')
 
     with timeit():
-        print('Transferring images and updating database...')
+        output.print('Transferring images and updating database...')
+        db = DB()
         ion_thumb_id, ion_thumbnail_url = db.select_one(SEL_ION_THUMB, params=(ds_id,))
         if not ion_thumbnail_url and ion_thumb_id:
             transfer_images(
@@ -152,10 +169,11 @@ UPD_OPT_THUMB = '''
 
 
 def migrate_optical_images(ds_id):
-    print('Migrating optical images')
+    output.print('Migrating optical images')
 
     with timeit():
-        print('Transferring images and updating database...')
+        output.print('Transferring images and updating database...')
+        db = DB()
         rows = db.select(SEL_OPTICAL_IMGS, params=(ds_id,))
         for opt_image_id, opt_image_url in rows:
             if not opt_image_url and opt_image_id:
@@ -197,43 +215,40 @@ def read_ds_list(path):
     return result
 
 
-def migrate_dataset(ds, force=False):
-    try:
-        with timeit('Dataset'):
-            if force or ds['status'] == DatasetStatus.FINISHED:
-                migrate_isotopic_images(ds['id'])
-                migrate_ion_thumbnail(ds['id'])
+def migrate_dataset(ds, i, n, force=False):
+    output.print(f'Migrating dataset {ds["id"]} ({i}/{n})')
 
-            migrate_optical_images(ds['id'])
-    except Exception:
-        logger.exception(f'Migration of {ds["id"]} failed')
-        with open('FAILED_DATASETS.txt', 'a') as f:
-            f.write(',' + ds['id'])
-    else:
-        with open('SUCCEEDED_DATASETS.txt', 'a') as f:
-            f.write(',' + ds['id'])
+    with ConnectionPool(sm_config['db']):
+        try:
+            with timeit('Dataset'):
+                if force or ds['status'] == DatasetStatus.FINISHED:
+                    migrate_isotopic_images(ds['id'])
+                    migrate_ion_thumbnail(ds['id'])
 
+                migrate_optical_images(ds['id'])
+        except Exception:
+            output.print(f'Migration of {ds["id"]} failed:\n{traceback.format_exc()}')
+            lock.acquire()
+            with open('FAILED_DATASETS.txt', 'a') as f:
+                f.write(',' + ds['id'])
+            lock.release()
+        else:
+            lock.acquire()
+            with open('SUCCEEDED_DATASETS.txt', 'a') as f:
+                f.write(',' + ds['id'])
+            lock.release()
 
-def migrate_datasets():
-    dss = db.select_with_fields(SEL_ALL_DSS)
-    processed_ds_ids = read_ds_list('SUCCEEDED_DATASETS.txt') | read_ds_list('FAILED_DATASETS.txt')
-    dss_to_process = [ds for ds in dss if ds['id'] not in processed_ds_ids]
-
-    n = len(dss_to_process)
-    for i, ds in enumerate(dss_to_process, 1):
-        print(f'Migrating dataset {ds["id"]} ({i}/{n})')
-        migrate_dataset(ds)
-        print()
+    return output.flush()
 
 
-def force_migrate_datasets(ds_ids: Set[str]):
-    dss = db.select_with_fields(SEL_SPEC_DSS, params=(ds_ids,))
-
-    n = len(dss)
-    for i, ds in enumerate(dss, 1):
-        print(f'Migrating dataset {ds["id"]} ({i}/{n})')
-        migrate_dataset(ds, force=True)
-        print()
+# def force_migrate_datasets(ds_ids: Set[str]):
+#     dss = db.select_with_fields(SEL_SPEC_DSS, params=(ds_ids,))
+#
+#     n = len(dss)
+#     for i, ds in enumerate(dss, 1):
+#         output.print(f'Migrating dataset {ds["id"]} ({i}/{n})')
+#         migrate_dataset(ds, force=True)
+#         output.print()
 
 
 if __name__ == '__main__':
@@ -245,16 +260,29 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    logger = logging.getLogger('engine')
-
     image_base_path = args.image_base_path
-    with GlobalInit(args.config) as sm_config:
-        bucket_name = sm_config['image_storage']['bucket']
-        db = DB()
-        s3_client = create_s3_client(max_conn=20)
 
-        if args.ds_ids:
-            ds_ids = {ds_id for ds_id in args.ds_ids.split(',') if ds_id}
-            force_migrate_datasets(ds_ids)
-        else:
-            migrate_datasets()
+    sm_config = on_startup(args.config)
+    bucket_name = sm_config['image_storage']['bucket']
+
+    logging.getLogger('engine').setLevel(logging.WARNING)
+    logging.getLogger('engine.db').setLevel(logging.WARNING)
+    output = Output()
+
+    lock = Lock()
+
+    # if args.ds_ids:
+    #     ds_ids = {ds_id for ds_id in args.ds_ids.split(',') if ds_id}
+    #     force_migrate_datasets(ds_ids)
+    # else:
+
+    with ConnectionPool(sm_config['db']):
+        dss = DB().select_with_fields(SEL_ALL_DSS)
+    processed_ds_ids = read_ds_list('SUCCEEDED_DATASETS.txt') | read_ds_list('FAILED_DATASETS.txt')
+    dss_to_process = [ds for ds in dss if ds['id'] not in processed_ds_ids]
+
+    n = len(dss_to_process)
+    tasks = [(ds, i, n) for i, ds in enumerate(dss_to_process, 1)]
+    with ProcessPoolExecutor(max_workers=2) as executor:
+        for logs in executor.map(migrate_dataset, *zip(*tasks)):
+            print(logs)
