@@ -73,6 +73,7 @@ const router = new VueRouter({
     { path: '/datasets/edit/:dataset_id', name: 'edit-metadata', component: asyncPages.MetadataEditPage },
     { path: '/datasets/:dataset_id/add-optical-image', name: 'add-optical-image', component: asyncPages.ImageAlignmentPage },
     { path: '/dataset/:datasetId', name: 'dataset-overview', component: asyncPages.DatasetOverviewPage },
+    { path: '/dataset/:datasetId/annotations', name: 'dataset-annotations', component: asyncPages.AnnotationsPage },
     { path: '/upload', component: asyncPages.UploadPage },
     { path: '/help', component: asyncPages.HelpPage, meta: { footer: true } },
     { path: '/user/me', component: asyncPages.EditUserPage },

@@ -4,6 +4,7 @@ import { intersection, keyBy } from 'lodash'
 import ImageLoader from '../../../components/ImageLoader.vue'
 import './DatasetOverviewGallery.scss'
 import safeJsonParse from '../../../lib/safeJsonParse'
+import { templateRef } from '../../../lib/templateRef'
 
   enum ITEM_TYPES {
     IMAGE = 'image',
@@ -32,6 +33,7 @@ import safeJsonParse from '../../../lib/safeJsonParse'
   interface DatasetOverviewGalleryState {
     selectedOption: DatasetOverviewGalleryOption,
     selectedValue: any
+    showCarouselItem: boolean
   }
 
 export const DatasetOverviewGallery = defineComponent<DatasetOverviewGalleryProps>({
@@ -76,6 +78,8 @@ export const DatasetOverviewGallery = defineComponent<DatasetOverviewGalleryProp
     },
   },
   setup(props, ctx) {
+    const carousel = templateRef<any>('carousel')
+
     const diagnosticDataLookup = computed(() => {
       const parsed = props?.data?.map(({ data, ...rest }) => ({ ...rest, data: JSON.parse(data) }))
       return keyBy(parsed, 'id')
@@ -93,6 +97,7 @@ export const DatasetOverviewGallery = defineComponent<DatasetOverviewGalleryProp
     }
 
     const state = reactive<DatasetOverviewGalleryState>({
+      showCarouselItem: true,
       selectedValue: setSelectedValue((Array.isArray(props?.options[0]?.options)
         ? props?.options[0]?.options[0] : undefined) as DatasetOverviewGalleryOption),
       selectedOption: (Array.isArray(props?.options[0]?.options)
@@ -104,9 +109,18 @@ export const DatasetOverviewGallery = defineComponent<DatasetOverviewGalleryProp
       state.selectedValue = setSelectedValue(option)
     }
 
+    const handleCarouselChange = (index: number) => {
+      // quick fix to imageloader redraw
+      state.showCarouselItem = false
+      setTimeout(() => {
+        state.showCarouselItem = true
+      }, 0)
+    }
+
     return () => {
       const { options } = props
-      const { selectedOption, selectedValue } = state
+      const { selectedOption, selectedValue, showCarouselItem } = state
+
       return (
         <div class='dataset-overview-gallery-wrapper'>
           <Select
@@ -134,20 +148,25 @@ export const DatasetOverviewGallery = defineComponent<DatasetOverviewGalleryProp
             {
               selectedOption?.type === ITEM_TYPES.IMAGE
               && <Carousel
+                onChange={handleCarouselChange}
                 arrow={`${Array.isArray(mockImg) && mockImg.length > 1 ? 'always' : 'never'}`}
                 indicatorPosition={`${Array.isArray(mockImg) && mockImg.length > 1 ? 'outside' : 'none'}`}
                 autoplay={false}>
                 {
-                  Array.isArray(selectedValue) && selectedValue.map((image) => {
+                  Array.isArray(selectedValue) && selectedValue.map((image, imageIndex) => {
                     return (
                       <CarouselItem>
-                        <ImageLoader
-                          src={image}
-                          imagePosition={{ zoom: 1, xOffset: 0, yOffset: 0 }}
-                          minIntensity={0}
-                          maxIntensity={1}
-                          pixelAspectRatio={1}
-                        />
+                        {
+                          showCarouselItem
+                          && <ImageLoader
+                            ref='carousel'
+                            src={image}
+                            imagePosition={{ zoom: 1, xOffset: 0, yOffset: 0 }}
+                            minIntensity={0}
+                            maxIntensity={1}
+                            pixelAspectRatio={1}
+                          />
+                        }
                       </CarouselItem>
                     )
                   })

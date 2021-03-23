@@ -71,7 +71,7 @@ export default defineComponent<Props>({
         isPublic,
       } = dataset?.value || {} as any
       const { annotationLabel, detailLabel, projectLabel, inpFdrLvls } = props
-      const showImageViewer = true
+      const showImageViewer = false
       const metadata = safeJsonParse(metadataJson) || {}
       const groupLink = $router.resolve({ name: 'group', params: { groupIdOrSlug: group?.id || '' } }).href
       const upDate = moment(moment(dataset?.value?.uploadDT)).isValid()

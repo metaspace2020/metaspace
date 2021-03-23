@@ -58,6 +58,10 @@ const orderedFilterKeys = [
   'metadataType',
 ]
 
+const dsAnnotationHiddenFilters = [
+  'datasetIds',
+]
+
 const filterComponents = {}
 Object.keys(FILTER_SPECIFICATIONS).reduce((accum, cur) => {
   const componentType = FILTER_SPECIFICATIONS[cur].type
@@ -153,6 +157,9 @@ const FilterPanel = {
       }
       if (filterKey === 'simpleFilter') {
         return this.simpleFilterOptions != null
+      }
+      if (this.level === 'dataset-annotation' && dsAnnotationHiddenFilters.includes(filterKey)) {
+        return false
       }
       if (filterKey === 'datasetOwner') {
         return this.setDatasetOwnerOptions != null
