@@ -172,16 +172,9 @@ def migrate_optical_images(ds_id):
 
 
 SEL_ALL_DSS = '''
-    SELECT d.id, d.status, d.upload_dt, COALESCE(t.annot_cnt, 0) as annot_cnt
+    SELECT d.id, d.status, d.upload_dt
     FROM dataset d
-    LEFT JOIN (
-        SELECT d.id, COUNT(*) AS annot_cnt
-        FROM dataset d
-        JOIN job j ON d.id = j.ds_id
-        JOIN annotation a ON j.id = a.job_id
-        GROUP BY d.id
-    ) t ON t.id = d.id
-    WHERE status != 'FAILED' AND annot_cnt > 0
+    WHERE status != 'FAILED'
     ORDER BY upload_dt DESC
 '''
 SEL_SPEC_DSS = '''
@@ -199,16 +192,10 @@ def read_ds_list(path):
     return result
 
 
-# def force_migrate_datasets(ds_ids: Set[str] = None):
-#     force = bool(ds_ids)
-#     if ds_ids:
-#         dss = db.select_with_fields(SEL_SPEC_DSS, params=(ds_ids,))
-
-
-def migrate_dataset(ds):
+def migrate_dataset(ds, force=False):
     try:
         with timeit('Dataset'):
-            if ds['status'] == DatasetStatus.FINISHED:
+            if force or ds['status'] == DatasetStatus.FINISHED:
                 migrate_isotopic_images(ds['id'])
                 migrate_ion_thumbnail(ds['id'])
 
@@ -234,6 +221,16 @@ def migrate_datasets():
         print()
 
 
+def force_migrate_datasets(ds_ids: Set[str]):
+    dss = db.select_with_fields(SEL_SPEC_DSS, params=(ds_ids,))
+
+    n = len(dss)
+    for i, ds in enumerate(dss, 1):
+        print(f'Migrating dataset {ds["id"]} ({i}/{n})')
+        migrate_dataset(ds, force=True)
+        print()
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Migrate image storage data')
     parser.add_argument('--config', default='conf/config.json')
@@ -249,10 +246,10 @@ if __name__ == '__main__':
     with GlobalInit(args.config) as sm_config:
         bucket_name = sm_config['image_storage']['bucket']
         db = DB()
-        s3t_client = create_s3_client()
+        s3t_client = create_s3_client(max_conn=20)
 
-        # if args.ds_ids:
-        #     ds_ids = {ds_id for ds_id in args.ds_ids.split(',') if ds_id}
-        #     migrate_datasets(ds_ids)
-        # else:
-        migrate_datasets()
+        if args.ds_ids:
+            ds_ids = {ds_id for ds_id in args.ds_ids.split(',') if ds_id}
+            force_migrate_datasets(ds_ids)
+        else:
+            migrate_datasets()
