@@ -42,23 +42,17 @@ def create_s3_client(max_conn=10):
     return boto3.client('s3', config=boto_config, **kwargs)
 
 
-def create_s3t(s3_client):
+def create_s3t():
     transfer_config = s3transfer.TransferConfig(
         use_threads=True, max_concurrency=s3_client.meta.config.max_pool_connections
     )
     return s3transfer.create_transfer_manager(s3_client, config=transfer_config)
 
 
-def dataset_is_migrated(ds_id):
-    image_type = image_storage.ISO
-    resp = s3t_client.list_objects(Bucket=bucket_name, Prefix=f'{image_type}/{ds_id}', MaxKeys=1)
-    return 'Contents' in resp
-
-
 def transfer_images(
     ds_id, old_image_type, image_type, image_ids,
 ):
-    s3t = create_s3t(s3t_client)
+    s3t = create_s3t()
     futures = []
     for image_id in image_ids:
         if image_id:
@@ -83,23 +77,34 @@ SEL_DS_IMG_IDS = '''
 '''
 
 
+def _es_docs_migrated(es, ds_id):
+    query_body = {'query': {'match': {'ds_id': ds_id}}}
+    resp = es.search(
+        index='sm', doc_type='annotation', body=query_body, _source=['iso_image_urls'], size=1,
+    )
+    hits = resp['hits']['hits']
+    return hits and 'iso_image_urls' in hits[0]['_source']
+
+
 def migrate_isotopic_images(ds_id):
     print('Migrating isotopic images')
 
-    with timeit():
-        print('Transferring images...')
-        image_ids = db.select_onecol(SEL_DS_IMG_IDS, params=(ds_id,))
-        print(len(image_ids))
-        transfer_images(ds_id, 'iso_images', image_storage.ISO, image_ids)
+    es_exporter = ESExporter(db, sm_config)
+    if not _es_docs_migrated(es_exporter._es, ds_id):
 
-    with timeit():
-        print('Reindexing ES documents...')
-        es_exporter = ESExporter(db, sm_config)
-        es_exporter.reindex_ds(ds_id)
+        with timeit():
+            print('Transferring images...')
+            image_ids = db.select_onecol(SEL_DS_IMG_IDS, params=(ds_id,))
+            print(len(image_ids))
+            transfer_images(ds_id, 'iso_images', image_storage.ISO, image_ids)
+
+        with timeit():
+            print('Reindexing ES documents...')
+            es_exporter.reindex_ds(ds_id)
 
 
 SEL_ION_THUMB = '''
-    SELECT ion_thumbnail
+    SELECT ion_thumbnail, ion_thumbnail_url
     FROM dataset
     WHERE id = %s;
 '''
@@ -115,8 +120,8 @@ def migrate_ion_thumbnail(ds_id):
 
     with timeit():
         print('Transferring images and updating database...')
-        (ion_thumb_id,) = db.select_onecol(SEL_ION_THUMB, params=(ds_id,))
-        if ion_thumb_id:
+        ion_thumb_id, ion_thumbnail_url = db.select_one(SEL_ION_THUMB, params=(ds_id,))
+        if not ion_thumbnail_url and ion_thumb_id:
             transfer_images(
                 ds_id, 'ion_thumbnails', image_storage.THUMB, [ion_thumb_id],
             )
@@ -125,7 +130,7 @@ def migrate_ion_thumbnail(ds_id):
 
 
 SEL_OPTICAL_IMGS = '''
-    SELECT id
+    SELECT id, url
     FROM optical_image
     WHERE ds_id = %s
 '''
@@ -135,7 +140,7 @@ UPD_OPTICAL_IMGS = '''
     WHERE id = %s
 '''
 SEL_OPT_THUMB = '''
-    SELECT thumbnail
+    SELECT thumbnail, thumbnail_url
     FROM dataset
     WHERE id = %s;
 '''
@@ -151,19 +156,19 @@ def migrate_optical_images(ds_id):
 
     with timeit():
         print('Transferring images and updating database...')
-        opt_image_ids = db.select_onecol(SEL_OPTICAL_IMGS, params=(ds_id,))
-        transfer_images(
-            ds_id, 'optical_images', image_storage.OPTICAL, opt_image_ids,
-        )
-        for opt_image_id in opt_image_ids:
-            if opt_image_id:
+        rows = db.select(SEL_OPTICAL_IMGS, params=(ds_id,))
+        for opt_image_id, opt_image_url in rows:
+            if not opt_image_url and opt_image_id:
+                transfer_images(
+                    ds_id, 'optical_images', image_storage.OPTICAL, [opt_image_id],
+                )
                 opt_image_url = image_storage.get_image_url(
                     image_storage.OPTICAL, ds_id, opt_image_id
                 )
                 db.alter(UPD_OPTICAL_IMGS, params=(opt_image_url, opt_image_id))
 
-        (opt_thumb_id,) = db.select_onecol(SEL_OPT_THUMB, params=(ds_id,))
-        if opt_thumb_id:
+        opt_thumb_id, opt_thumb_url = db.select_one(SEL_OPT_THUMB, params=(ds_id,))
+        if not opt_thumb_url and opt_thumb_id:
             transfer_images(
                 ds_id, 'optical_images', image_storage.OPTICAL, [opt_thumb_id],
             )
@@ -246,7 +251,7 @@ if __name__ == '__main__':
     with GlobalInit(args.config) as sm_config:
         bucket_name = sm_config['image_storage']['bucket']
         db = DB()
-        s3t_client = create_s3_client(max_conn=20)
+        s3_client = create_s3_client(max_conn=20)
 
         if args.ds_ids:
             ds_ids = {ds_id for ds_id in args.ds_ids.split(',') if ds_id}
