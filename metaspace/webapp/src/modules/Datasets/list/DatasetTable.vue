@@ -77,6 +77,7 @@
     <div class="mb-8 p-2 flex flex-row justify-end">
       <el-pagination
         v-if="totalCount > 0"
+        class="flex"
         hide-on-single-page
         :total="totalCount"
         :current-page.sync="currentPage"
