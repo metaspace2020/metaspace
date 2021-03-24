@@ -1,6 +1,10 @@
-import { DatasetAnnotationCount } from '../../../api/dataset'
 import { defineComponent } from '@vue/composition-api'
+import Vue from 'vue'
+import { Table, TableColumn, Button } from '../../../lib/element-ui'
+import { DatasetAnnotationCount } from '../../../api/dataset'
 import { encodeParams } from '../../Filters'
+
+const RouterLink = Vue.component('router-link')
 
 interface AnnotationCountTableData{
   name: string
@@ -68,10 +72,10 @@ export const AnnotationCountTable = defineComponent<AnnotationCountTableProps>({
       if (colIndex === 0) { return cellValue }
 
       return (
-        <router-link to={annotationsLink(id?.toString(), row?.id,
+        <RouterLink to={annotationsLink(id?.toString(), row?.id,
           parseInt(column?.property, 10) / 100)}>
           {cellValue}
-        </router-link>
+        </RouterLink>
       )
     }
 
@@ -82,14 +86,14 @@ export const AnnotationCountTable = defineComponent<AnnotationCountTableProps>({
       return (
         <div class="relative text-center">
           <h4>{title}</h4>
-          <el-table
+          <Table
             data={tableData}
             show-summary={true}
             sum-text={sumRowLabel}
             style="width: 100%; margin-top: 20px">
             {
               ['name'].concat(header).map((col, colIndex) => {
-                return <el-table-column
+                return <TableColumn
                   sortable={true}
                   key={colIndex}
                   prop={col.toString()}
@@ -98,9 +102,9 @@ export const AnnotationCountTable = defineComponent<AnnotationCountTableProps>({
                   label={formatTitle(col)} />
               })
             }
-          </el-table>
+          </Table>
           <div class="text-right mt-2">
-            <el-button onClick={browseAnnotations}>{btnLabel}</el-button>
+            <Button onClick={browseAnnotations}>{btnLabel}</Button>
           </div>
         </div>
       )
