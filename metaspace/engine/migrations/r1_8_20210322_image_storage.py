@@ -6,7 +6,6 @@ import traceback
 from concurrent.futures.process import ProcessPoolExecutor
 from multiprocessing import Lock
 from pathlib import Path
-from typing import Set
 
 import boto3
 import botocore
@@ -241,16 +240,6 @@ def migrate_dataset(ds, i, n, force=False):
     return output.flush()
 
 
-# def force_migrate_datasets(ds_ids: Set[str]):
-#     dss = db.select_with_fields(SEL_SPEC_DSS, params=(ds_ids,))
-#
-#     n = len(dss)
-#     for i, ds in enumerate(dss, 1):
-#         output.print(f'Migrating dataset {ds["id"]} ({i}/{n})')
-#         migrate_dataset(ds, force=True)
-#         output.print()
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Migrate image storage data')
     parser.add_argument('--config', default='conf/config.json')
@@ -271,18 +260,24 @@ if __name__ == '__main__':
 
     lock = Lock()
 
-    # if args.ds_ids:
-    #     ds_ids = {ds_id for ds_id in args.ds_ids.split(',') if ds_id}
-    #     force_migrate_datasets(ds_ids)
-    # else:
-
     with ConnectionPool(sm_config['db']):
-        dss = DB().select_with_fields(SEL_ALL_DSS)
-    processed_ds_ids = read_ds_list('SUCCEEDED_DATASETS.txt') | read_ds_list('FAILED_DATASETS.txt')
-    dss_to_process = [ds for ds in dss if ds['id'] not in processed_ds_ids]
+        db = DB()
+        if args.ds_ids:
+            ds_ids = list({ds_id for ds_id in args.ds_ids.split(',') if ds_id})
+            dss_to_process = db.select_with_fields(SEL_SPEC_DSS, params=(ds_ids,))
+            n = len(dss_to_process)
+            for i, ds in enumerate(dss_to_process, 1):
+                logs = migrate_dataset(ds, i, n, force=True)
+                print(logs)
+        else:
+            dss = db.select_with_fields(SEL_ALL_DSS)
+            processed_ds_ids = read_ds_list('SUCCEEDED_DATASETS.txt') | read_ds_list(
+                'FAILED_DATASETS.txt'
+            )
+            dss_to_process = [ds for ds in dss if ds['id'] not in processed_ds_ids]
 
-    n = len(dss_to_process)
-    tasks = [(ds, i, n) for i, ds in enumerate(dss_to_process, 1)]
-    with ProcessPoolExecutor(max_workers=2) as executor:
-        for logs in executor.map(migrate_dataset, *zip(*tasks)):
-            print(logs)
+            n = len(dss_to_process)
+            tasks = [(ds, i, n) for i, ds in enumerate(dss_to_process, 1)]
+            with ProcessPoolExecutor(max_workers=2) as executor:
+                for logs in executor.map(migrate_dataset, *zip(*tasks)):
+                    print(logs)
