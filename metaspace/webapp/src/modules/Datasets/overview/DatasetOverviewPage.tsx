@@ -126,7 +126,7 @@ export default defineComponent<Props>({
                   }
                 </span>
               </div>
-              <DatasetActionsDropdown dataset={dataset?.value} metadata={metadata} currentUser={currentUser?.value}/>
+              <DatasetActionsDropdown dataset={dataset?.value} currentUser={currentUser?.value}/>
             </div>
             <div class='dataset-overview-holder'>
               <div class='truncate'>{submitter?.name}
