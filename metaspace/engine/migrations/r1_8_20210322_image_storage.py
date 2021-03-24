@@ -38,8 +38,8 @@ def timeit(msg=''):
     output.print(f'{msg} elapsed: {time.time() - start:.2f}s')
 
 
-def create_s3_client(max_conn=10):
-    boto_config = botocore.config.Config(signature_version='s3v4', max_pool_connections=max_conn)
+def create_s3_client():
+    boto_config = botocore.config.Config(signature_version='s3v4', max_pool_connections=20)
     if 'aws' in sm_config:
         kwargs = dict(
             region_name=sm_config['aws']['aws_default_region'],
@@ -56,7 +56,7 @@ def create_s3_client(max_conn=10):
 
 
 def create_s3t():
-    s3_client = create_s3_client(max_conn=20)
+    s3_client = create_s3_client()
     transfer_config = s3transfer.TransferConfig(
         use_threads=True, max_concurrency=s3_client.meta.config.max_pool_connections
     )
@@ -260,24 +260,24 @@ if __name__ == '__main__':
 
     lock = Lock()
 
-    with ConnectionPool(sm_config['db']):
-        db = DB()
-        if args.ds_ids:
-            ds_ids = list({ds_id for ds_id in args.ds_ids.split(',') if ds_id})
-            dss_to_process = db.select_with_fields(SEL_SPEC_DSS, params=(ds_ids,))
-            n = len(dss_to_process)
-            for i, ds in enumerate(dss_to_process, 1):
-                logs = migrate_dataset(ds, i, n, force=True)
-                print(logs)
-        else:
-            dss = db.select_with_fields(SEL_ALL_DSS)
-            processed_ds_ids = read_ds_list('SUCCEEDED_DATASETS.txt') | read_ds_list(
-                'FAILED_DATASETS.txt'
-            )
-            dss_to_process = [ds for ds in dss if ds['id'] not in processed_ds_ids]
+    if args.ds_ids:
+        ds_ids = list({ds_id for ds_id in args.ds_ids.split(',') if ds_id})
+        with ConnectionPool(sm_config['db']):
+            dss_to_process = DB().select_with_fields(SEL_SPEC_DSS, params=(ds_ids,))
+        n = len(dss_to_process)
+        for i, ds in enumerate(dss_to_process, 1):
+            logs = migrate_dataset(ds, i, n, force=True)
+            print(logs)
+    else:
+        with ConnectionPool(sm_config['db']):
+            dss = DB().select_with_fields(SEL_ALL_DSS)
+        processed_ds_ids = read_ds_list('SUCCEEDED_DATASETS.txt') | read_ds_list(
+            'FAILED_DATASETS.txt'
+        )
+        dss_to_process = [ds for ds in dss if ds['id'] not in processed_ds_ids]
 
-            n = len(dss_to_process)
-            tasks = [(ds, i, n) for i, ds in enumerate(dss_to_process, 1)]
-            with ProcessPoolExecutor(max_workers=2) as executor:
-                for logs in executor.map(migrate_dataset, *zip(*tasks)):
-                    print(logs)
+        n = len(dss_to_process)
+        tasks = [(ds, i, n) for i, ds in enumerate(dss_to_process, 1)]
+        with ProcessPoolExecutor(max_workers=4) as executor:
+            for logs in executor.map(migrate_dataset, *zip(*tasks)):
+                print(logs)
