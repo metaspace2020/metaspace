@@ -13,7 +13,6 @@ interface DatasetActionsDropdownProps {
   reprocessActionLabel: string
   downloadActionLabel: string
   dataset: DatasetDetailItem
-  metadata: any
   currentUser: CurrentUserRoleResult
 }
 
@@ -22,11 +21,10 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
   props: {
     actionLabel: { type: String, default: 'Actions' },
     deleteActionLabel: { type: String, default: 'Delete' },
-    editActionLabel: { type: String, default: 'Edit' },
-    reprocessActionLabel: { type: String, default: 'Reprocess Data' },
+    editActionLabel: { type: String, default: 'Edit metadata' },
+    reprocessActionLabel: { type: String, default: 'Reprocess data' },
     downloadActionLabel: { type: String, default: 'Download' },
     dataset: { type: Object as () => DatasetDetailItem, required: true },
-    metadata: { type: Object as () => any, required: true },
     currentUser: { type: Object as () => CurrentUserRoleResult },
   },
   setup(props, ctx) {
@@ -131,10 +129,10 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
       const { role, id: currentUserId } = currentUser || {}
       const { submitter, status, canDownload, id, name } = dataset || {}
       const publicationStatus = computed(() => {
-        if (dataset?.projects.some(({ publicationStatus }) => publicationStatus === 'PUBLISHED')) {
+        if (dataset?.projects?.some(({ publicationStatus }) => publicationStatus === 'PUBLISHED')) {
           return 'Published'
         }
-        if (dataset?.projects.some(({ publicationStatus }) => publicationStatus === 'UNDER_REVIEW')) {
+        if (dataset?.projects?.some(({ publicationStatus }) => publicationStatus === 'UNDER_REVIEW')) {
           return 'Under review'
         }
         return null
@@ -145,7 +143,9 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
       const canReprocess = (role === 'admin')
 
       return (
-        <Dropdown trigger='click' type="primary" onCommand={handleCommand}>
+        <Dropdown style={{
+          visibility: (!canEdit && !canDelete && !canReprocess && !canDownload) ? 'hidden' : '',
+        }} trigger='click' type="primary" onCommand={handleCommand}>
           <Button class="p-1" type="primary">
             <span class="ml-2">{actionLabel}</span><i class="el-icon-arrow-down el-icon--right"/>
           </Button>
