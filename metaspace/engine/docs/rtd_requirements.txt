@@ -1,5 +1,5 @@
 boto3==1.3.0
-lxml==4.6.2
+lxml==4.6.3
 pypng==0.0.18
 pyimzml>=1.0.1
 pyopenms==2.2.0
