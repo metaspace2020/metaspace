@@ -230,7 +230,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       logger.warn(`Elasticsearch DS does not exist in DB: ${ds._source.ds_id}`)
       return null
     }
-    return JSON.stringify(dataset.datasetDescription)
+    return dataset.datasetDescription ? JSON.stringify(dataset.datasetDescription) : undefined
   },
   async principalInvestigator(ds, _, { cachedGetEntityById, isAdmin, user }: Context) {
     const dataset = await cachedGetEntityById(DatasetModel, ds._source.ds_id)
