@@ -11,7 +11,7 @@ import { DatasetActionsDropdown } from './DatasetActionsDropdown'
 import { currentUserRoleQuery, CurrentUserRoleResult } from '../../../api/user'
 import { DatasetOverviewGallery } from './DatasetOverviewGallery'
 import RichText from '../../../components/RichText'
-import { isValidTiptapJson, validateTiptapJson } from '../../../../../graphql/src/utils/tiptap'
+import { isValidTiptapJson } from '../../../lib/safeJsonParse'
 
 interface Props {
   className: string

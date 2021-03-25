@@ -30,6 +30,7 @@ import { mapDatabaseToDatabaseId } from '../../moldb/util/mapDatabaseToDatabaseI
 import { MolecularDbRepository } from '../../moldb/MolecularDbRepository'
 import { assertUserBelongsToGroup } from '../../moldb/util/assertUserBelongsToGroup'
 import { smApiUpdateDataset } from '../../../utils/smApi/datasets'
+import { validateTiptapJson } from '../../../utils/tiptap'
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -138,12 +139,13 @@ interface SaveDatasetArgs {
   datasetId?: string;
   submitterId: string;
   groupId?: string;
+  datasetDescription?: string;
   projectIds?: string[];
   principalInvestigator?: { name: string, email: string };
 }
 
 const saveDataset = async(entityManager: EntityManager, args: SaveDatasetArgs, requireInsert = false) => {
-  const { datasetId, submitterId, groupId, projectIds, principalInvestigator } = args
+  const { datasetId, submitterId, groupId, projectIds, principalInvestigator, datasetDescription } = args
   const groupUpdate = groupId === undefined
     ? {}
     : groupId === null
@@ -154,9 +156,11 @@ const saveDataset = async(entityManager: EntityManager, args: SaveDatasetArgs, r
     : principalInvestigator === null
       ? { piName: null, piEmail: null }
       : { piName: principalInvestigator.name, piEmail: principalInvestigator.email }
+  const dsDescriptionUpdate = datasetDescription === undefined ? null : datasetDescription
   const dsUpdate = {
     id: datasetId,
     userId: submitterId,
+    datasetDescription: dsDescriptionUpdate,
     ...groupUpdate,
     ...piUpdate,
   }
@@ -261,6 +265,14 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
     validateMetadata(metadata)
   }
 
+  let datasetDescription
+  if (input.datasetDescription) {
+    if (!skipValidation || !ctx.isAdmin) {
+      datasetDescription = input.datasetDescription
+      validateTiptapJson(input.datasetDescription, 'dataset_description')
+    }
+  }
+
   await setDatabaseIdsInInput(ctx.entityManager, input)
   await assertUserCanUseMolecularDBs(ctx, input.databaseIds as number[])
 
@@ -269,6 +281,7 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
   const saveDsArgs = {
     datasetId,
     submitterId: submitterId as string,
+    datasetDescription: datasetDescription as string,
     groupId: input.groupId as (string | undefined),
     projectIds: input.projectIds as string[],
     principalInvestigator: input.principalInvestigator,
@@ -329,6 +342,14 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       }
     }
 
+    let datasetDescription
+    if (update.datasetDescription) {
+      if (!skipValidation || !ctx.isAdmin) {
+        datasetDescription = update.datasetDescription
+        validateTiptapJson(update.datasetDescription, 'dataset_description')
+      }
+    }
+
     if (!ctx.isAdmin) {
       if (update.isPublic === false) {
         await checkProjectsPublicationStatus(ctx.entityManager, datasetId, [PSO.PUBLISHED])
@@ -349,6 +370,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     const saveDatasetArgs = {
       datasetId,
       submitterId: submitterId as string,
+      datasetDescription: datasetDescription as string,
       groupId: update.groupId as (string | undefined),
       projectIds: update.projectIds as string[],
       principalInvestigator: update.principalInvestigator,

@@ -5,6 +5,19 @@
       style="position: relative;"
     >
       <div id="md-section-list">
+        <div class="flex flex-row w-full flex-wrap mt-6">
+          <div class="metadata-section__title w-3/12">
+            Dataset Description
+          </div>
+          <rich-text
+            id="description-container"
+            :content="metaspaceOptions.datasetDescription"
+            :auto-focus="true"
+            :readonly="false"
+            :update="handleDescriptionChange"
+            content-class-name="customEditor"
+          />
+        </div>
         <form-section
           v-bind="sectionBinds('Sample_Information')"
           v-on="sectionEvents('Sample_Information')"
@@ -87,9 +100,10 @@ import VisibilityOptionSection from './sections/VisibilityOptionSection.vue'
 import FormSection from './sections/FormSection.vue'
 import DataManagementSection from './sections/DataManagementSection.vue'
 import emailRegex from '../../lib/emailRegex'
-import safeJsonParse from '../../lib/safeJsonParse'
+import safeJsonParse, { isValidTiptapJson } from '../../lib/safeJsonParse'
 import config from '../../lib/config'
 import { getDatabasesByGroup } from '../MolecularDatabases/formatting'
+import RichText from '../../components/RichText/RichText'
 
 const factories = {
   string: schema => schema.default || '',
@@ -112,6 +126,7 @@ const defaultMetaspaceOptions = {
 export default {
   name: 'MetadataEditor',
   components: {
+    RichText,
     FormSection,
     MetaspaceOptionsSection,
     VisibilityOptionSection,
@@ -194,6 +209,7 @@ export default {
         const {
           isPublic, configJson, databases, adducts,
           name, group, projects, submitter, principalInvestigator,
+          datasetDescription,
         } = dataset
         const config = safeJsonParse(configJson)
         return {
@@ -201,6 +217,8 @@ export default {
           groupId: group ? group.id : null,
           projectIds: projects ? projects.map(p => p.id) : [],
           principalInvestigator: principalInvestigator == null ? null : omit(principalInvestigator, '__typename'),
+          datasetDescription: isValidTiptapJson(safeJsonParse(datasetDescription))
+            ? safeJsonParse(datasetDescription) : null,
           isPublic,
           databaseIds: databases.map(_ => _.id),
           adducts,
@@ -412,7 +430,9 @@ export default {
         input: this.onInput,
       }
     },
-
+    handleDescriptionChange(content) {
+      this.metaspaceOptions.datasetDescription = content
+    },
     onInput(path, val) {
       set(this.value, path, val)
 
@@ -497,5 +517,28 @@ export default {
 
  #load-indicator {
    min-height: 300px;
+ }
+
+ #description-container{
+   @apply p-0 border rounded border-solid;
+   width: calc(75% - 10px);
+   border-color: #BCCDDC;
+   margin-left: 4px;
+   overflow: hidden;
+ }
+
+ #description-container > div > div > div {
+   @apply p-2;
+   min-height: calc(50px - 1rem);
+   background: #F1F5F8;
+ }
+
+ .focus-visible{
+   outline: 1px solid hsl(208,87%,50%);
+   outline-offset: 1px;
+ }
+
+ #description-container > div > div > div > p {
+
  }
 </style>

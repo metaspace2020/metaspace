@@ -11,7 +11,9 @@ import { OnEscape } from './tiptap'
 interface Props {
   content: string
   placeholder: string
+  contentClassName: string
   readonly: boolean
+  autoFocus: boolean
   update: (content: string) => Promise<void> | void
 }
 
@@ -37,8 +39,13 @@ const RichText = defineComponent<Props>({
   props: {
     content: String,
     placeholder: String,
+    contentClassName: String,
     readonly: Boolean,
     update: Function,
+    autoFocus: {
+      type: Boolean,
+      default: false,
+    },
   },
   setup(props) {
     const state = reactive({
@@ -72,7 +79,7 @@ const RichText = defineComponent<Props>({
           }
         },
       }),
-      editing: false,
+      editing: props.autoFocus,
       saveState: saveStates.UNSAVED,
     })
 
@@ -139,7 +146,9 @@ const RichText = defineComponent<Props>({
         )}
         <div onClick={stopPropagation}>
           <EditorContent
+            autoFocus={props.autoFocus}
             class={[
+              props.contentClassName,
               'transition-colors ease-in-out duration-300 rounded',
               { 'bg-transparent': !state.editing },
               { 'bg-gray-100': state.editing },
