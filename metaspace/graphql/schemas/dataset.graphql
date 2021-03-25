@@ -2,6 +2,7 @@ type Dataset {
   id: String!
   name: String!
   uploadDT: String!
+  datasetDescription: String  # JSON-based rich text, in a format defined by tiptap (https://tiptap.scrumpy.io/)
 
   submitter: DatasetUser!
   group: DatasetGroup

@@ -21,6 +21,7 @@ export interface DatasetAnnotationCount {
 export interface DatasetDetailItem {
   id: string;
   name: string;
+  datasetDescription: string | null;
   submitter: {
     id: string | null;
     name: string;
@@ -73,6 +74,7 @@ export const datasetDetailItemFragment =
   gql`fragment DatasetDetailItem on Dataset {
     id
     name
+    datasetDescription
     submitter {
       id
       name
