@@ -102,6 +102,7 @@ CREATE INDEX "IDX_d99bb7781b0c98876331d19387" ON "graphql"."user_project" (
 CREATE TABLE "graphql"."dataset" (
   "id" text NOT NULL, 
   "user_id" uuid NOT NULL, 
+  "dataset_description" text, 
   "group_id" uuid, 
   "group_approved" boolean NOT NULL DEFAULT false, 
   "pi_name" text, 

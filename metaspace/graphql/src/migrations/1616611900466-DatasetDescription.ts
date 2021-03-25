@@ -9,7 +9,9 @@ export class DatasetDescription1616611900466 implements MigrationInterface {
                 '{"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": ""}]}]}'::jsonb,
                 '{content, 0, content, 0, text}',
                 to_jsonb(public.dataset.metadata->'Additional_Information'->'Supplementary')
-            )::json FROM public.dataset where graphql.dataset.id=public.dataset.id;
+            )::json FROM public.dataset where graphql.dataset.id=public.dataset.id  and
+            public.dataset.metadata->'Additional_Information'->'Supplementary' is not null and
+            public.dataset.metadata->'Additional_Information'->'Supplementary' #>> '{}' != '';
         `);
     }
 

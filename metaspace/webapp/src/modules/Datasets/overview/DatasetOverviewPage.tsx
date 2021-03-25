@@ -10,6 +10,8 @@ import VisibilityBadge from '../common/VisibilityBadge'
 import { DatasetActionsDropdown } from './DatasetActionsDropdown'
 import { currentUserRoleQuery, CurrentUserRoleResult } from '../../../api/user'
 import { DatasetOverviewGallery } from './DatasetOverviewGallery'
+import RichText from '../../../components/RichText'
+import { isValidTiptapJson, validateTiptapJson } from '../../../../../graphql/src/utils/tiptap'
 
 interface Props {
   className: string
@@ -68,7 +70,7 @@ export default defineComponent<Props>({
     return () => {
       const {
         name, submitter, group, projects, annotationCounts, metadataJson, id,
-        isPublic,
+        isPublic, datasetDescription,
       } = dataset?.value || {} as any
       const { role, id: currentUserId } = currentUser?.value || {} as CurrentUserRoleResult
       const { annotationLabel, detailLabel, projectLabel, inpFdrLvls } = props
@@ -88,7 +90,8 @@ export default defineComponent<Props>({
         }
         return null
       })
-
+      const description = isValidTiptapJson(safeJsonParse(datasetDescription))
+        ? safeJsonParse(datasetDescription) : null
       const canEdit = (role === 'admin' || (currentUserId === submitter?.id
         && (status !== 'QUEUED' && status !== 'ANNOTATING')))
       const canViewPublicationStatus = (status === 'FINISHED' && canEdit && publicationStatus?.value != null)
@@ -113,6 +116,7 @@ export default defineComponent<Props>({
         return <div class="text-center">This dataset doesn't exist, or you do not have access to it.</div>
       }
 
+      console.log('description', description)
       return (
         <div class={`dataset-overview-container ${!showImageViewer ? 'justify-center' : ''}`}>
           <div class={`dataset-overview-wrapper max-w-4xl w-full  ${showImageViewer ? 'lg:w-1/2' : ''}`}>
@@ -134,7 +138,15 @@ export default defineComponent<Props>({
                 {!group && <a class='ml-1' href={groupLink}>(test)</a>}
               </div>
               <div>{upDate}</div>
-              <div class='dataset-opt-description'>Lorem ipsum</div>
+              {
+                description
+                && <RichText
+                  class="dataset-opt-description p-0"
+                  placeholder=" "
+                  content={description}
+                  readonly={true}
+                />
+              }
             </div>
             <div class='dataset-overview-holder'>
               <div class='text-4xl truncate'>{annotationLabel}</div>
