@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`AnnotationCountTable should match snapshot 1`] = `
+exports[`AnnotationCountTable it should match snapshot 1`] = `
 <div class="relative text-center" data="[object Object],[object Object]" id="xxxx" header="5,10,20,50">
   <h4># of annotations with FDR% &lt;=</h4>
   <div class="el-table el-table--fit el-table--scrollable-x el-table--enable-row-hover el-table--enable-row-transition" style="width: 100%; margin-top: 20px;">
