@@ -94,11 +94,7 @@ export default {
     },
 
     filter() {
-      const filterAux = this.$store?.getters?.filter
-      if (this.$route?.name === 'dataset-annotations') { // apply dataset filter if a dataset annotation
-        filterAux.datasetIds = [this.$route.params.datasetId]
-      }
-      return filterAux
+      return this.$store?.getters?.filter
     },
   },
   created() {

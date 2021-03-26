@@ -90,18 +90,28 @@ describe('AnnotationCountTable', () => {
     const wrapper = mount(testHarness, { store, router, propsData })
     await Vue.nextTick()
 
-    // check if each link cell has the correct parameters
-    wrapper.findAll('a').wrappers.forEach((link, index) => {
-      const mockIndex: number = Math.floor(index / (mockFdrLevels.length || 1))
-      const countIndex: number = index % mockFdrLevels.length
-      expect(link.props('to').params.datasetId).toBe('xxxx')
-      expect(link.props('to').query.db_id).toBe(mockAnnotationCounts[mockIndex].databaseId.toString())
-      expect(link.props('to').query.fdr)
-        .toBe((mockAnnotationCounts[mockIndex].counts[countIndex].level / 100).toString())
+    // check if each link cell has the correct parameters for fdr and db filters
+    wrapper.find('tbody').findAll('tr').wrappers.forEach((row, rowIndex) => {
+      row.findAll('a').wrappers.forEach((col, colIndex) => {
+        if (colIndex !== 0) { // db name links do not filter by fdr
+          expect(col.props('to').query.fdr)
+            .toBe((mockFdrLevels[colIndex - 1] / 100).toString())
+        }
+        expect(col.props('to').params.dataset_id).toBe('xxxx')
+        expect(col.props('to').query.db_id).toBe(mockAnnotationCounts[rowIndex].databaseId.toString())
+      })
     })
 
+    // check if each link cell has the correct parameters for the summaryRow
+    wrapper.findAll('tbody').at(1)
+      .findAll('a').wrappers.forEach((col, colIndex) => {
+        expect(col.props('to').query.fdr)
+          .toBe((mockFdrLevels[colIndex] / 100).toString())
+        expect(col.props('to').params.dataset_id).toBe('xxxx')
+      })
+
     expect(wrapper.findAll('th').length).toBe(mockFdrLevels.length + 1)
-    expect(wrapper.findAll('a').at(1).props('to').params.datasetId)
+    expect(wrapper.findAll('a').at(1).props('to').params.dataset_id)
       .toBe('xxxx')
   })
 

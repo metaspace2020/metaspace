@@ -1,10 +1,10 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`DatasetActionsDropdown it should match snapshot 1`] = `
-<div class="el-dropdown" dataset="[object Object]" currentuser="[object Object]"><button type="button" class="el-button el-button--primary p-1 el-dropdown-selfdefine" aria-haspopup="list" aria-controls="dropdown-menu-4606" role="button" tabindex="0">
+<div class="el-dropdown" dataset="[object Object]" currentuser="[object Object]"><button type="button" class="el-button el-button--primary p-1 el-dropdown-selfdefine" aria-haspopup="list" aria-controls="dropdown-menu-411" role="button" tabindex="0">
     <!---->
     <!----><span><span class="ml-2">Actions</span><i class="el-icon-arrow-down el-icon--right"></i></span></button>
-  <transition-stub name="el-zoom-in-top" class="dataset-overview-menu" id="dropdown-menu-4606">
+  <transition-stub name="el-zoom-in-top" class="dataset-overview-menu" id="dropdown-menu-411">
     <ul class="el-dropdown-menu el-popper" style="display: none;">
       <li tabindex="-1" class="el-dropdown-menu__item">
         <!---->Edit metadata</li>

@@ -48,7 +48,7 @@ export default defineComponent<Props>({
   // Last reprocessed date (as currently)/Upload date/Number of annotations for FDR 10%/User name/Dataset name
   setup(props, ctx) {
     const { $router, $route } = ctx.root
-    const datasetId = computed(() => $route.params.datasetId)
+    const datasetId = computed(() => $route.params.dataset_id)
     const {
       result: datasetResult,
       loading: datasetLoading,
@@ -116,7 +116,6 @@ export default defineComponent<Props>({
         return <div class="text-center">This dataset doesn't exist, or you do not have access to it.</div>
       }
 
-      console.log('description', description)
       return (
         <div class={`dataset-overview-container ${!showImageViewer ? 'justify-center' : ''}`}>
           <div class={`dataset-overview-wrapper max-w-4xl w-full  ${showImageViewer ? 'lg:w-1/2' : ''}`}>
