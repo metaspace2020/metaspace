@@ -33,14 +33,26 @@ export const AnnotationCountTable = defineComponent<AnnotationCountTableProps>({
     headerTitleSuffix: { type: String, default: '%' },
   },
   setup(props, ctx) {
-    const annotationsLink = (datasetId: string, database?: string, fdrLevel?: number) => ({
-      name: 'dataset-annotations',
-      params: { datasetId },
-      query: encodeParams({
+    const annotationsLink = (datasetId: string, database?: string, fdrLevel?: number) => {
+      const query = {
         database,
         fdrLevel,
-      }),
-    })
+        datasetIds: [datasetId],
+      }
+      // delete undefined so that filter do not replace the nulls and make the navigation back weird
+      if (!database) {
+        delete query.database
+      }
+      if (!fdrLevel) {
+        delete query.fdrLevel
+      }
+
+      return {
+        name: 'dataset-annotations',
+        params: { dataset_id: datasetId },
+        query: encodeParams(query),
+      }
+    }
 
     const mountTableData = (data: DatasetAnnotationCount[], header: string[]) : AnnotationCountTableData[] => {
       if (!data) { return [] }
@@ -69,7 +81,14 @@ export const AnnotationCountTable = defineComponent<AnnotationCountTableProps>({
 
     const formatCell = (row: any, column: any, cellValue: any, rowIndex: number, colIndex: number) => {
       const { id } = props
-      if (colIndex === 0) { return cellValue }
+      if (colIndex === 0) {
+        return (
+          <RouterLink to={annotationsLink(id?.toString(), row?.id,
+            undefined)}>
+            {cellValue}
+          </RouterLink>
+        )
+      }
 
       return (
         <RouterLink to={annotationsLink(id?.toString(), row?.id,
@@ -77,6 +96,28 @@ export const AnnotationCountTable = defineComponent<AnnotationCountTableProps>({
           {cellValue}
         </RouterLink>
       )
+    }
+
+    const getSummaries = (param: any) => {
+      const { columns, data } = param
+      return columns
+        .map((col: any, colIndex : number) => {
+          if (colIndex === 0) {
+            return props.sumRowLabel
+          }
+          const currentFDR = props?.header[colIndex - 1]
+
+          const reducer = (accumulator: number, currentValue: any) => {
+            return accumulator + currentValue[currentFDR]
+          }
+
+          return (
+            <RouterLink key={colIndex} to={annotationsLink(props?.id?.toString(), undefined,
+              parseInt(currentFDR, 10) / 100)}>
+              {data.reduce(reducer, 0)}
+            </RouterLink>
+          )
+        })
     }
 
     return () => {
@@ -90,6 +131,7 @@ export const AnnotationCountTable = defineComponent<AnnotationCountTableProps>({
             data={tableData}
             show-summary={true}
             sum-text={sumRowLabel}
+            summary-method={getSummaries}
             style="width: 100%; margin-top: 20px">
             {
               ['name'].concat(header).map((col, colIndex) => {
