@@ -6,6 +6,27 @@
     </h2>
     <ul>
       <publication-item
+        title="Multimodal Imaging Based on Vibrational Spectroscopies and Mass Spectrometry Imaging Applied to Biological Tissue: A Multiscale and Multiomics Review"
+        authors="Tuck M, Blanc L, Touti R, Patterson NH, Van Nuffel S, Villette S, Taveau JC, Römpp A, Brunelle A, Lecomte S, Desbenoit N"
+        publisher="Anal. Chem."
+        year="2021"
+        link="https://doi.org/10.1021/acs.analchem.0c04595"
+      />
+      <publication-item
+        title="The emergence of imaging mass spectrometry in drug discovery and development: Making a difference by driving decision making"
+        authors="Castellino S, Lareau NM, Groseclose MR"
+        publisher="J. Mass Spectrom."
+        year="2021"
+        link="https://doi.org/10.1002/jms.4717"
+      />
+      <publication-item
+        title="Batch Effects in MALDI Mass Spectrometry Imaging"
+        authors="Balluff B, Hopf C, Porta Siegel T, Grabsch HI, Heeren RMA"
+        publisher="J. Am. Soc. Mass Spectrom."
+        year="2021"
+        link="https://doi.org/10.1021/jasms.0c00393"
+      />
+      <publication-item
         title="Spatial Metabolomics and Imaging Mass Spectrometry in the Age of Artificial Intelligence"
         authors="Alexandrov T"
         publisher="Annu. Rev. Biomed. Data Sci."
