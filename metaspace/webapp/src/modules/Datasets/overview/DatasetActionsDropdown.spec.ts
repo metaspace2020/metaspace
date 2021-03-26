@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils'
+import { mount, shallowMount } from '@vue/test-utils'
 import router from '../../../router'
 import store from '../../../store/index'
 import Vue from 'vue'
@@ -73,8 +73,7 @@ describe('DatasetActionsDropdown', () => {
   })
 
   it('it should match snapshot', async() => {
-    const wrapper = mount(testHarness, { store, router, propsData })
-    await Vue.nextTick()
+    const wrapper = shallowMount(testHarness, { store, router, propsData })
 
     expect(wrapper).toMatchSnapshot()
   })
