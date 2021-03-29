@@ -324,6 +324,12 @@ export default {
       this.molDBsByGroup = getDatabasesByGroup(molecularDatabases)
       this.schema = deriveFullSchema(metadataSchemas[mdType])
 
+      // TODO remove the additional information from the schema itself at some point
+      // hide additional info from dataset upload, without changing schema for compatibility reasons
+      if (this.schema && this.schema.properties && this.schema.properties.Additional_Information) {
+        delete this.schema.properties.Additional_Information
+      }
+
       if (this.isNew) {
         // If this is a prepopulated form from a previous submission and metabolite databases have changed since that submission,
         // clear the databases so that the user has to re-pick. Otherwise populate it with the default databases.

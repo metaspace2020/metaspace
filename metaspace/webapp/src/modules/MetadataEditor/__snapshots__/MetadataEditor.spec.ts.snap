@@ -81,7 +81,6 @@ exports[`MetadataEditor should match snapshot 1`] = `
       <data-management-section-stub value="[object Object]" submitter="[object Object]"></data-management-section-stub>
       <visibility-option-section-stub ispublic="true"></visibility-option-section-stub>
       <metaspace-options-section-stub value="[object Object]" databasesbygroup="[object Object],[object Object]" adductoptions="[object Object],[object Object],[object Object]" isnewdataset="true"></metaspace-options-section-stub>
-      <form-section-stub sectionkey="Additional_Information" section="[object Object]" value="[object Object]" getsuggestionsforfield="function () { [native code] }"></form-section-stub>
     </div>
   </div>
 </div>
