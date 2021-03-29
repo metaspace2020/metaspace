@@ -9,7 +9,8 @@ from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
 from shutil import copyfileobj
-from typing import Optional, List, Iterable, Dict, Union, Tuple
+from typing import Optional, List, Iterable, Union, Tuple
+from urllib.parse import urlparse
 
 import numpy as np
 import pandas as pd
@@ -1027,10 +1028,15 @@ class SMDataset(object):
         def fetchImage(url):
             if not url:
                 return None
-            url = self._baseurl + url
+            if not urlparse(url).netloc:
+                # Ion images that have not been moved to S3 are sent as relative paths that need
+                # a host prefixed. This fallback can likely be removed after 2021-04-01.
+                url = self._baseurl + url
+
             try:
                 im = mpimg.imread(BytesIO(self._session.get(url).content))
             except:
+                # Retry, because occasionally the first request fails with a timeout
                 im = mpimg.imread(BytesIO(self._session.get(url).content))
             mask = im[:, :, 3]
             data = im[:, :, 0]
@@ -1125,7 +1131,12 @@ class SMDataset(object):
 
             if not url:
                 return None
-            url = self._baseurl + url
+
+            if not urlparse(url).netloc:
+                # Images that have not been moved to S3 are sent as relative paths that need
+                # a host prefixed. This fallback can be removed after
+                # https://github.com/metaspace2020/metaspace/issues/803 is implemented
+                url = self._baseurl + url
             im = Image.open(BytesIO(self._session.get(url).content))
             return np.asarray(im)
 
