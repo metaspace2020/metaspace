@@ -137,7 +137,8 @@ def get_config(
         'moldb_url': '{}/mol_db/v1'.format(host),
         'signin_url': '{}/api_auth/signin'.format(host),
         'gettoken_url': '{}/api_auth/gettoken'.format(host),
-        'companion_url': f'{host}/database_upload',
+        'database_upload_url': f'{host}/database_upload',
+        'dataset_upload_url': f'{host}/dataset_upload',
         'usr_email': email,
         'usr_pass': password,
         'usr_api_key': api_key,
@@ -145,25 +146,32 @@ def get_config(
     }
 
 
-def multipart_upload(local_path, companion_url):
-    def send_request(url, method='GET', json=None, data=None, return_headers=False):
+def multipart_upload(local_path, companion_url, file_type, headers={}):
+    def send_request(
+            url,
+            method='GET',
+            json=None,
+            data=None,
+            headers={},
+            return_headers=False,
+    ):
         if method == 'POST':
-            resp = requests.post(url, data=data, json=json)
+            resp = requests.post(url, data=data, json=json, headers=headers)
         elif method == 'PUT':
-            resp = requests.put(url, data=data, json=json)
+            resp = requests.put(url, data=data, json=json, headers=headers)
         else:
             resp = requests.get(url)
         resp.raise_for_status()
         return resp.json() if not return_headers else resp.headers
 
-    def init_multipart_upload(filename, file_type='text/csv'):
+    def init_multipart_upload(filename, file_type, headers={}):
         url = companion_url + '/s3/multipart'
         data = {
             'filename': filename,
             'type': file_type,
             'metadata': {'name': filename, 'type': file_type},
         }
-        resp_data = send_request(url, 'POST', json=data)
+        resp_data = send_request(url, 'POST', json=data, headers=headers)
         return resp_data['key'], resp_data['uploadId']
 
     def sign_part_upload(key, upload_id, part):
@@ -173,19 +181,25 @@ def multipart_upload(local_path, companion_url):
         return resp_data['url']
 
     def upload_part(presigned_url, data):
-        resp_data = send_request(presigned_url, 'PUT', data=data, return_headers=True)
+        resp_data = send_request(
+            presigned_url,
+            'PUT',
+            data=data,
+            headers=headers,
+            return_headers=True,
+        )
         return resp_data['ETag']
 
-    def complete_multipart_upload(key, upload_id, etags):
+    def complete_multipart_upload(key, upload_id, etags, headers={}):
         query = urllib.parse.urlencode({'key': key})
         url = f'{companion_url}/s3/multipart/{upload_id}/complete?{query}'
         data = {'parts': [{'PartNumber': part, 'ETag': etag} for part, etag in etags]}
-        resp_data = send_request(url, 'POST', json=data)
+        resp_data = send_request(url, 'POST', json=data, headers=headers)
         location = urllib.parse.unquote(resp_data['location'])
         (bucket,) = re.findall(r'https://([^.]+)', location)
-        return f's3://{bucket}/{key}'
+        return f's3a://{bucket}/{key}'
 
-    key, upload_id = init_multipart_upload(Path(local_path).name)
+    key, upload_id = init_multipart_upload(Path(local_path).name, file_type, headers=headers)
 
     PART_SIZE = 5 * 1024 ** 2
     etags = []
@@ -268,7 +282,8 @@ class GraphQLClient(object):
               }
             }
         """
-        return self.query(query)['currentUser']['primaryGroup'].get('group', {}).get('id', None)
+        primary_group = self.query(query)['currentUser']
+        return primary_group.get('group', {}).get('id', None) if not primary_group else None
 
     def iterQuery(self, query, variables={}, batch_size=50000):
         """
@@ -570,6 +585,12 @@ class GraphQLClient(object):
 
         return database_ids[0]
 
+    def _get_uuid(self):
+        url = f'{self._config["dataset_upload_url"]}/s3/uuid'
+        resp = requests.get(url)
+        resp.raise_for_status()
+        return resp.json()
+
     def create_dataset(
         self,
         data_path,
@@ -581,6 +602,7 @@ class GraphQLClient(object):
         ppm=None,
         ds_id=None,
     ):
+        """DEPRECATED."""
         submitter_id = self.get_submitter_id()
         query = """
             mutation createDataset($id: String, $input: DatasetCreateInput!, $priority: Int) {
@@ -603,6 +625,59 @@ class GraphQLClient(object):
                 'submitterId': submitter_id,
                 'metadataJson': metadata,
             },
+        }
+        return self.query(query, variables)
+
+    def create_dataset_v3(
+            self,
+            ibd_fn,
+            imzml_fn,
+            dataset_name,
+            metadata,
+            is_public,
+            databases,
+            adducts,
+            ppm=None,
+            ds_id=None,
+    ):
+        headers = self._get_uuid()
+
+        for fn in [ibd_fn, imzml_fn]:
+            file_path = multipart_upload(
+                fn,
+                self._config['dataset_upload_url'],
+                'application/octet-stream',
+                headers=headers,
+            )
+        data_path = file_path.rsplit('/', 1)[0]
+
+        submitter_id = self.get_submitter_id()
+        primary_group_id = self.get_primary_group_id()
+
+        query = """
+            mutation createDataset($id: String, $input: DatasetCreateInput!, $priority: Int, $useLithops: Boolean) {
+                createDataset(
+                  id: $id,
+                  input: $input,
+                  priority: $priority,
+                  useLithops: $useLithops,
+                )
+            }
+        """
+        variables = {
+            'id': ds_id,
+            'input': {
+                'name': dataset_name,
+                'inputPath': data_path,
+                'isPublic': is_public,
+                'databaseIds': databases and [self.map_database_to_id(db) for db in databases],
+                'adducts': adducts,
+                'ppm': ppm,
+                'submitterId': submitter_id,
+                'groupId': primary_group_id,
+                'metadataJson': metadata,
+            },
+            'useLithops': True,
         }
         return self.query(query, variables)
 
@@ -665,7 +740,7 @@ class GraphQLClient(object):
     def create_database(
         self, local_path: Union[str, Path], name: str, version: str, is_public: bool = False
     ) -> dict:
-        s3_path = multipart_upload(local_path, self._config['companion_url'])
+        s3_path = multipart_upload(local_path, self._config['database_upload_url'], 'text/csv')
 
         query = f"""
             mutation ($input: CreateMolecularDBInput!) {{
@@ -1404,7 +1479,7 @@ class SMInstance(object):
         adducts: List[str] = None,
         priority: int = 0,
     ):
-        """Submit a dataset for processing in Metaspace.
+        """DEPRECATED. Submit a dataset for processing in Metaspace.
 
         Args:
             imzml_fn: Imzml file path.
@@ -1433,6 +1508,37 @@ class SMInstance(object):
             is_public=is_public,
             databases=moldbs,
             adducts=adducts,
+        )
+
+    def submit_dataset_v3(
+            self,
+            ibd_fn: str,
+            imzml_fn: str,
+            dataset_name: str,
+            metadata: str,
+            is_public: bool = False,
+            mol_dbs: Union[List[str], List[int]] = None,
+            adducts: List[str] = None
+    ) -> dict:
+        """Submit a dataset for processing in Metaspace.
+
+        Args:
+            ibd_fn: ibd file name.
+            imzml_fn: imzml file name.
+            dataset_name: Dataset name.
+            metadata: Properly formatted metadata json string.
+            is_public: Make dataset public or not.
+            mol_dbs: List of molecular databases.
+            adducts: List of adducts.
+        """
+        if not adducts:
+            if metadata['MS_Analysis']['Polarity'] == 'Positive':
+                adducts = ['+H', '+Na', '+K']
+            else:
+                adducts = ['-H', '+Cl']
+
+        return self._gqclient.create_dataset_3(
+            ibd_fn, imzml_fn, dataset_name, metadata, is_public, mol_dbs, adducts
         )
 
     def update_dataset_dbs(self, datasetID, molDBs=None, adducts=None, priority=1):
