@@ -148,12 +148,7 @@ def get_config(
 
 def multipart_upload(local_path, companion_url, file_type, headers={}):
     def send_request(
-            url,
-            method='GET',
-            json=None,
-            data=None,
-            headers={},
-            return_headers=False,
+        url, method='GET', json=None, data=None, headers={}, return_headers=False,
     ):
         if method == 'POST':
             resp = requests.post(url, data=data, json=json, headers=headers)
@@ -182,11 +177,7 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
 
     def upload_part(presigned_url, data):
         resp_data = send_request(
-            presigned_url,
-            'PUT',
-            data=data,
-            headers=headers,
-            return_headers=True,
+            presigned_url, 'PUT', data=data, headers=headers, return_headers=True,
         )
         return resp_data['ETag']
 
@@ -629,25 +620,22 @@ class GraphQLClient(object):
         return self.query(query, variables)
 
     def create_dataset_v3(
-            self,
-            ibd_fn,
-            imzml_fn,
-            dataset_name,
-            metadata,
-            is_public,
-            databases,
-            adducts,
-            ppm=None,
-            ds_id=None,
+        self,
+        ibd_fn,
+        imzml_fn,
+        dataset_name,
+        metadata,
+        is_public,
+        databases,
+        adducts,
+        ppm=None,
+        ds_id=None,
     ):
         headers = self._get_uuid()
 
         for fn in [ibd_fn, imzml_fn]:
             file_path = multipart_upload(
-                fn,
-                self._config['dataset_upload_url'],
-                'application/octet-stream',
-                headers=headers,
+                fn, self._config['dataset_upload_url'], 'application/octet-stream', headers=headers,
             )
         data_path = file_path.rsplit('/', 1)[0]
 
@@ -1511,14 +1499,14 @@ class SMInstance(object):
         )
 
     def submit_dataset_v3(
-            self,
-            ibd_fn: str,
-            imzml_fn: str,
-            dataset_name: str,
-            metadata: str,
-            is_public: bool = False,
-            mol_dbs: Union[List[str], List[int]] = None,
-            adducts: List[str] = None
+        self,
+        ibd_fn: str,
+        imzml_fn: str,
+        dataset_name: str,
+        metadata: str,
+        is_public: bool = False,
+        mol_dbs: Union[List[str], List[int]] = None,
+        adducts: List[str] = None,
     ) -> dict:
         """Submit a dataset for processing in Metaspace.
 
