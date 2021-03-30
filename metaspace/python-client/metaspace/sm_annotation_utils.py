@@ -1526,7 +1526,9 @@ class SMInstance(object):
             elif polarity == 'Negative':
                 adducts = ['-H', '+Cl']
             else:
-                raise Exception('Polarization set incorrectly, available only "Positive" or "Negative"')
+                raise Exception(
+                    'Polarization set incorrectly, available only "Positive" or "Negative"'
+                )
 
         return self._gqclient.create_dataset_v3(
             ibd_fn, imzml_fn, dataset_name, metadata, is_public, mol_dbs, adducts
