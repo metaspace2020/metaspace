@@ -202,7 +202,7 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
                 break
 
             part += 1
-            print(f'Uploading {part} part of {local_path} file...')
+            print(f'Uploading {part:3} part of {Path(local_path).name} file...')
             presigned_url = sign_part_upload(key, upload_id, part)
             etag = upload_part(presigned_url, file_data)
             etags.append((part, etag))
