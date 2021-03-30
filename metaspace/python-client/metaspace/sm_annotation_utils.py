@@ -1519,13 +1519,16 @@ class SMInstance(object):
             mol_dbs: List of molecular databases.
             adducts: List of adducts.
         """
+        polarity = json.loads(metadata)['MS_Analysis']['Polarity']
         if not adducts:
-            if metadata['MS_Analysis']['Polarity'] == 'Positive':
+            if polarity == 'Positive':
                 adducts = ['+H', '+Na', '+K']
-            else:
+            elif polarity == 'Negative':
                 adducts = ['-H', '+Cl']
+            else:
+                raise Exception('Polarization set incorrectly, available only "Positive" or "Negative"')
 
-        return self._gqclient.create_dataset_3(
+        return self._gqclient.create_dataset_v3(
             ibd_fn, imzml_fn, dataset_name, metadata, is_public, mol_dbs, adducts
         )
 
