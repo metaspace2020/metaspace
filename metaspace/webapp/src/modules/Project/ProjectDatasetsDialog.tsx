@@ -71,14 +71,14 @@ export const ProjectDatasetsDialog = defineComponent<ProjectDatasetsDialogProps>
       loading,
     } = useQuery<{allDatasets: DatasetListItem[]}>(datasetListItemsQuery, {
       dFilter: {
-        submitter: props?.currentUserId,
+        submitter: props.currentUserId,
       },
     })
     const datasets = computed(() => datasetsResult.value != null
       ? datasetsResult.value.allDatasets as DatasetListItem[] : null)
 
     const getAvailableDatasets = (datasets: any) => {
-      if (!props?.isAdmin) {
+      if (!props.isAdmin) {
         return datasets
       }
 
@@ -104,11 +104,17 @@ export const ProjectDatasetsDialog = defineComponent<ProjectDatasetsDialogProps>
     const handleSelectNone = () => {
       const availableDatasets = getAvailableDatasets(datasets?.value).map((ds: any) => ds.id)
       availableDatasets.forEach((key: string) => { state.selectedDatasets[key] = false })
+      if (!state.hasChanged) {
+        state.hasChanged = true
+      }
     }
 
     const handleSelectAll = () => {
       const availableDatasets = getAvailableDatasets(datasets?.value).map((ds: any) => ds.id)
       availableDatasets.forEach((key: string) => { state.selectedDatasets[key] = true })
+      if (!state.hasChanged) {
+        state.hasChanged = true
+      }
     }
 
     const handleProjectDatasetsUpdate = async() => {
@@ -128,10 +134,10 @@ export const ProjectDatasetsDialog = defineComponent<ProjectDatasetsDialogProps>
         if (addedDatasetIds.length > 0 || removedDatasetIds.length > 0) {
           await $apollo.mutate({
             mutation: importDatasetsIntoProjectMutation,
-            variables: { projectId: props?.project?.id, datasetIds: addedDatasetIds, removedDatasetIds },
+            variables: { projectId: props.project?.id, datasetIds: addedDatasetIds, removedDatasetIds },
           })
         }
-        await props?.refreshData()
+        await props.refreshData()
         emit('update')
       } catch (err) {
         reportError(err)
