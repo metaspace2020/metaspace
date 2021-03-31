@@ -104,7 +104,7 @@ const UploadDialog = defineComponent<Props>({
       if (result.successful.length) {
         const [file] = result.successful
         // The path part of file.uploadURL is double-URI-encoded for some reason (slashes in the path are %2F,
-        // spaces in the filename are %2520). Pass it through decodeURI to get a regular encoded URI (spaces are %20).
+        // spaces in the filename are %2520). Decode it once to get a regular URI (slashes are /, spaces are %20).
         state.model.filePath = convertUploadUrlToS3Path(decodeURIComponent(file.uploadURL))
         if (!state.model.name) {
           state.model.name = file.name.substr(0, file.name.lastIndexOf('.')) || file.name
