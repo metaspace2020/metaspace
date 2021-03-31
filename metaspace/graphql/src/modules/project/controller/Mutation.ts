@@ -212,19 +212,27 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     return true
   },
 
-  async importDatasetsIntoProject(source, { projectId, datasetIds }, ctx: Context): Promise<boolean> {
+  async importDatasetsIntoProject(source, {
+    projectId, datasetIds,
+    removedDatasetIds,
+  }, ctx: Context): Promise<boolean> {
     const userProjectRole = (await ctx.user.getProjectRoles())[projectId]
     if (userProjectRole == null) {
       throw new UserError('Not a member of project')
     }
-    if (datasetIds.length > 0) {
+
+    if (
+      (Array.isArray(datasetIds) && datasetIds.length > 0)
+        || (Array.isArray(removedDatasetIds) && removedDatasetIds.length > 0)
+    ) {
       // Verify user is allowed to edit the datasets
-      await Promise.all(datasetIds.map(async(dsId: string) => {
+      await Promise.all((datasetIds || []).map(async(dsId: string) => {
         await getDatasetForEditing(ctx.entityManager, ctx.user, dsId)
       }))
 
       const approved = [UPRO.MEMBER, UPRO.MANAGER].includes(userProjectRole)
-      await updateProjectDatasets(ctx, projectId, datasetIds, approved)
+      await updateProjectDatasets(ctx, projectId, (datasetIds || []), (removedDatasetIds || [])
+        , approved, false)
     }
 
     return true

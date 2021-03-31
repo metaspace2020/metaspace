@@ -93,7 +93,7 @@ type Mutation {
 
   updateUserProject(projectId: ID!, userId: ID!, update: UpdateUserProjectInput!): Boolean!
 
-  importDatasetsIntoProject(projectId: ID!, datasetIds: [ID!]!): Boolean!
+  importDatasetsIntoProject(projectId: ID!, datasetIds: [ID!], removedDatasetIds: [ID!]): Boolean!
 
   # Managing review links
   createReviewLink(projectId: ID!): Project!
