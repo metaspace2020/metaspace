@@ -1504,7 +1504,7 @@ class SMInstance(object):
         ibd_fn: str,
         dataset_name: str,
         metadata: str,
-        is_public: bool = False,
+        is_public: bool,
         mol_dbs: Union[List[str], List[int]] = None,
         adducts: List[str] = None,
     ) -> dict:
