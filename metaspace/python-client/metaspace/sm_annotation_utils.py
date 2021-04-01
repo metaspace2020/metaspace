@@ -632,15 +632,15 @@ class GraphQLClient(object):
         ds_id=None,
     ):
         headers = self._get_dataset_upload_uuid()
+        submitter_id = self.get_submitter_id()
+        primary_group_id = self.get_primary_group_id()
+        database_ids = databases and [self.map_database_to_id(db) for db in databases]
 
         for fn in [imzml_fn, ibd_fn]:
             file_path = multipart_upload(
                 fn, self._config['dataset_upload_url'], 'application/octet-stream', headers=headers,
             )
         data_path = file_path.rsplit('/', 1)[0]
-
-        submitter_id = self.get_submitter_id()
-        primary_group_id = self.get_primary_group_id()
 
         query = """
             mutation createDataset($id: String, $input: DatasetCreateInput!, $priority: Int, $useLithops: Boolean) {
@@ -658,7 +658,7 @@ class GraphQLClient(object):
                 'name': dataset_name,
                 'inputPath': data_path,
                 'isPublic': is_public,
-                'databaseIds': databases and [self.map_database_to_id(db) for db in databases],
+                'databaseIds': database_ids,
                 'adducts': adducts,
                 'ppm': ppm,
                 'submitterId': submitter_id,
