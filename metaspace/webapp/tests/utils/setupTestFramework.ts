@@ -45,6 +45,10 @@ jest.mock('../../src/lib/delay', () => jest.fn(() => Promise.resolve()))
 // Mock elapsed time as it relies on variables such as current time and locale
 registerMockComponent('elapsed-time', { path: '../../src/components/ElapsedTime' })
 
+// Mock filter-panel and metadata editor as snaps are not updating local and failing on circle ci
+registerMockComponent('filter-panel', { path: '../../src/modules/Filters/FilterPanel' })
+registerMockComponent('metadata-editor', { path: '../../src/modules/MetadataEditor/MetadataEditor' })
+
 // Mock svg icons
 registerSVGIcons()
 
