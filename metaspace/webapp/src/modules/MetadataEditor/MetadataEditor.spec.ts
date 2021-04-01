@@ -1,4 +1,4 @@
-import { mount, shallowMount } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
 import MetadataEditor from './MetadataEditor.vue'
 import router from '../../router'
 import { initMockGraphqlClient, apolloProvider } from '../../../tests/utils/mockGraphqlClient'
@@ -49,7 +49,7 @@ describe('MetadataEditor', () => {
         allMolecularDBs: mockMolecularDatabases,
       }),
     })
-    const wrapper = shallowMount(MetadataEditor, { store, router, apolloProvider })
+    const wrapper = mount(MetadataEditor, { store, router, apolloProvider })
     await wrapper.vm.$data.loadingPromise
 
     expect(wrapper).toMatchSnapshot()
