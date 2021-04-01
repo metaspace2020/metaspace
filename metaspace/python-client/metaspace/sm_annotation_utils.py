@@ -576,7 +576,7 @@ class GraphQLClient(object):
 
         return database_ids[0]
 
-    def _get_uuid(self):
+    def _get_dataset_upload_uuid(self):
         url = f'{self._config["dataset_upload_url"]}/s3/uuid'
         resp = requests.get(url)
         resp.raise_for_status()
@@ -631,7 +631,7 @@ class GraphQLClient(object):
         ppm=None,
         ds_id=None,
     ):
-        headers = self._get_uuid()
+        headers = self._get_dataset_upload_uuid()
 
         for fn in [imzml_fn, ibd_fn]:
             file_path = multipart_upload(
