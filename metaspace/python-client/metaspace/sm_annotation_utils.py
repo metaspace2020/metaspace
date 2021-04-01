@@ -621,8 +621,8 @@ class GraphQLClient(object):
 
     def create_dataset_v3(
         self,
-        ibd_fn,
         imzml_fn,
+        ibd_fn,
         dataset_name,
         metadata,
         is_public,
@@ -633,7 +633,7 @@ class GraphQLClient(object):
     ):
         headers = self._get_uuid()
 
-        for fn in [ibd_fn, imzml_fn]:
+        for fn in [imzml_fn, ibd_fn]:
             file_path = multipart_upload(
                 fn, self._config['dataset_upload_url'], 'application/octet-stream', headers=headers,
             )
@@ -1500,8 +1500,8 @@ class SMInstance(object):
 
     def submit_dataset_v3(
         self,
-        ibd_fn: str,
         imzml_fn: str,
+        ibd_fn: str,
         dataset_name: str,
         metadata: str,
         is_public: bool = False,
@@ -1511,8 +1511,8 @@ class SMInstance(object):
         """Submit a dataset for processing in Metaspace.
 
         Args:
-            ibd_fn: ibd file name.
             imzml_fn: imzml file name.
+            ibd_fn: ibd file name.
             dataset_name: Dataset name.
             metadata: Properly formatted metadata json string.
             is_public: Make dataset public or not.
@@ -1531,7 +1531,7 @@ class SMInstance(object):
                 )
 
         return self._gqclient.create_dataset_v3(
-            ibd_fn, imzml_fn, dataset_name, metadata, is_public, mol_dbs, adducts
+            imzml_fn, ibd_fn, dataset_name, metadata, is_public, mol_dbs, adducts
         )
 
     def update_dataset_dbs(self, datasetID, molDBs=None, adducts=None, priority=1):
