@@ -1505,7 +1505,7 @@ class SMInstance(object):
         dataset_name: str,
         metadata: str,
         is_public: bool,
-        mol_dbs: Union[List[str], List[int]] = None,
+        mol_dbs: List[str],
         adducts: List[str] = None,
     ) -> dict:
         """Submit a dataset for processing in Metaspace.
