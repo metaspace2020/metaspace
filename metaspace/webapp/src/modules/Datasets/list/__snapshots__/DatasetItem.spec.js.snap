@@ -232,15 +232,17 @@ exports[`DatasetItem should match snapshot 1`] = `
         Edit metadata
       </a>
     </div>
-    <div>
+    <div
+      class="ds-delete"
+    >
       <i
-        class="el-icon-data-analysis"
+        class="el-icon-delete"
       />
       <a
-        class=""
-        href="/dataset/mockdataset"
+        class="text-danger"
+        href="#"
       >
-        Dataset overview
+        Delete dataset
       </a>
     </div>
   </div>

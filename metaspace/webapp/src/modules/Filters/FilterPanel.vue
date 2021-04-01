@@ -211,7 +211,7 @@ const FilterPanel = {
             }
 
             this.$store.commit('updateFilter',
-              Object.assign(this.filter, { [filterKey]: val }))
+              Object.assign(this.filter, { [filterKey]: val, ...extraUpdatesAux }))
           },
           onDestroy: () => {
             this.$store.commit('removeFilter', filterKey)

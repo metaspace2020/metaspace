@@ -10,7 +10,7 @@ import config from '../../../lib/config'
 const DatasetItemActions = defineComponent({
   name: 'DatasetItemActions',
   props: {
-    showOverview: { type: Boolean, default: true },
+    showOverview: { type: Boolean, default: config.features.show_dataset_overview },
     dataset: { type: Object as () => DatasetDetailItem, required: true },
     metadata: { type: Object as () => any, required: true },
     currentUser: { type: Object as () => any },
@@ -202,7 +202,7 @@ const DatasetItemActions = defineComponent({
           </div>}
 
           {
-            !props?.showOverview && dataset.canDownload
+            !props.showOverview && dataset.canDownload
           && <div class="ds-download">
             <i class="el-icon-download" />
             <a
@@ -212,7 +212,7 @@ const DatasetItemActions = defineComponent({
           </div>}
 
           {
-            !props?.showOverview && canDelete.value
+            !props.showOverview && canDelete.value
           && <div class="ds-delete">
             <i class="el-icon-delete" />
             <a
@@ -223,7 +223,7 @@ const DatasetItemActions = defineComponent({
           </div>}
 
           {
-            !props?.showOverview
+            !props.showOverview
             && canReprocess.value
           && <div class="ds-reprocess">
             <i class="el-icon-refresh" />
@@ -239,15 +239,18 @@ const DatasetItemActions = defineComponent({
             {publicationStatus.value}
           </div>}
 
-          <div>
-            <i class="el-icon-data-analysis" />
-            <router-link to={{
-              name: 'dataset-overview',
-              params: { dataset_id: props.dataset.id },
-            }}>
-              Dataset overview
-            </router-link>
-          </div>
+          {
+            props.showOverview
+            && <div>
+              <i class="el-icon-data-analysis" />
+              <router-link to={{
+                name: 'dataset-overview',
+                params: { dataset_id: props.dataset.id },
+              }}>
+                Dataset overview
+              </router-link>
+            </div>
+          }
         </div>
       )
     }

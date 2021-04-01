@@ -105,14 +105,14 @@ export const AnnotationCountTable = defineComponent<AnnotationCountTableProps>({
           if (colIndex === 0) {
             return props.sumRowLabel
           }
-          const currentFDR = props?.header[colIndex - 1]
+          const currentFDR = props.header[colIndex - 1]
 
           const reducer = (accumulator: number, currentValue: any) => {
             return accumulator + currentValue[currentFDR]
           }
 
           return (
-            <RouterLink key={colIndex} to={annotationsLink(props?.id?.toString(), undefined,
+            <RouterLink key={colIndex} to={annotationsLink(props.id?.toString(), undefined,
               parseInt(currentFDR, 10) / 100)}>
               {data.reduce(reducer, 0)}
             </RouterLink>

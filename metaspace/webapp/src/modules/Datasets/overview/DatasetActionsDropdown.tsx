@@ -37,9 +37,9 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
     })
 
     const openDeleteDialog = async() => {
-      const force = props?.currentUser != null
-        && props?.currentUser?.role === 'admin'
-        && props?.dataset?.status !== 'FINISHED'
+      const force = props.currentUser != null
+        && props.currentUser?.role === 'admin'
+        && props.dataset?.status !== 'FINISHED'
       try {
         const msg = `Are you sure you want to ${force ? 'FORCE-DELETE' : 'delete'} ${props.dataset.name}?`
         await $confirm(msg, {
@@ -55,13 +55,13 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
         await $apollo.mutate({
           mutation: deleteDatasetQuery,
           variables: {
-            id: props?.dataset?.id,
+            id: props.dataset?.id,
             force,
           },
         })
 
         emit('datasetMutated')
-        $notify.success(`Dataset deleted ${props?.dataset?.name}`)
+        $notify.success(`Dataset deleted ${props.dataset?.name}`)
         $router.replace('/datasets')
       } catch (err) {
         state.disabled = false
@@ -83,7 +83,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
         await $apollo.mutate({
           mutation: reprocessDatasetQuery,
           variables: {
-            id: props?.dataset?.id,
+            id: props.dataset?.id,
             useLithops: config.features.lithops,
           },
         })
@@ -103,7 +103,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
         case 'edit':
           $router.push({
             name: 'edit-metadata',
-            params: { dataset_id: props?.dataset?.id },
+            params: { dataset_id: props.dataset?.id },
           })
           break
         case 'delete':

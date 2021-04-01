@@ -2,7 +2,7 @@ type Dataset {
   id: String!
   name: String!
   uploadDT: String!
-  datasetDescription: String  # JSON-based rich text, in a format defined by tiptap (https://tiptap.scrumpy.io/)
+  description: String  # JSON-based rich text, in a format defined by tiptap (https://tiptap.scrumpy.io/)
 
   submitter: DatasetUser!
   group: DatasetGroup
@@ -180,7 +180,7 @@ input DatasetCreateInput {
   name: String!
   inputPath: String!
   uploadDT: String
-  datasetDescription: String
+  description: String
   metadataJson: String!
   databaseIds: [Int!]
   molDBs: [String!]  # @deprecated(reason: "This field will be removed. Use \"databaseIds\" instead.")
@@ -204,7 +204,7 @@ input DatasetUpdateInput {
   name: String
   uploadDT: String
   metadataJson: String
-  datasetDescription: String
+  description: String
   databaseIds: [Int!]
   molDBs: [String!]  # @deprecated(reason: "This field will be removed. Use \"databaseIds\" instead.")
   adducts: [String!]

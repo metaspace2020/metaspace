@@ -224,13 +224,13 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       publicationStatus: p.publicationStatus,
     }))
   },
-  async datasetDescription(ds, _, { cachedGetEntityById }: Context) {
+  async description(ds, _, { cachedGetEntityById }: Context) {
     const dataset = await cachedGetEntityById(DatasetModel, ds._source.ds_id)
     if (dataset == null) {
       logger.warn(`Elasticsearch DS does not exist in DB: ${ds._source.ds_id}`)
       return null
     }
-    return dataset.datasetDescription ? JSON.stringify(dataset.datasetDescription) : undefined
+    return dataset.description ? JSON.stringify(dataset.description) : undefined
   },
   async principalInvestigator(ds, _, { cachedGetEntityById, isAdmin, user }: Context) {
     const dataset = await cachedGetEntityById(DatasetModel, ds._source.ds_id)

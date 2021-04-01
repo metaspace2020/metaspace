@@ -14,6 +14,7 @@ interface Props {
   contentClassName: string
   readonly: boolean
   autoFocus: boolean
+  hideStateStatus: boolean
   update: (content: string) => Promise<void> | void
 }
 
@@ -41,6 +42,7 @@ const RichText = defineComponent<Props>({
     placeholder: String,
     contentClassName: String,
     readonly: Boolean,
+    hideStateStatus: Boolean,
     update: Function,
     autoFocus: {
       type: Boolean,
@@ -129,19 +131,22 @@ const RichText = defineComponent<Props>({
                   <i class="el-icon-edit" /> click to edit
                 </button>}
             </FadeTransition>
-            <FadeTransition>
-              {state.editing && <p class="m-0 ml-auto text-sm leading-6 text-gray-700" onClick={stopPropagation}>
-                <FadeTransition>
-                  {state.saveState === saveStates.FAILED
-                    ? <button class="el-button el-button--mini" onClick={() => editor.emitUpdate()}>
+            {
+              !props.hideStateStatus
+              && <FadeTransition>
+                {state.editing && <p class="m-0 ml-auto text-sm leading-6 text-gray-700" onClick={stopPropagation}>
+                  <FadeTransition>
+                    {state.saveState === saveStates.FAILED
+                      ? <button class="el-button el-button--mini" onClick={() => editor.emitUpdate()}>
                         Retry
-                    </button>
-                    : <span key={state.saveState}>
-                      {getSaveState(state.saveState)}
-                    </span>}
-                </FadeTransition>
-              </p> }
-            </FadeTransition>
+                      </button>
+                      : <span key={state.saveState}>
+                        {getSaveState(state.saveState)}
+                      </span>}
+                  </FadeTransition>
+                </p> }
+              </FadeTransition>
+            }
           </header>
         )}
         <div onClick={stopPropagation}>

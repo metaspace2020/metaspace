@@ -11,7 +11,7 @@ import { DatasetActionsDropdown } from './DatasetActionsDropdown'
 import { currentUserRoleQuery, CurrentUserRoleResult } from '../../../api/user'
 import { DatasetOverviewGallery } from './DatasetOverviewGallery'
 import RichText from '../../../components/RichText'
-import { isValidTiptapJson } from '../../../lib/safeJsonParse'
+import isValidTiptapJson from '../../../lib/isValidTiptapJson'
 
 interface Props {
   className: string
@@ -70,7 +70,7 @@ export default defineComponent<Props>({
     return () => {
       const {
         name, submitter, group, projects, annotationCounts, metadataJson, id,
-        isPublic, datasetDescription,
+        isPublic, description,
       } = dataset?.value || {} as any
       const { role, id: currentUserId } = currentUser?.value || {} as CurrentUserRoleResult
       const { annotationLabel, detailLabel, projectLabel, inpFdrLvls } = props
@@ -90,8 +90,8 @@ export default defineComponent<Props>({
         }
         return null
       })
-      const description = isValidTiptapJson(safeJsonParse(datasetDescription))
-        ? safeJsonParse(datasetDescription) : null
+      const dsDescription = isValidTiptapJson(safeJsonParse(description))
+        ? safeJsonParse(description) : null
       const canEdit = (role === 'admin' || (currentUserId === submitter?.id
         && (status !== 'QUEUED' && status !== 'ANNOTATING')))
       const canViewPublicationStatus = (status === 'FINISHED' && canEdit && publicationStatus?.value != null)
@@ -120,7 +120,7 @@ export default defineComponent<Props>({
         <div class={`dataset-overview-container ${!showImageViewer ? 'justify-center' : ''}`}>
           <div class={`dataset-overview-wrapper max-w-4xl w-full  ${showImageViewer ? 'lg:w-1/2' : ''}`}>
             <div class='dataset-overview-header'>
-              <div class='text-4xl text-center truncate'>
+              <h1 class='text-center truncate'>
                 {name}
                 <span class='text-base align-middle'>
                   {
@@ -128,40 +128,40 @@ export default defineComponent<Props>({
                     && <VisibilityBadge datasetId={id ? id.toString() : ''}/>
                   }
                 </span>
-              </div>
+              </h1>
               <DatasetActionsDropdown dataset={dataset?.value} currentUser={currentUser?.value}/>
             </div>
             <div class='dataset-overview-holder'>
-              <div class='truncate'>{submitter?.name}
+              <p class='truncate'>{submitter?.name}
                 {group && <a class='ml-1' href={groupLink}>({group?.shortName})</a>}
                 {!group && <a class='ml-1' href={groupLink}>(test)</a>}
-              </div>
+              </p>
               <div>{upDate}</div>
               {
                 description
                 && <RichText
                   class="dataset-opt-description p-0"
                   placeholder=" "
-                  content={description}
+                  content={dsDescription}
                   readonly={true}
                 />
               }
             </div>
             <div class='dataset-overview-holder'>
-              <div class='text-4xl truncate'>{annotationLabel}</div>
+              <h1 class='truncate'>{annotationLabel}</h1>
               <AnnotationCountTable id={id} data={annotationCounts} header={inpFdrLvls}/>
             </div>
             {
               !isEmpty(metadata)
               && <div class='dataset-overview-holder'>
-                <div class='text-4xl truncate'>{detailLabel}</div>
+                <h1 class='truncate'>{detailLabel}</h1>
                 <DatasetMetadataViewer metadata={metadata}/>
               </div>
             }
             {
               Array.isArray(projects) && projects.length > 0
               && <div class='dataset-overview-holder'>
-                <div class='text-4xl truncate'>{projectLabel}</div>
+                <h1 class='truncate'>{projectLabel}</h1>
                 {
                   projects.map((project) => {
                     return (

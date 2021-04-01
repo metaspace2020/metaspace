@@ -3,6 +3,14 @@
     <filter-panel
       :level="currentLevel"
     />
+    <div class="my-2 w-full">
+      <router-link
+        v-if="isFromDatasetOverview"
+        :to="datasetOverviewLink"
+      >
+        <span><i class="el-icon-arrow-left"></i>Dataset Overview</span>
+      </router-link>
+    </div>
     <el-row>
       <el-col
         id="annot-table-container"
@@ -87,6 +95,17 @@ export default {
 
     currentLevel() {
       return this.$route.name === 'dataset-annotations' ? 'dataset-annotation' : 'annotation'
+    },
+
+    isFromDatasetOverview() {
+      return this.$route.name === 'dataset-annotations'
+    },
+
+    datasetOverviewLink() {
+      return {
+        name: 'dataset-overview',
+        params: { dataset_id: this.$route.params.dataset_id },
+      }
     },
 
     selectedAnnotation() {

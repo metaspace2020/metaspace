@@ -81,7 +81,7 @@ export const DatasetOverviewGallery = defineComponent<DatasetOverviewGalleryProp
     const carousel = templateRef<any>('carousel')
 
     const diagnosticDataLookup = computed(() => {
-      const parsed = props?.data?.map(({ data, ...rest }) => ({ ...rest, data: JSON.parse(data) }))
+      const parsed = props.data?.map(({ data, ...rest }) => ({ ...rest, data: JSON.parse(data) }))
       return keyBy(parsed, 'id')
     })
     const mockImg: any = diagnosticDataLookup?.value?.ionPreview?.imageIds
@@ -98,10 +98,10 @@ export const DatasetOverviewGallery = defineComponent<DatasetOverviewGalleryProp
 
     const state = reactive<DatasetOverviewGalleryState>({
       showCarouselItem: true,
-      selectedValue: setSelectedValue((Array.isArray(props?.options[0]?.options)
-        ? props?.options[0]?.options[0] : undefined) as DatasetOverviewGalleryOption),
-      selectedOption: (Array.isArray(props?.options[0]?.options)
-        ? props?.options[0]?.options[0] : undefined) as DatasetOverviewGalleryOption,
+      selectedValue: setSelectedValue((Array.isArray(props.options[0]?.options)
+        ? props.options[0]?.options[0] : undefined) as DatasetOverviewGalleryOption),
+      selectedOption: (Array.isArray(props.options[0]?.options)
+        ? props.options[0]?.options[0] : undefined) as DatasetOverviewGalleryOption,
     })
 
     const handleOptionChange = (option: any) => {

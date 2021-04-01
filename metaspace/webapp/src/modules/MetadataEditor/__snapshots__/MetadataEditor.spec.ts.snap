@@ -45,8 +45,8 @@ Object {
   "databaseIds": Array [
     1,
   ],
-  "datasetDescription": null,
   "decoySampleSize": null,
+  "description": null,
   "groupId": "123",
   "isPublic": true,
   "name": "dataset.name",
@@ -71,9 +71,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
     <div id="md-section-list">
       <div class="flex flex-row w-full flex-wrap mt-6">
         <div class="metadata-section__title w-3/12">
-          Dataset Description
+          Dataset description
         </div>
-        <rich-text-stub contentclassname="customEditor" update="function () { [native code] }" autofocus="true" id="description-container"></rich-text-stub>
+        <rich-text-stub contentclassname="customEditor" hidestatestatus="true" update="function () { [native code] }" autofocus="true" id="description-container"></rich-text-stub>
       </div>
       <form-section-stub sectionkey="Sample_Information" section="[object Object]" value="[object Object]" getsuggestionsforfield="function () { [native code] }"></form-section-stub>
       <form-section-stub sectionkey="Sample_Preparation" section="[object Object]" value="[object Object]" getsuggestionsforfield="function () { [native code] }"></form-section-stub>

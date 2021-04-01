@@ -7,12 +7,13 @@
       <div id="md-section-list">
         <div class="flex flex-row w-full flex-wrap mt-6">
           <div class="metadata-section__title w-3/12">
-            Dataset Description
+            Dataset description
           </div>
           <rich-text
             id="description-container"
-            :content="metaspaceOptions.datasetDescription"
+            :content="metaspaceOptions.description"
             :auto-focus="true"
+            :hide-state-status="true"
             :readonly="false"
             :update="handleDescriptionChange"
             content-class-name="customEditor"
@@ -100,7 +101,8 @@ import VisibilityOptionSection from './sections/VisibilityOptionSection.vue'
 import FormSection from './sections/FormSection.vue'
 import DataManagementSection from './sections/DataManagementSection.vue'
 import emailRegex from '../../lib/emailRegex'
-import safeJsonParse, { isValidTiptapJson } from '../../lib/safeJsonParse'
+import safeJsonParse from '../../lib/safeJsonParse'
+import isValidTiptapJson from '../../lib/isValidTiptapJson'
 import config from '../../lib/config'
 import { getDatabasesByGroup } from '../MolecularDatabases/formatting'
 import RichText from '../../components/RichText/RichText'
@@ -209,7 +211,7 @@ export default {
         const {
           isPublic, configJson, databases, adducts,
           name, group, projects, submitter, principalInvestigator,
-          datasetDescription,
+          description,
         } = dataset
         const config = safeJsonParse(configJson)
         return {
@@ -217,8 +219,8 @@ export default {
           groupId: group ? group.id : null,
           projectIds: projects ? projects.map(p => p.id) : [],
           principalInvestigator: principalInvestigator == null ? null : omit(principalInvestigator, '__typename'),
-          datasetDescription: isValidTiptapJson(safeJsonParse(datasetDescription))
-            ? safeJsonParse(datasetDescription) : null,
+          description: isValidTiptapJson(safeJsonParse(description))
+            ? safeJsonParse(description) : null,
           isPublic,
           databaseIds: databases.map(_ => _.id),
           adducts,
@@ -437,7 +439,7 @@ export default {
       }
     },
     handleDescriptionChange(content) {
-      this.metaspaceOptions.datasetDescription = content
+      this.metaspaceOptions.description = content
     },
     onInput(path, val) {
       set(this.value, path, val)

@@ -12,42 +12,24 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     <!---->
     <!---->
   </div>
-  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="database" filter-key="database" name="Database" options="">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="analyzerType" filter-key="analyzerType">
     <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
-      Database:
+      Analyzer type:
       <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
-        <div>
-          <mock-el-select placeholder="Start typing name" filterable="" filter-method="function () { [native code] }" no-data-text="No matches" no-match-text="No matches" reserve-keyword="" class="w-full" value="1">
-            <ul class="el-select-group__wrap">
-              <li class="el-select-group__title">METASPACE</li>
-              <li>
-                <ul class="el-select-group">
-                  <mock-el-option value="1" label="foo - v1" class="flex"><span title="foo - v1" class="truncate">
-            foo - v1
-          </span>
-                    <!---->
-                  </mock-el-option>
-                </ul>
-              </li>
-            </ul>
-          </mock-el-select>
-          <p class="leading-5 text-sm m-0 mt-3 text-gray-700"><i class="text-gray-600 mr-1 el-icon-time"></i>
-            Showing results from selected datasets
-          </p>
-        </div>
+        <mock-el-select filterable="true" value="FTICR">
+          <mock-el-option label="analyzerTypes" value="analyzerTypes"></mock-el-option>
+          <mock-el-option label="analyzerTypes" value="analyzerTypes"></mock-el-option>
+        </mock-el-select>
       </div>
       <div slot-key="reference">
-        <div class="tf-value"><span class="tf-value-span">
-    foo - v1
-  </span>
+        <div class="tf-value"><span class="tf-value-span"><span>FTICR</span></span>
           <!---->
         </div>
       </div>
-    </mock-el-popover>
-    <!---->
+    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"></button>
   </div>
   <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="fdrLevel" filter-key="fdrLevel">
     <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
@@ -241,31 +223,42 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       </div>
     </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"></button>
   </div>
-  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="adduct" filter-key="adduct" name="Adduct">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="database" filter-key="database" name="Database" options="">
     <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
-      Adduct:
+      Database:
       <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
         <div>
-          <!---->
-          <!---->
-          <mock-el-select value="+K" placeholder="Select ionising adduct" filterable="" clearable="" remote="">
-            <mock-el-option label="[M + H]⁺" value="+H"></mock-el-option>
-            <mock-el-option label="[M + Na]⁺" value="+Na"></mock-el-option>
-            <mock-el-option label="[M + K]⁺" value="+K"></mock-el-option>
-            <mock-el-option label="[M - H]⁻" value="-H"></mock-el-option>
-            <mock-el-option label="[M + Cl]⁻" value="+Cl"></mock-el-option>
+          <mock-el-select placeholder="Start typing name" filterable="" filter-method="function () { [native code] }" no-data-text="No matches" no-match-text="No matches" reserve-keyword="" class="w-full" value="1">
+            <ul class="el-select-group__wrap">
+              <li class="el-select-group__title">METASPACE</li>
+              <li>
+                <ul class="el-select-group">
+                  <mock-el-option value="1" label="foo - v1" class="flex"><span title="foo - v1" class="truncate">
+            foo - v1
+          </span>
+                    <!---->
+                  </mock-el-option>
+                </ul>
+              </li>
+            </ul>
           </mock-el-select>
+          <p class="leading-5 text-sm m-0 mt-3 text-gray-700"><i class="text-gray-600 mr-1 el-icon-time"></i>
+            Showing results from selected datasets
+          </p>
         </div>
       </div>
       <div slot-key="reference">
-        <div class="tf-value"><span class="tf-value-span"><span>[M + K]⁺</span></span>
+        <div class="tf-value"><span class="tf-value-span">
+    foo - v1
+  </span>
           <!---->
         </div>
       </div>
-    </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"></button>
+    </mock-el-popover>
+    <!---->
   </div>
   <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="mz" filter-key="mz" options="" name="m/z" value="296.0659">
     <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
@@ -433,20 +426,27 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       </div>
     </mock-el-popover> <button title="Remove filter" class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"></button>
   </div>
-  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="analyzerType" filter-key="analyzerType">
+  <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="adduct" filter-key="adduct" name="Adduct">
     <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
-      Analyzer type:
+      Adduct:
       <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
       <div slot-key="default">
-        <mock-el-select filterable="true" value="FTICR">
-          <mock-el-option label="analyzerTypes" value="analyzerTypes"></mock-el-option>
-          <mock-el-option label="analyzerTypes" value="analyzerTypes"></mock-el-option>
-        </mock-el-select>
+        <div>
+          <!---->
+          <!---->
+          <mock-el-select value="+K" placeholder="Select ionising adduct" filterable="" clearable="" remote="">
+            <mock-el-option label="[M + H]⁺" value="+H"></mock-el-option>
+            <mock-el-option label="[M + Na]⁺" value="+Na"></mock-el-option>
+            <mock-el-option label="[M + K]⁺" value="+K"></mock-el-option>
+            <mock-el-option label="[M - H]⁻" value="-H"></mock-el-option>
+            <mock-el-option label="[M + Cl]⁻" value="+Cl"></mock-el-option>
+          </mock-el-select>
+        </div>
       </div>
       <div slot-key="reference">
-        <div class="tf-value"><span class="tf-value-span"><span>FTICR</span></span>
+        <div class="tf-value"><span class="tf-value-span"><span>[M + K]⁺</span></span>
           <!---->
         </div>
       </div>

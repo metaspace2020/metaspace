@@ -139,13 +139,13 @@ interface SaveDatasetArgs {
   datasetId?: string;
   submitterId: string;
   groupId?: string;
-  datasetDescription?: string;
+  description?: string;
   projectIds?: string[];
   principalInvestigator?: { name: string, email: string };
 }
 
 const saveDataset = async(entityManager: EntityManager, args: SaveDatasetArgs, requireInsert = false) => {
-  const { datasetId, submitterId, groupId, projectIds, principalInvestigator, datasetDescription } = args
+  const { datasetId, submitterId, groupId, projectIds, principalInvestigator, description } = args
   const groupUpdate = groupId === undefined
     ? {}
     : groupId === null
@@ -156,11 +156,11 @@ const saveDataset = async(entityManager: EntityManager, args: SaveDatasetArgs, r
     : principalInvestigator === null
       ? { piName: null, piEmail: null }
       : { piName: principalInvestigator.name, piEmail: principalInvestigator.email }
-  const dsDescriptionUpdate = datasetDescription === undefined ? null : datasetDescription
+  const dsDescriptionUpdate = description === undefined ? null : description
   const dsUpdate = {
     id: datasetId,
     userId: submitterId,
-    datasetDescription: dsDescriptionUpdate,
+    description: dsDescriptionUpdate,
     ...groupUpdate,
     ...piUpdate,
   }
@@ -265,11 +265,11 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
     validateMetadata(metadata)
   }
 
-  let datasetDescription
-  if (input.datasetDescription) {
+  let description
+  if (input.description) {
     if (!skipValidation || !ctx.isAdmin) {
-      datasetDescription = input.datasetDescription
-      validateTiptapJson(input.datasetDescription, 'dataset_description')
+      description = input.description
+      validateTiptapJson(input.description, 'dataset_description')
     }
   }
 
@@ -281,7 +281,7 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
   const saveDsArgs = {
     datasetId,
     submitterId: submitterId as string,
-    datasetDescription: datasetDescription as string,
+    description: description as string,
     groupId: input.groupId as (string | undefined),
     projectIds: input.projectIds as string[],
     principalInvestigator: input.principalInvestigator,
@@ -342,11 +342,11 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       }
     }
 
-    let datasetDescription
-    if (update.datasetDescription) {
+    let description
+    if (update.description) {
       if (!skipValidation || !ctx.isAdmin) {
-        datasetDescription = update.datasetDescription
-        validateTiptapJson(update.datasetDescription, 'dataset_description')
+        description = update.description
+        validateTiptapJson(update.description, 'dataset_description')
       }
     }
 
@@ -370,7 +370,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     const saveDatasetArgs = {
       datasetId,
       submitterId: submitterId as string,
-      datasetDescription: datasetDescription as string,
+      description: description as string,
       groupId: update.groupId as (string | undefined),
       projectIds: update.projectIds as string[],
       principalInvestigator: update.principalInvestigator,

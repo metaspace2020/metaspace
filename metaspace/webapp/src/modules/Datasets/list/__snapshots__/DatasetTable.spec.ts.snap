@@ -498,15 +498,16 @@ exports[`DatasetTable should match snapshot 1`] = `
             Show full metadata
           </a>
         </div>
-        <div>
+        <div
+          class="ds-download"
+        >
           <i
-            class="el-icon-data-analysis"
+            class="el-icon-download"
           />
           <a
-            class=""
-            href="/dataset/QUEUED1"
+            href="#"
           >
-            Dataset overview
+            Download
           </a>
         </div>
       </div>
@@ -682,17 +683,6 @@ exports[`DatasetTable should match snapshot 1`] = `
             href="#"
           >
             Show full metadata
-          </a>
-        </div>
-        <div>
-          <i
-            class="el-icon-data-analysis"
-          />
-          <a
-            class=""
-            href="/dataset/ANNOTATING1"
-          >
-            Dataset overview
           </a>
         </div>
       </div>
@@ -926,17 +916,6 @@ exports[`DatasetTable should match snapshot 1`] = `
             href="#"
           >
             Show full metadata
-          </a>
-        </div>
-        <div>
-          <i
-            class="el-icon-data-analysis"
-          />
-          <a
-            class=""
-            href="/dataset/FINISHED1"
-          >
-            Dataset overview
           </a>
         </div>
       </div>
