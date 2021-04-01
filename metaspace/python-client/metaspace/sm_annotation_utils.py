@@ -273,8 +273,8 @@ class GraphQLClient(object):
               }
             }
         """
-        primary_group = self.query(query)['currentUser']
-        return primary_group.get('group', {}).get('id', None) if not primary_group else None
+        primary_group = self.query(query)['currentUser']['primaryGroup']
+        return primary_group.get('group', {}).get('id', None) if primary_group else None
 
     def iterQuery(self, query, variables={}, batch_size=50000):
         """
