@@ -7,6 +7,7 @@ import {
   mockAdductSuggestions,
   mockMolecularDatabases,
 } from '../../../tests/utils/mockGraphqlData'
+import Vue from "vue";
 
 describe('MetadataEditor', () => {
   /* eslint-disable vue/max-len */
@@ -51,6 +52,7 @@ describe('MetadataEditor', () => {
     })
     const wrapper = mount(MetadataEditor, { store, router, apolloProvider })
     await wrapper.vm.$data.loadingPromise
+    await Vue.nextTick()
 
     expect(wrapper).toMatchSnapshot()
   })
