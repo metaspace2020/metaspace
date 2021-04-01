@@ -1528,9 +1528,10 @@ class SMInstance(object):
             else:
                 raise Exception('Polarity set incorrectly, available only "Positive" or "Negative"')
 
-        return self._gqclient.create_dataset_v3(
+        graphql_response = self._gqclient.create_dataset_v3(
             imzml_fn, ibd_fn, dataset_name, metadata, is_public, mol_dbs, adducts
         )
+        return json.loads(graphql_response['createDataset'])['datasetId']
 
     def update_dataset_dbs(self, datasetID, molDBs=None, adducts=None, priority=1):
         return self._gqclient.update_dataset(
