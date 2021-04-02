@@ -627,6 +627,7 @@ class GraphQLClient(object):
         metadata,
         is_public,
         databases,
+        projects,
         adducts,
         ppm=None,
         ds_id=None,
@@ -663,6 +664,7 @@ class GraphQLClient(object):
                 'ppm': ppm,
                 'submitterId': submitter_id,
                 'groupId': primary_group_id,
+                'projectIds': projects,
                 'metadataJson': metadata,
             },
             'useLithops': True,
@@ -875,7 +877,7 @@ class Metadata(object):
         return self._json
 
 
-NYI = Exception("NOT IMPLEMENTED YET")
+NYI = Exception('NOT IMPLEMENTED YET')
 
 
 class SMDataset(object):
@@ -1335,6 +1337,16 @@ class SMInstance(object):
 
         return ProjectsClient(self._gqclient)
 
+    def check_projects(self, project_ids):
+        wrong_project_ids = []
+        for project_id in project_ids:
+            print(self.projects.get_project(project_id))
+            if self.projects.get_project(project_id) is None:
+                print(project_id)
+                wrong_project_ids.append(project_id)
+        if wrong_project_ids:
+            raise Exception(f'The next project_ids is not valid: {", ".join(wrong_project_ids)}')
+
     def dataset(self, name=None, id=None) -> SMDataset:
         if id:
             return SMDataset(self._gqclient.getDataset(id), self._gqclient)
@@ -1506,6 +1518,7 @@ class SMInstance(object):
         metadata: str,
         is_public: bool,
         mol_dbs: List[str],
+        project_ids: List[str] = [],
         adducts: List[str] = None,
     ) -> dict:
         """Submit a dataset for processing in Metaspace.
@@ -1517,6 +1530,7 @@ class SMInstance(object):
             metadata: Properly formatted metadata json string.
             is_public: Make dataset public or not.
             mol_dbs: List of molecular databases.
+            project_ids: List of project IDs that will contain this dataset.
             adducts: List of adducts.
         """
         polarity = json.loads(metadata)['MS_Analysis']['Polarity']
@@ -1528,8 +1542,12 @@ class SMInstance(object):
             else:
                 raise Exception('Polarity set incorrectly, available only "Positive" or "Negative"')
 
+        # check the existence of projects by their project_id
+        if project_ids:
+            self.check_projects(project_ids)
+
         graphql_response = self._gqclient.create_dataset_v3(
-            imzml_fn, ibd_fn, dataset_name, metadata, is_public, mol_dbs, adducts
+            imzml_fn, ibd_fn, dataset_name, metadata, is_public, mol_dbs, project_ids, adducts
         )
         return json.loads(graphql_response['createDataset'])['datasetId']
 
