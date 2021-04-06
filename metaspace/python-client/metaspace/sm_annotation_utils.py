@@ -188,7 +188,7 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
         resp_data = send_request(url, 'POST', json=data, headers=headers)
         location = urllib.parse.unquote(resp_data['location'])
         (bucket,) = re.findall(r'https://([^.]+)', location)
-        return f's3a://{bucket}/{key}'
+        return bucket
 
     key, upload_id = init_multipart_upload(Path(local_path).name, file_type, headers=headers)
 
@@ -207,8 +207,8 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
             etag = upload_part(presigned_url, file_data)
             etags.append((part, etag))
 
-    s3_path = complete_multipart_upload(key, upload_id, etags)
-    return s3_path
+    bucket = complete_multipart_upload(key, upload_id, etags)
+    return bucket, key
 
 
 class GraphQLClient(object):
@@ -638,10 +638,10 @@ class GraphQLClient(object):
         database_ids = databases and [self.map_database_to_id(db) for db in databases]
 
         for fn in [imzml_fn, ibd_fn]:
-            file_path = multipart_upload(
+            bucket, key = multipart_upload(
                 fn, self._config['dataset_upload_url'], 'application/octet-stream', headers=headers,
             )
-        data_path = file_path.rsplit('/', 1)[0]
+        data_path = f's3a://{bucket}/{key.rsplit("/", 1)[0]}'
 
         query = """
             mutation createDataset($id: String, $input: DatasetCreateInput!, $priority: Int, $useLithops: Boolean) {
@@ -730,7 +730,10 @@ class GraphQLClient(object):
     def create_database(
         self, local_path: Union[str, Path], name: str, version: str, is_public: bool = False
     ) -> dict:
-        s3_path = multipart_upload(local_path, self._config['database_upload_url'], 'text/csv')
+        # TODO: s3 -> s3a in GraphQL
+        bucket, key = multipart_upload(local_path, self._config['database_upload_url'], 'text/csv')
+        s3_path = f's3://{bucket}/{key}'
+
 
         query = f"""
             mutation ($input: CreateMolecularDBInput!) {{
@@ -1527,7 +1530,7 @@ class SMInstance(object):
             imzml_fn: imzml file name.
             ibd_fn: ibd file name.
             dataset_name: Dataset name.
-            metadata: Properly formatted metadata json string.
+            metadata: Dict based metadata.
             is_public: Make dataset public or not.
             mol_dbs: List of molecular databases.
             project_ids: List of project IDs that will contain this dataset.
