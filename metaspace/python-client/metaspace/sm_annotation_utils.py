@@ -1342,9 +1342,7 @@ class SMInstance(object):
     def check_projects(self, project_ids):
         wrong_project_ids = []
         for project_id in project_ids:
-            print(self.projects.get_project(project_id))
             if self.projects.get_project(project_id) is None:
-                print(project_id)
                 wrong_project_ids.append(project_id)
         if wrong_project_ids:
             raise Exception(f'The next project_ids is not valid: {", ".join(wrong_project_ids)}')
