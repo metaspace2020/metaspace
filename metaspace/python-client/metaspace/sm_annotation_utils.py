@@ -734,7 +734,6 @@ class GraphQLClient(object):
         bucket, key = multipart_upload(local_path, self._config['database_upload_url'], 'text/csv')
         s3_path = f's3://{bucket}/{key}'
 
-
         query = f"""
             mutation ($input: CreateMolecularDBInput!) {{
               createMolecularDB(databaseDetails: $input) {{
