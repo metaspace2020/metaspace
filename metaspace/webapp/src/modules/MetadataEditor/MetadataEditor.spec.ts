@@ -7,7 +7,7 @@ import {
   mockAdductSuggestions,
   mockMolecularDatabases,
 } from '../../../tests/utils/mockGraphqlData'
-import Vue from "vue";
+import Vue from 'vue'
 
 describe('MetadataEditor', () => {
   /* eslint-disable vue/max-len */
