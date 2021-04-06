@@ -584,43 +584,6 @@ class GraphQLClient(object):
 
     def create_dataset(
         self,
-        data_path,
-        metadata,
-        ds_name=None,
-        is_public=None,
-        databases=None,
-        adducts=None,
-        ppm=None,
-        ds_id=None,
-    ):
-        """DEPRECATED."""
-        submitter_id = self.get_submitter_id()
-        query = """
-            mutation createDataset($id: String, $input: DatasetCreateInput!, $priority: Int) {
-                createDataset(
-                  id: $id,
-                  input: $input,
-                  priority: $priority
-                )
-            }
-        """
-        variables = {
-            'id': ds_id,
-            'input': {
-                'name': ds_name,
-                'inputPath': data_path,
-                'isPublic': is_public,
-                'databaseIds': databases and [self.map_database_to_id(db) for db in databases],
-                'adducts': adducts,
-                'ppm': ppm,
-                'submitterId': submitter_id,
-                'metadataJson': metadata,
-            },
-        }
-        return self.query(query, variables)
-
-    def create_dataset_v3(
-        self,
         imzml_fn,
         ibd_fn,
         dataset_name,
@@ -1418,100 +1381,6 @@ class SMInstance(object):
 
     def submit_dataset(
         self,
-        imzml_fn,
-        ibd_fn,
-        metadata,
-        dsid=None,
-        folder_uuid=None,
-        dsName=None,
-        isPublic=None,
-        molDBs=None,
-        adducts=None,
-        s3bucket=None,
-        priority=0,
-    ):
-        """DEPRECATED. Submit a dataset for processing on the SM Instance
-        :param imzml_fn: file path to imzml
-        :param ibd_fn: file path to ibd
-        :param metadata: a properly formatted metadata json string
-        :param s3bucket: this should be a bucket that both the user has write permission to and METASPACE can access
-        :param folder_uuid: a unique key for the dataset
-        :return:
-        """
-        try:
-            import boto3
-        except ImportError:
-            raise ImportError('Please install boto3 to use the submit_dataset function')
-
-        s3 = boto3.client('s3')
-        buckets = s3.list_buckets()
-        if not s3bucket in [b['Name'] for b in buckets['Buckets']]:
-            s3.create_bucket(
-                Bucket=s3bucket, CreateBucketConfiguration={'LocationConstraint': 'eu-west-1'}
-            )
-        if not folder_uuid:
-            import uuid
-
-            folder_uuid = str(uuid.uuid4())
-        for fn in [imzml_fn, ibd_fn]:
-            key = "{}/{}".format(folder_uuid, os.path.split(fn)[1])
-            s3.upload_file(fn, s3bucket, key)
-        folder = "s3a://" + s3bucket + "/" + folder_uuid
-        return self._gqclient.create_dataset(
-            data_path=folder,
-            metadata=metadata,
-            ds_name=dsName,
-            is_public=isPublic,
-            databases=molDBs,
-            adducts=adducts,
-            ds_id=dsid,
-        )
-
-    def submit_dataset_v2(
-        self,
-        imzml_fn: str,
-        ibd_fn: str,
-        ds_name: str,
-        metadata: str,
-        s3_bucket,
-        is_public: bool = None,
-        moldbs: Union[List[str], List[int]] = None,
-        adducts: List[str] = None,
-        priority: int = 0,
-    ):
-        """DEPRECATED. Submit a dataset for processing in Metaspace.
-
-        Args:
-            imzml_fn: Imzml file path.
-            ibd_fn: Ibd file path.
-            ds_name: Dataset name.
-            metadata: Properly formatted metadata json string.
-            s3_bucket: boto3 s3 bucket object, both the user has write permission to
-                and METASPACE can access.
-            is_public: Make dataset public.
-            moldbs: List of databases.
-            adducts: List of adducts.
-
-        Returns:
-            Request status.
-        """
-        import uuid
-
-        dataset_key = str(uuid.uuid4())
-        for fn in [imzml_fn, ibd_fn]:
-            file_key = f'{dataset_key}/{Path(fn).name}'
-            s3_bucket.upload_file(fn, file_key)
-        return self._gqclient.create_dataset(
-            data_path=f's3a://{s3_bucket.name}/{dataset_key}',
-            metadata=metadata,
-            ds_name=ds_name,
-            is_public=is_public,
-            databases=moldbs,
-            adducts=adducts,
-        )
-
-    def submit_dataset_v3(
-        self,
         imzml_fn: str,
         ibd_fn: str,
         dataset_name: str,
@@ -1546,7 +1415,7 @@ class SMInstance(object):
         if project_ids:
             self.check_projects(project_ids)
 
-        graphql_response = self._gqclient.create_dataset_v3(
+        graphql_response = self._gqclient.create_dataset(
             imzml_fn, ibd_fn, dataset_name, metadata, is_public, mol_dbs, project_ids, adducts
         )
         return json.loads(graphql_response['createDataset'])['datasetId']
