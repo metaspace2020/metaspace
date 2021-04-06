@@ -5,6 +5,20 @@
       style="position: relative;"
     >
       <div id="md-section-list">
+        <div class="flex flex-row w-full flex-wrap mt-6">
+          <div class="metadata-section__title w-3/12">
+            Dataset description
+          </div>
+          <rich-text
+            id="description-container"
+            :content="metaspaceOptions.description"
+            :auto-focus="true"
+            :hide-state-status="true"
+            :readonly="false"
+            :update="handleDescriptionChange"
+            content-class-name="customEditor"
+          />
+        </div>
         <form-section
           v-bind="sectionBinds('Sample_Information')"
           v-on="sectionEvents('Sample_Information')"
@@ -88,8 +102,10 @@ import FormSection from './sections/FormSection.vue'
 import DataManagementSection from './sections/DataManagementSection.vue'
 import emailRegex from '../../lib/emailRegex'
 import safeJsonParse from '../../lib/safeJsonParse'
+import isValidTiptapJson from '../../lib/isValidTiptapJson'
 import config from '../../lib/config'
 import { getDatabasesByGroup } from '../MolecularDatabases/formatting'
+import RichText from '../../components/RichText/RichText'
 
 const factories = {
   string: schema => schema.default || '',
@@ -112,6 +128,7 @@ const defaultMetaspaceOptions = {
 export default {
   name: 'MetadataEditor',
   components: {
+    RichText,
     FormSection,
     MetaspaceOptionsSection,
     VisibilityOptionSection,
@@ -194,6 +211,7 @@ export default {
         const {
           isPublic, configJson, databases, adducts,
           name, group, projects, submitter, principalInvestigator,
+          description,
         } = dataset
         const config = safeJsonParse(configJson)
         return {
@@ -201,6 +219,8 @@ export default {
           groupId: group ? group.id : null,
           projectIds: projects ? projects.map(p => p.id) : [],
           principalInvestigator: principalInvestigator == null ? null : omit(principalInvestigator, '__typename'),
+          description: isValidTiptapJson(safeJsonParse(description))
+            ? safeJsonParse(description) : null,
           isPublic,
           databaseIds: databases.map(_ => _.id),
           adducts,
@@ -305,6 +325,12 @@ export default {
       }
       this.molDBsByGroup = getDatabasesByGroup(molecularDatabases)
       this.schema = deriveFullSchema(metadataSchemas[mdType])
+
+      // TODO remove the additional information from the schema itself at some point
+      // hide additional info from dataset upload, without changing schema for compatibility reasons
+      if (this.schema && this.schema.properties && this.schema.properties.Additional_Information) {
+        delete this.schema.properties.Additional_Information
+      }
 
       if (this.isNew) {
         // If this is a prepopulated form from a previous submission and metabolite databases have changed since that submission,
@@ -412,7 +438,9 @@ export default {
         input: this.onInput,
       }
     },
-
+    handleDescriptionChange(content) {
+      this.metaspaceOptions.description = content
+    },
     onInput(path, val) {
       set(this.value, path, val)
 
@@ -497,5 +525,28 @@ export default {
 
  #load-indicator {
    min-height: 300px;
+ }
+
+ #description-container{
+   @apply p-0 border rounded border-solid;
+   width: calc(75% - 10px);
+   border-color: #BCCDDC;
+   margin-left: 4px;
+   overflow: hidden;
+ }
+
+ #description-container > div > div > div {
+   @apply p-2;
+   min-height: calc(50px - 1rem);
+   background: #F1F5F8;
+ }
+
+ .focus-visible{
+   outline: 1px solid hsl(208,87%,50%);
+   outline-offset: 1px;
+ }
+
+ #description-container > div > div > div > p {
+
  }
 </style>

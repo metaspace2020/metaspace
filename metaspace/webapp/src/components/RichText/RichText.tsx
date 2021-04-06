@@ -11,7 +11,10 @@ import { OnEscape } from './tiptap'
 interface Props {
   content: string
   placeholder: string
+  contentClassName: string
   readonly: boolean
+  autoFocus: boolean
+  hideStateStatus: boolean
   update: (content: string) => Promise<void> | void
 }
 
@@ -37,8 +40,14 @@ const RichText = defineComponent<Props>({
   props: {
     content: String,
     placeholder: String,
+    contentClassName: String,
     readonly: Boolean,
+    hideStateStatus: Boolean,
     update: Function,
+    autoFocus: {
+      type: Boolean,
+      default: false,
+    },
   },
   setup(props) {
     const state = reactive({
@@ -72,7 +81,7 @@ const RichText = defineComponent<Props>({
           }
         },
       }),
-      editing: false,
+      editing: props.autoFocus,
       saveState: saveStates.UNSAVED,
     })
 
@@ -122,24 +131,29 @@ const RichText = defineComponent<Props>({
                   <i class="el-icon-edit" /> click to edit
                 </button>}
             </FadeTransition>
-            <FadeTransition>
-              {state.editing && <p class="m-0 ml-auto text-sm leading-6 text-gray-700" onClick={stopPropagation}>
-                <FadeTransition>
-                  {state.saveState === saveStates.FAILED
-                    ? <button class="el-button el-button--mini" onClick={() => editor.emitUpdate()}>
+            {
+              !props.hideStateStatus
+              && <FadeTransition>
+                {state.editing && <p class="m-0 ml-auto text-sm leading-6 text-gray-700" onClick={stopPropagation}>
+                  <FadeTransition>
+                    {state.saveState === saveStates.FAILED
+                      ? <button class="el-button el-button--mini" onClick={() => editor.emitUpdate()}>
                         Retry
-                    </button>
-                    : <span key={state.saveState}>
-                      {getSaveState(state.saveState)}
-                    </span>}
-                </FadeTransition>
-              </p> }
-            </FadeTransition>
+                      </button>
+                      : <span key={state.saveState}>
+                        {getSaveState(state.saveState)}
+                      </span>}
+                  </FadeTransition>
+                </p> }
+              </FadeTransition>
+            }
           </header>
         )}
         <div onClick={stopPropagation}>
           <EditorContent
+            autoFocus={props.autoFocus}
             class={[
+              props.contentClassName,
               'transition-colors ease-in-out duration-300 rounded',
               { 'bg-transparent': !state.editing },
               { 'bg-gray-100': state.editing },

@@ -72,9 +72,9 @@ import Badge from 'element-ui/lib/badge'
 // import Rate from 'element-ui/lib/rate'
 // import Steps from 'element-ui/lib/steps'
 // import Step from 'element-ui/lib/step'
-// import Carousel from 'element-ui/lib/carousel'
+import Carousel from 'element-ui/lib/carousel'
 // import Scrollbar from 'element-ui/lib/scrollbar'
-// import CarouselItem from 'element-ui/lib/carousel-item'
+import CarouselItem from 'element-ui/lib/carousel-item'
 import Collapse from 'element-ui/lib/collapse'
 import CollapseItem from 'element-ui/lib/collapse-item'
 // import Cascader from 'element-ui/lib/cascader'
@@ -154,9 +154,9 @@ const components = {
   // Rate,
   // Steps,
   // Step,
-  // Carousel,
+  Carousel,
   // Scrollbar,
-  // CarouselItem,
+  CarouselItem,
   Collapse,
   CollapseItem,
   // Cascader,
@@ -235,9 +235,9 @@ export {
   // Rate,
   // Steps,
   // Step,
-  // Carousel,
+  Carousel,
   // Scrollbar,
-  // CarouselItem,
+  CarouselItem,
   Collapse,
   CollapseItem,
   // Cascader,

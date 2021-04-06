@@ -19,7 +19,7 @@ function formatFDR(fdr: number) {
   return fdr ? Math.round(fdr * 100) + '%' : ''
 }
 
-export type Level = 'annotation' | 'dataset' | 'upload' | 'projects';
+export type Level = 'annotation' | 'dataset' | 'upload' | 'projects' | 'dataset-annotation';
 
 export type FilterKey = 'database' | 'datasetIds' | 'minMSM' | 'compoundName'
   | 'chemMod' | 'neutralLoss' | 'adduct' | 'mz' | 'fdrLevel'
@@ -102,7 +102,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: DatabaseFilter,
     name: 'Database',
     description: 'Select database',
-    levels: ['annotation'],
+    levels: ['annotation', 'dataset-annotation'],
     defaultInLevels: ['annotation'],
     initialValue: lists =>
       lists.molecularDatabases
@@ -115,7 +115,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: SearchableFilter,
     name: 'Dataset',
     description: 'Select dataset',
-    levels: ['annotation', 'dataset'],
+    levels: ['annotation', 'dataset', 'dataset-annotation'],
     initialValue: undefined,
     multiple: true,
     encoding: 'list',
@@ -125,7 +125,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: MSMFilter,
     name: 'Min. MSM',
     description: 'Set minimum MSM score',
-    levels: ['annotation'],
+    levels: ['annotation', 'dataset-annotation'],
     initialValue: 0.0,
     encoding: 'number',
   },
@@ -134,7 +134,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: InputFilter,
     name: 'Molecule',
     description: 'Search molecule',
-    levels: ['dataset', 'annotation'],
+    levels: ['dataset', 'annotation', 'dataset-annotation'],
     initialValue: undefined,
     debounce: true,
   },
@@ -142,7 +142,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
   chemMod: {
     type: InputFilter,
     name: 'Chemical modification',
-    levels: ['annotation'],
+    levels: ['annotation', 'dataset-annotation'],
     initialValue: undefined,
     multiFilterParent: 'adduct',
   },
@@ -150,7 +150,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
   neutralLoss: {
     type: InputFilter,
     name: 'Neutral loss',
-    levels: ['annotation'],
+    levels: ['annotation', 'dataset-annotation'],
     initialValue: undefined,
     multiFilterParent: 'adduct',
   },
@@ -159,7 +159,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: AdductFilter,
     name: 'Adduct',
     description: 'Select adduct',
-    levels: ['annotation'],
+    levels: ['annotation', 'dataset-annotation'],
     initialValue: undefined,
     options: lists => lists.adducts.filter(a => config.features.all_adducts || !a.hidden),
     isMultiFilter: true,
@@ -169,7 +169,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: MzFilter,
     name: 'm/z',
     description: 'Search by m/z',
-    levels: ['annotation'],
+    levels: ['annotation', 'dataset-annotation'],
     initialValue: 0,
     encoding: 'number',
   },
@@ -178,8 +178,8 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: SingleSelectFilter,
     name: 'FDR',
     description: 'Select FDR level',
-    levels: ['annotation'],
-    defaultInLevels: ['annotation'],
+    levels: ['annotation', 'dataset-annotation'],
+    defaultInLevels: ['annotation', 'dataset-annotation'],
     initialValue: 0.1,
 
     options: [0.05, 0.1, 0.2, 0.5],
@@ -310,8 +310,8 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: SearchBox,
     name: 'Simple query',
     description: 'Search anything',
-    levels: ['annotation', 'dataset', 'projects'],
-    defaultInLevels: ['annotation', 'dataset', 'projects'],
+    levels: ['annotation', 'dataset', 'projects', 'dataset-annotation'],
+    defaultInLevels: ['annotation', 'dataset', 'projects', 'dataset-annotation'],
     initialValue: '',
     removable: false,
     sortOrder: 2,
@@ -322,7 +322,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     name: 'Data type',
     description: 'Select data type',
     levels: ['annotation', 'dataset', 'upload'],
-    defaultInLevels: ['annotation', 'dataset', 'upload'],
+    defaultInLevels: ['annotation', 'dataset', 'upload', 'dataset-annotation'],
     initialValue: defaultMetadataType,
     removable: false,
     options: metadataTypes,
@@ -365,7 +365,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     name: '',
     description: 'Show/hide off-sample annotations',
     helpComponent: OffSampleHelp,
-    levels: ['annotation'],
+    levels: ['annotation', 'dataset-annotation'],
     defaultInLevels: [],
     initialValue: false,
     options: [true, false],

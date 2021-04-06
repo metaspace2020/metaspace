@@ -6,6 +6,7 @@ export const editDatasetFragment =
     id
     metadataJson
     configJson
+    description
     isPublic
     group {
       id

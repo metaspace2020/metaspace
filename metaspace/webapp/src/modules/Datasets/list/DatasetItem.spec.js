@@ -65,17 +65,18 @@ describe('DatasetItem', () => {
     expect(wrapper.element).toMatchSnapshot()
   })
 
-  it('should be able to delete if unpublished', () => {
-    const propsData = {
-      currentUser: submitter,
-      dataset: {
-        ...dataset,
-        projects: [unpublished]
-      },
-    }
-    const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
-    expect(wrapper.find('.ds-delete').exists()).toBe(true)
-  })
+  // NOTE: delete changed to dataset overview page (to be removed)
+  // it('should be able to delete if unpublished', () => {
+  //   const propsData = {
+  //     currentUser: submitter,
+  //     dataset: {
+  //       ...dataset,
+  //       projects: [unpublished]
+  //     },
+  //   }
+  //   const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
+  //   expect(wrapper.find('.ds-delete').exists()).toBe(true)
+  // })
 
   it('should not show the publication status if cannot edit', () => {
     const propsData = {
@@ -138,16 +139,17 @@ describe('DatasetItem', () => {
     expect(wrapper.find('.test-publication-status').text()).toBe('Published')
   })
 
-  it('should show admin options', () => {
-    const propsData = {
-      currentUser: admin,
-      dataset: {
-        ...dataset,
-        projects: [published]
-      }
-    }
-    const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
-    expect(wrapper.find('.ds-delete').exists()).toBe(true)
-    expect(wrapper.find('.ds-reprocess').exists()).toBe(true)
-  })
+  // NOTE: options changed to dataset overview page (to be removed)
+  // it('should show admin options', () => {
+  //   const propsData = {
+  //     currentUser: admin,
+  //     dataset: {
+  //       ...dataset,
+  //       projects: [published]
+  //     }
+  //   }
+  //   const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
+  //   expect(wrapper.find('.ds-delete').exists()).toBe(true)
+  //   expect(wrapper.find('.ds-reprocess').exists()).toBe(true)
+  // })
 })

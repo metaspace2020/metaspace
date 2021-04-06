@@ -1,7 +1,16 @@
 <template>
   <div id="annot-page">
-    <filter-panel level="annotation" />
-
+    <filter-panel
+      :level="currentLevel"
+    />
+    <div class="my-2 w-full">
+      <router-link
+        v-if="isFromDatasetOverview"
+        :to="datasetOverviewLink"
+      >
+        <span><i class="el-icon-arrow-left"></i>Dataset Overview</span>
+      </router-link>
+    </div>
     <el-row>
       <el-col
         id="annot-table-container"
@@ -84,12 +93,27 @@ export default {
          - (this.hiddenColumns.filter(c => ['ColocalizationCoeff', 'OffSampleProb'].includes(c)).length * 1))
     },
 
+    currentLevel() {
+      return this.$route.name === 'dataset-annotations' ? 'dataset-annotation' : 'annotation'
+    },
+
+    isFromDatasetOverview() {
+      return this.$route.name === 'dataset-annotations'
+    },
+
+    datasetOverviewLink() {
+      return {
+        name: 'dataset-overview',
+        params: { dataset_id: this.$route.params.dataset_id },
+      }
+    },
+
     selectedAnnotation() {
       return this.$store.state.annotation
     },
 
     filter() {
-      return this.$store.getters.filter
+      return this.$store?.getters?.filter
     },
   },
   created() {
