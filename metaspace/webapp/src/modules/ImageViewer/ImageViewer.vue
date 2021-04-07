@@ -48,13 +48,13 @@
         class="ion-slider-wrapper"
       >
         <div
-          v-if="hasOpticalImage"
+          v-if="hasOpticalImage && !isIE"
           class="ion-slider-holder"
         >
           <fade-transition class="w-full">
             <opacity-settings
               key="opticalOpacity"
-              label="Optical image color scale"
+              label="Optical image visibility"
               class="sm-leading-trim mt-auto"
               :opacity="opticalOpacity"
               @opacity="emitOpticalOpacity"
@@ -68,7 +68,7 @@
           <fade-transition class="w-full">
             <opacity-settings
               key="opacity"
-              label="Ion overlay opacity"
+              label="Ion image opacity"
               class="sm-leading-trim mt-auto"
               :opacity="opacity"
               @opacity="emitOpacity"
@@ -199,12 +199,18 @@ const ImageViewer = defineComponent<Props>({
       })
     })
 
+    const isIE = computed(() => {
+      // IE 10 and IE 11
+      return /Trident\/|MSIE/.test(window.navigator.userAgent)
+    })
+
     return {
       imageArea,
       dimensions,
       ionImageDimensions,
       imageFit,
       onResize,
+      isIE,
       ionImageLayers,
       ionImageMenuItems,
       singleIonImageControls,

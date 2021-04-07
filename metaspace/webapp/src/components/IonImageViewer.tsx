@@ -339,6 +339,7 @@ const useBufferedOpticalImage = (props: Props) => {
       {opticalImageUrl.value
       && <img
         key={state.loadedOpticalImageUrl}
+        crossOrigin="anonymous"
         src={state.loadedOpticalImageUrl}
         class="absolute top-0 left-0 -z-10 origin-top-left"
         style={{
@@ -352,6 +353,7 @@ const useBufferedOpticalImage = (props: Props) => {
       && state.loadedOpticalImageUrl !== opticalImageUrl.value
       && <img
         key={opticalImageUrl.value}
+        crossOrigin="anonymous"
         src={opticalImageUrl.value}
         class="absolute top-0 left-0 -z-20 origin-top-left opacity-1"
         style={{
