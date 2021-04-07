@@ -58,6 +58,7 @@ interface Settings {
   lockMaxScale: number
   isLockActive: boolean
   opacity: number
+  opticalOpacity: number
 }
 
 const channels = ['magenta', 'green', 'blue', 'red', 'yellow', 'cyan', 'orange', 'violet']
@@ -73,6 +74,7 @@ const settings = reactive<Settings>({
   lockMaxScale: 1,
   isLockActive: true,
   opacity: 1,
+  opticalOpacity: 1,
 })
 const activeAnnotation = ref<string>() // local copy of prop value to allow watcher to run
 
@@ -165,6 +167,7 @@ export function resetIonImageState() {
     lockMaxScale: 1,
     isLockActive: true,
     opacity: 1,
+    opticalOpacity: 1,
   })
 }
 
