@@ -1,0 +1,65 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`DatasetComparisonDialog it should match snapshot 1`] = `
+<transition-stub name="dialog-fade" class="dataset-comparison-page sm-content-page el-dialog-lean" title="Datasets Comparison" firststeperror="Please select at least two datasets to be compared!" finalsteperror="Please place all the selected datasets on the grid!" selecteddatasetids="2021-04-06_08h35m04s" style="z-index: 2001;">
+  <div class="el-dialog__wrapper">
+    <div role="dialog" aria-modal="true" aria-label="dialog" class="el-dialog" style="margin-top: 15vh;">
+      <div class="el-dialog__header"><span class="el-dialog__title"></span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+      <div class="el-dialog__body">
+        <h1>Datasets Comparison</h1>
+        <ol class="sm-workflow leading-6 m-0 p-0">
+          <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-300 transition-colors ease-in-out duration-300 active">
+            <p class="sm-workflow-header">Select the datasets</p>
+            <form>
+              <div class="el-select w-full ">
+                <div class="el-select__tags" style="max-width: -32px; width: 100%;">
+                  <!---->
+                  <transition-group-stub><span class="el-tag el-tag--info el-tag--small el-tag--light"><span class="el-select__tags-text">Untreated_3_434_super_lite_19_31 (1)</span><i class="el-tag__close el-icon-close"></i></span></transition-group-stub>
+                  <!---->
+                </div>
+                <div class="el-input el-input--suffix">
+                  <!----><input type="text" readonly="readonly" autocomplete="off" placeholder="" class="el-input__inner" style="height: 40px;">
+                  <!----><span class="el-input__suffix"><span class="el-input__suffix-inner"><i class="el-select__caret el-input__icon el-icon-arrow-up"></i><!----><!----><!----><!----><!----></span>
+                  <!----></span>
+                  <!---->
+                  <!---->
+                </div>
+                <transition-stub name="el-zoom-in-top">
+                  <div class="el-select-dropdown el-popper is-multiple" style="display: none;">
+                    <div class="el-scrollbar" style="">
+                      <div class="el-select-dropdown__wrap el-scrollbar__wrap el-scrollbar__wrap--hidden-default">
+                        <ul class="el-scrollbar__view el-select-dropdown__list">
+                          <!---->
+                          <li class="el-select-dropdown__item"><span>New 3 (1)</span></li>
+                          <li class="el-select-dropdown__item"><span>Untreated_3_434_super_lite_19_31 (1)</span></li>
+                          <li class="el-select-dropdown__item selected"><span>Untreated_3_434_super_lite_19_31 (1)</span></li>
+                        </ul>
+                      </div>
+                      <div class="el-scrollbar__bar is-horizontal">
+                        <div class="el-scrollbar__thumb" style="transform: translateX(0%); webkit-transform: translateX(0%);"></div>
+                      </div>
+                      <div class="el-scrollbar__bar is-vertical">
+                        <div class="el-scrollbar__thumb" style="transform: translateY(0%); webkit-transform: translateY(0%);"></div>
+                      </div>
+                    </div>
+                    <!---->
+                  </div>
+                </transition-stub>
+              </div><button type="button" class="el-button el-button--primary">
+                <!---->
+                <!----><span>Next</span></button>
+            </form>
+          </li>
+          <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-300 transition-colors ease-in-out duration-300">
+            <p class="sm-workflow-header">Set the grid arrangement</p>
+          </li>
+          <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-300 transition-colors ease-in-out duration-300">
+            <p class="sm-workflow-header">Choose the datasets disposition</p>
+          </li>
+        </ol>
+      </div>
+      <!---->
+    </div>
+  </div>
+</transition-stub>
+`;

@@ -14,6 +14,9 @@ interface DatasetComparisonDialogProps {
   title: string
   selectedDatasetIds: string[]
   firstStepError: string
+  firstStepLabel: string
+  secondStepLabel: string
+  thirdStepLabel: string
   finalStepError: string
 }
 
@@ -28,7 +31,7 @@ interface DatasetComparisonDialogState {
   arrangement: {[key: string] : string}
 }
 
-export default defineComponent<DatasetComparisonDialogProps>({
+export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogProps>({
   name: 'DatasetComparisonDialog',
   props: {
     title: {
@@ -42,6 +45,18 @@ export default defineComponent<DatasetComparisonDialogProps>({
     finalStepError: {
       type: String,
       default: 'Please place all the selected datasets on the grid!',
+    },
+    firstStepLabel: {
+      type: String,
+      default: 'Select the datasets',
+    },
+    secondStepLabel: {
+      type: String,
+      default: 'Set the grid arrangement',
+    },
+    thirdStepLabel: {
+      type: String,
+      default: 'Choose the datasets disposition',
     },
     selectedDatasetIds: {
       type: Array,
@@ -110,7 +125,7 @@ export default defineComponent<DatasetComparisonDialogProps>({
               done={state.workflowStep > 1}
             >
               <p class="sm-workflow-header">
-                Select the datasets
+                {props.firstStepLabel}
               </p>
               {
                 state.workflowStep === 1
@@ -152,7 +167,8 @@ export default defineComponent<DatasetComparisonDialogProps>({
               done={state.workflowStep > 2}
             >
               <p class="sm-workflow-header">
-              Set the grid arrangement
+                {props.secondStepLabel}
+
               </p>
               {
                 state.workflowStep === 2
@@ -207,7 +223,8 @@ export default defineComponent<DatasetComparisonDialogProps>({
               done={state.workflowStep > 3}
             >
               <p class="sm-workflow-header">
-               Choose the datasets disposition
+                {props.thirdStepLabel}
+
               </p>
               {
                 state.workflowStep === 3
@@ -220,7 +237,7 @@ export default defineComponent<DatasetComparisonDialogProps>({
                             return (
                               <div key={col} class='dataset-comparison-col'>
                                 <Select
-                                  class={`${state.finalStepError ? 'sm-form-error' : ''}`}
+                                  class={`dataset-cell ${state.finalStepError ? 'sm-form-error' : ''}`}
                                   value={state.arrangement[`${row}-${col}`]}
                                   placeholder=" "
                                   clearable
@@ -231,6 +248,7 @@ export default defineComponent<DatasetComparisonDialogProps>({
                                     && dataset?.value.map((ds) => {
                                       return (
                                         <Option
+                                          class='dataset-cell-option'
                                           disabled={Object.values(state.arrangement).includes(ds.id)}
                                           key={ds.id} label={ds.name} value={ds.id}/>
                                       )
@@ -255,7 +273,7 @@ export default defineComponent<DatasetComparisonDialogProps>({
                     if (Object.values(state.arrangement).length < state.selectedDatasetIds.length) {
                       state.finalStepError = true
                     } else {
-                      root.$router.push(annotationsLink(state.selectedDatasetIds))
+                      root.$router.push(annotationsLink(state.selectedDatasetIds.sort()))
                     }
                   }} type="primary">
                     Compare
