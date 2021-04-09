@@ -4,7 +4,7 @@ import { CurrentUserRoleResult } from '../../../api/user'
 import { Dropdown, DropdownItem, DropdownMenu, Button } from '../../../lib/element-ui'
 import reportError from '../../../lib/reportError'
 import DownloadDialog from '../list/DownloadDialog'
-import DatasetComparisonDialog from '../comparison/DatasetComparisonDialog'
+import { DatasetComparisonDialog } from '../comparison/DatasetComparisonDialog'
 import config from '../../../lib/config'
 
 interface DatasetActionsDropdownProps {
