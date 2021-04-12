@@ -10,7 +10,5 @@ setup(
     author='Alexandrov Team, EMBL',
     author_email='vitaly.kovalev@embl.de',
     packages=find_packages(),
-    install_requires=[
-
-    ],
+    install_requires=[],
 )

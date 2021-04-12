@@ -5,8 +5,8 @@ import pandas as pd
 from joblib import Parallel, delayed
 from msiwarp.util.warp import to_mz, to_height, to_mx_peaks, generate_mean_spectrum
 
-from recal.math import mass_accuracy_bounds, weighted_stddev
-from recal.params import RecalParams
+from msi_recal.math import mass_accuracy_bounds, weighted_stddev
+from msi_recal.params import RecalParams
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +72,10 @@ def get_mean_mx_spectrum_parallel(spectra, params: RecalParams, is_aligned: bool
             merged_sigma_1 = sigma_1 / np.sqrt(batch_size)
             merged_tics = np.array([np.sum(to_height(s)) for s in merged_mx_spectra])
             mean_spectrum = _get_mean_spectrum(
-                merged_mx_spectra, merged_tics, params, merged_sigma_1,
+                merged_mx_spectra,
+                merged_tics,
+                params,
+                merged_sigma_1,
             )
 
     # Ensure spectrum is sorted

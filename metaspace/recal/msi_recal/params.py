@@ -1,4 +1,4 @@
-from typing import Literal, Union
+from typing import Literal, Union, List
 
 import cpyMSpec
 
@@ -22,20 +22,24 @@ class RecalParams:
         instrument: str,
         rp_at_200: float,
         unaligned_sigma_1: float,
-        aligned_sigma_1: float,
+        jitter_sigma_1: float,
+        recal_sigma_1: float,
         limit_of_detection: float,
         min_mz: float,
         max_mz: float,
         n_recal_segms: int,
+        adducts: List[str],
     ):
         self.instrument = instrument = normalize_instrument_type(instrument)
         self.rp_at_200 = rp_at_200
         self.unaligned_sigma_1 = unaligned_sigma_1
-        self.aligned_sigma_1 = aligned_sigma_1
+        self.jitter_sigma_1 = jitter_sigma_1
+        self.recal_sigma_1 = recal_sigma_1
         self.limit_of_detection = limit_of_detection
         self.min_mz = min_mz
         self.max_mz = max_mz
         self.n_recal_segms = n_recal_segms
+        self.adducts = adducts
 
         if instrument == 'ft-icr':
             self.instrument_model = cpyMSpec.InstrumentModel('fticr', rp_at_200)

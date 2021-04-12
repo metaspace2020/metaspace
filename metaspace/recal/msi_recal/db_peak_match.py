@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 from msiwarp.util.warp import to_mz, to_mx_peaks
 
-from recal.math import mass_accuracy_bounds, get_centroid_peaks
-from recal.params import RecalParams
+from msi_recal.math import mass_accuracy_bounds, get_centroid_peaks
+from msi_recal.params import RecalParams
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +61,11 @@ def calc_spectral_scores(spectrum, db_hits, params: RecalParams, sigma_1: float)
     for db_hit in db_hits.itertuples():
         min_abundance = params.limit_of_detection / db_hit.ints
         mol_peaks = get_centroid_peaks(
-            db_hit.formula, db_hit.adduct, db_hit.charge, min_abundance, params.instrument_model,
+            db_hit.formula,
+            db_hit.adduct,
+            db_hit.charge,
+            min_abundance,
+            params.instrument_model,
         )
         # Recalc error as centroid may be slightly different to monoisotopic peak
         mz_error = db_hit.mz - mol_peaks[0][0]
@@ -93,7 +97,9 @@ def get_recal_candidates(mean_spectrum, mz_lo, mz_hi, adducts, charge, recal_ppm
             db_name = db_path.stem + adduct
             db = pd.read_csv(db_path).assign(db=db_name)[['db', 'formula']].drop_duplicates()
             formulas = db.formula.unique()
-            mzs = pd.Series({formula: get_mz(formula + adduct, charge) for formula in formulas})
+            mzs = pd.Series(
+                {formula: get_centroid_peaks(formula, adduct, charge)[0] for formula in formulas}
+            )
             db['adduct'] = adduct
             db['db_mz'] = mzs[db.formula].values
             db = db[(db.db_mz >= mz_lo) & (db.db_mz <= mz_hi)]

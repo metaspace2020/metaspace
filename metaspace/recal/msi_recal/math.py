@@ -1,10 +1,10 @@
-from typing import overload
+from typing import overload, Optional
 
 import cpyMSpec
 import numpy as np
 import pandas as pd
 
-from recal.params import InstrumentType
+from msi_recal.params import InstrumentType
 
 
 def weighted_stddev(values, weights):
@@ -87,20 +87,34 @@ def sigma_1_to_ppm(sigma_1: float, instrument: InstrumentType, at_mz=200):
 
 def get_centroid_peaks(
     formula: str,
-    adduct: str,
+    adduct: Optional[str],
     charge: int,
     min_abundance: float,
     instrument_model: cpyMSpec.InstrumentModel,
 ):
-    iso_pattern = cpyMSpec.isotopePattern(formula + adduct)
+    if adduct and adduct not in ('[M]+', '[M]-'):
+        formula += adduct
+    iso_pattern = cpyMSpec.isotopePattern(formula)
     if charge:
         iso_pattern.addCharge(charge)
 
     try:
         centr = iso_pattern.centroids(instrument_model, min_abundance=min_abundance)
-        order = np.argsort(centr.intensities)[::-1]
-        return list(zip(np.array(centr.masses)[order], np.array(centr.intensities)[order]))
+        return sorted(zip(centr.masses, centr.intensities), key=lambda pair: -pair[1])
     except Exception as ex:
+        # iso_pattern.centroids may raise an exception:
+        #   Exception: b'the result contains no peaks, make min_abundance lower!'
+        # If this happens, just return the most intense uncentroided theoretical peak.
         if 'min_abundance' not in str(ex):
             raise
-        return [(iso_pattern.masses[0], 1)]
+        return [(iso_pattern.masses[np.argmax(iso_pattern.intensities)], 1)]
+
+
+def get_mono_mz(formula: str, adduct: Optional[str], charge: int):
+    if adduct and adduct not in ('[M]+', '[M]-'):
+        formula += adduct
+    iso_pattern = cpyMSpec.isotopePattern(formula + adduct)
+    if charge:
+        iso_pattern.addCharge(charge)
+
+    return iso_pattern.masses[np.argmax(iso_pattern.intensities)]
