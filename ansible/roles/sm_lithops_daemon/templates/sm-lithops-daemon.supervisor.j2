@@ -9,3 +9,4 @@ redirect_stderr = true
 stdout_logfile = {{ sm_home }}/logs/{{ sm_lithops_daemon_app_name }}-%(process_num)s.log
 numprocs = {{ sm_lithops_daemon_nprocs }}
 startsecs = 10
+killasgroup = true  # Clean up child processes from multiprocessing
