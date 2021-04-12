@@ -37,7 +37,7 @@ class SMUpdateDaemon:
         if msg['action'] in [DaemonAction.UPDATE, DaemonAction.INDEX]:
             msg['web_app_link'] = self._manager.create_web_app_link(msg)
 
-        if msg['action'] != DaemonAction.UPDATE:
+        if msg['action'] == DaemonAction.DELETE:
             self._manager.post_to_slack(
                 'dart', f' [v] Succeeded to {msg["action"]}: {json.dumps(msg)}'
             )
@@ -54,9 +54,6 @@ class SMUpdateDaemon:
     def _callback(self, msg):
         try:
             self.logger.info(f' SM update daemon received a message: {msg}')
-            self._manager.post_to_slack(
-                'new', f' [v] New {msg["action"]} message: {json.dumps(msg)}'
-            )
 
             ds = self._manager.load_ds(msg['ds_id'])
             self._manager.notify_update(ds.id, msg['action'], DaemonActionStage.STARTED)
