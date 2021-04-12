@@ -43,25 +43,54 @@
           v-bind="singleIonImageControls"
         />
       </fade-transition>
-      <fade-transition>
-        <opacity-settings
-          v-if="openMenu === 'ION' && hasOpticalImage"
-          key="opacity"
-          class="sm-leading-trim mt-auto"
-          :opacity="opacity"
-          @opacity="emitOpacity"
-        />
-      </fade-transition>
-      <fade-transition v-if="lockIntensityEnabled">
-        <intensity-settings
-          v-if="openMenu === 'ION'"
-          key="ion-settings"
-          class="sm-leading-trim"
-          :has-optical-image="hasOpticalImage"
-          :opacity="opacity"
-          @opacity="emitOpacity"
-        />
-      </fade-transition>
+      <div
+        v-if="openMenu === 'ION'"
+        class="ion-slider-wrapper"
+      >
+        <div
+          v-if="hasOpticalImage && !isIE"
+          class="ion-slider-holder"
+        >
+          <fade-transition class="w-full">
+            <opacity-settings
+              key="opticalOpacity"
+              label="Optical image visibility"
+              class="sm-leading-trim mt-auto"
+              :opacity="opticalOpacity"
+              @opacity="emitOpticalOpacity"
+            />
+          </fade-transition>
+        </div>
+        <div
+          v-if="hasOpticalImage"
+          class="ion-slider-holder"
+        >
+          <fade-transition class="w-full">
+            <opacity-settings
+              key="opacity"
+              label="Ion image opacity"
+              class="sm-leading-trim mt-auto"
+              :opacity="opacity"
+              @opacity="emitOpacity"
+            />
+          </fade-transition>
+        </div>
+        <div
+          v-if="lockIntensityEnabled"
+          class="ion-slider-holder"
+        >
+          <fade-transition>
+            <intensity-settings
+              v-if="openMenu === 'ION'"
+              key="ion-settings"
+              class="sm-leading-trim"
+              :has-optical-image="hasOpticalImage"
+              :opacity="opacity"
+              @opacity="emitOpacity"
+            />
+          </fade-transition>
+        </div>
+      </div>
     </div>
     <image-saver
       class="absolute top-0 left-0 mt-3 ml-3"
@@ -119,6 +148,7 @@ const ImageViewer = defineComponent<Props>({
     annotation: { required: true, type: Object },
     colormap: { required: true, type: String },
     opacity: { required: true, type: Number },
+    opticalOpacity: { type: Number },
     imageLoaderSettings: { required: true, type: Object },
     applyImageMove: { required: true, type: Function },
     pixelSizeX: { type: Number },
@@ -169,12 +199,18 @@ const ImageViewer = defineComponent<Props>({
       })
     })
 
+    const isIE = computed(() => {
+      // IE 10 and IE 11
+      return /Trident\/|MSIE/.test(window.navigator.userAgent)
+    })
+
     return {
       imageArea,
       dimensions,
       ionImageDimensions,
       imageFit,
       onResize,
+      isIE,
       ionImageLayers,
       ionImageMenuItems,
       singleIonImageControls,
@@ -191,6 +227,9 @@ const ImageViewer = defineComponent<Props>({
       emitOpacity(value: number) {
         emit('opacity', value)
       },
+      emitOpticalOpacity(value: number) {
+        emit('opticalOpacity', value)
+      },
       hasOpticalImage: computed(() => !!props.imageLoaderSettings.opticalSrc),
       lockIntensityEnabled: config.features.lock_intensity,
     }
@@ -206,5 +245,21 @@ export default ImageViewer
 
 .sm-leading-trim > :first-child {
   margin-top: calc(-1 * theme('spacing.3') / 2); /* hacking */
+}
+
+.ion-slider-wrapper{
+  display: flex;
+  flex-wrap: wrap;
+}
+.ion-slider-holder{
+  display: flex;
+  flex-wrap: wrap;
+  width: 240px;
+  @apply mt-2 ml-2;
+}
+@media (min-width: 768px) {
+  .ion-slider-wrapper{
+    min-width: max-content;
+  }
 }
 </style>
