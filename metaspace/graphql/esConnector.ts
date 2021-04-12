@@ -454,6 +454,22 @@ export const esCountGroupedResults = async(args: any, docType: DocType, user: Co
   return flattenAggResponse(args.groupingFields, resp.aggregations, 0)
 }
 
+export const esRawAggregationResults = async(args: any, aggs: any, docType: DocType,
+  user: ContextUser): Promise<any> => {
+  const body = await constructESQuery(args, docType, user)
+
+  const aggRequest = {
+    body: {
+      ...body,
+      aggs,
+    },
+    index: esIndex,
+    size: 0,
+  }
+  const resp = await es.search(aggRequest)
+  return resp.aggregations
+}
+
 export const esCountMatchingAnnotationsPerDataset = async(
   args: any, user: ContextUser
 ): Promise<Record<string, number>> => {

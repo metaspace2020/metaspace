@@ -69,6 +69,78 @@ gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrde
     countAnnotations(filter: $filter, datasetFilter: $dFilter, simpleQuery: $query)
   }`
 
+export const comparisonAnnotationListQuery =
+gql`query GetAggregatedAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
+  $offset: Int, $limit: Int, $query: String,
+  $filter: AnnotationFilter, $dFilter: DatasetFilter,
+  $colocalizationCoeffFilter: ColocalizationCoeffFilter,
+  $countIsomerCompounds: Boolean) {
+  allAggregatedAnnotations(filter: $filter, datasetFilter: $dFilter, simpleQuery: $query,
+      orderBy: $orderBy, sortingOrder: $sortingOrder,
+      offset: $offset, limit: $limit) {
+    ion
+    dbId
+    datasetIds
+    datasets {
+      id
+      sumFormula
+      adduct
+      ion
+      ionFormula
+      database
+      msmScore
+      rhoSpatial
+      rhoSpectral
+      rhoChaos
+      fdrLevel
+      mz
+      colocalizationCoeff(colocalizationCoeffFilter: $colocalizationCoeffFilter)
+      offSample
+      offSampleProb
+      dataset {
+        id
+        submitter { id name email }
+        principalInvestigator { name email }
+        group { id name shortName }
+        groupApproved
+        projects { id name }
+        name
+        polarity
+        metadataJson
+        isPublic
+      }
+      databaseDetails {
+        id
+      }
+      isotopeImages {
+        mz
+        url
+        minIntensity
+        maxIntensity
+        totalIntensity
+      }
+      isomers {
+        ion
+      }
+      isobars {
+        ion
+        ionFormula
+        peakNs
+        shouldWarn
+      }
+      countPossibleCompounds(includeIsomers: $countIsomerCompounds)
+      possibleCompounds {
+        name
+        imageURL
+        information {
+          database
+          url
+        }
+      }
+    }
+  }
+  }`
+
 export const tableExportQuery =
 gql`query Export($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
                    $offset: Int, $limit: Int, $query: String,

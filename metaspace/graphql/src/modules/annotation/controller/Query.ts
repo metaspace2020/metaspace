@@ -1,5 +1,5 @@
 import { applyQueryFilters } from '../queryFilters'
-import { esAnnotationByID, esCountResults, esSearchResults } from '../../../../esConnector'
+import { esAnnotationByID, esCountResults, esSearchResults, esRawAggregationResults } from '../../../../esConnector'
 import { FieldResolversFor } from '../../../bindingTypes'
 import { Query } from '../../../binding'
 
@@ -13,6 +13,61 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     }
 
     return annotations
+  },
+
+  async allAggregatedAnnotations(source, args, ctx) {
+    const { args: newArgs } = await applyQueryFilters(ctx, args)
+    const aggAnnotations = await esRawAggregationResults(newArgs, {
+      unique_formulas: {
+        terms: {
+          field: 'ion',
+        },
+        aggs: {
+          unique_db_ids: {
+            terms: {
+              field: 'db_id',
+            },
+            aggs: {
+              unique_ds_ids: {
+                terms: {
+                  field: 'ds_id',
+                },
+                aggs: {
+                  include_source: {
+                    top_hits: {
+                      _source: {},
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }, 'annotation', ctx.user)
+
+    const auxObj : any[] = []
+
+    aggAnnotations.unique_formulas.buckets.forEach((agg:any) => {
+      agg.unique_db_ids.buckets.forEach((db: any) => {
+        const item : {
+          ion : string
+          dbId: string
+          datasetIds: string[]
+          datasets: any[]
+        } | any = {}
+        item.ion = agg.key
+        item.dbId = db.key
+        item.datasetIds = []
+        item.datasets = []
+        db.unique_ds_ids.buckets.forEach((ds: any) => {
+          item.datasetIds.push(ds.key)
+          item.datasets.push(ds.include_source.hits.hits[0])
+        })
+        auxObj.push(item)
+      })
+    })
+    return auxObj
   },
 
   async countAnnotations(source, args, ctx) {
