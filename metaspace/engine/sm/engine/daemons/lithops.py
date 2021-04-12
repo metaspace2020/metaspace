@@ -7,7 +7,7 @@ from traceback import format_exc
 from sm.engine.annotation_lithops.executor import LithopsStalledException
 from sm.engine.daemons.actions import DaemonActionStage, DaemonAction
 from sm.engine.dataset import DatasetStatus
-from sm.engine.errors import ImzMLError, AnnotationError
+from sm.engine.errors import AnnotationError
 from sm.engine.queue import QueueConsumer, QueuePublisher
 from sm.engine.config import SMConfig
 from sm.rest.dataset_manager import DatasetActionPriority
@@ -43,6 +43,7 @@ class LithopsDaemon:
         self.logger.info(' SM lithops daemon: success')
         self._manager.post_to_slack('dart', f' [v] Annotation succeeded: {json.dumps(msg)}')
 
+    # pylint: disable=unused-argument
     def _on_failure(self, msg, e):
         exc = format_exc(limit=10)
         # Requeue the message so it retries
