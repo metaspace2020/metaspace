@@ -4,12 +4,6 @@ requires = [
     "wheel",
     "pybind11~=2.6.0",
     "cmake",
-    "scikit-build",
-    "numpy",
-    "scipy",
-    "numba",
-    "matplotlib",
-    "pyimzml",
 ]
 
 build-backend = "setuptools.build_meta"
