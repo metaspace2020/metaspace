@@ -8,7 +8,7 @@ export default async function(ctx: Context, projectId: string, datasetIds: strin
   removedDatasetIds: string[], approved: boolean | null,
   asyncEsUpdate = true) {
   // add and update
-  if (Array.isArray(datasetIds) && datasetIds.length > 0) {
+  if (datasetIds != null && datasetIds.length > 0) {
     const datasetProjectRepository = ctx.entityManager.getRepository(DatasetProjectModel)
     const datasets = await ctx.entityManager.getRepository(DatasetModel)
       .find({
@@ -16,8 +16,8 @@ export default async function(ctx: Context, projectId: string, datasetIds: strin
         relations: ['datasetProjects'],
       })
 
-    const promises = datasets.map(async dataset => {
-      const existingDatasetProject = dataset.datasetProjects.find(dp => dp.projectId === projectId)
+    const promises = datasets.map(async(dataset: any) => {
+      const existingDatasetProject = dataset.datasetProjects.find((dp: any) => dp.projectId === projectId)
       const datasetId = dataset.id
       if (approved == null) {
         if (existingDatasetProject != null) {
@@ -35,7 +35,7 @@ export default async function(ctx: Context, projectId: string, datasetIds: strin
         }
       }
 
-      const projectIds = dataset.datasetProjects.map(dp => dp.projectId)
+      const projectIds = dataset.datasetProjects.map((dp : any) => dp.projectId)
       if (approved === true) {
         projectIds.push(projectId)
       } else {
@@ -49,7 +49,7 @@ export default async function(ctx: Context, projectId: string, datasetIds: strin
   }
 
   // remove relationships
-  if (Array.isArray(removedDatasetIds) && removedDatasetIds.length > 0) {
+  if (removedDatasetIds != null && removedDatasetIds.length > 0) {
     const datasetProjectRepository = ctx.entityManager.getRepository(DatasetProjectModel)
     const datasets = await ctx.entityManager.getRepository(DatasetModel)
       .find({
@@ -57,17 +57,14 @@ export default async function(ctx: Context, projectId: string, datasetIds: strin
         relations: ['datasetProjects'],
       })
 
-    console.log('TO REMOV', datasets.length, JSON.stringify(datasets))
-
-    const promises = datasets.map(async dataset => {
-      const existingDatasetProject = dataset.datasetProjects.find(dp => dp.projectId === projectId)
+    const promises = datasets.map(async(dataset : any) => {
+      const existingDatasetProject = dataset.datasetProjects.find((dp : any) => dp.projectId === projectId)
       const datasetId = dataset.id
 
-      console.log('existingDatasetProject', existingDatasetProject)
       if (existingDatasetProject) {
         await datasetProjectRepository.delete({ projectId, datasetId })
 
-        const projectIds = dataset.datasetProjects.map(dp => dp.projectId)
+        const projectIds = dataset.datasetProjects.map((dp : any) => dp.projectId)
         _.pull(projectIds, projectId)
 
         await smApiUpdateDataset(datasetId, { projectIds }, { asyncEsUpdate })

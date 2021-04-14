@@ -24,12 +24,12 @@ import {
   sentGroupOrProjectInvitationEmail,
 } from '../../groupOrProject/email'
 import { smApiUpdateDataset } from '../../../utils/smApi/datasets'
-import { getDatasetForEditing } from '../../dataset/operation/getDatasetForEditing'
 import { utc } from 'moment'
 import generateRandomToken from '../../../utils/generateRandomToken'
 import { addExternalLink, removeExternalLink, ExternalLinkProviderOptions as ELPO } from '../ExternalLink'
 import { validateUrlSlugChange } from '../../groupOrProject/urlSlug'
 import { validateTiptapJson } from '../../../utils/tiptap'
+import { getDatasetFromProjectForEditing } from '../../dataset/operation/getDatasetFromProjectForEditing'
 import moment = require('moment')
 
 const asyncAssertCanEditProject = async(ctx: Context, projectId: string) => {
@@ -222,17 +222,24 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     }
 
     if (
-      (Array.isArray(datasetIds) && datasetIds.length > 0)
-        || (Array.isArray(removedDatasetIds) && removedDatasetIds.length > 0)
+      (datasetIds != null && datasetIds.length > 0)
+        || (removedDatasetIds != null && removedDatasetIds.length > 0)
     ) {
       // Verify user is allowed to edit the datasets
       await Promise.all((datasetIds || []).map(async(dsId: string) => {
-        await getDatasetForEditing(ctx.entityManager, ctx.user, dsId)
+        await getDatasetFromProjectForEditing(ctx.entityManager, ctx.user, dsId,
+          projectId, userProjectRole, false)
+      }))
+
+      // Verify user is allowed to edit the datasets to ber removed
+      await Promise.all((removedDatasetIds || []).map(async(dsId: string) => {
+        await getDatasetFromProjectForEditing(ctx.entityManager, ctx.user, dsId,
+          projectId, userProjectRole, true)
       }))
 
       const approved = [UPRO.MEMBER, UPRO.MANAGER].includes(userProjectRole)
-      await updateProjectDatasets(ctx, projectId, (datasetIds || []), (removedDatasetIds || [])
-        , approved, false)
+      await updateProjectDatasets(ctx, projectId, (datasetIds || []), (removedDatasetIds || []),
+        approved, false)
     }
 
     return true

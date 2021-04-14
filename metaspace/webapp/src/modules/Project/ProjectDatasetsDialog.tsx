@@ -1,12 +1,13 @@
 import { defineComponent, computed, reactive } from '@vue/composition-api'
 import { importDatasetsIntoProjectMutation, ProjectsListProject } from '../../api/project'
 import { Dialog, Checkbox, Button } from '../../lib/element-ui'
-import { uniqBy } from 'lodash'
+import { uniqBy, isEmpty } from 'lodash'
 import './ProjectDatasetsDialog.scss'
-import { DatasetListItem, datasetListItemsQuery } from '../../api/dataset'
+import { DatasetListItem, datasetListItemsQuery, projectDatasetListItemsQuery } from '../../api/dataset'
 import { useQuery } from '@vue/apollo-composable'
 import ElapsedTime from '../../components/ElapsedTime'
 import reportError from '../../lib/reportError'
+import Vue from 'vue'
 
 interface CheckOptions {
   [key: string]: boolean
@@ -22,14 +23,7 @@ interface ProjectDatasetsDialogProps {
   project: ProjectsListProject
   currentUserId: string
   visible: boolean
-  isAdmin: boolean
-  projectDatasets: string[]
-  dialogLabel: string
-  saveBtnLabel: string
-  cancelBtnLabel: string
-  selectAllLabel: string
-  selectNoneLabel: string
-  noDatasetsLabel: string
+  isManager: boolean
   refreshData: () => Promise<any>
 }
 
@@ -38,87 +32,99 @@ export const ProjectDatasetsDialog = defineComponent<ProjectDatasetsDialogProps>
   props: {
     project: { type: Object, default: undefined },
     currentUserId: { type: String, default: undefined },
-    dialogLabel: { type: String, default: 'Would you like to include/remove previously submitted datasets?' },
-    saveBtnLabel: { type: String, default: 'Update' },
-    cancelBtnLabel: { type: String, default: 'Cancel' },
-    selectAllLabel: { type: String, default: 'Select all' },
-    selectNoneLabel: { type: String, default: 'Select none' },
-    noDatasetsLabel: { type: String, default: 'No datasets available' },
     visible: { type: Boolean, default: true },
-    isAdmin: { type: Boolean, default: false },
-    projectDatasets: { type: Array, default: () => [] },
+    isManager: { type: Boolean, default: false },
     refreshData: { type: Function, required: true },
   },
   setup(props, ctx) {
     const { emit, root } = ctx
     const { $apollo } = root
-    const getProjectDatasets = () => {
+    const state = reactive<ProjectDatasetsDialogState>({
+      selectedDatasets: {},
+      isSubmitting: false,
+      hasChanged: false,
+    })
+
+    const getProjectDatasets = (projectDatasets: any) => {
       const defaultDatasets = {} as CheckOptions
-      if (Array.isArray(props.projectDatasets)) {
-        props.projectDatasets.forEach((ds: any) => {
+
+      if (projectDatasets) {
+        projectDatasets.forEach((ds: any) => {
           defaultDatasets[ds.id] = true
         })
       }
       return defaultDatasets
     }
-    const state = reactive<ProjectDatasetsDialogState>({
-      selectedDatasets: getProjectDatasets(),
-      isSubmitting: false,
-      hasChanged: false,
-    })
-    const {
-      result: datasetsResult,
-      loading,
-    } = useQuery<{allDatasets: DatasetListItem[]}>(datasetListItemsQuery, {
-      dFilter: {
-        submitter: props.currentUserId,
-      },
-    })
-    const datasets = computed(() => datasetsResult.value != null
-      ? datasetsResult.value.allDatasets as DatasetListItem[] : null)
 
-    const getAvailableDatasets = (datasets: any) => {
-      if (!props.isAdmin) {
+    const getAvailableDatasets = (datasets: any, projectDatasets: any) => {
+      if (!props.isManager) {
         return datasets
       }
 
-      if (Array.isArray(datasets) && Array.isArray(props.projectDatasets)) {
+      if (datasets && projectDatasets) {
         // show not owned datasets if admin, so it can be removed
-        return uniqBy(datasets.concat(props.projectDatasets), 'id')
+        return uniqBy(datasets.concat(projectDatasets), 'id')
       }
 
       return []
     }
+
+    const {
+      result: datasetsResult,
+      loading,
+    } = useQuery<{allDatasets: DatasetListItem[]}>(datasetListItemsQuery,
+      () => ({ dFilter: { submitter: props.currentUserId } }))
+    const datasets = computed(() => datasetsResult.value != null
+      ? datasetsResult.value.allDatasets as DatasetListItem[] : null)
+    const {
+      result: projectDatasetsResult,
+      loading: loadingProjectDatasets,
+    } = useQuery<{allProjectDatasets: DatasetListItem[]}>(projectDatasetListItemsQuery,
+      () => ({ dFilter: { project: props.project?.id } }))
+    const projectDatasets = computed(() => {
+      if (isEmpty(state.selectedDatasets)) {
+        state.selectedDatasets = getProjectDatasets(projectDatasetsResult.value?.allProjectDatasets)
+      }
+
+      return projectDatasetsResult.value != null
+        ? projectDatasetsResult.value.allProjectDatasets as DatasetListItem[] : null
+    })
 
     const handleClose = () => {
       emit('close')
     }
 
     const handleDatasetCheck = (value: boolean, key: string) => {
-      state.selectedDatasets[key] = value
+      Vue.set(state.selectedDatasets, key, value)
       if (!state.hasChanged) {
         state.hasChanged = true
       }
     }
 
     const handleSelectNone = () => {
-      const availableDatasets = getAvailableDatasets(datasets?.value).map((ds: any) => ds.id)
-      availableDatasets.forEach((key: string) => { state.selectedDatasets[key] = false })
+      const availableDatasets = getAvailableDatasets(datasets?.value,
+        projectDatasets?.value).map((ds: any) => ds.id)
+      availableDatasets.forEach((key: string) => {
+        Vue.set(state.selectedDatasets, key, false)
+      })
       if (!state.hasChanged) {
         state.hasChanged = true
       }
     }
 
     const handleSelectAll = () => {
-      const availableDatasets = getAvailableDatasets(datasets?.value).map((ds: any) => ds.id)
-      availableDatasets.forEach((key: string) => { state.selectedDatasets[key] = true })
+      const availableDatasets = getAvailableDatasets(datasets?.value,
+        projectDatasets?.value).map((ds: any) => ds.id)
+      availableDatasets.forEach((key: string) => {
+        Vue.set(state.selectedDatasets, key, true)
+      })
       if (!state.hasChanged) {
         state.hasChanged = true
       }
     }
 
     const handleProjectDatasetsUpdate = async() => {
-      const previousDatasets = getProjectDatasets()
+      const previousDatasets = getProjectDatasets(projectDatasets?.value)
       const removedDatasetIds: string[] = []
       const addedDatasetIds: string[] = []
       state.isSubmitting = true
@@ -148,11 +154,10 @@ export const ProjectDatasetsDialog = defineComponent<ProjectDatasetsDialogProps>
 
     return () => {
       const {
-        visible, project, dialogLabel, saveBtnLabel, cancelBtnLabel,
-        selectAllLabel, selectNoneLabel, noDatasetsLabel,
+        visible, project,
       } = props
       const { name } = project
-      const availableDatasets = getAvailableDatasets(datasets?.value)
+      const availableDatasets = getAvailableDatasets(datasets?.value, projectDatasets?.value)
 
       return (
         <Dialog
@@ -164,26 +169,26 @@ export const ProjectDatasetsDialog = defineComponent<ProjectDatasetsDialogProps>
           onClose={handleClose}>
           <div class="mt-6">
             <h4 class="m-0">
-              {dialogLabel}
+              Would you like to include/remove previously submitted datasets?
             </h4>
             {
-              Array.isArray(availableDatasets) && availableDatasets.length > 0
+              availableDatasets != null && availableDatasets.length > 0
                 && <div class="dataset-checkbox-list leading-6">
                   <div class="mb-2">
                     <span
                       class="select-link"
-                      onClick={handleSelectNone}>{selectNoneLabel}</span>
+                      onClick={handleSelectNone}>Select none</span>
                     <span> | </span>
                     <span
                       class="select-link"
-                      onClick={handleSelectAll}>{selectAllLabel}</span>
+                      onClick={handleSelectAll}>Select all</span>
                   </div>
                   {
-                    availableDatasets.map((dataset) => <Checkbox
+                    availableDatasets.map((dataset: any) => <Checkbox
                       class="flex h-6 items-center m-0 mx-2"
                       key={dataset.id}
-                      value={state?.selectedDatasets[dataset.id]}
-                      disabled={state?.isSubmitting}
+                      value={state.selectedDatasets[dataset.id]}
+                      disabled={state.isSubmitting}
                       onChange={(value: boolean) => handleDatasetCheck(value, dataset.id)}
                       label={dataset.name}>
                       <span class="truncate">
@@ -197,23 +202,23 @@ export const ProjectDatasetsDialog = defineComponent<ProjectDatasetsDialogProps>
                 </div>
             }
             {
-              Array.isArray(availableDatasets) && availableDatasets.length === 0
+              availableDatasets !== null && availableDatasets.length === 0
                 && <div class="flex items-center justify-center leading-6">
-                  <div>{noDatasetsLabel}</div>
+                  <div>No datasets available</div>
                 </div>
             }
 
             <div class="button-bar">
               <Button onClick={handleClose}>
-                {cancelBtnLabel}
+                Cancel
               </Button>
               <Button
                 class='w-32'
-                loading={state?.isSubmitting}
-                disabled={!state?.hasChanged}
+                loading={state.isSubmitting}
+                disabled={!state.hasChanged}
                 type="primary"
                 onClick={handleProjectDatasetsUpdate}>
-                {saveBtnLabel}
+                Update
               </Button>
             </div>
           </div>

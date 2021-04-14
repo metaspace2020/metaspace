@@ -11,8 +11,7 @@
         :visible="showProjectDatasetsDialog && currentUser != null"
         :current-user-id="currentUser && currentUser.id"
         :project="project"
-        :is-admin="isManager"
-        :project-datasets="projectDatasets"
+        :is-manager="isManager"
         :refresh-data="refetch"
         @close="handleCloseProjectDatasetsDialog"
         @update="handleCloseProjectDatasetsDialog"
@@ -349,11 +348,6 @@ export default class ViewProjectPage extends Vue {
       return (this.data && this.data.allDatasets || []).filter(ds => ds.status !== 'FAILED')
     }
 
-    get projectUserDatasetsIds(): string[] {
-      return (this.data && this.data.allDatasets || []).filter(ds => ds.status !== 'FAILED'
-        && ds.submitter && ds.submitter.id === this.currentUser?.id).map((ds) => ds.id)
-    }
-
     get countDatasets(): number { return this.data && this.data.countDatasets || 0 }
     get members() { return this.project && this.project.members || [] }
     get countMembers() { return this.project && this.project.numMembers }
@@ -560,6 +554,7 @@ export default class ViewProjectPage extends Vue {
 
     handleOpenProjectDatasetsDialog() {
       this.showProjectDatasetsDialog = true
+      hideFeatureBadge('manage_project_datasets')
     }
 
     handleCloseProjectDatasetsDialog() {

@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`ProjectDatasetsDialog it should match no dataset snapshot 1`] = `
-<transition-stub name="dialog-fade" class="project-datasets-dialog" project="[object Object]" currentuserid="039801c8-919e-11eb-908e-3b2b8e672707" dialoglabel="Would you like to include/remove previously submitted datasets?" savebtnlabel="Update" cancelbtnlabel="Cancel" selectalllabel="Select all" selectnonelabel="Select none" nodatasetslabel="No datasets available" visible="true" isadmin="true" refreshdata="function () {}" projectdatasets="[object Object],[object Object]" style="z-index: 2003;">
+<transition-stub name="dialog-fade" class="project-datasets-dialog" project="[object Object]" currentuserid="039801c8-919e-11eb-908e-3b2b8e672707" visible="true" ismanager="true" refreshdata="function () {}" style="z-index: 2003;">
   <div class="el-dialog__wrapper">
     <div role="dialog" aria-modal="true" aria-label="Manage Test\`s datasets" class="el-dialog" style="margin-top: 15vh;">
       <div class="el-dialog__header"><span class="el-dialog__title">Manage Test\`s datasets</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
@@ -9,8 +9,8 @@ exports[`ProjectDatasetsDialog it should match no dataset snapshot 1`] = `
         <div class="mt-6">
           <h4 class="m-0">Would you like to include/remove previously submitted datasets?</h4>
           <div class="dataset-checkbox-list leading-6">
-            <div class="mb-2"><span class="select-link">Select none</span><span> | </span><span class="select-link">Select all</span></div><label class="el-checkbox is-checked flex h-6 items-center m-0 mx-2"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value="New 3 (1)"></span><span class="el-checkbox__label"><span class="truncate">New 3 (1)</span><span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="2021-03-31T14:02:28.722Z"></mock-elapsed-time></span>
-              <!----></span></label><label class="el-checkbox is-checked flex h-6 items-center m-0 mx-2"><span class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value="Untreated_3_434_super_lite_19_31 (1)"></span><span class="el-checkbox__label"><span class="truncate">Untreated_3_434_super_lite_19_31 (1)</span><span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="2021-03-30T21:25:18.473Z"></mock-elapsed-time></span>
+            <div class="mb-2"><span class="select-link">Select none</span><span> | </span><span class="select-link">Select all</span></div><label class="el-checkbox flex h-6 items-center m-0 mx-2"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value="allDatasets.0.name"></span><span class="el-checkbox__label"><span class="truncate">allDatasets.0.name</span><span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time></span>
+              <!----></span></label><label class="el-checkbox flex h-6 items-center m-0 mx-2"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value="allDatasets.1.name"></span><span class="el-checkbox__label"><span class="truncate">allDatasets.1.name</span><span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time></span>
               <!----></span></label>
           </div>
           <div class="button-bar"><button type="button" class="el-button el-button--default">
@@ -27,7 +27,7 @@ exports[`ProjectDatasetsDialog it should match no dataset snapshot 1`] = `
 `;
 
 exports[`ProjectDatasetsDialog it should match snapshot 1`] = `
-<transition-stub name="dialog-fade" class="project-datasets-dialog" project="[object Object]" currentuserid="039801c8-919e-11eb-908e-3b2b8e672707" dialoglabel="Would you like to include/remove previously submitted datasets?" savebtnlabel="Update" cancelbtnlabel="Cancel" selectalllabel="Select all" selectnonelabel="Select none" nodatasetslabel="No datasets available" visible="true" isadmin="true" refreshdata="function () {}" projectdatasets="[object Object],[object Object]" style="z-index: 2001;">
+<transition-stub name="dialog-fade" class="project-datasets-dialog" project="[object Object]" currentuserid="039801c8-919e-11eb-908e-3b2b8e672707" visible="true" ismanager="true" refreshdata="function () {}" style="z-index: 2001;">
   <div class="el-dialog__wrapper">
     <div role="dialog" aria-modal="true" aria-label="Manage Test\`s datasets" class="el-dialog" style="margin-top: 15vh;">
       <div class="el-dialog__header"><span class="el-dialog__title">Manage Test\`s datasets</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
