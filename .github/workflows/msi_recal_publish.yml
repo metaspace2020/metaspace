@@ -16,9 +16,9 @@ jobs:
     - uses: actions/checkout@v2
 
     - uses: actions/checkout@v2
-      - repository: horvatovichlab/MSIWarp
-      - path: MSIWarp
-      - submodules: true
+      repository: horvatovichlab/MSIWarp
+      path: MSIWarp
+      submodules: true
 
     - uses: actions/setup-python@v2
 
