@@ -74,6 +74,9 @@ setup(
         '': '.',
     },
     packages=[*find_packages(), 'msiwarp', 'msiwarp.util'],
+    package_data={
+        'msi_recal': ['dbs/*.csv'],
+    },
     install_requires=['numpy', 'scipy', 'matplotlib', 'pyimzml', 'numba'],
     # Vendorize MSIWarp because it's not on PyPI yet
     ext_modules=[CMakeExtension('msiwarp/msiwarp_cpp')],
