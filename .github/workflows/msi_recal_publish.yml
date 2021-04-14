@@ -26,7 +26,7 @@ jobs:
     - name: Build wheels
       uses: joerick/cibuildwheel@v1.10.0
       env:
-        CIBW_SKIP: cp27*
+        CIBW_SKIP: cp27* pp*
 
     - name: Show files
       run: ls -lh wheelhouse

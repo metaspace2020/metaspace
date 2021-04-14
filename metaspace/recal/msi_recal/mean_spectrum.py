@@ -180,15 +180,14 @@ def get_alignment_peaks(annotated_mean_spectrum, n_peaks):
 
 def get_representative_spectrum(
     spectra_df: pd.DataFrame,
-    ref_mzs: np.ndarray,
+    mean_spectrum: pd.DataFrame,
     instrument: InstrumentType,
     sigma_1: float,
     remove_bg=False,
 ):
     """Finds the single spectrum that is most similar to the mean spectrum"""
-    mean_spectrum = annotate_mean_spectrum(spectra_df, ref_mzs, instrument, sigma_1).rename(
-        columns={'mz': 'mean_mz', 'ints': 'mean_ints'}
-    )
+    mean_spectrum = mean_spectrum.rename(columns={'mz': 'mean_mz', 'ints': 'mean_ints'})
+
     if remove_bg:
         # Exclude peaks that only exist in a fraction of spectra
         background_threshold = np.median(mean_spectrum.coverage)
@@ -214,7 +213,7 @@ def get_representative_spectrum(
     # Return the best scoring spectrum
     best_sp = pd.Series(spectrum_scores).idxmax()
     logger.debug(f'Choose representative spectrum: {best_sp}')
-    return processed_spectra[best_sp]
+    return processed_spectra[best_sp].sort_values('mz')
 
 
 def hybrid_mean_spectrum(spectra_df, instrument, sigma_1, min_coverage=0):

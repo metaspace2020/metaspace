@@ -66,38 +66,8 @@ def build_pipeline(sample_peaks_df: pd.DataFrame, params: RecalParams):
         assert pass_name in PASSES, f'Unrecognized model "{pass_name}"'
 
         p = PASSES[pass_name](params)
-
-        if 'align' in pass_name:
-            mean_spectrum = hybrid_mean_spectrum(
-                sample_peaks_df, params.instrument, params.align_sigma_1
-            )
-
-            spectrum = get_representative_spectrum(
-                sample_peaks_df,
-                mean_spectrum.mz.values,
-                params.instrument,
-                params.align_sigma_1,
-                remove_bg=True,
-            )
-            p.fit(sample_peaks_df, spectrum)
-        else:
-            # mean_spectrum = get_mean_spectrum_df_parallel(
-            #     sample_peaks_df, params.instrument, params.jitter_sigma_1
-            # )
-            # mean_spectrum = annotate_mean_spectrum(
-            #     sample_peaks_df, mean_spectrum.mz, params.instrument, params.jitter_sigma_1
-            # )
-            mean_spectrum = hybrid_mean_spectrum(
-                sample_peaks_df, params.instrument, params.jitter_sigma_1, 0
-            )
-            candidate_df = get_recal_candidates(mean_spectrum, params, params.recal_sigma_1)
-            # __import__('__main__')._sample_peaks_df = sample_peaks_df
-            # __import__('__main__').mean_spectrum = mean_spectrum
-            # __import__('__main__').candidate_df = candidate_df
-            # __import__('__main__')._p = p
-            p.fit(sample_peaks_df, candidate_df)
+        p.fit(sample_peaks_df)
         sample_peaks_df = p.predict(sample_peaks_df)
-        logger.debug(f'Sample peaks: {sample_peaks_df.shape}')
 
         models.append(p)
 

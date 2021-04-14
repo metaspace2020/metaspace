@@ -7,6 +7,7 @@ from sklearn.linear_model import RANSACRegressor
 
 from msi_recal.db_peak_match import join_by_mz
 from msi_recal.math import peak_width
+from msi_recal.mean_spectrum import get_representative_spectrum, hybrid_mean_spectrum
 from msi_recal.params import RecalParams
 
 logger = logging.getLogger(__name__)
@@ -24,12 +25,21 @@ class AlignRansac:
         self.hi_warp_ = {}
         self.target_spectrum = None
 
-    def fit(self, X, y):
-        missing_cols = {'mz', 'coverage'}.difference(y.columns)
-        assert not missing_cols, f'y is missing columns: {", ".join(missing_cols)}'
+    def fit(self, X):
+        missing_cols = {'mz', 'ints', 'mz'}.difference(X.columns)
+        assert not missing_cols, f'X is missing columns: {", ".join(missing_cols)}'
 
-        self.target_spectrum = y[['mz', 'ints', 'coverage']].sort_values('mz')
-        logger.info(f'Alignment spectrum has {len(y)} peaks')
+        mean_spectrum = hybrid_mean_spectrum(X, self.instrument, self.align_sigma_1)
+        spectrum = get_representative_spectrum(
+            X,
+            mean_spectrum,
+            self.instrument,
+            self.align_sigma_1,
+            remove_bg=True,
+        )
+
+        self.target_spectrum = spectrum[['mz', 'ints', 'coverage']].sort_values('mz')
+        logger.info(f'Alignment spectrum has {len(spectrum)} peaks')
 
         self.min_mz = np.round(X.mz.min(), -1)
         self.max_mz = np.round(X.mz.max(), -1)

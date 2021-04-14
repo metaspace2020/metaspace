@@ -6,6 +6,7 @@ import pandas as pd
 from msiwarp.util.warp import to_mx_peaks
 
 from msi_recal.math import peak_width
+from msi_recal.mean_spectrum import hybrid_mean_spectrum, get_representative_spectrum
 from msi_recal.params import RecalParams
 
 logger = logging.getLogger(__name__)
@@ -23,26 +24,20 @@ class AlignMsiwarp:
         self.ref_s = None
         self.align_nodes = None
 
-    def fit(self, X, y):
+    def fit(self, X):
         missing_cols = {'sp', 'mz', 'ints'}.difference(X.columns)
         assert not missing_cols, f'X is missing columns: {", ".join(missing_cols)}'
-        missing_cols = {'mz', 'ints'}.difference(y.columns)
-        assert not missing_cols, f'y is missing columns: {", ".join(missing_cols)}'
-        y = y.sort_values('mz')
 
-        # To ensure an even distribution of peaks across the mass range, take up to 250 peaks
-        # from each quadrant of the mass range
-        bin_edges = np.histogram_bin_edges(y.mz.values, 4)
-        ref_chunks = []
-        print()
-        for i in range(4):
-            range_peaks = y[y.mz.between(bin_edges[i], bin_edges[i + 1])]
-            idxs = np.argsort(-range_peaks.ints.values)[:250]
-            logger.debug(
-                f'Chose {len(idxs)} peaks from {bin_edges[i]:.0f}-{bin_edges[i+1]:.0f} for alignment'
-            )
-            ref_chunks.append(range_peaks.iloc[idxs])
-        ref_df = pd.concat(ref_chunks)
+        mean_spectrum = hybrid_mean_spectrum(X, self.instrument, self.align_sigma_1)
+        spectrum = get_representative_spectrum(
+            X,
+            mean_spectrum,
+            self.instrument,
+            self.align_sigma_1,
+            remove_bg=True,
+        )
+
+        ref_df = self._sample_across_mass_range(spectrum)
 
         node_mzs = np.array([np.floor(X.mz.min()), np.ceil(X.mz.max())])
         node_slacks = peak_width(node_mzs, self.instrument, self.align_sigma_1) / 2
@@ -61,6 +56,20 @@ class AlignMsiwarp:
         ]
 
         return self
+
+    def _sample_across_mass_range(self, spectrum, n_bins=4, n_per_bin=250):
+        # To ensure an even distribution of peaks across the mass range, take the most intense peaks
+        # from each quadrant of the mass range
+        bin_edges = np.histogram_bin_edges(spectrum.mz.values, n_bins)
+        ref_chunks = []
+        for i in range(n_bins):
+            range_peaks = spectrum[spectrum.mz.between(bin_edges[i], bin_edges[i + 1])]
+            idxs = np.argsort(-range_peaks.ints.values)[:n_per_bin]
+            logger.debug(
+                f'Chose {len(idxs)} alignment peaks from {bin_edges[i]:.0f}-{bin_edges[i + 1]:.0f}'
+            )
+            ref_chunks.append(range_peaks.iloc[idxs])
+        return pd.concat(ref_chunks)
 
     def predict(self, X):
         assert self.ref_s is not None, 'predict called before fit'

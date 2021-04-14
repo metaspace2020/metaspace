@@ -158,7 +158,7 @@ def get_recal_candidates(peaks_df, params: RecalParams, sigma_1: float):
     candidate_df = pd.concat(candidate_dfs)
     candidate_df['weight'] /= candidate_df.weight.max()
 
-    return candidate_df
+    return candidate_df.sort_values('mz')
 
 
 def get_recal_mx_spectrum(candidate_peaks, n_nodes):

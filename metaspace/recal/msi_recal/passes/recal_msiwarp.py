@@ -3,6 +3,7 @@ import logging
 import msiwarp as mx
 import numpy as np
 import pandas as pd
+from msi_recal.db_peak_match import get_recal_candidates
 from msiwarp.util.warp import to_mx_peaks
 
 from msi_recal.math import peak_width
@@ -27,36 +28,43 @@ class RecalMsiwarp:
         self.lo_warp_ = {}
         self.hi_warp_ = {}
 
+        self.recal_spectrum = None
         self.recal_nodes = None
         self.recal_move = None
 
-    def fit(self, X, y):
+    def fit(self, X):
         missing_cols = {'sp', 'mz', 'ints'}.difference(X.columns)
         assert not missing_cols, f'X is missing columns: {", ".join(missing_cols)}'
-        missing_cols = {'mz', 'ints'}.difference(y.columns)
-        assert not missing_cols, f'y is missing columns: {", ".join(missing_cols)}'
 
         self.recal_nodes = self._make_recal_nodes(np.floor(X.mz.min()), np.ceil(X.mz.max()))
 
-        # Convert reference spectrum
-        y = y.sort_values('mz')
-        ref_s = to_mx_peaks(y.mz, y.ints, self.jitter_sigma_1, 2, self.instrument)
+        # Get reference spectrum
+        mean_spectrum = hybrid_mean_spectrum(X, self.instrument, self.jitter_sigma_1, 0)
+        db_hits = get_recal_candidates(mean_spectrum, self.params, self.params.recal_sigma_1)
+        db_hits = (
+            db_hits[db_hits.weight > 0]
+            .sort_values('weight', ascending=False)
+            .drop_duplicates('mz')
+            .sort_values('mz')
+        )
+        self.recal_spectrum = to_mx_peaks(
+            db_hits.mz, db_hits.ints, self.jitter_sigma_1, 2, self.instrument
+        )
 
         # Get sample spectrum
-        mean_spectrum = hybrid_mean_spectrum(X, self.instrument, self.jitter_sigma_1)
         spectrum = get_representative_spectrum(
-            X, mean_spectrum.mz.values, self.instrument, self.jitter_sigma_1
+            X, mean_spectrum, self.instrument, self.jitter_sigma_1
         )
         # Reminder: IDs must be different
         recal_s = to_mx_peaks(spectrum.mz, spectrum.ints, self.jitter_sigma_1, 1, self.instrument)
 
         logger.info(f'Representative spectrum has {len(recal_s)} peaks')
-        logger.info(f'Alignment spectrum has {len(ref_s)} peaks')
+        logger.info(f'Calibration spectrum has {len(self.recal_spectrum)} peaks')
 
         self.recal_move = mx.find_optimal_spectrum_warping(
             recal_s,
             # aligned_mean_spectrum,
-            ref_s,
+            self.recal_spectrum,
             self.recal_nodes,
             # The "epsilon" parameter is multiplied by a node's sigma to get the maximum distance
             # between peaks for them to be candidate recalibration pairs
