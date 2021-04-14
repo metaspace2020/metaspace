@@ -31,11 +31,14 @@ def mass_accuracy_bounds(mzs: float, instrument: InstrumentType, sigma_1: float)
 def mass_accuracy_bounds(mzs, instrument: InstrumentType, sigma_1: float):
     """Returns upper and lower mass boundsm, scaled based on m/z, instrument and sigma_1"""
     if instrument == 'ft-icr':
-        half_width = mzs * sigma_1 * 1e-6
+        half_width = mzs ** 2 * sigma_1
     elif instrument == 'orbitrap':
-        half_width = np.sqrt(mzs) * sigma_1
+        half_width = mzs ** 1.5 * sigma_1
     else:
-        half_width = np.ones_like(mzs) * sigma_1
+        if np.isscalar(sigma_1):
+            half_width = sigma_1
+        else:
+            half_width = np.full_like(mzs, sigma_1)
 
     lower = mzs - half_width
     upper = mzs + half_width
@@ -70,9 +73,9 @@ def ppm_to_sigma_1(ppm: float, instrument: InstrumentType, at_mz=200):
     value of Daltons measured at 1 Da.
     """
     if instrument == 'orbitrap':
-        return (ppm * at_mz / 1e6) / (at_mz ** 1.5)
+        return (at_mz * ppm / 1e6) / (at_mz ** 1.5)
     if instrument == 'ft-icr':
-        return (ppm * at_mz / 1e6) / (at_mz ** 2)
+        return (at_mz * ppm / 1e6) / (at_mz ** 2)
     return ppm / 1e6
 
 

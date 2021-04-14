@@ -1,35 +1,24 @@
 import logging
-import os
-import pickle
 from concurrent.futures.process import ProcessPoolExecutor
-from multiprocessing import Process, JoinableQueue
-from pathlib import Path
 
-import cpyMSpec
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-from pyimzml.ImzMLWriter import ImzMLWriter
-from sklearn.linear_model import RANSACRegressor, TheilSenRegressor
-from sklearn.metrics import r2_score
-import msiwarp as mx
-from msiwarp.util.warp import to_mz, to_height, to_mx_peaks, generate_mean_spectrum
-from pyimzml.ImzMLParser import ImzMLParser
+from sklearn.linear_model import RANSACRegressor
 
 from msi_recal.db_peak_match import join_by_mz
 from msi_recal.math import peak_width
+from msi_recal.params import RecalParams
 
 logger = logging.getLogger(__name__)
 
 
-class SpectrumAlignerRansac:
-    def __init__(self, align_sigma_1, tol_sigma_1, instrument, mz_lo, mz_hi):
-        self.align_sigma_1 = align_sigma_1
-        self.tol_sigma_1 = tol_sigma_1
-        self.instrument = instrument
-        self.mz_lo = mz_lo
-        self.mz_hi = mz_hi
+class AlignRansac:
+    def __init__(self, params: RecalParams):
+        self.align_sigma_1 = params.align_sigma_1
+        self.jitter_sigma_1 = params.jitter_sigma_1
+        self.instrument = params.instrument
+        self.min_mz = 100
+        self.max_mz = 1000
         self.coef_ = {}
         self.lo_warp_ = {}
         self.hi_warp_ = {}
@@ -38,12 +27,16 @@ class SpectrumAlignerRansac:
     def fit(self, X, y):
         missing_cols = {'mz', 'coverage'}.difference(y.columns)
         assert not missing_cols, f'y is missing columns: {", ".join(missing_cols)}'
+
         self.target_spectrum = y[['mz', 'ints', 'coverage']].sort_values('mz')
         logger.info(f'Alignment spectrum has {len(y)} peaks')
+
+        self.min_mz = np.round(X.mz.min(), -1)
+        self.max_mz = np.round(X.mz.max(), -1)
+
         return self
 
     def _align_ransac_inner(self, sp, mzs, ints):
-        # threshold = self.align_ppm * 200 * 1e-6
         hits = join_by_mz(
             self.target_spectrum,
             'mz',
@@ -61,7 +54,7 @@ class SpectrumAlignerRansac:
             X = hits.sample_mz.values.reshape(-1, 1)
             y = hits.mz.values
             bins = np.histogram_bin_edges(X, 2)
-            threshold = peak_width(X[:, 0], self.instrument, self.tol_sigma_1)
+            threshold = peak_width(X[:, 0], self.instrument, self.jitter_sigma_1)
             ransac = RANSACRegressor(
                 # max_trials=10000,
                 min_samples=max(0.1, 3 / len(X)),
@@ -89,16 +82,13 @@ class SpectrumAlignerRansac:
         assert self.target_spectrum is not None, 'predict called before fit'
         missing_cols = {'sp', 'mz', 'ints'}.difference(X.columns)
         assert not missing_cols, f'X is missing columns: {", ".join(missing_cols)}'
-        results = pmap(
-            self._align_ransac_inner,
-            [(sp, grp.mz, grp.ints) for sp, grp in X.groupby('sp') if sp not in self.coef_],
-        )
-
-        for result in results:
-            sp = result['sp']
-            self.coef_[sp] = result
-            self.lo_warp_[sp] = result['M'] * self.mz_lo + result['C']
-            self.hi_warp_[sp] = result['M'] * self.mz_hi + result['C']
+        with ProcessPoolExecutor() as ex:
+            args = [(sp, grp.mz, grp.ints) for sp, grp in X.groupby('sp') if sp not in self.coef_]
+            for result in ex.map(self._align_ransac_inner, *zip(args)):
+                sp = result['sp']
+                self.coef_[sp] = result
+                self.lo_warp_[sp] = result['M'] * self.min_mz + result['C']
+                self.hi_warp_[sp] = result['M'] * self.max_mz + result['C']
 
         sp_to_M = pd.Series({sp: result['M'] for sp, result in self.coef_.items()})
         sp_to_C = pd.Series({sp: result['C'] for sp, result in self.coef_.items()})

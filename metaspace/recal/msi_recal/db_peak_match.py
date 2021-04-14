@@ -16,10 +16,10 @@ def join_by_mz(left, left_mz_col, right, right_mz_col, instrument, sigma_1, how=
 
     if not right[right_mz_col].is_monotonic_increasing:
         right = right.sort_values(right_mz_col)
-    lo_mz, hi_mz = mass_accuracy_bounds(left[left_mz_col].values, instrument, sigma_1)
+    min_mz, max_mz = mass_accuracy_bounds(left[left_mz_col].values, instrument, sigma_1)
 
-    lo_idx = np.searchsorted(right[right_mz_col], lo_mz, 'l')
-    hi_idx = np.searchsorted(right[right_mz_col], hi_mz, 'r')
+    lo_idx = np.searchsorted(right[right_mz_col], min_mz, 'l')
+    hi_idx = np.searchsorted(right[right_mz_col], max_mz, 'r')
     mask = lo_idx != hi_idx
 
     joiner = pd.DataFrame(
@@ -52,14 +52,24 @@ def _spectral_score(ref_ints: np.ndarray, ints: np.ndarray):
         return 0
 
 
-def calc_spectral_scores(spectrum, db_hits, params: RecalParams, sigma_1: float) -> pd.Series:
+def calc_spectral_scores(spectrum, db_hits, params: RecalParams, sigma_1: float) -> pd.DataFrame:
     """For each DB match, searches for isotopic peaks with the same approximate mass error and
     calculates a spectral score"""
 
     # Make list of expected isotopic peaks for each DB hit
     spectral_peaks = []
+    if 'coverage' in spectrum.columns:
+        limit_of_detection = np.percentile(spectrum.ints / spectrum.coverage, 0.1)
+        logger.debug(f'Limit of detection (mean spectrum): {limit_of_detection}')
+    else:
+        limit_of_detection = np.percentile(spectrum.ints, 0.1)
+        logger.debug(f'Limit of detection: {limit_of_detection}')
+
     for db_hit in db_hits.itertuples():
-        min_abundance = params.limit_of_detection / db_hit.ints
+        if 'coverage' in db_hits.columns:
+            min_abundance = min(limit_of_detection / db_hit.ints / db_hit.coverage, 0.9)
+        else:
+            min_abundance = min(limit_of_detection / db_hit.ints, 0.9)
         mol_peaks = get_centroid_peaks(
             db_hit.formula,
             db_hit.adduct,
@@ -80,39 +90,64 @@ def calc_spectral_scores(spectrum, db_hits, params: RecalParams, sigma_1: float)
     spectral_hits['ints'] = spectral_hits['ints'].fillna(0)
 
     # Calculate score
-    spectral_scores = spectral_hits.groupby('hit_index').apply(
-        lambda grp: _spectral_score(grp.ref_ints.values, grp.ints.values)
-    )
+    if len(spectral_hits):
+        by_hit = spectral_hits.groupby('hit_index')
+        spectral_scores = pd.DataFrame(
+            {
+                'spectral_score': by_hit.apply(
+                    lambda grp: _spectral_score(grp.ref_ints.values, grp.ints.values)
+                ),
+                'n_ref_peaks': by_hit.apply(lambda grp: len(grp)),
+            }
+        )
+    else:
+        spectral_scores = pd.DataFrame(
+            {
+                'spectral_score': pd.Series(),
+                'n_ref_peaks': pd.Series(dtype='i'),
+            }
+        )
     return spectral_scores
 
 
-def get_recal_candidates(mean_spectrum, mz_lo, mz_hi, adducts, charge, recal_ppm=3):
-    peaks = pd.DataFrame(
-        [(s.mz, s.height, s.sigma_mz) for s in mean_spectrum], columns=['mz', 'ints', 'sigma']
-    )
+def get_recal_candidates(peaks_df, params: RecalParams, sigma_1: float):
+    min_mz = peaks_df.mz.min()
+    max_mz = peaks_df.mz.max()
 
     candidate_dfs = []
-    for db_path in Path('./dbs').glob('*.csv'):
-        for adduct in adducts:
+    for db_path in params.db_paths:
+        for adduct in params.adducts:
             db_name = db_path.stem + adduct
             db = pd.read_csv(db_path).assign(db=db_name)[['db', 'formula']].drop_duplicates()
             formulas = db.formula.unique()
             mzs = pd.Series(
-                {formula: get_centroid_peaks(formula, adduct, charge)[0] for formula in formulas}
+                {
+                    formula: get_centroid_peaks(
+                        formula, adduct, params.charge, 0.001, params.instrument_model
+                    )[0][0]
+                    for formula in formulas
+                }
             )
             db['adduct'] = adduct
+            db['charge'] = params.charge
             db['db_mz'] = mzs[db.formula].values
-            db = db[(db.db_mz >= mz_lo) & (db.db_mz <= mz_hi)]
-            db_hits = join_by_mz(db, 'db_mz', peaks, 'mz', recal_ppm)
-            spectral_scores = calc_spectral_scores(peaks, db_hits, charge)
+            db_hits = join_by_mz(db, 'db_mz', peaks_df, 'mz', params.instrument, sigma_1)
+            spectral_scores = calc_spectral_scores(peaks_df, db_hits, params, params.jitter_sigma_1)
             db_hits = db_hits.join(spectral_scores)
-            db_hits = db_hits[db_hits.n_ref_peaks > 1]
+
+            # db_hits = db_hits[db_hits.n_ref_peaks > 1]  # Only count sufficiently abundant hits
             sum_spectral_score = (
                 db_hits.sort_values('spectral_score', ascending=False)
                 .drop_duplicates('formula')
                 .spectral_score.sum()
             )
-            db_weight = sum_spectral_score / len(db)
+            # Find the average score, excluding the following cases that don't indicate bad matches:
+            # * mols out of m/z range (also excluding the last 2 Da, because those peaks usually
+            # won't have good M+1s)
+            # * mols with no other isotopic peaks expected above the limit of detection
+            n_candidates = np.count_nonzero(db.db_mz.between(min_mz, max_mz - 2))
+            mono_ratio = np.count_nonzero(db_hits.n_ref_peaks <= 1) / len(db_hits)
+            db_weight = sum_spectral_score / n_candidates / mono_ratio
             db_hits['weight'] = db_hits.spectral_score * db_weight
             candidate_dfs.append(db_hits)
 
