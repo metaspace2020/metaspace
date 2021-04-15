@@ -8,7 +8,7 @@ from matplotlib.figure import Figure
 
 
 def save_spectrum_image(
-        spectra_df: pd.DataFrame, values: Union[dict, pd.Series], path: str, title: str, **kwargs
+    spectra_df: pd.DataFrame, values: Union[dict, pd.Series], path: str, title: str, **kwargs
 ):
     values = pd.Series(values)
     base_y = spectra_df.y.min()

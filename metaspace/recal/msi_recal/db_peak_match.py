@@ -27,7 +27,7 @@ def _spectral_score(ref_ints: np.ndarray, ints: np.ndarray):
 
 
 def calc_spectral_scores(
-        spectrum, db_hits, params: RecalParams, sigma_1: float, limit_of_detection: float
+    spectrum, db_hits, params: RecalParams, sigma_1: float, limit_of_detection: float
 ) -> pd.DataFrame:
     """For each DB match, searches for isotopic peaks with the same approximate mass error and
     calculates a spectral score"""
@@ -124,8 +124,8 @@ def _calc_db_scores(peaks_df, db_path, adduct, limit_of_detection, max_mz, min_m
     # db_hits = db_hits[db_hits.n_ref_peaks > 1]  # Only count sufficiently abundant hits
     filtered = (
         db_hits[db_hits.n_ref_peaks > 1]
-            .sort_values('spectral_score', ascending=False)
-            .drop_duplicates('formula')
+        .sort_values('spectral_score', ascending=False)
+        .drop_duplicates('formula')
     )
     # Find the average score, excluding the following cases that don't indicate bad matches:
     # * mols out of m/z range (also excluding the last 2 Da, because those peaks usually
@@ -146,9 +146,9 @@ def get_recal_candidates(peaks_df, params: RecalParams, sigma_1: float):
     db_hits = get_db_hits(mean_spectrum, params, sigma_1)
     recal_candidates = (
         db_hits[db_hits.weight > 0]
-            .sort_values('weight', ascending=False)
-            .drop_duplicates('mz')
-            .sort_values('mz')
+        .sort_values('weight', ascending=False)
+        .drop_duplicates('mz')
+        .sort_values('mz')
     )
     db_hits['used_for_recal'] = db_hits.index.isin(recal_candidates.index)
 

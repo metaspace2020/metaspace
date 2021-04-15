@@ -60,11 +60,11 @@ def make_spectra_df(spectra):
 
 
 def representative_spectrum(
-        spectra_df: pd.DataFrame,
-        mean_spectrum: pd.DataFrame,
-        instrument: InstrumentType,
-        sigma_1: float,
-        remove_bg=False,
+    spectra_df: pd.DataFrame,
+    mean_spectrum: pd.DataFrame,
+    instrument: InstrumentType,
+    sigma_1: float,
+    remove_bg=False,
 ):
     """Finds the single spectrum that is most similar to the mean spectrum"""
     mean_spectrum = mean_spectrum.rename(columns={'mz': 'mean_mz', 'ints': 'mean_ints'})

@@ -34,7 +34,7 @@ def parse_transforms(args_transforms):
         elif transform_name == 'normalize':
             assert len(t_args) <= 2, f'too many arguments to {transform_name}'
             assert (
-                    len(t_args) < 1 or t_args[0] == 'median' or is_float_str(t_args[0])
+                len(t_args) < 1 or t_args[0] == 'median' or is_float_str(t_args[0])
             ), f'invalid intensity argument to {transform_name}'
             assert len(t_args) < 2 or t_args[1] in (
                 'tic',

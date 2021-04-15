@@ -84,12 +84,12 @@ def _imzml_writer_process(output_path, queue):
 
 
 def process_imzml_file(
-        input_path: Union[str, Path],
-        params: RecalParams,
-        output_path: Union[str, Path, None] = None,
-        debug_path: Union[str, Path, None] = None,
-        samples: int = 100,
-        limit: int = None,
+    input_path: Union[str, Path],
+    params: RecalParams,
+    output_path: Union[str, Path, None] = None,
+    debug_path: Union[str, Path, None] = None,
+    samples: int = 100,
+    limit: int = None,
 ):
     input_path = Path(input_path)
     if not output_path:

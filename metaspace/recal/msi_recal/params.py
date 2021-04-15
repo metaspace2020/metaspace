@@ -20,15 +20,15 @@ def normalize_instrument_type(instrument) -> InstrumentType:
 
 class RecalParams:
     def __init__(
-            self,
-            instrument: str,
-            rp: float,
-            base_mz: float,
-            jitter_sigma_1: float,
-            charge: int,
-            db_paths: List[Path],
-            adducts: List[str],
-            passes: List[List[str]],
+        self,
+        instrument: str,
+        rp: float,
+        base_mz: float,
+        jitter_sigma_1: float,
+        charge: int,
+        db_paths: List[Path],
+        adducts: List[str],
+        passes: List[List[str]],
     ):
         self.instrument = instrument = normalize_instrument_type(instrument)
         self.rp = rp

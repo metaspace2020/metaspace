@@ -32,6 +32,7 @@ class RecalMsiwarp:
         self.recal_spectrum = None
         self.recal_nodes = None
         self.recal_move = None
+        self.skip = False
 
     def fit(self, X):
         missing_cols = {'sp', 'mz', 'ints'}.difference(X.columns)
@@ -66,10 +67,10 @@ class RecalMsiwarp:
         )
 
         if all(
-                move == len(node.mz_shifts) - 1 for move, node in zip(self.recal_move, self.recal_nodes)
+            move == len(node.mz_shifts) - 1 for move, node in zip(self.recal_move, self.recal_nodes)
         ):
-            logger.warning("MSIWarp produced an invalid warp. Skipping.")
-            self.recal_move = [len(node.mz_shifts) // 2 for node in self.recal_nodes]
+            logger.warning("MSIWarp produced an invalid warp. Skipping recal_msiwarp.")
+            self.skip = True
 
         for node, move in zip(self.recal_nodes, self.recal_move):
             logger.debug(f'Warping {node.mz:.6f} -> {node.mz + node.mz_shifts[move]:.6f}')
@@ -93,6 +94,9 @@ class RecalMsiwarp:
         assert self.recal_move is not None, 'predict called before fit'
         missing_cols = {'sp', 'mz', 'ints'}.difference(X.columns)
         assert not missing_cols, f'X is missing columns: {", ".join(missing_cols)}'
+
+        if self.skip:
+            return X
 
         # Apply alignments & convert back to
         results_dfs = []
