@@ -94,8 +94,13 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
       }
 
       return {
-        path: '/annotations',
+        name: 'datasets-comparison',
         query: encodeParams(query),
+        params: {
+          nCols: state.nCols.toString(),
+          nRows: state.nRows.toString(),
+          grid: JSON.stringify(state.arrangement),
+        },
       }
     }
 

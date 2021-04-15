@@ -71,13 +71,12 @@ gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrde
 
 export const comparisonAnnotationListQuery =
 gql`query GetAggregatedAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
-  $offset: Int, $limit: Int, $query: String,
+  $query: String,
   $filter: AnnotationFilter, $dFilter: DatasetFilter,
   $colocalizationCoeffFilter: ColocalizationCoeffFilter,
   $countIsomerCompounds: Boolean) {
   allAggregatedAnnotations(filter: $filter, datasetFilter: $dFilter, simpleQuery: $query,
-      orderBy: $orderBy, sortingOrder: $sortingOrder,
-      offset: $offset, limit: $limit) {
+      orderBy: $orderBy, sortingOrder: $sortingOrder) {
     ion
     dbId
     datasetIds
