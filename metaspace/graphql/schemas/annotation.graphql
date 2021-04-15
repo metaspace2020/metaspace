@@ -146,7 +146,6 @@ type Query {
 
   allAggregatedAnnotations(orderBy: AnnotationOrderBy = ORDER_BY_MSM,
                  sortingOrder: SortingOrder = DESCENDING,
-                 offset: Int = 0, limit: Int = 10,
                  filter: AnnotationFilter = {},
                  datasetFilter: DatasetFilter = {},
                  simpleQuery: String): [AggregatedAnnotation]

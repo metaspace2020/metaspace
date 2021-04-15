@@ -4,7 +4,7 @@
       id="annot-table"
       ref="table"
       v-loading="isLoading"
-      :data="annotations"
+      :data="getAnnotationData"
       size="mini"
       border
       element-loading-text="Loading results …"
@@ -307,7 +307,7 @@ export default Vue.extend({
     AnnotationTableMolName,
     FilterIcon,
   },
-  props: ['hideColumns'],
+  props: ['hideColumns', 'defaultAnnotations'],
   data() {
     return {
       annotations: [],
@@ -382,6 +382,10 @@ export default Vue.extend({
 
     numberOfPages() {
       return Math.ceil(this.totalCount / this.recordsPerPage)
+    },
+
+    getAnnotationData() {
+      return this.defaultAnnotations ? this.defaultAnnotations : this.annotations
     },
 
     currentPage: {

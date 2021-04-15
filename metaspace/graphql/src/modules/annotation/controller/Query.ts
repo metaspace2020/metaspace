@@ -21,6 +21,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       unique_formulas: {
         terms: {
           field: 'ion',
+          size: 1000000, // given ES agg pagination lacking, here we need a big number to return everything
         },
         aggs: {
           unique_db_ids: {
