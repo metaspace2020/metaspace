@@ -5,22 +5,26 @@ import numpy as np
 import pandas as pd
 from msiwarp.util.warp import to_mx_peaks
 
-from msi_recal.math import peak_width
-from msi_recal.mean_spectrum import hybrid_mean_spectrum, get_representative_spectrum
+from msi_recal.math import peak_width, ppm_to_sigma_1
+from msi_recal.mean_spectrum import hybrid_mean_spectrum, representative_spectrum
 from msi_recal.params import RecalParams
+from msi_recal.save_image_plot import save_spectrum_image
 
 logger = logging.getLogger(__name__)
 
 
 class AlignMsiwarp:
-    def __init__(self, params: RecalParams):
-        self.align_sigma_1 = params.align_sigma_1
+    def __init__(self, params: RecalParams, ppm='5', segments='1', precision='0.2'):
+        self.align_sigma_1 = ppm_to_sigma_1(float(ppm), params.instrument, params.base_mz)
+        self.n_segments = int(segments)
+        self.n_steps = int(np.round(float(ppm) / float(precision)))
+
         self.jitter_sigma_1 = params.jitter_sigma_1
         self.instrument = params.instrument
-        self.n_mx_align_steps = params.n_mx_align_steps
+
         self.coef_ = {}
-        self.lo_warp_ = {}
-        self.hi_warp_ = {}
+        self.warps_ = [{} for i in range(self.n_segments + 1)]
+
         self.ref_s = None
         self.align_nodes = None
 
@@ -29,7 +33,7 @@ class AlignMsiwarp:
         assert not missing_cols, f'X is missing columns: {", ".join(missing_cols)}'
 
         mean_spectrum = hybrid_mean_spectrum(X, self.instrument, self.align_sigma_1)
-        spectrum = get_representative_spectrum(
+        spectrum = representative_spectrum(
             X,
             mean_spectrum,
             self.instrument,
@@ -39,19 +43,19 @@ class AlignMsiwarp:
 
         ref_df = self._sample_across_mass_range(spectrum)
 
-        node_mzs = np.array([np.floor(X.mz.min()), np.ceil(X.mz.max())])
+        node_mzs = np.linspace(np.floor(X.mz.min()), np.ceil(X.mz.max()), self.n_segments + 1)
         node_slacks = peak_width(node_mzs, self.instrument, self.align_sigma_1) / 2
         self.ref_s = to_mx_peaks(
             ref_df.mz, ref_df.ints, self.jitter_sigma_1, 1000000, self.instrument
         )
-        logger.info(f'Selected {len(self.ref_s)} peaks for alignment')
+        logger.debug(f'Selected {len(self.ref_s)} peaks for alignment')
 
         # Include immovable nodes at 0 and 10000 Da because MSIWarp throws away peaks outside of
         # the range of these nodes, which can be annoying when it was fitted against a bad set of
         # sample spectra
         self.align_nodes = [
             *mx.initialize_nodes([0], [0], 1),
-            *mx.initialize_nodes(node_mzs, node_slacks, self.n_mx_align_steps),
+            *mx.initialize_nodes(node_mzs, node_slacks, self.n_steps),
             *mx.initialize_nodes([10000], [0], 1),
         ]
 
@@ -81,22 +85,7 @@ class AlignMsiwarp:
             for sp, grp in X.groupby('sp')
             for grp_sorted in [grp.sort_values('mz')]
         ]
-        # Calculate alignments for spectra that haven't been seen yet
-        spectra_to_calc = [s for s in spectra if s[0].id not in self.coef_]
-        if spectra_to_calc:
-            epsilon = self.align_sigma_1 / self.jitter_sigma_1
-            align_moves = mx.find_optimal_spectra_warpings(
-                spectra_to_calc, self.ref_s, self.align_nodes, epsilon
-            )
-            for spectrum, align_move in zip(spectra_to_calc, align_moves):
-                sp = spectrum[0].id
-                self.coef_[sp] = align_move
-                self.lo_warp_[sp] = (
-                    self.align_nodes[0].mz + self.align_nodes[0].mz_shifts[align_move[0]]
-                )
-                self.hi_warp_[sp] = (
-                    self.align_nodes[1].mz + self.align_nodes[1].mz_shifts[align_move[1]]
-                )
+        self._calc_alignments(spectra)
 
         # Apply alignments & convert back to
         results_dfs = []
@@ -115,3 +104,44 @@ class AlignMsiwarp:
             )
 
         return pd.concat(results_dfs)
+
+    def _calc_alignments(self, spectra):
+        # Calculate alignments for spectra that haven't been seen yet
+        spectra_to_calc = [s for s in spectra if s[0].id not in self.coef_]
+        if spectra_to_calc:
+            # WORKAROUND: MSIWarp sometimes has issues with small numbers of spectra,
+            # due to the calculated number of threads being out of range. Repeat the spectra several
+            # times to get up to a stable size.
+            # TODO: Report/send patch
+            n_spectra = len(spectra_to_calc)
+            if n_spectra < 20:
+                spectra_to_calc = spectra_to_calc * int(np.ceil(20 / n_spectra))
+
+            epsilon = self.align_sigma_1 / self.jitter_sigma_1
+            align_moves = mx.find_optimal_spectra_warpings(
+                spectra_to_calc, self.ref_s, self.align_nodes, epsilon
+            )
+            align_moves = align_moves[:n_spectra]
+            for spectrum, align_move in zip(spectra_to_calc, align_moves):
+                sp = spectrum[0].id
+                self.coef_[sp] = align_move
+                for i in range(self.n_segments + 1):
+                    self.warps_[i][sp] = (
+                        self.align_nodes[i + 1].mz
+                        + self.align_nodes[i + 1].mz_shifts[align_move[i + 1]]
+                    )
+
+    def save_debug(self, spectra_df, path_prefix):
+        for i, warp_ in enumerate(self.warps_):
+            mz = self.align_nodes[i + 1].mz
+            max_val = np.max(np.abs(list(warp_.values())))
+
+            save_spectrum_image(
+                spectra_df,
+                warp_,
+                f'{path_prefix}_{mz:.0f}_shift.png',
+                f'm/z shift at {mz:.6f}',
+                vmin=-max_val,
+                vmax=max_val,
+                cmap='Spectral',
+            )

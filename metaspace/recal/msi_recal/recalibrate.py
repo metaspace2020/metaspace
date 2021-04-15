@@ -1,23 +1,17 @@
 import logging
 from multiprocessing import JoinableQueue, Process
 from pathlib import Path
-from typing import List, Iterable, Union
+from typing import Iterable, Union
 
 import numpy as np
 import pandas as pd
 from pyimzml.ImzMLParser import ImzMLParser
 from pyimzml.ImzMLWriter import ImzMLWriter
 
-from msi_recal.db_peak_match import get_recal_candidates
-from msi_recal.mean_spectrum import (
-    get_mean_spectrum_df_parallel,
-    get_representative_spectrum,
-    annotate_mean_spectrum,
-    hybrid_mean_spectrum,
-)
 from msi_recal.params import RecalParams
 from msi_recal.passes.align_msiwarp import AlignMsiwarp
 from msi_recal.passes.align_ransac import AlignRansac
+from msi_recal.passes.normalize import Normalize
 from msi_recal.passes.recal_msiwarp import RecalMsiwarp
 from msi_recal.passes.recal_ransac import RecalRansac
 
@@ -28,6 +22,7 @@ PASSES = {
     'align_ransac': AlignRansac,
     'recal_msiwarp': RecalMsiwarp,
     'recal_ransac': RecalRansac,
+    'normalize': Normalize,
 }
 
 
@@ -52,20 +47,22 @@ def get_spectra_df_from_parser(p: ImzMLParser, sp_idxs: Iterable[int]):
     return peaks_df, spectra_df
 
 
-def get_sample_spectra_df_from_parser(p: ImzMLParser, n_samples=200):
+def get_sample_spectra_df_from_parser(p: ImzMLParser, n_samples=200, limit=None):
     sp_n = len(p.coordinates)
+    if limit:
+        sp_n = min(sp_n, limit)
+
     sp_idxs = np.sort(np.random.choice(sp_n, min(n_samples, sp_n), False))
     return get_spectra_df_from_parser(p, sp_idxs)
 
 
 def build_pipeline(sample_peaks_df: pd.DataFrame, params: RecalParams):
-    limit_of_detection = np.percentile(sample_peaks_df.ints, 0.1)
     models = []
-    for pass_name in params.passes:
-        logger.debug(f'Fitting {pass_name} model')
+    for pass_name, *pass_args in params.transforms:
+        logger.info(f'Fitting {pass_name} model')
         assert pass_name in PASSES, f'Unrecognized model "{pass_name}"'
 
-        p = PASSES[pass_name](params)
+        p = PASSES[pass_name](params, *pass_args)
         p.fit(sample_peaks_df)
         sample_peaks_df = p.predict(sample_peaks_df)
 
@@ -87,29 +84,40 @@ def _imzml_writer_process(output_path, queue):
 
 
 def process_imzml_file(
-    input_path: Union[str, Path], params: RecalParams, output_path: Union[str, Path, None] = None
+        input_path: Union[str, Path],
+        params: RecalParams,
+        output_path: Union[str, Path, None] = None,
+        debug_path: Union[str, Path, None] = None,
+        samples: int = 100,
+        limit: int = None,
 ):
     input_path = Path(input_path)
     if not output_path:
         output_path = Path(f'{input_path.parent}/{input_path.stem}_recal.imzML')
 
     p = ImzMLParser(str(input_path))
-    sample_peaks_df, sample_spectra_df = get_sample_spectra_df_from_parser(p)
+    sample_peaks_df, sample_spectra_df = get_sample_spectra_df_from_parser(
+        p, n_samples=samples, limit=limit
+    )
     models = build_pipeline(sample_peaks_df, params)
-    __import__('__main__').models = models
 
     writer_queue = JoinableQueue(2)
     writer_process = Process(target=_imzml_writer_process, args=(output_path, writer_queue))
     writer_process.start()
 
+    all_spectra_dfs = []
+
     try:
         chunk_size = 1000
-        for start_i in range(0, len(p.coordinates), chunk_size):
-            end_i = min(start_i + chunk_size, len(p.coordinates))
-            logger.debug(f'Reading peaks {start_i}-{end_i}')
-            peaks_df, spectra_df = get_spectra_df_from_parser(p, np.arange(start_i, end_i))
+        sp_n = min(limit, len(p.coordinates)) if limit else len(p.coordinates)
 
-            logger.debug(f'Transforming peaks {start_i}-{end_i}')
+        for start_i in range(0, sp_n, chunk_size):
+            end_i = min(start_i + chunk_size, sp_n)
+            logger.debug(f'Reading spectra {start_i}-{end_i}')
+            peaks_df, spectra_df = get_spectra_df_from_parser(p, np.arange(start_i, end_i))
+            all_spectra_dfs.append(spectra_df)
+
+            logger.info(f'Transforming spectra {start_i}-{end_i}')
             for model in models:
                 peaks_df = model.predict(peaks_df)
 
@@ -118,7 +126,7 @@ def process_imzml_file(
                 spectrum = spectra_df.loc[sp]
                 writer_job.append((grp.mz, grp.ints, (spectrum.x, spectrum.y, spectrum.z)))
 
-            logger.debug(f'Writing peaks {start_i}-{end_i}')
+            logger.debug(f'Writing spectra {start_i}-{end_i}')
             writer_queue.put(writer_job)
     finally:
         writer_queue.put(None)
@@ -126,3 +134,15 @@ def process_imzml_file(
         writer_queue.join()
         writer_process.join()
     logger.info(f'Finished writing {output_path}')
+
+    if debug_path:
+        logger.info(f'Writing debug output to {debug_path}')
+        debug_path.mkdir(parents=True, exist_ok=True)
+        all_spectra_df = pd.concat(all_spectra_dfs)
+
+        for i, ((transform_name, *_), model) in enumerate(zip(params.transforms, models)):
+            try:
+                if hasattr(model, 'save_debug'):
+                    model.save_debug(all_spectra_df, str(debug_path / f'{i}_{transform_name}'))
+            except:
+                logger.warning(f'{transform_name} error', exc_info=True)

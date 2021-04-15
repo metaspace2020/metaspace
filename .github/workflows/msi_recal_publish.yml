@@ -35,10 +35,17 @@ jobs:
       run: ls -lh wheelhouse
       shell: bash
 
-    - name: Upload wheels
-      uses: actions/upload-artifact@v2
-      with:
-        path: wheelhouse/*.whl
+      #    - name: Upload wheels
+      #      uses: actions/upload-artifact@v2
+      #      with:
+      #        path: wheelhouse/*.whl
+
+    - name: Publish to PyPI
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        twine upload wheelhouse/*
 
 #  upload_all:
 #    name: Upload if release

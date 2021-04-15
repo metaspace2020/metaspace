@@ -2,13 +2,13 @@
 import os
 import platform
 import re
-import sys
-import sysconfig
 import subprocess
-
+import sys
 from distutils.version import LooseVersion
+
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
+
 
 ## This CMakeExtension stuff is part of MSIWarp vendoring (bundling a built copy of their library with our library)
 ## It's hacky and should be removed as soon as there's a MSIWarp package available on PyPI
@@ -77,7 +77,7 @@ setup(
     package_data={
         'msi_recal': ['dbs/*.csv'],
     },
-    install_requires=['numpy', 'scipy', 'matplotlib', 'pyimzml', 'numba'],
+    install_requires=['numpy', 'scipy', 'matplotlib', 'seaborn', 'pyimzml', 'numba'],
     # Vendorize MSIWarp because it's not on PyPI yet
     ext_modules=[CMakeExtension('msiwarp/msiwarp_cpp')],
     cmdclass={"build_ext": CMakeBuild},

@@ -5,21 +5,21 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import RANSACRegressor
 
-from msi_recal.db_peak_match import join_by_mz
-from msi_recal.math import peak_width
-from msi_recal.mean_spectrum import get_representative_spectrum, hybrid_mean_spectrum
+from msi_recal.join_by_mz import join_by_mz
+from msi_recal.math import peak_width, ppm_to_sigma_1
+from msi_recal.mean_spectrum import representative_spectrum, hybrid_mean_spectrum
 from msi_recal.params import RecalParams
 
 logger = logging.getLogger(__name__)
 
 
 class AlignRansac:
-    def __init__(self, params: RecalParams):
-        self.align_sigma_1 = params.align_sigma_1
+    def __init__(self, params: RecalParams, ppm='20'):
+        self.align_sigma_1 = ppm_to_sigma_1(float(ppm), params.instrument, params.base_mz)
         self.jitter_sigma_1 = params.jitter_sigma_1
         self.instrument = params.instrument
-        self.min_mz = 100
-        self.max_mz = 1000
+        self.min_mz = None
+        self.max_mz = None
         self.coef_ = {}
         self.lo_warp_ = {}
         self.hi_warp_ = {}
@@ -30,7 +30,7 @@ class AlignRansac:
         assert not missing_cols, f'X is missing columns: {", ".join(missing_cols)}'
 
         mean_spectrum = hybrid_mean_spectrum(X, self.instrument, self.align_sigma_1)
-        spectrum = get_representative_spectrum(
+        spectrum = representative_spectrum(
             X,
             mean_spectrum,
             self.instrument,
@@ -38,7 +38,7 @@ class AlignRansac:
             remove_bg=True,
         )
 
-        self.target_spectrum = spectrum[['mz', 'ints', 'coverage']].sort_values('mz')
+        self.target_spectrum = spectrum[['mz', 'ints']].sort_values('mz')
         logger.info(f'Alignment spectrum has {len(spectrum)} peaks')
 
         self.min_mz = np.round(X.mz.min(), -1)
@@ -59,7 +59,7 @@ class AlignRansac:
             ints = hits.sample_ints * np.median(hits.ints / hits.sample_ints)
             ints_accuracy = 0.5 - (ints / (ints + 1))
 
-            hits['weight'] = hits.coverage * np.log(hits.sample_ints) * ints_accuracy
+            hits['weight'] = np.log(hits.sample_ints) * ints_accuracy
             hits = hits.sort_values('weight', ascending=False, ignore_index=True).iloc[:100]
             X = hits.sample_mz.values.reshape(-1, 1)
             y = hits.mz.values
@@ -94,7 +94,7 @@ class AlignRansac:
         assert not missing_cols, f'X is missing columns: {", ".join(missing_cols)}'
         with ProcessPoolExecutor() as ex:
             args = [(sp, grp.mz, grp.ints) for sp, grp in X.groupby('sp') if sp not in self.coef_]
-            for result in ex.map(self._align_ransac_inner, *zip(args)):
+            for result in ex.map(self._align_ransac_inner, *zip(*args)):
                 sp = result['sp']
                 self.coef_[sp] = result
                 self.lo_warp_[sp] = result['M'] * self.min_mz + result['C']
