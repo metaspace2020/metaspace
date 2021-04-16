@@ -42,7 +42,10 @@
         title="Show/hide optical image"
         @click="toggleOpticalImage"
       >
-        <img src="../../../../assets/microscope-icon.png">
+        <img
+          class="setting-icon"
+          src="../../../../assets/microscope-icon.png"
+        >
       </button>
     </div>
     <fade-transition v-if="multiImageFlag">
