@@ -42,9 +42,79 @@
       />
     </ul>
     <h2 id="community">
-      Research articles using METASPACE (28)
+      Research articles using METASPACE (38)
     </h2>
     <ul>
+      <publication-item
+        title="3D-surface MALDI mass spectrometry imaging for visualising plant defensive cardiac glycosides in Asclepias curassavica"
+        authors="Dreisbach D, Petschenka G, Spengler B, Bhandari DR"
+        publisher="Anal. Bioanal. Chem."
+        year="2021"
+        link="https://doi.org/10.1007/s00216-021-03177-y"
+      />
+      <publication-item
+        title="A comparison of human and porcine skin in laser-assisted drug delivery of chemotherapeutics"
+        authors="Rosenberg LK, Bagger C, Janfelt C, Haedersdal M, Olesen UH, Lerche CM"
+        publisher="Lasers Surg. Med"
+        year="2021"
+        link="https://doi.org/10.1002/lsm.23344"
+      />
+      <publication-item
+        title="Unveiling the spatial distribution of aflatoxin B1 and plant defense metabolites in maize using AP-SMALDI mass spectrometry imaging"
+        authors="Righetti L, Bhandari DR, Rolli E, Tortorella S, Bruni R, Dall'Asta C, Spengler B"
+        publisher="Plant J."
+        year="2021"
+        link="https://doi.org/10.1111/tpj.15158"
+      />
+      <publication-item
+        title="Detecting early myocardial ischemia in rat heart by MALDI imaging mass spectrometry"
+        authors="Aljakna Khan A, Bararpour N, Gorka M, Joye T, Morel S, Montessuit CA, Grabherr S, Fracasso T, Augsburger M, Kwak BR, Thomas A, Sabatasso S"
+        publisher="Sci. Rep"
+        year="2021"
+        link="https://doi.org/10.1038/s41598-021-84523-z"
+      />
+      <publication-item
+        title="Three-dimensional (3D) imaging of lipids in skin tissues with infrared matrix-assisted laser desorption electrospray ionization (MALDESI) mass spectrometry"
+        authors="Bai H, Linder KE, Muddiman DC"
+        publisher="Anal. Bioanal. Chem."
+        year="2021"
+        link="https://doi.org/10.1007/s00216-020-03105-6"
+      />
+      <publication-item
+        title="Evaluation of UV-C Decontamination of Clinical Tissue Sections for Spatially Resolved Analysis by Mass Spectrometry Imaging (MSI)"
+        authors="Dannhorn A, Ling S, Powell S, McCall E, Maglennon G, Jones GN, Pierce AJ, Strittmatter N, Hamm G, Barry ST, Bunch J, Goodwin RJA, Takats Z"
+        publisher="Anal. Chem."
+        year="2021"
+        link="https://doi.org/10.1021/acs.analchem.0c03430"
+      />
+      <publication-item
+        title="The Characterization of an Aggregated Three-Dimensional Cell Culture Model by Multimodal Mass Spectrometry Imaging"
+        authors="Flint LE, Hamm GR, Ready JD, Ling S, Duckett CJ, Cross NA, Cole LM, Smith DP, Goodwin RJ, Clench MR"
+        publisher="Anal. Chem."
+        year="2020"
+        link="https://doi.org/10.1021/jasms.0c00187"
+      />
+      <publication-item
+        title="Spatial segmentation and metabolite annotation involved in sperm maturation in the rat epididymis by MALDI imaging mass spectrometry"
+        authors="Lagarrigue M, Lavigne R, Guével B, Palmer A, Rondel K, Guilot L, Kobarg JH, Trede D, Pineau C"
+        publisher="J. Mass Spectrom."
+        year="2020"
+        link="https://doi.org/10.1002/jms.4633"
+      />
+      <publication-item
+        title="MALDI Mass Spectrometry Imaging in a Primary Demyelination Model of Murine Spinal Cord"
+        authors="Sekera ER, Saraswat D, Zemaitis KJ, Sim FJ, Wood TD"
+        publisher="J. Am. Soc. Mass Spectrom."
+        year="2020"
+        link="https://doi.org/10.1021/jasms.0c00187"
+      />
+      <publication-item
+        title="Intracellular Parasites Toxoplasma gondii and Besnoitia besnoiti, Unveiled in Single Host Cells Using AP-SMALDI MS Imaging"
+        authors="Kadesch P, Hollubarsch T, Gerbig S, Schneider L, Silva LMR, Hermosilla C, Taubert A, Spengler B"
+        publisher="J. Am. Soc. Mass Spectrom."
+        year="2020"
+        link="https://doi.org/10.1021/jasms.0c00043"
+      />
       <publication-item
         title="Methods for Cryosectioning and Mass Spectrometry Imaging of Whole-Body Zebrafish"
         authors="Stutts WL, Knuth MM, Ekelöf M, Mahapatra D, Kullman SW, Muddiman DC"
