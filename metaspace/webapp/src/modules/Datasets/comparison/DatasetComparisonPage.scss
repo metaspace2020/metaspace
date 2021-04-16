@@ -1,0 +1,89 @@
+.dataset-comparison-page{
+
+  .ds-collapse{
+    margin: 0 8px;
+    width: calc(100% - 16px);
+    .el-collapse-item__header{
+      background-color: #F1F5F8;
+    }
+  }
+
+  .ds-comparison-opacity-item{
+   min-width: 160px;
+  }
+  #annot-content {
+    width: 100%;
+
+    .el-collapse-item__header {
+      text-align: left;
+
+      .el-collapse-item__arrow {
+        // WORKAROUND: A new version of ElementUI changed the position of the arrow in a way that doesn't look good
+        // with our existing components: https://github.com/ElemeFE/element/issues/14142
+        order: -1;
+      }
+    }
+  }
+
+  #annot-img-collapse .el-collapse-item__header>span {
+    display: inline-flex;
+    align-items: center;
+  }
+
+
+
+
+  .dataset-comparison-grid-item-header{
+    @apply flex flex-row;
+    background: #F1F5F8;
+    padding: 8px;
+    width: calc(100% - 16px);
+
+    span{
+      @apply mr-1;
+    }
+
+    .av-icon-button {
+      @apply self-center mb-2 mr-1 h-6;
+
+      svg {
+        display: block;
+      }
+    }
+
+    .setting-icon{
+      height: 20px;
+      width: 20px;
+      color: black;
+    }
+  }
+
+  .dataset-comparison-grid{
+    width: 100%;
+    min-height: 200px;
+    overflow-x: auto;
+  }
+  .dataset-comparison-row{
+    @apply flex flex-row m-1;
+  }
+
+  .dataset-comparison-col{
+    @apply flex items-center ml-1 mb-1 flex-col;
+    border: 1px solid lightgray;
+    width: 100%;
+    min-width: 100px;
+  }
+
+
+  .sm-form-error{
+    input{
+      border-color: red;
+    }
+  }
+
+  .text-danger{
+    @apply mt-0 text-right;
+  }
+}
+
+

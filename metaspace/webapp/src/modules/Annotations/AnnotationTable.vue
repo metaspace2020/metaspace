@@ -541,7 +541,9 @@ export default Vue.extend({
       this.$store.commit('setAnnotation', row)
 
       if (row !== null) {
-        this.currentRowIndex = this.annotations.indexOf(row)
+        const annotations = this.getAnnotationData
+        this.currentRowIndex = annotations.indexOf(row)
+        this.$emit('rowChange', this.currentRowIndex)
       }
     },
 

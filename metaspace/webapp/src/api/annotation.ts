@@ -74,7 +74,8 @@ gql`query GetAggregatedAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: S
   $query: String,
   $filter: AnnotationFilter, $dFilter: DatasetFilter,
   $colocalizationCoeffFilter: ColocalizationCoeffFilter,
-  $countIsomerCompounds: Boolean) {
+  $countIsomerCompounds: Boolean,
+  $type: OpticalImageType) {
   allAggregatedAnnotations(filter: $filter, datasetFilter: $dFilter, simpleQuery: $query,
       orderBy: $orderBy, sortingOrder: $sortingOrder) {
     ion
@@ -107,6 +108,13 @@ gql`query GetAggregatedAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: S
         polarity
         metadataJson
         isPublic
+        opticalImages(type: $type) {
+          id
+          url
+          type
+          zoom
+          transform
+        }
       }
       databaseDetails {
         id

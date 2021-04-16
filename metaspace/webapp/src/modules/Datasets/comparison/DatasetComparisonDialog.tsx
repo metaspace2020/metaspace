@@ -122,7 +122,7 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
           visible
           lockScroll={true}
           onclose={() => emit('close')}
-          class="dataset-comparison-page sm-content-page el-dialog-lean">
+          class="dataset-comparison-dialog sm-content-page el-dialog-lean">
           <h1>{props.title}</h1>
           <Workflow>
             <WorkflowStep
@@ -198,13 +198,13 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
                           onChange={(value: number) => { state.nCols = value }}/>
                       </div>
                     </div>
-                    <div class='dataset-comparison-grid'>
+                    <div class='dataset-comparison-dialog-grid'>
                       {Array.from(Array(state.nRows).keys()).map((row) => {
                         return (
-                          <div key={row} class='dataset-comparison-row'>
+                          <div key={row} class='dataset-comparison-dialog-row'>
                             {Array.from(Array(state.nCols).keys()).map((col) => {
                               return (
-                                <div key={col} class='dataset-comparison-col'>
+                                <div key={col} class='dataset-comparison-dialog-col'>
                                   {(col + 1) + (row * state.nCols)}
                                 </div>
                               )
@@ -234,13 +234,13 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
               {
                 state.workflowStep === 3
                 && <form>
-                  <div class='dataset-comparison-grid'>
+                  <div class='dataset-comparison-dialog-grid'>
                     {Array.from(Array(state.nRows).keys()).map((row) => {
                       return (
-                        <div key={row} class='dataset-comparison-row'>
+                        <div key={row} class='dataset-comparison-dialog-row'>
                           {Array.from(Array(state.nCols).keys()).map((col) => {
                             return (
-                              <div key={col} class='dataset-comparison-col'>
+                              <div key={col} class='dataset-comparison-dialog-col'>
                                 <Select
                                   class={`dataset-cell ${state.finalStepError ? 'sm-form-error' : ''}`}
                                   value={state.arrangement[`${row}-${col}`]}

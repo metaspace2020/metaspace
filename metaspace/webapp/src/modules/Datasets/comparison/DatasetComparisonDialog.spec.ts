@@ -100,8 +100,8 @@ describe('DatasetComparisonDialog', () => {
     wrapper.find('.el-button--primary').trigger('click')
     await Vue.nextTick()
 
-    expect(wrapper.findAll('.dataset-comparison-row').length).toBe(2)
-    expect(wrapper.findAll('.dataset-comparison-col').length).toBe(4)
+    expect(wrapper.findAll('.dataset-comparison-dialog-row').length).toBe(2)
+    expect(wrapper.findAll('.dataset-comparison-dialog-col').length).toBe(4)
   })
 
   it('it should display the final step required error', async() => {

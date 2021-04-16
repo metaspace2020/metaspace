@@ -1,15 +1,15 @@
-.dataset-comparison-page{
-  .dataset-comparison-grid{
+.dataset-comparison-dialog{
+  .dataset-comparison-dialog-grid{
     width: 100%;
     min-height: 200px;
     overflow-x: auto;
   }
-  .dataset-comparison-row{
+  .dataset-comparison-dialog-row{
     @apply flex flex-row m-1;
     height: 100px;
   }
 
-  .dataset-comparison-col{
+  .dataset-comparison-dialog-col{
     @apply flex items-center justify-center ml-1 mb-1;
     border: 1px solid black;
     width: 100%;
