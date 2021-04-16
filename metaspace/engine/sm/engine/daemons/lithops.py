@@ -5,11 +5,11 @@ import signal
 from traceback import format_exc
 
 from sm.engine.annotation_lithops.executor import LithopsStalledException
+from sm.engine.config import SMConfig
 from sm.engine.daemons.actions import DaemonActionStage, DaemonAction
 from sm.engine.dataset import DatasetStatus
 from sm.engine.errors import AnnotationError
 from sm.engine.queue import QueueConsumer, QueuePublisher
-from sm.engine.config import SMConfig
 from sm.rest.dataset_manager import DatasetActionPriority
 
 
@@ -53,8 +53,7 @@ class LithopsDaemon:
                 {**msg, 'retry_attempt': msg.get('retry_attempt', 0) + 1}
             )
             self._manager.post_to_slack(
-                'bomb',
-                f" [x] Annotation failed, retrying: {json.dumps(msg)}\n```{exc}```",
+                'bomb', f" [x] Annotation failed, retrying: {json.dumps(msg)}\n```{exc}```",
             )
         else:
             self.logger.critical(f'Lithops annotation failed. Falling back to Spark\n{exc}')
