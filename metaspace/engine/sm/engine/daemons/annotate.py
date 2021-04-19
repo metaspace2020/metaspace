@@ -14,8 +14,7 @@ from sm.rest.dataset_manager import DatasetActionPriority
 
 
 class SMAnnotateDaemon:
-    """ Reads messages from annotation queue and starts annotation jobs
-    """
+    """Reads messages from annotation queue and starts annotation jobs"""
 
     logger = logging.getLogger('annotate-daemon')
 
@@ -92,8 +91,7 @@ class SMAnnotateDaemon:
         self._annot_queue_consumer.start()
 
     def stop(self):
-        """  Must be called from main thread
-        """
+        """Must be called from main thread"""
         if not self._stopped:
             self._annot_queue_consumer.stop()
             self._annot_queue_consumer.join()

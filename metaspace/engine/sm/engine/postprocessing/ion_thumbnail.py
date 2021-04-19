@@ -228,7 +228,11 @@ def delete_ion_thumbnail(db, ds: Dataset):
 
 
 def generate_ion_thumbnail_lithops(
-    executor: Executor, db, ds: Dataset, only_if_needed=False, algorithm=DEFAULT_ALGORITHM,
+    executor: Executor,
+    db,
+    ds: Dataset,
+    only_if_needed=False,
+    algorithm=DEFAULT_ALGORITHM,
 ):
     try:
         (existing_thumb_id,) = db.select_one(THUMB_SEL, [ds.id])

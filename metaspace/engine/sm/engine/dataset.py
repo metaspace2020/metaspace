@@ -54,8 +54,7 @@ FLAT_DS_CONFIG_KEYS = frozenset(
 
 
 class Dataset:
-    """ Class for representing an IMS dataset
-    """
+    """Class for representing an IMS dataset"""
 
     DS_SEL = (
         'SELECT id, name, input_path, upload_dt, metadata, config, status, '

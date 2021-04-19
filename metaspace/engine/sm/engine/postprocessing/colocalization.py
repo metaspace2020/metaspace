@@ -129,7 +129,7 @@ class FreeableRef:
 
 
 def _labels_to_clusters(labels, scores):
-    """ Converts from [0,1,0,1,2] form (mapping sample idx to cluster idx)
+    """Converts from [0,1,0,1,2] form (mapping sample idx to cluster idx)
     to [[0,2],[1,3],[4]] form (mapping cluster idx to sample idx's).
     Each cluster is sorted based on items' distance from the cluster's mean
     """
@@ -241,7 +241,7 @@ def _get_sample_ion_ids(scores, cluster_max_images, trunc_fdr_mask, trunc_masked
 
 # pylint: disable=cell-var-from-loop
 def analyze_colocalization(ds_id, moldb_id, images, ion_ids, fdrs, h, w, cluster_max_images=5000):
-    """ Calculate co-localization of ion images for all algorithms and yield results
+    """Calculate co-localization of ion images for all algorithms and yield results
 
     Args
     ----------

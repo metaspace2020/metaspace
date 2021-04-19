@@ -64,7 +64,10 @@ def create_s3t():
 
 
 def transfer_images(
-    ds_id, old_image_type, image_type, image_ids,
+    ds_id,
+    old_image_type,
+    image_type,
+    image_ids,
 ):
     s3t = create_s3t()
     futures = []
@@ -94,7 +97,11 @@ SEL_DS_IMG_IDS = '''
 def _es_docs_migrated(es, ds_id):
     query_body = {'query': {'match': {'ds_id': ds_id}}}
     resp = es.search(
-        index='sm', doc_type='annotation', body=query_body, _source=['iso_image_urls'], size=1,
+        index='sm',
+        doc_type='annotation',
+        body=query_body,
+        _source=['iso_image_urls'],
+        size=1,
     )
     hits = resp['hits']['hits']
     return hits and 'iso_image_urls' in hits[0]['_source']
@@ -139,7 +146,10 @@ def migrate_ion_thumbnail(ds_id):
         ion_thumb_id, ion_thumbnail_url = db.select_one(SEL_ION_THUMB, params=(ds_id,))
         if not ion_thumbnail_url and ion_thumb_id:
             transfer_images(
-                ds_id, 'ion_thumbnails', image_storage.THUMB, [ion_thumb_id],
+                ds_id,
+                'ion_thumbnails',
+                image_storage.THUMB,
+                [ion_thumb_id],
             )
             ion_thumb_url = image_storage.get_image_url(image_storage.THUMB, ds_id, ion_thumb_id)
             db.alter(UPD_ION_THUMB, params=(ion_thumb_url, ds_id))
@@ -177,7 +187,10 @@ def migrate_optical_images(ds_id):
         for opt_image_id, opt_image_url in rows:
             if not opt_image_url and opt_image_id:
                 transfer_images(
-                    ds_id, 'optical_images', image_storage.OPTICAL, [opt_image_id],
+                    ds_id,
+                    'optical_images',
+                    image_storage.OPTICAL,
+                    [opt_image_id],
                 )
                 opt_image_url = image_storage.get_image_url(
                     image_storage.OPTICAL, ds_id, opt_image_id
@@ -187,7 +200,10 @@ def migrate_optical_images(ds_id):
         opt_thumb_id, opt_thumb_url = db.select_one(SEL_OPT_THUMB, params=(ds_id,))
         if not opt_thumb_url and opt_thumb_id:
             transfer_images(
-                ds_id, 'optical_images', image_storage.OPTICAL, [opt_thumb_id],
+                ds_id,
+                'optical_images',
+                image_storage.OPTICAL,
+                [opt_thumb_id],
             )
             opt_thumb_url = image_storage.get_image_url(image_storage.OPTICAL, ds_id, opt_thumb_id)
             db.alter(UPD_OPT_THUMB, params=(opt_thumb_url, ds_id))

@@ -98,7 +98,11 @@ def run_daemons(db, es, sm_config):
     )
 
     manager = DatasetManager(
-        db=db, es=es, status_queue=status_queue_pub, logger=logger, sm_config=sm_config,
+        db=db,
+        es=es,
+        status_queue=status_queue_pub,
+        logger=logger,
+        sm_config=sm_config,
     )
     annotate_daemon = SMAnnotateDaemon(
         manager=manager, annot_qdesc=SM_ANNOTATE, upd_qdesc=SM_UPDATE
@@ -120,7 +124,8 @@ def run_daemons(db, es, sm_config):
     return_value=get_ion_images_for_analysis_mock_return,
 )
 @patch(
-    'sm.engine.image_storage.get_image', return_value=Image.new('RGBA', (10, 10)),
+    'sm.engine.image_storage.get_image',
+    return_value=Image.new('RGBA', (10, 10)),
 )
 @patch('sm.engine.annotation_spark.search_results.SearchResults._post_images_to_image_store')
 @patch(

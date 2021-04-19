@@ -91,7 +91,8 @@ def test_create_moldb(fill_db, is_public):
             assert doc[field] == input_doc[field]
 
         docs = db.select_with_fields(
-            'SELECT * FROM molecule WHERE moldb_id = %s', params=(resp_doc['id'],),
+            'SELECT * FROM molecule WHERE moldb_id = %s',
+            params=(resp_doc['id'],),
         )
         for doc in docs:
             print(doc)
@@ -191,7 +192,8 @@ def test_update_moldb(archived, is_public, fill_db):
         assert resp['status'] == 'success'
 
         result_doc = DB().select_one_with_fields(
-            'SELECT * FROM molecular_db where id = %s', params=(moldb.id,),
+            'SELECT * FROM molecular_db where id = %s',
+            params=(moldb.id,),
         )
         assert result_doc['archived'] == archived
         assert result_doc['is_public'] == is_public

@@ -148,7 +148,12 @@ def get_config(
 
 def multipart_upload(local_path, companion_url, file_type, headers={}):
     def send_request(
-        url, method='GET', json=None, data=None, headers={}, return_headers=False,
+        url,
+        method='GET',
+        json=None,
+        data=None,
+        headers={},
+        return_headers=False,
     ):
         if method == 'POST':
             resp = requests.post(url, data=data, json=json, headers=headers)
@@ -177,7 +182,11 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
 
     def upload_part(presigned_url, data):
         resp_data = send_request(
-            presigned_url, 'PUT', data=data, headers=headers, return_headers=True,
+            presigned_url,
+            'PUT',
+            data=data,
+            headers=headers,
+            return_headers=True,
         )
         return resp_data['ETag']
 
@@ -602,7 +611,10 @@ class GraphQLClient(object):
 
         for fn in [imzml_fn, ibd_fn]:
             bucket, key = multipart_upload(
-                fn, self._config['dataset_upload_url'], 'application/octet-stream', headers=headers,
+                fn,
+                self._config['dataset_upload_url'],
+                'application/octet-stream',
+                headers=headers,
             )
         data_path = f's3a://{bucket}/{key.rsplit("/", 1)[0]}'
 
@@ -964,7 +976,14 @@ class SMDataset(object):
                 moleculeIds=df.possibleCompounds.apply(get_compound_database_ids),
                 intensity=df.isotopeImages.apply(lambda imgs: imgs[0]['maxIntensity']),
             )
-            .drop(columns=['possibleCompounds', 'dataset.id', 'dataset.name', 'offSampleProb',])
+            .drop(
+                columns=[
+                    'possibleCompounds',
+                    'dataset.id',
+                    'dataset.name',
+                    'offSampleProb',
+                ]
+            )
             .rename(
                 columns={
                     'sumFormula': 'formula',
@@ -1153,7 +1172,12 @@ class SMDataset(object):
                 return_vals=('sumFormula', 'adduct', 'neutralLoss', 'chemMod'),
                 **annotation_filter,
             )
-            return list(pool.map(get_annotation_images, annotations,))
+            return list(
+                pool.map(
+                    get_annotation_images,
+                    annotations,
+                )
+            )
 
     def optical_images(self):
         def fetch_image(url):

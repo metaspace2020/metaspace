@@ -86,8 +86,7 @@ class DatasetManager:
         classify_dataset_ion_images(self._db, ds, self._sm_config['services'])
 
     def annotate(self, ds, del_first=False):
-        """ Run an annotation job for the dataset. If del_first provided, delete first
-        """
+        """Run an annotation job for the dataset. If del_first provided, delete first"""
         if del_first:
             self.logger.warning(f'Deleting all results for dataset: {ds.id}')
             del_jobs(ds)
@@ -118,7 +117,10 @@ class DatasetManager:
 
             if self._sm_config['services'].get('ion_thumbnail', True):
                 generate_ion_thumbnail_lithops(
-                    executor=executor, db=self._db, ds=ds, only_if_needed=not del_first,
+                    executor=executor,
+                    db=self._db,
+                    ds=ds,
+                    only_if_needed=not del_first,
                 )
 
     def index(self, ds: Dataset):

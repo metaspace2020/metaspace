@@ -9,8 +9,7 @@ from sm.engine.errors import UnknownDSID, SMError, IndexUpdateError
 
 
 class SMUpdateDaemon:
-    """ Reads messages from the update queue and does indexing/update/delete
-    """
+    """Reads messages from the update queue and does indexing/update/delete"""
 
     logger = logging.getLogger('update-daemon')
 

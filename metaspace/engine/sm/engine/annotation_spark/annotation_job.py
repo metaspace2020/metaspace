@@ -40,7 +40,10 @@ class AnnotationJob:
     """Class responsible for dataset annotation."""
 
     def __init__(
-        self, ds: Dataset, perf: Profiler, sm_config: Optional[Dict] = None,
+        self,
+        ds: Dataset,
+        perf: Profiler,
+        sm_config: Optional[Dict] = None,
     ):
         self._sm_config = sm_config or SMConfig.get_conf()
         self._sc = None
