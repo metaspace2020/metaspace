@@ -20,15 +20,17 @@ from sm.engine.utils.perf_profile import SubtaskProfiler, Profiler, NullProfiler
 
 logger = logging.getLogger('engine.lithops-wrapper')
 TRet = TypeVar('TRet')
-#: RUNTIME_DOCKER_IMAGE is defined in code instead of config so that devs don't have to coordinate
+#: RUNTIME_CF_VPC is defined in code instead of config so that devs don't have to coordinate
 #: manually updating their config files every time it changes. The image must be public on
 #: Docker Hub, and can be rebuilt using the scripts/Dockerfile in `engine/docker/lithops_ibm_cf`.
 #: Note: sci-test changes this constant to force local execution without docker
-RUNTIME_DOCKER_IMAGE = 'metaspace2020/metaspace-lithops:1.8.4'
+RUNTIME_CF_VPC = 'metaspace2020/metaspace-lithops:1.8.4'
+RUNTIME_CE = 'metaspace2020/metaspace-lithops-ce:1.8.5'
 MEM_LIMITS = {
     'localhost': 32768,
     'ibm_cf': 4096,
     'ibm_vpc': 128 * 2 ** 30,
+    'code_engine': 32768,
 }
 
 
@@ -151,17 +153,20 @@ class Executor:
                 'localhost': lithops.LocalhostExecutor(
                     config=lithops_config,
                     storage='localhost',
-                    runtime='python',  # Change to RUNTIME_DOCKER_IMAGE to run in a Docker container
+                    runtime='python',  # Change to RUNTIME_CF_VPC to run in a Docker container
                 )
             }
         else:
             self.is_hybrid = True
             self.executors = {
-                'ibm_cf': lithops.ServerlessExecutor(
-                    config=lithops_config, runtime=RUNTIME_DOCKER_IMAGE
+                # 'ibm_cf': lithops.ServerlessExecutor(
+                #     config=lithops_config, runtime=RUNTIME_CF_VPC
+                # ),
+                'code_engine': lithops.ServerlessExecutor(
+                    config=lithops_config, backend='code_engine', runtime=RUNTIME_CE
                 ),
                 'ibm_vpc': lithops.StandaloneExecutor(
-                    config=lithops_config, runtime=RUNTIME_DOCKER_IMAGE,
+                    config=lithops_config, runtime=RUNTIME_CF_VPC,
                 ),
             }
 
