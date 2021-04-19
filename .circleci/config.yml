@@ -286,7 +286,7 @@ jobs:
       - run:
           name: Test engine dependencies
           command: |
-            pip install --upgrade -r requirements.txt
+            pip install --upgrade -r requirements.txt -r requirements-dev.txt
       - attach_workspace:
           at: ~/workspace
       - run:
@@ -346,7 +346,7 @@ jobs:
       - run:
           name: Test setup
           command: |
-            pip install --upgrade -r requirements.txt
+            pip install --upgrade -r requirements.txt -r requirements-dev.txt
             pip install -e .
       - run:
           name: Create engine database
