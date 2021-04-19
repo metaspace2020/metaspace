@@ -243,6 +243,10 @@ jobs:
             git clean -fdX
             git checkout -- ~/metaspace
       - run:
+          name: Install dependencies
+          command: |
+            pip install -r metaspace/engine/requirements-dev.txt
+      - run:
           name: Code format check for .py files in ansible and metaspace directories
           command: |
             black --check ansible metaspace/off-sample metaspace/python-client
@@ -307,10 +311,6 @@ jobs:
           command: pylint -j1 sm scripts
       - run:
          name: Run code formatter
-         command: black --check .
-      - run:
-         name: Run code formatter on Python Client
-         working_directory: ../python-client
          command: black --check .
 
   test-engine-sci:
