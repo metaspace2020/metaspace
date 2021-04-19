@@ -308,6 +308,10 @@ jobs:
       - run:
          name: Run code formatter
          command: black --check .
+      - run:
+         name: Run code formatter on Python Client
+         working_directory: ../python-client
+         command: black --check .
 
   test-engine-sci:
     docker:
