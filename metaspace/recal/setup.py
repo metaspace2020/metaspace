@@ -65,7 +65,7 @@ class CMakeBuild(build_ext):
 
 setup(
     name='msi_recal',
-    version='0.1.4',
+    version='0.1.5',
     description='Pipeline for mostly unsupervised recalibration of imzML mass spectrometry data',
     url='https://github.com/metaspace2020/metaspace/tree/master/metaspace/recal',
     author='Alexandrov Team, EMBL',
@@ -81,6 +81,7 @@ setup(
         'pyMSpec',
         'cpyMSpec',
         'scikit-learn',
+        'typing-extensions',
     ],
     # Vendorize MSIWarp because it's not on PyPI yet
     ext_modules=[CMakeExtension('msiwarp/msiwarp_cpp')],

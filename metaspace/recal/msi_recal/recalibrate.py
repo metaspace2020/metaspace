@@ -1,7 +1,8 @@
 import logging
 from multiprocessing import JoinableQueue, Process
 from pathlib import Path
-from typing import Iterable, Union, Literal
+from typing_extensions import Literal
+from typing import Iterable, Union
 
 import numpy as np
 import pandas as pd

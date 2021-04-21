@@ -1,6 +1,7 @@
 from pathlib import Path
 from pprint import pformat
-from typing import Literal, Union, List
+from typing_extensions import Literal
+from typing import Union, List
 
 import cpyMSpec
 
