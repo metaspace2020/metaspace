@@ -171,7 +171,7 @@ defaults won't apply if any other value is specified, so re-add cm3 and dhb/dan 
     if args.debug:
         debug_path = Path(args.debug)
     elif not args.no_debug:
-        debug_path = Path(f'{input_path.parent}/{input_path.stem}_debug/')
+        debug_path = 'infer'
     else:
         debug_path = None
 
@@ -196,7 +196,7 @@ defaults won't apply if any other value is specified, so re-add cm3 and dhb/dan 
         instrument=args.instrument,
         rp=args.rp,
         base_mz=args.base_mz,
-        jitter_sigma_1=ppm_to_sigma_1(args.jitter, args.instrument, args.base_mz),
+        jitter_ppm=args.jitter,
         charge=charge,
         db_paths=db_paths,
         adducts=adducts,

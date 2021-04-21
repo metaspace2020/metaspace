@@ -45,6 +45,16 @@ def mass_accuracy_bounds(mzs, instrument: InstrumentType, sigma_1: float):
     return lower, upper
 
 
+def mass_accuracy_bound_indices(
+    mzs: np.array, search_mzs: np.array, instrument: InstrumentType, sigma_1: float
+):
+    """Note that mzs must be sorted, but this isn't asserted"""
+    lower_mz, upper_mz = mass_accuracy_bounds(search_mzs, instrument, sigma_1)
+    lower_idx = np.searchsorted(mzs, lower_mz, 'l')
+    upper_idx = np.searchsorted(mzs, upper_mz, 'r')
+    return lower_idx, upper_idx
+
+
 @overload
 def peak_width(mzs: np.array, instrument: InstrumentType, sigma_1: float) -> np.array:
     ...

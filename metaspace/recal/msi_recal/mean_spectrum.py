@@ -5,7 +5,12 @@ import pandas as pd
 from msiwarp.util.warp import to_mz, to_height, to_mx_peaks, generate_mean_spectrum
 
 from msi_recal.join_by_mz import join_by_mz
-from msi_recal.math import mass_accuracy_bounds, weighted_stddev, peak_width
+from msi_recal.math import (
+    mass_accuracy_bounds,
+    weighted_stddev,
+    peak_width,
+    mass_accuracy_bound_indices,
+)
 from msi_recal.params import InstrumentType
 
 logger = logging.getLogger(__name__)
@@ -64,17 +69,40 @@ def representative_spectrum(
     mean_spectrum: pd.DataFrame,
     instrument: InstrumentType,
     sigma_1: float,
-    remove_bg=False,
+    denoise=False,
 ):
     """Finds the single spectrum that is most similar to the mean spectrum"""
-    mean_spectrum = mean_spectrum.rename(columns={'mz': 'mean_mz', 'ints': 'mean_ints'})
 
-    if remove_bg:
-        # Exclude peaks that only exist in a fraction of spectra
-        background_threshold = np.median(mean_spectrum.coverage)
-        mean_spectrum = mean_spectrum[mean_spectrum.coverage > background_threshold]
+    orig_mean_spectrum = mean_spectrum
+
+    if denoise:
+        # Exclude peaks that only exist in small number of spectra, have high m/z variability
+        # (which suggests that multiple peaks were grouped together), or are near other more
+        # intense peaks
+        mean_spectrum = mean_spectrum[mean_spectrum.n_hits > 1]
+        _ints = mean_spectrum.ints.values
+        _mz = mean_spectrum.mz.values
+        local_lo, local_hi = mass_accuracy_bound_indices(_mz, _mz, instrument, sigma_1 * 2)
+        local_maximum_score = np.array(
+            [
+                lo >= hi - 1 or i == lo + np.argmax(_ints[lo:hi])
+                for i, (lo, hi) in enumerate(zip(local_lo, local_hi))
+            ]
+        )
+
+        peak_score = (
+            mean_spectrum.coverage
+            * (0.1 + local_maximum_score)
+            * (1 - np.clip(mean_spectrum.mz_stddev / mean_spectrum.mz_tol, 0, 1))
+        )
+
+        mean_spectrum = sample_across_mass_range(mean_spectrum, peak_score, n_per_bin=500)
+        logger.debug(
+            f'Denoising reduced peaks from {len(orig_mean_spectrum)} to {len(mean_spectrum)}'
+        )
 
     # Find the spectrum that's most similar to the background spectrum
+    mean_spectrum = mean_spectrum.rename(columns={'mz': 'mean_mz', 'ints': 'mean_ints'})
     spectrum_scores = {}
     processed_spectra = {}
     for sp, grp in spectra_df.groupby('sp'):
@@ -86,7 +114,7 @@ def representative_spectrum(
         mz_err = max(joined.mz_err.abs().sum(), 0.0001)
         # score = cosine_similarity(mean_ints, ints) / mz_err.sum()
         spectrum_scores[sp] = np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)) / mz_err
-        if remove_bg:
+        if denoise:
             processed_spectra[sp] = joined[['sp', 'mz', 'ints']][~joined.ints.isna()]
         else:
             processed_spectra[sp] = grp
@@ -159,3 +187,18 @@ def hybrid_mean_spectrum(spectra_df, instrument, sigma_1, min_coverage=0):
     logger.debug(f'Hybrid_mean_spectrum returned {len(results)} peaks (sigma_1: {sigma_1})')
 
     return pd.DataFrame(results)
+
+
+def sample_across_mass_range(spectrum: pd.DataFrame, scores, n_bins=4, n_per_bin=250):
+    """For ensuring an even distribution of peaks across the mass range, get split the mass range
+    into `n_bins` even bins and take the highest-scored `n_per_bin` from each bin."""
+    assert len(spectrum) == len(scores)
+    bin_edges = np.histogram_bin_edges(spectrum.mz.values, n_bins)
+    bins = []
+    for i in range(n_bins):
+        bin_mask = spectrum.mz.between(bin_edges[i], bin_edges[i + 1])
+        idxs = np.argsort(scores[bin_mask])[-n_per_bin:]
+        logger.debug(f'Chose {len(idxs)} peaks from {bin_edges[i]:.0f}-{bin_edges[i + 1]:.0f}')
+        bins.append(spectrum[bin_mask].iloc[idxs])
+
+    return pd.concat(bins).sort_values('mz')

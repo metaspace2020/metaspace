@@ -65,7 +65,7 @@ class CMakeBuild(build_ext):
 
 setup(
     name='msi_recal',
-    version='0.1.0',
+    version='0.1.1',
     description='Pipeline for mostly unsupervised recalibration of imzML mass spectrometry data',
     url='https://github.com/metaspace2020/metaspace/tree/master/metaspace/recal',
     author='Alexandrov Team, EMBL',
@@ -77,7 +77,7 @@ setup(
     package_data={
         'msi_recal': ['dbs/*.csv'],
     },
-    install_requires=['numpy', 'scipy', 'matplotlib', 'seaborn', 'pyimzml', 'numba'],
+    install_requires=['numpy', 'scipy', 'matplotlib', 'seaborn', 'pyimzml', 'pyMSpec', 'numba'],
     # Vendorize MSIWarp because it's not on PyPI yet
     ext_modules=[CMakeExtension('msiwarp/msiwarp_cpp')],
     cmdclass={"build_ext": CMakeBuild},

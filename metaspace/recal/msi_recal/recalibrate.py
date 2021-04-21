@@ -1,7 +1,7 @@
 import logging
 from multiprocessing import JoinableQueue, Process
 from pathlib import Path
-from typing import Iterable, Union
+from typing import Iterable, Union, Literal
 
 import numpy as np
 import pandas as pd
@@ -87,13 +87,15 @@ def process_imzml_file(
     input_path: Union[str, Path],
     params: RecalParams,
     output_path: Union[str, Path, None] = None,
-    debug_path: Union[str, Path, None] = None,
+    debug_path: Union[str, Path, None, Literal['infer']] = 'infer',
     samples: int = 100,
     limit: int = None,
 ):
     input_path = Path(input_path)
     if not output_path:
         output_path = Path(f'{input_path.parent}/{input_path.stem}_recal.imzML')
+    if debug_path == 'infer':
+        debug_path = Path(f'{input_path.parent}/{input_path.stem}_debug/')
 
     p = ImzMLParser(str(input_path))
     sample_peaks_df, sample_spectra_df = get_sample_spectra_df_from_parser(
@@ -136,8 +138,14 @@ def process_imzml_file(
     logger.info(f'Finished writing {output_path}')
 
     if debug_path:
-        logger.info(f'Writing debug output to {debug_path}')
         debug_path.mkdir(parents=True, exist_ok=True)
+        existing_debug_files = [p for p in debug_path.iterdir() if p.is_file()]
+        if existing_debug_files:
+            logger.info(f'Cleaning debug output directory')
+            for file in existing_debug_files:
+                file.unlink()
+        logger.info(f'Writing debug output to {debug_path}')
+
         all_spectra_df = pd.concat(all_spectra_dfs)
 
         for i, ((transform_name, *_), model) in enumerate(zip(params.transforms, models)):

@@ -1,6 +1,6 @@
 import pandas as pd
 
-from msi_recal.save_image_plot import save_spectrum_image
+from msi_recal.plot import save_spectrum_image
 
 
 class Normalize:

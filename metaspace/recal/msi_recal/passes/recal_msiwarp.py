@@ -25,10 +25,6 @@ class RecalMsiwarp:
         self.jitter_sigma_1 = params.jitter_sigma_1
         self.instrument = params.instrument
 
-        self.coef_ = {}
-        self.lo_warp_ = {}
-        self.hi_warp_ = {}
-
         self.recal_spectrum = None
         self.recal_nodes = None
         self.recal_move = None
@@ -38,7 +34,7 @@ class RecalMsiwarp:
         missing_cols = {'sp', 'mz', 'ints'}.difference(X.columns)
         assert not missing_cols, f'X is missing columns: {", ".join(missing_cols)}'
 
-        self.recal_nodes = self._make_recal_nodes(np.floor(X.mz.min()), np.ceil(X.mz.max()))
+        self.recal_nodes = self._make_mx_nodes(X)
 
         # Get reference spectrum
         recal_candidates, self.db_hits, mean_spectrum = get_recal_candidates(
@@ -73,22 +69,23 @@ class RecalMsiwarp:
             self.skip = True
 
         for node, move in zip(self.recal_nodes, self.recal_move):
-            logger.debug(f'Warping {node.mz:.6f} -> {node.mz + node.mz_shifts[move]:.6f}')
+            logger.debug(
+                f'Warping {node.mz:.6f} -> {node.mz + node.mz_shifts[move]:.6f} '
+                f'(node {move} / {len(node.mz_shifts)})'
+            )
 
         return self
 
-    def _make_recal_nodes(self, min_mz, max_mz):
-        node_mzs = np.round(np.linspace(min_mz, max_mz, self.n_segments + 1))
+    def _make_mx_nodes(self, X):
+        # MSIWarp discards peaks outside the node_mzs range, so add a safety margin at either end
+        # in case some other spectra in the dataset have a wider m/z range than the sample spectra.
+        # Also, round to the nearest 10 or 1 Da for consistency and interpretability, and only pick
+        # unique values in case n_segments is too high or the mass range is too small
+        min_mz = np.floor(X.mz.min() / 10 - 1) * 10
+        max_mz = np.ceil(X.mz.max() / 10 + 1) * 10
+        node_mzs = np.unique(np.round(np.linspace(min_mz, max_mz, self.n_segments + 1)))
         node_slacks = peak_width(node_mzs, self.instrument, self.recal_sigma_1) / 2
-        # Include immovable nodes at 0 and 10000 Da because MSIWarp throws away peaks outside of
-        # the range of these nodes, which can be annoying when it was fitted against a bad set of
-        # sample spectra
-        recal_nodes = [
-            *mx.initialize_nodes([0], [0], 1),
-            *mx.initialize_nodes(node_mzs, node_slacks, self.n_steps),
-            *mx.initialize_nodes([10000], [0], 1),
-        ]
-        return recal_nodes
+        return mx.initialize_nodes(node_mzs, node_slacks, self.n_steps)
 
     def predict(self, X):
         assert self.recal_move is not None, 'predict called before fit'

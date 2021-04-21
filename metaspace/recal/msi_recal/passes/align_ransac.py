@@ -35,7 +35,7 @@ class AlignRansac:
             mean_spectrum,
             self.instrument,
             self.align_sigma_1,
-            remove_bg=True,
+            denoise=True,
         )
 
         self.target_spectrum = spectrum[['mz', 'ints']].sort_values('mz')
