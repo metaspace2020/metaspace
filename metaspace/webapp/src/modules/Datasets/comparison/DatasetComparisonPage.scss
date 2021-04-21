@@ -4,6 +4,7 @@
     @apply flex justify-between items-start h-6 leading-6 tracking-wide relative z-10;
   }
   .ds-wrapper{
+    @apply flex justify-center items-center;
     width: 100%;
     height: 310px;
   }

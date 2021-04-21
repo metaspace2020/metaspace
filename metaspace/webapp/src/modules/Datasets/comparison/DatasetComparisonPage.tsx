@@ -15,7 +15,6 @@ import { Collapse, CollapseItem } from '../../../lib/element-ui'
 import ImageSaver from '../../ImageViewer/ImageSaver.vue'
 import OpacitySettings from '../../ImageViewer/OpacitySettings.vue'
 import IonIntensity from '../../ImageViewer/IonIntensity.vue'
-import Overlay from '../../ImageViewer/Overlay.vue'
 import FadeTransition from '../../../components/FadeTransition'
 import IonImageViewer from '../../../components/IonImageViewer'
 import RangeSlider from '../../../components/Slider/RangeSlider.vue'
@@ -157,6 +156,16 @@ export default defineComponent<DatasetComparisonPageProps>({
       })
     }
 
+    const getMetadata = (annotation: any) => {
+      const datasetMetadataExternals = {
+        Submitter: annotation.dataset.submitter,
+        PI: annotation.dataset.principalInvestigator,
+        Group: annotation.dataset.group,
+        Projects: annotation.dataset.projects,
+      }
+      return Object.assign(safeJsonParse(annotation.dataset.metadataJson), datasetMetadataExternals)
+    }
+
     const handleImageMove = ({ zoom, xOffset, yOffset }: any, imageFit: any, key: string) => {
       Vue.set(state.gridState, key, {
         ...state.gridState[key],
@@ -189,6 +198,11 @@ export default defineComponent<DatasetComparisonPageProps>({
       await handleImageLayerUpdate(state.annotationData[key], key)
     }
 
+    const handleScaleTypeChange = async(scaleType: string, key: string) => {
+      Vue.set(state.gridState, key, { ...state.gridState[key], scaleType })
+      await handleImageLayerUpdate(state.annotationData[key], key)
+    }
+
     const handleIonIntensityChange = async(intensity: number, key: string, type: string) => {
       if (type === 'min') {
         Vue.set(state.gridState, key, { ...state.gridState[key], minIntensity: intensity })
@@ -197,18 +211,18 @@ export default defineComponent<DatasetComparisonPageProps>({
       }
     }
 
-    const handleScaleTypeChange = (scaleType: string, key: string) => {
-      Vue.set(state.gridState, key, { ...state.gridState[key], scaleType })
-    }
-    const handleScaleBarColorChange = (scaleBarColor: string, key: string) => {
-      Vue.set(state.gridState, key, { ...state.gridState[key], scaleBarColor })
+    const handleIonIntensityLockChange = async(value: number, key: string, type: string) => {
+      const minLocked = type === 'min' ? value : state.gridState[key].lockedIntensities[0]
+      const maxLocked = type === 'max' ? value : state.gridState[key].lockedIntensities[1]
+      const lockedIntensities = [minLocked, maxLocked]
+      const intensity = getIntensity(state.gridState[`${key}`]?.ionImageLayers[0]?.ionImage,
+        lockedIntensities)
+
+      Vue.set(state.gridState, key, { ...state.gridState[key], lockedIntensities, intensity })
     }
 
-    const getImagePosition = (key: string) => {
-      if (state.gridState[key] && state.gridState[key].imagePosition) {
-        return state.gridState[key].imagePosition
-      }
-      return props.defaultImagePosition
+    const handleScaleBarColorChange = (scaleBarColor: string, key: string) => {
+      Vue.set(state.gridState, key, { ...state.gridState[key], scaleBarColor })
     }
 
     const getIntensityData = (
@@ -235,6 +249,7 @@ export default defineComponent<DatasetComparisonPageProps>({
           lowQuantile, highQuantile,
         } = ionImage || {}
         const [lockedMin, lockedMax] = lockedIntensities
+
         return {
           min: getIntensityData(
             minIntensity,
@@ -290,11 +305,19 @@ export default defineComponent<DatasetComparisonPageProps>({
       const ionImageLayersAux = await ionImageLayers(annotation, key)
       const imageFitAux = await imageFit(annotation, key)
       const intensity = getIntensity(ionImageLayersAux[0]?.ionImage)
+      const metadata = getMetadata(annotation)
+
       const settings = {
         intensity,
         ionImagePng,
+        metadata,
+        // eslint-disable-next-line camelcase
+        pixelSizeX: metadata?.MS_Analysis?.Pixel_Size?.Xaxis || 0,
+        // eslint-disable-next-line camelcase
+        pixelSizeY: metadata?.MS_Analysis?.Pixel_Size?.Yaxis || 0,
         ionImageLayers: ionImageLayersAux,
         imageFit: imageFitAux,
+        lockedIntensities: [undefined, undefined],
         annotImageOpacity: 1.0,
         opacityMode: 'linear',
         imagePosition: props.defaultImagePosition,
@@ -365,8 +388,8 @@ export default defineComponent<DatasetComparisonPageProps>({
                                   class='dataset-comparison-grid-item-header dom-to-image-hidden'
                                   annotation={state.annotationData[`${row}-${col}`]}
                                   slot="title"
-                                  isActive={true}
-                                  scaleBarColor='#000000'
+                                  isActive={false}
+                                  scaleBarColor={state.gridState[`${row}-${col}`]?.scaleBarColor}
                                   onScaleBarColorChange={(scaleBarColor: string) =>
                                     handleScaleBarColorChange(scaleBarColor, `${row}-${col}`)}
                                   scaleType={state.gridState[`${row}-${col}`]?.scaleType}
@@ -389,6 +412,14 @@ export default defineComponent<DatasetComparisonPageProps>({
                                       && <IonImageViewer
                                         isLoading={!state.annotationData[`${row}-${col}`]}
                                         ionImageLayers={state.gridState[`${row}-${col}`]?.ionImageLayers}
+                                        scaleBarColor={state.gridState[`${row}-${col}`]?.scaleBarColor}
+                                        scaleType={state.gridState[`${row}-${col}`]?.scaleType}
+                                        pixelSizeX={state.gridState[`${row}-${col}`]?.pixelSizeX}
+                                        pixelSizeY={state.gridState[`${row}-${col}`]?.pixelSizeY}
+                                        imageHeight={state.gridState[`${row}-${col}`]?.
+                                          ionImageLayers[0]?.ionImage?.height }
+                                        imageWidth={state.gridState[`${row}-${col}`]?.
+                                          ionImageLayers[0]?.ionImage?.width }
                                         height={300}
                                         width={410}
                                         zoom={state.gridState[`${row}-${col}`]?.imagePosition?.zoom
@@ -429,41 +460,46 @@ export default defineComponent<DatasetComparisonPageProps>({
                                       {
                                         state.refsLoaded
                                         && state.gridState[`${row}-${col}`] !== undefined
-                                        && <div ref={`range-slider-${row}-${col}`}>
-                                          <Overlay
-                                            class='sm-leading-trim mt-auto dom-to-image-hidden'>
-                                            <RangeSlider
-                                              class="ds-comparison-opacity-item"
-                                              value={state.gridState[`${row}-${col}`]?.userScaling}
-                                              min={0}
-                                              max={1}
-                                              step={0.01}
-                                              style={buildRangeSliderStyle(`${row}-${col}`)}
-                                              onInput={(nextRange: number[]) =>
-                                                handleUserScalingChange(nextRange, `${row}-${col}`)}
+                                        && <div
+                                          class="p-3 bg-gray-100 rounded-lg box-border shadow-xs"
+                                          ref={`range-slider-${row}-${col}`}>
+                                          <RangeSlider
+                                            class="ds-comparison-opacity-item"
+                                            value={state.gridState[`${row}-${col}`]?.userScaling}
+                                            min={0}
+                                            max={1}
+                                            step={0.01}
+                                            style={buildRangeSliderStyle(`${row}-${col}`)}
+                                            onInput={(nextRange: number[]) =>
+                                              handleUserScalingChange(nextRange, `${row}-${col}`)}
+                                          />
+                                          <div
+                                            class="ds-intensities-wrapper">
+                                            <IonIntensity
+                                              value={state.gridState[`${row}-${col}`]?.minIntensity}
+                                              intensities={state.gridState[`${row}-${col}`]?.intensity?.min}
+                                              label="Minimum intensity"
+                                              placeholder="min."
+                                              onInput={(value: number) =>
+                                                handleIonIntensityChange(value, `${row}-${col}`,
+                                                  'min')}
+                                              onLock={(value: number) =>
+                                                handleIonIntensityLockChange(value, `${row}-${col}`,
+                                                  'min')}
                                             />
-                                            <div
-                                              class="ds-intensities-wrapper">
-                                              <IonIntensity
-                                                value={state.gridState[`${row}-${col}`]?.minIntensity}
-                                                intensities={state.gridState[`${row}-${col}`]?.intensity?.min}
-                                                label="Minimum intensity"
-                                                placeholder="min."
-                                                onInput={(value: number) =>
-                                                  handleIonIntensityChange(value, `${row}-${col}`,
-                                                    'min')}
-                                              />
-                                              <IonIntensity
-                                                value={state.gridState[`${row}-${col}`]?.maxIntensity}
-                                                intensities={state.gridState[`${row}-${col}`]?.intensity?.max}
-                                                label="Minimum intensity"
-                                                placeholder="min."
-                                                onInput={(value: number) =>
-                                                  handleIonIntensityChange(value, `${row}-${col}`,
-                                                    'max')}
-                                              />
-                                            </div>
-                                          </Overlay>
+                                            <IonIntensity
+                                              value={state.gridState[`${row}-${col}`]?.maxIntensity}
+                                              intensities={state.gridState[`${row}-${col}`]?.intensity?.max}
+                                              label="Minimum intensity"
+                                              placeholder="min."
+                                              onInput={(value: number) =>
+                                                handleIonIntensityChange(value, `${row}-${col}`,
+                                                  'max')}
+                                              onLock={(value: number) =>
+                                                handleIonIntensityLockChange(value, `${row}-${col}`,
+                                                  'max')}
+                                            />
+                                          </div>
                                         </div>
                                       }
                                     </FadeTransition>
