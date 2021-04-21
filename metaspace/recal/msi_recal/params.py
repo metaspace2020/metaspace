@@ -7,6 +7,8 @@ import cpyMSpec
 INSTRUMENT_TYPES = ('orbitrap', 'ft-icr', 'tof')
 InstrumentType = Union[Literal['orbitrap'], Literal['ft-icr'], Literal['tof']]
 
+DEFAULT = object()
+
 
 def normalize_instrument_type(instrument) -> InstrumentType:
     """Detects instrument type from a string and returns an MSIWarp-compatible instrument string"""
@@ -21,31 +23,75 @@ def normalize_instrument_type(instrument) -> InstrumentType:
 class RecalParams:
     def __init__(
         self,
-        instrument: str,
-        rp: float,
-        base_mz: float,
-        peak_width_ppm: float,
-        jitter_ppm: float,
-        charge: int,
-        adducts: List[str],
-        profile_mode: bool,
-        db_paths: List[Path],
-        passes: List[List[str]],
+        instrument: str = 'orbitrap',
+        source: str = 'maldi',
+        polarity: Union[Literal['positive'], Literal['negative']] = 'positive',
+        rp: float = 140000.0,
+        base_mz: float = 200.0,
+        peak_width_ppm: float = DEFAULT,
+        jitter_ppm: float = 3.0,
+        adducts: List[str] = DEFAULT,
+        profile_mode: bool = False,
+        db_paths: List[Union[Path, str]] = DEFAULT,
+        transforms: List[List[str]] = DEFAULT,
     ):
         from msi_recal.math import ppm_to_sigma_1  # Avoid circular import
 
         self.instrument = instrument = normalize_instrument_type(instrument)
         self.rp = rp
         self.base_mz = base_mz
-        self.peak_width_ppm = peak_width_ppm
-        self.peak_width_sigma_1 = ppm_to_sigma_1(peak_width_ppm, instrument, base_mz)
+        if peak_width_ppm is DEFAULT:
+            self.peak_width_ppm = 15 if profile_mode else 0
+        else:
+            self.peak_width_ppm = peak_width_ppm
+        self.peak_width_sigma_1 = ppm_to_sigma_1(self.peak_width_ppm, instrument, base_mz)
         self.jitter_ppm = jitter_ppm
-        self.jitter_sigma_1 = ppm_to_sigma_1(jitter_ppm, instrument, base_mz)
-        self.charge = charge
+        self.jitter_sigma_1 = ppm_to_sigma_1(self.jitter_ppm, instrument, base_mz)
+
+        if polarity.lower() == 'positive':
+            self.charge = 1
+            if adducts is DEFAULT:
+                if source.lower() == 'maldi':
+                    adducts = ['', '+H', '+Na', '+K']
+                else:
+                    adducts = ['', '+H', '+Na', '-Cl', '+NH4']
+            if db_paths is DEFAULT:
+                if source.lower() == 'maldi':
+                    db_paths = ['core', 'dhb']
+                else:
+                    db_paths = ['core']
+        else:
+            self.charge = -1
+            if adducts is DEFAULT:
+                if source.lower() == 'maldi':
+                    adducts = ['', '-H', '+Cl']
+                else:
+                    adducts = ['', '-H', '+Cl', '+HCO2']
+            if db_paths is DEFAULT:
+                if source.lower() == 'maldi':
+                    db_paths = ['core', 'dan']
+                else:
+                    db_paths = ['core']
+
         self.adducts = adducts
         self.profile_mode = profile_mode
-        self.db_paths = db_paths
-        self.transforms = passes
+
+        self.db_paths = []
+        all_db_paths = (Path(__file__).parent / 'dbs').glob('*.csv')
+        for db in db_paths:
+            if isinstance(db, Path):
+                self.db_paths.append(db)
+            else:
+                matches = [p for p in all_db_paths if str(db) in p.name.lower()]
+                self.db_paths.append(matches[0] if matches else db)
+
+        if transforms is DEFAULT:
+            transforms = [
+                ['align_msiwarp', '5', '1', '0.2'],
+                ['recal_ransac', '50'],
+                ['recal_msiwarp', '20', '4', '0.1'],
+            ]
+        self.transforms = transforms
 
         if instrument == 'ft-icr':
             self.instrument_model = cpyMSpec.InstrumentModel('fticr', rp, base_mz)
@@ -54,38 +100,3 @@ class RecalParams:
 
     def __repr__(self):
         return 'RecalParams ' + pformat(self.__dict__, sort_dicts=False)
-
-
-def default_params(
-    polarity='positive', source='maldi', instrument='orbitrap', profile_mode=False, **kwargs
-):
-    instrument = normalize_instrument_type(instrument)
-    all_db_paths = (Path(__file__).parent / 'dbs').glob('*.csv')
-    if polarity.lower() == 'positive':
-        charge = 1
-        adducts = ['', '+H', '+Na', '+K'] if source == 'maldi' else ['', '+H', '+Na', '-Cl', '+NH4']
-        dbs = ['core', 'dhb'] if source == 'maldi' else ['core']
-    else:
-        charge = -1
-        adducts = ['', '-H', '+Cl'] if source == 'maldi' else ['', '-H', '+Cl', '+HCO2']
-        dbs = ['core', 'dan'] if source == 'maldi' else ['core']
-    db_paths = [p for p in all_db_paths if any(s in str(p).lower() for s in dbs)]
-    return RecalParams(
-        **{
-            'instrument': instrument,
-            'rp': 140000,
-            'base_mz': 200,
-            'peak_width_ppm': 15 if profile_mode else 0,  # TODO: Calculate peak width based on RP
-            'jitter_ppm': 5,
-            'charge': charge,
-            'adducts': adducts,
-            'profile_mode': profile_mode,
-            'db_paths': db_paths,
-            'passes': [
-                ['align_msiwarp', '5', '1', '0.2'],
-                ['recal_ransac', '50'],
-                ['recal_msiwarp', '20', '4', '0.1'],
-            ],
-            **kwargs,
-        }
-    )

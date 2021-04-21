@@ -17,7 +17,7 @@ from msi_recal.passes.recal_ransac import RecalRansac
 
 logger = logging.getLogger(__name__)
 
-PASSES = {
+TRANSFORM = {
     'align_msiwarp': AlignMsiwarp,
     'align_ransac': AlignRansac,
     'recal_msiwarp': RecalMsiwarp,
@@ -56,15 +56,15 @@ def get_sample_spectra_df_from_parser(p: ImzMLParser, n_samples=200):
 
 def build_pipeline(sample_peaks_df: pd.DataFrame, params: RecalParams):
     models = []
-    for pass_name, *pass_args in params.transforms:
-        logger.info(f'Fitting {pass_name} model')
-        assert pass_name in PASSES, f'Unrecognized model "{pass_name}"'
+    for tf_name, *tf_args in params.transforms:
+        logger.info(f'Fitting {tf_name} model')
+        assert tf_name in TRANSFORM, f'Unrecognized transform "{tf_name}"'
 
-        p = PASSES[pass_name](params, *pass_args)
-        p.fit(sample_peaks_df)
-        sample_peaks_df = p.predict(sample_peaks_df)
+        tf = TRANSFORM[tf_name](params, *tf_args)
+        tf.fit(sample_peaks_df)
+        sample_peaks_df = tf.predict(sample_peaks_df)
 
-        models.append(p)
+        models.append(tf)
 
     return models
 

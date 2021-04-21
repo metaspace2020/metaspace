@@ -101,9 +101,7 @@ class RecalRansac:
             min_move, max_move = self.model.predict([[min_mz], [max_mz]]) - [min_mz, max_mz]
 
             ax.plot(
-                [min_mz, max_mz],
-                [min_move, max_move],
-                label='Recalibration shift',
+                [min_move, max_move], [min_mz, max_mz], label='Recalibration shift',
             )
 
             fig.savefig(f'{path_prefix}_recal.png')

@@ -55,14 +55,18 @@ class AlignMsiwarp:
         missing_cols = {'sp', 'mz', 'ints'}.difference(X.columns)
         assert not missing_cols, f'X is missing columns: {", ".join(missing_cols)}'
 
-        mean_spectrum = hybrid_mean_spectrum(X, self.instrument, self.align_sigma_1)
-        ref_df = representative_spectrum(
+        mean_spectrum = hybrid_mean_spectrum(
             X,
-            mean_spectrum,
             self.instrument,
-            self.align_sigma_1,
-            denoise=not self.profile_mode,
+            max(self.align_sigma_1, self.jitter_sigma_1 + self.peak_width_sigma_1),
         )
+        ref_df = representative_spectrum(
+            X, mean_spectrum, self.instrument, self.align_sigma_1, denoise=not self.profile_mode,
+        )
+
+        if self.profile_mode:
+            # Just grab the most intense peaks, otherwise it takes ages to fit each spectrum
+            ref_df = sample_across_mass_range(ref_df, ref_df.ints, n_per_bin=1000)
 
         self.sample_mzs = sample_across_mass_range(
             mean_spectrum, mean_spectrum.coverage.values, n_per_bin=4

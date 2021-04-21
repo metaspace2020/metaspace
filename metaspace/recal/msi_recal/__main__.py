@@ -3,8 +3,7 @@ import logging
 from pathlib import Path
 
 from msi_recal import process_imzml_file
-from msi_recal.math import ppm_to_sigma_1
-from msi_recal.params import RecalParams
+from msi_recal.params import RecalParams, DEFAULT
 
 
 def is_float_str(s):
@@ -16,6 +15,9 @@ def is_float_str(s):
 
 
 def parse_transforms(args_transforms):
+    if not args_transforms:
+        return DEFAULT
+
     transforms = []
     for arg_str in args_transforms:
         transform_name, *t_args = arg_str.split(',')
@@ -82,7 +84,7 @@ This step is particularly slow, and takes even longer when ppm/segments are incr
     ref (default tic) "tic" to scale intensities relative to the TIC. "max" to scale to the most 
         intense peak in the spectrum. 
         
-Arguments are optional, e.g. these have the same effect: 
+If arguments aren't specified, the defaults will be used, e.g. these have the same effect: 
     msi_recal input.imzML align_msiwarp normalize
     msi_recal input.imzML align_msiwarp,5,1,0.2 normalize,median,tic
     
@@ -94,11 +96,7 @@ The default transform is "align_msiwarp recal_ransac recal_msiwarp"
         'transform',
         help='Which transformation functions to use. See below',
         nargs='*',
-        default=[
-            'align_msiwarp,5,1,0.2',
-            'recal_ransac,500',
-            'recal_msiwarp,20,4,0.1',
-        ],
+        default=['align_msiwarp,5,1,0.2', 'recal_ransac,500', 'recal_msiwarp,20,4,0.1',],
     )
     parser.add_argument(
         '--output',
@@ -111,10 +109,7 @@ The default transform is "align_msiwarp recal_ransac recal_msiwarp"
         help='Analyzer type',
     )
     parser.add_argument(
-        '--rp',
-        type=float,
-        default=140000,
-        help='Analyzer resolving power (default 140000)',
+        '--rp', type=float, default=140000, help='Analyzer resolving power (default 140000)',
     )
     parser.add_argument(
         '--base-mz',
@@ -184,14 +179,12 @@ Specify --no-default-dbs to suppress the defaults.
 
     assert input_path.exists(), f'{input_path} not found'
 
-    dbs = args.db
+    dbs = args.db or []
     if args.polarity == 'positive':
-        charge = 1
         adducts = (args.adducts or '+H,+Na,+K,[M]+').split(',')
         if not args.no_default_dbs:
             dbs = sorted({'cm3', 'dhb', *dbs})
     else:
-        charge = -1
         adducts = (args.adducts or '-H,+Cl,[M]-').split(',')
         if not args.no_default_dbs:
             dbs = sorted({'cm3', 'dan', *dbs})
@@ -204,15 +197,15 @@ Specify --no-default-dbs to suppress the defaults.
 
     params = RecalParams(
         instrument=args.instrument,
+        polarity=args.polarity,
         rp=args.rp,
         base_mz=args.base_mz,
         peak_width_ppm=15 if args.profile_mode else 0,
         jitter_ppm=args.jitter,
-        charge=charge,
         adducts=adducts,
         profile_mode=args.profile_mode,
         db_paths=db_paths,
-        passes=parse_transforms(args.transform),
+        transforms=parse_transforms(args.transform),
     )
 
     process_imzml_file(
