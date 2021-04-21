@@ -30,8 +30,9 @@ class AlignMsiwarp:
         self.align_sigma_1 = ppm_to_sigma_1(float(ppm), params.instrument, params.base_mz)
         self.n_segments = int(segments)
         self.n_steps = int(np.round(float(ppm) / float(precision)))
-        self.profile_mode = False
+        self.profile_mode = params.profile_mode
 
+        self.peak_width_sigma_1 = params.peak_width_sigma_1
         self.jitter_sigma_1 = params.jitter_sigma_1
         self.instrument = params.instrument
 
@@ -60,7 +61,7 @@ class AlignMsiwarp:
             mean_spectrum,
             self.instrument,
             self.align_sigma_1,
-            denoise=True,
+            denoise=not self.profile_mode,
         )
 
         self.sample_mzs = sample_across_mass_range(
@@ -132,7 +133,7 @@ class AlignMsiwarp:
             for i, (lo, hi) in enumerate(zip(idx_lo, idx_hi)):
                 if hi - lo == 0:
                     continue
-                elif self.profile_mode:
+                elif self.profile_mode and hi - lo > 1:
                     image_set[i].extend(
                         find_centroid_mzs(spectrum.mz.values[lo:hi], spectrum.ints.values[lo:hi])
                     )
@@ -211,11 +212,19 @@ class AlignMsiwarp:
 
 def find_centroid_mzs(mzs, ints):
     try:
+        if len(mzs <= 2):
+            # If there aren't enough peaks to model a centroid, assume the centroid is
+            # outside of the sampled range and return nothing.
+            return np.empty(0)
+
         if signal is not None and gradient is not None:
             ints = signal.savgol_filter(ints, 5, 2)
             mzs, ints, _ = gradient(
-                np.asarray(mzs), np.asarray(ints), max_output=-1, weighted_bins=3
+                np.asarray(mzs),
+                np.asarray(ints),
+                max_output=-1,
+                weighted_bins=max(min(3, (len(mzs) - 1) // 2), 1),
             )
             return mzs
     except ValueError:
-        return np.nan
+        return np.empty(0)

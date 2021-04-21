@@ -37,15 +37,13 @@ class RecalRansac:
             logger.warning(
                 f'Too few peaks for recalibration ({len(recal_candidates)} < 10). Skipping.'
             )
-            self.M_ = 1
-            self.C_ = 0
             # Make a fake RANSACRegressor just in case
             linear_data = np.arange(3).reshape(-1, 1)
             self.model = RANSACRegressor(min_samples=2).fit(linear_data, linear_data)
             return self
 
-        _X = np.array(recal_candidates.db_mz).reshape(-1, 1)
-        _y = np.array(recal_candidates.mz)
+        _X = np.array(recal_candidates.mz).reshape(-1, 1)
+        _y = np.array(recal_candidates.db_mz)
         _weights = np.array(recal_candidates.weight)
         threshold = peak_width(recal_candidates.db_mz.values, self.instrument, self.jitter_sigma_1)
 
@@ -78,33 +76,35 @@ class RecalRansac:
     def save_debug(self, spectra_df, path_prefix):
         self.db_hits.to_csv(f'{path_prefix}_db_hits.csv')
 
-        fig: Figure = plt.figure(figsize=(10, 10))
-        fig.suptitle('RANSAC recalibration')
-        ax: Axes = fig.gca()
+        if self.db_hits.used_for_recal.any():
+            fig: Figure = plt.figure(figsize=(10, 10))
+            fig.suptitle('RANSAC recalibration')
+            ax: Axes = fig.gca()
 
-        candidates = self.db_hits[lambda df: df.used_for_recal].copy()
-        candidates['mz_err'] = candidates.mz - candidates.db_mz
-        sns.scatterplot(
-            data=candidates,
-            x='mz',
-            y='mz_err',
-            size='weight',
-            hue='db',
-            alpha=0.5,
-            sizes=(0, 25),
-            legend=True,
-            ax=ax,
-        )
+            candidates = self.db_hits[lambda df: df.used_for_recal].copy()
+            candidates['mz_err'] = candidates.mz - candidates.db_mz
+            sns.scatterplot(
+                data=candidates,
+                x='mz',
+                y='mz_err',
+                size='weight',
+                hue='db',
+                alpha=0.5,
+                sizes=(0, 25),
+                legend=True,
+                ax=ax,
+            )
 
-        ax.set_ylim(*np.percentile(candidates.mz_err, [1, 99]))
+            ax.set_ylim(*np.percentile(candidates.mz_err, [1, 99]))
 
-        min_mz, max_mz = candidates.mz.min(), candidates.mz.max()
-        min_move, max_move = self.model.predict([[min_mz], [max_mz]]) - [min_mz, max_mz]
+            min_mz, max_mz = candidates.mz.min(), candidates.mz.max()
+            min_move, max_move = self.model.predict([[min_mz], [max_mz]]) - [min_mz, max_mz]
 
-        ax.plot(
-            [min_mz, max_mz],
-            [min_move, max_move],
-            label='Recalibration shift',
-        )
+            ax.plot(
+                [min_mz, max_mz],
+                [min_move, max_move],
+                label='Recalibration shift',
+            )
 
-        fig.savefig(f'{path_prefix}_recal.png')
+            fig.savefig(f'{path_prefix}_recal.png')
+            plt.close(fig)

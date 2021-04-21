@@ -142,7 +142,9 @@ def _calc_db_scores(peaks_df, db_path, adduct, limit_of_detection, max_mz, min_m
 
 
 def get_recal_candidates(peaks_df, params: RecalParams, sigma_1: float):
-    mean_spectrum = hybrid_mean_spectrum(peaks_df, params.instrument, params.jitter_sigma_1, 0)
+    mean_spectrum = hybrid_mean_spectrum(
+        peaks_df, params.instrument, params.peak_width_sigma_1 + params.jitter_sigma_1, 0
+    )
     db_hits = get_db_hits(mean_spectrum, params, sigma_1)
     recal_candidates = (
         db_hits[db_hits.weight > 0]

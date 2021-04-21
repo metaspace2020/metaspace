@@ -63,16 +63,23 @@ class RecalMsiwarp:
         )
 
         if all(
-            move == len(node.mz_shifts) - 1 for move, node in zip(self.recal_move, self.recal_nodes)
+            move in (0, len(node.mz_shifts) - 1)
+            for move, node in zip(self.recal_move, self.recal_nodes)
         ):
             logger.warning("MSIWarp produced an invalid warp. Skipping recal_msiwarp.")
             self.skip = True
-
-        for node, move in zip(self.recal_nodes, self.recal_move):
-            logger.debug(
-                f'Warping {node.mz:.6f} -> {node.mz + node.mz_shifts[move]:.6f} '
-                f'(node {move} / {len(node.mz_shifts)})'
-            )
+        else:
+            for i, (node, move) in enumerate(zip(self.recal_nodes, self.recal_move)):
+                move_str = f'{node.mz:.6f} -> {node.mz + node.mz_shifts[move]:.6f} (node {move} / {len(node.mz_shifts)})'
+                if move == 0:
+                    logger.warning(
+                        f'MSIWarp appears to have made an invalid warp: {move_str}. '
+                        f'Overriding it to not shift this node.'
+                    )
+                    # Reset node to the middle mz_shift as it is usually 0
+                    self.recal_move[i] = (len(node.mz_shifts) + 1) // 2
+                else:
+                    logger.debug(f'Warping {move_str}')
 
         return self
 
@@ -146,3 +153,4 @@ class RecalMsiwarp:
         )
 
         fig.savefig(f'{path_prefix}_recal.png')
+        plt.close(fig)

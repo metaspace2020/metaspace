@@ -125,8 +125,8 @@ The default transform is "align_msiwarp recal_ransac recal_msiwarp"
     parser.add_argument(
         '--jitter',
         type=float,
-        default=2.0,
-        help='Maximum expected m/z error between spectra (after alignment) in ppm (default 2.0)',
+        default=3.0,
+        help='Maximum expected centroid m/z imprecision in ppm (default 3.0)',
     )
     parser.add_argument(
         '--polarity', choices=['positive', 'negative'], default='positive', help='Polarity'
@@ -136,23 +136,30 @@ The default transform is "align_msiwarp recal_ransac recal_msiwarp"
         help='Comma-separated list of adducts. (default "+H,+Na,+K,[M]+" for positive mode, "-H,+Cl,[M]-" for negative mode)',
     )
     parser.add_argument(
+        '--profile-mode', action='store_true', help='Set this flag for profile-mode data'
+    )
+    parser.add_argument(
+        '--no-default-dbs', action='store_true', help='Suppress the default recalibration DBs'
+    )
+    parser.add_argument(
         '--db',
         action='append',
         help='''A preset database name (hmdb, cm3, dhb, dan) or a path to a csv/tsv file containing 
-a "formula" column. Can be specified multiple times for multiple databases. 
-By default it will use "cm3,dhb" for positive mode, "cm3,dan" for negative mode. However, the
-defaults won't apply if any other value is specified, so re-add cm3 and dhb/dan if they're still wanted.
+a "formula" column listing molecules to use for recalibration. 
+Can be specified multiple times to add multiple databases.
+By default it will use "cm3,dhb" for positive mode, "cm3,dan" for negative mode. 
+Specify --no-default-dbs to suppress the defaults.
 ''',
     )
     parser.add_argument(
         '--debug',
         help='Directory to write debug files describing the detected alignment/recalibration parameters (default determined by input path)',
     )
+    parser.add_argument('--no-debug', action='store_true', help='Suppress writing debug files')
     parser.add_argument(
         '--samples', type=int, default=100, help='How many spectra to use for model fitting'
     )
     parser.add_argument('--limit', type=int, help='Only consider the first N spectra')
-    parser.add_argument('--no-debug', help='Suppress writing debug files')
     parser.add_argument('--verbose', '-v', action='count', default=2)
     parser.add_argument('--quiet', '-q', action='count', default=0)
 
@@ -177,14 +184,17 @@ defaults won't apply if any other value is specified, so re-add cm3 and dhb/dan 
 
     assert input_path.exists(), f'{input_path} not found'
 
+    dbs = args.db
     if args.polarity == 'positive':
         charge = 1
         adducts = (args.adducts or '+H,+Na,+K,[M]+').split(',')
-        dbs = args.db or ['cm3', 'dhb']
+        if not args.no_default_dbs:
+            dbs = sorted({'cm3', 'dhb', *dbs})
     else:
         charge = -1
         adducts = (args.adducts or '-H,+Cl,[M]-').split(',')
-        dbs = args.db or ['cm3', 'dan']
+        if not args.no_default_dbs:
+            dbs = sorted({'cm3', 'dan', *dbs})
 
     adducts = ['' if a in ('[M]+', '[M]-') else a for a in adducts]
     db_paths = [Path(BUILTIN_DBS.get(db, db)) for db in dbs]
@@ -196,10 +206,12 @@ defaults won't apply if any other value is specified, so re-add cm3 and dhb/dan 
         instrument=args.instrument,
         rp=args.rp,
         base_mz=args.base_mz,
+        peak_width_ppm=15 if args.profile_mode else 0,
         jitter_ppm=args.jitter,
         charge=charge,
-        db_paths=db_paths,
         adducts=adducts,
+        profile_mode=args.profile_mode,
+        db_paths=db_paths,
         passes=parse_transforms(args.transform),
     )
 

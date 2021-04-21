@@ -24,10 +24,12 @@ class RecalParams:
         instrument: str,
         rp: float,
         base_mz: float,
+        peak_width_ppm: float,
         jitter_ppm: float,
         charge: int,
-        db_paths: List[Path],
         adducts: List[str],
+        profile_mode: bool,
+        db_paths: List[Path],
         passes: List[List[str]],
     ):
         from msi_recal.math import ppm_to_sigma_1  # Avoid circular import
@@ -35,11 +37,14 @@ class RecalParams:
         self.instrument = instrument = normalize_instrument_type(instrument)
         self.rp = rp
         self.base_mz = base_mz
+        self.peak_width_ppm = peak_width_ppm
+        self.peak_width_sigma_1 = ppm_to_sigma_1(peak_width_ppm, instrument, base_mz)
         self.jitter_ppm = jitter_ppm
         self.jitter_sigma_1 = ppm_to_sigma_1(jitter_ppm, instrument, base_mz)
         self.charge = charge
-        self.db_paths = db_paths
         self.adducts = adducts
+        self.profile_mode = profile_mode
+        self.db_paths = db_paths
         self.transforms = passes
 
         if instrument == 'ft-icr':
@@ -52,7 +57,7 @@ class RecalParams:
 
 
 def default_params(
-    polarity: str = 'positive', source: str = 'maldi', instrument: str = 'orbitrap', **kwargs
+    polarity='positive', source='maldi', instrument='orbitrap', profile_mode=False, **kwargs
 ):
     instrument = normalize_instrument_type(instrument)
     all_db_paths = (Path(__file__).parent / 'dbs').glob('*.csv')
@@ -70,14 +75,16 @@ def default_params(
             'instrument': instrument,
             'rp': 140000,
             'base_mz': 200,
+            'peak_width_ppm': 15 if profile_mode else 0,  # TODO: Calculate peak width based on RP
             'jitter_ppm': 5,
             'charge': charge,
-            'db_paths': db_paths,
             'adducts': adducts,
+            'profile_mode': profile_mode,
+            'db_paths': db_paths,
             'passes': [
-                ['align_msiwarp', '20', '1', '30'],
+                ['align_msiwarp', '5', '1', '0.2'],
                 ['recal_ransac', '50'],
-                ['recal_msiwarp', '20', '4', '100'],
+                ['recal_msiwarp', '20', '4', '0.1'],
             ],
             **kwargs,
         }

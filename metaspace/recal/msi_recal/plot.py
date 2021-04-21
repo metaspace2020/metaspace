@@ -18,6 +18,8 @@ def save_spectrum_image(
     spectra_df: pd.DataFrame, values: Union[dict, pd.Series], path: str, title: str, **kwargs
 ):
     values = pd.Series(values)
+    values = values[values.index.isin(spectra_df.index)]
+
     base_y = spectra_df.y.min()
     base_x = spectra_df.x.min()
     im_height = spectra_df.y.max() + 1 - base_y

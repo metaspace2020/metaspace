@@ -47,10 +47,8 @@ def get_spectra_df_from_parser(p: ImzMLParser, sp_idxs: Iterable[int]):
     return peaks_df, spectra_df
 
 
-def get_sample_spectra_df_from_parser(p: ImzMLParser, n_samples=200, limit=None):
+def get_sample_spectra_df_from_parser(p: ImzMLParser, n_samples=200):
     sp_n = len(p.coordinates)
-    if limit:
-        sp_n = min(sp_n, limit)
 
     sp_idxs = np.sort(np.random.choice(sp_n, min(n_samples, sp_n), False))
     return get_spectra_df_from_parser(p, sp_idxs)
@@ -98,9 +96,8 @@ def process_imzml_file(
         debug_path = Path(f'{input_path.parent}/{input_path.stem}_debug/')
 
     p = ImzMLParser(str(input_path))
-    sample_peaks_df, sample_spectra_df = get_sample_spectra_df_from_parser(
-        p, n_samples=samples, limit=limit
-    )
+    sample_peaks_df, sample_spectra_df = get_sample_spectra_df_from_parser(p, n_samples=samples)
+
     models = build_pipeline(sample_peaks_df, params)
 
     writer_queue = JoinableQueue(2)
