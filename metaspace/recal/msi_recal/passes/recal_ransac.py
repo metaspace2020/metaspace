@@ -47,13 +47,17 @@ class RecalRansac:
         _weights = np.array(recal_candidates.weight)
         threshold = peak_width(recal_candidates.db_mz.values, self.instrument, self.jitter_sigma_1)
 
-        bins = np.histogram_bin_edges(_X, 2)
+        # Require subsets include values from both the higher and lower end of the mass range
+        # but define the bins such that at least 20% of peaks are included in each, to guard
+        # against cases where the upper half of the mass range is almost empty.
+        bins = np.histogram_bin_edges(recal_candidates.db_mz, 2)
+        bins[1] = np.clip(bins[1], *np.percentile(_X, [20, 80]))
+
         self.model = RANSACRegressor(
             max_trials=10000,
             # min_samples
             min_samples=max(0.05, 3 / len(X)),
             residual_threshold=threshold,
-            # Require subsets include values from both the higher and lower end of the mass range
             is_data_valid=lambda X_subset, y_subset: np.histogram(X_subset, bins)[0].all(),
             loss='absolute_loss',
             stop_probability=1,

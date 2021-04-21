@@ -50,15 +50,6 @@ def parse_transforms(args_transforms):
 
 
 if __name__ == '__main__':
-
-    DB_ROOT = Path(__file__).parent / 'dbs'
-    BUILTIN_DBS = {
-        'hmdb': DB_ROOT / 'HMDB-v4.csv',
-        'cm3': DB_ROOT / 'CoreMetabolome-v3.csv',
-        'dhb': DB_ROOT / 'DHB_clusters.csv',
-        'dan': DB_ROOT / 'DAN_clusters.csv',
-    }
-
     parser = argparse.ArgumentParser(
         description='Align & recalibrate imzML files',
         formatter_class=argparse.RawTextHelpFormatter,
@@ -190,10 +181,6 @@ Specify --no-default-dbs to suppress the defaults.
             dbs = sorted({'cm3', 'dan', *dbs})
 
     adducts = ['' if a in ('[M]+', '[M]-') else a for a in adducts]
-    db_paths = [Path(BUILTIN_DBS.get(db, db)) for db in dbs]
-
-    for db_path in db_paths:
-        assert db_path.exists(), f'{db_path} not found'
 
     params = RecalParams(
         instrument=args.instrument,
@@ -204,7 +191,7 @@ Specify --no-default-dbs to suppress the defaults.
         jitter_ppm=args.jitter,
         adducts=adducts,
         profile_mode=args.profile_mode,
-        db_paths=db_paths,
+        dbs=dbs,
         transforms=parse_transforms(args.transform),
     )
 

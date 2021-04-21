@@ -9,6 +9,14 @@ InstrumentType = Union[Literal['orbitrap'], Literal['ft-icr'], Literal['tof']]
 
 DEFAULT = object()
 
+DB_ROOT = Path(__file__).parent / 'dbs'
+BUILTIN_DBS = {
+    'hmdb': DB_ROOT / 'HMDB-v4.csv',
+    'cm3': DB_ROOT / 'CoreMetabolome-v3.csv',
+    'dhb': DB_ROOT / 'DHB_clusters.csv',
+    'dan': DB_ROOT / 'DAN_clusters.csv',
+}
+
 
 def normalize_instrument_type(instrument) -> InstrumentType:
     """Detects instrument type from a string and returns an MSIWarp-compatible instrument string"""
@@ -32,7 +40,7 @@ class RecalParams:
         jitter_ppm: float = 3.0,
         adducts: List[str] = DEFAULT,
         profile_mode: bool = False,
-        db_paths: List[Union[Path, str]] = DEFAULT,
+        dbs: List[Union[Path, str]] = DEFAULT,
         transforms: List[List[str]] = DEFAULT,
     ):
         from msi_recal.math import ppm_to_sigma_1  # Avoid circular import
@@ -55,11 +63,11 @@ class RecalParams:
                     adducts = ['', '+H', '+Na', '+K']
                 else:
                     adducts = ['', '+H', '+Na', '-Cl', '+NH4']
-            if db_paths is DEFAULT:
+            if dbs is DEFAULT:
                 if source.lower() == 'maldi':
-                    db_paths = ['core', 'dhb']
+                    dbs = ['cm3', 'dhb']
                 else:
-                    db_paths = ['core']
+                    dbs = ['cm3']
         else:
             self.charge = -1
             if adducts is DEFAULT:
@@ -67,23 +75,18 @@ class RecalParams:
                     adducts = ['', '-H', '+Cl']
                 else:
                     adducts = ['', '-H', '+Cl', '+HCO2']
-            if db_paths is DEFAULT:
+            if dbs is DEFAULT:
                 if source.lower() == 'maldi':
-                    db_paths = ['core', 'dan']
+                    dbs = ['cm3', 'dan']
                 else:
-                    db_paths = ['core']
+                    dbs = ['cm3']
 
         self.adducts = adducts
         self.profile_mode = profile_mode
 
-        self.db_paths = []
-        all_db_paths = (Path(__file__).parent / 'dbs').glob('*.csv')
-        for db in db_paths:
-            if isinstance(db, Path):
-                self.db_paths.append(db)
-            else:
-                matches = [p for p in all_db_paths if str(db) in p.name.lower()]
-                self.db_paths.append(matches[0] if matches else db)
+        self.db_paths = [Path(BUILTIN_DBS.get(db, db)) for db in dbs]
+        for db_path in self.db_paths:
+            assert db_path.exists(), f'{db_path} not found'
 
         if transforms is DEFAULT:
             transforms = [
