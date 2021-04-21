@@ -102,10 +102,12 @@ class RecalRansac:
             ax.set_ylim(*np.percentile(candidates.mz_err, [1, 99]))
 
             min_mz, max_mz = candidates.mz.min(), candidates.mz.max()
-            min_move, max_move = self.model.predict([[min_mz], [max_mz]]) - [min_mz, max_mz]
+            min_move, max_move = np.array([min_mz, max_mz]) - self.model.predict(
+                [[min_mz], [max_mz]]
+            )
 
             ax.plot(
-                [min_move, max_move], [min_mz, max_mz], label='Recalibration shift',
+                [min_mz, max_mz], [min_move, max_move], label='Recalibration shift',
             )
 
             fig.savefig(f'{path_prefix}_recal.png')

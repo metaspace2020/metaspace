@@ -112,7 +112,7 @@ def process_imzml_file(
 
         for start_i in range(0, sp_n, chunk_size):
             end_i = min(start_i + chunk_size, sp_n)
-            logger.debug(f'Reading spectra {start_i}-{end_i}')
+            logger.debug(f'Reading spectra {start_i}-{end_i} out of {sp_n}')
             peaks_df, spectra_df = get_spectra_df_from_parser(p, np.arange(start_i, end_i))
             all_spectra_dfs.append(spectra_df)
 
@@ -127,6 +127,8 @@ def process_imzml_file(
 
             logger.debug(f'Writing spectra {start_i}-{end_i}')
             writer_queue.put(writer_job)
+    except KeyboardInterrupt:
+        pass  # Don't rethrow - save the debug data if possible
     finally:
         writer_queue.put(None)
         writer_queue.close()
