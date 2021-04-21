@@ -30,10 +30,7 @@
       />
     </div>
 
-    <div
-      v-if="!hideColorBar"
-      class="colorbar-container"
-    >
+    <div class="colorbar-container">
       <div
         v-if="imageLoaderSettings.opticalSrc"
         class="opacity-slider dom-to-image-hidden"
@@ -151,21 +148,14 @@ export default class MainImage extends Vue {
     @Prop({ type: String })
     scaleBarColor!: string | null
 
-    @Prop({ type: Boolean })
-    hideColorBar!: boolean | null
-
     @Prop({ type: String })
     scaleType?: ScaleType
-
-    @Prop({ type: Number })
-    imageViewerWidth?: number = 500
-
-    @Prop({ type: Number })
-    imageViewerHeight?: number = 500
 
     ionImageUrl: string | null = null;
     ionImagePng: Image | null = null;
     ionImageIsLoading = false;
+    imageViewerWidth: number = 500;
+    imageViewerHeight: number = 500;
 
     created() {
       const ignoredPromise = this.updateIonImage()

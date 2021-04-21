@@ -103,7 +103,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import ColorBar from './Colorbar.vue'
-import { Component } from 'vue-property-decorator'
+import { Component, Prop } from 'vue-property-decorator'
 import { ScaleType } from '../../../../lib/ionImageRendering'
 import ScaleBar from '../../../../components/ScaleBar.vue'
 
@@ -118,6 +118,15 @@ import ScaleBar from '../../../../components/ScaleBar.vue'
    components: { ColorBar, ScaleBar },
  })
 export default class IonImageSettings extends Vue {
+   @Prop({ type: String })
+   defaultColormap: string | undefined;
+
+   @Prop({ type: String })
+   defaultScaleType: string | undefined;
+
+   @Prop({ type: String })
+   defaultScaleBarColor: string | undefined;
+
    availableScales: string[] = ['Viridis', 'Cividis', 'Hot', 'YlGnBu', 'Portland', 'Greys', 'Inferno', 'Turbo'];
    paletteColors: colorObjType[] = [{
      code: '#000000',
@@ -133,14 +142,14 @@ export default class IonImageSettings extends Vue {
      colorName: 'White',
    }];
 
-   pickedColor: string = this.paletteColors[0].code;
+   pickedColor: string = this.defaultScaleBarColor ? this.defaultScaleBarColor : this.paletteColors[0].code;
 
    get colormap() {
-     return this.$store.getters.settings.annotationView.colormap
+     return this.defaultColormap ? this.defaultColormap : this.$store.getters.settings.annotationView.colormap
    }
 
    get scaleType() {
-     return this.$store.getters.settings.annotationView.scaleType
+     return this.defaultScaleType ? this.defaultScaleType : this.$store.getters.settings.annotationView.scaleType
    }
 
    scaleBarColors(color: string): string {
@@ -153,10 +162,12 @@ export default class IonImageSettings extends Vue {
 
    onColormapChange(selection: string) {
      this.$store.commit('setColormap', selection)
+     this.$emit('colormapChange', selection)
    }
 
    onScaleTypeChange(scaleType: ScaleType) {
      this.$store.commit('setScaleType', scaleType)
+     this.$emit('scaleTypeChange', scaleType)
    }
 
    onScaleBarColorChange(c: string) {

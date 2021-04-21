@@ -120,6 +120,7 @@
       </el-table-column>
 
       <el-table-column
+        v-if="!hidden('mz')"
         key="mz"
         property="mz"
         label="m/z"

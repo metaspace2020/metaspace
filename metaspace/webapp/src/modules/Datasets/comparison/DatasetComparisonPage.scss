@@ -1,5 +1,17 @@
 .dataset-comparison-page{
 
+  .ds-intensities-wrapper{
+    @apply flex justify-between items-start h-6 leading-6 tracking-wide relative z-10;
+  }
+  .ds-wrapper{
+    width: 100%;
+    height: 310px;
+  }
+  .ds-viewer-controls-wrapper{
+    @apply absolute top-0 right-0 py-3 mr-2 h-full box-border flex flex-col justify-between items-end w-0;
+  }
+
+
   .ds-collapse{
     margin: 0 8px;
     width: calc(100% - 16px);
@@ -68,7 +80,7 @@
   }
 
   .dataset-comparison-col{
-    @apply flex items-center ml-1 mb-1 flex-col;
+    @apply flex ml-1 mb-1 items-center flex-col;
     border: 1px solid lightgray;
     width: 100%;
     min-width: 100px;
