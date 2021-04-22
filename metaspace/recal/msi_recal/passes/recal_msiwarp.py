@@ -12,6 +12,7 @@ from msi_recal.db_peak_match import get_recal_candidates
 from msi_recal.math import peak_width, ppm_to_sigma_1
 from msi_recal.mean_spectrum import representative_spectrum
 from msi_recal.params import RecalParams
+from msi_recal.plot import save_recal_image
 
 logger = logging.getLogger(__name__)
 
@@ -129,28 +130,9 @@ class RecalMsiwarp:
     def save_debug(self, spectra_df, path_prefix):
         self.db_hits.to_csv(f'{path_prefix}_db_hits.csv')
 
-        fig: Figure = plt.figure(figsize=(10, 10))
-        fig.suptitle('MSIWarp recalibration')
-        ax = fig.gca()
-
-        candidates = self.db_hits[lambda df: df.used_for_recal].copy()
-        candidates['mz_err'] = candidates.mz - candidates.db_mz
-        sns.scatterplot(
-            data=candidates,
-            x='mz',
-            y='mz_err',
-            size='weight',
-            hue='db',
-            alpha=0.5,
-            sizes=(0, 25),
-            legend=True,
-            ax=ax,
+        save_recal_image(
+            self.db_hits[lambda df: df.used_for_recal],
+            [(n.mz, n.mz_shifts[move]) for n, move in zip(self.recal_nodes, self.recal_move)],
+            'MSIWarp recalibration',
+            f'{path_prefix}_recal.png',
         )
-        ax.plot(
-            [n.mz for n in self.recal_nodes[1:-1]],
-            [n.mz_shifts[move] for n, move in zip(self.recal_nodes[1:-1], self.recal_move[1:-1])],
-            label='Recalibration shift',
-        )
-
-        fig.savefig(f'{path_prefix}_recal.png')
-        plt.close(fig)

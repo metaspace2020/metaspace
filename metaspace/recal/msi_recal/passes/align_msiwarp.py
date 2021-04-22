@@ -186,15 +186,22 @@ class AlignMsiwarp:
                 logger.debug(f'Aligning {mz:.6f} -> {min_shift :.6f} - {max_shift :.6f}')
 
     def save_debug(self, spectra_df, path_prefix):
-        for node, warp_ in zip(self.align_nodes, self.warps_):
-            mz = node.mz
-            max_val = np.max(np.abs(list(warp_.values())))
+        debug_warps = [(node.mz, warp_) for node, warp_ in zip(self.align_nodes, self.warps_)]
+        if len(debug_warps) == 2:
+            (lo_mz, lo_warp), (hi_mz, hi_warp) = debug_warps
+            mid_mz = (lo_mz + hi_mz) / 2
+            common_sps = {*lo_warp.keys()}.intersection(hi_warp.keys())
+            mid_warp = {sp: (lo_warp[sp] + hi_warp[sp]) for sp in common_sps}
+            debug_warps.insert(1, (mid_mz, mid_warp,))
+
+        for mz, warp in debug_warps:
+            max_val = np.max(np.abs(list(warp.values())))
 
             save_spectrum_image(
                 spectra_df,
-                warp_,
+                warp,
                 f'{path_prefix}_shift_{mz:.0f}.png',
-                f'm/z shift at {mz:.6f}',
+                f'm/z adjustment at {mz:.6f}',
                 vmin=-max_val,
                 vmax=max_val,
                 cmap='Spectral',
@@ -210,7 +217,7 @@ class AlignMsiwarp:
                     self.align_sigma_1,
                     before,
                     after,
-                    f'{path_prefix}_mma_{mz:.6f}.png',
+                    f'{path_prefix}_peak_dist_{mz:.6f}.png',
                 )
 
 

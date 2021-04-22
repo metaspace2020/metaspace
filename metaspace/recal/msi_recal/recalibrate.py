@@ -115,6 +115,8 @@ def process_imzml_file(
             end_i = min(start_i + chunk_size, sp_n)
             logger.debug(f'Reading spectra {start_i}-{end_i} out of {sp_n}')
             peaks_df, spectra_df = get_spectra_df_from_parser(p, np.arange(start_i, end_i))
+            # Convert to tuples, because spectra_df.loc coalesces everything into floats
+            spectra_dict = {row[0]: row for row in spectra_df.itertuples()}
             all_spectra_dfs.append(spectra_df)
 
             logger.info(f'Transforming spectra {start_i}-{end_i}')
@@ -123,7 +125,7 @@ def process_imzml_file(
 
             writer_job = []
             for sp, grp in peaks_df.groupby('sp'):
-                spectrum = spectra_df.loc[sp]
+                spectrum = spectra_dict[sp]
                 writer_job.append((grp.mz, grp.ints, (spectrum.x, spectrum.y, spectrum.z)))
 
             logger.debug(f'Writing spectra {start_i}-{end_i}')

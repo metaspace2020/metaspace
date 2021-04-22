@@ -10,6 +10,7 @@ from sklearn.linear_model import RANSACRegressor
 from msi_recal.db_peak_match import get_recal_candidates
 from msi_recal.math import peak_width, ppm_to_sigma_1
 from msi_recal.params import RecalParams
+from msi_recal.plot import save_recal_image
 
 logger = logging.getLogger(__name__)
 
@@ -80,35 +81,14 @@ class RecalRansac:
     def save_debug(self, spectra_df, path_prefix):
         self.db_hits.to_csv(f'{path_prefix}_db_hits.csv')
 
-        if self.db_hits.used_for_recal.any():
-            fig: Figure = plt.figure(figsize=(10, 10))
-            fig.suptitle('RANSAC recalibration')
-            ax: Axes = fig.gca()
+        candidates = self.db_hits[lambda df: df.used_for_recal]
+        if len(candidates) > 0:
+            mz_bounds = np.array([candidates.mz.min(), candidates.mz.max()])
+            mz_bound_moves = mz_bounds - self.model.predict(mz_bounds.reshape(-1, 1))
 
-            candidates = self.db_hits[lambda df: df.used_for_recal].copy()
-            candidates['mz_err'] = candidates.mz - candidates.db_mz
-            sns.scatterplot(
-                data=candidates,
-                x='mz',
-                y='mz_err',
-                size='weight',
-                hue='db',
-                alpha=0.5,
-                sizes=(0, 25),
-                legend=True,
-                ax=ax,
+            save_recal_image(
+                candidates,
+                list(zip(mz_bounds, mz_bound_moves)),
+                'MSIWarp recalibration',
+                f'{path_prefix}_recal.png',
             )
-
-            ax.set_ylim(*np.percentile(candidates.mz_err, [1, 99]))
-
-            min_mz, max_mz = candidates.mz.min(), candidates.mz.max()
-            min_move, max_move = np.array([min_mz, max_mz]) - self.model.predict(
-                [[min_mz], [max_mz]]
-            )
-
-            ax.plot(
-                [min_mz, max_mz], [min_move, max_move], label='Recalibration shift',
-            )
-
-            fig.savefig(f'{path_prefix}_recal.png')
-            plt.close(fig)
