@@ -71,7 +71,11 @@ const router = new VueRouter({
         { path: 'summary', component: asyncPages.DatasetSummary },
       ],
     },
-    { path: '/datasets/comparison', name: 'datasets-comparison', component: asyncPages.DatasetComparisonPage },
+    {
+      path: '/datasets/:dataset_id/comparison/:snapshot_id',
+      name: 'datasets-comparison',
+      component: asyncPages.DatasetComparisonPage,
+    },
     { path: '/datasets/edit/:dataset_id', name: 'edit-metadata', component: asyncPages.MetadataEditPage },
     { path: '/datasets/:dataset_id/add-optical-image', name: 'add-optical-image', component: asyncPages.ImageAlignmentPage },
     { path: '/dataset/:dataset_id', name: 'dataset-overview', component: asyncPages.DatasetOverviewPage },
