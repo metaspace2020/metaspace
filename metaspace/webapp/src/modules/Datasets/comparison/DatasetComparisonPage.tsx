@@ -22,6 +22,8 @@ import AnnotationTable from '../../Annotations/AnnotationTable.vue'
 import fitImageToArea from '../../../lib/fitImageToArea'
 import { THUMB_WIDTH } from '../../../components/Slider'
 import getColorScale from '../../../lib/getColorScale'
+import { DatasetComparisonAnnotationTable } from './DatasetComparisonAnnotationTable'
+
 interface DatasetComparisonPageProps {
   className: string
   defaultImagePosition: any
@@ -355,13 +357,13 @@ export default defineComponent<DatasetComparisonPageProps>({
     return () => {
       return (
         <div class='dataset-comparison-page w-full flex flex-wrap flex-row'>
-          <div class='dataset-comparison-wrapper w-full md:w-1/4'>
-            <AnnotationTable
-              defaultAnnotations={(annotations.value || []).map((ion: any) => ion.datasets[0])}
-              onRowChange={handleRowChange}
-              hideColumns={['ColocalizationCoeff', 'Dataset', 'Group', 'OffSampleProb', 'mz']}/>
+          <div class='dataset-comparison-wrapper w-full md:w-5/12'>
+            <DatasetComparisonAnnotationTable
+              isLoading={annotationLoading.value}
+              annotations={(annotations.value || []).map((ion: any) => ion.datasets[0])}
+              onRowChange={handleRowChange}/>
           </div>
-          <div class='dataset-comparison-wrapper  w-full  md:w-3/4'>
+          <div class='dataset-comparison-wrapper  w-full  md:w-7/12'>
             <Collapse value={'images'} id="annot-content"
               class="border-0">
               <CollapseItem
