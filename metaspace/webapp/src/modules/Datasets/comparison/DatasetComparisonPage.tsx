@@ -24,11 +24,18 @@ import fitImageToArea from '../../../lib/fitImageToArea'
 import { THUMB_WIDTH } from '../../../components/Slider'
 import getColorScale from '../../../lib/getColorScale'
 import { DatasetComparisonAnnotationTable } from './DatasetComparisonAnnotationTable'
+import gql from 'graphql-tag'
 
 interface DatasetComparisonPageProps {
   className: string
   defaultImagePosition: any
 }
+
+const fetchImageViewerSnapshot = gql`query fetchImageViewerSnapshot($id: String!, $datasetId: String!) {
+        imageViewerSnapshot(id: $id, datasetId: $datasetId) {
+          snapshot
+        }
+      }`
 
 export default defineComponent<DatasetComparisonPageProps>({
   name: 'DatasetComparisonPage',
@@ -54,24 +61,59 @@ export default defineComponent<DatasetComparisonPageProps>({
     const state = reactive<any>({
       selectedAnnotation: 0,
       gridState: {},
+      annotations: [],
+      grid: undefined,
+      nCols: 0,
+      nRows: 0,
       annotationData: {},
       refsLoaded: false,
       showViewer: false,
+      annotationLoading: true,
     })
-    const gridObj = JSON.stringify({
-      '0-0': '2021-04-06_08h35m04s',
-      '0-1': '2021-03-31_11h02m28s',
-      '1-1': '2021-04-01_09h26m22s',
-      '1-0': '2021-04-14_07h23m35s',
+    const { snapshot_id: snapshotId, dataset_id: sourceDsId } = $route.params
+    const {
+      result: settingsResult,
+      loading: settingsLoading,
+    } = useQuery<any>(fetchImageViewerSnapshot, {
+      id: snapshotId,
+      datasetId: sourceDsId,
     })
 
+    const gridSettings = computed(() => settingsResult.value != null
+      ? settingsResult.value.imageViewerSnapshot : null)
+
+    const requestAnnotations = async() => {
+      const result = await root.$apollo.mutate({
+        mutation: comparisonAnnotationListQuery,
+        variables: {
+          filter: { fdrLevel: 0.1, colocalizationAlgo: null, databaseId: 1 },
+          dFilter: {
+            ids: Object.values(state.grid).join('|'),
+            polarity: null,
+            metadataType: 'Imaging MS',
+          },
+          type: 'SCALED',
+          query: '',
+          colocalizationCoeffFilter: null,
+          orderBy: 'ORDER_BY_FORMULA',
+          sortingOrder:
+            'ASCENDING',
+          countIsomerCompounds: true,
+        },
+      })
+
+      state.annotations = result.data.allAggregatedAnnotations
+      state.annotationLoading = false
+      getAnnotationData(state.grid, state.selectedAnnotation)
+    }
+
     const getAnnotationData = (grid: any, annotationIdx = 0) => {
-      if (!grid || !annotations.value) {
+      if (!grid || !state.annotations) {
         return {}
       }
 
-      const auxGrid = safeJsonParse(grid)
-      const selectedAnnotation = annotations.value[annotationIdx]
+      const auxGrid = grid
+      const selectedAnnotation = state.annotations[annotationIdx]
 
       Object.keys(auxGrid).forEach(async(key) => {
         const item = auxGrid[key]
@@ -87,37 +129,23 @@ export default defineComponent<DatasetComparisonPageProps>({
       state.refsLoaded = true
     })
 
-    const {
-      result: annotationResult,
-      loading: annotationLoading,
-    } = useQuery<any>(comparisonAnnotationListQuery, {
-      filter: { fdrLevel: 0.1, colocalizationAlgo: null, databaseId: 1 },
-      dFilter: {
-        ids: '2021-04-01_09h26m22s|2021-04-14_07h23m35s|2021-04-06_08h35m04s|2021-03-31_11h02m28s',
-        polarity: null,
-        metadataType: 'Imaging MS',
-      },
-      type: 'SCALED',
-      query: '',
-      colocalizationCoeffFilter: null,
-      orderBy: 'ORDER_BY_FORMULA',
-      sortingOrder:
-        'ASCENDING',
-      countIsomerCompounds: true,
-    })
-    const annotations = computed(() => annotationResult.value != null
-      ? annotationResult.value.allAggregatedAnnotations : null)
-
-    watchEffect(() => {
-      if (annotations.value && Object.keys(state.gridState).length === 0) {
-        getAnnotationData(gridObj, state.selectedAnnotation)
+    watchEffect(async() => {
+      if (!state.grid && gridSettings.value) {
+        const auxSettings = safeJsonParse(gridSettings.value.snapshot)
+        state.nCols = auxSettings.nCols
+        state.nRows = auxSettings.nRows
+        state.grid = auxSettings.grid
+        await requestAnnotations()
       }
+      // if (state.gridSettings && state.annotations && Object.keys(state.gridState).length === 0) {
+      //   getAnnotationData(state.gridSettings.grid, state.selectedAnnotation)
+      // }
     })
 
     const handleRowChange = (idx: number) => {
       if (idx !== -1) {
         state.selectedAnnotation = idx
-        getAnnotationData(gridObj, idx)
+        getAnnotationData(state.grid, idx)
       }
     }
 
@@ -351,7 +379,7 @@ export default defineComponent<DatasetComparisonPageProps>({
       })
     }
 
-    const renderImageGallery = () => {
+    const renderImageGallery = (nCols: number, nRows: number) => {
       return (
         <CollapseItem
           id="annot-img-collapse"
@@ -364,12 +392,12 @@ export default defineComponent<DatasetComparisonPageProps>({
           />
           <div class='dataset-comparison-grid' ref={gridNode}>
             {nRows
-            && Array.from(Array(parseInt(nRows, 10)).keys()).map((row) => {
+            && Array.from(Array(nRows).keys()).map((row) => {
               return (
                 <div key={row} class='dataset-comparison-row'>
                   {
                     nCols
-                    && Array.from(Array(parseInt(nCols, 10)).keys()).map((col) => {
+                    && Array.from(Array(nCols).keys()).map((col) => {
                       return (
                         <div key={col} class='dataset-comparison-col overflow-hidden'
                           style={{ height: 200, width: 200 }}>
@@ -516,7 +544,7 @@ export default defineComponent<DatasetComparisonPageProps>({
       const relatedMolecules = (annotation: any) => <RelatedMolecules
         query="isomers"
         annotation={annotation}
-        databaseId={$store.getters.filter.database}
+        databaseId={$store.getters.filter.database || 1}
         hideFdr
       />
 
@@ -532,23 +560,23 @@ export default defineComponent<DatasetComparisonPageProps>({
         }
       </CollapseItem>)
     }
-    // const { nCols, nRows, grid } = $route.params
-    const nCols = '2'
-    const nRows = '2'
 
     return () => {
+      const nCols = state.nCols
+      const nRows = state.nRows
+
       return (
         <div class='dataset-comparison-page w-full flex flex-wrap flex-row'>
           <div class='dataset-comparison-wrapper w-full md:w-5/12'>
             <DatasetComparisonAnnotationTable
-              isLoading={annotationLoading.value}
-              annotations={(annotations.value || []).map((ion: any) => ion.datasets[0])}
+              isLoading={state.annotationLoading}
+              annotations={(state.annotations || []).map((ion: any) => ion.datasets[0])}
               onRowChange={handleRowChange}/>
           </div>
           <div class='dataset-comparison-wrapper  w-full  md:w-7/12'>
             <Collapse value={'images'} id="annot-content"
               class="border-0">
-              {renderImageGallery()}
+              {renderImageGallery(nCols, nRows)}
               {renderCompounds()}
             </Collapse>
           </div>

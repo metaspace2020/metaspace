@@ -9,15 +9,10 @@ import {
 } from '../../../api/dataset'
 import './DatasetComparisonDialog.scss'
 import { encodeParams } from '../../Filters'
+import gql from 'graphql-tag'
 
 interface DatasetComparisonDialogProps {
-  title: string
   selectedDatasetIds: string[]
-  firstStepError: string
-  firstStepLabel: string
-  secondStepLabel: string
-  thirdStepLabel: string
-  finalStepError: string
 }
 
 interface DatasetComparisonDialogState {
@@ -34,30 +29,6 @@ interface DatasetComparisonDialogState {
 export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogProps>({
   name: 'DatasetComparisonDialog',
   props: {
-    title: {
-      type: String,
-      default: 'Datasets Comparison',
-    },
-    firstStepError: {
-      type: String,
-      default: 'Please select at least two datasets to be compared!',
-    },
-    finalStepError: {
-      type: String,
-      default: 'Please place all the selected datasets on the grid!',
-    },
-    firstStepLabel: {
-      type: String,
-      default: 'Select the datasets',
-    },
-    secondStepLabel: {
-      type: String,
-      default: 'Set the grid arrangement',
-    },
-    thirdStepLabel: {
-      type: String,
-      default: 'Choose the datasets disposition',
-    },
     selectedDatasetIds: {
       type: Array,
       default: () => [],
@@ -88,18 +59,30 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
     })
     const dataset = computed(() => datasetResult.value != null ? datasetResult.value.allDatasets : null)
 
-    const annotationsLink = (datasetIds: string[]) => {
-      const query = {
-        datasetIds: datasetIds,
-      }
+    const annotationsLink = async() => {
+      const result = await root.$apollo.mutate({
+        mutation: gql`mutation saveImageViewerSnapshotMutation($input: ImageViewerSnapshotInput!) {
+          saveImageViewerSnapshot(input: $input)
+        }`,
+        variables: {
+          input: {
+            version: 1,
+            annotationIds: state.selectedDatasetIds,
+            snapshot: JSON.stringify({
+              nCols: state.nCols,
+              nRows: state.nRows,
+              grid: state.arrangement,
+            }),
+            datasetId: props.selectedDatasetIds[0],
+          },
+        },
+      })
 
       return {
         name: 'datasets-comparison',
-        query: encodeParams(query),
         params: {
-          nCols: state.nCols.toString(),
-          nRows: state.nRows.toString(),
-          grid: JSON.stringify(state.arrangement),
+          dataset_id: props.selectedDatasetIds[0],
+          snapshot_id: result.data.saveImageViewerSnapshot,
         },
       }
     }
@@ -123,14 +106,14 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
           lockScroll={true}
           onclose={() => emit('close')}
           class="dataset-comparison-dialog sm-content-page el-dialog-lean">
-          <h1>{props.title}</h1>
+          <h1>Datasets Comparison</h1>
           <Workflow>
             <WorkflowStep
               active={state.workflowStep === 1}
               done={state.workflowStep > 1}
             >
               <p class="sm-workflow-header">
-                {props.firstStepLabel}
+                Select the datasets
               </p>
               {
                 state.workflowStep === 1
@@ -152,9 +135,11 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
                   </Select>
                   {
                     state.firstStepError
-                    && <ErrorLabelText class='mt-0'>{props.firstStepError}</ErrorLabelText>
+                    && <ErrorLabelText class='mt-0'>
+                      Please select at least two datasets to be compared!
+                    </ErrorLabelText>
                   }
-                  <Button onClick={() => {
+                  <Button onClick={async() => {
                     if (state.selectedDatasetIds.length > 1) {
                       state.firstStepError = false
                       state.workflowStep = 2
@@ -172,8 +157,7 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
               done={state.workflowStep > 2}
             >
               <p class="sm-workflow-header">
-                {props.secondStepLabel}
-
+                Set the grid arrangement
               </p>
               {
                 state.workflowStep === 2
@@ -228,8 +212,7 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
               done={state.workflowStep > 3}
             >
               <p class="sm-workflow-header">
-                {props.thirdStepLabel}
-
+                Choose the datasets disposition
               </p>
               {
                 state.workflowStep === 3
@@ -250,14 +233,15 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
                                   {
                                     state.showOptions
                                     && Array.isArray(dataset?.value)
-                                    && dataset?.value.map((ds) => {
-                                      return (
-                                        <Option
-                                          class='dataset-cell-option'
-                                          disabled={Object.values(state.arrangement).includes(ds.id)}
-                                          key={ds.id} label={ds.name} value={ds.id}/>
-                                      )
-                                    })
+                                    && dataset?.value
+                                      .filter(ds => state.selectedDatasetIds.includes(ds.id)).map((ds) => {
+                                        return (
+                                          <Option
+                                            class='dataset-cell-option'
+                                            disabled={Object.values(state.arrangement).includes(ds.id)}
+                                            key={ds.id} label={ds.name} value={ds.id}/>
+                                        )
+                                      })
                                   }
                                 </Select>
                               </div>
@@ -269,16 +253,19 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
                   </div>
                   {
                     state.finalStepError
-                    && <ErrorLabelText class='mt-0'>{props.finalStepError}</ErrorLabelText>
+                    && <ErrorLabelText class='mt-0'>
+                      Please place all the selected datasets on the grid!
+                    </ErrorLabelText>
                   }
                   <Button onClick={() => { state.workflowStep = 2 }}>
                     Prev
                   </Button>
-                  <Button onClick={() => {
+                  <Button onClick={async() => {
                     if (Object.values(state.arrangement).length < state.selectedDatasetIds.length) {
                       state.finalStepError = true
                     } else {
-                      root.$router.push(annotationsLink(state.selectedDatasetIds.sort()))
+                      const link = await annotationsLink()
+                      root.$router.push(link)
                     }
                   }} type="primary">
                     Compare

@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`DatasetComparisonDialog it should match snapshot 1`] = `
-<transition-stub name="dialog-fade" class="dataset-comparison-dialog sm-content-page el-dialog-lean" title="Datasets Comparison" firststeperror="Please select at least two datasets to be compared!" finalsteperror="Please place all the selected datasets on the grid!" selecteddatasetids="2021-04-06_08h35m04s" style="z-index: 2001;">
+<transition-stub name="dialog-fade" class="dataset-comparison-dialog sm-content-page el-dialog-lean" selecteddatasetids="2021-04-06_08h35m04s" style="z-index: 2001;">
   <div class="el-dialog__wrapper">
     <div role="dialog" aria-modal="true" aria-label="dialog" class="el-dialog" style="margin-top: 15vh;">
       <div class="el-dialog__header"><span class="el-dialog__title"></span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
