@@ -55,6 +55,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
     watchEffect(() => {
       if (state.processedAnnotations.length !== props.annotations.length) {
         state.processedAnnotations = props.annotations
+        handleSortChange(getDefaultSort())
         state.selectedRow = state.processedAnnotations[0]
         state.firstLoaded = true
         updateSelectedRow()
@@ -196,6 +197,13 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       return 'prev,pager,next,sizes'
     }
 
+    const getDefaultSort = () => {
+      return {
+        prop: 'msmScore',
+        order: 'ascending',
+      }
+    }
+
     return () => {
       const totalCount = props.annotations.length
       const dataStart = ((state.offset - 1) * state.pageSize)
@@ -215,10 +223,11 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
             highlightCurrentRow
             width="100%"
             stripe
+            defaultSort={getDefaultSort()}
             tabindex="1"
-            onKeyUp={handleKeyUp}
             {...{
               on: {
+                'key-up': handleKeyUp,
                 'current-change': handleCurrentRowChange,
                 'sort-change': handleSortChange,
               },

@@ -24,7 +24,7 @@
             </div>
 
             <fdr-badge
-              v-if="other.fdrLevel !== null"
+              v-if="other.fdrLevel !== null && !hideFdr"
               :fdr-level="other.fdrLevel"
             />
             <msm-badge
@@ -111,7 +111,8 @@ export default {
   },
   props: {
     annotation: { type: Object, required: true },
-    databaseId: { type: Number, requried: true },
+    databaseId: { type: Number, required: true },
+    hideFdr: { type: Boolean, default: false },
   },
   data() {
     return {
