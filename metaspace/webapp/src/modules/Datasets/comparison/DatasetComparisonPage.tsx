@@ -10,6 +10,7 @@ import safeJsonParse from '../../../lib/safeJsonParse'
 import { loadPngFromUrl, processIonImage, renderScaleBar } from '../../../lib/ionImageRendering'
 import createColormap from '../../../lib/createColormap'
 import MainImageHeader from '../../Annotations/annotation-widgets/default/MainImageHeader.vue'
+import RelatedMolecules from '../../Annotations/annotation-widgets/RelatedMolecules.vue'
 import Vue from 'vue'
 import { Collapse, CollapseItem } from '../../../lib/element-ui'
 import ImageSaver from '../../ImageViewer/ImageSaver.vue'
@@ -319,17 +320,17 @@ export default defineComponent<DatasetComparisonPageProps>({
         pixelSizeY: metadata?.MS_Analysis?.Pixel_Size?.Yaxis || 0,
         ionImageLayers: ionImageLayersAux,
         imageFit: imageFitAux,
-        lockedIntensities: [undefined, undefined],
-        annotImageOpacity: 1.0,
-        opacityMode: 'linear',
-        imagePosition: props.defaultImagePosition,
-        pixelAspectRatio: 1,
-        imageZoom: 1,
-        showOpticalImage: true,
-        colormap: 'Viridis',
-        scaleType: 'linear',
-        scaleBarColor: '#000000',
-        userScaling: [0, 1],
+        lockedIntensities: state.gridState[key] ? state.gridState[key].lockedIntensities : [undefined, undefined],
+        annotImageOpacity: state.gridState[key] ? state.gridState[key].annotImageOpacity : 1.0,
+        opacityMode: state.gridState[key] ? state.gridState[key].opacityMode : 'linear',
+        imagePosition: state.gridState[key] ? state.gridState[key].imagePosition : props.defaultImagePosition,
+        pixelAspectRatio: state.gridState[key] ? state.gridState[key].pixelAspectRatio : 1,
+        imageZoom: state.gridState[key] ? state.gridState[key].imageZoom : 1,
+        showOpticalImage: state.gridState[key] ? state.gridState[key].showOpticalImage : true,
+        colormap: state.gridState[key] ? state.gridState[key].colormap : 'Viridis',
+        scaleType: state.gridState[key] ? state.gridState[key].scaleType : 'linear',
+        scaleBarColor: state.gridState[key] ? state.gridState[key].scaleBarColor : '#000000',
+        userScaling: state.gridState[key] ? state.gridState[key].userScaling : [0, 1],
       }
 
       Vue.set(state.gridState, key, settings)
@@ -350,6 +351,187 @@ export default defineComponent<DatasetComparisonPageProps>({
       })
     }
 
+    const renderImageGallery = () => {
+      return (
+        <CollapseItem
+          id="annot-img-collapse"
+          name="images"
+          title="Image viewer"
+          class="ds-collapse el-collapse-item--no-padding relative">
+          <ImageSaver
+            class="absolute top-0 right-0 mt-2 mr-2 dom-to-image-hidden"
+            domNode={gridNode.value}
+          />
+          <div class='dataset-comparison-grid' ref={gridNode}>
+            {nRows
+            && Array.from(Array(parseInt(nRows, 10)).keys()).map((row) => {
+              return (
+                <div key={row} class='dataset-comparison-row'>
+                  {
+                    nCols
+                    && Array.from(Array(parseInt(nCols, 10)).keys()).map((col) => {
+                      return (
+                        <div key={col} class='dataset-comparison-col overflow-hidden'
+                          style={{ height: 200, width: 200 }}>
+                          <MainImageHeader
+                            class='dataset-comparison-grid-item-header dom-to-image-hidden'
+                            annotation={state.annotationData[`${row}-${col}`]}
+                            slot="title"
+                            isActive={false}
+                            scaleBarColor={state.gridState[`${row}-${col}`]?.scaleBarColor}
+                            onScaleBarColorChange={(scaleBarColor: string) =>
+                              handleScaleBarColorChange(scaleBarColor, `${row}-${col}`)}
+                            scaleType={state.gridState[`${row}-${col}`]?.scaleType}
+                            onScaleTypeChange={(scaletype: string) =>
+                              handleScaleTypeChange(scaletype, `${row}-${col}`)}
+                            colormap={state.gridState[`${row}-${col}`]?.colormap}
+                            onColormapChange={(colormap: string) =>
+                              handleColormapChange(colormap, `${row}-${col}`)}
+                            showOpticalImage={!!state.gridState[`${row}-${col}`]?.showOpticalImage}
+                            toggleOpticalImage={(e: any) => toggleOpticalImage(e, `${row}-${col}`)}
+                            resetViewport={(e: any) => resetViewPort(e, `${row}-${col}`)}
+                            hasOpticalImage={
+                              state.annotationData[`${row}-${col}`]?.dataset?.opticalImages[0]?.url
+                              !== undefined}
+                          />
+                          <div ref={`image-${row}-${col}`} class='ds-wrapper relative'>
+                            {
+                              state.gridState[`${row}-${col}`]
+                              && state.gridState[`${row}-${col}`].ionImageLayers
+                              && <IonImageViewer
+                                isLoading={!state.annotationData[`${row}-${col}`]}
+                                ionImageLayers={state.gridState[`${row}-${col}`]?.ionImageLayers}
+                                scaleBarColor={state.gridState[`${row}-${col}`]?.scaleBarColor}
+                                scaleType={state.gridState[`${row}-${col}`]?.scaleType}
+                                pixelSizeX={state.gridState[`${row}-${col}`]?.pixelSizeX}
+                                pixelSizeY={state.gridState[`${row}-${col}`]?.pixelSizeY}
+                                imageHeight={state.gridState[`${row}-${col}`]?.
+                                  ionImageLayers[0]?.ionImage?.height }
+                                imageWidth={state.gridState[`${row}-${col}`]?.
+                                  ionImageLayers[0]?.ionImage?.width }
+                                height={300}
+                                width={410}
+                                zoom={state.gridState[`${row}-${col}`]?.imagePosition?.zoom
+                                * state.gridState[`${row}-${col}`]?.imageFit?.imageZoom}
+                                minZoom={state.gridState[`${row}-${col}`]?.imageFit?.imageZoom / 4}
+                                maxZoom={state.gridState[`${row}-${col}`]?.imageFit?.imageZoom * 20}
+                                xOffset={state.gridState[`${row}-${col}`]?.imagePosition?.xOffset || 0}
+                                yOffset={state.gridState[`${row}-${col}`]?.imagePosition?.yOffset || 0}
+                                opticalSrc={state.gridState[`${row}-${col}`]?.showOpticalImage
+                                  ? state.annotationData[`${row}-${col}`]?.dataset?.opticalImages[0]?.url
+                                  : undefined}
+                                opticalTransform={state.gridState[`${row}-${col}`]?.showOpticalImage
+                                  ? state.annotationData[`${row}-${col}`]?.dataset?.opticalImages[0]?.transform
+                                  : undefined}
+                                scrollBlock
+                                showPixelIntensity
+                                onMove={(e: any) =>
+                                  handleImageMove(e, state.gridState[`${row}-${col}`]?.imageFit,
+                                    `${row}-${col}`)}
+                              />
+                            }
+                            <div class="ds-viewer-controls-wrapper  v-rhythm-3 sm-side-bar">
+                              <FadeTransition class="absolute bottom-0 right-0 mt-3 ml-3 dom-to-image-hidden">
+                                {
+                                  state.gridState[`${row}-${col}`]?.showOpticalImage
+                                  && state.annotationData[`${row}-${col}`]?.dataset?.opticalImages[0]?.url
+                                  !== undefined
+                                  && <OpacitySettings
+                                    key="opacity"
+                                    class="ds-comparison-opacity-item sm-leading-trim mt-auto dom-to-image-hidden"
+                                    opacity={state.gridState[`${row}-${col}`]?.annotImageOpacity !== undefined
+                                      ? state.gridState[`${row}-${col}`]?.annotImageOpacity : 1}
+                                    onOpacity={(opacity: number) => handleOpacityChange(opacity, `${row}-${col}`)}
+                                  />
+                                }
+                              </FadeTransition>
+                              <FadeTransition class="absolute top-0 right-0 mt-3 ml-3 dom-to-image-hidden">
+                                {
+                                  state.refsLoaded
+                                  && state.gridState[`${row}-${col}`] !== undefined
+                                  && <div
+                                    class="p-3 bg-gray-100 rounded-lg box-border shadow-xs"
+                                    ref={`range-slider-${row}-${col}`}>
+                                    <RangeSlider
+                                      class="ds-comparison-opacity-item"
+                                      value={state.gridState[`${row}-${col}`]?.userScaling}
+                                      min={0}
+                                      max={1}
+                                      step={0.01}
+                                      style={buildRangeSliderStyle(`${row}-${col}`)}
+                                      onInput={(nextRange: number[]) =>
+                                        handleUserScalingChange(nextRange, `${row}-${col}`)}
+                                    />
+                                    <div
+                                      class="ds-intensities-wrapper">
+                                      <IonIntensity
+                                        value={state.gridState[`${row}-${col}`]?.minIntensity}
+                                        intensities={state.gridState[`${row}-${col}`]?.intensity?.min}
+                                        label="Minimum intensity"
+                                        placeholder="min."
+                                        onInput={(value: number) =>
+                                          handleIonIntensityChange(value, `${row}-${col}`,
+                                            'min')}
+                                        onLock={(value: number) =>
+                                          handleIonIntensityLockChange(value, `${row}-${col}`,
+                                            'min')}
+                                      />
+                                      <IonIntensity
+                                        value={state.gridState[`${row}-${col}`]?.maxIntensity}
+                                        intensities={state.gridState[`${row}-${col}`]?.intensity?.max}
+                                        label="Minimum intensity"
+                                        placeholder="min."
+                                        onInput={(value: number) =>
+                                          handleIonIntensityChange(value, `${row}-${col}`,
+                                            'max')}
+                                        onLock={(value: number) =>
+                                          handleIonIntensityLockChange(value, `${row}-${col}`,
+                                            'max')}
+                                      />
+                                    </div>
+                                  </div>
+                                }
+                              </FadeTransition>
+                            </div>
+                            {
+                              state.refsLoaded
+                              && <ImageSaver
+                                class="absolute top-0 left-0 mt-3 ml-3 dom-to-image-hidden"
+                                domNode={refs[`image-${row}-${col}`]}
+                              />
+                            }
+                          </div>
+                        </div>
+                      )
+                    })}
+                </div>
+              )
+            })}
+          </div>
+        </CollapseItem>)
+    }
+
+    const renderCompounds = () => {
+      // @ts-ignore TS2604
+      const relatedMolecules = (annotation: any) => <RelatedMolecules
+        query="isomers"
+        annotation={annotation}
+        databaseId={$store.getters.filter.database}
+        hideFdr
+      />
+
+      return (<CollapseItem
+        id="annot-img-collapse"
+        name="compounds"
+        title="Molecules"
+        class="ds-collapse el-collapse-item--no-padding relative">
+        {
+          Object.keys(state.annotationData).map((key) => {
+            return relatedMolecules(state.annotationData[key])
+          })
+        }
+      </CollapseItem>)
+    }
     // const { nCols, nRows, grid } = $route.params
     const nCols = '2'
     const nRows = '2'
@@ -366,165 +548,10 @@ export default defineComponent<DatasetComparisonPageProps>({
           <div class='dataset-comparison-wrapper  w-full  md:w-7/12'>
             <Collapse value={'images'} id="annot-content"
               class="border-0">
-              <CollapseItem
-                id="annot-img-collapse"
-                name="images"
-                title="Image viewer"
-                class="ds-collapse el-collapse-item--no-padding relative">
-                <ImageSaver
-                  class="absolute top-0 right-0 mt-2 mr-2 dom-to-image-hidden"
-                  domNode={gridNode.value}
-                />
-                <div class='dataset-comparison-grid' ref={gridNode}>
-                  {nRows
-                  && Array.from(Array(parseInt(nRows, 10)).keys()).map((row) => {
-                    return (
-                      <div key={row} class='dataset-comparison-row'>
-                        {
-                          nCols
-                          && Array.from(Array(parseInt(nCols, 10)).keys()).map((col) => {
-                            return (
-                              <div key={col} class='dataset-comparison-col overflow-hidden'
-                                style={{ height: 200, width: 200 }}>
-                                <MainImageHeader
-                                  class='dataset-comparison-grid-item-header dom-to-image-hidden'
-                                  annotation={state.annotationData[`${row}-${col}`]}
-                                  slot="title"
-                                  isActive={false}
-                                  scaleBarColor={state.gridState[`${row}-${col}`]?.scaleBarColor}
-                                  onScaleBarColorChange={(scaleBarColor: string) =>
-                                    handleScaleBarColorChange(scaleBarColor, `${row}-${col}`)}
-                                  scaleType={state.gridState[`${row}-${col}`]?.scaleType}
-                                  onScaleTypeChange={(scaletype: string) =>
-                                    handleScaleTypeChange(scaletype, `${row}-${col}`)}
-                                  colormap={state.gridState[`${row}-${col}`]?.colormap}
-                                  onColormapChange={(colormap: string) =>
-                                    handleColormapChange(colormap, `${row}-${col}`)}
-                                  showOpticalImage={!!state.gridState[`${row}-${col}`]?.showOpticalImage}
-                                  toggleOpticalImage={(e: any) => toggleOpticalImage(e, `${row}-${col}`)}
-                                  resetViewport={(e: any) => resetViewPort(e, `${row}-${col}`)}
-                                  hasOpticalImage={
-                                      state.annotationData[`${row}-${col}`]?.dataset?.opticalImages[0]?.url
-                                      !== undefined}
-                                />
-                                <div ref={`image-${row}-${col}`} class='ds-wrapper relative'>
-                                  {
-                                    state.gridState[`${row}-${col}`]
-                                    && state.gridState[`${row}-${col}`].ionImageLayers
-                                      && <IonImageViewer
-                                        isLoading={!state.annotationData[`${row}-${col}`]}
-                                        ionImageLayers={state.gridState[`${row}-${col}`]?.ionImageLayers}
-                                        scaleBarColor={state.gridState[`${row}-${col}`]?.scaleBarColor}
-                                        scaleType={state.gridState[`${row}-${col}`]?.scaleType}
-                                        pixelSizeX={state.gridState[`${row}-${col}`]?.pixelSizeX}
-                                        pixelSizeY={state.gridState[`${row}-${col}`]?.pixelSizeY}
-                                        imageHeight={state.gridState[`${row}-${col}`]?.
-                                          ionImageLayers[0]?.ionImage?.height }
-                                        imageWidth={state.gridState[`${row}-${col}`]?.
-                                          ionImageLayers[0]?.ionImage?.width }
-                                        height={300}
-                                        width={410}
-                                        zoom={state.gridState[`${row}-${col}`]?.imagePosition?.zoom
-                                      * state.gridState[`${row}-${col}`]?.imageFit?.imageZoom}
-                                        minZoom={state.gridState[`${row}-${col}`]?.imageFit?.imageZoom / 4}
-                                        maxZoom={state.gridState[`${row}-${col}`]?.imageFit?.imageZoom * 20}
-                                        xOffset={state.gridState[`${row}-${col}`]?.imagePosition?.xOffset || 0}
-                                        yOffset={state.gridState[`${row}-${col}`]?.imagePosition?.yOffset || 0}
-                                        opticalSrc={state.gridState[`${row}-${col}`]?.showOpticalImage
-                                          ? state.annotationData[`${row}-${col}`]?.dataset?.opticalImages[0]?.url
-                                          : undefined}
-                                        opticalTransform={state.gridState[`${row}-${col}`]?.showOpticalImage
-                                          ? state.annotationData[`${row}-${col}`]?.dataset?.opticalImages[0]?.transform
-                                          : undefined}
-                                        scrollBlock
-                                        showPixelIntensity
-                                        onMove={(e: any) =>
-                                          handleImageMove(e, state.gridState[`${row}-${col}`]?.imageFit,
-                                            `${row}-${col}`)}
-                                      />
-                                  }
-                                  <div class="ds-viewer-controls-wrapper  v-rhythm-3 sm-side-bar">
-                                    <FadeTransition class="absolute bottom-0 right-0 mt-3 ml-3 dom-to-image-hidden">
-                                      {
-                                         state.gridState[`${row}-${col}`]?.showOpticalImage
-                                      && state.annotationData[`${row}-${col}`]?.dataset?.opticalImages[0]?.url
-                                      !== undefined
-                                      && <OpacitySettings
-                                        key="opacity"
-                                        class="ds-comparison-opacity-item sm-leading-trim mt-auto dom-to-image-hidden"
-                                        opacity={state.gridState[`${row}-${col}`]?.annotImageOpacity !== undefined
-                                          ? state.gridState[`${row}-${col}`]?.annotImageOpacity : 1}
-                                        onOpacity={(opacity: number) => handleOpacityChange(opacity, `${row}-${col}`)}
-                                      />
-                                      }
-                                    </FadeTransition>
-                                    <FadeTransition class="absolute top-0 right-0 mt-3 ml-3 dom-to-image-hidden">
-                                      {
-                                        state.refsLoaded
-                                        && state.gridState[`${row}-${col}`] !== undefined
-                                        && <div
-                                          class="p-3 bg-gray-100 rounded-lg box-border shadow-xs"
-                                          ref={`range-slider-${row}-${col}`}>
-                                          <RangeSlider
-                                            class="ds-comparison-opacity-item"
-                                            value={state.gridState[`${row}-${col}`]?.userScaling}
-                                            min={0}
-                                            max={1}
-                                            step={0.01}
-                                            style={buildRangeSliderStyle(`${row}-${col}`)}
-                                            onInput={(nextRange: number[]) =>
-                                              handleUserScalingChange(nextRange, `${row}-${col}`)}
-                                          />
-                                          <div
-                                            class="ds-intensities-wrapper">
-                                            <IonIntensity
-                                              value={state.gridState[`${row}-${col}`]?.minIntensity}
-                                              intensities={state.gridState[`${row}-${col}`]?.intensity?.min}
-                                              label="Minimum intensity"
-                                              placeholder="min."
-                                              onInput={(value: number) =>
-                                                handleIonIntensityChange(value, `${row}-${col}`,
-                                                  'min')}
-                                              onLock={(value: number) =>
-                                                handleIonIntensityLockChange(value, `${row}-${col}`,
-                                                  'min')}
-                                            />
-                                            <IonIntensity
-                                              value={state.gridState[`${row}-${col}`]?.maxIntensity}
-                                              intensities={state.gridState[`${row}-${col}`]?.intensity?.max}
-                                              label="Minimum intensity"
-                                              placeholder="min."
-                                              onInput={(value: number) =>
-                                                handleIonIntensityChange(value, `${row}-${col}`,
-                                                  'max')}
-                                              onLock={(value: number) =>
-                                                handleIonIntensityLockChange(value, `${row}-${col}`,
-                                                  'max')}
-                                            />
-                                          </div>
-                                        </div>
-                                      }
-                                    </FadeTransition>
-                                  </div>
-                                  {
-                                    state.refsLoaded
-                                      && <ImageSaver
-                                        class="absolute top-0 left-0 mt-3 ml-3 dom-to-image-hidden"
-                                        domNode={refs[`image-${row}-${col}`]}
-                                      />
-                                  }
-                                </div>
-                              </div>
-                            )
-                          })}
-                      </div>
-                    )
-                  })}
-                </div>
-              </CollapseItem>
+              {renderImageGallery()}
+              {renderCompounds()}
             </Collapse>
           </div>
-
         </div>
       )
     }
