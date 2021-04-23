@@ -19,12 +19,14 @@ import IonIntensity from '../../ImageViewer/IonIntensity.vue'
 import FadeTransition from '../../../components/FadeTransition'
 import IonImageViewer from '../../../components/IonImageViewer'
 import RangeSlider from '../../../components/Slider/RangeSlider.vue'
-import AnnotationTable from '../../Annotations/AnnotationTable.vue'
 import fitImageToArea from '../../../lib/fitImageToArea'
 import { THUMB_WIDTH } from '../../../components/Slider'
 import getColorScale from '../../../lib/getColorScale'
 import { DatasetComparisonAnnotationTable } from './DatasetComparisonAnnotationTable'
 import gql from 'graphql-tag'
+import FilterPanel from '../../Filters/FilterPanel.vue'
+import { isEqual } from 'lodash'
+import config from '../../../lib/config'
 
 interface DatasetComparisonPageProps {
   className: string
@@ -69,6 +71,8 @@ export default defineComponent<DatasetComparisonPageProps>({
       refsLoaded: false,
       showViewer: false,
       annotationLoading: true,
+      filter: $store?.getters?.filter,
+      isLoading: false,
     })
     const { snapshot_id: snapshotId, dataset_id: sourceDsId } = $route.params
     const {
@@ -82,33 +86,41 @@ export default defineComponent<DatasetComparisonPageProps>({
     const gridSettings = computed(() => settingsResult.value != null
       ? settingsResult.value.imageViewerSnapshot : null)
 
+    const queryVariables = () => {
+      const filter = $store.getters.gqlAnnotationFilter
+      const dFilter = $store.getters.gqlDatasetFilter
+      const colocalizationCoeffFilter = $store.getters.gqlColocalizationFilter
+      const query = $store.getters.ftsQuery
+
+      return {
+        filter,
+        dFilter,
+        query,
+        colocalizationCoeffFilter,
+        countIsomerCompounds: config.features.isomers,
+      }
+    }
+
     const requestAnnotations = async() => {
+      state.isLoading = true
+      const query = queryVariables()
+      query.dFilter.ids = Object.values(state.grid).join('|')
+
       const result = await root.$apollo.mutate({
         mutation: comparisonAnnotationListQuery,
-        variables: {
-          filter: { fdrLevel: 0.1, colocalizationAlgo: null, databaseId: 1 },
-          dFilter: {
-            ids: Object.values(state.grid).join('|'),
-            polarity: null,
-            metadataType: 'Imaging MS',
-          },
-          type: 'SCALED',
-          query: '',
-          colocalizationCoeffFilter: null,
-          orderBy: 'ORDER_BY_FORMULA',
-          sortingOrder:
-            'ASCENDING',
-          countIsomerCompounds: true,
-        },
+        variables: query,
       })
 
       state.annotations = result.data.allAggregatedAnnotations
       state.annotationLoading = false
       getAnnotationData(state.grid, state.selectedAnnotation)
+      state.isLoading = false
     }
 
     const getAnnotationData = (grid: any, annotationIdx = 0) => {
-      if (!grid || !state.annotations) {
+      if (!grid || !state.annotations || state.annotations.length === 0) {
+        state.annotationData = {}
+        state.gridState = {}
         return {}
       }
 
@@ -137,9 +149,10 @@ export default defineComponent<DatasetComparisonPageProps>({
         state.grid = auxSettings.grid
         await requestAnnotations()
       }
-      // if (state.gridSettings && state.annotations && Object.keys(state.gridState).length === 0) {
-      //   getAnnotationData(state.gridSettings.grid, state.selectedAnnotation)
-      // }
+      if (!isEqual(state.filter, $store.getters.filter) && state.grid) { // requery onFilter update
+        state.filter = $store.getters.filter
+        await requestAnnotations()
+      }
     })
 
     const handleRowChange = (idx: number) => {
@@ -427,7 +440,7 @@ export default defineComponent<DatasetComparisonPageProps>({
                               state.gridState[`${row}-${col}`]
                               && state.gridState[`${row}-${col}`].ionImageLayers
                               && <IonImageViewer
-                                isLoading={!state.annotationData[`${row}-${col}`]}
+                                isLoading={state.isLoading}
                                 ionImageLayers={state.gridState[`${row}-${col}`]?.ionImageLayers}
                                 scaleBarColor={state.gridState[`${row}-${col}`]?.scaleBarColor}
                                 scaleType={state.gridState[`${row}-${col}`]?.scaleType}
@@ -567,6 +580,7 @@ export default defineComponent<DatasetComparisonPageProps>({
 
       return (
         <div class='dataset-comparison-page w-full flex flex-wrap flex-row'>
+          <FilterPanel class='w-full' level='annotation'/>
           <div class='dataset-comparison-wrapper w-full md:w-5/12'>
             <DatasetComparisonAnnotationTable
               isLoading={state.annotationLoading}
