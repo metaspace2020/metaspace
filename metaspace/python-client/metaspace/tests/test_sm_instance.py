@@ -88,7 +88,7 @@ def test_update_dataset_without_reprocessing(sm: SMInstance, my_ds_id):
     assert sm.dataset(id=my_ds_id).name == new_name
 
 
-# @pytest.mark.skip('This test triggers reprocessing and should only be run manually')
+@pytest.mark.skip('This test triggers reprocessing and should only be run manually')
 def test_update_dataset_with_auto_reprocessing(sm: SMInstance, my_ds_id):
     old_ds = sm.dataset(id=my_ds_id)
     new_adducts = ['+H'] if old_ds.adducts != ['+H'] else ['+K']
