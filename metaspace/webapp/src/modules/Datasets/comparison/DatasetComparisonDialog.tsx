@@ -2,15 +2,17 @@ import { computed, defineComponent, reactive } from '@vue/composition-api'
 import { Workflow, WorkflowStep } from '../../../components/Workflow'
 import { Select, Option, InputNumber, Button, Dialog } from '../../../lib/element-ui'
 import { ErrorLabelText } from '../../../components/Form'
-import { useQuery } from '@vue/apollo-composable'
+import { useMutation, useQuery } from '@vue/apollo-composable'
 import {
   DatasetDetailItem,
   datasetDetailItemsQuery,
 } from '../../../api/dataset'
 import './DatasetComparisonDialog.scss'
-import { encodeParams } from '../../Filters'
 import gql from 'graphql-tag'
 
+const saveSettings = gql`mutation saveImageViewerSnapshotMutation($input: ImageViewerSnapshotInput!) {
+  saveImageViewerSnapshot(input: $input)
+}`
 interface DatasetComparisonDialogProps {
   selectedDatasetIds: string[]
 }
@@ -58,26 +60,23 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
       sortingOrder: 'DESCENDING',
     })
     const dataset = computed(() => datasetResult.value != null ? datasetResult.value.allDatasets : null)
+    const { mutate: settingsMutation } = useMutation<any>(saveSettings)
 
     const annotationsLink = async() => {
-      const result = await root.$apollo.mutate({
-        mutation: gql`mutation saveImageViewerSnapshotMutation($input: ImageViewerSnapshotInput!) {
-          saveImageViewerSnapshot(input: $input)
-        }`,
-        variables: {
-          input: {
-            version: 1,
-            annotationIds: state.selectedDatasetIds,
-            snapshot: JSON.stringify({
-              nCols: state.nCols,
-              nRows: state.nRows,
-              grid: state.arrangement,
-            }),
-            datasetId: props.selectedDatasetIds[0],
-          },
+      const variables : any = {
+        input: {
+          version: 1,
+          annotationIds: state.selectedDatasetIds,
+          snapshot: JSON.stringify({
+            nCols: state.nCols,
+            nRows: state.nRows,
+            grid: state.arrangement,
+          }),
+          datasetId: props.selectedDatasetIds[0],
         },
-      })
-
+      }
+      const result = await settingsMutation(variables)
+      console.log('MANOLINHOx', variables, result.data)
       return {
         name: 'datasets-comparison',
         params: {

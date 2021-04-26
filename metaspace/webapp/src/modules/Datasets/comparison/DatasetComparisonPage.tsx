@@ -4,7 +4,7 @@ import {
   onMounted, reactive,
   ref, watchEffect,
 } from '@vue/composition-api'
-import { useQuery } from '@vue/apollo-composable'
+import { useQuery, useMutation } from '@vue/apollo-composable'
 import { comparisonAnnotationListQuery } from '../../../api/annotation'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import { loadPngFromUrl, processIonImage, renderScaleBar } from '../../../lib/ionImageRendering'
@@ -82,6 +82,7 @@ export default defineComponent<DatasetComparisonPageProps>({
       id: snapshotId,
       datasetId: sourceDsId,
     })
+    const { mutate: annotationsMutation } = useMutation<any>(comparisonAnnotationListQuery)
 
     const gridSettings = computed(() => settingsResult.value != null
       ? settingsResult.value.imageViewerSnapshot : null)
@@ -103,13 +104,10 @@ export default defineComponent<DatasetComparisonPageProps>({
 
     const requestAnnotations = async() => {
       state.isLoading = true
-      const query = queryVariables()
+      const query : any = queryVariables()
       query.dFilter.ids = Object.values(state.grid).join('|')
 
-      const result = await root.$apollo.mutate({
-        mutation: comparisonAnnotationListQuery,
-        variables: query,
-      })
+      const result = await annotationsMutation(query)
 
       state.annotations = result.data.allAggregatedAnnotations
       state.annotationLoading = false
