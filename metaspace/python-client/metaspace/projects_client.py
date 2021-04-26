@@ -128,3 +128,11 @@ class ProjectsClient:
             {'projectId': project_id, 'provider': provider, 'link': link},
         )
         return result['removeProjectExternalLink']['externalLinks']
+
+
+# Specify __all__ so that Sphinx documents everything in order from most to least interesting
+__all__ = [
+    'ProjectsClient',
+    'ProjectDict',
+    'ExternalLink',
+]

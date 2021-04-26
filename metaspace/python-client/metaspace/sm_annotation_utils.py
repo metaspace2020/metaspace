@@ -9,7 +9,7 @@ from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
 from shutil import copyfileobj
-from typing import Optional, List, Iterable, Union, Tuple, Any
+from typing import Optional, List, Iterable, Union, Tuple, Any, TYPE_CHECKING
 from urllib.parse import urlparse
 
 import numpy as np
@@ -38,6 +38,9 @@ try:
 except ImportError:
     from pandas.io.json import json_normalize  # Logs DeprecationWarning if used in Pandas 1.0.0+
 
+if TYPE_CHECKING:
+    # Cannot import directly due to circular imports
+    from metaspace.projects_client import ProjectsClient
 
 DEFAULT_DATABASE = ('HMDB', 'v4')
 
@@ -210,6 +213,13 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
 
 
 class GraphQLClient(object):
+    """Client for low-level access to the METASPACE API, for advanced operations that aren't
+    supported by :py:class:`metaspace.sm_annotation_utils.SMInstance`.
+
+    Use :py:attr:`query` for calling GraphQL directly.
+    An editor for composing GraphQL API queries can be found at https://metaspace2020.eu/graphql
+    """
+
     def __init__(self, config):
         self._config = config
         self.host = self._config['host']
@@ -965,12 +975,18 @@ class SMDataset(object):
 
     @property
     def databases(self):
-        """DEPRECATED. Use 'databases_details' instead."""
+        """DEPRECATED. Use 'databases_details' instead.
+
+        :meta private:
+        """
         return [d['name'] for d in self.database_details]
 
     @property
     def database(self):
-        """DEPRECATED. Use 'databases_details' instead."""
+        """DEPRECATED. Use 'databases_details' instead.
+
+        :meta private:
+        """
         return self.databases[0]
 
     @property
@@ -1188,23 +1204,23 @@ class MolecularDB:
         self._gqclient = gqclient
 
     @property
-    def id(self):
+    def id(self) -> int:
         return self._info['id']
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._info['name']
 
     @property
-    def version(self):
+    def version(self) -> str:
         return self._info['version']
 
     @property
-    def is_public(self):
+    def is_public(self) -> bool:
         return self._info['isPublic']
 
     @property
-    def archived(self):
+    def archived(self) -> bool:
         return self._info['archived']
 
     def __repr__(self):
@@ -1244,6 +1260,12 @@ class SMInstance(object):
         return "SMInstance({})".format(self._config['graphql_url'])
 
     def login(self, email=None, password=None, api_key=None):
+        """
+        DEPRECATED. Avoid calling this directly - pass credentials to SMInstance directly instead.
+        This function is kept for backwards compatibility
+
+        :meta private:
+        """
         assert (
             email and password
         ) or api_key, 'Either email and password, or api_key must be provided'
@@ -1254,19 +1276,26 @@ class SMInstance(object):
         assert self._gqclient.logged_in, 'Login failed'
 
     def reconnect(self):
+        """:meta private:"""
         self._gqclient = GraphQLClient(self._config)
         self._es_client = None
 
     def logged_in(self):
+        """:meta private:"""
         return self._gqclient.logged_in
 
     @property
     def projects(self):
+        """
+        Sub-object containing methods for interacting with projects.
+
+        :rtype: metaspace.projects_client.ProjectsClient
+        """
         from metaspace.projects_client import ProjectsClient
 
         return ProjectsClient(self._gqclient)
 
-    def check_projects(self, project_ids):
+    def _check_projects(self, project_ids):
         wrong_project_ids = []
         for project_id in project_ids:
             if self.projects.get_project(project_id) is None:
@@ -1275,6 +1304,12 @@ class SMInstance(object):
             raise Exception(f'The next project_ids is not valid: {", ".join(wrong_project_ids)}')
 
     def dataset(self, name=None, id=None) -> SMDataset:
+        """Retrieve a dataset by id (preferred) or name.
+
+        You can get a dataset's ID by viewing its annotations online and looking at the URL, e.g.
+        in this URL: :samp:`metaspace2020.eu/annotations?ds={2016-09-22_11h16m17s}`
+        the dataset ID is ``2016-09-22_11h16m17s``
+        """
         if id:
             return SMDataset(self._gqclient.getDataset(id), self._gqclient)
         elif name:
@@ -1282,24 +1317,70 @@ class SMInstance(object):
         else:
             raise Exception("either name or id must be provided")
 
-    def datasets(self, nameMask='', idMask='', **kwargs) -> List[SMDataset]:
+    def datasets(
+        self,
+        nameMask: Optional[str] = None,
+        idMask: Union[str, List[str], None] = None,
+        *,
+        submitter_id: Optional[str] = None,
+        group_id: Optional[str] = None,
+        project_id: Optional[str] = None,
+        polarity: Optional[Polarity] = None,
+        ionisation_source: Optional[str] = None,
+        analyzer_type: Optional[str] = None,
+        maldi_matrix: Optional[str] = None,
+        organism: Optional[str] = None,
+        **kwargs,
+    ) -> List[SMDataset]:
+        """
+        Search for datasets that match the given criteria. If no criteria are given, it will
+        return all accessible datasets on METASPACE.
+
+        :param nameMask: Search string to be applied to the dataset name
+        :param idMask: Dataset ID or list of IDs
+        :param submitter_id: User ID of the submitter
+        :param group_id:
+        :param project_id:
+        :param polarity: 'Positive' or 'Negative'
+        :param ionisation_source:
+        :param analyzer_type:
+        :param maldi_matrix:
+        :param organism:
+        :return:
+        """
         datasetFilter = kwargs.copy()
-        if nameMask != '':
+        if nameMask is not None:
             datasetFilter['name'] = nameMask
-        if idMask != '':
+        if idMask is not None:
             datasetFilter['ids'] = idMask if isinstance(idMask, str) else "|".join(idMask)
+        if submitter_id is not None:
+            datasetFilter['submitter'] = submitter_id
+        if group_id is not None:
+            datasetFilter['group'] = group_id
+        if project_id is not None:
+            datasetFilter['project'] = project_id
+        if polarity is not None:
+            datasetFilter['polarity'] = polarity
+        if ionisation_source is not None:
+            datasetFilter['ionisationSource'] = ionisation_source
+        if analyzer_type is not None:
+            datasetFilter['analyzerType'] = analyzer_type
+        if maldi_matrix is not None:
+            datasetFilter['maldiMatrix'] = maldi_matrix
+        if organism is not None:
+            datasetFilter['organism'] = organism
 
         return [
             SMDataset(info, self._gqclient) for info in self._gqclient.getDatasets(datasetFilter)
         ]
 
-    def all_adducts(self):
-        raise NYI
-
     def metadata(self, datasets):
         """
+        DEPRECATED - SMInstance.datasets should be preferred
         Pandas dataframe for a subset of datasets
         where rows are flattened metadata JSON objects
+
+        :meta private:
         """
         df = json_normalize([d.metadata.json for d in datasets])
         df.index = [d.name for d in datasets]
@@ -1310,6 +1391,8 @@ class SMInstance(object):
         DEPRECATED
         This function does not work as previously described, and is kept only for backwards compatibility.
         Use sm.dataset(id='...').results() or sm.dataset(id='...').annotations() instead.
+
+        :meta private:
         """
         records = self._gqclient.getAnnotations(
             annotationFilter={'database': db_name, 'fdrLevel': fdr}, datasetFilter=datasetFilter
@@ -1332,6 +1415,13 @@ class SMInstance(object):
         )
 
     def get_metadata(self, datasetFilter={}):
+        """
+        DEPRECATED - SMInstance.datasets should be preferred
+        Pandas dataframe for a subset of datasets
+        where rows are flattened metadata JSON objects
+
+        :meta private:
+        """
         datasets = self._gqclient.getDatasets(datasetFilter=datasetFilter)
         df = pd.concat(
             [
@@ -1377,7 +1467,7 @@ class SMInstance(object):
 
         # check the existence of projects by their project_id
         if project_ids:
-            self.check_projects(project_ids)
+            self._check_projects(project_ids)
 
         graphql_response = self._gqclient.create_dataset(
             imzml_fn, ibd_fn, dataset_name, metadata, is_public, mol_dbs, project_ids, adducts
@@ -1411,13 +1501,10 @@ class SMInstance(object):
         """Updates a dataset's metadata and/or processing settings. Only specify the fields that
         should change. All arguments should be specified as keyword arguments,
         e.g. to update a dataset's adducts:
-
-        ```
-            sm.update_dataset(
-                dataset_id='2018-11-07_14h15m28s',
-                adducts=['[M]+', '+H', '+K', '+Na'],
-            )
-        ```
+        >>> sm.update_dataset(
+        >>>     dataset_id='2018-11-07_14h15m28s',
+        >>>     adducts=['[M]+', '+H', '+K', '+Na'],
+        >>> )
 
         :param id: (Required) ID of an existing dataset
         :param name: New dataset name
@@ -1723,3 +1810,19 @@ class DataframeNode(object):
 
 class DatasetNotFound(Exception):
     pass
+
+
+# Specify __all__ so that Sphinx documents everything in order from most to least interesting
+__all__ = [
+    'SMInstance',
+    'SMDataset',
+    'MolecularDB',
+    'IsotopeImages',
+    'OpticalImage',
+    'GraphQLClient',
+    'MetaspaceException',
+    'DatasetNotFound',
+    'GraphQLException',
+    'BadRequestException',
+    'InvalidResponseException',
+]

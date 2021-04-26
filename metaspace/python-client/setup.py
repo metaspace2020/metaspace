@@ -24,7 +24,6 @@ setup(
         'plotly>=1.12',
         'numpy',
         'matplotlib',
-        'pyMSpec',
         'pillow',
         'requests',
     ],

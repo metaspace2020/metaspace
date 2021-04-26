@@ -54,6 +54,12 @@ class MetadataMSAnalysis(TypedDict):
 
 
 class Metadata(TypedDict):
+    """
+    SMDataset.metadata should be accessed as a Python dict, e.g.
+
+    >>> organism = dataset.metadata['Sample_Information']['Organism']
+    """
+
     Data_Type: str  # Should always be 'Imaging MS'
     Sample_Information: MetadataSampleInformation
     Sample_Preparation: MetadataSamplePreparation
@@ -107,6 +113,12 @@ class DSConfigImageGeneration(TypedDict):
 
 # noinspection DuplicatedCode
 class DSConfig(TypedDict):
+    """
+    SMDataset.config should be accessed as a Python dict, e.g.
+
+    >>> instrument = dataset.config['isotope_generation']['instrument']
+    """
+
     database_ids: List[int]
     analysis_version: int
     isotope_generation: DSConfigIsotopeGeneration
