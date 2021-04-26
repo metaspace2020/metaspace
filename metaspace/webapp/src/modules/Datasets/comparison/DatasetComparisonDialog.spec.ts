@@ -151,11 +151,10 @@ describe('DatasetComparisonDialog', () => {
     await Vue.nextTick()
     await new Promise((resolve) => setTimeout(resolve, 500))
 
-    // wrapper.find('.el-button--primary').trigger('click')
-    // await Vue.nextTick()
-    //
-    // expect(wrapper.find('.text-danger').exists()).toBe(false)
+    wrapper.find('.el-button--primary').trigger('click')
+    await Vue.nextTick()
 
+    expect(wrapper.find('.text-danger').exists()).toBe(false)
     // expect(wrapper.vm.$route.name).toBe('datasets-comparison')
     // expect(wrapper.vm.$route.query.ds).toBe(graphqlReturnData.map((ds) => ds.id).sort().join(','))
   })
