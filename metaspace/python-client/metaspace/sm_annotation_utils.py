@@ -9,7 +9,7 @@ from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
 from shutil import copyfileobj
-from typing import Optional, List, Iterable, Union, Tuple
+from typing import Optional, List, Iterable, Union, Tuple, Any
 from urllib.parse import urlparse
 
 import numpy as np
@@ -647,15 +647,7 @@ class GraphQLClient(object):
         return self.query(query, variables)
 
     def update_dataset(
-        self,
-        ds_id,
-        name=None,
-        databases=None,
-        adducts=None,
-        ppm=None,
-        reprocess=False,
-        force=False,
-        priority=1,
+        self, ds_id, input=None, reprocess=False, force=False, priority=1,
     ):
         query = """
             mutation updateMetadataDatabases($id: String!, $reprocess: Boolean,
@@ -669,26 +661,16 @@ class GraphQLClient(object):
                     )
             }
         """
-        input_field = {}
-        if name:
-            input_field['name'] = name
 
-        if databases:
-            input_field['databaseIds'] = [self.map_database_to_id(db) for db in databases]
-
-        if adducts:
-            input_field['adducts'] = adducts
-        if ppm:
-            input_field['ppm'] = ppm
         variables = {
             'id': ds_id,
-            'input': input_field,
+            'input': input,
             'priority': priority,
             'reprocess': reprocess,
             'force': force,
         }
 
-        return self.query(query, variables)
+        self.query(query, variables)
 
     def create_database(
         self, local_path: Union[str, Path], name: str, version: str, is_public: bool = False
@@ -1420,13 +1402,103 @@ class SMInstance(object):
         )
         return json.loads(graphql_response['createDataset'])['datasetId']
 
-    def update_dataset_dbs(self, datasetID, molDBs=None, adducts=None, priority=1):
-        return self._gqclient.update_dataset(
-            ds_id=datasetID, databases=molDBs, adducts=adducts, reprocess=True, priority=priority
-        )
+    def update_dataset_dbs(self, dataset_id, molDBs=None, adducts=None):
+        self.update_dataset(dataset_id, databases=molDBs, adducts=adducts, reprocess=True)
 
     def reprocess_dataset(self, dataset_id, force=False):
-        return self._gqclient.update_dataset(ds_id=dataset_id, reprocess=True, force=force)
+        self._gqclient.update_dataset(ds_id=dataset_id, reprocess=True, force=force)
+
+    def update_dataset(
+        self,
+        id: str,
+        *,
+        name: Optional[str] = None,
+        metadata: Any = None,
+        databases=None,
+        adducts: Optional[List[str]] = None,
+        neutral_losses: Optional[List[str]] = None,
+        chem_mods: Optional[List[str]] = None,
+        is_public: Optional[List[str]] = None,
+        ppm: Optional[float] = None,
+        num_isotopic_peaks: Optional[int] = None,
+        decoy_sample_size: Optional[int] = None,
+        analysis_version: Optional[int] = None,
+        reprocess: Optional[bool] = None,
+        force: bool = False,
+    ):
+        """Updates a dataset's metadata and/or processing settings. Only specify the fields that
+        should change. All arguments should be specified as keyword arguments,
+        e.g. to update a dataset's adducts:
+
+        ```
+            sm.update_dataset(
+                dataset_id='2018-11-07_14h15m28s',
+                adducts=['[M]+', '+H', '+K', '+Na'],
+            )
+        ```
+
+        :param id: (Required) ID of an existing dataset
+        :param name: New dataset name
+        :param metadata: A JSON string or Python dict containing updated metadata
+        :param databases: List of databases to process with, either as IDs or (name, version)
+            tuples, e.g. [22, ('LipidMaps', '2017-12-12')]
+        :param adducts: List of adducts. e.g. ['-H', '+Cl']
+            Normal adducts should be plus or minus followed by an element.
+            For radical ions/cations, use the special strings '[M]+' or '[M]-'.
+        :param neutral_losses: List of neutral losses, e.g. ['-H2O', '-CO2']
+        :param chem_mods:
+        :param is_public: If True, the dataset will be publicly visible.
+            If False, it will only be visible to yourself, other members of your Group,
+            METASPACE administrators, and members of any Projects you add it to
+        :param ppm: m/z tolerance (in ppm) for generating ion images (default 3.0)
+        :param num_isotopic_peaks: Number of isotopic peaks to search for (default 4)
+        :param decoy_sample_size: Number of implausible adducts to use for generating the decoy
+            search database (default 20)
+        :param analysis_version:
+        :param reprocess:
+            None (default): Reprocess if needed
+            True: Force reprocessing, even if not needed
+            False: Raise an error if the changes would require reprocessing
+        :param force:
+            True: Allow changes to datasets that are already being processed. This should be used
+            with caution, as it can cause errors or inconsistent results.
+        """
+
+        input_field = {}
+
+        if name is not None:
+            input_field['name'] = name
+        if metadata is not None:
+            if isinstance(metadata, str):
+                input_field['metadata'] = metadata
+            else:
+                input_field['metadata'] = json.dumps(metadata)
+        if databases is not None:
+            input_field['databaseIds'] = [self.map_database_to_id(db) for db in databases]
+        if adducts is not None:
+            input_field['adducts'] = adducts
+        if neutral_losses is not None:
+            input_field['neutralLosses'] = neutral_losses
+        if chem_mods is not None:
+            input_field['chemMods'] = chem_mods
+        if is_public is not None:
+            input_field['is_public'] = is_public
+        if ppm is not None:
+            input_field['ppm'] = ppm
+        if num_isotopic_peaks is not None:
+            input_field['num_isotopic_peaks'] = num_isotopic_peaks
+        if decoy_sample_size is not None:
+            input_field['decoy_sample_size'] = decoy_sample_size
+        if analysis_version is not None:
+            input_field['analysis_version'] = analysis_version
+
+        try:
+            self._gqclient.update_dataset(id, input_field, reprocess or False, force)
+        except BadRequestException as ex:
+            if ex.type == 'reprocessing_needed' and reprocess is None:
+                self._gqclient.update_dataset(id, input_field, True, force)
+            else:
+                raise
 
     def delete_dataset(self, ds_id, **kwargs):
         return self._gqclient.delete_dataset(ds_id, **kwargs)
