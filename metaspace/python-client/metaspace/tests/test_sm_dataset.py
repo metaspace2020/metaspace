@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
@@ -13,7 +14,6 @@ from metaspace.sm_annotation_utils import (
     GraphQLException,
 )
 from metaspace.tests.utils import sm, my_ds_id, advanced_ds_id
-
 
 EXPECTED_RESULTS_COLS = [
     'msm',
@@ -217,3 +217,27 @@ def test_download(sm: SMInstance, downloadable_dataset_id: str):
         files = [f.name for f in Path(tmpdir).iterdir()]
         assert 'base_name.imzML' in files
         assert 'base_name.ibd' in files
+
+
+def test_metadata(dataset: SMDataset):
+    metadata = dataset.metadata
+
+    # Make sure it behaves like a Dict
+    assert 'Sample_Information' in metadata
+    assert 'Sample_Preparation' in metadata
+    assert 'MS_Analysis' in metadata
+
+    assert len(metadata) > 0
+    assert len(list(metadata.keys())) > 0
+
+    # Make sure nested items work
+    assert 'Organism' in metadata['Sample_Information']
+    assert 'Xaxis' in metadata['MS_Analysis']['Pixel_Size']
+
+    # Make sure it re-serializes in a way that matches the original JSON.
+    # Use sort_keys to ensure they're both ordered the same way
+    serialized = json.dumps(dataset.metadata, sort_keys=True)
+    original_json = dataset.metadata.json  # type: ignore
+    sorted_json = json.dumps(json.loads(original_json), sort_keys=True)
+
+    assert serialized == sorted_json

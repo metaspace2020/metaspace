@@ -18,6 +18,15 @@ import requests
 from PIL import Image
 
 from metaspace.image_processing import clip_hotspots
+from metaspace.types import (
+    Metadata,
+    DatabaseDetails,
+    DSConfig,
+    make_metadata,
+    Polarity,
+    DatasetDownloadFile,
+    DatasetDownload,
+)
 
 try:
     from typing import TypedDict  # Requires Python 3.8
@@ -33,37 +42,16 @@ except ImportError:
 DEFAULT_DATABASE = ('HMDB', 'v4')
 
 
-class DatasetDownloadLicense(TypedDict):
-    code: str
-    name: str
-    link: Optional[str]
-
-
-class DatasetDownloadContributor(TypedDict):
-    name: Optional[str]
-    institution: Optional[str]
-
-
-class DatasetDownloadFile(TypedDict):
-    filename: str
-    link: str
-
-
-class DatasetDownload(TypedDict):
-    license: DatasetDownloadLicense
-    contributors: List[DatasetDownloadContributor]
-    files: List[DatasetDownloadFile]
-
-
 class MetaspaceException(Exception):
     pass
 
 
 class GraphQLException(MetaspaceException):
-    def __init__(self, json, message):
-        super().__init__(message)
+    def __init__(self, json, message, type=None):
+        super().__init__(f"{type}: {message}" if type is not None else message)
         self.json = json
         self.message = message
+        self.type = type
 
 
 class BadRequestException(MetaspaceException):
@@ -92,6 +80,16 @@ def _extract_data(res):
         return res_json['data']
     else:
         if 'errors' in res_json:
+            try:
+                # Some operations raise user-correctable errors with JSON messages that have a
+                # user-friendly 'message' field and a 'type' field for programmatic recognition.
+                json_error = json.loads(res_json['errors'][0]['message'])
+            except json.JSONDecodeError:
+                json_error = None
+
+            if json_error is not None and 'type' in json_error and 'message' in json_error:
+                raise GraphQLException(res_json, json_error['message'], json_error['type'])
+
             pprint.pprint(res_json['errors'])
             raise GraphQLException(res_json, res_json['errors'][0]['message'])
         elif 'message' in res_json:
@@ -721,12 +719,6 @@ class GraphQLClient(object):
         return self.query(query, variables)['deleteMolecularDB']
 
 
-def ion(r):
-    from pyMSpec.pyisocalc.tools import normalise_sf
-
-    return (r.ds_id, normalise_sf(r.sf), r.adduct, 1)
-
-
 class IsotopeImages(object):
     def __init__(self, images, sf, chem_mod, neutral_loss, adduct, centroids, urls):
         self._images = images
@@ -815,24 +807,12 @@ class OpticalImage(object):
         )
 
 
-class Metadata(object):
-    def __init__(self, json_metadata):
-        self._json = json_metadata
-
-    @property
-    def json(self):
-        return self._json
-
-
-NYI = Exception('NOT IMPLEMENTED YET')
-
-
 class SMDataset(object):
     def __init__(self, _info, gqclient):
         self._info = _info
         self._gqclient: GraphQLClient = gqclient
         self._config = json.loads(self._info['configJson'])
-        self._metadata = Metadata(self._info['metadataJson'])
+        self._metadata = make_metadata(self._info['metadataJson'])
         self._session = requests.session()
 
     @property
@@ -962,23 +942,25 @@ class SMDataset(object):
         )
 
     @property
-    def metadata(self):
+    def metadata(self) -> Metadata:
         return self._metadata
 
     @property
-    def config(self):
+    def config(self) -> DSConfig:
         return self._config
 
     @property
-    def adducts(self):
+    def adducts(self) -> List[str]:
         return self._config['isotope_generation']['adducts']
 
     @property
-    def polarity(self):
-        return 'Positive' if self._config['isotope_generation']['charge'] > 0 else 'Negative'
+    def polarity(self) -> Polarity:
+        if self._config['isotope_generation']['charge'] > 0:
+            return 'Positive'
+        return 'Negative'
 
     @property
-    def database_details(self):
+    def database_details(self) -> List[DatabaseDetails]:
         return self._info['databases']
 
     @property
@@ -1470,11 +1452,11 @@ class SMInstance(object):
             input_field['name'] = name
         if metadata is not None:
             if isinstance(metadata, str):
-                input_field['metadata'] = metadata
+                input_field['metadataJson'] = metadata
             else:
-                input_field['metadata'] = json.dumps(metadata)
+                input_field['metadataJson'] = json.dumps(metadata)
         if databases is not None:
-            input_field['databaseIds'] = [self.map_database_to_id(db) for db in databases]
+            input_field['databaseIds'] = [self._gqclient.map_database_to_id(db) for db in databases]
         if adducts is not None:
             input_field['adducts'] = adducts
         if neutral_losses is not None:
@@ -1494,7 +1476,7 @@ class SMInstance(object):
 
         try:
             self._gqclient.update_dataset(id, input_field, reprocess or False, force)
-        except BadRequestException as ex:
+        except GraphQLException as ex:
             if ex.type == 'reprocessing_needed' and reprocess is None:
                 self._gqclient.update_dataset(id, input_field, True, force)
             else:
