@@ -52,6 +52,25 @@ def test_datasets_by_project(sm):
     assert len(result) > 0
 
 
+def test_datasets_by_all_fields(sm: SMInstance):
+    project_id = [p['id'] for p in sm.projects.get_all_projects() if p['numDatasets'] > 0][0]
+
+    # If anything is broken with the GraphQL mapping, this will throw an exception
+    sm.datasets(
+        nameMask='foo',
+        idMask='foo',
+        submitter_id=sm.current_user_id(),
+        group_id=sm._gqclient.get_primary_group_id(),
+        project=project_id,
+        polarity='Positive',
+        ionisation_source='MALDI',
+        analyzer_type='Orbitrap',
+        maldi_matrix='DHB',
+        organism='Human',
+        organismPart='Cells',
+    )
+
+
 def test_update_dataset_without_reprocessing(sm: SMInstance, my_ds_id):
     old_ds = sm.dataset(id=my_ds_id)
     new_name = 'foo' if old_ds.name != 'foo' else 'bar'

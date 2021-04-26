@@ -1360,7 +1360,7 @@ class SMInstance(object):
         if project_id is not None:
             datasetFilter['project'] = project_id
         if polarity is not None:
-            datasetFilter['polarity'] = polarity
+            datasetFilter['polarity'] = polarity.upper()
         if ionisation_source is not None:
             datasetFilter['ionisationSource'] = ionisation_source
         if analyzer_type is not None:
