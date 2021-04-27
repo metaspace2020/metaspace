@@ -128,3 +128,10 @@
     padding-left: 5px;
   }
 }
+
+.ds-comparison-annotation-table-loading-wrapper{
+  @apply flex items-center justify-center;
+  height: 200px;
+  width: 100%;
+}
+
