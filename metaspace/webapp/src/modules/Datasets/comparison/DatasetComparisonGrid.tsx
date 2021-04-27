@@ -14,6 +14,7 @@ import IonIntensity from '../../ImageViewer/IonIntensity.vue'
 import ImageSaver from '../../ImageViewer/ImageSaver.vue'
 import getColorScale from '../../../lib/getColorScale'
 import { THUMB_WIDTH } from '../../../components/Slider'
+import { isEqual } from 'lodash-es'
 
 interface DatasetComparisonGridProps {
   nCols: number
@@ -28,6 +29,7 @@ interface DatasetComparisonGridState {
   gridState: any,
   grid: any,
   annotationData: any,
+  annotations: any[],
   refsLoaded: boolean,
   showViewer: boolean,
   annotationLoading: boolean,
@@ -73,6 +75,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
     const state = reactive<DatasetComparisonGridState>({
       gridState: {},
       grid: undefined,
+      annotations: [],
       annotationData: {},
       selectedAnnotation: props.selectedAnnotation,
       refsLoaded: false,
@@ -109,12 +112,12 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
     }
 
     const buildRangeSliderStyle = (key: string, scaleRange: number[] = [0, 1]) => {
-      if (!refs[`range-slider-${key}`] || !state.gridState[`${key}`]) {
+      if (!refs[`range-slider-${key}`] || state.gridState[`${key}`]?.empty || !state.gridState[`${key}`]) {
         return null
       }
 
-      const width = refs[`range-slider-${key}`].offsetWidth
-      const activeColorMap = state.gridState[`${key}`].colormap
+      const width = refs[`range-slider-${key}`]?.offsetWidth
+      const activeColorMap = state.gridState[`${key}`]?.colormap
       const ionImage = state.gridState[`${key}`]?.ionImageLayers[0]?.ionImage
       const cmap = createColormap(activeColorMap)
       const { range } = getColorScale(activeColorMap)
@@ -142,6 +145,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       const imageFitAux = await imageFit(annotation, key)
       const intensity = getIntensity(ionImageLayersAux[0]?.ionImage)
       const metadata = getMetadata(annotation)
+      const hasPreviousSettings = state.gridState[key] && !state.gridState[key].empty
 
       const settings = {
         intensity,
@@ -153,17 +157,28 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         pixelSizeY: metadata?.MS_Analysis?.Pixel_Size?.Yaxis || 0,
         ionImageLayers: ionImageLayersAux,
         imageFit: imageFitAux,
-        lockedIntensities: state.gridState[key] ? state.gridState[key].lockedIntensities : [undefined, undefined],
-        annotImageOpacity: state.gridState[key] ? state.gridState[key].annotImageOpacity : 1.0,
-        opacityMode: state.gridState[key] ? state.gridState[key].opacityMode : 'linear',
-        imagePosition: state.gridState[key] ? state.gridState[key].imagePosition : defaultImagePosition,
-        pixelAspectRatio: state.gridState[key] ? state.gridState[key].pixelAspectRatio : 1,
-        imageZoom: state.gridState[key] ? state.gridState[key].imageZoom : 1,
-        showOpticalImage: state.gridState[key] ? state.gridState[key].showOpticalImage : true,
-        colormap: state.gridState[key] ? state.gridState[key].colormap : 'Viridis',
-        scaleType: state.gridState[key] ? state.gridState[key].scaleType : 'linear',
-        scaleBarColor: state.gridState[key] ? state.gridState[key].scaleBarColor : '#000000',
-        userScaling: state.gridState[key] ? state.gridState[key].userScaling : [0, 1],
+        lockedIntensities: hasPreviousSettings && state.gridState[key].lockedIntensities !== undefined
+          ? state.gridState[key].lockedIntensities : [undefined, undefined],
+        annotImageOpacity: hasPreviousSettings && state.gridState[key].annotImageOpacity !== undefined
+          ? state.gridState[key].annotImageOpacity : 1.0,
+        opacityMode: hasPreviousSettings && state.gridState[key].opacityMode !== undefined
+          ? state.gridState[key].opacityMode : 'linear',
+        imagePosition: hasPreviousSettings && state.gridState[key].imagePosition !== undefined
+          ? state.gridState[key].imagePosition : defaultImagePosition,
+        pixelAspectRatio: hasPreviousSettings && state.gridState[key].pixelAspectRatio !== undefined
+          ? state.gridState[key].pixelAspectRatio : 1,
+        imageZoom: hasPreviousSettings && state.gridState[key].imageZoom !== undefined
+          ? state.gridState[key].imageZoom : 1,
+        showOpticalImage: hasPreviousSettings && state.gridState[key].showOpticalImage !== undefined
+          ? state.gridState[key].showOpticalImage : true,
+        colormap: hasPreviousSettings && state.gridState[key].colormap !== undefined
+          ? state.gridState[key].colormap : 'Viridis',
+        scaleType: hasPreviousSettings && state.gridState[key].scaleType !== undefined
+          ? state.gridState[key].scaleType : 'linear',
+        scaleBarColor: hasPreviousSettings && state.gridState[key].scaleBarColor !== undefined
+          ? state.gridState[key].scaleBarColor : '#000000',
+        userScaling: hasPreviousSettings && state.gridState[key].userScaling !== undefined
+          ? state.gridState[key].userScaling : [0, 1],
       }
 
       Vue.set(state.gridState, key, settings)
@@ -171,8 +186,8 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
     }
 
     const unsetAnnotation = (key: string) => {
-      Vue.set(state.annotationData, key, undefined)
-      Vue.set(state.gridState, key, undefined)
+      Vue.set(state.annotationData, key, { empty: true })
+      Vue.set(state.gridState, key, { empty: true })
     }
 
     const getAnnotationData = (grid: any, annotationIdx = 0) => {
@@ -202,9 +217,11 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
 
     watchEffect(async() => {
       // initial settings build
-      if (!state.grid && props.annotations && props.annotations.length > 0 && props.settings.value) {
+      if ((!state.grid && props.annotations && props.settings.value)
+        || (state.grid && !isEqual(state.annotations, props.annotations))) {
         const auxSettings = safeJsonParse(props.settings.value.snapshot)
         state.grid = auxSettings.grid
+        state.annotations = props.annotations
         await getAnnotationData(state.grid, state.selectedAnnotation)
       } else if (state.selectedAnnotation !== props.selectedAnnotation) { // row change update
         state.selectedAnnotation = props.selectedAnnotation
@@ -367,7 +384,9 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
 
     const renderImageViewerHeaders = (row: number, col: number) => {
       if (
-        (state.firstLoaded && !state.annotationData[`${row}-${col}`] && !state.gridState[`${row}-${col}`])
+        !props.isLoading
+          && state.annotationData[`${row}-${col}`]?.empty
+          && state.gridState[`${row}-${col}`]?.empty
       ) {
         return (
           <div key={col} class='dataset-comparison-grid-col overflow-hidden items-center justify-center'
@@ -401,6 +420,12 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
               !== undefined}
           />
           <div ref={`image-${row}-${col}`} class='ds-wrapper relative'>
+            {
+              props.isLoading
+              && <i
+                class="el-icon-loading"
+              />
+            }
             {
               state.gridState[`${row}-${col}`]
               && state.gridState[`${row}-${col}`].ionImageLayers

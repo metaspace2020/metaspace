@@ -3,7 +3,6 @@ import './DatasetComparisonAnnotationTable.scss'
 import { Table, TableColumn, Pagination } from '../../../lib/element-ui'
 import AnnotationTableMolName from '../../Annotations/AnnotationTableMolName.vue'
 import { cloneDeep, findIndex } from 'lodash-es'
-import Vue from 'vue'
 
 interface DatasetComparisonAnnotationTableProps {
   annotations: any[]
@@ -40,6 +39,9 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
     annotations: {
       type: Array,
       default: () => [],
+    },
+    isLoading: {
+      type: Boolean,
     },
   },
   setup: function(props, { emit, root }) {
@@ -205,13 +207,22 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       const dataStart = ((state.offset - 1) * state.pageSize)
       const dataEnd = ((state.offset - 1) * state.pageSize) + state.pageSize
 
+      if (props.isLoading) {
+        return (
+          <div class='ds-comparison-annotation-table-loading-wrapper'>
+            <i
+              class="el-icon-loading"
+            />
+          </div>
+        )
+      }
+
       return (
         <div class="dataset-comparison-annotation-table">
           <Table
             id="annot-table"
             ref={table}
             data={state.processedAnnotations.slice(dataStart, dataEnd)}
-            isLoading={props.isLoading || !state.firstLoaded}
             rowClassName={getRowClass}
             size="mini"
             border
@@ -257,7 +268,6 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
           </Table>
           <div class="flex justify-between items-start mt-2">
             <div>
-
               <Pagination
                 total={totalCount}
                 pageSize={state.pageSize}
