@@ -1,0 +1,45 @@
+.dataset-comparison-grid{
+  width: 100%;
+  min-height: 200px;
+  overflow-x: auto;
+
+  .dataset-comparison-grid-row{
+    @apply flex flex-row m-1;
+  }
+
+  .dataset-comparison-grid-col{
+    @apply flex ml-1 mb-1 items-center flex-col;
+    border: 1px solid lightgray;
+    width: 100%;
+    min-width: 100px;
+    min-height: 300px;
+  }
+
+  .dataset-comparison-grid-item-header{
+    @apply flex flex-row;
+    background: #F1F5F8;
+    padding: 8px;
+    width: calc(100% - 16px);
+
+    span{
+      @apply mr-1;
+    }
+
+    .av-icon-button {
+      @apply self-center mb-2 mr-1 h-6;
+
+      svg {
+        display: block;
+      }
+    }
+
+    .setting-icon{
+      height: 20px;
+      width: 20px;
+      color: black;
+    }
+  }
+
+}
+
+
