@@ -2,6 +2,7 @@ import { defineComponent, onMounted, reactive, ref, watchEffect } from '@vue/com
 import './DatasetComparisonAnnotationTable.scss'
 import { Table, TableColumn, Pagination } from '../../../lib/element-ui'
 import AnnotationTableMolName from '../../Annotations/AnnotationTableMolName.vue'
+import { cloneDeep, findIndex } from 'lodash-es'
 import Vue from 'vue'
 
 interface DatasetComparisonAnnotationTableProps {
@@ -54,8 +55,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
 
     watchEffect(() => {
       if (state.processedAnnotations.length !== props.annotations.length) {
-        state.processedAnnotations = props.annotations
-        handleSortChange(getDefaultSort())
+        state.processedAnnotations = cloneDeep(props.annotations)
         state.selectedRow = state.processedAnnotations[0]
         state.firstLoaded = true
         updateSelectedRow()
@@ -66,17 +66,20 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       if (table.value !== null) {
         // @ts-ignore
         table.value.setCurrentRow(state.selectedRow)
+        handleCurrentRowChange(state.selectedRow)
       }
     }
 
     const handleKeyUp = (event: any) => {
-      console.log('YO', event)
+
     }
 
     const handleCurrentRowChange = (row: any) => {
       if (row) {
         state.selectedRow = row
-        emit('rowChange', props.annotations.indexOf(row))
+        const currentIndex = findIndex(props.annotations,
+          (annotation) => { return row.id === annotation.id })
+        emit('rowChange', currentIndex)
       }
     }
 
@@ -120,16 +123,16 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
     }
 
     const handleSortFormula = (order: string) => {
-      state.processedAnnotations.sort((a, b) =>
+      state.processedAnnotations = state.processedAnnotations.sort((a, b) =>
         sortMolecule(a, b, order === 'ascending' ? 1 : -1))
     }
 
     const handleSortMSM = (order: string) => {
-      state.processedAnnotations.sort((a, b) =>
+      state.processedAnnotations = state.processedAnnotations.sort((a, b) =>
         (order === 'ascending' ? 1 : -1) * (a.msmScore - b.msmScore))
     }
     const handleSortFdr = (order: string) => {
-      state.processedAnnotations.sort((a, b) =>
+      state.processedAnnotations = state.processedAnnotations.sort((a, b) =>
         (order === 'ascending' ? 1 : -1) * (a.fdrLevel - b.fdrLevel))
     }
 
@@ -197,13 +200,6 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       return 'prev,pager,next,sizes'
     }
 
-    const getDefaultSort = () => {
-      return {
-        prop: 'msmScore',
-        order: 'ascending',
-      }
-    }
-
     return () => {
       const totalCount = props.annotations.length
       const dataStart = ((state.offset - 1) * state.pageSize)
@@ -223,7 +219,6 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
             highlightCurrentRow
             width="100%"
             stripe
-            defaultSort={getDefaultSort()}
             tabindex="1"
             {...{
               on: {

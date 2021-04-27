@@ -76,7 +76,6 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
         },
       }
       const result = await settingsMutation(variables)
-      console.log('MANOLINHOx', variables, result.data)
       return {
         name: 'datasets-comparison',
         params: {
@@ -263,8 +262,8 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
                     if (Object.values(state.arrangement).length < state.selectedDatasetIds.length) {
                       state.finalStepError = true
                     } else {
-                      const link = await annotationsLink()
-                      root.$router.push(link)
+                      const link: any = await annotationsLink()
+                      await root.$router.push(link)
                     }
                   }} type="primary">
                     Compare

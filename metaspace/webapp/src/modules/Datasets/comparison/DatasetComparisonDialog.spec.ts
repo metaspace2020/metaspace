@@ -7,9 +7,6 @@ import { sync } from 'vuex-router-sync'
 import { DatasetComparisonDialog } from './DatasetComparisonDialog'
 import { initMockGraphqlClient, apolloProvider } from '../../../../tests/utils/mockGraphqlClient'
 
-Vue.use(Vuex)
-sync(store, router)
-
 describe('DatasetComparisonDialog', () => {
   const propsData = {
     selectedDatasetIds: [
@@ -31,6 +28,10 @@ describe('DatasetComparisonDialog', () => {
     uploadDT: '2021-03-30T21:25:18.473Z',
   }]
 
+  const mockAnnotationAgg = jest.fn((src: any, args: any, ctx: any) => ({
+    saveImageViewerSnapshot: 'saveImageViewerSnapshot',
+  }))
+
   const testHarness = Vue.extend({
     components: {
       DatasetComparisonDialog,
@@ -46,11 +47,19 @@ describe('DatasetComparisonDialog', () => {
           return graphqlReturnData
         },
       }),
+      Mutation: () => ({
+        saveImageViewerSnapshot: mockAnnotationAgg,
+      }),
     })
   }
 
-  it('it should match snapshot', async() => {
+  beforeAll(() => {
+    Vue.use(Vuex)
+    sync(store, router)
     graphqlWithData()
+  })
+
+  it('it should match snapshot', async() => {
     const wrapper = mount(testHarness, { store, router, propsData })
     await Vue.nextTick()
 
@@ -58,7 +67,6 @@ describe('DatasetComparisonDialog', () => {
   })
 
   it('it should display the minimum required datasets error', async() => {
-    graphqlWithData()
     const wrapper = mount(testHarness, { store, router, propsData })
     await Vue.nextTick()
     wrapper.find('.el-button--primary').trigger('click')
@@ -70,7 +78,6 @@ describe('DatasetComparisonDialog', () => {
   })
 
   it('it should select a dataset and advance to the next step', async() => {
-    graphqlWithData()
     const wrapper = mount(testHarness, { store, router, propsData })
     await Vue.nextTick()
 
@@ -85,7 +92,6 @@ describe('DatasetComparisonDialog', () => {
   })
 
   it('it should check the ds comparison grid nofcols and rows', async() => {
-    graphqlWithData()
     const wrapper = mount(testHarness, { store, router, propsData })
     await Vue.nextTick()
 
@@ -100,7 +106,6 @@ describe('DatasetComparisonDialog', () => {
   })
 
   it('it should display the final step required error', async() => {
-    graphqlWithData()
     const wrapper = mount(testHarness, { store, router, propsData })
     await Vue.nextTick()
 
@@ -120,7 +125,6 @@ describe('DatasetComparisonDialog', () => {
   })
 
   it('it should set ds placement on the grid and advance to comparison page', async() => {
-    graphqlWithData()
     const wrapper = mount(testHarness, { store, router, propsData })
     await Vue.nextTick()
 
@@ -155,6 +159,7 @@ describe('DatasetComparisonDialog', () => {
     await Vue.nextTick()
 
     expect(wrapper.find('.text-danger').exists()).toBe(false)
+    expect(mockAnnotationAgg).toHaveBeenCalledTimes(1)
     // expect(wrapper.vm.$route.name).toBe('datasets-comparison')
     // expect(wrapper.vm.$route.query.ds).toBe(graphqlReturnData.map((ds) => ds.id).sort().join(','))
   })
