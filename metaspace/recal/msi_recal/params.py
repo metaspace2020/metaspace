@@ -5,8 +5,8 @@ from typing import Union, List
 
 import cpyMSpec
 
-INSTRUMENT_TYPES = ('orbitrap', 'ft-icr', 'tof')
-InstrumentType = Union[Literal['orbitrap'], Literal['ft-icr'], Literal['tof']]
+INSTRUMENT_TYPES = ('tof', 'orbitrap', 'ft-icr')
+InstrumentType = Literal['tof', 'orbitrap', 'ft-icr']
 
 DEFAULT = object()
 
@@ -42,6 +42,7 @@ class RecalParams:
         adducts: List[str] = DEFAULT,
         profile_mode: bool = False,
         dbs: List[Union[Path, str]] = DEFAULT,
+        targeted_dbs: List[Union[Path, str]] = DEFAULT,
         transforms: List[List[str]] = DEFAULT,
     ):
         from msi_recal.math import ppm_to_sigma_1  # Avoid circular import
@@ -88,6 +89,10 @@ class RecalParams:
         self.db_paths = [Path(BUILTIN_DBS.get(db, db)) for db in dbs]
         for db_path in self.db_paths:
             assert db_path.exists(), f'{db_path} not found'
+
+        if targeted_dbs is DEFAULT:
+            targeted_dbs = []
+        self.targeted_dbs = [Path(BUILTIN_DBS.get(db, db)) for db in targeted_dbs]
 
         if transforms is DEFAULT:
             transforms = [

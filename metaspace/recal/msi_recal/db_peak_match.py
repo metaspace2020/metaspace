@@ -41,11 +41,7 @@ def calc_spectral_scores(
         else:
             min_abundance = min(limit_of_detection / db_hit.ints, 0.9)
         mol_peaks = get_centroid_peaks(
-            db_hit.formula,
-            db_hit.adduct,
-            db_hit.charge,
-            min_abundance,
-            params.instrument_model,
+            db_hit.formula, db_hit.adduct, db_hit.charge, min_abundance, params.instrument_model,
         )
         # Recalc error as centroid may be slightly different to monoisotopic peak
         mz_error = db_hit.mz - mol_peaks[0][0]
@@ -72,10 +68,7 @@ def calc_spectral_scores(
         )
     else:
         spectral_scores = pd.DataFrame(
-            {
-                'spectral_score': pd.Series(),
-                'n_ref_peaks': pd.Series(dtype='i'),
-            }
+            {'spectral_score': pd.Series(), 'n_ref_peaks': pd.Series(dtype='i')}
         )
     return spectral_scores
 
@@ -92,10 +85,35 @@ def get_db_hits(peaks_df, params: RecalParams, sigma_1: float):
         logger.debug(f'Limit of detection: {limit_of_detection}')
 
     with ThreadPoolExecutor() as ex:
+        db_jobs = []
+        for db_path in params.db_paths:
+            db = load_db(db_path)
+            is_targeted = db_path in params.targeted_dbs
+            if 'adduct' in db.columns:
+                db = db.drop_duplicates(['formula', 'adduct']).assign(
+                    db=db_path.stem, charge=params.charge
+                )
+                db_jobs.append((db_path.stem, db, is_targeted))
+            else:
+                db = db.drop_duplicates('formula')
+                for adduct in params.adducts:
+                    db_name = db_path.stem + adduct
+                    adduct_db = db.assign(db=db_name, adduct=adduct, charge=params.charge)
+                    db_jobs.append((db_name, adduct_db, is_targeted))
+
         params = [
-            (peaks_df, db_path, adduct, limit_of_detection, max_mz, min_mz, params, sigma_1)
-            for db_path in params.db_paths
-            for adduct in params.adducts
+            (
+                peaks_df,
+                db_name,
+                db,
+                is_targeted,
+                limit_of_detection,
+                max_mz,
+                min_mz,
+                params,
+                sigma_1,
+            )
+            for db_name, db, is_targeted in db_jobs
         ]
         candidate_dfs = list(ex.map(_calc_db_scores, *zip(*params)))
 
@@ -105,16 +123,21 @@ def get_db_hits(peaks_df, params: RecalParams, sigma_1: float):
     return candidate_df.sort_values('mz')
 
 
-def _calc_db_scores(peaks_df, db_path, adduct, limit_of_detection, max_mz, min_mz, params, sigma_1):
-    db_name = db_path.stem + adduct
+def load_db(db_path):
     if '\t' in open(db_path).readline():
-        db = pd.read_csv(db_path, sep='\t')[['formula']].drop_duplicates()
+        db = pd.read_csv(db_path, sep='\t')
     else:
-        db = pd.read_csv(db_path)[['formula']].drop_duplicates()
-    db = db.assign(db=db_name, adduct=adduct, charge=params.charge)
+        db = pd.read_csv(db_path)
+    db = db.drop(columns=['inchi'], errors='ignore')
+    return db
+
+
+def _calc_db_scores(
+    peaks_df, db_name, db, is_targeted, limit_of_detection, max_mz, min_mz, params, sigma_1
+):
     db['db_mz'] = [
-        get_centroid_peaks(f, adduct, params.charge, 0.1, params.instrument_model)[0][0]
-        for f in db.formula
+        get_centroid_peaks(formula, adduct, params.charge, 0.1, params.instrument_model)[0][0]
+        for formula, adduct in db[['formula', 'adduct']].itertuples(False, None)
     ]
     db_hits = join_by_mz(db, 'db_mz', peaks_df, 'mz', params.instrument, sigma_1)
     spectral_scores = calc_spectral_scores(
@@ -122,11 +145,15 @@ def _calc_db_scores(peaks_df, db_path, adduct, limit_of_detection, max_mz, min_m
     )
     db_hits = db_hits.join(spectral_scores)
     # db_hits = db_hits[db_hits.n_ref_peaks > 1]  # Only count sufficiently abundant hits
-    filtered = (
-        db_hits[db_hits.n_ref_peaks > 1]
-        .sort_values('spectral_score', ascending=False)
-        .drop_duplicates('formula')
+    if is_targeted:
+        db_hits['spectral_score'] = np.clip(db_hits.spectral_score, 0.1, None)
+        filtered = db_hits.sort_values('spectral_score', ascending=False)
+    else:
+        filtered = db_hits[db_hits.n_ref_peaks > 1]
+    filtered = filtered.sort_values('spectral_score', ascending=False).drop_duplicates(
+        ['formula', 'adduct']
     )
+
     # Find the average score, excluding the following cases that don't indicate bad matches:
     # * mols out of m/z range (also excluding the last 2 Da, because those peaks usually
     # won't have good M+1s)
@@ -135,6 +162,8 @@ def _calc_db_scores(peaks_df, db_path, adduct, limit_of_detection, max_mz, min_m
     # mono_ratio = np.count_nonzero(db_hits.n_ref_peaks <= 1) / len(db_hits)
     db_weight = filtered.spectral_score.sum() / n_candidates  # / mono_ratio
     db_hits['weight'] = db_hits.spectral_score * db_weight
+    if is_targeted:
+        db_name = db_name + ' (targeted)'
     logger.debug(
         f'{db_name}: {len(filtered)} of {len(db)} formulas in m/z range matched, weight: {db_weight}'
     )

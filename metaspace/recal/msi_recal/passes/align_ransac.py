@@ -31,11 +31,7 @@ class AlignRansac:
 
         mean_spectrum = hybrid_mean_spectrum(X, self.instrument, self.align_sigma_1)
         spectrum = representative_spectrum(
-            X,
-            mean_spectrum,
-            self.instrument,
-            self.align_sigma_1,
-            denoise=True,
+            X, mean_spectrum, self.instrument, self.align_sigma_1, denoise=True,
         )
 
         self.target_spectrum = spectrum[['mz', 'ints']].sort_values('mz')

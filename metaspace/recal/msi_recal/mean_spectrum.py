@@ -17,15 +17,18 @@ logger = logging.getLogger(__name__)
 
 
 def _get_mean_spectrum(
-    mx_spectra: np.array,
-    instrument: InstrumentType,
-    sigma_1: float,
+    mx_spectra: np.array, instrument: InstrumentType, sigma_1: float,
 ):
     tics = np.array([np.sum(to_height(s)) for s in mx_spectra])
     # min_mz = np.floor(np.min([s[0].mz for s in mx_spectra if len(s)]))
     # max_mz = np.ceil(np.max([s[-1].mz for s in mx_spectra if len(s)]))
     min_mz = np.floor(np.min([np.min(to_mz(s)) for s in mx_spectra if len(s)]))
     max_mz = np.ceil(np.max([np.max(to_mz(s)) for s in mx_spectra if len(s)]))
+
+    # WORKAROUND: MSIWarp splats each peak across 3 * sigma_1, which can cause low-coverage peaks
+    # to be overshadowed by higher-coverage peaks within a much wider range. Reduce sigma_1
+    # to compensate. Peaks' individual sigma_1 values will be used for the actual peak shape.
+    sigma_1 /= 3
 
     # MSIWarp's generate_mean_spectrum needs a temporary array to store a fuzzy histogram of peaks
     # with a distribution function that ensures the peak width is a constant number of bins
@@ -41,14 +44,7 @@ def _get_mean_spectrum(
     )
 
     return generate_mean_spectrum(
-        mx_spectra,
-        n_points,
-        sigma_1,
-        min_mz,
-        max_mz,
-        tics,
-        instrument,
-        stride=1,
+        mx_spectra, n_points, sigma_1, min_mz, max_mz, tics, instrument, stride=1,
     )
 
 
