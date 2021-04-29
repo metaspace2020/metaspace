@@ -52,7 +52,7 @@ def mass_accuracy_bound_indices(
     lower_mz, upper_mz = mass_accuracy_bounds(search_mzs, instrument, sigma_1)
     lower_idx = np.searchsorted(mzs, lower_mz, 'l')
     upper_idx = np.searchsorted(mzs, upper_mz, 'r')
-    return lower_idx, upper_idx
+    return np.vstack([lower_idx, upper_idx])
 
 
 @overload
@@ -126,7 +126,7 @@ def get_centroid_peaks(
 def get_mono_mz(formula: str, adduct: Optional[str], charge: int):
     if adduct and adduct not in ('[M]+', '[M]-'):
         formula += adduct
-    iso_pattern = cpyMSpec.isotopePattern(formula + adduct)
+    iso_pattern = cpyMSpec.isotopePattern(formula)
     if charge:
         iso_pattern.addCharge(charge)
 
