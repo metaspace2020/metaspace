@@ -49,7 +49,7 @@ def parse_transforms(args_transforms):
     return transforms
 
 
-if __name__ == '__main__':
+def parse_args():
     parser = argparse.ArgumentParser(
         description='Align & recalibrate imzML files',
         formatter_class=argparse.RawTextHelpFormatter,
@@ -164,8 +164,10 @@ Specify --no-default-dbs to suppress the defaults.
     parser.add_argument('--verbose', '-v', action='count', default=2)
     parser.add_argument('--quiet', '-q', action='count', default=0)
 
-    args = parser.parse_args()
+    return parser.parse_args()
 
+
+def main(args):
     verbosity = min(max(args.verbose - args.quiet, 0), 3)
     logging.basicConfig(
         level=['ERROR', 'WARNING', 'INFO', 'DEBUG'][verbosity],
@@ -217,3 +219,7 @@ Specify --no-default-dbs to suppress the defaults.
     process_imzml_file(
         input_path, params, output_path, debug_path, samples=args.samples, limit=args.limit
     )
+
+
+if __name__ == '__main__':
+    main(parse_args())
