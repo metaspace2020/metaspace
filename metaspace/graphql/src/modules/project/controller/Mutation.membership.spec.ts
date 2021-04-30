@@ -1,4 +1,9 @@
-import { createTestDataset, createTestProject, createTestProjectMember } from '../../../tests/testDataCreation'
+import {
+  createTestDataset,
+  createTestProject,
+  createTestProjectMember,
+  createTestUser,
+} from '../../../tests/testDataCreation'
 import { UserProjectRole } from '../../../binding'
 import {
   Project as ProjectModel,
@@ -265,6 +270,114 @@ describe('modules/project/controller (membership-related mutations)', () => {
           { datasetId: datasetIds[0], projectId, approved },
           { datasetId: datasetIds[1], projectId, approved },
         ]))
+      await validateBackgroundData(bgData)
+    })
+  })
+
+  describe('Mutation.importDatasetsIntoProject bulk remove/add', () => {
+    const importDatasetsIntoProjectQuery = 'mutation ($projectId: ID!, $datasetIds: [ID!]!, '
+        + '$removedDatasetIds: [ID!]!) { importDatasetsIntoProject(projectId: $projectId, datasetIds: $datasetIds, removedDatasetIds: $removedDatasetIds) }'
+
+    test.each([
+      [false, UPRO.INVITED],
+      [false, UPRO.PENDING],
+      [false, UPRO.REVIEWER],
+      [true, UPRO.MEMBER],
+      [true, UPRO.MANAGER],
+    ])('should set \'approved\' to \'%s\' if the user is a %s', async(approved: boolean, role: UserProjectRole) => {
+      const project = await createTestProject()
+      const projectId = project.id
+      const datasets = await Promise.all([1, 2].map(() => createTestDataset()))
+      const datasetsToBeDeleted = await Promise.all([3, 4].map(() => createTestDataset()))
+      const datasetIds = datasets.map(ds => ds.id)
+      const removedDatasetIds = datasetsToBeDeleted.map(ds => ds.id)
+      await testEntityManager.save(UserProjectModel, { userId, projectId, role })
+      await Promise.all(datasets.concat(datasetsToBeDeleted).map(async ds => {
+        await testEntityManager.save(DatasetProjectModel, { datasetId: ds.id, projectId, approved: true })
+      }))
+      const bgData = await createBackgroundData({
+        datasetsForProjectIds: [projectId],
+        datasetsForUserIds: [userId],
+      })
+
+      // if manager, should not be able to add datasets from another user
+      if (role === UPRO.MANAGER) {
+        const anotherUser = await createTestUser()
+        const datasetFromAnotherUser = await createTestDataset({ userId: anotherUser.id })
+        const anotherUserDatasetId = datasetFromAnotherUser.id
+
+        let accessError
+        try {
+          await doQuery(importDatasetsIntoProjectQuery, {
+            projectId,
+            datasetIds: [anotherUserDatasetId],
+            removedDatasetIds: [],
+          })
+        } catch (e) {
+          accessError = e
+        }
+        expect(accessError.message).toBe('Access denied')
+
+        // adds another user ds into project, so the manager can remove it
+        await testEntityManager.save(DatasetProjectModel, {
+          datasetId: anotherUserDatasetId,
+          projectId,
+          approved,
+        })
+
+        // manager should be able to remove other user dataset from project
+        await doQuery(importDatasetsIntoProjectQuery, {
+          projectId,
+          datasetIds: [],
+          removedDatasetIds: [anotherUserDatasetId],
+        })
+        const mItem = await testEntityManager.find(DatasetProjectModel, {
+          datasetId: anotherUserDatasetId,
+        })
+        expect(mItem)
+          .not.toEqual(expect.arrayContaining([
+            { datasetId: anotherUserDatasetId, projectId, approved },
+          ]))
+      }
+
+      // add datasets
+      await doQuery(importDatasetsIntoProjectQuery, {
+        projectId,
+        datasetIds: datasetIds.concat(removedDatasetIds),
+        removedDatasetIds: [],
+      })
+      expect(await testEntityManager.find(DatasetProjectModel, {
+        datasetId: In(datasetIds
+          .concat(removedDatasetIds)),
+      }))
+        .toEqual(expect.arrayContaining([
+          { datasetId: datasetIds[0], projectId, approved },
+          { datasetId: datasetIds[1], projectId, approved },
+          { datasetId: removedDatasetIds[0], projectId, approved },
+          { datasetId: removedDatasetIds[1], projectId, approved },
+        ]))
+
+      // remove the datasets to be deleted
+      await doQuery(importDatasetsIntoProjectQuery, {
+        projectId,
+        datasetIds: [],
+        removedDatasetIds,
+      })
+      const items = await testEntityManager.find(DatasetProjectModel, {
+        datasetId: In(datasetIds
+          .concat(removedDatasetIds)),
+      })
+      expect(items)
+        .not.toEqual(expect.arrayContaining([
+          { datasetId: removedDatasetIds[0], projectId, approved },
+          { datasetId: removedDatasetIds[1], projectId, approved },
+        ]))
+      expect(items)
+        .toEqual(expect.arrayContaining([
+          { datasetId: datasetIds[0], projectId, approved },
+          { datasetId: datasetIds[1], projectId, approved },
+        ]))
+
       await validateBackgroundData(bgData)
     })
   })

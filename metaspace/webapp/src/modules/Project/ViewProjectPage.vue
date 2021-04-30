@@ -7,6 +7,15 @@
       v-if="project != null"
       class="page-content"
     >
+      <project-datasets-dialog
+        :visible="showProjectDatasetsDialog && currentUser != null"
+        :current-user-id="currentUser && currentUser.id"
+        :project="project"
+        :is-manager="isManager"
+        :refresh-data="refetch"
+        @close="handleCloseProjectDatasetsDialog"
+        @update="handleCloseProjectDatasetsDialog"
+      />
       <div class="header-row">
         <div class="header-names">
           <h1
@@ -45,6 +54,17 @@
           >
             Request sent
           </el-button>
+          <new-feature-badge
+            v-if="showManageDataset"
+            class="ml-2"
+            feature-key="manage_project_datasets"
+          >
+            <el-button
+              @click="handleOpenProjectDatasetsDialog"
+            >
+              Manage datasets
+            </el-button>
+          </new-feature-badge>
         </div>
         <el-alert
           v-if="roleInProject === 'INVITED'"
@@ -201,6 +221,7 @@ import { removeDatasetFromAllDatasetsQuery } from '../../lib/updateApolloCache'
 import RichText from '../../components/RichText'
 import Publishing from './publishing'
 import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
+import { ProjectDatasetsDialog } from '../Project/ProjectDatasetsDialog'
 
   interface ViewProjectPageData {
     allDatasets: DatasetDetailItem[];
@@ -216,6 +237,7 @@ import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBa
       RichText,
       Publishing,
       NewFeatureBadge,
+      ProjectDatasetsDialog,
     },
     filters: {
       optionalSuffixInParens,
@@ -304,9 +326,16 @@ export default class ViewProjectPage extends Vue {
     currentUser: CurrentUserRoleResult | null = null;
     project: ViewProjectResult | null = null;
     data: ViewProjectPageData | null = null;
+    showProjectDatasetsDialog: boolean = false;
 
     get currentUserId(): string | null { return this.currentUser && this.currentUser.id }
     get roleInProject(): ProjectRole | null { return this.project && this.project.currentUserRole }
+    get showManageDataset(): boolean {
+      const canEditRole = (this.project?.currentUserRole === ProjectRoleOptions.MANAGER
+        || this.project?.currentUserRole === ProjectRoleOptions.MEMBER)
+      return !!(this.currentUser?.id
+        && canEditRole && this.$route?.query?.tab === 'datasets')
+    }
 
     get currentUserName() {
       if (this.currentUser && this.currentUser.name) {
@@ -395,6 +424,10 @@ export default class ViewProjectPage extends Vue {
     get canEdit() {
       return this.roleInProject === ProjectRoleOptions.MANAGER
         || (this.currentUser && this.currentUser.role === 'admin')
+    }
+
+    get isManager() {
+      return this.roleInProject === ProjectRoleOptions.MANAGER
     }
 
     get countHiddenMembers() {
@@ -517,6 +550,15 @@ export default class ViewProjectPage extends Vue {
         this.$apollo.queries.project.refetch(),
         this.$apollo.queries.data.refetch(),
       ])
+    }
+
+    handleOpenProjectDatasetsDialog() {
+      this.showProjectDatasetsDialog = true
+      hideFeatureBadge('manage_project_datasets')
+    }
+
+    handleCloseProjectDatasetsDialog() {
+      this.showProjectDatasetsDialog = false
     }
 }
 

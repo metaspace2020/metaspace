@@ -169,6 +169,15 @@ export const datasetListItemsQuery =
     }
   }`
 
+export const projectDatasetListItemsQuery =
+  gql`query GetProjectDatasets($dFilter: DatasetFilter, $query: String) {
+    allProjectDatasets(filter: $dFilter, simpleQuery: $query) {
+      id
+      name
+      uploadDT
+    }
+  }`
+
 export type OpticalImageType = 'SCALED' | 'CLIPPED_TO_ION_IMAGE';
 
 export interface OpticalImage {
