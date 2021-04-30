@@ -75,11 +75,11 @@ def save_mma_image(
         columns=['set', 'mz'],
     )
 
-    jitter_mz_lo, jitter_mz_hi = mass_accuracy_bounds(mz, params.instrument, params.jitter_sigma_1)
+    jitter_mz_lo, jitter_mz_hi = mass_accuracy_bounds(mz, params.analyzer, params.jitter_sigma_1)
     ax.axvline(jitter_mz_lo, c='#0008')
     ax.axvline(jitter_mz_hi, c='#0008')
 
-    align_mz_lo, align_mz_hi = mass_accuracy_bounds(mz, params.instrument, align_sigma_1)
+    align_mz_lo, align_mz_hi = mass_accuracy_bounds(mz, params.analyzer, align_sigma_1)
     ax.set_xlim(align_mz_lo, align_mz_hi)
 
     sns.kdeplot(data=df, x='mz', hue='set', common_grid=True, ax=ax, bw_adjust=0.25)

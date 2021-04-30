@@ -15,9 +15,9 @@ logger = logging.getLogger(__name__)
 
 class AlignRansac:
     def __init__(self, params: RecalParams, ppm='20'):
-        self.align_sigma_1 = ppm_to_sigma_1(float(ppm), params.instrument, params.base_mz)
+        self.align_sigma_1 = ppm_to_sigma_1(float(ppm), params.analyzer, params.base_mz)
         self.jitter_sigma_1 = params.jitter_sigma_1
-        self.instrument = params.instrument
+        self.analyzer = params.analyzer
         self.min_mz = None
         self.max_mz = None
         self.coef_ = {}
@@ -29,9 +29,9 @@ class AlignRansac:
         missing_cols = {'mz', 'ints', 'mz'}.difference(X.columns)
         assert not missing_cols, f'X is missing columns: {", ".join(missing_cols)}'
 
-        mean_spectrum = hybrid_mean_spectrum(X, self.instrument, self.align_sigma_1)
+        mean_spectrum = hybrid_mean_spectrum(X, self.analyzer, self.align_sigma_1)
         spectrum = representative_spectrum(
-            X, mean_spectrum, self.instrument, self.align_sigma_1, denoise=True,
+            X, mean_spectrum, self.analyzer, self.align_sigma_1, denoise=True,
         )
 
         self.target_spectrum = spectrum[['mz', 'ints']].sort_values('mz')
@@ -48,7 +48,7 @@ class AlignRansac:
             'mz',
             pd.DataFrame({'sample_mz': mzs, 'sample_ints': ints}),
             'sample_mz',
-            self.instrument,
+            self.analyzer,
             self.align_sigma_1,
         )
         if len(hits) > 10:
@@ -60,7 +60,7 @@ class AlignRansac:
             X = hits.sample_mz.values.reshape(-1, 1)
             y = hits.mz.values
             bins = np.histogram_bin_edges(X, 2)
-            threshold = peak_width(X[:, 0], self.instrument, self.jitter_sigma_1)
+            threshold = peak_width(X[:, 0], self.analyzer, self.jitter_sigma_1)
             ransac = RANSACRegressor(
                 # max_trials=10000,
                 min_samples=max(0.1, 3 / len(X)),

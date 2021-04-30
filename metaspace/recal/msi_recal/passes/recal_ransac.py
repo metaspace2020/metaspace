@@ -18,9 +18,9 @@ logger = logging.getLogger(__name__)
 class RecalRansac:
     def __init__(self, params: RecalParams, ppm='500'):
         self.params = params
-        self.recal_sigma_1 = ppm_to_sigma_1(float(ppm), params.instrument, params.base_mz)
+        self.recal_sigma_1 = ppm_to_sigma_1(float(ppm), params.analyzer, params.base_mz)
 
-        self.instrument = params.instrument
+        self.analyzer = params.analyzer
         self.jitter_sigma_1 = params.jitter_sigma_1
 
         self.db_hits = None
@@ -46,7 +46,7 @@ class RecalRansac:
         _X = np.array(recal_candidates.mz).reshape(-1, 1)
         _y = np.array(recal_candidates.db_mz)
         _weights = np.array(recal_candidates.weight)
-        threshold = peak_width(recal_candidates.db_mz.values, self.instrument, self.jitter_sigma_1)
+        threshold = peak_width(recal_candidates.db_mz.values, self.analyzer, self.jitter_sigma_1)
 
         # Require subsets include values from both the higher and lower end of the mass range
         # but define the bins such that at least 20% of peaks are included in each, to guard

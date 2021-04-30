@@ -11,13 +11,13 @@ from msi_recal.math import (
     peak_width,
     mass_accuracy_bound_indices,
 )
-from msi_recal.params import InstrumentType
+from msi_recal.params import AnalyzerType
 
 logger = logging.getLogger(__name__)
 
 
 def _get_mean_spectrum(
-    mx_spectra: np.array, instrument: InstrumentType, sigma_1: float,
+    mx_spectra: np.ndarray, analyzer: AnalyzerType, sigma_1: float,
 ):
     tics = np.array([np.sum(to_height(s)) for s in mx_spectra])
     # min_mz = np.floor(np.min([s[0].mz for s in mx_spectra if len(s)]))
@@ -32,19 +32,19 @@ def _get_mean_spectrum(
 
     # MSIWarp's generate_mean_spectrum needs a temporary array to store a fuzzy histogram of peaks
     # with a distribution function that ensures the peak width is a constant number of bins
-    # throughout the m/z range. The formula for this is different for each instrument.
+    # throughout the m/z range. The formula for this is different for each analyzer.
     # n_points specifies how big the temporary array should be. If it's set too low, the function
     # silently fails. If it's set too high, it takes longer to run and there are console warnings.
     # Predict the required number of n_points so that neither of these conditions are hit.
     # A buffer of 10% + 1000 is added to compensate for numerical error
-    exp = {'tof': 1, 'orbitrap': 1.5, 'ft-icr': 2}[instrument]
+    exp = {'tof': 1, 'orbitrap': 1.5, 'ft-icr': 2}[analyzer]
     density_samples = np.linspace(min_mz, max_mz, 100) ** exp * 0.25 * sigma_1
     n_points = int(
         (max_mz - min_mz) / np.average(density_samples, weights=1 / density_samples) * 1.1 + 1000
     )
 
     return generate_mean_spectrum(
-        mx_spectra, n_points, sigma_1, min_mz, max_mz, tics, instrument, stride=1,
+        mx_spectra, n_points, sigma_1, min_mz, max_mz, tics, analyzer, stride=1,
     )
 
 
@@ -63,7 +63,7 @@ def make_spectra_df(spectra):
 def representative_spectrum(
     spectra_df: pd.DataFrame,
     mean_spectrum: pd.DataFrame,
-    instrument: InstrumentType,
+    analyzer: AnalyzerType,
     sigma_1: float,
     denoise=False,
 ):
@@ -78,7 +78,7 @@ def representative_spectrum(
         mean_spectrum = mean_spectrum[mean_spectrum.n_hits > 1]
         _ints = mean_spectrum.ints.values
         _mz = mean_spectrum.mz.values
-        local_lo, local_hi = mass_accuracy_bound_indices(_mz, _mz, instrument, sigma_1 * 2)
+        local_lo, local_hi = mass_accuracy_bound_indices(_mz, _mz, analyzer, sigma_1 * 2)
         local_maximum_score = np.array(
             [
                 lo >= hi - 1 or i == lo + np.argmax(_ints[lo:hi])
@@ -102,8 +102,8 @@ def representative_spectrum(
     spectrum_scores = {}
     processed_spectra = {}
     for sp, grp in spectra_df.groupby('sp'):
-        joined = join_by_mz(mean_spectrum, 'mean_mz', grp, 'mz', instrument, sigma_1, how='left')
-        mz_tol = peak_width(joined.mz, instrument, sigma_1) / 2
+        joined = join_by_mz(mean_spectrum, 'mean_mz', grp, 'mz', analyzer, sigma_1, how='left')
+        mz_tol = peak_width(joined.mz, analyzer, sigma_1) / 2
         joined['mz_err'] = np.clip((joined.mean_mz - joined.mz.fillna(0)) / mz_tol, -1, 1)
         a = joined.mean_ints
         b = joined.ints.fillna(0)
@@ -121,7 +121,7 @@ def representative_spectrum(
     return processed_spectra[best_sp].sort_values('mz')
 
 
-def hybrid_mean_spectrum(spectra_df, instrument, sigma_1, min_coverage=0):
+def hybrid_mean_spectrum(spectra_df, analyzer, sigma_1, min_coverage=0):
     from msiwarp.util.warp import to_mz
 
     if not spectra_df.mz.is_monotonic_increasing:
@@ -129,18 +129,17 @@ def hybrid_mean_spectrum(spectra_df, instrument, sigma_1, min_coverage=0):
 
     n_spectra = spectra_df.sp.nunique()
     mx_spectra = [
-        to_mx_peaks(grp.mz, grp.ints, sigma_1, sp, instrument)
-        for sp, grp in spectra_df.groupby('sp')
+        to_mx_peaks(grp.mz, grp.ints, sigma_1, sp, analyzer) for sp, grp in spectra_df.groupby('sp')
     ]
     logger.debug(f'Converted {sum(map(len, mx_spectra))} peaks to mx.peak')
 
-    mean_spectrum = _get_mean_spectrum(mx_spectra, instrument, sigma_1)
+    mean_spectrum = _get_mean_spectrum(mx_spectra, analyzer, sigma_1)
     mean_spectrum_df = pd.DataFrame(
         {'mz': to_mz(mean_spectrum), 'ints': np.float32(to_height(mean_spectrum))}
     ).sort_values('mz')
     logger.debug(f'MSIWarp generate_mean_spectrum returned {len(mean_spectrum_df)} peaks')
 
-    lo_mzs, hi_mzs = mass_accuracy_bounds(mean_spectrum_df.mz.values, instrument, sigma_1)
+    lo_mzs, hi_mzs = mass_accuracy_bounds(mean_spectrum_df.mz.values, analyzer, sigma_1)
 
     lo_idxs = np.searchsorted(spectra_df.mz, lo_mzs, 'left')
     hi_idxs = np.searchsorted(spectra_df.mz, hi_mzs, 'right')

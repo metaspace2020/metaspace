@@ -1,7 +1,6 @@
 import logging
 from multiprocessing import JoinableQueue, Process
 from pathlib import Path
-from typing_extensions import Literal
 from typing import Iterable, Union
 
 import numpy as np
@@ -15,6 +14,11 @@ from msi_recal.passes.align_ransac import AlignRansac
 from msi_recal.passes.normalize import Normalize
 from msi_recal.passes.recal_msiwarp import RecalMsiwarp
 from msi_recal.passes.recal_ransac import RecalRansac
+
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
 
 logger = logging.getLogger(__name__)
 

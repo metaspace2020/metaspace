@@ -4,12 +4,12 @@ import pandas as pd
 from msi_recal.math import mass_accuracy_bounds
 
 
-def join_by_mz(left, left_mz_col, right, right_mz_col, instrument, sigma_1, how='inner'):
+def join_by_mz(left, left_mz_col, right, right_mz_col, analyzer, sigma_1, how='inner'):
     """Joins two DataFrames by m/z value, using the given m/z tolerance"""
 
     if not right[right_mz_col].is_monotonic_increasing:
         right = right.sort_values(right_mz_col)
-    min_mz, max_mz = mass_accuracy_bounds(left[left_mz_col].values, instrument, sigma_1)
+    min_mz, max_mz = mass_accuracy_bounds(left[left_mz_col].values, analyzer, sigma_1)
 
     lo_idx = np.searchsorted(right[right_mz_col], min_mz, 'l')
     hi_idx = np.searchsorted(right[right_mz_col], max_mz, 'r')

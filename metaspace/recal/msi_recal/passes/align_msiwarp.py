@@ -27,14 +27,14 @@ except ImportError:
 class AlignMsiwarp:
     def __init__(self, params: RecalParams, ppm='5', segments='1', precision='0.2'):
         self.params = params
-        self.align_sigma_1 = ppm_to_sigma_1(float(ppm), params.instrument, params.base_mz)
+        self.align_sigma_1 = ppm_to_sigma_1(float(ppm), params.analyzer, params.base_mz)
         self.n_segments = int(segments)
         self.n_steps = int(np.round(float(ppm) / float(precision)))
         self.profile_mode = params.profile_mode
 
         self.peak_width_sigma_1 = params.peak_width_sigma_1
         self.jitter_sigma_1 = params.jitter_sigma_1
-        self.instrument = params.instrument
+        self.analyzer = params.analyzer
 
         self.coef_ = {}
         self.warps_ = [{} for i in range(self.n_segments + 1)]
@@ -57,11 +57,11 @@ class AlignMsiwarp:
 
         mean_spectrum = hybrid_mean_spectrum(
             X,
-            self.instrument,
+            self.analyzer,
             max(self.align_sigma_1, self.jitter_sigma_1 + self.peak_width_sigma_1),
         )
         ref_df = representative_spectrum(
-            X, mean_spectrum, self.instrument, self.align_sigma_1, denoise=not self.profile_mode,
+            X, mean_spectrum, self.analyzer, self.align_sigma_1, denoise=not self.profile_mode,
         )
 
         if self.profile_mode:
@@ -72,7 +72,7 @@ class AlignMsiwarp:
             mean_spectrum, mean_spectrum.coverage.values, n_per_bin=4
         ).mz.values
         self.sample_mzs_bounds = mass_accuracy_bounds(
-            self.sample_mzs, self.instrument, self.align_sigma_1
+            self.sample_mzs, self.analyzer, self.align_sigma_1
         )
         self.sample_before = [[] for mz in self.sample_mzs]
         self.sample_after = [[] for mz in self.sample_mzs]
@@ -81,7 +81,7 @@ class AlignMsiwarp:
         self.warps_ = [{} for node in self.align_nodes]
 
         self.ref_s = to_mx_peaks(
-            ref_df.mz, ref_df.ints, self.jitter_sigma_1, 1000000, self.instrument
+            ref_df.mz, ref_df.ints, self.jitter_sigma_1, 1000000, self.analyzer
         )
         logger.debug(f'Selected {len(self.ref_s)} peaks for alignment')
 
@@ -95,7 +95,7 @@ class AlignMsiwarp:
         min_mz = np.floor(X.mz.min() / 10 - 1) * 10
         max_mz = np.ceil(X.mz.max() / 10 + 1) * 10
         node_mzs = np.unique(np.round(np.linspace(min_mz, max_mz, self.n_segments + 1)))
-        node_slacks = peak_width(node_mzs, self.instrument, self.align_sigma_1) / 2
+        node_slacks = peak_width(node_mzs, self.analyzer, self.align_sigma_1) / 2
         return mx.initialize_nodes(node_mzs, node_slacks, self.n_steps)
 
     def predict(self, X):
@@ -105,7 +105,7 @@ class AlignMsiwarp:
 
         spectra = [(sp, grp.sort_values('mz')) for sp, grp in X.groupby('sp')]
         mx_spectra = [
-            to_mx_peaks(grp.mz, grp.ints, self.jitter_sigma_1, sp, self.instrument)
+            to_mx_peaks(grp.mz, grp.ints, self.jitter_sigma_1, sp, self.analyzer)
             for sp, grp in spectra
         ]
         self._calc_alignments(mx_spectra)

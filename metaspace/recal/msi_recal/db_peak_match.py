@@ -51,7 +51,7 @@ def calc_spectral_scores(
     # Search for peaks in the spectrum
     spectral_peaks = pd.DataFrame(spectral_peaks, columns=['hit_index', 'ref_mz', 'ref_ints'])
     spectral_hits = join_by_mz(
-        spectral_peaks, 'ref_mz', spectrum, 'mz', params.instrument, sigma_1, how='left'
+        spectral_peaks, 'ref_mz', spectrum, 'mz', params.analyzer, sigma_1, how='left'
     )
     spectral_hits['ints'] = spectral_hits['ints'].fillna(0)
 
@@ -125,10 +125,10 @@ def get_db_hits(peaks_df, params: RecalParams, sigma_1: float):
 
 def load_db(db_path):
     if '\t' in open(db_path).readline():
-        db = pd.read_csv(db_path, sep='\t')
+        db = pd.read_csv(db_path, keep_default_na=False, sep='\t')
     else:
-        db = pd.read_csv(db_path)
-    db = db.drop(columns=['inchi'], errors='ignore')
+        db = pd.read_csv(db_path, keep_default_na=False)
+    db = db.drop(columns=['inchi', 'mz'], errors='ignore')
     return db
 
 
@@ -139,7 +139,7 @@ def _calc_db_scores(
         get_centroid_peaks(formula, adduct, params.charge, 0.1, params.instrument_model)[0][0]
         for formula, adduct in db[['formula', 'adduct']].itertuples(False, None)
     ]
-    db_hits = join_by_mz(db, 'db_mz', peaks_df, 'mz', params.instrument, sigma_1)
+    db_hits = join_by_mz(db, 'db_mz', peaks_df, 'mz', params.analyzer, sigma_1)
     spectral_scores = calc_spectral_scores(
         peaks_df, db_hits, params, params.jitter_sigma_1, limit_of_detection
     )
@@ -172,7 +172,7 @@ def _calc_db_scores(
 
 def get_recal_candidates(peaks_df, params: RecalParams, sigma_1: float):
     mean_spectrum = hybrid_mean_spectrum(
-        peaks_df, params.instrument, params.peak_width_sigma_1 + params.jitter_sigma_1, 0
+        peaks_df, params.analyzer, params.peak_width_sigma_1 + params.jitter_sigma_1, 0
     )
     db_hits = get_db_hits(mean_spectrum, params, sigma_1)
     recal_candidates = (

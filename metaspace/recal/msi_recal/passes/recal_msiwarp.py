@@ -20,11 +20,11 @@ logger = logging.getLogger(__name__)
 class RecalMsiwarp:
     def __init__(self, params: RecalParams, ppm='20', segments='4', precision='0.1'):
         self.params = params
-        self.recal_sigma_1 = ppm_to_sigma_1(float(ppm), params.instrument, params.base_mz)
+        self.recal_sigma_1 = ppm_to_sigma_1(float(ppm), params.analyzer, params.base_mz)
         self.n_segments = int(segments)
         self.n_steps = int(np.round(float(ppm) / float(precision)))
         self.jitter_sigma_1 = params.jitter_sigma_1
-        self.instrument = params.instrument
+        self.analyzer = params.analyzer
 
         self.recal_spectrum = None
         self.recal_nodes = None
@@ -42,13 +42,13 @@ class RecalMsiwarp:
             X, self.params, self.recal_sigma_1
         )
         self.recal_spectrum = to_mx_peaks(
-            recal_candidates.mz, recal_candidates.ints, self.jitter_sigma_1, 100, self.instrument
+            recal_candidates.mz, recal_candidates.ints, self.jitter_sigma_1, 100, self.analyzer
         )
 
         # Get sample spectrum
-        spectrum = representative_spectrum(X, mean_spectrum, self.instrument, self.jitter_sigma_1)
+        spectrum = representative_spectrum(X, mean_spectrum, self.analyzer, self.jitter_sigma_1)
         # Reminder: spectrum IDs must be different!!!
-        recal_s = to_mx_peaks(spectrum.mz, spectrum.ints, self.jitter_sigma_1, 5, self.instrument)
+        recal_s = to_mx_peaks(spectrum.mz, spectrum.ints, self.jitter_sigma_1, 5, self.analyzer)
 
         logger.info(f'Representative spectrum has {len(recal_s)} peaks')
         logger.info(f'Calibration spectrum has {len(self.recal_spectrum)} peaks')
@@ -92,7 +92,7 @@ class RecalMsiwarp:
         min_mz = np.floor(X.mz.min() / 10 - 1) * 10
         max_mz = np.ceil(X.mz.max() / 10 + 1) * 10
         node_mzs = np.unique(np.round(np.linspace(min_mz, max_mz, self.n_segments + 1)))
-        node_slacks = peak_width(node_mzs, self.instrument, self.recal_sigma_1) / 2
+        node_slacks = peak_width(node_mzs, self.analyzer, self.recal_sigma_1) / 2
         return mx.initialize_nodes(node_mzs, node_slacks, self.n_steps)
 
     def predict(self, X):
@@ -110,7 +110,7 @@ class RecalMsiwarp:
                 grp = grp.sort_values('mz')
 
             recal_spectrum = mx.warp_peaks(
-                to_mx_peaks(grp.mz, grp.ints, self.jitter_sigma_1, sp, self.instrument),
+                to_mx_peaks(grp.mz, grp.ints, self.jitter_sigma_1, sp, self.analyzer),
                 self.recal_nodes,
                 self.recal_move,
             )

@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 
 from msi_recal import process_imzml_file
-from msi_recal.params import RecalParams, DEFAULT
+from msi_recal.params import RecalParams, DEFAULT, FORMATTED_MATRIXES
 
 
 def is_float_str(s):
@@ -79,7 +79,7 @@ If arguments aren't specified, the defaults will be used, e.g. these have the sa
     msi_recal input.imzML align_msiwarp normalize
     msi_recal input.imzML align_msiwarp,5,1,0.2 normalize,median,tic
     
-The default transform is "align_msiwarp recal_ransac recal_msiwarp"
+The default transform is "align_msiwarp recal_ransac"
 ''',
     )
     parser.add_argument('input', help='Input imzML file')
@@ -90,14 +90,23 @@ The default transform is "align_msiwarp recal_ransac recal_msiwarp"
         default=['align_msiwarp,5,1,0.2', 'recal_ransac,500', 'recal_msiwarp,20,4,0.1',],
     )
     parser.add_argument(
-        '--output',
-        help='Output path. If not specified, the input path with a _recal suffix will be used',
+        '--output', help='Output path (default: input path with _recal suffix)',
     )
     parser.add_argument(
-        '--instrument',
+        '--analyzer',
         choices=['orbitrap', 'ft-icr', 'tof'],
         default='orbitrap',
-        help='Analyzer type',
+        help='Analyzer type (default: Orbitrap)',
+    )
+    parser.add_argument(
+        '--source',
+        default='maldi',
+        help=f'Ionisation source (default: MALDI, only used for determining default adducts)',
+    )
+    parser.add_argument(
+        '--matrix',
+        default=DEFAULT,
+        help=f'MALDI matrix to use for reference peaks. Supported values: {FORMATTED_MATRIXES}',
     )
     parser.add_argument(
         '--rp', type=float, default=140000, help='Analyzer resolving power (default 140000)',
@@ -130,10 +139,9 @@ The default transform is "align_msiwarp recal_ransac recal_msiwarp"
     parser.add_argument(
         '--db',
         action='append',
-        help='''A preset database name (hmdb, cm3, dhb, dan) or a path to a csv/tsv file containing 
-a "formula" column listing molecules to use for recalibration. 
-Can be specified multiple times to add multiple databases.
-By default it will use "cm3,dhb" for positive mode, "cm3,dan" for negative mode. 
+        help='''A preset database name (hmdb, cm3) or a path to a csv/tsv file containing 
+a "formula" column listing molecules to use for recalibration. (default: cm3) 
+Can be specified multiple times to add multiple databases. 
 Specify --no-default-dbs to suppress the defaults.
 ''',
     )
@@ -145,7 +153,8 @@ Specify --no-default-dbs to suppress the defaults.
     )
     parser.add_argument(
         '--debug',
-        help='Directory to write debug files describing the detected alignment/recalibration parameters (default determined by input path)',
+        help='Directory to write debug files describing the detected alignment/recalibration '
+        'parameters (default: input path with _debug suffix)',
     )
     parser.add_argument('--no-debug', action='store_true', help='Suppress writing debug files')
     parser.add_argument(
@@ -190,7 +199,9 @@ Specify --no-default-dbs to suppress the defaults.
     adducts = ['' if a in ('[M]+', '[M]-') else a for a in adducts]
 
     params = RecalParams(
-        instrument=args.instrument,
+        analyzer=args.analyzer,
+        source=args.source,
+        matrix=args.matrix,
         polarity=args.polarity,
         rp=args.rp,
         base_mz=args.base_mz,

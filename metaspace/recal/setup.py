@@ -81,7 +81,7 @@ setup(
         'pyMSpec',
         'cpyMSpec',
         'scikit-learn',
-        'typing-extensions',
+        'typing-extensions; python_version < "3.8"',
     ],
     # Vendorize MSIWarp because it's not on PyPI yet
     ext_modules=[CMakeExtension('msiwarp/msiwarp_cpp')],

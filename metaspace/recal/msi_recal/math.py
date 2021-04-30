@@ -4,7 +4,7 @@ import cpyMSpec
 import numpy as np
 import pandas as pd
 
-from msi_recal.params import InstrumentType
+from msi_recal.params import AnalyzerType
 
 
 def weighted_stddev(values, weights):
@@ -14,25 +14,25 @@ def weighted_stddev(values, weights):
 
 
 @overload
-def mass_accuracy_bounds(mzs: np.array, instrument: InstrumentType, sigma_1: float) -> np.array:
+def mass_accuracy_bounds(mzs: np.ndarray, analyzer: AnalyzerType, sigma_1: float) -> np.array:
     ...
 
 
 @overload
-def mass_accuracy_bounds(mzs: pd.Series, instrument: InstrumentType, sigma_1: float) -> pd.Series:
+def mass_accuracy_bounds(mzs: pd.Series, analyzer: AnalyzerType, sigma_1: float) -> pd.Series:
     ...
 
 
 @overload
-def mass_accuracy_bounds(mzs: float, instrument: InstrumentType, sigma_1: float) -> float:
+def mass_accuracy_bounds(mzs: float, analyzer: AnalyzerType, sigma_1: float) -> float:
     ...
 
 
-def mass_accuracy_bounds(mzs, instrument: InstrumentType, sigma_1: float):
-    """Returns upper and lower mass boundsm, scaled based on m/z, instrument and sigma_1"""
-    if instrument == 'ft-icr':
+def mass_accuracy_bounds(mzs, analyzer: AnalyzerType, sigma_1: float):
+    """Returns upper and lower mass boundsm, scaled based on m/z, analyzer and sigma_1"""
+    if analyzer == 'ft-icr':
         half_width = mzs ** 2 * sigma_1
-    elif instrument == 'orbitrap':
+    elif analyzer == 'orbitrap':
         half_width = mzs ** 1.5 * sigma_1
     else:
         if np.isscalar(sigma_1):
@@ -46,54 +46,54 @@ def mass_accuracy_bounds(mzs, instrument: InstrumentType, sigma_1: float):
 
 
 def mass_accuracy_bound_indices(
-    mzs: np.array, search_mzs: np.array, instrument: InstrumentType, sigma_1: float
+    mzs: np.ndarray, search_mzs: np.ndarray, analyzer: AnalyzerType, sigma_1: float
 ):
     """Note that mzs must be sorted, but this isn't asserted"""
-    lower_mz, upper_mz = mass_accuracy_bounds(search_mzs, instrument, sigma_1)
+    lower_mz, upper_mz = mass_accuracy_bounds(search_mzs, analyzer, sigma_1)
     lower_idx = np.searchsorted(mzs, lower_mz, 'l')
     upper_idx = np.searchsorted(mzs, upper_mz, 'r')
     return np.vstack([lower_idx, upper_idx])
 
 
 @overload
-def peak_width(mzs: np.array, instrument: InstrumentType, sigma_1: float) -> np.array:
+def peak_width(mzs: np.ndarray, analyzer: AnalyzerType, sigma_1: float) -> np.array:
     ...
 
 
 @overload
-def peak_width(mzs: pd.Series, instrument: InstrumentType, sigma_1: float) -> pd.Series:
+def peak_width(mzs: pd.Series, analyzer: AnalyzerType, sigma_1: float) -> pd.Series:
     ...
 
 
 @overload
-def peak_width(mzs: float, instrument: InstrumentType, sigma_1: float) -> float:
+def peak_width(mzs: float, analyzer: AnalyzerType, sigma_1: float) -> float:
     ...
 
 
-def peak_width(mzs, instrument: InstrumentType, sigma_1: float):
-    lower, upper = mass_accuracy_bounds(mzs, instrument, sigma_1)
+def peak_width(mzs, analyzer: AnalyzerType, sigma_1: float):
+    lower, upper = mass_accuracy_bounds(mzs, analyzer, sigma_1)
     return upper - lower
 
 
-def ppm_to_sigma_1(ppm: float, instrument: InstrumentType, at_mz=200):
+def ppm_to_sigma_1(ppm: float, analyzer: AnalyzerType, at_mz=200):
     """
     Converts a ppm value at a given m/z to a sigma_1 value for use with MSIWarp.
     Effectively METASPACE and MSIWarp treat the two values the same way - as an m/z tolerance.
     However, ppm is proportional to a base m/z value (usually 200), whereas sigma_1 is an absolute
     value of Daltons measured at 1 Da.
     """
-    if instrument == 'orbitrap':
+    if analyzer == 'orbitrap':
         return (at_mz * ppm / 1e6) / (at_mz ** 1.5)
-    if instrument == 'ft-icr':
+    if analyzer == 'ft-icr':
         return (at_mz * ppm / 1e6) / (at_mz ** 2)
     return ppm / 1e6
 
 
-def sigma_1_to_ppm(sigma_1: float, instrument: InstrumentType, at_mz=200):
+def sigma_1_to_ppm(sigma_1: float, analyzer: AnalyzerType, at_mz=200):
     """Inverse of ppm_to_sigma_1"""
-    if instrument == 'orbitrap':
+    if analyzer == 'orbitrap':
         return sigma_1 * 1e6 * at_mz ** 0.5
-    if instrument == 'ft-icr':
+    if analyzer == 'ft-icr':
         return sigma_1 * 1e6 * at_mz
     return sigma_1 * 1e6
 
