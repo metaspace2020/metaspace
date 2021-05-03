@@ -14,7 +14,7 @@ def weighted_stddev(values, weights):
 
 
 @overload
-def mass_accuracy_bounds(mzs: np.ndarray, analyzer: AnalyzerType, sigma_1: float) -> np.array:
+def mass_accuracy_bounds(mzs: np.ndarray, analyzer: AnalyzerType, sigma_1: float) -> np.ndarray:
     ...
 
 
@@ -56,7 +56,7 @@ def mass_accuracy_bound_indices(
 
 
 @overload
-def peak_width(mzs: np.ndarray, analyzer: AnalyzerType, sigma_1: float) -> np.array:
+def peak_width(mzs: np.ndarray, analyzer: AnalyzerType, sigma_1: float) -> np.ndarray:
     ...
 
 
