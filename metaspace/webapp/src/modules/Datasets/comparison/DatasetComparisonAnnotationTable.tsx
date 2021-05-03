@@ -269,6 +269,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
           <div class="flex justify-between items-start mt-2">
             <div>
               <Pagination
+                popperClass='ds-comparison-annotation-table-popper'
                 total={totalCount}
                 pageSize={state.pageSize}
                 pageSizes={pageSizes}
