@@ -98,7 +98,9 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         es_exp = ESExporter(db, sm_config)
         es_exp.delete_ds(ds_id)
         es_exp.index_ds(
-            ds_id=ds_id, moldb=moldb, isocalc=isocalc_mock,
+            ds_id=ds_id,
+            moldb=moldb,
+            isocalc=isocalc_mock,
         )
 
     wait_for_es(sec=1.5)

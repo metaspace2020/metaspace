@@ -8,7 +8,7 @@ logger = logging.getLogger('engine')
 
 
 class PngGenerator:
-    """ Generator of isotopic images as png files
+    """Generator of isotopic images as png files
 
     Args
     ----------

@@ -382,8 +382,7 @@ class QueueConsumer(Thread):
     def __init__(
         self, config, qdesc, callback, on_success, on_failure, logger=None, poll_interval=1
     ):
-        """Create a new instance of the blocking consumer class
-        """
+        """Create a new instance of the blocking consumer class"""
         super().__init__()
         self._config = config
         self._heartbeat = 3 * 60 * 60  # 3h

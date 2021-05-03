@@ -291,8 +291,7 @@ class ESExporter:
 
     @retry_on_exception(TransportError)
     def sync_dataset(self, ds_id):
-        """ Warning: This will wait till ES index/update is completed
-        """
+        """Warning: This will wait till ES index/update is completed"""
         with self._ds_locker.lock(ds_id):
             ds = self._select_ds_by_id(ds_id)
             if self._es.exists(index=self.index, doc_type='dataset', id=ds_id):

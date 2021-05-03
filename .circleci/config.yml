@@ -243,6 +243,10 @@ jobs:
             git clean -fdX
             git checkout -- ~/metaspace
       - run:
+          name: Install dependencies
+          command: |
+            pip install -r metaspace/engine/requirements-dev.txt
+      - run:
           name: Code format check for .py files in ansible and metaspace directories
           command: |
             black --check ansible metaspace/off-sample metaspace/python-client
@@ -286,7 +290,7 @@ jobs:
       - run:
           name: Test engine dependencies
           command: |
-            pip install --upgrade -r requirements.txt
+            pip install --upgrade -r requirements.txt -r requirements-dev.txt
       - attach_workspace:
           at: ~/workspace
       - run:
@@ -346,7 +350,7 @@ jobs:
       - run:
           name: Test setup
           command: |
-            pip install --upgrade -r requirements.txt
+            pip install --upgrade -r requirements.txt -r requirements-dev.txt
             pip install -e .
       - run:
           name: Create engine database

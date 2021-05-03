@@ -45,7 +45,9 @@ def clip_centr_df(
 
     assert len(peaks_cobjs) > 0
     clip_centr_chunks_cobjs, centr_n = fexec.map_unpack(
-        clip_centr_df_chunk, list(enumerate(peaks_cobjs)), runtime_memory=512,
+        clip_centr_df_chunk,
+        list(enumerate(peaks_cobjs)),
+        runtime_memory=512,
     )
 
     clip_centr_chunks_cobjs = list(clip_centr_chunks_cobjs)
@@ -55,7 +57,10 @@ def clip_centr_df(
 
 
 def define_centr_segments(
-    fexec: Executor, clip_centr_chunks_cobjs: List[CloudObject], centr_n: int, ds_size_mb: int,
+    fexec: Executor,
+    clip_centr_chunks_cobjs: List[CloudObject],
+    centr_n: int,
+    ds_size_mb: int,
 ):
     logger.info('Defining centroids segments bounds')
 
@@ -103,7 +108,10 @@ def segment_centroids(
     # define first level segmentation and then segment each one into desired number
 
     centr_segm_lower_bounds = define_centr_segments(
-        fexec, clip_centr_chunks_cobjs, centr_n, len(ds_segms_cobjs) * ds_segm_size_mb,
+        fexec,
+        clip_centr_chunks_cobjs,
+        centr_n,
+        len(ds_segms_cobjs) * ds_segm_size_mb,
     )
     first_level_centr_segm_n = min(32, len(centr_segm_lower_bounds))
     centr_segm_lower_bounds = np.array_split(centr_segm_lower_bounds, first_level_centr_segm_n)

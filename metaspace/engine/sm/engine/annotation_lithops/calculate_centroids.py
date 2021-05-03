@@ -55,7 +55,9 @@ def calculate_centroids(
         return peaks_cobject, peaks_df.shape[0]
 
     peaks_cobjs, peaks_cobject_lens = fexec.map_unpack(
-        calculate_peaks_chunk, list(enumerate(formula_cobjs)), runtime_memory=2048,
+        calculate_peaks_chunk,
+        list(enumerate(formula_cobjs)),
+        runtime_memory=2048,
     )
 
     num_centroids = sum(peaks_cobject_lens)
@@ -183,6 +185,7 @@ def validate_formulas_not_in_multiple_segms(segm_formula_is, warn):
     ].sort_values('formula_i')
     if not formulas_in_multiple_segms_df.empty:
         warn(
-            'found the same formula in multiple segments:', formulas_in_multiple_segms_df,
+            'found the same formula in multiple segments:',
+            formulas_in_multiple_segms_df,
         )
     return formula_in_segms_df

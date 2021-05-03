@@ -32,7 +32,10 @@ def get_manager():
         config=sm_config['rabbitmq'], qdesc=SM_DS_STATUS, logger=logger
     )
     return DatasetManager(
-        db=db, es=ESExporter(db, sm_config), status_queue=status_queue_pub, logger=logger,
+        db=db,
+        es=ESExporter(db, sm_config),
+        status_queue=status_queue_pub,
+        logger=logger,
     )
 
 
@@ -118,7 +121,9 @@ if __name__ == "__main__":
         '--config', dest='config_path', default='conf/config.json', type=str, help='SM config path'
     )
     parser.add_argument(
-        '--exit-after', type=float, help='Exits gracefully with an exitcode after N seconds',
+        '--exit-after',
+        type=float,
+        help='Exits gracefully with an exitcode after N seconds',
     )
     args = parser.parse_args()
 
