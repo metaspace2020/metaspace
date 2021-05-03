@@ -72,14 +72,14 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
             nRows: state.nRows,
             grid: state.arrangement,
           }),
-          datasetId: props.selectedDatasetIds[0],
+          datasetId: props.selectedDatasetIds[0] || state.selectedDatasetIds[0],
         },
       }
       const result = await settingsMutation(variables)
       return {
         name: 'datasets-comparison',
         params: {
-          dataset_id: props.selectedDatasetIds[0],
+          dataset_id: props.selectedDatasetIds[0] || state.selectedDatasetIds[0],
           snapshot_id: result.data.saveImageViewerSnapshot,
         },
       }
