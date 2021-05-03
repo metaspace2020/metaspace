@@ -34,6 +34,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'nbsphinx',
     'sphinx_rtd_theme',
+    'sphinx_autodoc_typehints',
 ]
 
 source_suffix = ['.rst', '.ipynb']

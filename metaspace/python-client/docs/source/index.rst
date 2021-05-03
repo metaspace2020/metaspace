@@ -35,6 +35,7 @@ Applications:
    content/apireference/sm_annotation_utils
    content/apireference/image_processing
    content/apireference/projects_client
+   content/apireference/types
 
 Indices and tables
 ------------------
