@@ -195,18 +195,16 @@ def main(args):
 
     assert input_path.exists(), f'{input_path} not found'
 
-    dbs = args.db or []
-    targeted_dbs = args.targeted_db or []
     if args.polarity == 'positive':
         adducts = (args.adducts or '+H,+Na,+K,[M]+').split(',')
-        if not args.no_default_dbs:
-            dbs = sorted({'cm3', 'dhb', *dbs, *targeted_dbs})
     else:
         adducts = (args.adducts or '-H,+Cl,[M]-').split(',')
-        if not args.no_default_dbs:
-            dbs = sorted({'cm3', 'dan', *dbs, *targeted_dbs})
-
     adducts = ['' if a in ('[M]+', '[M]-') else a for a in adducts]
+
+    dbs = args.db or []
+    targeted_dbs = args.targeted_db or []
+    if not args.no_default_dbs:
+        dbs = sorted({'cm3', *dbs, *targeted_dbs})
 
     params = RecalParams(
         analyzer=args.analyzer,
