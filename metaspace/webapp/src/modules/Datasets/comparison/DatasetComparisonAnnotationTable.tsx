@@ -3,6 +3,7 @@ import './DatasetComparisonAnnotationTable.scss'
 import { Table, TableColumn, Pagination } from '../../../lib/element-ui'
 import AnnotationTableMolName from '../../Annotations/AnnotationTableMolName.vue'
 import { cloneDeep, findIndex } from 'lodash-es'
+import Vue from 'vue'
 
 interface DatasetComparisonAnnotationTableProps {
   annotations: any[]
@@ -15,7 +16,6 @@ interface DatasetComparisonAnnotationTableState {
   selectedRow: any
   pageSize: number
   offset: number
-  firstLoaded: boolean
 }
 
 const KEY_TO_ACTION = {
@@ -33,6 +33,12 @@ const KEY_TO_ACTION = {
   l: 'right',
 }
 
+const SORT_ORDER_TO_COLUMN = {
+  ORDER_BY_MSM: 'msmscore',
+  ORDER_BY_FDR_MSM: 'fdrlevel',
+  ORDER_BY_FORMULA: 'sumformula',
+}
+
 export const DatasetComparisonAnnotationTable = defineComponent<DatasetComparisonAnnotationTableProps>({
   name: 'DatasetComparisonAnnotationTable',
   props: {
@@ -45,6 +51,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
     },
   },
   setup: function(props, { emit, root }) {
+    const { $store, $route } = root
     const table = ref(null)
     const pageSizes = [15, 20, 25, 30]
     const state = reactive<DatasetComparisonAnnotationTableState>({
@@ -52,23 +59,48 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       pageSize: 15,
       offset: 0,
       processedAnnotations: [],
-      firstLoaded: false,
     })
 
     watchEffect(() => {
       if (state.processedAnnotations.length !== props.annotations.length) {
-        state.processedAnnotations = cloneDeep(props.annotations)
-        state.selectedRow = state.processedAnnotations[0]
-        state.firstLoaded = true
-        updateSelectedRow()
+        const { sort, row } = $route.query
+        const annotations = cloneDeep(props.annotations)
+        state.processedAnnotations = annotations
+        const order = sort?.indexOf('-') === 0 ? 'descending' : 'ascending'
+        const prop = sort ? sort.replace('-', '') : 'msmscore'
+        handleSortChange({ order, prop })
+        state.selectedRow = row ? cloneDeep(props.annotations)[parseInt(row, 10)]
+          : state.processedAnnotations[0]
+        handleCurrentRowChange(state.selectedRow)
       }
     })
 
-    const updateSelectedRow = () => {
-      if (table.value !== null) {
-        // @ts-ignore
-        table.value.setCurrentRow(state.selectedRow)
-        handleCurrentRowChange(state.selectedRow)
+    const clearCurrentRow = () => {
+      const currentRow = document.querySelector('.current-row')
+      if (currentRow) {
+        currentRow.classList.remove('current-row')
+      }
+    }
+
+    const setCurrentRow = () => {
+      clearCurrentRow()
+      const dataStart = ((state.offset - 1) * state.pageSize)
+      const dataEnd = ((state.offset - 1) * state.pageSize) + state.pageSize
+      const currentIndex = findIndex(state.processedAnnotations.slice(dataStart, dataEnd),
+        (annotation) => { return state.selectedRow.id === annotation.id })
+      if (currentIndex !== -1) {
+        setTimeout(() => {
+          document.querySelectorAll('.el-table__row')[currentIndex].classList.add('current-row')
+        }, 500)
+      }
+    }
+
+    const getDefaultTableSort = () => {
+      const { sort } = $route.query
+
+      return {
+        prop: sort ? sort.replace('-', '') : 'msmscore',
+        order: sort?.indexOf('-') === 0 ? 'descending' : 'ascending',
       }
     }
 
@@ -81,7 +113,13 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
         state.selectedRow = row
         const currentIndex = findIndex(props.annotations,
           (annotation) => { return row.id === annotation.id })
-        emit('rowChange', currentIndex)
+        if (currentIndex !== -1) {
+          $store.commit('setRow', currentIndex)
+          emit('rowChange', currentIndex)
+          // for same reason setCurrentRow and clearSelection are not working so
+          // I had to add the current row class by hand
+          setCurrentRow()
+        }
       }
     }
 
@@ -143,13 +181,18 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
 
       if (!order) {
         state.processedAnnotations = props.annotations
-      } else if (prop === 'sumFormula') {
+      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_FORMULA) {
         handleSortFormula(order)
-      } else if (prop === 'msmScore') {
+      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_MSM) {
         handleSortMSM(order)
-      } else if (prop === 'fdrLevel') {
+      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_FDR_MSM) {
         handleSortFdr(order)
       }
+
+      $store.commit('setSortOrder', {
+        by: prop,
+        dir: order?.toUpperCase(),
+      })
     }
 
     const onPageSizeChange = (newSize: number) => {
@@ -158,7 +201,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
 
     const onPageChange = (newPage: number) => {
       state.offset = newPage
-      updateSelectedRow()
+      handleCurrentRowChange(state.selectedRow)
     }
 
     const formatAnnotation = (row: any) => {
@@ -226,11 +269,13 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
             rowClassName={getRowClass}
             size="mini"
             border
+            current
             elementLoadingText="Loading results …"
             highlightCurrentRow
             width="100%"
             stripe
             tabindex="1"
+            defaultSort={getDefaultTableSort()}
             {...{
               on: {
                 'key-up': handleKeyUp,
@@ -241,7 +286,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
           >
             <TableColumn
               key="sumFormula"
-              property="sumFormula"
+              property="sumformula"
               label="Annotation"
               sortable={'custom'}
               sortMethod={handleSortFormula}
@@ -250,7 +295,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
             />
             <TableColumn
               key="msmScore"
-              property="msmScore"
+              property="msmscore"
               label="MSM"
               sortable="custom"
               minWidth="60"
@@ -258,7 +303,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
             />
             <TableColumn
               key="fdrLevel"
-              property="fdrLevel"
+              property="fdrlevel"
               label="FDR"
               className="fdr-cell"
               sortable="custom"

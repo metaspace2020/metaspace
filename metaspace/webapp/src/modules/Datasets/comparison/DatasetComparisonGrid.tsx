@@ -57,7 +57,6 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
     },
     selectedAnnotation: {
       type: Number,
-      default: 0,
     },
     annotations: {
       type: Array,
@@ -191,7 +190,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
     }
 
     const getAnnotationData = (grid: any, annotationIdx = 0) => {
-      if (!grid || !props.annotations || props.annotations.length === 0) {
+      if (!grid || !props.annotations || props.annotations.length === 0 || annotationIdx === -1) {
         state.annotationData = {}
         state.gridState = {}
         state.firstLoaded = true
@@ -288,7 +287,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         return null
       }
       const { minIntensity, maxIntensity } = isotopeImage
-      const png = ionImagePng || await loadPngFromUrl(isotopeImage.url)
+      const png = await loadPngFromUrl(isotopeImage.url)
       return processIonImage(png, minIntensity, maxIntensity, scaleType, userScaling)
     }
 
@@ -384,9 +383,10 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
 
     const renderImageViewerHeaders = (row: number, col: number) => {
       if (
-        !props.isLoading
+        (!props.isLoading
           && state.annotationData[`${row}-${col}`]?.empty
-          && state.gridState[`${row}-${col}`]?.empty
+          && state.gridState[`${row}-${col}`]?.empty)
+        || (!props.isLoading && state.selectedAnnotation === -1)
       ) {
         return (
           <div key={col} class='dataset-comparison-grid-col overflow-hidden items-center justify-center'
@@ -479,13 +479,14 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
               <FadeTransition class="absolute top-0 right-0 mt-3 ml-3 dom-to-image-hidden">
                 {
                   state.refsLoaded
-                  && state.gridState[`${row}-${col}`] !== undefined
+                  && state.gridState[`${row}-${col}`]
+                  && state.gridState[`${row}-${col}`].userScaling
                   && <div
                     class="p-3 bg-gray-100 rounded-lg box-border shadow-xs"
                     ref={`range-slider-${row}-${col}`}>
                     <RangeSlider
                       class="ds-comparison-opacity-item"
-                      value={state.gridState[`${row}-${col}`]?.userScaling}
+                      value={state.gridState[`${row}-${col}`].userScaling}
                       min={0}
                       max={1}
                       step={0.01}
@@ -496,8 +497,8 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
                     <div
                       class="ds-intensities-wrapper">
                       <IonIntensity
-                        value={state.gridState[`${row}-${col}`]?.minIntensity}
-                        intensities={state.gridState[`${row}-${col}`]?.intensity?.min}
+                        value={state.gridState[`${row}-${col}`].minIntensity}
+                        intensities={state.gridState[`${row}-${col}`].intensity?.min}
                         label="Minimum intensity"
                         placeholder="min."
                         onInput={(value: number) =>
@@ -508,7 +509,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
                             'min')}
                       />
                       <IonIntensity
-                        value={state.gridState[`${row}-${col}`]?.maxIntensity}
+                        value={state.gridState[`${row}-${col}`].maxIntensity}
                         intensities={state.gridState[`${row}-${col}`]?.intensity?.max}
                         label="Minimum intensity"
                         placeholder="min."

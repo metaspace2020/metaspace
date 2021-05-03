@@ -4,7 +4,7 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
 <div class="dataset-comparison-annotation-table" annotations="[object Object],[object Object]" onrowchange="function mockConstructor(_a) {
         return fn.apply(this, arguments);
       }">
-  <div class="el-table el-table--fit el-table--striped el-table--border el-table--scrollable-x el-table--enable-row-hover el-table--mini" id="annot-table" elementloadingtext="Loading results …" tabindex="1">
+  <div class="el-table el-table--fit el-table--striped el-table--border el-table--scrollable-x el-table--enable-row-hover el-table--mini" id="annot-table" current="true" elementloadingtext="Loading results …" tabindex="1">
     <div class="hidden-columns">
       <div></div>
       <div></div>
@@ -22,7 +22,7 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
             <th colspan="1" rowspan="1" class="el-table_1_column_1     is-leaf is-sortable">
               <div class="cell">Annotation<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
             </th>
-            <th colspan="1" rowspan="1" class="el-table_1_column_2     is-leaf is-sortable">
+            <th colspan="1" rowspan="1" class="el-table_1_column_2 ascending    is-leaf is-sortable">
               <div class="cell">MSM<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
             </th>
             <th colspan="1" rowspan="1" class="el-table_1_column_3   fdr-cell  is-leaf is-sortable">

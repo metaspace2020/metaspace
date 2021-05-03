@@ -16,6 +16,7 @@ import gql from 'graphql-tag'
 import FilterPanel from '../../Filters/FilterPanel.vue'
 import { isEqual } from 'lodash'
 import config from '../../../lib/config'
+import { cloneDeep } from 'lodash-es'
 
 interface DatasetComparisonPageProps {
   className: string
@@ -49,7 +50,7 @@ export default defineComponent<DatasetComparisonPageProps>({
     const { $route, $store } = root
     const gridNode = ref(null)
     const state = reactive<any>({
-      selectedAnnotation: 0,
+      selectedAnnotation: -1,
       gridState: {},
       annotations: [],
       grid: undefined,
@@ -125,7 +126,11 @@ export default defineComponent<DatasetComparisonPageProps>({
 
     const handleRowChange = (idx: number) => {
       if (idx !== -1) {
+        state.isLoading = true
         state.selectedAnnotation = idx
+        setTimeout(() => {
+          state.isLoading = false
+        }, 500)
       }
     }
 
@@ -186,7 +191,7 @@ export default defineComponent<DatasetComparisonPageProps>({
           <div class='dataset-comparison-wrapper w-full md:w-4/12'>
             <DatasetComparisonAnnotationTable
               isLoading={state.annotationLoading}
-              annotations={(state.annotations || []).map((ion: any) => ion.datasets[0])}
+              annotations={(cloneDeep(state.annotations) || []).map((ion: any) => ion.datasets[0])}
               onRowChange={handleRowChange}/>
           </div>
           <div class='dataset-comparison-wrapper  w-full  md:w-8/12'>
