@@ -24,7 +24,7 @@ MATRIX_DBS = [f.stem for f in DB_ROOT.glob('matrix_*.csv')]
 PARSED_MATRIX_DBS = sorted([matrix_db.split('_')[1:] for matrix_db in MATRIX_DBS])
 MATRIXES = set(matrix for matrix, polarity in PARSED_MATRIX_DBS)
 FORMATTED_MATRIXES = ', '.join(
-    f'{matrix} ({"/".join(pols[::-1])}'
+    f'{matrix} ({"/".join(pols[::-1])})'
     for matrix in MATRIXES
     for pols in [[p for m, p in PARSED_MATRIX_DBS if m == matrix]]
 )
@@ -107,7 +107,7 @@ class RecalParams:
         if dbs is DEFAULT:
             dbs = ['cm3']
 
-        if matrix is not None:
+        if matrix is not None and matrix.lower() != 'none':
             matrix_db = f'matrix_{matrix.lower()}_{polarity[:3]}'
             if matrix_db in BUILTIN_DBS:
                 dbs.append(matrix_db)

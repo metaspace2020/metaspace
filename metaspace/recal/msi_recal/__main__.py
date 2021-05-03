@@ -110,7 +110,8 @@ The default transform is "align_msiwarp recal_ransac"
     parser.add_argument(
         '--matrix',
         default=DEFAULT,
-        help=f'MALDI matrix to use for reference peaks. Supported values: {FORMATTED_MATRIXES}',
+        help=f'MALDI matrix to use for reference peaks. Supported values: {FORMATTED_MATRIXES}. '
+             f'(default: dhb in positive mode/dan in negative mode. Use "none" to suppress the default)',
     )
     parser.add_argument(
         '--rp',

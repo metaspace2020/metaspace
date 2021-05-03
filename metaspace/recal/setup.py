@@ -65,7 +65,7 @@ class CMakeBuild(build_ext):
 
 setup(
     name='msi_recal',
-    version='0.2.0',
+    version='0.2.1',
     description='Pipeline for mostly unsupervised recalibration of imzML mass spectrometry data',
     url='https://github.com/metaspace2020/metaspace/tree/master/metaspace/recal',
     author='Alexandrov Team, EMBL',
