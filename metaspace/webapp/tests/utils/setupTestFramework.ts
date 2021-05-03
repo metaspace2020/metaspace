@@ -1,5 +1,4 @@
 import Vue from 'vue'
-import ElementUI from '../../src/lib/element-ui'
 import registerMockComponent from './registerMockComponent'
 import VueRouter from 'vue-router'
 import registerMockDirective from './registerMockDirective'
@@ -14,8 +13,14 @@ window.fetch = jest.fn()
 window.scrollTo = jest.fn()
 
 Vue.use(VueRouter)
-Vue.use(ElementUI)
+
+// Mock problematic ElementUI components that are not mocked with Vue.use(ElementUi)
+registerMockComponent('el-collapse', { path: 'element-ui/lib/collapse' })
+registerMockComponent('el-collapse-item', { path: 'element-ui/lib/collapse-item' })
+
+Vue.use(require('../../src/lib/element-ui').default)
 Vue.use(VueCompositionApi)
+
 // Mock problematic ElementUI components
 registerMockComponent('el-dialog')
 registerMockComponent('el-popover')

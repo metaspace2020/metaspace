@@ -160,7 +160,11 @@ describe('DatasetComparisonDialog', () => {
 
     expect(wrapper.find('.text-danger').exists()).toBe(false)
     expect(mockAnnotationAgg).toHaveBeenCalledTimes(1)
-    // expect(wrapper.vm.$route.name).toBe('datasets-comparison')
-    // expect(wrapper.vm.$route.query.ds).toBe(graphqlReturnData.map((ds) => ds.id).sort().join(','))
+    await Vue.nextTick()
+
+    // check if the user was redirect to the page with the correct params
+    expect(wrapper.vm.$route.name).toBe('datasets-comparison')
+    expect(wrapper.vm.$route.params.snapshot_id).toBe('saveImageViewerSnapshot')
+    expect(wrapper.vm.$route.params.dataset_id).toBe(propsData.selectedDatasetIds[0])
   })
 })
