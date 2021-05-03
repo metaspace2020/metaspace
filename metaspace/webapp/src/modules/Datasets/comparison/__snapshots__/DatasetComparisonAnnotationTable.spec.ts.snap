@@ -126,7 +126,7 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
         <!---->
       </div>
       <transition-stub name="el-zoom-in-top">
-        <div class="el-select-dropdown el-popper" style="display: none;">
+        <div class="el-select-dropdown el-popper ds-comparison-annotation-table-popper" style="display: none;">
           <div class="el-scrollbar" style="">
             <div class="el-select-dropdown__wrap el-scrollbar__wrap el-scrollbar__wrap--hidden-default">
               <ul class="el-scrollbar__view el-select-dropdown__list">
