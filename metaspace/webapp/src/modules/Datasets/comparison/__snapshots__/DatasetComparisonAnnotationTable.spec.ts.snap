@@ -4,7 +4,7 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
 <div class="dataset-comparison-annotation-table" annotations="[object Object],[object Object]" onrowchange="function mockConstructor(_a) {
         return fn.apply(this, arguments);
       }">
-  <div class="el-table el-table--fit el-table--striped el-table--border el-table--scrollable-x el-table--enable-row-hover el-table--enable-row-transition el-table--mini" id="annot-table" elementloadingtext="Loading results …" tabindex="1">
+  <div class="el-table el-table--fit el-table--striped el-table--border el-table--scrollable-x el-table--enable-row-hover el-table--mini" id="annot-table" elementloadingtext="Loading results …" tabindex="1">
     <div class="hidden-columns">
       <div></div>
       <div></div>
@@ -40,70 +40,10 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
           <col name="el-table_1_column_3" width="40">
         </colgroup>
         <tbody>
-          <tr class="el-table__row current-row fdr-5 ">
-            <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
-              <div class="cell">
-                <div class="cell-wrapper">
-                  <mock-el-popover trigger="hover" placement="right" class="cell-span">
-                    <div slot-key="default">
-                      <div class="leading-5 py-2 px-3 font-normal content text-sm text-left">
-                        <!---->
-                        <!---->
-                        <ul class="p-0 list-none leading-7">
-                          <!---->
-                        </ul>
-                        <!---->
-                        <!---->
-                      </div>
-                    </div>
-                    <div slot-key="reference"><span>[C<sub class="leading-none">10</sub>H<sub class="leading-none">11</sub>NO + Na]⁺</span>
-                      <!---->
-                    </div>
-                  </mock-el-popover> <svg data-icon="filter" class="cell-filter-button"></svg>
-                </div>
-              </div>
-            </td>
-            <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
-              <div class="cell">0.736</div>
-            </td>
-            <td rowspan="1" colspan="1" class="el-table_1_column_3  fdr-cell">
-              <div class="cell"><span>5%</span></div>
-            </td>
-          </tr>
-          <tr class="el-table__row el-table__row--striped fdr-5 ">
-            <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
-              <div class="cell">
-                <div class="cell-wrapper">
-                  <mock-el-popover trigger="hover" placement="right" class="cell-span">
-                    <div slot-key="default">
-                      <div class="leading-5 py-2 px-3 font-normal content text-sm text-left">
-                        <!---->
-                        <!---->
-                        <ul class="p-0 list-none leading-7">
-                          <!---->
-                        </ul>
-                        <!---->
-                        <!---->
-                      </div>
-                    </div>
-                    <div slot-key="reference"><span>[C<sub class="leading-none">23</sub>H<sub class="leading-none">45</sub>NO<sub class="leading-none">4</sub> + H]⁺</span>
-                      <!---->
-                    </div>
-                  </mock-el-popover> <svg data-icon="filter" class="cell-filter-button"></svg>
-                </div>
-              </div>
-            </td>
-            <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
-              <div class="cell">0.510</div>
-            </td>
-            <td rowspan="1" colspan="1" class="el-table_1_column_3  fdr-cell">
-              <div class="cell"><span>5%</span></div>
-            </td>
-          </tr>
           <!---->
         </tbody>
       </table>
-      <!---->
+      <div class="el-table__empty-block" style="height: 100%; width: 220px;"><span class="el-table__empty-text">暂无数据</span></div>
       <!---->
     </div>
     <!---->
@@ -114,50 +54,16 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
   </div>
   <div class="flex justify-between items-start mt-2">
     <div>
-      <div class="el-pagination"><button type="button" disabled="disabled" class="btn-prev"><i class="el-icon el-icon-arrow-left"></i></button>
-        <ul class="el-pager">
-          <li class="number active">1</li>
-          <!---->
-          <!---->
-          <!---->
-        </ul><button type="button" disabled="disabled" class="btn-next"><i class="el-icon el-icon-arrow-right"></i></button><span class="el-pagination__sizes"><div class="el-select el-select--mini"><!----><div class="el-input el-input--mini el-input--suffix"><!----><input type="text" readonly="readonly" autocomplete="off" placeholder="请选择" class="el-input__inner"><!----><span class="el-input__suffix"><span class="el-input__suffix-inner"><i class="el-select__caret el-input__icon el-icon-arrow-up"></i><!----><!----><!----><!----><!----></span>
-        <!----></span>
-        <!---->
-        <!---->
+      <mock-el-pagination total="2" pagesize="15" pagesizes="15,20,25,30" currentpage="0" layout="prev,pager,next,sizes"></mock-el-pagination>
+      <div id="annot-count" class="mt-2"><b>2</b> matching records</div>
+      <div class="mt-2">
+        <div class="fdr-legend-header">FDR levels:</div>
+        <div class="fdr-legend fdr-5">5%</div>
+        <div class="fdr-legend fdr-10">10%</div>
+        <div class="fdr-legend fdr-20">20%</div>
+        <div class="fdr-legend fdr-50">50%</div>
       </div>
-      <transition-stub name="el-zoom-in-top">
-        <div class="el-select-dropdown el-popper ds-comparison-annotation-table-popper" style="display: none;">
-          <div class="el-scrollbar" style="">
-            <div class="el-select-dropdown__wrap el-scrollbar__wrap el-scrollbar__wrap--hidden-default">
-              <ul class="el-scrollbar__view el-select-dropdown__list">
-                <!---->
-                <li class="el-select-dropdown__item selected"><span>15条/页</span></li>
-                <li class="el-select-dropdown__item"><span>20条/页</span></li>
-                <li class="el-select-dropdown__item"><span>25条/页</span></li>
-                <li class="el-select-dropdown__item"><span>30条/页</span></li>
-              </ul>
-            </div>
-            <div class="el-scrollbar__bar is-horizontal">
-              <div class="el-scrollbar__thumb" style="transform: translateX(0%); webkit-transform: translateX(0%);"></div>
-            </div>
-            <div class="el-scrollbar__bar is-vertical">
-              <div class="el-scrollbar__thumb" style="transform: translateY(0%); webkit-transform: translateY(0%);"></div>
-            </div>
-          </div>
-          <!---->
-        </div>
-      </transition-stub>
-    </div></span>
+    </div>
   </div>
-  <div id="annot-count" class="mt-2"><b>2</b> matching records</div>
-  <div class="mt-2">
-    <div class="fdr-legend-header">FDR levels:</div>
-    <div class="fdr-legend fdr-5">5%</div>
-    <div class="fdr-legend fdr-10">10%</div>
-    <div class="fdr-legend fdr-20">20%</div>
-    <div class="fdr-legend fdr-50">50%</div>
-  </div>
-</div>
-</div>
 </div>
 `;

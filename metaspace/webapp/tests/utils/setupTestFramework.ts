@@ -17,6 +17,7 @@ Vue.use(VueRouter)
 // Mock problematic ElementUI components that are not mocked with Vue.use(ElementUi)
 registerMockComponent('el-collapse', { path: 'element-ui/lib/collapse' })
 registerMockComponent('el-collapse-item', { path: 'element-ui/lib/collapse-item' })
+registerMockComponent('el-pagination', { path: 'element-ui/lib/pagination' })
 
 Vue.use(require('../../src/lib/element-ui').default)
 Vue.use(VueCompositionApi)
@@ -33,7 +34,6 @@ registerMockComponent('el-dropdown')
 registerMockComponent('el-dropdown-menu')
 registerMockComponent('el-dropdown-item')
 registerMockComponent('el-tree')
-registerMockComponent('el-pagination')
 
 // Mock problematic directives
 registerMockDirective('loading')
