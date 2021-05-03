@@ -41,7 +41,11 @@ def calc_spectral_scores(
         else:
             min_abundance = min(limit_of_detection / db_hit.ints, 0.9)
         mol_peaks = get_centroid_peaks(
-            db_hit.formula, db_hit.adduct, db_hit.charge, min_abundance, params.instrument_model,
+            db_hit.formula,
+            db_hit.adduct,
+            db_hit.charge,
+            min_abundance,
+            params.instrument_model,
         )
         # Recalc error as centroid may be slightly different to monoisotopic peak
         mz_error = db_hit.mz - mol_peaks[0][0]

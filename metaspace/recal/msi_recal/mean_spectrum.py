@@ -17,7 +17,9 @@ logger = logging.getLogger(__name__)
 
 
 def _get_mean_spectrum(
-    mx_spectra: np.ndarray, analyzer: AnalyzerType, sigma_1: float,
+    mx_spectra: np.ndarray,
+    analyzer: AnalyzerType,
+    sigma_1: float,
 ):
     tics = np.array([np.sum(to_height(s)) for s in mx_spectra])
     # min_mz = np.floor(np.min([s[0].mz for s in mx_spectra if len(s)]))
@@ -44,7 +46,14 @@ def _get_mean_spectrum(
     )
 
     return generate_mean_spectrum(
-        mx_spectra, n_points, sigma_1, min_mz, max_mz, tics, analyzer, stride=1,
+        mx_spectra,
+        n_points,
+        sigma_1,
+        min_mz,
+        max_mz,
+        tics,
+        analyzer,
+        stride=1,
     )
 
 

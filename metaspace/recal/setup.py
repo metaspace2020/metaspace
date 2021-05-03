@@ -65,11 +65,14 @@ class CMakeBuild(build_ext):
 
 setup(
     name='msi_recal',
-    version='0.1.7',
+    version='0.2.0',
     description='Pipeline for mostly unsupervised recalibration of imzML mass spectrometry data',
     url='https://github.com/metaspace2020/metaspace/tree/master/metaspace/recal',
     author='Alexandrov Team, EMBL',
-    package_dir={'msiwarp': 'MSIWarp/src/python-bindings/msiwarp', '': '.',},
+    package_dir={
+        'msiwarp': 'MSIWarp/src/python-bindings/msiwarp',
+        '': '.',
+    },
     packages=[*find_packages(), 'msiwarp', 'msiwarp.util'],
     package_data={'msi_recal': ['dbs/*.csv']},
     install_requires=[

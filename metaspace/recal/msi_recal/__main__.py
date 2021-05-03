@@ -87,10 +87,14 @@ The default transform is "align_msiwarp recal_ransac"
         'transform',
         help='Which transformation functions to use. See below',
         nargs='*',
-        default=['align_msiwarp,5,1,0.2', 'recal_ransac,500', 'recal_msiwarp,20,4,0.1',],
+        default=[
+            'align_msiwarp,5,1,0.2',
+            'recal_ransac,500',
+        ],
     )
     parser.add_argument(
-        '--output', help='Output path (default: input path with _recal suffix)',
+        '--output',
+        help='Output path (default: input path with _recal suffix)',
     )
     parser.add_argument(
         '--analyzer',
@@ -109,7 +113,10 @@ The default transform is "align_msiwarp recal_ransac"
         help=f'MALDI matrix to use for reference peaks. Supported values: {FORMATTED_MATRIXES}',
     )
     parser.add_argument(
-        '--rp', type=float, default=140000, help='Analyzer resolving power (default 140000)',
+        '--rp',
+        type=float,
+        default=140000,
+        help='Analyzer resolving power (default 140000)',
     )
     parser.add_argument(
         '--base-mz',

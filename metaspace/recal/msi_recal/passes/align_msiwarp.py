@@ -61,7 +61,11 @@ class AlignMsiwarp:
             max(self.align_sigma_1, self.jitter_sigma_1 + self.peak_width_sigma_1),
         )
         ref_df = representative_spectrum(
-            X, mean_spectrum, self.analyzer, self.align_sigma_1, denoise=not self.profile_mode,
+            X,
+            mean_spectrum,
+            self.analyzer,
+            self.align_sigma_1,
+            denoise=not self.profile_mode,
         )
 
         if self.profile_mode:
@@ -192,7 +196,13 @@ class AlignMsiwarp:
             mid_mz = (lo_mz + hi_mz) / 2
             common_sps = {*lo_warp.keys()}.intersection(hi_warp.keys())
             mid_warp = {sp: (lo_warp[sp] + hi_warp[sp]) for sp in common_sps}
-            debug_warps.insert(1, (mid_mz, mid_warp,))
+            debug_warps.insert(
+                1,
+                (
+                    mid_mz,
+                    mid_warp,
+                ),
+            )
 
         for mz, warp in debug_warps:
             max_val = np.max(np.abs(list(warp.values())))
