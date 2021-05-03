@@ -5,6 +5,7 @@ import Vuex from 'vuex'
 import { sync } from 'vuex-router-sync'
 import store from '../../../store'
 import router from '../../../router'
+import registerMockComponent from '../../../../tests/utils/registerMockComponent'
 
 describe('DatasetComparisonAnnotationTable', () => {
   const fillArray = (value: any, len: number) => {
@@ -85,6 +86,7 @@ describe('DatasetComparisonAnnotationTable', () => {
   beforeAll(() => {
     Vue.use(Vuex)
     sync(store, router)
+    registerMockComponent('el-select', { path: 'element-ui/lib/select' })
   })
 
   it('it should match snapshot', async() => {
@@ -100,14 +102,5 @@ describe('DatasetComparisonAnnotationTable', () => {
 
     expect(wrapper.find('#annot-count').text())
       .toBe(`${propsData.annotations.length} matching records`)
-  })
-
-  it('it should show the correct number of pages', async() => {
-    propsData.annotations = fillArray(propsData.annotations[0], 30)
-    const wrapper = mount(testHarness, { store, router, propsData })
-    await Vue.nextTick()
-
-    expect(wrapper.findAll('.number').at(-1).text())
-      .toBe('2')
   })
 })
