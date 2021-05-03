@@ -53,7 +53,8 @@ class LithopsDaemon:
                 {**msg, 'retry_attempt': msg.get('retry_attempt', 0) + 1}
             )
             self._manager.post_to_slack(
-                'bomb', f" [x] Annotation failed, retrying: {json.dumps(msg)}\n```{exc}```",
+                'bomb',
+                f" [x] Annotation failed, retrying: {json.dumps(msg)}\n```{exc}```",
             )
         else:
             self.logger.critical(f'Lithops annotation failed. Falling back to Spark\n{exc}')
