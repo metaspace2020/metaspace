@@ -76,7 +76,7 @@ export const findUserByApiKey = async(apiKey: string, groups = false) => {
   return (await query.getOne()) || null
 }
 
-export const createExpiry = (minutes = 10): Moment => {
+export const createExpiry = (minutes = 60): Moment => {
   return utc().add(minutes, 'minutes')
 }
 

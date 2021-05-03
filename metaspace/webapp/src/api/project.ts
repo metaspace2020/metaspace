@@ -99,8 +99,8 @@ export const updateUserProjectMutation =
   }`
 
 export const importDatasetsIntoProjectMutation =
-  gql`mutation($projectId: ID!, $datasetIds: [ID!]!) {
-    importDatasetsIntoProject(projectId: $projectId, datasetIds: $datasetIds)
+  gql`mutation($projectId: ID!, $datasetIds: [ID!], $removedDatasetIds: [ID!]) {
+    importDatasetsIntoProject(projectId: $projectId, datasetIds: $datasetIds, removedDatasetIds: $removedDatasetIds)
   }`
 
 export const createReviewLinkMutation =

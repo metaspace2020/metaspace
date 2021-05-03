@@ -75,6 +75,6 @@ export default async(ctx: Context, userId: string, projectId: string, newRole: U
     const approved = newRole == null
       ? null
       : [UPRO.MANAGER, UPRO.MEMBER].includes(newRole)
-    await updateProjectDatasets(ctx, projectId, datasetIds, approved)
+    await updateProjectDatasets(ctx, projectId, datasetIds, [], approved)
   }
 }

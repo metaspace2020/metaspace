@@ -5,11 +5,11 @@ import signal
 from traceback import format_exc
 
 from sm.engine.annotation_lithops.executor import LithopsStalledException
+from sm.engine.config import SMConfig
 from sm.engine.daemons.actions import DaemonActionStage, DaemonAction
 from sm.engine.dataset import DatasetStatus
-from sm.engine.errors import ImzMLError, AnnotationError
+from sm.engine.errors import AnnotationError
 from sm.engine.queue import QueueConsumer, QueuePublisher
-from sm.engine.config import SMConfig
 from sm.rest.dataset_manager import DatasetActionPriority
 
 
@@ -43,29 +43,30 @@ class LithopsDaemon:
         self.logger.info(' SM lithops daemon: success')
         self._manager.post_to_slack('dart', f' [v] Annotation succeeded: {json.dumps(msg)}')
 
+    # pylint: disable=unused-argument
     def _on_failure(self, msg, e):
-        if isinstance(e, LithopsStalledException):
-            # Requeue the message so it retries, then exit the process and let supervisor restart it
-            if msg.get('retry_attempt', 0) < 1:
-                self.logger.info('Lithops stalled. Retrying')
-                self._lithops_queue_pub.publish(
-                    {**msg, 'retry_attempt': msg.get('retry_attempt', 0) + 1}
-                )
-            else:
-                self.logger.critical('Lithops stalled. Retrying on Spark')
-                self._annot_queue_pub.publish(msg)
+        exc = format_exc(limit=10)
+        # Requeue the message so it retries
+        if msg.get('retry_attempt', 0) < 1:
+            self.logger.warning(f'Lithops annotation failed, retrying.\n{exc}')
+            self._lithops_queue_pub.publish(
+                {**msg, 'retry_attempt': msg.get('retry_attempt', 0) + 1}
+            )
+            self._manager.post_to_slack(
+                'bomb', f" [x] Annotation failed, retrying: {json.dumps(msg)}\n```{exc}```",
+            )
+        else:
+            self.logger.critical(f'Lithops annotation failed. Falling back to Spark\n{exc}')
+            self._annot_queue_pub.publish(msg)
 
             self._manager.post_to_slack(
-                'bomb', f" [x] Lithops stall: {json.dumps(msg)}\n```{format_exc(limit=10)}```"
+                'bomb',
+                f" [x] Annotation failed, retrying on Spark: {json.dumps(msg)}\n```{exc}```",
             )
-            os.kill(os.getpid(), signal.SIGINT)
 
-        else:
-            self._manager.ds_failure_handler(msg, e)
-
-            if 'email' in msg:
-                traceback = e.__cause__.traceback if isinstance(e.__cause__, ImzMLError) else None
-                self._manager.send_failed_email(msg, traceback)
+        # Exit the process and let supervisor restart it, in case Lithops was left in
+        # an unrecoverable state
+        os.kill(os.getpid(), signal.SIGINT)
 
     def _callback(self, msg):
         try:
