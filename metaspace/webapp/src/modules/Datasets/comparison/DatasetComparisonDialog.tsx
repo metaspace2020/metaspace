@@ -123,8 +123,8 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
                     placeholder=" "
                     onChange={handleDatasetSelection}>
                     {
-                      Array.isArray(dataset?.value)
-                        && dataset?.value.map((ds) => {
+                      Array.isArray(dataset.value)
+                        && dataset.value.map((ds) => {
                           return (
                             <Option key={ds.id} label={ds.name} value={ds.id}/>
                           )
@@ -230,8 +230,8 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
                                   onChange={(value: string) => { handleSelection(value, row, col) }}>
                                   {
                                     state.showOptions
-                                    && Array.isArray(dataset?.value)
-                                    && dataset?.value
+                                    && Array.isArray(dataset.value)
+                                    && dataset.value
                                       .filter(ds => state.selectedDatasetIds.includes(ds.id)).map((ds) => {
                                         return (
                                           <Option

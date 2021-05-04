@@ -60,7 +60,7 @@ export default defineComponent<DatasetComparisonPageProps>({
       refsLoaded: false,
       showViewer: false,
       annotationLoading: true,
-      filter: $store?.getters?.filter,
+      filter: $store.getters.filter,
       isLoading: false,
     })
     const { snapshot_id: snapshotId, dataset_id: sourceDsId } = $route.params
