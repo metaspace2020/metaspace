@@ -323,7 +323,7 @@ type Mutation {
     id: String,
     input: DatasetCreateInput!,
     priority: Int=0,
-    useLithops: Boolean=false
+    useLithops: Boolean=true
   ): String!
 
   # Throws errors of types: "under_review_or_published", "reprocessing_needed", "failed_validation"
@@ -335,7 +335,7 @@ type Mutation {
     skipValidation: Boolean=false, # ignored for non-admins
     force: Boolean=false,
     priority: Int=0,
-    useLithops: Boolean=false
+    useLithops: Boolean=true
   ): String!
 
   # Throws errors of types: "under_review_or_published"
@@ -346,7 +346,7 @@ type Mutation {
     id: String,
     priority: Int=0,
     delFirst: Boolean=false,
-    useLithops: Boolean=false
+    useLithops: Boolean=true
   ): String!
 
   addOpticalImage(input: AddOpticalImageInput!): String!
