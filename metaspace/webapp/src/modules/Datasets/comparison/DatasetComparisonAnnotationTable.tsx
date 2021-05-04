@@ -204,7 +204,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       if (currentIndex !== -1) {
         // add to final of processing queue
         setTimeout(() => {
-          document.querySelectorAll('.el-table__row')[currentIndex].classList.add('current-row')
+          document.querySelectorAll('.el-table__row')[currentIndex]?.classList.add('current-row')
         }, 0)
       }
     }

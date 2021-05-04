@@ -1,0 +1,164 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`DatasetComparisonPage it should match snapshot 1`] = `
+<div class="dataset-comparison-page w-full flex flex-wrap flex-row">
+  <div class="filter-panel w-full">
+    <mock-el-select placeholder="Add filter" class="filter-select">
+      <mock-el-option value="group" label="Select group"></mock-el-option>
+      <mock-el-option value="project" label="Select project"></mock-el-option>
+      <mock-el-option value="submitter" label="Select submitter"></mock-el-option>
+      <mock-el-option value="datasetIds" label="Select dataset"></mock-el-option>
+      <mock-el-option value="compoundName" label="Search molecule"></mock-el-option>
+      <mock-el-option value="mz" label="Search by m/z"></mock-el-option>
+      <mock-el-option value="offSample" label="Show/hide off-sample annotations"></mock-el-option>
+      <mock-el-option value="polarity" label="Select polarity"></mock-el-option>
+      <mock-el-option value="adduct" label="Select adduct"></mock-el-option>
+      <mock-el-option value="organism" label="Select organism"></mock-el-option>
+      <mock-el-option value="organismPart" label="Select organism part"></mock-el-option>
+      <mock-el-option value="condition" label="Select organism condition"></mock-el-option>
+      <mock-el-option value="growthConditions" label="Select sample growth conditions"></mock-el-option>
+      <mock-el-option value="analyzerType" label="Select analyzer"></mock-el-option>
+      <mock-el-option value="ionisationSource" label="Select ionisation source"></mock-el-option>
+      <mock-el-option value="maldiMatrix" label="Select MALDI matrix"></mock-el-option>
+      <mock-el-option value="minMSM" label="Set minimum MSM score"></mock-el-option>
+    </mock-el-select>
+    <div class="tf-outer w-auto el-input el-input-group el-input-group--prepend" data-test-key="simpleQuery" filter-key="simpleQuery" name="Simple query" options="">
+      <div class="el-input-group__prepend"><i class="el-icon-search -mx-1"></i></div><input type="text" autocomplete="off" placeholder="Enter keywords" class="el-input__inner">
+      <!---->
+      <!---->
+      <!---->
+      <!---->
+    </div>
+    <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="database" filter-key="database" name="Database" options="">
+      <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
+        Database:
+        <!---->
+      </div>
+      <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
+        <div slot-key="default">
+          <div>
+            <mock-el-select placeholder="Start typing name" filterable="" filter-method="function () { [native code] }" no-data-text="No matches" no-match-text="No matches" reserve-keyword="" class="w-full"></mock-el-select>
+            <p class="leading-5 text-sm m-0 mt-3 text-gray-700"><i class="text-gray-600 mr-1 el-icon-info"></i>
+              Search to see archived versions
+            </p>
+          </div>
+        </div>
+        <div slot-key="reference">
+          <div class="tf-value"><i class="el-icon-loading"></i>
+            <!---->
+          </div>
+        </div>
+      </mock-el-popover>
+      <!---->
+    </div>
+    <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="fdrLevel" filter-key="fdrLevel">
+      <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
+        FDR:
+        <!---->
+      </div>
+      <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
+        <div slot-key="default">
+          <mock-el-select value="0.1">
+            <mock-el-option label="5%" value="0.05"></mock-el-option>
+            <mock-el-option label="10%" value="0.1"></mock-el-option>
+            <mock-el-option label="20%" value="0.2"></mock-el-option>
+            <mock-el-option label="50%" value="0.5"></mock-el-option>
+          </mock-el-select>
+        </div>
+        <div slot-key="reference">
+          <div class="tf-value"><span class="tf-value-span"><span>10%</span></span>
+            <!---->
+          </div>
+        </div>
+      </mock-el-popover>
+      <!---->
+    </div>
+    <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="metadataType" filter-key="metadataType">
+      <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
+        Data type:
+        <!---->
+      </div>
+      <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container pl-3">
+        <div slot-key="default">
+          <mock-el-select filterable="true" value="Imaging MS">
+            <mock-el-option label="Imaging MS" value="Imaging MS"></mock-el-option>
+            <mock-el-option label="LC-MS" value="LC-MS"></mock-el-option>
+          </mock-el-select>
+        </div>
+        <div slot-key="reference">
+          <div class="tf-value"><span class="tf-value-span"><span>Imaging MS</span></span>
+            <!---->
+          </div>
+        </div>
+      </mock-el-popover>
+      <!---->
+    </div>
+  </div>
+  <div class="dataset-comparison-wrapper w-full md:w-5/12">
+    <div class="ds-comparison-annotation-table-loading-wrapper"><i class="el-icon-loading"></i></div>
+  </div>
+  <div class="dataset-comparison-wrapper  w-full  md:w-7/12">
+    <mock-el-collapse value="images" id="annot-content" class="border-0">
+      <mock-el-collapse-item id="annot-img-collapse" name="images" title="Image viewer" class="ds-collapse el-collapse-item--no-padding relative"><button title="Export image" class="button-reset rounded-full bg-gray-100 shadow-xs h-8 w-8 flex items-center justify-center cursor-not-allowed absolute top-0 right-0 mt-2 mr-2 dom-to-image-hidden"><i class="el-icon-download text-xl"></i></button>
+        <div class="dataset-comparison-grid">
+          <div class="dataset-comparison-grid">
+            <div class="dataset-comparison-grid-row">
+              <div class="dataset-comparison-grid-col overflow-hidden"><span slot="title" class="w-full dataset-comparison-grid-item-header dom-to-image-hidden"><span>
+    Image viewer
+  </span>
+                <div class="flex items-center pr-4 cursor-default">
+                  <mock-el-popover placement="bottom" trigger="click">
+                    <div slot-key="default"><span id="ion-image-settings"><form class="el-form el-form--label-top"><div class="el-form-item" data-feature-anchor="ion-image-color-scale"><label class="el-form-item__label">Intensity scaling</label><div class="el-form-item__content"><mock-el-select value="linear" style="width: 300px;"><mock-el-option value="linear" label="Linear"></mock-el-option> <mock-el-option value="linear-full" label="Linear (without hot-spot removal)"></mock-el-option> <mock-el-option value="log" label="Logarithmic"></mock-el-option> <mock-el-option value="log-full" label="Logarithmic (without outlier clipping)"></mock-el-option> <mock-el-option value="hist" label="Equalized histogram"></mock-el-option></mock-el-select><transition-stub name="el-zoom-in-top"><!----></transition-stub></div></div> <div class="el-form-item"><label class="el-form-item__label">Colormap</label><div class="el-form-item__content"><mock-el-select value="Viridis" style="width: 150px;"><ul class="el-select-group__wrap"><li class="el-select-group__title"></li><li><ul class="el-select-group"><mock-el-option value="Viridis" label="Viridis" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="Cividis" label="Cividis" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="Hot" label="Hot" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="YlGnBu" label="YlGnBu" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="Portland" label="Portland" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="Greys" label="Greys" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option></ul></li></ul> <ul class="el-select-group__wrap"><li class="el-select-group__title">Inverted</li><li><ul class="el-select-group"><mock-el-option value="-Viridis" label="Viridis" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="-Cividis" label="Cividis" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="-Hot" label="Hot" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="-YlGnBu" label="YlGnBu" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="-Portland" label="Portland" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="-Greys" label="Greys" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option></ul></li></ul></mock-el-select><transition-stub name="el-zoom-in-top"><!----></transition-stub></div></div> <div class="el-form-item"><label class="el-form-item__label">Scale bar color</label><div class="el-form-item__content"><mock-el-select value="#000000" style="width: 150px;"><mock-el-option value="#000000" label="Black"><div style="position: relative; background: transparent; height: 50px;"><div class="scale-bar"><div class="scale-bar-x" style="color: rgb(0, 0, 0); border-color: #000000; width: 62.5px;"><div class="scale-bar-x-text">
+      500 µm
+    </div></div> <!----></div></div></mock-el-option><mock-el-option value="#999999" label="Gray"><div style="position: relative; background: transparent; height: 50px;"><div class="scale-bar"><div class="scale-bar-x" style="color: rgb(153, 153, 153); border-color: #999999; width: 62.5px;"><div class="scale-bar-x-text">
+      500 µm
+    </div></div> <!----></div></div></mock-el-option><mock-el-option value="#FFFFFF" label="White"><div style="position: relative; background: rgb(204, 204, 204); height: 50px;"><div class="scale-bar"><div class="scale-bar-x" style="color: rgb(255, 255, 255); border-color: #ffffff; width: 62.5px;"><div class="scale-bar-x-text">
+      500 µm
+    </div></div> <!----></div></div></mock-el-option> <mock-el-option value="hidden" label="Hidden"></mock-el-option></mock-el-select><transition-stub name="el-zoom-in-top"><!----></transition-stub></div></div></form></span> </div>
+                    <div slot-key="reference"><button class="button-reset av-icon-button"><i data-feature-anchor="ion-image-settings" class="el-icon-setting" style="font-size: 20px; vertical-align: middle;"></i></button></div>
+                  </mock-el-popover> <button title="Reset image zoom and offsets" class="button-reset av-icon-button"><svg data-icon="aspect-ratio" class="w-6 h-6 fill-current text-gray-900"></svg></button>
+                  <!---->
+                </div>
+                <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out"></transition-stub>
+                </span>
+                <div class="ds-wrapper relative"><i class="el-icon-loading"></i>
+                  <div class="ds-viewer-controls-wrapper  v-rhythm-3 sm-side-bar">
+                    <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out" class="absolute bottom-0 right-0 mt-3 ml-3 dom-to-image-hidden"></transition-stub>
+                    <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out" class="absolute top-0 right-0 mt-3 ml-3 dom-to-image-hidden"></transition-stub>
+                  </div><button title="Export image" class="button-reset rounded-full bg-gray-100 shadow-xs h-8 w-8 flex items-center justify-center cursor-not-allowed absolute top-0 left-0 mt-3 ml-3 dom-to-image-hidden"><i class="el-icon-download text-xl"></i></button>
+                </div>
+              </div>
+              <div class="dataset-comparison-grid-col overflow-hidden"><span slot="title" class="w-full dataset-comparison-grid-item-header dom-to-image-hidden"><span>
+    Image viewer
+  </span>
+                <div class="flex items-center pr-4 cursor-default">
+                  <mock-el-popover placement="bottom" trigger="click">
+                    <div slot-key="default"><span id="ion-image-settings"><form class="el-form el-form--label-top"><div class="el-form-item" data-feature-anchor="ion-image-color-scale"><label class="el-form-item__label">Intensity scaling</label><div class="el-form-item__content"><mock-el-select value="linear" style="width: 300px;"><mock-el-option value="linear" label="Linear"></mock-el-option> <mock-el-option value="linear-full" label="Linear (without hot-spot removal)"></mock-el-option> <mock-el-option value="log" label="Logarithmic"></mock-el-option> <mock-el-option value="log-full" label="Logarithmic (without outlier clipping)"></mock-el-option> <mock-el-option value="hist" label="Equalized histogram"></mock-el-option></mock-el-select><transition-stub name="el-zoom-in-top"><!----></transition-stub></div></div> <div class="el-form-item"><label class="el-form-item__label">Colormap</label><div class="el-form-item__content"><mock-el-select value="Viridis" style="width: 150px;"><ul class="el-select-group__wrap"><li class="el-select-group__title"></li><li><ul class="el-select-group"><mock-el-option value="Viridis" label="Viridis" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="Cividis" label="Cividis" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="Hot" label="Hot" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="YlGnBu" label="YlGnBu" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="Portland" label="Portland" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="Greys" label="Greys" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option></ul></li></ul> <ul class="el-select-group__wrap"><li class="el-select-group__title">Inverted</li><li><ul class="el-select-group"><mock-el-option value="-Viridis" label="Viridis" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="-Cividis" label="Cividis" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="-Hot" label="Hot" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="-YlGnBu" label="YlGnBu" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="-Portland" label="Portland" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="-Greys" label="Greys" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option></ul></li></ul></mock-el-select><transition-stub name="el-zoom-in-top"><!----></transition-stub></div></div> <div class="el-form-item"><label class="el-form-item__label">Scale bar color</label><div class="el-form-item__content"><mock-el-select value="#000000" style="width: 150px;"><mock-el-option value="#000000" label="Black"><div style="position: relative; background: transparent; height: 50px;"><div class="scale-bar"><div class="scale-bar-x" style="color: rgb(0, 0, 0); border-color: #000000; width: 62.5px;"><div class="scale-bar-x-text">
+      500 µm
+    </div></div> <!----></div></div></mock-el-option><mock-el-option value="#999999" label="Gray"><div style="position: relative; background: transparent; height: 50px;"><div class="scale-bar"><div class="scale-bar-x" style="color: rgb(153, 153, 153); border-color: #999999; width: 62.5px;"><div class="scale-bar-x-text">
+      500 µm
+    </div></div> <!----></div></div></mock-el-option><mock-el-option value="#FFFFFF" label="White"><div style="position: relative; background: rgb(204, 204, 204); height: 50px;"><div class="scale-bar"><div class="scale-bar-x" style="color: rgb(255, 255, 255); border-color: #ffffff; width: 62.5px;"><div class="scale-bar-x-text">
+      500 µm
+    </div></div> <!----></div></div></mock-el-option> <mock-el-option value="hidden" label="Hidden"></mock-el-option></mock-el-select><transition-stub name="el-zoom-in-top"><!----></transition-stub></div></div></form></span> </div>
+                    <div slot-key="reference"><button class="button-reset av-icon-button"><i data-feature-anchor="ion-image-settings" class="el-icon-setting" style="font-size: 20px; vertical-align: middle;"></i></button></div>
+                  </mock-el-popover> <button title="Reset image zoom and offsets" class="button-reset av-icon-button"><svg data-icon="aspect-ratio" class="w-6 h-6 fill-current text-gray-900"></svg></button>
+                  <!---->
+                </div>
+                <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out"></transition-stub>
+                </span>
+                <div class="ds-wrapper relative"><i class="el-icon-loading"></i>
+                  <div class="ds-viewer-controls-wrapper  v-rhythm-3 sm-side-bar">
+                    <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out" class="absolute bottom-0 right-0 mt-3 ml-3 dom-to-image-hidden"></transition-stub>
+                    <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out" class="absolute top-0 right-0 mt-3 ml-3 dom-to-image-hidden"></transition-stub>
+                  </div><button title="Export image" class="button-reset rounded-full bg-gray-100 shadow-xs h-8 w-8 flex items-center justify-center cursor-not-allowed absolute top-0 left-0 mt-3 ml-3 dom-to-image-hidden"><i class="el-icon-download text-xl"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mock-el-collapse-item>
+      <mock-el-collapse-item id="annot-img-collapse" name="compounds" title="Molecules" class="ds-collapse el-collapse-item--no-padding relative"></mock-el-collapse-item>
+    </mock-el-collapse>
+  </div>
+</div>
+`;
