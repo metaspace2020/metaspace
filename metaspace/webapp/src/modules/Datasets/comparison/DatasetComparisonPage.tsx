@@ -100,7 +100,6 @@ export default defineComponent<DatasetComparisonPageProps>({
       // on demand, and we have a limitation using refetch or query options enabled for use Query
       // on this case we are querying using the useMutate
       const result = await annotationsMutation(query)
-
       state.annotations = result.data.allAggregatedAnnotations
       state.annotationLoading = false
       state.isLoading = false
@@ -187,7 +186,7 @@ export default defineComponent<DatasetComparisonPageProps>({
 
       return (
         <div class='dataset-comparison-page w-full flex flex-wrap flex-row'>
-          <FilterPanel class='w-full' level='annotation'/>
+          <FilterPanel class='w-full' level='annotation' hiddenFilters={['datasetIds']}/>
           <div class='dataset-comparison-wrapper w-full md:w-5/12'>
             <DatasetComparisonAnnotationTable
               isLoading={state.annotationLoading}

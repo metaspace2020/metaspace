@@ -100,15 +100,22 @@ describe('DatasetComparisonPage', () => {
         dataset_id: 'xxxx',
       },
     })
-
-    graphqlWithData()
   })
 
-  it('it should call snapshot settings query', async() => {
+  it('it should match snapshot', async() => {
+    graphqlWithData()
     const wrapper = mount(testHarness, {
       store,
       router,
     })
+    await Vue.nextTick()
+
+    expect(wrapper).toMatchSnapshot()
+  })
+
+  it('it should call snapshot settings query', async() => {
+    graphqlWithData()
+    mount(testHarness, { store, router })
     await Vue.nextTick()
 
     expect(snapshotData).toHaveBeenCalledTimes(1)

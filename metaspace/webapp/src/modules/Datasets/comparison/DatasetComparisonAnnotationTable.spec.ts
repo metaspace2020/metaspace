@@ -5,17 +5,8 @@ import Vuex from 'vuex'
 import { sync } from 'vuex-router-sync'
 import store from '../../../store'
 import router from '../../../router'
-import registerMockComponent from '../../../../tests/utils/registerMockComponent'
 
 describe('DatasetComparisonAnnotationTable', () => {
-  const fillArray = (value: any, len: number) => {
-    if (len === 0) return []
-    let a = [value]
-    while (a.length * 2 <= len) a = a.concat(a)
-    if (a.length < len) a = a.concat(a.slice(0, len - a.length))
-    return a
-  }
-
   const mockHandleRowChange = jest.fn((idx: number) => { return idx })
   const propsData = {
     isLoading: false,
@@ -86,7 +77,6 @@ describe('DatasetComparisonAnnotationTable', () => {
   beforeAll(() => {
     Vue.use(Vuex)
     sync(store, router)
-    registerMockComponent('el-select', { path: 'element-ui/lib/select' })
   })
 
   it('it should match snapshot', async() => {
