@@ -667,7 +667,12 @@ class GraphQLClient(object):
         return self.query(query, variables)
 
     def update_dataset(
-        self, ds_id, input=None, reprocess=False, force=False, priority=1,
+        self,
+        ds_id,
+        input=None,
+        reprocess=False,
+        force=False,
+        priority=1,
     ):
         query = """
             mutation updateMetadataDatabases($id: String!, $reprocess: Boolean,
