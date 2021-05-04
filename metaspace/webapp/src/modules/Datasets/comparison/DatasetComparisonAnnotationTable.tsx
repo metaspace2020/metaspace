@@ -1,9 +1,11 @@
-import { defineComponent, onMounted, reactive, ref, watchEffect } from '@vue/composition-api'
+import { defineComponent, onMounted, onUnmounted, reactive, ref, watchEffect } from '@vue/composition-api'
 import './DatasetComparisonAnnotationTable.scss'
-import { Table, TableColumn, Pagination } from '../../../lib/element-ui'
+import { Table, TableColumn, Pagination, Button } from '../../../lib/element-ui'
+import ProgressButton from '../../Annotations/ProgressButton.vue'
 import AnnotationTableMolName from '../../Annotations/AnnotationTableMolName.vue'
 import { cloneDeep, findIndex } from 'lodash-es'
-import Vue from 'vue'
+import config from '../../../lib/config'
+import FileSaver from 'file-saver'
 
 interface DatasetComparisonAnnotationTableProps {
   annotations: any[]
@@ -16,6 +18,9 @@ interface DatasetComparisonAnnotationTableState {
   selectedRow: any
   pageSize: number
   offset: number
+  keyListenerAdded: boolean
+  isExporting: boolean
+  exportProgress: number
 }
 
 const KEY_TO_ACTION = {
@@ -59,11 +64,104 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       pageSize: 15,
       offset: 0,
       processedAnnotations: [],
+      keyListenerAdded: false,
+      isExporting: false,
+      exportProgress: 0,
+    })
+
+    const csvExportHeader = () => {
+      const dateStr = new Date().toLocaleString().replace(/,/g, '')
+      return `# Generated at ${dateStr}. For help see https://bit.ly/2HO2uz4\n`
+        + `# URL: ${window.location.href}\n`
+    }
+
+    const formatCsvTextArray = (values: string[]): string =>
+      values
+        .map(val => val?.replace(/, +/g, ','))
+        .join(', ')
+
+    const formatCsvRow = (values: string[]): string => {
+      const escaped = values.map(v => {
+        if (v != null) {
+          return `"${String(v)?.replace(/"/g, '""')}"`
+        } else {
+          return ''
+        }
+      })
+
+      return escaped.join(',') + '\n'
+    }
+
+    const onKeyUp = (event: any) => {
+      // @ts-ignore
+      const action : string = KEY_TO_ACTION[event.key]
+
+      if (!action) {
+        return
+      }
+
+      event.preventDefault()
+      event.stopPropagation()
+
+      const currentRowIndex = getCurrentRowIndex()
+      const currentDataIndex = getDataItemIndex()
+
+      if (action === 'up' && currentRowIndex === 0) {
+        if (state.offset === 1) {
+          return
+        }
+        state.selectedRow = state.processedAnnotations[currentDataIndex - 1]
+        onPageChange(state.offset - 1)
+        return
+      }
+
+      if (action === 'down' && currentRowIndex === state.pageSize - 1) {
+        if (state.offset === getNumberOfPages()) {
+          return
+        }
+        state.selectedRow = state.processedAnnotations[currentDataIndex + 1]
+        onPageChange(state.offset + 1)
+        return
+      }
+
+      if (action === 'left') {
+        const newIndex = Math.max(0, currentDataIndex - state.pageSize)
+        state.selectedRow = state.processedAnnotations[newIndex]
+        onPageChange(Math.max(1, state.offset - 1))
+        return
+      }
+
+      if (action === 'right') {
+        const newIndex = Math.min(currentDataIndex + state.pageSize, props.annotations.length - 1)
+        state.selectedRow = state.processedAnnotations[newIndex]
+        onPageChange(Math.min(getNumberOfPages(), state.offset + 1))
+        return
+      }
+
+      const delta = action === 'up' ? -1 : +1
+      let newIdx = Math.max(0, currentDataIndex + delta)
+      newIdx = Math.min(newIdx, props.annotations.length - 1)
+      state.selectedRow = state.processedAnnotations[newIdx]
+      handleCurrentRowChange(state.selectedRow)
+    }
+
+    onMounted(() => {
+      if (!state.keyListenerAdded) {
+        state.keyListenerAdded = true
+        window.addEventListener('keyup', onKeyUp)
+      }
+    })
+
+    onUnmounted(() => {
+      if (state.keyListenerAdded) {
+        state.keyListenerAdded = false
+        window.removeEventListener('keyup', onKeyUp)
+      }
     })
 
     watchEffect(() => {
       if (state.processedAnnotations.length !== props.annotations.length) {
-        const { sort, row } = $route.query
+        const { sort, row, page } = $route.query
         const annotations = cloneDeep(props.annotations)
         state.processedAnnotations = annotations
         const order = sort?.indexOf('-') === 0 ? 'descending' : 'ascending'
@@ -71,27 +169,43 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
         handleSortChange({ order, prop })
         state.selectedRow = row ? cloneDeep(props.annotations)[parseInt(row, 10)]
           : state.processedAnnotations[0]
-        handleCurrentRowChange(state.selectedRow)
+        onPageChange(page ? parseInt(page, 10) : 1)
       }
     })
 
     const clearCurrentRow = () => {
-      const currentRow = document.querySelector('.current-row')
-      if (currentRow) {
-        currentRow.classList.remove('current-row')
+      const currentRows = document.querySelectorAll('.current-row')
+      if (currentRows) {
+        currentRows.forEach((currentRow) => {
+          currentRow.classList.remove('current-row')
+        })
       }
+    }
+
+    const getCurrentRowIndex = () => {
+      const dataStart = ((state.offset - 1) * state.pageSize)
+      const dataEnd = ((state.offset - 1) * state.pageSize) + state.pageSize
+      return findIndex(state.processedAnnotations.slice(dataStart, dataEnd),
+        (annotation) => { return state.selectedRow.id === annotation.id })
+    }
+
+    const getDataItemIndex = () => {
+      return findIndex(state.processedAnnotations,
+        (annotation) => { return state.selectedRow.id === annotation.id })
+    }
+
+    const getNumberOfPages = () => {
+      return Math.ceil(props.annotations.length / state.pageSize)
     }
 
     const setCurrentRow = () => {
       clearCurrentRow()
-      const dataStart = ((state.offset - 1) * state.pageSize)
-      const dataEnd = ((state.offset - 1) * state.pageSize) + state.pageSize
-      const currentIndex = findIndex(state.processedAnnotations.slice(dataStart, dataEnd),
-        (annotation) => { return state.selectedRow.id === annotation.id })
+      const currentIndex = getCurrentRowIndex()
       if (currentIndex !== -1) {
+        // add to final of processing queue
         setTimeout(() => {
           document.querySelectorAll('.el-table__row')[currentIndex].classList.add('current-row')
-        }, 500)
+        }, 0)
       }
     }
 
@@ -102,10 +216,6 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
         prop: sort ? sort.replace('-', '') : 'msmscore',
         order: sort?.indexOf('-') === 0 ? 'descending' : 'ascending',
       }
-    }
-
-    const handleKeyUp = (event: any) => {
-
     }
 
     const handleCurrentRowChange = (row: any) => {
@@ -201,6 +311,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
 
     const onPageChange = (newPage: number) => {
       state.offset = newPage
+      $store.commit('setCurrentPage', newPage)
       handleCurrentRowChange(state.selectedRow)
     }
 
@@ -245,6 +356,90 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       return 'prev,pager,next,sizes'
     }
 
+    const startExport = async() => {
+      const includeColoc = false
+      const includeOffSample = config.features.off_sample
+      const includeIsomers = config.features.isomers
+      const includeIsobars = config.features.isobars
+      const colocalizedWith = props.filter?.colocalizedWith
+
+      let csv = csvExportHeader()
+
+      const columns = ['group', 'datasetName', 'datasetId', 'formula', 'adduct', 'mz',
+        'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
+        'moleculeNames', 'moleculeIds', 'minIntensity', 'maxIntensity', 'totalIntensity']
+      if (includeColoc) {
+        columns.push('colocalizationCoeff')
+      }
+      if (includeOffSample) {
+        columns.push('offSample', 'rawOffSampleProb')
+      }
+      if (includeIsomers) {
+        columns.push('isomerIons')
+      }
+      if (includeIsobars) {
+        columns.push('isobarIons')
+      }
+
+      csv += formatCsvRow(columns)
+
+      function databaseId(compound : any) {
+        return compound.information[0].databaseId
+      }
+
+      function formatRow(row : any) {
+        const {
+          dataset, sumFormula, adduct, ion, mz,
+          msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos, possibleCompounds,
+          isotopeImages, isomers, isobars,
+          offSample, offSampleProb, colocalizationCoeff,
+        } = row
+        const cells = [
+          dataset.groupApproved && dataset.group ? dataset.group.name : '',
+          dataset.name,
+          dataset.id,
+          sumFormula, 'M' + adduct, mz,
+          msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos,
+          formatCsvTextArray(possibleCompounds.map((m: any) => m.name)),
+          formatCsvTextArray(possibleCompounds.map(databaseId)),
+          isotopeImages[0] && isotopeImages[0].minIntensity,
+          isotopeImages[0] && isotopeImages[0].maxIntensity,
+          isotopeImages[0] && isotopeImages[0].totalIntensity,
+        ]
+        if (includeColoc) {
+          cells.push(colocalizedWith === ion ? 'Reference annotation' : colocalizationCoeff)
+        }
+        if (includeOffSample) {
+          cells.push(offSample, offSampleProb)
+        }
+        if (includeIsomers) {
+          cells.push(formatCsvTextArray(isomers.map((isomer : any) => isomer.ion)))
+        }
+        if (includeIsobars) {
+          cells.push(formatCsvTextArray(isobars.map((isobar : any) => isobar.ion)))
+        }
+
+        return formatCsvRow(cells)
+      }
+
+      state.isExporting = true
+
+      csv += state.processedAnnotations.map(formatRow).join('')
+
+      if (state.isExporting) {
+        state.isExporting = false
+        state.exportProgress = 0
+
+        const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
+        FileSaver.saveAs(blob, 'metaspace_annotations.csv')
+      }
+    }
+
+    const abortExport = () => {
+      state.isExporting = false
+      state.exportProgress = 0
+    }
+
     return () => {
       const totalCount = props.annotations.length
       const dataStart = ((state.offset - 1) * state.pageSize)
@@ -278,7 +473,6 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
             defaultSort={getDefaultTableSort()}
             {...{
               on: {
-                'key-up': handleKeyUp,
                 'current-change': handleCurrentRowChange,
                 'sort-change': handleSortChange,
               },
@@ -344,6 +538,32 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
                   50%
                 </div>
               </div>
+            </div>
+            <div>
+              {
+                state.isExporting
+                && totalCount > 5000
+                && <ProgressButton
+                  class="export-btn"
+                  width={130}
+                  height={40}
+                  percentage={state.exportProgress * 100}
+                  onClick={abortExport}
+                >
+                  Cancel
+                </ProgressButton>
+              }
+              {
+                !(state.isExporting
+                  && totalCount > 5000)
+                && <Button
+                  class="export-btn"
+                  disabled={state.isExporting}
+                  onClick={startExport}
+                >
+                  Export to CSV
+                </Button>
+              }
             </div>
           </div>
         </div>
