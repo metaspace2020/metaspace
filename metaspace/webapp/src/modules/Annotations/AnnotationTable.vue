@@ -4,7 +4,7 @@
       id="annot-table"
       ref="table"
       v-loading="isLoading"
-      :data="getAnnotationData"
+      :data="annotations"
       size="mini"
       border
       element-loading-text="Loading results …"
@@ -120,7 +120,6 @@
       </el-table-column>
 
       <el-table-column
-        v-if="!hidden('mz')"
         key="mz"
         property="mz"
         label="m/z"
@@ -308,7 +307,7 @@ export default Vue.extend({
     AnnotationTableMolName,
     FilterIcon,
   },
-  props: ['hideColumns', 'defaultAnnotations'],
+  props: ['hideColumns'],
   data() {
     return {
       annotations: [],
@@ -383,10 +382,6 @@ export default Vue.extend({
 
     numberOfPages() {
       return Math.ceil(this.totalCount / this.recordsPerPage)
-    },
-
-    getAnnotationData() {
-      return this.defaultAnnotations ? this.defaultAnnotations : this.annotations
     },
 
     currentPage: {
@@ -542,9 +537,7 @@ export default Vue.extend({
       this.$store.commit('setAnnotation', row)
 
       if (row !== null) {
-        const annotations = this.getAnnotationData
-        this.currentRowIndex = annotations.indexOf(row)
-        this.$emit('rowChange', this.currentRowIndex)
+        this.currentRowIndex = this.annotations.indexOf(row)
       }
     },
 
