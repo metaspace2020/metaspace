@@ -202,10 +202,12 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       clearCurrentRow()
       const currentIndex = getCurrentRowIndex()
       if (currentIndex !== -1) {
-        // add to final of processing queue
+        // gives time to clear and render the new selection
         setTimeout(() => {
-          document.querySelectorAll('.el-table__row')[currentIndex]?.classList.add('current-row')
-        }, 0)
+          if (document.querySelectorAll('.el-table__row').length > currentIndex) {
+            document.querySelectorAll('.el-table__row')[currentIndex].classList.add('current-row')
+          }
+        }, 100)
       }
     }
 
