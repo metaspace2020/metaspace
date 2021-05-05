@@ -5,9 +5,10 @@ import { ProjectSource } from '../../bindingTypes'
 import * as _ from 'lodash'
 import * as DataLoader from 'dataloader'
 import { urlSlugMatchesClause } from '../groupOrProject/urlSlug'
+import { ProjectOrderBy, SortingOrder } from '../../binding'
 import moment = require('moment')
 
-type SortBy = 'name' | 'popularity';
+type SortBy = 'name' | 'popularity' | ProjectOrderBy;
 
 function fixDateFields(project: ProjectSource): ProjectSource {
   // WORKAROUND: .getRawMany doesn't apply MomentValueTransformer, so manually convert Dates to Moments here.
@@ -23,12 +24,13 @@ export class ProjectSourceRepository {
   }
 
   private async queryProjectsWhere(user: ContextUser, whereClause?: string | Brackets,
-    parameters?: any, sortBy: SortBy = 'name') {
+    parameters?: any, sortBy: SortBy = 'name', sortingOrder: SortingOrder = 'DESCENDING') {
     const columnMap = this.manager.connection
       .getMetadata(ProjectModel)
       .columns
       .map(c => `"project"."${c.databasePath}" AS "${c.propertyName}"`)
 
+    const sqlSortingOrder = sortingOrder === 'DESCENDING' ? 'DESC' : 'ASC'
     let qb = this.manager
       .createQueryBuilder(ProjectModel, 'project')
       .select(columnMap)
@@ -37,8 +39,43 @@ export class ProjectSourceRepository {
       .filter(([, role]) => role !== UPRO.PENDING)
       .map(([id]) => id)
 
-    if (sortBy === 'name') {
-      qb = qb.orderBy('project.name')
+    if (sortBy === 'name' || sortBy === 'ORDER_BY_NAME') {
+      qb = qb.orderBy('project.name', sqlSortingOrder)
+    } else if (sortBy === 'ORDER_BY_DATE') {
+      qb = qb.orderBy('project.created_dt', sqlSortingOrder)
+    } else if (sortBy === 'ORDER_BY_UP_DATE') {
+      qb = qb.orderBy('project.published_dt', sqlSortingOrder)
+    } else if (sortBy === 'ORDER_BY_MANAGER_NAME') {
+      qb = qb
+        .leftJoin(`(SELECT graphql.user_project.project_id as project_id, 
+                            string_agg(graphql.user.name, ', ') as members
+                            FROM graphql.user_project 
+                            INNER JOIN graphql.user
+                            ON graphql.user_project.user_id = graphql.user.id
+                            WHERE graphql.user_project.role = '${UPRO.MANAGER}'
+                            GROUP BY graphql.user_project.project_id)`,
+        'manager', 'project.id = manager.project_id')
+        .orderBy('manager.members', sqlSortingOrder)
+    } else if (sortBy === 'ORDER_BY_DATASETS_COUNT') {
+      qb = qb
+        .leftJoin(`(SELECT dp.project_id, COUNT(*) as cnt 
+                            FROM graphql.dataset_project dp 
+                            JOIN dataset ds ON dp.dataset_id = ds.id 
+                            WHERE dp.approved = true 
+                              AND (ds.is_public = true OR dp.project_id = ANY(:memberOfProjectIds))
+                            GROUP BY dp.project_id)`,
+        'num_datasets',
+        'project.id = num_datasets.project_id',
+        { memberOfProjectIds })
+        .orderBy(' COALESCE(num_datasets.cnt, 0)', sqlSortingOrder)
+    } else if (sortBy === 'ORDER_BY_MEMBERS_COUNT') {
+      qb = qb
+        .leftJoin(`(SELECT project_id, COUNT(*) as cnt 
+                            FROM graphql.user_project 
+                            WHERE role IN ('${UPRO.MEMBER}','${UPRO.MANAGER}') 
+                            GROUP BY project_id)`,
+        'num_members', 'project.id = num_members.project_id')
+        .orderBy(' COALESCE(num_members.cnt, 0)', sqlSortingOrder)
     } else {
       // Approximate popularity as num_members * 20 + num_datasets
       qb = qb
@@ -56,7 +93,7 @@ export class ProjectSourceRepository {
         'num_datasets',
         'project.id = num_datasets.project_id',
         { memberOfProjectIds })
-        .orderBy('(COALESCE(num_members.cnt * 20, 0) + COALESCE(num_datasets.cnt, 0))', 'DESC')
+        .orderBy('(COALESCE(num_members.cnt * 20, 0) + COALESCE(num_datasets.cnt, 0))', sqlSortingOrder)
         .addOrderBy('project.name')
     }
 
@@ -129,7 +166,8 @@ export class ProjectSourceRepository {
     return datasetIds.map(id => groupedRows[id] || [])
   }
 
-  private queryProjectsByTextSearch(user: ContextUser, query?: string, sortBy: SortBy = 'name') {
+  private queryProjectsByTextSearch(user: ContextUser, query?: string, sortBy: SortBy = 'name',
+    sortingOrder: SortingOrder = 'DESCENDING') {
     if (query) {
       // Full-text search is disabled as it relies on functions not present in the installed pg version (9.5)
       // TODO: Add a full-text index to project.name to speed this up
@@ -141,15 +179,16 @@ export class ProjectSourceRepository {
       //        ELSE true
       //   END
       // )`, {query});
-      return this.queryProjectsWhere(user, 'project.name ILIKE (\'%\' || :query || \'%\')', { query }, sortBy)
+      return this.queryProjectsWhere(user, 'project.name ILIKE (\'%\' || :query || \'%\')',
+        { query }, sortBy, sortingOrder)
     } else {
-      return this.queryProjectsWhere(user, undefined, undefined, sortBy)
+      return this.queryProjectsWhere(user, undefined, undefined, sortBy, sortingOrder)
     }
   }
 
   async findProjectsByQuery(user: ContextUser, query?: string,
-    offset?: number, limit?: number): Promise<ProjectSource[]> {
-    let queryBuilder = await this.queryProjectsByTextSearch(user, query, 'popularity')
+    offset?: number, limit?: number, orderBy?: ProjectOrderBy, sortingOrder?: SortingOrder): Promise<ProjectSource[]> {
+    let queryBuilder = await this.queryProjectsByTextSearch(user, query, orderBy, sortingOrder)
     if (offset != null) {
       queryBuilder = queryBuilder.offset(offset)
     }

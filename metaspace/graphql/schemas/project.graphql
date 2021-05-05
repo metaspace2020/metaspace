@@ -53,6 +53,16 @@ type UserProject {
   numDatasets: Int!
 }
 
+enum ProjectOrderBy {
+  ORDER_BY_DATE
+  ORDER_BY_POPULARITY
+  ORDER_BY_NAME
+  ORDER_BY_UP_DATE
+  ORDER_BY_MANAGER_NAME
+  ORDER_BY_DATASETS_COUNT
+  ORDER_BY_MEMBERS_COUNT
+}
+
 enum UserProjectRole {
   INVITED    # User was invited into the project but hasn't confirmed it yet
   PENDING    # User requested to join the project but the PI hasn't confirmed it yet
@@ -64,7 +74,9 @@ enum UserProjectRole {
 type Query {
   project(projectId: ID!): Project
   projectByUrlSlug(urlSlug: String!): Project
-  allProjects(query: String, offset: Int = 0, limit: Int = 10): [Project!]!
+  allProjects(orderBy: ProjectOrderBy = ORDER_BY_POPULARITY,
+              sortingOrder: SortingOrder = DESCENDING,
+              query: String, offset: Int = 0, limit: Int = 10): [Project!]!
   projectsCount(query: String): Int!
 
   projectUrlSlugIsValid(urlSlug: String!, existingProjectId: ID): Boolean! # Throws error if invalid, consistent with updateProject

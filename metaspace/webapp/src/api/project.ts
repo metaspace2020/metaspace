@@ -207,8 +207,10 @@ const projectsListItemFragment =
     }`
 
 export const projectsListQuery =
-  gql`query ProjectsListQuery($query: String!, $offset: Int = 0, $limit: Int = 10) {
-    allProjects(query: $query, offset: $offset, limit: $limit) {
+  gql`query ProjectsListQuery($query: String!, $offset: Int = 0, $limit: Int = 10,
+    $orderBy: ProjectOrderBy = ORDER_BY_POPULARITY, $sortingOrder: SortingOrder = DESCENDING) {
+    allProjects(orderBy: $orderBy, sortingOrder: $sortingOrder, query: $query,
+      offset: $offset, limit: $limit) {
       ...ProjectsListItem
     }
   }

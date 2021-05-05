@@ -52,6 +52,11 @@ exports[`ProjectsListPage should change actions for projects under review 1`] = 
     </div>
   </mock-el-dialog>
   <div class="page-content">
+    <div class="flex flex-row items-center justify-end flex-1 w-full py-4"><button type="button" class="el-button el-button--primary el-button--small">
+        <!---->
+        <!----><span>
+        Create project
+      </span></button></div>
     <div class="header-row">
       <div class="filter-panel">
         <!---->
@@ -67,13 +72,26 @@ exports[`ProjectsListPage should change actions for projects under review 1`] = 
           <!---->
         </div>
       </div>
-      <div style="flex-grow: 1;"></div> <button type="button" class="el-button el-button--default">
-        <!---->
-        <!----><span>
-        Create project
-      </span></button>
+      <div class="flex flex-row items-center justify-end flex-1">
+        <div class="pb-2 flex flex-row sort-dp-container">
+          <mock-el-select size="default" value="" placeholder="Sort by" clearable="true">
+            <mock-el-option label="Popularity" value="ORDER_BY_POPULARITY"></mock-el-option>
+            <mock-el-option label="Last updated" value="ORDER_BY_DATE"></mock-el-option>
+            <mock-el-option label="Upload date" value="ORDER_BY_UP_DATE"></mock-el-option>
+            <mock-el-option label="Project name" value="ORDER_BY_NAME"></mock-el-option>
+            <mock-el-option label="Manager name" value="ORDER_BY_MANAGER_NAME"></mock-el-option>
+            <mock-el-option label="Number of datasets" value="ORDER_BY_DATASETS_COUNT"></mock-el-option>
+            <mock-el-option label="Number of members" value="ORDER_BY_MEMBERS_COUNT"></mock-el-option>
+          </mock-el-select>
+          <div class="el-input-group__append sort-dp-btn">
+            <mock-el-tooltip content="Sorting order" placement="right"><button type="button" class="el-button el-button--default cursor-not-allowed">
+                <!----><i class="el-icon-sort"></i>
+                <!----></button></mock-el-tooltip>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="clearfix"></div>
+    <div style="" mock-v-loading="true" class="clearfix"></div>
     <div style="min-height: 100px;" mock-v-loading="false">
       <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/proj-one" class="underlay"></a>
         <div class="item-body">
@@ -198,6 +216,11 @@ exports[`ProjectsListPage should change actions for published projects 1`] = `
     </div>
   </mock-el-dialog>
   <div class="page-content">
+    <div class="flex flex-row items-center justify-end flex-1 w-full py-4"><button type="button" class="el-button el-button--primary el-button--small">
+        <!---->
+        <!----><span>
+        Create project
+      </span></button></div>
     <div class="header-row">
       <div class="filter-panel">
         <!---->
@@ -213,13 +236,26 @@ exports[`ProjectsListPage should change actions for published projects 1`] = `
           <!---->
         </div>
       </div>
-      <div style="flex-grow: 1;"></div> <button type="button" class="el-button el-button--default">
-        <!---->
-        <!----><span>
-        Create project
-      </span></button>
+      <div class="flex flex-row items-center justify-end flex-1">
+        <div class="pb-2 flex flex-row sort-dp-container">
+          <mock-el-select size="default" value="" placeholder="Sort by" clearable="true">
+            <mock-el-option label="Popularity" value="ORDER_BY_POPULARITY"></mock-el-option>
+            <mock-el-option label="Last updated" value="ORDER_BY_DATE"></mock-el-option>
+            <mock-el-option label="Upload date" value="ORDER_BY_UP_DATE"></mock-el-option>
+            <mock-el-option label="Project name" value="ORDER_BY_NAME"></mock-el-option>
+            <mock-el-option label="Manager name" value="ORDER_BY_MANAGER_NAME"></mock-el-option>
+            <mock-el-option label="Number of datasets" value="ORDER_BY_DATASETS_COUNT"></mock-el-option>
+            <mock-el-option label="Number of members" value="ORDER_BY_MEMBERS_COUNT"></mock-el-option>
+          </mock-el-select>
+          <div class="el-input-group__append sort-dp-btn">
+            <mock-el-tooltip content="Sorting order" placement="right"><button type="button" class="el-button el-button--default cursor-not-allowed">
+                <!----><i class="el-icon-sort"></i>
+                <!----></button></mock-el-tooltip>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="clearfix"></div>
+    <div style="" mock-v-loading="true" class="clearfix"></div>
     <div style="min-height: 100px;" mock-v-loading="false">
       <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/proj-one" class="underlay"></a>
         <div class="item-body">
@@ -343,6 +379,11 @@ exports[`ProjectsListPage should match snapshot 1`] = `
     </div>
   </mock-el-dialog>
   <div class="page-content">
+    <div class="flex flex-row items-center justify-end flex-1 w-full py-4"><button type="button" class="el-button el-button--primary el-button--small">
+        <!---->
+        <!----><span>
+        Create project
+      </span></button></div>
     <div class="header-row">
       <div class="filter-panel">
         <!---->
@@ -358,13 +399,26 @@ exports[`ProjectsListPage should match snapshot 1`] = `
           <!---->
         </div>
       </div>
-      <div style="flex-grow: 1;"></div> <button type="button" class="el-button el-button--default">
-        <!---->
-        <!----><span>
-        Create project
-      </span></button>
+      <div class="flex flex-row items-center justify-end flex-1">
+        <div class="pb-2 flex flex-row sort-dp-container">
+          <mock-el-select size="default" value="" placeholder="Sort by" clearable="true">
+            <mock-el-option label="Popularity" value="ORDER_BY_POPULARITY"></mock-el-option>
+            <mock-el-option label="Last updated" value="ORDER_BY_DATE"></mock-el-option>
+            <mock-el-option label="Upload date" value="ORDER_BY_UP_DATE"></mock-el-option>
+            <mock-el-option label="Project name" value="ORDER_BY_NAME"></mock-el-option>
+            <mock-el-option label="Manager name" value="ORDER_BY_MANAGER_NAME"></mock-el-option>
+            <mock-el-option label="Number of datasets" value="ORDER_BY_DATASETS_COUNT"></mock-el-option>
+            <mock-el-option label="Number of members" value="ORDER_BY_MEMBERS_COUNT"></mock-el-option>
+          </mock-el-select>
+          <div class="el-input-group__append sort-dp-btn">
+            <mock-el-tooltip content="Sorting order" placement="right"><button type="button" class="el-button el-button--default cursor-not-allowed">
+                <!----><i class="el-icon-sort"></i>
+                <!----></button></mock-el-tooltip>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="clearfix"></div>
+    <div style="" mock-v-loading="true" class="clearfix"></div>
     <div style="min-height: 100px;" mock-v-loading="false">
       <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/proj-one" class="underlay"></a>
         <div class="item-body">
