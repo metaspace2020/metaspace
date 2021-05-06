@@ -1,8 +1,10 @@
 import * as _ from 'lodash'
+import * as moment from 'moment'
 import {
   createTestDataset,
   createTestProject,
   createTestProjectMember,
+  createTestUser,
   createTestUserProject,
 } from '../../../tests/testDataCreation'
 import { Context } from '../../../context'
@@ -179,8 +181,8 @@ describe('modules/project/controller (queries)', () => {
   })
 
   describe('Query.allProjects', () => {
-    const searchQuery = `query ($query: String) {
-      allProjects (query: $query) { ${projectFields} }
+    const searchQuery = `query ($query: String, $orderBy: ProjectOrderBy, $sortingOrder: SortingOrder) {
+      allProjects (query: $query, orderBy: $orderBy, sortingOrder: $sortingOrder) { ${projectFields} }
     }`
     const countQuery = `query ($query: String) {
       projectsCount (query: $query)
@@ -270,6 +272,175 @@ describe('modules/project/controller (queries)', () => {
 
         expect(_.sortBy(results, ['name'])).toEqual(sortedNames.map(name => expect.objectContaining({ name })))
         expect(count).toEqual(matchedNameIdxs.length)
+      })
+    })
+
+    describe('should sort projects according to params', () => {
+      it('should test all sorting options and orders', async() => {
+        const projects = await Promise.all(_.range(10).map(async(pIdx, idx) => {
+          const project = await createTestProject({
+            name: `test${pIdx}`,
+            createdDT: moment().add(pIdx, 'seconds'),
+            publishedDT: moment().add(pIdx, 'seconds'),
+          })
+          const members = await Promise.all(_.range(idx + 1)
+            .map((mIdx) => createTestUser({ name: `user${pIdx}-${mIdx}` })))
+          await testEntityManager.save(UserProjectModel,
+            members.map(({ id }) => ({
+              userId: id,
+              projectId: project.id,
+              role: UPRO.MANAGER,
+            })))
+          const datasets = await Promise.all(_.range(idx + 1).map(() => createTestDataset({ userId })))
+          await testEntityManager.save(DatasetProjectModel, datasets.map(({ id }) => ({
+            datasetId: id,
+            projectId: project.id,
+            approved: true,
+          })))
+          // @ts-ignore
+          project.numDatasets = datasets.length
+          // @ts-ignore
+          project.numMembers = members.length
+          // @ts-ignore
+          project.members = members.map((member) => member.name).join(', ')
+          return project
+        }))
+
+        const resultSortedByNameAsc = await doQuery(searchQuery, {
+          orderBy: 'ORDER_BY_NAME',
+          sortingOrder: 'ASCENDING',
+        }, { })
+        const resultSortedByNameDesc = await doQuery(searchQuery, {
+          orderBy: 'ORDER_BY_NAME',
+          sortingOrder: 'DESCENDING',
+        }, { })
+        const resultSortedByDateAsc = await doQuery(searchQuery, {
+          orderBy: 'ORDER_BY_DATE',
+          sortingOrder: 'ASCENDING',
+        }, { })
+        const resultSortedByDateDesc = await doQuery(searchQuery, {
+          orderBy: 'ORDER_BY_DATE',
+          sortingOrder: 'DESCENDING',
+        }, { })
+        const resultSortedByPubDateAsc = await doQuery(searchQuery, {
+          orderBy: 'ORDER_BY_UP_DATE',
+          sortingOrder: 'ASCENDING',
+        }, { })
+        const resultSortedByPubDateDesc = await doQuery(searchQuery, {
+          orderBy: 'ORDER_BY_UP_DATE',
+          sortingOrder: 'DESCENDING',
+        }, { })
+        const resultSortedByDsCountAsc = await doQuery(searchQuery, {
+          orderBy: 'ORDER_BY_DATASETS_COUNT',
+          sortingOrder: 'ASCENDING',
+        }, { })
+        const resultSortedByDsCountDesc = await doQuery(searchQuery, {
+          orderBy: 'ORDER_BY_DATASETS_COUNT',
+          sortingOrder: 'DESCENDING',
+        }, { })
+        const resultSortedByMembersCountAsc = await doQuery(searchQuery, {
+          orderBy: 'ORDER_BY_MEMBERS_COUNT',
+          sortingOrder: 'ASCENDING',
+        }, { })
+        const resultSortedByMembersCountDesc = await doQuery(searchQuery, {
+          orderBy: 'ORDER_BY_MEMBERS_COUNT',
+          sortingOrder: 'DESCENDING',
+        }, { })
+        const resultSortedByPopularityAsc = await doQuery(searchQuery, {
+          orderBy: 'ORDER_BY_POPULARITY',
+          sortingOrder: 'ASCENDING',
+        }, { })
+        const resultSortedByPopularityDesc = await doQuery(searchQuery, {
+          orderBy: 'ORDER_BY_POPULARITY',
+          sortingOrder: 'DESCENDING',
+        }, { })
+        const resultSortedByManagerNameAsc = await doQuery(searchQuery, {
+          orderBy: 'ORDER_BY_MANAGER_NAME',
+          sortingOrder: 'ASCENDING',
+        }, { })
+        const resultSortedByManagerNameDesc = await doQuery(searchQuery, {
+          orderBy: 'ORDER_BY_MANAGER_NAME',
+          sortingOrder: 'DESCENDING',
+        }, { })
+
+        expect(resultSortedByNameAsc.map((pj: any) => pj.id))
+          .toEqual(projects.sort((a: any, b: any) => {
+            if (a.name < b.name) { return -1 }
+            if (a.name > b.name) { return 1 }
+            return 0
+          }).map((pj: any) => pj.id))
+        expect(resultSortedByNameDesc.map((pj: any) => pj.id))
+          .toEqual(projects.sort((a: any, b: any) => {
+            if (a.name < b.name) { return 1 }
+            if (a.name > b.name) { return -1 }
+            return 0
+          }).map((pj: any) => pj.id))
+        expect(resultSortedByDateAsc.map((pj: any) => pj.id))
+          .toEqual(projects.sort((a: any, b: any) => {
+            if (a.createdDT.isBefore(b.createdDT)) { return -1 }
+            if (a.createdDT.isAfter(b.createdDT)) { return 1 }
+            return 0
+          }).map((pj: any) => pj.id))
+        expect(resultSortedByDateDesc.map((pj: any) => pj.id))
+          .toEqual(projects.sort((a: any, b: any) => {
+            if (a.createdDT.isBefore(b.createdDT)) { return 1 }
+            if (a.createdDT.isAfter(b.createdDT)) { return -1 }
+            return 0
+          }).map((pj: any) => pj.id))
+        expect(resultSortedByPubDateAsc.map((pj: any) => pj.id))
+          .toEqual(projects.sort((a: any, b: any) => {
+            if (a.publishedDT.isBefore(b.publishedDT)) { return -1 }
+            if (a.publishedDT.isAfter(b.publishedDT)) { return 1 }
+            return 0
+          }).map((pj: any) => pj.id))
+        expect(resultSortedByPubDateDesc.map((pj: any) => pj.id))
+          .toEqual(projects.sort((a: any, b: any) => {
+            if (a.publishedDT.isBefore(b.publishedDT)) { return 1 }
+            if (a.publishedDT.isAfter(b.publishedDT)) { return -1 }
+            return 0
+          }).map((pj: any) => pj.id))
+        expect(resultSortedByDsCountAsc.map((pj: any) => pj.id))
+          .toEqual(projects
+            .sort((a: any, b: any) => a.numDatasets - b.numDatasets)
+            .map((pj: any) => pj.id))
+        expect(resultSortedByDsCountDesc.map((pj: any) => pj.id))
+          .toEqual(projects
+            .sort((a: any, b: any) => b.numDatasets - a.numDatasets)
+            .map((pj: any) => pj.id))
+        expect(resultSortedByMembersCountAsc.map((pj: any) => pj.id))
+          .toEqual(projects
+            .sort((a: any, b: any) => a.numMembers - b.numMembers)
+            .map((pj: any) => pj.id))
+        expect(resultSortedByMembersCountDesc.map((pj: any) => pj.id))
+          .toEqual(projects
+            .sort((a: any, b: any) => b.numMembers - a.numMembers)
+            .map((pj: any) => pj.id))
+        expect(resultSortedByPopularityAsc.map((pj: any) => pj.id))
+          .toEqual(projects
+            .sort((a: any, b: any) => {
+              return ((parseInt(a.numMembers, 10) * 20) + parseInt(a.numDatasets, 10))
+                    - ((parseInt(b.numMembers, 10) * 20) + parseInt(b.numDatasets, 10))
+            })
+            .map((pj: any) => pj.id))
+        expect(resultSortedByPopularityDesc.map((pj: any) => pj.id))
+          .toEqual(projects
+            .sort((a: any, b: any) => {
+              return ((parseInt(b.numMembers, 10) * 20) + parseInt(b.numDatasets, 10))
+                  - ((parseInt(a.numMembers, 10) * 20) + parseInt(a.numDatasets, 10))
+            })
+            .map((pj: any) => pj.id))
+        expect(resultSortedByManagerNameAsc.map((pj: any) => pj.id))
+          .toEqual(projects.sort((a: any, b: any) => {
+            if (a.members < b.members) { return -1 }
+            if (a.members > b.members) { return 1 }
+            return 0
+          }).map((pj: any) => pj.id))
+        expect(resultSortedByManagerNameDesc.map((pj: any) => pj.id))
+          .toEqual(projects.sort((a: any, b: any) => {
+            if (a.members < b.members) { return 1 }
+            if (a.members > b.members) { return -1 }
+            return 0
+          }).map((pj: any) => pj.id))
       })
     })
   })
