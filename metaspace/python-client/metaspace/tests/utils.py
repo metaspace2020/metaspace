@@ -29,3 +29,36 @@ def advanced_ds_id(sm):
     )
     assert annotations, 'TEST SETUP: Process a dataset with a -H2O neutral loss and -H+C chem mod'
     return annotations[0]['dataset']['id']
+
+
+@pytest.fixture()
+def metadata():
+    return {
+        'Data_Type': 'Imaging MS',
+        'Sample_Information': {
+            'Organism': 'Species',
+            'Organism_Part': 'Organ or organism part',
+            'Condition': 'E.g. wildtype, diseased',
+            'Sample_Growth_Conditions': 'E.g. intervention, treatment'
+        },
+        'Sample_Preparation': {
+            'Sample_Stabilisation': 'Preservation method',
+            'Tissue_Modification': 'E.g. chemical modification',
+            'MALDI_Matrix': '2,5-dihydroxybenzoic acid (DHB)',
+            'MALDI_Matrix_Application': 'ImagePrep',
+            'Solvent': 'none'
+        },
+        'MS_Analysis': {
+            'Polarity': 'Positive',
+            'Ionisation_Source': 'E.g. MALDI, DESI',
+            'Analyzer': 'E.g. FTICR, Orbitrap',
+            'Detector_Resolving_Power': {
+                'mz': 400,
+                'Resolving_Power': 130000
+            },
+            'Pixel_Size': {
+                'Xaxis': 20,
+                'Yaxis': 40
+            }
+        }
+    }

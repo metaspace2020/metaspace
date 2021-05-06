@@ -196,8 +196,15 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
         url = f'{companion_url}/s3/multipart/{upload_id}/complete?{query}'
         data = {'parts': [{'PartNumber': part, 'ETag': etag} for part, etag in etags]}
         resp_data = send_request(url, 'POST', json=data, headers=headers)
+        # Decode bucket from returned URL
         location = urllib.parse.unquote(resp_data['location'])
-        (bucket,) = re.findall(r'https://([^.]+)', location)
+        dest_url = urllib.parse.urlparse(location)
+        if '.' in dest_url.hostname:
+            # S3 URL e.g. https://sm-engine-upload.s3.eu-west-1.amazonaws.com/
+            bucket = dest_url.hostname.split('.')[0]
+        else:
+            # Minio URL e.g. http://storage:9000/sm-engine-dev/
+            bucket = dest_url.path[1:].split('/')[0]
         return bucket
 
     key, upload_id = init_multipart_upload(Path(local_path).name, file_type, headers=headers)
@@ -219,6 +226,37 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
 
     bucket = complete_multipart_upload(key, upload_id, etags)
     return bucket, key
+
+
+def _dataset_upload(imzml_fn, ibd_fn, companion_url):
+    assert Path(imzml_fn).exists(), f'Could not find .imzML file: {imzml_fn}'
+    assert Path(ibd_fn).exists(), f'Could not find .ibd file: {ibd_fn}'
+    # Get UUID for upload
+    url = f'{companion_url}/s3/uuid'
+    resp = requests.get(url)
+    resp.raise_for_status()
+    headers = resp.json()
+
+    for fn in [imzml_fn, ibd_fn]:
+        bucket, key = multipart_upload(
+            fn,
+            companion_url,
+            'application/octet-stream',
+            headers=headers,
+        )
+    input_path = f's3a://{bucket}/{key.rsplit("/", 1)[0]}'
+    return input_path
+
+
+def _str_to_tiptap_markup(text):
+    """Convert a plain text string into a TipTap-compatible markup structure"""
+    return json.dumps({
+        'type': 'doc',
+        'content': [
+            {'type': 'paragraph', 'content': [{'type': 'text', 'text': paragraph}]}
+            for paragraph in text.split('\n\n')
+        ]
+    })
 
 
 class GraphQLClient(object):
@@ -271,16 +309,6 @@ class GraphQLClient(object):
         )
         res.raise_for_status()
         return res.text
-
-    def get_submitter_id(self):
-        query = """
-        query {
-          currentUser {
-            id
-          }
-        }
-        """
-        return self.query(query)['currentUser']['id']
 
     def get_primary_group_id(self):
         query = """
@@ -599,33 +627,7 @@ class GraphQLClient(object):
         resp.raise_for_status()
         return resp.json()
 
-    def create_dataset(
-        self,
-        imzml_fn,
-        ibd_fn,
-        dataset_name,
-        metadata,
-        is_public,
-        databases,
-        projects,
-        adducts,
-        ppm=None,
-        ds_id=None,
-    ):
-        headers = self._get_dataset_upload_uuid()
-        submitter_id = self.get_submitter_id()
-        primary_group_id = self.get_primary_group_id()
-        database_ids = databases and [self.map_database_to_id(db) for db in databases]
-
-        for fn in [imzml_fn, ibd_fn]:
-            bucket, key = multipart_upload(
-                fn,
-                self._config['dataset_upload_url'],
-                'application/octet-stream',
-                headers=headers,
-            )
-        data_path = f's3a://{bucket}/{key.rsplit("/", 1)[0]}'
-
+    def create_dataset(self, input_params, ds_id=None):
         query = """
             mutation createDataset($id: String, $input: DatasetCreateInput!, $priority: Int, $useLithops: Boolean) {
                 createDataset(
@@ -638,21 +640,10 @@ class GraphQLClient(object):
         """
         variables = {
             'id': ds_id,
-            'input': {
-                'name': dataset_name,
-                'inputPath': data_path,
-                'isPublic': is_public,
-                'databaseIds': database_ids,
-                'adducts': adducts,
-                'ppm': ppm,
-                'submitterId': submitter_id,
-                'groupId': primary_group_id,
-                'projectIds': projects,
-                'metadataJson': metadata,
-            },
+            'input': input_params,
             'useLithops': True,
         }
-        return self.query(query, variables)
+        return self.query(query, variables)['createDataset']
 
     def delete_dataset(self, ds_id, force=False):
         query = """
@@ -1464,29 +1455,68 @@ class SMInstance(object):
 
     def submit_dataset(
         self,
-        imzml_fn: str,
-        ibd_fn: str,
-        dataset_name: str,
-        metadata: str,
+        imzml_fn: Optional[str],
+        ibd_fn: Optional[str],
+        name: str,
+        metadata: Union[str, dict],
         is_public: bool,
-        mol_dbs: List[str],
-        project_ids: List[str] = [],
-        adducts: List[str] = None,
-    ) -> dict:
-        """Submit a dataset for processing in Metaspace.
+        databases: List[Union[int, str, Tuple[str, str]]] = None,
+        *,
+        project_ids: Optional[List[str]] = None,
+        adducts: Optional[List[str]] = None,
+        neutral_losses: Optional[List[str]] = None,
+        chem_mods: Optional[List[str]] = None,
+        ppm: Optional[float] = None,
+        num_isotopic_peaks: Optional[int] = None,
+        decoy_sample_size: Optional[int] = None,
+        analysis_version: Optional[int] = None,
+        input_path: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> str:
+        """Submit a dataset for processing in METASPACE.
 
-        Args:
-            imzml_fn: imzml file name.
-            ibd_fn: ibd file name.
-            dataset_name: Dataset name.
-            metadata: Dict based metadata.
-            is_public: Make dataset public or not.
-            mol_dbs: List of molecular databases.
-            project_ids: List of project IDs that will contain this dataset.
-            adducts: List of adducts.
+        :param imzml_fn: Path to the imzML file to upload
+        :param ibd_fn: Path to the ibd file to upload
+        :param name: New dataset name
+        :param metadata: A JSON string or Python dict containing metadata. This must exactly follow
+            the expected format - see the `submit dataset example notebook`_.
+
+        :param is_public: If True, the dataset will be publicly visible.
+            If False, it will only be visible to yourself, other members of your Group,
+            METASPACE administrators, and members of any Projects you add it to
+        :param databases: List of databases to process with, either as IDs or (name, version)
+            tuples, e.g. [22, ('LipidMaps', '2017-12-12')]
+        :param project_ids: A list of project IDs to add this dataset to.
+        :param adducts: List of adducts. e.g. ['-H', '+Cl']
+            Normal adducts should be plus or minus followed by an element.
+            For radical ions/cations, use the special strings '[M]+' or '[M]-'.
+        :param neutral_losses: List of neutral losses, e.g. ['-H2O', '-CO2']
+        :param chem_mods:
+        :param ppm: m/z tolerance (in ppm) for generating ion images (default 3.0)
+        :param num_isotopic_peaks: Number of isotopic peaks to search for (default 4)
+        :param decoy_sample_size: Number of implausible adducts to use for generating the decoy
+            search database (default 20)
+        :param analysis_version:
+        :param input_path: Only use this if making a clone of an existing dataset.
+            When input_path is suppled, imzml_fn and ibd_fn can be set to none None.
+        :param description: Optional text to describe the dataset
+
+        :return: The newly created dataset ID
+
+        .. _submit dataset example notebook: ../examples/submit-dataset.ipynb
         """
-        polarity = json.loads(metadata)['MS_Analysis']['Polarity']
+        current_user_id = self.current_user_id()
+        assert current_user_id, 'You must be logged in to submit a dataset'
+
+        primary_group_id = self._gqclient.get_primary_group_id()
+        database_ids = [self._gqclient.map_database_to_id(db) for db in databases or []]
+
+        if isinstance(metadata, str):
+            metadata = json.loads(metadata)
+
+        # Set default adducts
         if not adducts:
+            polarity = metadata['MS_Analysis']['Polarity']
             if polarity == 'Positive':
                 adducts = ['+H', '+Na', '+K']
             elif polarity == 'Negative':
@@ -1498,10 +1528,35 @@ class SMInstance(object):
         if project_ids:
             self._check_projects(project_ids)
 
-        graphql_response = self._gqclient.create_dataset(
-            imzml_fn, ibd_fn, dataset_name, metadata, is_public, mol_dbs, project_ids, adducts
-        )
-        return json.loads(graphql_response['createDataset'])['datasetId']
+        if description:
+            description_json = _str_to_tiptap_markup(description)
+        else:
+            description_json = None
+
+        # Upload the files. Keep this as late as possible to minimize chances of error after upload
+        if input_path is None:
+            assert imzml_fn and ibd_fn, 'imzml_fn and ibd_fn must be supplied'
+            input_path = _dataset_upload(imzml_fn, ibd_fn, self._config['dataset_upload_url'])
+
+        graphql_response = self._gqclient.create_dataset({
+            'name': name,
+            'inputPath': input_path,
+            'description': description_json,
+            'metadataJson': json.dumps(metadata),
+            'databaseIds': database_ids,
+            'adducts': adducts,
+            'neutralLosses': neutral_losses,
+            'chemMods': chem_mods,
+            'ppm': ppm,
+            'numPeaks': num_isotopic_peaks,
+            'decoySampleSize': decoy_sample_size,
+            'analysisVersion': analysis_version,
+            'submitterId': current_user_id,
+            'groupId': primary_group_id,
+            'projectIds': project_ids,
+            'isPublic': is_public,
+        })
+        return json.loads(graphql_response)['datasetId']
 
     def update_dataset_dbs(self, dataset_id, molDBs=None, adducts=None):
         self.update_dataset(dataset_id, databases=molDBs, adducts=adducts, reprocess=True)
@@ -1530,6 +1585,7 @@ class SMInstance(object):
         """Updates a dataset's metadata and/or processing settings. Only specify the fields that
         should change. All arguments should be specified as keyword arguments,
         e.g. to update a dataset's adducts:
+
         >>> sm.update_dataset(
         >>>     dataset_id='2018-11-07_14h15m28s',
         >>>     adducts=['[M]+', '+H', '+K', '+Na'],
@@ -1627,7 +1683,8 @@ class SMInstance(object):
         return db_match and MolecularDB(db_match, self._gqclient)
 
     def databases(self) -> List[MolecularDB]:
-        return [MolecularDB(db, self._gqclient) for db in self._gqclient.get_visible_databases()]
+        dbs = sorted(self._gqclient.get_visible_databases(), key=lambda db: db['id'])
+        return [MolecularDB(db, self._gqclient) for db in dbs]
 
     def create_database(
         self, local_path: Union[str, Path], name: str, version: str, is_public: bool = False
