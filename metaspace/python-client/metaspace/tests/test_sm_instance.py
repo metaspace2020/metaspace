@@ -111,7 +111,7 @@ def test_submit_dataset_clone(sm: SMInstance, my_ds_id, metadata):
         decoy_sample_size=10,
         analysis_version=2,
         input_path=sm.dataset(id=my_ds_id)._info['inputPath'],
-        description='Test description\nNew line\n\nNew paragraph [{"\\escape characters'
+        description='Test description\nNew line\n\nNew paragraph [{"\\escape characters',
     )
 
     new_ds = sm.dataset(id=new_ds_id)
@@ -128,7 +128,6 @@ def test_submit_dataset_clone(sm: SMInstance, my_ds_id, metadata):
     assert new_ds.config['isotope_generation']['chem_mods'] == ['+CO2']
     assert new_ds.config['fdr']['decoy_sample_size'] == 10
     assert new_ds.config['image_generation']['ppm'] == 2
-
 
 
 def test_update_dataset_without_reprocessing(sm: SMInstance, my_ds_id):

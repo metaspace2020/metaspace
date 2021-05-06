@@ -250,13 +250,15 @@ def _dataset_upload(imzml_fn, ibd_fn, companion_url):
 
 def _str_to_tiptap_markup(text):
     """Convert a plain text string into a TipTap-compatible markup structure"""
-    return json.dumps({
-        'type': 'doc',
-        'content': [
-            {'type': 'paragraph', 'content': [{'type': 'text', 'text': paragraph}]}
-            for paragraph in text.split('\n\n')
-        ]
-    })
+    return json.dumps(
+        {
+            'type': 'doc',
+            'content': [
+                {'type': 'paragraph', 'content': [{'type': 'text', 'text': paragraph}]}
+                for paragraph in text.split('\n\n')
+            ],
+        }
+    )
 
 
 class GraphQLClient(object):
@@ -1538,24 +1540,26 @@ class SMInstance(object):
             assert imzml_fn and ibd_fn, 'imzml_fn and ibd_fn must be supplied'
             input_path = _dataset_upload(imzml_fn, ibd_fn, self._config['dataset_upload_url'])
 
-        graphql_response = self._gqclient.create_dataset({
-            'name': name,
-            'inputPath': input_path,
-            'description': description_json,
-            'metadataJson': json.dumps(metadata),
-            'databaseIds': database_ids,
-            'adducts': adducts,
-            'neutralLosses': neutral_losses,
-            'chemMods': chem_mods,
-            'ppm': ppm,
-            'numPeaks': num_isotopic_peaks,
-            'decoySampleSize': decoy_sample_size,
-            'analysisVersion': analysis_version,
-            'submitterId': current_user_id,
-            'groupId': primary_group_id,
-            'projectIds': project_ids,
-            'isPublic': is_public,
-        })
+        graphql_response = self._gqclient.create_dataset(
+            {
+                'name': name,
+                'inputPath': input_path,
+                'description': description_json,
+                'metadataJson': json.dumps(metadata),
+                'databaseIds': database_ids,
+                'adducts': adducts,
+                'neutralLosses': neutral_losses,
+                'chemMods': chem_mods,
+                'ppm': ppm,
+                'numPeaks': num_isotopic_peaks,
+                'decoySampleSize': decoy_sample_size,
+                'analysisVersion': analysis_version,
+                'submitterId': current_user_id,
+                'groupId': primary_group_id,
+                'projectIds': project_ids,
+                'isPublic': is_public,
+            }
+        )
         return json.loads(graphql_response)['datasetId']
 
     def update_dataset_dbs(self, dataset_id, molDBs=None, adducts=None):
