@@ -1,10 +1,13 @@
 import time
 from copy import deepcopy
+from pathlib import Path
 
 import pytest
 
 from metaspace import SMInstance
-from metaspace.tests.utils import sm, my_ds_id
+from metaspace.tests.utils import sm, my_ds_id, metadata
+
+TEST_DATA_PATH = str((Path(__file__).parent / '../../../engine/tests/data').resolve())
 
 
 def test_add_dataset_external_link(sm, my_ds_id):
@@ -69,6 +72,62 @@ def test_datasets_by_all_fields(sm: SMInstance):
         organism='Human',
         organismPart='Cells',
     )
+
+
+def test_submit_dataset(sm: SMInstance, metadata):
+    time.sleep(1)  # Ensure no more than 1 DS per second is submitted to prevent errors
+
+    new_ds_id = sm.submit_dataset(
+        f'{TEST_DATA_PATH}/untreated/Untreated_3_434.imzML',
+        f'{TEST_DATA_PATH}/untreated/Untreated_3_434.ibd',
+        'Test dataset',
+        metadata,
+        False,
+    )
+
+    new_ds = sm.dataset(id=new_ds_id)
+    assert new_ds.name == 'Test dataset'
+    assert new_ds.polarity == 'Positive'
+    assert set(new_ds.adducts) == {'+H', '+Na', '+K'}  # Ensure defaults were added
+
+
+def test_submit_dataset_clone(sm: SMInstance, my_ds_id, metadata):
+    time.sleep(1)  # Ensure no more than 1 DS per second is submitted to prevent errors
+
+    project_id = sm.projects.get_all_projects()[0]['id']
+    new_ds_id = sm.submit_dataset(
+        None,
+        None,
+        'Test clone dataset',
+        metadata,
+        False,
+        [22, ('ChEBI', '2018-01')],
+        project_ids=[project_id],
+        adducts=['[M]+'],
+        neutral_losses=['-H2O'],
+        chem_mods=['+CO2'],
+        ppm=2,
+        num_isotopic_peaks=2,
+        decoy_sample_size=10,
+        analysis_version=2,
+        input_path=sm.dataset(id=my_ds_id)._info['inputPath'],
+        description='Test description\nNew line\n\nNew paragraph [{"\\escape characters',
+    )
+
+    new_ds = sm.dataset(id=new_ds_id)
+    assert new_ds.name == 'Test clone dataset'
+    assert new_ds.polarity == 'Positive'
+    assert new_ds.adducts == ['[M]+']
+
+    dbs = [dd['name'] for dd in new_ds.database_details]
+    assert 'HMDB' in dbs
+    assert 'ChEBI' in dbs
+    assert new_ds.config['analysis_version'] == 2
+    assert new_ds.config['isotope_generation']['n_peaks'] == 2
+    assert new_ds.config['isotope_generation']['neutral_losses'] == ['-H2O']
+    assert new_ds.config['isotope_generation']['chem_mods'] == ['+CO2']
+    assert new_ds.config['fdr']['decoy_sample_size'] == 10
+    assert new_ds.config['image_generation']['ppm'] == 2
 
 
 def test_update_dataset_without_reprocessing(sm: SMInstance, my_ds_id):
