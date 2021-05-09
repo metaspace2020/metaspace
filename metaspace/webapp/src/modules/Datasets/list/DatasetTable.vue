@@ -110,6 +110,7 @@ import updateApolloCache, { removeDatasetFromAllDatasetsQuery } from '../../../l
 import { merge, orderBy, pick } from 'lodash-es'
 import { formatDatabaseLabel } from '../../MolecularDatabases//formatting'
 import { datasetOwnerOptions } from '../../../lib/filterTypes'
+import { getLocalStorage } from '../../../lib/localStorage'
 
 const extractGroupedStatusCounts = (data) => {
   const counts = {
@@ -169,14 +170,23 @@ export default Vue.extend({
       return true
     },
     setDatasetOwnerOptions() {
+      if (!this.currentUser) {
+        return null
+      }
+
+      // due to some misbehaviour from setting initial value from getLocalstorage with null values
+      // on filterSpecs, the filter is being initialized here if user is logged
+      const localDsOwner = this.$store.getters.filter.datasetOwner
+        ? this.$store.getters.filter.datasetOwner : (getLocalStorage('datasetOwner') || null)
+      this.$store.commit('updateFilter', { ...this.$store.getters.filter, datasetOwner: localDsOwner })
+
       if (this.currentUser && Array.isArray(this.currentUser.groups)) {
         const groups = this.currentUser.groups
           .map((userGroup) => { return { isGroup: true, ...userGroup.group } })
         return datasetOwnerOptions.concat(groups)
-      } else if (this.currentUser) {
-        return datasetOwnerOptions
       }
-      return null
+
+      return datasetOwnerOptions
     },
     queryVariables() {
       return {
