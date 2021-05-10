@@ -43,15 +43,6 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     return await esSearchResults(filteredArgs, 'dataset', ctx.user)
   },
 
-  async allProjectDatasets(source, args, ctx): Promise<DatasetSource[]> {
-    const { args: filteredArgs } = await applyQueryFilters(ctx, {
-      ...args,
-      datasetFilter: args.filter,
-      filter: {},
-    })
-    return await esSearchResults(filteredArgs, 'dataset', ctx.user)
-  },
-
   async countDatasets(source, args, ctx): Promise<number> {
     const { args: filteredArgs } = await applyQueryFilters(ctx, {
       ...args,

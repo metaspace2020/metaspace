@@ -331,9 +331,9 @@ export default class ViewProjectPage extends Vue {
     get currentUserId(): string | null { return this.currentUser && this.currentUser.id }
     get roleInProject(): ProjectRole | null { return this.project && this.project.currentUserRole }
     get showManageDataset(): boolean {
-      const canEditRole = (this.project?.currentUserRole === ProjectRoleOptions.MANAGER
-        || this.project?.currentUserRole === ProjectRoleOptions.MEMBER)
-      return !!(this.currentUser?.id
+      const canEditRole = this.currentUser && (this.project?.currentUserRole === ProjectRoleOptions.MANAGER
+        || this.project?.currentUserRole === ProjectRoleOptions.MEMBER || this.currentUser.role === 'admin')
+      return !!(this.currentUser && this.currentUser.id
         && canEditRole && this.$route?.query?.tab === 'datasets')
     }
 
@@ -427,7 +427,8 @@ export default class ViewProjectPage extends Vue {
     }
 
     get isManager() {
-      return this.roleInProject === ProjectRoleOptions.MANAGER
+      return this.currentUser
+        && (this.roleInProject === ProjectRoleOptions.MANAGER || this.currentUser.role === 'admin')
     }
 
     get countHiddenMembers() {

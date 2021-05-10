@@ -35,7 +35,7 @@ describe('ProjectDatasetsDialog', () => {
   const graphqlWithData = () => {
     initMockGraphqlClient({
       Query: () => ({
-        allProjectDatasets: () => {
+        allDatasets: () => {
           return [{
             id: '2021-03-31_11h02m28s',
             name: 'New 3 (1)',
@@ -46,7 +46,17 @@ describe('ProjectDatasetsDialog', () => {
             uploadDT: '2021-03-30T21:25:18.473Z',
           }]
         },
-        allDatasets: () => {
+      }),
+    })
+  }
+  const graphqlWithExtraUserData = () => {
+    initMockGraphqlClient({
+      Query: () => ({
+        allDatasets: (src: any, { filter: { project } } : any) => {
+          if (project) {
+            return []
+          }
+
           return [{
             id: '2021-03-31_11h02m28s',
             name: 'New 3 (1)',
@@ -71,16 +81,6 @@ describe('ProjectDatasetsDialog', () => {
     })
   }
 
-  const graphqlProjectDsWithNoData = () => {
-    initMockGraphqlClient({
-      Query: () => ({
-        allProjectDatasets: () => {
-          return []
-        },
-      }),
-    })
-  }
-
   it('it should match snapshot', async() => {
     graphqlWithData()
     const wrapper = mount(testHarness, { store, router, apolloProvider, propsData })
@@ -91,7 +91,6 @@ describe('ProjectDatasetsDialog', () => {
 
   it('it should match no dataset snapshot', async() => {
     graphqlWithNoData()
-    graphqlProjectDsWithNoData()
     const wrapper = mount(testHarness, { store, router, apolloProvider, propsData })
     await Vue.nextTick()
 
@@ -100,7 +99,6 @@ describe('ProjectDatasetsDialog', () => {
 
   it('it should have disabled update button when no data available', async() => {
     graphqlWithNoData()
-    graphqlProjectDsWithNoData()
     const wrapper = mount(testHarness, { store, router, apolloProvider, propsData })
     await Vue.nextTick()
 
@@ -167,8 +165,7 @@ describe('ProjectDatasetsDialog', () => {
   })
 
   it('it should check one dataset and hit update', async() => {
-    graphqlWithData()
-    graphqlProjectDsWithNoData()
+    graphqlWithExtraUserData()
 
     const wrapper = mount(testHarness, {
       store,

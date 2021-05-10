@@ -8,10 +8,8 @@ exports[`ProjectDatasetsDialog it should match no dataset snapshot 1`] = `
       <div class="el-dialog__body">
         <div class="mt-6">
           <h4 class="m-0">Would you like to include/remove previously submitted datasets?</h4>
-          <div class="dataset-checkbox-list leading-6">
-            <div class="mb-2"><span class="select-link">Select none</span><span> | </span><span class="select-link">Select all</span></div><label class="el-checkbox flex h-6 items-center m-0 mx-2"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value="allDatasets.0.name"></span><span class="el-checkbox__label"><span class="truncate">allDatasets.0.name</span><span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time></span>
-              <!----></span></label><label class="el-checkbox flex h-6 items-center m-0 mx-2"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value="allDatasets.1.name"></span><span class="el-checkbox__label"><span class="truncate">allDatasets.1.name</span><span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time></span>
-              <!----></span></label>
+          <div class="flex items-center justify-center leading-6">
+            <div>No datasets available</div>
           </div>
           <div class="button-bar"><button type="button" class="el-button el-button--default">
               <!---->
