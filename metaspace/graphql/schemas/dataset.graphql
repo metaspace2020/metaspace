@@ -298,11 +298,6 @@ type Query {
               filter: DatasetFilter = {}, simpleQuery: String,
               offset: Int = 0, limit: Int = 10): [Dataset!]
 
-  allProjectDatasets(orderBy: DatasetOrderBy = ORDER_BY_DATE,
-              sortingOrder: SortingOrder = DESCENDING,
-              filter: DatasetFilter = {}, simpleQuery: String
-  ): [Dataset!]
-
   countDatasets(filter: DatasetFilter = {}, simpleQuery: String): Int!
 
   countDatasetsPerGroup(query: DatasetCountPerGroupInput!): DatasetCountPerGroup!

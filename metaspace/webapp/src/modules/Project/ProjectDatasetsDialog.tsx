@@ -3,7 +3,7 @@ import { importDatasetsIntoProjectMutation, ProjectsListProject } from '../../ap
 import { Dialog, Checkbox, Button } from '../../lib/element-ui'
 import { uniqBy, isEmpty } from 'lodash'
 import './ProjectDatasetsDialog.scss'
-import { DatasetListItem, datasetListItemsQuery, projectDatasetListItemsQuery } from '../../api/dataset'
+import { DatasetListItem, datasetListItemsQuery } from '../../api/dataset'
 import { useQuery } from '@vue/apollo-composable'
 import ElapsedTime from '../../components/ElapsedTime'
 import reportError from '../../lib/reportError'
@@ -79,15 +79,15 @@ export const ProjectDatasetsDialog = defineComponent<ProjectDatasetsDialogProps>
     const {
       result: projectDatasetsResult,
       loading: loadingProjectDatasets,
-    } = useQuery<{allProjectDatasets: DatasetListItem[]}>(projectDatasetListItemsQuery,
+    } = useQuery<{allDatasets: DatasetListItem[]}>(datasetListItemsQuery,
       () => ({ dFilter: { project: props.project?.id } }))
     const projectDatasets = computed(() => {
       if (isEmpty(state.selectedDatasets)) {
-        state.selectedDatasets = getProjectDatasets(projectDatasetsResult.value?.allProjectDatasets)
+        state.selectedDatasets = getProjectDatasets(projectDatasetsResult.value?.allDatasets)
       }
 
       return projectDatasetsResult.value != null
-        ? projectDatasetsResult.value.allProjectDatasets as DatasetListItem[] : null
+        ? projectDatasetsResult.value.allDatasets as DatasetListItem[] : null
     })
 
     const handleClose = () => {

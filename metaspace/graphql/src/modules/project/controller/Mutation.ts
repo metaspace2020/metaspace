@@ -217,7 +217,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     removedDatasetIds,
   }, ctx: Context): Promise<boolean> {
     const userProjectRole = (await ctx.user.getProjectRoles())[projectId]
-    if (userProjectRole == null) {
+    if (userProjectRole == null && !ctx.isAdmin) {
       throw new UserError('Not a member of project')
     }
 
@@ -237,7 +237,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
           projectId, userProjectRole, true)
       }))
 
-      const approved = [UPRO.MEMBER, UPRO.MANAGER].includes(userProjectRole)
+      const approved = ([UPRO.MEMBER, UPRO.MANAGER].includes(userProjectRole) || ctx.isAdmin)
       await updateProjectDatasets(ctx, projectId, (datasetIds || []), (removedDatasetIds || []),
         approved, false)
     }
