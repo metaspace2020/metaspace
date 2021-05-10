@@ -127,7 +127,7 @@ mol_db_imports:
     name: "HMDB"
     version: "v4"
 # uncomment below for other databases
-#  - url: "https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files_2021/brachemdb/BraChemDB_2018-03_empty_inchi.tsv"
+#  - url: "https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files_2021/brachem/BraChemDB_2018-03_empty_inchi.tsv"
 #    name: "BraChemDB"
 #    version: "2018-01"
 #  - url: "https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files_2021/chebi/chebi_2018-01.tsv"
