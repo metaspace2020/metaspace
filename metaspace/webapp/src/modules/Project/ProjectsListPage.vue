@@ -106,8 +106,6 @@ import { SortDropdown } from '../../components/SortDropdown/SortDropdown'
             query: this.query,
             offset: (this.page - 1) * this.pageSize,
             limit: this.pageSize,
-            orderBy: this.orderBy,
-            sortingOrder: this.sortingOrder,
           }
         },
       },
