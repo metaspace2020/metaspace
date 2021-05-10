@@ -79,6 +79,7 @@ export const ProjectDatasetsDialog = defineComponent<ProjectDatasetsDialogProps>
     const {
       result: projectDatasetsResult,
       loading: loadingProjectDatasets,
+      refetch: projectDatasetsRefetch,
     } = useQuery<{allDatasets: DatasetListItem[]}>(datasetListItemsQuery,
       () => ({ dFilter: { project: props.project?.id } }))
     const projectDatasets = computed(() => {
@@ -144,6 +145,7 @@ export const ProjectDatasetsDialog = defineComponent<ProjectDatasetsDialogProps>
           })
         }
         await props.refreshData()
+        await projectDatasetsRefetch()
         emit('update')
       } catch (err) {
         reportError(err)
