@@ -281,7 +281,8 @@ describe('modules/project/controller (queries)', () => {
           const project = await createTestProject({
             name: `test${pIdx}`,
             createdDT: moment().add(pIdx, 'seconds'),
-            publishedDT: moment().add(pIdx, 'seconds'),
+            publishedDT: pIdx === 0 ? null : moment().add(pIdx, 'seconds'), // adds null to first to check if it
+            // is removed
           })
           const members = await Promise.all(_.range(idx + 1)
             .map((mIdx) => createTestUser({ name: `user${pIdx}-${mIdx}` })))
@@ -388,17 +389,35 @@ describe('modules/project/controller (queries)', () => {
             return 0
           }).map((pj: any) => pj.id))
         expect(resultSortedByPubDateAsc.map((pj: any) => pj.id))
+          .not
           .toEqual(projects.sort((a: any, b: any) => {
-            if (a.publishedDT.isBefore(b.publishedDT)) { return -1 }
-            if (a.publishedDT.isAfter(b.publishedDT)) { return 1 }
+            if (a.publishedDT?.isBefore(b.publishedDT)) { return -1 }
+            if (a.publishedDT?.isAfter(b.publishedDT)) { return 1 }
             return 0
           }).map((pj: any) => pj.id))
         expect(resultSortedByPubDateDesc.map((pj: any) => pj.id))
+          .not
           .toEqual(projects.sort((a: any, b: any) => {
-            if (a.publishedDT.isBefore(b.publishedDT)) { return 1 }
-            if (a.publishedDT.isAfter(b.publishedDT)) { return -1 }
+            if (a.publishedDT?.isBefore(b.publishedDT)) { return 1 }
+            if (a.publishedDT?.isAfter(b.publishedDT)) { return -1 }
             return 0
           }).map((pj: any) => pj.id))
+        expect(resultSortedByPubDateAsc.map((pj: any) => pj.id))
+          .toEqual(projects
+            .filter((pj: any) => pj.publishedDT !== null)
+            .sort((a: any, b: any) => {
+              if (a.publishedDT?.isBefore(b.publishedDT)) { return -1 }
+              if (a.publishedDT?.isAfter(b.publishedDT)) { return 1 }
+              return 0
+            }).map((pj: any) => pj.id))
+        expect(resultSortedByPubDateDesc.map((pj: any) => pj.id))
+          .toEqual(projects
+            .filter((pj: any) => pj.publishedDT !== null)
+            .sort((a: any, b: any) => {
+              if (a.publishedDT?.isBefore(b.publishedDT)) { return 1 }
+              if (a.publishedDT?.isAfter(b.publishedDT)) { return -1 }
+              return 0
+            }).map((pj: any) => pj.id))
         expect(resultSortedByDsCountAsc.map((pj: any) => pj.id))
           .toEqual(projects
             .sort((a: any, b: any) => a.numDatasets - b.numDatasets)

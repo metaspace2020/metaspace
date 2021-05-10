@@ -149,15 +149,15 @@ export default class ProjectsListPage extends Vue {
     sortingOptions: any[] = [
       {
         value: 'ORDER_BY_POPULARITY',
-        label: 'Popularity',
+        label: 'Project size',
       },
       {
         value: 'ORDER_BY_DATE',
-        label: 'Last updated',
+        label: 'Creation date',
       },
       {
         value: 'ORDER_BY_UP_DATE',
-        label: 'Upload date',
+        label: 'Publication date',
       },
       {
         value: 'ORDER_BY_NAME',

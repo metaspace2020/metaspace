@@ -39,12 +39,22 @@ export class ProjectSourceRepository {
       .filter(([, role]) => role !== UPRO.PENDING)
       .map(([id]) => id)
 
+    // Hide datasets the current user doesn't have access to
+    if (user.id && user.role === 'admin') {
+      qb = qb.where('true') // For consistency, in case anything weird happens when `andWhere` is called without first calling `where`
+    } else {
+      qb = qb.where(new Brackets(qb => qb.where('project.is_public = True')
+        .orWhere('project.id = ANY(:memberOfProjectIds)', { memberOfProjectIds })))
+    }
+
     if (sortBy === 'name' || sortBy === 'ORDER_BY_NAME') {
       qb = qb.orderBy('project.name', sqlSortingOrder)
     } else if (sortBy === 'ORDER_BY_DATE') {
       qb = qb.orderBy('project.created_dt', sqlSortingOrder)
     } else if (sortBy === 'ORDER_BY_UP_DATE') {
-      qb = qb.orderBy('project.published_dt', sqlSortingOrder)
+      qb = qb
+        .andWhere('project.published_dt IS NOT NULL')
+        .orderBy('project.published_dt', sqlSortingOrder)
     } else if (sortBy === 'ORDER_BY_MANAGER_NAME') {
       qb = qb
         .leftJoin(`(SELECT graphql.user_project.project_id as project_id, 
@@ -97,13 +107,6 @@ export class ProjectSourceRepository {
         .addOrderBy('project.name')
     }
 
-    // Hide datasets the current user doesn't have access to
-    if (user.id && user.role === 'admin') {
-      qb = qb.where('true') // For consistency, in case anything weird happens when `andWhere` is called without first calling `where`
-    } else {
-      qb = qb.where(new Brackets(qb => qb.where('project.is_public = True')
-        .orWhere('project.id = ANY(:memberOfProjectIds)', { memberOfProjectIds })))
-    }
     // Add caller-supplied filter
     if (whereClause) {
       qb = qb.andWhere(whereClause, parameters)

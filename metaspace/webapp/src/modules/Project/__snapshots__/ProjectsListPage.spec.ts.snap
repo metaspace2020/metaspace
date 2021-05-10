@@ -75,9 +75,9 @@ exports[`ProjectsListPage should change actions for projects under review 1`] = 
       <div class="flex flex-row items-center justify-end flex-1">
         <div class="pb-2 flex flex-row sort-dp-container">
           <mock-el-select size="default" value="" placeholder="Sort by" clearable="true">
-            <mock-el-option label="Popularity" value="ORDER_BY_POPULARITY"></mock-el-option>
-            <mock-el-option label="Last updated" value="ORDER_BY_DATE"></mock-el-option>
-            <mock-el-option label="Upload date" value="ORDER_BY_UP_DATE"></mock-el-option>
+            <mock-el-option label="Project size" value="ORDER_BY_POPULARITY"></mock-el-option>
+            <mock-el-option label="Creation date" value="ORDER_BY_DATE"></mock-el-option>
+            <mock-el-option label="Publication date" value="ORDER_BY_UP_DATE"></mock-el-option>
             <mock-el-option label="Project name" value="ORDER_BY_NAME"></mock-el-option>
             <mock-el-option label="Manager name" value="ORDER_BY_MANAGER_NAME"></mock-el-option>
             <mock-el-option label="Number of datasets" value="ORDER_BY_DATASETS_COUNT"></mock-el-option>
@@ -239,9 +239,9 @@ exports[`ProjectsListPage should change actions for published projects 1`] = `
       <div class="flex flex-row items-center justify-end flex-1">
         <div class="pb-2 flex flex-row sort-dp-container">
           <mock-el-select size="default" value="" placeholder="Sort by" clearable="true">
-            <mock-el-option label="Popularity" value="ORDER_BY_POPULARITY"></mock-el-option>
-            <mock-el-option label="Last updated" value="ORDER_BY_DATE"></mock-el-option>
-            <mock-el-option label="Upload date" value="ORDER_BY_UP_DATE"></mock-el-option>
+            <mock-el-option label="Project size" value="ORDER_BY_POPULARITY"></mock-el-option>
+            <mock-el-option label="Creation date" value="ORDER_BY_DATE"></mock-el-option>
+            <mock-el-option label="Publication date" value="ORDER_BY_UP_DATE"></mock-el-option>
             <mock-el-option label="Project name" value="ORDER_BY_NAME"></mock-el-option>
             <mock-el-option label="Manager name" value="ORDER_BY_MANAGER_NAME"></mock-el-option>
             <mock-el-option label="Number of datasets" value="ORDER_BY_DATASETS_COUNT"></mock-el-option>
@@ -402,9 +402,9 @@ exports[`ProjectsListPage should match snapshot 1`] = `
       <div class="flex flex-row items-center justify-end flex-1">
         <div class="pb-2 flex flex-row sort-dp-container">
           <mock-el-select size="default" value="" placeholder="Sort by" clearable="true">
-            <mock-el-option label="Popularity" value="ORDER_BY_POPULARITY"></mock-el-option>
-            <mock-el-option label="Last updated" value="ORDER_BY_DATE"></mock-el-option>
-            <mock-el-option label="Upload date" value="ORDER_BY_UP_DATE"></mock-el-option>
+            <mock-el-option label="Project size" value="ORDER_BY_POPULARITY"></mock-el-option>
+            <mock-el-option label="Creation date" value="ORDER_BY_DATE"></mock-el-option>
+            <mock-el-option label="Publication date" value="ORDER_BY_UP_DATE"></mock-el-option>
             <mock-el-option label="Project name" value="ORDER_BY_NAME"></mock-el-option>
             <mock-el-option label="Manager name" value="ORDER_BY_MANAGER_NAME"></mock-el-option>
             <mock-el-option label="Number of datasets" value="ORDER_BY_DATASETS_COUNT"></mock-el-option>
