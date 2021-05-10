@@ -11,6 +11,7 @@ const enum SortingOrder {
 
 interface Props {
   options: Option[]
+  size: string
   onSortChange(value: any, orderBy: SortingOrder): any
 }
 
@@ -50,6 +51,10 @@ export const SortDropdown = defineComponent<Props>({
       type: Function,
       default: () => {},
     },
+    size: {
+      type: String,
+      default: 'small',
+    },
   },
   // Last reprocessed date (as currently)/Upload date/Number of annotations for FDR 10%/User name/Dataset name
   setup(props) {
@@ -75,7 +80,7 @@ export const SortDropdown = defineComponent<Props>({
 
     return () => (
       <div class="flex flex-row sort-dp-container">
-        <el-select size="small" value={state.value} placeholder="Sort by" onChange={handleSelect} clearable>
+        <el-select size={props.size} value={state.value} placeholder="Sort by" onChange={handleSelect} clearable>
           {
             props.options.map((opt) => {
               return <el-option
