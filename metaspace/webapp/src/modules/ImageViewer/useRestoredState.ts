@@ -51,6 +51,19 @@ export default async($apollo: any, id: string, datasetId: string) => {
 
     store.commit('setSnapshotAnnotationIds', annotations.map((annotation: any) => annotation.id))
 
+    // set annotation id filter as default if multi annotation shared
+    if (annotations.length > 1) {
+      store.commit('updateFilter', {
+        ...store.getters.filter,
+        annotationIds: annotations.map((annotation: any) => annotation.id),
+      })
+    } else {
+      store.commit('updateFilter', {
+        ...store.getters.filter,
+        annotationIds: undefined,
+      })
+    }
+
     if (annotations.length > 0) {
       store.commit('setAnnotation', annotations[0])
     } else {

@@ -21,7 +21,7 @@ function formatFDR(fdr: number) {
 
 export type Level = 'annotation' | 'dataset' | 'upload' | 'projects' | 'dataset-annotation';
 
-export type FilterKey = 'database' | 'datasetIds' | 'minMSM' | 'compoundName'
+export type FilterKey = 'annotationIds' | 'database' | 'datasetIds' | 'minMSM' | 'compoundName'
   | 'chemMod' | 'neutralLoss' | 'adduct' | 'mz' | 'fdrLevel'
   | 'group' | 'project' | 'submitter' | 'polarity' | 'organism' | 'organismPart' | 'condition' | 'growthConditions'
   | 'ionisationSource' | 'maldiMatrix' | 'analyzerType' | 'simpleFilter' | 'simpleQuery' | 'metadataType'
@@ -116,6 +116,16 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     name: 'Dataset',
     description: 'Select dataset',
     levels: ['annotation', 'dataset', 'dataset-annotation'],
+    initialValue: undefined,
+    multiple: true,
+    encoding: 'list',
+  },
+
+  annotationIds: {
+    type: SearchableFilter,
+    name: 'Annotation',
+    description: 'Select annotation',
+    levels: ['annotation'],
     initialValue: undefined,
     multiple: true,
     encoding: 'list',
@@ -381,7 +391,7 @@ export const DATASET_FILTERS: FilterKey[] = [
 ]
 /** = all annotation-affecting filters - dataset-affecting filters */
 export const ANNOTATION_FILTERS: FilterKey[] = [
-  'database', 'minMSM', 'compoundName', 'adduct', 'mz', 'fdrLevel', 'colocalizedWith', 'offSample',
+  'annotationIds', 'database', 'minMSM', 'compoundName', 'adduct', 'mz', 'fdrLevel', 'colocalizedWith', 'offSample',
 ]
 /** Filters that are very specific to particular annotations and should be cleared when navigating to other annotations */
 export const ANNOTATION_SPECIFIC_FILTERS: FilterKey[] = [

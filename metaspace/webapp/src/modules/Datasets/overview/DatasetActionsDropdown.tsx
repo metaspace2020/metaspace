@@ -97,8 +97,6 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
     }
 
     const handleCommand = (command: string) => {
-      console.log('handleCommand', command)
-
       switch (command) {
         case 'edit':
           $router.push({

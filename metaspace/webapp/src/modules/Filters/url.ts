@@ -21,6 +21,7 @@ const FILTER_TO_URL: Record<FilterKey, string> = {
   project: 'prj',
   submitter: 'subm',
   datasetIds: 'ds',
+  annotationIds: 'ann',
   minMSM: 'msm',
   compoundName: 'mol',
   chemMod: 'chem_mod',

@@ -2,6 +2,7 @@
   <div id="annot-page">
     <filter-panel
       :level="currentLevel"
+      :hidden-filters="hiddenFilters"
     />
     <div class="my-2 w-full">
       <router-link
@@ -41,6 +42,8 @@
             longer exist. Please select another annotation and generate the link again."
             type="warning"
             effect="dark"
+            :closable="false"
+            :show-icon="true"
           >
           </el-alert>
         </div>
@@ -67,6 +70,7 @@ import AnnotationView from './AnnotationView.vue'
 import { FilterPanel } from '../Filters/index'
 import config from '../../lib/config'
 import { useRestoredState } from '../ImageViewer'
+import Vue from 'vue'
 
 export default {
   name: 'AnnotationsPage',
@@ -108,8 +112,23 @@ export default {
       return this.$route.name === 'dataset-annotations' ? 'dataset-annotation' : 'annotation'
     },
 
+    hiddenFilters() {
+      return !this.hasSnapshot ? ['annotationIds'] : []
+    },
+
     isFromDatasetOverview() {
       return this.$route.name === 'dataset-annotations'
+    },
+
+    hasSnapshot() {
+      if (config.features.multiple_ion_images) {
+        const { viewId } = this.$route.query
+        const { datasetIds } = this.filter
+        if (viewId && datasetIds?.length === 1) {
+          return true
+        }
+      }
+      return false
     },
 
     datasetOverviewLink() {
@@ -128,7 +147,7 @@ export default {
     },
   },
   created() {
-    this.$store.commit('updateFilter', this.filter)
+    this.$store.commit('updateFilter', { ...this.filter, annotationIds: undefined })
 
     if (config.features.multiple_ion_images) {
       const { viewId } = this.$route.query

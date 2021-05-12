@@ -38,6 +38,7 @@ const orderedFilterKeys = [
   'group',
   'project',
   'submitter',
+  'annotationIds',
   'datasetIds',
   'compoundName',
   'mz',
@@ -79,7 +80,7 @@ Object.keys(FILTER_SPECIFICATIONS).reduce((accum, cur) => {
 /** @type {ComponentOptions<Vue> & Vue} */
 const FilterPanel = {
   name: 'filter-panel',
-  props: ['level', 'simpleFilterOptions', 'setDatasetOwnerOptions'],
+  props: ['level', 'simpleFilterOptions', 'setDatasetOwnerOptions', 'hiddenFilters'],
   components: filterComponents,
   mounted() {
     this.$store.dispatch('initFilterLists')
@@ -109,6 +110,7 @@ const FilterPanel = {
         const filterSpec = FILTER_SPECIFICATIONS[key]
         if (filterSpec.levels.includes(this.level)
            && !this.activeKeys.includes(key)
+           && (!this.hiddenFilters || (this.hiddenFilters && !this.hiddenFilters.includes(key)))
            && (filterSpec.hidden == null || filterSpec.hidden === false
              || (isFunction(filterSpec.hidden) && !filterSpec.hidden()))) {
           available.push({ key, description: filterSpec.description })
