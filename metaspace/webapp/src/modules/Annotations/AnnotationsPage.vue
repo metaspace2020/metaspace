@@ -30,9 +30,20 @@
         :lg="24 - tableWidth"
       >
         <annotation-view
-          v-if="selectedAnnotation"
+          v-if="selectedAnnotation && selectedAnnotation.status !== 'reprocessed_snapshot'"
           :annotation="selectedAnnotation"
         />
+        <div
+          v-if="selectedAnnotation && selectedAnnotation.status === 'reprocessed_snapshot'"
+        >
+          <el-alert
+            title="This dataset has been reprocessed and some of the annotations used for this link no
+            longer exist. Please select another annotation and generate the link again."
+            type="warning"
+            effect="dark"
+          >
+          </el-alert>
+        </div>
 
         <el-col
           v-else
@@ -122,13 +133,14 @@ export default {
     if (config.features.multiple_ion_images) {
       const { viewId } = this.$route.query
       const { datasetIds } = this.filter
-      if (viewId && datasetIds.length === 1) {
+      if (viewId && datasetIds?.length === 1) {
         useRestoredState(this.$apollo, viewId, datasetIds[0])
       }
     }
   },
   destroyed() {
     this.$store.commit('setAnnotation', undefined)
+    this.$store.commit('setSnapshotAnnotationIds', undefined)
   },
 }
 </script>

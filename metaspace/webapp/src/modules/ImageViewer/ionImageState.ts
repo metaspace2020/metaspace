@@ -121,6 +121,9 @@ function removeLayer(id: string) : number {
 }
 
 function getImageIntensities(annotation: Annotation) {
+  if (!annotation) {
+    return { minIntensity: 0, maxIntensity: 1 }
+  }
   const [isotopeImage] = annotation.isotopeImages
   const { minIntensity = 0, maxIntensity = 1 } = isotopeImage || {}
   return {

@@ -283,7 +283,7 @@ const constructAnnotationFilters = (filter: AnnotationFilter & ExtraAnnotationFi
     filters.push(constructRangeFilter('fdr', { min: null, max: fdrLevel + 1e-3 }))
   }
 
-  if (annId) { filters.push({ term: { _id: annId } }) }
+  if (annId) { filters.push({ terms: { _id: annId.split('|') } }) }
   if (databaseId) { filters.push({ term: { db_id: databaseId } }) }
   if (sumFormula) { filters.push({ term: { formula: sumFormula } }) }
   if (chemMod != null) { filters.push({ term: { chem_mod: chemMod } }) }

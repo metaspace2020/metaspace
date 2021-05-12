@@ -320,6 +320,7 @@ export default Vue.extend({
       initialLoading: true,
       csvChunkSize: 1000,
       nextCurrentRowIndex: null,
+      loadedSnapshotAnnotations: false,
     }
   },
   computed: {
@@ -384,6 +385,13 @@ export default Vue.extend({
       return Math.ceil(this.totalCount / this.recordsPerPage)
     },
 
+    isFromSnapshot() {
+      const { viewId, mol } = this.$route.query
+      const { datasetIds } = this.filter
+
+      return config.features.multiple_ion_images && !mol && viewId && datasetIds?.length === 1
+    },
+
     currentPage: {
       get() {
         return this.$store.getters.settings.table.currentPage
@@ -440,17 +448,36 @@ export default Vue.extend({
       query: annotationListQuery,
       fetchPolicy: 'cache-first',
       variables() {
-        return this.queryVariables
+        let queryVariables = this.queryVariables
+        if (
+          this.isFromSnapshot
+          && this.$store.state.snapshotAnnotationIds?.length > 1
+        ) {
+          queryVariables = {
+            ...queryVariables,
+            filter: { ...queryVariables.filter, annId: this.$store.state.snapshotAnnotationIds.join('|') },
+          }
+        }
+        return queryVariables
       },
       update: data => data.allAnnotations,
       throttle: 200,
       result({ data }) {
         // timing hack to allow table state to update
         Vue.nextTick(() => {
-          if (this.nextCurrentRowIndex !== null) {
+          if (this.isFromSnapshot && !this.loadedSnapshotAnnotations) {
+            this.nextCurrentRowIndex = -1
+            if (Array.isArray(this.$store.state.snapshotAnnotationIds)) {
+              this.nextCurrentRowIndex = this.annotations.findIndex((annotation) =>
+                this.$store.state.snapshotAnnotationIds.includes(annotation.id))
+              this.loadedSnapshotAnnotations = true
+            }
+          }
+
+          if (this.nextCurrentRowIndex !== null && this.nextCurrentRowIndex !== -1) {
             this.setCurrentRow(this.nextCurrentRowIndex)
             this.nextCurrentRowIndex = null
-          } else {
+          } else if (this.nextCurrentRowIndex !== -1) {
             const curRow = this.getCurrentRow()
             if (!curRow) {
               this.setCurrentRow(this.currentRowIndex)
@@ -534,6 +561,11 @@ export default Vue.extend({
     },
 
     onCurrentRowChange(row) {
+      // do not set initial row if loading from a snapshot (permalink)
+      if (this.isFromSnapshot && !this.loadedSnapshotAnnotations) {
+        return null
+      }
+
       this.$store.commit('setAnnotation', row)
 
       if (row !== null) {

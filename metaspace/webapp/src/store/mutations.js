@@ -156,6 +156,10 @@ export default {
     state.annotation = annotation;
   },
 
+  setSnapshotAnnotationIds(state, annotation) {
+    state.snapshotAnnotationIds = annotation;
+  },
+
   updateAnnotationTableStatus(state, isLoading) {
     state.tableIsLoading = isLoading;
   },
