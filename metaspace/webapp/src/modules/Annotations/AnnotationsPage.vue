@@ -45,6 +45,22 @@
             :closable="false"
             :show-icon="true"
           >
+            <ul
+              v-if="selectedAnnotation && selectedAnnotation.annotationIons"
+              id="ions"
+              class="mt-0 ml-0 pl-2"
+            >
+              <p class="mb-1 font-bold text-xs">
+                The previous link showed the following info:
+              </p>
+              <li
+                v-for="item in selectedAnnotation.annotationIons"
+                :key="item.ion"
+                class="ml-4"
+              >
+                {{ item.ion }} - {{ item.database }}
+              </li>
+            </ul>
           </el-alert>
         </div>
 
@@ -184,4 +200,5 @@ export default {
   #annot-view-container {
     padding-left: 5px;
   }
+
 </style>

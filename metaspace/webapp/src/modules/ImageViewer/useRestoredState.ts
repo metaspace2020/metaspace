@@ -5,6 +5,7 @@ import reportError from '../../lib/reportError'
 import { restoreImageViewerState } from './state'
 import { restoreIonImageState } from './ionImageState'
 import store from '../../store'
+import safeJsonParse from '../../lib/safeJsonParse'
 
 export default async($apollo: any, id: string, datasetId: string) => {
   try {
@@ -67,7 +68,10 @@ export default async($apollo: any, id: string, datasetId: string) => {
     if (annotations.length > 0) {
       store.commit('setAnnotation', annotations[0])
     } else {
-      store.commit('setAnnotation', { status: 'reprocessed_snapshot' })
+      store.commit('setAnnotation', {
+        status: 'reprocessed_snapshot',
+        annotationIons: safeJsonParse(snapshot).annotationIons,
+      })
     }
 
     restoreImageViewerState({

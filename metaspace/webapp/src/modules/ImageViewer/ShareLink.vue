@@ -123,6 +123,19 @@ export default defineComponent<Props>({
 
       status.value = 'SAVING'
       try {
+        const annotationIonsQuery = await root.$apollo.query({
+          query: gql`query AnnotationNames($ids: String) {
+                    options: allAnnotations(filter: {annId: $ids}) {
+                      ion
+                      database
+                    }
+                  }`,
+          variables: {
+            ids: ionImage.annotationIds.join('|'),
+          },
+        })
+        const annotationIons = annotationIonsQuery.data.options
+
         const result = await root.$apollo.mutate({
           mutation: gql`mutation saveImageViewerSnapshotMutation($input: ImageViewerSnapshotInput!) {
             saveImageViewerSnapshot(input: $input)
@@ -133,6 +146,7 @@ export default defineComponent<Props>({
               annotationIds: ionImage.annotationIds,
               snapshot: JSON.stringify({
                 imageViewer,
+                annotationIons,
                 ionImage: ionImage.snapshot,
               }),
               datasetId: props.annotation.dataset.id,
