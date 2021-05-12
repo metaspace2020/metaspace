@@ -1,5 +1,7 @@
 import gql from 'graphql-tag'
 import { omit } from 'lodash-es'
+import { annotationListQuery } from '../../../api/annotation'
+import config from '../../../lib/config'
 
 export interface Option {
   value: string;
@@ -10,7 +12,7 @@ export interface FilterQueries {
   getById($apollo: any, ids: string[]): Promise<Option[]>;
 }
 
-export type SearchableFilterKey = 'datasetIds' | 'group' | 'project' | 'submitter';
+export type SearchableFilterKey = 'datasetIds' | 'group' | 'project' | 'submitter' | 'annotationIds';
 
 const datasetQueries: FilterQueries = {
   async search($apollo, $store, query) {
@@ -42,6 +44,54 @@ const datasetQueries: FilterQueries = {
           id
           value: id
           label: name
+        }
+      }`,
+      fetchPolicy: 'cache-first',
+      variables: { ids: ids.join('|') },
+    })
+    return data.options as Option[]
+  },
+}
+
+const annotationQueries: FilterQueries = {
+  async search($apollo, $store, query) {
+    const dFilter = $store.getters.gqlDatasetFilter
+    const colocalizationCoeffFilter = $store.getters.gqlColocalizationFilter
+
+    const { data } = await $apollo.query({
+      query: gql`query AnnotationOptions($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
+        $query: String, $filter: AnnotationFilter, $dFilter: DatasetFilter) {
+        options: allAnnotations(filter: $filter, datasetFilter: $dFilter, simpleQuery: $query,
+          orderBy: $orderBy, sortingOrder: $sortingOrder,
+          limit: 20) {
+          id
+          value: id
+          label: ion
+        }
+      }`,
+      fetchPolicy: 'cache-first',
+      variables: {
+        filter: {
+          ...omit($store.getters.gqlAnnotationFilter, 'annId'),
+          compoundQuery: query,
+        },
+        dFilter,
+        query: $store.getters.ftsQuery,
+        colocalizationCoeffFilter,
+        orderBy: $store.getters.settings.table.order.by,
+        sortingOrder: $store.getters.settings.table.order.dir,
+        countIsomerCompounds: config.features.isomers,
+      },
+    })
+    return data.options as Option[]
+  },
+  async getById($apollo, ids) {
+    const { data } = await $apollo.query({
+      query: gql`query AnnotationNames($ids: String) {
+        options: allAnnotations(filter: {annId: $ids}) {
+          id
+          value: id
+          label: ion
         }
       }`,
       fetchPolicy: 'cache-first',
@@ -234,6 +284,7 @@ const submitterQueries: FilterQueries = {
 
 const searchableFilterQueries: Record<SearchableFilterKey, FilterQueries> = {
   datasetIds: datasetQueries,
+  annotationIds: annotationQueries,
   group: groupQueries,
   project: projectQueries,
   submitter: submitterQueries,

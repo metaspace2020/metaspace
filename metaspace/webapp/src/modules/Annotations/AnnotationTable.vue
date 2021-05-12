@@ -448,17 +448,7 @@ export default Vue.extend({
       query: annotationListQuery,
       fetchPolicy: 'cache-first',
       variables() {
-        let queryVariables = this.queryVariables
-        if (
-          this.isFromSnapshot
-          && this.$store.state.snapshotAnnotationIds?.length > 1
-        ) {
-          queryVariables = {
-            ...queryVariables,
-            filter: { ...queryVariables.filter, annId: this.$store.state.snapshotAnnotationIds.join('|') },
-          }
-        }
-        return queryVariables
+        return this.queryVariables
       },
       update: data => data.allAnnotations,
       throttle: 200,
