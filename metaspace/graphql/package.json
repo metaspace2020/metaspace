@@ -76,7 +76,7 @@
     "jsondiffpatch": "^0.3.9",
     "jsonwebtoken": "^8.5.1",
     "knex": "^0.21.2",
-    "lodash": "^4.17.19",
+    "lodash": "^4.17.21",
     "merge-graphql-schemas": "^1.5.3",
     "mkdirp": "^0.5.1",
     "moment": "^2.22.2",
