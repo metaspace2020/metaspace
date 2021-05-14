@@ -61,7 +61,7 @@ const router = new VueRouter({
   mode: 'history',
   routes: [
     { path: '/(about)?', component: AboutPage, meta: { footer: true, headerClass: 'bg-primary' } },
-    { path: '/annotations', component: asyncPages.AnnotationsPage },
+    { path: '/annotations', name: 'annotations', component: asyncPages.AnnotationsPage },
     {
       path: '/datasets',
       component: DatasetsPage,
