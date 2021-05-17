@@ -172,6 +172,24 @@
           </a>
         </p>
       </li>
+      <li>
+        <b>NGlycDB:</b>
+        Database containing naturally occurring N-linked glycans. This DB is based on glycans reported in the
+        GlyConnect platform and is filtered to include only N-linked glycans.
+        <p class="m-0 text-sm">
+          <span class="text-gray-700 font-medium">
+            Citation TBC
+          </span>
+          <a
+            href="https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files_2021/nglyc/nglyc_v1.tsv"
+            class="ml-3"
+            target="_blank"
+            rel="noopener"
+          >
+            Download N-linked glycan list
+          </a>
+        </p>
+      </li>
     </ul>
   </div>
 </template>
