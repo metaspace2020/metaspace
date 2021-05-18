@@ -118,7 +118,7 @@ import ScaleBar from '../../../../components/ScaleBar.vue'
    components: { ColorBar, ScaleBar },
  })
 export default class IonImageSettings extends Vue {
-   availableScales: string[] = ['Viridis', 'Cividis', 'Hot', 'YlGnBu', 'Portland', 'Greys'];
+   availableScales: string[] = ['Viridis', 'Cividis', 'Hot', 'YlGnBu', 'Portland', 'Greys', 'Inferno', 'Turbo'];
    paletteColors: colorObjType[] = [{
      code: '#000000',
      bgColor: 'transparent',
