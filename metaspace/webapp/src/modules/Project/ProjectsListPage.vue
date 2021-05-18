@@ -78,6 +78,7 @@ import { FilterPanel } from '../Filters'
 import QuickFilterBox from '../Filters/filter-components/SimpleFilterBox.vue'
 import ProjectsListItem from './ProjectsListItem.vue'
 import CreateProjectDialog from './CreateProjectDialog.vue'
+import { getLocalStorage } from '../../lib/localStorage'
 import { SortDropdown } from '../../components/SortDropdown/SortDropdown'
 
   @Component<ProjectsListPage>({
@@ -218,6 +219,15 @@ export default class ProjectsListPage extends Vue {
       if (this.currentUser == null) {
         return null
       } else {
+        // due to some misbehaviour from setting initial value from getLocalstorage with null values
+        // on filterSpecs, the filter is being initialized here if user is logged
+        const localSimpleFilter = this.$store.getters.filter.simpleFilter
+          ? this.$store.getters.filter.simpleFilter : (getLocalStorage('simpleFilter') || null)
+        this.$store.commit('updateFilter', {
+          ...this.$store.getters.filter,
+          simpleFilter: localSimpleFilter,
+        })
+
         return [
           { value: null, label: 'All projects' },
           { value: 'my-projects', label: 'My projects' },

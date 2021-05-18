@@ -31,6 +31,7 @@
 <script>
 import { FILTER_COMPONENT_PROPS, FILTER_SPECIFICATIONS } from './filterSpecs'
 import { isFunction, pick, get, uniq } from 'lodash-es'
+import { setLocalStorage } from '../../lib/localStorage'
 
 const orderedFilterKeys = [
   'database',
@@ -208,6 +209,18 @@ const FilterPanel = {
               extraUpdatesAux.datasetOwner = null
             } else if (filterKey === 'datasetOwner' && submitter !== undefined && val === 'my-datasets') {
               extraUpdatesAux.submitter = undefined
+            }
+
+            // update datasetOwner settings
+            if (filterKey === 'datasetOwner' || ('datasetOwner' in extraUpdatesAux)) {
+              const dsValue = ('datasetOwner' in extraUpdatesAux)
+                ? extraUpdatesAux.datasetOwner : val
+              setLocalStorage(filterKey, dsValue)
+            }
+
+            // update simpleFilter settings
+            if (filterKey === 'simpleFilter') {
+              setLocalStorage(filterKey, val)
             }
 
             this.$store.commit('updateFilter',
