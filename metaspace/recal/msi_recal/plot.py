@@ -16,7 +16,11 @@ logger = logging.getLogger(__name__)
 
 
 def save_spectrum_image(
-    spectra_df: pd.DataFrame, values: Union[dict, pd.Series], path: str, title: str, **kwargs
+    spectra_df: pd.DataFrame,
+    values: Union[dict, pd.Series],
+    path: str,
+    title: str,
+    **kwargs,
 ):
     values = pd.Series(values)
     values = values[values.index.isin(spectra_df.index)]

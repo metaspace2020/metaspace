@@ -8,6 +8,7 @@ import pandas as pd
 from pyimzml.ImzMLParser import ImzMLParser
 from pyimzml.ImzMLWriter import ImzMLWriter
 
+from msi_recal.evaluate import EvalPeaksCollector
 from msi_recal.params import RecalParams
 from msi_recal.passes.align_msiwarp import AlignMsiwarp
 from msi_recal.passes.align_ransac import AlignRansac
@@ -23,11 +24,11 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 TRANSFORM = {
-    'align_msiwarp': AlignMsiwarp,
-    'align_ransac': AlignRansac,
-    'recal_msiwarp': RecalMsiwarp,
-    'recal_ransac': RecalRansac,
-    'normalize': Normalize,
+    "align_msiwarp": AlignMsiwarp,
+    "align_ransac": AlignRansac,
+    "recal_msiwarp": RecalMsiwarp,
+    "recal_ransac": RecalRansac,
+    "normalize": Normalize,
 }
 
 
@@ -38,16 +39,16 @@ def get_spectra_df_from_parser(p: ImzMLParser, sp_idxs: Iterable[int]):
     for i in sp_idxs:
         mzs, ints = p.getspectrum(i)
         x, y, z = p.coordinates[i]
-        mask = ints > 0
-        mzs = mzs[mask]
-        ints = ints[mask]
-        peaks_dfs.append(pd.DataFrame({'sp': i, 'mz': mzs, 'ints': ints.astype(np.float32)}))
+        mask = (ints > 0) & (mzs > 200) & (mzs < 900)
+        mzs = mzs[mask].astype(np.float64)
+        ints = ints[mask].astype(np.float32)
+        peaks_dfs.append(pd.DataFrame({"sp": i, "mz": mzs, "ints": ints}))
         spectra.append((i, x, y, z, np.min(mzs), np.max(mzs), np.sum(ints)))
 
     peaks_df = pd.concat(peaks_dfs)
     spectra_df = pd.DataFrame(
-        spectra, columns=['sp', 'x', 'y', 'z', 'mz_lo', 'mz_hi', 'tic']
-    ).set_index('sp')
+        spectra, columns=["sp", "x", "y", "z", "mz_lo", "mz_hi", "tic"]
+    ).set_index("sp")
 
     return peaks_df, spectra_df
 
@@ -61,6 +62,9 @@ def get_sample_spectra_df_from_parser(p: ImzMLParser, n_samples=200):
 
 def build_pipeline(sample_peaks_df: pd.DataFrame, params: RecalParams):
     models = []
+    stages = [
+        ('initial', sample_peaks_df),
+    ]
     for tf_name, *tf_args in params.transforms:
         logger.info(f'Fitting {tf_name} model')
         assert tf_name in TRANSFORM, f'Unrecognized transform "{tf_name}"'
@@ -70,8 +74,23 @@ def build_pipeline(sample_peaks_df: pd.DataFrame, params: RecalParams):
         sample_peaks_df = tf.predict(sample_peaks_df)
 
         models.append(tf)
+        stages.append((tf_name, sample_peaks_df))
 
-    return models
+    # Hacky progress report
+    eval = EvalPeaksCollector(sample_peaks_df, params)
+    for stage_name, stage_df in stages:
+        eval.collect_peaks(stage_df, stage_name)
+
+    __import__('__main__').eval = eval
+
+    logger.debug(pd.DataFrame({
+        stage_name: eval.get_stats(stage_name).abs().mean()
+        for stage_name, stage_df in stages
+    }))
+
+    eval.reset()
+
+    return models, eval
 
 
 def _imzml_writer_process(output_path, queue):
@@ -100,10 +119,10 @@ def process_imzml_file(
     if debug_path == 'infer':
         debug_path = Path(f'{input_path.parent}/{input_path.stem}_debug/')
 
-    p = ImzMLParser(str(input_path))
+    p = ImzMLParser(str(input_path), parse_lib="ElementTree")
     sample_peaks_df, sample_spectra_df = get_sample_spectra_df_from_parser(p, n_samples=samples)
 
-    models = build_pipeline(sample_peaks_df, params)
+    models, eval = build_pipeline(sample_peaks_df, params)
 
     writer_queue = JoinableQueue(2)
     writer_process = Process(target=_imzml_writer_process, args=(output_path, writer_queue))
@@ -113,12 +132,20 @@ def process_imzml_file(
 
     try:
         chunk_size = 1000
-        sp_n = min(limit, len(p.coordinates)) if limit else len(p.coordinates)
+        if limit:
+            skip = max(0, (len(p.coordinates) - limit) // 2)
+            sp_n = min(limit, len(p.coordinates) - skip)
+        else:
+            skip = 0
+            sp_n = len(p.coordinates)
 
-        for start_i in range(0, sp_n, chunk_size):
-            end_i = min(start_i + chunk_size, sp_n)
-            logger.debug(f'Reading spectra {start_i}-{end_i} out of {sp_n}')
+        for start_i in range(skip, skip + sp_n, chunk_size):
+            end_i = min(start_i + chunk_size, len(p.coordinates))
+            if start_i >= end_i:
+                continue
+            logger.debug(f'Reading spectra {start_i}-{end_i} out of {len(p.coordinates)}')
             peaks_df, spectra_df = get_spectra_df_from_parser(p, np.arange(start_i, end_i))
+            eval.collect_peaks(peaks_df, 'before')
             # Convert to tuples, because spectra_df.loc coalesces everything into floats
             spectra_dict = {row[0]: row for row in spectra_df.itertuples()}
             all_spectra_dfs.append(spectra_df)
@@ -126,6 +153,8 @@ def process_imzml_file(
             logger.info(f'Transforming spectra {start_i}-{end_i}')
             for model in models:
                 peaks_df = model.predict(peaks_df)
+
+            eval.collect_peaks(peaks_df, 'after')
 
             writer_job = []
             for sp, grp in peaks_df.groupby('sp'):
@@ -160,3 +189,5 @@ def process_imzml_file(
                     model.save_debug(all_spectra_df, str(debug_path / f'{i}_{transform_name}'))
             except:
                 logger.warning(f'{transform_name} error', exc_info=True)
+
+        eval.get_report().to_csv(debug_path / 'evaluation_peaks.csv')

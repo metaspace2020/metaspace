@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from msi_recal.join_by_mz import join_by_mz
-from msi_recal.math import get_centroid_peaks
+from msi_recal.math import get_centroid_peaks, is_valid_formula_adduct
 from msi_recal.mean_spectrum import hybrid_mean_spectrum
 from msi_recal.params import RecalParams
 
@@ -77,6 +77,32 @@ def calc_spectral_scores(
     return spectral_scores
 
 
+def build_dbs(params):
+    db_jobs = []
+    for db_path in params.db_paths:
+        db = load_db(db_path)
+        is_targeted = db_path in params.targeted_dbs
+        if 'adduct' in db.columns:
+            db = db.drop_duplicates(['formula', 'adduct']).assign(
+                db=db_path.stem, charge=params.charge
+            )
+            db_jobs.append((db_path.stem, db, is_targeted))
+        else:
+            db = db.drop_duplicates('formula')
+            for adduct in params.adducts:
+                db_name = db_path.stem + adduct
+                adduct_db = db.assign(db=db_name, adduct=adduct, charge=params.charge)
+                # Remove DB entries that would be invalid (e.g. H2O-Cl)
+                adduct_db = adduct_db[
+                    [
+                        is_valid_formula_adduct(f, a)
+                        for f, a in adduct_db[['formula', 'adduct']].itertuples(False, None)
+                    ]
+                ]
+                db_jobs.append((db_name, adduct_db, is_targeted))
+    return db_jobs
+
+
 def get_db_hits(peaks_df, params: RecalParams, sigma_1: float):
     min_mz = peaks_df.mz.min()
     max_mz = peaks_df.mz.max()
@@ -89,23 +115,9 @@ def get_db_hits(peaks_df, params: RecalParams, sigma_1: float):
         logger.debug(f'Limit of detection: {limit_of_detection}')
 
     with ThreadPoolExecutor() as ex:
-        db_jobs = []
-        for db_path in params.db_paths:
-            db = load_db(db_path)
-            is_targeted = db_path in params.targeted_dbs
-            if 'adduct' in db.columns:
-                db = db.drop_duplicates(['formula', 'adduct']).assign(
-                    db=db_path.stem, charge=params.charge
-                )
-                db_jobs.append((db_path.stem, db, is_targeted))
-            else:
-                db = db.drop_duplicates('formula')
-                for adduct in params.adducts:
-                    db_name = db_path.stem + adduct
-                    adduct_db = db.assign(db=db_name, adduct=adduct, charge=params.charge)
-                    db_jobs.append((db_name, adduct_db, is_targeted))
+        db_jobs = build_dbs(params)
 
-        params = [
+        job_params = [
             (
                 peaks_df,
                 db_name,
@@ -119,7 +131,7 @@ def get_db_hits(peaks_df, params: RecalParams, sigma_1: float):
             )
             for db_name, db, is_targeted in db_jobs
         ]
-        candidate_dfs = list(ex.map(_calc_db_scores, *zip(*params)))
+        candidate_dfs = list(ex.map(_calc_db_scores, *zip(*job_params)))
 
     candidate_df = pd.concat(candidate_dfs, ignore_index=True)
     candidate_df['weight'] /= candidate_df.weight.max()
@@ -137,7 +149,15 @@ def load_db(db_path):
 
 
 def _calc_db_scores(
-    peaks_df, db_name, db, is_targeted, limit_of_detection, max_mz, min_mz, params, sigma_1
+    peaks_df,
+    db_name,
+    db,
+    is_targeted,
+    limit_of_detection,
+    max_mz,
+    min_mz,
+    params,
+    sigma_1,
 ):
     db['db_mz'] = [
         get_centroid_peaks(formula, adduct, params.charge, 0.1, params.instrument_model)[0][0]
@@ -176,7 +196,13 @@ def _calc_db_scores(
 
 def get_recal_candidates(peaks_df, params: RecalParams, sigma_1: float):
     mean_spectrum = hybrid_mean_spectrum(
-        peaks_df, params.analyzer, params.peak_width_sigma_1 + params.jitter_sigma_1, 0
+        peaks_df,
+        params.analyzer,
+        # WORKAROUND: MSIWarp splats each peak across 3 * sigma_1, which can cause low-coverage peaks
+        # to be overshadowed by higher-coverage peaks within a much wider range. Reduce sigma_1
+        # to compensate. Peaks' individual sigma_1 values will be used for the actual peak shape.
+        (params.peak_width_sigma_1 + params.jitter_sigma_1) / 3,
+        0,
     )
     db_hits = get_db_hits(mean_spectrum, params, sigma_1)
     recal_candidates = (

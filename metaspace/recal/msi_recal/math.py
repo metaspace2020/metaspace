@@ -1,4 +1,4 @@
-from typing import overload, Optional
+from typing import overload, Optional, List, Tuple
 
 import cpyMSpec
 import numpy as np
@@ -35,10 +35,7 @@ def mass_accuracy_bounds(mzs, analyzer: AnalyzerType, sigma_1: float):
     elif analyzer == 'orbitrap':
         half_width = mzs ** 1.5 * sigma_1
     else:
-        if np.isscalar(sigma_1):
-            half_width = sigma_1
-        else:
-            half_width = np.full_like(mzs, sigma_1)
+        half_width = mzs * sigma_1
 
     lower = mzs - half_width
     upper = mzs + half_width
@@ -104,7 +101,7 @@ def get_centroid_peaks(
     charge: int,
     min_abundance: float,
     instrument_model: cpyMSpec.InstrumentModel,
-):
+) -> List[Tuple[float, float]]:
     if adduct and adduct not in ('[M]+', '[M]-'):
         formula += adduct
     iso_pattern = cpyMSpec.isotopePattern(formula)
@@ -118,9 +115,12 @@ def get_centroid_peaks(
         # iso_pattern.centroids may raise an exception:
         #   Exception: b'the result contains no peaks, make min_abundance lower!'
         # If this happens, just return the most intense uncentroided theoretical peak.
-        if 'min_abundance' not in str(ex):
-            raise
-        return [(iso_pattern.masses[np.argmax(iso_pattern.intensities)], 1)]
+        if 'min_abundance' in str(ex):
+            return [(iso_pattern.masses[np.argmax(iso_pattern.intensities)], 1.0)]
+        if 'total number of' in str(ex) and 'less than zero' in str(ex):
+            # Invalid molecule due to adduct removing non-existent elements
+            raise Exception(f'Adduct could not be applied: {formula}{adduct}')
+        raise
 
 
 def get_mono_mz(formula: str, adduct: Optional[str], charge: int):
@@ -131,3 +131,13 @@ def get_mono_mz(formula: str, adduct: Optional[str], charge: int):
         iso_pattern.addCharge(charge)
 
     return iso_pattern.masses[np.argmax(iso_pattern.intensities)]
+
+
+def is_valid_formula_adduct(formula: str, adduct: str):
+    if adduct and adduct not in ('[M]+', '[M]-'):
+        formula += adduct
+    try:
+        cpyMSpec.isotopePattern(formula)
+        return True
+    except Exception:
+        return False

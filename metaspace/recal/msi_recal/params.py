@@ -32,6 +32,7 @@ FORMATTED_MATRIXES = ', '.join(
 BUILTIN_DBS = {
     'hmdb': DB_ROOT / 'HMDB-v4.csv',
     'cm3': DB_ROOT / 'CoreMetabolome-v3.csv',
+    'lipid_maps': DB_ROOT / 'lipidmaps_2017-12-12-v2.tsv',
     'dhb': DB_ROOT / 'DHB_clusters.csv',
     'dan': DB_ROOT / 'DAN_clusters.csv',
     **{matrix_db: DB_ROOT / f'{matrix_db}.csv' for matrix_db in MATRIX_DBS},
