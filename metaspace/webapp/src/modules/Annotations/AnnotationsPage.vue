@@ -2,7 +2,6 @@
   <div id="annot-page">
     <filter-panel
       :level="currentLevel"
-      :hidden-filters="hiddenFilters"
     />
     <div class="my-2 w-full">
       <router-link
@@ -38,8 +37,8 @@
           v-if="selectedAnnotation && selectedAnnotation.status === 'reprocessed_snapshot'"
         >
           <el-alert
-            title="This dataset has been reprocessed and some of the annotations used for this link no
-            longer exist. Please select another annotation and generate the link again."
+            title="This share link is no longer valid as the dataset has been reprocessed since
+            the link was created."
             type="warning"
             effect="dark"
             :closable="false"
@@ -51,7 +50,7 @@
               class="mt-0 ml-0 pl-2"
             >
               <p class="mb-1 font-bold text-xs">
-                The previous link showed the following info:
+                This link was supposed to show the following annotation(s):
               </p>
               <li
                 v-for="item in selectedAnnotation.annotationIons"
@@ -86,7 +85,7 @@ import AnnotationView from './AnnotationView.vue'
 import { FilterPanel } from '../Filters/index'
 import config from '../../lib/config'
 import { useRestoredState } from '../ImageViewer'
-import Vue from 'vue'
+import isSnapshot from '../../lib/isSnapshot'
 
 export default {
   name: 'AnnotationsPage',
@@ -128,23 +127,8 @@ export default {
       return this.$route.name === 'dataset-annotations' ? 'dataset-annotation' : 'annotation'
     },
 
-    hiddenFilters() {
-      return !this.hasSnapshot ? ['annotationIds'] : []
-    },
-
     isFromDatasetOverview() {
       return this.$route.name === 'dataset-annotations'
-    },
-
-    hasSnapshot() {
-      if (config.features.multiple_ion_images) {
-        const { viewId } = this.$route.query
-        const { datasetIds } = this.filter
-        if (viewId && datasetIds?.length === 1) {
-          return true
-        }
-      }
-      return false
     },
 
     datasetOverviewLink() {
@@ -163,14 +147,14 @@ export default {
     },
   },
   created() {
-    this.$store.commit('updateFilter', { ...this.filter, annotationIds: undefined })
+    const filter = this.filter
+    delete filter.annotationIds
+    this.$store.commit('updateFilter', filter)
 
-    if (config.features.multiple_ion_images) {
+    if (isSnapshot()) {
       const { viewId } = this.$route.query
       const { datasetIds } = this.filter
-      if (viewId && datasetIds?.length === 1) {
-        useRestoredState(this.$apollo, viewId, datasetIds[0])
-      }
+      useRestoredState(this.$apollo, viewId, datasetIds[0])
     }
   },
   destroyed() {

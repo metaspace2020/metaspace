@@ -72,7 +72,7 @@ const annotationQueries: FilterQueries = {
       fetchPolicy: 'cache-first',
       variables: {
         filter: {
-          ...omit($store.getters.gqlAnnotationFilter, 'annId'),
+          ...omit($store.getters.gqlAnnotationFilter, 'annotationId'),
           compoundQuery: query,
         },
         dFilter,
@@ -88,7 +88,7 @@ const annotationQueries: FilterQueries = {
   async getById($apollo, ids) {
     const { data } = await $apollo.query({
       query: gql`query AnnotationNames($ids: String) {
-        options: allAnnotations(filter: {annId: $ids}) {
+        options: allAnnotations(filter: {annotationId: $ids}) {
           id
           value: id
           label: ion
