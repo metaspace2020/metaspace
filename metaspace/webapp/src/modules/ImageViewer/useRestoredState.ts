@@ -49,19 +49,16 @@ export default async($apollo: any, id: string, datasetId: string) => {
 
     const { version, snapshot, annotations } = result.data.imageViewerSnapshot
     const parsed = JSON.parse(snapshot)
+    let filter = store.getters.filter
 
     store.commit('setSnapshotAnnotationIds', annotations.map((annotation: any) => annotation.id))
 
-    // set annotation id filter as default if multi annotation shared
-    if (annotations.length > 1) {
+    // set snapshot filters
+    if (parsed.filter) {
+      delete parsed.filter.datasetIds
+      filter = { ...filter, ...parsed.filter }
       store.commit('updateFilter', {
-        ...store.getters.filter,
-        annotationIds: annotations.map((annotation: any) => annotation.id),
-      })
-    } else {
-      store.commit('updateFilter', {
-        ...store.getters.filter,
-        annotationIds: undefined,
+        ...filter,
       })
     }
 
@@ -70,7 +67,7 @@ export default async($apollo: any, id: string, datasetId: string) => {
     } else {
       store.commit('setAnnotation', {
         status: 'reprocessed_snapshot',
-        annotationIons: safeJsonParse(snapshot).annotationIons,
+        annotationIons: parsed.annotationIons,
       })
     }
 

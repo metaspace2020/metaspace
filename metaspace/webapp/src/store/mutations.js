@@ -1,7 +1,7 @@
 import { isEqual, omit, without } from 'lodash-es';
 import router from '../router';
 import compare from '../lib/compare';
-
+import store from "../store/index";
 import {
   decodeParams,
   encodeParams,
@@ -13,6 +13,7 @@ import {
 } from '../modules/Filters';
 import { DEFAULT_ANNOTATION_VIEW_SECTIONS, DEFAULT_COLORMAP, DEFAULT_TABLE_ORDER } from '../modules/Filters/url';
 import { DEFAULT_SCALE_TYPE } from '../lib/constants';
+import {computed} from "@vue/composition-api";
 
 
 function updatedLocation(state, filter) {
@@ -41,7 +42,7 @@ function sortFilterKeys(keys) {
   keys.sort((a, b) => compare(FILTER_SPECIFICATIONS[a].sortOrder || 100, FILTER_SPECIFICATIONS[b].sortOrder || 100));
 }
 
-function updateFilter(state, filter, routerAction = null) {
+async function updateFilter(state, filter, routerAction = null) {
   let active = [];
 
   // drop unset filters

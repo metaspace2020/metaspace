@@ -13,7 +13,7 @@ import config from '../../lib/config'
 import AdductFilter from './filter-components/AdductFilter.vue'
 import DatabaseFilter from './filter-components/DatabaseFilter.vue'
 import { SingleSelectFilterType } from '../../lib/filterTypes'
-import store from '../../store'
+import isSnapshot from '../../lib/isSnapshot'
 
 function formatFDR(fdr: number) {
   return fdr ? Math.round(fdr * 100) + '%' : ''
@@ -97,6 +97,7 @@ export const FILTER_COMPONENT_PROPS: (keyof FilterSpecification)[] = [
   'debounce',
 ]
 
+// @ts-ignore
 export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
   database: {
     type: DatabaseFilter,
@@ -105,8 +106,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     levels: ['annotation', 'dataset-annotation'],
     defaultInLevels: ['annotation'],
     initialValue: lists =>
-      lists.molecularDatabases
-        .filter(d => d.default)[0]?.id,
+      lists.molecularDatabases?.filter(d => d.default)[0]?.id,
     encoding: 'number',
     convertValueForComponent: (v) => v?.toString(),
   },
@@ -126,7 +126,10 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     name: 'Annotation',
     description: 'Select annotation',
     levels: ['annotation'],
-    initialValue: undefined,
+    defaultInLevels: ['annotation'],
+    hidden: () => !isSnapshot(),
+    initialValue: lists =>// @ts-ignore
+      lists.annotationIds.value,
     multiple: true,
     encoding: 'list',
   },

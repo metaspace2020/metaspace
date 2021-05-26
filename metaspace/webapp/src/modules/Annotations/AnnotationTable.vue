@@ -273,6 +273,7 @@ import FileSaver from 'file-saver'
 import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../lib/formatCsvRow'
 import { invert } from 'lodash-es'
 import config from '../../lib/config'
+import isSnapshot from '../../lib/isSnapshot'
 
 // 38 = up, 40 = down, 74 = j, 75 = k
 const KEY_TO_ACTION = {
@@ -385,13 +386,6 @@ export default Vue.extend({
       return Math.ceil(this.totalCount / this.recordsPerPage)
     },
 
-    isFromSnapshot() {
-      const { viewId, mol } = this.$route.query
-      const { datasetIds } = this.filter
-
-      return config.features.multiple_ion_images && !mol && viewId && datasetIds?.length === 1
-    },
-
     currentPage: {
       get() {
         return this.$store.getters.settings.table.currentPage
@@ -454,10 +448,14 @@ export default Vue.extend({
       throttle: 200,
       result({ data }) {
         // timing hack to allow table state to update
-        Vue.nextTick(() => {
-          if (this.isFromSnapshot && !this.loadedSnapshotAnnotations) {
+        Vue.nextTick(async() => {
+          if (isSnapshot() && !this.loadedSnapshotAnnotations) {
             this.nextCurrentRowIndex = -1
             if (Array.isArray(this.$store.state.snapshotAnnotationIds)) {
+              if (this.$store.state.snapshotAnnotationIds.length > 1) { // adds annotationFilter if multi mol
+                this.$store.commit('addFilter', 'annotationIds')
+                this.updateFilter({ annotationIds: this.$store.state.snapshotAnnotationIds })
+              }
               this.nextCurrentRowIndex = this.annotations.findIndex((annotation) =>
                 this.$store.state.snapshotAnnotationIds.includes(annotation.id))
               this.loadedSnapshotAnnotations = true
@@ -552,7 +550,7 @@ export default Vue.extend({
 
     onCurrentRowChange(row) {
       // do not set initial row if loading from a snapshot (permalink)
-      if (this.isFromSnapshot && !this.loadedSnapshotAnnotations) {
+      if (isSnapshot() && !this.loadedSnapshotAnnotations) {
         return null
       }
 

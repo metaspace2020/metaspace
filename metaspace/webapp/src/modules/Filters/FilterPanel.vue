@@ -31,6 +31,8 @@
 <script>
 import { FILTER_COMPONENT_PROPS, FILTER_SPECIFICATIONS } from './filterSpecs'
 import { isFunction, pick, get, uniq } from 'lodash-es'
+import store from '@/store'
+import { computed } from '@vue/composition-api'
 
 const orderedFilterKeys = [
   'database',
@@ -38,7 +40,6 @@ const orderedFilterKeys = [
   'group',
   'project',
   'submitter',
-  'annotationIds',
   'datasetIds',
   'compoundName',
   'mz',
@@ -80,7 +81,7 @@ Object.keys(FILTER_SPECIFICATIONS).reduce((accum, cur) => {
 /** @type {ComponentOptions<Vue> & Vue} */
 const FilterPanel = {
   name: 'filter-panel',
-  props: ['level', 'simpleFilterOptions', 'setDatasetOwnerOptions', 'hiddenFilters'],
+  props: ['level', 'simpleFilterOptions', 'setDatasetOwnerOptions'],
   components: filterComponents,
   mounted() {
     this.$store.dispatch('initFilterLists')
@@ -110,7 +111,6 @@ const FilterPanel = {
         const filterSpec = FILTER_SPECIFICATIONS[key]
         if (filterSpec.levels.includes(this.level)
            && !this.activeKeys.includes(key)
-           && (!this.hiddenFilters || (this.hiddenFilters && !this.hiddenFilters.includes(key)))
            && (filterSpec.hidden == null || filterSpec.hidden === false
              || (isFunction(filterSpec.hidden) && !filterSpec.hidden()))) {
           available.push({ key, description: filterSpec.description })
@@ -216,6 +216,13 @@ const FilterPanel = {
               Object.assign(this.filter, { [filterKey]: val, ...extraUpdatesAux }))
           },
           onDestroy: () => {
+            if (filterKey === 'annotationIds') {
+              this.$store.commit('setFilterLists', {
+                ...this.$store.state.filterLists,
+                annotationIds: computed(() => undefined),
+              })
+            }
+            console.log('filterKey', filterKey)
             this.$store.commit('removeFilter', filterKey)
           },
           attrs: {

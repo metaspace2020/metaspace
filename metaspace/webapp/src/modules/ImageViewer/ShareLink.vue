@@ -78,6 +78,7 @@ import { exportImageViewerState } from './state'
 import reportError from '../../lib/reportError'
 import config from '../../lib/config'
 import useOutClick from '../../lib/useOutClick'
+import store from '../../store'
 
 interface Route {
   query: Record<string, string>
@@ -104,11 +105,12 @@ export default defineComponent<Props>({
   setup(props, { root }) {
     const viewId = ref<string>()
     const status = ref('CLOSED')
+    const ds = store.getters.filter.datasetIds || props.route.query.ds
 
     const routeWithViewId = computed(() => ({
       ...props.route,
       query: {
-        ...props.route.query,
+        ds,
         viewId: viewId.value,
       },
     }))
@@ -125,7 +127,7 @@ export default defineComponent<Props>({
       try {
         const annotationIonsQuery = await root.$apollo.query({
           query: gql`query AnnotationNames($ids: String) {
-                    options: allAnnotations(filter: {annId: $ids}) {
+                    options: allAnnotations(filter: {annotationId: $ids}) {
                       ion
                       database
                     }
@@ -147,6 +149,7 @@ export default defineComponent<Props>({
               snapshot: JSON.stringify({
                 imageViewer,
                 annotationIons,
+                filter: store.getters.filter,
                 ionImage: ionImage.snapshot,
               }),
               datasetId: props.annotation.dataset.id,

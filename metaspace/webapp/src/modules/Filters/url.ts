@@ -81,7 +81,6 @@ export const DEFAULT_COLORMAP = 'Viridis'
 export function encodeParams(filter: any, path?: string, filterLists?: MetadataLists): Dictionary<string> {
   const level = getLevel(path)
   const defaultFilter = level != null ? getDefaultFilter(level, filterLists) : null
-
   const q: Dictionary<string> = {}
   let key: FilterKey
   for (key in FILTER_TO_URL) {
@@ -104,6 +103,8 @@ export function encodeParams(filter: any, path?: string, filterLists?: MetadataL
       }
     }
   }
+
+  console.log("q", q)
   return q
 }
 
