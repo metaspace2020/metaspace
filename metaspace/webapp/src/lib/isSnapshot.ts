@@ -1,11 +1,11 @@
 import config from './config'
-import store from '../store'
+import router from '../router'
 
 export default () => {
   try {
     if (config.features.multiple_ion_images) {
       // @ts-ignore
-      const { viewId, ds } = store.state.route.query
+      const { viewId, ds } = router.history.current.query
       if (viewId && ds) {
         return true
       }
