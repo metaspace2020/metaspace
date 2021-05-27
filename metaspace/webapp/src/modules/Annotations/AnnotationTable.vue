@@ -453,8 +453,9 @@ export default Vue.extend({
             this.nextCurrentRowIndex = -1
             if (Array.isArray(this.$store.state.snapshotAnnotationIds)) {
               if (this.$store.state.snapshotAnnotationIds.length > 1) { // adds annotationFilter if multi mol
-                this.$store.commit('addFilter', 'annotationIds')
                 this.updateFilter({ annotationIds: this.$store.state.snapshotAnnotationIds })
+              } else { // dont display filter if less than one annotation
+                setTimeout(() => this.$store.commit('removeFilter', 'annotationIds'), 500)
               }
               this.nextCurrentRowIndex = this.annotations.findIndex((annotation) =>
                 this.$store.state.snapshotAnnotationIds.includes(annotation.id))
