@@ -1462,7 +1462,7 @@ class SMInstance(object):
         name: str,
         metadata: Union[str, dict],
         is_public: bool,
-        databases: List[Union[int, str, Tuple[str, str]]] = None,
+        databases: List[Union[int, str, Tuple[str, str]]] = [DEFAULT_DATABASE],
         *,
         project_ids: Optional[List[str]] = None,
         adducts: Optional[List[str]] = None,
