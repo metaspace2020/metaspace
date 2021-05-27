@@ -129,7 +129,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     defaultInLevels: ['annotation'],
     hidden: () => !isSnapshot(),
     initialValue: lists =>// @ts-ignore
-      lists.annotationIds.value,
+      lists.annotationIds?.value?.length > 1 ? lists.annotationIds.value : undefined,
     multiple: true,
     encoding: 'list',
   },

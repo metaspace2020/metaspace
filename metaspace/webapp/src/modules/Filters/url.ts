@@ -104,7 +104,6 @@ export function encodeParams(filter: any, path?: string, filterLists?: MetadataL
     }
   }
 
-  console.log("q", q)
   return q
 }
 

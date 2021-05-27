@@ -31,7 +31,6 @@
 <script>
 import { FILTER_COMPONENT_PROPS, FILTER_SPECIFICATIONS } from './filterSpecs'
 import { isFunction, pick, get, uniq } from 'lodash-es'
-import store from '@/store'
 import { computed } from '@vue/composition-api'
 
 const orderedFilterKeys = [
@@ -222,7 +221,6 @@ const FilterPanel = {
                 annotationIds: computed(() => undefined),
               })
             }
-            console.log('filterKey', filterKey)
             this.$store.commit('removeFilter', filterKey)
           },
           attrs: {
