@@ -203,7 +203,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         const item = auxGrid[key]
         const dsIndex = selectedAnnotation.datasetIds.findIndex((dsId: string) => dsId === item)
         if (dsIndex !== -1) {
-          return startImageSettings(key, selectedAnnotation.datasets[dsIndex])
+          return startImageSettings(key, selectedAnnotation.annotations[dsIndex])
         } else {
           return unsetAnnotation(key)
         }

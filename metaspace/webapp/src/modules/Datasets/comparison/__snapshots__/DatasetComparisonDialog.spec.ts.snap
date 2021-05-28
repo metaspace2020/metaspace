@@ -51,10 +51,10 @@ exports[`DatasetComparisonDialog it should match snapshot 1`] = `
             </form>
           </li>
           <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-300 transition-colors ease-in-out duration-300">
-            <p class="sm-workflow-header">Set the grid arrangement</p>
+            <p class="sm-workflow-header">Set the grid size</p>
           </li>
           <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-300 transition-colors ease-in-out duration-300">
-            <p class="sm-workflow-header">Choose the datasets disposition</p>
+            <p class="sm-workflow-header">Arrange the datasets</p>
           </li>
         </ol>
       </div>

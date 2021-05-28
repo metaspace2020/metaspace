@@ -55,15 +55,15 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
           ion : string
           dbId: string
           datasetIds: string[]
-          datasets: any[]
+          annotations: any[]
         } | any = {}
         item.ion = agg.key
         item.dbId = db.key
         item.datasetIds = []
-        item.datasets = []
+        item.annotations = []
         db.unique_ds_ids.buckets.forEach((ds: any) => {
           item.datasetIds.push(ds.key)
-          item.datasets.push(ds.include_source.hits.hits[0])
+          item.annotations.push(ds.include_source.hits.hits[0])
         })
         auxObj.push(item)
       })

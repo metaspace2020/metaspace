@@ -173,7 +173,7 @@ export default defineComponent<DatasetComparisonPageProps>({
         class="ds-collapse el-collapse-item--no-padding relative">
         {
           state.annotations[state.selectedAnnotation]
-          && state.annotations[state.selectedAnnotation].datasets.map((ds: any) => {
+          && state.annotations[state.selectedAnnotation].annotations.map((ds: any) => {
             return relatedMolecules(ds)
           })
         }
@@ -190,7 +190,7 @@ export default defineComponent<DatasetComparisonPageProps>({
           <div class='dataset-comparison-wrapper w-full md:w-5/12'>
             <DatasetComparisonAnnotationTable
               isLoading={state.annotationLoading}
-              annotations={(cloneDeep(state.annotations) || []).map((ion: any) => ion.datasets[0])}
+              annotations={(cloneDeep(state.annotations) || []).map((ion: any) => ion.annotations[0])}
               onRowChange={handleRowChange}/>
           </div>
           <div class='dataset-comparison-wrapper  w-full  md:w-7/12'>

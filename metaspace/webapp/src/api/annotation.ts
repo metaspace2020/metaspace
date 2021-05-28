@@ -1,73 +1,87 @@
 import gql from 'graphql-tag'
 
+export const annotationDetailItemFragment =
+gql`fragment AnnotationDetailItem on Annotation {
+  id
+  sumFormula
+  adduct
+  ion
+  ionFormula
+  database
+  msmScore
+  rhoSpatial
+  rhoSpectral
+  rhoChaos
+  fdrLevel
+  mz
+  colocalizationCoeff(colocalizationCoeffFilter: $colocalizationCoeffFilter)
+  offSample
+  offSampleProb
+  dataset {
+    id
+    submitter { id name email }
+    principalInvestigator { name email }
+    group { id name shortName }
+    groupApproved
+    projects { id name }
+    name
+    polarity
+    metadataJson
+    isPublic
+    opticalImages(type: $type) {
+      id
+      url
+      type
+      zoom
+      transform
+    }
+  }
+  databaseDetails {
+    id
+  }
+  isotopeImages {
+    mz
+    url
+    minIntensity
+    maxIntensity
+    totalIntensity
+  }
+  isomers {
+    ion
+  }
+  isobars {
+    ion
+    ionFormula
+    peakNs
+    shouldWarn
+  }
+  countPossibleCompounds(includeIsomers: $countIsomerCompounds)
+  possibleCompounds {
+    name
+    imageURL
+    information {
+      database
+      url
+    }
+  }
+}`
+
 export const annotationListQuery =
 gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
                            $offset: Int, $limit: Int, $query: String,
                            $filter: AnnotationFilter, $dFilter: DatasetFilter,
                            $colocalizationCoeffFilter: ColocalizationCoeffFilter,
-                           $countIsomerCompounds: Boolean) {
+                           $countIsomerCompounds: Boolean,
+  $type: OpticalImageType) {
     allAnnotations(filter: $filter, datasetFilter: $dFilter, simpleQuery: $query,
       orderBy: $orderBy, sortingOrder: $sortingOrder,
       offset: $offset, limit: $limit) {
-        id
-        sumFormula
-        adduct
-        ion
-        ionFormula
-        database
-        msmScore
-        rhoSpatial
-        rhoSpectral
-        rhoChaos
-        fdrLevel
-        mz
-        colocalizationCoeff(colocalizationCoeffFilter: $colocalizationCoeffFilter)
-        offSample
-        offSampleProb
-        dataset {
-          id
-          submitter { id name email }
-          principalInvestigator { name email }
-          group { id name shortName }
-          groupApproved
-          projects { id name }
-          name
-          polarity
-          metadataJson
-          isPublic
-        }
-        databaseDetails {
-          id
-        }
-        isotopeImages {
-          mz
-          url
-          minIntensity
-          maxIntensity
-          totalIntensity
-        }
-        isomers {
-          ion
-        }
-        isobars {
-          ion
-          ionFormula
-          peakNs
-          shouldWarn
-        }
-        countPossibleCompounds(includeIsomers: $countIsomerCompounds)
-        possibleCompounds {
-          name
-          imageURL
-          information {
-            database
-            url
-          }
-        }
+        ...AnnotationDetailItem
       }
 
     countAnnotations(filter: $filter, datasetFilter: $dFilter, simpleQuery: $query)
-  }`
+  }
+  ${annotationDetailItemFragment}`
 
 export const comparisonAnnotationListQuery =
 gql`query GetAggregatedAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
@@ -81,72 +95,12 @@ gql`query GetAggregatedAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: S
     ion
     dbId
     datasetIds
-    datasets {
-      id
-      sumFormula
-      adduct
-      ion
-      ionFormula
-      database
-      msmScore
-      rhoSpatial
-      rhoSpectral
-      rhoChaos
-      fdrLevel
-      mz
-      colocalizationCoeff(colocalizationCoeffFilter: $colocalizationCoeffFilter)
-      offSample
-      offSampleProb
-      dataset {
-        id
-        submitter { id name email }
-        principalInvestigator { name email }
-        group { id name shortName }
-        groupApproved
-        projects { id name }
-        name
-        polarity
-        metadataJson
-        isPublic
-        opticalImages(type: $type) {
-          id
-          url
-          type
-          zoom
-          transform
-        }
-      }
-      databaseDetails {
-        id
-      }
-      isotopeImages {
-        mz
-        url
-        minIntensity
-        maxIntensity
-        totalIntensity
-      }
-      isomers {
-        ion
-      }
-      isobars {
-        ion
-        ionFormula
-        peakNs
-        shouldWarn
-      }
-      countPossibleCompounds(includeIsomers: $countIsomerCompounds)
-      possibleCompounds {
-        name
-        imageURL
-        information {
-          database
-          url
-        }
-      }
+    annotations {
+      ...AnnotationDetailItem
     }
   }
-  }`
+  }
+${annotationDetailItemFragment}`
 
 export const tableExportQuery =
 gql`query Export($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
