@@ -81,12 +81,7 @@ describe('DatasetComparisonPage', () => {
     initMockGraphqlClient({
       Query: () => ({
         imageViewerSnapshot: snapshotData,
-      }),
-      Mutation: () => ({
-        allAggregatedAnnotations: () => {
-          return annotationsData
-        },
-      }),
+      })
     })
   }
 
