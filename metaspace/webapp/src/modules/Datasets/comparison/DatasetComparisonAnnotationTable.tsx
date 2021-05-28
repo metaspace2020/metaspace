@@ -1,4 +1,4 @@
-import { defineComponent, onMounted, onUnmounted, reactive, ref, watchEffect } from '@vue/composition-api'
+import { computed, defineComponent, onMounted, onUnmounted, reactive, ref, watchEffect } from '@vue/composition-api'
 import './DatasetComparisonAnnotationTable.scss'
 import { Table, TableColumn, Pagination, Button } from '../../../lib/element-ui'
 import ProgressButton from '../../Annotations/ProgressButton.vue'
@@ -14,7 +14,7 @@ interface DatasetComparisonAnnotationTableProps {
 }
 
 interface DatasetComparisonAnnotationTableState {
-  processedAnnotations: any[]
+  processedAnnotations: any
   selectedRow: any
   pageSize: number
   offset: number
@@ -63,7 +63,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       selectedRow: props.annotations[0],
       pageSize: 15,
       offset: 0,
-      processedAnnotations: [],
+      processedAnnotations: computed(() => props.annotations.slice()),
       keyListenerAdded: false,
       isExporting: false,
       exportProgress: 0,
@@ -142,6 +142,13 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
     }
 
     onMounted(() => {
+      const { sort, row, page } = $route.query
+      const order = sort?.indexOf('-') === 0 ? 'descending' : 'ascending'
+      const prop = sort ? sort.replace('-', '') : 'msmscore'
+      handleSortChange({ order, prop })
+      state.selectedRow = row ? props.annotations[parseInt(row, 10)]
+        : state.processedAnnotations[0]
+      onPageChange(page ? parseInt(page, 10) : 1)
       if (!state.keyListenerAdded) {
         state.keyListenerAdded = true
         window.addEventListener('keyup', onKeyUp)
@@ -152,20 +159,6 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       if (state.keyListenerAdded) {
         state.keyListenerAdded = false
         window.removeEventListener('keyup', onKeyUp)
-      }
-    })
-
-    watchEffect(() => {
-      if (state.processedAnnotations.length !== props.annotations.length) {
-        const { sort, row, page } = $route.query
-        const annotations = cloneDeep(props.annotations)
-        state.processedAnnotations = annotations
-        const order = sort?.indexOf('-') === 0 ? 'descending' : 'ascending'
-        const prop = sort ? sort.replace('-', '') : 'msmscore'
-        handleSortChange({ order, prop })
-        state.selectedRow = row ? cloneDeep(props.annotations)[parseInt(row, 10)]
-          : state.processedAnnotations[0]
-        onPageChange(page ? parseInt(page, 10) : 1)
       }
     })
 
@@ -182,12 +175,12 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       const dataStart = ((state.offset - 1) * state.pageSize)
       const dataEnd = ((state.offset - 1) * state.pageSize) + state.pageSize
       return findIndex(state.processedAnnotations.slice(dataStart, dataEnd),
-        (annotation) => { return state.selectedRow.id === annotation.id })
+        (annotation: any) => { return state.selectedRow.id === annotation?.id })
     }
 
     const getDataItemIndex = () => {
       return findIndex(state.processedAnnotations,
-        (annotation) => { return state.selectedRow.id === annotation.id })
+        (annotation: any) => { return state.selectedRow.id === annotation?.id })
     }
 
     const getNumberOfPages = () => {
@@ -271,24 +264,24 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
     }
 
     const handleSortFormula = (order: string) => {
-      state.processedAnnotations = state.processedAnnotations.sort((a, b) =>
-        sortMolecule(a, b, order === 'ascending' ? 1 : -1))
+      state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
+        sortMolecule(a, b, order === 'ascending' ? 1 : -1)))
     }
 
     const handleSortMSM = (order: string) => {
-      state.processedAnnotations = state.processedAnnotations.sort((a, b) =>
-        (order === 'ascending' ? 1 : -1) * (a.msmScore - b.msmScore))
+      state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
+        (order === 'ascending' ? 1 : -1) * (a.msmScore - b.msmScore)))
     }
     const handleSortFdr = (order: string) => {
-      state.processedAnnotations = state.processedAnnotations.sort((a, b) =>
-        (order === 'ascending' ? 1 : -1) * (a.fdrLevel - b.fdrLevel))
+      state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
+        (order === 'ascending' ? 1 : -1) * (a.fdrLevel - b.fdrLevel)))
     }
 
     const handleSortChange = (settings: any) => {
       const { prop, order } = settings
 
       if (!order) {
-        state.processedAnnotations = props.annotations
+        state.processedAnnotations = computed(() => props.annotations)
       } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_FORMULA) {
         handleSortFormula(order)
       } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_MSM) {
@@ -466,7 +459,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       }
 
       return (
-        <div class="dataset-comparison-annotation-table">
+        <div class="dataset-comparison-annotation-table relative">
           <Table
             id="annot-table"
             ref={table}
