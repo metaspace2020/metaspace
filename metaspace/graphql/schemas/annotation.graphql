@@ -42,7 +42,7 @@ type AggregatedAnnotation {
   ion: String!
   dbId: String!
   datasetIds: [String]
-  datasets: [Annotation]
+  annotations: [Annotation]
 }
 
 type CompoundInfoEntry {

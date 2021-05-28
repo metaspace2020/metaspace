@@ -24,6 +24,7 @@ interface DatasetComparisonDialogState {
   nRows: number
   showOptions: boolean
   firstStepError: boolean
+  secondStepError: boolean
   finalStepError: boolean
   arrangement: {[key: string] : string}
 }
@@ -44,6 +45,7 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
       nRows: 2,
       showOptions: true,
       firstStepError: false,
+      secondStepError: false,
       finalStepError: false,
       arrangement: {},
     })
@@ -51,7 +53,7 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
       result: datasetResult,
       loading: datasetLoading,
     } = useQuery<{allDatasets: DatasetDetailItem}>(datasetDetailItemsQuery, {
-      dFilter: { ids: null, polarity: null, metadataType: 'Imaging MS' },
+      dFilter: { ids: null, polarity: null, metadataType: 'Imaging MS', status: 'FINISHED' },
       query: '',
       inpFdrLvls: [10],
       checkLvl: 10,
@@ -155,7 +157,7 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
               done={state.workflowStep > 2}
             >
               <p class="sm-workflow-header">
-                Set the grid arrangement
+                Set the grid size
               </p>
               {
                 state.workflowStep === 2
@@ -195,10 +197,24 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
                         )
                       })}
                     </div>
+                    {
+                      state.secondStepError
+                    && <ErrorLabelText class='mt-0'>
+                      The grid must have enough cells to all datasets!
+                    </ErrorLabelText>
+                    }
                     <Button onClick={() => { state.workflowStep = 1 }}>
                       Prev
                     </Button>
-                    <Button onClick={() => { state.workflowStep = 3 }} type="primary">
+                    <Button onClick={() => {
+                      // the grid needs to have cells to all datasets
+                      if ((state.nCols * state.nRows) < state.selectedDatasetIds.length) {
+                        state.secondStepError = true
+                      } else {
+                        state.secondStepError = false
+                        state.workflowStep = 3
+                      }
+                    }} type="primary">
                       Next
                     </Button>
                   </form>
@@ -210,7 +226,7 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
               done={state.workflowStep > 3}
             >
               <p class="sm-workflow-header">
-                Choose the datasets disposition
+                Arrange the datasets
               </p>
               {
                 state.workflowStep === 3
@@ -255,7 +271,10 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
                       Please place all the selected datasets on the grid!
                     </ErrorLabelText>
                   }
-                  <Button onClick={() => { state.workflowStep = 2 }}>
+                  <Button onClick={() => {
+                    state.arrangement = {}
+                    state.workflowStep = 2
+                  }}>
                     Prev
                   </Button>
                   <Button onClick={async() => {
