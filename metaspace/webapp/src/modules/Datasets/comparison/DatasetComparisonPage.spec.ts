@@ -81,7 +81,7 @@ describe('DatasetComparisonPage', () => {
     initMockGraphqlClient({
       Query: () => ({
         imageViewerSnapshot: snapshotData,
-      })
+      }),
     })
   }
 

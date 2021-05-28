@@ -15,6 +15,7 @@ import ImageSaver from '../../ImageViewer/ImageSaver.vue'
 import getColorScale from '../../../lib/getColorScale'
 import { THUMB_WIDTH } from '../../../components/Slider'
 import { isEqual } from 'lodash-es'
+import { processingSettingsChanged } from '../../../../../graphql/src/modules/dataset/controller/Mutation'
 
 interface DatasetComparisonGridProps {
   nCols: number
@@ -422,12 +423,15 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           <div ref={`image-${row}-${col}`} class='ds-wrapper relative'>
             {
               props.isLoading
-              && <i
-                class="el-icon-loading"
-              />
+              && <div class='absolute'>
+                <i
+                  class="el-icon-loading"
+                />
+              </div>
             }
             {
-              state.gridState[`${row}-${col}`]
+              !props.isLoading
+              && state.gridState[`${row}-${col}`]
               && state.gridState[`${row}-${col}`].ionImageLayers
               && <IonImageViewer
                 isLoading={props.isLoading || !state.firstLoaded}
