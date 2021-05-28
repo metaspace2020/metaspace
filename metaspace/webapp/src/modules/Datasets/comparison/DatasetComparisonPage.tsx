@@ -23,6 +23,21 @@ interface DatasetComparisonPageProps {
   defaultImagePosition: any
 }
 
+interface DatasetComparisonPageState {
+  selectedAnnotation: number
+  gridState: any
+  annotations: any
+  grid: any
+  nCols: number
+  nRows: number
+  annotationData: any
+  refsLoaded: boolean
+  showViewer: boolean
+  annotationLoading: boolean
+  filter: any
+  isLoading: any
+}
+
 export default defineComponent<DatasetComparisonPageProps>({
   name: 'DatasetComparisonPage',
   props: {
@@ -49,7 +64,7 @@ export default defineComponent<DatasetComparisonPageProps>({
     }`
     const { $route, $store } = root
     const gridNode = ref(null)
-    const state = reactive<any>({
+    const state = reactive<DatasetComparisonPageState>({
       selectedAnnotation: -1,
       gridState: {},
       annotations: [],

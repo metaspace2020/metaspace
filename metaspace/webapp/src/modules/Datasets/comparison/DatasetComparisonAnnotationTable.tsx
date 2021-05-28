@@ -125,15 +125,11 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       }
 
       if (action === 'left') {
-        const newIndex = Math.max(0, currentDataIndex - state.pageSize)
-        state.selectedRow = state.processedAnnotations[newIndex]
         onPageChange(Math.max(1, state.offset - 1))
         return
       }
 
       if (action === 'right') {
-        const newIndex = Math.min(currentDataIndex + state.pageSize, props.annotations.length - 1)
-        state.selectedRow = state.processedAnnotations[newIndex]
         onPageChange(Math.min(getNumberOfPages(), state.offset + 1))
         return
       }
@@ -312,6 +308,18 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
     }
 
     const onPageChange = (newPage: number) => {
+      const currentDataIndex = getDataItemIndex()
+
+      // right
+      if (newPage > state.offset) {
+        const newIndex = Math.min(currentDataIndex + (state.pageSize * (newPage - state.offset)),
+          props.annotations.length - 1)
+        state.selectedRow = state.processedAnnotations[newIndex]
+      } else if (newPage < state.offset) { // left
+        const newIndex = Math.max(0, currentDataIndex - (state.pageSize * (state.offset - newPage)))
+        state.selectedRow = state.processedAnnotations[newIndex]
+      }
+
       state.offset = newPage
       $store.commit('setCurrentPage', newPage)
       handleCurrentRowChange(state.selectedRow)

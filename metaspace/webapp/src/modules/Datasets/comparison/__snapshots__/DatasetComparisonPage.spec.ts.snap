@@ -284,7 +284,8 @@ exports[`DatasetComparisonPage it should match snapshot 1`] = `
                 </div>
                 <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out"></transition-stub>
                 </span>
-                <div class="ds-wrapper relative"><i class="el-icon-loading"></i>
+                <div class="ds-wrapper relative">
+                  <div class="absolute"><i class="el-icon-loading"></i></div>
                   <div class="ds-viewer-controls-wrapper  v-rhythm-3 sm-side-bar">
                     <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out" class="absolute bottom-0 right-0 mt-3 ml-3 dom-to-image-hidden"></transition-stub>
                     <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out" class="absolute top-0 right-0 mt-3 ml-3 dom-to-image-hidden"></transition-stub>
@@ -309,7 +310,8 @@ exports[`DatasetComparisonPage it should match snapshot 1`] = `
                 </div>
                 <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out"></transition-stub>
                 </span>
-                <div class="ds-wrapper relative"><i class="el-icon-loading"></i>
+                <div class="ds-wrapper relative">
+                  <div class="absolute"><i class="el-icon-loading"></i></div>
                   <div class="ds-viewer-controls-wrapper  v-rhythm-3 sm-side-bar">
                     <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out" class="absolute bottom-0 right-0 mt-3 ml-3 dom-to-image-hidden"></transition-stub>
                     <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out" class="absolute top-0 right-0 mt-3 ml-3 dom-to-image-hidden"></transition-stub>
@@ -331,16 +333,16 @@ exports[`DatasetComparisonPage it should match snapshot 1`] = `
                     <div class="compound-popover">
                       <figure>
                         <figcaption>
-                          allAggregatedAnnotations.1.annotations.0.possibleCompounds.0.name
-                          <br> <a href="allAggregatedAnnotations.1.annotations.0.possibleCompounds.0.information.0.url" target="_blank">
-                            View on allAggregatedAnnotations.1.annotations.0.possibleCompounds.0.information.0.database website
-                          </a></figcaption> <img src="allAggregatedAnnotations.1.annotations.0.possibleCompounds.0.imageURL" class="compound-image">
+                          allAggregatedAnnotations.0.annotations.0.possibleCompounds.0.name
+                          <br> <a href="allAggregatedAnnotations.0.annotations.0.possibleCompounds.0.information.0.url" target="_blank">
+                            View on allAggregatedAnnotations.0.annotations.0.possibleCompounds.0.information.0.database website
+                          </a></figcaption> <img src="allAggregatedAnnotations.0.annotations.0.possibleCompounds.0.imageURL" class="compound-image">
                       </figure>
                     </div>
                   </div>
-                  <div slot-key="reference"><img src="allAggregatedAnnotations.1.annotations.0.possibleCompounds.0.imageURL" class="compound-thumbnail"></div>
-                </mock-el-popover> <br> <span><a href="allAggregatedAnnotations.1.annotations.0.possibleCompounds.0.information.0.url" target="_blank" title="allAggregatedAnnotations.1.annotations.0.possibleCompounds.0.name">
-        allAggregatedAnnotations.1.annot...
+                  <div slot-key="reference"><img src="allAggregatedAnnotations.0.annotations.0.possibleCompounds.0.imageURL" class="compound-thumbnail"></div>
+                </mock-el-popover> <br> <span><a href="allAggregatedAnnotations.0.annotations.0.possibleCompounds.0.information.0.url" target="_blank" title="allAggregatedAnnotations.0.annotations.0.possibleCompounds.0.name">
+        allAggregatedAnnotations.0.annot...
       </a></span>
               </div>
               <div class="compound">
@@ -349,16 +351,16 @@ exports[`DatasetComparisonPage it should match snapshot 1`] = `
                     <div class="compound-popover">
                       <figure>
                         <figcaption>
-                          allAggregatedAnnotations.1.annotations.0.possibleCompounds.1.name
-                          <br> <a href="allAggregatedAnnotations.1.annotations.0.possibleCompounds.1.information.0.url" target="_blank">
-                            View on allAggregatedAnnotations.1.annotations.0.possibleCompounds.1.information.0.database website
-                          </a></figcaption> <img src="allAggregatedAnnotations.1.annotations.0.possibleCompounds.1.imageURL" class="compound-image">
+                          allAggregatedAnnotations.0.annotations.0.possibleCompounds.1.name
+                          <br> <a href="allAggregatedAnnotations.0.annotations.0.possibleCompounds.1.information.0.url" target="_blank">
+                            View on allAggregatedAnnotations.0.annotations.0.possibleCompounds.1.information.0.database website
+                          </a></figcaption> <img src="allAggregatedAnnotations.0.annotations.0.possibleCompounds.1.imageURL" class="compound-image">
                       </figure>
                     </div>
                   </div>
-                  <div slot-key="reference"><img src="allAggregatedAnnotations.1.annotations.0.possibleCompounds.1.imageURL" class="compound-thumbnail"></div>
-                </mock-el-popover> <br> <span><a href="allAggregatedAnnotations.1.annotations.0.possibleCompounds.1.information.0.url" target="_blank" title="allAggregatedAnnotations.1.annotations.0.possibleCompounds.1.name">
-        allAggregatedAnnotations.1.annot...
+                  <div slot-key="reference"><img src="allAggregatedAnnotations.0.annotations.0.possibleCompounds.1.imageURL" class="compound-thumbnail"></div>
+                </mock-el-popover> <br> <span><a href="allAggregatedAnnotations.0.annotations.0.possibleCompounds.1.information.0.url" target="_blank" title="allAggregatedAnnotations.0.annotations.0.possibleCompounds.1.name">
+        allAggregatedAnnotations.0.annot...
       </a></span>
               </div>
               <!---->
@@ -376,16 +378,16 @@ exports[`DatasetComparisonPage it should match snapshot 1`] = `
                     <div class="compound-popover">
                       <figure>
                         <figcaption>
-                          allAggregatedAnnotations.1.annotations.1.possibleCompounds.0.name
-                          <br> <a href="allAggregatedAnnotations.1.annotations.1.possibleCompounds.0.information.0.url" target="_blank">
-                            View on allAggregatedAnnotations.1.annotations.1.possibleCompounds.0.information.0.database website
-                          </a></figcaption> <img src="allAggregatedAnnotations.1.annotations.1.possibleCompounds.0.imageURL" class="compound-image">
+                          allAggregatedAnnotations.0.annotations.1.possibleCompounds.0.name
+                          <br> <a href="allAggregatedAnnotations.0.annotations.1.possibleCompounds.0.information.0.url" target="_blank">
+                            View on allAggregatedAnnotations.0.annotations.1.possibleCompounds.0.information.0.database website
+                          </a></figcaption> <img src="allAggregatedAnnotations.0.annotations.1.possibleCompounds.0.imageURL" class="compound-image">
                       </figure>
                     </div>
                   </div>
-                  <div slot-key="reference"><img src="allAggregatedAnnotations.1.annotations.1.possibleCompounds.0.imageURL" class="compound-thumbnail"></div>
-                </mock-el-popover> <br> <span><a href="allAggregatedAnnotations.1.annotations.1.possibleCompounds.0.information.0.url" target="_blank" title="allAggregatedAnnotations.1.annotations.1.possibleCompounds.0.name">
-        allAggregatedAnnotations.1.annot...
+                  <div slot-key="reference"><img src="allAggregatedAnnotations.0.annotations.1.possibleCompounds.0.imageURL" class="compound-thumbnail"></div>
+                </mock-el-popover> <br> <span><a href="allAggregatedAnnotations.0.annotations.1.possibleCompounds.0.information.0.url" target="_blank" title="allAggregatedAnnotations.0.annotations.1.possibleCompounds.0.name">
+        allAggregatedAnnotations.0.annot...
       </a></span>
               </div>
               <div class="compound">
@@ -394,16 +396,16 @@ exports[`DatasetComparisonPage it should match snapshot 1`] = `
                     <div class="compound-popover">
                       <figure>
                         <figcaption>
-                          allAggregatedAnnotations.1.annotations.1.possibleCompounds.1.name
-                          <br> <a href="allAggregatedAnnotations.1.annotations.1.possibleCompounds.1.information.0.url" target="_blank">
-                            View on allAggregatedAnnotations.1.annotations.1.possibleCompounds.1.information.0.database website
-                          </a></figcaption> <img src="allAggregatedAnnotations.1.annotations.1.possibleCompounds.1.imageURL" class="compound-image">
+                          allAggregatedAnnotations.0.annotations.1.possibleCompounds.1.name
+                          <br> <a href="allAggregatedAnnotations.0.annotations.1.possibleCompounds.1.information.0.url" target="_blank">
+                            View on allAggregatedAnnotations.0.annotations.1.possibleCompounds.1.information.0.database website
+                          </a></figcaption> <img src="allAggregatedAnnotations.0.annotations.1.possibleCompounds.1.imageURL" class="compound-image">
                       </figure>
                     </div>
                   </div>
-                  <div slot-key="reference"><img src="allAggregatedAnnotations.1.annotations.1.possibleCompounds.1.imageURL" class="compound-thumbnail"></div>
-                </mock-el-popover> <br> <span><a href="allAggregatedAnnotations.1.annotations.1.possibleCompounds.1.information.0.url" target="_blank" title="allAggregatedAnnotations.1.annotations.1.possibleCompounds.1.name">
-        allAggregatedAnnotations.1.annot...
+                  <div slot-key="reference"><img src="allAggregatedAnnotations.0.annotations.1.possibleCompounds.1.imageURL" class="compound-thumbnail"></div>
+                </mock-el-popover> <br> <span><a href="allAggregatedAnnotations.0.annotations.1.possibleCompounds.1.information.0.url" target="_blank" title="allAggregatedAnnotations.0.annotations.1.possibleCompounds.1.name">
+        allAggregatedAnnotations.0.annot...
       </a></span>
               </div>
               <!---->

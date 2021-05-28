@@ -17,58 +17,9 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
 
   async allAggregatedAnnotations(source, args, ctx) {
     const { args: newArgs } = await applyQueryFilters(ctx, args)
-    const aggAnnotations = await esRawAggregationResults(newArgs, {
-      unique_formulas: {
-        terms: {
-          field: 'ion',
-          size: 1000000, // given ES agg pagination lacking, here we need a big number to return everything
-        },
-        aggs: {
-          unique_db_ids: {
-            terms: {
-              field: 'db_id',
-            },
-            aggs: {
-              unique_ds_ids: {
-                terms: {
-                  field: 'ds_id',
-                },
-                aggs: {
-                  include_source: {
-                    top_hits: {
-                      _source: {},
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    }, 'annotation', ctx.user)
+    const aggAnnotations = await esRawAggregationResults(newArgs, 'annotation', ctx.user)
 
-    const auxObj : any[] = []
-
-    aggAnnotations.unique_formulas.buckets.forEach((agg:any) => {
-      agg.unique_db_ids.buckets.forEach((db: any) => {
-        const item : {
-          ion : string
-          dbId: string
-          datasetIds: string[]
-          annotations: any[]
-        } | any = {}
-        item.ion = agg.key
-        item.dbId = db.key
-        item.datasetIds = []
-        item.annotations = []
-        db.unique_ds_ids.buckets.forEach((ds: any) => {
-          item.datasetIds.push(ds.key)
-          item.annotations.push(ds.include_source.hits.hits[0])
-        })
-        auxObj.push(item)
-      })
-    })
-    return auxObj
+    return aggAnnotations
   },
 
   async countAnnotations(source, args, ctx) {
