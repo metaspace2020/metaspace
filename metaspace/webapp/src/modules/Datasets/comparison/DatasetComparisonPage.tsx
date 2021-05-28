@@ -206,10 +206,13 @@ export default defineComponent<DatasetComparisonPageProps>({
         <div class='dataset-comparison-page w-full flex flex-wrap flex-row'>
           <FilterPanel class='w-full' level='annotation' hiddenFilters={['datasetIds']}/>
           <div class='dataset-comparison-wrapper w-full md:w-5/12'>
-            <DatasetComparisonAnnotationTable
-              isLoading={state.annotationLoading}
-              annotations={(cloneDeep(state.annotations || [])).map((ion: any) => ion.annotations[0])}
-              onRowChange={handleRowChange}/>
+            {
+              state.annotations
+              && <DatasetComparisonAnnotationTable
+                isLoading={state.annotationLoading}
+                annotations={state.annotations.map((ion: any) => ion.annotations[0])}
+                onRowChange={handleRowChange}/>
+            }
           </div>
           <div class='dataset-comparison-wrapper  w-full  md:w-7/12'>
             <Collapse value={'images'} id="annot-content"
