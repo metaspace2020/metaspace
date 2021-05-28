@@ -15,7 +15,6 @@ import ImageSaver from '../../ImageViewer/ImageSaver.vue'
 import getColorScale from '../../../lib/getColorScale'
 import { THUMB_WIDTH } from '../../../components/Slider'
 import { isEqual } from 'lodash-es'
-import { processingSettingsChanged } from '../../../../../graphql/src/modules/dataset/controller/Mutation'
 
 interface DatasetComparisonGridProps {
   nCols: number
