@@ -71,7 +71,6 @@ export default defineComponent<DatasetComparisonPageProps>({
       id: snapshotId,
       datasetId: sourceDsId,
     })
-    const { mutate: annotationsMutation } = useMutation<any>(comparisonAnnotationListQuery)
 
     const gridSettings = computed(() => settingsResult.value != null
       ? settingsResult.value.imageViewerSnapshot : null)
@@ -91,16 +90,23 @@ export default defineComponent<DatasetComparisonPageProps>({
       }
     }
 
+    const queryOptions = reactive({ enabled: false })
+    const queryVars = computed(() => ({
+      ...queryVariables(),
+      dFilter: { ...queryVariables().dFilter, ids: Object.values(state.grid || {}).join('|') },
+    }))
+    const annotationsQuery = useQuery<any>(comparisonAnnotationListQuery, queryVars, queryOptions)
+    const loadAnnotations = () => { queryOptions.enabled = true }
+    state.annotations = computed(() => {
+      if (annotationsQuery.result.value) {
+        return annotationsQuery.result.value.allAggregatedAnnotations
+      }
+      return null
+    })
+
     const requestAnnotations = async() => {
       state.isLoading = true
-      const query : any = queryVariables()
-      query.dFilter.ids = Object.values(state.grid).join('|')
-
-      // although a querying is been done, given we want to get the annotation data
-      // on demand, and we have a limitation using refetch or query options enabled for use Query
-      // on this case we are querying using the useMutate
-      const result = await annotationsMutation(query)
-      state.annotations = result.data.allAggregatedAnnotations
+      loadAnnotations()
       state.annotationLoading = false
       state.isLoading = false
     }
@@ -115,10 +121,6 @@ export default defineComponent<DatasetComparisonPageProps>({
         state.nCols = auxSettings.nCols
         state.nRows = auxSettings.nRows
         state.grid = auxSettings.grid
-        await requestAnnotations()
-      }
-      if (!isEqual(state.filter, $store.getters.filter) && state.grid) { // requery onFilter update
-        state.filter = $store.getters.filter
         await requestAnnotations()
       }
     })
@@ -149,7 +151,7 @@ export default defineComponent<DatasetComparisonPageProps>({
               nCols={nCols}
               nRows={nRows}
               settings={gridSettings}
-              annotations={state.annotations}
+              annotations={state.annotations || []}
               selectedAnnotation={state.selectedAnnotation}
               isLoading={state.isLoading}
             />
@@ -172,7 +174,8 @@ export default defineComponent<DatasetComparisonPageProps>({
         title="Molecules"
         class="ds-collapse el-collapse-item--no-padding relative">
         {
-          state.annotations[state.selectedAnnotation]
+          state.annotations
+          && state.annotations[state.selectedAnnotation]
           && state.annotations[state.selectedAnnotation].annotations.map((ds: any) => {
             return relatedMolecules(ds)
           })
@@ -190,7 +193,7 @@ export default defineComponent<DatasetComparisonPageProps>({
           <div class='dataset-comparison-wrapper w-full md:w-5/12'>
             <DatasetComparisonAnnotationTable
               isLoading={state.annotationLoading}
-              annotations={(cloneDeep(state.annotations) || []).map((ion: any) => ion.annotations[0])}
+              annotations={(cloneDeep(state.annotations || [])).map((ion: any) => ion.annotations[0])}
               onRowChange={handleRowChange}/>
           </div>
           <div class='dataset-comparison-wrapper  w-full  md:w-7/12'>

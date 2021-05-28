@@ -95,7 +95,170 @@ exports[`DatasetComparisonPage it should match snapshot 1`] = `
     </div>
   </div>
   <div class="dataset-comparison-wrapper w-full md:w-5/12">
-    <div class="ds-comparison-annotation-table-loading-wrapper"><i class="el-icon-loading"></i></div>
+    <div class="dataset-comparison-annotation-table">
+      <div class="el-table el-table--fit el-table--striped el-table--border el-table--scrollable-x el-table--enable-row-hover el-table--enable-row-transition el-table--mini" id="annot-table" current="true" elementloadingtext="Loading results …" tabindex="1">
+        <div class="hidden-columns">
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
+        <div class="el-table__header-wrapper">
+          <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 220px;">
+            <colgroup>
+              <col name="el-table_1_column_1" width="120">
+              <col name="el-table_1_column_2" width="60">
+              <col name="el-table_1_column_3" width="40">
+            </colgroup>
+            <thead class="">
+              <tr class="">
+                <th colspan="1" rowspan="1" class="el-table_1_column_1     is-leaf is-sortable">
+                  <div class="cell">Annotation<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
+                </th>
+                <th colspan="1" rowspan="1" class="el-table_1_column_2 ascending    is-leaf is-sortable">
+                  <div class="cell">MSM<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
+                </th>
+                <th colspan="1" rowspan="1" class="el-table_1_column_3   fdr-cell  is-leaf is-sortable">
+                  <div class="cell">FDR<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
+                </th>
+              </tr>
+            </thead>
+          </table>
+        </div>
+        <div class="el-table__body-wrapper is-scrolling-left">
+          <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 220px;">
+            <colgroup>
+              <col name="el-table_1_column_1" width="120">
+              <col name="el-table_1_column_2" width="60">
+              <col name="el-table_1_column_3" width="40">
+            </colgroup>
+            <tbody>
+              <tr class="el-table__row fdr-50 coloc-95">
+                <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
+                  <div class="cell">
+                    <div class="cell-wrapper">
+                      <mock-el-popover trigger="hover" placement="right" class="cell-span">
+                        <div slot-key="default">
+                          <div class="leading-5 py-2 px-3 font-normal content text-sm text-left">
+                            <p class="title">
+                              2 candidate molecules
+                            </p>
+                            <!---->
+                            <ul class="p-0 list-none leading-7">
+                              <li>
+                                allAggregatedAnnotations.1.annotations.0.possibleCompounds.0.name
+                              </li>
+                              <li>
+                                allAggregatedAnnotations.1.annotations.0.possibleCompounds.1.name
+                              </li>
+                              <!---->
+                            </ul>
+                            <div>
+                              <p class="title"><span>2 isomeric ions were annotated</span></p>
+                              <p>
+                                Check the <b>Molecules</b> panel for more candidates.
+                              </p>
+                            </div>
+                            <div>
+                              <p class="title"><span>2 isobaric ions were annotated</span></p>
+                              <p class="max-w-measure-1">
+                                Check the <b>Molecules</b> panel to see candidate molecules from the isobaric ions,
+                                and the <b>Diagnostics</b> panel to compare the isotopic images and spectra.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div slot-key="reference"><span>[allAggregatedAnnotations.<sub class="leading-none">1</sub>.annotations.<sub class="leading-none">0</sub>.ion]</span>
+                          <!---->
+                        </div>
+                      </mock-el-popover> <svg data-icon="filter" class="cell-filter-button"></svg>
+                    </div>
+                  </div>
+                </td>
+                <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+                  <div class="cell">31.333</div>
+                </td>
+                <td rowspan="1" colspan="1" class="el-table_1_column_3  fdr-cell">
+                  <div class="cell"><span>2233%</span></div>
+                </td>
+              </tr>
+              <tr class="el-table__row el-table__row--striped fdr-50 coloc-95">
+                <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
+                  <div class="cell">
+                    <div class="cell-wrapper">
+                      <mock-el-popover trigger="hover" placement="right" class="cell-span">
+                        <div slot-key="default">
+                          <div class="leading-5 py-2 px-3 font-normal content text-sm text-left">
+                            <p class="title">
+                              2 candidate molecules
+                            </p>
+                            <!---->
+                            <ul class="p-0 list-none leading-7">
+                              <li>
+                                allAggregatedAnnotations.0.annotations.0.possibleCompounds.0.name
+                              </li>
+                              <li>
+                                allAggregatedAnnotations.0.annotations.0.possibleCompounds.1.name
+                              </li>
+                              <!---->
+                            </ul>
+                            <div>
+                              <p class="title"><span>2 isomeric ions were annotated</span></p>
+                              <p>
+                                Check the <b>Molecules</b> panel for more candidates.
+                              </p>
+                            </div>
+                            <div>
+                              <p class="title"><span>2 isobaric ions were annotated</span></p>
+                              <p class="max-w-measure-1">
+                                Check the <b>Molecules</b> panel to see candidate molecules from the isobaric ions,
+                                and the <b>Diagnostics</b> panel to compare the isotopic images and spectra.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div slot-key="reference"><span>[allAggregatedAnnotations.<sub class="leading-none">0</sub>.annotations.<sub class="leading-none">0</sub>.ion]</span>
+                          <!---->
+                        </div>
+                      </mock-el-popover> <svg data-icon="filter" class="cell-filter-button"></svg>
+                    </div>
+                  </div>
+                </td>
+                <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+                  <div class="cell">31.667</div>
+                </td>
+                <td rowspan="1" colspan="1" class="el-table_1_column_3  fdr-cell">
+                  <div class="cell"><span>2200%</span></div>
+                </td>
+              </tr>
+              <!---->
+            </tbody>
+          </table>
+          <!---->
+          <!---->
+        </div>
+        <!---->
+        <!---->
+        <!---->
+        <!---->
+        <div class="el-table__column-resize-proxy" style="display: none;"></div>
+      </div>
+      <div class="flex justify-between items-start mt-2">
+        <div>
+          <mock-el-pagination total="2" pagesize="15" pagesizes="15,20,25,30" currentpage="1" layout="prev,pager,next,sizes"></mock-el-pagination>
+          <div id="annot-count" class="mt-2"><b>2</b> matching records</div>
+          <div class="mt-2">
+            <div class="fdr-legend-header">FDR levels:</div>
+            <div class="fdr-legend fdr-5">5%</div>
+            <div class="fdr-legend fdr-10">10%</div>
+            <div class="fdr-legend fdr-20">20%</div>
+            <div class="fdr-legend fdr-50">50%</div>
+          </div>
+        </div>
+        <div><button type="button" class="el-button el-button--default export-btn">
+            <!---->
+            <!----><span>Export to CSV</span></button></div>
+      </div>
+    </div>
   </div>
   <div class="dataset-comparison-wrapper  w-full  md:w-7/12">
     <mock-el-collapse value="images" id="annot-content" class="border-0">
@@ -103,7 +266,7 @@ exports[`DatasetComparisonPage it should match snapshot 1`] = `
         <div class="dataset-comparison-grid">
           <div class="dataset-comparison-grid">
             <div class="dataset-comparison-grid-row">
-              <div class="dataset-comparison-grid-col overflow-hidden"><span slot="title" class="w-full dataset-comparison-grid-item-header dom-to-image-hidden"><span>
+              <div class="dataset-comparison-grid-col overflow-hidden"><span slot="title" class="w-full dataset-comparison-grid-item-header dom-to-image-hidden" annotation="[object Object]"><span>
     Image viewer
   </span>
                 <div class="flex items-center pr-4 cursor-default">
@@ -128,7 +291,7 @@ exports[`DatasetComparisonPage it should match snapshot 1`] = `
                   </div><button title="Export image" class="button-reset rounded-full bg-gray-100 shadow-xs h-8 w-8 flex items-center justify-center cursor-not-allowed absolute top-0 left-0 mt-3 ml-3 dom-to-image-hidden"><i class="el-icon-download text-xl"></i></button>
                 </div>
               </div>
-              <div class="dataset-comparison-grid-col overflow-hidden"><span slot="title" class="w-full dataset-comparison-grid-item-header dom-to-image-hidden"><span>
+              <div class="dataset-comparison-grid-col overflow-hidden"><span slot="title" class="w-full dataset-comparison-grid-item-header dom-to-image-hidden" annotation="[object Object]"><span>
     Image viewer
   </span>
                 <div class="flex items-center pr-4 cursor-default">
@@ -157,7 +320,98 @@ exports[`DatasetComparisonPage it should match snapshot 1`] = `
           </div>
         </div>
       </mock-el-collapse-item>
-      <mock-el-collapse-item id="annot-img-collapse" name="compounds" title="Molecules" class="ds-collapse el-collapse-item--no-padding relative"></mock-el-collapse-item>
+      <mock-el-collapse-item id="annot-img-collapse" name="compounds" title="Molecules" class="ds-collapse el-collapse-item--no-padding relative">
+        <div class="related-molecules" mock-v-loading="0" query="isomers">
+          <div>
+            <!---->
+            <div class="compound-list">
+              <div class="compound">
+                <mock-el-popover placement="left" trigger="click">
+                  <div slot-key="default">
+                    <div class="compound-popover">
+                      <figure>
+                        <figcaption>
+                          allAggregatedAnnotations.1.annotations.0.possibleCompounds.0.name
+                          <br> <a href="allAggregatedAnnotations.1.annotations.0.possibleCompounds.0.information.0.url" target="_blank">
+                            View on allAggregatedAnnotations.1.annotations.0.possibleCompounds.0.information.0.database website
+                          </a></figcaption> <img src="allAggregatedAnnotations.1.annotations.0.possibleCompounds.0.imageURL" class="compound-image">
+                      </figure>
+                    </div>
+                  </div>
+                  <div slot-key="reference"><img src="allAggregatedAnnotations.1.annotations.0.possibleCompounds.0.imageURL" class="compound-thumbnail"></div>
+                </mock-el-popover> <br> <span><a href="allAggregatedAnnotations.1.annotations.0.possibleCompounds.0.information.0.url" target="_blank" title="allAggregatedAnnotations.1.annotations.0.possibleCompounds.0.name">
+        allAggregatedAnnotations.1.annot...
+      </a></span>
+              </div>
+              <div class="compound">
+                <mock-el-popover placement="left" trigger="click">
+                  <div slot-key="default">
+                    <div class="compound-popover">
+                      <figure>
+                        <figcaption>
+                          allAggregatedAnnotations.1.annotations.0.possibleCompounds.1.name
+                          <br> <a href="allAggregatedAnnotations.1.annotations.0.possibleCompounds.1.information.0.url" target="_blank">
+                            View on allAggregatedAnnotations.1.annotations.0.possibleCompounds.1.information.0.database website
+                          </a></figcaption> <img src="allAggregatedAnnotations.1.annotations.0.possibleCompounds.1.imageURL" class="compound-image">
+                      </figure>
+                    </div>
+                  </div>
+                  <div slot-key="reference"><img src="allAggregatedAnnotations.1.annotations.0.possibleCompounds.1.imageURL" class="compound-thumbnail"></div>
+                </mock-el-popover> <br> <span><a href="allAggregatedAnnotations.1.annotations.0.possibleCompounds.1.information.0.url" target="_blank" title="allAggregatedAnnotations.1.annotations.0.possibleCompounds.1.name">
+        allAggregatedAnnotations.1.annot...
+      </a></span>
+              </div>
+              <!---->
+            </div>
+          </div>
+          <!---->
+        </div>
+        <div class="related-molecules" mock-v-loading="0" query="isomers">
+          <div>
+            <!---->
+            <div class="compound-list">
+              <div class="compound">
+                <mock-el-popover placement="left" trigger="click">
+                  <div slot-key="default">
+                    <div class="compound-popover">
+                      <figure>
+                        <figcaption>
+                          allAggregatedAnnotations.1.annotations.1.possibleCompounds.0.name
+                          <br> <a href="allAggregatedAnnotations.1.annotations.1.possibleCompounds.0.information.0.url" target="_blank">
+                            View on allAggregatedAnnotations.1.annotations.1.possibleCompounds.0.information.0.database website
+                          </a></figcaption> <img src="allAggregatedAnnotations.1.annotations.1.possibleCompounds.0.imageURL" class="compound-image">
+                      </figure>
+                    </div>
+                  </div>
+                  <div slot-key="reference"><img src="allAggregatedAnnotations.1.annotations.1.possibleCompounds.0.imageURL" class="compound-thumbnail"></div>
+                </mock-el-popover> <br> <span><a href="allAggregatedAnnotations.1.annotations.1.possibleCompounds.0.information.0.url" target="_blank" title="allAggregatedAnnotations.1.annotations.1.possibleCompounds.0.name">
+        allAggregatedAnnotations.1.annot...
+      </a></span>
+              </div>
+              <div class="compound">
+                <mock-el-popover placement="left" trigger="click">
+                  <div slot-key="default">
+                    <div class="compound-popover">
+                      <figure>
+                        <figcaption>
+                          allAggregatedAnnotations.1.annotations.1.possibleCompounds.1.name
+                          <br> <a href="allAggregatedAnnotations.1.annotations.1.possibleCompounds.1.information.0.url" target="_blank">
+                            View on allAggregatedAnnotations.1.annotations.1.possibleCompounds.1.information.0.database website
+                          </a></figcaption> <img src="allAggregatedAnnotations.1.annotations.1.possibleCompounds.1.imageURL" class="compound-image">
+                      </figure>
+                    </div>
+                  </div>
+                  <div slot-key="reference"><img src="allAggregatedAnnotations.1.annotations.1.possibleCompounds.1.imageURL" class="compound-thumbnail"></div>
+                </mock-el-popover> <br> <span><a href="allAggregatedAnnotations.1.annotations.1.possibleCompounds.1.information.0.url" target="_blank" title="allAggregatedAnnotations.1.annotations.1.possibleCompounds.1.name">
+        allAggregatedAnnotations.1.annot...
+      </a></span>
+              </div>
+              <!---->
+            </div>
+          </div>
+          <!---->
+        </div>
+      </mock-el-collapse-item>
     </mock-el-collapse>
   </div>
 </div>
