@@ -1,4 +1,4 @@
-import { computed, defineComponent, reactive } from '@vue/composition-api'
+import { computed, defineComponent, onMounted, reactive, watchEffect } from '@vue/composition-api'
 import { Workflow, WorkflowStep } from '../../../components/Workflow'
 import { Select, Option, InputNumber, Button, Dialog } from '../../../lib/element-ui'
 import { ErrorLabelText } from '../../../components/Form'
@@ -9,6 +9,7 @@ import {
 } from '../../../api/dataset'
 import './DatasetComparisonDialog.scss'
 import gql from 'graphql-tag'
+import { isEqual, uniqBy } from 'lodash-es'
 
 const saveSettings = gql`mutation saveImageViewerSnapshotMutation($input: ImageViewerSnapshotInput!) {
   saveImageViewerSnapshot(input: $input)
@@ -19,6 +20,7 @@ interface DatasetComparisonDialogProps {
 
 interface DatasetComparisonDialogState {
   selectedDatasetIds: string[]
+  cachedOptions: any[]
   workflowStep: number
   nCols: number
   nRows: number
@@ -26,7 +28,9 @@ interface DatasetComparisonDialogState {
   firstStepError: boolean
   secondStepError: boolean
   finalStepError: boolean
+  loading: boolean
   arrangement: {[key: string] : string}
+  datasetName: string
 }
 
 export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogProps>({
@@ -48,20 +52,39 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
       secondStepError: false,
       finalStepError: false,
       arrangement: {},
+      loading: false,
+      cachedOptions: [],
+      datasetName: '',
     })
+
+    const queryVars = computed(() => ({
+      dFilter: {
+        ids: null,
+        polarity: null,
+        metadataType: 'Imaging MS',
+        status: 'FINISHED',
+        name: state.datasetName,
+      },
+      query: '',
+      limit: 2,
+    }))
     const {
       result: datasetResult,
       loading: datasetLoading,
-    } = useQuery<{allDatasets: DatasetDetailItem}>(datasetListItemsQuery, {
-      dFilter: { ids: null, polarity: null, metadataType: 'Imaging MS', status: 'FINISHED' },
-      query: '',
-      inpFdrLvls: [10],
-      checkLvl: 10,
-      offset: 0,
-      orderBy: 'ORDER_BY_DATE',
-      sortingOrder: 'DESCENDING',
-    })
+    } = useQuery<{allDatasets: DatasetDetailItem}>(datasetListItemsQuery, queryVars)
+    const {
+      result: receivedDatasetsResult,
+      loading: receivedDatasetsResultLoading,
+    } = useQuery<{allDatasets: DatasetDetailItem}>(gql`query DatasetNames($ids: String) {
+      allDatasets(filter: {ids: $ids}) {
+        id
+        name
+        uploadDT
+      }
+    }`, { ids: props.selectedDatasetIds.join('|') })
     const dataset = computed(() => datasetResult.value != null ? datasetResult.value.allDatasets : null)
+    const receivedDatasets = computed(() => receivedDatasetsResult.value != null
+      ? receivedDatasetsResult.value.allDatasets : null)
     const { mutate: settingsMutation } = useMutation<any>(saveSettings)
 
     const annotationsLink = async() => {
@@ -87,6 +110,25 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
       }
     }
 
+    watchEffect(() => {
+      if (dataset.value && !isEqual(state.cachedOptions,
+        uniqBy(state.cachedOptions.concat(dataset.value), 'id'))) {
+        state.cachedOptions = uniqBy(state.cachedOptions.concat(dataset.value), 'id')
+      }
+      if (receivedDatasets.value && !isEqual(state.cachedOptions,
+        uniqBy(state.cachedOptions.concat(receivedDatasets.value), 'id'))) {
+        state.cachedOptions = uniqBy(state.cachedOptions.concat(receivedDatasets.value), 'id')
+      }
+    })
+
+    const options = computed(() => state.selectedDatasetIds.map((id: string) => {
+      return state.cachedOptions.find((opt: any) => opt.id === id)
+    }).filter((id: string) => id !== undefined))
+
+    const fetchDatasets = async(query: string) => {
+      state.datasetName = query
+    }
+
     const handleDatasetSelection = (options: string[]) => {
       state.selectedDatasetIds = options
     }
@@ -100,6 +142,9 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
     }
 
     return () => {
+      const datasets : any[] = uniqBy(((options.value || []) as any[]).concat((dataset.value || []) as any[])
+        , 'id')
+
       return (
         <Dialog
           visible
@@ -122,15 +167,20 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
                     class={`w-full ${state.firstStepError ? 'sm-form-error' : ''}`}
                     value={state.selectedDatasetIds}
                     multiple
-                    placeholder=" "
+                    filterable
+                    remote
+                    remoteMethod={fetchDatasets}
+                    loading={datasetLoading.value}
+                    placeholder="Start typing name"
+                    loadingText="Loading matching entries..."
+                    noMatchText="No matches"
                     onChange={handleDatasetSelection}>
                     {
-                      Array.isArray(dataset.value)
-                        && dataset.value.map((ds) => {
-                          return (
-                            <Option key={ds.id} label={ds.name} value={ds.id}/>
-                          )
-                        })
+                      datasets.map((ds) => {
+                        return (
+                          <Option key={ds.id} label={ds.name} value={ds.id}/>
+                        )
+                      })
                     }
                   </Select>
                   {
@@ -246,8 +296,7 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
                                   onChange={(value: string) => { handleSelection(value, row, col) }}>
                                   {
                                     state.showOptions
-                                    && Array.isArray(dataset.value)
-                                    && dataset.value
+                                    && datasets
                                       .filter(ds => state.selectedDatasetIds.includes(ds.id)).map((ds) => {
                                         return (
                                           <Option

@@ -10,21 +10,47 @@ import { initMockGraphqlClient, apolloProvider } from '../../../../tests/utils/m
 describe('DatasetComparisonDialog', () => {
   const propsData = {
     selectedDatasetIds: [
-      '2021-04-06_08h35m04s',
+      '2021-03-31_11h01m28s',
+      '2021-03-30_18h22m18s',
+      '2021-04-06_08h33m04s',
+    ],
+  }
+
+  const manySelectedPropsData = {
+    selectedDatasetIds: [
+      '2021-03-31_11h01m28s',
+      '2021-03-30_18h22m18s',
+      '2021-04-06_08h33m04s',
+      '2021-03-30_18h23m18s',
+      '2021-04-06_08h34m04s',
+    ],
+  }
+
+  const propsDataUnique = {
+    selectedDatasetIds: [
+      '2021-03-31_11h02m28s',
     ],
   }
 
   const graphqlReturnData = [{
-    id: '2021-03-31_11h02m28s',
-    name: 'New 3 (1)',
+    id: '2021-03-31_11h01m28s',
+    name: 'Mock (1)',
     uploadDT: '2021-03-31T14:02:28.722Z',
   }, {
-    id: '2021-03-30_18h25m18s',
-    name: 'Untreated_3_434_super_lite_19_31 (1)',
+    id: '2021-03-30_18h22m18s',
+    name: 'Mock (2)',
     uploadDT: '2021-03-30T21:25:18.473Z',
   }, {
-    id: '2021-04-06_08h35m04s',
-    name: 'Untreated_3_434_super_lite_19_31 (1)',
+    id: '2021-04-06_08h33m04s',
+    name: 'Mock (3)',
+    uploadDT: '2021-03-30T21:25:18.473Z',
+  }, {
+    id: '2021-03-30_18h23m18s',
+    name: 'Mock (4)',
+    uploadDT: '2021-03-30T21:25:18.473Z',
+  }, {
+    id: '2021-04-06_08h34m04s',
+    name: 'Mock (5)',
     uploadDT: '2021-03-30T21:25:18.473Z',
   }]
 
@@ -40,6 +66,7 @@ describe('DatasetComparisonDialog', () => {
       return h(DatasetComparisonDialog, { props: this.$attrs })
     },
   })
+
   const graphqlWithData = () => {
     initMockGraphqlClient({
       Query: () => ({
@@ -67,7 +94,7 @@ describe('DatasetComparisonDialog', () => {
   })
 
   it('it should display the minimum required datasets error', async() => {
-    const wrapper = mount(testHarness, { store, router, propsData })
+    const wrapper = mount(testHarness, { store, router, propsData: propsDataUnique })
     await Vue.nextTick()
     wrapper.find('.el-button--primary').trigger('click')
     await Vue.nextTick()
@@ -81,8 +108,6 @@ describe('DatasetComparisonDialog', () => {
     const wrapper = mount(testHarness, { store, router, propsData })
     await Vue.nextTick()
 
-    wrapper.find('.el-select').trigger('click')
-    wrapper.find('.el-select-dropdown__item').trigger('click')
     wrapper.find('.el-button--primary').trigger('click')
     await Vue.nextTick()
 
@@ -91,13 +116,11 @@ describe('DatasetComparisonDialog', () => {
       .includes('active')).toBe(true)
   })
 
-  it('it should check the ds comparison grid nofcols and rows', async() => {
+  it('it should check the ds comparison grid n of cols and rows', async() => {
     const wrapper = mount(testHarness, { store, router, propsData })
     await Vue.nextTick()
 
     // advances first step
-    wrapper.find('.el-select').trigger('click')
-    wrapper.find('.el-select-dropdown__item').trigger('click')
     wrapper.find('.el-button--primary').trigger('click')
     await Vue.nextTick()
 
@@ -105,13 +128,27 @@ describe('DatasetComparisonDialog', () => {
     expect(wrapper.findAll('.dataset-comparison-dialog-col').length).toBe(4)
   })
 
+  it('it should display the final min grid size error', async() => {
+    const wrapper = mount(testHarness, { store, router, propsData: manySelectedPropsData })
+    await Vue.nextTick()
+
+    // advances first step
+    wrapper.find('.el-button--primary').trigger('click')
+    await Vue.nextTick()
+
+    wrapper.find('.el-button--primary').trigger('click')
+    await Vue.nextTick()
+
+    expect(wrapper.find('.text-danger').exists()).toBe(true)
+    expect(wrapper.find('.text-danger').text())
+      .toBe('The grid must have enough cells to all datasets!')
+  })
+
   it('it should display the final step required error', async() => {
     const wrapper = mount(testHarness, { store, router, propsData })
     await Vue.nextTick()
 
     // advances first and second step and tries to compare
-    wrapper.find('.el-select').trigger('click')
-    wrapper.find('.el-select-dropdown__item').trigger('click')
     wrapper.find('.el-button--primary').trigger('click')
     await Vue.nextTick()
     wrapper.find('.el-button--primary').trigger('click')
@@ -129,11 +166,6 @@ describe('DatasetComparisonDialog', () => {
     await Vue.nextTick()
 
     // advances first and second step
-    wrapper.find('.el-select').trigger('click')
-    wrapper.find('.el-select-dropdown__item').trigger('click')
-    await Vue.nextTick()
-    wrapper.find('.el-select').trigger('click')
-    wrapper.findAll('.el-select-dropdown__item').at(1).trigger('click')
     wrapper.find('.el-button--primary').trigger('click')
     await Vue.nextTick()
     wrapper.find('.el-button--primary').trigger('click')

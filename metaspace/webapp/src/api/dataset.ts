@@ -161,8 +161,8 @@ export interface DatasetListItem {
 }
 
 export const datasetListItemsQuery =
-  gql`query GetDatasets($dFilter: DatasetFilter, $query: String) {
-    allDatasets(offset: 0, limit: 10000, filter: $dFilter, simpleQuery: $query) {
+  gql`query GetDatasets($dFilter: DatasetFilter, $query: String, $limit: Int = 10000) {
+    allDatasets(offset: 0, limit: $limit, filter: $dFilter, simpleQuery: $query) {
       id
       name
       uploadDT
