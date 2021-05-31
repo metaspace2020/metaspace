@@ -168,7 +168,7 @@ export default defineComponent<DatasetComparisonPageProps>({
               settings={gridSettings}
               annotations={state.annotations || []}
               selectedAnnotation={state.selectedAnnotation}
-              isLoading={state.isLoading}
+              isLoading={state.isLoading || annotationsQuery.loading.value}
             />
           </div>
         </CollapseItem>)

@@ -5,7 +5,7 @@ import { ErrorLabelText } from '../../../components/Form'
 import { useMutation, useQuery } from '@vue/apollo-composable'
 import {
   DatasetDetailItem,
-  datasetDetailItemsQuery,
+  datasetListItemsQuery,
 } from '../../../api/dataset'
 import './DatasetComparisonDialog.scss'
 import gql from 'graphql-tag'
@@ -52,7 +52,7 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
     const {
       result: datasetResult,
       loading: datasetLoading,
-    } = useQuery<{allDatasets: DatasetDetailItem}>(datasetDetailItemsQuery, {
+    } = useQuery<{allDatasets: DatasetDetailItem}>(datasetListItemsQuery, {
       dFilter: { ids: null, polarity: null, metadataType: 'Imaging MS', status: 'FINISHED' },
       query: '',
       inpFdrLvls: [10],
