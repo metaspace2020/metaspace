@@ -66,7 +66,7 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
         name: state.datasetName,
       },
       query: '',
-      limit: 2,
+      limit: 100,
     }))
     const {
       result: datasetResult,
