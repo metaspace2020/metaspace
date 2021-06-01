@@ -196,7 +196,7 @@ describe('DatasetComparisonDialog', () => {
 
     // check if the user was redirect to the page with the correct params
     expect(wrapper.vm.$route.name).toBe('datasets-comparison')
-    expect(wrapper.vm.$route.params.snapshot_id).toBe('saveImageViewerSnapshot')
+    expect(wrapper.vm.$route.query.viewId).toBe('saveImageViewerSnapshot')
     expect(wrapper.vm.$route.params.dataset_id).toBe(propsData.selectedDatasetIds[0])
   })
 })

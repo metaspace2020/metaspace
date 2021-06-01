@@ -78,7 +78,8 @@ export default defineComponent<DatasetComparisonPageProps>({
       filter: $store.getters.filter,
       isLoading: false,
     })
-    const { snapshot_id: snapshotId, dataset_id: sourceDsId } = $route.params
+    const { dataset_id: sourceDsId } = $route.params
+    const { viewId: snapshotId } = $route.query
     const {
       result: settingsResult,
       loading: settingsLoading,
@@ -201,6 +202,13 @@ export default defineComponent<DatasetComparisonPageProps>({
     return () => {
       const nCols = state.nCols
       const nRows = state.nRows
+
+      if (!snapshotId) {
+        return (
+          <div class='dataset-comparison-page w-full flex flex-wrap flex-row items-center justify-center'>
+          Not found
+          </div>)
+      }
 
       return (
         <div class='dataset-comparison-page w-full flex flex-wrap flex-row'>

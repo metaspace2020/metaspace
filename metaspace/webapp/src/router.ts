@@ -72,7 +72,7 @@ const router = new VueRouter({
       ],
     },
     {
-      path: '/datasets/:dataset_id/comparison/:snapshot_id',
+      path: '/datasets/:dataset_id/comparison',
       name: 'datasets-comparison',
       component: asyncPages.DatasetComparisonPage,
     },
