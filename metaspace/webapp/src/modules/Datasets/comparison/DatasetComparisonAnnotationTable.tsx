@@ -327,7 +327,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
     }
 
     const formatFDR = (row: any) => {
-      return row.fdrLevel ? <span>{Math.round(row.fdrLevel * 100)}%</span> : <span>&mdash</span>
+      return row.fdrLevel ? <span>{Math.round(row.fdrLevel * 100)}%</span> : <span>&mdash;</span>
     }
 
     const getRowClass = (info: any) => {

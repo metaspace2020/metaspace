@@ -502,7 +502,7 @@ export const esRawAggregationResults = async(args: any, docType: DocType,
       agg.unique_db_ids.buckets.forEach((db: any) => {
         const item : {
           ion : string
-          dbId: string
+          dbId: number
           datasetIds: string[]
           annotations: any[]
         } | any = {}

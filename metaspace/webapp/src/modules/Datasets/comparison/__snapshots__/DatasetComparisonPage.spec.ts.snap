@@ -94,7 +94,7 @@ exports[`DatasetComparisonPage it should match snapshot 1`] = `
       <!---->
     </div>
   </div>
-  <div class="dataset-comparison-wrapper w-full md:w-5/12">
+  <div class="dataset-comparison-wrapper w-full md:w-5/12 relative">
     <div class="dataset-comparison-annotation-table relative">
       <div class="el-table el-table--fit el-table--striped el-table--border el-table--scrollable-x el-table--enable-row-hover el-table--enable-row-transition el-table--mini" id="annot-table" current="true" elementloadingtext="Loading results …" tabindex="1">
         <div class="hidden-columns">

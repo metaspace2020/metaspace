@@ -40,7 +40,7 @@ type Annotation {
 
 type AggregatedAnnotation {
   ion: String!
-  dbId: String!
+  dbId: Int!
   datasetIds: [String]
   annotations: [Annotation]
 }
