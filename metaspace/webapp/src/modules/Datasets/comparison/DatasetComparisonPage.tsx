@@ -209,7 +209,6 @@ export default defineComponent<DatasetComparisonPageProps>({
           Not found
           </div>)
       }
-
       return (
         <div class='dataset-comparison-page w-full flex flex-wrap flex-row'>
           <FilterPanel class='w-full' level='annotation' hiddenFilters={['datasetIds']}/>
@@ -218,7 +217,12 @@ export default defineComponent<DatasetComparisonPageProps>({
               state.annotations
               && <DatasetComparisonAnnotationTable
                 isLoading={state.annotationLoading}
-                annotations={state.annotations.map((ion: any) => ion.annotations[0])}
+                annotations={state.annotations.map((ion: any) => {
+                  return {
+                    ...ion.annotations[0],
+                    datasetCount: (ion.datasetIds || []).length,
+                  }
+                })}
                 onRowChange={handleRowChange}/>
             }
             {

@@ -42,6 +42,7 @@ const SORT_ORDER_TO_COLUMN = {
   ORDER_BY_MSM: 'msmscore',
   ORDER_BY_FDR_MSM: 'fdrlevel',
   ORDER_BY_FORMULA: 'sumformula',
+  ORDER_BY_DS_COUNT: 'datasetCount',
 }
 
 export const DatasetComparisonAnnotationTable = defineComponent<DatasetComparisonAnnotationTableProps>({
@@ -272,6 +273,12 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
         (order === 'ascending' ? 1 : -1) * (a.msmScore - b.msmScore)))
     }
+
+    const handleSortDsCount = (order: string) => {
+      state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
+        (order === 'ascending' ? 1 : -1) * (a.datasetCount - b.datasetCount)))
+    }
+
     const handleSortFdr = (order: string) => {
       state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
         (order === 'ascending' ? 1 : -1) * (a.fdrLevel - b.fdrLevel)))
@@ -288,6 +295,8 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
         handleSortMSM(order)
       } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_FDR_MSM) {
         handleSortFdr(order)
+      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_DS_COUNT) {
+        handleSortDsCount(order)
       }
 
       $store.commit('setSortOrder', {
@@ -447,7 +456,6 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       const totalCount = props.annotations.length
       const dataStart = ((state.offset - 1) * state.pageSize)
       const dataEnd = ((state.offset - 1) * state.pageSize) + state.pageSize
-
       if (props.isLoading) {
         return (
           <div class='ds-comparison-annotation-table-loading-wrapper'>
@@ -497,6 +505,13 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
               sortable="custom"
               minWidth="60"
               formatter={(row: any) => formatMSM(row)}
+            />
+            <TableColumn
+              key="datasetCount"
+              property="datasetCount"
+              label="# of datasets"
+              sortable="custom"
+              minWidth="60"
             />
             <TableColumn
               key="fdrLevel"
