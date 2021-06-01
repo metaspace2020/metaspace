@@ -42,7 +42,7 @@ function sortFilterKeys(keys) {
   keys.sort((a, b) => compare(FILTER_SPECIFICATIONS[a].sortOrder || 100, FILTER_SPECIFICATIONS[b].sortOrder || 100));
 }
 
-async function updateFilter(state, filter, routerAction = null) {
+function updateFilter(state, filter, routerAction = null) {
   let active = [];
 
   // drop unset filters
