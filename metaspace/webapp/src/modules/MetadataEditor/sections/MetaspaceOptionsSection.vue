@@ -303,7 +303,7 @@ export default class MetaspaceOptionsSection extends Vue {
     databasesByGroup!: MolDBsByGroup[];
 
     @Prop({ type: Object, required: true })
-    defaultDb!: MolecularDB;
+    defaultDb!: MolecularDB | null;
 
     @Prop({ type: Array, required: true })
     adductOptions!: {value: string, label: string}[];
@@ -343,7 +343,7 @@ export default class MetaspaceOptionsSection extends Vue {
     }
 
     onDbRemoval<TKey extends keyof MetaspaceOptions>(val: any) {
-      if (val === this.defaultDb.id) {
+      if (this.defaultDb && val === this.defaultDb.id) {
         this.$message({
           message: `${(this.defaultDb.group?.shortName || 'METASPACE')}
         ${formatDatabaseLabel(this.defaultDb)} is the default database and It can not be removed.`,

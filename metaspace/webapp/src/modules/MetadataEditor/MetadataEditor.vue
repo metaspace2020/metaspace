@@ -146,7 +146,7 @@ export default {
       schema: null,
       loadingPromise: null,
       localErrors: {},
-      defaultDb: {},
+      defaultDb: null,
       molDBsByGroup: [],
       possibleAdducts: {},
       metaspaceOptions: cloneDeep(defaultMetaspaceOptions),
