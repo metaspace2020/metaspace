@@ -41,6 +41,7 @@
           v-model="metaspaceOptions"
           :error="errors['metaspaceOptions']"
           :databases-by-group="molDBsByGroup"
+          :default-db="defaultDb"
           :adduct-options="adductOptions"
           :is-new-dataset="isNew"
         />
@@ -86,7 +87,7 @@ import {
   get, set, cloneDeep, defaults,
   isEmpty, isEqual, isPlainObject,
   mapValues, forEach, without, omit,
-  sortBy,
+  uniq,
 } from 'lodash-es'
 import {
   newDatasetQuery,
@@ -145,6 +146,7 @@ export default {
       schema: null,
       loadingPromise: null,
       localErrors: {},
+      defaultDb: null,
       molDBsByGroup: [],
       possibleAdducts: {},
       metaspaceOptions: cloneDeep(defaultMetaspaceOptions),
@@ -323,6 +325,7 @@ export default {
         Positive: adducts.filter(a => a.charge > 0),
         Negative: adducts.filter(a => a.charge < 0),
       }
+      this.defaultDb = molecularDatabases.find((db) => db.default) || {}
       this.molDBsByGroup = getDatabasesByGroup(molecularDatabases)
       this.schema = deriveFullSchema(metadataSchemas[mdType])
 
@@ -332,19 +335,24 @@ export default {
         delete this.schema.properties.Additional_Information
       }
 
+      const selectedDbs = dataset.databases || []
+
+      // enable default db normal edit if dataset already registered and does not have it
+      this.defaultDb = !this.isNew && !selectedDbs.map((db) => db.id).includes(this.defaultDb.id) ? {}
+        : this.defaultDb
+
       if (this.isNew) {
         // If this is a prepopulated form from a previous submission and metabolite databases have changed since that submission,
         // clear the databases so that the user has to re-pick. Otherwise populate it with the default databases.
         // This is because it's expensive to change database later. We want a smart default for new users,
         // but if the user has previously selected a value that is now invalid, they should be made aware so that they
         // can choose an appropriate substitute.
-        const selectedDbs = dataset.databases || []
-        if (selectedDbs.length === 0) {
-          metaspaceOptions.databaseIds = molecularDatabases.filter(d => d.default).map(_ => _.id)
-        } else {
+        metaspaceOptions.databaseIds = uniq(selectedDbs.map((db) => db.id)
+          .concat(molecularDatabases.filter(d => d.default).map(_ => _.id)))
+        if (selectedDbs.length > 0) {
           for (const db of selectedDbs) {
             if (molecularDatabases.find(_ => _.id === db.id) === undefined) {
-              metaspaceOptions.databaseIds = []
+              metaspaceOptions.databaseIds = molecularDatabases.filter(d => d.default).map(_ => _.id)
               break
             }
           }

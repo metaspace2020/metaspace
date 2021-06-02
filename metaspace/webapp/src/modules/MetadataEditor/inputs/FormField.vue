@@ -88,6 +88,7 @@
       :required="required"
       multiple
       v-bind="$attrs"
+      @remove-tag="onRemoveTag"
       @input="onInput"
     >
       <slot name="options">
@@ -220,6 +221,10 @@ export default class FormField extends Vue {
 
     onInput(val: any) {
       this.$emit('input', val)
+    }
+
+    onRemoveTag(val: any) {
+      this.$emit('remove-tag', val)
     }
 
     fetchSuggestionsAndTestWidth(queryString: string, callback: FetchSuggestionsCallback) {
