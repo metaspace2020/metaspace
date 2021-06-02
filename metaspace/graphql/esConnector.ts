@@ -257,13 +257,13 @@ const constructDatasetFilters = (filter: DatasetFilter) => {
 }
 
 interface ExtraAnnotationFilters {
-  annId?: string;
+  annotationId?: string;
 }
 
 const constructAnnotationFilters = (filter: AnnotationFilter & ExtraAnnotationFilters) => {
   const {
     databaseId, datasetName, mzFilter, msmScoreFilter, fdrLevel,
-    sumFormula, chemMod, neutralLoss, adduct, ion, ionFormula, offSample, compoundQuery, annId,
+    sumFormula, chemMod, neutralLoss, adduct, ion, ionFormula, offSample, compoundQuery, annotationId,
     isobaricWith, hasNeutralLoss, hasChemMod, hasHiddenAdduct,
   } = filter
   const filters = []
@@ -283,7 +283,7 @@ const constructAnnotationFilters = (filter: AnnotationFilter & ExtraAnnotationFi
     filters.push(constructRangeFilter('fdr', { min: null, max: fdrLevel + 1e-3 }))
   }
 
-  if (annId) { filters.push({ term: { _id: annId } }) }
+  if (annotationId) { filters.push({ terms: { _id: annotationId.split('|') } }) }
   if (databaseId) { filters.push({ term: { db_id: databaseId } }) }
   if (sumFormula) { filters.push({ term: { formula: sumFormula } }) }
   if (chemMod != null) { filters.push({ term: { chem_mod: chemMod } }) }
@@ -512,7 +512,7 @@ const getFirst = async(args: any, docType: DocType, user: ContextUser, bypassAut
 
 export const esAnnotationByID = async(id: string, user: ContextUser): Promise<ESAnnotationSource | null> => {
   if (id) {
-    return getFirst({ filter: { annId: id } }, 'annotation', user)
+    return getFirst({ filter: { annotationId: id } }, 'annotation', user)
   }
   return null
 }

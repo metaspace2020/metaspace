@@ -21,6 +21,7 @@ const FILTER_TO_URL: Record<FilterKey, string> = {
   project: 'prj',
   submitter: 'subm',
   datasetIds: 'ds',
+  annotationIds: 'ann',
   minMSM: 'msm',
   compoundName: 'mol',
   chemMod: 'chem_mod',
@@ -80,7 +81,6 @@ export const DEFAULT_COLORMAP = 'Viridis'
 export function encodeParams(filter: any, path?: string, filterLists?: MetadataLists): Dictionary<string> {
   const level = getLevel(path)
   const defaultFilter = level != null ? getDefaultFilter(level, filterLists) : null
-
   const q: Dictionary<string> = {}
   let key: FilterKey
   for (key in FILTER_TO_URL) {
@@ -93,7 +93,7 @@ export function encodeParams(filter: any, path?: string, filterLists?: MetadataL
       if (encoding === 'json') {
         q[FILTER_TO_URL[key]] = JSON.stringify(filter[key])
       } else if (encoding === 'list') {
-        q[FILTER_TO_URL[key]] = filter[key].join(',')
+        q[FILTER_TO_URL[key]] = filter[key] ? filter[key].join(',') : undefined
       } else if (encoding === 'bool') {
         q[FILTER_TO_URL[key]] = filter[key] ? '1' : '0'
       } else if (encoding === 'number') {
@@ -103,6 +103,7 @@ export function encodeParams(filter: any, path?: string, filterLists?: MetadataL
       }
     }
   }
+
   return q
 }
 

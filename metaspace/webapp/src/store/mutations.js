@@ -1,7 +1,7 @@
 import { isEqual, omit, without } from 'lodash-es';
 import router from '../router';
 import compare from '../lib/compare';
-
+import store from "../store/index";
 import {
   decodeParams,
   encodeParams,
@@ -13,6 +13,7 @@ import {
 } from '../modules/Filters';
 import { DEFAULT_ANNOTATION_VIEW_SECTIONS, DEFAULT_COLORMAP, DEFAULT_TABLE_ORDER } from '../modules/Filters/url';
 import { DEFAULT_SCALE_TYPE } from '../lib/constants';
+import {computed} from "@vue/composition-api";
 
 
 function updatedLocation(state, filter) {
@@ -154,6 +155,10 @@ export default {
 
   setAnnotation(state, annotation) {
     state.annotation = annotation;
+  },
+
+  setSnapshotAnnotationIds(state, annotation) {
+    state.snapshotAnnotationIds = annotation;
   },
 
   updateAnnotationTableStatus(state, isLoading) {

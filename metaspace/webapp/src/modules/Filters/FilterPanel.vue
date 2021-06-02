@@ -32,6 +32,7 @@
 import { FILTER_COMPONENT_PROPS, FILTER_SPECIFICATIONS } from './filterSpecs'
 import { isFunction, pick, get, uniq } from 'lodash-es'
 import { setLocalStorage } from '../../lib/localStorage'
+import { computed } from '@vue/composition-api'
 
 const orderedFilterKeys = [
   'database',
@@ -227,6 +228,12 @@ const FilterPanel = {
               Object.assign(this.filter, { [filterKey]: val, ...extraUpdatesAux }))
           },
           onDestroy: () => {
+            if (filterKey === 'annotationIds') {
+              this.$store.commit('setFilterLists', {
+                ...this.$store.state.filterLists,
+                annotationIds: computed(() => undefined),
+              })
+            }
             this.$store.commit('removeFilter', filterKey)
           },
           attrs: {

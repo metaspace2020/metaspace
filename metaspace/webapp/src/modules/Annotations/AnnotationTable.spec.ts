@@ -70,6 +70,28 @@ describe('AnnotationTable', () => {
     expect(wrapper).toMatchSnapshot()
   })
 
+  it('should match snapshot when loading snapshot', async() => {
+    initMockGraphqlClient({
+      Query: () => ({
+        allAnnotations: () => ([
+          mockAnnotation,
+        ]),
+        countAnnotations: () => 1,
+      }),
+    })
+    router.replace({
+      name: 'annotations',
+      query: {
+        viewId: 'xxxx',
+        ds: '2019-02-12_15h55m06s',
+      },
+    })
+    const wrapper = mount(AnnotationTable, { store, router, apolloProvider, propsData })
+    await Vue.nextTick()
+
+    expect(wrapper).toMatchSnapshot()
+  })
+
   it('should be able to export a CSV', async() => {
     initMockGraphqlClient({
       Query: () => ({

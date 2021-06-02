@@ -30,9 +30,38 @@
         :lg="24 - tableWidth"
       >
         <annotation-view
-          v-if="selectedAnnotation"
+          v-if="selectedAnnotation && selectedAnnotation.status !== 'reprocessed_snapshot'"
           :annotation="selectedAnnotation"
         />
+        <div
+          v-if="selectedAnnotation && selectedAnnotation.status === 'reprocessed_snapshot'"
+        >
+          <el-alert
+            title="This share link is no longer valid as the dataset has been reprocessed since
+            the link was created."
+            type="warning"
+            effect="dark"
+            :closable="false"
+            :show-icon="true"
+          >
+            <ul
+              v-if="selectedAnnotation && selectedAnnotation.annotationIons"
+              id="ions"
+              class="mt-0 ml-0 pl-2"
+            >
+              <p class="mb-1 font-bold text-xs">
+                This link was supposed to show the following annotation(s):
+              </p>
+              <li
+                v-for="item in selectedAnnotation.annotationIons"
+                :key="item.ion"
+                class="ml-4"
+              >
+                {{ item.ion }} - {{ item.database }}
+              </li>
+            </ul>
+          </el-alert>
+        </div>
 
         <el-col
           v-else
@@ -56,6 +85,7 @@ import AnnotationView from './AnnotationView.vue'
 import { FilterPanel } from '../Filters/index'
 import config from '../../lib/config'
 import { useRestoredState } from '../ImageViewer'
+import isSnapshot from '../../lib/isSnapshot'
 
 export default {
   name: 'AnnotationsPage',
@@ -117,18 +147,19 @@ export default {
     },
   },
   created() {
-    this.$store.commit('updateFilter', this.filter)
+    const filter = this.filter
+    delete filter.annotationIds
+    this.$store.commit('updateFilter', filter)
 
-    if (config.features.multiple_ion_images) {
+    if (isSnapshot()) {
       const { viewId } = this.$route.query
       const { datasetIds } = this.filter
-      if (viewId && datasetIds.length === 1) {
-        useRestoredState(this.$apollo, viewId, datasetIds[0])
-      }
+      useRestoredState(this.$apollo, viewId, datasetIds[0])
     }
   },
   destroyed() {
     this.$store.commit('setAnnotation', undefined)
+    this.$store.commit('setSnapshotAnnotationIds', undefined)
   },
 }
 </script>
@@ -153,4 +184,5 @@ export default {
   #annot-view-container {
     padding-left: 5px;
   }
+
 </style>
