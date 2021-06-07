@@ -454,6 +454,73 @@ export const esCountGroupedResults = async(args: any, docType: DocType, user: Co
   return flattenAggResponse(args.groupingFields, resp.aggregations, 0)
 }
 
+export const esRawAggregationResults = async(args: any, docType: DocType,
+  user: ContextUser): Promise<any> => {
+  const body = await constructESQuery(args, docType, user)
+
+  const aggRequest = {
+    body: {
+      ...body,
+      aggs: {
+        unique_formulas: {
+          terms: {
+            field: 'ion',
+            size: 1000000, // given ES agg pagination lacking, here we need a big number to return everything
+          },
+          aggs: {
+            unique_db_ids: {
+              terms: {
+                field: 'db_id',
+              },
+              aggs: {
+                unique_ds_ids: {
+                  terms: {
+                    field: 'ds_id',
+                  },
+                  aggs: {
+                    include_source: {
+                      top_hits: {
+                        _source: {},
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    index: esIndex,
+    size: 0,
+  }
+  const resp = await es.search(aggRequest)
+  const aggAnnotations : any[] = []
+
+  if (resp.aggregations) {
+    resp.aggregations.unique_formulas.buckets.forEach((agg:any) => {
+      agg.unique_db_ids.buckets.forEach((db: any) => {
+        const item : {
+          ion : string
+          dbId: number
+          datasetIds: string[]
+          annotations: any[]
+        } | any = {}
+        item.ion = agg.key
+        item.dbId = db.key
+        item.datasetIds = []
+        item.annotations = []
+        db.unique_ds_ids.buckets.forEach((ds: any) => {
+          item.datasetIds.push(ds.key)
+          item.annotations.push(ds.include_source.hits.hits[0])
+        })
+        aggAnnotations.push(item)
+      })
+    })
+  }
+  return aggAnnotations
+}
+
 export const esCountMatchingAnnotationsPerDataset = async(
   args: any, user: ContextUser
 ): Promise<Record<string, number>> => {

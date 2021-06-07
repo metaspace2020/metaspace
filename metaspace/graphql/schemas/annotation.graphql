@@ -37,6 +37,14 @@ type Annotation {
   offSampleProb: Float  # 0.0 = probably on-sample, 1.0 = probably off-sample
 }
 
+
+type AggregatedAnnotation {
+  ion: String!
+  dbId: Int!
+  datasetIds: [String]
+  annotations: [Annotation]
+}
+
 type CompoundInfoEntry {
   database: String!
   url: String
@@ -136,6 +144,12 @@ type Query {
                  filter: AnnotationFilter = {},
                  datasetFilter: DatasetFilter = {},
                  simpleQuery: String): [Annotation]
+
+  allAggregatedAnnotations(orderBy: AnnotationOrderBy = ORDER_BY_MSM,
+                 sortingOrder: SortingOrder = DESCENDING,
+                 filter: AnnotationFilter = {},
+                 datasetFilter: DatasetFilter = {},
+                 simpleQuery: String): [AggregatedAnnotation]
 
   countAnnotations(filter: AnnotationFilter = {},
                    datasetFilter: DatasetFilter = {},

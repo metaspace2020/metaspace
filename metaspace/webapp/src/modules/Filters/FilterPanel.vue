@@ -81,7 +81,7 @@ Object.keys(FILTER_SPECIFICATIONS).reduce((accum, cur) => {
 /** @type {ComponentOptions<Vue> & Vue} */
 const FilterPanel = {
   name: 'filter-panel',
-  props: ['level', 'simpleFilterOptions', 'setDatasetOwnerOptions'],
+  props: ['level', 'simpleFilterOptions', 'setDatasetOwnerOptions', 'hiddenFilters'],
   components: filterComponents,
   mounted() {
     this.$store.dispatch('initFilterLists')
@@ -161,6 +161,9 @@ const FilterPanel = {
         return this.simpleFilterOptions != null
       }
       if (this.level === 'dataset-annotation' && dsAnnotationHiddenFilters.includes(filterKey)) {
+        return false
+      }
+      if (this.hiddenFilters && this.hiddenFilters.includes(filterKey)) {
         return false
       }
       if (filterKey === 'datasetOwner') {
