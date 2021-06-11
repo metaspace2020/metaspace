@@ -214,14 +214,13 @@ export default Vue.extend({
     },
   },
   mounted() {
-    if (!this.$store.getters.currentUser) {
-      return null
+    if (this.$store.getters.currentUser) {
+      // due to some misbehaviour from setting initial value from getLocalstorage with null values
+      // on filterSpecs, the filter is being initialized here if user is logged
+      const localDsOwner = this.$store.getters.filter.datasetOwner
+        ? this.$store.getters.filter.datasetOwner : (getLocalStorage('datasetOwner') || null)
+      this.$store.commit('updateFilter', { ...this.$store.getters.filter, datasetOwner: localDsOwner })
     }
-    // due to some misbehaviour from setting initial value from getLocalstorage with null values
-    // on filterSpecs, the filter is being initialized here if user is logged
-    const localDsOwner = this.$store.getters.filter.datasetOwner
-      ? this.$store.getters.filter.datasetOwner : (getLocalStorage('datasetOwner') || null)
-    this.$store.commit('updateFilter', { ...this.$store.getters.filter, datasetOwner: localDsOwner })
   },
 
   apollo: {
