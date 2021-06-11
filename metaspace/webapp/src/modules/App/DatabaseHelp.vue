@@ -190,6 +190,36 @@
           </a>
         </p>
       </li>
+      <li>
+        <b>Natural Products Atlas:</b>
+        Taken from the NPA homepage: "The Natural Products Atlas provides open access coverage of bacterial
+        and fungal natural products, giving researchers the power to visualize the chemical diversity
+        of the natural world."
+        <div>
+          <el-popover
+            trigger="hover"
+            placement="bottom"
+          >
+            <div class="desc-cite-popover">
+              van Santen, J. A.; Jacob, G.; Leen Singh, A.; Aniebok, V.; Balunas, M. J.; Bunsko, D.;
+              Carnevale Neto, F.; Castaño-Espriu, L.; Chang, C.; Clark, T. N.; Cleary Little, J. L.;
+              Delgadillo, D. A.; Dorrestein, P. C.; Duncan, K. R.; Egan, J. M.; Galey, M. M.;
+              Haeckl, F. P. J.; Hua, A.; Hughes, A. H.; Iskakova, D.; Khadilkar, A.; Lee, J.-H.;
+              Lee, S.; LeGrow, N.; Liu, D. Y.; Macho, J. M.; McCaughey, C. S.; Medema, M. H.; Neupane,
+              R. P.; O’Donnell, T. J.; Paula, J. S.; Sanchez, L. M.; Shaikh, A. F.; Soldatou, S.;
+              Terlouw, B. R.; Tran, T. A.; Valentine, M.; van der Hooft, J. J. J.; Vo, D. A.;
+              Wang, M.; Wilson, D.; Zink, K. E.; Linington, R. G.
+              "The Natural Products Atlas: An Open Access Knowledge Base for Microbial Natural Products Discovery”,
+              ACS Central Science, 2019, 5, 11, 1824-1833.
+              <a href="https://doi.org/10.1021/acscentsci.9b00806">10.1021/acscentsci.9b00806</a>
+            </div>
+            <span
+              slot="reference"
+              class="desc-cite"
+            >Citation</span>
+          </el-popover>
+        </div>
+      </li>
     </ul>
   </div>
 </template>
