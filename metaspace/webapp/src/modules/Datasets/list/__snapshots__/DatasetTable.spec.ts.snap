@@ -77,32 +77,14 @@ exports[`DatasetTable should match snapshot 1`] = `
       />
       <mock-el-option
         label="Select data type"
+        value="datasetOwner"
+      />
+      <mock-el-option
+        label="Select data type"
         value="metadataType"
       />
     </mock-el-select>
      
-    <mock-el-select
-      class="filter-select"
-      data-test-key="datasetOwner"
-      filter-key="datasetOwner"
-    >
-      <mock-el-option
-        label="All datasets"
-      />
-      <mock-el-option
-        label="My datasets"
-        value="my-datasets"
-      />
-      <mock-el-option
-        label="currentUser.groups.0.group.label"
-        value="currentUser.groups.0.group.value"
-      />
-      <mock-el-option
-        label="currentUser.groups.1.group.label"
-        value="currentUser.groups.1.group.value"
-      />
-       
-    </mock-el-select>
   </div>
    
   <div>
