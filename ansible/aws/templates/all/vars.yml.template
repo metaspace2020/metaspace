@@ -158,7 +158,7 @@ mol_db_imports:
 #    name: "NGlycDB"
 #    version: "v1"
 #  - url: "https://sm-mol-db.s3.eu-west-1.amazonaws.com/db_files_2021/npa/npa_2019-08.tsv"
-#    name: "NAP"
+#    name: "NPA"
 #    version: "2019-08"
 
 nodejs_version: 14.5
