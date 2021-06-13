@@ -176,6 +176,7 @@
         <b>NGlycDB:</b>
         Database containing naturally occurring N-linked glycans. This DB is based on glycans reported in the
         GlyConnect platform and is filtered to include only N-linked glycans.
+        We recommend selecting only +Na adduct when using this database.
         <p class="m-0 text-sm">
           <span class="text-gray-700 font-medium">
             Citation TBC
