@@ -14,6 +14,10 @@ export default {
     return decodeParams(state.route, state.filterLists);
   },
 
+  currentUser(state) {
+    return state.currentUser;
+  },
+
   settings(state) {
     return decodeSettings(state.route);
   },

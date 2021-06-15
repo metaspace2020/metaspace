@@ -147,7 +147,6 @@ export default Vue.extend({
       sortingOrder: 'DESCENDING',
     }
   },
-
   computed: {
     currentPage: {
       get() {
@@ -173,12 +172,6 @@ export default Vue.extend({
       if (!this.currentUser) {
         return null
       }
-
-      // due to some misbehaviour from setting initial value from getLocalstorage with null values
-      // on filterSpecs, the filter is being initialized here if user is logged
-      const localDsOwner = this.$store.getters.filter.datasetOwner
-        ? this.$store.getters.filter.datasetOwner : (getLocalStorage('datasetOwner') || null)
-      this.$store.commit('updateFilter', { ...this.$store.getters.filter, datasetOwner: localDsOwner })
 
       if (this.currentUser && Array.isArray(this.currentUser.groups)) {
         const groups = this.currentUser.groups
@@ -219,6 +212,15 @@ export default Vue.extend({
     canSeeFailed() {
       return this.currentUser != null && this.currentUser.role === 'admin'
     },
+  },
+  mounted() {
+    if (this.$store.getters.currentUser) {
+      // due to some misbehaviour from setting initial value from getLocalstorage with null values
+      // on filterSpecs, the filter is being initialized here if user is logged
+      const localDsOwner = this.$store.getters.filter.datasetOwner
+        ? this.$store.getters.filter.datasetOwner : (getLocalStorage('datasetOwner') || null)
+      this.$store.commit('updateFilter', { ...this.$store.getters.filter, datasetOwner: localDsOwner })
+    }
   },
 
   apollo: {
@@ -300,7 +302,6 @@ export default Vue.extend({
       },
     },
   },
-
   methods: {
     formatSubmitter: (row, col) =>
       row.submitter.name,
