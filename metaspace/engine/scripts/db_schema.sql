@@ -276,6 +276,8 @@ CREATE TABLE "graphql"."image_viewer_snapshot" (
   "dataset_id" text NOT NULL, 
   "snapshot" text NOT NULL, 
   "annotation_ids" json NOT NULL, 
+  "ion_formulas" json NOT NULL, 
+  "db_ids" json NOT NULL, 
   "version" integer NOT NULL, 
   "user_id" uuid, 
   "created_dt" TIMESTAMP NOT NULL, 

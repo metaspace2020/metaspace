@@ -370,7 +370,6 @@ export const esSearchResults = async(args: any, docType: DocType,
     from: args.offset,
     size: args.limit,
   }
-
   const resp = await es.search(request)
   return resp.hits.hits
 }
@@ -580,6 +579,16 @@ const getFirst = async(args: any, docType: DocType, user: ContextUser, bypassAut
 export const esAnnotationByID = async(id: string, user: ContextUser): Promise<ESAnnotationSource | null> => {
   if (id) {
     return getFirst({ filter: { annotationId: id } }, 'annotation', user)
+  }
+  return null
+}
+
+export const esAnnotationByIon = async(ion: string, datasetId: string,
+  databaseId: string,
+  user: ContextUser): Promise<ESAnnotationSource | null> => {
+  if (ion) {
+    return getFirst({ datasetFilter: { ids: datasetId }, filter: { ion, databaseId } },
+      'annotation', user)
   }
   return null
 }

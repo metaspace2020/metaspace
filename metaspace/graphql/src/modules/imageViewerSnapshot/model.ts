@@ -16,6 +16,12 @@ export class ImageViewerSnapshot {
   @Column({ type: 'json' })
   annotationIds: string[];
 
+  @Column({ type: 'json' })
+  ionFormulas: string[];
+
+  @Column({ type: 'json' })
+  dbIds: string[];
+
   @Column({ type: 'int' })
   version: number;
 
