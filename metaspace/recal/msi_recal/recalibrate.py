@@ -24,11 +24,11 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 TRANSFORM = {
-    "align_msiwarp": AlignMsiwarp,
-    "align_ransac": AlignRansac,
-    "recal_msiwarp": RecalMsiwarp,
-    "recal_ransac": RecalRansac,
-    "normalize": Normalize,
+    'align_msiwarp': AlignMsiwarp,
+    'align_ransac': AlignRansac,
+    'recal_msiwarp': RecalMsiwarp,
+    'recal_ransac': RecalRansac,
+    'normalize': Normalize,
 }
 
 
@@ -39,16 +39,16 @@ def get_spectra_df_from_parser(p: ImzMLParser, sp_idxs: Iterable[int]):
     for i in sp_idxs:
         mzs, ints = p.getspectrum(i)
         x, y, z = p.coordinates[i]
-        mask = (ints > 0) & (mzs > 200) & (mzs < 900)
+        mask = ints > 0
         mzs = mzs[mask].astype(np.float64)
         ints = ints[mask].astype(np.float32)
-        peaks_dfs.append(pd.DataFrame({"sp": i, "mz": mzs, "ints": ints}))
+        peaks_dfs.append(pd.DataFrame({'sp': i, 'mz': mzs, 'ints': ints}))
         spectra.append((i, x, y, z, np.min(mzs), np.max(mzs), np.sum(ints)))
 
     peaks_df = pd.concat(peaks_dfs)
     spectra_df = pd.DataFrame(
-        spectra, columns=["sp", "x", "y", "z", "mz_lo", "mz_hi", "tic"]
-    ).set_index("sp")
+        spectra, columns=['sp', 'x', 'y', 'z', 'mz_lo', 'mz_hi', 'tic']
+    ).set_index('sp')
 
     return peaks_df, spectra_df
 
@@ -80,8 +80,6 @@ def build_pipeline(sample_peaks_df: pd.DataFrame, params: RecalParams):
     eval = EvalPeaksCollector(sample_peaks_df, params)
     for stage_name, stage_df in stages:
         eval.collect_peaks(stage_df, stage_name)
-
-    __import__('__main__').eval = eval
 
     logger.debug(pd.DataFrame({
         stage_name: eval.get_stats(stage_name).abs().mean()
