@@ -108,6 +108,27 @@
         </div>
       </li>
       <li>
+        <b><a href="https://www.genome.jp/kegg/compound/">Kyoto Encyclopedia of Genes and Genomes (KEGG)</a>:</b>
+        Database containing COMPOUND collection of small molecules from KEGG.
+        <div>
+          <el-popover
+            trigger="hover"
+            placement="bottom"
+          >
+            <div class="desc-cite-popover">
+              Minoru Kanehisa, Miho Furumichi, Mao Tanabe, Yoko Sato, Kanae Morishima.
+              KEGG: new perspectives on genomes, pathways, diseases and drugs,
+              Nucleic Acids Research 45, D353–D361 (2017).
+              <a href="https://doi.org/10.1093/nar/gkw1092">10.1093/nar/gkw1092</a>
+            </div>
+            <span
+              slot="reference"
+              class="desc-cite"
+            >Citation</span>
+          </el-popover>
+        </div>
+      </li>
+      <li>
         <b><a href="http://www.lipidmaps.org/data/databases.html">LIPID Metabolites And Pathways Strategy (LipidMaps)</a>:</b>
         An experimentally determined list of all of the major and many minor lipid species in mammalian cells.
         <div>

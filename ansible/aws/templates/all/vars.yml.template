@@ -122,6 +122,8 @@ mol_db_image_archives:
 #    path: https://sm-mol-db.s3-eu-west-1.amazonaws.com/mol-images/mol-images-core-metabolome.tar.xz
 #  - name: NGlycDB
 #    path: https://sm-mol-db.s3-eu-west-1.amazonaws.com/mol-images/mol-images-nglyc.tar.xz
+#  - name: KEGG
+#    path: https://sm-mol-db.s3.eu-west-1.amazonaws.com/mol-images/mol-images-kegg.tar.xz
 mol_db_imports:
   - url: "https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files_2021/hmdb/hmdb_4.tsv"
     name: "HMDB"
@@ -160,6 +162,9 @@ mol_db_imports:
 #  - url: "https://sm-mol-db.s3.eu-west-1.amazonaws.com/db_files_2021/npa/npa_2019-08.tsv"
 #    name: "NPA"
 #    version: "2019-08"
+#  - url: "https://sm-mol-db.s3.eu-west-1.amazonaws.com/db_files_2021/kegg/kegg_v1.tsv"
+#    name: "KEGG"
+#    version: "v1"
 
 nodejs_version: 14.5
 
