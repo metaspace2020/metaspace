@@ -14,6 +14,7 @@ def get_inchi(filename):
 
     return molecules
 
+
 def get_name_and_formula(filename, molecules_inchi):
     """Read base file and filtered some molecules."""
     molecules = {}
@@ -27,8 +28,12 @@ def get_name_and_formula(filename, molecules_inchi):
             if line.startswith('FORMULA'):
                 formula = line.replace('FORMULA', '').strip()
                 # skip molecule with `R`, `R\d+`, `(R2)`, `)n` and `)n-1` on the end of line
-                if formula.endswith(')n') or formula.endswith(')n-1') \
-                        or re.findall(r'R\d{0,2}$', formula) or formula.endswith('(R2)'):
+                if (
+                    formula.endswith(')n')
+                    or formula.endswith(')n-1')
+                    or re.findall(r'R\d{0,2}$', formula)
+                    or formula.endswith('(R2)')
+                ):
                     continue
                 molecule['formula'] = formula
 
@@ -37,12 +42,17 @@ def get_name_and_formula(filename, molecules_inchi):
                 if molecules_inchi.get(molecule['id']):
                     inchi = molecules_inchi[molecule['id']]['inchi']
                     molecule['inchi'] = inchi
-                    if inchi and molecule.get('id') \
-                        and molecule.get('name') and molecule.get('formula'):
+                    if (
+                        inchi
+                        and molecule.get('id')
+                        and molecule.get('name')
+                        and molecule.get('formula')
+                    ):
                         molecules[molecule['id']] = molecule
                         molecule = {}
 
     return molecules
+
 
 def main():
     help_msg = 'Create TSV file for KEGG database'
@@ -57,6 +67,7 @@ def main():
 
     df = pd.DataFrame.from_records(list(molecules.values()))
     df.to_csv(args.output_file, sep='\t')
+
 
 if __name__ == '__main__':
     main()
