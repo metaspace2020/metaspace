@@ -28,7 +28,7 @@ def get_name_and_formula(filename, molecules_inchi):
                 formula = line.replace('FORMULA', '').strip()
                 # skip molecule with `R`, `R\d+`, `(R2)`, `)n` and `)n-1` on the end of line
                 if formula.endswith(')n') or formula.endswith(')n-1') \
-                        or re.findall('R\d{0,2}$', formula) or formula.endswith('(R2)'):
+                        or re.findall(r'R\d{0,2}$', formula) or formula.endswith('(R2)'):
                     continue
                 molecule['formula'] = formula
 
@@ -37,7 +37,8 @@ def get_name_and_formula(filename, molecules_inchi):
                 if molecules_inchi.get(molecule['id']):
                     inchi = molecules_inchi[molecule['id']]['inchi']
                     molecule['inchi'] = inchi
-                    if inchi and molecule.get('id') and molecule.get('name') and molecule.get('formula'):
+                    if inchi and molecule.get('id') \
+                        and molecule.get('name') and molecule.get('formula'):
                         molecules[molecule['id']] = molecule
                         molecule = {}
 
@@ -46,7 +47,7 @@ def get_name_and_formula(filename, molecules_inchi):
 def main():
     help_msg = 'Create TSV file for KEGG database'
     parser = argparse.ArgumentParser(description=help_msg)
-    parser.add_argument('main_file', type=str, help='Name of main file with whole info about molecules')
+    parser.add_argument('main_file', type=str, help='Name of file with whole info about molecules')
     parser.add_argument('inchi_file', type=str, help='INCHI file')
     parser.add_argument('--output_file', default='./kegg.tsv', help='Output TSV file')
     args = parser.parse_args()
