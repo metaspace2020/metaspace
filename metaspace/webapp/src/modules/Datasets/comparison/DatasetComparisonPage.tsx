@@ -92,10 +92,6 @@ export default defineComponent<DatasetComparisonPageProps>({
 
     const gridSettings = computed(() => settingsResult.value != null
       ? settingsResult.value.imageViewerSnapshot : null)
-    const compoundsAnnotations = computed(() =>
-      state.annotations
-        ? uniqBy((state.annotations[state.selectedAnnotation]?.annotations || []), 'id') : [],
-    )
 
     const queryVariables = () => {
       const filter = $store.getters.gqlAnnotationFilter

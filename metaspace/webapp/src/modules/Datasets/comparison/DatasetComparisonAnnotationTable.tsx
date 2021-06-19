@@ -16,6 +16,7 @@ interface DatasetComparisonAnnotationTableProps {
 interface DatasetComparisonAnnotationTableState {
   processedAnnotations: any
   selectedRow: any
+  currentRowIndex: number
   pageSize: number
   offset: number
   keyListenerAdded: boolean
@@ -62,6 +63,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
     const pageSizes = [15, 20, 25, 30]
     const state = reactive<DatasetComparisonAnnotationTableState>({
       selectedRow: props.annotations[0],
+      currentRowIndex: -1,
       pageSize: 15,
       offset: 0,
       processedAnnotations: computed(() => props.annotations.slice()),
@@ -191,6 +193,18 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
     const setCurrentRow = () => {
       clearCurrentRow()
       const currentIndex = getCurrentRowIndex()
+
+      // guarantee old selection was removed
+      if (state.currentRowIndex !== currentIndex && state.currentRowIndex !== -1) {
+        setTimeout(() => {
+          if (document.querySelectorAll('.el-table__row').length > state.currentRowIndex) {
+            document.querySelectorAll('.el-table__row')[state.currentRowIndex]
+              .classList.remove('current-row')
+          }
+          state.currentRowIndex = currentIndex
+        }, 100)
+      }
+
       if (currentIndex !== -1) {
         // gives time to clear and render the new selection
         setTimeout(() => {
@@ -215,6 +229,11 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
         state.selectedRow = row
         const currentIndex = findIndex(props.annotations,
           (annotation) => { return row.id === annotation.id })
+
+        if (state.currentRowIndex === -1) {
+          state.currentRowIndex = currentIndex
+        }
+
         if (currentIndex !== -1) {
           $store.commit('setRow', currentIndex)
           emit('rowChange', currentIndex)
