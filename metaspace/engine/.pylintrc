@@ -154,7 +154,7 @@ disable=print-statement,
         # https://github.com/PyCQA/pylint/issues/2368
         duplicate-code,
         # Redefined outer variable name is a recurring problem in scripts
-        redefined-outer-name
+        redefined-outer-name,
         # Unnecessary else after return.
         no-else-return
 
