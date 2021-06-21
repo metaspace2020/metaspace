@@ -155,6 +155,8 @@ disable=print-statement,
         duplicate-code,
         # Redefined outer variable name is a recurring problem in scripts
         redefined-outer-name
+        # Unnecessary else after return.
+        no-else-return
 
 
 # Enable the message, report, category or checker with the given id(s). You can
