@@ -8,8 +8,8 @@ type ImageViewerSnapshot {
 
 input ImageViewerSnapshotInput {
   annotationIds: [String!]!
-  ionFormulas: [String]
-  dbIds: [String]
+  ionFormulas: [String!]!
+  dbIds: [String!]!
   datasetId: String!
   snapshot: String! # JSON
   version: Int!
