@@ -19,6 +19,7 @@ from sm.engine.es_export import ESExporter
 from sm.engine.postprocessing.ion_thumbnail import (
     generate_ion_thumbnail,
     generate_ion_thumbnail_lithops,
+    delete_ion_thumbnail,
 )
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.postprocessing.off_sample_wrapper import classify_dataset_ion_images
@@ -28,12 +29,11 @@ from sm.engine.utils.perf_profile import perf_profile
 
 
 class DatasetManager:
-    def __init__(self, db, es, img_store, status_queue=None, logger=None, sm_config=None):
+    def __init__(self, db, es, status_queue=None, logger=None, sm_config=None):
         self._sm_config = sm_config or SMConfig.get_conf()
         self._slack_conf = self._sm_config.get('slack', {})
         self._db: DB = db
         self._es: ESExporter = es
-        self._img_store = img_store
         self._status_queue = status_queue
         self.logger = logger or logging.getLogger()
 
@@ -47,13 +47,13 @@ class DatasetManager:
 
     def post_to_slack(self, emoji, msg):
         if self._slack_conf.get('webhook_url', None):
-            m = {
-                "channel": self._slack_conf['channel'],
-                "username": "webhookbot",
-                "text": ":{}:{}".format(emoji, msg),
-                "icon_emoji": ":robot_face:",
+            doc = {
+                'channel': self._slack_conf['channel'],
+                'username': 'webhookbot',
+                'text': f":{emoji}:{msg}",
+                'icon_emoji': ':robot_face:',
             }
-            post(self._slack_conf['webhook_url'], json=m)
+            post(self._slack_conf['webhook_url'], json=doc)
 
     def fetch_ds_metadata(self, ds_id):
         res = self._db.select_one(
@@ -68,7 +68,7 @@ class DatasetManager:
             md_type_quoted = urllib.parse.quote(ds_meta['Data_Type'])
             base_url = self._sm_config['services']['web_app_url']
             ds_id_quoted = urllib.parse.quote(msg['ds_id'])
-            link = '{}/annotations?mdtype={}&ds={}'.format(base_url, md_type_quoted, ds_id_quoted)
+            link = f'{base_url}/annotations?mdtype={md_type_quoted}&ds={ds_id_quoted}'
         except Exception as e:
             self.logger.error(e)
         return link
@@ -86,25 +86,20 @@ class DatasetManager:
         classify_dataset_ion_images(self._db, ds, self._sm_config['services'])
 
     def annotate(self, ds, del_first=False):
-        """ Run an annotation job for the dataset. If del_first provided, delete first
-        """
+        """Run an annotation job for the dataset. If del_first provided, delete first"""
         if del_first:
             self.logger.warning(f'Deleting all results for dataset: {ds.id}')
             del_jobs(ds)
         ds.save(self._db, self._es)
         with perf_profile(self._db, 'annotate_spark', ds.id) as perf:
-            AnnotationJob(
-                img_store=self._img_store, ds=ds, sm_config=self._sm_config, perf=perf
-            ).run()
+            AnnotationJob(ds=ds, sm_config=self._sm_config, perf=perf).run()
 
             if self._sm_config['services'].get('colocalization', True):
-                Colocalization(self._db, self._img_store).run_coloc_job(ds, reprocess=del_first)
+                Colocalization(self._db).run_coloc_job(ds, reprocess=del_first)
                 perf.record_entry('ran colocalization')
 
             if self._sm_config['services'].get('ion_thumbnail', True):
-                generate_ion_thumbnail(
-                    db=self._db, img_store=self._img_store, ds=ds, only_if_needed=not del_first
-                )
+                generate_ion_thumbnail(db=self._db, ds=ds, only_if_needed=not del_first)
                 perf.record_entry('generated ion thumbnail')
 
     def annotate_lithops(self, ds: Dataset, del_first=False):
@@ -115,18 +110,15 @@ class DatasetManager:
         with perf_profile(self._db, 'annotate_lithops', ds.id) as perf:
             executor = Executor(self._sm_config['lithops'], perf=perf)
 
-            ServerAnnotationJob(executor, self._img_store, ds, perf).run()
+            ServerAnnotationJob(executor, ds, perf).run()
 
             if self._sm_config['services'].get('colocalization', True):
-                Colocalization(self._db, self._img_store).run_coloc_job_lithops(
-                    executor, ds, reprocess=del_first
-                )
+                Colocalization(self._db).run_coloc_job_lithops(executor, ds, reprocess=del_first)
 
             if self._sm_config['services'].get('ion_thumbnail', True):
                 generate_ion_thumbnail_lithops(
                     executor=executor,
                     db=self._db,
-                    sm_config=self._sm_config,
                     ds=ds,
                     only_if_needed=not del_first,
                 )
@@ -157,10 +149,12 @@ class DatasetManager:
         self._es.update_ds(ds.id, fields)
 
     def delete(self, ds):
-        """ Delete all dataset related data from the DB """
+        """Delete all dataset related data."""
+
         self.logger.info(f'Deleting dataset: {ds.id}')
         del_jobs(ds)
-        del_optical_image(self._db, self._img_store, ds.id)
+        del_optical_image(self._db, ds.id)
+        delete_ion_thumbnail(self._db, ds)
         self._es.delete_ds(ds.id)
         self._db.alter('DELETE FROM dataset WHERE id=%s', params=(ds.id,))
 
@@ -217,7 +211,7 @@ class DatasetManager:
         )
         if traceback:
             content += (
-                f"\n\nWe could not successfully read the dataset's imzML file. "
+                f'\n\nWe could not successfully read the dataset\'s imzML file. '
                 f'Please make sure you are using up-to-date software for '
                 f'exporting the dataset to imzML format.\nIf you are a developer, '
                 f'the following stack trace may be useful:\n\n{traceback}'
@@ -230,9 +224,9 @@ class DatasetManager:
         self._send_email(msg['email'], 'METASPACE service notification (FAILED)', email_body)
 
     def ds_failure_handler(self, msg, e):
-        self.logger.error(f" SM {msg['action']} daemon: failure", exc_info=True)
+        self.logger.error(f' SM {msg["action"]} daemon: failure', exc_info=True)
         ds = self.load_ds(msg['ds_id'])
         self.set_ds_status(ds, status=DatasetStatus.FAILED)
         self.notify_update(ds.id, msg['action'], stage=DaemonActionStage.FAILED)
         slack_msg = f'{json.dumps(msg)}\n```{e.traceback}```'
-        self.post_to_slack('hankey', f" [x] {msg['action']} failed: {slack_msg}")
+        self.post_to_slack('hankey', f' [x] {msg["action"]} failed: {slack_msg}')

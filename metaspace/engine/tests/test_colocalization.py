@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pandas as pd
@@ -9,7 +9,6 @@ from sm.engine.postprocessing.colocalization import (
     FreeableRef,
 )
 from sm.engine.db import DB
-from sm.engine.image_store import ImageStoreServiceWrapper
 from .utils import create_test_molecular_db, create_test_ds
 
 
@@ -30,7 +29,7 @@ def test_valid_colocalization_jobs_generated():
     )  # First annotation was colocalized with at least one other
 
 
-def mock_get_ion_images_for_analysis(storage_type, img_ids, **kwargs):
+def mock_get_ion_images_for_analysis(ds_id, img_ids, **kwargs):
     images = (
         np.array(
             [np.linspace(0, 25, 25, False) % ((seed or 1) % 25) for seed in range(len(img_ids))],
@@ -67,10 +66,13 @@ def test_new_ds_saves_to_db(test_db, metadata, ds_config):
         "VALUES (%s, %s, '', '', %s, 1, %s, '{}', %s)",
         [(job_id, r.formula, r.adduct, r.fdr, [r.image_id]) for i, r in ion_metrics_df.iterrows()],
     )
-    img_svc_mock = MagicMock(spec=ImageStoreServiceWrapper)
-    img_svc_mock.get_ion_images_for_analysis.side_effect = mock_get_ion_images_for_analysis
 
-    Colocalization(db, img_store=img_svc_mock).run_coloc_job(ds)
+    with patch(
+        'sm.engine.postprocessing.colocalization.ImageStorage.get_ion_images_for_analysis'
+    ) as get_ion_images_for_analysis_mock:
+        get_ion_images_for_analysis_mock.side_effect = mock_get_ion_images_for_analysis
+
+        Colocalization(db).run_coloc_job(ds)
 
     jobs = db.select('SELECT id, error, sample_ion_ids FROM graphql.coloc_job')
     annotations = db.select('SELECT coloc_ion_ids, coloc_coeffs FROM graphql.coloc_annotation')

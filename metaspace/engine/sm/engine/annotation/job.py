@@ -6,9 +6,8 @@ from typing import Iterable, Optional
 from sm.engine import molecular_db
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
-from sm.engine.errors import UnknownDSID
 from sm.engine.es_export import ESExporter
-from sm.engine.image_store import ImageStoreServiceWrapper
+from sm.engine import image_storage
 
 logger = logging.getLogger('engine')
 
@@ -34,13 +33,6 @@ def del_jobs(ds: Dataset, moldb_ids: Optional[Iterable[int]] = None):
     """
     db = DB()
     es = ESExporter(db)
-    img_store = ImageStoreServiceWrapper()
-
-    try:
-        storage_type = ds.get_ion_img_storage_type(db)
-    except UnknownDSID:
-        logger.warning('Attempt to delete job of non-existing dataset. Skipping')
-        return
 
     if moldb_ids is None:
         moldb_ids = get_ds_moldb_ids(ds.id)
@@ -57,8 +49,9 @@ def del_jobs(ds: Dataset, moldb_ids: Optional[Iterable[int]] = None):
                 'WHERE ds_id = %s AND j.moldb_id = %s',
                 (ds.id, moldb.id),
             )
+
             for _ in executor.map(
-                lambda img_id: img_store.delete_image_by_id(storage_type, 'iso_image', img_id),
+                lambda img_id: image_storage.delete_image(image_storage.ISO, ds.id, img_id),
                 (img_id for img_ids in img_id_rows for img_id in img_ids if img_id is not None),
             ):
                 pass
@@ -84,5 +77,6 @@ def update_finished_job(job_id: int, job_status: str):
     finish = datetime.now()
 
     DB().alter(
-        'UPDATE job set status=%s, finish=%s where id=%s', params=(job_status, finish, job_id),
+        'UPDATE job set status=%s, finish=%s where id=%s',
+        params=(job_status, finish, job_id),
     )

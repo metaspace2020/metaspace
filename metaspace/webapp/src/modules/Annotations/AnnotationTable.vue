@@ -273,6 +273,7 @@ import FileSaver from 'file-saver'
 import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../lib/formatCsvRow'
 import { invert } from 'lodash-es'
 import config from '../../lib/config'
+import isSnapshot from '../../lib/isSnapshot'
 
 // 38 = up, 40 = down, 74 = j, 75 = k
 const KEY_TO_ACTION = {
@@ -320,6 +321,7 @@ export default Vue.extend({
       initialLoading: true,
       csvChunkSize: 1000,
       nextCurrentRowIndex: null,
+      loadedSnapshotAnnotations: false,
     }
   },
   computed: {
@@ -446,11 +448,25 @@ export default Vue.extend({
       throttle: 200,
       result({ data }) {
         // timing hack to allow table state to update
-        Vue.nextTick(() => {
-          if (this.nextCurrentRowIndex !== null) {
+        Vue.nextTick(async() => {
+          if (isSnapshot() && !this.loadedSnapshotAnnotations) {
+            this.nextCurrentRowIndex = -1
+            if (Array.isArray(this.$store.state.snapshotAnnotationIds)) {
+              if (this.$store.state.snapshotAnnotationIds.length > 1) { // adds annotationFilter if multi mol
+                this.updateFilter({ annotationIds: this.$store.state.snapshotAnnotationIds })
+              } else { // dont display filter if less than one annotation
+                setTimeout(() => this.$store.commit('removeFilter', 'annotationIds'), 500)
+              }
+              this.nextCurrentRowIndex = this.annotations.findIndex((annotation) =>
+                this.$store.state.snapshotAnnotationIds.includes(annotation.id))
+              this.loadedSnapshotAnnotations = true
+            }
+          }
+
+          if (this.nextCurrentRowIndex !== null && this.nextCurrentRowIndex !== -1) {
             this.setCurrentRow(this.nextCurrentRowIndex)
             this.nextCurrentRowIndex = null
-          } else {
+          } else if (this.nextCurrentRowIndex !== -1) {
             const curRow = this.getCurrentRow()
             if (!curRow) {
               this.setCurrentRow(this.currentRowIndex)
@@ -534,6 +550,11 @@ export default Vue.extend({
     },
 
     onCurrentRowChange(row) {
+      // do not set initial row if loading from a snapshot (permalink)
+      if (isSnapshot() && !this.loadedSnapshotAnnotations) {
+        return null
+      }
+
       this.$store.commit('setAnnotation', row)
 
       if (row !== null) {

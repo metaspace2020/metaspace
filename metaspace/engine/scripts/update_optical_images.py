@@ -1,15 +1,12 @@
 import argparse
 import logging
-from functools import partial
 
 from sm.engine.db import DB
 from sm.engine.optical_image import add_optical_image
-from sm.engine.util import bootstrap_and_run
-from sm.engine.image_store import ImageStoreServiceWrapper
+from sm.engine.util import GlobalInit
 
 
-def update_optical_images(sm_config, ds_id_str, sql_where):
-    img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
+def update_optical_images(ds_id_str, sql_where):
     db = DB()
 
     if ds_id_str:
@@ -26,16 +23,16 @@ def update_optical_images(sm_config, ds_id_str, sql_where):
             )
             if img_id and transform:
                 logger.info(f'[{i + 1}/{len(ds_ids)}] Updating optical image of dataset {ds_id}')
-                add_optical_image(db, img_store, ds_id, img_id, transform)
+                add_optical_image(db, ds_id, img_id, transform)
             else:
                 logger.info(f'[{i + 1}/{len(ds_ids)}] Skipping dataset {ds_id}')
         except Exception:
             logger.error(f'Failed to update optical image on {ds_id}', exc_info=True)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description="Updates optical image copies for a provided dataset"
+        description='Updates optical image copies for a provided dataset'
     )
     parser.add_argument('--config', default='conf/config.json', help='SM config path')
     parser.add_argument(
@@ -52,9 +49,7 @@ if __name__ == "__main__":
     logger = logging.getLogger('engine')
 
     if args.ds_id or args.sql_where:
-        bootstrap_and_run(
-            args.config,
-            partial(update_optical_images, ds_id_str=args.ds_id, sql_where=args.sql_where),
-        )
+        with GlobalInit(config_path=args.config) as sm_config:
+            update_optical_images(ds_id_str=args.ds_id, sql_where=args.sql_where)
     else:
         parser.print_help()

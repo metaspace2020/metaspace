@@ -51,6 +51,7 @@ const { settings: ionImageSettings } = useIonImageSettings()
    opticalSrc: string | null
    opticalTransform: number[][] | null
    pixelAspectRatio: number
+   opticalOpacity: number
    // scaleType is deliberately not included here, because every time it changes some slow computation occurs,
    // and the computed getters were being triggered by any part of the ImageSettings object changing, such as opacity,
    // causing a lot of jank.
@@ -207,6 +208,7 @@ export default class AnnotationView extends Vue {
 
      return {
        annotImageOpacity: (this.showOpticalImage && hasOpticalImages) ? this.opacity : 1.0,
+       opticalOpacity: this.showOpticalImage ? this.opticalOpacity : 1.0,
        opacityMode: this.imageOpacityMode,
        imagePosition: this.imagePosition,
        opticalSrc: this.showOpticalImage && optImg && optImg.url || null,
@@ -270,6 +272,14 @@ export default class AnnotationView extends Vue {
 
    set opacity(value: number) {
      ionImageSettings.opacity = value
+   }
+
+   get opticalOpacity() {
+     return ionImageSettings.opticalOpacity
+   }
+
+   set opticalOpacity(value: number) {
+     ionImageSettings.opticalOpacity = value
    }
 
    get imagePosition() {

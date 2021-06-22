@@ -35,6 +35,7 @@ interface Props {
   xOffset: number
   yOffset: number
   opticalSrc: string | null
+  opticalOpacity: number
   ionImageTransform: number[][]
   opticalTransform: number[][]
   scrollBlock: boolean
@@ -338,18 +339,28 @@ const useBufferedOpticalImage = (props: Props) => {
       {opticalImageUrl.value
       && <img
         key={state.loadedOpticalImageUrl}
+        crossOrigin="anonymous"
         src={state.loadedOpticalImageUrl}
         class="absolute top-0 left-0 -z-10 origin-top-left"
-        style={state.loadedOpticalImageStyle}
+        style={{
+          ...state.loadedOpticalImageStyle,
+          filter: props.opticalOpacity !== undefined ? `brightness(${100 - ((1 - props.opticalOpacity) * 100
+              * 0.75)}%) grayscale(${(1 - (props.opticalOpacity || 0)) * 100}%)` : '',
+        }}
       />}
 
       {opticalImageUrl.value
       && state.loadedOpticalImageUrl !== opticalImageUrl.value
       && <img
         key={opticalImageUrl.value}
+        crossOrigin="anonymous"
         src={opticalImageUrl.value}
         class="absolute top-0 left-0 -z-20 origin-top-left opacity-1"
-        style={opticalImageStyle.value}
+        style={{
+          ...opticalImageStyle.value,
+          filter: props.opticalOpacity !== undefined ? `brightness(${100 - ((1 - props.opticalOpacity) * 100
+              * 0.75)}%) grayscale(${(1 - (props.opticalOpacity || 0)) * 100}%)` : '',
+        }}
         onLoad={onOpticalImageLoaded}
       />}
     </div>)
@@ -420,6 +431,7 @@ export default defineComponent<Props>({
     xOffset: { type: Number, required: true },
     yOffset: { type: Number, required: true },
     opticalSrc: { type: String, default: null },
+    opticalOpacity: { type: Number, default: 1 },
 
     // 3x3 matrix mapping ion-image pixel coordinates into new ion-image pixel coordinates independent from
     // zoom/offset props, e.g. This ionImageTransform:

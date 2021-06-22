@@ -9,6 +9,7 @@ import pandas as pd
 from pyMSpec.pyisocalc.canopy.sum_formula_actions import InvalidFormulaError
 from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
 
+from sm.engine.config import SMConfig
 from sm.engine.db import DB, transaction_context
 from sm.engine.errors import SMError
 from sm.engine.storage import get_s3_bucket
@@ -35,7 +36,12 @@ class MolecularDB:
 
     # pylint: disable=redefined-builtin
     def __init__(
-        self, id: int, name: str, version: str, targeted: bool = None, group_id: str = None,
+        self,
+        id: int,
+        name: str,
+        version: str,
+        targeted: bool = None,
+        group_id: str = None,
     ):
         self.id = id
         self.name = name
@@ -78,12 +84,13 @@ def read_moldb_file(file_path):
     try:
         if re.findall(r'^s3a?://', file_path):
             bucket_name, key = split_s3_path(file_path)
-            buffer = get_s3_bucket(bucket_name).Object(key).get()['Body']
+            sm_config = SMConfig.get_conf()
+            buffer = get_s3_bucket(bucket_name, sm_config).Object(key).get()['Body']
         else:
             buffer = Path(file_path).open()
         moldb_df = pd.read_csv(buffer, sep='\t', dtype=object, na_filter=False)
     except ValueError as e:
-        raise MalformedCSV(f'Malformed CSV: {e}')
+        raise MalformedCSV(f'Malformed CSV: {e}') from e
 
     if moldb_df.empty:
         raise MalformedCSV('No data rows found')

@@ -4,7 +4,7 @@
   >
     <p class="leading-6 m-0 flex justify-between">
       <span class="text-gray-700 font-medium">
-        Opacity
+        {{ opacityLabel }}
       </span>
       <span>
         {{ percentage }}%
@@ -16,7 +16,7 @@
       :min="0"
       :max="100"
       :step="1"
-      @change="emitOpacity"
+      @input="emitOpacity"
     />
   </overlay>
 </template>
@@ -33,10 +33,12 @@ export default defineComponent({
   },
   props: {
     opacity: { type: Number, required: true },
+    label: { type: String, default: 'Opacity' },
   },
   setup(props, { emit }) {
     return {
       percentage: computed(() => Math.round(props.opacity * 100)),
+      opacityLabel: computed(() => props.label),
       emitOpacity(value: number) {
         emit('opacity', value / 100)
       },

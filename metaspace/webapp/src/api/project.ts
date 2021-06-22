@@ -99,8 +99,8 @@ export const updateUserProjectMutation =
   }`
 
 export const importDatasetsIntoProjectMutation =
-  gql`mutation($projectId: ID!, $datasetIds: [ID!]!) {
-    importDatasetsIntoProject(projectId: $projectId, datasetIds: $datasetIds)
+  gql`mutation($projectId: ID!, $datasetIds: [ID!], $removedDatasetIds: [ID!]) {
+    importDatasetsIntoProject(projectId: $projectId, datasetIds: $datasetIds, removedDatasetIds: $removedDatasetIds)
   }`
 
 export const createReviewLinkMutation =
@@ -207,8 +207,10 @@ const projectsListItemFragment =
     }`
 
 export const projectsListQuery =
-  gql`query ProjectsListQuery($query: String!, $offset: Int = 0, $limit: Int = 10) {
-    allProjects(query: $query, offset: $offset, limit: $limit) {
+  gql`query ProjectsListQuery($query: String!, $offset: Int = 0, $limit: Int = 10,
+    $orderBy: ProjectOrderBy = ORDER_BY_POPULARITY, $sortingOrder: SortingOrder = DESCENDING) {
+    allProjects(orderBy: $orderBy, sortingOrder: $sortingOrder, query: $query,
+      offset: $offset, limit: $limit) {
       ...ProjectsListItem
     }
   }

@@ -120,12 +120,14 @@ mol_db_image_archives:
 #    path: https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-ecmdb.tar.xz
 #  - name: CoreMetabolome
 #    path: https://sm-mol-db.s3-eu-west-1.amazonaws.com/mol-images/mol-images-core-metabolome.tar.xz
+#  - name: NGlycDB
+#    path: https://sm-mol-db.s3-eu-west-1.amazonaws.com/mol-images/mol-images-nglyc.tar.xz
 mol_db_imports:
   - url: "https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files_2021/hmdb/hmdb_4.tsv"
     name: "HMDB"
     version: "v4"
 # uncomment below for other databases
-#  - url: "https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files_2021/brachemdb/BraChemDB_2018-03_empty_inchi.tsv"
+#  - url: "https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files_2021/brachem/BraChemDB_2018-03_empty_inchi.tsv"
 #    name: "BraChemDB"
 #    version: "2018-01"
 #  - url: "https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files_2021/chebi/chebi_2018-01.tsv"
@@ -152,6 +154,12 @@ mol_db_imports:
 #  - url: "https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files_2021/core_metabolome/core_metabolome_v3.csv"
 #    name: "CoreMetabolome"
 #    version: "v3"
+#  - url: "https://sm-mol-db.s3-eu-west-1.amazonaws.com/db_files_2021/nglyc/nglyc_v1.tsv"
+#    name: "NGlycDB"
+#    version: "v1"
+#  - url: "https://sm-mol-db.s3.eu-west-1.amazonaws.com/db_files_2021/npa/npa_2019-08.tsv"
+#    name: "NPA"
+#    version: "2019-08"
 
 nodejs_version: 14.5
 

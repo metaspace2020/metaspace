@@ -243,6 +243,10 @@ jobs:
             git clean -fdX
             git checkout -- ~/metaspace
       - run:
+          name: Install dependencies
+          command: |
+            pip install -r metaspace/engine/requirements-dev.txt
+      - run:
           name: Code format check for .py files in ansible and metaspace directories
           command: |
             black --check ansible metaspace/off-sample metaspace/python-client
@@ -286,7 +290,7 @@ jobs:
       - run:
           name: Test engine dependencies
           command: |
-            pip install --upgrade -r requirements.txt
+            pip install --upgrade -r requirements.txt -r requirements-dev.txt
       - attach_workspace:
           at: ~/workspace
       - run:
@@ -346,7 +350,7 @@ jobs:
       - run:
           name: Test setup
           command: |
-            pip install --upgrade -r requirements.txt
+            pip install --upgrade -r requirements.txt -r requirements-dev.txt
             pip install -e .
       - run:
           name: Create engine database
@@ -363,7 +367,7 @@ jobs:
           name: Run scientific test
           command: |
             #while true; do echo '---'; sleep 5; done  # uncomment this line for debugging
-            python tests/sci_test/spheroid.py -r --mock-img-store --lithops --config=conf/scitest_config.json
+            python tests/sci_test/spheroid.py -r --mock-image-storage --lithops --config=conf/scitest_config.json
 
 workflows:
   version: 2
@@ -379,18 +383,23 @@ workflows:
       - test-webapp:
           requires:
             - generate-graphql-schema
-  sci-test-on-demand:
-    jobs:
-      - generate-graphql-schema
-      - test-engine-sci:
-          requires:
-            - generate-graphql-schema
-          filters:
-            branches:
-              only:
-                - master
-                # Add additional branches to run sci-test against here. Clean up old branches if you notice any.
-                - feat/lithops-ds-sort-in-ram
+
+## sci-test on demand is currently failing as it either uses more RAM than CircleCI allows, or takes >15 minutes if
+## parallelism is reduced to minimize memory usage.
+## Re-test after https://github.com/metaspace2020/metaspace/issues/763 has been addressed
+#
+#  sci-test-on-demand:
+#    jobs:
+#      - generate-graphql-schema
+#      - test-engine-sci:
+#          requires:
+#            - generate-graphql-schema
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                # Add additional branches to run sci-test against here. Clean up old branches if you notice any.
+#                - feat/lithops-ds-sort-in-ram
 
 
 ## Disabled until we have time to redo these tests

@@ -72,7 +72,7 @@ def _format_formula(elements):
 
 
 def generate_ion_formula(formula, *adducts):
-    """ Calculates resulting molecular formula for ion.
+    """Calculates resulting molecular formula for ion.
 
     Calculates the resulting molecular formula after applying a set of transformations,
     e.g. `generate_ion_formula('H2O', '+H', '-O')` => `'H3'`

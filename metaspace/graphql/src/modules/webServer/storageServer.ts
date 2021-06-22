@@ -12,6 +12,7 @@ import logger from '../../utils/logger'
 import { Config, ImageCategory } from '../../utils/config'
 import datasetUploadMiddleware from './datasetUploadMiddleware'
 import databaseUploadMiddleware from './databaseUploadMiddleware'
+import uploadMiddleware from './uploadMiddleware'
 
 function imageProviderFSBackend(storageRootDir: string) {
   /**
@@ -124,8 +125,9 @@ export async function createStorageServerAsync(config: Config) {
   })
 
   app.use('/dataset_upload', datasetUploadMiddleware(httpServer))
-
   app.use('/database_upload', databaseUploadMiddleware(httpServer))
+  app.use('/optical_image_upload',
+    uploadMiddleware('/optical_image_upload', config.upload.optical_images_prefix, httpServer))
 
   logger.info(`Storage server is listening on ${config.img_storage_port} port...`)
   return httpServer

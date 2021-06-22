@@ -5,6 +5,20 @@
       style="position: relative;"
     >
       <div id="md-section-list">
+        <div class="flex flex-row w-full flex-wrap mt-6">
+          <div class="metadata-section__title w-3/12">
+            Dataset description
+          </div>
+          <rich-text
+            id="description-container"
+            :content="metaspaceOptions.description"
+            :auto-focus="true"
+            :hide-state-status="true"
+            :readonly="false"
+            :update="handleDescriptionChange"
+            content-class-name="customEditor"
+          />
+        </div>
         <form-section
           v-bind="sectionBinds('Sample_Information')"
           v-on="sectionEvents('Sample_Information')"
@@ -27,6 +41,7 @@
           v-model="metaspaceOptions"
           :error="errors['metaspaceOptions']"
           :databases-by-group="molDBsByGroup"
+          :default-db="defaultDb"
           :adduct-options="adductOptions"
           :is-new-dataset="isNew"
         />
@@ -72,7 +87,7 @@ import {
   get, set, cloneDeep, defaults,
   isEmpty, isEqual, isPlainObject,
   mapValues, forEach, without, omit,
-  sortBy,
+  uniq,
 } from 'lodash-es'
 import {
   newDatasetQuery,
@@ -88,8 +103,10 @@ import FormSection from './sections/FormSection.vue'
 import DataManagementSection from './sections/DataManagementSection.vue'
 import emailRegex from '../../lib/emailRegex'
 import safeJsonParse from '../../lib/safeJsonParse'
+import isValidTiptapJson from '../../lib/isValidTiptapJson'
 import config from '../../lib/config'
 import { getDatabasesByGroup } from '../MolecularDatabases/formatting'
+import RichText from '../../components/RichText/RichText'
 
 const factories = {
   string: schema => schema.default || '',
@@ -112,6 +129,7 @@ const defaultMetaspaceOptions = {
 export default {
   name: 'MetadataEditor',
   components: {
+    RichText,
     FormSection,
     MetaspaceOptionsSection,
     VisibilityOptionSection,
@@ -128,6 +146,7 @@ export default {
       schema: null,
       loadingPromise: null,
       localErrors: {},
+      defaultDb: null,
       molDBsByGroup: [],
       possibleAdducts: {},
       metaspaceOptions: cloneDeep(defaultMetaspaceOptions),
@@ -194,6 +213,7 @@ export default {
         const {
           isPublic, configJson, databases, adducts,
           name, group, projects, submitter, principalInvestigator,
+          description,
         } = dataset
         const config = safeJsonParse(configJson)
         return {
@@ -201,6 +221,8 @@ export default {
           groupId: group ? group.id : null,
           projectIds: projects ? projects.map(p => p.id) : [],
           principalInvestigator: principalInvestigator == null ? null : omit(principalInvestigator, '__typename'),
+          description: isValidTiptapJson(safeJsonParse(description))
+            ? safeJsonParse(description) : null,
           isPublic,
           databaseIds: databases.map(_ => _.id),
           adducts,
@@ -303,8 +325,21 @@ export default {
         Positive: adducts.filter(a => a.charge > 0),
         Negative: adducts.filter(a => a.charge < 0),
       }
+      this.defaultDb = molecularDatabases.find((db) => db.default) || {}
       this.molDBsByGroup = getDatabasesByGroup(molecularDatabases)
       this.schema = deriveFullSchema(metadataSchemas[mdType])
+
+      // TODO remove the additional information from the schema itself at some point
+      // hide additional info from dataset upload, without changing schema for compatibility reasons
+      if (this.schema && this.schema.properties && this.schema.properties.Additional_Information) {
+        delete this.schema.properties.Additional_Information
+      }
+
+      const selectedDbs = dataset.databases || []
+
+      // enable default db normal edit if dataset already registered and does not have it
+      this.defaultDb = !this.isNew && !selectedDbs.map((db) => db.id).includes(this.defaultDb.id) ? {}
+        : this.defaultDb
 
       if (this.isNew) {
         // If this is a prepopulated form from a previous submission and metabolite databases have changed since that submission,
@@ -312,13 +347,12 @@ export default {
         // This is because it's expensive to change database later. We want a smart default for new users,
         // but if the user has previously selected a value that is now invalid, they should be made aware so that they
         // can choose an appropriate substitute.
-        const selectedDbs = dataset.databases || []
-        if (selectedDbs.length === 0) {
-          metaspaceOptions.databaseIds = molecularDatabases.filter(d => d.default).map(_ => _.id)
-        } else {
+        metaspaceOptions.databaseIds = uniq(selectedDbs.map((db) => db.id)
+          .concat(molecularDatabases.filter(d => d.default).map(_ => _.id)))
+        if (selectedDbs.length > 0) {
           for (const db of selectedDbs) {
             if (molecularDatabases.find(_ => _.id === db.id) === undefined) {
-              metaspaceOptions.databaseIds = []
+              metaspaceOptions.databaseIds = molecularDatabases.filter(d => d.default).map(_ => _.id)
               break
             }
           }
@@ -412,7 +446,9 @@ export default {
         input: this.onInput,
       }
     },
-
+    handleDescriptionChange(content) {
+      this.metaspaceOptions.description = content
+    },
     onInput(path, val) {
       set(this.value, path, val)
 
@@ -497,5 +533,28 @@ export default {
 
  #load-indicator {
    min-height: 300px;
+ }
+
+ #description-container{
+   @apply p-0 border rounded border-solid;
+   width: calc(75% - 10px);
+   border-color: #BCCDDC;
+   margin-left: 4px;
+   overflow: hidden;
+ }
+
+ #description-container > div > div > div {
+   @apply p-2;
+   min-height: calc(50px - 1rem);
+   background: #F1F5F8;
+ }
+
+ .focus-visible{
+   outline: 1px solid hsl(208,87%,50%);
+   outline-offset: 1px;
+ }
+
+ #description-container > div > div > div > p {
+
  }
 </style>

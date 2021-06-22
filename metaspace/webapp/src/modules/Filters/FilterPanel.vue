@@ -31,6 +31,8 @@
 <script>
 import { FILTER_COMPONENT_PROPS, FILTER_SPECIFICATIONS } from './filterSpecs'
 import { isFunction, pick, get, uniq } from 'lodash-es'
+import { setLocalStorage } from '../../lib/localStorage'
+import { computed } from '@vue/composition-api'
 
 const orderedFilterKeys = [
   'database',
@@ -54,7 +56,12 @@ const orderedFilterKeys = [
   'minMSM',
   'simpleQuery',
   'simpleFilter',
+  'datasetOwner',
   'metadataType',
+]
+
+const dsAnnotationHiddenFilters = [
+  'datasetIds',
 ]
 
 const filterComponents = {}
@@ -74,7 +81,7 @@ Object.keys(FILTER_SPECIFICATIONS).reduce((accum, cur) => {
 /** @type {ComponentOptions<Vue> & Vue} */
 const FilterPanel = {
   name: 'filter-panel',
-  props: ['level', 'simpleFilterOptions'],
+  props: ['level', 'simpleFilterOptions', 'setDatasetOwnerOptions', 'hiddenFilters'],
   components: filterComponents,
   mounted() {
     this.$store.dispatch('initFilterLists')
@@ -130,6 +137,12 @@ const FilterPanel = {
         this.$store.commit('updateFilter', { ...this.filter, simpleFilter: null })
       }
     },
+    setDatasetOwnerOptions(newVal) {
+      if (this.filter.datasetOwner != null
+        && (newVal == null || !newVal.some(opt => opt.value === this.filter.datasetOwner))) {
+        this.$store.commit('updateFilter', { ...this.filter, datasetOwner: null })
+      }
+    },
   },
 
   data() {
@@ -146,6 +159,15 @@ const FilterPanel = {
       }
       if (filterKey === 'simpleFilter') {
         return this.simpleFilterOptions != null
+      }
+      if (this.level === 'dataset-annotation' && dsAnnotationHiddenFilters.includes(filterKey)) {
+        return false
+      }
+      if (this.hiddenFilters && this.hiddenFilters.includes(filterKey)) {
+        return false
+      }
+      if (filterKey === 'datasetOwner') {
+        return this.setDatasetOwnerOptions != null
       }
       return true
     },
@@ -176,10 +198,45 @@ const FilterPanel = {
           type,
           // passing the value of undefined destroys the tag element
           onChange: (val) => {
+            const { datasetOwner, submitter, group } = this.filter
+            const extraUpdatesAux = {}
+
+            // unset conflicting group filters
+            if (filterKey === 'group' && datasetOwner && datasetOwner !== 'my-datasets') {
+              extraUpdatesAux.datasetOwner = null
+            } else if (filterKey === 'datasetOwner' && group !== undefined && val && val !== 'my-datasets') {
+              extraUpdatesAux.group = null
+            }
+
+            // unset conflicting submitter id filters
+            if (filterKey === 'submitter' && datasetOwner === 'my-datasets') {
+              extraUpdatesAux.datasetOwner = null
+            } else if (filterKey === 'datasetOwner' && submitter !== undefined && val === 'my-datasets') {
+              extraUpdatesAux.submitter = undefined
+            }
+
+            // update datasetOwner settings
+            if (filterKey === 'datasetOwner' || ('datasetOwner' in extraUpdatesAux)) {
+              const dsValue = ('datasetOwner' in extraUpdatesAux)
+                ? extraUpdatesAux.datasetOwner : val
+              setLocalStorage(filterKey, dsValue)
+            }
+
+            // update simpleFilter settings
+            if (filterKey === 'simpleFilter') {
+              setLocalStorage(filterKey, val)
+            }
+
             this.$store.commit('updateFilter',
-              Object.assign(this.filter, { [filterKey]: val }))
+              Object.assign(this.filter, { [filterKey]: val, ...extraUpdatesAux }))
           },
           onDestroy: () => {
+            if (filterKey === 'annotationIds') {
+              this.$store.commit('setFilterLists', {
+                ...this.$store.state.filterLists,
+                annotationIds: computed(() => undefined),
+              })
+            }
             this.$store.commit('removeFilter', filterKey)
           },
           attrs: {
@@ -204,6 +261,9 @@ const FilterPanel = {
       // either specify a function of optionLists or one of its field names
       if (filterKey === 'simpleFilter') {
         return this.simpleFilterOptions
+      }
+      if (filterKey === 'datasetOwner') {
+        return this.setDatasetOwnerOptions
       }
       if (typeof filter.options === 'object') {
         return filter.options

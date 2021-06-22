@@ -6,14 +6,14 @@ cpyMSpec_0_3_5==0.3.5
 pyimzML==1.4.1
 requests
 pytest
-boto3==1.15.16
+boto3==1.17.13
 fabric3
 pypng==0.0.19    # 0.0.20 introduced incompatible API changes
 pyyaml>=5.1
 elasticsearch-dsl>=5.0.0,<6.0.0
 pika==0.13.1
 bottle
-Pillow==7.2.0
+Pillow==8.2.0
 numpy>=1.19.2
 scipy>=1.5.2
 pandas>=1.1.3

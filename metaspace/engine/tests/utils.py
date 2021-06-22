@@ -6,7 +6,6 @@ from sm.engine.db import DB
 from sm.engine import molecular_db
 from sm.engine.molecular_db import MolecularDB
 
-
 TEST_METADATA = {
     "Data_Type": "Imaging MS",
     "MS_Analysis": {
@@ -36,7 +35,12 @@ TEST_DS_CONFIG = {
 
 
 def create_test_molecular_db(
-    name='HMDB', version='v4', group_id=None, created_dt=None, archived=False, **kwargs,
+    name='HMDB',
+    version='v4',
+    group_id=None,
+    created_dt=None,
+    archived=False,
+    **kwargs,
 ) -> MolecularDB:
     if not created_dt:
         created_dt = datetime.utcnow()

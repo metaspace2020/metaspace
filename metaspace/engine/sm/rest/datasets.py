@@ -5,7 +5,6 @@ import bottle
 
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
-from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_DS_STATUS, SM_UPDATE, SM_LITHOPS
 from sm.engine.errors import UnknownDSID, DSIsBusy
 from sm.engine.config import SMConfig
@@ -30,12 +29,9 @@ def _create_queue_publisher(qdesc):
 
 
 def _create_dataset_manager(db):
-    img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
-    img_store.storage_type = 'fs'
     return SMapiDatasetManager(
         db=db,
         es=ESExporter(db, sm_config),
-        image_store=img_store,
         annot_queue=_create_queue_publisher(SM_ANNOTATE),
         update_queue=_create_queue_publisher(SM_UPDATE),
         lit_queue=_create_queue_publisher(SM_LITHOPS),
@@ -175,8 +171,7 @@ def add_optical_image(ds_man, ds_id, params):
     }
     :return:
     """
-    img_id = params['url'].split('/')[-1]
-    ds_man.add_optical_image(ds_id, img_id, params['transform'])
+    ds_man.add_optical_image(ds_id, params['url'], params['transform'])
 
 
 @app.post('/<ds_id>/del-optical-image')

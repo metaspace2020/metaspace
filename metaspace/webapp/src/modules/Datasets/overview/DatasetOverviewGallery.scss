@@ -1,0 +1,20 @@
+.dataset-overview-gallery-wrapper{
+  @apply p-6;
+
+
+  .ds-overview-select{
+    @apply w-full mb-4;
+    border-radius: 5px;
+    border: 1px solid rgba(18, 135,238,0.3);
+  }
+
+  .el-carousel__container{
+    min-height: 500px;
+  }
+
+
+  .ds-overview-container{
+    width: 100%;
+    min-height: 500px;
+  }
+}

@@ -1,5 +1,5 @@
 <template>
-  <div class="text-base proportional-nums leading-6">
+  <div class="text-base leading-6">
     <div class="bg-primary overflow-hidden w-full">
       <div class="box-border font-display pt-12 pb-24 mx-auto max-w-4xl flex items-center">
         <img

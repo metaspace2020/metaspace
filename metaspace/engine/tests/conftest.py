@@ -12,6 +12,7 @@ import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from pysparkling import Context
 
+from sm.engine import image_storage
 from sm.engine.db import DB, ConnectionPool
 from sm.engine.tests.db_sql_schema import DB_SQL_SCHEMA
 from sm.engine.util import populate_aws_env_vars
@@ -40,6 +41,8 @@ def global_setup(sm_config):
     init_loggers(sm_config['logs'])
     if 'aws' in sm_config:
         populate_aws_env_vars(sm_config['aws'])
+
+    image_storage.init(sm_config)
 
 
 @pytest.fixture()

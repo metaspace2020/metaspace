@@ -15,8 +15,7 @@ def proj_root():
 
 
 def init_loggers(config=None):
-    """ Init logger using config file, 'logs' section of the sm config
-    """
+    """Init logger using config file, 'logs' section of the sm config"""
     if not config:
         SMConfig.set_path('conf/config.json')
         config = SMConfig.get_conf()['logs']
@@ -53,7 +52,7 @@ class SMConfig:
 
     @classmethod
     def set_path(cls, path):
-        """ Set path for a SM configuration file
+        """Set path for a SM configuration file
 
         Parameters
         ----------

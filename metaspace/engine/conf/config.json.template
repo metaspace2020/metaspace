@@ -125,8 +125,7 @@ The Prefix is necessary and should not have a leading or trailing slash
       "parser_factory": {
         "name": "ImzMLParser",
         "path": "pyimzml.ImzMLParser"
-      },
-      "img_storage_type": "fs"
+      }
     },
     {
       "type": "lcms",
@@ -134,8 +133,7 @@ The Prefix is necessary and should not have a leading or trailing slash
       "parser_factory": {
         "name": "MzMLParser",
         "path": "sm.engine.mzml_parser"
-      },
-      "img_storage_type": "db"
+      }
     }
   ],
   "isotope_storage": {
@@ -198,5 +196,8 @@ The Prefix is necessary and should not have a leading or trailing slash
   },
   "ds_config_defaults": {
     "adducts": {{ sm_default_adducts | to_json }}
+  },
+  "image_storage": {
+    "bucket": "{{ sm_image_storage_bucket }}"
   }
 }

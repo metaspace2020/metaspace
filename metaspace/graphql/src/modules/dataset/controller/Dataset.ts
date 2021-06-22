@@ -21,7 +21,9 @@ import { getS3Client } from '../../../utils/awsClient'
 interface DbDataset {
   id: string;
   thumbnail: string | null;
+  thumbnail_url: string | null;
   ion_thumbnail: string | null;
+  ion_thumbnail_url: string | null;
   transform: number[][] | null;
   external_links: ExternalLink[] | null;
 }
@@ -29,7 +31,8 @@ const getDbDatasetById = async(ctx: Context, id: string): Promise<DbDataset | nu
   const dataloader = ctx.contextCacheGet('getDbDatasetByIdDataLoader', [], () => {
     return new DataLoader(async(datasetIds: string[]): Promise<any[]> => {
       const results = await ctx.entityManager.query(`
-      SELECT ds.id, ds.thumbnail, ds.ion_thumbnail, ds.transform, gds.external_links
+      SELECT ds.id, ds.thumbnail, ds.thumbnail_url, ds.ion_thumbnail, ds.ion_thumbnail_url, 
+             ds.transform, gds.external_links
       FROM public.dataset ds
       JOIN graphql.dataset gds on ds.id = gds.id
       WHERE ds.id = ANY($1)`,
@@ -43,11 +46,16 @@ const getDbDatasetById = async(ctx: Context, id: string): Promise<DbDataset | nu
 
 export const thumbnailOpticalImageUrl = async(ctx: Context, datasetId: string) => {
   const result = await getDbDatasetById(ctx, datasetId)
-  if (result && result.thumbnail != null) {
-    return `/fs/optical_images/${result.thumbnail}`
-  } else {
-    return null
+  if (result != null) {
+    if (result.thumbnail_url != null) {
+      return result.thumbnail_url
+    }
+    // FIXME: remove after data migration
+    if (result.thumbnail != null) {
+      return `/fs/optical_images/${result.thumbnail}`
+    }
   }
+  return null
 }
 
 const getOpticalImagesByDsId = async(ctx: Context, id: string): Promise<OpticalImage[]> => {
@@ -55,10 +63,10 @@ const getOpticalImagesByDsId = async(ctx: Context, id: string): Promise<OpticalI
     return new DataLoader(async(datasetIds: string[]): Promise<OpticalImage[][]> => {
       const rawResults: OpticalImageModel[] = await ctx.entityManager.query(
         'SELECT * from public.optical_image WHERE ds_id = ANY($1)', [datasetIds])
-      const results = rawResults.map(({ id, type, ...rest }) => ({
+      const results = rawResults.map(({ id, type, url, ...rest }) => ({
         ...rest,
         id,
-        url: `/fs/optical_images/${id}`,
+        url: url || `/fs/optical_images/${id}`, // FIXME: remove after data migration
         type: type.toUpperCase() as OpticalImageType,
       }))
       const groupedResults = _.groupBy(results, 'ds_id')
@@ -216,7 +224,14 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       publicationStatus: p.publicationStatus,
     }))
   },
-
+  async description(ds, _, { cachedGetEntityById }: Context) {
+    const dataset = await cachedGetEntityById(DatasetModel, ds._source.ds_id)
+    if (dataset == null) {
+      logger.warn(`Elasticsearch DS does not exist in DB: ${ds._source.ds_id}`)
+      return null
+    }
+    return dataset.description ? JSON.stringify(dataset.description) : undefined
+  },
   async principalInvestigator(ds, _, { cachedGetEntityById, isAdmin, user }: Context) {
     const dataset = await cachedGetEntityById(DatasetModel, ds._source.ds_id)
     if (dataset == null) {
@@ -251,6 +266,30 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
 
   uploadDateTime(ds) {
     return ds._source.ds_upload_dt
+  },
+
+  async annotationCounts(ds, { inpFdrLvls }: { inpFdrLvls: number[] }, ctx) {
+    const counts = []
+    if (ds._source.annotation_counts && ds._source.ds_status === 'FINISHED') {
+      const visibleDatabaseIds = await ctx.user.getVisibleDatabaseIds()
+      const annotCounts: any[] = ds._source.annotation_counts.filter(
+        el => ds._source.ds_moldb_ids?.includes(el.db.id)
+              && visibleDatabaseIds.includes(el.db.id)
+      )
+      for (const el of annotCounts) {
+        const filteredFdrLevels = el.counts.filter((lvlObj: any) => inpFdrLvls.includes(lvlObj.level))
+        const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
+          .findDatabaseById(ctx, el.db.id)
+        counts.push({
+          databaseId: el.db.id,
+          dbName: database.name,
+          dbVersion: database.version,
+          counts: filteredFdrLevels,
+        })
+      }
+    }
+
+    return counts
   },
 
   async fdrCounts(ds, { inpFdrLvls, checkLvl }: { inpFdrLvls: number[], checkLvl: number }, ctx) {
@@ -325,11 +364,16 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
 
   async ionThumbnailUrl(ds, args, ctx) {
     const result = await getDbDatasetById(ctx, ds._source.ds_id)
-    if (result && result.ion_thumbnail != null) {
-      return `/fs/ion_thumbnails/${result.ion_thumbnail}`
-    } else {
-      return null
+    if (result != null) {
+      if (result.ion_thumbnail_url != null) {
+        return result.ion_thumbnail_url
+      }
+      // FIXME: remove after data migration
+      if (result.ion_thumbnail != null) {
+        return `/fs/ion_thumbnails/${result.ion_thumbnail}`
+      }
     }
+    return null
   },
 
   async externalLinks(ds, args, ctx) {

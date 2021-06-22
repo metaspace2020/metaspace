@@ -7,19 +7,35 @@
       @create="handleProjectCreated"
     />
     <div class="page-content">
-      <div class="header-row">
-        <filter-panel
-          level="projects"
-          :simple-filter-options="simpleFilterOptions"
-        />
-        <div style="flex-grow: 1" />
+      <div
+        v-if="currentUser"
+        class="flex flex-row items-center justify-end flex-1 w-full py-4"
+      >
         <el-button
-          v-if="currentUser"
+          type="primary"
+          size="small"
           @click="handleOpenCreateProject"
         >
           Create project
         </el-button>
       </div>
+      <div class="header-row">
+        <filter-panel
+          level="projects"
+          :simple-filter-options="simpleFilterOptions"
+        />
+        <div
+          class="flex flex-row items-center justify-end flex-1"
+        >
+          <sort-dropdown
+            class="pb-2"
+            size="default"
+            :options="sortingOptions"
+            :on-sort-change="handleSortChange"
+          />
+        </div>
+      </div>
+
       <div class="clearfix" />
       <div
         v-loading="loading !== 0"
@@ -62,6 +78,8 @@ import { FilterPanel } from '../Filters'
 import QuickFilterBox from '../Filters/filter-components/SimpleFilterBox.vue'
 import ProjectsListItem from './ProjectsListItem.vue'
 import CreateProjectDialog from './CreateProjectDialog.vue'
+import { getLocalStorage } from '../../lib/localStorage'
+import { SortDropdown } from '../../components/SortDropdown/SortDropdown'
 
   @Component<ProjectsListPage>({
     components: {
@@ -69,6 +87,7 @@ import CreateProjectDialog from './CreateProjectDialog.vue'
       ProjectsListItem,
       CreateProjectDialog,
       QuickFilterBox,
+      SortDropdown,
     },
     apollo: {
       currentUser: {
@@ -87,6 +106,8 @@ import CreateProjectDialog from './CreateProjectDialog.vue'
             query: this.query,
             offset: (this.page - 1) * this.pageSize,
             limit: this.pageSize,
+            orderBy: this.orderBy,
+            sortingOrder: this.sortingOrder,
           }
         },
       },
@@ -124,6 +145,38 @@ export default class ProjectsListPage extends Vue {
     allProjects: ProjectsListProject[] | null = null;
     myProjects: ProjectsListProject[] | null = null;
     allProjectsCount = 0;
+    orderBy : string = 'ORDER_BY_POPULARITY';
+    sortingOrder : string = 'DESCENDING';
+    sortingOptions: any[] = [
+      {
+        value: 'ORDER_BY_POPULARITY',
+        label: 'Project size',
+      },
+      {
+        value: 'ORDER_BY_DATE',
+        label: 'Creation date',
+      },
+      {
+        value: 'ORDER_BY_UP_DATE',
+        label: 'Publication date',
+      },
+      {
+        value: 'ORDER_BY_NAME',
+        label: 'Project name',
+      },
+      {
+        value: 'ORDER_BY_MANAGER_NAME',
+        label: 'Manager name',
+      },
+      {
+        value: 'ORDER_BY_DATASETS_COUNT',
+        label: 'Number of datasets',
+      },
+      {
+        value: 'ORDER_BY_MEMBERS_COUNT',
+        label: 'Number of members',
+      },
+    ]
 
     showCreateProjectDialog = false;
     page = 1;
@@ -166,6 +219,15 @@ export default class ProjectsListPage extends Vue {
       if (this.currentUser == null) {
         return null
       } else {
+        // due to some misbehaviour from setting initial value from getLocalstorage with null values
+        // on filterSpecs, the filter is being initialized here if user is logged
+        const localSimpleFilter = this.$store.getters.filter.simpleFilter
+          ? this.$store.getters.filter.simpleFilter : (getLocalStorage('simpleFilter') || null)
+        this.$store.commit('updateFilter', {
+          ...this.$store.getters.filter,
+          simpleFilter: localSimpleFilter,
+        })
+
         return [
           { value: null, label: 'All projects' },
           { value: 'my-projects', label: 'My projects' },
@@ -197,6 +259,11 @@ export default class ProjectsListPage extends Vue {
 
     handleCloseCreateProject() {
       this.showCreateProjectDialog = false
+    }
+
+    handleSortChange(value: string, sortingOrder: string) {
+      this.orderBy = !value ? 'ORDER_BY_POPULARITY' : value
+      this.sortingOrder = !sortingOrder ? 'DESCENDING' : sortingOrder
     }
 
     handleProjectCreated({ id }: {id: string}) {

@@ -16,7 +16,7 @@ from sm.engine.molecular_db import MolecularDB
 from .utils import create_test_molecular_db
 
 
-def wait_for_es(sec=1):
+def wait_for_es(sec: float = 1):
     time.sleep(sec)
 
 
@@ -39,10 +39,9 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
     db = DB()
     db.insert(
         "INSERT INTO dataset(id, name, input_path, config, metadata, upload_dt, status, "
-        "status_update_dt, is_public, ion_img_storage_type, acq_geometry) "
-        "VALUES (%s, 'ds_name', 'ds_input_path', %s, %s, %s, 'ds_status', %s, "
-        "true, 'fs', '{}')",
-        [[ds_id, json.dumps(ds_config), json.dumps(metadata), upload_dt, upload_dt]],
+        "status_update_dt, is_public, acq_geometry, ion_thumbnail) "
+        "VALUES (%s, 'ds_name', 'ds_input_path', %s, %s, %s, 'ds_status', %s, true, '{}', %s)",
+        [[ds_id, json.dumps(ds_config), json.dumps(metadata), upload_dt, upload_dt, 'thumb-id']],
     )
     moldb = create_test_molecular_db()
     (job_id,) = db.insert_return(
@@ -99,7 +98,9 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         es_exp = ESExporter(db, sm_config)
         es_exp.delete_ds(ds_id)
         es_exp.index_ds(
-            ds_id=ds_id, moldb=moldb, isocalc=isocalc_mock,
+            ds_id=ds_id,
+            moldb=moldb,
+            isocalc=isocalc_mock,
         )
 
     wait_for_es(sec=1.5)
@@ -126,7 +127,6 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         'ds_id': ds_id,
         'ds_upload_dt': upload_dt,
         'ds_is_public': True,
-        'ds_ion_img_storage': 'fs',
         'ds_submitter_email': 'email',
         'ds_submitter_id': user_id,
         'ds_submitter_name': 'user_name',
@@ -169,6 +169,10 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         'total_iso_ints': 100,
         'centroid_mzs': [100.0, 200.0, 300.0],
         'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
+        'iso_image_urls': [
+            f'http://localhost:9000/{sm_config["image_storage"]["bucket"]}/iso/{ds_id}/iso_img_id_1',
+            f'http://localhost:9000/{sm_config["image_storage"]["bucket"]}/iso/{ds_id}/iso_img_id_2',
+        ],
         'isobars': [],
         'isomer_ions': [],
         'polarity': '+',
@@ -206,6 +210,10 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
         'total_iso_ints': 100,
         'centroid_mzs': [10.0, 20.0],
         'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
+        'iso_image_urls': [
+            f'http://localhost:9000/{sm_config["image_storage"]["bucket"]}/iso/{ds_id}/iso_img_id_1',
+            f'http://localhost:9000/{sm_config["image_storage"]["bucket"]}/iso/{ds_id}/iso_img_id_2',
+        ],
         'isobars': [],
         'isomer_ions': [],
         'polarity': '+',
@@ -255,7 +263,7 @@ def test_add_isobar_fields_to_anns(ds_config):
         {
             'annotation_id': 'Base annotation',
             'centroid_mzs': [100, 101, 102, 103],
-            'iso_image_ids': ['img1', 'img2', 'img3', 'img4'],
+            'iso_image_urls': ['img1', 'img2', 'img3', 'img4'],
             'msm': 0.5,
             'ion': 'H1+',
             'ion_formula': 'H1',
@@ -263,7 +271,7 @@ def test_add_isobar_fields_to_anns(ds_config):
         {
             'annotation_id': "Base's 1st centroid overlaps 1st",
             'centroid_mzs': [100.0002, 101.1, 102.1, 103.1],
-            'iso_image_ids': ['img1', 'img2', 'img3', 'img4'],
+            'iso_image_urls': ['img1', 'img2', 'img3', 'img4'],
             'msm': 0.6,
             'ion': 'H2+',
             'ion_formula': 'H2',
@@ -271,7 +279,7 @@ def test_add_isobar_fields_to_anns(ds_config):
         {
             'annotation_id': "Base's 1st centroid overlaps 2nd (shouldn't be reported)",
             'centroid_mzs': [98, 100.0002, 101.2, 102.2],
-            'iso_image_ids': ['img1', 'img2', 'img3', 'img4'],
+            'iso_image_urls': ['img1', 'img2', 'img3', 'img4'],
             'msm': 0.7,
             'ion': 'H3+',
             'ion_formula': 'H3',
@@ -279,7 +287,7 @@ def test_add_isobar_fields_to_anns(ds_config):
         {
             'annotation_id': "Base's 2nd and 3rd centroid overlap 3rd and 4th",
             'centroid_mzs': [96, 97, 101, 102],
-            'iso_image_ids': ['img1', 'img2', 'img3', 'img4'],
+            'iso_image_urls': ['img1', 'img2', 'img3', 'img4'],
             'msm': 0.8,
             'ion': 'H4+',
             'ion_formula': 'H4',

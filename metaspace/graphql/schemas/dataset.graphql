@@ -2,6 +2,7 @@ type Dataset {
   id: String!
   name: String!
   uploadDT: String!
+  description: String  # JSON-based rich text, in a format defined by tiptap (https://tiptap.scrumpy.io/)
 
   submitter: DatasetUser!
   group: DatasetGroup
@@ -37,7 +38,7 @@ type Dataset {
   inputPath: String
   uploadDateTime: String
   fdrCounts(inpFdrLvls: [Int!]! = [10], checkLvl: Int! = 10): FdrCounts
-
+  annotationCounts(inpFdrLvls: [Int!]! = [10]): [AnnotationCounts]
   opticalImage: String  # @deprecated(reason: "Use Dataset.opticalImages instead")
   rawOpticalImageUrl: String  # @deprecated(reason: "Use Dataset.opticalImages instead")
 
@@ -62,6 +63,17 @@ type FdrCounts {
   dbVersion: String!
   levels: [Float!]!
   counts: [Float!]!
+}
+
+type FdrSingleCount {
+  level: Int!
+  n: Int!
+}
+type AnnotationCounts {
+  databaseId: Int!
+  dbName: String!
+  dbVersion: String!
+  counts: [FdrSingleCount!]!
 }
 
 type Person {
@@ -96,6 +108,9 @@ type DatasetProject {
 enum DatasetOrderBy {
   ORDER_BY_DATE
   ORDER_BY_NAME
+  ORDER_BY_UP_DATE
+  ORDER_BY_DS_SUBMITTER_NAME
+  ORDER_BY_ANNOTATION_COUNTS
 }
 
 # fields of categorical type
@@ -165,6 +180,7 @@ input DatasetCreateInput {
   name: String!
   inputPath: String!
   uploadDT: String
+  description: String
   metadataJson: String!
   databaseIds: [Int!]
   molDBs: [String!]  # @deprecated(reason: "This field will be removed. Use \"databaseIds\" instead.")
@@ -188,6 +204,7 @@ input DatasetUpdateInput {
   name: String
   uploadDT: String
   metadataJson: String
+  description: String
   databaseIds: [Int!]
   molDBs: [String!]  # @deprecated(reason: "This field will be removed. Use \"databaseIds\" instead.")
   adducts: [String!]
@@ -301,7 +318,7 @@ type Mutation {
     id: String,
     input: DatasetCreateInput!,
     priority: Int=0,
-    useLithops: Boolean=false
+    useLithops: Boolean=true
   ): String!
 
   # Throws errors of types: "under_review_or_published", "reprocessing_needed", "failed_validation"
@@ -313,7 +330,7 @@ type Mutation {
     skipValidation: Boolean=false, # ignored for non-admins
     force: Boolean=false,
     priority: Int=0,
-    useLithops: Boolean=false
+    useLithops: Boolean=true
   ): String!
 
   # Throws errors of types: "under_review_or_published"
@@ -324,7 +341,7 @@ type Mutation {
     id: String,
     priority: Int=0,
     delFirst: Boolean=false,
-    useLithops: Boolean=false
+    useLithops: Boolean=true
   ): String!
 
   addOpticalImage(input: AddOpticalImageInput!): String!

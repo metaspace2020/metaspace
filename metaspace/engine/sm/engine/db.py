@@ -64,7 +64,7 @@ def transaction_context():
         try:
             yield thread_local.conn
 
-        except Exception as e:
+        except Exception:
             logger.debug('Rolling back transaction')
             thread_local.conn.rollback()
             raise
@@ -117,7 +117,7 @@ class DB:
 
     @db_call
     def select(self, sql, params=None):
-        """ Execute select query
+        """Execute select query
 
         Args
         ------------
@@ -138,7 +138,7 @@ class DB:
 
     @db_call
     def select_one(self, sql, params=None):
-        """ Execute select query and take the first row
+        """Execute select query and take the first row
 
         Args
         ------------
@@ -164,7 +164,7 @@ class DB:
 
     @db_call
     def insert(self, sql, rows=None):
-        """ Execute insert query
+        """Execute insert query
 
         Args
         ------------
@@ -177,7 +177,7 @@ class DB:
 
     @db_call
     def insert_return(self, sql, rows=None):
-        """ Execute insert query
+        """Execute insert query
 
         Args
         ------------
@@ -198,7 +198,7 @@ class DB:
 
     @db_call
     def alter(self, sql, params=None):
-        """ Execute alter query
+        """Execute alter query
 
         Args
         ------------
@@ -211,7 +211,7 @@ class DB:
 
     @db_call
     def alter_many(self, sql, rows=None):
-        """ Execute alter query
+        """Execute alter query
 
         Args
         ------------
@@ -224,7 +224,7 @@ class DB:
 
     @db_call
     def copy(self, inp_file, table, sep='\t', columns=None):
-        """ Copy data from a file to a table
+        """Copy data from a file to a table
 
         Args
         ------------

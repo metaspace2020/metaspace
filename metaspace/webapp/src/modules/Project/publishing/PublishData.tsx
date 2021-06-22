@@ -1,7 +1,8 @@
 import { defineComponent, reactive } from '@vue/composition-api'
-import { Button, Input } from '../../../lib/element-ui'
+import { Button } from '../../../lib/element-ui'
 
 import { WorkflowStep } from '../../../components/Workflow'
+import { SmForm } from '../../../components/Form'
 import DoiField from '../DoiField'
 
 import confirmPrompt from '../../../components/confirmPrompt'
@@ -52,7 +53,7 @@ const PublishData = defineComponent<Props>({
         {!props.active && !props.done
         && <p>This project and its datasets will be made public.</p>}
         {props.active
-          && <form class="sm-form" onSubmit={(e: Event) => { e.preventDefault() }}>
+          && <SmForm>
             <p class="italic">
               Complete this step after the DOI for your paper has been issued.
               <br />
@@ -65,7 +66,7 @@ const PublishData = defineComponent<Props>({
             <Button type="primary" onClick={submit}>
               Publish project
             </Button>
-          </form>
+          </SmForm>
         }
       </WorkflowStep>
     )

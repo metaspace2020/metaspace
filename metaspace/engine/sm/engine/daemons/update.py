@@ -3,17 +3,17 @@ import logging
 from traceback import format_exc
 
 from sm.engine.daemons.actions import DaemonAction, DaemonActionStage
+from sm.engine.daemons.dataset_manager import DatasetManager
 from sm.engine.dataset import DatasetStatus
 from sm.engine.errors import UnknownDSID, SMError, IndexUpdateError
 
 
 class SMUpdateDaemon:
-    """ Reads messages from the update queue and does indexing/update/delete
-    """
+    """Reads messages from the update queue and does indexing/update/delete"""
 
     logger = logging.getLogger('update-daemon')
 
-    def __init__(self, manager, make_update_queue_cons):
+    def __init__(self, manager: DatasetManager, make_update_queue_cons):
         self._manager = manager
         self._update_queue_cons = make_update_queue_cons(
             callback=self._callback, on_success=self._on_success, on_failure=self._on_failure
@@ -21,7 +21,7 @@ class SMUpdateDaemon:
         self._stopped = False
 
     def _on_success(self, msg):
-        self.logger.info(f" SM update daemon: success")
+        self.logger.info(' SM update daemon: success')
 
         if msg['action'] == DaemonAction.DELETE:
             self._manager.notify_update(
@@ -36,9 +36,9 @@ class SMUpdateDaemon:
         if msg['action'] in [DaemonAction.UPDATE, DaemonAction.INDEX]:
             msg['web_app_link'] = self._manager.create_web_app_link(msg)
 
-        if msg['action'] != DaemonAction.UPDATE:
+        if msg['action'] == DaemonAction.DELETE:
             self._manager.post_to_slack(
-                'dart', f" [v] Succeeded to {msg['action']}: {json.dumps(msg)}"
+                'dart', f' [v] Succeeded to {msg["action"]}: {json.dumps(msg)}'
             )
 
         if msg.get('email'):
@@ -56,9 +56,6 @@ class SMUpdateDaemon:
     def _callback(self, msg):
         try:
             self.logger.info(f' SM update daemon received a message: {msg}')
-            self._manager.post_to_slack(
-                'new', f" [v] New {msg['action']} message: {json.dumps(msg)}"
-            )
 
             ds = self._manager.load_ds(msg['ds_id'])
             self._manager.notify_update(ds.id, msg['action'], DaemonActionStage.STARTED)
@@ -84,7 +81,7 @@ class SMUpdateDaemon:
             elif msg['action'] == DaemonAction.DELETE:
                 self._manager.delete(ds=ds)
             else:
-                raise SMError(f"Wrong action: {msg['action']}")
+                raise SMError(f'Wrong action: {msg["action"]}')
         except Exception as e:
             raise IndexUpdateError(msg['ds_id'], traceback=format_exc(chain=False)) from e
 

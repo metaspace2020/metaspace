@@ -16,6 +16,8 @@ const asyncPagesFreelyTyped = {
   MetadataEditPage: () => import(/* webpackPrefetch: true, webpackChunkName: "MetadataEditPage" */ './modules/MetadataEditor/MetadataEditPage.vue'),
   ImageAlignmentPage: () => import(/* webpackPrefetch: true, webpackChunkName: "ImageAlignmentPage" */ './modules/ImageAlignment/ImageAlignmentPage.vue'),
   UploadPage: () => import(/* webpackPrefetch: true, webpackChunkName: "UploadPage" */ './modules/MetadataEditor/UploadPage.vue'),
+  DatasetOverviewPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DatasetOverviewPage" */ './modules/Datasets/overview/DatasetOverviewPage.vue'),
+  DatasetComparisonPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DatasetOverviewPage" */ './modules/Datasets/comparison/DatasetComparisonPage.vue'),
 
   // These pages are relatively small as they don't have any big 3rd party dependencies, so pack them together
   DatasetTable: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Datasets/list/DatasetTable.vue'),
@@ -32,6 +34,13 @@ const asyncPagesFreelyTyped = {
   // These pages use sanitizeHtml, which is big
   ViewGroupPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle2" */ './modules/GroupProfile/ViewGroupPage.vue'),
   ViewProjectPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle2" */ './modules/Project/ViewProjectPage.vue'),
+
+  // Separate bundle for design docs
+  DesignTOC: () => import(/* webpackChunkName: "DesignBundle" */ './design/TOCPage.vue'),
+  DesignStyleGuide: () => import(/* webpackChunkName: "DesignBundle" */ './design/StyleGuidePage.vue'),
+  DesignIcons: () => import(/* webpackChunkName: "DesignBundle" */ './design/IconsPage.vue'),
+  DesignComponents: () => import(/* webpackChunkName: "DesignBundle" */ './design/ComponentsPage.vue'),
+  DesignForms: () => import(/* webpackChunkName: "DesignBundle" */ './design/FormsPage.vue'),
 }
 const asyncPages = asyncPagesFreelyTyped as Record<keyof typeof asyncPagesFreelyTyped, AsyncComponent>
 
@@ -53,7 +62,7 @@ const router = new VueRouter({
   mode: 'history',
   routes: [
     { path: '/(about)?', component: AboutPage, meta: { footer: true, headerClass: 'bg-primary' } },
-    { path: '/annotations', component: asyncPages.AnnotationsPage },
+    { path: '/annotations', name: 'annotations', component: asyncPages.AnnotationsPage },
     {
       path: '/datasets',
       component: DatasetsPage,
@@ -62,8 +71,15 @@ const router = new VueRouter({
         { path: 'summary', component: asyncPages.DatasetSummary },
       ],
     },
+    {
+      path: '/datasets/:dataset_id/comparison',
+      name: 'datasets-comparison',
+      component: asyncPages.DatasetComparisonPage,
+    },
     { path: '/datasets/edit/:dataset_id', name: 'edit-metadata', component: asyncPages.MetadataEditPage },
     { path: '/datasets/:dataset_id/add-optical-image', name: 'add-optical-image', component: asyncPages.ImageAlignmentPage },
+    { path: '/dataset/:dataset_id', name: 'dataset-overview', component: asyncPages.DatasetOverviewPage },
+    { path: '/dataset/:dataset_id/annotations', name: 'dataset-annotations', component: asyncPages.AnnotationsPage },
     { path: '/upload', component: asyncPages.UploadPage },
     { path: '/help', component: asyncPages.HelpPage, meta: { footer: true } },
     { path: '/user/me', component: asyncPages.EditUserPage },
@@ -90,6 +106,12 @@ const router = new VueRouter({
     { path: '/terms', component: asyncPages.TermsPage, meta: { footer: true } },
     { path: '/privacy', component: asyncPages.PrivacyPage, meta: { footer: true } },
     { path: '/publications', component: asyncPages.PublicationsPage, meta: { footer: true } },
+
+    { path: '/design', component: asyncPages.DesignTOC, meta: { footer: true, flex: true } },
+    { path: '/design/styleguide', component: asyncPages.DesignStyleGuide, meta: { footer: true, flex: true } },
+    { path: '/design/icons', component: asyncPages.DesignIcons, meta: { footer: true, flex: true } },
+    { path: '/design/components', component: asyncPages.DesignComponents, meta: { footer: true, flex: true } },
+    { path: '/design/forms', component: asyncPages.DesignForms, meta: { footer: true, flex: true } },
 
     { path: '*', component: NotFoundPage, meta: { footer: true, flex: true } },
   ],

@@ -7,10 +7,10 @@ from pathlib import Path
 from typing import Optional, Dict, List, Union
 
 import pandas as pd
+from ibm_boto3.s3.transfer import TransferConfig, MB
 from lithops.storage import Storage
 from lithops.storage.utils import StorageNoSuchKeyError, CloudObject
 
-from sm.engine import molecular_db
 from sm.engine.annotation.formula_validator import METRICS
 from sm.engine.annotation.job import del_jobs, insert_running_job, update_finished_job, JobStatus
 from sm.engine.annotation_lithops.executor import Executor
@@ -22,13 +22,12 @@ from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.ds_config import DSConfig
 from sm.engine.es_export import ESExporter
-from sm.engine.image_store import ImageStoreServiceWrapper
-from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.molecular_db import read_moldb_file
 from sm.engine.util import split_s3_path, split_cos_path
 from sm.engine.config import SMConfig
 from sm.engine.utils.perf_profile import Profiler
 from sm.engine.storage import get_s3_client
+from sm.engine import image_storage
 
 logger = logging.getLogger('engine')
 
@@ -72,7 +71,12 @@ def _upload_if_needed(src_path, storage, sm_storage, storage_type, s3_client=Non
             obj = s3_client.get_object(Bucket=src_bucket, Key=src_key)
             if hasattr(storage.get_client(), 'upload_fileobj'):
                 # Try streaming upload to IBM COS
-                storage.get_client().upload_fileobj(Fileobj=obj['Body'], Bucket=bucket, Key=key)
+                transfer_config = TransferConfig(
+                    multipart_chunksize=20 * MB, max_concurrency=20, io_chunksize=1 * MB
+                )
+                storage.get_client().upload_fileobj(
+                    Fileobj=obj['Body'], Bucket=bucket, Key=key, Config=transfer_config
+                )
                 cobject = CloudObject(storage.backend, bucket, key)
             else:
                 # Fall back to buffering the entire object in memory for other backends
@@ -156,7 +160,7 @@ class LocalAnnotationJob:
     """
     Runs an annotation job from local files and saves the results to the filesystem.
 
-    As a developer convienence, if a list of integers is given for `moldb_files`,
+    As a developer convenience, if a list of integers is given for `moldb_files`,
     then it will try to connect to the configured postgres database and dump the formulas
     for the specified databases.
     Otherwise, this can be used to run the pipeline without any external dependencies.
@@ -219,13 +223,12 @@ class LocalAnnotationJob:
 class ServerAnnotationJob:
     """
     Runs an annotation job for a dataset in the database, saving the results back to the database
-    and image store.
+    and image storage.
     """
 
     def __init__(
         self,
         executor: Executor,
-        img_store: ImageStoreServiceWrapper,
         ds: Dataset,
         perf: Profiler,
         sm_config: Optional[Dict] = None,
@@ -244,7 +247,6 @@ class ServerAnnotationJob:
         self.s3_client = get_s3_client()
         self.ds = ds
         self.perf = perf
-        self.img_store = img_store
         self.db = DB()
         self.es = ESExporter(self.db, sm_config)
         self.imzml_cobj, self.ibd_cobj = _upload_imzmls_from_prefix_if_needed(
@@ -274,13 +276,11 @@ class ServerAnnotationJob:
 
     def _store_images(self, all_results_dfs, formula_png_iter):
         db_formula_image_ids = defaultdict(dict)
-        img_store_type = self.ds.get_ion_img_storage_type(self.db)
+        ds_id = self.ds.id
 
         def _upload_images(formula_id, db_id, pngs):
             image_ids = [
-                self.img_store.post_image(img_store_type, 'iso_image', png)
-                if png is not None
-                else None
+                image_storage.post_image(image_storage.ISO, ds_id, png) if png is not None else None
                 for png in pngs
             ]
             db_formula_image_ids[db_id][formula_id] = {'iso_image_ids': image_ids}
@@ -300,7 +300,6 @@ class ServerAnnotationJob:
         return db_formula_image_ids
 
     def run(self, **kwargs):
-        isocalc = IsocalcWrapper(self.ds.config)
         # TODO: Only run missing moldbs
         del_jobs(self.ds)
         moldb_to_job_map = {}
@@ -320,6 +319,7 @@ class ServerAnnotationJob:
                 formula_image_ids = self.db_formula_image_ids.get(moldb_id, {})
 
                 search_results = SearchResults(
+                    ds_id=self.ds.id,
                     job_id=job_id,
                     metric_names=METRICS.keys(),
                     n_peaks=self.ds.config['isotope_generation']['n_peaks'],
@@ -328,7 +328,6 @@ class ServerAnnotationJob:
                 search_results.store_ion_metrics(results_df, formula_image_ids, self.db)
 
                 update_finished_job(job_id, JobStatus.FINISHED)
-                self.es.index_ds(self.ds.id, molecular_db.find_by_id(moldb_id), isocalc)
         except Exception:
             for moldb_id, job_id in moldb_to_job_map.items():
                 update_finished_job(job_id, JobStatus.FAILED)

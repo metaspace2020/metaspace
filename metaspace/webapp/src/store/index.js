@@ -24,6 +24,8 @@ const store = new Vuex.Store({
     lastUsedFilters: {},
 
     currentTour: null,
+
+    currentUser: {}
   },
 
   getters,

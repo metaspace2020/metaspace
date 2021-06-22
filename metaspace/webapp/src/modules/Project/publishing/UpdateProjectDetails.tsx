@@ -3,7 +3,7 @@ import { Button, Input } from '../../../lib/element-ui'
 
 import { WorkflowStep } from '../../../components/Workflow'
 import { RichTextArea } from '../../../components/RichText'
-import CopyToClipboard from '../../../components/CopyToClipboard'
+import { SmForm, CopyToClipboard } from '../../../components/Form'
 import FadeTransition from '../../../components/FadeTransition'
 import ShortLinkField from '../ShortLinkField'
 
@@ -52,6 +52,14 @@ const PrepareProject = defineComponent<Props>({
     project: Object,
     updateProject: Function,
   },
+  components: {
+    CopyToClipboard,
+    FadeTransition,
+    RichTextArea,
+    ShortLinkField,
+    SmForm,
+    WorkflowStep,
+  },
   setup(props) {
     const state = reactive<State>({
       editing: false,
@@ -89,11 +97,9 @@ const PrepareProject = defineComponent<Props>({
         <h2 class="sm-workflow-header">Update project details</h2>
         <FadeTransition>
           {(props.active || state.editing)
-            && <form
+            && <SmForm
               key="editing"
-              class="sm-form"
-              action="#"
-              onSubmit={(e: Event) => { e.preventDefault(); submit() }}
+              onSubmit={submit}
             >
               <p>
                 Create a short project link to use in the manuscript.
@@ -142,7 +148,7 @@ const PrepareProject = defineComponent<Props>({
               >
                 Cancel
               </Button> }
-            </form>}
+            </SmForm>}
           { props.done && !state.editing
           && <form
             key="done"

@@ -6,9 +6,22 @@ import { MolecularDB } from './moldb'
 export type GqlPolarity = 'POSITIVE' | 'NEGATIVE';
 export type GqlJobStatus = 'QUEUED' | 'ANNOTATING' | 'FINISHED' | 'FAILED';
 
+export interface FdrSingleCount {
+  level: number
+  n: number
+}
+
+export interface DatasetAnnotationCount {
+  databaseId: number;
+  dbName: string;
+  dbVersion: string;
+  counts: FdrSingleCount[];
+}
+
 export interface DatasetDetailItem {
   id: string;
   name: string;
+  description: string | null;
   submitter: {
     id: string | null;
     name: string;
@@ -44,6 +57,7 @@ export interface DatasetDetailItem {
   databases: MolecularDB[];
   status: GqlJobStatus | null;
   metadataType: string;
+  annotationCounts: DatasetAnnotationCount[];
   fdrCounts: {
     databaseId: number;
     dbName: string;
@@ -60,6 +74,7 @@ export const datasetDetailItemFragment =
   gql`fragment DatasetDetailItem on Dataset {
     id
     name
+    description
     submitter {
       id
       name
@@ -96,6 +111,15 @@ export const datasetDetailItemFragment =
       levels
       counts
     }
+    annotationCounts(inpFdrLvls: $inpFdrLvls) {
+      databaseId
+      dbName
+      dbVersion
+      counts {
+        level
+        n
+      }
+    }
     thumbnailOpticalImageUrl
     ionThumbnailUrl
     canDownload
@@ -104,9 +128,11 @@ export const datasetDetailItemFragment =
 
 export const datasetDetailItemsQuery =
   gql`query GetDatasets(
-    $dFilter: DatasetFilter, $query: String, $inpFdrLvls: [Int!]!, $checkLvl: Int!, $offset: Int = 0
+    $dFilter: DatasetFilter, $query: String, $inpFdrLvls: [Int!]!, $checkLvl: Int!, $offset: Int = 0,
+    $orderBy: DatasetOrderBy = ORDER_BY_DATE, $sortingOrder: SortingOrder = DESCENDING,
   ) {
-    allDatasets(offset: $offset, limit: 100, filter: $dFilter, simpleQuery: $query) {
+    allDatasets(orderBy: $orderBy, sortingOrder: $sortingOrder, offset: $offset, limit: 100, filter: $dFilter,
+    simpleQuery: $query) {
       ...DatasetDetailItem
     }
   }
@@ -135,8 +161,8 @@ export interface DatasetListItem {
 }
 
 export const datasetListItemsQuery =
-  gql`query GetDatasets($dFilter: DatasetFilter, $query: String) {
-    allDatasets(offset: 0, limit: 10000, filter: $dFilter, simpleQuery: $query) {
+  gql`query GetDatasets($dFilter: DatasetFilter, $query: String, $limit: Int = 10000) {
+    allDatasets(offset: 0, limit: $limit, filter: $dFilter, simpleQuery: $query) {
       id
       name
       uploadDT
@@ -268,3 +294,16 @@ export interface DownloadLinkJson {
   license: {code: string, name: string, link: string},
   files: {filename: string, link: string}[],
 }
+
+export interface GetDatasetByIdQuery {
+  dataset: DatasetDetailItem
+}
+export const getDatasetByIdQuery =
+  gql`query getDatasetByIdQuery($id: String!, $inpFdrLvls: [Int!] = [5, 10, 20, 50],
+  $checkLvl: Int = 10) {
+    dataset(id: $id) {
+      ...DatasetDetailItem
+    }
+  }
+  ${datasetDetailItemFragment}
+`

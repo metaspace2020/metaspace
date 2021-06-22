@@ -46,8 +46,8 @@ Be careful and follow the below processes when making migrations.
 5. Run `yarn exec typeorm migration:run` and check that it runs correctly.
 6. If it runs without error, but the changes are incorrect, run `yarn exec typeorm migration:revert` to revert 
     the last migration BEFORE attempting to fix the migration file.
-7. Make sure to commit the migration file. WebStorm doesn't automatically add it to git - you have to find it in the
-    "Unversioned Files" section of the commit window
+7. Make sure to commit the migration file. WebStorm doesn't automatically add it to git - you have to find it in the "Unversioned Files" section of the commit window.
+8. Run `yarn run gen-sql-schema` to re-generate the `db_schema.sql` script.
 
 ### To make manual changes to the schema, or changes to the data
 

@@ -58,7 +58,7 @@ class CentroidsGenerator:
         self._s3 = get_s3_client()
 
     def _generate(self, formulas, index_start=0):
-        """ Generate isotopic peaks
+        """Generate isotopic peaks
 
         Args
         ---
@@ -92,7 +92,7 @@ class CentroidsGenerator:
         return FormulaCentroids(formulas_df, centroids_df)
 
     def generate_if_not_exist(self, formulas):
-        """ Generate missing centroids and return them
+        """Generate missing centroids and return them
 
         Args
         ---
@@ -122,8 +122,7 @@ class CentroidsGenerator:
         return all_formula_centroids.subset(formulas)
 
     def _saved(self):
-        """ Check if ion centroids saved to parquet
-        """
+        """Check if ion centroids saved to parquet"""
         if self._centroids_stored_on_s3:
             bucket, key = split_s3_path(self._ion_centroids_path)
             try:
@@ -135,7 +134,7 @@ class CentroidsGenerator:
                 return True
         else:
             return all(
-                [(Path(self._ion_centroids_path) / fn).exists() for fn in self._parquet_file_names]
+                (Path(self._ion_centroids_path) / fn).exists() for fn in self._parquet_file_names
             )
 
     def _download_from_s3(self):
@@ -173,8 +172,7 @@ class CentroidsGenerator:
         return formula_centroids
 
     def _save(self, formula_centroids):
-        """ Save isotopic peaks
-        """
+        """Save isotopic peaks"""
         logger.info(f'Saving peaks to {self._ion_centroids_path}')
         assert formula_centroids.formulas_df.index.name == 'formula_i'
 
@@ -188,7 +186,7 @@ class CentroidsGenerator:
 
 
 class FormulaCentroids:
-    """ Theoretical isotope peaks for formulas
+    """Theoretical isotope peaks for formulas
 
     Args
     ----------
@@ -231,7 +229,7 @@ class FormulaCentroids:
         return self._centroids_df[self._centroids_df.mz > 0]
 
     def __add__(self, other):
-        """ Is also used for += operation by Python automatically
+        """Is also used for += operation by Python automatically
 
         Args
         -----

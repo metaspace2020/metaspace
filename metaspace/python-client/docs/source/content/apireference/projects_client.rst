@@ -2,5 +2,7 @@ metaspace.projects_client
 =============================
 
 .. automodule:: metaspace.projects_client
-   :members:
-   :undoc-members:
+    :member-order: bysource
+    :exclude-members: PROJECT_FIELDS
+    :members:
+    :undoc-members:

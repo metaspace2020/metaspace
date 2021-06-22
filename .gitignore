@@ -40,6 +40,7 @@ dist
 # IDE
 .idea
 .vscode
+*.DS_Store
 
 # Other files that should usually not be committed
 *.pkl

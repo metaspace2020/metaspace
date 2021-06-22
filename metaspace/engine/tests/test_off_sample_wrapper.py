@@ -1,3 +1,4 @@
+import io
 from collections import defaultdict
 
 from PIL import Image
@@ -8,14 +9,18 @@ from sm.engine.db import DB
 from sm.engine.postprocessing.off_sample_wrapper import classify_dataset_ion_images
 
 
-@patch('sm.engine.postprocessing.off_sample_wrapper.ImageStoreServiceWrapper')
+@patch('sm.engine.postprocessing.off_sample_wrapper.image_storage')
 @patch('sm.engine.postprocessing.off_sample_wrapper.call_api')
-def test_classify_ion_images_preds_saved(call_api_mock, ImageStoreServiceWrapperMock, fill_db):
+def test_classify_ion_images_preds_saved(call_api_mock, image_storage_mock, fill_db):
     call_api_mock.return_value = {
         'predictions': [{'prob': 0.1, 'label': 'on'}, {'prob': 0.9, 'label': 'off'}]
     }
-    image_store_mock = ImageStoreServiceWrapperMock()
-    image_store_mock.get_image_by_id.return_value = Image.new('RGBA', (10, 10))
+
+    fp = io.BytesIO()
+    Image.new('RGBA', (10, 10)).save(fp, format='PNG')
+    fp.seek(0)
+    img_bytes = fp.read()
+    image_storage_mock.get_image.return_value = img_bytes
 
     db = DB()
     ds_id = '2000-01-01'

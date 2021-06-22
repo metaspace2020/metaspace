@@ -123,7 +123,9 @@ def store_formula_segments(storage: Storage, formulas_df: pd.DataFrame):
 
 
 def build_moldb(
-    executor: Executor, ds_config: DSConfig, moldbs: List[InputMolDb],
+    executor: Executor,
+    ds_config: DSConfig,
+    moldbs: List[InputMolDb],
 ) -> Tuple[List[CObj[pd.DataFrame]], List[CObj[DbFDRData]]]:
     def _build_moldb(
         *, storage: Storage, perf: Profiler

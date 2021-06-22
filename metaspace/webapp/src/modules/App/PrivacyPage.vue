@@ -1,5 +1,5 @@
 <template>
-  <div class="sm-content-page">
+  <content-page>
     <h1>Privacy and Personal Data</h1>
     <h2>Privacy policy</h2>
     <p>
@@ -239,17 +239,24 @@
         contact@metaspace2020.eu<!-- -->
       </a>.
     </p>
-  </div>
+  </content-page>
 </template>
 <script>
-import './content.css'
+import ContentPage from '../../components/ContentPage.vue'
 
 export default {
   name: 'PrivacyPage',
+  components: {
+    ContentPage,
+  },
 }
 </script>
 <style scoped>
   td:first-child {
     @apply w-4/12;
+  }
+
+  tr + tr > td {
+    @apply pt-6;
   }
 </style>

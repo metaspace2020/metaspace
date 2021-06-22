@@ -2,14 +2,13 @@ import base64
 import json
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from functools import partial
-from io import BytesIO
+
 from PIL import Image
 from requests import post, get
 import numpy as np
 
 from sm.engine.errors import SMError
-from sm.engine.image_store import ImageStoreServiceWrapper
+from sm.engine import image_storage
 from sm.engine.utils.retry_on_exception import retry_on_exception
 
 logger = logging.getLogger('update-daemon')
@@ -20,13 +19,6 @@ def make_chunk_gen(items, chunk_size):
     chunks = [items[i * chunk_size : (i + 1) * chunk_size] for i in range(chunk_n)]
     for image_path_chunk in chunks:
         yield image_path_chunk
-
-
-def encode_image_as_base64(img):
-    fp = BytesIO()
-    img.save(fp, format='PNG')
-    fp.seek(0)
-    return base64.b64encode(fp.read()).decode()
 
 
 def base64_images_to_doc(images):
@@ -73,14 +65,15 @@ def call_api(url='', doc=None):
     raise SMError(resp.content or resp)
 
 
-def make_classify_images(api_endpoint, get_image):
+def make_classify_images(api_endpoint, ds_id):
     def classify(chunk):
         logger.debug(f'Classifying chunk of {len(chunk)} images')
 
         base64_images = []
-        for elem in chunk:
-            img = get_image(elem)
-            base64_images.append(encode_image_as_base64(img))
+        for img_id in chunk:
+            img_bytes = image_storage.get_image(image_storage.ISO, ds_id, img_id)
+            img_base64 = base64.b64encode(img_bytes).decode()
+            base64_images.append(img_base64)
 
         images_doc = base64_images_to_doc(base64_images)
         pred_doc = call_api(api_endpoint + '/predict', doc=images_doc)
@@ -107,16 +100,11 @@ def classify_dataset_ion_images(db, ds, services_config, overwrite_existing=Fals
         overwrite_existing (bool): whether to overwrite existing image classes
     """
     off_sample_api_endpoint = services_config['off_sample']
-    img_api_endpoint = services_config['img_service_url']
-
-    image_store_service = ImageStoreServiceWrapper(img_api_endpoint)
-    storage_type = ds.get_ion_img_storage_type(db)
-    get_image_by_id = partial(image_store_service.get_image_by_id, storage_type, 'iso_image')
 
     annotations = db.select_with_fields(SEL_ION_IMAGES, (ds.id, overwrite_existing))
     image_ids = [a['img_id'] for a in annotations]
 
-    classify_images = make_classify_images(off_sample_api_endpoint, get_image_by_id)
+    classify_images = make_classify_images(off_sample_api_endpoint, ds.id)
     image_predictions = classify_images(image_ids)
 
     rows = [(ann['ann_id'], json.dumps(pred)) for ann, pred in zip(annotations, image_predictions)]

@@ -47,6 +47,7 @@ export interface ESDatasetSource {
   ds_group_short_name: string | null;
   ds_group_approved: boolean;
   ds_project_ids?: string[];
+  ds_ion_thumbnail_url: string;
   annotation_counts: any[];
 }
 
@@ -74,7 +75,8 @@ export interface ESAnnotationSource extends ESDatasetSource {
 
   mz: number;
   centroid_mzs: number[];
-  iso_image_ids: (string|null)[];
+  iso_image_ids: (string|null)[]; // FIXME: remove after data migration
+  iso_image_urls?: (string|null)[];
   total_iso_ints: number[];
   min_iso_ints: number[];
   max_iso_ints: number[];
@@ -149,8 +151,30 @@ const esSort = (orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: Sorti
       sortTerm('ds_status_update_dt', order),
       sortTerm('ds_last_finished', order),
     ]
+  } else if (orderBy === 'ORDER_BY_DS_SUBMITTER_NAME') {
+    return [sortTerm('ds_submitter_name', order)]
+  } else if (orderBy === 'ORDER_BY_ANNOTATION_COUNTS') {
+    return [
+      {
+        _script: {
+          type: 'number',
+          script: {
+            inline: 'int maxCountFDR10 = 0; if(params._source.annotation_counts == null) { return -1 } '
+                + 'for (dbs in params._source.annotation_counts) { for (counts in dbs.counts)'
+                + ' { if (counts.level == 10 && counts.n > maxCountFDR10) { maxCountFDR10 = counts.n; } } }'
+                + ' return maxCountFDR10;',
+          },
+          order: order,
+        },
+      },
+    ]
   } else if (orderBy === 'ORDER_BY_NAME') {
     return [sortTerm('ds_name', order)]
+  } else if (orderBy === 'ORDER_BY_UP_DATE') {
+    return [
+      sortTerm('ds_upload_dt', order),
+      sortTerm('ds_last_finished', order),
+    ]
   }
 }
 
@@ -233,13 +257,13 @@ const constructDatasetFilters = (filter: DatasetFilter) => {
 }
 
 interface ExtraAnnotationFilters {
-  annId?: string;
+  annotationId?: string;
 }
 
 const constructAnnotationFilters = (filter: AnnotationFilter & ExtraAnnotationFilters) => {
   const {
     databaseId, datasetName, mzFilter, msmScoreFilter, fdrLevel,
-    sumFormula, chemMod, neutralLoss, adduct, ion, ionFormula, offSample, compoundQuery, annId,
+    sumFormula, chemMod, neutralLoss, adduct, ion, ionFormula, offSample, compoundQuery, annotationId,
     isobaricWith, hasNeutralLoss, hasChemMod, hasHiddenAdduct,
   } = filter
   const filters = []
@@ -259,7 +283,7 @@ const constructAnnotationFilters = (filter: AnnotationFilter & ExtraAnnotationFi
     filters.push(constructRangeFilter('fdr', { min: null, max: fdrLevel + 1e-3 }))
   }
 
-  if (annId) { filters.push({ term: { _id: annId } }) }
+  if (annotationId) { filters.push({ terms: { _id: annotationId.split('|') } }) }
   if (databaseId) { filters.push({ term: { db_id: databaseId } }) }
   if (sumFormula) { filters.push({ term: { formula: sumFormula } }) }
   if (chemMod != null) { filters.push({ term: { chem_mod: chemMod } }) }
@@ -430,6 +454,73 @@ export const esCountGroupedResults = async(args: any, docType: DocType, user: Co
   return flattenAggResponse(args.groupingFields, resp.aggregations, 0)
 }
 
+export const esRawAggregationResults = async(args: any, docType: DocType,
+  user: ContextUser): Promise<any> => {
+  const body = await constructESQuery(args, docType, user)
+
+  const aggRequest = {
+    body: {
+      ...body,
+      aggs: {
+        unique_formulas: {
+          terms: {
+            field: 'ion',
+            size: 1000000, // given ES agg pagination lacking, here we need a big number to return everything
+          },
+          aggs: {
+            unique_db_ids: {
+              terms: {
+                field: 'db_id',
+              },
+              aggs: {
+                unique_ds_ids: {
+                  terms: {
+                    field: 'ds_id',
+                  },
+                  aggs: {
+                    include_source: {
+                      top_hits: {
+                        _source: {},
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    index: esIndex,
+    size: 0,
+  }
+  const resp = await es.search(aggRequest)
+  const aggAnnotations : any[] = []
+
+  if (resp.aggregations) {
+    resp.aggregations.unique_formulas.buckets.forEach((agg:any) => {
+      agg.unique_db_ids.buckets.forEach((db: any) => {
+        const item : {
+          ion : string
+          dbId: number
+          datasetIds: string[]
+          annotations: any[]
+        } | any = {}
+        item.ion = agg.key
+        item.dbId = db.key
+        item.datasetIds = []
+        item.annotations = []
+        db.unique_ds_ids.buckets.forEach((ds: any) => {
+          item.datasetIds.push(ds.key)
+          item.annotations.push(ds.include_source.hits.hits[0])
+        })
+        aggAnnotations.push(item)
+      })
+    })
+  }
+  return aggAnnotations
+}
+
 export const esCountMatchingAnnotationsPerDataset = async(
   args: any, user: ContextUser
 ): Promise<Record<string, number>> => {
@@ -488,7 +579,7 @@ const getFirst = async(args: any, docType: DocType, user: ContextUser, bypassAut
 
 export const esAnnotationByID = async(id: string, user: ContextUser): Promise<ESAnnotationSource | null> => {
   if (id) {
-    return getFirst({ filter: { annId: id } }, 'annotation', user)
+    return getFirst({ filter: { annotationId: id } }, 'annotation', user)
   }
   return null
 }

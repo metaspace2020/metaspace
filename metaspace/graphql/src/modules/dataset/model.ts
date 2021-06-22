@@ -16,6 +16,9 @@ export class Dataset {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
+  @Column({ type: 'text', nullable: true })
+  description: string | null;
+
   @Column({ type: 'uuid', nullable: true })
   groupId: string | null; // dataset belongs to group -> all members have view rights
 

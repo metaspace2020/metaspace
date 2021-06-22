@@ -23,71 +23,44 @@ from sm.engine.utils.perf_profile import SubtaskProfiler
 logger = logging.getLogger('annotation-pipeline')
 
 
-def create_imzml_parser(storage: Storage, imzml_cobject: CloudObject):
+def load_portable_spectrum_reader(storage: Storage, imzml_cobject: CloudObject):
     stream = storage.get_cloudobject(imzml_cobject, stream=True)
-    return ImzMLParser(stream, parse_lib='ElementTree', ibd_file=None)
+
+    imzml_parser = ImzMLParser(stream, parse_lib='ElementTree', ibd_file=None)
+    return imzml_parser.portable_spectrum_reader()
 
 
-def _get_polarity(imzml_parser: ImzMLParser, storage: Storage, imzml_cobject: CloudObject):
-    """
-    Get polarity from imzml reader.
-
-    Trying to find polariry information in the header of the file.
+def _get_polarity(storage: Storage, imzml_cobject: CloudObject):
+    """Trying to find polarity information in the header of the file.
     Otherwise, we re-read the file with the option include_spectra_metadata='full'
     and try to find information in the body(`spectrumList`) section.
-    Returned value:
-      +1 - positive polarity
-      -1 - negative polarity
-       0 - polarity not set in file
     """
-    in_header, polarity = _check_polarity_in_header(imzml_parser)
-    if in_header:  # pylint: disable=no-else-return
-        return polarity
-    else:
-        stream = storage.get_cloudobject(imzml_cobject, stream=True)
-        imzml_parser = ImzMLParser(
-            stream, parse_lib='ElementTree', ibd_file=None, include_spectra_metadata='full'
-        )
-        in_spectrum, polarity = _check_polarity_in_body(imzml_parser)
-        if in_spectrum:
-            return polarity
+    # check in header
+    stream = storage.get_cloudobject(imzml_cobject, stream=True)
+    imzml_parser = ImzMLParser(stream, parse_lib='ElementTree', ibd_file=None)
+    in_header = imzml_parser.metadata.referenceable_param_groups.get('spectrum1')
+    if in_header:
+        return _check_and_convert_polarity(in_header)
 
-        return 0
+    # check in body
+    stream = storage.get_cloudobject(imzml_cobject, stream=True)
+    imzml_parser = ImzMLParser(
+        stream, parse_lib='ElementTree', ibd_file=None, include_spectra_metadata='full'
+    )
+    in_spectrum = imzml_parser.spectrum_full_metadata
+    if in_spectrum:
+        return _check_and_convert_polarity(in_spectrum[0])
 
-
-def _check_polarity_in_header(imzml_parser):
-    """
-    Check info about polarity in header of imzml file.
-
-    Inside `referenceableParamGroupList`.
-    """
-    header = imzml_parser.metadata.referenceable_param_groups.get('spectrum1')
-    if header:
-        return _check_and_convert_polarity(header)
-
-    return False, 0
-
-
-def _check_polarity_in_body(imzml_parser):
-    """
-    Check info about polarity in body of imzml file.
-
-    Inside first `spectrum` of `spectrumList`.
-    """
-    spectrum_meta = imzml_parser.spectrum_full_metadata
-    if spectrum_meta:
-        return _check_and_convert_polarity(spectrum_meta[0])
-
-    return False, 0
+    return 'unspecified'
 
 
 def _check_and_convert_polarity(meta):
-    if meta.param_by_name.get('positive scan'):  # pylint: disable=no-else-return
-        return True, 1
+    if meta.param_by_name.get('positive scan'):
+        return 'positive'
     elif meta.param_by_name.get('negative scan'):
-        return True, -1
+        return 'negative'
     else:
-        return False, 0
+        return 'unspecified'
 
 
 def get_spectra(
@@ -206,12 +179,9 @@ def _load_ds(
     *,
     storage: Storage,
     perf: SubtaskProfiler,
-) -> Tuple[
-    PortableSpectrumReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray,
-]:
+) -> Tuple[PortableSpectrumReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray,]:
     logger.info('Loading .imzML file...')
-    imzml_parser = create_imzml_parser(storage, imzml_cobject)
-    imzml_reader = imzml_parser.portable_spectrum_reader()
+    imzml_reader = load_portable_spectrum_reader(storage, imzml_cobject)
     perf.record_entry(
         'loaded imzml',
         n_peaks=np.sum(imzml_reader.intensityLengths),
@@ -220,7 +190,7 @@ def _load_ds(
     )
 
     logger.info('Finding polarity')
-    polarity = _get_polarity(imzml_parser, storage, imzml_cobject)
+    polarity = _get_polarity(storage, imzml_cobject)
     perf.record_entry('find polarity')
 
     logger.info('Reading spectra')
@@ -261,7 +231,9 @@ def load_ds(
         runtime_memory = 32768
 
     imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens, polarity = executor.call(
-        _load_ds, (imzml_cobject, ibd_cobject, ds_segm_size_mb), runtime_memory=runtime_memory,
+        _load_ds,
+        (imzml_cobject, ibd_cobject, ds_segm_size_mb),
+        runtime_memory=runtime_memory,
     )
 
     logger.info(f'Segmented dataset chunks into {len(ds_segms_cobjs)} segments')
@@ -293,7 +265,10 @@ def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobjs
 
     n_segms = len(ds_segms_cobjs)
     assert n_segms == len(ds_segm_lens), (n_segms, len(ds_segm_lens))
-    assert ds_segments_bounds.shape == (n_segms, 2,), (ds_segments_bounds.shape, (n_segms, 2))
+    assert ds_segments_bounds.shape == (
+        n_segms,
+        2,
+    ), (ds_segments_bounds.shape, (n_segms, 2))
 
     results = fexec.map(get_segm_stats, ds_segms_cobjs)
 

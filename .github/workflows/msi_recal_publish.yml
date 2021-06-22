@@ -1,0 +1,13 @@
+# This is a placeholder action file, because manually triggered actions need a file in the master branch to be run on any branch.
+# The real action template will come in a PR
+name: Build msi_recal wheels
+
+on:
+  workflow_dispatch:
+
+jobs:
+  hello_world:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Hello world
+        run: echo "Hello world"

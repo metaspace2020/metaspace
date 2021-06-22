@@ -21,6 +21,7 @@ const FILTER_TO_URL: Record<FilterKey, string> = {
   project: 'prj',
   submitter: 'subm',
   datasetIds: 'ds',
+  annotationIds: 'ann',
   minMSM: 'msm',
   compoundName: 'mol',
   chemMod: 'chem_mod',
@@ -38,6 +39,7 @@ const FILTER_TO_URL: Record<FilterKey, string> = {
   analyzerType: 'instr',
   simpleQuery: 'q',
   simpleFilter: 'f',
+  datasetOwner: 'ds_owner',
   metadataType: 'mdtype',
   colocalizedWith: 'colo',
   colocalizationSamples: 'locs',
@@ -48,6 +50,8 @@ const URL_TO_FILTER = invert(FILTER_TO_URL) as Record<string, FilterKey>
 
 const PATH_TO_LEVEL: [RegExp, Level][] = [
   [/^\/annotations/i, 'annotation'],
+  [/^\/datasets\/\S+\/comparison/i, 'annotation'],
+  [/^\/dataset\/\S+\/annotations/i, 'dataset-annotation'],
   [/^\/datasets/i, 'dataset'],
   [/^\/datasets\/summary/i, 'dataset'],
   [/^\/upload/i, 'upload'],
@@ -78,7 +82,6 @@ export const DEFAULT_COLORMAP = 'Viridis'
 export function encodeParams(filter: any, path?: string, filterLists?: MetadataLists): Dictionary<string> {
   const level = getLevel(path)
   const defaultFilter = level != null ? getDefaultFilter(level, filterLists) : null
-
   const q: Dictionary<string> = {}
   let key: FilterKey
   for (key in FILTER_TO_URL) {
@@ -91,7 +94,7 @@ export function encodeParams(filter: any, path?: string, filterLists?: MetadataL
       if (encoding === 'json') {
         q[FILTER_TO_URL[key]] = JSON.stringify(filter[key])
       } else if (encoding === 'list') {
-        q[FILTER_TO_URL[key]] = filter[key].join(',')
+        q[FILTER_TO_URL[key]] = filter[key] ? filter[key].join(',') : undefined
       } else if (encoding === 'bool') {
         q[FILTER_TO_URL[key]] = filter[key] ? '1' : '0'
       } else if (encoding === 'number') {
@@ -101,6 +104,7 @@ export function encodeParams(filter: any, path?: string, filterLists?: MetadataL
       }
     }
   }
+
   return q
 }
 

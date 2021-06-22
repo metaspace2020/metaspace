@@ -14,6 +14,10 @@ export default {
     return decodeParams(state.route, state.filterLists);
   },
 
+  currentUser(state) {
+    return state.currentUser;
+  },
+
   settings(state) {
     return decodeSettings(state.route);
   },
@@ -31,6 +35,7 @@ export default {
       chemMod: noneToEmptyString(filter.chemMod),
       neutralLoss: noneToEmptyString(filter.neutralLoss),
       adduct: filter.adduct,
+      annotationId: filter.annotationIds ? filter.annotationIds.join('|') : undefined,
       fdrLevel: filter.fdrLevel,
       colocalizedWith: filter.colocalizedWith,
       // Only include colocalizationAlgo if there is another filter that uses it. Otherwise the annotations list
@@ -74,13 +79,14 @@ export default {
     const { group, project, submitter, datasetIds, polarity,
       organism, organismPart, condition, growthConditions,
       ionisationSource, analyzerType, maldiMatrix, metadataType,
-      compoundName } = filter;
+      compoundName, datasetOwner } = filter;
     const level = getters.filterLevel;
+    const isLogged = state.currentUser && state.currentUser.id
     const hasAnnotationMatching = level === 'dataset' && compoundName ? { compoundQuery: compoundName } : undefined;
     return {
-      group: group,
+      group: datasetOwner && datasetOwner !== 'my-datasets' && isLogged ? datasetOwner : group,
       project: project,
-      submitter: submitter,
+      submitter: datasetOwner === 'my-datasets' && isLogged ? state.currentUser.id : submitter,
 
       // temporary workaround because of array-related bugs in apollo-client
       ids: datasetIds ? datasetIds.join("|") : null,

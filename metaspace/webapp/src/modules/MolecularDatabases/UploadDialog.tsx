@@ -4,21 +4,14 @@ import { defineComponent, reactive, onMounted, ref } from '@vue/composition-api'
 import { ApolloError } from 'apollo-client-preset'
 import { UppyOptions, UploadResult } from '@uppy/core'
 
-import { PrimaryLabelText } from '../../components/Form'
+import { SmForm, PrimaryLabelText } from '../../components/Form'
 import UppyUploader from '../../components/UppyUploader/UppyUploader.vue'
 import FadeTransition from '../../components/FadeTransition'
 
 import { createDatabaseQuery, MolecularDBDetails } from '../../api/moldb'
 import safeJsonParse from '../../lib/safeJsonParse'
 import reportError from '../../lib/reportError'
-import { getS3Bucket } from '../../lib/util'
-
-const convertToS3 = (url: string) => {
-  const parsedUrl = new URL(url)
-  const bucket = getS3Bucket(parsedUrl)
-  const path = decodeURIComponent(parsedUrl.pathname.slice(1))
-  return `s3://${bucket}/${path}`
-}
+import { convertUploadUrlToS3Path } from '../../lib/util'
 
 const uppyOptions : UppyOptions = {
   debug: true,
@@ -110,7 +103,9 @@ const UploadDialog = defineComponent<Props>({
     const handleUploadComplete = (result: UploadResult) => {
       if (result.successful.length) {
         const [file] = result.successful
-        state.model.filePath = convertToS3(file.uploadURL)
+        // The path part of file.uploadURL is double-URI-encoded for some reason (slashes in the path are %2F,
+        // spaces in the filename are %2520). Decode it once to get a regular URI (slashes are /, spaces are %20).
+        state.model.filePath = convertUploadUrlToS3Path(decodeURIComponent(file.uploadURL))
         if (!state.model.name) {
           state.model.name = file.name.substr(0, file.name.lastIndexOf('.')) || file.name
         }
@@ -181,7 +176,7 @@ const UploadDialog = defineComponent<Props>({
               </div>
             </div> }
         </FadeTransition>
-        <form class="sm-form flex leading-6">
+        <SmForm class="flex leading-6">
           <div class="flex-grow">
             <label for="database-name">
               <PrimaryLabelText>Name</PrimaryLabelText>
@@ -204,7 +199,7 @@ const UploadDialog = defineComponent<Props>({
               disabled={state.loading}
             />
           </div>
-        </form>
+        </SmForm>
         <p class="m-0 mt-3">
           Databases should be provided in{' '}
           <a href="https://en.wikipedia.org/wiki/Tab-separated_values">TSV format</a>.
@@ -220,10 +215,10 @@ const UploadDialog = defineComponent<Props>({
         </pre>
         <UppyUploader
           class="mt-6"
-          removeFile={handleRemoveFile}
           disabled={state.loading}
           options={uppyOptions}
           s3Options={s3Options}
+          onFile-removed={handleRemoveFile} /* ugly alert */
           onComplete={handleUploadComplete}
         />
         <span slot="footer">

@@ -1,5 +1,5 @@
 <template>
-  <div class="sm-content-page">
+  <content-page>
     <primary-icon large>
       <sign-svg />
     </primary-icon>
@@ -7,17 +7,17 @@
     <p class="pt-6">
       <a href="javascript:history.go(-1)">Go back</a>
     </p>
-  </div>
+  </content-page>
 </template>
 <script>
-import './content.css'
-
+import ContentPage from '../../components/ContentPage.vue'
 import PrimaryIcon from '../../components/PrimaryIcon.vue'
 import SignSvg from '../../assets/inline/refactoring-ui/icon-sign.svg'
 
 export default {
   name: 'NotFoundPage',
   components: {
+    ContentPage,
     PrimaryIcon,
     SignSvg,
   },

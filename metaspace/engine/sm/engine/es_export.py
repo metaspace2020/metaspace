@@ -23,6 +23,7 @@ from sm.engine import molecular_db
 from sm.engine.molecular_db import MolecularDB
 from sm.engine.utils.retry_on_exception import retry_on_exception
 from sm.engine.config import SMConfig
+from sm.engine import image_storage
 
 logger = logging.getLogger('engine')
 
@@ -80,11 +81,11 @@ FROM (
     d.config #> '{isotope_generation,adducts}' AS ds_adducts,
     d.config #> '{isotope_generation,neutral_losses}' AS ds_neutral_losses,
     d.config #> '{isotope_generation,chem_mods}' AS ds_chem_mods,
-    d.acq_geometry AS ds_acq_geometry,
-    d.ion_img_storage_type AS ds_ion_img_storage
+    d.acq_geometry AS ds_acq_geometry
   FROM dataset as d
   LEFT JOIN job ON job.ds_id = d.id
-  GROUP BY d.id) as d
+  GROUP BY d.id
+) as d
 LEFT JOIN graphql.dataset gd ON gd.id = d.ds_id
 LEFT JOIN graphql.user gu ON gu.id = gd.user_id
 LEFT JOIN graphql.group gg ON gg.id = gd.group_id
@@ -290,8 +291,7 @@ class ESExporter:
 
     @retry_on_exception(TransportError)
     def sync_dataset(self, ds_id):
-        """ Warning: This will wait till ES index/update is completed
-        """
+        """Warning: This will wait till ES index/update is completed"""
         with self._ds_locker.lock(ds_id):
             ds = self._select_ds_by_id(ds_id)
             if self._es.exists(index=self.index, doc_type='dataset', id=ds_id):
@@ -383,6 +383,12 @@ class ESExporter:
             mzs, _ = isocalc.centroids(ion_without_pol)
             doc['centroid_mzs'] = list(mzs) if mzs is not None else []
             doc['mz'] = mzs[0] if mzs is not None else 0
+            doc['iso_image_urls'] = [
+                image_storage.get_image_url(image_storage.ISO, ds_id, image_id)
+                if image_id
+                else None
+                for image_id in doc['iso_image_ids']
+            ]
 
             if moldb.targeted:
                 fdr_level = doc['fdr'] = -1
@@ -577,8 +583,8 @@ class ESExporterIsobars:
             for peak_i, mz in enumerate(doc['centroid_mzs']):
                 if (
                     mz != 0
-                    and peak_i < len(doc['iso_image_ids'])
-                    and doc['iso_image_ids'][peak_i] is not None
+                    and peak_i < len(doc['iso_image_urls'])
+                    and doc['iso_image_urls'][peak_i] is not None
                 ):
                     peaks.append(
                         (

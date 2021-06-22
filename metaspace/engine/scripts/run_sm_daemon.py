@@ -1,15 +1,17 @@
 #!/usr/bin/env python
 import argparse
 import logging
+import os
+import resource
 import signal
 import sys
 from functools import partial
 from multiprocessing.process import parent_process
+from threading import Timer
 
 from sm.engine.daemons.lithops import LithopsDaemon
 from sm.engine.db import DB, ConnectionPool
 from sm.engine.es_export import ESExporter
-from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.daemons.update import SMUpdateDaemon
 from sm.engine.daemons.annotate import SMAnnotateDaemon
 from sm.engine.daemons.dataset_manager import DatasetManager
@@ -21,7 +23,7 @@ from sm.engine.queue import (
     QueuePublisher,
     QueueConsumer,
 )
-from sm.engine.config import init_loggers, SMConfig
+from sm.engine.util import on_startup
 
 
 def get_manager():
@@ -32,13 +34,12 @@ def get_manager():
     return DatasetManager(
         db=db,
         es=ESExporter(db, sm_config),
-        img_store=ImageStoreServiceWrapper(sm_config['services']['img_service_url']),
         status_queue=status_queue_pub,
         logger=logger,
     )
 
 
-def main(daemon_name):
+def main(daemon_name, exit_after):
     logger.info(f'Starting {daemon_name}-daemon')
 
     conn_pool = ConnectionPool(sm_config['db'])
@@ -60,6 +61,18 @@ def main(daemon_name):
             daemon = SMUpdateDaemon(get_manager(), make_update_queue_cons)
             daemons.append(daemon)
     elif daemon_name == 'lithops':
+        try:
+            # Raise the soft limit of open files, as Lithops sometimes makes many network
+            # connections in parallel, exceeding the default limit of 1024.
+            # The hard limit cannot be changed by non-sudo users.
+            soft_rlimit, hard_rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
+            new_rlimit = 10000
+            if soft_rlimit < new_rlimit:
+                resource.setrlimit(resource.RLIMIT_NOFILE, (new_rlimit, hard_rlimit))
+                logger.debug(f'Raised open file limit from {soft_rlimit} to {new_rlimit}')
+        except Exception:
+            logger.warning('Failed to set the open file limit (non-critical)', exc_info=True)
+
         daemon = LithopsDaemon(
             get_manager(), lit_qdesc=SM_LITHOPS, annot_qdesc=SM_ANNOTATE, upd_qdesc=SM_UPDATE
         )
@@ -78,8 +91,18 @@ def main(daemon_name):
         conn_pool.close()
         sys.exit(1)
 
+    def timer_stop_daemons():
+        # Raise a signal to stop the daemons. Only the main thread is able to set an exit code,
+        # so a signal is raised instead of calling cb_stop_daemons directly from the timer thread.
+        os.kill(os.getpid(), signal.SIGINT)
+
     signal.signal(signal.SIGINT, cb_stop_daemons)
     signal.signal(signal.SIGTERM, cb_stop_daemons)
+
+    if exit_after is not None:
+        exit_timer = Timer(exit_after, timer_stop_daemons)
+        exit_timer.setDaemon(True)  # Don't prevent shutdown if the timer is still running
+        exit_timer.start()
 
     for daemon in daemons:
         daemon.start()
@@ -97,11 +120,14 @@ if __name__ == "__main__":
     parser.add_argument(
         '--config', dest='config_path', default='conf/config.json', type=str, help='SM config path'
     )
+    parser.add_argument(
+        '--exit-after',
+        type=float,
+        help='Exits gracefully with an exitcode after N seconds',
+    )
     args = parser.parse_args()
 
-    SMConfig.set_path(args.config_path)
-    sm_config = SMConfig.get_conf()
-    init_loggers(sm_config['logs'])
+    sm_config = on_startup(args.config_path)
     logger = logging.getLogger(f'{args.name}-daemon')
 
-    main(args.name)
+    main(args.name, args.exit_after)

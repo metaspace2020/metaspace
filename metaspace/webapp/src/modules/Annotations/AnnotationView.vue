@@ -122,6 +122,7 @@
             :annotation="annotation"
             :colormap="colormap"
             :opacity="opacity"
+            :optical-opacity="opticalOpacity"
             :image-position="imagePosition"
             :image-loader-settings="imageLoaderSettings"
             :apply-image-move="onImageMove"
@@ -131,6 +132,7 @@
             :scale-bar-color="scaleBarColor"
             :scale-type="scaleType"
             @opacity="newVal => opacity = newVal"
+            @opticalOpacity="newVal => opticalOpacity = newVal"
           />
         </el-collapse-item>
 
@@ -259,7 +261,6 @@
     cursor: default !important;
     font-size: 24px;
     align-items: baseline;
-    font-variant-numeric: proportional-nums;
 
     >*+* {
       margin-left: 16px;

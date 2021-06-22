@@ -26,6 +26,7 @@
                   :error="error && error.databaseIds"
                   :multiple-limit="maxMolDBs"
                   required
+                  @remove-tag="onDbRemoval"
                   @input="val => onInput('databaseIds', val)"
                 >
                   <el-option-group
@@ -264,7 +265,7 @@ import config, { limits } from '../../../lib/config'
 import { formatDatabaseLabel, MolDBsByGroup } from '../../MolecularDatabases/formatting'
 import { sortBy } from 'lodash-es'
 import PopupAnchor from '../../../modules/NewFeaturePopup/PopupAnchor.vue'
-
+import { MolecularDB } from '../../../api/moldb'
 import './FormSection.scss'
 
 interface Option {
@@ -301,6 +302,9 @@ export default class MetaspaceOptionsSection extends Vue {
     @Prop({ type: Array, required: true })
     databasesByGroup!: MolDBsByGroup[];
 
+    @Prop({ type: Object, required: true })
+    defaultDb!: MolecularDB | null;
+
     @Prop({ type: Array, required: true })
     adductOptions!: {value: string, label: string}[];
 
@@ -336,6 +340,16 @@ export default class MetaspaceOptionsSection extends Vue {
 
     onInput<TKey extends keyof MetaspaceOptions>(field: TKey, val: MetaspaceOptions[TKey]) {
       this.$emit('input', { ...this.value, [field]: val })
+    }
+
+    onDbRemoval<TKey extends keyof MetaspaceOptions>(val: any) {
+      if (this.defaultDb && val === this.defaultDb.id) {
+        this.$message({
+          message: `${(this.defaultDb.group?.shortName || 'METASPACE')}
+        ${formatDatabaseLabel(this.defaultDb)} is the default database and It can not be removed.`,
+        })
+        this.onInput('databaseIds', this.value.databaseIds)
+      }
     }
 
     updateNeutralLossOptions(query: string) {

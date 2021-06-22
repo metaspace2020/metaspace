@@ -4,11 +4,7 @@
       v-if="project != null"
       class="mt-6 mb-12"
     >
-      <form
-        class="sm-form"
-        action="#"
-        @submit="e => { e.preventDefault(); handleSave() }"
-      >
+      <sm-form @submit="handleSave">
         <h2>Project Details</h2>
         <edit-project-form
           v-model="model"
@@ -39,7 +35,7 @@
             Update details
           </span>
         </button>
-      </form>
+      </sm-form>
       <div class="mt-12">
         <h2>Delete project</h2>
         <p v-if="isPublished">
@@ -88,12 +84,14 @@ import reportError from '../../lib/reportError'
 import { parseValidationErrors } from '../../api/validation'
 import DoiField from './DoiField'
 import ShortLinkField from './ShortLinkField'
+import { SmForm } from '../../components/Form'
 
 @Component<ProjectSettings>({
   components: {
     EditProjectForm,
     DoiField,
     ShortLinkField,
+    SmForm,
   },
   apollo: {
     currentUser: {

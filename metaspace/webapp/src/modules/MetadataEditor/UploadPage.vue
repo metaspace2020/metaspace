@@ -114,12 +114,12 @@ import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/
 import get from 'lodash-es/get'
 import { currentUserIdQuery } from '../../api/user'
 import reportError from '../../lib/reportError'
-import { getS3Bucket } from '../../lib/util'
+import { parseS3Url } from '../../lib/util'
 import config from '../../lib/config'
 
 const createInputPath = (url, uuid) => {
   const parsedUrl = new URL(url)
-  const bucket = getS3Bucket(parsedUrl)
+  const { bucket } = parseS3Url(parsedUrl)
   return `s3a://${bucket}/${uuid}`
 }
 
@@ -261,7 +261,8 @@ export default {
       try {
         const response = await fetch(`${this.uploadEndpoint}/s3/uuid`)
         if (response.status < 200 || response.status >= 300) {
-          reportError()
+          const responseBody = await response.text()
+          reportError(new Error(`Unexpected server response getting upload UUID: ${response.status} ${responseBody}`))
         } else {
           // uuid and uuidSignature
           this.storageKey = await response.json()
@@ -281,9 +282,15 @@ export default {
       })
     },
 
-    onFileRemoved(file) {
+    async onFileRemoved(file) {
       this.uploads[file.extension.toLowerCase()] = false
-      this.status = 'READY'
+      if (Object.values(this.uploads).every(flag => !flag)) {
+        // Get a new storage key, because the old uploads may have different filenames which would cause later issues
+        // when trying to determine which file to use if they were uploaded to the same prefix.
+        await this.fetchStorageKey()
+      } else {
+        this.status = 'READY'
+      }
     },
 
     onUploadStart() {

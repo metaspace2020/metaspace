@@ -173,7 +173,10 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
 
     def validate_segment_centroids(self):
         validate_centroid_segments(
-            self.executor, self.db_segms_cobjs, self.ds_segments_bounds, self.isocalc_wrapper,
+            self.executor,
+            self.db_segms_cobjs,
+            self.ds_segments_bounds,
+            self.isocalc_wrapper,
         )
 
     @use_pipeline_cache

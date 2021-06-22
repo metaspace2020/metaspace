@@ -15,8 +15,7 @@ from sm.rest.dataset_manager import DatasetActionPriority
 
 
 class SMAnnotateDaemon:
-    """ Reads messages from annotation queue and starts annotation jobs
-    """
+    """Reads messages from annotation queue and starts annotation jobs"""
 
     logger = logging.getLogger('annotate-daemon')
 
@@ -40,7 +39,7 @@ class SMAnnotateDaemon:
         Path(self._sm_config['fs']['spark_data_path']).mkdir(parents=True, exist_ok=True)
 
     def _on_success(self, msg):
-        self.logger.info(f" SM annotate daemon: success")
+        self.logger.info(' SM annotate daemon: success')
 
         ds = self._manager.load_ds(msg['ds_id'])
         self._manager.set_ds_status(ds, DatasetStatus.FINISHED)
@@ -59,16 +58,14 @@ class SMAnnotateDaemon:
 
     def _callback(self, msg):
         try:
-            self.logger.info(f" SM annotate daemon received a message: {msg}")
+            self.logger.info(f' SM annotate daemon received a message: {msg}')
             self._redis_client.set('cluster-busy', 'yes', ex=3600 * 13)  # key expires in 13h
 
             ds = self._manager.load_ds(msg['ds_id'])
             self._manager.set_ds_status(ds, DatasetStatus.ANNOTATING)
             self._manager.notify_update(ds.id, msg['action'], DaemonActionStage.STARTED)
 
-            self._manager.post_to_slack(
-                'new', " [v] New annotation message: {}".format(json.dumps(msg))
-            )
+            self._manager.post_to_slack('new', f' [v] New annotation message: {json.dumps(msg)}')
 
             update_msg = {
                 'ds_id': msg['ds_id'],
@@ -100,8 +97,7 @@ class SMAnnotateDaemon:
         self._annot_queue_consumer.start()
 
     def stop(self):
-        """  Must be called from main thread
-        """
+        """Must be called from main thread"""
         if not self._stopped:
             self._annot_queue_consumer.stop()
             self._annot_queue_consumer.join()
