@@ -91,6 +91,8 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
       const variables : any = {
         input: {
           version: 1,
+          ionFormulas: [],
+          dbIds: [],
           annotationIds: state.selectedDatasetIds,
           snapshot: JSON.stringify({
             nCols: state.nCols,
