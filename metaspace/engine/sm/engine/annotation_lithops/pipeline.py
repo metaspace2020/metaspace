@@ -129,12 +129,12 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.ds_segments_bounds,
             self.ds_segms_cobjs,
             self.ds_segm_lens,
-            self.imzml_polarity,
+            imzml_polarity,
         ) = load_ds(self.executor, self.imzml_cobject, self.ibd_cobject, self.ds_segm_size_mb)
 
         self.is_intensive_dataset = len(self.ds_segms_cobjs) * self.ds_segm_size_mb > 5000
 
-        self.check_polarity()
+        self.check_polarity(imzml_polarity)
 
     def validate_load_ds(self):
         validate_ds_segments(
@@ -145,7 +145,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.ds_segm_lens,
         )
 
-    def check_polarity(self):
+    def check_polarity(self, imzml_polarity):
         """Check polarity between imzml file and config
         For different polarity - add an warning, in case the polarity
         is specified in the imzml file (positive or negative).
@@ -153,8 +153,8 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         ds_charge = self.ds_config['isotope_generation']['charge']
         ds_polarity = 'positive' if ds_charge == 1 else 'negative'
 
-        if self.imzml_polarity in ('positive', 'negative'):
-            if self.imzml_polarity != ds_polarity:
+        if imzml_polarity in ('positive', 'negative'):
+            if imzml_polarity != ds_polarity:
                 warnings.warn(
                     'Wrong polarity between imzml file and metadata.', category=PolarityWarning
                 )

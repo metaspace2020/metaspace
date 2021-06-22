@@ -9,7 +9,7 @@ from sm.engine.annotation_lithops.executor import LithopsStalledException
 from sm.engine.config import SMConfig
 from sm.engine.daemons.actions import DaemonActionStage, DaemonAction
 from sm.engine.dataset import DatasetStatus
-from sm.engine.errors import ImzMLError, AnnotationError, PolarityWarning
+from sm.engine.errors import AnnotationError, PolarityWarning
 from sm.engine.queue import QueueConsumer, QueuePublisher
 from sm.rest.dataset_manager import DatasetActionPriority
 
