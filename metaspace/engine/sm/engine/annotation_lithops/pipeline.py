@@ -91,8 +91,6 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         if debug_validate:
             self.validate_load_ds()
 
-        self.check_polarity()
-
         self.segment_centroids(use_cache=use_cache)
         if debug_validate:
             self.validate_segment_centroids()
