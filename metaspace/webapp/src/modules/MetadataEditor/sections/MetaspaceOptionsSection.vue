@@ -196,7 +196,10 @@ interface Option {
   label: string
 }
 
-const validElement = /A[cglmrstu]|B[aeikr]?|C[adelorsu]?|D[by]|E[rsu]|F[er]?|G[ade]|H[efgo]?|I[nr]?|Kr?|L[airu]|M[dgno]|N[abdeip]?|Os?|P[abdmrt]?|R[behu]|S[bceimnr]?|T[abceilm]|U|V|W|Xe|Yb?|Z[nr]/
+const validElement = new RegExp(
+  '/A[cglmrstu]|B[aeikr]?|C[adelorsu]?|D[by]|E[rsu]|F[er]?|G[ade]|H[efgo]?|I[nr]?|Kr?|L[airu]|M[dgno]|'
+  + 'N[abdeip]?|Os?|P[abdmrt]?|R[behu]|S[bceimnr]?|T[abceilm]|U|V|W|Xe|Yb?|Z[nr]',
+)
 const validFormulaModifier = new RegExp(`([+-]((${validElement.source})[0-9]{0,3})+)+`)
 const normalizeFormulaModifier = (formula: string, defaultSign: '+'|'-') => {
   if (!formula) return null
@@ -280,8 +283,8 @@ export default class MetaspaceOptionsSection extends Vue {
       }
     }
 
-    onNeutralLossesInput(neutralLosses: string) {
-      const parsedVals = []
+    onNeutralLossesInput(neutralLosses: string[]) {
+      const parsedVals: string[] = []
       neutralLosses.forEach(neutralLoss => {
         const parsedVal = normalizeFormulaModifier(neutralLoss, '-')
         if (parsedVal) {
@@ -300,7 +303,7 @@ export default class MetaspaceOptionsSection extends Vue {
     }
 
     onChemModsInput(chemMods: string[]) {
-      const parsedVals = []
+      const parsedVals: string[] = []
       chemMods.forEach(chemMod => {
         const parsedVal = normalizeFormulaModifier(chemMod, '+')
         if (parsedVal) {
