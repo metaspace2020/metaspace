@@ -52,6 +52,7 @@
                 :value="value.adducts"
                 :error="error && error.adducts"
                 :options="adductOptions"
+                :help="AdductsHelp"
                 required
                 @input="val => onInput('adducts', val)"
               />
@@ -76,121 +77,40 @@
               v-if="features.neutral_losses"
               :span="8"
             >
-              <el-form-item
-                class="md-form-field"
-                :class="{'is-error': error && error.neutralLosses}"
-              >
-                <span
-                  slot="label"
-                  class="field-label"
-                >
-                  <span>Neutral losses</span>
-                  <el-popover
-                    trigger="hover"
-                    placement="right"
-                  >
-                    <div style="max-width: 500px;">
-                      <p>
-                        Search for ions with a specific neutral loss by entering the formula of the loss here,
-                        e.g. <span class="example-input">-H2O</span> to search for ions with H2O loss.
-                      </p>
-                      <p v-if="!features.neutral_losses_new_ds">
-                        This functionality is only intended for diagnosis when specific expected molecules
-                        were not found in a regular search. It may not be available until after the initial annotation has run.
-                      </p>
-                    </div>
-                    <i
-                      slot="reference"
-                      class="el-icon-question metadata-help-icon"
-                    />
-                  </el-popover>
-                </span>
-                <el-select
-                  class="md-ac"
-                  :disabled="!features.advanced_ds_config && !features.neutral_losses_new_ds && isNewDataset"
-                  :value="value.neutralLosses"
-                  multiple
-                  filterable
-                  default-first-option
-                  remote
-                  :multiple-limit="MAX_NEUTRAL_LOSSES"
-                  no-data-text="Please enter a valid molecular formula"
-                  :remote-method="updateNeutralLossOptions"
-                  :loading="false"
-                  @input="val => onInput('neutralLosses', val)"
-                >
-                  <el-option
-                    v-for="opt in neutralLossOptions"
-                    :key="opt"
-                    :value="opt"
-                    :label="opt"
-                  />
-                </el-select>
-                <span
-                  v-if="error && error.neutralLosses"
-                  class="error-msg"
-                >{{ error.neutralLosses }}</span>
-              </el-form-item>
+              <form-field
+                type="selectMulti"
+                name="Neutral losses"
+                :help="NeutralLossesHelp"
+                :value="value.neutralLosses"
+                :error="error && error.neutralLosses"
+                :multiple-limit="MAX_NEUTRAL_LOSSES"
+                popper-class="el-select-popper__free-entry"
+                no-data-text="Enter a formula"
+                filterable
+                allow-create
+                default-first-option
+                @input="onNeutralLossesInput"
+              />
             </el-col>
 
             <el-col
               v-if="features.chem_mods"
               :span="8"
             >
-              <el-form-item
-                class="md-form-field"
-                :class="{'is-error': error && error.chemMods}"
-              >
-                <span
-                  slot="label"
-                  class="field-label"
-                >
-                  <span>Chemical modifications</span>
-                  <el-popover
-                    trigger="hover"
-                    placement="right"
-                  >
-                    <div style="max-width: 500px;">
-                      <p>
-                        Search for ions that have had been chemically modified. For example, on a sample that has been
-                        treated with a hydroxylating agent, <span class="example-input">-CH+COH</span> would attempt
-                        to find annotations for known molecules with the mass of an additional oxygen atom.
-                      </p>
-                      <p>
-                        This setting should only be used for samples that have been intentionally chemically treated.
-                      </p>
-                    </div>
-                    <i
-                      slot="reference"
-                      class="el-icon-question metadata-help-icon"
-                    />
-                  </el-popover>
-                </span>
-                <el-select
-                  class="md-ac"
-                  :value="value.chemMods"
-                  :multiple-limit="MAX_CHEM_MODS"
-                  multiple
-                  filterable
-                  default-first-option
-                  remote
-                  no-data-text="Please enter a valid molecular formula"
-                  :remote-method="updateChemModOptions"
-                  :loading="false"
-                  @input="val => onInput('chemMods', val)"
-                >
-                  <el-option
-                    v-for="opt in chemModOptions"
-                    :key="opt"
-                    :value="opt"
-                    :label="opt"
-                  />
-                </el-select>
-                <span
-                  v-if="error && error.chemMods"
-                  class="error-msg"
-                >{{ error.chemMods }}</span>
-              </el-form-item>
+              <form-field
+                type="selectMulti"
+                name="Chemical modifications"
+                :help="ChemModsHelp"
+                :value="value.chemMods"
+                :error="error && error.chemMods"
+                :multiple-limit="MAX_CHEM_MODS"
+                popper-class="el-select-popper__free-entry"
+                no-data-text="Enter a formula"
+                filterable
+                allow-create
+                default-first-option
+                @input="onChemModsInput"
+              />
             </el-col>
             <el-col
               v-if="features.advanced_ds_config"
@@ -259,11 +179,14 @@ import { Component, Prop } from 'vue-property-decorator'
 import FormField from '../inputs/FormField.vue'
 import DatabaseHelpLink from '../inputs/DatabaseHelpLink.vue'
 import AnalysisVersionHelp from '../inputs/AnalysisVersionHelp.vue'
+import AdductsHelp from '../inputs/AdductsHelp.vue'
+import NeutralLossesHelp from '../inputs/NeutralLossesHelp.vue'
+import ChemModsHelp from '../inputs/ChemModsHelp.vue'
 import { MetaspaceOptions } from '../formStructure'
 import { MAX_NEUTRAL_LOSSES, MAX_CHEM_MODS } from '../../../lib/constants'
 import config, { limits } from '../../../lib/config'
 import { formatDatabaseLabel, MolDBsByGroup } from '../../MolecularDatabases/formatting'
-import { sortBy } from 'lodash-es'
+import { sortBy, uniq } from 'lodash-es'
 import PopupAnchor from '../../../modules/NewFeaturePopup/PopupAnchor.vue'
 import { MolecularDB } from '../../../api/moldb'
 import './FormSection.scss'
@@ -273,17 +196,22 @@ interface Option {
   label: string
 }
 
+const validElement = /A[cglmrstu]|B[aeikr]?|C[adelorsu]?|D[by]|E[rsu]|F[er]?|G[ade]|H[efgo]?|I[nr]?|Kr?|L[airu]|M[dgno]|N[abdeip]?|Os?|P[abdmrt]?|R[behu]|S[bceimnr]?|T[abceilm]|U|V|W|Xe|Yb?|Z[nr]/
+const validFormulaModifier = new RegExp(`([+-]((${validElement.source})[0-9]{0,3})+)+`)
 const normalizeFormulaModifier = (formula: string, defaultSign: '+'|'-') => {
   if (!formula) return null
   // It won't work for all situations, but for lazy users convert "h2o" to "H2O"
   if (formula === formula.toLowerCase()) {
     formula = formula.toUpperCase()
   }
+  // Tidy & regularize formula as much as possible
   if (!formula.startsWith('-') && !formula.startsWith('+')) {
     formula = defaultSign + formula
   }
-  const match = /^([+-]?[A-Z][a-z]*[0-9]*)+$/.exec(formula)
-  return match != null ? match[0] : null
+  formula = formula.replace(/\s/g, '')
+  // If it's not valid after tidying, reject it
+  const match = validFormulaModifier.exec(formula)
+  return match != null && match[0] === formula ? formula : null
 }
 
   @Component({
@@ -314,6 +242,9 @@ export default class MetaspaceOptionsSection extends Vue {
     features = config.features;
     dbHelp = DatabaseHelpLink;
     AnalysisVersionHelp = AnalysisVersionHelp;
+    NeutralLossesHelp = NeutralLossesHelp;
+    ChemModsHelp = ChemModsHelp;
+    AdductsHelp = AdductsHelp;
     maxMolDBs = limits.maxMolDBs;
     MAX_NEUTRAL_LOSSES = MAX_NEUTRAL_LOSSES;
     MAX_CHEM_MODS = MAX_CHEM_MODS;
@@ -321,9 +252,6 @@ export default class MetaspaceOptionsSection extends Vue {
       { value: 1, label: 'v1 (Stable)' },
       { value: 2, label: 'v2 (Development)' },
     ];
-
-    neutralLossOptions: string[] = [];
-    chemModOptions: string[] = [];
 
     get databaseOptions() {
       return this.databasesByGroup.map(({ shortName, molecularDatabases }) => ({
@@ -352,14 +280,42 @@ export default class MetaspaceOptionsSection extends Vue {
       }
     }
 
-    updateNeutralLossOptions(query: string) {
-      const formula = normalizeFormulaModifier(query, '-')
-      this.neutralLossOptions = formula ? [formula] : []
+    onNeutralLossesInput(neutralLosses: string) {
+      const parsedVals = []
+      neutralLosses.forEach(neutralLoss => {
+        const parsedVal = normalizeFormulaModifier(neutralLoss, '-')
+        if (parsedVal) {
+          parsedVals.push(parsedVal)
+        } else if (neutralLoss) {
+          this.$alert(
+            `"${neutralLoss}" was not understood. Neutral losses should be specified as a chemical formula`
+            + ' prefixed with -. Group, bond type, isotope and charge notation should not be used.',
+            'Invalid neutral loss',
+            { type: 'error', lockScroll: false },
+          )
+        }
+      })
+
+      this.onInput('neutralLosses', uniq(parsedVals))
     }
 
-    updateChemModOptions(query: string) {
-      const formula = normalizeFormulaModifier(query, '-')
-      this.chemModOptions = formula ? [formula] : []
+    onChemModsInput(chemMods: string[]) {
+      const parsedVals = []
+      chemMods.forEach(chemMod => {
+        const parsedVal = normalizeFormulaModifier(chemMod, '+')
+        if (parsedVal) {
+          parsedVals.push(parsedVal)
+        } else if (chemMod) {
+          this.$alert(
+            `"${chemMod}" was not understood. Chemical modification strings should be one or more chemical formulas,`
+            + ' each prefixed with either + or -. Bond type, group, isotope and charge notation should not be used.',
+            'Invalid chemical modification',
+            { type: 'error', lockScroll: false },
+          )
+        }
+      })
+
+      this.onInput('chemMods', uniq(parsedVals))
     }
 }
 </script>
@@ -371,4 +327,14 @@ export default class MetaspaceOptionsSection extends Vue {
     padding: 2px 8px;
     white-space: nowrap;
   }
+
+  .el-select-popper__free-entry .el-select-dropdown__list::after {
+    @apply pt-2 px-5 text-center;
+    display: list-item;
+    content: 'Press enter to confirm';
+    // Style to match the no-data-text
+    font-size: 14px;
+    color: #999;
+  }
+
 </style>
