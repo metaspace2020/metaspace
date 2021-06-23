@@ -965,7 +965,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                       </mock-el-popover>
                       </span></label>
                     <div class="el-form-item__content">
-                      <mock-el-select multiple="" multiple-limit="3" popper-class="el-select-popper__free-entry" no-data-text="Enter a formula" filterable="" allow-create="" default-first-option=""></mock-el-select>
+                      <mock-el-select popper-class="el-select-popper__with-create" no-data-text="Invalid value" multiple="" filterable="" default-first-option="" remote="" remote-method="function () { [native code] }" multiple-limit="3"></mock-el-select>
                       <transition-stub name="el-zoom-in-top">
                         <!---->
                       </transition-stub>
