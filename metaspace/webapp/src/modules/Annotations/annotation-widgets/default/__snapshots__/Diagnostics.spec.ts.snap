@@ -179,7 +179,7 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
   <div class="compare-container">
     Compare selected annotation to:
     <mock-el-select placeholder="None" clearable="" class="compare-select" value="C8H9S2">
-      <mock-el-option value="C8H9S2" label="[M+0.0000]: [C8H10S2 - H]⁻">[M+0.0000]: [C<sub>8</sub>H<sub>10</sub>S<sub>2</sub> - H]⁻</mock-el-option>
+      <mock-el-option value="C8H9S2" label="[M+0.0000]: [C8H10S2 - H]⁻">[M+0.0000]: [C<sub>8</sub>H<sub>10</sub>S<sub>2</sub> - H]⁻</mock-el-option>
     </mock-el-select>
   </div>
   <div class="ref-annotation-header">
@@ -200,7 +200,7 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
           <!---->
         </div>
       </div>
-      <div slot-key="reference"><span class="annotation-ion">[C<sub>19</sub>H<sub>18</sub>N<sub>2</sub>O<sub>7</sub>S<sub>2</sub> - H]⁺</span></div>
+      <div slot-key="reference"><span class="annotation-ion">[C<sub>19</sub>H<sub>18</sub>N<sub>2</sub>O<sub>7</sub>S<sub>2</sub> - H]⁺</span></div>
     </mock-el-popover> <span style="padding-left: 5px;">(Selected annotation)</span>
   </div>
   <div class="ref-annotation-container">
@@ -253,7 +253,7 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
       Candidate molecule
     </p> <ul class="p-0 list-none leading-7"><li>
         C.I. Food Red 6
-      </li> <!----></ul> <!----> <!----></div> </div><div slot-key="reference"><span class="annotation-ion">[C<sub>8</sub>H<sub>10</sub>S<sub>2</sub> - H]⁻</span></div>
+      </li> <!----></ul> <!----> <!----></div> </div><div slot-key="reference"><span class="annotation-ion">[C<sub>8</sub>H<sub>10</sub>S<sub>2</sub> - H]⁻</span></div>
   </mock-el-popover>
   <!----></span>
 </div>
@@ -393,7 +393,7 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
                 </g>
               </g>
             </g>
-          </svg> <span class="legend-item-name">[C<sub>19</sub>H<sub>18</sub>N<sub>2</sub>O<sub>7</sub>S<sub>2</sub> - H]⁺<br> Theoretical</span></div>
+          </svg> <span class="legend-item-name">[C<sub>19</sub>H<sub>18</sub>N<sub>2</sub>O<sub>7</sub>S<sub>2</sub> - H]⁺<br> Theoretical</span></div>
         <div class="legend-item"><svg width="64" height="32">
             <g>
               <g class="sample-graph refSample">
@@ -408,7 +408,7 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
                 </g>
               </g>
             </g>
-          </svg> <span class="legend-item-name">[C<sub>19</sub>H<sub>18</sub>N<sub>2</sub>O<sub>7</sub>S<sub>2</sub> - H]⁺<br> Sample</span></div>
+          </svg> <span class="legend-item-name">[C<sub>19</sub>H<sub>18</sub>N<sub>2</sub>O<sub>7</sub>S<sub>2</sub> - H]⁺<br> Sample</span></div>
         <div class="legend-item"><svg width="64" height="32">
             <g>
               <g class="theor-graph compTheor">
@@ -417,7 +417,7 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
                 </g>
               </g>
             </g>
-          </svg> <span class="legend-item-name">[C<sub>8</sub>H<sub>10</sub>S<sub>2</sub> - H]⁻<br> Theoretical</span></div>
+          </svg> <span class="legend-item-name">[C<sub>8</sub>H<sub>10</sub>S<sub>2</sub> - H]⁻<br> Theoretical</span></div>
         <div class="legend-item"><svg width="64" height="32">
             <g>
               <g class="sample-graph compSample">
@@ -432,7 +432,7 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
                 </g>
               </g>
             </g>
-          </svg> <span class="legend-item-name">[C<sub>8</sub>H<sub>10</sub>S<sub>2</sub> - H]⁻<br> Sample</span></div>
+          </svg> <span class="legend-item-name">[C<sub>8</sub>H<sub>10</sub>S<sub>2</sub> - H]⁻<br> Sample</span></div>
       </div>
     </div>
   </div>
