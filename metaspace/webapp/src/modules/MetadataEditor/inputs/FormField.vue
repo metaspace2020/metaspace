@@ -228,10 +228,10 @@ export default class FormField extends Vue {
     fetchSuggestions!: FetchSuggestions;
 
     @Prop(Function)
-    normalizeInput: (value: string) => string | null;
+    normalizeInput?: (value: string) => string | null;
 
     wideAutocomplete = false;
-    createItemPreviewOptions = []
+    createItemPreviewOptions: string[] = []
 
     created() {
       // WORKAROUND: Currently there's a delay that causes the autocomplete box to stutter when opening on focus.
@@ -254,11 +254,11 @@ export default class FormField extends Vue {
     }
 
     onInput(val: any) {
-      if (this.type === 'selectMultiWithCreate' && this.normalizeInput) {
+      if (this.type === 'selectMultiWithCreate') {
         const valArray = val as string[]
         const normalizedVals = valArray.flatMap(newVal => {
-          if (valArray.includes(newVal)) {
-            // Don't change existing values
+          if (valArray.includes(newVal) || !this.normalizeInput) {
+            // Don't change existing values, don't normalize if no normalization function
             return [newVal]
           }
           const normalizedVal = this.normalizeInput(newVal)

@@ -1,6 +1,10 @@
 const validElement = new RegExp(
-  '/A[cglmrstu]|B[aeikr]?|C[adelorsu]?|D[by]|E[rsu]|F[er]?|G[ade]|H[efgo]?|I[nr]?|Kr?|L[airu]|M[dgno]|'
-  + 'N[abdeip]?|Os?|P[abdmrt]?|R[behu]|S[bceimnr]?|T[abceilm]|U|V|W|Xe|Yb?|Z[nr]',
+  // NOTE: this regex should only contain elements that are accepted by METASPACE.
+  // This means only elements that are supported in BOTH of these libraries:
+  // pyMSpec: https://github.com/alexandrovteam/pyMSpec/blob/master/pyMSpec/pyisocalc/periodic_table.py
+  // cpyMSpec (which uses ims-cpp): https://github.com/alexandrovteam/ims-cpp/blob/d8ba14b36c1a0303a6c9799c3c25ddb8eda3dea9/ms/periodic_table.cpp
+  'A[cglrstu]|B[aeir]?|C[adelorsu]?|Dy|E[ru]|F[er]?|G[ade]|H[efgo]?|I[nr]?|Kr?|L[aiu]|M[gno]|'
+  + 'N[abdei]?|Os?|P[abdmort]?|R[behu]|S[bceimnr]?|T[abceilm]|U|V|W|Xe|Yb?|Z[nr]',
 )
 
 const validFormulaModifier = new RegExp(`([+-]((${validElement.source})[0-9]{0,3})+)+`)
