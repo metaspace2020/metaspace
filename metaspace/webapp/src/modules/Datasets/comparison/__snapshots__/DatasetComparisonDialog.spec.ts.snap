@@ -12,19 +12,19 @@ exports[`DatasetComparisonDialog it should match snapshot 1`] = `
             <p class="sm-workflow-header">Select the datasets</p>
             <form>
               <div class="el-select w-full ">
-                <div class="el-select__tags" style="max-width: 168px; width: 100%;">
+                <div class="el-select__tags" style="max-width: -32px; width: 100%;">
                   <!---->
-                  <transition-group-stub><span class="el-tag el-tag--info el-tag--small el-tag--light"><span class="el-select__tags-text">Mock (1)</span><i class="el-tag__close el-icon-close"></i></span><span class="el-tag el-tag--info el-tag--small el-tag--light"><span class="el-select__tags-text">Mock (2)</span><i class="el-tag__close el-icon-close"></i></span><span class="el-tag el-tag--info el-tag--small el-tag--light"><span class="el-select__tags-text">Mock (3)</span><i class="el-tag__close el-icon-close"></i></span></transition-group-stub><input type="text" autocomplete="off" class="el-select__input" style="flex-grow: 1; width: 0.11904761904761904%; max-width: 158px;">
+                  <transition-group-stub><span class="el-tag el-tag--info el-tag--small el-tag--light"><span class="el-select__tags-text">Mock (1)</span><i class="el-tag__close el-icon-close"></i></span><span class="el-tag el-tag--info el-tag--small el-tag--light"><span class="el-select__tags-text">Mock (2)</span><i class="el-tag__close el-icon-close"></i></span><span class="el-tag el-tag--info el-tag--small el-tag--light"><span class="el-select__tags-text">Mock (3)</span><i class="el-tag__close el-icon-close"></i></span></transition-group-stub><input type="text" autocomplete="off" class="el-select__input" style="flex-grow: 1; width: -0.625%; max-width: -42px;">
                 </div>
                 <div class="el-input el-input--suffix">
-                  <!----><input tabindex="-1" type="text" readonly="readonly" autocomplete="off" placeholder="" class="el-input__inner" style="height: 300px;">
+                  <!----><input tabindex="-1" type="text" readonly="readonly" autocomplete="off" placeholder="" class="el-input__inner" style="height: 40px;">
                   <!----><span class="el-input__suffix"><span class="el-input__suffix-inner"><i class="el-select__caret el-input__icon el-icon-"></i><!----><!----><!----><!----><!----></span>
                   <!----></span>
                   <!---->
                   <!---->
                 </div>
                 <transition-stub name="el-zoom-in-top">
-                  <div class="el-select-dropdown el-popper is-multiple" style="display: none; min-width: 200px;">
+                  <div class="el-select-dropdown el-popper is-multiple" style="display: none;">
                     <div class="el-scrollbar" style="">
                       <div class="el-select-dropdown__wrap el-scrollbar__wrap el-scrollbar__wrap--hidden-default">
                         <ul class="el-scrollbar__view el-select-dropdown__list">
