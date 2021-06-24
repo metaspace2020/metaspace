@@ -108,7 +108,7 @@ export default defineComponent<DatasetComparisonPageProps>({
       }
     }
 
-    const queryOptions = reactive({ enabled: false })
+    const queryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
     const queryVars = computed(() => ({
       ...queryVariables(),
       dFilter: { ...queryVariables().dFilter, ids: Object.values(state.grid || {}).join('|') },
@@ -184,7 +184,6 @@ export default defineComponent<DatasetComparisonPageProps>({
       // @ts-ignore TS2604
       const relatedMolecules = () => <RelatedMolecules
         query="isomers"
-        skipQueries
         annotation={state.annotations[state.selectedAnnotation].annotations[0]}
         annotations={state.annotations[state.selectedAnnotation].annotations}
         databaseId={$store.getters.filter.database || 1}

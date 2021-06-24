@@ -114,7 +114,6 @@ export default {
     annotations: { type: Array, required: false },
     databaseId: { type: Number, required: true },
     hideFdr: { type: Boolean, default: false },
-    skipQueries: { type: Boolean, default: false },
   },
   data() {
     return {
@@ -126,7 +125,7 @@ export default {
       query: relatedMoleculesQuery,
       loadingKey: 'loading',
       skip() {
-        return this.skipQueries || !config.features.isomers
+        return !config.features.isomers
       },
       variables() {
         return {
@@ -144,7 +143,7 @@ export default {
       query: relatedMoleculesQuery,
       loadingKey: 'loading',
       skip() {
-        return this.skipQueries || !config.features.isobars
+        return !config.features.isobars
       },
       variables() {
         return {
@@ -161,7 +160,11 @@ export default {
   },
   computed: {
     sortedAnnotations() {
-      let annotations = this.annotations ? this.annotations : [
+      let annotations = this.annotations ? [
+        ...this.annotations,
+        ...(this.isomerAnnotations || []).map(ann => ({ ...ann, isIsomer: true })),
+        ...(this.isobarAnnotations || []).map(ann => ({ ...ann, isIsobar: true })),
+      ] : [
         this.annotation,
         ...(this.isomerAnnotations || []).map(ann => ({ ...ann, isIsomer: true })),
         ...(this.isobarAnnotations || []).map(ann => ({ ...ann, isIsobar: true })),

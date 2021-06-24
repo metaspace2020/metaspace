@@ -197,7 +197,11 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       // guarantee old selection was removed
       if (state.currentRowIndex !== currentIndex && state.currentRowIndex !== -1) {
         setTimeout(() => {
-          if (document.querySelectorAll('.el-table__row').length > state.currentRowIndex) {
+          if (
+            document.querySelectorAll('.el-table__row')
+            && document.querySelectorAll('.el-table__row').length > state.currentRowIndex
+            && document.querySelectorAll('.el-table__row')[state.currentRowIndex]
+          ) {
             document.querySelectorAll('.el-table__row')[state.currentRowIndex]
               .classList.remove('current-row')
           }
@@ -208,7 +212,11 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       if (currentIndex !== -1) {
         // gives time to clear and render the new selection
         setTimeout(() => {
-          if (document.querySelectorAll('.el-table__row').length > currentIndex) {
+          if (
+            document.querySelectorAll('.el-table__row')
+            && document.querySelectorAll('.el-table__row').length > currentIndex
+            && document.querySelectorAll('.el-table__row')[currentIndex]
+          ) {
             document.querySelectorAll('.el-table__row')[currentIndex].classList.add('current-row')
           }
         }, 100)
