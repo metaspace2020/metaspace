@@ -127,6 +127,8 @@ class DSConfig(TypedDict):
 
 
 class DatabaseDetails(TypedDict):
+    """DEPRECATED - this has been replaced by metaspace.sm_annotation_utils.MolecularDB"""
+
     id: int
     name: str
     version: str
@@ -154,3 +156,20 @@ class DatasetDownload(TypedDict):
     license: DatasetDownloadLicense
     contributors: List[DatasetDownloadContributor]
     files: List[DatasetDownloadFile]
+
+
+class DatasetUser(TypedDict):
+    id: str
+    name: str
+
+
+class DatasetGroup(TypedDict):
+    id: str
+    name: str
+    shortName: str
+
+
+class DatasetProject(TypedDict):
+    id: str
+    name: str
+    publicationStatus: str
