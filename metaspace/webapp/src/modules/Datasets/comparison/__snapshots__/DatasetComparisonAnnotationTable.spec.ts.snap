@@ -28,7 +28,11 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
             </th>
             <th colspan="1" rowspan="1" class="el-table_1_column_2 ascending    is-leaf is-sortable">
               <div class="cell">
-                <div class="msm-header">MSM<span><transition-stub name="fade-in-linear"><div role="tooltip" id="el-popover-3150" aria-hidden="true" class="el-popover el-popper" style="display: none;" tabindex="0"><!---->Highest MSM among the datasets.</div></transition-stub><i class="el-icon-question metadata-help-icon ml-1 el-popover__reference" aria-describedby="el-popover-3150" tabindex="0"></i></span></div><span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span>
+                <div class="msm-header">MSM<mock-el-popover trigger="hover" placement="right">
+                    <div slot-key="default">Highest MSM among the datasets.</div>
+                    <div slot-key="reference"><i class="el-icon-question metadata-help-icon ml-1"></i></div>
+                  </mock-el-popover>
+                </div><span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span>
               </div>
             </th>
             <th colspan="1" rowspan="1" class="el-table_1_column_3     is-leaf is-sortable">
