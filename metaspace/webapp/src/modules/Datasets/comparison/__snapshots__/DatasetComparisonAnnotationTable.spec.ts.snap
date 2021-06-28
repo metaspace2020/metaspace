@@ -10,14 +10,16 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
       <div></div>
       <div></div>
       <div></div>
+      <div></div>
     </div>
     <div class="el-table__header-wrapper">
-      <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 280px;">
+      <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 390px;">
         <colgroup>
           <col name="el-table_1_column_1" width="120">
           <col name="el-table_1_column_2" width="60">
           <col name="el-table_1_column_3" width="60">
-          <col name="el-table_1_column_4" width="40">
+          <col name="el-table_1_column_4" width="110">
+          <col name="el-table_1_column_5" width="40">
         </colgroup>
         <thead class="">
           <tr class="">
@@ -28,9 +30,12 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
               <div class="cell">MSM<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
             </th>
             <th colspan="1" rowspan="1" class="el-table_1_column_3     is-leaf is-sortable">
+              <div class="cell">m/z<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
+            </th>
+            <th colspan="1" rowspan="1" class="el-table_1_column_4     is-leaf is-sortable">
               <div class="cell"># of datasets<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
             </th>
-            <th colspan="1" rowspan="1" class="el-table_1_column_4   fdr-cell  is-leaf is-sortable">
+            <th colspan="1" rowspan="1" class="el-table_1_column_5   fdr-cell  is-leaf is-sortable">
               <div class="cell">FDR<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
             </th>
           </tr>
@@ -38,12 +43,13 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
       </table>
     </div>
     <div class="el-table__body-wrapper is-scrolling-left">
-      <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 280px;">
+      <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 390px;">
         <colgroup>
           <col name="el-table_1_column_1" width="120">
           <col name="el-table_1_column_2" width="60">
           <col name="el-table_1_column_3" width="60">
-          <col name="el-table_1_column_4" width="40">
+          <col name="el-table_1_column_4" width="110">
+          <col name="el-table_1_column_5" width="40">
         </colgroup>
         <tbody>
           <tr class="el-table__row fdr-5 ">
@@ -73,9 +79,12 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
               <div class="cell">0.510</div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+              <div class="cell">400.3421</div>
+            </td>
+            <td rowspan="1" colspan="1" class="el-table_1_column_4  ">
               <div class="cell"></div>
             </td>
-            <td rowspan="1" colspan="1" class="el-table_1_column_4  fdr-cell">
+            <td rowspan="1" colspan="1" class="el-table_1_column_5  fdr-cell">
               <div class="cell"><span>5%</span></div>
             </td>
           </tr>
@@ -106,9 +115,12 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
               <div class="cell">0.736</div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+              <div class="cell">184.0732</div>
+            </td>
+            <td rowspan="1" colspan="1" class="el-table_1_column_4  ">
               <div class="cell"></div>
             </td>
-            <td rowspan="1" colspan="1" class="el-table_1_column_4  fdr-cell">
+            <td rowspan="1" colspan="1" class="el-table_1_column_5  fdr-cell">
               <div class="cell"><span>5%</span></div>
             </td>
           </tr>

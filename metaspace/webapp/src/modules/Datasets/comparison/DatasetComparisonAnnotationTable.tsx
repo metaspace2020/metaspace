@@ -40,6 +40,7 @@ const KEY_TO_ACTION = {
 }
 
 const SORT_ORDER_TO_COLUMN = {
+  ORDER_BY_MZ: 'mz',
   ORDER_BY_MSM: 'msmscore',
   ORDER_BY_FDR_MSM: 'fdrlevel',
   ORDER_BY_FORMULA: 'sumformula',
@@ -296,6 +297,11 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
         sortMolecule(a, b, order === 'ascending' ? 1 : -1)))
     }
 
+    const handleSortMZ = (order: string) => {
+      state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
+        (order === 'ascending' ? 1 : -1) * (a.mz - b.mz)))
+    }
+
     const handleSortMSM = (order: string) => {
       state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
         (order === 'ascending' ? 1 : -1) * (a.msmScore - b.msmScore)))
@@ -324,6 +330,8 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
         handleSortFdr(order)
       } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_DS_COUNT) {
         handleSortDsCount(order)
+      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_MZ) {
+        handleSortMZ(order)
       }
 
       $store.commit('setSortOrder', {
@@ -360,6 +368,10 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
 
     const formatMSM = (row: any) => {
       return row.msmScore.toFixed(3)
+    }
+
+    const formatMZ = (row: any) => {
+      return row.mz.toFixed(4)
     }
 
     const formatFDR = (row: any) => {
@@ -534,11 +546,19 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
               formatter={(row: any) => formatMSM(row)}
             />
             <TableColumn
+              key="mz"
+              property="mz"
+              label="m/z"
+              sortable="custom"
+              minWidth="60"
+              formatter={(row: any) => formatMZ(row)}
+            />
+            <TableColumn
               key="datasetCount"
               property="datasetCount"
               label="# of datasets"
               sortable="custom"
-              minWidth="60"
+              minWidth="110"
             />
             <TableColumn
               key="fdrLevel"
