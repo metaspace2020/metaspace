@@ -1,6 +1,6 @@
 import { computed, defineComponent, onMounted, onUnmounted, reactive, ref, watchEffect } from '@vue/composition-api'
 import './DatasetComparisonAnnotationTable.scss'
-import { Table, TableColumn, Pagination, Button } from '../../../lib/element-ui'
+import { Table, TableColumn, Pagination, Button, Popover } from '../../../lib/element-ui'
 import ProgressButton from '../../Annotations/ProgressButton.vue'
 import AnnotationTableMolName from '../../Annotations/AnnotationTableMolName.vue'
 import { cloneDeep, findIndex } from 'lodash-es'
@@ -362,6 +362,22 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       handleCurrentRowChange(state.selectedRow)
     }
 
+    const renderMSMHeader = (info: any) => {
+      return <div class="msm-header">
+        MSM
+        <Popover
+          trigger="hover"
+          placement="right"
+        >
+          <i
+            slot="reference"
+            class="el-icon-question metadata-help-icon ml-1"
+          />
+          Highest MSM among the datasets.
+        </Popover>
+      </div>
+    }
+
     const formatAnnotation = (row: any) => {
       return <AnnotationTableMolName annotation={row}/>
     }
@@ -543,6 +559,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
               label="MSM"
               sortable="custom"
               minWidth="60"
+              renderHeader={renderMSMHeader}
               formatter={(row: any) => formatMSM(row)}
             />
             <TableColumn

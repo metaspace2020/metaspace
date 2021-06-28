@@ -329,6 +329,9 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           !state.gridState[key].showOpticalImage ? state.gridState[key].annotImageOpacity : 1,
       })
     }
+    const formatMSM = (value: number) => {
+      return value.toFixed(3)
+    }
 
     const handleImageMove = ({ zoom, xOffset, yOffset }: any, imageFit: any, key: string) => {
       Vue.set(state.gridState, key, {
@@ -404,7 +407,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       }
 
       return (
-        <div key={col} class='dataset-comparison-grid-col overflow-hidden'
+        <div key={col} class='dataset-comparison-grid-col overflow-hidden relative'
           style={{ height: 200, width: 200 }}>
           <MainImageHeader
             class='dataset-comparison-grid-item-header dom-to-image-hidden'
@@ -427,6 +430,13 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
               state.annotationData[`${row}-${col}`]?.dataset?.opticalImages[0]?.url
               !== undefined}
           />
+          {
+            state.annotationData[`${row}-${col}`]
+            && state.annotationData[`${row}-${col}`].msmScore
+            && <div class="dataset-comparison-msm-badge">
+              <b>MSM</b> {formatMSM(state.annotationData[`${row}-${col}`].msmScore)}
+            </div>
+          }
           <div ref={`image-${row}-${col}`} class='ds-wrapper relative'>
             {
               props.isLoading

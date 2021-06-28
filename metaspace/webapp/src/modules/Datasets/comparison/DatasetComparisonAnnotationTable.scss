@@ -5,6 +5,12 @@
     outline-offset: 1px;
   }
 
+  .msm-header{
+    min-width: 60px;
+    padding: 0;
+    margin: 0;
+  }
+
   /* fix cell height and align text in the center */
   #annot-table .cell {
     height: 24px;

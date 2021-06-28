@@ -223,6 +223,7 @@ export default defineComponent<DatasetComparisonPageProps>({
                 annotations={state.annotations.map((ion: any) => {
                   return {
                     ...ion.annotations[0],
+                    msmScore: Math.max(...ion.annotations.map((annot: any) => annot.msmScore)),
                     datasetCount: (ion.datasetIds || []).length,
                   }
                 })}
