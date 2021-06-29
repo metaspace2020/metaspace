@@ -3,7 +3,7 @@ import './DatasetComparisonAnnotationTable.scss'
 import { Table, TableColumn, Pagination, Button, Popover } from '../../../lib/element-ui'
 import ProgressButton from '../../Annotations/ProgressButton.vue'
 import AnnotationTableMolName from '../../Annotations/AnnotationTableMolName.vue'
-import { cloneDeep, findIndex } from 'lodash-es'
+import { findIndex } from 'lodash-es'
 import config from '../../../lib/config'
 import FileSaver from 'file-saver'
 

@@ -3,15 +3,26 @@
   min-height: 200px;
   overflow-x: auto;
 
-  .dataset-comparison-msm-badge{
+  .dataset-comparison-extra{
     position: absolute;
     right: 10px;
-    top: 10px;
-    background: #1287EE;
+    top: 14px;
+    @apply flex flex-row justify-center	items-center;
+  }
+
+  .dataset-comparison-msm-badge{
+    background: rgba(0,0,0,0.3);
     border-radius: 16px;
     color: white;
-    padding: 5px;
+    padding: 0 5px;
+    font-size: 11px;
+  }
+
+  .dataset-comparison-link{
     font-size: 10px;
+    height: 20px;
+    width: 20px;
+    margin-left: 8px;
   }
 
   .dataset-comparison-grid-row{

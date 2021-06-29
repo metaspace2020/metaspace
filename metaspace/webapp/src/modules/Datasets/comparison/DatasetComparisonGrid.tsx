@@ -15,6 +15,12 @@ import ImageSaver from '../../ImageViewer/ImageSaver.vue'
 import getColorScale from '../../../lib/getColorScale'
 import { THUMB_WIDTH } from '../../../components/Slider'
 import { isEqual } from 'lodash-es'
+import { encodeParams } from '../../Filters'
+import StatefulIcon from '../../../components/StatefulIcon.vue'
+import { ExternalWindowSvg } from '../../../design/refactoringUIIcons'
+import { Popover } from '../../../lib/element-ui'
+
+const RouterLink = Vue.component('router-link')
 
 interface DatasetComparisonGridProps {
   nCols: number
@@ -345,6 +351,27 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       })
     }
 
+    const annotationsLink = (datasetId: string, database?: string, fdrLevel?: number) => {
+      const query = {
+        database,
+        fdrLevel,
+        datasetIds: [datasetId],
+      }
+      // delete undefined so that filter do not replace the nulls and make the navigation back weird
+      if (!database) {
+        delete query.database
+      }
+      if (!fdrLevel) {
+        delete query.fdrLevel
+      }
+
+      return {
+        name: 'annotations',
+        params: { dataset_id: datasetId },
+        query: encodeParams(query),
+      }
+    }
+
     const handleImageLayerUpdate = async(annotation: any, key: string) => {
       const ionImageLayersAux = await ionImageLayers(annotation, key)
       Vue.set(state.gridState, key, { ...state.gridState[key], ionImageLayers: ionImageLayersAux })
@@ -433,8 +460,28 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           {
             state.annotationData[`${row}-${col}`]
             && state.annotationData[`${row}-${col}`].msmScore
-            && <div class="dataset-comparison-msm-badge">
-              <b>MSM</b> {formatMSM(state.annotationData[`${row}-${col}`].msmScore)}
+            && <div class="dataset-comparison-extra">
+              <div class="dataset-comparison-msm-badge">
+                <b>MSM</b> {formatMSM(state.annotationData[`${row}-${col}`].msmScore)}
+              </div>
+              <Popover
+                trigger="hover"
+                placement="right"
+              >
+                <div slot="reference" class="dataset-comparison-link">
+                  <RouterLink
+                    target='_blank'
+                    to={annotationsLink(state.annotationData[`${row}-${col}`].dataset.id.toString(),
+                      state.annotationData[`${row}-${col}`].databaseDetails.id.toString(),
+                      state.annotationData[`${row}-${col}`].databaseDetails.fdrLevel)}>
+
+                    <StatefulIcon className="h-6 w-6 pointer-events-none">
+                      <ExternalWindowSvg/>
+                    </StatefulIcon>
+                  </RouterLink>
+                </div>
+                Individual dataset annotation page.
+              </Popover>
             </div>
           }
           <div ref={`image-${row}-${col}`} class='ds-wrapper relative'>
