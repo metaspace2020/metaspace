@@ -28,11 +28,7 @@ def get_name_and_formula(filename, molecules_inchi):
             if line.startswith('FORMULA'):
                 formula = line.replace('FORMULA', '').strip()
                 # skip molecule with `(`, `.` or `R\d+` symbols
-                if (
-                    '(' in  formula
-                    or '.' in formula
-                    or re.findall(r'R\d{0,2}$', formula)
-                ):
+                if '(' in formula or '.' in formula or re.findall(r'R\d{0,2}$', formula):
                     continue
                 molecule['formula'] = formula
 
