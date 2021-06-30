@@ -14,7 +14,7 @@ import { DatasetComparisonAnnotationTable } from './DatasetComparisonAnnotationT
 import { DatasetComparisonGrid } from './DatasetComparisonGrid'
 import gql from 'graphql-tag'
 import FilterPanel from '../../Filters/FilterPanel.vue'
-import { isEqual } from 'lodash'
+import { uniqBy } from 'lodash'
 import config from '../../../lib/config'
 import { cloneDeep } from 'lodash-es'
 
@@ -36,6 +36,7 @@ interface DatasetComparisonPageState {
   annotationLoading: boolean
   filter: any
   isLoading: any
+  collapse: string[]
 }
 
 export default defineComponent<DatasetComparisonPageProps>({
@@ -68,6 +69,7 @@ export default defineComponent<DatasetComparisonPageProps>({
       selectedAnnotation: -1,
       gridState: {},
       annotations: [],
+      collapse: ['images'],
       grid: undefined,
       nCols: 0,
       nRows: 0,
@@ -106,7 +108,7 @@ export default defineComponent<DatasetComparisonPageProps>({
       }
     }
 
-    const queryOptions = reactive({ enabled: false })
+    const queryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
     const queryVars = computed(() => ({
       ...queryVariables(),
       dFilter: { ...queryVariables().dFilter, ids: Object.values(state.grid || {}).join('|') },
@@ -163,23 +165,27 @@ export default defineComponent<DatasetComparisonPageProps>({
             domNode={gridNode.value}
           />
           <div class='dataset-comparison-grid' ref={gridNode}>
-            <DatasetComparisonGrid
-              nCols={nCols}
-              nRows={nRows}
-              settings={gridSettings}
-              annotations={state.annotations || []}
-              selectedAnnotation={state.selectedAnnotation}
-              isLoading={state.isLoading || annotationsQuery.loading.value}
-            />
+            {
+              state.collapse.includes('images')
+              && <DatasetComparisonGrid
+                nCols={nCols}
+                nRows={nRows}
+                settings={gridSettings}
+                annotations={state.annotations || []}
+                selectedAnnotation={state.selectedAnnotation}
+                isLoading={state.isLoading || annotationsQuery.loading.value}
+              />
+            }
           </div>
         </CollapseItem>)
     }
 
     const renderCompounds = () => {
       // @ts-ignore TS2604
-      const relatedMolecules = (annotation: any) => <RelatedMolecules
+      const relatedMolecules = () => <RelatedMolecules
         query="isomers"
-        annotation={annotation}
+        annotation={state.annotations[state.selectedAnnotation].annotations[0]}
+        annotations={state.annotations[state.selectedAnnotation].annotations}
         databaseId={$store.getters.filter.database || 1}
         hideFdr
       />
@@ -190,11 +196,9 @@ export default defineComponent<DatasetComparisonPageProps>({
         title="Molecules"
         class="ds-collapse el-collapse-item--no-padding relative">
         {
-          state.annotations
-          && state.annotations[state.selectedAnnotation]
-          && state.annotations[state.selectedAnnotation].annotations.map((ds: any) => {
-            return relatedMolecules(ds)
-          })
+          !state.isLoading
+          && state.collapse.includes('compounds')
+          && relatedMolecules()
         }
       </CollapseItem>)
     }
@@ -202,7 +206,6 @@ export default defineComponent<DatasetComparisonPageProps>({
     return () => {
       const nCols = state.nCols
       const nRows = state.nRows
-
       if (!snapshotId) {
         return (
           <div class='dataset-comparison-page w-full flex flex-wrap flex-row items-center justify-center'>
@@ -223,7 +226,8 @@ export default defineComponent<DatasetComparisonPageProps>({
                     datasetCount: (ion.datasetIds || []).length,
                   }
                 })}
-                onRowChange={handleRowChange}/>
+                onRowChange={handleRowChange}
+              />
             }
             {
               (annotationsQuery.loading.value)
@@ -235,8 +239,13 @@ export default defineComponent<DatasetComparisonPageProps>({
             }
           </div>
           <div class='dataset-comparison-wrapper  w-full  md:w-7/12'>
-            <Collapse value={'images'} id="annot-content"
-              class="border-0">
+            <Collapse
+              value={state.collapse}
+              id="annot-content"
+              class="border-0"
+              onChange={(activeNames: string[]) => {
+                state.collapse = activeNames
+              }}>
               {renderImageGallery(nCols, nRows)}
               {renderCompounds()}
             </Collapse>

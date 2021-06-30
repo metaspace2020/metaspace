@@ -210,9 +210,16 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         }
       })
 
-      Promise.all(settingPromises).then((values) => {
-        state.firstLoaded = true
-      })
+      Promise.all(settingPromises)
+        .then((values) => {
+          // pass
+        })
+        .catch((e) => {
+          // pass
+        })
+        .finally(() => {
+          state.firstLoaded = true
+        })
     }
 
     watchEffect(async() => {

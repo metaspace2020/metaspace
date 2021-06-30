@@ -3,7 +3,7 @@ import { utc } from 'moment'
 
 import { Context } from '../../context'
 import logger from '../../utils/logger'
-import { esAnnotationByID } from '../../../esConnector'
+import { esAnnotationByID, esAnnotationByIon } from '../../../esConnector'
 import { ImageViewerSnapshot, Annotation } from '../../binding'
 import { ImageViewerSnapshot as ImageViewerSnapshotModel } from './model'
 
@@ -12,7 +12,12 @@ export const Resolvers = {
     async imageViewerSnapshot(_: any, { id, datasetId }: any, ctx: Context): Promise<ImageViewerSnapshot | null> {
       const ivs = await ctx.entityManager.getRepository(ImageViewerSnapshotModel).findOne({ id, datasetId })
       if (ivs) {
-        const annotations = await Promise.all(ivs.annotationIds.map(id => esAnnotationByID(id, ctx.user)))
+        // kept the ids query for now, in case there are permalinks without ionFormula even after the migration
+        // i.e when the job does not exist anymore to extract the ion from the id
+        const annotations = ivs.ionFormulas && ivs.dbIds
+          ? await Promise.all(ivs.ionFormulas.map((ion, idx) => esAnnotationByIon(ion, datasetId,
+              ivs.dbIds[idx], ctx.user)))
+          : await Promise.all(ivs.annotationIds.map(id => esAnnotationByID(id, ctx.user)))
         return {
           ...ivs,
           annotations: annotations.filter(a => a !== null) as unknown as Annotation[],

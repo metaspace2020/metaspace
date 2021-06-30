@@ -130,6 +130,9 @@ export default defineComponent<Props>({
                     options: allAnnotations(filter: {annotationId: $ids}) {
                       ion
                       database
+                      databaseDetails {
+                        id
+                      }
                     }
                   }`,
           variables: {
@@ -146,6 +149,8 @@ export default defineComponent<Props>({
             input: {
               version: 1,
               annotationIds: ionImage.annotationIds,
+              ionFormulas: annotationIons.map((annotation: any) => annotation.ion),
+              dbIds: annotationIons.map((annotation: any) => annotation.databaseDetails.id.toString()),
               snapshot: JSON.stringify({
                 imageViewer,
                 annotationIons,

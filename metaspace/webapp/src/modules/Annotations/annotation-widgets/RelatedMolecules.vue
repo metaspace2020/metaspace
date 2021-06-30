@@ -111,6 +111,7 @@ export default {
   },
   props: {
     annotation: { type: Object, required: true },
+    annotations: { type: Array, required: false },
     databaseId: { type: Number, required: true },
     hideFdr: { type: Boolean, default: false },
   },
@@ -159,7 +160,11 @@ export default {
   },
   computed: {
     sortedAnnotations() {
-      let annotations = [
+      let annotations = this.annotations ? [
+        ...this.annotations,
+        ...(this.isomerAnnotations || []).map(ann => ({ ...ann, isIsomer: true })),
+        ...(this.isobarAnnotations || []).map(ann => ({ ...ann, isIsobar: true })),
+      ] : [
         this.annotation,
         ...(this.isomerAnnotations || []).map(ann => ({ ...ann, isIsomer: true })),
         ...(this.isobarAnnotations || []).map(ann => ({ ...ann, isIsobar: true })),
@@ -181,7 +186,8 @@ export default {
     renderMolFormulaHtml,
     linkToAnnotation(other) {
       const filters = {
-        datasetIds: [this.annotation.dataset.id],
+        datasetIds: this.annotations ? this.annotations.map((annotation) => annotation.dataset.id)
+          : [this.annotation.dataset.id],
         compoundName: other.sumFormula,
         chemMod: other.chemMod,
         neutralLoss: other.neutralLoss,
