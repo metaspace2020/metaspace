@@ -11,7 +11,7 @@ from metaspace.sm_annotation_utils import (
     SMDataset,
     GraphQLClient,
     SMInstance,
-    GraphQLException,
+    MolecularDB,
 )
 from metaspace.tests.utils import sm, my_ds_id, advanced_ds_id
 
@@ -81,17 +81,15 @@ def test_results_with_int_database_id(dataset: SMDataset):
 
 
 def test_results_with_str_database_id(dataset: SMDataset):
-    try:
-        annotations = dataset.results('22', fdr=0.5)
-        # If the above code succeeds, it's time to start coercing the databaseId type to fit the API.
-        # See the comment in GraphQLClient.map_database_to_id for context.
-        assert False
-    except GraphQLException:
-        assert True
+    # The type of database IDs was up in the air for a while. Both ints and int-strings are accepted
+    # and are converted to the correct form internally
+    annotations = dataset.results('22', fdr=0.5)
+
+    assert len(annotations) > 0
 
 
 @patch(
-    'metaspace.sm_annotation_utils.GraphQLClient.get_databases',
+    'metaspace.sm_annotation_utils.GraphQLClient.get_visible_databases',
     return_value=[{'id': '22', 'name': 'HMDB', 'version': 'v4'}],
 )
 @patch('metaspace.sm_annotation_utils.GraphQLClient.getAnnotations', return_value=[])
@@ -241,3 +239,62 @@ def test_metadata(dataset: SMDataset):
     sorted_json = json.dumps(json.loads(original_json), sort_keys=True)
 
     assert serialized == sorted_json
+
+
+def test_dataset_info_fields(dataset: SMDataset):
+    # Ensures that the graphql query includes all fields required for these properties,
+    # and that the TypedDicts have the right keys
+
+    assert isinstance(dataset.id, str)
+    assert isinstance(dataset.name, str)
+    assert isinstance(dataset.s3dir, str)
+
+    assert isinstance(dataset.config['database_ids'][0], int)
+    assert isinstance(dataset.config['analysis_version'], int)
+    assert isinstance(dataset.config['isotope_generation']['adducts'][0], str)
+    assert isinstance(dataset.config['isotope_generation']['charge'], int)
+    assert isinstance(dataset.config['isotope_generation']['isocalc_sigma'], float)
+    assert isinstance(dataset.config['isotope_generation']['instrument'], str)
+    assert isinstance(dataset.config['isotope_generation']['n_peaks'], int)
+    assert isinstance(dataset.config['isotope_generation']['neutral_losses'], list)
+    assert isinstance(dataset.config['isotope_generation']['chem_mods'], list)
+    assert isinstance(dataset.config['fdr']['decoy_sample_size'], int)
+    assert isinstance(dataset.config['image_generation']['ppm'], (int, float))
+    assert isinstance(dataset.config['image_generation']['n_levels'], int)
+    assert isinstance(dataset.config['image_generation']['min_px'], int)
+
+    assert isinstance(dataset.adducts[0], str)
+
+    assert dataset.polarity in ('Positive', 'Negative')
+
+    assert isinstance(dataset.submitter['id'], str)
+    assert isinstance(dataset.submitter['name'], str)
+
+    assert isinstance(dataset.database_details[0], MolecularDB)
+    assert isinstance(dataset.database_details[0].id, int)
+    assert isinstance(dataset.database_details[0].name, str)
+    assert isinstance(dataset.database_details[0].version, str)
+    assert isinstance(dataset.database_details[0].is_public, bool)
+    assert isinstance(dataset.database_details[0].archived, bool)
+
+    # Accessing by the dict interface is deprecated, but still probably relied upon
+    assert isinstance(dataset.database_details[0]['id'], int)
+    assert isinstance(dataset.database_details[0]['name'], str)
+    assert isinstance(dataset.database_details[0]['version'], str)
+    assert isinstance(dataset.database_details[0]['isPublic'], bool)
+    assert isinstance(dataset.database_details[0]['archived'], bool)
+
+    assert isinstance(dataset.status, str)
+
+    if len(dataset.projects) > 0:
+        assert isinstance(dataset.projects[0]['id'], str)
+        assert isinstance(dataset.projects[0]['name'], str)
+        assert isinstance(dataset.projects[0]['publicationStatus'], str)
+    else:
+        print('Skipping check for dataset.projects fields as dataset has no projects')
+
+    assert isinstance(dataset.group['id'], str)
+    assert isinstance(dataset.group['name'], str)
+    assert isinstance(dataset.group['shortName'], str)
+
+    assert isinstance(dataset.principal_investigator, (str, type(None)))
