@@ -159,7 +159,7 @@ describe('getContext', () => {
         const user = await createTestProjectMember(proj1, UPRO.MANAGER)
 
         const req = { session: { reviewTokens: ['abc'] } } as any
-        const context = getContext({ id: user.id, role: 'user', groupIds: [] }, testEntityManager, req, null as any)
+        const context = getContext({ id: user.id, role: 'user' }, testEntityManager, req, null as any)
 
         const projectRoles = await context.user.getProjectRoles()
 
@@ -213,7 +213,7 @@ describe('getContext', () => {
       await createTestUserGroup(user.id, group.id, UGRO.MEMBER, true)
 
       const context = getContext(
-        { id: user.id, groupIds: [groupId], role: 'user' }, testEntityManager, null as any, null as any
+        { id: user.id, role: 'user' }, testEntityManager, null as any, null as any
       )
       const databaseIds = await context.user.getVisibleDatabaseIds()
 

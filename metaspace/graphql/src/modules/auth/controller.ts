@@ -86,7 +86,7 @@ const configureJwt = (router: IRouter<any>) => {
     const nowSeconds = Math.floor(Date.now() / 1000)
     let payload
     if (user) {
-      const { id, email, role, groups } = user
+      const { id, email, role } = user
       payload = {
         iss: 'METASPACE2020',
         user: {
