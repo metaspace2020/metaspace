@@ -1,4 +1,4 @@
-import { defineComponent, onMounted, reactive, watchEffect } from '@vue/composition-api'
+import { defineComponent, onMounted, onUnmounted, reactive, watchEffect } from '@vue/composition-api'
 import './DatasetComparisonGrid.scss'
 import MainImageHeader from '../../Annotations/annotation-widgets/default/MainImageHeader.vue'
 import Vue from 'vue'
@@ -95,8 +95,36 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       filter: $store?.getters?.filter,
     })
 
+    const dimensions = reactive({
+      width: 410,
+      height: 300,
+    })
+
+    const resizeHandler = () => {
+      let width = 0
+      let height = 0
+      Object.keys(refs).filter((key: string) => key.includes('image')).forEach((key: string) => {
+        const container = refs[key]
+        if (container && container.clientWidth > width) {
+          width = container.clientWidth
+        }
+        if (container && container.clientHeight > height) {
+          height = container.clientHeight
+        }
+      })
+      if (width !== 0 && height !== 0) {
+        dimensions.width = width
+        dimensions.height = height
+      }
+    }
+
     onMounted(() => {
       state.refsLoaded = true
+      window.addEventListener('resize', resizeHandler)
+    })
+
+    onUnmounted(() => {
+      window.removeEventListener('resize', resizeHandler)
     })
 
     const getMetadata = (annotation: any) => {
@@ -111,13 +139,13 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
 
     const imageFit = async(annotation: any, key: string, pixelAspectRatio: number = 1) => {
       const finalImage = await ionImage(state.gridState[key]?.ionImagePng, annotation.isotopeImages[0])
-      const { width = 410, height = 300 } = finalImage || {}
+      const { width = dimensions.width, height = dimensions.height } = finalImage || {}
 
       return fitImageToArea({
         imageWidth: width,
         imageHeight: height / (state.gridState[key]?.pixelAspectRatio || 1),
-        areaWidth: 300,
-        areaHeight: 410,
+        areaWidth: dimensions.height,
+        areaHeight: dimensions.width,
       })
     }
 
@@ -230,6 +258,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         })
         .finally(() => {
           state.firstLoaded = true
+          resizeHandler()
         })
     }
 
@@ -528,8 +557,8 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
                   ionImageLayers[0]?.ionImage?.height }
                 imageWidth={state.gridState[`${row}-${col}`]?.
                   ionImageLayers[0]?.ionImage?.width }
-                height={300}
-                width={410}
+                height={dimensions.height}
+                width={dimensions.width}
                 zoom={state.gridState[`${row}-${col}`]?.imagePosition?.zoom
                 * state.gridState[`${row}-${col}`]?.imageFit?.imageZoom}
                 minZoom={state.gridState[`${row}-${col}`]?.imageFit?.imageZoom / 4}
