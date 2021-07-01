@@ -215,11 +215,12 @@ const constructDatasetAuthFilters = async(user: ContextUser) => {
       datasetOrConditions.push({ term: { ds_submitter_id: user.id } })
     }
     // User's group
-    if (user.groupIds) {
+    const groupIds = await user.getMemberOfGroupIds()
+    if (groupIds.length > 0) {
       datasetOrConditions.push({
         bool: {
           filter: [
-            { terms: { ds_group_id: user.groupIds } },
+            { terms: { ds_group_id: groupIds } },
             { term: { ds_group_approved: true } },
           ],
         },
