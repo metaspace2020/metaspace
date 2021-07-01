@@ -28,7 +28,6 @@ import {
 import { AuthMethodOptions } from '../../context'
 import { UserError } from 'graphql-errors'
 import NoisyJwtStrategy from './NoisyJwtStrategy'
-import { UserGroupRoleOptions as UGRO } from '../group/model'
 
 const preventCache = (req: Request, res: Response, next: NextFunction) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate')
@@ -55,7 +54,7 @@ const configurePassport = (router: IRouter<any>, app: Express) => {
   Passport.serializeUser<User, string>(callbackify(async(user: User) => user.id))
 
   Passport.deserializeUser<User | false, string>(callbackify(async(id: string) => {
-    return await findUserById(id, false, true) || false
+    return await findUserById(id, false, false) || false
   }))
 
   router.post('/signout', preventCache, async(req, res) => {
@@ -71,7 +70,6 @@ const configurePassport = (router: IRouter<any>, app: Express) => {
 export interface JwtUser {
   id?: string,
   email?: string,
-  groupIds?: string[], // used in esConnector for ES visibility filters
   role: 'admin' | 'user' | 'anonymous',
 }
 
@@ -95,9 +93,6 @@ const configureJwt = (router: IRouter<any>) => {
           id,
           email,
           role,
-          groupIds: groups
-            ? groups.filter(g => [UGRO.MEMBER, UGRO.GROUP_ADMIN].includes(g.role)).map(g => g.groupId)
-            : null,
         },
         iat: nowSeconds,
         exp: expSeconds == null ? undefined : nowSeconds + expSeconds,
@@ -158,7 +153,7 @@ const configureApiKey = () => {
       try {
         if (prefix.test(header)) {
           const apikey = header.replace(prefix, '')
-          const user = await findUserByApiKey(apikey, true)
+          const user = await findUserByApiKey(apikey, false)
           if (user != null) {
             return done(null, user, AuthMethodOptions.API_KEY)
           }
