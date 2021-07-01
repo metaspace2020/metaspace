@@ -148,7 +148,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
     onMounted(() => {
       const { sort, row, page } = $route.query
       const order = sort?.indexOf('-') === 0 ? 'descending' : 'ascending'
-      const prop = sort ? sort.replace('-', '') : 'msmscore'
+      const prop = sort ? sort.replace('-', '') : SORT_ORDER_TO_COLUMN.ORDER_BY_FDR_MSM
       handleSortChange({ order, prop })
       state.selectedRow = row ? props.annotations[parseInt(row, 10)]
         : state.processedAnnotations[0]
@@ -228,7 +228,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       const { sort } = $route.query
 
       return {
-        prop: sort ? sort.replace('-', '') : 'msmscore',
+        prop: sort ? sort.replace('-', '') : SORT_ORDER_TO_COLUMN.ORDER_BY_FDR_MSM,
         order: sort?.indexOf('-') === 0 ? 'descending' : 'ascending',
       }
     }

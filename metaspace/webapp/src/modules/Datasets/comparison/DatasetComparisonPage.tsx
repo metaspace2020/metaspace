@@ -5,7 +5,7 @@ import {
   onMounted, reactive,
   ref, watchEffect,
 } from '@vue/composition-api'
-import { useQuery, useMutation } from '@vue/apollo-composable'
+import { useQuery } from '@vue/apollo-composable'
 import { comparisonAnnotationListQuery } from '../../../api/annotation'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import RelatedMolecules from '../../Annotations/annotation-widgets/RelatedMolecules.vue'
@@ -14,9 +14,8 @@ import { DatasetComparisonAnnotationTable } from './DatasetComparisonAnnotationT
 import { DatasetComparisonGrid } from './DatasetComparisonGrid'
 import gql from 'graphql-tag'
 import FilterPanel from '../../Filters/FilterPanel.vue'
-import { uniqBy } from 'lodash'
 import config from '../../../lib/config'
-import { cloneDeep } from 'lodash-es'
+import { DatasetListItem, datasetListItemsQuery } from '../../../api/dataset'
 
 interface DatasetComparisonPageProps {
   className: string
@@ -27,6 +26,7 @@ interface DatasetComparisonPageState {
   selectedAnnotation: number
   gridState: any
   annotations: any
+  datasets: any
   grid: any
   nCols: number
   nRows: number
@@ -69,6 +69,7 @@ export default defineComponent<DatasetComparisonPageProps>({
       selectedAnnotation: -1,
       gridState: {},
       annotations: [],
+      datasets: [],
       collapse: ['images'],
       grid: undefined,
       nCols: 0,
@@ -114,10 +115,18 @@ export default defineComponent<DatasetComparisonPageProps>({
       dFilter: { ...queryVariables().dFilter, ids: Object.values(state.grid || {}).join('|') },
     }))
     const annotationsQuery = useQuery<any>(comparisonAnnotationListQuery, queryVars, queryOptions)
+    const datasetsQuery = useQuery<{allDatasets: DatasetListItem[]}>(datasetListItemsQuery,
+      queryVars, queryOptions)
     const loadAnnotations = () => { queryOptions.enabled = true }
     state.annotations = computed(() => {
       if (annotationsQuery.result.value) {
         return annotationsQuery.result.value.allAggregatedAnnotations
+      }
+      return null
+    })
+    state.datasets = computed(() => {
+      if (datasetsQuery.result.value) {
+        return datasetsQuery.result.value.allDatasets
       }
       return null
     })
@@ -172,6 +181,7 @@ export default defineComponent<DatasetComparisonPageProps>({
                 nRows={nRows}
                 settings={gridSettings}
                 annotations={state.annotations || []}
+                datasets={state.datasets || []}
                 selectedAnnotation={state.selectedAnnotation}
                 isLoading={state.isLoading || annotationsQuery.loading.value}
               />
@@ -206,6 +216,7 @@ export default defineComponent<DatasetComparisonPageProps>({
     return () => {
       const nCols = state.nCols
       const nRows = state.nRows
+
       if (!snapshotId) {
         return (
           <div class='dataset-comparison-page w-full flex flex-wrap flex-row items-center justify-center'>

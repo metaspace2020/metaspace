@@ -28,6 +28,7 @@ interface DatasetComparisonGridProps {
   settings: any
   selectedAnnotation: number
   annotations: any[]
+  datasets: any[]
   isLoading: boolean
 }
 
@@ -65,6 +66,10 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       type: Number,
     },
     annotations: {
+      type: Array,
+      required: true,
+    },
+    datasets: {
       type: Array,
       required: true,
     },
@@ -306,16 +311,19 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
     }
 
     const ionImageLayers = async(annotation: any, key: string,
-      colormap: string = 'Viridis', opacityMode: any = 'linear') => {
+      colormap: string = 'Viridis', opacityMode: any = 'constant') => {
       const finalImage = await ionImage(state.gridState[key]?.ionImagePng,
         annotation.isotopeImages[0],
         state.gridState[key]?.scaleType, state.gridState[key]?.userScaling)
+      const hasOpticalImage = state.annotationData[key]?.dataset?.opticalImages[0]?.url
+        !== undefined
+
       if (finalImage) {
         return [{
           ionImage: finalImage,
           colorMap: createColormap(state.gridState[key]?.colormap || colormap,
-            state.gridState[key]?.opacityMode || opacityMode,
-            state.gridState[key]?.annotImageOpacity || 1),
+            hasOpticalImage ? (state.gridState[key]?.opacityMode || opacityMode) : 'constant',
+            hasOpticalImage ? (state.gridState[key]?.annotImageOpacity || 1) : 1),
         }]
       }
       return []
@@ -419,6 +427,16 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       Vue.set(state.gridState, key, { ...state.gridState[key], scaleBarColor })
     }
 
+    const renderDatasetName = (row: number, col: number) => {
+      const dataset =
+        props.datasets
+          ? props.datasets.find((dataset: any) => dataset.id === state.grid[`${row}-${col}`])
+          : null
+      return (
+        <span class='dataset-comparison-grid-ds-name'>{dataset?.name}</span>
+      )
+    }
+
     const renderImageViewerHeaders = (row: number, col: number) => {
       if (
         (!props.isLoading
@@ -427,8 +445,9 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         || (!props.isLoading && state.selectedAnnotation === -1)
       ) {
         return (
-          <div key={col} class='dataset-comparison-grid-col overflow-hidden items-center justify-center'
+          <div key={col} class='dataset-comparison-grid-col overflow-hidden items-center justify-start'
             style={{ height: 200, width: 200 }}>
+            {renderDatasetName(row, col)}
             <span>No data</span>
           </div>)
       }
@@ -436,6 +455,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       return (
         <div key={col} class='dataset-comparison-grid-col overflow-hidden relative'
           style={{ height: 200, width: 200 }}>
+          {renderDatasetName(row, col)}
           <MainImageHeader
             class='dataset-comparison-grid-item-header dom-to-image-hidden'
             annotation={state.annotationData[`${row}-${col}`]}

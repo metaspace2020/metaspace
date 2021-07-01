@@ -3,7 +3,7 @@
 exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
 <div class="dataset-comparison-grid" ncols="2" nrows="1" settings="[object Object]" selectedannotation="0" annotations="[object Object]">
   <div class="dataset-comparison-grid-row">
-    <div class="dataset-comparison-grid-col overflow-hidden relative"><span slot="title" class="w-full dataset-comparison-grid-item-header dom-to-image-hidden"><span>
+    <div class="dataset-comparison-grid-col overflow-hidden relative"><span class="dataset-comparison-grid-ds-name"></span><span slot="title" class="w-full dataset-comparison-grid-item-header dom-to-image-hidden"><span>
     Image viewer
   </span>
       <div class="flex items-center pr-4 cursor-default">
@@ -28,7 +28,7 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
         </div><button title="Export image" class="button-reset rounded-full bg-gray-100 shadow-xs h-8 w-8 flex items-center justify-center cursor-not-allowed absolute top-0 left-0 mt-3 ml-3 dom-to-image-hidden"><i class="el-icon-download text-xl"></i></button>
       </div>
     </div>
-    <div class="dataset-comparison-grid-col overflow-hidden relative"><span slot="title" class="w-full dataset-comparison-grid-item-header dom-to-image-hidden"><span>
+    <div class="dataset-comparison-grid-col overflow-hidden relative"><span class="dataset-comparison-grid-ds-name"></span><span slot="title" class="w-full dataset-comparison-grid-item-header dom-to-image-hidden"><span>
     Image viewer
   </span>
       <div class="flex items-center pr-4 cursor-default">

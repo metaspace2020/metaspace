@@ -26,7 +26,7 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
             <th colspan="1" rowspan="1" class="el-table_1_column_1     is-leaf is-sortable">
               <div class="cell">Annotation<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
             </th>
-            <th colspan="1" rowspan="1" class="el-table_1_column_2 ascending    is-leaf is-sortable">
+            <th colspan="1" rowspan="1" class="el-table_1_column_2     is-leaf is-sortable">
               <div class="cell">
                 <div class="msm-header">MSM<mock-el-popover trigger="hover" placement="right">
                     <div slot-key="default">Highest MSM among the datasets.</div>
@@ -41,7 +41,7 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
             <th colspan="1" rowspan="1" class="el-table_1_column_4     is-leaf is-sortable">
               <div class="cell"># of datasets<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
             </th>
-            <th colspan="1" rowspan="1" class="el-table_1_column_5   fdr-cell  is-leaf is-sortable">
+            <th colspan="1" rowspan="1" class="el-table_1_column_5 ascending  fdr-cell  is-leaf is-sortable">
               <div class="cell">FDR<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
             </th>
           </tr>
@@ -74,7 +74,7 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
                         <!---->
                       </div>
                     </div>
-                    <div slot-key="reference"><span>[C<sub class="leading-none">23</sub>H<sub class="leading-none">45</sub>NO<sub class="leading-none">4</sub> + H]⁺</span>
+                    <div slot-key="reference"><span>[C<sub class="leading-none">10</sub>H<sub class="leading-none">11</sub>NO + Na]⁺</span>
                       <!---->
                     </div>
                   </mock-el-popover> <svg data-icon="filter" class="cell-filter-button"></svg>
@@ -82,10 +82,10 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
               </div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
-              <div class="cell">0.510</div>
+              <div class="cell">0.736</div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
-              <div class="cell">400.3421</div>
+              <div class="cell">184.0732</div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_4  ">
               <div class="cell"></div>
@@ -110,7 +110,7 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
                         <!---->
                       </div>
                     </div>
-                    <div slot-key="reference"><span>[C<sub class="leading-none">10</sub>H<sub class="leading-none">11</sub>NO + Na]⁺</span>
+                    <div slot-key="reference"><span>[C<sub class="leading-none">23</sub>H<sub class="leading-none">45</sub>NO<sub class="leading-none">4</sub> + H]⁺</span>
                       <!---->
                     </div>
                   </mock-el-popover> <svg data-icon="filter" class="cell-filter-button"></svg>
@@ -118,10 +118,10 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
               </div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
-              <div class="cell">0.736</div>
+              <div class="cell">0.510</div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
-              <div class="cell">184.0732</div>
+              <div class="cell">400.3421</div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_4  ">
               <div class="cell"></div>

@@ -5,8 +5,8 @@
 
   .dataset-comparison-extra{
     position: absolute;
-    right: 10px;
-    top: 14px;
+    right: 8px;
+    top: 29px;
     @apply flex flex-row justify-center	items-center;
   }
 
@@ -37,11 +37,19 @@
     min-height: 300px;
   }
 
+  .dataset-comparison-grid-ds-name{
+    @apply flex flex-row w-full justify-center items-center	font-medium;
+    background: #F1F5F8;
+  }
+
   .dataset-comparison-grid-item-header{
     @apply flex flex-row;
     background: #F1F5F8;
-    padding: 8px;
+    padding: 4px 8px;
     width: calc(100% - 16px);
+    border-top: 1px dashed lightgray;
+    align-items: baseline;
+    height: 22px;
 
     span{
       @apply mr-1;
