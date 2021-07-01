@@ -28,6 +28,7 @@ import {
 import { AuthMethodOptions } from '../../context'
 import { UserError } from 'graphql-errors'
 import NoisyJwtStrategy from './NoisyJwtStrategy'
+import { UserGroupRoleOptions as UGRO } from '../group/model'
 
 const preventCache = (req: Request, res: Response, next: NextFunction) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate')
@@ -94,7 +95,9 @@ const configureJwt = (router: IRouter<any>) => {
           id,
           email,
           role,
-          groupIds: groups ? groups.map(g => g.groupId) : null,
+          groupIds: groups
+            ? groups.filter(g => [UGRO.MEMBER, UGRO.GROUP_ADMIN].includes(g.role)).map(g => g.groupId)
+            : null,
         },
         iat: nowSeconds,
         exp: expSeconds == null ? undefined : nowSeconds + expSeconds,
