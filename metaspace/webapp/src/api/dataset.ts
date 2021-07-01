@@ -66,6 +66,8 @@ export interface DatasetDetailItem {
     counts: number[];
   };
   rawOpticalImageUrl: string;
+  canEdit: boolean;
+  canDelete: boolean;
   canDownload: boolean;
   uploadDT: string;
 }
@@ -122,6 +124,8 @@ export const datasetDetailItemFragment =
     }
     thumbnailOpticalImageUrl
     ionThumbnailUrl
+    canEdit
+    canDelete
     canDownload
     uploadDT
   }`

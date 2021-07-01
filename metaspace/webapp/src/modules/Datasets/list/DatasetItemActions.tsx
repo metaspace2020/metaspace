@@ -190,7 +190,7 @@ const DatasetItemActions = defineComponent({
             >Show full metadata</a>
           </div>
 
-          {canEdit.value
+          {dataset.canEdit
           && <div>
             <i class="el-icon-edit" />
             <router-link to={{
@@ -212,7 +212,7 @@ const DatasetItemActions = defineComponent({
           </div>}
 
           {
-            !props.showOverview && canDelete.value
+            !props.showOverview && dataset.canDelete
           && <div class="ds-delete">
             <i class="el-icon-delete" />
             <a
