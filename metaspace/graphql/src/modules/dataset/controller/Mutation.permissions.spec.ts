@@ -2,22 +2,24 @@ import {
   createTestDataset,
   createTestDatasetProject,
   createTestDatasetWithEngineDataset,
-  getTestUserForScenario,
-  TestUserScenario,
-  TestUserScenarioOptions,
+
 } from '../../../tests/testDataCreation'
 import {
   doQuery, onAfterAll, onAfterEach, onBeforeAll, onBeforeEach,
   setupTestUsers, testEntityManager,
   testUser,
 } from '../../../tests/graphqlTestEnvironment'
-import { Group } from '../../group/model'
 import { Dataset } from '../model'
 
 import * as _smApiDatasets from '../../../utils/smApi/datasets'
 import { DatasetUpdateInput } from '../../../binding'
-import { EngineDataset } from '../../engine/model'
 import _ = require('lodash')
+import {
+  allScenarioTestCases,
+  getTestUserForScenario,
+  TestUserScenario,
+  TestUserScenarioOptions,
+} from '../../../tests/getTestUserForScenario'
 jest.mock('../../../utils/smApi/datasets')
 const mockSmApiDatasets = _smApiDatasets as jest.Mocked<typeof _smApiDatasets>
 mockSmApiDatasets.smApiDatasetRequest.mockReturnValue('{"status": "ok"}')
@@ -25,10 +27,6 @@ mockSmApiDatasets.smApiDeleteDataset.mockReturnValue('{"status": "ok"}')
 mockSmApiDatasets.smApiUpdateDataset.mockReturnValue('{"status": "ok"}')
 
 describe('Dataset mutations: editing permissions', () => {
-  let dataset: Dataset
-  let group: Group
-  const databaseIds: number[] = []
-
   beforeAll(onBeforeAll)
   afterAll(onAfterAll)
   beforeEach(async() => {
@@ -38,17 +36,11 @@ describe('Dataset mutations: editing permissions', () => {
   })
   afterEach(onAfterEach)
 
-  const allScenarioTestCases = <T>(
-    defaultVal: T, overrides: Partial<Record<TestUserScenario, T>>
-  ): ([TestUserScenario, T])[] =>
-      (Object.keys(TestUserScenarioOptions) as TestUserScenario[])
-        .map(option => ([option, option in overrides ? overrides[option]! : defaultVal]))
-
   const updateDatasetQuery = `mutation($datasetId: String!, $input: DatasetUpdateInput!) {
     updateDataset(id: $datasetId, input: $input)
   }`
   const canEditMetadataCases = allScenarioTestCases(false, {
-    currentUser: true,
+    sameUser: true,
     admin: true,
     sameGroupMember: true,
     sameGroupAdmin: true,
@@ -102,7 +94,7 @@ describe('Dataset mutations: editing permissions', () => {
     deleteDataset(id: $datasetId)
   }`
   const canDeleteDatasetCases = allScenarioTestCases(false, {
-    currentUser: true,
+    sameUser: true,
     admin: true,
     sameGroupAdmin: true,
   })

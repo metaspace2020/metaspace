@@ -383,8 +383,8 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     return dbDs && dbDs.external_links || []
   },
 
-  canEdit(ds, args, ctx) {
-    return canEditEsDataset(ds, ctx.user)
+  async canEdit(ds, args, ctx) {
+    return await canEditEsDataset(ds, ctx)
   },
 
   async canDelete(ds, args, ctx) {

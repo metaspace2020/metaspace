@@ -398,6 +398,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     if (ctx.user.id == null) {
       throw new UserError('Unauthorized')
     }
+    // Authorization handled in deleteDataset
     const resp = await deleteDataset(ctx.entityManager, ctx.user, datasetId, { force })
     return JSON.stringify(resp)
   },

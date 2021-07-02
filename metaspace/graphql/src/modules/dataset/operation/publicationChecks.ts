@@ -1,23 +1,46 @@
-import { EntityManager } from 'typeorm'
 import { DatasetProject as DatasetProjectModel } from '../model'
 import { PublicationStatusOptions as PSO } from '../../project/Publishing'
 import { UserError } from 'graphql-errors'
 import { PublicationStatus } from '../../../binding'
+import * as DataLoader from 'dataloader'
+import { Context } from '../../../context'
+import * as _ from 'lodash'
+import { EntityManager } from 'typeorm'
 
-const fetchDatasetProjectsInStatus = async(
-  entityManager: EntityManager, datasetId: string, statuses: PublicationStatus[]
+const fetchDatasetProjectsInStatusUncached = async(
+  entityManager: EntityManager, datasetIds: string[], statuses: PublicationStatus[]
 ) => {
-  return await entityManager.createQueryBuilder(DatasetProjectModel, 'dsProj')
+  const rows = await entityManager.createQueryBuilder(DatasetProjectModel, 'dsProj')
     .leftJoinAndSelect('dsProj.project', 'proj')
-    .where('dsProj.datasetId = :datasetId', { datasetId })
+    .where('dsProj.datasetId = ANY(:datasetIds)', { datasetIds })
     .andWhere('proj.publicationStatus = ANY(:statuses)', { statuses })
     .getMany()
+
+  const groupedRows = _.groupBy(rows, 'datasetId')
+  return datasetIds.map(id => groupedRows[id] || [])
+}
+
+const fetchDatasetProjectsInStatus = async(
+  ctx: Context, datasetId: string, statuses: PublicationStatus[]
+): Promise<DatasetProjectModel[]> => {
+  const dataLoader = ctx.contextCacheGet('findProjectsByDatasetIdDataLoader', [], () => {
+    return new DataLoader(
+      async(datasetIds: string[]) => fetchDatasetProjectsInStatusUncached(ctx.entityManager, datasetIds, statuses)
+    )
+  })
+  return dataLoader.load(datasetId)
+}
+
+export const isDatasetInPublicationStatus = async(
+  ctx: Context, datasetId: string, statuses: PublicationStatus[]
+) => {
+  return (await fetchDatasetProjectsInStatus(ctx, datasetId, statuses)).length > 0
 }
 
 export const checkProjectsPublicationStatus = async(
   entityManager: EntityManager, datasetId: string, statuses: PublicationStatus[]
 ) => {
-  const dsProjectPublished = await fetchDatasetProjectsInStatus(entityManager, datasetId, statuses)
+  const [dsProjectPublished] = (await fetchDatasetProjectsInStatusUncached(entityManager, [datasetId], statuses))
   if (dsProjectPublished.length > 0) {
     const projectStatusList = dsProjectPublished
       .map(dp => ({ projectId: dp.projectId, status: dp.project.publicationStatus }))
@@ -31,9 +54,10 @@ export const checkProjectsPublicationStatus = async(
 export const checkNoPublishedProjectRemoved = async(
   entityManager: EntityManager, datasetId: string, updatedProjectIds: string[]
 ) => {
-  const removedDsProject = (
-    await fetchDatasetProjectsInStatus(entityManager, datasetId, [PSO.PUBLISHED, PSO.UNDER_REVIEW])
-  ).find(dsProj => !updatedProjectIds.includes(dsProj.projectId))
+  const [dsProjects] = await fetchDatasetProjectsInStatusUncached(
+    entityManager, [datasetId], [PSO.PUBLISHED, PSO.UNDER_REVIEW]
+  )
+  const removedDsProject = dsProjects.find(dsProj => !updatedProjectIds.includes(dsProj.projectId))
 
   if (removedDsProject) {
     throw new UserError(JSON.stringify({

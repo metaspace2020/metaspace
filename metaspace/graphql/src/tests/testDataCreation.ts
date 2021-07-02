@@ -1,27 +1,14 @@
 import * as moment from 'moment'
 import { User } from '../modules/user/model'
 import { Credentials } from '../modules/auth/model'
-import {
-  adminContext,
-  adminUser,
-  anonContext,
-  testEntityManager,
-  testUser,
-  userContext,
-} from './graphqlTestEnvironment'
-import {
-  Project,
-  UserProject as UserProjectModel,
-  UserProjectRoleOptions as UPRO,
-} from '../modules/project/model'
+import { testEntityManager, userContext } from './graphqlTestEnvironment'
+import { Project, UserProject as UserProjectModel, UserProjectRoleOptions as UPRO } from '../modules/project/model'
 import { PublicationStatusOptions as PSO } from '../modules/project/Publishing'
 import { PublicationStatus, UserGroupRole, UserProjectRole } from '../binding'
 import { Dataset, DatasetProject } from '../modules/dataset/model'
 import { EngineDataset } from '../modules/engine/model'
-import { Group, UserGroup as UserGroupModel, UserGroupRoleOptions as UGRO } from '../modules/group/model'
+import { Group, UserGroup as UserGroupModel } from '../modules/group/model'
 import { MolecularDB } from '../modules/moldb/model'
-import { Context } from '../context'
-import { getContextForTest } from '../getContext'
 import { isMemberOfGroup } from '../modules/dataset/operation/isMemberOfGroup'
 
 export const createTestUser = async(user?: Partial<User>): Promise<User> => {
@@ -190,135 +177,4 @@ export const createTestMolecularDB = async(molecularDb: Partial<MolecularDB> = {
     createdDT: moment.utc(),
     ...molecularDb,
   }) as MolecularDB
-}
-
-export const TestUserScenarioOptions = {
-  currentUser: 'currentUser',
-  unrelatedUser: 'unrelatedUser',
-  admin: 'admin',
-  anon: 'anon',
-  sameGroupInvited: 'sameGroupInvited',
-  sameGroupPending: 'sameGroupPending',
-  sameGroupMember: 'sameGroupMember',
-  sameGroupAdmin: 'sameGroupAdmin',
-  differentGroupAdmin: 'differentGroupAdmin',
-  pendingGroupAdmin: 'pendingGroupAdmin',
-  invitedGroupAdmin: 'invitedGroupAdmin',
-  sameProjectInvited: 'sameProjectInvited',
-  sameProjectPending: 'sameProjectPending',
-  sameProjectMember: 'sameProjectMember',
-  sameProjectManager: 'sameProjectManager',
-  sameProjectReviewer: 'sameProjectReviewer',
-  differentProjectManager: 'differentProjectManager',
-  pendingProjectManager: 'pendingGroupManager',
-  pendingProjectReviewer: 'pendingGroupReviewer',
-  invitedProjectManager: 'invitedGroupManager',
-} as const
-export type TestUserScenario = keyof typeof TestUserScenarioOptions
-export interface TestUserForScenarioResult {
-  // otherUser - the user created for the scenario. In contrast to "thisUser"/testUser - the user owning the securable
-  otherUser: User | null
-  context: Context
-  // groupId - for sameGroup* this is the groupId of both users, for differentGroup* this is the groupId of `userContext`
-  groupId?: string
-  // otherGroupId - for differentGroup* this is the groupId of the created user
-  otherGroupId?: string
-  projectId?: string
-  otherProjectId?: string
-}
-export const getTestUserForScenario = async(scenario: TestUserScenario): Promise<TestUserForScenarioResult> => {
-  const ThisUserGroupRole: Partial<Record<TestUserScenario, UserGroupRole>> = {
-    pendingGroupAdmin: UGRO.PENDING,
-    invitedGroupAdmin: UGRO.INVITED,
-  }
-  const ThisUserProjectRole: Partial<Record<TestUserScenario, UserProjectRole>> = {
-    pendingProjectManager: UPRO.PENDING,
-    pendingProjectReviewer: UPRO.PENDING,
-    invitedProjectManager: UPRO.INVITED,
-  }
-  const OtherUserRole = {
-    sameGroupInvited: UGRO.INVITED,
-    sameGroupPending: UGRO.PENDING,
-    sameGroupMember: UGRO.MEMBER,
-    sameGroupAdmin: UGRO.GROUP_ADMIN,
-    differentGroupAdmin: UGRO.GROUP_ADMIN,
-    pendingGroupAdmin: UGRO.GROUP_ADMIN,
-    invitedGroupAdmin: UGRO.GROUP_ADMIN,
-    sameProjectInvited: UPRO.INVITED,
-    sameProjectPending: UPRO.PENDING,
-    sameProjectMember: UPRO.MEMBER,
-    sameProjectManager: UPRO.MANAGER,
-    sameProjectReviewer: UPRO.REVIEWER,
-    differentProjectManager: UPRO.MANAGER,
-    pendingProjectManager: UPRO.MANAGER,
-    pendingProjectReviewer: UPRO.REVIEWER,
-    invitedProjectManager: UPRO.MANAGER,
-  } as const
-
-  // Special cases where the context is overridden or already exists
-  if (scenario === 'currentUser') {
-    return { otherUser: testUser, context: userContext }
-  } if (scenario === 'admin') {
-    return { otherUser: adminUser, context: adminContext }
-  } else if (scenario === 'anon') {
-    return { otherUser: null, context: anonContext }
-  }
-
-  // Cases where a new user is created
-  let otherUser: User
-  let group: Group | undefined
-  const otherUserGroups: UserGroupModel[] = []
-  let otherGroup: Group | undefined
-  let project: Project | undefined
-  let otherProject: Project | undefined
-  if (scenario === 'unrelatedUser') {
-    otherUser = await createTestUser()
-  } else if (
-    scenario === 'sameGroupInvited'
-    || scenario === 'sameGroupPending'
-    || scenario === 'sameGroupMember'
-    || scenario === 'sameGroupAdmin'
-    || scenario === 'differentGroupAdmin'
-    || scenario === 'pendingGroupAdmin'
-    || scenario === 'invitedGroupAdmin'
-  ) {
-    otherUser = await createTestUser()
-    group = await createTestGroup()
-    if (scenario === 'differentGroupAdmin') {
-      otherGroup = await createTestGroup({ name: 'other group' })
-    }
-    await createTestUserGroup(testUser.id, group.id, ThisUserGroupRole[scenario] ?? UGRO.MEMBER, true)
-    otherUserGroups.push(
-      (await createTestUserGroup(otherUser.id, (otherGroup ?? group).id, OtherUserRole[scenario], true))!
-    )
-  } else if (
-    scenario === 'sameProjectInvited'
-    || scenario === 'sameProjectPending'
-    || scenario === 'sameProjectMember'
-    || scenario === 'sameProjectManager'
-    || scenario === 'sameProjectReviewer'
-    || scenario === 'differentProjectManager'
-    || scenario === 'pendingProjectManager'
-    || scenario === 'pendingProjectReviewer'
-    || scenario === 'invitedProjectManager'
-  ) {
-    otherUser = await createTestUser()
-    project = await createTestProject()
-    if (scenario === 'differentProjectManager') {
-      otherProject = await createTestProject({ name: 'other group' })
-    }
-    await createTestUserProject(testUser.id, project.id, ThisUserProjectRole[scenario] ?? UPRO.MEMBER)
-    await createTestUserProject(otherUser.id, (otherProject ?? project).id, OtherUserRole[scenario])
-  } else {
-    throw new Error(`Unhandled scenario in call getTestUserForScenario(${scenario})`)
-  }
-
-  return {
-    otherUser,
-    context: getContextForTest({ ...otherUser, groups: otherUserGroups }, testEntityManager),
-    groupId: group?.id,
-    otherGroupId: otherGroup?.id,
-    projectId: project?.id,
-    otherProjectId: otherProject?.id,
-  }
 }
