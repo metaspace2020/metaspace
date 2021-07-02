@@ -1,7 +1,5 @@
 import { DatasetSource } from '../../../bindingTypes'
 import { Context } from '../../../context'
-import { isDatasetInPublicationStatus } from './publicationChecks'
-import { PublicationStatusOptions as PSO } from '../../project/Publishing'
 
 /**
  * Checks if a user is allowed to edit a dataset. This is an optimized subset of the permissions checking of

@@ -23,6 +23,6 @@ export default function getCompanionOptions(path: string, getKey: GetKey) {
       protocol: 'http',
     },
     filePath: '/tmp',
-    // debug: true,
+    debug: true,
   }
 }
