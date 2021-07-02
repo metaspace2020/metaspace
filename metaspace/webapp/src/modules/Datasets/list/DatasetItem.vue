@@ -71,7 +71,8 @@ export default {
 
     canEditOpticalImage() {
       return this.currentUser?.role === 'admin'
-        || (this.currentUser?.id === this.dataset.submitter.id && this.dataset.status === 'FINISHED')
+        // Only allow editing after annotation has finished, as it requires ion images for alignment
+        || (this.dataset.canEdit && this.dataset.status === 'FINISHED')
     },
   },
   async created() {
