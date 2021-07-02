@@ -19,9 +19,9 @@
     "test": "NODE_ENV=test jest --maxWorkers=8",
     "test-ci": "NODE_ENV=test jest --maxWorkers=2",
     "lint": "eslint --cache .",
-    "gen-binding": "graphql-binding --language typescript --input schema.ts --outputBinding src/binding.ts",
+    "gen-binding": "TS_NODE_TRANSPILE_ONLY=true graphql-binding --language typescript --input schema.ts --outputBinding src/binding.ts",
     "deref-schema": "node ./bin/deref_schema.js ./metadataSchemas/",
-    "gen-sql-schema": "node ./bin/dump-sql-schema.js ../engine/scripts/db_schema.sql",
+    "gen-sql-schema": "TS_NODE_TRANSPILE_ONLY=true node ./bin/dump-sql-schema.js ../engine/scripts/db_schema.sql",
     "gen-graphql-schema": "node ./bin/generate-json-graphql-schema.js ../webapp/tests/utils/graphql-schema.json"
   },
   "license": "ISC",
