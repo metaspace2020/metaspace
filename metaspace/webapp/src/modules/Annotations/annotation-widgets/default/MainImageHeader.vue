@@ -3,7 +3,7 @@
     slot="title"
     class="w-full"
   >
-    <span>
+    <span v-if="!hideOptions">
       Image viewer
     </span>
     <div
@@ -22,6 +22,7 @@
           @scaleBarColorChange="onScaleBarColorChange"
         />
         <button
+          v-if="!hideOptions"
           slot="reference"
           class="button-reset av-icon-button"
           @click="$event.stopPropagation()"
@@ -35,6 +36,7 @@
       </el-popover>
 
       <button
+        v-if="!hideOptions"
         class="button-reset av-icon-button"
         title="Reset image zoom and offsets"
         @click="resetViewport"
@@ -108,6 +110,9 @@ export default class MainImageHeader extends Vue {
 
     @Prop({ required: true, type: Boolean })
     isActive!: boolean
+
+    @Prop({ type: Boolean })
+    hideOptions: boolean | undefined
 
     get multiImageFlag() {
       return config.features.multiple_ion_images

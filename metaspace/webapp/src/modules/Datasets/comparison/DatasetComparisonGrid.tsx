@@ -26,10 +26,14 @@ interface DatasetComparisonGridProps {
   nCols: number
   nRows: number
   settings: any
+  colormap: string
+  scaleType: string
+  scaleBarColor: string
   selectedAnnotation: number
   annotations: any[]
   datasets: any[]
   isLoading: boolean
+  resetViewPort: boolean
 }
 
 interface DatasetComparisonGridState {
@@ -77,9 +81,25 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       type: Boolean,
       default: false,
     },
+    resetViewPort: {
+      type: Boolean,
+      default: false,
+    },
+    colormap: {
+      type: String,
+      default: 'Viridis',
+    },
+    scaleType: {
+      type: String,
+      default: 'linear',
+    },
+    scaleBarColor: {
+      type: String,
+      default: '#000000',
+    },
   },
   // @ts-ignore
-  setup: function(props, { refs, root }) {
+  setup: function(props, { refs, emit, root }) {
     const { $route, $store } = root
 
     const state = reactive<DatasetComparisonGridState>({
@@ -210,7 +230,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         showOpticalImage: hasPreviousSettings && state.gridState[key].showOpticalImage !== undefined
           ? state.gridState[key].showOpticalImage : true,
         colormap: hasPreviousSettings && state.gridState[key].colormap !== undefined
-          ? state.gridState[key].colormap : 'Viridis',
+          ? state.gridState[key].colormap : props.colormap,
         scaleType: hasPreviousSettings && state.gridState[key].scaleType !== undefined
           ? state.gridState[key].scaleType : 'linear',
         scaleBarColor: hasPreviousSettings && state.gridState[key].scaleBarColor !== undefined
@@ -221,6 +241,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
 
       Vue.set(state.gridState, key, settings)
       Vue.set(state.annotationData, key, annotation)
+      await handleImageLayerUpdate(state.annotationData[key], key)
     }
 
     const unsetAnnotation = (key: string) => {
@@ -262,7 +283,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         })
     }
 
-    watchEffect(async() => {
+    watchEffect(async(onInvalidate) => {
       // initial settings build
       if ((!state.grid && props.annotations && props.settings.value)
         || (state.grid && !isEqual(state.annotations, props.annotations))) {
@@ -273,6 +294,58 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       } else if (state.selectedAnnotation !== props.selectedAnnotation) { // row change update
         state.selectedAnnotation = props.selectedAnnotation
         await getAnnotationData(state.grid, state.selectedAnnotation)
+      }
+
+      // reset global viewPort
+      if (props.resetViewPort === true && state.gridState) {
+        emit('resetViewPort', false)
+        resetGlobalViewPort()
+      }
+
+      // change global colormap
+      if (props.colormap && state.gridState) {
+        let diffColormapCount = 0
+        Object.keys(state.gridState).forEach((key: string) => {
+          if (state.gridState[key] && state.gridState[key].colormap
+            && state.gridState[key].colormap !== props.colormap) {
+            diffColormapCount += 1
+          }
+        })
+
+        if (diffColormapCount > 0) {
+          handleGlobalColormapChange()
+        }
+      }
+
+      // change global scaleType
+      if (props.scaleType && state.gridState) {
+        let diffScaleCount = 0
+        Object.keys(state.gridState).forEach((key: string) => {
+          if (state.gridState[key] && state.gridState[key].scaleType
+            && state.gridState[key].scaleType !== props.scaleType) {
+            diffScaleCount += 1
+          }
+        })
+
+        if (diffScaleCount > 0) {
+          handleGlobalScaleTypeChange()
+        }
+      }
+
+      // change global scaleBarColor
+      if ((props.scaleBarColor || props.scaleBarColor === null) && state.gridState) {
+        let diffscaleBarColorCount = 0
+        Object.keys(state.gridState).forEach((key: string) => {
+          if (state.gridState[key]
+            && (state.gridState[key].scaleBarColor || state.gridState[key].scaleBarColor === null)
+            && state.gridState[key].scaleBarColor !== props.scaleBarColor) {
+            diffscaleBarColorCount += 1
+          }
+        })
+
+        if (diffscaleBarColorCount > 0) {
+          handleGlobalScaleBarColorChange()
+        }
       }
     })
 
@@ -336,11 +409,12 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       }
       const { minIntensity, maxIntensity } = isotopeImage
       const png = await loadPngFromUrl(isotopeImage.url)
-      return processIonImage(png, minIntensity, maxIntensity, scaleType, userScaling)
+      return png
+        ? processIonImage(png, minIntensity, maxIntensity, scaleType, userScaling) : null
     }
 
     const ionImageLayers = async(annotation: any, key: string,
-      colormap: string = 'Viridis', opacityMode: any = 'constant') => {
+      colormap: string = 'Viridis', opacityMode: any = 'linear') => {
       const finalImage = await ionImage(state.gridState[key]?.ionImagePng,
         annotation.isotopeImages[0],
         state.gridState[key]?.scaleType, state.gridState[key]?.userScaling)
@@ -358,8 +432,16 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       return []
     }
 
+    const resetGlobalViewPort = () => {
+      Object.keys(state.gridState).forEach((key: string) => {
+        resetViewPort(null, key)
+      })
+    }
+
     const resetViewPort = (event: any, key: string) => {
-      event.stopPropagation()
+      if (event) {
+        event.stopPropagation()
+      }
       Vue.set(state.gridState, key, { ...state.gridState[key], imagePosition: defaultImagePosition })
     }
 
@@ -414,6 +496,12 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       Vue.set(state.gridState, key, { ...state.gridState[key], ionImageLayers: ionImageLayersAux })
     }
 
+    const handleGlobalColormapChange = () => {
+      Object.keys(state.gridState).forEach((key: string) => {
+        handleColormapChange(props.colormap, key)
+      })
+    }
+
     const handleColormapChange = async(colormap: string, key: string) => {
       Vue.set(state.gridState, key, { ...state.gridState[key], colormap })
       await handleImageLayerUpdate(state.annotationData[key], key)
@@ -427,6 +515,12 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
     const handleUserScalingChange = async(userScaling: any, key: string) => {
       Vue.set(state.gridState, key, { ...state.gridState[key], userScaling: userScaling })
       await handleImageLayerUpdate(state.annotationData[key], key)
+    }
+
+    const handleGlobalScaleTypeChange = () => {
+      Object.keys(state.gridState).forEach((key: string) => {
+        handleScaleTypeChange(props.scaleType, key)
+      })
     }
 
     const handleScaleTypeChange = async(scaleType: string, key: string) => {
@@ -452,7 +546,13 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       Vue.set(state.gridState, key, { ...state.gridState[key], lockedIntensities, intensity })
     }
 
-    const handleScaleBarColorChange = (scaleBarColor: string, key: string) => {
+    const handleGlobalScaleBarColorChange = () => {
+      Object.keys(state.gridState).forEach((key: string) => {
+        handleScaleBarColorChange(props.scaleBarColor, key)
+      })
+    }
+
+    const handleScaleBarColorChange = async(scaleBarColor: string, key: string) => {
       Vue.set(state.gridState, key, { ...state.gridState[key], scaleBarColor })
     }
 
@@ -484,12 +584,17 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       return (
         <div key={col} class='dataset-comparison-grid-col overflow-hidden relative'
           style={{ height: 200, width: 200 }}>
-          {renderDatasetName(row, col)}
+          {
+            state.gridState
+            && state.gridState[`${row}-${col}`]
+            && renderDatasetName(row, col)
+          }
           <MainImageHeader
             class='dataset-comparison-grid-item-header dom-to-image-hidden'
             annotation={state.annotationData[`${row}-${col}`]}
             slot="title"
             isActive={false}
+            hideOptions={true}
             scaleBarColor={state.gridState[`${row}-${col}`]?.scaleBarColor}
             onScaleBarColorChange={(scaleBarColor: string) =>
               handleScaleBarColorChange(scaleBarColor, `${row}-${col}`)}
@@ -509,7 +614,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           {
             state.annotationData[`${row}-${col}`]
             && state.annotationData[`${row}-${col}`].msmScore
-            && <div class="dataset-comparison-extra">
+            && <div class="dataset-comparison-extra dom-to-image-hidden">
               <div class="dataset-comparison-msm-badge">
                 <b>MSM</b> {formatMSM(state.annotationData[`${row}-${col}`].msmScore)}
               </div>

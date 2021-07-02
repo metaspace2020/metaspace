@@ -16,6 +16,8 @@ import gql from 'graphql-tag'
 import FilterPanel from '../../Filters/FilterPanel.vue'
 import config from '../../../lib/config'
 import { DatasetListItem, datasetListItemsQuery } from '../../../api/dataset'
+import MainImageHeader from '../../Annotations/annotation-widgets/default/MainImageHeader.vue'
+import Vue from 'vue'
 
 interface DatasetComparisonPageProps {
   className: string
@@ -27,6 +29,7 @@ interface DatasetComparisonPageState {
   gridState: any
   annotations: any
   datasets: any
+  globalImageSettings: any
   grid: any
   nCols: number
   nRows: number
@@ -65,9 +68,11 @@ export default defineComponent<DatasetComparisonPageProps>({
     }`
     const { $route, $store } = root
     const gridNode = ref(null)
+    const imageGrid = ref(null)
     const state = reactive<DatasetComparisonPageState>({
       selectedAnnotation: -1,
       gridState: {},
+      globalImageSettings: {},
       annotations: [],
       datasets: [],
       collapse: ['images'],
@@ -149,8 +154,33 @@ export default defineComponent<DatasetComparisonPageProps>({
         state.nRows = auxSettings.nRows
         state.grid = auxSettings.grid
         await requestAnnotations()
+        state.globalImageSettings = {
+          scaleBarColor: '#000000',
+          scaleType: 'linear',
+          colormap: 'Viridis',
+          showOpticalImage: false,
+        }
       }
     })
+
+    const resetViewPort = (event: any) => {
+      if (event) {
+        event.stopPropagation()
+      }
+      Vue.set(state.globalImageSettings, 'resetViewPort', !state.globalImageSettings.resetViewPort)
+    }
+
+    const handleScaleBarColorChange = (scaleBarColor: string) => {
+      Vue.set(state.globalImageSettings, 'scaleBarColor', scaleBarColor)
+    }
+
+    const handleScaleTypeChange = async(scaleType: string) => {
+      Vue.set(state.globalImageSettings, 'scaleType', scaleType)
+    }
+
+    const handleColormapChange = async(colormap: string) => {
+      Vue.set(state.globalImageSettings, 'colormap', colormap)
+    }
 
     const handleRowChange = (idx: number) => {
       if (idx !== -1) {
@@ -167,8 +197,22 @@ export default defineComponent<DatasetComparisonPageProps>({
         <CollapseItem
           id="annot-img-collapse"
           name="images"
-          title="Image viewer"
           class="ds-collapse el-collapse-item--no-padding relative">
+          <MainImageHeader
+            class='dataset-comparison-item-header dom-to-image-hidden'
+            slot="title"
+            isActive={false}
+            scaleBarColor={state.globalImageSettings?.scaleBarColor}
+            onScaleBarColorChange={handleScaleBarColorChange}
+            scaleType={state.globalImageSettings?.scaleType}
+            onScaleTypeChange={handleScaleTypeChange}
+            colormap={state.globalImageSettings?.colormap}
+            onColormapChange={handleColormapChange}
+            showOpticalImage={false}
+            hasOpticalImage={false}
+            resetViewport={resetViewPort}
+            toggleOpticalImage={() => {}}
+          />
           <ImageSaver
             class="absolute top-0 right-0 mt-2 mr-2 dom-to-image-hidden"
             domNode={gridNode.value}
@@ -177,8 +221,14 @@ export default defineComponent<DatasetComparisonPageProps>({
             {
               state.collapse.includes('images')
               && <DatasetComparisonGrid
+                ref={imageGrid}
                 nCols={nCols}
                 nRows={nRows}
+                resetViewPort={state.globalImageSettings?.resetViewPort}
+                onResetViewPort={resetViewPort}
+                scaleBarColor={state.globalImageSettings?.scaleBarColor}
+                scaleType={state.globalImageSettings?.scaleType}
+                colormap={state.globalImageSettings?.colormap}
                 settings={gridSettings}
                 annotations={state.annotations || []}
                 datasets={state.datasets || []}
