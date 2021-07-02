@@ -350,7 +350,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
     })
 
     const defaultImagePosition = {
-      zoom: 1,
+      zoom: 0.7,
       xOffset: 0,
       yOffset: 0,
     }

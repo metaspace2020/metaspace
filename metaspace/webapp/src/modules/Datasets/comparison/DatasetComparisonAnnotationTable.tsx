@@ -506,7 +506,9 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
 
       state.isExporting = true
 
-      csv += state.processedAnnotations.map(formatRow).join('')
+      state.processedAnnotations.forEach((annotation: any) => {
+        csv += annotation.rawAnnotations.map(formatRow).join('')
+      })
 
       if (state.isExporting) {
         state.isExporting = false

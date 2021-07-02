@@ -287,6 +287,7 @@ export default defineComponent<DatasetComparisonPageProps>({
                     msmScore: Math.max(...ion.annotations.map((annot: any) => annot.msmScore)),
                     fdrlevel: Math.min(...ion.annotations.map((annot: any) => annot.fdrlevel)),
                     datasetCount: (ion.datasetIds || []).length,
+                    rawAnnotations: ion.annotations,
                   }
                 })}
                 onRowChange={handleRowChange}
