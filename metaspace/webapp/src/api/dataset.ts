@@ -311,3 +311,14 @@ export const getDatasetByIdQuery =
   }
   ${datasetDetailItemFragment}
 `
+
+export interface GetDatabaseStatusQuery {
+  dataset: {
+    id: string
+    status: GqlJobStatus | null
+  }
+}
+export const getDatasetStatusQuery =
+  gql`query getDatasetStatusQuery($id: String!) {
+    dataset(id: $id) { id status }
+  }`
