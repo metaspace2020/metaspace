@@ -94,7 +94,7 @@ export default {
       variables() {
         return { id: this.datasetId }
       },
-      result(data) {
+      update(data) {
         return data.dataset.status
       },
     },
